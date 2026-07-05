@@ -4,11 +4,7 @@ PX4 펌웨어 또는 ArduPilot 펌웨어에 따라 페이지의 세부 정보가
 
 ## ArduPilot 카메라 설정
 
-![](../../../assets/setup/ardupilot_camera.jpg)
-
 ## PX4 카메라 설정
-
-![PX4 카메라 설정](../../../assets/setup/px4_camera.jpg)
 
 For more information see [Camera](http://docs.px4.io/main/en/peripherals/camera.html) (PX4 User Guide).
 

@@ -2,18 +2,38 @@
 
 _설정 화면_은 일반 기체들의 _QGroundControl_ 애플리케이션을 설정합니다. 이 값을 변경하기 위하여 기체를 연결할 필요는 없습니다.
 
-왼쪽 사이드바에 있는 버튼을 클릭하여 다양한 설정 옵션들을 전환할 수 있습니다.
+You can switch between the various settings pages by clicking the buttons in the left-sidebar.
 
-![](../../../assets/settings/settings_view.jpg)
+## Search
 
-## 설정 옵션
+Use the **search bar** at the top of the settings sidebar to find any setting by name. As you type, matching settings are shown across all pages — click a result to jump directly to that setting. This is the fastest way to find a setting when you don't know which page it's on.
 
-**[일반](general.md)** <br />주요 애플리케이션 설정입니다. 디스플레이 장치, 자동 연결 장치, 비디오 디스플레이 및 저장 장치, RTK GPS 등을 지정합니다.
+## Settings Pages
 
-**커뮤니케이션 링크** <br />통신 링크를 수동으로 생성하고 연결합니다. _QGroundControl이 가장 일반적인 기기에 자동으로 연결되므로, 이것은 필요하지 않습니다._
+**[General](general.md)** <br>The main application configuration settings: display units, autoconnection devices, language, color scheme, and other core options.
 
-**[오프라인 지도](offline_maps.md)** <br />인터넷에 연결되지 않은 환경에서도 지도를 저장하여 사용할 수 있습니다.
+**[Fly View](fly_view.md)** <br>Configure Fly View behavior: preflight checklist, guided mode, virtual joystick, and instrument panel options.
 
-**[MAVLink](mavlink.md)** <br />차량에 대한 MAVLink 연결과 관련된 설정입니다.
+**[3D View](3d_view.md)** <br>Enable and configure the 3D map view.
 
-**[콘솔](console_logging.md)** <br />응용 프로그램 문제 진단에 도움이 되도록 응용 프로그램 로그를 캡처하는 데 사용됩니다.
+**[Plan View](plan_view.md)** <br>Configure Plan View defaults: mission altitude, VTOL transition distance, and landing pattern options.
+
+**[ADSB Server](adsb_server.md)** <br>Configure the ADS-B traffic tracking server connection for nearby aircraft display.
+
+**[Comm Links](comm_links.md)** <br>Manually create communication links and configure auto-connect options.
+
+**[Logging](console_logging.md)** <br>Capture application logs for help with diagnosing problems.
+
+**[Maps](maps.md)** <br>Map provider selection, offline tile management, API tokens, custom tile servers, and cache settings.
+
+**[NTRIP / RTK](ntrip_rtk.md)** <br>Configure the built-in NTRIP client for streaming RTK correction data to the vehicle.
+
+**[PX4 Log Transfer](px4_log_transfer.md)** <br>Configure PX4 log download and upload settings.
+
+**[Remote ID](remote_id.md)** <br>Configure drone Remote ID settings including registration, region, and operator information.
+
+**[Telemetry](telemetry.md)** <br>Settings associated with the MAVLink connection to a vehicle.
+
+**[Video](video.md)** <br>Configure video source, stream URL, recording options, and decoder settings.
+
+**[Help](help.md)** <br>Links to QGroundControl user guide, forums, and support resources.

@@ -13,8 +13,6 @@ If the survey area has significant elevation variation then consider enabling [T
 지형 추적을 사용하면 측량이 지형 위의 원하는 고도와 더 가깝게 일치하도록 하고 지면 수준에 너무 가까운 임무를 계획할 가능성을 줄입니다.
 :::
 
-![탐사](../../../assets/plan/survey/survey.jpg)
-
 ## 탐사 생성
 
 탐사를 생성하려면:
@@ -23,14 +21,12 @@ If the survey area has significant elevation variation then consider enabling [T
 
 2. _계획 도구_에서 _패턴 도구_를 선택한 다음 _탐사_를 선택합니다.
 
-  ![탐사 메뉴](../../../assets/plan/survey/survey_menu.jpg)
-
-  그러면 지도에 설문조사 그리드가 추가되고 임무 목록(오른쪽)에 _설문조사_ 항목이 추가됩니다.
+   그러면 지도에 설문조사 그리드가 추가되고 임무 목록(오른쪽)에 _설문조사_ 항목이 추가됩니다.
 
 3. 지도에서 정점을 끌어 다각형의 모양을 변경합니다.
 
 4. 기존 정점 사이의 `(+)` 기호를 클릭하여 새 정점을 만듭니다.
-  그런 다음 새 정점을 새 위치로 끌어서 수정할 수 있습니다.
+   그런 다음 새 정점을 새 위치로 끌어서 수정할 수 있습니다.
 
 The survey settings are covered in the next section.
 
@@ -44,13 +40,9 @@ The survey settings are covered in the next section.
 기존 카메라, 사용자 지정 카메라를 선택하거나 수동으로 설정을 입력할 수 있습니다.
 사용 가능한 카메라(QGC 3.4) 목록은 아래와 같습니다.
 
-![탐사 - 카메라 선택](../../../assets/plan/survey/survey_camera_select.jpg)
-
 #### 알려진 카메라 {#known_camera}
 
 드롭다운 옵션에서 알려진 카메라를 선택하면 카메라 기능을 기반으로 격자 패턴이 생성됩니다.
-
-![탐사 - 소니 카메라](../../../assets/plan/survey/survey_camera_sony.jpg)
 
 설정 옵션을 사용하여 설문조사에 대한 기본 설정을 조정할 수 있습니다.
 
@@ -65,8 +57,6 @@ The survey settings are covered in the next section.
 
 사용자 정의 카메라 옵션을 선택하면 알려진 카메라와 유사한 방식으로 새 카메라에 대한 설정을 지정할 수 있습니다.
 
-![탐사 - 카메라 설정](../../../assets/plan/survey/survey_camera_custom.jpg)
-
 카메라별 설정은 다음과 같습니다.
 
 - **센서 너비/높이** - 카메라의 이미지 센서 크기입니다.
@@ -79,8 +69,6 @@ The survey settings are covered in the next section.
 
 수동 카메라 옵션을 사용하여 측량 높이, 트리거 간격 및 카메라에 적합한 격자 간격을 지정할 수 있습니다.
 
-![탐사 - 수동 카메라 설정](../../../assets/plan/survey/survey_camera_manual.jpg)
-
 설정 옵션은 다음과 같습니다:
 
 - **고도** - 전체 그리드를 비행하기 위한 측량 고도입니다.
@@ -91,17 +79,13 @@ The survey settings are covered in the next section.
 
 _횡단_ 섹션은 사용된 카메라와 독립적인 그리드를 설정합니다.
 
-![탐사 - 횡단](../../../assets/plan/survey/survey_transects.jpg)
-
-설정 옵션은 다음과 같습니다:
+The configurable options are:
 
 - **각도** - 북쪽을 기준으로 한 그리드 선의 각도입니다.
-  ![탐사 - 각도](../../../assets/plan/survey/survey_transects_angle.jpg)
 - **회전 거리** - 차량 회전을 위해 조사 영역 외부에 추가할 추가 거리의 양입니다.
 - **진입점 회전** - 버튼을 눌러 설문조사의 시작점과 끝점을 변경합니다.
 - **마우스를 가져가서 이미지 캡처** - 마우스를 가져가서 이미지를 캡처합니다(멀티콥터만 해당).
 - **90도 오프셋으로 비행** - 전체 임무를 90도 오프셋으로 되돌립니다.
-  ![탐사 - 비행 오프셋](../../../assets/plan/survey/survey_transects_offset.jpg)
 - **회전 중인 이미지** - 회전시 이미지를 촬영합니다.
 - **상대 고도** - 홈을 기준으로 지정된 고도를 지정하려면 선택합니다(선택하지 않은 경우 AMSL임).
 
@@ -109,8 +93,6 @@ _횡단_ 섹션은 사용된 카메라와 독립적인 그리드를 설정합니
 
 기본적으로 비행 차량은 고정 고도에서 측량 경로를 따릅니다.
 Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
-
-![탐사 - 지형 추적 설정](../../../assets/plan/survey/survey_terrain.jpg)
 
 :::info
 지형 추적은 _AirMap_ 서버에서 쿼리한 지형 높이를 사용합니다.
@@ -127,4 +109,3 @@ Enabling _Terrain Following_ makes the vehicle maintain a constant height relati
 
 _통계_ 섹션에는 계산된 조사 영역, 사진 간격, 사진 간격 및 계획된 사진 수가 표시됩니다.
 
-![탐사 - 통계](../../../assets/plan/survey/survey_statistics.jpg)

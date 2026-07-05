@@ -1,4 +1,4 @@
-# QGroundControl Guide (Daily Builds)
+# QGroundControl Guide
 
 [![Discuss](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage)
 [![Discuss](https://img.shields.io/badge/discuss-ardupilot-ff69b4.svg)](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol)
@@ -8,22 +8,27 @@ _QGroundControl_을 이용하여 PX4나 ArduPilot 구동 차량을 설정하고 
 
 **주요 기능:**
 
-- ArduPilot과 PX4 Pro 구동 차량의 설정
-- PX4와 ArduPilot(또는 기타 MAVLink 통신 자동조종장치)을 실행하는 기체 비행 방법
+- Full setup/configuration of ArduPilot and PX4 powered vehicles.
 - 자율 비행을 위한 미션 계획
-- 기체 위치, 비행 트랙, 웨이포인트 및 기체 계기를 표출하는 지도 디스플레이
-- 3D viewer visualizing the 3D map of the environment (.osm file), the 3D model of the vehicle (only multi-rotors for the moment), and the mission 3D trajectory (including the waypoints).
+- Flight map display with vehicle position, flight track, waypoints, and instruments.
 - 기기 디스플레이 오버레이를 이용한 비디오 스트리밍
+- Joystick and gamepad support for direct vehicle control.
 - Support for managing multiple vehicles.
-- QGroundControl은 Windows, OS X, Linux 플랫폼, iOS 및 Android 장치에서 실행됩니다.
-
-![](../../assets/quickstart/connected_vehicle.jpg)
+- Flight log download, GeoTagging, MAVLink console, and MAVLink traffic inspection.
+- Runs on Windows, macOS, Linux, Android, and iOS.
 
 :::info
-이 설명서는 작업 중인 버전입니다.
-정확한 정보를 제공하기 위하여 노력하였습니다. 그럼에도 불구하고, 누락되거나 잘못된 부분이 있을 수 있습니다.
+These docs cover the **daily build** (master branch).
+If you are using the stable release, see the [Stable V5.0 docs](https://docs.qgroundcontrol.com/Stable_V5.0/en/qgc-user-guide/).
 :::
 
+## Getting Started
+
+- **[What's New](getting_started/whats_new.md)** — Changes since the last stable release.
+- **[Download & Install](getting_started/download_and_install.md)** — Get QGroundControl on your platform.
+- **[UI Overview](getting_started/ui_overview.md)** — A quick tour of the main views.
+- **[First Flight Guide](getting_started/quick_start.md)** — Connect, verify, and fly.
+
 :::tip
-Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developer Guide](../qgc-dev-guide/index.md) section.
+Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developer Guide](../qgc-dev-guide/index.md).
 :::

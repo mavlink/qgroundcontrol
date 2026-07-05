@@ -10,8 +10,6 @@ Ek olarak günlük sürümlerin ya da stabil 3.6 sürümünün (erişilebilir ol
 Eğer bağlanan cihaz tarafından Toparlanma Noktası seçeneği desteklenmiyorsa _QGroundControl_ seçeneği göstermeyecektir.
 :::
 
-![Toparlanma Noktaları](../../../assets/plan/rally/rally_points_overview.jpg)
-
 ## Rally Point Usage
 
 Toparlanma Noktası oluşturmak için:
@@ -23,7 +21,7 @@ Toparlanma Noktası oluşturmak için:
    - şu anda aktif olan işaretçi farklı bir renge (yeşil) sahiptir ve _Rally Point_ paneli kullanılarak düzenlenebilir.
 4. Harita üzerinde seçerek herhangi bir toplanma noktasını etkinleştirin:
    - Seçilen toplanma noktasını harita üzerinde sürükleyerek veya paneldeki konumu düzenleyerek hareket ettirin.
-   - Aktif toplanma noktasını _ Rally Point_ panelindeki menü seçeneğini seçerek silin ![Toplanma Noktasını Sil](../../../assets/plan/rally/rally_points_delete.jpg)
+   - Delete the active rally point by selecting the menu option on the _Rally Point_ panel
 
 ## Upload Rally Points
 

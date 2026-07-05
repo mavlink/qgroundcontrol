@@ -275,7 +275,7 @@ StructureScan复杂任务项的对象定义如下。
 
 #### `TransectStyleComplexItem	` {#TransectStyleComplexItem}
 
-TransectStyleComplexItem contains the common base definition for survey and CorridorScan complex items.
+`TransectStyleComplexItem` contains the common base definition for [`survey`](#survey) and [`CorridorScan`](#corridor_scan) complex items.
 
 ```json
                  "TransectStyleComplexItem": {

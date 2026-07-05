@@ -20,11 +20,7 @@ Aşağıdaki resim, yapı taramasının bir ekran görüntüsünü göstermekted
 Yeşil çokgen, yapının zemin ayak izini işaretlemek için kullanılırken, etrafındaki beyaz çizgi aracın uçuş yolunu gösterir.
 Uçuş yolundaki yeşil numaralı daire, taramaya giriş/çıkış noktasıdır (taramanın başladığı yer).
 
-![Yapı Taraması](../../../assets/plan/structure_scan_v2/structure_scan.jpg)
-
 Tarama, yapıyı eşit olarak katmanlara ayırır; araç, yapının çevresinde belirli bir irtifada ve yapıya _ scan distance_'den uçar, ardından tüm yüzey taranana kadar işlemi her katmanda tekrarlar.
-
-![Katman JPG](../../../assets/plan/structure_scan_v2/layers.jpg)
 
 Kullanıcılar, yapının altındaki engellerden kaçınmak için _scan bottom altitude_ ve araç taramaya / taramaya giderken engellerden kaçınmak için _entrance/exit altitude_ ayarlayabilir.
 
@@ -34,34 +30,26 @@ Tarama oluşturmak için:
 
 1. **Plan View**'den **Pattern tool > Structure Scan**'ı seçin.
 
-![Tarama JPG'si oluştur](../../../assets/plan/structure_scan_v2/create_scan.jpg)
+2. Bu haritada basit kare bir yapı taraması oluşturacaktır.
 
-1. Bu haritada basit kare bir yapı taraması oluşturacaktır.
+   Yeşil bölge, yapıyı kaplayacak şekilde düzenlenmelidir.
 
-  ![İlk Köşegen](../../../assets/plan/structure_scan_v2/initial_polygon_scan.jpg)
+   - Haritadaki opak köşeleri yapının kenarlarına sürükleyin (yukarıda leylak rengi daire içine alınmış köşeler).
+   - Yapının kapladığı alan basit bir kareden fazlaysa, yeni bir köşe noktası oluşturmak için köşeler arasındaki yarı saydam dairelere tıklayabilirsiniz.
 
-  Yeşil bölge, yapıyı kaplayacak şekilde düzenlenmelidir.
+3. Ayrıca merkezdeki "daire"ye (kırmızı ile işaretlenmiş) tıklayarak ve açılır menüden _Circle_ 'ı seçerek dairesel bir alana geçebilirsiniz.
 
-  - Haritadaki opak köşeleri yapının kenarlarına sürükleyin (yukarıda leylak rengi daire içine alınmış köşeler).
-  - Yapının kapladığı alan basit bir kareden fazlaysa, yeni bir köşe noktası oluşturmak için köşeler arasındaki yarı saydam dairelere tıklayabilirsiniz.
+   - Açılır menüden çokgen alana geri dönebilir ve taramanın yarıçapını ve/veya konumunu değiştirebilirsiniz.
+   - Çemberin merkezini konumlandırmak için merkezdeki daireyi sürükleyin.
 
-2. Ayrıca merkezdeki "daire"ye (kırmızı ile işaretlenmiş) tıklayarak ve açılır menüden _Circle_ 'ı seçerek dairesel bir alana geçebilirsiniz.
+4. Geri kalan düzenlemeler, ekranın sağındaki _Structure Scan_ editörü kullanılarak halledilir.
+   İlk olarak manuel tarama, belirli bir kamera kullanarak tarama veya özel bir kamera tanımı kullanarak tarama seçeneklerinden hangisini istediğinizi seçin.
 
-  ![Dairesel Tarama](../../../assets/plan/structure_scan_v2/circle_scan.jpg).
+   ::: info
+   Modlar arasındaki temel fark, önceden tanımlanmış kameraların etkili bir katman yüksekliğini ve deklanşör mesafesini doğru bir şekilde hesaplamak için zaten ayarlanmış olmasıdır.
+   :::
 
-  - Açılır menüden çokgen alana geri dönebilir ve taramanın yarıçapını ve/veya konumunu değiştirebilirsiniz.
-  - Çemberin merkezini konumlandırmak için merkezdeki daireyi sürükleyin.
-
-3. Geri kalan düzenlemeler, ekranın sağındaki _Structure Scan_ editörü kullanılarak halledilir.
-  İlk olarak manuel tarama, belirli bir kamera kullanarak tarama veya özel bir kamera tanımı kullanarak tarama seçeneklerinden hangisini istediğinizi seçin.
-
-  ::: info
-  Modlar arasındaki temel fark, önceden tanımlanmış kameraların etkili bir katman yüksekliğini ve deklanşör mesafesini doğru bir şekilde hesaplamak için zaten ayarlanmış olmasıdır.
-  :::
-
-  Farklı modlar için seçenekler aşağıda gösterilmiştir.
-
-  ![Yapı Taraması Editörü](../../../assets/plan/structure_scan_v2/editor_options.jpg)
+   Farklı modlar için seçenekler aşağıda gösterilmiştir.
 
 Kullanıcı her zaman aşağıdaki ayarları yapılandırabilir:
 

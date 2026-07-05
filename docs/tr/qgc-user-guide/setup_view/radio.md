@@ -20,14 +20,11 @@ Radyoyu kalibre etmek için:
 
 3. Kalibrasyonu başlatmak için **OK**'a basın.
 
-   ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)::: info
-
-   Yukardaki görüntü PX4 Pro içindir. Her iki aygıt yazılımı için kalibrasyon/üst bölüm aynıdır, ancak _ Ek Radyo Ayarları _ bölümü farklı olacaktır.
+   ::: info
+   Calibration steps are the same for both PX4 and ArduPilot firmware, but the _Additional Radio setup_ section will differ.
    :::
 
 4. Verici yapılandırmanıza uyan radyo _ verici modunu _ seçin (bu, _ QGroundControl _ 'ın kalibrasyon sırasında izlemeniz için doğru çubuk pozisyonlarını görüntülemesini sağlar).
-
-   ![Radio setup - move sticks](../../../assets/setup/radio_sticks_throttle.jpg)
 
 5. Çubukları metinde (ve verici görüntüsünde) belirtilen pozisyonlara hareket ettirin. Çubuklar doğru pozisyondayken \*\* Next \*\* tuşuna basın. Tüm pozisyonlar için tekrar edin.
 
@@ -41,9 +38,7 @@ Radio calibration is demonstrated in the [PX4 setup video here](https://youtu.be
 
 At the lower part of the _Radio Setup_ screen is firmware-specific _Additional Radio setup_ section. The options for each autopilot are shown below.
 
-| PX4                                                                                                                                  | ArduPilot                                                                                                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| <img src="../../../assets/setup/radio_additional_radio_setup_px4.jpg" title="Radio setup - PX4 additional settings" width="300px" /> | <img src="../../../assets/setup/radio_additional_radio_setup_ardupilot.jpg" title="Radio setup - ArduPilot additional settings" width="300px" /> |
+The additional settings differ between PX4 and ArduPilot firmware.
 
 ### Spectrum Bind (ArduPilot/PX4)
 
@@ -56,8 +51,6 @@ To bind a Spektrum transmitter/receiver:
 2. Select the radio button for your receiver
 
 3. Press **OK**
-
-   ![Spektrum Bind](../../../assets/setup/radio_additional_setup_spectrum_bind_select_channels.jpg)
 
 4. Power on your Spektrum transmitter while holding down the bind button.
 
@@ -73,8 +66,6 @@ To copy the trims:
 
 3. Press **Ok**.
 
-   ![Copy Trims](../../../assets/setup/radio_additional_radio_setup_copy_trims_px4.jpg)
-
 4. Reset the trims on your transmitter back to zero.
 
 ### AUX Passthrough Channels (PX4)
@@ -85,8 +76,6 @@ To use the AUX passthrough channels:
 
 1. Map up to 2 transmitter controls to separate channels.
 2. Specify these channels to map to the AUX1 and AUX2 ports respectively, as shown below. Values are saved to the vehicle as soon as they are set.
-
-   ![AUX1 and AUX2 RC passthrough channels](../../../assets/setup/radio_additional_setup_aux_passthrough_channels_px4.jpg)
 
 The flight controller will pass through the unmodified values from the specified channels out of AUX1/AUX2 to the connected servos/relays that drive your hardware.
 
@@ -105,8 +94,6 @@ To set up tuning channels:
 1. Map up to 3 transmitter controls (dials or sliders) to separate channels.
 2. Select the mapping of _PARAM Tuning Id_ to radio channels, using the selection lists. Values are saved to the vehicle as soon as they are set.
 
-   ![Map radio channels to tuning channels](../../../assets/setup/radio_additional_radio_setup_param_tuning_px4.jpg)
-
 To map a PARAM tuning channel to a parameter:
 
 1. Open the **Parameters** sidebar.
@@ -116,8 +103,6 @@ To map a PARAM tuning channel to a parameter:
 3. Check the **Advanced Settings** checkbox.
 
 4. Click the **Set RC to Param...** button (this will pop-up the foreground dialog displayed below)
-
-   ![Map tuning channels to parameters](../../../assets/setup/parameters_radio_channel_mapping_px4.jpg)
 
 5. Select the tuning channel to map (1, 2 or 3) from the _Parameter Tuning ID_ selection list.
 

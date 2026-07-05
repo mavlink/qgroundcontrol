@@ -1,4 +1,4 @@
-# QGroundControl Guide (Daily Builds)
+# QGroundControl Guide
 
 [![Discuss](https://img.shields.io/badge/discuss-px4-ff69b4.svg)](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage)
 [![Discuss](https://img.shields.io/badge/discuss-ardupilot-ff69b4.svg)](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol)
@@ -8,22 +8,27 @@ It provides easy and straightforward usage for beginners, while still delivering
 
 **Key Features:**
 
-- Full setup/configuration of ArduPilot and PX4 Pro powered vehicles.
-- Flight support for vehicles running PX4 and ArduPilot (or any other autopilot that communicates using the MAVLink protocol).
+- Full setup/configuration of ArduPilot and PX4 powered vehicles.
 - Mission planning for autonomous flight.
-- Flight map display showing vehicle position, flight track, waypoints and vehicle instruments.
-- 3D viewer visualizing the 3D map of the environment (.osm file), the 3D model of the vehicle (only multi-rotors for the moment), and the mission 3D trajectory (including the waypoints).
+- Flight map display with vehicle position, flight track, waypoints, and instruments.
 - Video streaming with instrument display overlays.
+- Joystick and gamepad support for direct vehicle control.
 - Support for managing multiple vehicles.
-- QGC runs on Windows, OS X, Linux platforms, iOS and Android devices.
-
-![](../../assets/quickstart/connected_vehicle.jpg)
+- Flight log download, GeoTagging, MAVLink console, and MAVLink traffic inspection.
+- Runs on Windows, macOS, Linux, Android, and iOS.
 
 :::info
-This guide is an active work in progress.
-The information provided should be correct, but you may find missing information or incomplete pages.
+These docs cover the **daily build** (master branch).
+If you are using the stable release, see the [Stable V5.0 docs](https://docs.qgroundcontrol.com/Stable_V5.0/en/qgc-user-guide/).
 :::
 
+## Getting Started
+
+- **[What's New](getting_started/whats_new.md)** — Changes since the last stable release.
+- **[Download & Install](getting_started/download_and_install.md)** — Get QGroundControl on your platform.
+- **[UI Overview](getting_started/ui_overview.md)** — A quick tour of the main views.
+- **[First Flight Guide](getting_started/quick_start.md)** — Connect, verify, and fly.
+
 :::tip
-Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developer Guide](../qgc-dev-guide/index.md) section.
+Information about _QGroundControl_ development, architecture, contributing, and translating can be found in the [Developer Guide](../qgc-dev-guide/index.md).
 :::
