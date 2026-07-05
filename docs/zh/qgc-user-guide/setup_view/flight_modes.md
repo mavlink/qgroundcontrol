@@ -39,11 +39,7 @@ Below we show how to map the Taranis 3-way "SD" switch to channel 5.
 
 Open the Taranis UI **MIXER** page and scroll down to **CH5**, as shown below:
 
-![Taranis - Map channel to switch](../../../assets/setup/flight_modes/taranis_single_channel_mode_selection_1.png)
-
 Press **ENT(ER)** to edit the **CH5** configuration then change the **Source** to be the _SD_ button.
-
-![Taranis - Configure channel](../../../assets/setup/flight_modes/taranis_single_channel_mode_selection_2.png)
 
 That's it!
 Channel 5 will now output 3 different PWM values for the three different **SD** switch positions.

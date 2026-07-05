@@ -17,16 +17,12 @@ Mock Link允许您在QGroundControl调试版本中创建和停止指向多个模
 
 1. 通过[构建源代码](https://github.com/mavlink/qgroundcontrol#supported-builds)创建一个调试版本。
 
-2. 通过选择顶部工具栏中的“应用程序设置”图标，然后选择侧栏中的“模拟链接”来访问“模拟链接”：
-
-   ![](../../../assets/dev_tools/mocklink_waiting_for_connection.jpg)
+2. Access _Mock Link_ by selecting the _Application Settings_ icon in the top toolbar and then **Mock Link** in the sidebar.
 
 3. 可以单击面板中的按钮以创建相关类型的载具链接。
 
    - 每次单击按钮时，都会创建一个新连接。
    - 当存在多个连接时，将显示多载具UI。
-
-   ![](../../../assets/dev_tools/mocklink_connected.jpg)
 
 4. 点击 **停止一个 Mock 连接** 来停止当前正在使用的载具。
 

@@ -48,8 +48,8 @@ QGC 用户界面是使用 Qt Qml 实现的。 Qml 提供硬件加速，它是平
 
 PX4 开发者指南包含更多关于（通用）文件翻译工具链的信息：
 
-- [文档](https://dev.px4.io/en/contribute/docs.html)
-- [翻译](https://dev.px4.io/en/contribute/docs.html)
+- [Documentation](https://docs.px4.io/main/en/contribute/docs)
+- [Translation](https://docs.px4.io/main/en/contribute/docs.html)
 
 ## 许可证
 

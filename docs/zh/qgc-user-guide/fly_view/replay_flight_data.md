@@ -21,8 +21,6 @@ _QGroundControl_ 将飞行重放视为活动连接。
 
 3. 检查 **显示 Telemetry 日志重播状态栏** 以切换屏幕底部的飞行重播栏。
 
-   ![切换飞行重播](../../../assets/fly/flight_replay/flight_replay_toggle.jpg)
-
 4. 选择 **Load Telemetry 日志** 按钮来显示一个 _file 选择对话框。
    - 从可用的遥测日志中选择要重播的日志文件。
    - _QGroundControl_ 将立即开始播放日志。

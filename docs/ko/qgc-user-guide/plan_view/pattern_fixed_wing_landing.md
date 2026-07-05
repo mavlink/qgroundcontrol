@@ -3,8 +3,6 @@
 _고정익 착륙 패턴_ 도구를 사용하여 임무에 고정익 착륙 패턴을 추가할 수 있습니다.
 ArduPilot과 PX4 모두에서 지원됩니다.
 
-![고정익 착륙 패턴](../../../assets/plan/pattern/fixed_wing_landing_pattern.jpg)
-
 패턴의 첫 번째 지점은 특정 고도를 가진 배회 지점이고 두 번째 지점은 착륙 지점입니다.
 기체는 목표 고도에 도달할 때까지 첫 번째 지점에서 배회한 다음, 착륙 시퀀스를 순서대로 지정된 착륙 지점으로 비행합니다.
 
@@ -18,14 +16,10 @@ ArduPilot과 PX4 모두에서 지원됩니다.
 
 2. _계획 도구_에서 _패턴 도구_를 선택한 다음 _고정익 착륙 패턴_을 선택합니다.
 
-  ![고정익 착륙 패턴](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
-
-  그러면 임무 목록(오른쪽)에 _착륙 패턴_ 항목이 추가됩니다.
-
-  ![고정익 착륙 패턴](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
+   그러면 임무 목록(오른쪽)에 _착륙 패턴_ 항목이 추가됩니다.
 
 3. 지도를 클릭하여 배회 지점과 착륙 지점을 모두 생성합니다.
-  지도에서 이동할 수 있습니다.
+   지도에서 이동할 수 있습니다.
 
 추가 설정은 다음 섹션에서 설명합니다.
 
@@ -37,8 +31,6 @@ ArduPilot과 PX4 모두에서 지원됩니다.
 
 _배회 지점_ 설정은 배회 고도, 반경 및 방향을 설정합니다.
 
-![착륙 패턴 - 배회 지점](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_loiter.jpg)
-
 설정 옵션은 다음과 같습니다:
 
 - **고도** - 배회 고도.
@@ -48,8 +40,6 @@ _배회 지점_ 설정은 배회 고도, 반경 및 방향을 설정합니다.
 ### 착륙 지점
 
 _착륙 지점_ 설정은 착륙 위치와 경로를 설정합니다.
-
-![착륙 패턴 - 착륙 지점](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_landing.jpg)
 
 설정 옵션은 다음과 같습니다:
 

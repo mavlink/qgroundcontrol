@@ -7,26 +7,20 @@
 - 从OpenStreetMap 网站(.osm 文件)下载的任何感兴趣区域导入和显示3D映射图。
 - 在 3D 中显示车辆和它的任务。
 - 以及[飞行视图](../fly_view/fly_view.md)的大多数功能，包括：
-  - 运行一个自动的[飞行前检查列表](#preflight_checklist)。
+  - Run an automated [pre-flight checklist](../fly_view/hud.md#preflight_checklist).
   - 把载具解锁(或检查它为什么不会解锁)。
-  - 控制任务： [开始](#start_mission)、 [继续](#continue_mission)、 [暂停](#pause)和 [恢复](#resume_mission)。
-  - 引导飞行器进行[解锁](#arm)/[上锁](#disarm)/[紧急停止](#emergency_stop)、[起飞](#takeoff)/[降落](#land)、[改变高度](#change_altitude) 以及 [返航/一键返航](#rtl)。
+  - Control missions: [start](../fly_view/hud.md#start_mission), [continue](../fly_view/hud.md#continue_mission), [pause](../fly_view/hud.md#pause), and [resume](../fly_view/hud.md#resume_mission).
+  - Guide the vehicle to [arm](../fly_view/hud.md#arm)/[disarm](../fly_view/hud.md#disarm)/[emergency stop](../fly_view/hud.md#emergency_stop), [takeoff](../fly_view/hud.md#takeoff)/[land](../fly_view/hud.md#land), [change altitude](../fly_view/hud.md#change_altitude), and [return/RTL](../fly_view/hud.md#rtl).
   - 在地图视图和视频视图之间切换(如果可用)
   - 显示当前载具的视频、飞行任务、遥测和其他信息，同时在已连接的载具之间切换。
 
-![3D 视图](../../../assets/viewer_3d/viewer_3d_overview.jpg)
-
 # 界面概述
 
-上面的截图显示3D视图的主要元素。
+The main elements of the 3D View are the same as the [Fly View](../fly_view/fly_view.md), with an added 3D environment.
 
-<font color="red">**启用3D 视图：** </font>默认禁用3D 视图。 若要启用它，请前往**应用程序设置** ->**Fly View** 标签，并在 **3D View** 设置组下切换下面显示的 **启用** 切换：
+**Enabling the 3D View:** The 3D View is disabled by default. To enable it, go to **Settings > Fly View**, and under the **3D View** settings group, toggle the **Enabled** switch.
 
-![3D 视图](../../../assets/viewer_3d/enable_3d_view.jpg)
-
-打开3D 视图，当您在 [飞行视图](../fly_view/fly_view.md) 从左边的工具栏中选择3D视图图标如下所示：
-
-![3D 视图](../../../assets/viewer_3d/open_3d_viewer.jpg)
+To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), select the 3D View icon from the toolbar on the left.
 
 打开3D视图后，您可以使用鼠标或触摸屏来导航3D环境：
 

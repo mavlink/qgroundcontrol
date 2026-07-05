@@ -3,8 +3,6 @@
 _Pattern tools_ ([PlanView](../plan_view/plan_view.md) _Plan Tools_'un içindeki), karmaşık uçuş şablonlarını basit bir grafik kullanıcı arayüzü kullanarak özelleştirmenize olanak tanır.
 Uygun şablon araçları, araca (ve uçuş dizinindeki araç tipinin desteğine) bağlıdır.
 
-![Şablon Aracı (Plan Araçları)](../../../assets/plan/pattern/pattern_tool.jpg)
-
 | Şablon                                                          | Tanım                                                                                                                                                                                                                                                                        | Araçlar           |
 | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | [Yüzey](../plan_view/pattern_survey.md)                         | Çok köşeli bir alan üstünde ızgara şeklinde bir uçuş şablonu oluşturun. Alanı ve coğrafi etiketli görüntüler oluşturmak için uygun ızgara ve kamera ayarlarını belirleyebilirsiniz.                                                          | Tüm               |

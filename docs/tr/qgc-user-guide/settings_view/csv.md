@@ -1,7 +1,5 @@
 # CSV Logging
 
-![Csv checkbox](../../../assets/settings/general/csv.jpg)
-
 When checked, a CSV (comma-separated value) telemetry file will be created along with the usual **.tlog** telemetry file.
 The file is only created if **Save log after each flight** is enabled, and is recorded for the same duration.
 

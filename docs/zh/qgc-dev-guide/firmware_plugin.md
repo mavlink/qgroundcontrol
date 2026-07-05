@@ -1,6 +1,6 @@
 # 插件架构
 
-尽管 MAVLink 规范定义了与载具通信的标准通信协议。 这个规范在许多方面需要固件开发者来解释。 由于这种情况，在许多情况下，为完成相同任务，与运行一种固件的载具进行通信，和与运行不同固件的载具进行通信，二者会略有差异。 此外，每个固件可能实现一个不同的 MAVLink 命令集的子集。
+尽管 MAVLink 规范定义了与载具通信的标准通信协议。 这个规范在许多方面需要固件开发者来解释。 Because of this there are many cases where communication with a vehicle running one firmware is slightly different than communication with a vehicle running a different firmware in order to accomplish the same task. 此外，每个固件可能实现一个不同的 MAVLink 命令集的子集。
 
 另一个主要问题是MAVLink规范不包括载具配置或通用参数集。 Due to this all code which relates to vehicle setup ends up being firmware specific. 正因如此，所有与载具配置相关的代码最终都具有固件特定性。 此外，任何必须引用特定参数的代码也是特定于固件的。
 

@@ -3,8 +3,6 @@
 The _Fixed Wing Landing Pattern_ tool allows you to add a fixed wing landing pattern to a mission.
 It is supported on both ArduPilot and PX4.
 
-![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern.jpg)
-
 The first point of the pattern is a loiter point with a specific altitude and the second is a landing point.
 The vehicle will loiter at the first point until it reaches the target altitude, and then begin the landing sequence to fly down to the specified landing spot.
 
@@ -18,14 +16,10 @@ To create a landing pattern:
 
 2. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Fixed Wing Landing Pattern_.
 
-  ![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
-
-  This will add a _Landing Pattern_ item to the mission list (on the right).
-
-  ![Fixed Wing Landing Pattern](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
+   This will add a _Landing Pattern_ item to the mission list (on the right).
 
 3. Click on the map to create both the loiter point and the landing point.
-  These can be moved on the map.
+   These can be moved on the map.
 
 Additional settings are covered in the next section.
 
@@ -37,8 +31,6 @@ The landing pattern can be further configured in the associated mission item (in
 
 The _Loiter Point_ settings are used to configure the loiter altitude, radius and direction.
 
-![Landing Pattern - Loiter Point](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_loiter.jpg)
-
 The configurable options are:
 
 - **Altitude** - Loiter altitude.
@@ -48,8 +40,6 @@ The configurable options are:
 ### Landing Point
 
 The _Landing Point_ settings are used to configure the landing position and path.
-
-![Landing Pattern - Landing Point](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_landing.jpg)
 
 The configurable options are:
 

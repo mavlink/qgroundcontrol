@@ -7,8 +7,6 @@
 针对特定飞行器的说明作为子主题提供（例如[电机设置（ArduSub）](../setup_view/motors_ardusub.md)）。
 :::
 
-![电机测试](../../../assets/setup/Motors.png)
-
 ## 测试步骤
 
 要测试的电机：

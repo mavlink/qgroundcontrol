@@ -7,13 +7,9 @@
 即使没有工具连接，值也是可以设置的。 需要重新启动载具的设置会在用户界面中显示。
 :::
 
-![设置视图-完整通用标签](../../../assets/settings/general/overview.jpg)
-
 ## 单位
 
 本节定义应用程序中使用的显示单位。
-
-![单位设置](../../../assets/settings/general/units.jpg)
 
 设置如下：
 
@@ -26,13 +22,9 @@
 
 本节定义了一些杂项设置，涉及（不完全）：字体大小、配色方案、地图提供者、地图类型、遥测记录、音频输出、低电量公告级别、默认任务高度、[虚拟操纵杆]（.../settings_view/virtual_joystick.md）、任务自动加载、默认应用程序文件加载/保存路径等。
 
-![杂项设置](../../../assets/settings/general/miscellaneous.jpg)
-
 设置如下：
 
-- <span id="language"></span>**语言**：系统 (系统语言) | 保加利亚语，中文...
-
-  ![显示语言](../../../assets/settings/general/languages.jpg)
+- <a id="language"></a>**Language**: System (System Language) | Bulgarian, Chinese, ...
 
   翻译通常纳入应用程序，并根据系统语言自动选择。
 
@@ -40,7 +32,7 @@
   这些都是通过载具连接从互联网下载的。 然后本地缓存翻译。
   这意味着在载具连接期间至少需要一次互联网连接。
 
-- <span id="colour_scheme"></span>**颜色方案**: 室内(暗) | 户外(亮度)
+- <a id="colour_scheme"></a>**Color Scheme**: Indoor (Dark) | Outdoor (Light)
 
 - **地图提供商**: Google | Mapbox | Bing | Airmap | VWorld | Eniro| Statkart
 
@@ -54,7 +46,7 @@
 
 - **检查互联网连接**：取消选中以允许地图在中国/地图上下载可能失败的地方使用(停止地图引擎持续检查互联网连接)。
 
-- <span id="autoload_missions"></span> **自动加载任务**：如果启用，连接时自动上传计划到载具。
+- <a id="autoload_missions"></a> **Autoload Missions**: If enabled, automatically upload a plan to the vehicle on connection.
   - 计划文件必须命名为 **AutoLoad#.plan**, 其中`#` 被替换为载具ID。
   - 计划文件必须位于[应用程序加载/保存路径](#load_save_path)。
 
@@ -62,11 +54,9 @@
 
 - **电池电量过低通知**：_QGroundControl_ 将在电池电量水平上启动低电量通知。
 
-- <span id="load_save_path"></span>**应用程序加载/保存路径**: 下载/保存应用程序文件的默认位置，包括参数、遥测日志和飞行计划。
+- <a id="load_save_path"></a>**Application Load/Save Path**: Default location for loading/saving application files, including: parameters, telemetry logs, and mission plans.
 
 ## 数据持久化 {#data_persistence}
-
-![数据持久化设置](../../../assets/settings/general/data_persistence.jpg)
 
 设置如下：
 
@@ -75,20 +65,16 @@
 
 ## 来自载具的 {#telemetry_logs} 遥测日志
 
-![载具设置中的遥测日志](../../../assets/settings/general/telemetry_logs.jpg)
-
 设置如下：
 
-- <span id="autosave_log"></span>**每次飞行后保存日志**: 遥测日志 (`.tlog`) 飞行后自动保存到 _Application Load/Save Path_ ([above](#load_save_path) )。
+- <a id="autosave_log"></a>**Save log after each flight**: Telemetry logs (`.tlog`) automatically saved to the _Application Load/Save Path_ ([above](#load_save_path)) after flight.
 - **保存日志，即使载具没有解锁设备**: 当载具连接到 _QGroundControl_ 时记录日志。
   当最后一辆载具断开时停止日志记录。
 - [**CSV 日志**](csv.md)：将遥测数据子集记录到一个CSV文件。
 
 ## 飞行视图{#fly_view}
 
-![飞行视图设置](../../../assets/settings/general/fly_view.jpg)
-
-设置如下：
+The settings are:
 
 - **使用飞行检查清单**：在飞行工具栏中启用飞行前检查清单。
 
@@ -120,8 +106,6 @@
 
 ## 计划视图 {#plan_view}
 
-![计划视图设置](../../../assets/settings/general/plan_view.jpg)
-
 设置如下：
 
 - **默认飞行任务高度**：用于任务起始面板的默认高度，因此也是第一个航点的默认高度。
@@ -129,8 +113,6 @@
 ## 自动连接到以下设备 {#auto_connect}
 
 本节定义了_QGroundControl_ 将自动连接到的设备集合。
-
-![设备自动连接设置](../../../assets/settings/general/autoconnect_devices.jpg)
 
 设置包括：
 
@@ -158,8 +140,6 @@ GPS设备必须支持 ASCII NMEA 格式――通常情况是这样。
 
 - USB 连接：
 
-  ![NMEA GPS设备 - 串口](../../../assets/settings/general/nmea_gps_serial.jpg)
-
   - **NMEA GPS设备**：_串口_
   - **NMEA GPS波特率**：串口的波特率
 
@@ -169,16 +149,12 @@ GPS设备必须支持 ASCII NMEA 格式――通常情况是这样。
 
 - 网络连接：
 
-  ![NMEA GPS 设备 - UDP](../../../assets/settings/general/nmea_gps_udp.jpg)
-
   - **NMEA GPS 设备:** _UDP 端口_。
   - **NMEA 流 UDP 端口**: QGC 监听NMEA 数据的 UDP 端口(QGC 绑定端口作为服务器)
 
 ## RTK GPS {#rtk_gps}
 
 此部分允许您指定RTK GPS “测量初始化” 设置，保存并复用测量初始化操作的结果，或者直接输入基站的任何其他已知位置。
-
-![RTK GPS 设置](../../../assets/settings/general/rtk_gps.jpg)
 
 :::info
 _Survey-In_进程是 RTK GPS 系统为准确估算基站位置所需的启动程序。
@@ -206,8 +182,6 @@ _Survey-In_进程是 RTK GPS 系统为准确估算基站位置所需的启动程
 
 ## ADSB 服务器 {#adsb_server}
 
-![ADSB_Server 设置](../../../assets/settings/general/adbs_server.jpg)
-
 设置如下：
 
 - **连接到 ADSB SBS 服务器**：检查启动时连接到 ADSB 服务器。
@@ -233,14 +207,12 @@ One way to get ADSB information from nearby vehicles is to use [dump1090](https:
 
 _视频_ 部分用于定义视频的源和连接设置，将显示在 _飞行视图_中。
 
-![视频设置](../../../assets/settings/general/video_udp.jpg)
-
-设置如下：
+The settings are:
 
 - **视频源** ：视频流已禁用 | RTSP 视频流| UDP h.264 视频流| UDP h. 65 视频流 | TCP-MPEG2 视频流 | MPEGTS 视频流 | 集成摄像头
 
   ::: info
-  如果没有指定视频源，那么将不会显示其他视频或 _video 录制设置(我们在选择UDP源时看到设置)。
+  If no video source is specified then no other video or _video recording_ settings will be displayed.
   :::
 
 - **URL/端口**：连接类型特定流地址 (可能是端口或URL)。
@@ -256,10 +228,6 @@ _视频_ 部分用于定义视频的源和连接设置，将显示在 _飞行视
 使用 _视频录制_ 部分指定文件格式和最大分配的文件存储以存储视频。
 视频被保存到 [应用程序加载/保存路径]的子目录 ("视频") (#load_save_path)。
 
-![视频 - 没有自动删除](../../../assets/settings/general/video_recording.jpg)
-
-![视频 - 自动删除](../../../assets/settings/general/video_recording_auto_delete.jpg)
-
 设置为：
 
 - **自动删除文件**：如果选中，当使用指定的存储量时，文件将被自动删除。
@@ -272,8 +240,6 @@ _视频_ 部分用于定义视频的源和连接设置，将显示在 _飞行视
 
 品牌图像将以图标取代工具栏右上角的连接自动化图标。
 提供它是为了用户能够轻松创建屏幕/视频捕获，包括公司标志/品牌。
-
-![品牌图像](../../../assets/settings/general/brand_image.jpg)
 
 设置如下：
 
