@@ -85,6 +85,6 @@ private:
     QGCCompass *_compass = nullptr;
 
     static constexpr qreal kMinHorizonalAccuracyMeters = 100.;
-    static constexpr qreal kMinVerticalAccuracyMeters = 10.;
+    static constexpr qreal kMinVerticalAccuracyMeters = 100.;
     static constexpr qreal kMinDirectionAccuracyDegrees = 30.;
 };

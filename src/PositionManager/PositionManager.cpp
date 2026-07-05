@@ -119,11 +119,18 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
         }
     }
 
+    // Accept the altitude when the fix carries one and the vertical accuracy is either
+    // acceptable or not reported at all. The Android position source typically reports a
+    // vertical accuracy well above the old 10m gate (or none), which used to drop the
+    // altitude entirely and leave consumers such as Remote ID (which mandates an operator
+    // altitude in FAA regions) with a NaN.
+    bool verticalAccuracyOk = true;
     if (update.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
         _gcsPositionVerticalAccuracy = update.attribute(QGeoPositionInfo::VerticalAccuracy);
-        if (_gcsPositionVerticalAccuracy <= kMinVerticalAccuracyMeters) {
-            newGCSPosition.setAltitude(update.coordinate().altitude());
-        }
+        verticalAccuracyOk = (_gcsPositionVerticalAccuracy <= kMinVerticalAccuracyMeters);
+    }
+    if ((update.coordinate().type() == QGeoCoordinate::Coordinate3D) && verticalAccuracyOk) {
+        newGCSPosition.setAltitude(update.coordinate().altitude());
     }
 
     _gcsPositionAccuracy = sqrt(pow(_gcsPositionHorizontalAccuracy, 2) + pow(_gcsPositionVerticalAccuracy, 2));
