@@ -54,8 +54,6 @@ Item {
         radius: ScreenTools.defaultBorderRadius
     }
 
-    
-
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -64,17 +62,19 @@ Item {
         onClicked: root.clicked()
     }
 
-    Text {
-        id: chevron
+    SVArrow {
+        id: arrow
         visible: root.extendHeader
-        text: "\u25BE"   // ▾
-        font.pointSize: ScreenTools.smallFontPointSize
-        color: root.checked ? qgcPalette.buttonHighlightText : qgcPalette.statusFailedText
+        width: ScreenTools.defaultFontPixelWidth * 0.6
+        height: width * 1.3
+        anchors.top: parent.top
+        anchors.topMargin: root.height / 2 - root.spacing * 2.5
         anchors.right: parent.right
         anchors.rightMargin: root.spacing
-        anchors.top: parent.top
-        anchors.topMargin: root.size * root.iconScale / 2 - spacing / 2
-        rotation: root.expanded ? 180 : 0
+        arrowFilled: true
+        outerBorderColor: root.checked ? qgcPalette.buttonHighlightText : qgcPalette.statusFailedText
+
+        rotation: root.expanded ? 90 : 270
 
         Behavior on rotation {
             NumberAnimation { duration: 60 }

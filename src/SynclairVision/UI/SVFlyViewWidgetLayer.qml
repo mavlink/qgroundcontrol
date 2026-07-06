@@ -23,9 +23,9 @@ Item {
     property string activeSettingsId: ""
     property bool recordActive: false
     property var settingsModel: [
-        { id: "General", text: "General", checkable: true },
-        { id: "Controls", text: "Controls", checkable: true },
-        { id: "Dev", text: "Dev", checkable: true }
+        { id: "General", text: "General", checkable: true, iconSource: "/qmlimages/settings_general.svg" },
+        { id: "Controls", text: "Controls", checkable: true, iconSource: "/qmlimages/settings_controls.svg" },
+        { id: "Dev", text: "Dev", checkable: true, iconSource: "/qmlimages/settings_dev.svg" }
     ]
 
     property bool activeDigiview: QGroundControl.videoManager.streaming
@@ -82,7 +82,11 @@ Item {
 
         width: settings.width
         height: settings.height
+
+        
     }
+
+    
 
     SVMenuStrip {
         id: settingsMenu
@@ -99,11 +103,7 @@ Item {
         autoUpdateActiveId: false
         activeId: root.activeSettingsId
 
-        model: [
-            { id: "General",  text: "General",  checkable: true, iconSource: "/qmlimages/settings_general.svg" },
-            { id: "Controls", text: "Controls", checkable: true, iconSource: "/qmlimages/settings_controls.svg" },
-            { id: "Dev",      text: "Dev",      checkable: true, iconSource: "/qmlimages/settings_dev.svg" },
-        ]
+        model: root.settingsModel
 
         onItemSelected: (id) => {
             activeSettingsId = (activeSettingsId === id) ? "" : id
@@ -118,17 +118,65 @@ Item {
         id: settingsAnchor
         width: 1
         height: 1
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
+        //anchors.horizontalCenter: parent.horizontalCenter
+        //anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        anchors.right: parent.right
+        //anchors.rightMargin: 300 
     }
 
     Component {
         id: settingsDrawer 
 
-        SVSettingsMenu {
-            activeSettingsId: root.activeSettingsId
-            width: 600
-            height: 700
+        Item {
+            property bool indicatorDrawerUseRightEdgeAlignment: true
+            property real indicatorDrawerRightEdgeMargin: -ScreenTools.defaultFontPixelHeight / 8 - 2
+            readonly property real drawerSpacing: ScreenTools.defaultFontPixelWidth * 2
+
+            width: settingsPanel.width + settingsCategoryStrip.width + drawerSpacing
+            height: Math.max(settingsPanel.height, settingsCategoryStrip.height)
+
+            Component.onDestruction: root.activeSettingsId = ""
+
+            Row {
+                spacing: parent.drawerSpacing
+
+                SVSettingsMenu {
+                    id: settingsPanel
+
+                    activeSettingsId: root.activeSettingsId
+                    width: 700
+                    height: 900
+                }
+
+                SVMenuStrip {
+                    id: settingsCategoryStrip
+                    transform: Translate { y: ScreenTools.defaultFontPixelWidth * 7 - ScreenTools.defaultFontPixelWidth / 2 - 1 }
+
+                    headerless: true
+                    autoUpdateActiveId: false
+                    direction: vertical
+                    activeId: root.activeSettingsId
+                    model: root.settingsModel
+
+                    onItemSelected: (id) => {
+                        if (root.activeSettingsId === id) {
+                            closeIndicatorDrawer()
+                            return
+                        }
+
+                        root.activeSettingsId = id
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.width: 1
+                        border.color: qgcPalette.windowShadeLight
+                        radius: 5
+                    }
+                }
+            }
         }
     }
 
