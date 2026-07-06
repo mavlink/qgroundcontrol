@@ -32,6 +32,7 @@ class VehicleFactGroup : public FactGroup
     Q_PROPERTY(Fact *xTrackError            READ xTrackError            CONSTANT)
     Q_PROPERTY(Fact *rangeFinderDist        READ rangeFinderDist        CONSTANT)
     Q_PROPERTY(Fact *flightDistance         READ flightDistance         CONSTANT)
+    Q_PROPERTY(Fact *flightTime             READ flightTime             CONSTANT)
     Q_PROPERTY(Fact *distanceToHome         READ distanceToHome         CONSTANT)
     Q_PROPERTY(Fact *timeToHome             READ timeToHome             CONSTANT)
     Q_PROPERTY(Fact *missionItemIndex       READ missionItemIndex       CONSTANT)
@@ -64,6 +65,7 @@ public:
     Fact *xTrackError() { return &_xTrackErrorFact; }
     Fact *rangeFinderDist() { return &_rangeFinderDistFact; }
     Fact *flightDistance() { return &_flightDistanceFact; }
+    Fact *flightTime() { return &_flightTimeFact; }
     Fact *distanceToHome() { return &_distanceToHomeFact; }
     Fact *timeToHome() { return &_timeToHomeFact; }
     Fact *missionItemIndex() { return &_missionItemIndexFact; }

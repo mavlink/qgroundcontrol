@@ -263,7 +263,10 @@ SetupPage {
                             text: controller.motorDetectionMessages
                             wrapMode: Text.WordWrap
                             background: Rectangle {
-                                color: qgcPal.window
+                                color: Qt.rgba(1, 1, 1, 0.030)
+                                radius: Math.round(ScreenTools.defaultFontPixelWidth * 0.5)
+                                border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                                border.width: 1
                             }
                             onTextChanged: function() {
                                 flickable.flick(0, -300)

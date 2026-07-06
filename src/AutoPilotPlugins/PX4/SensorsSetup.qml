@@ -474,7 +474,7 @@ Item {
                 readOnly:       true
                 text:           statusTextAreaDefaultText
                 color:          qgcPal.text
-                background: Rectangle { color: qgcPal.windowShade }
+                background: Rectangle { color: Qt.rgba(1, 1, 1, 0.026) }
             }
 
             Rectangle {
@@ -482,7 +482,7 @@ Item {
                 width:      parent.calDisplayAreaWidth
                 height:     parent.height
                 visible:    controller.showOrientationCalArea
-                color:      qgcPal.windowShade
+                color:      Qt.rgba(1, 1, 1, 0.026)
 
                 QGCLabel {
                     id:                 orientationCalAreaHelpText

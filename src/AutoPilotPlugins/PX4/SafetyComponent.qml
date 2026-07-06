@@ -68,7 +68,7 @@ SetupPage {
                 Rectangle {
                     width:                  mainRow.width  + (_margins * 2)
                     height:                 mainRow.height + (_margins * 2)
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(1, 1, 1, 0.026)
                     Row {
                         id:                 mainRow
                         spacing:            _margins
@@ -138,7 +138,7 @@ SetupPage {
                 Rectangle {
                     width:                  mainRow.width + (_margins * 2)
                     height:                 odRow.height  + (_margins * 2)
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(1, 1, 1, 0.026)
                     Row {
                         id:                 odRow
                         spacing:            _margins
@@ -250,7 +250,7 @@ SetupPage {
                 Rectangle {
                     width:                  mainRow.width     + (_margins * 2)
                     height:                 rcLossGrid.height + (_margins * 2)
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(1, 1, 1, 0.026)
                     Row {
                         id:                 rcLossGrid
                         spacing:            _margins
@@ -302,7 +302,7 @@ SetupPage {
                 Rectangle {
                     width:                  mainRow.width           + (_margins * 2)
                     height:                 dataLinkLossGrid.height + (_margins * 2)
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(1, 1, 1, 0.026)
                     Row {
                         id:                 dataLinkLossGrid
                         spacing:            _margins
@@ -354,7 +354,7 @@ SetupPage {
                 Rectangle {
                     width:                  mainRow.width       + (_margins * 2)
                     height:                 geoFenceGrid.height + (_margins * 2)
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(1, 1, 1, 0.026)
                     Row {
                         id:                 geoFenceGrid
                         spacing:            _margins
@@ -424,7 +424,7 @@ SetupPage {
                 Rectangle {
                     width:              mainRow.width         + (_margins * 2)
                     height:             returnHomeGrid.height + (_margins * 2)
-                    color:              qgcPal.windowShade
+                    color:              Qt.rgba(1, 1, 1, 0.026)
                     Row {
                         id:                 returnHomeGrid
                         spacing:            _margins
@@ -521,7 +521,7 @@ SetupPage {
                 Rectangle {
                     width:              mainRow.width       + (_margins * 2)
                     height:             landModeGrid.height + (_margins * 2)
-                    color:              qgcPal.windowShade
+                    color:              Qt.rgba(1, 1, 1, 0.026)
                     Row {
                         id:                 landModeGrid
                         spacing:            _margins
@@ -579,7 +579,7 @@ SetupPage {
                 Rectangle {
                     width:              mainRow.width      + (_margins * 2)
                     height:             loggingGrid.height + (_margins * 2)
-                    color:              qgcPal.windowShade
+                    color:              Qt.rgba(1, 1, 1, 0.026)
                     Row {
                         id:                 loggingGrid
                         spacing:            _margins
@@ -630,7 +630,7 @@ SetupPage {
                 Rectangle {
                     width:              mainRow.width   + (_margins * 2)
                     height:             hitlGrid.height + (_margins * 2)
-                    color:              qgcPal.windowShade
+                    color:              Qt.rgba(1, 1, 1, 0.026)
                     visible:            _hitlAvailable
                     Row {
                         id:                 hitlGrid

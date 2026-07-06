@@ -223,7 +223,7 @@ SetupPage {
                     Rectangle {
                         width:  fsColumn.x + fsColumn.width + _margins
                         height: fsColumn.y + fsColumn.height + _margins
-                        color:  qgcPal.windowShade
+                        color:  Qt.rgba(1, 1, 1, 0.026)
 
                         ColumnLayout {
                             id:                 fsColumn
@@ -676,7 +676,7 @@ SetupPage {
                     Rectangle {
                         width:  rltAltField.x + rltAltField.width + _margins
                         height: rltAltField.y + rltAltField.height + _margins
-                        color:  qgcPal.windowShade
+                        color:  Qt.rgba(1, 1, 1, 0.026)
 
                         QGCRadioButton {
                             id:                 returnAtCurrentRadio

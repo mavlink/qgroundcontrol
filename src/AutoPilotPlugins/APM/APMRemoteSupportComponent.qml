@@ -28,7 +28,7 @@ SetupPage {
             id:                 backgroundRectangle
             width:              availableWidth
             height:             elementsRow.height * 1.5
-            color:              qgcPal.windowShade
+            color:              Qt.rgba(1, 1, 1, 0.026)
 
             GridLayout {
                 id:               elementsRow

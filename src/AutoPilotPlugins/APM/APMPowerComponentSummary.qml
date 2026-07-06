@@ -29,12 +29,26 @@ Item {
     property Fact _batt2Capacity:           controller.getParameterFact(-1, "BATT2_CAPACITY", false /* reportMissing */)
     property bool _battCapacityAvailable:   controller.parameterExists(-1, "BATT_CAPACITY")
 
+    function translatedMonitorState(fact) {
+        if (!fact) {
+            return ""
+        }
+        var enumText = fact.enumStringValue.toString().trim()
+        if (enumText === "Disabled") {
+            return qsTr("Disabled")
+        }
+        if (enumText === "Enabled") {
+            return qsTr("Enabled")
+        }
+        return enumText
+    }
+
     Column {
         anchors.fill:       parent
 
         VehicleSummaryRow {
             labelText: qsTr("Batt1 monitor")
-            valueText: _batt1Monitor.enumStringValue
+            valueText: translatedMonitorState(_batt1Monitor)
         }
 
         VehicleSummaryRow {
@@ -45,7 +59,7 @@ Item {
 
         VehicleSummaryRow {
             labelText:  qsTr("Batt2 monitor")
-            valueText:  _batt2MonitorAvailable ? _batt2Monitor.enumStringValue : ""
+            valueText:  _batt2MonitorAvailable ? translatedMonitorState(_batt2Monitor) : ""
             visible:    _batt2MonitorAvailable
         }
 

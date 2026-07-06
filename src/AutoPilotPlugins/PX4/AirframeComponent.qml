@@ -149,7 +149,11 @@ SetupPage {
                     Rectangle {
                         width:  _boxWidth
                         height: ScreenTools.defaultFontPixelHeight * 14
-                        color:  qgcPal.window
+                        color:  Qt.rgba(1, 1, 1, 0.025)
+                        radius: Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                        border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                        border.width: 1
+                        clip:   true
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.75
                         readonly property real innerMargin: ScreenTools.defaultFontPixelWidth
@@ -174,7 +178,10 @@ SetupPage {
                             anchors.bottom:     parent.bottom
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            color:              airframeCheckBox.checked ? qgcPal.buttonHighlight : qgcPal.windowShade
+                            color:              airframeCheckBox.checked ? Qt.rgba(qgcPal.primaryButton.r, qgcPal.primaryButton.g, qgcPal.primaryButton.b, 0.16) : Qt.rgba(1, 1, 1, 0.035)
+                            radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.6)
+                            border.color:       airframeCheckBox.checked ? qgcPal.primaryButton : Qt.rgba(0.82, 0.88, 0.94, 0.10)
+                            border.width:       1
 
                             Image {
                                 id:                 image

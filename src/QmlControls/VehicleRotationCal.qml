@@ -38,7 +38,10 @@ Rectangle {
         y:      inset
         width:  parent.width - (inset * 2)
         height: parent.height - (inset * 2)
-        color: qgcPal.windowShade
+        color: Qt.rgba(1, 1, 1, 0.035)
+        radius: Math.round(ScreenTools.defaultFontPixelWidth * 0.6)
+        border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
+        border.width: 1
 
         Image {
             width:      parent.width

@@ -249,7 +249,7 @@ SetupPage {
                             x:                      (fitnessRow.width * (Math.min(Math.max(controller.rgCompassCalFitness[index], 0.0), fitnessRange) / fitnessRange)) - (width / 2)
                             radius:                 height / 2
                             color:                  "white"
-                            border.color:           "black"
+                            border.color:           Qt.rgba(0.82, 0.88, 0.94, 0.70)
                         }
                     }
 
@@ -793,14 +793,14 @@ SetupPage {
                         readOnly:       true
                         text:           statusTextAreaDefaultText
                         color:          qgcPal.text
-                        background:     Rectangle { color: qgcPal.windowShade }
+                        background:     Rectangle { color: Qt.rgba(1, 1, 1, 0.026) }
                     }
 
                     Rectangle {
                         id:             orientationCalArea
                         anchors.fill:   parent
                         visible:        controller.showOrientationCalArea
-                        color:          qgcPal.windowShade
+                        color:          Qt.rgba(1, 1, 1, 0.026)
 
                         QGCLabel {
                             id:                 orientationCalAreaHelpText

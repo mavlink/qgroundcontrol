@@ -65,7 +65,7 @@ SetupPage {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 height:             posColumn.height + _margins*2
-                color:              qgcPal.windowShade
+                color:              Qt.rgba(1, 1, 1, 0.026)
 
                 Column {
                     id:                 posColumn
@@ -101,7 +101,7 @@ SetupPage {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 height:             velColumn.height + _margins*2
-                color:              qgcPal.windowShade
+                color:              Qt.rgba(1, 1, 1, 0.026)
 
                 Component {
                     id: velColumnUpTo36
@@ -167,7 +167,7 @@ SetupPage {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 height:             wpnavColumn.height + _margins*2
-                color:              qgcPal.windowShade
+                color:              Qt.rgba(1, 1, 1, 0.026)
 
                 // WPNAV parameters up to 3.5
                 Component {

@@ -43,8 +43,8 @@ Item {
                     width:          Math.round(ScreenTools.defaultFontPixelWidth * 45)
                     height:         Math.round(width * 0.5)
                     radius:         ScreenTools.defaultFontPixelWidth * 2
-                    color:          qgcPal.window
-                    border.color:   qgcPal.text
+                    color:          Qt.rgba(1, 1, 1, 0.030)
+                    border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.18)
                     border.width:   ScreenTools.defaultFontPixelWidth * 0.25
                     anchors.horizontalCenter: parent.horizontalCenter
                     property bool hasStickPositions: controller.stickPositions.length === 4
@@ -54,8 +54,8 @@ Item {
                         width:      parent.width * 0.25
                         height:     width
                         radius:     width * 0.5
-                        color:      qgcPal.window
-                        border.color: qgcPal.text
+                        color:      Qt.rgba(1, 1, 1, 0.045)
+                        border.color: Qt.rgba(0.82, 0.88, 0.94, 0.18)
                         border.width: ScreenTools.defaultFontPixelWidth * 0.125
                         x:          (parent.width  * 0.25) - (width  * 0.5)
                         y:          (parent.height * 0.5)  - (height * 0.5)
@@ -75,8 +75,8 @@ Item {
                         width:      parent.width * 0.25
                         height:     width
                         radius:     width * 0.5
-                        color:      qgcPal.window
-                        border.color: qgcPal.text
+                        color:      Qt.rgba(1, 1, 1, 0.045)
+                        border.color: Qt.rgba(0.82, 0.88, 0.94, 0.18)
                         border.width: ScreenTools.defaultFontPixelWidth * 0.125
                         x:          (parent.width  * 0.75) - (width  * 0.5)
                         y:          (parent.height * 0.5)  - (height * 0.5)

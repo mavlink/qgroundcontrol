@@ -18,7 +18,7 @@ import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
 Rectangle {
-    color:          qgcPal.window
+    color:          "transparent"
     anchors.fill:   parent
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight

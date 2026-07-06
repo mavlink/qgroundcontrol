@@ -146,7 +146,11 @@ SetupPage {
                     Rectangle {
                         width:  _boxWidth
                         height: ScreenTools.defaultFontPixelHeight * 14
-                        color:  qgcPal.window
+                        color:  Qt.rgba(1, 1, 1, 0.020)
+                        radius: Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                        border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                        border.width: 1
+                        clip:   true
 
                         QGCLabel {
                             id:     title
@@ -159,7 +163,10 @@ SetupPage {
                             anchors.bottom:     parent.bottom
                             anchors.left:       parent.left
                             anchors.right:      parent.right
-                            color:              subFrameModel.get(index).paramValue == _frameConfig.value ? qgcPal.buttonHighlight: qgcPal.windowShade
+                            color:              subFrameModel.get(index).paramValue == _frameConfig.value ? Qt.rgba(qgcPal.primaryButton.r, qgcPal.primaryButton.g, qgcPal.primaryButton.b, 0.16) : Qt.rgba(1, 1, 1, 0.026)
+                            radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.6)
+                            border.color:       subFrameModel.get(index).paramValue == _frameConfig.value ? qgcPal.primaryButton : Qt.rgba(0.82, 0.88, 0.94, 0.10)
+                            border.width:       1
 
                             Image {
                                 anchors.margins:    ScreenTools.defaultFontPixelWidth

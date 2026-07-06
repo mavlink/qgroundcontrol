@@ -42,6 +42,9 @@ Item {
     property string _disableReason:         _disableDueToArmed ? qsTr("armed") : qsTr("flying")
     property real   _margins:               ScreenTools.defaultFontPixelHeight * 0.5
     property string _pageTitle:             qsTr("%1 Config").arg(pageName)
+    property real   _panelRadius:           Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+    property color  _panelColor:            Qt.rgba(1, 1, 1, 0.026)
+    property color  _borderColor:           Qt.rgba(0.82, 0.88, 0.94, 0.12)
 
     Component.onCompleted: {
         if(pageLoader.item && pageLoader.item.setupPageCompleted) {
@@ -55,35 +58,46 @@ Item {
         contentHeight:  Math.max(availableHeight, pageLoader.y + pageLoader.item.height)
         clip:           true
 
-        RowLayout {
-            id:                 headingRow
+        Rectangle {
+            id:                 headingPanel
             width:              availableWidth
-            spacing:            _margins
-            layoutDirection:    Qt.RightToLeft
+            height:             visible ? headingPanelLayout.implicitHeight + (_margins * 2) : 0
+            color:              _panelColor
+            radius:             _panelRadius
+            border.color:       _borderColor
+            border.width:       1
             visible:            showAdvanced || (pageDescription !== "" && !ScreenTools.isShortScreen)
 
-            QGCCheckBox {
-                id:         advancedCheckBox
-                text:       qsTr("Advanced")
-                visible:    showAdvanced
-            }
-
-            ColumnLayout {
+            RowLayout {
+                id:                 headingPanelLayout
+                anchors.fill:       parent
+                anchors.margins:    _margins
                 spacing:            _margins
-                Layout.fillWidth:   true
+                layoutDirection:    Qt.RightToLeft
 
-                QGCLabel {
-                    Layout.fillWidth:   true
-                    font.pointSize:     ScreenTools.largeFontPointSize
-                    text:               !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
-                    visible:            !ScreenTools.isShortScreen
+                QGCCheckBox {
+                    id:         advancedCheckBox
+                    text:       qsTr("Advanced")
+                    visible:    showAdvanced
                 }
 
-                QGCLabel {
+                ColumnLayout {
+                    spacing:            _margins
                     Layout.fillWidth:   true
-                    wrapMode:           Text.WordWrap
-                    text:               pageDescription
-                    visible:            pageDescription !== "" && !ScreenTools.isShortScreen
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        font.pointSize:     ScreenTools.largeFontPointSize
+                        text:               !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
+                        visible:            !ScreenTools.isShortScreen
+                    }
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        text:               pageDescription
+                        visible:            pageDescription !== "" && !ScreenTools.isShortScreen
+                    }
                 }
             }
         }
@@ -91,7 +105,7 @@ Item {
         Loader {
             id:                 pageLoader
             anchors.topMargin:  _margins
-            anchors.top:        headingRow.bottom
+            anchors.top:        headingPanel.bottom
         }
 
         // Overlay to display when vehicle is armed and this setup page needs
@@ -99,8 +113,7 @@ Item {
         Rectangle {
             visible:            !setupView.enabled
             anchors.fill:       parent
-            color:              "black"
-            opacity:            0.5
+            color:              Qt.rgba(0, 0, 0, 0.42)
         }
     }
 }

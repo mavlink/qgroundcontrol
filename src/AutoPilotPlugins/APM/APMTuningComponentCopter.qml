@@ -133,7 +133,7 @@ SetupPage {
                     anchors.left:       parent.left
                     anchors.right:      parent.right
                     height:             basicTuningColumn.y + basicTuningColumn.height + _margins
-                    color:              qgcPal.windowShade
+                    color:              Qt.rgba(1, 1, 1, 0.026)
 
                     Column {
                         id:                 basicTuningColumn
@@ -315,7 +315,7 @@ SetupPage {
                     Rectangle {
                         height: autoTuneLabel.height + autoTuneRect.height
                         width:  autoTuneRect.width
-                        color:  qgcPal.window
+                        color:  Qt.rgba(1, 1, 1, 0.020)
 
                         QGCLabel {
                             id:                 autoTuneLabel
@@ -328,7 +328,7 @@ SetupPage {
                             width:          autoTuneColumn.x + autoTuneColumn.width + _margins
                             height:         autoTuneColumn.y + autoTuneColumn.height + _margins
                             anchors.top:    autoTuneLabel.bottom
-                            color:          qgcPal.windowShade
+                            color:          Qt.rgba(1, 1, 1, 0.026)
 
                             Column {
                                 id:                 autoTuneColumn
@@ -375,7 +375,7 @@ SetupPage {
                     Rectangle {
                         height:     inFlightTuneLabel.height + channel6TuningOption.height
                         width:      channel6TuningOption.width
-                        color:      qgcPal.window
+                        color:      Qt.rgba(1, 1, 1, 0.020)
 
                         QGCLabel {
                             id:                 inFlightTuneLabel
@@ -388,7 +388,7 @@ SetupPage {
                             width:          channel6TuningOptColumn.width + (_margins * 2)
                             height:         channel6TuningOptColumn.height + ScreenTools.defaultFontPixelHeight
                             anchors.top:    inFlightTuneLabel.bottom
-                            color:          qgcPal.windowShade
+                            color:          Qt.rgba(1, 1, 1, 0.026)
 
                             Column {
                                 id:                 channel6TuningOptColumn

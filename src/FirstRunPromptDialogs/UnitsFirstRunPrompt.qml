@@ -74,7 +74,7 @@ FirstRunPrompt {
         Rectangle {
             Layout.preferredHeight: unitsGrid.height + (_margins * 2)
             Layout.preferredWidth:  unitsGrid.width + (_margins * 2)
-            color:                  qgcPal.windowShade
+            color:                  Qt.rgba(1, 1, 1, 0.026)
             Layout.fillWidth:       true
 
             GridLayout {

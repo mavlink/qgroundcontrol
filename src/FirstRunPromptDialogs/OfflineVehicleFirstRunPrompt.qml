@@ -41,7 +41,7 @@ FirstRunPrompt {
             id:                     valueRect
             Layout.preferredHeight: valueGrid.height + (_margins * 2)
             Layout.preferredWidth:  valueGrid.width + (_margins * 2)
-            color:                  qgcPal.windowShade
+            color:                  Qt.rgba(1, 1, 1, 0.026)
             Layout.fillWidth:       true
 
             GridLayout {

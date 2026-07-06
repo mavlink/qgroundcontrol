@@ -25,7 +25,7 @@ Rectangle {
     anchors.fill:   parent
     anchors.rightMargin: ScreenTools.defaultFontPixelWidth
     anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
-    color:          qgcPal.window
+    color:          "transparent"
 
     property real _minSummaryW:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 28 : ScreenTools.defaultFontPixelWidth * 36
     property real _summaryBoxWidth: _minSummaryW
@@ -103,13 +103,12 @@ Rectangle {
                     Rectangle {
                         width:      _summaryBoxWidth
                         height:     ScreenTools.defaultFontPixelHeight * 13
-                        color:      qgcPal.windowShade
+                        color:      Qt.rgba(1, 1, 1, 0.032)
                         visible:    modelData.summaryQmlSource.toString() !== ""
                         border.width: 1
-                        border.color: qgcPal.text
-                        Component.onCompleted: {
-                            border.color = Qt.rgba(border.color.r, border.color.g, border.color.b, 0.1)
-                        }
+                        border.color: Qt.rgba(0.82, 0.88, 0.94, 0.085)
+                        radius:     Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                        clip:       true
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
@@ -142,7 +141,9 @@ Rectangle {
                         // Summary Qml
                         Rectangle {
                             anchors.top:    titleBar.bottom
+                            anchors.bottom: parent.bottom
                             width:          parent.width
+                            color:          "transparent"
                             Loader {
                                 anchors.fill:       parent
                                 anchors.margins:    ScreenTools.defaultFontPixelWidth

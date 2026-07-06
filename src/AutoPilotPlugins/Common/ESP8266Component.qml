@@ -117,7 +117,10 @@ Item {
                     font.bold:                          true
                 }
                 Rectangle {
-                    color:                              qgcPal.windowShade
+                    color:                              Qt.rgba(1, 1, 1, 0.026)
+                    radius:                             Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                    border.color:                       Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                    border.width:                       1
                     width:                              statusLayout.width  + _margins * 4
                     height:                             settingsRow.height  + _margins * 2
                     Row {
@@ -278,7 +281,10 @@ Item {
                     font.bold:                          true
                 }
                 Rectangle {
-                    color:                              qgcPal.windowShade
+                    color:                              Qt.rgba(1, 1, 1, 0.026)
+                    radius:                             Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                    border.color:                       Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                    border.width:                       1
                     width:                              statusLayout.width  + _margins * 4
                     height:                             statusLayout.height + _margins * 2
                     GridLayout {

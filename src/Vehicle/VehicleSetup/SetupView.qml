@@ -20,7 +20,7 @@ import QGroundControl.MultiVehicleManager
 
 Rectangle {
     id:     setupView
-    color:  qgcPal.window
+    color:  "transparent"
     z:      QGroundControl.zOrderTopMost
 
     // This need to block click event leakage to underlying map.
@@ -123,10 +123,16 @@ Rectangle {
         }
     }
 
+    QGCToolPageFrame {
+        anchors.fill:       parent
+        navigationWidth:    divider.x + divider.width
+        contentLeft:        divider.right
+    }
+
     Component {
         id: noComponentsVehicleSummaryComponent
         Rectangle {
-            color: qgcPal.windowShade
+            color: Qt.rgba(1, 1, 1, 0.025)
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
                 anchors.fill:           parent
@@ -135,7 +141,7 @@ Rectangle {
                 wrapMode:               Text.WordWrap
                 font.pointSize:         ScreenTools.mediumFontPointSize
                 text:                   qsTr("%1 does not currently support setup of your vehicle type. ").arg(QGroundControl.appName) +
-                                        "If your vehicle is already configured you can still Fly."
+                                        qsTr("If your vehicle is already configured you can still Fly.")
                 onLinkActivated: (link) => Qt.openUrlExternally(link)
             }
         }
@@ -144,7 +150,7 @@ Rectangle {
     Component {
         id: disconnectedVehicleSummaryComponent
         Rectangle {
-            color: qgcPal.windowShade
+            color: Qt.rgba(1, 1, 1, 0.025)
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
                 anchors.fill:           parent
@@ -153,7 +159,7 @@ Rectangle {
                 wrapMode:               Text.WordWrap
                 font.pointSize:         ScreenTools.largeFontPointSize
                 text:                   qsTr("Vehicle settings and info will display after connecting your vehicle.") +
-                                        (ScreenTools.isMobile || !_corePlugin.options.showFirmwareUpgrade ? "" : " Click Firmware on the left to upgrade your vehicle.")
+                                        (ScreenTools.isMobile || !_corePlugin.options.showFirmwareUpgrade ? "" : " " + qsTr("Click Firmware on the left to upgrade your vehicle."))
 
                 onLinkActivated: (link) => Qt.openUrlExternally(link)
             }
@@ -164,7 +170,7 @@ Rectangle {
         id: missingParametersVehicleSummaryComponent
 
         Rectangle {
-            color: qgcPal.windowShade
+            color: Qt.rgba(1, 1, 1, 0.025)
 
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
@@ -292,7 +298,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  qgcPal.windowShade
+        color:                  "transparent"
     }
 
     Loader {

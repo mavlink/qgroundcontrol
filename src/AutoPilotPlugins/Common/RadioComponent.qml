@@ -109,7 +109,7 @@ SetupPage {
 
                     property int            __lastRcValue:      1500
                     readonly property int   __rcValueMaxJitter: 2
-                    property color          __barColor:         qgcPal.windowShade
+                    property color          __barColor:         Qt.rgba(1, 1, 1, 0.055)
 
                     readonly property int _pwmMin:      800
                     readonly property int _pwmMax:      2200
@@ -129,7 +129,7 @@ SetupPage {
                         anchors.horizontalCenter:   parent.horizontalCenter
                         width:                      globals.defaultTextWidth / 2
                         height:                     parent.height
-                        color:                      qgcPal.window
+                        color:                      Qt.rgba(0.82, 0.88, 0.94, 0.20)
                     }
 
                     // Indicator

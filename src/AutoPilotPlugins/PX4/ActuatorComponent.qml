@@ -54,7 +54,10 @@ SetupPage {
                 Rectangle {
                     implicitWidth:          _leftColumnWidth
                     implicitHeight:         mixerUi.height + (_margins * 2)
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(1, 1, 1, 0.026)
+                    radius:                 Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                    border.color:           Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                    border.width:           1
                     visible:                actuators.mixer.groups.count > 0
 
                     Column {
@@ -185,7 +188,10 @@ SetupPage {
                 Rectangle {
                     implicitWidth:            _leftColumnWidth
                     implicitHeight:           actuatorTesting.height + (_margins * 2)
-                    color:                    qgcPal.windowShade
+                    color:                    Qt.rgba(1, 1, 1, 0.026)
+                    radius:                   Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                    border.color:             Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                    border.width:             1
 
                     Column {
                         id:                   actuatorTesting
@@ -354,7 +360,10 @@ SetupPage {
                     id:                             selActuatorOutput
                     implicitWidth:                  actuatorGroupColumn.width + (_margins * 2)
                     implicitHeight:                 actuatorGroupColumn.height + (_margins * 2)
-                    color:                          qgcPal.windowShade
+                    color:                          Qt.rgba(1, 1, 1, 0.026)
+                    radius:                         Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                    border.color:                   Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                    border.width:                   1
 
                     property var actuatorOutput:    actuators.selectedActuatorOutput
 

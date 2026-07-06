@@ -138,7 +138,10 @@ SettingsPage {
                 id:                     flagsRectangle
                 Layout.preferredHeight: statusGrid.height + (_margins * 2)
                 Layout.preferredWidth:  statusGrid.width + (_margins * 2)
-                color:                  qgcPal.windowShade
+                color:                  Qt.rgba(1, 1, 1, 0.025)
+                radius:                 Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                border.color:           Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                border.width:           1
                 visible:                _activeVehicle
                 Layout.fillWidth:       true
 

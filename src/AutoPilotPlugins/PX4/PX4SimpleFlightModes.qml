@@ -72,7 +72,7 @@ Item {
                         id:                 flightModeSettings
                         width:              flightModeColumn.width + (_margins * 2)
                         height:             flightModeColumn.height + ScreenTools.defaultFontPixelHeight
-                        color:              qgcPal.windowShade
+                        color:              Qt.rgba(1, 1, 1, 0.026)
 
                         GridLayout {
                             id:                 flightModeColumn
@@ -133,7 +133,7 @@ Item {
                         id:     switchSettingsRect
                         width:  switchSettingsGrid.width + (_margins * 2)
                         height: switchSettingsGrid.height + ScreenTools.defaultFontPixelHeight
-                        color:  qgcPal.windowShade
+                        color:  Qt.rgba(1, 1, 1, 0.026)
 
                         GridLayout {
                             id:                 switchSettingsGrid

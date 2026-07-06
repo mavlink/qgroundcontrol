@@ -62,7 +62,7 @@ SetupPage {
                 Rectangle {
                     width:  throttlePWMField.x + throttlePWMField.width + _margins
                     height: gcsCheckbox.y + gcsCheckbox.height + _margins
-                    color:  qgcPal.windowShade
+                    color:  Qt.rgba(1, 1, 1, 0.026)
 
                     QGCCheckBox {
                         id:                 throttleEnableCheckBox
@@ -151,7 +151,7 @@ SetupPage {
                 Rectangle {
                     width:  rltAltField.x + rltAltField.width + _margins
                     height: rltAltField.y + rltAltField.height + _margins
-                    color:  qgcPal.windowShade
+                    color:  Qt.rgba(1, 1, 1, 0.026)
 
                     QGCRadioButton {
                         id:                 returnAtCurrentRadio

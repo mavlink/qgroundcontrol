@@ -233,7 +233,7 @@ SetupPage {
                         anchors.top:        directionLabel.bottom
                         width:              mountAngMaxField.x + mountAngMaxField.width + _margins
                         height:             servoPWMMaxField.y + servoPWMMaxField.height + _margins
-                        color:              qgcPal.windowShade
+                        color:              Qt.rgba(1, 1, 1, 0.026)
 
                         FactCheckBox {
                             id:                 mountStabCheckBox
@@ -417,7 +417,7 @@ SetupPage {
                         anchors.top:        settingsLabel.bottom
                         width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
                         height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
-                        color:              qgcPal.windowShade
+                        color:              Qt.rgba(1, 1, 1, 0.026)
 
                         QGCLabel {
                             id:                 gimbalTypeLabel

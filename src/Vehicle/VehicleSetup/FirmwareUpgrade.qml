@@ -438,7 +438,10 @@ SetupPage {
                 color:              qgcPal.text
 
                 background: Rectangle {
-                    color: qgcPal.windowShade
+                    color:          Qt.rgba(1, 1, 1, 0.035)
+                    radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.65)
+                    border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                    border.width:   1
                 }
             }
         } // ColumnLayout

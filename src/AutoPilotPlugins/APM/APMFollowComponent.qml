@@ -328,7 +328,7 @@ SetupPage {
                         anchors.bottom:             parent.bottom
                         anchors.horizontalCenter:   parent.horizontalCenter
                         width:                      3
-                        color:                      qgcPal.windowShade
+                        color:                      Qt.rgba(0.82, 0.88, 0.94, 0.16)
                     }
 
                     Rectangle {
@@ -336,7 +336,7 @@ SetupPage {
                         anchors.right:          parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         height:                 3
-                        color:                  qgcPal.windowShade
+                        color:                  Qt.rgba(1, 1, 1, 0.026)
                     }
 
                     QGCLabel {

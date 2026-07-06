@@ -246,12 +246,13 @@ Item {
                             width:          ScreenTools.defaultFontPixelHeight * 1.5
                             height:         width
                             border.width:   1
-                            border.color:   qgcPal.text
-                            color:          pressed ? qgcPal.buttonHighlight : qgcPal.windowShade
+                            border.color:   pressed ? qgcPal.primaryButton : Qt.rgba(0.82, 0.88, 0.94, 0.18)
+                            color:          pressed ? Qt.rgba(qgcPal.primaryButton.r, qgcPal.primaryButton.g, qgcPal.primaryButton.b, 0.18) : Qt.rgba(1, 1, 1, 0.045)
+                            radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.35)
                             property bool pressed
                             QGCLabel {
                                 anchors.fill:           parent
-                                color:                  pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                                color:                  pressed ? qgcPal.primaryButton : qgcPal.buttonText
                                 horizontalAlignment:    Text.AlignHCenter
                                 verticalAlignment:      Text.AlignVCenter
                                 text:                   modelData

@@ -176,7 +176,7 @@ SetupPage {
                         anchors.top:        settingsLabel.bottom
                         width:              lights1Combo.x + lights1Combo.width + lightsStepCombo.width + _margins
                         height:             lights2Combo.y + lights2Combo.height + lightsStepCombo.height + 2*_margins
-                        color:              qgcPal.windowShade
+                        color:              Qt.rgba(1, 1, 1, 0.026)
 
                         QGCLabel {
                             id:                 lights1Label

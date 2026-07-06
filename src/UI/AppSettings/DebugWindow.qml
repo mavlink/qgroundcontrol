@@ -24,7 +24,7 @@ Item {
     Text {
         id:             _textMeasure
         text:           "X"
-        color:          qgcPal.window
+        color:          Qt.rgba(0.045, 0.048, 0.052, 0.88)
         font.family:    ScreenTools.normalFontFamily
     }
 
@@ -286,7 +286,7 @@ Item {
         Text {
             text: "100x100"
             anchors.centerIn: parent
-            color:  qgcPal.window
+            color:  Qt.rgba(0.045, 0.048, 0.052, 0.88)
         }
     }
 

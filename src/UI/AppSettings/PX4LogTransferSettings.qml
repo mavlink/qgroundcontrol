@@ -23,7 +23,7 @@ import QGroundControl.Palette
 
 Rectangle {
     id:             __mavlinkRoot
-    color:          qgcPal.window
+    color:          "transparent"
     anchors.fill:   parent
 
     property real _labelWidth:          ScreenTools.defaultFontPixelWidth * 28
@@ -115,7 +115,10 @@ Rectangle {
             Rectangle {
                 height:         mavlogColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
                 width:          __mavlinkRoot.width * 0.8
-                color:          qgcPal.windowShade
+                color:          Qt.rgba(1, 1, 1, 0.025)
+                radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                border.width:   1
                 anchors.margins: ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible:        _showMavlinkLog && _isPX4
@@ -177,7 +180,10 @@ Rectangle {
             Rectangle {
                 height:         logColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
                 width:          __mavlinkRoot.width * 0.8
-                color:          qgcPal.windowShade
+                color:          Qt.rgba(1, 1, 1, 0.025)
+                radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                border.width:   1
                 anchors.margins: ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible:        _showMavlinkLog && _isPX4
@@ -413,7 +419,10 @@ Rectangle {
             Rectangle {
                 height:         logFilesColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
                 width:          __mavlinkRoot.width * 0.8
-                color:          qgcPal.windowShade
+                color:          Qt.rgba(1, 1, 1, 0.025)
+                radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                border.width:   1
                 anchors.margins: ScreenTools.defaultFontPixelWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible:        _showMavlinkLog
@@ -426,8 +435,8 @@ Rectangle {
                         width:          ScreenTools.defaultFontPixelWidth  * 64
                         height:         ScreenTools.defaultFontPixelHeight * 14
                         anchors.horizontalCenter: parent.horizontalCenter
-                        color:          qgcPal.window
-                        border.color:   qgcPal.text
+                        color:          Qt.rgba(1, 1, 1, 0.035)
+                        border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.12)
                         border.width:   0.5
                         QGCListView {
                             width:          ScreenTools.defaultFontPixelWidth  * 56
@@ -439,7 +448,7 @@ Rectangle {
                             delegate: Rectangle {
                                 width:          ScreenTools.defaultFontPixelWidth  * 52
                                 height:         selectCheck.height
-                                color:          qgcPal.window
+                                color:          "transparent"
                                 Row {
                                     width:  ScreenTools.defaultFontPixelWidth  * 50
                                     anchors.centerIn: parent

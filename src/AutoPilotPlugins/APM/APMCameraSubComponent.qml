@@ -296,7 +296,7 @@ SetupPage {
                             id:     rectangle
                             height: innerColumn.height + _margins*2
                             width:  innerColumn.width + _margins*2
-                            color:  qgcPal.windowShade
+                            color:  Qt.rgba(1, 1, 1, 0.026)
 
                             // Section Content - 3 Rows
                             Column {
@@ -460,7 +460,7 @@ SetupPage {
                         anchors.top:        settingsLabel.bottom
                         width:              gimbalModeCombo.x + gimbalModeCombo.width + _margins
                         height:             gimbalModeCombo.y + gimbalModeCombo.height + _margins
-                        color:              qgcPal.windowShade
+                        color:              Qt.rgba(1, 1, 1, 0.026)
 
                         QGCLabel {
                             id:                 gimbalTypeLabel
