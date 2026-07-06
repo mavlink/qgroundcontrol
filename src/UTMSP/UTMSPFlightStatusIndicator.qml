@@ -34,7 +34,7 @@ Rectangle {
     width:  ScreenTools.defaultFontPixelHeight * 7.5
     height: ScreenTools.defaultFontPixelHeight * 7.5
     radius: width / 2
-    color:  qgcPal.window
+    color:  Qt.rgba(0.045, 0.048, 0.052, 0.88)
     anchors.left:   parent.left
     anchors.bottom: parent.bottom
     anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.3
@@ -69,7 +69,7 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         radius: width / 2
-        color:  qgcPal.window
+        color:  Qt.rgba(0.045, 0.048, 0.052, 0.88)
         border.color: "white"
         border.width: 3
         opacity: .5

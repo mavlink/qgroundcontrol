@@ -13,8 +13,10 @@ import QGroundControl.Palette
 Rectangle {
     width:  availableWidth
     height: editorColumn.height + (_margin * 2)
-    color:  qgcPal.windowShadeDark
+    color:  "transparent"
     radius: _radius
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.08)
+    border.width: 0
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2

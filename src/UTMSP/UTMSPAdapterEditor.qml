@@ -99,7 +99,7 @@ QGCFlickable {
             anchors.right:      parent.right
             anchors.top:        utmspFenceLabel.bottom
             height:             fenceColumn.y + fenceColumn.height + (_margin * 2)
-            color:              qgcPal.windowShadeDark
+            color:              Qt.rgba(0.045, 0.048, 0.052, 0.90)
             radius:             _radius
 
             Column {
@@ -185,7 +185,7 @@ QGCFlickable {
                     Rectangle{
                         width:   ScreenTools.defaultFontPixelWidth * 0.1
                         height:  ScreenTools.defaultFontPixelHeight * 0.83
-                        color:   qgcPal.windowShadeDark
+                        color:   Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         visible: !UTMSPStateStorage.loginState
                     }
 
@@ -220,7 +220,7 @@ QGCFlickable {
                 Rectangle{
                     width:   ScreenTools.defaultFontPixelWidth * 0.5
                     height:  ScreenTools.defaultFontPixelHeight * 0.833
-                    color:   qgcPal.windowShadeDark
+                    color:   Qt.rgba(0.045, 0.048, 0.052, 0.90)
                     visible: UTMSPStateStorage.loginState
                 }
 
@@ -267,7 +267,7 @@ QGCFlickable {
                         Rectangle{
                             width:   ScreenTools.defaultFontPixelWidth * 0.5
                             height:  ScreenTools.defaultFontPixelHeight * 0.833
-                            color:   qgcPal.windowShadeDark
+                            color:   Qt.rgba(0.045, 0.048, 0.052, 0.90)
                             visible: UTMSPStateStorage.loginState
                         }
                         QGCButton {
@@ -312,7 +312,7 @@ QGCFlickable {
                         Rectangle{
                             width:   ScreenTools.defaultFontPixelWidth * 0.5
                             height:  ScreenTools.defaultFontPixelHeight * 0.833
-                            color:   qgcPal.windowShadeDark
+                            color:   Qt.rgba(0.045, 0.048, 0.052, 0.90)
                             visible: UTMSPStateStorage.loginState
                         }
                     }
@@ -330,7 +330,7 @@ QGCFlickable {
                         Rectangle{
                             width:  ScreenTools.defaultFontPixelWidth * 2.5
                             height: ScreenTools.defaultFontPixelHeight * 0.278
-                            color:  qgcPal.windowShadeDark
+                            color:  Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                         QGCLabel {
                             text:               qsTr("Forgot Your Password?")
@@ -340,7 +340,7 @@ QGCFlickable {
                         Rectangle{
                             width:  ScreenTools.defaultFontPixelWidth * 2.5
                             height: ScreenTools.defaultFontPixelHeight * 0.278
-                            color:  qgcPal.windowShadeDark
+                            color:  Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                     }
 
@@ -350,7 +350,7 @@ QGCFlickable {
                         Rectangle{
                             width:  ScreenTools.defaultFontPixelWidth * 2.5
                             height: ScreenTools.defaultFontPixelHeight * 0.278
-                            color:  qgcPal.windowShadeDark
+                            color:  Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                         QGCLabel {
                             text:               qsTr("New User? Register Now") //TODO-->Will include register process
@@ -361,7 +361,7 @@ QGCFlickable {
                         Rectangle{
                             width:  ScreenTools.defaultFontPixelWidth * 2.5
                             height: ScreenTools.defaultFontPixelHeight * 0.278
-                            color:  qgcPal.windowShadeDark
+                            color:  Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                     }
                 }
@@ -369,7 +369,7 @@ QGCFlickable {
                 Rectangle{
                     width:  ScreenTools.defaultFontPixelWidth * 0.5
                     height: ScreenTools.defaultFontPixelHeight * 0.833
-                    color:  qgcPal.windowShadeDark
+                    color:  Qt.rgba(0.045, 0.048, 0.052, 0.90)
                 }
 
                 Text{
@@ -484,7 +484,7 @@ QGCFlickable {
                                     height:         ScreenTools.defaultFontPixelHeight * 1.667
                                     border.width:   ScreenTools.defaultFontPixelWidth * 0.167
                                     border.color:   qgcPal.buttonText
-                                    color:          qgcPal.windowShadeDark
+                                    color:          Qt.rgba(0.045, 0.048, 0.052, 0.90)
                                     Text {
                                         anchors.centerIn:   parent
                                         color:              qgcPal.buttonText
@@ -545,7 +545,7 @@ QGCFlickable {
                                 height:       ScreenTools.defaultFontPixelHeight * 1.667
                                 border.width: ScreenTools.defaultFontPixelWidth * 0.1667
                                 border.color: qgcPal.buttonText
-                                color:        qgcPal.windowShadeDark
+                                color:        Qt.rgba(0.045, 0.048, 0.052, 0.90)
                                 Text {
                                     anchors.centerIn: parent
                                     color:            qgcPal.buttonText
@@ -658,7 +658,7 @@ QGCFlickable {
                         Rectangle{
                             width:  ScreenTools.defaultFontPixelWidth * 2.5
                             height: ScreenTools.defaultFontPixelHeight * 0.278
-                            color:  qgcPal.windowShadeDark
+                            color:  Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                         Text{
                             text:  "Month"
@@ -675,7 +675,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                     }
 
@@ -685,7 +685,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                         Tumbler {
                             id: scrollMonth
@@ -838,7 +838,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                     }
                 }
@@ -853,7 +853,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
 
                         Text{
@@ -874,7 +874,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                     }
 
@@ -884,7 +884,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
 
                         Tumbler {
@@ -1045,7 +1045,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                     }
 
@@ -1055,7 +1055,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
 
                         Tumbler {
@@ -1211,7 +1211,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 2.5
                             height:ScreenTools.defaultFontPixelHeight * 0.278
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                     }
 
@@ -1222,7 +1222,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 5
                             height:ScreenTools.defaultFontPixelHeight * 0.556
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
 
                         QGCCheckBox {
@@ -1243,7 +1243,7 @@ QGCFlickable {
                         Rectangle{
                             width: ScreenTools.defaultFontPixelWidth * 5
                             height:ScreenTools.defaultFontPixelHeight * 0.556
-                            color: qgcPal.windowShadeDark
+                            color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
                         }
                     }
                 }

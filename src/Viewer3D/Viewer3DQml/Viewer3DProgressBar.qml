@@ -24,7 +24,7 @@ Rectangle{
     height: _progressCol.height + 2 * ScreenTools.defaultFontPixelWidth
 
     radius: ScreenTools.defaultFontPixelWidth * 2
-    color: qgcPal.windowShadeDark
+    color: Qt.rgba(0.045, 0.048, 0.052, 0.90)
 
     visible: progressValue < 100.0
     opacity:  (progressValue < 100)?(1.0):(0.0)

@@ -11,8 +11,10 @@ import QGroundControl.Palette
 Rectangle {
     id:     root
     height: _currentItem ? valuesRect.y + valuesRect.height + (_margin * 2) : titleBar.y - titleBar.height + _margin
-    color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
+    color:  _currentItem ? Qt.rgba(1, 1, 1, 0.030) : "transparent"
     radius: _radius
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
+    border.width: _currentItem ? 1 : 0
 
     signal clicked()
 
@@ -86,9 +88,11 @@ Rectangle {
         anchors.right:      parent.right
         anchors.top:        titleBar.bottom
         height:             valuesGrid.height + (_margin * 2)
-        color:              qgcPal.windowShadeDark
+        color:              "transparent"
         visible:            _currentItem
         radius:             _radius
+        border.color:       Qt.rgba(0.82, 0.88, 0.94, 0.08)
+        border.width:       0
 
         GridLayout {
             id:                 valuesGrid

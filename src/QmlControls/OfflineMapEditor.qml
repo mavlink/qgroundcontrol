@@ -209,8 +209,10 @@ FlightMap {
             anchors.verticalCenter: parent.verticalCenter
             width:              tileInfoColumn.width  + (ScreenTools.defaultFontPixelWidth  * 2)
             height:             tileInfoColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
-            color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
-            radius:             ScreenTools.defaultFontPixelWidth * 0.5
+            color:              Qt.rgba(0.045, 0.048, 0.052, 0.88)
+            radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.85)
+            border.color:       Qt.rgba(0.82, 0.88, 0.94, 0.14)
+            border.width:       1
 
             property bool       _extraButton: {
                 if(!tileSet)
@@ -465,8 +467,10 @@ FlightMap {
                 anchors.right:      parent.right
                 width:              ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 24 : 28)
                 height:             Math.min(parent.height - (anchors.margins * 2), addNewSetFlickable.y + addNewSetColumn.height + addNewSetLabel.anchors.margins)
-                color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
-                radius:             ScreenTools.defaultFontPixelWidth * 0.5
+                color:              Qt.rgba(0.045, 0.048, 0.052, 0.88)
+                radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.85)
+                border.color:       Qt.rgba(0.82, 0.88, 0.94, 0.14)
+                border.width:       1
 
                 //-- Eat mouse events
                 DeadMouseArea {
@@ -562,9 +566,9 @@ FlightMap {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             height:         zoomColumn.height + ScreenTools.defaultFontPixelHeight * 0.5
-                            color:          qgcPal.window
-                            border.color:   qgcPal.text
-                            radius:         ScreenTools.defaultFontPixelWidth * 0.5
+                            color:          Qt.rgba(1, 1, 1, 0.030)
+                            border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.14)
+                            radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.6)
 
                             Column {
                                 id:                 zoomColumn

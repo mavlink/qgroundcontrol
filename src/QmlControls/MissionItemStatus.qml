@@ -20,9 +20,11 @@ import QGroundControl.FactControls
 
 Rectangle {
     id:         root
-    radius:     ScreenTools.defaultFontPixelWidth * 0.5
-    color:      qgcPal.window
-    opacity:    0.80
+    radius:     Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+    color:      Qt.rgba(0.045, 0.048, 0.052, 0.64)
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.08)
+    border.width: 1
+    opacity:    1.0
     clip:       true
 
     property var    missionItems                    ///< List of all available mission items
@@ -107,7 +109,7 @@ Rectangle {
                 anchors.leftMargin:     -2
                 anchors.rightMargin:    -2
                 anchors.fill:           indexLabel
-                color:                  qgcPal.window
+                color:                  Qt.rgba(0.045, 0.048, 0.052, 0.70)
                 opacity:                0.3
                 visible:                indexLabel.visible
                 transform:              Rotation { angle: 90; origin.x: indexBackground.width / 2; origin.y: indexBackground.height / 2 }

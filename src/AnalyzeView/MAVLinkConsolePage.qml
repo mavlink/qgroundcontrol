@@ -123,7 +123,7 @@ AnalyzePage {
                     text: "> "
                     focus: true
                     color: qgcPal.text
-                    selectedTextColor: qgcPal.windowShade
+                    selectedTextColor: Qt.rgba(0.045, 0.048, 0.052, 1.0)
                     selectionColor: qgcPal.text
                     font.pointSize: ScreenTools.defaultFontPointSize
                     font.family: ScreenTools.fixedFontFamily
@@ -137,7 +137,12 @@ AnalyzePage {
                         }
                     }
 
-                    background: Rectangle { color: qgcPal.windowShade }
+                    background: Rectangle {
+                        color:          Qt.rgba(1, 1, 1, 0.035)
+                        radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.65)
+                        border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                        border.width:   1
+                    }
 
                     Keys.onPressed: (event) => {
                         // ignore tabs

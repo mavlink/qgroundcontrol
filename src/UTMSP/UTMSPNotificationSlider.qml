@@ -37,7 +37,7 @@ Rectangle {
     anchors.bottom: parent.bottom
     anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.3
     anchors.leftMargin: ScreenTools.defaultFontPixelHeight * 4.75
-    color:  qgcPal.window
+    color:  Qt.rgba(0.045, 0.048, 0.052, 0.88)
     opacity: 0.8
     clip: true
 

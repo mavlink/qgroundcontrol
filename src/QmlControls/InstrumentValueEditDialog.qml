@@ -115,7 +115,10 @@ QGCPopupDialog {
                                 Rectangle {
                                     width:      height
                                     height:     changeIconBtn.height
-                                    color:      qgcPal.windowShade
+                                    color:      Qt.rgba(1, 1, 1, 0.045)
+                                    radius:     Math.round(ScreenTools.defaultFontPixelWidth * 0.5)
+                                    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.14)
+                                    border.width: 1
                                     opacity:    iconRadio.checked ? 1 : .3
 
                                     QGCColoredImage {
@@ -596,7 +599,10 @@ QGCPopupDialog {
                     Rectangle {
                         height: ScreenTools.minTouchPixels
                         width:  height
-                        color:  currentSelection ? qgcPal.text  : qgcPal.window
+                        color:  currentSelection ? Qt.rgba(qgcPal.primaryButton.r, qgcPal.primaryButton.g, qgcPal.primaryButton.b, 0.16) : Qt.rgba(1, 1, 1, 0.030)
+                        radius: Math.round(ScreenTools.defaultFontPixelWidth * 0.45)
+                        border.color: currentSelection ? qgcPal.primaryButton : Qt.rgba(0.82, 0.88, 0.94, 0.10)
+                        border.width: 1
 
                         property bool currentSelection: icon == modelData
 
@@ -609,7 +615,7 @@ QGCPopupDialog {
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
                             smooth:             true
-                            color:              currentSelection ? qgcPal.window : qgcPal.text
+                            color:              currentSelection ? qgcPal.primaryButton : qgcPal.text
 
                             MouseArea {
                                 anchors.fill:   parent

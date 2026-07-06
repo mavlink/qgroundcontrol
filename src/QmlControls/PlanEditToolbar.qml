@@ -43,7 +43,9 @@ Item {
     Rectangle {
         anchors.fill:    parent
         radius:         _radius
-        color:          QGroundControl.globalPalette.toolbarBackground
+        color:          Qt.rgba(0.045, 0.048, 0.052, 0.80)
+        border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.055)
+        border.width:   1
     }
 
     QGCFlickable {

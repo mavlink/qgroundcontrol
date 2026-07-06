@@ -16,11 +16,11 @@ import QGroundControl.Palette
 Rectangle {
     id:             _root
     height:         _currentItem ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
-    color:          _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
+    color:          _currentItem ? Qt.rgba(1, 1, 1, 0.055) : Qt.rgba(1, 1, 1, 0.030)
     radius:         _radius
     opacity:        _currentItem ? 1.0 : 0.7
-    border.width:   _readyForSave ? 0 : 2
-    border.color:   qgcPal.warningText
+    border.width:   _readyForSave ? 1 : 2
+    border.color:   _readyForSave ? Qt.rgba(0.82, 0.88, 0.94, 0.12) : qgcPal.warningText
 
     property var    map                 ///< Map control
     property var    masterController
@@ -91,7 +91,7 @@ Rectangle {
             height:                 width
             border.width:           1
             border.color:           qgcPal.warningText
-            color:                  "white"
+            color:                  Qt.rgba(1, 1, 1, 0.08)
             radius:                 width / 2
             visible:                !_readyForSave
 
@@ -227,7 +227,7 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth:       true
                         Layout.preferredHeight: 1
-                        color:                  qgcPal.groupBorder
+                        color:                  Qt.rgba(0.82, 0.88, 0.94, 0.10)
                     }
 
                     QGCCheckBoxSlider {
@@ -251,7 +251,7 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth:       true
                         Layout.preferredHeight: 1
-                        color:                  qgcPal.groupBorder
+                        color:                  Qt.rgba(0.82, 0.88, 0.94, 0.10)
                     }
 
                     QGCLabel { 

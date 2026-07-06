@@ -466,7 +466,7 @@ ApplicationWindow {
         id:             toolDrawer
         anchors.fill:   parent
         visible:        false
-        color:          qgcPal.window
+        color:          Qt.rgba(0.045, 0.048, 0.052, 1.0)
 
         property var backIcon
         property string toolTitle
@@ -490,7 +490,15 @@ ApplicationWindow {
             anchors.right:  parent.right
             anchors.top:    parent.top
             height:         ScreenTools.toolbarHeight
-            color:          qgcPal.toolbarBackground
+            color:          Qt.rgba(1, 1, 1, 0.025)
+
+            Rectangle {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                anchors.bottom: parent.bottom
+                height:         1
+                color:          Qt.rgba(0.82, 0.88, 0.94, 0.10)
+            }
 
             RowLayout {
                 id:                 toolDrawerToolbarLayout
@@ -698,9 +706,10 @@ ApplicationWindow {
             Rectangle {
                 id:             backgroundRect
                 anchors.fill:   parent
-                color:          QGroundControl.globalPalette.window
-                radius:         indicatorDrawer._margins
-                opacity:        0.85
+                color:          Qt.rgba(0.045, 0.048, 0.052, 0.96)
+                radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.85)
+                border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.14)
+                border.width:   1
             }
 
             Rectangle {
@@ -709,8 +718,8 @@ ApplicationWindow {
                 width:                      ScreenTools.largeFontPixelHeight
                 height:                     width
                 radius:                     width / 2
-                color:                      QGroundControl.globalPalette.button
-                border.color:               QGroundControl.globalPalette.buttonText
+                color:                      Qt.rgba(1, 1, 1, 0.07)
+                border.color:               Qt.rgba(0.82, 0.88, 0.94, 0.22)
                 visible:                    indicatorDrawerLoader.item && indicatorDrawerLoader.item.showExpand && !indicatorDrawer._expanded
 
                 QGCLabel {

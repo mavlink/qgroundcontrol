@@ -16,8 +16,10 @@ Rectangle {
     id:         _root
     height:     childrenRect.y + childrenRect.height + _margin
     width:      availableWidth
-    color:      qgcPal.windowShadeDark
+    color:      "transparent"
     radius:     _radius
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.08)
+    border.width: 0
 
     property bool   transectAreaDefinitionComplete: true
     property string transectAreaDefinitionHelp:     _internalError

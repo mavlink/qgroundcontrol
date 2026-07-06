@@ -213,8 +213,7 @@ AnalyzePage {
 
             Rectangle {
                 anchors.fill:   parent
-                color:          qgcPal.window
-                opacity:        0.75
+                color:          Qt.rgba(0.045, 0.048, 0.052, 0.86)
                 visible:        !_available
 
                 QGCLabel {

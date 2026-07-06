@@ -23,14 +23,30 @@ Rectangle {
     id:     _root
     width:  parent.width
     height: ScreenTools.toolbarHeight
-    color:  qgcPal.toolbarBackground
+    color:  "transparent"
 
     property var    planMasterController
+    property Item   backdropSource
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property real   _controllerProgressPct: planMasterController.missionController.progressPct
     
     QGCPalette { id: qgcPal }
+
+    GlassBackdrop {
+        anchors.fill:       parent
+        sourceItem:         _root.backdropSource
+        targetItem:         _root
+        sampleAtItemPosition: false
+        sampleY:            0
+        sourceScale:        0.42
+        blurAmount:         0.84
+        blurMax:            36
+        sourceBrightness:   -0.05
+        sourceSaturation:   0.54
+        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.80)
+        sheenColor:         "transparent"
+    }
 
     /// Bottom single pixel divider
     Rectangle {
@@ -38,8 +54,7 @@ Rectangle {
         anchors.right:  parent.right
         anchors.bottom: parent.bottom
         height:         1
-        color:          "black"
-        visible:        qgcPal.globalTheme === QGCPalette.Light
+        color:          Qt.rgba(0.82, 0.88, 0.94, 0.035)
     }
 
     RowLayout {
@@ -91,7 +106,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         height:         4
         width:          _controllerProgressPct * parent.width
-        color:          qgcPal.colorGreen
+        color:          qgcPal.primaryButton
         visible:        false
 
         onVisibleChanged: {
@@ -108,7 +123,7 @@ Rectangle {
         anchors.left:   parent.left
         anchors.right:  parent.right
         height:         parent.height
-        color:          qgcPal.window
+        color:          Qt.rgba(0.045, 0.048, 0.052, 0.96)
         visible:        _showLargeProgress
 
         property bool _userHide:                false
@@ -123,7 +138,7 @@ Rectangle {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
             width:          _controllerProgressPct * parent.width
-            color:          qgcPal.colorGreen
+            color:          qgcPal.primaryButton
         }
 
         QGCLabel {

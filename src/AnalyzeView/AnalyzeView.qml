@@ -19,7 +19,7 @@ import QGroundControl.ScreenTools
 
 Rectangle {
     id:     _root
-    color:  qgcPal.window
+    color:  "transparent"
     z:      QGroundControl.zOrderTopMost
 
     signal popout()
@@ -37,6 +37,12 @@ Rectangle {
 
     GeoTagController {
         id: geoController
+    }
+
+    QGCToolPageFrame {
+        anchors.fill:       parent
+        navigationWidth:    divider.x + divider.width
+        contentLeft:        divider.right
     }
 
     QGCFlickable {
@@ -107,7 +113,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  qgcPal.windowShade
+        color:                  "transparent"
     }
 
     Loader {

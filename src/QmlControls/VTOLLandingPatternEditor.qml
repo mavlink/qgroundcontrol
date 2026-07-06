@@ -25,8 +25,10 @@ Rectangle {
     id:         _root
     height:     visible ? ((editorColumn.visible ? editorColumn.height : editorColumnNeedLandingPoint.height) + (_margin * 2)) : 0
     width:      availableWidth
-    color:      qgcPal.windowShadeDark
+    color:      "transparent"
     radius:     _radius
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.08)
+    border.width: 0
 
     // The following properties must be available up the hierarchy chain
     //property real   availableWidth    ///< Width for control

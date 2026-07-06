@@ -93,7 +93,7 @@ Item {
             var centerY = parent.height - ScreenTools.defaultFontPixelHeight * 7.5 /2 - ScreenTools.defaultFontPixelHeight * 0.3
             var ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = qgcPal.window
+            ctx.strokeStyle = Qt.rgba(0.045, 0.048, 0.052, 0.88)
             ctx.lineWidth = ScreenTools.defaultFontPixelHeight * 0.75
             ctx.beginPath()
 
@@ -115,7 +115,7 @@ Item {
             var centerY = parent.height - ScreenTools.defaultFontPixelHeight * 7.5 /2 - ScreenTools.defaultFontPixelHeight * 0.3
             var ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = qgcPal.window
+            ctx.strokeStyle = Qt.rgba(0.045, 0.048, 0.052, 0.88)
             ctx.lineWidth = ScreenTools.defaultFontPixelHeight * 0.75
             ctx.beginPath()
 
@@ -167,7 +167,7 @@ Item {
         width: notificationslider.width + 20
         height: 40
         radius: 3
-        color:  qgcPal.window
+        color:  Qt.rgba(0.045, 0.048, 0.052, 0.88)
         opacity: 0.8
         anchors.left:   parent.left
         anchors.bottom: parent.bottom

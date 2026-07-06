@@ -16,9 +16,11 @@ Rectangle {
     id:                 valuesRect
     width:              availableWidth
     height:             valuesColumn.height + (_margin * 2)
-    color:              qgcPal.windowShadeDark
+    color:              "transparent"
     visible:            missionItem.isCurrentItem
     radius:             _radius
+    border.color:       Qt.rgba(0.82, 0.88, 0.94, 0.08)
+    border.width:       0
 
     property var    _masterControler:               masterController
     property var    _missionController:             _masterControler.missionController

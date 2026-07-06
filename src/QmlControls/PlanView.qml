@@ -329,6 +329,7 @@ Item {
     PlanViewToolBar {
         id:                     planToolBar
         planMasterController:   _planMasterController
+        backdropSource:         editorMap
     }
 
     Item {
@@ -676,12 +677,29 @@ Item {
                  else{
                      _rightPanelWidth
                  }
-             }
-            color:              qgcPal.window
-            opacity:            layerTabBar.visible ? 0.2 : 0
+            }
+            color:              "transparent"
+            radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+            border.color:       "transparent"
+            border.width:       0
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
             anchors.rightMargin: _toolsMargin
+
+            GlassBackdrop {
+                anchors.fill:       parent
+                visible:            layerTabBar.visible || layerTabBarUTMSP.visible
+                sourceItem:         editorMap
+                targetItem:         rightPanel
+                cornerRadius:       rightPanel.radius
+                sourceScale:        0.42
+                blurAmount:         0.92
+                blurMax:            42
+                sourceBrightness:   -0.04
+                sourceSaturation:   0.52
+                tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.80)
+                sheenColor:         "transparent"
+            }
         }
         //-------------------------------------------------------
         // Right Panel Controls
@@ -913,6 +931,22 @@ Item {
                                                       UTMSPStateStorage.currentStateIndex = 0}})
     }
 
+    function planCreatorDisplayName(name) {
+        if (name === "Empty Plan") {
+            return qsTr("Empty Plan")
+        }
+        if (name === "Survey") {
+            return qsTr("Survey")
+        }
+        if (name === "Corridor Scan") {
+            return qsTr("Corridor Scan")
+        }
+        if (name === "Structure Scan") {
+            return qsTr("Structure Scan")
+        }
+        return name
+    }
+
     //- ToolStrip ToolStripDropPanel Components
 
     Component {
@@ -964,7 +998,7 @@ Item {
 
         ColumnLayout {
             id:         columnHolder
-            spacing:    _margin
+            spacing:    _margin * 0.82
 
             property string _overwriteText: qsTr("Plan overwrite")
 
@@ -999,7 +1033,11 @@ Item {
                         id:     button
                         width:  ScreenTools.defaultFontPixelHeight * 7
                         height: planCreatorNameLabel.y + planCreatorNameLabel.height
-                        color:  button.pressed || button.highlighted ? qgcPal.buttonHighlight : qgcPal.button
+                        color:  button.pressed || button.highlighted ? Qt.rgba(0.18, 0.20, 0.22, 0.66) : Qt.rgba(1, 1, 1, 0.022)
+                        radius: Math.round(ScreenTools.defaultFontPixelWidth * 0.50)
+                        border.color: button.pressed || button.highlighted ? Qt.rgba(0.82, 0.88, 0.94, 0.13) : Qt.rgba(0.82, 0.88, 0.94, 0.055)
+                        border.width: 1
+                        clip: true
 
                         property bool highlighted: mouseArea.containsMouse
                         property bool pressed:     mouseArea.pressed
@@ -1020,8 +1058,10 @@ Item {
                             anchors.left:           parent.left
                             anchors.right:          parent.right
                             horizontalAlignment:    Text.AlignHCenter
-                            text:                   object.name
+                            text:                   planCreatorDisplayName(object.name)
                             color:                  button.pressed || button.highlighted ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            elide:                  Text.ElideRight
                         }
 
                         QGCMouseArea {
