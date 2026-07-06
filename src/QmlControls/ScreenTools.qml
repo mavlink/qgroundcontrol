@@ -33,7 +33,7 @@ Item {
     property real defaultFontPointSize:     10
     property real platformFontPointSize:    10
 
-    readonly property real smallFontPointRatio:      0.75
+    readonly property real smallFontPointRatio:      0.82
     readonly property real mediumFontPointRatio:     1.25
     readonly property real largeFontPointRatio:      1.5
 
@@ -199,7 +199,7 @@ Item {
                     platformFontPointSize = 14;
                 }
             } else {
-                platformFontPointSize = _defaultFont.font.pointSize;
+                platformFontPointSize = Math.max(_defaultFont.font.pointSize, 10);
             }
             //-- See if we are using a custom size
             var _appFontPointSizeFact = QGroundControl.settingsManager.appSettings.appFontPointSize
@@ -207,6 +207,10 @@ Item {
             //-- Sanity check
             if(baseSize < _appFontPointSizeFact.min || baseSize > _appFontPointSizeFact.max) {
                 baseSize = platformFontPointSize;
+                _appFontPointSizeFact.value = baseSize
+            }
+            if(!ScreenToolsController.isMobile && baseSize < 10) {
+                baseSize = 10
                 _appFontPointSizeFact.value = baseSize
             }
             //-- Set size saved in settings

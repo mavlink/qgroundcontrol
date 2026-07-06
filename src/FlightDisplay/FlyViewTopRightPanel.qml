@@ -56,7 +56,7 @@ Rectangle {
                                                                     _panelWidth - (_panelMargin * 2) - (_scaleWidth * 2) - ScreenTools.defaultFontPixelWidth * 1.8))
     property real _compassReadoutGap:       Math.max(6, ScreenTools.defaultFontPixelHeight * 0.34)
     property real _scaleHeight:             Math.min(_attitudeRowHeight, _compassSize * 1.10)
-    property string _panelFontFamily:       Qt.platform.os === "windows" ? "Microsoft YaHei UI" : ScreenTools.normalFontFamily
+    property string _panelFontFamily:       ScreenTools.normalFontFamily
     property real _panelTitlePointSize:     ScreenTools.defaultFontPointSize + 2
     property real _panelLabelPointSize:     ScreenTools.defaultFontPointSize + 1
     property real _panelValuePointSize:     ScreenTools.defaultFontPointSize + 4
