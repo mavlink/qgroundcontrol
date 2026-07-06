@@ -20,14 +20,21 @@ Rectangle {
     width:  size
     height: size
     radius: width / 2
-    color:  qgcPal.window
-    border.color:   qgcPal.text
+    color:          compassFaceColor
+    border.color:   compassBorderColor
     border.width:   usedByMultipleVehicleList ? 1 : 0
     opacity:        vehicle && usedByMultipleVehicleList && !vehicle.armed ? 0.5 : 1
 
     property real size:                         _defaultSize
     property var  vehicle:                      null
     property bool usedByMultipleVehicleList:    false
+    property color compassFaceColor:            Qt.rgba(0.045, 0.048, 0.052, 0.82)
+    property color compassBorderColor:          qgcPal.text
+    property color compassTickColor:            qgcPal.text
+    property color compassLabelColor:           qgcPal.text
+    property color headingPrimaryColor:         "#EE3424"
+    property color headingSecondaryColor:       "#C72B27"
+    property color headingStrokeColor:          qgcPal.text
 
     property real _defaultSize:                 usedByMultipleVehicleList ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight * 10
     property real _sizeRatio:                   (usedByMultipleVehicleList || ScreenTools.isTinyScreen) ? (size / _defaultSize) * 0.5 : size / _defaultSize
@@ -80,12 +87,17 @@ Rectangle {
         CompassDial {
             anchors.fill:   parent
             visible:        !usedByMultipleVehicleList
+            tickColor:      root.compassTickColor
+            labelColor:     root.compassLabelColor
         }
 
         CompassHeadingIndicator {
-            compassSize:    size
-            heading:        _heading
-            simplified:     usedByMultipleVehicleList
+            compassSize:        size
+            heading:            _heading
+            simplified:         usedByMultipleVehicleList
+            primaryColor:       root.headingPrimaryColor
+            secondaryColor:     root.headingSecondaryColor
+            strokeColor:        root.headingStrokeColor
         }
 
         Image {
@@ -150,6 +162,7 @@ Rectangle {
         anchors.horizontalCenter:   parent.horizontalCenter
         y:                          size * 0.74
         text:                       vehicle && !usedByMultipleVehicleList ? _heading.toFixed(0) + "°" : ""
+        color:                      compassLabelColor
         horizontalAlignment:        Text.AlignHCenter
     }
 }

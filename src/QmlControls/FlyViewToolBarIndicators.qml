@@ -20,10 +20,21 @@ Row {
     anchors.top:        parent.top
     anchors.bottom:     parent.bottom
     anchors.margins:    _toolIndicatorMargins
-    spacing:            ScreenTools.defaultFontPixelWidth * 1.75
+    spacing:            ScreenTools.defaultFontPixelWidth * 0.78
 
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
-    property real _toolIndicatorMargins:    ScreenTools.defaultFontPixelHeight * 0.66
+    property real _toolIndicatorMargins:    ScreenTools.defaultFontPixelHeight * 0.48
+    property var  hiddenIndicatorNames:      []
+
+    function indicatorHidden(indicatorSource) {
+        var sourceText = indicatorSource ? indicatorSource.toString() : ""
+        for (var i = 0; i < hiddenIndicatorNames.length; i++) {
+            if (sourceText.indexOf(hiddenIndicatorNames[i]) !== -1) {
+                return true
+            }
+        }
+        return false
+    }
 
     Repeater {
         id:     appRepeater
@@ -32,7 +43,8 @@ Row {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             source:             modelData
-            visible:            item.showIndicator
+            visible:            item && item.showIndicator && !indicatorRow.indicatorHidden(modelData)
+            width:              visible && item ? item.width : 0
         }
     }
 
@@ -44,7 +56,8 @@ Row {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             source:             modelData
-            visible:            item.showIndicator
+            visible:            item && item.showIndicator && !indicatorRow.indicatorHidden(modelData)
+            width:              visible && item ? item.width : 0
         }
     }
 
@@ -54,7 +67,8 @@ Row {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             source:             modelData
-            visible:            item.showIndicator
+            visible:            item && item.showIndicator && !indicatorRow.indicatorHidden(modelData)
+            width:              visible && item ? item.width : 0
         }
     }
 }

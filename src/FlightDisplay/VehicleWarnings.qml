@@ -12,18 +12,23 @@ import QtQuick
 import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Controls
+import QGroundControl.Palette
 
 Rectangle {
     anchors.margins:    -ScreenTools.defaultFontPixelHeight
     height:             warningsCol.height
     width:              warningsCol.width
-    color:              Qt.rgba(1, 1, 1, 0.5)
+    color:              Qt.rgba(0.045, 0.048, 0.052, 0.82)
+    border.color:       Qt.rgba(0.82, 0.88, 0.94, 0.14)
+    border.width:       1
     radius:             ScreenTools.defaultFontPixelWidth / 2
     visible:            _noGPSLockVisible || _prearmErrorVisible
 
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property bool _noGPSLockVisible:    _activeVehicle && _activeVehicle.requiresGpsFix && !_activeVehicle.coordinate.isValid
     property bool _prearmErrorVisible:  _activeVehicle && !_activeVehicle.armed && _activeVehicle.prearmError && !_activeVehicle.healthAndArmingCheckReport.supported
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     Column {
         id:         warningsCol
@@ -32,7 +37,7 @@ Rectangle {
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
             visible:                    _noGPSLockVisible
-            color:                      "black"
+            color:                      qgcPal.text
             font.pointSize:             ScreenTools.largeFontPointSize
             text:                       qsTr("No GPS Lock for Vehicle")
         }
@@ -40,7 +45,7 @@ Rectangle {
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
             visible:                    _prearmErrorVisible
-            color:                      "black"
+            color:                      qgcPal.text
             font.pointSize:             ScreenTools.largeFontPointSize
             text:                       _activeVehicle ? _activeVehicle.prearmError : ""
         }
@@ -51,7 +56,7 @@ Rectangle {
             width:                      ScreenTools.defaultFontPixelWidth * 50
             horizontalAlignment:        Text.AlignHCenter
             wrapMode:                   Text.WordWrap
-            color:                      "black"
+            color:                      qgcPal.text
             font.pointSize:             ScreenTools.largeFontPointSize
             text:                       qsTr("The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure.")
         }

@@ -20,6 +20,8 @@ Item {
     id: control
 
     property real offsetRadius: width / 2 - ScreenTools.defaultFontPixelHeight / 2
+    property color tickColor: qgcPal.text
+    property color labelColor: qgcPal.text
 
     function translateCenterToAngleX(radius, angle) {
         return radius * Math.sin(angle * (Math.PI / 180))
@@ -32,6 +34,7 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "N"
+        color:              control.labelColor
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 0)
@@ -42,6 +45,7 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "E"
+        color:              control.labelColor
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 90)
@@ -52,6 +56,7 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "S"
+        color:              control.labelColor
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 180)
@@ -62,6 +67,7 @@ Item {
     QGCLabel {
         anchors.centerIn:   parent
         text:               "W"
+        color:              control.labelColor
 
         transform: Translate {
             x: translateCenterToAngleX(control.offsetRadius, 270)
@@ -78,7 +84,7 @@ Item {
             x:                  size / 2
             width:              1
             height:             ScreenTools.defaultFontPixelHeight * 0.5
-            color:              qgcPal.text
+            color:              control.tickColor
 
             transform: Rotation {
                 origin.x:   0
@@ -98,7 +104,7 @@ Item {
             y:                  _margin
             width:              1
             height:             _margin
-            color:              qgcPal.text
+            color:              control.tickColor
 
             property real _margin: ScreenTools.defaultFontPixelHeight * 0.25
 

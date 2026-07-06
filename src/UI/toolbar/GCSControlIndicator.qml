@@ -259,7 +259,7 @@ Item {
                     Layout.columnSpan:      2
                     Layout.preferredWidth:  parent.width
                     Layout.alignment:       Qt.AlignHCenter
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(0.82, 0.88, 0.94, 0.12)
                     height:                 outdoorPalette ? 1 : 2
                 }
                 QGCLabel {
@@ -319,7 +319,7 @@ Item {
                     Layout.columnSpan:      2
                     Layout.preferredWidth:  parent.width
                     Layout.alignment:       Qt.AlignHCenter
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(0.82, 0.88, 0.94, 0.12)
                     height:                 outdoorPalette ? 1 : 2
                 }
                 LabelledFactTextField {

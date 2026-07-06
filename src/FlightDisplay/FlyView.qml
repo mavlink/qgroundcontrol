@@ -80,8 +80,9 @@ Item {
     }
 
     FlyViewToolBar {
-        id:         toolbar
-        visible:    !QGroundControl.videoManager.fullScreen
+        id:                 toolbar
+        visible:            !QGroundControl.videoManager.fullScreen
+        backdropSourceItem: mapControl
     }
 
     Item {

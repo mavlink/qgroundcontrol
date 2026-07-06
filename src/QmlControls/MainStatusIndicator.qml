@@ -34,110 +34,115 @@ RowLayout {
         mainWindow.showIndicatorDrawer(overallStatusComponent, control)
     }
 
-    QGCLabel {
-        id:                 mainStatusLabel
-        Layout.fillHeight:  true
-        Layout.preferredWidth: contentWidth + vehicleMessagesIcon.width + control.spacing
-        verticalAlignment:  Text.AlignVCenter
-        text:               mainStatusText()
-        font.pointSize:     ScreenTools.largeFontPointSize
+    Item {
+        id:                     statusBlock
+        Layout.alignment:       Qt.AlignVCenter
+        Layout.fillHeight:      true
+        Layout.preferredWidth:  statusRow.implicitWidth + (_margins * 1.15)
 
-        property string _commLostText:      qsTr("Comms Lost")
-        property string _readyToFlyText:    qsTr("Ready To Fly")
-        property string _notReadyToFlyText: qsTr("Not Ready")
-        property string _disconnectedText:  qsTr("Disconnected - Click to manually connect")
-        property string _armedText:         qsTr("Armed")
-        property string _flyingText:        qsTr("Flying")
-        property string _landingText:       qsTr("Landing")
+        RowLayout {
+            id:                 statusRow
+            anchors.centerIn:   parent
+            spacing:            _spacing
 
-        function mainStatusText() {
-            var statusText
-            if (_activeVehicle) {
-                if (_communicationLost) {
-                    _mainStatusBGColor = "red"
-                    return mainStatusLabel._commLostText
-                }
-                if (_activeVehicle.armed) {
-                    _mainStatusBGColor = "green"
+            Rectangle {
+                Layout.alignment:       Qt.AlignVCenter
+                width:                  ScreenTools.defaultFontPixelHeight * 0.66
+                height:                 width
+                radius:                 width / 2
+                color:                  _mainStatusBGColor
+            }
 
-                    if (_healthAndArmingChecksSupported) {
-                        if (_activeVehicle.healthAndArmingCheckReport.canArm) {
-                            if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
-                                _mainStatusBGColor = "yellow"
-                            }
-                        } else {
-                            _mainStatusBGColor = "red"
+            QGCLabel {
+                id:                     mainStatusLabel
+                Layout.alignment:       Qt.AlignVCenter
+                verticalAlignment:      Text.AlignVCenter
+                text:                   mainStatusText()
+                color:                  qgcPal.text
+                font.pointSize:         ScreenTools.defaultFontPointSize
+                font.bold:              true
+
+                property string _commLostText:      qsTr("Comms Lost")
+                property string _readyToFlyText:    qsTr("Ready")
+                property string _notReadyToFlyText: qsTr("Not Ready")
+                property string _disconnectedText:  qsTr("Disconnected")
+                property string _armedText:         qsTr("Armed")
+                property string _flyingText:        qsTr("Flying")
+                property string _landingText:       qsTr("Landing")
+
+                function mainStatusText() {
+                    var statusText
+                    if (_activeVehicle) {
+                        if (_communicationLost) {
+                            _mainStatusBGColor = qgcPal.colorRed
+                            return mainStatusLabel._commLostText
                         }
-                    }
+                        if (_activeVehicle.armed) {
+                            _mainStatusBGColor = qgcPal.colorGreen
 
-                    if (_activeVehicle.flying) {
-                        return mainStatusLabel._flyingText
-                    } else if (_activeVehicle.landing) {
-                        return mainStatusLabel._landingText
-                    } else {
-                        return mainStatusLabel._armedText
-                    }
-                } else {
-                    if (_healthAndArmingChecksSupported) {
-                        if (_activeVehicle.healthAndArmingCheckReport.canArm) {
-                            if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
-                                _mainStatusBGColor = "yellow"
+                            if (_healthAndArmingChecksSupported) {
+                                if (_activeVehicle.healthAndArmingCheckReport.canArm) {
+                                    if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
+                                        _mainStatusBGColor = qgcPal.colorYellow
+                                    }
+                                } else {
+                                    _mainStatusBGColor = qgcPal.colorRed
+                                }
+                            }
+
+                            if (_activeVehicle.flying) {
+                                return mainStatusLabel._flyingText
+                            } else if (_activeVehicle.landing) {
+                                return mainStatusLabel._landingText
                             } else {
-                                _mainStatusBGColor = "green"
+                                return mainStatusLabel._armedText
                             }
-                            return mainStatusLabel._readyToFlyText
                         } else {
-                            _mainStatusBGColor = "red"
-                            return mainStatusLabel._notReadyToFlyText
-                        }
-                    } else if (_activeVehicle.readyToFlyAvailable) {
-                        if (_activeVehicle.readyToFly) {
-                            _mainStatusBGColor = "green"
-                            return mainStatusLabel._readyToFlyText
-                        } else {
-                            _mainStatusBGColor = "yellow"
-                            return mainStatusLabel._notReadyToFlyText
+                            if (_healthAndArmingChecksSupported) {
+                                if (_activeVehicle.healthAndArmingCheckReport.canArm) {
+                                    if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
+                                        _mainStatusBGColor = qgcPal.colorYellow
+                                    } else {
+                                        _mainStatusBGColor = qgcPal.colorGreen
+                                    }
+                                    return mainStatusLabel._readyToFlyText
+                                } else {
+                                    _mainStatusBGColor = qgcPal.colorRed
+                                    return mainStatusLabel._notReadyToFlyText
+                                }
+                            } else if (_activeVehicle.readyToFlyAvailable) {
+                                if (_activeVehicle.readyToFly) {
+                                    _mainStatusBGColor = qgcPal.colorGreen
+                                    return mainStatusLabel._readyToFlyText
+                                } else {
+                                    _mainStatusBGColor = qgcPal.colorYellow
+                                    return mainStatusLabel._notReadyToFlyText
+                                }
+                            } else {
+                                if (_activeVehicle.allSensorsHealthy && _activeVehicle.autopilotPlugin.setupComplete) {
+                                    _mainStatusBGColor = qgcPal.colorGreen
+                                    return mainStatusLabel._readyToFlyText
+                                } else {
+                                    _mainStatusBGColor = qgcPal.colorYellow
+                                    return mainStatusLabel._notReadyToFlyText
+                                }
+                            }
                         }
                     } else {
-                        // Best we can do is determine readiness based on AutoPilot component setup and health indicators from SYS_STATUS
-                        if (_activeVehicle.allSensorsHealthy && _activeVehicle.autopilotPlugin.setupComplete) {
-                            _mainStatusBGColor = "green"
-                            return mainStatusLabel._readyToFlyText
-                        } else {
-                            _mainStatusBGColor = "yellow"
-                            return mainStatusLabel._notReadyToFlyText
-                        }
+                        _mainStatusBGColor = qgcPal.brandingPurple
+                        return mainStatusLabel._disconnectedText
                     }
                 }
-            } else {
-                _mainStatusBGColor = qgcPal.brandingPurple
-                return mainStatusLabel._disconnectedText
             }
         }
 
-        QGCColoredImage {
-            id:                     vehicleMessagesIcon
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.right:          parent.right
-            width:                  ScreenTools.defaultFontPixelWidth * 2
-            height:                 width
-            source:                 "/res/VehicleMessages.png"
-            color:                  getIconColor()
-            sourceSize.width:       width
-            fillMode:               Image.PreserveAspectFit
-            //visible:                _activeVehicle && _activeVehicle.messageCount > 0// FIXME: Is messageCount check needed?
-
-            function getIconColor() {
-                let iconColor = qgcPal.text
-                if (_activeVehicle) {
-                    if (_activeVehicle.messageTypeWarning) {
-                        iconColor = qgcPal.colorOrange
-                    } else if (_activeVehicle.messageTypeError) {
-                        iconColor = qgcPal.colorRed
-                    }
-                }
-                return iconColor
-            }
+        Rectangle {
+            anchors.left:       statusRow.left
+            anchors.right:      statusRow.right
+            anchors.bottom:     parent.bottom
+            height:             Math.max(1, ScreenTools.defaultFontPixelHeight * 0.10)
+            color:              _mainStatusBGColor
+            opacity:            0.90
         }
 
         QGCMouseArea {
@@ -146,13 +151,22 @@ RowLayout {
         }
     }
 
-    QGCLabel {
-        id:                 vtolModeLabel
-        Layout.fillHeight:  true
-        verticalAlignment:  Text.AlignVCenter
-        text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
-        font.pointSize:     _vehicleInAir ? ScreenTools.largeFontPointSize : ScreenTools.defaultFontPointSize
-        visible:            _activeVehicle && _activeVehicle.vtol
+    Item {
+        id:                     vtolModeItem
+        Layout.alignment:       Qt.AlignVCenter
+        Layout.fillHeight:      true
+        Layout.preferredWidth:  vtolModeLabel.contentWidth + _margins * 0.8
+        visible:                _activeVehicle && _activeVehicle.vtol
+
+        QGCLabel {
+            id:                 vtolModeLabel
+            anchors.centerIn:   parent
+            verticalAlignment:  Text.AlignVCenter
+            text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
+            color:              _vehicleInAir ? qgcPal.colorGreen : qgcPal.buttonText
+            font.pointSize:     ScreenTools.defaultFontPointSize
+            font.bold:          _vehicleInAir
+        }
 
         QGCMouseArea {
             anchors.fill: parent

@@ -19,7 +19,10 @@ import QGroundControl.Palette
 Rectangle {
     implicitHeight: mainLayout.height + (_margins * 2)
     visible:        false
-    color:          qgcPal.window
+    color:          Qt.rgba(0.045, 0.048, 0.052, 0.88)
+    radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.65)
+    border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.14)
+    border.width:   1
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
@@ -74,13 +77,15 @@ Rectangle {
             Layout.fillWidth:   true
             height:             ScreenTools.defaultFontPixelHeight
             color:              "transparent"
-            border.color:       "green"
+            border.color:       qgcPal.primaryButton
+            radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.35)
 
             Rectangle {
                 anchors.top:    parent.top
                 anchors.bottom: parent.bottom
-                color:          "green"
+                color:          qgcPal.primaryButton
                 width:         parent.width * _pctComplete
+                radius:        parent.radius
 
                 QGCLabel {
                     anchors.centerIn:   parent

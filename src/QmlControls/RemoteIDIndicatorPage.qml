@@ -69,8 +69,9 @@ ToolIndicatorPage {
             width:          remoteIDCol.width + ScreenTools.defaultFontPixelWidth  * 3
             height:         remoteIDCol.height + ScreenTools.defaultFontPixelHeight * 2 + (emergencyButtonItem.visible ? emergencyButtonItem.height : 0)
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
-            color:          qgcPal.window
-            border.color:   qgcPal.text
+            color:          Qt.rgba(1, 1, 1, 0.026)
+            border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.14)
+            border.width:   1
 
             Column {
                 id:                         remoteIDCol

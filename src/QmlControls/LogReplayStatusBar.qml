@@ -9,7 +9,9 @@ import QGroundControl.ScreenTools
 
 Rectangle {
     height: visible ? (rowLayout.height + (_margins * 2)) : 0
-    color: qgcPal.window
+    color: Qt.rgba(0.045, 0.048, 0.052, 0.88)
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
+    border.width: 1
 
     property real _margins: ScreenTools.defaultFontPixelHeight / 4
     property var _logReplayLink: null

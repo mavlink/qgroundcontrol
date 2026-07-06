@@ -49,10 +49,42 @@ Item {
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property alias  _gripperMenu:           gripperOptions
     property real   _layoutMargin:          ScreenTools.defaultFontPixelWidth * 0.75
-    property bool   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
+    property real   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
     property bool   _showSingleVehicleUI:   true
+    property bool   _rightVehiclePanelOpen: false
+    property var    _rightPanelVehicle:     null
 
     property bool utmspActTrigger
+
+    function toggleVehiclePanel(vehicle) {
+        if (!vehicle) {
+            _rightVehiclePanelOpen = false
+            _rightPanelVehicle = null
+            return
+        }
+
+        if (_rightVehiclePanelOpen && _rightPanelVehicle === vehicle) {
+            _rightVehiclePanelOpen = false
+            _rightPanelVehicle = null
+            return
+        }
+
+        QGroundControl.multiVehicleManager.activeVehicle = vehicle
+        _rightPanelVehicle = vehicle
+        _rightVehiclePanelOpen = true
+    }
+
+    Connections {
+        target: QGroundControl.multiVehicleManager
+        function onActiveVehicleChanged(activeVehicle) {
+            if (!activeVehicle) {
+                _rightVehiclePanelOpen = false
+                _rightPanelVehicle = null
+            } else if (_rightVehiclePanelOpen && _rightPanelVehicle !== activeVehicle) {
+                _rightPanelVehicle = activeVehicle
+            }
+        }
+    }
 
     QGCToolInsets {
         id:                     _totalToolInsets
@@ -72,14 +104,16 @@ Item {
 
     FlyViewTopRightPanel {
         id:                     topRightPanel
-        anchors.top:            parent.top
         anchors.right:          parent.right
-        anchors.topMargin:      _layoutMargin
+        anchors.bottom:         parent.bottom
         anchors.rightMargin:    _layoutMargin
-        maximumHeight:          parent.height - (bottomRightRowLayout.height + _margins * 5)
+        anchors.bottomMargin:   _layoutMargin
+        maximumHeight:          parent.height - (_layoutMargin * 2)
+        panelExpanded:          _rightVehiclePanelOpen
+        backdropSourceItem:     mapControl
 
-        property real topEdgeRightInset:    height + _layoutMargin
-        property real rightEdgeTopInset:    width + _layoutMargin
+        property real topEdgeRightInset:    visible ? y + height : 0
+        property real rightEdgeTopInset:    visible ? width + _layoutMargin : 0
         property real rightEdgeCenterInset: rightEdgeTopInset
     }
 
@@ -101,12 +135,21 @@ Item {
         id:                 bottomRightRowLayout
         anchors.margins:    _layoutMargin
         anchors.bottom:     parent.bottom
-        anchors.right:      parent.right
+        anchors.horizontalCenter: parent.horizontalCenter
+        width:              Math.min(implicitWidth, Math.max(1, parent.width - (_layoutMargin * 2)))
         spacing:            _layoutSpacing
+        visible:            !QGroundControl.videoManager.fullScreen
+        panelExpanded:      _rightVehiclePanelOpen
+        panelVehicle:       _rightPanelVehicle
+        backdropSourceItem: mapControl
 
-        property real bottomEdgeRightInset:     height + _layoutMargin
+        onVehicleClicked: function(vehicle) {
+            toggleVehiclePanel(vehicle)
+        }
+
+        property real bottomEdgeRightInset:     visible ? height + _layoutMargin : 0
         property real bottomEdgeCenterInset:    bottomEdgeRightInset
-        property real rightEdgeBottomInset:     width + _layoutMargin
+        property real rightEdgeBottomInset:     bottomEdgeRightInset
     }
 
     FlyViewMissionCompleteDialog {
@@ -178,8 +221,9 @@ Item {
         anchors.left:           parent.left
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
-        maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
+        maxHeight:              parent.height - y - (bottomRightRowLayout.visible ? bottomRightRowLayout.height + _layoutMargin : parentToolInsets.bottomEdgeLeftInset) - _toolsMargin
         visible:                !QGroundControl.videoManager.fullScreen
+        backdropSourceItem:     mapControl
 
         onDisplayPreFlightChecklist: {
             if (!preFlightChecklistLoader.active) {

@@ -28,33 +28,62 @@ RowLayout {
     property var    expandedPageComponent
     property bool   waitForParameters:      false
 
-    property real fontPointSize:    ScreenTools.largeFontPointSize
+    property real fontPointSize:    ScreenTools.defaultFontPointSize
     property var  activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
     property bool allowEditMode:    true
     property bool editMode:         false
+    property real _pillPadding:     ScreenTools.defaultFontPixelWidth * 0.80
+    property real _pillHeight:      Math.max(ScreenTools.defaultFontPixelHeight * 1.85, ScreenTools.minTouchPixels * 0.62)
 
-    RowLayout {
-        Layout.fillWidth: true
+    QGCPalette { id: qgcPal }
+
+    Rectangle {
+        id:                     modePill
+        Layout.alignment:       Qt.AlignVCenter
+        Layout.preferredHeight: _pillHeight
+        Layout.preferredWidth:  modeRow.implicitWidth + (_pillPadding * 1.9)
+        radius:                 height / 2
+        color:                  Qt.rgba(0.070, 0.073, 0.078, 0.72)
+        border.color:           Qt.rgba(0.82, 0.88, 0.94, 0.12)
+        border.width:           1
+
+        RowLayout {
+            id:                 modeRow
+            anchors.fill:       parent
+            anchors.margins:    _pillPadding * 0.52
+            spacing:            ScreenTools.defaultFontPixelWidth * 0.48
+
+            Rectangle {
+                Layout.alignment:   Qt.AlignVCenter
+                width:              ScreenTools.defaultFontPixelHeight * 0.60
+                height:             width
+                radius:             width / 2
+                color:              qgcPal.colorGreen
+            }
 
         QGCColoredImage {
             id:         flightModeIcon
-            width:      ScreenTools.defaultFontPixelWidth * 3
-            height:     ScreenTools.defaultFontPixelHeight
+                Layout.alignment: Qt.AlignVCenter
+            width:      ScreenTools.defaultFontPixelWidth * 2.0
+                height:     ScreenTools.defaultFontPixelHeight * 1.05
             fillMode:   Image.PreserveAspectFit
             mipmap:     true
-            color:      qgcPal.text
+                color:      qgcPal.buttonText
             source:     "/qmlimages/FlightModesComponentIcon.png"
         }
 
         QGCLabel {
             text:               activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
             font.pointSize:     fontPointSize
-            Layout.alignment:   Qt.AlignCenter
+                color:              qgcPal.text
+                font.bold:          true
+                Layout.alignment:   Qt.AlignVCenter
+        }
+    }
 
-            MouseArea {
-                anchors.fill:   parent
-                onClicked:      mainWindow.showIndicatorDrawer(drawerComponent, control)
-            }
+        MouseArea {
+            anchors.fill:   parent
+            onClicked:      mainWindow.showIndicatorDrawer(drawerComponent, control)
         }
     }
 

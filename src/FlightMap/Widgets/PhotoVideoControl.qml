@@ -25,8 +25,10 @@ import QGroundControl.FactControls
 Rectangle {
     width:      mainLayout.width + (_margins * 2)
     height:     mainLayout.height + (_margins * 2)
-    color:      Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
+    color:      Qt.rgba(0.045, 0.048, 0.052, 0.82)
     radius:     _margins
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
+    border.width: 1
     visible:    _camera.capturesVideo || _camera.capturesPhotos
 
     property real   _margins:                   ScreenTools.defaultFontPixelHeight / 2
@@ -93,7 +95,7 @@ Rectangle {
                     Layout.alignment:   Qt.AlignHCenter
                     width:              ScreenTools.defaultFontPixelWidth * 10
                     height:             width / 2
-                    color:              qgcPal.windowShadeLight
+                    color:              Qt.rgba(1, 1, 1, 0.055)
                     radius:             height * 0.5
                     visible:            _camera.hasModes
 
@@ -102,10 +104,10 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         width:                  parent.height
                         height:                 parent.height
-                        color:                  _cameraInVideoMode ? qgcPal.window : qgcPal.windowShadeLight
+                        color:                  _cameraInVideoMode ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.055)
                         radius:                 height * 0.5
                         anchors.left:           parent.left
-                        border.color:           qgcPal.text
+                        border.color:           Qt.rgba(0.82, 0.88, 0.94, 0.22)
                         border.width:           _cameraInPhotoMode ? 0 : 1
 
                         QGCColoredImage {
@@ -130,10 +132,10 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         width:                  parent.height
                         height:                 parent.height
-                        color:                  _cameraInPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
+                        color:                  _cameraInPhotoMode ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.055)
                         radius:                 height * 0.5
                         anchors.right:          parent.right
-                        border.color:           qgcPal.text
+                        border.color:           Qt.rgba(0.82, 0.88, 0.94, 0.22)
                         border.width:           _cameraInPhotoMode ? 1 : 0
 
                         QGCColoredImage {
@@ -264,7 +266,7 @@ Rectangle {
 
                 Rectangle {
                     Layout.alignment:       Qt.AlignHCenter
-                    color:                  _camera.trackingEnabled ? qgcPal.colorRed : qgcPal.windowShadeLight
+                    color:                  _camera.trackingEnabled ? qgcPal.colorRed : Qt.rgba(1, 1, 1, 0.055)
                     Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 6
                     Layout.preferredHeight: Layout.preferredWidth
                     border.color:           qgcPal.buttonText

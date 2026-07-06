@@ -22,7 +22,9 @@ Rectangle {
     width:      ScreenTools.defaultFontPixelWidth * 35
     height:     mainLayout.height + (_margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth / 2
-    color:      qgcPal.window
+    color:      Qt.rgba(0.045, 0.048, 0.052, 0.88)
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.14)
+    border.width: 1
     visible:    _utmspEnabled === true ? utmspSliderTrigger: false
 
     property var    guidedController

@@ -18,27 +18,31 @@ import QGroundControl.Palette
 
 Item {
     id:             control
-    implicitWidth:  mainLayout.width + (_toolsMargin * 2)
-    implicitHeight: mainLayout.height + (_toolsMargin * 2)
+    implicitWidth:  mainLayout.width + (_panelMargin * 2)
+    implicitHeight: mainLayout.height + (_panelMargin * 2)
 
     property real extraWidth: 0 ///< Extra width to add to the background rectangle
+    property real _panelMargin: ScreenTools.defaultFontPixelWidth * 0.52
 
     property alias factValueGrid:           factValueGrid
     property alias settingsGroup:           factValueGrid.settingsGroup
     property alias specificVehicleForCard:  factValueGrid.specificVehicleForCard
 
+    QGCPalette { id: qgcPal }
+
     Rectangle {
         id:         backgroundRect
         width:      control.width + extraWidth
         height:     control.height
-        color:      qgcPal.window
-        radius:     ScreenTools.defaultFontPixelWidth / 2
-        opacity:    0.75
+        color:      Qt.rgba(0.070, 0.073, 0.078, 0.62)
+        radius:     Math.round(ScreenTools.defaultFontPixelWidth * 0.50)
+        border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
+        border.width: 1
     }
 
     ColumnLayout {
         id:                 mainLayout
-        anchors.margins:    _toolsMargin
+        anchors.margins:    _panelMargin
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
 

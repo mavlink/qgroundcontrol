@@ -19,7 +19,7 @@ Rectangle {
     width:  Math.min(_defaultWidth, _maxWidth)
     height: _outerRadius * 2
     radius: _outerRadius
-    color:  qgcPal.window
+    color:  Qt.rgba(0.045, 0.048, 0.052, 0.82)
 
     property real extraInset:           0
     property real extraValuesWidth:     _outerRadius

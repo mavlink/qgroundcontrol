@@ -117,8 +117,7 @@ Item {
 
     Rectangle {
         anchors.fill:   parent
-        color:          _qgcPal.window
-        opacity:        0.5
+        color:          Qt.rgba(0.045, 0.048, 0.052, 0.62)
     }
 
     ColumnLayout {
@@ -235,7 +234,7 @@ Item {
         onPaint: {
             var ctx = getContext("2d")
             ctx.strokeStyle = _qgcPal.text
-            ctx.fillStyle = _qgcPal.window
+            ctx.fillStyle = Qt.rgba(0.045, 0.048, 0.052, 0.88)
             ctx.lineWidth = 1
             ctx.beginPath()
             ctx.moveTo(0, indicatorHeight / 2)

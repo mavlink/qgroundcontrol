@@ -110,7 +110,7 @@ Item {
                     Layout.leftMargin:      margins
                     Layout.preferredWidth:  2
                     Layout.preferredHeight: separatorHeight
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(0.82, 0.88, 0.94, 0.12)
                     visible:                multiGimbalSetup
                 }
 
@@ -142,7 +142,7 @@ Item {
                         anchors.horizontalCenter:   gimbalSelectorPanel.horizontalCenter
                         width:                      gimbalSelectorPanel.width
                         height:                     panelRadius * 2
-                        color:                      qgcPal.window
+                        color:                      Qt.rgba(0.045, 0.048, 0.052, 0.96)
                         visible:                    gimbalSelectorPanel.visible
                     }
                     
@@ -151,11 +151,11 @@ Item {
                         width:                      buttonHeight + margins * 2
                         height:                     gimbalSelectorContentGrid.childrenRect.height + margins * 2
                         visible:                    gimbalSelectorButton.checked
-                        color:                      qgcPal.window
+                        color:                      Qt.rgba(0.045, 0.048, 0.052, 0.96)
                         radius:                     panelRadius
                         // We only show border if the extended settings panel is visible
-                        border.color:               settingsPanelVisible ? qgcPal.windowShade : qgcPal.window
-                        border.width:               5
+                        border.color:               settingsPanelVisible ? Qt.rgba(0.82, 0.88, 0.94, 0.14) : Qt.rgba(0.82, 0.88, 0.94, 0.08)
+                        border.width:               1
 
                         anchors.top:                parent.bottom
                         anchors.horizontalCenter:   parent.horizontalCenter
@@ -202,7 +202,7 @@ Item {
                     Layout.leftMargin:      margins
                     Layout.preferredWidth:  2
                     Layout.preferredHeight: separatorHeight
-                    color:                  qgcPal.windowShade
+                    color:                  Qt.rgba(0.82, 0.88, 0.94, 0.12)
                 }
 
                 // Show settings button. It is thought for persisting popup close actions, hence the visibility
@@ -293,7 +293,7 @@ Item {
                         Layout.preferredHeight:  2
                         Layout.preferredWidth:   gimbalAzimuthMapCheckbox.width
                         Layout.margins:          margins
-                        color:                   qgcPal.windowShade
+                        color:                   Qt.rgba(0.82, 0.88, 0.94, 0.12)
                     }
 
                     QGCLabel {
@@ -312,7 +312,7 @@ Item {
                         Layout.preferredHeight:  2
                         Layout.preferredWidth:   gimbalAzimuthMapCheckbox.width
                         Layout.margins:          margins
-                        color:                   qgcPal.windowShade
+                        color:                   Qt.rgba(0.82, 0.88, 0.94, 0.12)
                         visible:                 joystickButtonsAvailable && QGroundControl.settingsManager.gimbalControllerSettings.visible
                     }
 

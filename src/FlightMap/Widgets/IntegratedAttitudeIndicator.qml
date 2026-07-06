@@ -24,6 +24,9 @@ Item {
 
     property real attitudeSize:         ScreenTools.defaultFontPixelHeight * 0.75
     property real attitudeSpacing:      ScreenTools.defaultFontPixelHeight / 4
+    property color arcBackgroundColor:  Qt.rgba(0.045, 0.048, 0.052, 0.82)
+    property color arcValueColor:       qgcPal.primaryButton
+    property color tickColor:           qgcPal.text
 
     property real _totalRadius:             compassRadius + attitudeSpacing + attitudeSize
     property real _attitudeRadius:          (width / 2) - (attitudeSize / 2)
@@ -46,7 +49,7 @@ Item {
             var centerY = height / 2
             var ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = qgcPal.window
+            ctx.strokeStyle = arcBackgroundColor
             ctx.lineWidth = attitudeSize
             ctx.beginPath()
             ctx.arc(centerX, centerY, _attitudeRadius, _zeroAttitudeRadians - _maxRadians, _zeroAttitudeRadians + _maxRadians)
@@ -70,7 +73,7 @@ Item {
             var centerY = height / 2
             var ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = qgcPal.primaryButton
+            ctx.strokeStyle = arcValueColor
             ctx.lineWidth = attitudeSize
             ctx.beginPath()
             ctx.arc(centerX, centerY, _attitudeRadius, startRollRadiansOrdered, endRollRadiansOrdered)
@@ -87,7 +90,7 @@ Item {
             var centerY = height / 2
             var ctx = getContext("2d")
             ctx.reset()
-            ctx.strokeStyle = qgcPal.text
+            ctx.strokeStyle = tickColor
             ctx.lineWidth = 2
             ctx.beginPath()
             ctx.moveTo(centerX, 0)
