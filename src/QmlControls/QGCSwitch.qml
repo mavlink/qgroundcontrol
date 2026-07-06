@@ -36,7 +36,9 @@ Switch {
         x: control.width - width - control.rightPadding
         y: parent.height / 2 - height / 2
         radius: knob.radius
-        color: control.checked ? qgcPal.primaryButton : qgcPal.button
+        color: control.checked ? qgcPal.primaryButton : Qt.rgba(1, 1, 1, 0.055)
+        border.color: control.checked ? qgcPal.primaryButton : Qt.rgba(0.82, 0.88, 0.94, 0.18)
+        border.width: 1
 
         Rectangle {
             id: knob
@@ -44,7 +46,7 @@ Switch {
             width: ScreenTools.defaultFontPixelHeight
             height: ScreenTools.defaultFontPixelHeight
             radius: height / 2
-            color: qgcPal.buttonText
+            color: control.checked ? qgcPal.primaryButtonText : qgcPal.buttonText
         }
     }
 }

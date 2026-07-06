@@ -21,8 +21,8 @@ Button {
 
     property bool   primary:        false                               ///< primary button for a group of buttons
     property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
-    property real   backRadius:     ScreenTools.buttonBorderRadius
-    property real   heightFactor:   0.5
+    property real   backRadius:     Math.round(ScreenTools.defaultFontPixelWidth * 0.65)
+    property real   heightFactor:   0.55
     property string iconSource:     ""
     property real   fontWeight:     Font.Normal // default for qml Text
     property real   pointSize:      ScreenTools.defaultFontPointSize
@@ -32,7 +32,7 @@ Button {
     property alias backgroundColor:     backRect.color
     property alias textColor:           text.color
 
-    property bool   _showHighlight:     enabled && (pressed | checked)
+    property bool   _showHighlight:     enabled && (pressed || checked)
 
     property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth * 2
     property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
@@ -43,21 +43,22 @@ Button {
         id:             backRect
         radius:         backRadius
         implicitWidth:  ScreenTools.implicitButtonWidth
-        implicitHeight: ScreenTools.implicitButtonHeight
-        border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonBorder
+        implicitHeight: Math.round(ScreenTools.implicitButtonHeight * 1.1)
+        border.width:   showBorder || control.enabled ? 1 : 0
+        border.color:   primary ? qgcPal.primaryButton : qgcPal.buttonBorder
         color:          primary ? qgcPal.primaryButton : qgcPal.button
+        opacity:        control.enabled ? 1.0 : 0.52
 
         Rectangle {
             anchors.fill:   parent
             color:          qgcPal.buttonHighlight
-            opacity:        _showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
+            opacity:        _showHighlight ? 0.92 : control.enabled && control.hovered ? 0.18 : 0
             radius:         parent.radius
         }
     }
 
     contentItem: RowLayout {
-            spacing: ScreenTools.defaultFontPixelWidth
+            spacing: ScreenTools.defaultFontPixelWidth * 0.65
 
             QGCColoredImage {
                 id:                     icon

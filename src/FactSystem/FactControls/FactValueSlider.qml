@@ -10,7 +10,11 @@ import QGroundControl.FactSystem
 Rectangle {
     height: _itemHeight
     width:  _totalSlots * _itemWidth
-    color:  qgcPal.textField
+    color:  Qt.rgba(1, 1, 1, 0.045)
+    radius: Math.round(ScreenTools.buttonBorderRadius * 1.2)
+    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.18)
+    border.width: 1
+    clip:   true
 
     property Fact   fact:               undefined
     property int    digitCount:         4           ///< The minimum number of digits to show for each value
@@ -120,16 +124,14 @@ Rectangle {
         id:         leftOverlay
         width:      _itemWidth * _prevIncrementSlots
         height:     _itemHeight
-        color:      qgcPal.textField
-        opacity:    0.5
+        color:      Qt.rgba(0, 0, 0, 0.26)
     }
 
     Rectangle {
         width:          _itemWidth * _nextIncrementSlots
         height:         _itemHeight
         anchors.right:  parent.right
-        color:          qgcPal.textField
-        opacity:        0.5
+        color:          Qt.rgba(0, 0, 0, 0.26)
     }
 
     Rectangle {
@@ -138,9 +140,10 @@ Rectangle {
         width:          _itemWidth + (_borderWidth * 2)
         height:         _itemHeight + (_borderWidth * 2)
         border.width:   _borderWidth
-        border.color:   qgcPal.brandingBlue
+        border.color:   qgcPal.primaryButton
         color:          "transparent"
+        radius:         Math.max(1, parent.radius - _borderWidth)
 
-        readonly property int _borderWidth: 3
+        readonly property int _borderWidth: 2
     }
 }

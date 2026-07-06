@@ -94,7 +94,8 @@ T.ComboBox {
         }
 
         background: Rectangle {
-            color:                  control.currentIndex === index ? qgcPal.buttonHighlight : qgcPal.button
+            color:                  control.currentIndex === index ? Qt.rgba(0.18, 0.20, 0.22, 0.98)
+                                                                  : (control.highlightedIndex === index ? Qt.rgba(1, 1, 1, 0.055) : "transparent")
         }
 
         highlighted:                control.highlightedIndex === index
@@ -121,10 +122,10 @@ T.ComboBox {
     }
 
     background: Rectangle {
-        color:          qgcPal.button
-        border.color:   qgcPal.buttonBorder
-        border.width:   _showBorder ? 1 : 0
-        radius:         ScreenTools.buttonBorderRadius
+        color:          Qt.rgba(1, 1, 1, 0.045)
+        border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.18)
+        border.width:   1
+        radius:         Math.round(ScreenTools.buttonBorderRadius * 1.25)
     }
 
     popup: T.Popup {
@@ -147,14 +148,18 @@ T.ComboBox {
                 width:          parent.width
                 height:         parent.height
                 color:          "transparent"
-                border.color:   qgcPal.text
+                border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.16)
+                radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.65)
             }
 
             T.ScrollIndicator.vertical: ScrollIndicator { }
         }
 
         background: Rectangle {
-            color: qgcPal.window
+            color:          Qt.rgba(0.045, 0.048, 0.052, 0.98)
+            radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.65)
+            border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.16)
+            border.width:   1
         }
     }
 }

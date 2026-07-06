@@ -51,7 +51,7 @@ CheckBox {
         Rectangle {
             Layout.fillWidth:   true
             height:             1
-            color:              qgcPal.text
+            color:              Qt.rgba(0.82, 0.88, 0.94, 0.055)
         }
     }
 

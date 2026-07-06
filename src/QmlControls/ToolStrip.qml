@@ -17,17 +17,37 @@ import QGroundControl.Controls
 
 Rectangle {
     id:         _root
-    color:      qgcPal.toolbarBackground
-    width:      ScreenTools.defaultFontPixelWidth * 8
+    color:      "transparent"
+    width:      Math.max(ScreenTools.defaultFontPixelWidth * 9.0, ScreenTools.minTouchPixels * 1.38)
     height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
-    radius:     ScreenTools.defaultFontPixelWidth / 2
+    radius:     Math.round(ScreenTools.defaultFontPixelWidth * 0.78)
+    border.color: "transparent"
+    border.width: 0
 
     property alias  model:              repeater.model
     property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
     property alias  title:              titleLabel.text
-    property var    fontSize:           ScreenTools.smallFontPointSize
+    property var    fontSize:           ScreenTools.defaultFontPointSize + 1
+    property var    backdropSourceItem: null
 
     property var _dropPanel: dropPanel
+
+    QGCPalette { id: qgcPal }
+
+    GlassBackdrop {
+        anchors.fill:       parent
+        sourceItem:         _root.backdropSourceItem
+        backdropBlurEnabled:true
+        targetItem:         _root
+        cornerRadius:       _root.radius
+        sourceScale:        0.52
+        blurAmount:         0.92
+        blurMax:            38
+        sourceBrightness:   -0.01
+        sourceSaturation:   0.62
+        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.80)
+        sheenColor:         "transparent"
+    }
 
     function simulateClick(buttonIndex) {
         buttonIndex = buttonIndex + 1 // skip over title label
@@ -46,7 +66,7 @@ Rectangle {
 
     QGCFlickable {
         id:                 flickable
-        anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
+        anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.36
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
@@ -59,7 +79,7 @@ Rectangle {
             id:             toolStripColumn
             anchors.left:   parent.left
             anchors.right:  parent.right
-            spacing:        ScreenTools.defaultFontPixelWidth * 0.25
+            spacing:        ScreenTools.defaultFontPixelWidth * 0.28
 
             QGCLabel {
                 id:                     titleLabel
@@ -67,6 +87,7 @@ Rectangle {
                 anchors.right:          parent.right
                 horizontalAlignment:    Text.AlignHCenter
                 font.pointSize:         ScreenTools.smallFontPointSize
+                color:                  qgcPal.buttonText
                 visible:                title != ""
             }
 
@@ -77,8 +98,10 @@ Rectangle {
                     id:                 buttonTemplate
                     anchors.left:       toolStripColumn.left
                     anchors.right:      toolStripColumn.right
-                    height:             width
-                    radius:             ScreenTools.defaultFontPixelWidth / 2
+                    height:             Math.max(ScreenTools.minTouchPixels * 0.98,
+                                                 Math.min(toolStripColumn.width * 0.96,
+                                                          ScreenTools.defaultFontPixelHeight * 3.60))
+                    radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.30)
                     fontPointSize:      _root.fontSize
                     toolStripAction:    modelData
                     dropPanel:          _dropPanel

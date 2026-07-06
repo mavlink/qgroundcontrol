@@ -83,6 +83,7 @@ qt_add_qml_module(QGroundControlControlsModule
         FactSliderPanel.qml
         FileButton.qml
         FlightModeMenu.qml
+        GlassBackdrop.qml
         HeightIndicator.qml
         HorizontalFactValueGrid.qml
         IndicatorButton.qml
@@ -144,6 +145,7 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCTabButton.qml
         QGCTextField.qml
         QGCToolBarButton.qml
+        QGCToolPageFrame.qml
         QGCToolInsets.qml
         RCChannelMonitor.qml
         RCToParamDialog.qml

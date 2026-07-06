@@ -18,7 +18,7 @@ import QGroundControl.ScreenTools
 
 RowLayout {
     id:         control
-    spacing:    ScreenTools.defaultFontPixelWidth
+    spacing:    ScreenTools.defaultFontPixelWidth * 1.25
 
     property bool       showExpand:         false   // Controls whether the expand widget is shown or not
     property bool       waitForParameters:  false   // UI won't show until parameters are ready
@@ -52,7 +52,7 @@ RowLayout {
         id:                     divider
         Layout.preferredWidth:  visible ? 1 : -1
         Layout.fillHeight:      true
-        color:                  QGroundControl.globalPalette.groupBorder
+        color:                  Qt.rgba(0.82, 0.88, 0.94, 0.10)
         visible:                expanded
     }
     

@@ -40,15 +40,15 @@ CheckBox {
         implicitHeight: implicitWidth
         x:              control.leftPadding
         y:              parent.height / 2 - height / 2
-        color:          control.enabled ? "white" : _qgcPal.text
-        border.color:   _qgcPal.text
+        color:          control.checked ? _qgcPal.primaryButton : Qt.rgba(1, 1, 1, 0.055)
+        border.color:   control.checked ? _qgcPal.primaryButton : Qt.rgba(0.82, 0.88, 0.94, 0.34)
         border.width:   1
-        radius:         ScreenTools.buttonBorderRadius
-        opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
+        radius:         Math.round(ScreenTools.buttonBorderRadius * 1.2)
+        opacity:        control.checkState === Qt.PartiallyChecked ? 0.5 : 1
 
         QGCColoredImage {
             source:             "/qmlimages/checkbox-check.svg"
-            color:              "black"
+            color:              _qgcPal.primaryButtonText
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             width:              parent.implicitWidth * 0.75

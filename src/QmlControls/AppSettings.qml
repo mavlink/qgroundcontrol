@@ -20,7 +20,7 @@ import QGroundControl.AppSettings
 
 Rectangle {
     id:     settingsView
-    color:  qgcPal.window
+    color:  "transparent"
     z:      QGroundControl.zOrderTopMost
 
     readonly property real _defaultTextHeight:  ScreenTools.defaultFontPixelHeight
@@ -49,6 +49,12 @@ Rectangle {
     }
 
     QGCPalette { id: qgcPal }
+
+    QGCToolPageFrame {
+        anchors.fill:       parent
+        navigationWidth:    divider.x + divider.width
+        contentLeft:        divider.right
+    }
 
     Component.onCompleted: {
         //-- Default Settings
@@ -130,7 +136,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  qgcPal.windowShade
+        color:                  "transparent"
     }
 
     //-- Panel Contents

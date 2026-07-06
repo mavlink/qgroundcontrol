@@ -8,7 +8,8 @@ Rectangle {
     width:          80
     height:         20
     border.width:   1
-    border.color:   "black"
+    border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.28)
+    radius:         4
 
     signal colorSelected(var color)
 

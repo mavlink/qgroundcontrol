@@ -32,6 +32,8 @@ Item {
     readonly property real _arrowBaseHeight:    radius             // Height of vertical side of arrow
     readonly property real _arrowPointWidth:    radius * 0.666     // Distance from vertical side to point
     readonly property real _dropMargin:         ScreenTools.defaultFontPixelWidth
+    readonly property color _panelColor:        Qt.rgba(0.045, 0.048, 0.052, 0.72)
+    readonly property color _panelBorderColor:  Qt.rgba(0.82, 0.88, 0.94, 0.075)
 
     property var    _dropEdgeTopPoint
     property alias  _dropDownComponent: panelLoader.sourceComponent
@@ -120,23 +122,31 @@ Item {
                 var panelY = 0
                 var panelWidth = parent.width - _arrowPointWidth
                 var panelHeight = parent.height
+                var cornerRadius = Math.min(ScreenTools.defaultFontPixelWidth * 0.85, panelWidth / 2, panelHeight / 2)
 
                 var context = getContext("2d")
                 context.reset()
                 context.beginPath()
 
-                context.moveTo(panelX, panelY)                              // top left
-                context.lineTo(panelX + panelWidth, panelY)                 // top right
-                context.lineTo(panelX + panelWidth, panelX + panelHeight)   // bottom right
-                context.lineTo(panelX, panelY + panelHeight)                // bottom left
-                context.lineTo(arrowBase2.x, arrowBase2.y)
+                context.moveTo(panelX + cornerRadius, panelY)
+                context.lineTo(panelX + panelWidth - cornerRadius, panelY)
+                context.quadraticCurveTo(panelX + panelWidth, panelY, panelX + panelWidth, panelY + cornerRadius)
+                context.lineTo(panelX + panelWidth, panelY + panelHeight - cornerRadius)
+                context.quadraticCurveTo(panelX + panelWidth, panelY + panelHeight, panelX + panelWidth - cornerRadius, panelY + panelHeight)
+                context.lineTo(panelX + cornerRadius, panelY + panelHeight)
+                context.quadraticCurveTo(panelX, panelY + panelHeight, panelX, panelY + panelHeight - cornerRadius)
+                context.lineTo(panelX, arrowBase2.y)
                 context.lineTo(arrowPoint.x, arrowPoint.y)
                 context.lineTo(arrowBase1.x, arrowBase1.y)
-                context.lineTo(panelX, panelY)                              // top left
+                context.lineTo(panelX, panelY + cornerRadius)
+                context.quadraticCurveTo(panelX, panelY, panelX + cornerRadius, panelY)
 
                 context.closePath()
-                context.fillStyle = qgcPal.windowShade
+                context.fillStyle = _panelColor
                 context.fill()
+                context.strokeStyle = _panelBorderColor
+                context.lineWidth = 1
+                context.stroke()
             }
         } // Canvas - arrowCanvas
 

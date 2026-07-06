@@ -83,10 +83,10 @@ TextField {
     }
 
     background: Rectangle {
-        border.width:   control.validationError ? 2 : (qgcPal.globalTheme === QGCPalette.Light ? 1 : 0)
-        border.color:   control.validationError ? qgcPal.colorRed : qgcPal.buttonBorder
-        radius:         ScreenTools.buttonBorderRadius
-        color:          qgcPal.textField
+        border.width:   control.validationError ? 2 : 1
+        border.color:   control.validationError ? qgcPal.colorRed : Qt.rgba(0.82, 0.88, 0.94, control.activeFocus ? 0.30 : 0.16)
+        radius:         Math.round(ScreenTools.buttonBorderRadius * 1.25)
+        color:          Qt.rgba(1, 1, 1, control.activeFocus ? 0.070 : 0.045)
         implicitWidth:  ScreenTools.implicitTextFieldWidth
         implicitHeight: ScreenTools.implicitTextFieldHeight
 

@@ -64,6 +64,7 @@ Popup {
     property var    _qgcPal:            QGroundControl.globalPalette
     property real   _frameSize:         ScreenTools.defaultFontPixelWidth
     property real   _contentMargin:     ScreenTools.defaultFontPixelHeight / 2
+    property real   _dialogRadius:      Math.round(ScreenTools.defaultFontPixelWidth * 0.9)
     property bool   _acceptAllowed:     acceptButton.visible
     property bool   _rejectAllowed:     rejectButton.visible
     property int    _previousValidationErrorCount: 0
@@ -71,6 +72,11 @@ Popup {
     background: QGCMouseArea {
         width:  mainWindow.width
         height: mainWindow.height
+
+        Rectangle {
+            anchors.fill: parent
+            color:        Qt.rgba(0, 0, 0, 0.36)
+        }
 
         onClicked: {
             if (closePolicy & Popup.CloseOnPressOutside) {
@@ -198,10 +204,10 @@ Popup {
         y:              mainLayout.y - _contentMargin
         width:          mainLayout.width + _contentMargin * 2
         height:         mainLayout.height + _contentMargin * 2
-        color:          _qgcPal.windowShade
-        radius:         root.padding / 2
+        color:          Qt.rgba(0.045, 0.048, 0.052, 0.96)
+        radius:         _dialogRadius
         border.width:   1
-        border.color:   _qgcPal.windowShadeLight
+        border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.14)
     }
 
     ColumnLayout {
@@ -242,7 +248,9 @@ Popup {
             Layout.fillWidth:       true
             Layout.preferredWidth:  Math.min(maxAvailableWidth, totalContentWidth)
             Layout.preferredHeight: Math.min(maxAvailableHeight, totalContentHeight)
-            color:                  _qgcPal.window
+            color:                  Qt.rgba(1, 1, 1, 0.025)
+            radius:                 Math.round(_dialogRadius * 0.65)
+            clip:                   true
 
             property real maxAvailableWidth:    mainWindow.width - _contentMargin * 4
             property real maxAvailableHeight:   mainWindow.height - titleRowLayout.height - _contentMargin * 5

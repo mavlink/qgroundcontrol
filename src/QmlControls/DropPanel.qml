@@ -74,7 +74,9 @@ Popup {
             radius: ScreenTools.defaultFontPixelHeight / 2
             width:  parent.implicitWidth - _arrowPointWidth
             height: parent.implicitHeight
-            color:  _qgcPal.window
+            color:  Qt.rgba(0.045, 0.048, 0.052, 0.88)
+            border.color: Qt.rgba(0.82, 0.88, 0.94, 0.10)
+            border.width: 1
         }
 
         // Arrowhead
@@ -92,7 +94,7 @@ Popup {
                 context.lineTo(_dropRight ? _arrowPointWidth : 0, 0)
                 context.lineTo(_dropRight ? _arrowPointWidth : 0, _arrowPointWidth * 2)
                 context.closePath()
-                context.fillStyle = _qgcPal.window
+                context.fillStyle = Qt.rgba(0.045, 0.048, 0.052, 0.88)
                 context.fill()
             }
         }

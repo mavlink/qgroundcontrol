@@ -15,8 +15,8 @@ ColumnLayout {
 
     property alias contentSpacing: _contentLayout.spacing
 
-    property string defaultBorderColor  : QGroundControl.globalPalette.groupBorder
-    property string outerBorderColor    : defaultBorderColor
+    property color defaultBorderColor  : Qt.rgba(0.82, 0.88, 0.94, 0.12)
+    property color outerBorderColor    : defaultBorderColor
 
     property string heading
     property string headingDescription
@@ -51,10 +51,10 @@ ColumnLayout {
         Layout.fillWidth:   true
         implicitWidth:      _contentLayout.implicitWidth + (showBorder ? _margins * 2 : 0)
         implicitHeight:     _contentLayout.implicitHeight + (showBorder ? _margins * 2: 0)
-        color:              "transparent"
+        color:              Qt.rgba(1, 1, 1, 0.025)
         border.color:       outerBorderColor
         border.width:       showBorder ? 1 : 0
-        radius:             ScreenTools.defaultFontPixelHeight / 2
+        radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
 
         Repeater {
             model: showDividers? _contentLayout.children.length : 0
@@ -64,7 +64,7 @@ ColumnLayout {
                 y:                  _contentItem.y + _contentItem.height + _margins + (showBorder ? _margins : 0)
                 width:              parent.width - (showBorder ? _margins * 2 : 0)
                 height:             1
-                color:              QGroundControl.globalPalette.groupBorder
+                color:              Qt.rgba(0.82, 0.88, 0.94, 0.085)
                 visible:            _contentItem.visible && 
                                         _contentItem.width !== 0 && _contentItem.height !== 0 &&
                                         index < _contentLayout.children.length - 1

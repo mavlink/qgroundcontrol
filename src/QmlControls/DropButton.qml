@@ -210,7 +210,7 @@ Item {
                 context.lineTo(dropItemHolderRect.x, dropItemHolderRect.y)
 
                 context.closePath()
-                context.fillStyle = qgcPal.windowShade
+                context.fillStyle = Qt.rgba(0.045, 0.048, 0.052, 0.96)
                 context.fill()
             }
         } // Canvas - arrowCanvas

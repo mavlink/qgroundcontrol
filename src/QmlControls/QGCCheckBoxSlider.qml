@@ -41,9 +41,9 @@ AbstractButton   {
             height:                 ScreenTools.defaultFontPixelHeight
             width:                  height * 2
             radius:                 height / 2
-            color:                  control.checked ? qgcPal.primaryButton : qgcPal.button
-            border.width:           _showBorder ? 1 : 0
-            border.color:           qgcPal.buttonBorder
+            color:                  control.checked ? qgcPal.primaryButton : Qt.rgba(1, 1, 1, 0.055)
+            border.width:           1
+            border.color:           control.checked ? qgcPal.primaryButton : Qt.rgba(0.82, 0.88, 0.94, 0.18)
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
@@ -51,7 +51,7 @@ AbstractButton   {
                 height:                 parent.height - 2
                 width:                  height
                 radius:                 height / 2
-                color:                  qgcPal.buttonText
+                color:                  control.checked ? qgcPal.primaryButtonText : qgcPal.buttonText
             }
         }
     }

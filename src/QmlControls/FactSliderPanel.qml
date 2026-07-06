@@ -56,7 +56,10 @@ Column {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 height:             sliderColumn.y + sliderColumn.height + _margins
-                color:              qgcPal.windowShade
+                color:              Qt.rgba(1, 1, 1, 0.026)
+                radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+                border.color:       Qt.rgba(0.82, 0.88, 0.94, 0.12)
+                border.width:       1
 
                 Column {
                     id:                 sliderColumn

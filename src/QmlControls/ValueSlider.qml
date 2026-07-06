@@ -221,7 +221,7 @@ Control {
             id:         labelItemBackground
             width:      labelItem.contentWidth
             height:     labelItem.contentHeight
-            color:      qgcPal.window
+            color:      Qt.rgba(0.045, 0.048, 0.052, 0.82)
             opacity:    0.8
             visible:    labelItem.visible
         }
@@ -252,7 +252,7 @@ Control {
             onPaint: {
                 var ctx = getContext("2d")
                 ctx.strokeStyle = qgcPal.text
-                ctx.fillStyle = qgcPal.window
+                ctx.fillStyle = Qt.rgba(0.045, 0.048, 0.052, 0.88)
                 ctx.lineWidth = 1
                 ctx.beginPath()
                 ctx.moveTo(width / 2, 0)

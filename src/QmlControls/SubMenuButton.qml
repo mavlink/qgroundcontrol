@@ -19,6 +19,7 @@ Button {
     property string imageResource:  "/qmlimages/subMenuButtonImage.png"     ///< Button image
     property bool   largeSize:      false
     property bool   showHighlight:  control.pressed | control.checked
+    property real   activeStripWidth: Math.max(2, ScreenTools.defaultFontPixelWidth * 0.28)
 
     property size   sourceSize:     Qt.size(ScreenTools.defaultFontPixelHeight * 2, ScreenTools.defaultFontPixelHeight * 2)
 
@@ -38,14 +39,20 @@ Button {
 
     background: Rectangle {
         id:     innerRect
-        color:  qgcPal.windowShade
+        color:  showHighlight ? Qt.rgba(0.18, 0.20, 0.22, 0.96)
+                              : (control.enabled && control.hovered ? Qt.rgba(1, 1, 1, 0.055) : "transparent")
+        radius: Math.round(ScreenTools.defaultFontPixelWidth * 0.65)
 
         implicitWidth: titleBar.x + titleBar.contentWidth + ScreenTools.defaultFontPixelWidth
 
         Rectangle {
-            anchors.fill:   parent
-            color:          qgcPal.buttonHighlight
-            opacity:        showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
+            anchors.left:           parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width:                  control.activeStripWidth
+            height:                 parent.height * 0.58
+            radius:                 width / 2
+            color:                  qgcPal.primaryButton
+            visible:                showHighlight
         }
 
         QGCColoredImage {
@@ -53,8 +60,8 @@ Button {
             anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
             anchors.left:           parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width:                  ScreenTools.defaultFontPixelHeight * 2
-            height:                 ScreenTools.defaultFontPixelHeight * 2
+            width:                  ScreenTools.defaultFontPixelHeight * 1.65
+            height:                 ScreenTools.defaultFontPixelHeight * 1.65
             fillMode:               Image.PreserveAspectFit
             mipmap:                 true
             color:                  imageColor ? imageColor : (control.setupComplete ? titleBar.color : "red")

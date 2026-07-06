@@ -33,12 +33,15 @@ Item {
             id:              logwindow
             anchors.fill:    parent
             anchors.margins: ScreenTools.defaultFontPixelWidth
-            color:           qgcPal.window
+            color:           Qt.rgba(1, 1, 1, 0.025)
+            radius:          Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+            border.color:    Qt.rgba(0.82, 0.88, 0.94, 0.10)
+            border.width:    1
 
             Component {
                 id: delegateItem
                 Rectangle {
-                    color:  index % 2 == 0 ? qgcPal.window : qgcPal.windowShade
+                    color:  index % 2 == 0 ? "transparent" : Qt.rgba(1, 1, 1, 0.030)
                     height: Math.round(ScreenTools.defaultFontPixelHeight * 0.5 + field.height)
                     width:  listView.width
 

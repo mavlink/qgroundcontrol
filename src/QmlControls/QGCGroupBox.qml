@@ -22,7 +22,10 @@ GroupBox {
         y:      control.topPadding - control.padding
         width:  parent.width
         height: parent.height - control.topPadding + control.padding
-        color:  qgcPal.windowShade
+        color:  Qt.rgba(1, 1, 1, 0.025)
+        radius: Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
+        border.color: Qt.rgba(0.82, 0.88, 0.94, 0.10)
+        border.width: 1
     }
 
     label: QGCLabel {

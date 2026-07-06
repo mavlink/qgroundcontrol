@@ -11,7 +11,9 @@ Rectangle {
     implicitWidth:  label.contentWidth + (_diameter * 2.5) + (_border * 4)
     implicitHeight: label.height * 2.5
     radius:         height /2
-    color:          qgcPal.windowShade
+    color:          Qt.rgba(1, 1, 1, 0.055)
+    border.color:   Qt.rgba(0.82, 0.88, 0.94, 0.16)
+    border.width:   1
 
     signal accept   ///< Action confirmed
 

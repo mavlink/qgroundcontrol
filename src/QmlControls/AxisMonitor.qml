@@ -14,7 +14,7 @@ Item {
     property bool   mapped:             false
     property bool   reversed:           false
 
-    property color  __barColor:         qgcPal.windowShade
+    property color  __barColor:         Qt.rgba(1, 1, 1, 0.055)
 
     // Bar
     Rectangle {
@@ -45,7 +45,7 @@ Item {
         anchors.horizontalCenter:   parent.horizontalCenter
         width:                      ScreenTools.defaultFontPixelWidth / 2
         height:                     parent.height
-        color:                      qgcPal.window
+        color:                      Qt.rgba(0.82, 0.88, 0.94, 0.20)
     }
 
     // Indicator

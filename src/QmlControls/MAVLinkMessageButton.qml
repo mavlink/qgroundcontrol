@@ -26,7 +26,9 @@ Button {
 
     background: Rectangle {
         anchors.fill:   parent
-        color:          checked ? qgcPal.buttonHighlight : qgcPal.button
+        color:          checked ? Qt.rgba(0.18, 0.20, 0.22, 0.96)
+                                : (control.hovered ? Qt.rgba(1, 1, 1, 0.055) : "transparent")
+        radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.45)
     }
 
     property double messageHz:  0

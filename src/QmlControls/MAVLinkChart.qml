@@ -15,8 +15,8 @@ ChartView {
     antialiasing:       true
     animationOptions:   ChartView.NoAnimation
     legend.visible:     false
-    backgroundColor:    qgcPal.window
-    backgroundRoundness: 0
+    backgroundColor:    Qt.rgba(0.045, 0.048, 0.052, 0.88)
+    backgroundRoundness: Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
     margins.bottom:     ScreenTools.defaultFontPixelHeight * 1.5
     margins.top:        chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
 

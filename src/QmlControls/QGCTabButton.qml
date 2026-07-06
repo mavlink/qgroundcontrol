@@ -40,10 +40,10 @@ TabButton {
         id:             backRect
         implicitWidth:  ScreenTools.implicitButtonWidth
         implicitHeight: ScreenTools.implicitButtonHeight
-        //radius:         backRadius
-        border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonBorder
-        color:          _showHighlight ? qgcPal.buttonHighlight : qgcPal.button
+        radius:         Math.round(backRadius * 1.25)
+        border.width:   1
+        border.color:   _showHighlight ? qgcPal.primaryButton : Qt.rgba(0.82, 0.88, 0.94, 0.14)
+        color:          _showHighlight ? Qt.rgba(0.18, 0.20, 0.22, 0.96) : Qt.rgba(1, 1, 1, 0.035)
     }
 
     contentItem: Item {
