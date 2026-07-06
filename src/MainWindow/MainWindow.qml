@@ -12,6 +12,9 @@ import QGroundControl.FlightMap
 import QGroundControl.PlanView
 import QGroundControl.Toolbar
 
+import QGroundControl.SynclairVisionUI
+
+
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
@@ -595,7 +598,7 @@ ApplicationWindow {
     Popup {
         id:             indicatorDrawer
         x:              calcXPosition()
-        y:              ScreenTools.toolbarHeight + _margins
+        y:              ((SVState.svToolbar) ? ScreenTools.toolbarHeight : 0) + _margins
         leftInset:      0
         rightInset:     0
         topInset:       0
@@ -614,8 +617,21 @@ ApplicationWindow {
 
         function calcXPosition() {
             if (indicatorItem) {
-                var xCenter = indicatorItem.mapToItem(mainWindow.contentItem, indicatorItem.width / 2, 0).x
-                return Math.max(_margins, Math.min(xCenter - (contentItem.implicitWidth / 2), mainWindow.contentItem.width - contentItem.implicitWidth - _margins - (indicatorDrawer.padding * 2) - (ScreenTools.defaultFontPixelHeight / 2)))
+                var drawerItem = indicatorDrawerLoader.item
+                var centeredX = indicatorItem.mapToItem(mainWindow.contentItem, indicatorItem.width / 2, 0).x - (contentItem.implicitWidth / 2)
+                var maxX = mainWindow.contentItem.width - contentItem.implicitWidth - _margins - (indicatorDrawer.padding * 2) - (ScreenTools.defaultFontPixelHeight / 2)
+
+                if (drawerItem && drawerItem.indicatorDrawerUseRightEdgeAlignment) {
+                    var rightEdgeMargin = drawerItem.indicatorDrawerRightEdgeMargin
+                    if (rightEdgeMargin === undefined) {
+                        rightEdgeMargin = _margins
+                    }
+
+                    var popupWidth = Math.max(indicatorDrawer.width, indicatorDrawer.implicitWidth)
+                    return Math.max(0, mainWindow.contentItem.width - popupWidth - rightEdgeMargin)
+                }
+
+                return Math.max(_margins, Math.min(centeredX, maxX))
             } else {
                 return _margins
             }

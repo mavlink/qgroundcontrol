@@ -7,7 +7,7 @@ import QGroundControl
 Item {
     id: root
 
-    property string joystickType: "Simple"
+    property string joystickType: "Standard"
     property int borderWidth
 
     QGCPalette { id: qgcPalette }
