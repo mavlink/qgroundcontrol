@@ -7,8 +7,6 @@
 #include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QRegularExpression>
-
 QGC_LOGGING_CATEGORY(GCSControlManagerLog, "Vehicle.GCSControlManager")
 
 #define REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS 10000
@@ -40,35 +38,6 @@ void GCSControlManager::startTimerRevertAllowTakeover()
     _timerRevertAllowTakeover.start();
 }
 
-void GCSControlManager::_computeOperatorControlRange(uint8_t &rangeLow, uint8_t &rangeHigh) const
-{
-    const uint8_t myId = static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId());
-    const QString secondaryStr = SettingsManager::instance()->flyViewSettings()->operatorControlSecondaryGCS()->rawValue().toString().trimmed();
-
-    if (secondaryStr.isEmpty()) {
-        rangeLow = myId;
-        rangeHigh = 0;
-        return;
-    }
-
-    uint8_t lo = myId;
-    uint8_t hi = myId;
-    // Accept any non-digit separator (commas, spaces, or a mix) so the field is forgiving
-    const QStringList parts = secondaryStr.split(QRegularExpression(QStringLiteral("[^0-9]+")), Qt::SkipEmptyParts);
-    for (const QString &part : parts) {
-        bool ok = false;
-        const int val = part.toInt(&ok);
-        if (ok && val >= 1 && val <= 255) {
-            const uint8_t id = static_cast<uint8_t>(val);
-            if (id < lo) lo = id;
-            if (id > hi) hi = id;
-        }
-    }
-
-    rangeLow = lo;
-    rangeHigh = (hi > lo) ? hi : 0;
-}
-
 void GCSControlManager::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
 {
     int safeRequestTimeoutSecs;
@@ -80,9 +49,8 @@ void GCSControlManager::requestOperatorControl(bool allowOverride, int requestTi
         safeRequestTimeoutSecs = SettingsManager::instance()->flyViewSettings()->requestControlTimeout()->cookedDefaultValue().toInt();
     }
 
-    uint8_t rangeLow, rangeHigh;
-    _computeOperatorControlRange(rangeLow, rangeHigh);
-
+    // Secondary/owner membership is the flight stack's configuration: the request
+    // only asks for the gcs_main role for this GCS, it never carries a range.
     const VehicleTypes::MavCmdAckHandlerInfo_t handlerInfo = {&GCSControlManager::_requestOperatorControlAckHandler, this, nullptr, nullptr};
     _vehicle->sendMavCommandWithHandler(
         &handlerInfo,
@@ -91,8 +59,8 @@ void GCSControlManager::requestOperatorControl(bool allowOverride, int requestTi
         1,                                  // param1: Action - 1: Request control
         allowOverride ? 1.0f : 0.0f,        // param2: Allow takeover
         static_cast<float>(safeRequestTimeoutSecs), // param3: Timeout in seconds
-        static_cast<float>(rangeLow),        // param4: GCS sysid (range low)
-        static_cast<float>(rangeHigh)        // param5: GCS sysid upper range (0 = single GCS)
+        static_cast<float>(MAVLinkProtocol::instance()->getSystemId()), // param4: GCS sysid requesting control
+        0                                   // param5: unused (removed from spec)
     );
 
     if (requestTimeoutSecs > 0) {

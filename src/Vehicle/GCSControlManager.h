@@ -60,7 +60,6 @@ signals:
 private:
     static void _requestOperatorControlAckHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, VehicleTypes::MavCmdResultFailureCode_t failureCode);
     void _requestOperatorControlStartTimer(int requestTimeoutMsecs);
-    void _computeOperatorControlRange(uint8_t &rangeLow, uint8_t &rangeHigh) const;
 
     Vehicle*   _vehicle = nullptr;
 
