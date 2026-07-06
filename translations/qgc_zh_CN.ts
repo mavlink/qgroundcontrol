@@ -119,7 +119,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="183"/>
@@ -271,7 +271,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="183"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="183"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="184"/>
@@ -796,25 +796,25 @@
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="36"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="36"/>
       <source>Batt1 monitor</source>
-      <translation type="unfinished">Batt1 monitor</translation>
+      <translation>电池1监测</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="41"/>
       <source>Batt1 capacity</source>
-      <translation type="unfinished">Batt1 capacity</translation>
+      <translation>电池1容量</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="47"/>
       <source>Batt2 monitor</source>
-      <translation type="unfinished">Batt2 monitor</translation>
+      <translation>电池2监测</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml" line="53"/>
       <source>Batt2 capacity</source>
-      <translation type="unfinished">Batt2 capacity</translation>
+      <translation>电池2容量</translation>
     </message>
   </context>
   <context>
@@ -967,7 +967,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="135"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="135"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="143"/>
@@ -1016,7 +1016,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="63"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="63"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="64"/>
@@ -1447,25 +1447,35 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="36"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="36"/>
       <source>Batt1 monitor</source>
-      <translation type="unfinished">Batt1 monitor</translation>
+      <translation>电池1监测</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="41"/>
       <source>Batt1 capacity</source>
-      <translation type="unfinished">Batt1 capacity</translation>
+      <translation>电池1容量</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="47"/>
       <source>Batt2 monitor</source>
-      <translation type="unfinished">Batt2 monitor</translation>
+      <translation>电池2监测</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="53"/>
       <source>Batt2 capacity</source>
-      <translation type="unfinished">Batt2 capacity</translation>
+      <translation>电池2容量</translation>
+    </message>
+    <message>
+      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="36"/>
+      <source>Disabled</source>
+      <translation>已禁用</translation>
+    </message>
+    <message>
+      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="39"/>
+      <source>Enabled</source>
+      <translation>已启用</translation>
     </message>
   </context>
   <context>
@@ -1499,7 +1509,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="34"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="39"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>需要设置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="24"/>
@@ -1654,7 +1664,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="375"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="375"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="375"/>
@@ -1840,7 +1850,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="254"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="254"/>
@@ -2011,7 +2021,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="131"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="131"/>
@@ -2147,7 +2157,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
@@ -2213,7 +2223,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="112"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="112"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="115"/>
@@ -2278,7 +2288,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="42"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="42"/>
@@ -2319,7 +2329,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="77"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="79"/>
@@ -2374,7 +2384,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="33"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="38"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="32"/>
@@ -2404,7 +2414,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="70"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="93"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="57"/>
@@ -2440,7 +2450,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="88"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="88"/>
@@ -2475,7 +2485,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="43"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="43"/>
@@ -2946,7 +2956,7 @@ Click Ok to start calibration.</translation>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="715"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="715"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="789"/>
@@ -3103,13 +3113,13 @@ Click Ok to start calibration.</translation>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="40"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="47"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>需要设置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="41"/>
       <source>Not installed</source>
-      <translation type="unfinished">Not installed</translation>
+      <translation>未安装</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="46"/>
@@ -3121,7 +3131,31 @@ Click Ok to start calibration.</translation>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="47"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>就绪</translation>
+    </message>    <message>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="44"/>
+      <source>, External</source>
+      <translation>，外置</translation>
+    </message>    <message>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="44"/>
+      <source>, Internal</source>
+      <translation>，内置</translation>
+    </message>    <message>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="51"/>
+      <source>Primary</source>
+      <translation>主用</translation>
+    </message>    <message>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="54"/>
+      <source>Secondary</source>
+      <translation>备用</translation>
+    </message>    <message>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="57"/>
+      <source>Tertiary</source>
+      <translation>第三</translation>
+    </message>    <message>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="59"/>
+      <source>Unused</source>
+      <translation>未使用</translation>
     </message>
   </context>
   <context>
@@ -3504,7 +3538,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="50"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="50"/>
       <source>Reset</source>
-      <translation type="unfinished">Reset</translation>
+      <translation>重置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="114"/>
@@ -3577,7 +3611,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="28"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="32"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>需要设置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="31"/>
@@ -3609,7 +3643,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="67"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>常规</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="84"/>
@@ -3772,7 +3806,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="421"/>
       <source>No</source>
-      <translation type="unfinished">No</translation>
+      <translation>否</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="433"/>
@@ -3857,7 +3891,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="642"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>关闭</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="653"/>
@@ -4078,7 +4112,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="67"/>
       <source>Mixed Modes</source>
-      <translation type="unfinished">Mixed Modes</translation>
+      <translation>混合模式</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AltModeDialog.qml" line="68"/>
@@ -4114,7 +4148,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="181"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>清除</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/AppMessages.qml" line="189"/>
@@ -4157,7 +4191,7 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="30"/>
       <source>Parameters</source>
-      <translation type="unfinished">Parameters</translation>
+      <translation>参数</translation>
     </message>
     <message>
       <location filename="../src/Settings/AppSettings.cc" line="31"/>
@@ -4404,7 +4438,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/BatteryIndicator.qml" line="174"/>
       <source>Temperature</source>
-      <translation type="unfinished">Temperature</translation>
+      <translation>温度</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/BatteryIndicator.qml" line="175"/>
@@ -4868,7 +4902,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightMap/Widgets/CenterMapDropButton.qml" line="165"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/CenterMapDropButton.qml" line="177"/>
@@ -4911,7 +4945,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightMap/Widgets/CenterMapDropPanel.qml" line="32"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/CenterMapDropPanel.qml" line="43"/>
@@ -4991,7 +5025,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="52"/>
       <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="53"/>
       <source>Corridor Scan</source>
-      <translation type="unfinished">Corridor Scan</translation>
+      <translation>走廊扫描</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="54"/>
@@ -5225,7 +5259,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="63"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/DefaultChecklist.qml" line="64"/>
@@ -5498,7 +5532,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/ExitWithErrorWindow.qml" line="47"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>关闭</translation>
     </message>
   </context>
   <context>
@@ -5743,7 +5777,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/QmlControls/FactValueGrid.cc" line="39"/>
       <source>Default</source>
-      <translation type="unfinished">Default</translation>
+      <translation>默认</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/FactValueGrid.cc" line="40"/>
@@ -6280,7 +6314,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="28"/>
       <source>Firmware</source>
-      <translation type="unfinished">Firmware</translation>
+      <translation>固件</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="44"/>
@@ -6621,7 +6655,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="63"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FixedWingChecklist.qml" line="64"/>
@@ -6756,7 +6790,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Airmap/FlightBrief.qml" line="223"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>关闭</translation>
     </message>
   </context>
   <context>
@@ -6866,7 +6900,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="30"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="50"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>需要设置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="35"/>
@@ -6888,7 +6922,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="58"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="62"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="57"/>
@@ -6933,34 +6967,34 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="371"/>
       <source>Go here</source>
       <comment>Go to location waypoint</comment>
-      <translation type="unfinished">Go here</translation>
+      <translation>到这里</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="474"/>
       <source>ROI here</source>
       <comment>Make this a Region Of Interest</comment>
-      <translation type="unfinished">ROI here</translation>
+      <translation>在此设置 ROI</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="510"/>
       <source>Orbit</source>
       <comment>Orbit waypoint</comment>
-      <translation type="unfinished">Orbit</translation>
+      <translation>盘旋</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="522"/>
       <source>Go to location</source>
-      <translation type="unfinished">Go to location</translation>
+      <translation>前往此位置</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="531"/>
       <source>Orbit at location</source>
-      <translation type="unfinished">Orbit at location</translation>
+      <translation>在此位置盘旋</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlyViewMap.qml" line="540"/>
       <source>ROI at location</source>
-      <translation type="unfinished">ROI at location</translation>
+      <translation>在此位置设置 ROI</translation>
     </message>
   </context>
   <context>
@@ -7006,7 +7040,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/FlyViewPreFlightChecklistPopup.qml" line="21"/>
       <source>Pre-Flight Checklist</source>
-      <translation type="unfinished">Pre-Flight Checklist</translation>
+      <translation>飞前检查单</translation>
     </message>
   </context>
   <context>
@@ -7142,17 +7176,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="427"/>
       <source>Area</source>
-      <translation type="unfinished">Area</translation>
+      <translation>面积</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="427"/>
       <source>Speed</source>
-      <translation type="unfinished">Speed</translation>
+      <translation>速度</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="427"/>
       <source>Temperature</source>
-      <translation type="unfinished">Temperature</translation>
+      <translation>温度</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="444"/>
@@ -7249,12 +7283,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="145"/>
       <source>Auto-Center Throttle</source>
-      <translation type="unfinished">Auto-Center Throttle</translation>
+      <translation>油门自动回中</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="177"/>
       <source>Show simple camera controls (DIGICAM_CONTROL)</source>
-      <translation type="unfinished">Show simple camera controls (DIGICAM_CONTROL)</translation>
+      <translation>显示简易相机控制 (DIGICAM_CONTROL)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="188"/>
@@ -7264,12 +7298,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="194"/>
       <source>Minimum Altitude</source>
-      <translation type="unfinished">Minimum Altitude</translation>
+      <translation>最小高度</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="205"/>
       <source>Maximum Altitude</source>
-      <translation type="unfinished">Maximum Altitude</translation>
+      <translation>最大高度</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="539"/>
@@ -7294,27 +7328,27 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="103"/>
       <source>Use Preflight Checklist</source>
-      <translation type="unfinished">Use Preflight Checklist</translation>
+      <translation>使用飞前检查单</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="111"/>
       <source>Enforce Preflight Checklist</source>
-      <translation type="unfinished">Enforce Preflight Checklist</translation>
+      <translation>强制飞前检查</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="120"/>
       <source>Keep Map Centered On Vehicle</source>
-      <translation type="unfinished">Keep Map Centered On Vehicle</translation>
+      <translation>地图保持以载具为中心</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="128"/>
       <source>Show Telemetry Log Replay Status Bar</source>
-      <translation type="unfinished">Show Telemetry Log Replay Status Bar</translation>
+      <translation>显示遥测日志回放状态栏</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="139"/>
       <source>Virtual Joystick</source>
-      <translation type="unfinished">Virtual Joystick</translation>
+      <translation>虚拟摇杆</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="153"/>
@@ -7324,17 +7358,17 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="161"/>
       <source>Show additional heading indicators on Compass</source>
-      <translation type="unfinished">Show additional heading indicators on Compass</translation>
+      <translation>在罗盘上显示额外航向指示</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="169"/>
       <source>Lock Compass Nose-Up</source>
-      <translation type="unfinished">Lock Compass Nose-Up</translation>
+      <translation>锁定罗盘机头朝上</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="216"/>
       <source>Go To Location Max Distance</source>
-      <translation type="unfinished">Go To Location Max Distance</translation>
+      <translation>指点飞行最大距离</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="233"/>
@@ -7389,12 +7423,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="427"/>
       <source>Horizontal Distance</source>
-      <translation type="unfinished">Horizontal Distance</translation>
+      <translation>水平距离</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="427"/>
       <source>Vertical Distance</source>
-      <translation type="unfinished">Vertical Distance</translation>
+      <translation>垂直距离</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="731"/>
@@ -7955,7 +7989,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="55"/>
       <source>ROI</source>
-      <translation type="unfinished">ROI</translation>
+      <translation>ROI</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="56"/>
@@ -8055,7 +8089,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="77"/>
       <source>Make the specified location a Region Of Interest.</source>
-      <translation type="unfinished">Make the specified location a Region Of Interest.</translation>
+      <translation>将指定位置设为 ROI。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="163"/>
@@ -8247,7 +8281,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Joystick/Joystick.cc" line="44"/>
       <source>No Action</source>
-      <translation type="unfinished">No Action</translation>
+      <translation>无动作</translation>
     </message>
     <message>
       <location filename="../src/Joystick/Joystick.cc" line="45"/>
@@ -8370,12 +8404,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/JoystickConfig.qml" line="28"/>
       <source>Joystick</source>
-      <translation type="unfinished">Joystick</translation>
+      <translation>摇杆</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfig.qml" line="69"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>常规</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfig.qml" line="72"/>
@@ -8509,7 +8543,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/VehicleSetup/JoystickConfigCalibration.qml" line="175"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfigCalibration.qml" line="187"/>
@@ -8831,7 +8865,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="260"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
   </context>
   <context>
@@ -8973,7 +9007,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/AnalyzeView/LogDownloadPage.qml" line="189"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
   </context>
   <context>
@@ -9109,7 +9143,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="110"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>关闭</translation>
     </message>
   </context>
   <context>
@@ -9242,7 +9276,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="220"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+      <translation>电池</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCMAVLink.cc" line="221"/>
@@ -9363,7 +9397,7 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/AnalyzeView/MAVLinkInspectorController.cc" line="859"/>
       <location filename="../src/AnalyzeView/MAVLinkInspectorController.cc" line="874"/>
       <source>System %1</source>
-      <translation type="unfinished">System %1</translation>
+      <translation>系统 %1</translation>
     </message>
   </context>
   <context>
@@ -9406,12 +9440,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspectorPage.qml" line="180"/>
       <source>Plot 1</source>
-      <translation type="unfinished">Plot 1</translation>
+      <translation>图表 1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspectorPage.qml" line="183"/>
       <source>Plot 2</source>
-      <translation type="unfinished">Plot 2</translation>
+      <translation>图表 2</translation>
     </message>
   </context>
   <context>
@@ -9458,35 +9492,35 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="307"/>
       <source>There are still active connections to vehicles. Are you sure you want to exit?</source>
-      <translation type="unfinished">There are still active connections to vehicles. Are you sure you want to exit?</translation>
+      <translation>仍有活动的载具连接。确定要退出吗？</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="271"/>
       <source>You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?</source>
-      <translation type="unfinished">You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?</translation>
+      <translation>当前有尚未保存或发送的任务编辑。关闭后将丢失更改。确定要关闭吗？</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="156"/>
       <location filename="../src/ui/MainRootWindow.qml" line="385"/>
       <source>Analyze Tools</source>
-      <translation type="unfinished">Analyze Tools</translation>
+      <translation>分析工具</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="160"/>
       <location filename="../src/ui/MainRootWindow.qml" line="370"/>
       <source>Vehicle Setup</source>
-      <translation type="unfinished">Vehicle Setup</translation>
+      <translation>载具设置</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="164"/>
       <location filename="../src/ui/MainRootWindow.qml" line="401"/>
       <source>Application Settings</source>
-      <translation type="unfinished">Application Settings</translation>
+      <translation>应用设置</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="288"/>
       <source>You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</source>
-      <translation type="unfinished">You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</translation>
+      <translation>当前有尚未写入载具的参数更新。关闭后将丢失更改。确定要关闭吗？</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="351"/>
@@ -9501,7 +9535,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="452"/>
       <source>Advanced Mode</source>
-      <translation type="unfinished">Advanced Mode</translation>
+      <translation>高级模式</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="520"/>
@@ -9524,7 +9558,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="37"/>
       <source>Not Ready</source>
-      <translation type="unfinished">Not Ready</translation>
+      <translation>未就绪</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="38"/>
@@ -9879,7 +9913,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="677"/>
       <source>Saved Log Files</source>
-      <translation type="unfinished">Saved Log Files</translation>
+      <translation>已保存的日志文件</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="740"/>
@@ -9894,12 +9928,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="773"/>
       <source>Check None</source>
-      <translation type="unfinished">Check None</translation>
+      <translation>全部不选</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="783"/>
       <source>Delete Selected</source>
-      <translation type="unfinished">Delete Selected</translation>
+      <translation>删除所选</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="791"/>
@@ -9914,7 +9948,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="799"/>
       <source>Upload Selected</source>
-      <translation type="unfinished">Upload Selected</translation>
+      <translation>上传所选</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="814"/>
@@ -9929,12 +9963,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="822"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="831"/>
       <source>Cancel Upload</source>
-      <translation type="unfinished">Cancel Upload</translation>
+      <translation>取消上传</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="832"/>
@@ -9955,7 +9989,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="63"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>常规</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="80"/>
@@ -10043,7 +10077,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="282"/>
       <source>Apply</source>
-      <translation type="unfinished">Apply</translation>
+      <translation>应用</translation>
     </message>
   </context>
   <context>
@@ -10195,7 +10229,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="42"/>
       <source>Firmware</source>
-      <translation type="unfinished">Firmware</translation>
+      <translation>固件</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="43"/>
@@ -10230,12 +10264,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="68"/>
       <source>All Altitudes</source>
-      <translation type="unfinished">All Altitudes</translation>
+      <translation>全部高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="103"/>
       <source>Initial Waypoint Alt</source>
-      <translation type="unfinished">Initial Waypoint Alt</translation>
+      <translation>初始航点高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionSettingsEditor.qml" line="208"/>
@@ -10365,7 +10399,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="84"/>
       <source>Firmware</source>
-      <translation type="unfinished">Firmware</translation>
+      <translation>固件</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLinkSettings.qml" line="88"/>
@@ -10484,7 +10518,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="58"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/MultiRotorChecklist.qml" line="59"/>
@@ -10715,7 +10749,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="598"/>
       <source>Cancel Download</source>
-      <translation type="unfinished">Cancel Download</translation>
+      <translation>取消下载</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="607"/>
@@ -10730,14 +10764,14 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="612"/>
       <source>Ok</source>
-      <translation type="unfinished">Ok</translation>
+      <translation>确定</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="625"/>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="1209"/>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="1289"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>关闭</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="625"/>
@@ -10745,7 +10779,7 @@ Is this really what you want?</translation>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="1159"/>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="1313"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="686"/>
@@ -10896,7 +10930,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml" line="56"/>
       <source>Firmware</source>
-      <translation type="unfinished">Firmware</translation>
+      <translation>固件</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml" line="68"/>
@@ -10929,7 +10963,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="279"/>
       <source>Save To Clipboard</source>
-      <translation type="unfinished">Save To Clipboard</translation>
+      <translation>保存到剪贴板</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="284"/>
@@ -10939,7 +10973,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="343"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>清除</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="348"/>
@@ -11173,7 +11207,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="75"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="75"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="76"/>
@@ -11279,7 +11313,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="37"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="38"/>
@@ -11314,7 +11348,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="44"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>就绪</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="45"/>
@@ -11329,7 +11363,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="47"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="48"/>
@@ -11540,12 +11574,12 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="340"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>已启用</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4ParameterMetaData.cc" line="342"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
   </context>
   <context>
@@ -11579,7 +11613,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="42"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>需要设置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="31"/>
@@ -11613,7 +11647,7 @@ Is this really what you want?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="58"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="52"/>
@@ -12166,7 +12200,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="74"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>清除</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="85"/>
@@ -12486,7 +12520,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="533"/>
       <source>Reset</source>
-      <translation type="unfinished">Reset</translation>
+      <translation>重置</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="538"/>
@@ -12788,7 +12822,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="229"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+      <translation>电池</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="234"/>
@@ -12981,7 +13015,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="669"/>
       <source>Cancel ROI</source>
-      <translation type="unfinished">Cancel ROI</translation>
+      <translation>取消 ROI</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="698"/>
@@ -12996,17 +13030,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="817"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="820"/>
       <source>Fence</source>
-      <translation type="unfinished">Fence</translation>
+      <translation>围栏</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="824"/>
       <source>Rally</source>
-      <translation type="unfinished">Rally</translation>
+      <translation>集结点</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="942"/>
@@ -13021,7 +13055,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1228"/>
       <source>Clear</source>
-      <translation type="unfinished">Clear</translation>
+      <translation>清除</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="978"/>
@@ -13046,88 +13080,108 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1029"/>
       <source>Rally Points overwrite</source>
-      <translation type="unfinished">Rally Points overwrite</translation>
+      <translation>覆盖集结点</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1037"/>
       <source>You have unsaved changes.</source>
-      <translation type="unfinished">You have unsaved changes.</translation>
+      <translation>您有未保存的更改。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1136"/>
       <source>Open...</source>
-      <translation type="unfinished">Open...</translation>
+      <translation>打开...</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="231"/>
       <location filename="../src/PlanView/PlanView.qml" line="236"/>
       <location filename="../src/PlanView/PlanView.qml" line="1150"/>
       <source>Save</source>
-      <translation type="unfinished">Save</translation>
+      <translation>保存</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="232"/>
       <location filename="../src/PlanView/PlanView.qml" line="237"/>
       <source>Unable to %1</source>
-      <translation type="unfinished">Unable to %1</translation>
+      <translation>无法%1</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="232"/>
       <source>Plan has incomplete items. Complete all items and %1 again.</source>
-      <translation type="unfinished">Plan has incomplete items. Complete all items and %1 again.</translation>
+      <translation>计划包含未完成项目。请完成所有项目后再次%1。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="967"/>
       <source>Are you sure you want to remove current plan and create a new plan? </source>
-      <translation type="unfinished">Are you sure you want to remove current plan and create a new plan? </translation>
+      <translation>确定要移除当前计划并创建新计划吗？ </translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1036"/>
       <source>You have unsaved changes. You should upload to your vehicle, or save to a file.</source>
-      <translation type="unfinished">You have unsaved changes. You should upload to your vehicle, or save to a file.</translation>
+      <translation>您有未保存的更改。请上传到载具，或保存到文件。</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1044"/>
       <location filename="../src/PlanView/PlanView.qml" line="1096"/>
       <source>Create Plan</source>
-      <translation type="unfinished">Create Plan</translation>
+      <translation>创建计划</translation>
+    </message>
+    <message>
+      <location filename="../src/PlanView/PlanView.qml" line="985"/>
+      <source>Empty Plan</source>
+      <translation>空白计划</translation>
+    </message>
+    <message>
+      <location filename="../src/PlanView/PlanView.qml" line="988"/>
+      <source>Survey</source>
+      <translation>测绘</translation>
+    </message>
+    <message>
+      <location filename="../src/PlanView/PlanView.qml" line="991"/>
+      <source>Corridor Scan</source>
+      <translation>走廊扫描</translation>
+    </message>
+    <message>
+      <location filename="../src/PlanView/PlanView.qml" line="994"/>
+      <source>Structure Scan</source>
+      <translation>建筑扫描</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1115"/>
       <source>Storage</source>
-      <translation type="unfinished">Storage</translation>
+      <translation>存储</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1164"/>
       <source>Save As...</source>
-      <translation type="unfinished">Save As...</translation>
+      <translation>另存为...</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1176"/>
       <source>Save Mission Waypoints As KML...</source>
-      <translation type="unfinished">Save Mission Waypoints As KML...</translation>
+      <translation>将任务航点另存为 KML...</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1181"/>
       <source>KML</source>
-      <translation type="unfinished">KML</translation>
+      <translation>KML</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="231"/>
       <location filename="../src/PlanView/PlanView.qml" line="236"/>
       <location filename="../src/PlanView/PlanView.qml" line="1202"/>
       <source>Upload</source>
-      <translation type="unfinished">Upload</translation>
+      <translation>上传</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1193"/>
       <source>Vehicle</source>
-      <translation type="unfinished">Vehicle</translation>
+      <translation>载具</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="1213"/>
       <source>Download</source>
-      <translation type="unfinished">Download</translation>
+      <translation>下载</translation>
     </message>
   </context>
   <context>
@@ -13529,7 +13583,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/FlightDisplay/PreFlightBatteryCheck.qml" line="18"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+      <translation>电池</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/PreFlightBatteryCheck.qml" line="19"/>
@@ -13776,7 +13830,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/api/QGCCorePlugin.cc" line="134"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>常规</translation>
     </message>
     <message>
       <location filename="../src/api/QGCCorePlugin.cc" line="138"/>
@@ -14121,83 +14175,83 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="97"/>
       <source>Ok</source>
-      <translation type="unfinished">Ok</translation>
+      <translation>确定</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="100"/>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="109"/>
       <source>Open</source>
-      <translation type="unfinished">Open</translation>
+      <translation>打开</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="103"/>
       <source>Save</source>
-      <translation type="unfinished">Save</translation>
+      <translation>保存</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="106"/>
       <source>Apply</source>
-      <translation type="unfinished">Apply</translation>
+      <translation>应用</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="112"/>
       <source>Save All</source>
-      <translation type="unfinished">Save All</translation>
+      <translation>全部保存</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="115"/>
       <source>Yes</source>
-      <translation type="unfinished">Yes</translation>
+      <translation>是</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="118"/>
       <source>Yes to All</source>
-      <translation type="unfinished">Yes to All</translation>
+      <translation>全部是</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="121"/>
       <source>Retry</source>
-      <translation type="unfinished">Retry</translation>
+      <translation>重试</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="124"/>
       <source>Reset</source>
-      <translation type="unfinished">Reset</translation>
+      <translation>重置</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="127"/>
       <source>Restore to Defaults</source>
-      <translation type="unfinished">Restore to Defaults</translation>
+      <translation>恢复默认值</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="130"/>
       <source>Ignore</source>
-      <translation type="unfinished">Ignore</translation>
+      <translation>忽略</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="136"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="139"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>关闭</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="142"/>
       <source>No</source>
-      <translation type="unfinished">No</translation>
+      <translation>否</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="145"/>
       <source>No to All</source>
-      <translation type="unfinished">No to All</translation>
+      <translation>全部否</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialogContainer.qml" line="148"/>
       <source>Abort</source>
-      <translation type="unfinished">Abort</translation>
+      <translation>中止</translation>
     </message>
   </context>
   <context>
@@ -14213,83 +14267,83 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="34"/>
       <source>Ok</source>
-      <translation type="unfinished">Ok</translation>
+      <translation>确定</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="37"/>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="46"/>
       <source>Open</source>
-      <translation type="unfinished">Open</translation>
+      <translation>打开</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="40"/>
       <source>Save</source>
-      <translation type="unfinished">Save</translation>
+      <translation>保存</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="43"/>
       <source>Apply</source>
-      <translation type="unfinished">Apply</translation>
+      <translation>应用</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="49"/>
       <source>Save All</source>
-      <translation type="unfinished">Save All</translation>
+      <translation>全部保存</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="52"/>
       <source>Yes</source>
-      <translation type="unfinished">Yes</translation>
+      <translation>是</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="55"/>
       <source>Yes to All</source>
-      <translation type="unfinished">Yes to All</translation>
+      <translation>全部是</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="58"/>
       <source>Retry</source>
-      <translation type="unfinished">Retry</translation>
+      <translation>重试</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="61"/>
       <source>Reset</source>
-      <translation type="unfinished">Reset</translation>
+      <translation>重置</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="64"/>
       <source>Restore to Defaults</source>
-      <translation type="unfinished">Restore to Defaults</translation>
+      <translation>恢复默认值</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="67"/>
       <source>Ignore</source>
-      <translation type="unfinished">Ignore</translation>
+      <translation>忽略</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="73"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="76"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>关闭</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="79"/>
       <source>No</source>
-      <translation type="unfinished">No</translation>
+      <translation>否</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="82"/>
       <source>No to All</source>
-      <translation type="unfinished">No to All</translation>
+      <translation>全部否</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCViewDialogContainer.qml" line="85"/>
       <source>Abort</source>
-      <translation type="unfinished">Abort</translation>
+      <translation>中止</translation>
     </message>
   </context>
   <context>
@@ -14327,7 +14381,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="298"/>
       <source>Mixed Modes</source>
-      <translation type="unfinished">Mixed Modes</translation>
+      <translation>混合模式</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGroundControlQmlGlobal.cc" line="274"/>
@@ -14493,7 +14547,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/QmlControls/QmlTest.qml" line="288"/>
       <location filename="../src/QmlControls/QmlTest.qml" line="393"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>已启用</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QmlTest.qml" line="294"/>
@@ -14505,7 +14559,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/QmlControls/QmlTest.qml" line="300"/>
       <location filename="../src/QmlControls/QmlTest.qml" line="400"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QmlTest.qml" line="386"/>
@@ -14778,7 +14832,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="338"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="345"/>
@@ -15005,7 +15059,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="53"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/RoverChecklist.qml" line="54"/>
@@ -15162,7 +15216,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="189"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="610"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="170"/>
@@ -15172,7 +15226,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="189"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="610"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="185"/>
@@ -15487,7 +15541,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="52"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>需要设置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="30"/>
@@ -15501,7 +15555,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="52"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>就绪</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="34"/>
@@ -15546,7 +15600,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="49"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>需要设置</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="33"/>
@@ -15558,7 +15612,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="49"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>就绪</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="37"/>
@@ -15757,7 +15811,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="460"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="460"/>
       <source>Airspeed</source>
-      <translation type="unfinished">Airspeed</translation>
+      <translation>空速</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="471"/>
@@ -15769,7 +15823,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="478"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="478"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>取消</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="487"/>
@@ -15884,17 +15938,17 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="73"/>
       <source>Baud Rate</source>
-      <translation type="unfinished">Baud Rate</translation>
+      <translation>波特率</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="102"/>
       <source>Advanced Settings</source>
-      <translation type="unfinished">Advanced Settings</translation>
+      <translation>高级设置</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="119"/>
       <source>Parity</source>
-      <translation type="unfinished">Parity</translation>
+      <translation>校验位</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="122"/>
@@ -15914,12 +15968,12 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="157"/>
       <source>Data Bits</source>
-      <translation type="unfinished">Data Bits</translation>
+      <translation>数据位</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/SerialSettings.qml" line="165"/>
       <source>Stop Bits</source>
-      <translation type="unfinished">Stop Bits</translation>
+      <translation>停止位</translation>
     </message>
   </context>
   <context>
@@ -15947,7 +16001,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/SetupPage.qml" line="77"/>
       <source> (Disabled while the vehicle is %1)</source>
-      <translation type="unfinished"> (Disabled while the vehicle is %1)</translation>
+      <translation>（载具%1时禁用）</translation>
     </message>
   </context>
   <context>
@@ -15955,47 +16009,57 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="35"/>
       <source>This operation cannot be performed while the vehicle is armed.</source>
-      <translation type="unfinished">This operation cannot be performed while the vehicle is armed.</translation>
+      <translation>载具解锁时不能执行该操作。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="38"/>
       <source>missing message panel text</source>
-      <translation type="unfinished">missing message panel text</translation>
+      <translation>缺少消息面板文本</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="80"/>
       <source>%1 setup must be completed prior to %2 setup.</source>
-      <translation type="unfinished">%1 setup must be completed prior to %2 setup.</translation>
+      <translation>必须先完成 %1 设置，然后才能进行 %2 设置。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="132"/>
       <source>%1 does not currently support setup of your vehicle type. </source>
-      <translation type="unfinished">%1 does not currently support setup of your vehicle type. </translation>
+      <translation>%1 当前不支持此载具类型的设置。</translation>
+    </message>
+    <message>
+      <location filename="../src/VehicleSetup/SetupView.qml" line="133"/>
+      <source>If your vehicle is already configured you can still Fly.</source>
+      <translation>如果载具已经配置完成，仍然可以进入飞行视图。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="150"/>
       <source>Vehicle settings and info will display after connecting your vehicle.</source>
-      <translation type="unfinished">Vehicle settings and info will display after connecting your vehicle.</translation>
+      <translation>连接载具后将显示载具设置和信息。</translation>
+    </message>
+    <message>
+      <location filename="../src/VehicleSetup/SetupView.qml" line="151"/>
+      <source>Click Firmware on the left to upgrade your vehicle.</source>
+      <translation>点击左侧“固件”可升级载具。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="171"/>
       <source>You are currently connected to a vehicle but it did not return the full parameter list. </source>
-      <translation type="unfinished">You are currently connected to a vehicle but it did not return the full parameter list. </translation>
+      <translation>当前已连接载具，但载具未返回完整参数列表。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="172"/>
       <source>As a result, the full set of vehicle setup options are not available.</source>
-      <translation type="unfinished">As a result, the full set of vehicle setup options are not available.</translation>
+      <translation>因此，完整的载具设置选项暂不可用。</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="231"/>
       <source>Summary</source>
-      <translation type="unfinished">Summary</translation>
+      <translation>概览</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="243"/>
       <source>Firmware</source>
-      <translation type="unfinished">Firmware</translation>
+      <translation>固件</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="254"/>
@@ -16005,12 +16069,12 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="266"/>
       <source>Joystick</source>
-      <translation type="unfinished">Joystick</translation>
+      <translation>摇杆</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/SetupView.qml" line="293"/>
       <source>Parameters</source>
-      <translation type="unfinished">Parameters</translation>
+      <translation>参数</translation>
     </message>
   </context>
   <context>
@@ -16189,7 +16253,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/MissionManager/StructureScanComplexItem.h" line="79"/>
       <location filename="../src/MissionManager/StructureScanComplexItem.h" line="80"/>
       <source>Structure Scan</source>
-      <translation type="unfinished">Structure Scan</translation>
+      <translation>建筑扫描</translation>
     </message>
   </context>
   <context>
@@ -16357,7 +16421,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/FlightDisplay/SubChecklist.qml" line="63"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/SubChecklist.qml" line="64"/>
@@ -16403,7 +16467,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/MissionManager/SurveyComplexItem.h" line="58"/>
       <location filename="../src/MissionManager/SurveyComplexItem.h" line="59"/>
       <source>Survey</source>
-      <translation type="unfinished">Survey</translation>
+      <translation>测绘</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/SurveyComplexItem.h" line="60"/>
@@ -16474,7 +16538,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/Vehicle/SysStatusSensorInfo.cc" line="119"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>已禁用</translation>
     </message>
   </context>
   <context>
@@ -16547,7 +16611,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/Taisync/TaisyncManager.cc" line="128"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>手动</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncManager.cc" line="150"/>
@@ -16585,7 +16649,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="71"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>常规</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="88"/>
@@ -16713,7 +16777,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="406"/>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="512"/>
       <source>Apply</source>
-      <translation type="unfinished">Apply</translation>
+      <translation>应用</translation>
     </message>
     <message>
       <location filename="../src/Taisync/TaisyncSettings.qml" line="415"/>
@@ -16782,7 +16846,7 @@ Confirm change?</translation>
     <message>
       <location filename="../src/ui/preferences/TcpSettings.qml" line="36"/>
       <source>Port</source>
-      <translation type="unfinished">Port</translation>
+      <translation>端口</translation>
     </message>
   </context>
   <context>
@@ -17195,12 +17259,12 @@ Confirm change?</translation>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="37"/>
       <source>Port</source>
-      <translation type="unfinished">Port</translation>
+      <translation>端口</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="48"/>
       <source>Server Addresses (optional)</source>
-      <translation type="unfinished">Server Addresses (optional)</translation>
+      <translation>服务器地址（可选）</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="62"/>
@@ -17210,12 +17274,12 @@ Confirm change?</translation>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="74"/>
       <source>Example: 127.0.0.1:14550</source>
-      <translation type="unfinished">Example: 127.0.0.1:14550</translation>
+      <translation>示例：127.0.0.1:14550</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/UdpSettings.qml" line="77"/>
       <source>Add Server</source>
-      <translation type="unfinished">Add Server</translation>
+      <translation>添加服务器</translation>
     </message>
   </context>
   <context>
@@ -17228,27 +17292,27 @@ Confirm change?</translation>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Horizontal Distance</source>
-      <translation type="unfinished">Horizontal Distance</translation>
+      <translation>水平距离</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Vertical Distance</source>
-      <translation type="unfinished">Vertical Distance</translation>
+      <translation>垂直距离</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Area</source>
-      <translation type="unfinished">Area</translation>
+      <translation>面积</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Speed</source>
-      <translation type="unfinished">Speed</translation>
+      <translation>速度</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="27"/>
       <source>Temperature</source>
-      <translation type="unfinished">Temperature</translation>
+      <translation>温度</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml" line="64"/>
@@ -17324,7 +17388,7 @@ Confirm change?</translation>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="63"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/VTOLChecklist.qml" line="64"/>
@@ -17621,7 +17685,7 @@ Confirm change?</translation>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2393"/>
       <source>Quadrotor</source>
-      <translation type="unfinished">Quadrotor</translation>
+      <translation>四旋翼</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2394"/>
@@ -17661,7 +17725,7 @@ Confirm change?</translation>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2401"/>
       <source>Ground rover</source>
-      <translation type="unfinished">Ground rover</translation>
+      <translation>地面车</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2402"/>
@@ -17703,7 +17767,7 @@ Confirm change?</translation>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2411"/>
       <source>Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter</source>
-      <translation type="unfinished">Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter</translation>
+      <translation>四旋翼 VTOL</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2412"/>
@@ -18032,7 +18096,7 @@ Confirm change?</translation>
     <message>
       <location filename="../src/Settings/VideoSettings.cc" line="23"/>
       <source>Video Stream Disabled</source>
-      <translation type="unfinished">Video Stream Disabled</translation>
+      <translation>视频流已禁用</translation>
     </message>
     <message>
       <location filename="../src/Settings/VideoSettings.cc" line="24"/>
@@ -18075,4 +18139,67 @@ Confirm change?</translation>
       <translation type="unfinished">Yuneec Mantis G</translation>
     </message>
   </context>
+  <context>
+    <name>VehicleSummaryRow</name>
+    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="12"/>
+      <source>Disabled</source>
+      <translation>已禁用</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="13"/>
+      <source>Enabled</source>
+      <translation>已启用</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="14"/>
+      <source>Some disabled</source>
+      <translation>部分已禁用</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="15"/>
+      <source>Manual</source>
+      <translation>手动</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="16"/>
+      <source>Auto</source>
+      <translation>自动</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="17"/>
+      <source>RTL</source>
+      <translation>返航</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="18"/>
+      <source>Hold</source>
+      <translation>保持</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="19"/>
+      <source>Always Hold</source>
+      <translation>始终保持</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="20"/>
+      <source>Always RTL</source>
+      <translation>始终返航</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="21"/>
+      <source>Hold and Disarm</source>
+      <translation>保持并上锁</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="22"/>
+      <source>None</source>
+      <translation>无</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="23"/>
+      <source>Unknown</source>
+      <translation>未知</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="24"/>
+      <source>Undefined</source>
+      <translation>未定义</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="25"/>
+      <source>Rover</source>
+      <translation>地面车</translation>
+    </message>    <message>
+      <location filename="../src/QmlControls/VehicleSummaryRow.qml" line="26"/>
+      <source>Analog Voltage and Current</source>
+      <translation>模拟电压和电流</translation>
+    </message>  </context>
 </TS>
