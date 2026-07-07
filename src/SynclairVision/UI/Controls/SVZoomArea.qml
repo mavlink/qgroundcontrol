@@ -14,6 +14,8 @@ Item {
     property bool zoomOutPressed: false
 
     function getButton(mouseX, mouseY) {
+        if(!root.enabled) { return -1 }
+        
         if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
             return -1
         }
@@ -47,13 +49,13 @@ Item {
             } else if(hoverIndex === 0) {
                 return qgcPalette.windowShadeLight
             } else {
-                return qgcPalette.windowShade
+                return (root.enabled) ? qgcPalette.windowShade : qgcPalette.window
             }
         }
         rotation: 180
 
         buttonText: "+"
-        textColor: qgcPalette.statusPassedText
+        textColor: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
 
     }
 
@@ -68,12 +70,12 @@ Item {
             } else if(hoverIndex === 1) {
                 return qgcPalette.windowShadeLight
             } else {
-                return qgcPalette.windowShade
+                return (root.enabled) ? qgcPalette.windowShade : qgcPalette.window
             }
         }
 
         buttonText: "-"
-        textColor: qgcPalette.statusPassedText
+        textColor: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
 
     }
 
@@ -91,7 +93,7 @@ Item {
         radius: width / 2
         color: "transparent"
         border.width: 1
-        border.color: qgcPalette.statusPassedText
+        border.color: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
     }
 
     MouseArea {

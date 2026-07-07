@@ -30,24 +30,18 @@ Item {
                 item.hasInnerRing = false
             }
 
+            item.enabled = root.enabled
+
         }
     }
 
     Component {
         id: areaComponent
-        SVJoystickArea {
-            id: joystick
-            anchors.fill: parent
-            //anchors.margins: borderWidth
-        }
+        SVJoystickArea {}
     }
 
     Component {
         id: dragComponent
-        SVJoystickDrag {
-            id: joystick
-            anchors.fill: parent
-            //anchors.margins: borderWidth
-        }
+        SVJoystickDrag {}
     }
 }

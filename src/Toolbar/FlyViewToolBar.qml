@@ -151,8 +151,8 @@ Item {
                 QGCCheckBoxSlider {
                     id: overlayButton
                     text: "Synclair Vision: QGroundControl"
-                    checked: SVState.svOverlay
-                    onCheckedChanged: SVState.svOverlay = checked
+                    checked: SVSettings.svOverlay
+                    onCheckedChanged: SVSettings.svOverlay = checked
                     anchors.right: flyViewIndicators.right
                     anchors.rightMargin: _margins * 2
                     anchors.verticalCenter: parent.verticalCenter

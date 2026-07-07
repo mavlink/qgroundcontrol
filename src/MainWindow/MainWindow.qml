@@ -572,7 +572,7 @@ ApplicationWindow {
     Popup {
         id:             indicatorDrawer
         x:              calcXPosition()
-        y:              ((SVState.svToolbar) ? ScreenTools.toolbarHeight : 0) + _margins
+        y:              ((SVSettings.svToolbar) ? ScreenTools.toolbarHeight : 0) + _margins
         leftInset:      0
         rightInset:     0
         topInset:       0

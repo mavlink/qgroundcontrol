@@ -162,6 +162,7 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 1.7
 
         RowLayout {
             Layout.fillWidth: true
@@ -202,7 +203,7 @@ Item {
                             
                         }
                     }
-
+                    
                     Repeater {
                         model: root.sectionModel
 
@@ -227,7 +228,7 @@ Item {
                             Rectangle {
                                 anchors.fill: parent
                                 anchors.margins: ScreenTools.defaultFontPixelWidth * 0.25 / 2
-                                anchors.leftMargin: 0
+                                //anchors.leftMargin: 0
                                 color: "transparent"
                                 border.width: 1
                                 border.color: qgcPalette.window

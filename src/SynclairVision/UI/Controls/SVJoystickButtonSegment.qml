@@ -97,6 +97,7 @@ Item {
 
                 arrowFilled: root.arrowFilled
                 outerBorderColor: root.outerBorderColor
+                //opacity: (root.enabled) ? 1 : 0.33
 
             }
         }

@@ -38,6 +38,8 @@ Item {
     }
 
     function getHoveredButton(mouseX, mouseY) {
+        if(!root.enabled) { return -1 }
+
         const radius = root.width / 2;
         const innerRadius = radius / 2;
 
@@ -94,11 +96,11 @@ Item {
     SVJoystickButtonSegment {
         id: outerButtons
         anchors.fill: parent
-        buttonColor: qgcPalette.windowShade
+        buttonColor: (root.enabled) ? qgcPalette.windowShade : qgcPalette.window
         hoveredButtonColor: qgcPalette.windowShadeLight
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: qgcPalette.windowShadeLight
-        outerBorderColor: qgcPalette.statusPassedText
+        outerBorderColor: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
         hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
         clicked: outerClicked 
         arrowFilled: (qgcPalette.globalTheme === QGCPalette.Light) ? false : true
@@ -116,7 +118,7 @@ Item {
         hoveredButtonColor: qgcPalette.windowShadeLight
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: qgcPalette.windowShadeLight
-        outerBorderColor: qgcPalette.statusPassedText
+        outerBorderColor: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
         hoverIndex: (root.hoverIndex >= 4) ? root.hoverIndex - 4 : -1
 
         clicked: innerClicked
