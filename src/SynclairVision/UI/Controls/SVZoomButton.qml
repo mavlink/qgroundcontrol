@@ -58,7 +58,7 @@ Item {
             anchors.centerIn: parent
             anchors.verticalCenterOffset: - root.radiusY * 0.1
             text: buttonText
-            font.pixelSize: radiusX * 1.5
+            font.pixelSize: root.radiusX * 1.5
             color: textColor
         }
     }

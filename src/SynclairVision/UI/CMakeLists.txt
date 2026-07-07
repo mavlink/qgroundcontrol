@@ -3,7 +3,7 @@
 # ============================================================================
 qt_add_library(SynclairVisionUIModule STATIC)
 
-set_source_files_properties(SVState.qml
+set_source_files_properties(Settings/SVSettings.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
@@ -12,62 +12,70 @@ qt_add_qml_module(SynclairVisionUIModule
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
-        SVFlyView.qml
-        SVFlyViewWidgetLayer.qml
-        SVState.qml
-        SVCameraLayer.qml
-        SVCameraWidgetLayer.qml
-        SVControlPanel.qml
-        SVVirtualJoystick.qml
-        SVJoystickArea.qml
-        SVJoystickDrag.qml
-        SVJoystickButtonSegment.qml
-        SVArrow.qml
-        SVZoom.qml
-        SVZoomArea.qml
-        SVZoomButton.qml
-        SVMenuStrip.qml
-        SVMenuStripButton.qml
-        SVSettingsMenu.qml
-        SVCameraLayouts.js
-        SVSettingsGeneral.js
-        SVSettingsControls.js
-        SVSettingsDev.js
+        Flyview/SVFlyView.qml
+        Flyview/SVFlyViewWidgetLayer.qml
+
+        Camera/SVCameraLayer.qml
+        Camera/SVCameraWidgetLayer.qml
+        Camera/SVCameraLayouts.js
+
+        Controls/SVControlPanel.qml
+        Controls/SVVirtualJoystick.qml
+        Controls/SVJoystickArea.qml
+        Controls/SVJoystickDrag.qml
+        Controls/SVJoystickButtonSegment.qml
+        Controls/SVZoom.qml
+        Controls/SVZoomArea.qml
+        Controls/SVZoomButton.qml
+        
+        Menustrip/SVMenuStrip.qml
+        Menustrip/SVMenuStripButton.qml
+
+        Settings/SVSettings.qml
+        Settings/SVSettingsMenu.qml
+        Settings/SVSettingsGeneral.js
+        Settings/SVSettingsControls.js
+        Settings/SVSettingsDev.js
+
+        Resources/SVArrow.qml
+
     RESOURCES
-        Images/no-video-camera-background.png
-        Images/no_video_background.png
+        Resources/Images/no-video-camera-background.png
+        Resources/Images/no_video_background.png
+        
     NO_PLUGIN
 )
 
 qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
     PREFIX "/qmlimages"
-    BASE "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons"
     FILES
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/layout_single.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/layout_double.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/layout_quadruple.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/layout_double_panorama.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/layout_double+panorama.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/layout_triple+panorama.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/layout_single_panorama.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/layout_main.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/camera_photo.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/camera_record.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_single.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_double.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_quadruple.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_double_panorama.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_double+panorama.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_triple+panorama.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_single_panorama.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_main.svg"
 
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_main.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_main_open.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_general.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_controls.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_dev.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/toolbar_open.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/toolbar_closed.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/camera_photo.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/camera_record.svg"
 
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_main.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_main_open.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_general.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_controls.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_dev.svg"
 
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/toolbar_open.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/toolbar_closed.svg"
 
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/hud_eye.svg"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/hud_eye_closed.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/controls_lock.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/controls_lock_closed.svg"
 
-
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/hud_eye.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/hud_eye_closed.svg"
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -70,14 +70,14 @@ Item {
         id: controlPanel
         anchors.bottom: root.bottom
         anchors.horizontalCenter: root.horizontalCenter
-        visible: SVState.svHUD
+        visible: SVSettings.svHUD
     }
 
     Item {
         id: settingsHost
         anchors.top: parent.top
         anchors.right: parent.right
-        visible: SVState.svHUD
+        visible: SVSettings.svHUD
         z: 3
 
         width: settings.width
@@ -92,7 +92,7 @@ Item {
         id: settingsMenu
         anchors.top: parent.top
         anchors.right: parent.right
-        visible: SVState.svHUD
+        visible: SVSettings.svHUD
 
 
         menuText: "Settings"
@@ -129,24 +129,133 @@ Item {
         id: settingsDrawer 
 
         Item {
+            id: settingsDrawerRoot
+
+            property var drawer
             property bool indicatorDrawerUseRightEdgeAlignment: true
             property real indicatorDrawerRightEdgeMargin: -ScreenTools.defaultFontPixelHeight / 8 - 2
             readonly property real drawerSpacing: ScreenTools.defaultFontPixelWidth * 2
+            property real settingsPanelWidth: 700
+            property real settingsPanelHeight: 900
+            readonly property real drawerViewportWidth: {
+                if (!drawer || !drawer.parent || (drawer.parent.width <= 0)) {
+                    return root.width
+                }
 
-            width: settingsPanel.width + settingsCategoryStrip.width + drawerSpacing
-            height: Math.max(settingsPanel.height, settingsCategoryStrip.height)
+                return drawer.parent.width - indicatorDrawerRightEdgeMargin - (drawer.padding * 2)
+            }
+            readonly property real drawerViewportHeight: {
+                if (!drawer || !drawer.parent || (drawer.parent.height <= 0)) {
+                    return root.height
+                }
+
+                return drawer.parent.height - drawer.y - (drawer.padding * 2) - drawer._margins
+            }
+            readonly property real minimumSettingsPanelWidth: ScreenTools.defaultFontPixelWidth * 75
+            readonly property real maximumSettingsPanelWidth: Math.max(minimumSettingsPanelWidth,
+                                                                        drawerViewportWidth - settingsCategoryStrip.width - drawerSpacing - (ScreenTools.defaultFontPixelWidth * 12))
+            readonly property real minimumSettingsPanelHeight: ScreenTools.defaultFontPixelHeight * 10
+            readonly property real maximumSettingsPanelHeight: Math.max(minimumSettingsPanelHeight,
+                                                                         drawerViewportHeight - (ScreenTools.defaultFontPixelHeight * 5))
+
+            width: settingsPanelContainer.width + settingsCategoryStrip.width + drawerSpacing
+            height: Math.max(settingsPanelContainer.height, settingsCategoryStrip.height)
 
             Component.onDestruction: root.activeSettingsId = ""
+
+            Component.onCompleted: {
+                settingsPanelWidth = Math.max(minimumSettingsPanelWidth, Math.min(settingsPanelWidth, maximumSettingsPanelWidth))
+                settingsPanelHeight = Math.max(minimumSettingsPanelHeight, Math.min(settingsPanelHeight, maximumSettingsPanelHeight))
+            }
+
+            onMaximumSettingsPanelWidthChanged: {
+                if (settingsPanelWidth > maximumSettingsPanelWidth) {
+                    settingsPanelWidth = maximumSettingsPanelWidth
+                }
+            }
+
+            onMaximumSettingsPanelHeightChanged: {
+                if (settingsPanelHeight > maximumSettingsPanelHeight) {
+                    settingsPanelHeight = maximumSettingsPanelHeight
+                }
+            }
 
             Row {
                 spacing: parent.drawerSpacing
 
-                SVSettingsMenu {
-                    id: settingsPanel
+                Item {
+                    id: settingsPanelContainer
+                    width: Math.max(settingsDrawerRoot.minimumSettingsPanelWidth,
+                                    Math.min(settingsDrawerRoot.settingsPanelWidth, settingsDrawerRoot.maximumSettingsPanelWidth))
+                    height: Math.max(settingsDrawerRoot.minimumSettingsPanelHeight,
+                                     Math.min(settingsDrawerRoot.settingsPanelHeight, settingsDrawerRoot.maximumSettingsPanelHeight))
 
-                    activeSettingsId: root.activeSettingsId
-                    width: 700
-                    height: 900
+                    SVSettingsMenu {
+                        id: settingsPanel
+                        anchors.fill: parent
+
+                        activeSettingsId: root.activeSettingsId
+                    }
+
+                    Rectangle {
+                        id: settingsResizeHandle
+                        anchors.left: parent.left
+                        anchors.bottom: parent.bottom
+                        //anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
+                        //anchors.bottomMargin: ScreenTools.defaultFontPixelWidth / 2
+                        width: ScreenTools.defaultFontPixelHeight * 1.8
+                        height: width
+                        radius: ScreenTools.defaultBorderRadius
+                        color: Qt.rgba(0, 0, 0, 0.18)
+                        border.width: 1
+                        border.color: qgcPalette.windowShadeLight
+                        z: 1
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: parent.width * 0.65
+                            height: 1
+                            rotation: -45
+                            color: qgcPalette.text
+                            opacity: 0.8
+                        }
+
+                        HoverHandler {
+                            cursorShape: Qt.SizeFDiagCursor
+                        }
+
+                        DragHandler {
+                            acceptedButtons: Qt.LeftButton
+                            target: null
+                            cursorShape: Qt.SizeFDiagCursor
+
+                            property real initialWidth: 0
+                            property real initialHeight: 0
+
+                            onActiveChanged: {
+                                if (!active) {
+                                    return
+                                }
+
+                                initialWidth = settingsPanel.width
+                                initialHeight = settingsPanel.height
+                            }
+
+                            onActiveTranslationChanged: {
+                                if (!active) {
+                                    return
+                                }
+
+                                var nextWidth = initialWidth - activeTranslation.x
+                                var nextHeight = initialHeight + activeTranslation.y
+
+                                settingsDrawerRoot.settingsPanelWidth = Math.max(settingsDrawerRoot.minimumSettingsPanelWidth,
+                                                                                 Math.min(nextWidth, settingsDrawerRoot.maximumSettingsPanelWidth))
+                                settingsDrawerRoot.settingsPanelHeight = Math.max(settingsDrawerRoot.minimumSettingsPanelHeight,
+                                                                                  Math.min(nextHeight, settingsDrawerRoot.maximumSettingsPanelHeight))
+                            }
+                        }
+                    }
                 }
 
                 SVMenuStrip {
@@ -177,6 +286,7 @@ Item {
                     }
                 }
             }
+
         }
     }
 
@@ -195,9 +305,9 @@ Item {
 
         activeIds: {
             var ids = []
-            if (!SVState.svHUD) ids.push("hud")
+            if (!SVSettings.svHUD) ids.push("hud")
             if (root.recordActive) ids.push("record")
-            if (!SVState.svToolbar) ids.push("toolbar")
+            if (!SVSettings.svToolbar) ids.push("toolbar")
             return ids
         }
 
@@ -208,7 +318,7 @@ Item {
                 checkable: true,
                 iconSource: "/qmlimages/hud_eye.svg",
                 alternateIconSource: "/qmlimages/hud_eye_closed.svg",
-                iconActive: !SVState.svHUD,
+                iconActive: !SVSettings.svHUD,
                 enabled: true
             },
             { 
@@ -217,7 +327,7 @@ Item {
                 checkable: true,
                 iconSource: "/qmlimages/toolbar_open.svg",
                 alternateIconSource: "/qmlimages/toolbar_closed.svg",
-                iconActive: !SVState.svToolbar,
+                iconActive: !SVSettings.svToolbar,
                 enabled: true
             },
             { 
@@ -238,7 +348,7 @@ Item {
 
         onItemSelected: (id) => {
             if (id === "hud") {
-                SVState.svHUD = !SVState.svHUD
+                SVSettings.svHUD = !SVSettings.svHUD
                 return
             }
 
@@ -248,7 +358,7 @@ Item {
             }
 
             if (id === "toolbar") {
-                SVState.svToolbar = !SVState.svToolbar
+                SVSettings.svToolbar = !SVSettings.svToolbar
                 return
             }
         }
@@ -259,7 +369,7 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: root.leftToolStripBottom + 5
         anchors.left: parent.left
-        visible: SVState.svHUD
+        visible: SVSettings.svHUD
 
 
         menuText: "Layout"

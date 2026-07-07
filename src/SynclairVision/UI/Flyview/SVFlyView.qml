@@ -7,7 +7,7 @@ import QtPositioning
 import QtQuick.Window
 import QtQml.Models
 import QtQuick.Shapes 2.15
-import "SVCameraLayouts.js" as SVCameraLayouts
+import "../Camera/SVCameraLayouts.js" as SVCameraLayouts
 
 import QGroundControl
 import QGroundControl.Controls
