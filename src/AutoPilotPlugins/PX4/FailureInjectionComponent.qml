@@ -103,7 +103,6 @@ SetupPage {
             return
         }
         var s = _sendQueue[0]
-        _injectOne(s.unit, s.type, s.param3, s.param4)
         if (s.logArgs) {
             var stamp = Qt.formatDateTime(new Date(), "hh:mm:ss")
             if (s.logArgs.track) {
@@ -114,6 +113,7 @@ SetupPage {
                 FailureInjection.logRow(s.logArgs.unitName, s.logArgs.typeName, s.logArgs.instanceLabel, stamp)
             }
         }
+        _injectOne(s.unit, s.type, s.param3, s.param4)
     }
 
     // One ack arrived: resolve the matching log row (only one is pending at a time), then send the next.
