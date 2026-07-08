@@ -459,24 +459,15 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing:            ScreenTools.defaultFontPixelWidth * 0.70
 
-                Rectangle {
+                Image {
                     Layout.alignment:       Qt.AlignVCenter
                     Layout.preferredWidth:  brandBlock._symbolSize
                     Layout.preferredHeight: brandBlock._symbolSize
-                    radius:                 Math.round(width * 0.16)
-                    color:                  Qt.rgba(0.93, 0.965, 1.0, 0.92)
-                    border.color:           Qt.rgba(0.60, 0.76, 1.0, 0.22)
-                    border.width:           1
-
-                    Image {
-                        anchors.fill:       parent
-                        anchors.margins:    parent.width * 0.07
-                        source:             "/res/brand-symbol.png"
-                        sourceSize.width:   width
-                        sourceSize.height:  height
-                        fillMode:           Image.PreserveAspectFit
-                        mipmap:             true
-                    }
+                    source:                 "/res/brand-symbol.png"
+                    sourceSize.width:       width
+                    sourceSize.height:      height
+                    fillMode:               Image.PreserveAspectFit
+                    mipmap:                 true
                 }
 
                 Item {

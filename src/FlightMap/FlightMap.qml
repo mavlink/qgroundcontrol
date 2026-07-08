@@ -206,7 +206,7 @@ Map {
 
         sourceItem: Image {
             id:             mapItemImage
-            source:         isNaN(gcsHeading) ? "/res/QGCLogoFull.svg" : "/res/QGCLogoArrow.svg"
+            source:         "/res/brand-symbol.png"
             mipmap:         true
             antialiasing:   true
             fillMode:       Image.PreserveAspectFit
