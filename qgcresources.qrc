@@ -30,6 +30,7 @@
         <file alias="layout-right.svg">resources/layout-right.svg</file>
         <file alias="LockClosed.svg">resources/LockClosed.svg</file>
         <file alias="LockOpen.svg">resources/LockOpen.svg</file>
+        <file alias="nav-back.svg">resources/nav-back.svg</file>
         <file alias="notile.png">resources/notile.png</file>
         <file alias="NoVideoBackground.jpg">resources/NoVideoBackground.jpg</file>
         <file alias="Pause.svg">resources/Pause.svg</file>
@@ -37,6 +38,8 @@
         <file alias="pencil.svg">resources/pencil.svg</file>
         <file alias="Play.svg">resources/Play.svg</file>
         <file alias="PowerButton.svg">resources/PowerButton.svg</file>
+        <file alias="brand-symbol.png">resources/branding/brand-symbol.png</file>
+        <file alias="brand-wordmark.png">resources/branding/brand-wordmark.png</file>
         <file alias="QGCLogoBlack.svg">resources/QGCLogoBlack.svg</file>
         <file alias="QGCLogoFull.svg">resources/QGCLogoFull.svg</file>
         <file alias="QGCLogoWhite.svg">resources/QGCLogoWhite.svg</file>
@@ -60,6 +63,20 @@
         <file alias="Gripper.svg">resources/Gripper.svg</file>
         <file alias="GripperRelease.svg">resources/GripperRelease.svg</file>
         <file alias="GripperGrab.svg">resources/GripperGrab.svg</file>
+        <file alias="flyview-3d.svg">resources/flyview-3d.svg</file>
+        <file alias="flyview-actions.svg">resources/flyview-actions.svg</file>
+        <file alias="flyview-checklist.svg">resources/flyview-checklist.svg</file>
+        <file alias="flyview-continue.svg">resources/flyview-continue.svg</file>
+        <file alias="flyview-fly.svg">resources/flyview-fly.svg</file>
+        <file alias="flyview-gripper.svg">resources/flyview-gripper.svg</file>
+        <file alias="flyview-gripper-grab.svg">resources/flyview-gripper-grab.svg</file>
+        <file alias="flyview-gripper-release.svg">resources/flyview-gripper-release.svg</file>
+        <file alias="flyview-land.svg">resources/flyview-land.svg</file>
+        <file alias="flyview-mode.svg">resources/flyview-mode.svg</file>
+        <file alias="flyview-pause.svg">resources/flyview-pause.svg</file>
+        <file alias="flyview-plan.svg">resources/flyview-plan.svg</file>
+        <file alias="flyview-rtl.svg">resources/flyview-rtl.svg</file>
+        <file alias="flyview-takeoff.svg">resources/flyview-takeoff.svg</file>
         <file alias="qgroundcontrol.ico">resources/icons/qgroundcontrol.ico</file>
     </qresource>
     <qresource prefix="/res/firmware">
