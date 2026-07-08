@@ -3,7 +3,6 @@
 //Lägg till att klicka eller hålla ner för att ändra kameran och zoom
 
 function getSections() {
-    console.log("SVSettingsControls NEW FILE LOADED")
     return [
         {
             id: 'controlpanel',
@@ -122,8 +121,8 @@ function getSections() {
             ]
         },
         {
-            id: 'joystick',
-            title: 'Joystick',
+            id: 'zoom',
+            title: 'zoom',
             items: [
                 {
                     id: 'zoom_size',

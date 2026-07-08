@@ -56,7 +56,7 @@ Item {
         anchors.fill: parent
         anchors.margins: _widgetMargin
         parentToolInsets: root.parentToolInsets
-        visible: SVSettings.svHUD
+        visible: SVState.hud
     }
 
 

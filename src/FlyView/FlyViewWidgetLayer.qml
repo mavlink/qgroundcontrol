@@ -71,7 +71,7 @@ Item {
         anchors.top:        parent.top
         anchors.right:      parent.right
         spacing:            _layoutSpacing
-        visible:           !topRightPanel.visible && !SVSettings.svOverlay
+        visible:           !topRightPanel.visible && !SVState.synclairOverlay
 
         property real topEdgeRightInset:    childrenRect.height + _layoutMargin
         property real rightEdgeTopInset:    width + _layoutMargin
@@ -83,7 +83,7 @@ Item {
         anchors.bottom:     parent.bottom
         anchors.right:      parent.right
         spacing:            _layoutSpacing
-        visible:            !SVSettings.svOverlay || _mainWindowIsMap
+        visible:            !SVState.synclairOverlay || _mainWindowIsMap
 
         property real bottomEdgeRightInset:     height + _layoutMargin
         property real bottomEdgeCenterInset:    bottomEdgeRightInset

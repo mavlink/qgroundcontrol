@@ -5,23 +5,12 @@ QtObject {
     id: root
 
 //---------------------------------
-// Overlay
-//---------------------------------
-
-    property bool synclairOverlay: true
-    property bool hud: true
-    property bool toolbar: true
-    property bool lockControls: false
-    property string layout: "single"
-    property bool record: false
-
-//---------------------------------
 // General
 //---------------------------------
 
     //Video
         property int videoResolution: 123
-        property real targetBrightness: 1
+        property real videoTargetBrightness: 1
 
     //Network
         property string networkIPAdress: "127.0.0.1"
