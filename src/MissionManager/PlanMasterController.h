@@ -70,6 +70,9 @@ public:
     /// Replaces any current plan with the plan from the manager vehicle even if offline.
     Q_INVOKABLE void showPlanFromManagerVehicle(void);
 
+    /// Aligns the plan view controller with the current active vehicle.
+    Q_INVOKABLE void syncToActiveVehicle(void);
+
     /// Sends a plan to the specified file
     ///     @param[in] vehicle Vehicle we are sending a plan to
     ///     @param[in] filename Plan file to load

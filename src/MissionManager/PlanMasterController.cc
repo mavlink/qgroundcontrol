@@ -653,3 +653,21 @@ void PlanMasterController::showPlanFromManagerVehicle(void)
         _showPlanFromManagerVehicle();
     }
 }
+
+void PlanMasterController::syncToActiveVehicle(void)
+{
+    Vehicle* activeVehicle = _multiVehicleMgr->activeVehicle();
+    Vehicle* targetVehicle = activeVehicle ? activeVehicle : _controllerVehicle;
+
+    if (_managerVehicle != targetVehicle) {
+        _activeVehicleChanged(activeVehicle);
+        return;
+    }
+
+    if (dirty()) {
+        // Keep unsaved work intact when the plan is already associated with the active vehicle.
+        return;
+    }
+
+    showPlanFromManagerVehicle();
+}

@@ -12,7 +12,7 @@ import QGroundControl.UTMSP
 
 // Toolbar for Plan View
 Item {
-    width: missionStats.width + _margins
+    width: missionStats.implicitWidth + _margins
 
     property var    planMasterController
 
@@ -35,12 +35,8 @@ Item {
     property bool   _currentItemIsVTOLTakeoff:  _currentMissionItemValid && _currentMissionItem.command == 84
     property bool   _missionValid:              missionItems !== undefined
 
-    property real   _dataFontSize:              ScreenTools.defaultFontPointSize
-    property real   _largeValueWidth:           ScreenTools.defaultFontPixelWidth * 8
-    property real   _mediumValueWidth:          ScreenTools.defaultFontPixelWidth * 4
-    property real   _smallValueWidth:           ScreenTools.defaultFontPixelWidth * 3
-    property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth
-    property real   _rowSpacing:                ScreenTools.isMobile ? 1 : 0
+    property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth * 0.70
+    property real   _segmentPadding:            ScreenTools.defaultFontPixelWidth * 0.80
     property real   _distance:                  _currentMissionItemValid ? _currentMissionItem.distance : NaN
     property real   _altDifference:             _currentMissionItemValid ? _currentMissionItem.altDifference : NaN
     property real   _azimuth:                   _currentMissionItemValid ? _currentMissionItem.azimuth : NaN
@@ -61,16 +57,19 @@ Item {
     property string _altDifferenceText:             isNaN(_altDifference) ?             "-.-" : QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.unitsConversion.appSettingsVerticalDistanceUnitsString
     property string _gradientText:                  isNaN(_gradient) ?                  "-.-" : _gradient.toFixed(0) + qsTr(" deg")
     property string _azimuthText:                   isNaN(_azimuth) ?                   "-.-" : Math.round(_azimuth) % 360
-    property string _headingText:                   isNaN(_azimuth) ?                   "-.-" : Math.round(_heading) % 360
+    property string _headingText:                   isNaN(_heading) ?                   "-.-" : Math.round(_heading) % 360
     property string _missionPlannedDistanceText:    isNaN(_missionPlannedDistance) ?    "-.-" : QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionPlannedDistance).toFixed(0) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
     property string _missionMaxTelemetryText:       isNaN(_missionMaxTelemetry) ?       "-.-" : QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionMaxTelemetry).toFixed(0) + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
     property string _batteryChangePointText:        _batteryChangePoint < 0 ?           qsTr("N/A") : _batteryChangePoint
     property string _batteriesRequiredText:         _batteriesRequired < 0 ?            qsTr("N/A") : _batteriesRequired
+    property string _selectedWaypointText:          _currentMissionItemValid && _currentMissionItem.sequenceNumber !== undefined ? _currentMissionItem.sequenceNumber : "--"
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     // Properties of UTM adapter
     property bool   _utmspEnabled:                       QGroundControl.utmspSupported
+
+    QGCPalette { id: qgcPal }
 
     function getMissionTime() {
         if (!_missionTime) {
@@ -89,20 +88,85 @@ Item {
         return complete
     }
 
+    component BarDivider: Rectangle {
+        Layout.alignment:       Qt.AlignVCenter
+        Layout.preferredWidth:  1
+        Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2.1
+        color:                  Qt.rgba(0.82, 0.90, 0.95, 0.09)
+    }
+
+    component MetricSegment: Item {
+        id: metricSegment
+
+        property string label: ""
+        property string value: ""
+        property real   minimumWidth: ScreenTools.defaultFontPixelWidth * 7.8
+
+        Layout.alignment:       Qt.AlignVCenter
+        Layout.preferredWidth:  Math.max(minimumWidth, valueColumn.implicitWidth + _segmentPadding)
+        Layout.fillHeight:      true
+
+        function displayLabel() {
+            var text = metricSegment.label
+            while (text.length > 0 && text.charAt(text.length - 1) === " ") {
+                text = text.substring(0, text.length - 1)
+            }
+            if (text.length > 0 && (text.charAt(text.length - 1) === ":" || text.charAt(text.length - 1) === "：")) {
+                return text.substring(0, text.length - 1)
+            }
+            return text
+        }
+
+        ColumnLayout {
+            id:                     valueColumn
+            anchors.left:           parent.left
+            anchors.right:          parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing:                -ScreenTools.defaultFontPixelHeight * 0.08
+
+            QGCLabel {
+                Layout.fillWidth:   true
+                text:               metricSegment.displayLabel()
+                color:              qgcPal.buttonText
+                font.pointSize:     ScreenTools.labelFontPointSize
+                elide:              Text.ElideRight
+            }
+
+            QGCLabel {
+                Layout.fillWidth:   true
+                text:               metricSegment.value
+                color:              qgcPal.text
+                font.bold:          true
+                font.pointSize:     ScreenTools.controlFontPointSize
+                elide:              Text.ElideRight
+            }
+        }
+    }
+
     RowLayout {
         id:                     missionStats
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.leftMargin:     _margins
         anchors.left:           parent.left
-        spacing:                ScreenTools.defaultFontPixelWidth * 2
+        spacing:                ScreenTools.defaultFontPixelWidth * 0.72
 
-        QGCButton {
+        Button {
             id:          uploadButton
+            Layout.alignment:       Qt.AlignVCenter
+            Layout.preferredWidth:  Math.max(uploadText.implicitWidth + ScreenTools.defaultFontPixelWidth * 3.0,
+                                             ScreenTools.defaultFontPixelWidth * 6.4)
+            Layout.preferredHeight: Math.max(ScreenTools.defaultFontPixelHeight * 1.60,
+                                             missionStats.height * 0.54)
+            padding:      0
+            topInset:     0
+            bottomInset:  0
+            leftInset:    0
+            rightInset:   0
+            hoverEnabled: !ScreenTools.isMobile
             text:        _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
             enabled:     _utmspEnabled ? !_controllerSyncInProgress && UTMSPStateStorage.enableMissionUploadButton : !_controllerSyncInProgress
             visible:     !_controllerOffline && !_controllerSyncInProgress
-            primary:     _controllerDirty
             onClicked: {
                 if (_utmspEnabled) {
                     QGroundControl.utmspManager.utmspVehicle.triggerActivationStatusBar(true);
@@ -110,6 +174,28 @@ Item {
                     UTMSPStateStorage.indicatorDisplayStatus = true
                 }
                 _planMasterController.upload();
+            }
+
+            background: Rectangle {
+                radius:         Math.round(ScreenTools.defaultFontPixelWidth * 0.42)
+                color:          _controllerDirty ? qgcPal.primaryButton :
+                                    (uploadButton.pressed ? Qt.rgba(0.135, 0.140, 0.150, 0.48) :
+                                     uploadButton.hovered ? Qt.rgba(1, 1, 1, 0.055) : Qt.rgba(1, 1, 1, 0.020))
+                border.color:   _controllerDirty ? qgcPal.primaryButton : Qt.rgba(0.82, 0.90, 0.95, 0.22)
+                border.width:   1
+                opacity:        uploadButton.enabled ? 1.0 : 0.45
+            }
+
+            contentItem: Item {
+                QGCLabel {
+                    id:                     uploadText
+                    anchors.centerIn:       parent
+                    text:                   uploadButton.text
+                    color:                  _controllerDirty ? qgcPal.primaryButtonText : qgcPal.text
+                    font.pointSize:         ScreenTools.controlFontPointSize
+                    horizontalAlignment:    Text.AlignHCenter
+                    verticalAlignment:      Text.AlignVCenter
+                }
             }
 
             PropertyAnimation on opacity {
@@ -123,112 +209,32 @@ Item {
             }
         }
 
-        GridLayout {
-            columns:                8
-            rowSpacing:             _rowSpacing
-            columnSpacing:          _labelToValueSpacing
+        BarDivider { }
 
-            QGCLabel {
-                text:               qsTr("Selected Waypoint")
-                Layout.columnSpan:  8
-                font.pointSize:     ScreenTools.smallFontPointSize
-            }
+        MetricSegment { label: qsTr("Selected Waypoint"); value: _selectedWaypointText; minimumWidth: ScreenTools.defaultFontPixelWidth * 8.6 }
+        BarDivider { }
+        MetricSegment { label: qsTr("Alt diff:");         value: _altDifferenceText;    minimumWidth: ScreenTools.defaultFontPixelWidth * 7.4 }
+        BarDivider { }
+        MetricSegment { label: qsTr("Azimuth:");          value: _azimuthText;          minimumWidth: ScreenTools.defaultFontPixelWidth * 6.3 }
+        BarDivider { }
+        MetricSegment { label: qsTr("Dist prev WP:");     value: _distanceText;         minimumWidth: ScreenTools.defaultFontPixelWidth * 8.8 }
+        BarDivider { }
+        MetricSegment { label: qsTr("Gradient:");         value: _gradientText;         minimumWidth: ScreenTools.defaultFontPixelWidth * 6.9 }
+        BarDivider { }
+        MetricSegment { label: qsTr("Heading:");          value: _headingText;          minimumWidth: ScreenTools.defaultFontPixelWidth * 6.3 }
+        BarDivider { }
+        MetricSegment { label: qsTr("Distance:");         value: _missionPlannedDistanceText; minimumWidth: ScreenTools.defaultFontPixelWidth * 7.6 }
+        BarDivider { }
+        MetricSegment { label: qsTr("Max telem dist:");   value: _missionMaxTelemetryText;    minimumWidth: ScreenTools.defaultFontPixelWidth * 10.0 }
+        BarDivider { }
+        MetricSegment { label: qsTr("Time:");             value: getMissionTime();            minimumWidth: ScreenTools.defaultFontPixelWidth * 8.0 }
+        BarDivider { visible: _batteryInfoAvailable }
 
-            QGCLabel { text: qsTr("Alt diff:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _altDifferenceText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _mediumValueWidth
-            }
-
-            Item { width: 1; height: 1 }
-
-            QGCLabel { text: qsTr("Azimuth:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _azimuthText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _smallValueWidth
-            }
-
-            Item { width: 1; height: 1 }
-
-            QGCLabel { text: qsTr("Dist prev WP:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _distanceText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _largeValueWidth
-            }
-
-            QGCLabel { text: qsTr("Gradient:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _gradientText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _mediumValueWidth
-            }
-
-            Item { width: 1; height: 1 }
-
-            QGCLabel { text: qsTr("Heading:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _headingText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _smallValueWidth
-            }
-        }
-
-        GridLayout {
-            columns:                5
-            rowSpacing:             _rowSpacing
-            columnSpacing:          _labelToValueSpacing
-
-            QGCLabel {
-                text:               qsTr("Total Mission")
-                Layout.columnSpan:  5
-                font.pointSize:     ScreenTools.smallFontPointSize
-            }
-
-            QGCLabel { text: qsTr("Distance:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _missionPlannedDistanceText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _largeValueWidth
-            }
-
-            Item { width: 1; height: 1 }
-
-            QGCLabel { text: qsTr("Max telem dist:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _missionMaxTelemetryText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _largeValueWidth
-            }
-
-            QGCLabel { text: qsTr("Time:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   getMissionTime()
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _largeValueWidth
-            }
-        }
-
-        GridLayout {
-            columns:                3
-            rowSpacing:             _rowSpacing
-            columnSpacing:          _labelToValueSpacing
-            visible:                _batteryInfoAvailable
-
-            QGCLabel {
-                text:               qsTr("Battery")
-                Layout.columnSpan:  3
-                font.pointSize:     ScreenTools.smallFontPointSize
-            }
-
-            QGCLabel { text: qsTr("Batteries required:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _batteriesRequiredText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _mediumValueWidth
-            }
+        MetricSegment {
+            label:        qsTr("Batteries required:")
+            value:        _batteriesRequiredText
+            minimumWidth: ScreenTools.defaultFontPixelWidth * 9.8
+            visible:      _batteryInfoAvailable
         }
     }
 }

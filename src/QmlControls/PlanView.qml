@@ -78,6 +78,11 @@ Item {
         return coordinate
     }
 
+    function syncToActiveVehicleOnEntry() {
+        _planMasterController.syncToActiveVehicle()
+        _missionController.setCurrentPlanViewSeqNum(0, true)
+    }
+
     property bool _firstMissionLoadComplete:    false
     property bool _firstFenceLoadComplete:      false
     property bool _firstRallyLoadComplete:      false
@@ -558,6 +563,8 @@ Item {
             anchors.top:        parent.top
             z:                  QGroundControl.zOrderWidgets
             maxHeight:          parent.height - toolStrip.y
+            sizeScale:          0.82
+            backdropSourceItem: editorMap
 
             readonly property int fileButtonIndex:      0
             readonly property int takeoffButtonIndex:   1
@@ -697,7 +704,7 @@ Item {
                 blurMax:            42
                 sourceBrightness:   -0.04
                 sourceSaturation:   0.52
-                tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.80)
+                tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.68)
                 sheenColor:         "transparent"
             }
         }
@@ -865,6 +872,7 @@ Item {
             anchors.bottom:     parent.bottom
             height:             ScreenTools.defaultFontPixelHeight * 7
             missionController:  _missionController
+            backdropSourceItem: editorMap
             visible:            _internalVisible && _editingLayer === _layerMission && QGroundControl.corePlugin.options.showMissionStatus
 
             onSetCurrentSeqNum: _missionController.setCurrentPlanViewSeqNum(seqNum, true)
@@ -883,6 +891,7 @@ Item {
             anchors.bottom:         terrainStatus.visible ? terrainStatus.top : parent.bottom
             anchors.left:           toolStrip.y + toolStrip.height + _toolsMargin > mapScale.y ? toolStrip.right: parent.left
             mapControl:             editorMap
+            backdropSourceItem:     editorMap
             buttonsOnLeft:          true
             terrainButtonVisible:   _editingLayer === _layerMission
             terrainButtonChecked:   terrainStatus.visible

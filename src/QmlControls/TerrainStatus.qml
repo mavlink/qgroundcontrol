@@ -18,13 +18,14 @@ import QGroundControl.Palette
 Rectangle {
     id:         root
     radius:     Math.round(ScreenTools.defaultFontPixelWidth * 0.75)
-    color:      Qt.rgba(0.045, 0.048, 0.052, 0.52)
-    border.color: Qt.rgba(0.82, 0.88, 0.94, 0.045)
-    border.width: 1
+    color:      "transparent"
+    border.color: "transparent"
+    border.width: 0
     opacity:    1.0
     clip:       true
 
     property var missionController
+    property var backdropSourceItem: null
 
     signal setCurrentSeqNum(int seqNum)
 
@@ -39,11 +40,25 @@ Rectangle {
 
     QGCPalette { id: qgcPal }
 
+    GlassBackdrop {
+        anchors.fill:       parent
+        sourceItem:         root.backdropSourceItem
+        targetItem:         root
+        cornerRadius:       root.radius
+        sourceScale:        0.42
+        blurAmount:         0.94
+        blurMax:            42
+        sourceBrightness:   -0.01
+        sourceSaturation:   0.62
+        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.68)
+        sheenColor:         "transparent"
+    }
+
     QGCLabel {
         id:                     titleLabel
         anchors.top:            parent.bottom
         width:                  parent.height
-        font.pointSize:         ScreenTools.smallFontPointSize
+        font.pointSize:         ScreenTools.labelFontPointSize
         text:                   qsTr("Height AMSL (%1)").arg(_unitsConversion.appSettingsVerticalDistanceUnitsString)
         horizontalAlignment:    Text.AlignHCenter
         rotation:               -90
@@ -80,7 +95,7 @@ Rectangle {
                     max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionController.missionTotalDistance)
                     lineVisible:                false
                     labelsFont.family:          ScreenTools.fixedFontFamily
-                    labelsFont.pointSize:       ScreenTools.smallFontPointSize
+                    labelsFont.pointSize:       ScreenTools.captionFontPointSize
                     labelsColor:                qgcPal.text
                     tickCount:                  5
                     gridLineColor:              applyOpacity(qgcPal.text, 0.085)
@@ -92,7 +107,7 @@ Rectangle {
                     max:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude)
                     lineVisible:                false
                     labelsFont.family:          ScreenTools.fixedFontFamily
-                    labelsFont.pointSize:       ScreenTools.smallFontPointSize
+                    labelsFont.pointSize:       ScreenTools.captionFontPointSize
                     labelsColor:                qgcPal.text
                     tickCount:                  4
                     gridLineColor:              applyOpacity(qgcPal.text, 0.085)

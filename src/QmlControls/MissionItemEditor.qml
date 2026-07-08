@@ -34,7 +34,7 @@ Rectangle {
     property var    _masterController:          masterController
     property var    _missionController:         _masterController.missionController
     property bool   _currentItem:               missionItem.isCurrentItem
-    property color  _outerTextColor:            _currentItem ? qgcPal.primaryButtonText : qgcPal.text
+    property color  _outerTextColor:            _currentItem ? qgcPal.text : qgcPal.buttonText
     property bool   _noMissionItemsAdded:       ListView.view.model.count === 1
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
     property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
