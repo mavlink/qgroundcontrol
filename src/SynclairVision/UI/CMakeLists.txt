@@ -3,7 +3,9 @@
 # ============================================================================
 qt_add_library(SynclairVisionUIModule STATIC)
 
-set_source_files_properties(Settings/SVSettings.qml
+set_source_files_properties(
+    Settings/SVSettings.qml
+    Settings/SVState.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
@@ -32,6 +34,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Menustrip/SVMenuStripButton.qml
 
         Settings/SVSettings.qml
+        Settings/SVState.qml
         Settings/SVSettingsMenu.qml
         Settings/SVSettingsGeneral.js
         Settings/SVSettingsControls.js

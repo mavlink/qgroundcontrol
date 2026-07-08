@@ -70,18 +70,18 @@ Item {
         id: controlPanel
         anchors.bottom: root.bottom
         anchors.horizontalCenter: root.horizontalCenter
-        visible: SVSettings.svHUD
+        visible: SVState.hud
     }
 
     Item {
         id: settingsHost
         anchors.top: parent.top
         anchors.right: parent.right
-        visible: SVSettings.svHUD
+        visible: SVState.hud
         z: 3
 
-        width: settings.width
-        height: settings.height
+        width: settingsMenu.width
+        height: settingsMenu.height
 
         
     }
@@ -92,7 +92,7 @@ Item {
         id: settingsMenu
         anchors.top: parent.top
         anchors.right: parent.right
-        visible: SVSettings.svHUD
+        visible: SVState.hud
 
 
         menuText: "Settings"
@@ -305,9 +305,9 @@ Item {
 
         activeIds: {
             var ids = []
-            if (!SVSettings.svHUD) ids.push("hud")
+            if (!SVState.hud) ids.push("hud")
             if (root.recordActive) ids.push("record")
-            if (!SVSettings.svToolbar) ids.push("toolbar")
+            if (!SVState.toolbar) ids.push("toolbar")
             return ids
         }
 
@@ -318,7 +318,7 @@ Item {
                 checkable: true,
                 iconSource: "/qmlimages/hud_eye.svg",
                 alternateIconSource: "/qmlimages/hud_eye_closed.svg",
-                iconActive: !SVSettings.svHUD,
+                iconActive: !SVState.hud,
                 enabled: true
             },
             { 
@@ -327,7 +327,7 @@ Item {
                 checkable: true,
                 iconSource: "/qmlimages/toolbar_open.svg",
                 alternateIconSource: "/qmlimages/toolbar_closed.svg",
-                iconActive: !SVSettings.svToolbar,
+                iconActive: !SVState.toolbar,
                 enabled: true
             },
             { 
@@ -348,7 +348,7 @@ Item {
 
         onItemSelected: (id) => {
             if (id === "hud") {
-                SVSettings.svHUD = !SVSettings.svHUD
+                SVState.hud = !SVState.hud
                 return
             }
 
@@ -358,7 +358,7 @@ Item {
             }
 
             if (id === "toolbar") {
-                SVSettings.svToolbar = !SVSettings.svToolbar
+                SVState.toolbar = !SVState.toolbar
                 return
             }
         }
@@ -369,7 +369,7 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: root.leftToolStripBottom + 5
         anchors.left: parent.left
-        visible: SVSettings.svHUD
+        visible: SVState.hud
 
 
         menuText: "Layout"

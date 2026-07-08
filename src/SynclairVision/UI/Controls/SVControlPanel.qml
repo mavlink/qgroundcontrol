@@ -30,7 +30,7 @@ Item {
 
         direction: horizontal
 
-        activeIds: SVSettings.svLockedControls ? ["lock"] : []
+        activeIds: SVState.lockedControls ? ["lock"] : []
 
 
         model: [
@@ -40,13 +40,13 @@ Item {
                 checkable: true,
                 iconSource: "/qmlimages/controls_lock.svg",
                 alternateIconSource: "/qmlimages/controls_lock_closed.svg",
-                iconActive: SVSettings.svLockedControls,
+                iconActive: SVState.lockedControls,
                 enabled: true
             }
         ]
 
         onItemSelected: (id) => {
-                SVSettings.svLockedControls = !SVSettings.svLockedControls
+                SVState.lockedControls = !SVState.lockedControls
                 return
         }
     }
@@ -58,7 +58,7 @@ Item {
         x: 0
         y: 0
         borderWidth: root.borderWidth
-        enabled: !SVSettings.svLockedControls
+        enabled: !SVState.lockedControls
     }
 
     SVZoom {
@@ -68,6 +68,6 @@ Item {
         x: joystick.width - borderWidth
         y: root.implicitHeight - height
         borderWidth: root.borderWidth
-        enabled: !SVSettings.svLockedControls
+        enabled: !SVState.lockedControls
     }
 }
