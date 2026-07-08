@@ -75,10 +75,11 @@ void UVCReceiver::adjustAspectRatio()
     }
 
     const QSize resolution = cameraFormat.resolution();
-    if (resolution.isValid()) {
-        const qreal aspectRatio = resolution.width() / resolution.height();
-        const qreal height = height * aspectRatio;
-        _videoOutput->setHeight(height * aspectRatio);
+    if (resolution.isValid() && resolution.height() > 0) {
+        const qreal aspectRatio = static_cast<qreal>(resolution.width()) / static_cast<qreal>(resolution.height());
+        if (aspectRatio > 0) {
+            _videoOutput->setHeight(_videoOutput->width() / aspectRatio);
+        }
     }
 }
 

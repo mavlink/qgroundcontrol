@@ -38,33 +38,35 @@ Rectangle {
     property var  backdropSourceItem:       null
     property real maximumHeight
 
-    property real _panelHeight:             Math.min(maximumHeight > 0 ? maximumHeight : Math.max(560, _panelWidth * 1.43),
-                                                     Math.max(560, Math.min(650, _panelWidth * 1.43)))
-    property real _panelMargin:             Math.max(7, ScreenTools.defaultFontPixelWidth * 0.62)
-    property real _panelSpacing:            Math.max(5, ScreenTools.defaultFontPixelHeight * 0.30)
-    property real _panelWidth:              Math.max(360,
-                                                     Math.min(parent ? parent.width * 0.225 : 420,
-                                                              430))
+    property real _panelHeight:             Math.min(maximumHeight > 0 ? maximumHeight : Math.max(560, _panelWidth * 1.32),
+                                                     Math.max(560, Math.min(620, _panelWidth * 1.32)))
+    property real _panelMargin:             Math.max(6, ScreenTools.defaultFontPixelWidth * 0.48)
+    property real _panelSpacing:            Math.max(4, ScreenTools.defaultFontPixelHeight * 0.20)
+    property real _panelWidth:              Math.max(410,
+                                                     Math.min(parent ? parent.width * 0.225 : 430,
+                                                              450))
     property real _contentHeight:           Math.max(1, _panelHeight - (_panelMargin * 2))
-    property real _headerHeight:            Math.max(66, Math.min(80, _contentHeight * 0.105))
-    property real _metricHeight:            Math.max(230, Math.min(278, _contentHeight * 0.385))
-    property real _instrumentHeight:        Math.max(230, _contentHeight - _headerHeight - _metricHeight - (_panelSpacing * 2))
+    property real _headerHeight:            Math.max(50, Math.min(60, _contentHeight * 0.105))
+    property real _metricHeight:            Math.max(270, Math.min(312, _contentHeight * 0.48))
+    property real _instrumentHeight:        Math.max(180, _contentHeight - _headerHeight - _metricHeight - (_panelSpacing * 2))
     property real _headingTapeHeight:       0
-    property real _attitudeRowHeight:       Math.max(186, _instrumentHeight - (ScreenTools.defaultFontPixelHeight * 0.70))
-    property real _scaleWidth:              Math.max(72, ScreenTools.defaultFontPixelWidth * 7.4)
-    property real _compassSize:             Math.max(150, Math.min(_attitudeRowHeight * 0.68,
-                                                                    _panelWidth - (_panelMargin * 2) - (_scaleWidth * 2) - ScreenTools.defaultFontPixelWidth * 1.8))
-    property real _compassReadoutGap:       Math.max(6, ScreenTools.defaultFontPixelHeight * 0.34)
+    property real _attitudeRowHeight:       Math.max(154, _instrumentHeight - (ScreenTools.defaultFontPixelHeight * 0.45))
+    property real _scaleWidth:              Math.max(82, ScreenTools.defaultFontPixelWidth * 7.4)
+    property real _scaleCompassGap:         Math.max(8, ScreenTools.defaultFontPixelWidth * 0.72)
+    property real _compassSize:             Math.max(126, Math.min(_attitudeRowHeight * 0.58,
+                                                                     _panelWidth - (_panelMargin * 2) - (_scaleWidth * 2) - (_scaleCompassGap * 2)))
+    property real _compassReadoutGap:       Math.max(4, ScreenTools.defaultFontPixelHeight * 0.20)
     property real _scaleHeight:             Math.min(_attitudeRowHeight, _compassSize * 1.10)
     property string _panelFontFamily:       ScreenTools.normalFontFamily
-    property real _panelTitlePointSize:     ScreenTools.defaultFontPointSize + 2
-    property real _panelLabelPointSize:     ScreenTools.defaultFontPointSize + 1
-    property real _panelValuePointSize:     ScreenTools.defaultFontPointSize + 4
-    property real _panelAuxPointSize:       Math.max(ScreenTools.defaultFontPointSize - 1, ScreenTools.smallFontPointSize + 1)
+    property real _panelTitlePointSize:     ScreenTools.titleFontPointSize
+    property real _panelLabelPointSize:     ScreenTools.controlFontPointSize
+    property real _panelValuePointSize:     ScreenTools.metricFontPointSize
+    property real _panelAuxPointSize:       ScreenTools.labelFontPointSize
     property bool _selectionActive:         selectedVehicles && selectedVehicles.count > 0
     property bool _vehicleMenuOpen:         false
 
     QGCPalette { id: qgcPal }
+    FlightModeDisplay { id: flightModeDisplay }
 
     GlassBackdrop {
         anchors.fill:       parent
@@ -77,7 +79,7 @@ Rectangle {
         blurMax:            46
         sourceBrightness:   -0.01
         sourceSaturation:   0.62
-        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.80)
+        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.68)
         sheenColor:         "transparent"
     }
 
@@ -100,6 +102,23 @@ Rectangle {
             return NaN
         }
         return fact.rawValue
+    }
+
+    function coordinateText(fact, fallbackText) {
+        if (!fact || fact.rawValue === undefined || isNaN(fact.rawValue)) {
+            return fallbackText
+        }
+        return Number(fact.rawValue).toFixed(7)
+    }
+
+    function primaryVoltageText(vehicle) {
+        if (vehicle && vehicle.batteries && vehicle.batteries.count > 0) {
+            var battery = vehicle.batteries.get(0)
+            if (battery && battery.voltage && battery.voltage.valueString !== undefined && !isNaN(battery.voltage.rawValue)) {
+                return battery.voltage.valueString + (battery.voltage.units && battery.voltage.units !== "" ? " " + battery.voltage.units : "")
+            }
+        }
+        return qsTr("N/A")
     }
 
     function batteryText(vehicle) {
@@ -129,69 +148,6 @@ Rectangle {
         return vehicle ? vehicleKindText(vehicle) + " #" + vehicle.id : qsTr("Unknown")
     }
 
-    function flightModeDisplayText(mode) {
-        if (!mode || mode.length === 0) {
-            return qsTr("--")
-        }
-
-        var prefix = ""
-        var displayMode = mode
-        var normalized = mode.toLowerCase()
-        if (normalized.indexOf("quadplane ") === 0) {
-            prefix = qsTr("QuadPlane") + " "
-            displayMode = mode.substr(10)
-            normalized = displayMode.toLowerCase()
-        }
-
-        if (normalized === "manual") {
-            return prefix + qsTr("Manual")
-        }
-        if (normalized === "stabilize" || normalized === "stabilized") {
-            return prefix + qsTr("Stabilize")
-        }
-        if (normalized === "alt hold" || normalized === "althold" || normalized === "altitude hold") {
-            return prefix + qsTr("Alt Hold")
-        }
-        if (normalized === "loiter") {
-            return prefix + qsTr("Loiter")
-        }
-        if (normalized.indexOf("follow") !== -1) {
-            return prefix + qsTr("Follow")
-        }
-        if (normalized.indexOf("guided") !== -1) {
-            return prefix + qsTr("Guided")
-        }
-        if (normalized.indexOf("auto") !== -1) {
-            return prefix + qsTr("Auto")
-        }
-        if (normalized === "rtl") {
-            return prefix + qsTr("RTL")
-        }
-        if (normalized === "land") {
-            return prefix + qsTr("Land")
-        }
-        if (normalized === "takeoff") {
-            return prefix + qsTr("Takeoff")
-        }
-        if (normalized === "hold") {
-            return prefix + qsTr("Hold")
-        }
-        if (normalized.indexOf("position") !== -1 || normalized === "poshold") {
-            return prefix + qsTr("Position")
-        }
-        if (normalized === "acro") {
-            return prefix + qsTr("Acro")
-        }
-        if (normalized === "brake") {
-            return prefix + qsTr("Brake")
-        }
-        if (normalized === "circle") {
-            return prefix + qsTr("Circle")
-        }
-
-        return prefix + displayMode
-    }
-
     function activeActionLabel() {
         return _activeVehicle && _activeVehicle.armed ? qsTr("Disarm") : qsTr("Arm")
     }
@@ -202,6 +158,12 @@ Rectangle {
 
     function activeActionCode() {
         return _activeVehicle && _activeVehicle.armed ? _guidedController.actionDisarm : _guidedController.actionArm
+    }
+
+    function toggleVehicleMenu() {
+        if (vehicles && vehicles.count > 1) {
+            _vehicleMenuOpen = !_vehicleMenuOpen
+        }
     }
 
     function headingRaw(vehicle) {
@@ -323,6 +285,16 @@ Rectangle {
             return Math.round(value).toString()
         }
 
+        function tickLabelVisible(index, yPosition, labelHeight, labelText) {
+            if (labelText === "" || yPosition <= ScreenTools.defaultFontPixelHeight * 2.05 || yPosition >= tape.height - labelHeight) {
+                return false
+            }
+            if (_hasValue && Math.abs(majorValue(index) - _displayValue) < stepValue * 0.36) {
+                return false
+            }
+            return true
+        }
+
         function tickWidth(index) {
             return index % _minorDivisions === 0 ? _majorTickWidth : _minorTickWidth
         }
@@ -332,32 +304,35 @@ Rectangle {
             return leftScale ? _leftTickStartX : _rightTickEndX - currentTickWidth
         }
 
-        Column {
-            anchors.top:                parent.top
-            anchors.horizontalCenter:   parent.horizontalCenter
-            spacing:                    0
-            visible:                    tape.title !== "" || tape.unit !== ""
-
-            QGCLabel {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text:                     tape.title
-                color:                    qgcPal.text
-                font.bold:                true
-                font.family:              _panelFontFamily
-                font.pointSize:           _panelAuxPointSize
-                visible:                  text !== ""
-                horizontalAlignment:      Text.AlignHCenter
+        function titleText() {
+            if (title === "") {
+                return ""
             }
+            return unit === "" ? title : title + "(" + unit + ")"
+        }
 
-            QGCLabel {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text:                     tape.unit
-                color:                    qgcPal.buttonText
-                font.family:              _panelFontFamily
-                font.pointSize:           _panelAuxPointSize
-                visible:                  text !== ""
-                horizontalAlignment:      Text.AlignHCenter
-            }
+        function rulerCenterX() {
+            return leftScale ? _leftTickStartX + (_majorTickWidth / 2)
+                             : _rightTickEndX - (_majorTickWidth / 2)
+        }
+
+        QGCLabel {
+            id:                     scaleTitle
+            x:                      tape.rulerCenterX() - (width / 2)
+            y:                      0
+            width:                  Math.min(parent.width, Math.max(implicitWidth, tape._majorTickWidth + ScreenTools.defaultFontPixelWidth * 1.4))
+            text:                   tape.titleText()
+            color:                  qgcPal.text
+            font.bold:              true
+            font.family:            _panelFontFamily
+            font.pointSize:         _panelAuxPointSize
+            horizontalAlignment:    Text.AlignHCenter
+            verticalAlignment:      Text.AlignVCenter
+            fontSizeMode:           Text.HorizontalFit
+            minimumPointSize:       ScreenTools.captionFontPointSize
+            elide:                  Text.ElideNone
+            maximumLineCount:       1
+            visible:                text !== ""
         }
 
         Repeater {
@@ -388,7 +363,7 @@ Rectangle {
                 font.family:            _panelFontFamily
                 font.pointSize:         _panelAuxPointSize
                 horizontalAlignment:    tape.leftScale ? Text.AlignRight : Text.AlignLeft
-                visible:                text !== "" && y > ScreenTools.defaultFontPixelHeight * 2.05 && y < parent.height - height
+                visible:                tape.tickLabelVisible(index, y, height, text)
             }
         }
 
@@ -434,7 +409,7 @@ Rectangle {
                 horizontalAlignment:    Text.AlignHCenter
                 verticalAlignment:      Text.AlignVCenter
                 fontSizeMode:           Text.HorizontalFit
-                minimumPointSize:       ScreenTools.smallFontPointSize
+                minimumPointSize:       ScreenTools.captionFontPointSize
                 elide:                  Text.ElideNone
             }
         }
@@ -611,7 +586,7 @@ Rectangle {
 
                 ctx.beginPath()
                 ctx.arc(cx, cy, r * 1.06, 0, Math.PI * 2)
-                ctx.fillStyle = Qt.rgba(0.07, 0.073, 0.078, 0.36)
+                ctx.fillStyle = Qt.rgba(0.16, 0.17, 0.18, 0.24)
                 ctx.fill()
 
                 ctx.save()
@@ -622,19 +597,19 @@ Rectangle {
                 ctx.rotate(-roll)
                 ctx.translate(0, pitchOffset)
 
-                ctx.fillStyle = Qt.rgba(0.18, 0.185, 0.195, 0.86)
+                ctx.fillStyle = Qt.rgba(0.30, 0.62, 0.90, 0.94)
                 ctx.fillRect(-r, -r * 1.35, r * 2, r * 1.35)
-                ctx.fillStyle = Qt.rgba(0.09, 0.094, 0.100, 0.92)
+                ctx.fillStyle = Qt.rgba(0.28, 0.54, 0.20, 0.96)
                 ctx.fillRect(-r, 0, r * 2, r * 1.35)
 
-                ctx.strokeStyle = Qt.rgba(0.92, 0.94, 0.96, 0.62)
-                ctx.lineWidth = Math.max(1, r * 0.012)
+                ctx.strokeStyle = Qt.rgba(1.0, 1.0, 0.96, 0.92)
+                ctx.lineWidth = Math.max(1.5, r * 0.018)
                 ctx.beginPath()
                 ctx.moveTo(-r * 0.72, 0)
                 ctx.lineTo(r * 0.72, 0)
                 ctx.stroke()
 
-                ctx.strokeStyle = Qt.rgba(0.92, 0.94, 0.96, 0.26)
+                ctx.strokeStyle = Qt.rgba(1.0, 1.0, 0.96, 0.48)
                 ctx.lineWidth = 1
                 for (var p = -20; p <= 20; p += 10) {
                     if (p === 0) {
@@ -649,7 +624,7 @@ Rectangle {
                 }
                 ctx.restore()
 
-                ctx.strokeStyle = Qt.rgba(0.92, 0.94, 0.96, 0.18)
+                ctx.strokeStyle = Qt.rgba(0.92, 0.94, 0.96, 0.14)
                 ctx.lineWidth = Math.max(1, r * 0.018)
                 ctx.beginPath()
                 ctx.arc(cx, cy, r * 0.66, 0, Math.PI * 2)
@@ -661,8 +636,8 @@ Rectangle {
                     var cardinal = i % 9 === 0
                     var outer = r * 0.99
                     var inner = major ? r * 0.86 : r * 0.91
-                    ctx.strokeStyle = cardinal ? Qt.rgba(0.95, 0.97, 0.99, 0.82) :
-                                                 (major ? Qt.rgba(0.95, 0.97, 0.99, 0.52) : Qt.rgba(0.95, 0.97, 0.99, 0.26))
+                    ctx.strokeStyle = cardinal ? Qt.rgba(0.95, 0.97, 0.99, 0.72) :
+                                                 (major ? Qt.rgba(0.95, 0.97, 0.99, 0.46) : Qt.rgba(0.95, 0.97, 0.99, 0.22))
                     ctx.lineWidth = cardinal ? Math.max(1.6, r * 0.020) : (major ? Math.max(1.2, r * 0.014) : 1)
                     ctx.beginPath()
                     ctx.moveTo(sx(inner, degrees), sy(inner, degrees))
@@ -881,30 +856,95 @@ Rectangle {
                             elide:              Text.ElideRight
                         }
 
-                        QGCLabel {
+                        Item {
+                            id:                 activeModeTextHost
                             Layout.fillWidth:   true
-                            text:               _activeVehicle ? flightModeDisplayText(_activeVehicle.flightMode) : qsTr("--")
-                            color:              qgcPal.buttonText
-                            font.family:        _panelFontFamily
-                            font.pointSize:     _panelLabelPointSize
-                            elide:              Text.ElideRight
+                            Layout.preferredHeight: Math.max(activeModeLabel.implicitHeight,
+                                                             activeModeBadge.visible ? activeModeBadge.height : 0)
+
+                            property string modeDisplayText: _activeVehicle ? flightModeDisplay.modeText(_activeVehicle, _activeVehicle.flightMode, qsTr("--")) : qsTr("--")
+
+                            RowLayout {
+                                id:                 activeModeRow
+                                anchors.left:       parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing:            activeModeBadge.visible ? ScreenTools.defaultFontPixelWidth * 0.28 : 0
+
+                                QGCLabel {
+                                    id:                 activeModeLabel
+                                    Layout.preferredWidth: Math.max(0, Math.min(implicitWidth,
+                                                                                activeModeTextHost.width -
+                                                                                (activeModeBadge.visible ? activeModeBadge.width + activeModeRow.spacing : 0)))
+                                    Layout.maximumWidth: Layout.preferredWidth
+                                    text:               flightModeDisplay.labelText(activeModeTextHost.modeDisplayText)
+                                    color:              qgcPal.buttonText
+                                    font.family:        _panelFontFamily
+                                    font.pointSize:     _panelLabelPointSize
+                                    verticalAlignment:  Text.AlignVCenter
+                                    elide:              Text.ElideRight
+                                    maximumLineCount:   1
+                                }
+
+                                Rectangle {
+                                    id:                 activeModeBadge
+                                    Layout.alignment:   Qt.AlignVCenter
+                                    Layout.preferredWidth: activeModeBadgeText.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.46
+                                    Layout.preferredHeight: Math.max(ScreenTools.defaultFontPixelHeight * 0.70,
+                                                                     activeModeBadgeText.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.06)
+                                    radius:             Math.round(height * 0.28)
+                                    color:              Qt.rgba(0.82, 0.88, 0.94, 0.10)
+                                    border.color:       Qt.rgba(0.82, 0.88, 0.94, 0.18)
+                                    border.width:       1
+                                    visible:            activeModeBadgeText.text !== ""
+
+                                    QGCLabel {
+                                        id:                     activeModeBadgeText
+                                        anchors.centerIn:       parent
+                                        text:                   flightModeDisplay.badgeText(activeModeTextHost.modeDisplayText)
+                                        color:                  qgcPal.buttonText
+                                        font.bold:              true
+                                        font.family:            _panelFontFamily
+                                        font.pointSize:         Math.max(7, ScreenTools.captionFontPointSize - 1)
+                                        horizontalAlignment:    Text.AlignHCenter
+                                        verticalAlignment:      Text.AlignVCenter
+                                        maximumLineCount:       1
+                                    }
+                                }
+                            }
                         }
                     }
 
                     QGCMouseArea {
                         anchors.fill:   parent
-                        onClicked:      _vehicleMenuOpen = !_vehicleMenuOpen
+                        onClicked:      toggleVehicleMenu()
                     }
                 }
 
-                QGCColoredImage {
+                Item {
+                    id:                 vehicleMenuToggle
                     Layout.alignment:   Qt.AlignVCenter
-                    source:             "qrc:/InstrumentValueIcons/cheveron-down.svg"
-                    color:              qgcPal.buttonText
-                    width:              ScreenTools.defaultFontPixelHeight * 0.80
-                    height:             width
-                    sourceSize.width:   width
-                    fillMode:           Image.PreserveAspectFit
+                    Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 1.18
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.18
+                    enabled:            vehicles && vehicles.count > 1
+                    opacity:            enabled ? 1.0 : 0.45
+
+                    QGCColoredImage {
+                        anchors.centerIn:   parent
+                        source:             "qrc:/InstrumentValueIcons/cheveron-down.svg"
+                        color:              vehicleMenuToggleMouse.containsMouse || _vehicleMenuOpen ? qgcPal.text : qgcPal.buttonText
+                        width:              ScreenTools.defaultFontPixelHeight * 0.80
+                        height:             width
+                        sourceSize.width:   width
+                        fillMode:           Image.PreserveAspectFit
+                    }
+
+                    QGCMouseArea {
+                        id:             vehicleMenuToggleMouse
+                        anchors.fill:   parent
+                        hoverEnabled:   !ScreenTools.isMobile
+                        enabled:        vehicleMenuToggle.enabled
+                        onClicked:      toggleVehicleMenu()
+                    }
                 }
 
                 PanelLine {
@@ -988,7 +1028,7 @@ Rectangle {
                         Rectangle {
                             id:                 vehicleMenuRow
                             Layout.fillWidth:   true
-                            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2.50
+                            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2.36
                             radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.30)
                             color:              object === _activeVehicle ? Qt.rgba(1, 1, 1, 0.080) : (rowMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.048) : "transparent")
 
@@ -1020,13 +1060,61 @@ Rectangle {
                                         elide:              Text.ElideRight
                                     }
 
-                                    QGCLabel {
+                                    Item {
+                                        id:                 rowModeTextHost
                                         Layout.fillWidth:   true
-                                        text:               object ? flightModeDisplayText(object.flightMode) : qsTr("--")
-                                        color:              qgcPal.buttonText
-                                        font.family:        _panelFontFamily
-                                        font.pointSize:     _panelAuxPointSize
-                                        elide:              Text.ElideRight
+                                        Layout.preferredHeight: Math.max(rowModeLabel.implicitHeight,
+                                                                         rowModeBadge.visible ? rowModeBadge.height : 0)
+
+                                        property string modeDisplayText: object ? flightModeDisplay.modeText(object, object.flightMode, qsTr("--")) : qsTr("--")
+
+                                        RowLayout {
+                                            id:                 rowModeTextRow
+                                            anchors.left:       parent.left
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            spacing:            rowModeBadge.visible ? ScreenTools.defaultFontPixelWidth * 0.28 : 0
+
+                                            QGCLabel {
+                                                id:                 rowModeLabel
+                                                Layout.preferredWidth: Math.max(0, Math.min(implicitWidth,
+                                                                                            rowModeTextHost.width -
+                                                                                            (rowModeBadge.visible ? rowModeBadge.width + rowModeTextRow.spacing : 0)))
+                                                Layout.maximumWidth: Layout.preferredWidth
+                                                text:               flightModeDisplay.labelText(rowModeTextHost.modeDisplayText)
+                                                color:              qgcPal.buttonText
+                                                font.family:        _panelFontFamily
+                                                font.pointSize:     _panelAuxPointSize
+                                                verticalAlignment:  Text.AlignVCenter
+                                                elide:              Text.ElideRight
+                                                maximumLineCount:   1
+                                            }
+
+                                            Rectangle {
+                                                id:                 rowModeBadge
+                                                Layout.alignment:   Qt.AlignVCenter
+                                                Layout.preferredWidth: rowModeBadgeText.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.46
+                                                Layout.preferredHeight: Math.max(ScreenTools.defaultFontPixelHeight * 0.66,
+                                                                                 rowModeBadgeText.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.04)
+                                                radius:             Math.round(height * 0.28)
+                                                color:              Qt.rgba(0.82, 0.88, 0.94, 0.10)
+                                                border.color:       Qt.rgba(0.82, 0.88, 0.94, 0.18)
+                                                border.width:       1
+                                                visible:            rowModeBadgeText.text !== ""
+
+                                                QGCLabel {
+                                                    id:                     rowModeBadgeText
+                                                    anchors.centerIn:       parent
+                                                    text:                   flightModeDisplay.badgeText(rowModeTextHost.modeDisplayText)
+                                                    color:                  qgcPal.buttonText
+                                                    font.bold:              true
+                                                    font.family:            _panelFontFamily
+                                                    font.pointSize:         Math.max(7, ScreenTools.captionFontPointSize - 1)
+                                                    horizontalAlignment:    Text.AlignHCenter
+                                                    verticalAlignment:      Text.AlignVCenter
+                                                    maximumLineCount:       1
+                                                }
+                                            }
+                                        }
                                     }
                                 }
 
@@ -1073,8 +1161,8 @@ Rectangle {
                 anchors.fill:       parent
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.80
                 anchors.rightMargin:ScreenTools.defaultFontPixelWidth * 0.80
-                anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.64
-                anchors.bottomMargin:ScreenTools.defaultFontPixelHeight * 0.52
+                anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.36
+                anchors.bottomMargin:ScreenTools.defaultFontPixelHeight * 0.34
 
                 Item {
                     id:                 attitudeBand
@@ -1104,8 +1192,8 @@ Rectangle {
                         anchors.right:      speedTape.left
                         anchors.top:        parent.top
                         anchors.bottom:     parent.bottom
-                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.45
-                        anchors.rightMargin:ScreenTools.defaultFontPixelWidth * 0.45
+                        anchors.leftMargin: _scaleCompassGap
+                        anchors.rightMargin:_scaleCompassGap
 
                         Column {
                             id:                         compassStack
@@ -1114,31 +1202,24 @@ Rectangle {
                             height:                     implicitHeight
                             spacing:                    _compassReadoutGap
 
+                            QGCLabel {
+                                width:                    parent.width
+                                text:                     qsTr("HDG") + " " + topRightPanel.headingDisplayText()
+                                color:                    qgcPal.text
+                                font.bold:                true
+                                font.family:              _panelFontFamily
+                                font.pointSize:           _panelLabelPointSize
+                                horizontalAlignment:      Text.AlignHCenter
+                                verticalAlignment:        Text.AlignVCenter
+                                maximumLineCount:         1
+                            }
+
                             AttitudeCompass {
                                 id:                     compassBox
                                 width:                  _compassSize
                                 height:                 width
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 vehicle:                _activeVehicle
-                            }
-
-                            QGCLabel {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text:                     qsTr("HDG")
-                                color:                    qgcPal.buttonText
-                                font.family:              _panelFontFamily
-                                font.pointSize:           _panelAuxPointSize
-                                horizontalAlignment:      Text.AlignHCenter
-                            }
-
-                            QGCLabel {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text:                     topRightPanel.headingDisplayText()
-                                color:                    qgcPal.text
-                                font.bold:                true
-                                font.family:              _panelFontFamily
-                                font.pointSize:           _panelLabelPointSize + 1
-                                horizontalAlignment:      Text.AlignHCenter
                             }
                         }
                     }
@@ -1181,47 +1262,69 @@ Rectangle {
             color:                  "transparent"
             clip:                   true
 
-            PanelLine {
-                x:                  parent.width / 3
-                y:                  0
-                width:              1
-                height:             parent.height
+            property int  _metricColumns:     4
+            property int  _metricRows:        5
+            property real _metricCellWidth:   width / _metricColumns
+            property real _bottomInset:       Math.max(10, ScreenTools.defaultFontPixelHeight * 0.72)
+            property real _gridHeight:        Math.max(1, height - _bottomInset)
+            property real _metricCellHeight:  _gridHeight / _metricRows
+
+            Repeater {
+                model: metricsFrame._metricColumns - 1
+
+                delegate: PanelLine {
+                    x:      (index + 1) * metricsFrame.width / metricsFrame._metricColumns
+                    y:      0
+                    width:  1
+                    height: metricsFrame._gridHeight
+                }
             }
 
-            PanelLine {
-                x:                  parent.width * 2 / 3
-                y:                  0
-                width:              1
-                height:             parent.height
-            }
+            Repeater {
+                model: metricsFrame._metricRows - 1
 
-            PanelLine {
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                y:                  parent.height / 2
-                height:             1
+                delegate: PanelLine {
+                    anchors.left:   metricsFrame.left
+                    anchors.right:  metricsFrame.right
+                    y:              (index + 1) * metricsFrame._gridHeight / metricsFrame._metricRows
+                    height:         1
+                }
             }
 
             Repeater {
                 id: metricsGrid
                 model: [
-                    { "label": qsTr("V/S"),              "value": factText(_activeVehicle ? _activeVehicle.climbRate : null, qsTr("N/A")),        "accent": qgcPal.text },
-                    { "label": qsTr("AirSpd"),           "value": factText(_activeVehicle ? _activeVehicle.airSpeed : null, qsTr("N/A")),         "accent": qgcPal.text },
-                    { "label": qsTr("Flight Time"),      "value": factText(_activeVehicle ? _activeVehicle.flightTime : null, qsTr("00:00:00")),  "accent": qgcPal.text },
-                    { "label": qsTr("Home"),             "value": factText(_activeVehicle ? _activeVehicle.distanceToHome : null, qsTr("N/A")),   "accent": qgcPal.text },
-                    { "label": qsTr("Thr"),              "value": factText(_activeVehicle ? _activeVehicle.throttlePct : null, qsTr("N/A")),      "accent": qgcPal.text },
-                    { "label": qsTr("Flight Dist"),      "value": factText(_activeVehicle ? _activeVehicle.flightDistance : null, qsTr("N/A")),   "accent": qgcPal.text }
+                    { "label": qsTr("Home Dist"),    "value": factText(_activeVehicle ? _activeVehicle.distanceToHome : null, qsTr("N/A")) },
+                    { "label": qsTr("Next WP"),      "value": factText(_activeVehicle ? _activeVehicle.distanceToNextWP : null, qsTr("N/A")) },
+                    { "label": qsTr("Climb"),        "value": factText(_activeVehicle ? _activeVehicle.climbRate : null, qsTr("N/A")) },
+                    { "label": qsTr("Voltage"),      "value": primaryVoltageText(_activeVehicle) },
+                    { "label": qsTr("Rel Alt"),      "value": factText(_activeVehicle ? _activeVehicle.altitudeRelative : null, qsTr("N/A")) },
+                    { "label": qsTr("AMSL Alt"),     "value": factText(_activeVehicle ? _activeVehicle.altitudeAMSL : null, qsTr("N/A")) },
+                    { "label": qsTr("Thr"),          "value": factText(_activeVehicle ? _activeVehicle.throttlePct : null, qsTr("N/A")) },
+                    { "label": qsTr("GPS HDG"),      "value": factText(_activeVehicle && _activeVehicle.gps ? _activeVehicle.gps.courseOverGround : null, qsTr("N/A")) },
+                    { "label": qsTr("Flight Time"),  "value": factText(_activeVehicle ? _activeVehicle.flightTime : null, qsTr("00:00:00")) },
+                    { "label": qsTr("Flight Dist"),  "value": factText(_activeVehicle ? _activeVehicle.flightDistance : null, qsTr("N/A")) },
+                    { "label": qsTr("Home Time"),    "value": factText(_activeVehicle ? _activeVehicle.timeToHome : null, qsTr("N/A")) },
+                    { "label": qsTr("Course"),       "value": factText(_activeVehicle ? _activeVehicle.headingToNextWP : null, qsTr("N/A")) },
+                    { "label": qsTr("Pitch"),        "value": factText(_activeVehicle ? _activeVehicle.pitch : null, qsTr("N/A")) },
+                    { "label": qsTr("Roll"),         "value": factText(_activeVehicle ? _activeVehicle.roll : null, qsTr("N/A")) },
+                    { "label": qsTr("Wind Spd"),     "value": factText(_activeVehicle && _activeVehicle.wind ? _activeVehicle.wind.speed : null, qsTr("N/A")) },
+                    { "label": qsTr("Wind Dir"),     "value": factText(_activeVehicle && _activeVehicle.wind ? _activeVehicle.wind.direction : null, qsTr("N/A")) },
+                    { "label": qsTr("Heading"),      "value": factText(_activeVehicle ? _activeVehicle.heading : null, qsTr("N/A")) },
+                    { "label": qsTr("Lat"),          "value": coordinateText(_activeVehicle && _activeVehicle.gps ? _activeVehicle.gps.lat : null, qsTr("N/A")) },
+                    { "label": qsTr("Lon"),          "value": coordinateText(_activeVehicle && _activeVehicle.gps ? _activeVehicle.gps.lon : null, qsTr("N/A")) },
+                    { "label": qsTr("IMU Temp"),     "value": factText(_activeVehicle ? _activeVehicle.imuTemp : null, qsTr("N/A")) }
                 ]
 
                 delegate: Item {
-                    x:          (index % 3) * metricsFrame.width / 3
-                    y:          Math.floor(index / 3) * metricsFrame.height / 2
-                    width:      metricsFrame.width / 3
-                    height:     metricsFrame.height / 2
-                    clip:       true
+                    x:              (index % metricsFrame._metricColumns) * metricsFrame._metricCellWidth
+                    y:              Math.floor(index / metricsFrame._metricColumns) * metricsFrame._metricCellHeight
+                    width:          metricsFrame._metricCellWidth
+                    height:         metricsFrame._metricCellHeight
+                    clip:           true
 
-                    property real _innerMarginX: ScreenTools.defaultFontPixelWidth * 0.52
-                    property real _innerMarginY: ScreenTools.defaultFontPixelHeight * 0.18
+                    property real _innerMarginX: Math.max(4, ScreenTools.defaultFontPixelWidth * 0.44)
+                    property real _innerMarginY: Math.max(2, ScreenTools.defaultFontPixelHeight * 0.10)
 
                     QGCLabel {
                         id:                     metricLabel
@@ -1230,32 +1333,37 @@ Rectangle {
                         anchors.top:            parent.top
                         anchors.leftMargin:     parent._innerMarginX
                         anchors.rightMargin:    parent._innerMarginX
-                        anchors.topMargin:      parent._innerMarginY * 1.25
+                        anchors.topMargin:      parent._innerMarginY * 1.15
                         height:                 parent.height * 0.34
                         text:                   modelData.label
                         color:                  qgcPal.buttonText
                         font.family:            _panelFontFamily
-                        font.pointSize:         _panelLabelPointSize
+                        font.pointSize:         Math.max(8, _panelLabelPointSize)
                         verticalAlignment:      Text.AlignBottom
+                        fontSizeMode:           Text.HorizontalFit
+                        minimumPointSize:       Math.max(6, ScreenTools.captionFontPointSize - 1)
                         elide:                  Text.ElideRight
+                        maximumLineCount:       1
                     }
 
                     QGCLabel {
                         id:                     metricValue
-                        anchors.left:           parent.left
+                        anchors.left:           metricLabel.left
                         anchors.right:          parent.right
                         anchors.top:            metricLabel.bottom
                         anchors.bottom:         parent.bottom
-                        anchors.leftMargin:     parent._innerMarginX
                         anchors.rightMargin:    parent._innerMarginX
-                        anchors.bottomMargin:   parent._innerMarginY * 1.15
+                        anchors.bottomMargin:   parent._innerMarginY * 1.10
                         text:                   modelData.value
-                        color:                  modelData.accent
+                        color:                  qgcPal.text
                         font.bold:              true
                         font.family:            _panelFontFamily
-                        font.pointSize:         _panelValuePointSize
+                        font.pointSize:         Math.max(10, _panelValuePointSize * 0.82)
                         verticalAlignment:      Text.AlignVCenter
+                        fontSizeMode:           Text.HorizontalFit
+                        minimumPointSize:       Math.max(7, ScreenTools.captionFontPointSize)
                         elide:                  Text.ElideRight
+                        maximumLineCount:       1
                     }
                 }
             }

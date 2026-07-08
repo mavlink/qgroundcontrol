@@ -59,7 +59,7 @@ RowLayout {
                 verticalAlignment:      Text.AlignVCenter
                 text:                   mainStatusText()
                 color:                  qgcPal.text
-                font.pointSize:         ScreenTools.defaultFontPointSize
+                font.pointSize:         ScreenTools.controlFontPointSize
                 font.bold:              true
 
                 property string _commLostText:      qsTr("Comms Lost")
@@ -162,9 +162,9 @@ RowLayout {
             id:                 vtolModeLabel
             anchors.centerIn:   parent
             verticalAlignment:  Text.AlignVCenter
-            text:               _vtolInFWDFlight ? qsTr("FW(vtol)") : qsTr("MR(vtol)")
+            text:               _vtolInFWDFlight ? qsTr("Fixed Wing") : qsTr("Multi-Rotor")
             color:              _vehicleInAir ? qgcPal.colorGreen : qgcPal.buttonText
-            font.pointSize:     ScreenTools.defaultFontPointSize
+            font.pointSize:     ScreenTools.controlFontPointSize
             font.bold:          _vehicleInAir
         }
 

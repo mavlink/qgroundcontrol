@@ -32,6 +32,11 @@ Rectangle {
     property color  _mainStatusBGColor: qgcPal.brandingPurple
     property real   _barMargin:         ScreenTools.defaultFontPixelWidth * 0.72
     property real   _segmentPadding:    ScreenTools.defaultFontPixelWidth * 0.75
+    property var    _batterySettings:   QGroundControl.settingsManager.batteryIndicatorSettings
+    property int    _batteryDisplayMode: _batterySettings ? _batterySettings.valueDisplay.rawValue : 0
+    property bool   _showBatteryTopIndicator: _activeVehicle && _activeVehicle.batteries && _activeVehicle.batteries.count > 0
+    property bool   _showGpsTopIndicator: _activeVehicle !== null && _activeVehicle !== undefined
+    property bool   _showRightBranding: false
 
     function dropMainStatusIndicatorTool() {
         mainStatusIndicator.dropMainStatusIndicator()
@@ -66,8 +71,8 @@ Rectangle {
     }
 
     function batteryPercentText(vehicle) {
-        if (vehicle && vehicle.batteries && vehicle.batteries.count > 0) {
-            var battery = vehicle.batteries.get(0)
+        var battery = firstBattery(vehicle)
+        if (battery) {
             if (battery && !isNaN(battery.percentRemaining.rawValue)) {
                 return battery.percentRemaining.valueString + battery.percentRemaining.units
             }
@@ -75,9 +80,54 @@ Rectangle {
         return qsTr("N/A")
     }
 
-    function batteryDetailText(vehicle) {
+    function firstBattery(vehicle) {
         if (vehicle && vehicle.batteries && vehicle.batteries.count > 0) {
-            var battery = vehicle.batteries.get(0)
+            return vehicle.batteries.get(0)
+        }
+        return null
+    }
+
+    function batteryVoltageText(vehicle) {
+        var battery = firstBattery(vehicle)
+        if (battery && !isNaN(battery.voltage.rawValue)) {
+            return battery.voltage.valueString + battery.voltage.units
+        }
+        return qsTr("N/A")
+    }
+
+    function batteryCurrentText(vehicle) {
+        var battery = firstBattery(vehicle)
+        if (battery && battery.current && !isNaN(battery.current.rawValue)) {
+            return battery.current.valueString + " " + battery.current.units
+        }
+        return qsTr("N/A")
+    }
+
+    function batteryPrimaryText(vehicle) {
+        return _batteryDisplayMode === 1 ? batteryVoltageText(vehicle) : batteryPercentText(vehicle)
+    }
+
+    function batterySecondaryText(vehicle) {
+        return _batteryDisplayMode === 2 ? batteryVoltageText(vehicle) : ""
+    }
+
+    function batteryIconColor(vehicle) {
+        var battery = firstBattery(vehicle)
+        if (!battery || isNaN(battery.percentRemaining.rawValue)) {
+            return qgcPal.buttonText
+        }
+        if (battery.percentRemaining.rawValue <= _batterySettings.threshold2.rawValue) {
+            return qgcPal.colorRed
+        }
+        if (battery.percentRemaining.rawValue <= _batterySettings.threshold1.rawValue) {
+            return qgcPal.colorYellow
+        }
+        return qgcPal.colorGreen
+    }
+
+    function batteryDetailText(vehicle) {
+        var battery = firstBattery(vehicle)
+        if (battery) {
             var parts = []
             if (battery && !isNaN(battery.percentRemaining.rawValue)) {
                 parts.push(battery.percentRemaining.valueString + battery.percentRemaining.units)
@@ -95,11 +145,29 @@ Rectangle {
         return qsTr("N/A")
     }
 
+    function gpsAvailable(vehicle) {
+        return vehicle && vehicle.gps
+    }
+
+    function gpsSatelliteText(vehicle) {
+        if (!gpsAvailable(vehicle) || isNaN(vehicle.gps.count.value)) {
+            return ""
+        }
+        return vehicle.gps.count.valueString
+    }
+
+    function gpsHdopText(vehicle) {
+        if (!gpsAvailable(vehicle) || isNaN(vehicle.gps.hdop.value)) {
+            return ""
+        }
+        return vehicle.gps.hdop.value.toFixed(1)
+    }
+
     function gpsText(vehicle) {
-        if (!vehicle || !vehicle.gps || isNaN(vehicle.gps.count.value)) {
+        if (!gpsAvailable(vehicle)) {
             return qsTr("N/A")
         }
-        return vehicle.gps.count.valueString + (isNaN(vehicle.gps.hdop.value) ? "" : "  " + vehicle.gps.hdop.value.toFixed(1))
+        return gpsSatelliteText(vehicle) + (gpsHdopText(vehicle) === "" ? "" : "  " + gpsHdopText(vehicle))
     }
 
     function vehicleCountText() {
@@ -159,7 +227,7 @@ Rectangle {
         blurMax:                46
         sourceBrightness:       -0.01
         sourceSaturation:       0.62
-        tintColor:              Qt.rgba(0.045, 0.048, 0.052, 0.80)
+        tintColor:              Qt.rgba(0.045, 0.048, 0.052, 0.68)
         sheenColor:             "transparent"
     }
 
@@ -167,6 +235,8 @@ Rectangle {
         Layout.alignment:       Qt.AlignVCenter
         Layout.preferredWidth:  1
         Layout.preferredHeight: parent ? parent.height * 0.62 : ScreenTools.defaultFontPixelHeight * 2
+        width:                  1
+        height:                 parent ? parent.height * 0.62 : ScreenTools.defaultFontPixelHeight * 2
         color:                  Qt.rgba(0.82, 0.90, 0.95, 0.18)
     }
 
@@ -175,9 +245,13 @@ Rectangle {
         property string iconSource: ""
         property string tooltipText: ""
         property color  iconColor: qgcPal.text
-        property real   slotSize:  _root.height * 0.62
+        property real   slotSize:  _root.height * 0.74
         signal clicked()
 
+        implicitWidth:          slotSize
+        implicitHeight:         slotSize
+        width:                  slotSize
+        height:                 slotSize
         Layout.alignment:       Qt.AlignVCenter
         Layout.preferredWidth:  slotSize
         Layout.preferredHeight: slotSize
@@ -193,7 +267,7 @@ Rectangle {
 
         QGCColoredImage {
             anchors.centerIn:   parent
-            width:              parent.width * 0.48
+            width:              parent.width * 0.56
             height:             width
             source:             iconSlot.iconSource
             color:              iconSlot.iconColor
@@ -213,56 +287,152 @@ Rectangle {
         id: infoSegment
         property string label: ""
         property string value: ""
-        property string iconSource: ""
-        property color  iconColor: qgcPal.text
         property real   minimumWidth: ScreenTools.defaultFontPixelWidth * 9
+        property real   _textWidth: Math.max(labelText.visible ? labelText.implicitWidth : 0,
+                                             valueText.implicitWidth)
 
         Layout.alignment:       Qt.AlignVCenter
-        Layout.preferredWidth:  Math.max(minimumWidth, contentRow.implicitWidth + _root._segmentPadding * 1.25)
+        Layout.preferredWidth:  Math.max(minimumWidth, _textWidth + _root._segmentPadding * 1.60)
         Layout.fillHeight:      true
+        implicitWidth:          Layout.preferredWidth
 
-        RowLayout {
-            id:                 contentRow
-            anchors.fill:       parent
-            anchors.leftMargin: _root._segmentPadding * 0.45
-            anchors.rightMargin:_root._segmentPadding * 0.45
-            spacing:            ScreenTools.defaultFontPixelWidth * 0.45
+        Column {
+            id:                 textColumn
+            anchors.centerIn:   parent
+            width:              Math.min(infoSegment._textWidth, Math.max(0, parent.width - _root._segmentPadding * 0.90))
+            spacing:            -ScreenTools.defaultFontPixelHeight * 0.08
 
-            QGCColoredImage {
-                Layout.alignment:   Qt.AlignVCenter
-                width:              ScreenTools.defaultFontPixelHeight * 1.10
-                height:             width
-                source:             infoSegment.iconSource
-                color:              infoSegment.iconColor
-                sourceSize.width:   width
-                fillMode:           Image.PreserveAspectFit
-                visible:            source !== ""
+            QGCLabel {
+                id:                 labelText
+                width:              parent.width
+                text:               infoSegment.label
+                color:              qgcPal.buttonText
+                font.pointSize:     ScreenTools.smallFontPointSize
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment:  Text.AlignVCenter
+                elide:              Text.ElideRight
+                visible:            text !== ""
             }
 
-            ColumnLayout {
-                Layout.alignment:   Qt.AlignVCenter
-                Layout.fillWidth:   true
-                spacing:            -ScreenTools.defaultFontPixelHeight * 0.08
-
-                QGCLabel {
-                    Layout.fillWidth:   true
-                    text:               infoSegment.label
-                    color:              qgcPal.buttonText
-                    font.pointSize:     ScreenTools.smallFontPointSize
-                    elide:              Text.ElideRight
-                    visible:            text !== ""
-                }
-
-                QGCLabel {
-                    Layout.fillWidth:   true
-                    text:               infoSegment.value
-                    color:              qgcPal.text
-                    font.bold:          true
-                    font.pointSize:     ScreenTools.defaultFontPointSize
-                    elide:              Text.ElideRight
-                }
+            QGCLabel {
+                id:                 valueText
+                width:              parent.width
+                text:               infoSegment.value
+                color:              qgcPal.text
+                font.bold:          true
+                font.pointSize:     ScreenTools.defaultFontPointSize
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment:  Text.AlignVCenter
+                elide:              Text.ElideRight
             }
         }
+    }
+
+    component TopBarIndicator: Item {
+        id: indicator
+        property string iconSource: ""
+        property color  iconColor: qgcPal.buttonText
+        property string primaryText: ""
+        property string secondaryText: ""
+        property var    drawerComponent: null
+        property real   _iconSize: _root.height * 0.56
+        property real   _textWidth: Math.max(primaryLabel.visible ? primaryLabel.implicitWidth : 0,
+                                             secondaryLabel.visible ? secondaryLabel.implicitWidth : 0)
+        property real   _textGap: _textWidth > 0 ? ScreenTools.defaultFontPixelWidth * 0.42 : 0
+
+        implicitWidth:          _iconSize + _textGap + _textWidth
+        width:                  visible ? implicitWidth : 0
+        height:                 parent ? parent.height : _root.height
+
+        QGCColoredImage {
+            id:                 indicatorIcon
+            anchors.left:       parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width:              indicator._iconSize
+            height:             width
+            source:             indicator.iconSource
+            color:              indicator.iconColor
+            sourceSize.width:   width
+            fillMode:           Image.PreserveAspectFit
+        }
+
+        Column {
+            anchors.left:       indicatorIcon.right
+            anchors.leftMargin: indicator._textGap
+            anchors.verticalCenter: parent.verticalCenter
+            width:              indicator._textWidth
+            spacing:            -ScreenTools.defaultFontPixelHeight * 0.08
+            visible:            indicator._textWidth > 0
+
+            QGCLabel {
+                id:                 primaryLabel
+                width:              parent.width
+                text:               indicator.primaryText
+                color:              qgcPal.text
+                font.pointSize:     ScreenTools.defaultFontPointSize
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment:  Text.AlignVCenter
+                visible:            text !== ""
+            }
+
+            QGCLabel {
+                id:                 secondaryLabel
+                width:              parent.width
+                text:               indicator.secondaryText
+                color:              qgcPal.text
+                font.pointSize:     ScreenTools.defaultFontPointSize
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment:  Text.AlignVCenter
+                visible:            text !== ""
+            }
+        }
+
+        QGCMouseArea {
+            anchors.fill:   parent
+            enabled:        indicator.drawerComponent !== null
+            onClicked:      mainWindow.showIndicatorDrawer(indicator.drawerComponent, indicator)
+        }
+    }
+
+    Component {
+        id: batteryTopIndicatorPage
+
+        ToolIndicatorPage {
+            showExpand:         false
+            waitForParameters:  false
+            contentComponent:   batteryTopIndicatorContent
+        }
+    }
+
+    Component {
+        id: batteryTopIndicatorContent
+
+        SettingsGroupLayout {
+            heading:        qsTr("Battery Status")
+            contentSpacing: 0
+            showDividers:   false
+
+            LabelledLabel {
+                label:      qsTr("Remaining")
+                labelText:  batteryPercentText(_activeVehicle)
+            }
+
+            LabelledLabel {
+                label:      qsTr("Voltage")
+                labelText:  batteryVoltageText(_activeVehicle)
+            }
+
+            LabelledLabel {
+                label:      qsTr("Current")
+                labelText:  batteryCurrentText(_activeVehicle)
+            }
+        }
+    }
+
+    Component {
+        id: gpsTopIndicatorPage
+
+        GPSIndicatorPage { }
     }
 
     RowLayout {
@@ -274,40 +444,58 @@ Rectangle {
 
         Item {
             id:                     brandBlock
+            readonly property real  _symbolSize: _root.height * 0.62
+            readonly property real  _wordmarkHeight: _root.height * 0.43
+            readonly property real  _wordmarkAspect: 727 / 192
+
             Layout.alignment:       Qt.AlignVCenter
-            Layout.preferredWidth:  Math.max(ScreenTools.defaultFontPixelWidth * 24.5, brandRow.implicitWidth)
+            Layout.preferredWidth:  brandRow.implicitWidth
+            Layout.minimumWidth:    brandRow.implicitWidth
             Layout.fillHeight:      true
 
             RowLayout {
                 id:                 brandRow
-                anchors.fill:       parent
+                anchors.left:       parent.left
+                anchors.verticalCenter: parent.verticalCenter
                 spacing:            ScreenTools.defaultFontPixelWidth * 0.70
 
                 Rectangle {
-                    Layout.alignment:   Qt.AlignVCenter
-                    width:              _root.height * 0.62
-                    height:             width
-                    radius:             Math.round(width * 0.22)
-                    color:              "transparent"
-                    border.color:       "transparent"
-                    border.width:       0
+                    Layout.alignment:       Qt.AlignVCenter
+                    Layout.preferredWidth:  brandBlock._symbolSize
+                    Layout.preferredHeight: brandBlock._symbolSize
+                    radius:                 Math.round(width * 0.16)
+                    color:                  Qt.rgba(0.93, 0.965, 1.0, 0.92)
+                    border.color:           Qt.rgba(0.60, 0.76, 1.0, 0.22)
+                    border.width:           1
 
                     Image {
                         anchors.fill:       parent
-                        anchors.margins:    parent.width * 0.18
-                        source:             "/res/QGCLogoFull.svg"
+                        anchors.margins:    parent.width * 0.07
+                        source:             "/res/brand-symbol.png"
+                        sourceSize.width:   width
+                        sourceSize.height:  height
                         fillMode:           Image.PreserveAspectFit
                         mipmap:             true
                     }
                 }
 
-                QGCLabel {
-                    Layout.fillWidth:   true
-                    text:               qsTr("QGroundControl")
-                    color:              qgcPal.text
-                    font.pointSize:     ScreenTools.defaultFontPointSize
-                    font.bold:          true
-                    elide:              Text.ElideRight
+                Item {
+                    Layout.alignment:       Qt.AlignVCenter
+                    Layout.preferredWidth:  brandBlock._wordmarkHeight * brandBlock._wordmarkAspect
+                    Layout.preferredHeight: brandBlock._symbolSize
+
+                    QGCColoredImage {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: ScreenTools.defaultFontPixelHeight * 0.10
+                        width:                  parent.width
+                        height:                 brandBlock._wordmarkHeight
+                        source:                 "/res/brand-wordmark.png"
+                        sourceSize.width:       width
+                        sourceSize.height:      height
+                        color:                  qgcPal.text
+                        fillMode:               Image.PreserveAspectFit
+                    }
                 }
             }
 
@@ -331,34 +519,42 @@ Rectangle {
             visible:                _activeVehicle && _communicationLost
         }
 
-        BarDivider { }
+        BarDivider {
+            visible: _showBatteryTopIndicator || _showGpsTopIndicator
+        }
 
-        QGCFlickable {
-            id:                     nativeIndicatorFlickable
+        Row {
+            id:                     topBarIndicators
             Layout.alignment:       Qt.AlignVCenter
-            Layout.preferredWidth:  Math.min(Math.max(ScreenTools.defaultFontPixelWidth * 4.8,
-                                                       nativeToolIndicators.childrenRect.width),
-                                             ScreenTools.defaultFontPixelWidth * 16.0)
+            Layout.preferredWidth:  visible ? implicitWidth : 0
             Layout.fillHeight:      true
-            contentWidth:           nativeToolIndicators.childrenRect.width
-            contentHeight:          height
-            flickableDirection:     Flickable.HorizontalFlick
-            boundsBehavior:         Flickable.StopAtBounds
-            interactive:            contentWidth > width
-            clip:                   true
+            spacing:                _showBatteryTopIndicator && _showGpsTopIndicator ? ScreenTools.defaultFontPixelWidth * 1.05 : 0
+            visible:                _showBatteryTopIndicator || _showGpsTopIndicator
 
-            FlyViewToolBarIndicators {
-                id: nativeToolIndicators
-                hiddenIndicatorNames: [
-                    "FlightModeIndicator.qml",
-                    "APMFlightModeIndicator.qml",
-                    "PX4FlightModeIndicator.qml",
-                    "MultiVehicleSelector.qml"
-                ]
+            TopBarIndicator {
+                id:             batteryTopBarIndicator
+                visible:        _showBatteryTopIndicator
+                iconSource:     "/qmlimages/Battery.svg"
+                iconColor:      batteryIconColor(_activeVehicle)
+                primaryText:    batteryPrimaryText(_activeVehicle)
+                secondaryText:  batterySecondaryText(_activeVehicle)
+                drawerComponent: batteryTopIndicatorPage
+            }
+
+            TopBarIndicator {
+                id:             gpsTopBarIndicator
+                visible:        _showGpsTopIndicator
+                iconSource:     "/qmlimages/Gps.svg"
+                iconColor:      qgcPal.buttonText
+                primaryText:    gpsSatelliteText(_activeVehicle)
+                secondaryText:  gpsHdopText(_activeVehicle)
+                drawerComponent: gpsTopIndicatorPage
             }
         }
 
-        BarDivider { }
+        BarDivider {
+            visible: _showBatteryTopIndicator || _showGpsTopIndicator
+        }
 
         InfoSegment {
             label:        qsTr("Altitude")
@@ -388,49 +584,80 @@ Rectangle {
             Layout.fillWidth: true
         }
 
-        RowLayout {
+        Item {
+            id:                 rightActionRow
+            property bool       _showAnalyzeAction: QGroundControl.corePlugin.showAdvancedUI
+            property bool       _showAppSettingsAction: !QGroundControl.corePlugin.options.combineSettingsAndSetup
+            property int        _visibleActionCount: (_showAnalyzeAction ? 1 : 0) +
+                                                     1 +
+                                                     1 +
+                                                     (_showAppSettingsAction ? 1 : 0)
+            property real       _slotSize: _root.height * 0.74
+            property real       _rowWidth: _visibleActionCount > 0 ?
+                                             (_visibleActionCount * _slotSize +
+                                              Math.max(0, _visibleActionCount - 1) * actionRow.spacing) : 0
+
             Layout.alignment:   Qt.AlignVCenter
+            Layout.minimumWidth: _rowWidth
+            Layout.preferredWidth: _rowWidth
             Layout.fillHeight:  true
-            spacing:            ScreenTools.defaultFontPixelWidth * 0.42
 
-            IconSlot {
-                iconSource:     "/qmlimages/Analyze.svg"
-                tooltipText:    qsTr("Analyze Tools")
-                iconColor:      qgcPal.buttonText
-                visible:        QGroundControl.corePlugin.showAdvancedUI
-                onClicked:      _root.openAnalyzeTool()
-            }
+            Row {
+                id:                 actionRow
+                anchors.right:      parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height:             parent.height
+                spacing:            ScreenTools.defaultFontPixelWidth * 0.42
 
-            IconSlot {
-                iconSource:     "/qmlimages/Gears.svg"
-                tooltipText:    qsTr("Vehicle Configuration")
-                iconColor:      qgcPal.buttonText
-                onClicked:      _root.openVehicleConfig()
-            }
+                IconSlot {
+                    id:             analyzeAction
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconSource:     "/qmlimages/Analyze.svg"
+                    tooltipText:    qsTr("Analyze Tools")
+                    iconColor:      qgcPal.buttonText
+                    visible:        rightActionRow._showAnalyzeAction
+                    onClicked:      _root.openAnalyzeTool()
+                }
 
-            IconSlot {
-                iconSource:     "/res/VehicleMessages.png"
-                tooltipText:    qsTr("Vehicle Messages")
-                iconColor:      messageIconColor()
-                onClicked:      mainStatusIndicator.dropMainStatusIndicator()
-            }
+                IconSlot {
+                    id:             vehicleConfigAction
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconSource:     "/qmlimages/Gears.svg"
+                    tooltipText:    qsTr("Vehicle Configuration")
+                    iconColor:      qgcPal.buttonText
+                    onClicked:      _root.openVehicleConfig()
+                }
 
-            IconSlot {
-                iconSource:     "/res/gear-white.svg"
-                tooltipText:    qsTr("Application Settings")
-                iconColor:      qgcPal.buttonText
-                visible:        !QGroundControl.corePlugin.options.combineSettingsAndSetup
-                onClicked:      _root.openSettingsTool()
+                IconSlot {
+                    id:             vehicleMessagesAction
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconSource:     "/res/VehicleMessages.png"
+                    tooltipText:    qsTr("Vehicle Messages")
+                    iconColor:      messageIconColor()
+                    onClicked:      mainStatusIndicator.dropMainStatusIndicator()
+                }
+
+                IconSlot {
+                    id:             appSettingsAction
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconSource:     "/res/gear-white.svg"
+                    tooltipText:    qsTr("Application Settings")
+                    iconColor:      qgcPal.buttonText
+                    visible:        rightActionRow._showAppSettingsAction
+                    onClicked:      _root.openSettingsTool()
+                }
             }
         }
 
-        BarDivider { }
+        BarDivider {
+            visible: _showRightBranding && brandHolder.visible
+        }
 
         Item {
             id:                     brandHolder
-            Layout.preferredWidth:  _brandSource !== "" ? ScreenTools.defaultFontPixelWidth * 10 : 0
+            Layout.preferredWidth:  visible ? ScreenTools.defaultFontPixelWidth * 10 : 0
             Layout.fillHeight:      true
-            visible:                _brandSource !== ""
+            visible:                _showRightBranding && _brandSource !== ""
 
             property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
             property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length != 0

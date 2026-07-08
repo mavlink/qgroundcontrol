@@ -88,13 +88,13 @@ Item {
 
     QGCToolInsets {
         id:                     _totalToolInsets
-        leftEdgeTopInset:       toolStrip.leftEdgeTopInset
-        leftEdgeCenterInset:    toolStrip.leftEdgeCenterInset
+        leftEdgeTopInset:       vehicleSideList.leftEdgeTopInset
+        leftEdgeCenterInset:    vehicleSideList.leftEdgeCenterInset
         leftEdgeBottomInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.leftEdgeBottomInset : parentToolInsets.leftEdgeBottomInset
         rightEdgeTopInset:      topRightPanel.rightEdgeTopInset
         rightEdgeCenterInset:   topRightPanel.rightEdgeCenterInset
         rightEdgeBottomInset:   bottomRightRowLayout.rightEdgeBottomInset
-        topEdgeLeftInset:       toolStrip.topEdgeLeftInset
+        topEdgeLeftInset:       vehicleSideList.topEdgeLeftInset
         topEdgeCenterInset:     mapScale.topEdgeCenterInset
         topEdgeRightInset:      topRightPanel.topEdgeRightInset
         bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : parentToolInsets.bottomEdgeLeftInset
@@ -105,10 +105,10 @@ Item {
     FlyViewTopRightPanel {
         id:                     topRightPanel
         anchors.right:          parent.right
-        anchors.bottom:         parent.bottom
+        anchors.top:            parent.top
         anchors.rightMargin:    _layoutMargin
-        anchors.bottomMargin:   _layoutMargin
-        maximumHeight:          parent.height - (_layoutMargin * 2)
+        anchors.topMargin:      _layoutMargin
+        maximumHeight:          parent.height - (bottomRightRowLayout.visible ? bottomRightRowLayout.height + (_layoutMargin * 4) : (_layoutMargin * 2))
         panelExpanded:          _rightVehiclePanelOpen
         backdropSourceItem:     mapControl
 
@@ -139,12 +139,14 @@ Item {
         width:              Math.min(implicitWidth, Math.max(1, parent.width - (_layoutMargin * 2)))
         spacing:            _layoutSpacing
         visible:            !QGroundControl.videoManager.fullScreen
-        panelExpanded:      _rightVehiclePanelOpen
-        panelVehicle:       _rightPanelVehicle
+        z:                  QGroundControl.zOrderWidgets
         backdropSourceItem: mapControl
 
-        onVehicleClicked: function(vehicle) {
-            toggleVehiclePanel(vehicle)
+        onDisplayPreFlightChecklist: {
+            if (!preFlightChecklistLoader.active) {
+                preFlightChecklistLoader.active = true
+            }
+            preFlightChecklistLoader.item.open()
         }
 
         property real bottomEdgeRightInset:     visible ? height + _layoutMargin : 0
@@ -179,7 +181,9 @@ Item {
         anchors.bottom:             parent.bottom
         anchors.bottomMargin:       bottomLoaderMargin
         anchors.left:               parent.left   
-        anchors.leftMargin:         ( y > toolStrip.y + toolStrip.height ? toolStrip.width / 2 : toolStrip.width * 1.05 + toolStrip.x) 
+        anchors.leftMargin:         vehicleSideList.visible ?
+                                        (y > vehicleSideList.y + vehicleSideList.height ? vehicleSideList.width / 2 : vehicleSideList.width * 1.05 + vehicleSideList.x) :
+                                        parentToolInsets.leftEdgeBottomInset
         source:                     "qrc:/qml/QGroundControl/FlightDisplay/VirtualJoystick.qml"
         active:                     _virtualJoystickEnabled && !(_activeVehicle ? _activeVehicle.usingHighLatencyLink : false)
 
@@ -214,22 +218,21 @@ Item {
         }
     }
 
-    FlyViewToolStrip {
-        id:                     toolStrip
+    MultiVehicleList {
+        id:                     vehicleSideList
         anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
         anchors.topMargin:      _toolsMargin + parentToolInsets.topEdgeLeftInset
         anchors.left:           parent.left
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
         maxHeight:              parent.height - y - (bottomRightRowLayout.visible ? bottomRightRowLayout.height + _layoutMargin : parentToolInsets.bottomEdgeLeftInset) - _toolsMargin
-        visible:                !QGroundControl.videoManager.fullScreen
+        visible:                !QGroundControl.videoManager.fullScreen && QGroundControl.multiVehicleManager.vehicles.count > 0
+        panelExpanded:          _rightVehiclePanelOpen
+        panelVehicle:           _rightPanelVehicle
         backdropSourceItem:     mapControl
 
-        onDisplayPreFlightChecklist: {
-            if (!preFlightChecklistLoader.active) {
-                preFlightChecklistLoader.active = true
-            }
-            preFlightChecklistLoader.item.open()
+        onVehicleClicked: function(vehicle) {
+            toggleVehiclePanel(vehicle)
         }
 
         property real topEdgeLeftInset:     visible ? y + height : 0
@@ -249,7 +252,8 @@ Item {
     MapScale {
         id:                 mapScale
         anchors.margins:    _toolsMargin
-        anchors.left:       toolStrip.right
+        anchors.left:       parent.left
+        anchors.leftMargin: vehicleSideList.visible ? vehicleSideList.x + vehicleSideList.width + _toolsMargin : _toolsMargin
         anchors.top:        parent.top
         mapControl:         _mapControl
         buttonsOnLeft:      true

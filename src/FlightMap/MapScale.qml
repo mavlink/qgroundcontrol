@@ -26,6 +26,7 @@ Item {
     property alias  terrainButtonChecked:   terrainButton.checked
     property bool   zoomButtonsVisible:     true
     property bool   buttonsOnLeft:          true    ///< Buttons to left/right of scale bar
+    property var    backdropSourceItem:     mapControl
 
     signal terrainButtonClicked
 
@@ -33,7 +34,6 @@ Item {
     property var    _scaleLengthsFeet:      [10, 25, 50, 100, 250, 500, 1000, 2000, 3000, 4000, 5280, 5280*2, 5280*5, 5280*10, 5280*25, 5280*50, 5280*100, 5280*250, 5280*500, 5280*1000]
     property bool   _zoomButtonsVisible:    zoomButtonsVisible && !ScreenTools.isMobile
     property var    _color:                 mapControl.isSatelliteMap ? "white" : "black"
-
     function formatDistanceMeters(meters) {
         var dist = Math.round(meters)
         if (dist > 1000 ){
@@ -184,44 +184,130 @@ Item {
         color:              _color
     }
 
-    QGCButton {
+    component MapControlButton: Rectangle {
+        id: mapButton
+
+        property bool plus: true
+        property bool checked: false
+        property string iconSource: ""
+        property var backdropSourceItem: scale.backdropSourceItem
+        property color _symbolColor: Qt.rgba(1, 1, 1, enabled ? 0.92 : 0.48)
+        property real _symbolLength: Math.max(ScreenTools.defaultFontPixelHeight * 0.82, width * 0.42)
+        property real _symbolThickness: Math.max(2.5, width * 0.065)
+        signal clicked()
+
+        width:              height
+        radius:             Math.round(height * 0.16)
+        color:              "transparent"
+        border.color:       checked ? Qt.rgba(0.82, 0.90, 0.95, 0.30) :
+                                (mapButtonMouse.containsMouse ? Qt.rgba(0.82, 0.90, 0.95, 0.24) : Qt.rgba(0.82, 0.90, 0.95, 0.14))
+        border.width:       1
+        clip:               true
+
+        GlassBackdrop {
+            anchors.fill:       parent
+            sourceItem:         mapButton.backdropSourceItem
+            backdropBlurEnabled:true
+            targetItem:         mapButton
+            cornerRadius:       mapButton.radius
+            sourceScale:        0.46
+            blurAmount:         0.94
+            blurMax:            42
+            sourceBrightness:   -0.01
+            sourceSaturation:   0.62
+            tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.68)
+            sheenColor:         "transparent"
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius:       mapButton.radius
+            color:        mapButtonMouse.pressed ? Qt.rgba(0.135, 0.140, 0.150, 0.44) :
+                            (checked ? Qt.rgba(1, 1, 1, 0.060) :
+                             (mapButtonMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.052) : "transparent"))
+        }
+
+        QGCColoredImage {
+            anchors.centerIn:   parent
+            width:              Math.max(ScreenTools.defaultFontPixelHeight * 0.94, parent.width * 0.48)
+            height:             width
+            sourceSize.width:   width
+            sourceSize.height:  height
+            source:             mapButton.iconSource
+            visible:            source !== ""
+            color:              mapButton._symbolColor
+            fillMode:           Image.PreserveAspectFit
+        }
+
+        Item {
+            anchors.centerIn:   parent
+            width:              mapButton._symbolLength
+            height:             width
+            visible:            mapButton.iconSource === ""
+
+            Rectangle {
+                anchors.centerIn:   parent
+                width:              parent.width
+                height:             mapButton._symbolThickness
+                radius:             height / 2
+                color:              mapButton._symbolColor
+            }
+
+            Rectangle {
+                anchors.centerIn:   parent
+                width:              mapButton._symbolThickness
+                height:             parent.height
+                radius:             width / 2
+                color:              mapButton._symbolColor
+                visible:            mapButton.plus
+            }
+        }
+
+        QGCMouseArea {
+            id:             mapButtonMouse
+            anchors.fill:   parent
+            hoverEnabled:   !ScreenTools.isMobile
+            onClicked:      mapButton.clicked()
+        }
+    }
+
+    MapControlButton {
         id:                 terrainButton
         anchors.top:        scaleText.top
         anchors.bottom:     rightEnd.bottom
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.10
+        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.10
         anchors.leftMargin: buttonsOnLeft ? 0 : ScreenTools.defaultFontPixelWidth / 2
         anchors.left:       buttonsOnLeft ? parent.left : rightEnd.right
-        leftPadding:        topPadding
         iconSource:         "/res/terrain.svg"
-        width:              height
-        opacity:            0.75
         visible:            terrainButtonVisible
         onClicked:          terrainButtonClicked()
     }
 
-    QGCButton {
+    MapControlButton {
         id:                 zoomUpButton
         anchors.top:        scaleText.top
         anchors.bottom:     rightEnd.bottom
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.10
+        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.10
         anchors.leftMargin: terrainButton.visible ? ScreenTools.defaultFontPixelWidth / 2 : 0
         anchors.left:       terrainButton.visible ? terrainButton.right : terrainButton.left
-        text:               qsTr("+")
-        width:              height
-        opacity:            0.75
+        plus:               true
         visible:            _zoomButtonsVisible
-        onClicked:          mapControl.zoomLevel += 0.5
+        onClicked:          if (mapControl) mapControl.zoomLevel += 0.5
     }
 
-    QGCButton {
+    MapControlButton {
         id:                 zoomDownButton
         anchors.top:        scaleText.top
         anchors.bottom:     rightEnd.bottom
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.10
+        anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.10
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
         anchors.left:       zoomUpButton.right
-        text:               qsTr("-")
-        width:              height
-        opacity:            0.75
+        plus:               false
         visible:            _zoomButtonsVisible
-        onClicked:          mapControl.zoomLevel -= 0.5
+        onClicked:          if (mapControl) mapControl.zoomLevel -= 0.5
     }
 
     Component.onCompleted: {

@@ -25,14 +25,17 @@ import QGroundControl.FactControls
 Rectangle {
     width:      mainLayout.width + (_margins * 2)
     height:     mainLayout.height + (_margins * 2)
-    color:      Qt.rgba(0.045, 0.048, 0.052, 0.82)
+    color:      Qt.rgba(0.045, 0.048, 0.052, 0.66)
     radius:     _margins
     border.color: Qt.rgba(0.82, 0.88, 0.94, 0.12)
     border.width: 1
     visible:    _camera.capturesVideo || _camera.capturesPhotos
 
-    property real   _margins:                   ScreenTools.defaultFontPixelHeight / 2
-    property real   _smallMargins:              ScreenTools.defaultFontPixelWidth / 2
+    property real   _margins:                   ScreenTools.defaultFontPixelHeight / 3
+    property real   _smallMargins:              ScreenTools.defaultFontPixelWidth / 3
+    property real   _recordButtonSize:          ScreenTools.defaultFontPixelHeight * 2.25
+    property real   _modeSelectorWidth:         ScreenTools.defaultFontPixelWidth * 8
+    property real   _settingsIconSize:          ScreenTools.defaultFontPixelHeight * 1.1
     property var    _activeVehicle:             globals.activeVehicle
     property var    _cameraManager:             _activeVehicle.cameraManager
     property var    _camera:                    _cameraManager.currentCameraInstance
@@ -78,7 +81,7 @@ Rectangle {
         }
         
         ColumnLayout {
-            spacing: _margins * 2
+            spacing: _margins * 1.35
 
             ColumnLayout {
                 spacing: _margins
@@ -93,7 +96,7 @@ Rectangle {
                 // Photo/Video Mode Selector
                 Rectangle {
                     Layout.alignment:   Qt.AlignHCenter
-                    width:              ScreenTools.defaultFontPixelWidth * 10
+                    width:              _modeSelectorWidth
                     height:             width / 2
                     color:              Qt.rgba(1, 1, 1, 0.055)
                     radius:             height * 0.5
@@ -160,11 +163,11 @@ Rectangle {
                 Rectangle {
                     Layout.alignment:   Qt.AlignHCenter
                     color:              Qt.rgba(0,0,0,0)
-                    width:              ScreenTools.defaultFontPixelWidth * 6
+                    width:              _recordButtonSize
                     height:             width
                     radius:             width * 0.5
                     border.color:       qgcPal.buttonText
-                    border.width:       3
+                    border.width:       2
 
                     Rectangle {
                         // anchors.centerIn snaps to integer coordinates, which
@@ -221,7 +224,7 @@ Rectangle {
                         anchors.left:       parent.left
                         anchors.top:        parent.top
                         text:               _videoCaptureIdle ? "00:00:00" : _camera.recordTimeStr
-                        font.pointSize:     ScreenTools.largeFontPointSize
+                        font.pointSize:     ScreenTools.defaultFontPointSize
                         visible:            _cameraInVideoMode
                     }
 
@@ -232,7 +235,7 @@ Rectangle {
                         anchors.left:       parent.left
                         anchors.top:        parent.top
                         text:               _activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
-                        font.pointSize:     ScreenTools.largeFontPointSize
+                        font.pointSize:     ScreenTools.defaultFontPointSize
                         visible:            _cameraInPhotoMode
                     }
                 }
@@ -267,10 +270,10 @@ Rectangle {
                 Rectangle {
                     Layout.alignment:       Qt.AlignHCenter
                     color:                  _camera.trackingEnabled ? qgcPal.colorRed : Qt.rgba(1, 1, 1, 0.055)
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 6
+                    Layout.preferredWidth:  _recordButtonSize
                     Layout.preferredHeight: Layout.preferredWidth
                     border.color:           qgcPal.buttonText
-                    border.width:           3
+                    border.width:           2
                     
                     QGCColoredImage {
                         height:             parent.height * 0.5
@@ -305,7 +308,7 @@ Rectangle {
                 Layout.alignment:       Qt.AlignHCenter
                 source:                 "/res/gear-black.svg"
                 mipmap:                 true
-                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
+                Layout.preferredHeight: _settingsIconSize
                 Layout.preferredWidth:  Layout.preferredHeight
                 sourceSize.height:      Layout.preferredHeight
                 color:                  qgcPal.text
