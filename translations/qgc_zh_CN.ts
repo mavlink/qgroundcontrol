@@ -7044,6 +7044,104 @@ Click Ok to start the auto-tuning process.
     </message>
   </context>
   <context>
+    <name>FlyViewTopRightPanel</name>
+    <message>
+      <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="1190"/>
+      <source>HDG</source>
+      <translation>航向</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="1161"/>
+      <source>Altitude</source>
+      <translation>高度</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightDisplay/FlyViewTopRightPanel.qml" line="1221"/>
+      <source>Speed</source>
+      <translation>速度</translation>
+    </message>
+    <message>
+      <source>Flight Time</source>
+      <translation>飞行时间</translation>
+    </message>
+    <message>
+      <source>Flight Dist</source>
+      <translation>航程</translation>
+    </message>
+    <message>
+      <source>Home Time</source>
+      <translation>返航时间</translation>
+    </message>
+    <message>
+      <source>Home Dist</source>
+      <translation>返航距离</translation>
+    </message>
+    <message>
+      <source>Course</source>
+      <translation>航线</translation>
+    </message>
+    <message>
+      <source>Next WP</source>
+      <translation>下一航点</translation>
+    </message>
+    <message>
+      <source>Climb</source>
+      <translation>爬升</translation>
+    </message>
+    <message>
+      <source>Voltage</source>
+      <translation>电压</translation>
+    </message>
+    <message>
+      <source>Rel Alt</source>
+      <translation>相对高度</translation>
+    </message>
+    <message>
+      <source>Thr</source>
+      <translation>油门</translation>
+    </message>
+    <message>
+      <source>AMSL Alt</source>
+      <translation>海拔</translation>
+    </message>
+    <message>
+      <source>GPS HDG</source>
+      <translation>GPS航向</translation>
+    </message>
+    <message>
+      <source>Pitch</source>
+      <translation>俯仰</translation>
+    </message>
+    <message>
+      <source>Wind Spd</source>
+      <translation>风速</translation>
+    </message>
+    <message>
+      <source>Roll</source>
+      <translation>横滚</translation>
+    </message>
+    <message>
+      <source>Wind Dir</source>
+      <translation>风向</translation>
+    </message>
+    <message>
+      <source>Heading</source>
+      <translation>航向</translation>
+    </message>
+    <message>
+      <source>IMU Temp</source>
+      <translation>IMU温度</translation>
+    </message>
+    <message>
+      <source>Lat</source>
+      <translation>纬度</translation>
+    </message>
+    <message>
+      <source>Lon</source>
+      <translation>经度</translation>
+    </message>
+  </context>
+  <context>
     <name>FlyViewToolStrip</name>
     <message>
       <location filename="../src/FlightDisplay/FlyViewToolStrip.qml" line="18"/>
@@ -7904,32 +8002,32 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="40"/>
       <source>Return</source>
-      <translation type="unfinished">Return</translation>
+      <translation>返航|返回</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="41"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>起飞</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="42"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>降落</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="43"/>
       <source>Start Mission</source>
-      <translation type="unfinished">Start Mission</translation>
+      <translation>开始任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="44"/>
       <source>Start Mission (MV)</source>
-      <translation type="unfinished">Start Mission (MV)</translation>
+      <translation>开始任务 (MV)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="45"/>
       <source>Continue Mission</source>
-      <translation type="unfinished">Continue Mission</translation>
+      <translation>继续任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="46"/>
@@ -7939,12 +8037,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="47"/>
       <source>Pause</source>
-      <translation type="unfinished">Pause</translation>
+      <translation>暂停</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="48"/>
       <source>Pause (MV)</source>
-      <translation type="unfinished">Pause (MV)</translation>
+      <translation>暂停 (MV)</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="49"/>
@@ -8029,7 +8127,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="64"/>
       <source>Continue the mission from the current waypoint.</source>
-      <translation type="unfinished">Continue the mission from the current waypoint.</translation>
+      <translation>从当前航点继续任务。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="65"/>
@@ -8069,12 +8167,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="73"/>
       <source>Pause the vehicle at it&apos;s current position, adjusting altitude up or down as needed.</source>
-      <translation type="unfinished">Pause the vehicle at it&apos;s current position, adjusting altitude up or down as needed.</translation>
+      <translation>将飞行器停在当前位置，并按需要调整高度。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="74"/>
       <source>Pause all vehicles at their current position.</source>
-      <translation type="unfinished">Pause all vehicles at their current position.</translation>
+      <translation>让所有飞行器在当前位置暂停。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="75"/>
@@ -9540,7 +9638,15 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="520"/>
       <source>Back</source>
-      <translation type="unfinished">Back</translation>
+      <translation>返回</translation>
+    </message>
+  </context>
+  <context>
+    <name>NavigationBackButton</name>
+    <message>
+      <location filename="../src/QmlControls/NavigationBackButton.qml" line="23"/>
+      <source>Back</source>
+      <translation>返回</translation>
     </message>
   </context>
   <context>
@@ -9582,13 +9688,13 @@ Click Ok to start the auto-tuning process.
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="136"/>
-      <source>FW(vtol)</source>
-      <translation type="unfinished">FW(vtol)</translation>
+      <source>Fixed Wing</source>
+      <translation>固定翼</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="136"/>
-      <source>MR(vtol)</source>
-      <translation type="unfinished">MR(vtol)</translation>
+      <source>Multi-Rotor</source>
+      <translation>多旋翼</translation>
     </message>
     <message>
       <location filename="../src/ui/toolbar/MainStatusIndicator.qml" line="196"/>
@@ -12769,6 +12875,14 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
       <location filename="../src/MissionManager/PlanMasterController.cc" line="594"/>
       <source>Plan Files (*.%1)</source>
       <translation type="unfinished">Plan Files (*.%1)</translation>
+    </message>
+  </context>
+  <context>
+    <name>PlanViewToolBar</name>
+    <message>
+      <location filename="../src/QmlControls/PlanViewToolBar.qml" line="58"/>
+      <source>Back to Fly</source>
+      <translation>返回飞行</translation>
     </message>
   </context>
   <context>
@@ -17973,7 +18087,112 @@ Confirm change?</translation>
     <message>
       <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="89"/>
       <source>Vehicle %1</source>
-      <translation type="unfinished">Vehicle %1</translation>
+      <translation>载具%1</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="45"/>
+      <source>N/A</source>
+      <translation>无数据</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="61"/>
+      <source>2D</source>
+      <translation>2D</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="63"/>
+      <source>3D</source>
+      <translation>3D</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="65"/>
+      <source>DGPS</source>
+      <translation>DGPS</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="67"/>
+      <source>RTK Float</source>
+      <translation>RTK浮点</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="69"/>
+      <source>RTK Fixed</source>
+      <translation>RTK固定</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="71"/>
+      <source>No Fix</source>
+      <translation>无定位</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="85"/>
+      <source>Device %1</source>
+      <translation>设备 %1</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="85"/>
+      <source>Unknown</source>
+      <translation>未知</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="94"/>
+      <source>Communication Lost</source>
+      <translation>通信丢失</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="97"/>
+      <source>Landing</source>
+      <translation>降落中</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="100"/>
+      <source>Flying</source>
+      <translation>飞行中</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="103"/>
+      <source>Armed</source>
+      <translation>已解锁</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="106"/>
+      <source>Not Ready</source>
+      <translation>未就绪</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="109"/>
+      <source>Ready</source>
+      <translation>已就绪</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="111"/>
+      <source>Connected</source>
+      <translation>已连接</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="274"/>
+      <source>Ground Speed</source>
+      <translation>地速</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="280"/>
+      <source>Air Speed</source>
+      <translation>空速</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="286"/>
+      <source>Altitude</source>
+      <translation>高度</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="292"/>
+      <source>Battery</source>
+      <translation>电池</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="298"/>
+      <source>GPS</source>
+      <translation>GPS</translation>
     </message>
   </context>
   <context>
