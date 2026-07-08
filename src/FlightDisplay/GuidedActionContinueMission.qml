@@ -10,9 +10,9 @@
 import QGroundControl.FlightDisplay
 
 GuidedToolStripAction {
-    text:       _guidedController.pauseTitle
-    iconSource: "/res/flyview-pause.svg"
-    visible:    _guidedController.showPause
-    enabled:    _guidedController.showPause
-    actionID:   _guidedController.actionPause
+    text:       _guidedController.continueMissionTitle
+    iconSource: "/res/flyview-continue.svg"
+    visible:    _guidedController.showContinueMission
+    enabled:    _guidedController.showContinueMission
+    actionID:   _guidedController.actionContinueMission
 }

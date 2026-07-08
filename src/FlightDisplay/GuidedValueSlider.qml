@@ -127,7 +127,7 @@ Item {
         QGCLabel {
             Layout.fillWidth:   true
             horizontalAlignment: Text.AlignHCenter
-            font.pointSize:     ScreenTools.smallFontPointSize
+            font.pointSize:     ScreenTools.labelFontPointSize
             text:               _displayText
         }
       
@@ -184,7 +184,7 @@ Item {
                             anchors.right:          parent.right
                             anchors.verticalCenter: majorTick.verticalCenter
                             text:                   parent.tickValue
-                            font.pointSize:         ScreenTools.largeFontPointSize
+                            font.pointSize:         ScreenTools.metricFontPointSize
                         }
                     }
                 }
@@ -219,7 +219,7 @@ Item {
         QGCLabel {
             id:             maxDigitsTextMeasure
             text:           "-100"
-            font.pointSize: ScreenTools.largeFontPointSize
+            font.pointSize: ScreenTools.metricFontPointSize
             visible:        false
         }
 
@@ -257,7 +257,7 @@ Item {
             horizontalAlignment:    Text.AlignRight
             verticalAlignment:      Text.AlignVCenter
             text:                   _clampedSliderValueString(_sliderValue) + " " + unitsString
-            font.pointSize:         ScreenTools.largeFontPointSize
+            font.pointSize:         ScreenTools.metricFontPointSize
 
             property var unitsString: _sliderType === GuidedValueSlider.Speed ? 
                                         QGroundControl.unitsConversion.appSettingsSpeedUnitsString : 

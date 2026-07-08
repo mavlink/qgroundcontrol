@@ -11,7 +11,7 @@ import QGroundControl.FlightDisplay
 
 GuidedToolStripAction {
     text:       _guidedController.takeoffTitle
-    iconSource: "/res/takeoff.svg"
+    iconSource: "/res/flyview-takeoff.svg"
     visible:    _guidedController.showTakeoff || !_guidedController.showLand
     enabled:    _guidedController.showTakeoff
     actionID:   _guidedController.actionTakeoff

@@ -35,7 +35,7 @@ QGCPopupDialog {
         QGCColumnButton {
             id: grabButton
             text:                   "Grab"
-            iconSource:             "/res/GripperGrab.svg"
+            iconSource:             "/res/flyview-gripper-grab.svg"
             font.pointSize:         ScreenTools.defaultFontPointSize * 3.5
             backRadius:             width / 40
             heightFactor:           0.75
@@ -51,7 +51,7 @@ QGCPopupDialog {
         QGCColumnButton {
             id: releaseButton
             text:                   "Release"
-            iconSource:             "/res/GripperRelease.svg"
+            iconSource:             "/res/flyview-gripper-release.svg"
             font.pointSize:         ScreenTools.defaultFontPointSize * 3.5
             backRadius:             width / 40
             heightFactor:           0.75

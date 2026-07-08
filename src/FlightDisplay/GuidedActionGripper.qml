@@ -17,7 +17,7 @@ GuidedToolStripAction {
     property bool  _isVehicleArmed:         _initialConnectComplete ? activeVehicle.armed : false
 
     text:       "Gripper"
-    iconSource: "/res/Gripper.svg"          
+    iconSource: "/res/flyview-gripper.svg"
     visible:    !_isVehicleArmed && _grip_enable   // in this way if the pilot it's on the ground can release the cargo without actions tool
     enabled:    _grip_enable
     actionID:   _guidedController.actionGripper

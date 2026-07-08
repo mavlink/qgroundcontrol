@@ -204,7 +204,7 @@ RowLayout {
                 id:                     hiddenModesLabel
                 text:                   qsTr("Some Modes Hidden")
                 Layout.fillWidth:       true
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.labelFontPointSize
                 horizontalAlignment:    Text.AlignHCenter
                 visible:                false
 

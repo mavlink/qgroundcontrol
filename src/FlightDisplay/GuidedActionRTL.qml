@@ -11,7 +11,7 @@ import QGroundControl.FlightDisplay
 
 GuidedToolStripAction {
     text:       _guidedController.rtlTitle
-    iconSource: "/res/rtl.svg"
+    iconSource: "/res/flyview-rtl.svg"
     visible:    true
     enabled:    _guidedController.showRTL
     actionID:   _guidedController.actionRTL

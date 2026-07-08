@@ -19,7 +19,7 @@ import QGroundControl.Controllers
 ToolStripAction {
     id:         action
     text:       qsTr("Actions")
-    iconSource: "qrc:/qmlimages/HamburgerThin.svg"
+    iconSource: "/res/flyview-actions.svg"
     visible:    _additionalActions.anyActionAvailable || _mavlinkActions.anyActionAvailable || _customActions.anyActionAvailable
     enabled:    true
 

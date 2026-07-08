@@ -8,6 +8,7 @@ qt_add_qml_module(FlightDisplayModule
         CustomGuidedActionsController.qml
         DefaultChecklist.qml
         FixedWingChecklist.qml
+        FlightModeDisplay.qml
         FlightDisplayViewDummy.qml
         FlightDisplayViewGStreamer.qml
         FlightDisplayViewQtMultimedia.qml
@@ -33,6 +34,7 @@ qt_add_qml_module(FlightDisplayModule
         FlyViewWidgetLayer.qml
         GripperMenu.qml
         GuidedActionConfirm.qml
+        GuidedActionContinueMission.qml
         GuidedActionGripper.qml
         GuidedActionLand.qml
         GuidedActionPause.qml

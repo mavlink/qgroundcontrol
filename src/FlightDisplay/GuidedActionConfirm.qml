@@ -100,7 +100,7 @@ Rectangle {
             Layout.fillWidth:       true
             horizontalAlignment:    Text.AlignHCenter
             wrapMode:               Text.WordWrap
-            font.pointSize:         ScreenTools.defaultFontPointSize
+            font.pointSize:         ScreenTools.titleFontPointSize
             font.bold:              true
         }
 
