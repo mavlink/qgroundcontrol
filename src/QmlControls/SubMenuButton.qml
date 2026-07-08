@@ -77,6 +77,7 @@ Button {
             verticalAlignment:      TextEdit.AlignVCenter
             color:                  showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
             text:                   control.text
+            font.pointSize:         ScreenTools.controlFontPointSize
         }
     }
 

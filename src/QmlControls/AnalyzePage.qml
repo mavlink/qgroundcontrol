@@ -53,7 +53,7 @@ Item {
         visible:                !ScreenTools.isShortScreen && headerLoader.sourceComponent === null
         QGCLabel {
             id:                 pageNameLabel
-            font.pointSize:     ScreenTools.largeFontPointSize
+            font.pointSize:     ScreenTools.sectionFontPointSize
             visible:            !popped
         }
         QGCLabel {

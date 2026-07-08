@@ -15,7 +15,7 @@ Item {
     clip:           true
     implicitWidth:  Math.min(_measureText.implicitWidth, maxWidth)
     implicitHeight: _measureText.implicitHeight
-    font.pointSize: ScreenTools.defaultFontPointSize
+    font.pointSize: ScreenTools.bodyFontPointSize
     font.family:    ScreenTools.normalFontFamily
 
     property bool _scrollMarquee:       _measureText.implicitWidth > maxWidth

@@ -12,7 +12,7 @@ TextField {
     selectedTextColor:  qgcPal.textField
     activeFocusOnPress: true
     antialiasing:       true
-    font.pointSize:     ScreenTools.defaultFontPointSize
+    font.pointSize:     ScreenTools.controlFontPointSize
     font.family:        ScreenTools.normalFontFamily
     inputMethodHints:   numericValuesOnly && !ScreenTools.isiOS ?
                             Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
@@ -127,7 +127,7 @@ TextField {
             Text {
                 Layout.alignment:   Qt.AlignVCenter
                 text:               control.extraUnitsLabel
-                font.pointSize:     ScreenTools.smallFontPointSize
+                font.pointSize:     ScreenTools.captionFontPointSize
                 font.family:        ScreenTools.normalFontFamily
                 antialiasing:       true
                 color:              control.color
@@ -138,7 +138,7 @@ TextField {
             Text {
                 Layout.alignment:   Qt.AlignVCenter
                 text:               control.unitsLabel
-                font.pointSize:     control.activeFocus ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+                font.pointSize:     control.activeFocus ? ScreenTools.captionFontPointSize : ScreenTools.labelFontPointSize
                 font.family:        ScreenTools.normalFontFamily
                 antialiasing:       true
                 color:              control.color

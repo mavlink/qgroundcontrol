@@ -22,6 +22,7 @@ Item {
     property real   radius:             ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.75 : ScreenTools.defaultFontPixelHeight * 1.25
     property real   viewportMargins:    0
     property var    toolStrip
+    property bool   allowOutsideParent: false
 
     // Should be an enum but that get's into the whole problem of creating a singleton which isn't worth the effort
     readonly property int dropLeft:     1
@@ -30,14 +31,14 @@ Item {
     readonly property int dropDown:     4
 
     readonly property real _arrowBaseHeight:    radius             // Height of vertical side of arrow
-    readonly property real _arrowPointWidth:    radius * 0.666     // Distance from vertical side to point
+    readonly property real _arrowPointWidth:    allowOutsideParent ? 0 : radius * 0.666     // Distance from vertical side to point
     readonly property real _dropMargin:         ScreenTools.defaultFontPixelWidth
     readonly property color _panelColor:        Qt.rgba(0.045, 0.048, 0.052, 0.72)
     readonly property color _panelBorderColor:  Qt.rgba(0.82, 0.88, 0.94, 0.075)
 
     property var    _dropEdgeTopPoint
     property alias  _dropDownComponent: panelLoader.sourceComponent
-    property real   _viewportMaxTop:    0
+    property real   _viewportMaxTop:    allowOutsideParent && parent ? -parent.y + viewportMargins : 0
     property real   _viewportMaxBottom: parent.parent.height - parent.y
     property real   _viewportMaxHeight: _viewportMaxBottom - _viewportMaxTop
     property var    _dropPanelCancel
@@ -68,8 +69,14 @@ Item {
         dropDownItem.width  = panelComponentWidth  + (_dropMargin * 2) + _arrowPointWidth
         dropDownItem.height = panelComponentHeight + (_dropMargin * 2)
 
-        dropDownItem.x = _dropEdgeTopPoint.x + _dropMargin
-        dropDownItem.y = _dropEdgeTopPoint.y -(dropDownItem.height / 2) + radius
+        if (allowOutsideParent) {
+            var viewportWidth = parent && parent.parent ? parent.parent.width : parent.width
+            dropDownItem.x = Math.max(0, Math.min(_dropEdgeTopPoint.x - (dropDownItem.width / 2), viewportWidth - dropDownItem.width))
+            dropDownItem.y = _dropEdgeTopPoint.y - dropDownItem.height - (_dropMargin * 0.55)
+        } else {
+            dropDownItem.x = _dropEdgeTopPoint.x + _dropMargin
+            dropDownItem.y = _dropEdgeTopPoint.y -(dropDownItem.height / 2) + radius
+        }
 
         // Validate that dropdown is within viewport
         dropDownItem.y = Math.min(dropDownItem.y + dropDownItem.height, _viewportMaxBottom) - dropDownItem.height
@@ -79,7 +86,7 @@ Item {
         dropDownItem.height = Math.min(dropDownItem.height, _viewportMaxHeight - dropDownItem.y)
 
         // Arrow points
-        arrowCanvas.arrowPoint.y = (_dropEdgeTopPoint.y + radius) - dropDownItem.y
+        arrowCanvas.arrowPoint.y = allowOutsideParent ? 0 : (_dropEdgeTopPoint.y + radius) - dropDownItem.y
         arrowCanvas.arrowPoint.x = 0
         arrowCanvas.arrowBase1.x = _arrowPointWidth
         arrowCanvas.arrowBase1.y = arrowCanvas.arrowPoint.y - (_arrowBaseHeight / 2)
@@ -135,9 +142,11 @@ Item {
                 context.quadraticCurveTo(panelX + panelWidth, panelY + panelHeight, panelX + panelWidth - cornerRadius, panelY + panelHeight)
                 context.lineTo(panelX + cornerRadius, panelY + panelHeight)
                 context.quadraticCurveTo(panelX, panelY + panelHeight, panelX, panelY + panelHeight - cornerRadius)
-                context.lineTo(panelX, arrowBase2.y)
-                context.lineTo(arrowPoint.x, arrowPoint.y)
-                context.lineTo(arrowBase1.x, arrowBase1.y)
+                if (!allowOutsideParent) {
+                    context.lineTo(panelX, arrowBase2.y)
+                    context.lineTo(arrowPoint.x, arrowPoint.y)
+                    context.lineTo(arrowBase1.x, arrowBase1.y)
+                }
                 context.lineTo(panelX, panelY + cornerRadius)
                 context.quadraticCurveTo(panelX, panelY, panelX + cornerRadius, panelY)
 

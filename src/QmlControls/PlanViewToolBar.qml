@@ -22,8 +22,9 @@ import QGroundControl.Controllers
 Rectangle {
     id:     _root
     width:  parent.width
-    height: ScreenTools.toolbarHeight
+    height: Math.max(ScreenTools.minTouchPixels * 0.72, ScreenTools.defaultFontPixelHeight * 2.02)
     color:  "transparent"
+    clip:   true
 
     property var    planMasterController
     property Item   backdropSource
@@ -44,7 +45,7 @@ Rectangle {
         blurMax:            36
         sourceBrightness:   -0.05
         sourceSaturation:   0.54
-        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.80)
+        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.68)
         sheenColor:         "transparent"
     }
 
@@ -57,27 +58,16 @@ Rectangle {
         color:          Qt.rgba(0.82, 0.88, 0.94, 0.035)
     }
 
-    RowLayout {
+    NavigationBackButton {
         id:                     viewButtonRow
-        anchors.bottomMargin:   1
+        anchors.left:           parent.left
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        spacing:                ScreenTools.defaultFontPixelWidth / 2
-
-        QGCLabel {
-            font.pointSize: ScreenTools.largeFontPointSize
-            text:           "<"
-        }
-
-        QGCLabel {
-            text:           qsTr("Exit Plan")
-            font.pointSize: ScreenTools.largeFontPointSize
-        }
-    }
-
-    QGCMouseArea {
-        anchors.fill:   viewButtonRow
-        onClicked:      mainWindow.showFlyView()
+        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 0.55
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.16
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 0.16 + 1
+        text:                   qsTr("Back to Fly")
+        onClicked:              mainWindow.showFlyView()
     }
 
     QGCFlickable {
@@ -144,14 +134,14 @@ Rectangle {
         QGCLabel {
             anchors.centerIn:   parent
             text:               qsTr("Syncing Mission")
-            font.pointSize:     ScreenTools.largeFontPointSize
+            font.pointSize:     ScreenTools.sectionFontPointSize
             visible:            _controllerProgressPct !== 1
         }
 
         QGCLabel {
             anchors.centerIn:   parent
             text:               qsTr("Done")
-            font.pointSize:     ScreenTools.largeFontPointSize
+            font.pointSize:     ScreenTools.sectionFontPointSize
             visible:            _controllerProgressPct === 1
         }
 

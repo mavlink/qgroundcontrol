@@ -20,7 +20,7 @@ T.ComboBox {
     id:             control
     padding:        ScreenTools.comboBoxPadding
     spacing:        ScreenTools.defaultFontPixelWidth
-    font.pointSize: ScreenTools.defaultFontPointSize
+    font.pointSize: ScreenTools.controlFontPointSize
     font.family:    ScreenTools.normalFontFamily
     implicitWidth:  Math.max(background ? background.implicitWidth : 0,
                              contentItem.implicitWidth + leftPadding + rightPadding + padding)

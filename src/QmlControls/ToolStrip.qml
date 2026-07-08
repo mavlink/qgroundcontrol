@@ -18,7 +18,8 @@ import QGroundControl.Controls
 Rectangle {
     id:         _root
     color:      "transparent"
-    width:      Math.max(ScreenTools.defaultFontPixelWidth * 9.0, ScreenTools.minTouchPixels * 1.38)
+    width:      Math.max(ScreenTools.defaultFontPixelWidth * 9.0 * sizeScale,
+                         ScreenTools.minTouchPixels * 1.38 * sizeScale)
     height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
     radius:     Math.round(ScreenTools.defaultFontPixelWidth * 0.78)
     border.color: "transparent"
@@ -27,8 +28,9 @@ Rectangle {
     property alias  model:              repeater.model
     property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
     property alias  title:              titleLabel.text
-    property var    fontSize:           ScreenTools.defaultFontPointSize + 1
+    property var    fontSize:           ScreenTools.titleFontPointSize
     property var    backdropSourceItem: null
+    property real   sizeScale:          1.0
 
     property var _dropPanel: dropPanel
 
@@ -40,12 +42,12 @@ Rectangle {
         backdropBlurEnabled:true
         targetItem:         _root
         cornerRadius:       _root.radius
-        sourceScale:        0.52
-        blurAmount:         0.92
-        blurMax:            38
+        sourceScale:        0.46
+        blurAmount:         0.94
+        blurMax:            42
         sourceBrightness:   -0.01
         sourceSaturation:   0.62
-        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.80)
+        tintColor:          Qt.rgba(0.045, 0.048, 0.052, 0.68)
         sheenColor:         "transparent"
     }
 
@@ -66,7 +68,7 @@ Rectangle {
 
     QGCFlickable {
         id:                 flickable
-        anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.36
+        anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.36 * _root.sizeScale
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
@@ -79,14 +81,14 @@ Rectangle {
             id:             toolStripColumn
             anchors.left:   parent.left
             anchors.right:  parent.right
-            spacing:        ScreenTools.defaultFontPixelWidth * 0.28
+            spacing:        ScreenTools.defaultFontPixelWidth * 0.28 * _root.sizeScale
 
             QGCLabel {
                 id:                     titleLabel
                 anchors.left:           parent.left
                 anchors.right:          parent.right
                 horizontalAlignment:    Text.AlignHCenter
-                font.pointSize:         ScreenTools.smallFontPointSize
+                font.pointSize:         ScreenTools.captionFontPointSize
                 color:                  qgcPal.buttonText
                 visible:                title != ""
             }
@@ -98,11 +100,11 @@ Rectangle {
                     id:                 buttonTemplate
                     anchors.left:       toolStripColumn.left
                     anchors.right:      toolStripColumn.right
-                    height:             Math.max(ScreenTools.minTouchPixels * 0.98,
+                    height:             Math.max(ScreenTools.minTouchPixels * 0.98 * _root.sizeScale,
                                                  Math.min(toolStripColumn.width * 0.96,
-                                                          ScreenTools.defaultFontPixelHeight * 3.60))
-                    radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.30)
-                    fontPointSize:      _root.fontSize
+                                                          ScreenTools.defaultFontPixelHeight * 3.60 * _root.sizeScale))
+                    radius:             Math.round(ScreenTools.defaultFontPixelWidth * 0.30 * _root.sizeScale)
+                    fontPointSize:      _root.fontSize * _root.sizeScale
                     toolStripAction:    modelData
                     dropPanel:          _dropPanel
                     onDropped: (index) => _root.dropped(index)

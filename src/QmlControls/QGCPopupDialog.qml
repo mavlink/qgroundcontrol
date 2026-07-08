@@ -226,7 +226,7 @@ Popup {
                 id: titleLable
                 Layout.fillWidth:   true
                 text:               root.title
-                font.pointSize:     ScreenTools.mediumFontPointSize
+                font.pointSize:     ScreenTools.titleFontPointSize
                 verticalAlignment:	Text.AlignVCenter
             }
 

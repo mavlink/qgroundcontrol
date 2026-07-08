@@ -34,6 +34,7 @@ Button {
     property bool forceImageScale11: false
     property real imageScale:        forceImageScale11 && (text == "") ? 0.72 : 0.56
     property real contentMargins:    ScreenTools.defaultFontPixelWidth * 0.20
+    property string cornerBadgeText: toolStripAction && typeof toolStripAction.cornerBadgeText !== "undefined" ? toolStripAction.cornerBadgeText : ""
 
     property color _currentContentColor:  checked ? qgcPal.text : qgcPal.buttonText
     property color _currentContentColorSecondary:  qgcPal.colorGreen
@@ -128,6 +129,35 @@ Button {
                 elide:                      Text.ElideRight
                 font.bold:                  control.checked || (!innerImage.visible && !innerImageColorful.visible)
                 opacity:                    control.enabled ? 1.0 : 0.45
+            }
+        }
+
+        Rectangle {
+            id:             cornerBadge
+            anchors.top:    parent.top
+            anchors.right:  parent.right
+            anchors.topMargin:     -contentMargins * 0.15
+            anchors.rightMargin:   -contentMargins * 0.10
+            width:          cornerBadgeLabel.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.44
+            height:         Math.max(ScreenTools.defaultFontPixelHeight * 0.68,
+                                     cornerBadgeLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.04)
+            radius:         Math.round(height * 0.28)
+            color:          Qt.rgba(0.82, 0.88, 0.94, control.checked ? 0.16 : 0.10)
+            border.color:   Qt.rgba(0.82, 0.88, 0.94, control.checked ? 0.28 : 0.18)
+            border.width:   1
+            visible:        control.cornerBadgeText !== ""
+            z:              2
+
+            QGCLabel {
+                id:                     cornerBadgeLabel
+                anchors.centerIn:       parent
+                text:                   control.cornerBadgeText
+                color:                  qgcPal.buttonText
+                font.bold:              true
+                font.pointSize:         Math.max(7, ScreenTools.captionFontPointSize - 1)
+                horizontalAlignment:    Text.AlignHCenter
+                verticalAlignment:      Text.AlignVCenter
+                maximumLineCount:       1
             }
         }
     }

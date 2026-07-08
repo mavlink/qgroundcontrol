@@ -33,7 +33,7 @@ ColumnLayout {
 
         QGCLabel { 
             text:           heading
-            font.pointSize: ScreenTools.defaultFontPointSize + 1
+            font.pointSize: ScreenTools.titleFontPointSize
             font.bold:      true
         }
 
@@ -41,7 +41,7 @@ ColumnLayout {
             Layout.fillWidth:   true
             text:               headingDescription
             wrapMode:           Text.WordWrap
-            font.pointSize:     ScreenTools.smallFontPointSize
+            font.pointSize:     ScreenTools.labelFontPointSize
             visible:            headingDescription !== ""
         }
     }

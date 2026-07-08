@@ -117,6 +117,7 @@ ApplicationWindow {
 
     function showPlanView() {
         flyView.visible = false
+        planView.syncToActiveVehicleOnEntry()
         planView.visible = true
     }
 
@@ -506,22 +507,31 @@ ApplicationWindow {
                 anchors.left:       parent.left
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
-                spacing:            ScreenTools.defaultFontPixelWidth
+                spacing:            0
 
-                QGCLabel {
-                    font.pointSize: ScreenTools.largeFontPointSize
-                    text:           "<"
+                NavigationBackButton {
+                    text:           qsTr("Back")
+                    height:         Math.max(ScreenTools.minTouchPixels * 0.78, ScreenTools.defaultFontPixelHeight * 2.0)
+                    onClicked: {
+                        if (mainWindow.allowViewSwitch()) {
+                            toolDrawer.visible = false
+                        }
+                    }
                 }
 
                 QGCLabel {
-                    id:             toolbarDrawerText
-                    text:           qsTr("Exit") + " " + toolDrawer.toolTitle
-                    font.pointSize: ScreenTools.largeFontPointSize
+                    id:                     toolbarDrawerText
+                    Layout.leftMargin:      ScreenTools.defaultFontPixelWidth * 0.60
+                    text:                   toolDrawer.toolTitle
+                    color:                  qgcPal.text
+                    font.pointSize:         ScreenTools.largeFontPointSize
+                    verticalAlignment:      Text.AlignVCenter
+                    elide:                  Text.ElideRight
                 }
             }
 
             QGCMouseArea {
-                anchors.fill: toolDrawerToolbarLayout
+                anchors.fill: toolbarDrawerText
                 onClicked: {
                     if (mainWindow.allowViewSwitch()) {
                         toolDrawer.visible = false

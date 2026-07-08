@@ -5,7 +5,7 @@ import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
 Text {
-    font.pointSize: ScreenTools.defaultFontPointSize
+    font.pointSize: ScreenTools.bodyFontPointSize
     font.family:    ScreenTools.normalFontFamily
     color:          qgcPal.text
     antialiasing:   true

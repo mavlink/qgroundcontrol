@@ -33,9 +33,20 @@ Item {
     property real defaultFontPointSize:     10
     property real platformFontPointSize:    10
 
-    readonly property real smallFontPointRatio:      0.82
+    readonly property real smallFontPointRatio:      0.88
     readonly property real mediumFontPointRatio:     1.25
     readonly property real largeFontPointRatio:      1.5
+
+    // Semantic type scale used by the redesigned UI. Keep the legacy small/default/medium/large
+    // values for old QGC pages, but prefer these names for new or touched surfaces.
+    readonly property real captionFontPointSize:     defaultFontPointSize * 0.88
+    readonly property real labelFontPointSize:       defaultFontPointSize * 0.96
+    readonly property real bodyFontPointSize:        defaultFontPointSize
+    readonly property real controlFontPointSize:     defaultFontPointSize * (isMobile ? 1.00 : 1.05)
+    readonly property real titleFontPointSize:       defaultFontPointSize * (isMobile ? 1.12 : 1.18)
+    readonly property real sectionFontPointSize:     defaultFontPointSize * (isMobile ? 1.24 : 1.30)
+    readonly property real metricFontPointSize:      defaultFontPointSize * (isMobile ? 1.38 : 1.46)
+    readonly property real displayFontPointSize:     defaultFontPointSize * (isMobile ? 1.52 : 1.70)
 
     /// You can use these properties to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way

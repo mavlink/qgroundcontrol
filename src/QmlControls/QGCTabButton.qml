@@ -24,7 +24,7 @@ TabButton {
     //implicitHeight:     Math.max(implicitBackgroundHeight + topInset + bottomInset, implicitContentHeight + topPadding + bottomPadding)
 
     property bool   primary:        false                               ///< primary button for a group of buttons
-    property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
+    property real   pointSize:      ScreenTools.controlFontPointSize    ///< Point size for button text
     property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
     property real   backRadius:     ScreenTools.buttonBorderRadius
     property real   heightFactor:   0.5

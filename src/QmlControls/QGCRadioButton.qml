@@ -7,7 +7,7 @@ import QGroundControl.ScreenTools
 RadioButton {
     id:             control
     font.family:    ScreenTools.normalFontFamily
-    font.pointSize: ScreenTools.defaultFontPointSize
+    font.pointSize: ScreenTools.controlFontPointSize
 
     property color  textColor:  _qgcPal.text
     property var    _qgcPal:    QGCPalette { colorGroupEnabled: enabled }

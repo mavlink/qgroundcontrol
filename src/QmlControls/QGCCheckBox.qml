@@ -11,7 +11,7 @@ CheckBox {
 
     property color  textColor:          _qgcPal.text
     property bool   textBold:           false
-    property real   textFontPointSize:  ScreenTools.defaultFontPointSize
+    property real   textFontPointSize:  ScreenTools.controlFontPointSize
 
     property var    _qgcPal: QGCPalette { colorGroupEnabled: enabled }
     property bool   _noText: text === ""

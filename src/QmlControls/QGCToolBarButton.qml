@@ -71,7 +71,7 @@ Button {
             text:                   button.text
             color:                  button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             font.family:            ScreenTools.normalFontFamily
-            font.pointSize:         ScreenTools.defaultFontPointSize
+            font.pointSize:         ScreenTools.controlFontPointSize
             anchors.verticalCenter: parent.verticalCenter
         }
     }

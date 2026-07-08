@@ -15,7 +15,7 @@ MenuItem {
     contentItem: Text {
         text:               control.text
         font.family:        ScreenTools.normalFontFamily
-        font.pointSize:     ScreenTools.defaultFontPointSize
+        font.pointSize:     ScreenTools.controlFontPointSize
         color:              control.highlighted ? qgcPal.buttonHighlightText : qgcPal.buttonText
         verticalAlignment:  Text.AlignVCenter
     }

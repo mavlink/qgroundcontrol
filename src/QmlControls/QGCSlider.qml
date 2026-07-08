@@ -94,7 +94,7 @@ Slider {
             visible:            control.displayValue
             anchors.centerIn:   parent
             font.family:        ScreenTools.normalFontFamily
-            font.pointSize:     ScreenTools.smallFontPointSize
+            font.pointSize:     ScreenTools.captionFontPointSize
             color:              qgcPal.buttonText
         }
     }

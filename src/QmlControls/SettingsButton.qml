@@ -62,6 +62,7 @@ Button {
             Layout.fillWidth:       true
             text:                   control.text
             color:                  control.textColor
+            font.pointSize:         ScreenTools.controlFontPointSize
             horizontalAlignment:    QGCLabel.AlignLeft
         }
     }
