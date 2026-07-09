@@ -829,7 +829,7 @@ void UnitTest::init()
     // when running unit tests, but every test function of a class shares that one process,
     // so persisted QSettings values written by one test function (or left over from a prior
     // crashed run) otherwise bleed into the next. Clear the persistent store at the start of
-    // every test function so each starts from an empty scope. Facts re-read defaults below.
+    // every test function so each starts from an empty scope.
     {
         QSettings settings;
         settings.clear();
@@ -838,7 +838,12 @@ void UnitTest::init()
 
     // Force offline vehicle back to defaults. Lightweight (bare QCoreApplication) tests run
     // without the SettingsManager toolbox, so guard against a missing AppSettings rather than
-    // dereferencing null. On the default full-app path appSettings is always present.
+    // dereferencing null.
+    // Note: There is deliberately no generic "reset all settings facts to defaults" sweep here.
+    // Some facts (e.g. AppSettings::savePath) are boot-initialized programmatically to values
+    // that differ from their JSON defaults; resetting them to defaults mid-run breaks the app
+    // (savePath in particular falls back to relative paths under the ctest cwd — the build
+    // directory). Tests that mutate settings facts must save and restore them explicitly.
     if (AppSettings* const appSettings = SettingsManager::instance()->appSettings()) {
         appSettings->offlineEditingFirmwareClass()->setRawValue(
             appSettings->offlineEditingFirmwareClass()->rawDefaultValue());

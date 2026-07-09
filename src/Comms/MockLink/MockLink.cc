@@ -833,6 +833,7 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t *bytes, int cBytes)
 void MockLink::_updateIncomingMessageCounts(const mavlink_message_t &msg)
 {
     _receivedMavlinkMessageCountMap[msg.msgid]++;
+    _lastReceivedMavlinkMessageMap[msg.msgid] = msg;
 
     // Update command-specific counts if this is a COMMAND_LONG message
     if (msg.msgid == MAVLINK_MSG_ID_COMMAND_LONG) {
@@ -2678,17 +2679,32 @@ void MockLink::_sendGeneralMetaData()
     respondWithMavlinkMessage(responseMsg);
 }
 
+void MockLink::setRemoteIDArmStatus(uint8_t status, const QString& error)
+{
+    QMutexLocker locker(&_remoteIDArmStatusMutex);
+    _remoteIDArmStatus = status;
+    _remoteIDArmStatusError = error;
+}
+
 void MockLink::_sendRemoteIDArmStatus()
 {
+    uint8_t armStatus;
+    QByteArray errorUtf8;
+    {
+        QMutexLocker locker(&_remoteIDArmStatusMutex);
+        armStatus = _remoteIDArmStatus;
+        errorUtf8 = _remoteIDArmStatusError.toUtf8();
+    }
+
     char armStatusError[MAVLINK_MSG_OPEN_DRONE_ID_ARM_STATUS_FIELD_ERROR_LEN] = {};
-    std::strncpy(armStatusError, "No Error", sizeof(armStatusError) - 1);
+    std::strncpy(armStatusError, errorUtf8.constData(), sizeof(armStatusError) - 1);
 
     mavlink_message_t msg{};
     (void) mavlink_msg_open_drone_id_arm_status_pack(
         _vehicleSystemId,
         MAV_COMP_ID_ODID_TXRX_1,
         &msg,
-        MAV_ODID_ARM_STATUS_GOOD_TO_ARM,
+        armStatus,
         armStatusError
     );
     respondWithMavlinkMessage(msg);
