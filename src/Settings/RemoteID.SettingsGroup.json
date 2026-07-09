@@ -3,24 +3,29 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
-            "name": "operatorID",
-            "shortDesc": "Pilot registration code or identification number (max 20 characters).",
-            "longDesc": "Operator ID. Maximum 20 characters.",
+            "name": "operatorIDEU",
+            "comment": "Writes are gated by an EN 4709-002 validator and sanitized to the 16-character public part, so a stored value is always valid by construction",
+            "shortDesc": "Pilot registration code or identification number.",
+            "longDesc": "EU Operator ID. Enter the full 19 or 20 character ID including the 3 secret characters; only the 16 character public part is stored and broadcast.",
             "type": "string",
+            "maxStringLength": 20,
             "default": "",
             "label": "Operator ID",
             "keywords": "operator,pilot,registration"
         },
         {
-            "name": "operatorIDValid",
-            "shortDesc": "Operator ID is valid",
-            "longDesc": "Operator ID has been checked using checksum.",
-            "type": "bool",
-            "default": false,
-            "label": "Operator ID is valid"
+            "name": "operatorIDFAA",
+            "shortDesc": "Pilot registration code or identification number.",
+            "longDesc": "Operator ID. Maximum 20 characters.",
+            "type": "string",
+            "maxStringLength": 20,
+            "default": "",
+            "label": "Operator ID",
+            "keywords": "operator,pilot,registration"
         },
         {
             "name": "operatorIDType",
+            "comment": "enumValues must stay in sync with MAVLink MAV_ODID_OPERATOR_ID_TYPE",
             "shortDesc": "Format of the operator ID (currently CAA only).",
             "type": "uint8",
             "enumStrings": "CAA",
@@ -43,6 +48,7 @@
             "shortDesc": "Flight purpose description to broadcast (max 23 characters).",
             "longDesc": "Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.",
             "type": "string",
+            "maxStringLength": 23,
             "default": "",
             "label": "Flight Purpose",
             "keywords": "self id,description"
@@ -52,6 +58,7 @@
             "shortDesc": "Emergency status text to broadcast (max 23 characters).",
             "longDesc": "Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.",
             "type": "string",
+            "maxStringLength": 23,
             "default": "Pilot Emergency Status",
             "label": "Emergency Text",
             "keywords": "self id,emergency"
@@ -61,13 +68,14 @@
             "shortDesc": "Extended operational status information to broadcast (max 23 characters).",
             "longDesc": "Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.",
             "type": "string",
+            "maxStringLength": 23,
             "default": "",
             "label": "Extended Status",
             "keywords": "self id,description"
         },
         {
             "name": "selfIDType",
-            "shortDesc": "Type of self-ID message to broadcast (flight purpose, emergency, or extended).",
+            "shortDesc": "Type of self-ID message to broadcast.",
             "type": "uint8",
             "enumStrings": "Flight Purpose,Emergency,Extended Status",
             "enumValues": "0,1,2",
@@ -88,13 +96,15 @@
             "name": "basicID",
             "shortDesc": "Drone serial number or registration code to transmit (max 20 characters).",
             "type": "string",
+            "maxStringLength": 20,
             "default": "",
             "label": "Basic ID",
             "keywords": "basic id,serial number,drone id"
         },
         {
             "name": "basicIDType",
-            "shortDesc": "Format of the drone ID (CAA registration, serial number, or UTM assigned).",
+            "comment": "enumValues must stay in sync with MAVLink MAV_ODID_ID_TYPE",
+            "shortDesc": "Format of the drone ID.",
             "type": "uint8",
             "enumStrings": "None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific",
             "enumValues": "0,1,2,3,4",
@@ -104,6 +114,7 @@
         },
         {
             "name": "basicIDUaType",
+            "comment": "enumValues must stay in sync with MAVLink MAV_ODID_UA_TYPE",
             "shortDesc": "Classification of the unmanned aircraft (multirotor, fixed-wing, etc.).",
             "type": "uint8",
             "enumStrings": "Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other",
@@ -123,7 +134,7 @@
         },
         {
             "name": "region",
-            "shortDesc": "Regulatory region for Remote ID compliance (FAA or EU).",
+            "shortDesc": "Regulatory region for Remote ID compliance.",
             "longDesc": "The region of operation the mission will take place in",
             "type": "uint8",
             "enumStrings": "FAA,EU",
@@ -179,10 +190,11 @@
         },
         {
             "name": "classificationType",
-            "shortDesc": "Classification standard to use for Remote ID (undeclared or EU).",
+            "comment": "enumValues must stay in sync with MAVLink MAV_ODID_CLASSIFICATION_TYPE",
+            "shortDesc": "Classification standard to use for Remote ID.",
             "longDesc": "Classification Type of UAS",
             "type": "uint8",
-            "enumStrings": "Undeclared,EU",
+            "enumStrings": "None,EU",
             "enumValues": "0,1",
             "default": 0,
             "label": "Classification Type",
@@ -190,7 +202,8 @@
         },
         {
             "name": "categoryEU",
-            "shortDesc": "EU classification category for the UAS (Open, Specific, or Certified).",
+            "comment": "enumValues must stay in sync with MAVLink MAV_ODID_CATEGORY_EU",
+            "shortDesc": "EU classification category for the UAS.",
             "longDesc": "Category of the UAS in the EU region",
             "type": "uint8",
             "enumStrings": "Undeclared,Open,Specific,Certified",
@@ -201,7 +214,8 @@
         },
         {
             "name": "classEU",
-            "shortDesc": "EU equipment class designation (Class 0 through Class 6).",
+            "comment": "enumValues must stay in sync with MAVLink MAV_ODID_CLASS_EU",
+            "shortDesc": "EU equipment class designation.",
             "longDesc": "Class of the UAS in the EU region",
             "type": "uint8",
             "enumStrings": "Undeclared,Class 0,Class 1,Class 2,Class 3,Class 4,Class 5,Class 6",
