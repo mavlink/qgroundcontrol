@@ -50,16 +50,20 @@ bool QGCSerialPortInfo::_loadJsonData()
     }
 
     static const QList<JsonParsing::KeyValidateInfo> rootKeyInfoList = {
+        { JsonParsing::jsonFileTypeKey, QJsonValue::String, true },    // Standard header, validated by openInternalQGCJsonFile
+        { JsonParsing::jsonVersionKey, QJsonValue::Double, true },     // Standard header, validated by openInternalQGCJsonFile
+        { "comment", QJsonValue::String, false },                      // Developer notes only, never parsed
         { _jsonBoardInfoKey, QJsonValue::Array, true },
         { _jsonBoardDescriptionFallbackKey, QJsonValue::Array, true },
         { _jsonBoardManufacturerFallbackKey, QJsonValue::Array, true },
     };
-    if (!JsonParsing::validateKeys(json, rootKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeysStrict(json, rootKeyInfoList, errorString)) {
         qCWarning(QGCSerialPortInfoLog) << errorString;
         return false;
     }
 
     static const QList<JsonParsing::KeyValidateInfo> boardKeyInfoList = {
+        { "comment", QJsonValue::String, false },   // Developer notes only, never parsed
         { _jsonVendorIDKey, QJsonValue::Double, true },
         { _jsonProductIDKey, QJsonValue::Double, true },
         { _jsonBoardClassKey, QJsonValue::String, true },
@@ -73,7 +77,7 @@ bool QGCSerialPortInfo::_loadJsonData()
         }
 
         const QJsonObject boardObject = jsonValue.toObject();
-        if (!JsonParsing::validateKeys(boardObject, boardKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeysStrict(boardObject, boardKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
             return false;
         }
@@ -93,6 +97,7 @@ bool QGCSerialPortInfo::_loadJsonData()
     }
 
     static const QList<JsonParsing::KeyValidateInfo> fallbackKeyInfoList = {
+        { "comment", QJsonValue::String, false },   // Developer notes only, never parsed
         { _jsonRegExpKey, QJsonValue::String, true },
         { _jsonBoardClassKey, QJsonValue::String, true },
         { _jsonAndroidOnlyKey, QJsonValue::Bool, false },
@@ -105,7 +110,7 @@ bool QGCSerialPortInfo::_loadJsonData()
         }
 
         const QJsonObject fallbackObject = jsonValue.toObject();
-        if (!JsonParsing::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeysStrict(fallbackObject, fallbackKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
             return false;
         }
@@ -138,7 +143,7 @@ bool QGCSerialPortInfo::_loadJsonData()
         }
 
         const QJsonObject fallbackObject = jsonValue.toObject();
-        if (!JsonParsing::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeysStrict(fallbackObject, fallbackKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
             return false;
         }

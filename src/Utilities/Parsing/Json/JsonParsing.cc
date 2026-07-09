@@ -78,6 +78,10 @@ bool validateKeyTypes(const QJsonObject& jsonObject, const QStringList& keys, co
         const QString& valueKey = keys[i];
         if (jsonObject.contains(valueKey)) {
             const QJsonValue& jsonValue = jsonObject[valueKey];
+            if (types[i] == QJsonValue::Undefined) {
+                // Undefined signals any type is acceptable (e.g. "default" whose type follows the fact type).
+                continue;
+            }
             if ((jsonValue.type() == QJsonValue::Double) && (types[i] == QJsonValue::Null)) {
                 // Null type signals a possible NaN on a double value.
                 continue;
