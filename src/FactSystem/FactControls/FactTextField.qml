@@ -12,6 +12,7 @@ QGCTextField {
     showUnits:          true
     showHelp:           false
     numericValuesOnly:  fact && !fact.typeIsString
+    maximumLength:      fact && fact.maxStringLength > 0 ? fact.maxStringLength : 32767 // 32767 is the TextInput default (no limit)
 
     signal updated()
 
