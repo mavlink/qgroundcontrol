@@ -102,8 +102,16 @@ public:
     int receivedRequestMessageCount(int compId, int messageId) const { return _receivedRequestMessageByCompAndMsgCountMap.value(compId).value(messageId, 0); }
     void clearReceivedRequestMessageCounts() { _receivedRequestMessageCountMap.clear(); _receivedRequestMessageByCompAndMsgCountMap.clear(); }
     int receivedRequestMessageCount(uint32_t messageId) const { return _receivedRequestMessageCountMap.value(messageId, 0); }
-    void clearReceivedMavlinkMessageCounts() { _receivedMavlinkMessageCountMap.clear(); _hashCheckRequestCount = 0; _missionItemHandler->clearRequestListCounts(); }
+    void clearReceivedMavlinkMessageCounts() { _receivedMavlinkMessageCountMap.clear(); _lastReceivedMavlinkMessageMap.clear(); _hashCheckRequestCount = 0; _missionItemHandler->clearRequestListCounts(); }
     int receivedMavlinkMessageCount(uint32_t messageId) const { return _receivedMavlinkMessageCountMap.value(messageId, 0); }
+    /// Returns the last received message with the given id. Returns false if none received.
+    bool lastReceivedMavlinkMessage(uint32_t messageId, mavlink_message_t &message) const {
+        if (!_lastReceivedMavlinkMessageMap.contains(messageId)) {
+            return false;
+        }
+        message = _lastReceivedMavlinkMessageMap.value(messageId);
+        return true;
+    }
     int receivedMissionRequestListCount(MAV_MISSION_TYPE type) const { return _missionItemHandler->requestListCount(type); }
 
     enum RequestMessageFailureMode_t {
@@ -167,6 +175,10 @@ public:
     /// Returns the current MockLink-side value of a parameter. Used by unit tests
     /// to verify that PARAM_SET writes reached the simulated firmware.
     QVariant paramValue(int componentId, const QString &paramName) const { return _mapParamName2Value.value(componentId).value(paramName); }
+
+    /// Override the OPEN_DRONE_ID_ARM_STATUS the simulated RID device sends at 1Hz.
+    /// status is a MAV_ODID_ARM_STATUS value.
+    void setRemoteIDArmStatus(uint8_t status, const QString& error);
 
     static MockLink *startPX4MockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startPX4MockLinkWithMission(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -388,6 +400,12 @@ private:
     bool _paramRequestListHashCheckSent = false;
     bool _resetSysAutostartOnParamReset = false;
 
+    // Periodic OPEN_DRONE_ID_ARM_STATUS content (overridable via setRemoteIDArmStatus).
+    // Written by the test (main) thread, read by the 1Hz worker: guarded by _remoteIDArmStatusMutex.
+    QMutex _remoteIDArmStatusMutex;
+    uint8_t _remoteIDArmStatus = MAV_ODID_ARM_STATUS_GOOD_TO_ARM;
+    QString _remoteIDArmStatusError = QStringLiteral("No Error");
+
     // APM compass calibration worker state
     // Protects _apmCompassCalProgress: main thread writes 0 to start/stop,
     // worker thread reads/increments each 100ms tick.
@@ -424,6 +442,7 @@ private:
     QMap<uint32_t, int> _receivedRequestMessageCountMap;
     QMap<int, QMap<int, int>> _receivedRequestMessageByCompAndMsgCountMap;
     QMap<uint32_t, int> _receivedMavlinkMessageCountMap;
+    QMap<uint32_t, mavlink_message_t> _lastReceivedMavlinkMessageMap;
     QMap<int, QMap<QString, QVariant>> _mapParamName2Value;
     QMap<int, QMap<QString, MAV_PARAM_TYPE>> _mapParamName2MavParamType;
 
