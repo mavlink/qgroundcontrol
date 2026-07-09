@@ -70,6 +70,134 @@ class TestLoadPageDef:
         assert page.groups[0].controls[0].control == "combobox"
         assert page.groups[0].controls[1].setting == "appSettings.y"
 
+    def test_unknown_root_key_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "bogusRootKey": True,
+            "groups": [{"heading": "G", "controls": [{"setting": "appSettings.x"}]}],
+        }
+        with pytest.raises(ValueError, match="bogusRootKey"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_non_object_root_rejected(self, tmp_path: Path):
+        # A JSON array root must produce a clear shape error, not a confusing traceback
+        p = tmp_path / "Test.SettingsUI.json"
+        p.write_text(json.dumps([{"heading": "G"}]), encoding="utf-8")
+        with pytest.raises(ValueError, match="must be a JSON object"):
+            load_page_def(p)
+
+    def test_non_object_control_rejected(self, tmp_path: Path):
+        # A string where a control object belongs must not be treated as per-character keys
+        data = {
+            "version": 1,
+            "groups": [{"heading": "G", "controls": ["appSettings.x"]}],
+        }
+        with pytest.raises(ValueError, match="must be a JSON object"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_non_object_error_repr_truncated(self):
+        # A huge offending value must not balloon the error message
+        from generators.common.validation import reject_unknown_keys
+
+        with pytest.raises(ValueError) as excinfo:
+            reject_unknown_keys(["x" * 50] * 100, frozenset(), "control", "Test.json")
+        assert len(str(excinfo.value)) < 400
+        assert str(excinfo.value).count("...") >= 1
+
+    def test_non_array_groups_rejected(self, tmp_path: Path):
+        # groups: 42 must give a clear shape error, not a bare TypeError traceback
+        data = {"version": 1, "groups": 42}
+        with pytest.raises(ValueError, match="must be a JSON array"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_string_controls_rejected(self, tmp_path: Path):
+        # controls: "x" must not be iterated per-character
+        data = {"version": 1, "groups": [{"heading": "G", "controls": "appSettings.x"}]}
+        with pytest.raises(ValueError, match="must be a JSON array"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_non_object_bindings_rejected(self, tmp_path: Path):
+        # bindings: [] would only blow up later in emit with an AttributeError
+        data = {"version": 1, "bindings": [1, 2], "groups": []}
+        with pytest.raises(ValueError, match="must be a JSON object"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_missing_setting_rejected(self, tmp_path: Path):
+        # A fact-backed control without a setting would crash emit with a bare IndexError
+        data = {"version": 1, "groups": [{"heading": "G", "controls": [{"label": "Oops"}]}]}
+        with pytest.raises(ValueError, match="settingsGroupAccessor.factName"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_dotless_setting_rejected(self, tmp_path: Path):
+        # Forgetting the settings group prefix must be a clear authoring error
+        data = {
+            "version": 1,
+            "groups": [{"heading": "G", "controls": [{"setting": "operatorIDEU"}]}],
+        }
+        with pytest.raises(ValueError, match="operatorIDEU"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    @pytest.mark.parametrize("bad_setting", ["appSettings..x", "appSettings.x.", ".x", "appSettings.höhe"])
+    def test_malformed_setting_segments_rejected(self, tmp_path: Path, bad_setting: str):
+        # Empty path segments or non-ASCII would emit broken fact refs / objectNames
+        data = {
+            "version": 1,
+            "groups": [{"heading": "G", "controls": [{"setting": bad_setting}]}],
+        }
+        with pytest.raises(ValueError, match="settingsGroupAccessor.factName"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    @pytest.mark.parametrize("key", ["enableCheckbox", "button"])
+    def test_non_object_nested_field_rejected(self, tmp_path: Path, key: str):
+        # A truthy non-object (e.g. a string) must not reach .get() with an AttributeError
+        data = {
+            "version": 1,
+            "groups": [{"heading": "G", "controls": [{"setting": "appSettings.x", key: "oops"}]}],
+        }
+        with pytest.raises(ValueError, match=key):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    @pytest.mark.parametrize("bad_value", [[], "", 0, False])
+    def test_falsy_non_object_nested_field_rejected(self, tmp_path: Path, bad_value):
+        # Falsy wrong-shaped values must not be silently treated as "absent"
+        data = {
+            "version": 1,
+            "groups": [{"heading": "G", "controls": [{"setting": "appSettings.x", "enableCheckbox": bad_value}]}],
+        }
+        with pytest.raises(ValueError, match="enableCheckbox"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_unknown_group_key_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [{"heading": "G", "showWen": "typo", "controls": [{"setting": "appSettings.x"}]}],
+        }
+        with pytest.raises(ValueError, match="showWen"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_unknown_control_key_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [{"heading": "G", "controls": [{"setting": "appSettings.x", "enabelWhen": "typo"}]}],
+        }
+        with pytest.raises(ValueError, match="enabelWhen"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_comment_keys_accepted(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "comment": "root note",
+            "groups": [
+                {
+                    "heading": "G",
+                    "comment": "group note",
+                    "controls": [{"setting": "appSettings.x", "comment": "control note"}],
+                }
+            ],
+        }
+        page = load_page_def(_make_page_json(tmp_path, data))
+        assert len(page.groups[0].controls) == 1
+
     def test_loads_bindings(self, tmp_path: Path):
         data = {
             "version": 1,
@@ -219,7 +347,7 @@ class TestGeneratePageQml:
             ]
         )
         qml = generate_page_qml(page, settings_dir, page_name="")
-        assert "objectName:" not in qml
+        assert 'objectName: "settingsPage_' not in qml
 
     def test_bool_generates_checkbox(self, settings_dir: Path):
         page = PageDef(
@@ -258,6 +386,97 @@ class TestGeneratePageQml:
         )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledFactComboBox {" in qml
+
+    def test_textfield_has_object_name(self, settings_dir: Path):
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.savePath")]),
+            ]
+        )
+        qml = generate_page_qml(page, settings_dir)
+        assert 'objectName: "settingsTextField_savePath"' in qml
+
+    def test_group_has_object_name(self, settings_dir: Path):
+        page = PageDef(
+            groups=[
+                GroupDef(heading="EU Vehicle Info", controls=[ControlDef(setting="appSettings.savePath")]),
+            ]
+        )
+        qml = generate_page_qml(page, settings_dir)
+        assert 'objectName: "settingsGroup_EUVehicleInfo"' in qml
+
+    def test_group_object_name_sanitized(self, settings_dir: Path):
+        # Quotes, backslashes and other non-identifier characters in a heading must not
+        # be able to break out of (or corrupt) the generated QML string literal
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading='Say "Hi\\" & <Bye>!',
+                    controls=[ControlDef(setting="appSettings.savePath")],
+                ),
+            ]
+        )
+        qml = generate_page_qml(page, settings_dir)
+        assert 'objectName: "settingsGroup_SayHiBye"' in qml
+
+    def test_duplicate_group_object_name_rejected(self, settings_dir: Path):
+        # The sanitizer is lossy: distinct headings can collapse to the same objectName,
+        # which would make UI test lookups silently match the wrong group. Fail loudly.
+        page = PageDef(
+            groups=[
+                GroupDef(heading="EU Vehicle Info", controls=[ControlDef(setting="appSettings.savePath")]),
+                GroupDef(heading="EU-Vehicle Info", controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
+        with pytest.raises(ValueError, match="settingsGroup_EUVehicleInfo"):
+            generate_page_qml(page, settings_dir)
+
+    def test_page_name_sanitizing_to_empty_rejected(self, settings_dir: Path):
+        # A page name with no identifier characters would silently drop the page's
+        # objectName, breaking UI test lookups. Fail loudly, same as headings.
+        page = PageDef(
+            groups=[
+                GroupDef(heading="G", controls=[ControlDef(setting="appSettings.savePath")]),
+            ]
+        )
+        with pytest.raises(ValueError, match="sanitizes to an empty objectName"):
+            generate_page_qml(page, settings_dir, page_name="中文!")
+
+    def test_heading_sanitizing_to_empty_rejected(self, settings_dir: Path):
+        page = PageDef(
+            groups=[
+                GroupDef(heading="***", controls=[ControlDef(setting="appSettings.savePath")]),
+            ]
+        )
+        with pytest.raises(ValueError, match=r"\*\*\*"):
+            generate_page_qml(page, settings_dir)
+
+    def test_page_object_name_sanitized(self, settings_dir: Path):
+        page = PageDef(
+            groups=[
+                GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
+        qml = generate_page_qml(page, settings_dir, page_name='Fly "View"')
+        assert 'objectName: "settingsPage_FlyView"' in qml
+
+    def test_checkbox_has_object_name(self, settings_dir: Path):
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
+        qml = generate_page_qml(page, settings_dir)
+        assert 'objectName: "settingsCheckBox_enableFeature"' in qml
+
+    def test_no_error_when_no_validation_ui(self, settings_dir: Path):
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.savePath")]),
+            ]
+        )
+        qml = generate_page_qml(page, settings_dir)
+        assert "externalError" not in qml
 
     def test_heading(self, settings_dir: Path):
         page = PageDef(
@@ -690,6 +909,42 @@ class TestGeneratePagesModelQml:
         pages_path.write_text(json.dumps(pages_json), encoding="utf-8")
         qml = generate_pages_model_qml(pages_path)
         assert "QGroundControl.someFlag" in qml
+
+    def test_unknown_root_key_rejected(self, tmp_path: Path):
+        pages_path = tmp_path / "SettingsPages.json"
+        pages_path.write_text(json.dumps({
+            "version": 1,
+            "bogusRootKey": True,
+            "pages": [{"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg"}],
+        }), encoding="utf-8")
+        with pytest.raises(ValueError, match="bogusRootKey"):
+            generate_pages_model_qml(pages_path)
+
+    def test_unknown_page_entry_key_rejected(self, tmp_path: Path):
+        pages_path = tmp_path / "SettingsPages.json"
+        pages_path.write_text(json.dumps({
+            "version": 1,
+            "pages": [{"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg", "vissible": "typo"}],
+        }), encoding="utf-8")
+        with pytest.raises(ValueError, match="vissible"):
+            generate_pages_model_qml(pages_path)
+
+    def test_comment_keys_accepted(self, tmp_path: Path):
+        pages_path = tmp_path / "SettingsPages.json"
+        pages_path.write_text(json.dumps({
+            "version": 1,
+            "comment": "root note",
+            "pages": [{"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg", "comment": "entry note"}],
+        }), encoding="utf-8")
+        qml = generate_pages_model_qml(pages_path)
+        assert 'nameKey: "P"' in qml
+
+    def test_non_array_pages_rejected(self, tmp_path: Path):
+        # pages: "oops" must not be iterated per-character
+        pages_path = tmp_path / "SettingsPages.json"
+        pages_path.write_text(json.dumps({"version": 1, "pages": "oops"}), encoding="utf-8")
+        with pytest.raises(ValueError, match="must be a JSON array"):
+            generate_pages_model_qml(pages_path)
 
 
 class TestRealPageDefinitions:

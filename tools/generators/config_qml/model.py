@@ -21,6 +21,7 @@ from ..common.controls import (
     parse_radio_options,
     parse_toggle_checkbox,
 )
+from ..common.validation import reject_unknown_keys, require_dict, require_list
 
 
 @dataclass
@@ -158,6 +159,29 @@ def _parse_enum_value_entry(entry: object, ctrl_name: str) -> tuple[int | float 
     return (value, label)
 
 
+_ALLOWED_ROOT_KEYS = frozenset({
+    "fileType", "version", "comment", "constants", "params", "bindings",
+    "imports", "sections", "controllerType",
+})
+_ALLOWED_PARAM_KEYS = frozenset({"comment", "name", "required", "existsOnly"})
+_ALLOWED_SECTION_KEYS = frozenset({
+    "comment", "title", "image", "controls", "component", "showWhen", "repeat", "keywords",
+})
+_ALLOWED_CONTROL_KEYS = frozenset({
+    "comment", "param", "setting", "label", "control", "showWhen", "enableWhen",
+    "optional", "sliderMin", "sliderMax", "enableCheckbox", "button", "options",
+    "enumValues", "dialogButton", "actionButton", "warning", "raw", "bitMask",
+    "firstEntryIsAll", "toggleCheckbox", "indent", "smallFont", "description",
+    "sliderFrom", "sliderTo", "majorTickStepSize", "decimalPlaces", "linkedParams",
+    "component",
+})
+_ALLOWED_REPEAT_KEYS = frozenset({
+    "comment", "paramPrefix", "probePostfix", "startIndex", "firstIndexOmitsNumber",
+    "indexing", "enableParam", "disabledParamValue", "disabledSection",
+})
+_ALLOWED_DISABLED_SECTION_KEYS = frozenset({"comment", "heading", "enabledParamValue"})
+
+
 def load_page_def(json_path: Path) -> PageDef:
     """Load a config page definition from a JSON file."""
     with open(json_path, encoding="utf-8") as f:
@@ -167,23 +191,31 @@ def load_page_def(json_path: Path) -> PageDef:
 
 def _build_page_def(data: dict, json_filename: str) -> PageDef:
     """Build a PageDef from already-parsed JSON data (no I/O)."""
-    constants = data.get("constants", {})
+    reject_unknown_keys(data, _ALLOWED_ROOT_KEYS, "page", json_filename)
+    constants = require_dict(data.get("constants", {}), "'constants'", json_filename)
     params: dict[str, ParamDef] = {}
-    for pname, pval in data.get("params", {}).items():
+    for pname, pval in require_dict(data.get("params", {}), "'params'", json_filename).items():
         if isinstance(pval, str):
             params[pname] = ParamDef(name=pval)
         else:
+            reject_unknown_keys(pval, _ALLOWED_PARAM_KEYS, f"param '{pname}'", json_filename)
+            if "name" not in pval:
+                raise ValueError(f"{json_filename}: param '{pname}' is missing required key 'name'")
             params[pname] = ParamDef(
                 name=pval["name"],
                 required=pval.get("required", False),
                 existsOnly=pval.get("existsOnly", False),
             )
-    bindings = data.get("bindings", {})
-    extra_imports = data.get("imports", [])
+    bindings = require_dict(data.get("bindings", {}), "'bindings'", json_filename)
+    extra_imports = require_list(data.get("imports", []), "'imports'", json_filename)
     sections: list[SectionDef] = []
-    for sec_data in data.get("sections", []):
+    for sec_data in require_list(data.get("sections", []), "'sections'", json_filename):
+        reject_unknown_keys(sec_data, _ALLOWED_SECTION_KEYS, "section", json_filename)
         controls: list[ControlDef] = []
-        for ctrl_data in sec_data.get("controls", []):
+        for ctrl_data in require_list(
+            sec_data.get("controls", []), "section 'controls'", json_filename
+        ):
+            reject_unknown_keys(ctrl_data, _ALLOWED_CONTROL_KEYS, "control", json_filename)
             controls.append(
                 ControlDef(
                     param=ctrl_data.get("param", ""),
@@ -227,9 +259,11 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
         repeat_data = sec_data.get("repeat")
         repeat_def = None
         if repeat_data:
+            reject_unknown_keys(repeat_data, _ALLOWED_REPEAT_KEYS, "repeat", json_filename)
             ds_data = repeat_data.get("disabledSection")
             ds_def = None
             if ds_data:
+                reject_unknown_keys(ds_data, _ALLOWED_DISABLED_SECTION_KEYS, "disabledSection", json_filename)
                 ds_def = DisabledSectionDef(
                     heading=ds_data.get("heading", ""),
                     enabledParamValue=str(ds_data.get("enabledParamValue", "")),

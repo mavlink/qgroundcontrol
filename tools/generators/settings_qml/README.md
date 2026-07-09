@@ -158,6 +158,30 @@ Explicit `control` values:
 
 ---
 
+### objectName conventions (UI test hooks)
+
+Generated pages emit stable `objectName`s so QML UI tests (`test/QmlUITests/`,
+via `QmlUITestBase::findVisibleItem`) can locate items without brittle
+text/traversal matching:
+
+| Item | objectName |
+| --- | --- |
+| Page root | `settingsPage_<PageName>` (characters outside `[A-Za-z0-9_]` stripped, e.g. `settingsPage_RemoteID`) |
+| Group (`SettingsGroupLayout`, headed groups only) | `settingsGroup_<Heading>` (characters outside `[A-Za-z0-9_]` stripped, e.g. `settingsGroup_EUVehicleInfo`) |
+| Text field (`LabelledFactTextField`) | `settingsTextField_<factName>` |
+| Checkbox (`FactCheckBoxSlider`) | `settingsCheckBox_<factName>` |
+
+Page names and headings are sanitized to `[A-Za-z0-9_]` before being embedded in
+the objectName. Generation fails with an error if a heading sanitizes to an empty
+string, or if two headings on the same page collapse to the same objectName —
+rename one of the headings to resolve it.
+
+The hand-written `SettingsPage.qml` content flickable is named
+`settingsPageFlickable` for use with `QmlUITestBase::scrollIntoView`.
+See `test/QmlUITests/RemoteIDSettingsUITest.cc` for a usage example.
+
+---
+
 ## Complete example
 
 ```json

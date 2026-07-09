@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from .._jinja import make_env
@@ -13,10 +14,18 @@ from ..common.controls import (
     render_slider,
     render_textfield,
 )
+from ..common.validation import reject_unknown_keys, require_list
 from .metadata import get_fact_type, has_enum_strings
 from .model import ControlDef, PageDef, load_page_def
 
 _env = make_env(Path(__file__).parent / "templates")
+
+
+def _object_name(text: str) -> str:
+    """Sanitize free text (headings, page names) for use inside a QML objectName
+    string literal. Restricting to identifier characters guarantees the generated
+    QML is always syntactically valid and keeps objectNames grep-able for UI tests."""
+    return re.sub(r"[^A-Za-z0-9_]", "", text)
 
 
 def _wrap_with_description(control_qml: str, fact_ref: str, vis_expr: str, indent: str) -> str:
@@ -114,6 +123,7 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path, json_context: str = "") -
             label_source="fact.label",
             qml_type="FactCheckBoxSlider",
             tr_context=json_context,
+            object_name=f"settingsCheckBox_{ctrl.fact_name}",
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     if use_combobox:
@@ -128,7 +138,7 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path, json_context: str = "") -
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
 
     fact_type = get_fact_type(ctrl.setting, settings_dir)
-    extra: list[str] = []
+    extra: list[str] = [f'objectName: "settingsTextField_{ctrl.fact_name}"']
     if fact_type == "string":
         extra.append("textFieldPreferredWidth: _stringFieldWidth")
     control_qml = render_textfield(
@@ -204,6 +214,7 @@ def generate_page_qml(
             section_cases.append({"idx": grp_idx, "expr": " && ".join(vis_parts)})
 
     group_blocks: list[str] = []
+    seen_object_names: dict[str, str] = {}  # objectName -> heading that produced it
     for grp_idx, grp in enumerate(page.groups):
         section_vis = f"(sectionFilter === -1 || sectionFilter === {grp_idx})"
         vis_parts = [section_vis]
@@ -221,9 +232,28 @@ def generate_page_qml(
             ))
             continue
 
+        # The sanitizer is lossy, so guard the objectName invariants at generation time:
+        # UI tests look groups up by objectName and would silently match the wrong one
+        group_object_name = None
+        if grp.heading:
+            sanitized = _object_name(grp.heading)
+            if not sanitized:
+                raise ValueError(
+                    f"Page '{page_name or json_context}': heading '{grp.heading}' sanitizes to an "
+                    f"empty objectName. Use a heading with ASCII letters or digits."
+                )
+            group_object_name = f"settingsGroup_{sanitized}"
+            if group_object_name in seen_object_names:
+                raise ValueError(
+                    f"Page '{page_name or json_context}': headings '{seen_object_names[group_object_name]}' "
+                    f"and '{grp.heading}' both produce objectName '{group_object_name}'. Rename one."
+                )
+            seen_object_names[group_object_name] = grp.heading
+
         blocks = [_qml_control(ctrl, settings_dir, json_context) for ctrl in grp.controls]
         blocks.extend(_qml_missing_placeholder(desc) for desc in grp.missing)
         group_blocks.append(_env.get_template("group_settings.qml.j2").render(
+            object_name=group_object_name,
             heading=_tr(grp.heading) if grp.heading else None,
             heading_description=grp.headingDescription,
             visible=visible_expr,
@@ -231,9 +261,18 @@ def generate_page_qml(
             blocks=blocks,
         ))
 
+    page_object_name = None
+    if page_name:
+        page_object_name = _object_name(page_name)
+        if not page_object_name:
+            raise ValueError(
+                f"Page '{page_name}': page name sanitizes to an empty objectName. "
+                f"Use a name with ASCII letters or digits."
+            )
+
     return _env.get_template("page.qml.j2").render(
         imports=page.imports,
-        object_name=page_name.replace(" ", "") if page_name else None,
+        object_name=page_object_name,
         has_string_fields=_needs_string_field_width(page, settings_dir),
         bindings=bindings,
         section_cases=section_cases,
@@ -241,15 +280,24 @@ def generate_page_qml(
     ) + "\n"
 
 
+_ALLOWED_PAGES_ROOT_KEYS = frozenset({"fileType", "version", "comment", "pages"})
+_ALLOWED_PAGE_ENTRY_KEYS = frozenset({
+    "comment", "divider", "name", "url", "qml", "icon", "visible", "pageDefinition",
+})
+
+
 def generate_pages_model_qml(pages_json_path: Path) -> str:
     """Generate SettingsPagesModel.qml from SettingsPages.json."""
     with open(pages_json_path, encoding="utf-8") as f:
         data = json.load(f)
 
+    reject_unknown_keys(data, _ALLOWED_PAGES_ROOT_KEYS, "pages file", pages_json_path)
+
     pages_dir = pages_json_path.parent
     entries: list[dict] = []
 
-    for entry in data.get("pages", []):
+    for entry in require_list(data.get("pages", []), "'pages'", pages_json_path):
+        reject_unknown_keys(entry, _ALLOWED_PAGE_ENTRY_KEYS, "page entry", pages_json_path)
         if entry.get("divider"):
             entries.append({"divider": True})
             continue
