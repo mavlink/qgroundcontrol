@@ -55,14 +55,18 @@ QList<CameraMetaData*> CameraMetaData::parseCameraMetaData()
     }
 
     static const QList<JsonParsing::KeyValidateInfo> rootKeyInfoList = {
+        { JsonParsing::jsonFileTypeKey, QJsonValue::String, true },    // Standard header, validated by openInternalQGCJsonFile
+        { JsonParsing::jsonVersionKey, QJsonValue::Double, true },     // Standard header, validated by openInternalQGCJsonFile
+        { "comment", QJsonValue::String, false },                      // Developer notes only, never parsed
         { "cameraMetaData", QJsonValue::Array, true }
     };
-    if (!JsonParsing::validateKeys(jsonObject, rootKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeysStrict(jsonObject, rootKeyInfoList, errorString)) {
         qCWarning(CameraMetaDataLog) << errorString;
         return cameraList;
     }
 
     static const QList<JsonParsing::KeyValidateInfo> cameraKeyInfoList = {
+        { "comment", QJsonValue::String, false },   // Developer notes only, never parsed
         { "canonicalName", QJsonValue::String, true },
         { "brand", QJsonValue::String, true },
         { "model", QJsonValue::String, true },
@@ -84,7 +88,7 @@ QList<CameraMetaData*> CameraMetaData::parseCameraMetaData()
         }
 
         const QJsonObject obj = jsonValue.toObject();
-        if (!JsonParsing::validateKeys(obj, cameraKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeysStrict(obj, cameraKeyInfoList, errorString)) {
             qCWarning(CameraMetaDataLog) << errorString;
             return cameraList;
         }
