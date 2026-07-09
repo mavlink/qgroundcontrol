@@ -13,15 +13,110 @@ QtObject {
     id: flightModeDisplay
 
     function _tr(sourceText) {
-        return qsTranslate("FlyViewToolStripActionList", sourceText)
+        return qsTranslate("FlightModeDisplay", sourceText)
     }
 
-    function _apmMode(sourceText) {
-        return qsTranslate("APMPlaneMode", sourceText)
+    property var _modeContexts: [ "APMPlaneMode", "APMCopterMode", "APMCustomMode" ]
+
+    property var _quadPlaneModes: [
+        { source: "QuadPlane Stabilize", base: "Stabilize" },
+        { source: "QuadPlane Hover",     base: "Hover" },
+        { source: "QuadPlane Loiter",    base: "Loiter" },
+        { source: "QuadPlane Land",      base: "Land" },
+        { source: "QuadPlane RTL",       base: "RTL" },
+        { source: "QuadPlane AutoTune",  base: "Autotune", aliases: [ "QuadPlane Autotune" ] },
+        { source: "QuadPlane Acro",      base: "Acro" }
+    ]
+
+    property var _modeEntries: [
+        { source: "Manual",             label: "Manual" },
+        { source: "Circle",             label: "Circle" },
+        { source: "Stabilize",          label: "Stabilize", aliases: [ "Stabilized" ] },
+        { source: "Training",           label: "Training" },
+        { source: "Acro",               label: "Acro" },
+        { source: "Altitude Hold",      label: "Alt Hold", aliases: [ "Alt Hold", "AltHold" ] },
+        { source: "FBW A",              label: "FBW A" },
+        { source: "FBW B",              label: "FBW B" },
+        { source: "Cruise",             label: "Cruise" },
+        { source: "Auto",               label: "Auto" },
+        { source: "Autotune",           label: "Autotune", aliases: [ "AutoTune", "Auto Tune" ] },
+        { source: "RTL",                label: "RTL" },
+        { source: "Loiter",             label: "Loiter" },
+        { source: "Takeoff",            label: "Takeoff" },
+        { source: "Avoid ADSB",         label: "Avoid ADSB" },
+        { source: "Guided",             label: "Guided" },
+        { source: "Guided No GPS",      label: "Guided No GPS" },
+        { source: "Initializing",       label: "Initializing" },
+        { source: "Land",               label: "Land" },
+        { source: "Hover",              label: "Hover" },
+        { source: "Drift",              label: "Drift" },
+        { source: "Sport",              label: "Sport" },
+        { source: "Flip",               label: "Flip" },
+        { source: "Position Hold",      label: "Position Hold", aliases: [ "Pos Hold" ] },
+        { source: "Brake",              label: "Brake" },
+        { source: "Throw",              label: "Throw" },
+        { source: "Smart RTL",          label: "Smart RTL" },
+        { source: "Flow Hold",          label: "Flow Hold" },
+        { source: "Follow",             label: "Follow" },
+        { source: "Follow Target",      label: "Follow Target" },
+        { source: "ZigZag",             label: "ZigZag" },
+        { source: "SystemID",           label: "SystemID" },
+        { source: "AutoRotate",         label: "AutoRotate", aliases: [ "Auto Rotate" ] },
+        { source: "AutoRTL",            label: "AutoRTL", aliases: [ "Auto RTL" ] },
+        { source: "Turtle",             label: "Turtle" },
+        { source: "Thermal",            label: "Thermal" },
+        { source: "Loiter to QLand",    label: "Loiter to QLand" },
+        { source: "Autoland",           label: "Autoland" },
+        { source: "QuadPlane Stabilize", label: "QuadPlane Stabilize" },
+        { source: "QuadPlane Hover",     label: "QuadPlane Hover" },
+        { source: "QuadPlane Loiter",    label: "QuadPlane Loiter" },
+        { source: "QuadPlane Land",      label: "QuadPlane Land" },
+        { source: "QuadPlane RTL",       label: "QuadPlane RTL" },
+        { source: "QuadPlane AutoTune",  label: "QuadPlane AutoTune", aliases: [ "QuadPlane Autotune" ] },
+        { source: "QuadPlane Acro",      label: "QuadPlane Acro" }
+    ]
+
+    function _matchesMode(mode, sourceText) {
+        if (mode === sourceText) {
+            return true
+        }
+
+        for (var i = 0; i < _modeContexts.length; i++) {
+            if (mode === qsTranslate(_modeContexts[i], sourceText)) {
+                return true
+            }
+        }
+
+        return false
     }
 
-    function quadPlaneText() {
-        return qsTr("四旋翼")
+    function _matchesEntry(mode, entry) {
+        if (_matchesMode(mode, entry.source)) {
+            return true
+        }
+
+        var aliases = entry.aliases || []
+        for (var i = 0; i < aliases.length; i++) {
+            if (_matchesMode(mode, aliases[i])) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    function _modeEntry(mode) {
+        if (!mode || mode.length === 0) {
+            return null
+        }
+
+        for (var i = 0; i < _modeEntries.length; i++) {
+            if (_matchesEntry(mode, _modeEntries[i])) {
+                return _modeEntries[i]
+            }
+        }
+
+        return null
     }
 
     function quadPlaneBaseMode(mode) {
@@ -29,24 +124,10 @@ QtObject {
             return ""
         }
 
-        var quadPlaneModes = [
-            { source: "QuadPlane Stabilize", base: "Stabilize" },
-            { source: "QuadPlane Hover",     base: "Hover" },
-            { source: "QuadPlane Loiter",    base: "Loiter" },
-            { source: "QuadPlane Land",      base: "Land" },
-            { source: "QuadPlane RTL",       base: "RTL" },
-            { source: "QuadPlane AutoTune",  base: "AutoTune" },
-            { source: "QuadPlane Acro",      base: "Acro" }
-        ]
-
-        for (var i = 0; i < quadPlaneModes.length; i++) {
-            if (mode === quadPlaneModes[i].source || mode === _apmMode(quadPlaneModes[i].source)) {
-                return quadPlaneModes[i].base
+        for (var i = 0; i < _quadPlaneModes.length; i++) {
+            if (_matchesEntry(mode, _quadPlaneModes[i])) {
+                return _quadPlaneModes[i].base
             }
-        }
-
-        if (mode.toLowerCase().indexOf("quadplane ") === 0) {
-            return mode.substr(10)
         }
 
         return ""
@@ -63,52 +144,11 @@ QtObject {
             return fallbackText !== undefined ? fallbackText : _tr("Mode")
         }
 
-        var normalized = displayMode.toLowerCase()
-        if (normalized === "manual") {
-            return _tr("Manual")
+        var entry = _modeEntry(displayMode)
+        if (entry) {
+            return _tr(entry.label)
         }
-        if (normalized === "stabilize" || normalized === "stabilized") {
-            return _tr("Stabilize")
-        }
-        if (normalized === "alt hold" || normalized === "althold" || normalized === "altitude hold") {
-            return _tr("Alt Hold")
-        }
-        if (normalized === "loiter") {
-            return _tr("Loiter")
-        }
-        if (normalized.indexOf("follow") !== -1) {
-            return _tr("Follow")
-        }
-        if (normalized.indexOf("guided") !== -1) {
-            return _tr("Guided")
-        }
-        if (normalized.indexOf("auto") !== -1) {
-            return _tr("Auto")
-        }
-        if (normalized === "rtl") {
-            return _tr("RTL")
-        }
-        if (normalized === "land") {
-            return _tr("Land")
-        }
-        if (normalized === "takeoff") {
-            return _tr("Takeoff")
-        }
-        if (normalized.indexOf("hold") !== -1) {
-            return _tr("Hold")
-        }
-        if (normalized.indexOf("position") !== -1 || normalized.indexOf("pos") !== -1) {
-            return _tr("Position")
-        }
-        if (normalized === "acro") {
-            return _tr("Acro")
-        }
-        if (normalized === "brake") {
-            return _tr("Brake")
-        }
-        if (normalized === "circle") {
-            return _tr("Circle")
-        }
+
         return displayMode
     }
 
@@ -117,8 +157,9 @@ QtObject {
             return fallbackText !== undefined ? fallbackText : _tr("Mode")
         }
 
-        if (isQuadPlaneMode(mode)) {
-            return quadPlaneText() + baseDisplayText(mode, fallbackText)
+        var entry = _modeEntry(mode)
+        if (entry) {
+            return _tr(entry.label)
         }
 
         return baseDisplayText(mode, fallbackText)
@@ -159,7 +200,14 @@ QtObject {
         if (!mode || mode.length === 0) {
             return ""
         }
-        return baseDisplayText(mode, "").toLowerCase()
+
+        var entry = _modeEntry(mode)
+        if (!entry) {
+            return ""
+        }
+
+        var quadPlaneBase = quadPlaneBaseMode(entry.source)
+        return (quadPlaneBase !== "" ? quadPlaneBase : entry.source).toLowerCase()
     }
 
     function isQuadPlaneMode(mode) {
