@@ -37,22 +37,20 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(QObject *parent)
 
     static FlightModeList availableFlightModes = {
         // Mode Name              , Custom Mode                CanBeSet  adv
-        { _autoFlightMode         , APMRoverMode::AUTO         , true , true},
-        { _guidedFlightMode       , APMRoverMode::GUIDED       , true , true},
-        { _holdFlightMode         , APMRoverMode::HOLD         , true , true},
-        { _rtlFlightMode          , APMRoverMode::RTL          , true , true},
         { _manualFlightMode       , APMRoverMode::MANUAL       , true , true},
-
-        // Not part of the AeroFollow operator workflow. Keep mapped, but hide from the dropdown.
-        { _acroFlightMode         , APMRoverMode::ACRO         , false, true},
+        { _acroFlightMode         , APMRoverMode::ACRO         , true , true},
         { _learningFlightMode     , APMRoverMode::LEARNING     , false, true},
-        { _steeringFlightMode     , APMRoverMode::STEERING     , false, true},
-        { _loiterFlightMode       , APMRoverMode::LOITER       , false, true},
-        { _followFlightMode       , APMRoverMode::FOLLOW       , false, true},
-        { _simpleFlightMode       , APMRoverMode::SIMPLE       , false, true},
-        { _dockFlightMode         , APMRoverMode::DOCK         , false, true},
-        { _circleFlightMode       , APMRoverMode::CIRCLE       , false, true},
-        { _smartRtlFlightMode     , APMRoverMode::SMART_RTL    , false, true},
+        { _steeringFlightMode     , APMRoverMode::STEERING     , true , true},
+        { _holdFlightMode         , APMRoverMode::HOLD         , true , true},
+        { _loiterFlightMode       , APMRoverMode::LOITER       , true , true},
+        { _followFlightMode       , APMRoverMode::FOLLOW       , true , true},
+        { _simpleFlightMode       , APMRoverMode::SIMPLE       , true , true},
+        { _dockFlightMode         , APMRoverMode::DOCK         , true , true},
+        { _circleFlightMode       , APMRoverMode::CIRCLE       , true , true},
+        { _autoFlightMode         , APMRoverMode::AUTO         , true , true},
+        { _rtlFlightMode          , APMRoverMode::RTL          , true , true},
+        { _smartRtlFlightMode     , APMRoverMode::SMART_RTL    , true , true},
+        { _guidedFlightMode       , APMRoverMode::GUIDED       , true , true},
         { _initializingFlightMode , APMRoverMode::INITIALIZING , false, true},
     };
     updateAvailableFlightModes(availableFlightModes);

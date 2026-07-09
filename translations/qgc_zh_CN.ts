@@ -7150,6 +7150,193 @@ Click Ok to start the auto-tuning process.
     </message>
   </context>
   <context>
+    <name>FlightModeDisplay</name>
+    <message>
+      <source>Mode</source>
+      <translation>模式</translation>
+    </message>
+    <message>
+      <source>Manual</source>
+      <translation>手动</translation>
+    </message>
+    <message>
+      <source>Circle</source>
+      <translation>绕圈</translation>
+    </message>
+    <message>
+      <source>Stabilize</source>
+      <translation>增稳</translation>
+    </message>
+    <message>
+      <source>Training</source>
+      <translation>训练</translation>
+    </message>
+    <message>
+      <source>Acro</source>
+      <translation>特技</translation>
+    </message>
+    <message>
+      <source>Alt Hold</source>
+      <translation>定高</translation>
+    </message>
+    <message>
+      <source>FBW A</source>
+      <translation>FBW A</translation>
+    </message>
+    <message>
+      <source>FBW B</source>
+      <translation>FBW B</translation>
+    </message>
+    <message>
+      <source>Cruise</source>
+      <translation>巡航</translation>
+    </message>
+    <message>
+      <source>Auto</source>
+      <translation>自动</translation>
+    </message>
+    <message>
+      <source>Autotune</source>
+      <translation>自动调参</translation>
+    </message>
+    <message>
+      <source>RTL</source>
+      <translation>返航</translation>
+    </message>
+    <message>
+      <source>Loiter</source>
+      <translation>盘旋</translation>
+    </message>
+    <message>
+      <source>Takeoff</source>
+      <translation>起飞</translation>
+    </message>
+    <message>
+      <source>Avoid ADSB</source>
+      <translation>ADSB 避让</translation>
+    </message>
+    <message>
+      <source>Guided</source>
+      <translation>引导</translation>
+    </message>
+    <message>
+      <source>Guided No GPS</source>
+      <translation>无 GPS 引导</translation>
+    </message>
+    <message>
+      <source>Initializing</source>
+      <translation>初始化中</translation>
+    </message>
+    <message>
+      <source>Land</source>
+      <translation>降落</translation>
+    </message>
+    <message>
+      <source>Hover</source>
+      <translation>悬停</translation>
+    </message>
+    <message>
+      <source>Drift</source>
+      <translation>漂移</translation>
+    </message>
+    <message>
+      <source>Sport</source>
+      <translation>运动</translation>
+    </message>
+    <message>
+      <source>Flip</source>
+      <translation>翻滚</translation>
+    </message>
+    <message>
+      <source>Position Hold</source>
+      <translation>位置保持</translation>
+    </message>
+    <message>
+      <source>Brake</source>
+      <translation>制动</translation>
+    </message>
+    <message>
+      <source>Throw</source>
+      <translation>投掷</translation>
+    </message>
+    <message>
+      <source>Smart RTL</source>
+      <translation>智能返航</translation>
+    </message>
+    <message>
+      <source>Flow Hold</source>
+      <translation>光流保持</translation>
+    </message>
+    <message>
+      <source>Follow</source>
+      <translation>跟随</translation>
+    </message>
+    <message>
+      <source>Follow Target</source>
+      <translation>跟随目标</translation>
+    </message>
+    <message>
+      <source>ZigZag</source>
+      <translation>ZigZag</translation>
+    </message>
+    <message>
+      <source>SystemID</source>
+      <translation>SystemID</translation>
+    </message>
+    <message>
+      <source>AutoRotate</source>
+      <translation>自动旋转</translation>
+    </message>
+    <message>
+      <source>AutoRTL</source>
+      <translation>自动返航</translation>
+    </message>
+    <message>
+      <source>Turtle</source>
+      <translation>Turtle</translation>
+    </message>
+    <message>
+      <source>Thermal</source>
+      <translation>热气流</translation>
+    </message>
+    <message>
+      <source>Loiter to QLand</source>
+      <translation>盘旋转四旋翼降落</translation>
+    </message>
+    <message>
+      <source>Autoland</source>
+      <translation>自动降落</translation>
+    </message>
+    <message>
+      <source>QuadPlane Stabilize</source>
+      <translation>四旋翼增稳</translation>
+    </message>
+    <message>
+      <source>QuadPlane Hover</source>
+      <translation>四旋翼悬停</translation>
+    </message>
+    <message>
+      <source>QuadPlane Loiter</source>
+      <translation>四旋翼悬停</translation>
+    </message>
+    <message>
+      <source>QuadPlane Land</source>
+      <translation>四旋翼降落</translation>
+    </message>
+    <message>
+      <source>QuadPlane RTL</source>
+      <translation>四旋翼返航</translation>
+    </message>
+    <message>
+      <source>QuadPlane AutoTune</source>
+      <translation>四旋翼自动调参</translation>
+    </message>
+    <message>
+      <source>QuadPlane Acro</source>
+      <translation>四旋翼特技</translation>
+    </message>
+  </context>
+  <context>
     <name>FlyViewToolStripActionList</name>
     <message>
       <location filename="../src/FlightDisplay/FlyViewToolStripActionList.qml" line="22"/>

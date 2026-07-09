@@ -599,7 +599,7 @@ Rectangle {
 
                 ctx.fillStyle = Qt.rgba(0.30, 0.62, 0.90, 0.94)
                 ctx.fillRect(-r, -r * 1.35, r * 2, r * 1.35)
-                ctx.fillStyle = Qt.rgba(0.28, 0.54, 0.20, 0.96)
+                ctx.fillStyle = Qt.rgba(0.82, 0.64, 0.26, 0.96)
                 ctx.fillRect(-r, 0, r * 2, r * 1.35)
 
                 ctx.strokeStyle = Qt.rgba(1.0, 1.0, 0.96, 0.92)
