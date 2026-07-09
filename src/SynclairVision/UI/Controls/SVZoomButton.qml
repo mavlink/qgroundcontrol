@@ -6,60 +6,50 @@ Item {
     id: root
 
     property color buttonColor
-    property string buttonText
+    property string text
     property color textColor
-    readonly property int radiusX: width / 2
-    readonly property int radiusY: height / 2
+
+    readonly property real halfWidth: width / 2
+    readonly property real halfHeight: height / 2
 
     Shape {
-        id: shape
         anchors.fill: parent
         antialiasing: true
 
         ShapePath {
             strokeWidth: 0
-            fillColor: buttonColor
+            fillColor: root.buttonColor
             startX: 0
             startY: 0
 
-            PathLine {
-                x: 0
-                y: root.radiusY
-            }
+            PathLine { x: 0; y: root.halfHeight }
 
             PathArc {
-                x: root.radiusX
-                y: root.radiusY * 2
-                radiusX: root.radiusX
-                radiusY: root.radiusY
+                x: root.halfWidth
+                y: root.height
+                radiusX: root.halfWidth
+                radiusY: root.halfHeight
                 direction: PathArc.Counterclockwise
             }
 
             PathArc {
-                x: root.radiusX * 2
-                y: root.radiusY
-                radiusX: root.radiusX
-                radiusY: root.radiusY
+                x: root.width
+                y: root.halfHeight
+                radiusX: root.halfWidth
+                radiusY: root.halfHeight
                 direction: PathArc.Counterclockwise
             }
 
-            PathLine {
-                x: root.radiusX * 2
-                y: 0
-            }
-
-            PathLine {
-                x: 0
-                y: 0
-            }
+            PathLine { x: root.width; y: 0 }
+            PathLine { x: 0; y: 0 }
         }
+    }
 
-        Text {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: - root.radiusY * 0.1
-            text: buttonText
-            font.pixelSize: root.radiusX * 1.5
-            color: textColor
-        }
+    Text {
+        anchors.centerIn: parent
+        anchors.verticalCenterOffset: -SVUnits.smallMargin
+        text: root.text
+        font.pixelSize: root.halfWidth * 1.5
+        color: root.textColor
     }
 }

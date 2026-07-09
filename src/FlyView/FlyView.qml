@@ -105,6 +105,8 @@ Item {
 
             property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
             property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
+
+            visible: SVState.hud
         }
 
         SVFlyView   {
@@ -115,7 +117,7 @@ Item {
             leftToolStripBottom: widgetLayer.leftToolStripBottom
             z:                  _fullItemZorder + 2
 
-            parentToolInsets:   _toolInsets
+            //parentToolInsets:   _toolInsets
             visible:            !QGroundControl.videoManager.fullScreen && SVState.synclairOverlay && !_mainWindowIsMap
         }
 
@@ -200,6 +202,6 @@ Item {
     FlyViewToolBar {
         id:                 toolbar
         guidedValueSlider:  _guidedValueSlider
-        visible:            !QGroundControl.videoManager.fullScreen && SVState.tool
+        visible:            !QGroundControl.videoManager.fullScreen && SVState.toolbar
     }
 }

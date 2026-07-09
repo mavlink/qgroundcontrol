@@ -8,13 +8,22 @@ import QGroundControl.Controls
 Item {
     id: root
 
-    property real t: 0.5
+    property real t: SVSettings.joystickRatio
     property int hoverIndex: -1
     property int pressedIndex: -1
 
     property var  innerClicked: [false, false, false, false]
     property var  outerClicked: [false, false, false, false]
     property var  hasInnerRing: true
+
+    readonly property bool controlsLocked: SVState.lockControls
+    readonly property bool controlsUsable: !SVState.lockControls && SVState.cameraSelected !== -1
+    readonly property color activeBorderColor: qgcPalette.statusPassedText
+    readonly property color disabledArrowColor: qgcPalette.windowShadeLight
+    readonly property color arrowColor: root.controlsUsable ? "white" : root.disabledArrowColor
+    readonly property real arrowOpacity: root.controlsUsable ? 1 : 0.45
+    readonly property color outerBorderColor: root.activeBorderColor//root.controlsLocked ? qgcPalette.colorRed : root.activeBorderColor
+    readonly property color innerBorderColor: !root.controlsUsable ? qgcPalette.windowShadeLight : root.activeBorderColor
 
     QGCPalette { id: qgcPalette}
 
@@ -38,8 +47,6 @@ Item {
     }
 
     function getHoveredButton(mouseX, mouseY) {
-        if(!root.enabled) { return -1 }
-
         const radius = root.width / 2;
         const innerRadius = radius / 2;
 
@@ -73,8 +80,6 @@ Item {
         }
     }
 
-    
-
     function clearClicked(index) {
         if (index < 0) {
             return
@@ -91,24 +96,24 @@ Item {
         }
     }
 
-     
-
     SVJoystickButtonSegment {
         id: outerButtons
         anchors.fill: parent
-        buttonColor: (root.enabled) ? qgcPalette.windowShade : qgcPalette.window
+        buttonColor: qgcPalette.windowShade
         hoveredButtonColor: qgcPalette.windowShadeLight
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: qgcPalette.windowShadeLight
-        outerBorderColor: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
+        outerBorderColor: root.outerBorderColor
         hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
-        clicked: outerClicked 
+        clicked: outerClicked
         arrowFilled: (qgcPalette.globalTheme === QGCPalette.Light) ? false : true
-        arrowSize: (root.hasInnerRing) ? 0.45 : 0.3  
+        arrowSize: (root.hasInnerRing) ? 0.45 : 0.3
         arrowSpace: (root.hasInnerRing) ? 1 - root.t : 0.8
+        arrowColor: root.arrowColor
+        arrowOpacity: root.arrowOpacity
     }
 
-     SVJoystickButtonSegment {
+    SVJoystickButtonSegment {
         id: innerButtons
         width: parent.width * root.t
         height: parent.height * root.t
@@ -118,15 +123,16 @@ Item {
         hoveredButtonColor: qgcPalette.windowShadeLight
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: qgcPalette.windowShadeLight
-        outerBorderColor: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
+        outerBorderColor: innerBorderColor
         hoverIndex: (root.hoverIndex >= 4) ? root.hoverIndex - 4 : -1
 
         clicked: innerClicked
         arrowSize: 0.3
         arrowSpace: 0.8
+        arrowColor: root.arrowColor
+        arrowOpacity: root.arrowOpacity
 
         visible: hasInnerRing
-
     }
 
     MouseArea {
@@ -136,6 +142,12 @@ Item {
 
         onPositionChanged: (mouse) => {
             const index = root.getHoveredButton(mouse.x, mouse.y)
+
+            if (!root.controlsUsable) {
+                root.hoverIndex = -1
+                return
+            }
+
             root.hoverIndex = index
 
             if (pressed && index !== root.pressedIndex) {
@@ -153,6 +165,21 @@ Item {
 
         onPressed: (mouse) => {
             const index = root.getHoveredButton(mouse.x, mouse.y)
+
+            if (index < 0) {
+                root.hoverIndex = -1
+                root.clearClicked(root.pressedIndex)
+                root.pressedIndex = -1
+                mouse.accepted = false
+                return
+            }
+
+            if (!root.controlsUsable) {
+                root.hoverIndex = -1
+                root.pressedIndex = -1
+                return
+            }
+
             root.hoverIndex = index
             root.pressedIndex = index
             root.setClicked(index)

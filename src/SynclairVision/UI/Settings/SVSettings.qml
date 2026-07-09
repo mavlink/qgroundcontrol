@@ -9,8 +9,10 @@ QtObject {
 //---------------------------------
 
     //Video
-        property int videoResolution: 123
+        property string videoResolution: "1080p"
         property real videoTargetBrightness: 1
+        property bool recordHighlight: true
+        property bool recordInformationBox: true
 
     //Network
         property string networkIPAdress: "127.0.0.1"
@@ -32,14 +34,16 @@ QtObject {
 
     //Joystick
         property string joystickType: "standard"
-        property int joystickSize: 200
+        property int joystickSize: 40
         property int joystickSensitivity: 10
         property real joystickDeadzone: 0
         property bool joystickInvertHorizontal: false
         property bool joystickInvertVertical: false
+        property real joystickRatio: 0.5
+        property real joystickKnobSize: 0.3
 
     //Zoom
-        property int zoomSize: 100
+        property int zoomSize: 25
         property int zoomSensitivity: 10
 
     //Shortcuts
@@ -58,6 +62,16 @@ QtObject {
         property int shortcutLayout: Qt.Key_Up
         property int shortcutPhoto: Qt.Key_Up
         property int shortcutRecord: Qt.Key_Up
+        property int shortcutCamera1: Qt.Key_Up
+        property int shortcutCamera2: Qt.Key_Up
+        property int shortcutCamera3: Qt.Key_Up
+        property int shortcutCamera4: Qt.Key_Up
+        property int shortcutCamera5: Qt.Key_Up
+        property int shortcutNextCamera: Qt.Key_Up
+        property int shortcutDeselectCamera: Qt.Key_Up
+
+        onControlPanelPositionChanged: console.log("panel position ->", controlPanelPosition)
+
 
 
 //---------------------------------

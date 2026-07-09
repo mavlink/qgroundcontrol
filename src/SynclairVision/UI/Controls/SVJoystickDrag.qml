@@ -7,14 +7,28 @@ import QGroundControl.Controls
 Item {
     id: root
 
-    property real knobSize: 0.3
+    property real knobSize: SVSettings.joystickKnobSize
     property real knobOffsetX: 0
     property real knobOffsetY: 0
-    property real joystickRadius: Math.min(background.width, background.height) / 2
-    property real knobRadius: Math.max(joystickKnob.width, joystickKnob.height) / 2
-    property real movementRadius: Math.max(0, joystickRadius - knobRadius)
 
-    QGCPalette { id: qgcPalette}
+    readonly property real centerX: width / 2
+    readonly property real centerY: height / 2
+    readonly property real joystickRadius: Math.min(width, height) / 2
+    readonly property real knobRadius: Math.max(joystickKnob.width, joystickKnob.height) / 2
+    readonly property real movementRadius: Math.max(0, joystickRadius - knobRadius)
+
+    readonly property real arrowWidth: width * 0.08
+    readonly property real arrowHeight: height * 0.10
+    readonly property bool controlsLocked: SVState.lockControls
+    readonly property bool controlsUsable: !SVState.lockControls && SVState.cameraSelected !== -1
+    readonly property color activeBorderColor: qgcPalette.statusPassedText
+    readonly property color disabledArrowColor: qgcPalette.windowShadeLight
+    readonly property color arrowColor: root.controlsUsable ? "white" : root.disabledArrowColor
+    readonly property real arrowOpacity: root.controlsUsable ? 1 : 0.45
+    readonly property color outerRingColor: root.controlsLocked ? qgcPalette.colorRed : root.activeBorderColor
+    readonly property color knobBorderColor: root.controlsUsable ? root.activeBorderColor : root.disabledArrowColor
+
+    QGCPalette { id: qgcPalette }
 
     function centerKnob() {
         knobOffsetX = 0
@@ -22,11 +36,11 @@ Item {
     }
 
     function updateKnobPosition(pointerX, pointerY) {
-        const deltaX = pointerX - (width / 2)
-        const deltaY = pointerY - (height / 2)
+        const deltaX = pointerX - centerX
+        const deltaY = pointerY - centerY
         const distance = Math.hypot(deltaX, deltaY)
 
-        if (distance <= movementRadius || distance === 0) {
+        if (distance === 0 || distance <= movementRadius) {
             knobOffsetX = deltaX
             knobOffsetY = deltaY
             return
@@ -38,53 +52,63 @@ Item {
     }
 
     function isInsideJoystick(pointerX, pointerY) {
-        return Math.hypot(pointerX - (width / 2), pointerY - (height / 2)) <= joystickRadius
+        return Math.hypot(pointerX - centerX, pointerY - centerY) <= joystickRadius
     }
 
     Rectangle {
         id: background
         anchors.fill: parent
         color: qgcPalette.windowShade
-        border.width: 1
-        border.color: qgcPalette.statusPassedText
+        border.width: SVUnits.lineWidth
+        border.color: root.outerRingColor
         radius: width / 2
     }
 
-    Repeater {
-        id: arrows
+    Rectangle {
+        id: deadzone
+        width: root.width * SVSettings.joystickDeadzone
+        height: width
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        color: qgcPalette.window
+        border.width: 0
+        radius: width / 2
+        opacity: 0.3
+        //visible: SVSettings.joystickDeadzone !== 0.0
+    }
 
+    Repeater {
         model: 4
 
-        delegate : Item {
-            id: arrow
+        delegate: Item {
             required property int index
-            rotation: index * 90
+
             anchors.fill: parent
+            rotation: index * 90
 
             SVArrow {
-                width: 10
-                height: 13
+                width: root.arrowWidth
+                height: root.arrowHeight
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right: parent.right
-                anchors.rightMargin: 10
+                anchors.rightMargin: SVUnits.margin
 
                 arrowFilled: true
-                outerBorderColor: qgcPalette.window
-
-
+                outerBorderColor: root.arrowColor
+                opacity: root.arrowOpacity
             }
         }
     }
 
     Rectangle {
         id: joystickKnob
-        width: parent.width * root.knobSize
-        height: parent.height * root.knobSize
-        x: (root.width / 2) - (width / 2) + root.knobOffsetX
-        y: (root.height / 2) - (height / 2) + root.knobOffsetY
+        width: root.width * root.knobSize
+        height: root.height * root.knobSize
+        x: root.centerX - (width / 2) + root.knobOffsetX
+        y: root.centerY - (height / 2) + root.knobOffsetY
         color: qgcPalette.window
-        border.width: 1
-        border.color: qgcPalette.statusPassedText
+        border.width: SVUnits.lineWidth
+        border.color: root.knobBorderColor
         radius: width / 2
     }
 
@@ -92,8 +116,15 @@ Item {
         anchors.fill: parent
 
         onPressed: (mouse) => {
-            if (!root.isInsideJoystick(mouse.x, mouse.y)) {
-                mouse.accepted = false
+            const isInsideJoystick = root.isInsideJoystick(mouse.x, mouse.y)
+
+            mouse.accepted = isInsideJoystick
+
+            if (!isInsideJoystick) {
+                return
+            }
+
+            if (!root.controlsUsable) {
                 return
             }
 
@@ -101,25 +132,12 @@ Item {
         }
 
         onPositionChanged: (mouse) => {
-            if (!pressed) {
-                return
+            if (pressed && root.controlsUsable) {
+                root.updateKnobPosition(mouse.x, mouse.y)
             }
-
-            root.updateKnobPosition(mouse.x, mouse.y)
         }
 
         onReleased: root.centerKnob()
         onCanceled: root.centerKnob()
     }
-
-
-
-
-
-
-
-
-
-
-
 }
