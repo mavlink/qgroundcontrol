@@ -23,59 +23,17 @@ Item {
     property int _widgetMargin: 0
     property int _toolBarHeight: 0
 
-    property var cameraLayouts: []
-    property string activeLayoutId: "four_square"
-    property var activeLayout: null
-    property real separatorThickness: 1
-    property color seperatorColor: qgcPalette.windowShade
-
-    function findLayout(layoutId) {
+    readonly property var cameraLayouts: SVCameraLayouts.getCameraLayouts()
+    readonly property var activeLayout: {
         for (let i = 0; i < cameraLayouts.length; i++) {
-            if (cameraLayouts[i].id === layoutId) {
+            if (cameraLayouts[i].id === SVState.layout) {
                 return cameraLayouts[i]
             }
         }
-        return null
+
+        return cameraLayouts.length > 0 ? cameraLayouts[0] : null
     }
-
-    function updateActiveLayout() {
-        activeLayout = findLayout(activeLayoutId)
-
-        if (!activeLayout && cameraLayouts.length > 0) {
-            activeLayout = cameraLayouts[0]
-            activeLayoutId = activeLayout.id
-        }
-    }
-
-    function setActiveLayout(layoutId) {
-        if (activeLayoutId === layoutId) {
-            return
-        }
-
-        activeLayoutId = layoutId
-        updateActiveLayout()
-    }
-
-    Component.onCompleted: {
-        cameraLayouts = SVCameraLayouts.getCameraLayouts()
-        updateActiveLayout()
-    }
-
-    QGCToolInsets {
-        id: _toolInsets
-        leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
-        leftEdgeCenterInset:    parentToolInsets.leftEdgeCenterInset
-        leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
-        rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
-        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
-        rightEdgeBottomInset:   parentToolInsets.rightEdgeBottomInset
-        topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
-        topEdgeCenterInset:     parentToolInsets.topEdgeCenterInset
-        topEdgeRightInset:      parentToolInsets.topEdgeRightInset
-        bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
-        bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
-        bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
-    }
+    readonly property string resolvedActiveLayoutId: activeLayout ? activeLayout.id : ""
 
     QGCPalette { id: qgcPalette}
 
@@ -85,14 +43,14 @@ Item {
 
         delegate: SVCameraLayer {
             required property var modelData
+            required property int index
 
-            x: modelData.x * root.width
-            y: modelData.y * root.height
             width: modelData.w * root.width
             height: modelData.h * root.height
+            x: modelData.x * root.width
+            y: modelData.y * root.height
+            cameraIndex: index
             
-
-            parentToolInsets: root.parentToolInsets
             _widgetMargin: root._widgetMargin
         }
     }
@@ -107,17 +65,16 @@ Item {
 
             delegate: Rectangle {
                 required property var modelData
+                readonly property bool isVertical: modelData.orientation === 'vertical'
+                readonly property bool isHorizontal: modelData.orientation === 'horizontal'
 
-                readonly property bool isVertical: modelData.orientation === "vertical"
-                readonly property bool isHorizontal: modelData.orientation === "horizontal"
+                width:  isVertical   ? SVUnits.lineWidth : modelData.length * root.width
+                height: isHorizontal ? SVUnits.lineWidth : modelData.length * root.height 
+                x: modelData.x * root.width - (isVertical ? width / 2 : 0)
+                y: modelData.y * root.height - (isHorizontal ? height / 2: 0)
 
-                visible: isVertical || isHorizontal
-                color: seperatorColor
 
-                width: isVertical ? root.separatorThickness : modelData.length * root.width
-                height: isVertical ? modelData.length * root.height : root.separatorThickness
-                x: isVertical ? (modelData.x * root.width) - (width / 2) : modelData.x * root.width
-                y: isVertical ? modelData.y * root.height : (modelData.y * root.height) - (height / 2)
+                color: qgcPalette.windowShade
             }
         }
     }
@@ -129,10 +86,27 @@ Item {
         anchors.margins: _widgetMargin
         anchors.topMargin: _widgetMargin + _toolBarHeight
         leftToolStripBottom: root.leftToolStripBottom
-        parentToolInsets: root.parentToolInsets
-        activeLayoutId: root.activeLayoutId
-        onLayoutSelected: (layoutId) => {
-            root.setActiveLayout(layoutId)
+        activeLayoutId: root.resolvedActiveLayoutId
+        onLayoutSelected: (layoutId) => SVState.layout = layoutId
+    }
+
+    
+
+    Rectangle {
+        id: recordBorder
+        z: 100
+        anchors.fill: parent
+        color: "transparent"
+        border.width: SVUnits.thickLineWidth + SVUnits.lineWidth * 2
+        border.color: qgcPalette.colorRed
+        visible: SVState.record
+
+        SequentialAnimation on opacity {
+            loops: Animation.Infinite
+            running: true
+
+            NumberAnimation { from: 1.0; to: 0.4; duration: 1000; easing.type: Easing.InOutSine }
+            NumberAnimation { from: 0.4; to: 1.0; duration: 1000; easing.type: Easing.InOutSine }
         }
     }
 }

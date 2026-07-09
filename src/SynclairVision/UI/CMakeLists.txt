@@ -6,6 +6,7 @@ qt_add_library(SynclairVisionUIModule STATIC)
 set_source_files_properties(
     Settings/SVSettings.qml
     Settings/SVState.qml
+    Resources/SVUnits.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
@@ -15,14 +16,17 @@ qt_add_qml_module(SynclairVisionUIModule
     RESOURCE_PREFIX /qml
     QML_FILES
         Flyview/SVFlyView.qml
+        Flyview/SVFlyViewMenus.qml
+        Flyview/SVFlyViewMenusList.js
         Flyview/SVFlyViewWidgetLayer.qml
+        Flyview/SVRecordInfoBox.qml
 
         Camera/SVCameraLayer.qml
         Camera/SVCameraWidgetLayer.qml
         Camera/SVCameraLayouts.js
 
         Controls/SVControlPanel.qml
-        Controls/SVVirtualJoystick.qml
+        Controls/SVJoystick.qml
         Controls/SVJoystickArea.qml
         Controls/SVJoystickDrag.qml
         Controls/SVJoystickButtonSegment.qml
@@ -34,7 +38,10 @@ qt_add_qml_module(SynclairVisionUIModule
         Menustrip/SVMenuStripButton.qml
 
         Settings/SVSettings.qml
+        Settings/SVSettingsDrawer.qml
         Settings/SVState.qml
+        Resources/SVUnits.qml
+        
         Settings/SVSettingsMenu.qml
         Settings/SVSettingsGeneral.js
         Settings/SVSettingsControls.js

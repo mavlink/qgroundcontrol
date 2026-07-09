@@ -12,62 +12,50 @@ Item {
     id: root
 
     property int borderWidth: 5
-    
 
     QGCPalette { id: qgcPalette}
 
-    implicitWidth: joystick.width + zoom.width - borderWidth
+    implicitWidth: content.width
     implicitHeight: Math.max(joystick.height, zoom.height)
-    
-    SVMenuStrip {
-        id: lockButton
-        headerless: true
-        anchors.left: zoom.right
+
+    Item {
+        id: content
+        anchors.left: parent.left
         anchors.bottom: parent.bottom
+        width: joystick.width + zoom.width - borderWidth
+        height: Math.max(joystick.height, zoom.height)
+        opacity: (SVSettings.controlPanelPassiveOpacity && (!contentHoverHandler.hovered || !(!SVState.lockControls && SVState.cameraSelected !== -1)))
+                 ? SVSettings.controlPanelPassiveOpacityValue
+                 : 1
 
-        exclusiveSelection: false
-        autoUpdateActiveId: false
-
-        direction: horizontal
-
-        activeIds: SVState.lockedControls ? ["lock"] : []
-
-
-        model: [
-            { 
-                id: "lock",
-                text: "Lock",
-                checkable: true,
-                iconSource: "/qmlimages/controls_lock.svg",
-                alternateIconSource: "/qmlimages/controls_lock_closed.svg",
-                iconActive: SVState.lockedControls,
-                enabled: true
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 250
             }
-        ]
-
-        onItemSelected: (id) => {
-                SVState.lockedControls = !SVState.lockedControls
-                return
         }
-    }
 
-    SVVirtualJoystick {
-        id: joystick
-        height: 200
-        width: height
-        x: 0
-        y: 0
-        borderWidth: root.borderWidth
-        enabled: !SVState.lockedControls
-    }
+    
 
-    SVZoom {
-        id: zoom
-        height: 120
-        width: height / 2
-        x: joystick.width - borderWidth
-        y: root.implicitHeight - height
-        borderWidth: root.borderWidth
-        enabled: !SVState.lockedControls
+        HoverHandler {
+            id: contentHoverHandler
+        }
+
+        SVJoystick {
+            id: joystick
+            height: SVSettings.joystickSize / 4 * SVUnits.height
+            width: height
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            joystickType: SVSettings.joystickType
+        }
+
+        SVZoom {
+            id: zoom
+            height: SVSettings.zoomSize / 4 * SVUnits.height
+            width: height / 2
+            anchors.left: joystick.right
+            anchors.leftMargin: -SVUnits.margin
+            anchors.bottom: parent.bottom
+        }
     }
 }

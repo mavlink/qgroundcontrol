@@ -4,24 +4,19 @@ import QGroundControl
 
 Item {
     id: root
-
-    property int borderWidth
-
+    
     QGCPalette { id: qgcPalette }
 
     Rectangle {
         id: border
         anchors.fill: parent
         radius: width / 2
-        //color: qgcPalette.window
         color: qgcPalette.window
     }
 
     SVZoomArea {
         id: zoomArea
         anchors.fill: parent
-        anchors.margins: borderWidth
+        anchors.margins: SVUnits.margin
     }
-
-    
 }

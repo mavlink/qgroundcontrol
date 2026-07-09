@@ -15,11 +15,13 @@ Item {
     property color clickedButtonColor
     property color borderColor
     property color outerBorderColor
+    property color arrowColor: "white"
     property int   hoverIndex: -1
 
     property bool  arrowFilled: true
-    property real   arrowSize  
-    property real   arrowSpace
+    property real  arrowSize
+    property real  arrowSpace
+    property real  arrowOpacity: 1
 
     property var   arrowSpaceWidth: radius - (1 - arrowSpace) * radius
     property var   spacing: (arrowSpaceWidth * (1 - arrowSize)) / 2
@@ -96,9 +98,8 @@ Item {
                 anchors.rightMargin: root.spacing
 
                 arrowFilled: root.arrowFilled
-                outerBorderColor: root.outerBorderColor
-                //opacity: (root.enabled) ? 1 : 0.33
-
+                outerBorderColor: root.arrowColor
+                opacity: root.arrowOpacity
             }
         }
     }

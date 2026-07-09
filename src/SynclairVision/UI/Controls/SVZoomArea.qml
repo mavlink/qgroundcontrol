@@ -5,24 +5,39 @@ import QGroundControl
 Item {
     id: root
 
-    QGCPalette { id: qgcPalette}
+    QGCPalette { id: qgcPalette }
 
     property int hoverIndex: -1
-    property int pressedIndex: -1
+    readonly property bool controlsUsable: !SVState.lockControls && SVState.cameraSelected !== -1
 
     property bool zoomInPressed: false
     property bool zoomOutPressed: false
 
-    function getButton(mouseX, mouseY) {
-        if(!root.enabled) { return -1 }
-        
-        if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {
+    property color textColor: root.controlsUsable
+        ? qgcPalette.statusPassedText
+        : qgcPalette.windowShadeLight
+
+    property color borderColor: SVState.lockControls ? qgcPalette.colorRed : qgcPalette.statusPassedText
+
+    function buttonAt(x, y) {
+        if (x < 0 || x > width || y < 0 || y > height) {
             return -1
         }
 
-        return (mouseY > height / 2) ? 1 : 0
+        return y < height / 2 ? 0 : 1
     }
 
+    function isPressed(index) {
+        if (index === 0) {
+            return zoomInPressed
+        }
+
+        if (index === 1) {
+            return zoomOutPressed
+        }
+
+        return false
+    }
 
     function setPressed(index, pressed) {
         if (index === 0) {
@@ -32,10 +47,25 @@ Item {
         }
     }
 
-    function clearPressed() {
+    function buttonColor(index) {
+        if (root.isPressed(index)) {
+            return qgcPalette.buttonHighlight
+        }
+
+        if (hoverIndex === index) {
+            return qgcPalette.windowShadeLight
+        }
+
+        return qgcPalette.windowShade
+    }
+
+    function clearMouseState() {
+        hoverIndex = -1
+    }
+
+    function clearPressedState() {
         zoomInPressed = false
         zoomOutPressed = false
-        pressedIndex = -1
     }
 
     SVZoomButton {
@@ -43,57 +73,35 @@ Item {
         width: parent.width
         height: parent.height / 2
         anchors.top: parent.top
-        buttonColor: {
-            if(zoomInPressed) {
-                return qgcPalette.buttonHighlight
-            } else if(hoverIndex === 0) {
-                return qgcPalette.windowShadeLight
-            } else {
-                return (root.enabled) ? qgcPalette.windowShade : qgcPalette.window
-            }
-        }
+        text: "+"
+        buttonColor: root.buttonColor(0)
+        textColor: root.textColor
         rotation: 180
-
-        buttonText: "+"
-        textColor: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
-
     }
 
-     SVZoomButton {
+    SVZoomButton {
         id: zoomOut
         width: parent.width
         height: parent.height / 2
         anchors.bottom: parent.bottom
-        buttonColor: {
-            if(zoomOutPressed) {
-                return qgcPalette.buttonHighlight
-            } else if(hoverIndex === 1) {
-                return qgcPalette.windowShadeLight
-            } else {
-                return (root.enabled) ? qgcPalette.windowShade : qgcPalette.window
-            }
-        }
-
-        buttonText: "-"
-        textColor: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
-
+        text: "-"
+        buttonColor: root.buttonColor(1)
+        textColor: root.textColor
     }
 
     Rectangle {
-        id: innerBorder
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
-        height: 1
+        height: SVUnits.lineWidth
         color: qgcPalette.windowShadeLight
     }
 
     Rectangle {
-        id: outerBorder
         anchors.fill: parent
         radius: width / 2
         color: "transparent"
-        border.width: 1
-        border.color: (root.enabled) ? qgcPalette.statusPassedText : qgcPalette.windowShadeLight
+        border.width: SVUnits.lineWidth
+        border.color: root.borderColor
     }
 
     MouseArea {
@@ -101,36 +109,57 @@ Item {
         hoverEnabled: true
         z: 999
 
+        property int pressedButtonIndex: -1
+
         onPositionChanged: (mouse) => {
-            const index = root.getButton(mouse.x, mouse.y)
+            const index = root.buttonAt(mouse.x, mouse.y)
+
+            if (!root.controlsUsable) {
+                root.hoverIndex = -1
+                return
+            }
+
             root.hoverIndex = index
 
-            if (pressed && index !== root.pressedIndex) {
-                root.setPressed(root.pressedIndex, false)
+            if (pressed && index !== pressedButtonIndex) {
+                root.setPressed(pressedButtonIndex, false)
                 root.setPressed(index, true)
-                root.pressedIndex = index
+                pressedButtonIndex = index
             }
         }
 
-        onExited: {
-            root.hoverIndex = -1
-            root.clearPressed()
-        }
-
         onPressed: (mouse) => {
-            const index = root.getButton(mouse.x, mouse.y)
+            const index = root.buttonAt(mouse.x, mouse.y)
+
+            if (index < 0 && !root.controlsUsable) {
+                mouse.accepted = false
+                return
+            }
+
+            if (!root.controlsUsable) {
+                root.hoverIndex = -1
+                pressedButtonIndex = -1
+                return
+            }
+
             root.hoverIndex = index
-            root.pressedIndex = index
+            pressedButtonIndex = index
             root.setPressed(index, true)
         }
 
         onReleased: {
-            root.clearPressed()
+            root.setPressed(pressedButtonIndex, false)
+            pressedButtonIndex = -1
+        }
+
+        onExited: {
+            root.clearMouseState()
         }
 
         onCanceled: {
-            root.hoverIndex = -1
-            root.clearPressed()
+            root.setPressed(pressedButtonIndex, false)
+            pressedButtonIndex = -1
+            root.clearMouseState()
         }
     }
 }

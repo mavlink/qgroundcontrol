@@ -16,50 +16,60 @@ import QGroundControl.FlightMap
 Item {
     id: root
 
-    property var parentToolInsets
     property int _widgetMargin: 0
     property bool cameraActive: QGroundControl.videoManager.decoding || QGroundControl.videoManager.isUvc
+    property int cameraIndex
 
-    Item {
+    QGCPalette { id: qgcPalette}
+
+    Rectangle {
         id: noVideo
         anchors.fill: parent
-
-        Rectangle {
-            anchors.fill: parent
-            color: "black"
-        }
+        color: "black"
+        visible:            !cameraActive
 
         Rectangle {
             id:                 noVideoLabelBackground
             anchors.centerIn:   parent
-            width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
-            height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
-            radius:             ScreenTools.defaultFontPixelWidth / 2
-            color:              "white"
-            opacity:            0.3
-            visible:            !cameraActive
-        }
+            width:              noVideoLabel.contentWidth + SVUnits.bigMargin * 2
+            height:             noVideoLabel.contentHeight + SVUnits.bigMargin * 2
+            radius:             SVUnits.radius
+            color:              qgcPalette.windowTransparent
 
-        QGCLabel {
-            id:                 noVideoLabel
-            text:               qsTr("NO VIDEO AVAILABLE")
-            font.bold:          true
-            color:              "white"
-            font.pointSize:     ScreenTools.smallFontPointSize //ScreenTools.largeFontPointSize
-            anchors.centerIn:   parent
+            QGCLabel {
+                id:                 noVideoLabel
+                text:               qsTr("NO VIDEO AVAILABLE")
+                font.bold:          true
+                color:              qgcPalette.text
+                font.pointSize:     SVUnits.mediumText
+                anchors.centerIn:   parent
+            }
         }
     }
     
-
     SVCameraWidgetLayer {
         id: widgetLayer
         anchors.fill: parent
-        anchors.margins: _widgetMargin
-        parentToolInsets: root.parentToolInsets
+        anchors.margins: SVUnits.bigMargin
         visible: SVState.hud
     }
 
+    Rectangle {
+        id: selected
+        anchors.fill: parent
+        color: "transparent"
+        border.width: SVUnits.thickLineWidth - SVUnits.lineWidth
+        border.color: qgcPalette.colorYellowGreen
+        visible: SVState.cameraSelected === cameraIndex && SVState.hud
+    }
 
-    
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            SVState.cameraSelected = (SVState.cameraSelected === root.cameraIndex || SVState.lockControls)
+                ? -1
+                : root.cameraIndex
+        }
+    }
 }
 

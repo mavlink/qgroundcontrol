@@ -37,25 +37,13 @@ Item {
     readonly property real bottomEdgeGradientOpacity: Math.min(1, bottomHiddenContent / edgeGradientHeight)
     readonly property var categoryData: getCategoryData(activeSettingsId)
     readonly property var sectionModel: categoryData.sections ? categoryData.sections : []
-
-    function getCategoryData(settingsId) {
-        if (settingsId === 'Controls') {
-            return {
-                title: 'Controls',
-                sections: SVSettingsControls.getSections()
-            }
-        }
-
-        if (settingsId === 'Dev') {
-            return {
-                title: 'Dev',
-                sections: SVSettingsDev.getSections()
-            }
-        }
-
-        return {
-            title: 'General',
-            sections: SVSettingsGeneral.getSections()
+        function getCategoryData(settingsId) {
+        if (settingsId === 'General') {
+            return { title: 'General', sections: SVSettingsGeneral.getSections() }
+        } else if (settingsId === 'Controls') {
+            return { title: 'Controls', sections: SVSettingsControls.getSections() }
+        } else if (settingsId === 'Dev') {
+            return { title: 'Dev', sections: SVSettingsDev.getSections() }
         }
     }
 
@@ -67,6 +55,114 @@ Item {
         }
 
         return labels
+    }
+
+    function useControlsSettingBridge(settingData) {
+        return activeSettingsId === 'Controls'
+            && settingData.property !== undefined
+            && SVSettings[settingData.property] !== undefined
+    }
+
+    function settingValue(settingData, fallbackValue) {
+        if (useControlsSettingBridge(settingData)) {
+            return SVSettings[settingData.property]
+        }
+
+        return fallbackValue
+    }
+
+    function setSettingValue(settingData, value) {
+        if (!useControlsSettingBridge(settingData)) {
+            return
+        }
+
+        SVSettings[settingData.property] = value
+    }
+
+    function dropdownCurrentIndex(settingData) {
+        const options = settingData.options ? settingData.options : []
+
+        if (useControlsSettingBridge(settingData)) {
+            const currentValue = SVSettings[settingData.property]
+
+            for (let index = 0; index < options.length; index++) {
+                if (options[index].value === currentValue) {
+                    return index
+                }
+            }
+        }
+
+        return settingData.currentIndex !== undefined ? settingData.currentIndex : 0
+    }
+
+    function setDropdownSettingValue(settingData, currentIndex) {
+        const options = settingData.options ? settingData.options : []
+
+        if (currentIndex < 0 || currentIndex >= options.length) {
+            return
+        }
+
+        setSettingValue(settingData, options[currentIndex].value)
+    }
+
+    function matchesCondition(conditionData) {
+        if (!conditionData
+                || conditionData.property === undefined
+                || conditionData.equals === undefined) {
+            return true
+        }
+
+        const currentValue = settingValue({ property: conditionData.property }, undefined)
+
+        return currentValue === undefined || currentValue === conditionData.equals
+    }
+
+    function isSettingVisible(settingData) {
+        return matchesCondition(settingData.visibleWhen)
+    }
+
+    function hasVisibleSettingBefore(items, startIndex) {
+        if (!items) {
+            return false
+        }
+
+        for (let settingIndex = 0; settingIndex < startIndex; settingIndex++) {
+            if (isSettingVisible(items[settingIndex])) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    function hasVisibleSettingAfter(items, startIndex) {
+        if (!items) {
+            return false
+        }
+
+        for (let settingIndex = startIndex + 1; settingIndex < items.length; settingIndex++) {
+            if (isSettingVisible(items[settingIndex])) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    function isSectionEnabled(sectionData) {
+        return matchesCondition(sectionData ? sectionData.enabledWhen : undefined)
+    }
+
+    function isSettingEnabled(settingData) {
+        return matchesCondition(settingData ? settingData.enabledWhen : undefined)
+    }
+
+    function sliderDisplayValue(settingData, sliderValue) {
+        if (useControlsSettingBridge(settingData)) {
+            return SVSettings[settingData.property]
+        }
+
+        return sliderValue
     }
 
     function formatValue(value) {
@@ -264,6 +360,7 @@ Item {
                 Layout.fillHeight: true
                 Flickable {
                     id: contentFlickable
+                    readonly property real scrollBarGutterWidth: Math.max(contentScrollBar.implicitWidth, ScreenTools.defaultFontPixelWidth)
 
                     anchors.fill: parent
                     anchors.bottomMargin: 4
@@ -282,7 +379,7 @@ Item {
                     Column {
                         id: sectionColumn
 
-                        width: Math.max(0, contentFlickable.width - contentScrollBar.width - ScreenTools.defaultFontPixelWidth)
+                        width: Math.max(0, contentFlickable.width - contentFlickable.scrollBarGutterWidth - ScreenTools.defaultFontPixelWidth)
                         spacing: root.sectionSpacing * 2
 
                         Item {
@@ -297,8 +394,13 @@ Item {
                             model: root.sectionModel
 
                             delegate: Column {
+                                readonly property var sectionData: modelData
+                                readonly property bool sectionEnabled: root.isSectionEnabled(sectionData)
+
                                 width: sectionColumn.width
                                 spacing: root.controlSpacing / 2
+                                enabled: sectionEnabled
+                                opacity: sectionEnabled ? 1 : 0.5
 
                                 Rectangle {
                                     width: parent.width
@@ -334,20 +436,26 @@ Item {
                                         Repeater {
                                             id: settingRepeater
 
-                                            model: modelData.items
+                                            model: sectionData.items
 
                                             delegate: ColumnLayout {
                                                 readonly property var settingData: modelData
+                                                readonly property bool settingEnabled: root.isSettingEnabled(settingData)
 
                                                 Layout.fillWidth: true
                                                 spacing: 0
+                                                visible: root.isSettingVisible(settingData)
+                                                enabled: settingEnabled
+                                                opacity: settingEnabled ? 1 : 0.5
 
                                                 Loader {
                                                     id: settingControlLoader
 
                                                     Layout.fillWidth: true
-                                                    Layout.topMargin: index > 0 ? root.settingRowVerticalPadding : 0
-                                                    Layout.bottomMargin: index < settingRepeater.count - 1
+                                                    Layout.topMargin: root.hasVisibleSettingBefore(sectionData.items, index)
+                                                        ? root.settingRowVerticalPadding
+                                                        : 0
+                                                    Layout.bottomMargin: root.hasVisibleSettingAfter(sectionData.items, index)
                                                         ? (settingDescription.visible
                                                             ? root.settingTextSpacing
                                                             : root.settingRowVerticalPadding)
@@ -388,7 +496,7 @@ Item {
                                                     //Layout.bottomMargin: root.controlSpacing / 2
                                                     height: 1
                                                     color: qgcPalette.windowShadeLight
-                                                    visible: index < settingRepeater.count - 1
+                                                    visible: root.hasVisibleSettingAfter(sectionData.items, index)
                                                 }
 
                                                 Component {
@@ -400,8 +508,10 @@ Item {
 
                                                         QGCCheckBox {
                                                             Layout.alignment: Qt.AlignTop
-                                                            checked: settingData.checked === true
+                                                            checked: root.settingValue(settingData, settingData.checked === true)
                                                             text: ''
+
+                                                            onClicked: root.setSettingValue(settingData, checked)
                                                         }
 
                                                         ColumnLayout {
@@ -440,7 +550,9 @@ Item {
                                                             Layout.alignment: Qt.AlignTop
                                                             Layout.preferredWidth: root.controlColumnWidth
                                                             model: root.optionLabels(settingData.options ? settingData.options : [])
-                                                            currentIndex: settingData.currentIndex !== undefined ? settingData.currentIndex : 0
+                                                            currentIndex: root.dropdownCurrentIndex(settingData)
+
+                                                            onActivated: root.setDropdownSettingValue(settingData, currentIndex)
                                                         }
                                                     }
                                                 }
@@ -469,17 +581,21 @@ Item {
 
                                                             QGCLabel {
                                                                 Layout.alignment: Qt.AlignTop
-                                                                text: root.formatValue(settingData.value)
+                                                                text: root.formatValue(root.sliderDisplayValue(settingData, sliderControl.value))
                                                                 color: qgcPalette.text
                                                             }
                                                         }
 
                                                         QGCSlider {
+                                                            id: sliderControl
+
                                                             Layout.fillWidth: true
                                                             from: settingData.min !== undefined ? settingData.min : 0
                                                             to: settingData.max !== undefined ? settingData.max : 100
                                                             stepSize: settingData.step !== undefined ? settingData.step : 1
-                                                            value: settingData.value !== undefined ? settingData.value : from
+                                                            value: root.settingValue(settingData, settingData.value !== undefined ? settingData.value : from)
+
+                                                            onMoved: root.setSettingValue(settingData, value)
                                                         }
 
                                                         RowLayout {
