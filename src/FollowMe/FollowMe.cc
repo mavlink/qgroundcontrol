@@ -12,6 +12,7 @@
 #include "FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "PositionManager.h"
+#include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
@@ -50,6 +51,7 @@ void FollowMe::init()
     static bool once = false;
     if (!once) {
         (void) connect(_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
+        (void) connect(QGCPositionManager::instance(), &QGCPositionManager::positionInfoUpdated, this, &FollowMe::_positionUpdated);
         (void) connect(SettingsManager::instance()->appSettings()->followTarget(), &Fact::rawValueChanged, this, &FollowMe::_settingsChanged);
 
         _settingsChanged(SettingsManager::instance()->appSettings()->followTarget()->rawValue());
@@ -100,6 +102,9 @@ void FollowMe::_sendGCSMotionReport()
     const QGeoCoordinate gcsCoordinate = geoPositionInfo.coordinate();
 
     if (!geoPositionInfo.isValid()) {
+        return;
+    }
+    if ((_lastPositionUpdateMSecs <= 0) || ((qgcApp()->msecsSinceBoot() - _lastPositionUpdateMSecs) > kPositionStaleTimeoutMSecs)) {
         return;
     }
 
@@ -172,6 +177,13 @@ void FollowMe::_sendGCSMotionReport()
             qCDebug(FollowMeLog) << "sendGCSMotionReport latInt:lonInt:altMetersAMSL" << motionReport.lat_int << motionReport.lon_int << motionReport.altMetersAMSL;
             vehicle->firmwarePlugin()->sendGCSMotionReport(vehicle, motionReport, estimationCapabilities);
         }
+    }
+}
+
+void FollowMe::_positionUpdated()
+{
+    if (QGCPositionManager::instance()->geoPositionInfo().isValid()) {
+        _lastPositionUpdateMSecs = qgcApp()->msecsSinceBoot();
     }
 }
 

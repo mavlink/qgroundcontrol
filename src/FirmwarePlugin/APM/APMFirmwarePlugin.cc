@@ -1191,25 +1191,26 @@ void APMFirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GC
         return;
     }
 
-    const mavlink_global_position_int_t globalPositionInt = {
-        static_cast<uint32_t>(qgcApp()->msecsSinceBoot()),                  /*< [ms] Timestamp (time since system boot).*/
-        motionReport.lat_int,                                               /*< [degE7] Latitude, expressed*/
-        motionReport.lon_int,                                               /*< [degE7] Longitude, expressed*/
-        static_cast<int32_t>(vehicle->homePosition().altitude() * 1000),    /*< [mm] Altitude (MSL).*/
-        static_cast<int32_t>(0),                                            /*< [mm] Altitude above home*/
-        static_cast<int16_t>(motionReport.vxMetersPerSec * 100),            /*< [cm/s] Ground X Speed (Latitude, positive north)*/
-        static_cast<int16_t>(motionReport.vyMetersPerSec * 100),            /*< [cm/s] Ground Y Speed (Longitude, positive east)*/
-        static_cast<int16_t>(motionReport.vzMetersPerSec * 100),            /*< [cm/s] Ground Z Speed (Altitude, positive down)*/
-        static_cast<uint16_t>(motionReport.headingDegrees * 100.0)          /*< [cdeg] Vehicle heading (yaw angle)*/
-    };
+    mavlink_follow_target_t followTarget{};
+    followTarget.timestamp = qgcApp()->msecsSinceBoot();
+    followTarget.est_capabilities = estimationCapabilities;
+    followTarget.lat = motionReport.lat_int;
+    followTarget.lon = motionReport.lon_int;
+    followTarget.alt = static_cast<float>(motionReport.altMetersAMSL);
+    followTarget.vel[0] = static_cast<float>(motionReport.vxMetersPerSec);
+    followTarget.vel[1] = static_cast<float>(motionReport.vyMetersPerSec);
+    followTarget.vel[2] = static_cast<float>(motionReport.vzMetersPerSec);
+    followTarget.position_cov[0] = static_cast<float>(motionReport.pos_std_dev[0]);
+    followTarget.position_cov[1] = static_cast<float>(motionReport.pos_std_dev[1]);
+    followTarget.position_cov[2] = static_cast<float>(motionReport.pos_std_dev[2]);
 
     mavlink_message_t message{};
-    (void) mavlink_msg_global_position_int_encode_chan(
+    (void) mavlink_msg_follow_target_encode_chan(
         static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
         static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
         sharedLink->mavlinkChannel(),
         &message,
-        &globalPositionInt
+        &followTarget
     );
     (void) vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }

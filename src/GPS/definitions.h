@@ -71,7 +71,7 @@ Q_DECLARE_LOGGING_CATEGORY(GPSDriversLog)
 #define M_PI_2_F 0.63661977f
 
 #ifdef _WIN32
-#if (_MSC_VER < 1900)
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
 struct timespec
 {
     time_t tv_sec;

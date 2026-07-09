@@ -330,6 +330,10 @@ if(WIN32)
         list(APPEND QGC_INSTALLER_SOURCE_WIN_FILES "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}")
     endforeach()
 
+    if(MINGW)
+        list(REMOVE_ITEM QGC_INSTALLER_SOURCE_WIN_FILES "${QGC_INSTALLER_SOURCE_WIN}/QGroundControl.rc")
+    endif()
+
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_INSTALLER_SOURCE_WIN_FILES})
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES

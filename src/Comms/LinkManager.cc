@@ -852,7 +852,14 @@ void LinkManager::_addSerialAutoConnectLink()
                 QSerialPort* newPort = new QSerialPort(portInfo, this);
                 _nmeaBaud = _autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt();
                 newPort->setBaudRate(static_cast<qint32>(_nmeaBaud));
+                newPort->setDataBits(QSerialPort::Data8);
+                newPort->setParity(QSerialPort::NoParity);
+                newPort->setStopBits(QSerialPort::OneStop);
+                newPort->setFlowControl(QSerialPort::NoFlowControl);
                 qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
+                if (!newPort->open(QIODevice::ReadOnly)) {
+                    qCWarning(LinkManagerLog) << "Failed to open nmea port" << _nmeaDeviceName << newPort->errorString();
+                }
                 // This will stop polling old device if previously set
                 QGCPositionManager::instance()->setNmeaSourceDevice(newPort);
                 if (_nmeaPort) {

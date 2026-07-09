@@ -53,6 +53,7 @@ public:
 
 private slots:
     void _sendGCSMotionReport();
+    void _positionUpdated();
     void _settingsChanged(QVariant value);
     void _vehicleAdded(Vehicle *vehicle);
     void _vehicleRemoved(Vehicle *vehicle);
@@ -71,6 +72,8 @@ private:
 
     QTimer *_gcsMotionReportTimer = nullptr;
     FollowMode _currentMode = MODE_NEVER;
+    qint64 _lastPositionUpdateMSecs = 0;
 
-    static constexpr int kMotionUpdateInterval = 250;
+    static constexpr int kMotionUpdateInterval = 200;
+    static constexpr int kPositionStaleTimeoutMSecs = 3000;
 };
