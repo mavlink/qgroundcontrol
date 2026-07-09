@@ -222,6 +222,13 @@ repos:
         exclude: ^test/
         pass_filenames: true
 
+      - id: check-categorized-logging
+        name: Check for category function passed to uncategorized logging macro
+        entry: bash -c 'if grep -EnH "(^|[^A-Za-z0-9_])q(Debug|Info|Warning|Critical)\([[:space:]]*[A-Za-z_]+Log[[:space:]]*\)" "$@" 2>/dev/null; then echo "::error::Category function passed to qDebug/qInfo/qWarning/qCritical. Use the qCDebug/qCInfo/qCWarning/qCCritical macros instead." >&2; exit 1; fi' --
+        language: system
+        types: [c++]
+        pass_filenames: true
+
       - id: check-no-qtest-ignore-message
         name: Check for QTest::ignoreMessage in test code
         entry: bash -c 'if grep -nH "QTest::ignoreMessage" "$@" 2>/dev/null; then echo "::error::QTest::ignoreMessage found. Use expectLogMessage+verifyExpectedLogMessage or ignoreLogMessage instead." >&2; exit 1; fi' --
