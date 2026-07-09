@@ -1656,22 +1656,22 @@ bool ParameterManager::_parseParamFile(const QString& filename)
         withdefault = (flags & 0x01) == 0x01;
         in >> byte;
         if (in.status() != QDataStream::Ok) {
-            qCritical(ParameterManagerLog) << "_parseParamFile: Error: Unexpected EOF while reading flags";
+            qCCritical(ParameterManagerLog) << "_parseParamFile: Error: Unexpected EOF while reading flags";
             goto Error;
         }
         name_len = ((byte >> 4) & 0x0F) + 1;
         common_len = byte & 0x0F;
         if ((name_len + common_len) > 16) {
-            qCritical(ParameterManagerLog) << "_parseParamFile: Error: common_len + name_len > 16"
-                                           << "name_len" << name_len
-                                           << "common_len" << common_len;
+            qCCritical(ParameterManagerLog) << "_parseParamFile: Error: common_len + name_len > 16"
+                                            << "name_len" << name_len
+                                            << "common_len" << common_len;
             goto Error;
         }
         no_read = in.readRawData(&name_buffer[common_len], static_cast<int>(name_len));
         if (no_read != name_len) {
-            qCritical(ParameterManagerLog) << "_parseParamFile: Error: Unexpected EOF while reading parameterName"
-                                           << "Expected:" << name_len
-                                           << "Actual:" << no_read;
+            qCCritical(ParameterManagerLog) << "_parseParamFile: Error: Unexpected EOF while reading parameterName"
+                                            << "Expected:" << name_len
+                                            << "Actual:" << no_read;
             goto Error;
         }
         name_buffer[common_len + name_len] = '\0';
