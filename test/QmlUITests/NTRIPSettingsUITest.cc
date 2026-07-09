@@ -39,8 +39,9 @@ bool NTRIPSettingsUITest::_navigateToNtripPage()
     QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
     QTest::qWait(_pageDelay);
 
-    if (!findVisibleItem(_rootItem, QStringLiteral("settingsPage_NTRIP/RTK"))) {
-        QTest::qFail("NTRIP settings page wrapper not found: settingsPage_NTRIP/RTK", __FILE__, __LINE__);
+    // Page root objectNames are sanitized to [A-Za-z0-9_], so "NTRIP/RTK" becomes "NTRIPRTK"
+    if (!findVisibleItem(_rootItem, QStringLiteral("settingsPage_NTRIPRTK"))) {
+        QTest::qFail("NTRIP settings page wrapper not found: settingsPage_NTRIPRTK", __FILE__, __LINE__);
         return false;
     }
     return true;

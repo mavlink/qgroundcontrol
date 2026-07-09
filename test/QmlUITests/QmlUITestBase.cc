@@ -119,7 +119,7 @@ void QmlUITestBase::startUI()
     // are external-server reachability warnings, never something a UI smoke test
     // should assert on, so ignore them to keep the full run deterministic.
     ignoreLogMessage("QtLocationPlugin.QGeoTiledMapReplyQGC", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Error transferring")));
+                     QRegularExpression(QStringLiteral("Error transferring|Operation timed out")));
     ignoreLogMessage("Terrain.TerrainTileManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Elevation tile fetching returned error")));
 
