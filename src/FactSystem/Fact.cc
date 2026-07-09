@@ -690,6 +690,16 @@ int Fact::decimalPlaces() const
     }
 }
 
+int Fact::maxStringLength() const
+{
+    if (_metaData) {
+        return _metaData->maxStringLength();
+    } else {
+        qCWarning(FactLog) << kMissingMetadata << name();
+        return 0;
+    }
+}
+
 QString Fact::category() const
 {
     if (_metaData) {

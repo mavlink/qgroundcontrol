@@ -23,6 +23,7 @@ class Fact : public QObject
     Q_PROPERTY(QVariantList bitmaskValues           READ bitmaskValues                                          NOTIFY bitmaskValuesChanged)
     Q_PROPERTY(QStringList  selectedBitmaskStrings  READ selectedBitmaskStrings                                 NOTIFY valueChanged)
     Q_PROPERTY(int          decimalPlaces           READ decimalPlaces                                          CONSTANT)
+    Q_PROPERTY(int          maxStringLength         READ maxStringLength                                        CONSTANT)
     Q_PROPERTY(QVariant     defaultValue            READ cookedDefaultValue                                     CONSTANT)
     Q_PROPERTY(QString      defaultValueString      READ cookedDefaultValueString                               CONSTANT)
     Q_PROPERTY(bool         defaultValueAvailable   READ defaultValueAvailable                                  CONSTANT)
@@ -89,6 +90,7 @@ public:
     }
     int componentId() const { return _componentId; }
     int decimalPlaces() const;
+    int maxStringLength() const;
     QVariant rawDefaultValue() const;
     QVariant cookedDefaultValue() const;
     bool defaultValueAvailable() const;

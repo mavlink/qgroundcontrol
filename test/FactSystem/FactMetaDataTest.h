@@ -28,4 +28,9 @@ private slots:
     void _builtInTranslatorCentiDegrees_test();
     void _builtInTranslatorNorm_test();
     void _setMinMax_test();
+    void _maxStringLength_test();
+    void _maxStringLengthNegativeRejected_test();
+    void _maxStringLengthValidation_test();
+    void _commentKeyAccepted_test();
+    void _unknownKeyRejected_test();
 };

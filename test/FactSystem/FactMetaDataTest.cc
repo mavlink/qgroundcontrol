@@ -1,5 +1,6 @@
 #include "FactMetaDataTest.h"
 
+#include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QtNumeric>
 
@@ -318,6 +319,109 @@ void FactMetaDataTest::_setMinMax_test()
     QCOMPARE(meta.rawMax().toInt(), 10);
     QVERIFY(!meta.minIsDefaultForType());
     QVERIFY(!meta.maxIsDefaultForType());
+}
+
+void FactMetaDataTest::_maxStringLength_test()
+{
+    // Default: no limit
+    FactMetaData meta(FactMetaData::valueTypeString);
+    QCOMPARE(meta.maxStringLength(), 0);
+
+    // Parsed from JSON
+    QJsonObject json;
+    json.insert("name", "testString");
+    json.insert("type", "string");
+    json.insert("maxStringLength", 20);
+
+    FactMetaData* parsedMeta = FactMetaData::createFromJsonObject(json, {}, nullptr);
+    QCOMPARE(parsedMeta->maxStringLength(), 20);
+    delete parsedMeta;
+
+    // Copies must preserve the limit
+    meta.setMaxStringLength(16);
+    FactMetaData copy(meta);
+    QCOMPARE(copy.maxStringLength(), 16);
+}
+
+void FactMetaDataTest::_maxStringLengthNegativeRejected_test()
+{
+    // A negative maxStringLength can only be an authoring mistake; it must warn (which the
+    // resource audit turns into a CI failure) and fall back to 0 (no limit) instead of
+    // silently disabling length validation
+    QJsonObject json;
+    json.insert("name", "testString");
+    json.insert("type", "string");
+    json.insert("maxStringLength", -5);
+
+    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("Invalid maxStringLength"));
+    FactMetaData* parsedMeta = FactMetaData::createFromJsonObject(json, {}, nullptr);
+    verifyExpectedLogMessage();
+
+    QCOMPARE(parsedMeta->maxStringLength(), 0);
+    delete parsedMeta;
+
+    // The guard lives in the setter, so direct C++ callers are covered too
+    FactMetaData meta(FactMetaData::valueTypeString);
+    meta.setMaxStringLength(10);
+    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("Invalid maxStringLength"));
+    meta.setMaxStringLength(-1);
+    verifyExpectedLogMessage();
+    QCOMPARE(meta.maxStringLength(), 0);
+}
+
+void FactMetaDataTest::_maxStringLengthValidation_test()
+{
+    FactMetaData meta(FactMetaData::valueTypeString);
+    meta.setMaxStringLength(5);
+
+    QVariant typedValue;
+    QString errorString;
+
+    // Within the limit
+    QVERIFY(meta.convertAndValidateCooked(QStringLiteral("12345"), false /* convertOnly */, typedValue, errorString));
+    QVERIFY(errorString.isEmpty());
+
+    // Over the limit: rejected with an error
+    QVERIFY(!meta.convertAndValidateCooked(QStringLiteral("123456"), false /* convertOnly */, typedValue, errorString));
+    QVERIFY(!errorString.isEmpty());
+
+    // convertOnly skips validation
+    QVERIFY(meta.convertAndValidateCooked(QStringLiteral("123456"), true /* convertOnly */, typedValue, errorString));
+
+    // No limit set: any length accepted
+    FactMetaData unlimitedMeta(FactMetaData::valueTypeString);
+    QVERIFY(unlimitedMeta.convertAndValidateCooked(QString(100, u'x'), false /* convertOnly */, typedValue, errorString));
+}
+
+void FactMetaDataTest::_commentKeyAccepted_test()
+{
+    // "comment" is a documentation-only key: it must parse cleanly and have no effect
+    QJsonObject json;
+    json.insert("name", "testFact");
+    json.insert("type", "uint8");
+    json.insert("comment", "Values must stay in sync with some MAVLink enum");
+
+    FactMetaData* parsedMeta = FactMetaData::createFromJsonObject(json, {}, nullptr);
+    QCOMPARE(parsedMeta->name(), QStringLiteral("testFact"));
+    QCOMPARE(parsedMeta->type(), FactMetaData::valueTypeUint8);
+    delete parsedMeta;
+}
+
+void FactMetaDataTest::_unknownKeyRejected_test()
+{
+    // Unknown keys (e.g. typos like "enumStings") must be rejected loudly and fall back
+    // to default uint32 metadata
+    QJsonObject json;
+    json.insert("name", "testFact");
+    json.insert("type", "string");
+    json.insert("bogusKey", "anything");
+
+    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("Unknown key: bogusKey"));
+    FactMetaData* parsedMeta = FactMetaData::createFromJsonObject(json, {}, nullptr);
+    verifyExpectedLogMessage();
+
+    QCOMPARE(parsedMeta->type(), FactMetaData::valueTypeUint32);
+    delete parsedMeta;
 }
 
 UT_REGISTER_TEST(FactMetaDataTest, TestLabel::Unit)
