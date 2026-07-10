@@ -104,6 +104,8 @@ Popup {
         }
     }
 
+    onButtonsChanged: setupDialogButtons(buttons)
+
     function _accept() {
         if (_acceptAllowed && (bypassNavigationCheck || mainWindow.allowViewSwitch(_previousValidationErrorCount))) {
             accepted()
@@ -144,9 +146,6 @@ Popup {
             acceptButton.visible = true
         } else if (buttons & Dialog.Apply) {
             acceptButton.text = qsTr("Apply")
-            acceptButton.visible = true
-        } else if (buttons & Dialog.Open) {
-            acceptButton.text = qsTr("Open")
             acceptButton.visible = true
         } else if (buttons & Dialog.SaveAll) {
             acceptButton.text = qsTr("Save All")
