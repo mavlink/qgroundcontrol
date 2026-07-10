@@ -74,7 +74,18 @@ Item {
         border.width: 0
         radius: width / 2
         opacity: 0.3
-        //visible: SVSettings.joystickDeadzone !== 0.0
+        visible: false
+    }
+
+    Rectangle {
+        id: centerPoint
+        width: SVUnits.width
+        height: width
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+        radius: width / 2
+        color: root.arrowColor
+        opacity: 0.3
     }
 
     Repeater {

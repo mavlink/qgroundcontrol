@@ -107,5 +107,13 @@ Item {
         visible: SVState.record && SVSettings.recordInformationBox
     } 
 
+    SVFlyViewStats {
+        id: statsBox
+        anchors.right: parent.right
+        anchors.top: parent.verticalCenter
+        open: true
+
+    }
+
     
 }

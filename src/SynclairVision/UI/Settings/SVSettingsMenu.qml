@@ -499,33 +499,34 @@ Item {
                                                     visible: root.hasVisibleSettingAfter(sectionData.items, index)
                                                 }
 
-                                                Component {
-                                                    id: checkboxComponent
+                                                 Component {
+                                                     id: checkboxComponent
+ 
+                                                     RowLayout {
+                                                         width: settingControlLoader.width
+                                                         spacing: root.settingColumnSpacing
+ 
+                                                         ColumnLayout {
+                                                             Layout.fillWidth: true
+                                                             Layout.preferredWidth: root.labelColumnWidth
+                                                             spacing: 0
+ 
+                                                             QGCLabel {
+                                                                 Layout.fillWidth: true
+                                                                 text: settingData.label
+                                                                 wrapMode: Text.WordWrap
+                                                             }
+                                                         }
 
-                                                    RowLayout {
-                                                        width: settingControlLoader.width
-                                                        spacing: root.settingColumnSpacing
+                                                         QGCCheckBoxSlider {
+                                                             Layout.alignment: Qt.AlignTop | Qt.AlignRight
+                                                             checked: root.settingValue(settingData, settingData.checked === true)
+                                                             text: ''
 
-                                                        QGCCheckBox {
-                                                            Layout.alignment: Qt.AlignTop
-                                                            checked: root.settingValue(settingData, settingData.checked === true)
-                                                            text: ''
-
-                                                            onClicked: root.setSettingValue(settingData, checked)
-                                                        }
-
-                                                        ColumnLayout {
-                                                            Layout.fillWidth: true
-                                                            spacing: 0
-
-                                                            QGCLabel {
-                                                                Layout.fillWidth: true
-                                                                text: settingData.label
-                                                                wrapMode: Text.WordWrap
-                                                            }
-                                                        }
-                                                    }
-                                                }
+                                                             onClicked: root.setSettingValue(settingData, checked)
+                                                         }
+                                                     }
+                                                 }
 
                                                 Component {
                                                     id: dropdownComponent

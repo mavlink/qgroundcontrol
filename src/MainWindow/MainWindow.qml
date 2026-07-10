@@ -221,7 +221,8 @@ ApplicationWindow {
     //  Returns true if it is OK to close
     readonly property int _skipUnsavedMissionCheckMask: 0x01
     readonly property int _skipPendingParameterWritesCheckMask: 0x02
-    readonly property int _skipActiveConnectionsCheckMask: 0x04
+    readonly property int _skipActiveRecordingCheckMask: 0x04
+    readonly property int _skipActiveConnectionsCheckMask: 0x08
     property int _closeChecksToSkip: 0
     property bool _reentrantCloseGuard: false
     function performCloseChecks() {
@@ -229,6 +230,9 @@ ApplicationWindow {
             return false
         }
         if (!(_closeChecksToSkip & _skipPendingParameterWritesCheckMask) && !checkForPendingParameterWrites()) {
+            return false
+        }
+        if (!(_closeChecksToSkip & _skipActiveRecordingCheckMask) && !checkForActiveRecording()) {
             return false
         }
         if (!(_closeChecksToSkip & _skipActiveConnectionsCheckMask) && !checkForActiveConnections()) {
@@ -269,6 +273,25 @@ ApplicationWindow {
             }
         }
         return true
+    }
+
+    function checkForActiveRecording() {
+        if (SVState.record) {
+            let accepted = false
+            _reentrantCloseGuard = true
+            _showMessageDialogWorker(mainWindow, qsTr("Active Recording"),
+                qsTr("SynclairVisionQGC is currently recording. Are you sure that you want to exit?"),
+                Dialog.Yes | Dialog.No,
+                function() { accepted = true
+                            SVState.record = false
+                            _closeChecksToSkip |= _skipActiveRecordingCheckMask
+                             performCloseChecks() },
+                function() { if (!accepted) _reentrantCloseGuard = false },
+                true /* bypassNavigationCheck */)
+            return false
+        } else {
+            return true
+        }
     }
 
     function checkForActiveConnections() {

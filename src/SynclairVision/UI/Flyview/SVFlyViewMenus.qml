@@ -101,7 +101,10 @@ Item {
 
         model: SVFlyViewMenusList.getLayoutModel()
 
-        onItemSelected: (id) => root.layoutSelected(id)
+        onItemSelected: (id) => {
+            SVState.cameraSelected = -1
+            root.layoutSelected(id)
+        }
     }
 
     SVMenuStrip {
