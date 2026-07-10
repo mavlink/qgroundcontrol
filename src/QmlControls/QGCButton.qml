@@ -29,6 +29,7 @@ Button {
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
+    property alias verticalAlignment:   text.verticalAlignment
     property alias backgroundColor:     backRect.color
     property alias textColor:           text.color
 
@@ -62,7 +63,7 @@ Button {
 
             QGCColoredImage {
                 id:                     icon
-                Layout.alignment:       Qt.AlignHCenter
+                Layout.alignment:       Qt.AlignHCenter | Qt.AlignVCenter
                 source:                 control.iconSource
                 height:                 text.height
                 width:                  height
@@ -74,12 +75,13 @@ Button {
 
             QGCLabel {
                 id:                     text
-                Layout.alignment:       Qt.AlignHCenter
+                Layout.alignment:       Qt.AlignHCenter | Qt.AlignVCenter
                 text:                   control.text
                 font.pointSize:         control.pointSize
                 font.family:            control.font.family
                 font.weight:            fontWeight
                 color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
+                verticalAlignment:      Text.AlignVCenter
                 visible:                control.text !== "" 
             }
     }

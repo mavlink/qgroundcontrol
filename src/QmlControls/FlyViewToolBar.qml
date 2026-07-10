@@ -32,6 +32,7 @@ Rectangle {
     property color  _mainStatusBGColor: qgcPal.brandingPurple
     property real   _barMargin:         ScreenTools.defaultFontPixelWidth * 0.72
     property real   _segmentPadding:    ScreenTools.defaultFontPixelWidth * 0.75
+    property real   _topControlHeight:  _root.height * 0.74
     property var    _batterySettings:   QGroundControl.settingsManager.batteryIndicatorSettings
     property int    _batteryDisplayMode: _batterySettings ? _batterySettings.valueDisplay.rawValue : 0
     property bool   _showBatteryTopIndicator: _activeVehicle && _activeVehicle.batteries && _activeVehicle.batteries.count > 0
@@ -245,7 +246,7 @@ Rectangle {
         property string iconSource: ""
         property string tooltipText: ""
         property color  iconColor: qgcPal.text
-        property real   slotSize:  _root.height * 0.74
+        property real   slotSize:  _root._topControlHeight
         signal clicked()
 
         implicitWidth:          slotSize
@@ -504,7 +505,8 @@ Rectangle {
         QGCButton {
             id:                     disconnectButton
             Layout.alignment:       Qt.AlignVCenter
-            Layout.preferredHeight: Math.max(ScreenTools.defaultFontPixelHeight * 1.6, _root.height * 0.52)
+            Layout.preferredHeight: _root._topControlHeight
+            heightFactor:           0
             text:                   qsTr("Disconnect")
             onClicked:              _activeVehicle.closeVehicle()
             visible:                _activeVehicle && _communicationLost
