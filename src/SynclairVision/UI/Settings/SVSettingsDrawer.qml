@@ -110,8 +110,8 @@ Item {
                         id: settingsResizeHandle
                         anchors.left: parent.left
                         anchors.bottom: parent.bottom
-                        width: SVUnits.objectWidth / 2
-                        height: SVUnits.objectWidth / 2
+                        width: SVUnits.objectWidth / 1.5
+                        height: SVUnits.objectWidth / 1.5
                         readonly property color handleColor: qgcPalette.windowShadeLight
 
                         Shape {
@@ -129,16 +129,12 @@ Item {
                             }
 
                             ShapePath {
-                                strokeWidth: SVUnits.lineWidth
-                                strokeColor: settingsResizeHandle.handleColor
+                                strokeWidth: 1
+                                strokeColor: qgcPalette.text
                                 fillColor: "transparent"
-                                capStyle: ShapePath.RoundCap
-                                startX: settingsResizeHandle.width * 0.25
-                                startY: settingsResizeHandle.height
-                                PathLine {
-                                    x: settingsResizeHandle.width
-                                    y: settingsResizeHandle.height * 0.25
-                                }
+                                startX: 0
+                                startY: 0
+                                PathLine { x: settingsResizeHandle.width; y: settingsResizeHandle.height }
                             }
                         }
 

@@ -20,6 +20,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Flyview/SVFlyViewMenusList.js
         Flyview/SVFlyViewWidgetLayer.qml
         Flyview/SVRecordInfoBox.qml
+        Flyview/SVFlyViewStats.qml
 
         Camera/SVCameraLayer.qml
         Camera/SVCameraWidgetLayer.qml
