@@ -93,6 +93,7 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         fact: root._settings.networkVideoSecretFile
         selectFolder: false
+        showClearButton: true
         visible: root._usesAuthentication && root._settings.networkVideoCredentialFileSupported
     }
 
@@ -106,6 +107,7 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         fact: root._settings.networkVideoCaCertificateFile
         selectFolder: false
+        showClearButton: true
         visible: !ScreenTools.isMobile
     }
 

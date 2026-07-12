@@ -11,6 +11,12 @@
 namespace GStreamer {
 bool isValidRtspUri(const gchar* uri_str);
 
+/// Pipeline graph detail mask safe for persisted diagnostics. Element property
+/// values are intentionally excluded because network source credentials can be
+/// stored in non-default GStreamer properties.
+inline constexpr GstDebugGraphDetails kSafePipelineGraphDetails = static_cast<GstDebugGraphDetails>(
+    GST_DEBUG_GRAPH_SHOW_MEDIA_TYPE | GST_DEBUG_GRAPH_SHOW_CAPS_DETAILS | GST_DEBUG_GRAPH_SHOW_STATES);
+
 /// Dump @p pipeline's graph as a rotating .dot under CacheLocation/qgc-pipeline-dot/ for field reports.
 /// Returns empty (no-op) when GST_DEBUG_DUMP_DOT_DIR is set or on I/O failure.
 QString writePipelineDot(GstElement* pipeline, const char* tag);

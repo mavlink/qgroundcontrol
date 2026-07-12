@@ -10,6 +10,24 @@ endif()
 set(QGCGStreamer_FIND_COMPONENTS ${_qgc_gst_components})
 include(GStreamer/Orchestrator)
 
+# Generate the runtime verifier from PluginPolicy.cmake so installation and
+# startup checks cannot drift as source capabilities change.
+gstreamer_runtime_required_plugins(_qgc_gst_runtime_required_plugins)
+list(LENGTH _qgc_gst_runtime_required_plugins _qgc_gst_runtime_required_plugin_count)
+set(_qgc_gst_runtime_required_plugin_entries "")
+foreach(_plugin IN LISTS _qgc_gst_runtime_required_plugins)
+    string(APPEND _qgc_gst_runtime_required_plugin_entries "    \"${_plugin}\",\n")
+endforeach()
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/GStreamerPluginPolicy.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/GStreamerPluginPolicy.h"
+    @ONLY
+)
+unset(_plugin)
+unset(_qgc_gst_runtime_required_plugin_entries)
+unset(_qgc_gst_runtime_required_plugin_count)
+unset(_qgc_gst_runtime_required_plugins)
+
 # QGCGStreamer: one static lib for the self-contained HwBuffers + gstqgc leaf layer (no app deps).
 # PUBLIC usage reqs flow to the app via the link below; facade sources stay app-side (need app headers).
 qt_add_library(QGCGStreamer STATIC)
@@ -76,6 +94,10 @@ add_subdirectory(HwBuffers)
 add_subdirectory(gstqgc)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGStreamer)
+if(TARGET GStreamer::gio)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::gio)
+endif()
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 
 # GStreamer:: facade: app-facing API + source/receiver glue. App-coupled, so it stays on the app
 # target and inherits QGCGStreamer's PUBLIC deps/defs/includes via the link above.
@@ -89,11 +111,14 @@ target_sources(${CMAKE_PROJECT_NAME}
         GStreamerHelpers.h
         GStreamerLogging.cc
         GStreamerLogging.h
+        GStreamerPluginPolicy.h.in
         GstScoped.h
         GstSourceFactory.cc
         GstSourceFactory.h
         GstVideoReceiver.cc
         GstVideoReceiver.h
+        QGCJpegStreamGuard.cc
+        QGCJpegStreamGuard.h
         QGCQVideoSinkController.cc
         QGCQVideoSinkController.h
 )

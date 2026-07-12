@@ -372,6 +372,14 @@ void VideoManager::startRecording(const QString &videoFile)
         return;
     }
 
+    const QString source = _videoSettings->videoSource()->rawValue().toString();
+    if (!_isRecordingFormatSupported(source, fileFormat)) {
+        QGC::showAppMessage(
+            tr("HTTP MJPEG and WebSocket JPEG streams can be recorded as MKV or MOV. Select one of those formats in "
+               "Video settings before recording."));
+        return;
+    }
+
     _cleanupOldVideos();
 
     const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
@@ -394,6 +402,13 @@ void VideoManager::startRecording(const QString &videoFile)
         const QString videoFileName = videoFileNameTemplate.arg(streamName);
         receiver->startRecording(videoFileName, fileFormat);
     }
+}
+
+bool VideoManager::_isRecordingFormatSupported(const QString &source, int fileFormat)
+{
+    const bool jpegNetworkSource = source == VideoSettings::videoSourceHTTPMJPEG ||
+                                   source == VideoSettings::videoSourceWebSocketJPEG;
+    return !jpegNetworkSource || fileFormat != VideoReceiver::FILE_FORMAT_MP4;
 }
 
 void VideoManager::stopRecording()
@@ -962,13 +977,15 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
     });
 
     (void) connect(receiver, &VideoReceiver::onStopComplete, this, [this, receiver](VideoReceiver::STATUS status) {
-        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name() << receiver->uri()  << ", status:" << status;
+        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name()
+                                 << QGCNetworkHelper::redactedUrlForLogging(receiver->uri()) << ", status:" << status;
         receiver->setStarted(false);
         if (status == VideoReceiver::STATUS_INVALID_URL) {
             qCDebug(VideoManagerLog) << "Invalid video URL. Not restarting";
         } else {
             QTimer::singleShot(1000, receiver, [this, receiver]() {
-                qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name() << receiver->uri();
+                qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name()
+                                         << QGCNetworkHelper::redactedUrlForLogging(receiver->uri());
                 _startReceiver(receiver);
             });
         }

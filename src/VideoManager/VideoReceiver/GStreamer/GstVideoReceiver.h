@@ -52,6 +52,8 @@ class GstVideoReceiver : public VideoReceiver
     Q_PROPERTY(double  qosProportion     READ qosProportion     NOTIFY decoderStatsChanged)
     Q_PROPERTY(int     qosQuality        READ qosQuality        NOTIFY decoderStatsChanged)
 
+    friend class GStreamerTest;
+
 public:
     explicit GstVideoReceiver(QObject *parent = nullptr);
     ~GstVideoReceiver();
@@ -87,6 +89,9 @@ private slots:
 private:
     GstElement *_makeDecoder();
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
+    QString _uriForLogging() const;
+    static bool _isJpegNetworkSource(const QString &uri);
+    static bool _mustRedactPipelineDiagnostics(const QString &uri);
 
     void _onNewSourcePad(GstPad *pad);
     void _onNewDecoderPad(GstPad *pad);
@@ -132,8 +137,10 @@ private:
     GstElement *_tee = nullptr;
     GstElement *_videoSink = nullptr;
     GstVideoWorker *_worker = nullptr;
+    gulong _busHandlerId = 0;
     std::atomic<int> _reconnectAttempts = 0;     ///< Written on the streaming thread (_noteTeeFrame) and GUI thread (reconnect lambda); atomic.
     std::atomic<quint64> _reconnectEpoch = 0;    ///< Bumped on every stop() — pending singleShot lambdas check this before firing, replacing an explicit cancel/pending-flag pair.
+    std::atomic<quint64> _pipelineGeneration = 0; ///< Invalidates callbacks and queued work from a retired pipeline.
     std::atomic<quint64> _sourceFrameCount =
         0;  ///< Tee-probe frame tally (streaming thread); drives the source-side flow heartbeat log.
     gulong _teeProbeId = 0;
@@ -142,6 +149,7 @@ private:
     GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
     gulong _keyframeWatchId = 0;
     bool _recordingStopRequested = false;
+    bool _activePipelineIsJpegNetworkSource = false;
 
     mutable QMutex _decoderNameMutex;  // QString refcount isn't thread-safe across reader/writer threads
     QString _decoderName;

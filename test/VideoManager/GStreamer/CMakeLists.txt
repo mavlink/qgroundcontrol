@@ -4,6 +4,7 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         GStreamerTest.cc
         GStreamerTest.h
+        NetworkVideoTlsFixture.h
         HwBuffers/common/GStreamerHwBuffersCommonTest.cc
         HwBuffers/d3d/GStreamerD3DTest.cc
         HwBuffers/dmabuf/GStreamerDmaBufTest.cc

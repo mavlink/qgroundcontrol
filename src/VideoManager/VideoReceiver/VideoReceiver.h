@@ -65,18 +65,38 @@ public:
     VideoSinkHandle sink() const { return _sink; }
     QQuickItem *widget() { return _widget; }
     QString name() const { return _name; }
-    QString uri() const { return _uri; }
+    QString uri() const
+    {
+        const QMutexLocker locker(&_uriMutex);
+        return _uri;
+    }
     bool started() const { return _started; }
     bool lowLatency() const { return _lowLatency; }
     int rtpJitterLatencyMs() const { return _rtpJitterLatencyMs; }
     bool autoReconnect() const { return _autoReconnect; }
     QGCVideoStreamInfo *videoStreamInfo() { return _videoStreamInfo; }
-    QString recordingOutput() const { return _recordingOutput; }
+    QString recordingOutput() const
+    {
+        const QMutexLocker locker(&_recordingOutputMutex);
+        return _recordingOutput;
+    }
 
     virtual void setSink(VideoSinkHandle sink) { if (sink != _sink) { _sink = sink; emit sinkChanged(_sink); } }
     virtual void setWidget(QQuickItem *widget) { if (widget != _widget) { _widget = widget; emit widgetChanged(_widget); } }
     void setName(const QString &name) { if (name != _name) { _name = name; emit nameChanged(_name); } }
-    void setUri(const QString &uri) { if (uri != _uri) { _uri = uri; emit uriChanged(_uri); } }
+    void setUri(const QString &uri)
+    {
+        QString changedUri;
+        {
+            const QMutexLocker locker(&_uriMutex);
+            if (uri == _uri) {
+                return;
+            }
+            _uri = uri;
+            changedUri = _uri;
+        }
+        emit uriChanged(changedUri);
+    }
     void setStarted(bool started) { if (started != _started) { _started = started; emit startedChanged(_started); } }
     void setLowLatency(bool lowLatency) { if (lowLatency != _lowLatency) { _lowLatency = lowLatency; emit lowLatencyChanged(_lowLatency); } }
     void setRtpJitterLatencyMs(int ms) { if (ms != _rtpJitterLatencyMs) { _rtpJitterLatencyMs = ms; emit rtpJitterLatencyMsChanged(_rtpJitterLatencyMs); } }
@@ -158,10 +178,17 @@ public slots:
     virtual void takeScreenshot(const QString &imageFile) = 0;
 
 protected:
+    void _setRecordingOutput(const QString& output)
+    {
+        const QMutexLocker locker(&_recordingOutputMutex);
+        _recordingOutput = output;
+    }
+
     VideoSinkHandle _sink = nullptr;
     QQuickItem *_widget = nullptr;
     QGCVideoStreamInfo *_videoStreamInfo = nullptr;
     QString _name;
+    mutable QMutex _uriMutex;
     QString _uri;
     bool _started = false;
     // Flipped on streaming threads, read cross-thread (e.g. tee probe logging).
@@ -187,6 +214,7 @@ protected:
     int _statsTickCounter = 0;
     QTimer _watchdogTimer;
     uint32_t _timeout = 0;
+    mutable QMutex _recordingOutputMutex;
     QString _recordingOutput;
     mutable QMutex _networkSourceConfigMutex;
     NetworkSourceConfig _networkSourceConfig;

@@ -82,7 +82,7 @@ QString writePipelineDot(GstElement* pipeline, const char* tag)
         QFile::remove(existing.takeFirst().absoluteFilePath());
     }
 
-    gchar* data = gst_debug_bin_to_dot_data(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL);
+    gchar* data = gst_debug_bin_to_dot_data(GST_BIN(pipeline), kSafePipelineGraphDetails);
     if (!data)
         return {};
     const QString fileName = QStringLiteral("%1-%2.dot")

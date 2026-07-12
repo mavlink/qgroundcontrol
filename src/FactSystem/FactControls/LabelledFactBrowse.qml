@@ -15,6 +15,7 @@ import QGroundControl.FactControls
 ///   dialogTitle  - Title for the file dialog (defaults to label).
 ///   selectFolder - true to browse folders, false for files (default true).
 ///   defaultText  - Placeholder shown when the Fact value is empty.
+///   showClearButton - show a button that restores an empty path (default false).
 RowLayout {
     id:      root
 
@@ -23,6 +24,7 @@ RowLayout {
     property string dialogTitle:    label
     property bool   selectFolder:   true
     property string defaultText:    qsTr("<not set>")
+    property bool   showClearButton: false
 
     spacing: ScreenTools.defaultFontPixelWidth * 2
 
@@ -55,5 +57,12 @@ RowLayout {
             selectFolder:       root.selectFolder
             onAcceptedForLoad:  (file) => root.fact.rawValue = file
         }
+    }
+
+    QGCButton {
+        text: qsTr("Clear")
+        visible: root.showClearButton
+        enabled: root.fact.rawValue !== ""
+        onClicked: root.fact.rawValue = ""
     }
 }

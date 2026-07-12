@@ -1,11 +1,13 @@
 #include "QGCWebSocketVideoSource.h"
 
+#include <QtCore/QTimer>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
 #include <QtNetwork/QSslError>
 #include <QtWebSockets/QWebSocket>
 
+#include "QGCJpegStreamGuard.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
 #include "SecureMemory.h"
@@ -14,10 +16,7 @@ QGC_LOGGING_CATEGORY(QGCWebSocketVideoSourceLog, "Video.GStreamer.WebSocketVideo
 
 QGCWebSocketVideoSource::QGCWebSocketVideoSource(const QUrl& url, const VideoReceiver::NetworkSourceConfig& config,
                                                  GstElement* appsrc, QObject* parent)
-    : QObject(parent)
-    , _url(url)
-    , _config(config)
-    , _appsrc(appsrc)
+    : QObject(parent), _url(url), _config(config), _appsrc(appsrc)
 {
     if (_appsrc) {
         gst_object_ref(_appsrc);
@@ -37,6 +36,13 @@ bool QGCWebSocketVideoSource::start(QString& error)
     if (_running) {
         return true;
     }
+    _protocolViolationReported = false;
+    _transportErrorReported = false;
+    _pendingError = PendingError::None;
+    _pendingErrorDetail.clear();
+    _pendingTransportErrorCode = 0;
+    _pendingErrorPosted = false;
+    _pendingErrorRetryScheduled = false;
     if (!_appsrc || !_url.isValid() ||
         (_url.scheme() != QStringLiteral("ws") && _url.scheme() != QStringLiteral("wss"))) {
         error = tr("Invalid WebSocket JPEG source.");
@@ -53,32 +59,29 @@ bool QGCWebSocketVideoSource::start(QString& error)
 
     QNetworkRequest request(_url);
     request.setRawHeader("User-Agent", QGCNetworkHelper::defaultUserAgent().toUtf8());
-    if (_config.hasAuthentication() || !_config.origin.isEmpty() || !_config.caCertificateFile.isEmpty()) {
-        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
-    }
     switch (_config.authentication) {
-    case VideoReceiver::NetworkSourceConfig::Authentication::Basic: {
-        QByteArray credentials = _config.username.toUtf8() + QByteArrayLiteral(":") + _config.secret;
-        QByteArray authorization = QByteArrayLiteral("Basic ") + credentials.toBase64();
-        request.setRawHeader("Authorization", authorization);
-        QGC::secureZero(authorization);
-        QGC::secureZero(credentials);
-        break;
-    }
-    case VideoReceiver::NetworkSourceConfig::Authentication::Bearer: {
-        QByteArray authorization = QByteArrayLiteral("Bearer ") + _config.secret;
-        request.setRawHeader("Authorization", authorization);
-        QGC::secureZero(authorization);
-        break;
-    }
-    case VideoReceiver::NetworkSourceConfig::Authentication::None:
-        break;
+        case VideoReceiver::NetworkSourceConfig::Authentication::Basic: {
+            QByteArray credentials = _config.username.toUtf8() + QByteArrayLiteral(":") + _config.secret;
+            QByteArray authorization = QByteArrayLiteral("Basic ") + credentials.toBase64();
+            request.setRawHeader("Authorization", authorization);
+            QGC::secureZero(authorization);
+            QGC::secureZero(credentials);
+            break;
+        }
+        case VideoReceiver::NetworkSourceConfig::Authentication::Bearer: {
+            QByteArray authorization = QByteArrayLiteral("Bearer ") + _config.secret;
+            request.setRawHeader("Authorization", authorization);
+            QGC::secureZero(authorization);
+            break;
+        }
+        case VideoReceiver::NetworkSourceConfig::Authentication::None:
+            break;
     }
 
     _webSocket = new QWebSocket(_config.origin, QWebSocketProtocol::VersionLatest, this);
-    _webSocket->setMaxAllowedIncomingFrameSize(kMaximumJpegBytes);
-    _webSocket->setMaxAllowedIncomingMessageSize(kMaximumJpegBytes);
-    _webSocket->setReadBufferSize(static_cast<qint64>(kMaximumJpegBytes));
+    _webSocket->setMaxAllowedIncomingFrameSize(static_cast<quint64>(QGCJpegStreamGuard::kMaximumEncodedBytes));
+    _webSocket->setMaxAllowedIncomingMessageSize(static_cast<quint64>(QGCJpegStreamGuard::kMaximumEncodedBytes));
+    _webSocket->setReadBufferSize(static_cast<qint64>(QGCJpegStreamGuard::kMaximumEncodedBytes));
 
     if (_url.scheme() == QStringLiteral("wss")) {
         QSslConfiguration sslConfiguration = QGCNetworkHelper::createSslConfig();
@@ -117,6 +120,9 @@ void QGCWebSocketVideoSource::stop()
     }
 
     _running = false;
+    _pendingError = PendingError::None;
+    _pendingErrorDetail.clear();
+    _pendingErrorRetryScheduled = false;
     if (_webSocket) {
         _webSocket->disconnect(this);
         _webSocket->abort();
@@ -127,9 +133,7 @@ void QGCWebSocketVideoSource::stop()
 
 bool QGCWebSocketVideoSource::isCompleteJpeg(const QByteArray& message)
 {
-    return message.size() >= 4 && static_cast<quint8>(message.front()) == 0xFF &&
-           static_cast<quint8>(message.at(1)) == 0xD8 && static_cast<quint8>(message.at(message.size() - 2)) == 0xFF &&
-           static_cast<quint8>(message.back()) == 0xD9;
+    return QGCJpegStreamGuard::validateJpeg(message);
 }
 
 void QGCWebSocketVideoSource::_onConnected()
@@ -141,7 +145,9 @@ void QGCWebSocketVideoSource::_onConnected()
 void QGCWebSocketVideoSource::_onDisconnected()
 {
     qCDebug(QGCWebSocketVideoSourceLog) << "Disconnected" << QGCNetworkHelper::redactedUrlForLogging(_url);
-    if (_running && _appsrc) {
+    const bool terminalErrorOwnsDisconnect =
+        _transportErrorReported || _pendingError != PendingError::None || _pendingErrorPosted;
+    if (_running && _appsrc && !terminalErrorOwnsDisconnect) {
         (void) gst_app_src_end_of_stream(GST_APP_SRC(_appsrc));
     }
     emit disconnected();
@@ -149,8 +155,22 @@ void QGCWebSocketVideoSource::_onDisconnected()
 
 void QGCWebSocketVideoSource::_onBinaryMessageReceived(const QByteArray& message)
 {
-    if (!isCompleteJpeg(message)) {
-        qCWarning(QGCWebSocketVideoSourceLog) << "Ignoring invalid JPEG message of" << message.size() << "bytes";
+    if (_protocolViolationReported) {
+        return;
+    }
+
+    QString validationError;
+    if (!QGCJpegStreamGuard::validateJpeg(message, &validationError)) {
+        _protocolViolationReported = true;
+        _transportErrorReported = true;
+        qCWarning(QGCWebSocketVideoSourceLog)
+            << "Rejecting WebSocket JPEG stream after an invalid" << message.size() << "byte frame:" << validationError;
+        _pendingError = PendingError::ProtocolViolation;
+        _pendingErrorDetail = validationError;
+        _postPendingErrorWhenAttached();
+        if (_webSocket) {
+            _webSocket->close(QWebSocketProtocol::CloseCodeProtocolError, tr("Invalid JPEG frame"));
+        }
         return;
     }
     _pushFrameToAppsrc(message);
@@ -163,16 +183,83 @@ void QGCWebSocketVideoSource::_onTextMessageReceived(const QString& message)
 
 void QGCWebSocketVideoSource::_onError()
 {
-    if (_webSocket) {
-        qCWarning(QGCWebSocketVideoSourceLog) << "WebSocket error code" << static_cast<int>(_webSocket->error());
+    if (!_webSocket || _transportErrorReported) {
+        return;
     }
+    _transportErrorReported = true;
+    const int errorCode = static_cast<int>(_webSocket->error());
+    qCWarning(QGCWebSocketVideoSourceLog) << "WebSocket error code" << errorCode;
+    _pendingError = PendingError::Transport;
+    _pendingTransportErrorCode = errorCode;
+    _postPendingErrorWhenAttached();
 }
 
 void QGCWebSocketVideoSource::_onSslErrors(const QList<QSslError>& errors)
 {
-    for (const QSslError& error : errors) {
-        qCWarning(QGCWebSocketVideoSourceLog) << "TLS verification error code" << static_cast<int>(error.error());
+    if (!errors.isEmpty()) {
+        qCWarning(QGCWebSocketVideoSourceLog)
+            << "TLS verification failed with" << errors.size() << "error(s); first code"
+            << static_cast<int>(errors.constFirst().error());
     }
+}
+
+bool QGCWebSocketVideoSource::_appsrcHasReadyPipelineAncestor() const
+{
+    if (!_appsrc) {
+        return false;
+    }
+
+    GstObject* current = GST_OBJECT(gst_object_ref(_appsrc));
+    bool foundPipeline = false;
+    while (current) {
+        if (GST_IS_PIPELINE(current)) {
+            GstState state = GST_STATE_NULL;
+            GstState pending = GST_STATE_VOID_PENDING;
+            (void) gst_element_get_state(GST_ELEMENT(current), &state, &pending, 0);
+            foundPipeline = state >= GST_STATE_READY || pending >= GST_STATE_READY;
+            gst_object_unref(current);
+            break;
+        }
+        GstObject* parent = gst_object_get_parent(current);
+        gst_object_unref(current);
+        current = parent;
+    }
+    return foundPipeline;
+}
+
+void QGCWebSocketVideoSource::_postPendingErrorWhenAttached()
+{
+    if (!_running || !_appsrc || _pendingError == PendingError::None || _pendingErrorPosted) {
+        return;
+    }
+    if (!_appsrcHasReadyPipelineAncestor()) {
+        if (!_pendingErrorRetryScheduled) {
+            _pendingErrorRetryScheduled = true;
+            QTimer::singleShot(10, this, [this]() {
+                _pendingErrorRetryScheduled = false;
+                _postPendingErrorWhenAttached();
+            });
+        }
+        return;
+    }
+
+    _pendingErrorPosted = true;
+    switch (_pendingError) {
+        case PendingError::ProtocolViolation: {
+            const QByteArray detail = _pendingErrorDetail.toUtf8();
+            GST_ELEMENT_ERROR(_appsrc, STREAM, DECODE, ("WebSocket JPEG stream was rejected"),
+                              ("%s", detail.constData()));
+            break;
+        }
+        case PendingError::Transport:
+            GST_ELEMENT_ERROR(_appsrc, RESOURCE, OPEN_READ, ("WebSocket video connection failed"),
+                              ("Socket error code %d", _pendingTransportErrorCode));
+            break;
+        case PendingError::None:
+            break;
+    }
+    _pendingError = PendingError::None;
+    _pendingErrorDetail.clear();
 }
 
 void QGCWebSocketVideoSource::_pushFrameToAppsrc(const QByteArray& jpegData)

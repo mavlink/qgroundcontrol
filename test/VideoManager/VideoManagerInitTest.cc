@@ -176,6 +176,19 @@ void VideoManagerInitTest::_testNetworkVideoSettingsPropagation()
     networkConfig.clearSecret();
 }
 
+void VideoManagerInitTest::_testJpegNetworkRecordingPolicy()
+{
+    const QString httpSource = QString::fromLatin1(VideoSettings::videoSourceHTTPMJPEG);
+    const QString webSocketSource = QString::fromLatin1(VideoSettings::videoSourceWebSocketJPEG);
+    const QString udpSource = QString::fromLatin1(VideoSettings::videoSourceUDPH264);
+
+    QVERIFY(!VideoManager::_isRecordingFormatSupported(httpSource, VideoReceiver::FILE_FORMAT_MP4));
+    QVERIFY(!VideoManager::_isRecordingFormatSupported(webSocketSource, VideoReceiver::FILE_FORMAT_MP4));
+    QVERIFY(VideoManager::_isRecordingFormatSupported(httpSource, VideoReceiver::FILE_FORMAT_MOV));
+    QVERIFY(VideoManager::_isRecordingFormatSupported(webSocketSource, VideoReceiver::FILE_FORMAT_MKV));
+    QVERIFY(VideoManager::_isRecordingFormatSupported(udpSource, VideoReceiver::FILE_FORMAT_MP4));
+}
+
 #else
 
 void VideoManagerInitTest::init()
@@ -200,6 +213,11 @@ void VideoManagerInitTest::_testBackendInitFailure()
 }
 
 void VideoManagerInitTest::_testNetworkVideoSettingsPropagation()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void VideoManagerInitTest::_testJpegNetworkRecordingPolicy()
 {
     QSKIP("GStreamer not enabled");
 }

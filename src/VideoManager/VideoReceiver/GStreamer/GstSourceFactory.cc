@@ -6,12 +6,19 @@
 #include <QtCore/QSemaphore>
 #include <QtCore/QThread>
 #include <QtCore/QUrl>
+
+#pragma push_macro("signals")
+#undef signals
+#include <gio/gio.h>
+#pragma pop_macro("signals")
+
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 #include <gst/rtsp/gstrtsptransport.h>
 #include <memory>
 
 #include "GStreamerHelpers.h"
+#include "QGCJpegStreamGuard.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
 #include "SecureMemory.h"
@@ -27,6 +34,128 @@ constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
 constexpr int kRtspRetry = 3;
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
 constexpr int kWebSocketThreadOperationTimeoutMs = 5000;
+
+struct HttpMultipartProbeContext
+{
+    QGCJpegStreamGuard::MultipartGuard guard;
+    bool failed = false;
+};
+
+void postNetworkJpegError(GstPad* pad, const QString& reason)
+{
+    GstElement* element = gst_pad_get_parent_element(pad);
+    if (!element) {
+        return;
+    }
+
+    const QByteArray detail = reason.toUtf8();
+    GST_ELEMENT_ERROR(element, STREAM, DECODE, ("Network JPEG stream was rejected"), ("%s", detail.constData()));
+    gst_object_unref(element);
+}
+
+GstPadProbeReturn guardHttpMultipart(GstPad* pad, GstPadProbeInfo* info, gpointer userData)
+{
+    auto* context = static_cast<HttpMultipartProbeContext*>(userData);
+    if (!context || context->failed) {
+        return GST_PAD_PROBE_DROP;
+    }
+
+    QString error;
+    if ((GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM) != 0) {
+        GstEvent* event = GST_PAD_PROBE_INFO_EVENT(info);
+        if (event && GST_EVENT_TYPE(event) == GST_EVENT_CAPS) {
+            GstCaps* caps = nullptr;
+            gst_event_parse_caps(event, &caps);
+            if (caps && !gst_caps_is_empty(caps) && !gst_caps_is_any(caps)) {
+                const GstStructure* structure = gst_caps_get_structure(caps, 0);
+                if (const gchar* boundary = gst_structure_get_string(structure, "boundary");
+                    boundary && !context->guard.setBoundary(
+                                    QByteArrayView(boundary, static_cast<qsizetype>(qstrlen(boundary))), &error)) {
+                    context->failed = true;
+                    postNetworkJpegError(pad, error);
+                    return GST_PAD_PROBE_DROP;
+                }
+            }
+        }
+        return GST_PAD_PROBE_OK;
+    }
+
+    GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (!buffer) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    GstMapInfo map = GST_MAP_INFO_INIT;
+    if (!gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+        context->failed = true;
+        postNetworkJpegError(pad, QStringLiteral("Multipart input buffer could not be mapped."));
+        return GST_PAD_PROBE_DROP;
+    }
+    const bool accepted = context->guard.consume(
+        QByteArrayView(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size)), &error);
+    gst_buffer_unmap(buffer, &map);
+    if (!accepted) {
+        context->failed = true;
+        postNetworkJpegError(pad, error);
+        return GST_PAD_PROBE_DROP;
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn validateJpegBuffer(GstPad* pad, GstPadProbeInfo* info, gpointer)
+{
+    GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (!buffer) {
+        return GST_PAD_PROBE_OK;
+    }
+
+    GstMapInfo map = GST_MAP_INFO_INIT;
+    if (!gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+        postNetworkJpegError(pad, QStringLiteral("Parsed JPEG buffer could not be mapped."));
+        return GST_PAD_PROBE_DROP;
+    }
+    QString error;
+    const bool accepted = QGCJpegStreamGuard::validateJpeg(
+        QByteArrayView(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size)), &error);
+    gst_buffer_unmap(buffer, &map);
+    if (!accepted) {
+        postNetworkJpegError(pad, error);
+        return GST_PAD_PROBE_DROP;
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+bool installHttpJpegGuards(GstElement* demux, GstElement* parser)
+{
+    GstPad* demuxSink = gst_element_get_static_pad(demux, "sink");
+    GstPad* parserSource = gst_element_get_static_pad(parser, "src");
+    if (!demuxSink || !parserSource) {
+        qCWarning(GstSourceFactoryLog) << "Required HTTP JPEG guard pad is unavailable";
+        gst_clear_object(&demuxSink);
+        gst_clear_object(&parserSource);
+        return false;
+    }
+
+    auto* context = new HttpMultipartProbeContext;
+    const gulong multipartProbe = gst_pad_add_probe(
+        demuxSink, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
+        guardHttpMultipart, context, [](gpointer data) { delete static_cast<HttpMultipartProbeContext*>(data); });
+    if (multipartProbe == 0) {
+        delete context;
+    }
+    const gulong jpegProbe =
+        gst_pad_add_probe(parserSource, GST_PAD_PROBE_TYPE_BUFFER, validateJpegBuffer, nullptr, nullptr);
+    if (multipartProbe != 0 && jpegProbe == 0) {
+        gst_pad_remove_probe(demuxSink, multipartProbe);
+    }
+    gst_object_unref(demuxSink);
+    gst_object_unref(parserSource);
+    if (multipartProbe == 0 || jpegProbe == 0) {
+        qCWarning(GstSourceFactoryLog) << "Failed to install HTTP JPEG stream guards";
+        return false;
+    }
+    return true;
+}
 
 // Older Linux/system GStreamer needs an autoplug-query caps filter to keep parsebin on byte-stream output.
 #if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
@@ -285,7 +414,7 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
 GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Config& config, guint latencyMs)
 {
     if (!GStreamer::isValidRtspUri(uri.toUtf8().constData())) {
-        qCCritical(GstSourceFactoryLog) << "Invalid RTSP URI:" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Invalid RTSP URI:" << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -325,12 +454,14 @@ GstElement* buildTcpSource(const QUrl& sourceUrl)
 {
     const int port = sourceUrl.port();
     if (!validPort(port)) {
-        qCCritical(GstSourceFactoryLog) << "Invalid TCP port" << port << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Invalid TCP port" << port << "in"
+                                        << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
     const QString host = sourceUrl.host();
     if (host.isEmpty()) {
-        qCCritical(GstSourceFactoryLog) << "Missing host in TCP URI" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Missing host in TCP URI"
+                                        << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -348,7 +479,8 @@ GstElement* buildUdpSource(const QUrl& sourceUrl, bool isUdpH264, bool isUdpH265
 {
     const int port = sourceUrl.port();
     if (!validPort(port)) {
-        qCCritical(GstSourceFactoryLog) << "Invalid UDP port" << port << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Invalid UDP port" << port << "in"
+                                        << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -463,6 +595,7 @@ GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
         gst_clear_object(&bin);
         return nullptr;
     }
+    gst_bin_add_many(GST_BIN(bin), source, demux, parser, nullptr);
 
     QUrl cleanUrl(sourceUrl);
     cleanUrl.setUserInfo(QString());
@@ -472,12 +605,37 @@ GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
                                           !networkConfig.caCertificateFile.isEmpty();
     g_object_set(source, "location", location.constData(), "is-live", TRUE, "do-timestamp", TRUE, "timeout",
                  config.timeoutS, "retries", securitySensitiveRequest ? 0 : 3, "keep-alive", TRUE, "automatic-redirect",
-                 securitySensitiveRequest ? FALSE : TRUE, "ssl-strict", TRUE, "user-agent", userAgent.constData(),
+                 securitySensitiveRequest ? FALSE : TRUE, "ssl-strict", TRUE, "ssl-use-system-ca-file",
+                 networkConfig.caCertificateFile.isEmpty() ? TRUE : FALSE, "user-agent", userAgent.constData(),
                  "http-log-level", 0, nullptr);
 
     if (!networkConfig.caCertificateFile.isEmpty()) {
-        const QByteArray caFile = QFile::encodeName(networkConfig.caCertificateFile);
-        g_object_set(source, "ssl-ca-file", caFile.constData(), "ssl-use-system-ca-file", FALSE, nullptr);
+        const QByteArray caFileUtf8 = networkConfig.caCertificateFile.toUtf8();
+        GError* filenameError = nullptr;
+        gchar* caFile = g_filename_from_utf8(caFileUtf8.constData(), static_cast<gssize>(caFileUtf8.size()), nullptr,
+                                             nullptr, &filenameError);
+        if (!caFile) {
+            qCWarning(GstSourceFactoryLog)
+                << "The HTTP MJPEG custom CA path could not be converted to the platform filename encoding. "
+                   "Domain/code:"
+                << (filenameError ? filenameError->domain : 0) << (filenameError ? filenameError->code : 0);
+            g_clear_error(&filenameError);
+            gst_clear_object(&bin);
+            return nullptr;
+        }
+        GError* databaseError = nullptr;
+        GTlsDatabase* tlsDatabase = g_tls_file_database_new(caFile, &databaseError);
+        g_free(caFile);
+        if (!tlsDatabase) {
+            qCWarning(GstSourceFactoryLog) << "Failed to create the HTTP MJPEG custom CA trust database. Domain/code:"
+                                           << (databaseError ? databaseError->domain : 0)
+                                           << (databaseError ? databaseError->code : 0);
+            g_clear_error(&databaseError);
+            gst_clear_object(&bin);
+            return nullptr;
+        }
+        g_object_set(source, "tls-database", tlsDatabase, nullptr);
+        g_object_unref(tlsDatabase);
     }
 
     if (networkConfig.authentication == VideoReceiver::NetworkSourceConfig::Authentication::Basic) {
@@ -506,7 +664,10 @@ GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
     QGC::secureZero(authorization);
 
     g_object_set(demux, "single-stream", TRUE, nullptr);
-    gst_bin_add_many(GST_BIN(bin), source, demux, parser, nullptr);
+    if (!installHttpJpegGuards(demux, parser)) {
+        gst_clear_object(&bin);
+        return nullptr;
+    }
     if (!gst_element_link(source, demux)) {
         qCWarning(GstSourceFactoryLog) << "Failed to link HTTP MJPEG source";
         gst_clear_object(&bin);
@@ -657,8 +818,9 @@ GstElement* buildWebSocketJpegSource(const QUrl& sourceUrl, const Config& config
 
     GstCaps* caps = gst_caps_from_string("image/jpeg");
     g_object_set(appsrc, "caps", caps, "is-live", TRUE, "do-timestamp", TRUE, "format", GST_FORMAT_TIME, "block", FALSE,
-                 "max-buffers", static_cast<guint64>(4), "max-bytes", static_cast<guint64>(64U * 1024U * 1024U),
-                 "leaky-type", GST_APP_LEAKY_TYPE_DOWNSTREAM, nullptr);
+                 "max-buffers", static_cast<guint64>(4), "max-bytes",
+                 static_cast<guint64>(QGCJpegStreamGuard::kMaximumEncodedBytes * 4), "leaky-type",
+                 GST_APP_LEAKY_TYPE_DOWNSTREAM, nullptr);
     gst_clear_caps(&caps);
 
     gst_bin_add_many(GST_BIN(bin), appsrc, parser, nullptr);
@@ -799,7 +961,7 @@ GstElement* create(const QString& uri, const Config& config)
 
     if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS && !isHttpMjpeg && !isWebSocketJpeg) {
         qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in"
-                                       << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 

@@ -39,13 +39,27 @@ private slots:
     void _onSslErrors(const QList<QSslError>& errors);
 
 private:
-    void _pushFrameToAppsrc(const QByteArray& jpegData);
+    enum class PendingError
+    {
+        None,
+        ProtocolViolation,
+        Transport,
+    };
 
-    static constexpr quint64 kMaximumJpegBytes = 16U * 1024U * 1024U;
+    bool _appsrcHasReadyPipelineAncestor() const;
+    void _postPendingErrorWhenAttached();
+    void _pushFrameToAppsrc(const QByteArray& jpegData);
 
     QUrl _url;
     VideoReceiver::NetworkSourceConfig _config;
     GstElement* _appsrc = nullptr;
     QWebSocket* _webSocket = nullptr;
     bool _running = false;
+    bool _protocolViolationReported = false;
+    bool _transportErrorReported = false;
+    PendingError _pendingError = PendingError::None;
+    QString _pendingErrorDetail;
+    int _pendingTransportErrorCode = 0;
+    bool _pendingErrorPosted = false;
+    bool _pendingErrorRetryScheduled = false;
 };

@@ -431,6 +431,31 @@ void GStreamerTest::_testWritePipelineDotReturnsEmptyOnWriteFailure()
     QVERIFY2(path.isEmpty(), qPrintable(QStringLiteral("Expected empty path for failed dot write, got %1").arg(path)));
 }
 
+void GStreamerTest::_testPipelineDotOmitsElementProperties()
+{
+    GstElement* pipeline = gst_pipeline_new("safe-dot-test");
+    GstElement* source = gst_element_factory_make("filesrc", "source");
+    QVERIFY(pipeline);
+    QVERIFY(source);
+    const auto cleanup = qScopeGuard([&] { gst_clear_object(&pipeline); });
+
+    constexpr const char* secret = "/tmp/qgc-dot-secret-token";
+    g_object_set(source, "location", secret, nullptr);
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
+
+    gchar* unsafeDot = gst_debug_bin_to_dot_data(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL);
+    QVERIFY(unsafeDot);
+    const QByteArray unsafeData(unsafeDot);
+    g_free(unsafeDot);
+    QVERIFY2(unsafeData.contains(secret), "The test property must be visible with SHOW_ALL");
+
+    gchar* safeDot = gst_debug_bin_to_dot_data(GST_BIN(pipeline), GStreamer::kSafePipelineGraphDetails);
+    QVERIFY(safeDot);
+    const QByteArray safeData(safeDot);
+    g_free(safeDot);
+    QVERIFY2(!safeData.contains(secret), "Persisted pipeline graphs must omit element property values");
+}
+
 void GStreamerTest::_testCompleteInit()
 {
     GStreamer::redirectGLibLogging();
@@ -517,6 +542,7 @@ QGC_GST_SKIP_TEST(_testConfigureDebugLoggingIsIdempotent)
 QGC_GST_SKIP_TEST(_testVerifyRequiredPlugins)
 QGC_GST_SKIP_TEST(_testEnvironmentSetup)
 QGC_GST_SKIP_TEST(_testWritePipelineDotReturnsEmptyOnWriteFailure)
+QGC_GST_SKIP_TEST(_testPipelineDotOmitsElementProperties)
 QGC_GST_SKIP_TEST(_testCompleteInit)
 QGC_GST_SKIP_TEST(_testCreateVideoReceiver)
 QGC_GST_SKIP_TEST(_testBindDebugLevelFactRejectsNullContext)
@@ -573,6 +599,7 @@ QGC_GST_SKIP_TEST(_testSourceFactoryRejectsBadUri)
 QGC_GST_SKIP_TEST(_testSourceFactoryTcpMpegTs)
 QGC_GST_SKIP_TEST(_testSourceFactoryRejectsBadTcpUri)
 QGC_GST_SKIP_TEST(_testSourceFactoryUdp265Caps)
+QGC_GST_SKIP_TEST(_testSourceFactoryUdp265UsesExplicitDepayAndParser)
 QGC_GST_SKIP_TEST(_testSourceFactoryUdpH264Caps)
 QGC_GST_SKIP_TEST(_testSourceFactoryUdpMpegTs)
 QGC_GST_SKIP_TEST(_testSourceFactorySchemeCaseInsensitive)
@@ -582,10 +609,24 @@ QGC_GST_SKIP_TEST(_testSourceFactoryHttpMjpeg)
 QGC_GST_SKIP_TEST(_testSourceFactoryHttpMjpegAuthRequiresHttps)
 QGC_GST_SKIP_TEST(_testSourceFactoryHttpMjpegSecurityProperties)
 QGC_GST_SKIP_TEST(_testHttpMjpegDelivery)
+QGC_GST_SKIP_TEST(_testPipelineDiagnosticRedactionUsesGeneration)
+QGC_GST_SKIP_TEST(_testHttpsMjpegTlsAuth)
+QGC_GST_SKIP_TEST(_testHttpsMjpegRejectsUntrustedCa)
+QGC_GST_SKIP_TEST(_testHttpsMjpegAuthRedirectNotFollowed)
+QGC_GST_SKIP_TEST(_testNetworkJpegValidation)
+QGC_GST_SKIP_TEST(_testMultipartJpegGuard)
+QGC_GST_SKIP_TEST(_testJpegRecordingContainers)
+QGC_GST_SKIP_TEST(_testJpegReceiverRecording)
 QGC_GST_SKIP_TEST(_testSourceFactoryWebSocketJpeg)
 QGC_GST_SKIP_TEST(_testSourceFactoryWebSocketAuthRequiresWss)
 QGC_GST_SKIP_TEST(_testWebSocketJpegValidation)
 QGC_GST_SKIP_TEST(_testWebSocketJpegDelivery)
+QGC_GST_SKIP_TEST(_testWebSocketRejectsInvalidFrame)
+QGC_GST_SKIP_TEST(_testWebSocketEarlyTransportFailureAfterDelayedParenting)
+QGC_GST_SKIP_TEST(_testWebSocketEarlyProtocolFailureAfterDelayedParenting)
+QGC_GST_SKIP_TEST(_testWebSocketJpegTlsAuth)
+QGC_GST_SKIP_TEST(_testWebSocketAuthRedirectNotFollowed)
+QGC_GST_SKIP_TEST(_testWebSocketJpegRejectsUntrustedCa)
 QGC_GST_SKIP_TEST(_testWebSocketThreadTeardown)
 QGC_GST_SKIP_TEST(_testColorimetryColorRangeMapping)
 QGC_GST_SKIP_TEST(_testPixelFormatAcceptedButNotAdvertised)

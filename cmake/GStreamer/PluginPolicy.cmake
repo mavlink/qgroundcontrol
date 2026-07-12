@@ -24,7 +24,8 @@ set(GSTREAMER_PLUGIN_ALTERNATES
 # multifile (splitmuxsink), isomp4 (qtmux/mp4mux), and matroska (matroskamux)
 # are load-bearing for video recording (GstVideoReceiver _kFileMux).
 set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
-    coreelements isomp4 matroska multifile opengl playback rtsp rtp rtpmanager tcp udp videoconvertscale
+    app coreelements isomp4 jpegformat matroska multifile multipart opengl playback rtsp rtp
+    rtpmanager soup tcp udp videoconvertscale
 )
 
 # iOS xcframework: plugins whose dependent static libs aren't bundled in the

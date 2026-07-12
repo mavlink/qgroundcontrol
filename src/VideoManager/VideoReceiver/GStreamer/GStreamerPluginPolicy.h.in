@@ -1,0 +1,10 @@
+#pragma once
+
+#include <array>
+
+namespace GStreamer {
+
+inline constexpr std::array<const char*, @_qgc_gst_runtime_required_plugin_count@> kRuntimeRequiredPlugins = {
+@_qgc_gst_runtime_required_plugin_entries@};
+
+}  // namespace GStreamer

@@ -30,6 +30,7 @@
 #include "GStreamerEnvironment.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "GStreamerPluginPolicy.h"
 #include "GstScoped.h"
 #include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
@@ -117,13 +118,14 @@ bool _verifyPlugins()
         const GstObjectPtr plugin(GST_OBJECT(gst_registry_find_plugin(registry, name)));
         return plugin != nullptr;
     };
-    // Mirrors GSTREAMER_RUNTIME_REQUIRED_PLUGINS (PluginPolicy.cmake) plus qgc,
-    // so a stripped registry fails loudly instead of at first stream attempt.
-    static constexpr std::array<const char*, 12> kRequiredPlugins = {
-        "qgc", "coreelements", "isomp4", "matroska", "multifile", "opengl",
-        "playback", "rtp", "rtpmanager", "rtsp", "tcp", "udp",
-    };
-    for (const char* name : kRequiredPlugins) {
+    if (!hasPlugin("qgc")) {
+        qCCritical(GStreamerLog) << "Required GStreamer plugin not found: qgc";
+        result = false;
+    }
+    for (const char* name : kRuntimeRequiredPlugins) {
+        if (g_str_equal(name, "videoconvertscale")) {
+            continue;  // Alternate-group policy is checked below.
+        }
         if (!hasPlugin(name)) {
             qCCritical(GStreamerLog) << "Required GStreamer plugin not found:" << name;
             result = false;

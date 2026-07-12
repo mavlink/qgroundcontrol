@@ -32,6 +32,7 @@ qgc_test_assert_in_list("apple has vtdec" vtdec _plugins_apple)
 qgc_test_pass("plugins_for apple addenda")
 
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
+gstreamer_plugins_for(PLATFORM "" OUT_VAR _plugins_common_real)
 gstreamer_plugins_for(PLATFORM windows OUT_VAR _plugins_windows_real)
 qgc_test_assert_in_list("windows has d3d11" d3d11 _plugins_windows_real)
 qgc_test_assert_in_list("windows has d3d12" d3d12 _plugins_windows_real)
@@ -72,8 +73,11 @@ qgc_test_assert_in_list("partial: x264enc retained"           x264enc           
 qgc_test_pass("filter_alternates partial-pair unsatisfied")
 
 gstreamer_runtime_required_plugins(_required)
-foreach(_p IN ITEMS coreelements isomp4 matroska multifile opengl playback rtsp rtp rtpmanager tcp udp videoconvertscale)
+foreach(_p IN ITEMS
+        app coreelements isomp4 jpegformat matroska multifile multipart opengl playback
+        rtsp rtp rtpmanager soup tcp udp videoconvertscale)
     qgc_test_assert_in_list("runtime required: ${_p}" "${_p}" _required)
+    qgc_test_assert_in_list("common packaged runtime requirement: ${_p}" "${_p}" _plugins_common_real)
 endforeach()
 qgc_test_assert_not_in_list("runtime required: openh264 is optional codec implementation" openh264 _required)
 qgc_test_pass("runtime_required_plugins")

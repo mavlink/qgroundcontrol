@@ -137,12 +137,13 @@ void QtMultimediaReceiver::start(uint32_t timeout)
         return;
     }
 
-    if (_uri.isEmpty()) {
+    const QString sourceUri = uri();
+    if (sourceUri.isEmpty()) {
         qCDebug(QtMultimediaReceiverLog) << "Failed because URI is not specified";
         emit onStartComplete(STATUS_INVALID_URL);
         return;
     }
-    _mediaPlayer->setSource(QUrl::fromUserInput(_uri));
+    _mediaPlayer->setSource(QUrl::fromUserInput(sourceUri));
 
     _frameTimer.setInterval(timeout);
 
@@ -264,7 +265,7 @@ void QtMultimediaReceiver::startRecording(const QString& videoFile, FILE_FORMAT 
     }
 
     _mediaRecorder->setOutputLocation(QUrl::fromLocalFile(videoFile));
-    _recordingOutput = _mediaRecorder->outputLocation().toLocalFile();
+    _setRecordingOutput(_mediaRecorder->outputLocation().toLocalFile());
     _mediaRecorder->record();
 
     qCDebug(QtMultimediaReceiverLog) << "Recording";

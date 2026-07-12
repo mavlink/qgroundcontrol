@@ -25,10 +25,20 @@ HTTP MJPEG and WebSocket JPEG sources can be anonymous for local labs and truste
 - **Session credential** — password or token retained only in memory until QGC exits or you clear it
 - **Credential file** — optional owner-only file containing one password or token for unattended Unix-like desktop use; other platforms use the in-memory session credential
 - **Origin** — optional HTTP/WebSocket Origin header for servers that require one
-- **CA certificate file** — optional PEM trust file for HTTPS or WSS validation
+- **CA certificate file** — optional PEM trust file for HTTPS or WSS validation.
+  For HTTP MJPEG, this file replaces the system trust store for that source, so
+  include every issuing CA needed by the endpoint.
 
 Do not put passwords, bearer tokens, or API keys in the video URL. QGC rejects URL user-info and common token query parameters and removes user-info, query, and fragment data from video URL logs.
-Automatic redirects are disabled whenever authentication, Origin, or a custom CA is configured so credentials and trust policy cannot be silently forwarded to another endpoint.
+HTTP MJPEG redirects are disabled whenever authentication, Origin, or a custom CA is configured so credentials and trust policy cannot be silently forwarded to another endpoint. WebSocket handshake redirects are not followed.
+
+HTTP MJPEG and WebSocket JPEG streams can be recorded as MKV or MOV. MP4 does
+not accept the parsed JPEG stream, so QGC rejects that combination before
+recording instead of creating an unusable file.
+
+For resource safety, each JPEG message is limited to 16 MiB, each dimension to
+8192 pixels, and the decoded image to 7680 x 4320 pixels. Malformed or oversized
+frames are rejected before decoding.
 
 ## Test Sources
 

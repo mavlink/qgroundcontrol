@@ -13,4 +13,5 @@ private slots:
     void _testBackendReadyBeforeQmlReady();
     void _testBackendInitFailure();
     void _testNetworkVideoSettingsPropagation();
+    void _testJpegNetworkRecordingPolicy();
 };
