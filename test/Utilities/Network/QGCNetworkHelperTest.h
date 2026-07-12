@@ -38,6 +38,7 @@ private slots:
     void _testBuildUrlFromMap();
     void _testBuildUrlFromList();
     void _testUrlWithoutQuery();
+    void _testRedactedUrlForLogging();
 
     // Request configuration tests
     void _testDefaultUserAgent();

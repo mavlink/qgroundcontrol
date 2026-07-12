@@ -1,11 +1,18 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 
+#include <QtCore/QByteArray>
+#include <QtCore/QMutex>
+#include <QtCore/QMutexLocker>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
+#include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include "SecureMemory.h"
 
 class QGCVideoStreamInfo;
 class QQuickItem;
@@ -19,9 +26,39 @@ public:
     /// Backend-specific decoded-frame sink.
     using VideoSinkHandle = void *;
 
+    struct NetworkSourceConfig
+    {
+        enum class Authentication : uint8_t
+        {
+            None = 0,
+            Basic,
+            Bearer,
+        };
+
+        Authentication authentication = Authentication::None;
+        QString username;
+        QByteArray secret;
+        QString origin;
+        QString caCertificateFile;
+
+        bool operator==(const NetworkSourceConfig& other) const = default;
+        bool hasAuthentication() const { return authentication != Authentication::None; }
+        void clearSecret()
+        {
+            secret.detach();
+            QGC::secureZero(secret);
+        }
+    };
+
     explicit VideoReceiver(QObject *parent = nullptr)
         : QObject(parent)
     {}
+
+    ~VideoReceiver() override
+    {
+        const QMutexLocker locker(&_networkSourceConfigMutex);
+        _networkSourceConfig.clearSecret();
+    }
 
     bool isThermal() const { return (_name == QStringLiteral("thermalVideo")); }
 
@@ -45,6 +82,22 @@ public:
     void setRtpJitterLatencyMs(int ms) { if (ms != _rtpJitterLatencyMs) { _rtpJitterLatencyMs = ms; emit rtpJitterLatencyMsChanged(_rtpJitterLatencyMs); } }
     void setAutoReconnect(bool enabled) { if (enabled != _autoReconnect) { _autoReconnect = enabled; emit autoReconnectChanged(_autoReconnect); } }
     void setVideoStreamInfo(QGCVideoStreamInfo *videoStreamInfo) { if (videoStreamInfo != _videoStreamInfo) { _videoStreamInfo = videoStreamInfo; emit videoStreamInfoChanged(); } }
+    bool setNetworkSourceConfig(const NetworkSourceConfig& config)
+    {
+        const QMutexLocker locker(&_networkSourceConfigMutex);
+        if (_networkSourceConfig == config) {
+            return false;
+        }
+
+        _networkSourceConfig.clearSecret();
+        _networkSourceConfig = config;
+        return true;
+    }
+    NetworkSourceConfig networkSourceConfig() const
+    {
+        const QMutexLocker locker(&_networkSourceConfigMutex);
+        return _networkSourceConfig;
+    }
 
     // QMediaFormat::FileFormat
     enum FILE_FORMAT {
@@ -135,6 +188,8 @@ protected:
     QTimer _watchdogTimer;
     uint32_t _timeout = 0;
     QString _recordingOutput;
+    mutable QMutex _networkSourceConfigMutex;
+    NetworkSourceConfig _networkSourceConfig;
 
     // bool _initialized = false;
     // bool _fullScreen = false;

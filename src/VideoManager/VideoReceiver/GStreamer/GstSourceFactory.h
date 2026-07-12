@@ -1,7 +1,11 @@
 #pragma once
 
+#include <cstdint>
+
 #include <QtCore/QString>
 #include <gst/gstelement.h>
+
+#include "VideoReceiver.h"
 
 namespace GStreamer::SourceFactory {
 
@@ -22,11 +26,14 @@ struct Config
     JitterBuffer jitterBuffer = JitterBuffer::DropOnLatency;
     int latencyMs = 80;
     bool doRetransmission = true;
+    uint32_t timeoutS = 0;
+    VideoReceiver::NetworkSourceConfig networkSourceConfig;
 };
 
 /// Build a source bin (`source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`)
 /// for `uri`. Supported schemes: rtsp/rtspt, tcp:// (MPEG-TS), udp:// (H.264 RTP),
-/// udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP).
+/// udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP), http(s):// (multipart MJPEG),
+/// ws(s):// (JPEG binary messages, when Qt WebSockets is available).
 ///
 /// Ghost pads on the returned bin are wired lazily; for `rtspsrc`/`tsdemux`/`parsebin`
 /// they appear only after upstream produces pads, so callers must connect any

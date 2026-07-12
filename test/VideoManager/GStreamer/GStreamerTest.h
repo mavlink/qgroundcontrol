@@ -92,6 +92,15 @@ private slots:
     void _testSourceFactorySchemeCaseInsensitive();
     void _testSourceFactoryNegativeLatencyClamped();
     void _testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer();
+    void _testSourceFactoryHttpMjpeg();
+    void _testSourceFactoryHttpMjpegAuthRequiresHttps();
+    void _testSourceFactoryHttpMjpegSecurityProperties();
+    void _testHttpMjpegDelivery();
+    void _testSourceFactoryWebSocketJpeg();
+    void _testSourceFactoryWebSocketAuthRequiresWss();
+    void _testWebSocketJpegValidation();
+    void _testWebSocketJpegDelivery();
+    void _testWebSocketThreadTeardown();
     void _testColorimetryColorRangeMapping();
     void _testPixelFormatAcceptedButNotAdvertised();
     void _testAdvertisedFormatListMatchesTable();

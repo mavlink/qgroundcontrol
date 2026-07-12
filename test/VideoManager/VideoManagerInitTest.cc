@@ -2,10 +2,37 @@
 
 #ifdef QGC_GST_STREAMING
 
-#include "VideoManager.h"
-
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickWindow>
+
+#include "Fixtures/RAIIFixtures.h"
+#include "SettingsManager.h"
+#include "VideoManager.h"
+#include "VideoReceiver.h"
+#include "VideoSettings.h"
+
+namespace {
+
+class TestVideoReceiver final : public VideoReceiver
+{
+public:
+    void start(uint32_t) override {}
+
+    void stop() override {}
+
+    void startDecoding(VideoSinkHandle) override {}
+
+    void stopDecoding() override {}
+
+    void startRecording(const QString&, FILE_FORMAT) override {}
+
+    void stopRecording() override {}
+
+    void takeScreenshot(const QString&) override {}
+};
+
+}  // namespace
 
 void VideoManagerInitTest::init()
 {
@@ -101,12 +128,81 @@ void VideoManagerInitTest::_testBackendInitFailure()
     QCOMPARE(createReceiversCount, 0);
 }
 
+void VideoManagerInitTest::_testNetworkVideoSettingsPropagation()
+{
+    TestFixtures::SettingsFixture fixture;
+    VideoSettings* settings = SettingsManager::instance()->videoSettings();
+    QVERIFY(settings);
+
+    fixture.setFactValue(settings->videoSource(), QString::fromLatin1(VideoSettings::videoSourceHTTPMJPEG));
+    fixture.setFactValue(settings->httpMjpegUrl(), QStringLiteral("http://192.0.2.1:8080/video_feed"));
+    fixture.setFactValue(settings->networkVideoAuthType(), VideoSettings::NetworkVideoAuthNone);
+    fixture.setFactValue(settings->networkVideoUsername(), QString());
+    fixture.setFactValue(settings->networkVideoOrigin(), QString());
+    fixture.setFactValue(settings->networkVideoCaCertificateFile(), QString());
+    fixture.setFactValue(settings->streamEnabled(), true);
+
+    const auto clearSecret = qScopeGuard([settings] { settings->clearNetworkVideoSecret(); });
+    VideoManager videoManager;
+    TestVideoReceiver receiver;
+    receiver.setName(QStringLiteral("video"));
+
+    QVERIFY(videoManager._updateSettings(&receiver));
+    QCOMPARE(receiver.uri(), QStringLiteral("http://192.0.2.1:8080/video_feed"));
+    VideoReceiver::NetworkSourceConfig networkConfig = receiver.networkSourceConfig();
+    QVERIFY(networkConfig.authentication == VideoReceiver::NetworkSourceConfig::Authentication::None);
+    QVERIFY(networkConfig.secret.isEmpty());
+
+    settings->httpMjpegUrl()->setRawValue(QStringLiteral("https://camera.example/video_feed"));
+    settings->networkVideoAuthType()->setRawValue(VideoSettings::NetworkVideoAuthBearer);
+    QCOMPARE(settings->setNetworkVideoSecret(QStringLiteral("session-token")), QString());
+    QVERIFY(videoManager._updateSettings(&receiver));
+    QCOMPARE(receiver.uri(), QStringLiteral("https://camera.example/video_feed"));
+    networkConfig.clearSecret();
+    networkConfig = receiver.networkSourceConfig();
+    QVERIFY(networkConfig.authentication == VideoReceiver::NetworkSourceConfig::Authentication::Bearer);
+    QCOMPARE(networkConfig.secret, QByteArrayLiteral("session-token"));
+
+    settings->httpMjpegUrl()->setRawValue(QStringLiteral("http://192.0.2.1:8080/video_feed"));
+    expectLogMessage("Video.VideoManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Network video configuration rejected")));
+    QVERIFY(videoManager._updateSettings(&receiver));
+    verifyExpectedLogMessage();
+    QVERIFY(receiver.uri().isEmpty());
+    networkConfig.clearSecret();
+    networkConfig = receiver.networkSourceConfig();
+    QVERIFY(networkConfig.authentication == VideoReceiver::NetworkSourceConfig::Authentication::None);
+    QVERIFY(networkConfig.secret.isEmpty());
+    networkConfig.clearSecret();
+}
+
 #else
 
-void VideoManagerInitTest::init() { UnitTest::init(); QSKIP("GStreamer not enabled"); }
-void VideoManagerInitTest::_testQmlReadyBeforeBackendReady() { QSKIP("GStreamer not enabled"); }
-void VideoManagerInitTest::_testBackendReadyBeforeQmlReady() { QSKIP("GStreamer not enabled"); }
-void VideoManagerInitTest::_testBackendInitFailure() { QSKIP("GStreamer not enabled"); }
+void VideoManagerInitTest::init()
+{
+    UnitTest::init();
+    QSKIP("GStreamer not enabled");
+}
+
+void VideoManagerInitTest::_testQmlReadyBeforeBackendReady()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void VideoManagerInitTest::_testBackendReadyBeforeQmlReady()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void VideoManagerInitTest::_testBackendInitFailure()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void VideoManagerInitTest::_testNetworkVideoSettingsPropagation()
+{
+    QSKIP("GStreamer not enabled");
+}
 
 #endif
 

@@ -204,7 +204,10 @@ void GstVideoReceiver::start(uint32_t timeout)
         // do-retransmission needs ≥40 ms latency headroom over the default 20 ms rtx-delay;
         // forcibly disable for sub-frame latency configurations to avoid retransmit storms.
         sourceConfig.doRetransmission = (_rtpJitterLatencyMs >= 40) && (sourceConfig.jitterBuffer != GStreamer::SourceFactory::JitterBuffer::None);
+        sourceConfig.timeoutS = _timeout;
+        sourceConfig.networkSourceConfig = networkSourceConfig();
         _source = GStreamer::SourceFactory::create(_uri, sourceConfig);
+        sourceConfig.networkSourceConfig.clearSecret();
         if (!_source) {
             qCCritical(GstVideoReceiverLog) << "SourceFactory::create() failed";
             break;
@@ -774,10 +777,10 @@ void GstVideoReceiver::_handleEOS()
         _shutdownDecodingBranch();
     } else if (_recording && _removingRecorder) {
         _shutdownRecordingBranch();
-    } /*else {
+    } else {
         qCWarning(GstVideoReceiverLog) << "Unexpected EOS!";
-        stop();
-    }*/
+        _scheduleReconnect("unexpected EOS");
+    }
 }
 
 GstElement *GstVideoReceiver::_makeDecoder()
@@ -1593,14 +1596,15 @@ GstPadProbeReturn GstVideoReceiver::_videoSinkProbe(GstPad *pad, GstPadProbeInfo
 GstPadProbeReturn GstVideoReceiver::_eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data)
 {
     Q_UNUSED(pad);
-    Q_ASSERT(user_data);
+    if (!info || !user_data) {
+        qCCritical(GstVideoReceiverLog) << "Invalid EOS probe arguments";
+        return GST_PAD_PROBE_OK;
+    }
 
-    if (info) {
-        const GstEvent *event = gst_pad_probe_info_get_event(info);
-        if (GST_EVENT_TYPE(event) == GST_EVENT_EOS) {
-            GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(user_data);
-            pThis->_noteEndOfStream();
-        }
+    const GstEvent *event = gst_pad_probe_info_get_event(info);
+    if (event && GST_EVENT_TYPE(event) == GST_EVENT_EOS) {
+        GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(user_data);
+        pThis->_noteEndOfStream();
     }
 
     return GST_PAD_PROBE_OK;

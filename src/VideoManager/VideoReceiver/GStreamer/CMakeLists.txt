@@ -59,6 +59,19 @@ else()
     message(WARNING "QGCGStreamer: Qt6::MultimediaQuickPrivate not found - GStreamer video sink integration may not build")
 endif()
 
+find_package(Qt6 COMPONENTS WebSockets QUIET)
+if(TARGET Qt6::WebSockets)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_HAS_WEBSOCKET_VIDEO)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::WebSockets)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            QGCWebSocketVideoSource.cc
+            QGCWebSocketVideoSource.h
+    )
+else()
+    message(STATUS "Qt6::WebSockets not found - WebSocket JPEG video source disabled")
+endif()
+
 add_subdirectory(HwBuffers)
 add_subdirectory(gstqgc)
 

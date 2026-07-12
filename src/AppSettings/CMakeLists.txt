@@ -91,6 +91,7 @@ qt_add_qml_module(AppSettingsModule
         SettingsPage.qml
         TcpSettings.qml
         UdpSettings.qml
+        VideoNetworkSecuritySettings.qml
     NO_PLUGIN
 )
 
