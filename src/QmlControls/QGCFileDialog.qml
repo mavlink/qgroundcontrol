@@ -128,6 +128,9 @@ Item {
         nameFilters:    _root.nameFilters ? _root.nameFilters : []
         title:          _root.title
         defaultSuffix:  _root.defaultSuffix
+        // macOS: the native NSOpenPanel crashes inside Apple's ViewBridge/ImageIO when it
+        // snapshots the accessory (name-filter) view over XPC. Use Qt's non-native dialog there.
+        options:        Qt.platform.os === "osx" ? FileDialog.DontUseNativeDialog : 0
 
         onAccepted: {
             var fullPath = QGCFileDialogController.urlToLocalFile(selectedFile)
