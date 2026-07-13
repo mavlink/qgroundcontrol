@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DigiviewConnection.h"
+#include "MAVLinkEnums.h"
 
 #include <QtCore/QObject>
 
@@ -51,6 +52,9 @@ public:
     Q_INVOKABLE void sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp);
     Q_INVOKABLE void sendAIParameters(uint8_t run_ai, QString track_model_name, QString scan_model_name);
     Q_INVOKABLE void sendModelParameters(QString model_name);
+    Q_INVOKABLE void sendSetVideoOutput(
+        QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
+        uint8_t layout, uint8_t detection_overlay_mode);
     Q_INVOKABLE void sendVideoOutputParameters(
         QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
         uint8_t layout_mode, uint8_t detection_overlay_mode, uint8_t num_user_views,
@@ -74,7 +78,7 @@ public:
         float yaw_rel, float pitch_rel,
         float latitude, float longitude, float altitude,
         float distance, float width, float height,
-        uint16_t track_id, quint64 publish_timestamp_us);
+        uint16_t track_id, quint64 publish_timestamp_us, uint8_t view_id);
     Q_INVOKABLE void sendCamTargetingParameters(
         QString stream_name, uint8_t cam_id, uint8_t targeting_mode, uint8_t euler_delta,
         float yaw, float pitch, float roll, uint8_t lock_flags,
@@ -99,13 +103,21 @@ public:
         uint8_t detection_id, uint16_t zoom_level, float confidence,
         float yaw_global, float pitch_global,
         uint8_t rel_frame_of_reference, float yaw_rel, float pitch_rel,
-        quint64 publish_timestamp_us, uint8_t status);
+        quint64 publish_timestamp_us, uint8_t status, uint8_t lock_target);
     Q_INVOKABLE void sendCalibrationParameters(
         uint8_t cam_id, uint8_t calib_command, uint8_t calib_status);
     Q_INVOKABLE void sendNavigationParameters(
         float altitude, float visual_lat, float visual_lon,
         float next_waypoint_target_yaw, float next_waypoint_target_pitch, float next_waypoint_target_roll,
         float visual_vel_x, float visual_vel_y, float visual_vel_z);
+
+
+    //////////////////////////////////////////////////////////
+    ///////////// Helper-functions ///////////////////////////
+    //////////////////////////////////////////////////////////
+
+    Q_INVOKABLE void changeEuler(int camId, float yaw, float pitch);
+    Q_INVOKABLE void changeZoom(int camId, float zoom);
 
 signals:
     void hostChanged();
@@ -142,7 +154,7 @@ signals:
         float yaw_rel, float pitch_rel,
         float latitude, float longitude, float altitude,
         float distance, float width, float height,
-        uint16_t track_id, quint64 publish_timestamp_us);
+        uint16_t track_id, quint64 publish_timestamp_us, uint8_t view_id);
     void camTargetingParametersReceived(
         const QString& stream_name, uint8_t cam_id, uint8_t targeting_mode, uint8_t euler_delta,
         float yaw, float pitch, float roll, uint8_t lock_flags,
@@ -167,7 +179,7 @@ signals:
         uint8_t detection_id, uint16_t zoom_level, float confidence,
         float yaw_global, float pitch_global,
         uint8_t rel_frame_of_reference, float yaw_rel, float pitch_rel,
-        quint64 publish_timestamp_us, uint8_t status);
+        quint64 publish_timestamp_us, uint8_t status, uint8_t lock_target);
     void calibrationParametersReceived(uint8_t cam_id, uint8_t calib_command, uint8_t calib_status);
     void navigationParametersReceived(
         float altitude, float visual_lat, float visual_lon,

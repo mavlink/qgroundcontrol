@@ -141,7 +141,7 @@ function getSections() {
                     label: 'Sensitivity',
                     description: 'Choose the sensitivity of the joystick',
                     min: 1,
-                    max: 20,
+                    max: 25,
                     step: 1,
                     value: 10
                 },
@@ -203,7 +203,7 @@ function getSections() {
                     label: 'Sensitivity',
                     description: 'Choose the sensitivity of the zoom buttons',
                     min: 1,
-                    max: 20,
+                    max: 25,
                     step: 1,
                     value: 10
                 }

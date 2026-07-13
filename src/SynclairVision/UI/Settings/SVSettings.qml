@@ -9,7 +9,9 @@ QtObject {
 //---------------------------------
 
     //Video
-        property string videoResolution: "1080p"
+        property int videoResolutionWidth: 1280
+        property int videoResolutionHeight: 720
+        property int videoFps: 30
         property real videoTargetBrightness: 1
         property bool recordHighlight: true
         property bool recordInformationBox: true

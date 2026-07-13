@@ -17,7 +17,7 @@ Item {
     id: root
 
     property int _widgetMargin: 0
-    property bool cameraActive: QGroundControl.videoManager.decoding || QGroundControl.videoManager.isUvc
+    property bool cameraActive: !QGroundControl.videoManager.decoding && !QGroundControl.videoManager.isUvc
     property int cameraIndex
 
     QGCPalette { id: qgcPalette}
@@ -26,7 +26,7 @@ Item {
         id: noVideo
         anchors.fill: parent
         color: "black"
-        visible:            !cameraActive
+        visible: cameraActive
 
         Rectangle {
             id:                 noVideoLabelBackground

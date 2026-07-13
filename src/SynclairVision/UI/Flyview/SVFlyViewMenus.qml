@@ -18,6 +18,34 @@ Item {
     signal settingsSelected(string settingsId)
     signal layoutSelected(string layoutId)
 
+    readonly property var digiview: QGroundControl.digiviewManager
+
+    function setLayout(layoutId) {
+        var layoutModel = SVFlyViewMenusList.getLayoutModel()
+        var layoutMode = -1
+        var i
+
+        for (i = 0; i < layoutModel.length; i++) {
+            if (layoutModel[i].id === layoutId) {
+                layoutMode = i
+                break
+            }
+        }
+
+        if (layoutMode < 0) {
+            return
+        }
+
+        digiview.sendSetVideoOutput(
+            "stream",
+            SVSettings.videoResolutionWidth,
+            SVSettings.videoResolutionHeight,
+            SVSettings.videoFps,
+            layoutMode,
+            0
+        )
+    }
+
     SVMenuStrip {
         id: settingsMenu
         anchors.top: parent.top
@@ -75,6 +103,14 @@ Item {
             }
 
             if (id === "record") {
+                if(SVState.record === true) {
+
+                } else {
+                    
+                }
+
+
+
                 SVState.record = !SVState.record
                 return
             }
@@ -104,6 +140,7 @@ Item {
         onItemSelected: (id) => {
             SVState.cameraSelected = -1
             root.layoutSelected(id)
+            root.setLayout(id);
         }
     }
 

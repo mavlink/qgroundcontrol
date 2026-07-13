@@ -18,6 +18,8 @@ Q_APPLICATION_STATIC(DigiviewManager, _digiviewManagerInstance);
 
 namespace {
 
+constexpr uint8_t kCamTargetingLockFlagsUnchanged = 0xFF;
+
 void copyStringToCharBuf(const QString& src, char* dest, int size)
 {
     memset(dest, 0, static_cast<size_t>(size));
@@ -31,6 +33,33 @@ QString stringFromCharBuf(const char* src, int size)
     return QString::fromLatin1(src, static_cast<qsizetype>(strnlen(src, static_cast<size_t>(size))));
 }
 
+uint8_t userViewCountForLayout(uint8_t layout)
+{
+    switch (layout & 0x0F) {
+    case 0:
+        return 1;
+    case 1:
+        return 2;
+    case 2:
+        return 4;
+    case 3:
+        return 2;
+    case 4:
+        return 3;
+    case 5:
+        return 4;
+    case 6:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+uint8_t packLayoutMode(uint8_t layout, uint8_t numUserViews)
+{
+    return static_cast<uint8_t>(((numUserViews & 0x0F) << 4) | (layout & 0x0F));
+}
+
 } // namespace
 
 DigiviewManager* DigiviewManager::instance()
@@ -41,8 +70,6 @@ DigiviewManager* DigiviewManager::instance()
 DigiviewManager::DigiviewManager(QObject* parent)
     : QObject(parent)
     , _connection(new DigiviewConnection(this))
-    , _senderSystemId(252)
-    , _senderComponentId(69)
 {
     connect(_connection, &DigiviewConnection::hostChanged, this, &DigiviewManager::hostChanged);
     connect(_connection, &DigiviewConnection::portChanged, this, &DigiviewManager::portChanged);
@@ -182,6 +209,31 @@ void DigiviewManager::sendModelParameters(QString model_name)
     _sendMessage(msg);
 }
 
+void DigiviewManager::sendSetVideoOutput(
+    QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
+    uint8_t layout, uint8_t detection_overlay_mode)
+{
+    const uint8_t numUserViews = userViewCountForLayout(layout);
+
+    sendVideoOutputParameters(
+        stream_name,
+        width,
+        height,
+        fps,
+        packLayoutMode(layout, numUserViews),
+        detection_overlay_mode,
+        numUserViews,
+        {},
+        {},
+        {},
+        {},
+        0,
+        0,
+        0,
+        0,
+        0);
+}
+
 void DigiviewManager::sendVideoOutputParameters(
     QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
     uint8_t layout_mode, uint8_t detection_overlay_mode, uint8_t num_user_views,
@@ -268,7 +320,7 @@ void DigiviewManager::sendTrackedDetectionParameters(
     float yaw_rel, float pitch_rel,
     float latitude, float longitude, float altitude,
     float distance, float width, float height,
-    uint16_t track_id, quint64 publish_timestamp_us)
+    uint16_t track_id, quint64 publish_timestamp_us, uint8_t view_id)
 {
     mavlink_message_t msg;
     mavlink_tracked_detection_parameters_t payload {};
@@ -290,6 +342,7 @@ void DigiviewManager::sendTrackedDetectionParameters(
     payload.height = height;
     payload.track_id = track_id;
     payload.publish_timestamp_us = static_cast<uint64_t>(publish_timestamp_us);
+    payload.view_id = view_id;
 
     _encodeMessage(msg, payload, mavlink_msg_tracked_detection_parameters_encode);
     _sendMessage(msg);
@@ -402,7 +455,7 @@ void DigiviewManager::sendSingleTargetTrackingParameters(
     uint8_t detection_id, uint16_t zoom_level, float confidence,
     float yaw_global, float pitch_global,
     uint8_t rel_frame_of_reference, float yaw_rel, float pitch_rel,
-    quint64 publish_timestamp_us, uint8_t status)
+    quint64 publish_timestamp_us, uint8_t status, uint8_t lock_target)
 {
     mavlink_message_t msg;
     mavlink_single_target_tracking_parameters_t payload {};
@@ -422,6 +475,7 @@ void DigiviewManager::sendSingleTargetTrackingParameters(
     payload.pitch_rel = pitch_rel;
     payload.publish_timestamp_us = static_cast<uint64_t>(publish_timestamp_us);
     payload.status = status;
+    payload.lock_target = lock_target;
 
     _encodeMessage(msg, payload, mavlink_msg_single_target_tracking_parameters_encode);
     _sendMessage(msg);
@@ -460,6 +514,57 @@ void DigiviewManager::sendNavigationParameters(
 
     _encodeMessage(msg, payload, mavlink_msg_navigation_parameters_encode);
     _sendMessage(msg);
+}
+
+////////////// HELPERS ///////////////////////////
+
+void DigiviewManager::changeEuler(int camId, float yaw, float pitch)
+{
+    sendSingleTargetTrackingParameters(
+        SV_STT_CMD_OFF,
+        "stream",
+        camId,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        SV_STT_STATUS_OFF,
+        0
+    );
+
+    sendCamTargetingParameters(
+        "stream",
+        camId,
+        SV_TARGETING_MODE_DIRECTIONAL,
+        1,
+        yaw,
+        pitch,
+        0,
+        kCamTargetingLockFlagsUnchanged,
+        0, 0,
+        0, 0, 0,
+        0,
+        -1,
+        0
+    );
+}
+
+void DigiviewManager::changeZoom(int camId, float zoom)
+{
+    sendCamOpticsAndControlParameters(
+        "stream",
+        camId,
+        zoom,
+        0,
+        0
+    );
 }
 
 void DigiviewManager::_handleMessage(const mavlink_message_t& message)
@@ -577,7 +682,8 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.width,
             payload.height,
             payload.track_id,
-            static_cast<quint64>(payload.publish_timestamp_us));
+            static_cast<quint64>(payload.publish_timestamp_us),
+            payload.view_id);
         break;
     }
     case MAVLINK_MSG_ID_CAM_TARGETING_PARAMETERS: {
@@ -666,7 +772,8 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.yaw_rel,
             payload.pitch_rel,
             static_cast<quint64>(payload.publish_timestamp_us),
-            payload.status);
+            payload.status,
+            payload.lock_target);
         break;
     }
     case MAVLINK_MSG_ID_CALIBRATION_PARAMETERS: {

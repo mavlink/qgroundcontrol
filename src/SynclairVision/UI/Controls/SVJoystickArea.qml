@@ -27,6 +27,9 @@ Item {
 
     QGCPalette { id: qgcPalette}
 
+    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property real eulerScale: 0.50
+
     function getAngleStep(dx, dy) {
         let angle = Math.atan2(dy, dx)
         if (angle < 0) angle += Math.PI * 2;
@@ -94,6 +97,46 @@ Item {
             next[index - 4] = false
             innerClicked = next
         }
+    }
+
+    function changeEuler() {
+        if (root.pressedIndex < 0) {
+            return
+        }
+
+        let yaw = 0
+        let pitch = 0
+        let direction = root.pressedIndex % 4
+
+        let strength = SVSettings.joystickSensitivity * eulerScale
+        if (root.pressedIndex >= 4) {
+            strength *= 0.333
+        }
+
+        switch (direction) {
+        case 0:
+            yaw = -strength
+            break
+        case 1:
+            pitch = -strength
+            break
+        case 2:
+            yaw = strength
+            break
+        case 3:
+            pitch = strength
+            break
+        }
+
+        if (SVSettings.invertJoystickX) {
+            yaw = -yaw
+        }
+
+        if (SVSettings.invertJoystickY) {
+            pitch = -pitch
+        }
+
+        digiview.changeEuler(SVState.cameraSelected, yaw, pitch)
     }
 
     SVJoystickButtonSegment {
@@ -183,6 +226,8 @@ Item {
             root.hoverIndex = index
             root.pressedIndex = index
             root.setClicked(index)
+
+            changeEuler();
         }
 
         onReleased: {

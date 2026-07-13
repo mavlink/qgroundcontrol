@@ -17,7 +17,7 @@ class DigiviewConnection : public QObject
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
 
 public:
-    static constexpr const char* kDefaultHost = "192.168.4.126";
+    static constexpr const char* kDefaultHost = "192.168.4.60";
     static constexpr quint16 kDefaultPort = 14570;
     static constexpr quint16 kDefaultListenPort = 14571;
 
@@ -56,7 +56,7 @@ private:
     bool _resolveRemoteAddress(QHostAddress& remoteAddress);
 
     QUdpSocket _socket;
-    QString _host = QStringLiteral("192.168.4.126");
+    QString _host = QStringLiteral("192.168.4.60");
     quint16 _port = kDefaultPort;
     quint16 _listenPort = kDefaultListenPort;
     bool _connected = false;
