@@ -106,7 +106,7 @@ private:
     /// -Send an EOS event at the beginning of that branch
     bool _unlinkBranch(GstElement *from, guint32 eosSeqnum = GST_SEQNUM_INVALID);
     bool _isRecordingEOSMessage(GstMessage *message) const;
-    void _handleBusEOS(bool recordingEOS);
+    void _handleBusEOS(bool recordingEOS, bool directPipelineEOS);
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
     void _logDecodebin3SelectedCodec(GstElement *decodebin3);

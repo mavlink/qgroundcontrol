@@ -1205,14 +1205,23 @@ void GStreamerTest::_testRecordingEosSeqnumClassification()
 {
     GstVideoReceiver receiver;
     GstElement* messageSource = gst_pipeline_new("recording-eos-seqnum-test");
+    GstElement* recordingBin = gst_bin_new("recording-sink-bin");
+    GstElement* recordingSink = gst_element_factory_make("fakesink", nullptr);
     QVERIFY(messageSource);
+    QVERIFY(recordingBin);
+    QVERIFY(recordingSink);
+    QVERIFY(gst_bin_add(GST_BIN(recordingBin), recordingSink));
     GstMessage* recordingMessage = gst_message_new_eos(GST_OBJECT(messageSource));
     GstMessage* sourceMessage = gst_message_new_eos(GST_OBJECT(messageSource));
+    GstMessage* ancestryMessage = gst_message_new_eos(GST_OBJECT(recordingSink));
     QVERIFY(recordingMessage);
     QVERIFY(sourceMessage);
+    QVERIFY(ancestryMessage);
     const auto cleanup = qScopeGuard([&] {
         gst_clear_message(&recordingMessage);
         gst_clear_message(&sourceMessage);
+        gst_clear_message(&ancestryMessage);
+        gst_clear_object(&recordingBin);
         gst_clear_object(&messageSource);
     });
 
@@ -1226,6 +1235,7 @@ void GStreamerTest::_testRecordingEosSeqnumClassification()
 
     receiver._recordingEosSeqnum.store(recordingSeqnum, std::memory_order_release);
     QVERIFY(receiver._isRecordingEOSMessage(recordingMessage));
+    QVERIFY(receiver._isRecordingEOSMessage(ancestryMessage));
     QVERIFY(!receiver._isRecordingEOSMessage(sourceMessage));
 
     receiver._recordingEosSeqnum.store(GST_SEQNUM_INVALID, std::memory_order_release);

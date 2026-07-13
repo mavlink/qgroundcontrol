@@ -200,7 +200,8 @@ protected:
     // Written live on the GUI thread, read on the receiver worker thread.
     std::atomic<bool> _autoReconnect = true;     ///< RTSP/UDP auto-reconnect with exponential backoff on watchdog/error.
     bool _resetVideoSink = false;
-    bool _endOfStream = false;
+    // Written by a streaming-thread source-pad probe, read by bus/worker EOS handling.
+    std::atomic<bool> _endOfStream = false;
     bool _removingDecoder = false;
     bool _removingRecorder = false;
     // buffer:
