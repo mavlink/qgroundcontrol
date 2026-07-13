@@ -41,6 +41,7 @@ struct APMPlaneMode
         THERMAL       = 24,
         LOITER2QLAND  = 25,
         FOLLOW_TARGET = 90,
+        CUSTOM_LAND   = 91,
     };
 };
 
@@ -90,6 +91,7 @@ protected:
     const QString _thermalFlightMode = tr("Thermal");
     const QString _loiter2qlandFlightMode = tr("Loiter to QLand");
     const QString _followTargetFlightMode = tr("Follow Target");
+    const QString _customLandFlightMode = tr("Custom Landing");
 
 private:
     static bool _remapParamNameIntialized;

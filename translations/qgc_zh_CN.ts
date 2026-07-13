@@ -7308,6 +7308,11 @@ Click Ok to start the auto-tuning process.
       <translation>自动降落</translation>
     </message>
     <message>
+      <location filename="../src/FlightDisplay/FlightModeDisplay.qml" line="70"/>
+      <source>Custom Landing</source>
+      <translation>自定义降落</translation>
+    </message>
+    <message>
       <source>QuadPlane Stabilize</source>
       <translation>四旋翼增稳</translation>
     </message>
@@ -18608,4 +18613,131 @@ Confirm change?</translation>
       <source>Analog Voltage and Current</source>
       <translation>模拟电压和电流</translation>
     </message>  </context>
+  <context>
+    <name>CustomLandingMapVisual</name>
+    <message>
+      <location filename="../src/FlightDisplay/CustomLandingMapVisual.qml" line="41"/>
+      <source>Landing point must be at least 30 metres beyond the loiter radius.</source>
+      <translation>降落点必须至少位于盘旋半径之外 30 米。</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightDisplay/CustomLandingMapVisual.qml" line="317"/>
+      <source>Tangent exit</source>
+      <translation>切线退出点</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightDisplay/CustomLandingMapVisual.qml" line="425"/>
+      <source>Loiter descent</source>
+      <translation>盘旋降高</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightDisplay/CustomLandingMapVisual.qml" line="426"/>
+      <location filename="../src/FlightDisplay/CustomLandingMapVisual.qml" line="444"/>
+      <source>%1 m</source>
+      <translation>%1 米</translation>
+    </message>
+    <message>
+      <location filename="../src/FlightDisplay/CustomLandingMapVisual.qml" line="443"/>
+      <source>Vertical land</source>
+      <translation>垂直降落</translation>
+    </message>
+  </context>
+  <context>
+    <name>CustomLandingPanel</name>
+    <message><source>Waiting for the custom landing controller.</source><translation>正在等待自定义降落控制器。</translation></message>
+    <message><source>Waiting for the vehicle to confirm Custom Landing mode.</source><translation>正在等待飞控确认自定义降落模式。</translation></message>
+    <message><source>Checking whether the vehicle supports Custom Landing.</source><translation>正在检查飞控是否支持自定义降落。</translation></message>
+    <message><source>The landing plan is committed. Map editing is locked.</source><translation>降落方案已提交，地图编辑已锁定。</translation></message>
+    <message><source>Communicating with the vehicle. Keep the aircraft in Custom Landing mode.</source><translation>正在与飞控通信，请保持自定义降落模式。</translation></message>
+    <message><source>Click the map to set the loiter descent point.</source><translation>单击地图设置盘旋降高点。</translation></message>
+    <message><source>Click the map to set the vertical landing point.</source><translation>单击地图设置垂直降落点。</translation></message>
+    <message><source>Drag either marker to refine the path, then review and execute.</source><translation>拖动任一标记以调整路径，然后检查并执行。</translation></message>
+    <message><source>Altitudes are relative to the home position.</source><translation>所有高度均为相对 Home 点高度。</translation></message>
+    <message><source>Not set</source><translation>未设置</translation></message>
+    <message><source>Default</source><translation>默认</translation></message>
+    <message><source>Custom Landing</source><translation>自定义降落</translation></message>
+    <message><source>Draft not committed</source><translation>草稿尚未提交</translation></message>
+    <message><source>The connected firmware did not report Custom Landing capability.</source><translation>已连接的飞控未报告自定义降落能力。</translation></message>
+    <message><source>Check capability again</source><translation>重新检查能力</translation></message>
+    <message><source>Loiter descent point</source><translation>盘旋降高点</translation></message>
+    <message><source>Target altitude</source><translation>目标高度</translation></message>
+    <message><source>m</source><translation>米</translation></message>
+    <message><source>Loiter radius</source><translation>盘旋半径</translation></message>
+    <message><source>Loiter direction</source><translation>盘旋方向</translation></message>
+    <message><source>Clockwise</source><translation>顺时针</translation></message>
+    <message><source>Counter-clockwise</source><translation>逆时针</translation></message>
+    <message><source>Vertical landing point</source><translation>垂直降落点</translation></message>
+    <message><source>Landing altitude</source><translation>降落高度</translation></message>
+    <message><source>Approach airspeed</source><translation>进近空速</translation></message>
+    <message><source>m/s</source><translation>米/秒</translation></message>
+    <message><source>Reset points</source><translation>重新选点</translation></message>
+    <message><source>Abort landing</source><translation>中止降落</translation></message>
+    <message><source>Cancel</source><translation>取消</translation></message>
+    <message><source>Plan committed</source><translation>方案已提交</translation></message>
+    <message><source>Review and execute</source><translation>检查并执行</translation></message>
+    <message><source>Execute Custom Landing?</source><translation>执行自定义降落？</translation></message>
+    <message><source>The vehicle will leave its current hold and execute this landing path after the flight controller accepts the plan.</source><translation>飞控接受方案后，无人机将离开当前等待盘旋并执行此降落路径。</translation></message>
+    <message><source>Loiter point</source><translation>盘旋点</translation></message>
+    <message><source>Loiter altitude</source><translation>盘旋高度</translation></message>
+    <message><source>%1 m</source><translation>%1 米</translation></message>
+    <message><source>Radius / direction</source><translation>半径/方向</translation></message>
+    <message><source>%1 m, %2</source><translation>%1 米，%2</translation></message>
+    <message><source>clockwise</source><translation>顺时针</translation></message>
+    <message><source>counter-clockwise</source><translation>逆时针</translation></message>
+    <message><source>Landing point</source><translation>降落点</translation></message>
+    <message><source>%1 m/s</source><translation>%1 米/秒</translation></message>
+    <message><source>Flight controller default</source><translation>使用飞控默认值</translation></message>
+    <message><source>Abort Custom Landing?</source><translation>中止自定义降落？</translation></message>
+    <message><source>Cancel Custom Landing?</source><translation>取消自定义降落？</translation></message>
+    <message><source>Cancel is accepted before VTOL approach starts and then holds in Custom Landing. After VTOL approach starts it is denied; explicitly select QLOITER or QRTL if an abort is required.</source><translation>VTOL 进近开始前可取消，取消后将在自定义降落模式中盘旋等待；VTOL 进近开始后飞控会拒绝取消。如需中止，请明确切换到 QLOITER 或 QRTL。</translation></message>
+    <message><source>The draft will not execute. The flight controller will leave the planning hold using its configured cancel behavior.</source><translation>草稿不会执行。飞控将按已配置的取消策略退出规划等待状态。</translation></message>
+  </context>
+  <context>
+    <name>CustomLandingController</name>
+    <message><source>Query Custom Landing capability</source><translation>查询自定义降落能力</translation></message>
+    <message><source>No active vehicle</source><translation>无活动飞行器</translation></message>
+    <message><source>Another Custom Landing command is in progress</source><translation>另一项自定义降落命令正在执行</translation></message>
+    <message><source>Custom Landing mode is not active</source><translation>自定义降落模式未激活</translation></message>
+    <message><source>Cannot reset while a command is in progress</source><translation>命令执行期间无法重置</translation></message>
+    <message><source>Cancel the onboard Custom Landing plan before resetting the draft</source><translation>重置草稿前请先取消飞控中的自定义降落方案</translation></message>
+    <message><source>Select loiter and landing points</source><translation>请选择盘旋点和降落点</translation></message>
+    <message><source>Vehicle left Custom Landing mode</source><translation>飞行器已退出自定义降落模式</translation></message>
+    <message><source>Custom Landing draft changed</source><translation>自定义降落草稿已更改</translation></message>
+    <message><source>Vehicle has not confirmed Custom Landing capability</source><translation>飞控尚未确认支持自定义降落</translation></message>
+    <message><source>Vehicle is not in Custom Landing mode</source><translation>飞行器未处于自定义降落模式</translation></message>
+    <message><source>A Custom Landing plan is already committed</source><translation>已有自定义降落方案提交</translation></message>
+    <message><source>Commit status is uncertain; cancel the onboard plan before retrying</source><translation>提交状态不确定；重试前请先取消飞控中的方案</translation></message>
+    <message><source>Select valid loiter and landing coordinates</source><translation>请选择有效的盘旋点和降落点坐标</translation></message>
+    <message><source>Latitude and longitude cannot both be zero</source><translation>纬度和经度不能同时为零</translation></message>
+    <message><source>Altitude and loiter radius values are invalid</source><translation>高度或盘旋半径数值无效</translation></message>
+    <message><source>Loiter altitude must be at least 20 metres above landing altitude</source><translation>盘旋高度必须至少比降落高度高 20 米</translation></message>
+    <message><source>A Custom Landing numeric value is out of range</source><translation>自定义降落的数值超出范围</translation></message>
+    <message><source>Landing point must be at least 30 metres beyond the loiter radius</source><translation>降落点必须至少位于盘旋半径之外 30 米</translation></message>
+    <message><source>Querying Custom Landing capability (%1/%2)</source><translation>正在查询自定义降落能力（%1/%2）</translation></message>
+    <message><source>Sending loiter point (%1/%2)</source><translation>正在发送盘旋点（%1/%2）</translation></message>
+    <message><source>Sending landing point (%1/%2)</source><translation>正在发送降落点（%1/%2）</translation></message>
+    <message><source>Committing Custom Landing plan (%1/%2)</source><translation>正在提交自定义降落方案（%1/%2）</translation></message>
+    <message><source>Cancelling Custom Landing plan (%1/%2)</source><translation>正在取消自定义降落方案（%1/%2）</translation></message>
+    <message><source>No response for %1; retrying</source><translation>%1 无响应，正在重试</translation></message>
+    <message><source>Custom Landing protocol version %1 supported</source><translation>支持自定义降落协议版本 %1</translation></message>
+    <message><source>Custom Landing plan committed; execution accepted</source><translation>自定义降落方案已提交，飞控已接受执行</translation></message>
+    <message><source>Custom Landing plan cancelled; vehicle holding</source><translation>自定义降落方案已取消，飞行器保持等待</translation></message>
+    <message><source>no COMMAND_ACK received</source><translation>未收到 COMMAND_ACK</translation></message>
+    <message><source>another command with the same MAV_CMD is pending</source><translation>另一条相同 MAV_CMD 的命令正在等待</translation></message>
+    <message><source>temporarily rejected</source><translation>暂时被拒绝</translation></message>
+    <message><source>denied by vehicle safety validation</source><translation>未通过飞行器安全校验</translation></message>
+    <message><source>unsupported by vehicle</source><translation>飞行器不支持</translation></message>
+    <message><source>vehicle reported failure</source><translation>飞行器报告失败</translation></message>
+    <message><source>MAV_RESULT %1</source><translation>MAV_RESULT %1</translation></message>
+    <message><source> (reason %1)</source><translation>（原因 %1）</translation></message>
+    <message><source>; commit status is uncertain, use Cancel before retrying</source><translation>；提交状态不确定，请在重试前使用“取消”</translation></message>
+    <message><source>; after VTOL approach starts, explicitly switch to QLOITER or QRTL if an abort is required</source><translation>；VTOL 进近开始后如需中止，请明确切换到 QLOITER 或 QRTL</translation></message>
+    <message><source>Custom Landing %1 failed: %2</source><translation>自定义降落%1失败：%2</translation></message>
+    <message><source>capability query</source><translation>能力查询</translation></message>
+    <message><source>loiter point</source><translation>盘旋点</translation></message>
+    <message><source>landing point</source><translation>降落点</translation></message>
+    <message><source>commit</source><translation>提交</translation></message>
+    <message><source>cancel</source><translation>取消</translation></message>
+    <message><source>command</source><translation>命令</translation></message>
+  </context>
 </TS>

@@ -67,6 +67,7 @@ QtObject {
         { source: "Thermal",            label: "Thermal" },
         { source: "Loiter to QLand",    label: "Loiter to QLand" },
         { source: "Autoland",           label: "Autoland" },
+        { source: "Custom Landing",     label: "Custom Landing" },
         { source: "QuadPlane Stabilize", label: "QuadPlane Stabilize" },
         { source: "QuadPlane Hover",     label: "QuadPlane Hover" },
         { source: "QuadPlane Loiter",    label: "QuadPlane Loiter" },

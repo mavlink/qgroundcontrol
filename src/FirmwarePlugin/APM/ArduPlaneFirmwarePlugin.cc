@@ -43,6 +43,7 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
         { APMPlaneMode::THERMAL       , _thermalFlightMode      },
         { APMPlaneMode::LOITER2QLAND  , _loiter2qlandFlightMode },
         { APMPlaneMode::FOLLOW_TARGET , _followTargetFlightMode },
+        { APMPlaneMode::CUSTOM_LAND   , _customLandFlightMode   },
         
     });
 
@@ -74,6 +75,7 @@ ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(QObject *parent)
         { _thermalFlightMode      , APMPlaneMode::THERMAL       , true , true },
         { _loiter2qlandFlightMode , APMPlaneMode::LOITER2QLAND  , true , true },
         { _followTargetFlightMode , APMPlaneMode::FOLLOW_TARGET , true , true },
+        { _customLandFlightMode   , APMPlaneMode::CUSTOM_LAND   , true , true },
     };
     updateAvailableFlightModes(availableFlightModes);
 
