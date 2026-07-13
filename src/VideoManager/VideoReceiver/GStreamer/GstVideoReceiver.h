@@ -11,6 +11,7 @@
 #include <glib.h>
 #include <gst/gstelement.h>
 #include <gst/gstpad.h>
+#include <gst/gstutils.h>
 
 #include "VideoReceiver.h"
 
@@ -103,7 +104,9 @@ private:
     void _noteEndOfStream();
     /// -Unlink the branch from the src pad
     /// -Send an EOS event at the beginning of that branch
-    bool _unlinkBranch(GstElement *from);
+    bool _unlinkBranch(GstElement *from, guint32 eosSeqnum = GST_SEQNUM_INVALID);
+    bool _isRecordingEOSMessage(GstMessage *message) const;
+    void _handleBusEOS(bool recordingEOS);
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
     void _logDecodebin3SelectedCodec(GstElement *decodebin3);
@@ -148,6 +151,7 @@ private:
     gulong _eosProbeId = 0;
     GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
     std::atomic<gulong> _keyframeWatchId = 0;
+    std::atomic<guint32> _recordingEosSeqnum{GST_SEQNUM_INVALID};
     bool _recordingStopRequested = false;
     bool _activePipelineIsJpegNetworkSource = false;
 

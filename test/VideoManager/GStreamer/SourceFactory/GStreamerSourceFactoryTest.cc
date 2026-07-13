@@ -1201,6 +1201,37 @@ void GStreamerTest::_testJpegRecordingContainers()
     }
 }
 
+void GStreamerTest::_testRecordingEosSeqnumClassification()
+{
+    GstVideoReceiver receiver;
+    GstElement* messageSource = gst_pipeline_new("recording-eos-seqnum-test");
+    QVERIFY(messageSource);
+    GstMessage* recordingMessage = gst_message_new_eos(GST_OBJECT(messageSource));
+    GstMessage* sourceMessage = gst_message_new_eos(GST_OBJECT(messageSource));
+    QVERIFY(recordingMessage);
+    QVERIFY(sourceMessage);
+    const auto cleanup = qScopeGuard([&] {
+        gst_clear_message(&recordingMessage);
+        gst_clear_message(&sourceMessage);
+        gst_clear_object(&messageSource);
+    });
+
+    const guint32 recordingSeqnum = gst_util_seqnum_next();
+    const guint32 sourceSeqnum = gst_util_seqnum_next();
+    QVERIFY(recordingSeqnum != GST_SEQNUM_INVALID);
+    QVERIFY(sourceSeqnum != GST_SEQNUM_INVALID);
+    QVERIFY(recordingSeqnum != sourceSeqnum);
+    gst_message_set_seqnum(recordingMessage, recordingSeqnum);
+    gst_message_set_seqnum(sourceMessage, sourceSeqnum);
+
+    receiver._recordingEosSeqnum.store(recordingSeqnum, std::memory_order_release);
+    QVERIFY(receiver._isRecordingEOSMessage(recordingMessage));
+    QVERIFY(!receiver._isRecordingEOSMessage(sourceMessage));
+
+    receiver._recordingEosSeqnum.store(GST_SEQNUM_INVALID, std::memory_order_release);
+    QVERIFY(!receiver._isRecordingEOSMessage(recordingMessage));
+}
+
 void GStreamerTest::_testJpegReceiverRecording()
 {
 #ifdef QGC_HAS_WEBSOCKET_VIDEO

@@ -88,23 +88,6 @@ bool isRecoverableH265PaciError(GstMessage *msg, const GError *error, const gcha
     return factory && (g_strcmp0(GST_OBJECT_NAME(factory), "rtph265depay") == 0);
 }
 
-bool isRecordingBranchMessage(GstMessage* message)
-{
-    GstObject* current =
-        message && GST_MESSAGE_SRC(message) ? GST_OBJECT(gst_object_ref(GST_MESSAGE_SRC(message))) : nullptr;
-    while (current) {
-        const char* name = GST_OBJECT_NAME(current);
-        if ((g_strcmp0(name, kRecordingSinkBinName) == 0) || (g_strcmp0(name, kRecordingSplitMuxName) == 0)) {
-            gst_object_unref(current);
-            return true;
-        }
-        GstObject* parent = gst_object_get_parent(current);
-        gst_object_unref(current);
-        current = parent;
-    }
-    return false;
-}
-
 } // namespace
 
 GstVideoReceiver::GstVideoReceiver(QObject *parent)
@@ -165,6 +148,7 @@ void GstVideoReceiver::start(uint32_t timeout)
     const QString pipelineUriForLogging = QGCNetworkHelper::redactedUrlForLogging(pipelineUri);
     const bool redactPipelineDiagnostics = _mustRedactPipelineDiagnostics(pipelineUri);
     const quint64 pipelineGeneration = _pipelineGeneration.fetch_add(1, std::memory_order_acq_rel) + 1;
+    _recordingEosSeqnum.store(GST_SEQNUM_INVALID, std::memory_order_release);
 
     _timeout = timeout;
     _buffer = lowLatency() ? -1 : 0;
@@ -724,16 +708,17 @@ void GstVideoReceiver::stopRecording()
                  nullptr);
 
     _removingRecorder = true;
+    _recordingStopRequested = true;
+    const guint32 recordingEosSeqnum = gst_util_seqnum_next();
+    _recordingEosSeqnum.store(recordingEosSeqnum, std::memory_order_release);
 
-    if (!_unlinkBranch(_recorderValve)) {
+    if (!_unlinkBranch(_recorderValve, recordingEosSeqnum)) {
+        _recordingEosSeqnum.store(GST_SEQNUM_INVALID, std::memory_order_release);
+        _recordingStopRequested = false;
         _removingRecorder = false;
         emit onStopRecordingComplete(STATUS_FAIL);
         return;
     }
-
-    // EOS event propagates valve→mux→filesink; _shutdownRecordingBranch emits the
-    // complete signal once the muxer index is written and the file is closed.
-    _recordingStopRequested = true;
 }
 
 void GstVideoReceiver::takeScreenshot(const QString &imageFile)
@@ -885,6 +870,28 @@ void GstVideoReceiver::_handleEOS()
     } else {
         qCWarning(GstVideoReceiverLog) << "Unexpected EOS!";
         _scheduleReconnect("unexpected EOS");
+    }
+}
+
+bool GstVideoReceiver::_isRecordingEOSMessage(GstMessage *message) const
+{
+    const guint32 recordingEosSeqnum = _recordingEosSeqnum.load(std::memory_order_acquire);
+    return message && (recordingEosSeqnum != GST_SEQNUM_INVALID) &&
+           (gst_message_get_seqnum(message) == recordingEosSeqnum);
+}
+
+void GstVideoReceiver::_handleBusEOS(bool recordingEOS)
+{
+    if (!recordingEOS) {
+        _handleEOS();
+        return;
+    }
+
+    if (_recording && _removingRecorder) {
+        qCDebug(GstVideoReceiverLog) << "Received recording branch EOS";
+        _shutdownRecordingBranch();
+    } else {
+        qCDebug(GstVideoReceiverLog) << "Ignoring duplicate recording branch EOS";
     }
 }
 
@@ -1282,7 +1289,7 @@ void GstVideoReceiver::_noteEndOfStream()
     _endOfStream = true;
 }
 
-bool GstVideoReceiver::_unlinkBranch(GstElement *from)
+bool GstVideoReceiver::_unlinkBranch(GstElement *from, guint32 eosSeqnum)
 {
     GstPad *src = gst_element_get_static_pad(from, "src");
     if (!src) {
@@ -1306,8 +1313,13 @@ bool GstVideoReceiver::_unlinkBranch(GstElement *from)
 
     gst_clear_object(&src);
 
-    // Send EOS at the beginning of the branch
-    const gboolean ret = gst_pad_send_event(sink, gst_event_new_eos());
+    // Send EOS at the beginning of the branch. Recording teardown stamps the
+    // event so its forwarded and aggregate pipeline messages can be correlated.
+    GstEvent *eos = gst_event_new_eos();
+    if (eosSeqnum != GST_SEQNUM_INVALID) {
+        gst_event_set_seqnum(eos, eosSeqnum);
+    }
+    const gboolean ret = gst_pad_send_event(sink, eos);
 
     gst_clear_object(&sink);
 
@@ -1514,15 +1526,17 @@ gboolean GstVideoReceiver::_onBusMessage(GstBus * /* bus */, GstMessage *msg, gp
         g_clear_pointer(&debug, g_free);
         break;
     }
-    case GST_MESSAGE_EOS:
-        pThis->_worker->dispatch([pThis, pipelineGeneration]() {
+    case GST_MESSAGE_EOS: {
+        const bool recordingEOS = pThis->_isRecordingEOSMessage(msg);
+        pThis->_worker->dispatch([pThis, pipelineGeneration, recordingEOS]() {
             if (pipelineGeneration != pThis->_pipelineGeneration.load(std::memory_order_acquire)) {
                 return;
             }
             qCDebug(GstVideoReceiverLog) << "Received EOS";
-            pThis->_handleEOS();
+            pThis->_handleBusEOS(recordingEOS);
         });
         break;
+    }
     case GST_MESSAGE_STREAM_COLLECTION: {
         GstStreamCollection *collection = nullptr;
         gst_message_parse_stream_collection(msg, &collection);
@@ -1601,22 +1615,13 @@ gboolean GstVideoReceiver::_onBusMessage(GstBus * /* bus */, GstMessage *msg, gp
         }
 
         if (GST_MESSAGE_TYPE(forward_msg) == GST_MESSAGE_EOS) {
-            const bool recordingBranchMessage = isRecordingBranchMessage(msg) || isRecordingBranchMessage(forward_msg);
-            pThis->_worker->dispatch([pThis, pipelineGeneration, recordingBranchMessage]() {
+            const bool recordingEOS = pThis->_isRecordingEOSMessage(forward_msg);
+            pThis->_worker->dispatch([pThis, pipelineGeneration, recordingEOS]() {
                 if (pipelineGeneration != pThis->_pipelineGeneration.load(std::memory_order_acquire)) {
                     return;
                 }
-                if (recordingBranchMessage) {
-                    if (pThis->_recording && pThis->_removingRecorder) {
-                        qCDebug(GstVideoReceiverLog) << "Received recording branch EOS";
-                        pThis->_shutdownRecordingBranch();
-                    } else {
-                        qCDebug(GstVideoReceiverLog) << "Ignoring duplicate recording branch EOS";
-                    }
-                    return;
-                }
                 qCDebug(GstVideoReceiverLog) << "Received branch EOS";
-                pThis->_handleEOS();
+                pThis->_handleBusEOS(recordingEOS);
             });
         }
 
