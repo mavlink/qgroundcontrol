@@ -12,10 +12,14 @@ Values are settable even if no vehicle is connected. Settings that require a veh
 
 This section defines the display units used in the application.
 
+QGroundControl tracks **horizontal** and **vertical** distance preferences separately in the Fact system.
+Facts tagged with unit type `m` follow the horizontal distance setting, while altitude and height facts use the `vertical m` unit type so they can show feet independently of map/distance units.
+When altitudes look wrong after you change Display Units, verify both distance axes (and area/speed/temperature) rather than only the generic distance control.
 
 The settings are:
 
-- **Distance**: Meters | Feet
+- **Distance** (horizontal): Meters | Feet
+- **Vertical Distance** (altitude/height): Meters | Feet
 - **Area**: SquareMetres | SquareFeet | SquareKilometers | Hectares | Acres | SquareMiles
 - **Speed**: Metres/second | Feet/second | Miles/hour | Kilometres/hour | Knots
 - **Temperature**: Celsius | Fahrenheit
