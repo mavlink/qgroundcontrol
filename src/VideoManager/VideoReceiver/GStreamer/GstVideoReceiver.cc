@@ -206,11 +206,17 @@ void GstVideoReceiver::start(uint32_t timeout)
 
         _lastSourceFrameTime = 0;
 
-        _teeProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this, nullptr);
+        // This mandatory probe belongs to the source pipeline, not either removable branch.
+        // Besides the frame heartbeat, it marks source-originated EOS before GstBin creates
+        // aggregate EOS messages whose source and sequence number no longer identify origin.
+        _sourceProbeId = gst_pad_add_probe(
+            pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
+            _sourceProbe, this, nullptr);
         gst_clear_object(&pad);
-        if (_teeProbeId == 0) {
-            // _teeProbe updates _lastSourceFrameTime; without it the watchdog timer fires spuriously instead of reporting a real failure.
-            qCCritical(GstVideoReceiverLog) << "gst_pad_add_probe(_teeProbe) failed";
+        if (_sourceProbeId == 0) {
+            // Without this probe, the watchdog fires spuriously and aggregate branch EOS
+            // cannot be distinguished safely from a real source ending.
+            qCCritical(GstVideoReceiverLog) << "gst_pad_add_probe(_sourceProbe) failed";
             break;
         }
 
@@ -297,7 +303,7 @@ void GstVideoReceiver::start(uint32_t timeout)
         (void) gst_element_foreach_src_pad(_source, grabFirstSrcPad, &srcPad);
 
         if (srcPad) {
-            _onNewSourcePad(srcPad);
+            _onNewSourcePad();
             gst_clear_object(&srcPad);
         } else {
             (void) g_signal_connect(_source, "pad-added", G_CALLBACK(_onNewPad), this);
@@ -346,6 +352,7 @@ void GstVideoReceiver::start(uint32_t timeout)
         qCCritical(GstVideoReceiverLog) << "Failed";
         _pipelineGeneration.fetch_add(1, std::memory_order_acq_rel);
         _activePipelineIsJpegNetworkSource = false;
+        _removeSourceProbe();
 
         if (_pipeline) {
             (void) gst_element_set_state(_pipeline, GST_STATE_NULL);
@@ -395,16 +402,7 @@ void GstVideoReceiver::stop()
     // Only _watchdogTimer.stop() must run on the GUI thread (the timer lives on `this`).
     QMetaObject::invokeMethod(this, [this]() { _watchdogTimer.stop(); }, Qt::QueuedConnection);
 
-    if (_teeProbeId != 0) {
-        if (_tee) {
-            GstPad *sinkpad = gst_element_get_static_pad(_tee, "sink");
-            if (sinkpad) {
-                gst_pad_remove_probe(sinkpad, _teeProbeId);
-                gst_clear_object(&sinkpad);
-            }
-        }
-        _teeProbeId = 0;
-    }
+    _removeSourceProbe();
 
     if (_pipeline) {
         GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
@@ -909,14 +907,14 @@ void GstVideoReceiver::_handleBusEOS(bool recordingEOS, bool directPipelineEOS)
         return;
     }
 
-    // GstBin creates a fresh aggregate EOS message after a child sink posts
-    // EOS, so the branch event seqnum is not preserved on this direct message.
-    // Source EOS is authoritative only after the source-pad probe observes the
-    // event. Otherwise branch teardown is handled by the forwarded child EOS,
-    // and an uncorrelated aggregate must not reconnect a still-flowing source.
+    // GstBin creates a fresh aggregate EOS message after a child sink posts EOS, so the
+    // branch event seqnum is not preserved on this direct message. The mandatory
+    // source-lifetime probe marks real source EOS first; an uncorrelated aggregate must not
+    // reconnect a still-flowing source. Forwarded child EOS remains actionable because it
+    // can report an unexpected decoder termination.
     if (directPipelineEOS && !_endOfStream.load(std::memory_order_acquire) && !(_decoding && _removingDecoder) &&
         !(_recording && _removingRecorder)) {
-        qCDebug(GstVideoReceiverLog) << "Ignoring aggregate EOS without source-pad EOS";
+        qCDebug(GstVideoReceiverLog) << "Ignoring aggregate EOS without source-probe EOS";
         return;
     }
 
@@ -1027,7 +1025,7 @@ GstElement *GstVideoReceiver::_makeFileSink(const QString &videoFile, FILE_FORMA
     return fileSink;
 }
 
-void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
+void GstVideoReceiver::_onNewSourcePad()
 {
     // FIXME: check for caps - if this is not video stream (and preferably - one of these which we have to support) then simply skip it
     if (!gst_element_link(_source, _tee)) {
@@ -1041,11 +1039,6 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
         emit streamingChanged(_streaming);
     }
 
-    _eosProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, _eosProbe, this, nullptr);
-    if (_eosProbeId != 0) {
-        // Hold a ref so _shutdownDecodingBranch can remove the probe even after _decoder is gone.
-        _eosProbePad = GST_PAD_CAST(gst_object_ref(pad));
-    }
     if (!_videoSink) {
         return;
     }
@@ -1314,7 +1307,33 @@ void GstVideoReceiver::_noteVideoSinkFrame()
 
 void GstVideoReceiver::_noteEndOfStream()
 {
-    _endOfStream.store(true, std::memory_order_release);
+    if (_endOfStream.exchange(true, std::memory_order_acq_rel)) {
+        return;
+    }
+
+    const quint64 pipelineGeneration = _pipelineGeneration.load(std::memory_order_acquire);
+    _worker->dispatch([this, pipelineGeneration]() {
+        if (pipelineGeneration != _pipelineGeneration.load(std::memory_order_acquire)) {
+            return;
+        }
+        _handleEOS();
+    });
+}
+
+void GstVideoReceiver::_removeSourceProbe()
+{
+    if (_sourceProbeId == 0) {
+        return;
+    }
+
+    if (_tee) {
+        GstPad* sinkpad = gst_element_get_static_pad(_tee, "sink");
+        if (sinkpad) {
+            gst_pad_remove_probe(sinkpad, _sourceProbeId);
+            gst_clear_object(&sinkpad);
+        }
+    }
+    _sourceProbeId = 0;
 }
 
 bool GstVideoReceiver::_unlinkBranch(GstElement *from, guint32 eosSeqnum)
@@ -1384,13 +1403,6 @@ void GstVideoReceiver::_shutdownDecodingBranch()
     }
     _videoSinkProbeId = 0;
 
-    if (_eosProbeId != 0 && _eosProbePad) {
-        // Probe was installed on the source pad in _onNewSourcePad; remove from that exact pad — not from _decoder, which may already be cleared above.
-        gst_pad_remove_probe(_eosProbePad, _eosProbeId);
-    }
-    _eosProbeId = 0;
-    gst_clear_object(&_eosProbePad);
-
     _lastVideoFrameTime = 0;
 
     if (_videoSink) {
@@ -1417,6 +1429,8 @@ void GstVideoReceiver::_shutdownDecodingBranch()
 
 void GstVideoReceiver::_shutdownRecordingBranch()
 {
+    _recordingEosSeqnum.store(GST_SEQNUM_INVALID, std::memory_order_release);
+
     const gulong keyframeWatchId = _keyframeWatchId.exchange(0, std::memory_order_acq_rel);
     if (keyframeWatchId != 0 && _recorderValve) {
         GstPad *probepad = gst_element_get_static_pad(_recorderValve, "src");
@@ -1717,7 +1731,7 @@ void GstVideoReceiver::_onNewPad(GstElement *element, GstPad *pad, gpointer data
     GstVideoReceiver *self = static_cast<GstVideoReceiver*>(data);
 
     if (element == self->_source) {
-        self->_onNewSourcePad(pad);
+        self->_onNewSourcePad();
     } else if (element == self->_decoder) {
         self->_onNewDecoderPad(pad);
     } else {
@@ -1725,13 +1739,23 @@ void GstVideoReceiver::_onNewPad(GstElement *element, GstPad *pad, gpointer data
     }
 }
 
-GstPadProbeReturn GstVideoReceiver::_teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data)
+GstPadProbeReturn GstVideoReceiver::_sourceProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
 {
-    Q_UNUSED(pad); Q_UNUSED(info)
+    Q_UNUSED(pad)
 
-    if (user_data) {
-        GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(user_data);
+    if (!info || !user_data) {
+        qCCritical(GstVideoReceiverLog) << "Invalid source probe arguments";
+        return GST_PAD_PROBE_OK;
+    }
+
+    GstVideoReceiver* pThis = static_cast<GstVideoReceiver*>(user_data);
+    if ((GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER) != 0) {
         pThis->_noteTeeFrame();
+    } else if ((GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM) != 0) {
+        const GstEvent* event = gst_pad_probe_info_get_event(info);
+        if (event && GST_EVENT_TYPE(event) == GST_EVENT_EOS) {
+            pThis->_noteEndOfStream();
+        }
     }
 
     return GST_PAD_PROBE_OK;
@@ -1773,23 +1797,6 @@ GstPadProbeReturn GstVideoReceiver::_videoSinkProbe(GstPad *pad, GstPadProbeInfo
         }
 
         pThis->_noteVideoSinkFrame();
-    }
-
-    return GST_PAD_PROBE_OK;
-}
-
-GstPadProbeReturn GstVideoReceiver::_eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data)
-{
-    Q_UNUSED(pad);
-    if (!info || !user_data) {
-        qCCritical(GstVideoReceiverLog) << "Invalid EOS probe arguments";
-        return GST_PAD_PROBE_OK;
-    }
-
-    const GstEvent *event = gst_pad_probe_info_get_event(info);
-    if (event && GST_EVENT_TYPE(event) == GST_EVENT_EOS) {
-        GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(user_data);
-        pThis->_noteEndOfStream();
     }
 
     return GST_PAD_PROBE_OK;

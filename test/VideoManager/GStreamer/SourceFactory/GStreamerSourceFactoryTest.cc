@@ -26,6 +26,7 @@
 #include <QtNetwork/QSslSocket>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
+#include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
 #include <atomic>
 #include <functional>
@@ -1271,7 +1272,9 @@ void GStreamerTest::_testJpegReceiverRecording()
     receiver.start(30);
     QVERIFY_SIGNAL_WAIT(receiverStartSpy, TestTimeout::mediumMs());
     QVERIFY_TRUE_WAIT(serverSocket != nullptr, TestTimeout::mediumMs());
-    QSignalSpy unexpectedReceiverStopSpy(&receiver, &VideoReceiver::onStopComplete);
+    const gulong sourceProbeId = receiver._sourceProbeId;
+    QVERIFY(sourceProbeId != 0);
+    QSignalSpy receiverStopSpy(&receiver, &VideoReceiver::onStopComplete);
 
     const QString rejectedMp4 = directory.filePath(QStringLiteral("jpeg-rejected.mp4"));
     // The configured URI can change before the old worker pipeline is retired. Recording
@@ -1332,13 +1335,15 @@ void GStreamerTest::_testJpegReceiverRecording()
         QVERIFY_SIGNAL_WAIT(stopRecordingSpy, TestTimeout::longMs());
         QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(stopRecordingSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
         QCOMPARE(receiver._keyframeWatchId.load(std::memory_order_acquire), static_cast<gulong>(0));
+        QCOMPARE(receiver._recordingEosSeqnum.load(std::memory_order_acquire),
+                 static_cast<guint32>(GST_SEQNUM_INVALID));
 
         const quint64 postRecordingFrameCount = receiver._sourceFrameCount.load(std::memory_order_relaxed);
         frameTimer.start(1);
         QVERIFY_TRUE_WAIT(receiver._sourceFrameCount.load(std::memory_order_relaxed) >= postRecordingFrameCount + 12,
                           TestTimeout::mediumMs());
         frameTimer.stop();
-        QCOMPARE(unexpectedReceiverStopSpy.count(), 0);
+        QCOMPARE(receiverStopSpy.count(), 0);
 
         const QFileInfo recording(outputPath);
         QVERIFY(recording.exists());
@@ -1372,13 +1377,54 @@ void GStreamerTest::_testJpegReceiverRecording()
         gst_message_unref(playbackMessage);
     }
 
-    QSignalSpy receiverStopSpy(&receiver, &VideoReceiver::onStopComplete);
-    receiver.stop();
+    QQuickItem widget;
+    receiver.setWidget(&widget);
+    GstElement* videoSink = gst_element_factory_make("fakesink", nullptr);
+    QVERIFY(videoSink);
+    gst_object_ref_sink(videoSink);
+    const auto videoSinkCleanup = qScopeGuard([&] { gst_clear_object(&videoSink); });
+
+    QTimer decodeFrameTimer;
+    connect(&decodeFrameTimer, &QTimer::timeout, this, [&]() {
+        if (serverSocket && serverSocket->state() == QAbstractSocket::ConnectedState) {
+            serverSocket->sendBinaryMessage(jpeg);
+            serverSocket->flush();
+        }
+    });
+    decodeFrameTimer.start(1);
+
+    QSignalSpy startDecodingSpy(&receiver, &VideoReceiver::onStartDecodingComplete);
+    QSignalSpy decodingChangedSpy(&receiver, &VideoReceiver::decodingChanged);
+    receiver.startDecoding(videoSink);
+    QVERIFY_SIGNAL_WAIT(startDecodingSpy, TestTimeout::mediumMs());
+    QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(startDecodingSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_WAIT(decodingChangedSpy, TestTimeout::mediumMs());
+    QCOMPARE(decodingChangedSpy.takeFirst().at(0).toBool(), true);
+
+    QSignalSpy stopDecodingSpy(&receiver, &VideoReceiver::onStopDecodingComplete);
+    receiver.stopDecoding();
+    QVERIFY_SIGNAL_WAIT(stopDecodingSpy, TestTimeout::mediumMs());
+    QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(stopDecodingSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_WAIT(decodingChangedSpy, TestTimeout::mediumMs());
+    QCOMPARE(decodingChangedSpy.takeFirst().at(0).toBool(), false);
+    QCOMPARE(receiver._sourceProbeId, sourceProbeId);
+
+    receiver.startDecoding(videoSink);
+    QVERIFY_SIGNAL_WAIT(startDecodingSpy, TestTimeout::mediumMs());
+    QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(startDecodingSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_WAIT(decodingChangedSpy, TestTimeout::mediumMs());
+    QCOMPARE(decodingChangedSpy.takeFirst().at(0).toBool(), true);
+    decodeFrameTimer.stop();
+    QCOMPARE(receiverStopSpy.count(), 0);
+    QCOMPARE(receiver._sourceProbeId, sourceProbeId);
+
+    serverSocket->close(QWebSocketProtocol::CloseCodeNormal, QStringLiteral("test complete"));
     QVERIFY_SIGNAL_WAIT(receiverStopSpy, TestTimeout::longMs());
-    if (serverSocket) {
-        serverSocket->close();
-        serverSocket->deleteLater();
-    }
+    QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(receiverStopSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
+    QVERIFY(receiver._endOfStream.load(std::memory_order_acquire));
+    QCOMPARE(receiver._sourceProbeId, static_cast<gulong>(0));
+    serverSocket->deleteLater();
+    receiver.setWidget(nullptr);
 #else
     QSKIP("Qt WebSockets unavailable");
 #endif
