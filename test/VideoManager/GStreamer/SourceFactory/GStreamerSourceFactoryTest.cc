@@ -1230,6 +1230,7 @@ void GStreamerTest::_testJpegReceiverRecording()
     receiver.start(30);
     QVERIFY_SIGNAL_WAIT(receiverStartSpy, TestTimeout::mediumMs());
     QVERIFY_TRUE_WAIT(serverSocket != nullptr, TestTimeout::mediumMs());
+    QSignalSpy unexpectedReceiverStopSpy(&receiver, &VideoReceiver::onStopComplete);
 
     const QString rejectedMp4 = directory.filePath(QStringLiteral("jpeg-rejected.mp4"));
     // The configured URI can change before the old worker pipeline is retired. Recording
@@ -1273,6 +1274,7 @@ void GStreamerTest::_testJpegReceiverRecording()
         QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(startRecordingSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
         QVERIFY_SIGNAL_WAIT(recordingStartedSpy, TestTimeout::mediumMs());
         QCOMPARE(recordingStartedSpy.takeFirst().at(0).toString(), outputPath);
+        QCOMPARE(receiver._keyframeWatchId.load(std::memory_order_acquire), static_cast<gulong>(0));
 
         const quint64 initialFrameCount = receiver._sourceFrameCount.load(std::memory_order_relaxed);
         for (int frame = 0; frame < 12; ++frame) {
@@ -1288,6 +1290,15 @@ void GStreamerTest::_testJpegReceiverRecording()
         receiver.stopRecording();
         QVERIFY_SIGNAL_WAIT(stopRecordingSpy, TestTimeout::longMs());
         QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(stopRecordingSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
+        QCOMPARE(receiver._keyframeWatchId.load(std::memory_order_acquire), static_cast<gulong>(0));
+
+        const quint64 postRecordingFrameCount = receiver._sourceFrameCount.load(std::memory_order_relaxed);
+        frameTimer.start(1);
+        QVERIFY_TRUE_WAIT(receiver._sourceFrameCount.load(std::memory_order_relaxed) >= postRecordingFrameCount + 12,
+                          TestTimeout::mediumMs());
+        frameTimer.stop();
+        QCOMPARE(unexpectedReceiverStopSpy.count(), 0);
+
         const QFileInfo recording(outputPath);
         QVERIFY(recording.exists());
         QVERIFY(recording.size() > 0);

@@ -33,6 +33,8 @@ QGC_LOGGING_CATEGORY(GstVideoReceiverLog, "Video.GStreamer.GstVideoReceiver")
 namespace {
 // kEosTimeoutNs: bus wait budget for EOS/ERROR during stop(); 3 s covers slow hw decoders.
 constexpr GstClockTime kEosTimeoutNs = 3 * GST_SECOND;
+constexpr char kRecordingSinkBinName[] = "recording-sink-bin";
+constexpr char kRecordingSplitMuxName[] = "recording-splitmux";
 
 struct PipelineBusContext
 {
@@ -84,6 +86,23 @@ bool isRecoverableH265PaciError(GstMessage *msg, const GError *error, const gcha
 
     GstElementFactory *factory = gst_element_get_factory(GST_ELEMENT(src));
     return factory && (g_strcmp0(GST_OBJECT_NAME(factory), "rtph265depay") == 0);
+}
+
+bool isRecordingBranchMessage(GstMessage* message)
+{
+    GstObject* current =
+        message && GST_MESSAGE_SRC(message) ? GST_OBJECT(gst_object_ref(GST_MESSAGE_SRC(message))) : nullptr;
+    while (current) {
+        const char* name = GST_OBJECT_NAME(current);
+        if ((g_strcmp0(name, kRecordingSinkBinName) == 0) || (g_strcmp0(name, kRecordingSplitMuxName) == 0)) {
+            gst_object_unref(current);
+            return true;
+        }
+        GstObject* parent = gst_object_get_parent(current);
+        gst_object_unref(current);
+        current = parent;
+    }
+    return false;
 }
 
 } // namespace
@@ -670,7 +689,8 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
         return;
     }
 
-    _keyframeWatchId = gst_pad_add_probe(probepad, GST_PAD_PROBE_TYPE_BUFFER, _keyframeWatch, this, nullptr);
+    _keyframeWatchId.store(gst_pad_add_probe(probepad, GST_PAD_PROBE_TYPE_BUFFER, _keyframeWatch, this, nullptr),
+                           std::memory_order_release);
     gst_clear_object(&probepad);
 
     _setRecordingOutput(videoFile);
@@ -895,7 +915,7 @@ GstElement *GstVideoReceiver::_makeFileSink(const QString &videoFile, FILE_FORMA
         // lifetime, and finalizes asynchronously so EOS no longer wedges the worker
         // thread (replaces the manual qtmux/matroskamux+filesink combo + "stuck muxer"
         // bounded-wait in stop()). max-size-time=0 keeps single-file behaviour.
-        splitmux = gst_element_factory_make("splitmuxsink", nullptr);
+        splitmux = gst_element_factory_make("splitmuxsink", kRecordingSplitMuxName);
         if (!splitmux) {
             qCCritical(GstVideoReceiverLog) << "gst_element_factory_make('splitmuxsink') failed";
             break;
@@ -926,9 +946,9 @@ GstElement *GstVideoReceiver::_makeFileSink(const QString &videoFile, FILE_FORMA
             gst_structure_free(muxerProps);
         }
 
-        bin = gst_bin_new("sinkbin");
+        bin = gst_bin_new(kRecordingSinkBinName);
         if (!bin) {
-            qCCritical(GstVideoReceiverLog) << "gst_bin_new('sinkbin') failed";
+            qCCritical(GstVideoReceiverLog) << "gst_bin_new('recording-sink-bin') failed";
             break;
         }
 
@@ -1357,13 +1377,13 @@ void GstVideoReceiver::_shutdownDecodingBranch()
 
 void GstVideoReceiver::_shutdownRecordingBranch()
 {
-    if (_keyframeWatchId != 0 && _recorderValve) {
+    const gulong keyframeWatchId = _keyframeWatchId.exchange(0, std::memory_order_acq_rel);
+    if (keyframeWatchId != 0 && _recorderValve) {
         GstPad *probepad = gst_element_get_static_pad(_recorderValve, "src");
         if (probepad) {
-            gst_pad_remove_probe(probepad, _keyframeWatchId);
+            gst_pad_remove_probe(probepad, keyframeWatchId);
             gst_clear_object(&probepad);
         }
-        _keyframeWatchId = 0;
     }
 
     gst_bin_remove(GST_BIN(_pipeline), _fileSink);
@@ -1581,8 +1601,18 @@ gboolean GstVideoReceiver::_onBusMessage(GstBus * /* bus */, GstMessage *msg, gp
         }
 
         if (GST_MESSAGE_TYPE(forward_msg) == GST_MESSAGE_EOS) {
-            pThis->_worker->dispatch([pThis, pipelineGeneration]() {
+            const bool recordingBranchMessage = isRecordingBranchMessage(msg) || isRecordingBranchMessage(forward_msg);
+            pThis->_worker->dispatch([pThis, pipelineGeneration, recordingBranchMessage]() {
                 if (pipelineGeneration != pThis->_pipelineGeneration.load(std::memory_order_acquire)) {
+                    return;
+                }
+                if (recordingBranchMessage) {
+                    if (pThis->_recording && pThis->_removingRecorder) {
+                        qCDebug(GstVideoReceiverLog) << "Received recording branch EOS";
+                        pThis->_shutdownRecordingBranch();
+                    } else {
+                        qCDebug(GstVideoReceiverLog) << "Ignoring duplicate recording branch EOS";
+                    }
                     return;
                 }
                 qCDebug(GstVideoReceiverLog) << "Received branch EOS";
@@ -1751,6 +1781,7 @@ GstPadProbeReturn GstVideoReceiver::_keyframeWatch(GstPad *pad, GstPadProbeInfo 
     qCDebug(GstVideoReceiverLog) << "Got keyframe, stop dropping buffers";
 
     GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(user_data);
+    pThis->_keyframeWatchId.store(0, std::memory_order_release);
     emit pThis->recordingStarted(pThis->recordingOutput());
 
     return GST_PAD_PROBE_REMOVE;

@@ -147,7 +147,7 @@ private:
     gulong _videoSinkProbeId = 0;
     gulong _eosProbeId = 0;
     GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
-    gulong _keyframeWatchId = 0;
+    std::atomic<gulong> _keyframeWatchId = 0;
     bool _recordingStopRequested = false;
     bool _activePipelineIsJpegNetworkSource = false;
 
