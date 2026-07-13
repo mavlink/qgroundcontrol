@@ -43,7 +43,7 @@
             "name": "altitudeBias",
             "shortDesc": "Vertical offset in meters for vehicle rendering in the 3D viewer.",
             "type": "double",
-            "units": "m",
+            "units": "vertical m",
             "min": -1000,
             "max": 1000,
             "default": 0,
