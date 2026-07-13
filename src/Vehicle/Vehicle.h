@@ -383,6 +383,11 @@ public:
     ///     @param timeoutSec Disabled motor after this amount of time
     Q_INVOKABLE void motorTest(int motor, int percent, int timeoutSecs, bool showError);
 
+    /// Sends a MANUAL_CONTROL sample for the AeroFollow preflight actuator check.
+    /// Values use the QGC joystick range of -1.0 to 1.0. The caller is
+    /// responsible for returning all axes to neutral after a short pulse.
+    Q_INVOKABLE void sendFlightCheckControl(float roll, float pitch, float yaw, float thrust);
+
     enum PIDTuningTelemetryMode {
         ModeDisabled,
         ModeRateAndAttitude,
