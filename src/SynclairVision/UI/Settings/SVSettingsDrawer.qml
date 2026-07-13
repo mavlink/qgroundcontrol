@@ -38,7 +38,7 @@ Item {
             property bool indicatorDrawerUseRightEdgeAlignment: true
             property real indicatorDrawerRightEdgeMargin: -(SVUnits.height / 8) - (SVUnits.lineWidth * 2)
             readonly property real drawerSpacing: SVUnits.bigMargin * 2
-            readonly property real settingsCategoryStripTopOffset: SVUnits.objectWidth - SVUnits.margin - SVUnits.lineWidth
+            readonly property real settingsCategoryStripTopOffset: SVUnits.objectWidth - SVUnits.margin  -  2.5 * SVUnits.lineWidth
             readonly property real minimumSettingsPanelWidth: SVUnits.width * 75
             readonly property real maximumSettingsPanelWidth: Math.max(minimumSettingsPanelWidth,
                                                                         drawerViewportWidth - settingsCategoryStripContainer.width - drawerSpacing - (SVUnits.width * 12))

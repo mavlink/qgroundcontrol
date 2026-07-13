@@ -7,6 +7,8 @@ Item {
 
     QGCPalette { id: qgcPalette }
 
+    readonly property var digiview: QGroundControl.digiviewManager
+
     property int hoverIndex: -1
     readonly property bool controlsUsable: !SVState.lockControls && SVState.cameraSelected !== -1
 
@@ -66,6 +68,18 @@ Item {
     function clearPressedState() {
         zoomInPressed = false
         zoomOutPressed = false
+    }
+
+    function changeZoom() {
+        let zoom = 0
+
+        if (zoomInPressed) {
+            zoom = SVSettings.zoomSensitivity
+        } else if (zoomOutPressed) {
+            zoom = -SVSettings.zoomSensitivity
+        }
+
+        digiview.changeZoom(SVState.cameraSelected, zoom)
     }
 
     SVZoomButton {
@@ -145,6 +159,9 @@ Item {
             root.hoverIndex = index
             pressedButtonIndex = index
             root.setPressed(index, true)
+
+            changeZoom()
+            
         }
 
         onReleased: {

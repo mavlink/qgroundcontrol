@@ -16,6 +16,7 @@ Item {
     readonly property real joystickRadius: Math.min(width, height) / 2
     readonly property real knobRadius: Math.max(joystickKnob.width, joystickKnob.height) / 2
     readonly property real movementRadius: Math.max(0, joystickRadius - knobRadius)
+    readonly property real deadzoneSize: Math.max(0, Math.min(1, SVSettings.joystickDeadzone))
 
     readonly property real arrowWidth: width * 0.08
     readonly property real arrowHeight: height * 0.10
@@ -30,9 +31,56 @@ Item {
 
     QGCPalette { id: qgcPalette }
 
+    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property real eulerScale: 0.10
+
+
+
     function centerKnob() {
         knobOffsetX = 0
         knobOffsetY = 0
+        sendEulerCommand(0, 0)
+    }
+
+    function sendEulerCommand(yaw, pitch) {
+        if (SVState.cameraSelected < 0) {
+            return
+        }
+
+        digiview.changeEuler(SVState.cameraSelected, yaw, pitch)
+    }
+
+    function updateEulerCommand() {
+        if (movementRadius <= 0 || deadzoneSize >= 1) {
+            sendEulerCommand(0, 0)
+            return
+        }
+
+        let yaw = knobOffsetX / movementRadius
+        let pitch = knobOffsetY / movementRadius
+        const magnitude = Math.hypot(yaw, pitch)
+
+        if (magnitude <= deadzoneSize) {
+            sendEulerCommand(0, 0)
+            return
+        }
+
+        const scaledMagnitude = (magnitude - deadzoneSize) / (1 - deadzoneSize)
+        const scale = scaledMagnitude / magnitude
+
+        yaw = -yaw * scale
+        pitch = -pitch * scale
+
+        if (SVSettings.joystickInvertHorizontal) {
+            yaw = -yaw
+        }
+
+        if (SVSettings.joystickInvertVertical) {
+            pitch = -pitch
+        }
+
+        const sensitivity = SVSettings.joystickSensitivity * eulerScale
+        sendEulerCommand(yaw * sensitivity, pitch * sensitivity)
     }
 
     function updateKnobPosition(pointerX, pointerY) {
@@ -43,17 +91,21 @@ Item {
         if (distance === 0 || distance <= movementRadius) {
             knobOffsetX = deltaX
             knobOffsetY = deltaY
+            updateEulerCommand()
             return
         }
 
         const scale = movementRadius / distance
         knobOffsetX = deltaX * scale
         knobOffsetY = deltaY * scale
+        updateEulerCommand()
     }
 
     function isInsideJoystick(pointerX, pointerY) {
         return Math.hypot(pointerX - centerX, pointerY - centerY) <= joystickRadius
     }
+
+    
 
     Rectangle {
         id: background
@@ -66,7 +118,7 @@ Item {
 
     Rectangle {
         id: deadzone
-        width: root.width * SVSettings.joystickDeadzone
+        width: root.movementRadius * 2 * root.deadzoneSize
         height: width
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
