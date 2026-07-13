@@ -51,8 +51,8 @@ void VideoSettingsTest::_testAuthenticatedTransportPolicy()
 #ifndef QGC_GST_STREAMING
     QSKIP("GStreamer not enabled");
 #else
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
+    TestFixtures::SettingsFixture fixture;
     fixture.setFactValue(settings.videoSource(), QString::fromLatin1(VideoSettings::videoSourceHTTPMJPEG));
     fixture.setFactValue(settings.httpMjpegUrl(), QStringLiteral("http://192.0.2.1:8080/video"));
     fixture.setFactValue(settings.networkVideoAuthType(), VideoSettings::NetworkVideoAuthBasic);
@@ -61,7 +61,7 @@ void VideoSettingsTest::_testAuthenticatedTransportPolicy()
 
     QVERIFY(settings.networkVideoConfigurationError().contains(QStringLiteral("HTTPS")));
 
-    fixture.setFactValue(settings.httpMjpegUrl(), QStringLiteral("https://camera.example/video"));
+    settings.httpMjpegUrl()->setRawValue(QStringLiteral("https://camera.example/video"));
     QCOMPARE(settings.networkVideoConfigurationError(), QString());
 
     const QStringList invalidUsernames = {
@@ -71,7 +71,7 @@ void VideoSettingsTest::_testAuthenticatedTransportPolicy()
         QStringLiteral("viewer\nadmin"),
     };
     for (const QString& username : invalidUsernames) {
-        fixture.setFactValue(settings.networkVideoUsername(), username);
+        settings.networkVideoUsername()->setRawValue(username);
         QVERIFY(settings.networkVideoConfigurationError().contains(QStringLiteral("username")));
     }
 #endif
@@ -82,22 +82,21 @@ void VideoSettingsTest::_testOriginValidation()
 #ifndef QGC_HAS_WEBSOCKET_VIDEO
     QSKIP("Qt WebSockets unavailable");
 #else
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
+    TestFixtures::SettingsFixture fixture;
     fixture.setFactValue(settings.videoSource(), QString::fromLatin1(VideoSettings::videoSourceWebSocketJPEG));
     fixture.setFactValue(settings.websocketJpegUrl(), QStringLiteral("ws://192.0.2.1:8080/video"));
 
     fixture.setFactValue(settings.networkVideoOrigin(), QStringLiteral("https://operator.example/path"));
     QVERIFY(settings.networkVideoConfigurationError().contains(QStringLiteral("Origin")));
 
-    fixture.setFactValue(settings.networkVideoOrigin(), QStringLiteral("https://operator.example:8443"));
+    settings.networkVideoOrigin()->setRawValue(QStringLiteral("https://operator.example:8443"));
     QCOMPARE(settings.networkVideoConfigurationError(), QString());
 #endif
 }
 
 void VideoSettingsTest::_testCredentialFilePlatformSupport()
 {
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
 #if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     QVERIFY(settings.networkVideoCredentialFileSupported());
@@ -111,8 +110,8 @@ void VideoSettingsTest::_testSecretFileValidation()
 #if !defined(Q_OS_UNIX) || defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     QSKIP("Owner-only credential file validation is Unix-specific");
 #else
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
+    TestFixtures::SettingsFixture fixture;
     QTemporaryFile file;
     QVERIFY(file.open());
     QCOMPARE(file.write("file-secret\n"), 12);
@@ -147,8 +146,8 @@ void VideoSettingsTest::_testSecretFileRejectsAliases()
 #if !defined(Q_OS_UNIX) || defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
     QSKIP("Owner-only credential file validation is Unix-specific");
 #else
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
+    TestFixtures::SettingsFixture fixture;
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
 
@@ -173,7 +172,7 @@ void VideoSettingsTest::_testSecretFileRejectsAliases()
     const QString hardlinkPath = directory.filePath(QStringLiteral("credential-hardlink"));
     const QByteArray encodedHardlink = QFile::encodeName(hardlinkPath);
     QCOMPARE(::link(encodedTarget.constData(), encodedHardlink.constData()), 0);
-    fixture.setFactValue(settings.networkVideoSecretFile(), targetPath);
+    settings.networkVideoSecretFile()->setRawValue(targetPath);
     QVERIFY(!settings.resolveNetworkVideoSecret(secret, error));
     QVERIFY(error.contains(QStringLiteral("hard links")));
 #endif

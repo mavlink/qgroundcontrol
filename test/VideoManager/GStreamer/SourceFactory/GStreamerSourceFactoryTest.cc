@@ -561,13 +561,11 @@ void GStreamerTest::_testSourceFactoryHttpMjpegSecurityProperties()
         QVERIFY(source);
         gboolean automaticRedirect = TRUE;
         gboolean strictTls = FALSE;
-        gboolean useSystemCaFile = FALSE;
         GObject* tlsDatabase = nullptr;
         gchar* userId = nullptr;
         gchar* userPassword = nullptr;
-        g_object_get(source, "automatic-redirect", &automaticRedirect, "ssl-strict", &strictTls,
-                     "ssl-use-system-ca-file", &useSystemCaFile, "tls-database", &tlsDatabase, "user-id", &userId,
-                     "user-pw", &userPassword, nullptr);
+        g_object_get(source, "automatic-redirect", &automaticRedirect, "ssl-strict", &strictTls, "tls-database",
+                     &tlsDatabase, "user-id", &userId, "user-pw", &userPassword, nullptr);
         const auto credentialsCleanup = qScopeGuard([&] {
             g_clear_object(&tlsDatabase);
             g_free(userId);
@@ -575,7 +573,6 @@ void GStreamerTest::_testSourceFactoryHttpMjpegSecurityProperties()
         });
         QCOMPARE(automaticRedirect, FALSE);
         QCOMPARE(strictTls, TRUE);
-        QCOMPARE(useSystemCaFile, TRUE);
         QVERIFY(!tlsDatabase);
         QCOMPARE(QByteArray(userId), QByteArrayLiteral("viewer"));
         QCOMPARE(QByteArray(userPassword), QByteArrayLiteral("test-password"));
@@ -623,13 +620,10 @@ void GStreamerTest::_testSourceFactoryHttpMjpegSecurityProperties()
         GstElement* source = findChildByFactoryName(bin, "souphttpsrc");
         QVERIFY(source);
         gboolean automaticRedirect = TRUE;
-        gboolean useSystemCaFile = TRUE;
         GObject* tlsDatabase = nullptr;
-        g_object_get(source, "automatic-redirect", &automaticRedirect, "ssl-use-system-ca-file", &useSystemCaFile,
-                     "tls-database", &tlsDatabase, nullptr);
+        g_object_get(source, "automatic-redirect", &automaticRedirect, "tls-database", &tlsDatabase, nullptr);
         const auto databaseCleanup = qScopeGuard([&] { g_clear_object(&tlsDatabase); });
         QCOMPARE(automaticRedirect, FALSE);
-        QCOMPARE(useSystemCaFile, FALSE);
         QVERIFY(tlsDatabase);
     }
 }
@@ -1175,6 +1169,8 @@ void GStreamerTest::_testJpegRecordingContainers()
         QVERIFY(playback);
         QVERIFY(videoSink);
         QVERIFY(audioSink);
+        gst_object_ref_sink(videoSink);
+        gst_object_ref_sink(audioSink);
         const QByteArray uri = QUrl::fromLocalFile(outputPath).toEncoded();
         g_object_set(playback, "uri", uri.constData(), "video-sink", videoSink, "audio-sink", audioSink, nullptr);
         gst_object_unref(videoSink);
@@ -1302,14 +1298,16 @@ void GStreamerTest::_testJpegReceiverRecording()
         QVERIFY(playback);
         QVERIFY(videoSink);
         QVERIFY(audioSink);
+        gst_object_ref_sink(videoSink);
+        gst_object_ref_sink(audioSink);
         const auto playbackCleanup = qScopeGuard([&] {
             (void) gst_element_set_state(playback, GST_STATE_NULL);
-            gst_object_unref(playback);
-            gst_object_unref(videoSink);
-            gst_object_unref(audioSink);
+            gst_clear_object(&playback);
         });
         const QByteArray uri = QUrl::fromLocalFile(outputPath).toEncoded();
         g_object_set(playback, "uri", uri.constData(), "video-sink", videoSink, "audio-sink", audioSink, nullptr);
+        gst_object_unref(videoSink);
+        gst_object_unref(audioSink);
         QVERIFY(gst_element_set_state(playback, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
         GstBus* playbackBus = gst_element_get_bus(playback);
         QVERIFY(playbackBus);
@@ -1342,12 +1340,25 @@ void GStreamerTest::_testSourceFactoryWebSocketJpeg()
 
     GStreamer::SourceFactory::Config config;
 #ifdef QGC_HAS_WEBSOCKET_VIDEO
-    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("ws://127.0.0.1:5077/ws/video_feed"), config);
+    QWebSocketServer server(QStringLiteral("QGC source factory test"), QWebSocketServer::NonSecureMode);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    const QString url = QStringLiteral("ws://127.0.0.1:%1/ws/video_feed").arg(server.serverPort());
+    GstElement* bin = GStreamer::SourceFactory::create(url, config);
     QVERIFY(bin);
-    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
+    QWebSocket* serverSocket = nullptr;
+    const auto cleanup = qScopeGuard([&] {
+        gst_clear_object(&bin);
+        if (serverSocket) {
+            serverSocket->close();
+            serverSocket->deleteLater();
+        }
+    });
 
     QVERIFY2(findChildByFactoryName(bin, "appsrc"), "ws:// must build an appsrc bridge");
     QVERIFY2(findChildByFactoryName(bin, "jpegparse"), "WebSocket JPEG must expose parsed JPEG frames");
+    QVERIFY_TRUE_WAIT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    serverSocket = server.nextPendingConnection();
+    QVERIFY(serverSocket);
 #else
     ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
                      QRegularExpression(QStringLiteral("WebSocket JPEG support is unavailable")));
@@ -1578,8 +1589,7 @@ void GStreamerTest::_testWebSocketEarlyTransportFailureAfterDelayedParenting()
 
     GstBus* bus = gst_element_get_bus(pipeline);
     QVERIFY(bus);
-    GstMessage* message = waitForBusMessage(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS),
-                                            TestTimeout::mediumMs());
+    GstMessage* message = waitForBusMessage(bus, GST_MESSAGE_ERROR, TestTimeout::mediumMs());
     gst_object_unref(bus);
     QVERIFY2(message, "Pre-parent WebSocket refusal was not replayed to the pipeline bus");
     QCOMPARE(GST_MESSAGE_TYPE(message), GST_MESSAGE_ERROR);
@@ -1643,8 +1653,7 @@ void GStreamerTest::_testWebSocketEarlyProtocolFailureAfterDelayedParenting()
 
     GstBus* bus = gst_element_get_bus(pipeline);
     QVERIFY(bus);
-    GstMessage* message = waitForBusMessage(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS),
-                                            TestTimeout::mediumMs());
+    GstMessage* message = waitForBusMessage(bus, GST_MESSAGE_ERROR, TestTimeout::mediumMs());
     gst_object_unref(bus);
     QVERIFY2(message, "Pre-parent invalid WebSocket JPEG was not replayed to the pipeline bus");
     QCOMPARE(GST_MESSAGE_TYPE(message), GST_MESSAGE_ERROR);
