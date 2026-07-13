@@ -54,7 +54,9 @@ qt_add_qml_module(FlightDisplayModule
         PreFlightBatteryCheck.qml
         PreFlightCheckList.qml
         PreFlightCheckListShowAction.qml
+        PreFlightCommandCheckButton.qml
         PreFlightGPSCheck.qml
+        PreFlightManualCheckButton.qml
         PreFlightRCCheck.qml
         PreFlightSensorsHealthCheck.qml
         PreFlightSoundCheck.qml
@@ -65,6 +67,7 @@ qt_add_qml_module(FlightDisplayModule
         SubChecklist.qml
         TelemetryValuesBar.qml
         TerrainProgress.qml
+        VTOLChecklist.qml
         VehicleWarnings.qml
         VirtualJoystick.qml
     NO_PLUGIN # Required by Qt 6.6.3. TODO: Remove when no longer supported.

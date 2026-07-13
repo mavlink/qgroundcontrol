@@ -3215,6 +3215,11 @@ void Vehicle::motorTest(int motor, int percent, int timeoutSecs, bool showError)
     sendMavCommand(_defaultComponentId, MAV_CMD_DO_MOTOR_TEST, showError, motor, MOTOR_TEST_THROTTLE_PERCENT, percent, timeoutSecs, 0, MOTOR_TEST_ORDER_BOARD);
 }
 
+void Vehicle::sendFlightCheckControl(float roll, float pitch, float yaw, float thrust)
+{
+    sendJoystickDataThreadSafe(roll, pitch, yaw, thrust, 0);
+}
+
 QString Vehicle::brandImageIndoor() const
 {
     return _firmwarePlugin->brandImageIndoor(this);
