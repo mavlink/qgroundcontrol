@@ -421,13 +421,15 @@ void GstVideoReceiver::stop()
 
                 // Wait for splitmuxsink to actually finalize its current fragment. async-finalize
                 // pushes muxer teardown off the streaming thread; the splitmuxsink-fragment-closed
-                // element message is posted (via message-forward=TRUE) exactly when the muxer's
-                // state has gone NULL. EOS is the fallback for older builds / unexpected paths;
+                // element message is posted exactly when the muxer's state has gone NULL. A source
+                // disconnect can post aggregate pipeline EOS before that asynchronous close has
+                // completed, so EOS is not proof that the recording file is ready to consume.
                 // ERROR breaks out so we don't burn the full budget on a known failure. Track
-                // elapsed time so unrelated ELEMENT messages don't abort the wait early.
+                // elapsed time so unrelated ELEMENT/EOS messages don't abort the wait early.
                 const GstClockTime deadline = kEosTimeoutNs;
                 const qint64 startMs = QDateTime::currentMSecsSinceEpoch();
                 bool finalized = false;
+                bool finalizationError = false;
                 for (;;) {
                     const qint64 elapsedNs = (QDateTime::currentMSecsSinceEpoch() - startMs)
                                              * qint64(GST_MSECOND);
@@ -446,24 +448,30 @@ void GstVideoReceiver::stop()
                         break;
                     }
                     case GST_MESSAGE_EOS:
-                        qCDebug(GstVideoReceiverLog) << "End of stream received (fallback path)";
-                        finalized = true;
+                        qCDebug(GstVideoReceiverLog)
+                            << "Pipeline EOS received while waiting for recording fragment finalization";
                         break;
                     case GST_MESSAGE_ERROR:
                         qCCritical(GstVideoReceiverLog) << "Error stopping pipeline!";
-                        finalized = true;
+                        finalizationError = true;
                         break;
                     default:
                         break;
                     }
                     gst_clear_message(&msg);
-                    if (finalized) break;
+                    if (finalized || finalizationError) break;
                 }
                 if (!finalized) {
-                    qCWarning(GstVideoReceiverLog) << "splitmuxsink finalize signal not received within"
-                                                   << (kEosTimeoutNs / GST_MSECOND)
-                                                   << "ms — forcing pipeline NULL (recording may be truncated; "
-                                                   << "faststart + reserved-moov-update-period keep the file playable)";
+                    if (finalizationError) {
+                        qCWarning(GstVideoReceiverLog)
+                            << "Recording fragment finalization aborted after a pipeline error; "
+                               "the file may be incomplete";
+                    } else {
+                        qCWarning(GstVideoReceiverLog) << "splitmuxsink finalize signal not received within"
+                                                       << (kEosTimeoutNs / GST_MSECOND)
+                                                       << "ms — forcing pipeline NULL (recording may be truncated; "
+                                                       << "faststart + reserved-moov-update-period keep the file playable)";
+                    }
                 }
             }
 
