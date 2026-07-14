@@ -109,4 +109,24 @@ Item {
             NumberAnimation { from: 0.4; to: 1.0; duration: 1000; easing.type: Easing.InOutSine }
         }
     }
+
+    Rectangle {
+        id: photoBorder
+        z: 101
+        anchors.fill: parent
+        color: "transparent"
+        border.width: SVUnits.thickLineWidth * 4
+        border.color: "white"
+        visible: opacity > 0.01
+
+        SequentialAnimation on opacity {
+            loops: 1
+            running: true
+
+            NumberAnimation { from: 1.0; to: 0.0; duration: 1000; easing.type: Easing.InOutSine }
+            
+        }
+    }
+
+    
 }

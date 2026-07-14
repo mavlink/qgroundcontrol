@@ -22,7 +22,7 @@ Item {
     property string activeId: ""
     property var activeIds: []
 
-    property real buttonSize: SVUnits.objectWidth - SVUnits.bigMargin
+    property real buttonSize: Math.min(SVUnits.objectWidth - SVUnits.bigMargin, ScreenTools.implicitButtonHeight + (SVUnits.bigMargin * 2))
 
     readonly property bool isHorizontal: direction === horizontal
     readonly property bool isVertical: !isHorizontal
