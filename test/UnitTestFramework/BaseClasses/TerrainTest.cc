@@ -1,129 +1,53 @@
 #include "TerrainTest.h"
 
-#include "TerrainTileManager.h"
+#include <cmath>
 
 // Use the canonical definition from TerrainTest::pointNemo()
 static const QGeoCoordinate pointNemo = TerrainTest::pointNemo();
 
-const UnitTestTerrainQuery::Flat10Region UnitTestTerrainQuery::flat10Region{
-    {pointNemo, QGeoCoordinate{pointNemo.latitude() - UnitTestTerrainQuery::regionSizeDeg,
-                               pointNemo.longitude() + UnitTestTerrainQuery::regionSizeDeg}}};
+const UnitTestTerrainData::Flat10Region UnitTestTerrainData::flat10Region{
+    {pointNemo, QGeoCoordinate{pointNemo.latitude() - UnitTestTerrainData::regionSizeDeg,
+                               pointNemo.longitude() + UnitTestTerrainData::regionSizeDeg}}};
 
-const UnitTestTerrainQuery::LinearSlopeRegion UnitTestTerrainQuery::linearSlopeRegion{
+const UnitTestTerrainData::LinearSlopeRegion UnitTestTerrainData::linearSlopeRegion{
     {flat10Region.topRight(),
-     QGeoCoordinate{flat10Region.topRight().latitude() - UnitTestTerrainQuery::regionSizeDeg,
-                    flat10Region.topRight().longitude() + UnitTestTerrainQuery::regionSizeDeg}}};
+     QGeoCoordinate{flat10Region.topRight().latitude() - UnitTestTerrainData::regionSizeDeg,
+                    flat10Region.topRight().longitude() + UnitTestTerrainData::regionSizeDeg}}};
 
-const UnitTestTerrainQuery::HillRegion UnitTestTerrainQuery::hillRegion{
+const UnitTestTerrainData::HillRegion UnitTestTerrainData::hillRegion{
     {linearSlopeRegion.topRight(),
-     QGeoCoordinate{linearSlopeRegion.topRight().latitude() - UnitTestTerrainQuery::regionSizeDeg,
-                    linearSlopeRegion.topRight().longitude() + UnitTestTerrainQuery::regionSizeDeg}}};
+     QGeoCoordinate{linearSlopeRegion.topRight().latitude() - UnitTestTerrainData::regionSizeDeg,
+                    linearSlopeRegion.topRight().longitude() + UnitTestTerrainData::regionSizeDeg}}};
 
-UnitTestTerrainQuery::UnitTestTerrainQuery(QObject* parent) : TerrainQueryInterface(parent)
+double UnitTestTerrainData::heightAt(const QGeoCoordinate& coordinate)
 {
-}
-
-UnitTestTerrainQuery::~UnitTestTerrainQuery()
-{
-}
-
-void UnitTestTerrainQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
-{
-    const QList<double> result = _requestCoordinateHeights(coordinates);
-    emit coordinateHeightsReceived(result.size() == coordinates.size(), result);
-}
-
-void UnitTestTerrainQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
-{
-    const PathHeightInfo_t pathHeightInfo = _requestPathHeights(fromCoord, toCoord);
-    emit pathHeightsReceived(!pathHeightInfo.rgHeights.isEmpty(), pathHeightInfo.distanceBetween,
-                             pathHeightInfo.finalDistanceBetween, pathHeightInfo.rgHeights);
-}
-
-void UnitTestTerrainQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord,
-                                                bool statsOnly)
-{
-    QList<QList<double>> carpet;
-    if ((swCoord.longitude() > neCoord.longitude()) || (swCoord.latitude() > neCoord.latitude())) {
-        emit carpetHeightsReceived(false, qQNaN(), qQNaN(), carpet);
-        return;
+    if (flat10Region.contains(coordinate)) {
+        return Flat10Region::amslElevation;
     }
-    double min = std::numeric_limits<double>::max();
-    double max = std::numeric_limits<double>::min();
-    for (double lat = swCoord.latitude(); lat < neCoord.latitude(); lat++) {
-        const QGeoCoordinate fromCoord(lat, swCoord.longitude());
-        const QGeoCoordinate toCoord(lat, neCoord.longitude());
-        const QList<double> row = _requestPathHeights(fromCoord, toCoord).rgHeights;
-        if (row.isEmpty()) {
-            emit carpetHeightsReceived(false, qQNaN(), qQNaN(), QList<QList<double>>());
-            return;
-        }
-        for (const double val : row) {
-            min = qMin(val, min);
-            max = qMax(val, max);
-        }
-        if (!statsOnly) {
-            (void)carpet.append(row);
-        }
-    }
-    emit carpetHeightsReceived(true, min, max, carpet);
-}
 
-UnitTestTerrainQuery::PathHeightInfo_t UnitTestTerrainQuery::_requestPathHeights(const QGeoCoordinate& fromCoord,
-                                                                                 const QGeoCoordinate& toCoord)
-{
-    PathHeightInfo_t pathHeights;
-    pathHeights.rgCoords = TerrainTileManager::_pathQueryToCoords(fromCoord, toCoord, pathHeights.distanceBetween,
-                                                                  pathHeights.finalDistanceBetween);
-    pathHeights.rgHeights = _requestCoordinateHeights(pathHeights.rgCoords);
-    return pathHeights;
-}
-
-QList<double> UnitTestTerrainQuery::_requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
-{
-    QList<double> result;
-    for (const auto& coordinate : coordinates) {
-        if (flat10Region.contains(coordinate)) {
-            (void)result.append(UnitTestTerrainQuery::Flat10Region::amslElevation);
-        } else if (linearSlopeRegion.contains(coordinate)) {
-            // cast to oneSecondDeg grid and round to int to emulate SRTM1 even better
-            const double x = (coordinate.longitude() - linearSlopeRegion.topLeft().longitude()) / oneSecondDeg;
-            const double dx = regionSizeDeg / oneSecondDeg;
-            const double fraction = x / dx;
-            (void)result.append(std::round(UnitTestTerrainQuery::LinearSlopeRegion::minAMSLElevation +
-                                           (fraction * UnitTestTerrainQuery::LinearSlopeRegion::totalElevationChange)));
-        } else if (hillRegion.contains(coordinate)) {
-            const double arcSecondMeters = (earthsRadiusMts * oneSecondDeg) * (M_PI / 180.);
-            const double x = (coordinate.latitude() - hillRegion.center().latitude()) * arcSecondMeters / oneSecondDeg;
-            const double y =
-                (coordinate.longitude() - hillRegion.center().longitude()) * arcSecondMeters / oneSecondDeg;
-            const double x2y2 = pow(x, 2) + pow(y, 2);
-            const double r2 = pow(UnitTestTerrainQuery::HillRegion::radius, 2);
-            const double z = (x2y2 <= r2) ? sqrt(r2 - x2y2) : UnitTestTerrainQuery::Flat10Region::amslElevation;
-            (void)result.append(z);
-        } else {
-            result.clear();
-            break;
-        }
+    if (linearSlopeRegion.contains(coordinate)) {
+        // cast to oneSecondDeg grid and round to int to emulate SRTM1 even better
+        const double x = (coordinate.longitude() - linearSlopeRegion.topLeft().longitude()) / oneSecondDeg;
+        const double dx = regionSizeDeg / oneSecondDeg;
+        const double fraction = x / dx;
+        return std::round(LinearSlopeRegion::minAMSLElevation + (fraction * LinearSlopeRegion::totalElevationChange));
     }
-    return result;
+
+    if (hillRegion.contains(coordinate)) {
+        // Distance from the hill center in meters, compared against the sphere radius in meters.
+        // Longitude degrees are scaled by cos(latitude) so the hill is truly spherical.
+        const double metersPerDeg = earthsRadiusMts * (M_PI / 180.);
+        const double x = (coordinate.latitude() - hillRegion.center().latitude()) * metersPerDeg;
+        const double y = (coordinate.longitude() - hillRegion.center().longitude()) * metersPerDeg *
+                         cos(hillRegion.center().latitude() * (M_PI / 180.));
+        const double x2y2 = (x * x) + (y * y);
+        const double r2 = HillRegion::radiusMts * HillRegion::radiusMts;
+        return (x2y2 <= r2) ? sqrt(r2 - x2y2) : Flat10Region::amslElevation;
+    }
+
+    return 0.;
 }
 
 /*===========================================================================*/
 
-TerrainTest::TerrainTest(QObject* parent) : UnitTest(parent)
-{
-}
-
-void TerrainTest::init()
-{
-    UnitTest::init();
-    _terrainQuery = new UnitTestTerrainQuery(this);
-}
-
-void TerrainTest::cleanup()
-{
-    delete _terrainQuery;
-    _terrainQuery = nullptr;
-    UnitTest::cleanup();
-}
+TerrainTest::TerrainTest(QObject* parent) : UnitTest(parent) {}

@@ -3,26 +3,19 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoRectangle>
 
-#include "TerrainQueryInterface.h"
 #include "UnitTest.h"
 
 /// @file
-/// @brief Base class for terrain-related tests
+/// @brief Base class and synthetic terrain data for terrain-related tests
 
-/// Provides unit test terrain query responses.
-/// It provides preset, emulated, 1 arc-second (SRTM1) resolution regions that are either
-/// flat or sloped in a fashion that aids testing terrain-sensitive functionality. All emulated
-/// regions are positioned around Point Nemo - should real terrain become useful and checked in one day.
-class UnitTestTerrainQuery : public TerrainQueryInterface
+/// Synthetic terrain regions used to generate deterministic elevation data for unit tests.
+/// Preset, emulated, 1 arc-second (SRTM1) resolution regions that are either flat or sloped
+/// in a fashion that aids testing terrain-sensitive functionality. All emulated regions are
+/// positioned around Point Nemo - should real terrain become useful and checked in one day.
+/// Any coordinate outside the regions has 0 height.
+class UnitTestTerrainData
 {
 public:
-    explicit UnitTestTerrainQuery(QObject* parent = nullptr);
-    ~UnitTestTerrainQuery() override;
-
-    void requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates) final;
-    void requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) final;
-    void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) final;
-
     static constexpr double regionSizeDeg = 0.1;  ///< all regions are 0.1deg (~11km) square
     static constexpr double oneSecondDeg = 1.0 / 3600.;
     static constexpr double earthsRadiusMts = 6371000.;
@@ -30,9 +23,7 @@ public:
     /// Region with constant 10m terrain elevation
     struct Flat10Region : public QGeoRectangle
     {
-        explicit Flat10Region(const QGeoRectangle& region) : QGeoRectangle(region)
-        {
-        }
+        explicit Flat10Region(const QGeoRectangle& region) : QGeoRectangle(region) {}
 
         static constexpr double amslElevation = 10.;
     };
@@ -42,9 +33,7 @@ public:
     /// Region with a linear west to east slope raising at a rate of 100 meters per kilometer (-100m to 1000m)
     struct LinearSlopeRegion : public QGeoRectangle
     {
-        explicit LinearSlopeRegion(const QGeoRectangle& region) : QGeoRectangle(region)
-        {
-        }
+        explicit LinearSlopeRegion(const QGeoRectangle& region) : QGeoRectangle(region) {}
 
         static constexpr double minAMSLElevation = -100.;
         static constexpr double maxAMSLElevation = 1000.;
@@ -56,47 +45,25 @@ public:
     /// Region with a hill (top half of a sphere) in the center.
     struct HillRegion : public QGeoRectangle
     {
-        explicit HillRegion(const QGeoRectangle& region) : QGeoRectangle(region)
-        {
-        }
+        explicit HillRegion(const QGeoRectangle& region) : QGeoRectangle(region) {}
 
-        static constexpr double radius = UnitTestTerrainQuery::regionSizeDeg / UnitTestTerrainQuery::oneSecondDeg;
+        /// Sphere radius in meters (also the hill's peak height)
+        static constexpr double radiusMts = 360.;
     };
 
     static const HillRegion hillRegion;
 
-    /// Path height info returned by terrain queries
-    struct PathHeightInfo_t
-    {
-        QList<QGeoCoordinate> rgCoords;
-        QList<double> rgHeights;
-        double distanceBetween;
-        double finalDistanceBetween;
-    };
-
-private:
-    QList<double> _requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates);
-    PathHeightInfo_t _requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord);
+    /// Returns the synthetic terrain height for the coordinate. Coordinates outside
+    /// the test regions return 0.
+    static double heightAt(const QGeoCoordinate& coordinate);
 };
 
 /*===========================================================================*/
 
 /// Base class for terrain-related tests.
-/// Provides access to UnitTestTerrainQuery for mock terrain data.
-///
-/// Example usage:
-/// @code
-/// class MyTerrainTest : public TerrainTest
-/// {
-///     Q_OBJECT
-/// private slots:
-///     void _testTerrainQuery() {
-///         QList<QGeoCoordinate> coords;
-///         coords << pointNemo();
-///         terrainQuery()->requestCoordinateHeights(coords);
-///     }
-/// };
-/// @endcode
+/// Synthetic elevation data for the UnitTestTerrainData regions is served to all unit
+/// tests at the tile cache layer (see UnitTestTileGenerator), so production terrain
+/// queries resolve against it without any network access.
 class TerrainTest : public UnitTest
 {
     Q_OBJECT
@@ -107,39 +74,17 @@ public:
     ~TerrainTest() override = default;
 
     /// Point Nemo - furthest point from land, used as terrain test origin
-    static QGeoCoordinate pointNemo()
-    {
-        return QGeoCoordinate(-48.875556, -123.392500);
-    }
-
-    /// Returns the test terrain query interface
-    UnitTestTerrainQuery* terrainQuery() const
-    {
-        return _terrainQuery;
-    }
+    static QGeoCoordinate pointNemo() { return QGeoCoordinate(-48.875556, -123.392500); }
 
     /// Access to flat 10m region
-    static const UnitTestTerrainQuery::Flat10Region& flat10Region()
-    {
-        return UnitTestTerrainQuery::flat10Region;
-    }
+    static const UnitTestTerrainData::Flat10Region& flat10Region() { return UnitTestTerrainData::flat10Region; }
 
     /// Access to linear slope region
-    static const UnitTestTerrainQuery::LinearSlopeRegion& linearSlopeRegion()
+    static const UnitTestTerrainData::LinearSlopeRegion& linearSlopeRegion()
     {
-        return UnitTestTerrainQuery::linearSlopeRegion;
+        return UnitTestTerrainData::linearSlopeRegion;
     }
 
     /// Access to hill region
-    static const UnitTestTerrainQuery::HillRegion& hillRegion()
-    {
-        return UnitTestTerrainQuery::hillRegion;
-    }
-
-protected slots:
-    void init() override;
-    void cleanup() override;
-
-private:
-    UnitTestTerrainQuery* _terrainQuery = nullptr;
+    static const UnitTestTerrainData::HillRegion& hillRegion() { return UnitTestTerrainData::hillRegion; }
 };

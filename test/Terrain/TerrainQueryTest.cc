@@ -8,103 +8,180 @@
 #include "TerrainQueryInterface.h"
 #include "TerrainTileCopernicus.h"
 
+// These tests run the full production terrain pipeline: query classes route through
+// TerrainTileManager, whose elevation tile cache misses are served synthetic tiles
+// built from the UnitTestTerrainData regions (see UnitTestTileGenerator). No network
+// access ever occurs.
+
 void TerrainQueryTest::_testRequestCoordinateHeights()
 {
-    QSignalSpy spy(terrainQuery(), &UnitTestTerrainQuery::coordinateHeightsReceived);
+    TerrainAtCoordinateQuery* const query = new TerrainAtCoordinateQuery(true, this);
+    QSignalSpy spy(query, &TerrainAtCoordinateQuery::terrainDataReceived);
     QVERIFY(spy.isValid());
-    const QList<QGeoCoordinate> coords = {pointNemo()};
-    terrainQuery()->requestCoordinateHeights(coords);
+
+    // Half an arc-second inside the flat region's north-west corner (pointNemo).
+    // Exact edge coordinates are ambiguous with grid cell floor-indexing.
+    const QGeoCoordinate nearNwCorner(pointNemo().latitude() - (UnitTestTerrainData::oneSecondDeg / 2.0),
+                                      pointNemo().longitude() + (UnitTestTerrainData::oneSecondDeg / 2.0));
+    const QList<QGeoCoordinate> coords = {nearNwCorner, flat10Region().center()};
+    query->requestData(coords);
+
+    QTRY_VERIFY_WITH_TIMEOUT(spy.count() > 0, TestTimeout::mediumMs());
     const QVariantList arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toBool() == true);
-    QCOMPARE(arguments.at(1).toList().size(), coords.size());
-    QVERIFY(arguments.at(1).toList().at(0).toDouble() == UnitTestTerrainQuery::Flat10Region::amslElevation);
+    QVERIFY(arguments.at(0).toBool());
+
+    const QList<double> heights = qvariant_cast<QList<double>>(arguments.at(1));
+    QCOMPARE(heights.size(), coords.size());
+    QCOMPARE(heights.at(0), UnitTestTerrainData::Flat10Region::amslElevation);
+    QCOMPARE(heights.at(1), UnitTestTerrainData::Flat10Region::amslElevation);
+}
+
+void TerrainQueryTest::_testRequestCoordinateHeightsSlope()
+{
+    TerrainAtCoordinateQuery* const query = new TerrainAtCoordinateQuery(true, this);
+    QSignalSpy spy(query, &TerrainAtCoordinateQuery::terrainDataReceived);
+    QVERIFY(spy.isValid());
+
+    // Center of the linear slope region: halfway between -100m and 1000m. The tile
+    // grid samples on 1 arc-second cells, so allow one cell (~3m of slope) of error.
+    query->requestData({linearSlopeRegion().center()});
+
+    QTRY_VERIFY_WITH_TIMEOUT(spy.count() > 0, TestTimeout::mediumMs());
+    const QVariantList arguments = spy.takeFirst();
+    QVERIFY(arguments.at(0).toBool());
+
+    const QList<double> heights = qvariant_cast<QList<double>>(arguments.at(1));
+    QCOMPARE(heights.size(), 1);
+    QVERIFY(qAbs(heights.at(0) - 450.0) <= 5.0);
+}
+
+void TerrainQueryTest::_testRequestCoordinateHeightsOutsideRegions()
+{
+    TerrainAtCoordinateQuery* const query = new TerrainAtCoordinateQuery(true, this);
+    QSignalSpy spy(query, &TerrainAtCoordinateQuery::terrainDataReceived);
+    QVERIFY(spy.isValid());
+
+    // Coordinates outside the test regions succeed with 0 height
+    query->requestData({QGeoCoordinate(0.005, 0.005)});
+
+    QTRY_VERIFY_WITH_TIMEOUT(spy.count() > 0, TestTimeout::mediumMs());
+    const QVariantList arguments = spy.takeFirst();
+    QVERIFY(arguments.at(0).toBool());
+
+    const QList<double> heights = qvariant_cast<QList<double>>(arguments.at(1));
+    QCOMPARE(heights.size(), 1);
+    QCOMPARE(heights.at(0), 0.0);
 }
 
 void TerrainQueryTest::_testRequestPathHeights()
 {
-    QSignalSpy spy(terrainQuery(), &UnitTestTerrainQuery::pathHeightsReceived);
+    TerrainPathQuery* const query = new TerrainPathQuery(true, this);
+    QSignalSpy spy(query, &TerrainPathQuery::terrainDataReceived);
     QVERIFY(spy.isValid());
-    const QGeoCoordinate from = pointNemo();
-    const QGeoCoordinate to =
-        QGeoCoordinate(pointNemo().latitude(), pointNemo().longitude() + UnitTestTerrainQuery::regionSizeDeg);
-    terrainQuery()->requestPathHeights(from, to);
+
+    const double centerLat = flat10Region().center().latitude();
+    const QGeoCoordinate from(centerLat, flat10Region().topLeft().longitude() + 0.02);
+    const QGeoCoordinate to(centerLat, flat10Region().topRight().longitude() - 0.02);
+    query->requestData(from, to);
+
+    // The signal is synchronous when all tiles are already cached, async otherwise
+    QTRY_VERIFY_WITH_TIMEOUT(spy.count() > 0, TestTimeout::mediumMs());
     const QVariantList arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toBool() == true);
-    QVERIFY(arguments.at(1).toDouble() > 0.);
-    QVERIFY(arguments.at(2).toDouble() > 0.);
-    QVERIFY(arguments.at(3).toList().size() > 2);
-    QVERIFY(arguments.at(3).toList().constFirst().toDouble() == UnitTestTerrainQuery::Flat10Region::amslElevation);
-    QVERIFY(arguments.at(3).toList().constLast().toDouble() == UnitTestTerrainQuery::Flat10Region::amslElevation);
+    QVERIFY(arguments.at(0).toBool());
+
+    const auto pathHeightInfo = qvariant_cast<TerrainPathQuery::PathHeightInfo_t>(arguments.at(1));
+    QVERIFY(pathHeightInfo.heights.size() > 2);
+    QCOMPARE(pathHeightInfo.heights.constFirst(), UnitTestTerrainData::Flat10Region::amslElevation);
+    QCOMPARE(pathHeightInfo.heights.constLast(), UnitTestTerrainData::Flat10Region::amslElevation);
 }
 
 void TerrainQueryTest::_testRequestPathHeightsSpacing()
 {
-    QSignalSpy spy(terrainQuery(), &UnitTestTerrainQuery::pathHeightsReceived);
+    TerrainPathQuery* const query = new TerrainPathQuery(true, this);
+    QSignalSpy spy(query, &TerrainPathQuery::terrainDataReceived);
     QVERIFY(spy.isValid());
 
-    const QGeoCoordinate from = pointNemo();
-    const QGeoCoordinate to = QGeoCoordinate(pointNemo().latitude(), pointNemo().longitude() + UnitTestTerrainQuery::regionSizeDeg);
-    terrainQuery()->requestPathHeights(from, to);
+    const double centerLat = flat10Region().center().latitude();
+    const QGeoCoordinate from(centerLat, flat10Region().topLeft().longitude() + 0.02);
+    const QGeoCoordinate to(centerLat, flat10Region().topRight().longitude() - 0.02);
+    query->requestData(from, to);
 
+    // The signal is synchronous when all tiles are already cached, async otherwise
+    QTRY_VERIFY_WITH_TIMEOUT(spy.count() > 0, TestTimeout::mediumMs());
     const QVariantList arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toBool() == true);
-
-    const double distanceBetween = arguments.at(1).toDouble();
-    const double finalDistanceBetween = arguments.at(2).toDouble();
-    QVERIFY(distanceBetween > 0.0);
-    QVERIFY(finalDistanceBetween > 0.0);
+    QVERIFY(arguments.at(0).toBool());
 
     // Spacing should track the terrain tile sample spacing with a small tolerance.
-    QVERIFY(qAbs(distanceBetween - TerrainTileCopernicus::kTileValueSpacingMeters) < 2.0);
-    QVERIFY(qAbs(finalDistanceBetween - TerrainTileCopernicus::kTileValueSpacingMeters) < 2.0);
+    const auto pathHeightInfo = qvariant_cast<TerrainPathQuery::PathHeightInfo_t>(arguments.at(1));
+    QVERIFY(pathHeightInfo.distanceBetween > 0.0);
+    QVERIFY(pathHeightInfo.finalDistanceBetween > 0.0);
+    QVERIFY(qAbs(pathHeightInfo.distanceBetween - TerrainTileCopernicus::kTileValueSpacingMeters) < 2.0);
+    QVERIFY(qAbs(pathHeightInfo.finalDistanceBetween - TerrainTileCopernicus::kTileValueSpacingMeters) < 2.0);
 }
 
 void TerrainQueryTest::_testRequestCarpetHeights()
 {
-    QSignalSpy spy(terrainQuery(), &UnitTestTerrainQuery::carpetHeightsReceived);
+    TerrainAreaQuery* const query = new TerrainAreaQuery(true, this);
+    QSignalSpy spy(query, &TerrainAreaQuery::terrainDataReceived);
     QVERIFY(spy.isValid());
-    const QGeoCoordinate sw = pointNemo();
-    const QGeoCoordinate ne = QGeoCoordinate(pointNemo().latitude() + UnitTestTerrainQuery::regionSizeDeg,
-                                             pointNemo().longitude() + UnitTestTerrainQuery::regionSizeDeg);
-    terrainQuery()->requestCarpetHeights(sw, ne, false);
+
+    // Rectangle fully inside the flat region
+    const QGeoCoordinate regionCenter = flat10Region().center();
+    const QGeoCoordinate sw(regionCenter.latitude() - 0.01, regionCenter.longitude() - 0.01);
+    const QGeoCoordinate ne(regionCenter.latitude() + 0.01, regionCenter.longitude() + 0.01);
+    query->requestData(sw, ne);
+
+    // The signal is synchronous when all tiles are already cached, async otherwise
+    QTRY_VERIFY_WITH_TIMEOUT(spy.count() > 0, TestTimeout::mediumMs());
     const QVariantList arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toBool() == true);
-    QVERIFY(arguments.at(1).toDouble() == UnitTestTerrainQuery::Flat10Region::amslElevation);
-    QVERIFY(arguments.at(2).toDouble() == UnitTestTerrainQuery::Flat10Region::amslElevation);
-    QVERIFY(!arguments.at(3).toList().isEmpty());
-    QVERIFY(!arguments.at(3).toList().constFirst().toList().isEmpty());
-    QVERIFY(arguments.at(3).toList().constFirst().toList().constFirst().toDouble() ==
-            UnitTestTerrainQuery::Flat10Region::amslElevation);
+    QVERIFY(arguments.at(0).toBool());
+
+    const auto carpetHeightInfo = qvariant_cast<TerrainAreaQuery::CarpetHeightInfo_t>(arguments.at(1));
+    QCOMPARE(carpetHeightInfo.minHeight, UnitTestTerrainData::Flat10Region::amslElevation);
+    QCOMPARE(carpetHeightInfo.maxHeight, UnitTestTerrainData::Flat10Region::amslElevation);
+    QVERIFY(!carpetHeightInfo.carpet.isEmpty());
+    QVERIFY(!carpetHeightInfo.carpet.constFirst().isEmpty());
+    QCOMPARE(carpetHeightInfo.carpet.constFirst().constFirst(), UnitTestTerrainData::Flat10Region::amslElevation);
 }
 
 void TerrainQueryTest::_testRequestCarpetHeightsStatsOnly()
 {
-    QSignalSpy spy(terrainQuery(), &UnitTestTerrainQuery::carpetHeightsReceived);
+    TerrainOfflineQuery* const query = new TerrainOfflineQuery(this);
+    QSignalSpy spy(query, &TerrainQueryInterface::carpetHeightsReceived);
     QVERIFY(spy.isValid());
 
-    const QGeoCoordinate sw = pointNemo();
-    const QGeoCoordinate ne = QGeoCoordinate(pointNemo().latitude() + UnitTestTerrainQuery::regionSizeDeg,
-                                             pointNemo().longitude() + UnitTestTerrainQuery::regionSizeDeg);
-    terrainQuery()->requestCarpetHeights(sw, ne, true);
+    const QGeoCoordinate regionCenter = flat10Region().center();
+    const QGeoCoordinate sw(regionCenter.latitude() - 0.01, regionCenter.longitude() - 0.01);
+    const QGeoCoordinate ne(regionCenter.latitude() + 0.01, regionCenter.longitude() + 0.01);
+    query->requestCarpetHeights(sw, ne, true /* statsOnly */);
 
+    // The signal is synchronous when all tiles are already cached, async otherwise
+    QTRY_VERIFY_WITH_TIMEOUT(spy.count() > 0, TestTimeout::mediumMs());
     const QVariantList arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toBool() == true);
-    QCOMPARE(arguments.at(1).toDouble(), UnitTestTerrainQuery::Flat10Region::amslElevation);
-    QCOMPARE(arguments.at(2).toDouble(), UnitTestTerrainQuery::Flat10Region::amslElevation);
-    QVERIFY(arguments.at(3).toList().isEmpty());
+    QVERIFY(arguments.at(0).toBool());
+    QCOMPARE(arguments.at(1).toDouble(), UnitTestTerrainData::Flat10Region::amslElevation);
+    QCOMPARE(arguments.at(2).toDouble(), UnitTestTerrainData::Flat10Region::amslElevation);
+    QVERIFY(qvariant_cast<QList<QList<double>>>(arguments.at(3)).isEmpty());
 }
 
 void TerrainQueryTest::_testRequestCarpetHeightsInvalidBounds()
 {
-    QSignalSpy spy(terrainQuery(), &UnitTestTerrainQuery::carpetHeightsReceived);
+    TerrainOfflineQuery* const query = new TerrainOfflineQuery(this);
+    QSignalSpy spy(query, &TerrainQueryInterface::carpetHeightsReceived);
     QVERIFY(spy.isValid());
+
     // SW and NE are reversed (NE is actually SW)
-    const QGeoCoordinate sw = QGeoCoordinate(pointNemo().latitude() + UnitTestTerrainQuery::regionSizeDeg,
-                                             pointNemo().longitude() + UnitTestTerrainQuery::regionSizeDeg);
+    const QGeoCoordinate sw = QGeoCoordinate(pointNemo().latitude() + UnitTestTerrainData::regionSizeDeg,
+                                             pointNemo().longitude() + UnitTestTerrainData::regionSizeDeg);
     const QGeoCoordinate ne = pointNemo();
-    terrainQuery()->requestCarpetHeights(sw, ne, false);
+    expectLogMessage("Terrain.TerrainTileManager", QtWarningMsg, QRegularExpression("Invalid carpet bounds"));
+    query->requestCarpetHeights(sw, ne, false /* statsOnly */);
+    verifyExpectedLogMessage();
+
+    // Signal is emitted synchronously for invalid bounds
+    QCOMPARE(spy.count(), 1);
     const QVariantList arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toBool() == false);
+    QVERIFY(!arguments.at(0).toBool());
     QVERIFY(qIsNaN(arguments.at(1).toDouble()));
     QVERIFY(qIsNaN(arguments.at(2).toDouble()));
 }
@@ -115,7 +192,8 @@ void TerrainQueryTest::_testPolyPathQueryEmptyPath()
     QSignalSpy spy(query, &TerrainPolyPathQuery::terrainDataReceived);
     QVERIFY(spy.isValid());
     const QList<QGeoCoordinate> emptyPath;
-    expectLogMessage("Terrain.TerrainQuery", QtWarningMsg, QRegularExpression("polyPath requires at least 2 coordinates"));
+    expectLogMessage("Terrain.TerrainQuery", QtWarningMsg,
+                     QRegularExpression("polyPath requires at least 2 coordinates"));
     query->requestData(emptyPath);
     verifyExpectedLogMessage();
     // Signal is emitted synchronously for invalid path
@@ -130,8 +208,9 @@ void TerrainQueryTest::_testPolyPathQuerySingleCoord()
     QSignalSpy spy(query, &TerrainPolyPathQuery::terrainDataReceived);
     QVERIFY(spy.isValid());
     QList<QGeoCoordinate> singleCoordPath;
-    (void)singleCoordPath.append(pointNemo());
-    expectLogMessage("Terrain.TerrainQuery", QtWarningMsg, QRegularExpression("polyPath requires at least 2 coordinates"));
+    (void) singleCoordPath.append(pointNemo());
+    expectLogMessage("Terrain.TerrainQuery", QtWarningMsg,
+                     QRegularExpression("polyPath requires at least 2 coordinates"));
     query->requestData(singleCoordPath);
     verifyExpectedLogMessage();
     // Signal is emitted synchronously for invalid path
@@ -142,18 +221,17 @@ void TerrainQueryTest::_testPolyPathQuerySingleCoord()
 
 void TerrainQueryTest::_testPolyPathQueryFailureClearsAccumulatedSegments()
 {
-    TerrainPolyPathQuery *const query = new TerrainPolyPathQuery(false, this);
+    TerrainPolyPathQuery* const query = new TerrainPolyPathQuery(false, this);
     QSignalSpy spy(query, &TerrainPolyPathQuery::terrainDataReceived);
     QVERIFY(spy.isValid());
 
     TerrainPathQuery::PathHeightInfo_t segment;
     segment.distanceBetween = 10.0;
     segment.finalDistanceBetween = 10.0;
-    (void) segment.heights.append(UnitTestTerrainQuery::Flat10Region::amslElevation);
-    (void) segment.heights.append(UnitTestTerrainQuery::Flat10Region::amslElevation);
+    (void) segment.heights.append(UnitTestTerrainData::Flat10Region::amslElevation);
+    (void) segment.heights.append(UnitTestTerrainData::Flat10Region::amslElevation);
 
-    bool invoked = QMetaObject::invokeMethod(query, "_terrainDataReceived", Qt::DirectConnection,
-                                             Q_ARG(bool, true),
+    bool invoked = QMetaObject::invokeMethod(query, "_terrainDataReceived", Qt::DirectConnection, Q_ARG(bool, true),
                                              Q_ARG(TerrainPathQuery::PathHeightInfo_t, segment));
     QVERIFY(invoked);
     QCOMPARE(spy.count(), 1);
@@ -165,8 +243,7 @@ void TerrainQueryTest::_testPolyPathQueryFailureClearsAccumulatedSegments()
     QVERIFY(!initialSegments.isEmpty());
 
     const TerrainPathQuery::PathHeightInfo_t emptySegment{};
-    invoked = QMetaObject::invokeMethod(query, "_terrainDataReceived", Qt::DirectConnection,
-                                        Q_ARG(bool, false),
+    invoked = QMetaObject::invokeMethod(query, "_terrainDataReceived", Qt::DirectConnection, Q_ARG(bool, false),
                                         Q_ARG(TerrainPathQuery::PathHeightInfo_t, emptySegment));
     QVERIFY(invoked);
 
@@ -178,34 +255,4 @@ void TerrainQueryTest::_testPolyPathQueryFailureClearsAccumulatedSegments()
     QVERIFY(clearedSegments.isEmpty());
 }
 
-void TerrainQueryTest::_testTerrainAtCoordinateQuery()
-{
-    // Inject our test terrain query into the batch manager
-    TerrainAtCoordinateBatchManager::instance()->setTerrainQueryInterface(new UnitTestTerrainQuery());
-
-    QList<QGeoCoordinate> coordinates;
-    (void)coordinates.append(pointNemo());
-    (void)coordinates.append(QGeoCoordinate(pointNemo().latitude() - 0.01, pointNemo().longitude() + 0.01));
-
-    TerrainAtCoordinateQuery* const query = new TerrainAtCoordinateQuery(true, this);
-    QSignalSpy spy(query, &TerrainAtCoordinateQuery::terrainDataReceived);
-    QVERIFY(spy.isValid());
-
-    query->requestData(coordinates);
-
-    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::mediumMs());
-    QCOMPARE(spy.count(), 1);
-
-    const QVariantList arguments = spy.takeFirst();
-    QVERIFY(arguments.at(0).toBool() == true);
-
-    const QList<QVariant> heights = arguments.at(1).toList();
-    QCOMPARE(heights.size(), coordinates.size());
-    QCOMPARE(heights.at(0).toDouble(), UnitTestTerrainQuery::Flat10Region::amslElevation);
-    QCOMPARE(heights.at(1).toDouble(), UnitTestTerrainQuery::Flat10Region::amslElevation);
-
-    // Restore default terrain query for other tests
-    TerrainAtCoordinateBatchManager::instance()->setTerrainQueryInterface(new TerrainOfflineQuery());
-}
-
-UT_REGISTER_TEST(TerrainQueryTest, TestLabel::Integration, TestLabel::Terrain, TestLabel::Network)
+UT_REGISTER_TEST(TerrainQueryTest, TestLabel::Integration, TestLabel::Terrain)
