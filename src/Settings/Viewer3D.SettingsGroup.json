@@ -32,7 +32,7 @@
             "name": "buildingLevelHeight",
             "shortDesc": "Average floor-to-floor height in meters used for 3D building visualization.",
             "type": "double",
-            "units": "m",
+            "units": "vertical m",
             "min": 0.5,
             "max": 20,
             "default": 3,
