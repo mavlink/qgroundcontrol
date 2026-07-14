@@ -6,6 +6,7 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/private/qthread_p.h>
+#include <QtGui/QFont>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QIcon>
 #include <QtQml/QQmlApplicationEngine>
@@ -37,6 +38,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCLoggingCategoryManager.h"
 #include "QGCNetworkHelper.h"
+#include "QGCPalette.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VideoManager.h"
@@ -53,7 +55,6 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
     : QGuiApplication(argc, argv),
       _runningUnitTests(cli.runningUnitTests),
       _simpleBootTest(cli.simpleBootTest),
-      _fakeMobile(cli.fakeMobile),
       _logOutput(cli.logOutput),
       _systemId(cli.systemId.value_or(0))
 {
@@ -183,16 +184,6 @@ void QGCApplication::setLanguage()
     if (possibleLocale != QLocale::AnyLanguage) {
         _locale = QLocale(possibleLocale);
     }
-    //-- We have specific fonts for Korean
-    if (_locale == QLocale::Korean) {
-        qCDebug(QGCApplicationLog) << "Loading Korean fonts" << _locale.name();
-        if (QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
-            qCWarning(QGCApplicationLog) << "Could not load /fonts/NanumGothic-Regular font";
-        }
-        if (QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Bold") < 0) {
-            qCWarning(QGCApplicationLog) << "Could not load /fonts/NanumGothic-Bold font";
-        }
-    }
     qCDebug(QGCApplicationLog) << "Loading localizations for" << _locale.name();
     removeTranslator(JsonParsing::translator());
     removeTranslator(&_qgcTranslatorSourceCode);
@@ -216,6 +207,10 @@ void QGCApplication::setLanguage()
         }
     }
 
+    if (_applicationFontsLoaded) {
+        _setApplicationFont();
+    }
+
     if (_qmlAppEngine) {
         _qmlAppEngine->retranslate();
     }
@@ -235,15 +230,8 @@ void QGCApplication::init()
 
     LogManager::instance()->init();
 
-    // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop
-    // up more easily
-    if (QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
-        qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans font";
-    }
-
-    if (QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
-        qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
-    }
+    _loadApplicationFonts();
+    _setApplicationFont();
 
     if (_simpleBootTest) {
         // Since GStream builds are so problematic we initialize video during the simple boot test
@@ -254,6 +242,49 @@ void QGCApplication::init()
     } else if (!_runningUnitTests) {
         _initForNormalAppBoot();
     }
+}
+
+void QGCApplication::_loadApplicationFonts()
+{
+    if (_applicationFontsLoaded) {
+        return;
+    }
+
+    if (QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
+        qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans font";
+    }
+    if (QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
+        qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
+    }
+    _applicationFontsLoaded = true;
+}
+
+void QGCApplication::_loadKoreanFonts()
+{
+    if (_koreanFontsLoaded) {
+        return;
+    }
+
+    if (QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
+        qCWarning(QGCApplicationLog) << "Could not load /fonts/NanumGothic-Regular font";
+    }
+    if (QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Bold") < 0) {
+        qCWarning(QGCApplicationLog) << "Could not load /fonts/NanumGothic-Bold font";
+    }
+
+    _koreanFontsLoaded = true;
+}
+
+void QGCApplication::_setApplicationFont()
+{
+    if (_locale.language() == QLocale::Korean) {
+        _loadKoreanFonts();
+    }
+
+    QFont applicationFont = font();
+    applicationFont.setFamily(_locale.language() == QLocale::Korean ? QStringLiteral("NanumGothic")
+                                                                    : QStringLiteral("Open Sans"));
+    setFont(applicationFont);
 }
 
 bool QGCApplication::_initVideo()
@@ -272,8 +303,9 @@ bool QGCApplication::_initVideo()
 
 bool QGCApplication::_initQmlRootWindow()
 {
-    QQuickStyle::setStyle("Basic");
+    QQuickStyle::setStyle("QGCStyle");
     QGCCorePlugin::instance()->init();
+    QGCPalette::initializeApplicationPalette();
     MAVLinkProtocol::instance()->init();
     MultiVehicleManager::instance()->init();
     _qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);

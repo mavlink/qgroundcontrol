@@ -51,7 +51,8 @@ public:
     void init();
 
     /// Create/Edit Link Configuration
-    Q_INVOKABLE LinkConfiguration *createConfiguration(int type, const QString &name);
+    /// Default type is the first LinkType enum entry (serial when available, otherwise UDP)
+    Q_INVOKABLE LinkConfiguration *createConfiguration(int type = 0, const QString &name = QString());
     Q_INVOKABLE LinkConfiguration *startConfigurationEditing(LinkConfiguration *config);
     Q_INVOKABLE void cancelConfigurationEditing(LinkConfiguration *config) const { delete config; }
     Q_INVOKABLE void endConfigurationEditing(LinkConfiguration *config, LinkConfiguration *editedConfig);

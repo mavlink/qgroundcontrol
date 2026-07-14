@@ -3,13 +3,14 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 Button {
     id:             control
     objectName:     toolStripAction ? toolStripAction.objectName : ""
     width:          contentLayoutItem.contentWidth + (contentMargins * 2)
     height:         width
-    hoverEnabled:   !ScreenTools.isMobile
+    hoverEnabled:   QGCStyle.StylePreferences.hoverEffectsEnabled
     enabled:        toolStripAction ? toolStripAction.enabled : true
     visible:        toolStripAction ? toolStripAction.visible : true
     imageSource:    (toolStripAction && modelData) ? (toolStripAction.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource) : ""

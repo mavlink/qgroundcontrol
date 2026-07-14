@@ -58,8 +58,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         RCChannelMonitorController.h
         RCToParamDialogController.cc
         RCToParamDialogController.h
-        ScreenToolsController.cc
-        ScreenToolsController.h
         TerrainProfile.cc
         TerrainProfile.h
         ToolStripAction.cc
@@ -77,16 +75,22 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # QML Controls Module
 # ----------------------------------------------------------------------------
+add_subdirectory(QGCStyle)
+
 qt_add_library(QGroundControlControlsModule STATIC)
 
-set_source_files_properties(ScreenTools.qml PROPERTIES
-    QT_QML_SINGLETON_TYPE TRUE
+set_source_files_properties(
+    QGCStyleEnvironment.qml
+    ScreenTools.qml
+    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
 
 qt_add_qml_module(QGroundControlControlsModule
     URI QGroundControl.Controls
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    DEPENDENCIES
+        QGCStyle
     QML_FILES
         AltFrameCombo.qml
         AltFrameDialog.qml
@@ -160,6 +164,7 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCRoundButton.qml
         QGCSimpleMessageDialog.qml
         QGCSlider.qml
+        QGCStyleEnvironment.qml
         QGCSwipeView.qml
         QGCTabBar.qml
         QGCTabButton.qml

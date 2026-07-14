@@ -213,6 +213,7 @@ find_package(Qt6
         Core
         Gui
         HttpServer
+        LabsStyleKit
         LinguistTools
         Location
         LocationPrivate
@@ -371,16 +372,6 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
     TS_FILE_BASE ${CMAKE_PROJECT_NAME}
     QM_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/i18n"
     MERGE_QT_TRANSLATIONS
-)
-
-# ----------------------------------------------------------------------------
-# Qt Quick Controls Configuration
-# ----------------------------------------------------------------------------
-qgc_set_qt_resource_alias("${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf")
-
-qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
-    PREFIX "/"
-    FILES "${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf"
 )
 
 # ----------------------------------------------------------------------------

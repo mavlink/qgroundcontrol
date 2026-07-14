@@ -5,6 +5,7 @@ import QtQuick.Templates as T
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 T.ComboBox {
     property bool sizeToContents: false
@@ -96,7 +97,7 @@ T.ComboBox {
         anchors.rightMargin: control.padding
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        height: ScreenTools.defaultFontPixelWidth
+        height: QGCStyle.StyleMetrics.inlineIconSize
         width: height
         source: "/qmlimages/arrow-down.png"
         color: qgcPal.buttonText

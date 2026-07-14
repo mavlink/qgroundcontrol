@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.AppSettings
+import QGCStyle as QGCStyle
 
 Rectangle {
     id:     settingsView
@@ -281,7 +282,7 @@ Rectangle {
                             Layout.fillWidth: true
                             padding:        ScreenTools.defaultFontPixelWidth * 0.75
                             leftPadding:    ScreenTools.defaultFontPixelWidth * 3
-                            hoverEnabled:   !ScreenTools.isMobile
+                            hoverEnabled:   QGCStyle.StylePreferences.hoverEffectsEnabled
 
                             property int sectionIndex: index
                             property bool sectionChecked: pageColumn.isSelected && settingsView._selectedSectionIndex === sectionIndex

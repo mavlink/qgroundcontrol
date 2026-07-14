@@ -3,11 +3,13 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 RadioButton {
     id:             control
     font.family:    ScreenTools.normalFontFamily
     font.pointSize: ScreenTools.defaultFontPointSize
+    hoverEnabled:   QGCStyle.StylePreferences.hoverEffectsEnabled
 
     property color  textColor:  qgcPal.text
     property bool   _noText:    text === ""

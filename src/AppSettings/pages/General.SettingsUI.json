@@ -7,7 +7,7 @@
     "groups": [
         {
             "heading": "General",
-            "keywords": ["language", "locale", "color scheme", "dark mode", "theme", "palette", "follow me", "audio", "volume", "sound", "gstreamer", "debug level", "ui scale", "font size", "zoom", "save path", "storage", "reset", "clear settings", "factory reset"],
+            "keywords": ["language", "locale", "color scheme", "dark mode", "theme", "palette", "follow me", "audio", "volume", "sound", "gstreamer", "debug level", "ui scale", "font size", "zoom", "accessibility", "contrast", "motion", "touch", "pointer", "density", "save path", "storage", "reset", "clear settings", "factory reset"],
             "controls": [
                 {
                     "setting": "appSettings.qLocaleLanguage",
@@ -39,6 +39,16 @@
                 {
                     "setting": "appSettings.uiScalePercent",
                     "control": "scaler"
+                },
+                {
+                    "setting": "appSettings.forceHighContrast"
+                },
+                {
+                    "setting": "appSettings.reducedMotion"
+                },
+                {
+                    "setting": "appSettings.touchModeOverride",
+                    "control": "combobox"
                 },
                 {
                     "setting": "appSettings.savePath",

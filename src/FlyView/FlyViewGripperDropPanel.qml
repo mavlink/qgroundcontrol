@@ -5,7 +5,7 @@ import QGroundControl
 import QGroundControl.Controls
 
 ColumnLayout {
-    spacing: ScreenTools.defaultFontHeight / 2
+    spacing: ScreenTools.defaultFontPixelHeight / 2
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property var _buttonTitles: [qsTr("Release"), qsTr("Grab"), qsTr("Hold")]

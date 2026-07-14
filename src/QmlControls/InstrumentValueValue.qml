@@ -4,6 +4,7 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 ColumnLayout {
     property var    instrumentValueData:            null
@@ -25,6 +26,7 @@ ColumnLayout {
         id:                 label
         Layout.alignment:   Qt.AlignVCenter
         font.pointSize:     _fontSize
+        font.features:      QGCStyle.StyleTypography.tabularNumberFeatures
         color:              instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.text
         text:               valueText()
 

@@ -2,6 +2,7 @@
 """Post-install fixups for CI dependency caching on Linux.
 
 Handles:
+- Normalizing official Ubuntu apt mirrors to reliable HTTPS endpoints
 - Enabling the Ubuntu universe repository
 - Repairing apt alternatives after cache-apt-pkgs-action restore
 - Installing optional packages
@@ -23,6 +24,10 @@ from common.gh_actions import gh_error, gh_warning, write_github_output
 from common.proc import run_captured
 
 APT_OPTS = ["-o", "DPkg::Lock::Timeout=300", "-o", "Acquire::Retries=3"]
+UBUNTU_APT_URL_PATTERN = re.compile(
+    r"http://(?P<host>[a-z0-9.-]+\.ubuntu\.com)(?P<suffix>(?::\d+)?(?:/[^\s#]*)?)",
+    re.IGNORECASE,
+)
 
 
 def _sudo(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
@@ -38,6 +43,63 @@ def _ldconfig_has_blas() -> bool:
 def _get_multiarch() -> str:
     result = run_captured(["dpkg-architecture", "-qDEB_HOST_MULTIARCH"])
     return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def _normalize_ubuntu_apt_urls(text: str) -> str:
+    """Use canonical HTTPS endpoints for official Ubuntu apt repositories."""
+
+    def replace_url(match: re.Match[str]) -> str:
+        host = match.group("host").lower()
+        suffix = match.group("suffix")
+
+        if host.endswith(".ec2.ports.ubuntu.com"):
+            host = "ports.ubuntu.com"
+        elif host.endswith(".ec2.archive.ubuntu.com"):
+            host = "archive.ubuntu.com"
+        elif host not in {"archive.ubuntu.com", "ports.ubuntu.com", "security.ubuntu.com"}:
+            return match.group(0)
+
+        return f"https://{host}{suffix}"
+
+    return UBUNTU_APT_URL_PATTERN.sub(replace_url, text)
+
+
+def normalize_apt_sources(apt_root: Path = Path("/etc/apt")) -> None:
+    """Normalize Ubuntu URLs in legacy and deb822 apt source files."""
+    sources = [apt_root / "sources.list"]
+    sources_dir = apt_root / "sources.list.d"
+    if sources_dir.is_dir():
+        sources.extend(sorted(sources_dir.glob("*.list")))
+        sources.extend(sorted(sources_dir.glob("*.sources")))
+
+    changed_sources = 0
+    for source in sources:
+        if not source.is_file():
+            continue
+
+        try:
+            original = source.read_text(errors="replace")
+        except OSError as error:
+            gh_warning(f"Unable to read apt source {source}: {error}")
+            continue
+
+        normalized = _normalize_ubuntu_apt_urls(original)
+        if normalized == original:
+            continue
+
+        try:
+            source.write_text(normalized)
+        except PermissionError:
+            subprocess.run(
+                ["sudo", "tee", str(source)],
+                check=True,
+                input=normalized,
+                stdout=subprocess.DEVNULL,
+                text=True,
+            )
+        changed_sources += 1
+
+    print(f"Normalized {changed_sources} apt source file(s)")
 
 
 def enable_universe() -> None:
@@ -150,6 +212,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("normalize-apt-sources")
     sub.add_parser("enable-universe")
     sub.add_parser("fix-apt-alternatives")
     sub.add_parser("install-optional")
@@ -158,6 +221,7 @@ def main() -> None:
 
     args = parser.parse_args()
     commands = {
+        "normalize-apt-sources": normalize_apt_sources,
         "enable-universe": enable_universe,
         "fix-apt-alternatives": fix_apt_alternatives,
         "install-optional": install_optional_packages,

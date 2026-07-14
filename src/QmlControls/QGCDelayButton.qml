@@ -4,10 +4,11 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 DelayButton {
     id:             control
-    hoverEnabled:   !ScreenTools.isMobile
+    hoverEnabled:   QGCStyle.StylePreferences.hoverEffectsEnabled
     topPadding:     _verticalPadding
     bottomPadding:  _verticalPadding
     leftPadding:    _horizontalPadding

@@ -3,6 +3,7 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 // Important Note: SubMenuButtons must manage their checked state manually in order to support
 // view switch prevention. This means they can't be checkable or autoExclusive.
@@ -11,7 +12,7 @@ Button {
     id:             control
     text:           "Button"
     focusPolicy:    Qt.ClickFocus
-    hoverEnabled:   !ScreenTools.isMobile
+    hoverEnabled:   QGCStyle.StylePreferences.hoverEffectsEnabled
     implicitHeight: ScreenTools.defaultFontPixelHeight * 2.5
 
     property bool   setupComplete:  true                                    ///< true: setup complete indicator shows as completed

@@ -20,9 +20,17 @@ ApplicationWindow {
     // The special casing for android prevents white bars from showing up on the edges of the screen with newer android versions
     flags:      Qt.Window | (ScreenTools.isAndroid ? Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint : 0)
 
+    readonly property var _qgcStyleEnvironment: QGCStyleEnvironment
+
     Component.onCompleted: {
         // Start the sequence of first run prompt(s)
         firstRunPromptManager.nextPrompt()
+    }
+
+    Binding {
+        target: ScreenTools
+        property: "_windowScreen"
+        value: mainWindow.screen
     }
 
     /// Saves main window position and size and re-opens it in the same position and size next time

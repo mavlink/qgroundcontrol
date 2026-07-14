@@ -56,9 +56,6 @@ public:
     /// multiple times.
     void reportMissingParameter(int componentId, const QString &name);
 
-    /// @return true: Fake ui into showing mobile interface
-    bool fakeMobile() const { return _fakeMobile; }
-
     void setLanguage();
     QQuickWindow *mainRootWindow();
     uint64_t msecsSinceBoot() const { return _msecsElapsedTime.elapsed(); }
@@ -113,6 +110,9 @@ private slots:
 
 private:
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
+    void _loadApplicationFonts();
+    void _loadKoreanFonts();
+    void _setApplicationFont();
 
     bool _initVideo();
 
@@ -126,7 +126,6 @@ private:
 
     bool _runningUnitTests = false;
     bool _simpleBootTest = false;
-    bool _fakeMobile = false;    ///< true: Fake ui into displaying mobile interface
     bool _logOutput = false;    ///< true: Log Qt debug output to file
     quint8 _systemId = 0; ///< MAVLink system ID, 0 means not set
 
@@ -148,6 +147,8 @@ private:
     QElapsedTimer _msecsElapsedTime;
     bool _videoManagerInitialized = false;
     bool _bootTestPassed = true;
+    bool _applicationFontsLoaded = false;
+    bool _koreanFontsLoaded = false;
 
     QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;
 

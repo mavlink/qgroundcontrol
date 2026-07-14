@@ -92,7 +92,7 @@ SettingsGroupLayout {
         buttonText: qsTr("Add")
 
         onClicked: {
-            var editingConfig = _linkManager.createConfiguration(ScreenTools.isSerialAvailable ? LinkConfiguration.TypeSerial : LinkConfiguration.TypeUdp, "")
+            const editingConfig = _root._linkManager.createConfiguration()
             linkDialogFactory.open({ editingConfig: editingConfig, originalConfig: null })
         }
     }

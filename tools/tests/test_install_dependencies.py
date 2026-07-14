@@ -99,6 +99,16 @@ def test_sysroot_script_single_sources_cross_arm64() -> None:
         )
 
 
+def test_sysroot_script_retries_partial_apt_updates() -> None:
+    script = (REPO_ROOT / "deploy" / "docker" / "install-sysroot-aarch64.sh").read_text()
+    assert "APT::Update::Error-Mode=any" in script
+
+
+def test_sysroot_script_uses_https_arm64_mirror() -> None:
+    script = (REPO_ROOT / "deploy" / "docker" / "install-sysroot-aarch64.sh").read_text()
+    assert 'MIRROR="${MIRROR:-https://ports.ubuntu.com/ubuntu-ports}"' in script
+
+
 def test_get_debian_packages_no_duplicates() -> None:
     pkgs = get_debian_packages()
     assert len(pkgs) == len(set(pkgs))

@@ -220,6 +220,35 @@
             "keywords": "ui scale,font size,zoom"
         },
         {
+            "name": "forceHighContrast",
+            "shortDesc": "Forces the high-contrast interface appearance.",
+            "longDesc": "Uses the high-contrast interface appearance even when the platform does not request it.",
+            "type": "bool",
+            "default": false,
+            "label": "High Contrast",
+            "keywords": "accessibility,contrast,appearance"
+        },
+        {
+            "name": "reducedMotion",
+            "shortDesc": "Reduces interface animations and transitions.",
+            "longDesc": "Disables non-essential interface animations and transitions.",
+            "type": "bool",
+            "default": false,
+            "label": "Reduced Motion",
+            "keywords": "accessibility,animation,motion"
+        },
+        {
+            "name": "touchModeOverride",
+            "shortDesc": "Selects automatic, pointer, or touch interface density.",
+            "longDesc": "Overrides automatic input-device detection when choosing control spacing and touch target sizes.",
+            "type": "int32",
+            "enumStrings": "Automatic,Pointer,Touch",
+            "enumValues": "-1,0,1",
+            "default": -1,
+            "label": "Interface Density",
+            "keywords": "touch,pointer,density,spacing"
+        },
+        {
             "name": "indoorPalette",
             "shortDesc": "Switches between light and dark color schemes for different lighting conditions.",
             "longDesc": "The color scheme for the user interface.",

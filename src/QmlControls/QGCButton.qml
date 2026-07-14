@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 /// Standard push button control:
 ///     If there is both an icon and text the icon will be to the left of the text
@@ -23,7 +24,7 @@ Button {
     property alias textColor: text.color
 
     id: control
-    hoverEnabled: !ScreenTools.isMobile
+    hoverEnabled: QGCStyle.StylePreferences.hoverEffectsEnabled
     topPadding: _verticalPadding
     bottomPadding: _verticalPadding
     leftPadding: _horizontalPadding
