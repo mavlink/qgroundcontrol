@@ -29,7 +29,7 @@ permissions:
 jobs:
   profile:
     name: Clang -ftime-trace + ClangBuildAnalyzer
-    runs-on: ubuntu-22.04
+    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-profiler', github.run_id) || 'ubuntu-22.04' }}
     timeout-minutes: 90
 
     defaults:
@@ -45,6 +45,13 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
 
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -69,16 +76,20 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors --max-time 300 \
-            https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v1.6.0/ClangBuildAnalyzer-linux-x64 \
+            https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v1.6.0/ClangBuildAnalyzer-linux \
             -o /tmp/ClangBuildAnalyzer
+          echo 'afbb05054712228bfde56ed388f634706e123c2be39290f0c86c1e336a31fa12  /tmp/ClangBuildAnalyzer' \
+            | sha256sum --check --strict
           chmod +x /tmp/ClangBuildAnalyzer
           test -x /tmp/ClangBuildAnalyzer
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
+          preset: >-
+            ${{ inputs.build_type == 'Debug' && 'Linux-debug' ||
+                inputs.build_type == 'RelWithDebInfo' && 'Linux-relwithdebinfo' || 'Linux' }}
           build-dir: ${{ runner.temp }}/build
-          build-type: ${{ inputs.build_type }}
           extra-args: -DQGC_TIME_TRACE=ON -DQGC_USE_CACHE=OFF
 
       - name: Start ClangBuildAnalyzer capture
@@ -117,11 +128,14 @@ jobs:
 
       - name: Post summary
         working-directory: ${{ runner.temp }}/build
+        env:
+          PROFILE_BUILD_TYPE: ${{ inputs.build_type }}
+          PROFILE_SHA: ${{ github.sha }}
         run: |
           {
-            echo "## Build profile (${{ inputs.build_type }})"
+            echo "## Build profile (${PROFILE_BUILD_TYPE})"
             echo
-            echo "Commit: \`${{ github.sha }}\`"
+            echo "Commit: \`${PROFILE_SHA}\`"
             echo "Compiler: \`$(${CXX} --version | head -n1)\`"
             echo
             echo "### tools/build_profile.py — ninja + per-TU"

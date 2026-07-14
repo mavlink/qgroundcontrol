@@ -1,7 +1,7 @@
 # QGroundControl Coding Style Guide
 
-This document describes the coding conventions for QGroundControl. For the canonical AI-agent
-workflow entry point (golden rules, build/test commands, project structure), see [AGENTS.md](AGENTS.md).
+This document describes the coding conventions for QGroundControl. For the AI-agent entry point,
+project map, and scope-aware validation workflow, see [AGENTS.md](AGENTS.md).
 
 For complete worked examples, see the reference files:
 
@@ -58,7 +58,7 @@ over narration.
 | Methods/Functions | camelCase | `getActiveVehicle()` |
 | Variables | camelCase | `activeVehicle` |
 | Private members | _leadingUnderscore | `_vehicleList` |
-| Constants | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
+| Compile-time constants | PascalCase | `MaxRetries` |
 | Enums | PascalCase (scoped) | `enum class FlightMode` |
 | Files | ClassName.h/.cc | `Vehicle.h`, `Vehicle.cc` |
 
@@ -69,13 +69,13 @@ over narration.
 ```cpp
 #pragma once
 
-// System headers first
-#include <algorithm>
-#include <span>
-
-// Qt headers second (use full paths)
+// Qt headers first (use full paths)
 #include <QtCore/QObject>
 #include <QtCore/QString>
+
+// System headers second
+#include <algorithm>
+#include <span>
 
 // Project headers last
 #include "Vehicle.h"
@@ -291,6 +291,8 @@ Connections {
 
 ## Common Pitfalls
 
+This is the canonical checklist for QGroundControl source architecture and defensive-coding rules.
+
 1. **Assuming single vehicle** - Always null-check `activeVehicle()`
 2. **Accessing Facts before ready** - Wait for `parametersReady` signal
 3. **Bypassing FirmwarePlugin** - Use plugin for firmware-specific behavior
@@ -326,11 +328,15 @@ Formatting and static analysis are enforced via [.pre-commit-config.yaml](.pre-c
 - `.qmllint.ini` - QML linting
 - `.editorconfig` - Editor settings
 
-Run them with `just lint` (fast gate) or `pre-commit run --all-files` (full sweep); see
+Run the full repository gate with `just lint` (equivalent to `pre-commit run --all-files`). During
+iteration, scope individual hooks with `pre-commit run <hook> --files <changed-files>`. See
 [tools/README.md](tools/README.md) for all commands.
 
 ## Additional Resources
 
+- [Contribution workflow](.github/CONTRIBUTING.md)
+- [Build, lint, and analysis commands](tools/README.md)
+- [Test framework and conventions](test/README.md)
 - [Qt 6 Documentation](https://doc.qt.io/qt-6/)
 - [QGroundControl Dev Guide](https://dev.qgroundcontrol.com/)
 - [MAVLink Protocol](https://mavlink.io/)

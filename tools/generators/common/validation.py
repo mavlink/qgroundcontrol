@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import reprlib
 
-# Clamp offending-value reprs so a huge JSON fragment can't balloon the error message
 _repr = reprlib.Repr()
 _repr.maxstring = 120
 _repr.maxlist = 4

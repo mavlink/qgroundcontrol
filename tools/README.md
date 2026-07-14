@@ -17,6 +17,8 @@ This directory contains development tools, scripts, and configuration files for 
 - [Shared Utilities](#shared-utilities)
 - [Debugging Tools](#debugging-tools)
 - [Simulation Tools](#simulation-tools)
+- [Generator References](#generator-references)
+- [AI Skills](#ai-skills)
 - [Translation Tools](#translation-tools)
 - [Code Quality Tools](#code-quality-tools)
 - [VS Code Integration](#vs-code-integration)
@@ -62,14 +64,14 @@ tools/
 ├── pseudo_loc.py             # Generate pseudo-localized .ts files for layout testing
 ├── release.py                # Semantic versioning and release automation
 ├── run_tests.py              # Qt unit test runner
+├── _bootstrap.py             # Import bootstrap for Python entrypoints
 ├── configs/                 # Tool configuration files
 │   └── ccache.conf          # ccache configuration
 ├── analyzers/                # Static analysis scripts
 │   └── vehicle_null_check.py
 ├── coding-style/             # Code style examples
-├── common/                   # Shared Python utilities
-│   ├── patterns.py          # QGC regex patterns
-│   └── file_traversal.py    # File discovery
+├── common/                   # Shared Python and shell utilities
+│   └── README.md            # Module index and extension rules
 ├── debuggers/                # Debugging tools
 │   ├── gdb-pretty-printers/ # GDB/LLDB Qt type formatters
 │   ├── profile.sh           # Profiling (valgrind, perf)
@@ -81,6 +83,7 @@ tools/
 ├── simulation/                # Vehicle simulators
 │   ├── mock_vehicle.py      # Lightweight MAVLink simulator
 │   └── run-arducopter-sitl.sh  # ArduCopter SITL (Docker)
+├── skills/                    # Standalone AI skill packages
 └── translations/              # Translation tools
 ```
 
@@ -100,8 +103,8 @@ with no arguments to print this list from the tool itself.
 
 | Recipe              | Description                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------------ |
-| `just configure`    | Configure CMake build (Debug by default; pulls submodules first)                                 |
-| `just build`        | Build the project (`--parallel` capped at half of `nproc`; override with `JOBS=N`)               |
+| `just configure`    | Configure with the matching `default*` CMake preset (Debug by default; pulls submodules first)   |
+| `just build`        | Build with the preset (`--parallel` capped at half of `nproc`; override with `JOBS=N`)           |
 | `just release`      | Configure and build in Release mode (testing disabled)                                           |
 | `just clean [ARGS]` | Clean the build directory; forwards `ARGS` to `tools/clean.py` (`--cache`, `--all`, `--dry-run`) |
 | `just rebuild`      | `clean` + `configure` + `build`                                                                  |
@@ -111,13 +114,16 @@ with no arguments to print this list from the tool itself.
 
 | Recipe            | Description                                                                                    |
 | ----------------- | ---------------------------------------------------------------------------------------------- |
-| `just test`       | Run unit tests via ctest; defaults to labels `Unit`/`Integration`, excluding `Flaky`/`Network` |
+| `just test`       | Run the default CTest preset; defaults to Unit and Integration, excluding Flaky and Network    |
 | `just lint`       | Run all pre-commit checks (`pre-commit run --all-files`)                                       |
 | `just format`     | Check code formatting with clang-format (no changes)                                           |
 | `just format-fix` | Apply clang-format fixes                                                                       |
 | `just analyze`    | Run static analysis (`tools/analyze.py`, default tool clang-tidy)                              |
 | `just coverage`   | Build with coverage instrumentation, run tests, generate report                                |
 | `just check`      | `lint` + `test` — run before declaring a task done                                             |
+
+For test framework details, labels, fixtures, and focused test selection, see
+[test/README.md](../test/README.md).
 
 Override `test` label filters via environment variables or positional args:
 
@@ -149,8 +155,9 @@ Prefer `just` recipes for common tasks; call the underlying scripts directly for
 doesn't expose — see [Development Scripts](#development-scripts) for the per-script flag reference.
 
 ```bash
-# Run tools/ Python tests
-cd tools && uv run --extra scripts --extra test pytest tests/ -q
+# Run the complete developer/CI script suite
+uv run --project tools --extra scripts --extra test \
+  pytest -q tools/tests .github/scripts/tests
 ```
 
 ## Development Scripts
@@ -274,6 +281,7 @@ Scripts in `setup/` help configure development environments. They read configura
 | `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                       |
 | `install_python.py`                       | All                   | Install Python tools via uv or pip (see groups below)                         |
 | `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI) |
+| `setup_vscode.py`                         | All                   | Install missing VS Code defaults without overwriting local files              |
 | `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                        |
 | `build_android_openssl.py`                | Android               | Cross-compile OpenSSL as Qt-style Android libraries (optional)                |
 | `download_artifacts.py`                   | All                   | Download build artifacts (in `.github/scripts/`)                              |
@@ -310,35 +318,19 @@ Scripts in `analyzers/` perform QGC-specific static analysis.
 
 ### vehicle_null_check.py
 
-Detects unsafe `activeVehicle()` access patterns that could cause null pointer dereferences.
-
-```bash
-# Analyze specific files
-python3 tools/analyzers/vehicle_null_check.py src/Vehicle/*.cc
-
-# Analyze entire directory
-python3 tools/analyzers/vehicle_null_check.py src/
-
-# JSON output for CI/editor integration
-python3 tools/analyzers/vehicle_null_check.py --json src/
-
-# Run via pre-commit
-pre-commit run vehicle-null-check --all-files
-```
-
-Detects `activeVehicle()->method()` without a prior null check and unvalidated `getParameter()`
-results; output includes fix suggestions per issue. See
-[analyzers/README.md](analyzers/README.md) for details.
+Detects unsafe vehicle and parameter access. See the
+[static-analyzer guide](analyzers/README.md) for supported patterns, direct invocation, JSON output,
+and suppression guidance.
 
 ## Shared Utilities
 
-Common utilities in `common/` are used by multiple tools:
+Shared utilities are grouped by concern rather than entrypoint: process execution, Git and GitHub
+Actions, network retries, safe file/archive I/O, platform normalization, build configuration,
+analysis, and terminal output. Import helpers from their defining `common.<module>`; the package
+root deliberately has no convenience re-exports.
 
-- `patterns.py` - QGC-specific regex patterns (Fact, FactGroup, MAVLink)
-- `file_traversal.py` - File discovery with proper filtering
-- `gh_actions.py` - GitHub API helpers (httpx with `gh` CLI fallback) for workflow runs and artifacts
-
-See [common/README.md](common/README.md) for API documentation.
+See [common/README.md](common/README.md) for the full module index, bootstrap examples, extension
+rules, sparse-checkout constraints, and verification commands.
 
 ## Debugging Tools
 
@@ -364,43 +356,37 @@ Visual Studio debugger visualizers for Qt6 types. Automatically loaded by VS whe
 
 ## Simulation Tools
 
-Vehicle simulators for testing QGC without hardware.
+The [simulation guide](simulation/README.md) owns setup, commands, options, limitations, and the
+comparison between the lightweight mock vehicle and ArduCopter SITL.
 
-### Mock Vehicle (Lightweight)
+## Generator References
 
-```bash
-pip install pymavlink
-./tools/simulation/mock_vehicle.py              # QGC connects to UDP 14550
-./tools/simulation/mock_vehicle.py --tcp --port 5760  # TCP mode
-```
+The build-time QML generators have format-specific reference guides:
 
-### ArduCopter SITL (Full Simulation)
+- [Vehicle configuration pages](generators/config_qml/README.md)
+- [Application settings pages](generators/settings_qml/README.md)
 
-```bash
-./tools/simulation/run-arducopter-sitl.sh       # Connect to tcp://localhost:5760
-./tools/simulation/run-arducopter-sitl.sh --with-latency  # Simulate network lag
-```
+## AI Skills
 
-See [simulation/README.md](simulation/README.md) for details.
+Each package under `skills/` is independently installable. Its `README.md` owns installation and
+platform notes, `SKILL.md` owns runtime instructions, and `references/` holds detailed supporting
+material.
+
+- [Qt C++ documentation](skills/qt-cpp-docs/README.md)
+- [Qt C++ review](skills/qt-cpp-review/README.md)
+- [Qt project setup](skills/qt-project/README.md)
+- [Qt QML documentation](skills/qt-qml-docs/README.md)
+- [Qt QML profiling](skills/qt-qml-profiler/README.md)
+- [Qt QML review](skills/qt-qml-review/README.md)
+- [Qt QML test runner](skills/qt-qml-test-run/README.md)
+- [Qt QML test generation](skills/qt-qml-test/README.md)
+- [Qt QML coding](skills/qt-qml/README.md)
+- [Qt UI design](skills/qt-ui-design/README.md)
 
 ## Translation Tools
 
-Scripts in `translations/` manage internationalization.
-
-| Script                | Description                                                              |
-| --------------------- | ------------------------------------------------------------------------ |
-| `qgc_lupdate.py`      | Update Qt translation files (runs lupdate + JSON extractor + pseudo-loc) |
-| `qgc_lupdate_json.py` | Extract translatable strings from JSON files                             |
-
-```bash
-# From repository root:
-python3 tools/translations/qgc_lupdate.py
-
-# Or run JSON extractor directly:
-python3 tools/translations/qgc_lupdate_json.py
-```
-
-See [translations/README.md](translations/README.md) for Crowdin integration.
+The [translation guide](translations/README.md) owns Crowdin synchronization, source regeneration,
+Qt string-marking rules, and JSON parser metadata.
 
 ## Code Quality Tools
 
@@ -426,14 +412,22 @@ See [CODING_STYLE.md](../CODING_STYLE.md) for the full style guide.
 
 ## VS Code Integration
 
-The repository includes VS Code configuration in `.vscode/`:
+The repository includes recommended extensions and tracked configuration templates in `.vscode/`:
 
-- **settings.json** - Editor settings, CMake integration
-- **extensions.json** - Recommended extensions
-- **tasks.json** - Build, test, format tasks
-- **launch.json** - Debug configurations
+- **extensions.json** - Recommended extensions loaded directly by VS Code
+- **settings.default.json** - Editor, clangd, QML, CMake, and Python defaults
+- **tasks.default.json** - Build, test, lint, format, and analysis tasks backed by `just`
+- **launch.default.json** - GDB/LLDB launch and test-debugging configurations
 
-Open the repository in VS Code and install recommended extensions for the best experience.
+Install the local configuration once after cloning:
+
+```bash
+just vscode
+```
+
+This copies only missing `settings.json`, `tasks.json`, and `launch.json` files. Existing local
+configuration is never overwritten. The development container installs the task and launch
+templates automatically while keeping its `/opt/qgc-venv` interpreter setting container-local.
 
 ## Centralized Configuration
 
@@ -445,7 +439,7 @@ Version numbers and build settings are centralized in `.github/build-config.json
   "gstreamer": { "version": { "default": "1.28.4", ... }, ... },
   "android": { "platform": "36", "ndk_full_version": "27.2.12479018", "java_version": "21", ... },
   "apple": { "xcode_version": "16.x", "macos_deployment_target": "13.0", ... },
-  "build": { "cmake_minimum_version": "3.25", "platform_workflows": "Linux,Windows,MacOS,Android" }
+  "build": { "cmake_minimum_version": "3.25", "platform_workflows": "Linux,Windows,MacOS,Android,iOS" }
 }
 ```
 

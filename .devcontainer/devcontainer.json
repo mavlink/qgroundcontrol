@@ -2,32 +2,25 @@
   "build": {
     "context": "..",
     "dockerfile": "../deploy/docker/Dockerfile",
-    "target": "linux"
+    "target": "devcontainer"
   },
   "customizations": {
     "vscode": {
       "extensions": [
+        "ms-vscode.cpptools",
         "llvm-vs-code-extensions.vscode-clangd",
         "ms-vscode.cmake-tools",
-        "twxs.cmake",
-        "QML.qml-official",
+        "vadimcn.vscode-lldb",
+        "theqtcompany.qt-qml",
         "ms-python.python",
-        "GitHub.copilot"
+        "streetsidesoftware.code-spell-checker",
+        "DavidAnson.vscode-markdownlint",
+        "EditorConfig.EditorConfig",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml"
       ],
       "settings": {
-        "clangd.arguments": [
-          "--background-index",
-          "--clang-tidy",
-          "--header-insertion=iwyu",
-          "--completion-style=detailed"
-        ],
-        "cmake.buildDirectory": "${workspaceFolder}/build",
-        "cmake.configureOnOpen": true,
-        "cmake.generator": "Ninja",
-        "editor.formatOnSave": true,
-        "files.associations": {
-          "*.qml": "qml"
-        }
+        "python.defaultInterpreterPath": "/opt/qgc-venv/bin/python"
       }
     }
   },
@@ -36,8 +29,9 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "name": "QGroundControl Dev",
-  "postCreateCommand": "git submodule update --init --recursive",
-  "remoteUser": "root",
+  "overrideCommand": true,
+  "postCreateCommand": "git submodule update --init --recursive && /opt/qgc-venv/bin/python tools/setup/setup_vscode.py --exclude settings",
+  "remoteUser": "vscode",
   "workspaceFolder": "/workspaces/qgroundcontrol",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/qgroundcontrol,type=bind,consistency=cached"
 }

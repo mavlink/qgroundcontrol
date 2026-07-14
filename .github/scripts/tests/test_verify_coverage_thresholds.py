@@ -1,7 +1,8 @@
-"""Tests for verify_coverage_thresholds.py."""
+"""Coverage threshold enforcement contracts."""
 
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 from verify_coverage_thresholds import main
@@ -9,60 +10,32 @@ from verify_coverage_thresholds import main
 if TYPE_CHECKING:
     from pathlib import Path
 
-
-def _write_xml(path: Path, content: str) -> None:
-    path.write_text(content, encoding="utf-8")
+    import pytest
 
 
-def test_missing_file_returns_zero(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr(
-        "sys.argv",
-        ["prog", "--coverage-xml", str(tmp_path / "missing.xml")],
-    )
-    assert main() == 0
+def _run(monkeypatch: pytest.MonkeyPatch, path: Path, *thresholds: str) -> int:
+    monkeypatch.setattr(sys, "argv", ["prog", "--coverage-xml", str(path), *thresholds])
+    return main()
 
 
-def test_above_thresholds(tmp_path: Path, monkeypatch) -> None:
-    xml = tmp_path / "coverage.xml"
-    _write_xml(
-        xml, '<coverage lines-valid="100" lines-covered="80" line-rate="0.80" branch-rate="0.60"/>'
-    )
-    monkeypatch.setattr(
-        "sys.argv",
-        ["prog", "--coverage-xml", str(xml), "--line-threshold", "30", "--branch-threshold", "20"],
-    )
-    assert main() == 0
+def test_missing_coverage_is_non_blocking(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    assert _run(monkeypatch, tmp_path / "missing.xml") == 0
 
 
-def test_below_line_threshold(tmp_path: Path, monkeypatch) -> None:
-    xml = tmp_path / "coverage.xml"
-    _write_xml(
-        xml, '<coverage lines-valid="100" lines-covered="10" line-rate="0.10" branch-rate="0.50"/>'
-    )
-    monkeypatch.setattr(
-        "sys.argv",
-        ["prog", "--coverage-xml", str(xml), "--line-threshold", "30", "--branch-threshold", "20"],
-    )
-    assert main() == 1
-
-
-def test_below_branch_threshold(tmp_path: Path, monkeypatch) -> None:
-    xml = tmp_path / "coverage.xml"
-    _write_xml(
-        xml, '<coverage lines-valid="100" lines-covered="80" line-rate="0.80" branch-rate="0.10"/>'
-    )
-    monkeypatch.setattr(
-        "sys.argv",
-        ["prog", "--coverage-xml", str(xml), "--line-threshold", "30", "--branch-threshold", "20"],
-    )
-    assert main() == 1
-
-
-def test_zero_lines_valid(tmp_path: Path, monkeypatch) -> None:
-    xml = tmp_path / "coverage.xml"
-    _write_xml(xml, '<coverage lines-valid="0" lines-covered="0" line-rate="0" branch-rate="0"/>')
-    monkeypatch.setattr(
-        "sys.argv",
-        ["prog", "--coverage-xml", str(xml)],
-    )
-    assert main() == 1
+def test_thresholds_accept_healthy_coverage_and_reject_each_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    coverage = tmp_path / "coverage.xml"
+    thresholds = ("--line-threshold", "30", "--branch-threshold", "20")
+    cases = [
+        ((100, 80, 0.80, 0.60), 0),
+        ((100, 10, 0.10, 0.50), 1),
+        ((100, 80, 0.80, 0.10), 1),
+        ((0, 0, 0.0, 0.0), 1),
+    ]
+    for (valid, covered, line_rate, branch_rate), expected in cases:
+        coverage.write_text(
+            f'<coverage lines-valid="{valid}" lines-covered="{covered}" '
+            f'line-rate="{line_rate}" branch-rate="{branch_rate}"/>'
+        )
+        assert _run(monkeypatch, coverage, *thresholds) == expected

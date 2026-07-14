@@ -24,6 +24,11 @@
           "description": "Enable pretty-printing for gdb",
           "ignoreFailures": true,
           "text": "-enable-pretty-printing"
+        },
+        {
+          "description": "Load QGC Qt pretty-printers",
+          "ignoreFailures": true,
+          "text": "source ${workspaceFolder}/tools/debuggers/gdb-pretty-printers/qt6.py"
         }
       ],
       "stopAtEntry": false,
@@ -45,7 +50,8 @@
     {
       "MIMode": "gdb",
       "args": [
-        "--unittest"
+        "--unittest",
+        "--label=Unit"
       ],
       "cwd": "${workspaceFolder}",
       "environment": [],
@@ -59,6 +65,11 @@
           "description": "Enable pretty-printing for gdb",
           "ignoreFailures": true,
           "text": "-enable-pretty-printing"
+        },
+        {
+          "description": "Load QGC Qt pretty-printers",
+          "ignoreFailures": true,
+          "text": "source ${workspaceFolder}/tools/debuggers/gdb-pretty-printers/qt6.py"
         }
       ],
       "stopAtEntry": false,
@@ -81,6 +92,11 @@
           "description": "Enable pretty-printing for gdb",
           "ignoreFailures": true,
           "text": "-enable-pretty-printing"
+        },
+        {
+          "description": "Load QGC Qt pretty-printers",
+          "ignoreFailures": true,
+          "text": "source ${workspaceFolder}/tools/debuggers/gdb-pretty-printers/qt6.py"
         }
       ],
       "stopAtEntry": false,
@@ -97,6 +113,11 @@
           "description": "Enable pretty-printing for gdb",
           "ignoreFailures": true,
           "text": "-enable-pretty-printing"
+        },
+        {
+          "description": "Load QGC Qt pretty-printers",
+          "ignoreFailures": true,
+          "text": "source ${workspaceFolder}/tools/debuggers/gdb-pretty-printers/qt6.py"
         }
       ],
       "type": "cppdbg"

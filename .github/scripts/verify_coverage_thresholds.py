@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Verify coverage.xml meets line and branch coverage thresholds."""
 
 import argparse
@@ -8,8 +7,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.cobertura import CoberturaError, read_cobertura
 from common.gh_actions import gh_error, gh_warning
-from xml_utils import xml_parse
 
 
 def main() -> int:
@@ -24,15 +23,15 @@ def main() -> int:
         gh_warning("coverage.xml not found, skipping threshold check")
         return 0
 
-    root = xml_parse(str(path)).getroot()
-    if root is None:
-        gh_error("coverage.xml has no root element")
+    try:
+        metrics = read_cobertura(path)
+    except CoberturaError as error:
+        gh_error(str(error))
         return 1
-    cov = root
-    lines_valid = int(cov.get("lines-valid", 0))
-    lines_covered = int(cov.get("lines-covered", 0))
-    line_rate = float(cov.get("line-rate", 0)) * 100
-    branch_rate = float(cov.get("branch-rate", 0)) * 100
+    lines_valid = metrics.lines_valid
+    lines_covered = metrics.lines_covered
+    line_rate = metrics.line_percent
+    branch_rate = metrics.branch_percent or 0.0
 
     if lines_valid == 0:
         gh_error(

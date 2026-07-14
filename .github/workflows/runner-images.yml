@@ -1,0 +1,101 @@
+name: Runner Images
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: runner-images
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  ubuntu24-x64:
+    name: Ubuntu 24 x64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github
+            tools
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve settings
+        id: settings
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ROLE_ARN: ${{ secrets.RUNS_ON_AMI_ROLE_ARN || secrets.AWS_ROLE_ARN }}
+          SUBNET_ID: ${{ vars.RUNS_ON_AMI_SUBNET_ID }}
+        run: |
+          if [[ -n "${ROLE_ARN}" && -n "${SUBNET_ID}" ]]; then
+            echo "configured=true" >> "${GITHUB_OUTPUT}"
+          elif [[ "${EVENT_NAME}" == "schedule" ]]; then
+            echo "::warning::Skipping runner image build: configure RUNS_ON_AMI_ROLE_ARN and RUNS_ON_AMI_SUBNET_ID"
+            echo "configured=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::Configure RUNS_ON_AMI_ROLE_ARN and RUNS_ON_AMI_SUBNET_ID before dispatching this workflow"
+            exit 1
+          fi
+
+      - name: Configure AWS Credentials
+        if: steps.settings.outputs.configured == 'true'
+        uses: ./.github/actions/aws-credentials
+        with:
+          aws-role-arn: ${{ secrets.RUNS_ON_AMI_ROLE_ARN || secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Setup Packer
+        if: steps.settings.outputs.configured == 'true'
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: '1.15.4'
+
+      - name: Resolve build configuration
+        if: steps.settings.outputs.configured == 'true'
+        id: build-config
+        shell: bash
+        run: |
+          {
+            echo "qt_version=$(python3 tools/setup/read_config.py --get qt.version)"
+            echo "qt_modules=$(python3 tools/setup/read_config.py --get qt.modules)"
+            echo "aqt_source=$(python3 tools/setup/read_config.py --get qt.aqt_source)"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Build runner image
+        if: steps.settings.outputs.configured == 'true'
+        working-directory: .github/runner-images
+        env:
+          PKR_VAR_aws_region: ${{ vars.AWS_REGION || 'us-west-2' }}
+          PKR_VAR_subnet_id: ${{ vars.RUNS_ON_AMI_SUBNET_ID }}
+          PKR_VAR_source_repository: ${{ github.server_url }}/${{ github.repository }}.git
+          PKR_VAR_source_ref: ${{ github.sha }}
+          PKR_VAR_qt_version: ${{ steps.build-config.outputs.qt_version }}
+          PKR_VAR_qt_modules: ${{ steps.build-config.outputs.qt_modules }}
+          QGC_PACKER_AQT_SOURCE: ${{ steps.build-config.outputs.aqt_source }}
+        run: |
+          packer fmt -check qgc-ubuntu24-x64.pkr.hcl
+          packer init qgc-ubuntu24-x64.pkr.hcl
+          packer validate -var "aqt_source=${QGC_PACKER_AQT_SOURCE}" qgc-ubuntu24-x64.pkr.hcl
+          packer build -var "aqt_source=${QGC_PACKER_AQT_SOURCE}" qgc-ubuntu24-x64.pkr.hcl
+
+      - name: Upload Packer manifest
+        if: steps.settings.outputs.configured == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: qgc-ubuntu24-x64-packer-manifest
+          path: .github/runner-images/packer-manifest.json
+          if-no-files-found: error
+          retention-days: 30

@@ -3,6 +3,10 @@
 QGC uses the standard Qt Linguist mechanism for string translation, sourced through a crowd-sourced
 [Crowdin project](https://crowdin.com/project/qgroundcontrol).
 
+> See [tools/README.md](../README.md#translation-tools) for the parent tooling index and the
+> [contribution guide](../../.github/CONTRIBUTING.md#contributing-translations) for the contributor
+> entry point.
+
 ## Crowdin integration
 
 Crowdin synchronizes `qgc.ts` once a day, picking up new changes automatically and opening a pull

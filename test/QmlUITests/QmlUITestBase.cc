@@ -145,6 +145,12 @@ void QmlUITestBase::ignoreAPMMockLinkWarnings()
         "ComponentInformation.RequestMetaDataTypeStateMachine",
         QtWarningMsg,
         QRegularExpression(QStringLiteral("\"COMP_METADATA_TYPE_GENERAL\" : failed to load metadata \\(primary and fallback\\) \"\"")));
+
+    // ArduPilot startup requests these two streams, which the generic MockLink does not serve.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression(QStringLiteral(
+                         "Giving up sending command after max retries: MAV_CMD_SET_MESSAGE_INTERVAL requesting: "
+                         "(HOME_POSITION|EXTENDED_SYS_STATE)")));
 }
 
 void QmlUITestBase::closeUIWindow()

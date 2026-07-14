@@ -27,11 +27,35 @@ if(NOT GIT_FOUND OR NOT EXISTS "${CMAKE_SOURCE_DIR}/.git")
     return()
 endif()
 
+execute_process(
+    COMMAND "${GIT_EXECUTABLE}" rev-parse --absolute-git-dir
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE _qgc_git_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+)
+set(_qgc_git_configure_dependencies "${_qgc_git_dir}/HEAD" "${_qgc_git_dir}/index")
+if(EXISTS "${_qgc_git_dir}/packed-refs")
+    list(APPEND _qgc_git_configure_dependencies "${_qgc_git_dir}/packed-refs")
+endif()
+file(GLOB_RECURSE _qgc_git_tag_refs CONFIGURE_DEPENDS LIST_DIRECTORIES false
+    "${_qgc_git_dir}/refs/tags/*")
+list(APPEND _qgc_git_configure_dependencies ${_qgc_git_tag_refs})
+file(READ "${_qgc_git_dir}/HEAD" _qgc_git_head LIMIT 4096)
+if(_qgc_git_head MATCHES "^ref: ([^\r\n]+)")
+    set(_qgc_git_ref "${_qgc_git_dir}/${CMAKE_MATCH_1}")
+    if(EXISTS "${_qgc_git_ref}")
+        list(APPEND _qgc_git_configure_dependencies "${_qgc_git_ref}")
+    endif()
+endif()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    ${_qgc_git_configure_dependencies})
+
 # Optionally update submodules during configuration
 if(GIT_SUBMODULE)
     message(STATUS "Updating Git submodules...")
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+        COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         RESULT_VARIABLE GIT_SUBMODULE_RESULT
         OUTPUT_VARIABLE GIT_SUBMODULE_OUTPUT
@@ -51,7 +75,7 @@ endif()
 # ----------------------------------------------------------------------------
 
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} log -1 --format=%D%n%h
+    COMMAND "${GIT_EXECUTABLE}" log -1 --format=%D%n%h
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     OUTPUT_VARIABLE _git_info
     OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -72,12 +96,14 @@ else()
 endif()
 
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} diff-index --quiet HEAD --
+    COMMAND "${GIT_EXECUTABLE}" status --porcelain --untracked-files=normal
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_VARIABLE _git_status
+    OUTPUT_STRIP_TRAILING_WHITESPACE
     RESULT_VARIABLE _git_dirty_result
     ERROR_QUIET
 )
-if(_git_dirty_result EQUAL 0)
+if(_git_dirty_result EQUAL 0 AND NOT _git_status)
     set(QGC_GIT_DIRTY FALSE)
 else()
     set(QGC_GIT_DIRTY TRUE)
@@ -87,7 +113,7 @@ endif()
 # Extract Version String from Git Tags
 # ----------------------------------------------------------------------------
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --always --tags
+    COMMAND "${GIT_EXECUTABLE}" describe --always --tags
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     OUTPUT_VARIABLE QGC_APP_VERSION_STR
     OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -110,7 +136,7 @@ endif()
 # Extract Clean Version Tag
 # ----------------------------------------------------------------------------
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --always --tags --abbrev=0
+    COMMAND "${GIT_EXECUTABLE}" describe --always --tags --abbrev=0
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     OUTPUT_VARIABLE QGC_APP_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -133,7 +159,7 @@ else()
 endif()
 
 execute_process(
-    COMMAND ${GIT_EXECUTABLE} log -1 --format=%aI ${QGC_APP_DATE_VERSION}
+    COMMAND "${GIT_EXECUTABLE}" log -1 --format=%aI "${QGC_APP_DATE_VERSION}"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     OUTPUT_VARIABLE QGC_APP_DATE
     OUTPUT_STRIP_TRAILING_WHITESPACE

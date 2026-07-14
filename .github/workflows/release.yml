@@ -37,9 +37,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: 'lts/*'
+          node-version-file: '.nvmrc'
 
       - name: Run semantic-release
         id: release
@@ -75,19 +75,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     permissions:
-      actions: read  # wait-for-workflows-action polls workflow runs
+      actions: write
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Dispatch platform builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ needs.semantic-release.outputs.version }}
+        run: |
+          set -euo pipefail
+          for workflow in linux.yml windows.yml macos.yml android.yml ios.yml; do
+            gh workflow run "$workflow" --ref "$RELEASE_TAG"
+          done
+
       - name: Wait for builds to complete
         uses: int128/wait-for-workflows-action@v1
         with:
-          workflow-names: |
+          filter-workflow-names: |
             Linux
             Windows
             MacOS
             Android
-          timeout-minutes: 170
-          poll-interval-minutes: 5
+            iOS
+          filter-workflow-events: workflow_dispatch
+          sha: ${{ github.sha }}
+          period-seconds: 300
 
   upload-artifacts:
     name: Upload Release Artifacts
@@ -113,10 +130,11 @@ jobs:
           persist-credentials: false
 
       - name: Download artifacts
-        uses: actions/download-artifact@v8
+        uses: ./.github/actions/download-all-artifacts
         with:
-          path: artifacts
-          merge-multiple: true
+          head-sha: ${{ github.sha }}
+          event: workflow_dispatch
+          output-dir: artifacts
 
       - name: List artifacts
         run: find artifacts -type f | head -50 || echo "No artifacts found"
@@ -128,9 +146,7 @@ jobs:
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py" \
             --build-dir artifacts \
             --match "appimage=QGroundControl*.AppImage" \
-            --match "apk=*.apk" \
-            --match "dmg=*.dmg" \
-            --match "exe=QGroundControl*.exe"
+            --match "apk=QGroundControl-linux/*.apk"
 
       # Source-tree SBOM is kept as a release artifact for source traceability,
       # but it is NOT used as the attestation evidence (per-platform SBOMs are).
@@ -193,40 +209,56 @@ jobs:
           scan-path: extracted/android
         continue-on-error: true
 
-      # DMG/EXE: Linux runner can't deeply extract these; Syft scans the file
-      # best-effort. For full coverage, mac/Windows builds should emit their
-      # own SBOM as an artifact (followup).
-      - name: Attest macOS DMG
-        id: attest-macos
-        if: steps.paths.outputs.dmg != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.dmg }}
-          subject-name: macos-dmg
-        continue-on-error: true
-
-      - name: Attest Windows EXE
-        id: attest-windows
-        if: steps.paths.outputs.exe != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.exe }}
-          subject-name: windows-exe
-        continue-on-error: true
-
       - name: Upload to Release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: v${{ needs.semantic-release.outputs.version }}
-          files: |
-            artifacts/**/*.AppImage
-            artifacts/**/*.dmg
-            artifacts/**/*.exe
-            artifacts/**/*.apk
-            sbom-source.spdx.json
-            sbom-source.cdx.json
-            ${{ steps.attest-linux.outputs.sbom-path }}
-            ${{ steps.attest-android.outputs.sbom-path }}
-            ${{ steps.attest-macos.outputs.sbom-path }}
-            ${{ steps.attest-windows.outputs.sbom-path }}
-          fail_on_unmatched_files: false
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ needs.semantic-release.outputs.version }}
+          LINUX_SBOM: ${{ steps.attest-linux.outputs.sbom-path }}
+          ANDROID_SBOM: ${{ steps.attest-android.outputs.sbom-path }}
+        run: |
+          set -euo pipefail
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+            checksum="${file}.sha256"
+            if [[ ! -f "$checksum" ]]; then
+              echo "::error::Required checksum not found: $checksum"
+              exit 1
+            fi
+            files+=("$checksum")
+          done < <(find artifacts -type f \( \
+            -name '*.AppImage' -o -name '*.dmg' -o -name '*.exe' -o -name '*.apk' \
+          \) -print0)
+
+          for file in \
+            sbom-source.spdx.json \
+            sbom-source.cdx.json \
+            "$LINUX_SBOM" \
+            "$ANDROID_SBOM"; do
+            if [[ -n "$file" && -f "$file" ]]; then
+              files+=("$file")
+            fi
+          done
+
+          for name in \
+            QGroundControl-macos.sbom.spdx.json \
+            QGroundControl-installer-AMD64-windows.sbom.spdx.json \
+            QGroundControl-installer-ARM64-windows.sbom.spdx.json \
+            QGroundControl-installer-AMD64-ARM64-windows.sbom.spdx.json; do
+            native_sbom=$(find artifacts -type f -name "$name" -print -quit)
+            if [[ -z "$native_sbom" ]]; then
+              echo "::error::Required native SBOM not found: $name"
+              exit 1
+            fi
+            files+=("$native_sbom")
+          done
+
+          if (( ${#files[@]} == 0 )); then
+            echo "::error::No release artifacts were found"
+            exit 1
+          fi
+
+          printf 'Uploading %d release artifacts to %s:\n' "${#files[@]}" "$RELEASE_TAG"
+          printf '  %s\n' "${files[@]}"
+          gh release upload "$RELEASE_TAG" "${files[@]}" --clobber

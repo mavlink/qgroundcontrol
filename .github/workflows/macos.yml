@@ -42,7 +42,6 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 120
 
-    # id-token/attestations scoped here: only the attestation upload step needs them.
     permissions:
       contents: read
       actions: read
@@ -52,7 +51,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: ['${{ inputs.build_type || ''Release'' }}']
+        build_type:
+          - ${{ inputs.build_type || 'Release' }}
 
     defaults:
       run:
@@ -84,8 +84,8 @@ jobs:
       - name: CMake configure
         uses: ./.github/actions/cmake-configure
         with:
+          preset: ${{ matrix.build_type == 'Debug' && 'macOS-debug' || 'macOS' }}
           build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           extra-args: -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
@@ -139,6 +139,7 @@ jobs:
         with:
           artifact-name: QGroundControl.dmg
           package-name: QGroundControl
+          subject-name: QGroundControl-macos
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Generate pseudo-localized Qt .ts files for UI layout/translation testing.
 
@@ -22,7 +21,11 @@ import sys
 import xml.etree.ElementTree as ET  # for Element/SubElement/indent/tostring construction
 from pathlib import Path
 
-import defusedxml.ElementTree as DET  # parse-only hardening for untrusted XML input
+from _bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.xml import xml_parse  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Character substitution table
@@ -89,8 +92,10 @@ def _substitute(segment: str) -> str:
 
 def process_ts(src_path: Path, dst_path: Path, language: str) -> int:
     """Read *src_path*, write pseudo-loc *dst_path*. Returns message count."""
-    tree = DET.parse(src_path)
+    tree = xml_parse(src_path)
     root = tree.getroot()
+    if root is None:
+        raise ValueError(f"{src_path}: XML document has no root element")
 
     # Set locale on the <TS> element
     root.set("language", language)

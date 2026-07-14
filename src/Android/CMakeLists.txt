@@ -83,11 +83,12 @@ target_include_directories(qtandroidextensions_lockers
 target_compile_definitions(qtandroidextensions_lockers PRIVATE QTANDROIDEXTENSIONS_NO_DEPRECATES)
 
 target_link_libraries(qtandroidextensions_lockers PUBLIC Qt6::Core PRIVATE Qt6::CorePrivate)
+qgc_disable_dependency_warnings(qtandroidextensions_lockers)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qtandroidextensions_lockers)
 
 # Deploy Java sources to QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR (added to build.gradle's source set)
-file(GLOB _qjnihelpers_java "${_qjni_dir}/ru.dublgis.qjnihelpers/*.java")
-file(GLOB _qtandroidhelpers_java "${_qtah_dir}/ru.dublgis.androidhelpers/*.java")
+file(GLOB _qjnihelpers_java CONFIGURE_DEPENDS "${_qjni_dir}/ru.dublgis.qjnihelpers/*.java")
+file(GLOB _qtandroidhelpers_java CONFIGURE_DEPENDS "${_qtah_dir}/ru.dublgis.androidhelpers/*.java")
 file(COPY ${_qjnihelpers_java}
     DESTINATION "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}/ru/dublgis/qjnihelpers"
 )

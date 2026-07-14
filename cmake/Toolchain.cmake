@@ -1,7 +1,8 @@
-# ----------------------------------------------------------------------------
 # QGroundControl Toolchain Configuration
 # Sets compiler, linker, and build tool settings
 # ----------------------------------------------------------------------------
+
+include_guard(GLOBAL)
 
 # ----------------------------------------------------------------------------
 # Platform Detection Helpers
@@ -115,6 +116,10 @@ endif()
 # ----------------------------------------------------------------------------
 # Link Job Pool (Ninja only)
 # ----------------------------------------------------------------------------
+if(NOT QGC_LINK_PARALLEL_LEVEL MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR
+        "QGC_LINK_PARALLEL_LEVEL must be a positive integer, got '${QGC_LINK_PARALLEL_LEVEL}'")
+endif()
 if(CMAKE_GENERATOR MATCHES "Ninja")
     set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_pool=${QGC_LINK_PARALLEL_LEVEL})
     set(CMAKE_JOB_POOL_LINK link_pool)

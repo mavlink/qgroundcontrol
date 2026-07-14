@@ -28,12 +28,12 @@ jobs:
       platform: ios
 
   build:
+    name: iOS (${{ matrix.target }})
     needs: changes
-    if: needs.changes.outputs.should_build == 'true'
-    runs-on: macos-15
+    if: github.ref_type == 'tag' || needs.changes.outputs.should_build == 'true'
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
 
-    # id-token/attestations scoped here: only the attestation upload step needs them.
     permissions:
       contents: read
       actions: read
@@ -41,8 +41,17 @@ jobs:
       attestations: write
 
     strategy:
+      fail-fast: false
       matrix:
-        build_type: [Release]
+        include:
+          - target: device
+            runner: macos-15
+            build_type: Release
+            preset: iOS
+          - target: simulator
+            runner: macos-15-intel
+            build_type: Debug
+            preset: iOS-debug
 
     defaults:
       run:
@@ -50,6 +59,7 @@ jobs:
 
     env:
       PACKAGE: QGroundControl
+      APPSTORE_BUNDLE_ID: ${{ vars.APPSTORE_BUNDLE_ID || 'org.mavlink.qgroundcontrol' }}
 
     steps:
       - name: Harden Runner
@@ -71,16 +81,66 @@ jobs:
           build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
+      - name: Import App Store signing certificate
+        if: matrix.target == 'device' && github.ref_type == 'tag'
+        uses: apple-actions/import-codesign-certs@v7
+        with:
+          p12-file-base64: ${{ secrets.APPSTORE_CERTIFICATES_FILE_BASE64 }}
+          p12-password: ${{ secrets.APPSTORE_CERTIFICATES_PASSWORD }}
+
+      - name: Download App Store provisioning profiles
+        id: profiles
+        if: matrix.target == 'device' && github.ref_type == 'tag'
+        uses: apple-actions/download-provisioning-profiles@v6
+        with:
+          bundle-id: ${{ env.APPSTORE_BUNDLE_ID }}
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ vars.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ vars.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: Select App Store provisioning profile
+        id: profile
+        if: matrix.target == 'device' && github.ref_type == 'tag'
+        env:
+          BUNDLE_ID: ${{ env.APPSTORE_BUNDLE_ID }}
+          PROFILE_NAME: ${{ vars.APPSTORE_PROVISIONING_PROFILE_NAME }}
+          PROFILES: ${{ steps.profiles.outputs.profiles }}
+          TEAM_ID: ${{ vars.APPSTORE_TEAM_ID }}
+        run: |
+          if [[ -z "$TEAM_ID" ]]; then
+            echo "::error::APPSTORE_TEAM_ID repository variable is required"
+            exit 1
+          fi
+          if [[ -z "$PROFILE_NAME" ]]; then
+            echo "::error::APPSTORE_PROVISIONING_PROFILE_NAME repository variable is required"
+            exit 1
+          fi
+          matches=$(jq --arg name "$PROFILE_NAME" '[.[] | select(.name == $name)] | length' <<< "$PROFILES")
+          if [[ "$matches" != "1" ]]; then
+            echo "::error::Expected one active IOS_APP_STORE profile named '$PROFILE_NAME'; found $matches"
+            exit 1
+          fi
+          profile_uuid=$(jq -r --arg name "$PROFILE_NAME" '.[] | select(.name == $name) | .udid' <<< "$PROFILES")
+          {
+            printf 'cmake_args=-DQGC_IOS_APP_STORE_BUILD=ON '
+            printf '%s ' "-DQGC_IOS_DEVELOPMENT_TEAM=$TEAM_ID"
+            printf '%s ' "-DQGC_IOS_PROVISIONING_PROFILE=$profile_uuid"
+            printf '%s ' "-DQGC_PACKAGE_NAME=$BUNDLE_ID"
+            printf '%s\n' "-DQGC_MACOS_BUNDLE_ID=$BUNDLE_ID"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Configure
         uses: ./.github/actions/cmake-configure
+        env:
+          QT_HOST_PATH: ${{ env.QT_ROOT_DIR }}/../macos
         with:
+          preset: ${{ matrix.preset }}
           build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
-          # Qt6LinguistTools cmake config ships with the desktop qtbase install (host),
-          # not iOS qtbase; point CMake at the host copy directly.
+          generator: ${{ matrix.target == 'device' && github.ref_type == 'tag' && 'Xcode' || '' }}
           extra-args: >-
-            -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../macos
-            -DQt6LinguistTools_DIR=${{ env.QT_ROOT_DIR }}/../macos/lib/cmake/Qt6LinguistTools
+            ${{ matrix.target == 'simulator' && '-DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64' || '' }}
+            ${{ steps.profile.outputs.cmake_args }}
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -88,12 +148,42 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
 
+      - name: Verify Simulator Bundle
+        if: matrix.target == 'simulator'
+        env:
+          APP_PATH: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
+        run: |
+          test -d "$APP_PATH"
+          lipo "$APP_PATH/$PACKAGE" -verify_arch x86_64
+
+      - name: Package IPA
+        if: matrix.target == 'device' && matrix.build_type == 'Release'
+        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            test -f "${PACKAGE}.app/embedded.mobileprovision"
+            codesign --verify --deep --strict --verbose=2 "${PACKAGE}.app"
+          fi
+          mkdir -p Payload
+          cp -R "${PACKAGE}.app" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload "${PACKAGE}.ipa"
+          rm -rf Payload
+
       - name: Attest and Upload
-        if: matrix.build_type == 'Release'
+        if: matrix.target == 'device' && matrix.build_type == 'Release'
         uses: ./.github/actions/attest-and-upload
         with:
-          artifact-name: ${{ env.PACKAGE }}.app
-          # iOS uses Ninja Multi-Config; the .app lands in build/<config>/, not build/.
-          artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
+          artifact-name: ${{ env.PACKAGE }}.ipa
+          # QGC's configuration-specific output directory places the .ipa under build/<config>/.
+          artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.ipa
           package-name: ${{ env.PACKAGE }}
           upload-aws: 'false'
+
+      - name: Upload to TestFlight
+        if: matrix.target == 'device' && matrix.build_type == 'Release' && github.ref_type == 'tag'
+        uses: apple-actions/upload-testflight-build@v5
+        with:
+          app-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.ipa
+          issuer-id: ${{ vars.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ vars.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}

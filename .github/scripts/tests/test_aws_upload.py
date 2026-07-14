@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Tests for aws_upload.py."""
+"""Security and CLI contracts for AWS artifact uploads."""
 
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 from aws_upload import (
@@ -12,101 +14,65 @@ from aws_upload import (
     validate_credentials,
 )
 
-
-class TestSanitizeRef:
-    def test_simple_branch(self) -> None:
-        assert sanitize_ref("main") == "main"
-
-    def test_slashes_replaced(self) -> None:
-        assert sanitize_ref("feature/foo") == "feature_foo"
-
-    def test_dotdot_removed(self) -> None:
-        assert sanitize_ref("../../../etc/passwd") == "___etc_passwd"
-
-    def test_special_chars(self) -> None:
-        assert sanitize_ref("v1.2.3-rc1") == "v1.2.3-rc1"
-
-    def test_spaces_replaced(self) -> None:
-        assert sanitize_ref("my branch") == "my_branch"
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-class TestValidateCredentials:
-    def test_role_arn_sufficient(self) -> None:
-        validate_credentials("arn:aws:iam::123:role/test", "", "")
+def test_ref_sanitization() -> None:
+    expected = {
+        "main": "main",
+        "feature/foo": "feature_foo",
+        "../../../etc/passwd": "___etc_passwd",
+        "v1.2.3-rc1": "v1.2.3-rc1",
+        "my branch": "my_branch",
+    }
+    for ref, safe_ref in expected.items():
+        assert sanitize_ref(ref) == safe_ref
 
-    def test_static_creds_sufficient(self) -> None:
-        validate_credentials("", "AKID", "secret")
 
-    def test_missing_both_exits(self) -> None:
+def test_credentials_accept_complete_auth_and_reject_incomplete_auth() -> None:
+    validate_credentials("arn:aws:iam::123:role/test", "", "")
+    validate_credentials("", "AKID", "secret")
+    for credentials in (("", "", ""), ("", "AKID", "")):
         with pytest.raises(SystemExit):
-            validate_credentials("", "", "")
+            validate_credentials(*credentials)
 
-    def test_partial_static_exits(self) -> None:
+
+def test_artifact_validation_rejects_unsafe_names_and_missing_files(tmp_path: Path) -> None:
+    artifact = tmp_path / "QGroundControl.AppImage"
+    artifact.touch()
+    validate_artifact(str(artifact), artifact.name)
+
+    for name in ("../test.bin", "path/test.bin", "path\\test.bin"):
         with pytest.raises(SystemExit):
-            validate_credentials("", "AKID", "")
+            validate_artifact(str(artifact), name)
+    with pytest.raises(SystemExit):
+        validate_artifact(str(tmp_path / "missing"), "test.bin")
 
 
-class TestValidateArtifact:
-    def test_path_traversal_rejected(self, tmp_path) -> None:
-        f = tmp_path / "test.bin"
-        f.touch()
-        with pytest.raises(SystemExit):
-            validate_artifact(str(f), "../test.bin")
-
-    def test_slash_in_name_rejected(self, tmp_path) -> None:
-        f = tmp_path / "test.bin"
-        f.touch()
-        with pytest.raises(SystemExit):
-            validate_artifact(str(f), "path/test.bin")
-
-    def test_backslash_rejected(self, tmp_path) -> None:
-        f = tmp_path / "test.bin"
-        f.touch()
-        with pytest.raises(SystemExit):
-            validate_artifact(str(f), "path\\test.bin")
-
-    def test_missing_file_exits(self) -> None:
-        with pytest.raises(SystemExit):
-            validate_artifact("/nonexistent/file", "test.bin")
-
-    def test_valid_artifact(self, tmp_path) -> None:
-        f = tmp_path / "QGroundControl.AppImage"
-        f.touch()
-        validate_artifact(str(f), "QGroundControl.AppImage")
+def test_auth_mode_precedence() -> None:
+    cases = [
+        (("arn:aws:iam::123:role/x", "AKID"), "oidc"),
+        (("arn:aws:iam::123:role/x", ""), "oidc"),
+        (("", "AKID"), "static"),
+        (("", ""), "none"),
+    ]
+    for inputs, expected in cases:
+        assert resolve_auth_mode(*inputs) == expected
 
 
-class TestResolveAuthMode:
-    def test_role_arn_wins_over_key(self) -> None:
-        assert resolve_auth_mode("arn:aws:iam::123:role/x", "AKID") == "oidc"
+def test_auth_mode_command_writes_stdout_and_github_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    output_file = tmp_path / "gh_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
 
-    def test_role_arn_alone(self) -> None:
-        assert resolve_auth_mode("arn:aws:iam::123:role/x", "") == "oidc"
-
-    def test_key_id_alone(self) -> None:
-        assert resolve_auth_mode("", "AKID") == "static"
-
-    def test_neither_returns_none(self) -> None:
-        assert resolve_auth_mode("", "") == "none"
-
-
-class TestAuthModeCmd:
-    def test_writes_output_and_stdout(self, tmp_path, monkeypatch, capsys) -> None:
-        output_file = tmp_path / "gh_output"
+    for argv, expected in (
+        (["prog", "auth-mode", "--role-arn", "arn:aws:iam::1:role/x"], "oidc"),
+        (["prog", "auth-mode"], "none"),
+    ):
         output_file.write_text("")
-        monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
-        monkeypatch.setattr(
-            "sys.argv",
-            ["prog", "auth-mode", "--role-arn", "arn:aws:iam::1:role/x"],
-        )
+        monkeypatch.setattr("sys.argv", argv)
         main()
-        assert capsys.readouterr().out.strip() == "oidc"
-        assert "mode=oidc" in output_file.read_text()
-
-    def test_emits_none_when_unset(self, tmp_path, monkeypatch, capsys) -> None:
-        output_file = tmp_path / "gh_output"
-        output_file.write_text("")
-        monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
-        monkeypatch.setattr("sys.argv", ["prog", "auth-mode"])
-        main()
-        assert capsys.readouterr().out.strip() == "none"
-        assert "mode=none" in output_file.read_text()
+        assert capsys.readouterr().out.strip() == expected
+        assert f"mode={expected}" in output_file.read_text()

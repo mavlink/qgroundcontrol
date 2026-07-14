@@ -12,7 +12,7 @@ inputs:
     description: Cache key (must be fixed/non-versioned; this is a moving 'latest')
     required: true
   github-token:
-    description: Token used by `gh actions-cache delete` (defaults to github.token)
+    description: Token used by `gh cache delete` (defaults to github.token)
     required: false
     default: ${{ github.token }}
 
@@ -25,10 +25,10 @@ runs:
         GH_TOKEN: ${{ inputs.github-token }}
         GH_REPO: ${{ github.repository }}
         CACHE_KEY: ${{ inputs.key }}
-      run: gh actions-cache delete "${CACHE_KEY}" -R "${GH_REPO}" --confirm || true
+      run: gh cache delete "${CACHE_KEY}" -R "${GH_REPO}" || true
 
     - name: Save cache entry
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: ${{ inputs.path }}
         key: ${{ inputs.key }}

@@ -21,7 +21,7 @@ constexpr std::chrono::seconds kTcpKeepAliveInterval{30};
 constexpr int kTcpKeepAliveProbeCount = 3;
 }  // namespace
 
-QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager* networkManager, const QVariantMap& parameters,
+QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager* networkManager, const QVariantMap&,
                                        QGeoTiledMappingManagerEngineQGC* parent)
     : QGeoTileFetcher(parent), m_networkManager(networkManager)
 {

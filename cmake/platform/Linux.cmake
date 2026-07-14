@@ -1,6 +1,7 @@
-# ----------------------------------------------------------------------------
 # QGroundControl Linux Platform Configuration
 # ----------------------------------------------------------------------------
+
+include_guard(GLOBAL)
 
 if(NOT LINUX)
     message(FATAL_ERROR "QGC: Invalid Platform: Linux.cmake included but platform is not Linux")

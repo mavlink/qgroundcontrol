@@ -33,9 +33,9 @@ Fixes #
 ## Checklist
 
 - [ ] I have read the [Contribution Guidelines](../CONTRIBUTING.md)
-- [ ] My code follows the project's coding standards
-- [ ] I have added a test that reproduces the bug
-- [ ] New and existing unit tests pass locally
+- [ ] My code follows [CODING_STYLE.md](../../CODING_STYLE.md)
+- [ ] I added a regression test and ran the relevant checks from the [test guide](../../test/README.md)
 
 ---
-By submitting this pull request, I confirm that my contribution is made under the terms of the project's dual license (Apache 2.0 and GPL v3).
+By submitting this pull request, I confirm that my contribution follows the project's
+[dual-license terms](../COPYING.md).

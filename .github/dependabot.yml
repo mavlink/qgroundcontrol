@@ -1,6 +1,5 @@
-# Dependabot owns GitHub Actions only. npm, python (uv, /tools), and pre-commit are
-# handled by Renovate (see .github/renovate.json). Merge bot PRs with: @dependabot merge.
-# Docs: https://docs.github.com/en/code-security/dependabot
+# Dependabot owns workflow actions; Renovate owns npm, Python, pre-commit, and
+# composite actions because Dependabot does not scan nested action.yml files.
 version: 2
 updates:
   - package-ecosystem: "github-actions"

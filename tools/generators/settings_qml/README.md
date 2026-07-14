@@ -2,6 +2,10 @@
 
 Generates QML application settings pages from UI definition JSON files.
 
+This file owns the application-settings schema and generator usage. The
+[generator index](../../README.md#generator-references) links the sibling vehicle-config generator;
+generated output follows the repository's [QML conventions](../../../CODING_STYLE.md#qt6--qml-integration).
+
 The generator reads two types of inputs:
 
 - `src/AppSettings/pages/SettingsPages.json` — the ordered list of pages

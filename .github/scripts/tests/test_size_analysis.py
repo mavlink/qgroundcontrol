@@ -1,79 +1,45 @@
-"""Tests for size_analysis.py."""
+"""Core contracts for binary size analysis."""
 
 from __future__ import annotations
 
-import subprocess
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
+import pytest
+from _helpers import completed
 from size_analysis import BinaryAnalyzer
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-def test_binary_analyzer_requires_existing_file(tmp_path: Path) -> None:
-    missing = tmp_path / "missing.bin"
-    try:
-        BinaryAnalyzer(missing)
-        raise AssertionError("Expected FileNotFoundError")
-    except FileNotFoundError:
-        pass
+def test_binary_analyzer_requires_a_file_and_reports_its_size(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        BinaryAnalyzer(tmp_path / "missing")
 
-
-def test_get_binary_size(tmp_path: Path) -> None:
     binary = tmp_path / "QGroundControl"
     binary.write_bytes(b"abcd")
-    analyzer = BinaryAnalyzer(binary)
-    assert analyzer.get_binary_size() == 4
+    assert BinaryAnalyzer(binary).get_binary_size() == 4
 
 
-def test_get_symbol_count_success(tmp_path: Path) -> None:
+def test_external_tool_failures_degrade_cleanly(tmp_path: Path) -> None:
     binary = tmp_path / "QGroundControl"
     binary.write_bytes(b"abcd")
     analyzer = BinaryAnalyzer(binary)
 
-    with patch(
-        "size_analysis.subprocess.run",
-        return_value=subprocess.CompletedProcess(
-            args=["nm"], returncode=0, stdout="a\nb\n", stderr=""
-        ),
-    ):
-        assert analyzer.get_symbol_count() == 2
-
-
-def test_get_symbol_count_failure_returns_zero(tmp_path: Path) -> None:
-    binary = tmp_path / "QGroundControl"
-    binary.write_bytes(b"abcd")
-    analyzer = BinaryAnalyzer(binary)
-
-    with patch(
-        "size_analysis.subprocess.run",
-        return_value=subprocess.CompletedProcess(
-            args=["nm"], returncode=1, stdout="", stderr="err"
-        ),
-    ):
-        assert analyzer.get_symbol_count() == 0
-
-
-def test_get_section_sizes_unavailable(tmp_path: Path) -> None:
-    binary = tmp_path / "QGroundControl"
-    binary.write_bytes(b"abcd")
-    analyzer = BinaryAnalyzer(binary)
-
-    with patch("size_analysis.subprocess.run", side_effect=FileNotFoundError):
+    for result, expected in ((completed(stdout="a\nb\n"), 2), (completed(returncode=1), 0)):
+        with patch("size_analysis.run_captured", return_value=result):
+            assert analyzer.get_symbol_count() == expected
+    with patch("size_analysis.run_captured", side_effect=FileNotFoundError):
         assert analyzer.get_section_sizes() == "Section sizes unavailable"
 
 
-def test_generate_metrics_json_with_explicit_values(tmp_path: Path) -> None:
+def test_metrics_json_preserves_names_units_and_values(tmp_path: Path) -> None:
     binary = tmp_path / "QGroundControl"
-    binary.write_bytes(b"abcd")
-    analyzer = BinaryAnalyzer(binary)
-
-    metrics = analyzer.generate_metrics_json(binary_size=4, stripped_size=3, symbol_count=42)
-
-    names = [entry["name"] for entry in metrics]
-    assert names == ["Binary Size", "Stripped Size", "Symbol Count"]
-    assert metrics[0]["value"] == 4
-    assert metrics[1]["value"] == 3
-    assert metrics[2]["value"] == 42
+    binary.write_bytes(b"x")
+    metrics = BinaryAnalyzer(binary).generate_metrics_json(4, 3, 42)
+    assert metrics == [
+        {"name": "Binary Size", "unit": "bytes", "value": 4},
+        {"name": "Stripped Size", "unit": "bytes", "value": 3},
+        {"name": "Symbol Count", "unit": "symbols", "value": 42},
+    ]

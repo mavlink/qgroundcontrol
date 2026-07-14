@@ -73,6 +73,7 @@ set(_config_generated_qml_names
 )
 
 qgc_add_qml_codegen(GenerateConfigQmlPX4
+    GENERATE_AT_CONFIGURE
     GENERATOR_MODULE tools.generators.config_qml.generate_pages
     OUTPUT_DIR       "${CONFIG_QML_GEN_DIR}"
     QML_NAMES        ${_config_generated_qml_names}

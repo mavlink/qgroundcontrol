@@ -11,6 +11,15 @@ gstreamer_version := `python3 ./tools/setup/read_config.py --get gstreamer.versi
 qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
 build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
+build_preset := if build_type == "Debug" {
+    "default"
+} else if build_type == "Release" {
+    "default-release"
+} else if build_type == "RelWithDebInfo" {
+    "default-relwithdebinfo"
+} else {
+    "default-minsizerel"
+}
 # Leave cores free for the user's other work; override with JOBS=N.
 jobs := env_var_or_default("JOBS", `python3 -c "import os; print(max(1, (os.cpu_count() or 4)//2))" 2>/dev/null || echo 4`)
 
@@ -31,22 +40,26 @@ deps:
 submodules:
     git submodule update --init --recursive
 
+# Install VS Code workspace defaults without overwriting local settings
+vscode:
+    python3 ./tools/setup/setup_vscode.py
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Build
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Configure CMake build
 configure: submodules
-    python3 ./tools/configure.py -B {{build_dir}} -t {{build_type}} --testing --qt-root {{qt_dir}}
+    python3 ./tools/configure.py --preset {{build_preset}} -B {{build_dir}} -t {{build_type}} --qt-root {{qt_dir}}
 
 # Build the project
 build:
-    cmake --build {{build_dir}} --config {{build_type}} --parallel {{jobs}}
+    cmake --build --preset {{build_preset}} --parallel {{jobs}}
 
 # Configure and build Release
 release:
-    python3 ./tools/configure.py -B {{build_dir}} --release --qt-root {{qt_dir}}
-    cmake --build {{build_dir}} --config Release --parallel {{jobs}}
+    python3 ./tools/configure.py --preset default-release -B {{build_dir}} --release --qt-root {{qt_dir}}
+    cmake --build --preset default-release --parallel {{jobs}}
 
 # Clean build directory (forwards to tools/clean.py; pass --cache, --all, --dry-run)
 clean *ARGS:
@@ -62,9 +75,9 @@ setup: deps submodules configure build
 # Quality
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Run unit tests (matches CI label filters; override with `LABELS=... EXCLUDE=... just test`)
+# Run application tests (matches CI label filters; override with `LABELS=... EXCLUDE=... just test`)
 test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_default("EXCLUDE", "Flaky|Network"):
-    cd {{build_dir}} && ctest --output-on-failure -L "{{labels}}" -LE "{{exclude}}"
+    ctest --preset default --build-config {{build_type}} -L "{{labels}}" -LE "{{exclude}}"
 
 # Run pre-commit checks
 lint:

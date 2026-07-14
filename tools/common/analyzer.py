@@ -9,15 +9,17 @@ from __future__ import annotations
 
 import shutil
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, ClassVar
 
 from .logging import log_error, log_info
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
-__all__ = ["AnalysisResult", "AnalyzerBase"]
+__all__ = ["AnalysisResult", "AnalyzerBase", "FileAnalysis"]
 
 
 @dataclass
@@ -32,15 +34,25 @@ class AnalysisResult:
     files_with_issues: list[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class FileAnalysis:
+    """Normalized result for one file processed by an analyzer worker."""
+
+    path: str
+    has_issues: bool
+    output: str = ""
+
+
 class AnalyzerBase(ABC):
     """Base class for all code analyzers."""
 
     name: ClassVar[str] = "base"
     install_hint: ClassVar[str] = ""
 
-    def __init__(self, repo_root: Path, build_dir: Path) -> None:
+    def __init__(self, repo_root: Path, build_dir: Path, jobs: int = 1) -> None:
         self.repo_root = repo_root
         self.build_dir = build_dir
+        self.jobs = jobs
         self.compile_commands = build_dir / "compile_commands.json"
 
     @abstractmethod
@@ -65,3 +77,18 @@ class AnalyzerBase(ABC):
             return str(path.relative_to(self.repo_root))
         except ValueError:
             return str(path)
+
+    def run_files_parallel(
+        self,
+        files: list[Path],
+        worker: Callable[[Path], FileAnalysis],
+        *,
+        jobs: int,
+    ) -> list[FileAnalysis]:
+        """Run a per-file analyzer worker in parallel and return path-sorted results."""
+        results: list[FileAnalysis] = []
+        with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
+            futures = {pool.submit(worker, path): path for path in files}
+            for future in as_completed(futures):
+                results.append(future.result())
+        return sorted(results, key=lambda result: result.path)

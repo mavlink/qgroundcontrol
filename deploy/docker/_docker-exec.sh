@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
     echo "Usage: $0 [--fuse] <image-name> [build-type]"
-    echo "  --fuse    Enable FUSE support (required for AppImage builds)"
+    echo "  --fuse    Enable FUSE support for AppImageLint target mounting"
     echo ""
     echo "Env:"
     echo "  SOURCE_DIR   Host source tree    (default: \$PWD)"

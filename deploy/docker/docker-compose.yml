@@ -30,7 +30,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d"
+        BASE_REF: "ubuntu:22.04@sha256:0e0a0fc6d18feda9db1590da249ac93e8d5abfea8f4c3c0c849ce512b5ef8982"
         APT_EXTRA: "gcc-12 g++-12"
         PIP_CMAKE: "cmake>=3.25,<4"
         CC_PIN: "gcc-12"
@@ -53,7 +53,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
+        BASE_REF: "ubuntu:26.04@sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e"
     image: qgc-ubuntu-2604-docker
     user: "${QGC_UID:-1000}:${QGC_GID:-1000}"
     environment:
@@ -72,7 +72,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
+        BASE_REF: "debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
     image: qgc-debian-docker
     user: "${QGC_UID:-1000}:${QGC_GID:-1000}"
     environment:
@@ -91,7 +91,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d"
+        BASE_REF: "fedora:44@sha256:6c75d5bf57cb0fa5aa4b92c6a83c86c791644496d9ac230de7711f5b8ec3b898"
         SETUP_BASE: "setup-base-dnf.sh"
         DEP_PLATFORM: "fedora"
     image: qgc-fedora-docker
@@ -103,16 +103,13 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-    cap_add: [SYS_ADMIN]
-    devices: ["/dev/fuse"]
-    security_opt: ["apparmor:unconfined"]
   arch:
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671"
+        BASE_REF: "archlinux:base@sha256:fe6972d4dc1f660c0c10f4c41b2de8986bab89e7e2955378f8beadb8ebcd7433"
         SETUP_BASE: "setup-base-pacman.sh"
         DEP_PLATFORM: "arch"
     image: qgc-arch-docker
@@ -124,9 +121,6 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-    cap_add: [SYS_ADMIN]
-    devices: ["/dev/fuse"]
-    security_opt: ["apparmor:unconfined"]
   aarch64:
     build:
       context: ../..

@@ -6,10 +6,12 @@ description: "When performing a code review on C++ headers, check that heavy hea
 # Forward Declaration Rules for Headers
 
 Prefer forward declarations and lightweight type headers over including full class definitions.
+For general header layout and include order, see [CODING_STYLE.md](../../CODING_STYLE.md#headers).
 
 ## Vehicle.h
 
 `Vehicle.h` is one of the heaviest headers in the codebase. Most headers that reference `Vehicle` only need:
+
 - A pointer/reference to Vehicle → `class Vehicle;` forward declaration
 - Vehicle type aliases → `#include "VehicleTypes.h"`
 
@@ -18,6 +20,7 @@ Only include `Vehicle.h` if the header calls Vehicle methods, accesses Vehicle m
 ## QGCMAVLink.h
 
 `QGCMAVLink.h` combines MAVLink enums, message types, and QGC-specific type aliases. Most headers only need one of these. Use the specific lightweight header instead:
+
 - `MAVLinkEnums.h` for enum constants
 - `MAVLinkMessageType.h` for `mavlink_message_t`
 - `QGCMAVLinkTypes.h` for `FirmwareClass_t`, `VehicleClass_t`

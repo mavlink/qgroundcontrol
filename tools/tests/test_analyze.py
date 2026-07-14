@@ -1,93 +1,85 @@
-#!/usr/bin/env python3
-"""Tests for tools/analyze.py."""
+"""Path, file-selection, analyzer-factory, and parallel-run contracts."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
+import common.proc as proc
+import pytest
 from analyze import FileCollector, get_analyzer, validate_path
+from common.analyzer import AnalysisResult, AnalyzerBase, FileAnalysis
+
+from ._helpers import completed
 
 
-class TestFileCollector:
-    def test_get_compare_ref_symbolic(self, tmp_path: Path) -> None:
-        collector = FileCollector(tmp_path)
-        mock_result = MagicMock(returncode=0, stdout="origin/main\n")
-        with patch("common.proc.subprocess.run", return_value=mock_result):
-            ref = collector.get_compare_ref()
-        assert ref == "main"
-
-    def test_get_compare_ref_fallback_master(self, tmp_path: Path) -> None:
-        collector = FileCollector(tmp_path)
-        symbolic_fail = MagicMock(returncode=1, stdout="")
-        master_ok = MagicMock(returncode=0)
-
-        def side_effect(cmd, **kw):
-            if "symbolic-ref" in cmd:
-                return symbolic_fail
-            if cmd[-1] == "master":
-                return master_ok
-            return MagicMock(returncode=1)
-
-        with patch("common.proc.subprocess.run", side_effect=side_effect):
-            ref = collector.get_compare_ref()
-        assert ref == "master"
-
-    def test_get_compare_ref_none(self, tmp_path: Path) -> None:
-        collector = FileCollector(tmp_path)
-        fail = MagicMock(returncode=1, stdout="")
-        with patch("common.proc.subprocess.run", return_value=fail):
-            ref = collector.get_compare_ref()
-        assert ref is None
-
-    def test_find_files(self, tmp_path: Path) -> None:
-        src = tmp_path / "src"
-        src.mkdir()
-        (src / "foo.cpp").touch()
-        (src / "bar.h").touch()
-        (src / "readme.txt").touch()
-
-        collector = FileCollector(tmp_path)
-        files = collector._find_files(src, (".cpp", ".h"))
-        names = [f.name for f in files]
-        assert "foo.cpp" in names
-        assert "bar.h" in names
-        assert "readme.txt" not in names
+class _Analyzer(AnalyzerBase):
+    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
+        return AnalysisResult(tool="test", passed=True, files_checked=len(files))
 
 
-class TestValidatePath:
-    def test_valid_relative_path(self, tmp_path: Path) -> None:
-        (tmp_path / "src").mkdir()
-        result = validate_path("src", tmp_path)
-        assert result == Path("src")
+def test_file_collector_resolves_refs_and_filters_extensions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    collector = FileCollector(tmp_path)
+    monkeypatch.setattr(
+        proc.subprocess, "run", lambda *_args, **_kwargs: completed("origin/main\n")
+    )
+    assert collector.get_compare_ref() == "main"
 
-    def test_rejects_parent_traversal(self, tmp_path: Path) -> None:
-        import pytest
-        with pytest.raises(ValueError, match="must not contain"):
-            validate_path("../etc/passwd", tmp_path)
+    def master_fallback(command, **_kwargs):
+        if "symbolic-ref" in command:
+            return completed(returncode=1)
+        return completed(returncode=0 if command[-1] == "master" else 1)
 
-    def test_rejects_absolute_path(self, tmp_path: Path) -> None:
-        import pytest
-        with pytest.raises(ValueError, match="must be relative"):
-            validate_path("/etc/passwd", tmp_path)
+    monkeypatch.setattr(proc.subprocess, "run", master_fallback)
+    assert collector.get_compare_ref() == "master"
+    monkeypatch.setattr(proc.subprocess, "run", lambda *_args, **_kwargs: completed(returncode=1))
+    assert collector.get_compare_ref() is None
+
+    src = tmp_path / "src"
+    src.mkdir()
+    for name in ("foo.cpp", "bar.h", "readme.txt"):
+        (src / name).touch()
+    assert {path.name for path in collector._find_files(src, (".cpp", ".h"))} == {
+        "foo.cpp",
+        "bar.h",
+    }
 
 
-class TestGetAnalyzer:
-    def test_returns_clang_tidy(self, tmp_path: Path) -> None:
-        analyzer = get_analyzer("clang-tidy", tmp_path, tmp_path / "build", jobs=4)
-        assert analyzer.name == "clang-tidy"
-        assert analyzer.jobs == 4  # type: ignore[attr-defined]
+def test_validate_path_accepts_repo_relative_and_rejects_escape(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    assert validate_path("src", tmp_path) == Path("src")
+    with pytest.raises(ValueError, match="must not contain"):
+        validate_path("../etc/passwd", tmp_path)
+    with pytest.raises(ValueError, match="must be relative"):
+        validate_path("/etc/passwd", tmp_path)
 
-    def test_returns_clazy_with_jobs(self, tmp_path: Path) -> None:
-        analyzer = get_analyzer("clazy", tmp_path, tmp_path / "build", jobs=2)
-        assert analyzer.name == "clazy"
-        assert analyzer.jobs == 2  # type: ignore[attr-defined]
 
-    def test_returns_cppcheck(self, tmp_path: Path) -> None:
-        analyzer = get_analyzer("cppcheck", tmp_path, tmp_path / "build")
-        assert analyzer.name == "cppcheck"
+def test_analyzer_factory_constructs_supported_tools(tmp_path: Path) -> None:
+    cases = (("clang-tidy", 4), ("clazy", 2), ("cppcheck", None))
+    for name, jobs in cases:
+        analyzer = get_analyzer(name, tmp_path, tmp_path / "build", jobs=jobs or 0)
+        assert analyzer.name == name
+        if jobs is not None:
+            assert analyzer.jobs == jobs  # type: ignore[attr-defined]
+    with pytest.raises(ValueError, match="Unknown tool"):
+        get_analyzer("nonexistent", tmp_path, tmp_path / "build")
 
-    def test_unknown_tool_raises(self, tmp_path: Path) -> None:
-        import pytest
-        with pytest.raises(ValueError, match="Unknown tool"):
-            get_analyzer("nonexistent", tmp_path, tmp_path / "build")
+
+def test_parallel_analyzer_orders_results_and_surfaces_errors(tmp_path: Path) -> None:
+    analyzer = _Analyzer(tmp_path, tmp_path / "build")
+    results = analyzer.run_files_parallel(
+        [tmp_path / "z.cpp", tmp_path / "a.cpp"],
+        lambda path: FileAnalysis(path=path.name, has_issues=path.name.startswith("z")),
+        jobs=2,
+    )
+    assert [(result.path, result.has_issues) for result in results] == [
+        ("a.cpp", False),
+        ("z.cpp", True),
+    ]
+
+    def fail(path: Path) -> FileAnalysis:
+        raise RuntimeError(f"failed {path.name}")
+
+    with pytest.raises(RuntimeError, match=r"failed broken\.cpp"):
+        analyzer.run_files_parallel([tmp_path / "broken.cpp"], fail, jobs=1)

@@ -19,7 +19,7 @@ inputs:
     required: false
     default: 'Release'
   fuse:
-    description: Enable FUSE support (required for AppImage builds)
+    description: Enable FUSE support for AppImageLint target mounting
     required: false
     default: 'false'
   docker-username:
@@ -30,10 +30,19 @@ inputs:
     description: Docker Hub token
     required: false
     default: ''
+  github-token:
+    description: GitHub token used to publish GHCR images
+    required: false
+    default: ''
   push-image:
     description: "Image reference (e.g. dronecode/qgroundcontrol) to push the builder to. Empty = don't push."
     required: false
     default: ''
+
+outputs:
+  image-digest:
+    description: Digest of the built image
+    value: ${{ steps.build.outputs.digest }}
 
 runs:
   using: composite
@@ -46,25 +55,20 @@ runs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
 
-    - name: Login to Docker Hub
-      if: inputs.docker-token != '' && inputs.docker-username != ''
-      uses: docker/login-action@v4
-      with:
-        username: ${{ inputs.docker-username }}
-        password: ${{ inputs.docker-token }}
-
     - name: Login to GHCR
-      if: github.event.pull_request.head.repo.fork != true
+      if: startsWith(inputs.push-image, 'ghcr.io/') && inputs.github-token != ''
       uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ github.token }}
+        password: ${{ inputs.github-token }}
 
-    - name: Resolve GHCR cache ref
-      id: ghcr
-      shell: bash
-      run: echo "ref=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/qgroundcontrol-build-cache" >> "$GITHUB_OUTPUT"
+    - name: Login to Docker Hub
+      if: inputs.push-image != '' && !startsWith(inputs.push-image, 'ghcr.io/') && inputs.docker-token != '' && inputs.docker-username != ''
+      uses: docker/login-action@v4
+      with:
+        username: ${{ inputs.docker-username }}
+        password: ${{ inputs.docker-token }}
 
     - name: Validate inputs
       shell: bash
@@ -75,6 +79,52 @@ runs:
         python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" validate \
           --target "${TARGET}" \
           --build-type "${BUILD_TYPE}"
+
+    - name: Resolve cache policy
+      id: cache-policy
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        THIS_REPO: ${{ github.repository }}
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cache_policy.py" --requested auto
+
+    - name: Determine cache scope
+      id: cache-scope
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        REF_NAME: ${{ github.ref_name }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: >-
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" scope
+        --event-name "${EVENT_NAME}"
+        --ref-name "${REF_NAME}"
+        --pr-number "${PR_NUMBER:-}"
+
+    - name: Restore compiler cache (read/write)
+      if: steps.cache-policy.outputs.save == 'true'
+      uses: actions/cache@v6
+      with:
+        path: ${{ github.workspace }}/.ccache
+        key: >-
+          docker-ccache-${{ inputs.variant }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{
+          hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        restore-keys: |
+          docker-ccache-${{ inputs.variant }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          docker-ccache-${{ inputs.variant }}-${{ inputs.build-type }}-shared-
+
+    - name: Restore compiler cache (read-only)
+      if: steps.cache-policy.outputs.save != 'true'
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/.ccache
+        key: >-
+          docker-ccache-${{ inputs.variant }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{
+          hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        restore-keys: |
+          docker-ccache-${{ inputs.variant }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          docker-ccache-${{ inputs.variant }}-${{ inputs.build-type }}-shared-
 
     - name: Docker metadata (tags + OCI labels)
       id: meta
@@ -87,6 +137,7 @@ runs:
           type=sha,prefix=${{ inputs.variant }}-,format=short,enable=${{ inputs.push-image != '' }}
 
     - name: Build Docker image
+      id: build
       if: contains(fromJSON('["linux", "linux-cross", "android"]'), inputs.target)
       uses: docker/build-push-action@v7
       with:
@@ -96,15 +147,23 @@ runs:
         build-args: ${{ inputs.build-args }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        # load must stay unconditional: the Run step docker-runs the image locally
-        # whether or not we push. Targets are single-arch, so load+push coexist.
+        # The following step runs the image locally even when it is also pushed.
         load: true
         push: ${{ inputs.push-image != '' }}
         # Avoid the OCI attestation manifest that renders as unknown/unknown on Docker Hub.
         provenance: false
         sbom: false
-        cache-from: ${{ github.event.pull_request.head.repo.fork != true && format('type=registry,ref={0}:{1}', steps.ghcr.outputs.ref, inputs.variant) || '' }}
-        cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}:{1},mode=max', steps.ghcr.outputs.ref, inputs.variant) || '' }}
+        cache-from: >-
+          ${{ env.RUNS_ON_S3_BUCKET_CACHE != '' &&
+          format('type=s3,bucket={0},region={1},blobs_prefix={2}/buildkit/blobs/,manifests_prefix={2}/buildkit/{3}/',
+          env.RUNS_ON_S3_BUCKET_CACHE, env.RUNS_ON_AWS_REGION, env.RUNS_ON_S3_CACHE_REPO_PREFIX, inputs.variant) ||
+          format('type=gha,scope={0}', inputs.variant) }}
+        cache-to: >-
+          ${{ steps.cache-policy.outputs.save == 'true' &&
+          (env.RUNS_ON_S3_BUCKET_CACHE != '' &&
+          format('type=s3,bucket={0},region={1},blobs_prefix={2}/buildkit/blobs/,manifests_prefix={2}/buildkit/{3}/,mode=max',
+          env.RUNS_ON_S3_BUCKET_CACHE, env.RUNS_ON_AWS_REGION, env.RUNS_ON_S3_CACHE_REPO_PREFIX, inputs.variant) ||
+          format('type=gha,scope={0},mode=max', inputs.variant)) || '' }}
 
     - name: Re-tag pushed image for local run
       if: inputs.push-image != ''
@@ -126,3 +185,16 @@ runs:
         ARGS=(run --image "$IMAGE" --build-type "$BUILD_TYPE")
         [[ "$ENABLE_FUSE" == "true" ]] && ARGS+=(--fuse)
         python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" "${ARGS[@]}"
+
+    - name: Show compiler cache statistics
+      if: always()
+      shell: bash
+      env:
+        IMAGE: dronecode/qgroundcontrol:${{ inputs.variant }}
+      run: |
+        if [[ -d "${GITHUB_WORKSPACE}/.ccache" ]] && docker image inspect "${IMAGE}" >/dev/null 2>&1; then
+          docker run --rm --entrypoint /bin/bash \
+            -v "${GITHUB_WORKSPACE}/.ccache:/ccache" \
+            "${IMAGE}" \
+            -c 'CCACHE_DIR=/ccache ccache --show-stats'
+        fi

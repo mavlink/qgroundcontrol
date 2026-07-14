@@ -17,11 +17,21 @@ from .proc import run_captured
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-__all__ = ["DEFAULT_VERSION_RE", "probe_version", "uv_lock_version"]
+__all__ = ["DEFAULT_VERSION_RE", "probe_version", "uv_lock_version", "version_prefix_matches"]
 
 DEFAULT_VERSION_RE: re.Pattern[str] = re.compile(r"(\d+)\.(\d+)(?:\.(\d+))?")
 
 _UV_LOCK = Path(__file__).resolve().parents[1] / "uv.lock"
+
+
+def version_prefix_matches(installed: tuple[int, ...], expected: str) -> bool:
+    """Compare installed and expected versions over their shared components."""
+    try:
+        wanted = tuple(int(part) for part in expected.split("."))
+    except ValueError:
+        return False
+    compare_len = min(len(installed), len(wanted))
+    return compare_len > 0 and installed[:compare_len] == wanted[:compare_len]
 
 
 def uv_lock_version(package: str, *, lock_path: Path | None = None) -> str | None:

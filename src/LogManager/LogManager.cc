@@ -78,11 +78,13 @@ LogManager* LogManager::instance()
     return s_instance.load(std::memory_order_acquire);
 }
 
-LogManager* LogManager::create(QQmlEngine* qmlEngine, QJSEngine* jsEngine)
+LogManager* LogManager::create(QQmlEngine*, QJSEngine*)
 {
-    Q_UNUSED(jsEngine);
     auto* inst = instance();
-    Q_ASSERT(inst);
+    if (!inst) {
+        qCCritical(LogManagerLog) << "QML requested LogManager before it was initialized";
+        return nullptr;
+    }
     QJSEngine::setObjectOwnership(inst, QJSEngine::CppOwnership);
     return inst;
 }

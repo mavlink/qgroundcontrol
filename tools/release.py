@@ -25,9 +25,10 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import find_repo_root, probe_version
+from common.file_traversal import find_repo_root
 from common.io import chdir
 from common.logging import log_error, log_info, log_ok
+from common.tool_version import probe_version
 
 # Pin versions for reproducibility + supply chain (bumped via Dependabot npm ecosystem)
 SR_VERSION = "24.2.5"
@@ -51,10 +52,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-i", "--install", action="store_true", help="Install semantic-release deps locally"
     )
     return parser.parse_args(argv)
-
-
-def repo_root() -> Path:
-    return find_repo_root(Path(__file__))
 
 
 def check_node() -> int:
@@ -98,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     check_node()
 
-    with chdir(repo_root()):
+    with chdir(find_repo_root(Path(__file__))):
         if args.install:
             return handle_install()
 

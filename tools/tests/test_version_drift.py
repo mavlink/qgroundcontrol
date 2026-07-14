@@ -49,7 +49,9 @@ def _lock_version(package: str) -> str:
     """Independently parse *package*'s pin from uv.lock (not via the helper under test)."""
     text = UV_LOCK.read_text(encoding="utf-8")
     match = re.search(
-        r'\[\[package\]\]\s*\nname\s*=\s*"' + re.escape(package) + r'"\s*\nversion\s*=\s*"([\d.]+)"',
+        r'\[\[package\]\]\s*\nname\s*=\s*"'
+        + re.escape(package)
+        + r'"\s*\nversion\s*=\s*"([\d.]+)"',
         text,
     )
     assert match, f"{package} package not found in tools/uv.lock"
@@ -64,16 +66,14 @@ def _derived_versions() -> dict[str, str]:
     return {"rust-just": JUST_VERSION, "meson": bg.MESON_VERSION, "ninja": bg.NINJA_VERSION}
 
 
-@pytest.mark.parametrize("package", ["rust-just", "meson", "ninja"])
-def test_fallback_version_derives_from_uv_lock(package: str) -> None:
+def test_fallback_versions_derive_from_uv_lock() -> None:
     if not UV_LOCK.exists():
         pytest.skip("tools/uv.lock not in checkout")
 
-    derived = _derived_versions()[package]
-    pinned = _lock_version(package)
-
-    assert derived == pinned, (
-        f"{package}: setup script resolved {derived!r} but tools/uv.lock pins {pinned!r}. "
-        f"common.tool_version.uv_lock_version is broken or the constant's fallback is "
-        f"shadowing the lock, so the fallback-install path would ship a stale binary."
-    )
+    for package, derived in _derived_versions().items():
+        pinned = _lock_version(package)
+        assert derived == pinned, (
+            f"{package}: setup script resolved {derived!r} but tools/uv.lock pins {pinned!r}. "
+            f"common.tool_version.uv_lock_version is broken or the constant's fallback is "
+            f"shadowing the lock, so the fallback-install path would ship a stale binary."
+        )

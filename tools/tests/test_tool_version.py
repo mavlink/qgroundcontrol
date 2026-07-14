@@ -1,80 +1,66 @@
-#!/usr/bin/env python3
-"""Tests for tools/common/tool_version.py."""
+"""Contracts for external-tool version probing."""
 
 from __future__ import annotations
 
 import re
-from unittest.mock import patch
+from typing import TYPE_CHECKING
 
-from common.tool_version import probe_version
+import common.tool_version as tool_version
+from common.tool_version import probe_version, version_prefix_matches
 
 from ._helpers import completed
 
+if TYPE_CHECKING:
+    import pytest
 
-def test_probe_version_three_components() -> None:
-    with (
-        patch("common.tool_version.shutil.which", return_value="/usr/bin/clang-format"),
-        patch(
-            "common.tool_version.run_captured",
-            return_value=completed("clang-format version 21.1.7\n"),
-        ),
+
+def test_probe_version_parses_stdout_stderr_and_custom_patterns(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(tool_version.shutil, "which", lambda name: f"/usr/bin/{name}")
+    cases = [
+        (completed("clang-format version 21.1.7\n"), None, (21, 1, 7)),
+        (completed("foo v4.13\n"), None, (4, 13)),
+        (completed(stderr="javac 17.0.10\n"), None, (17, 0, 10)),
+        (completed("release v2-7\n"), re.compile(r"v(\d+)-(\d+)"), (2, 7)),
+    ]
+    for result, pattern, expected in cases:
+        monkeypatch.setattr(
+            tool_version, "run_captured", lambda _args, result=result, **_kwargs: result
+        )
+        kwargs = {} if pattern is None else {"pattern": pattern}
+        assert probe_version("tool", **kwargs) == expected
+
+
+def test_probe_version_returns_none_when_unavailable_or_invalid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(tool_version.shutil, "which", lambda _name: None)
+    assert probe_version("missing") is None
+
+    monkeypatch.setattr(tool_version.shutil, "which", lambda _name: "/bin/tool")
+    for result in (completed(returncode=1), completed("not a version")):
+        monkeypatch.setattr(
+            tool_version, "run_captured", lambda _args, result=result, **_kwargs: result
+        )
+        assert probe_version("tool") is None
+
+
+def test_custom_arguments_and_prefix_matching(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(tool_version.shutil, "which", lambda _name: "/bin/git")
+    monkeypatch.setattr(
+        tool_version,
+        "run_captured",
+        lambda args, **_kwargs: calls.append(args) or completed("git version 2.42.0\n"),
+    )
+    assert probe_version("git", args=("version",)) == (2, 42, 0)
+    assert calls == [["git", "version"]]
+
+    for actual, expected, matches in (
+        ((4, 13), "4.13.6", True),
+        ((4, 13, 6), "4.13", True),
+        ((4, 12, 6), "4.13.6", False),
+        ((4, 13, 6), "latest", False),
     ):
-        assert probe_version("clang-format") == (21, 1, 7)
-
-
-def test_probe_version_two_components() -> None:
-    with (
-        patch("common.tool_version.shutil.which", return_value="/usr/bin/foo"),
-        patch("common.tool_version.run_captured", return_value=completed("foo v4.13\n")),
-    ):
-        assert probe_version("foo") == (4, 13)
-
-
-def test_probe_version_uses_stderr_when_stdout_empty() -> None:
-    with (
-        patch("common.tool_version.shutil.which", return_value="/usr/bin/javac"),
-        patch("common.tool_version.run_captured", return_value=completed(stderr="javac 17.0.10\n")),
-    ):
-        assert probe_version("javac") == (17, 0, 10)
-
-
-def test_probe_version_missing_tool() -> None:
-    with patch("common.tool_version.shutil.which", return_value=None):
-        assert probe_version("nonexistent") is None
-
-
-def test_probe_version_nonzero_exit() -> None:
-    with (
-        patch("common.tool_version.shutil.which", return_value="/bin/false"),
-        patch("common.tool_version.run_captured", return_value=completed(returncode=1)),
-    ):
-        assert probe_version("false") is None
-
-
-def test_probe_version_unparseable() -> None:
-    with (
-        patch("common.tool_version.shutil.which", return_value="/bin/x"),
-        patch("common.tool_version.run_captured", return_value=completed("not a version")),
-    ):
-        assert probe_version("x") is None
-
-
-def test_probe_version_custom_pattern() -> None:
-    pattern = re.compile(r"v(\d+)-(\d+)")
-    with (
-        patch("common.tool_version.shutil.which", return_value="/bin/x"),
-        patch("common.tool_version.run_captured", return_value=completed("release v2-7\n")),
-    ):
-        assert probe_version("x", pattern=pattern) == (2, 7)
-
-
-def test_probe_version_custom_args() -> None:
-    with (
-        patch("common.tool_version.shutil.which", return_value="/bin/git"),
-        patch(
-            "common.tool_version.run_captured", return_value=completed("git version 2.42.0\n")
-        ) as run,
-    ):
-        probe_version("git", args=("version",))
-        run.assert_called_once()
-        assert run.call_args[0][0] == ["git", "version"]
+        assert version_prefix_matches(actual, expected) is matches

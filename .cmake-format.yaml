@@ -252,7 +252,6 @@ markup:
   fence_pattern: '^\s*([`~]{3}[`~]*)(.*)$'
   ruler_pattern: '^\s*[^\w\s]{3}.*[^\w\s]{3}$'
   hashruler_min_length: 10
-  canonical_bullet: '*'
 
 # -----------------------------------------------------------------------------
 # Linting

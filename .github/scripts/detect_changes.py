@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 _COMMON_PATTERNS: list[str] = [
     r"^src/",
     r"^CMakeLists\.txt$",
+    r"^CMakePresets\.json$",
     r"^cmake/",
     r"^libs/",
     r"^resources/",
@@ -38,8 +39,32 @@ _COMMON_PATTERNS: list[str] = [
     r"^test/",
     r"^\.github/actions/",
     r"^\.github/scripts/",
+    r"^\.github/workflows/_detect-changes\.yml$",
     r"^\.github/build-config\.json$",
+    # Shared CI/build/test tooling affects every platform. Keep tools/setup/
+    # platform-specific below so a Debian-only dependency change does not
+    # rebuild Windows and macOS.
+    r"^tools/(?!setup/|tests/)",
 ]
+
+# These files have their own CI coverage and do not change a platform build input.
+_BUILD_IRRELEVANT_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"^\.github/scripts/tests/"),
+    re.compile(r"^tools/tests/"),
+)
+
+# Match narrowly consumed CI inputs before the broad .github/scripts/ common pattern.
+# Unclassified production scripts remain common so new helpers fail safe by rebuilding all
+# platforms until their consumers are recorded here.
+_SCOPED_CI_PATTERNS: tuple[tuple[re.Pattern[str], frozenset[str]], ...] = (
+    (
+        re.compile(
+            r"^(?:\.github/scripts/(?:docker_helper|plan_docker_builds)\.py|"
+            r"deploy/docker/(?:_variants\.py|variants\.json))$"
+        ),
+        frozenset({"docker-linux", "docker-android"}),
+    ),
+)
 
 # Per-platform additional patterns
 _PLATFORM_PATTERNS: dict[str, list[str]] = {
@@ -100,6 +125,16 @@ def has_relevant_changes(files: Sequence[str], platform: str) -> bool:
     patterns = build_patterns(platform)
     for f in files:
         if not f:
+            continue
+        if any(pattern.search(f) for pattern in _BUILD_IRRELEVANT_PATTERNS):
+            continue
+        scoped_platforms = next(
+            (platforms for pattern, platforms in _SCOPED_CI_PATTERNS if pattern.search(f)),
+            None,
+        )
+        if scoped_platforms is not None:
+            if platform in scoped_platforms:
+                return True
             continue
         for p in patterns:
             if p.search(f):

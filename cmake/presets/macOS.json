@@ -21,34 +21,28 @@
       "name": "macOS",
       "displayName": "macOS Release",
       "inherits": ["release", "macos-base"],
-      "binaryDir": "${sourceParentDir}/build/macOS"
+      "binaryDir": "${sourceDir}/build/macOS"
     },
     {
       "name": "macOS-debug",
       "displayName": "macOS Debug",
       "inherits": ["debug", "macos-base"],
-      "binaryDir": "${sourceParentDir}/build/macOS-debug"
+      "binaryDir": "${sourceDir}/build/macOS-debug"
     }
   ],
   "buildPresets": [
-    { "name": "macOS", "configurePreset": "macOS", "inherits": ["default"] },
-    { "name": "macOS-debug", "configurePreset": "macOS-debug", "inherits": ["default"] }
+    { "name": "macOS", "configurePreset": "macOS", "inherits": ["build-defaults"] },
+    { "name": "macOS-debug", "configurePreset": "macOS-debug", "inherits": ["build-defaults"] }
   ],
   "testPresets": [
-    { "name": "macOS", "configurePreset": "macOS", "inherits": ["default"] },
-    { "name": "macOS-debug", "configurePreset": "macOS-debug", "inherits": ["default"] }
-  ],
-  "packagePresets": [
-    { "name": "macOS", "configurePreset": "macOS" }
+    { "name": "macOS-debug", "configurePreset": "macOS-debug", "inherits": ["test-defaults"] }
   ],
   "workflowPresets": [
     {
       "name": "macOS",
       "steps": [
         { "type": "configure", "name": "macOS" },
-        { "type": "build", "name": "macOS" },
-        { "type": "test", "name": "macOS" },
-        { "type": "package", "name": "macOS" }
+        { "type": "build", "name": "macOS" }
       ]
     },
     {

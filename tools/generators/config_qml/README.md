@@ -2,6 +2,10 @@
 
 Generates QML vehicle configuration pages from JSON definitions.
 
+This file owns the vehicle-configuration schema and generator usage. The
+[generator index](../../README.md#generator-references) links the sibling settings generator;
+generated output follows the repository's [QML conventions](../../../CODING_STYLE.md#qt6--qml-integration).
+
 Each `<Name>.VehicleConfig.json` file in a `VehicleConfig/` directory is
 converted to `<Name>Component.qml` at CMake configure time.
 

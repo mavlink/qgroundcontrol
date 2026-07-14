@@ -7,6 +7,10 @@ on:
       - '.github/actions/**'
       - '.github/workflows/**'
       - '.github/build-config.json'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'cmake/install/CreateAppImage.cmake'
+      - 'cmake/presets/**'
       - 'tools/setup/**'
       - 'tools/*.py'
       - 'tools/uv.lock'
@@ -17,6 +21,12 @@ on:
       - 'tools/simulation/**'
       - 'tools/translations/**'
       - 'deploy/docker/**'
+      - 'deploy/multipass/**'
+      - 'deploy/vagrant/**'
+      - 'justfile'
+      - 'src/AutoPilotPlugins/**/VehicleConfig/**'
+      - 'src/AppSettings/pages/**'
+      - 'src/Settings/**'
   push:
     branches:
       - master
@@ -26,6 +36,10 @@ on:
       - '.github/actions/**'
       - '.github/workflows/**'
       - '.github/build-config.json'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'cmake/install/CreateAppImage.cmake'
+      - 'cmake/presets/**'
       - 'tools/setup/**'
       - 'tools/*.py'
       - 'tools/uv.lock'
@@ -36,6 +50,12 @@ on:
       - 'tools/simulation/**'
       - 'tools/translations/**'
       - 'deploy/docker/**'
+      - 'deploy/multipass/**'
+      - 'deploy/vagrant/**'
+      - 'justfile'
+      - 'src/AutoPilotPlugins/**/VehicleConfig/**'
+      - 'src/AppSettings/pages/**'
+      - 'src/Settings/**'
   workflow_dispatch:
 
 concurrency:
@@ -50,7 +70,6 @@ jobs:
     name: Lint Workflows
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # checks: write scoped here: only actionlint reports via github-pr-check.
     permissions:
       contents: read
       checks: write
@@ -98,23 +117,6 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
-          sparse-checkout: |
-            .github/actions/setup-python
-            .github/build-config.json
-            .github/scripts
-            .github/workflows/build-results.yml
-            tools/pyproject.toml
-            tools/uv.lock
-            tools/*.py
-            tools/setup
-            tools/tests
-            tools/common
-            tools/generators
-            tools/analyzers
-            tools/simulation
-            tools/translations
-            deploy/docker
-          sparse-checkout-cone-mode: false
           persist-credentials: false
 
       - name: Setup Python
@@ -122,6 +124,9 @@ jobs:
         with:
           groups: scripts,test
           python-version: ${{ matrix.python-version }}
+
+      - name: Validate CMake preset graph
+        run: cmake --list-presets=all
 
       - name: Python syntax smoke test
         run: python3 -m compileall .github/scripts tools/*.py tools/setup tools/common tools/generators tools/analyzers tools/simulation tools/translations

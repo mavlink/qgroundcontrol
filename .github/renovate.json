@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
+    ":maintainLockFilesWeekly",
     ":semanticCommitTypeAll(deps)"
   ],
   "labels": [
@@ -11,8 +12,12 @@
   "ignorePaths": [
     ".github/workflows/**"
   ],
-  "description": "Active manager for npm, python (pep621/uv), and pre-commit. GitHub Actions are handled by Dependabot (see dependabot.yml); excluded here via ignorePaths.",
+  "description": "Manages npm, Python, pre-commit, development environments, Gradle Wrapper, Dockerfiles, and composite actions. Dependabot owns .github/workflows, which are excluded here.",
   "enabledManagers": [
+    "devcontainer",
+    "dockerfile",
+    "github-actions",
+    "gradle-wrapper",
     "npm",
     "pep621",
     "pre-commit"
@@ -20,7 +25,14 @@
   "packageRules": [
     {
       "description": "Auto-merge patch updates after CI passes",
-      "matchUpdateTypes": ["patch"],
+      "matchManagers": [
+        "npm",
+        "pep621",
+        "pre-commit"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
       "automerge": true
     },
     {
@@ -33,6 +45,22 @@
       ],
       "schedule": [
         "before 6am on monday"
+      ]
+    },
+    {
+      "description": "Group composite GitHub Action updates not covered by Dependabot",
+      "groupName": "composite action dependencies",
+      "matchManagers": [
+        "github-actions"
+      ]
+    },
+    {
+      "description": "Group development environment and build bootstrap updates",
+      "groupName": "development environment dependencies",
+      "matchManagers": [
+        "devcontainer",
+        "dockerfile",
+        "gradle-wrapper"
       ]
     }
   ],

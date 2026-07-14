@@ -29,7 +29,13 @@ include_guard(GLOBAL)
 # TYPE value and as a sibling keyword would make `TYPE FRAMEWORK FRAMEWORK
 # <path>` ambiguous (TYPE's value gets eaten by the keyword recognizer).
 function(gstreamer_create_layout_target)
-    cmake_parse_arguments(GCLT "" "SDK_ROOT;TYPE;LIB_PATH;INCLUDE_PATH;FRAMEWORK_BUNDLE;XCFRAMEWORK_BUNDLE" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 GCLT ""
+        "SDK_ROOT;TYPE;LIB_PATH;INCLUDE_PATH;FRAMEWORK_BUNDLE;XCFRAMEWORK_BUNDLE" "")
+    if(GCLT_KEYWORDS_MISSING_VALUES OR GCLT_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_create_layout_target: malformed arguments "
+            "(missing='${GCLT_KEYWORDS_MISSING_VALUES}', unknown='${GCLT_UNPARSED_ARGUMENTS}')")
+    endif()
 
     if(NOT GCLT_SDK_ROOT)
         message(FATAL_ERROR "gstreamer_create_layout_target: SDK_ROOT is required")

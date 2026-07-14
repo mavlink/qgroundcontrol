@@ -79,7 +79,7 @@ Vagrant.configure(2) do |config|
   # rm -rf /vagrant/shadow_build
   # mkdir /vagrant/shadow_build
   # cd /vagrant/shadow_build
-  # time cmake -S /vagrant -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DQGC_BUILD_TESTING=ON -DQGC_STABLE_BUILD=OFF  # 34s
+  # time cmake -S /vagrant -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DQGC_BUILD_TESTING=OFF -DQGC_STABLE_BUILD=OFF  # 34s
   # time cmake --build . --target all --config Release  # 75m
   # time cmake --install . --config Release
 
@@ -90,13 +90,37 @@ Vagrant.configure(2) do |config|
      export %{build_env}
      export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))
 
-     sudo apt-get update -y
+     apt_retry() {
+       attempt=1
+       while [ "$attempt" -le 3 ]; do
+         if "$@"; then return 0; fi
+         if [ "$attempt" -lt 3 ]; then sleep $((attempt * 10)); fi
+         attempt=$((attempt + 1))
+       done
+       return 1
+     }
+
+     sudo tee /etc/apt/apt.conf.d/80-qgc-retries >/dev/null <<'APTCONF'
+Acquire::Retries "3";
+Acquire::http::Timeout "30";
+Acquire::https::Timeout "30";
+APTCONF
+     for sources in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+       if [ -f "$sources" ]; then
+         sudo sed -i \
+           -e 's|http://archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' \
+           -e 's|http://security.ubuntu.com/ubuntu|https://security.ubuntu.com/ubuntu|g' \
+           "$sources"
+       fi
+     done
+
+     apt_retry sudo apt-get update -y
      # we need this long command to keep packages (grub-pc esp.) from prompting for input
-     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
+     apt_retry sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 
-     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install %{apt_pkgs}
+     apt_retry sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install %{apt_pkgs}
 
-     sudo apt-get install -y python3-pip python3-venv python3-dev
+     apt_retry sudo apt-get install -y python3-pip python3-venv python3-dev
 
      # use common package installation:
      python3 /vagrant/tools/setup/install_dependencies --platform debian
@@ -114,13 +138,13 @@ Vagrant.configure(2) do |config|
      su - vagrant -c 'python3 -m venv --system-site-packages ~vagrant/venv-qgroundcontrol'
      su - vagrant -c 'echo "VIRTUAL_ENV_DISABLE_PROMPT=1 source /home/vagrant/venv-qgroundcontrol/bin/activate" >>~vagrant/.bashrc'
      echo 'Installing QT'
-     sudo apt-get install -y qt6-base-dev-tools
+     apt_retry sudo apt-get install -y qt6-base-dev-tools
 
      QT6_FEATURES="charts location positioning speech 5compat multimedia serialport shadertools connectivity quick3d sensors"
 
      su - vagrant -c "source /home/vagrant/venv-qgroundcontrol/bin/activate; python3 -m pip install --user aqtinstall"
 
-     apt-get install -y patchelf
+     apt_retry apt-get install -y patchelf
 
      dir="%{qt_deps_unpack_dir}"
      version="%{qt_version}"
@@ -151,7 +175,8 @@ SHADOW_BUILD=\"\\\$HOME/shadow_build\"
 rm -rf \"\\\$SHADOW_BUILD\"
 mkdir \"\\\$SHADOW_BUILD\"
 cd \"\\\$SHADOW_BUILD\"
-time cmake -S /vagrant -B . -G Ninja -DCMAKE_BUILD_TYPE=Release -DQGC_BUILD_TESTING=ON -DQGC_STABLE_BUILD=OFF -DCMAKE_PREFIX_PATH=\\\$HOME/Qt/${version}/gcc_64 # 34s
+export QT_ROOT_DIR=\\\$HOME/Qt/${version}/gcc_64
+time cmake --preset Linux -S /vagrant -B . -DQGC_STABLE_BUILD=OFF # 34s
 CONFIGURE
 "
 

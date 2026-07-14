@@ -1,0 +1,2 @@
+# Sourced helper paths are resolved by the calling scripts at runtime.
+disable=SC1091

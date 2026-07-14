@@ -2,6 +2,8 @@
 
 This directory contains GDB pretty printers for displaying Qt types in a human-readable format.
 
+> See [tools/README.md](../../README.md#debugging-tools) for the parent debugging-tools index.
+
 ## Setup
 
 ### Quick Setup (per session)
@@ -27,7 +29,8 @@ end
 
 ### VS Code Setup
 
-The `.vscode/launch.json` in this repository is already configured to load these printers automatically.
+Run `just vscode` to install the tracked launch template. Its GDB configurations load these
+printers automatically without changing an existing local `.vscode/launch.json`.
 
 ## Supported Types
 

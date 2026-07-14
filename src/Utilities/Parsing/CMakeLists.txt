@@ -146,7 +146,12 @@ target_link_libraries(QGCParsing
 # its own tests); JsonSchemaValidator catches to stay warn-only, so force exceptions on here.
 target_compile_definitions(QGCParsing PRIVATE VALIJSON_USE_EXCEPTIONS=1)
 
-target_include_directories(QGCParsing SYSTEM PUBLIC ${ulog_cpp_SOURCE_DIR})
+target_include_directories(QGCParsing SYSTEM
+    PUBLIC
+        ${ulog_cpp_SOURCE_DIR}
+    PRIVATE
+        ${valijson_SOURCE_DIR}/include
+)
 
 target_include_directories(QGCParsing
     PUBLIC
@@ -165,5 +170,11 @@ target_precompile_headers(QGCParsing PRIVATE
     <QtCore/QJsonArray>
     <QtCore/QJsonDocument>
 )
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    qgc_add_optional_no_warning(QGCParsing PRIVATE stringop-overflow)
+    qgc_add_optional_no_warning(QGCParsing PRIVATE array-bounds)
+    qgc_add_optional_no_warning(QGCParsing PRIVATE restrict)
+endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCParsing)

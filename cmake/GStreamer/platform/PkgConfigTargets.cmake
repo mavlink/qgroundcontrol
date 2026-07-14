@@ -4,6 +4,8 @@
 # is required so GStreamer_FOUND / IMPORTED targets / cache vars propagate to
 # the caller.
 
+include_guard(GLOBAL)
+
 macro(_qgc_create_pkgconfig_targets)
 
 # MACOS is set out-of-band by cmake/Toolchain.cmake; the overlay below gates on

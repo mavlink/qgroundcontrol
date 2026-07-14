@@ -7,10 +7,12 @@ on:
       - 'Stable*'
     paths:
       - 'docs/**'
+      - '.nvmrc'
       - 'package*.json'
   pull_request:
     paths:
       - 'docs/**'
+      - '.nvmrc'
       - 'package*.json'
   workflow_dispatch:
 
@@ -40,9 +42,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: 'lts/*'
+          node-version-file: '.nvmrc'
 
       - name: Install dependencies
         run: npm ci

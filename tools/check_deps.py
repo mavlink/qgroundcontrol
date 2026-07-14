@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Check dependency and tool versions used by QGroundControl development."""
 
 from __future__ import annotations
@@ -13,8 +12,8 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import find_repo_root
 from common.build_config import get_build_config_value
+from common.file_traversal import find_repo_root
 from common.git import run_git
 from common.logging import log_error, log_info, log_ok, log_warn
 from common.proc import run_captured

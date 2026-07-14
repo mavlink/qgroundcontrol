@@ -1,19 +1,25 @@
 {
-    "name": "qgc_vitepress_docs",
-    "version": "1.0.1",
-    "description": "QGC vitepress docs build dependencies.",
-    "scripts": {
-        "docs:dev": "vitepress dev docs",
-        "docs:build": "vitepress build docs",
-        "docs:preview": "vitepress preview docs",
-        "start": "npm run docs:dev"
-    },
-    "dependencies": {
-        "vitepress": "^1.6.4"
-    },
-    "license": "CC-BY-4.0",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/mavlink/qgroundcontrol"
-    }
+  "name": "qgc_vitepress_docs",
+  "version": "1.0.1",
+  "private": true,
+  "description": "QGroundControl VitePress documentation build dependencies.",
+  "license": "CC-BY-4.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mavlink/qgroundcontrol"
+  },
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.18.0",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "start": "npm run docs:dev"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
 }

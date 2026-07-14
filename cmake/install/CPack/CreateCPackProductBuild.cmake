@@ -8,41 +8,9 @@ include(CreateCPackCommon)
 # ----------------------------------------------------------------------------
 # ProductBuild Generator Configuration
 # ----------------------------------------------------------------------------
-list(APPEND CPACK_GENERATOR "PRODUCTBUILD")
+set(CPACK_GENERATOR "productbuild")
 set(CPACK_BINARY_PRODUCTBUILD ON)
-
-set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/macos")
-
-# ----------------------------------------------------------------------------
-# Package Building Tools and Signing
-# ----------------------------------------------------------------------------
-# set(CPACK_COMMAND_PRODUCTBUILD)
-# set(CPACK_PRODUCTBUILD_IDENTIFIER)
-# set(CPACK_PRODUCTBUILD_IDENTITY_NAME)
-# set(CPACK_PRODUCTBUILD_KEYCHAIN_PATH)
-# set(CPACK_COMMAND_PKGBUILD)
-# set(CPACK_PKGBUILD_IDENTITY_NAME)
-# set(CPACK_PKGBUILD_KEYCHAIN_PATH)
-# set(CPACK_PREFLIGHT_<COMP>_SCRIPT)
-# set(CPACK_POSTFLIGHT_<COMP>_SCRIPT)
-# set(CPACK_PRODUCTBUILD_RESOURCES_DIR)
-# set(CPACK_PRODUCTBUILD_DOMAINS)
-# set(CPACK_PRODUCTBUILD_DOMAINS_ANYWHERE)
-# set(CPACK_PRODUCTBUILD_DOMAINS_USER)
-# set(CPACK_PRODUCTBUILD_DOMAINS_ROOT)
-
-# ----------------------------------------------------------------------------
-# Installer Background Images (Light and Dark Mode)
-# ----------------------------------------------------------------------------
-# set(CPACK_PRODUCTBUILD_BACKGROUND)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_ALIGNMENT)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_SCALING)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_MIME_TYPE)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_UTI)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_DARKAQUA)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_DARKAQUA_ALIGNMENT)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_DARKAQUA_SCALING)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_DARKAQUA_MIME_TYPE)
-# set(CPACK_PRODUCTBUILD_BACKGROUND_DARKAQUA_UTI)
+set(CPACK_PRODUCTBUILD_IDENTIFIER "${QGC_PACKAGE_NAME}")
+set(CPACK_PACKAGING_INSTALL_PREFIX "/Applications")
 
 include(CPack)

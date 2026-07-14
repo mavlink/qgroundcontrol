@@ -31,10 +31,18 @@ indent_size = 4
 indent_style = space
 indent_size = 2
 
-# YAML files
-[*.{yml,yaml}]
+# Other structured configuration files
+[*.{yml,yaml,toml}]
 indent_style = space
 indent_size = 2
+
+[*.{ini,cfg,conf,properties}]
+indent_style = space
+indent_size = 4
+
+[{Dockerfile,Dockerfile-*}]
+indent_style = space
+indent_size = 4
 
 # Markdown files
 [*.md]
@@ -62,3 +70,7 @@ max_line_length = 100
 # Makefiles (require tabs)
 [{Makefile,*.mk}]
 indent_style = tab
+
+# Windows command files are the only tracked text files that require CRLF.
+[*.{bat,cmd,ps1}]
+end_of_line = crlf

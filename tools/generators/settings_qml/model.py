@@ -17,8 +17,7 @@ from ..common.validation import clamped_repr, reject_unknown_keys, require_dict,
 # Matches C++ FactMetaData::splitTranslatedList: [,，、] (ASCII / fullwidth / enumeration commas).
 _TRANSLATED_LIST_RE = re.compile("[,，、]")
 
-# Fact-backed control settings: "settingsGroupAccessor.factName" (nested fact names allowed).
-# ASCII-only, non-empty segments: fact_name feeds objectNames, which must stay grep-able.
+# Fact-backed settings use ASCII path segments so generated object names remain stable.
 _SETTING_RE = re.compile(r"[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+")
 
 
@@ -128,9 +127,7 @@ def load_page_def(json_path: Path) -> PageDef:
                 enableCheckbox=parse_enable_checkbox(ctrl_data.get("enableCheckbox")),
                 button=parse_button(ctrl_data.get("button")),
             )
-            # component/info controls have no fact; every other kind derives its fact
-            # reference and objectName from setting, so a bad one must fail here with
-            # context, not deep inside the emitter with an IndexError
+            # Component and info controls are the only controls without a Fact path.
             if ctrl.control not in ("component", "info") and not _SETTING_RE.fullmatch(ctrl.setting):
                 raise ValueError(
                     f"{json_path}: control setting must be 'settingsGroupAccessor.factName', "

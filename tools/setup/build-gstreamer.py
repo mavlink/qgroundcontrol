@@ -50,6 +50,7 @@ ensure_tools_dir(__file__)
 from common.build_config import get_build_config_value
 from common.gh_actions import write_github_output
 from common.logging import log_error, log_info, log_ok, log_warn
+from common.platform import normalize_arch
 from common.tool_version import uv_lock_version
 
 # ============================================================================
@@ -80,11 +81,15 @@ def detect_jobs(override: int | None = None) -> int:
 
 def detect_host_arch() -> str:
     """Detect the host architecture."""
-    machine = platform.machine().lower()
-    if machine in ("x86_64", "amd64"):
-        return "x86_64"
-    if machine in ("aarch64", "arm64"):
+    machine = (os.environ.get("RUNNER_ARCH") or platform.machine()).strip().lower()
+    try:
+        normalized = normalize_arch(machine)
+    except ValueError:
+        normalized = machine
+    if normalized == "aarch64":
         return "arm64"
+    if normalized == "x86_64":
+        return normalized
     if machine.startswith("arm"):
         return "armv7"
     return machine
@@ -253,7 +258,7 @@ class MesonBuilder:
             packages.append(f"ninja=={NINJA_VERSION}")
 
         log_info(f"Installing pinned build tools: {', '.join(packages)}")
-        from common import pip_install
+        from common.deps import pip_install
 
         pip_install(packages)
 

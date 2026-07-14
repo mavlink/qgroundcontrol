@@ -1,148 +1,100 @@
-"""Tests for attest_helper.py."""
+"""Release-attestation gating and checksum contracts."""
 
 from __future__ import annotations
 
-from unittest.mock import patch
+import sys
+from hashlib import sha256
+from typing import TYPE_CHECKING
+
+import attest_helper
+import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-class TestAttestHelper:
-    """Tests for attest_helper main logic."""
+def _run_main(
+    monkeypatch: pytest.MonkeyPatch, args: list[str], *, event_name: str = "push"
+) -> dict[str, str]:
+    outputs: dict[str, str] = {}
+    monkeypatch.setenv("GITHUB_EVENT_NAME", event_name)
+    monkeypatch.setattr(attest_helper, "write_github_output", outputs.update)
+    monkeypatch.setattr(sys, "argv", ["attest_helper.py", *args])
+    attest_helper.main()
+    return outputs
 
-    def _run_main(self, args: list[str], *, event_name: str = "push") -> dict[str, str]:
-        """Run attest_helper.main with mocked dependencies, return captured outputs."""
-        captured = {}
 
-        def fake_write_output(d: dict) -> None:
-            captured.update(d)
+def test_check_skips_prs_and_resolves_sbom_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    subject = tmp_path / "sub" / "artifact.zip"
+    subject.parent.mkdir()
+    subject.touch()
+    base_args = [
+        "check",
+        "--subject-path",
+        str(subject),
+        "--subject-name",
+        "my-artifact",
+        "--runner-temp",
+        str(tmp_path),
+    ]
 
-        with (
-            patch.dict("os.environ", {"GITHUB_EVENT_NAME": event_name}, clear=False),
-            patch("attest_helper.write_github_output", side_effect=fake_write_output),
-        ):
-            import sys
+    assert _run_main(monkeypatch, base_args, event_name="pull_request") == {"skip": "true"}
+    for sbom_format, suffix in (("spdx-json", "spdx.json"), ("cyclonedx-json", "cdx.json")):
+        outputs = _run_main(monkeypatch, [*base_args, "--sbom-format", sbom_format])
+        assert outputs == {
+            "skip": "false",
+            "scan-path": str(subject.parent),
+            "sbom-path": str(tmp_path / f"my-artifact.sbom.{suffix}"),
+        }
 
-            import attest_helper
 
-            old_argv = sys.argv
-            try:
-                sys.argv = ["attest_helper.py", *args]
-                attest_helper.main()
-            finally:
-                sys.argv = old_argv
-        return captured
+def test_resolve_path_prefers_override_and_rejects_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    default = tmp_path / "default.zip"
+    override = tmp_path / "override.zip"
+    default.touch()
+    override.touch()
 
-    def test_pull_request_skips(self, tmp_path):
-        subject = tmp_path / "artifact.zip"
-        subject.touch()
-        outputs = self._run_main(
-            [
-                "check",
-                "--subject-path",
-                str(subject),
-                "--subject-name",
-                "my-artifact",
-                "--runner-temp",
-                str(tmp_path),
-            ],
-            event_name="pull_request",
+    assert _run_main(monkeypatch, ["resolve-path", "--default", str(default)]) == {
+        "path": str(default)
+    }
+    assert _run_main(
+        monkeypatch,
+        ["resolve-path", "--override", str(override), "--default", str(default)],
+    ) == {"path": str(override)}
+    with pytest.raises(SystemExit) as error:
+        _run_main(monkeypatch, ["resolve-path", "--default", str(tmp_path / "missing")])
+    assert error.value.code == 1
+
+
+def test_checksum_creates_and_normalizes_valid_sidecars(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    artifact = tmp_path / "QGroundControl-installer-AMD64-ARM64.exe"
+    artifact.write_bytes(b"release artifact")
+    digest = sha256(artifact.read_bytes()).hexdigest()
+    sidecar = tmp_path / f"{artifact.name}.sha256"
+
+    outputs = _run_main(monkeypatch, ["checksum", "--source-path", str(artifact)])
+    assert outputs == {"path": str(sidecar)}
+    assert sidecar.read_text(encoding="utf-8") == f"{digest}  {artifact.name}\n"
+
+    for line_ending in ("\n", "\r\n"):
+        sidecar.write_bytes(
+            f"{digest}  QGroundControl-installer-AMD64-arm64.exe".encode() + line_ending.encode()
         )
-        assert outputs == {"skip": "true"}
+        _run_main(monkeypatch, ["checksum", "--source-path", str(artifact)])
+        assert sidecar.read_text(encoding="utf-8") == f"{digest}  {artifact.name}\n"
 
-    def test_spdx_sbom_path(self, tmp_path):
-        """SBOM path uses .spdx.json suffix for spdx-json format."""
-        subject = tmp_path / "artifact.zip"
-        subject.touch()
-        outputs = self._run_main(
-            [
-                "check",
-                "--subject-path",
-                str(subject),
-                "--subject-name",
-                "my-artifact",
-                "--sbom-format",
-                "spdx-json",
-                "--runner-temp",
-                str(tmp_path),
-            ]
-        )
-        assert outputs["skip"] == "false"
-        assert outputs["sbom-path"] == str(tmp_path / "my-artifact.sbom.spdx.json")
 
-    def test_cyclonedx_sbom_path(self, tmp_path):
-        """SBOM path uses .cdx.json suffix for cyclonedx-json format."""
-        subject = tmp_path / "artifact.zip"
-        subject.touch()
-        outputs = self._run_main(
-            [
-                "check",
-                "--subject-path",
-                str(subject),
-                "--subject-name",
-                "my-artifact",
-                "--sbom-format",
-                "cyclonedx-json",
-                "--runner-temp",
-                str(tmp_path),
-            ]
-        )
-        assert outputs["skip"] == "false"
-        assert outputs["sbom-path"] == str(tmp_path / "my-artifact.sbom.cdx.json")
+def test_checksum_rejects_mismatch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    artifact = tmp_path / "artifact.zip"
+    artifact.write_bytes(b"release artifact")
+    (tmp_path / "artifact.zip.sha256").write_text(f"{'0' * 64}  artifact.zip\n")
 
-    def test_scan_path_defaults_to_parent(self, tmp_path):
-        """When scan-path is empty, defaults to subject's parent directory."""
-        subject = tmp_path / "sub" / "artifact.zip"
-        subject.parent.mkdir(parents=True, exist_ok=True)
-        subject.touch()
-        outputs = self._run_main(
-            [
-                "check",
-                "--subject-path",
-                str(subject),
-                "--subject-name",
-                "my-artifact",
-                "--runner-temp",
-                str(tmp_path),
-            ]
-        )
-        assert outputs["scan-path"] == str(subject.parent)
-
-    def test_resolve_path_uses_default_when_no_override(self, tmp_path):
-        artifact = tmp_path / "Out.AppImage"
-        artifact.touch()
-        outputs = self._run_main(
-            [
-                "resolve-path",
-                "--default",
-                str(artifact),
-            ]
-        )
-        assert outputs == {"path": str(artifact)}
-
-    def test_resolve_path_prefers_override(self, tmp_path):
-        override = tmp_path / "override.zip"
-        override.touch()
-        default = tmp_path / "default.zip"
-        default.touch()
-        outputs = self._run_main(
-            [
-                "resolve-path",
-                "--override",
-                str(override),
-                "--default",
-                str(default),
-            ]
-        )
-        assert outputs == {"path": str(override)}
-
-    def test_resolve_path_missing_artifact_exits(self, tmp_path):
-        import pytest
-
-        with pytest.raises(SystemExit) as excinfo:
-            self._run_main(
-                [
-                    "resolve-path",
-                    "--default",
-                    str(tmp_path / "missing.zip"),
-                ]
-            )
-        assert excinfo.value.code == 1
+    with pytest.raises(SystemExit) as error:
+        _run_main(monkeypatch, ["checksum", "--source-path", str(artifact)])
+    assert error.value.code == 1

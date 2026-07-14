@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Generate a CycloneDX SBOM from a CMake build directory's CPM package metadata.
+"""Generate an SBOM from a CMake build directory's CPM package metadata.
 
 Parses CMakeCache.txt for CPM_PACKAGES and per-package VERSION/SOURCE_DIR,
 then reads git metadata (remote URL, commit hash) from each source directory.
 
 Usage:
-    generate_cpm_sbom.py --build-dir DIR [--output FILE]
+    generate_cpm_sbom.py --build-dir DIR [--format cyclonedx|spdx] [--output FILE]
 
-Outputs CycloneDX 1.6 JSON to stdout or the specified file.
+Outputs CycloneDX 1.6 JSON by default or SPDX 2.2 JSON for GitHub dependency submission.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from cmake_helper import read_cache_dict
+from common.cmake import read_cache_dict
 from common.git import run_git
 
 
@@ -83,7 +83,7 @@ def generate_sbom(build_dir: Path) -> dict:
         print(f"Error: {cache_path} not found", file=sys.stderr)
         sys.exit(1)
 
-    cache = read_cache_dict(str(cache_path))
+    cache = read_cache_dict(cache_path)
 
     packages_str = cache.get("CPM_PACKAGES", "")
     if not packages_str:
@@ -155,18 +155,109 @@ def generate_sbom(build_dir: Path) -> dict:
     return sbom
 
 
+def generate_spdx(build_dir: Path) -> dict:
+    """Return an SPDX dependency snapshot suitable for GitHub submission."""
+    cyclonedx = generate_sbom(build_dir)
+    root_id = "SPDXRef-Package-QGroundControl"
+    packages: list[dict] = [
+        {
+            "SPDXID": root_id,
+            "name": "QGroundControl",
+            "downloadLocation": "https://github.com/mavlink/qgroundcontrol",
+            "filesAnalyzed": False,
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "copyrightText": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:github/mavlink/qgroundcontrol",
+                }
+            ],
+        }
+    ]
+    relationships = [
+        {
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relationshipType": "DESCRIBES",
+            "relatedSpdxElement": root_id,
+        }
+    ]
+
+    for index, component in enumerate(cyclonedx["components"], start=1):
+        safe_name = re.sub(r"[^A-Za-z0-9.-]", "-", component["name"])
+        package_id = f"SPDXRef-Package-{safe_name}-{index}"
+        external_references = component.get("externalReferences", [])
+        package = {
+            "SPDXID": package_id,
+            "name": component["name"],
+            "versionInfo": component["version"],
+            "downloadLocation": (
+                external_references[0]["url"] if external_references else "NOASSERTION"
+            ),
+            "filesAnalyzed": False,
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "copyrightText": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": component["purl"],
+                }
+            ],
+        }
+        if hashes := component.get("hashes"):
+            package["checksums"] = [
+                {"algorithm": item["alg"].replace("-", ""), "checksumValue": item["content"]}
+                for item in hashes
+            ]
+        packages.append(package)
+        relationships.append(
+            {
+                "spdxElementId": root_id,
+                "relationshipType": "DEPENDS_ON",
+                "relatedSpdxElement": package_id,
+            }
+        )
+
+    return {
+        "spdxVersion": "SPDX-2.2",
+        "dataLicense": "CC0-1.0",
+        "SPDXID": "SPDXRef-DOCUMENT",
+        "name": "QGroundControl CPM dependencies",
+        "documentNamespace": (
+            f"https://github.com/mavlink/qgroundcontrol/dependency-sbom/{uuid.uuid4()}"
+        ),
+        "creationInfo": {
+            "created": datetime.now(timezone.utc).isoformat(),
+            "creators": ["Tool: generate_cpm_sbom-1.0.0"],
+        },
+        "packages": packages,
+        "relationships": relationships,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path, required=True, help="CMake build directory")
+    parser.add_argument(
+        "--format",
+        choices=("cyclonedx", "spdx"),
+        default="cyclonedx",
+        help="SBOM format (default: cyclonedx)",
+    )
     parser.add_argument("--output", "-o", type=Path, help="Output file (default: stdout)")
     args = parser.parse_args()
 
-    sbom = generate_sbom(args.build_dir)
+    sbom = generate_spdx(args.build_dir) if args.format == "spdx" else generate_sbom(args.build_dir)
     output = json.dumps(sbom, indent=2)
 
     if args.output:
         args.output.write_text(output, encoding="utf-8")
-        print(f"SBOM written to {args.output} ({len(sbom['components'])} components)")
+        count = len(sbom["packages"]) - 1 if args.format == "spdx" else len(sbom["components"])
+        print(f"SBOM written to {args.output} ({count} components)")
     else:
         print(output)
 

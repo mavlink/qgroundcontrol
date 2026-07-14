@@ -13,6 +13,16 @@ import re
 import sys
 from pathlib import Path
 
+_tools_dir = Path(__file__).resolve().parents[1]
+if str(_tools_dir) not in sys.path:
+    sys.path.insert(0, str(_tools_dir))
+
+from _bootstrap import ensure_tools_dir  # noqa: E402
+
+ensure_tools_dir(__file__)
+
+from common.io import write_text_if_changed  # noqa: E402
+
 ENUM_DECL_RE = re.compile(r'^\s*typedef\s+enum\s+([A-Z_][A-Z0-9_]*)\b', re.MULTILINE)
 
 
@@ -45,16 +55,6 @@ def find_dialects(mavlink_dir):
         if dialect_dir.is_dir() and dialect_header.is_file():
             dialects.append((entry, dialect_header))
     return dialects
-
-
-def write_if_changed(path, content):
-    """Return True if file was written (avoids spurious rebuilds)."""
-    path = Path(path)
-    if path.is_file() and path.read_text() == content:
-        return False
-    path.resolve().parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
-    return True
 
 
 def strip_duplicate_blocks(enums_text, seen_names, dialect):
@@ -192,11 +192,11 @@ def main():
         qml_cc_path = out_dir / "MAVLinkEnumsQml.cc"
 
     written: list[Path] = []
-    if write_if_changed(enums_h_path, enums_h):
+    if write_text_if_changed(enums_h_path, enums_h):
         written.append(enums_h_path)
-    if write_if_changed(qml_h_path, build_qml_header(enum_names)):
+    if write_text_if_changed(qml_h_path, build_qml_header(enum_names)):
         written.append(qml_h_path)
-    if write_if_changed(qml_cc_path, build_qml_anchor_cc()):
+    if write_text_if_changed(qml_cc_path, build_qml_anchor_cc()):
         written.append(qml_cc_path)
 
     if written:

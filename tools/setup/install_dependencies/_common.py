@@ -9,12 +9,14 @@ level above the package.
 
 from __future__ import annotations
 
+import importlib
 import os
 import shlex
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 _tools_dir = Path(__file__).resolve().parents[2]
 if str(_tools_dir) not in sys.path:
@@ -276,11 +278,16 @@ def _set_env_var_ci(name: str, value: str) -> None:
     os.environ[name] = value
 
 
+def _load_winreg() -> Any:
+    """Load the Windows-only registry module behind the runtime platform guard."""
+    return cast("Any", importlib.import_module("winreg"))
+
+
 def _set_env_var_local(name: str, value: str) -> None:
     """Set a machine-level environment variable via Windows registry."""
     if not is_windows():
         raise RuntimeError("Local env var persistence is only supported on Windows")
-    import winreg
+    winreg = _load_winreg()
 
     key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
     with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE) as key:
@@ -305,7 +312,7 @@ def add_to_path(path_entry: str) -> None:
     else:
         if not is_windows():
             raise RuntimeError("Local PATH persistence is only supported on Windows")
-        import winreg
+        winreg = _load_winreg()
 
         key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
         with winreg.OpenKey(

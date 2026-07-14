@@ -1,16 +1,13 @@
 # ============================================================================
 # CreateArchPackage.cmake
 # Arch Linux package via makepkg (CPack has no pacman generator). Defines the
-# `qgc-package` target. Smoke artifact, not a published distributable, so
-# makepkg failure is non-fatal — the AppImage is the real Arch deliverable.
+# `qgc-package` target. The AppImage remains the primary Arch deliverable, but
+# an explicitly requested package target must fail if makepkg cannot build it.
 # ============================================================================
 
 # pkgver: strip the git-describe 'v' prefix and map '-' to '.' (makepkg forbids '-').
 string(REGEX REPLACE "^v" "" QGC_ARCH_PKGVER "${QGC_APP_VERSION_STR}")
 string(REPLACE "-" "." QGC_ARCH_PKGVER "${QGC_ARCH_PKGVER}")
-if(QGC_ARCH_PKGVER STREQUAL "")
-    set(QGC_ARCH_PKGVER "0.0.0")
-endif()
 
 # Single source of truth for the Arch runtime dep list (see PKGBUILD.in note):
 # the remaining system libraries QGC links against once Qt is bundled by the
@@ -33,13 +30,14 @@ configure_file(
 )
 
 # PKGDEST drops the package in the build root (where find_artifact.py looks);
-# BUILDDIR keeps makepkg scratch out of the source tree. `|| echo` keeps a
-# makepkg failure non-fatal so `--target qgc-package` still succeeds.
-add_custom_target(qgc-package
-    COMMAND ${CMAKE_COMMAND} -E env
-        "PKGDEST=${CMAKE_BINARY_DIR}" "BUILDDIR=${_qgc_arch_dir}"
-        bash -c "makepkg -f --noconfirm --nodeps --skipinteg || echo 'QGC: makepkg failed; Arch package skipped (AppImage still produced).' >&2"
+# BUILDDIR keeps makepkg scratch out of the source tree.
+add_custom_target(
+    qgc-package
+    COMMAND "${CMAKE_COMMAND}" "-DQGC_NATIVE_PACKAGE_VERSION=${QGC_ARCH_PKGVER}" -P
+            "${CMAKE_SOURCE_DIR}/cmake/install/ValidatePackageVersion.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E env "PKGDEST=${CMAKE_BINARY_DIR}" "BUILDDIR=${_qgc_arch_dir}" makepkg -f --noconfirm
+            --nodeps --skipinteg
     WORKING_DIRECTORY "${_qgc_arch_dir}"
     VERBATIM
-    COMMENT "QGC: building Arch package via makepkg (smoke artifact)"
+    COMMENT "QGC: building Arch package via makepkg"
 )

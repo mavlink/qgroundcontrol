@@ -1,7 +1,7 @@
 {
   "inputs": [
     {
-      "description": "Test class name (e.g., FactSystemTest)",
+      "description": "CTest test name or regular expression (e.g., FactSystemTest)",
       "id": "testClass",
       "type": "promptString"
     }
@@ -9,41 +9,39 @@
   "tasks": [
     {
       "args": [
-        "-B",
-        "build",
-        "-G",
-        "Ninja",
-        "-DCMAKE_BUILD_TYPE=Debug",
-        "-DQGC_BUILD_TESTING=ON"
+        "configure"
       ],
-      "command": "qt-cmake",
+      "command": "just",
       "group": "build",
       "label": "CMake: Configure (Debug)",
+      "options": {
+        "env": {
+          "BUILD_TYPE": "Debug"
+        }
+      },
       "problemMatcher": [],
       "type": "shell"
     },
     {
       "args": [
-        "-B",
-        "build",
-        "-G",
-        "Ninja",
-        "-DCMAKE_BUILD_TYPE=Release",
-        "-DQGC_BUILD_TESTING=OFF"
+        "configure"
       ],
-      "command": "qt-cmake",
+      "command": "just",
       "group": "build",
       "label": "CMake: Configure (Release)",
+      "options": {
+        "env": {
+          "BUILD_TYPE": "Release"
+        }
+      },
       "problemMatcher": [],
       "type": "shell"
     },
     {
       "args": [
-        "--build",
-        "build",
-        "--parallel"
+        "build"
       ],
-      "command": "cmake",
+      "command": "just",
       "group": {
         "isDefault": true,
         "kind": "build"
@@ -54,12 +52,9 @@
     },
     {
       "args": [
-        "--build",
-        "build",
-        "--target",
         "clean"
       ],
-      "command": "cmake",
+      "command": "just",
       "group": "build",
       "label": "CMake: Clean",
       "problemMatcher": [],
@@ -67,17 +62,15 @@
     },
     {
       "args": [
-        "--test-dir",
-        "build",
-        "--output-on-failure"
+        "test"
       ],
-      "command": "ctest",
+      "command": "just",
       "dependsOn": "CMake: Build",
       "group": {
         "isDefault": true,
         "kind": "test"
       },
-      "label": "Run Unit Tests",
+      "label": "Run Tests",
       "problemMatcher": [],
       "type": "shell"
     },
@@ -98,11 +91,9 @@
     },
     {
       "args": [
-        "./tools/analyze.py",
-        "--tool",
-        "clang-format"
+        "format"
       ],
-      "command": "python3",
+      "command": "just",
       "group": "none",
       "label": "Format: Check Changed Files",
       "problemMatcher": [],
@@ -110,12 +101,9 @@
     },
     {
       "args": [
-        "./tools/analyze.py",
-        "--tool",
-        "clang-format",
-        "--fix"
+        "format-fix"
       ],
-      "command": "python3",
+      "command": "just",
       "group": "none",
       "label": "Format: Fix Changed Files",
       "problemMatcher": [],
@@ -123,9 +111,9 @@
     },
     {
       "args": [
-        "./tools/analyze.py"
+        "analyze"
       ],
-      "command": "python3",
+      "command": "just",
       "group": "none",
       "label": "Static Analysis",
       "problemMatcher": "$gcc",
@@ -133,10 +121,9 @@
     },
     {
       "args": [
-        "run",
-        "--all-files"
+        "lint"
       ],
-      "command": "pre-commit",
+      "command": "just",
       "group": "none",
       "label": "Pre-commit: Run All",
       "problemMatcher": [],

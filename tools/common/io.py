@@ -7,6 +7,7 @@ Centralizes the encoding and atomic-write patterns that get repeated in
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import json
 import os
 import tempfile
@@ -14,14 +15,19 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from typing import Literal
 
 __all__ = [
     "atomic_write",
     "chdir",
+    "extract_tar_data",
+    "extract_zip_safe",
     "read_json",
     "read_toml",
     "require_tar_data_filter",
+    "sha256_file",
     "write_json",
+    "write_text_if_changed",
 ]
 
 
@@ -51,6 +57,41 @@ def require_tar_data_filter() -> None:
             "(Python 3.10.12+, 3.11.4+, or 3.12+). Update Python "
             "(Ubuntu 22.04 ships 3.10.12+) to extract this archive."
         )
+
+
+def extract_tar_data(
+    archive: Path,
+    destination: Path,
+    *,
+    mode: Literal["r", "r:*", "r:gz", "r:bz2", "r:xz"] = "r:*",
+) -> None:
+    """Extract a tar archive using Python's path-safe PEP 706 data filter."""
+    import tarfile
+
+    require_tar_data_filter()
+    with tarfile.open(archive, mode) as tar:
+        tar.extractall(destination, filter="data")
+
+
+def extract_zip_safe(archive: Path, destination: Path) -> None:
+    """Extract a zip archive, rejecting members that resolve outside *destination*."""
+    import zipfile
+
+    dest = destination.resolve()
+    with zipfile.ZipFile(archive) as zf:
+        for name in zf.namelist():
+            if not (dest / name).resolve().is_relative_to(dest):
+                raise ValueError(f"Unsafe zip member path: {name!r}")
+        zf.extractall(dest)
+
+
+def sha256_file(path: Path, *, chunk_size: int = 1024 * 1024) -> str:
+    """Return the SHA-256 digest of *path* without loading it all into memory."""
+    digest = hashlib.sha256()
+    with path.open("rb") as fh:
+        while chunk := fh.read(chunk_size):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def read_json(path: Path) -> Any:
@@ -103,3 +144,14 @@ def atomic_write(path: Path, content: str, *, encoding: str = "utf-8") -> None:
         with contextlib.suppress(FileNotFoundError):
             os.unlink(tmp_name)
         raise
+
+
+def write_text_if_changed(path: Path, content: str, *, encoding: str = "utf-8") -> bool:
+    """Atomically write *content* when it differs; return whether the file changed."""
+    try:
+        if path.read_text(encoding=encoding) == content:
+            return False
+    except FileNotFoundError:
+        pass
+    atomic_write(path, content, encoding=encoding)
+    return True

@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Tests for download_artifacts.py."""
+"""Contract tests for workflow artifact downloads."""
 
 from __future__ import annotations
 
@@ -8,286 +7,169 @@ from pathlib import Path
 from unittest.mock import patch
 
 import download_artifacts as mod
-from _helpers import completed
+from _helpers import completed, workflow_run
 
 
-def test_parse_args_defaults() -> None:
-    args = mod.parse_args(["--repo", "owner/repo", "--head-sha", "abc123"])
-    assert args.repo == "owner/repo"
-    assert args.head_sha == "abc123"
-    assert args.output_dir == Path("artifacts")
-    assert args.workflows == "Linux,Windows,MacOS,Android"
-    assert args.event == ""
-    assert args.artifact_prefixes == ""
-    assert args.artifact_metadata_out == ""
-
-
-def test_get_workflow_runs_filters_by_name_status_and_conclusion() -> None:
-    all_runs = [
-        {"id": 1, "name": "Linux", "status": "completed", "conclusion": "success"},
-        {"id": 2, "name": "Linux", "status": "in_progress", "conclusion": None},
-        {"id": 3, "name": "Windows", "status": "completed", "conclusion": "failure"},
-        {"id": 4, "name": "Other", "status": "completed", "conclusion": "success"},
+def _main_args(tmp_path: Path, *extra: str) -> list[str]:
+    return [
+        "--repo",
+        "owner/repo",
+        "--head-sha",
+        "abc",
+        "--output-dir",
+        str(tmp_path),
+        "--workflows",
+        "Linux",
+        "--artifact-prefixes",
+        "coverage-report",
+        *extra,
     ]
 
-    with patch.object(mod, "list_workflow_runs_for_sha", return_value=all_runs):
-        runs = mod.get_workflow_runs("owner/repo", "abc", ["Linux", "Windows"])
 
-    assert len(runs) == 1
-    assert runs[0]["id"] == 1
-    assert runs[0]["name"] == "Linux"
-
-
-def test_get_workflow_runs_keeps_latest_successful_run_per_workflow() -> None:
-    all_runs = [
-        {
-            "id": 10,
-            "name": "Linux",
-            "status": "completed",
-            "conclusion": "success",
-            "created_at": "2026-01-01T00:00:00Z",
-        },
-        {
-            "id": 11,
-            "name": "Linux",
-            "status": "completed",
-            "conclusion": "success",
-            "created_at": "2026-01-02T00:00:00Z",
-        },
-        {
-            "id": 20,
-            "name": "Windows",
-            "status": "completed",
-            "conclusion": "success",
-            "created_at": "2026-01-01T00:00:00Z",
-        },
+def test_workflow_run_selection_filters_and_keeps_latest() -> None:
+    runs = [
+        workflow_run("Linux", 10),
+        workflow_run("Linux", 11, created_at="2026-02-25T00:00:00Z"),
+        workflow_run("Windows", 20),
+        workflow_run("Windows", 21, conclusion="failure"),
+        workflow_run("Other", 30, event="push"),
     ]
-
-    with patch.object(mod, "list_workflow_runs_for_sha", return_value=all_runs):
-        runs = mod.get_workflow_runs("owner/repo", "abc", ["Linux", "Windows"])
-
-    by_name = {run["name"]: run["id"] for run in runs}
-    assert by_name["Linux"] == 11
-    assert by_name["Windows"] == 20
+    selected = mod.select_latest_successful_runs(runs, ["Linux", "Windows"], event="pull_request")
+    assert {run["name"]: run["id"] for run in selected} == {"Linux": 11, "Windows": 20}
 
 
-def test_get_workflow_runs_filters_by_event() -> None:
-    all_runs = [
-        {"id": 10, "name": "Linux", "status": "completed", "conclusion": "success", "event": "push"},
-        {"id": 11, "name": "Linux", "status": "completed", "conclusion": "success", "event": "pull_request"},
-    ]
-
-    with patch.object(mod, "list_workflow_runs_for_sha", return_value=all_runs):
-        runs = mod.get_workflow_runs("owner/repo", "abc", ["Linux"], event="pull_request")
-
-    assert [run["id"] for run in runs] == [11]
-
-
-def test_download_run_artifacts_failure_returns_false() -> None:
-    with patch.object(mod, "gh", return_value=completed(stderr="bad", returncode=1)):
-        ok = mod.download_run_artifacts(123, "owner/repo", Path("artifacts"))
-    assert ok is False
-
-
-def test_download_run_artifacts_passes_selected_names() -> None:
-    with patch.object(mod, "gh", return_value=completed()) as mock_gh:
-        ok = mod.download_run_artifacts(
+def test_download_command_passes_selected_names_and_reports_failure() -> None:
+    with patch.object(mod, "gh", return_value=completed()) as gh:
+        assert mod.download_run_artifacts(
             123,
             "owner/repo",
             Path("artifacts"),
-            artifact_names=["coverage-report", "test-results-linux_gcc_64"],
+            artifact_names=["coverage-report", "test-results-linux"],
         )
-    assert ok is True
-    args = mock_gh.call_args.args
-    assert args[:3] == ("run", "download", "123")
-    assert "-n" in args
-    assert "coverage-report" in args
-    assert "test-results-linux_gcc_64" in args
+    assert gh.call_args.args[:3] == ("run", "download", "123")
+    assert "coverage-report" in gh.call_args.args
+    assert "test-results-linux" in gh.call_args.args
+
+    with patch.object(mod, "gh", return_value=completed(stderr="bad", returncode=1)):
+        assert not mod.download_run_artifacts(123, "owner/repo", Path("artifacts"))
 
 
-def test_select_artifact_names_for_run_filters_by_prefix() -> None:
+def test_artifact_filters_match_prefixes_and_product_extensions(tmp_path: Path) -> None:
     artifacts = [
         {"name": "coverage-report"},
-        {"name": "test-results-linux_gcc_64"},
-        {"name": "emulator-diagnostics-123"},
+        {"name": "test-results-linux"},
         {"name": "QGroundControl-x86_64.AppImage"},
     ]
-    with patch.object(mod, "list_run_artifacts", return_value=artifacts):
-        names = mod.select_artifact_names_for_run(
-            "owner/repo",
-            42,
-            ["coverage-report", "test-results-"],
-        )
-    assert names == ["coverage-report", "test-results-linux_gcc_64"]
+    assert mod.select_artifact_names(artifacts, ["coverage-report", "test-results-"]) == [
+        "coverage-report",
+        "test-results-linux",
+    ]
 
-
-def test_list_downloaded_artifacts_filters_extensions(tmp_path: Path) -> None:
-    (tmp_path / "a.apk").write_bytes(b"x")
-    (tmp_path / "b.txt").write_bytes(b"x")
+    (tmp_path / "app.apk").write_bytes(b"x")
+    (tmp_path / "notes.txt").write_bytes(b"x")
     nested = tmp_path / "nested"
     nested.mkdir()
-    (nested / "c.AppImage").write_bytes(b"x")
-
-    files = mod.list_downloaded_artifacts(tmp_path)
-    names = sorted(p.name for p in files)
-    assert names == ["a.apk", "c.AppImage"]
-
-
-def test_main_returns_zero_when_no_runs_found() -> None:
-    with patch.object(mod, "list_workflow_runs_for_sha", return_value=[]), patch.object(
-        mod, "select_latest_successful_runs", return_value=[],
-    ):
-        rc = mod.main(["--repo", "owner/repo", "--head-sha", "abc123"])
-    assert rc == 0
-
-
-def test_main_returns_one_when_downloads_fail_and_no_files(tmp_path: Path) -> None:
-    runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
-    with patch.object(mod, "list_workflow_runs_for_sha", return_value=runs), patch.object(
-        mod, "select_latest_successful_runs", return_value=runs,
-    ), patch.object(
-        mod, "download_run_artifacts", return_value=False,
-    ), patch.object(mod, "list_downloaded_artifacts", return_value=[]):
-        rc = mod.main(
-            [
-                "--repo", "owner/repo",
-                "--head-sha", "abc123",
-                "--output-dir", str(tmp_path),
-                "--workflows", "Linux",
-            ],
-        )
-    assert rc == 1
-
-
-def test_main_returns_two_when_no_artifacts_match_prefixes(tmp_path: Path) -> None:
-    runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
-    with patch.object(mod, "list_workflow_runs_for_sha", return_value=runs), patch.object(
-        mod, "select_latest_successful_runs", return_value=runs,
-    ), patch.object(
-        mod, "list_run_artifacts", return_value=[{"name": "unrelated-artifact", "size_in_bytes": 1}],
-    ), patch.object(
-        mod, "download_run_artifacts", return_value=True,
-    ), patch.object(
-        mod, "list_downloaded_files", return_value=[],
-    ):
-        rc = mod.main(
-            [
-                "--repo", "owner/repo",
-                "--head-sha", "abc123",
-                "--output-dir", str(tmp_path),
-                "--workflows", "Linux",
-                "--artifact-prefixes", "coverage-report",
-            ],
-        )
-    assert rc == 2
-
-
-def test_main_returns_one_on_invalid_runs_file(tmp_path: Path) -> None:
-    runs_file = tmp_path / "runs.json"
-    runs_file.write_text("{not-json", encoding="utf-8")
-
-    rc = mod.main(
-        [
-            "--repo", "owner/repo",
-            "--head-sha", "abc123",
-            "--runs-file", str(runs_file),
-        ],
-    )
-    assert rc == 1
-
-
-def test_main_returns_one_on_non_list_runs_file(tmp_path: Path) -> None:
-    runs_file = tmp_path / "runs.json"
-    runs_file.write_text(json.dumps({"runs": []}), encoding="utf-8")
-
-    rc = mod.main(
-        [
-            "--repo", "owner/repo",
-            "--head-sha", "abc123",
-            "--runs-file", str(runs_file),
-        ],
-    )
-    assert rc == 1
-
-
-def test_main_falls_back_to_older_successful_run_with_matching_artifacts(tmp_path: Path) -> None:
-    runs = [
-        {
-            "id": 101,
-            "name": "Linux",
-            "status": "completed",
-            "conclusion": "success",
-            "created_at": "2026-02-25T10:00:00Z",
-        },
-        {
-            "id": 100,
-            "name": "Linux",
-            "status": "completed",
-            "conclusion": "success",
-            "created_at": "2026-02-25T09:00:00Z",
-        },
+    (nested / "app.AppImage").write_bytes(b"x")
+    assert sorted(path.name for path in mod.list_downloaded_artifacts(tmp_path)) == [
+        "app.AppImage",
+        "app.apk",
     ]
 
-    def _artifacts_for_run(repo: str, run_id: int) -> list[dict[str, object]]:
-        if run_id == 101:
-            return [{"name": "unrelated-artifact", "size_in_bytes": 1}]
-        if run_id == 100:
-            return [{"name": "coverage-report", "size_in_bytes": 42}]
-        return []
+
+def test_main_reports_empty_and_failed_download_states(tmp_path: Path) -> None:
+    for runs, artifacts, downloads, expected in (
+        ([], [], True, 0),
+        ([workflow_run("Linux", 42)], [{"name": "coverage-report"}], False, 1),
+        ([workflow_run("Linux", 42)], [{"name": "unrelated"}], True, 2),
+    ):
+        with (
+            patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+            patch.object(mod, "select_latest_successful_runs", return_value=runs),
+            patch.object(mod, "list_run_artifacts", return_value=artifacts),
+            patch.object(mod, "download_run_artifacts", return_value=downloads),
+            patch.object(mod, "list_downloaded_files", return_value=[]),
+            patch.object(mod, "list_downloaded_artifacts", return_value=[]),
+        ):
+            assert mod.main(_main_args(tmp_path)) == expected
+
+
+def test_main_fails_when_only_some_workflow_downloads_succeed(tmp_path: Path) -> None:
+    runs = [workflow_run("Linux", 41), workflow_run("Windows", 42)]
+    downloaded = tmp_path / "QGroundControl.AppImage"
+    downloaded.write_text("partial download")
+    outcomes = iter([True, False])
+
+    def download(*_args, **_kwargs) -> bool:
+        return next(outcomes)
+
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "select_latest_successful_runs", return_value=runs),
+        patch.object(mod, "download_run_artifacts", side_effect=download),
+        patch.object(mod, "list_downloaded_artifacts", return_value=[downloaded]),
+    ):
+        args = _main_args(tmp_path)
+        args[args.index("Linux")] = "Linux,Windows"
+        args[args.index("coverage-report") - 1 :] = []
+        assert mod.main(args) == 1
+
+
+def test_main_falls_back_to_older_run_with_matching_artifacts(tmp_path: Path) -> None:
+    runs = [
+        workflow_run("Linux", 101, created_at="2026-02-25T10:00:00Z"),
+        workflow_run("Linux", 100, created_at="2026-02-25T09:00:00Z"),
+    ]
+
+    def artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
+        del repo
+        return [{"name": "unrelated" if run_id == 101 else "coverage-report", "size_in_bytes": 1}]
 
     downloaded = tmp_path / "coverage.xml"
-    downloaded.write_text("<xml/>", encoding="utf-8")
+    downloaded.write_text("<xml/>")
 
-    with patch.object(mod, "list_workflow_runs_for_sha", return_value=runs), patch.object(
-        mod, "list_run_artifacts", side_effect=_artifacts_for_run,
-    ), patch.object(
-        mod, "download_run_artifacts", return_value=True,
-    ) as download_mock, patch.object(
-        mod, "list_downloaded_files", return_value=[downloaded],
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", side_effect=artifacts),
+        patch.object(mod, "download_run_artifacts", return_value=True) as download,
+        patch.object(mod, "list_downloaded_files", return_value=[downloaded]),
     ):
-        rc = mod.main(
-            [
-                "--repo", "owner/repo",
-                "--head-sha", "abc123",
-                "--output-dir", str(tmp_path),
-                "--workflows", "Linux",
-                "--artifact-prefixes", "coverage-report",
-            ],
-        )
-
-    assert rc == 0
-    assert download_mock.call_args.args[0] == 100
+        assert mod.main(_main_args(tmp_path)) == 0
+    assert download.call_args.args[0] == 100
 
 
-def test_main_writes_artifact_metadata_file(tmp_path: Path) -> None:
-    runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
-    artifacts = [
-        {"name": "coverage-report", "size_in_bytes": 100},
-        {"name": "QGroundControl-x86_64.AppImage", "size_in_bytes": 200},
-    ]
-    metadata_path = tmp_path / "artifact-metadata.json"
+def test_main_writes_selected_artifact_metadata(tmp_path: Path) -> None:
+    metadata = tmp_path / "metadata.json"
     downloaded = tmp_path / "dummy.txt"
-    downloaded.write_text("x", encoding="utf-8")
-
-    with patch.object(mod, "list_workflow_runs_for_sha", return_value=runs), patch.object(
-        mod, "select_latest_successful_runs", return_value=runs,
-    ), patch.object(
-        mod, "list_run_artifacts", return_value=artifacts,
-    ), patch.object(
-        mod, "download_run_artifacts", return_value=True,
-    ), patch.object(
-        mod, "list_downloaded_files", return_value=[downloaded],
-    ):
-        rc = mod.main(
-            [
-                "--repo", "owner/repo",
-                "--head-sha", "abc123",
-                "--output-dir", str(tmp_path),
-                "--workflows", "Linux",
-                "--artifact-prefixes", "coverage-report",
-                "--artifact-metadata-out", str(metadata_path),
+    downloaded.write_text("x")
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=[workflow_run("Linux", 42)]),
+        patch.object(
+            mod, "select_latest_successful_runs", return_value=[workflow_run("Linux", 42)]
+        ),
+        patch.object(
+            mod,
+            "list_run_artifacts",
+            return_value=[
+                {"name": "coverage-report", "size_in_bytes": 100},
+                {"name": "QGroundControl.AppImage", "size_in_bytes": 200},
             ],
-        )
+        ),
+        patch.object(mod, "download_run_artifacts", return_value=True),
+        patch.object(mod, "list_downloaded_files", return_value=[downloaded]),
+    ):
+        assert mod.main(_main_args(tmp_path, "--artifact-metadata-out", str(metadata))) == 0
+    assert json.loads(metadata.read_text()) == {
+        "runs": {
+            "42": [
+                {"name": "coverage-report", "size_in_bytes": 100},
+                {"name": "QGroundControl.AppImage", "size_in_bytes": 200},
+            ]
+        }
+    }
 
-    assert rc == 0
-    assert metadata_path.exists()
+
+def test_main_rejects_invalid_runs_file(tmp_path: Path) -> None:
+    runs_file = tmp_path / "runs.json"
+    for payload in ("{invalid", json.dumps({"runs": []})):
+        runs_file.write_text(payload)
+        assert mod.main(_main_args(tmp_path, "--runs-file", str(runs_file))) == 1

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Plan Docker build matrix entries for the Docker workflow.
 
 The variant set (base images, build args, artifact patterns) is defined once in
@@ -21,12 +20,11 @@ ensure_tools_dir(__file__)
 
 from common.gh_actions import parse_bool, write_github_output
 
-VARIANTS_JSON = Path(__file__).resolve().parents[2] / "deploy" / "docker" / "variants.json"
+_docker_dir = Path(__file__).resolve().parents[2] / "deploy" / "docker"
+if str(_docker_dir) not in sys.path:
+    sys.path.insert(0, str(_docker_dir))
 
-
-def load_variants() -> list[dict[str, Any]]:
-    """Load the shared Docker variant definitions."""
-    return json.loads(VARIANTS_JSON.read_text())["variants"]
+from _variants import load_variants  # pyright: ignore[reportMissingImports]
 
 
 def build_args_str(build_args: dict[str, str]) -> str:
@@ -49,6 +47,7 @@ def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> 
     include: list[dict[str, Any]] = [
         {
             "platform": v["platform"],
+            "security_category": v["security_category"],
             "target": v["target"],
             "variant": v["ci_variant"],
             "build_args": build_args_str(v["build_args"]),

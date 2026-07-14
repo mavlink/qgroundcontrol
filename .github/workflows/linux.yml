@@ -17,11 +17,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
-env:
-  # build-mode:manual can't produce overlay DBs (those need build-mode:none); disable the
-  # overlay attempt so CodeQL doesn't log the "falling back to a full database" message.
-  CODEQL_ACTION_OVERLAY_ANALYSIS: "false"
-
 permissions:
   contents: read
   actions: read
@@ -39,13 +34,10 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
 
-    # security-events: write is scoped here (CodeQL runs only in this job),
-    # not at workflow level — the debug/changes jobs cannot upload SARIF.
     permissions:
       contents: read
       id-token: write
       attestations: write
-      security-events: write
       actions: read
       checks: write
 
@@ -54,27 +46,34 @@ jobs:
       matrix:
         include:
           - arch: linux_gcc_arm64
-            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-arm64-builder', github.run_id) || 'ubuntu-24.04-arm' }}
+            runs_on: >-
+              ${{
+                github.repository_owner == 'mavlink' &&
+                (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+                format('runs-on={0}/runner=linux-arm64-builder', github.run_id) ||
+                'ubuntu-24.04-arm'
+              }}
             package: QGroundControl-aarch64
             host: linux_arm64
+            preset: Linux-arm64
 
           - arch: linux_gcc_64
-            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) || 'ubuntu-24.04' }}
+            runs_on: >-
+              ${{
+                github.repository_owner == 'mavlink' &&
+                (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+                format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) ||
+                'ubuntu-24.04'
+              }}
             package: QGroundControl-x86_64
             host: linux
+            preset: Linux
 
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
-        uses: runs-on/action@v2
-        with:
-          metrics: cpu,network,memory,disk,io
-          show_costs: summary
-
       # harden-runner is x86_64 Linux only — skip on the ubuntu-24.04-arm matrix entry.
       # macOS/Windows runners no-op silently, so other workflows don't need the guard.
       - name: Harden Runner
@@ -82,6 +81,13 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
 
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -99,22 +105,11 @@ jobs:
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Initialize CodeQL
-        if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')) && runner.arch != 'ARM64'
-        uses: github/codeql-action/init@v4
-        with:
-          languages: c-cpp
-          # c-cpp can't use overlay DBs (those require build-mode: none, interpreted-only); declare manual to match the cmake-build step below and silence the "undefined build-mode" fallback warning.
-          build-mode: manual
-          config-file: ./.github/codeql/codeql-config.yml
-          trap-caching: false
-          dependency-caching: false
-
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
+          preset: ${{ matrix.preset }}
           build-dir: ${{ runner.temp }}/build
-          build-type: Release
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -123,18 +118,6 @@ jobs:
           build-type: Release
           reviewdog: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
           reviewdog-token: ${{ github.token }}
-
-      - name: Perform CodeQL Analysis
-        id: codeql
-        if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')) && runner.arch != 'ARM64'
-        continue-on-error: true
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:c-cpp"
-
-      - name: Annotate CodeQL failure
-        if: steps.codeql.outcome == 'failure'
-        run: echo "::warning::CodeQL analysis failed — see step log for details"
 
       - name: Verify Executable
         uses: ./.github/actions/verify-executable
@@ -174,6 +157,8 @@ jobs:
         with:
           artifact-name: ${{ matrix.package }}.AppImage
           package-name: ${{ matrix.package }}
+          additional-artifact-paths: >-
+            ${{ matrix.arch == 'linux_gcc_64' && format('{0}/build/appimagelint-report.json', runner.temp) || '' }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -187,6 +172,11 @@ jobs:
     outputs:
       include: ${{ steps.build.outputs.include }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@v7
         with:
           sparse-checkout: |
@@ -209,13 +199,19 @@ jobs:
     name: ${{ matrix.job_name }}
     needs: [changes, debug-matrix]
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-tester', github.run_id) || 'ubuntu-24.04' }}
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
+        'ubuntu-24.04'
+      }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
 
-    # checks: write scoped here: only this job reports test results (dorny/test-reporter).
     permissions:
       contents: read
       checks: write
+      id-token: write
 
     strategy:
       fail-fast: false
@@ -227,17 +223,17 @@ jobs:
         shell: bash
 
     steps:
-      - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
-        uses: runs-on/action@v2
-        with:
-          metrics: cpu,network,memory,disk,io
-          show_costs: summary
-
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
 
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -255,20 +251,15 @@ jobs:
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      - name: Ensure coverage tools are available
+      - name: Install locked coverage tools
         if: matrix.mode == 'coverage'
-        run: |
-          if ! command -v gcovr >/dev/null 2>&1; then
-            pipx install gcovr
-          fi
+        run: uv run --no-project python tools/setup/install_python.py scripts,coverage
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
+          preset: ${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-debug' }}
           build-dir: ${{ runner.temp }}/build
-          build-type: Debug
-          testing: 'true'
-          coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
           extra-args: ${{ matrix.configure_extra }}
 
       - name: Build
@@ -338,6 +329,8 @@ jobs:
           output-file: test-output-linux-${{ matrix.mode }}-unit.txt
           artifact-name: test-results-linux-${{ matrix.mode }}-unit
           retention-days: 7
+          upload-codecov: ${{ matrix.mode == 'coverage' }}
+          codecov-flags: linux-unit
 
       - name: Report Test Results (integration)
         if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
@@ -349,6 +342,8 @@ jobs:
           output-file: test-output-linux-${{ matrix.mode }}-integration.txt
           artifact-name: test-results-linux-${{ matrix.mode }}-integration
           retention-days: 7
+          upload-codecov: ${{ matrix.mode == 'coverage' }}
+          codecov-flags: linux-integration
 
       - name: Upload Test Artifacts
         if: always() && !cancelled() && (steps.unit_tests.conclusion != 'skipped' || steps.integration_tests.conclusion != 'skipped')
@@ -378,7 +373,6 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           mode: report-only
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Verify Coverage Thresholds
         if: matrix.mode == 'coverage'

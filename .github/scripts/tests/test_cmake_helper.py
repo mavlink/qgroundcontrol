@@ -1,126 +1,188 @@
-#!/usr/bin/env python3
-"""Tests for cmake_helper.py."""
+"""Contracts for CMake CI argument and cache helpers."""
 
 from __future__ import annotations
 
+import sys
+from subprocess import CompletedProcess
 from typing import TYPE_CHECKING
-from unittest.mock import patch
 
 import pytest
-from cmake_helper import detect_jobs, main, read_cache_var
+from cmake_helper import detect_jobs, main, split_extra_args
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-class TestDetectJobs:
-    def test_explicit_value(self) -> None:
-        assert detect_jobs("4") == 4
-
-    def test_explicit_value_large(self) -> None:
-        assert detect_jobs("16") == 16
-
-    def test_auto_uses_cpu_count(self) -> None:
-        with patch("os.cpu_count", return_value=8):
-            assert detect_jobs("auto") == 8
-
-    def test_auto_fallback_none(self) -> None:
-        with patch("os.cpu_count", return_value=None):
-            assert detect_jobs("auto") == 2
-
-    def test_invalid_exits(self) -> None:
-        with pytest.raises(SystemExit):
-            detect_jobs("abc")
-
-    def test_zero_exits(self) -> None:
-        with pytest.raises(SystemExit):
-            detect_jobs("0")
-
-    def test_negative_exits(self) -> None:
-        with pytest.raises(SystemExit):
-            detect_jobs("-1")
-
-
 _SAMPLE_CACHE = """\
-# This is the CMakeCache file.
-//Build type
 CMAKE_BUILD_TYPE:STRING=Release
 QGC_COVERAGE_LINE_THRESHOLD:STRING=42
-QGC_COVERAGE_BRANCH_THRESHOLD:STRING=23
 QGC_ENABLE_GST:BOOL=ON
-//Comment
 """
 
 
-def _write_cache(tmp_path: Path) -> Path:
-    cache = tmp_path / "CMakeCache.txt"
+def _write_cache(directory: Path) -> Path:
+    cache = directory / "CMakeCache.txt"
     cache.write_text(_SAMPLE_CACHE)
     return cache
 
 
-class TestReadCacheVar:
-    def test_returns_string_value(self, tmp_path: Path) -> None:
-        cache = _write_cache(tmp_path)
-        assert read_cache_var(str(cache), "QGC_COVERAGE_LINE_THRESHOLD") == "42"
-
-    def test_returns_bool_value(self, tmp_path: Path) -> None:
-        cache = _write_cache(tmp_path)
-        assert read_cache_var(str(cache), "QGC_ENABLE_GST") == "ON"
-
-    def test_missing_var_returns_none(self, tmp_path: Path) -> None:
-        cache = _write_cache(tmp_path)
-        assert read_cache_var(str(cache), "ABSENT_VAR") is None
-
-    def test_missing_file_returns_none(self, tmp_path: Path) -> None:
-        assert read_cache_var(str(tmp_path / "nope.txt"), "X") is None
-
-    def test_partial_name_does_not_match(self, tmp_path: Path) -> None:
-        cache = _write_cache(tmp_path)
-        assert read_cache_var(str(cache), "QGC_COVERAGE_LINE") is None
+def test_detect_jobs_accepts_positive_values_and_auto(monkeypatch: pytest.MonkeyPatch) -> None:
+    for value, expected in (("4", 4), ("16", 16)):
+        assert detect_jobs(value) == expected
+    monkeypatch.setattr("os.cpu_count", lambda: 8)
+    assert detect_jobs("auto") == 8
+    monkeypatch.setattr("os.cpu_count", lambda: None)
+    assert detect_jobs("auto") == 2
+    for value in ("abc", "0", "-1"):
+        with pytest.raises(SystemExit):
+            detect_jobs(value)
 
 
-class TestCmdCacheVar:
-    def test_main_prints_and_writes_output(
-        self, tmp_path: Path, monkeypatch, capsys, gh_output: Path
-    ) -> None:
-        _write_cache(tmp_path)
-        monkeypatch.setattr(
-            "sys.argv",
-            ["prog", "cache-var", "--build-dir", str(tmp_path), "--name", "CMAKE_BUILD_TYPE"],
-        )
+def test_cache_var_command_outputs_value_default_or_required_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    gh_output: Path,
+) -> None:
+    _write_cache(tmp_path)
+    cases = [
+        (["--name", "CMAKE_BUILD_TYPE"], "Release", "cmake_build_type=Release"),
+        (
+            ["--name", "ABSENT", "--default", "fallback", "--output-key", "value"],
+            "fallback",
+            "value=fallback",
+        ),
+    ]
+    for args, stdout, output in cases:
+        gh_output.write_text("")
+        monkeypatch.setattr(sys, "argv", ["prog", "cache-var", "--build-dir", str(tmp_path), *args])
         main()
-        assert capsys.readouterr().out.strip() == "Release"
-        assert "cmake_build_type=Release" in gh_output.read_text()
+        assert capsys.readouterr().out.strip() == stdout
+        assert output in gh_output.read_text()
 
-    def test_main_uses_default_when_missing(
-        self, tmp_path: Path, monkeypatch, capsys, gh_output: Path
-    ) -> None:
-        _write_cache(tmp_path)
-        monkeypatch.setattr(
-            "sys.argv",
-            [
-                "prog",
-                "cache-var",
-                "--build-dir",
-                str(tmp_path),
-                "--name",
-                "ABSENT",
-                "--default",
-                "fallback",
-                "--output-key",
-                "value",
-            ],
-        )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["prog", "cache-var", "--build-dir", str(tmp_path), "--name", "ABSENT", "--required"],
+    )
+    with pytest.raises(SystemExit) as error:
         main()
-        assert capsys.readouterr().out.strip() == "fallback"
-        assert "value=fallback" in gh_output.read_text()
+    assert error.value.code == 1
 
-    def test_main_required_missing_exits(self, tmp_path: Path, monkeypatch) -> None:
-        _write_cache(tmp_path)
-        monkeypatch.setattr(
-            "sys.argv",
-            ["prog", "cache-var", "--build-dir", str(tmp_path), "--name", "ABSENT", "--required"],
-        )
-        with pytest.raises(SystemExit) as exc:
-            main()
-        assert exc.value.code == 1
+
+def test_configure_preserves_quoted_extra_arguments(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands: list[list[str]] = []
+
+    def run(command: list[str], **_kwargs) -> CompletedProcess[str]:
+        commands.append(command)
+        return CompletedProcess(command, 0)
+
+    monkeypatch.setattr("cmake_helper.subprocess.run", run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "prog",
+            "configure",
+            "--source-dir",
+            ".",
+            "--build-dir",
+            "build",
+            "--extra-args",
+            '-DNAME="hello world" -DOTHER=ON',
+        ],
+    )
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 0
+    separator = commands[0].index("--")
+    assert commands[0][separator + 1 :] == ["-DNAME=hello world", "-DOTHER=ON"]
+
+
+def test_configure_uses_preset_with_only_ci_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
+    commands: list[list[str]] = []
+
+    def run(command: list[str], **_kwargs) -> CompletedProcess[str]:
+        commands.append(command)
+        return CompletedProcess(command, 0)
+
+    monkeypatch.setattr("cmake_helper.subprocess.run", run)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "prog",
+            "configure",
+            "--source-dir",
+            "/workspace",
+            "--build-dir",
+            "/tmp/build",
+            "--preset",
+            "Linux-debug",
+            "--stable",
+            "--extra-args",
+            '-DNAME="hello world" -DOTHER=ON',
+        ],
+    )
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 0
+    assert commands == [
+        [
+            "cmake",
+            "--preset",
+            "Linux-debug",
+            "-S",
+            "/workspace",
+            "-B",
+            "/tmp/build",
+            "-DQGC_STABLE_BUILD=ON",
+            "-DNAME=hello world",
+            "-DOTHER=ON",
+        ]
+    ]
+
+
+def test_split_extra_args_preserves_windows_paths_and_quoted_values() -> None:
+    arguments = split_extra_args(
+        r'-DCMAKE_TOOLCHAIN_FILE=D:\a\Qt\qt.toolchain.cmake -DNAME="hello world"',
+        windows=True,
+    )
+    assert arguments == [
+        r"-DCMAKE_TOOLCHAIN_FILE=D:\a\Qt\qt.toolchain.cmake",
+        "-DNAME=hello world",
+    ]
+
+
+def test_ctest_sharding_omits_end_and_rejects_invalid_index(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    commands: list[list[str]] = []
+    monkeypatch.setattr(
+        "cmake_helper.run_tee",
+        lambda command, _output: commands.append(command) or 0,
+    )
+    monkeypatch.setattr("cmake_helper._maybe_wrap_xvfb", lambda command: command)
+
+    base = [
+        "prog",
+        "ctest",
+        "--junit-output",
+        "junit.xml",
+        "--ctest-output",
+        "ctest.txt",
+        "--jobs",
+        "2",
+        "--shard-count",
+        "3",
+    ]
+    monkeypatch.setattr(sys, "argv", [*base, "--shard-index", "1"])
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 0
+    assert commands[0][commands[0].index("-I") + 1] == "2,,3"
+
+    monkeypatch.setattr(sys, "argv", [*base, "--shard-index", "3"])
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 1

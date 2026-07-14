@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Install Qt SDK using aqtinstall with architecture resolution.
 
@@ -31,7 +30,7 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import pip_install
+from common.deps import pip_install
 from common.gh_actions import gh_error, gh_warning, write_github_output
 
 # aqtinstall creates directories that differ from the arch parameter.

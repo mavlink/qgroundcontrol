@@ -1,6 +1,12 @@
 include_guard(GLOBAL)
 
 function(qgc_parse_expected_hash _HASH_VALUE _OUT_ALGO _OUT_EXPECTED)
+    if(NOT ARGC EQUAL 3 OR NOT _OUT_ALGO MATCHES "^[A-Za-z_][A-Za-z0-9_]*$" OR
+       NOT _OUT_EXPECTED MATCHES "^[A-Za-z_][A-Za-z0-9_]*$"
+    )
+        message(FATAL_ERROR
+            "qgc_parse_expected_hash: expected HASH_VALUE OUT_ALGORITHM OUT_DIGEST")
+    endif()
     set(_valid MD5 SHA1 SHA224 SHA256 SHA384 SHA512 SHA3_224 SHA3_256 SHA3_384 SHA3_512)
     string(REGEX MATCH "^([A-Za-z0-9_]+)=(.+)$" _match "${_HASH_VALUE}")
     if(NOT _match)
@@ -15,9 +21,17 @@ function(qgc_parse_expected_hash _HASH_VALUE _OUT_ALGO _OUT_EXPECTED)
 endfunction()
 
 function(qgc_resilient_download)
-    cmake_parse_arguments(ARG "ALLOW_FAILURE"
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "ALLOW_FAILURE"
         "FILENAME;DESTINATION_DIR;RESULT_VAR;TIMEOUT;INACTIVITY_TIMEOUT;RETRIES;RETRY_BACKOFF;EXPECTED_HASH;LOG_TAG;FAILURE_HINT"
-        "URLS" ${ARGN})
+        "URLS")
+
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR
+            "qgc_resilient_download: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "qgc_resilient_download: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
 
     foreach(_required FILENAME DESTINATION_DIR RESULT_VAR)
         if(NOT ARG_${_required})
@@ -26,6 +40,12 @@ function(qgc_resilient_download)
     endforeach()
     if(NOT ARG_URLS)
         message(FATAL_ERROR "qgc_resilient_download: at least one URL is required")
+    endif()
+    if(IS_ABSOLUTE "${ARG_FILENAME}" OR ARG_FILENAME MATCHES "[/\\\\]" OR ARG_FILENAME MATCHES "^[.][.]?$")
+        message(FATAL_ERROR "qgc_resilient_download: FILENAME must be a basename")
+    endif()
+    if(NOT ARG_RESULT_VAR MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
+        message(FATAL_ERROR "qgc_resilient_download: RESULT_VAR must be a valid variable name")
     endif()
 
     if(NOT ARG_LOG_TAG)
@@ -52,15 +72,21 @@ function(qgc_resilient_download)
             set(ARG_RETRIES 3)
         endif()
     endif()
-    if(ARG_RETRIES LESS 1)
-        set(ARG_RETRIES 1)
-    endif()
     if(NOT DEFINED ARG_RETRY_BACKOFF)
         if(DEFINED QGC_DOWNLOAD_RETRY_BACKOFF)
             set(ARG_RETRY_BACKOFF ${QGC_DOWNLOAD_RETRY_BACKOFF})
         else()
             set(ARG_RETRY_BACKOFF 5)
         endif()
+    endif()
+
+    foreach(_positive_option IN ITEMS TIMEOUT INACTIVITY_TIMEOUT RETRIES)
+        if(NOT "${ARG_${_positive_option}}" MATCHES "^[1-9][0-9]*$")
+            message(FATAL_ERROR "qgc_resilient_download: ${_positive_option} must be a positive integer")
+        endif()
+    endforeach()
+    if(NOT ARG_RETRY_BACKOFF MATCHES "^[0-9]+$")
+        message(FATAL_ERROR "qgc_resilient_download: RETRY_BACKOFF must be a non-negative integer")
     endif()
 
     set(_progress_opt SHOW_PROGRESS)

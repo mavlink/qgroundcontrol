@@ -214,7 +214,7 @@ def generate_page_qml(
             section_cases.append({"idx": grp_idx, "expr": " && ".join(vis_parts)})
 
     group_blocks: list[str] = []
-    seen_object_names: dict[str, str] = {}  # objectName -> heading that produced it
+    seen_object_names: dict[str, str] = {}
     for grp_idx, grp in enumerate(page.groups):
         section_vis = f"(sectionFilter === -1 || sectionFilter === {grp_idx})"
         vis_parts = [section_vis]
@@ -232,8 +232,7 @@ def generate_page_qml(
             ))
             continue
 
-        # The sanitizer is lossy, so guard the objectName invariants at generation time:
-        # UI tests look groups up by objectName and would silently match the wrong one
+        # The sanitizer is lossy, so reject empty or duplicate object names.
         group_object_name = None
         if grp.heading:
             sanitized = _object_name(grp.heading)

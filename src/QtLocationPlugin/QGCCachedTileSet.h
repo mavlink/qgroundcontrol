@@ -81,7 +81,7 @@ public:
     int minZoom() const { return _minZoom; }
     int maxZoom() const { return _maxZoom; }
     const QDateTime &creationDate() const { return _creationDate; }
-    quint64 id() const { return _id; }
+    quint64 id() const { return _setId; }
     const QString &type() const { return _type; }
     bool complete() const { return (_defaultSet || (_totalTileCount <= _savedTileCount)); }
     bool defaultSet() const { return _defaultSet; }
@@ -111,7 +111,7 @@ public:
     void setMinZoom(int zoom) { _minZoom = zoom; }
     void setMaxZoom(int zoom) { _maxZoom = zoom; }
     void setCreationDate(const QDateTime &date) { _creationDate = date; }
-    void setId(quint64 id) { _id = id; }
+    void setId(quint64 id) { _setId = id; }
     void setType(const QString &type) { _type = type; }
     void setDefaultSet(bool def) { _defaultSet = def; }
     void setDeleting(bool del) { if (del != _deleting) { _deleting = del; emit deletingChanged(); } }
@@ -144,7 +144,7 @@ private:
     QString _name;
     QString _mapTypeStr;
     QString _type = QStringLiteral("Invalid");
-    quint64 _id = 0;
+    quint64 _setId = 0;
     double _topleftLat = 0.;
     double _topleftLon = 0.;
     double _bottomRightLat = 0.;

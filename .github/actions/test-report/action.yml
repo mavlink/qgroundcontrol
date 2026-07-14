@@ -23,6 +23,14 @@ inputs:
     description: Days to retain artifacts
     required: false
     default: "14"
+  upload-codecov:
+    description: Upload the JUnit report to Codecov Test Analytics
+    required: false
+    default: "false"
+  codecov-flags:
+    description: Codecov flags (comma-separated)
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -35,6 +43,18 @@ runs:
         path: ${{ inputs.build-dir }}/${{ inputs.junit-file }}
         reporter: java-junit
         fail-on-error: false
+
+    - name: Upload to Codecov Test Analytics
+      if: always() && inputs.upload-codecov == 'true'
+      uses: codecov/codecov-action@v7
+      with:
+        files: ${{ inputs.build-dir }}/${{ inputs.junit-file }}
+        report_type: test_results
+        disable_search: true
+        flags: ${{ inputs.codecov-flags }}
+        name: ${{ inputs.name }}
+        use_oidc: true
+        fail_ci_if_error: false
 
     - name: Upload Test Results
       if: always()

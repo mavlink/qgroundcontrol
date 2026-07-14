@@ -5,7 +5,6 @@ Provides colored terminal output with support for:
 - TTY detection (auto-disable colors in non-interactive mode)
 - NO_COLOR environment variable (https://no-color.org/)
 - Both class-based Logger and module-level convenience functions
-- Debug mode via DEBUG environment variable
 
 Usage:
     # Module-level functions (simple)
@@ -31,8 +30,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TextIO
 
-from .env import is_debug, is_verbose
-
 
 class Color(str, Enum):
     """ANSI color codes for terminal output."""
@@ -43,10 +40,6 @@ class Color(str, Enum):
     GREEN = "\033[0;32m"
     YELLOW = "\033[1;33m"
     BLUE = "\033[0;34m"
-    CYAN = "\033[0;36m"
-    MAGENTA = "\033[0;35m"
-    BOLD = "\033[1m"
-    DIM = "\033[2m"
     RESET = "\033[0m"
 
 
@@ -71,7 +64,9 @@ def use_color(stream: TextIO | None = None) -> bool:
         return True
     if stream is None:
         stream = sys.stdout
-    return hasattr(stream, "isatty") and stream.isatty()
+    if stream is None:
+        return False
+    return stream.isatty()
 
 
 def colorize(text: str, color: Color, stream: TextIO | None = None) -> str:
@@ -114,36 +109,6 @@ def log_error(msg: str, *, prefix: str = "[ERROR]") -> None:
     print(f"{colorize(prefix, Color.RED, sys.stderr)} {msg}", file=sys.stderr)
 
 
-def log_debug(msg: str, *, prefix: str = "[DEBUG]") -> None:
-    """Log a debug message to stderr (only if DEBUG env var is set)."""
-    if is_debug():
-        print(f"{colorize(prefix, Color.DIM, sys.stderr)} {msg}", file=sys.stderr)
-
-
-def log_verbose(msg: str, *, prefix: str = "[VERBOSE]") -> None:
-    """Log a verbose message (only if VERBOSE or DEBUG env var is set)."""
-    if is_verbose() or is_debug():
-        print(f"{colorize(prefix, Color.DIM)} {msg}")
-
-
-def log_step(msg: str, step: int | None = None, total: int | None = None) -> None:
-    """Log a step in a multi-step process."""
-    if step is not None and total is not None:
-        prefix = f"[{step}/{total}]"
-    elif step is not None:
-        prefix = f"[{step}]"
-    else:
-        prefix = "[*]"
-    print(f"{colorize(prefix, Color.CYAN)} {msg}")
-
-
-def log_command(cmd: str | list[str]) -> None:
-    """Log a command being executed."""
-    if isinstance(cmd, list):
-        cmd = " ".join(cmd)
-    log_debug(f"$ {cmd}")
-
-
 @dataclass
 class Logger:
     """
@@ -165,7 +130,6 @@ class Logger:
     prefix_ok: str = "[OK]"
     prefix_warn: str = "[WARN]"
     prefix_error: str = "[ERROR]"
-    prefix_debug: str = "[DEBUG]"
 
     def __post_init__(self) -> None:
         if self.color is None:
@@ -191,24 +155,3 @@ class Logger:
     def error(self, msg: str) -> None:
         """Log an error message to stderr."""
         print(f"{self._colorize(self.prefix_error, Color.RED)} {msg}", file=sys.stderr)
-
-    def debug(self, msg: str) -> None:
-        """Log a debug message (only if DEBUG env var is set)."""
-        if is_debug():
-            print(f"{self._colorize(self.prefix_debug, Color.DIM)} {msg}", file=sys.stderr)
-
-    def step(self, msg: str, step: int | None = None, total: int | None = None) -> None:
-        """Log a step in a multi-step process."""
-        if step is not None and total is not None:
-            prefix = f"[{step}/{total}]"
-        elif step is not None:
-            prefix = f"[{step}]"
-        else:
-            prefix = "[*]"
-        print(f"{self._colorize(prefix, Color.CYAN)} {msg}")
-
-    def command(self, cmd: str | list[str]) -> None:
-        """Log a command being executed."""
-        if isinstance(cmd, list):
-            cmd = " ".join(cmd)
-        self.debug(f"$ {cmd}")

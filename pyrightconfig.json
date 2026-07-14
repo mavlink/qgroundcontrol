@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json.schemastore.org/pyrightconfig.json",
   "exclude": [
     "build",
     "**/__pycache__",

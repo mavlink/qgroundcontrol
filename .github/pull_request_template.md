@@ -38,12 +38,12 @@
 <!-- Go over all the following points, and put an 'x' in all the boxes that apply -->
 - [ ] I have read the [Contribution Guidelines](CONTRIBUTING.md)
 - [ ] I have read the [Code of Conduct](CODE_OF_CONDUCT.md)
-- [ ] My code follows the project's coding standards
-- [ ] I have added tests that prove my fix/feature works
-- [ ] New and existing unit tests pass locally
+- [ ] My code follows [CODING_STYLE.md](../CODING_STYLE.md)
+- [ ] I added appropriate coverage and ran the relevant checks from the [test guide](../test/README.md)
 
 ## Related Issues
 <!-- Link any related issues using #issue_number -->
 
 ---
-By submitting this pull request, I confirm that my contribution is made under the terms of the project's dual license (Apache 2.0 and GPL v3).
+By submitting this pull request, I confirm that my contribution follows the project's
+[dual-license terms](COPYING.md).

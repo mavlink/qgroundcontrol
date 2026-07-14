@@ -127,14 +127,22 @@ if(NOT GStreamer_USE_XCFRAMEWORK)
     endif()
     if(_gst_missing_paths)
         string(REPLACE ";" "\n  " _gst_missing_str "${_gst_missing_paths}")
+        set(_gst_framework_detail "")
+        if(DEFINED GSTREAMER_FRAMEWORK_PATH)
+            set(_gst_framework_detail "\nGSTREAMER_FRAMEWORK_PATH=${GSTREAMER_FRAMEWORK_PATH}")
+        endif()
         message(FATAL_ERROR
             "GStreamer: required directories do not exist on disk:\n  ${_gst_missing_str}\n"
-            "GSTREAMER_FRAMEWORK_PATH=${GSTREAMER_FRAMEWORK_PATH}\n"
+            "${_gst_framework_detail}\n"
             "Check installation or set GStreamer_ROOT_DIR.")
     endif()
 
-    if(GStreamer_USE_FRAMEWORK AND NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
-        message(FATAL_ERROR "GStreamer: Could not locate framework at ${GSTREAMER_FRAMEWORK_PATH}")
+    if(GStreamer_USE_FRAMEWORK)
+        if(NOT DEFINED GSTREAMER_FRAMEWORK_PATH)
+            message(FATAL_ERROR "GStreamer: framework mode is active but GSTREAMER_FRAMEWORK_PATH is unset")
+        elseif(NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
+            message(FATAL_ERROR "GStreamer: Could not locate framework at ${GSTREAMER_FRAMEWORK_PATH}")
+        endif()
     endif()
 else()
     if(NOT EXISTS "${GSTREAMER_XCFRAMEWORK_LIB}")

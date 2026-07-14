@@ -38,6 +38,11 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
       has_jobs: ${{ steps.plan.outputs.has_jobs }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout planner
         uses: actions/checkout@v7
         with:
@@ -48,6 +53,7 @@ jobs:
           sparse-checkout: |
             .github/scripts/plan_docker_builds.py
             .github/scripts/ci_bootstrap.py
+            deploy/docker/_variants.py
             deploy/docker/variants.json
             tools/_bootstrap.py
             tools/common/__init__.py
@@ -66,7 +72,14 @@ jobs:
 
   build:
     name: Docker ${{ matrix.platform }}
-    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-builder', github.run_id) || 'ubuntu-latest' }}
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner={1}', github.run_id,
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder') ||
+        'ubuntu-latest'
+      }}
     needs: [changes, plan-builds]
     if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120
@@ -84,6 +97,11 @@ jobs:
         shell: bash
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
@@ -91,15 +109,11 @@ jobs:
           metrics: cpu,network,memory,disk,io
           show_costs: summary
 
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          # Package versions come from git describe and require reachable tags.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Free Disk Space
@@ -119,6 +133,7 @@ jobs:
           --ref "${REF}"
 
       - name: Build with Docker
+        id: docker-build
         uses: ./.github/actions/docker
         with:
           target: ${{ matrix.target }}
@@ -127,13 +142,15 @@ jobs:
           fuse: ${{ matrix.fuse }}
           docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+          github-token: ${{ github.token }}
           push-image: ${{ steps.push-target.outputs.ref }}
 
       - name: Find build artifact
         id: artifact
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
-          --build-dir "${{ github.workspace }}/build"
+          --build-dir "${GITHUB_WORKSPACE}/build"
+          --required
           --pattern "${MATRIX_ARTIFACT_PATTERN}"
         env:
           MATRIX_ARTIFACT_PATTERN: ${{ matrix.artifact_pattern }}
@@ -145,7 +162,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: qgroundcontrol-${{ matrix.variant }}
-          path: ${{ steps.artifact.outputs.path }}
+          path: |
+            ${{ steps.artifact.outputs.path }}
+            ${{ github.workspace }}/build/appimagelint-report.json
           if-no-files-found: error
           retention-days: 14
 
@@ -156,10 +175,27 @@ jobs:
         if: matrix.package_pattern != ''
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
-          --build-dir "${{ github.workspace }}/build"
+          --build-dir "${GITHUB_WORKSPACE}/build"
+          --top-level
+          --required
           --pattern "${MATRIX_PACKAGE_PATTERN}"
         env:
           MATRIX_PACKAGE_PATTERN: ${{ matrix.package_pattern }}
+
+      - name: Validate native package lifecycle
+        if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
+        shell: bash
+        env:
+          IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
+          PACKAGE_PATH: ${{ steps.package.outputs.path }}
+        run: |
+          package_dir=$(dirname "${PACKAGE_PATH}")
+          package_name=$(basename "${PACKAGE_PATH}")
+          docker run --rm --entrypoint /bin/bash \
+            -v "${GITHUB_WORKSPACE}:/project/source:ro" \
+            -v "${package_dir}:/packages:ro" \
+            "${IMAGE}" \
+            /project/source/deploy/docker/validate-native-package.sh "/packages/${package_name}"
 
       - name: Upload native package
         if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
@@ -174,8 +210,25 @@ jobs:
         if: steps.artifact.outputs.found == 'true'
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_cpm_sbom.py"
-          --build-dir "${{ github.workspace }}/build"
+          --build-dir "${GITHUB_WORKSPACE}/build"
           -o cpm-sbom.cdx.json
+
+      - name: Generate CPM dependency snapshot
+        if: matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_cpm_sbom.py"
+          --build-dir "${GITHUB_WORKSPACE}/build"
+          --format spdx
+          -o cpm-sbom.spdx.json
+
+      - name: Upload CPM dependency snapshot
+        if: matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: cpm-dependency-snapshot
+          path: cpm-sbom.spdx.json
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Scan SBOM with Grype
         if: steps.artifact.outputs.found == 'true'
@@ -193,4 +246,148 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
-          category: 'grype-${{ matrix.platform }}'
+          category: ${{ matrix.security_category }}
+
+      - name: Generate published image SBOM
+        if: steps.push-target.outputs.ref != ''
+        uses: anchore/sbom-action@v0
+        with:
+          image: dronecode/qgroundcontrol:${{ matrix.variant }}
+          format: cyclonedx-json
+          output-file: image-sbom.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Scan published image
+        if: steps.push-target.outputs.ref != ''
+        id: grype-image
+        uses: anchore/scan-action@v7
+        with:
+          sbom: image-sbom.cdx.json
+          fail-build: false
+          severity-cutoff: high
+          only-fixed: true
+          output-format: sarif
+
+      - name: Upload image scan to GitHub Security
+        if: steps.push-target.outputs.ref != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.grype-image.outputs.sarif }}
+          category: grype-image-${{ matrix.security_category }}
+
+      - name: Save published image digest
+        if: steps.push-target.outputs.ref != ''
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ steps.docker-build.outputs.image-digest }}
+        run: |
+          [[ "${IMAGE_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]
+          printf '%s\n' "${IMAGE_DIGEST}" > image-digest.txt
+
+      - name: Upload image security evidence
+        if: steps.push-target.outputs.ref != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: qgc-builder-security-${{ matrix.variant }}
+          path: |
+            image-digest.txt
+            image-sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 7
+
+  attest-images:
+    name: Attest ${{ matrix.platform }} Image
+    needs: [plan-builds, build]
+    if: github.repository == 'mavlink/qgroundcontrol' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan-builds.outputs.matrix) }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Download image security evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: qgc-builder-security-${{ matrix.variant }}
+
+      - name: Read image digest
+        id: image
+        shell: bash
+        run: |
+          digest=$(< image-digest.txt)
+          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]
+          printf 'digest=%s\n' "${digest}" >> "${GITHUB_OUTPUT}"
+
+      - name: Login to GHCR
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Login to Docker Hub
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Attest image provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ${{ startsWith(github.ref, 'refs/tags/v') && 'dronecode/qgroundcontrol' || 'ghcr.io/mavlink/qgroundcontrol' }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest image SBOM
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ startsWith(github.ref, 'refs/tags/v') && 'dronecode/qgroundcontrol' || 'ghcr.io/mavlink/qgroundcontrol' }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          sbom-path: image-sbom.cdx.json
+          push-to-registry: true
+
+  submit-cpm-dependencies:
+    name: Submit CPM Dependencies
+    needs: [plan-builds, build]
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/master' &&
+      contains(needs.plan-builds.outputs.matrix, '"variant":"linux"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Download CPM dependency snapshot
+        uses: actions/download-artifact@v8
+        with:
+          name: cpm-dependency-snapshot
+
+      - name: Submit CPM dependency snapshot
+        uses: advanced-security/spdx-dependency-submission-action@v0.2.0
+        with:
+          filePath: cpm-sbom.spdx.json
+          correlator: qgroundcontrol-cpm

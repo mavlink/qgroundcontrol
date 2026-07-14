@@ -5,11 +5,12 @@
       "id": "ubuntu",
       "ci_variant": "linux",
       "platform": "Linux-Ubuntu-24.04",
+      "security_category": "grype-Linux-Ubuntu-24.04",
       "selector": "linux",
       "target": "linux",
       "image": "qgc-ubuntu-docker",
       "fuse": true,
-      "artifact_pattern": "*.AppImage",
+      "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {}
     },
@@ -17,14 +18,15 @@
       "id": "ubuntu-2204",
       "ci_variant": "linux-2204",
       "platform": "Linux-Ubuntu-22.04",
+      "security_category": "grype-Linux-Ubuntu-22.04",
       "selector": "linux",
       "target": "linux",
       "image": "qgc-ubuntu-2204-docker",
       "fuse": true,
-      "artifact_pattern": "*.AppImage",
+      "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
-        "BASE_REF": "ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
+        "BASE_REF": "ubuntu:22.04@sha256:0e0a0fc6d18feda9db1590da249ac93e8d5abfea8f4c3c0c849ce512b5ef8982",
         "APT_EXTRA": "gcc-12 g++-12",
         "PIP_CMAKE": "cmake>=3.25,<4",
         "CC_PIN": "gcc-12",
@@ -35,42 +37,45 @@
       "id": "ubuntu-2604",
       "ci_variant": "linux-2604",
       "platform": "Linux-Ubuntu-26.04",
+      "security_category": "grype-Linux-Ubuntu-26.04",
       "selector": "linux",
       "target": "linux",
       "image": "qgc-ubuntu-2604-docker",
       "fuse": true,
-      "artifact_pattern": "*.AppImage",
+      "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
-        "BASE_REF": "ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
+        "BASE_REF": "ubuntu:26.04@sha256:b7f48194d4d8b763a478a621cdc81c27be222ba2206ca3ca6bc42b49685f3d9e"
       }
     },
     {
       "id": "debian",
       "ci_variant": "linux-debian",
       "platform": "Linux-Debian",
+      "security_category": "grype-Linux-Debian",
       "selector": "linux",
       "target": "linux",
       "image": "qgc-debian-docker",
       "fuse": true,
-      "artifact_pattern": "*.AppImage",
+      "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.deb",
       "build_args": {
-        "BASE_REF": "debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
+        "BASE_REF": "debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
       }
     },
     {
       "id": "fedora",
       "ci_variant": "linux-fedora",
       "platform": "Linux-Fedora",
+      "security_category": "grype-Linux-Fedora",
       "selector": "linux",
       "target": "linux",
       "image": "qgc-fedora-docker",
-      "fuse": true,
-      "artifact_pattern": "*.AppImage",
+      "fuse": false,
+      "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.rpm",
       "build_args": {
-        "BASE_REF": "fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d",
+        "BASE_REF": "fedora:44@sha256:6c75d5bf57cb0fa5aa4b92c6a83c86c791644496d9ac230de7711f5b8ec3b898",
         "SETUP_BASE": "setup-base-dnf.sh",
         "DEP_PLATFORM": "fedora"
       }
@@ -79,14 +84,15 @@
       "id": "arch",
       "ci_variant": "linux-arch",
       "platform": "Linux-Arch",
+      "security_category": "grype-Linux-Arch",
       "selector": "linux",
       "target": "linux",
       "image": "qgc-arch-docker",
-      "fuse": true,
-      "artifact_pattern": "*.AppImage",
+      "fuse": false,
+      "artifact_pattern": "QGroundControl-*.AppImage",
       "package_pattern": "*.pkg.tar.zst",
       "build_args": {
-        "BASE_REF": "archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671",
+        "BASE_REF": "archlinux:base@sha256:fe6972d4dc1f660c0c10f4c41b2de8986bab89e7e2955378f8beadb8ebcd7433",
         "SETUP_BASE": "setup-base-pacman.sh",
         "DEP_PLATFORM": "arch"
       }
@@ -95,11 +101,12 @@
       "id": "aarch64",
       "ci_variant": "linux-aarch64",
       "platform": "Linux-aarch64",
+      "security_category": "grype-Linux-aarch64",
       "selector": "linux",
       "target": "linux-cross",
       "image": "qgc-ubuntu-aarch64-docker",
       "fuse": false,
-      "artifact_pattern": "QGroundControl",
+      "artifact_pattern": "Release/QGroundControl",
       "package_pattern": "",
       "build_args": {}
     },
@@ -107,11 +114,12 @@
       "id": "android",
       "ci_variant": "android",
       "platform": "Android",
+      "security_category": "grype-Android",
       "selector": "android",
       "target": "android",
       "image": "qgc-android-docker",
       "fuse": false,
-      "artifact_pattern": "*.apk",
+      "artifact_pattern": "android-build/QGroundControl.apk",
       "package_pattern": "",
       "build_args": {}
     }

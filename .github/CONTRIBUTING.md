@@ -4,19 +4,19 @@ Thank you for considering contributing to QGroundControl! This guide will help y
 contributing code, reporting issues, and improving documentation.
 
 > **AI coding agents** (Claude Code, Codex, etc.): see [AGENTS.md](../AGENTS.md) for the canonical
-> agent-facing guide (golden rules, `just` build/test commands, definition of done, commit conventions).
-> This document remains the human-facing source of truth for the
-> [Architecture Patterns](#architecture-patterns) that AGENTS.md links back to.
+> agent-facing entry point and definition of done. This document remains the human-facing
+> contribution workflow; topic-specific rules live in the guides linked below.
 
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
 2. [How to Contribute](#how-to-contribute)
 3. [Coding Standards](#coding-standards)
-4. [Testing Requirements](#testing-requirements)
-5. [Pull Request Process](#pull-request-process)
-6. [License Requirements](#license-requirements)
-7. [Additional Resources](#additional-resources)
+4. [Commit Messages](#commit-messages)
+5. [Testing Requirements](#testing-requirements)
+6. [Pull Request Process](#pull-request-process)
+7. [License Requirements](#license-requirements)
+8. [Additional Resources](#additional-resources)
 
 ---
 
@@ -95,7 +95,7 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
    - Test on all relevant platforms when possible
    - Test with both PX4 and ArduPilot if applicable
 
-5. **Commit your changes** using [Conventional Commits](../AGENTS.md#commit--review-conventions)
+5. **Commit your changes** using [Conventional Commits](#commit-messages)
 
    ```bash
    git add .
@@ -119,13 +119,50 @@ conventions. Run `just lint` (or `pre-commit run --all-files`) before committing
 
 ### Architecture Patterns
 
-QGroundControl has several core architecture patterns you must follow. See [CODING_STYLE.md](../CODING_STYLE.md)
-for full details with code examples:
+The canonical architecture rules and examples are in
+[CODING_STYLE.md](../CODING_STYLE.md#common-pitfalls). Its
+[Qt/QML integration section](../CODING_STYLE.md#qt6--qml-integration) covers type registration,
+properties, signals, and QML structure.
 
-- **Fact System**: ALL vehicle parameters use Facts — never create custom parameter storage
-- **Multi-Vehicle**: ALWAYS null-check `activeVehicle()` before use
-- **Firmware Plugin**: Use `vehicle->firmwarePlugin()` for firmware-specific behavior
-- **QML Integration**: Use `QML_ELEMENT`/`QML_SINGLETON`/`QML_UNCREATABLE` macros, `Q_PROPERTY` for bindings
+#### Architecture Entry Points
+
+Start with these interfaces when changing vehicle parameters, multi-vehicle behavior, or
+firmware-specific integration:
+
+1. `src/FactSystem/Fact.h` — parameter system foundation
+2. `src/Vehicle/Vehicle.h` — core vehicle model
+3. `src/FirmwarePlugin/FirmwarePlugin.h` — firmware abstraction
+
+### Repository Layout
+
+The primary application modules are under `src/`:
+
+```text
+src/
+├── Vehicle/          # Vehicle state/comms
+├── Comms/            # Link layer (serial, UDP, TCP, Bluetooth)
+├── FactSystem/       # Parameter management
+├── FirmwarePlugin/   # PX4/ArduPilot abstraction
+├── AutoPilotPlugins/ # Vehicle setup UI
+├── MissionManager/   # Mission planning
+├── MAVLink/          # Protocol handling
+├── VideoManager/     # Video pipeline (GStreamer)
+├── FlyView/          # In-flight UI
+├── PlanView/         # Mission planning UI
+├── QmlControls/      # Reusable QML components
+└── Settings/         # Persistent settings
+```
+
+---
+
+## Commit Messages
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) because the type drives release
+automation through `.releaserc.json` and semantic-release.
+
+- Release-triggering types: `feat`, `fix`, `perf`, `revert`
+- Non-release types: `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci`
+- Example: `fix(Vehicle): guard null activeVehicle in telemetry handler`
 
 ---
 
@@ -134,17 +171,9 @@ for full details with code examples:
 See [test/README.md](../test/README.md) for the complete testing guide, including base classes, CTest labels,
 `MultiSignalSpy`, and coverage.
 
-**Key points:**
-
-- Add unit tests for new functionality in `test/` mirroring `src/` structure
-- Use the `UnitTest` base class (or `VehicleTest`, `MissionTest`, etc.)
-- Run `ctest --output-on-failure -L Unit` before submitting
-- Test on multiple platforms and both PX4/ArduPilot when applicable
-
-### Pre-commit Checks
-
-Run the lint gate before committing (`just lint`, or `pre-commit run --all-files` for the full sweep) —
-see [tools/README.md](../tools/README.md) for all available development commands.
+Run the checks appropriate to the change. The canonical commands and lint gate are documented in
+[tools/README.md](../tools/README.md#quality); test selection and labels are documented in
+[test/README.md](../test/README.md#running-tests).
 
 ---
 
@@ -173,8 +202,7 @@ see [tools/README.md](../tools/README.md) for all available development commands
 - Code follows style guidelines
 - Tests added for new features
 - No unrelated changes
-- Commit messages are clear and descriptive (Conventional Commits, see
-  [AGENTS.md](../AGENTS.md#commit--review-conventions))
+- Commit messages follow [Conventional Commits](#commit-messages)
 
 ### Review Process
 

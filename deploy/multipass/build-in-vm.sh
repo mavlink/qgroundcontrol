@@ -37,17 +37,26 @@ python tools/setup/install_qt.py install \
 # linux_gcc_64 -> on-disk dir gcc_64 (resolve_arch_dir strips the linux_ prefix).
 QT_ROOT="${QT_OUT}/${QT_VERSION}/gcc_64"
 
-cmake -S "${REPO}" -B "${BUILD_DIR}" -G Ninja \
-    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-    -DQGC_BUILD_TESTING=OFF \
-    -DQGC_STABLE_BUILD=OFF \
-    -DCMAKE_PREFIX_PATH="${QT_ROOT}"
+case "${BUILD_TYPE}" in
+    Debug) CMAKE_PRESET=default ;;
+    Release) CMAKE_PRESET=default-release ;;
+    RelWithDebInfo) CMAKE_PRESET=default-relwithdebinfo ;;
+    MinSizeRel) CMAKE_PRESET=default-minsizerel ;;
+    *) echo "Error: unsupported BUILD_TYPE: ${BUILD_TYPE}" >&2; exit 1 ;;
+esac
+QT_ROOT_DIR="${QT_ROOT}" "${QT_ROOT}/bin/qt-cmake" --preset "${CMAKE_PRESET}" \
+    -S "${REPO}" -B "${BUILD_DIR}" -DQGC_BUILD_TESTING=OFF -DQGC_STABLE_BUILD=OFF
 build_jobs=(--parallel)
 [[ -n "${JOBS:-}" ]] && build_jobs=(--parallel "${JOBS}")
 cmake --build "${BUILD_DIR}" --config "${BUILD_TYPE}" "${build_jobs[@]}"
 cmake --install "${BUILD_DIR}" --config "${BUILD_TYPE}"
 
+shopt -s nullglob
 appimages=("${BUILD_DIR}"/*.AppImage)
+if (( ${#appimages[@]} == 0 )); then
+    echo "Error: no AppImage produced under ${BUILD_DIR}" >&2
+    exit 1
+fi
 echo "AppImage(s) produced:"
 printf '%s\n' "${appimages[@]}"
 

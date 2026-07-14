@@ -156,7 +156,7 @@ function(qgc_enable_pie)
     include(CheckPIESupported)
     check_pie_supported(OUTPUT_VARIABLE _output LANGUAGES C CXX)
 
-    if(CMAKE_C_LINK_PIE_SUPPORTED)
+    if(CMAKE_C_LINK_PIE_SUPPORTED AND CMAKE_CXX_LINK_PIE_SUPPORTED)
         set(CMAKE_POSITION_INDEPENDENT_CODE ON PARENT_SCOPE)
         message(STATUS "QGC: PIE enabled")
     else()
@@ -241,7 +241,12 @@ endfunction()
 # Args: package_name - the CPMAddPackage NAME (checks <package_name>_ADDED)
 # ----------------------------------------------------------------------------
 function(qgc_require_cpm_added package_name)
-    if(NOT ${package_name}_ADDED)
+    if(NOT ARGC EQUAL 1 OR NOT package_name MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
+        message(FATAL_ERROR "qgc_require_cpm_added: exactly one valid CPM package name is required")
+    endif()
+
+    set(_added_variable "${package_name}_ADDED")
+    if(NOT DEFINED ${_added_variable} OR NOT "${${_added_variable}}")
         message(FATAL_ERROR
             "QGC: ${package_name} (required dependency) was not added by CPM. "
             "This package must be vendored from source; if QGC_USE_SYSTEM_LIBS or "
@@ -251,11 +256,30 @@ endfunction()
 
 function(qgc_add_json_resources name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "NO_RECURSE" "PREFIX;PATTERN" "")
+    if(NOT name OR NOT name MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
+        message(FATAL_ERROR "qgc_add_json_resources: a valid resource name is required")
+    endif()
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if(NOT TARGET ${CMAKE_PROJECT_NAME})
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): project target '${CMAKE_PROJECT_NAME}' does not exist")
+    endif()
     if(NOT ARG_PREFIX)
         set(ARG_PREFIX "/json")
     endif()
     if(NOT ARG_PATTERN)
         set(ARG_PATTERN "*.json")
+    endif()
+    if(IS_ABSOLUTE "${ARG_PATTERN}" OR ARG_PATTERN MATCHES "(^|/)[.][.](/|$)")
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): PATTERN must remain under the current source directory")
     endif()
     set(_glob GLOB_RECURSE)
     if(ARG_NO_RECURSE)
@@ -263,5 +287,9 @@ function(qgc_add_json_resources name)
     endif()
     file(${_glob} _json CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
          "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_PATTERN}")
+    if(NOT _json)
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): no files matched '${ARG_PATTERN}' in ${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
     qt_add_resources(${CMAKE_PROJECT_NAME} ${name} PREFIX "${ARG_PREFIX}" FILES ${_json})
 endfunction()

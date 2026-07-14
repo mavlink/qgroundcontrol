@@ -30,6 +30,12 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
 
 QGeoTiledMapReplyQGC::~QGeoTiledMapReplyQGC()
 {
+    if (QNetworkReply* const reply = _networkReply.data()) {
+        _networkReply.clear();
+        (void) disconnect(reply, nullptr, this, nullptr);
+        reply->abort();
+        reply->deleteLater();
+    }
     qCDebug(QGeoTiledMapReplyQGCLog) << this;
 }
 
@@ -92,6 +98,9 @@ void QGeoTiledMapReplyQGC::_networkReplyFinished()
     if (!reply) {
         setError(QGeoTiledMapReply::UnknownError, tr("Unexpected Error"));
         return;
+    }
+    if (reply == _networkReply) {
+        _networkReply.clear();
     }
     reply->deleteLater();
 
@@ -195,17 +204,30 @@ void QGeoTiledMapReplyQGC::_cacheError(QGCMapTask::TaskType type, QStringView er
 {
     Q_UNUSED(errorString);
 
-    Q_ASSERT(type == QGCMapTask::TaskType::taskFetchTile);
+    if (type != QGCMapTask::TaskType::taskFetchTile) {
+        setError(QGeoTiledMapReply::UnknownError, tr("Unexpected Cache Error"));
+        return;
+    }
 
     if (!QGCNetworkHelper::isInternetAvailable()) {
         setError(QGeoTiledMapReply::CommunicationError, tr("Network Not Available"));
         return;
     }
 
+    if (!_networkManager) {
+        setError(QGeoTiledMapReply::CommunicationError, tr("Network Manager Not Available"));
+        return;
+    }
+
     _request.setOriginatingObject(this);
 
-    QNetworkReply* const reply = _networkManager->get(_request);
-    reply->setParent(this);
+    _networkReply = _networkManager->get(_request);
+    if (!_networkReply) {
+        setError(QGeoTiledMapReply::CommunicationError, tr("Failed to Create Network Reply"));
+        return;
+    }
+
+    QNetworkReply* const reply = _networkReply.data();
     QGCNetworkHelper::ignoreSslErrorsIfNeeded(reply);
 
     (void) connect(reply, &QNetworkReply::finished, this, &QGeoTiledMapReplyQGC::_networkReplyFinished);

@@ -1,5 +1,10 @@
 # QGroundControl Ground Control Station
 
+This directory is the sample described by the
+[custom-build developer guide](https://dev.qgroundcontrol.com/en/custom_build/custom_build.html).
+For repository-wide build and contribution workflows, see [tools/README.md](../tools/README.md) and
+[CONTRIBUTING.md](../.github/CONTRIBUTING.md).
+
 ## Custom Build Example
 
 To build this sample custom version:
@@ -9,9 +14,6 @@ To build this sample custom version:
 3. `cd custom` and build QGC.
 
 ![Custom Build Screenshot](README.jpg)
-
-See the [QGC Dev Guide](https://dev.qgroundcontrol.com/en/custom_build/custom_build.html) for what a
-custom build is and how to create your own.
 
 This example demonstrates:
 

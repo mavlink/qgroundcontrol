@@ -88,6 +88,7 @@ set(_apm_config_generated_qml_names
 )
 
 qgc_add_qml_codegen(GenerateConfigQmlAPM
+    GENERATE_AT_CONFIGURE
     GENERATOR_MODULE tools.generators.config_qml.generate_pages
     OUTPUT_DIR       "${APM_CONFIG_QML_GEN_DIR}"
     QML_NAMES        ${_apm_config_generated_qml_names}

@@ -11,6 +11,8 @@ The following is a list of versions the development team is currently supporting
 
 ## Reporting a Vulnerability
 
+For non-security questions and bug reports, use the channels in [SUPPORT.md](SUPPORT.md).
+
 We currently only receive security vulnerability reports through GitHub.
 
 To begin a report, please go to the top-level repository, for example, mavlink/qgroundcontrol,

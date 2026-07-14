@@ -1,9 +1,8 @@
-# ============================================================================
 # QGroundControl Build Configuration Options
 # All options can be overridden by custom builds via CustomOverrides.cmake
 # ============================================================================
 
-include(CMakeDependentOption)
+include_guard(GLOBAL)
 
 # Load centralized build configuration from .github/build-config.json
 include(BuildConfig)
@@ -36,20 +35,20 @@ option(QGC_UNITY_BUILD "Enable unity builds for faster compilation" OFF)
 option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
 option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code" ON)
 
-# Debug-dependent options
+# Debug-defaulted options
 # Note: CMAKE_BUILD_TYPE is empty on multi-config generators (VS, Ninja Multi-Config).
-# Multi-config generators always get _QGC_DEBUG_BUILD=TRUE because Debug is selected
-# at build time, not configure time. Release-only CI jobs should pass
-# -DQGC_BUILD_TESTING=OFF explicitly to skip test compilation.
+# Multi-config generators default these to ON because Debug is selected at build
+# time. Explicit cache values remain honored for every generator and build type.
 if(CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(_QGC_DEBUG_BUILD TRUE)
 else()
     set(_QGC_DEBUG_BUILD FALSE)
 endif()
-cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "_QGC_DEBUG_BUILD" OFF)
-cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "_QGC_DEBUG_BUILD" OFF)
-cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "_QGC_DEBUG_BUILD" OFF)
-cmake_dependent_option(QT_QML_NO_CACHEGEN "Skip qmlcachegen (faster Debug builds, slower QML startup)" ON "_QGC_DEBUG_BUILD" OFF)
+option(QGC_BUILD_TESTING "Enable unit tests" ${_QGC_DEBUG_BUILD})
+option(QGC_DEBUG_QML "Enable QML debugging/profiling" ${_QGC_DEBUG_BUILD})
+option(QT_QML_NO_CACHEGEN "Skip qmlcachegen (faster Debug builds, slower QML startup)" ${_QGC_DEBUG_BUILD})
+option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
+unset(_QGC_DEBUG_BUILD)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
 option(QGC_TIME_TRACE "Emit per-TU Clang -ftime-trace JSON for build profiling (Clang only)" OFF)
 option(QGC_SPLIT_DWARF "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF)
@@ -168,18 +167,18 @@ option(QGC_MACOS_UNIVERSAL_BUILD "Build macOS universal binary (x86_64h + arm64)
 # ----------------------------------------------------------------------------
 set(QGC_IOS_DEPLOYMENT_TARGET "${QGC_CONFIG_IOS_DEPLOYMENT_TARGET}" CACHE STRING "iOS minimum deployment target")
 set(QGC_IOS_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "iOS targeted device family (1=iPhone, 2=iPad)")
+option(QGC_IOS_APP_STORE_BUILD "Sign the iOS app for App Store distribution" OFF)
+set(QGC_IOS_DEVELOPMENT_TEAM "" CACHE STRING "Apple development team ID used for App Store signing")
+set(QGC_IOS_PROVISIONING_PROFILE "" CACHE STRING "App Store provisioning profile name or UUID")
 
 # ----------------------------------------------------------------------------
 # Linux Platform
 # ----------------------------------------------------------------------------
-# Distro-aware defaults for native (non-Docker) builds. Docker builds pass these
-# explicitly via -D (see deploy/docker/entrypoint.sh), which overrides the cache.
-include(LinuxDistro)
-
 # Fedora/Arch glibc exceeds the AppImage floor (appimagelint noise there); native
 # package generator follows the distro (DEB/RPM via CPack, Arch via makepkg).
 set(_qgc_appimagelint_default ON)
 set(_qgc_cpack_default "")
+include(LinuxDistro)
 if(QGC_LINUX_DISTRO_FAMILY STREQUAL "debian")
     set(_qgc_cpack_default "DEB")
 elseif(QGC_LINUX_DISTRO_FAMILY STREQUAL "rhel")
@@ -206,7 +205,7 @@ if(WIN32)
 elseif(APPLE)
     set(_qgc_cpack_strings "" "DragNDrop" "Bundle" "productbuild" "IFW" "TXZ")
 else()
-    set(_qgc_cpack_strings "" "DEB" "RPM" "TXZ")
+    set(_qgc_cpack_strings "" "DEB" "RPM" "IFW" "TXZ")
 endif()
 set(QGC_CPACK_GENERATOR "${_qgc_cpack_default}" CACHE STRING "Optional CPack generator for the qgc-package target (alongside the default installer)")
 set_property(CACHE QGC_CPACK_GENERATOR PROPERTY STRINGS ${_qgc_cpack_strings})

@@ -34,12 +34,21 @@ on:
 permissions:
   actions: write
 
+concurrency:
+  group: qgc-cache-cleanup
+  cancel-in-progress: false
+
 jobs:
   cleanup:
     name: Cleanup Caches
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@v7
         with:
           sparse-checkout: |
