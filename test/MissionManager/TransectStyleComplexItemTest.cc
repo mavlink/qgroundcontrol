@@ -166,7 +166,7 @@ TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterControl
 {
     // We use a 100m by 100m square test polygon
     const double edgeDistance = 100;
-    surveyAreaPolygon()->appendVertex(UnitTestTerrainQuery::linearSlopeRegion.center());
+    surveyAreaPolygon()->appendVertex(UnitTestTerrainData::linearSlopeRegion.center());
     surveyAreaPolygon()->appendVertex(surveyAreaPolygon()->vertexCoordinate(0).atDistanceAndAzimuth(edgeDistance, 90));
     surveyAreaPolygon()->appendVertex(surveyAreaPolygon()->vertexCoordinate(1).atDistanceAndAzimuth(edgeDistance, 180));
     surveyAreaPolygon()->appendVertex(

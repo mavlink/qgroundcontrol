@@ -10,7 +10,20 @@
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 
+#ifdef QGC_UNITTEST_BUILD
+#include "AppMessages.h"
+#endif
+
 QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "QtLocationPlugin.QGCTileCacheWorker")
+
+#ifdef QGC_UNITTEST_BUILD
+std::function<QGCCacheTile*(const QString&)> QGCCacheWorker::_unitTestTileGenerator;
+
+void QGCCacheWorker::setUnitTestTileGenerator(std::function<QGCCacheTile*(const QString &hash)> generator)
+{
+    _unitTestTileGenerator = std::move(generator);
+}
+#endif
 
 QGCCacheWorker::QGCCacheWorker(QObject *parent)
     : QThread(parent)
@@ -216,9 +229,23 @@ void QGCCacheWorker::_getTile(QGCMapTask *mtask)
     auto tile = _database->getTile(task->hash());
     if (tile) {
         task->setTileFetched(tile.release());
-    } else {
-        task->setError("Tile not in cache database");
+        return;
     }
+
+    // Under unit tests a cache miss consults the synthetic tile generator instead of
+    // erroring, so tile consumers never fall back to real network fetches (late
+    // replies race UI teardown and crash). See UnitTestTileGenerator.
+#ifdef QGC_UNITTEST_BUILD
+    if (QGC::runningUnitTests() && _unitTestTileGenerator) {
+        QGCCacheTile* const generated = _unitTestTileGenerator(task->hash());
+        if (generated) {
+            task->setTileFetched(generated);
+            return;
+        }
+    }
+#endif
+
+    task->setError("Tile not in cache database");
 }
 
 void QGCCacheWorker::_getTileSets(QGCMapTask *mtask)

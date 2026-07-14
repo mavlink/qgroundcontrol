@@ -23,7 +23,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UNITTEST_BUILD)
+# QGC_UNITTEST_BUILD is defined directory-wide from the root CMakeLists.txt when
+# QGC_BUILD_TESTING is enabled, covering this target and all src/ targets.
 
 target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE
     <QtTest/QTest>
@@ -60,8 +61,8 @@ include(Sanitizers)
 #   3. C++ ENTRY POINT (not owned here): qgc_tests needs a main() that parses
 #      `--unittest:<name>` and runs the UnitTestList dispatch, mirroring the app's
 #      existing --unittest handling. Without this the binary cannot run tests.
-#   4. Mirror QGC_UNITTEST_BUILD compile definition, include dirs, and PCH onto
-#      qgc_tests.
+#   4. Mirror include dirs and PCH onto qgc_tests (QGC_UNITTEST_BUILD is already
+#      inherited from the root directory-scope definition).
 # Until items 1-4 land, configuring with -DQGC_BUILD_TEST_BINARY=ON builds no
 # qgc_tests target, so add_qgc_test() falls back to the app binary (no breakage).
 if(QGC_BUILD_TEST_BINARY)

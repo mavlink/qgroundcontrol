@@ -24,8 +24,6 @@
 #include "QGCFileDialogController.h"
 #include "QGCImageProvider.h"
 #include "SettingsManager.h"
-#include "TerrainQuery.h"
-#include "TerrainTest.h"
 #include "Vehicle.h"
 
 // Bounded real-time window for render/GC/deferred-delete settle drains during UI teardown.
@@ -82,12 +80,6 @@ void QmlUITestBase::startUI()
     MAVLinkProtocol::instance()->init();
     MultiVehicleManager::instance()->init();
 
-    // Replace the live terrain backend with the synthetic unit-test provider so
-    // mission editing in the UI never makes real HTTP terrain requests. Live
-    // fetches can return HTTP 500, emitting warning logs that trip the
-    // strict-mode log check. Restored to the default backend in stopUI().
-    TerrainAtCoordinateBatchManager::instance()->setTerrainQueryInterface(new UnitTestTerrainQuery());
-
     // Suppress first-run prompts so they don't block the UI
     AppSettings *appSettings = SettingsManager::instance()->appSettings();
     const QList<int> promptIds = QGCCorePlugin::instance()->firstRunPromptStdIds();
@@ -111,17 +103,6 @@ void QmlUITestBase::startUI()
     // Offscreen incubation can leave an item incubating at teardown; the drain is best-effort.
     ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("in the process of being created at engine destruction")));
-
-    // The synthetic terrain provider installed above only covers coordinate
-    // queries routed through TerrainAtCoordinateBatchManager. Path/carpet queries
-    // (TerrainPathQuery, TerrainAreaQuery) hardcode their own online backend and
-    // hit the live terrain server, which intermittently returns HTTP errors. Those
-    // are external-server reachability warnings, never something a UI smoke test
-    // should assert on, so ignore them to keep the full run deterministic.
-    ignoreLogMessage("QtLocationPlugin.QGeoTiledMapReplyQGC", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Error transferring|Operation timed out")));
-    ignoreLogMessage("Terrain.TerrainTileManager", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Elevation tile fetching returned error")));
 
     // Slow headless/software-GL runners can leave async-incubated QML items still
     // creating when the engine is torn down (destroyUIEngine drains best-effort but
@@ -235,11 +216,6 @@ void QmlUITestBase::stopUI()
 {
     closeUIWindow();
     destroyUIEngine();
-
-    // Restore the default terrain backend. The batch manager is a process-global
-    // singleton shared across all tests in a single-process --unittest run, so the
-    // mock must not leak into later tests.
-    TerrainAtCoordinateBatchManager::instance()->setTerrainQueryInterface(new TerrainOfflineQuery());
 }
 
 void QmlUITestBase::_verifyFileDialogTestHookConsumed()
