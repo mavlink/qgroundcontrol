@@ -175,7 +175,16 @@ void GCSControlManager::handleControlStatus(const mavlink_message_t& message)
     }
 
     // This component manages GCS control of the whole system. Operator control
-    // commands must be addressed to it, which is not necessarily the autopilot
+    // commands must be addressed to it, which is not necessarily the autopilot.
+    // Follow the most recent claimant so a manager that restarts under a new
+    // compid keeps receiving our requests, but make the switch visible: it can
+    // also mean two components are claiming SYSTEM_MANAGER, which the spec
+    // requires integrators to prevent.
+    if ((_operatorControlCompId != 0) && (message.compid != _operatorControlCompId)) {
+        qCWarning(GCSControlManagerLog) << "System manager component changed from compId"
+            << _operatorControlCompId << "to" << message.compid
+            << "- component restart, or two components claiming GCS_CONTROL_STATUS_FLAGS_SYSTEM_MANAGER?";
+    }
     _operatorControlCompId = message.compid;
 
     bool updateControlStatusSignals = false;
