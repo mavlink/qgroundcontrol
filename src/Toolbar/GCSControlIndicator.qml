@@ -16,7 +16,6 @@ Item {
     property bool   showIndicator:                          gcsControlManager && gcsControlManager.firstControlStatusReceived
     property var    sysidInControl:                         gcsControlManager ? gcsControlManager.sysidInControl : 0
     property var    secondaryGCSList:                       gcsControlManager ? gcsControlManager.secondaryGCSList : []
-    property bool   gcsControlStatusFlags_SystemManager:    gcsControlManager ? gcsControlManager.gcsControlStatusFlags_SystemManager : false
     property bool   gcsControlStatusFlags_TakeoverAllowed:  gcsControlManager ? gcsControlManager.gcsControlStatusFlags_TakeoverAllowed : false
     property Fact   requestControlAllowTakeoverFact:        QGroundControl.settingsManager.flyViewSettings.requestControlAllowTakeover
     property bool   requestControlAllowTakeover:            requestControlAllowTakeoverFact.rawValue
@@ -44,7 +43,7 @@ Item {
     property bool   outdoorPalette:                         qgcPal.globalTheme === QGCPalette.Light
 
     // Used by control request popup, when other GCS ask us for control
-    property var    receivedRequestTimeoutMs:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue // Use this as default in case something goes wrong. Usually it will be overriden on onRequestOperatorControlReceived
+    property var    receivedRequestTimeoutMs:               QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue * 1000 // Use this as default in case something goes wrong. Usually it will be overriden on onRequestOperatorControlReceived (defaultValue is in seconds, this is in ms)
     property var    requestSysIdRequestingControl:          0
     property var    requestAllowTakeover:                   false
 
@@ -61,7 +60,7 @@ Item {
             requestSysIdRequestingControl = sysIdRequestingControl
             requestAllowTakeover = allowTakeover
             // If request came without request timeout, use our default one
-            receivedRequestTimeoutMs = requestTimeoutSecs !== 0 ? requestTimeoutSecs * 1000 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue
+            receivedRequestTimeoutMs = requestTimeoutSecs !== 0 ? requestTimeoutSecs * 1000 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.defaultValue * 1000
             // First hide current popup, in case the normal control panel is visible
             mainWindow.closeIndicatorDrawer()
             // When showing the popup, the component will automatically start the count down in controlRequestPopup
@@ -160,13 +159,11 @@ Item {
     }
 
     // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts
-    // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
+    // that after gcsControlManager.operatorControlTakeoverTimeoutMsecs, this GCS will change back to takeover not allowed, as per mavlink specs
     Component {
         id: allowTakeoverExpirationPopup
 
             ToolIndicatorPage {
-            // Allow takeover expiration time popup. When a request is received and takeover was allowed, this popup alerts
-            // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
             TimedProgressTracker {
                 id:                     revertTakeoverProgressTracker
                 timeoutSeconds:         control.gcsControlManager.operatorControlTakeoverTimeoutMsecs * 0.001

@@ -1,5 +1,6 @@
 #include "GCSControlManager.h"
 #include "Vehicle.h"
+#include "MultiVehicleManager.h"
 #include "VehicleLinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "SettingsManager.h"
@@ -63,8 +64,8 @@ void GCSControlManager::requestOperatorControl(bool allowOverride, int requestTi
         0                                   // param5: unused (removed from spec)
     );
 
-    if (requestTimeoutSecs > 0) {
-        _requestOperatorControlStartTimer(requestTimeoutSecs * 1000);
+    if (safeRequestTimeoutSecs > 0) {
+        _requestOperatorControlStartTimer(safeRequestTimeoutSecs * 1000);
     }
 }
 
@@ -72,12 +73,7 @@ void GCSControlManager::releaseOperatorControl()
 {
     // Releasing control makes any pending request countdown or takeover revert meaningless
     _timerRevertAllowTakeover.stop();
-    _timerRequestOperatorControl.stop();
-    disconnect(&_timerRequestOperatorControl, &QTimer::timeout, nullptr, nullptr);
-    if (!_sendControlRequestAllowed) {
-        _sendControlRequestAllowed = true;
-        emit sendControlRequestAllowedChanged(true);
-    }
+    _cancelRequestOperatorControlCountdown();
 
     const VehicleTypes::MavCmdAckHandlerInfo_t handlerInfo = {&GCSControlManager::_requestOperatorControlAckHandler, this, nullptr, nullptr};
     _vehicle->sendMavCommandWithHandler(
@@ -88,7 +84,7 @@ void GCSControlManager::releaseOperatorControl()
         0,                                  // param2: Allow takeover (irrelevant for release)
         0,                                  // param3: Timeout (irrelevant for release)
         static_cast<float>(MAVLinkProtocol::instance()->getSystemId()), // param4: GCS sysid
-        0                                   // param5: GCS sysid upper range (0 = single GCS)
+        0                                   // param5: unused (removed from spec)
     );
 }
 
@@ -114,10 +110,37 @@ void GCSControlManager::_requestOperatorControlAckHandler(void* resultHandlerDat
         return;
     }
 
-    if (ack.result == MAV_RESULT_ACCEPTED) {
+    switch (ack.result) {
+    case MAV_RESULT_ACCEPTED:
         qCDebug(GCSControlManagerLog) << "Operator control request accepted";
-    } else {
-        qCDebug(GCSControlManagerLog) << "Operator control request rejected";
+        break;
+    case MAV_RESULT_FAILED:
+    case MAV_RESULT_IN_PROGRESS:
+        // The owner was notified and the request is genuinely pending vehicle-side, so keep the
+        // request-lockout countdown running until it is granted or times out.
+        qCDebug(GCSControlManagerLog) << "Operator control request pending owner response";
+        break;
+    case MAV_RESULT_DENIED:
+        // Requester is not an authorized operator of the vehicle, so nothing is pending
+        // vehicle-side. Cancel the local countdown so the UI stops showing a bogus wait.
+        manager->_cancelRequestOperatorControlCountdown();
+        QGC::showAppMessage(tr("Control request denied: this ground station is not an authorized operator of vehicle %1").arg(manager->_vehicle->id()));
+        break;
+    default:
+        // Any other rejection (unsupported, temporarily rejected, ...) is not pending either.
+        manager->_cancelRequestOperatorControlCountdown();
+        QGC::showAppMessage(tr("Control request rejected by vehicle (%1)").arg(static_cast<int>(ack.result)));
+        break;
+    }
+}
+
+void GCSControlManager::_cancelRequestOperatorControlCountdown()
+{
+    _timerRequestOperatorControl.stop();
+    disconnect(&_timerRequestOperatorControl, &QTimer::timeout, nullptr, nullptr);
+    if (!_sendControlRequestAllowed) {
+        _sendControlRequestAllowed = true;
+        emit sendControlRequestAllowedChanged(true);
     }
 }
 
@@ -144,11 +167,16 @@ void GCSControlManager::handleControlStatus(const mavlink_message_t& message)
     mavlink_control_status_t controlStatus;
     mavlink_msg_control_status_decode(&message, &controlStatus);
 
-    if (controlStatus.flags & GCS_CONTROL_STATUS_FLAGS_SYSTEM_MANAGER) {
-        // This component manages GCS control of the whole system. Operator control
-        // commands must be addressed to it, which is not necessarily the autopilot
-        _operatorControlCompId = message.compid;
+    if (!(controlStatus.flags & GCS_CONTROL_STATUS_FLAGS_SYSTEM_MANAGER)) {
+        // Per spec, a CONTROL_STATUS without the SYSTEM_MANAGER flag describes only the emitting
+        // component, not the system, so it must not drive system-level control state.
+        qCDebug(GCSControlManagerLog) << "Ignoring component-local CONTROL_STATUS (no SYSTEM_MANAGER flag) from compId" << message.compid;
+        return;
     }
+
+    // This component manages GCS control of the whole system. Operator control
+    // commands must be addressed to it, which is not necessarily the autopilot
+    _operatorControlCompId = message.compid;
 
     bool updateControlStatusSignals = false;
     if (_gcsControlStatusFlags != controlStatus.flags) {
@@ -216,6 +244,21 @@ void GCSControlManager::handleCommandRequestOperatorControl(const mavlink_messag
             message.sysid,
             message.compid);
         (void) _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), ackMessage);
+    }
+
+    // Only a request for control (param1 == 1) raises a takeover prompt. A forwarded release
+    // (param1 == 0) from a non-ArduPilot stack must not surface a bogus takeover popup.
+    if (static_cast<int>(commandLong.param1) != 1) {
+        return;
+    }
+
+    // The takeover popup is bound to the active vehicle only, so a request arriving on a
+    // non-active vehicle would otherwise be ACKed and silently dropped. Surface it at the app
+    // level so the operator knows to switch to that vehicle to respond.
+    if (MultiVehicleManager::instance()->activeVehicle() != _vehicle) {
+        QGC::showAppMessage(tr("GCS %1 is requesting control of vehicle %2 — switch to that vehicle to respond")
+                            .arg(static_cast<int>(commandLong.param4))
+                            .arg(_vehicle->id()));
     }
 
     emit requestOperatorControlReceived(
