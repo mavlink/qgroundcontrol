@@ -1259,6 +1259,62 @@ void GStreamerTest::_testJpegReceiverRecording()
 
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
+    const auto verifyPlayableRecording = [](const QString& outputPath) -> QString {
+        const QFileInfo recording(outputPath);
+        if (!recording.exists() || recording.size() <= 0) {
+            return QStringLiteral("Recording was not finalized: %1").arg(outputPath);
+        }
+
+        GstElement* playback = gst_element_factory_make("playbin", nullptr);
+        GstElement* videoSink = gst_element_factory_make("fakesink", nullptr);
+        GstElement* audioSink = gst_element_factory_make("fakesink", nullptr);
+        if (!playback || !videoSink || !audioSink) {
+            gst_clear_object(&audioSink);
+            gst_clear_object(&videoSink);
+            gst_clear_object(&playback);
+            return QStringLiteral("Required recording playback elements are unavailable");
+        }
+
+        gst_object_ref_sink(videoSink);
+        gst_object_ref_sink(audioSink);
+        const auto playbackCleanup = qScopeGuard([&] {
+            (void) gst_element_set_state(playback, GST_STATE_NULL);
+            gst_clear_object(&playback);
+        });
+        const QByteArray uri = QUrl::fromLocalFile(outputPath).toEncoded();
+        g_object_set(playback, "uri", uri.constData(), "video-sink", videoSink, "audio-sink", audioSink, nullptr);
+        gst_object_unref(videoSink);
+        gst_object_unref(audioSink);
+        if (gst_element_set_state(playback, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
+            return QStringLiteral("Failed to start recording playback: %1").arg(outputPath);
+        }
+
+        GstBus* playbackBus = gst_element_get_bus(playback);
+        if (!playbackBus) {
+            return QStringLiteral("Recording playback bus is unavailable: %1").arg(outputPath);
+        }
+        GstMessage* playbackMessage =
+            gst_bus_timed_pop_filtered(playbackBus, static_cast<GstClockTime>(TestTimeout::longMs()) * GST_MSECOND,
+                                       static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+        gst_object_unref(playbackBus);
+        if (!playbackMessage) {
+            return QStringLiteral("Timed out playing finalized recording: %1").arg(outputPath);
+        }
+
+        QString result;
+        if (GST_MESSAGE_TYPE(playbackMessage) == GST_MESSAGE_ERROR) {
+            GError* error = nullptr;
+            gchar* debug = nullptr;
+            gst_message_parse_error(playbackMessage, &error, &debug);
+            result = QStringLiteral("Finalized recording playback failed: %1")
+                         .arg(error ? QString::fromUtf8(error->message) : QStringLiteral("unknown error"));
+            g_clear_error(&error);
+            g_clear_pointer(&debug, g_free);
+        }
+        gst_message_unref(playbackMessage);
+        return result;
+    };
+
     QWebSocketServer server(QStringLiteral("QGC receiver recording test"), QWebSocketServer::NonSecureMode);
     QVERIFY(server.listen(QHostAddress::LocalHost, 0));
     QWebSocket* serverSocket = nullptr;
@@ -1345,36 +1401,8 @@ void GStreamerTest::_testJpegReceiverRecording()
         frameTimer.stop();
         QCOMPARE(receiverStopSpy.count(), 0);
 
-        const QFileInfo recording(outputPath);
-        QVERIFY(recording.exists());
-        QVERIFY(recording.size() > 0);
-
-        GstElement* playback = gst_element_factory_make("playbin", nullptr);
-        GstElement* videoSink = gst_element_factory_make("fakesink", nullptr);
-        GstElement* audioSink = gst_element_factory_make("fakesink", nullptr);
-        QVERIFY(playback);
-        QVERIFY(videoSink);
-        QVERIFY(audioSink);
-        gst_object_ref_sink(videoSink);
-        gst_object_ref_sink(audioSink);
-        const auto playbackCleanup = qScopeGuard([&] {
-            (void) gst_element_set_state(playback, GST_STATE_NULL);
-            gst_clear_object(&playback);
-        });
-        const QByteArray uri = QUrl::fromLocalFile(outputPath).toEncoded();
-        g_object_set(playback, "uri", uri.constData(), "video-sink", videoSink, "audio-sink", audioSink, nullptr);
-        gst_object_unref(videoSink);
-        gst_object_unref(audioSink);
-        QVERIFY(gst_element_set_state(playback, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-        GstBus* playbackBus = gst_element_get_bus(playback);
-        QVERIFY(playbackBus);
-        GstMessage* playbackMessage =
-            gst_bus_timed_pop_filtered(playbackBus, static_cast<GstClockTime>(TestTimeout::longMs()) * GST_MSECOND,
-                                       static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
-        gst_object_unref(playbackBus);
-        QVERIFY2(playbackMessage, "Timed out playing the receiver JPEG recording");
-        QCOMPARE(GST_MESSAGE_TYPE(playbackMessage), GST_MESSAGE_EOS);
-        gst_message_unref(playbackMessage);
+        const QString playbackFailure = verifyPlayableRecording(outputPath);
+        QVERIFY2(playbackFailure.isEmpty(), qPrintable(playbackFailure));
     }
 
     QQuickItem widget;
@@ -1414,15 +1442,48 @@ void GStreamerTest::_testJpegReceiverRecording()
     QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(startDecodingSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
     QVERIFY_SIGNAL_WAIT(decodingChangedSpy, TestTimeout::mediumMs());
     QCOMPARE(decodingChangedSpy.takeFirst().at(0).toBool(), true);
-    decodeFrameTimer.stop();
     QCOMPARE(receiverStopSpy.count(), 0);
     QCOMPARE(receiver._sourceProbeId, sourceProbeId);
 
+    const QString sourceEosRecordingPath = directory.filePath(QStringLiteral("source-eos-recording.mkv"));
+    QSignalSpy sourceEosStartRecordingSpy(&receiver, &VideoReceiver::onStartRecordingComplete);
+    QSignalSpy sourceEosRecordingStartedSpy(&receiver, &VideoReceiver::recordingStarted);
+    QSignalSpy sourceEosRecordingChangedSpy(&receiver, &VideoReceiver::recordingChanged);
+    QSignalSpy sourceEosStopRecordingSpy(&receiver, &VideoReceiver::onStopRecordingComplete);
+    QSignalSpy sourceEosStreamingChangedSpy(&receiver, &VideoReceiver::streamingChanged);
+    const quint64 sourceEosInitialFrameCount = receiver._sourceFrameCount.load(std::memory_order_relaxed);
+    receiver.startRecording(sourceEosRecordingPath, VideoReceiver::FILE_FORMAT_MKV);
+    QVERIFY_SIGNAL_WAIT(sourceEosStartRecordingSpy, TestTimeout::mediumMs());
+    QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(sourceEosStartRecordingSpy.takeFirst().at(0)),
+             VideoReceiver::STATUS_OK);
+    QVERIFY_SIGNAL_WAIT(sourceEosRecordingStartedSpy, TestTimeout::mediumMs());
+    QCOMPARE(sourceEosRecordingStartedSpy.takeFirst().at(0).toString(), sourceEosRecordingPath);
+    QVERIFY_TRUE_WAIT(receiver._sourceFrameCount.load(std::memory_order_relaxed) >= sourceEosInitialFrameCount + 3,
+                      TestTimeout::mediumMs());
+    QVERIFY(receiver._recording);
+    QVERIFY(!receiver._endOfStream.load(std::memory_order_acquire));
+    QCOMPARE(receiverStopSpy.count(), 0);
+
+    decodeFrameTimer.stop();
     serverSocket->close(QWebSocketProtocol::CloseCodeNormal, QStringLiteral("test complete"));
     QVERIFY_SIGNAL_WAIT(receiverStopSpy, TestTimeout::longMs());
     QCOMPARE(qvariant_cast<VideoReceiver::STATUS>(receiverStopSpy.takeFirst().at(0)), VideoReceiver::STATUS_OK);
+    QVERIFY_TRUE_WAIT(sourceEosRecordingChangedSpy.count() >= 2, TestTimeout::longMs());
+    QCOMPARE(sourceEosRecordingChangedSpy.takeFirst().at(0).toBool(), true);
+    QCOMPARE(sourceEosRecordingChangedSpy.takeFirst().at(0).toBool(), false);
+    QCOMPARE(sourceEosStopRecordingSpy.count(), 0);
+    QVERIFY_SIGNAL_COUNT_WAIT(sourceEosStreamingChangedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(sourceEosStreamingChangedSpy.takeFirst().at(0).toBool(), false);
+    QVERIFY_SIGNAL_COUNT_WAIT(decodingChangedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(decodingChangedSpy.takeFirst().at(0).toBool(), false);
+    QVERIFY(!receiver._recording);
+    QVERIFY(!receiver._streaming);
     QVERIFY(receiver._endOfStream.load(std::memory_order_acquire));
+    QVERIFY(receiver._fileSink == nullptr);
+    QCOMPARE(receiver._recordingEosSeqnum.load(std::memory_order_acquire), static_cast<guint32>(GST_SEQNUM_INVALID));
     QCOMPARE(receiver._sourceProbeId, static_cast<gulong>(0));
+    const QString sourceEosPlaybackFailure = verifyPlayableRecording(sourceEosRecordingPath);
+    QVERIFY2(sourceEosPlaybackFailure.isEmpty(), qPrintable(sourceEosPlaybackFailure));
     serverSocket->deleteLater();
     receiver.setWidget(nullptr);
 #else
