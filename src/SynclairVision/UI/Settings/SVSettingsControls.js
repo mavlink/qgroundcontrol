@@ -208,15 +208,6 @@ function getSections() {
                     value: 10
                 }
             ]
-        },
-        {
-            id: 'shortcuts',
-            title: 'Shortcuts',
-            items: [
-                {
-                    id: ''
-                }
-            ]
         }
     ]
 

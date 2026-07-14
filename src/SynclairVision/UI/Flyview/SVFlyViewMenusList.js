@@ -4,11 +4,12 @@ function getSettingsModel() {
     return [
         { id: 'General', text: 'General', checkable: true, iconSource: '/qmlimages/settings_general.svg' },
         { id: 'Controls', text: 'Controls', checkable: true, iconSource: '/qmlimages/settings_controls.svg' },
+        { id: 'Shortcuts', text: 'Shortcuts', checkable: true, iconSource: '/qmlimages/settings_controls.svg' },
         { id: 'Dev', text: 'Dev', checkable: true, iconSource: '/qmlimages/settings_dev.svg' }
     ]
 }
 
-function getOneShotModel(activeDigiview, hudVisible, toolbarVisible) {
+function getOneShotModel() {
     return [
         {
             id: 'hud',
@@ -16,7 +17,6 @@ function getOneShotModel(activeDigiview, hudVisible, toolbarVisible) {
             checkable: true,
             iconSource: '/qmlimages/hud_eye.svg',
             alternateIconSource: '/qmlimages/hud_eye_closed.svg',
-            iconActive: !hudVisible,
             enabled: true
         },
         {
@@ -25,7 +25,6 @@ function getOneShotModel(activeDigiview, hudVisible, toolbarVisible) {
             checkable: true,
             iconSource: '/qmlimages/toolbar_open.svg',
             alternateIconSource: '/qmlimages/toolbar_closed.svg',
-            iconActive: !toolbarVisible,
             enabled: true
         },
         {

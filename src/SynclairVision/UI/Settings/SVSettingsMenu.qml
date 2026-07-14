@@ -8,6 +8,7 @@ import QGroundControl.Controls
 import "SVSettingsControls.js" as SVSettingsControls
 import "SVSettingsDev.js" as SVSettingsDev
 import "SVSettingsGeneral.js" as SVSettingsGeneral
+import "SVSettingsShortcuts.js" as SVSettingsShortcuts
 
 Item {
     id: root
@@ -42,6 +43,8 @@ Item {
             return { title: 'General', sections: SVSettingsGeneral.getSections() }
         } else if (settingsId === 'Controls') {
             return { title: 'Controls', sections: SVSettingsControls.getSections() }
+        } else if (settingsId === 'Shortcuts') {
+            return { title: 'Shortcuts', sections: SVSettingsShortcuts.getSections() }
         } else if (settingsId === 'Dev') {
             return { title: 'Dev', sections: SVSettingsDev.getSections() }
         }
@@ -58,7 +61,8 @@ Item {
     }
 
     function useControlsSettingBridge(settingData) {
-        return activeSettingsId === 'Controls'
+        return (activeSettingsId === 'Controls'
+            || activeSettingsId === 'Shortcuts')
             && settingData.property !== undefined
             && SVSettings[settingData.property] !== undefined
     }
@@ -461,9 +465,13 @@ Item {
                                                             : root.settingRowVerticalPadding)
                                                         : 0
                                                     sourceComponent: {
+                                                        if (settingData.type === 'shortcut') {
+                                                            return shortcutComponent
+                                                        }
+
                                                         if (settingData.type === 'checkbox') {
                                                             return checkboxComponent
-                                                         }
+                                                        }
 
                                                         if (settingData.type === 'dropdown') {
                                                             return dropdownComponent
@@ -499,34 +507,49 @@ Item {
                                                     visible: root.hasVisibleSettingAfter(sectionData.items, index)
                                                 }
 
-                                                 Component {
-                                                     id: checkboxComponent
- 
-                                                     RowLayout {
-                                                         width: settingControlLoader.width
-                                                         spacing: root.settingColumnSpacing
- 
-                                                         ColumnLayout {
-                                                             Layout.fillWidth: true
-                                                             Layout.preferredWidth: root.labelColumnWidth
-                                                             spacing: 0
- 
-                                                             QGCLabel {
-                                                                 Layout.fillWidth: true
-                                                                 text: settingData.label
-                                                                 wrapMode: Text.WordWrap
-                                                             }
-                                                         }
+                                                Component {
+                                                    id: shortcutComponent
 
-                                                         QGCCheckBoxSlider {
-                                                             Layout.alignment: Qt.AlignTop | Qt.AlignRight
-                                                             checked: root.settingValue(settingData, settingData.checked === true)
-                                                             text: ''
+                                                    SVSettingsShortcut {
+                                                        width: settingControlLoader.width
+                                                        labelText: settingData.label ? settingData.label : ''
+                                                        targetPropertyName: settingData.property ? settingData.property : ''
+                                                        shortcutValue: root.settingValue(settingData, settingData.value !== undefined ? settingData.value : 0)
+                                                        labelColumnWidth: root.labelColumnWidth
+                                                        controlColumnWidth: root.controlColumnWidth
+                                                        columnSpacing: root.settingColumnSpacing
+                                                    }
 
-                                                             onClicked: root.setSettingValue(settingData, checked)
-                                                         }
-                                                     }
-                                                 }
+                                                }
+
+                                                Component {
+                                                    id: checkboxComponent
+
+                                                    RowLayout {
+                                                        width: settingControlLoader.width
+                                                        spacing: root.settingColumnSpacing
+
+                                                        ColumnLayout {
+                                                            Layout.fillWidth: true
+                                                            Layout.preferredWidth: root.labelColumnWidth
+                                                            spacing: 0
+
+                                                            QGCLabel {
+                                                                Layout.fillWidth: true
+                                                                text: settingData.label
+                                                                wrapMode: Text.WordWrap
+                                                            }
+                                                        }
+
+                                                        QGCCheckBoxSlider {
+                                                            Layout.alignment: Qt.AlignTop | Qt.AlignRight
+                                                            checked: root.settingValue(settingData, settingData.checked === true)
+                                                            text: ''
+
+                                                            onClicked: root.setSettingValue(settingData, checked)
+                                                        }
+                                                    }
+                                                }
 
                                                 Component {
                                                     id: dropdownComponent

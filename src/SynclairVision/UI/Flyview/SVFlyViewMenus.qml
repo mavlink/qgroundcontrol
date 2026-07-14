@@ -94,29 +94,22 @@ Item {
             return ids
         }
 
-        model: SVFlyViewMenusList.getOneShotModel(root.activeDigiview, SVState.hud, SVState.toolbar)
+        model: SVFlyViewMenusList.getOneShotModel()
 
         onItemSelected: (id) => {
             if (id === "hud") {
-                SVState.hud = !SVState.hud
+                SVState.toggleHud()
                 return
             }
 
             if (id === "record") {
-                if(SVState.record === true) {
-
-                } else {
-                    
-                }
-
-
-
-                SVState.record = !SVState.record
+                SVState.toggleRecord()
                 return
             }
 
             if (id === "toolbar") {
-                SVState.toolbar = !SVState.toolbar
+                SVState.toggleToolbar()
+                return
             }
         }
     }
@@ -169,11 +162,8 @@ Item {
         ]
 
         onItemSelected: (id) => {
-            if(SVState.lockControls === false) {
-                SVState.cameraSelected = -1
-            }
-                SVState.lockControls = !SVState.lockControls
-                return
+            SVState.toggleLockControls()
+            return
         }
     }
 
@@ -202,11 +192,8 @@ Item {
         ]
 
         onItemSelected: (id) => {
-            if(SVState.lockControls === false) {
-                SVState.cameraSelected = -1
-            }
-                SVState.lockControls = !SVState.lockControls
-                return
+            SVState.toggleLockControls()
+            return
         }
     }
 }

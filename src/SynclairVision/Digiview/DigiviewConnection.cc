@@ -7,6 +7,51 @@
 
 #include <array>
 
+namespace {
+
+constexpr uint8_t kDigiviewCrc8Polynomial = 0xA7;
+constexpr uint8_t kDigiviewMavlink1Magic = 0xFE;
+constexpr uint8_t kDigiviewMavlink2Magic = 0xFD;
+constexpr uint16_t kDigiviewMavlink2IncompatFlagsOffset = 2;
+constexpr uint16_t kDigiviewMavlink1HeaderLength = 6;
+constexpr uint16_t kDigiviewMavlink2HeaderLength = 10;
+constexpr uint16_t kDigiviewChecksumBytes = 2;
+
+// Matches the DigiView BLUETOOTH CRC8 preset in message-definitions/msg_defs.hpp,
+// but stays local to avoid pulling the full native protocol header into this TU.
+uint8_t _reflectByte(uint8_t value)
+{
+    uint8_t reflection = 0;
+    for (uint8_t bit = 0; bit < 8; ++bit) {
+        if ((value & (1U << bit)) != 0U) {
+            reflection |= static_cast<uint8_t>(1U << (7U - bit));
+        }
+    }
+
+    return reflection;
+}
+
+uint8_t _digiviewCrc8(const uint8_t* data, uint16_t length)
+{
+    uint8_t checksum = 0;
+
+    for (uint16_t index = 0; index < length; ++index) {
+        checksum ^= _reflectByte(data[index]);
+
+        for (uint8_t bit = 0; bit < 8; ++bit) {
+            if ((checksum & 0x80U) != 0U) {
+                checksum = static_cast<uint8_t>((checksum << 1U) ^ kDigiviewCrc8Polynomial);
+            } else {
+                checksum = static_cast<uint8_t>(checksum << 1U);
+            }
+        }
+    }
+
+    return _reflectByte(checksum);
+}
+
+} // namespace
+
 QGC_LOGGING_CATEGORY(DigiviewConnectionLog, "Digiview.Connection")
 
 DigiviewConnection::DigiviewConnection(QObject* parent)
@@ -103,13 +148,64 @@ bool DigiviewConnection::sendMessage(const mavlink_message_t& message)
     std::array<uint8_t, MAVLINK_MAX_PACKET_LEN> buffer {};
     const uint16_t messageLength = mavlink_msg_to_send_buffer(buffer.data(), &message);
 
+    uint16_t checksumOffset = 0;
+    switch (buffer[0]) {
+    case kDigiviewMavlink1Magic:
+        checksumOffset = static_cast<uint16_t>(kDigiviewMavlink1HeaderLength + buffer[1]);
+        break;
+    case kDigiviewMavlink2Magic:
+        if ((buffer[kDigiviewMavlink2IncompatFlagsOffset] & MAVLINK_IFLAG_SIGNED) != 0U) {
+            _setLastError(tr("Failed to send Digiview datagram: signed MAVLink 2 packets are not supported on this transport"));
+            return false;
+        }
+
+        checksumOffset = static_cast<uint16_t>(kDigiviewMavlink2HeaderLength + buffer[1]);
+        break;
+    default:
+        _setLastError(tr("Failed to send Digiview datagram: unsupported MAVLink framing byte %1").arg(buffer[0]));
+        return false;
+    }
+
+    if (messageLength < (checksumOffset + kDigiviewChecksumBytes)) {
+        _setLastError(tr("Failed to send Digiview datagram: serialized MAVLink packet is shorter than its checksum trailer"));
+        return false;
+    }
+
+    const uint8_t originalChecksumLow = buffer[checksumOffset];
+    const uint8_t originalChecksumHigh = buffer[checksumOffset + 1U];
+    const uint8_t checksum = _digiviewCrc8(buffer.data(), checksumOffset);
+    buffer[checksumOffset] = checksum;
+
+    const uint16_t datagramLength = static_cast<uint16_t>(messageLength - 1U);
+
     const qint64 bytesWritten = _socket.writeDatagram(
         reinterpret_cast<const char*>(buffer.data()),
-        messageLength,
+        datagramLength,
         remoteAddress,
         _port);
+    const qint64 transmittedLength = (bytesWritten > 0) ? bytesWritten : 0;
+    const QString transmittedBytesHex = (transmittedLength > 0)
+        ? QString::fromLatin1(
+              QByteArray::fromRawData(
+                  reinterpret_cast<const char*>(buffer.data()),
+                  static_cast<qsizetype>(transmittedLength))
+                  .toHex(' '))
+        : QStringLiteral("<none>");
 
-    if (bytesWritten != messageLength) {
+    qCWarning(DigiviewConnectionLog).noquote()
+        << QStringLiteral("Digiview TX msgid=%1 frame=0x%2 payloadLen=%3 checksumOffset=%4 mavCrc=[0x%5 0x%6] digiCrc8=0x%7 sentLen=%8")
+               .arg(message.msgid)
+               .arg(buffer[0], 2, 16, QChar('0'))
+               .arg(buffer[1])
+               .arg(checksumOffset)
+               .arg(originalChecksumLow, 2, 16, QChar('0'))
+               .arg(originalChecksumHigh, 2, 16, QChar('0'))
+               .arg(checksum, 2, 16, QChar('0'))
+               .arg(transmittedLength);
+    qCWarning(DigiviewConnectionLog).noquote()
+        << QStringLiteral("Digiview TX bytes=%1").arg(transmittedBytesHex);
+
+    if (bytesWritten != datagramLength) {
         _setLastError(tr("Failed to send Digiview datagram to %1:%2: %3")
                           .arg(remoteAddress.toString())
                           .arg(_port)

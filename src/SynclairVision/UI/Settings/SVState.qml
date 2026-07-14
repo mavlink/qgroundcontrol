@@ -37,6 +37,58 @@ QtObject {
         recordElapsedText = "00:00:00"
     }
 
+    function toggleHud() {
+        hud = !hud
+    }
+
+    function toggleToolbar() {
+        toolbar = !toolbar
+    }
+
+    function toggleLockControls() {
+        lockControls = !lockControls
+    }
+
+    function toggleSynclairOverlay() {
+        synclairOverlay = !synclairOverlay
+    }
+
+    function setCamera(cameraId) {
+        if(cameraId === cameraSelected) {
+            clearCamera()
+        } else {
+            cameraSelected = cameraId
+        }
+    }
+
+    function clearCamera() {
+        cameraSelected = -1
+    }
+
+    function nextCamera() {
+        cameraSelected = cameraSelected + 1
+
+        if(cameraSelected > 5) {
+            cameraSelected = 0
+        }
+    }
+
+    function toggleRecord() {
+        if(record) {
+            stopRecording()
+        } else {
+            startRecording()
+        }
+    }
+
+    function startRecording() {
+        record = true
+    }
+
+    function stopRecording() {
+        record = false
+    }
+
 //---------------------------------
 // Overlay
 //---------------------------------

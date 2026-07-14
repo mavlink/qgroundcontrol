@@ -21,6 +21,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Flyview/SVFlyViewWidgetLayer.qml
         Flyview/SVRecordInfoBox.qml
         Flyview/SVFlyViewStats.qml
+        Flyview/SVShortcutHandler.qml
 
         Camera/SVCameraLayer.qml
         Camera/SVCameraWidgetLayer.qml
@@ -44,8 +45,10 @@ qt_add_qml_module(SynclairVisionUIModule
         Resources/SVUnits.qml
         
         Settings/SVSettingsMenu.qml
+        Settings/SVSettingsShortcut.qml
         Settings/SVSettingsGeneral.js
         Settings/SVSettingsControls.js
+        Settings/SVSettingsShortcuts.js
         Settings/SVSettingsDev.js
 
         Resources/SVArrow.qml

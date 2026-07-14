@@ -236,4 +236,9 @@ Item {
         guidedValueSlider:  _guidedValueSlider
         visible:            !QGroundControl.videoManager.fullScreen && SVState.toolbar
     }
+
+    SVShortcutHandler {
+        anchors.fill: parent
+        z: 999
+    }
 }

@@ -4,6 +4,9 @@ import QtQuick
 QtObject {
     id: root
 
+    readonly property int scrollUp: -1001
+    readonly property int scrollDown: -1002
+
 //---------------------------------
 // General
 //---------------------------------
@@ -50,30 +53,29 @@ QtObject {
 
     //Shortcuts
         property int shortcutPitchUp: Qt.Key_Up
-        property int shortcutPitchDown: Qt.Key_Up
-        property int shortcutJawLeft: Qt.Key_Up
-        property int shortcutJawRight: Qt.Key_Up
+        property int shortcutPitchDown: Qt.Key_Down
+        property int shortcutJawLeft: Qt.Key_Left
+        property int shortcutJawRight: Qt.Key_Right
         //property int shortcutRollLeft: Qt.Key_Up
         //property int shortcutRollRight: Qt.Key_Up
-        property int shortcutZoomIn: Qt.Key_Up
-        property int shortcutZoomOut: Qt.Key_Up
-        property int shortcutSlowMovement: Qt.Key_Up
-        property int shortcutSynclair: Qt.Key_Up
-        property int shortcutHUD: Qt.Key_Up
-        property int shortcutToolbar: Qt.Key_Up
+
+        property int shortcutZoomIn: scrollUp
+        property int shortcutZoomOut: scrollDown
+        property int shortcutSmallMovement: Qt.Key_Shift
+        property int shortcutSynclair: Qt.Key_S
+        property int shortcutHUD: Qt.Key_H
+        property int shortcutToolbar: Qt.Key_T
         property int shortcutLayout: Qt.Key_Up
-        property int shortcutPhoto: Qt.Key_Up
-        property int shortcutRecord: Qt.Key_Up
-        property int shortcutCamera1: Qt.Key_Up
-        property int shortcutCamera2: Qt.Key_Up
-        property int shortcutCamera3: Qt.Key_Up
-        property int shortcutCamera4: Qt.Key_Up
-        property int shortcutCamera5: Qt.Key_Up
-        property int shortcutNextCamera: Qt.Key_Up
+        property int shortcutLockControls: Qt.Key_L
+        property int shortcutPhoto: Qt.Key_P
+        property int shortcutRecord: Qt.Key_R
+        property int shortcutCamera1: Qt.Key_1
+        property int shortcutCamera2: Qt.Key_2
+        property int shortcutCamera3: Qt.Key_3
+        property int shortcutCamera4: Qt.Key_4
+        property int shortcutCamera5: Qt.Key_5
+        property int shortcutNextCamera: Qt.Key_G
         property int shortcutDeselectCamera: Qt.Key_Up
-
-        onControlPanelPositionChanged: console.log("panel position ->", controlPanelPosition)
-
 
 
 //---------------------------------
