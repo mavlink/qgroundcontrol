@@ -54,13 +54,12 @@ Item {
         visible: SVState.hud
     }
 
-    Rectangle {
+    SVBorder {
         id: selected
         anchors.fill: parent
-        color: "transparent"
-        border.width: SVUnits.thickLineWidth - SVUnits.lineWidth
-        border.color: qgcPalette.colorYellowGreen
-        visible: SVState.cameraSelected === cameraIndex && SVState.hud
+        borderWidth: SVUnits.thickLineWidth - SVUnits.lineWidth
+        borderColor: qgcPalette.colorYellowGreen
+        borderVisible: SVState.cameraSelected === cameraIndex && SVState.hud
     }
 
     MouseArea {
@@ -72,4 +71,3 @@ Item {
         }
     }
 }
-

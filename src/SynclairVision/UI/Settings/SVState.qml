@@ -4,6 +4,8 @@ import QtQuick
 QtObject {
     id: root
 
+    signal takePhotoRequested()
+
     function _padRecordTimeSegment(value) {
         return value < 10 ? "0" + value : value.toString()
     }
@@ -89,6 +91,17 @@ QtObject {
         record = false
     }
 
+    function takePhoto() {
+        var now = Date.now()
+
+        if (now - lastPhotoRequestTimeMs < photoCooldownMs) {
+            return
+        }
+
+        lastPhotoRequestTimeMs = now
+        takePhotoRequested()
+    }
+
 //---------------------------------
 // Overlay
 //---------------------------------
@@ -101,4 +114,6 @@ QtObject {
     property bool record: false
     property real recordStartTimeMs: 0
     property string recordElapsedText: "00:00:00"
+    property int photoCooldownMs: 500
+    property real lastPhotoRequestTimeMs: 0
 }

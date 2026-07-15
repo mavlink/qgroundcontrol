@@ -16,6 +16,11 @@ Item {
     property string activeSettingsId: ""
     property int selectedSectionIndex: 0
     property int pendingProgrammaticSectionIndex: -1
+    property bool networkConnectionPending: false
+    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property bool networkConnectionActive: !!(digiview
+        && digiview.connected
+        && QGroundControl.videoManager.streaming)
 
     readonly property real panelMargin: ScreenTools.defaultFontPixelHeight / 2
     readonly property real sectionSpacing: ScreenTools.defaultFontPixelHeight / 2
@@ -31,6 +36,9 @@ Item {
     readonly property real settingRowVerticalPadding: ScreenTools.defaultFontPixelHeight * 0.45
     readonly property real settingColumnSpacing: ScreenTools.defaultFontPixelWidth * 1.5
     readonly property real settingTextSpacing: ScreenTools.defaultFontPixelHeight * 0.15
+    readonly property int wheelUpShortcutValue: -1001
+    readonly property int wheelDownShortcutValue: -1002
+    readonly property int mouseButtonShortcutBaseValue: -2000
     readonly property color edgeGradientColor: Qt.alpha(qgcPalette.window, 0.96)
     readonly property real maxScrollContentY: Math.max(0, contentFlickable.contentHeight - contentFlickable.height)
     readonly property real topEdgeGradientOpacity: Math.min(1, Math.max(0, contentFlickable.contentY) / edgeGradientHeight)
@@ -60,15 +68,29 @@ Item {
         return labels
     }
 
-    function useControlsSettingBridge(settingData) {
-        return (activeSettingsId === 'Controls'
-            || activeSettingsId === 'Shortcuts')
-            && settingData.property !== undefined
-            && SVSettings[settingData.property] !== undefined
+    function settingSourceValue(sourceName, propertyName) {
+        if (propertyName === undefined) {
+            return undefined
+        }
+
+        if (sourceName === undefined || sourceName === 'settings') {
+            return SVSettings[propertyName]
+        }
+
+        if (sourceName === 'digiview') {
+            return root.digiview ? root.digiview[propertyName] : undefined
+        }
+
+        return undefined
+    }
+
+    function useSettingsBridge(settingData) {
+        return settingData.property !== undefined
+            && settingSourceValue('settings', settingData.property) !== undefined
     }
 
     function settingValue(settingData, fallbackValue) {
-        if (useControlsSettingBridge(settingData)) {
+        if (useSettingsBridge(settingData)) {
             return SVSettings[settingData.property]
         }
 
@@ -76,17 +98,138 @@ Item {
     }
 
     function setSettingValue(settingData, value) {
-        if (!useControlsSettingBridge(settingData)) {
+        if (!useSettingsBridge(settingData)) {
             return
         }
 
         SVSettings[settingData.property] = value
     }
 
-    function dropdownCurrentIndex(settingData) {
-        const options = settingData.options ? settingData.options : []
+    function settingOptions(settingData) {
+        if (settingData.optionsSource === 'networkProfiles') {
+            const profiles = SVSettings.networkProfiles ? SVSettings.networkProfiles : []
+            const options = []
 
-        if (useControlsSettingBridge(settingData)) {
+            for (let index = 0; index < profiles.length; index++) {
+                const profile = profiles[index]
+                const profileName = profile && profile.name ? profile.name : 'Profile ' + (index + 1)
+
+                options.push({ label: profileName, value: index })
+            }
+
+            return options
+        }
+
+        return settingData.options ? settingData.options : []
+    }
+
+    function selectedNetworkProfile() {
+        return SVSettings.selectedNetworkProfile()
+    }
+
+    function selectedNetworkProfileName() {
+        const profile = selectedNetworkProfile()
+
+        return profile && profile.name ? profile.name : 'Profile'
+    }
+
+    function settingLabel(settingData) {
+        if (settingData.buttonRole === 'editSelectedProfile') {
+            return 'Edit ' + selectedNetworkProfileName()
+        }
+
+        return settingData.label ? settingData.label : ''
+    }
+
+    function buttonText(settingData) {
+        if (settingData.buttonRole === 'connectToggle') {
+            if (root.networkConnectionActive) {
+                return 'Disconnect'
+            }
+
+            return (root.networkConnectionPending || (root.digiview && root.digiview.connected))
+                ? 'Connecting...'
+                : 'Connect'
+        }
+
+        if (settingData.buttonRole === 'editSelectedProfile') {
+            return 'Edit   ✎'
+        }
+
+        return settingData.text ? settingData.text : ''
+    }
+
+    function isNetworkActionButton(settingData) {
+        if (!settingData) {
+            return false
+        }
+
+        return settingData.buttonRole === 'connectToggle'
+            || settingData.buttonRole === 'editSelectedProfile'
+            || settingData.buttonRole === 'newProfile'
+    }
+
+    function applySelectedNetworkProfile() {
+        return SVSettings.applySelectedNetworkProfile(root.digiview)
+    }
+
+    function handleButtonClick(settingData) {
+        if (!settingData) {
+            return
+        }
+
+        if (settingData.buttonRole === 'connectToggle') {
+            if (!root.digiview) {
+                root.networkConnectionPending = false
+                return
+            }
+
+            if (root.digiview.connected) {
+                networkConnectTimer.stop()
+                root.networkConnectionPending = false
+                root.digiview.disconnectFromHost()
+                return
+            }
+
+            if (!applySelectedNetworkProfile()) {
+                root.networkConnectionPending = false
+                return
+            }
+
+            root.networkConnectionPending = true
+            networkConnectTimer.restart()
+            return
+        }
+
+        if (settingData.buttonRole === 'editSelectedProfile') {
+            const profile = selectedNetworkProfile()
+
+            if (!profile) {
+                console.log('SynclairVision network profile editor could not open because no profile is selected')
+                return
+            }
+
+            editNetworkProfileDialogFactory.open({
+                editingProfile: profile,
+                editingProfileIndex: SVSettings.networkSelectedProfileIndex,
+                isNewProfile: false
+            })
+            return
+        }
+
+        if (settingData.buttonRole === 'newProfile') {
+            editNetworkProfileDialogFactory.open({
+                editingProfile: null,
+                editingProfileIndex: -1,
+                isNewProfile: true
+            })
+        }
+    }
+
+    function dropdownCurrentIndex(settingData) {
+        const options = settingOptions(settingData)
+
+        if (useSettingsBridge(settingData)) {
             const currentValue = SVSettings[settingData.property]
 
             for (let index = 0; index < options.length; index++) {
@@ -100,13 +243,57 @@ Item {
     }
 
     function setDropdownSettingValue(settingData, currentIndex) {
-        const options = settingData.options ? settingData.options : []
+        const options = settingOptions(settingData)
 
         if (currentIndex < 0 || currentIndex >= options.length) {
             return
         }
 
         setSettingValue(settingData, options[currentIndex].value)
+    }
+
+    Timer {
+        id: networkConnectTimer
+
+        interval: 0
+        repeat: false
+
+        onTriggered: {
+            if (!root.digiview) {
+                root.networkConnectionPending = false
+                return
+            }
+
+            if (root.digiview.connected) {
+                return
+            }
+
+            if (!root.digiview.connectToHost()) {
+                root.networkConnectionPending = false
+            }
+        }
+    }
+
+    onNetworkConnectionActiveChanged: {
+        if (networkConnectionActive) {
+            root.networkConnectionPending = false
+        }
+    }
+
+    Connections {
+        target: root.digiview
+
+        function onConnectedChanged() {
+            if (!root.digiview || !root.digiview.connected) {
+                root.networkConnectionPending = false
+            }
+        }
+
+        function onLastErrorChanged() {
+            if (!root.digiview || !root.digiview.connected) {
+                root.networkConnectionPending = false
+            }
+        }
     }
 
     function matchesCondition(conditionData) {
@@ -116,7 +303,7 @@ Item {
             return true
         }
 
-        const currentValue = settingValue({ property: conditionData.property }, undefined)
+        const currentValue = settingSourceValue(conditionData.source, conditionData.property)
 
         return currentValue === undefined || currentValue === conditionData.equals
     }
@@ -162,7 +349,7 @@ Item {
     }
 
     function sliderDisplayValue(settingData, sliderValue) {
-        if (useControlsSettingBridge(settingData)) {
+        if (useSettingsBridge(settingData)) {
             return SVSettings[settingData.property]
         }
 
@@ -177,6 +364,100 @@ Item {
         return Math.abs(value - Math.round(value)) < 0.001
             ? Math.round(value).toString()
             : value.toFixed(2)
+    }
+
+    function shortcutKeyToString(key) {
+        if (key === undefined || key === 0) {
+            return qsTr('Not Set')
+        }
+
+        if (key < root.mouseButtonShortcutBaseValue) {
+            const button = root.shortcutToMouseButton(key)
+
+            switch (button) {
+            case Qt.LeftButton: return qsTr('Mouse Left Button')
+            case Qt.RightButton: return qsTr('Mouse Right Button')
+            case Qt.MiddleButton: return qsTr('Mouse Middle Button')
+            case Qt.BackButton: return qsTr('Mouse Back Button')
+            case Qt.ForwardButton: return qsTr('Mouse Forward Button')
+
+            default:
+                return qsTr('Mouse Button %1').arg(button)
+            }
+        }
+
+        if (key >= Qt.Key_A && key <= Qt.Key_Z) {
+            return String.fromCharCode(key)
+        }
+
+        if (key >= Qt.Key_0 && key <= Qt.Key_9) {
+            return String.fromCharCode(key)
+        }
+
+        if (key >= Qt.Key_F1 && key <= Qt.Key_F35) {
+            return 'F' + (key - Qt.Key_F1 + 1)
+        }
+
+        switch (key) {
+        case root.wheelUpShortcutValue: return qsTr('Wheel Up')
+        case root.wheelDownShortcutValue: return qsTr('Wheel Down')
+        case Qt.Key_Up: return 'Up'
+        case Qt.Key_Down: return 'Down'
+        case Qt.Key_Left: return 'Left'
+        case Qt.Key_Right: return 'Right'
+        case Qt.Key_Space: return 'Space'
+        case Qt.Key_Return: return 'Enter'
+        case Qt.Key_Enter: return 'Enter'
+        case Qt.Key_Tab: return 'Tab'
+        case Qt.Key_Backspace: return 'Backspace'
+        case Qt.Key_Delete: return 'Delete'
+        case Qt.Key_Escape: return 'Escape'
+        case Qt.Key_Shift: return 'Shift'
+        case Qt.Key_Control: return 'Ctrl'
+        case Qt.Key_Alt: return 'Alt'
+        case Qt.Key_Meta: return 'Meta'
+        case Qt.Key_Home: return 'Home'
+        case Qt.Key_End: return 'End'
+        case Qt.Key_PageUp: return 'Page Up'
+        case Qt.Key_PageDown: return 'Page Down'
+        case Qt.Key_Plus: return '+'
+        case Qt.Key_Minus: return '-'
+        case Qt.Key_Period: return '.'
+        case Qt.Key_Comma: return ','
+
+        default:
+            return qsTr('Key %1').arg(key)
+        }
+    }
+
+    function mouseButtonToShortcut(button) {
+        return root.mouseButtonShortcutBaseValue - button
+    }
+
+    function shortcutToMouseButton(shortcut) {
+        return root.mouseButtonShortcutBaseValue - shortcut
+    }
+
+    function isAssignableMouseButton(button) {
+        switch (button) {
+        case Qt.MiddleButton:
+        case Qt.BackButton:
+        case Qt.ForwardButton:
+            return true
+
+        default:
+            return false
+        }
+    }
+
+    function assignWheelShortcut(settingData, angleDeltaY) {
+        if (angleDeltaY === 0) {
+            return false
+        }
+
+        root.setSettingValue(settingData, angleDeltaY > 0 ? root.wheelUpShortcutValue : root.wheelDownShortcutValue)
+
+        return true
     }
 
     function scrollToSection(sectionIndex) {
@@ -248,6 +529,253 @@ Item {
         selectedSectionIndex = 0
         pendingProgrammaticSectionIndex = -1
         contentFlickable.contentY = 0
+    }
+
+    QGCPopupDialogFactory {
+        id: editNetworkProfileDialogFactory
+
+        dialogComponent: editNetworkProfileDialogComponent
+    }
+
+    QGCPopupDialogFactory {
+        id: deleteNetworkProfileDialogFactory
+
+        dialogComponent: deleteNetworkProfileDialogComponent
+    }
+
+    Component {
+        id: deleteNetworkProfileDialogComponent
+
+        QGCSimpleMessageDialog {
+            property string profileName: ''
+            property int profileIndex: -1
+            property var editDialog: null
+
+            title: profileName === '' ? qsTr('Delete profile?') : qsTr('Delete %1?').arg(profileName)
+            text: qsTr('Are you sure you want this?')
+            buttons: Dialog.Yes | Dialog.No
+
+            onAccepted: {
+                SVSettings.deleteNetworkProfile(profileIndex)
+
+                if (editDialog) {
+                    editDialog.close()
+                }
+            }
+        }
+    }
+
+    Component {
+        id: editNetworkProfileDialogComponent
+
+        QGCPopupDialog {
+            id: editProfileDialog
+
+            buttons: 0
+
+            property var editingProfile
+            property int editingProfileIndex: -1
+            property bool isNewProfile: false
+            property string profileName: ''
+            property string streamName: ''
+            property string ipAddress: ''
+            property string port: ''
+            property string videoPort: ''
+            property string listenPort: ''
+
+            function populateFields() {
+                if (isNewProfile) {
+                    profileName = ''
+                    streamName = ''
+                    ipAddress = ''
+                    port = ''
+                    videoPort = ''
+                    listenPort = ''
+                    return
+                }
+
+                profileName = editingProfile && editingProfile.name ? editingProfile.name : ''
+                streamName = editingProfile ? SVSettings.networkProfileStreamName(editingProfile.streamName) : SVSettings.defaultNetworkProfileStreamName
+                ipAddress = editingProfile && editingProfile.host ? editingProfile.host : ''
+                port = editingProfile && editingProfile.port !== undefined ? editingProfile.port.toString() : ''
+                videoPort = editingProfile && editingProfile.videoPort !== undefined ? editingProfile.videoPort.toString() : ''
+                listenPort = editingProfile && editingProfile.listenPort !== undefined ? editingProfile.listenPort.toString() : ''
+            }
+
+            title: isNewProfile ? qsTr('New') : qsTr('Edit')
+
+            Component.onCompleted: populateFields()
+            onEditingProfileChanged: populateFields()
+            onIsNewProfileChanged: populateFields()
+
+            ColumnLayout {
+                width: Math.min(editProfileDialog.maxContentAvailableWidth, ScreenTools.defaultFontPixelWidth * 56)
+                spacing: root.sectionSpacing * 1.5
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: formContent.implicitHeight + root.sectionPadding * 2
+                    radius: ScreenTools.defaultBorderRadius * 3
+                    color: qgcPalette.window
+                    border.width: 1
+                    border.color: qgcPalette.windowShadeLight
+
+                    GridLayout {
+                        id: formContent
+
+                        anchors.fill: parent
+                        anchors.margins: root.sectionPadding
+                        columns: 2
+                        rowSpacing: root.settingRowVerticalPadding * 2
+                        columnSpacing: root.settingColumnSpacing
+
+                        QGCLabel {
+                            Layout.preferredWidth: root.labelColumnWidth
+                            text: qsTr('Profile name')
+                            wrapMode: Text.WordWrap
+                        }
+
+                        QGCTextField {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: root.controlColumnWidth
+                            text: editProfileDialog.profileName
+                            placeholderText: qsTr('Enter profile name')
+
+                            onTextChanged: editProfileDialog.profileName = text
+                        }
+
+                        QGCLabel {
+                            Layout.preferredWidth: root.labelColumnWidth
+                            text: qsTr('Stream name')
+                            wrapMode: Text.WordWrap
+                        }
+
+                        QGCTextField {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: root.controlColumnWidth
+                            text: editProfileDialog.streamName
+                            placeholderText: qsTr('Enter stream name')
+
+                            onTextChanged: editProfileDialog.streamName = text
+                        }
+
+                        QGCLabel {
+                            Layout.preferredWidth: root.labelColumnWidth
+                            text: qsTr('IP address')
+                            wrapMode: Text.WordWrap
+                        }
+
+                        QGCTextField {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: root.controlColumnWidth
+                            text: editProfileDialog.ipAddress
+                            placeholderText: qsTr('Enter IP address')
+
+                            onTextChanged: editProfileDialog.ipAddress = text
+                        }
+
+                        QGCLabel {
+                            Layout.preferredWidth: root.labelColumnWidth
+                            text: qsTr('Port')
+                            wrapMode: Text.WordWrap
+                        }
+
+                        QGCTextField {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: root.controlColumnWidth
+                            text: editProfileDialog.port
+                            placeholderText: qsTr('Enter port')
+
+                            onTextChanged: editProfileDialog.port = text
+                        }
+
+                        QGCLabel {
+                            Layout.preferredWidth: root.labelColumnWidth
+                            text: qsTr('Video port')
+                            wrapMode: Text.WordWrap
+                        }
+
+                        QGCTextField {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: root.controlColumnWidth
+                            text: editProfileDialog.videoPort
+                            placeholderText: qsTr('Enter video port')
+
+                            onTextChanged: editProfileDialog.videoPort = text
+                        }
+
+                        QGCLabel {
+                            Layout.preferredWidth: root.labelColumnWidth
+                            text: qsTr('Listen port')
+                            wrapMode: Text.WordWrap
+                        }
+
+                        QGCTextField {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: root.controlColumnWidth
+                            text: editProfileDialog.listenPort
+                            placeholderText: qsTr('Enter listen port')
+
+                            onTextChanged: editProfileDialog.listenPort = text
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: root.settingColumnSpacing
+
+                    QGCButton {
+                        text: qsTr('Delete   ×')
+                        visible: !editProfileDialog.isNewProfile
+                        backgroundColor: 'red'
+                        textColor: 'white'
+
+                        onClicked: {
+                            deleteNetworkProfileDialogFactory.open({
+                                profileName: editProfileDialog.profileName,
+                                profileIndex: editProfileDialog.editingProfileIndex,
+                                editDialog: editProfileDialog
+                            })
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+
+                    QGCButton {
+                        text: qsTr('Cancel')
+
+                        onClicked: editProfileDialog.close()
+                    }
+
+                    QGCButton {
+                        text: qsTr('Accept')
+                        primary: true
+
+                        onClicked: {
+                            const profileData = {
+                                name: editProfileDialog.profileName,
+                                streamName: editProfileDialog.streamName,
+                                host: editProfileDialog.ipAddress,
+                                port: editProfileDialog.port,
+                                videoPort: editProfileDialog.videoPort,
+                                listenPort: editProfileDialog.listenPort
+                            }
+
+                            if (editProfileDialog.isNewProfile) {
+                                SVSettings.appendNetworkProfile(profileData)
+                            } else {
+                                SVSettings.updateNetworkProfile(profileData, editProfileDialog.editingProfileIndex)
+                            }
+
+                            editProfileDialog.close()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     QGCPalette { id: qgcPalette }
@@ -481,6 +1009,10 @@ Item {
                                                             return sliderComponent
                                                         }
 
+                                                        if (settingData.type === 'button') {
+                                                            return buttonComponent
+                                                        }
+
                                                         return null
                                                     }
                                                 }
@@ -504,21 +1036,160 @@ Item {
                                                     //Layout.bottomMargin: root.controlSpacing / 2
                                                     height: 1
                                                     color: qgcPalette.windowShadeLight
+                                                    enabled: true
                                                     visible: root.hasVisibleSettingAfter(sectionData.items, index)
                                                 }
 
                                                 Component {
                                                     id: shortcutComponent
 
-                                                    SVSettingsShortcut {
+                                                    RowLayout {
                                                         width: settingControlLoader.width
-                                                        labelText: settingData.label ? settingData.label : ''
-                                                        targetPropertyName: settingData.property ? settingData.property : ''
-                                                        shortcutValue: root.settingValue(settingData, settingData.value !== undefined ? settingData.value : 0)
-                                                        labelColumnWidth: root.labelColumnWidth
-                                                        controlColumnWidth: root.controlColumnWidth
-                                                        columnSpacing: root.settingColumnSpacing
-                                                    }
+                                                        spacing: root.settingColumnSpacing
+
+                                                        ColumnLayout {
+                                                            Layout.fillWidth: true
+                                                            Layout.preferredWidth: root.labelColumnWidth
+                                                            spacing: 0
+
+                                                             QGCLabel {
+                                                                 Layout.fillWidth: true
+                                                                 text: settingData.label ? settingData.label : ''
+                                                                 wrapMode: Text.WordWrap
+                                                             }
+                                                         }
+
+                                                         QGCButton {
+                                                             id: shortcutButton
+
+                                                             property string settingLabel: settingData.label ? settingData.label : ''
+                                                             property int shortcutValue: root.settingValue(settingData, settingData.value !== undefined ? settingData.value : 0)
+
+                                                             Layout.alignment: Qt.AlignLeft
+                                                             Layout.preferredWidth: root.controlColumnWidth
+                                                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.6
+                                                             heightFactor: 0.35
+                                                             enabled: root.useSettingsBridge(settingData)
+                                                             text: root.shortcutKeyToString(shortcutValue)
+                                                             horizontalAlignment: Text.AlignLeft
+
+                                                             onClicked: shortcutDialogFactory.open()
+
+                                                             QGCPopupDialogFactory {
+                                                                 id: shortcutDialogFactory
+
+                                                                 dialogComponent: shortcutDialogComponent
+                                                             }
+
+                                                             Component {
+                                                                 id: shortcutDialogComponent
+
+                                                                 QGCPopupDialog {
+                                                                     id: shortcutDialog
+
+                                                                     title: shortcutButton.settingLabel === '' ? qsTr('Set Shortcut') : shortcutButton.settingLabel
+                                                                     buttons: Dialog.Cancel
+
+                                                                     Item {
+                                                                         id: captureArea
+
+                                                                         width: Math.max(root.controlColumnWidth, 300)
+                                                                         implicitWidth: width
+                                                                         height: contentLayout.implicitHeight
+                                                                         implicitHeight: height
+
+                                                                         ColumnLayout {
+                                                                             id: contentLayout
+
+                                                                             anchors.fill: parent
+                                                                             spacing: ScreenTools.defaultFontPixelHeight / 2
+
+                                                                             QGCLabel {
+                                                                                 text: shortcutButton.settingLabel === ''
+                                                                                     ? qsTr('Press any key, click a mouse button, or scroll to assign a shortcut.')
+                                                                                     : qsTr('Press any key, click a mouse button, or scroll to assign %1.').arg(shortcutButton.settingLabel)
+                                                                                 wrapMode: Text.WordWrap
+                                                                             }
+
+                                                                             QGCLabel {
+                                                                                 text: qsTr('Press Cancel or Escape to keep the current shortcut.')
+                                                                                 wrapMode: Text.WordWrap
+                                                                                 opacity: 0.7
+                                                                             }
+
+                                                                             Rectangle {
+                                                                                 Layout.fillWidth: true
+                                                                                 height: promptLabel.implicitHeight + ScreenTools.defaultFontPixelHeight
+                                                                                 color: QGroundControl.globalPalette.windowShade
+                                                                                 radius: ScreenTools.defaultFontPixelHeight / 4
+
+                                                                                 QGCLabel {
+                                                                                     id: promptLabel
+
+                                                                                     anchors.left: parent.left
+                                                                                     anchors.leftMargin: SVUnits.bigMargin
+                                                                                     anchors.verticalCenter: parent.verticalCenter
+                                                                                     text: qsTr('Waiting for key press, mouse click, or scroll...')
+                                                                                 }
+                                                                             }
+                                                                         }
+
+                                                                         Item {
+                                                                             id: keyCapture
+
+                                                                             anchors.fill: parent
+                                                                             focus: true
+
+                                                                             Keys.onPressed: (event) => {
+                                                                                 if (event.isAutoRepeat) {
+                                                                                     event.accepted = true
+                                                                                     return
+                                                                                 }
+
+                                                                                 if (event.key === Qt.Key_Escape) {
+                                                                                     event.accepted = true
+                                                                                     shortcutDialog.close()
+                                                                                     return
+                                                                                 }
+
+                                                                                 root.setSettingValue(settingData, event.key)
+                                                                                 event.accepted = true
+                                                                                 shortcutDialog.close()
+                                                                             }
+
+                                                                             Component.onCompleted: forceActiveFocus()
+                                                                         }
+
+                                                                         MouseArea {
+                                                                             anchors.fill: parent
+                                                                             acceptedButtons: Qt.AllButtons
+
+                                                                             onWheel: (wheel) => {
+                                                                                 wheel.accepted = true
+
+                                                                                 if (!root.assignWheelShortcut(settingData, wheel.angleDelta.y)) {
+                                                                                     return
+                                                                                 }
+
+                                                                                 shortcutDialog.close()
+                                                                             }
+
+                                                                             onPressed: (mouse) => {
+                                                                                 mouse.accepted = true
+
+                                                                                 if (!root.isAssignableMouseButton(mouse.button)) {
+                                                                                     return
+                                                                                 }
+
+                                                                                 root.setSettingValue(settingData, root.mouseButtonToShortcut(mouse.button))
+                                                                                 shortcutDialog.close()
+                                                                             }
+                                                                         }
+                                                                     }
+                                                                 }
+                                                             }
+                                                         }
+                                                     }
 
                                                 }
 
@@ -573,13 +1244,78 @@ Item {
                                                         QGCComboBox {
                                                             Layout.alignment: Qt.AlignTop
                                                             Layout.preferredWidth: root.controlColumnWidth
-                                                            model: root.optionLabels(settingData.options ? settingData.options : [])
+                                                            model: root.optionLabels(root.settingOptions(settingData))
                                                             currentIndex: root.dropdownCurrentIndex(settingData)
 
                                                             onActivated: root.setDropdownSettingValue(settingData, currentIndex)
                                                         }
                                                     }
                                                 }
+
+                                                Component {
+                                                    id: buttonComponent
+
+                                                    RowLayout {
+                                                        width: settingControlLoader.width
+                                                        spacing: root.settingColumnSpacing
+
+                                                        ColumnLayout {
+                                                            Layout.fillWidth: true
+                                                            Layout.preferredWidth: root.labelColumnWidth
+                                                            spacing: 0
+
+                                                            QGCLabel {
+                                                                Layout.fillWidth: true
+                                                                text: root.settingLabel(settingData)
+                                                                wrapMode: Text.WordWrap
+                                                            }
+                                                        }
+
+                                                         RowLayout {
+                                                             Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                                                             spacing: ScreenTools.defaultFontPixelWidth * 0.6
+
+                                                             Rectangle {
+                                                                 Layout.alignment: Qt.AlignVCenter
+                                                                 Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.55
+                                                                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.55
+                                                                 radius: width / 2
+                                                                 color: "#47c266"
+                                                                 visible: settingData.buttonRole === 'connectToggle' && root.networkConnectionActive
+
+                                                                 SequentialAnimation on opacity {
+                                                                     running: parent.visible
+                                                                     loops: Animation.Infinite
+
+                                                                     NumberAnimation {
+                                                                         from: 0.35
+                                                                         to: 1
+                                                                         duration: 650
+                                                                         easing.type: Easing.InOutQuad
+                                                                     }
+
+                                                                     NumberAnimation {
+                                                                         from: 1
+                                                                         to: 0.35
+                                                                         duration: 650
+                                                                         easing.type: Easing.InOutQuad
+                                                                     }
+                                                                 }
+                                                             }
+
+                                                             QGCButton {
+                                                                 Layout.alignment: Qt.AlignLeft
+                                                                 Layout.preferredWidth: root.isNetworkActionButton(settingData) ? implicitWidth : root.controlColumnWidth
+                                                                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.6
+                                                                 heightFactor: 0.35
+                                                                 text: root.buttonText(settingData)
+                                                                 horizontalAlignment: Text.AlignLeft
+
+                                                                 onClicked: root.handleButtonClick(settingData)
+                                                              }
+                                                         }
+                                                     }
+                                                 }
 
                                                 Component {
                                                     id: sliderComponent

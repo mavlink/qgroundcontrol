@@ -102,6 +102,11 @@ Item {
                 return
             }
 
+            if (id === "photo") {
+                SVState.takePhoto()
+                return
+            }
+
             if (id === "record") {
                 SVState.toggleRecord()
                 return

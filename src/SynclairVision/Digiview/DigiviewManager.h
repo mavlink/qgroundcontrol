@@ -23,8 +23,8 @@ class DigiviewManager : public QObject
 public:
     // Defaults match QGC's normal GCS MAVLink identity. senderSystemId falls back to
     // 255 when MAVLinkProtocol is not available during startup.
-    static constexpr uint8_t kDefaultSenderSystemId = 255;
-    static constexpr uint8_t kDefaultSenderComponentId = MAV_COMP_ID_MISSIONPLANNER;
+    static constexpr uint8_t kDefaultSenderSystemId = 252;
+    static constexpr uint8_t kDefaultSenderComponentId = 69;//MAV_COMP_ID_MISSIONPLANNER;
 
     explicit DigiviewManager(QObject* parent = nullptr);
     ~DigiviewManager() override;

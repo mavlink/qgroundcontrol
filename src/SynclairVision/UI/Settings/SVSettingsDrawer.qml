@@ -130,7 +130,7 @@ Item {
 
                             ShapePath {
                                 strokeWidth: 1
-                                strokeColor: qgcPalette.text
+                                strokeColor: qgcPalette.windowShadeLight
                                 fillColor: "transparent"
                                 startX: 0
                                 startY: 0

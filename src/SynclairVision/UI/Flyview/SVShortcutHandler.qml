@@ -70,6 +70,10 @@ Item {
             SVState.toggleRecord()
             break
 
+        case SVSettings.shortcutPhoto:
+            SVState.takePhoto()
+            break
+
         case SVSettings.shortcutLockControls:
             SVState.toggleLockControls()
             break
