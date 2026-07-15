@@ -12,6 +12,7 @@ private slots:
     void _setRawValueDouble_test();
     void _setRawValueString_test();
     void _setCookedValueWithTranslator_test();
+    void _rawToCooked_test();
     void _validateValid_test();
     void _validateInvalid_test();
     void _validateConvertOnly_test();

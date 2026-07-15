@@ -17,7 +17,7 @@
     "name":             "EntranceAltitude",
     "shortDesc": "Vehicle will fly to/from the structure at this altitude.",
     "type":             "double",
-    "units":            "m",
+    "units":            "vertical m",
     "decimalPlaces":    1,
     "default":     50
 },
@@ -25,7 +25,7 @@
     "name":             "ScanBottomAlt",
     "shortDesc": "Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.",
     "type":             "double",
-    "units":            "m",
+    "units":            "vertical m",
     "decimalPlaces":    1,
     "default":     50
 },
@@ -41,7 +41,7 @@
     "shortDesc": "Height of structure being scanned.",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "m",
+    "units":            "vertical m",
     "min":              1,
     "default":     100
 },

@@ -196,13 +196,12 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Abort Alt",
-                "units":            "m",
+                "units":            "vertical m",
                 "default":          0,
                 "decimalPlaces":    2
             },
             "param2": {
                 "label":            "Precision Land",
-                "units":            "m",
                 "enumStrings":      "Disabled,Opportunistic,Required",
                 "enumValues":       "0,1,2",
                 "default":          0,
@@ -345,7 +344,6 @@
             "category":             "Basic",
             "param2": {
                 "label":            "Transition Heading",
-                "units":            "m",
                 "enumStrings":      "Default,Next waypoint,Takeoff,Specified,Any",
                 "enumValues":       "0,1,2,3,4",
                 "default":          0,
@@ -373,7 +371,7 @@
             "category":             "Basic",
             "param3": {
                 "label":            "Approach Alt",
-                "units":            "m",
+                "units":            "vertical m",
                 "nanUnchanged":     true,
                 "default":          null,
                 "decimalPlaces":    2,
@@ -477,7 +475,7 @@
             },
             "param7": {
                 "label":            "Target",
-                "units":            "m",
+                "units":            "vertical m",
                 "default":          100,
                 "decimalPlaces":    2,
                 "userMin":          0,
@@ -1179,12 +1177,12 @@
             "param2": {
                 "label":            "Min Alt",
                 "default":          25,
-                "units":            "m",
+                "units":            "vertical m",
                 "decimalPlaces":    2
             },
             "param3": {
                 "label":            "Max Alt",
-                "units":            "m",
+                "units":            "vertical m",
                 "default":          100,
                 "decimalPlaces":    2
             },

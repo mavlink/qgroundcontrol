@@ -59,6 +59,22 @@ void FactTest::_setCookedValueWithTranslator_test()
     QCOMPARE_FUZZY(fact.cookedValue().toDouble(), 180.0, 1e-5);
 }
 
+void FactTest::_rawToCooked_test()
+{
+    // Converts an arbitrary raw value through the fact's own translator
+    Fact fact(0, "RadParam", FactMetaData::valueTypeDouble);
+
+    auto *meta = fact.metaData();
+    QVERIFY(meta);
+    meta->setRawUnits("radians");
+
+    QCOMPARE_FUZZY(fact.rawToCooked(QVariant(M_PI)).toDouble(), 180.0, 1e-5);
+
+    // Default identity translator - value passes through unchanged
+    Fact plainFact(0, "PlainParam", FactMetaData::valueTypeDouble);
+    QCOMPARE(plainFact.rawToCooked(QVariant(42.0)).toDouble(), 42.0);
+}
+
 void FactTest::_validateValid_test()
 {
     Fact fact(0, "IntParam", FactMetaData::valueTypeInt32);

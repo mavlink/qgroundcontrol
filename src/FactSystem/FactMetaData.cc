@@ -956,6 +956,12 @@ void FactMetaData::_setAppSettingsTranslators()
             }
         }
     }
+
+    // "vertical m" is an artificial lookup unit - never show it to the user. Checking _cookedUnits
+    // rather than _rawUnits ensures a successful translation above is never overwritten.
+    if (_cookedUnits.compare(QStringLiteral("vertical m"), Qt::CaseInsensitive) == 0) {
+        _cookedUnits = QStringLiteral("m");
+    }
 }
 
 const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsUnitsTranslation(const QString &rawUnits, UnitTypes type)

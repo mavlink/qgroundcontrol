@@ -21,7 +21,8 @@ Node {
     property double pitch: vehicle ? finiteOr(vehicle.pitch.value, 0) : 0
     property double pose_x: finiteOr(geo2Enu.localCoordinate.x, 0) * 10
     property double pose_y: finiteOr(geo2Enu.localCoordinate.y, 0) * 10
-    property double pose_z: (finiteOr((vehicle ? vehicle.altitudeRelative.value : 0), 0) + altitudeBias) * 10
+    // Scene coordinates are meters - use rawValue since cooked value follows the user's units setting
+    property double pose_z: (finiteOr((vehicle ? vehicle.altitudeRelative.rawValue : 0), 0) + altitudeBias) * 10
     property double roll: vehicle ? finiteOr(vehicle.roll.value, 0) : 0
     property var vehicle
 
