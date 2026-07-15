@@ -261,6 +261,14 @@ void GCSControlManager::handleCommandRequestOperatorControl(const mavlink_messag
         return;
     }
 
+    // Within our own takeover-allowed window (we just approved a request and the revert timer
+    // is running) the vehicle grants any takeover without asking, so a repeated or crossed
+    // request must not re-prompt the operator for consent they already gave.
+    if (_timerRevertAllowTakeover.isActive()) {
+        qCDebug(GCSControlManagerLog) << "Suppressing takeover prompt: takeover already allowed (revert timer active)";
+        return;
+    }
+
     // The takeover popup is bound to the active vehicle only, so a request arriving on a
     // non-active vehicle would otherwise be ACKed and silently dropped. Surface it at the app
     // level so the operator knows to switch to that vehicle to respond.
