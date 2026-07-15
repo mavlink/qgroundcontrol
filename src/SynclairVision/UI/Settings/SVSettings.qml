@@ -1,11 +1,84 @@
 pragma Singleton
 import QtQuick
+import QtCore
 
 QtObject {
     id: root
 
     readonly property int scrollUp: -1001
     readonly property int scrollDown: -1002
+
+    property var persistedSettings: Settings {
+        category: "SynclairVisionSettings"
+
+        property alias videoResolutionWidth: root.videoResolutionWidth
+        property alias videoResolutionHeight: root.videoResolutionHeight
+        property alias videoFps: root.videoFps
+        property alias videoTargetBrightness: root.videoTargetBrightness
+        property alias recordHighlight: root.recordHighlight
+        property alias recordInformationBox: root.recordInformationBox
+
+        property alias networkIPAdress: root.networkIPAdress
+        property alias networkProfiles: root.networkProfiles
+        property alias networkSelectedProfileIndex: root.networkSelectedProfileIndex
+        property alias networkAutoconnectOnStart: root.networkAutoconnectOnStart
+        property alias calibrationCommand: root.calibrationCommand
+        property alias calibrationActive: root.calibrationActive
+
+        property alias controlPanel: root.controlPanel
+        property alias controlPanelPosition: root.controlPanelPosition
+        property alias controlPanelInteraction: root.controlPanelInteraction
+        property alias controlPanelPassiveOpacity: root.controlPanelPassiveOpacity
+        property alias controlPanelPassiveOpacityValue: root.controlPanelPassiveOpacityValue
+        property alias joystickType: root.joystickType
+        property alias joystickSize: root.joystickSize
+        property alias joystickSensitivity: root.joystickSensitivity
+        property alias joystickDeadzone: root.joystickDeadzone
+        property alias joystickInvertHorizontal: root.joystickInvertHorizontal
+        property alias joystickInvertVertical: root.joystickInvertVertical
+        property alias joystickRatio: root.joystickRatio
+        property alias joystickKnobSize: root.joystickKnobSize
+        property alias zoomSize: root.zoomSize
+        property alias zoomSensitivity: root.zoomSensitivity
+
+        property alias shortcutPitchUp: root.shortcutPitchUp
+        property alias shortcutPitchDown: root.shortcutPitchDown
+        property alias shortcutJawLeft: root.shortcutJawLeft
+        property alias shortcutJawRight: root.shortcutJawRight
+        property alias shortcutZoomIn: root.shortcutZoomIn
+        property alias shortcutZoomOut: root.shortcutZoomOut
+        property alias shortcutSmallMovement: root.shortcutSmallMovement
+        property alias shortcutSynclair: root.shortcutSynclair
+        property alias shortcutHUD: root.shortcutHUD
+        property alias shortcutToolbar: root.shortcutToolbar
+        property alias shortcutLayout: root.shortcutLayout
+        property alias shortcutLockControls: root.shortcutLockControls
+        property alias shortcutPhoto: root.shortcutPhoto
+        property alias shortcutRecord: root.shortcutRecord
+        property alias shortcutCamera1: root.shortcutCamera1
+        property alias shortcutCamera2: root.shortcutCamera2
+        property alias shortcutCamera3: root.shortcutCamera3
+        property alias shortcutCamera4: root.shortcutCamera4
+        property alias shortcutCamera5: root.shortcutCamera5
+        property alias shortcutNextCamera: root.shortcutNextCamera
+        property alias shortcutDeselectCamera: root.shortcutDeselectCamera
+
+        property alias aiDetectionOverlay: root.aiDetectionOverlay
+        property alias aiSortingMode: root.aiSortingMode
+        property alias aiCropConfidenceTreshold: root.aiCropConfidenceTreshold
+        property alias aiScanConfidenceTreshold: root.aiScanConfidenceTreshold
+        property alias aiCreationScoreScale: root.aiCreationScoreScale
+        property alias aiBonusDetectionScale: root.aiBonusDetectionScale
+        property alias aiBonusRedetectionScale: root.aiBonusRedetectionScale
+        property alias aiMissedDetectionPenaltyScale: root.aiMissedDetectionPenaltyScale
+        property alias aiMissedRedetectionPenaltyScale: root.aiMissedRedetectionPenaltyScale
+        property alias aiCropBoxOverlay: root.aiCropBoxOverlay
+        property alias aiVarBoxOverlap: root.aiVarBoxOverlap
+        property alias cameraMinimalExposure: root.cameraMinimalExposure
+        property alias cameraMaximalExposure: root.cameraMaximalExposure
+        property alias cameraMinimalGain: root.cameraMinimalGain
+        property alias cameraMaximalGain: root.cameraMaximalGain
+    }
 
 //---------------------------------
 // General
@@ -20,8 +93,192 @@ QtObject {
         property bool recordInformationBox: true
 
     //Network
-        property string networkIPAdress: "127.0.0.1"
-        property bool networkConnected: true
+        readonly property string defaultNetworkProfileStreamName: "stream"
+        property string networkIPAdress: "192.168.4.60"
+        property var networkProfiles: [
+            {
+                name: "Digiview 60",
+                host: "192.168.4.60",
+                port: 14570,
+                videoPort: 8556,
+                listenPort: 14571,
+                streamName: defaultNetworkProfileStreamName
+            },
+            {
+                name: "Digiview 126",
+                host: "192.168.4.126",
+                port: 14570,
+                videoPort: 8556,
+                listenPort: 14571,
+                streamName: defaultNetworkProfileStreamName
+            }
+        ]
+        property int networkSelectedProfileIndex: 0
+        property bool networkAutoconnectOnStart: false
+
+        function networkProfileText(value) {
+            if (value === undefined || value === null) {
+                return ''
+            }
+
+            return value.toString().trim()
+        }
+
+        function networkProfilePort(value, fallbackValue) {
+            const parsedPort = parseInt(networkProfileText(value), 10)
+
+            return isNaN(parsedPort) ? fallbackValue : parsedPort
+        }
+
+        function networkProfileStreamName(value, fallbackValue) {
+            if (value === undefined || value === null) {
+                const fallbackStreamName = networkProfileText(fallbackValue)
+
+                return fallbackStreamName !== '' ? fallbackStreamName : defaultNetworkProfileStreamName
+            }
+
+            const streamName = networkProfileText(value)
+
+            if (streamName !== '') {
+                return streamName
+            }
+
+            return defaultNetworkProfileStreamName
+        }
+
+        function normalizeNetworkProfile(profileData, fallbackProfile) {
+            const defaultProfile = fallbackProfile ? fallbackProfile : {}
+            const profiles = networkProfiles ? networkProfiles : []
+            const fallbackName = networkProfileText(defaultProfile.name) !== ''
+                ? networkProfileText(defaultProfile.name)
+                : 'Profile ' + (profiles.length + 1)
+            const fallbackHost = networkProfileText(defaultProfile.host) !== ''
+                ? networkProfileText(defaultProfile.host)
+                : networkIPAdress
+
+            return {
+                name: networkProfileText(profileData && profileData.name) || fallbackName,
+                host: networkProfileText(profileData && profileData.host) || fallbackHost,
+                port: networkProfilePort(profileData && profileData.port, defaultProfile.port !== undefined ? defaultProfile.port : 14570),
+                videoPort: networkProfilePort(profileData && profileData.videoPort, defaultProfile.videoPort !== undefined ? defaultProfile.videoPort : 5600),
+                listenPort: networkProfilePort(profileData && profileData.listenPort, defaultProfile.listenPort !== undefined ? defaultProfile.listenPort : 14571),
+                streamName: networkProfileStreamName(profileData && profileData.streamName, defaultProfile.streamName)
+            }
+        }
+
+        function setNetworkProfiles(profiles, selectedProfileIndex) {
+            const normalizedProfiles = []
+
+            for (let index = 0; index < profiles.length; index++) {
+                normalizedProfiles.push(normalizeNetworkProfile(profiles[index], profiles[index]))
+            }
+
+            networkProfiles = normalizedProfiles
+
+            if (normalizedProfiles.length === 0) {
+                networkSelectedProfileIndex = -1
+                syncSelectedNetworkProfileState()
+                return
+            }
+
+            if (selectedProfileIndex === undefined || selectedProfileIndex < 0) {
+                networkSelectedProfileIndex = 0
+                syncSelectedNetworkProfileState()
+                return
+            }
+
+            networkSelectedProfileIndex = Math.min(selectedProfileIndex, normalizedProfiles.length - 1)
+            syncSelectedNetworkProfileState()
+        }
+
+        function updateNetworkProfile(profileData, profileIndex) {
+            const profiles = networkProfiles ? networkProfiles.slice() : []
+            const targetIndex = profileIndex === undefined ? networkSelectedProfileIndex : profileIndex
+
+            if (targetIndex < 0 || targetIndex >= profiles.length) {
+                return false
+            }
+
+            profiles[targetIndex] = normalizeNetworkProfile(profileData, profiles[targetIndex])
+            setNetworkProfiles(profiles, targetIndex)
+
+            return true
+        }
+
+        function appendNetworkProfile(profileData) {
+            const profiles = networkProfiles ? networkProfiles.slice() : []
+
+            profiles.push(normalizeNetworkProfile(profileData, null))
+            setNetworkProfiles(profiles, profiles.length - 1)
+
+            return true
+        }
+
+        function deleteNetworkProfile(profileIndex) {
+            const profiles = networkProfiles ? networkProfiles.slice() : []
+            const targetIndex = profileIndex === undefined ? networkSelectedProfileIndex : profileIndex
+
+            if (targetIndex < 0 || targetIndex >= profiles.length) {
+                return false
+            }
+
+            profiles.splice(targetIndex, 1)
+            setNetworkProfiles(profiles, profiles.length === 0 ? -1 : Math.min(targetIndex, profiles.length - 1))
+
+            return true
+        }
+
+        function selectedNetworkProfile() {
+            const profiles = networkProfiles ? networkProfiles : []
+
+            if (networkSelectedProfileIndex < 0 || networkSelectedProfileIndex >= profiles.length) {
+                return null
+            }
+
+            return profiles[networkSelectedProfileIndex]
+        }
+
+        function syncSelectedNetworkProfileState() {
+            const profile = selectedNetworkProfile()
+            const nextHost = profile && profile.host !== undefined
+                ? networkProfileText(profile.host)
+                : ''
+
+            if (networkIPAdress !== nextHost) {
+                networkIPAdress = nextHost
+            }
+
+            return profile
+        }
+
+        function applySelectedNetworkProfile(digiview) {
+            const profile = syncSelectedNetworkProfileState()
+
+            if (!profile || !digiview) {
+                return false
+            }
+
+            const host = networkProfileText(profile.host)
+
+            if (host !== '') {
+                digiview.host = host
+            }
+
+            if (profile.port !== undefined) {
+                digiview.port = networkProfilePort(profile.port, digiview.port)
+            }
+
+            if (profile.listenPort !== undefined) {
+                digiview.listenPort = networkProfilePort(profile.listenPort, digiview.listenPort)
+            }
+
+            return true
+        }
+
+        onNetworkProfilesChanged: syncSelectedNetworkProfileState()
+        onNetworkSelectedProfileIndexChanged: syncSelectedNetworkProfileState()
+
+        Component.onCompleted: setNetworkProfiles(networkProfiles ? networkProfiles.slice() : [], networkSelectedProfileIndex)
 
     //Calibration
         property string calibrationCommand: "test"

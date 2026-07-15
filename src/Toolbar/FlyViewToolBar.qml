@@ -156,6 +156,7 @@ Item {
                     anchors.right: flyViewIndicators.right
                     anchors.rightMargin: _margins * 2
                     anchors.verticalCenter: parent.verticalCenter
+                    visible: mapControl.pipState.state !== mapControl.pipState.fullState
                 }
                 
             }

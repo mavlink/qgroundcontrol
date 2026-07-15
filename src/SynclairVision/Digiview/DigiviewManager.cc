@@ -7,7 +7,6 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>
-#include <QtCore/QTimer>
 
 #include <cstring>
 #include <limits>
@@ -82,7 +81,6 @@ DigiviewManager::DigiviewManager(QObject* parent)
         connect(qApp, &QCoreApplication::aboutToQuit, this, &DigiviewManager::disconnectFromHost, Qt::QueuedConnection);
     }
 
-    QTimer::singleShot(0, this, &DigiviewManager::connectToHost);
 }
 
 DigiviewManager::~DigiviewManager()

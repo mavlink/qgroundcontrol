@@ -45,15 +45,16 @@ qt_add_qml_module(SynclairVisionUIModule
         Resources/SVUnits.qml
         
         Settings/SVSettingsMenu.qml
-        Settings/SVSettingsShortcut.qml
         Settings/SVSettingsGeneral.js
         Settings/SVSettingsControls.js
         Settings/SVSettingsShortcuts.js
         Settings/SVSettingsDev.js
 
         Resources/SVArrow.qml
+        Resources/SVBorder.qml
 
     RESOURCES
+        Resources/Images/halftone_texture_2.png
         Resources/Images/no-video-camera-background.png
         Resources/Images/no_video_background.png
         
@@ -81,6 +82,9 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_general.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_controls.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_dev.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_shortcut.svg"
+
+
 
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/toolbar_open.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/toolbar_closed.svg"
