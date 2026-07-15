@@ -183,6 +183,7 @@
             "shortDesc": "Fixed altitude for operator location when not using live GNSS.",
             "longDesc": "Fixed Altitude to send on SYSTEM message",
             "type": "double",
+            "units": "vertical m",
             "decimalPlaces": 7,
             "default": 0,
             "label": "Altitude Fixed",

@@ -22,7 +22,7 @@
     "shortDesc": "Z",
     "type":             "double",
     "decimalPlaces":    1,
-    "units":            "m"
+    "units":            "vertical m"
 },
 {
     "name":             "vx",

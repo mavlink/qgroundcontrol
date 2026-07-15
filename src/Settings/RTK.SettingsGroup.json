@@ -80,7 +80,7 @@
             "longDesc": "Defines the altitude of the fixed RTK base position.",
             "type": "float",
             "default": 0,
-            "units": "m",
+            "units": "vertical m",
             "decimalPlaces": 2,
             "qgcRebootRequired": true,
             "label": "Base Position Alt (WGS84)"

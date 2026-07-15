@@ -72,7 +72,7 @@
     "name":             "OffsetUp",
     "shortDesc":        "Up offset",
     "type":             "double",
-    "units":            "m",
+    "units":            "vertical m",
     "default":          0,
     "decimalPlaces":    2
 },
