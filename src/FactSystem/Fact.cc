@@ -234,6 +234,16 @@ QVariant Fact::cookedValue() const
     return _rawValue;
 }
 
+QVariant Fact::rawToCooked(const QVariant &rawValue) const
+{
+    if (_metaData) {
+        return _metaData->rawTranslator()(rawValue);
+    }
+
+    qCWarning(FactLog) << kMissingMetadata << name();
+    return rawValue;
+}
+
 QString Fact::enumStringValue()
 {
     if (_metaData) {

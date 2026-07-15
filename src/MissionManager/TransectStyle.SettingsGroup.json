@@ -45,7 +45,7 @@
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
-    "units":            "m",
+    "units":            "vertical m",
     "default":     10
 },
 {

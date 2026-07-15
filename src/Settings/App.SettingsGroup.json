@@ -112,7 +112,7 @@
             "type": "double",
             "default": 50.0,
             "min": 0.0,
-            "units": "m",
+            "units": "vertical m",
             "decimalPlaces": 1,
             "userMin": 0.0,
             "userMax": 121.92,

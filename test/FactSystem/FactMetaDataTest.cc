@@ -2,12 +2,15 @@
 
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QtNumeric>
 
 #include <cmath>
 #include <limits>
 
 #include "FactMetaData.h"
+#include "SettingsManager.h"
+#include "UnitsSettings.h"
 
 void FactMetaDataTest::_stringToTypeRoundTrip_test()
 {
@@ -306,6 +309,35 @@ void FactMetaDataTest::_builtInTranslatorNorm_test()
 
     const QVariant cooked = meta.rawTranslator()(QVariant(0.5));
     QCOMPARE_FUZZY(cooked.toDouble(), 50.0, 1e-5);
+}
+
+void FactMetaDataTest::_verticalMetersUnitsIntType_test()
+{
+    // "vertical m" is an artificial lookup unit. Int types don't get app settings
+    // translators, but the artificial unit string must never be shown to the user.
+    FactMetaData meta(FactMetaData::valueTypeInt32);
+    meta.setRawUnits("vertical m");
+
+    QCOMPARE(meta.cookedUnits(), QStringLiteral("m"));
+}
+
+void FactMetaDataTest::_verticalMetersUnitsFeetTranslation_test()
+{
+    // With vertical distance units set to feet, a double fact must translate to "ft"
+    // and the artificial-unit fallback must not clobber the translated units
+    Fact *const vertUnitsFact = SettingsManager::instance()->unitsSettings()->verticalDistanceUnits();
+    const QVariant savedUnits = vertUnitsFact->rawValue();
+    const auto restoreUnits = qScopeGuard([vertUnitsFact, savedUnits] {
+        vertUnitsFact->setRawValue(savedUnits);
+    });
+    vertUnitsFact->setRawValue(UnitsSettings::VerticalDistanceUnitsFeet);
+
+    FactMetaData meta(FactMetaData::valueTypeDouble);
+    meta.setRawUnits("vertical m");
+
+    QCOMPARE(meta.cookedUnits(), QStringLiteral("ft"));
+    QCOMPARE_FUZZY(meta.rawTranslator()(QVariant(1.0)).toDouble(), 3.28084, 1e-4);
+    QCOMPARE_FUZZY(meta.cookedTranslator()(QVariant(3.28084)).toDouble(), 1.0, 1e-4);
 }
 
 void FactMetaDataTest::_setMinMax_test()

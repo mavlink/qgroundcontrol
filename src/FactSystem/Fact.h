@@ -83,6 +83,10 @@ public:
     /// Convert and clamp value
     Q_INVOKABLE QVariant clamp(const QString &cookedValue);
     QVariant cookedValue() const; /// Value after translation
+    /// Converts an arbitrary raw value to the cooked (user units) domain using this fact's own translator.
+    /// Use this instead of the QmlUnitsConversion helpers when mixing constants with Fact values so the
+    /// conversion always follows the fact's metadata.
+    Q_INVOKABLE QVariant rawToCooked(const QVariant &rawValue) const;
     QVariant rawValue() const
     {
         QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);

@@ -6,7 +6,7 @@
             "name": "guidedMinimumAltitude",
             "shortDesc": "Minimum altitude allowed for guided mode actions like takeoff and altitude changes.",
             "type": "double",
-            "units": "m",
+            "units": "vertical m",
             "default": 2,
             "label": "Minimum Altitude",
             "keywords": "altitude,guided,minimum"
@@ -15,7 +15,7 @@
             "name": "guidedMaximumAltitude",
             "shortDesc": "Maximum altitude allowed for guided mode actions like takeoff and altitude changes.",
             "type": "double",
-            "units": "m",
+            "units": "vertical m",
             "default": 121.92,
             "label": "Maximum Altitude",
             "keywords": "altitude,guided,maximum"
