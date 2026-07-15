@@ -330,8 +330,9 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel
         vehicle->defaultComponentId(),
         MAV_CMD_NAV_TAKEOFF,
         true,                                   // show error is fails
-        -1,                                     // No pitch requested
-        0, 0,                                   // param 2-4 unused
+        NAN,                                    // No pitch requested
+        NAN,                                    // param 2 unused
+        0,                                      // param 3 takeoff flags
         NAN, NAN, NAN,                          // No yaw, lat, lon
         static_cast<float>(takeoffAltAMSL));    // AMSL altitude
 }
