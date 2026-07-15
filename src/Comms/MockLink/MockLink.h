@@ -99,6 +99,8 @@ public:
     void clearReceivedMavCommandCounts() { _receivedMavCommandCountMap.clear(); _receivedMavCommandByCompCountMap.clear(); _receivedRequestMessageByCompAndMsgCountMap.clear(); }
     int receivedMavCommandCount(MAV_CMD command) const { return _receivedMavCommandCountMap.value(command, 0); }
     int receivedMavCommandCount(MAV_CMD command, int compId) const { return _receivedMavCommandByCompCountMap.value(command).value(compId, 0); }
+    /// Result acked for MAV_CMD_REQUEST_OPERATOR_CONTROL (defaults to MAV_RESULT_UNSUPPORTED: not implemented)
+    void setRequestOperatorControlResult(MAV_RESULT result) { _requestOperatorControlResult = result; }
     int receivedRequestMessageCount(int compId, int messageId) const { return _receivedRequestMessageByCompAndMsgCountMap.value(compId).value(messageId, 0); }
     void clearReceivedRequestMessageCounts() { _receivedRequestMessageCountMap.clear(); _receivedRequestMessageByCompAndMsgCountMap.clear(); }
     int receivedRequestMessageCount(uint32_t messageId) const { return _receivedRequestMessageCountMap.value(messageId, 0); }
@@ -384,6 +386,7 @@ private:
     bool _paramRequestReadFailureFirstAttemptPending = false;
     bool _hashCheckNoResponse = false;
     int _hashCheckRequestCount = 0;
+    MAV_RESULT _requestOperatorControlResult = MAV_RESULT_UNSUPPORTED;
     bool _paramRequestListHashCheckSent = false;
     bool _resetSysAutostartOnParamReset = false;
 

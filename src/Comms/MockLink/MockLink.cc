@@ -1733,6 +1733,10 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         _handleTakeoff(request);
         commandResult = MAV_RESULT_ACCEPTED;
         break;
+    case MAV_CMD_REQUEST_OPERATOR_CONTROL:
+        // Result is settable so tests can exercise the pending (FAILED) vs rejected paths
+        commandResult = _requestOperatorControlResult;
+        break;
     case MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED:
         // Test command which always returns MAV_RESULT_ACCEPTED
         commandResult = MAV_RESULT_ACCEPTED;
