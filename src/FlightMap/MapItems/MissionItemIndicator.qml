@@ -37,6 +37,7 @@ MapQuickItem {
 
     anchorPoint.x:  sourceItem.anchorPointX
     anchorPoint.y:  sourceItem.anchorPointY
+    autoFadeIn:     false
     z:              QGroundControl.zOrderMapItems + (_isCurrentItem ? 1 : 0)
     visible:        indicatorVisible && _isGroupRepresentative
 
