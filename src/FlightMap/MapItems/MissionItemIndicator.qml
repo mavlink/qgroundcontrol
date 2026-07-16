@@ -40,6 +40,7 @@ MapQuickItem {
 
     anchorPoint.x:  sourceItem.anchorPointX
     anchorPoint.y:  sourceItem.anchorPointY
+    autoFadeIn:     false
     z:              QGroundControl.zOrderMapItems + (_isCurrentItem ? 0.5 : 0) // Show current item above other indicators, but below controls
     visible:        indicatorVisible && _isGroupRepresentative
 
