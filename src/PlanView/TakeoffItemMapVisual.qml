@@ -98,7 +98,7 @@ Item {
 
         MissionItemIndicator {
             coordinate:     _missionItem.specifiesCoordinate ? _missionItem.coordinate : _missionItem.launchCoordinate
-            z:              QGroundControl.zOrderMapItems
+            z:              QGroundControl.zOrderMapItems + (_missionItem.isCurrentItem || _missionItem.hasCurrentChildItem ? 1 : 0)
             missionItem:    _missionItem
             sequenceNumber: _missionItem.sequenceNumber
             onClicked:      _root.clicked(_missionItem.sequenceNumber)
