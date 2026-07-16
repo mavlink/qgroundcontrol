@@ -237,6 +237,74 @@ bool QmlUITestBase::clickButton(const QString &objectName)
     return true;
 }
 
+bool QmlUITestBase::clickItemFraction(const QString &objectName, qreal fractionX, qreal fractionY)
+{
+    // Fail loudly on nonsense fractions rather than silently clicking outside
+    // the item (which would surface as an unrelated failure later in the test)
+    if (!qIsFinite(fractionX) || !qIsFinite(fractionY)
+        || (fractionX < 0) || (fractionX > 1) || (fractionY < 0) || (fractionY > 1)) {
+        QTest::qFail(qPrintable(QStringLiteral("clickItemFraction: fractions out of [0,1]: (%1, %2)")
+                                    .arg(fractionX).arg(fractionY)),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    QQuickItem *item = findVisibleItem(_rootItem, objectName);
+    if (!item) {
+        return false;
+    }
+    const QPointF scenePos = item->mapToScene(QPointF(item->width() * fractionX, item->height() * fractionY));
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, scenePos.toPoint());
+    return true;
+}
+
+QQuickItem *QmlUITestBase::findVisibleItemScrolled(const QString &objectName, const QString &flickableObjectName)
+{
+    // Fast path: delegate already instantiated somewhere in the visual tree
+    QQuickItem *item = findVisibleItem(_rootItem, objectName, 500);
+    if (item) {
+        scrollIntoView(item, flickableObjectName);
+        return item;
+    }
+
+    QQuickItem *flickable = findVisibleItem(_rootItem, flickableObjectName);
+    if (!flickable) {
+        return nullptr;
+    }
+
+    // Virtualized delegates only exist for rows near the viewport. Step the
+    // flickable through its content range to force the target row to instantiate.
+    const double viewportHeight = flickable->height();
+    if (viewportHeight <= 0) {
+        return nullptr; // not laid out yet: stepping cannot advance
+    }
+    // Iteration cap guards against content that grows as delegates instantiate
+    constexpr int kMaxScrollSteps = 100;
+    double y = 0;
+    for (int step = 0; step < kMaxScrollSteps; step++, y += viewportHeight) {
+        const double maxContentY =
+            qMax(0.0, flickable->property("contentHeight").toDouble() - viewportHeight);
+        const double clampedY = qMin(y, maxContentY);
+        flickable->setProperty("contentY", clampedY);
+        item = findVisibleItem(_rootItem, objectName, 100);
+        if (item) {
+            scrollIntoView(item, flickableObjectName);
+            return item;
+        }
+        if (clampedY >= maxContentY) {
+            break;
+        }
+    }
+    return nullptr;
+}
+
+bool QmlUITestBase::clickButtonScrolled(const QString &objectName, const QString &flickableObjectName)
+{
+    if (!findVisibleItemScrolled(objectName, flickableObjectName)) {
+        return false;
+    }
+    return clickButton(objectName);
+}
+
 bool QmlUITestBase::clickToolSelectDropdownButton(const QString &viewObjectName, int timeoutMs)
 {
     if (!clickButton(QStringLiteral("toolbar_qgcLogo"))) {
@@ -338,16 +406,22 @@ bool QmlUITestBase::_verifyItemProperty(const QString &objectName, const char *p
         return false;
     }
 
+    // Guard against the item being destroyed while waiting (e.g. view rebuilds)
+    const QPointer<QQuickItem> guardedItem(item);
+
     // State changes propagate through bindings; allow them to settle
     const bool matched = waitForCondition(
-        [item, propertyName, expectedValue] { return item->property(propertyName) == expectedValue; },
+        [guardedItem, propertyName, expectedValue] {
+            return guardedItem && (guardedItem->property(propertyName) == expectedValue);
+        },
         2000,
         QStringLiteral("%1 %2 == %3").arg(objectName, QLatin1String(propertyName), _displayValue(expectedValue)));
     if (!matched) {
         QTest::qFail(qPrintable(QStringLiteral("%1: %2 expected %3=%4 but was %5")
                                     .arg(context, objectName, QLatin1String(propertyName),
                                          _displayValue(expectedValue),
-                                         _displayValue(item->property(propertyName)))),
+                                         guardedItem ? _displayValue(guardedItem->property(propertyName))
+                                                     : QStringLiteral("<item destroyed>"))),
                      __FILE__, __LINE__);
         return false;
     }
@@ -357,6 +431,29 @@ bool QmlUITestBase::_verifyItemProperty(const QString &objectName, const char *p
 bool QmlUITestBase::verifyEnabled(const QString &objectName, bool expectedEnabled, const QString &context)
 {
     return _verifyItemProperty(objectName, "enabled", expectedEnabled, context);
+}
+
+bool QmlUITestBase::verifyProperty(const QString &objectName, const char *propertyName,
+                                   const QVariant &expectedValue, const QString &context)
+{
+    return _verifyItemProperty(objectName, propertyName, expectedValue, context);
+}
+
+bool QmlUITestBase::verifyVisibility(const QString &objectName, bool expectedVisible, const QString &context)
+{
+    const bool result = waitForCondition(
+        [this, objectName, expectedVisible] {
+            return (findVisibleItem(_rootItem, objectName, 0) != nullptr) == expectedVisible;
+        },
+        2000,
+        QStringLiteral("%1 %2").arg(objectName, expectedVisible ? QStringLiteral("visible") : QStringLiteral("absent")));
+    if (!result) {
+        QTest::qFail(qPrintable(QStringLiteral("%1: %2 expected %3")
+                                    .arg(context, objectName,
+                                         expectedVisible ? QStringLiteral("visible") : QStringLiteral("absent"))),
+                     __FILE__, __LINE__);
+    }
+    return result;
 }
 
 bool QmlUITestBase::verifyPrimary(const QString &objectName, bool expectedPrimary, const QString &context)
