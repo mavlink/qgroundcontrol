@@ -12,15 +12,18 @@ MapQuickItem {
     property var missionItem
     property int sequenceNumber
 
+    readonly property bool _isCurrentItem: missionItem ? missionItem.isCurrentItem || missionItem.hasCurrentChildItem : false
+
     signal clicked
 
     anchorPoint.x:  sourceItem.anchorPointX
     anchorPoint.y:  sourceItem.anchorPointY
+    z:              QGroundControl.zOrderMapItems + (_isCurrentItem ? 0.5 : 0) // Show current item above other indicators, but below controls
 
     sourceItem:
         MissionItemIndexLabel {
             id:                 _label
-            checked:            _isCurrentItem
+            checked:            _item._isCurrentItem
             label:              missionItem.abbreviation
             index:              missionItem.abbreviation.charAt(0) > 'A' && missionItem.abbreviation.charAt(0) < 'z' ? -1 : missionItem.sequenceNumber
             gimbalYaw:          missionItem.missionGimbalYaw
@@ -29,7 +32,5 @@ MapQuickItem {
             highlightSelected:  true
             onClicked:          _item.clicked()
             opacity:            _item.opacity
-
-            property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem || missionItem.hasCurrentChildItem : false
         }
 }
