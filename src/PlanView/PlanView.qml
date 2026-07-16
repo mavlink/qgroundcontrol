@@ -309,6 +309,16 @@ Item {
                 }
             }
 
+            MissionItemIndicatorGroup {
+                id: _missionItemIndicatorGroup
+
+                map: editorMap
+                missionItems: _root._missionController.visualItems
+                onItemSelected: (sequenceNumber) => {
+                    _root._missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
+                }
+            }
+
             // Add the mission item visuals to the map
             Repeater {
                 model: _missionController.visualItems
@@ -317,7 +327,10 @@ Item {
                     opacity: _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
                     interactive: _editingLayer == _layerMission
                     vehicle: _planMasterController.controllerVehicle
-                    onClicked: (sequenceNumber) => { _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false) }
+                    indicatorGroup: _missionItemIndicatorGroup
+                    onClicked: (sequenceNumber) => {
+                        _root._missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
+                    }
                 }
             }
 
