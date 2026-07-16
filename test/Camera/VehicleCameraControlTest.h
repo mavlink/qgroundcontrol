@@ -15,6 +15,7 @@ private slots:
     void cleanup() override;
 
     UT_PARAMETERIZED_TEST(_testCameraCapFlags);
+    void _testZoomTriggersCameraSettingsRequest();
 
 private:
     MockLink* _mockLink = nullptr;

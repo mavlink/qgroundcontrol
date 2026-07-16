@@ -350,10 +350,15 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
 
     case MAV_CMD_SET_CAMERA_ZOOM:
         if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM) {
-             cam->zoomLevel = request.param2;
-             qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom set to" << cam->zoomLevel;
+             // param2 is an absolute level only for ZOOM_TYPE_RANGE. For step/continuous
+             // zoom it is a direction, which this simple simulation does not model.
+             if (static_cast<int>(request.param1) == ZOOM_TYPE_RANGE) {
+                 cam->zoomLevel = request.param2;
+                 qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom set to" << cam->zoomLevel;
+             }
+             // Spec-minimal: CAMERA_SETTINGS is not broadcast after a zoom change.
+             // The GCS must re-request it (MAVLink camera protocol v2).
              _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-             _sendCameraSettings(targetCompId);
         } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
@@ -508,10 +513,12 @@ bool MockLinkCamera::_handleRequestMessage(const mavlink_command_long_t &request
     }
 
     default:
-        break;
+        // All commands addressed to a component must be acked, even unsupported ones.
+        // Without this the requester's command queue keeps the request pending, blocking
+        // further REQUEST_MESSAGE commands to this component.
+        _sendCommandAck(targetCompId, MAV_CMD_REQUEST_MESSAGE, MAV_RESULT_DENIED, msgId);
+        return true;
     }
-
-    return false;
 }
 
 void MockLinkCamera::_sendCameraInformation(uint8_t compId)
