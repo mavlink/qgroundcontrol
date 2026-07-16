@@ -78,6 +78,21 @@ protected:
     /// Returns false if the item cannot be found.
     bool clickButton(const QString &objectName);
 
+    /// Click the visible QQuickItem with \a objectName at a fractional position
+    /// within the item ((0.5, 0.5) is the center). Returns false if the item
+    /// cannot be found.
+    bool clickItemFraction(const QString &objectName, qreal fractionX, qreal fractionY);
+
+    /// Find an item that may live in a virtualized view (ListView/TableView/
+    /// TreeView) inside the flickable with \a flickableObjectName. Virtualized
+    /// delegates only exist near the viewport, so this steps the flickable
+    /// through its content range until the item instantiates, then scrolls it
+    /// into view. Returns nullptr if the item never appears.
+    QQuickItem *findVisibleItemScrolled(const QString &objectName, const QString &flickableObjectName);
+
+    /// Convenience: findVisibleItemScrolled() followed by clickButton().
+    bool clickButtonScrolled(const QString &objectName, const QString &flickableObjectName);
+
     /// Open the toolbar Q-logo tool-select dropdown and click the entry with
     /// objectName \a viewObjectName (e.g. "toolbar_viewPlan", "toolbar_viewClose").
     /// Clicks the Q logo, waits up to \a timeoutMs for the entry to appear, then
@@ -117,6 +132,17 @@ protected:
 
     /// Same semantics as verifyEnabled().
     bool verifyText(const QString &objectName, const QString &expectedText, const QString &context);
+
+    /// Verify an arbitrary property of a visible item found by \a objectName,
+    /// waiting up to 2 seconds for bindings to settle. Fails the test if the
+    /// item is missing, the property does not exist, or the value never matches.
+    bool verifyProperty(const QString &objectName, const char *propertyName,
+                        const QVariant &expectedValue, const QString &context);
+
+    /// Verify that an item found by \a objectName is present-and-visible
+    /// (\a expectedVisible true) or absent/hidden (false), waiting up to
+    /// 2 seconds. Fails the test on mismatch.
+    bool verifyVisibility(const QString &objectName, bool expectedVisible, const QString &context);
 
     /// Scroll the QQuickFlickable identified by \a flickableObjectName so that
     /// \a item's centre is fully visible inside the flickable. Does nothing if
@@ -167,6 +193,7 @@ private:
     /// guard against the property not existing (an invalid QVariant silently
     /// converts to false/"" which would make false/empty expectations pass
     /// vacuously), then wait up to 2 seconds for the property to match.
+    /// Exposed publicly as verifyProperty().
     bool _verifyItemProperty(const QString &objectName, const char *propertyName,
                              const QVariant &expectedValue, const QString &context);
 };
