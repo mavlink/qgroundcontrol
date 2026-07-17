@@ -68,6 +68,7 @@ Item {
                     fromCoord:      object ? object.coordinate1 : undefined
                     toCoord:        object ? object.coordinate2 : undefined
                     arrowPosition:  3
+                    mapControl:     _root.map
                     z:              QGroundControl.zOrderWaypointLines + 1
                 }
             }

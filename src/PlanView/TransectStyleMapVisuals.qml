@@ -136,6 +136,7 @@ Item {
             fromCoord:      _transectPoints[_firstTrueTransectIndex]
             toCoord:        _transectPoints[_firstTrueTransectIndex + 1]
             arrowPosition:  1
+            mapControl:     _root.map
             visible:        _currentItem && !_vertexDrag
             opacity:        _root.opacity
         }
@@ -148,6 +149,7 @@ Item {
             fromCoord:      _transectPoints[nextTrueTransectIndex]
             toCoord:        _transectPoints[nextTrueTransectIndex + 1]
             arrowPosition:  1
+            mapControl:     _root.map
             visible:        _currentItem && _transectCount > 3 && !_vertexDrag
             opacity:        _root.opacity
 
@@ -162,6 +164,7 @@ Item {
             fromCoord:      _transectPoints[_lastTrueTransectIndex - 1]
             toCoord:        _transectPoints[_lastTrueTransectIndex]
             arrowPosition:  3
+            mapControl:     _root.map
             visible:        _currentItem && !_vertexDrag
             opacity:        _root.opacity
         }
@@ -174,6 +177,7 @@ Item {
             fromCoord:      _transectPoints[prevTrueTransectIndex - 1]
             toCoord:        _transectPoints[prevTrueTransectIndex]
             arrowPosition:  13
+            mapControl:     _root.map
             visible:        _currentItem && _transectCount > 3 && !_vertexDrag
             opacity:        _root.opacity
 
