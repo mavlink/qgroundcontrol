@@ -19,8 +19,6 @@ public:
     GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format,
                          EGLDisplay eglDisplay);
 
-    bool isDmaBuf() const override { return true; }
-
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
