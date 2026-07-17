@@ -17,6 +17,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         InitialConnectPeripheralStartupTest.h
         MAVLinkLogManagerTest.cc
         MAVLinkLogManagerTest.h
+        MavCommandQueueReentrancyTest.cc
+        MavCommandQueueReentrancyTest.h
+        MultiVehicleManagerTest.cc
+        MultiVehicleManagerTest.h
         RemoteIDManagerTest.cc
         RemoteIDManagerTest.h
         RequestMessageTest.cc
@@ -53,6 +57,8 @@ add_qgc_test(FirmwareUpgradeControllerTest LABELS Unit Vehicle)
 add_qgc_test(InitialConnectTest LABELS Integration Vehicle)
 add_qgc_test(InitialConnectPeripheralStartupTest LABELS Integration Vehicle)
 add_qgc_test(MAVLinkLogManagerTest LABELS Integration Vehicle)
+add_qgc_test(MavCommandQueueReentrancyTest LABELS Integration Vehicle)
+add_qgc_test(MultiVehicleManagerTest LABELS Integration Vehicle)
 add_qgc_test(RemoteIDManagerTest LABELS Integration Vehicle)
 add_qgc_test(RequestMessageTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle)

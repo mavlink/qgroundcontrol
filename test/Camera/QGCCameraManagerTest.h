@@ -1,11 +1,12 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "BaseClasses/VehicleTest.h"
 
-class QGCCameraManagerTest : public UnitTest
+class QGCCameraManagerTest : public VehicleTest
 {
     Q_OBJECT
 
 private slots:
     void _testCameraList();
+    void _testLostCameraCleanupWithPendingRequest();
 };

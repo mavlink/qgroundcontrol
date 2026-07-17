@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         LinkConfigurationTest.h
         LinkManagerTest.cc
         LinkManagerTest.h
+        LogReplayLinkControllerTest.cc
+        LogReplayLinkControllerTest.h
         QGCSerialPortInfoTest.cc
         QGCSerialPortInfoTest.h
 )
@@ -19,4 +21,5 @@ add_subdirectory(Bluetooth)
 
 add_qgc_test(LinkConfigurationTest LABELS Unit Comms RESOURCE_LOCK Settings TempFiles)
 add_qgc_test(LinkManagerTest LABELS Integration Comms SERIAL)
+add_qgc_test(LogReplayLinkControllerTest LABELS Unit Comms)
 add_qgc_test(QGCSerialPortInfoTest LABELS Unit Comms)
