@@ -47,7 +47,7 @@
     "units":            "m"
 },
 {    "name":            "rangefinderTarget",
-    "shortDesc": "RFTarget",
+    "shortDesc": "Rangefinder Target",
     "type":             "float",
     "decimalPlaces":    2,
     "units":            "m"
