@@ -97,32 +97,34 @@ View3D {
         standAloneScene.resetCamera();
     }
 
-    Viewer3DProgressBar {
-        id: _terrainProgressBar
+    Rectangle {
+        readonly property bool _mapLoaded: QGCViewer3DManager.mapProvider ? QGCViewer3DManager.mapProvider.mapLoaded : false
 
-        progressText: qsTr("Downloading Imageries: ")
-        width: ScreenTools.screenWidth * 0.2
+        color: qgcPal.windowShadeDark
+        height: _bannerLabel.height + ScreenTools.defaultFontPixelHeight
+        opacity: 0.8
+        radius: ScreenTools.defaultFontPixelWidth
+        visible: !_mapLoaded || QGCViewer3DManager.vehicleOutsideMapRegion
+        width: _bannerLabel.width + (2 * ScreenTools.defaultFontPixelWidth)
 
-        anchors {
-            bottom: parent.bottom
-            horizontalCenter: parent.horizontalCenter
-            margins: ScreenTools.defaultFontPixelWidth
+        anchors.centerIn: parent
+
+        QGCLabel {
+            id: _bannerLabel
+
+            anchors.centerIn: parent
+            text: parent._mapLoaded ?
+                      qsTr("Vehicle is outside the loaded OSM map region.") :
+                      qsTr("No OSM map file loaded. Buildings will not be shown. Select a file in Application Settings > 3D View.")
+            width: Math.min(implicitWidth, topView.width - (4 * ScreenTools.defaultFontPixelWidth))
+            wrapMode: Text.WordWrap
         }
-    }
-
-    Binding {
-        property: "progressValue"
-        target: _terrainProgressBar
-        value: (mapGeometryLoader.active) ? (mapGeometryLoader.item.textureDownloadProgress) : (100)
-        when: mapGeometryLoader.status == Loader.Ready
     }
 
     Component {
         id: buildingsGeometryComponent
 
         Node {
-            property real textureDownloadProgress: _terrainTextureManager.textureDownloadProgress
-
             Model {
                 id: cityMapModel
 

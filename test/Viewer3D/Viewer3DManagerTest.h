@@ -10,4 +10,5 @@ private slots:
     void _testInitialState();
     void _testSetDisplayMode();
     void _testSetDisplayModeNoop();
+    void _testCoordinateWithinRegion();
 };

@@ -7,7 +7,7 @@ Node {
     property alias cameraOne: cameraPerspectiveOne
     property alias cameraOneRotation: cameraPerspectiveOne.eulerRotation
     property alias cameraTwoPosition: cameraPerspectiveTwo.position
-    property real lightsBrightness: 0.3
+    property real lightsBrightness: 0.5
     property real viewDistance: 50000
 
     function resetCamera() {
@@ -49,16 +49,6 @@ Node {
     DirectionalLight {
         brightness: lightsBrightness
         eulerRotation.x: 270
-    }
-
-    DirectionalLight {
-        brightness: lightsBrightness
-        eulerRotation.y: 90
-    }
-
-    DirectionalLight {
-        brightness: lightsBrightness
-        eulerRotation.y: -90
     }
 
     Node {

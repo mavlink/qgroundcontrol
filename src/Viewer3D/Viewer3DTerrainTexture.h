@@ -23,7 +23,6 @@ class Viewer3DTerrainTexture : public QQuick3DTextureData
     Q_PROPERTY(QSize                tileCount                READ tileCount                                                  NOTIFY tileCountChanged)
     Q_PROPERTY(bool                 textureLoaded            READ textureLoaded                                              NOTIFY textureLoadedChanged)
     Q_PROPERTY(bool                 textureGeometryDone      READ textureGeometryDone                                        NOTIFY textureGeometryDoneChanged)
-    Q_PROPERTY(float                textureDownloadProgress  READ textureDownloadProgress                                    NOTIFY textureDownloadProgressChanged)
 
 public:
     explicit Viewer3DTerrainTexture();
@@ -44,10 +43,8 @@ public:
 
     bool textureLoaded() const { return _textureLoaded; }
     bool textureGeometryDone() const { return _textureGeometryDone; }
-    float textureDownloadProgress() const { return _textureDownloadProgress; }
 
     void setTextureGeometryDone(bool newTextureGeometryDone);
-    void setTextureDownloadProgress(float newTextureDownloadProgress);
     void setTextureGeometry(const Viewer3DTileStatistics &tileInfo);
 
 signals:
@@ -57,7 +54,6 @@ signals:
     void tileCountChanged();
     void textureLoadedChanged();
     void textureGeometryDoneChanged();
-    void textureDownloadProgressChanged();
 
 private:
     void _updateTexture();
@@ -73,7 +69,6 @@ private:
     QSize _tileCount;
     QString _mapType;
 
-    float _textureDownloadProgress = 100.0f;
     int _mapId = 0;
     bool _textureLoaded = false;
     bool _textureGeometryDone = false;
