@@ -2,6 +2,8 @@
 
 #include "QmlUITestBase.h"
 
+#include <QtPositioning/QGeoCoordinate>
+
 class QQuickItem;
 
 /// UI test for Plan view state transitions (offline, no vehicle).
@@ -18,6 +20,8 @@ public:
 
 private slots:
     void _testPlanViewStates();
+    void _testRoverWaypointOnEmptyPlan();
+    void _testTakeoffNotRequiredWaypointOnEmptyPlan();
 
 private:
     /// Complete expected state of all Plan view UI under test
@@ -43,10 +47,22 @@ private:
     /// and not highlighted, Open/Clear always enabled.
     void _verifyFullState(const PlanUIState &state, const QString &context);
 
+    /// Navigate to the Plan view and position the map at a known center/zoom
+    /// so map clicks are deterministic.
+    void _navigateToPlanAndCenterMap();
+
+    /// Shared worker for the empty-plan Waypoint tool regression: set home by
+    /// map click, arm the Waypoint tool while the plan is still empty, click
+    /// the map, and verify a waypoint is inserted and home does not move.
+    void _verifyWaypointToolAddsWaypointOnEmptyPlan(bool expectTakeoffButtonVisible);
+
     /// Click the Plan view map at a fractional position within its viewport.
     /// (0.5, 0.5) is the map center.
     void _clickMap(qreal fractionX, qreal fractionY);
 
     /// Current MissionController visualItems count, or -1 if unavailable.
     int _missionItemCount();
+
+    /// Current MissionController plannedHomePosition, or invalid if unavailable.
+    QGeoCoordinate _plannedHomePosition();
 };

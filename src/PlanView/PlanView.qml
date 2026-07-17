@@ -468,7 +468,15 @@ Item {
                         enabled: _missionController.flyThroughCommandsAllowed
                         visible: toolStrip._isMissionLayer
                         checkable: true
-                        onTriggered: { _addWaypointOnClick = !_addWaypointOnClick; if (_addWaypointOnClick) _addROIOnClick = false }
+                        onTriggered: {
+                            _addWaypointOnClick = !_addWaypointOnClick
+                            if (_addWaypointOnClick) {
+                                _addROIOnClick = false
+                                // Arming an insert tool leaves template-creation mode, otherwise
+                                // map clicks keep moving the home position instead of inserting
+                                _planMasterController.userSelectedManualCreation = true
+                            }
+                        }
                     },
                     ToolStripAction {
                         id: roiButton
@@ -478,7 +486,13 @@ Item {
                         enabled: _missionController.isInsertROIValid
                         visible: toolStrip._isMissionLayer && _planMasterController.controllerVehicle.supports.roiMode
                         checkable: true
-                        onTriggered: { _addROIOnClick = !_addROIOnClick; if (_addROIOnClick) _addWaypointOnClick = false }
+                        onTriggered: {
+                            _addROIOnClick = !_addROIOnClick
+                            if (_addROIOnClick) {
+                                _addWaypointOnClick = false
+                                _planMasterController.userSelectedManualCreation = true
+                            }
+                        }
                     },
                     ToolStripAction {
                         objectName: "planToolStrip_landButton"
