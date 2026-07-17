@@ -3,6 +3,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QTemporaryDir>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
@@ -16,17 +17,27 @@
 
 UT_REGISTER_TEST(AppCloseWarningUITest, TestLabel::Integration, TestLabel::MissionManager)
 
-bool AppCloseWarningUITest::_forcePlanViewMissionDirty()
+PlanMasterController *AppCloseWarningUITest::_planViewMasterController()
 {
     QQuickItem *planView = _window ? _window->findChild<QQuickItem *>(QStringLiteral("mainView_plan")) : nullptr;
     if (!planView) {
         QTest::qFail("Could not find Plan view item (mainView_plan)", __FILE__, __LINE__);
-        return false;
+        return nullptr;
     }
 
     auto *masterController = qvariant_cast<PlanMasterController *>(planView->property("_planMasterController"));
     if (!masterController) {
         QTest::qFail("Plan view _planMasterController property is not a PlanMasterController", __FILE__, __LINE__);
+        return nullptr;
+    }
+
+    return masterController;
+}
+
+bool AppCloseWarningUITest::_forcePlanViewMissionDirty()
+{
+    PlanMasterController *masterController = _planViewMasterController();
+    if (!masterController) {
         return false;
     }
 
@@ -218,5 +229,96 @@ void AppCloseWarningUITest::_testNoUnsavedMissionWarningForDownloadedMission()
             // "mission edit in progress" even though nothing was edited.
             QVERIFY2(!dialogVisible(QStringLiteral("Unsaved Mission")),
                      "Unsaved mission warning shown for a freshly downloaded, unedited plan");
+        });
+}
+
+void AppCloseWarningUITest::_testNoUnsavedMissionWarningAfterSuccessfulUpload()
+{
+    // Incidental one-time startup message when the map cache DB is upgraded.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Offline Map Cache database has been upgraded")));
+
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */); },
+        [this](QPointer<MockLink> mockLink, Vehicle *vehicle) {
+            Q_UNUSED(mockLink);
+            Q_UNUSED(vehicle);
+
+            PlanMasterController *masterController = _planViewMasterController();
+            if (!masterController) {
+                return;
+            }
+
+            // Edit the plan, then upload it to the vehicle.
+            masterController->missionController()->setDirty(true);
+            QVERIFY2(masterController->dirtyForSave() && masterController->dirtyForUpload(),
+                     "Dirtying the mission controller did not propagate to the master controller");
+
+            masterController->sendToVehicle();
+            QTRY_VERIFY_WITH_TIMEOUT(!masterController->syncInProgress() && !masterController->dirtyForUpload(), TestTimeout::mediumMs());
+
+            // The plan was never saved to disk, only uploaded.
+            QVERIFY(masterController->dirtyForSave());
+
+            QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewClose")),
+                     "Failed to click Close button in tool select dropdown");
+
+            // The active-connection check runs only after the unsaved-mission check
+            // passes. Waiting for its dialog to appear proves the mission check did
+            // not block.
+            QVERIFY2(waitForDialog(QStringLiteral("Active Vehicle Connections")),
+                     "Active vehicle connection warning dialog was not shown on close");
+
+            // The edits are safely on the vehicle, so closing loses nothing and the
+            // unsaved-mission warning must NOT appear (issue #14537).
+            QVERIFY2(!dialogVisible(QStringLiteral("Unsaved Mission")),
+                     "Unsaved mission warning shown after a successful mission upload");
+        });
+}
+
+void AppCloseWarningUITest::_testNoUnsavedMissionWarningAfterSaveToFile()
+{
+    // Incidental one-time startup message when the map cache DB is upgraded.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Offline Map Cache database has been upgraded")));
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */); },
+        [this, &tempDir](QPointer<MockLink> mockLink, Vehicle *vehicle) {
+            Q_UNUSED(mockLink);
+            Q_UNUSED(vehicle);
+
+            PlanMasterController *masterController = _planViewMasterController();
+            if (!masterController) {
+                return;
+            }
+
+            // Edit the plan, then save it to disk without uploading.
+            masterController->missionController()->setDirty(true);
+            QVERIFY2(masterController->dirtyForSave() && masterController->dirtyForUpload(),
+                     "Dirtying the mission controller did not propagate to the master controller");
+
+            QVERIFY(masterController->saveToFile(tempDir.filePath(QStringLiteral("close-warning-test"))));
+
+            // Saving clears dirty-for-save but the plan was never uploaded.
+            QVERIFY(!masterController->dirtyForSave());
+            QVERIFY(masterController->dirtyForUpload());
+
+            QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewClose")),
+                     "Failed to click Close button in tool select dropdown");
+
+            // The active-connection check runs only after the unsaved-mission check
+            // passes. Waiting for its dialog to appear proves the mission check did
+            // not block.
+            QVERIFY2(waitForDialog(QStringLiteral("Active Vehicle Connections")),
+                     "Active vehicle connection warning dialog was not shown on close");
+
+            // The edits are safely on disk, so closing loses nothing and the
+            // unsaved-mission warning must NOT appear.
+            QVERIFY2(!dialogVisible(QStringLiteral("Unsaved Mission")),
+                     "Unsaved mission warning shown after saving the plan to disk");
         });
 }
