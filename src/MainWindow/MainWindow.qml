@@ -236,7 +236,12 @@ ApplicationWindow {
     }
 
     function checkForUnsavedMission() {
-        if (planView._planMasterController.dirtyForSave || planView._planMasterController.dirtyForUpload) {
+        // Only warn when edits are neither saved to disk nor uploaded to the vehicle.
+        // If either happened the edits are recoverable, so closing loses nothing.
+        // With no active vehicle an upload can't have happened, so treat the plan as
+        // not uploaded regardless of dirtyForUpload.
+        if (planView._planMasterController.dirtyForSave &&
+                (planView._planMasterController.dirtyForUpload || !QGroundControl.multiVehicleManager.activeVehicle)) {
             let accepted = false
             _reentrantCloseGuard = true
             _showMessageDialogWorker(mainWindow, qsTr("Unsaved Mission"),
