@@ -44,13 +44,13 @@
     "shortDesc": "Rangefinder",
     "type":             "float",
     "decimalPlaces":    2,
-    "units":            "m"
+    "units":            "vertical m"
 },
 {    "name":            "rangefinderTarget",
     "shortDesc": "RFTarget",
     "type":             "float",
     "decimalPlaces":    2,
-    "units":            "m"
+    "units":            "vertical m"
 },
 {   "name":             "rollPitchToggle",
     "shortDesc": "Roll/Pitch Toggle",
