@@ -53,7 +53,6 @@ qt_add_qml_module(Viewer3DModule
         Viewer3DQml/Drones/AnimatedPropeller.qml
         Viewer3DQml/Drones/DroneModelDjiF450.qml
         Viewer3DQml/Models3D/Viewer3DVehicleItems.qml
-        Viewer3DQml/Viewer3DProgressBar.qml
         Viewer3DQml/Viewer3DShowAction.qml
     RESOURCES
         Viewer3DQml/Images/city_3d_map_icon.svg

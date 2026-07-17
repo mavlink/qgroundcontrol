@@ -72,7 +72,10 @@ void OsmParser::_onOsmParserFinished(bool isValid)
 void OsmParser::parseOsmFile(const QString &filePath)
 {
     _gpsRefSet = false;
-    _mapLoadedFlag = false;
+    if (_mapLoadedFlag) {
+        _mapLoadedFlag = false;
+        emit mapChanged();
+    }
     resetGpsRef();
 
     _osmParserWorker->start(filePath);

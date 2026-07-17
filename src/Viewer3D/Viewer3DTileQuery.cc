@@ -76,7 +76,6 @@ void Viewer3DTileQuery::_loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint
     }
 
     _totalTilesCount = _mapToBeLoaded.tileList.size();
-    _downloadedTilesCount = 0;
     qCDebug(Viewer3DTileQueryLog) << "Requesting" << _totalTilesCount << "tiles at zoom" << zoomLevel
                                   << "x:[" << tileMinIndex.x() << ".." << tileMaxIndex.x() << "]"
                                   << "y:[" << tileMinIndex.y() << ".." << tileMaxIndex.y() << "]";
@@ -176,12 +175,9 @@ void Viewer3DTileQuery::_tileDone(Viewer3DTileInfo tileData)
         _mapToBeLoaded.currentTileIndex = QPoint(tileData.x, tileData.y);
         _mapToBeLoaded.currentTileData = tileData.data;
         _mapToBeLoaded.setMapTile();
-        _downloadedTilesCount++;
-        emit mapTileDownloaded(100.0f * (static_cast<float>(_downloadedTilesCount) / static_cast<float>(_totalTilesCount)));
 
         if (_mapToBeLoaded.tileList.isEmpty()) {
             qCDebug(Viewer3DTileQueryLog) << "All tiles downloaded";
-            _downloadedTilesCount = _totalTilesCount;
             emit loadingMapCompleted();
         }
     }
@@ -196,11 +192,8 @@ void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileInfo tileData)
 
     const QString key = _tileKey(tileData.mapId, tileData.x, tileData.y, tileData.zoomLevel);
     _mapToBeLoaded.tileList.removeAll(key);
-    _downloadedTilesCount++;
-    emit mapTileDownloaded(100.0f * (static_cast<float>(_downloadedTilesCount) / static_cast<float>(_totalTilesCount)));
 
     if (_mapToBeLoaded.tileList.isEmpty()) {
-        _downloadedTilesCount = _totalTilesCount;
         emit loadingMapCompleted();
     }
 }
