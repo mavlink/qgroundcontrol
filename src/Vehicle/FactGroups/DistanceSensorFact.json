@@ -73,7 +73,7 @@
     "type":             "double",
     "default":          null,
     "decimalPlaces":    2,
-    "units":            "m"
+    "units":            "vertical m"
 },
 {
     "name":             "rotationPitch270",
@@ -81,7 +81,7 @@
     "type":             "double",
     "default":          null,
     "decimalPlaces":    2,
-    "units":            "m"
+    "units":            "vertical m"
 },
 {
     "name":             "minDistance",
