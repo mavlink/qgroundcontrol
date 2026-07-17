@@ -14,7 +14,7 @@ UT_REGISTER_TEST(PX4VehicleConfigUITest, TestLabel::Integration)
 void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
     navigateToConfigureView();
     if (QTest::currentTestFailed()) return;
@@ -50,7 +50,7 @@ void PX4VehicleConfigUITest::_cycleAxisButtons(const QStringList &axisNames)
 void PX4VehicleConfigUITest::_testDisconnectWithPIDTuningOpen()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle * /*vehicle*/) {
     // -------------------------------------------------------------------------
     // Navigate to Configure view and open the PID Tuning sidebar page

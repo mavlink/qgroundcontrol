@@ -34,6 +34,7 @@ ColumnLayout {
         subEditConfig.sendStatus = sendStatus.checked
         subEditConfig.enableCamera = enableCamera.checked
         subEditConfig.enableGimbal = enableGimbal.checked
+        subEditConfig.enableProximity = enableProximity.checked
         subEditConfig.incrementVehicleId = incrementVehicleId.checked
         subEditConfig.cameraCaptureVideo = cameraCaptureVideo.checked
         subEditConfig.cameraCaptureImage = cameraCaptureImage.checked
@@ -91,6 +92,13 @@ ColumnLayout {
         Layout.fillWidth: true
         text: qsTr("Enable Gimbal")
         checked: subEditConfig.enableGimbal
+    }
+
+    QGCCheckBoxSlider {
+        id: enableProximity
+        Layout.fillWidth: true
+        text: qsTr("Enable Proximity Sensors")
+        checked: subEditConfig.enableProximity
     }
 
     QGCCheckBoxSlider {

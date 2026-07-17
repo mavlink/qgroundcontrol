@@ -101,7 +101,7 @@ void PX4AirframeSetupUITest::_verifyAirframePrereq(const QString &compObjectName
 void PX4AirframeSetupUITest::_testNavigateToAirframe()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     // Reset all params including SYS_AUTOSTART so the test starts with no
     // airframe configured
@@ -116,7 +116,7 @@ void PX4AirframeSetupUITest::_testNavigateToAirframe()
 void PX4AirframeSetupUITest::_testAirframePrereqPages()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     // Reset all params including SYS_AUTOSTART so Airframe setup is incomplete
     mockLink->setResetSysAutostartOnParamReset(true);
@@ -157,7 +157,7 @@ void PX4AirframeSetupUITest::_testAirframePrereqPages()
 void PX4AirframeSetupUITest::_testApplyAirframe()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     // Reset all params including SYS_AUTOSTART so the test starts with no
     // airframe configured

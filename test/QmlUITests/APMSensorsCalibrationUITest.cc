@@ -154,7 +154,7 @@ void APMSensorsCalibrationUITest::_testCompassCalibration()
 {
     ignoreAPMMockLinkWarnings();
     runWithMockLink(
-        [] { return MockLink::startAPMArduCopterMockLink(false, false, false); },
+        [] { return MockLink::startAPMArduCopterMockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
 
     resetAPMParamsToUncalibrated(vehicle);
@@ -222,7 +222,7 @@ void APMSensorsCalibrationUITest::_testCompassCalibrationCancel()
 {
     ignoreAPMMockLinkWarnings();
     runWithMockLink(
-        [] { return MockLink::startAPMArduCopterMockLink(false, false, false); },
+        [] { return MockLink::startAPMArduCopterMockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
 
     resetAPMParamsToUncalibrated(vehicle);
@@ -281,7 +281,7 @@ void APMSensorsCalibrationUITest::_testAccelCalibration()
 {
     ignoreAPMMockLinkWarnings();
     runWithMockLink(
-        [] { return MockLink::startAPMArduCopterMockLink(false, false, false); },
+        [] { return MockLink::startAPMArduCopterMockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
 
     resetAPMParamsToUncalibrated(vehicle);

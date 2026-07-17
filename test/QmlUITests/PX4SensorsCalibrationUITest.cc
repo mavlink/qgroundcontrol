@@ -155,7 +155,7 @@ void PX4SensorsCalibrationUITest::_startCalibration(const QString &calibrateButt
 void PX4SensorsCalibrationUITest::_testMagCalibration()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     resetParamsToFirmwareDefaults(vehicle, QStringLiteral("CAL_MAG0_ID"));
     if (QTest::currentTestFailed()) return;
@@ -300,7 +300,7 @@ void PX4SensorsCalibrationUITest::_testMagCalibration()
 void PX4SensorsCalibrationUITest::_runCalibrationCancelTest(const QString &sectionObjectName, const QString &calibrateButtonObjectName)
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     resetParamsToFirmwareDefaults(vehicle, QStringLiteral("CAL_MAG0_ID"));
     if (QTest::currentTestFailed()) return;
@@ -380,7 +380,7 @@ void PX4SensorsCalibrationUITest::_testMagCalibrationCancel()
 void PX4SensorsCalibrationUITest::_testAccelCalibration()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     resetParamsToFirmwareDefaults(vehicle, QStringLiteral("CAL_MAG0_ID"));
     if (QTest::currentTestFailed()) return;

@@ -120,7 +120,7 @@ void ToolbarIndicatorUITest::_runIndicatorTest(
 void ToolbarIndicatorUITest::_testPX4Indicators()
 {
     _runIndicatorTest(
-        [] { return MockLink::startPX4MockLink(false, false, true); },
+        [] { return MockLink::startPX4MockLink(MockConfiguration::OptionEnableGimbal); },
         QStringLiteral("PX4"));
 }
 
@@ -128,6 +128,6 @@ void ToolbarIndicatorUITest::_testAPMCopterIndicators()
 {
     ignoreAPMMockLinkWarnings();
     _runIndicatorTest(
-        [] { return MockLink::startAPMArduCopterMockLink(false, false, true); },
+        [] { return MockLink::startAPMArduCopterMockLink(MockConfiguration::OptionEnableGimbal); },
         QStringLiteral("APMCopter"));
 }

@@ -114,12 +114,12 @@ public:
 
 
 
-    Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText, bool enableCamera, bool enableGimbal);
-    Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText, bool enableCamera, bool enableGimbal);
-    Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText, bool enableCamera, bool enableGimbal);
-    Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal);
-    Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText, bool enableCamera, bool enableGimbal);
-    Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal);
+    Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false);
+    Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false);
+    Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false);
+    Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false);
+    Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false);
+    Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity = false);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
