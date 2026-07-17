@@ -1,5 +1,5 @@
 name: Cache Cleanup
-description: List and optionally delete GitHub Actions caches via gh-actions-cache.
+description: List and optionally delete GitHub Actions caches via GitHub CLI.
 
 inputs:
   branch:
@@ -38,15 +38,6 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Install gh-actions-cache
-      shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        if ! gh extension list | awk '{print $1}' | grep -qx 'actions/gh-actions-cache'; then
-          gh extension install actions/gh-actions-cache
-        fi
-
     - name: List and clean caches
       id: run
       shell: bash

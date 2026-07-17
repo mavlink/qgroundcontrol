@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Analyze JUnit test durations and emit CI summaries."""
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ ensure_tools_dir(__file__)
 
 from common.gh_actions import gh_warning, write_github_output, write_step_summary
 from common.markdown import md_table
-from xml_utils import xml_parse
+from common.xml import xml_parse
 
 
 def test_key(elem: ET.Element) -> str:

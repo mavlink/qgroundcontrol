@@ -298,8 +298,7 @@ LoggingCategoryTreeNode* LoggingCategoryTreeModel::findOrCreateIntermediateNode(
     return node;
 }
 
-void LoggingCategoryTreeModel::insertCategory(const QStringList& pathSegments, const QString& fullCategory,
-                                               QGCLoggingCategoryItem* item)
+void LoggingCategoryTreeModel::insertCategory(const QStringList& pathSegments, QGCLoggingCategoryItem* item)
 {
     LoggingCategoryTreeNode* currentParent = &_root;
 

@@ -5,6 +5,8 @@
 # Depends on: Components.cmake (gstreamer_platform_plugin_attrs),
 #             PluginPolicy.cmake (gstreamer_runtime_required_plugins, gstreamer_plugin_satisfy_sets).
 
+include_guard(GLOBAL)
+
 # Shared install-from-glob helper. CALLER must specify GLOB_PATTERN; FILTER_PREFIX
 # (optional) restricts results to files matching ${PREFIX}${name}.${EXT} where name
 # is in GSTREAMER_PLUGINS. Used by the public install_* wrappers below.
@@ -31,7 +33,18 @@ function(_gstreamer_filter_plugin_paths PREFIX PATHS OUT_VAR)
 endfunction()
 
 function(_gstreamer_install_glob LABEL)
-    cmake_parse_arguments(ARG "REQUIRE_NONEMPTY" "SOURCE_DIR;DEST_DIR;GLOB_PATTERN;FILTER_PREFIX" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "REQUIRE_NONEMPTY"
+        "SOURCE_DIR;DEST_DIR;GLOB_PATTERN;FILTER_PREFIX" "")
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "${LABEL}: malformed arguments (missing='${ARG_KEYWORDS_MISSING_VALUES}', "
+            "unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
+    foreach(_required IN ITEMS SOURCE_DIR DEST_DIR GLOB_PATTERN)
+        if(NOT ARG_${_required})
+            message(FATAL_ERROR "${LABEL}: ${_required} is required")
+        endif()
+    endforeach()
     if(NOT EXISTS "${ARG_SOURCE_DIR}")
         message(WARNING "${LABEL}: SOURCE_DIR does not exist: ${ARG_SOURCE_DIR}")
         return()
@@ -53,14 +66,34 @@ function(_gstreamer_install_glob LABEL)
 endfunction()
 
 function(gstreamer_install_gio_modules)
-    cmake_parse_arguments(ARG "" "SOURCE_DIR;DEST_DIR;EXTENSION" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "SOURCE_DIR;DEST_DIR;EXTENSION" "")
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_install_gio_modules: malformed arguments (missing='${ARG_KEYWORDS_MISSING_VALUES}', "
+            "unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
+    foreach(_required IN ITEMS SOURCE_DIR DEST_DIR EXTENSION)
+        if(NOT ARG_${_required})
+            message(FATAL_ERROR "gstreamer_install_gio_modules: ${_required} is required")
+        endif()
+    endforeach()
     _gstreamer_install_glob("gstreamer_install_gio_modules"
         SOURCE_DIR "${ARG_SOURCE_DIR}" DEST_DIR "${ARG_DEST_DIR}"
         GLOB_PATTERN "*.${ARG_EXTENSION}")
 endfunction()
 
 function(gstreamer_install_plugins)
-    cmake_parse_arguments(ARG "" "SOURCE_DIR;DEST_DIR;EXTENSION;PREFIX" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "SOURCE_DIR;DEST_DIR;EXTENSION;PREFIX" "")
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_install_plugins: malformed arguments (missing='${ARG_KEYWORDS_MISSING_VALUES}', "
+            "unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
+    foreach(_required IN ITEMS SOURCE_DIR DEST_DIR EXTENSION PREFIX)
+        if(NOT ARG_${_required})
+            message(FATAL_ERROR "gstreamer_install_plugins: ${_required} is required")
+        endif()
+    endforeach()
     _gstreamer_install_glob("gstreamer_install_plugins"
         SOURCE_DIR "${ARG_SOURCE_DIR}" DEST_DIR "${ARG_DEST_DIR}"
         GLOB_PATTERN "${ARG_PREFIX}*.${ARG_EXTENSION}"
@@ -69,7 +102,17 @@ function(gstreamer_install_plugins)
 endfunction()
 
 function(gstreamer_install_libs)
-    cmake_parse_arguments(ARG "" "SOURCE_DIR;DEST_DIR;EXTENSION" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "SOURCE_DIR;DEST_DIR;EXTENSION" "")
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_install_libs: malformed arguments (missing='${ARG_KEYWORDS_MISSING_VALUES}', "
+            "unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
+    foreach(_required IN ITEMS SOURCE_DIR DEST_DIR EXTENSION)
+        if(NOT ARG_${_required})
+            message(FATAL_ERROR "gstreamer_install_libs: ${_required} is required")
+        endif()
+    endforeach()
 
     if(NOT EXISTS "${ARG_SOURCE_DIR}")
         message(WARNING "gstreamer_install_libs: SOURCE_DIR does not exist: ${ARG_SOURCE_DIR}")
@@ -459,7 +502,15 @@ endfunction()
 # verify exist post-install; default is the minimum needed to run any pipeline,
 # extended with every configured plugin present in the SDK at configure time.
 function(gstreamer_install_platform_sdk PROJECT_NAME)
-    cmake_parse_arguments(GIPS "" "" "REQUIRED_PLUGINS" ${ARGN})
+    if(NOT PROJECT_NAME)
+        message(FATAL_ERROR "gstreamer_install_platform_sdk: PROJECT_NAME is required")
+    endif()
+    cmake_parse_arguments(PARSE_ARGV 1 GIPS "" "" "REQUIRED_PLUGINS")
+    if(GIPS_KEYWORDS_MISSING_VALUES OR GIPS_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_install_platform_sdk: malformed arguments "
+            "(missing='${GIPS_KEYWORDS_MISSING_VALUES}', unknown='${GIPS_UNPARSED_ARGUMENTS}')")
+    endif()
     if(NOT GIPS_REQUIRED_PLUGINS)
         gstreamer_runtime_required_plugins(GIPS_REQUIRED_PLUGINS)
     endif()

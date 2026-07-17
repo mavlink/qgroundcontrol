@@ -1,116 +1,71 @@
 #!/usr/bin/env python3
-"""Tests for tools/setup/build-gstreamer.py."""
+"""Configuration contracts for the source GStreamer builder."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import patch
-
-import pytest
 
 from ._helpers import load_script_module
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-_mod = load_script_module("setup/build-gstreamer.py", "build_gstreamer")
+    import pytest
 
-BuildConfig = _mod.BuildConfig
-MesonBuilder = _mod.MesonBuilder
-detect_host_arch = _mod.detect_host_arch
-detect_jobs = _mod.detect_jobs
+mod = load_script_module("setup/build-gstreamer.py", "build_gstreamer")
 
 
-def test_detect_jobs_with_override() -> None:
-    assert detect_jobs(override=8) == 8
+def test_job_and_host_arch_detection(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert mod.detect_jobs(override=8) == 8
+    assert mod.detect_jobs() >= 1
+    monkeypatch.setattr("os.cpu_count", lambda: None)
+    assert mod.detect_jobs() == 4
 
-
-def test_detect_jobs_without_override() -> None:
-    result = detect_jobs()
-    assert result >= 1
-
-
-def test_detect_jobs_fallback_when_cpu_count_none() -> None:
-    with patch("os.cpu_count", return_value=None):
-        assert detect_jobs() == 4
-
-
-@pytest.mark.parametrize(
-    "machine, expected",
-    [
+    monkeypatch.delenv("RUNNER_ARCH", raising=False)
+    for machine, expected in (
         ("x86_64", "x86_64"),
         ("amd64", "x86_64"),
         ("aarch64", "arm64"),
         ("arm64", "arm64"),
         ("armv7l", "armv7"),
-    ],
-)
-def test_detect_host_arch(machine: str, expected: str) -> None:
-    with patch("platform.machine", return_value=machine):
-        assert detect_host_arch() == expected
+    ):
+        monkeypatch.setattr("platform.machine", lambda machine=machine: machine)
+        assert mod.detect_host_arch() == expected
 
 
-def test_build_config_defaults(tmp_path: Path) -> None:
-    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.24.0", work_dir=tmp_path)
-    assert cfg.prefix == tmp_path / "gst-linux-x86_64"
-    assert cfg.source_dir == tmp_path / "gstreamer"
-    assert cfg.build_dir == tmp_path / "gstreamer" / "builddir"
-    assert cfg.build_type == "release"
+def test_build_config_paths_and_archive_names(tmp_path: Path) -> None:
+    config = mod.BuildConfig(platform="linux", arch="x86_64", version="1.24.0", work_dir=tmp_path)
+    assert config.prefix == tmp_path / "gst-linux-x86_64"
+    assert config.source_dir == tmp_path / "gstreamer"
+    assert config.build_dir == config.source_dir / "builddir"
+    assert config.build_type == "release"
+    assert config.archive_name == "gstreamer-1.0-linux-x86_64-1.24.0"
 
-
-def test_build_config_custom_prefix(tmp_path: Path) -> None:
     custom = tmp_path / "custom"
-    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.24.0", prefix=custom)
-    assert cfg.prefix == custom
+    assert mod.BuildConfig("linux", "x86_64", "1.24.0", prefix=custom).prefix == custom
+    ios = mod.BuildConfig("ios", "arm64", "1.24.0", simulator=True)
+    assert ios.archive_name == "gstreamer-1.0-ios-arm64-1.24.0-simulator"
 
 
-def test_build_config_archive_name() -> None:
-    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.24.0")
-    assert cfg.archive_name == "gstreamer-1.0-linux-x86_64-1.24.0"
+def test_meson_arguments_cover_plugins_and_platform_arch_flags(tmp_path: Path) -> None:
+    linux = mod.BuildConfig("linux", "x86_64", "1.24.0", work_dir=tmp_path)
+    linux_args = mod.MesonBuilder(linux).get_meson_args()
+    for value in (
+        f"--prefix={linux.prefix}",
+        "--buildtype=release",
+        "--wrap-mode=forcefallback",
+        "-Dgst-plugins-base:gl=enabled",
+        "-Dgst-plugins-good:qt6=enabled",
+        "-Dgst-plugins-bad:videoparsers=enabled",
+        "-Dgst-plugins-ugly:x264=enabled",
+    ):
+        assert value in linux_args
+    assert not any("-Dcpp_args" in arg for arg in linux_args)
 
+    macos = mod.BuildConfig("macos", "arm64", "1.24.0", work_dir=tmp_path)
+    macos_args = mod.MesonBuilder(macos).get_meson_args()
+    assert "-Dcpp_args=['-arch', 'arm64']" in macos_args
+    assert "-Dc_args=['-arch', 'arm64']" in macos_args
 
-def test_build_config_archive_name_simulator() -> None:
-    cfg = BuildConfig(platform="ios", arch="arm64", version="1.24.0", simulator=True)
-    assert cfg.archive_name == "gstreamer-1.0-ios-arm64-1.24.0-simulator"
-
-
-def test_get_meson_args_contains_prefix(tmp_path: Path) -> None:
-    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.24.0", work_dir=tmp_path)
-    builder = MesonBuilder(cfg)
-    args = builder.get_meson_args()
-    assert f"--prefix={cfg.prefix}" in args
-    assert "--buildtype=release" in args
-    assert "--wrap-mode=forcefallback" in args
-
-
-def test_get_meson_args_macos_arch_flags(tmp_path: Path) -> None:
-    cfg = BuildConfig(platform="macos", arch="arm64", version="1.24.0", work_dir=tmp_path)
-    builder = MesonBuilder(cfg)
-    args = builder.get_meson_args()
-    assert "-Dcpp_args=['-arch', 'arm64']" in args
-    assert "-Dc_args=['-arch', 'arm64']" in args
-
-
-def test_get_meson_args_macos_universal_no_arch_flags(tmp_path: Path) -> None:
-    cfg = BuildConfig(platform="macos", arch="universal", version="1.24.0", work_dir=tmp_path)
-    builder = MesonBuilder(cfg)
-    args = builder.get_meson_args()
-    assert not any("-Dcpp_args" in a for a in args)
-    assert not any("-Dc_args" in a for a in args)
-
-
-def test_get_meson_args_linux_no_arch_flags(tmp_path: Path) -> None:
-    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.24.0", work_dir=tmp_path)
-    builder = MesonBuilder(cfg)
-    args = builder.get_meson_args()
-    assert not any("-Dcpp_args" in a for a in args)
-
-
-def test_get_meson_args_includes_plugins(tmp_path: Path) -> None:
-    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.24.0", work_dir=tmp_path)
-    builder = MesonBuilder(cfg)
-    args = builder.get_meson_args()
-    assert "-Dgst-plugins-base:gl=enabled" in args
-    assert "-Dgst-plugins-good:qt6=enabled" in args
-    assert "-Dgst-plugins-bad:videoparsers=enabled" in args
-    assert "-Dgst-plugins-ugly:x264=enabled" in args
+    universal = mod.BuildConfig("macos", "universal", "1.24.0", work_dir=tmp_path)
+    assert not any("_args" in arg for arg in mod.MesonBuilder(universal).get_meson_args())

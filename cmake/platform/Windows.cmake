@@ -1,6 +1,7 @@
-# ----------------------------------------------------------------------------
 # QGroundControl Windows Platform Configuration
 # ----------------------------------------------------------------------------
+
+include_guard(GLOBAL)
 
 if(NOT WIN32)
     message(FATAL_ERROR "QGC: Invalid Platform: Windows.cmake included but platform is not Windows")
@@ -36,10 +37,6 @@ if(COMMAND _qt_internal_generate_win32_rc_file)
             QT_TARGET_VERSION "${CMAKE_PROJECT_VERSION}"
             QT_TARGET_COPYRIGHT "${QGC_APP_COPYRIGHT}"
             QT_TARGET_PRODUCT_NAME "${CMAKE_PROJECT_NAME}"
-            # QT_TARGET_COMMENTS: ${QGC_QT_TARGET_COMMENTS}
-            # QT_TARGET_ORIGINAL_FILENAME: ${QGC_QT_TARGET_ORIGINAL_FILENAME}
-            # QT_TARGET_TRADEMARKS: ${QGC_QT_TARGET_TRADEMARKS}
-            # QT_TARGET_INTERNALNAME: ${QGC_QT_TARGET_INTERNALNAME}
             QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
     )
     _qt_internal_generate_win32_rc_file(${CMAKE_PROJECT_NAME})
@@ -55,10 +52,6 @@ elseif(EXISTS "${CMAKE_SOURCE_DIR}/deploy/windows/QGroundControl.rc.in")
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_BINARY_DIR}/QGroundControl.rc")
 else()
     message(WARNING "QGC: No Windows resource file found")
-endif()
-
-if(MSVC)
-    # qt_add_win_app_sdk(${CMAKE_PROJECT_NAME} PRIVATE)
 endif()
 
 message(STATUS "QGC: Windows platform configuration applied")

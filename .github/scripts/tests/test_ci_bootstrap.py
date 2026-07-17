@@ -1,151 +1,99 @@
-"""Tests for ci_bootstrap.py (compat shim for tools/_bootstrap.py)."""
+"""Contracts for the CI bootstrap compatibility shim."""
 
 from __future__ import annotations
 
 import subprocess
 import sys
 import textwrap
+from typing import TYPE_CHECKING
 
 import pytest
 from _helpers import REPO_ROOT
 from ci_bootstrap import ensure_tools_dir
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-class TestEnsureToolsDir:
-    def test_resolves_tools_as_sibling_of_ancestor(self, tmp_path):
-        (tmp_path / "tools").mkdir()
-        deep = tmp_path / ".github" / "scripts" / "x.py"
-        deep.parent.mkdir(parents=True)
-        deep.touch()
-        result = ensure_tools_dir(str(deep))
-        assert result == tmp_path / "tools"
 
-    def test_resolves_tools_as_ancestor(self, tmp_path):
-        tools = tmp_path / "tools"
-        sub = tools / "sub"
-        sub.mkdir(parents=True)
-        result = ensure_tools_dir(str(sub / "x.py"))
-        assert result == tools
+def test_ensure_tools_dir_locates_and_adds_tools_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    script = tmp_path / ".github" / "scripts" / "x.py"
+    script.parent.mkdir(parents=True)
+    script.touch()
+    monkeypatch.setattr(sys, "path", [entry for entry in sys.path if entry != str(tools)])
 
-    def test_adds_to_sys_path(self, tmp_path, monkeypatch):
-        (tmp_path / "tools").mkdir()
-        deep = tmp_path / "pkg" / "x.py"
-        deep.parent.mkdir(parents=True)
-        deep.touch()
-        tools_str = str(tmp_path / "tools")
-        monkeypatch.setattr(sys, "path", [p for p in sys.path if p != tools_str])
-        ensure_tools_dir(str(deep))
-        assert tools_str in sys.path
+    assert ensure_tools_dir(str(script)) == tools
+    assert ensure_tools_dir(str(script)) == tools
+    assert sys.path.count(str(tools)) == 1
 
-    def test_idempotent(self, tmp_path, monkeypatch):
-        (tmp_path / "tools").mkdir()
-        deep = tmp_path / "pkg" / "x.py"
-        deep.parent.mkdir(parents=True)
-        deep.touch()
-        tools_str = str(tmp_path / "tools")
-        monkeypatch.setattr(sys, "path", [p for p in sys.path if p != tools_str])
-        ensure_tools_dir(str(deep))
-        ensure_tools_dir(str(deep))
-        assert sys.path.count(tools_str) == 1
+    nested_script = tools / "sub" / "x.py"
+    nested_script.parent.mkdir()
+    assert ensure_tools_dir(str(nested_script)) == tools
 
-    def test_raises_when_tools_not_found(self, tmp_path):
-        deep = tmp_path / "a" / "b" / "x.py"
-        deep.parent.mkdir(parents=True)
-        deep.touch()
-        with pytest.raises(RuntimeError, match="Could not locate tools"):
-            ensure_tools_dir(str(deep))
 
-def _spawn_bootstrap(env: dict[str, str], body: str) -> subprocess.CompletedProcess:
-    """Run a snippet in a subprocess with tools/ on sys.path so _bootstrap imports."""
-    code = textwrap.dedent(body)
-    full_env = {**env, "PYTHONDONTWRITEBYTECODE": "1"}
+def test_ensure_tools_dir_rejects_unrelated_tree(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("pathlib.Path.is_dir", lambda _path: False)
+    with pytest.raises(RuntimeError, match="Could not locate tools"):
+        ensure_tools_dir("/unrelated/a/b/x.py")
+
+
+def _spawn_bootstrap(env: dict[str, str], body: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-c", code],
+        [sys.executable, "-c", textwrap.dedent(body)],
         cwd=REPO_ROOT,
-        env=full_env,
+        env={**env, "PYTHONDONTWRITEBYTECODE": "1"},
         capture_output=True,
         text=True,
         timeout=15,
         check=False,
     )
 
-class TestDebugConfigure:
-    """`_configure_debug()` runs at import time when QGC_CI_DEBUG is set."""
 
-    BOOTSTRAP_IMPORT = "import sys; sys.path.insert(0, 'tools'); import _bootstrap"
+_BOOTSTRAP_IMPORT = "import sys; sys.path.insert(0, 'tools'); import _bootstrap"
 
-    def test_disabled_by_default_leaves_faulthandler_off(self):
+
+def test_debug_flag_controls_faulthandler() -> None:
+    cases = [(None, False)] + [(value, True) for value in ("1", "true", "TRUE", "yes", "on")]
+    cases += [(value, False) for value in ("", "0", "false", "no", "off", "random")]
+
+    for value, expected in cases:
+        env = {"PATH": ""}
+        if value is not None:
+            env["QGC_CI_DEBUG"] = value
         result = _spawn_bootstrap(
-            env={"PATH": ""},
-            body=f"""
-            {self.BOOTSTRAP_IMPORT}
+            env,
+            f"""
+            {_BOOTSTRAP_IMPORT}
             import faulthandler
-            print('enabled' if faulthandler.is_enabled() else 'disabled')
+            print(faulthandler.is_enabled())
             """,
         )
         assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == "disabled"
+        assert result.stdout.strip() == str(expected)
 
-    @pytest.mark.parametrize("value", ["1", "true", "TRUE", "yes", "on"])
-    def test_truthy_value_enables_faulthandler(self, value):
-        result = _spawn_bootstrap(
-            env={"PATH": "", "QGC_CI_DEBUG": value},
-            body=f"""
-            {self.BOOTSTRAP_IMPORT}
-            import faulthandler
-            print('enabled' if faulthandler.is_enabled() else 'disabled')
-            """,
-        )
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == "enabled"
 
-    @pytest.mark.parametrize("value", ["", "0", "false", "no", "off", "random"])
-    def test_non_truthy_value_keeps_faulthandler_off(self, value):
+def test_debug_excepthook_annotates_github_once() -> None:
+    cases = [
+        ({"QGC_CI_DEBUG": "1"}, False, ""),
+        ({"QGC_CI_DEBUG": "1", "GITHUB_ACTIONS": "true"}, True, ""),
+        (
+            {"QGC_CI_DEBUG": "1", "GITHUB_ACTIONS": "true"},
+            True,
+            "import importlib, _bootstrap; importlib.reload(_bootstrap)",
+        ),
+    ]
+    for extra_env, annotated, reload_code in cases:
         result = _spawn_bootstrap(
-            env={"PATH": "", "QGC_CI_DEBUG": value},
-            body=f"""
-            {self.BOOTSTRAP_IMPORT}
-            import faulthandler
-            print('enabled' if faulthandler.is_enabled() else 'disabled')
-            """,
-        )
-        assert result.returncode == 0, result.stderr
-        assert result.stdout.strip() == "disabled"
-
-    def test_gha_excepthook_emits_error_annotation(self):
-        result = _spawn_bootstrap(
-            env={"PATH": "", "QGC_CI_DEBUG": "1", "GITHUB_ACTIONS": "true"},
-            body=f"""
-            {self.BOOTSTRAP_IMPORT}
+            {"PATH": "", **extra_env},
+            f"""
+            {_BOOTSTRAP_IMPORT}
+            {reload_code}
             raise RuntimeError('boom')
             """,
         )
         assert result.returncode != 0
-        assert "::error::RuntimeError: boom" in result.stderr
-        assert "RuntimeError: boom" in result.stderr  # plus the normal traceback
-
-    def test_non_gha_skips_error_annotation(self):
-        result = _spawn_bootstrap(
-            env={"PATH": "", "QGC_CI_DEBUG": "1"},
-            body=f"""
-            {self.BOOTSTRAP_IMPORT}
-            raise RuntimeError('boom')
-            """,
-        )
-        assert result.returncode != 0
-        assert "::error::" not in result.stderr
         assert "RuntimeError: boom" in result.stderr
-
-    def test_idempotent_when_imported_twice(self):
-        # Second import should not double-wrap the excepthook; only one ::error:: line.
-        result = _spawn_bootstrap(
-            env={"PATH": "", "QGC_CI_DEBUG": "1", "GITHUB_ACTIONS": "true"},
-            body=f"""
-            {self.BOOTSTRAP_IMPORT}
-            import importlib, _bootstrap
-            importlib.reload(_bootstrap)
-            raise RuntimeError('boom')
-            """,
-        )
-        assert result.returncode != 0
-        assert result.stderr.count("::error::RuntimeError: boom") == 1
+        assert result.stderr.count("::error::RuntimeError: boom") == int(annotated)

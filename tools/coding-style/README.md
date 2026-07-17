@@ -4,6 +4,8 @@ Reference files demonstrating QGroundControl's coding conventions. For the autho
 (naming, include order, C++20, QML, logging), see **[CODING_STYLE.md](../../CODING_STYLE.md)** — these
 files are worked examples of it.
 
+> For the parent tooling index and command reference, see [tools/README.md](../README.md).
+
 ## Files
 
 | File | Demonstrates |

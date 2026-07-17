@@ -2,6 +2,11 @@
 
 QGroundControl uses GStreamer for UDP RTP and RTSP video streaming in the Main Flight Display.
 
+This guide owns the GStreamer receiver architecture, platform setup, and diagnostics. Use
+[CODING_STYLE.md](../../../../CODING_STYLE.md) for repository-wide source conventions,
+[test/README.md](../../../../test/README.md) for the test framework, and
+[tools/README.md](../../../../tools/README.md) for general build and tooling commands.
+
 ## Source Code Architecture
 
 The pipeline is split into focused components (all in this directory):

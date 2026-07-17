@@ -30,6 +30,7 @@ import os
 import sys
 import time
 from dataclasses import dataclass, field
+from typing import Any, Protocol, cast
 
 try:
     from pymavlink import mavutil
@@ -43,6 +44,14 @@ except ImportError:
 DEFAULT_LAT = 47.3977
 DEFAULT_LON = 8.5456
 DEFAULT_ALT = 100.0
+
+
+class _MavlinkConnection(Protocol):
+    """Subset of pymavlink's dynamically generated connection surface used here."""
+
+    mav: Any
+
+    def recv_match(self, *, blocking: bool = False) -> Any: ...
 
 
 def _get_default_lat() -> float:
@@ -75,7 +84,7 @@ class VehicleState:
     airspeed: float = 0.0
     climb_rate: float = 0.0
     battery_voltage: float = 12.6
-    battery_remaining: int = 100
+    battery_remaining: float = 100.0
     armed: bool = False
     mode: str = "STABILIZE"
     gps_fix: int = 3  # 3D fix
@@ -90,7 +99,7 @@ class MockVehicle:
         self.component_id = component_id
         self.state = VehicleState()
         self.running = False
-        self.connection = None
+        self._connection: _MavlinkConnection | None = None
         self.start_time = time.time()
 
         # Mode mapping
@@ -105,21 +114,34 @@ class MockVehicle:
             "LAND": 9,
         }
 
+    @property
+    def connection(self) -> _MavlinkConnection:
+        """Return the active MAVLink connection or fail with a clear setup error."""
+        if self._connection is None:
+            raise RuntimeError("Mock vehicle is not connected")
+        return self._connection
+
     def connect_udp(self, host="127.0.0.1", port=14550):
         """Connect via UDP."""
-        self.connection = mavutil.mavlink_connection(
-            f"udpout:{host}:{port}",
-            source_system=self.system_id,
-            source_component=self.component_id,
+        self._connection = cast(
+            "_MavlinkConnection",
+            mavutil.mavlink_connection(
+                f"udpout:{host}:{port}",
+                source_system=self.system_id,
+                source_component=self.component_id,
+            ),
         )
         print(f"UDP connection to {host}:{port}")
 
     def connect_tcp(self, host="127.0.0.1", port=5760):
         """Connect via TCP (SITL-style)."""
-        self.connection = mavutil.mavlink_connection(
-            f"tcp:{host}:{port}",
-            source_system=self.system_id,
-            source_component=self.component_id,
+        self._connection = cast(
+            "_MavlinkConnection",
+            mavutil.mavlink_connection(
+                f"tcp:{host}:{port}",
+                source_system=self.system_id,
+                source_component=self.component_id,
+            ),
         )
         print(f"TCP connection on {host}:{port}")
 
@@ -149,7 +171,7 @@ class MockVehicle:
             500,  # load (50%)
             voltage,  # voltage_battery (mV)
             -1,  # current_battery
-            self.state.battery_remaining,
+            round(self.state.battery_remaining),
             0,
             0,
             0,
@@ -231,7 +253,7 @@ class MockVehicle:
             -1,  # current
             -1,  # current consumed
             -1,  # energy consumed
-            self.state.battery_remaining,
+            round(self.state.battery_remaining),
         )
 
     def send_home_position(self):

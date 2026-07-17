@@ -1,4 +1,4 @@
-"""Tests for coverage_comment.py."""
+"""Cobertura parsing and report-generation contracts."""
 
 from __future__ import annotations
 
@@ -13,170 +13,86 @@ if TYPE_CHECKING:
     import pytest
 
 
-def _write_xml(path: Path, content: str) -> None:
-    path.write_text(content, encoding="utf-8")
+def test_parse_coverage_supports_root_and_package_rates(tmp_path: Path) -> None:
+    coverage = tmp_path / "coverage.xml"
+    cases = [
+        ('<coverage line-rate="0.75" branch-rate="0.50"/>', {"line": 75.0, "branch": 50.0}),
+        (
+            '<coverage><packages><package line-rate="0.62" branch-rate="0.40"/></packages></coverage>',
+            {"line": 62.0, "branch": 40.0},
+        ),
+    ]
+    for content, expected in cases:
+        coverage.write_text(content)
+        assert parse_coverage(str(coverage)) == expected
 
 
-def test_parse_coverage_root_rates(tmp_path: Path) -> None:
-    xml = tmp_path / "coverage.xml"
-    _write_xml(xml, '<coverage line-rate="0.75" branch-rate="0.50"></coverage>')
-
-    cov = parse_coverage(str(xml))
-    assert cov is not None
-    assert cov["line"] == 75.0
-    assert cov["branch"] == 50.0
-
-
-def test_parse_coverage_package_fallback(tmp_path: Path) -> None:
-    xml = tmp_path / "coverage.xml"
-    _write_xml(
-        xml,
-        '<coverage><packages><package line-rate="0.62" branch-rate="0.40"/></packages></coverage>',
-    )
-
-    cov = parse_coverage(str(xml))
-    assert cov is not None
-    assert cov["line"] == 62.0
-    assert cov["branch"] == 40.0
-
-
-def test_parse_coverage_invalid_xml_returns_none(tmp_path: Path) -> None:
-    xml = tmp_path / "bad.xml"
-    _write_xml(xml, "<coverage")
-    assert parse_coverage(str(xml)) is None
-
-
-def test_parse_coverage_rejects_doctype_entity_payload(tmp_path: Path) -> None:
-    xml = tmp_path / "coverage.xml"
-    _write_xml(
-        xml,
+def test_parse_coverage_rejects_invalid_or_unsafe_xml(tmp_path: Path) -> None:
+    coverage = tmp_path / "coverage.xml"
+    for content in (
+        "<coverage",
         '<!DOCTYPE coverage [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><coverage line-rate="0.75"/>',
-    )
-    assert parse_coverage(str(xml)) is None
+    ):
+        coverage.write_text(content)
+        assert parse_coverage(str(coverage)) is None
 
 
-def test_coverage_badge() -> None:
-    assert coverage_badge(85.0) == "Good"
-    assert coverage_badge(70.0) == "Fair"
-    assert coverage_badge(30.0) == "Low"
+def test_coverage_labels_and_deltas() -> None:
+    for coverage, expected in ((85.0, "Good"), (70.0, "Fair"), (30.0, "Low")):
+        assert coverage_badge(coverage) == expected
+    for old, new, expected in (
+        (None, 70.0, "N/A"),
+        (50.0, 55.0, "+5.00%"),
+        (55.0, 50.0, "-5.00%"),
+        (55.0, 55.0, "No change"),
+    ):
+        assert delta_str(old, new) == expected
 
 
-def test_delta_str() -> None:
-    assert delta_str(None, 70.0) == "N/A"
-    assert delta_str(50.0, 55.0) == "+5.00%"
-    assert delta_str(55.0, 50.0) == "-5.00%"
-    assert delta_str(55.0, 55.0) == "No change"
+def _run_report(
+    monkeypatch: pytest.MonkeyPatch,
+    coverage: Path,
+    output: Path,
+    baseline: Path | None = None,
+) -> str:
+    argv = ["coverage_comment.py", "--coverage-xml", str(coverage), "--output", str(output)]
+    if baseline is not None:
+        argv.extend(["--baseline-xml", str(baseline)])
+    monkeypatch.setattr(sys, "argv", argv)
+    assert main() == 0
+    return output.read_text()
 
 
-def test_main_missing_coverage_writes_placeholder(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    output = tmp_path / "coverage-comment.md"
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "coverage_comment.py",
-            "--coverage-xml",
-            str(tmp_path / "missing.xml"),
-            "--output",
-            str(output),
-        ],
-    )
-
-    rc = main()
-    assert rc == 0
-    text = output.read_text(encoding="utf-8")
+def test_report_handles_missing_coverage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    text = _run_report(monkeypatch, tmp_path / "missing.xml", tmp_path / "comment.md")
     assert "Coverage data not available" in text
 
 
-def test_main_with_baseline_writes_delta_table(
+def test_report_includes_available_baseline_deltas(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    coverage_xml = tmp_path / "coverage.xml"
-    baseline_xml = tmp_path / "baseline.xml"
-    output = tmp_path / "coverage-comment.md"
+    coverage = tmp_path / "coverage.xml"
+    baseline = tmp_path / "baseline.xml"
+    output = tmp_path / "comment.md"
+    baseline.write_text('<coverage line-rate="0.70" branch-rate="0.50"/>')
 
-    _write_xml(coverage_xml, '<coverage line-rate="0.80" branch-rate="0.60"></coverage>')
-    _write_xml(baseline_xml, '<coverage line-rate="0.70" branch-rate="0.50"></coverage>')
-
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "coverage_comment.py",
-            "--coverage-xml",
-            str(coverage_xml),
-            "--baseline-xml",
-            str(baseline_xml),
-            "--output",
-            str(output),
-        ],
-    )
-
-    main()
-
-    text = output.read_text(encoding="utf-8")
-    assert "| Good Lines | 80.00% | +10.00% |" in text
-    assert "| Fair Branches | 60.00% | +10.00% |" in text
-
-
-def test_main_with_no_branch_in_pr_writes_na(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Regression: pr_cov['branch'] is None when XML lacks branch-rate; must report N/A."""
-    coverage_xml = tmp_path / "coverage.xml"
-    baseline_xml = tmp_path / "baseline.xml"
-    output = tmp_path / "coverage-comment.md"
-
-    _write_xml(coverage_xml, '<coverage line-rate="0.80"></coverage>')
-    _write_xml(baseline_xml, '<coverage line-rate="0.70" branch-rate="0.50"></coverage>')
-
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "coverage_comment.py",
-            "--coverage-xml",
-            str(coverage_xml),
-            "--baseline-xml",
-            str(baseline_xml),
-            "--output",
-            str(output),
-        ],
-    )
-
-    assert main() == 0
-    text = output.read_text(encoding="utf-8")
-    assert "Lines" in text
-    assert "Branches" not in text
-
-
-def test_main_with_zero_branch_coverage_reports_delta(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    coverage_xml = tmp_path / "coverage.xml"
-    baseline_xml = tmp_path / "baseline.xml"
-    output = tmp_path / "coverage-comment.md"
-
-    _write_xml(coverage_xml, '<coverage line-rate="0.80" branch-rate="0.00"></coverage>')
-    _write_xml(baseline_xml, '<coverage line-rate="0.70" branch-rate="0.10"></coverage>')
-
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "coverage_comment.py",
-            "--coverage-xml",
-            str(coverage_xml),
-            "--baseline-xml",
-            str(baseline_xml),
-            "--output",
-            str(output),
-        ],
-    )
-
-    main()
-
-    text = output.read_text(encoding="utf-8")
-    assert "| Low Branches | 0.00% | -10.00% |" in text
+    cases = [
+        (
+            '<coverage line-rate="0.80" branch-rate="0.60"/>',
+            ["| Good Lines | 80.00% | +10.00% |", "| Fair Branches | 60.00% | +10.00% |"],
+            [],
+        ),
+        ('<coverage line-rate="0.80"/>', ["Lines"], ["Branches"]),
+        (
+            '<coverage line-rate="0.80" branch-rate="0.00"/>',
+            ["| Low Branches | 0.00% | -50.00% |"],
+            [],
+        ),
+    ]
+    for xml, expected, absent in cases:
+        coverage.write_text(xml)
+        text = _run_report(monkeypatch, coverage, output, baseline)
+        for value in expected:
+            assert value in text
+        for value in absent:
+            assert value not in text

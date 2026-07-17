@@ -1,70 +1,22 @@
 # Support for QGroundControl
 
-Welcome to the QGroundControl support guide. This document provides information on how to get help, report issues, and engage with the community.
+## Get Help
 
----
+- [User Manual](https://docs.qgroundcontrol.com/)
+- [Developer Guide](https://dev.qgroundcontrol.com/)
+- [QGroundControl forum](https://discuss.px4.io/c/qgroundcontrol)
+- [Dronecode Discord](https://discord.gg/dronecode)
 
-## 1. Getting Started
+## Report a Bug
 
-- **Documentation**: Comprehensive user and developer guides are available on the official website:
-  - User Guide: <https://docs.qgroundcontrol.com/>
-  - Developer Guide: <https://dev.qgroundcontrol.com/>
+Search the [existing issues](https://github.com/mavlink/qgroundcontrol/issues) first. If the problem
+has not been reported, open a new issue and include the QGroundControl version, operating system,
+reproduction steps, logs, and any useful screenshots or recordings.
 
----
+Do not report vulnerabilities in a public issue. Follow the private process in the
+[Security Policy](SECURITY.md).
 
-## 2. Reporting Issues
+## Contribute
 
-When you encounter a bug or unexpected behavior, please help us by reporting it:
-
-1. Search existing issues to avoid duplicates: <https://github.com/mavlink/qgroundcontrol/issues>  
-2. Open a new issue with the following information:
-   - QGroundControl version (e.g., v5.0.0)
-   - Operating system and version
-   - Detailed steps to reproduce the problem
-   - Log files and console output (attach via GitHub issue)
-   - Screenshots or screen recordings (optional)
-
-**Issue Tracking**: <https://github.com/mavlink/qgroundcontrol/issues>
-
----
-
-## 3. Community & Chat
-
-Join the community to ask questions, share experiences, and stay informed:
-
-- **Discourse Forum**: <https://discuss.px4.io/c/qgroundcontrol>
-- **Discord**: <https://discord.gg/dronecode>
-
----
-
-## 4. Commercial & Professional Support
-
-For enterprise-grade support, consulting, and custom development, please contact our commercial partners:
-
-- **Dronecode Foundation**: <https://www.dronecode.org>  
-
----
-
-## 5. Contributing & Development Support
-
-We welcome contributions of all kinds:
-
-- **Source Repository**: <https://github.com/mavlink/qgroundcontrol>
-- **Contribution Guide**: See [CONTRIBUTING.md](CONTRIBUTING.md) for the full process, coding standards, and PR requirements
-- **Coding Standards**: See [CODING_STYLE.md](../CODING_STYLE.md) for naming, formatting, and architecture patterns
-
----
-
-## 6. Security and Privacy
-
-To report security vulnerabilities, please use GitHub's Security tab to privately report the issue. See [SECURITY.md](SECURITY.md) for details.
-
----
-
-## 7. License
-
-QGroundControl is dual-licensed under the Apache License 2.0 and the GNU General Public License v3. See [COPYING.md](COPYING.md) for details.
-
----
-
-Thank you for using QGroundControl! Your feedback and contributions help us improve.
+The [Contribution Guide](CONTRIBUTING.md) owns the development and pull-request workflow. Refer to
+[CODING_STYLE.md](../CODING_STYLE.md) for source rules and [COPYING.md](COPYING.md) for licensing.

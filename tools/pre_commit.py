@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Run pre-commit checks with CI-friendly summaries."""
 
 from __future__ import annotations
@@ -15,13 +14,16 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import find_repo_root, get_default_branch_ref, run_captured
+from common.deps import pip_install
+from common.file_traversal import find_repo_root
 from common.gh_actions import write_github_output as _write_github_output
 from common.gh_actions import write_step_summary as _write_step_summary
+from common.git import get_default_branch_ref
 from common.io import chdir
 from common.logging import log_error, log_info, log_ok, log_warn
+from common.proc import run_captured
 
-HOOK_RESULT_RE = re.compile(r"\b(Passed|Failed|Skipped)\b")
+HOOK_RESULT_RE = re.compile(r"^.+?\.{10,}(Passed|Failed|Skipped)\s*$")
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
@@ -37,10 +39,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def repo_root() -> Path:
-    return find_repo_root(Path(__file__))
-
-
 def ensure_precommit_available() -> bool:
     return shutil.which("pre-commit") is not None
 
@@ -52,7 +50,7 @@ def strip_ansi(value: str) -> str:
 def summarize_output(output: str) -> tuple[int, int, int]:
     passed = failed = skipped = 0
     for line in output.splitlines():
-        match = HOOK_RESULT_RE.search(line)
+        match = HOOK_RESULT_RE.match(strip_ansi(line))
         if not match:
             continue
         state = match.group(1)
@@ -66,14 +64,19 @@ def summarize_output(output: str) -> tuple[int, int, int]:
 
 
 def extract_hook_lines(output: str, *, limit: int = 40) -> list[str]:
-    lines = [strip_ansi(line) for line in output.splitlines() if ".........." in line]
+    lines = [
+        clean_line
+        for line in output.splitlines()
+        if HOOK_RESULT_RE.match(clean_line := strip_ansi(line))
+    ]
     return lines[:limit] or ["No results"]
 
 
 def build_precommit_args(args: argparse.Namespace) -> list[str]:
     result = ["pre-commit", "run", "--show-diff-on-failure", "--color=always"]
     if args.changed:
-        ref = get_default_branch_ref()
+        github_base_ref = os.environ.get("GITHUB_BASE_REF", "").strip()
+        ref = f"origin/{github_base_ref}" if github_base_ref else get_default_branch_ref()
         if ref:
             log_info(f"Running on files changed vs {ref}...")
             result.extend(["--from-ref", ref, "--to-ref", "HEAD"])
@@ -123,8 +126,6 @@ def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, o
 
 def handle_install() -> int:
     log_info("Installing pre-commit and hooks...")
-    from common import pip_install
-
     pip_install(["pre-commit"])
     subprocess.run(["pre-commit", "install"], check=True)
     subprocess.run(["pre-commit", "install", "--hook-type", "commit-msg"], check=True)
@@ -142,7 +143,7 @@ def handle_update() -> int:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
-    with chdir(repo_root()):
+    with chdir(find_repo_root(Path(__file__))):
         try:
             if args.install:
                 return handle_install()

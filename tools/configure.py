@@ -1,13 +1,12 @@
-#!/usr/bin/env python3
 """Configure QGroundControl CMake build.
 
 Usage:
-    ./tools/configure.py                     # Default Debug build
-    ./tools/configure.py --release           # Release build
-    ./tools/configure.py --testing           # With unit tests
-    ./tools/configure.py --coverage          # With coverage
-    ./tools/configure.py --unity             # Unity build (faster)
-    ./tools/configure.py --qt-root ~/Qt/6.8.0/gcc_64  # Explicit Qt
+    python3 tools/configure.py                     # Default Debug build
+    python3 tools/configure.py --release           # Release build
+    python3 tools/configure.py --testing           # With unit tests
+    python3 tools/configure.py --coverage          # With coverage
+    python3 tools/configure.py --unity             # Unity build (faster)
+    python3 tools/configure.py --qt-root ~/Qt/6.8.0/gcc_64  # Explicit Qt
 
 Environment:
     QT_ROOT_DIR - Qt installation (auto-detected if not set)
@@ -28,7 +27,7 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import find_repo_root
+from common.file_traversal import find_repo_root
 from common.gh_actions import write_github_output
 from common.platform import is_windows
 
@@ -43,12 +42,35 @@ class CMakeConfig:
     generator: str = "Ninja"
     testing: bool = False
     coverage: bool = False
+    preset: str | None = None
+    use_preset: bool = True
     stable: bool = False
     unity_build: bool = False
     unity_batch_size: int = 16
     use_qt_cmake: bool = True
     qt_root: Path | None = None
     extra_args: list[str] = field(default_factory=list)
+
+
+LOCAL_PRESETS = {
+    "Debug": "default",
+    "Release": "default-release",
+    "RelWithDebInfo": "default-relwithdebinfo",
+    "MinSizeRel": "default-minsizerel",
+}
+
+
+def select_preset(config: CMakeConfig) -> str | None:
+    """Select the canonical local preset for a configuration."""
+    if not config.use_preset:
+        return None
+    if config.preset:
+        return config.preset
+    if config.coverage:
+        if not sys.platform.startswith("linux"):
+            raise ValueError("Coverage builds require Linux; use --no-preset for a custom setup")
+        return "Linux-coverage"
+    return LOCAL_PRESETS[config.build_type]
 
 
 def parse_version(path: Path) -> tuple[int, ...]:
@@ -125,6 +147,8 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
 
 def configure(config: CMakeConfig) -> int:
     """Run CMake configuration."""
+    preset = select_preset(config)
+
     # Determine cmake command
     if config.use_qt_cmake:
         qt_cmake = find_qt_cmake(config.qt_root)
@@ -137,25 +161,35 @@ def configure(config: CMakeConfig) -> int:
     else:
         cmake_cmd = "cmake"
 
-    # Build CMake arguments
-    args = [
-        cmake_cmd,
-        "-S",
-        str(config.source_dir),
-        "-B",
-        str(config.build_dir),
-        "-G",
-        config.generator,
-        f"-DCMAKE_BUILD_TYPE={config.build_type}",
-    ]
+    if preset:
+        args = [
+            cmake_cmd,
+            "--preset",
+            preset,
+            "-S",
+            str(config.source_dir),
+            "-B",
+            str(config.build_dir),
+        ]
+    else:
+        args = [
+            cmake_cmd,
+            "-S",
+            str(config.source_dir),
+            "-B",
+            str(config.build_dir),
+            "-G",
+            config.generator,
+            f"-DCMAKE_BUILD_TYPE={config.build_type}",
+        ]
 
-    # Feature flags
+    # Explicit feature flags may refine a preset, but normal preset-owned defaults are not repeated.
     if config.testing:
         args.append("-DQGC_BUILD_TESTING=ON")
-    else:
+    elif not preset:
         args.append("-DQGC_BUILD_TESTING=OFF")
 
-    if config.coverage:
+    if config.coverage and preset != "Linux-coverage":
         args.append("-DQGC_ENABLE_COVERAGE=ON")
 
     if config.stable:
@@ -168,11 +202,19 @@ def configure(config: CMakeConfig) -> int:
     # Extra arguments
     args.extend(config.extra_args)
 
-    print(f"Build type: {config.build_type}")
+    if preset:
+        print(f"Preset: {preset}")
+    else:
+        print(f"Build type: {config.build_type}")
     print(f"Build dir: {config.build_dir}")
 
     # Run cmake
-    result = subprocess.run(args)
+    env = os.environ.copy()
+    if config.qt_root:
+        env["QT_ROOT_DIR"] = str(config.qt_root.resolve())
+    elif "QT_ROOT_DIR" not in env and config.use_qt_cmake and qt_cmake:
+        env["QT_ROOT_DIR"] = str(qt_cmake.parent.parent.resolve())
+    result = subprocess.run(args, env=env)
 
     if result.returncode != 0:
         return result.returncode
@@ -196,6 +238,7 @@ Environment:
 Examples:
   %(prog)s --release --testing
   %(prog)s -B build-debug --debug
+  %(prog)s --preset Linux-debug
   %(prog)s --qt-root ~/Qt/6.8.0/gcc_64 --release
 """,
     )
@@ -251,6 +294,16 @@ Examples:
         action="store_true",
         help="Enable code coverage (QGC_ENABLE_COVERAGE=ON)",
     )
+    preset_group = parser.add_mutually_exclusive_group()
+    preset_group.add_argument(
+        "--preset",
+        help="CMake configure preset (default: matching default* preset)",
+    )
+    preset_group.add_argument(
+        "--no-preset",
+        action="store_true",
+        help="Use legacy command-line configuration for an unsupported custom setup",
+    )
     parser.add_argument(
         "--stable",
         action="store_true",
@@ -303,6 +356,8 @@ def main() -> int:
         generator=args.generator,
         testing=args.testing,
         coverage=args.coverage,
+        preset=args.preset,
+        use_preset=not args.no_preset,
         stable=args.stable,
         unity_build=args.unity,
         unity_batch_size=args.unity_batch,

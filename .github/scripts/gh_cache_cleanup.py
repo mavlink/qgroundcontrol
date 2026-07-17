@@ -1,34 +1,30 @@
 #!/usr/bin/env python3
-"""List and optionally delete GitHub Actions caches via gh-actions-cache.
+"""List and optionally delete GitHub Actions caches via GitHub CLI.
 
 Writes count (and deleted, when --delete) to GITHUB_OUTPUT. With --summary,
 appends a markdown table of caches (plus deletion totals or a dry-run notice)
 to GITHUB_STEP_SUMMARY.
-
-Requires the `gh-actions-cache` extension to be installed; the caller (action
-or workflow) is responsible for installation.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import sys
 from dataclasses import dataclass
 
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, gh_error, write_github_output, write_step_summary
+from common.gh_actions import gh, require_repository, write_github_output, write_step_summary
 from common.markdown import md_table
 
 # Build caches are the expensive-to-rebuild data the GC must never evict; the
 # 10 GiB/repo pool is reclaimed from everything else first.
 DEFAULT_PROTECT = r"^(ccache|cpm-modules)-"
 _MIB = 1024 * 1024
+_PRUNE_CACHE_LIMIT = 10_000
 
 
 @dataclass(frozen=True)
@@ -40,28 +36,30 @@ class CacheRow:
 
 @dataclass(frozen=True)
 class CacheUsage:
+    cache_id: int
     key: str
     ref: str
     size_bytes: int
     last_accessed: str
 
 
-def _repo() -> str:
-    repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
-    if not repo:
-        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
-        sys.exit(1)
-    return repo
-
-
 def _branch_args(branch: str) -> list[str]:
-    return ["-B", branch] if branch else []
+    if not branch:
+        return []
+    ref = branch if branch.startswith("refs/") else f"refs/heads/{branch}"
+    return ["--ref", ref]
+
+
+def _format_size(size_bytes: int) -> str:
+    if size_bytes >= _MIB:
+        return f"{size_bytes / _MIB:.1f} MiB"
+    return f"{size_bytes / 1024:.1f} KiB"
 
 
 def list_caches(repo: str, branch: str, limit: int = 100) -> list[CacheRow]:
-    """Return cached entries via `gh actions-cache list`. Empty list on no rows."""
+    """Return cached entries via built-in `gh cache list`."""
     result = gh(
-        "actions-cache",
+        "cache",
         "list",
         "-R",
         repo,
@@ -70,19 +68,19 @@ def list_caches(repo: str, branch: str, limit: int = 100) -> list[CacheRow]:
         "desc",
         "--limit",
         str(limit),
+        "--json",
+        "key,sizeInBytes,ref",
     )
-    rows: list[CacheRow] = []
-    for line in result.stdout.splitlines():
-        if not line.strip():
-            continue
-        # gh-actions-cache emits tab-separated: KEY \t SIZE \t REF \t LAST_USED
-        parts = line.split("\t")
-        if len(parts) < 3:
-            parts = line.split()
-            if len(parts) < 3:
-                continue
-        rows.append(CacheRow(key=parts[0], size=parts[1], ref=parts[2]))
-    return rows
+    data = json.loads(result.stdout or "[]")
+    return [
+        CacheRow(
+            key=row["key"],
+            size=_format_size(int(row.get("sizeInBytes", 0))),
+            ref=row.get("ref", ""),
+        )
+        for row in data
+        if row.get("key")
+    ]
 
 
 def delete_caches(repo: str, branch: str, keys: list[str]) -> tuple[int, int]:
@@ -92,13 +90,12 @@ def delete_caches(repo: str, branch: str, keys: list[str]) -> tuple[int, int]:
         if not key:
             continue
         result = gh(
-            "actions-cache",
+            "cache",
             "delete",
             key,
             "-R",
             repo,
             *_branch_args(branch),
-            "--confirm",
             check=False,
         )
         if result.returncode == 0:
@@ -108,7 +105,19 @@ def delete_caches(repo: str, branch: str, keys: list[str]) -> tuple[int, int]:
     return deleted, failed
 
 
-def list_caches_usage(repo: str, limit: int = 200) -> list[CacheUsage]:
+def delete_cache_ids(repo: str, cache_ids: list[int]) -> tuple[int, int]:
+    """Delete exact cache entries by ID; return (deleted, failed)."""
+    deleted = failed = 0
+    for cache_id in cache_ids:
+        result = gh("cache", "delete", str(cache_id), "-R", repo, check=False)
+        if result.returncode == 0:
+            deleted += 1
+        else:
+            failed += 1
+    return deleted, failed
+
+
+def list_caches_usage(repo: str, limit: int = _PRUNE_CACHE_LIMIT) -> list[CacheUsage]:
     """Return all caches with numeric sizes via built-in `gh cache list --json`."""
     result = gh(
         "cache",
@@ -118,18 +127,19 @@ def list_caches_usage(repo: str, limit: int = 200) -> list[CacheUsage]:
         "--limit",
         str(limit),
         "--json",
-        "key,ref,sizeInBytes,lastAccessedAt",
+        "id,key,ref,sizeInBytes,lastAccessedAt",
     )
     data = json.loads(result.stdout or "[]")
     return [
         CacheUsage(
+            cache_id=int(row.get("id", 0)),
             key=row.get("key", ""),
             ref=row.get("ref", ""),
             size_bytes=int(row.get("sizeInBytes", 0)),
             last_accessed=row.get("lastAccessedAt", ""),
         )
         for row in data
-        if row.get("key")
+        if row.get("key") and row.get("id")
     ]
 
 
@@ -182,13 +192,13 @@ def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, del
 
 def run_prune(repo: str, args: argparse.Namespace) -> dict[str, str]:
     """Evict non-protected caches when the pool exceeds the high-water mark."""
-    caches = list_caches_usage(repo, args.limit)
+    caches = list_caches_usage(repo, _PRUNE_CACHE_LIMIT)
     victims, total, projected = select_prune_victims(
         caches, keep_mb=args.keep_mb, high_water_mb=args.high_water_mb, protect=args.protect
     )
     deleted = 0
     if victims and args.delete:
-        deleted, _ = delete_caches(repo, "", [cache.key for cache in victims])
+        deleted, _ = delete_cache_ids(repo, [cache.cache_id for cache in victims])
     print(f"Pool {total // _MIB} MiB; {len(victims)} eviction candidate(s); deleted {deleted}")
 
     if args.summary:
@@ -263,7 +273,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    repo = _repo()
+    repo = require_repository()
 
     if args.prune:
         write_github_output(run_prune(repo, args))

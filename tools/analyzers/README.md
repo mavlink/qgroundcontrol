@@ -2,6 +2,10 @@
 
 Static analysis tools for QGroundControl C++ code.
 
+> See [tools/README.md](../README.md#static-analyzers) for the tooling index and
+> [CODING_STYLE.md](../../CODING_STYLE.md#common-pitfalls) for the source rules these analyzers
+> enforce.
+
 ## Vehicle Null-Check Analyzer
 
 Detects unsafe patterns where `activeVehicle()` or `getParameter()` results are used without null checks.

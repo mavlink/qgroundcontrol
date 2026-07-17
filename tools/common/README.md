@@ -1,79 +1,89 @@
-# QGC Tools Common Library
+# QGC Shared Tooling
 
-Shared utilities used by QGC developer tools.
-
-## Modules
-
-### patterns.py
-
-QGC-specific regex patterns for code analysis.
+`tools/common/` contains small, dependency-light helpers shared by QGC developer and CI scripts.
+Import from the module that defines a helper; `common/__init__.py` intentionally does not re-export
+symbols. Explicit imports keep runtime and sparse-checkout dependencies visible.
 
 ```python
-from tools.common.patterns import (
-    FACT_MEMBER_PATTERN,        # Match: Fact _speedFact = ...
-    FACTGROUP_CLASS_PATTERN,    # Match: class VehicleGPSFactGroup : ...
-    MAVLINK_MSG_ID_PATTERN,     # Match: MAVLINK_MSG_ID_HEARTBEAT
-    PARAM_NAME_PATTERN,         # Match: "name": "latitude" in JSON
-    ACTIVE_VEHICLE_DIRECT_PATTERN,   # Match: activeVehicle()->method()
-    ACTIVE_VEHICLE_ASSIGN_PATTERN,   # Match: var = activeVehicle()
-    GET_PARAMETER_DIRECT_PATTERN,    # Match: getParameter()->method()
-    NULL_CHECK_PATTERNS,        # List of null-check pattern strings
-    make_query_pattern,         # Create filtered pattern from query
-)
+from common.file_traversal import find_repo_root
+from common.proc import run_captured
 ```
 
-### file_traversal.py
+## Module Index
 
-File discovery with proper filtering for QGC codebase.
+| Module | Purpose |
+| ------ | ------- |
+| `analyzer.py` | Analyzer result types, base class, and ordered parallel execution |
+| `artifact_metadata.py` | Validated GitHub Actions artifact name and size interchange |
+| `aws.py` | Allowlisted public S3 object checks and uploads |
+| `build_config.py` | `.github/build-config.json` lookup, validation, and CI export |
+| `cmake.py` | CMake cache variable parsing |
+| `cobertura.py` | Cobertura line and branch coverage metrics |
+| `deps.py` | External-tool checks and project-aware Python package installation |
+| `env.py` | CI environment detection |
+| `errors.py` | Shared tooling exceptions |
+| `file_traversal.py` | Repository-root discovery and filtered C++ file traversal |
+| `format.py` | Human-readable byte and size-delta formatting |
+| `gh_actions.py` | GitHub CLI calls, annotations, outputs, environment, and step summaries |
+| `git.py` | Captured Git commands and default-branch discovery |
+| `github_runs.py` | Workflow-run loading, filtering, and latest-run selection |
+| `io.py` | JSON/TOML I/O, checksums, atomic writes, and safe archive extraction |
+| `logging.py` | Color-aware terminal logging |
+| `markdown.py` | Escaped GitHub-Flavored Markdown tables |
+| `net.py` | Dependency-free downloads and retry policies |
+| `opener.py` | Cross-platform default-application launching |
+| `patterns.py` | QGC-specific source-analysis regular expressions |
+| `platform.py` | OS and CPU architecture normalization |
+| `proc.py` | Captured text and byte subprocess execution |
+| `tool_version.py` | External-tool and `uv.lock` version lookup |
+| `xml.py` | Safe XML parsing with entity-declaration rejection |
+| `shell-utils.sh` | Shared shell logging for developer scripts |
+
+API behavior and edge cases are covered by matching files under `tools/tests/`, such as
+`test_proc.py`, `test_io.py`, and `test_gh_actions.py`.
+
+## Bootstrapping Imports
+
+Scripts under `tools/` must initialize the tools path before importing `common`:
 
 ```python
-from tools.common.file_traversal import (
-    find_repo_root,      # Find .git root directory
-    find_cpp_files,      # Find .cc, .cpp, .h, .hpp files
-    find_header_files,   # Find .h, .hpp files only
-    find_source_files,   # Find .cc, .cpp files only
-    find_json_files,     # Find JSON files by pattern
-    should_skip_path,    # Check if path should be skipped
-    DEFAULT_SKIP_DIRS,   # {'build', 'libs', 'test', ...}
-)
+from _bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.proc import run_captured
 ```
 
-### gh_actions.py
-
-Shared GitHub Actions API helpers (via `gh`) used by CI scripts.
+Scripts under `.github/scripts/` use the CI shim instead:
 
 ```python
-from tools.common.gh_actions import (
-    gh,                        # Run gh command and capture output
-    list_workflow_runs_for_sha,# List workflow runs for commit SHA
-    list_run_artifacts,        # List artifacts for a workflow run
-)
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import write_github_output
 ```
 
-## Usage Example
+The import after `ensure_tools_dir` is intentionally separated and may need `# noqa: E402` in
+files covered by Ruff's import-position rule. Do not manually modify `sys.path` in new scripts.
 
-```python
-import sys
-from pathlib import Path
+CI jobs that use sparse checkout must include the entrypoint, bootstrap shim, and transitive
+`common` modules. `test_bootstrap_sparse_checkout.py` checks that closure automatically.
 
-# Add tools to path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+## Adding or Reusing Helpers
 
-from common.patterns import FACT_MEMBER_PATTERN, make_query_pattern
-from common.file_traversal import find_header_files, find_repo_root
+Before adding a helper, search this directory and its call sites. Add shared code only when it has
+multiple consumers or centralizes a correctness boundary such as safe extraction, retries, GitHub
+output encoding, or platform normalization.
 
-# Search for Facts matching a query
-repo_root = find_repo_root()
-query_pattern = make_query_pattern(FACT_MEMBER_PATTERN, "lat")
+When a new helper is warranted:
 
-for header in find_header_files(repo_root / "src"):
-    content = header.read_text()
-    for match in query_pattern.finditer(content):
-        print(f"Found: {match.group(1)} in {header}")
-```
+1. Put it in the narrowest existing module; create a module only for a distinct concern.
+2. Keep imports dependency-light and defer optional packages until the function that needs them.
+3. Export the supported surface through the module's `__all__` when it has one.
+4. Add focused tests under `tools/tests/`.
+5. Run `pytest -q tools/tests .github/scripts/tests`, Ruff, Pyright, and import-linter.
+6. Update sparse-checkout lists if the automatic policy test reports a missing module.
 
-## Adding New Patterns
-
-1. Add pattern to `patterns.py` with descriptive name and docstring
-2. Export from `__init__.py`
-3. Add tests if pattern is complex
+Standalone packages under `tools/skills/` are copied and run outside the repository, so their
+reference scripts must not depend on `tools/common/`.

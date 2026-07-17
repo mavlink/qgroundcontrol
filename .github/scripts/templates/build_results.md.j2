@@ -11,6 +11,10 @@
 
 **{{ summary }}**
 
+{% if artifact_warning.show -%}
+> [!NOTE]
+> Test and coverage details were unavailable for this commit; the platform statuses above are unaffected.{% if artifact_warning.run_url %} [View workflow run]({{ artifact_warning.run_url }}).{% endif %}{{ "\n" }}
+{% endif -%}
 ### Pre-commit
 
 | Check | Status | Details |

@@ -5,22 +5,39 @@
 # APT_EXTRA (env) adds variant packages (e.g. "gcc-12 g++-12" for 22.04).
 set -eu
 
-# Harden apt against transient mirror outages: retries/timeouts + a geo-routed
-# CDN mirror instead of the single archive.ubuntu.com host.
+# Harden apt against transient repository outages with transport retries, bounded
+# timeouts, and whole-command retries. Minimal Ubuntu images need one signed HTTP
+# bootstrap to install the CA bundle before the canonical repositories can use
+# HTTPS; apt still authenticates repository metadata during that bootstrap.
+. /usr/local/lib/qgc/retry.sh
+
 cat > /etc/apt/apt.conf.d/80-retries <<'EOF'
 Acquire::Retries "3";
 Acquire::http::Timeout "30";
 Acquire::https::Timeout "30";
+APT::Update::Error-Mode "any";
 EOF
 
 for f in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
-    [ -f "$f" ] && sed -i 's|https\?://archive.ubuntu.com/ubuntu|mirror://mirrors.ubuntu.com/mirrors.txt|g' "$f"
+    [ -f "$f" ] && sed -i \
+        -e 's|https://archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' \
+        -e 's|https://security.ubuntu.com/ubuntu|http://security.ubuntu.com/ubuntu|g' \
+        "$f"
 done
 
-apt-get update
+retry apt-get update
+retry apt-get install -y --no-install-recommends ca-certificates
+
+for f in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+    [ -f "$f" ] && sed -i \
+        -e 's|http://archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' \
+        -e 's|http://security.ubuntu.com/ubuntu|https://security.ubuntu.com/ubuntu|g' \
+        "$f"
+done
+
+retry apt-get update
 # shellcheck disable=SC2086
-apt-get install -y --no-install-recommends \
-    ca-certificates \
+retry apt-get install -y --no-install-recommends \
     git \
     python3 \
     locales \

@@ -19,9 +19,15 @@ if(NOT QGC_ENABLE_COVERAGE)
 endif()
 
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(WARNING "QGC: Code coverage requires Debug build, but CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
-    return()
+    message(FATAL_ERROR
+        "QGC: Code coverage requires a Debug build, but CMAKE_BUILD_TYPE is '${CMAKE_BUILD_TYPE}'")
 endif()
+
+foreach(_threshold IN ITEMS QGC_COVERAGE_LINE_THRESHOLD QGC_COVERAGE_BRANCH_THRESHOLD)
+    if(NOT "${${_threshold}}" MATCHES "^([0-9]|[1-9][0-9]|100)$")
+        message(FATAL_ERROR "${_threshold} must be an integer from 0 through 100")
+    endif()
+endforeach()
 
 message(STATUS "Code coverage instrumentation enabled")
 
@@ -32,24 +38,20 @@ message(STATUS "Code coverage instrumentation enabled")
 # whose launcher property was initialized at qt_add_executable() time.
 set(CMAKE_C_COMPILER_LAUNCHER "" CACHE STRING "C compiler launcher" FORCE)
 set(CMAKE_CXX_COMPILER_LAUNCHER "" CACHE STRING "CXX compiler launcher" FORCE)
-if(TARGET ${CMAKE_PROJECT_NAME})
-    set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_COMPILER_LAUNCHER "")
-    set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY CXX_COMPILER_LAUNCHER "")
-endif()
-
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    message(STATUS "Using GCC coverage (gcov/lcov)")
-    # Scope coverage flags to the QGC target only. Global add_compile_options
-    # would leak --coverage into CPM third-party static libraries, injecting
-    # __gcov_* symbols that cause linker errors.
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE --coverage -O0 -g)
-    target_link_options(${CMAKE_PROJECT_NAME} PRIVATE --coverage)
-    set(GCOVR_GCOV_EXECUTABLE gcov)
+    set(_qgc_coverage_compile_options --coverage -O0 -g)
+    set(_qgc_coverage_link_options --coverage)
+    string(REGEX MATCH "^[0-9]+" _qgc_gcc_major "${CMAKE_CXX_COMPILER_VERSION}")
+    find_program(_qgc_gcov_executable NAMES "gcov-${_qgc_gcc_major}" gcov NO_CACHE)
+    set(GCOVR_GCOV_EXECUTABLE "${_qgc_gcov_executable}")
+    message(STATUS "Using GCC coverage (${GCOVR_GCOV_EXECUTABLE})")
+    unset(_qgc_gcc_major)
+    unset(_qgc_gcov_executable)
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "Using Clang source-based coverage (llvm-cov)")
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fprofile-instr-generate -fcoverage-mapping -O0 -g)
-    target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -fprofile-instr-generate)
+    set(_qgc_coverage_compile_options -fprofile-instr-generate -fcoverage-mapping -O0 -g)
+    set(_qgc_coverage_link_options -fprofile-instr-generate)
 
     find_program(LLVM_COV_PATH llvm-cov)
     if(LLVM_COV_PATH)
@@ -64,6 +66,33 @@ else()
     message(WARNING "QGC: Code coverage not supported for compiler: ${CMAKE_CXX_COMPILER_ID}")
     return()
 endif()
+
+# Apply coverage to each project-owned compiled target. Static and object
+# libraries need instrumentation at compile time; the final executable carries
+# the coverage runtime at link time. Multi-config builds instrument Debug only.
+function(qgc_apply_coverage_to_target target)
+    if(NOT target OR NOT TARGET ${target})
+        message(FATAL_ERROR "QGC: qgc_apply_coverage_to_target: Target '${target}' does not exist")
+    endif()
+
+    get_target_property(_target_type ${target} TYPE)
+    get_target_property(_imported ${target} IMPORTED)
+    if(_imported OR _target_type STREQUAL "INTERFACE_LIBRARY" OR _target_type STREQUAL "UTILITY")
+        message(FATAL_ERROR
+            "QGC: qgc_apply_coverage_to_target: '${target}' must be a non-imported compiled target")
+    endif()
+
+    set_property(TARGET ${target} PROPERTY C_COMPILER_LAUNCHER "")
+    set_property(TARGET ${target} PROPERTY CXX_COMPILER_LAUNCHER "")
+    foreach(_option IN LISTS _qgc_coverage_compile_options)
+        target_compile_options(${target} PRIVATE "$<$<CONFIG:Debug>:${_option}>")
+    endforeach()
+    if(_target_type MATCHES "^(EXECUTABLE|SHARED_LIBRARY|MODULE_LIBRARY)$")
+        foreach(_option IN LISTS _qgc_coverage_link_options)
+            target_link_options(${target} PRIVATE "$<$<CONFIG:Debug>:${_option}>")
+        endforeach()
+    endif()
+endfunction()
 
 find_program(GCOVR_EXECUTABLE gcovr)
 
@@ -89,47 +118,52 @@ if(GCOVR_EXECUTABLE)
     if(GCOVR_GCOV_EXECUTABLE)
         list(APPEND GCOVR_COMMON_ARGS --gcov-executable "${GCOVR_GCOV_EXECUTABLE}")
     endif()
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        # GCC can emit negative branch counters for exception-heavy code (GCC PR 68080).
+        list(APPEND GCOVR_COMMON_ARGS --gcov-ignore-parse-errors=negative_hits.warn_once_per_file)
+    endif()
 
     add_custom_target(coverage-report
-        COMMAND ${GCOVR_EXECUTABLE}
+        COMMAND "${GCOVR_EXECUTABLE}"
             ${GCOVR_COMMON_ARGS}
             --xml coverage.xml
             --html coverage.html
             --html-details
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         COMMENT "Generating coverage report from existing coverage data (XML + HTML)"
         VERBATIM
     )
 
     if(QGC_BUILD_TESTING)
         add_custom_target(coverage
-            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
-            COMMAND ${GCOVR_EXECUTABLE}
+            COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --output-on-failure -L Unit
+            COMMAND "${GCOVR_EXECUTABLE}"
                 ${GCOVR_COMMON_ARGS}
                 --xml coverage.xml
                 --html coverage.html
                 --html-details
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
             COMMENT "Running tests and generating coverage report (XML + HTML)"
             VERBATIM
         )
         add_dependencies(coverage ${CMAKE_PROJECT_NAME})
 
         add_custom_target(coverage-check
-            COMMAND ${GCOVR_EXECUTABLE}
+            COMMAND "${GCOVR_EXECUTABLE}"
                 ${GCOVR_COMMON_ARGS}
                 --fail-under-line ${QGC_COVERAGE_LINE_THRESHOLD}
                 --fail-under-branch ${QGC_COVERAGE_BRANCH_THRESHOLD}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
             COMMENT "Verifying coverage thresholds (lines>=${QGC_COVERAGE_LINE_THRESHOLD}%, branches>=${QGC_COVERAGE_BRANCH_THRESHOLD}%) — run 'coverage' target first"
             VERBATIM
         )
     endif()
 
     add_custom_target(coverage-clean
-        COMMAND ${CMAKE_COMMAND} -E rm -f coverage.xml coverage.html
-        COMMAND find ${CMAKE_BINARY_DIR} "(" -name "*.gcda" -o -name "*.profraw" -o -name "*.profdata" ")" -delete
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMAND "${CMAKE_COMMAND}" -E rm -f coverage.xml coverage.html
+        COMMAND "${CMAKE_COMMAND}" "-DQGC_COVERAGE_BUILD_DIR=${CMAKE_BINARY_DIR}" -P
+                "${CMAKE_CURRENT_LIST_DIR}/CleanCoverage.cmake"
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         COMMENT "Cleaning coverage data"
         VERBATIM
     )

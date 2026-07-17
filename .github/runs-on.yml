@@ -1,10 +1,22 @@
 # RunsOn self-hosted runner pools, referenced by the workflows via
 # `runs-on=<run_id>/runner=<pool>`. Edit a pool here to change every job that uses it.
+images:
+  qgc-ubuntu24-x64:
+    platform: linux
+    arch: x64
+    name: qgc-runs-on-ubuntu24-x64-*
+
 runners:
   linux-x64-builder:
     family: ["c8i.2xlarge"]
     spot: false
     image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 80gb
+  linux-x64-builder-prebaked:
+    family: ["c8i.2xlarge"]
+    spot: false
+    image: qgc-ubuntu24-x64
     extras: s3-cache
     volume: 80gb
   linux-x64-builder-60gb:
@@ -23,6 +35,12 @@ runners:
     family: ["m8i.2xlarge"]
     spot: false
     image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 60gb
+  linux-x64-profiler:
+    family: ["c8i.2xlarge"]
+    spot: false
+    image: ubuntu22-full-x64
     extras: s3-cache
     volume: 60gb
   linux-x64-emulator:

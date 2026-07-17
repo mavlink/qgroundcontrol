@@ -44,3 +44,6 @@ jobs:
         with:
           fail-on-severity: high
           comment-summary-in-pr: on-failure
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v4

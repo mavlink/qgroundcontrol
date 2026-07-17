@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,28 @@ DEFAULT_EXPORT_KEYS = [
     "build.platform_workflows",
 ]
 IOS_QT_MODULE_EXCLUDES = {"qtserialport"}
+_MISSING = object()
+
+
+def lookup_dotted(
+    mapping: Mapping[str, Any],
+    key: str,
+    default: Any = _MISSING,
+) -> Any:
+    """Return the value at dotted *key* or *default* when a segment is missing.
+
+    With no default, a missing path raises ``KeyError``. An explicit JSON null
+    is returned as ``None`` and is therefore distinct from a missing path.
+    """
+    value: Any = mapping
+    for part in key.split("."):
+        if isinstance(value, Mapping) and part in value:
+            value = value[part]
+            continue
+        if default is _MISSING:
+            raise KeyError(key)
+        return default
+    return value
 
 
 def find_build_config(
@@ -97,12 +120,7 @@ def get_build_config_value(
         config = load_build_config(config_file, start=start, extra_candidates=extra_candidates)
     except (FileNotFoundError, OSError):
         return default
-    value: Any = config
-    for part in key.split("."):
-        if isinstance(value, dict) and part in value:
-            value = value[part]
-        else:
-            return default
+    value = lookup_dotted(config, key, default)
     return str(value) if value is not None else default
 
 
@@ -132,13 +150,7 @@ def export_build_config_values(
     """Return uppercase env-style values exported from the config."""
     exported: dict[str, str] = {}
     for key in keys or DEFAULT_EXPORT_KEYS:
-        value: Any = config
-        for part in key.split("."):
-            if isinstance(value, dict) and part in value:
-                value = value[part]
-            else:
-                value = None
-                break
+        value = lookup_dotted(config, key, None)
         if value is not None:
             primary = _GSTREAMER_VERSION_ENV_NAMES.get(key, key.replace(".", "_").upper())
             exported[primary] = str(value)

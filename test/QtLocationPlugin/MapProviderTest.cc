@@ -2,6 +2,7 @@
 
 #include <QtCore/QtMath>
 
+#include "GenericMapProvider.h"
 #include "MapProvider.h"
 #include "QGCTileSet.h"
 
@@ -209,6 +210,34 @@ void MapProviderTest::_testGettersReturnConstructorValues()
     QVERIFY(!p.isElevationProvider());
     QVERIFY(!p.isBingProvider());
     QVERIFY(p.getMapId() > 0);
+}
+
+void MapProviderTest::_testGenericProviderUrls()
+{
+    QCOMPARE(JapanStdMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/std/4/2/3.png")));
+    QCOMPARE(JapanSeamlessMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/4/2/3.jpg")));
+    QCOMPARE(JapanAnaglyphMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/anaglyphmap_color/4/2/3.png")));
+    QCOMPARE(JapanSlopeMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/slopemap/4/2/3.png")));
+    QCOMPARE(JapanReliefMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/relief/4/2/3.png")));
+
+    QCOMPARE(StatkartTopoMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral("https://cache.kartverket.no/v1/wmts/1.0.0/topo4/default/webmercator/4/3/2.png")));
+    QCOMPARE(StatkartBaseMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral(
+                 "https://cache.kartverket.no/v1/wmts/1.0.0/norgeskart_bakgrunn/default/webmercator/4/3/2.png")));
+
+    QCOMPARE(MapQuestMapMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral("http://otile0.mqcdn.com/tiles/1.0.0/map/4/2/3.jpg")));
+    QCOMPARE(MapQuestSatMapProvider().getTileURL(2, 3, 4),
+             QUrl(QStringLiteral("http://otile0.mqcdn.com/tiles/1.0.0/sat/4/2/3.jpg")));
+
+    QVERIFY(VWorldStreetMapProvider().getTileURL(53, 22, 6).path().endsWith(QStringLiteral("/Base/6/22/53.png")));
+    QVERIFY(VWorldSatMapProvider().getTileURL(53, 22, 6).path().endsWith(QStringLiteral("/Satellite/6/22/53.jpeg")));
 }
 
 UT_REGISTER_TEST(MapProviderTest, TestLabel::Unit)

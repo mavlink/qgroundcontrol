@@ -61,8 +61,7 @@ def install_with_retries(apk_path: Path, retries: int, retry_delay: int) -> bool
         stdout = _decode(result.stdout).strip()
         stderr = _decode(result.stderr).strip()
         gh_warning(
-            f"adb install attempt {attempt}/{retries} failed."
-            f" stdout={stdout!r} stderr={stderr!r}"
+            f"adb install attempt {attempt}/{retries} failed. stdout={stdout!r} stderr={stderr!r}"
         )
         if attempt < retries:
             time.sleep(retry_delay)
@@ -294,8 +293,8 @@ def run_boot_attempt(
 
     print(f"Waiting for boot test to complete (timeout: {timeout}s)...")
     app_launched = False
-    app_launched_at = 0
     app_seen_running_once = False
+    process_seen_at: int | None = None
     consecutive_not_running = 0
 
     for second in range(1, timeout + 1):
@@ -310,12 +309,13 @@ def run_boot_attempt(
         is_running = app_running_from_process_table(package_name, process_table)
         if is_running:
             app_seen_running_once = True
+            if process_seen_at is None:
+                process_seen_at = second
             consecutive_not_running = 0
 
         launch_detected_in_log = bool(app_launch_pattern.search(logcat_delta))
         if not app_launched and (launch_detected_in_log or is_running or saw_app_logs):
             app_launched = True
-            app_launched_at = second
             if launch_detected_in_log:
                 launch_source = "logcat marker"
             elif is_running:
@@ -365,7 +365,7 @@ def run_boot_attempt(
                     crash_log_pattern,
                 )
 
-            if second - app_launched_at >= stability_window:
+            if process_seen_at is not None and second - process_seen_at >= stability_window:
                 print(
                     f"Boot test passed: app remained running for {stability_window}s after launch."
                 )
@@ -470,8 +470,7 @@ def main() -> int:
 
         if attempt < args.launch_retries:
             gh_warning(
-                f"{final_error_message} on attempt "
-                f"{attempt}/{args.launch_retries}; retrying..."
+                f"{final_error_message} on attempt {attempt}/{args.launch_retries}; retrying..."
             )
             time.sleep(2)
 

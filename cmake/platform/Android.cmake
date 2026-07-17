@@ -1,6 +1,7 @@
-# ----------------------------------------------------------------------------
 # QGroundControl Android Platform Configuration
 # ----------------------------------------------------------------------------
+
+include_guard(GLOBAL)
 
 if(NOT ANDROID)
     message(FATAL_ERROR "QGC: Invalid Platform: Android.cmake included but platform is not Android")
@@ -89,8 +90,6 @@ set(QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
 
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
-        # QT_ANDROID_ABIS ${CMAKE_ANDROID_ARCH_ABI}
-        # QT_ANDROID_SDK_BUILD_TOOLS_REVISION
         QT_ANDROID_MIN_SDK_VERSION ${QGC_QT_ANDROID_MIN_SDK_VERSION}
         QT_ANDROID_TARGET_SDK_VERSION ${QGC_QT_ANDROID_TARGET_SDK_VERSION}
         QT_ANDROID_COMPILE_SDK_VERSION ${QGC_QT_ANDROID_COMPILE_SDK_VERSION}
@@ -100,19 +99,12 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         QT_ANDROID_VERSION_CODE ${ANDROID_VERSION_CODE}
         QT_ANDROID_APP_NAME "${CMAKE_PROJECT_NAME}"
         QT_ANDROID_APP_ICON "@mipmap/ic_launcher"
-        QT_ANDROID_LEGACY_PACKAGING $<BOOL:${QGC_ENABLE_ASAN}>
+        QT_ANDROID_LEGACY_PACKAGING "${QGC_ENABLE_ASAN}"
         QT_QML_ROOT_PATH "${CMAKE_SOURCE_DIR}"
-        # QT_QML_IMPORT_PATH
-        # QT_ANDROID_SYSTEM_LIBS_PREFIX
 )
 
-# set(QT_ANDROID_POST_BUILD_GRADLE_CLEANUP ON)
-
-# if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-#     set(QT_ANDROID_APPLICATION_ARGUMENTS)
-# endif()
-
-# Forward Python3_EXECUTABLE so per-ABI sub-configures use the same interpreter (jinja2 lives in workspace .venv, not hostedtoolcache python).
+# Forward Python3_EXECUTABLE so per-ABI sub-configures use the same interpreter;
+# generator dependencies live in the workspace venv, not hosted-toolcache Python.
 list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH Python3_EXECUTABLE)
 
 # ----------------------------------------------------------------------------

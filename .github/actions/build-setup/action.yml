@@ -42,17 +42,14 @@ inputs:
     description: "Android ABIs (e.g., 'arm64-v8a;armeabi-v7a'). android mode only."
     required: false
     default: "arm64-v8a;armeabi-v7a"
+  gradle-dependency-graph:
+    description: "Gradle dependency graph mode. android mode only."
+    required: false
+    default: "disabled"
   ios-modules:
     description: Qt modules for iOS target (defaults to build-config qt_modules_ios)
     required: false
     default: ""
-  aqt-source:
-    description: >-
-      Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
-      for unreleased fixes. Forwarded to every qt-install step in this setup. Blank uses PyPI.
-    required: false
-    default: ""
-
 outputs:
   qt_modules:
     description: Qt modules used for this build
@@ -90,6 +87,9 @@ outputs:
   android_platform:
     description: Android platform/API level
     value: ${{ steps.prereq.outputs.android_platform }}
+  android_min_sdk:
+    description: Android minimum supported API level
+    value: ${{ steps.prereq.outputs.android_min_sdk }}
   android_build_tools:
     description: Android build-tools version
     value: ${{ steps.prereq.outputs.android_build_tools }}
@@ -160,9 +160,8 @@ runs:
         host: ${{ inputs.qt-host }}
         arch: ${{ inputs.qt-arch }}
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
-        aqt-source: ${{ inputs.aqt-source }}
 
-    # ARM64 cross-compile needs an x64 host Qt for moc/qmlcachegen/etc. that run on the build machine. export-env=false so QT_ROOT_DIR keeps pointing at the target Qt.
+    # Cross-compilation needs x64 Qt host tools without replacing the target Qt environment.
     - name: Install host Qt (Windows ARM64 cross-compile)
       if: inputs.mode == 'desktop' && inputs.qt-arch == 'win64_msvc2022_arm64_cross_compiled'
       id: qt-desktop-host
@@ -173,16 +172,15 @@ runs:
         arch: win64_msvc2022_64
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         export-env: 'false'
-        aqt-source: ${{ inputs.aqt-source }}
 
-    # Required only when compiling C++ with MSVC (desktop Windows builds). Android-on-Windows uses NDK clang and skips this.
     - name: Setup MSVC environment (Windows desktop)
       if: inputs.mode == 'desktop' && runner.os == 'Windows'
       uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: ${{ (inputs.qt-arch == 'win64_msvc2022_64' && 'x64') || (inputs.qt-arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
 
-    # windows-11-arm's PATH puts Git for Windows' /usr/bin/link.exe (GNU coreutils hardlink tool) ahead of MSVC's link.exe, breaking Rust crates that shell out to `link.exe` for MSVC targets. windows-2022 doesn't have this ordering issue. See rust-lang/rust#42825.
+    # Git for Windows shadows MSVC's link.exe on windows-11-arm, breaking Rust
+    # MSVC targets (rust-lang/rust#42825).
     - name: Fix Rust linker resolution (Windows ARM64 native)
       if: inputs.mode == 'desktop' && runner.os == 'Windows' && runner.arch == 'ARM64'
       shell: bash
@@ -198,6 +196,7 @@ runs:
       uses: gradle/actions/setup-gradle@v6
       with:
         cache-disabled: true
+        dependency-graph: ${{ inputs.gradle-dependency-graph }}
 
     - name: Install Qt for Android
       if: inputs.mode == 'android'
@@ -217,7 +216,6 @@ runs:
         android-cmdline-tools: ${{ steps.prereq.outputs.android_cmdline_tools }}
         android-build-tools: ${{ steps.prereq.outputs.android_build_tools }}
         save-cache: ${{ inputs.save-cache }}
-        aqt-source: ${{ inputs.aqt-source }}
 
     - name: Install Qt for iOS
       if: inputs.mode == 'ios'

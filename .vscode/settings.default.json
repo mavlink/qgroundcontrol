@@ -5,11 +5,9 @@
       "url": "./src/FactSystem/factmetadata.schema.json"
     }
   ],
-  "C_Cpp.codeAnalysis.clangTidy.enabled": true,
-  "C_Cpp.codeAnalysis.clangTidy.useBuildPath": true,
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "C_Cpp.default.cppStandard": "c++20",
   "C_Cpp.formatting.clangFormatStyle": "file",
+  "C_Cpp.intelliSenseEngine": "disabled",
   "[markdown]": {
     "editor.wordWrap": "on"
   },
@@ -21,14 +19,18 @@
     "--function-arg-placeholders=false"
   ],
   "cmake.buildDirectory": "${workspaceFolder}/build",
-  "cmake.configureOnOpen": true,
+  "cmake.configureOnOpen": false,
   "cmake.generator": "Ninja",
-  "cmake.parallelJobs": 0,
   "editor.formatOnSave": false,
   "editor.insertSpaces": true,
   "editor.rulers": [
     120
   ],
+  "[python]": {
+    "editor.rulers": [
+      100
+    ]
+  },
   "editor.tabSize": 4,
   "files.associations": {
     "*.FactMetaData.json": "json",
@@ -43,7 +45,7 @@
     "**/build/**": true
   },
   "git.ignoreLimitWarning": true,
-  "python.defaultInterpreterPath": "python3",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
   "qml.format.enabled": true,
   "qt-qml.qmlls.useQmllsFromEnvironment": true,
   "qt-qml.qmlls.customArgs": [

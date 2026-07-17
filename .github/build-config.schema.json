@@ -17,7 +17,11 @@
     },
     "qt": {
       "type": "object",
-      "required": ["version", "minimum_version"],
+      "required": [
+        "version",
+        "minimum_version",
+        "aqt_source"
+      ],
       "additionalProperties": false,
       "properties": {
         "version": {
@@ -30,6 +34,11 @@
           "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
           "description": "Minimum supported Qt version"
         },
+        "aqt_source": {
+          "type": "string",
+          "pattern": "^git\\+https://github\\.com/miurahr/aqtinstall\\.git@[0-9a-f]{40}$",
+          "description": "Pinned aqtinstall source used by CI and custom runner images"
+        },
         "modules": {
           "type": "string",
           "description": "Space-separated list of Qt modules to install"
@@ -38,7 +47,14 @@
     },
     "android": {
       "type": "object",
-      "required": ["platform", "min_sdk", "build_tools", "ndk_version", "ndk_full_version", "java_version"],
+      "required": [
+        "platform",
+        "min_sdk",
+        "build_tools",
+        "ndk_version",
+        "ndk_full_version",
+        "java_version"
+      ],
       "additionalProperties": false,
       "properties": {
         "platform": {
@@ -82,8 +98,14 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "xcode_version": { "type": "string", "description": "Xcode version (macOS/desktop)" },
-        "xcode_ios_version": { "type": "string", "description": "Xcode version (iOS)" },
+        "xcode_version": {
+          "type": "string",
+          "description": "Xcode version (macOS/desktop)"
+        },
+        "xcode_ios_version": {
+          "type": "string",
+          "description": "Xcode version (iOS)"
+        },
         "macos_deployment_target": {
           "type": "string",
           "pattern": "^[0-9]+\\.[0-9]+$",
@@ -98,7 +120,10 @@
     },
     "build": {
       "type": "object",
-      "required": ["cmake_minimum_version", "platform_workflows"],
+      "required": [
+        "cmake_minimum_version",
+        "platform_workflows"
+      ],
       "additionalProperties": false,
       "properties": {
         "cmake_minimum_version": {
@@ -114,33 +139,90 @@
     },
     "gstreamer": {
       "type": "object",
-      "required": ["version"],
+      "required": [
+        "version",
+        "ca_bundle_url",
+        "ca_bundle_sha256"
+      ],
       "additionalProperties": false,
       "properties": {
         "version": {
           "type": "object",
-          "required": ["default", "minimum"],
+          "required": [
+            "default",
+            "minimum"
+          ],
           "additionalProperties": false,
           "properties": {
-            "default":  { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-            "minimum":  { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-            "android":  { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-            "ios":      { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-            "macos":    { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
-            "windows":  { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+            "default": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "minimum": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "android": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "ios": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "macos": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "windows": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            }
           }
         },
         "plugins": {
           "type": "object",
           "description": "GStreamer plugin allow-list. 'common' applies to every platform; per-platform keys are appended.",
-          "required": ["common"],
+          "required": [
+            "common"
+          ],
           "additionalProperties": false,
           "properties": {
-            "common":  { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
-            "android": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
-            "apple":   { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
-            "windows": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
-            "linux":   { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } }
+            "common": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$"
+              }
+            },
+            "android": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$"
+              }
+            },
+            "apple": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$"
+              }
+            },
+            "windows": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$"
+              }
+            },
+            "linux": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$"
+              }
+            }
           }
         },
         "checksums": {
@@ -150,12 +232,30 @@
             "^[0-9]+\\.[0-9]+\\.[0-9]+$": {
               "type": "object",
               "properties": {
-                "android":            { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-                "ios":                { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-                "macos":              { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-                "macos_devel":        { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-                "windows_msvc_x64":   { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-                "windows_msvc_arm64": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+                "android": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "ios": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "macos": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "macos_devel": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "windows_msvc_x64": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "windows_msvc_arm64": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
               },
               "additionalProperties": false
             }
@@ -164,8 +264,13 @@
         },
         "ca_bundle_sha256": {
           "type": "string",
-          "description": "SHA256 of the curl.se Mozilla CA bundle baked into the iOS app; refresh on intentional bundle bumps (https://curl.se/ca/cacert.pem.sha256)",
+          "description": "SHA256 of the dated curl.se Mozilla CA snapshot baked into the iOS app; refresh with ca_bundle_url on intentional bundle bumps",
           "pattern": "^[a-f0-9]{64}$"
+        },
+        "ca_bundle_url": {
+          "type": "string",
+          "description": "Immutable dated curl.se Mozilla CA snapshot baked into the iOS app",
+          "pattern": "^https://curl\\.se/ca/cacert-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.pem$"
         }
       }
     }

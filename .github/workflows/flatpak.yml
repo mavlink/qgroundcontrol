@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     container:
-      image: bilelmoussaoui/flatpak-github-actions:gnome-47
+      image: bilelmoussaoui/flatpak-github-actions:gnome-47@sha256:1bcc94399a82b7102820ac91037971fa61577c1cda1ffac0145ad12ce606e8c4
       # flatpak-builder requires namespace operations not available in an unprivileged container.
       # This workflow is manual-trigger only and runner egress is audited as mitigation.
       options: --privileged

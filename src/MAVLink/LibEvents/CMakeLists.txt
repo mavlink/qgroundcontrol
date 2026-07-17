@@ -27,6 +27,8 @@ CPMAddPackage(
     GIT_TAG 840a88ea226d4eb0fd4c391ce860317422756435
     SOURCE_SUBDIR libs/cpp
 )
+qgc_disable_dependency_warnings(libevents_parser)
+qgc_disable_dependency_warnings(libevents_health_and_arming_checks)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libevents)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PRIVATE ${libevents_SOURCE_DIR}/libs/cpp)

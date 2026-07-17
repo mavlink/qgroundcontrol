@@ -116,9 +116,6 @@ build.ninja
 *.opensdf
 *.uhf.txt
 
-# iOS
-ios/iOSForAppStore-Info.plist
-
 # Android
 android/local.properties
 .gradle/
@@ -176,6 +173,7 @@ Qt*-linux*.tar.*
 # Python tooling caches
 .ruff_cache/
 .pytest_cache/
+/pytest-of-*/
 .import_linter_cache/
 .venv/
 

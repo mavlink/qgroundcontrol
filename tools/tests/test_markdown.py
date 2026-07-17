@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for tools/common/markdown.py."""
+"""Contracts for Markdown table rendering."""
 
 from __future__ import annotations
 
@@ -7,43 +7,27 @@ import pytest
 from common.markdown import md_table
 
 
-def test_basic_table() -> None:
-    out = md_table(["A", "B"], [["1", "2"], ["3", "4"]])
-    assert out == "| A | B |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |"
-
-
-def test_no_trailing_newline() -> None:
-    assert not md_table(["A"], [["1"]]).endswith("\n")
-
-
-def test_empty_rows_keeps_header_and_separator() -> None:
+def test_table_rendering_handles_rows_alignment_and_newlines() -> None:
+    assert md_table(["A", "B"], [["1", "2"], ["3", "4"]]) == (
+        "| A | B |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |"
+    )
     assert md_table(["A", "B"], []) == "| A | B |\n| --- | --- |"
-
-
-def test_cells_are_stringified() -> None:
+    assert not md_table(["A"], [["1"]]).endswith("\n")
     assert "| Count | 42 |" in md_table(["K", "V"], [["Count", 42]])
+    assert md_table(["A", "B", "C"], [], align=["left", "right", "center"]).splitlines()[1] == (
+        "| --- | ---: | :---: |"
+    )
+    rendered = md_table(["H"], [["a\r\nb"]])
+    assert "| a<br>b |" in rendered and "\r" not in rendered
 
 
-def test_alignment_separators() -> None:
-    out = md_table(["A", "B", "C"], [], align=["left", "right", "center"])
-    assert out.splitlines()[1] == "| --- | ---: | :---: |"
-
-
-def test_align_length_mismatch_raises() -> None:
-    with pytest.raises(ValueError, match="align must match headers length"):
-        md_table(["A", "B"], [], align=["left"])
-
-
-def test_invalid_align_value_raises() -> None:
-    with pytest.raises(ValueError, match="invalid align value"):
-        md_table(["A"], [], align=["centre"])
-
-
-def test_row_length_mismatch_raises() -> None:
+def test_table_rejects_shape_and_alignment_errors() -> None:
+    cases = [
+        ((["A", "B"], [], ["left"]), "align must match headers length"),
+        ((["A"], [], ["centre"]), "invalid align value"),
+    ]
+    for (headers, rows, align), message in cases:
+        with pytest.raises(ValueError, match=message):
+            md_table(headers, rows, align=align)
     with pytest.raises(ValueError, match="row 1 has 1 cells; expected 2"):
         md_table(["A", "B"], [["1", "2"], ["3"]])
-
-
-def test_crlf_flattened_to_br() -> None:
-    assert "| a<br>b |" in md_table(["H"], [["a\r\nb"]])
-    assert "\r" not in md_table(["H"], [["a\rb"]])

@@ -15,21 +15,25 @@ QML lines.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from .validation import clamped_repr
 
 
-def _require_object(data: object, key: str) -> None:
+def _require_object(data: object, key: str) -> dict[str, Any]:
     """Nested control fields must be JSON objects; a clear schema error beats an
     AttributeError from .get() on a string."""
     if not isinstance(data, dict):
         raise ValueError(
             f"'{key}' must be a JSON object, got {type(data).__name__}: {clamped_repr(data)}"
         )
+    return data
+
 
 # --------------------------------------------------------------------------- #
 # Shared data fragments — callers compose these into their own ControlDef
 # --------------------------------------------------------------------------- #
+
 
 @dataclass
 class EnableCheckboxDef:
@@ -327,7 +331,7 @@ def parse_enable_checkbox(data: object) -> EnableCheckboxDef | None:
     """Parse an enableCheckbox dict from JSON into an EnableCheckboxDef."""
     if data is None:
         return None
-    _require_object(data, "enableCheckbox")
+    data = _require_object(data, "enableCheckbox")
     if not data:
         return None
     return EnableCheckboxDef(
@@ -340,7 +344,7 @@ def parse_button(data: object) -> ButtonDef | None:
     """Parse a button dict from JSON into a ButtonDef."""
     if data is None:
         return None
-    _require_object(data, "button")
+    data = _require_object(data, "button")
     if not data:
         return None
     return ButtonDef(
@@ -358,15 +362,14 @@ def parse_radio_options(data: object) -> list[RadioOptionDef]:
         raise ValueError(
             f"'options' must be a JSON array, got {type(data).__name__}: {clamped_repr(data)}"
         )
-    for opt in data:
-        _require_object(opt, "options entry")
+    options = [_require_object(opt, "options entry") for opt in data]
     return [
         RadioOptionDef(
             label=opt.get("label", ""),
             value=str(opt.get("value", "")),
             checked=opt.get("checked", ""),
         )
-        for opt in data
+        for opt in options
     ]
 
 
@@ -414,7 +417,7 @@ def parse_dialog_button(data: object) -> DialogButtonDef | None:
     """Parse a dialogButton dict from JSON into a DialogButtonDef."""
     if data is None:
         return None
-    _require_object(data, "dialogButton")
+    data = _require_object(data, "dialogButton")
     if not data:
         return None
     return DialogButtonDef(
@@ -429,7 +432,7 @@ def parse_action_button(data: object) -> ActionButtonDef | None:
     """Parse an actionButton dict from JSON into an ActionButtonDef."""
     if data is None:
         return None
-    _require_object(data, "actionButton")
+    data = _require_object(data, "actionButton")
     if not data:
         return None
     return ActionButtonDef(
@@ -580,7 +583,7 @@ def parse_toggle_checkbox(data: object) -> ToggleCheckboxDef | None:
     """Parse a toggleCheckbox dict from JSON."""
     if data is None:
         return None
-    _require_object(data, "toggleCheckbox")
+    data = _require_object(data, "toggleCheckbox")
     if not data:
         return None
     return ToggleCheckboxDef(
@@ -597,7 +600,7 @@ def parse_linked_params(data: object) -> list[LinkedParamDef]:
     """
     if data is None:
         return []
-    _require_object(data, "linkedParams")
+    data = _require_object(data, "linkedParams")
     return [
         LinkedParamDef(param=name, expression=expr)
         for name, expr in data.items()

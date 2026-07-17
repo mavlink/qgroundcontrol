@@ -38,6 +38,9 @@ outputs:
   android_platform:
     description: Android platform/API level
     value: ${{ steps.read.outputs.android_platform }}
+  android_min_sdk:
+    description: Android minimum supported API level
+    value: ${{ steps.read.outputs.android_min_sdk }}
   android_build_tools:
     description: Android build tools version
     value: ${{ steps.read.outputs.android_build_tools }}

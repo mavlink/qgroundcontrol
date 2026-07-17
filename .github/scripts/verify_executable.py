@@ -19,7 +19,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from cmake_helper import read_cache_var
+from common.cmake import read_cache_var
 from common.gh_actions import gh_error
 
 
@@ -34,7 +34,7 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
     if not cache.is_file():
         return
 
-    value = read_cache_var(str(cache), "GStreamer_ROOT_DIR")
+    value = read_cache_var(cache, "GStreamer_ROOT_DIR")
     if not value:
         return
 
@@ -71,6 +71,20 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
         os.environ["PATH"] = f"{bin_dir};{existing}" if existing else bin_dir
 
 
+def resolve_executable(binary_path: Path, working_dir: Path | None) -> tuple[Path, Path]:
+    """Resolve the executable without discarding a supplied path component."""
+    if working_dir is None:
+        executable = binary_path.resolve()
+        return executable, executable.parent
+
+    resolved_working_dir = working_dir.resolve()
+    if binary_path.is_absolute() or binary_path.parent != Path("."):
+        executable = binary_path.resolve()
+    else:
+        executable = (resolved_working_dir / binary_path).resolve()
+    return executable, resolved_working_dir
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary-path", required=True)
@@ -80,18 +94,22 @@ def main() -> None:
     parser.add_argument("--timeout", default="60")
     args = parser.parse_args()
 
-    binary_path = Path(args.binary_path)
-    work_dir = Path(args.working_dir) if args.working_dir else binary_path.parent
+    binary_path, work_dir = resolve_executable(
+        Path(args.binary_path), Path(args.working_dir) if args.working_dir else None
+    )
 
     if not work_dir.is_dir():
         gh_error(f"Working directory not found: {work_dir}")
+        sys.exit(1)
+    if not binary_path.is_file():
+        gh_error(f"Executable not found: {binary_path}")
         sys.exit(1)
 
     if args.build_dir:
         _setup_gstreamer_env(Path(args.build_dir))
 
     binary_name = binary_path.name
-    run_binary = binary_name
+    run_binary = str(binary_path)
     headless = True
 
     # AppImages typically don't ship the "offscreen" Qt platform plugin.
@@ -99,10 +117,8 @@ def main() -> None:
         headless = False
 
     if os.name != "nt":
-        exe = work_dir / binary_name
         with contextlib.suppress(OSError):
-            exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
-        run_binary = str(exe.resolve())
+            binary_path.chmod(binary_path.stat().st_mode | stat.S_IEXEC)
 
     workspace = os.environ.get("GITHUB_WORKSPACE", ".")
     cmd = [

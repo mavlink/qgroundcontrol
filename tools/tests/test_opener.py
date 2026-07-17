@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
-"""Tests for tools/common/opener.py."""
+"""Cross-platform contracts for the default-application opener."""
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
+from unittest.mock import Mock
 
 from common.opener import open_in_default_app
 
@@ -14,46 +14,31 @@ if TYPE_CHECKING:
     import pytest
 
 
-def test_open_macos_uses_open(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("sys.platform", "darwin")
-    called: list[list[str]] = []
-    monkeypatch.setattr("common.opener.subprocess.run", lambda cmd, check: called.append(cmd))
+def test_posix_openers_and_missing_linux_opener(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr("common.opener.subprocess.run", lambda cmd, check: calls.append(cmd))
     target = tmp_path / "file.html"
-    assert open_in_default_app(target) is True
-    assert called == [["open", str(target)]]
+
+    for platform, value, executable, expected in (
+        ("darwin", target, None, ["open", str(target)]),
+        ("linux", target, "/usr/bin/xdg-open", ["/usr/bin/xdg-open", str(target)]),
+        ("linux", "https://example.com", "/bin/xdg-open", ["/bin/xdg-open", "https://example.com"]),
+    ):
+        monkeypatch.setattr("sys.platform", platform)
+        monkeypatch.setattr("common.opener.shutil.which", lambda _name, path=executable: path)
+        assert open_in_default_app(value)
+        assert calls.pop() == expected
+
+    monkeypatch.setattr("common.opener.shutil.which", lambda _name: None)
+    assert not open_in_default_app(target)
 
 
-def test_open_linux_uses_xdg_open(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("sys.platform", "linux")
-    monkeypatch.setattr("common.opener.shutil.which", lambda name: f"/usr/bin/{name}")
-    called: list[list[str]] = []
-    monkeypatch.setattr("common.opener.subprocess.run", lambda cmd, check: called.append(cmd))
-    target = tmp_path / "file.html"
-    assert open_in_default_app(target) is True
-    assert called == [["/usr/bin/xdg-open", str(target)]]
-
-
-def test_open_linux_no_opener_returns_false(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("sys.platform", "linux")
-    monkeypatch.setattr("common.opener.shutil.which", lambda name: None)
-    assert open_in_default_app(tmp_path / "x") is False
-
-
-def test_open_accepts_string(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("sys.platform", "linux")
-    monkeypatch.setattr("common.opener.shutil.which", lambda name: "/bin/xdg-open")
-    called: list[list[str]] = []
-    monkeypatch.setattr("common.opener.subprocess.run", lambda cmd, check: called.append(cmd))
-    assert open_in_default_app("https://example.com") is True
-    assert called == [["/bin/xdg-open", "https://example.com"]]
-
-
-def test_open_windows_uses_startfile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_windows_uses_startfile(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("sys.platform", "win32")
-    mock_startfile = MagicMock()
-    import os
-
-    monkeypatch.setattr(os, "startfile", mock_startfile, raising=False)
+    startfile = Mock()
+    monkeypatch.setattr(os, "startfile", startfile, raising=False)
     target = tmp_path / "file.html"
-    assert open_in_default_app(target) is True
-    mock_startfile.assert_called_once_with(str(target))
+    assert open_in_default_app(target)
+    startfile.assert_called_once_with(str(target))

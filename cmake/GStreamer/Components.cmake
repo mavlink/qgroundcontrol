@@ -1,11 +1,6 @@
-# Component registry, api/pc-name mapping, and plugin scanning helpers.
-# GSTREAMER_COMPONENT_REGISTRY below is the single source of truth for the
-# component → api_name → pc_name → mandatory mapping.
-
 include_guard(GLOBAL)
 
-# Single source of truth for platform plugin shared-library naming triple
-# (extension, prefix, glob). Used by plugin discovery and post-install verify.
+# Shared-library naming used by plugin discovery and install verification.
 function(gstreamer_platform_plugin_attrs EXT_OUT PREFIX_OUT GLOB_OUT)
     if(WIN32)
         set(_ext "dll")
@@ -44,19 +39,8 @@ function(gstreamer_scan_plugin_basenames OUTPUT_VAR PLUGIN_PATH)
     set(${OUTPUT_VAR} "${_names}" PARENT_SCOPE)
 endfunction()
 
-# Component registry — SINGLE source of truth for the
-# (component_name, api_name, pc_name, mandatory) tuple.
-#
-#   Format per entry: "ComponentName:api_name:pc_name:mandatory"
-#     ComponentName  - user-facing CamelCase component (Core, Base, GlPrototypes, …)
-#     api_name       - snake_case CMake/imported-target stem (api_base, api_gl_prototypes, …);
-#                      empty for components with no .pc file (Core)
-#     pc_name        - pkg-config module name (gstreamer-base-1.0); empty when no .pc file
-#     mandatory      - "1" if always present in any GStreamer install, "0" otherwise
-#
-# Mandatory entries seed gstreamer_build_apis_and_deps and the always-FOUND
-# iteration in Orchestrator.cmake. Adding a new always-present API requires
-# only an entry here.
+# Entry format: ComponentName:api_name:pkg_config_name:mandatory.
+# Mandatory entries seed the always-present API and FOUND lists.
 set(GSTREAMER_COMPONENT_REGISTRY
     "Core:::1"                                                   # umbrella; gstreamer-1.0 is queried directly
     "Base:api_base:gstreamer-base-1.0:1"

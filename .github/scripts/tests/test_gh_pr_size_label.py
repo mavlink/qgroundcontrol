@@ -1,4 +1,4 @@
-"""Tests for gh_pr_size_label.py."""
+"""PR size-label discovery and pruning contracts."""
 
 from __future__ import annotations
 
@@ -13,23 +13,23 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def test_list_size_labels_filters_to_size_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed("size/M\nsize/L\n"))
-    assert mod.list_size_labels("owner/repo", "42") == ["size/L", "size/M"]
-
-def test_list_size_labels_empty_when_none(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed(""))
-    assert mod.list_size_labels("owner/repo", "42") == []
-
-def test_list_size_labels_exits_on_gh_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed("", returncode=1, stderr="boom"))
+def test_list_size_labels_filters_sorts_and_surfaces_api_failures(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for output, expected in (("size/M\nsize/L\n", ["size/L", "size/M"]), ("", [])):
+        monkeypatch.setattr(mod, "gh", lambda *_args, output=output, **_kwargs: completed(output))
+        assert mod.list_size_labels("owner/repo", "42") == expected
+    monkeypatch.setattr(mod, "gh", lambda *_args, **_kwargs: completed(returncode=1, stderr="boom"))
     with pytest.raises(SystemExit):
         mod.list_size_labels("owner/repo", "42")
 
-def test_remove_label_url_encodes_slash(monkeypatch: pytest.MonkeyPatch) -> None:
+
+def test_remove_label_encodes_names_and_handles_idempotent_404(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     calls: list[tuple[Any, ...]] = []
 
-    def fake_gh(*args: str, **kwargs: Any) -> subprocess.CompletedProcess:
+    def fake_gh(*args: str, **_kwargs: Any) -> subprocess.CompletedProcess[str]:
         calls.append(args)
         return completed()
 
@@ -37,73 +37,59 @@ def test_remove_label_url_encodes_slash(monkeypatch: pytest.MonkeyPatch) -> None
     assert mod.remove_label("owner/repo", "42", "size/XL") is True
     assert "repos/owner/repo/issues/42/labels/size%2FXL" in calls[0]
 
-def test_remove_label_treats_404_as_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        mod, "gh", lambda *a, **kw: completed(returncode=1, stderr="HTTP 404: Not Found"),
-    )
-    assert mod.remove_label("owner/repo", "42", "size/M") is True
+    for stderr, expected in (("HTTP 404: Not Found", True), ("HTTP 500: internal", False)):
+        monkeypatch.setattr(
+            mod,
+            "gh",
+            lambda *_args, stderr=stderr, **_kwargs: completed(returncode=1, stderr=stderr),
+        )
+        assert mod.remove_label("owner/repo", "42", "size/M") is expected
 
-def test_remove_label_returns_false_on_other_errors(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        mod, "gh", lambda *a, **kw: completed(returncode=1, stderr="HTTP 500: internal"),
-    )
-    assert mod.remove_label("owner/repo", "42", "size/M") is False
 
-def test_cmd_current_writes_label(gh_output: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_current_command_writes_present_or_empty_label(
+    gh_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
     monkeypatch.setenv("PR_NUMBER", "42")
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed("size/M\n"))
+    for response, expected in (("size/M\n", "label=size/M\n"), ("", "label=\n")):
+        gh_output.write_text("")
+        monkeypatch.setattr(
+            mod, "gh", lambda *_args, response=response, **_kwargs: completed(response)
+        )
+        assert mod.main(["current"]) == 0
+        assert expected in gh_output.read_text()
 
-    assert mod.main(["current"]) == 0
-    assert "label=size/M\n" in gh_output.read_text()
 
-def test_cmd_current_writes_empty_when_no_label(gh_output: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("GH_REPO", "owner/repo")
-    monkeypatch.setenv("PR_NUMBER", "42")
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed(""))
-
-    assert mod.main(["current"]) == 0
-    assert "label=\n" in gh_output.read_text()
-
-def test_cmd_prune_noop_when_one_label(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("GH_REPO", "owner/repo")
-    monkeypatch.setenv("PR_NUMBER", "42")
-    monkeypatch.setattr(mod, "list_size_labels", lambda *_: ["size/M"])
-    removed: list[str] = []
-    monkeypatch.setattr(mod, "remove_label", lambda repo, pr, label: removed.append(label) or True)
-    assert mod.main(["prune"]) == 0
-    assert removed == []
-
-def test_cmd_prune_removes_old_label_when_multiple(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("GH_REPO", "owner/repo")
-    monkeypatch.setenv("PR_NUMBER", "42")
-    monkeypatch.setenv("OLD_LABEL", "size/S")
-    monkeypatch.setattr(mod, "list_size_labels", lambda *_: ["size/M", "size/S"])
-    removed: list[str] = []
-    monkeypatch.setattr(mod, "remove_label", lambda repo, pr, label: removed.append(label) or True)
-    assert mod.main(["prune"]) == 0
-    assert removed == ["size/S"]
-
-def test_cmd_prune_falls_back_to_alphabetic_when_old_label_missing(
+def test_prune_removes_only_stale_labels_and_requires_context(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
     monkeypatch.setenv("PR_NUMBER", "42")
-    monkeypatch.delenv("OLD_LABEL", raising=False)
-    monkeypatch.setattr(mod, "list_size_labels", lambda *_: ["size/L", "size/M", "size/XL"])
     removed: list[str] = []
-    monkeypatch.setattr(mod, "remove_label", lambda repo, pr, label: removed.append(label) or True)
-    assert mod.main(["prune"]) == 0
-    assert removed == ["size/M", "size/XL"]
+    monkeypatch.setattr(
+        mod, "remove_label", lambda _repo, _pr, label: removed.append(label) or True
+    )
 
-def test_main_exits_when_repo_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("GH_REPO", raising=False)
+    cases = [
+        (["size/M"], "", []),
+        (["size/M", "size/S"], "size/S", ["size/S"]),
+        (["size/L", "size/M", "size/XL"], "", ["size/M", "size/XL"]),
+    ]
+    for labels, old_label, expected in cases:
+        removed.clear()
+        monkeypatch.setattr(mod, "list_size_labels", lambda *_args, labels=labels: labels)
+        if old_label:
+            monkeypatch.setenv("OLD_LABEL", old_label)
+        else:
+            monkeypatch.delenv("OLD_LABEL", raising=False)
+        assert mod.main(["prune"]) == 0
+        assert removed == expected
+
+    monkeypatch.delenv("GH_REPO")
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
     with pytest.raises(SystemExit):
         mod.main(["current", "--pr-number", "42"])
-
-def test_main_exits_when_pr_number_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
-    monkeypatch.delenv("PR_NUMBER", raising=False)
+    monkeypatch.delenv("PR_NUMBER")
     with pytest.raises(SystemExit):
         mod.main(["current"])

@@ -40,7 +40,7 @@ target_compile_definitions(QGCQmlQuickTests
 add_test(
     NAME QmlQuickTests
     COMMAND $<TARGET_FILE:QGCQmlQuickTests> -platform offscreen
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
 
 set_tests_properties(QmlQuickTests PROPERTIES
@@ -57,6 +57,6 @@ foreach(_check_target check check-unit check-fast check-ci)
 endforeach()
 
 file(GLOB QML_TEST_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.qml")
-file(COPY ${QML_TEST_FILES} DESTINATION ${CMAKE_BINARY_DIR}/qmltests)
+file(COPY ${QML_TEST_FILES} DESTINATION "${CMAKE_BINARY_DIR}/qmltests")
 
 add_qgc_test(QmlTestFileValidator LABELS Unit)

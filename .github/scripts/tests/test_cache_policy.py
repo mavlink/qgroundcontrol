@@ -1,4 +1,4 @@
-"""Tests for cache_policy.py."""
+"""Cache-write policy contracts."""
 
 from __future__ import annotations
 
@@ -11,45 +11,37 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def test_explicit_true_passes_through(capsys, gh_output: Path) -> None:
-    assert mod.main(["--requested", "true"]) == 0
-    assert capsys.readouterr().out.strip() == "true"
-    assert "save=true" in gh_output.read_text()
+def test_explicit_and_auto_policies_write_expected_decision(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    gh_output: Path,
+) -> None:
+    cases = [
+        (["--requested", "true"], {}, "true"),
+        (["--requested", "false"], {}, "false"),
+        (["--requested", "auto"], {"EVENT_NAME": "push", "THIS_REPO": "owner/repo"}, "true"),
+        (
+            ["--requested", "auto"],
+            {"EVENT_NAME": "pull_request", "THIS_REPO": "owner/repo", "PR_REPO": "owner/repo"},
+            "false",
+        ),
+        (
+            ["--requested", "auto"],
+            {"EVENT_NAME": "pull_request", "THIS_REPO": "owner/repo", "PR_REPO": "fork/repo"},
+            "false",
+        ),
+    ]
+    for args, environment, expected in cases:
+        for key in ("EVENT_NAME", "THIS_REPO", "PR_REPO"):
+            monkeypatch.delenv(key, raising=False)
+        for key, value in environment.items():
+            monkeypatch.setenv(key, value)
+        gh_output.write_text("")
+        assert mod.main(args) == 0
+        assert capsys.readouterr().out.strip() == expected
+        assert f"save={expected}" in gh_output.read_text()
 
 
-def test_explicit_false_passes_through(capsys, gh_output: Path) -> None:
-    assert mod.main(["--requested", "false"]) == 0
-    assert capsys.readouterr().out.strip() == "false"
-    assert "save=false" in gh_output.read_text()
-
-
-@pytest.mark.usefixtures("gh_output")
-def test_auto_on_push_saves(monkeypatch, capsys) -> None:
-    monkeypatch.setenv("EVENT_NAME", "push")
-    monkeypatch.setenv("THIS_REPO", "owner/repo")
-    monkeypatch.delenv("PR_REPO", raising=False)
-    assert mod.main(["--requested", "auto"]) == 0
-    assert capsys.readouterr().out.strip() == "true"
-
-
-@pytest.mark.usefixtures("gh_output")
-def test_auto_on_pull_request_skips(monkeypatch, capsys) -> None:
-    monkeypatch.setenv("EVENT_NAME", "pull_request")
-    monkeypatch.setenv("PR_REPO", "owner/repo")
-    monkeypatch.setenv("THIS_REPO", "owner/repo")
-    assert mod.main(["--requested", "auto"]) == 0
-    assert capsys.readouterr().out.strip() == "false"
-
-
-@pytest.mark.usefixtures("gh_output")
-def test_auto_on_fork_pr_skips(monkeypatch, capsys) -> None:
-    monkeypatch.setenv("EVENT_NAME", "pull_request")
-    monkeypatch.setenv("PR_REPO", "fork/repo")
-    monkeypatch.setenv("THIS_REPO", "owner/repo")
-    assert mod.main(["--requested", "auto"]) == 0
-    assert capsys.readouterr().out.strip() == "false"
-
-
-def test_requires_requested_arg() -> None:
+def test_requested_policy_is_required() -> None:
     with pytest.raises(SystemExit):
         mod.main([])

@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """CMake build and configure helpers for CI.
 
 Subcommands:
     build       Run cmake --build with CI-friendly output and timing
-    configure   Run configure.py with standardized arguments
+    configure   Configure from a CMake preset with CI-specific overrides
     detect-jobs Detect number of parallel jobs for the current platform
     ctest       Run CTest with standardized arguments and timing
     cache-var   Read a CMake cache variable from CMakeCache.txt
@@ -24,27 +23,9 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.cmake import read_cache_var
 from common.gh_actions import append_github_env, gh_error, gh_notice, write_github_output
-
-
-def _run_with_tee(cmd: list[str], output_file: str) -> int:
-    # Use `bash | tee` so children keep a real stdout — Popen+PIPE deadlocks
-    # Gradle/javac on Windows when grandchildren block-buffer 8KB+ output.
-    bash = shutil.which("bash")
-    if bash:
-        quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
-        quoted_log = shlex.quote(output_file)
-        script = f"set -o pipefail; {quoted_cmd} 2>&1 | tee {quoted_log}"
-        return subprocess.run([bash, "-c", script], check=False).returncode
-
-    with open(output_file, "w", encoding="utf-8") as log:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        assert proc.stdout is not None
-        for line in proc.stdout:
-            sys.stdout.write(line)
-            log.write(line)
-        proc.wait()
-        return proc.returncode
+from common.proc import run_tee
 
 
 def detect_jobs(requested: str = "auto") -> int:
@@ -74,9 +55,7 @@ def cmd_build(args: argparse.Namespace) -> None:
     if args.parallel:
         if args.parallel_jobs:
             if not re.match(r"^[1-9]\d*$", args.parallel_jobs):
-                gh_error(
-                    f"parallel-jobs must be a positive integer, got '{args.parallel_jobs}'"
-                )
+                gh_error(f"parallel-jobs must be a positive integer, got '{args.parallel_jobs}'")
                 sys.exit(1)
             cmd += ["--parallel", args.parallel_jobs]
         else:
@@ -93,7 +72,7 @@ def cmd_build(args: argparse.Namespace) -> None:
     start = time.monotonic()
 
     if output_file:
-        exit_code = _run_with_tee(cmd, output_file)
+        exit_code = run_tee(cmd, output_file)
     else:
         result = subprocess.run(cmd, check=False)
         exit_code = result.returncode
@@ -108,9 +87,41 @@ def cmd_build(args: argparse.Namespace) -> None:
             sys.exit(exit_code)
 
 
+def split_extra_args(extra_args: str, *, windows: bool | None = None) -> list[str]:
+    """Split CMake arguments without consuming Windows path separators."""
+    if windows is None:
+        windows = os.name == "nt"
+    if windows:
+        extra_args = extra_args.replace("\\", "\\\\")
+    return shlex.split(extra_args)
+
+
 def cmd_configure(args: argparse.Namespace) -> None:
-    """Run configure.py with standardized arguments."""
+    """Configure from a preset, retaining the legacy wrapper as a fallback."""
     workspace = os.environ.get("GITHUB_WORKSPACE", ".")
+    if args.preset:
+        cmd = [
+            "cmake",
+            "--preset",
+            args.preset,
+            "-S",
+            args.source_dir,
+            "-B",
+            args.build_dir,
+        ]
+        if args.generator:
+            cmd += ["-G", args.generator]
+        if args.stable:
+            cmd.append("-DQGC_STABLE_BUILD=ON")
+        if args.extra_args:
+            cmd.extend(split_extra_args(args.extra_args))
+
+        start = time.monotonic()
+        result = subprocess.run(cmd, check=False)
+        duration = int(time.monotonic() - start)
+        gh_notice(f"Configure completed in {duration}s")
+        sys.exit(result.returncode)
+
     cmd = [
         sys.executable,
         os.path.join(workspace, "tools", "configure.py"),
@@ -119,7 +130,7 @@ def cmd_configure(args: argparse.Namespace) -> None:
         "-B",
         args.build_dir,
         "-G",
-        args.generator,
+        args.generator or "Ninja",
         "-t",
         args.build_type,
     ]
@@ -135,7 +146,7 @@ def cmd_configure(args: argparse.Namespace) -> None:
         cmd += ["--unity", "--unity-batch", args.unity_batch_size]
     if args.extra_args:
         cmd.append("--")
-        cmd.extend(args.extra_args.split())
+        cmd.extend(split_extra_args(args.extra_args))
 
     start = time.monotonic()
     result = subprocess.run(cmd, check=False)
@@ -173,37 +184,20 @@ def cmd_ctest(args: argparse.Namespace) -> None:
     if args.repeat:
         cmd += ["--repeat", args.repeat]
     if args.shard_count and args.shard_count > 1:
-        # CTest -I start,end,stride: stride=shard_count, start=shard_index+1, end=0 (last).
+        if args.shard_index < 0 or args.shard_index >= args.shard_count:
+            gh_error(
+                f"shard-index must be between 0 and {args.shard_count - 1}, got {args.shard_index}"
+            )
+            sys.exit(1)
+        # An omitted end means the last test; an explicit 0 disables the range.
         start_idx = args.shard_index + 1
-        cmd += ["-I", f"{start_idx},0,{args.shard_count}"]
+        cmd += ["-I", f"{start_idx},,{args.shard_count}"]
 
     start = time.monotonic()
-    exit_code = _run_with_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
+    exit_code = run_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
     duration = int(time.monotonic() - start)
     gh_notice(f"Tests completed in {duration}s")
     sys.exit(exit_code)
-
-
-_CACHE_LINE_RE = re.compile(r"^([A-Za-z0-9_.\-]+):[^=]+=(.*)$")
-
-
-def read_cache_var(cache_path: str, name: str) -> str | None:
-    """Return the value of a CMake cache variable, or None if not set."""
-    return read_cache_dict(cache_path).get(name)
-
-
-def read_cache_dict(cache_path: str) -> dict[str, str]:
-    """Return all typed entries from CMakeCache.txt as a flat name->value dict."""
-    entries: dict[str, str] = {}
-    try:
-        with open(cache_path, encoding="utf-8") as fh:
-            for line in fh:
-                match = _CACHE_LINE_RE.match(line.rstrip("\n"))
-                if match:
-                    entries[match.group(1)] = match.group(2)
-    except FileNotFoundError:
-        pass
-    return entries
 
 
 def cmd_cache_var(args: argparse.Namespace) -> None:
@@ -243,7 +237,8 @@ def main() -> None:
     p_conf = sub.add_parser("configure")
     p_conf.add_argument("--source-dir", required=True)
     p_conf.add_argument("--build-dir", required=True)
-    p_conf.add_argument("--generator", default="Ninja")
+    p_conf.add_argument("--preset", default="")
+    p_conf.add_argument("--generator", default="")
     p_conf.add_argument("--build-type", default="Release")
     p_conf.add_argument("--testing", action="store_true", default=False)
     p_conf.add_argument("--coverage", action="store_true", default=False)

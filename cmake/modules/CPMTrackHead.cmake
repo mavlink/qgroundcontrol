@@ -1,13 +1,25 @@
+include_guard(GLOBAL)
+
 option(QGC_UPDATE_TRACKED_DEPS "Refresh git deps that track a moving branch/tag HEAD" ON)
 
 function(qgc_track_git_head)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "OFFLINE_OK" "REPO_PATH;GIT_REF;INTERVAL" "")
+
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "QGC: qgc_track_git_head: malformed arguments "
+            "(missing='${ARG_KEYWORDS_MISSING_VALUES}', unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
 
     if(NOT QGC_UPDATE_TRACKED_DEPS)
         return()
     endif()
     if(NOT ARG_GIT_REF)
         message(FATAL_ERROR "QGC: qgc_track_git_head: GIT_REF is required")
+    endif()
+    if(ARG_INTERVAL AND NOT ARG_INTERVAL MATCHES "^[0-9]+$")
+        message(FATAL_ERROR
+            "QGC: qgc_track_git_head: INTERVAL must be a non-negative integer, got '${ARG_INTERVAL}'")
     endif()
     if(NOT ARG_REPO_PATH OR NOT EXISTS "${ARG_REPO_PATH}/.git")
         message(WARNING "QGC: qgc_track_git_head: '${ARG_REPO_PATH}' is not a git checkout; skipping")
@@ -29,7 +41,7 @@ function(qgc_track_git_head)
     endif()
 
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} -C "${ARG_REPO_PATH}" ls-remote --exit-code origin "${ARG_GIT_REF}"
+        COMMAND "${GIT_EXECUTABLE}" -C "${ARG_REPO_PATH}" ls-remote --exit-code origin "${ARG_GIT_REF}"
         RESULT_VARIABLE _ls_rc OUTPUT_VARIABLE _ls_out
         ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
     if(NOT _ls_rc EQUAL 0)
@@ -42,15 +54,15 @@ function(qgc_track_git_head)
     string(REGEX REPLACE "[ \t].*" "" _remote_sha "${_ls_out}")
 
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} -C "${ARG_REPO_PATH}" rev-parse HEAD
+        COMMAND "${GIT_EXECUTABLE}" -C "${ARG_REPO_PATH}" rev-parse HEAD
         OUTPUT_VARIABLE _local_sha ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(_local_sha STREQUAL _remote_sha)
+    if("${_local_sha}" STREQUAL "${_remote_sha}")
         file(TOUCH "${_stamp}")
         return()
     endif()
 
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} -c gc.auto=0 -C "${ARG_REPO_PATH}" fetch --depth=1 origin "${ARG_GIT_REF}"
+        COMMAND "${GIT_EXECUTABLE}" -c gc.auto=0 -C "${ARG_REPO_PATH}" fetch --depth=1 origin "${ARG_GIT_REF}"
         RESULT_VARIABLE _f_rc ERROR_VARIABLE _f_err)
     if(NOT _f_rc EQUAL 0)
         if(ARG_OFFLINE_OK)
@@ -61,7 +73,7 @@ function(qgc_track_git_head)
     endif()
 
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} -C "${ARG_REPO_PATH}" reset --hard FETCH_HEAD
+        COMMAND "${GIT_EXECUTABLE}" -C "${ARG_REPO_PATH}" reset --hard FETCH_HEAD
         RESULT_VARIABLE _r_rc ERROR_VARIABLE _r_err)
     if(NOT _r_rc EQUAL 0)
         message(FATAL_ERROR "QGC: qgc_track_git_head: reset --hard failed in ${ARG_REPO_PATH}: ${_r_err}")

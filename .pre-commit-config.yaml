@@ -3,6 +3,9 @@
 # Run: pre-commit run --all-files
 # Update: pre-commit autoupdate
 
+default_language_version:
+  node: 24.18.0
+
 repos:
   # Basic file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -88,14 +91,13 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
-        args: ['-e', 'SC1091']  # Don't warn about not following sourced files
 
   # Dockerfile linting
   - repo: https://github.com/AleksaC/hadolint-py
     rev: v2.14.0
     hooks:
       - id: hadolint
-        files: ^deploy/docker/Dockerfile-.*$
+        files: ^deploy/docker/Dockerfile(?:-.*)?$
         types: [file]
 
   # GitHub Actions linting
@@ -112,6 +114,7 @@ repos:
         entry: zizmor
         language: python
         additional_dependencies: ['zizmor>=1.25.2']
+        args: ['--min-severity=low']
         files: ^\.github/(workflows|actions)/.*\.ya?ml$
         types: [yaml]
 
@@ -130,6 +133,36 @@ repos:
         files: ^\.github/build-config\.json$
         args: ['--schemafile', '.github/build-config.schema.json']
 
+      - id: check-jsonschema
+        alias: validate-dependabot-config
+        name: Validate Dependabot config
+        files: ^\.github/dependabot\.ya?ml$
+        args: ['--builtin-schema', 'vendor.dependabot']
+
+      - id: check-jsonschema
+        alias: validate-codecov-config
+        name: Validate Codecov config
+        files: ^\.github/codecov\.ya?ml$
+        args: ['--builtin-schema', 'vendor.codecov']
+
+      - id: check-jsonschema
+        alias: validate-issue-template-config
+        name: Validate GitHub issue template config
+        files: ^\.github/ISSUE_TEMPLATE/config\.ya?ml$
+        args: ['--builtin-schema', 'vendor.github-issue-config']
+
+      - id: check-jsonschema
+        alias: validate-issue-forms
+        name: Validate GitHub issue forms
+        files: ^\.github/ISSUE_TEMPLATE/(?!config\.ya?ml$).*\.ya?ml$
+        args: ['--builtin-schema', 'vendor.github-issue-forms']
+
+      - id: check-jsonschema
+        alias: validate-compose-config
+        name: Validate Docker Compose config
+        files: ^deploy/docker/(?:docker-)?compose\.ya?ml$
+        args: ['--builtin-schema', 'vendor.compose-spec']
+
   # Renovate config validation (schema-checks the active renovate.json)
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 43.249.6
@@ -147,19 +180,15 @@ repos:
   # Prose linting (documentation quality)
   # vale-sync downloads the Packages declared in .vale.ini into the gitignored
   # .github/styles/ before vale runs; without it vale has no styles and no-ops.
-  - repo: local
-    hooks:
-      - id: vale-sync
-        name: vale sync (download styles)
-        language: golang
-        additional_dependencies:
-          - 'github.com/errata-ai/vale/v3@v3.14.2'
-        entry: vale sync
-        files: ^(docs/|\.vale\.ini$)
-        pass_filenames: false
   - repo: https://github.com/errata-ai/vale
     rev: v3.15.1
     hooks:
+      - id: vale
+        alias: vale-sync
+        name: vale sync (download styles)
+        entry: vale sync
+        files: ^(docs/|\.vale\.ini$)
+        pass_filenames: false
       - id: vale
         files: ^docs/
         args: ['--no-exit']  # Don't fail on warnings, just report
@@ -194,17 +223,17 @@ repos:
         name: cmake-format (check)
         entry: cmake-format --check
         language: python
-        additional_dependencies: ['cmakelang==0.6.13']
+        additional_dependencies: ['cmakelang==0.6.13', 'PyYAML==6.0.3']
         files: (CMakeLists\.txt|\.cmake)$
-        exclude: ^(build/|libs/)
+        exclude: ^(build/|libs/|cmake/modules/CPM\.cmake$)
 
       - id: cmake-lint
         name: cmake-lint
         entry: cmake-lint
         language: python
-        additional_dependencies: ['cmakelang==0.6.13']
+        additional_dependencies: ['cmakelang==0.6.13', 'PyYAML==6.0.3']
         files: (CMakeLists\.txt|\.cmake)$
-        exclude: ^(build/|libs/)
+        exclude: ^(build/|libs/|cmake/modules/CPM\.cmake$)
 
       - id: clazy
         name: Qt static analysis (clazy)
@@ -224,14 +253,20 @@ repos:
 
       - id: check-categorized-logging
         name: Check for category function passed to uncategorized logging macro
-        entry: bash -c 'if grep -EnH "(^|[^A-Za-z0-9_])q(Debug|Info|Warning|Critical)\([[:space:]]*[A-Za-z_]+Log[[:space:]]*\)" "$@" 2>/dev/null; then echo "::error::Category function passed to qDebug/qInfo/qWarning/qCritical. Use the qCDebug/qCInfo/qCWarning/qCCritical macros instead." >&2; exit 1; fi' --
+        entry: >-
+          bash -c 'if grep -EnH "(^|[^A-Za-z0-9_])q(Debug|Info|Warning|Critical)\([[:space:]]*[A-Za-z_]+Log[[:space:]]*\)" "$@" 2>/dev/null; then
+          echo "::error::Category function passed to qDebug/qInfo/qWarning/qCritical. Use the qCDebug/qCInfo/qCWarning/qCCritical macros instead." >&2;
+          exit 1; fi' --
         language: system
         types: [c++]
         pass_filenames: true
 
       - id: check-no-qtest-ignore-message
         name: Check for QTest::ignoreMessage in test code
-        entry: bash -c 'if grep -nH "QTest::ignoreMessage" "$@" 2>/dev/null; then echo "::error::QTest::ignoreMessage found. Use expectLogMessage+verifyExpectedLogMessage or ignoreLogMessage instead." >&2; exit 1; fi' --
+        entry: >-
+          bash -c 'if grep -nH "QTest::ignoreMessage" "$@" 2>/dev/null; then
+          echo "::error::QTest::ignoreMessage found. Use expectLogMessage+verifyExpectedLogMessage or ignoreLogMessage instead." >&2;
+          exit 1; fi' --
         language: system
         types: [c++]
         files: ^test/
@@ -239,7 +274,10 @@ repos:
 
       - id: check-no-fixed-qwait
         name: Check for fixed-delay QTest::qWait in test code
-        entry: bash -c 'if grep -EnH "qWait\([1-9][0-9]*\)" "$@" 2>/dev/null; then echo "::error::QTest::qWait(<non-zero>) found. Use QTRY_VERIFY_WITH_TIMEOUT, QTRY_COMPARE_WITH_TIMEOUT, or QSignalSpy::wait with a TestTimeout::* constant instead." >&2; exit 1; fi' --
+        entry: >-
+          bash -c 'if grep -EnH "qWait\([1-9][0-9]*\)" "$@" 2>/dev/null; then
+          echo "::error::QTest::qWait(<non-zero>) found. Use QTRY_VERIFY_WITH_TIMEOUT, QTRY_COMPARE_WITH_TIMEOUT, or QSignalSpy::wait with a TestTimeout::* constant instead." >&2;
+          exit 1; fi' --
         language: system
         types: [c++]
         files: ^test/

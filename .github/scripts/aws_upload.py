@@ -21,6 +21,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.aws import upload_public_file
 from common.gh_actions import gh_error, write_github_output
 from common.proc import run_captured
 
@@ -88,15 +89,24 @@ def _run_aws(cmd: list[str]) -> None:
 def cmd_upload(args: argparse.Namespace) -> None:
     validate_artifact(args.artifact_path, args.artifact_name)
     safe_ref = sanitize_ref(args.ref_name)
-
-    s3_path = f"s3://{args.s3_bucket}/builds/{safe_ref}/{args.artifact_name}"
-    _run_aws(["aws", "s3", "cp", args.artifact_path, s3_path, "--acl", "public-read"])
+    try:
+        upload_public_file(
+            Path(args.artifact_path),
+            args.s3_bucket,
+            f"builds/{safe_ref}/{args.artifact_name}",
+        )
+    except (RuntimeError, ValueError) as error:
+        gh_error(str(error))
+        raise SystemExit(1) from error
 
 
 def cmd_upload_latest(args: argparse.Namespace) -> None:
     validate_artifact(args.artifact_path, args.artifact_name)
-    s3_path = f"s3://{args.s3_bucket}/latest/{args.artifact_name}"
-    _run_aws(["aws", "s3", "cp", args.artifact_path, s3_path, "--acl", "public-read"])
+    try:
+        upload_public_file(Path(args.artifact_path), args.s3_bucket, f"latest/{args.artifact_name}")
+    except (RuntimeError, ValueError) as error:
+        gh_error(str(error))
+        raise SystemExit(1) from error
 
 
 def cmd_invalidate(args: argparse.Namespace) -> None:

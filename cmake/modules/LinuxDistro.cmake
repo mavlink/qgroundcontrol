@@ -1,5 +1,7 @@
-# Detect host Linux distro from /etc/os-release for distro-appropriate defaults
-# (native builds only; Docker passes packaging flags via -D). Sets QGC_LINUX_DISTRO[_LIKE/_FAMILY].
+# Detect host Linux distro from /etc/os-release for distro-appropriate native
+# and containerized build defaults. Sets QGC_LINUX_DISTRO[_LIKE/_FAMILY].
+
+include_guard(GLOBAL)
 
 function(_qgc_detect_linux_distro)
     set(_distro "unknown")

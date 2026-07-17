@@ -1,6 +1,4 @@
 # QGroundControl AI Assistant Guide
 
-The canonical AI agent guide is [AGENTS.md](../AGENTS.md) — **read it first.**
-It lists the critical files, code structure, build/test commands, CI layout,
-and links to every topic-specific reference (CODING_STYLE, CONTRIBUTING,
-tools/README, test/README, .github/ci-overview).
+Read and follow the canonical [AI agent guide](../AGENTS.md). It links to each authoritative topic
+guide; keep shared rules there instead of duplicating them in this Copilot entry point.

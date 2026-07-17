@@ -1,24 +1,9 @@
 # SPDX-FileCopyrightText: 2024 L. E. Segovia <amy@centricular.com>
 # SPDX-License-Identifier: LGPL-2.1-or-later
 #
-# QGC vendoring notes:
-#   Source: https://invent.kde.org/qt/qt/qtmultimedia (Qt 6.x branch)
-#   This module is consumed by cmake/GStreamer/Orchestrator.cmake → platform helpers.
-#   Local QGC patches (not in upstream):
-#     1. _gst_resolve_and_link_libraries converted from macro to function for
-#        scope hygiene; callers pass values (not names).
-#     2. Pkg-config env management (PKG_CONFIG_PATH/LIBDIR/DONT_DEFINE_PREFIX)
-#        moved out — every in-tree caller routes through
-#        gstreamer_apply_pkgconfig_env (cmake/GStreamer/PkgConfig.cmake) before
-#        find_package(GStreamer), so the upstream standalone-fallback block
-#        and the trailing DONT_DEFINE_PREFIX env-reset have been deleted.
-#     3. Component target generation walks GSTREAMER_APIS instead of a fixed
-#        list so xcframework / mobile static-build paths can introduce new
-#        components without editing this file.
-#     4. Hash parsing moved out — qgc_parse_expected_hash lives in
-#        cmake/modules/Download.cmake; this module no longer parses hashes.
-#   When syncing from upstream, re-apply each listed patch and update this
-#   block. Do NOT remove this block during sync.
+# Vendored from Qt Multimedia's Qt 6 branch with QGC patches for scoped library
+# resolution, centralized pkg-config handling, dynamic component targets, and
+# shared checksum parsing. Preserve these changes when syncing from upstream.
 
 #[=======================================================================[.rst:
 FindGStreamer
@@ -80,9 +65,7 @@ if (NOT DEFINED GStreamer_USE_STATIC_LIBS)
     set(GStreamer_USE_STATIC_LIBS OFF)
 endif()
 
-# Pkg-config env (PKG_CONFIG_PATH / LIBDIR / DONT_DEFINE_PREFIX) is configured
-# by the orchestrator via gstreamer_apply_pkgconfig_env() before this module
-# runs — see QGC patch #2 in the vendoring header.
+# The orchestrator configures pkg-config before loading this module.
 
 macro(_gst_filter_missing_directories GST_INCLUDE_DIRS)
     _gst_coalesce_existing_paths(${GST_INCLUDE_DIRS})

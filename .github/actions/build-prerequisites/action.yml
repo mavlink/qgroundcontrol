@@ -83,7 +83,7 @@ runs:
           Write-Host "Defender exclusions unavailable on this image ($_); continuing"
         }
 
-    - uses: lukka/get-cmake@v4.3.2
+    - uses: lukka/get-cmake@v4.3.3
       with:
         useCloudCache: false
         useLocalCache: true

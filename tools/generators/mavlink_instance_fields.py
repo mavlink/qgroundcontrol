@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Parse MAVLink XML definitions and emit a C++ header mapping message IDs to instance field names.
 
 Usage: mavlink_instance_fields.py <xml_dir> <dialect> <output_header>
@@ -9,11 +8,29 @@ elements, and generates a QMap<uint32_t, QString> lookup table.
 
 import sys
 from pathlib import Path
+from xml.etree.ElementTree import Element
 
-import defusedxml.ElementTree as ET
+_tools_dir = Path(__file__).resolve().parents[1]
+if str(_tools_dir) not in sys.path:
+    sys.path.insert(0, str(_tools_dir))
+
+from _bootstrap import ensure_tools_dir  # noqa: E402
+
+ensure_tools_dir(__file__)
+
+from common.io import write_text_if_changed  # noqa: E402
+from common.xml import xml_parse  # noqa: E402
 
 
-def resolve_includes(xml_dir: Path, dialect: str, visited: set | None = None) -> list[Path]:
+def _required_attribute(element: Element, name: str, source: Path) -> str:
+    """Return a required XML attribute with source context on failure."""
+    value = element.get(name)
+    if value is None:
+        raise ValueError(f"{source}: <{element.tag}> is missing required {name!r} attribute")
+    return value
+
+
+def resolve_includes(xml_dir: Path, dialect: str, visited: set[str] | None = None) -> list[Path]:
     """Recursively resolve the include chain for a dialect, returning XML paths in dependency order."""
     if visited is None:
         visited = set()
@@ -22,10 +39,14 @@ def resolve_includes(xml_dir: Path, dialect: str, visited: set | None = None) ->
         return []
     visited.add(dialect)
 
-    result = []
-    tree = ET.parse(xml_path)
+    result: list[Path] = []
+    tree = xml_parse(xml_path)
     root = tree.getroot()
+    if root is None:
+        raise ValueError(f"{xml_path}: XML document has no root element")
     for include_elem in root.findall("include"):
+        if not include_elem.text:
+            raise ValueError(f"{xml_path}: <include> must name a dialect")
         included_dialect = include_elem.text.replace(".xml", "")
         result.extend(resolve_includes(xml_dir, included_dialect, visited))
     result.append(xml_path)
@@ -39,14 +60,16 @@ def extract_instance_fields(xml_paths: list[Path]) -> dict[int, tuple[str, str]]
     """
     instance_fields: dict[int, tuple[str, str]] = {}
     for xml_path in xml_paths:
-        tree = ET.parse(xml_path)
+        tree = xml_parse(xml_path)
         root = tree.getroot()
+        if root is None:
+            raise ValueError(f"{xml_path}: XML document has no root element")
         for message in root.iter("message"):
-            msg_id = int(message.get("id"))
-            msg_name = message.get("name")
+            msg_id = int(_required_attribute(message, "id", xml_path))
+            msg_name = _required_attribute(message, "name", xml_path)
             for field in message.findall("field"):
                 if field.get("instance") == "true":
-                    field_name = field.get("name")
+                    field_name = _required_attribute(field, "name", xml_path)
                     if msg_id not in instance_fields:
                         instance_fields[msg_id] = (msg_name, field_name)
                     break  # Only one instance field per message
@@ -86,15 +109,6 @@ def generate_header(instance_fields: dict[int, tuple[str, str]]) -> str:
     return "\n".join(lines)
 
 
-def write_if_changed(path: Path, content: str) -> bool:
-    """Write file only if content changed. Returns True if written."""
-    if path.exists() and path.read_text() == content:
-        return False
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
-    return True
-
-
 def main():
     if len(sys.argv) != 4:
         print(f"Usage: {sys.argv[0]} <xml_dir> <dialect> <output_header>", file=sys.stderr)
@@ -112,7 +126,7 @@ def main():
     instance_fields = extract_instance_fields(xml_paths)
     header_content = generate_header(instance_fields)
 
-    if write_if_changed(output_path, header_content):
+    if write_text_if_changed(output_path, header_content):
         print(f"Generated {output_path} ({len(instance_fields)} instance fields)")
     else:
         print(f"Unchanged: {output_path}")

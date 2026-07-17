@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 option(QGC_AUTO_PYTHON_VENV "Auto-create <repo>/.venv with generator deps if missing" ON)
 
 if(WIN32)
@@ -7,9 +9,38 @@ else()
 endif()
 
 function(_qgc_sync_venv_if_stale _py)
+    # MAVLink's CMake configure requires `python -m pip`. uv may create or sync
+    # an otherwise valid environment without retaining pip, so repair that
+    # bootstrap prerequisite before checking QGC's generator dependencies.
+    execute_process(
+        COMMAND "${_py}" -m pip --version
+        RESULT_VARIABLE _pip_result
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(NOT _pip_result EQUAL 0)
+        if(NOT QGC_AUTO_PYTHON_VENV)
+            message(FATAL_ERROR
+                "QGC: .venv is missing pip and QGC_AUTO_PYTHON_VENV=OFF. "
+                "Run: ${_py} -m ensurepip --upgrade")
+        endif()
+        message(STATUS "QGC: .venv is missing pip — bootstrapping it with ensurepip")
+        execute_process(
+            COMMAND "${_py}" -m ensurepip --upgrade
+            RESULT_VARIABLE _pip_result
+            OUTPUT_VARIABLE _pip_output
+            ERROR_VARIABLE _pip_output
+        )
+        if(NOT _pip_result EQUAL 0)
+            message(FATAL_ERROR
+                "QGC: failed to bootstrap pip in .venv (exit ${_pip_result}):\n${_pip_output}\n"
+                "Remove .venv and reconfigure, or run: ${_py} -m ensurepip --upgrade")
+        endif()
+    endif()
     if(NOT QGC_AUTO_PYTHON_VENV)
         return()
     endif()
+
     execute_process(
         COMMAND "${_py}" "${CMAKE_SOURCE_DIR}/tools/setup/install_python.py" scripts --check
         RESULT_VARIABLE _deps_result
@@ -41,11 +72,17 @@ macro(_qgc_pin_python _py)
 endmacro()
 
 if(DEFINED CACHE{Python3_EXECUTABLE})
-    if(EXISTS "${_qgc_venv_python}" AND "${Python3_EXECUTABLE}" STREQUAL "${_qgc_venv_python}")
+    if(NOT EXISTS "${Python3_EXECUTABLE}")
+        message(STATUS "QGC: clearing stale cached Python interpreter: ${Python3_EXECUTABLE}")
+        unset(Python3_EXECUTABLE CACHE)
+        unset(Python_EXECUTABLE CACHE)
+    elseif(EXISTS "${_qgc_venv_python}" AND "${Python3_EXECUTABLE}" STREQUAL "${_qgc_venv_python}")
         _qgc_sync_venv_if_stale("${_qgc_venv_python}")
         _qgc_pin_python("${_qgc_venv_python}")
+        return()
+    else()
+        return()
     endif()
-    return()
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/.venv" AND NOT EXISTS "${_qgc_venv_python}")

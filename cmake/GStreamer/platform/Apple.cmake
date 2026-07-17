@@ -1,5 +1,7 @@
 # Shared Apple (macOS + iOS) GStreamer helpers — invoked by Orchestrator.cmake.
 
+include_guard(GLOBAL)
+
 function(_qgc_find_apple_pkg_config OUT_VAR)
     if(DEFINED CACHE{${OUT_VAR}} AND EXISTS "$CACHE{${OUT_VAR}}")
         return()

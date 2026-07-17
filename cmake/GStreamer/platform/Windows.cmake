@@ -1,5 +1,7 @@
 # Windows GStreamer SDK discovery — invoked by Orchestrator.cmake.
 
+include_guard(GLOBAL)
+
 function(_qgc_windows_sdk_complete ROOT_DIR OUT_VAR)
     set(_required_paths
         "bin/pkg-config.exe"

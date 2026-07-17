@@ -67,11 +67,15 @@ def _qbytearray_to_str(val):
         return f"<QByteArray error: {e}>"
 
 
-class QStringPrinter:
-    """Pretty printer for QString."""
+class _QtValuePrinter:
+    """Base for printers that retain a single GDB value."""
 
     def __init__(self, val):
         self.val = val
+
+
+class QStringPrinter(_QtValuePrinter):
+    """Pretty printer for QString."""
 
     def to_string(self):
         return _qstring_to_str(self.val)
@@ -80,11 +84,8 @@ class QStringPrinter:
         return "string"
 
 
-class QByteArrayPrinter:
+class QByteArrayPrinter(_QtValuePrinter):
     """Pretty printer for QByteArray."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         return _qbytearray_to_str(self.val)
@@ -93,11 +94,8 @@ class QByteArrayPrinter:
         return "string"
 
 
-class QListPrinter:
+class QListPrinter(_QtValuePrinter):
     """Pretty printer for QList<T>."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:
@@ -132,11 +130,8 @@ class QVectorPrinter(QListPrinter):
     pass
 
 
-class QMapPrinter:
+class QMapPrinter(_QtValuePrinter):
     """Pretty printer for QMap<K, V>."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:
@@ -152,11 +147,8 @@ class QMapPrinter:
         return "map"
 
 
-class QHashPrinter:
+class QHashPrinter(_QtValuePrinter):
     """Pretty printer for QHash<K, V>."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:
@@ -172,11 +164,8 @@ class QHashPrinter:
         return "map"
 
 
-class QVariantPrinter:
+class QVariantPrinter(_QtValuePrinter):
     """Pretty printer for QVariant."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:
@@ -209,11 +198,8 @@ class QVariantPrinter:
             return "QVariant"
 
 
-class QPointPrinter:
+class QPointPrinter(_QtValuePrinter):
     """Pretty printer for QPoint/QPointF."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:
@@ -224,11 +210,8 @@ class QPointPrinter:
             return "QPoint"
 
 
-class QSizePrinter:
+class QSizePrinter(_QtValuePrinter):
     """Pretty printer for QSize/QSizeF."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:
@@ -239,11 +222,8 @@ class QSizePrinter:
             return "QSize"
 
 
-class QRectPrinter:
+class QRectPrinter(_QtValuePrinter):
     """Pretty printer for QRect/QRectF."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:
@@ -263,11 +243,8 @@ class QRectPrinter:
                 return "QRect"
 
 
-class QUrlPrinter:
+class QUrlPrinter(_QtValuePrinter):
     """Pretty printer for QUrl."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:
@@ -293,11 +270,8 @@ class QUrlPrinter:
             return "QUrl"
 
 
-class QSharedPointerPrinter:
+class QSharedPointerPrinter(_QtValuePrinter):
     """Pretty printer for QSharedPointer<T>."""
-
-    def __init__(self, val):
-        self.val = val
 
     def to_string(self):
         try:

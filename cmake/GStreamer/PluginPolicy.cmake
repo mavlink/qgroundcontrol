@@ -51,7 +51,12 @@ _gstreamer_assert_policy_consistent()
 # build-config.json (gstreamer.plugins.common + gstreamer.plugins.<key>).
 # Requires QGC_BUILD_CONFIG_CONTENT to be set by BuildConfig.cmake.
 function(gstreamer_plugins_for)
-    cmake_parse_arguments(ARG "" "PLATFORM;OUT_VAR" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;OUT_VAR" "")
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_plugins_for: malformed arguments (missing='${ARG_KEYWORDS_MISSING_VALUES}', "
+            "unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
     if(NOT ARG_OUT_VAR)
         message(FATAL_ERROR "gstreamer_plugins_for: OUT_VAR is required")
     endif()
@@ -90,7 +95,12 @@ endfunction()
 # alternate set ships in the SDK. Modifies the variable named by IN_OUT_PLUGINS
 # in the caller's scope.
 function(gstreamer_filter_alternates)
-    cmake_parse_arguments(ARG "" "IN_OUT_PLUGINS" "AVAILABLE" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "IN_OUT_PLUGINS" "AVAILABLE")
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_filter_alternates: malformed arguments (missing='${ARG_KEYWORDS_MISSING_VALUES}', "
+            "unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
     if(NOT ARG_IN_OUT_PLUGINS)
         message(FATAL_ERROR "gstreamer_filter_alternates: IN_OUT_PLUGINS is required")
     endif()
@@ -141,7 +151,12 @@ endfunction()
 # "<name>". Lets the install verifier accept videoconvert+videoscale (1.20) in
 # place of the fused videoconvertscale (1.22+) instead of failing the build.
 function(gstreamer_plugin_satisfy_sets)
-    cmake_parse_arguments(ARG "" "PLUGIN;OUT_VAR" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLUGIN;OUT_VAR" "")
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_plugin_satisfy_sets: malformed arguments (missing='${ARG_KEYWORDS_MISSING_VALUES}', "
+            "unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
     if(NOT ARG_PLUGIN)
         message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: PLUGIN is required")
     endif()

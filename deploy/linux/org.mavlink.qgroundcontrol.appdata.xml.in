@@ -28,11 +28,7 @@
   </provides>
 
   <releases>
-    <release version="@CMAKE_PROJECT_VERSION@" date="@QGC_APP_DATE@">
-      <description>
-        <p>Rebuilt with CMake for Qt6.8</p>
-      </description>
-    </release>
+    <release version="@CMAKE_PROJECT_VERSION@" date="@QGC_APP_DATE@"/>
   </releases>
 
   <screenshots>

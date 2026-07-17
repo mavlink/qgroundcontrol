@@ -63,6 +63,15 @@ def parse_csv_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def require_repository() -> str:
+    """Return the configured owner/repo or terminate with a CI annotation."""
+    repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
+    if not repo:
+        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
+        raise SystemExit(1)
+    return repo
+
+
 def is_fork_pr() -> bool:
     """Check if the current event is a PR from a fork repository."""
     event = os.environ.get("EVENT_NAME", os.environ.get("GITHUB_EVENT_NAME", ""))

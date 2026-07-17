@@ -1,4 +1,4 @@
-"""Tests for gh_cache_cleanup.py."""
+"""Contract tests for GitHub cache cleanup and pruning."""
 
 from __future__ import annotations
 
@@ -13,223 +13,174 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def test_list_caches_parses_tab_separated(monkeypatch) -> None:
-    calls: list[list[str]] = []
-
-    def fake_run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess:
-        calls.append(cmd)
-        return completed(
-            "key-1\t100MB\trefs/heads/main\t2026-02-24\nkey-2\t50MB\trefs/pull/1/merge\t2026-02-25\n"
-        )
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    rows = mod.list_caches("owner/repo", "")
-    assert [r.key for r in rows] == ["key-1", "key-2"]
-    assert rows[0].size == "100MB"
-    assert rows[1].ref == "refs/pull/1/merge"
-    assert "-B" not in calls[0]
-
-
-def test_list_caches_passes_branch_filter(monkeypatch) -> None:
-    calls: list[list[str]] = []
-
-    def fake_run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess:
-        calls.append(cmd)
-        return completed("")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    mod.list_caches("owner/repo", "feature-x")
-    assert calls[0][calls[0].index("-B") + 1] == "feature-x"
-
-
-def test_list_caches_falls_back_to_whitespace_split(monkeypatch) -> None:
-    monkeypatch.setattr(
-        subprocess, "run", lambda *a, **kw: completed("key1  10MB  refs/heads/main")
+def _usage(
+    key: str,
+    mb: int,
+    *,
+    cache_id: int = 1,
+    ref: str = "refs/heads/master",
+    accessed: str = "2026-01-01",
+) -> Any:
+    return mod.CacheUsage(
+        cache_id=cache_id,
+        key=key,
+        ref=ref,
+        size_bytes=mb * 1024 * 1024,
+        last_accessed=accessed,
     )
-    rows = mod.list_caches("owner/repo", "")
-    assert len(rows) == 1
-    assert rows[0].key == "key1"
 
 
-def test_delete_caches_counts_outcomes(monkeypatch) -> None:
+def test_list_caches_parses_rows_and_normalizes_ref(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = '[{"key":"key-1","sizeInBytes":104857600,"ref":"refs/heads/main"}]'
+    for branch, expected_ref in (
+        ("", None),
+        ("feature-x", "refs/heads/feature-x"),
+        ("refs/pull/1/merge", "refs/pull/1/merge"),
+    ):
+        calls: list[list[str]] = []
+
+        def run(
+            command: list[str], calls: list[list[str]] = calls, **kwargs: Any
+        ) -> subprocess.CompletedProcess:
+            calls.append(command)
+            return completed(payload)
+
+        monkeypatch.setattr(subprocess, "run", run)
+        rows = mod.list_caches("owner/repo", branch)
+        assert [(row.key, row.size, row.ref) for row in rows] == [
+            ("key-1", "100.0 MiB", "refs/heads/main")
+        ]
+        if expected_ref is None:
+            assert "--ref" not in calls[0]
+        else:
+            assert calls[0][calls[0].index("--ref") + 1] == expected_ref
+
+
+def test_delete_caches_skips_empty_keys_and_counts_outcomes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     outcomes = iter([0, 1, 0])
+    calls: list[list[str]] = []
 
-    def fake_run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess:
+    def run(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess:
+        calls.append(command)
         return completed(returncode=next(outcomes))
 
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    deleted, failed = mod.delete_caches("owner/repo", "", ["a", "b", "c"])
-    assert (deleted, failed) == (2, 1)
+    monkeypatch.setattr(subprocess, "run", run)
+    assert mod.delete_caches("owner/repo", "", ["a", "", "b", "c"]) == (2, 1)
+    assert len(calls) == 3
 
 
-def test_delete_caches_skips_empty_keys(monkeypatch) -> None:
-    calls: list[list[str]] = []
-
-    def fake_run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess:
-        calls.append(cmd)
-        return completed(returncode=0)
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-    mod.delete_caches("owner/repo", "", ["", "x", ""])
-    assert len(calls) == 1
-
-
-def test_main_dry_run_writes_count_and_zero_deleted(monkeypatch, gh_output: Path) -> None:
+def test_main_dry_run_and_delete_write_outputs(
+    monkeypatch: pytest.MonkeyPatch, gh_output: Path, tmp_path: Path
+) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
+    summary = tmp_path / "summary"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
     monkeypatch.setattr(
         mod,
         "list_caches",
-        lambda *a, **kw: [
-            mod.CacheRow(key="k1", size="1MB", ref="refs/heads/main"),
-            mod.CacheRow(key="k2", size="2MB", ref="refs/heads/main"),
+        lambda *args, **kwargs: [
+            mod.CacheRow("k1", "1 MiB", "main"),
+            mod.CacheRow("k2", "2 MiB", "main"),
         ],
     )
-
-    called = False
-
-    def fail_delete(*_a, **_kw):
-        nonlocal called
-        called = True
-        return (0, 0)
-
-    monkeypatch.setattr(mod, "delete_caches", fail_delete)
-    assert mod.main([]) == 0
-    assert not called
-    contents = gh_output.read_text()
-    assert "count=2" in contents
-    assert "deleted=0" in contents
-
-
-def test_main_delete_invokes_delete(monkeypatch, gh_output: Path) -> None:
-    monkeypatch.setenv("GH_REPO", "owner/repo")
+    deleted: list[list[str]] = []
     monkeypatch.setattr(
-        mod, "list_caches", lambda *a, **kw: [mod.CacheRow(key="k1", size="1MB", ref="main")]
+        mod,
+        "delete_caches",
+        lambda repo, branch, keys: deleted.append(keys) or (len(keys), 0),
     )
-    monkeypatch.setattr(mod, "delete_caches", lambda *a, **kw: (1, 0))
-    assert mod.main(["--delete"]) == 0
-    assert "deleted=1" in gh_output.read_text()
 
-
-@pytest.mark.usefixtures("gh_output")
-def test_main_summary_includes_dry_run_notice(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("GH_REPO", "owner/repo")
-    summary_file = tmp_path / "step_summary"
-    summary_file.write_text("")
-    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_file))
-    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [mod.CacheRow("k1", "1MB", "main")])
     assert mod.main(["--summary"]) == 0
-    summary = summary_file.read_text()
-    assert "## Cache Summary" in summary
-    assert "Dry run" in summary
+    assert deleted == []
+    assert "count=2" in gh_output.read_text()
+    assert "Dry run" in summary.read_text()
 
-
-@pytest.mark.usefixtures("gh_output")
-def test_main_summary_after_delete_shows_results(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("GH_REPO", "owner/repo")
-    summary_file = tmp_path / "step_summary"
-    summary_file.write_text("")
-    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_file))
-    monkeypatch.setattr(mod, "list_caches", lambda *a, **kw: [mod.CacheRow("k1", "1MB", "main")])
-    monkeypatch.setattr(mod, "delete_caches", lambda *a, **kw: (1, 0))
     assert mod.main(["--delete", "--summary"]) == 0
-    summary = summary_file.read_text()
-    assert "Deletion Results" in summary
-    assert "Deleted: 1" in summary
-    assert "Dry run" not in summary
+    assert deleted == [["k1", "k2"]]
+    assert "Deletion Results" in summary.read_text()
 
 
-def test_main_requires_repo(monkeypatch) -> None:
+def test_main_requires_repository_context(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("GH_REPO", raising=False)
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
     with pytest.raises(SystemExit):
         mod.main([])
 
 
-def _usage(
-    key: str, mb: int, *, ref: str = "refs/heads/master", accessed: str = "2026-01-01"
-) -> Any:
-    return mod.CacheUsage(key=key, ref=ref, size_bytes=mb * 1024 * 1024, last_accessed=accessed)
-
-
-def test_select_prune_victims_noop_under_high_water() -> None:
-    caches = [_usage("ccache-linux", 3000), _usage("avd-Linux", 1000)]
+def test_prune_policy_respects_watermarks_protection_and_largest_first() -> None:
+    under = [_usage("ccache-linux", 3000), _usage("avd-Linux", 1000)]
     victims, total, projected = mod.select_prune_victims(
-        caches, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+        under, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
     )
     assert victims == []
     assert total == projected == 4000 * 1024 * 1024
 
-
-def test_select_prune_victims_never_evicts_protected() -> None:
-    caches = [
-        _usage("ccache-linux", 6000),
-        _usage("cpm-modules-shared", 1000),
-        _usage("avd-Linux", 3000),
-    ]
-    victims, _total, _projected = mod.select_prune_victims(
-        caches, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
-    )
-    assert [v.key for v in victims] == ["avd-Linux"]
-
-
-def test_select_prune_victims_largest_first_until_target() -> None:
-    caches = [
+    over = [
         _usage("ccache-linux", 5000),
         _usage("avd-Linux", 1750),
         _usage("codeql-trap", 1370),
         _usage("gradle-wrapper", 400),
     ]
-    victims, _total, projected = mod.select_prune_victims(
-        caches, keep_mb=6500, high_water_mb=8000, protect=mod.DEFAULT_PROTECT
+    victims, _, projected = mod.select_prune_victims(
+        over, keep_mb=6500, high_water_mb=8000, protect=mod.DEFAULT_PROTECT
     )
-    assert [v.key for v in victims] == ["avd-Linux", "codeql-trap"]
+    assert [victim.key for victim in victims] == ["avd-Linux", "codeql-trap"]
     assert projected <= 6500 * 1024 * 1024
 
-
-def test_select_prune_victims_floor_above_keep_when_protected_dominates() -> None:
-    caches = [_usage("ccache-linux", 9500), _usage("avd-Linux", 1000)]
-    victims, _total, projected = mod.select_prune_victims(
-        caches, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+    protected = [_usage("ccache-linux", 9500), _usage("avd-Linux", 1000)]
+    victims, _, projected = mod.select_prune_victims(
+        protected, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
     )
-    assert [v.key for v in victims] == ["avd-Linux"]
+    assert [victim.key for victim in victims] == ["avd-Linux"]
     assert projected == 9500 * 1024 * 1024
 
 
-def test_list_caches_usage_parses_json(monkeypatch) -> None:
-    payload = '[{"key":"ccache-x","ref":"refs/heads/master","sizeInBytes":1048576,"lastAccessedAt":"2026-01-01"}]'
-    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: completed(payload))
+def test_list_cache_usage_parses_api_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = '[{"id":17,"key":"ccache-x","ref":"refs/heads/master","sizeInBytes":1048576,"lastAccessedAt":"2026-01-01"}]'
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: completed(payload))
     rows = mod.list_caches_usage("owner/repo")
-    assert rows[0].key == "ccache-x"
-    assert rows[0].size_bytes == 1048576
+    assert (rows[0].cache_id, rows[0].key, rows[0].size_bytes) == (17, "ccache-x", 1048576)
 
 
-def test_main_prune_dry_run_does_not_delete(monkeypatch, gh_output: Path) -> None:
+def test_delete_cache_ids_targets_exact_entries(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[list[str]] = []
+
+    def run(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess:
+        calls.append(command)
+        return completed()
+
+    monkeypatch.setattr(subprocess, "run", run)
+    assert mod.delete_cache_ids("owner/repo", [17, 23]) == (2, 0)
+    assert [call[3] for call in calls] == ["17", "23"]
+
+
+def test_prune_main_is_dry_by_default_and_deletes_only_victims(
+    monkeypatch: pytest.MonkeyPatch, gh_output: Path
+) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
+    requested_limits: list[int] = []
+
+    def list_usage(repo: str, limit: int) -> list[Any]:
+        del repo
+        requested_limits.append(limit)
+        return [_usage("ccache-x", 9000), _usage("avd", 2000)]
+
+    monkeypatch.setattr(mod, "list_caches_usage", list_usage)
+    deleted: list[list[int]] = []
     monkeypatch.setattr(
-        mod, "list_caches_usage", lambda *a, **kw: [_usage("ccache-x", 9000), _usage("avd", 2000)]
+        mod,
+        "delete_cache_ids",
+        lambda repo, cache_ids: deleted.append(cache_ids) or (len(cache_ids), 0),
     )
-    called = False
 
-    def fail_delete(*_a, **_kw):
-        nonlocal called
-        called = True
-        return (0, 0)
-
-    monkeypatch.setattr(mod, "delete_caches", fail_delete)
     assert mod.main(["--prune"]) == 0
-    assert not called
+    assert deleted == []
     assert "deleted=0" in gh_output.read_text()
 
-
-def test_main_prune_delete_evicts_unprotected(monkeypatch, gh_output: Path) -> None:
-    monkeypatch.setenv("GH_REPO", "owner/repo")
-    monkeypatch.setattr(
-        mod, "list_caches_usage", lambda *a, **kw: [_usage("ccache-x", 9000), _usage("avd", 2000)]
-    )
-    seen: list[list[str]] = []
-    monkeypatch.setattr(
-        mod, "delete_caches", lambda repo, branch, keys: seen.append(keys) or (len(keys), 0)
-    )
     assert mod.main(["--prune", "--delete"]) == 0
-    assert seen == [["avd"]]
-    assert "deleted=1" in gh_output.read_text()
+    assert deleted == [[1]]
+    assert requested_limits == [mod._PRUNE_CACHE_LIMIT, mod._PRUNE_CACHE_LIMIT]

@@ -12,7 +12,7 @@ inputs:
   workflows:
     description: Comma-separated workflow names to download artifacts from
     required: false
-    default: Linux,Windows,MacOS,Android
+    default: Linux,Windows,MacOS,Android,iOS
   event:
     description: Optional workflow event name to filter runs by
     required: false

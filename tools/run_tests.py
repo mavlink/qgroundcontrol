@@ -26,8 +26,9 @@ from collections.abc import Sequence  # noqa: TC003
 from dataclasses import dataclass
 from pathlib import Path
 
-from common import Logger, find_repo_root
+from common.file_traversal import find_repo_root
 from common.gh_actions import write_github_output as _write_github_output
+from common.logging import Logger
 from common.platform import current_platform
 
 
@@ -205,7 +206,9 @@ class QtTestRunner:
 
         return result
 
-    def _build_command(self, binary: Path, test_args: list[str]) -> tuple[list[str], dict[str, str]]:
+    def _build_command(
+        self, binary: Path, test_args: list[str]
+    ) -> tuple[list[str], dict[str, str]]:
         """Build the command to run tests, handling virtual display if needed.
 
         Returns (command, extra_env) tuple.

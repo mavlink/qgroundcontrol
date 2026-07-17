@@ -15,15 +15,28 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh_warning, write_github_output
+from common.gh_actions import gh_error, gh_warning, write_github_output
 
 
-def find_first(build_dir: Path, pattern: str) -> Path | None:
+def find_first(build_dir: Path, pattern: str, *, recursive: bool = True) -> Path | None:
     """Return the first file under build_dir matching pattern, or None."""
-    for match in build_dir.rglob(pattern):
-        if match.is_file():
-            return match
-    return None
+    matches = find_matches(build_dir, pattern, recursive=recursive)
+    return matches[0] if matches else None
+
+
+def find_matches(build_dir: Path, pattern: str, *, recursive: bool = True) -> list[Path]:
+    """Return every matching file in deterministic path order."""
+    iterator = build_dir.rglob(pattern) if recursive else build_dir.glob(pattern)
+    return sorted(match for match in iterator if match.is_file())
+
+
+def find_unique(build_dir: Path, pattern: str, *, recursive: bool = True) -> Path | None:
+    """Return one matching file, raising when the pattern is ambiguous."""
+    matches = find_matches(build_dir, pattern, recursive=recursive)
+    if len(matches) > 1:
+        paths = ", ".join(str(path) for path in matches)
+        raise ValueError(f"Pattern {pattern!r} matched multiple artifacts: {paths}")
+    return matches[0] if matches else None
 
 
 def _parse_match(spec: str) -> tuple[str, str]:
@@ -45,37 +58,60 @@ def main() -> int:
         metavar="NAME=PATTERN",
         help="Output key + glob pattern; repeat for multiple artifacts",
     )
+    parser.add_argument(
+        "--top-level",
+        action="store_true",
+        help="Match only files directly inside --build-dir",
+    )
+    parser.add_argument(
+        "--required",
+        action="store_true",
+        help="Fail when the build directory or any requested artifact is missing",
+    )
     args = parser.parse_args()
 
     if not args.build_dir.is_dir():
-        gh_warning(f"Build directory does not exist: {args.build_dir}")
+        report = gh_error if args.required else gh_warning
+        report(f"Build directory does not exist: {args.build_dir}")
         if args.pattern is not None:
             write_github_output({"found": "false"})
         else:
             write_github_output({name: "" for name, _ in args.match})
-        return 0
+        return 1 if args.required else 0
 
     if args.pattern is not None:
-        artifact = find_first(args.build_dir, args.pattern)
+        try:
+            artifact = find_unique(args.build_dir, args.pattern, recursive=not args.top_level)
+        except ValueError as error:
+            gh_error(str(error))
+            return 1
         if artifact is None:
-            gh_warning(f"No artifact matching {args.pattern} found")
+            report = gh_error if args.required else gh_warning
+            report(f"No artifact matching {args.pattern} found")
             write_github_output({"found": "false"})
-            return 0
+            return 1 if args.required else 0
         print(f"Found artifact: {artifact}")
         write_github_output({"path": str(artifact), "found": "true"})
         return 0
 
     outputs: dict[str, str] = {}
+    missing = False
     for name, pattern in args.match:
-        artifact = find_first(args.build_dir, pattern)
+        try:
+            artifact = find_unique(args.build_dir, pattern, recursive=not args.top_level)
+        except ValueError as error:
+            gh_error(f"{name}: {error}")
+            return 1
         if artifact is None:
-            gh_warning(f"No artifact matching {pattern} found ({name})")
+            report = gh_error if args.required else gh_warning
+            report(f"No artifact matching {pattern} found ({name})")
             outputs[name] = ""
+            missing = True
         else:
             print(f"Found {name}: {artifact}")
             outputs[name] = str(artifact)
     write_github_output(outputs)
-    return 0
+    return 1 if args.required and missing else 0
 
 
 if __name__ == "__main__":

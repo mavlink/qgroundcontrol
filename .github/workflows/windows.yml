@@ -30,9 +30,6 @@ permissions:
   contents: read
   actions: read
 
-env:
-  AQT_SOURCE: 'git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95'
-
 jobs:
   changes:
     uses: ./.github/workflows/_detect-changes.yml
@@ -46,7 +43,6 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
 
-    # id-token/attestations scoped here: only the attestation upload step needs them.
     permissions:
       contents: read
       actions: read
@@ -56,13 +52,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: ['${{ inputs.build_type || ''Release'' }}']
+        build_type:
+          - ${{ inputs.build_type || 'Release' }}
         variant: [amd64, arm64, arm64-cross]
         include:
           - variant: amd64
-            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
+            runs_on: >-
+              ${{ github.repository_owner == 'mavlink' &&
+                  (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+                  format('runs-on={0}/{1}', github.run_id,
+                    vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
+                    'runner=windows-x64-builder') ||
+                  'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
+            preset: Windows
             package: QGroundControl-installer-AMD64
             gstreamer: true
 
@@ -70,13 +74,21 @@ jobs:
             runs_on: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
+            preset: Windows-arm64
             package: QGroundControl-installer-ARM64
             gstreamer: true
 
           - variant: arm64-cross
-            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
+            runs_on: >-
+              ${{ github.repository_owner == 'mavlink' &&
+                  (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+                  format('runs-on={0}/{1}', github.run_id,
+                    vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
+                    'runner=windows-x64-builder') ||
+                  'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
+            preset: Windows-arm64
             package: QGroundControl-installer-AMD64-ARM64
             gstreamer: false
 
@@ -85,6 +97,11 @@ jobs:
         shell: cmd
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
         uses: runs-on/action@v2
@@ -92,15 +109,11 @@ jobs:
           metrics: cpu,network,memory,disk,io
           show_costs: summary
 
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
       - name: Checkout repo
         uses: actions/checkout@v7
         with:
-          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          # NSIS package versions come from git describe and require reachable tags.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Install Visual Studio Build Tools
@@ -118,17 +131,18 @@ jobs:
         with:
           qt-host: ${{ matrix.host }}
           qt-arch: ${{ matrix.arch }}
-          aqt-source: ${{ env.AQT_SOURCE }}
           build-type: ${{ matrix.build_type }}
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
+        env:
+          QT_HOST_PATH: ${{ steps.build-setup.outputs.host_qt_root_dir }}
         with:
+          preset: ${{ matrix.build_type == 'Debug' && format('{0}-debug', matrix.preset) || matrix.preset }}
           build-dir: ${{ runner.temp }}/build
-          build-type: ${{ matrix.build_type }}
           extra-args: >-
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }}
-            ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
+            -DQGC_CPACK_GENERATOR=NSIS
 
       - name: Resolve GStreamer root
         id: gst-root
@@ -163,31 +177,61 @@ jobs:
           build-dir: ${{ runner.temp }}/build
 
       - name: Create Installer
-        uses: ./.github/actions/cmake-install
+        uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}\build
           build-type: ${{ matrix.build_type }}
+          target: qgc-package
+          parallel: 'false'
 
-      - name: Install and verify installer
+      - name: Install, upgrade, and verify installer
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
         shell: pwsh
+        env:
+          BUILD_DIR: ${{ runner.temp }}\build
+          OLD_INSTALL_DIR: ${{ runner.temp }}\qgc-install-old
+          INSTALL_DIR: ${{ runner.temp }}\qgc-install-test
+          EXPECT_GSTREAMER: ${{ matrix.gstreamer }}
         run: |
-          $buildDir = "${{ runner.temp }}\build"
+          $buildDir = $env:BUILD_DIR
           $installerExe = Get-ChildItem -Path $buildDir -Filter "*installer*.exe" | Select-Object -First 1
           if (-not $installerExe) {
             Write-Error "Installer .exe not found in $buildDir"
             exit 1
           }
-          $installDir = "${{ runner.temp }}\qgc-install-test"
-          Write-Host "Installing $($installerExe.Name) to $installDir"
+          $oldInstallDir = $env:OLD_INSTALL_DIR
+          $installDir = $env:INSTALL_DIR
+          Write-Host "Installing $($installerExe.Name) to $oldInstallDir"
+          Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$oldInstallDir" -Wait -NoNewWindow
+          $oldBinary = Join-Path $oldInstallDir "bin\QGroundControl.exe"
+          if (-not (Test-Path $oldBinary)) {
+            Write-Error "QGroundControl.exe not found at $oldBinary after initial install"
+            exit 1
+          }
+
+          $settingsDir = Join-Path $env:APPDATA "QGroundControl"
+          $settingsMarker = Join-Path $settingsDir "installer-upgrade-test.txt"
+          New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
+          Set-Content -Path $settingsMarker -Value "preserve during upgrade"
+
+          Write-Host "Upgrading into a different directory: $installDir"
           Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$installDir" -Wait -NoNewWindow
+          if (Test-Path $oldBinary) {
+            Write-Error "Previous installation was not removed from $oldInstallDir"
+            exit 1
+          }
+          if (-not (Test-Path $settingsMarker)) {
+            Write-Error "Application data was removed during upgrade"
+            exit 1
+          }
+
           $binary = Join-Path $installDir "bin\QGroundControl.exe"
           if (-not (Test-Path $binary)) {
-            Write-Error "QGroundControl.exe not found at $binary after install"
+            Write-Error "QGroundControl.exe not found at $binary after upgrade"
             Get-ChildItem -Path $installDir -Recurse | Select-Object FullName
             exit 1
           }
-          $expectGstreamer = "${{ matrix.gstreamer }}" -eq "true"
+          $expectGstreamer = $env:EXPECT_GSTREAMER -eq "true"
           $pluginDir = Join-Path $installDir "lib\gstreamer-1.0"
           if (-not $expectGstreamer) {
             Write-Host "GStreamer disabled for this build; skipping plugin verification"
@@ -202,6 +246,9 @@ jobs:
             Write-Error "GStreamer plugin directory not found: $pluginDir"
             exit 1
           }
+          "QGC_INSTALL_TEST_DIR=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "QGC_INSTALL_TEST_BINARY=$binary" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "QGC_INSTALL_TEST_SETTINGS=$settingsDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Remove build SDK from PATH for installed verification
         if: matrix.build_type == 'Release' && matrix.gstreamer
@@ -219,8 +266,28 @@ jobs:
         env:
           PATH: ${{ env.QGC_VERIFY_INSTALLED_PATH || env.PATH }}
         with:
-          binary-path: ${{ runner.temp }}\qgc-install-test\bin\QGroundControl.exe
+          binary-path: ${{ env.QGC_INSTALL_TEST_BINARY }}
           type: exe
+
+      - name: Uninstall and verify cleanup
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: pwsh
+        run: |
+          $uninstaller = Get-ChildItem -Path $env:QGC_INSTALL_TEST_DIR -Filter "*Uninstall*.exe" -Recurse | Select-Object -First 1
+          if (-not $uninstaller) {
+            Write-Error "Uninstaller not found in $env:QGC_INSTALL_TEST_DIR"
+            exit 1
+          }
+          # NSIS uninstallers self-copy to %TEMP% and exit immediately unless _?= keeps them in place, making -Wait meaningful
+          Start-Process -FilePath $uninstaller.FullName -ArgumentList "/S _?=$($uninstaller.DirectoryName)" -Wait -NoNewWindow
+          if (Test-Path $env:QGC_INSTALL_TEST_BINARY) {
+            Write-Error "Installed executable remains after uninstall"
+            exit 1
+          }
+          if (Test-Path $env:QGC_INSTALL_TEST_SETTINGS) {
+            Write-Error "Application data remains after a normal uninstall"
+            exit 1
+          }
 
       - name: Attest and Upload
         if: matrix.build_type == 'Release'
@@ -228,6 +295,7 @@ jobs:
         with:
           artifact-name: ${{ matrix.package }}.exe
           package-name: ${{ matrix.package }}
+          subject-name: ${{ matrix.package }}-windows
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

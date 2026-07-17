@@ -37,7 +37,14 @@ endif()
 # _qgc_register_gpu_path(NAME <n> SOURCES <files> [LIBS <libs>] DEFINE <macro> LOG <text>)
 # Adds sources/libs to QGCGStreamer, sets DEFINE=1, sets the QGC_GST_ANY_GPU_PATH global, logs status.
 function(_qgc_register_gpu_path)
-    cmake_parse_arguments(ARG "" "NAME;DEFINE;LOG" "SOURCES;LIBS" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "NAME;DEFINE;LOG" "SOURCES;LIBS")
+    set(missing_values ${ARG_KEYWORDS_MISSING_VALUES})
+    list(REMOVE_ITEM missing_values LIBS)
+    if(missing_values OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "_qgc_register_gpu_path: malformed arguments (missing='${missing_values}', "
+                            "unknown='${ARG_UNPARSED_ARGUMENTS}')"
+        )
+    endif()
     foreach(_req IN ITEMS NAME DEFINE LOG SOURCES)
         if(NOT ARG_${_req})
             message(FATAL_ERROR "_qgc_register_gpu_path: ${_req} is required")
@@ -83,9 +90,21 @@ if(LINUX AND _qgc_dmabuf_path_enabled)
     # gst/cuda/gstcuda.h transitively pulls <cuda.h>; resolve a CUDA include dir (full Toolkit, or gst-plugins-bad's
     # stub headers for compile-only builds without the SDK) before probing, else the header test fails to compile.
     set(_qgc_cuda_inc "")
+    set(_qgc_cuda_hints "/usr/local/cuda/include")
+    if(CUDAToolkit_INCLUDE_DIRS)
+        list(APPEND _qgc_cuda_hints ${CUDAToolkit_INCLUDE_DIRS})
+    endif()
+    if(DEFINED ENV{CUDA_PATH})
+        if(NOT "$ENV{CUDA_PATH}" STREQUAL "")
+            list(APPEND _qgc_cuda_hints "$ENV{CUDA_PATH}/include")
+        endif()
+    endif()
+    if(QGC_GST_CUDA_STUB_DIR)
+        list(APPEND _qgc_cuda_hints "${QGC_GST_CUDA_STUB_DIR}")
+    endif()
     # find_path cache var: a hit survives a CUDA toolkit swap until the cache is cleared.
     find_path(QGC_CUDA_INCLUDE_DIR NAMES cuda.h
-        HINTS ${CUDAToolkit_INCLUDE_DIRS} $ENV{CUDA_PATH}/include /usr/local/cuda/include ${QGC_GST_CUDA_STUB_DIR})
+        HINTS ${_qgc_cuda_hints})
     if(QGC_CUDA_INCLUDE_DIR)
         set(_qgc_cuda_inc "${QGC_CUDA_INCLUDE_DIR}")
     endif()

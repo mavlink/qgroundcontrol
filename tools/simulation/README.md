@@ -2,6 +2,9 @@
 
 Tools for testing QGroundControl without physical hardware.
 
+> See [tools/README.md](../README.md#simulation-tools) for the parent tooling index and
+> [test/README.md](../../test/README.md) for the test framework and test-selection guidance.
+
 ## Quick Start
 
 | Tool | Use Case | Setup |

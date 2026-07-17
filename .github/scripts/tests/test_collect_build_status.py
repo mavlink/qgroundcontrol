@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import collect_build_status as mod
+from _helpers import workflow_run
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -12,48 +13,13 @@ if TYPE_CHECKING:
     import pytest
 
 
-def _run(
-    name: str,
-    *,
-    created_at: str = "2026-02-24T00:00:00Z",
-    status: str = "completed",
-    conclusion: str = "success",
-    event: str = "pull_request",
-    html_url: str = "https://example.test/run",
-    run_id: int = 1,
-) -> dict[str, object]:
-    return {
-        "name": name,
-        "created_at": created_at,
-        "status": status,
-        "conclusion": conclusion,
-        "event": event,
-        "html_url": html_url,
-        "id": run_id,
-    }
-
-
-def test_latest_runs_by_name_filters_by_event_and_picks_latest() -> None:
-    runs = [
-        _run("Linux", created_at="2026-02-24T00:00:00Z"),
-        _run("Linux", created_at="2026-02-24T01:00:00Z", conclusion="failure"),
-        _run("Linux", created_at="2026-02-24T02:00:00Z", event="push"),
-        _run("Windows", created_at="2026-02-24T01:00:00Z"),
-    ]
-
-    latest = mod.select_latest_runs_by_name(runs, {"Linux", "Windows"}, event="pull_request")
-
-    assert latest["Linux"]["conclusion"] == "failure"
-    assert latest["Windows"]["status"] == "completed"
-
-
 def test_main_writes_expected_outputs(gh_output: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     runs = [
-        _run("Linux", html_url="https://example.test/linux"),
-        _run("Windows", html_url="https://example.test/windows"),
-        _run("MacOS", html_url="https://example.test/macos"),
-        _run("Android", html_url="https://example.test/android"),
-        _run("pre-commit", run_id=99, html_url="https://example.test/precommit"),
+        workflow_run("Linux", html_url="https://example.test/linux"),
+        workflow_run("Windows", html_url="https://example.test/windows"),
+        workflow_run("MacOS", html_url="https://example.test/macos"),
+        workflow_run("Android", html_url="https://example.test/android"),
+        workflow_run("pre-commit", 99, html_url="https://example.test/precommit"),
     ]
     monkeypatch.setattr(mod, "list_workflow_runs_for_sha", lambda repo, sha: runs)
 
@@ -77,3 +43,29 @@ def test_main_writes_expected_outputs(gh_output: Path, monkeypatch: pytest.Monke
     assert "precommit_status=Passed" in text
     assert "precommit_run_id=99" in text
     assert "| Linux | Passed | [View](https://example.test/linux) |" in text
+
+
+def test_timed_out_workflow_is_complete_but_failed(
+    gh_output: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runs = [workflow_run("Linux", conclusion="timed_out")]
+    monkeypatch.setattr(mod, "list_workflow_runs_for_sha", lambda repo, sha: runs)
+
+    assert (
+        mod.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--head-sha",
+                "abc123",
+                "--platform-workflows",
+                "Linux",
+                "--event",
+                "pull_request",
+            ]
+        )
+        == 0
+    )
+    text = gh_output.read_text(encoding="utf-8")
+    assert "all_complete=true" in text
+    assert "summary=Some builds failed." in text

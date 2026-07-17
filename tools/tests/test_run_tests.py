@@ -1,72 +1,54 @@
 #!/usr/bin/env python3
-"""Tests for tools/run_tests.py."""
+"""Contracts for locating and launching Qt test binaries."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
+from typing import TYPE_CHECKING
 
 from run_tests import QtTestRunner
 
+if TYPE_CHECKING:
+    import pytest
 
-class TestQtTestRunner:
-    def test_detect_platform_linux(self) -> None:
-        runner = QtTestRunner(Path("/tmp/build"))
-        with patch("run_tests.current_platform", return_value="linux"):
-            assert runner.detect_platform() == "linux"
 
-    def test_detect_platform_darwin(self) -> None:
-        runner = QtTestRunner(Path("/tmp/build"))
-        with patch("run_tests.current_platform", return_value="macos"):
-            assert runner.detect_platform() == "macos"
+def test_platform_detection_delegates_to_shared_helper(monkeypatch: pytest.MonkeyPatch) -> None:
+    runner = QtTestRunner(Path("/tmp/build"))
+    for platform, expected in (
+        ("linux", "linux"),
+        ("macos", "macos"),
+        ("windows", "windows"),
+        ("other", "linux"),
+    ):
+        monkeypatch.setattr("run_tests.current_platform", lambda platform=platform: platform)
+        assert runner.detect_platform() == expected
 
-    def test_detect_platform_windows(self) -> None:
-        runner = QtTestRunner(Path("/tmp/build"))
-        with patch("run_tests.current_platform", return_value="windows"):
-            assert runner.detect_platform() == "windows"
 
-    def test_find_binary_direct(self, tmp_path: Path) -> None:
-        build = tmp_path / "build"
-        build.mkdir()
-        binary = build / "QGroundControl"
-        binary.touch(mode=0o755)
-        runner = QtTestRunner(build)
-        with patch.object(runner, "detect_platform", return_value="linux"):
-            result = runner.find_binary()
-        assert result is not None
-        assert result.name == "QGroundControl"
+def test_binary_lookup_checks_direct_and_build_type_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    build = tmp_path / "build"
+    build.mkdir()
+    runner = QtTestRunner(build)
+    monkeypatch.setattr(runner, "detect_platform", lambda: "linux")
+    assert runner.find_binary() is None
 
-    def test_find_binary_in_build_type_dir(self, tmp_path: Path) -> None:
-        build = tmp_path / "build"
-        debug_dir = build / "Debug"
-        debug_dir.mkdir(parents=True)
-        binary = debug_dir / "QGroundControl"
-        binary.touch(mode=0o755)
-        runner = QtTestRunner(build)
-        with patch.object(runner, "detect_platform", return_value="linux"):
-            result = runner.find_binary("Debug")
-        assert result is not None
-        assert "Debug" in str(result)
+    direct = build / "QGroundControl"
+    direct.touch(mode=0o755)
+    assert runner.find_binary() == direct
+    direct.unlink()
 
-    def test_find_binary_not_found(self, tmp_path: Path) -> None:
-        build = tmp_path / "build"
-        build.mkdir()
-        runner = QtTestRunner(build)
-        with patch.object(runner, "detect_platform", return_value="linux"):
-            result = runner.find_binary()
-        assert result is None
+    debug = build / "Debug" / "QGroundControl"
+    debug.parent.mkdir()
+    debug.touch(mode=0o755)
+    assert runner.find_binary("Debug") == debug
 
-    def test_needs_virtual_display_headless(self) -> None:
-        runner = QtTestRunner(Path("/tmp/build"), headless=True)
-        assert runner.needs_virtual_display() is False
 
-    def test_needs_virtual_display_linux_no_display(self) -> None:
-        runner = QtTestRunner(Path("/tmp/build"))
-        with patch.object(runner, "detect_platform", return_value="linux"), \
-             patch.dict("os.environ", {}, clear=True):
-            assert runner.needs_virtual_display() is True
-
-    def test_needs_virtual_display_macos(self) -> None:
-        runner = QtTestRunner(Path("/tmp/build"))
-        with patch.object(runner, "detect_platform", return_value="macos"):
-            assert runner.needs_virtual_display() is False
+def test_virtual_display_is_linux_only_without_display(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert QtTestRunner(Path("/tmp/build"), headless=True).needs_virtual_display() is False
+    runner = QtTestRunner(Path("/tmp/build"))
+    monkeypatch.delenv("DISPLAY", raising=False)
+    monkeypatch.setattr(runner, "detect_platform", lambda: "linux")
+    assert runner.needs_virtual_display() is True
+    monkeypatch.setattr(runner, "detect_platform", lambda: "macos")
+    assert runner.needs_virtual_display() is False

@@ -1,59 +1,64 @@
 #!/usr/bin/env python3
-"""Tests for docker_helper.py."""
+"""Docker input validation and publication-policy contracts."""
 
 from __future__ import annotations
 
 import argparse
+import subprocess
 
 import pytest
+from _helpers import REPO_ROOT
 from docker_helper import cmd_validate, resolve_push_target
 
 
-class TestValidate:
-    def test_valid_linux_release(self) -> None:
-        args = argparse.Namespace(target="linux", build_type="Release")
-        cmd_validate(args)
-
-    def test_valid_android_debug(self) -> None:
-        args = argparse.Namespace(target="android", build_type="Debug")
-        cmd_validate(args)
-
-    def test_valid_linux_cross(self) -> None:
-        args = argparse.Namespace(target="linux-cross", build_type="Release")
-        cmd_validate(args)
-
-    def test_invalid_target(self) -> None:
-        args = argparse.Namespace(target="bogus", build_type="Release")
+def test_build_inputs_accept_supported_pairs_and_reject_invalid_values() -> None:
+    for target, build_type in (
+        ("linux", "Release"),
+        ("android", "Debug"),
+        ("linux-cross", "Release"),
+    ):
+        cmd_validate(argparse.Namespace(target=target, build_type=build_type))
+    for target, build_type in (("bogus", "Release"), ("linux", "BadType")):
         with pytest.raises(SystemExit):
-            cmd_validate(args)
-
-    def test_invalid_build_type(self) -> None:
-        args = argparse.Namespace(target="linux", build_type="BadType")
-        with pytest.raises(SystemExit):
-            cmd_validate(args)
+            cmd_validate(argparse.Namespace(target=target, build_type=build_type))
 
 
-class TestResolvePushTarget:
-    UPSTREAM = "mavlink/qgroundcontrol"
-
-    def test_upstream_release_tag_pushes_dockerhub(self) -> None:
-        assert resolve_push_target("push", self.UPSTREAM, "refs/tags/v5.0.0") == "dronecode/qgroundcontrol"
-
-    def test_upstream_master_pushes_ghcr_not_dockerhub(self) -> None:
-        assert resolve_push_target("push", self.UPSTREAM, "refs/heads/master") == "ghcr.io/mavlink/qgroundcontrol"
-
-    def test_upstream_stable_pushes_ghcr_not_dockerhub(self) -> None:
-        assert resolve_push_target("push", self.UPSTREAM, "refs/heads/Stable_V4.4") == "ghcr.io/mavlink/qgroundcontrol"
-
-    def test_upstream_feature_branch_no_push(self) -> None:
-        assert resolve_push_target("push", self.UPSTREAM, "refs/heads/feature-x") == ""
-
-    @pytest.mark.parametrize("ref", ["refs/tags/v5.0.0", "refs/heads/master", "refs/heads/Stable_V4.4"])
-    def test_fork_never_pushes(self, ref: str) -> None:
+def test_push_targets_are_limited_to_upstream_pushes() -> None:
+    upstream = "mavlink/qgroundcontrol"
+    expected = {
+        "refs/tags/v5.0.0": "dronecode/qgroundcontrol",
+        "refs/heads/master": "ghcr.io/mavlink/qgroundcontrol",
+        "refs/heads/Stable_V4.4": "ghcr.io/mavlink/qgroundcontrol",
+        "refs/heads/feature-x": "",
+    }
+    for ref, target in expected.items():
+        assert resolve_push_target("push", upstream, ref) == target
         assert resolve_push_target("push", "someuser/qgroundcontrol", ref) == ""
+    assert resolve_push_target("pull_request", upstream, "refs/tags/v5.0.0") == ""
+    assert resolve_push_target("workflow_dispatch", upstream, "refs/heads/master") == ""
 
-    def test_pull_request_never_pushes(self) -> None:
-        assert resolve_push_target("pull_request", self.UPSTREAM, "refs/tags/v5.0.0") == ""
 
-    def test_workflow_dispatch_never_pushes(self) -> None:
-        assert resolve_push_target("workflow_dispatch", self.UPSTREAM, "refs/heads/master") == ""
+def test_apt_bootstrap_installs_ca_bundle_before_enabling_https() -> None:
+    setup = (REPO_ROOT / "deploy/docker/lib/setup-base.sh").read_text(encoding="utf-8")
+
+    assert ". /usr/local/lib/qgc/retry.sh" in setup
+    assert 'APT::Update::Error-Mode "any";' in setup
+    assert setup.count("retry apt-get update") == 2
+    ca_install = "retry apt-get install -y --no-install-recommends ca-certificates"
+    assert ca_install in setup
+    assert "https://archive.ubuntu.com/ubuntu" in setup
+    assert "https://security.ubuntu.com/ubuntu" in setup
+    assert setup.index(ca_install) < setup.index(
+        "'s|http://archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g'"
+    )
+    assert "mirror://mirrors.ubuntu.com" not in setup
+
+
+def test_retry_helper_retries_and_propagates_final_failure() -> None:
+    retry_helper = REPO_ROOT / "deploy/docker/lib/retry.sh"
+    command = f"sleep() {{ :; }}; . '{retry_helper}'; retry false"
+
+    result = subprocess.run(["sh", "-c", command], check=False, capture_output=True, text=True)
+
+    assert result.returncode != 0
+    assert result.stderr.count("retrying") == 2

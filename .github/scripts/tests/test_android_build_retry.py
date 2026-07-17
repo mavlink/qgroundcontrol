@@ -1,4 +1,4 @@
-"""Tests for android_build_retry.py."""
+"""Android deployment-settings truncation retry contracts."""
 
 from __future__ import annotations
 
@@ -9,91 +9,109 @@ import android_build_retry as mod
 if TYPE_CHECKING:
     from pathlib import Path
 
+    import pytest
 
-def test_detect_truncation_matches_qt_error(tmp_path: Path) -> None:
+
+_TRUNCATION = (
+    "Invalid json file: /tmp/android-QGroundControl-deployment-settings.json. "
+    "Reason: unterminated object\n"
+)
+_REPOSITORY_FAILURE = (
+    "Could not GET "
+    "'https://repo.maven.apache.org/maven2/example/example.pom'. "
+    "Received status code 403 from server: Forbidden\n"
+)
+
+
+def test_truncation_detection_requires_complete_signature_and_tolerates_binary_prefix(
+    tmp_path: Path,
+) -> None:
     log = tmp_path / "build.log"
-    log.write_text(
-        "[ 92%] linking ...\n"
-        "Invalid json file: /tmp/build/android-QGroundControl-deployment-settings.json. "
-        "Reason: unterminated object\n"
-        "[ 93%] more output\n"
-    )
-    assert mod.detect_truncation(log) is True
+    for content, expected in (
+        (_TRUNCATION.encode(), True),
+        (b"ninja error\nReason: unterminated object\n", False),
+        (b"\xff\xfe garbage\n" + _TRUNCATION.encode(), True),
+    ):
+        log.write_bytes(content)
+        assert mod.detect_truncation(log) is expected
 
 
-def test_detect_truncation_ignores_other_errors(tmp_path: Path) -> None:
+def test_settings_cleanup_handles_present_and_missing_files(tmp_path: Path) -> None:
+    settings = tmp_path / "settings.json"
+    settings.write_text("{ truncated")
+    mod.clean_settings_json(settings)
+    assert not settings.exists()
+    mod.clean_settings_json(settings)
+
+
+def test_gradle_repository_failure_detection_is_narrow(tmp_path: Path) -> None:
     log = tmp_path / "build.log"
-    log.write_text(
-        "ninja: error: '/tmp/foo': No such file\n"
-        "Reason: unterminated object\n"  # right-half-only; missing prefix
-    )
-    assert mod.detect_truncation(log) is False
+    for content, expected in (
+        (_REPOSITORY_FAILURE, True),
+        (
+            "Could not GET 'https://dl.google.com/android/example.pom'. "
+            "Received status code 503 from server\n",
+            True,
+        ),
+        (
+            "Could not GET 'https://repo.maven.apache.org/example.pom'. "
+            "Received status code 404 from server\n",
+            False,
+        ),
+        ("Received status code 403 from an unrelated service\n", False),
+    ):
+        log.write_text(content)
+        assert mod.detect_gradle_repository_failure(log) is expected
 
 
-def test_detect_truncation_handles_non_utf8_bytes(tmp_path: Path) -> None:
-    log = tmp_path / "build.log"
-    log.write_bytes(
-        b"\xff\xfe garbage prefix\n"
-        b"Invalid json file: dir/android-QGroundControl-deployment-settings.json. "
-        b"Reason: unterminated object\n"
-    )
-    assert mod.detect_truncation(log) is True
-
-
-def test_clean_settings_json_removes_file(tmp_path: Path) -> None:
-    path = tmp_path / "settings.json"
-    path.write_text("{ truncated")
-    mod.clean_settings_json(path)
-    assert not path.exists()
-
-
-def test_clean_settings_json_noop_when_missing(tmp_path: Path) -> None:
-    mod.clean_settings_json(tmp_path / "absent.json")
-
-
-def test_main_missing_log_returns_error(tmp_path: Path, capsys) -> None:
-    rc = mod.main(["--build-dir", str(tmp_path), "--build-type", "Debug"])
-    assert rc == 1
+def test_main_rejects_missing_or_unrelated_logs(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    args = ["--build-dir", str(tmp_path), "--build-type", "Debug"]
+    assert mod.main(args) == 1
     assert "is missing" in capsys.readouterr().out
-
-
-def test_main_non_retriable_returns_error(tmp_path: Path, capsys) -> None:
     (tmp_path / "qgc-build.log").write_text("ninja: error: unrelated\n")
-    rc = mod.main(["--build-dir", str(tmp_path), "--build-type", "Debug"])
-    assert rc == 1
+    assert mod.main(args) == 1
     assert "non-retriable" in capsys.readouterr().out
 
 
-def test_main_truncation_invokes_retry(tmp_path: Path, monkeypatch) -> None:
-    (tmp_path / "qgc-build.log").write_text(
-        "Invalid json file: /tmp/android-QGroundControl-deployment-settings.json. "
-        "Reason: unterminated object\n"
-    )
+def test_main_cleans_settings_invokes_retry_and_propagates_status(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "qgc-build.log").write_text(_TRUNCATION)
     settings = tmp_path / "android-QGroundControl-deployment-settings.json"
     settings.write_text("{ truncated")
+    calls: list[tuple[Path, str, Path]] = []
 
-    captured: dict[str, object] = {}
+    def retry(build_dir: Path, build_type: str, retry_log: Path) -> int:
+        calls.append((build_dir, build_type, retry_log))
+        return 2
 
-    def fake_retry(build_dir: Path, build_type: str, retry_log: Path) -> int:
-        captured["build_dir"] = build_dir
-        captured["build_type"] = build_type
-        captured["retry_log"] = retry_log
-        return 0
-
-    monkeypatch.setattr(mod, "retry_build", fake_retry)
-    rc = mod.main(["--build-dir", str(tmp_path), "--build-type", "Release"])
-    assert rc == 0
-    assert captured["build_dir"] == tmp_path
-    assert captured["build_type"] == "Release"
-    assert captured["retry_log"] == tmp_path / "qgc-build-retry.log"
+    monkeypatch.setattr(mod, "retry_build", retry)
+    assert mod.main(["--build-dir", str(tmp_path), "--build-type", "Release"]) == 2
+    assert calls == [(tmp_path, "Release", tmp_path / "qgc-build-retry.log")]
     assert not settings.exists()
 
 
-def test_main_propagates_retry_exit_code(tmp_path: Path, monkeypatch) -> None:
-    (tmp_path / "qgc-build.log").write_text(
-        "Invalid json file: x/android-QGroundControl-deployment-settings.json. "
-        "Reason: unterminated object\n"
+def test_main_retries_transient_gradle_repository_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "qgc-build.log").write_text(_REPOSITORY_FAILURE)
+    settings = tmp_path / "android-QGroundControl-deployment-settings.json"
+    settings.write_text("valid settings must not be removed")
+    calls: list[tuple[Path, str, Path]] = []
+    delays: list[int] = []
+
+    monkeypatch.setattr(
+        mod,
+        "retry_build",
+        lambda build_dir, build_type, retry_log: (
+            calls.append((build_dir, build_type, retry_log)) or 0
+        ),
     )
-    monkeypatch.setattr(mod, "retry_build", lambda *a, **kw: 2)
-    rc = mod.main(["--build-dir", str(tmp_path), "--build-type", "Debug"])
-    assert rc == 2
+    monkeypatch.setattr(mod.time, "sleep", delays.append)
+
+    assert mod.main(["--build-dir", str(tmp_path), "--build-type", "Release"]) == 0
+    assert calls == [(tmp_path, "Release", tmp_path / "qgc-build-retry.log")]
+    assert delays == [mod._REPOSITORY_RETRY_DELAY_SECONDS]
+    assert settings.exists()

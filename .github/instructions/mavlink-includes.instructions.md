@@ -6,11 +6,12 @@ description: "When performing a code review on C++ headers, enforce the MAVLink 
 # MAVLink Include Rules for Headers
 
 C++ header files must use the **lightest possible** MAVLink include. Heavy includes in headers slow Qt moc parsing dramatically (~2.5s vs ~8ms per header).
+For general header layout and include order, see [CODING_STYLE.md](../../CODING_STYLE.md#headers).
 
 ## Include Hierarchy (lightest to heaviest)
 
 | Header | Provides | Preprocessed Lines |
-|--------|----------|--------------------|
+| -------- | ---------- | -------------------- |
 | `MAVLinkEnums.h` | All 253 MAVLink enum typedefs (MAV_CMD, MAV_TYPE, MAV_RESULT, etc.) | ~5,500 |
 | `MAVLinkMessageType.h` | `mavlink_message_t`, `mavlink_channel_t`, base types | ~2,700 |
 | `QGCMAVLinkTypes.h` | `FirmwareClass_t`, `VehicleClass_t`, `maxRcChannels` | ~50 |

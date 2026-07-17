@@ -64,9 +64,20 @@ jobs:
     name: ${{ inputs.platform }} ${{ inputs.arch }}${{ inputs.simulator && ' (Simulator)' || '' }}
     runs-on: >-
       ${{
+        inputs.platform == 'linux' && github.repository_owner == 'mavlink' &&
+          format('runs-on={0}/runner={1}', github.run_id,
+            inputs.arch == 'aarch64' && 'linux-arm64-builder' ||
+            (vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder')) ||
         inputs.platform == 'linux' && (inputs.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04') ||
         inputs.platform == 'macos' && 'macos-15' ||
+        inputs.platform == 'windows' && github.repository_owner == 'mavlink' && inputs.arch != 'arm64' &&
+          format('runs-on={0}/{1}', github.run_id,
+            vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
+            'runner=windows-x64-builder') ||
         inputs.platform == 'windows' && (inputs.arch == 'arm64' && 'windows-11-arm' || 'windows-2022') ||
+        inputs.platform == 'android' && github.repository_owner == 'mavlink' &&
+          format('runs-on={0}/runner={1}', github.run_id,
+            vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder') ||
         inputs.platform == 'android' && 'ubuntu-24.04' ||
         inputs.platform == 'ios' && 'macos-15' ||
         'ubuntu-24.04'
@@ -78,6 +89,13 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (inputs.platform == 'linux' || inputs.platform == 'android' || (inputs.platform == 'windows' && inputs.arch != 'arm64'))
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
 
       - name: Checkout
         uses: actions/checkout@v7
@@ -143,7 +161,19 @@ jobs:
             python3-pip git autoconf automake libtool \
             pkg-config gettext bison flex cmake ninja-build
 
-      # Android/iOS GStreamer builds don't link against host Qt — skip build-setup there. The desktop platforms run through build-setup so we get qt-install + setup-python + platform compiler toolchain in one shot.
+      - name: Install Visual Studio Build Tools (RunsOn)
+        if: >-
+          inputs.platform == 'windows' &&
+          github.repository_owner == 'mavlink' &&
+          inputs.arch != 'arm64'
+        uses: ./.github/actions/install-dependencies
+        with:
+          gstreamer: 'false'
+          msvc: 'true'
+          nsis: 'false'
+
+      # Android/iOS GStreamer builds don't link against host Qt, so skip build-setup there.
+      # Desktop platforms use it for Qt, Python, and compiler setup.
       - name: Build Setup
         if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
         uses: ./.github/actions/build-setup

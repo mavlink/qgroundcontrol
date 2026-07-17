@@ -6,6 +6,8 @@
 # to the same single-merged-archive consumption model
 # (_qgc_create_xcframework_targets) — discovery just locates the binary + Headers.
 
+include_guard(GLOBAL)
+
 macro(_qgc_discover_ios_sdk)
     if(NOT CMAKE_HOST_APPLE)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
@@ -243,34 +245,39 @@ function(_qgc_download_ios_ca_bundle)
         set(_ca_dir "${CMAKE_BINARY_DIR}/_deps/gstreamer-ios-ca")
     endif()
 
+    set(_ca_url "")
     set(_ca_hash_arg "")
     if(QGC_BUILD_CONFIG_CONTENT)
+        string(JSON _ca_url ERROR_VARIABLE _ca_url_err
+            GET "${QGC_BUILD_CONFIG_CONTENT}" "gstreamer" "ca_bundle_url")
         string(JSON _ca_sha256 ERROR_VARIABLE _ca_err
             GET "${QGC_BUILD_CONFIG_CONTENT}" "gstreamer" "ca_bundle_sha256")
         if(_ca_sha256 AND NOT _ca_err)
             set(_ca_hash_arg EXPECTED_HASH "SHA256=${_ca_sha256}")
         endif()
     endif()
-    if(NOT _ca_hash_arg)
+    if(NOT _ca_url OR _ca_url_err OR NOT _ca_hash_arg)
         # This bundle becomes the app's TLS trust root; an unpinned fetch lets a
         # MITM inject one. Pinning is default — opt out via QGC_GST_ALLOW_UNVERIFIED_CA.
         if(NOT QGC_GST_ALLOW_UNVERIFIED_CA)
             message(FATAL_ERROR
-                "GStreamer: gstreamer.ca_bundle_sha256 is missing from build-config.json, so the "
-                "iOS CA bundle (the app's TLS trust root) cannot be verified. Pin it from "
-                "https://curl.se/ca/cacert.pem.sha256 and commit it to build-config.json. "
+                "GStreamer: gstreamer.ca_bundle_url or gstreamer.ca_bundle_sha256 is missing from "
+                "build-config.json, so the iOS CA bundle (the app's TLS trust root) cannot be "
+                "verified. Pin a dated snapshot and its checksum from https://curl.se/docs/caextract.html. "
                 "To fetch the bundle UNVERIFIED anyway (NOT for CI/release builds), set "
                 "-DQGC_GST_ALLOW_UNVERIFIED_CA=ON.")
         endif()
-        message(WARNING "GStreamer: gstreamer.ca_bundle_sha256 missing from build-config.json and "
-            "QGC_GST_ALLOW_UNVERIFIED_CA is set; iOS CA bundle will be fetched UNVERIFIED. "
-            "Pin it from https://curl.se/ca/cacert.pem.sha256")
+        set(_ca_url "https://curl.se/ca/cacert.pem")
+        set(_ca_hash_arg "")
+        message(WARNING "GStreamer: CA bundle URL or checksum missing from build-config.json and "
+            "QGC_GST_ALLOW_UNVERIFIED_CA is set; the mutable iOS CA bundle will be fetched "
+            "UNVERIFIED. Pin a dated snapshot from https://curl.se/docs/caextract.html")
     endif()
 
     qgc_resilient_download(
         FILENAME        ca-certificates.crt
         DESTINATION_DIR "${_ca_dir}"
-        URLS            "https://curl.se/ca/cacert.pem"
+        URLS            "${_ca_url}"
         RESULT_VAR      _ca_path
         LOG_TAG         "iOS CA bundle"
         FAILURE_HINT    "Network is required at first iOS configure to fetch the Mozilla CA bundle from curl.se."
@@ -544,6 +551,11 @@ function(_qgc_create_xcframework_targets)
         )
         add_library(GStreamerMobileXcfw SHARED)
         target_sources(GStreamerMobileXcfw PRIVATE "${_xcfw_static_shim}")
+        if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator"
+                AND GStreamer_VERSION VERSION_GREATER_EQUAL "1.28.0"
+                AND GStreamer_VERSION VERSION_LESS "1.29.0")
+            target_sources(GStreamerMobileXcfw PRIVATE "${_qgc_gst_src}/IOSPipe2Compat.c")
+        endif()
         set_source_files_properties("${_xcfw_static_shim}" PROPERTIES GENERATED TRUE)
         target_link_libraries(GStreamerMobileXcfw PRIVATE GStreamer::GStreamer)
         set_target_properties(GStreamerMobileXcfw PROPERTIES

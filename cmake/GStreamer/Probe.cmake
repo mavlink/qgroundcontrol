@@ -22,7 +22,12 @@ include(CMakePushCheckState)
 # VAR name). The cache is sticky: a result from a stale toolchain/SDK survives
 # until the CMake cache is cleared — clear it after changing the GStreamer SDK.
 function(qgc_check_gst_header)
-    cmake_parse_arguments(ARG "" "VAR;HEADER;SYMBOL;TARGET" "INCLUDES" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "VAR;HEADER;SYMBOL;TARGET" "INCLUDES")
+    if(ARG_KEYWORDS_MISSING_VALUES OR ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "qgc_check_gst_header: malformed arguments (missing='${ARG_KEYWORDS_MISSING_VALUES}', "
+            "unknown='${ARG_UNPARSED_ARGUMENTS}')")
+    endif()
     foreach(_req IN ITEMS VAR HEADER SYMBOL)
         if(NOT ARG_${_req})
             message(FATAL_ERROR "qgc_check_gst_header: ${_req} is required")

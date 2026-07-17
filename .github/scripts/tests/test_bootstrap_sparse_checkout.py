@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Drift guard: every workflow or composite action that sparse-checks out the
 bootstrap shim must also include every `common.*` module that the scripts it
 checks out import transitively.
@@ -182,6 +181,7 @@ def test_bootstrap_sparse_checkout_matches_canonical() -> None:
 
 
 BOOTSTRAP_ACTION_YML = ACTIONS_DIR / "build-results-bootstrap" / "action.yml"
+DOCKER_WORKFLOW_YML = WORKFLOWS_DIR / "docker.yml"
 
 EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
     {
@@ -189,7 +189,6 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
         ".github/actions/collect-artifact-sizes",
         ".github/actions/replace-cache-entry",
         ".github/actions/setup-python",
-        ".github/scripts/check_baseline_ready.py",
         ".github/scripts/ci_bootstrap.py",
         "tools/_bootstrap.py",
         ".github/scripts/collect_artifact_sizes.py",
@@ -197,9 +196,10 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
         ".github/scripts/download_artifacts.py",
         ".github/scripts/generate_build_results_comment.py",
         ".github/scripts/templates/build_results.md.j2",
-        ".github/scripts/xml_utils.py",
         "tools/common/__init__.py",
+        "tools/common/artifact_metadata.py",
         "tools/common/build_config.py",
+        "tools/common/cobertura.py",
         "tools/common/file_traversal.py",
         "tools/common/format.py",
         "tools/common/gh_actions.py",
@@ -207,6 +207,7 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
         "tools/common/io.py",
         "tools/common/markdown.py",
         "tools/common/platform.py",
+        "tools/common/xml.py",
         "tools/pyproject.toml",
         "tools/uv.lock",
         "tools/setup/install_python.py",
@@ -240,3 +241,15 @@ def test_build_results_bootstrap_sparse_checkout_matches_expected() -> None:
         )
     if msg_parts:
         pytest.fail(" / ".join(msg_parts))
+
+
+def test_docker_planner_sparse_checkout_includes_variant_loader() -> None:
+    if not DOCKER_WORKFLOW_YML.exists():
+        pytest.skip("docker.yml not in checkout")
+
+    doc = yaml.safe_load(DOCKER_WORKFLOW_YML.read_text(encoding="utf-8"))
+    blocks = dict(_iter_checkout_steps(doc, str(DOCKER_WORKFLOW_YML.relative_to(REPO_ROOT))))
+    planner_entries = next(
+        entries for context, entries in blocks.items() if "plan-builds" in context
+    )
+    assert "deploy/docker/_variants.py" in planner_entries

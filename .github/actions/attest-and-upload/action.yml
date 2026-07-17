@@ -47,8 +47,12 @@ inputs:
   artifact-source-path:
     description: >-
       Override for the source path of the artifact. Defaults to
-      <runner.temp>/build/<artifact-name>. Use this for multi-config
-      generators (e.g. iOS Ninja Multi-Config writes to build/Release/<bundle>).
+      <runner.temp>/build/<artifact-name>. Use this when an artifact lands in a
+      configuration-specific directory (e.g. iOS writes to build/Release/<bundle>).
+    required: false
+    default: ''
+  additional-artifact-paths:
+    description: 'Optional newline-separated paths to include in the GitHub artifact'
     required: false
     default: ''
 
@@ -73,24 +77,53 @@ runs:
         subject-name: ${{ inputs.subject-name || inputs.package-name }}
         scan-path: ${{ inputs.scan-path || format('{0}/build', runner.temp) }}
 
+    - name: Verify or create SHA-256 checksum
+      id: checksum
+      shell: bash
+      env:
+        SOURCE_PATH: ${{ steps.src.outputs.path }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/attest_helper.py" checksum \
+          --source-path "${SOURCE_PATH}"
+
     - name: Save artifact
       uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.package-name }}
-        path: ${{ steps.src.outputs.path }}
+        path: |
+          ${{ steps.src.outputs.path }}
+          ${{ steps.checksum.outputs.path }}
+          ${{ inputs.additional-artifact-paths }}
         retention-days: ${{ inputs.retention-days != '' && inputs.retention-days || (github.event_name == 'pull_request' && '7' || '30') }}
         compression-level: ${{ inputs.compression-level }}
 
     - name: Upload to AWS
       if: >-
         fromJSON(inputs.upload-aws) &&
-        github.event_name == 'push' &&
+        (github.event_name == 'push' ||
+         (github.event_name == 'workflow_dispatch' && github.ref_type == 'tag')) &&
         github.repository_owner == 'mavlink' &&
         (inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != ''))
       uses: ./.github/actions/aws-upload
       with:
         artifact-name: ${{ inputs.artifact-name }}
         artifact-path: ${{ steps.src.outputs.path }}
+        aws-role-arn: ${{ inputs.aws-role-arn }}
+        aws-key-id: ${{ inputs.aws-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-distribution-id: ${{ inputs.aws-distribution-id }}
+
+    - name: Upload checksum to AWS
+      if: >-
+        fromJSON(inputs.upload-aws) &&
+        (github.event_name == 'push' ||
+         (github.event_name == 'workflow_dispatch' && github.ref_type == 'tag')) &&
+        github.repository_owner == 'mavlink' &&
+        (inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != ''))
+      uses: ./.github/actions/aws-upload
+      with:
+        artifact-name: ${{ inputs.artifact-name }}.sha256
+        artifact-path: ${{ steps.checksum.outputs.path }}
         aws-role-arn: ${{ inputs.aws-role-arn }}
         aws-key-id: ${{ inputs.aws-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}

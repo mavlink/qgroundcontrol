@@ -348,9 +348,10 @@ void MavCommandQueue::_sendFromList(int index)
     if (++_list[index].tryCount > commandEntry.maxTries) {
         QString logMsg = QStringLiteral("Giving up sending command after max retries: %1").arg(rawCommandName);
 
-        // For REQUEST_MESSAGE commands, also log which message was being requested
-        if (commandEntry.command == MAV_CMD_REQUEST_MESSAGE) {
-            int requestedMsgId = static_cast<int>(commandEntry.rgParam1);
+        // For commands whose first parameter is a message ID, also log that message.
+        if ((commandEntry.command == MAV_CMD_REQUEST_MESSAGE) ||
+            (commandEntry.command == MAV_CMD_SET_MESSAGE_INTERVAL)) {
+            const int requestedMsgId = static_cast<int>(commandEntry.rgParam1);
             const mavlink_message_info_t *info = mavlink_get_message_info_by_id(requestedMsgId);
             logMsg += QStringLiteral(" requesting: %1").arg(info ? info->name : QString::number(requestedMsgId));
         }

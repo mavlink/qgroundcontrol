@@ -1,4 +1,4 @@
-"""Tests for collect_artifact_sizes.py."""
+"""Contract tests for artifact-size collection."""
 
 from __future__ import annotations
 
@@ -6,369 +6,167 @@ import json
 from typing import TYPE_CHECKING
 
 import collect_artifact_sizes as mod
+import pytest
+from _helpers import workflow_run
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-def _run(
-    name: str,
-    *,
-    run_id: int,
-    created_at: str = "2026-02-24T00:00:00Z",
-    status: str = "completed",
-    conclusion: str = "success",
-    event: str = "pull_request",
-) -> dict[str, object]:
-    return {
-        "id": run_id,
-        "name": name,
-        "created_at": created_at,
-        "status": status,
-        "conclusion": conclusion,
-        "event": event,
-    }
-
-
-def test_latest_successful_runs_picks_latest_success_per_platform() -> None:
-    platforms = ["Linux", "Windows"]
-    runs = [
-        _run("Linux", run_id=1, created_at="2026-02-24T00:00:00Z"),
-        _run("Linux", run_id=2, created_at="2026-02-24T01:00:00Z"),
-        _run("Windows", run_id=3, conclusion="failure"),
-        _run("Windows", run_id=4, conclusion="success"),
-        _run("Other", run_id=5),
-    ]
-
-    latest = mod.select_latest_runs_by_name(
-        runs, set(platforms), status="completed", conclusion="success"
-    )
-    assert latest["Linux"]["id"] == 2
-    assert latest["Windows"]["id"] == 4
-
-
-def test_latest_successful_runs_handles_iso8601_offsets() -> None:
-    platforms = ["Linux"]
-    runs = [
-        _run("Linux", run_id=1, created_at="2026-02-24T01:30:00+01:00"),
-        _run("Linux", run_id=2, created_at="2026-02-24T01:00:00Z"),
-    ]
-
-    latest = mod.select_latest_runs_by_name(
-        runs, set(platforms), status="completed", conclusion="success"
-    )
-    assert latest["Linux"]["id"] == 2
-
-
-def test_latest_successful_runs_filters_by_event() -> None:
-    platforms = ["Linux"]
-    runs = [
-        _run("Linux", run_id=1, created_at="2026-02-24T00:00:00Z", event="pull_request"),
-        _run("Linux", run_id=2, created_at="2026-02-24T01:00:00Z", event="push"),
-    ]
-
-    latest = mod.select_latest_runs_by_name(
-        runs, set(platforms), event="pull_request", status="completed", conclusion="success"
-    )
-    assert latest["Linux"]["id"] == 1
-
-
-def test_collect_artifacts_filters_non_product_artifacts() -> None:
-    latest = {"Linux": {"id": 11}}
-
-    def fake_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        assert repo == "owner/repo"
-        assert run_id == 11
-        return [
-            {"name": "QGroundControl-x86_64", "size_in_bytes": 1024 * 1024},
-            {"name": "test-results-linux", "size_in_bytes": 100},
-            {"name": "test-duration-linux_gcc_64", "size_in_bytes": 100},
-            {"name": "coverage-report", "size_in_bytes": 100},
-            {"name": "size-metrics", "size_in_bytes": 100},
-            {"name": "emulator-diagnostics-linux-emulator-1", "size_in_bytes": 100},
-        ]
-
-    original = mod.list_run_artifacts
-    mod.list_run_artifacts = fake_list_run_artifacts  # type: ignore[assignment]
-    try:
-        artifacts = mod.collect_artifacts("owner/repo", latest, ["Linux"])
-    finally:
-        mod.list_run_artifacts = original  # type: ignore[assignment]
-
-    assert artifacts == [
-        {
-            "name": "QGroundControl-x86_64",
-            "size_bytes": 1024 * 1024,
-            "size_human": "1.00 MB",
-        },
+def _main_args(output: Path, *extra: str, platforms: str = "Linux,Windows") -> list[str]:
+    return [
+        "--repo",
+        "owner/repo",
+        "--head-sha",
+        "abc123",
+        "--platform-workflows",
+        platforms,
+        "--output-file",
+        str(output),
+        *extra,
     ]
 
 
-def test_collect_artifacts_keeps_real_extension() -> None:
-    latest = {"Android": {"id": 21}}
-
-    def fake_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        assert repo == "owner/repo"
-        assert run_id == 21
-        return [{"name": "QGroundControl.apk", "size_in_bytes": 2048}]
-
-    original = mod.list_run_artifacts
-    mod.list_run_artifacts = fake_list_run_artifacts  # type: ignore[assignment]
-    try:
-        artifacts = mod.collect_artifacts("owner/repo", latest, ["Android"])
-    finally:
-        mod.list_run_artifacts = original  # type: ignore[assignment]
-
-    assert artifacts == [
-        {
-            "name": "QGroundControl.apk",
-            "size_bytes": 2048,
-            "size_human": "0.00 MB",
-        },
-    ]
-
-
-def test_collect_artifacts_excludes_unknown_non_product_names() -> None:
-    latest = {"Linux": {"id": 31}}
-
-    def fake_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        assert repo == "owner/repo"
-        assert run_id == 31
-        return [
-            {"name": "random-tool-output", "size_in_bytes": 4096},
-            {"name": "QGroundControl-aarch64", "size_in_bytes": 8192},
-        ]
-
-    original = mod.list_run_artifacts
-    mod.list_run_artifacts = fake_list_run_artifacts  # type: ignore[assignment]
-    try:
-        artifacts = mod.collect_artifacts("owner/repo", latest, ["Linux"])
-    finally:
-        mod.list_run_artifacts = original  # type: ignore[assignment]
-
-    assert artifacts == [
-        {
-            "name": "QGroundControl-aarch64",
-            "size_bytes": 8192,
-            "size_human": "0.01 MB",
-        }
-    ]
-
-
-def test_collect_artifacts_uses_prefetched_artifact_metadata() -> None:
-    latest = {"Linux": {"id": 41}}
-    prefetched = {
-        41: [
-            {"name": "QGroundControl-x86_64", "size_in_bytes": 1234},
-            {"name": "test-results-linux_gcc_64", "size_in_bytes": 100},
+def test_collect_artifacts_filters_products_and_deduplicates_largest() -> None:
+    latest = {"MacOS": {"id": 11}, "Android": {"id": 12}}
+    artifacts = {
+        11: [
+            {"name": "QGroundControl", "size_in_bytes": 300 * 1024 * 1024},
+            {"name": "test-results-macos", "size_in_bytes": 100},
+            {"name": "random-tool-output", "size_in_bytes": 100},
+        ],
+        12: [
+            {"name": "QGroundControl", "size_in_bytes": 200 * 1024 * 1024},
+            {"name": "QGroundControl.apk", "size_in_bytes": 2 * 1024 * 1024},
         ],
     }
 
-    def fail_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        raise AssertionError(
-            "list_run_artifacts should not be called when prefetched metadata is provided"
-        )
+    result = mod.collect_artifacts(
+        "owner/repo", latest, ["MacOS", "Android"], artifacts_by_run_id=artifacts
+    )
 
-    original = mod.list_run_artifacts
-    mod.list_run_artifacts = fail_list_run_artifacts  # type: ignore[assignment]
-    try:
-        artifacts = mod.collect_artifacts(
-            "owner/repo",
-            latest,
-            ["Linux"],
-            artifacts_by_run_id=prefetched,
-        )
-    finally:
-        mod.list_run_artifacts = original  # type: ignore[assignment]
-
-    assert artifacts == [
-        {
-            "name": "QGroundControl-x86_64",
-            "size_bytes": 1234,
-            "size_human": "0.00 MB",
-        },
+    assert [(item["name"], item["size_bytes"]) for item in result] == [
+        ("QGroundControl", 300 * 1024 * 1024),
+        ("QGroundControl.apk", 2 * 1024 * 1024),
     ]
 
 
-def test_collect_artifacts_continues_when_one_api_call_fails() -> None:
-    latest = {
-        "Linux": {"id": 51},
-        "Windows": {"id": 52},
-    }
-
-    def flaky_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        if run_id == 51:
+def test_collect_artifacts_continues_after_api_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    def list_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
+        assert repo == "owner/repo"
+        if run_id == 21:
             raise RuntimeError("transient API error")
         return [{"name": "QGroundControl-installer-AMD64", "size_in_bytes": 2048}]
 
-    original = mod.list_run_artifacts
-    mod.list_run_artifacts = flaky_list_run_artifacts  # type: ignore[assignment]
-    try:
-        artifacts = mod.collect_artifacts("owner/repo", latest, ["Linux", "Windows"])
-    finally:
-        mod.list_run_artifacts = original  # type: ignore[assignment]
+    monkeypatch.setattr(mod, "list_run_artifacts", list_artifacts)
 
-    assert artifacts == [
-        {
-            "name": "QGroundControl-installer-AMD64",
-            "size_bytes": 2048,
-            "size_human": "0.00 MB",
-        },
-    ]
-
-
-def test_main_writes_output_json(tmp_path: Path, monkeypatch) -> None:
-    output_file = tmp_path / "sizes.json"
-    runs = [
-        _run("Linux", run_id=101, created_at="2026-02-24T02:00:00Z"),
-        _run("Windows", run_id=102, created_at="2026-02-24T02:00:00Z"),
-    ]
-
-    def fake_list_workflow_runs(repo: str, head_sha: str) -> list[dict[str, object]]:
-        assert repo == "owner/repo"
-        assert head_sha == "abc123"
-        return runs
-
-    def fake_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        if run_id == 101:
-            return [{"name": "QGroundControl-x86_64", "size_in_bytes": 2 * 1024 * 1024}]
-        return [{"name": "QGroundControl-installer-AMD64", "size_in_bytes": 2 * 1024 * 1024}]
-
-    monkeypatch.setattr(mod, "list_workflow_runs_for_sha", fake_list_workflow_runs)
-    monkeypatch.setattr(mod, "list_run_artifacts", fake_list_run_artifacts)
-
-    rc = mod.main(
-        [
-            "--repo",
-            "owner/repo",
-            "--head-sha",
-            "abc123",
-            "--platform-workflows",
-            "Linux,Windows",
-            "--output-file",
-            str(output_file),
-        ]
+    result = mod.collect_artifacts(
+        "owner/repo", {"Linux": {"id": 21}, "Windows": {"id": 22}}, ["Linux", "Windows"]
     )
-    assert rc == 0
-    data = json.loads(output_file.read_text(encoding="utf-8"))
-    assert len(data["artifacts"]) == 2
-    assert data["artifacts"][0]["name"] == "QGroundControl-installer-AMD64"
-    assert data["artifacts"][1]["name"] == "QGroundControl-x86_64"
+    assert [item["name"] for item in result] == ["QGroundControl-installer-AMD64"]
 
 
-def test_main_reads_artifacts_file_when_provided(tmp_path: Path, monkeypatch) -> None:
-    output_file = tmp_path / "sizes.json"
+def test_main_collects_and_writes_sorted_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "sizes.json"
+    monkeypatch.setattr(
+        mod,
+        "list_workflow_runs_for_sha",
+        lambda repo, sha: [workflow_run("Linux", 31), workflow_run("Windows", 32)],
+    )
+    monkeypatch.setattr(
+        mod,
+        "list_run_artifacts",
+        lambda repo, run_id: [
+            {
+                "name": "QGroundControl-x86_64"
+                if run_id == 31
+                else "QGroundControl-installer-AMD64",
+                "size_in_bytes": 2 * 1024 * 1024,
+            }
+        ],
+    )
+
+    assert mod.main(_main_args(output)) == 0
+    data = json.loads(output.read_text())
+    assert [item["name"] for item in data["artifacts"]] == [
+        "QGroundControl-installer-AMD64",
+        "QGroundControl-x86_64",
+    ]
+
+
+def test_main_uses_prefetched_artifacts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    output = tmp_path / "sizes.json"
     artifacts_file = tmp_path / "artifacts.json"
     artifacts_file.write_text(
         json.dumps(
             {
                 "runs": {
-                    "201": [
+                    "41": [
                         {"name": "QGroundControl-x86_64", "size_in_bytes": 1024 * 1024},
-                        {"name": "test-results-linux_gcc_64", "size_in_bytes": 100},
-                    ],
-                },
+                        {"name": "test-results-linux", "size_in_bytes": 100},
+                    ]
+                }
             }
-        ),
-        encoding="utf-8",
-    )
-    runs = [_run("Linux", run_id=201, created_at="2026-02-24T03:00:00Z")]
-
-    def fake_list_workflow_runs(repo: str, head_sha: str) -> list[dict[str, object]]:
-        assert repo == "owner/repo"
-        assert head_sha == "abc123"
-        return runs
-
-    def fail_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        raise AssertionError(
-            "list_run_artifacts should not be called when artifacts file is provided"
         )
-
-    monkeypatch.setattr(mod, "list_workflow_runs_for_sha", fake_list_workflow_runs)
-    monkeypatch.setattr(mod, "list_run_artifacts", fail_list_run_artifacts)
-
-    rc = mod.main(
-        [
-            "--repo",
-            "owner/repo",
-            "--head-sha",
-            "abc123",
-            "--platform-workflows",
-            "Linux",
-            "--output-file",
-            str(output_file),
-            "--artifacts-file",
-            str(artifacts_file),
-        ]
     )
-    assert rc == 0
-    data = json.loads(output_file.read_text(encoding="utf-8"))
-    assert len(data["artifacts"]) == 1
-    assert data["artifacts"][0]["name"] == "QGroundControl-x86_64"
-
-
-def test_collect_artifacts_deduplicates_same_name_keeps_largest() -> None:
-    """When multiple workflows produce artifacts with the same name, keep the largest."""
-    latest = {
-        "MacOS": {"id": 61},
-        "Android": {"id": 62},
-    }
-    prefetched = {
-        61: [
-            {"name": "QGroundControl", "size_in_bytes": 337 * 1024 * 1024},
-        ],
-        62: [
-            {"name": "QGroundControl", "size_in_bytes": 247 * 1024 * 1024},
-        ],
-    }
-
-    artifacts = mod.collect_artifacts(
-        "owner/repo",
-        latest,
-        ["MacOS", "Android"],
-        artifacts_by_run_id=prefetched,
+    monkeypatch.setattr(
+        mod, "list_workflow_runs_for_sha", lambda repo, sha: [workflow_run("Linux", 41)]
+    )
+    monkeypatch.setattr(
+        mod,
+        "list_run_artifacts",
+        lambda repo, run_id: pytest.fail("prefetched artifacts should avoid the API"),
     )
 
-    assert len(artifacts) == 1
-    assert artifacts[0]["name"] == "QGroundControl"
-    assert artifacts[0]["size_bytes"] == 337 * 1024 * 1024
+    assert (
+        mod.main(
+            _main_args(
+                output,
+                "--artifacts-file",
+                str(artifacts_file),
+                platforms="Linux",
+            )
+        )
+        == 0
+    )
+    assert [item["name"] for item in json.loads(output.read_text())["artifacts"]] == [
+        "QGroundControl-x86_64"
+    ]
 
 
-def test_main_returns_one_on_invalid_runs_file(tmp_path: Path) -> None:
+def test_main_falls_back_to_api_for_invalid_prefetched_artifacts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "sizes.json"
+    artifacts_file = tmp_path / "artifacts.json"
+    artifacts_file.write_text(json.dumps({"runs": {"invalid": []}}))
+    monkeypatch.setattr(
+        mod, "list_workflow_runs_for_sha", lambda repo, sha: [workflow_run("Linux", 41)]
+    )
+    monkeypatch.setattr(
+        mod,
+        "list_run_artifacts",
+        lambda repo, run_id: [{"name": "QGroundControl-x86_64", "size_in_bytes": 1024}],
+    )
+
+    assert (
+        mod.main(
+            _main_args(
+                output,
+                "--artifacts-file",
+                str(artifacts_file),
+                platforms="Linux",
+            )
+        )
+        == 0
+    )
+    assert json.loads(output.read_text())["artifacts"][0]["name"] == "QGroundControl-x86_64"
+
+
+def test_main_rejects_invalid_runs_file(tmp_path: Path) -> None:
     runs_file = tmp_path / "runs.json"
-    runs_file.write_text("{not-json", encoding="utf-8")
-    output_file = tmp_path / "sizes.json"
-
-    rc = mod.main(
-        [
-            "--repo",
-            "owner/repo",
-            "--head-sha",
-            "abc123",
-            "--output-file",
-            str(output_file),
-            "--runs-file",
-            str(runs_file),
-        ]
-    )
-    assert rc == 1
-
-
-def test_main_returns_one_on_non_list_runs_file(tmp_path: Path) -> None:
-    runs_file = tmp_path / "runs.json"
-    runs_file.write_text(json.dumps({"runs": []}), encoding="utf-8")
-    output_file = tmp_path / "sizes.json"
-
-    rc = mod.main(
-        [
-            "--repo",
-            "owner/repo",
-            "--head-sha",
-            "abc123",
-            "--output-file",
-            str(output_file),
-            "--runs-file",
-            str(runs_file),
-        ]
-    )
-    assert rc == 1
+    for payload in ("{not-json", json.dumps({"runs": []})):
+        runs_file.write_text(payload)
+        assert mod.main(_main_args(tmp_path / "sizes.json", "--runs-file", str(runs_file))) == 1

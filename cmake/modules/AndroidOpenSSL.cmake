@@ -107,6 +107,6 @@ elseif(_ossl_build_archs)
     file(WRITE "${_ossl_stamp}" "${QGC_ANDROID_OPENSSL_VERSION}\n")
 endif()
 
-include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
+include("${android_openssl_SOURCE_DIR}/android_openssl.cmake")
 add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
 message(STATUS "QGC: Android OpenSSL libraries added")

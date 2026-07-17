@@ -6,8 +6,8 @@
 #   neither              -> native x86_64 build (target: linux)
 set -euo pipefail
 
-# linuxdeploy/appimagetool are AppImages that FUSE-mount themselves; /dev/fuse
-# isn't usable in the RunsOn container, so make them extract-and-run instead.
+# Keep linuxdeploy/appimagetool independent of FUSE. AppImageLint temporarily
+# removes this variable when its target-image checks have a FUSE device.
 export APPIMAGE_EXTRACT_AND_RUN=1
 
 . /usr/local/lib/qgc/build-type.sh
@@ -35,15 +35,32 @@ require_env() {
 
 if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
     ANDROID_ABIS="${ANDROID_ABIS:-arm64-v8a}"  # arm64-v8a, armeabi-v7a, or both (semicolon-separated)
-    require_env QT_HOST_PATH QT_ROOT_DIR_ARM64 ANDROID_SDK_ROOT
+    require_env QT_HOST_PATH QT_ROOT_DIR_ARM64 ANDROID_SDK_ROOT ANDROID_NDK_ROOT ANDROID_PLATFORM ANDROID_MIN_SDK
     echo "Building QGroundControl for Android (${BUILD_TYPE})..."
-    "${QT_ROOT_DIR_ARM64}/bin/qt-cmake" -S /project/source -B /project/build -G Ninja \
-        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-        -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python \
-        -DQT_HOST_PATH="${QT_HOST_PATH}" \
-        -DQT_ANDROID_ABIS="${ANDROID_ABIS}" \
-        -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
-        -DQT_ANDROID_SIGN_APK=OFF
+    case "${BUILD_TYPE}" in
+        Release) CMAKE_PRESET=Android ;;
+        Debug) CMAKE_PRESET=Android-debug ;;
+        *) CMAKE_PRESET="" ;;
+    esac
+    if [[ -n "${CMAKE_PRESET}" ]]; then
+        # shellcheck disable=SC2153  # Exported by the Android image profile.
+        QT_TARGET_ROOT_DIR="${QT_ROOT_DIR_ARM64}" ANDROID_NDK="${ANDROID_NDK_ROOT}" \
+            cmake --preset "${CMAKE_PRESET}" -S /project/source -B /project/build \
+            -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python \
+            -DQT_ANDROID_ABIS="${ANDROID_ABIS}" \
+            -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
+            -DQT_ANDROID_SIGN_APK=OFF
+    else
+        # preset-exception: Android has no RelWithDebInfo or MinSizeRel release workflow.
+        "${QT_ROOT_DIR_ARM64}/bin/qt-cmake" -S /project/source -B /project/build -G Ninja \
+            -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+            -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python \
+            -DQT_HOST_PATH="${QT_HOST_PATH}" \
+            -DQT_ANDROID_ABIS="${ANDROID_ABIS}" \
+            -DCMAKE_SYSTEM_VERSION="${ANDROID_MIN_SDK}" \
+            -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
+            -DQT_ANDROID_SIGN_APK=OFF
+    fi
     cmake --build /project/build --target all --config "${BUILD_TYPE}" "${BUILD_PARALLEL[@]}"
 elif [[ -n "${SYSROOT:-}" ]]; then
     require_env QT_HOST_PATH QT_ROOT_DIR SYSROOT
@@ -63,6 +80,7 @@ elif [[ -n "${SYSROOT:-}" ]]; then
         echo "==> CLEAN_BUILD=1: removing /project/build/*"
         rm -rf /project/build/*
     fi
+    # preset-exception: this dynamic sysroot is not the preinstalled Linux-arm64 Qt target.
     # qt-cmake (host) loads target Qt's cmake config and feeds it the toolchain.
     "${QT_HOST_PATH}/bin/qt-cmake" \
         -S /project/source -B /project/build -G Ninja \
@@ -80,9 +98,21 @@ else
     # CMake derives the native package method (DEB/RPM via CPack, Arch via
     # makepkg) and the appimagelint default from the detected distro
     # (cmake/modules/LinuxDistro.cmake), so no per-distro flags are passed here.
-    qt-cmake -S /project/source -B /project/build -G Ninja \
-        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-        -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python
+    case "${BUILD_TYPE}" in
+        Release) CMAKE_PRESET=Linux ;;
+        Debug) CMAKE_PRESET=Linux-debug ;;
+        RelWithDebInfo) CMAKE_PRESET=Linux-relwithdebinfo ;;
+        *) CMAKE_PRESET="" ;;
+    esac
+    if [[ -n "${CMAKE_PRESET}" ]]; then
+        cmake --preset "${CMAKE_PRESET}" -S /project/source -B /project/build \
+            -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python
+    else
+        # preset-exception: Linux has no platform-specific MinSizeRel workflow.
+        qt-cmake -S /project/source -B /project/build -G Ninja \
+            -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+            -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python
+    fi
     cmake --build /project/build --target all "${BUILD_PARALLEL[@]}"
     cmake --install /project/build --config "${BUILD_TYPE}"
 

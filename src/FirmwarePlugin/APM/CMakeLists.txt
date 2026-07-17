@@ -27,9 +27,9 @@ endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-qgc_add_json_resources(json_firmaware_plugin_apm)
+qgc_add_json_resources(json_firmware_plugin_apm)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
+qt_add_resources(${CMAKE_PROJECT_NAME} firmware_plugin_apm_resource
     PREFIX "/FirmwarePlugin/APM"
     FILES
         Copter.OfflineEditing.params
@@ -68,7 +68,7 @@ set(QGC_APM_PARAMS_EXCLUDE
 # Dynamically discover all parameter definition files.
 # Directory layout: {Vehicle}-{Major}.{Minor}/apm.pdef.json
 # Resource alias:   FirmwarePlugin/APM/APMParameterFactMetaData.{Vehicle}.{Major}.{Minor}.json
-file(GLOB _apm_pdef_files "${ArduPilotParams_SOURCE_DIR}/*/apm.pdef.json")
+file(GLOB _apm_pdef_files CONFIGURE_DEPENDS "${ArduPilotParams_SOURCE_DIR}/*/apm.pdef.json")
 list(SORT _apm_pdef_files)
 
 set(_apm_param_resources "")

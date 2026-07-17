@@ -9,12 +9,14 @@ This document covers everything required to publish QGroundControl to the Micros
 ## Purchases & Accounts
 
 ### Microsoft Partner Center Account
+
 - **Cost:** $19 one-time registration fee (individual) or free for registered companies
-- **URL:** https://partner.microsoft.com
+- **URL:** <https://partner.microsoft.com>
 - Required to register the app, manage flights, and submit packages
 - Sign up with the org's Microsoft account (not a personal account)
 
 ### Code Signing Certificate
+
 - **Type:** OV (Organisation Validation) minimum; EV (Extended Validation) recommended
 - **Recommended CA:** DigiCert or Sectigo — both support direct issuance into Azure Key Vault, meaning the private key is generated inside the HSM and never exported
 - EV is recommended because it bypasses Windows SmartScreen reputation warnings immediately for direct downloads; OV works but SmartScreen will warn until enough download reputation is built
@@ -24,7 +26,7 @@ This document covers everything required to publish QGroundControl to the Micros
 #### Pricing (approximate, 2026)
 
 | CA | OV | EV |
-|---|---|---|
+| --- | --- | --- |
 | Sectigo | ~$220/year | ~$280/year |
 | DigiCert | ~$400/year | ~$560/year |
 
@@ -33,6 +35,7 @@ Sectigo is significantly cheaper for equivalent trust. DigiCert's premium is bra
 The difference between OV and EV for QGC specifically: EV (~$60 more/year with Sectigo) is worth it because QGC is distributed as a direct download as well as via the Store. Without EV, every new release binary triggers SmartScreen warnings for direct download users until enough download volume is accumulated — which can take weeks for each new version.
 
 ### Azure Subscription
+
 - Required for Azure Key Vault (HSM cert storage) and Azure AD (CI authentication)
 - **Sign-up:** Standard pay-as-you-go account at portal.azure.com — just a Microsoft account and a credit card, no enterprise agreement or commitment required. The same account and tenant covers both Key Vault and the Azure AD app registration for Partner Center API credentials.
 - **Key Vault tier:** Premium is required (Standard does not support HSM-backed keys, which the CA mandates for OV/EV certs)
@@ -46,6 +49,7 @@ The difference between OV and EV for QGC specifically: EV (~$60 more/year with S
 These steps cannot be automated and must be done before any CI work begins.
 
 ### 1. Register the App in Partner Center
+
 - Reserve the app name "QGroundControl"
 - Note the following values — they go into the MSIX manifest:
   - **Publisher ID** (e.g. `CN=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`)
@@ -53,22 +57,26 @@ These steps cannot be automated and must be done before any CI work begins.
   - **Package Family Name**
 
 ### 2. Create a Package Flight
+
 - In Partner Center, create a flight group called "Daily"
 - Add developers and testers by Microsoft account email
 - Note the **Flight ID** — needed for the CI submission step
 - The main listing can remain unpublished (draft) while the flight is active; flight group members install via a direct link rather than searching the Store
 
 ### 3. Issue the Code Signing Cert into Azure Key Vault
+
 - Create an Azure Key Vault instance
 - Purchase OV/EV cert from DigiCert or Sectigo with direct Key Vault issuance
 - Note the **Key Vault URL** and **Certificate Name**
 
 ### 4. Create an Azure AD App for CI
+
 - Register an Azure AD application in the same tenant
 - Grant it Partner Center Submission API permissions and Key Vault signing permissions
 - Note **Tenant ID**, **Client ID**, **Client Secret**
 
 ### 5. Microsoft runFullTrust Approval
+
 - On the first Store submission, Microsoft's review team must approve the `runFullTrust` restricted capability
 - This is routinely granted for existing Win32 desktop apps
 - Allow extra review time for the first submission only
@@ -82,6 +90,7 @@ MSIX replaces NSIS entirely as the Windows installer format. It is not an additi
 MSIX works as a standalone installer for direct download (users double-click a `.msix` file to install, just like an `.exe`) as well as for Store distribution. One package format serves both channels. The staged install tree that NSIS currently wraps is handed to `MakeAppx.exe` instead — the build output itself is unchanged.
 
 Benefits over NSIS:
+
 - Guaranteed clean uninstall with no registry orphans
 - No admin required to install (installs per-user by default)
 - Automatic rollback if install fails
@@ -95,14 +104,15 @@ The only prerequisite for direct download installs is that the MSIX is signed wi
 ## Code & Packaging Changes
 
 ### Remove
+
 - `cmake/install/CPack/CreateCPackNSIS.cmake`
-- `deploy/windows/nullsoft_installer.nsi`
 - `deploy/windows/installheader.bmp`
 - NSIS-related logic in `cmake/install/`
 
 ### Add
 
 #### `deploy/windows/Package.appxmanifest`
+
 Defines the app's Store identity and capabilities. Key fields populated from Partner Center registration:
 
 ```xml
@@ -144,10 +154,11 @@ Defines the app's Store identity and capabilities. Key fields populated from Par
 ```
 
 #### `deploy/windows/Assets/`
+
 Store-required visual assets at mandated sizes:
 
 | File | Size |
-|---|---|
+| --- | --- |
 | `StoreLogo.png` | 50×50 |
 | `Square44x44Logo.png` | 44×44 |
 | `Square150x150Logo.png` | 150×150 |
@@ -156,6 +167,7 @@ Store-required visual assets at mandated sizes:
 | `SplashScreen.png` | 620×300 |
 
 #### `cmake/install/CPack/CreateCPackMSIX.cmake` (or a post-install script)
+
 Replaces `CreateCPackNSIS.cmake`. After the install tree is staged, runs:
 
 ```cmake
@@ -183,12 +195,14 @@ Signing is handled in CI (see below) rather than at CMake time.
 ## CI Changes (`windows.yml`)
 
 ### Remove
+
 - "Create Installer" step (runs NSIS/CPack)
 - "Install and verify installer" step (NSIS-specific)
 
 ### Add
 
 #### Sign the MSIX
+
 Uses AzureSignTool — no hardware token required, signs via Key Vault API:
 
 ```yaml
@@ -209,6 +223,7 @@ Uses AzureSignTool — no hardware token required, signs via Key Vault API:
 ```
 
 #### Verify MSIX (optional smoke test)
+
 ```yaml
 - name: Verify MSIX
   shell: pwsh
@@ -219,6 +234,7 @@ Uses AzureSignTool — no hardware token required, signs via Key Vault API:
 ```
 
 #### Publish to Store Flight (every master merge)
+
 ```yaml
 - name: Publish to Daily Flight
   if: github.ref == 'refs/heads/master'
@@ -233,6 +249,7 @@ Uses AzureSignTool — no hardware token required, signs via Key Vault API:
 ```
 
 #### Publish to Store Main Listing (tags/releases only)
+
 ```yaml
 - name: Publish to Store (Stable)
   if: startsWith(github.ref, 'refs/tags/v')
@@ -248,7 +265,7 @@ Uses AzureSignTool — no hardware token required, signs via Key Vault API:
 ### New GitHub Secrets Required
 
 | Secret | Description |
-|---|---|
+| --- | --- |
 | `AKV_URL` | Azure Key Vault URL |
 | `AKV_CERT_NAME` | Certificate name within Key Vault |
 | `AZURE_TENANT_ID` | Azure AD tenant ID (shared with Store submission) |

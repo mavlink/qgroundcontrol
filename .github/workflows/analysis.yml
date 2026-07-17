@@ -35,7 +35,7 @@ permissions:
 jobs:
   analyze:
     name: ${{ inputs.tool }} Analysis
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-tester', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: ${{ inputs.tool == 'clazy' && 60 || 120 }}
 
     steps:
@@ -43,6 +43,13 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
 
       - name: Checkout
         uses: actions/checkout@v7
@@ -102,8 +109,8 @@ jobs:
         if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
         uses: ./.github/actions/cmake-configure
         with:
+          preset: Linux-debug
           build-dir: ${{ runner.temp }}/build
-          build-type: Debug
           extra-args: >-
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
             ${{ inputs.tool == 'iwyu' && '-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++' || '' }}
@@ -112,9 +119,8 @@ jobs:
         if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
         uses: ./.github/actions/cmake-configure
         with:
+          preset: Linux-debug
           build-dir: ${{ runner.temp }}/build
-          build-type: Debug
-          testing: 'true'
           extra-args: >-
             -DQGC_ENABLE_COVERAGE=OFF
             ${{ inputs.tool == 'asan' && '-DQGC_ENABLE_ASAN=ON' || '' }}

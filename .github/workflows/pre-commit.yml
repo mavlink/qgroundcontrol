@@ -33,7 +33,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Get build config
@@ -60,7 +60,12 @@ jobs:
         continue-on-error: true
         env:
           PRE_COMMIT_OUTPUT: pre-commit-output.txt
-        run: python3 ./tools/pre_commit.py --ci
+        run: |
+          args=(--ci)
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            args+=(--changed)
+          fi
+          python3 ./tools/pre_commit.py "${args[@]}"
 
       - name: Prepare pre-commit results artifact
         if: github.event_name == 'pull_request' && always()

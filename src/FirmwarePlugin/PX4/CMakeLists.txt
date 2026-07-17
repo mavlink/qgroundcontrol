@@ -17,11 +17,11 @@ if(NOT QGC_DISABLE_PX4_PLUGIN)
     )
 endif()
 
-qgc_add_json_resources(json_firmaware_plugin_px4 NO_RECURSE PATTERN "PX4-MavCmdInfo*.json")
+qgc_add_json_resources(json_firmware_plugin_px4 NO_RECURSE PATTERN "PX4-MavCmdInfo*.json")
 
 set_source_files_properties(V1.4.OfflineEditing.params PROPERTIES QT_RESOURCE_ALIAS PX4.OfflineEditing.params)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_px4_resource
+qt_add_resources(${CMAKE_PROJECT_NAME} firmware_plugin_px4_resource
     PREFIX "/FirmwarePlugin/PX4"
     FILES
         PX4ParameterFactMetaData.json

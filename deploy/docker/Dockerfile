@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 # Single source for the QGC builder images. Pick a variant with --target:
 #   docker build -f deploy/docker/Dockerfile --target linux       .   # x86_64 AppImage
+#   docker build -f deploy/docker/Dockerfile --target devcontainer .  # interactive Linux development
 #   docker build -f deploy/docker/Dockerfile --target linux-cross .   # aarch64 cross
 #   docker build -f deploy/docker/Dockerfile --target android     .   # Android APK
 # run-docker.sh / plan_docker_builds.py drive --target + build-args; non-Ubuntu
@@ -9,7 +10,7 @@
 # ---------- base: shared bootstrap for every variant ----------
 # Digest-pinned for reproducibility (re-resolve via `docker buildx imagetools
 # inspect` when bumping); BASE_REF/SETUP_BASE overridden for non-Ubuntu distros.
-ARG BASE_REF=ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54
+ARG BASE_REF=ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90
 FROM ${BASE_REF} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -42,7 +43,7 @@ RUN if [ -n "${CC_PIN}" ]; then \
 # Build-time Python deps for CMake generators + aqt. PIP_CMAKE pulls a modern
 # cmake into the venv when the distro's apt cmake is too old (22.04: 3.22 < 3.25).
 ARG PIP_CMAKE=""
-COPY --from=ghcr.io/astral-sh/uv:0.11.12 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.11.26@sha256:3d868e555f8f1dbc324afa005066cd11e1053fc4743b9808ca8025283e65efa5 /uv /usr/local/bin/uv
 COPY tools/pyproject.toml tools/uv.lock /tmp/qgc-tools/
 RUN PIP_CMAKE="${PIP_CMAKE}" sh /usr/local/lib/qgc/setup-venv.sh && \
     rm -rf /tmp/qgc-tools /usr/local/bin/uv
@@ -80,10 +81,21 @@ COPY deploy/docker/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
 
+# ---------- devcontainer: interactive non-root Linux development ----------
+FROM linux AS devcontainer
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=1000
+RUN groupadd --gid "${USER_GID}" "${USERNAME}" && \
+    useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}"
+ENV SHELL=/bin/bash
+WORKDIR /workspaces/qgroundcontrol
+USER ${USERNAME}
+ENTRYPOINT []
+CMD ["/bin/bash"]
+
 # ---------- linux-cross: aarch64 cross-compile (host tools + :arm64 sysroot) ----------
-# Why this exists (CI already builds arm64 natively on ubuntu-24.04-arm):
-#   - Local developer cross-builds without a target board / QEMU.
-#   - Reproducible builds against a specific glibc/Qt without an arm64 runner.
+# Supports reproducible local aarch64 builds without target hardware.
 FROM base AS linux-cross
 LABEL org.opencontainers.image.documentation="deploy/docker/run-docker.sh (variant: aarch64)"
 # Host build tools (core category covers cmake/ninja/build-essential/git/rsync/...).
@@ -114,26 +126,28 @@ CMD ["Release"]
 # ---------- android: Android APK build (SDK/NDK + Qt android target) ----------
 FROM base AS android
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
+# hadolint ignore=DL3008
 RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
     python3 /tmp/tools/setup/read_config.py --export bash > /etc/profile.d/qgc.sh && \
     . /etc/profile.d/qgc.sh && \
     apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-${ANDROID_JAVA_VERSION}-jdk && \
+    apt-get install -y --no-install-recommends "openjdk-${ANDROID_JAVA_VERSION}-jdk" && \
     rm -rf /var/lib/apt/lists/*
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT
+# hadolint ignore=DL3008,DL4006
 RUN . /etc/profile.d/qgc.sh && \
-    mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
-    wget "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
+    mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools/latest" && \
+    wget -nv "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
     # Pinned to android_cmdline_tools 14742923 (.github/build-config.json); update both together.
     echo "04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7  /opt/cmdline-tools.zip" | sha256sum -c - && \
-    unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
-    mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
-    rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \
+    unzip /opt/cmdline-tools.zip -d "${ANDROID_SDK_ROOT}/cmdline-tools" && \
+    mv "${ANDROID_SDK_ROOT}"/cmdline-tools/cmdline-tools/* "${ANDROID_SDK_ROOT}/cmdline-tools/latest/" && \
+    rm -rf "${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools" && \
     rm /opt/cmdline-tools.zip && \
-    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
-    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+    yes | "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" --sdk_root="${ANDROID_SDK_ROOT}" --licenses && \
+    "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" --sdk_root="${ANDROID_SDK_ROOT}" \
         "platform-tools" \
         "platforms;android-${ANDROID_PLATFORM}" \
         "build-tools;${ANDROID_BUILD_TOOLS}" \

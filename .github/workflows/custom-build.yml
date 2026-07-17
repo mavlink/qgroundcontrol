@@ -27,7 +27,13 @@ jobs:
     name: Custom Plugin Build
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) || 'ubuntu-24.04' }}
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) ||
+        'ubuntu-24.04'
+      }}
     timeout-minutes: 60
 
     defaults:
@@ -35,17 +41,17 @@ jobs:
         shell: bash
 
     steps:
-      - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
-        uses: runs-on/action@v2
-        with:
-          metrics: cpu,network,memory,disk,io
-          show_costs: summary
-
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
 
       - name: Checkout
         uses: actions/checkout@v7
@@ -67,8 +73,8 @@ jobs:
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
+          preset: Linux
           build-dir: ${{ runner.temp }}/build
-          build-type: Release
           extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build

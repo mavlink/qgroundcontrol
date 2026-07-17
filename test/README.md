@@ -1,7 +1,9 @@
-# QGroundControl Unit Testing
+# QGroundControl Testing Guide
 
-> Agent guidance (naming, review process, architecture patterns) lives in [AGENTS.md](../AGENTS.md);
-> this doc covers the test framework itself.
+This is the canonical guide to QGroundControl's test framework, test-writing conventions, CTest
+labels, fixtures, and debugging. Use [tools/README.md](../tools/README.md#quality) for the `just`
+recipe reference, [.github/README.md](../.github/README.md#tests) for CI invocation, and
+[AGENTS.md](../AGENTS.md) for the agent workflow and definition of done.
 
 ## Table of Contents
 
@@ -15,6 +17,7 @@
   - [Register in CMakeLists.txt](#register-in-cmakeliststxt)
   - [CTest Labels & Timeouts](#ctest-labels--timeouts)
   - [Wait/Timeout Helpers](#waittimeout-helpers)
+  - [Expected Log Messages](#expected-log-messages)
 - [Running Tests](#running-tests)
   - [Via CTest](#via-ctest)
   - [Via `just`](#via-just)
@@ -26,28 +29,30 @@
 - [MultiSignalSpy](#multisignalspy)
 - [Code Coverage](#code-coverage)
 - [Sanitizers](#sanitizers)
+- [Fuzzing](#fuzzing)
 - [Debugging Test Failures](#debugging-test-failures)
 
 ## Quick Start
 
 ```bash
-# Configure and build with tests enabled
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON
-cmake --build build
+# Configure and build a Debug tree with tests enabled
+just configure
+just build
 
-# Run all tests via CTest
-cd build && ctest --output-on-failure --parallel $(nproc)
+# Run the repository's default CI-safe test selection
+just test
 
-# Run specific test
-./QGroundControl --unittest:ParameterManagerTest
+# Iterate on one test
+ctest --test-dir build --output-on-failure -R '^ParameterManagerTest$'
 ```
 
 ## Test Framework Overview
 
-Tests are Qt `QObject`-based classes that subclass one of the framework's base classes
-(below) and self-register via `UT_REGISTER_TEST`. There is no central list of tests to
-update — `main.cc`, `QGCApplication`, `QGCCommandLineParser`, and `UnitTestList` are all
-generic and enumerate tests at runtime via `UnitTest::registeredTests()`.
+Tests are Qt `QObject`-based classes that subclass one of the framework's base classes (below) and
+self-register via `UT_REGISTER_TEST`. Each test is also registered with CTest in its area's
+`CMakeLists.txt`. There is no central C++ list to update: `main.cc`, `QGCApplication`,
+`QGCCommandLineParser`, and `UnitTestList` enumerate tests at runtime via
+`UnitTest::registeredTests()`.
 
 ### Base Test Classes
 
@@ -128,18 +133,24 @@ permutation is identified without re-running the whole method. See
 # Basic unit test
 add_qgc_test(MyTest LABELS Unit)
 
-# Integration test (auto-locks MockLink resource)
-add_qgc_test(MyIntegrationTest LABELS Integration Vehicle)
+# Integration test that shares the MockLink resource
+add_qgc_test(MyIntegrationTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 
 # Test with custom timeout
 add_qgc_test(MySlowTest LABELS Slow TIMEOUT 300)
 
-# Test that must run alone (locks all resources)
+# Test that must run alone
 add_qgc_test(MyExclusiveTest LABELS Integration SERIAL)
 
-# Test with specific resource lock
-add_qgc_test(MyTest LABELS Unit RESOURCE_LOCK TempFiles)
+# Test with a named shared resource
+add_qgc_test(MySettingsTest LABELS Unit RESOURCE_LOCK Settings)
 ```
+
+Keep behavioral categories in `UT_REGISTER_TEST(..., TestLabel::...)` aligned with the `LABELS`
+passed to `add_qgc_test()`. The C++ labels drive `QGroundControl --label`; the CMake labels drive
+CTest filtering and timeout selection. Concurrency is separate: `TestLabel::Serial` is runtime
+metadata, while the `SERIAL` CMake argument sets CTest's `RUN_SERIAL` property. Labels do not imply
+a resource lock—declare `RESOURCE_LOCK` or `SERIAL` explicitly when a test cannot run concurrently.
 
 ### CTest Labels & Timeouts
 
@@ -168,7 +179,6 @@ to absorb instrumentation overhead. `TIMEOUT <seconds>` on `add_qgc_test()` alwa
 | `Utilities`      | Utility class tests                                                                       |
 | `Network`        | Requires network access — excluded from CI (`check-ci`, `just test`)                      |
 | `Flaky`          | Reserved for intermittently-failing tests, excluded from CI; no test currently carries it |
-| `Serial`         | Must run alone (no parallel) — set automatically by `SERIAL`                              |
 | `Joystick`       | Joystick/controller tests                                                                 |
 | `AnalyzeView`    | Log analysis and geo-tagging tests                                                        |
 | `Terrain`        | Terrain query and tile tests                                                              |
@@ -194,21 +204,22 @@ Chrono-typed variants are also available: `TestTimeout::shortDuration()`,
 
 #### Wait macros
 
-Prefer the QGC wrapper macros over raw `QSignalSpy::wait()`/`QTest::qWaitFor()` — they
-emit readable failure messages that include the signal/condition name and the elapsed
-time:
+Prefer the QGC signal wrappers over raw `QSignalSpy::wait()`—they emit readable failure messages
+that include the signal name and elapsed time:
 
 ```cpp
 QVERIFY_SIGNAL_WAIT(spy, TestTimeout::shortMs());          // spy.count() >= 1
 QVERIFY_SIGNAL_COUNT_WAIT(spy, 3, TestTimeout::shortMs()); // spy.count() >= 3
 QVERIFY_NO_SIGNAL_WAIT(spy, 250);                          // see gotcha below
-QVERIFY_TRUE_WAIT(condition, TestTimeout::shortMs());      // QTRY_VERIFY wrapper
-QCOMPARE_TRUE_WAIT(actual, expected, TestTimeout::shortMs());
 ```
+
+For general conditions, prefer Qt's native `QTRY_VERIFY_WITH_TIMEOUT` and
+`QTRY_COMPARE_WITH_TIMEOUT`. `QVERIFY_TRUE_WAIT` and `QCOMPARE_TRUE_WAIT` remain compatibility
+wrappers for existing tests.
 
 **Gotcha — `QVERIFY_NO_SIGNAL_WAIT` always burns the full timeout.** It has to, because
 proving absence requires waiting the entire window. Keep its timeout as tight as
-possible (a few hundred ms), and put it *after* any `QVERIFY_TRUE_WAIT` that already
+possible (a few hundred ms), and put it *after* any `QTRY_*_WITH_TIMEOUT` that already
 proves state has settled.
 
 #### Condition polling
@@ -229,36 +240,68 @@ QVERIFY(UnitTest::waitForCondition([&]() { return thing.ready(); },
   `QVERIFY_NO_SIGNAL_WAIT`), add a comment explaining why `TestTimeout::*` isn't
   appropriate.
 
+### Expected Log Messages
+
+Every test runs with strict log checking: an unexpected message fails the test. If the behavior
+under test intentionally emits a warning, use the QGC base-class helpers instead of
+`QTest::ignoreMessage` (which the `check-no-qtest-ignore-message` pre-commit hook rejects):
+
+```cpp
+// Preferred: assert that the expected message is emitted by this operation.
+expectLogMessage("MAVLink.LibEvents.HealthAndArmingCheckReport",
+                 QtWarningMsg,
+                 QRegularExpression(QStringLiteral("Flight mode group not set")));
+somethingThatLogs();
+verifyExpectedLogMessage();
+
+// Last resort: suppress environment-dependent noise that has no precise call site.
+ignoreLogMessage("qt.bluetooth",
+                 QtWarningMsg,
+                 QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
+```
+
+Always pair `expectLogMessage()` with `verifyExpectedLogMessage()`. Use `ignoreLogMessage()` only
+for nondeterministic environment noise; it suppresses a message without proving that the expected
+behavior occurred.
+
 ## Running Tests
 
 ### Via CTest
 
+Run CTest from the configured build tree, or pass it explicitly with `--test-dir build`:
+
 ```bash
-ctest --parallel $(nproc)          # All tests in parallel
-ctest -L Unit                      # Unit tests only
-ctest --output-on-failure -L Unit  # Unit tests, print output on failure
-ctest -L Integration               # Integration tests
-ctest -LE "Flaky|Network"          # Exclude flaky and network tests
-ctest -R "Camera|Mission"          # Tests matching pattern (name regex)
-ctest -R MyTest                    # Run a single test by name
-ctest --rerun-failed               # Re-run only failed tests
+ctest --test-dir build --parallel 4                  # All tests, including opt-in categories
+ctest --test-dir build -L Unit                       # Unit tests only
+ctest --test-dir build --output-on-failure -L Unit   # Unit tests with failure output
+ctest --test-dir build -L Integration                # Integration tests
+ctest --test-dir build -LE "Flaky|Network"           # Exclude flaky and network tests
+ctest --test-dir build -R "Camera|Mission"           # Tests matching a name regex
+ctest --test-dir build -R '^MyTest$'                 # Run one test by exact name
+ctest --test-dir build --rerun-failed                # Re-run only failed tests
 ```
 
 ### Via `just`
 
+The [`just test` recipe](../tools/README.md#quality) owns the repository's default label and
+exclusion filters:
+
 ```bash
-just test                                    # Labels "Unit|Integration", excludes "Flaky|Network"
-LABELS=Unit just test                        # Override labels
-EXCLUDE=Network just test                    # Override exclusions
-LABELS=Slow EXCLUDE=Flaky just test          # Both at once
+just test                              # Unit|Integration, excluding Flaky|Network
+LABELS=Unit just test                  # Unit tests only
+EXCLUDE='Flaky|Network|Slow' just test # Add an exclusion
+just test Slow Network                 # Positional overrides: labels, then exclusions
 ```
 
-`just test` wraps `ctest --output-on-failure -L "<LABELS>" -LE "<EXCLUDE>"` and matches
-the label filters CI uses by default.
+Use direct CTest commands for focused iteration; use `just test` for the repository default.
 
 ### Via the QGroundControl Binary (unittest build)
 
+The default Debug build places the executable under `build/Debug/`. Run these commands from that
+directory (append `.exe` on Windows):
+
 ```bash
+cd build/Debug
 ./QGroundControl --list-tests                          # List all registered tests
 ./QGroundControl --list-tests --label=Unit,Utilities   # List tests matching labels
 ./QGroundControl --unittest:MyTest                     # Run one test suite
@@ -271,22 +314,22 @@ the label filters CI uses by default.
 ### Convenience Targets
 
 ```bash
-ninja check              # All tests
-ninja check-unit         # Unit tests only
-ninja check-integration  # Integration tests
-ninja check-fast         # Exclude slow tests
-ninja check-ci           # CI-safe (excludes Flaky, Network)
-ninja check-flaky        # Repeat until-fail to surface flaky failures (excludes Network)
+cmake --build build --target check              # All tests
+cmake --build build --target check-unit         # Unit tests only
+cmake --build build --target check-integration  # Integration tests
+cmake --build build --target check-fast         # Exclude slow tests
+cmake --build build --target check-ci           # CI-safe (excludes Flaky, Network)
+cmake --build build --target check-flaky        # Repeat until-fail (excludes Network)
 ```
 
 ### Category-Specific Targets
 
 ```bash
-ninja check-missionmanager   # MissionManager tests
-ninja check-vehicle          # Vehicle tests
-ninja check-utilities        # Utilities tests
-ninja check-mavlink          # MAVLink tests
-ninja check-comms            # Comms tests
+cmake --build build --target check-missionmanager
+cmake --build build --target check-vehicle
+cmake --build build --target check-utilities
+cmake --build build --target check-mavlink
+cmake --build build --target check-comms
 ```
 
 ### QML Test Split
@@ -301,20 +344,20 @@ There are two separate QML-related test entry points with different purposes:
 
 ```bash
 # Real QML quick tests
-ctest -R QmlQuickTests --output-on-failure
+ctest --test-dir build -R '^QmlQuickTests$' --output-on-failure
 
 # In-process sanity check runner
-ctest -R QmlTestFileValidator --output-on-failure
+ctest --test-dir build -R '^QmlTestFileValidator$' --output-on-failure
 ```
 
 ### JUnit XML Output
 
 ```bash
 # Single test with XML output
-./QGroundControl --unittest:MyTest --unittest-output:results.xml
+build/Debug/QGroundControl --unittest:MyTest --unittest-output:results.xml
 
 # All tests via CTest with JUnit output
-ctest --output-junit results.xml
+ctest --test-dir build --output-junit results.xml
 ```
 
 ## MultiSignalSpy
@@ -368,18 +411,27 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_ASAN
 cmake -B build -DCMAKE_BUILD_TYPE=Debug -DQGC_BUILD_TESTING=ON -DQGC_ENABLE_TSAN=ON
 ```
 
+## Fuzzing
+
+ClusterFuzzLite runs the MAVLink byte-stream parser under AddressSanitizer when a pull request
+changes the fuzzer, its build integration, or QGC's pinned MAVLink configuration. A matching
+`master` push stores the comparison build. Targets live in `test/Fuzz/`; the container and build
+contract live in `.clusterfuzzlite/`. Keep each target deterministic and independent between
+inputs, and provide a valid seed corpus plus a protocol dictionary when the input format includes
+checksums or framing bytes.
+
 ## Debugging Test Failures
 
 ### Enable Verbose Output
 
 ```bash
-QGC_TEST_VERBOSE=1 ./QGroundControl --unittest:MyTest
+QGC_TEST_VERBOSE=1 build/Debug/QGroundControl --unittest:MyTest
 ```
 
 ### Run Single Test Method
 
 ```bash
-./QGroundControl --unittest:MyTest -- -v2 _specificMethod
+build/Debug/QGroundControl --unittest:MyTest -- -v2 _specificMethod
 ```
 
 ### Common Issues
@@ -388,36 +440,8 @@ QGC_TEST_VERBOSE=1 ./QGroundControl --unittest:MyTest
 2. **Resource conflicts**: Use `RESOURCE_LOCK` or `SERIAL` for exclusive access
 3. **Flaky signals**: Use `MultiSignalSpy::waitForSignal()` instead of `QSignalSpy::wait()`
 4. **Stale singletons**: Ensure proper cleanup in `cleanup()` method
-5. **Unexpected log messages (strict mode)**: Every test runs with strict log checking, so
-   any log message that is not explicitly expected or suppressed causes `QFAIL`. If the
-   code under test emits a warning you didn't anticipate, use the QGC base-class helpers
-   instead of `QTest::ignoreMessage` (which is banned by the `check-no-qtest-ignore-message`
-   pre-commit hook):
-
-   ```cpp
-    // Preferred: one-shot expectation — asserts the message was actually emitted
-   expectLogMessage("MAVLink.LibEvents.HealthAndArmingCheckReport",
-                    QtWarningMsg,
-                    QRegularExpression(QStringLiteral("Flight mode group not set")));
-   somethingThatLogs();
-    verifyExpectedLogMessage();
-
-    // Last resort only: persistent suppression — does NOT assert the message fires
-    ignoreLogMessage("qt.bluetooth",
-                     QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
-   ```
-
-    `expectLogMessage(...)` must be followed by `verifyExpectedLogMessage()`.
-    If verification is omitted, `cleanup()` fails the test.
-
-    **Always prefer `expectLogMessage` + `verifyExpectedLogMessage`.** That
-    pairing both silences the strict-mode check *and* asserts the message was
-    actually emitted, so a regression that removes the log will break the test.
-
-    Use `ignoreLogMessage(...)` only as a last resort for non-deterministic or
-    environment-dependent noise that cannot be tied to a precise call site.
-
+5. **Unexpected log messages**: Follow [Expected Log Messages](#expected-log-messages); do not use
+   `QTest::ignoreMessage`.
 6. **Expensive SKIP paths**: If a test conditionally `QSKIP`s based on a backend probe
    (e.g. "SDL didn't expose a second virtual joystick"), cache the probe result in a
    test-class member so subsequent skipping tests don't each burn a full timeout.

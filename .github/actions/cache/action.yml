@@ -142,10 +142,17 @@ runs:
 
     - name: Restore Build Cache (ccache, save)
       if: steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ${{ github.workspace }}/.ccache
-        key: ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        key: >-
+          ${{ format('ccache-{0}-{1}-{2}{3}-{4}-{5}',
+          inputs.host,
+          inputs.target,
+          inputs.build-type,
+          inputs.variant && format('-{0}', inputs.variant) || '',
+          steps.cache-scope.outputs.scope,
+          hashFiles('.github/build-config.json', 'tools/configs/ccache.conf')) }}
         restore-keys: |
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-shared-
@@ -153,10 +160,17 @@ runs:
 
     - name: Restore Build Cache (ccache, read-only)
       if: steps.cache-policy.outputs.save != 'true' && inputs.variant != 'coverage'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: ${{ github.workspace }}/.ccache
-        key: ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        key: >-
+          ${{ format('ccache-{0}-{1}-{2}{3}-{4}-{5}',
+          inputs.host,
+          inputs.target,
+          inputs.build-type,
+          inputs.variant && format('-{0}', inputs.variant) || '',
+          steps.cache-scope.outputs.scope,
+          hashFiles('.github/build-config.json', 'tools/configs/ccache.conf')) }}
         restore-keys: |
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-shared-
@@ -171,7 +185,7 @@ runs:
     # save races on the same key (last-writer-wins waste).
     - name: Cache CPM Modules (restore and save)
       if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release'
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ${{ steps.cpm-cache.outputs.path }}
         key: cpm-modules-${{ steps.cache-scope.outputs.scope }}-${{ steps.cpm-key.outputs.fingerprint }}
@@ -181,7 +195,7 @@ runs:
 
     - name: Cache CPM Modules (restore only)
       if: inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release')
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: ${{ steps.cpm-cache.outputs.path }}
         key: cpm-modules-${{ steps.cache-scope.outputs.scope }}-${{ steps.cpm-key.outputs.fingerprint }}

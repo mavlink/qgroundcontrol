@@ -39,6 +39,7 @@ from common.build_config import (  # noqa: E402
     find_build_config,
     github_output_values,
     load_build_config,
+    lookup_dotted,
 )
 from common.gh_actions import append_github_env, write_github_output  # noqa: E402
 
@@ -113,14 +114,11 @@ def main() -> int:
         key = args.get.lower()  # Normalize to lowercase
         if key == "gstreamer_version":
             key = "gstreamer.version.default"
-        value: Any = config
-        for part in key.split("."):
-            if isinstance(value, dict) and part in value:
-                value = value[part]
-            else:
-                value = None
-                break
-        if value is not None:
+        try:
+            value: Any = lookup_dotted(config, key)
+        except KeyError:
+            value = None
+        else:
             print(value if isinstance(value, (str, int, float, bool)) else json.dumps(value))
             return 0
         print(f"Error: Key '{key}' not found in config", file=sys.stderr)

@@ -100,7 +100,7 @@ void QGCLoggingCategoryManager::registerCategory(const QString& fullCategory)
     }
     auto* categoryItem = new QGCLoggingCategoryItem(shortName, fullCategory, enabled, this);
     _flatModel->insertSorted(categoryItem);
-    _treeModel->insertCategory(segments, fullCategory, categoryItem);
+    _treeModel->insertCategory(segments, categoryItem);
 }
 
 void QGCLoggingCategoryManager::setCategoryEnabled(const QString& fullCategoryName, bool enable)

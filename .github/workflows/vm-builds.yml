@@ -11,11 +11,15 @@ on:
     paths:
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
+      - 'CMakePresets.json'
+      - 'cmake/presets/**'
       - '.github/workflows/vm-builds.yml'
   pull_request:
     paths:
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
+      - 'CMakePresets.json'
+      - 'cmake/presets/**'
       - '.github/workflows/vm-builds.yml'
   workflow_dispatch:
 
@@ -35,7 +39,10 @@ jobs:
     continue-on-error: true
     # linux-x64-emulator is the only RunsOn pool with nested-virt (/dev/kvm); forks
     # fall back to ubuntu-latest, which also exposes /dev/kvm.
-    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
+    runs-on: >-
+      ${{ github.repository_owner == 'mavlink' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+      format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 120
     steps:
       - name: Harden Runner
@@ -66,8 +73,7 @@ jobs:
 
       - name: Install Multipass
         run: |
-          # The RunsOn emulator AMI ships without snapd, so `snap` is absent; install and
-          # seed it first. No-op on the ubuntu-latest fork fallback (snapd already present).
+          # The RunsOn image lacks snapd; the GitHub-hosted fallback already has it.
           if ! command -v snap >/dev/null 2>&1; then
             sudo apt-get update
             sudo apt-get install -y --allow-change-held-packages snapd
@@ -75,11 +81,9 @@ jobs:
           fi
           sudo snap wait system seed.loaded
           sudo snap install multipass
-          # `snap install` no-ops on the AMI's cached multipass; force latest stable — older
-          # manifests still list retired core16, whose blob 403s and aborts find/launch (multipass#2794).
+          # Refresh cached Multipass to avoid manifests that reference retired core16.
           sudo snap refresh multipass
-          # snapd's control socket is group-`sudo`, gained only on re-login; wait for the
-          # socket, then open group access for this job.
+          # Wait for snapd's control socket, then grant this job access.
           for _ in $(seq 1 30); do
             [ -S /var/snap/multipass/common/multipass_socket ] && break
             sleep 2
@@ -129,7 +133,10 @@ jobs:
     # Heavy nested-VM build (~75 min) on a fragile libvirt synced-folder path;
     # informational only, never gate the PR on it.
     continue-on-error: true
-    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
+    runs-on: >-
+      ${{ github.repository_owner == 'mavlink' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+      format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
       - name: Harden Runner

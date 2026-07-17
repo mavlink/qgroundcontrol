@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Generate Build Results PR comment markdown."""
 
 from __future__ import annotations
@@ -21,9 +20,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.cobertura import CoberturaError, read_cobertura
 from common.format import format_bytes, format_delta_bytes
-from xml_utils import XMLParseError
-from xml_utils import xml_parse as _xml_parse
 
 logger = logging.getLogger(__name__)
 
@@ -34,17 +32,19 @@ def _env(env: Mapping[str, str], key: str, default: str = "") -> str:
     return str(env.get(key, default)).strip()
 
 
+def _env_flag(env: Mapping[str, str], key: str) -> bool:
+    return _env(env, key).lower() in {"1", "true", "yes"}
+
+
 def _parse_coverage_percent(path: Path) -> float | None:
     if not path.exists():
         return None
     try:
-        root = _xml_parse(path).getroot()
-        if root is None:
+        metrics = read_cobertura(path)
+        if metrics.lines_valid == 0:
             return None
-        if int(root.get("lines-valid", 0)) == 0:
-            return None
-        return float(root.get("line-rate", 0.0)) * 100.0
-    except (XMLParseError, OSError, ValueError):
+        return metrics.line_percent
+    except CoberturaError:
         logger.warning("Failed to parse coverage from %s", path, exc_info=True)
         return None
 
@@ -96,9 +96,9 @@ def _view_link(url: str) -> str | None:
 
 
 def _count_test_results(content: str) -> tuple[int, int, int]:
-    passed = len(re.findall(r"Test #[0-9]+: .* Passed", content))
-    failed = len(re.findall(r"Test #[0-9]+: .* \*\*\*Failed", content))
-    skipped = len(re.findall(r"Test #[0-9]+: .* (\*\*\*Skipped|Skipped)", content))
+    passed = len(re.findall(r"Test\s+#[0-9]+: .* Passed", content))
+    failed = len(re.findall(r"Test\s+#[0-9]+: .* \*\*\*Failed", content))
+    skipped = len(re.findall(r"Test\s+#[0-9]+: .* (\*\*\*Skipped|Skipped)", content))
 
     if passed == 0 and failed == 0 and skipped == 0:
         passed = len(re.findall(r"^PASS", content, re.MULTILINE))
@@ -111,7 +111,7 @@ def _count_test_results(content: str) -> tuple[int, int, int]:
 def _failed_test_lines(content: str, limit: int = 20, max_len: int = 500) -> list[str]:
     lines: list[str] = []
     for line in content.splitlines():
-        if re.search(r"Test #[0-9]+: .* \*\*\*Failed|^FAIL", line):
+        if re.search(r"Test\s+#[0-9]+: .* \*\*\*Failed|^FAIL", line):
             lines.append(line[:max_len])
             if len(lines) >= limit:
                 break
@@ -273,6 +273,10 @@ def generate_comment(
     rendered = template.render(
         table=table,
         summary=summary,
+        artifact_warning={
+            "show": _env_flag(env, "ARTIFACT_DOWNLOAD_FAILED"),
+            "run_url": _sanitize_external_url(_env(env, "BUILD_RESULTS_URL")),
+        },
         precommit={
             "status": precommit_status,
             "details": precommit_details,

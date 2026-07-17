@@ -1,5 +1,7 @@
 # QGroundControl Build Configuration Summary
 
+include_guard(GLOBAL)
+
 string(TIMESTAMP QGC_CONFIGURE_TIME "%Y-%m-%d %H:%M:%S %Z")
 
 function(_qgc_kv _label _value)
@@ -106,7 +108,9 @@ message(STATUS "")
 message(STATUS "Qt & Python:")
 _qgc_kv("Qt version:         " "${Qt6_VERSION}")
 _qgc_kv("Qt location:        " "${Qt6_DIR}")
-_qgc_kv("Qt host path:       " "${QT_HOST_PATH}")
+if(DEFINED QT_HOST_PATH)
+    _qgc_kv("Qt host path:       " "${QT_HOST_PATH}")
+endif()
 _qgc_kv("Python:             " "${Python3_EXECUTABLE}")
 _qgc_kv("Python version:     " "${Python3_VERSION}")
 

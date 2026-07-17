@@ -20,7 +20,13 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
-__all__ = ["download_file", "download_with_retry", "run_with_retries"]
+__all__ = ["download_file", "download_with_retry", "read_url_text", "run_with_retries"]
+
+
+def read_url_text(url: str, *, timeout: int = 60, encoding: str = "utf-8") -> str:
+    """Fetch a small text response using the dependency-free CI HTTP boundary."""
+    with urllib.request.urlopen(urllib.request.Request(url), timeout=timeout) as resp:
+        return resp.read().decode(encoding)
 
 
 def run_with_retries(

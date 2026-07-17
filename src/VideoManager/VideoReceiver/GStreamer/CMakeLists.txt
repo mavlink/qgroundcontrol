@@ -169,4 +169,13 @@ if(MACOS AND GSTREAMER_LIB_PATH)
         BUILD_RPATH "${GSTREAMER_LIB_PATH}")
 endif()
 
+# Keep QGC-owned runtime payload separate from dependency development install
+# rules, which generally use CMake's default "Unspecified" component.
+set(_qgc_previous_install_component "${CMAKE_INSTALL_DEFAULT_COMPONENT_NAME}")
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Runtime)
 gstreamer_install_platform_sdk(${CMAKE_PROJECT_NAME})
+if(_qgc_previous_install_component)
+    set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "${_qgc_previous_install_component}")
+else()
+    unset(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME)
+endif()
