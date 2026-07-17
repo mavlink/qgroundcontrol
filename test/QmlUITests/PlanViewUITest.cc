@@ -1,13 +1,19 @@
 #include "PlanViewUITest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
+#include "AppSettings.h"
+#include "Fact.h"
+#include "PlanViewSettings.h"
 #include "QGCFileDialogController.h"
+#include "QGCMAVLink.h"
+#include "SettingsManager.h"
 
 UT_REGISTER_TEST(PlanViewUITest, TestLabel::Integration, TestLabel::MissionManager)
 
@@ -30,6 +36,114 @@ int PlanViewUITest::_missionItemCount()
         return -1;
     }
     return visualItems->property("count").toInt();
+}
+
+QGeoCoordinate PlanViewUITest::_plannedHomePosition()
+{
+    QQuickItem *planView = findVisibleItem(_rootItem, QStringLiteral("mainView_plan"));
+    if (!planView) {
+        return QGeoCoordinate();
+    }
+    QObject *missionController = planView->property("_missionController").value<QObject*>();
+    if (!missionController) {
+        return QGeoCoordinate();
+    }
+    return missionController->property("plannedHomePosition").value<QGeoCoordinate>();
+}
+
+void PlanViewUITest::_navigateToPlanAndCenterMap()
+{
+    QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")), "Failed to navigate to Plan view");
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_plan"), 2000), "Plan view did not appear");
+    QTest::qWait(_viewDelay);
+
+    // Position the map at a known location and reasonable zoom so map clicks
+    // are deterministic and offset clicks produce nearby waypoints.
+    QQuickItem *map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY2(map, "planView_map not found");
+    const QGeoCoordinate mapCenter(47.397742, 8.545594); // Zurich
+    map->setProperty("center", QVariant::fromValue(mapCenter));
+    map->setProperty("zoomLevel", 15.0);
+    QVERIFY2(waitForCondition(
+                 [&] {
+                     const QGeoCoordinate c = map->property("center").value<QGeoCoordinate>();
+                     return c.isValid() && (c.distanceTo(mapCenter) < 1.0)
+                         && qFuzzyCompare(map->property("zoomLevel").toReal(), 15.0);
+                 },
+                 1000),
+             "Map did not settle on the requested center/zoom");
+}
+
+void PlanViewUITest::_verifyWaypointToolAddsWaypointOnEmptyPlan(bool expectTakeoffButtonVisible)
+{
+    startUI();
+    if (QTest::currentTestFailed()) return;
+
+    _navigateToPlanAndCenterMap();
+    if (QTest::currentTestFailed()) return;
+
+    const QString takeoffBtn  = QStringLiteral("planToolStrip_takeoffButton");
+    const QString waypointBtn = QStringLiteral("planToolStrip_waypointButton");
+    const QString context     = QStringLiteral("waypoint on empty plan");
+
+    verifyVisibility(takeoffBtn, expectTakeoffButtonVisible, context);
+    if (QTest::currentTestFailed()) return;
+
+    // Home-position gate: Waypoint tool must be disabled until home is set
+    verifyEnabled(waypointBtn, false, context);
+    if (QTest::currentTestFailed()) return;
+
+    // Click map to set home position: plan stays empty
+    _clickMap(0.5, 0.5);
+    if (QTest::currentTestFailed()) return;
+
+    QVERIFY2(waitForCondition([&] { return _plannedHomePosition().isValid(); }, 2000,
+                              QStringLiteral("home position set")),
+             "Map click did not set home position");
+    QCOMPARE(_missionItemCount(), 1);
+
+    // Precondition that distinguishes this path from the takeoff-first flow:
+    // the Waypoint tool is enabled while the plan is still empty.
+    verifyEnabled(waypointBtn, true, context);
+    if (QTest::currentTestFailed()) return;
+
+    const QGeoCoordinate homePosition = _plannedHomePosition();
+
+    // Arm the Waypoint tool and click the map: must insert a waypoint, not move home
+    QVERIFY2(clickButton(waypointBtn), "Failed to click Waypoint button");
+    verifyChecked(waypointBtn, true, context);
+    if (QTest::currentTestFailed()) return;
+
+    _clickMap(0.35, 0.4);
+    if (QTest::currentTestFailed()) return;
+
+    QVERIFY2(waitForCondition([&] { return _missionItemCount() == 2; }, 2000,
+                              QStringLiteral("waypoint inserted")),
+             qPrintable(QStringLiteral("Map click with Waypoint tool armed did not insert a waypoint (item count %1)")
+                            .arg(_missionItemCount())));
+    QVERIFY2(_plannedHomePosition().distanceTo(homePosition) < 1.0,
+             "Map click with Waypoint tool armed moved the home position");
+}
+
+void PlanViewUITest::_testRoverWaypointOnEmptyPlan()
+{
+    // Rover has no takeoff item, so the Waypoint tool is the first insert tool
+    // available on an empty plan.
+    SettingsManager::instance()->appSettings()->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::VehicleClassRoverBoat);
+
+    _verifyWaypointToolAddsWaypointOnEmptyPlan(false /* expectTakeoffButtonVisible */);
+}
+
+void PlanViewUITest::_testTakeoffNotRequiredWaypointOnEmptyPlan()
+{
+    // Multi-rotor with "takeoff item not required": the Waypoint tool is
+    // enabled on an empty plan just like the rover case.
+    Fact* const takeoffItemNotRequired = SettingsManager::instance()->planViewSettings()->takeoffItemNotRequired();
+    const QVariant savedValue = takeoffItemNotRequired->rawValue();
+    const auto restoreGuard = qScopeGuard([takeoffItemNotRequired, savedValue] { takeoffItemNotRequired->setRawValue(savedValue); });
+    takeoffItemNotRequired->setRawValue(true);
+
+    _verifyWaypointToolAddsWaypointOnEmptyPlan(true /* expectTakeoffButtonVisible */);
 }
 
 void PlanViewUITest::_verifyFullState(const PlanUIState &state, const QString &context)
@@ -92,26 +206,8 @@ void PlanViewUITest::_testPlanViewStates()
     startUI();
     if (QTest::currentTestFailed()) return;
 
-    // Navigate to Plan view
-    QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")), "Failed to navigate to Plan view");
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_plan"), 2000), "Plan view did not appear");
-    QTest::qWait(_viewDelay);
-
-    // Position the map at a known location and reasonable zoom so map clicks
-    // are deterministic and offset clicks produce nearby waypoints.
-    QQuickItem *map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
-    QVERIFY2(map, "planView_map not found");
-    const QGeoCoordinate mapCenter(47.397742, 8.545594); // Zurich
-    map->setProperty("center", QVariant::fromValue(mapCenter));
-    map->setProperty("zoomLevel", 15.0);
-    QVERIFY2(waitForCondition(
-                 [&] {
-                     const QGeoCoordinate c = map->property("center").value<QGeoCoordinate>();
-                     return c.isValid() && (c.distanceTo(mapCenter) < 1.0)
-                         && qFuzzyCompare(map->property("zoomLevel").toReal(), 15.0);
-                 },
-                 1000),
-             "Map did not settle on the requested center/zoom");
+    _navigateToPlanAndCenterMap();
+    if (QTest::currentTestFailed()) return;
 
     const QString takeoffBtn  = QStringLiteral("planToolStrip_takeoffButton");
     const QString waypointBtn = QStringLiteral("planToolStrip_waypointButton");
