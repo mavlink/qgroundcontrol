@@ -63,6 +63,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _sendStatusText(_mockConfig->sendStatusText())
     , _enableCamera(_mockConfig->enableCamera())
     , _enableGimbal(_mockConfig->enableGimbal())
+    , _enableProximity(_mockConfig->enableProximity())
     , _failureMode(_mockConfig->failureMode())
     , _vehicleSystemId(_mockConfig->incrementVehicleId() ? _nextVehicleSystemId++ : static_cast<int>(_nextVehicleSystemId))
     , _vehicleLatitude(_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))
@@ -221,6 +222,10 @@ void MockLink::run1HzTasks()
 
     if (_enableGimbal) {
         _mockLinkGimbal->run1HzTasks();
+    }
+
+    if (_enableProximity) {
+        _sendDistanceSensors();
     }
 
     _sendEscInfo();
@@ -753,6 +758,53 @@ void MockLink::_sendVibration()
         3        // clipping_0
     );
     respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendDistanceSensors()
+{
+    // Simulated proximity sensor ring: one DISTANCE_SENSOR message per yaw orientation.
+    // Two orientations are deliberately never sent so the UI shows sectors with no data.
+    static constexpr MAV_SENSOR_ORIENTATION rgOrientations[] = {
+        MAV_SENSOR_ROTATION_NONE,
+        MAV_SENSOR_ROTATION_YAW_45,
+        MAV_SENSOR_ROTATION_YAW_90,
+        MAV_SENSOR_ROTATION_YAW_180,
+        MAV_SENSOR_ROTATION_YAW_270,
+        MAV_SENSOR_ROTATION_YAW_315,
+    };
+
+    static constexpr uint16_t minDistanceCm = 20;
+    static constexpr uint16_t maxDistanceCm = 4000;
+
+    const uint32_t timeBootMs = static_cast<uint32_t>(_runningTime.elapsed());
+    const float quaternion[4]{};
+
+    for (size_t i = 0; i < std::size(rgOrientations); i++) {
+        // Slow sweep between 5m and 35m, phase shifted per array entry so the arcs move independently
+        const double sweep = std::sin((timeBootMs / 5000.0) + (i * M_PI / 4));
+        const uint16_t currentDistanceCm = static_cast<uint16_t>(2000 + (1500 * sweep));
+
+        mavlink_message_t msg{};
+        (void) mavlink_msg_distance_sensor_pack_chan(
+            _vehicleSystemId,
+            _vehicleComponentId,
+            _outgoingMavlinkChannel,
+            &msg,
+            timeBootMs,
+            minDistanceCm,
+            maxDistanceCm,
+            currentDistanceCm,
+            MAV_DISTANCE_SENSOR_LASER,
+            static_cast<uint8_t>(i),        // id
+            rgOrientations[i],
+            255,                            // covariance - unknown
+            0.0f,                           // horizontal_fov - unknown
+            0.0f,                           // vertical_fov - unknown
+            quaternion,                     // valid only for MAV_SENSOR_ROTATION_CUSTOM
+            0                               // signal_quality - unknown
+        );
+        respondWithMavlinkMessage(msg);
+    }
 }
 
 void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
@@ -2230,59 +2282,60 @@ MockLink *MockLink::_startMockLink(MockConfiguration *mockConfig)
     return nullptr;
 }
 
-MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode, bool preloadMission)
+MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
     MockConfiguration *const mockConfig = new MockConfiguration(configName);
 
     mockConfig->setFirmwareType(firmwareType);
     mockConfig->setVehicleType(vehicleType);
-    mockConfig->setSendStatusText(sendStatusText);
-    mockConfig->setEnableCamera(enableCamera);
-    mockConfig->setEnableGimbal(enableGimbal);
+    mockConfig->setSendStatusText(options.testFlag(MockConfiguration::OptionSendStatusText));
+    mockConfig->setEnableCamera(options.testFlag(MockConfiguration::OptionEnableCamera));
+    mockConfig->setEnableGimbal(options.testFlag(MockConfiguration::OptionEnableGimbal));
+    mockConfig->setEnableProximity(options.testFlag(MockConfiguration::OptionEnableProximity));
+    mockConfig->setPreloadMission(options.testFlag(MockConfiguration::OptionPreloadMission));
     mockConfig->setFailureMode(failureMode);
-    mockConfig->setPreloadMission(preloadMission);
 
     return _startMockLink(mockConfig);
 }
 
-MockLink *MockLink::startPX4MockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startPX4MockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
-    return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, sendStatusText, enableCamera, enableGimbal, failureMode);
+    return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, options, failureMode);
 }
 
-MockLink *MockLink::startPX4MockLinkWithMission(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startPX4MockLinkWithMission(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
-    return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, sendStatusText, enableCamera, enableGimbal, failureMode, true /* preloadMission */);
+    return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, options | MockConfiguration::OptionPreloadMission, failureMode);
 }
 
-MockLink *MockLink::startGenericMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startGenericMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
-    return _startMockLinkWorker(QStringLiteral("Generic MockLink"), MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR, sendStatusText, enableCamera, enableGimbal, failureMode);
+    return _startMockLinkWorker(QStringLiteral("Generic MockLink"), MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR, options, failureMode);
 }
 
-MockLink *MockLink::startNoInitialConnectMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startNoInitialConnectMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
-    return _startMockLinkWorker(QStringLiteral("No Initial Connect MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC, sendStatusText, enableCamera, enableGimbal, failureMode);
+    return _startMockLinkWorker(QStringLiteral("No Initial Connect MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC, options, failureMode);
 }
 
-MockLink *MockLink::startAPMArduCopterMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startAPMArduCopterMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
-    return _startMockLinkWorker(QStringLiteral("ArduCopter MockLink"),MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_QUADROTOR, sendStatusText, enableCamera, enableGimbal, failureMode);
+    return _startMockLinkWorker(QStringLiteral("ArduCopter MockLink"),MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_QUADROTOR, options, failureMode);
 }
 
-MockLink *MockLink::startAPMArduPlaneMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startAPMArduPlaneMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
-    return _startMockLinkWorker(QStringLiteral("ArduPlane MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, sendStatusText, enableCamera, enableGimbal, failureMode);
+    return _startMockLinkWorker(QStringLiteral("ArduPlane MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, options, failureMode);
 }
 
-MockLink *MockLink::startAPMArduSubMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startAPMArduSubMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
-    return _startMockLinkWorker(QStringLiteral("ArduSub MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_SUBMARINE, sendStatusText, enableCamera, enableGimbal, failureMode);
+    return _startMockLinkWorker(QStringLiteral("ArduSub MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_SUBMARINE, options, failureMode);
 }
 
-MockLink *MockLink::startAPMArduRoverMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startAPMArduRoverMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
 {
-    return _startMockLinkWorker(QStringLiteral("ArduRover MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_GROUND_ROVER, sendStatusText, enableCamera, enableGimbal, failureMode);
+    return _startMockLinkWorker(QStringLiteral("ArduRover MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_GROUND_ROVER, options, failureMode);
 }
 
 void MockLink::_sendRCChannels()

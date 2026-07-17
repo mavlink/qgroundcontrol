@@ -135,7 +135,7 @@ void AppCloseWarningUITest::_testCloseWarningMatrix()
 
     if (connection) {
         mockLink = connectMockLinkAndWaitReady(
-            [] { return MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */); },
+            [] { return MockLink::startPX4MockLink(); },
             vehicle);
         if (!mockLink) {
             return;
@@ -205,7 +205,7 @@ void AppCloseWarningUITest::_testNoUnsavedMissionWarningForDownloadedMission()
     // the mission has been downloaded from the vehicle and the Plan view's
     // PlanMasterController has loaded it.
     runWithMockLink(
-        [] { return MockLink::startPX4MockLinkWithMission(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */); },
+        [] { return MockLink::startPX4MockLinkWithMission(); },
         [this](QPointer<MockLink> mockLink, Vehicle *vehicle) {
             Q_UNUSED(mockLink);
             Q_UNUSED(vehicle);
@@ -239,7 +239,7 @@ void AppCloseWarningUITest::_testNoUnsavedMissionWarningAfterSuccessfulUpload()
                      QRegularExpression(QStringLiteral("Offline Map Cache database has been upgraded")));
 
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */); },
+        [] { return MockLink::startPX4MockLink(); },
         [this](QPointer<MockLink> mockLink, Vehicle *vehicle) {
             Q_UNUSED(mockLink);
             Q_UNUSED(vehicle);
@@ -286,7 +286,7 @@ void AppCloseWarningUITest::_testNoUnsavedMissionWarningAfterSaveToFile()
     QVERIFY(tempDir.isValid());
 
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */); },
+        [] { return MockLink::startPX4MockLink(); },
         [this, &tempDir](QPointer<MockLink> mockLink, Vehicle *vehicle) {
             Q_UNUSED(mockLink);
             Q_UNUSED(vehicle);

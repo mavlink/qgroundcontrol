@@ -134,16 +134,16 @@ void VehicleTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::F
 
     switch (autopilot) {
         case MAV_AUTOPILOT_PX4:
-            _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */, failureMode);
+            _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, failureMode);
             break;
         case MAV_AUTOPILOT_ARDUPILOTMEGA:
-            _mockLink = MockLink::startAPMArduCopterMockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */, failureMode);
+            _mockLink = MockLink::startAPMArduCopterMockLink(MockConfiguration::OptionNone, failureMode);
             break;
         case MAV_AUTOPILOT_GENERIC:
-            _mockLink = MockLink::startGenericMockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */, failureMode);
+            _mockLink = MockLink::startGenericMockLink(MockConfiguration::OptionNone, failureMode);
             break;
         case MAV_AUTOPILOT_INVALID:
-            _mockLink = MockLink::startNoInitialConnectMockLink(false /* sendStatusText */, false /* enableCamera */, false /* enableGimbal */);
+            _mockLink = MockLink::startNoInitialConnectMockLink();
             break;
         default:
             QFAIL(qPrintable(QStringLiteral("Unsupported autopilot type: %1").arg(autopilot)));

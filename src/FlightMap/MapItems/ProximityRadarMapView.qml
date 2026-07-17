@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import QtLocation
 import QtPositioning
 
@@ -8,6 +9,7 @@ import QGroundControl.FlyView
 
 MapQuickItem {
     id:             _root
+    objectName:     "proximityRadarMapView"
     visible:        proximityValues.telemetryAvailable && coordinate.isValid
 
     property var    vehicle                                                         /// Vehicle object, undefined for ADSB vehicle
@@ -18,20 +20,56 @@ MapQuickItem {
     anchorPoint.y:  vehicleItem.height / 2
 
     property real   _ratio: 1
-    property real   _maxDistance:   isNaN(proximityValues.maxDistance)
+
+    // Density-independent stroke width for the sensor arcs and limit circle
+    readonly property real _strokeWidth: ScreenTools.defaultFontPixelHeight / 4
+
+    // Each of the 8 sensor sectors covers 45 degrees, centered on its rotation direction.
+    // Sector 0 is vehicle-forward, which is -90 degrees in PathAngleArc coordinates.
+    readonly property real _sectorSweepAngle:      360 / 8
+    readonly property real _firstSectorStartAngle: -90 - (_sectorSweepAngle / 2)
+
+    // Cap the rendered circle size to keep item geometry sane at deep zoom levels. The clamp only
+    // engages once the circle's rim is more than two viewport-widths from the vehicle, so the
+    // clamped (wrong-sized) portion is offscreen and never visible.
+    readonly property real _maximumDiameter: Math.max(map.width, map.height) * 4
 
     function calcSize() {
         var scaleLinePixelLength    = 100
         var leftCoord               = map.toCoordinate(Qt.point(0, 0), false /* clipToViewPort */)
         var rightCoord              = map.toCoordinate(Qt.point(scaleLinePixelLength, 0), false /* clipToViewPort */)
-        var scaleLineMeters         = Math.round(leftCoord.distanceTo(rightCoord))
-        _ratio = scaleLinePixelLength / scaleLineMeters;
+        var scaleLineMeters         = leftCoord.distanceTo(rightCoord)
+        if (!isFinite(scaleLineMeters) || scaleLineMeters <= 0) {
+            _ratio = 0
+            return
+        }
+        _ratio = scaleLinePixelLength / scaleLineMeters
+    }
+
+    function _clampedDiameter(requestedDiameter) {
+        if (!isFinite(requestedDiameter) || requestedDiameter < 0) {
+            return 0
+        }
+        return Math.min(requestedDiameter, _maximumDiameter)
+    }
+
+    function _sectorRadius(sectorIndex) {
+        var sectorDistance = proximityValues.rgRotationValues[sectorIndex]
+        // Clamp for the same reason as _clampedDiameter: keep geometry coordinates sane at deep zoom
+        return isNaN(sectorDistance) ? 0 : _clampedDiameter(sectorDistance * _ratio * 2) / 2
+    }
+
+    function _sectorColor(sectorIndex) {
+        return isNaN(proximityValues.rgRotationValues[sectorIndex]) ? Qt.rgba(0, 0, 0, 0) : Qt.rgba(1, 0, 0, 1)
+    }
+
+    function _sectorStartAngle(sectorIndex) {
+        return _firstSectorStartAngle + (sectorIndex * _sectorSweepAngle)
     }
 
     ProximityRadarValues {
         id:                     proximityValues
         vehicle:                _root.vehicle
-        onRotationValueChanged: vehicleSensors.requestPaint()
     }
 
     Connections {
@@ -57,7 +95,10 @@ MapQuickItem {
 
         Component.onCompleted: calcSize()
 
-        Canvas{
+        // Sensor arcs are drawn with Shape rather than Canvas since Shape renders as scene graph
+        // geometry and doesn't require a backing store allocation which scales with item size.
+        // Each 45 degree sector is centered on its rotation direction: sector 0 is vehicle-forward.
+        Shape {
             id:                 vehicleSensors
             anchors.fill:       detectionLimitCircle
 
@@ -67,38 +108,39 @@ MapQuickItem {
                 angle:          isNaN(heading) ? 0 : heading
             }
 
-            function deg2rad(degrees) {
-                var pi = Math.PI;
-                return degrees * (pi/180);
-            }
+            // ShapePath is not an Item so a Repeater can't be used; an Instantiator which appends
+            // to the Shape's data list creates the equivalent of one ShapePath per sensor sector.
+            Instantiator {
+                model: 8
 
-            onPaint: {
-                var ctx = getContext("2d");
-                ctx.reset();
-                ctx.translate(width/2, height/2)
-                ctx.rotate(-Math.PI/2);
-                ctx.lineWidth = 5;
-                ctx.strokeStyle = Qt.rgba(1, 0, 0, 1);
-                for(var i=0; i<proximityValues.rgRotationValues.length; i++){
-                    var rotationValue = proximityValues.rgRotationValues[i]
-                    if (!isNaN(rotationValue)) {
-                        var a=deg2rad(360-22.5)+Math.PI/4*i;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, rotationValue * _ratio, a, a + Math.PI/4,false);
-                        ctx.stroke();
+                delegate: ShapePath {
+                    required property int index
+
+                    strokeColor:    _sectorColor(index)
+                    strokeWidth:    _strokeWidth
+                    fillColor:      "transparent"
+
+                    PathAngleArc {
+                        centerX:    vehicleSensors.width  / 2
+                        centerY:    vehicleSensors.height / 2
+                        radiusX:    _sectorRadius(index)
+                        radiusY:    radiusX
+                        startAngle: _sectorStartAngle(index)
+                        sweepAngle: _sectorSweepAngle
                     }
                 }
+
+                onObjectAdded: (index, object) => vehicleSensors.data.push(object)
             }
         }
 
         Rectangle {
             id:                 detectionLimitCircle
-            width:              proximityValues.maxDistance * 2 *_ratio
-            height:             proximityValues.maxDistance * 2 *_ratio
-            anchors.fill:       detectionLimitCircle
+            width:              _clampedDiameter(proximityValues.maxDistance * 2 * _ratio)
+            height:             width
             color:              Qt.rgba(1,1,1,0)
             border.color:       Qt.rgba(1,1,1,1)
-            border.width:       5
+            border.width:       _strokeWidth
             radius:             width * 0.5
 
             transform: Rotation {
