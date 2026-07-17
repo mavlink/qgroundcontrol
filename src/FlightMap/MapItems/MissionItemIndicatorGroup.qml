@@ -14,10 +14,11 @@ Item {
     required property FlightMap map
     required property QmlObjectListModel missionItems
 
+    readonly property real groupingDistance: _mediumIndicatorRadius
+
     readonly property real _smallIndicatorRadius: _oddCeil((ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) / 2)
     readonly property real _largeIndicatorRadius: _oddCeil(ScreenTools.defaultFontPixelHeight * 0.66)
     readonly property real _mediumIndicatorRadius: _oddCeil(((_smallIndicatorRadius * 2) + _largeIndicatorRadius) / 3)
-    readonly property real _groupingDistance: _mediumIndicatorRadius
     readonly property var _groupingState: {
         const state = []
         const count = missionItems ? missionItems.count : 0
@@ -133,8 +134,8 @@ Item {
         const cells = {}
         const groups = []
         for (const entry of entries) {
-            const cellX = Math.floor(entry.point.x / _groupingDistance)
-            const cellY = Math.floor(entry.point.y / _groupingDistance)
+            const cellX = Math.floor(entry.point.x / groupingDistance)
+            const cellY = Math.floor(entry.point.y / groupingDistance)
             let closestGroup = null
             let closestDistanceSquared = Infinity
 
@@ -145,7 +146,7 @@ Item {
                         const deltaX = entry.point.x - group.point.x
                         const deltaY = entry.point.y - group.point.y
                         const distanceSquared = (deltaX * deltaX) + (deltaY * deltaY)
-                        if (distanceSquared <= _groupingDistance * _groupingDistance
+                        if (distanceSquared <= groupingDistance * groupingDistance
                                 && (distanceSquared < closestDistanceSquared
                                     || (distanceSquared === closestDistanceSquared
                                         && group.representative.sequenceNumber < closestGroup.representative.sequenceNumber))) {
@@ -311,7 +312,7 @@ Item {
     }
 
     on_GroupingStateChanged: _scheduleRegroup()
-    on_GroupingDistanceChanged: _scheduleRegroup()
+    onGroupingDistanceChanged: _scheduleRegroup()
     onMapChanged: _scheduleRegroup()
     onMissionItemsChanged: _scheduleRegroup()
 
