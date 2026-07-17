@@ -51,9 +51,12 @@ private slots:
 private:
     static QString _secondsToHMS(uint32_t seconds);
 
+    /// Sentinel for _playheadSecs meaning "no playhead yet", so a t=0 update is never deduped
+    static constexpr int64_t kNoPlayhead = -1;
+
     bool _isPlaying = false;
     qreal _percentComplete = 0;
-    uint32_t _playheadSecs = 0;
+    int64_t _playheadSecs = kNoPlayhead;
     qreal _playbackSpeed = 1;
     QString _playheadTime;
     QString _totalTime;

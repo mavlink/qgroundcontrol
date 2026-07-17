@@ -110,10 +110,22 @@ QGCCameraManager::~QGCCameraManager()
     qDeleteAll(_cameraInfoRequest);
     _cameraInfoRequest.clear();
 
+    qDeleteAll(_cameraInfoContexts);
+    _cameraInfoContexts.clear();
+
     // Stop the main heartbeat timer
     _camerasLostHeartbeatTimer.stop();
 
     qCDebug(CameraManagerLog) << this;
+}
+
+QGCCameraManager::CameraInfoRequestContext* QGCCameraManager::cameraInfoContext(uint8_t compId)
+{
+    CameraInfoRequestContext*& context = _cameraInfoContexts[compId];
+    if (!context) {
+        context = new CameraInfoRequestContext{this, compId};
+    }
+    return context;
 }
 
 void QGCCameraManager::setCurrentCamera(int sel)
@@ -505,9 +517,28 @@ void QGCCameraManager::_handleTrackingImageStatus(const mavlink_message_t &messa
 
 static void _handleCameraInfoRetry(QGCCameraManager::CameraStruct *cameraInfo);
 
+/// Resolves the opaque callback context back to the live CameraStruct. Returns nullptr
+/// if the manager is gone or the camera was removed while the request was in flight.
+static QGCCameraManager::CameraStruct* _cameraStructFromContext(void *resultHandlerData)
+{
+    auto *context = static_cast<QGCCameraManager::CameraInfoRequestContext*>(resultHandlerData);
+    if (!context->manager) {
+        return nullptr;
+    }
+
+    QGCCameraManager::CameraStruct *cameraInfo = context->manager->findCameraStruct(context->compID);
+    if (!cameraInfo) {
+        qCDebug(CameraManagerLog) << "Camera info request callback for removed camera. compId" << QGCMAVLink::compIdToString(context->compID);
+    }
+    return cameraInfo;
+}
+
 static void _requestCameraInfoCommandResultHandler(void *resultHandlerData, int /*compId*/, const mavlink_command_ack_t &ack, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
-    auto *cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
+    QGCCameraManager::CameraStruct *cameraInfo = _cameraStructFromContext(resultHandlerData);
+    if (!cameraInfo) {
+        return;
+    }
 
     if (ack.result != MAV_RESULT_ACCEPTED) {
         qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_CAMERA_INFORMATION failed. compId" << QGCMAVLink::compIdToString(cameraInfo->compID)
@@ -520,7 +551,10 @@ static void _requestCameraInfoCommandResultHandler(void *resultHandlerData, int 
 
 static void _requestCameraInfoMessageResultHandler(void *resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, [[maybe_unused]] const mavlink_message_t &message)
 {
-    auto *cameraInfo = static_cast<QGCCameraManager::CameraStruct*>(resultHandlerData);
+    QGCCameraManager::CameraStruct *cameraInfo = _cameraStructFromContext(resultHandlerData);
+    if (!cameraInfo) {
+        return;
+    }
 
     if (result != MAV_RESULT_ACCEPTED) {
         qCDebug(CameraManagerLog) << "MAV_CMD_REQUEST_MESSAGE:MAVLINK_MSG_ID_CAMERA_INFORMATION failed. compId" << QGCMAVLink::compIdToString(cameraInfo->compID)
@@ -542,13 +576,13 @@ static void _requestCameraInfoHelper(QGCCameraManager *manager, QGCCameraManager
     // Alternate between REQUEST_MESSAGE and REQUEST_CAMERA_INFORMATION
     if ((pInfo->retryCount % 2) == 0) {
         qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_MESSAGE:CAMERA_INFORMATION for compId" << QGCMAVLink::compIdToString(pInfo->compID);
-        manager->vehicle()->requestMessage(_requestCameraInfoMessageResultHandler, pInfo, pInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
+        manager->vehicle()->requestMessage(_requestCameraInfoMessageResultHandler, manager->cameraInfoContext(pInfo->compID), pInfo->compID, MAVLINK_MSG_ID_CAMERA_INFORMATION);
     } else {
         qCDebug(CameraManagerLog) << "Using MAV_CMD_REQUEST_CAMERA_INFORMATION for compId" << QGCMAVLink::compIdToString(pInfo->compID);
 
         Vehicle::MavCmdAckHandlerInfo_t ackHandlerInfo{};
         ackHandlerInfo.resultHandler        = _requestCameraInfoCommandResultHandler;
-        ackHandlerInfo.resultHandlerData    = pInfo;
+        ackHandlerInfo.resultHandlerData    = manager->cameraInfoContext(pInfo->compID);
         ackHandlerInfo.progressHandler      = nullptr;
         ackHandlerInfo.progressHandlerData  = nullptr;
 

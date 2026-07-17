@@ -438,8 +438,18 @@ void MavCommandQueue::_responseTimeoutCheck()
         return;
     }
 
-    // Walk the list backwards since _sendFromList can remove entries
+    // Walk the list backwards since _sendFromList can remove entries. Give-up result
+    // handlers invoked from _sendFromList can also re-enter the queue and remove or
+    // clear entries (e.g. closing the vehicle from within the callback), so re-validate
+    // the stop flag and index on every iteration.
     for (int i = _list.count() - 1; i >= 0; i--) {
+        if (_stopped) {
+            return;
+        }
+        if (i >= _list.count()) {
+            i = _list.count();  // Handler removed entries below us, clamp (loop decrement follows)
+            continue;
+        }
         MavCommandListEntry_t& commandEntry = _list[i];
         if (commandEntry.elapsedTimer.elapsed() > commandEntry.ackTimeoutMSecs) {
             // Try sending command again
