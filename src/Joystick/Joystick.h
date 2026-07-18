@@ -445,6 +445,7 @@ private:
 
     void _executeButtonAction(const QString &action, const ButtonEvent_t buttonEvent);
     int  _findAvailableButtonActionIndex(const QString &action);
+    void _addAvailableButtonActionIfMissing(const QString &action);
     bool _validAxis(int axis) const;
     bool _validButton(int button) const;
     void _handleAxis();
