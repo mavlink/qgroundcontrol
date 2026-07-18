@@ -10,7 +10,7 @@
 },
 {
     "name":             "rpm",
-    "shortDesc":        "Rotation Per Minute",
+    "shortDesc":        "RPM",
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null
