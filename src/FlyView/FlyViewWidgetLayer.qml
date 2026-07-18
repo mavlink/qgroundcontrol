@@ -92,6 +92,13 @@ Item {
         rallyPointController:   _rallyPointController
     }
 
+    // Prevent the map's PinchHandler from stealing touch grabs from the joystick pads (issue #13450)
+    Binding {
+        target:   mapControl
+        property: "pinchZoomDisabledByVirtualJoysticks"
+        value:    virtualJoystickMultiTouch.visible && virtualJoystickMultiTouch.item && virtualJoystickMultiTouch.item.stickActive
+    }
+
     //-- Virtual Joystick
     Loader {
         id:                         virtualJoystickMultiTouch
