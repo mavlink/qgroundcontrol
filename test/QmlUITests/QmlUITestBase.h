@@ -75,7 +75,9 @@ protected:
     static QQuickItem *findVisibleItem(QQuickItem *root, const QString &objectName, int timeoutMs = 1000);
 
     /// Click the visible QQuickItem with \a objectName in the current window.
-    /// Returns false if the item cannot be found.
+    /// Waits for the item's scene position to settle before clicking and fails
+    /// the test if the click point lies outside the window. Returns false if
+    /// the item cannot be found or cannot be clicked.
     bool clickButton(const QString &objectName);
 
     /// Click the visible QQuickItem with \a objectName at a fractional position
@@ -145,9 +147,17 @@ protected:
     bool verifyVisibility(const QString &objectName, bool expectedVisible, const QString &context);
 
     /// Scroll the QQuickFlickable identified by \a flickableObjectName so that
-    /// \a item's centre is fully visible inside the flickable. Does nothing if
-    /// \a item is already visible or if the flickable cannot be found.
-    void scrollIntoView(QQuickItem *item, const QString &flickableObjectName);
+    /// \a item's centre is fully visible inside the flickable. Fails the test
+    /// and returns false if the item never settles inside the flickable's
+    /// clickable region; returns false without failing if \a item is null or
+    /// the flickable cannot be found.
+    bool scrollIntoView(QQuickItem *item, const QString &flickableObjectName);
+
+    /// Shared click implementation: waits for the item's mapped scene position to
+    /// settle (positioners/animations may still be moving a freshly-visible item),
+    /// verifies the click point is inside the window, then clicks. Fails the test
+    /// and returns false if the point never lands inside the window.
+    bool _clickItemAt(QQuickItem *item, qreal fractionX, qreal fractionY, const QString &objectName);
 
     /// Convenience wrapper: boots the UI, connects a MockLink, runs \a body
     /// with the active MockLink and Vehicle, then tears down in the correct
