@@ -3,6 +3,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
+#include <QtCore/QtMath>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QVariant>
@@ -232,8 +233,66 @@ bool QmlUITestBase::clickButton(const QString &objectName)
     if (!btn) {
         return false;
     }
-    const QPointF center = btn->mapToScene(QPointF(btn->width() / 2, btn->height() / 2));
-    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
+    return _clickItemAt(btn, 0.5, 0.5, objectName);
+}
+
+bool QmlUITestBase::_clickItemAt(QQuickItem *item, qreal fractionX, qreal fractionY, const QString &objectName)
+{
+    const QPointer<QQuickItem> guarded(item);
+
+    // A freshly-visible item can report a stale position: positioners lay out
+    // their children in a polish pass that has not necessarily run yet (e.g. layer
+    // switcher choices fading in inside a RightToLeft Row report the Row origin
+    // until polished). Clicking a stale position silently lands on the wrong item.
+    // Flush pending polish up the ancestor chain, then require the mapped scene
+    // position to be identical across two consecutive event-loop passes so
+    // animated reflows have finished too.
+    const auto scenePoint = [&]() -> QPointF {
+        for (QQuickItem *ancestor = guarded; ancestor; ancestor = ancestor->parentItem()) {
+            ancestor->ensurePolished();
+        }
+        return guarded->mapToScene(QPointF(guarded->width() * fractionX, guarded->height() * fractionY));
+    };
+    QPointF lastPos(qQNaN(), qQNaN());
+    const bool settled = waitForCondition(
+        [&] {
+            if (!guarded) {
+                return false;
+            }
+            const QPointF pos = scenePoint();
+            const bool stable = (pos == lastPos);
+            lastPos = pos;
+            return stable;
+        },
+        TestTimeout::shortMs(),
+        QStringLiteral("%1 position settled").arg(objectName));
+    if (!guarded) {
+        QTest::qFail(qPrintable(QStringLiteral("%1 destroyed while waiting to click it").arg(objectName)),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    if (!settled) {
+        return false; // waitForCondition already logged the timeout
+    }
+
+    // QTest::mouseClick warns and drops clicks outside the window (valid range is
+    // 0..width-1 / 0..height-1); a centre exactly on the bottom edge is outside.
+    // Fail loudly here instead of letting the dropped click surface as an
+    // unrelated failure (or silent no-op) later in the test. Validate in
+    // floating-point space and convert by truncation: rounding could push an
+    // in-window position like x=799.6 in an 800px window to the invalid x=800.
+    const QPointF scenePos = scenePoint();
+    if (scenePos.x() < 0 || scenePos.x() >= _window->width()
+        || scenePos.y() < 0 || scenePos.y() >= _window->height()) {
+        QTest::qFail(qPrintable(QStringLiteral("%1 click point (%2, %3) is outside the window (%4x%5)")
+                                    .arg(objectName).arg(scenePos.x()).arg(scenePos.y())
+                                    .arg(_window->width()).arg(_window->height())),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    const QPoint clickPoint(qFloor(scenePos.x()), qFloor(scenePos.y()));
+
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, clickPoint);
     return true;
 }
 
@@ -252,9 +311,7 @@ bool QmlUITestBase::clickItemFraction(const QString &objectName, qreal fractionX
     if (!item) {
         return false;
     }
-    const QPointF scenePos = item->mapToScene(QPointF(item->width() * fractionX, item->height() * fractionY));
-    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, scenePos.toPoint());
-    return true;
+    return _clickItemAt(item, fractionX, fractionY, objectName);
 }
 
 QQuickItem *QmlUITestBase::findVisibleItemScrolled(const QString &objectName, const QString &flickableObjectName)
@@ -262,8 +319,7 @@ QQuickItem *QmlUITestBase::findVisibleItemScrolled(const QString &objectName, co
     // Fast path: delegate already instantiated somewhere in the visual tree
     QQuickItem *item = findVisibleItem(_rootItem, objectName, 500);
     if (item) {
-        scrollIntoView(item, flickableObjectName);
-        return item;
+        return scrollIntoView(item, flickableObjectName) ? item : nullptr;
     }
 
     QQuickItem *flickable = findVisibleItem(_rootItem, flickableObjectName);
@@ -287,8 +343,7 @@ QQuickItem *QmlUITestBase::findVisibleItemScrolled(const QString &objectName, co
         flickable->setProperty("contentY", clampedY);
         item = findVisibleItem(_rootItem, objectName, 100);
         if (item) {
-            scrollIntoView(item, flickableObjectName);
-            return item;
+            return scrollIntoView(item, flickableObjectName) ? item : nullptr;
         }
         if (clampedY >= maxContentY) {
             break;
@@ -471,49 +526,77 @@ bool QmlUITestBase::verifyText(const QString &objectName, const QString &expecte
     return _verifyItemProperty(objectName, "text", expectedText, context);
 }
 
-void QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObjectName)
+bool QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObjectName)
 {
     if (!item || !_rootItem || !_window) {
-        return;
+        return false;
     }
 
     QQuickItem *flickable = findVisibleItem(_rootItem, flickableObjectName);
     if (!flickable) {
-        return;
+        return false;
     }
 
-    // Check whether the item's centre is already within the flickable's visible viewport.
-    const QPointF sceneCenter        = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
-    const QPointF flickableScenePos  = flickable->mapToScene(QPointF(0, 0));
-    const QRectF  flickableViewport(flickableScenePos, QSizeF(flickable->width(), flickable->height()));
-    if (flickableViewport.contains(sceneCenter)) {
-        return; // already within the flickable's clip region
+    // Scroll until the item's centre sits inside the flickable's clickable region
+    // and stays there. A single scroll is not enough: expand/collapse reflows and
+    // pending polish passes can shift content after contentY is applied (a row that
+    // was centred can end up hanging past the window edge where clicks are dropped).
+    // Each poll flushes polish, re-checks containment, and re-issues the scroll if
+    // the item has drifted out again; success requires the centre to be stable in
+    // the clickable region across two consecutive event-loop passes.
+    //
+    // The clickable region is the viewport clipped to the window, inset by 1px
+    // because QRectF::contains includes edges: a centre exactly on the window's
+    // bottom edge (y == height) maps to a click outside the window's valid
+    // 0..height-1 range.
+    const QPointer<QQuickItem> guardedItem(item);
+    const QPointer<QQuickItem> guardedFlickable(flickable);
+    QPointF lastCenter(qQNaN(), qQNaN());
+    const bool settled = waitForCondition(
+        [&] {
+            if (!guardedItem || !guardedFlickable) {
+                return false;
+            }
+            for (QQuickItem *ancestor = guardedItem; ancestor; ancestor = ancestor->parentItem()) {
+                ancestor->ensurePolished();
+            }
+            const QPointF sceneCenter =
+                guardedItem->mapToScene(QPointF(guardedItem->width() / 2, guardedItem->height() / 2));
+            const QRectF flickableViewport(guardedFlickable->mapToScene(QPointF(0, 0)),
+                                           QSizeF(guardedFlickable->width(), guardedFlickable->height()));
+            const QRectF windowRect(0, 0, _window->width(), _window->height());
+            const QRectF clickableViewport = flickableViewport.intersected(windowRect).adjusted(1, 1, -1, -1);
+
+            const bool stable = (sceneCenter == lastCenter);
+            lastCenter = sceneCenter;
+            if (clickableViewport.contains(sceneCenter)) {
+                return stable;
+            }
+
+            // mapToItem gives a viewport-relative position (already offset by contentY).
+            // Add current contentY to get the absolute content-space position, then
+            // target a contentY that centres the item in the flickable.
+            const QPointF itemInFlickable = guardedItem->mapToItem(guardedFlickable, QPointF(0, 0));
+            const double currentContentY = guardedFlickable->property("contentY").toDouble();
+            const double absoluteY = itemInFlickable.y() + currentContentY;
+            const double targetY = absoluteY + guardedItem->height() / 2.0 - guardedFlickable->height() / 2.0;
+            const double maxContentY =
+                guardedFlickable->property("contentHeight").toDouble() - guardedFlickable->height();
+            guardedFlickable->setProperty("contentY", qBound(0.0, targetY, qMax(0.0, maxContentY)));
+            return false;
+        },
+        TestTimeout::shortMs(),
+        QStringLiteral("scrollIntoView settled"));
+    if (!settled) {
+        // Record a test failure (as the pre-refactor QTRY_VERIFY_WITH_TIMEOUT did)
+        // rather than letting a click on a still-clipped item surface as a
+        // harder-to-diagnose failure later in the test.
+        QTest::qFail(qPrintable(QStringLiteral("scrollIntoView: item never settled inside flickable %1")
+                                    .arg(flickableObjectName)),
+                     __FILE__, __LINE__);
+        return false;
     }
-
-    // mapToItem gives a viewport-relative position (already offset by contentY).
-    // Add current contentY to get the absolute content-space position.
-    const QPointF itemInFlickable = item->mapToItem(flickable, QPointF(0, 0));
-    const double currentContentY = flickable->property("contentY").toDouble();
-    const double absoluteY = itemInFlickable.y() + currentContentY;
-    // Target contentY that places the item's centre in the middle of the flickable.
-    const double targetY = absoluteY + item->height() / 2.0 - flickable->height() / 2.0;
-    const double maxContentY = flickable->property("contentHeight").toDouble() - flickable->height();
-    const double clampedTargetY = qBound(0.0, targetY, qMax(0.0, maxContentY));
-    flickable->setProperty("contentY", clampedTargetY);
-
-    // Wait for the flickable to apply the new contentY and re-lay-out the item, so callers
-    // that immediately query/click the item see it at its scrolled position. The observable
-    // condition is that the item's scene centre now falls inside the flickable viewport, or
-    // contentY settled at its clamped target when the item can't be fully centred.
-    QTRY_VERIFY_WITH_TIMEOUT(
-        ([&] {
-            const QPointF center = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
-            const QRectF viewport(flickable->mapToScene(QPointF(0, 0)),
-                                  QSizeF(flickable->width(), flickable->height()));
-            return viewport.contains(center)
-                || qFuzzyCompare(flickable->property("contentY").toDouble() + 1.0, clampedTargetY + 1.0);
-        }()),
-        TestTimeout::shortMs());
+    return true;
 }
 
 void QmlUITestBase::runWithMockLink(
