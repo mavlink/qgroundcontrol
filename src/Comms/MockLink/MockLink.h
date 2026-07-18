@@ -96,6 +96,9 @@ public:
     /// Returns the filename for the simulated log file. Only available after a download is requested.
     QString logDownloadFile() const { return _logDownloadFilename; }
 
+    /// Vehicle-side channel used to encode outgoing (mock vehicle -> QGC) messages. Signing state lives here.
+    uint8_t outgoingMavlinkChannel() const { return _outgoingMavlinkChannel; }
+
     void clearReceivedMavCommandCounts() { _receivedMavCommandCountMap.clear(); _receivedMavCommandByCompCountMap.clear(); _receivedRequestMessageByCompAndMsgCountMap.clear(); }
     int receivedMavCommandCount(MAV_CMD command) const { return _receivedMavCommandCountMap.value(command, 0); }
     int receivedMavCommandCount(MAV_CMD command, int compId) const { return _receivedMavCommandByCompCountMap.value(command).value(compId, 0); }

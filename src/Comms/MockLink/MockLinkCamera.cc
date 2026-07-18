@@ -78,7 +78,7 @@ void MockLinkCamera::sendCameraHeartbeats()
         (void) mavlink_msg_heartbeat_pack_chan(
             _mockLink->vehicleId(),
             _cameras[i].compId,
-            _mockLink->mavlinkChannel(),
+            _mockLink->outgoingMavlinkChannel(),
             &msg,
             MAV_TYPE_CAMERA,
             MAV_AUTOPILOT_INVALID,
@@ -540,7 +540,7 @@ void MockLinkCamera::_sendCameraInformation(uint8_t compId)
     (void) mavlink_msg_camera_information_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         0,                                              // time_boot_ms
         vendorName,
@@ -573,7 +573,7 @@ void MockLinkCamera::_sendCameraSettings(uint8_t compId)
     (void) mavlink_msg_camera_settings_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         0,                  // time_boot_ms
         cam->cameraMode,    // mode_id
@@ -596,7 +596,7 @@ void MockLinkCamera::_sendStorageInformation(uint8_t compId)
     (void) mavlink_msg_storage_information_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         0,                                      // time_boot_ms
         1,                                      // storage_id
@@ -626,7 +626,7 @@ void MockLinkCamera::_sendCameraCaptureStatus(uint8_t compId)
     (void) mavlink_msg_camera_capture_status_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         0,                                              // time_boot_ms
         cam->image_status,                              // image_status (ImageCaptureStatus enum)
@@ -664,7 +664,7 @@ void MockLinkCamera::_sendCameraImageCaptured(uint8_t compId)
     (void) mavlink_msg_camera_image_captured_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         0,                                              // time_boot_ms
         0,                                              // time_utc
@@ -698,7 +698,7 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
     (void) mavlink_msg_video_stream_information_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         streamId,                               // stream_id
         kNumStreams,                            // count
@@ -725,7 +725,7 @@ void MockLinkCamera::_sendVideoStreamStatus(uint8_t compId, uint8_t streamId)
     (void) mavlink_msg_video_stream_status_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         streamId,                               // stream_id
         VIDEO_STREAM_STATUS_FLAGS_RUNNING,      // flags
@@ -752,7 +752,7 @@ void MockLinkCamera::_sendCameraTrackingImageStatus(uint8_t compId)
     (void) mavlink_msg_camera_tracking_image_status_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         CAMERA_TRACKING_STATUS_FLAGS_ACTIVE,    // tracking_status
         cam->trackingMode,                      // tracking_mode
@@ -774,7 +774,7 @@ void MockLinkCamera::_sendCommandAck(uint8_t compId, uint16_t command, uint8_t r
     (void) mavlink_msg_command_ack_pack_chan(
         _mockLink->vehicleId(),
         compId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         command,
         result,
