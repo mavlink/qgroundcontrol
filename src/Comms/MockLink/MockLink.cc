@@ -1296,17 +1296,30 @@ float MockLink::_floatUnionForParam(int componentId, const QString &paramName)
 
 uint32_t MockLink::_computeParamHash(int componentId) const
 {
-    // Volatile parameters are excluded from the hash, matching PX4 firmware and ParameterManager::_tryCacheHashLoad
-    static const QStringList volatileParams = {
-        QStringLiteral("COM_FLIGHT_UUID"),
-        QStringLiteral("EKF2_MAGBIAS_X"),
-        QStringLiteral("EKF2_MAGBIAS_Y"),
-        QStringLiteral("EKF2_MAGBIAS_Z"),
-        QStringLiteral("EKF2_MAG_DECL"),
-        QStringLiteral("LND_FLIGHT_T_HI"),
-        QStringLiteral("LND_FLIGHT_T_LO"),
-        QStringLiteral("SYS_RESTART_TYPE"),
-    };
+    // Volatile parameters are excluded from the hash, matching PX4 firmware and
+    // ParameterManager::_tryCacheHashLoad. The list comes from the same metadata
+    // json served to QGC so the two sides always agree.
+    static const QSet<QString> volatileParams = []() {
+        QSet<QString> volatiles;
+        QFile metaDataFile(QStringLiteral(":/MockLink/Parameter.MetaData.json"));
+        if (metaDataFile.open(QFile::ReadOnly)) {
+            QJsonParseError parseError{};
+            const QJsonDocument doc = QJsonDocument::fromJson(metaDataFile.readAll(), &parseError);
+            if (parseError.error != QJsonParseError::NoError) {
+                qCWarning(MockLinkLog) << "Unable to parse parameter metadata for volatile param list:" << parseError.errorString();
+            }
+            const QJsonArray parameters = doc.object().value(QStringLiteral("parameters")).toArray();
+            for (const QJsonValue &parameter : parameters) {
+                const QJsonObject paramObject = parameter.toObject();
+                if (paramObject.value(QStringLiteral("volatile")).toBool()) {
+                    volatiles.insert(paramObject.value(QStringLiteral("name")).toString());
+                }
+            }
+        } else {
+            qCWarning(MockLinkLog) << "Unable to open parameter metadata for volatile param list" << metaDataFile.fileName();
+        }
+        return volatiles;
+    }();
 
     uint32_t crc = 0;
     const auto &params = _mapParamName2Value[componentId];
@@ -2726,7 +2739,7 @@ void MockLink::_sendGeneralMetaData()
         _outgoingMavlinkChannel,
         &responseMsg,
         0, // time_boot_ms
-        100, // general_metadata_file_crc
+        25436021, // general_metadata_file_crc (crc32 of General.MetaData.json)
         metaDataURI
     );
     respondWithMavlinkMessage(responseMsg);
