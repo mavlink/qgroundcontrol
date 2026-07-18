@@ -20,4 +20,5 @@ private slots:
     void _testSigningPendingState();
     void _testSigningStatusChangedSignalFiresOnEnable();
     void _testEnableDisableReEnableCycle();
+    void _testMissionTransferWithSigningEnabled();
 };

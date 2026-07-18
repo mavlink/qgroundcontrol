@@ -545,7 +545,7 @@ void MockLinkFTP::_sendResponse(uint8_t targetSystemId, uint8_t targetComponentI
     (void) mavlink_msg_file_transfer_protocol_pack_chan(
         _systemIdServer,                    // System ID
         _componentIdServer,                 // Component ID
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &_lastReply,                        // Mavlink Message to pack into
         0,                                  // Target network
         targetSystemId,
