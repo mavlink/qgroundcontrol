@@ -63,7 +63,7 @@
 },
 {
     "name":             "runtime",
-    "shortDesc":        "runtime",
+    "shortDesc":        "Runtime",
     "type":             "uint32",
     "units":            "sec"
 },
