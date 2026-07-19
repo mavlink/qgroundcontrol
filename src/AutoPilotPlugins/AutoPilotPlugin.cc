@@ -1,12 +1,9 @@
 #include "AutoPilotPlugin.h"
 #include "FirmwarePlugin.h"
 #include "AppMessages.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
-
-#include <QtCore/QCoreApplication>
 
 QGC_LOGGING_CATEGORY(AutoPilotPluginLog, "AutoPilotPlugins.AutoPilotPlugin");
 
@@ -60,10 +57,7 @@ void AutoPilotPlugin::parametersReadyPreChecks()
     }
 
     if (!_setupComplete) {
-        // Take the user to Vehicle Config Summary
-        qgcApp()->showVehicleConfig();
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-        QGC::showAppMessage(tr("One or more vehicle components require setup prior to flight."));
+        QGC::showAppMessage(tr("Configuration tasks remain before this vehicle is ready to fly. See Vehicle Configuration for details."));
     }
 }
 
