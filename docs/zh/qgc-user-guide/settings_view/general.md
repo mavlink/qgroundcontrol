@@ -100,7 +100,7 @@ The settings are:
 
 - **引导最小高度**：引导操作高度滑块的最小值。
 
-- **引导最大高度**：引导操作高度滑块的最大值。
+- **Guided Maximum Altitude**: Maximum value for guided actions altitude slider.
 
 - 计划视图 {#plan_view}
 

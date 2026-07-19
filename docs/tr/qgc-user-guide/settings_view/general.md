@@ -99,7 +99,7 @@ The settings are:
 
 - **Guided Minimum Altitude**: Minimum value for guided actions altitude slider.
 
-- **Guided Maximum Altitude**: Minimum value for guided actions altitude slider.
+- **Guided Maximum Altitude**: Maximum value for guided actions altitude slider.
 
 - **Go To Location Max Distance**: The maximum distance that a Go To location can be set from the current vehicle location (in guided mode).
 
