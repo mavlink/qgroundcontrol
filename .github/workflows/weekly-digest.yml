@@ -1,0 +1,111 @@
+name: Weekly Digest
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  digest:
+    name: Generate Weekly Digest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      issues: write
+      pull-requests: read
+      models: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Collect issue and PR activity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          since=$(date -u -d '7 days ago' +%Y-%m-%d)
+          today=$(date -u +%Y-%m-%d)
+          echo "SINCE=$since" >> "$GITHUB_ENV"
+          echo "TODAY=$today" >> "$GITHUB_ENV"
+
+          item_tmpl='{{range .}}- #{{.number}} {{.title}} (@{{.author.login}}){{"\n"}}{{end}}'
+
+          {
+            echo "# Repository activity for $REPO from $since to $today"
+            echo
+            echo "## Issues opened"
+            gh issue list --repo "$REPO" --state all --limit 500 \
+              --search "created:>=$since" \
+              --json number,title,author --template "$item_tmpl"
+            echo
+            echo "## Issues closed"
+            gh issue list --repo "$REPO" --state closed --limit 500 \
+              --search "closed:>=$since" \
+              --json number,title,author --template "$item_tmpl"
+            echo
+            echo "## Pull requests opened"
+            gh pr list --repo "$REPO" --state all --limit 500 \
+              --search "created:>=$since" \
+              --json number,title,author --template "$item_tmpl"
+            echo
+            echo "## Pull requests merged"
+            gh pr list --repo "$REPO" --state merged --limit 500 \
+              --search "merged:>=$since" \
+              --json number,title,author --template "$item_tmpl"
+          } > activity.md
+
+          echo "Collected $(wc -l < activity.md) lines of activity"
+
+      - name: Summarize with AI
+        id: ai
+        uses: actions/ai-inference@v2
+        with:
+          prompt-file: activity.md
+          max-completion-tokens: 4000
+          system-prompt: |
+            You are writing the weekly digest for the QGroundControl open-source
+            project (a ground control station for MAVLink drones). You will be
+            given lists of issues and pull requests from the past week.
+
+            Write a concise Markdown digest with these sections:
+            1. **Overview** — 2-3 sentences summarizing the week's activity and
+               notable themes (group related items, e.g. video, joystick, plan view).
+            2. **Highlights** — bullet list of the most significant merged PRs and
+               notable new issues, with their #numbers so GitHub auto-links them.
+            3. **Issues** — brief summary of opened vs closed counts and dominant topics.
+            4. **Pull Requests** — brief summary of opened vs merged counts.
+
+            Be factual; only reference items present in the input. Do not invent
+            numbers or items. Keep the whole digest under 500 words.
+
+      - name: Post digest issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          AI_RESPONSE_FILE: ${{ steps.ai.outputs.response-file }}
+        run: |
+          {
+            cat "$AI_RESPONSE_FILE"
+            echo
+            echo '<details><summary>Raw activity data</summary>'
+            echo
+            cat activity.md
+            echo
+            echo '</details>'
+            echo
+            echo '_Generated automatically by the [Weekly Digest workflow](../blob/master/.github/workflows/weekly-digest.yml)._'
+          } > digest.md
+
+          gh issue create --repo "$REPO" \
+            --title "Weekly Digest ($SINCE — $TODAY)" \
+            --body-file digest.md
