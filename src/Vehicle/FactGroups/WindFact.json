@@ -12,14 +12,14 @@
 },
 {
     "name":             "speed",
-    "shortDesc": "Wind Spd",
+    "shortDesc": "Wind Speed",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m/s"
 },
 {
     "name":             "verticalSpeed",
-    "shortDesc": "Wind Spd (vert)",
+    "shortDesc": "Wind Speed (vert)",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m/s"
