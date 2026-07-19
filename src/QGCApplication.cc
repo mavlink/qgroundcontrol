@@ -490,13 +490,6 @@ QQuickWindow* QGCApplication::mainRootWindow()
     return _mainRootWindow;
 }
 
-void QGCApplication::showVehicleConfig()
-{
-    if (_rootQmlObject()) {
-        QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleConfig");
-    }
-}
-
 void QGCApplication::qmlAttemptWindowClose()
 {
     if (_rootQmlObject()) {

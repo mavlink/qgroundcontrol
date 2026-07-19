@@ -85,8 +85,6 @@ signals:
     void languageChanged(const QLocale &locale);
 
 public slots:
-    void showVehicleConfig();
-
     void qmlAttemptWindowClose();
 
     /// Get current language
