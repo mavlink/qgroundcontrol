@@ -3,7 +3,7 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-/// QGC version of ListVIew control that shows horizontal/vertial scroll indicators
+/// QGC version of ListView control that shows horizontal/vertical scroll indicators
 ListView {
     id:             root
     boundsBehavior: Flickable.StopAtBounds

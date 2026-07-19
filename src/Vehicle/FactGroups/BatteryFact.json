@@ -29,7 +29,7 @@
     "shortDesc":        "Voltage",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "v"
+    "units":            "V"
 },
 {
     "name":             "percentRemaining",

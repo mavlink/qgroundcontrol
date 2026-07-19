@@ -150,7 +150,7 @@ Item {
             // User wants voltage display so use that if available
             _recalcLowestBatteryIdFromVoltage()
         }
-        // If we still dont have a lowest battery id then try charge state
+        // If we still don't have a lowest battery id then try charge state
         if (_lowestBatteryId === -1) {
             _recalcLowestBatteryIdFromChargeState()
         }

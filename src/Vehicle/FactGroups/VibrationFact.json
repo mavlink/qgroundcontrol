@@ -5,19 +5,19 @@
 [
 {
     "name":             "xAxis",
-    "shortDesc": "Vibe xAxis",
+    "shortDesc": "Vibe X",
     "type":             "double",
     "decimalPlaces":    1
 },
 {
     "name":             "yAxis",
-    "shortDesc": "Vibe yAxis",
+    "shortDesc": "Vibe Y",
     "type":             "double",
     "decimalPlaces":    1
 },
 {
     "name":             "zAxis",
-    "shortDesc": "Vibe zAxis",
+    "shortDesc": "Vibe Z",
     "type":             "double",
     "decimalPlaces":    1
 },

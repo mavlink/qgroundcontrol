@@ -104,7 +104,7 @@ In overview:
      This will guide the plane to fly in circle at constant altitude and speed.
 1. In QGroundControl, open the menu: **Vehicle setup > PID Tuning**
 1. Select the _Rate Controller_ tab.
-   Ensure that the **Autotune enabled** button is is turned off.
+   Ensure that the **Autotune enabled** button is turned off.
 
 
 1. Select the _Tuning axis_ to tune: **Roll**, **Pitch** or **Yaw** (each axis is tuned separately).
