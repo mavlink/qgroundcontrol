@@ -59,7 +59,7 @@
         c << _colorInfoMap[Dark][ColorGroupDisabled][QStringLiteral(#NAME)].name(QColor::HexRgb); \
         return c; \
     } \
-    void SETNAME(const QColor& color) { _colorInfoMap[_theme][_colorGroupEnabled  ? ColorGroupEnabled : ColorGroupDisabled][QStringLiteral(#NAME)] = color; _signalPaletteChangeToAll(); }
+    void SETNAME(const QColor& color) { _colorInfoMap[_theme][_colorGroupEnabled  ? ColorGroupEnabled : ColorGroupDisabled][QStringLiteral(#NAME)] = color; _syncApplicationPalette(); _signalPaletteChangeToAll(); }
 
 /*!
  QGCPalette is used in QML ui to expose color properties for the QGC palette. There are two
@@ -161,6 +161,7 @@ public:
     void        setColorGroupEnabled        (bool enabled);
 
     static Theme    globalTheme             () { return _theme; }
+    static void     initializeApplicationPalette ();
     static void     setGlobalTheme          (Theme newTheme);
 
 signals:
@@ -168,6 +169,7 @@ signals:
 
 private:
     static void _buildMap                   ();
+    static void _syncApplicationPalette      ();
     static void _signalPaletteChangeToAll   ();
     void        _signalPaletteChanged       ();
     void        _themeChanged               ();

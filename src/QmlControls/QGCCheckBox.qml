@@ -3,11 +3,13 @@ import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 CheckBox {
     id:             control
     spacing:        _noText ? 0 : ScreenTools.defaultFontPixelWidth
     focusPolicy:    Qt.ClickFocus
+    hoverEnabled:   QGCStyle.StylePreferences.hoverEffectsEnabled
     leftPadding:    0
 
     Component.onCompleted: {
@@ -32,8 +34,6 @@ CheckBox {
     }
 
     contentItem: Text {
-        //implicitWidth:  _noText ? 0 : text.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.25
-        //implicitHeight: _noText ? 0 : Math.max(text.implicitHeight, ScreenTools.checkBoxIndicatorSize)
         leftPadding:        control.indicator.width + control.spacing
         verticalAlignment:  Text.AlignVCenter
         text:               control.text

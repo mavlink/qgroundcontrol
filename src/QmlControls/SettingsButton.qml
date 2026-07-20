@@ -4,11 +4,12 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 Button {
     id:             control
     padding:        ScreenTools.defaultFontPixelWidth * 0.75
-    hoverEnabled:   !ScreenTools.isMobile
+    hoverEnabled:   QGCStyle.StylePreferences.hoverEffectsEnabled
     autoExclusive:  true
     icon.color:     textColor
 

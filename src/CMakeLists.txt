@@ -106,6 +106,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Gui
         Qt6::GuiPrivate
         Qt6::HttpServer
+        Qt6::LabsStyleKit
         Qt6::Network
         Qt6::StateMachine
         Qt6::Svg
@@ -140,6 +141,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         FlightMapModule
         PlanViewModule
         QGroundControlControlsModule
+        QGCStyle
+        QGCStyleplugin
         QGroundControlModule
         ToolbarModule
         VehicleSetupModule

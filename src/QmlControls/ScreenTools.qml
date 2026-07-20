@@ -1,215 +1,131 @@
 pragma Singleton
 
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Window
 
 import QGroundControl
+import QGCStyle as QGCStyle
 
 /*!
- The ScreenTools Singleton provides information on QGC's standard font metrics. It also provides information on screen
- size which can be used to adjust user interface for varying available screen real estate.
-
- QGC has four standard font sizes: default, small, medium and large. The QGC controls use the default font for display and you should use this font
- for most text within the system that is drawn using something other than a standard QGC control. The small font is smaller than the default font.
- The medium and large fonts are larger than the default font.
+ ScreenTools provides QGC-specific platform and display information. Its legacy font and control metrics remain as
+ compatibility aliases. New visual components should use QGCStyle.StyleTypography and QGCStyle.StyleMetrics directly.
 
  Usage:
 
-        import QGroundControl.Controls
+        import QtQuick
+        import QGCStyle
+
         Rectangle {
-            anchors.fill:       parent
-            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            anchors.fill: parent
+            anchors.margins: StyleMetrics.contentMargin
             ...
         }
 */
-Item {
-    id: _screenTools
+QtObject {
+    id: root
 
-    //-- The point and pixel font size values are computed at runtime
+    readonly property real defaultFontPointSize: QGCStyle.StyleTypography.bodyPointSize
+    readonly property real platformFontPointSize: {
+        const applicationPointSize = Qt.application.font.pointSize > 0 ? Qt.application.font.pointSize : 10
+        if (!root.isMobile) {
+            return applicationPointSize
+        }
+        if (root.isiOS) {
+            return root.screenWidth < 570 ? 12 : 14
+        }
+        return (root.screenWidth / root.realPixelDensity) < QGCStyle.StyleMetrics.tinyScreenMaximumWidthMillimeters ? 11 : 14
+    }
 
-    property real defaultFontPointSize:     10
-    property real platformFontPointSize:    10
-
-    readonly property real smallFontPointRatio:      0.75
-    readonly property real mediumFontPointRatio:     1.25
-    readonly property real largeFontPointRatio:      1.5
+    readonly property real smallFontPointRatio:      QGCStyle.StyleTypography.captionScale
+    readonly property real mediumFontPointRatio:     QGCStyle.StyleTypography.headingScale
+    readonly property real largeFontPointRatio:      QGCStyle.StyleTypography.titleScale
 
     /// You can use these properties to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
     /// your ui elements will reposition themselves appropriately on varying screen sizes and resolutions.
-    property real defaultFontPixelHeight:   10
-    property real largeFontPixelHeight:     defaultFontPixelHeight * largeFontPointRatio
-    property real mediumFontPixelHeight:    defaultFontPixelHeight * mediumFontPointRatio
-    property real smallFontPixelHeight:     defaultFontPixelHeight * smallFontPointRatio
+    readonly property real defaultFontPixelHeight: QGCStyle.StyleTypography.bodyPixelHeight
+    readonly property real largeFontPixelHeight:     QGCStyle.StyleTypography.titlePixelHeight
 
     /// You can use these properties to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
     /// your ui elements will reposition themselves appropriately on varying screen sizes and resolutions.
-    property real defaultFontPixelWidth:    10
-    property real largeFontPixelWidth:      defaultFontPixelWidth * largeFontPointRatio
-    property real mediumFontPixelWidth:     defaultFontPixelWidth * mediumFontPointRatio
-    property real smallFontPixelWidth:      defaultFontPixelWidth * smallFontPointRatio
+    readonly property real defaultFontPixelWidth: QGCStyle.StyleTypography.bodyPixelWidth
+    readonly property real largeFontPixelWidth:      QGCStyle.StyleTypography.titlePixelWidth
 
     /// QFontMetrics::descent for default font at default point size
-    property real defaultFontDescent:       0
+    readonly property real defaultFontDescent: QGCStyle.StyleTypography.bodyDescent
 
     /// The default amount of space in between controls in a dialog
-    property real defaultDialogControlSpacing: defaultFontPixelHeight / 2
+    readonly property real defaultDialogControlSpacing: QGCStyle.StyleMetrics.defaultDialogControlSpacing
 
-    property real smallFontPointSize:       10
-    property real mediumFontPointSize:      10
-    property real largeFontPointSize:       10
+    readonly property real smallFontPointSize:       QGCStyle.StyleTypography.captionPointSize
+    readonly property real mediumFontPointSize:      QGCStyle.StyleTypography.headingPointSize
+    readonly property real largeFontPointSize:       QGCStyle.StyleTypography.titlePointSize
 
-    property real toolbarHeight:            0
+    readonly property real toolbarHeight: QGCStyle.StyleMetrics.toolbarHeight
 
-    property real realPixelDensity: {
-        //-- If a plugin defines it, just use what it tells us
-        if(QGroundControl.corePlugin.options.devicePixelDensity != 0) {
-            return QGroundControl.corePlugin.options.devicePixelDensity
+    property var _windowScreen: null
+    readonly property var _screen: root._windowScreen ?? (Qt.application.screens.length > 0 ? Qt.application.screens[0] : null)
+    readonly property real _screenPixelDensity: {
+        const density = root._screen ? root._screen.pixelDensity : 0
+        return Number.isFinite(density) && density > 0 ? density : 1
+    }
+    readonly property real realPixelDensity: {
+        //-- If a plugin defines a valid override, use what it tells us
+        const configuredPixelDensity = QGroundControl.corePlugin.options.devicePixelDensity
+        if (Number.isFinite(configuredPixelDensity) && configuredPixelDensity > 0) {
+            return configuredPixelDensity
         }
         //-- Android is rather unreliable
-        if(isAndroid) {
+        if (root.isAndroid) {
             // Lets assume it's unlikely you have a tablet over 300mm wide
-            if((Screen.width / Screen.pixelDensity) > 300) {
-                return Screen.pixelDensity * 2
+            if ((root.screenWidth / root._screenPixelDensity) > 300) {
+                return root._screenPixelDensity * 2
             }
         }
         //-- Let's use what the system tells us
-        return Screen.pixelDensity
+        return root._screenPixelDensity
     }
 
     // These properties allow us to create simulated mobile sizing for a desktop build.
     // This makes testing the UI for smaller mobile sizing much easier.
     // The 731x411 size is the size of the Herelink screen which is our target lower bound
-    property real screenWidth:  ScreenToolsController.fakeMobile ? 731 : Screen.width
-    property real screenHeight: ScreenToolsController.fakeMobile ? 411 : Screen.height
+    readonly property real screenWidth:  root.isFakeMobile ? 731 : (root._screen ? root._screen.width : 0)
+    readonly property real screenHeight: root.isFakeMobile ? 411 : (root._screen ? root._screen.height : 0)
 
-    property bool isAndroid:                        ScreenToolsController.isAndroid
-    property bool isiOS:                            ScreenToolsController.isiOS
-    property bool isMobile:                         ScreenToolsController.isMobile
-    property bool isFakeMobile:                     ScreenToolsController.fakeMobile
-    property bool isWindows:                        ScreenToolsController.isWindows
-    property bool isDebug:                          ScreenToolsController.isDebug
-    property bool isMac:                            ScreenToolsController.isMacOS
-    property bool isLinux:                          ScreenToolsController.isLinux
-    property bool isTinyScreen:                     (Screen.width / realPixelDensity) < 120 // 120mm
-    property bool isShortScreen:                    ((Screen.height / realPixelDensity) < 120) || (ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6))
-    property bool isHugeScreen:                     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
-    property bool isSerialAvailable:                ScreenToolsController.isSerialAvailable
+    readonly property QGCStyle.LayoutProfile _layoutProfile: QGCStyle.LayoutProfile {
+        availableHeight: root.screenHeight
+        availableWidth: root.screenWidth
+        mobileLayout: root.isMobile
+        pixelDensity: root.realPixelDensity
+    }
 
-    readonly property real minTouchMillimeters:     5   ///< Minimum touch size in millimeters
-    property real minTouchPixels:                   0   ///< Minimum touch size in pixels (calculatedd from minTouchMillimeters and realPixelDensity)
+    readonly property string _platformOs:           Qt.platform.os
+    readonly property bool isAndroid:               root._platformOs === "android"
+    readonly property bool isiOS:                   root._platformOs === "ios"
+    readonly property bool isFakeMobile:            !root.isAndroid && !root.isiOS
+                                                    && (Qt.application.arguments.includes("--fake-mobile")
+                                                        || Qt.application.arguments.includes("-fake-mobile"))
+    readonly property bool isMobile:                root.isAndroid || root.isiOS || root.isFakeMobile
+    readonly property bool isTinyScreen:            root._layoutProfile.isTiny
+    readonly property bool isShortScreen:           root._layoutProfile.isShort
+
+    readonly property real minTouchMillimeters:     QGCStyle.StyleMetrics.minimumTouchMillimeters
+    readonly property real minTouchPixels:          root._layoutProfile.minimumTouchTarget
 
     // The implicit heights/widths for our custom control set
-    property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  5.0)
-    property real implicitButtonHeight:             Math.round(defaultFontPixelHeight * 1.6)
-    property real implicitCheckBoxHeight:           Math.round(defaultFontPixelHeight * 1.0)
-    property real implicitRadioButtonHeight:        implicitCheckBoxHeight
-    property real implicitTextFieldWidth:           defaultFontPixelWidth * 10
-    property real implicitTextFieldHeight:          implicitButtonHeight
-    property real implicitComboBoxHeight:           implicitButtonHeight
-    property real implicitComboBoxWidth:            implicitButtonWidth
-    property real comboBoxPadding:                  defaultFontPixelWidth
-    property real implicitSliderHeight:             defaultFontPixelHeight
-    property real defaultBorderRadius:              defaultFontPixelWidth / 2
+    readonly property real implicitButtonWidth:              QGCStyle.StyleMetrics.implicitButtonWidth
+    readonly property real implicitButtonHeight:             QGCStyle.StyleMetrics.implicitButtonHeight
+    readonly property real implicitCheckBoxHeight:           QGCStyle.StyleMetrics.implicitCheckBoxHeight
+    readonly property real implicitTextFieldWidth:           QGCStyle.StyleMetrics.implicitTextFieldWidth
+    readonly property real implicitTextFieldHeight:          QGCStyle.StyleMetrics.implicitTextFieldHeight
+    readonly property real implicitComboBoxHeight:           QGCStyle.StyleMetrics.implicitComboBoxHeight
+    readonly property real implicitComboBoxWidth:            QGCStyle.StyleMetrics.implicitComboBoxWidth
+    readonly property real comboBoxPadding:                  QGCStyle.StyleMetrics.comboBoxPadding
+    readonly property real implicitSliderHeight:             QGCStyle.StyleMetrics.implicitSliderHeight
+    readonly property real defaultBorderRadius:              QGCStyle.StyleMetrics.defaultBorderRadius
 
-    // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization
-    property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight / 2) + 1
-    property real radioButtonIndicatorSize:         checkBoxIndicatorSize
+    readonly property real radioButtonIndicatorSize:         QGCStyle.StyleMetrics.radioButtonIndicatorSize
 
-    readonly property string normalFontFamily:      ScreenToolsController.normalFontFamily
-    readonly property string fixedFontFamily:       ScreenToolsController.fixedFontFamily
-    /* This mostly works but for some reason, reflowWidths() in SetupView doesn't change size.
-       I've disabled (in release builds) until I figure out why. Changes require a restart for now.
-    */
-    Connections {
-        target: QGroundControl.settingsManager.appSettings.uiScalePercent
-        function onValueChanged() {
-            var pct = QGroundControl.settingsManager.appSettings.uiScalePercent.value
-            _setBasePointSize(platformFontPointSize * pct / 100)
-        }
-    }
-
-    onRealPixelDensityChanged: {
-        _setBasePointSize(defaultFontPointSize)
-    }
-
-    function printScreenStats() {
-        console.log('ScreenTools: Screen.width: ' + Screen.width + ' Screen.height: ' + Screen.height + ' Screen.pixelDensity: ' + Screen.pixelDensity)
-    }
-
-    /// Returns the current x position of the mouse in global screen coordinates.
-    function mouseX() {
-        return ScreenToolsController.mouseX()
-    }
-
-    /// Returns the current y position of the mouse in global screen coordinates.
-    function mouseY() {
-        return ScreenToolsController.mouseY()
-    }
-
-    /// \private
-    function _setBasePointSize(pointSize) {
-        _textMeasure.font.pointSize = pointSize
-        defaultFontPointSize    = pointSize
-        defaultFontPixelHeight  = Math.round(_textMeasure.fontHeight/2.0)*2
-        defaultFontPixelWidth   = Math.round(_textMeasure.fontWidth/2.0)*2
-        defaultFontDescent      = ScreenToolsController.defaultFontDescent(defaultFontPointSize)
-        smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
-        mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
-        largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
-        minTouchPixels          = Math.round(minTouchMillimeters * realPixelDensity)
-        if (minTouchPixels / Screen.height > 0.15) {
-            // If using physical sizing takes up too much of the vertical real estate fall back to font based sizing
-            minTouchPixels      = defaultFontPixelHeight * 3
-        }
-        toolbarHeight           = defaultFontPixelHeight * 3
-        toolbarHeight           = toolbarHeight * QGroundControl.corePlugin.options.toolbarHeightMultiplier
-    }
-
-    Text {
-        id:     _defaultFont
-        text:   "X"
-    }
-
-    Text {
-        id:     _textMeasure
-        text:   "X"
-        font.family:    normalFontFamily
-        property real   fontWidth:    contentWidth
-        property real   fontHeight:   contentHeight
-        Component.onCompleted: {
-            //-- First, compute platform, default size
-            if(ScreenToolsController.isMobile) {
-                //-- Check iOS really tiny screens (iPhone 4s/5/5s)
-                if(ScreenToolsController.isiOS) {
-                    if(ScreenToolsController.isiOS && Screen.width < 570) {
-                        // For iPhone 4s size we don't fit with additional tweaks to fit screen,
-                        // we will just drop point size to make things fit. Correct size not yet determined.
-                        platformFontPointSize = 12;  // This will be lowered in a future pull
-                    } else {
-                        platformFontPointSize = 14;
-                    }
-                } else if((Screen.width / realPixelDensity) < 120) {
-                    platformFontPointSize = 11;
-                // Other Android
-                } else {
-                    platformFontPointSize = 14;
-                }
-            } else {
-                platformFontPointSize = _defaultFont.font.pointSize;
-            }
-            //-- See if we are using a custom size
-            var _uiScalePercentFact = QGroundControl.settingsManager.appSettings.uiScalePercent
-            var pct = _uiScalePercentFact.value
-            //-- Sanity check
-            if(pct < _uiScalePercentFact.min || pct > _uiScalePercentFact.max) {
-                pct = 100;
-                _uiScalePercentFact.value = pct
-            }
-            //-- Set size saved in settings
-            _screenTools._setBasePointSize(platformFontPointSize * pct / 100);
-        }
-    }
+    readonly property string normalFontFamily:      QGCStyle.StyleTypography.normalFontFamily
+    readonly property string fixedFontFamily:       QGCStyle.StyleTypography.fixedFontFamily
 }

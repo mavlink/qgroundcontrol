@@ -19,7 +19,7 @@ set -euo pipefail
 
 SYSROOT="${SYSROOT:-/opt/sysroot}"
 UBUNTU_SUITE="${UBUNTU_SUITE:-noble}"
-MIRROR="${MIRROR:-http://ports.ubuntu.com/ubuntu-ports}"
+MIRROR="${MIRROR:-https://ports.ubuntu.com/ubuntu-ports}"
 
 # Reject newlines/junk in overrides — they land verbatim in the apt sources heredoc.
 if [[ ! "$UBUNTU_SUITE" =~ ^[a-z][-a-z0-9]*$ ]]; then
@@ -96,7 +96,13 @@ EOF
 }
 
 configure_apt
-apt_retry apt-get -o Acquire::Retries=3 update -y --quiet
+# apt-get update normally exits successfully when an index download fails. Make
+# partial updates fatal so apt_retry can recover instead of continuing with no
+# arm64 package metadata and producing an empty dependency closure.
+apt_retry apt-get \
+    -o APT::Update::Error-Mode=any \
+    -o Acquire::Retries=3 \
+    update -y --quiet
 
 # Target-side libraries are single-sourced from install_dependencies
 # (DEBIAN_PACKAGES["cross_arm64"]) so they can't drift from the native build;

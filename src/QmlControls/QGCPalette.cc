@@ -2,6 +2,8 @@
 #include "QGCCorePlugin.h"
 
 #include <QtCore/QDebug>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QPalette>
 
 QList<QGCPalette*>   QGCPalette::_paletteObjects;
 
@@ -16,7 +18,7 @@ QGCPalette::QGCPalette(QObject* parent) :
     _colorGroupEnabled(true)
 {
     if (_colorInfoMap.isEmpty()) {
-        _buildMap();
+        initializeApplicationPalette();
     }
 
     // We have to keep track of all QGCPalette objects in the system so we can signal theme change to all of them
@@ -88,7 +90,15 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_SINGLE_COLOR(mapMissionTrajectory,          "#be781c")
     DECLARE_QGC_SINGLE_COLOR(surveyPolygonInterior,         "green")
     DECLARE_QGC_SINGLE_COLOR(surveyPolygonTerrainCollision, "red")
+}
 
+void QGCPalette::initializeApplicationPalette()
+{
+    if (_colorInfoMap.isEmpty()) {
+        _buildMap();
+    }
+
+    _syncApplicationPalette();
 }
 
 void QGCPalette::setColorGroupEnabled(bool enabled)
@@ -102,8 +112,48 @@ void QGCPalette::setGlobalTheme(Theme newTheme)
     // Mobile build does not have themes
     if (_theme != newTheme) {
         _theme = newTheme;
+        _syncApplicationPalette();
         _signalPaletteChangeToAll();
     }
+}
+
+void QGCPalette::_syncApplicationPalette()
+{
+    if (!QGuiApplication::instance() || _colorInfoMap.isEmpty()) {
+        return;
+    }
+
+    QPalette palette = QGuiApplication::palette();
+    const auto setColorGroup = [&palette](QPalette::ColorGroup paletteGroup, ColorGroup qgcGroup) {
+        const auto color = [qgcGroup](const QString& name) { return _colorInfoMap[_theme][qgcGroup][name]; };
+
+        palette.setColor(paletteGroup, QPalette::Window, color(QStringLiteral("window")));
+        palette.setColor(paletteGroup, QPalette::WindowText, color(QStringLiteral("text")));
+        palette.setColor(paletteGroup, QPalette::Base, color(QStringLiteral("textField")));
+        palette.setColor(paletteGroup, QPalette::AlternateBase, color(QStringLiteral("windowShade")));
+        palette.setColor(paletteGroup, QPalette::ToolTipBase, color(QStringLiteral("windowShade")));
+        palette.setColor(paletteGroup, QPalette::ToolTipText, color(QStringLiteral("text")));
+        palette.setColor(paletteGroup, QPalette::Text, color(QStringLiteral("textFieldText")));
+        palette.setColor(paletteGroup, QPalette::Button, color(QStringLiteral("button")));
+        palette.setColor(paletteGroup, QPalette::ButtonText, color(QStringLiteral("buttonText")));
+        palette.setColor(paletteGroup, QPalette::BrightText, color(QStringLiteral("buttonHighlightText")));
+        palette.setColor(paletteGroup, QPalette::Light, color(QStringLiteral("windowShadeLight")));
+        palette.setColor(paletteGroup, QPalette::Midlight, color(QStringLiteral("windowShade")));
+        palette.setColor(paletteGroup, QPalette::Mid, color(QStringLiteral("buttonBorder")));
+        palette.setColor(paletteGroup, QPalette::Dark, color(QStringLiteral("windowShadeDark")));
+        palette.setColor(paletteGroup, QPalette::Shadow, color(QStringLiteral("windowShadeDark")));
+        palette.setColor(paletteGroup, QPalette::Highlight, color(QStringLiteral("buttonHighlight")));
+        palette.setColor(paletteGroup, QPalette::HighlightedText, color(QStringLiteral("buttonHighlightText")));
+        palette.setColor(paletteGroup, QPalette::Link, color(QStringLiteral("colorBlue")));
+        palette.setColor(paletteGroup, QPalette::LinkVisited, color(QStringLiteral("brandingPurple")));
+        palette.setColor(paletteGroup, QPalette::PlaceholderText, color(QStringLiteral("textFieldText")));
+        palette.setColor(paletteGroup, QPalette::Accent, color(QStringLiteral("buttonHighlight")));
+    };
+
+    setColorGroup(QPalette::Active, ColorGroupEnabled);
+    setColorGroup(QPalette::Inactive, ColorGroupEnabled);
+    setColorGroup(QPalette::Disabled, ColorGroupDisabled);
+    QGuiApplication::setPalette(palette);
 }
 
 void QGCPalette::_signalPaletteChangeToAll()

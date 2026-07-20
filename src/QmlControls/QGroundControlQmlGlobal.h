@@ -91,6 +91,7 @@ public:
     Q_PROPERTY(QString qgcVersion       READ qgcVersion         CONSTANT)
     Q_PROPERTY(QString qgcAppDate       READ qgcAppDate         CONSTANT)
     Q_PROPERTY(bool    qgcDailyBuild    READ qgcDailyBuild      CONSTANT)
+    Q_PROPERTY(bool    isDebugBuild     READ isDebugBuild       CONSTANT)
 
     Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -206,6 +207,11 @@ public:
     static bool qgcDailyBuild() { return true; }
 #else
     static bool qgcDailyBuild() { return false; }
+#endif
+#ifdef QT_DEBUG
+    static bool isDebugBuild() { return true; }
+#else
+    static bool isDebugBuild() { return false; }
 #endif
 
 signals:

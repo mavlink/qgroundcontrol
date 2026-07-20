@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGCStyle as QGCStyle
 
 TextField {
     id:                 control
@@ -14,6 +15,7 @@ TextField {
     antialiasing:       true
     font.pointSize:     ScreenTools.defaultFontPointSize
     font.family:        ScreenTools.normalFontFamily
+    font.features:      numericValuesOnly ? QGCStyle.StyleTypography.tabularNumberFeatures : ({})
     inputMethodHints:   numericValuesOnly && !ScreenTools.isiOS ?
                             Qt.ImhFormattedNumbersOnly:  // Forces use of virtual numeric keyboard instead of full keyboard
                             Qt.ImhNone                   // iOS numeric keyboard has no done button, we can't use it.

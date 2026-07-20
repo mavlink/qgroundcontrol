@@ -75,6 +75,11 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" print-packages
 
+    - name: Normalize Ubuntu apt mirrors (Linux ARM64)
+      if: runner.os == 'Linux' && runner.arch == 'ARM64'
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" normalize-apt-sources
+
     - name: Enable universe repository (Linux)
       if: runner.os == 'Linux'
       shell: bash
@@ -82,21 +87,37 @@ runs:
 
     - name: Install apt packages (Linux)
       if: runner.os == 'Linux'
-      # Retry: a slow apt mirror can stall the download past the job timeout; fast-fail and retry.
-      uses: nick-fields/retry@v4
+      shell: bash
       env:
         APT_PACKAGES: ${{ steps.linux-deps.outputs.packages }}
-      with:
-        timeout_minutes: 20
-        max_attempts: 3
-        shell: bash
-        # Acquire::*::Timeout aborts a stalled mirror connection so retries can fire.
-        command: |
-          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
-          # shellcheck disable=SC2086
-          sudo apt-get $APT_OPTS update -qq
-          # shellcheck disable=SC2086
-          sudo apt-get $APT_OPTS install -y --no-install-recommends $APT_PACKAGES
+      run: |
+        # shellcheck disable=SC2153  # Supplied through the step environment.
+        read -r -a apt_packages <<< "$APT_PACKAGES"
+
+        for attempt in 1 2 3; do
+          # Run timeout as root so it can terminate the privileged apt process tree.
+          if sudo timeout --signal=TERM --kill-after=30s 20m bash -c '
+            set -euo pipefail
+            apt_opts=(
+              -o Acquire::Retries=3
+              -o Acquire::ForceIPv4=true
+              -o Acquire::http::Timeout=30
+              -o Acquire::https::Timeout=30
+            )
+            apt-get "${apt_opts[@]}" update -qq
+            apt-get "${apt_opts[@]}" install -y --no-install-recommends "$@"
+          ' -- "${apt_packages[@]}"; then
+            exit 0
+          fi
+
+          if [[ "$attempt" -eq 3 ]]; then
+            echo "::error::apt package installation failed after $attempt attempts"
+            exit 1
+          fi
+
+          echo "::warning::apt package installation attempt $attempt failed; retrying in 10 seconds"
+          sleep 10
+        done
 
     - name: Fix apt alternatives (Linux)
       if: runner.os == 'Linux'
@@ -134,4 +155,3 @@ runs:
         max_attempts: 3
         command: |
           python3 tools/setup/install_dependencies --platform macos
-

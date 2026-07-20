@@ -74,7 +74,7 @@ void QmlUITestBase::startUI()
     // warning that would trip the strict-mode log check.
     static bool s_styleSet = false;
     if (!s_styleSet) {
-        QQuickStyle::setStyle("Basic");
+        QQuickStyle::setStyle("QGCStyle");
         s_styleSet = true;
     }
     QGCCorePlugin::instance()->init();
