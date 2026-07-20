@@ -8,6 +8,7 @@ import QGroundControl.Controls
 import "SVSettingsControls.js" as SVSettingsControls
 import "SVSettingsDev.js" as SVSettingsDev
 import "SVSettingsGeneral.js" as SVSettingsGeneral
+import "SVSettingsNetwork.js" as SVSettingsNetwork
 import "SVSettingsShortcuts.js" as SVSettingsShortcuts
 
 Item {
@@ -17,10 +18,9 @@ Item {
     property int selectedSectionIndex: 0
     property int pendingProgrammaticSectionIndex: -1
     property bool networkConnectionPending: false
+    readonly property int settingsResetToken: SVSettings.resetToken
     readonly property var digiview: QGroundControl.digiviewManager
-    readonly property bool networkConnectionActive: !!(digiview
-        && digiview.connected
-        && QGroundControl.videoManager.streaming)
+    readonly property bool networkConnectionActive: SVState.digiviewActive
 
     readonly property real panelMargin: ScreenTools.defaultFontPixelHeight / 2
     readonly property real sectionSpacing: ScreenTools.defaultFontPixelHeight / 2
@@ -39,7 +39,7 @@ Item {
     readonly property int wheelUpShortcutValue: -1001
     readonly property int wheelDownShortcutValue: -1002
     readonly property int mouseButtonShortcutBaseValue: -2000
-    readonly property color edgeGradientColor: Qt.alpha(qgcPalette.window, 0.96)
+    readonly property color edgeGradientColor: qgcPalette.window
     readonly property real maxScrollContentY: Math.max(0, contentFlickable.contentHeight - contentFlickable.height)
     readonly property real topEdgeGradientOpacity: Math.min(1, Math.max(0, contentFlickable.contentY) / edgeGradientHeight)
     readonly property real bottomHiddenContent: Math.max(0, maxScrollContentY - contentFlickable.contentY)
@@ -49,6 +49,8 @@ Item {
         function getCategoryData(settingsId) {
         if (settingsId === 'General') {
             return { title: 'General', sections: SVSettingsGeneral.getSections() }
+        } else if (settingsId === 'Network') {
+            return { title: 'Network', sections: SVSettingsNetwork.getSections() }
         } else if (settingsId === 'Controls') {
             return { title: 'Controls', sections: SVSettingsControls.getSections() }
         } else if (settingsId === 'Shortcuts') {
@@ -90,6 +92,8 @@ Item {
     }
 
     function settingValue(settingData, fallbackValue) {
+        root.settingsResetToken
+
         if (useSettingsBridge(settingData)) {
             return SVSettings[settingData.property]
         }
@@ -106,6 +110,8 @@ Item {
     }
 
     function settingOptions(settingData) {
+        root.settingsResetToken
+
         if (settingData.optionsSource === 'networkProfiles') {
             const profiles = SVSettings.networkProfiles ? SVSettings.networkProfiles : []
             const options = []
@@ -124,6 +130,7 @@ Item {
     }
 
     function selectedNetworkProfile() {
+        root.settingsResetToken
         return SVSettings.selectedNetworkProfile()
     }
 
@@ -171,6 +178,65 @@ Item {
 
     function applySelectedNetworkProfile() {
         return SVSettings.applySelectedNetworkProfile(root.digiview)
+    }
+
+    function normalizedNetworkProfileSnapshot(profile) {
+        if (!profile) {
+            return null
+        }
+
+        const normalizedProfile = SVSettings.normalizeNetworkProfile(profile, profile)
+
+        return normalizedProfile ? {
+            name: normalizedProfile.name,
+            host: normalizedProfile.host,
+            port: normalizedProfile.port,
+            videoPort: normalizedProfile.videoPort,
+            listenPort: normalizedProfile.listenPort,
+            streamName: normalizedProfile.streamName
+        } : null
+    }
+
+    function networkProfilesContainProfile(profileSnapshot) {
+        if (!profileSnapshot) {
+            return false
+        }
+
+        const profiles = SVSettings.networkProfiles ? SVSettings.networkProfiles : []
+
+        for (let index = 0; index < profiles.length; index++) {
+            const normalizedProfile = normalizedNetworkProfileSnapshot(profiles[index])
+
+            if (normalizedProfile
+                && normalizedProfile.name === profileSnapshot.name
+                && normalizedProfile.host === profileSnapshot.host
+                && normalizedProfile.port === profileSnapshot.port
+                && normalizedProfile.videoPort === profileSnapshot.videoPort
+                && normalizedProfile.listenPort === profileSnapshot.listenPort
+                && normalizedProfile.streamName === profileSnapshot.streamName) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    function resetSettingsAndDisconnectIfNeeded() {
+        const selectedProfileSnapshot = normalizedNetworkProfileSnapshot(selectedNetworkProfile())
+
+        SVSettings.resetSettings()
+
+        if (!selectedProfileSnapshot || !root.digiview || !root.digiview.connected) {
+            return
+        }
+
+        if (networkProfilesContainProfile(selectedProfileSnapshot)) {
+            return
+        }
+
+        networkConnectTimer.stop()
+        root.networkConnectionPending = false
+        root.digiview.disconnectFromHost()
     }
 
     function handleButtonClick(settingData) {
@@ -223,10 +289,17 @@ Item {
                 editingProfileIndex: -1,
                 isNewProfile: true
             })
+            return
+        }
+
+        if (settingData.buttonRole === 'resetSettings') {
+            resetSettingsDialogFactory.open()
+            return
         }
     }
 
     function dropdownCurrentIndex(settingData) {
+        root.settingsResetToken
         const options = settingOptions(settingData)
 
         if (useSettingsBridge(settingData)) {
@@ -297,6 +370,8 @@ Item {
     }
 
     function matchesCondition(conditionData) {
+        root.settingsResetToken
+
         if (!conditionData
                 || conditionData.property === undefined
                 || conditionData.equals === undefined) {
@@ -349,6 +424,8 @@ Item {
     }
 
     function sliderDisplayValue(settingData, sliderValue) {
+        root.settingsResetToken
+
         if (useSettingsBridge(settingData)) {
             return SVSettings[settingData.property]
         }
@@ -543,6 +620,12 @@ Item {
         dialogComponent: deleteNetworkProfileDialogComponent
     }
 
+    QGCPopupDialogFactory {
+        id: resetSettingsDialogFactory
+
+        dialogComponent: resetSettingsDialogComponent
+    }
+
     Component {
         id: deleteNetworkProfileDialogComponent
 
@@ -562,6 +645,18 @@ Item {
                     editDialog.close()
                 }
             }
+        }
+    }
+
+    Component {
+        id: resetSettingsDialogComponent
+
+        QGCSimpleMessageDialog {
+            title: qsTr('Reset settings?')
+            text: qsTr('Are you sure?')
+            buttons: Dialog.Yes | Dialog.No
+
+            onAccepted: root.resetSettingsAndDisconnectIfNeeded()
         }
     }
 
@@ -779,6 +874,7 @@ Item {
     }
 
     QGCPalette { id: qgcPalette }
+    QGCPalette { id: enabledPalette; colorGroupEnabled: true }
 
     Rectangle {
         anchors.fill: parent
@@ -791,6 +887,8 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 1.7
+        anchors.topMargin: ScreenTools.defaultFontPixelWidth * 1.7
+        anchors.bottomMargin: ScreenTools.defaultFontPixelWidth * 1.7
 
         RowLayout {
             Layout.fillWidth: true
@@ -801,14 +899,12 @@ Item {
                 Layout.preferredWidth: root.navigationWidth
                 Layout.fillHeight: true
                 color: "transparent"
+                
 
                 ColumnLayout {
                     anchors.fill: parent
 
-                    anchors.top: parent.top
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
+                    
                     //anchors.leftMargin: 2
                     //anchors.rightMargin: 2
                     //anchors.margins: root.sectionPadding
@@ -818,14 +914,10 @@ Item {
                         height: ScreenTools.defaultFontPixelWidth * 7 - 5
                         color: "transparent"
 
-                        QGCLabel {
-                            anchors.top: parent.top
-                            anchors.topMargin: parent.height / 4
-                            //anchors.verticalCenter: parent.verticalCenter
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            //anchors.left: parent.left
-                            //anchors.leftMargin: ScreenTools.defaultFontPixelWidth
 
+                        QGCLabel {
+                            anchors.fill: parent
+                            anchors.topMargin: height / 8
                             text: root.categoryData.title
                             font.pointSize: ScreenTools.largeFontPointSize
                             
@@ -842,15 +934,17 @@ Item {
                             width: ScreenTools.defaultFontPixelHeight * 7
                             height: ScreenTools.defaultFontPixelWidth * 7
                             Layout.fillWidth: true
-                            padding: ScreenTools.defaultFontPixelWidth * 1.3
+                            padding: ScreenTools.defaultFontPixelWidth * 1.7
                             hoverEnabled: !ScreenTools.isMobile
                             text: modelData.title
 
                             background: Rectangle {
                                 radius: ScreenTools.defaultBorderRadius
+                                border.width: 1
+                                border.color: qgcPalette.windowShadeLight
                                 color: button.isSelected
                                     ? qgcPalette.buttonHighlight
-                                    : (button.hovered ? qgcPalette.toolStripHoverColor : "transparent")
+                                    : (button.hovered ? qgcPalette.toolStripHoverColor : qgcPalette.windowShade)
                             }
 
                             Rectangle {
@@ -890,6 +984,9 @@ Item {
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+
+                
+
                 Flickable {
                     id: contentFlickable
                     readonly property real scrollBarGutterWidth: Math.max(contentScrollBar.implicitWidth, ScreenTools.defaultFontPixelWidth)
@@ -954,7 +1051,7 @@ Item {
                                     width: parent.width
                                     height: sectionContent.implicitHeight + root.sectionPadding * 2
                                     radius: ScreenTools.defaultBorderRadius * 3
-                                    color: qgcPalette.window
+                                    color: qgcPalette.windowShade
                                     border.width: 1
                                     border.color: qgcPalette.windowShadeLight
 
@@ -1035,7 +1132,7 @@ Item {
                                                     //Layout.topMargin: root.controlSpacing / 2
                                                     //Layout.bottomMargin: root.controlSpacing / 2
                                                     height: 1
-                                                    color: qgcPalette.windowShadeLight
+                                                    color: enabledPalette.windowShadeLight
                                                     enabled: true
                                                     visible: root.hasVisibleSettingAfter(sectionData.items, index)
                                                 }
@@ -1385,11 +1482,6 @@ Item {
                                 }
                             }
                         }
-
-                        Item {
-                            width: parent.width
-                            height: root.bottomContentPadding
-                        }
                     }
                 }
 
@@ -1397,14 +1489,10 @@ Item {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.margins: 2
-                    anchors.leftMargin: 0
-                    anchors.rightMargin: 5
+                    anchors.rightMargin: 20 - 4
                     height: root.edgeGradientHeight
-                    color: "transparent"
                     opacity: root.topEdgeGradientOpacity
                     visible: opacity > 0.01
-                    z: 1
 
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: root.edgeGradientColor }
@@ -1416,14 +1504,11 @@ Item {
                     anchors.bottom: parent.bottom
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    anchors.margins: 2
-                    anchors.leftMargin: 0
-                    anchors.rightMargin: 5
+                    
+                    anchors.rightMargin: 20 - 4
                     height: root.edgeGradientHeight
-                    color: "transparent"
                     opacity: root.bottomEdgeGradientOpacity
                     visible: opacity > 0.01
-                    z: 1
 
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: "transparent" }

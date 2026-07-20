@@ -22,7 +22,7 @@ Item {
     property string activeId: ""
     property var activeIds: []
 
-    property real buttonSize: Math.min(SVUnits.objectWidth - SVUnits.bigMargin, ScreenTools.implicitButtonHeight + (SVUnits.bigMargin * 2))
+    property real buttonSize: SVUnits.objectWidth//Math.min(SVUnits.objectWidth - SVUnits.bigMargin, ScreenTools.implicitButtonHeight + (SVUnits.bigMargin * 2))
 
     readonly property bool isHorizontal: direction === horizontal
     readonly property bool isVertical: !isHorizontal
@@ -49,19 +49,16 @@ Item {
         return root.activeIds.indexOf(item.id) !== -1
     }
 
-    width: isVertical
-           ? SVUnits.objectWidth
-           : SVUnits.bigMargin
-             + (root.headerless ? 0 : root.buttonSize)
-             + (root.separatorVisible ? root.separatorSpan : 0)
-             + (root.contentVisible ? contentGrid.implicitWidth : 0)
-
-    height: isHorizontal
-             ? SVUnits.objectWidth
-             : SVUnits.bigMargin
-               + (root.headerless ? 0 : root.buttonSize)
-               + (root.separatorVisible ? root.separatorSpan : 0)
-               + (root.contentVisible ? contentGrid.implicitHeight : 0)
+    width: isVertical 
+            ? SVUnits.objectWidth
+            : + (root.headerless ? 0 : root.buttonSize)
+              + (root.separatorVisible ? root.separatorSpan : 0)
+              + (root.contentVisible ? contentGrid.implicitWidth : 0)
+    height: isHorizontal 
+            ? SVUnits.objectWidth 
+            : + (root.headerless ? 0 : root.buttonSize)
+              + (root.separatorVisible ? root.separatorSpan : 0)
+              + (root.contentVisible ? contentGrid.implicitHeight : 0)
 
     QGCPalette { id: qgcPalette }
 
@@ -91,6 +88,7 @@ Item {
             size: root.buttonSize
             borderRadius: SVUnits.radius
             text: modelData.text ? modelData.text : ""
+            tintIcon: modelData && (modelData.tintIcon !== undefined) ? modelData.tintIcon : true
             checked: root.isItemChecked(modelData)
             enabled: modelData.enabled !== undefined ? modelData.enabled : true
             iconSource: itemIconActive && modelData && modelData.alternateIconSource
@@ -112,12 +110,53 @@ Item {
         anchors.fill: parent
         color: qgcPalette.windowTransparent
         radius: SVUnits.radius
+        border.width: 1
+        border.color: qgcPalette.windowShade
+        
+    }
+
+    Rectangle {
+        id: backgroundGradient
+        anchors.fill: parent
+        color: qgcPalette.windowTransparent
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: qgcPalette.windowShade }
+            GradientStop {
+                position: Math.min(1.0, Math.max(0.0, background.width > 0 ? (root.buttonSize / 3) / background.width : 0.0))
+                color: "transparent"
+            }
+            GradientStop { position: 1.0; color: "transparent" }
+        }
+        radius: SVUnits.radius
+        border.width: 1
+        border.color: qgcPalette.windowShade
+        opacity: 0.20
+    }
+
+    Rectangle {
+        id: backgroundGradient2
+        anchors.fill: parent
+        color: qgcPalette.windowTransparent
+        gradient: Gradient {
+            orientation: Gradient.Vertical
+            GradientStop { position: 0.0; color: "transparent" }
+            GradientStop {
+                position: Math.min(1.0, Math.max(0.0, background.height > 0 ? (root.buttonSize / 10) / background.height : 0.0))
+                color: "transparent"
+            }
+            GradientStop { position: 1.0; color: qgcPalette.windowShadeLight }
+        }
+        radius: SVUnits.radius
+        border.width: 1
+        border.color: qgcPalette.windowShade
+        opacity: 0.20
     }
 
     Grid {
         id: layoutGrid
         anchors.fill: parent
-        anchors.margins: SVUnits.margin
+        //anchors.margins: SVUnits.margin
         rows: root.isVertical ? 3 : 1
         columns: root.isVertical ? 1 : 3
         spacing: 0

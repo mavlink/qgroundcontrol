@@ -46,6 +46,7 @@ qt_add_qml_module(SynclairVisionUIModule
         
         Settings/SVSettingsMenu.qml
         Settings/SVSettingsGeneral.js
+        Settings/SVSettingsNetwork.js
         Settings/SVSettingsControls.js
         Settings/SVSettingsShortcuts.js
         Settings/SVSettingsDev.js
@@ -80,6 +81,7 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_main.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_main_open.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_general.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_network.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_controls.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_dev.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_shortcut.svg"
@@ -94,6 +96,11 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
 
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/hud_eye.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/hud_eye_closed.svg"
+
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_ai.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_ai_bold.svg"
+
+
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -19,6 +19,9 @@ Item {
     property int _widgetMargin: 0
     property bool cameraActive: !QGroundControl.videoManager.decoding && !QGroundControl.videoManager.isUvc
     property int cameraIndex
+    property bool previewMode: false
+    property real _noVideoLabelPadding: previewMode ? SVUnits.margin : SVUnits.bigMargin
+    property real _noVideoLabelPointSize: previewMode ? SVUnits.smallText : SVUnits.mediumText
 
     QGCPalette { id: qgcPalette}
 
@@ -31,8 +34,8 @@ Item {
         Rectangle {
             id:                 noVideoLabelBackground
             anchors.centerIn:   parent
-            width:              noVideoLabel.contentWidth + SVUnits.bigMargin * 2
-            height:             noVideoLabel.contentHeight + SVUnits.bigMargin * 2
+            width:              noVideoLabel.contentWidth + root._noVideoLabelPadding * 2
+            height:             noVideoLabel.contentHeight + root._noVideoLabelPadding * 2
             radius:             SVUnits.radius
             color:              qgcPalette.windowTransparent
 
@@ -41,7 +44,7 @@ Item {
                 text:               qsTr("NO VIDEO AVAILABLE")
                 font.bold:          true
                 color:              qgcPalette.text
-                font.pointSize:     SVUnits.mediumText
+                font.pointSize:     root._noVideoLabelPointSize
                 anchors.centerIn:   parent
             }
         }
@@ -51,7 +54,7 @@ Item {
         id: widgetLayer
         anchors.fill: parent
         anchors.margins: SVUnits.bigMargin
-        visible: SVState.hud
+        visible: !root.previewMode && SVState.hud
     }
 
     SVBorder {
@@ -59,15 +62,22 @@ Item {
         anchors.fill: parent
         borderWidth: SVUnits.thickLineWidth - SVUnits.lineWidth
         borderColor: qgcPalette.colorYellowGreen
-        borderVisible: SVState.cameraSelected === cameraIndex && SVState.hud
+        borderVisible: !root.previewMode
+            && SVState.cameraSelectionEnabled
+            && SVState.cameraSelected === cameraIndex
+            && SVState.hud
     }
 
     MouseArea {
         anchors.fill: parent
+        enabled: !root.previewMode && SVState.cameraSelectionEnabled
         onClicked: {
-            SVState.cameraSelected = (SVState.cameraSelected === root.cameraIndex || SVState.lockControls)
-                ? -1
-                : root.cameraIndex
+            if (SVState.lockControls) {
+                SVState.clearCamera()
+                return
+            }
+
+            SVState.setCamera(root.cameraIndex)
         }
     }
 }

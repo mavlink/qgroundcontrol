@@ -8,6 +8,12 @@ function getSettingsModel() {
             checkable: true, 
             iconSource: '/qmlimages/settings_general.svg' 
         },
+        {
+            id: 'Network',
+            text: 'Network',
+            checkable: true,
+            iconSource: '/qmlimages/settings_network.svg'
+        },
         { 
             id: 'Controls', 
             text: 'Controls', 
@@ -29,7 +35,7 @@ function getSettingsModel() {
     ]
 }
 
-function getOneShotModel() {
+function getOneShotModel(uiInteractionEnabled) {
     return [
         {
             id: 'hud',
@@ -52,54 +58,62 @@ function getOneShotModel() {
             text: 'Photo',
             checkable: true,
             iconSource: '/qmlimages/camera_photo.svg',
-            enabled: true //activeDigiview
+            tintIcon: false,
+            enabled: uiInteractionEnabled
         },
         {
             id: 'record',
             text: 'Record',
             checkable: true,
             iconSource: '/qmlimages/camera_record.svg',
-            enabled: true //activeDigiview
+            enabled: uiInteractionEnabled
         }
     ]
 }
 
-function getLayoutModel() {
+function getLayoutModel(uiInteractionEnabled) {
     return [
         { 
             id: 'single', 
             checkable: true, 
-            iconSource: '/qmlimages/layout_single.svg' 
+            iconSource: '/qmlimages/layout_single.svg',
+            enabled: uiInteractionEnabled
         },
         { 
             id: 'two_stacked_square', 
             checkable: true, 
-            iconSource: '/qmlimages/layout_double.svg' 
+            iconSource: '/qmlimages/layout_double.svg',
+            enabled: uiInteractionEnabled
         },
         { 
             id: 'four_square', 
             checkable: true, 
-            iconSource: '/qmlimages/layout_quadruple.svg' 
+            iconSource: '/qmlimages/layout_quadruple.svg',
+            enabled: uiInteractionEnabled
         },
         { 
             id: 'two_stacked_panorama', 
             checkable: true, 
-            iconSource: '/qmlimages/layout_double_panorama.svg' 
+            iconSource: '/qmlimages/layout_double_panorama.svg',
+            enabled: uiInteractionEnabled
         },
         { 
             id: 'two_square_one_panorama', 
             checkable: true, 
-            iconSource: '/qmlimages/layout_double+panorama.svg' 
+            iconSource: '/qmlimages/layout_double+panorama.svg',
+            enabled: uiInteractionEnabled
         },
         { 
             id: 'three_square_one_panorama', 
             checkable: true, 
-            iconSource: '/qmlimages/layout_triple+panorama.svg' 
+            iconSource: '/qmlimages/layout_triple+panorama.svg',
+            enabled: uiInteractionEnabled
         },
         { 
             id: 'entire_picture', 
             checkable: true, 
-            iconSource: '/qmlimages/layout_single_panorama.svg' 
+            iconSource: '/qmlimages/layout_single_panorama.svg',
+            enabled: uiInteractionEnabled
         }
     ]
 }

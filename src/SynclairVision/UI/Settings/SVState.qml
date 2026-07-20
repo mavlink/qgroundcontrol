@@ -1,8 +1,17 @@
 pragma Singleton
 import QtQuick
 
+import QGroundControl
+
 QtObject {
     id: root
+
+    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property bool digiviewActive: !!(digiview
+        && digiview.connected
+        && QGroundControl.videoManager.streaming)
+    readonly property bool uiInteractionEnabled: digiviewActive || SVSettings.devBypassDisconnectedUiDisable
+    readonly property bool cameraSelectionEnabled: uiInteractionEnabled
 
     signal takePhotoRequested()
 
@@ -47,6 +56,10 @@ QtObject {
         toolbar = !toolbar
     }
 
+    function toggleAiOverlay() {
+        aiOverlay = !aiOverlay
+    }
+
     function toggleLockControls() {
         lockControls = !lockControls
     }
@@ -56,6 +69,11 @@ QtObject {
     }
 
     function setCamera(cameraId) {
+        if (!cameraSelectionEnabled) {
+            clearCamera()
+            return
+        }
+
         if(cameraId === cameraSelected) {
             clearCamera()
         } else {
@@ -68,6 +86,11 @@ QtObject {
     }
 
     function nextCamera() {
+        if (!cameraSelectionEnabled) {
+            clearCamera()
+            return
+        }
+
         cameraSelected = cameraSelected + 1
 
         if(cameraSelected > 5) {
@@ -89,6 +112,7 @@ QtObject {
 
     function stopRecording() {
         record = false
+        stopRecordTimer()
     }
 
     function takePhoto() {
@@ -105,7 +129,7 @@ QtObject {
 //---------------------------------
 // Overlay
 //---------------------------------
-    property bool synclairOverlay: true
+    property bool synclairOverlay: false
     property bool hud: true
     property bool toolbar: true
     property bool lockControls: false
@@ -116,4 +140,13 @@ QtObject {
     property string recordElapsedText: "00:00:00"
     property int photoCooldownMs: 500
     property real lastPhotoRequestTimeMs: 0
+    property bool aiOverlay: false
+
+    onDigiviewActiveChanged: {
+        if (digiviewActive) {
+            return
+        }
+
+        stopRecording()
+    }
 }

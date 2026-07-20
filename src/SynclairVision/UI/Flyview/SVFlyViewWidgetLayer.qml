@@ -23,7 +23,7 @@ Item {
     property string activeSettingsId: ""
     readonly property var settingsModel: SVFlyViewMenusList.getSettingsModel()
 
-    property bool activeDigiview: QGroundControl.videoManager.streaming
+    property bool uiInteractionEnabled: SVState.uiInteractionEnabled
 
     signal layoutSelected(string layoutId)
 
@@ -85,7 +85,7 @@ Item {
         activeLayoutId: root.activeLayoutId
         activeSettingsId: root.activeSettingsId
         settingsModel: root.settingsModel
-        activeDigiview: root.activeDigiview
+        uiInteractionEnabled: root.uiInteractionEnabled
         controlPanelRight: controlPanel.x + controlPanel.width + SVUnits.objectWidth
 
         onSettingsSelected: (settingsId) => {

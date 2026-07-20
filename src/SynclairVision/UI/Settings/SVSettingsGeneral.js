@@ -26,6 +26,22 @@ function getSections() {
                     max: 100,
                     step: 1
                 },
+                
+                {
+                    id: 'reset_settings',
+                    type: 'button',
+                    label: 'Reset Settings',
+                    description: 'Reset saved settings to defaults.',
+                    text: 'Reset',
+                    buttonRole: 'resetSettings'
+                }
+                
+            ]
+        },
+        {
+            id: 'userInterface',
+            title: 'User Interface',
+            items: [
                 {
                     id: 'record_highlight_enabled',
                     property: 'recordHighlightEnabled',
@@ -41,68 +57,23 @@ function getSections() {
                     label: 'Record Information Box',
                     description: 'Show or hide record information box',
                     checked: true
-                }
-                
-            ]
-        },
-        {
-            id: 'network', 
-            title: 'Network',
-            items: [
-                {
-                    id: 'network_profile',
-                    property: 'networkSelectedProfileIndex',
-                    type: 'dropdown',
-                    label: 'Network Profile',
-                    description: 'Pick from network profiles',
-                    optionsSource: 'networkProfiles',
-                    enabledWhen: {
-                        source: 'digiview',
-                        property: 'connected',
-                        equals: false
-                    }
                 },
                 {
-                    id: 'network_connect',
-                    type: 'button',
-                    label: 'Connection',
-                    description: 'Connect to or disconnect from selected network profile',
-                    buttonRole: 'connectToggle'
-                },
-                {
-                    id: 'network_edit',
-                    type: 'button',
-                    label: 'Edit Profile',
-                    description: 'Edit the currently selected network profile.',
-                    text: "Edit   ✎",
-                    buttonRole: 'editSelectedProfile',
-                    enabledWhen: {
-                        source: 'digiview',
-                        property: 'connected',
-                        equals: false
-                    }
-                },
-                {
-                    id: 'network_new',
-                    type: 'button',
-                    label: 'New Profile',
-                    description: 'Create a new network profile.',
-                    text: 'New   +',
-                    buttonRole: 'newProfile',
-                    enabledWhen: {
-                        source: 'digiview',
-                        property: 'connected',
-                        equals: false
-                    }
-                },
-                {
-                    id: 'network_autoconnect_on_start',
-                    property: 'networkAutoconnectOnStart',
+                    id: 'camera_flash',
+                    property: 'cameraFlash',
                     type: 'checkbox',
-                    label: 'Auto-connect on Start',
-                    description: 'Automatically connect with previous profile on program start',
-                    checked: false
-                }
+                    label: 'Camera Flash',
+                    description: 'Display camera flash on screen',
+                    checked: true
+                },
+                {
+                    id: 'record_information_box',
+                    property: 'recordInformationBox',
+                    type: 'checkbox',
+                    label: 'Record Information Box',
+                    description: 'Show or hide record information box',
+                    checked: true
+                },
             ]
         }
     ]

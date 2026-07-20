@@ -3,8 +3,22 @@
 function getSections() {
     return [
         {
-            id: 'diagnostics',
-            title: 'Diagnostics',
+            id: 'ui',
+            title: 'UI',
+            items: [
+                {
+                    id: 'bypass_disconnected_ui_disable',
+                    property: 'devBypassDisconnectedUiDisable',
+                    type: 'checkbox',
+                    label: 'Temporary: Bypass Disconnected UI Disable',
+                    description: 'Developer-only temporary bypass that keeps the Synclair UI interactable without an active Digiview stream.',
+                    checked: false
+                }
+            ]
+        },
+        {
+            id: 'ai',
+            title: 'AI',
             items: [
                 {
                     id: 'diagnostics_log_level',
@@ -17,23 +31,52 @@ function getSections() {
                         { label: 'Debug', value: 'debug' },
                         { label: 'Trace', value: 'trace' }
                     ]
-                },
+                }
+            ]
+        },
+        {
+            id: 'camera',
+            title: 'Camera',
+            items: [
                 {
-                    id: 'diagnostics_show_fps',
-                    type: 'checkbox',
-                    label: 'Show FPS Overlay',
-                    description: 'Display a small frame-rate overlay while the view is running.',
-                    checked: false
-                },
-                {
-                    id: 'diagnostics_refresh_rate',
+                    id: 'minimalExposure',
                     type: 'slider',
-                    label: 'Overlay Refresh Rate',
-                    description: 'Set how often developer overlays update on screen.',
-                    min: 5,
-                    max: 60,
-                    step: 5,
-                    value: 30
+                    label: 'Minimal Exposure',
+                    description: 'Controls minimal exposure for camera',
+                    min: 0,
+                    max: 255,
+                    step: 1,
+                    value: 40
+                },
+                {
+                    id: 'maximumExposure',
+                    type: 'slider',
+                    label: 'Maximum Exposure',
+                    description: 'Controls maximum exposure for camera',
+                    min: 0,
+                    max: 255,
+                    step: 1,
+                    value: 40
+                },
+                {
+                    id: 'minimalGain',
+                    type: 'slider',
+                    label: 'Minimal Gain',
+                    description: 'Controls minimal gain for camera',
+                    min: 0,
+                    max: 255,
+                    step: 1,
+                    value: 40
+                },
+                {
+                    id: 'maximumGain',
+                    type: 'slider',
+                    label: 'Maximum Gain',
+                    description: 'Controls maximum gain for camera',
+                    min: 0,
+                    max: 255,
+                    step: 1,
+                    value: 40
                 }
             ]
         }

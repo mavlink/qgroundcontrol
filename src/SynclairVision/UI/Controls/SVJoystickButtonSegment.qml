@@ -9,12 +9,11 @@ Item {
     readonly property var startAngle: -Math.PI / 4
     readonly property var endAngle: Math.PI / 4
 
-    property int radius: width / 2
+    property real radius: width / 2
     property color buttonColor
     property color hoveredButtonColor
     property color clickedButtonColor
     property color borderColor
-    property color outerBorderColor
     property color arrowColor: "white"
     property int   hoverIndex: -1
 
@@ -23,8 +22,8 @@ Item {
     property real  arrowSpace
     property real  arrowOpacity: 1
 
-    property var   arrowSpaceWidth: radius - (1 - arrowSpace) * radius
-    property var   spacing: (arrowSpaceWidth * (1 - arrowSize)) / 2
+    property real   arrowSpaceWidth: radius - (1 - arrowSpace) * radius
+    property real   spacing: (arrowSpaceWidth * (1 - arrowSize)) / 2
 
     property var   clicked: new Array(4).fill(false)
 
@@ -50,11 +49,10 @@ Item {
             Shape {
                 id: shape
                 anchors.fill: parent
-                antialiasing: true
+                //antialiasing: true
 
                 ShapePath {
-                    strokeWidth: 1
-                    strokeColor: borderColor
+                    strokeWidth: 0
 
                     fillColor: {
                         if(clicked[index]) {
@@ -109,7 +107,7 @@ Item {
         anchors.fill: parent
         color: "transparent"
         border.width: 1
-        border.color: outerBorderColor
+        border.color: borderColor
         radius: width / 2
     }
 }

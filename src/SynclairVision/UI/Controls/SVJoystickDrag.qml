@@ -111,8 +111,6 @@ Item {
         id: background
         anchors.fill: parent
         color: qgcPalette.windowShade
-        border.width: SVUnits.lineWidth
-        border.color: root.outerRingColor
         radius: width / 2
     }
 
@@ -123,7 +121,6 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         color: qgcPalette.window
-        border.width: 0
         radius: width / 2
         opacity: 0.3
         visible: false

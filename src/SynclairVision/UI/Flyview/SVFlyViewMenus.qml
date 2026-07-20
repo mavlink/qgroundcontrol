@@ -12,16 +12,21 @@ Item {
     property string activeLayoutId: "four_square"
     property string activeSettingsId: ""
     property var settingsModel: []
-    property bool activeDigiview: false
+    property bool uiInteractionEnabled: false
     property real controlPanelRight: 0
 
     signal settingsSelected(string settingsId)
     signal layoutSelected(string layoutId)
 
     readonly property var digiview: QGroundControl.digiviewManager
+    readonly property bool digiviewActive: SVState.digiviewActive
 
     function setLayout(layoutId) {
-        var layoutModel = SVFlyViewMenusList.getLayoutModel()
+        if (!root.digiviewActive) {
+            return
+        }
+
+        var layoutModel = SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled)
         var layoutMode = -1
         var i
 
@@ -94,7 +99,7 @@ Item {
             return ids
         }
 
-        model: SVFlyViewMenusList.getOneShotModel()
+        model: SVFlyViewMenusList.getOneShotModel(root.uiInteractionEnabled)
 
         onItemSelected: (id) => {
             if (id === "hud") {
@@ -103,11 +108,19 @@ Item {
             }
 
             if (id === "photo") {
+                if (!root.uiInteractionEnabled) {
+                    return
+                }
+
                 SVState.takePhoto()
                 return
             }
 
             if (id === "record") {
+                if (!root.uiInteractionEnabled) {
+                    return
+                }
+
                 SVState.toggleRecord()
                 return
             }
@@ -120,9 +133,44 @@ Item {
     }
 
     SVMenuStrip {
-        id: layout
+        id: aiDetectionOverlay
+        headerless: true
         anchors.top: parent.top
         anchors.topMargin: root.leftToolStripBottom + SVUnits.margin
+        anchors.left: parent.left
+    
+        visible: SVState.hud
+
+        exclusiveSelection: false
+        autoUpdateActiveId: false
+        activeIds: SVState.aiOverlay ? ["aiOverlay"] : []
+
+        model: [
+            { 
+                id: "aiOverlay",
+                text: "Overlay",
+                checkable: true,
+                iconSource: "/qmlimages/layout_ai.svg",
+                alternateIconSource: "/qmlimages/layout_ai_bold.svg",
+                iconActive: SVState.aiOverlay,
+                enabled: root.uiInteractionEnabled
+            }
+        ]
+
+        onItemSelected: (id) => {
+            if (!root.uiInteractionEnabled) {
+                return
+            }
+
+            SVState.toggleAiOverlay()
+            return
+        }
+    }
+
+    SVMenuStrip {
+        id: layout
+        anchors.top: aiDetectionOverlay.bottom
+        anchors.topMargin: SVUnits.margin
         anchors.left: parent.left
         visible: SVState.hud
 
@@ -133,9 +181,13 @@ Item {
         autoUpdateActiveId: false
         activeId: root.activeLayoutId
 
-        model: SVFlyViewMenusList.getLayoutModel()
+        model: SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled)
 
         onItemSelected: (id) => {
+            if (!root.uiInteractionEnabled) {
+                return
+            }
+
             SVState.cameraSelected = -1
             root.layoutSelected(id)
             root.setLayout(id);
@@ -147,36 +199,6 @@ Item {
         headerless: true
         anchors.left: parent.left
         anchors.leftMargin: root.controlPanelRight
-        anchors.bottom: parent.bottom
-        visible: SVState.hud
-
-        exclusiveSelection: false
-        autoUpdateActiveId: false
-        activeIds: SVState.lockControls ? ["lock"] : []
-
-        model: [
-            { 
-                id: "lock",
-                text: "Lock",
-                checkable: true,
-                iconSource: "/qmlimages/controls_lock.svg",
-                alternateIconSource: "/qmlimages/controls_lock_closed.svg",
-                iconActive: SVState.lockControls,
-                enabled: true
-            }
-        ]
-
-        onItemSelected: (id) => {
-            SVState.toggleLockControls()
-            return
-        }
-    }
-
-    SVMenuStrip {
-        id: targets
-        headerless: true
-        anchors.left: lockButton.right
-        anchors.leftMargin: SVUnits.margin
         anchors.bottom: parent.bottom
         visible: SVState.hud
 

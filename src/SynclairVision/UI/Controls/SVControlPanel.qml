@@ -54,7 +54,6 @@ Item {
             height: SVSettings.zoomSize / 4 * SVUnits.height
             width: height / 2
             anchors.left: joystick.right
-            anchors.leftMargin: -SVUnits.margin
             anchors.bottom: parent.bottom
         }
     }
