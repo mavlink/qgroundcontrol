@@ -489,16 +489,16 @@ bool ParameterManager::_mavlinkParamUnionToVariant(const mavlink_param_union_t &
         outValue = QVariant(paramUnion.param_float);
         return true;
     case MAV_PARAM_TYPE_UINT8:
-        outValue = QVariant(paramUnion.param_uint8);
+        outValue = QVariant(static_cast<quint32>(paramUnion.param_uint8));
         return true;
     case MAV_PARAM_TYPE_INT8:
-        outValue = QVariant(paramUnion.param_int8);
+        outValue = QVariant(static_cast<qint32>(paramUnion.param_int8));
         return true;
     case MAV_PARAM_TYPE_UINT16:
-        outValue = QVariant(paramUnion.param_uint16);
+        outValue = QVariant(static_cast<quint32>(paramUnion.param_uint16));
         return true;
     case MAV_PARAM_TYPE_INT16:
-        outValue = QVariant(paramUnion.param_int16);
+        outValue = QVariant(static_cast<qint32>(paramUnion.param_int16));
         return true;
     case MAV_PARAM_TYPE_UINT32:
         outValue = QVariant(paramUnion.param_uint32);
