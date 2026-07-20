@@ -56,7 +56,7 @@
 },
 {
     "name":             "count",
-    "shortDesc": "Sat Count",
+    "shortDesc": "Satellite Count",
     "type":             "uint32"
 },
 {
