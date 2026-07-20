@@ -26,6 +26,8 @@ public:
 private slots:
     void _testCompassCalibration();
     void _testCompassCalibrationCancel();
+    void _testCompassCalibrationIgnoresStaleFailedReports();
+    void _testCompassCalibrationStartRejected();
     void _testAccelCalibration();
 
 private:

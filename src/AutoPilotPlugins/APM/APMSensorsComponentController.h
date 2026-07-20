@@ -145,6 +145,10 @@ private:
     };
     void _stopCalibration(StopCalibrationCode code);
 
+    /// Sends MAV_CMD_DO_START_MAG_CAL using _magCalCompassBits. Called from the
+    /// pre-start MAV_CMD_DO_CANCEL_MAG_CAL ack handler.
+    void _sendStartMagCal();
+
     void _updateAndEmitShowOrientationCalArea(bool show);
 
     APMSensorsComponent *_sensorsComponent = nullptr;
@@ -158,6 +162,15 @@ private:
     bool _showOrientationCalArea = false;
 
     QGCMAVLink::CalibrationType _calTypeInProgress = QGCMAVLink::CalibrationNone;
+
+    /// ArduPilot keeps streaming MAG_CAL_PROGRESS/MAG_CAL_REPORT from a previous cal (a failed
+    /// cal streams until cancelled). Ignore those messages until our start command is accepted.
+    bool _magCalStartAccepted = false;
+
+    /// True while waiting for the pre-start MAV_CMD_DO_CANCEL_MAG_CAL ack; START is sent from
+    /// the ack handler so stale messages can't race into the new calibration session.
+    bool _magCalCancelBeforeStartPending = false;
+    uint8_t _magCalCompassBits = 0; ///< Compasses to calibrate, sent with the deferred START
 
     uint8_t _rgCompassCalProgress[3];
     bool _rgCompassCalComplete[3];

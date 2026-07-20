@@ -171,6 +171,18 @@ public:
     /// Change a float parameter value directly on MockLink (for testing cache invalidation)
     void setMockParamValue(int componentId, const QString &paramName, float value);
 
+    /// Simulates ArduPilot streaming MAG_CAL_REPORT(MAG_CAL_FAILED) after a failed onboard
+    /// compass cal. Like real ArduPilot, the failed report keeps streaming until
+    /// MAV_CMD_DO_CANCEL_MAG_CAL is received; MAV_CMD_DO_START_MAG_CAL does not stop it.
+    void startAPMStaleFailedMagCalReportStreaming();
+
+    /// Returns true while the stale failed MAG_CAL_REPORT stream is active
+    bool apmStaleFailedMagCalReportStreamingActive() const;
+
+    /// When enabled, MAV_CMD_DO_START_MAG_CAL is rejected with MAV_RESULT_FAILED
+    /// instead of starting the compass cal simulation.
+    void setAPMMagCalStartFailureMode(bool fail) { _apmMagCalStartFailureMode = fail; }
+
     /// Change an int32 parameter value directly on MockLink. Used to simulate the
     /// firmware storing calibration results (e.g. CAL_MAG0_ID).
     void setInt32ParamValue(int componentId, const QString &paramName, int32_t value) { _mapParamName2Value[componentId][paramName] = QVariant::fromValue(value); }
@@ -416,9 +428,11 @@ private:
     // APM compass calibration worker state
     // Protects _apmCompassCalProgress: main thread writes 0 to start/stop,
     // worker thread reads/increments each 100ms tick.
-    QMutex _apmCompassCalMutex;
+    mutable QMutex _apmCompassCalMutex;
     int    _apmCompassCalProgress  = -1; ///< -1 = inactive, 0-100 = progress pct
     int    _apmCompassCalTickCount = 0;  ///< 500 Hz tick counter for ~10 Hz throttle
+    bool   _apmStaleFailedMagCalReportStreaming = false; ///< Streaming MAG_CAL_REPORT(FAILED) from a previous failed cal
+    bool   _apmMagCalStartFailureMode = false; ///< Reject MAV_CMD_DO_START_MAG_CAL with MAV_RESULT_FAILED
 
     // APM accel calibration worker state
     // Protects _apmAccelCalPos: main thread writes the starting pos,
