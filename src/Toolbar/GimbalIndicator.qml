@@ -75,6 +75,30 @@ Item {
             rowSpacing:     0
             columnSpacing:  margins / 2
 
+            // Round to whole degrees and normalize -0 to 0 to prevent the text from
+            // jittering around as the gimbal telemetry noise changes the value slightly.
+            function formatAngle(fact) {
+                var angle = Math.round(fact.rawValue)
+                return isNaN(angle) ? "--" : (angle + 0).toString()
+            }
+
+            // The labels are fixed to the width of the widest possible value so the
+            // toolbar doesn't shift as the digit count changes. "-188" is used since
+            // 8 is the widest digit.
+            TextMetrics {
+                id:             pitchTextMetrics
+                font.family:    pitchLabel.font.family
+                font.pointSize: ScreenTools.smallFontPointSize
+                text:           qsTr("P: ") + "-188"
+            }
+
+            TextMetrics {
+                id:             panTextMetrics
+                font.family:    panLabel.font.family
+                font.pointSize: ScreenTools.smallFontPointSize
+                text:           (showAzimuth ? qsTr("Az: ") : qsTr("Y: ")) + "-188"
+            }
+
             QGCLabel {
                 id:                     statusLabel
                 font.pointSize:         ScreenTools.smallFontPointSize
@@ -86,20 +110,22 @@ Item {
                 Layout.alignment:       Qt.AlignHCenter
             }
             QGCLabel {
-                id:             pitchLabel
-                font.pointSize: ScreenTools.smallFontPointSize
-                text:           activeGimbal ? qsTr("P: ") + activeGimbal.absolutePitch.valueString : ""
-                color:          qgcPal.text
+                id:                     pitchLabel
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   activeGimbal ? qsTr("P: ") + parent.formatAngle(activeGimbal.absolutePitch) : ""
+                color:                  qgcPal.text
+                Layout.preferredWidth:  pitchTextMetrics.width
             }
             QGCLabel {
-                id:             panLabel
-                font.pointSize: ScreenTools.smallFontPointSize
-                text:           activeGimbal ?
-                                    (showAzimuth ?
-                                        (qsTr("Az: ") + activeGimbal.absoluteYaw.valueString) :
-                                        (qsTr("Y: ") + activeGimbal.bodyYaw.valueString)) :
-                                    ""
-                color:          qgcPal.text
+                id:                     panLabel
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   activeGimbal ?
+                                            (showAzimuth ?
+                                                (qsTr("Az: ") + parent.formatAngle(activeGimbal.absoluteYaw)) :
+                                                (qsTr("Y: ") + parent.formatAngle(activeGimbal.bodyYaw))) :
+                                            ""
+                color:                  qgcPal.text
+                Layout.preferredWidth:  panTextMetrics.width
             }
         }
     }
