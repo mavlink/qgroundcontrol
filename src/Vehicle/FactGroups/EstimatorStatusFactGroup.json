@@ -4,8 +4,8 @@
     "QGC.MetaData.Facts":
 [
 {
-    "name":         "goodAttitudeEsimate",
-    "shortDesc":    "Good Attitude Esimate",
+    "name":         "goodAttitudeEstimate",
+    "shortDesc":    "Good Attitude Estimate",
     "type":         "bool",
     "default":      false
 },

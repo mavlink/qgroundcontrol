@@ -54,7 +54,7 @@ public:
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
 private:
-    Fact _goodAttitudeEstimateFact = Fact(0, QStringLiteral("goodAttitudeEsimate"), FactMetaData::valueTypeBool);
+    Fact _goodAttitudeEstimateFact = Fact(0, QStringLiteral("goodAttitudeEstimate"), FactMetaData::valueTypeBool);
     Fact _goodHorizVelEstimateFact = Fact(0, QStringLiteral("goodHorizVelEstimate"), FactMetaData::valueTypeBool);
     Fact _goodVertVelEstimateFact = Fact(0, QStringLiteral("goodVertVelEstimate"), FactMetaData::valueTypeBool);
     Fact _goodHorizPosRelEstimateFact = Fact(0, QStringLiteral("goodHorizPosRelEstimate"), FactMetaData::valueTypeBool);
