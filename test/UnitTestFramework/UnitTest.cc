@@ -19,6 +19,7 @@
 #include <iterator>
 
 #include "AppSettings.h"
+#include "AutoPilotPlugin.h"
 #include "LinkManager.h"
 #include "LogEntry.h"
 #include "MultiVehicleManager.h"
@@ -28,6 +29,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleComponent.h"
 
 struct UnitTest::ExpectedLogMessages
 {
@@ -537,6 +539,22 @@ void UnitTest::settleEventLoopForCleanup(int iterations, int waitMs)
     }
 }
 
+VehicleComponent *UnitTest::findVehicleComponent(Vehicle *vehicle, const QString &name)
+{
+    if (!vehicle || !vehicle->autopilotPlugin()) {
+        return nullptr;
+    }
+
+    const QVariantList components = vehicle->autopilotPlugin()->vehicleComponents();
+    for (const QVariant &compVariant : components) {
+        auto *comp = compVariant.value<VehicleComponent *>();
+        if (comp && (comp->name() == name)) {
+            return comp;
+        }
+    }
+    return nullptr;
+}
+
 int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels labelFilter)
 {
     int ret = 0;
@@ -789,6 +807,13 @@ void UnitTest::init()
     _expectedLogMessages->ignored.clear();
     _expectedLogMessages->pending.clear();
     _expectedLogMessages->consumedMessageIndices.clear();
+
+    // showRebootAppMessage() debounces repeats (2 min) across tests — reset so each
+    // test deterministically sees its own reboot message. Lightweight harness runs a
+    // bare QCoreApplication, hence the cast check.
+    if (auto *app = qobject_cast<QGCApplication *>(QCoreApplication::instance())) {
+        app->resetRebootMessageDebounce();
+    }
 
     // MockLink emulates an Open Drone ID device (sends OPEN_DRONE_ID_ARM_STATUS at
     // 1Hz), which makes RemoteIDManager start its periodic send timer. That timer

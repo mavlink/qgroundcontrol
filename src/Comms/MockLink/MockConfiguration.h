@@ -10,6 +10,7 @@ class MockConfiguration : public LinkConfiguration
     Q_PROPERTY(int  firmware                             READ firmware                            WRITE setFirmware                            NOTIFY firmwareChanged)
     Q_PROPERTY(int  vehicle                              READ vehicle                             WRITE setVehicle                             NOTIFY vehicleChanged)
     Q_PROPERTY(bool sendStatus                           READ sendStatusText                      WRITE setSendStatusText                      NOTIFY sendStatusChanged)
+    Q_PROPERTY(bool apmStartFreshParams                  READ apmStartFreshParams                 WRITE setApmStartFreshParams                 NOTIFY apmStartFreshParamsChanged)
     Q_PROPERTY(bool enableCamera                         READ enableCamera                        WRITE setEnableCamera                        NOTIFY enableCameraChanged)
     Q_PROPERTY(bool enableGimbal                        READ enableGimbal                        WRITE setEnableGimbal                        NOTIFY enableGimbalChanged)
     Q_PROPERTY(bool enableProximity                      READ enableProximity                     WRITE setEnableProximity                     NOTIFY enableProximityChanged)
@@ -38,13 +39,14 @@ public:
 
     /// Options for the MockLink::start*MockLink helpers
     enum Option {
-        OptionNone            = 0,
-        OptionSendStatusText  = 1 << 0,
-        OptionEnableCamera    = 1 << 1,
-        OptionEnableGimbal    = 1 << 2,
-        OptionEnableProximity = 1 << 3,
-        OptionPreloadMission  = 1 << 4,
-        OptionStayMavlinkV1   = 1 << 5,
+        OptionNone                = 0,
+        OptionSendStatusText      = 1 << 0,
+        OptionEnableCamera        = 1 << 1,
+        OptionEnableGimbal        = 1 << 2,
+        OptionEnableProximity     = 1 << 3,
+        OptionPreloadMission      = 1 << 4,
+        OptionStayMavlinkV1       = 1 << 5,
+        OptionAPMStartFreshParams = 1 << 6,
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
@@ -71,6 +73,8 @@ public:
     void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; emit vehicleChanged(); }
     bool sendStatusText() const { return _sendStatusText; }
     void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
+    bool apmStartFreshParams() const { return _apmStartFreshParams; }
+    void setApmStartFreshParams(bool apmStartFreshParams) { _apmStartFreshParams = apmStartFreshParams; emit apmStartFreshParamsChanged(); }
     bool enableCamera() const { return _enableCamera; }
     void setEnableCamera(bool enableCamera) { _enableCamera = enableCamera; emit enableCameraChanged(); }
     bool enableGimbal() const { return _enableGimbal; }
@@ -141,6 +145,7 @@ signals:
     void firmwareChanged();
     void vehicleChanged();
     void sendStatusChanged();
+    void apmStartFreshParamsChanged();
     void enableCameraChanged();
     void enableGimbalChanged();
     void enableProximityChanged();
@@ -166,6 +171,7 @@ private:
     MAV_AUTOPILOT _firmwareType = MAV_AUTOPILOT_PX4;
     MAV_TYPE _vehicleType = MAV_TYPE_QUADROTOR;
     bool _sendStatusText = false;
+    bool _apmStartFreshParams = false;
     bool _enableCamera = false;
     bool _enableGimbal = false;
     bool _enableProximity = false;
@@ -200,6 +206,7 @@ private:
     static constexpr const char *_firmwareTypeKey = "FirmwareType";
     static constexpr const char *_vehicleTypeKey = "VehicleType";
     static constexpr const char *_sendStatusTextKey = "SendStatusText";
+    static constexpr const char *_apmStartFreshParamsKey = "APMStartFreshParams";
     static constexpr const char *_enableCameraKey = "EnableCamera";
     static constexpr const char *_enableGimbalKey = "EnableGimbal";
     static constexpr const char *_enableProximityKey = "EnableProximity";

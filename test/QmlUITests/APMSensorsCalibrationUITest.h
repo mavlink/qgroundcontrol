@@ -2,7 +2,6 @@
 
 #include "VehicleConfigUITestBase.h"
 
-class QString;
 class Vehicle;
 
 /// UI test that boots the full QML UI with an ArduCopter MockLink vehicle connected,
@@ -29,15 +28,4 @@ private slots:
     void _testCompassCalibrationIgnoresStaleFailedReports();
     void _testCompassCalibrationStartRejected();
     void _testAccelCalibration();
-
-private:
-    /// Navigate from the Fly view to the APM Sensors page.
-    void _navigateToSensorsPage();
-
-    /// Verify the two calibration indicator buttons reflect the expected green/orange state.
-    void _verifyCalIndicators(bool compassGreen, bool accelGreen, const char *context);
-
-    /// Run a complete full accelerometer calibration by clicking Next for each of the
-    /// six poses as MockLink drives the ACCELCAL_VEHICLE_POS handshake.
-    void _runFullAccelCal();
 };

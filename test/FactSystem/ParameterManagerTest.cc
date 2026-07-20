@@ -132,13 +132,21 @@ void ParameterManagerTest::_requestListMissingParamFail()
 
 void ParameterManagerTest::_paramWriteNoAckRetry()
 {
+    // BAT1_V_CHARGED requires a vehicle reboot, so writing it pops the reboot
+    // app message (debounce is reset per-test by the framework)
+    expectAppMessage(QRegularExpression("Reboot vehicle for changes to take effect"));
     _setParamWithFailureMode(MockLink::FailParamSetFirstAttemptNoAck, true /* expectSuccess */);
+    verifyExpectedLogMessage();
 }
 
 void ParameterManagerTest::_paramWriteNoAckPermanent()
 {
+    // Expectations verify in FIFO order: reboot message first (fires at local
+    // setRawValue), then the write-failed message (fires after retries exhaust)
+    expectAppMessage(QRegularExpression("Reboot vehicle for changes to take effect"));
     expectAppMessage(QRegularExpression("Parameter write failed"));
     _setParamWithFailureMode(MockLink::FailParamSetNoAck, false /* expectSuccess */);
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 }
 
@@ -194,8 +202,12 @@ void ParameterManagerTest::_paramReadNoResponse()
 
 void ParameterManagerTest::_paramWriteParamError()
 {
+    // Expectations verify in FIFO order: reboot message first (fires at local
+    // setRawValue), then the write-failed message (fires on the PARAM_ERROR ack)
+    expectAppMessage(QRegularExpression("Reboot vehicle for changes to take effect"));
     expectAppMessage(QRegularExpression("Parameter write failed"));
     _setParamWithFailureMode(MockLink::FailParamSetParamError, false /* expectSuccess */);
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 }
 

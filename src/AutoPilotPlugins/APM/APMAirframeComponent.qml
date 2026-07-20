@@ -84,10 +84,11 @@ SetupPage {
 
                     // Outer summary item rectangle
                     Rectangle {
-                        id:     outerRect
-                        width:  _boxWidth
-                        height: ScreenTools.defaultFontPixelHeight * 14
-                        color:  qgcPal.window
+                        id:         outerRect
+                        objectName: "apmAirframeBox_" + object.name
+                        width:      _boxWidth
+                        height:     ScreenTools.defaultFontPixelHeight * 14
+                        color:      qgcPal.window
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.75
                         readonly property real innerMargin: ScreenTools.defaultFontPixelWidth
