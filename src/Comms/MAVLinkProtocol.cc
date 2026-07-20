@@ -126,13 +126,15 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, const QByteArray& data)
         }
 
         // v1/v2 share per-(sysid,compid) sequence counters; counting v1 makes every v2 appear lost. Skip v1 non-heartbeats.
+        // RADIO_STATUS is exempt: SiK radios always frame it as v1, so it is processed and never triggers the v1 warning.
         const bool isV1 = (status.flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1);
-        if (isV1 && message.msgid != MAVLINK_MSG_ID_HEARTBEAT) {
+        if (isV1 && (message.msgid != MAVLINK_MSG_ID_HEARTBEAT) && (message.msgid != MAVLINK_MSG_ID_RADIO_STATUS)) {
             link->reportMavlinkV1Traffic();
             continue;
         }
 
         if (!isV1) {
+            link->reportMavlinkV2Traffic();
             _updateCounters(mavlinkChannel, message);
         }
         if (!linkPtr->linkConfiguration()->isForwarding()) {

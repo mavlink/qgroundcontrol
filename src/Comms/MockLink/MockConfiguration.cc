@@ -21,6 +21,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _incrementVehicleId(copy->incrementVehicleId())
     , _startArmed(copy->startArmed())
     , _preloadMission(copy->preloadMission())
+    , _stayMavlinkV1(copy->stayMavlinkV1())
     , _cameraCaptureVideo(copy->cameraCaptureVideo())
     , _cameraCaptureImage(copy->cameraCaptureImage())
     , _cameraHasModes(copy->cameraHasModes())
@@ -78,6 +79,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setGimbalHasNeutral(mockLinkSource->gimbalHasNeutral());
     setStartArmed(mockLinkSource->startArmed());
     setPreloadMission(mockLinkSource->preloadMission());
+    setStayMavlinkV1(mockLinkSource->stayMavlinkV1());
 }
 
 void MockConfiguration::loadSettings(QSettings &settings, const QString &root)

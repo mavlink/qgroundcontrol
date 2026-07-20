@@ -65,6 +65,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _enableGimbal(_mockConfig->enableGimbal())
     , _enableProximity(_mockConfig->enableProximity())
     , _failureMode(_mockConfig->failureMode())
+    , _stayMavlinkV1(_mockConfig->stayMavlinkV1())
     , _vehicleSystemId(_mockConfig->incrementVehicleId() ? _nextVehicleSystemId++ : static_cast<int>(_nextVehicleSystemId))
     , _vehicleLatitude(_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))
     , _vehicleLongitude(_defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001))
@@ -160,8 +161,17 @@ bool MockLink::_connect()
     if (!_connected) {
         _connected = true;
         _disconnectedEmitted = false;
+        // ArduPilot starts out sending MAVLink v1 and only switches to v2 once it sees a v2
+        // message from the GCS. Emulate that: outgoing traffic starts as v1.
+        // High latency links are exempt: QGC doesn't transmit on them, so the upgrade could never happen.
+        // Note: high latency takes precedence over OptionStayMavlinkV1 (the two are not meant to be combined).
+        _mavlinkV2Upgraded = linkConfiguration()->isHighLatency();
         mavlink_status_t *const outgoingStatus = mavlink_get_channel_status(_outgoingMavlinkChannel);
-        outgoingStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        if (_mavlinkV2Upgraded) {
+            outgoingStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        } else {
+            outgoingStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        }
         mavlink_status_t *const incomingStatus = mavlink_get_channel_status(_incomingMavlinkChannel);
         incomingStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
         emit connected();
@@ -875,6 +885,13 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t *bytes, int cBytes)
         const int parsed = mavlink_parse_char(_incomingMavlinkChannel, bytes[i], &msg, &comm);
         if (!parsed) {
             continue;
+        }
+        if (!_mavlinkV2Upgraded && !_stayMavlinkV1 && (msg.magic == MAVLINK_STX)) {
+            // First v2 message from GCS: switch outgoing traffic to v2, same as ArduPilot does.
+            _mavlinkV2Upgraded = true;
+            mavlink_status_t *const outgoingStatus = mavlink_get_channel_status(_outgoingMavlinkChannel);
+            outgoingStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+            qCDebug(MockLinkLog) << "Received MAVLink v2 message from GCS, upgrading outgoing traffic to v2";
         }
         lock.unlock();
         _handleIncomingMavlinkMsg(msg);
@@ -2306,6 +2323,7 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setEnableGimbal(options.testFlag(MockConfiguration::OptionEnableGimbal));
     mockConfig->setEnableProximity(options.testFlag(MockConfiguration::OptionEnableProximity));
     mockConfig->setPreloadMission(options.testFlag(MockConfiguration::OptionPreloadMission));
+    mockConfig->setStayMavlinkV1(options.testFlag(MockConfiguration::OptionStayMavlinkV1));
     mockConfig->setFailureMode(failureMode);
 
     return _startMockLink(mockConfig);
@@ -2766,9 +2784,10 @@ void MockLink::_sendRemoteIDArmStatus()
     std::strncpy(armStatusError, errorUtf8.constData(), sizeof(armStatusError) - 1);
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_open_drone_id_arm_status_pack(
+    (void) mavlink_msg_open_drone_id_arm_status_pack_chan(
         _vehicleSystemId,
         MAV_COMP_ID_ODID_TXRX_1,
+        static_cast<uint8_t>(_outgoingMavlinkChannel),
         &msg,
         armStatus,
         armStatusError
