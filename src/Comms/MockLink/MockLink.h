@@ -321,6 +321,7 @@ private:
     const bool _enableGimbal = false;
     const bool _enableProximity = false;
     const MockConfiguration::FailureMode_t _failureMode = MockConfiguration::FailNone;
+    const bool _stayMavlinkV1 = false;  ///< Test-only: never upgrade outgoing traffic to MAVLink v2
     const uint8_t _vehicleSystemId = 0;
     const double _vehicleLatitude = 0.0;
     const double _vehicleLongitude = 0.0;
@@ -362,6 +363,7 @@ private:
 
     double _vehicleAltitudeAMSL = _defaultVehicleHomeAltitude;
     std::atomic<bool> _commLost = false;
+    bool _mavlinkV2Upgraded = false;    ///< True once outgoing traffic has switched from v1 to v2
     bool _signingEnabled = false;
     bool _highLatencyTransmissionEnabled = true;
 

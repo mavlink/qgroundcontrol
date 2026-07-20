@@ -44,6 +44,7 @@ public:
         OptionEnableGimbal    = 1 << 2,
         OptionEnableProximity = 1 << 3,
         OptionPreloadMission  = 1 << 4,
+        OptionStayMavlinkV1   = 1 << 5,
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
@@ -131,6 +132,11 @@ public:
     bool preloadMission() const { return _preloadMission; }
     void setPreloadMission(bool preloadMission) { _preloadMission = preloadMission; }
 
+    // Test-only: when true, outgoing traffic never upgrades from MAVLink v1 to v2,
+    // simulating a vehicle which only supports MAVLink v1. Not persisted.
+    bool stayMavlinkV1() const { return _stayMavlinkV1; }
+    void setStayMavlinkV1(bool stayV1) { _stayMavlinkV1 = stayV1; }
+
 signals:
     void firmwareChanged();
     void vehicleChanged();
@@ -169,6 +175,7 @@ private:
     uint16_t _boardProductId = 0;
     bool _startArmed = false;
     bool _preloadMission = false;
+    bool _stayMavlinkV1 = false;
 
     // Camera capability flags (defaults match current Camera 1 configuration)
     bool _cameraCaptureVideo = true;
