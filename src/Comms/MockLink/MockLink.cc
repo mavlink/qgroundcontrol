@@ -1766,18 +1766,25 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         commandResult = MAV_RESULT_ACCEPTED;
         break;
     case MAV_CMD_DO_START_MAG_CAL:
-        // APM onboard compass calibration: start sending MAG_CAL_PROGRESS then MAG_CAL_REPORT
+        // APM onboard compass calibration: start sending MAG_CAL_PROGRESS then MAG_CAL_REPORT.
+        // Note: does NOT stop stale failed report streaming - like real ArduPilot, only
+        // MAV_CMD_DO_CANCEL_MAG_CAL stops the failed report stream.
         if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-            QMutexLocker locker(&_apmCompassCalMutex);
-            _apmCompassCalProgress  = 0;
-            _apmCompassCalTickCount = 0;
-            commandResult = MAV_RESULT_ACCEPTED;
+            if (_apmMagCalStartFailureMode) {
+                commandResult = MAV_RESULT_FAILED;
+            } else {
+                QMutexLocker locker(&_apmCompassCalMutex);
+                _apmCompassCalProgress  = 0;
+                _apmCompassCalTickCount = 0;
+                commandResult = MAV_RESULT_ACCEPTED;
+            }
         }
         break;
     case MAV_CMD_DO_CANCEL_MAG_CAL:
         // Stop APM compass calibration worker
         if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
             QMutexLocker locker(&_apmCompassCalMutex);
+            _apmStaleFailedMagCalReportStreaming = false;
             _apmCompassCalProgress = -1;
             commandResult = MAV_RESULT_ACCEPTED;
         }
@@ -2952,6 +2959,19 @@ int MockLink::_availableModesCount() const
 // Worker sends MAG_CAL_PROGRESS at ~10Hz (every 50 calls of 500Hz worker),
 // then sends MAG_CAL_REPORT when pct reaches 100.
 // ---------------------------------------------------------------------------
+void MockLink::startAPMStaleFailedMagCalReportStreaming()
+{
+    QMutexLocker locker(&_apmCompassCalMutex);
+    _apmStaleFailedMagCalReportStreaming = true;
+    _apmCompassCalTickCount = 0;
+}
+
+bool MockLink::apmStaleFailedMagCalReportStreamingActive() const
+{
+    QMutexLocker locker(&_apmCompassCalMutex);
+    return _apmStaleFailedMagCalReportStreaming;
+}
+
 void MockLink::_apmCompassCalWorker()
 {
     if (_firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA) {
@@ -2959,7 +2979,7 @@ void MockLink::_apmCompassCalWorker()
     }
 
     QMutexLocker locker(&_apmCompassCalMutex);
-    if (_apmCompassCalProgress < 0) {
+    if ((_apmCompassCalProgress < 0) && !_apmStaleFailedMagCalReportStreaming) {
         return;
     }
 
@@ -2968,6 +2988,20 @@ void MockLink::_apmCompassCalWorker()
         return;
     }
     _apmCompassCalTickCount = 0;
+
+    if (_apmStaleFailedMagCalReportStreaming) {
+        // Simulate ArduPilot streaming the report from a previously failed cal until cancelled
+        mavlink_message_t msg{};
+        mavlink_mag_cal_report_t report{};
+        report.compass_id  = 0;
+        report.cal_mask    = 0x01;
+        report.cal_status  = MAG_CAL_FAILED;
+        report.fitness     = 999.0f;
+        (void) mavlink_msg_mag_cal_report_encode_chan(
+            _vehicleSystemId, _vehicleComponentId, _outgoingMavlinkChannel, &msg, &report);
+        respondWithMavlinkMessage(msg);
+        return;
+    }
 
     const int pct = _apmCompassCalProgress;
 
