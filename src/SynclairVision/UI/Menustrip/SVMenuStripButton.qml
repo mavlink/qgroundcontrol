@@ -8,6 +8,7 @@ Item {
 
     property string text: ""
     property url iconSource
+    property bool tintIcon: true
     property bool checked: false
     property bool enabled: true
     property bool extendHeader: false
@@ -17,6 +18,7 @@ Item {
     property real borderRadius: ScreenTools.defaultBorderRadius
     property real iconScale: root.text === "" ? 0.6 : 0.45
     property real spacing: ScreenTools.defaultFontPixelHeight * 0.2
+    property real contentSize: size - SVUnits.bigMargin * 2
 
     readonly property color foregroundColor: root.checked ? qgcPalette.buttonHighlightText : qgcPalette.statusFailedText
     readonly property color backgroundColor: (mouseArea.pressed || root.checked)
@@ -34,13 +36,14 @@ Item {
     Rectangle {
         id: background
         anchors.fill: parent
+        anchors.margins: SVUnits.lineWidth
         radius: root.borderRadius
         color: root.backgroundColor
     }
 
     Rectangle {
         anchors.fill: parent
-        anchors.margins: root.frameInset / 2
+        anchors.margins: SVUnits.lineWidth * 2
         color: "transparent"
         border.width: 1
         border.color: qgcPalette.windowShade
@@ -79,14 +82,30 @@ Item {
         anchors.centerIn: parent
         spacing: root.spacing / 2
 
-        QGCColoredImage {
-            id: iconImage
-            width: root.size * root.iconScale
+        Item {
+            width: root.contentSize * root.iconScale
             height: width
-            source: root.iconSource
-            color: root.foregroundColor
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: source !== ""
+            visible: root.iconSource !== ""
+
+            QGCColoredImage {
+                anchors.fill: parent
+                source: root.iconSource
+                color: root.foregroundColor
+                visible: root.tintIcon
+            }
+
+            Image {
+                anchors.fill: parent
+                source: root.iconSource
+                smooth: true
+                mipmap: true
+                antialiasing: true
+                asynchronous: true
+                fillMode: Image.PreserveAspectFit
+                sourceSize.height: height
+                visible: !root.tintIcon
+            }
         }
 
         QGCLabel {

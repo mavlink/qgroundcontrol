@@ -19,6 +19,7 @@ Item {
 
     property var parentToolInsets
     property real leftToolStripBottom: 0
+    property bool previewMode: false
 
     property int _widgetMargin: 0
     property int _toolBarHeight: 0
@@ -109,7 +110,7 @@ Item {
             return
         }
 
-        const shouldOverride = SVState.synclairOverlay && digiview && digiview.connected
+        const shouldOverride = SVState.synclairOverlay && SVState.digiviewActive
         const overrideRtspUrl = shouldOverride ? root._overrideRtspUrl() : ""
 
         if (overrideRtspUrl !== "") {
@@ -179,6 +180,22 @@ Item {
         target: digiview
 
         function onConnectedChanged() {
+            if (!SVState.digiviewActive) {
+                SVState.clearCamera()
+            }
+
+            root._updateRtspUrlOverride()
+        }
+    }
+
+    Connections {
+        target: QGroundControl.videoManager
+
+        function onStreamingChanged() {
+            if (!SVState.digiviewActive) {
+                SVState.clearCamera()
+            }
+
             root._updateRtspUrlOverride()
         }
     }
@@ -196,7 +213,8 @@ Item {
             x: modelData.x * root.width
             y: modelData.y * root.height
             cameraIndex: index
-            
+            previewMode: root.previewMode
+
             _widgetMargin: root._widgetMargin
         }
     }
@@ -230,13 +248,14 @@ Item {
         anchors.fill: parent
         borderWidth: SVUnits.thickLineWidth + SVUnits.lineWidth * 2
         borderColor: qgcPalette.colorRed
-        borderVisible: SVState.record
+        borderVisible: !root.previewMode && SVState.record
         pulse: true
     }
 
     SVBorder {
         id: photoBorder
         anchors.fill: parent
+        visible: !root.previewMode
         borderWidth: SVUnits.thickLineWidth * 200
         flashDuration: 400
         flashStartOpacity: 0.6
@@ -252,6 +271,7 @@ Item {
         anchors.topMargin: _widgetMargin + _toolBarHeight
         leftToolStripBottom: root.leftToolStripBottom
         activeLayoutId: root.resolvedActiveLayoutId
+        visible: !root.previewMode
         onLayoutSelected: (layoutId) => SVState.layout = layoutId
     }
 }

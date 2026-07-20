@@ -18,12 +18,9 @@ Item {
 
     readonly property bool controlsLocked: SVState.lockControls
     readonly property bool controlsUsable: !SVState.lockControls && SVState.cameraSelected !== -1
-    readonly property color activeBorderColor: qgcPalette.statusPassedText
-    readonly property color disabledArrowColor: qgcPalette.windowShadeLight
-    readonly property color arrowColor: root.controlsUsable ? "white" : root.disabledArrowColor
+    readonly property color arrowColor: root.controlsUsable ? "white" : qgcPalette.windowShadeLight
     readonly property real arrowOpacity: root.controlsUsable ? 1 : 0.45
-    readonly property color outerBorderColor: root.activeBorderColor//root.controlsLocked ? qgcPalette.colorRed : root.activeBorderColor
-    readonly property color innerBorderColor: !root.controlsUsable ? qgcPalette.windowShadeLight : root.activeBorderColor
+    readonly property color borderColor: !root.controlsUsable ? qgcPalette.windowShadeLight : qgcPalette.statusPassedText
 
     QGCPalette { id: qgcPalette}
 
@@ -145,10 +142,10 @@ Item {
         buttonColor: qgcPalette.windowShade
         hoveredButtonColor: qgcPalette.windowShadeLight
         clickedButtonColor: qgcPalette.buttonHighlight
-        borderColor: qgcPalette.windowShadeLight
-        outerBorderColor: root.outerBorderColor
+        borderColor: root.borderColor
         hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
         clicked: outerClicked
+
         arrowFilled: (qgcPalette.globalTheme === QGCPalette.Light) ? false : true
         arrowSize: (root.hasInnerRing) ? 0.45 : 0.3
         arrowSpace: (root.hasInnerRing) ? 1 - root.t : 0.8
@@ -165,8 +162,7 @@ Item {
         buttonColor: qgcPalette.window
         hoveredButtonColor: qgcPalette.windowShadeLight
         clickedButtonColor: qgcPalette.buttonHighlight
-        borderColor: qgcPalette.windowShadeLight
-        outerBorderColor: innerBorderColor
+        borderColor: root.borderColor
         hoverIndex: (root.hoverIndex >= 4) ? root.hoverIndex - 4 : -1
 
         clicked: innerClicked
@@ -176,6 +172,24 @@ Item {
         arrowOpacity: root.arrowOpacity
 
         visible: hasInnerRing
+    }
+
+    Rectangle {
+        width: parent.width - 2
+        color: qgcPalette.windowShadeLight
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+        height: 1
+        rotation: 45
+    }
+
+    Rectangle {
+        width: parent.width - 2
+        color: qgcPalette.windowShadeLight
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+        height: 1
+        rotation: -45
     }
 
     MouseArea {

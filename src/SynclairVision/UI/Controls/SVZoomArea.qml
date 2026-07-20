@@ -19,7 +19,7 @@ Item {
         ? qgcPalette.statusPassedText
         : qgcPalette.windowShadeLight
 
-    property color borderColor: SVState.lockControls ? qgcPalette.colorRed : qgcPalette.statusPassedText
+    property color borderColor: qgcPalette.statusPassedText
 
     function buttonAt(x, y) {
         if (x < 0 || x > width || y < 0 || y > height) {

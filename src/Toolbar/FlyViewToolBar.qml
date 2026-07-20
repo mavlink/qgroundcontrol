@@ -21,6 +21,7 @@ Item {
     property color  _mainStatusBGColor: qgcPal.brandingPurple
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
     property var    _guidedController:  globals.guidedControllerFlyView
+    readonly property string _toolbarLogoSource: SVState.synclairOverlay ? "/res/resources/svlogo.png" : "/res/QGCLogoFull.svg"
 
 
     function dropMainStatusIndicatorTool() {
@@ -81,8 +82,8 @@ Item {
                             id:                 qgcButton
                             objectName:         "toolbar_qgcLogo"
                             Layout.fillHeight:  true
-                            icon.source: "/res/QGCLogoFull.svg"
-                        
+                            icon.source: control._toolbarLogoSource
+
                             logo:               true
                             onClicked:          mainWindow.showToolSelectDialog()
                         }
@@ -156,7 +157,6 @@ Item {
                     anchors.right: flyViewIndicators.right
                     anchors.rightMargin: _margins * 2
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: mapControl.pipState.state !== mapControl.pipState.fullState
                 }
                 
             }

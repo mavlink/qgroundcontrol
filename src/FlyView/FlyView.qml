@@ -51,6 +51,7 @@ Item {
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
+    readonly property bool _showVideoView: QGroundControl.videoManager.hasVideo || SVState.synclairOverlay
 
     function _calcCenterViewPort() {
         var newToolInset = Qt.rect(0, 0, width, height)
@@ -89,6 +90,21 @@ Item {
         FlyViewVideo {
             id:         videoControl
             pipView:    _pipView
+
+            SVFlyView {
+                id:                 synclairVisionLayer
+                anchors.fill:       parent
+                _widgetMargin:      _root._widgetMargin
+                _toolBarHeight:     SVState.toolbar ? toolbar.height : 0
+                leftToolStripBottom: widgetLayer.leftToolStripBottom
+                previewMode:        videoControl.pipState.state === videoControl.pipState.pipState
+                z:                  1
+
+                //parentToolInsets:   _toolInsets
+                visible:            !QGroundControl.videoManager.fullScreen
+                                        && SVState.synclairOverlay
+                                        && videoControl.pipState.state !== videoControl.pipState.windowState
+            }
         }
 
         PipView {
@@ -98,8 +114,8 @@ Item {
             anchors.margins:        _toolsMargin
             item1IsFullSettingsKey: "MainFlyWindowIsMap"
             item1:                  mapControl
-            item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
-            show:                   QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen &&
+            item2:                  _showVideoView ? videoControl : null
+            show:                   _showVideoView && !QGroundControl.videoManager.fullScreen &&
                                         (videoControl.pipState.state === videoControl.pipState.pipState || mapControl.pipState.state === mapControl.pipState.pipState)
             z:                      QGroundControl.zOrderWidgets
 
@@ -107,18 +123,6 @@ Item {
             property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
 
             visible: SVState.hud
-        }
-
-        SVFlyView   {
-            id:                 synclairVisionLayer
-            anchors.fill:       parent
-            _widgetMargin:      _root._widgetMargin
-            _toolBarHeight:     (SVState.toolbar) ? toolbar.height : 0
-            leftToolStripBottom: widgetLayer.leftToolStripBottom
-            z:                  _fullItemZorder + 2
-
-            //parentToolInsets:   _toolInsets
-            visible:            !QGroundControl.videoManager.fullScreen && SVState.synclairOverlay && !_mainWindowIsMap
         }
 
         FlyViewWidgetLayer {

@@ -17,11 +17,25 @@ Item {
     id: root
 
     property var parentToolInsets
+
+        QGCPalette { id: qgcPalette }
+
  
-    HorizontalCompassAttitude {
+    Rectangle {
+        width: compass.width + SVUnits.lineWidth * 2
+        height: compass.height + SVUnits.lineWidth * 2
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        width: 200
+        radius: height / 2
+        color: qgcPalette.windowShade
+
+        HorizontalCompassAttitude {
+            id: compass
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 200
+        }
     }
+    
 }
 
