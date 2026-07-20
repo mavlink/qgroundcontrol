@@ -57286,7 +57286,7 @@
    "max": 3.14159,
    "min": 0.001,
    "name": "RD_TRANS_DRV_TRN",
-   "shortDesc": "Yaw error threshhold to switch from driving to spot turning",
+   "shortDesc": "Yaw error threshold to switch from driving to spot turning",
    "type": "Float",
    "units": "rad"
   },
@@ -57300,7 +57300,7 @@
    "max": 3.14159,
    "min": 0.001,
    "name": "RD_TRANS_TRN_DRV",
-   "shortDesc": "Yaw error threshhold to switch from spot turning to driving",
+   "shortDesc": "Yaw error threshold to switch from spot turning to driving",
    "type": "Float",
    "units": "rad"
   },
