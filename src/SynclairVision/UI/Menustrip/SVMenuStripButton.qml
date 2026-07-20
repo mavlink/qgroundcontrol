@@ -23,7 +23,7 @@ Item {
     readonly property color foregroundColor: root.checked ? qgcPalette.buttonHighlightText : qgcPalette.statusFailedText
     readonly property color backgroundColor: (mouseArea.pressed || root.checked)
                                              ? qgcPalette.buttonHighlight
-                                             : (mouseArea.containsMouse ? qgcPalette.toolStripHoverColor : "transparent")
+                                             : (mouseArea.containsMouse ? qgcPalette.windowShadeLight : "transparent")
     readonly property real frameInset: ScreenTools.defaultFontPixelWidth * 0.25
 
     signal clicked

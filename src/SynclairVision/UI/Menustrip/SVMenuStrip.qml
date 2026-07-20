@@ -129,8 +129,6 @@ Item {
             GradientStop { position: 1.0; color: "transparent" }
         }
         radius: SVUnits.radius
-        border.width: 1
-        border.color: qgcPalette.windowShade
         opacity: 0.20
     }
 
@@ -142,14 +140,12 @@ Item {
             orientation: Gradient.Vertical
             GradientStop { position: 0.0; color: "transparent" }
             GradientStop {
-                position: Math.min(1.0, Math.max(0.0, background.height > 0 ? (root.buttonSize / 10) / background.height : 0.0))
+                position: Math.min(1.0, Math.max(0.0, background.height > 0 ? 1.0 - ((root.buttonSize / 3) / background.height) : 1.0))
                 color: "transparent"
             }
-            GradientStop { position: 1.0; color: qgcPalette.windowShadeLight }
+            GradientStop { position: 1.0; color: qgcPalette.windowShade }
         }
         radius: SVUnits.radius
-        border.width: 1
-        border.color: qgcPalette.windowShade
         opacity: 0.20
     }
 
