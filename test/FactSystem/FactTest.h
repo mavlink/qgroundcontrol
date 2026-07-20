@@ -18,6 +18,7 @@ private slots:
     void _validateConvertOnly_test();
     void _clampOutOfRange_test();
     void _enumOperations_test();
+    void _enumIndexUnknownValueNoSyncSignal_test();
     void _valueChangedSignal_test();
     void _rawValueChangedSignal_test();
     void _noSignalOnSameValue_test();

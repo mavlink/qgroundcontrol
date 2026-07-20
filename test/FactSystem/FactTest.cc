@@ -157,6 +157,31 @@ void FactTest::_enumOperations_test()
     QCOMPARE(fact.enumIndex(), 3);
 }
 
+void FactTest::_enumIndexUnknownValueNoSyncSignal_test()
+{
+    Fact fact(0, "EnumParam", FactMetaData::valueTypeInt32);
+
+    const QStringList strings = {"Off", "Low", "Medium", "High"};
+    const QVariantList values = {QVariant(0), QVariant(1), QVariant(2), QVariant(3)};
+    fact.setEnumInfo(strings, values);
+
+    fact.setRawValue(QVariant(42)); // Not in enum list
+
+    QSignalSpy spy(&fact, &Fact::enumsChanged);
+    QVERIFY(spy.isValid());
+
+    // Reading enumIndex for an unknown value adds an "Unknown" entry to the enum list.
+    // The enumsChanged signal must NOT be emitted synchronously during the read, since
+    // that causes QML binding loops for bindings which read both enumStrings and enumStringValue.
+    const int index = fact.enumIndex();
+    QCOMPARE(index, 4);
+    QCOMPARE(fact.enumStrings().count(), 5);
+    QCOMPARE(spy.count(), 0);
+
+    // Signal must still arrive once the event loop runs
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 1000);
+}
+
 void FactTest::_valueChangedSignal_test()
 {
     Fact fact(0, "SigParam", FactMetaData::valueTypeInt32);

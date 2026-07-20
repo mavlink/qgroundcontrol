@@ -278,9 +278,10 @@ int Fact::enumIndex()
                 }
                 index++;
             }
-            // Current value is not in list, add it manually
+            // Current value is not in list, add it manually. Defer the signal since this can
+            // be called from within a QML binding read and a synchronous emit causes binding loops.
             _metaData->addEnumInfo(tr("Unknown: %1").arg(rawValue().toString()), rawValue());
-            emit enumsChanged();
+            QMetaObject::invokeMethod(this, &Fact::enumsChanged, Qt::QueuedConnection);
             return index;
         }
     } else {
