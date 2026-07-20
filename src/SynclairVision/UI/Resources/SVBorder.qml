@@ -41,7 +41,7 @@ Item {
 
         anchors.fill: parent
         color: root.fillColor
-        radius: root.radius
+        radius: root.radius * 4
         border.width: root.borderWidth
         border.color: root.borderColor
         opacity: Math.max(root._baseOpacity, root._flashOpacity)

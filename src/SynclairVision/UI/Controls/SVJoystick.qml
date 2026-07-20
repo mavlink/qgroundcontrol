@@ -27,7 +27,7 @@ Item {
     Item {
         id: innerJoystick
         anchors.fill: parent
-        anchors.margins: SVUnits.margin / 2
+        //anchors.margins: SVUnits.margin / 2
 
         Loader {
             id: joystickLoader
@@ -47,6 +47,7 @@ Item {
         Item {
             id: lockOverlay
             anchors.fill: parent
+            anchors.margins: SVUnits.margin / 2
             visible: root.controlsLocked
 
             Image {

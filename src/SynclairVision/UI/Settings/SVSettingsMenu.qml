@@ -1085,9 +1085,9 @@ Item {
                                                         ? root.settingRowVerticalPadding
                                                         : 0
                                                     Layout.bottomMargin: root.hasVisibleSettingAfter(sectionData.items, index)
-                                                        ? (settingDescription.visible
-                                                            ? root.settingTextSpacing
-                                                            : root.settingRowVerticalPadding)
+                                                        ? 0 //(settingDescription.visible
+                                                            //? root.settingTextSpacing
+                                                            //: root.settingRowVerticalPadding)
                                                         : 0
                                                     sourceComponent: {
                                                         if (settingData.type === 'shortcut') {
