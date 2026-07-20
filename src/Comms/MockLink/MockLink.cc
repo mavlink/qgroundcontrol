@@ -61,6 +61,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _firmwareType(_mockConfig->firmwareType())
     , _vehicleType(_mockConfig->vehicleType())
     , _sendStatusText(_mockConfig->sendStatusText())
+    , _apmStartFreshParams(_mockConfig->apmStartFreshParams())
     , _enableCamera(_mockConfig->enableCamera())
     , _enableGimbal(_mockConfig->enableGimbal())
     , _enableProximity(_mockConfig->enableProximity())
@@ -454,6 +455,10 @@ void MockLink::_loadParams()
         _mapParamName2Value[compId][paramName] = paramValue;
         _mapParamName2MavParamType[compId][paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
     }
+
+    if ((_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) && _apmStartFreshParams) {
+        _applyAPMFreshFlashState();
+    }
 }
 
 /// Unit test support: MAV_CMD_PREFLIGHT_STORAGE with param1=2 (as sent by
@@ -547,6 +552,54 @@ void MockLink::_resetParamsToDefaults()
                 break;
             }
         }
+    }
+}
+
+/// Puts the parameter set into the state of a freshly flashed ArduPilot board: no airframe
+/// selected, compass/accel uncalibrated, radio uncalibrated. QGC's vehicle setup components
+/// then report "Setup required" until the user walks through the normal configuration steps.
+void MockLink::_applyAPMFreshFlashState()
+{
+    // Compass and accel offsets to 0 (uncalibrated)
+    _resetParamsToDefaults();
+
+    auto &paramMap = _mapParamName2Value[MAV_COMP_ID_AUTOPILOT1];
+    const auto &paramTypeMap = _mapParamName2MavParamType[MAV_COMP_ID_AUTOPILOT1];
+
+    // Set an integer param preserving the storage type used by _loadParams()
+    auto setIntParam = [&paramMap, &paramTypeMap](const QString &paramName, int value) {
+        if (!paramMap.contains(paramName)) {
+            return;
+        }
+        switch (paramTypeMap.value(paramName)) {
+        case MAV_PARAM_TYPE_UINT32: paramMap[paramName] = QVariant(static_cast<quint32>(value)); break;
+        case MAV_PARAM_TYPE_INT32:  paramMap[paramName] = QVariant(value); break;
+        case MAV_PARAM_TYPE_UINT16: paramMap[paramName] = QVariant(static_cast<quint16>(value)); break;
+        case MAV_PARAM_TYPE_INT16:  paramMap[paramName] = QVariant(static_cast<qint16>(value)); break;
+        case MAV_PARAM_TYPE_UINT8:  paramMap[paramName] = QVariant(static_cast<quint8>(value)); break;
+        case MAV_PARAM_TYPE_INT8:   paramMap[paramName] = QVariant(static_cast<qint8>(value)); break;
+        default:                    paramMap[paramName] = QVariant(value); break;
+        }
+    };
+
+    // No airframe selected. Not all vehicle types have FRAME_CLASS (Plane/Sub don't).
+    setIntParam(QStringLiteral("FRAME_CLASS"), 0);
+
+    // Radio uncalibrated: RC min/max/trim at firmware defaults for the mapped attitude channels
+    const QStringList rcMapParams = {
+        QStringLiteral("RCMAP_ROLL"),
+        QStringLiteral("RCMAP_PITCH"),
+        QStringLiteral("RCMAP_YAW"),
+        QStringLiteral("RCMAP_THROTTLE"),
+    };
+    for (const QString &mapParam : rcMapParams) {
+        if (!paramMap.contains(mapParam)) {
+            continue;
+        }
+        const int channel = paramMap[mapParam].toInt();
+        setIntParam(QStringLiteral("RC%1_MIN").arg(channel), 1100);
+        setIntParam(QStringLiteral("RC%1_MAX").arg(channel), 1900);
+        setIntParam(QStringLiteral("RC%1_TRIM").arg(channel), 1500);
     }
 }
 
@@ -2331,6 +2384,7 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setEnableProximity(options.testFlag(MockConfiguration::OptionEnableProximity));
     mockConfig->setPreloadMission(options.testFlag(MockConfiguration::OptionPreloadMission));
     mockConfig->setStayMavlinkV1(options.testFlag(MockConfiguration::OptionStayMavlinkV1));
+    mockConfig->setApmStartFreshParams(options.testFlag(MockConfiguration::OptionAPMStartFreshParams));
     mockConfig->setFailureMode(failureMode);
 
     return _startMockLink(mockConfig);

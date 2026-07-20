@@ -14,6 +14,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _firmwareType(copy->firmwareType())
     , _vehicleType(copy->vehicleType())
     , _sendStatusText(copy->sendStatusText())
+    , _apmStartFreshParams(copy->apmStartFreshParams())
     , _enableCamera(copy->enableCamera())
     , _enableGimbal(copy->enableGimbal())
     , _enableProximity(copy->enableProximity())
@@ -56,6 +57,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setFirmwareType(mockLinkSource->firmwareType());
     setVehicleType(mockLinkSource->vehicleType());
     setSendStatusText(mockLinkSource->sendStatusText());
+    setApmStartFreshParams(mockLinkSource->apmStartFreshParams());
     setEnableCamera(mockLinkSource->enableCamera());
     setEnableGimbal(mockLinkSource->enableGimbal());
     setEnableProximity(mockLinkSource->enableProximity());
@@ -89,6 +91,7 @@ void MockConfiguration::loadSettings(QSettings &settings, const QString &root)
     setFirmwareType(static_cast<MAV_AUTOPILOT>(settings.value(_firmwareTypeKey, static_cast<int>(MAV_AUTOPILOT_PX4)).toInt()));
     setVehicleType(static_cast<MAV_TYPE>(settings.value(_vehicleTypeKey, static_cast<int>(MAV_TYPE_QUADROTOR)).toInt()));
     setSendStatusText(settings.value(_sendStatusTextKey, false).toBool());
+    setApmStartFreshParams(settings.value(_apmStartFreshParamsKey, false).toBool());
     setEnableCamera(settings.value(_enableCameraKey, false).toBool());
     setEnableGimbal(settings.value(_enableGimbalKey, false).toBool());
     setEnableProximity(settings.value(_enableProximityKey, false).toBool());
@@ -121,6 +124,7 @@ void MockConfiguration::saveSettings(QSettings &settings, const QString &root) c
     settings.setValue(_firmwareTypeKey, firmwareType());
     settings.setValue(_vehicleTypeKey, vehicleType());
     settings.setValue(_sendStatusTextKey, sendStatusText());
+    settings.setValue(_apmStartFreshParamsKey, apmStartFreshParams());
     settings.setValue(_enableCameraKey, enableCamera());
     settings.setValue(_enableGimbalKey, enableGimbal());
     settings.setValue(_enableProximityKey, enableProximity());

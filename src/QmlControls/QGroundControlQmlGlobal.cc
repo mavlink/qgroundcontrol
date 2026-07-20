@@ -119,13 +119,14 @@ bool QGroundControlQmlGlobal::loadBoolGlobalSetting (const QString& key, bool de
 }
 
 #ifdef QT_DEBUG
-static MockConfiguration::Options _mockLinkOptions(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity)
+static MockConfiguration::Options _mockLinkOptions(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity, bool apmStartFreshParams = false)
 {
     MockConfiguration::Options options = MockConfiguration::OptionNone;
     options.setFlag(MockConfiguration::OptionSendStatusText, sendStatusText);
     options.setFlag(MockConfiguration::OptionEnableCamera, enableCamera);
     options.setFlag(MockConfiguration::OptionEnableGimbal, enableGimbal);
     options.setFlag(MockConfiguration::OptionEnableProximity, enableProximity);
+    options.setFlag(MockConfiguration::OptionAPMStartFreshParams, apmStartFreshParams);
     return options;
 }
 #endif
@@ -154,51 +155,55 @@ void QGroundControlQmlGlobal::startGenericMockLink(bool sendStatusText, bool ena
 #endif
 }
 
-void QGroundControlQmlGlobal::startAPMArduCopterMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity)
+void QGroundControlQmlGlobal::startAPMArduCopterMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity, bool apmStartFreshParams)
 {
 #ifdef QT_DEBUG
-    MockLink::startAPMArduCopterMockLink(_mockLinkOptions(sendStatusText, enableCamera, enableGimbal, enableProximity));
+    MockLink::startAPMArduCopterMockLink(_mockLinkOptions(sendStatusText, enableCamera, enableGimbal, enableProximity, apmStartFreshParams));
 #else
     Q_UNUSED(sendStatusText);
     Q_UNUSED(enableCamera);
     Q_UNUSED(enableGimbal);
     Q_UNUSED(enableProximity);
+    Q_UNUSED(apmStartFreshParams);
 #endif
 }
 
-void QGroundControlQmlGlobal::startAPMArduPlaneMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity)
+void QGroundControlQmlGlobal::startAPMArduPlaneMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity, bool apmStartFreshParams)
 {
 #ifdef QT_DEBUG
-    MockLink::startAPMArduPlaneMockLink(_mockLinkOptions(sendStatusText, enableCamera, enableGimbal, enableProximity));
+    MockLink::startAPMArduPlaneMockLink(_mockLinkOptions(sendStatusText, enableCamera, enableGimbal, enableProximity, apmStartFreshParams));
 #else
     Q_UNUSED(sendStatusText);
     Q_UNUSED(enableCamera);
     Q_UNUSED(enableGimbal);
     Q_UNUSED(enableProximity);
+    Q_UNUSED(apmStartFreshParams);
 #endif
 }
 
-void QGroundControlQmlGlobal::startAPMArduSubMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity)
+void QGroundControlQmlGlobal::startAPMArduSubMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity, bool apmStartFreshParams)
 {
 #ifdef QT_DEBUG
-    MockLink::startAPMArduSubMockLink(_mockLinkOptions(sendStatusText, enableCamera, enableGimbal, enableProximity));
+    MockLink::startAPMArduSubMockLink(_mockLinkOptions(sendStatusText, enableCamera, enableGimbal, enableProximity, apmStartFreshParams));
 #else
     Q_UNUSED(sendStatusText);
     Q_UNUSED(enableCamera);
     Q_UNUSED(enableGimbal);
     Q_UNUSED(enableProximity);
+    Q_UNUSED(apmStartFreshParams);
 #endif
 }
 
-void QGroundControlQmlGlobal::startAPMArduRoverMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity)
+void QGroundControlQmlGlobal::startAPMArduRoverMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, bool enableProximity, bool apmStartFreshParams)
 {
 #ifdef QT_DEBUG
-    MockLink::startAPMArduRoverMockLink(_mockLinkOptions(sendStatusText, enableCamera, enableGimbal, enableProximity));
+    MockLink::startAPMArduRoverMockLink(_mockLinkOptions(sendStatusText, enableCamera, enableGimbal, enableProximity, apmStartFreshParams));
 #else
     Q_UNUSED(sendStatusText);
     Q_UNUSED(enableCamera);
     Q_UNUSED(enableGimbal);
     Q_UNUSED(enableProximity);
+    Q_UNUSED(apmStartFreshParams);
 #endif
 }
 

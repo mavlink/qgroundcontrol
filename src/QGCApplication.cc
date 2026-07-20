@@ -433,11 +433,16 @@ void QGCApplication::showAppMessage(const QString& message, const QString& title
     const QString dialogTitle = title.isEmpty() ? applicationName() : title;
 
     if (runningUnitTests()) {
-        // Never show a blocking dialog during unit tests — it would hang the test runner.
-        // Logged under QGCAppMessageLog so tests can use expectAppMessage() to white-list
-        // expected dialogs without matching against the general QGCApplication category.
+        // Logged under QGCAppMessageLog so tests can assert expected dialogs via
+        // expectAppMessage() without matching against the general QGCApplication category.
         qCDebug(QGCAppMessageLog) << "showAppMessage:" << dialogTitle << "-" << message;
-        return;
+        if (!_uiTestMode) {
+            // Headless test: there is no QML root to host the dialog and the delayed-message
+            // timer would retry forever, so the log is the only record.
+            return;
+        }
+        // UI tests fall through: the message dialog is a non-blocking QML popup, so show it
+        // for real and let the test handle it the same way a user would.
     }
 
     QObject* const rootQmlObject = _rootQmlObject();
@@ -455,11 +460,9 @@ void QGCApplication::showAppMessage(const QString& message, const QString& title
 
 void QGCApplication::showRebootAppMessage(const QString& message, const QString& title)
 {
-    static QTime lastRebootMessage;
-
     const QTime currentTime = QTime::currentTime();
-    const QTime previousTime = lastRebootMessage;
-    lastRebootMessage = currentTime;
+    const QTime previousTime = _lastRebootMessageTime;
+    _lastRebootMessageTime = currentTime;
 
     if (previousTime.isValid() && (previousTime.msecsTo(currentTime) < (60 * 1000 * 2))) {
         // Debounce reboot messages

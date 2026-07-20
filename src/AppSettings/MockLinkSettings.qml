@@ -32,6 +32,7 @@ ColumnLayout {
             break
         }
         subEditConfig.sendStatus = sendStatus.checked
+        subEditConfig.apmStartFreshParams = apmStartFreshParams.checked
         subEditConfig.enableCamera = enableCamera.checked
         subEditConfig.enableGimbal = enableGimbal.checked
         subEditConfig.enableProximity = enableProximity.checked
@@ -123,6 +124,22 @@ ColumnLayout {
         label:                  qsTr("Vehicle Type")
         model:                  [ qsTr("ArduCopter"), qsTr("ArduPlane") ]
         visible:                firmwareTypeCombo.apmFirmwareSelected
+    }
+
+    QGCCheckBoxSlider {
+        id: apmStartFreshParams
+        Layout.fillWidth: true
+        text: qsTr("Start With Fresh Firmware Parameters (Setup Required)")
+        checked: subEditConfig.apmStartFreshParams
+        visible: firmwareTypeCombo.apmFirmwareSelected
+
+        onVisibleChanged: {
+            if (!visible) {
+                // Reset the model, not the view — an imperative write to checked
+                // would sever its declarative binding
+                subEditConfig.apmStartFreshParams = false
+            }
+        }
     }
 
     SettingsGroupLayout {

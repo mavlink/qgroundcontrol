@@ -46,24 +46,6 @@ const char *calStateName(int state)
     return "Unknown";
 }
 
-/// SensorsComponentController refreshes the CAL_*/SENS_* parameters whenever calibration
-/// stops. Wait for that traffic to go quiet so link teardown doesn't cut off in-flight
-/// PARAM_REQUEST_READs (which logs warnings that fail strict mode).
-void waitForParamRefreshQuiet(Vehicle *vehicle)
-{
-    ParameterManager *mgr = vehicle->parameterManager();
-    QElapsedTimer sinceLastResponse;
-    sinceLastResponse.start();
-
-    QObject context;
-    QObject::connect(mgr, &ParameterManager::_paramRequestReadSuccess, &context,
-                     [&] { sinceLastResponse.restart(); });
-    QObject::connect(mgr, &ParameterManager::_paramRequestReadFailure, &context,
-                     [&] { sinceLastResponse.restart(); });
-
-    (void) QTest::qWaitFor([&] { return sinceLastResponse.elapsed() > 500; }, 10000);
-}
-
 } // namespace
 
 void PX4SensorsCalibrationUITest::_navigateToSensorsPanel()
@@ -269,6 +251,7 @@ void PX4SensorsCalibrationUITest::_testMagCalibration()
              "Cancel button still visible after calibration completed");
 
     waitForParamRefreshQuiet(vehicle);
+    if (QTest::currentTestFailed()) return;
 
     // All sides must remain marked complete (green) after calibration ends and
     // the post-calibration parameter refresh settles
@@ -356,6 +339,7 @@ void PX4SensorsCalibrationUITest::_runCalibrationCancelTest(const QString &secti
                             .arg(calibrateButtonObjectName)));
 
     waitForParamRefreshQuiet(vehicle);
+    if (QTest::currentTestFailed()) return;
 
     // The cancelled calibration discarded its results: every sensor still
     // requires config
@@ -487,6 +471,7 @@ void PX4SensorsCalibrationUITest::_testAccelCalibration()
              "Cancel button still visible after calibration completed");
 
     waitForParamRefreshQuiet(vehicle);
+    if (QTest::currentTestFailed()) return;
 
     // All sides must remain marked complete (green) after calibration ends and
     // the post-calibration parameter refresh settles

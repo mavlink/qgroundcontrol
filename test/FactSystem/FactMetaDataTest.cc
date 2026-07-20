@@ -330,6 +330,11 @@ void FactMetaDataTest::_verticalMetersUnitsFeetTranslation_test()
     const auto restoreUnits = qScopeGuard([vertUnitsFact, savedUnits] {
         vertUnitsFact->setRawValue(savedUnits);
     });
+    // Changing units is a qgcRebootRequired setting, so the restart-app message
+    // fires — but only when the locale-dependent default isn't already feet, so
+    // it cannot be asserted deterministically with expectAppMessage()
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
     vertUnitsFact->setRawValue(UnitsSettings::VerticalDistanceUnitsFeet);
 
     FactMetaData meta(FactMetaData::valueTypeDouble);

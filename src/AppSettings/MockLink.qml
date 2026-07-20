@@ -42,39 +42,57 @@ Rectangle {
                 id:             enableProximity
                 text:           qsTr("Enable proximity sensors")
             }
-            QGCButton {
-                text:               qsTr("PX4 Vehicle")
+            QGCCheckBox {
+                id:             apmStartFreshParams
+                text:           qsTr("Start with fresh firmware parameters (setup required)")
+                visible:        vehicleTypeCombo.apmSelected
+
+                onVisibleChanged: {
+                    if (!visible) {
+                        checked = false
+                    }
+                }
+            }
+            LabelledComboBox {
+                id:                 vehicleTypeCombo
+                label:              qsTr("Vehicle Type")
                 Layout.fillWidth:   true
-                onClicked:          QGroundControl.startPX4MockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
+                model:              _vehicleNames
+
+                readonly property var _vehicleKeys: QGroundControl.hasAPMSupport ?
+                                                        [ "px4", "apmCopter", "apmPlane", "apmSub", "apmRover", "generic" ] :
+                                                        [ "px4", "generic" ]
+                readonly property var _vehicleNames: QGroundControl.hasAPMSupport ?
+                                                        [ qsTr("PX4 Vehicle"), qsTr("APM ArduCopter Vehicle"), qsTr("APM ArduPlane Vehicle"), qsTr("APM ArduSub Vehicle"), qsTr("APM ArduRover Vehicle"), qsTr("Generic Vehicle") ] :
+                                                        [ qsTr("PX4 Vehicle"), qsTr("Generic Vehicle") ]
+                readonly property string selectedKey: currentIndex >= 0 ? _vehicleKeys[currentIndex] : "px4"
+                readonly property bool apmSelected: selectedKey.startsWith("apm")
             }
             QGCButton {
-                text:               qsTr("APM ArduCopter Vehicle")
-                visible:            QGroundControl.hasAPMSupport
+                text:               qsTr("Start MockLink")
                 Layout.fillWidth:   true
-                onClicked:          QGroundControl.startAPMArduCopterMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
-            }
-            QGCButton {
-                text:               qsTr("APM ArduPlane Vehicle")
-                visible:            QGroundControl.hasAPMSupport
-                Layout.fillWidth:   true
-                onClicked:          QGroundControl.startAPMArduPlaneMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
-            }
-            QGCButton {
-                text:               qsTr("APM ArduSub Vehicle")
-                visible:            QGroundControl.hasAPMSupport
-                Layout.fillWidth:   true
-                onClicked:          QGroundControl.startAPMArduSubMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
-            }
-            QGCButton {
-                text:               qsTr("APM ArduRover Vehicle")
-                visible:            QGroundControl.hasAPMSupport
-                Layout.fillWidth:   true
-                onClicked:          QGroundControl.startAPMArduRoverMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
-            }
-            QGCButton {
-                text:               qsTr("Generic Vehicle")
-                Layout.fillWidth:   true
-                onClicked:          QGroundControl.startGenericMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
+                onClicked: {
+                    switch (vehicleTypeCombo.selectedKey) {
+                    case "px4":
+                        QGroundControl.startPX4MockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
+                        break
+                    case "apmCopter":
+                        QGroundControl.startAPMArduCopterMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked)
+                        break
+                    case "apmPlane":
+                        QGroundControl.startAPMArduPlaneMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked)
+                        break
+                    case "apmSub":
+                        QGroundControl.startAPMArduSubMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked)
+                        break
+                    case "apmRover":
+                        QGroundControl.startAPMArduRoverMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked)
+                        break
+                    default:
+                        QGroundControl.startGenericMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
+                        break
+                    }
+                }
             }
             QGCButton {
                 text:               qsTr("Stop One MockLink")

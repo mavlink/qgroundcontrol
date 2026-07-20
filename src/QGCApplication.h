@@ -4,6 +4,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QSet>
+#include <QtCore/QTime>
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
 #include <QtGui/QGuiApplication>
@@ -80,6 +81,17 @@ public:
 
     /// Although public, these methods are internal and should only be called by UnitTest code
     QQmlApplicationEngine *qmlAppEngine() const { return _qmlAppEngine; }
+    /// UI test harnesses create their own QML engine; registering it here lets app-level
+    /// messaging (showAppMessage) reach the test's MainWindow. Pass nullptr on teardown.
+    void setQmlAppEngine(QQmlApplicationEngine *engine)
+    {
+        _qmlAppEngine = engine;
+        _mainRootWindow = nullptr;    // cached from the previous engine's root object
+        _uiTestMode = (engine != nullptr);
+    }
+    /// showRebootAppMessage() debounces repeat messages (2 min). Tests reset the
+    /// debounce per-test so each one deterministically sees its own message.
+    void resetRebootMessageDebounce() { _lastRebootMessageTime = QTime(); }
 
 signals:
     void languageChanged(const QLocale &locale);
@@ -124,9 +136,11 @@ private:
 
     bool _runningUnitTests = false;
     bool _simpleBootTest = false;
+    bool _uiTestMode = false;    ///< true: QML UI test harness registered its engine via setQmlAppEngine()
     bool _fakeMobile = false;    ///< true: Fake ui into displaying mobile interface
     bool _logOutput = false;    ///< true: Log Qt debug output to file
     quint8 _systemId = 0; ///< MAVLink system ID, 0 means not set
+    QTime _lastRebootMessageTime;    ///< showRebootAppMessage() debounce state
 
     static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display
     QTimer _missingParamsDelayedDisplayTimer;                               ///< Timer use to delay missing fact display

@@ -242,6 +242,7 @@ private:
 
     void _loadParams();
     void _resetParamsToDefaults();
+    void _applyAPMFreshFlashState();
 
     /// Convert from a parameter variant to the float value from mavlink_param_union_t
     float _floatUnionForParam(int componentId, const QString &paramName);
@@ -329,6 +330,7 @@ private:
     const MAV_AUTOPILOT _firmwareType = MAV_AUTOPILOT_PX4;
     const MAV_TYPE _vehicleType = MAV_TYPE_QUADROTOR;
     const bool _sendStatusText = false;
+    const bool _apmStartFreshParams = false;
     const bool _enableCamera = false;
     const bool _enableGimbal = false;
     const bool _enableProximity = false;

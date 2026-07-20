@@ -128,6 +128,10 @@ void QmlUITestBase::startUI()
     _engine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow.qml")));
     QVERIFY(!_engine->rootObjects().isEmpty());
 
+    // Register the engine with the app so showAppMessage() reaches this MainWindow
+    // and app message dialogs are shown for real during UI tests.
+    qgcApp()->setQmlAppEngine(_engine);
+
     _window = qobject_cast<QQuickWindow *>(_engine->rootObjects().first());
     QVERIFY(_window);
 
@@ -206,6 +210,7 @@ void QmlUITestBase::destroyUIEngine()
         _window = nullptr;
         QCoreApplication::processEvents();
     }
+    qgcApp()->setQmlAppEngine(nullptr);
     delete _engine;
     _engine   = nullptr;
     _window   = nullptr;
