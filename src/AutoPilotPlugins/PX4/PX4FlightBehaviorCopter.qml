@@ -86,7 +86,7 @@ SetupPage {
                     Layout.fillWidth:   true
                     enabled:            xyVelCheckbox.checked
                     heading:            qsTr("Horizontal velocity (m/s)")
-                    headingDescription: qsTr("Limit the horizonal velocity (applies to all modes).")
+                    headingDescription: qsTr("Limit the horizontal velocity (applies to all modes).")
 
                     // It's a bit tricky to handle the fact that the parameter goes negative to signal disabled.
                     // We can't allow the slider to go negative, hence all the hoops to jump through with value and loadComplete.
