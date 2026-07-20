@@ -29,6 +29,7 @@ set_source_files_properties(MockLink.Parameter.MetaData.json PROPERTIES QT_RESOU
 qt_add_resources(${CMAKE_PROJECT_NAME} mocklink_resources
     PREFIX "/MockLink"
     FILES
+        GenericMockLink.params
         PX4MockLink.params
         MockLink.General.MetaData.json
         MockLink.General.MetaData.json.xz

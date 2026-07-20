@@ -398,6 +398,8 @@ void MockLink::_loadParams()
         } else {
             paramFile.setFileName(":/FirmwarePlugin/APM/Copter.OfflineEditing.params");
         }
+    } else if (_firmwareType == MAV_AUTOPILOT_GENERIC) {
+        paramFile.setFileName(":/MockLink/GenericMockLink.params");
     } else {
         paramFile.setFileName(":/MockLink/PX4MockLink.params");
     }
