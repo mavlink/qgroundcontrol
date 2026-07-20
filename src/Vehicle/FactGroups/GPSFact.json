@@ -100,7 +100,7 @@
 },
 {
     "name":             "gnssSignalQuality",
-    "shortDesc": "Gnss Signal Quality",
+    "shortDesc": "GNSS Signal Quality",
     "type":             "uint8"
 },
 {

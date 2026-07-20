@@ -65,7 +65,7 @@
 },
 {
     "name":         "gpsGlitch",
-    "shortDesc":    "Gps Glitch",
+    "shortDesc":    "GPS Glitch",
     "type":         "bool",
     "default":      false
 },
