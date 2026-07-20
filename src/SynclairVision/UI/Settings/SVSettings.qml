@@ -15,6 +15,7 @@ QtObject {
         videoTargetBrightness: 1,
         recordHighlight: true,
         recordInformationBox: true,
+        simplifiedUserInterface: false,
         networkIPAdress: "192.168.4.60",
         networkProfiles: [
             {
@@ -110,6 +111,7 @@ QtObject {
         property alias calibrationActive: root.calibrationActive
 
         property alias controlPanel: root.controlPanel
+        property alias simplifiedUserInterface: root.simplifiedUserInterface
         property alias controlPanelPosition: root.controlPanelPosition
         property alias controlPanelInteraction: root.controlPanelInteraction
         property alias controlPanelPassiveOpacity: root.controlPanelPassiveOpacity
@@ -410,6 +412,8 @@ QtObject {
 //---------------------------------
 // Controls
 //---------------------------------
+    property bool simplifiedUserInterface: false
+
     //Control Panel
         property bool controlPanel: true
         property string controlPanelPosition: "Bottom-center"

@@ -18,24 +18,29 @@ Item {
 
     property var parentToolInsets
 
-        QGCPalette { id: qgcPalette }
+    QGCPalette { id: qgcPalette }
 
- 
-    Rectangle {
-        width: compass.width + SVUnits.lineWidth * 2
-        height: compass.height + SVUnits.lineWidth * 2
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        radius: height / 2
-        color: qgcPalette.windowShade
-
-        HorizontalCompassAttitude {
+    HorizontalCompassAttitude {
             id: compass
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenter: parent.horizontalCenter
             width: 200
+            border.width: 1
+            border.color: qgcPalette.windowShade
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            gradient: Gradient {
+                GradientStop { position: 0.0;  color: qgcPalette.windowTransparent }
+                GradientStop { position: 0.90;  color: qgcPalette.windowTransparent }
+                GradientStop { position: 1.0;  color: Qt.tint(
+                    qgcPalette.windowTransparent,
+                    Qt.rgba(
+                        qgcPalette.windowShade.r,
+                        qgcPalette.windowShade.g,
+                        qgcPalette.windowShade.b,
+                        0.25
+                    )
+                ) }
+            }
         }
-    }
     
 }
 

@@ -22,7 +22,7 @@ Item {
     property string activeId: ""
     property var activeIds: []
 
-    property real buttonSize: SVUnits.objectWidth//Math.min(SVUnits.objectWidth - SVUnits.bigMargin, ScreenTools.implicitButtonHeight + (SVUnits.bigMargin * 2))
+    property real buttonSize: SVUnits.objectWidth - SVUnits.lineWidth * 2//Math.min(SVUnits.objectWidth - SVUnits.bigMargin, ScreenTools.implicitButtonHeight + (SVUnits.bigMargin * 2))
 
     readonly property bool isHorizontal: direction === horizontal
     readonly property bool isVertical: !isHorizontal
@@ -110,7 +110,7 @@ Item {
         anchors.fill: parent
         color: qgcPalette.windowTransparent
         radius: SVUnits.radius
-        border.width: 1
+        border.width: (SVSettings.simplifiedUserInterface) ? 0 : SVUnits.lineWidth
         border.color: qgcPalette.windowShade
         
     }
@@ -118,6 +118,7 @@ Item {
     Rectangle {
         id: backgroundGradient
         anchors.fill: parent
+        visible: !SVSettings.simplifiedUserInterface
         color: qgcPalette.windowTransparent
         gradient: Gradient {
             orientation: Gradient.Horizontal
@@ -135,6 +136,7 @@ Item {
     Rectangle {
         id: backgroundGradient2
         anchors.fill: parent
+        visible: !SVSettings.simplifiedUserInterface
         color: qgcPalette.windowTransparent
         gradient: Gradient {
             orientation: Gradient.Vertical
@@ -152,7 +154,7 @@ Item {
     Grid {
         id: layoutGrid
         anchors.fill: parent
-        //anchors.margins: SVUnits.margin
+        anchors.margins: SVUnits.lineWidth
         rows: root.isVertical ? 3 : 1
         columns: root.isVertical ? 1 : 3
         spacing: 0
@@ -171,9 +173,53 @@ Item {
 
             Rectangle {
                 anchors.centerIn: parent
-                width: root.isVertical ? parent.width * 0.8 : SVUnits.lineWidth
-                height: root.isHorizontal ? parent.height : SVUnits.lineWidth
+                width: {
+                    if(root.isVertical) {
+                        return parent.width * (SVSettings.simplifiedUserInterface ? 0.75 : 0.9)
+                    } else {
+                        return SVUnits.lineWidth
+                    }
+                }
+
+                height: {
+                    if(root.isHorizontal) {
+                        return parent.height * (SVSettings.simplifiedUserInterface ? 0.75 : 0.9)
+                    } else {
+                        return SVUnits.lineWidth
+                    }
+                }
+                
                 color: qgcPalette.windowShadeLight
+
+                gradient: SVSettings.simplifiedUserInterface
+                        ? null
+                        : separatorGradient
+
+                Gradient {
+                    id: separatorGradient
+
+                    orientation: Gradient.Horizontal
+
+                    GradientStop {
+                        position: 0.0
+                        color: "transparent"
+                    }
+
+                    GradientStop {
+                        position: 0.15
+                        color: qgcPalette.windowShadeLight
+                    }
+
+                    GradientStop {
+                        position: 0.85
+                        color: qgcPalette.windowShadeLight
+                    }
+
+                    GradientStop {
+                        position: 1.0
+                        color: "transparent"
+                    }
+                }
             }
         }
 

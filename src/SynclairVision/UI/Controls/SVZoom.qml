@@ -25,13 +25,13 @@ Item {
     SVZoomArea {
         id: zoomArea
         anchors.fill: parent
-        anchors.margins: SVUnits.margin / 2
+        //anchors.margins: SVUnits.margin / 2
     }
 
     Item {
         id: lockOverlay
         anchors.fill: parent
-        anchors.margins: SVUnits.margin
+        anchors.margins: SVUnits.margin / 2
         visible: root.controlsLocked
         z: 1
 

@@ -43,6 +43,14 @@ function getSections() {
             title: 'User Interface',
             items: [
                 {
+                    id: 'simplifiedUserInterface',
+                    property: 'simplifiedUserInterface',
+                    type: 'checkbox',
+                    label: 'Simplified User Interface',
+                    description: 'Simplify the visual look of buttons and menus',
+                    checked: true
+                },
+                {
                     id: 'record_highlight_enabled',
                     property: 'recordHighlightEnabled',
                     type: 'checkbox',
