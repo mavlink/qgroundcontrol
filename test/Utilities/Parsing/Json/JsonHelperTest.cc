@@ -83,6 +83,28 @@ void JsonHelperTest::_validateInternalMissingKeys_test()
     QVERIFY(!errorString.isEmpty());
 }
 
+void JsonHelperTest::_validateExternalWrongFileType_test()
+{
+    QJsonObject obj;
+    JsonParsing::saveQGCJsonFileHeader(obj, "OtherType", 2);
+
+    int version = 0;
+    QString errorString;
+    QVERIFY(!JsonParsing::validateExternalQGCJsonFile(obj, "TestFile", 1, 3, version, errorString));
+    QVERIFY(!errorString.isEmpty());
+}
+
+void JsonHelperTest::_validateExternalVersionTooNew_test()
+{
+    QJsonObject obj;
+    JsonParsing::saveQGCJsonFileHeader(obj, "TestFile", 9);
+
+    int version = 0;
+    QString errorString;
+    QVERIFY(!JsonParsing::validateExternalQGCJsonFile(obj, "TestFile", 1, 3, version, errorString));
+    QVERIFY(!errorString.isEmpty());
+}
+
 void JsonHelperTest::_validateKeysRequired_test()
 {
     const QJsonObject obj = {

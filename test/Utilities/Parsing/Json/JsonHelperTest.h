@@ -13,6 +13,8 @@ private slots:
     void _validateInternalVersionTooNew_test();
     void _validateInternalWrongFileType_test();
     void _validateInternalMissingKeys_test();
+    void _validateExternalWrongFileType_test();
+    void _validateExternalVersionTooNew_test();
     void _validateKeysRequired_test();
     void _validateKeysOptional_test();
     void _validateKeysWrongType_test();
