@@ -25,4 +25,6 @@ private slots:
     void _crc32Empty_test();
     void _crc32KnownVector_test();
     void _crc32Incremental_test();
+    void _fuzzyCompareDoubleInfMismatch_test();
+    void _limitAngleToPMPIdThreePi_test();
 };

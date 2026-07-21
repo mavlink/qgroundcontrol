@@ -160,4 +160,23 @@ void QGCMathTest::_crc32Incremental_test()
     QCOMPARE(crc, 0xCBF43926u);
 }
 
+void QGCMathTest::_fuzzyCompareDoubleInfMismatch_test()
+{
+    const double inf = std::numeric_limits<double>::infinity();
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    QVERIFY(!QGC::fuzzyCompare(inf, -inf));
+    QVERIFY(!QGC::fuzzyCompare(-inf, inf));
+    QVERIFY(!QGC::fuzzyCompare(inf, nan));
+    QVERIFY(!QGC::fuzzyCompare(nan, inf));
+}
+
+void QGCMathTest::_limitAngleToPMPIdThreePi_test()
+{
+    // 3π should wrap into (-π, π] / [-π, π] family — expect ±π
+    const double r = QGC::limitAngleToPMPId(3.0 * M_PI);
+    QVERIFY(r >= -M_PI - 1e-10);
+    QVERIFY(r <= M_PI + 1e-10);
+    QCOMPARE_FUZZY(std::abs(r), M_PI, 1e-9);
+}
+
 UT_REGISTER_TEST(QGCMathTest, TestLabel::Unit, TestLabel::Utilities)
