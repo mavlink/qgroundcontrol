@@ -8,14 +8,16 @@ The Fly View is used to command and monitor the vehicle.
 
 ## Overview
 
+<img src="../../../assets/fly/fly_view_overview.svg" alt="Fly View overview" style="height: 30em; vertical-align: text-bottom;" />
 
-- **[Toolbar](fly_view_toolbar.md):** The toolbar is at the top of the screen. It provides controls to select views, show flight status and mode as well as the status of the main components of the vehicle.
-- **[Vehicle Actions](fly_tools.md):** Allows you command the vehicle to take a specific action.
-- **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
-- **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
-- **[Camera Tools](camera_tools.md)**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
+- **View Selector:** Allows you to switch between the main views (Fly, Plan, Analyze, Vehicle Configuration, Application Settings).
+- **[Status Indicators](fly_view_toolbar.md):** Shows flight status and mode as well as the status of the main components of the vehicle.
+- **[Actions](fly_tools.md):** Allows you to command the vehicle to take a specific action.
+- **[Camera Tools](camera_tools.md):** Switch between still and video modes, start/stop capture, and control camera settings.
 - **[Video](video.md):** Display the video from the vehicle. Allows you to toggle between video or map as the main display.
-- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
+- **[Telemetry Values](instrument_panel.md):** Displays configurable telemetry values.
+- **[Attitude/Compass](hud.md):** Provides virtual horizon and heading information.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle. Can be switched between multiple variations.
   - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
   - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
   - Once flying, you can click on the map to set a [Go to](#map_actions) or [Orbit at](#map_actions) location.
