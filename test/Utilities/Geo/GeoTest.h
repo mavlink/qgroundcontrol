@@ -27,6 +27,7 @@ private slots:
     void _convertEnuToEcef_test();
 
     void _geodesicDistance_test();
+    void _geodesicDistanceSelf_test();
     void _geodesicAzimuth_test();
     void _geodesicDestination_test();
     void _geodesicRoundTrip_test();

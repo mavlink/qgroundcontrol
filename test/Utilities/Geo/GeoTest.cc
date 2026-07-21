@@ -194,6 +194,14 @@ void GeoTest::_geodesicDistance_test()
     QVERIFY(qAbs(distance - qtDistance) < 2000.0);  // Within 2km for this distance
 }
 
+void GeoTest::_geodesicDistanceSelf_test()
+{
+    // Identical coordinates must report zero length on the ellipsoid model.
+    QCOMPARE_FUZZY(QGCGeo::geodesicDistance(m_origin, m_origin), 0.0, 1e-9);
+    const QGeoCoordinate elevated(m_origin.latitude(), m_origin.longitude(), 250.0);
+    QCOMPARE_FUZZY(QGCGeo::geodesicDistance(elevated, elevated), 0.0, 1e-9);
+}
+
 void GeoTest::_geodesicAzimuth_test()
 {
     // Test azimuth from ETH Zurich heading northwest to Paris
