@@ -1,6 +1,7 @@
 #include "QmlUITestBase.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDebug>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
 #include <QtCore/QtMath>
@@ -93,6 +94,9 @@ void QmlUITestBase::startUI()
     // Ignore benign Qt platform warnings that cannot be avoided in offscreen mode
     ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("This plugin does not support propagateSizeHints")));
+    // Diagnostic phase markers used to localize CI-only QML warnings (temporary instrumentation)
+    ignoreLogMessage("default", QtInfoMsg,
+                     QRegularExpression(QStringLiteral("^\\[(LayerUITest|QmlUITeardown)\\]")));
     ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Populating font family aliases")));
     ignoreLogMessage("default", QtWarningMsg,
@@ -155,6 +159,7 @@ void QmlUITestBase::ignoreAPMMockLinkWarnings()
 void QmlUITestBase::closeUIWindow()
 {
     if (_window) {
+        qInfo() << "[QmlUITeardown] closeUIWindow: closing window";
         _window->close();
         (void) QTest::qWaitFor([this] { return !_window->isVisible(); }, TestTimeout::shortMs());
         // No observable post-close condition: this is a bounded render/deferred-delete settle
@@ -165,6 +170,7 @@ void QmlUITestBase::closeUIWindow()
         while (settle.elapsed() < kSettleDrainMs) {
             QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
         }
+        qInfo() << "[QmlUITeardown] closeUIWindow: settle drain done";
     }
 }
 
@@ -175,6 +181,7 @@ void QmlUITestBase::destroyUIEngine()
         // pumps in offscreen mode, so pending incubators stall mid-creation and the
         // engine warns "items still being created at engine destruction". Pump the
         // controller directly until it drains so teardown is clean.
+        qInfo() << "[QmlUITeardown] destroyUIEngine: draining incubators";
         if (QQmlIncubationController *controller = _engine->incubationController()) {
             QElapsedTimer drainTimer;
             drainTimer.start();
@@ -182,6 +189,8 @@ void QmlUITestBase::destroyUIEngine()
                 controller->incubateFor(50);
                 QCoreApplication::processEvents();
             }
+            qInfo() << "[QmlUITeardown] destroyUIEngine: incubator drain done, remaining ="
+                     << controller->incubatingObjectCount();
         }
 
         // Give asynchronous QML item creation/destruction a brief drain window
@@ -194,6 +203,7 @@ void QmlUITestBase::destroyUIEngine()
             _engine->collectGarbage();
             QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
         }
+        qInfo() << "[QmlUITeardown] destroyUIEngine: GC settle done";
 
         // Force GC and event processing so QML releases references to C++ singletons
         // (e.g. SettingsFacts) before the engine is destroyed.  Without this,
@@ -206,16 +216,19 @@ void QmlUITestBase::destroyUIEngine()
 
         // Destroy the root window while the engine/context are still alive so a Loader
         // stuck mid-incubation is cancelled here instead of crashing engine teardown.
+        qInfo() << "[QmlUITeardown] destroyUIEngine: deleting window";
         delete _window;
         _window = nullptr;
         QCoreApplication::processEvents();
     }
     qgcApp()->setQmlAppEngine(nullptr);
+    qInfo() << "[QmlUITeardown] destroyUIEngine: deleting engine";
     delete _engine;
     _engine   = nullptr;
     _window   = nullptr;
     _rootItem = nullptr;
     QCoreApplication::processEvents();
+    qInfo() << "[QmlUITeardown] destroyUIEngine: done";
 }
 
 void QmlUITestBase::stopUI()

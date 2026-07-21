@@ -1,5 +1,6 @@
 #include "PlanViewLayerUITest.h"
 
+#include <QtCore/QDebug>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
@@ -65,13 +66,16 @@ void PlanViewLayerUITest::_verifyLayerState(const LayerUIState &state, const QSt
 
 void PlanViewLayerUITest::_testEditingLayerSwitching()
 {
+    qInfo() << "[LayerUITest] before startUI";
     startUI();
     if (QTest::currentTestFailed()) return;
+    qInfo() << "[LayerUITest] after startUI";
 
     // Navigate to Plan view
     QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")), "Failed to navigate to Plan view");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_plan"), 2000), "Plan view did not appear");
     QTest::qWait(_viewDelay);
+    qInfo() << "[LayerUITest] plan view visible";
 
     // Position the map at a known location so map clicks are deterministic
     QQuickItem *map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
@@ -86,6 +90,7 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
                  },
                  1000),
              "Map did not settle on the requested center");
+    qInfo() << "[LayerUITest] map settled, starting 2.1 create mode";
 
     // ------------------------------------------------------------------
     // 2.1 Create-from-template mode: layer switcher hidden, layer group
@@ -105,6 +110,7 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     // The expanded Plan Info section pushes the layer group headers below the
     // viewport where their virtualized delegates do not exist. Scroll them into
     // existence before checking their disabled state.
+    qInfo() << "[LayerUITest] 2.1 scrolling group headers into view";
     QVERIFY2(findVisibleItemScrolled(QLatin1String(kMissionHeader), QStringLiteral("planView_planTree")),
              "Mission group header not found");
     verifyEnabled(QLatin1String(kMissionHeader), false, QStringLiteral("2.1 create mode"));
@@ -119,10 +125,13 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     // 2.2 Set home and insert takeoff: exits create mode, mission group
     //     auto-expands and Mission is the active layer
     // ------------------------------------------------------------------
+    qInfo() << "[LayerUITest] 2.2 clicking map to set home";
     _clickMap(0.5, 0.5);
     if (QTest::currentTestFailed()) return;
+    qInfo() << "[LayerUITest] 2.2 clicking takeoff button";
     QVERIFY2(clickButton(QStringLiteral("planToolStrip_takeoffButton")), "Failed to click Takeoff button");
     QTest::qWait(_pageDelay);
+    qInfo() << "[LayerUITest] 2.2 takeoff added, verifying state";
 
     _verifyLayerState({
         .editingLayer         = kLayerMission,
@@ -144,7 +153,9 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     // 2.3 Click GeoFence header: fence becomes the active layer, mission
     //     group collapses (accordion)
     // ------------------------------------------------------------------
+    qInfo() << "[LayerUITest] 2.3 clicking fence header";
     QVERIFY2(_clickTreeRow(QLatin1String(kFenceHeader)), "Failed to click GeoFence header");
+    qInfo() << "[LayerUITest] 2.3 fence header clicked, verifying state";
 
     _verifyLayerState({
         .editingLayer         = kLayerFence,
@@ -161,7 +172,9 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     // 2.4 Click GeoFence header again: layer group headers do not collapse,
     //     state unchanged
     // ------------------------------------------------------------------
+    qInfo() << "[LayerUITest] 2.4 clicking fence header again";
     QVERIFY2(_clickTreeRow(QLatin1String(kFenceHeader)), "Failed to click GeoFence header (second)");
+    qInfo() << "[LayerUITest] 2.4 fence header re-clicked, verifying state";
 
     _verifyLayerState({
         .editingLayer         = kLayerFence,
@@ -178,7 +191,9 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     // 2.5 Click Rally header: rally becomes the active layer, fence group
     //     collapses
     // ------------------------------------------------------------------
+    qInfo() << "[LayerUITest] 2.5 clicking rally header";
     QVERIFY2(_clickTreeRow(QLatin1String(kRallyHeader)), "Failed to click Rally header");
+    qInfo() << "[LayerUITest] 2.5 rally header clicked, verifying state";
 
     _verifyLayerState({
         .editingLayer         = kLayerRally,
@@ -194,10 +209,13 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     // ------------------------------------------------------------------
     // 2.6 Layer switcher: expand choices and pick Mission
     // ------------------------------------------------------------------
+    qInfo() << "[LayerUITest] 2.6 clicking layer switcher active button";
     QVERIFY2(clickButton(QLatin1String(kSwitcherActive)), "Failed to click layer switcher active button");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("layerSwitcher_choice_missionGroup"), 2000),
              "Mission choice button did not appear");
+    qInfo() << "[LayerUITest] 2.6 clicking mission choice button";
     QVERIFY2(clickButton(QStringLiteral("layerSwitcher_choice_missionGroup")), "Failed to click Mission choice button");
+    qInfo() << "[LayerUITest] 2.6 mission choice clicked, verifying state";
 
     _verifyLayerState({
         .editingLayer         = kLayerMission,
@@ -213,10 +231,12 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     // ------------------------------------------------------------------
     // 2.7 Plan Info header: toggles expansion without affecting the layer
     // ------------------------------------------------------------------
+    qInfo() << "[LayerUITest] 2.7 clicking plan info header (expand)";
     QVERIFY2(_clickTreeRow(QLatin1String(kPlanFileHeader)), "Failed to click Plan Info header");
     QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, QStringLiteral("planTree_planFileInfo"), 0) != nullptr; },
                               2000, QStringLiteral("plan info expanded")),
              "2.7: Plan Info section did not expand");
+    qInfo() << "[LayerUITest] 2.7 plan info expanded, verifying state";
 
     _verifyLayerState({
         .editingLayer         = kLayerMission,  // Unchanged
@@ -229,10 +249,13 @@ void PlanViewLayerUITest::_testEditingLayerSwitching()
     }, QStringLiteral("2.7 plan info toggle"));
     if (QTest::currentTestFailed()) return;
 
+    qInfo() << "[LayerUITest] 2.7 clicking plan info header (collapse)";
     QVERIFY2(_clickTreeRow(QLatin1String(kPlanFileHeader)), "Failed to click Plan Info header (collapse)");
     QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, QStringLiteral("planTree_planFileInfo"), 0) == nullptr; },
                               2000, QStringLiteral("plan info collapsed")),
              "2.7: Plan Info section did not collapse");
 
+    qInfo() << "[LayerUITest] before stopUI";
     stopUI();
+    qInfo() << "[LayerUITest] after stopUI";
 }
