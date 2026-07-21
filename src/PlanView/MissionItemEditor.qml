@@ -43,8 +43,14 @@ Rectangle {
     readonly property real  _trashSize:         commandPicker.height * 0.75
     readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
-    // setSource() injects missionItem before internal bindings activate
-    function _loadEditor() {
+    // setSource() injects missionItem before internal bindings activate.
+    // Called on completion and by PlanTreeView when the current item changes.
+    // Intentionally NOT driven by a Connections to missionItem: missionItem
+    // outlives this delegate, and a released-but-not-yet-deleted delegate
+    // receiving isCurrentItemChanged would call setSource() on a Loader whose
+    // QML context is already invalidated ("Cannot create a component in an
+    // invalid context"). PlanTreeView only reaches live delegates.
+    function reloadEditor() {
         if (missionItem.isCurrentItem) {
             editorLoader.setSource(missionItem.editorQml, {
                 missionItem:    _root.missionItem,
@@ -53,11 +59,6 @@ Rectangle {
         } else {
             editorLoader.setSource("")
         }
-    }
-
-    Connections {
-        target: missionItem
-        function onIsCurrentItemChanged() { _root._loadEditor() }
     }
 
     QGCPalette {
@@ -351,7 +352,7 @@ Rectangle {
         anchors.top:        topRowLayout.bottom
         asynchronous:       true
 
-        Component.onCompleted: _root._loadEditor()
+        Component.onCompleted: _root.reloadEditor()
     }
 
     onHeightChanged: {

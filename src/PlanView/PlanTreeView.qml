@@ -52,6 +52,7 @@ TreeView {
     QGCFlickableScrollIndicator { parent: root; orientation: QGCFlickableScrollIndicator.Vertical }
 
     property int _lastMissionItemCount: 0
+    property int _lastPlanViewSeqNum: -1
 
     Connections {
         target: root._missionController.visualItems
@@ -94,7 +95,29 @@ TreeView {
             root.editingLayerChangeRequested(PlanEditLayers.layerMission)
         }
         function onPlanViewStateChanged() {
-            // Current item changed — bring it on-screen if completely off-screen.
+            // planViewStateChanged is also emitted for forced recalcs (home position
+            // set, settings changes) where the current item is unchanged. Skip the
+            // editor reload in that case to avoid tearing down the current editor
+            // (and losing focus/UI state) for no reason.
+            if (_missionController.currentPlanViewSeqNum === root._lastPlanViewSeqNum) {
+                return
+            }
+            root._lastPlanViewSeqNum = _missionController.currentPlanViewSeqNum
+
+            // Current item changed — reload the inline editors of the loaded
+            // mission item delegates. Driven from here rather than from a
+            // Connections inside MissionItemEditor because a released-but-not-
+            // yet-deleted delegate would still receive isCurrentItemChanged and
+            // trigger a Loader load in an invalidated QML context. Iterating
+            // the table only ever reaches live delegates.
+            for (let row = Math.max(root.topRow, 0); row <= root.bottomRow; row++) {
+                let delegateItem = root.itemAtCell(Qt.point(0, row))
+                if (delegateItem && delegateItem.nodeType === "missionItem" && delegateItem.editorItem) {
+                    delegateItem.editorItem.reloadEditor()
+                }
+            }
+
+            // Bring the new current item on-screen if completely off-screen.
             // Fine-tuned scroll happens later via editorExpandedAndLoaded.
             var item = _missionController.currentPlanViewItem
             if (item) {
@@ -217,6 +240,9 @@ TreeView {
         readonly property var nodeObject: model.object
         readonly property string nodeType: model.nodeType
         readonly property bool separator: model.separator ?? false
+
+        // Loaded editor item, reached by PlanTreeView's onPlanViewStateChanged
+        readonly property Item editorItem: loader.item
 
         // In create-new-plan mode, only the Plan Info and Defaults groups and their children are enabled
         readonly property bool _enabledInCreateMode: nodeType === "planFileGroup" || nodeType === "planFileInfo"
