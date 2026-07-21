@@ -16,6 +16,7 @@ private slots:
     void _testClassifyHttpStatusServerError();
     void _testClassifyHttpStatusUnknown();
     void _testIsHttpSuccess();
+    void _testIsHttpSuccessBoundaries();
     void _testIsHttpRedirect();
     void _testIsHttpClientError();
     void _testIsHttpServerError();

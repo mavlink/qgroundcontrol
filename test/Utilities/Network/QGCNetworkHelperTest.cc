@@ -76,6 +76,21 @@ void QGCNetworkHelperTest::_testIsHttpSuccess()
     QVERIFY(!QGCNetworkHelper::isHttpSuccess(500));
 }
 
+void QGCNetworkHelperTest::_testIsHttpSuccessBoundaries()
+{
+    // Exclusive upper/lower edges near 2xx / 3xx cutovers.
+    QVERIFY(!QGCNetworkHelper::isHttpSuccess(199));
+    QVERIFY(QGCNetworkHelper::isHttpSuccess(200));
+    QVERIFY(QGCNetworkHelper::isHttpSuccess(299));
+    QVERIFY(!QGCNetworkHelper::isHttpSuccess(300));
+    QVERIFY(!QGCNetworkHelper::isHttpSuccess(-1));
+    QVERIFY(!QGCNetworkHelper::isHttpRedirect(299));
+    QVERIFY(QGCNetworkHelper::isHttpRedirect(300));
+    QVERIFY(QGCNetworkHelper::isHttpRedirect(399));
+    QVERIFY(!QGCNetworkHelper::isHttpRedirect(400));
+}
+
+
 void QGCNetworkHelperTest::_testIsHttpRedirect()
 {
     QVERIFY(QGCNetworkHelper::isHttpRedirect(300));
