@@ -76,9 +76,7 @@ void MissionControllerTest::_testEmptyVehicle()
 {
     UT_FETCH_AUTOPILOT();
     Q_UNUSED(autopilotName);
-    // ArduPilot mock link has no metadata source; these warnings are expected for that autopilot.
-    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
-                     QRegularExpression("failed to load metadata"));
+    // ArduPilot metadata includes an invalid enum value; skip warning is expected for that autopilot.
     ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
                      QRegularExpression("Skipping invalid enum value"));
     _initForFirmwareType(autopilot);

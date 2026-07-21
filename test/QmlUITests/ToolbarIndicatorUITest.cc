@@ -126,7 +126,6 @@ void ToolbarIndicatorUITest::_testPX4Indicators()
 
 void ToolbarIndicatorUITest::_testAPMCopterIndicators()
 {
-    ignoreAPMMockLinkWarnings();
     _runIndicatorTest(
         [] { return MockLink::startAPMArduCopterMockLink(MockConfiguration::OptionEnableGimbal); },
         QStringLiteral("APMCopter"));

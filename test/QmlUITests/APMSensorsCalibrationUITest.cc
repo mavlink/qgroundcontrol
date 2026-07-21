@@ -14,7 +14,6 @@ UT_REGISTER_TEST(APMSensorsCalibrationUITest, TestLabel::Integration)
 // ---------------------------------------------------------------------------
 void APMSensorsCalibrationUITest::_testCompassCalibration()
 {
-    ignoreAPMMockLinkWarnings();
     runWithMockLink(
         [] { return MockLink::startAPMArduCopterMockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
@@ -62,7 +61,6 @@ void APMSensorsCalibrationUITest::_testCompassCalibration()
 // ---------------------------------------------------------------------------
 void APMSensorsCalibrationUITest::_testCompassCalibrationCancel()
 {
-    ignoreAPMMockLinkWarnings();
     runWithMockLink(
         [] { return MockLink::startAPMArduCopterMockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
@@ -126,7 +124,6 @@ void APMSensorsCalibrationUITest::_testCompassCalibrationCancel()
 // ---------------------------------------------------------------------------
 void APMSensorsCalibrationUITest::_testCompassCalibrationIgnoresStaleFailedReports()
 {
-    ignoreAPMMockLinkWarnings();
     runWithMockLink(
         [] { return MockLink::startAPMArduCopterMockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
@@ -194,7 +191,6 @@ void APMSensorsCalibrationUITest::_testCompassCalibrationIgnoresStaleFailedRepor
 // ---------------------------------------------------------------------------
 void APMSensorsCalibrationUITest::_testCompassCalibrationStartRejected()
 {
-    ignoreAPMMockLinkWarnings();
     runWithMockLink(
         [] { return MockLink::startAPMArduCopterMockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
@@ -250,7 +246,6 @@ void APMSensorsCalibrationUITest::_testCompassCalibrationStartRejected()
 // ---------------------------------------------------------------------------
 void APMSensorsCalibrationUITest::_testAccelCalibration()
 {
-    ignoreAPMMockLinkWarnings();
     runWithMockLink(
         [] { return MockLink::startAPMArduCopterMockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {

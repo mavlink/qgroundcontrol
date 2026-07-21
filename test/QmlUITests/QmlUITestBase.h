@@ -175,10 +175,6 @@ protected:
     /// binding bugs.
     void disconnectMockLink(QPointer<MockLink> mockLink);
 
-    /// Register ignores for known warnings produced by any ArduPilot MockLink
-    /// connection. Call once before connectMockLinkAndWaitReady().
-    void ignoreAPMMockLinkWarnings();
-
     /// Start a MockLink using \a factory, wait for the vehicle to connect and
     /// parameters to be fully loaded, then return the MockLink pointer and set
     /// \a vehicleOut to the active Vehicle.

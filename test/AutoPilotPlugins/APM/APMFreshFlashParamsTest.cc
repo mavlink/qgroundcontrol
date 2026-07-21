@@ -66,12 +66,6 @@ void APMFreshFlashParamsTest::_testFreshFlashParams()
     QFETCH(bool, hasFrameClass);
     QFETCH(bool, hasRadio);
 
-    // ArduPilot MockLink does not serve COMP_METADATA_TYPE_GENERAL.
-    ignoreLogMessage(
-        "ComponentInformation.RequestMetaDataTypeStateMachine",
-        QtWarningMsg,
-        QRegularExpression(QStringLiteral("\"COMP_METADATA_TYPE_GENERAL\" : failed to load metadata \\(primary and fallback\\) \"\"")));
-
     // Fresh-flash vehicles must show the setup-incomplete app message on connect
     expectAppMessage(QRegularExpression(QStringLiteral("Configuration tasks remain before this vehicle is ready to fly")));
 

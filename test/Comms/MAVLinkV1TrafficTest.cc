@@ -49,10 +49,6 @@ void MAVLinkV1TrafficTest::cleanup()
 
 void MAVLinkV1TrafficTest::_testV1UpgradeToV2NoWarning()
 {
-    // Expected warning on any full APM MockLink connect (no metadata json available).
-    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("failed to load metadata")));
-
     // MockLink starts out sending MAVLink v1 just like a real ArduPilot. The initial connect
     // sequence can only complete if the v1 -> v2 upgrade handshake works.
     _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);

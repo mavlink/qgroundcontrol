@@ -58,7 +58,6 @@ void APMFreshFlashUITest::_verifySetupIndicator(const QString &compObjectName, b
 
 void APMFreshFlashUITest::_testFreshFlashSetupState()
 {
-    ignoreAPMMockLinkWarnings();
     // Fresh-flash vehicles must show the setup-incomplete app message on connect
     expectAppMessage(QRegularExpression(QStringLiteral("Configuration tasks remain before this vehicle is ready to fly")));
     runWithMockLink(

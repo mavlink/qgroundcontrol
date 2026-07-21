@@ -46,7 +46,6 @@ void APMVehicleConfigUITest::_runNavigateVehicleConfig(
 
 void APMVehicleConfigUITest::_testArduCopter()
 {
-    ignoreAPMMockLinkWarnings();
     _runNavigateVehicleConfig(
         [] { return MockLink::startAPMArduCopterMockLink(); },
         QStringLiteral("ArduCopter"));
@@ -54,7 +53,6 @@ void APMVehicleConfigUITest::_testArduCopter()
 
 void APMVehicleConfigUITest::_testArduPlane()
 {
-    ignoreAPMMockLinkWarnings();
     _runNavigateVehicleConfig(
         [] { return MockLink::startAPMArduPlaneMockLink(); },
         QStringLiteral("ArduPlane"));
@@ -69,7 +67,6 @@ void APMVehicleConfigUITest::_testArduSub()
 
 void APMVehicleConfigUITest::_testArduRover()
 {
-    ignoreAPMMockLinkWarnings();
     _runNavigateVehicleConfig(
         [] { return MockLink::startAPMArduRoverMockLink(); },
         QStringLiteral("ArduRover"));
