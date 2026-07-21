@@ -13,6 +13,7 @@ private slots:
     void _simpleLinkTest();
     void _simpleCommLossTest();
     void _multiLinkSingleVehicleTest();
+    void _multiLinkTotalCommLossRecoveryTest();
     void _connectionRemovedTest();
     void _highLatencyLinkTest();
 
