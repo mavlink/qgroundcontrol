@@ -436,8 +436,14 @@ void RequestMetaDataTypeStateMachine::_completeRequest()
                                                     << sourceLabel << _metadataUri;
         }
     } else {
-        qCWarning(RequestMetaDataTypeStateMachineLog) << typeToString() << ": failed to load metadata (primary and fallback)"
-                                                  << (_metadataUri.isEmpty() ? _compInfo->uriMetaData() : _metadataUri);
+        const QString failureMsg = QStringLiteral("%1 : failed to load metadata (primary and fallback) %2")
+                .arg(typeToString(), _metadataUri.isEmpty() ? _compInfo->uriMetaData() : _metadataUri);
+        if (_compInfo->vehicle->apmFirmware()) {
+            // ArduPilot doesn't support the component metadata protocol, so failure is expected
+            qCDebug(RequestMetaDataTypeStateMachineLog).noquote() << failureMsg;
+        } else {
+            qCWarning(RequestMetaDataTypeStateMachineLog).noquote() << failureMsg;
+        }
     }
 }
 

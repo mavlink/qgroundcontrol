@@ -364,9 +364,6 @@ void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMod
 
 void ParameterManagerTest::_FTPnoFailure()
 {
-    // ArduPilot mock link has no metadata source; this warning is expected for the APM FTP path.
-    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
-                     QRegularExpression("failed to load metadata"));
     // Test APM FTP-based parameter download (param.pck).
     // FailParamNoResponseToRequestList forces the FTP path by blocking PARAM_REQUEST_LIST.
     QVERIFY2(!_mockLink, "MockLink already connected");
@@ -410,9 +407,6 @@ void ParameterManagerTest::_FTPnoFailure()
 
 void ParameterManagerTest::_FTPChangeParam()
 {
-    // ArduPilot mock link has no metadata source; this warning is expected for the APM FTP path.
-    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
-                     QRegularExpression("failed to load metadata"));
     // Test that parameter set works after APM FTP param download
     QVERIFY2(!_mockLink, "MockLink already connected");
     _mockLink = MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionNone, MockConfiguration::FailParamNoResponseToRequestList);
