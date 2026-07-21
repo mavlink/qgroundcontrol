@@ -147,13 +147,18 @@ void GStreamerTest::_testContextBridgeRegistry()
     gst_message_unref(miss);
 
     // Reset-callback round-trip: registerResetCallback + resetAllBridges must invoke every cb.
+    // Registry capacity is one slot per compiled bridge, so single-bridge builds (e.g. macOS
+    // GLMemory-only) can only exercise a single registration.
+    const bool multiSlot = GstContextBridgeRegistry::bridgeCapacityForTest() >= 2;
     GstContextBridgeRegistry::clearForTest();
     static int s_resetCount = 0;
     s_resetCount = 0;
     GstContextBridgeRegistry::registerResetCallback([]() { ++s_resetCount; });
-    GstContextBridgeRegistry::registerResetCallback([]() { s_resetCount += 10; });
+    if (multiSlot) {
+        GstContextBridgeRegistry::registerResetCallback([]() { s_resetCount += 10; });
+    }
     GstContextBridgeRegistry::resetAllBridges();
-    QCOMPARE(s_resetCount, 11);
+    QCOMPARE(s_resetCount, multiSlot ? 11 : 1);
     // clearForTest must invoke pending reset callbacks before zeroing the slots so cached
     // bridge state can't leak across test cases. Drop the prior round's callbacks first so we
     // measure exactly the new callback's invocation count, not 1+10+1=12 from leftovers.
@@ -166,37 +171,40 @@ void GStreamerTest::_testContextBridgeRegistry()
     QCOMPARE(s_resetCount, 1);
 
     // Coexistence: two bridges with different context types must not consume each other's messages.
-    GstContextBridgeRegistry::clearForTest();
-    static bool s_aHit = false;
-    static bool s_bHit = false;
-    s_aHit = s_bHit = false;
-    GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) -> GstBusSyncReply {
-        const gchar* t = nullptr;
-        gst_message_parse_context_type(m, &t);
-        if (t && std::string_view(t) == "type-A") {
-            s_aHit = true;
-            return GST_BUS_DROP;
-        }
-        return GST_BUS_PASS;
-    });
-    GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) -> GstBusSyncReply {
-        const gchar* t = nullptr;
-        gst_message_parse_context_type(m, &t);
-        if (t && std::string_view(t) == "type-B") {
-            s_bHit = true;
-            return GST_BUS_DROP;
-        }
-        return GST_BUS_PASS;
-    });
-    GstMessage* msgA = gst_message_new_need_context(GST_OBJECT(dummy), "type-A");
-    QCOMPARE(GstContextBridgeRegistry::dispatchBridges(msgA), GST_BUS_DROP);
-    QVERIFY(s_aHit);
-    QVERIFY(!s_bHit);
-    gst_message_unref(msgA);
-    GstMessage* msgB = gst_message_new_need_context(GST_OBJECT(dummy), "type-B");
-    QCOMPARE(GstContextBridgeRegistry::dispatchBridges(msgB), GST_BUS_DROP);
-    QVERIFY(s_bHit);
-    gst_message_unref(msgB);
+    // Needs two handler slots, so only meaningful on multi-bridge builds.
+    if (multiSlot) {
+        GstContextBridgeRegistry::clearForTest();
+        static bool s_aHit = false;
+        static bool s_bHit = false;
+        s_aHit = s_bHit = false;
+        GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) -> GstBusSyncReply {
+            const gchar* t = nullptr;
+            gst_message_parse_context_type(m, &t);
+            if (t && std::string_view(t) == "type-A") {
+                s_aHit = true;
+                return GST_BUS_DROP;
+            }
+            return GST_BUS_PASS;
+        });
+        GstContextBridgeRegistry::registerBridgeHandler([](GstMessage* m) -> GstBusSyncReply {
+            const gchar* t = nullptr;
+            gst_message_parse_context_type(m, &t);
+            if (t && std::string_view(t) == "type-B") {
+                s_bHit = true;
+                return GST_BUS_DROP;
+            }
+            return GST_BUS_PASS;
+        });
+        GstMessage* msgA = gst_message_new_need_context(GST_OBJECT(dummy), "type-A");
+        QCOMPARE(GstContextBridgeRegistry::dispatchBridges(msgA), GST_BUS_DROP);
+        QVERIFY(s_aHit);
+        QVERIFY(!s_bHit);
+        gst_message_unref(msgA);
+        GstMessage* msgB = gst_message_new_need_context(GST_OBJECT(dummy), "type-B");
+        QCOMPARE(GstContextBridgeRegistry::dispatchBridges(msgB), GST_BUS_DROP);
+        QVERIFY(s_bHit);
+        gst_message_unref(msgB);
+    }
 
     gst_object_unref(dummy);
 #endif

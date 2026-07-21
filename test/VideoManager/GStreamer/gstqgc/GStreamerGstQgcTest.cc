@@ -499,10 +499,17 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         }
 #endif
 #else
-        // Direct DMABuf: format_capsfilter → qgcqvideosink (2 children).
+        // Native memory passthrough: format_capsfilter → qgcqvideosink (2 children). Caps advertise
+        // whichever GPU memory types are compiled in (e.g. GLMemory on macOS/iOS).
         QCOMPARE(elementCount, 2);
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
         QVERIFY2(s.contains(QStringLiteral("memory:DMABuf")),
                  qUtf8Printable(QStringLiteral("GPU bin caps missing memory:DMABuf: ") + s));
+#endif
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+        QVERIFY2(s.contains(QStringLiteral("memory:GLMemory")),
+                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:GLMemory: ") + s));
+#endif
 #endif
 
         gst_object_unref(qvideosink);

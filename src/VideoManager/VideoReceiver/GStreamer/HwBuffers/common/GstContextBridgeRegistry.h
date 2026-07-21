@@ -43,6 +43,9 @@ void resetAllCaches();
 #ifdef QGC_GST_BUILD_TESTING
 /// Reset all registrations and call resetAllBridges() so tests start from a clean state.
 void clearForTest();
+
+/// Number of bridge slots compiled into this build (one per GPU bridge path).
+int bridgeCapacityForTest();
 #endif
 
 }  // namespace GstContextBridgeRegistry

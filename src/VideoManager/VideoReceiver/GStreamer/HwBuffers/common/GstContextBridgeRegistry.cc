@@ -161,6 +161,11 @@ void resetAllCaches()
 }
 
 #ifdef QGC_GST_BUILD_TESTING
+int bridgeCapacityForTest()
+{
+    return kMaxBridges;
+}
+
 void clearForTest()
 {
     resetAllBridges();
