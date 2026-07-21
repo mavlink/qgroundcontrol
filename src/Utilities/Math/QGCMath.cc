@@ -112,6 +112,9 @@ bool fuzzyCompare(double value1, double value2)
         return true;
     } else if (qIsNaN(value1) || qIsNaN(value2)) {
         return false;
+    } else if (qIsInf(value1) || qIsInf(value2)) {
+        // qFuzzyCompare(+inf, -inf) is true on Qt — reject opposite-signed infinities.
+        return value1 == value2;
     } else if (value1 == value2) {
         return true;
     } else {
@@ -136,6 +139,8 @@ bool fuzzyCompare(float value1, float value2)
         return true;
     } else if (qIsNaN(value1) || qIsNaN(value2)) {
         return false;
+    } else if (qIsInf(value1) || qIsInf(value2)) {
+        return value1 == value2;
     } else if (value1 == value2) {
         return true;
     } else {

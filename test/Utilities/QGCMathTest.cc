@@ -164,10 +164,18 @@ void QGCMathTest::_fuzzyCompareDoubleInfMismatch_test()
 {
     const double inf = std::numeric_limits<double>::infinity();
     const double nan = std::numeric_limits<double>::quiet_NaN();
+    QVERIFY(QGC::fuzzyCompare(inf, inf));
+    QVERIFY(QGC::fuzzyCompare(-inf, -inf));
     QVERIFY(!QGC::fuzzyCompare(inf, -inf));
     QVERIFY(!QGC::fuzzyCompare(-inf, inf));
     QVERIFY(!QGC::fuzzyCompare(inf, nan));
     QVERIFY(!QGC::fuzzyCompare(nan, inf));
+
+    const float finf = std::numeric_limits<float>::infinity();
+    const float fnan = std::numeric_limits<float>::quiet_NaN();
+    QVERIFY(QGC::fuzzyCompare(finf, finf));
+    QVERIFY(!QGC::fuzzyCompare(finf, -finf));
+    QVERIFY(!QGC::fuzzyCompare(finf, fnan));
 }
 
 void QGCMathTest::_limitAngleToPMPIdThreePi_test()
