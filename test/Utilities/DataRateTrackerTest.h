@@ -9,4 +9,5 @@ private slots:
     void testRecordBytesAccumulates();
     void testReset();
     void testKBpsConversion();
+    void testRecordBytesZeroKeepsRateClear();
 };

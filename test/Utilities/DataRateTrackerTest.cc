@@ -72,4 +72,14 @@ void DataRateTrackerTest::testKBpsConversion()
     QCOMPARE(tracker.kBps(), tracker.bytesPerSec() / 1024.0);
 }
 
+void DataRateTrackerTest::testRecordBytesZeroKeepsRateClear()
+{
+    DataRateTracker tracker;
+    tracker.recordBytes(0);
+    QCOMPARE(tracker.totalBytes(), static_cast<quint64>(0));
+    QCOMPARE(tracker.bytesPerSec(), 0.0);
+    // Window not elapsed → rate must not be marked updated.
+    QVERIFY(!tracker.rateUpdated());
+}
+
 UT_REGISTER_TEST(DataRateTrackerTest, TestLabel::Unit)
