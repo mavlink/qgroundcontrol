@@ -151,10 +151,11 @@ void APMFreshFlashUITest::_testFreshFlashSetupState()
     QCOMPARE(frameTypeFact->rawValue().toInt(), 1); // X is the Quad default frame type
 
     // The reboot message fires when the vehicle acks the param write: dismiss
-    // the resulting dialog before interacting with the UI again
+    // the resulting dialog before interacting with the UI again. Cancel rather
+    // than Ok — Ok would reboot the vehicle.
     QVERIFY2(QTest::qWaitFor([&] { return frameClassAckSpy.count() >= 1; }, 5000),
              "FRAME_CLASS write never acked by the vehicle");
-    QVERIFY2(acceptDialog(5000), "Reboot app message dialog never shown");
+    QVERIFY2(rejectDialog(5000), "Reboot app message dialog never shown");
     verifyExpectedLogMessage();
     if (QTest::currentTestFailed()) return;
 

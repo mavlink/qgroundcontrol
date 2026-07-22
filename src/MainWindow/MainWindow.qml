@@ -186,6 +186,19 @@ ApplicationWindow {
         _showMessageDialogWorker(mainWindow, dialogTitle, dialogText)
     }
 
+    // This variant is only meant to be called by QGCApplication. Ok reboots the active vehicle.
+    function _showRebootVehicleDialog(dialogTitle, dialogText) {
+        _showMessageDialogWorker(mainWindow, dialogTitle,
+                                 dialogText + " " + qsTr("Click Ok to reboot the vehicle now."),
+                                 Dialog.Ok | Dialog.Cancel,
+                                 function() {
+                                     const activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
+                                     if (activeVehicle) {
+                                         activeVehicle.rebootVehicle()
+                                     }
+                                 })
+    }
+
     Connections {
         target: QGroundControl
 

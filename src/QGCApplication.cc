@@ -458,18 +458,51 @@ void QGCApplication::showAppMessage(const QString& message, const QString& title
     }
 }
 
-void QGCApplication::showRebootAppMessage(const QString& message, const QString& title)
+bool QGCApplication::_rebootMessageDebounced()
 {
     const QTime currentTime = QTime::currentTime();
     const QTime previousTime = _lastRebootMessageTime;
     _lastRebootMessageTime = currentTime;
 
-    if (previousTime.isValid() && (previousTime.msecsTo(currentTime) < (60 * 1000 * 2))) {
-        // Debounce reboot messages
+    return previousTime.isValid() && (previousTime.msecsTo(currentTime) < (60 * 1000 * 2));
+}
+
+void QGCApplication::showRebootAppMessage(const QString& message, const QString& title)
+{
+    if (_rebootMessageDebounced()) {
         return;
     }
 
     showAppMessage(message, title);
+}
+
+void QGCApplication::showRebootVehicleMessage(const QString& message, const QString& title)
+{
+    if (_rebootMessageDebounced()) {
+        return;
+    }
+
+    const QString dialogTitle = title.isEmpty() ? applicationName() : title;
+
+    if (runningUnitTests()) {
+        // Same log format as showAppMessage() so tests assert this via expectAppMessage()
+        qCDebug(QGCAppMessageLog) << "showAppMessage:" << dialogTitle << "-" << message;
+        if (!_uiTestMode) {
+            return;
+        }
+    }
+
+    QObject* const rootQmlObject = _rootQmlObject();
+    if (rootQmlObject) {
+        QVariant varReturn;
+        QVariant varMessage = QVariant::fromValue(message);
+        QMetaObject::invokeMethod(rootQmlObject, "_showRebootVehicleDialog", Q_RETURN_ARG(QVariant, varReturn),
+                                  Q_ARG(QVariant, dialogTitle), Q_ARG(QVariant, varMessage));
+    } else {
+        // UI isn't ready yet: fall back to the plain app message queue
+        _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));
+        QTimer::singleShot(200, this, &QGCApplication::_showDelayedAppMessages);
+    }
 }
 
 void QGCApplication::_showDelayedAppMessages()
