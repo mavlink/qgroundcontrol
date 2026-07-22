@@ -114,6 +114,11 @@ Settings are organized into collapsible sections with consistent layout.
 
 New and updated MAVLink Actions support in Fly View settings.
 
+### Settings Override Files
+
+Application settings can now be overridden using [Settings Override Files](../../qgc-dev-guide/file_formats/settings_override.md) placed in the `Settings` subdirectory of the [Application Load/Save Path](../settings_view/general.md#load_save_path).
+These JSON files can change setting defaults, force settings to fixed values, hide settings from the UI, and adjust metadata such as min/max ranges — without requiring a custom build.
+
 ### Virtual Joystick
 
 Virtual Joystick now supports left-handed mode.
