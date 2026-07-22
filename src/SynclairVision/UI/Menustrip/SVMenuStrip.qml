@@ -14,10 +14,13 @@ Item {
     property bool autoUpdateActiveId: true
     
     property string direction: vertical
+    property string menuDirection: direction
 
     property url source
     property url alternateSource
     property string menuText: ""
+    property string menuDescription: ""
+
     property var model: []
     property string activeId: ""
     property var activeIds: []
@@ -26,6 +29,11 @@ Item {
 
     readonly property bool isHorizontal: direction === horizontal
     readonly property bool isVertical: !isHorizontal
+
+
+
+    property bool isLeft: true
+    property bool isTop: true
 
     readonly property bool hasContent: !!model && model.length > 0
     readonly property bool contentVisible: hasContent && (headerless || open)
@@ -53,12 +61,12 @@ Item {
             ? SVUnits.objectWidth
             : + (root.headerless ? 0 : root.buttonSize)
               + (root.separatorVisible ? root.separatorSpan : 0)
-              + (root.contentVisible ? contentGrid.implicitWidth : 0)
+              + (root.contentVisible ? contentGrid.implicitWidth : 0) + 2
     height: isHorizontal 
             ? SVUnits.objectWidth 
             : + (root.headerless ? 0 : root.buttonSize)
               + (root.separatorVisible ? root.separatorSpan : 0)
-              + (root.contentVisible ? contentGrid.implicitHeight : 0)
+              + (root.contentVisible ? contentGrid.implicitHeight : 0) + 2
 
     QGCPalette { id: qgcPalette }
 
@@ -69,11 +77,16 @@ Item {
             size: root.buttonSize
             borderRadius: SVUnits.radius
             text: root.menuText
+            description: root.menuDescription
             iconSource: root.useAlternateHeaderIcon ? root.alternateSource : root.source
             checked: root.open
+            enabled: root.enabled
             extendHeader: true
             expanded: root.open
             onClicked: root.open = !root.open
+            isLeft: root.isLeft
+            isTop: root.isTop
+            isVertical: menuDirection === vertical
         }
     }
 
@@ -87,10 +100,14 @@ Item {
 
             size: root.buttonSize
             borderRadius: SVUnits.radius
+            isLeft: root.isLeft
+            isTop: root.isTop
+            isVertical: root.isVertical
             text: modelData.text ? modelData.text : ""
+            description: modelData.description ? modelData.description : ""
             tintIcon: modelData && (modelData.tintIcon !== undefined) ? modelData.tintIcon : true
             checked: root.isItemChecked(modelData)
-            enabled: modelData.enabled !== undefined ? modelData.enabled : true
+            enabled: (modelData.enabled !== undefined ? modelData.enabled : true) && root.enabled
             iconSource: itemIconActive && modelData && modelData.alternateIconSource
                         ? modelData.alternateIconSource
                         : (modelData && modelData.iconSource ? modelData.iconSource : "")
@@ -105,51 +122,23 @@ Item {
         }
     }
 
-    Rectangle {
+    SVBackground {
         id: background
         anchors.fill: parent
-        color: qgcPalette.windowTransparent
         radius: SVUnits.radius
-        border.width: (SVSettings.simplifiedUserInterface) ? 0 : SVUnits.lineWidth
-        border.color: qgcPalette.windowShade
-        
+        borderColor: qgcPalette.windowShade
+        enabled: true
+        hoverEnabled: false
+        checkable: false
+        checked: false
+        hovered: false
+        pressed: false
+        borderWidth: 1
     }
 
-    Rectangle {
-        id: backgroundGradient
-        anchors.fill: parent
-        visible: !SVSettings.simplifiedUserInterface
-        color: qgcPalette.windowTransparent
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: qgcPalette.windowShade }
-            GradientStop {
-                position: Math.min(1.0, Math.max(0.0, background.width > 0 ? (root.buttonSize / 3) / background.width : 0.0))
-                color: "transparent"
-            }
-            GradientStop { position: 1.0; color: "transparent" }
-        }
-        radius: SVUnits.radius
-        opacity: 0.20
-    }
+    
 
-    Rectangle {
-        id: backgroundGradient2
-        anchors.fill: parent
-        visible: !SVSettings.simplifiedUserInterface
-        color: qgcPalette.windowTransparent
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop { position: 0.0; color: "transparent" }
-            GradientStop {
-                position: Math.min(1.0, Math.max(0.0, background.height > 0 ? 1.0 - ((root.buttonSize / 3) / background.height) : 1.0))
-                color: "transparent"
-            }
-            GradientStop { position: 1.0; color: qgcPalette.windowShade }
-        }
-        radius: SVUnits.radius
-        opacity: 0.20
-    }
+
 
     Grid {
         id: layoutGrid
@@ -175,7 +164,7 @@ Item {
                 anchors.centerIn: parent
                 width: {
                     if(root.isVertical) {
-                        return parent.width * (SVSettings.simplifiedUserInterface ? 0.75 : 0.9)
+                        return parent.width * (SVSettings.simplifiedUserInterface ? 0.75 : 0.9) + (SVUnits.lineWidth * 2)
                     } else {
                         return SVUnits.lineWidth
                     }
@@ -183,7 +172,7 @@ Item {
 
                 height: {
                     if(root.isHorizontal) {
-                        return parent.height * (SVSettings.simplifiedUserInterface ? 0.75 : 0.9)
+                        return parent.height * (SVSettings.simplifiedUserInterface ? 0.75 : 0.9) + (SVUnits.lineWidth * 2)
                     } else {
                         return SVUnits.lineWidth
                     }
@@ -198,7 +187,7 @@ Item {
                 Gradient {
                     id: separatorGradient
 
-                    orientation: Gradient.Horizontal
+                    orientation: root.isVertical ? Gradient.Horizontal : Gradient.Vertical
 
                     GradientStop {
                         position: 0.0

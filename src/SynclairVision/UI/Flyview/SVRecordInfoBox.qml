@@ -11,16 +11,16 @@ Item {
     implicitWidth: background.implicitWidth
     implicitHeight: background.implicitHeight
 
-    Rectangle {
+    SVBackground {
         id: background
-        color: qgcPalette.windowTransparent
-        radius: SVUnits.radius
-
         implicitWidth: contentRow.implicitWidth + SVUnits.bigMargin * 2
         implicitHeight: contentRow.implicitHeight + SVUnits.bigMargin * 2
 
         width: implicitWidth
         height: implicitHeight
+
+        borderWidth: 0
+        radius: SVUnits.radius
 
         Row {
             id: contentRow
@@ -41,4 +41,7 @@ Item {
             }
         }
     }
+
+    
+        
 }

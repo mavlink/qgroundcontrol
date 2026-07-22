@@ -5,33 +5,23 @@ import QGroundControl.Controls
 
 Item {
     id: root
+    height: 200
+    width: 600
 
     property var open
 
     QGCPalette { id: qgcPalette }
 
-    Rectangle {
-        id: test
+    SVBackground {
+        id: background
         anchors.fill: parent
-        width: 500
-        height: 300
 
-        color: qgcPalette.windowTransparent
-        visible: open
+        radius: SVUnits.radius
+        borderColor: qgcPalette.windowShade
+        borderWidth: 1
     }
 
-    Rectangle {
-        id: button
-        width: SVUnits.objectWidth / 2
-        height: SVUnits.objectWidth
-        anchors.right: (open) ? test.left : parent.right
-        anchors.verticalCenter: test.verticalCenter
-        color: qgcPalette.windowTransparent
 
-        SVArrow {
-            
-        }
-    }
 
 
 }

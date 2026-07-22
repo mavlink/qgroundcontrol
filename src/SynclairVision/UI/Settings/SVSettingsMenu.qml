@@ -881,6 +881,24 @@ Item {
         radius: ScreenTools.defaultBorderRadius * 2
         color: qgcPalette.window
     }
+    
+    SVBackground {
+        anchors.fill: parent
+        /*normalColor: "transparent"
+        hoverColor: qgcPalette.windowShadeLight
+        checkedColor: qgcPalette.buttonHighlight
+        pressedColor: qgcPalette.buttonHighlight
+        frameBorderColor: qgcPalette.windowShade
+        */
+
+        enabled: root.enabled
+        hoverEnabled: false
+        hovered: false
+        checkable: false
+        checked: false
+        pressed: false
+        radius: SVUnits.radius * 2
+    }
 
     
 

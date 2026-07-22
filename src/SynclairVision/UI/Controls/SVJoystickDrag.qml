@@ -105,6 +105,23 @@ Item {
         return Math.hypot(pointerX - centerX, pointerY - centerY) <= joystickRadius
     }
 
+    SVBackground {
+        id: background2
+        anchors.fill: parent
+        normalColor: qgcPalette.windowShade
+        round: true
+        radius: width / 2
+        checked: false
+        pressed: false
+        checkable: false
+        hoverEnabled: true
+        hovered: dragMouseArea.containsMouse && root.controlsUsable
+        hoverPosition: Qt.point(dragMouseArea.mouseX, dragMouseArea.mouseY)
+        hoverGlowOpacity: 0.06
+        hoverGlowRadius: Math.max(width, height) * 0.65
+    }
+
+    
     
 
     Rectangle {
@@ -112,6 +129,7 @@ Item {
         anchors.fill: parent
         color: qgcPalette.windowShade
         radius: width / 2
+        visible: false
     }
 
     Rectangle {
@@ -173,7 +191,9 @@ Item {
     }
 
     MouseArea {
+        id: dragMouseArea
         anchors.fill: parent
+        hoverEnabled: true
 
         onPressed: (mouse) => {
             const isInsideJoystick = root.isInsideJoystick(mouse.x, mouse.y)

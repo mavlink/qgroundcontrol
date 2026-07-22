@@ -102,7 +102,6 @@ Item {
                     SVSettingsMenu {
                         id: settingsPanel
                         anchors.fill: parent
-
                         activeSettingsId: root.activeSettingsId
                     }
 
@@ -186,7 +185,7 @@ Item {
                     SVMenuStrip {
                         id: settingsCategoryStrip
                         anchors.top: parent.top
-                        anchors.topMargin: settingsDrawerRoot.settingsCategoryStripTopOffset
+                        anchors.topMargin: settingsDrawerRoot.settingsCategoryStripTopOffset + 6
                         anchors.horizontalCenter: parent.horizontalCenter
 
                         headerless: true

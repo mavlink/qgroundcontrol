@@ -68,6 +68,34 @@ QtObject {
         synclairOverlay = !synclairOverlay
     }
 
+    function toggleCrosshair() {
+        if (cameraSelected < 0 || cameraSelected >= cameraOverlays.length) {
+            return
+        }
+
+        var overlays = cameraOverlays.slice()
+        var selectedOverlays = overlays[cameraSelected]
+        overlays[cameraSelected] = {
+            grid: selectedOverlays.grid,
+            crosshair: !selectedOverlays.crosshair
+        }
+        cameraOverlays = overlays
+    }
+
+    function toggleGrid() {
+        if (cameraSelected < 0 || cameraSelected >= cameraOverlays.length) {
+            return
+        }
+
+        var overlays = cameraOverlays.slice()
+        var selectedOverlays = overlays[cameraSelected]
+        overlays[cameraSelected] = {
+            grid: !selectedOverlays.grid,
+            crosshair: selectedOverlays.crosshair
+        }
+        cameraOverlays = overlays
+    }
+
     function setCamera(cameraId) {
         if (!cameraSelectionEnabled) {
             clearCamera()
@@ -141,6 +169,20 @@ QtObject {
     property int photoCooldownMs: 500
     property real lastPhotoRequestTimeMs: 0
     property bool aiOverlay: false
+    property var cameraOverlays: [
+        { grid: false, crosshair: false },
+        { grid: false, crosshair: false },
+        { grid: false, crosshair: false },
+        { grid: false, crosshair: false },
+        { grid: false, crosshair: false },
+        { grid: false, crosshair: false }
+    ]
+    readonly property bool grid: cameraSelected >= 0
+        && cameraSelected < cameraOverlays.length
+        && cameraOverlays[cameraSelected].grid
+    readonly property bool crosshair: cameraSelected >= 0
+        && cameraSelected < cameraOverlays.length
+        && cameraOverlays[cameraSelected].crosshair
 
     onDigiviewActiveChanged: {
         if (digiviewActive) {

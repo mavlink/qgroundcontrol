@@ -26,6 +26,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Camera/SVCameraLayer.qml
         Camera/SVCameraWidgetLayer.qml
         Camera/SVCameraLayouts.js
+        Camera/SVCameraLayerOverlays.qml
 
         Controls/SVControlPanel.qml
         Controls/SVJoystick.qml
@@ -52,7 +53,11 @@ qt_add_qml_module(SynclairVisionUIModule
         Settings/SVSettingsDev.js
 
         Resources/SVArrow.qml
+        Resources/SVBackground.qml
         Resources/SVBorder.qml
+        Resources/SVTooltip.qml
+        Resources/SVLine.qml
+
 
     RESOURCES
         Resources/Images/halftone_texture_2.png
@@ -85,6 +90,11 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_controls.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_dev.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_shortcut.svg"
+
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/overlay_main.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/overlay_grid.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/overlay_cross.svg"
+
 
 
 

@@ -18,10 +18,17 @@ Item {
 
     property int _widgetMargin: 0
     property bool cameraActive: !QGroundControl.videoManager.decoding && !QGroundControl.videoManager.isUvc
-    property int cameraIndex
+    property int cameraSlot
     property bool previewMode: false
     property real _noVideoLabelPadding: previewMode ? SVUnits.margin : SVUnits.bigMargin
     property real _noVideoLabelPointSize: previewMode ? SVUnits.smallText : SVUnits.mediumText
+
+    readonly property bool crosshair: cameraSlot >= 0
+        && cameraSlot < SVState.cameraOverlays.length
+        && SVState.cameraOverlays[cameraSlot].crosshair
+    readonly property bool grid: cameraSlot >= 0
+        && cameraSlot < SVState.cameraOverlays.length
+        && SVState.cameraOverlays[cameraSlot].grid
 
     QGCPalette { id: qgcPalette}
 
@@ -29,7 +36,7 @@ Item {
         id: noVideo
         anchors.fill: parent
         color: "black"
-        visible: cameraActive
+        visible: false//cameraActive
 
         Rectangle {
             id:                 noVideoLabelBackground
@@ -49,7 +56,14 @@ Item {
             }
         }
     }
-    
+
+    SVCameraLayerOverlays {
+        id: overlays
+        anchors.fill: parent
+        grid: parent.grid
+        crosshair: parent.crosshair
+    }
+
     SVCameraWidgetLayer {
         id: widgetLayer
         anchors.fill: parent
@@ -64,7 +78,7 @@ Item {
         borderColor: qgcPalette.colorYellowGreen
         borderVisible: !root.previewMode
             && SVState.cameraSelectionEnabled
-            && SVState.cameraSelected === cameraIndex
+            && SVState.cameraSelected === cameraSlot
             && SVState.hud
     }
 
@@ -77,7 +91,7 @@ Item {
                 return
             }
 
-            SVState.setCamera(root.cameraIndex)
+            SVState.setCamera(root.cameraSlot)
         }
     }
 }
