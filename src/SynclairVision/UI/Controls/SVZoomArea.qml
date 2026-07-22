@@ -14,6 +14,8 @@ Item {
 
     property bool zoomInPressed: false
     property bool zoomOutPressed: false
+    readonly property bool zoomInVisualPressed: zoomInPressed || SVState.shortcutZoomInHeld
+    readonly property bool zoomOutVisualPressed: zoomOutPressed || SVState.shortcutZoomOutHeld
 
     property color textColor: root.controlsUsable
         ? qgcPalette.statusPassedText
@@ -29,18 +31,6 @@ Item {
         return y < height / 2 ? 0 : 1
     }
 
-    function isPressed(index) {
-        if (index === 0) {
-            return zoomInPressed
-        }
-
-        if (index === 1) {
-            return zoomOutPressed
-        }
-
-        return false
-    }
-
     function setPressed(index, pressed) {
         if (index === 0) {
             zoomInPressed = pressed
@@ -49,16 +39,16 @@ Item {
         }
     }
 
-    function buttonColor(index) {
-        if (root.isPressed(index)) {
+    function buttonColor(index, pressed) {
+        if (pressed) {
             return qgcPalette.buttonHighlight
         }
 
         if (hoverIndex === index) {
-            return qgcPalette.windowShadeLight
+            return SVSettings.simplifiedUserInterface ? qgcPalette.windowShadeLight : Qt.alpha(qgcPalette.windowShadeLight, 0.8)
         }
 
-        return qgcPalette.windowShade
+        return SVSettings.simplifiedUserInterface ? qgcPalette.windowShade : qgcPalette.windowTransparent
     }
 
     function clearMouseState() {
@@ -88,7 +78,7 @@ Item {
         height: parent.height / 2
         anchors.top: parent.top
         text: "+"
-        buttonColor: root.buttonColor(0)
+        buttonColor: root.buttonColor(0, root.zoomInVisualPressed)
         textColor: root.textColor
         rotation: 180
     }
@@ -99,7 +89,7 @@ Item {
         height: parent.height / 2
         anchors.bottom: parent.bottom
         text: "-"
-        buttonColor: root.buttonColor(1)
+        buttonColor: root.buttonColor(1, root.zoomOutVisualPressed)
         textColor: root.textColor
     }
 
@@ -107,7 +97,9 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
         height: SVUnits.lineWidth
-        color: qgcPalette.windowShadeLight
+        color: (hoverIndex === -1 && !zoomInPressed && !zoomOutPressed && !zoomInVisualPressed && !zoomOutVisualPressed) 
+        ? qgcPalette.windowShadeLight 
+        : "white"
     }
 
     Rectangle {

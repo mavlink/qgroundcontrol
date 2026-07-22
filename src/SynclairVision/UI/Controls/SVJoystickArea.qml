@@ -16,6 +16,18 @@ Item {
     property var  innerClicked: [false, false, false, false]
     property var  outerClicked: [false, false, false, false]
     property var  hasInnerRing: true
+    readonly property var outerVisualClicked: [
+        outerClicked[0] || (!SVState.shortcutSmallMovementHeld && SVState.shortcutJoystickHeld[0]),
+        outerClicked[1] || (!SVState.shortcutSmallMovementHeld && SVState.shortcutJoystickHeld[1]),
+        outerClicked[2] || (!SVState.shortcutSmallMovementHeld && SVState.shortcutJoystickHeld[2]),
+        outerClicked[3] || (!SVState.shortcutSmallMovementHeld && SVState.shortcutJoystickHeld[3])
+    ]
+    readonly property var innerVisualClicked: [
+        innerClicked[0] || (SVState.shortcutSmallMovementHeld && SVState.shortcutJoystickHeld[0]),
+        innerClicked[1] || (SVState.shortcutSmallMovementHeld && SVState.shortcutJoystickHeld[1]),
+        innerClicked[2] || (SVState.shortcutSmallMovementHeld && SVState.shortcutJoystickHeld[2]),
+        innerClicked[3] || (SVState.shortcutSmallMovementHeld && SVState.shortcutJoystickHeld[3])
+    ]
 
     readonly property bool controlsLocked: SVState.lockControls
     readonly property bool controlsUsable: !SVState.lockControls && SVState.cameraSelected !== -1
@@ -140,13 +152,13 @@ Item {
     SVJoystickButtonSegment {
         id: outerButtons
         anchors.fill: parent
-        buttonColor: qgcPalette.windowShade
-        hoveredButtonColor: qgcPalette.windowShadeLight
+        buttonColor: SVSettings.simplifiedUserInterface ? qgcPalette.windowShade : qgcPalette.windowTransparent
+        hoveredButtonColor: SVSettings.simplifiedUserInterface ? qgcPalette.windowShadeLight : Qt.alpha(qgcPalette.windowShadeLight, 0.8) 
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: root.borderColor
         hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
         hoverPosition: outerButtons.mapFromItem(root, root.hoverPosition.x, root.hoverPosition.y)
-        clicked: outerClicked
+        clicked: root.outerVisualClicked
 
         arrowFilled: (qgcPalette.globalTheme === QGCPalette.Light) ? false : true
         arrowSize: (root.hasInnerRing) ? 0.45 : 0.3
@@ -161,14 +173,14 @@ Item {
         height: parent.height * root.t
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        buttonColor: qgcPalette.window
-        hoveredButtonColor: qgcPalette.windowShadeLight
+        buttonColor: SVSettings.simplifiedUserInterface ? qgcPalette.window : qgcPalette.windowTransparent
+        hoveredButtonColor: SVSettings.simplifiedUserInterface ? qgcPalette.windowShadeLight : Qt.alpha(qgcPalette.windowShadeLight, 0.8) 
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: root.borderColor
         hoverIndex: (root.hoverIndex >= 4) ? root.hoverIndex - 4 : -1
         hoverPosition: innerButtons.mapFromItem(root, root.hoverPosition.x, root.hoverPosition.y)
 
-        clicked: innerClicked
+        clicked: root.innerVisualClicked
         arrowSize: 0.3
         arrowSpace: 0.8
         arrowColor: root.arrowColor
