@@ -1,4 +1,4 @@
-"""Windows installer (MSI for GStreamer, exe for Vulkan SDK)."""
+"""Windows dependency installers."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import os
 import subprocess
 import sys
 import tempfile
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from . import _common as _c
@@ -14,7 +13,7 @@ from . import _common as _c
 WINDOWS_GSTREAMER_BASE_URL = (
     "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows"
 )
-WINDOWS_GSTREAMER_INSTALL_DIR = "C:\\gstreamer"
+_WINDOWS_GSTREAMER_OFFICIAL_URL = "https://gstreamer.freedesktop.org/data/pkg/windows"
 WINDOWS_GSTREAMER_PREFIX = "C:\\gstreamer\\1.0\\msvc_x86_64"
 WINDOWS_VULKAN_INSTALL_DIR = "C:\\VulkanSDK\\latest"
 WINDOWS_VULKAN_URL = "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe"
@@ -120,55 +119,35 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
         _c.add_to_path(f"{prefix}\\bin")
         return True
 
-    base_url = f"{WINDOWS_GSTREAMER_BASE_URL}/{version}"
-    runtime_name = f"gstreamer-1.0-msvc-x86_64-{version}.msi"
-    devel_name = f"gstreamer-1.0-devel-msvc-x86_64-{version}.msi"
+    installer_name = f"gstreamer-1.0-msvc-x86_64-{version}.exe"
 
     print(f"\nInstalling GStreamer {version}...")
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmp = Path(tmpdir)
-        runtime_msi = tmp / runtime_name
-        devel_msi = tmp / devel_name
-
-        download_targets = [
-            ("runtime", f"{base_url}/{runtime_name}", runtime_msi),
-            ("devel", f"{base_url}/{devel_name}", devel_msi),
-        ]
-        if dry_run:
-            for _, url, path in download_targets:
-                if not _c.download_file(url, path, dry_run):
-                    return False
-        else:
-            print("  Downloading GStreamer installers in parallel...")
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                futures = {
-                    executor.submit(_c.download_file, url, path): label
-                    for label, url, path in download_targets
-                }
-                for future in as_completed(futures):
-                    label = futures[future]
-                    if not future.result():
-                        print(
-                            f"Failed to download GStreamer {label} installer",
-                            file=sys.stderr,
-                        )
-                        return False
-
-        install_dir = WINDOWS_GSTREAMER_INSTALL_DIR
-        for label, msi in [("runtime", runtime_msi), ("devel", devel_msi)]:
-            print(f"  Installing GStreamer {label}...")
-            if not _c.run_command(
-                [
-                    "msiexec.exe",
-                    "/i",
-                    str(msi),
-                    "/passive",
-                    f"INSTALLDIR={install_dir}",
-                    "ADDLOCAL=ALL",
-                ],
-                dry_run,
-            ):
-                return False
+        installer = Path(tmpdir) / installer_name
+        installer_urls = (
+            f"{WINDOWS_GSTREAMER_BASE_URL}/{installer_name}",
+            f"{_WINDOWS_GSTREAMER_OFFICIAL_URL}/{version}/msvc/{installer_name}",
+        )
+        if not _c.download_file(
+            installer_urls[0],
+            installer,
+            dry_run,
+            warn_on_failure=True,
+        ) and not _c.download_file(installer_urls[1], installer, dry_run):
+            return False
+        if not _c.run_command(
+            [
+                str(installer),
+                "/VERYSILENT",
+                "/SUPPRESSMSGBOXES",
+                "/SP-",
+                "/NORESTART",
+                "/TYPE=devel",
+                f"/DIR={WINDOWS_GSTREAMER_PREFIX}",
+            ],
+            dry_run,
+        ):
+            return False
 
     prefix = WINDOWS_GSTREAMER_PREFIX
     _c.set_env_var("GSTREAMER_1_0_ROOT_MSVC_X86_64", prefix)
@@ -252,7 +231,6 @@ def install_windows(
 
 __all__ = [
     "WINDOWS_GSTREAMER_BASE_URL",
-    "WINDOWS_GSTREAMER_INSTALL_DIR",
     "WINDOWS_GSTREAMER_PREFIX",
     "WINDOWS_VS_BUILDTOOLS_URL",
     "WINDOWS_VULKAN_INSTALL_DIR",

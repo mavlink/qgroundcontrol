@@ -325,6 +325,8 @@ def download_file(
     dry_run: bool = False,
     timeout: float = 300.0,
     retries: int = 3,
+    *,
+    warn_on_failure: bool = False,
 ) -> bool:
     """Download a file from a URL."""
     if dry_run:
@@ -357,7 +359,8 @@ def download_file(
             shutil.copyfileobj(response, out)
         return True
     except Exception as e:
-        log_error(f"Failed to download {url}: {e}")
+        log = log_warn if warn_on_failure else log_error
+        log(f"Failed to download {url}: {e}")
         return False
 
 
