@@ -30,6 +30,8 @@ private slots:
     void _geodesicAzimuth_test();
     void _geodesicDestination_test();
     void _geodesicRoundTrip_test();
+    void _geodesicDestinationZeroDistance_test();
+    void _geodesicDistanceSelfExact_test();
 
     void _pathLength_test();
     void _polygonArea_test();

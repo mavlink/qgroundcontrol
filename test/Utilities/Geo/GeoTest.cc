@@ -243,6 +243,21 @@ void GeoTest::_geodesicRoundTrip_test()
     QVERIFY(compareDoubles(calculatedAzimuth, originalAzimuth, 0.0001));
 }
 
+
+void GeoTest::_geodesicDestinationZeroDistance_test()
+{
+    const QGeoCoordinate dest = QGCGeo::geodesicDestination(m_origin, 45.0, 0.0);
+    QCOMPARE_FUZZY(dest.latitude(), m_origin.latitude(), 1e-9);
+    QCOMPARE_FUZZY(dest.longitude(), m_origin.longitude(), 1e-9);
+}
+
+void GeoTest::_geodesicDistanceSelfExact_test()
+{
+    QCOMPARE_FUZZY(QGCGeo::geodesicDistance(m_origin, m_origin), 0.0, 1e-9);
+    const QGeoCoordinate elevated(m_origin.latitude(), m_origin.longitude(), 120.0);
+    QCOMPARE_FUZZY(QGCGeo::geodesicDistance(elevated, elevated), 0.0, 1e-9);
+}
+
 void GeoTest::_pathLength_test()
 {
     // Empty and single-point paths
