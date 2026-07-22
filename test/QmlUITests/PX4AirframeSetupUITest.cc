@@ -239,10 +239,10 @@ void PX4AirframeSetupUITest::_testApplyAirframe()
     QVERIFY2(QTest::qWaitFor([&] { return MultiVehicleManager::instance()->activeVehicle() == nullptr; }, 10000),
              "Vehicle never disconnected after Apply and Restart");
 
-    // By now the SYS_AUTOSTART ack has round-tripped, so the reboot app
-    // message dialog must have been shown — dismiss and verify it. Cancel
-    // rather than Ok — Ok would reboot the (already disconnected) vehicle.
-    QVERIFY2(rejectDialog(5000), "Reboot app message dialog never shown");
+    // By now the SYS_AUTOSTART ack has round-tripped, so the vehicle
+    // reboot-required dialog must have been shown — dismiss and verify it.
+    // Cancel rather than Ok — Ok would reboot the (already disconnected) vehicle.
+    QVERIFY2(rejectDialog(5000), "Vehicle reboot-required dialog never shown");
     verifyExpectedLogMessage();
     });
 }
