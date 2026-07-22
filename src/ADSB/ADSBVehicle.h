@@ -13,6 +13,8 @@ class ADSBVehicle : public QObject
     Q_OBJECT
     // QML_ELEMENT
 
+    friend class ADSBTest;
+
     Q_PROPERTY(uint             icaoAddress READ    icaoAddress CONSTANT)
     Q_PROPERTY(QString          callsign    READ    callsign    NOTIFY callsignChanged)
     Q_PROPERTY(QGeoCoordinate   coordinate  READ    coordinate  NOTIFY coordinateChanged)
@@ -36,7 +38,7 @@ public:
     double verticalVel() const { return _info.verticalVel; }
     uint16_t squawk() const { return _info.squawk; }
     bool alert() const { return _info.alert; }
-    bool expired() const { return _lastUpdateTimer.hasExpired(_expirationTimeoutMs); }
+    bool expired() const { return !_lastUpdateTimer.isValid() || _lastUpdateTimer.hasExpired(_expirationTimeoutMs); }
     void update(const ADSB::VehicleInfo_t &vehicleInfo);
 
 signals:
@@ -52,6 +54,8 @@ signals:
 private:
     ADSB::VehicleInfo_t _info{};
     QElapsedTimer _lastUpdateTimer;
+    QElapsedTimer _lastPropertyUpdateTimer;
 
     static constexpr qint64 _expirationTimeoutMs = 120000; ///< timeout with no update in ms after which the vehicle is removed.
+    static constexpr qint64 _propertyUpdateMinIntervalMs = 1000; ///< min interval in ms between property updates
 };
