@@ -459,6 +459,42 @@ def test_install_windows_nsis_dry_run() -> None:
     rc.assert_called_once()
 
 
+def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("PROCESSOR_ARCHITECTURE", "AMD64")
+    monkeypatch.setattr(_windows, "WINDOWS_GSTREAMER_PREFIX", str(tmp_path))
+    with (
+        patch.object(_windows._c, "download_file", side_effect=[False, True]) as dl,
+        patch.object(_windows._c, "run_command", return_value=True) as rc,
+        patch.object(_windows._c, "set_env_var"),
+        patch.object(_windows._c, "add_to_path"),
+    ):
+        assert _windows.install_windows_gstreamer("1.28.4") is True
+
+    installer = dl.call_args_list[0].args[1]
+    assert installer.name == "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+    assert [call.args[0] for call in dl.call_args_list] == [
+        (
+            f"{_windows.WINDOWS_GSTREAMER_BASE_URL}/"
+            "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+        ),
+        (
+            "https://gstreamer.freedesktop.org/data/pkg/windows/1.28.4/msvc/"
+            "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+        ),
+    ]
+    assert dl.call_args_list[0].kwargs == {"warn_on_failure": True}
+    assert dl.call_args_list[1].kwargs == {}
+    assert rc.call_args.args[0] == [
+        str(installer),
+        "/VERYSILENT",
+        "/SUPPRESSMSGBOXES",
+        "/SP-",
+        "/NORESTART",
+        "/TYPE=devel",
+        f"/DIR={_windows.WINDOWS_GSTREAMER_PREFIX}",
+    ]
+
+
 def test_install_windows_nsis_already_installed(monkeypatch, tmp_path: Path) -> None:
     makensis = tmp_path / "NSIS" / "makensis.exe"
     makensis.parent.mkdir(parents=True)
