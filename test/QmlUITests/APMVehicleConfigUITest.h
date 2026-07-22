@@ -18,7 +18,6 @@ public:
 private slots:
     void _testArduCopter();
     void _testArduPlane();
-    void _testArduSub();
     void _testArduRover();
 
 private:

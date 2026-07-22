@@ -60,13 +60,6 @@ void APMVehicleConfigUITest::_testArduPlane()
         QStringLiteral("ArduPlane"));
 }
 
-void APMVehicleConfigUITest::_testArduSub()
-{
-    // TODO: APMTuningComponentSub.qml references parameters that don't exist in
-    // the Sub MockLink, causing null-fact TypeErrors. Needs investigation.
-    QSKIP("ArduSub Tuning page has parameter mismatches with MockLink – skipping pending fix");
-}
-
 void APMVehicleConfigUITest::_testArduRover()
 {
     ignoreAPMMockLinkWarnings();
