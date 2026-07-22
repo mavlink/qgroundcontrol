@@ -32,4 +32,6 @@ private slots:
     void _testNormalizeArgs_UnittestBare();
     void _testNormalizeArgs_UnittestBareFollowedByOption();
     void _testNormalizeArgs_ColonOptionValuePreserved();
+    void _testNormalizeArgs_EmptyColonValueDropped();
+    void _testNormalizeArgs_MixedColonAndPlain();
 };

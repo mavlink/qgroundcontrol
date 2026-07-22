@@ -143,4 +143,26 @@ void QGCCommandLineParserTest::_testNormalizeArgs_ColonOptionValuePreserved()
     QCOMPARE(out, QStringList({QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")}));
 }
 
+void QGCCommandLineParserTest::_testNormalizeArgs_EmptyColonValueDropped()
+{
+    // Non-unittest options with an empty --opt: value drop the empty token
+    // (unlike bare --unittest which deliberately injects an empty arg).
+    const QStringList out = QGCCommandLineParser::normalizeArgs(
+        {QStringLiteral("qgc"), QStringLiteral("--logging:")});
+    QCOMPARE(out, QStringList({QStringLiteral("qgc"), QStringLiteral("--logging")}));
+}
+
+void QGCCommandLineParserTest::_testNormalizeArgs_MixedColonAndPlain()
+{
+    const QStringList out = QGCCommandLineParser::normalizeArgs(
+        {QStringLiteral("qgc"),
+         QStringLiteral("--logging:Vehicle.FTPManager"),
+         QStringLiteral("--allow-multiple"),
+         QStringLiteral("--clear-settings")});
+    QCOMPARE(out,
+             QStringList({QStringLiteral("qgc"), QStringLiteral("--logging"),
+                          QStringLiteral("Vehicle.FTPManager"), QStringLiteral("--allow-multiple"),
+                          QStringLiteral("--clear-settings")}));
+}
+
 UT_REGISTER_TEST(QGCCommandLineParserTest, TestLabel::Unit, TestLabel::Utilities)
