@@ -24,6 +24,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         QGCMathTest.h
         SecureMemoryTest.cc
         SecureMemoryTest.h
+        QGCFormatTest.cc
+        QGCFormatTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -41,3 +43,4 @@ add_qgc_test(DataRateTrackerTest LABELS Unit Utilities)
 add_qgc_test(QGCCommandLineParserTest LABELS Unit Utilities)
 add_qgc_test(QGCMathTest LABELS Unit Utilities)
 add_qgc_test(SecureMemoryTest LABELS Unit Utilities)
+add_qgc_test(QGCFormatTest LABELS Unit Utilities)
