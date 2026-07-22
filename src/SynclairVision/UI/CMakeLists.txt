@@ -95,6 +95,12 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/overlay_grid.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/overlay_cross.svg"
 
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/tracking_main.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/tracking_cursor.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/tracking_manual.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/tracking_single.svg"
+
+
 
 
 

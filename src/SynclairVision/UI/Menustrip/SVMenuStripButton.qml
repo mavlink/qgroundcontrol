@@ -42,13 +42,14 @@ Item {
 
     SVBackground {
         anchors.fill: parent
+        anchors.margins: root.enabled ? 0 : SVUnits.lineWidth * 2
         
         transparentBackground: true
         enabled: root.enabled
         hoverEnabled: true
         hovered: mouseArea.containsMouse && root.enabled
         checkable: true
-        checked: root.checked && root.enabled
+        checked: root.checked// && root.enabled
         pressed: mouseArea.pressed && root.enabled
         hoverPosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
         radius: root.borderRadius
@@ -57,16 +58,8 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
-        enabled: true
+        enabled: root.enabled
         hoverEnabled: true
-
-        onEntered: {
-            hoverTimer.start()
-        }
-
-        onExited: {
-            stopTimer()
-        }
 
         onPressed: {
             stopTimer()
@@ -75,6 +68,16 @@ Item {
         onClicked: {
             stopTimer()
             root.clicked()
+        }
+    }
+
+    HoverHandler {
+        onHoveredChanged: {
+            if (hovered) {
+                hoverTimer.start()
+            } else {
+                stopTimer()
+            }
         }
     }
 

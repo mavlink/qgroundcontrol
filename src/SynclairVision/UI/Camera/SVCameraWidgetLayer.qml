@@ -21,9 +21,11 @@ Item {
     QGCPalette { id: qgcPalette }
 
     SVBackground {
-        width: compass.width + 6
-        height: compass.height + 6
-        
+        width: compass.width + SVUnits.margin * 2
+        height: compass.height + SVUnits.margin * 2
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+
         enabled: true
         borderColor: qgcPalette.windowShade
         hoverEnabled: false
@@ -34,14 +36,11 @@ Item {
         borderWidth: 1
         radius: height / 2
 
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-
         HorizontalCompassAttitude {
             id: compass
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 200
+            width: SVUnits.objectWidth * 3
             color: "transparent"
         }
     }

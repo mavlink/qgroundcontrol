@@ -22,6 +22,12 @@ Item {
     property bool previewMode: false
     property real _noVideoLabelPadding: previewMode ? SVUnits.margin : SVUnits.bigMargin
     property real _noVideoLabelPointSize: previewMode ? SVUnits.smallText : SVUnits.mediumText
+    readonly property bool cursorTrackingSessionCamera: SVState.cursorTrackingSessionActive
+        && SVState.cursorTrackingSessionSlot === cameraSlot
+    readonly property bool cursorTrackingOtherCamera: SVState.cursorTrackingSessionActive
+        && !cursorTrackingSessionCamera
+
+    signal cursorTargetSelected(int cameraSlot, real normalizedX, real normalizedY)
 
     readonly property bool crosshair: cameraSlot >= 0
         && cameraSlot < SVState.cameraOverlays.length
@@ -62,14 +68,23 @@ Item {
         anchors.fill: parent
         grid: parent.grid
         crosshair: parent.crosshair
+        visible: !SVState.cursorTrackingSessionActive
     }
 
     SVCameraWidgetLayer {
         id: widgetLayer
         anchors.fill: parent
         anchors.margins: SVUnits.bigMargin
-        visible: !root.previewMode && SVState.hud
+        visible: !root.previewMode && SVState.hud && !SVState.cursorTrackingSessionActive
     }
+
+    SVBackground {
+        anchors.fill: parent
+        visible: !root.previewMode && root.cursorTrackingOtherCamera
+        effect: false
+    }
+
+    
 
     SVBorder {
         id: selected
@@ -79,12 +94,12 @@ Item {
         borderVisible: !root.previewMode
             && SVState.cameraSelectionEnabled
             && SVState.cameraSelected === cameraSlot
-            && SVState.hud
+            && SVState.hud && !SVState.cursorTrackingSessionActive
     }
 
     MouseArea {
         anchors.fill: parent
-        enabled: !root.previewMode && SVState.cameraSelectionEnabled
+        enabled: !root.previewMode && !SVState.cursorTrackingSessionActive && SVState.cameraSelectionEnabled
         onClicked: {
             if (SVState.lockControls) {
                 SVState.clearCamera()
@@ -92,6 +107,26 @@ Item {
             }
 
             SVState.setCamera(root.cameraSlot)
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        enabled: !root.previewMode && SVState.cursorTrackingSessionActive
+
+        onClicked: (mouse) => {
+            mouse.accepted = true
+
+            if (root.cursorTrackingSessionCamera) {
+                if (width > 0 && height > 0) {
+                    root.cursorTargetSelected(root.cameraSlot, mouse.x / width, mouse.y / height)
+                } else {
+                    SVState.cancelCursorTrackingSelection()
+                }
+                return
+            }
+
+            SVState.cancelCursorTrackingSelectionFromBackground()
         }
     }
 }

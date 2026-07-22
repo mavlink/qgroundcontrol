@@ -128,7 +128,7 @@ Item {
                 anchors.fill:       parent
                 _widgetMargin:      _root._widgetMargin
                 _toolBarHeight:     SVState.toolbar ? toolbar.height : 0
-                _pipViewWidth:      _pipView.left
+                pipViewWidth:       (_pipView._isExpanded) ? _pipView.width : ScreenTools.defaultFontPixelHeight * 2
                 leftToolStripBottom: widgetLayer.leftToolStripBottom
                 previewMode:        videoControl.pipState.state === videoControl.pipState.pipState
                 z:                  1
@@ -156,7 +156,7 @@ Item {
             property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
             property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
 
-            visible: SVState.hud
+            visible: SVState.hud && !SVState.cursorTrackingSessionActive
         }
 
         FlyViewWidgetLayer {
@@ -171,7 +171,7 @@ Item {
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             viewer3DCameraController: viewer3DLoader.item ? viewer3DLoader.item.cameraController : null
-            visible:                !QGroundControl.videoManager.fullScreen && SVState.hud
+            visible:                !QGroundControl.videoManager.fullScreen && SVState.hud && !SVState.cursorTrackingSessionActive
         }
 
         
@@ -239,11 +239,12 @@ Item {
     FlyViewToolBar {
         id:                 toolbar
         guidedValueSlider:  _guidedValueSlider
-        visible:            !QGroundControl.videoManager.fullScreen && SVState.toolbar
+        visible:            !QGroundControl.videoManager.fullScreen && SVState.toolbar && !SVState.cursorTrackingSessionActive
     }
 
     SVShortcutHandler {
         anchors.fill: parent
+        toolbarVisible: toolbar.visible
         z: 999
     }
 }

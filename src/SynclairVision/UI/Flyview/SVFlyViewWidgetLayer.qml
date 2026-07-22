@@ -21,12 +21,34 @@ Item {
     property real leftToolStripBottom
     property string activeLayoutId: "four_square"
     property string activeSettingsId: ""
-    property var pipViewWidth
+    property real pipViewWidth: 0
+    property var visibleCameraSlots: []
+    property bool cursorTargetingAvailable: false
     readonly property var settingsModel: SVFlyViewMenusList.getSettingsModel()
 
     property bool uiInteractionEnabled: SVState.uiInteractionEnabled
 
     signal layoutSelected(string layoutId)
+
+    onVisibleChanged: {
+        if (!visible) {
+            activeSettingsId = ""
+            mainWindow.closeIndicatorDrawer()
+        }
+    }
+
+    Connections {
+        target: SVState
+
+        function onCursorTrackingSessionActiveChanged() {
+            if (!SVState.cursorTrackingSessionActive) {
+                return
+            }
+
+            root.activeSettingsId = ""
+            mainWindow.closeIndicatorDrawer()
+        }
+    }
 
     Timer {
         id: recordElapsedTimer
@@ -56,21 +78,66 @@ Item {
         width: implicitWidth
         height: implicitHeight
 
-        // horizontal: right-aligned for Bottom-right, otherwise centered
-        anchors.right: isBottomRight ? parent.right : undefined
-        anchors.left: isBottomRight ? undefined : parent.horizontalCenter
-        anchors.leftMargin: isBottomRight ? 0 : -SVSettings.joystickSize / 8 * SVUnits.height
+        state: isBottomRight ? "bottomRight" : isTopCenter ? "topCenter" : "bottomCenter"
 
-        // vertical: top for Top-center, otherwise bottom
-        anchors.top: isTopCenter ? parent.top : undefined
-        anchors.bottom: !isTopCenter ? parent.bottom : undefined
+        states: [
+            State {
+                name: "bottomRight"
 
-        visible: SVState.hud && SVSettings.controlPanel
+                AnchorChanges {
+                    target: controlPanel
+                    anchors.left: undefined
+                    anchors.right: parent.right
+                    anchors.top: undefined
+                    anchors.bottom: parent.bottom
+                }
+
+                PropertyChanges {
+                    target: controlPanel
+                    anchors.leftMargin: 0
+                }
+            },
+            State {
+                name: "topCenter"
+
+                AnchorChanges {
+                    target: controlPanel
+                    anchors.left: parent.horizontalCenter
+                    anchors.right: undefined
+                    anchors.top: parent.top
+                    anchors.bottom: undefined
+                }
+
+                PropertyChanges {
+                    target: controlPanel
+                    anchors.leftMargin: -SVSettings.joystickSize / 8 * SVUnits.height
+                }
+            },
+            State {
+                name: "bottomCenter"
+
+                AnchorChanges {
+                    target: controlPanel
+                    anchors.left: parent.horizontalCenter
+                    anchors.right: undefined
+                    anchors.top: undefined
+                    anchors.bottom: parent.bottom
+                }
+
+                PropertyChanges {
+                    target: controlPanel
+                    anchors.leftMargin: -SVSettings.joystickSize / 8 * SVUnits.height
+                }
+            }
+        ]
+
+        visible: SVState.hud && SVSettings.controlPanel && SVState.cursorTrackingSelect
     }
 
     SVSettingsDrawer {
         id: settingsDrawer
         anchors.fill: parent
+        visible: !SVState.cursorTrackingSessionActive
 
         activeSettingsId: root.activeSettingsId
         settingsModel: root.settingsModel
@@ -86,6 +153,8 @@ Item {
         activeLayoutId: root.activeLayoutId
         activeSettingsId: root.activeSettingsId
         pipViewWidth: root.pipViewWidth
+        visibleCameraSlots: root.visibleCameraSlots
+        cursorTargetingAvailable: root.cursorTargetingAvailable
         settingsModel: root.settingsModel
         uiInteractionEnabled: root.uiInteractionEnabled
         controlPanelRight: controlPanel.x + controlPanel.width + SVUnits.objectWidth
@@ -104,9 +173,9 @@ Item {
     SVRecordInfoBox {
         id: recordInfoBox
         anchors.left: parent.left
-        anchors.leftMargin: SVUnits.margin + ((SVState.hud) ? SVUnits.objectWidth : 0)
+        anchors.leftMargin: SVUnits.margin + ((SVState.hud && SVState.cursorTrackingSelect) ? SVUnits.objectWidth : 0)
         anchors.top: parent.top
-        visible: SVState.record && SVSettings.recordInformationBox
+        visible: SVState.record && SVSettings.recordInformationBox && !SVState.cursorTrackingSessionActive
     } 
 
     SVFlyViewStats {

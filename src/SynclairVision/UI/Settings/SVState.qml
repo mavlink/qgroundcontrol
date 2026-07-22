@@ -14,6 +14,55 @@ QtObject {
     readonly property bool cameraSelectionEnabled: uiInteractionEnabled
 
     signal takePhotoRequested()
+    signal cursorTargetRequested(int cameraSlot, real normalizedX, real normalizedY)
+    signal cursorTrackingSelectionCancelled()
+
+    function beginCursorTrackingSelection(cameraSlot, visibleCameraSlots) {
+        if (!cameraSelectionEnabled || cameraSlot !== cameraSelected
+                || cameraSlot < 0 || cameraSlot >= cameraTrackingIds.length
+                || !visibleCameraSlots || visibleCameraSlots.indexOf(cameraSlot) === -1) {
+            return false
+        }
+
+        cursorTrackingSessionSlot = cameraSlot
+        cursorTrackingSelect = false
+        return true
+    }
+
+    function cancelCursorTrackingSelection() {
+        cursorTrackingSessionSlot = -1
+        cursorTrackingSelect = true
+    }
+
+    function cancelCursorTrackingSelectionFromBackground() {
+        const sessionSlot = cursorTrackingSessionSlot
+
+        if (!cursorTrackingSessionActive || sessionSlot >= cameraTrackingIds.length) {
+            cancelCursorTrackingSelection()
+            return
+        }
+
+        var trackingIds = cameraTrackingIds.slice()
+        trackingIds[sessionSlot] = ""
+        cameraTrackingIds = trackingIds
+        cancelCursorTrackingSelection()
+        cursorTrackingSelectionCancelled()
+    }
+
+    function recordCursorTarget(cameraSlot, normalizedX, normalizedY) {
+        if (!cursorTrackingSessionActive || cameraSlot !== cursorTrackingSessionSlot) {
+            return false
+        }
+
+        cursorTargetRequest = {
+            cameraSlot: cameraSlot,
+            normalizedX: normalizedX,
+            normalizedY: normalizedY
+        }
+        cursorTargetRequested(cameraSlot, normalizedX, normalizedY)
+        cancelCursorTrackingSelection()
+        return true
+    }
 
     function _padRecordTimeSegment(value) {
         return value < 10 ? "0" + value : value.toString()
@@ -68,6 +117,16 @@ QtObject {
         synclairOverlay = !synclairOverlay
     }
 
+    function setActiveCameraTrackingId(trackingId) {
+        if (!hasActiveCamera) {
+            return
+        }
+
+        var trackingIds = cameraTrackingIds.slice()
+        trackingIds[cameraSelected] = trackingId
+        cameraTrackingIds = trackingIds
+    }
+
     function toggleCrosshair() {
         if (cameraSelected < 0 || cameraSelected >= cameraOverlays.length) {
             return
@@ -97,6 +156,10 @@ QtObject {
     }
 
     function setCamera(cameraId) {
+        if (cursorTrackingSessionActive) {
+            return
+        }
+
         if (!cameraSelectionEnabled) {
             clearCamera()
             return
@@ -110,10 +173,15 @@ QtObject {
     }
 
     function clearCamera() {
+        cancelCursorTrackingSelection()
         cameraSelected = -1
     }
 
     function nextCamera() {
+        if (cursorTrackingSessionActive) {
+            return
+        }
+
         if (!cameraSelectionEnabled) {
             clearCamera()
             return
@@ -158,6 +226,10 @@ QtObject {
 // Overlay
 //---------------------------------
     property bool synclairOverlay: false
+    property bool cursorTrackingSelect: true
+    property int cursorTrackingSessionSlot: -1
+    property var cursorTargetRequest: ({ cameraSlot: -1, normalizedX: 0, normalizedY: 0 })
+    readonly property bool shortcutsEnabled: synclairOverlay
     property bool hud: true
     property bool toolbar: true
     property bool lockControls: false
@@ -169,6 +241,7 @@ QtObject {
     property int photoCooldownMs: 500
     property real lastPhotoRequestTimeMs: 0
     property bool aiOverlay: false
+    property var cameraTrackingIds: ["", "", "", "", "", ""]
     property var cameraOverlays: [
         { grid: false, crosshair: false },
         { grid: false, crosshair: false },
@@ -177,6 +250,9 @@ QtObject {
         { grid: false, crosshair: false },
         { grid: false, crosshair: false }
     ]
+    readonly property bool hasActiveCamera: cameraSelected >= 0 && cameraSelected < cameraTrackingIds.length
+    readonly property string activeCameraTrackingId: hasActiveCamera ? cameraTrackingIds[cameraSelected] : ""
+    readonly property bool cursorTrackingSessionActive: !cursorTrackingSelect && cursorTrackingSessionSlot >= 0
     readonly property bool grid: cameraSelected >= 0
         && cameraSelected < cameraOverlays.length
         && cameraOverlays[cameraSelected].grid
@@ -190,5 +266,18 @@ QtObject {
         }
 
         stopRecording()
+        cancelCursorTrackingSelection()
+    }
+
+    onCameraSelectedChanged: {
+        if (cursorTrackingSessionActive && cameraSelected !== cursorTrackingSessionSlot) {
+            cancelCursorTrackingSelection()
+        }
+    }
+
+    onCameraTrackingIdsChanged: {
+        if (cursorTrackingSessionActive && cursorTrackingSessionSlot >= cameraTrackingIds.length) {
+            cancelCursorTrackingSelection()
+        }
     }
 }

@@ -15,6 +15,7 @@ Item {
 
     property bool enabled: true
     property bool hoverEnabled: false
+    property bool effect: true
     property bool hovered: false
     property bool checkable: false
     property bool checked: false
@@ -95,7 +96,7 @@ Item {
         Rectangle {
             id: backgroundGradient
             anchors.fill: parent
-            visible: !SVSettings.simplifiedUserInterface && !root.transparentBackground
+            visible: !SVSettings.simplifiedUserInterface && !root.transparentBackground && root.effect
             color: qgcPalette.windowTransparent
             gradient: Gradient {
                 orientation: Gradient.Horizontal
@@ -104,13 +105,13 @@ Item {
                 GradientStop { position: 1.0; color: "transparent" }
             }
             radius: root.radius
-            opacity: 0.20
+            opacity: 0.25
         }
 
         Rectangle {
             id: backgroundGradient2
             anchors.fill: parent
-            visible: !SVSettings.simplifiedUserInterface && !root.transparentBackground
+            visible: !SVSettings.simplifiedUserInterface && !root.transparentBackground && root.effect
             color: qgcPalette.windowTransparent
             gradient: Gradient {
                 orientation: Gradient.Vertical
@@ -119,7 +120,7 @@ Item {
                 GradientStop { position: 1.0; color: qgcPalette.windowShade }
             }
             radius: root.radius
-            opacity: 0.20
+            opacity: 0.25
         }
 
         Rectangle {
