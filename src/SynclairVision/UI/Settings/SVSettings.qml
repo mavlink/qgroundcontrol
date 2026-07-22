@@ -7,7 +7,9 @@ QtObject {
 
     readonly property int scrollUp: -1001
     readonly property int scrollDown: -1002
+    readonly property int mouseButtonShortcutBase: -2000
     property int resetToken: 0
+    property bool shortcutCaptureActive: false
     readonly property var resetDefaults: ({
         videoResolutionWidth: 1280,
         videoResolutionHeight: 720,

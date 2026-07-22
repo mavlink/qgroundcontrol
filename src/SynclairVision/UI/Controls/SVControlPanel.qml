@@ -54,7 +54,9 @@ Item {
             height: SVSettings.zoomSize / 4 * SVUnits.height
             width: height / 2
             anchors.left: joystick.right
-            anchors.bottom: parent.bottom
+
+            anchors.top: (SVSettings.controlPanelPosition === "Top-center") ? parent.top : undefined
+            anchors.bottom: (SVSettings.controlPanelPosition === "Top-center") ? undefined : parent.bottom
         }
     }
 }

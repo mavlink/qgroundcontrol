@@ -23,9 +23,10 @@ Item {
 
     property int _widgetMargin: 0
     property int _toolBarHeight: 0
-    property var _pipViewWidth
+    property real pipViewWidth: 0
     property string _savedRtspUrl: ""
     property bool _rtspOverrideApplied: false
+    property bool _digiviewWasStreaming: false
 
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property var rtspUrlFact: QGroundControl.settingsManager.videoSettings.rtspUrl
@@ -40,6 +41,7 @@ Item {
         return cameraLayouts.length > 0 ? cameraLayouts[0] : null
     }
     readonly property string resolvedActiveLayoutId: activeLayout ? activeLayout.id : ""
+    readonly property var visibleCameraSlots: activeLayout ? activeLayout.panes.map((pane) => pane.slot) : []
 
     QGCPalette { id: qgcPalette}
 
@@ -140,12 +142,15 @@ Item {
     }
 
     Component.onCompleted: {
+        root._digiviewWasStreaming = digiview && digiview.connected && QGroundControl.videoManager.streaming
         root._applySelectedNetworkProfile()
         Qt.callLater(root.autoconnectDigiview)
         Qt.callLater(root._updateRtspUrlOverride)
     }
 
     Component.onDestruction: {
+        SVState.cancelCursorTrackingSelection()
+
         if (root._rtspOverrideApplied && rtspUrlFact) {
             rtspUrlFact.rawValue = root._savedRtspUrl
         }
@@ -160,6 +165,10 @@ Item {
 
         function onSynclairOverlayChanged() {
             root._updateRtspUrlOverride()
+        }
+
+        function onLayoutChanged() {
+            SVState.cancelCursorTrackingSelection()
         }
     }
 
@@ -181,8 +190,11 @@ Item {
         target: digiview
 
         function onConnectedChanged() {
-            if (!SVState.digiviewActive) {
+            if (!digiview.connected) {
                 SVState.clearCamera()
+                root._digiviewWasStreaming = false
+            } else {
+                root._digiviewWasStreaming = QGroundControl.videoManager.streaming
             }
 
             root._updateRtspUrlOverride()
@@ -193,10 +205,14 @@ Item {
         target: QGroundControl.videoManager
 
         function onStreamingChanged() {
-            if (!SVState.digiviewActive) {
+            const streaming = QGroundControl.videoManager.streaming
+            const digiviewConnected = digiview && digiview.connected
+
+            if (root._digiviewWasStreaming && !streaming && digiviewConnected) {
                 SVState.clearCamera()
             }
 
+            root._digiviewWasStreaming = digiviewConnected && streaming
             root._updateRtspUrlOverride()
         }
     }
@@ -216,6 +232,10 @@ Item {
             previewMode: root.previewMode
 
             _widgetMargin: root._widgetMargin
+
+            onCursorTargetSelected: (cameraSlot, normalizedX, normalizedY) => {
+                SVState.recordCursorTarget(cameraSlot, normalizedX, normalizedY)
+            }
         }
     }
 
@@ -248,14 +268,14 @@ Item {
         anchors.fill: parent
         borderWidth: SVUnits.thickLineWidth + SVUnits.lineWidth * 3
         borderColor: qgcPalette.colorRed
-        borderVisible: !root.previewMode && SVState.record
+        borderVisible: !root.previewMode && SVState.record && !SVState.cursorTrackingSessionActive
         pulse: true
     }
 
     SVBorder {
         id: photoBorder
         anchors.fill: parent
-        visible: !root.previewMode
+        visible: !root.previewMode && !SVState.cursorTrackingSessionActive
         borderWidth: SVUnits.thickLineWidth * 200
         flashDuration: 400
         flashStartOpacity: 0.6
@@ -272,7 +292,21 @@ Item {
         leftToolStripBottom: root.leftToolStripBottom
         activeLayoutId: root.resolvedActiveLayoutId
         pipViewWidth: root.pipViewWidth
-        visible: !root.previewMode
+        visible: !root.previewMode && !SVState.cursorTrackingSessionActive
         onLayoutSelected: (layoutId) => SVState.layout = layoutId
+        visibleCameraSlots: root.visibleCameraSlots
+        cursorTargetingAvailable: root.visible && !root.previewMode && root.width > 0 && root.height > 0
+    }
+
+    onPreviewModeChanged: {
+        if (previewMode) {
+            SVState.cancelCursorTrackingSelection()
+        }
+    }
+
+    onVisibleChanged: {
+        if (!visible) {
+            SVState.cancelCursorTrackingSelection()
+        }
     }
 }

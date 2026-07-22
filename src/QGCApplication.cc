@@ -9,6 +9,9 @@
 #include <QtCore/QRegularExpression>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QIcon>
+#include <QtGui/QKeyEvent>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QWheelEvent>
 #include "QGCNetworkHelper.h"
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
@@ -661,6 +664,41 @@ bool QGCApplication::compressEvent(QEvent *event, QObject *receiver, QPostEventL
     return false;
 }
 QT_WARNING_POP
+
+bool QGCApplication::notify(QObject* receiver, QEvent* event)
+{
+    const bool delivered = QGuiApplication::notify(receiver, event);
+
+    // QQuickWindow performs delivery to the final QML target from its event handler. Inspecting
+    // acceptance here therefore observes the result of normal target delivery without filtering it.
+    if ((receiver != _mainRootWindow) || event->isAccepted()) {
+        return delivered;
+    }
+
+    switch (event->type()) {
+        case QEvent::KeyPress: {
+            const auto* keyEvent = static_cast<const QKeyEvent*>(event);
+            if (!keyEvent->isAutoRepeat()) {
+                emit unacceptedKeyPress(keyEvent->key());
+            }
+            break;
+        }
+        case QEvent::MouseButtonRelease:
+            emit unacceptedMouseRelease(static_cast<const QMouseEvent*>(event)->button());
+            break;
+        case QEvent::Wheel: {
+            const int angleDeltaY = static_cast<const QWheelEvent*>(event)->angleDelta().y();
+            if (angleDeltaY != 0) {
+                emit unacceptedWheel(angleDeltaY);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    return delivered;
+}
 
 bool QGCApplication::event(QEvent *e)
 {

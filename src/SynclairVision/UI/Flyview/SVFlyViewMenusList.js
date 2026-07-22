@@ -87,7 +87,7 @@ function getTrackingModel(uiInteractionEnabled) {
             text: 'Single',
             description: "Track a Single Target",
             checkable: true,
-            iconSource: '/qmlimages/layout_single.svg',
+            iconSource: '/qmlimages/tracking_single.svg',
             enabled: uiInteractionEnabled
         },
         {
@@ -95,7 +95,7 @@ function getTrackingModel(uiInteractionEnabled) {
             text: 'Cursor',
             description: "Track a Target from Cursor",
             checkable: true,
-            iconSource: '/qmlimages/layout_single.svg',
+            iconSource: '/qmlimages/tracking_cursor.svg',
             enabled: uiInteractionEnabled
         },
         {
@@ -103,7 +103,7 @@ function getTrackingModel(uiInteractionEnabled) {
             text: 'Manual',
             description: "Track a Target based on Manual Coordinates",
             checkable: true,
-            iconSource: '/qmlimages/layout_single.svg',
+            iconSource: '/qmlimages/tracking_manual.svg',
             enabled: uiInteractionEnabled
         },
     ]

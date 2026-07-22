@@ -36,9 +36,9 @@ Item {
     readonly property real settingRowVerticalPadding: ScreenTools.defaultFontPixelHeight * 0.45
     readonly property real settingColumnSpacing: ScreenTools.defaultFontPixelWidth * 1.5
     readonly property real settingTextSpacing: ScreenTools.defaultFontPixelHeight * 0.15
-    readonly property int wheelUpShortcutValue: -1001
-    readonly property int wheelDownShortcutValue: -1002
-    readonly property int mouseButtonShortcutBaseValue: -2000
+    readonly property int wheelUpShortcutValue: SVSettings.scrollUp
+    readonly property int wheelDownShortcutValue: SVSettings.scrollDown
+    readonly property int mouseButtonShortcutBaseValue: SVSettings.mouseButtonShortcutBase
     readonly property color edgeGradientColor: qgcPalette.window
     readonly property real maxScrollContentY: Math.max(0, contentFlickable.contentHeight - contentFlickable.height)
     readonly property real topEdgeGradientOpacity: Math.min(1, Math.max(0, contentFlickable.contentY) / edgeGradientHeight)
@@ -1204,6 +1204,8 @@ Item {
 
                                                                      title: shortcutButton.settingLabel === '' ? qsTr('Set Shortcut') : shortcutButton.settingLabel
                                                                      buttons: Dialog.Cancel
+                                                                     onAboutToShow: SVSettings.shortcutCaptureActive = true
+                                                                     onClosed: SVSettings.shortcutCaptureActive = false
 
                                                                      Item {
                                                                          id: captureArea
@@ -1289,7 +1291,7 @@ Item {
                                                                                  shortcutDialog.close()
                                                                              }
 
-                                                                             onPressed: (mouse) => {
+                                                                             onReleased: (mouse) => {
                                                                                  mouse.accepted = true
 
                                                                                  if (!root.isAssignableMouseButton(mouse.button)) {

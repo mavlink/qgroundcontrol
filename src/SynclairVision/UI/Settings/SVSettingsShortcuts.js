@@ -7,55 +7,6 @@ function getSections() {
             title: 'Control Panel',
             items: [
                 {
-                    id: 'shortcut_pitch_up',
-                    property: 'shortcutPitchUp',
-                    type: 'shortcut',
-                    label: 'Pitch Up',
-                    description: 'Shortcut for pitching the camera up'
-                },
-                {
-                    id: 'shortcut_pitch_down',
-                    property: 'shortcutPitchDown',
-                    type: 'shortcut',
-                    label: 'Pitch Down',
-                    description: 'Shortcut for pitching the camera down'
-                },
-                {
-                    id: 'shortcut_jaw_left',
-                    property: 'shortcutJawLeft',
-                    type: 'shortcut',
-                    label: 'Jaw Left',
-                    description: 'Shortcut for jawing left'
-                },
-                {
-                    id: 'shortcut_jaw_right',
-                    property: 'shortcutJawRight',
-                    type: 'shortcut',
-                    label: 'Jaw Right',
-                    description: 'Shortcut for jawing right'
-                },
-                {
-                    id: 'shortcut_zoom_in',
-                    property: 'shortcutZoomIn',
-                    type: 'shortcut',
-                    label: 'Zoom In',
-                    description: 'Shortcut for zooming in'
-                },
-                {
-                    id: 'shortcut_zoom_out',
-                    property: 'shortcutZoomOut',
-                    type: 'shortcut',
-                    label: 'Zoom Out',
-                    description: 'Shortcut for zooming out'
-                },
-                {
-                    id: 'shortcut_small_movements',
-                    property: 'shortcutSmallMovements',
-                    type: 'shortcut',
-                    label: 'Small Movements',
-                    description: 'Shortcut for using smaller movemenets'
-                },
-                {
                     id: 'shortcut_lock_controls',
                     property: 'shortcutLockControls',
                     type: 'shortcut',
@@ -114,7 +65,7 @@ function getSections() {
                 },
                 {
                     id: 'shortcut_deselect_camera',
-                    property: 'ShortcutDeselectCamera',
+                    property: 'shortcutDeselectCamera',
                     type: 'shortcut',
                     label: 'Deselect Camera',
                     description: 'Shortcut to deselect camera'

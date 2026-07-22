@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 
 import QGroundControl
 import QGroundControl.Controls
@@ -10,12 +11,13 @@ Item {
 
     property real leftToolStripBottom: 0
     property string activeLayoutId: "four_square"
-    property string activeTrackingId: ""
     property string activeSettingsId: ""
     property var settingsModel: []
     property bool uiInteractionEnabled: false
     property real controlPanelRight: 0
-    property var pipViewWidth
+    property real pipViewWidth: 0
+    property var visibleCameraSlots: []
+    property bool cursorTargetingAvailable: false
 
     signal settingsSelected(string settingsId)
     signal layoutSelected(string layoutId)
@@ -54,11 +56,50 @@ Item {
         )
     }
 
+    function activateTrackingMode(trackingId) {
+        if (trackingId === "cursorTrack"
+                && (!root.cursorTargetingAvailable
+                    || !SVState.beginCursorTrackingSelection(SVState.cameraSelected, root.visibleCameraSlots))) {
+            return
+        }
+
+        SVState.setActiveCameraTrackingId(trackingId)
+        root.trackingSelected(trackingId)
+    }
+
+    Connections {
+        target: SVState
+
+        function onCursorTrackingSelectionCancelled() {
+            root.trackingSelected("")
+        }
+    }
+
+    QGCPopupDialogFactory {
+        id: switchTrackingModeDialogFactory
+
+        dialogComponent: switchTrackingModeDialogComponent
+    }
+
+    Component {
+        id: switchTrackingModeDialogComponent
+
+        QGCSimpleMessageDialog {
+            property string trackingId: ""
+
+            title: qsTr("Switch tracking mode?")
+            text: qsTr("Are you sure you want to switch tracking modes?")
+            buttons: Dialog.Yes | Dialog.No
+
+            onAccepted: root.activateTrackingMode(trackingId)
+        }
+    }
+
     SVMenuStrip {
         id: settingsMenu
         anchors.top: parent.top
         anchors.right: parent.right
-        visible: SVState.hud
+        visible: SVState.hud && SVState.cursorTrackingSelect
 
         menuText: "Settings"
         menuDescription: "Settings"
@@ -150,7 +191,7 @@ Item {
         isLeft: true
         isTop: true
     
-        visible: SVState.hud
+        visible: SVState.hud && SVState.cursorTrackingSelect
 
         exclusiveSelection: false
         autoUpdateActiveId: false
@@ -182,31 +223,38 @@ Item {
     SVMenuStrip {
         id: tracking
         anchors.bottom: parent.bottom
-        anchors.left: pipViewWidth
+        anchors.left: parent.left
+        anchors.leftMargin: pipViewWidth + SVUnits.margin
         enabled: root.uiInteractionEnabled
-        visible: SVState.hud
+        visible: SVState.hud && SVState.cursorTrackingSelect
 
         menuText: "Tracking"
         menuDescription: "Settings for Tracking"
 
-        source: "/qmlimages/layout_main.svg"
+        source: "/qmlimages/tracking_main.svg"
         direction: horizontal
         isLeft: true
         isTop: false
         open: false
 
         autoUpdateActiveId: false
-        activeId: root.activeTrackingId
+        activeId: SVState.activeCameraTrackingId
 
-        model: SVFlyViewMenusList.getTrackingModel(SVState.cameraSelected !== -1 && root.uiInteractionEnabled)
+        model: SVFlyViewMenusList.getTrackingModel(SVState.hasActiveCamera && root.uiInteractionEnabled)
 
         onItemSelected: (id) => {
-            if(root.activeTrackingId === id) {
-                root.activeTrackingId === -1
-            } else {
-                root.activeTrackingId = id
+            if (SVState.activeCameraTrackingId === "") {
+                root.activateTrackingMode(id)
+                return
             }
-            root.trackingSelected(id)
+
+            if (SVState.activeCameraTrackingId === id) {
+                SVState.setActiveCameraTrackingId("")
+                root.trackingSelected("")
+                return
+            }
+
+            switchTrackingModeDialogFactory.open({ trackingId: id })
         }
     }
 
@@ -216,7 +264,7 @@ Item {
         anchors.topMargin: SVUnits.margin
         anchors.left: parent.left
         enabled: root.uiInteractionEnabled
-        visible: SVState.hud
+        visible: SVState.hud && SVState.cursorTrackingSelect
 
         menuText: "Layout"
         menuDescription: "Camera Layouts"
@@ -247,7 +295,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: lockButton.right
         anchors.leftMargin: SVUnits.margin
-        visible: SVState.hud
+        visible: SVState.hud && SVState.cursorTrackingSelect
         enabled: root.uiInteractionEnabled
         direction: horizontal
         isLeft: false
@@ -299,7 +347,7 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: root.controlPanelRight
         anchors.bottom: parent.bottom
-        visible: SVState.hud
+        visible: SVState.hud && SVState.cursorTrackingSelect
         direction: horizontal
         isLeft: false
         isTop: false
