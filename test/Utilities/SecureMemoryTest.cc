@@ -54,4 +54,22 @@ void SecureMemoryTest::_testSecureZeroStdArray()
     }
 }
 
+
+void SecureMemoryTest::_testSecureZeroOneByte()
+{
+    unsigned char b = 0x5A;
+    QGC::secureZero(&b, 1);
+    QCOMPARE(b, static_cast<unsigned char>(0));
+}
+
+void SecureMemoryTest::_testSecureZeroByteArrayDetachSize()
+{
+    QByteArray data(4, '\x11');
+    const qsizetype before = data.size();
+    QCOMPARE(before, 4);
+    QGC::secureZero(data);
+    QVERIFY(data.isEmpty());
+    QCOMPARE(data.size(), 0);
+}
+
 UT_REGISTER_TEST(SecureMemoryTest, TestLabel::Unit, TestLabel::Utilities)

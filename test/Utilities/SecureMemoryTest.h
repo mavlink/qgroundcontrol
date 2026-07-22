@@ -12,4 +12,6 @@ private slots:
     void _testSecureZeroEmptyByteArray();
     void _testSecureZeroZeroSize();
     void _testSecureZeroStdArray();
+    void _testSecureZeroOneByte();
+    void _testSecureZeroByteArrayDetachSize();
 };
