@@ -349,8 +349,10 @@ Rectangle {
         anchors.margins:    _innerMargin
         anchors.left:       parent.left
         anchors.top:        topRowLayout.bottom
-        asynchronous:       true
 
+        // Load synchronously: an async incubation can still be in flight when the
+        // TreeView collapses the mission group and invalidates this delegate's
+        // context, emitting "Cannot create a component in an invalid context".
         Component.onCompleted: _root._loadEditor()
     }
 
