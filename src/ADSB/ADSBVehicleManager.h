@@ -8,6 +8,7 @@
 class ADSBTCPLink;
 class ADSBVehicle;
 class QmlObjectListModel;
+class QThread;
 class QTimer;
 class ADSBVehicleManagerSettings;
 
@@ -46,6 +47,8 @@ private:
 
     QMap<uint32_t, ADSBVehicle*> _adsbICAOMap;
     ADSBTCPLink *_adsbTcpLink = nullptr;
+    QThread *_adsbTcpLinkThread = nullptr;
 
     static constexpr uint8_t kMaxTimeSinceLastSeen = 15;
+    static constexpr unsigned long kThreadStopTimeoutMs = 5000; ///< max time in ms to wait for the tcp link thread to stop
 };

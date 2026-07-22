@@ -13,4 +13,6 @@ private slots:
     void _adsbTcpLinkIgnoresInvalidMessagesTest();
     void _adsbTcpLinkCallsignMessageTest();
     void _adsbVehicleManagerTest();
+    void _adsbVehicleManagerExpirationTest();
+    void _adsbVehicleManagerStartStopTest();
 };

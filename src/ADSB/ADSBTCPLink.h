@@ -1,15 +1,19 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtNetwork/QHostAddress>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
 
 #include "ADSB.h"
 
 class QTcpSocket;
-class QTimer;
 
 /// \brief The ADSBTCPLink class handles the TCP connection to an ADS-B server
 /// and processes incoming ADS-B data.
+///
+/// The link is designed to be moved to a worker thread so that socket reads and
+/// SBS-1 parsing stay off the ui thread. init() must be invoked on the link's
+/// thread (e.g. via QThread::started).
 
 class ADSBTCPLink : public QObject
 {
@@ -17,10 +21,10 @@ class ADSBTCPLink : public QObject
 
 public:
     /// Constructs an ADSBTCPLink object.
-    ///     @param hostAddress The address of the host to connect to.
+    ///     @param hostAddress The IP address or hostname of the host to connect to.
     ///     @param port The port to connect to on the host.
     ///     @param parent The parent object.
-    explicit ADSBTCPLink(const QHostAddress &hostAddress, quint16 port = 30003, QObject *parent = nullptr);
+    explicit ADSBTCPLink(const QString &hostAddress, quint16 port = 30003, QObject *parent = nullptr);
 
     /// Destroys the ADSBTCPLink object.
     ~ADSBTCPLink();
@@ -38,11 +42,8 @@ signals:
     void errorOccurred(const QString &errorMsg, bool stopped = false);
 
 private slots:
-    /// Reads bytes from the TCP socket.
+    /// Reads and parses lines from the TCP socket.
     void _readBytes();
-
-    /// Processes buffered lines of ADS-B data.
-    void _processLines();
 
 private:
     /// Parses a line of ADS-B data.
@@ -64,13 +65,8 @@ private:
     ///     @param values The values parsed from the line.
     void _parseAndEmitHeading(ADSB::VehicleInfo_t &adsbInfo, const QStringList &values);
 
-    QHostAddress _hostAddress;
+    QString _hostAddress;
     quint16 _port = 30003;
 
     QTcpSocket *_socket = nullptr;     ///< Pointer to the TCP socket used for connection
-    QTimer *_processTimer = nullptr;   ///< Timer for periodic processing of ADS-B data
-    QStringList _lineBuffer;           ///< Buffer for storing incoming lines of ADS-B data
-
-    static constexpr int _processInterval = 50;     ///< Interval for processing lines
-    static constexpr int _maxLinesToProcess = 100;  ///< Maximum number of lines to process per timer timeout
 };

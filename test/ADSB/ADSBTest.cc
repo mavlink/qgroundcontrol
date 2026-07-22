@@ -1,13 +1,16 @@
 #include "ADSBTest.h"
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtNetwork/QTcpServer>
 #include <QtTest/QSignalSpy>
 
 #include "ADSBTCPLink.h"
 #include "ADSBVehicle.h"
 #include "ADSBVehicleManager.h"
+#include "ADSBVehicleManagerSettings.h"
 #include "QmlObjectListModel.h"
+#include "SettingsManager.h"
 
 void ADSBTest::_adsbVehicleTest()
 {
@@ -35,6 +38,13 @@ void ADSBTest::_adsbVehicleTest()
     QCOMPARE_NE(adsbVehicle->callsign(), vehicleInfo2.callsign);
     QCOMPARE_NE(adsbVehicle->coordinate(), vehicleInfo2.location);
     vehicleInfo2.icaoAddress = 1;
+    // Rapid updates are throttled and dropped
+    adsbVehicle->update(vehicleInfo2);
+    QCOMPARE_NE(adsbVehicle->callsign(), vehicleInfo2.callsign);
+    QCOMPARE_NE(adsbVehicle->coordinate(), vehicleInfo2.location);
+    QVERIFY(!adsbVehicle->expired());
+    // Bypass the update throttle
+    adsbVehicle->_lastPropertyUpdateTimer.invalidate();
     adsbVehicle->update(vehicleInfo2);
     QCOMPARE(adsbVehicle->callsign(), vehicleInfo2.callsign);
     QCOMPARE(adsbVehicle->coordinate(), vehicleInfo2.location);
@@ -47,7 +57,7 @@ void ADSBTest::_adsbTcpLinkTest()
     QVERIFY(server->listen(QHostAddress::LocalHost, 0));
     const quint16 serverPort = server->serverPort();
     QVERIFY(serverPort > 0);
-    ADSBTCPLink* const adsbLink = new ADSBTCPLink(QHostAddress::LocalHost, serverPort, this);
+    ADSBTCPLink* const adsbLink = new ADSBTCPLink(QStringLiteral("127.0.0.1"), serverPort, this);
     QVERIFY(adsbLink);
     QVERIFY(adsbLink->init());
     QSignalSpy spy(adsbLink, &ADSBTCPLink::adsbVehicleUpdate);
@@ -72,7 +82,7 @@ void ADSBTest::_adsbTcpLinkTest()
 
 void ADSBTest::_adsbTcpLinkRejectsNullHostTest()
 {
-    ADSBTCPLink* const adsbLink = new ADSBTCPLink(QHostAddress(), 30003, this);
+    ADSBTCPLink* const adsbLink = new ADSBTCPLink(QString(), 30003, this);
     QVERIFY(adsbLink);
     QVERIFY(!adsbLink->init());
 }
@@ -85,7 +95,7 @@ void ADSBTest::_adsbTcpLinkIgnoresInvalidMessagesTest()
     const quint16 serverPort = server->serverPort();
     QVERIFY(serverPort > 0);
 
-    ADSBTCPLink* const adsbLink = new ADSBTCPLink(QHostAddress::LocalHost, serverPort, this);
+    ADSBTCPLink* const adsbLink = new ADSBTCPLink(QStringLiteral("127.0.0.1"), serverPort, this);
     QVERIFY(adsbLink);
     QVERIFY(adsbLink->init());
 
@@ -123,7 +133,7 @@ void ADSBTest::_adsbTcpLinkCallsignMessageTest()
     const quint16 serverPort = server->serverPort();
     QVERIFY(serverPort > 0);
 
-    ADSBTCPLink* const adsbLink = new ADSBTCPLink(QHostAddress::LocalHost, serverPort, this);
+    ADSBTCPLink* const adsbLink = new ADSBTCPLink(QStringLiteral("127.0.0.1"), serverPort, this);
     QVERIFY(adsbLink);
     QVERIFY(adsbLink->init());
 
@@ -169,6 +179,100 @@ void ADSBTest::_adsbVehicleManagerTest()
     vehicleInfo.availableFlags = ADSB::LocationAvailable;
     manager->adsbVehicleUpdate(vehicleInfo);
     QCOMPARE(manager->adsbVehicles()->count(), initialCount + 1);
+}
+
+void ADSBTest::_adsbVehicleManagerExpirationTest()
+{
+    ADSBVehicleManager* const manager = ADSBVehicleManager::instance();
+    QVERIFY(manager);
+
+    const int initialCount = manager->adsbVehicles()->count();
+
+    ADSB::VehicleInfo_t vehicleInfo;
+    vehicleInfo.icaoAddress = 0xFEEDFACE;
+    vehicleInfo.location = QGeoCoordinate(1., 1., 1.);
+    vehicleInfo.availableFlags = ADSB::LocationAvailable;
+    manager->adsbVehicleUpdate(vehicleInfo);
+    QCOMPARE(manager->adsbVehicles()->count(), initialCount + 1);
+
+    ADSBVehicle* adsbVehicle = nullptr;
+    for (int i = 0; i < manager->adsbVehicles()->count(); i++) {
+        ADSBVehicle* const candidate = manager->adsbVehicles()->value<ADSBVehicle*>(i);
+        if (candidate->icaoAddress() == vehicleInfo.icaoAddress) {
+            adsbVehicle = candidate;
+            break;
+        }
+    }
+    QVERIFY(adsbVehicle);
+    QVERIFY(!adsbVehicle->expired());
+
+    // Force expiration. The always-running cleanup timer must remove the vehicle even though
+    // no tcp link is active (regression test: mavlink-sourced vehicles previously never expired).
+    adsbVehicle->_lastUpdateTimer.invalidate();
+    QVERIFY(adsbVehicle->expired());
+    QTRY_COMPARE_WITH_TIMEOUT(manager->adsbVehicles()->count(), initialCount, TestTimeout::mediumMs());
+
+    // The vehicle must also be gone from the icao map: re-adding it must create a new entry
+    manager->adsbVehicleUpdate(vehicleInfo);
+    QCOMPARE(manager->adsbVehicles()->count(), initialCount + 1);
+}
+
+void ADSBTest::_adsbVehicleManagerStartStopTest()
+{
+    QTcpServer* const server = new QTcpServer(this);
+    QVERIFY(server);
+    QVERIFY(server->listen(QHostAddress::LocalHost, 0));
+    const quint16 serverPort = server->serverPort();
+    QVERIFY(serverPort > 0);
+
+    ADSBVehicleManager* const manager = ADSBVehicleManager::instance();
+    QVERIFY(manager);
+
+    // Settings facts are not reset between test functions, so restore whatever we mutate
+    ADSBVehicleManagerSettings* const settings = SettingsManager::instance()->adsbVehicleManagerSettings();
+    const QVariant originalHostAddress = settings->adsbServerHostAddress()->rawValue();
+    const QVariant originalPort = settings->adsbServerPort()->rawValue();
+    const QVariant originalEnabled = settings->adsbServerConnectEnabled()->rawValue();
+    const auto restoreSettings = qScopeGuard([settings, originalHostAddress, originalPort, originalEnabled]() {
+        // Restore host/port before enabled so a restart (if originalEnabled is true) uses the
+        // restored values rather than the test's ephemeral server
+        settings->adsbServerHostAddress()->setRawValue(originalHostAddress);
+        settings->adsbServerPort()->setRawValue(originalPort);
+        settings->adsbServerConnectEnabled()->setRawValue(originalEnabled);
+    });
+
+    // Force a disable->enable transition so the start is deterministic even if a prior test
+    // left the connection enabled
+    settings->adsbServerConnectEnabled()->setRawValue(false);
+    settings->adsbServerHostAddress()->setRawValue(QStringLiteral("127.0.0.1"));
+    settings->adsbServerPort()->setRawValue(serverPort);
+    settings->adsbServerConnectEnabled()->setRawValue(true);
+
+    bool timeout = false;
+    QVERIFY(server->waitForNewConnection(TestTimeout::mediumMs(), &timeout));
+    QVERIFY(!timeout);
+    QTcpSocket* const clientSocket = server->nextPendingConnection();
+    QVERIFY(clientSocket != nullptr);
+
+    const int initialCount = manager->adsbVehicles()->count();
+    const QByteArray message(
+        "MSG,3,1,1,4840D7,1,2024/01/01,12:00:00.000,2024/01/01,12:00:00.000,,35000,,,47.0,-122.0,,,,0,,0\n");
+    clientSocket->write(message);
+    clientSocket->flush();
+    (void) clientSocket->waitForBytesWritten(TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(manager->adsbVehicles()->count(), initialCount + 1, TestTimeout::mediumMs());
+
+    // Disabling stops the worker thread and clears all vehicles
+    settings->adsbServerConnectEnabled()->setRawValue(false);
+    QCOMPARE(manager->adsbVehicles()->count(), 0);
+
+    // The link must be restartable after a stop
+    settings->adsbServerConnectEnabled()->setRawValue(true);
+    QVERIFY(server->waitForNewConnection(TestTimeout::mediumMs(), &timeout));
+    QVERIFY(!timeout);
+
+    settings->adsbServerConnectEnabled()->setRawValue(false);
+    server->close();
 }
 
 UT_REGISTER_TEST(ADSBTest, TestLabel::Unit)
