@@ -143,4 +143,26 @@ void QGCCommandLineParserTest::_testNormalizeArgs_ColonOptionValuePreserved()
     QCOMPARE(out, QStringList({QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")}));
 }
 
+
+void QGCCommandLineParserTest::_testNormalizeArgs_LoggingSpaceSeparated()
+{
+    const QStringList out = QGCCommandLineParser::normalizeArgs(
+        {QStringLiteral("qgc"), QStringLiteral("--logging"), QStringLiteral("Vehicle.*")});
+    QCOMPARE(out, QStringList({QStringLiteral("qgc"), QStringLiteral("--logging"), QStringLiteral("Vehicle.*")}));
+}
+
+void QGCCommandLineParserTest::_testNormalizeArgs_EmptyList()
+{
+    QCOMPARE(QGCCommandLineParser::normalizeArgs({}), QStringList());
+}
+
+void QGCCommandLineParserTest::_testDetermineAppMode_BootTestWinsOverGuiFlags()
+{
+    CommandLineParseResult result;
+    result.simpleBootTest = true;
+    result.allowMultiple = true;
+    result.fakeMobile = true;
+    QCOMPARE(QGCCommandLineParser::determineAppMode(result), AppMode::BootTest);
+}
+
 UT_REGISTER_TEST(QGCCommandLineParserTest, TestLabel::Unit, TestLabel::Utilities)

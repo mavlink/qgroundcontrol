@@ -32,4 +32,7 @@ private slots:
     void _testNormalizeArgs_UnittestBare();
     void _testNormalizeArgs_UnittestBareFollowedByOption();
     void _testNormalizeArgs_ColonOptionValuePreserved();
+    void _testNormalizeArgs_LoggingSpaceSeparated();
+    void _testNormalizeArgs_EmptyList();
+    void _testDetermineAppMode_BootTestWinsOverGuiFlags();
 };
