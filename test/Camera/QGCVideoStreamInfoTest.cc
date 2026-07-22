@@ -58,6 +58,37 @@ void QGCVideoStreamInfoTest::_aspectRatioDefaultsToOneForNullResolution_test()
     QCOMPARE(streamInfo.aspectRatio(), 1.0);
 }
 
+
+void QGCVideoStreamInfoTest::_aspectRatioDefaultsToOneForEmptyResolution_test()
+{
+    // One dimension non-zero → QSize::isNull() is false, but division by zero
+    // would produce Inf without the isEmpty() guard.
+    mavlink_video_stream_information_t info = _makeVideoStreamInfo();
+    info.resolution_h = 1920;
+    info.resolution_v = 0;
+
+    QGCVideoStreamInfo streamInfo(info);
+    QCOMPARE(streamInfo.aspectRatio(), 1.0);
+
+    info.resolution_h = 0;
+    info.resolution_v = 1080;
+    QGCVideoStreamInfo streamInfoV(info);
+    QCOMPARE(streamInfoV.aspectRatio(), 1.0);
+}
+
+void QGCVideoStreamInfoTest::_inactiveThermalFlagsDefault_test()
+{
+    mavlink_video_stream_information_t info = _makeVideoStreamInfo();
+    info.flags = 0;  // not RUNNING, not THERMAL
+
+    QGCVideoStreamInfo streamInfo(info);
+    QVERIFY(!streamInfo.isActive());
+    QVERIFY(!streamInfo.isThermal());
+    QCOMPARE(streamInfo.streamID(), static_cast<quint8>(3));
+    QCOMPARE(streamInfo.uri(), QStringLiteral("rtsp://127.0.0.1/main"));
+    QCOMPARE(streamInfo.name(), QStringLiteral("Main Stream"));
+}
+
 void QGCVideoStreamInfoTest::_updateNoChange_test()
 {
     const mavlink_video_stream_information_t info = _makeVideoStreamInfo();

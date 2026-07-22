@@ -9,6 +9,8 @@ class QGCVideoStreamInfoTest : public UnitTest
 private slots:
     void _aspectRatioFromResolution_test();
     void _aspectRatioDefaultsToOneForNullResolution_test();
+    void _aspectRatioDefaultsToOneForEmptyResolution_test();
+    void _inactiveThermalFlagsDefault_test();
     void _updateNoChange_test();
     void _updateChangedFieldsEmitsSignal_test();
 };

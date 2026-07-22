@@ -19,7 +19,10 @@ QGCVideoStreamInfo::~QGCVideoStreamInfo()
 qreal QGCVideoStreamInfo::aspectRatio() const
 {
     qreal ar = 1.0;
-    if (!resolution().isNull()) {
+    // isNull() is only true when *both* dimensions are 0. A stream that
+    // reports a non-zero width with height 0 (or the reverse) must not
+    // divide and produce Inf/NaN for QML layout.
+    if (!resolution().isEmpty()) {
         ar = static_cast<double>(_streamInfo.resolution_h) / static_cast<double>(_streamInfo.resolution_v);
     }
     return ar;
