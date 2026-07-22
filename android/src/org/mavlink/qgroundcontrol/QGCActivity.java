@@ -34,6 +34,7 @@ public class QGCActivity extends QtActivity {
         super.onCreate(savedInstanceState);
         m_instance = this;
 
+        QGCLogger.initialize(getApplicationContext());
         nativeInit();
         setupMulticastLock();
 

@@ -7,6 +7,7 @@
 # Application Branding
 # ----------------------------------------------------------------------------
 set(QGC_APP_NAME "Custom-QGroundControl" CACHE STRING "App Name" FORCE)
+set(QGC_ANDROID_PACKAGE_NAME "org.mavlink.customqgroundcontrol" CACHE STRING "Android package identifier" FORCE)
 
 # ----------------------------------------------------------------------------
 # Custom Icons and Graphics
