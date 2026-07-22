@@ -29,6 +29,41 @@ void QGCSqlHelperTest::_escapeLikePattern()
     QCOMPARE(QGCSqlHelper::escapeLikePattern(QString()), QString());
 }
 
+void QGCSqlHelperTest::_placeholders()
+{
+    // Non-positive counts produce an empty fragment (callers gate IN clauses).
+    QCOMPARE(QGCSqlHelper::placeholders(0), QString());
+    QCOMPARE(QGCSqlHelper::placeholders(-3), QString());
+
+    QCOMPARE(QGCSqlHelper::placeholders(1), QStringLiteral("?"));
+    QCOMPARE(QGCSqlHelper::placeholders(3), QStringLiteral("?,?,?"));
+    QCOMPARE(QGCSqlHelper::placeholders(5), QStringLiteral("?,?,?,?,?"));
+}
+
+void QGCSqlHelperTest::_userVersionRoundTrip()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString dbPath = tempDir.filePath(QStringLiteral("userver.db"));
+
+    QGCSqlHelper::ScopedConnection conn(dbPath);
+    QVERIFY(conn.isValid());
+    QSqlDatabase db = conn.database();
+
+    // Fresh SQLite DBs start at user_version 0.
+    const auto initial = QGCSqlHelper::userVersion(db);
+    QVERIFY(initial.has_value());
+    QCOMPARE(*initial, 0);
+
+    QVERIFY(QGCSqlHelper::setUserVersion(db, 7));
+    const auto after = QGCSqlHelper::userVersion(db);
+    QVERIFY(after.has_value());
+    QCOMPARE(*after, 7);
+
+    QVERIFY(QGCSqlHelper::setUserVersion(db, 0));
+    QCOMPARE(*QGCSqlHelper::userVersion(db), 0);
+}
+
 void QGCSqlHelperTest::_scopedConnectionOpen()
 {
     QTemporaryDir tempDir;

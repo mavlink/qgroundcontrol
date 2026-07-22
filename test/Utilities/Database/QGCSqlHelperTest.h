@@ -8,6 +8,8 @@ class QGCSqlHelperTest : public UnitTest
 
 private slots:
     void _escapeLikePattern();
+    void _placeholders();
+    void _userVersionRoundTrip();
     void _scopedConnectionOpen();
     void _scopedConnectionReadOnly();
     void _scopedConnectionInvalidPath();
