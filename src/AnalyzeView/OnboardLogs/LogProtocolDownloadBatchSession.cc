@@ -3,57 +3,47 @@
 quint64 LogProtocolDownloadBatchSession::begin(const QList<QPointer<OnboardLogEntry>>& entries, const QString& path,
                                                const QString& fileExtension)
 {
-    ++_generation;
-    _queue.clear();
-    for (const QPointer<OnboardLogEntry>& entry : entries) {
-        if (entry) {
-            _queue.enqueue(entry);
-        }
-    }
+    _entries.reset(entries);
     _current.reset();
     _path = path;
     _fileExtension = fileExtension;
     _retryCount = 0;
-    _active = !_queue.isEmpty();
-    return _generation;
+    return beginSession(!_entries.isEmpty());
 }
 
 LogProtocolDownloadBatchSession::Cancellation LogProtocolDownloadBatchSession::cancel()
 {
     Cancellation cancellation;
-    cancellation.wasActive = _active;
+    cancellation.wasActive = active();
     cancellation.currentEntry = _current ? _current->entry() : nullptr;
-    ++_generation;
+    invalidateSession();
     finish();
     return cancellation;
 }
 
 void LogProtocolDownloadBatchSession::finish()
 {
-    _queue.clear();
+    _entries.clear();
     _current.reset();
     _path.clear();
     _fileExtension.clear();
     _retryCount = 0;
-    _active = false;
+    finishSession();
 }
 
 void LogProtocolDownloadBatchSession::clear()
 {
-    ++_generation;
+    invalidateSession();
     finish();
 }
 
 LogProtocolDownloadSession* LogProtocolDownloadBatchSession::startNext()
 {
-    if (!_active || _current) {
+    if (!active() || _current) {
         return _current.get();
     }
 
-    QPointer<OnboardLogEntry> entry;
-    while (!_queue.isEmpty() && !entry) {
-        entry = _queue.dequeue();
-    }
+    const QPointer<OnboardLogEntry> entry = _entries.takeNext();
     if (!entry) {
         return nullptr;
     }
@@ -81,5 +71,5 @@ bool LogProtocolDownloadBatchSession::tryConsumeRetry(int maximumRetries)
 
 bool LogProtocolDownloadBatchSession::isCurrent(quint64 generation, const OnboardLogEntry* entry) const
 {
-    return (generation == _generation) && _active && (!entry || (_current && _current->matchesEntry(entry)));
+    return isCurrentGeneration(generation) && (!entry || (_current && _current->matchesEntry(entry)));
 }

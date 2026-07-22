@@ -5,6 +5,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QSet>
 #include <QtCore/QTextStream>
+#include <cstdint>
 
 #include "AutoPilotPlugin.h"
 #include "CompInfoParam.h"
@@ -33,6 +34,13 @@ QGC_LOGGING_CATEGORY(ParameterManagerLog, "FactSystem.ParameterManager")
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "FactSystem.ParameterManager:verbose1")
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log, "FactSystem.ParameterManager:verbose2")
 QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog, "FactSystem.ParameterManager:debugCacheFailure") // Turn on to debug parameter cache crc misses
+
+namespace {
+
+// Packed parameter files are generated dynamically, so guard against malformed or unbounded vehicle responses.
+constexpr uint32_t kMaximumFtpParameterFileSize = 4U * 1024U * 1024U;
+
+}  // namespace
 
 ParameterManager::ParameterManager(Vehicle *vehicle)
     : QObject(vehicle)
@@ -644,16 +652,19 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
         }
         FTPManager *const ftpManager = _vehicle->ftpManager();
         _waitingParamTimeoutTimer.stop();
-        FTPDownloadJob* const job = ftpManager->startDownload(
+        const FTPManager::DownloadStartResult startResult = ftpManager->startDownload(
             MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@PARAM/param.pck?withdefaults=1"),
             QStandardPaths::writableLocation(QStandardPaths::TempLocation), QStringLiteral("param.pck"),
-            false /* No filesize check */);
+            false /* No filesize check */, FTPManager::ExistingFilePolicy::Replace, kMaximumFtpParameterFileSize);
+        FTPDownloadJob* const job = startResult.job();
         if (job) {
             _ftpDownloadJob = job;
             (void) connect(job, &FTPDownloadJob::finished, this, &ParameterManager::_ftpDownloadComplete);
             (void) connect(job, &FTPJob::progress, this, &ParameterManager::_ftpDownloadProgress);
         } else {
-            qCWarning(ParameterManagerLog) << "ParameterManager::_startParameterDownload FTPManager::download returned failure";
+            qCWarning(ParameterManagerLog)
+                << "ParameterManager::_startParameterDownload FTPManager::startDownload returned failure"
+                << static_cast<int>(startResult.error());
         }
     } else if (_vehicle->px4Firmware() && !_initialLoadComplete && !_hashCheckDone) {
         // PX4: Try _HASH_CHECK first to see if we can load from cache without a full parameter stream
@@ -1445,6 +1456,7 @@ void ParameterManager::_loadOfflineEditingParams()
     QFile paramFile(paramFilename);
     if (!paramFile.open(QFile::ReadOnly)) {
         qCWarning(ParameterManagerLog) << "Unable to open offline editing params file" << paramFilename;
+        return;
     }
 
     QTextStream paramStream(&paramFile);
@@ -1455,7 +1467,10 @@ void ParameterManager::_loadOfflineEditingParams()
         }
 
         const QStringList paramData = line.split("\t");
-        Q_ASSERT(paramData.count() == 5);
+        if (paramData.size() != 5) {
+            qCWarning(ParameterManagerLog) << "Ignoring malformed offline editing parameter line" << line;
+            continue;
+        }
 
         const int offlineDefaultComponentId = paramData.at(1).toInt();
         _vehicle->setOfflineEditingDefaultComponentId(offlineDefaultComponentId);

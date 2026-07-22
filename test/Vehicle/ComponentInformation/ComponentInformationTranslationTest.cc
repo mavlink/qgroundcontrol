@@ -1,13 +1,13 @@
 #include "ComponentInformationTranslationTest.h"
 
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
 #include <QtTest/QSignalSpy>
 
-#include "QGCCachedFileDownload.h"
-#include "UnitTest.h"
-
 #include "ComponentInformationTranslation.h"
-#include <QtCore/QTemporaryDir>
+#include "QGCCachedFileDownload.h"
+#include "QGCCompression.h"
+#include "UnitTest.h"
 
 void ComponentInformationTranslationTest::_basic_test()
 {
@@ -29,6 +29,56 @@ void ComponentInformationTranslationTest::_basic_test()
     QJsonDocument translatedJson;
     readJson(translatedOutput, translatedJson);
     QVERIFY(expectedJson == translatedJson);
+}
+
+void ComponentInformationTranslationTest::_malformedTs_test()
+{
+    QTemporaryDir tempDir;
+    const QString tsPath = tempDir.filePath(QStringLiteral("malformed.ts"));
+    QFile tsFile(tsPath);
+    QVERIFY(tsFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    const QByteArray malformedTs =
+        QByteArrayLiteral("<TS><context><name>translate-me</name><message><translation>TRANSLATED</translation>");
+    QCOMPARE(tsFile.write(malformedTs), malformedTs.size());
+    tsFile.close();
+
+    QGCCachedFileDownload cachedDownloader(tempDir.filePath(QStringLiteral("cache")), this);
+    ComponentInformationTranslation translation(this, &cachedDownloader);
+    expectLogMessage("ComponentInformation.ComponentInformationTranslation", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Badly formed TS")));
+    const QString result = translation.translateJsonUsingTS(QStringLiteral(":/unittest/TranslationTest.json"), tsPath);
+    verifyExpectedLogMessage();
+    QVERIFY(result.isEmpty());
+}
+
+void ComponentInformationTranslationTest::_translatedOutputSizeLimit_test()
+{
+    QTemporaryDir tempDir;
+    QFile sourceTs(QStringLiteral(":/unittest/TranslationTest_de_DE.ts"));
+    QVERIFY(sourceTs.open(QIODevice::ReadOnly));
+    QByteArray expandedTs = sourceTs.readAll();
+    expandedTs.replace("TRANSLATED", QByteArray(4096, 'X'));
+
+    const QString expandedTsPath = tempDir.filePath(QStringLiteral("expanded.ts"));
+    QFile outputTs(expandedTsPath);
+    QVERIFY(outputTs.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    QCOMPARE(outputTs.write(expandedTs), expandedTs.size());
+    outputTs.close();
+
+    QFile sourceJson(QStringLiteral(":/unittest/TranslationTest.json"));
+    QVERIFY(sourceJson.open(QIODevice::ReadOnly));
+    const QJsonDocument sourceDocument = QJsonDocument::fromJson(sourceJson.readAll());
+    QVERIFY(!sourceDocument.isNull());
+    const qint64 maximumOutputBytes = sourceDocument.toJson(QJsonDocument::Compact).size() + 64;
+
+    QGCCachedFileDownload cachedDownloader(tempDir.filePath(QStringLiteral("cache")), this);
+    ComponentInformationTranslation translation(this, &cachedDownloader);
+    expectLogMessage("ComponentInformation.ComponentInformationTranslation", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Translated metadata exceeds output size limit")));
+    const QString result = translation.translateJsonUsingTS(QStringLiteral(":/unittest/TranslationTest.json"),
+                                                            expandedTsPath, maximumOutputBytes);
+    verifyExpectedLogMessage();
+    QVERIFY(result.isEmpty());
 }
 
 void ComponentInformationTranslationTest::readJson(const QByteArray& bytes, QJsonDocument& jsonDoc)
@@ -198,6 +248,55 @@ void ComponentInformationTranslationTest::_onDownloadCompletedMissingTsPropagate
     const QList<QVariant> args = completeSpy.first();
     QVERIFY(args.at(0).toString().isEmpty());
     QVERIFY(!args.at(1).toString().isEmpty());
+}
+
+void ComponentInformationTranslationTest::_cancelInvalidatesDownload_test()
+{
+    QTemporaryDir tempDir;
+    QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
+    ComponentInformationTranslation translation(this, &cachedDownloader);
+    QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
+    QVERIFY(completeSpy.isValid());
+
+    translation._running = true;
+    translation._toTranslateJsonFile = QStringLiteral(":/unittest/TranslationTest.json");
+    const quint64 generation = translation._generation;
+    translation._downloadConnection = connect(
+        &cachedDownloader, &QGCCachedFileDownload::finished, &translation,
+        [&translation, generation](bool success, const QString& localFile, const QString& errorMsg, bool fromCache) {
+            if (translation._running && (generation == translation._generation)) {
+                translation.onDownloadCompleted(success, localFile, errorMsg, fromCache);
+            }
+        });
+
+    translation.cancel();
+    QVERIFY(!translation.running());
+    QVERIFY(!translation._downloadConnection);
+    QVERIFY(translation._toTranslateJsonFile.isEmpty());
+
+    emit cachedDownloader.finished(false, QString(), QStringLiteral("stale completion"), false);
+    QCOMPARE(completeSpy.size(), 0);
+}
+
+void ComponentInformationTranslationTest::_onDownloadCompletedSizeLimitPropagatesError_test()
+{
+    QTemporaryDir tempDir;
+    QGCCachedFileDownload cachedDownloader(tempDir.path(), this);
+    ComponentInformationTranslation translation(this, &cachedDownloader);
+    translation._toTranslateJsonFile = QStringLiteral(":/unittest/TranslationTest.json");
+    translation._maximumFileBytes = 1;
+
+    QSignalSpy completeSpy(&translation, &ComponentInformationTranslation::downloadComplete);
+    QVERIFY(completeSpy.isValid());
+
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("File exceeds maximum size")));
+    translation.onDownloadCompleted(true, QStringLiteral(":/unittest/TranslationTest_de_DE.ts"), QString(), false);
+    verifyExpectedLogMessage();
+    QCOMPARE(completeSpy.size(), 1);
+    QVERIFY(completeSpy.first().at(0).toString().isEmpty());
+    QVERIFY(completeSpy.first().at(1).toString().contains(QStringLiteral("Decompression")));
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
 }
 
 UT_REGISTER_TEST(ComponentInformationTranslationTest, TestLabel::Unit, TestLabel::Vehicle)

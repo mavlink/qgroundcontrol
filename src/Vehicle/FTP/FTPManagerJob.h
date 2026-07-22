@@ -11,8 +11,8 @@ class FTPManager;
 /// Scoped handle for one FTPManager operation.
 ///
 /// Jobs bind progress, completion, and cancellation to the request which
-/// created them. FTPManager still exposes its legacy manager-wide signals for
-/// compatibility, but new consumers should connect to the returned job.
+/// created them. Consumers connect to the returned job for request-scoped
+/// status and completion.
 class FTPJob : public QObject
 {
     Q_OBJECT
@@ -44,6 +44,9 @@ protected:
 
 private:
     friend class FTPManager;
+#ifdef QGC_UNITTEST_BUILD
+    friend class RequestMetaDataTypeStateMachineTest;
+#endif
 
     void _finish();
 
@@ -64,6 +67,9 @@ signals:
 
 private:
     friend class FTPManager;
+#ifdef QGC_UNITTEST_BUILD
+    friend class RequestMetaDataTypeStateMachineTest;
+#endif
     explicit FTPDownloadJob(FTPManager* manager);
 
     void _emitFinished(const QString& file, const QString& error, const QString& warning)

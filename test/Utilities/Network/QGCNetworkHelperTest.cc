@@ -360,6 +360,8 @@ void QGCNetworkHelperTest::_testRequestConfigDefaults()
 {
     QGCNetworkHelper::RequestConfig config;
     QCOMPARE(config.timeoutMs, QGCNetworkHelper::kDefaultTimeoutMs);
+    QCOMPARE(config.maximumDownloadBytes, 0);
+    QCOMPARE(config.maximumDecompressedBytes, 0);
     QVERIFY(config.allowRedirects);
     QVERIFY(config.http2Allowed);
     QVERIFY(config.cacheEnabled);

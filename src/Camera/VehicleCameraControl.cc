@@ -2185,10 +2185,12 @@ void VehicleCameraControl::_handleDefinitionFile(const QString &url)
             _modelName.toStdString().c_str(),
             ver,
             ext.toStdString().c_str());
-        FTPDownloadJob* const job = _vehicle->ftpManager()->startDownload(
+        const FTPManager::DownloadStartResult startResult = _vehicle->ftpManager()->startDownload(
             _compID, url, SettingsManager::instance()->appSettings()->parameterSavePath(), fileName);
+        FTPDownloadJob* const job = startResult.job();
         if (!job) {
-            qCWarning(VehicleCameraControlLog) << "Unable to start camera definition FTP download" << url;
+            qCWarning(VehicleCameraControlLog) << "Unable to start camera definition FTP download" << url
+                                               << static_cast<int>(startResult.error());
             emit dataReady({});
             return;
         }

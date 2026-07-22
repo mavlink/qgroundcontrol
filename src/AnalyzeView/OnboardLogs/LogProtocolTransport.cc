@@ -644,44 +644,73 @@ bool LogProtocolTransport::_prepareLogDownload()
 
 void LogProtocolTransport::refresh()
 {
+    const QPointer<LogProtocolTransport> self(this);
     cancel();
+    if (!self) {
+        return;
+    }
     const bool oneBasedIds =
         _vehicle && _vehicle->firmwarePlugin()->onboardLogPolicy(_vehicle).logProtocolIdsAreOneBased;
     const quint64 generation = _listingSession.begin(oneBasedIds);
     _setErrorMessage(QString());
-    if (generation != _listingSession.generation()) {
+    if (!self || (generation != self->_listingSession.generation())) {
         return;
     }
-    _setBatchProgress(0.);
-    if (generation != _listingSession.generation()) {
+    self->_setBatchProgress(0.);
+    if (!self || (generation != self->_listingSession.generation())) {
         return;
     }
-    _logEntriesModel->clearAndDeleteContents();
-    if (generation != _listingSession.generation()) {
+    self->_logEntriesModel->clearAndDeleteContents();
+    if (!self || (generation != self->_listingSession.generation())) {
         return;
     }
-    _requestLogList(0, 0xffff);
+    self->_requestLogList(0, 0xffff);
 }
 
 void LogProtocolTransport::cancel()
 {
+    const QPointer<LogProtocolTransport> self(this);
+    _timer->stop();
     const bool listingWasActive = _listingSession.cancel();
     const LogProtocolDownloadBatchSession::Cancellation downloadCancellation = _downloadBatch.cancel();
+    const quint64 listingGeneration = _listingSession.generation();
+    const quint64 downloadGeneration = _downloadBatch.generation();
+    const auto cancellationIsCurrent = [self, listingGeneration, downloadGeneration]() {
+        return self && (self->_listingSession.generation() == listingGeneration) &&
+               (self->_downloadBatch.generation() == downloadGeneration);
+    };
     if (requestingList() || downloadingLogs() || downloadCancellation.wasActive) {
         _requestLogEnd();
+        if (!cancellationIsCurrent()) {
+            return;
+        }
     }
     if (listingWasActive) {
-        _timer->stop();
         _setListing(false);
+        if (!cancellationIsCurrent()) {
+            return;
+        }
         emit listingFinished(ListingResult::Canceled);
+        if (!cancellationIsCurrent()) {
+            return;
+        }
     }
 
     if (downloadCancellation.currentEntry) {
         downloadCancellation.currentEntry->setState(OnboardLogEntry::State::Canceled, tr("Canceled"));
+        if (!cancellationIsCurrent()) {
+            return;
+        }
     }
 
     _resetSelection(true);
+    if (!cancellationIsCurrent()) {
+        return;
+    }
     _setDownloading(false);
+    if (!cancellationIsCurrent()) {
+        return;
+    }
     _setBatchProgress(0.);
 }
 

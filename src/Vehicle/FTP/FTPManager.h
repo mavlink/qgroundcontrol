@@ -1,8 +1,11 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QTimer>
+#include <cstdint>
 #include <memory>
+#include <optional>
 
 #include "MAVLinkFTP.h"
 class Vehicle;
@@ -22,6 +25,53 @@ class FTPManager : public QObject
 #endif
 
 public:
+    enum class StartError : uint8_t
+    {
+        None,
+        Busy,
+        InvalidUri,
+        RemotePathTooLong,
+        InvalidArgument,
+        SourceMissing,
+        SourceTooLarge,
+        SourceOpenFailed,
+    };
+    Q_ENUM(StartError)
+
+    template <typename JobType>
+    class StartResult
+    {
+    public:
+        [[nodiscard]] static StartResult success(JobType* job)
+        {
+            return StartResult(job, job ? StartError::None : StartError::InvalidArgument);
+        }
+
+        [[nodiscard]] static StartResult failure(StartError error)
+        {
+            return StartResult(nullptr, error == StartError::None ? StartError::InvalidArgument : error);
+        }
+
+        [[nodiscard]] bool succeeded() const { return _error == StartError::None; }
+
+        [[nodiscard]] explicit operator bool() const { return succeeded(); }
+
+        [[nodiscard]] JobType* job() const { return _job.data(); }
+
+        [[nodiscard]] StartError error() const { return _error; }
+
+    private:
+        StartResult(JobType* job, StartError error) : _job(job), _error(error) {}
+
+        QPointer<JobType> _job;
+        StartError _error = StartError::InvalidArgument;
+    };
+
+    using DownloadStartResult = StartResult<FTPDownloadJob>;
+    using UploadStartResult = StartResult<FTPUploadJob>;
+    using ListDirectoryStartResult = StartResult<FTPListDirectoryJob>;
+    using DeleteStartResult = StartResult<FTPDeleteJob>;
+
     enum class ExistingFilePolicy : uint8_t
     {
         Replace,
@@ -31,7 +81,8 @@ public:
     FTPManager(Vehicle* vehicle);
     ~FTPManager() override;
 
-    /// Downloads the specified file.
+    /// Starts a download and returns the manager-owned job plus any synchronous start error.
+    /// Callers must not delete or reparent a returned job.
     ///     @param fromCompId Component id of the component to download from. If fromCompId is MAV_COMP_ID_ALL, then
     ///     MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param fromURI    File to download from component, fully qualified path. May be in the format
@@ -45,74 +96,37 @@ public:
     ///                       This is used for the APM parameter download where the filesize is wrong due to
     ///                       a dynamic file creation on the vehicle.
     ///     @param existingFilePolicy Whether an existing local destination may be replaced.
-    /// @return true: download has started, false: error, no download
-    /// Signals downloadComplete, commandProgress
-    [[nodiscard]] bool download(uint8_t fromCompId, const QString& fromURI, const QString& toDir,
-                                const QString& fileName = "", bool checksize = true,
-                                ExistingFilePolicy existingFilePolicy = ExistingFilePolicy::Replace);
-    [[nodiscard]] FTPDownloadJob* startDownload(uint8_t fromCompId, const QString& fromURI, const QString& toDir,
-                                                const QString& fileName = "", bool checksize = true,
-                                                ExistingFilePolicy existingFilePolicy = ExistingFilePolicy::Replace);
+    ///     @param maximumFileSize Optional upper bound for both the reported size and received data ranges.
+    ///                           Required when checksize is false.
+    [[nodiscard]] DownloadStartResult startDownload(uint8_t fromCompId, const QString& fromURI, const QString& toDir,
+                                                    const QString& fileName = "", bool checksize = true,
+                                                    ExistingFilePolicy existingFilePolicy = ExistingFilePolicy::Replace,
+                                                    std::optional<uint32_t> maximumFileSize = std::nullopt);
 
-    /// Uploads a local file to the specified URI on the vehicle.
+    /// Uploads a local file to the specified URI on the vehicle and reports synchronous start errors.
     ///     @param toCompId Component id of the component to upload to. If toCompId is MAV_COMP_ID_ALL, then
     ///     MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param toURI    Destination file path on the vehicle, fully qualified. May include mftp:// scheme and
     ///     optional component id selector.
     ///     @param fromFile Local filesystem path of the file to upload.
-    /// @return true: upload started, false: error, no upload
-    /// Signals uploadComplete, commandProgress
-    [[nodiscard]] bool upload(uint8_t toCompId, const QString& toURI, const QString& fromFile);
-    [[nodiscard]] FTPUploadJob* startUpload(uint8_t toCompId, const QString& toURI, const QString& fromFile);
+    [[nodiscard]] UploadStartResult startUpload(uint8_t toCompId, const QString& toURI, const QString& fromFile);
 
-    /// Get the directory listing of the specified directory.
+    /// Gets the directory listing of the specified directory and reports synchronous start errors.
     ///     @param fromCompId Component id of the component to download from. If fromCompId is MAV_COMP_ID_ALL, then
     ///     MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param fromURI    Directory path to list from component. May be in the format "mftp://[;comp=<id>]..." where
     ///     the component id
     ///                       is specified. If component id is not specified, then the id set via fromCompId is used.
     ///     @param maxEntries Maximum entries to accumulate, or zero for no limit.
-    /// @return true: process has started, false: error
-    /// Signals listDirectoryComplete
-    [[nodiscard]] bool listDirectory(uint8_t fromCompId, const QString& fromURI, int maxEntries = 0);
-    [[nodiscard]] FTPListDirectoryJob* startListDirectory(uint8_t fromCompId, const QString& fromURI,
-                                                          int maxEntries = 0);
+    [[nodiscard]] ListDirectoryStartResult startListDirectory(uint8_t fromCompId, const QString& fromURI,
+                                                              int maxEntries = 0);
 
-    /// Deletes a file on the vehicle.
+    /// Deletes a file on the vehicle and reports synchronous start errors.
     ///     @param fromCompId Component id of the component to delete from. If fromCompId is MAV_COMP_ID_ALL, then
     ///     MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param fromURI    File path to delete on the component. May include mftp:// scheme and optional component id
     ///     selector.
-    /// @return true: process has started, false: error
-    /// Signals deleteComplete
-    [[nodiscard]] bool deleteFile(uint8_t fromCompId, const QString& fromURI);
-    [[nodiscard]] FTPDeleteJob* startDeleteFile(uint8_t fromCompId, const QString& fromURI);
-
-    /// Cancel the download operation
-    /// This will emit downloadComplete() when done, and if there's currently a download in progress
-    void cancelDownload();
-
-    /// Cancel the list directory operation if running.
-    /// This will emit listDirectoryComplete() with an error string when finished.
-    void cancelListDirectory();
-
-    /// Cancel the delete operation if running.
-    /// This will emit deleteComplete() with an error string when finished.
-    void cancelDelete();
-
-    /// Cancel the upload operation
-    /// This will emit uploadComplete() when done, and if there's currently an upload in progress
-    void cancelUpload();
-
-signals:
-    void downloadComplete(const QString& file, const QString& errorMsg, const QString& warningMsg);
-    void uploadComplete(const QString& file, const QString& errorMsg);
-    void listDirectoryComplete(const QStringList& dirList, const QString& errorMsg, bool truncated);
-    void deleteComplete(const QString& file, const QString& errorMsg);
-
-    /// Signalled during a lengthy command to show progress
-    ///     @param value Amount of progress: 0.0 = none, 1.0 = complete
-    void commandProgress(float value);
+    [[nodiscard]] DeleteStartResult startDeleteFile(uint8_t fromCompId, const QString& fromURI);
 
 private slots:
     void _ackOrNakTimeout(void);
@@ -166,9 +180,15 @@ private:
     MavlinkFTP::ResponseValidationResult _validateResponseEnvelope(const MavlinkFTP::Request* response,
                                                                    MAV_FTP_OPCODE expectedRequestOpCode,
                                                                    const char* handlerName) const;
+    bool _validateDownloadDataRange(const MavlinkFTP::Request* response,
+                                    std::optional<uint32_t> remainingBytes = std::nullopt);
     QString _errorMsgFromNak(const MavlinkFTP::Request* nak);
     void _sendRequestExpectAck(MavlinkFTP::Request* request);
     void _cancelJob(FTPJob* job);
+    void cancelDownload();
+    void cancelListDirectory();
+    void cancelDelete();
+    void cancelUpload();
     void _emitCommandProgress(float value);
 
     void _downloadCompleteNoError(void) { _downloadComplete(QString()); }
@@ -215,7 +235,7 @@ private:
     std::unique_ptr<ListDirectoryOperation> _listDirectoryOperation;
     std::unique_ptr<DeleteOperation> _deleteOperation;
     std::unique_ptr<UploadOperation> _uploadOperation;
-    FTPJob* _activeJob = nullptr;
+    QPointer<FTPJob> _activeJob;
     int _resetSessionsRetryCount = 0;
     QTimer _ackOrNakTimeoutTimer;
     int _currentStateMachineIndex = -1;

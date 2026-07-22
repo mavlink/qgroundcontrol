@@ -5,7 +5,6 @@
 
 quint64 FtpListingSession::begin(const QString& root, uint firstLogId, int entryBudget)
 {
-    ++_generation;
     _state = State::ListingRoot;
     _root = root;
     _directories.clear();
@@ -14,19 +13,22 @@ quint64 FtpListingSession::begin(const QString& root, uint firstLogId, int entry
     _remainingEntryBudget = (std::max) (0, entryBudget);
     _triedFallbackRoot = false;
     _partial = false;
-    _canceling = false;
-    return _generation;
+    return beginSession();
 }
 
 bool FtpListingSession::cancel()
 {
-    ++_generation;
+    if (canceling()) {
+        return false;
+    }
+
+    invalidateSession();
     _directories.clear();
     if (!active()) {
         return false;
     }
 
-    _canceling = true;
+    beginCancellation();
     return true;
 }
 
@@ -34,12 +36,12 @@ void FtpListingSession::finish()
 {
     _state = State::Idle;
     _directories.clear();
-    _canceling = false;
+    finishSession();
 }
 
 void FtpListingSession::clear()
 {
-    ++_generation;
+    invalidateSession();
     finish();
     _root.clear();
     _firstLogId = 0;
@@ -100,7 +102,7 @@ void FtpListingSession::completeCurrentDirectory()
 
 bool FtpListingSession::isCurrent(quint64 generation) const
 {
-    return (generation == _generation) && active() && !_canceling;
+    return isCurrentGeneration(generation);
 }
 
 bool FtpListingSession::canListNextDirectory() const

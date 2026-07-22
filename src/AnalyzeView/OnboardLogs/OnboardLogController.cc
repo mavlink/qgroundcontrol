@@ -4,9 +4,9 @@
 #include <QtCore/QSignalBlocker>
 #include <utility>
 
+#include "FTP/FtpTransport.h"
 #include "Fact.h"
 #include "FirmwarePlugin.h"
-#include "FtpTransport.h"
 #include "LogProtocolTransport.h"
 #include "MAVLinkLib.h"
 #include "MavlinkSettings.h"

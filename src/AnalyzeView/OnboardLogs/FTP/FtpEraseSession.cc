@@ -2,91 +2,82 @@
 
 quint64 FtpEraseSession::begin(const QList<QPointer<OnboardLogEntry>>& entries)
 {
-    ++_generation;
-    _queue.clear();
-    for (const QPointer<OnboardLogEntry>& entry : entries) {
-        if (entry) {
-            _queue.enqueue(entry);
-        }
-    }
+    _entries.reset(entries);
     _currentEntry = nullptr;
+    _hasCurrent = false;
     _failureCount = 0;
-    _active = !_queue.isEmpty();
-    _canceling = false;
-    return _generation;
+    return beginSession(!_entries.isEmpty());
 }
 
 FtpEraseSession::Cancellation FtpEraseSession::cancel()
 {
     Cancellation cancellation;
-    cancellation.wasActive = _active;
-    if (_canceling) {
+    cancellation.wasActive = active();
+    if (canceling()) {
         return cancellation;
     }
 
-    ++_generation;
+    invalidateSession();
 
-    if (!_active) {
-        _queue.clear();
+    if (!active()) {
+        _entries.clear();
         _currentEntry = nullptr;
-        _active = false;
+        _hasCurrent = false;
+        finishSession();
         return cancellation;
     }
 
-    _canceling = true;
+    beginCancellation();
     cancellation.currentEntry = _currentEntry;
-    cancellation.pendingEntries.reserve(_queue.size());
-    while (!_queue.isEmpty()) {
-        cancellation.pendingEntries.append(_queue.dequeue());
-    }
+    cancellation.pendingEntries = _entries.takeAll();
     return cancellation;
 }
 
 void FtpEraseSession::finishCancellation()
 {
-    _queue.clear();
+    _entries.clear();
     _currentEntry = nullptr;
+    _hasCurrent = false;
     _failureCount = 0;
-    _active = false;
-    _canceling = false;
+    finishSession();
 }
 
 uint FtpEraseSession::finish()
 {
     const uint failures = _failureCount;
-    _queue.clear();
+    _entries.clear();
     _currentEntry = nullptr;
+    _hasCurrent = false;
     _failureCount = 0;
-    _active = false;
-    _canceling = false;
+    finishSession();
     return failures;
 }
 
 void FtpEraseSession::clear()
 {
-    ++_generation;
+    invalidateSession();
     (void) finish();
 }
 
 QPointer<OnboardLogEntry> FtpEraseSession::takeNext()
 {
-    if (!_active || _canceling || _currentEntry) {
+    if (!active() || canceling() || hasCurrent()) {
         return _currentEntry;
     }
 
-    while (!_queue.isEmpty() && !_currentEntry) {
-        _currentEntry = _queue.dequeue();
-    }
+    _currentEntry = _entries.takeNext();
+    _hasCurrent = !_currentEntry.isNull();
     return _currentEntry;
 }
 
 void FtpEraseSession::completeCurrent(bool failed)
 {
-    if (!_currentEntry) {
+    if (!hasCurrent()) {
         return;
     }
     if (failed) {
         ++_failureCount;
     }
     _currentEntry = nullptr;
+    _hasCurrent = false;
 }

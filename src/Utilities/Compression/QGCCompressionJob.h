@@ -3,13 +3,15 @@
 /// @file QGCCompressionJob.h
 /// @brief QObject wrapper for async compression operations using QtConcurrent/QPromise
 
-#include "QGCCompression.h"
-
-#include <atomic>
-#include <memory>
 #include <QtCore/QFuture>
 #include <QtCore/QFutureWatcher>
+#include <QtCore/QMutex>
 #include <QtCore/QObject>
+#include <atomic>
+#include <memory>
+#include <optional>
+
+#include "QGCCompression.h"
 
 /// \brief QObject wrapper for compression operations with progress signals
 ///
@@ -78,13 +80,14 @@ class QGCCompressionJob : public QObject
 
 public:
     /// Operation type
-    enum class Operation {
+    enum class Operation
+    {
         None,
         ExtractArchive,
         ExtractArchiveAtomic,
         DecompressFile,
         ExtractFile,
-        ExtractFiles
+        ExtractFiles,
     };
     Q_ENUM(Operation)
 
@@ -153,15 +156,17 @@ public slots:
     /// @param archivePath Path to archive file
     /// @param fileName Name of file inside archive
     /// @param outputPath Output file path
-    void extractFile(const QString &archivePath, const QString &fileName,
-                     const QString &outputPath);
+    /// @param maxBytes Maximum extracted size (0 = unlimited)
+    void extractFile(const QString& archivePath, const QString& fileName, const QString& outputPath,
+                     qint64 maxBytes = 0);
 
     /// Extract multiple files from archive
     /// @param archivePath Path to archive file
     /// @param fileNames Names of files inside archive
     /// @param outputDirectoryPath Output directory
-    void extractFiles(const QString &archivePath, const QStringList &fileNames,
-                      const QString &outputDirectoryPath);
+    /// @param maxBytes Maximum aggregate extracted size (0 = unlimited)
+    void extractFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
+                      qint64 maxBytes = 0);
 
     /// Cancel current operation
     void cancel();
@@ -193,16 +198,29 @@ private slots:
 private:
     using WorkFunction = std::function<bool(QGCCompression::ProgressCallback)>;
 
-    void _startOperation(Operation op, const QString &source, const QString &output,
-                         WorkFunction work);
+    struct WorkOutcome
+    {
+        mutable QMutex mutex;
+        QString error;
+    };
+
+    struct PendingOperation
+    {
+        Operation operation = Operation::None;
+        QString source;
+        QString output;
+        WorkFunction work;
+    };
+
+    void _startOperation(Operation op, const QString& source, const QString& output, WorkFunction work);
     void _setProgress(qreal progress);
     void _setRunning(bool running);
-    void _setErrorString(const QString &error);
+    void _setErrorString(const QString& error);
 
-    static QFuture<bool> _runWithProgress(WorkFunction work,
-                                          const std::shared_ptr<std::atomic_bool> &cancelRequested);
+    static QFuture<bool> _runWithProgress(WorkFunction work, const std::shared_ptr<std::atomic_bool>& cancelRequested,
+                                          const std::shared_ptr<WorkOutcome>& outcome = {});
 
-    QFutureWatcher<bool> *_watcher = nullptr;
+    QFutureWatcher<bool>* _watcher = nullptr;
     QFuture<bool> _future;
 
     qreal _progress = 0.0;
@@ -212,4 +230,7 @@ private:
     QString _outputPath;
     Operation _operation = Operation::None;
     std::shared_ptr<std::atomic_bool> _cancelRequested;
+    std::shared_ptr<WorkOutcome> _workOutcome;
+    std::optional<PendingOperation> _pendingOperation = std::nullopt;
+    bool _completing = false;
 };

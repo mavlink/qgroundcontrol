@@ -1,60 +1,58 @@
 #include "FtpDownloadSession.h"
 
 #include <algorithm>
+#include <cmath>
+
+namespace {
+
+constexpr qreal RateSmoothingTimeConstantSeconds = 2.;
+
+}  // namespace
 
 quint64 FtpDownloadSession::begin(const QList<QPointer<OnboardLogEntry>>& entries, const QString& path)
 {
-    ++_generation;
-    _queue.clear();
-    for (const QPointer<OnboardLogEntry>& entry : entries) {
-        if (entry) {
-            _queue.enqueue(entry);
-        }
-    }
+    _entries.reset(entries);
     _currentEntry = nullptr;
     _currentEntrySize = 0;
     _path = path;
-    _active = !_queue.isEmpty();
-    _canceling = false;
     _inFlight = false;
     _refreshRequested = false;
     _resetProgress();
-    return _generation;
+    return beginSession(!_entries.isEmpty());
 }
 
 FtpDownloadSession::Cancellation FtpDownloadSession::cancel()
 {
     Cancellation cancellation;
-    if (_canceling) {
+    if (canceling()) {
         return cancellation;
     }
 
-    ++_generation;
-    cancellation.wasActive = _active;
+    invalidateSession();
+    cancellation.wasActive = active();
     cancellation.currentEntry = _currentEntry;
     cancellation.cancelRemoteDownload = _inFlight;
-    _queue.clear();
+    _entries.clear();
 
-    if (!_active) {
+    if (!active()) {
         _currentEntry = nullptr;
         _currentEntrySize = 0;
         _inFlight = false;
         return cancellation;
     }
 
-    _canceling = true;
+    beginCancellation();
     return cancellation;
 }
 
 bool FtpDownloadSession::finishCancellation()
 {
     const bool refreshRequested = _refreshRequested;
-    _queue.clear();
+    _entries.clear();
     _currentEntry = nullptr;
     _currentEntrySize = 0;
     _path.clear();
-    _active = false;
-    _canceling = false;
+    finishSession();
     _inFlight = false;
     _refreshRequested = false;
     _resetProgress();
@@ -63,32 +61,29 @@ bool FtpDownloadSession::finishCancellation()
 
 void FtpDownloadSession::finish()
 {
-    _queue.clear();
+    _entries.clear();
     _currentEntry = nullptr;
     _currentEntrySize = 0;
     _path.clear();
-    _active = false;
-    _canceling = false;
+    finishSession();
     _inFlight = false;
     _resetProgress();
 }
 
 void FtpDownloadSession::clear()
 {
-    ++_generation;
+    invalidateSession();
     _refreshRequested = false;
     finish();
 }
 
 QPointer<OnboardLogEntry> FtpDownloadSession::takeNext()
 {
-    if (!_active || _canceling || _currentEntry) {
+    if (!active() || canceling() || _currentEntry) {
         return _currentEntry;
     }
 
-    while (!_queue.isEmpty() && !_currentEntry) {
-        _currentEntry = _queue.dequeue();
-    }
+    _currentEntry = _entries.takeNext();
     if (_currentEntry) {
         _currentEntrySize = _currentEntry->size();
         _resetProgress();
@@ -110,8 +105,11 @@ void FtpDownloadSession::completeCurrent()
 std::optional<FtpDownloadSession::ProgressUpdate> FtpDownloadSession::updateProgress(
     qreal progress, std::chrono::milliseconds minimumInterval)
 {
+    if (!active() || canceling() || !_currentEntry || !_elapsed.isValid()) {
+        return std::nullopt;
+    }
     const std::chrono::milliseconds elapsed{_elapsed.elapsed()};
-    if (!_active || _canceling || !_currentEntry || !_elapsed.isValid() || (elapsed < minimumInterval)) {
+    if (elapsed < minimumInterval) {
         return std::nullopt;
     }
 
@@ -119,8 +117,14 @@ std::optional<FtpDownloadSession::ProgressUpdate> FtpDownloadSession::updateProg
     const uint64_t totalBytes = static_cast<uint64_t>(static_cast<qreal>(_currentEntrySize) * boundedProgress);
     const uint64_t bytesSinceLastUpdate = (totalBytes >= _bytesAtLastUpdate) ? (totalBytes - _bytesAtLastUpdate) : 0;
     const qreal elapsedSeconds = std::chrono::duration<qreal>(elapsed).count();
-    const qreal rate = (elapsedSeconds > 0.) ? (bytesSinceLastUpdate / elapsedSeconds) : 0.;
-    _rateAverage = (_rateAverage * 0.95) + (rate * 0.05);
+    const qreal rate = (elapsedSeconds > 0.) ? (static_cast<qreal>(bytesSinceLastUpdate) / elapsedSeconds) : 0.;
+    if (_rateInitialized) {
+        const qreal smoothingFactor = -std::expm1(-elapsedSeconds / RateSmoothingTimeConstantSeconds);
+        _rateAverage += smoothingFactor * (rate - _rateAverage);
+    } else {
+        _rateAverage = rate;
+        _rateInitialized = true;
+    }
     _bytesAtLastUpdate = totalBytes;
     _elapsed.start();
 
@@ -129,7 +133,7 @@ std::optional<FtpDownloadSession::ProgressUpdate> FtpDownloadSession::updateProg
 
 bool FtpDownloadSession::isCurrent(quint64 generation, const OnboardLogEntry* entry) const
 {
-    return (generation == _generation) && _active && !_canceling && (!entry || (_currentEntry == entry));
+    return isCurrentGeneration(generation) && (!entry || (_currentEntry == entry));
 }
 
 void FtpDownloadSession::_resetProgress()
@@ -137,4 +141,5 @@ void FtpDownloadSession::_resetProgress()
     _elapsed.invalidate();
     _bytesAtLastUpdate = 0;
     _rateAverage = 0.;
+    _rateInitialized = false;
 }

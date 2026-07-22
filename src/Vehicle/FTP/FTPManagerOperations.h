@@ -5,6 +5,7 @@
 #include <QtCore/QList>
 #include <QtCore/QStringList>
 #include <cstdint>
+#include <optional>
 
 #include "FTPManager.h"
 
@@ -24,9 +25,9 @@ public:
         uint32_t bytesMissing = 0;
     };
 
-    bool begin(uint8_t componentId, const QString& uri, const QString& destinationDirectory,
-               const QString& requestedFileName, bool verifySize, ExistingFilePolicy filePolicy,
-               uint8_t& resolvedComponentId);
+    StartError begin(uint8_t componentId, const QString& uri, const QString& destinationDirectory,
+                     const QString& requestedFileName, bool verifySize, ExistingFilePolicy filePolicy,
+                     std::optional<uint32_t> maximumSize, uint8_t& resolvedComponentId);
     QList<StateFunctions_t> stateMachine() const;
     QList<StateFunctions_t> terminationStateMachine() const;
     void reset();
@@ -45,6 +46,7 @@ public:
     int retryCount = 0;
     bool checkSize = true;
     ExistingFilePolicy existingFilePolicy = ExistingFilePolicy::Replace;
+    std::optional<uint32_t> maximumFileSize = std::nullopt;
     bool remoteSessionOpen = false;
     QString pendingError;
 };
@@ -63,6 +65,7 @@ public:
         SourceTooLarge,
         OpenFailed,
         InvalidUri,
+        RemotePathTooLong,
     };
 
     BeginResult begin(uint8_t componentId, const QString& uri, const QString& sourceFile, uint8_t& resolvedComponentId);
@@ -91,8 +94,8 @@ class FTPManager::ListDirectoryOperation final
 public:
     ListDirectoryOperation() = default;
 
-    bool begin(uint8_t componentId, const QString& uri, int entryLimit, MAV_FTP_OPCODE listOpcode,
-               uint8_t& resolvedComponentId);
+    StartError begin(uint8_t componentId, const QString& uri, int entryLimit, MAV_FTP_OPCODE listOpcode,
+                     uint8_t& resolvedComponentId);
     QList<StateFunctions_t> stateMachine() const;
     void reset();
 
@@ -115,7 +118,7 @@ class FTPManager::DeleteOperation final
 public:
     DeleteOperation() = default;
 
-    bool begin(uint8_t componentId, const QString& uri, uint8_t& resolvedComponentId);
+    StartError begin(uint8_t componentId, const QString& uri, uint8_t& resolvedComponentId);
     QList<StateFunctions_t> stateMachine() const;
     void reset();
 

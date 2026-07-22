@@ -2,12 +2,13 @@
 
 #include <QtCore/QList>
 #include <QtCore/QPointer>
-#include <QtCore/QQueue>
 
 #include "OnboardLogEntry.h"
+#include "OnboardLogEntryQueue.h"
+#include "OnboardLogSession.h"
 
 /// Queue and lifecycle state for one MAVLink FTP erase batch.
-class FtpEraseSession final
+class FtpEraseSession final : public OnboardLogSessionBase
 {
     Q_DISABLE_COPY_MOVE(FtpEraseSession)
 
@@ -30,21 +31,15 @@ public:
     QPointer<OnboardLogEntry> takeNext();
     void completeCurrent(bool failed);
 
-    bool active() const { return _active; }
-
-    bool canceling() const { return _canceling; }
-
-    quint64 generation() const { return _generation; }
+    bool hasCurrent() const { return _hasCurrent; }
 
     QPointer<OnboardLogEntry> currentEntry() const { return _currentEntry; }
 
-    qsizetype pendingCount() const { return _queue.size(); }
+    qsizetype pendingCount() const { return _entries.size(); }
 
 private:
-    quint64 _generation = 0;
-    QQueue<QPointer<OnboardLogEntry>> _queue;
+    OnboardLogEntryQueue _entries;
     QPointer<OnboardLogEntry> _currentEntry;
     uint _failureCount = 0;
-    bool _active = false;
-    bool _canceling = false;
+    bool _hasCurrent = false;
 };

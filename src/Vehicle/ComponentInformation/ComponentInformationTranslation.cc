@@ -9,6 +9,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
+#include <QtCore/QSaveFile>
 #include <QtCore/QXmlStreamReader>
 
 QGC_LOGGING_CATEGORY(ComponentInformationTranslationLog, "ComponentInformation.ComponentInformationTranslation")
@@ -20,8 +21,11 @@ ComponentInformationTranslation::ComponentInformationTranslation(QObject* parent
 }
 
 bool ComponentInformationTranslation::downloadAndTranslate(const QString& summaryJsonFile,
-                                                           const QString& toTranslateJsonFile, int maxCacheAgeSec, const QString& componentName)
+                                                           const QString& toTranslateJsonFile, int maxCacheAgeSec,
+                                                           const QString& componentName, qint64 maximumFileBytes)
 {
+    cancel();
+
     // Metadata is authored in English, no translation needed
     const QString locale = QLocale::system().name();
     if (locale.startsWith(QLatin1String("en"))) {
@@ -31,19 +35,47 @@ bool ComponentInformationTranslation::downloadAndTranslate(const QString& summar
 
     // Parse summary: find url for current locale
     _toTranslateJsonFile = toTranslateJsonFile;
+    _maximumFileBytes = maximumFileBytes;
     QString url = getUrlFromSummaryJson(summaryJsonFile, locale, componentName);
     if (url.isEmpty()) {
         return false;
     }
 
     // Download file
-    connect(_cachedFileDownload, &QGCCachedFileDownload::finished, this, &ComponentInformationTranslation::onDownloadCompleted);
-    if (!_cachedFileDownload->download(url, maxCacheAgeSec)) {
+    const quint64 generation = ++_generation;
+    _running = true;
+    _downloadConnection =
+        connect(_cachedFileDownload, &QGCCachedFileDownload::finished, this,
+                [this, generation](bool success, const QString& localFile, const QString& errorMsg, bool fromCache) {
+                    if (!_running || (generation != _generation)) {
+                        return;
+                    }
+                    onDownloadCompleted(success, localFile, errorMsg, fromCache);
+                });
+    if (!_cachedFileDownload->download(url, maxCacheAgeSec, _maximumFileBytes)) {
         qCWarning(ComponentInformationTranslationLog) << "Metadata translation download failed";
-        disconnect(_cachedFileDownload, &QGCCachedFileDownload::finished, this, &ComponentInformationTranslation::onDownloadCompleted);
+        (void) disconnect(_downloadConnection);
+        _downloadConnection = {};
+        _running = false;
         return false;
     }
     return true;
+}
+
+void ComponentInformationTranslation::cancel()
+{
+    ++_generation;
+    const bool wasRunning = _running;
+    _running = false;
+    if (_downloadConnection) {
+        (void) disconnect(_downloadConnection);
+        _downloadConnection = {};
+    }
+    _toTranslateJsonFile.clear();
+    _maximumFileBytes = 0;
+    if (wasRunning && _cachedFileDownload && _cachedFileDownload->isRunning()) {
+        _cachedFileDownload->cancel();
+    }
 }
 
 QString ComponentInformationTranslation::getUrlFromSummaryJson(const QString &summaryJsonFile, const QString &locale, const QString &componentName)
@@ -72,13 +104,17 @@ QString ComponentInformationTranslation::getUrlFromSummaryJson(const QString &su
 
 void ComponentInformationTranslation::onDownloadCompleted(bool success, const QString &localFile, QString errorMsg, [[maybe_unused]] bool fromCache)
 {
-    disconnect(_cachedFileDownload, &QGCCachedFileDownload::finished, this, &ComponentInformationTranslation::onDownloadCompleted);
+    _running = false;
+    if (_downloadConnection) {
+        (void) disconnect(_downloadConnection);
+        _downloadConnection = {};
+    }
 
     QString tsFileName = localFile;
     bool deleteFile = false;
     if (success) {
         const QString tempPath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath("qgc_translation_file_decompressed.ts");
-        tsFileName = QGCCompression::decompressIfNeeded(localFile, tempPath, false);
+        tsFileName = QGCCompression::decompressIfNeeded(localFile, tempPath, false, _maximumFileBytes);
         if (tsFileName.isEmpty()) {
             const QString remoteFile = _cachedFileDownload->url().toString();
             errorMsg = "Decompression of translation file failed: " + remoteFile;
@@ -90,7 +126,7 @@ void ComponentInformationTranslation::onDownloadCompleted(bool success, const QS
     // Translate json file to new temp file
     QString translatedJsonFilename;
     if (errorMsg.isEmpty()) {
-        translatedJsonFilename = translateJsonUsingTS(_toTranslateJsonFile, tsFileName);
+        translatedJsonFilename = translateJsonUsingTS(_toTranslateJsonFile, tsFileName, _maximumFileBytes);
         if (translatedJsonFilename.isEmpty()) {
             errorMsg = "Failed to translate json file";
         }
@@ -103,9 +139,15 @@ void ComponentInformationTranslation::onDownloadCompleted(bool success, const QS
     emit downloadComplete(translatedJsonFilename, errorMsg);
 }
 
-QString ComponentInformationTranslation::translateJsonUsingTS(const QString &toTranslateJsonFile, const QString &tsFile)
+QString ComponentInformationTranslation::translateJsonUsingTS(const QString& toTranslateJsonFile, const QString& tsFile,
+                                                               qint64 maximumOutputBytes)
 {
     qCDebug(ComponentInformationTranslationLog) << "Translating" << toTranslateJsonFile << "using" << tsFile;
+
+    if (maximumOutputBytes < 0) {
+        qCWarning(ComponentInformationTranslationLog) << "Maximum translated output size cannot be negative";
+        return {};
+    }
 
     // Open JSON and get the 'translation' object
     QString         errorString;
@@ -123,6 +165,19 @@ QString ComponentInformationTranslation::translateJsonUsingTS(const QString &toT
 
     QJsonObject jsonObj = jsonDoc.object();
 
+    const qint64 initialJsonSize = jsonDoc.toJson(QJsonDocument::Compact).size();
+    TranslationBudget translationBudget;
+    TranslationBudget* budget = nullptr;
+    if (maximumOutputBytes > 0) {
+        if (initialJsonSize > maximumOutputBytes) {
+            qCWarning(ComponentInformationTranslationLog)
+                << "Metadata JSON exceeds translated output size limit" << maximumOutputBytes;
+            return {};
+        }
+        translationBudget.remainingBytes = maximumOutputBytes - initialJsonSize;
+        budget = &translationBudget;
+    }
+
     QJsonObject translationObj = jsonObj["translation"].toObject();
     if (translationObj.isEmpty()) {
         qCWarning(ComponentInformationTranslationLog) << "json file does not contain 'translation' object";
@@ -138,13 +193,7 @@ QString ComponentInformationTranslation::translateJsonUsingTS(const QString &toT
         return "";
     }
 
-    QXmlStreamReader xml(xmlFile.readAll());
-    xmlFile.close();
-    if (xml.hasError()) {
-        qCWarning(ComponentInformationTranslationLog) << "Badly formed TS (XML)" << xml.errorString();
-        return "";
-    }
-
+    QXmlStreamReader xml(&xmlFile);
     bool insideTS = false;
 
     while (!xml.atEnd()) {
@@ -194,38 +243,79 @@ QString ComponentInformationTranslation::translateJsonUsingTS(const QString &toT
         xml.readNext();
     }
 
+    if (xml.hasError()) {
+        qCWarning(ComponentInformationTranslationLog) << "Badly formed TS (XML)" << xml.errorString();
+        return "";
+    }
+
     if (translations.isEmpty()) {
         qCWarning(ComponentInformationTranslationLog) << "No translations found in TS file";
         return "";
     }
 
     // Translate the json document
-    jsonDoc.setObject(translate(translationObj, translations, jsonDoc.object()));
+    jsonDoc.setObject(translate(translationObj, translations, jsonDoc.object(), budget));
+    if (translationBudget.exceeded) {
+        qCWarning(ComponentInformationTranslationLog)
+            << "Translated metadata exceeds output size limit" << maximumOutputBytes;
+        return {};
+    }
+
+    const QByteArray translatedJson = jsonDoc.toJson(QJsonDocument::Compact);
+    if ((maximumOutputBytes > 0) && (translatedJson.size() > maximumOutputBytes)) {
+        qCWarning(ComponentInformationTranslationLog)
+            << "Translated metadata exceeds output size limit" << maximumOutputBytes;
+        return {};
+    }
 
     // Write to file
-    QString translatedFileName = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath("qgc_translated_metadata.json");
+    QString translatedFileName = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                                     .absoluteFilePath("qgc_translated_metadata.json");
 
-    QFile translatedFile(translatedFileName);
-    if (!translatedFile.open(QFile::WriteOnly|QFile::Truncate)) {
-        errorString = tr("File open failed: file:error %1 %2").arg(translatedFile.fileName()).arg(translatedFile.errorString());
+    QSaveFile translatedFile(translatedFileName);
+    if (!translatedFile.open(QFile::WriteOnly | QFile::Truncate)) {
+        errorString =
+            tr("File open failed: file:error %1 %2").arg(translatedFile.fileName()).arg(translatedFile.errorString());
         return "";
     }
-    translatedFile.write(jsonDoc.toJson());
-    translatedFile.close();
+    if ((translatedFile.write(translatedJson) != translatedJson.size()) || !translatedFile.commit()) {
+        qCWarning(ComponentInformationTranslationLog)
+            << "Failed writing translated metadata:" << translatedFile.errorString();
+        translatedFile.cancelWriting();
+        return {};
+    }
 
-    qCDebug(ComponentInformationTranslationLog) << "JSON file" << toTranslateJsonFile << "successfully translated to" << translatedFileName;
+    qCDebug(ComponentInformationTranslationLog)
+        << "JSON file" << toTranslateJsonFile << "successfully translated to" << translatedFileName;
     return translatedFileName;
 }
 
+bool ComponentInformationTranslation::TranslationBudget::consumeReplacement(const QString& oldValue,
+                                                                            const QString& newValue)
+{
+    const auto serializedSize = [](const QString& value) -> qint64 {
+        return QJsonDocument(QJsonArray{value}).toJson(QJsonDocument::Compact).size() - 2;
+    };
+    const qint64 delta = serializedSize(newValue) - serializedSize(oldValue);
+    if (delta > remainingBytes) {
+        exceeded = true;
+        return false;
+    }
+    remainingBytes -= delta;
+    return true;
+}
+
 QJsonObject ComponentInformationTranslation::translate(const QJsonObject& translationObj,
-                                                       const QHash<QString, QString>& translations, QJsonObject doc)
+                                                       const QHash<QString, QString>& translations, QJsonObject doc,
+                                                       TranslationBudget* budget)
 {
     QJsonObject defs = translationObj["$defs"].toObject();
     if (translationObj.contains("items")) {
-        doc = translateItems("", defs, translationObj["items"].toObject(), translations, doc);
+        doc = translateItems("", defs, translationObj["items"].toObject(), translations, doc, budget);
     }
-    if (translationObj.contains("$ref")) {
-        doc = translateItems("", defs, defs[getRefName(translationObj["$ref"].toString())].toObject(), translations, doc);
+    if ((!budget || !budget->exceeded) && translationObj.contains("$ref")) {
+        doc = translateItems("", defs, defs[getRefName(translationObj["$ref"].toString())].toObject(), translations,
+                             doc, budget);
     }
     return doc;
 }
@@ -233,9 +323,13 @@ QJsonObject ComponentInformationTranslation::translate(const QJsonObject& transl
 QJsonObject ComponentInformationTranslation::translateItems(const QString& prefix, const QJsonObject& defs,
                                                             const QJsonObject& translationObj,
                                                             const QHash<QString, QString>& translations,
-                                                            QJsonObject jsonData)
+                                                            QJsonObject jsonData, TranslationBudget* budget)
 {
-    for (auto translationItemIter = translationObj.begin(); translationItemIter != translationObj.end(); ++translationItemIter) {
+    for (auto translationItemIter = translationObj.begin(); translationItemIter != translationObj.end();
+         ++translationItemIter) {
+        if (budget && budget->exceeded) {
+            break;
+        }
         QStringList translationKeys;
         if (translationItemIter.key() == "*") {
             translationKeys = jsonData.keys();
@@ -245,8 +339,9 @@ QJsonObject ComponentInformationTranslation::translateItems(const QString& prefi
         for (const auto& jsonItem : translationKeys) {
             QString nextPrefix = prefix + '/' + jsonItem;
             QJsonObject nextTranslationObj = translationItemIter.value().toObject();
-            if (jsonData.contains(jsonItem)) {
-                jsonData[jsonItem] = translateTranslationItems(nextPrefix, defs, nextTranslationObj, translations, jsonData[jsonItem]);
+            if ((!budget || !budget->exceeded) && jsonData.contains(jsonItem)) {
+                jsonData[jsonItem] = translateTranslationItems(nextPrefix, defs, nextTranslationObj, translations,
+                                                               jsonData[jsonItem], budget);
             }
         }
     }
@@ -262,7 +357,7 @@ QString ComponentInformationTranslation::getRefName(const QString& ref)
 QJsonValue ComponentInformationTranslation::translateTranslationItems(const QString& prefix, const QJsonObject& defs,
                                                                       const QJsonObject& translationObj,
                                                                       const QHash<QString, QString>& translations,
-                                                                      QJsonValue jsonData)
+                                                                      QJsonValue jsonData, TranslationBudget* budget)
 {
     if (translationObj.contains("list")) {
         QJsonObject translationList = translationObj["list"].toObject();
@@ -270,13 +365,17 @@ QJsonValue ComponentInformationTranslation::translateTranslationItems(const QStr
         int idx = 0;
         QJsonArray array = jsonData.toArray();
         for (const auto& listEntry : array) {
+            if (budget && budget->exceeded) {
+                break;
+            }
             QString value;
             if (!key.isEmpty() && listEntry.toObject().contains(key)) {
                 value = listEntry.toObject()[key].toString();
             } else {
                 value = QString::number(idx);
             }
-            array[idx] = translateTranslationItems(prefix + '/' + value, defs, translationList, translations, listEntry);
+            array[idx] =
+                translateTranslationItems(prefix + '/' + value, defs, translationList, translations, listEntry, budget);
             ++idx;
         }
         jsonData = array;
@@ -288,16 +387,24 @@ QJsonValue ComponentInformationTranslation::translateTranslationItems(const QStr
                 if (jsonData[translateNameStr].isString()) {
                     auto lookupIter = translations.find(prefix + '/' + translateNameStr);
                     if (lookupIter != translations.end()) {
-                        // We need to copy as there's no way to modify nested elements! See https://bugreports.qt.io/browse/QTBUG-25723
+                        if (budget &&
+                            !budget->consumeReplacement(jsonData[translateNameStr].toString(), lookupIter.value())) {
+                            return jsonData;
+                        }
+                        // We need to copy as there's no way to modify nested elements! See
+                        // https://bugreports.qt.io/browse/QTBUG-25723
                         QJsonObject obj = jsonData.toObject();
                         obj.insert(translateNameStr, lookupIter.value());
                         jsonData = obj;
                     }
-                } else if (jsonData[translateNameStr].isArray()) { // List of strings
+                } else if (jsonData[translateNameStr].isArray()) {  // List of strings
                     QJsonArray jsonArray = jsonData[translateNameStr].toArray();
-                    for (int i=0; i < jsonArray.count(); ++i) {
+                    for (int i = 0; i < jsonArray.count(); ++i) {
                         auto lookupIter = translations.find(prefix + '/' + translateNameStr + '/' + QString::number(i));
                         if (lookupIter != translations.end()) {
+                            if (budget && !budget->consumeReplacement(jsonArray[i].toString(), lookupIter.value())) {
+                                return jsonData;
+                            }
                             jsonArray.replace(i, lookupIter.value());
                         }
                     }
@@ -314,17 +421,26 @@ QJsonValue ComponentInformationTranslation::translateTranslationItems(const QStr
             QString translateNameStr = translateName.toString();
             if (jsonData.toObject().contains(translateNameStr)) {
                 if (jsonData[translateNameStr].isString()) {
-                    auto lookupIter = translations.find("$globals/" + translateNameStr + "/" + jsonData[translateNameStr].toString());
+                    auto lookupIter =
+                        translations.find("$globals/" + translateNameStr + "/" + jsonData[translateNameStr].toString());
                     if (lookupIter != translations.end()) {
+                        if (budget &&
+                            !budget->consumeReplacement(jsonData[translateNameStr].toString(), lookupIter.value())) {
+                            return jsonData;
+                        }
                         QJsonObject obj = jsonData.toObject();
                         obj.insert(translateNameStr, lookupIter.value());
                         jsonData = obj;
                     }
-                } else if (jsonData[translateNameStr].isArray()) { // List of strings
+                } else if (jsonData[translateNameStr].isArray()) {  // List of strings
                     QJsonArray jsonArray = jsonData[translateNameStr].toArray();
-                    for (int i=0; i < jsonArray.count(); ++i) {
-                        auto lookupIter = translations.find("$globals/" + translateNameStr + '/' + jsonArray[i].toString());
+                    for (int i = 0; i < jsonArray.count(); ++i) {
+                        auto lookupIter =
+                            translations.find("$globals/" + translateNameStr + '/' + jsonArray[i].toString());
                         if (lookupIter != translations.end()) {
+                            if (budget && !budget->consumeReplacement(jsonArray[i].toString(), lookupIter.value())) {
+                                return jsonData;
+                            }
                             jsonArray.replace(i, lookupIter.value());
                         }
                     }
@@ -335,11 +451,14 @@ QJsonValue ComponentInformationTranslation::translateTranslationItems(const QStr
             }
         }
     }
-    if (translationObj.contains("items")) {
-        jsonData = translateItems(prefix, defs, translationObj["items"].toObject(), translations, jsonData.toObject());
+    if ((!budget || !budget->exceeded) && translationObj.contains("items")) {
+        jsonData =
+            translateItems(prefix, defs, translationObj["items"].toObject(), translations, jsonData.toObject(), budget);
     }
-    if (translationObj.contains("$ref")) {
-        jsonData = translateTranslationItems(prefix, defs, defs[getRefName(translationObj["$ref"].toString())].toObject(), translations, jsonData);
+    if ((!budget || !budget->exceeded) && translationObj.contains("$ref")) {
+        jsonData =
+            translateTranslationItems(prefix, defs, defs[getRefName(translationObj["$ref"].toString())].toObject(),
+                                      translations, jsonData, budget);
     }
     return jsonData;
 }

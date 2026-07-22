@@ -1,5 +1,6 @@
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QDir>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QPersistentModelIndex>
@@ -12,17 +13,20 @@
 #include <array>
 #include <chrono>
 #include <limits>
+#include <type_traits>
 
 #include "ArduCopterFirmwarePlugin.h"
+#include "FTP/FtpDownloadSession.h"
+#include "FTP/FtpEraseSession.h"
+#include "FTP/FtpListingParser.h"
+#include "FTP/FtpListingSession.h"
+#include "FTP/FtpTransport.h"
 #include "FTPManager.h"
 #include "Fact.h"
 #include "FirmwarePlugin.h"
-#include "FtpDownloadSession.h"
-#include "FtpListingParser.h"
-#include "FtpListingSession.h"
-#include "FtpTransport.h"
 #include "LogProtocolDownloadBatchSession.h"
 #include "LogProtocolDownloadSession.h"
+#include "LogProtocolListingSession.h"
 #include "LogProtocolTransport.h"
 #include "MAVLinkProtocol.h"
 #include "MavlinkSettings.h"
@@ -36,6 +40,13 @@
 #include "OnboardLogModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+
+static_assert(std::is_base_of_v<OnboardLogSessionBase, FtpDownloadSession>);
+static_assert(std::is_base_of_v<OnboardLogSessionBase, FtpEraseSession>);
+static_assert(std::is_base_of_v<OnboardLogSessionBase, FtpListingSession>);
+static_assert(std::is_base_of_v<OnboardLogSessionBase, LogProtocolDownloadBatchSession>);
+static_assert(std::is_base_of_v<OnboardLogSessionBase, LogProtocolListingSession>);
+static_assert(!std::is_base_of_v<OnboardLogSessionBase, LogProtocolDownloadSession>);
 
 void OnboardLogDownloadTest::_duplicateLogDataTest()
 {
@@ -333,6 +344,14 @@ void OnboardLogDownloadTest::_inconsistentLogCountTest()
 
 void OnboardLogDownloadTest::_sessionStateTest()
 {
+    auto* const expiredEntry = new OnboardLogEntry(99);
+    OnboardLogEntry queuedEntry(100);
+    FtpDownloadSession nullSafeQueueSession;
+    (void) nullSafeQueueSession.begin({expiredEntry, &queuedEntry}, QStringLiteral("/tmp/"));
+    delete expiredEntry;
+    QCOMPARE(nullSafeQueueSession.takeNext(), &queuedEntry);
+    nullSafeQueueSession.finish();
+
     LogProtocolListingSession listingSession;
     const quint64 listingGeneration = listingSession.begin(true);
     const LogProtocolListingSession::Response response = listingSession.observeResponse(3, 3, 1);
@@ -451,11 +470,16 @@ void OnboardLogDownloadTest::_sessionStateTest()
     QVERIFY(downloadSession.isCurrent(downloadGeneration));
     QCOMPARE(downloadSession.takeNext(), &firstDownloadEntry);
     downloadSession.setInFlight(true);
+    QElapsedTimer progressTimer;
+    progressTimer.start();
+    QTRY_VERIFY_WITH_TIMEOUT(progressTimer.elapsed() >= 20, TestTimeout::shortMs());
     const std::optional<FtpDownloadSession::ProgressUpdate> progress =
         downloadSession.updateProgress(0.5, std::chrono::milliseconds::zero());
     QVERIFY(progress.has_value());
     QCOMPARE(progress->bytes, 50U);
     QCOMPARE(progress->progress, 0.5);
+    const qreal observedRate = 50. / (static_cast<qreal>(progressTimer.elapsed()) / 1000.);
+    QVERIFY(progress->rate > (observedRate * 0.5));
     downloadSession.requestRefresh();
     const FtpDownloadSession::Cancellation downloadCancellation = downloadSession.cancel();
     QVERIFY(downloadCancellation.wasActive);
@@ -539,17 +563,19 @@ void OnboardLogDownloadTest::_remoteBoundsTest()
     FtpTransport ftpTransport;
     (void) ftpTransport._listingSession.begin(QStringLiteral("/logs"), FtpListingParser::kMaxLogEntries - 1);
 
-    QCOMPARE(ftpTransport._processFileEntries({QStringLiteral("Ffirst.ulg\t100"), QStringLiteral("Fsecond.ulg\t100")},
-                                              QString()),
-             1U);
-    QCOMPARE(ftpTransport.model()->count(), 1);
+    std::optional<uint> processedEntries = ftpTransport._processFileEntries(
+        {QStringLiteral("Ffirst.ulg\t100"), QStringLiteral("Fsecond.ulg\t100")}, QString());
+    QVERIFY(processedEntries.has_value());
+    QCOMPARE(*processedEntries, 1U);
+    QVERIFY(ftpTransport._pendingLogInsertion.has_value());
+    QCOMPARE(ftpTransport._pendingLogInsertion->descriptors.size(), 1);
     QVERIFY(!ftpTransport.errorMessage().isEmpty());
 
     ftpTransport._setErrorMessage(QString());
-    QCOMPARE(
-        ftpTransport._processFileEntries(
-            {QStringLiteral("Dsubdir"), QStringLiteral("Fnotes.txt\t100"), QStringLiteral("malformed")}, QString()),
-        0U);
+    processedEntries = ftpTransport._processFileEntries(
+        {QStringLiteral("Dsubdir"), QStringLiteral("Fnotes.txt\t100"), QStringLiteral("malformed")}, QString());
+    QVERIFY(processedEntries.has_value());
+    QCOMPARE(*processedEntries, 0U);
     QVERIFY(ftpTransport.errorMessage().isEmpty());
 
     ftpTransport._listDirComplete({}, QString(), true);
@@ -565,7 +591,10 @@ void OnboardLogDownloadTest::_remoteBoundsTest()
     (void) malformedTransport._listingSession.begin(QStringLiteral("/logs"));
     expectLogMessage("AnalyzeView.OnboardLogs.FtpTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("malformed onboard log entry")));
-    QCOMPARE(malformedTransport._processFileEntries({QStringLiteral("Fbroken.ulg\tnot-a-size")}, QString()), 0U);
+    const std::optional<uint> malformedEntries =
+        malformedTransport._processFileEntries({QStringLiteral("Fbroken.ulg\tnot-a-size")}, QString());
+    QVERIFY(malformedEntries.has_value());
+    QCOMPARE(*malformedEntries, 0U);
     verifyExpectedLogMessage();
     QVERIFY(malformedTransport._listingSession.partial());
     QVERIFY(!malformedTransport.errorMessage().isEmpty());
@@ -636,6 +665,154 @@ void OnboardLogDownloadTest::_destructorCleanupTest()
     delete transport;
 
     QVERIFY(!QFile::exists(partialPath));
+
+    QPointer<FtpTransport> ftpTransport = new FtpTransport;
+    auto* const ftpEntry = new OnboardLogEntry(1, QDateTime(), 128, true, ftpTransport);
+    bool deletionStarted = false;
+    connect(
+        ftpTransport, &FtpTransport::errorMessageChanged, this,
+        [ftpTransport, &deletionStarted]() {
+            if (!deletionStarted) {
+                deletionStarted = true;
+                delete ftpTransport.data();
+            }
+        },
+        Qt::DirectConnection);
+
+    expectLogMessage("AnalyzeView.OnboardLogs.FtpTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("active vehicle became unavailable")));
+    ftpTransport->_downloadEntry(ftpEntry);
+    verifyExpectedLogMessage();
+    QVERIFY(deletionStarted);
+    QVERIFY(!ftpTransport);
+
+    QPointer<FtpTransport> silentDestructionTransport = new FtpTransport;
+    (void) silentDestructionTransport->_listingSession.begin(QStringLiteral("/logs"));
+    silentDestructionTransport->_setListing(true);
+    QSignalSpy listingFinishedSpy(silentDestructionTransport, &FtpTransport::listingFinished);
+    QSignalSpy busyChangedSpy(silentDestructionTransport, &FtpTransport::busyChanged);
+    delete silentDestructionTransport.data();
+    QVERIFY(!silentDestructionTransport);
+    QCOMPARE(listingFinishedSpy.size(), 0);
+    QCOMPARE(busyChangedSpy.size(), 0);
+
+    QPointer<FtpTransport> listingCancelTransport = new FtpTransport;
+    (void) listingCancelTransport->_listingSession.begin(QStringLiteral("/logs"));
+    listingCancelTransport->_setListing(true);
+    connect(listingCancelTransport, &FtpTransport::requestingListChanged, this, [listingCancelTransport]() {
+        delete listingCancelTransport.data();
+    });
+    listingCancelTransport->cancel();
+    QVERIFY(!listingCancelTransport);
+
+    QPointer<FtpTransport> downloadCancelTransport = new FtpTransport;
+    auto* const cancelEntry = new OnboardLogEntry(2, QDateTime(), 128, true, downloadCancelTransport);
+    downloadCancelTransport->model()->append(cancelEntry);
+    (void) downloadCancelTransport->_downloadSession.begin({cancelEntry}, downloadDir.path());
+    QCOMPARE(downloadCancelTransport->_downloadSession.takeNext(), cancelEntry);
+    downloadCancelTransport->_setDownloading(true);
+    connect(cancelEntry, &OnboardLogEntry::stateChanged, this, [downloadCancelTransport, cancelEntry]() {
+        if (cancelEntry->state() == OnboardLogEntry::State::Canceled) {
+            delete downloadCancelTransport.data();
+        }
+    });
+    downloadCancelTransport->cancel();
+    QVERIFY(!downloadCancelTransport);
+
+    QPointer<FtpTransport> eraseCancelTransport = new FtpTransport;
+    auto* const eraseEntry = new OnboardLogEntry(3, QDateTime(), 128, true, eraseCancelTransport);
+    eraseCancelTransport->model()->append(eraseEntry);
+    (void) eraseCancelTransport->_eraseSession.begin({eraseEntry});
+    QCOMPARE(eraseCancelTransport->_eraseSession.takeNext(), eraseEntry);
+    connect(eraseEntry, &OnboardLogEntry::stateChanged, this, [eraseCancelTransport, eraseEntry]() {
+        if (eraseEntry->state() == OnboardLogEntry::State::Canceled) {
+            delete eraseCancelTransport.data();
+        }
+    });
+    eraseCancelTransport->cancel();
+    QVERIFY(!eraseCancelTransport);
+
+    QPointer<LogProtocolTransport> logCancelTransport = new LogProtocolTransport;
+    logCancelTransport->setVehicle(vehicle());
+    (void) logCancelTransport->_listingSession.begin(false);
+    logCancelTransport->_setListing(true);
+    connect(logCancelTransport, &LogProtocolTransport::requestingListChanged, this, [logCancelTransport]() {
+        delete logCancelTransport.data();
+    });
+    logCancelTransport->cancel();
+    QVERIFY(!logCancelTransport);
+}
+
+void OnboardLogDownloadTest::_logProtocolReentrancyTest()
+{
+    {
+        QPointer<LogProtocolTransport> transport = new LogProtocolTransport;
+        transport->setVehicle(vehicle());
+        transport->_setErrorMessage(QStringLiteral("previous error"));
+        connect(
+            transport, &LogProtocolTransport::errorMessageChanged, this, [transport]() { delete transport.data(); },
+            Qt::DirectConnection);
+
+        transport->refresh();
+        QVERIFY(!transport);
+    }
+
+    {
+        QPointer<LogProtocolTransport> transport = new LogProtocolTransport;
+        transport->setVehicle(vehicle());
+        transport->_setBatchProgress(0.5);
+        connect(
+            transport, &LogProtocolTransport::batchProgressChanged, this, [transport]() { delete transport.data(); },
+            Qt::DirectConnection);
+
+        transport->refresh();
+        QVERIFY(!transport);
+    }
+
+    {
+        LogProtocolTransport transport;
+        transport.setVehicle(vehicle());
+        (void) transport._listingSession.begin(false);
+        transport._setListing(true);
+        bool restarted = false;
+        const QMetaObject::Connection connection =
+            connect(&transport, &LogProtocolTransport::requestingListChanged, &transport, [&transport, &restarted]() {
+                if (!transport.requestingList() && !restarted) {
+                    restarted = true;
+                    transport.refresh();
+                }
+            });
+
+        transport.cancel();
+        (void) disconnect(connection);
+        QVERIFY(restarted);
+        QVERIFY(transport.requestingList());
+        QVERIFY(transport._listingSession.active());
+        transport.cancel();
+    }
+
+    {
+        LogProtocolTransport transport;
+        transport.setVehicle(vehicle());
+        (void) transport._listingSession.begin(false);
+        transport._setListing(true);
+        bool restarted = false;
+        const QMetaObject::Connection connection =
+            connect(&transport, &LogProtocolTransport::listingFinished, &transport,
+                    [&transport, &restarted](OnboardLogTransport::ListingResult result) {
+                        if ((result == OnboardLogTransport::ListingResult::Canceled) && !restarted) {
+                            restarted = true;
+                            transport.refresh();
+                        }
+                    });
+
+        transport.cancel();
+        (void) disconnect(connection);
+        QVERIFY(restarted);
+        QVERIFY(transport.requestingList());
+        QVERIFY(transport._listingSession.active());
+        transport.cancel();
+    }
 }
 
 void OnboardLogDownloadTest::_logProtocolFailureHandlingTest()
@@ -764,4 +941,23 @@ void OnboardLogDownloadTest::_logProtocolFailureHandlingTest()
     QCOMPARE(invalidIdEntry->state(), OnboardLogEntry::State::Error);
     QVERIFY(!invalidIdEntry->selected());
     QVERIFY(!invalidIdEntry->errorMessage().isEmpty());
+}
+
+void OnboardLogDownloadTest::_logDownloadCancelStopsTimerTest()
+{
+    LogProtocolTransport transport;
+    transport.setVehicle(vehicle());
+    OnboardLogEntry* const entry = new OnboardLogEntry(0, QDateTime(), 128, true, &transport);
+    transport.model()->append(entry);
+    (void) transport._downloadBatch.begin({entry}, QStringLiteral("/tmp/"));
+    QVERIFY(transport._downloadBatch.startNext());
+    transport._setDownloading(true);
+    transport._timer->start(LogProtocolTransport::kTimeout);
+    QVERIFY(transport._timer->isActive());
+
+    transport.cancel();
+
+    QVERIFY(!transport._timer->isActive());
+    QVERIFY(!transport._downloadBatch.active());
+    QVERIFY(!transport.downloadingLogs());
 }

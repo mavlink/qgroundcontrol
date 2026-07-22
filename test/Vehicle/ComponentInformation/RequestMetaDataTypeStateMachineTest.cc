@@ -3,7 +3,9 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QUuid>
 #include <QtTest/QSignalSpy>
 
@@ -11,9 +13,12 @@
 #include "CompInfoParam.h"
 #include "ComponentInformationCache.h"
 #include "ComponentInformationManager.h"
+#include "FTPManager.h"
+#include "FTPManagerJob.h"
 #include "FactMetaData.h"
 #include "LinkManager.h"
 #include "MockConfiguration.h"
+#include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "RequestMetaDataTypeStateMachine.h"
 #include "UnitTest.h"
@@ -245,6 +250,132 @@ void RequestMetaDataTypeStateMachineTest::_requestUsesCachedMetadataForParameter
     FactMetaData* metadata = param->factMetaDataForName(QStringLiteral("CACHE_HIT_PARAM"), FactMetaData::valueTypeFloat);
     QVERIFY(metadata);
     QCOMPARE(metadata->shortDescription(), QStringLiteral("Loaded from cache"));
+}
+
+void RequestMetaDataTypeStateMachineTest::_timedOutFileDownloadIsCanceled()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->isRunning(), TestTimeout::mediumMs());
+
+    auto* general = manager->compInfoGeneral(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(general);
+
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    QVERIFY(mockFtp);
+    mockFtp->setErrorMode(MockLinkFTP::errModeNoResponse);
+    const auto restoreFtpMode = qScopeGuard([mockFtp]() { mockFtp->setErrorMode(MockLinkFTP::errModeNone); });
+
+    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    requestMachine.setTimeoutOverride(QStringLiteral("RequestMetaDataJson"), 50);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+
+    requestMachine.request(general);
+    if (completeSpy.isEmpty()) {
+        QVERIFY(completeSpy.wait(TestTimeout::longMs()));
+    }
+
+    QCOMPARE(completeSpy.size(), 1);
+    QVERIFY(!requestMachine.active());
+    QVERIFY(!requestMachine._ftpDownloadJob);
+    QCOMPARE(requestMachine._activeFileDownloadState, nullptr);
+
+    mockFtp->setErrorMode(MockLinkFTP::errModeNone);
+    const FTPManager::ListDirectoryStartResult probeResult =
+        vehicle()->ftpManager()->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"), 1);
+    QCOMPARE(probeResult.error(), FTPManager::StartError::None);
+    QVERIFY(probeResult.job());
+    probeResult.job()->cancel();
+}
+
+void RequestMetaDataTypeStateMachineTest::_staleMessageCallbackIsIgnored()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+
+    auto* general = manager->compInfoGeneral(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(general);
+    QVERIFY(param);
+
+    auto* requestMachine = new RequestMetaDataTypeStateMachine(manager);
+    requestMachine->_compInfo = param;
+    requestMachine->_requestGeneration = 2;
+    requestMachine->_messageRequestPhase = RequestMetaDataTypeStateMachine::MessageRequestPhase::ComponentMetadata;
+
+    auto* staleContext = new RequestMetaDataTypeStateMachine::MessageRequestContext(
+        vehicle(), requestMachine, general, 1, RequestMetaDataTypeStateMachine::MessageRequestPhase::ComponentMetadata);
+    mavlink_message_t message = {};
+    RequestMetaDataTypeStateMachine::_messageRequestResultHandler(staleContext, MAV_RESULT_ACCEPTED,
+                                                                  Vehicle::RequestMessageNoFailure, message);
+
+    QCOMPARE(requestMachine->_compInfo, param);
+    QCOMPARE(requestMachine->_messageRequestPhase,
+             RequestMetaDataTypeStateMachine::MessageRequestPhase::ComponentMetadata);
+
+    auto* wrongPhaseContext = new RequestMetaDataTypeStateMachine::MessageRequestContext(
+        vehicle(), requestMachine, param, requestMachine->_requestGeneration,
+        RequestMetaDataTypeStateMachine::MessageRequestPhase::ComponentInformation);
+    RequestMetaDataTypeStateMachine::_messageRequestResultHandler(wrongPhaseContext, MAV_RESULT_ACCEPTED,
+                                                                  Vehicle::RequestMessageNoFailure, message);
+    QCOMPARE(requestMachine->_messageRequestPhase,
+             RequestMetaDataTypeStateMachine::MessageRequestPhase::ComponentMetadata);
+
+    auto* destroyedContext = new RequestMetaDataTypeStateMachine::MessageRequestContext(
+        vehicle(), requestMachine, param, requestMachine->_requestGeneration,
+        RequestMetaDataTypeStateMachine::MessageRequestPhase::ComponentMetadata);
+    delete requestMachine;
+    RequestMetaDataTypeStateMachine::_messageRequestResultHandler(destroyedContext, MAV_RESULT_ACCEPTED,
+                                                                  Vehicle::RequestMessageNoFailure, message);
+}
+
+void RequestMetaDataTypeStateMachineTest::_ftpFallbackWaitsForCancellation()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->isRunning(), TestTimeout::mediumMs());
+
+    auto* general = manager->compInfoGeneral(MAV_COMP_ID_AUTOPILOT1);
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(general);
+    QVERIFY(param);
+
+    QTemporaryDir metadataDir;
+    QVERIFY(metadataDir.isValid());
+    const QString generalMetadataPath = metadataDir.filePath(QStringLiteral("general.json"));
+    QFile generalMetadataFile(generalMetadataPath);
+    QVERIFY(generalMetadataFile.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    const QByteArray generalMetadata = QByteArrayLiteral(
+        R"({"version":1,"metadataTypes":[{"type":1,"uri":"mftp://[;comp=1]mocklink-size-32","fileCrc":1,"uriFallback":"mftp://[;comp=1]mocklink-size-64","fileCrcFallback":2}]})");
+    QCOMPARE(generalMetadataFile.write(generalMetadata), generalMetadata.size());
+    generalMetadataFile.close();
+    general->setJson(generalMetadataPath);
+    general->setUris(*param);
+    QCOMPARE(param->uriMetaDataFallback(), QStringLiteral("mftp://[;comp=1]mocklink-size-64"));
+
+    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    requestMachine._compInfo = param;
+    requestMachine._activeAsyncState = nullptr;
+    requestMachine._activeSkippableState = requestMachine._stateRequestMetaDataJsonFallback;
+
+    auto* const cancelingJob = new FTPDownloadJob(vehicle()->ftpManager());
+    cancelingJob->_finish();
+    QVERIFY(cancelingJob);
+    requestMachine._trackCancelingFtpDownloadJob(cancelingJob);
+
+    QString fallbackFile;
+    requestMachine._requestFile(QString(), false, QStringLiteral("mftp://[;comp=1]mocklink-size-64"), fallbackFile,
+                                false);
+    QVERIFY(fallbackFile.isEmpty());
+    QCOMPARE(requestMachine._cancelingFtpDownloadJob, cancelingJob);
+
+    emit cancelingJob->finished(QString(), QStringLiteral("Aborted"), QString());
+    QVERIFY(!requestMachine._cancelingFtpDownloadJob);
+    QVERIFY(requestMachine._ftpDownloadJob);
+    QVERIFY(fallbackFile.isEmpty());
+    QVERIFY(requestMachine._cancelActiveFileDownload());
+    delete cancelingJob;
 }
 
 UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest, TestLabel::Integration, TestLabel::Vehicle)

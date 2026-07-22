@@ -1,13 +1,15 @@
 #include "QGClibarchive.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QDirIterator>
 #include <QtCore/QFileInfo>
 #include <QtCore/QSaveFile>
 #include <QtCore/QSet>
 #include <QtCore/QTemporaryDir>
-
+#include <algorithm>
 #include <archive.h>
 #include <archive_entry.h>
+#include <limits>
 
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
@@ -19,6 +21,8 @@ QGC_LOGGING_CATEGORY(QGClibarchiveLog, "Utilities.QGClibarchive")
 // ============================================================================
 
 namespace {
+
+thread_local QGClibarchive::OperationResult t_lastOperationResult = QGClibarchive::OperationResult::Success;
 
 struct FormatState
 {
@@ -53,6 +57,11 @@ void updateFormatState(struct archive* a)
 }  // namespace
 
 namespace QGClibarchive {
+
+OperationResult lastOperationResult()
+{
+    return t_lastOperationResult;
+}
 
 QString lastDetectedFormatName()
 {
@@ -182,16 +191,25 @@ namespace {
 /// @return Data read, or empty QByteArray on error or size limit exceeded
 QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint64 maxBytes = 0)
 {
+    t_lastOperationResult = QGClibarchive::OperationResult::Failed;
     QByteArray result;
     if (expectedSize > 0) {
+        if ((maxBytes > 0) && (expectedSize > maxBytes)) {
+            qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            t_lastOperationResult = QGClibarchive::OperationResult::SizeLimitExceeded;
+            return {};
+        }
+        if (expectedSize <= (std::numeric_limits<qsizetype>::max)()) {
         result.reserve(static_cast<qsizetype>(expectedSize));
+        }
     }
 
     char buffer[QGCFileHelper::kBufferSizeMax];
     la_ssize_t size;
     while ((size = archive_read_data(a, buffer, sizeof(buffer))) > 0) {
-        if (maxBytes > 0 && (result.size() + size) > maxBytes) {
+        if ((maxBytes > 0) && (size > (maxBytes - result.size()))) {
             qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            t_lastOperationResult = QGClibarchive::OperationResult::SizeLimitExceeded;
             return {};
         }
         result.append(buffer, static_cast<qsizetype>(size));
@@ -202,7 +220,239 @@ QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint6
         return {};
     }
 
+    t_lastOperationResult = QGClibarchive::OperationResult::Success;
     return result;
+}
+
+QString canonicalExtractionRoot(const QString& outputDirectoryPath)
+{
+    QString root = QFileInfo(outputDirectoryPath).canonicalFilePath();
+    if (root.isEmpty()) {
+        root = QFileInfo(outputDirectoryPath).absoluteFilePath();
+    }
+    return QDir::cleanPath(root);
+}
+
+bool isWithinExtractionRoot(const QString& root, const QString& path)
+{
+    const QString relative = QDir::fromNativeSeparators(QDir(root).relativeFilePath(path));
+    return !QDir::isAbsolutePath(relative) && (relative != QLatin1String("..")) &&
+           !relative.startsWith(QLatin1String("../"));
+}
+
+bool resolveSecureExtractionPath(const QString& root, const QString& entryName, QString& outputPath)
+{
+    if (entryName.isEmpty() || entryName.contains(QChar('\0'))) {
+        qCWarning(QGClibarchiveLog) << "Rejecting empty path or path with embedded null byte";
+        return false;
+    }
+
+    const QString normalizedName = QDir::fromNativeSeparators(entryName);
+    if (QDir::isAbsolutePath(normalizedName)) {
+        qCWarning(QGClibarchiveLog) << "Rejecting absolute archive path:" << entryName;
+        return false;
+    }
+
+    const QString cleanName = QDir::cleanPath(normalizedName);
+    if ((cleanName == QLatin1String(".")) || (cleanName == QLatin1String("..")) ||
+        cleanName.startsWith(QLatin1String("../"))) {
+        qCWarning(QGClibarchiveLog) << "Rejecting archive path traversal:" << entryName;
+        return false;
+    }
+
+    outputPath = QDir(root).absoluteFilePath(cleanName);
+    if (!isWithinExtractionRoot(root, outputPath)) {
+        qCWarning(QGClibarchiveLog) << "Rejecting archive path outside extraction root:" << entryName;
+        return false;
+    }
+
+    QString currentPath = root;
+    const QStringList components = cleanName.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+    for (const QString& component : components) {
+        currentPath = QDir(currentPath).filePath(component);
+        const QFileInfo componentInfo(currentPath);
+        if (componentInfo.isSymLink()) {
+            qCWarning(QGClibarchiveLog) << "Rejecting archive path through symlink:" << entryName;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+struct SelectionCommitEntry
+{
+    QString stagedPath;
+    QString outputPath;
+    QString backupPath;
+    bool hadExistingOutput = false;
+    bool committed = false;
+};
+
+bool commitStagedSelection(const QString& stagingRoot, const QString& outputDirectoryPath)
+{
+    const QFileInfo outputInfo(outputDirectoryPath);
+    if (outputInfo.isSymLink() || (outputInfo.exists() && !outputInfo.isDir())) {
+        qCWarning(QGClibarchiveLog) << "Selective extraction output is not a regular directory:" << outputDirectoryPath;
+        return false;
+    }
+
+    const bool createdOutputRoot = !outputInfo.exists();
+    if (!QGCFileHelper::ensureDirectoryExists(outputDirectoryPath)) {
+        return false;
+    }
+
+    const QString outputRoot = canonicalExtractionRoot(outputDirectoryPath);
+    const QString outputParent = QFileInfo(outputRoot).absolutePath();
+    const QString outputName = QFileInfo(outputRoot).fileName();
+    QTemporaryDir backupDirectory(
+        QGCFileHelper::joinPath(outputParent, QStringLiteral(".%1.qgc_select_backup_XXXXXX").arg(outputName)));
+    if (!backupDirectory.isValid()) {
+        if (createdOutputRoot) {
+            (void) QDir(outputRoot).removeRecursively();
+        }
+        qCWarning(QGClibarchiveLog) << "Failed to create selective extraction backup directory:"
+                                    << backupDirectory.errorString();
+        return false;
+    }
+
+    QList<SelectionCommitEntry> entries;
+    QDirIterator iterator(stagingRoot, QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    while (iterator.hasNext()) {
+        const QString stagedPath = iterator.next();
+        const QFileInfo stagedInfo(stagedPath);
+        if (stagedInfo.isSymLink()) {
+            qCWarning(QGClibarchiveLog) << "Refusing to commit staged symlink:" << stagedPath;
+            if (createdOutputRoot) {
+                (void) QDir(outputRoot).removeRecursively();
+            }
+            return false;
+        }
+
+        const QString relativePath = QDir::fromNativeSeparators(QDir(stagingRoot).relativeFilePath(stagedPath));
+        QString outputPath;
+        if (!resolveSecureExtractionPath(outputRoot, relativePath, outputPath)) {
+            if (createdOutputRoot) {
+                (void) QDir(outputRoot).removeRecursively();
+            }
+            return false;
+        }
+
+        const QFileInfo destinationInfo(outputPath);
+        if (destinationInfo.isSymLink() || (destinationInfo.exists() && !destinationInfo.isFile())) {
+            qCWarning(QGClibarchiveLog) << "Refusing to replace non-regular extraction target:" << outputPath;
+            if (createdOutputRoot) {
+                (void) QDir(outputRoot).removeRecursively();
+            }
+            return false;
+        }
+
+        entries.append({stagedPath, outputPath, QDir(backupDirectory.path()).filePath(relativePath),
+                        destinationInfo.exists(), false});
+    }
+
+    QStringList createdDirectories;
+    const auto rollback = [&entries, &createdDirectories, createdOutputRoot, &outputRoot]() {
+        bool restored = true;
+        for (auto iterator = entries.rbegin(); iterator != entries.rend(); ++iterator) {
+            if (iterator->committed && !QFile::remove(iterator->outputPath)) {
+                    qCWarning(QGClibarchiveLog)
+                    << "Failed to remove selective extraction target during rollback:" << iterator->outputPath;
+                restored = false;
+            }
+            if (iterator->hadExistingOutput && QFileInfo::exists(iterator->backupPath)) {
+                if (!QGCFileHelper::ensureParentExists(iterator->outputPath) ||
+                    !QFile::rename(iterator->backupPath, iterator->outputPath)) {
+                    qCWarning(QGClibarchiveLog)
+                        << "Failed to restore selective extraction backup:" << iterator->outputPath;
+                    restored = false;
+                }
+            }
+        }
+        if (createdOutputRoot) {
+            if (!QDir(outputRoot).removeRecursively()) {
+                    qCWarning(QGClibarchiveLog)
+                    << "Failed to remove selective extraction output during rollback:" << outputRoot;
+                restored = false;
+            }
+        } else {
+            for (auto iterator = createdDirectories.crbegin(); iterator != createdDirectories.crend(); ++iterator) {
+                (void) QDir().rmdir(*iterator);
+            }
+        }
+        return restored;
+};
+    const auto rollbackAndPreserveBackups = [&rollback, &backupDirectory]() {
+        if (!rollback()) {
+            backupDirectory.setAutoRemove(false);
+            qCWarning(QGClibarchiveLog) << "Selective extraction recovery files retained at:" << backupDirectory.path();
+        }
+};
+
+    for (SelectionCommitEntry& entry : entries) {
+        QString currentDirectory = QFileInfo(entry.outputPath).absolutePath();
+        QStringList missingDirectories;
+        while (!QFileInfo::exists(currentDirectory) && isWithinExtractionRoot(outputRoot, currentDirectory)) {
+            missingDirectories.prepend(currentDirectory);
+            currentDirectory = QFileInfo(currentDirectory).absolutePath();
+        }
+        if (!QGCFileHelper::ensureParentExists(entry.outputPath)) {
+            rollbackAndPreserveBackups();
+            return false;
+        }
+        createdDirectories.append(missingDirectories);
+
+        if (entry.hadExistingOutput) {
+            if (!QGCFileHelper::ensureParentExists(entry.backupPath) ||
+                !QFile::rename(entry.outputPath, entry.backupPath)) {
+                qCWarning(QGClibarchiveLog) << "Failed to back up selective extraction target:" << entry.outputPath;
+                rollbackAndPreserveBackups();
+                return false;
+            }
+        }
+        if (!QFile::rename(entry.stagedPath, entry.outputPath)) {
+            qCWarning(QGClibarchiveLog) << "Failed to commit selective extraction target:" << entry.outputPath;
+            rollbackAndPreserveBackups();
+            return false;
+        }
+        entry.committed = true;
+    }
+
+    return true;
+}
+
+template <typename Extractor>
+bool extractSelectionAtomically(const QString& outputDirectoryPath, Extractor extractor)
+{
+    const QFileInfo outputInfo(outputDirectoryPath);
+    const QString outputName = outputInfo.fileName();
+    const QString outputParent = outputInfo.absolutePath();
+    if (outputName.isEmpty() || !QGCFileHelper::ensureDirectoryExists(outputParent)) {
+        qCWarning(QGClibarchiveLog) << "Invalid selective extraction output directory:" << outputDirectoryPath;
+        t_lastOperationResult = QGClibarchive::OperationResult::Failed;
+        return false;
+    }
+
+    QTemporaryDir stagingDirectory(
+        QGCFileHelper::joinPath(outputParent, QStringLiteral(".%1.qgc_select_XXXXXX").arg(outputName)));
+    if (!stagingDirectory.isValid()) {
+        qCWarning(QGClibarchiveLog) << "Failed to create selective extraction staging directory:"
+                                    << stagingDirectory.errorString();
+        t_lastOperationResult = QGClibarchive::OperationResult::Failed;
+        return false;
+    }
+
+    if (!extractor(stagingDirectory.path())) {
+        return false;
+    }
+
+    t_lastOperationResult = QGClibarchive::OperationResult::Failed;
+    if (!commitStagedSelection(stagingDirectory.path(), outputDirectoryPath)) {
+        return false;
+    }
+
+    t_lastOperationResult = QGClibarchive::OperationResult::Success;
+    return true;
 }
 
 /// Write current archive entry data to a file atomically
@@ -211,8 +461,11 @@ QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint6
 /// @return true on success, false on read/write error (no partial file left on failure)
 /// @note Uses QSaveFile for atomic writes - writes to temp file, then renames on commit
 /// @note Uses archive_read_data_block() with seeking to preserve sparse file structure
-bool writeArchiveEntryToFile(struct archive* a, const QString& outputPath)
+bool writeArchiveEntryToFile(struct archive* a, const QString& outputPath,
+                             const QGClibarchive::ProgressCallback& progress = nullptr, qint64 totalSize = 0,
+                             qint64 maxBytes = 0, qint64* aggregateBytes = nullptr, qint64 declaredSize = -1)
 {
+    t_lastOperationResult = QGClibarchive::OperationResult::Failed;
     QSaveFile outFile(outputPath);
     if (!outFile.open(QIODevice::WriteOnly)) {
         qCWarning(QGClibarchiveLog) << "Failed to open output file:" << outputPath << outFile.errorString();
@@ -223,8 +476,34 @@ bool writeArchiveEntryToFile(struct archive* a, const QString& outputPath)
     size_t size;
     la_int64_t offset;
     int r;
+    const qint64 aggregateBase = aggregateBytes ? *aggregateBytes : 0;
+    qint64 logicalFileSize = (std::max) (declaredSize, qint64{0});
+
+    if ((maxBytes > 0) && ((aggregateBase > maxBytes) || (logicalFileSize > (maxBytes - aggregateBase)))) {
+        qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+        outFile.cancelWriting();
+        t_lastOperationResult = QGClibarchive::OperationResult::SizeLimitExceeded;
+        return false;
+    }
 
     while ((r = archive_read_data_block(a, &buff, &size, &offset)) == ARCHIVE_OK) {
+        if ((offset < 0) || (size > static_cast<size_t>((std::numeric_limits<qint64>::max)())) ||
+            (static_cast<quint64>(offset) + static_cast<quint64>(size) >
+             static_cast<quint64>((std::numeric_limits<qint64>::max)()))) {
+            qCWarning(QGClibarchiveLog) << "Invalid archive data block range:" << offset << size;
+            outFile.cancelWriting();
+            return false;
+        }
+
+        const qint64 blockEnd = offset + static_cast<qint64>(size);
+        const qint64 newLogicalFileSize = (std::max) (logicalFileSize, blockEnd);
+        if ((maxBytes > 0) && ((aggregateBase > maxBytes) || (newLogicalFileSize > (maxBytes - aggregateBase)))) {
+            qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            outFile.cancelWriting();
+            t_lastOperationResult = QGClibarchive::OperationResult::SizeLimitExceeded;
+            return false;
+        }
+
         // Seek to offset - creates sparse hole if gap from previous position
         if (!outFile.seek(offset)) {
             qCWarning(QGClibarchiveLog) << "Failed to seek:" << outFile.errorString();
@@ -236,10 +515,23 @@ bool writeArchiveEntryToFile(struct archive* a, const QString& outputPath)
             outFile.cancelWriting();
             return false;
         }
+        logicalFileSize = newLogicalFileSize;
+        if (progress && !progress(archive_filter_bytes(a, -1), totalSize)) {
+            qCDebug(QGClibarchiveLog) << "Extraction cancelled by user";
+            outFile.cancelWriting();
+            t_lastOperationResult = QGClibarchive::OperationResult::Cancelled;
+            return false;
+        }
     }
 
     if (r != ARCHIVE_EOF) {
         qCWarning(QGClibarchiveLog) << "Read error:" << archive_error_string(a);
+        outFile.cancelWriting();
+        return false;
+    }
+
+    if (!outFile.resize(logicalFileSize)) {
+        qCWarning(QGClibarchiveLog) << "Failed to resize sparse output:" << outFile.errorString();
         outFile.cancelWriting();
         return false;
     }
@@ -250,6 +542,10 @@ bool writeArchiveEntryToFile(struct archive* a, const QString& outputPath)
         return false;
     }
 
+    if (aggregateBytes) {
+        *aggregateBytes = aggregateBase + logicalFileSize;
+    }
+    t_lastOperationResult = QGClibarchive::OperationResult::Success;
     return true;
 }
 
@@ -259,14 +555,16 @@ bool writeArchiveEntryToFile(struct archive* a, const QString& outputPath)
 /// @param progress Optional progress callback
 /// @param totalSize Total size for progress reporting (0 if unknown)
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @return true on success, false on error/cancel/limit exceeded (no partial file)
-bool decompressStreamToFile(struct archive* a, const QString& outputPath,
-                            const QGClibarchive::ProgressCallback& progress, qint64 totalSize, qint64 maxBytes)
+/// @return Typed result; failures leave no partial file
+QGClibarchive::OperationResult decompressStreamToFile(struct archive* a, const QString& outputPath,
+                                                      const QGClibarchive::ProgressCallback& progress, qint64 totalSize,
+                                                      qint64 maxBytes)
 {
+    t_lastOperationResult = QGClibarchive::OperationResult::Failed;
     QSaveFile outFile(outputPath);
     if (!outFile.open(QIODevice::WriteOnly)) {
         qCWarning(QGClibarchiveLog) << "Failed to open output file:" << outputPath << outFile.errorString();
-        return false;
+        return QGClibarchive::OperationResult::Failed;
     }
 
     qint64 totalBytesWritten = 0;
@@ -274,16 +572,17 @@ bool decompressStreamToFile(struct archive* a, const QString& outputPath,
     la_ssize_t size;
 
     while ((size = archive_read_data(a, buffer, sizeof(buffer))) > 0) {
-        if (maxBytes > 0 && (totalBytesWritten + size) > maxBytes) {
+        if (maxBytes > 0 && size > (maxBytes - totalBytesWritten)) {
             qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
             outFile.cancelWriting();
-            return false;
+            t_lastOperationResult = QGClibarchive::OperationResult::SizeLimitExceeded;
+            return t_lastOperationResult;
         }
 
         if (outFile.write(buffer, size) != size) {
             qCWarning(QGClibarchiveLog) << "Failed to write output:" << outFile.errorString();
             outFile.cancelWriting();
-            return false;
+            return QGClibarchive::OperationResult::Failed;
         }
         totalBytesWritten += size;
 
@@ -292,7 +591,8 @@ bool decompressStreamToFile(struct archive* a, const QString& outputPath,
             if (!progress(bytesRead, totalSize)) {
                 qCDebug(QGClibarchiveLog) << "Decompression cancelled by user";
                 outFile.cancelWriting();
-                return false;
+                t_lastOperationResult = QGClibarchive::OperationResult::Cancelled;
+                return t_lastOperationResult;
             }
         }
     }
@@ -300,16 +600,17 @@ bool decompressStreamToFile(struct archive* a, const QString& outputPath,
     if (size < 0) {
         qCWarning(QGClibarchiveLog) << "Decompression error:" << archive_error_string(a);
         outFile.cancelWriting();
-        return false;
+        return QGClibarchive::OperationResult::Failed;
     }
 
     if (!outFile.commit()) {
         qCWarning(QGClibarchiveLog) << "Failed to commit output file:" << outFile.errorString();
-        return false;
+        return QGClibarchive::OperationResult::Failed;
     }
 
     qCDebug(QGClibarchiveLog) << "Decompressed" << totalBytesWritten << "bytes to" << outputPath;
-    return true;
+    t_lastOperationResult = QGClibarchive::OperationResult::Success;
+    return t_lastOperationResult;
 }
 
 /// Remove only files/directories created during extraction (safe cleanup)
@@ -372,7 +673,13 @@ void trackAndCreateParentDirs(const QString& path, const QString& outputDir, QSe
 bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath,
                            const QGClibarchive::ProgressCallback& progress, qint64 totalSize, qint64 maxBytes)
 {
+    t_lastOperationResult = QGClibarchive::OperationResult::Failed;
     struct archive* ext = archive_write_disk_new();
+    if (!ext) {
+    archive_read_close(a);
+        archive_read_free(a);
+        return false;
+    }
     // Security flags:
     // - ARCHIVE_EXTRACT_TIME: Restore file modification times
     // - ARCHIVE_EXTRACT_SECURE_NODOTDOT: Reject paths containing ".."
@@ -397,14 +704,12 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
     // Resolve the extraction root to a canonical path when possible so platforms
     // with symlinked temp roots (for example, /var -> /private/var on macOS)
     // do not trip libarchive's secure symlink checks for parent directories.
-    QString canonicalOutputDir = QFileInfo(outputDirectoryPath).canonicalFilePath();
-    if (canonicalOutputDir.isEmpty()) {
-        canonicalOutputDir = QFileInfo(outputDirectoryPath).absoluteFilePath();
-    }
+    const QString canonicalOutputDir = canonicalExtractionRoot(outputDirectoryPath);
     existingDirs.insert(canonicalOutputDir);
 
     bool formatLogged = false;
-    while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
+    int headerResult = ARCHIVE_OK;
+    while ((headerResult = archive_read_next_header(a, &entry)) == ARCHIVE_OK) {
         // Log detected format after first header read
         if (!formatLogged) {
             updateFormatState(a);
@@ -412,23 +717,12 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
         }
 
         const char* currentFile = archive_entry_pathname(entry);
-        QString entryName = QString::fromUtf8(currentFile);
-        QString outputPath = QGCFileHelper::joinPath(canonicalOutputDir, entryName);
-
-        // Prevent path traversal attacks
-        QFileInfo outputInfo(outputPath);
-        QString canonicalOutput = outputInfo.absoluteFilePath();
-
-        if (!canonicalOutput.startsWith(canonicalOutputDir + "/") && canonicalOutput != canonicalOutputDir) {
-            qCWarning(QGClibarchiveLog) << "Skipping path traversal attempt:" << currentFile;
+        const QString entryName = QString::fromUtf8(currentFile);
+        QString outputPath;
+        if (!resolveSecureExtractionPath(canonicalOutputDir, entryName, outputPath)) {
             continue;
         }
-
-        // Security: reject filenames with embedded null bytes (libarchive issue #2774)
-        if (entryName.contains(QChar('\0'))) {
-            qCWarning(QGClibarchiveLog) << "Skipping path with embedded null byte";
-            continue;
-        }
+        const QString canonicalOutput = QFileInfo(outputPath).absoluteFilePath();
 
         // Security: validate symlink targets don't escape output directory
         const auto fileType = archive_entry_filetype(entry);
@@ -450,7 +744,7 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
                 }
 
                 // Verify resolved target stays within output directory
-                if (!resolvedTarget.startsWith(canonicalOutputDir + "/") && resolvedTarget != canonicalOutputDir) {
+                if (!isWithinExtractionRoot(canonicalOutputDir, resolvedTarget)) {
                     qCWarning(QGClibarchiveLog)
                         << "Skipping symlink escaping output directory:" << currentFile << "->" << symlinkTarget;
                     continue;
@@ -467,6 +761,16 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
         }
         // Note: symlinks don't have meaningful permissions on most systems
 
+        const qint64 declaredSize = archive_entry_size(entry);
+        if ((fileType == AE_IFREG) && (maxBytes > 0) && (declaredSize >= 0) &&
+            ((totalBytesWritten > maxBytes) || (declaredSize > (maxBytes - totalBytesWritten)))) {
+            qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+                    sizeLimitExceeded = true;
+            success = false;
+            break;
+        }
+
+        const bool outputExisted = QFileInfo::exists(canonicalOutput);
         archive_entry_set_pathname(entry, outputPath.toUtf8().constData());
 
         // Create parent directories and track newly created ones
@@ -486,18 +790,29 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
                 createdDirs.append(canonicalOutput);
                 existingDirs.insert(canonicalOutput);
             }
-        } else {
+        } else if (!outputExisted) {
             createdFiles.append(canonicalOutput);
         }
 
-        if (archive_entry_size(entry) > 0) {
+        qint64 entryLogicalSize = (fileType == AE_IFREG) && (declaredSize > 0) ? declaredSize : 0;
+        if (declaredSize > 0) {
             const void* buff;
             size_t size;
             la_int64_t offset;
 
             while ((r = archive_read_data_block(a, &buff, &size, &offset)) == ARCHIVE_OK) {
-                // Check size limit before writing
-                if (maxBytes > 0 && (totalBytesWritten + static_cast<qint64>(size)) > maxBytes) {
+                if ((offset < 0) || (size > static_cast<size_t>((std::numeric_limits<qint64>::max)())) ||
+                    (static_cast<quint64>(offset) + static_cast<quint64>(size) >
+                     static_cast<quint64>((std::numeric_limits<qint64>::max)()))) {
+                    qCWarning(QGClibarchiveLog) << "Invalid archive data block range:" << offset << size;
+                    success = false;
+                    break;
+                }
+
+                const qint64 blockEnd = offset + static_cast<qint64>(size);
+                const qint64 newLogicalSize = (std::max) (entryLogicalSize, blockEnd);
+                if ((maxBytes > 0) &&
+                    ((totalBytesWritten > maxBytes) || (newLogicalSize > (maxBytes - totalBytesWritten)))) {
                     qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
                     sizeLimitExceeded = true;
                     success = false;
@@ -510,7 +825,7 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
                     break;
                 }
 
-                totalBytesWritten += static_cast<qint64>(size);
+                entryLogicalSize = newLogicalSize;
 
                 // Report progress based on compressed bytes read
                 if (progress) {
@@ -539,6 +854,15 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
             success = false;
             break;
         }
+
+        if ((maxBytes > 0) && (fileType == AE_IFREG) && (entryLogicalSize > 0)) {
+            totalBytesWritten += entryLogicalSize;
+        }
+    }
+
+    if (success && (headerResult != ARCHIVE_EOF)) {
+        qCWarning(QGClibarchiveLog) << "Failed to read archive header:" << archive_error_string(a);
+        success = false;
     }
 
     archive_read_close(a);
@@ -546,9 +870,17 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
     archive_write_close(ext);
     archive_write_free(ext);
 
-    // Clean up only created entries on cancellation or size limit exceeded
-    if (cancelled || sizeLimitExceeded) {
+    // Never expose newly-created partial output from a failed extraction.
+    if (!success) {
         cleanupCreatedEntries(createdFiles, createdDirs);
+    }
+
+    if (sizeLimitExceeded) {
+        t_lastOperationResult = QGClibarchive::OperationResult::SizeLimitExceeded;
+    } else if (cancelled) {
+        t_lastOperationResult = QGClibarchive::OperationResult::Cancelled;
+    } else if (success) {
+        t_lastOperationResult = QGClibarchive::OperationResult::Success;
     }
 
     return success;
@@ -747,6 +1079,7 @@ bool openArchiveForReading(struct archive* a, const QString& filePath, QByteArra
 bool extractAnyArchive(const QString& archivePath, const QString& outputDirectoryPath, ProgressCallback progress,
                        qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     if (!QGCFileHelper::ensureDirectoryExists(outputDirectoryPath)) {
         return false;
     }
@@ -771,6 +1104,7 @@ bool extractAnyArchive(const QString& archivePath, const QString& outputDirector
 bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath, ProgressCallback progress,
                           qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     const QFileInfo outputInfo(outputDirectoryPath);
     if (outputInfo.fileName().isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Invalid output directory path:" << outputDirectoryPath;
@@ -801,8 +1135,8 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
     const QString outputDirectoryName = outputInfo.fileName();
 
     // Stage extraction in the same parent directory to keep commit/rollback renames on one filesystem.
-    QTemporaryDir stagingDir(QGCFileHelper::joinPath(parentDirectoryPath,
-                                                     QStringLiteral("%1.qgc_stage_XXXXXX").arg(outputDirectoryName)));
+    QTemporaryDir stagingDir(
+        QGCFileHelper::joinPath(parentDirectoryPath, QStringLiteral("%1.qgc_stage_XXXXXX").arg(outputDirectoryName)));
     if (!stagingDir.isValid()) {
         qCWarning(QGClibarchiveLog) << "Failed to create staging directory:" << stagingDir.errorString();
         return false;
@@ -824,10 +1158,13 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
 
     const qint64 totalSize = reader.dataSize();
     if (!extractArchiveEntries(reader.release(), stagingPath, progress, totalSize, maxBytes)) {
+        const OperationResult extractionResult = t_lastOperationResult;
         qCDebug(QGClibarchiveLog) << "Staged extraction failed, cleaning up";
         (void) QDir(stagingPath).removeRecursively();
+        t_lastOperationResult = extractionResult;
         return false;
     }
+    t_lastOperationResult = OperationResult::Failed;
 
     QDir parentDir(parentDirectoryPath);
     QString backupPath;
@@ -841,11 +1178,10 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
             return false;
         }
 
-        QTemporaryDir backupDir(QGCFileHelper::joinPath(parentDirectoryPath,
-                                                        QStringLiteral("%1.qgc_backup_XXXXXX").arg(outputDirectoryName)));
+        QTemporaryDir backupDir(QGCFileHelper::joinPath(
+            parentDirectoryPath, QStringLiteral("%1.qgc_backup_XXXXXX").arg(outputDirectoryName)));
         if (!backupDir.isValid()) {
-            qCWarning(QGClibarchiveLog) << "Failed to create backup directory placeholder:"
-                                        << backupDir.errorString();
+            qCWarning(QGClibarchiveLog) << "Failed to create backup directory placeholder:" << backupDir.errorString();
             (void) QDir(stagingPath).removeRecursively();
             return false;
         }
@@ -879,35 +1215,67 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
     }
 
     qCDebug(QGClibarchiveLog) << "Atomic extraction committed:" << outputDirectoryPath;
+    t_lastOperationResult = OperationResult::Success;
     return true;
 }
 
-bool extractSingleFile(const QString& archivePath, const QString& fileName, const QString& outputPath)
+bool extractSingleFile(const QString& archivePath, const QString& fileName, const QString& outputPath,
+                       ProgressCallback progress, qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
         return false;
     }
 
-    struct archive_entry* entry;
+    const qint64 totalSize = QFileInfo(archivePath).size();
+    if (progress && !progress(0, totalSize)) {
+        t_lastOperationResult = OperationResult::Cancelled;
+        return false;
+    }
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    struct archive_entry* entry;
+    int headerResult = ARCHIVE_OK;
+
+    while ((headerResult = archive_read_next_header(reader.handle(), &entry)) == ARCHIVE_OK) {
+        if (progress && !progress(archive_filter_bytes(reader.handle(), -1), totalSize)) {
+            t_lastOperationResult = OperationResult::Cancelled;
+            return false;
+        }
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
 
         if (entryName == fileName) {
-            QGCFileHelper::ensureParentExists(outputPath);
-            return writeArchiveEntryToFile(reader.handle(), outputPath);
+            const qint64 declaredSize = archive_entry_size(entry);
+            if ((maxBytes > 0) && (declaredSize >= 0) && (declaredSize > maxBytes)) {
+                qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+                t_lastOperationResult = OperationResult::SizeLimitExceeded;
+                return false;
+            }
+            if (!QGCFileHelper::ensureParentExists(outputPath)) {
+                return false;
+            }
+            qint64 extractedBytes = 0;
+            return writeArchiveEntryToFile(reader.handle(), outputPath, progress, totalSize, maxBytes, &extractedBytes,
+                                           declaredSize);
         }
 
         archive_read_data_skip(reader.handle());
     }
 
-    qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    if (headerResult != ARCHIVE_EOF) {
+        qCWarning(QGClibarchiveLog) << "Failed to scan archive:" << archive_error_string(reader.handle());
+        t_lastOperationResult = OperationResult::Failed;
     return false;
 }
 
-QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName)
+    qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    t_lastOperationResult = OperationResult::NotFound;
+    return false;
+}
+
+QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     if (fileName.isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Empty file name";
         return QByteArray();
@@ -919,12 +1287,13 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
     }
 
     struct archive_entry* entry;
+    int headerResult = ARCHIVE_OK;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((headerResult = archive_read_next_header(reader.handle(), &entry)) == ARCHIVE_OK) {
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
 
         if (entryName == fileName) {
-            QByteArray result = readArchiveToMemory(reader.handle(), archive_entry_size(entry));
+    QByteArray result = readArchiveToMemory(reader.handle(), archive_entry_size(entry), maxBytes);
             if (!result.isEmpty()) {
                 qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "to memory:" << result.size() << "bytes";
             }
@@ -934,30 +1303,54 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
         archive_read_data_skip(reader.handle());
     }
 
-    qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    if (headerResult != ARCHIVE_EOF) {
+        qCWarning(QGClibarchiveLog) << "Failed to scan archive:" << archive_error_string(reader.handle());
+        t_lastOperationResult = OperationResult::Failed;
     return QByteArray();
 }
 
-bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath)
+    qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    t_lastOperationResult = OperationResult::NotFound;
+    return QByteArray();
+}
+
+static bool extractMultipleFilesToDirectory(const QString& archivePath, const QStringList& fileNames,
+                                            const QString& outputDirectoryPath, ProgressCallback progress,
+                                            qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     if (fileNames.isEmpty()) {
+        t_lastOperationResult = OperationResult::Success;
         return true;
     }
 
     if (!QGCFileHelper::ensureDirectoryExists(outputDirectoryPath)) {
         return false;
     }
+    const QString extractionRoot = canonicalExtractionRoot(outputDirectoryPath);
 
     ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
         return false;
     }
 
+    const qint64 totalSize = QFileInfo(archivePath).size();
+    if (progress && !progress(0, totalSize)) {
+        t_lastOperationResult = OperationResult::Cancelled;
+        return false;
+    }
+
     QSet<QString> targetFiles(fileNames.begin(), fileNames.end());
     QSet<QString> extractedFiles;
+    qint64 extractedBytes = 0;
     struct archive_entry* entry;
+    int headerResult = ARCHIVE_OK;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((headerResult = archive_read_next_header(reader.handle(), &entry)) == ARCHIVE_OK) {
+        if (progress && !progress(archive_filter_bytes(reader.handle(), -1), totalSize)) {
+            t_lastOperationResult = OperationResult::Cancelled;
+            return false;
+        }
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
 
         if (!targetFiles.contains(entryName)) {
@@ -965,10 +1358,22 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
             continue;
         }
 
-        const QString outputPath = QGCFileHelper::joinPath(outputDirectoryPath, entryName);
-        QGCFileHelper::ensureParentExists(outputPath);
+        const qint64 declaredSize = archive_entry_size(entry);
+        if ((maxBytes > 0) && (declaredSize >= 0) &&
+            ((extractedBytes > maxBytes) || (declaredSize > (maxBytes - extractedBytes)))) {
+            qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            t_lastOperationResult = OperationResult::SizeLimitExceeded;
+            return false;
+        }
 
-        if (!writeArchiveEntryToFile(reader.handle(), outputPath)) {
+        QString outputPath;
+        if (!resolveSecureExtractionPath(extractionRoot, entryName, outputPath) ||
+            !QGCFileHelper::ensureParentExists(outputPath)) {
+            return false;
+        }
+
+        if (!writeArchiveEntryToFile(reader.handle(), outputPath, progress, totalSize, maxBytes, &extractedBytes,
+                                     declaredSize)) {
             return false;
         }
 
@@ -979,7 +1384,14 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
         }
     }
 
+    if ((extractedFiles.size() != targetFiles.size()) && (headerResult != ARCHIVE_EOF)) {
+        qCWarning(QGClibarchiveLog) << "Failed to scan archive:" << archive_error_string(reader.handle());
+        t_lastOperationResult = OperationResult::Failed;
+        return false;
+    }
+
     if (extractedFiles.size() != targetFiles.size()) {
+        t_lastOperationResult = OperationResult::NotFound;
         for (const QString& name : fileNames) {
             if (!extractedFiles.contains(name)) {
                 qCWarning(QGClibarchiveLog) << "File not found in archive:" << name;
@@ -988,12 +1400,28 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
         return false;
     }
 
+    t_lastOperationResult = OperationResult::Success;
     return true;
 }
 
-bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
-                      QStringList* extractedFiles)
+bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
+                       ProgressCallback progress, qint64 maxBytes)
 {
+    if (fileNames.isEmpty()) {
+        t_lastOperationResult = OperationResult::Success;
+        return true;
+    }
+
+    return extractSelectionAtomically(outputDirectoryPath, [&](const QString& stagingPath) {
+        return extractMultipleFilesToDirectory(archivePath, fileNames, stagingPath, progress, maxBytes);
+    });
+}
+
+static bool extractByPatternToDirectory(const QString& archivePath, const QStringList& patterns,
+                                        const QString& outputDirectoryPath, QStringList* extractedFiles,
+                                        qint64 maxBytes)
+{
+    t_lastOperationResult = OperationResult::Failed;
     if (patterns.isEmpty()) {
         return false;
     }
@@ -1001,6 +1429,7 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
     if (!QGCFileHelper::ensureDirectoryExists(outputDirectoryPath)) {
         return false;
     }
+    const QString extractionRoot = canonicalExtractionRoot(outputDirectoryPath);
 
     struct archive* match = archive_match_new();
     if (!match) {
@@ -1023,9 +1452,11 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
     }
 
     struct archive_entry* entry;
+    int headerResult = ARCHIVE_OK;
     int matchCount = 0;
+    qint64 extractedBytes = 0;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((headerResult = archive_read_next_header(reader.handle(), &entry)) == ARCHIVE_OK) {
         if (archive_match_excluded(match, entry)) {
             archive_read_data_skip(reader.handle());
             continue;
@@ -1036,12 +1467,25 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
             continue;
         }
 
+        const qint64 declaredSize = archive_entry_size(entry);
+        if ((maxBytes > 0) && (declaredSize >= 0) &&
+            ((extractedBytes > maxBytes) || (declaredSize > (maxBytes - extractedBytes)))) {
+            qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            t_lastOperationResult = OperationResult::SizeLimitExceeded;
+            archive_match_free(match);
+            return false;
+        }
+
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
-        const QString outputPath = QGCFileHelper::joinPath(outputDirectoryPath, entryName);
+        QString outputPath;
+        if (!resolveSecureExtractionPath(extractionRoot, entryName, outputPath) ||
+            !QGCFileHelper::ensureParentExists(outputPath)) {
+            archive_match_free(match);
+            return false;
+        }
 
-        QGCFileHelper::ensureParentExists(outputPath);
-
-        if (!writeArchiveEntryToFile(reader.handle(), outputPath)) {
+        if (!writeArchiveEntryToFile(reader.handle(), outputPath, nullptr, 0, maxBytes, &extractedBytes,
+                                     declaredSize)) {
             archive_match_free(match);
             return false;
         }
@@ -1050,6 +1494,13 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
         if (extractedFiles) {
             extractedFiles->append(entryName);
         }
+    }
+
+    if (headerResult != ARCHIVE_EOF) {
+        qCWarning(QGClibarchiveLog) << "Failed to scan archive:" << archive_error_string(reader.handle());
+        t_lastOperationResult = OperationResult::Failed;
+        archive_match_free(match);
+        return false;
     }
 
     if (archive_match_path_unmatched_inclusions(match) > 0) {
@@ -1062,7 +1513,21 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
     archive_match_free(match);
 
     qCDebug(QGClibarchiveLog) << "Extracted" << matchCount << "files matching patterns from" << archivePath;
+    t_lastOperationResult = matchCount > 0 ? OperationResult::Success : OperationResult::NotFound;
     return matchCount > 0;
+}
+
+bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
+                      QStringList* extractedFiles, qint64 maxBytes)
+{
+    QStringList stagedFiles;
+    const bool success = extractSelectionAtomically(outputDirectoryPath, [&](const QString& stagingPath) {
+        return extractByPatternToDirectory(archivePath, patterns, stagingPath, &stagedFiles, maxBytes);
+    });
+    if (success && extractedFiles) {
+        extractedFiles->append(stagedFiles);
+    }
+    return success;
 }
 
 bool validateArchive(const QString& archivePath)
@@ -1160,8 +1625,9 @@ ArchiveStats getArchiveStats(const QString& archivePath)
 
     ArchiveStats stats;
     struct archive_entry* entry;
+    int headerResult = ARCHIVE_OK;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((headerResult = archive_read_next_header(reader.handle(), &entry)) == ARCHIVE_OK) {
         stats.totalEntries++;
 
         if (archive_entry_filetype(entry) == AE_IFDIR) {
@@ -1185,9 +1651,10 @@ ArchiveStats getArchiveStats(const QString& archivePath)
     return stats;
 }
 
-bool extractWithFilter(const QString& archivePath, const QString& outputDirectoryPath, EntryFilter filter,
-                       ProgressCallback progress, qint64 maxBytes)
+static bool extractWithFilterToDirectory(const QString& archivePath, const QString& outputDirectoryPath,
+                                         EntryFilter filter, ProgressCallback progress, qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     if (!filter) {
         qCWarning(QGClibarchiveLog) << "No filter provided";
         return false;
@@ -1196,6 +1663,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
     if (!QGCFileHelper::ensureDirectoryExists(outputDirectoryPath)) {
         return false;
     }
+    const QString extractionRoot = canonicalExtractionRoot(outputDirectoryPath);
 
     // Pre-check: verify sufficient disk space (uses total archive size as upper bound)
     const ArchiveStats stats = getArchiveStats(archivePath);
@@ -1211,13 +1679,13 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
     }
 
     const qint64 totalSize = reader.dataSize();
-    qint64 bytesProcessed = 0;
     qint64 bytesExtracted = 0;
     int extractedCount = 0;
     int skippedCount = 0;
     struct archive_entry* entry;
+    int headerResult = ARCHIVE_OK;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((headerResult = archive_read_next_header(reader.handle(), &entry)) == ARCHIVE_OK) {
         // Build ArchiveEntry for filter callback
         const ArchiveEntry info = toArchiveEntry(entry);
 
@@ -1235,51 +1703,69 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
         }
 
         // Check size limit before extraction
-        if (maxBytes > 0 && (bytesExtracted + info.size) > maxBytes) {
+        if ((maxBytes > 0) && (info.size >= 0) &&
+            ((bytesExtracted > maxBytes) || (info.size > (maxBytes - bytesExtracted)))) {
             qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            t_lastOperationResult = OperationResult::SizeLimitExceeded;
             return false;
         }
 
-        const QString outputPath = QGCFileHelper::joinPath(outputDirectoryPath, info.name);
-        QGCFileHelper::ensureParentExists(outputPath);
-
-        if (!writeArchiveEntryToFile(reader.handle(), outputPath)) {
+        QString outputPath;
+        if (!resolveSecureExtractionPath(extractionRoot, info.name, outputPath) ||
+            !QGCFileHelper::ensureParentExists(outputPath)) {
             return false;
         }
 
-        bytesExtracted += info.size;
-        extractedCount++;
-
-        // Progress callback
-        if (progress) {
-            bytesProcessed += info.size;
-            if (!progress(bytesProcessed, totalSize)) {
-                qCDebug(QGClibarchiveLog) << "Extraction cancelled by user";
+        if (!writeArchiveEntryToFile(reader.handle(), outputPath, progress, totalSize, maxBytes, &bytesExtracted,
+                                     info.size)) {
                 return false;
             }
+
+        extractedCount++;
         }
+
+    if (headerResult != ARCHIVE_EOF) {
+        qCWarning(QGClibarchiveLog) << "Failed to scan archive:" << archive_error_string(reader.handle());
+        t_lastOperationResult = OperationResult::Failed;
+        return false;
     }
 
     qCDebug(QGClibarchiveLog) << "Extracted" << extractedCount << "files, skipped" << skippedCount;
+    t_lastOperationResult = OperationResult::Success;
     return true;
+}
+
+bool extractWithFilter(const QString& archivePath, const QString& outputDirectoryPath, EntryFilter filter,
+                       ProgressCallback progress, qint64 maxBytes)
+{
+    if (!filter) {
+        t_lastOperationResult = OperationResult::Failed;
+        qCWarning(QGClibarchiveLog) << "No filter provided";
+        return false;
+    }
+
+    return extractSelectionAtomically(outputDirectoryPath, [&](const QString& stagingPath) {
+        return extractWithFilterToDirectory(archivePath, stagingPath, filter, progress, maxBytes);
+    });
 }
 
 // ----------------------------------------------------------------------------
 // Single-File Decompression
 // ----------------------------------------------------------------------------
 
-bool decompressSingleFile(const QString& inputPath, const QString& outputPath, ProgressCallback progress,
+OperationResult decompressSingleFile(const QString& inputPath, const QString& outputPath, ProgressCallback progress,
                           qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     ArchiveReader reader;
     if (!reader.open(inputPath, ReaderMode::RawFormat)) {
-        return false;
+        return OperationResult::Failed;
     }
 
     struct archive_entry* entry = nullptr;
     if (archive_read_next_header(reader.handle(), &entry) != ARCHIVE_OK) {
         qCWarning(QGClibarchiveLog) << "Failed to read header:" << archive_error_string(reader.handle());
-        return false;
+        return OperationResult::Failed;
     }
 
     updateFormatState(reader.handle());
@@ -1290,6 +1776,7 @@ bool decompressSingleFile(const QString& inputPath, const QString& outputPath, P
 
 QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     if (data.isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Cannot decompress empty data";
         return {};
@@ -1332,6 +1819,7 @@ QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes)
 bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, ProgressCallback progress,
                        qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     if (!QGCFileHelper::ensureDirectoryExists(outputDirectoryPath)) {
         return false;
     }
@@ -1376,6 +1864,7 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
 
 bool decompressFromDevice(QIODevice* device, const QString& outputPath, ProgressCallback progress, qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     ArchiveReader reader;
     if (!reader.open(device, ReaderMode::RawFormat)) {
         return false;
@@ -1392,11 +1881,13 @@ bool decompressFromDevice(QIODevice* device, const QString& outputPath, Progress
     updateFormatState(reader.handle());
 
     const qint64 totalSize = device->size() > 0 ? device->size() : 0;
-    return decompressStreamToFile(reader.handle(), outputPath, progress, totalSize, maxBytes);
+    return decompressStreamToFile(reader.handle(), outputPath, progress, totalSize, maxBytes) ==
+           OperationResult::Success;
 }
 
 QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes)
 {
+    t_lastOperationResult = OperationResult::Failed;
     ArchiveReader reader;
     if (!reader.open(device, ReaderMode::RawFormat)) {
         return {};

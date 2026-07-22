@@ -7,6 +7,8 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
+#include <QtCore/QtGlobal>
+#include <optional>
 
 class QGCFileDownload;
 class QNetworkDiskCache;
@@ -74,12 +76,10 @@ class QGCCachedFileDownload : public QObject
     Q_PROPERTY(bool fromCache READ isFromCache NOTIFY fromCacheChanged FINAL)
 
     /// Cache directory path
-    Q_PROPERTY(QString cacheDirectory READ cacheDirectory WRITE setCacheDirectory
-               NOTIFY cacheDirectoryChanged FINAL)
+    Q_PROPERTY(QString cacheDirectory READ cacheDirectory WRITE setCacheDirectory NOTIFY cacheDirectoryChanged FINAL)
 
     /// Maximum cache size in bytes (0 = unlimited)
-    Q_PROPERTY(qint64 maxCacheSize READ maxCacheSize WRITE setMaxCacheSize
-               NOTIFY maxCacheSizeChanged FINAL)
+    Q_PROPERTY(qint64 maxCacheSize READ maxCacheSize WRITE setMaxCacheSize NOTIFY maxCacheSizeChanged FINAL)
 
     /// Current cache size in bytes
     Q_PROPERTY(qint64 cacheSize READ cacheSize NOTIFY cacheSizeChanged FINAL)
@@ -97,11 +97,17 @@ public:
 
     // Property getters
     qreal progress() const { return _progress; }
+
     bool isRunning() const { return _running; }
+
     QString errorString() const { return _errorString; }
+
     QUrl url() const { return _url; }
+
     QString localPath() const { return _localPath; }
+
     bool isFromCache() const { return _fromCache; }
+
     QString cacheDirectory() const;
     qint64 maxCacheSize() const;
     qint64 cacheSize() const;
@@ -137,18 +143,25 @@ public slots:
     /// Download a file with cache support
     /// @param url URL to download
     /// @param maxCacheAgeSec Maximum cache age in seconds (0 = any age is valid)
+    /// @param maximumDownloadBytes Maximum transferred bytes (0 = unlimited)
+    /// @param maximumDecompressedBytes Maximum bytes produced by automatic decompression (0 = unlimited)
     /// @return true if download started successfully
-    bool download(const QString &url, int maxCacheAgeSec);
+    bool download(const QString& url, int maxCacheAgeSec, qint64 maximumDownloadBytes = 0,
+                  qint64 maximumDecompressedBytes = 0);
 
     /// Download a file, always using cache if available (no expiration check)
     /// @param url URL to download
+    /// @param maximumDownloadBytes Maximum transferred bytes (0 = unlimited)
+    /// @param maximumDecompressedBytes Maximum bytes produced by automatic decompression (0 = unlimited)
     /// @return true if download started successfully
-    bool downloadPreferCache(const QString &url);
+    bool downloadPreferCache(const QString& url, qint64 maximumDownloadBytes = 0, qint64 maximumDecompressedBytes = 0);
 
     /// Download a file, bypassing cache entirely
     /// @param url URL to download
+    /// @param maximumDownloadBytes Maximum transferred bytes (0 = unlimited)
+    /// @param maximumDecompressedBytes Maximum bytes produced by automatic decompression (0 = unlimited)
     /// @return true if download started successfully
-    bool downloadNoCache(const QString &url);
+    bool downloadNoCache(const QString& url, qint64 maximumDownloadBytes = 0, qint64 maximumDecompressedBytes = 0);
 
     /// Cancel current download
     void cancel();
@@ -194,8 +207,7 @@ signals:
     /// @param localPath Path to downloaded/cached file
     /// @param errorMessage Error message (empty on success)
     /// @param fromCache true if result came from cache
-    void finished(bool success, const QString &localPath,
-                  const QString &errorMessage, bool fromCache);
+    void finished(bool success, const QString& localPath, const QString& errorMessage, bool fromCache);
 
     /// Emitted during download with byte counts
     void downloadProgress(qint64 bytesReceived, qint64 totalBytes);
@@ -205,15 +217,35 @@ private slots:
     void _onDownloadProgress(qint64 bytesReceived, qint64 totalBytes);
 
 private:
+    enum class DownloadMode
+    {
+        Standard,
+        PreferCache,
+        NoCache,
+    };
+
+    struct PendingDownload
+    {
+        DownloadMode mode = DownloadMode::Standard;
+        QString url;
+        int maxCacheAgeSec = 0;
+        qint64 maximumDownloadBytes = 0;
+        qint64 maximumDecompressedBytes = 0;
+    };
+
+    bool _requestDownload(PendingDownload request);
+    bool _startRequest(PendingDownload request);
     void _initializeCache(const QString &directory);
     void _setRunning(bool running);
     void _setProgress(qreal progress);
     void _setErrorString(const QString &error);
     void _setFromCache(bool fromCache);
+    bool _completeStartupCancellation();
     void _updateCacheTimestamp(const QString &url);
     QDateTime _getCacheTimestamp(const QString &url) const;
-    bool _startDownload(const QString &url, bool forceNetwork, bool preferCache);
-    void _emitFinished(bool success, const QString &path, const QString &error);
+    bool _startDownload(const QString& url, bool forceNetwork, bool preferCache, bool keepRunningOnFailure = false);
+    void _completeDownload(bool success, const QString& path, const QString& error, bool fromCache);
+    void _drainPendingDownload();
 
     QGCFileDownload *_fileDownload = nullptr;
     QNetworkDiskCache *_diskCache = nullptr;
@@ -224,10 +256,16 @@ private:
     QString _pendingUrl;
 
     qreal _progress = 0.0;
-    int _maxCacheAgeSec = 0;
+    qint64 _pendingMaximumDownloadBytes = 0;
+    qint64 _pendingMaximumDecompressedBytes = 0;
     bool _running = false;
     bool _fromCache = false;
     bool _networkAttemptFailed = false;
     bool _forceNetwork = false;
     bool _cancelRequested = false;
+    bool _starting = false;
+    bool _completing = false;
+    bool _pendingDrainScheduled = false;
+    quint64 _requestGeneration = 0;
+    std::optional<PendingDownload> _pendingDownload = std::nullopt;
 };

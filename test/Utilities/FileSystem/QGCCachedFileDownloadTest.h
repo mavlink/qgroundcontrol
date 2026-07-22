@@ -13,6 +13,7 @@ private slots:
     void _testCachedFileDownloadEmptyUrl();
     void _testCachedFileDownloadNoCacheDir();
     void _testCachedFileDownloadDownload();
+    void _testCachedFileDownloadMaximumSize();
     void _testCachedFileDownloadSyntheticCacheHit();
     void _testCachedFileDownloadCachedPath();
     void _testCachedFileDownloadPreferCache();
@@ -24,7 +25,14 @@ private slots:
     void _testCachedFileDownloadRemoveFromCache();
     void _testCachedFileDownloadCancel();
     void _testCachedFileDownloadConcurrentDownloadRejected();
+    void _testCachedFileDownloadStartupReentrancyRejected();
     void _testCachedFileDownloadRejectedStartNoFinishedSignal();
     void _testCachedFileDownloadReentrantStartFromCompletion();
+    void _testCachedFileDownloadDeferredStartFailureCompletes();
+    void _testCachedFileDownloadReentrantStartFromRunningChanged();
+    void _testCachedFileDownloadCancelFromRunningChanged();
+    void _testCachedFileDownloadDirectConnectionDeletion();
+    void _testCachedFileDownloadFallbackStartError();
+    void _testCachedFileDownloadFallbackCancellationAndDeletion();
     void _testCachedFileDownloadSignals();
 };

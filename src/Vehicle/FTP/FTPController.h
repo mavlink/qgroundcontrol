@@ -34,6 +34,7 @@ class FTPController : public QObject
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
     Q_PROPERTY(QString currentPath READ currentPath NOTIFY currentPathChanged)
     Q_PROPERTY(QStringList directoryEntries READ directoryEntries NOTIFY directoryEntriesChanged)
+    Q_PROPERTY(bool directoryTruncated READ directoryTruncated NOTIFY directoryTruncatedChanged)
     Q_PROPERTY(QString lastDownloadFile READ lastDownloadFile NOTIFY lastDownloadFileChanged)
     Q_PROPERTY(QString lastUploadTarget READ lastUploadTarget NOTIFY lastUploadTargetChanged)
     Q_PROPERTY(bool lastDownloadIsArchive READ lastDownloadIsArchive NOTIFY lastDownloadFileChanged)
@@ -45,24 +46,42 @@ public:
     explicit FTPController(QObject *parent = nullptr);
 
     Vehicle* vehicle() const;
+
     bool busy() const { return _busy; }
+
     bool listInProgress() const { return _operation == Operation::List; }
+
     bool downloadInProgress() const { return _operation == Operation::Download; }
+
     bool uploadInProgress() const { return _operation == Operation::Upload; }
+
     bool deleteInProgress() const { return _operation == Operation::Delete; }
+
     float progress() const { return _progress; }
+
     QString errorString() const { return _errorString; }
+
     QString currentPath() const { return _currentPath; }
+
     QStringList directoryEntries() const { return _directoryEntries; }
+
+    bool directoryTruncated() const { return _directoryTruncated; }
+
     QString lastDownloadFile() const { return _lastDownloadFile; }
+
     QString lastUploadTarget() const { return _lastUploadTarget; }
+
     bool lastDownloadIsArchive() const { return _lastDownloadIsArchive; }
+
     bool extracting() const { return _extracting; }
+
     float extractionProgress() const { return _extractionProgress; }
+
     QGCArchiveModel* archiveModel() const { return _archiveModel; }
 
     Q_INVOKABLE bool listDirectory(const QString &uri, int componentId = MAV_COMP_ID_AUTOPILOT1);
-    Q_INVOKABLE bool downloadFile(const QString &uri, const QString &localDir, const QString &fileName = QString(), int componentId = MAV_COMP_ID_AUTOPILOT1);
+    Q_INVOKABLE bool downloadFile(const QString& uri, const QString& localDir, const QString& fileName = QString(),
+                                  int componentId = MAV_COMP_ID_AUTOPILOT1);
     Q_INVOKABLE bool uploadFile(const QString &localFile, const QString &uri, int componentId = MAV_COMP_ID_AUTOPILOT1);
     Q_INVOKABLE bool deleteFile(const QString &uri, int componentId = MAV_COMP_ID_AUTOPILOT1);
     Q_INVOKABLE void cancelActiveOperation();
@@ -91,6 +110,7 @@ signals:
     void errorStringChanged();
     void currentPathChanged();
     void directoryEntriesChanged();
+    void directoryTruncatedChanged();
     void lastDownloadFileChanged();
     void lastUploadTargetChanged();
     void downloadComplete(const QString &filePath, const QString &error);
@@ -101,16 +121,19 @@ signals:
     void extractionComplete(const QString &outputDir, const QString &error);
 
 private slots:
-    void _handleDownloadComplete(const QString &filePath, const QString &error);
+    void _handleDownloadComplete(const QString& filePath, const QString& error, const QString& warning);
     void _handleUploadComplete(const QString &remotePath, const QString &error);
     void _handleDirectoryComplete(const QStringList& entries, const QString& error, bool truncated);
     void _handleDeleteComplete(const QString &remotePath, const QString &error);
     void _handleCommandProgress(float value);
-    void _handleExtractionProgress(qreal progress);
-    void _handleExtractionFinished(bool success);
 
 private:
-    enum class Operation {
+#ifdef QGC_UNITTEST_BUILD
+    friend class FTPControllerTest;
+#endif
+
+    enum class Operation
+    {
         None,
         List,
         Download,
@@ -123,6 +146,8 @@ private:
     void _clearOperation();
     void _setErrorString(const QString &error);
     void _resetDirectoryState();
+    void _handleExtractionProgress(quint64 generation, QGCCompressionJob* job, qreal progress);
+    void _handleExtractionFinished(quint64 generation, QGCCompressionJob* job, const QString& outputDir, bool success);
     uint8_t _componentIdForRequest(int componentId) const;
 
     QPointer<Vehicle> _vehicle;
@@ -134,12 +159,16 @@ private:
     QString _errorString;
     QString _currentPath;
     QStringList _directoryEntries;
+    bool _directoryTruncated = false;
     QString _lastDownloadFile;
     QString _lastUploadTarget;
     bool _lastDownloadIsArchive = false;
     bool _extracting = false;
+    bool _extractionFinishing = false;
     float _extractionProgress = 0.0F;
-    QString _extractionOutputDir;
+    quint64 _extractionGeneration = 0;
     QGCArchiveModel *_archiveModel = nullptr;
-    QGCCompressionJob *_extractionJob = nullptr;
+    QPointer<QGCCompressionJob> _extractionJob;
+
+    static constexpr int kMaximumDirectoryEntries = 10'000;
 };

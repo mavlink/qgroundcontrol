@@ -4,7 +4,12 @@
 
 FTPJob::FTPJob(FTPManager* manager, Type type) : QObject(manager), _manager(manager), _type(type) {}
 
-FTPJob::~FTPJob() = default;
+FTPJob::~FTPJob()
+{
+    if (_manager && !_finished) {
+        _manager->_cancelJob(this);
+    }
+}
 
 void FTPJob::cancel()
 {

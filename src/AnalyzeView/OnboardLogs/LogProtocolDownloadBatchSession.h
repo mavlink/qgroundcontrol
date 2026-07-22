@@ -2,15 +2,16 @@
 
 #include <QtCore/QList>
 #include <QtCore/QPointer>
-#include <QtCore/QQueue>
 #include <QtCore/QString>
 #include <memory>
 
 #include "LogProtocolDownloadSession.h"
 #include "OnboardLogEntry.h"
+#include "OnboardLogEntryQueue.h"
+#include "OnboardLogSession.h"
 
 /// Queue and retry state for one batch of MAVLink LOG_DATA downloads.
-class LogProtocolDownloadBatchSession final
+class LogProtocolDownloadBatchSession final : public OnboardLogSessionBase
 {
     Q_DISABLE_COPY_MOVE(LogProtocolDownloadBatchSession)
 
@@ -36,17 +37,13 @@ public:
 
     bool tryConsumeRetry(int maximumRetries);
 
-    bool active() const { return _active; }
-
     bool isCurrent(quint64 generation, const OnboardLogEntry* entry = nullptr) const;
-
-    quint64 generation() const { return _generation; }
 
     LogProtocolDownloadSession* current() { return _current.get(); }
 
     const LogProtocolDownloadSession* current() const { return _current.get(); }
 
-    qsizetype pendingCount() const { return _queue.size(); }
+    qsizetype pendingCount() const { return _entries.size(); }
 
     int retryCount() const { return _retryCount; }
 
@@ -55,11 +52,9 @@ public:
     const QString& fileExtension() const { return _fileExtension; }
 
 private:
-    quint64 _generation = 0;
-    QQueue<QPointer<OnboardLogEntry>> _queue;
+    OnboardLogEntryQueue _entries;
     std::unique_ptr<LogProtocolDownloadSession> _current;
     QString _path;
     QString _fileExtension;
     int _retryCount = 0;
-    bool _active = false;
 };

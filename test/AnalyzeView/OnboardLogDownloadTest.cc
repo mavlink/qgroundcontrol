@@ -16,13 +16,13 @@
 #include <limits>
 
 #include "ArduCopterFirmwarePlugin.h"
+#include "FTP/FtpDownloadSession.h"
+#include "FTP/FtpListingParser.h"
+#include "FTP/FtpListingSession.h"
+#include "FTP/FtpTransport.h"
 #include "FTPManager.h"
 #include "Fact.h"
 #include "FirmwarePlugin.h"
-#include "FtpDownloadSession.h"
-#include "FtpListingParser.h"
-#include "FtpListingSession.h"
-#include "FtpTransport.h"
 #include "LogProtocolDownloadBatchSession.h"
 #include "LogProtocolDownloadSession.h"
 #include "LogProtocolTransport.h"

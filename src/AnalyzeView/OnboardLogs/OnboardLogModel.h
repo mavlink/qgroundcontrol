@@ -1,7 +1,11 @@
 #pragma once
 
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QHash>
 #include <QtCore/QList>
+#include <QtCore/QPointer>
+#include <QtCore/QSet>
+#include <cstdint>
 
 class OnboardLogEntry;
 
@@ -45,7 +49,7 @@ public:
 
     OnboardLogEntry* at(int index) const;
 
-    bool contains(const OnboardLogEntry* entry) const { return _entries.contains(entry); }
+    bool contains(const OnboardLogEntry* entry) const { return _rowByEntry.contains(entry); }
 
     template <typename T>
     T value(int index) const
@@ -67,8 +71,35 @@ signals:
     void countChanged();
 
 private:
+    enum class PendingChangeType : uint8_t
+    {
+        Append,
+        Remove,
+        Clear,
+        ClearAndDelete,
+    };
+
+    struct PendingChange
+    {
+        PendingChangeType type = PendingChangeType::Clear;
+        QList<QPointer<OnboardLogEntry>> entries;
+    };
+
     void _connectEntry(OnboardLogEntry* entry);
     void _emitEntryChanged(OnboardLogEntry* entry, const QList<int>& roles);
+    bool _emitPendingEntryChanges();
+    bool _finishMutation(bool countChanged);
+    void _rebuildRowLookup(int firstRow = 0);
+    void _removeNullEntries();
+    void _clearAndDeleteContents(const QList<QPointer<OnboardLogEntry>>& additionalEntries);
+    void _queuePendingChange(PendingChangeType type, const QList<OnboardLogEntry*>& entries = {});
+    void _applyPendingChanges();
 
-    QList<OnboardLogEntry*> _entries;
+    QList<QPointer<OnboardLogEntry>> _entries;
+    QHash<const OnboardLogEntry*, int> _rowByEntry;
+    QHash<OnboardLogEntry*, QSet<int>> _pendingEntryChanges;
+    QList<PendingChange> _pendingChanges;
+    bool _modelChangeInProgress = false;
+    bool _nullCleanupPending = false;
+    bool _applyingPendingChanges = false;
 };

@@ -4,32 +4,30 @@
 
 quint64 LogProtocolListingSession::begin(bool oneBasedIds)
 {
-    ++_generation;
     _receivedEntries.clear();
     _firstLogId = oneBasedIds ? 1 : 0;
     _retryCount = 0;
     _receivedEntryCount = 0;
     _announcedLogCount = 0;
     _announcedLastLogNumber = 0;
-    _active = true;
     _partial = false;
     _receivedResponse = false;
     _initialized = false;
     _oneBasedIds = oneBasedIds;
-    return _generation;
+    return beginSession();
 }
 
 bool LogProtocolListingSession::cancel()
 {
-    const bool wasActive = _active;
-    ++_generation;
-    _active = false;
+    const bool wasActive = active();
+    invalidateSession();
+    finishSession();
     return wasActive;
 }
 
 void LogProtocolListingSession::finish()
 {
-    _active = false;
+    finishSession();
 }
 
 void LogProtocolListingSession::clear()

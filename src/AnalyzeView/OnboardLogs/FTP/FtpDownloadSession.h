@@ -3,16 +3,17 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QList>
 #include <QtCore/QPointer>
-#include <QtCore/QQueue>
 #include <QtCore/QString>
 #include <chrono>
 #include <cstdint>
 #include <optional>
 
 #include "OnboardLogEntry.h"
+#include "OnboardLogEntryQueue.h"
+#include "OnboardLogSession.h"
 
 /// Queue, cancellation, and progress state for one MAVLink FTP download batch.
-class FtpDownloadSession final
+class FtpDownloadSession final : public OnboardLogSessionBase
 {
     Q_DISABLE_COPY_MOVE(FtpDownloadSession)
 
@@ -50,35 +51,27 @@ public:
 
     void requestRefresh() { _refreshRequested = true; }
 
-    bool active() const { return _active; }
-
-    bool canceling() const { return _canceling; }
-
     bool isCurrent(quint64 generation, const OnboardLogEntry* entry = nullptr) const;
-
-    quint64 generation() const { return _generation; }
 
     QPointer<OnboardLogEntry> currentEntry() const { return _currentEntry; }
 
     uint64_t currentEntrySize() const { return _currentEntrySize; }
 
-    qsizetype pendingCount() const { return _queue.size(); }
+    qsizetype pendingCount() const { return _entries.size(); }
 
     const QString& path() const { return _path; }
 
 private:
     void _resetProgress();
 
-    quint64 _generation = 0;
-    QQueue<QPointer<OnboardLogEntry>> _queue;
+    OnboardLogEntryQueue _entries;
     QPointer<OnboardLogEntry> _currentEntry;
     uint64_t _currentEntrySize = 0;
     QString _path;
     QElapsedTimer _elapsed;
     uint64_t _bytesAtLastUpdate = 0;
     qreal _rateAverage = 0.;
-    bool _active = false;
-    bool _canceling = false;
+    bool _rateInitialized = false;
     bool _inFlight = false;
     bool _refreshRequested = false;
 };

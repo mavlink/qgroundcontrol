@@ -4,8 +4,10 @@
 #include <cstdint>
 #include <optional>
 
+#include "OnboardLogSession.h"
+
 /// State and invariants for one MAVLink LOG_ENTRY listing attempt.
-class LogProtocolListingSession final
+class LogProtocolListingSession final : public OnboardLogSessionBase
 {
     Q_DISABLE_COPY_MOVE(LogProtocolListingSession)
 
@@ -59,8 +61,6 @@ public:
 
     void resetRetries() { _retryCount = 0; }
 
-    bool active() const { return _active; }
-
     bool partial() const { return _partial; }
 
     bool receivedResponse() const { return _receivedResponse; }
@@ -73,21 +73,17 @@ public:
 
     uint16_t announcedLogCount() const { return _announcedLogCount; }
 
-    quint64 generation() const { return _generation; }
-
     static constexpr int kMaxLogEntries = 10000;
 
 private:
     static constexpr int kMaxListingRetries = 2;
 
-    quint64 _generation = 0;
     QBitArray _receivedEntries;
     uint16_t _firstLogId = 0;
     int _retryCount = 0;
     int _receivedEntryCount = 0;
     uint16_t _announcedLogCount = 0;
     uint16_t _announcedLastLogNumber = 0;
-    bool _active = false;
     bool _partial = false;
     bool _receivedResponse = false;
     bool _initialized = false;

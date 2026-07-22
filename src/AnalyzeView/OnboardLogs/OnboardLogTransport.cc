@@ -3,7 +3,6 @@
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QDir>
 #include <QtCore/QPointer>
-#include <QtCore/QSignalBlocker>
 #include <QtCore/QStorageInfo>
 #include <algorithm>
 #include <utility>
@@ -39,12 +38,19 @@ void OnboardLogTransport::_setOperation(Operation operation, Vehicle* vehicle)
     const bool wasDownloading = downloadingLogs();
     const bool wasBusy = busy();
     _operation = operation;
+    const QPointer<OnboardLogTransport> self(this);
 
     if (wasRequestingList != requestingList()) {
         emit requestingListChanged();
+        if (!self) {
+            return;
+        }
     }
     if (wasDownloading != downloadingLogs()) {
         emit downloadingLogsChanged();
+        if (!self) {
+            return;
+        }
     }
     if (wasBusy != busy()) {
         emit busyChanged();
@@ -133,11 +139,18 @@ void OnboardLogTransport::_setIdle(Vehicle* vehicle)
 
 void OnboardLogTransport::_setEntryError(OnboardLogEntry* entry, const QString& errorMessage)
 {
+    const QPointer<OnboardLogTransport> self(this);
     QPointer<OnboardLogEntry> guardedEntry(entry);
     if (guardedEntry) {
         guardedEntry->setState(OnboardLogEntry::State::Error, tr("Error"));
+        if (!self) {
+            return;
+        }
         if (guardedEntry) {
             guardedEntry->setErrorMessage(errorMessage);
+            if (!self) {
+                return;
+            }
         }
     }
     _setErrorMessage(errorMessage);
@@ -156,23 +169,37 @@ void OnboardLogTransport::_resetSelection(bool canceled, const QString& skippedE
     }
 
     if (!selectedEntries.isEmpty()) {
-        const QSignalBlocker blocker(this);
+        const QPointer<OnboardLogTransport> self(this);
+        const bool signalsWereBlocked = blockSignals(true);
         for (const QPointer<OnboardLogEntry>& entry : std::as_const(selectedEntries)) {
             if (!entry) {
                 continue;
             }
             if (canceled) {
                 entry->setState(OnboardLogEntry::State::Canceled, tr("Canceled"));
+                if (!self) {
+                    return;
+                }
             } else if (!skippedError.isEmpty()) {
                 entry->setState(OnboardLogEntry::State::Skipped, tr("Skipped"));
+                if (!self) {
+                    return;
+                }
                 if (entry) {
                     entry->setErrorMessage(skippedError);
+                    if (!self) {
+                        return;
+                    }
                 }
             }
             if (entry) {
                 entry->setSelected(false);
+                if (!self) {
+                    return;
+                }
             }
         }
+        blockSignals(signalsWereBlocked);
     }
 
     emit selectionChanged();

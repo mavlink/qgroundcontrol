@@ -15,6 +15,16 @@
 
 QGC_LOGGING_CATEGORY(FTPManagerLog, "Vehicle.FTPManager")
 
+namespace {
+
+const char* startErrorDescription(FTPManager::StartError error)
+{
+    return error == FTPManager::StartError::RemotePathTooLong ? "MAVLink FTP remote path is too long"
+                                                              : "Unable to parse MAVLink FTP URI";
+}
+
+}  // namespace
+
 FTPManager::FTPManager(Vehicle* vehicle)
     : QObject(vehicle),
       _vehicle(vehicle),
@@ -31,6 +41,10 @@ FTPManager::FTPManager(Vehicle* vehicle)
 
 FTPManager::~FTPManager()
 {
+    if (_activeJob) {
+        _activeJob->_finish();
+        _activeJob = nullptr;
+    }
     _ackOrNakTimeoutTimer.stop();
     _rgStateMachine.clear();
 
@@ -43,29 +57,30 @@ FTPManager::~FTPManager()
     }
 }
 
-bool FTPManager::download(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName,
-                          bool checkSize, ExistingFilePolicy existingFilePolicy)
-{
-    return startDownload(fromCompId, fromURI, toDir, fileName, checkSize, existingFilePolicy) != nullptr;
-}
-
-FTPDownloadJob* FTPManager::startDownload(uint8_t fromCompId, const QString& fromURI, const QString& toDir,
-                                          const QString& fileName, bool checkSize,
-                                          ExistingFilePolicy existingFilePolicy)
+FTPManager::DownloadStartResult FTPManager::startDownload(uint8_t fromCompId, const QString& fromURI,
+                                                          const QString& toDir, const QString& fileName, bool checkSize,
+                                                          ExistingFilePolicy existingFilePolicy,
+                                                          std::optional<uint32_t> maximumFileSize)
 {
     qCDebug(FTPManagerLog) << "Download fromCompId:" << fromCompId << "fromURI:" << fromURI << "to:" << toDir
                            << "fileName:" << fileName;
 
     if (!_rgStateMachine.isEmpty()) {
         qCDebug(FTPManagerLog) << "Cannot download. Already in another operation";
-        return nullptr;
+        return DownloadStartResult::failure(StartError::Busy);
+    }
+    if (!checkSize && !maximumFileSize.has_value()) {
+        qCWarning(FTPManagerLog) << "Dynamic MAVLink FTP downloads require a maximum file size";
+        return DownloadStartResult::failure(StartError::InvalidArgument);
     }
 
     _resetSessionsRetryCount = 0;
-    if (!_downloadOperation->begin(fromCompId, fromURI, toDir, fileName, checkSize, existingFilePolicy, _ftpCompId)) {
-        qCWarning(FTPManagerLog) << "Unable to parse MAVLink FTP URI" << fromURI;
+    const StartError beginError = _downloadOperation->begin(fromCompId, fromURI, toDir, fileName, checkSize,
+                                                            existingFilePolicy, maximumFileSize, _ftpCompId);
+    if (beginError != StartError::None) {
+        qCWarning(FTPManagerLog) << startErrorDescription(beginError) << fromURI;
         _rgStateMachine.clear();
-        return nullptr;
+        return DownloadStartResult::failure(beginError);
     }
     _rgStateMachine = _downloadOperation->stateMachine();
 
@@ -76,21 +91,16 @@ FTPDownloadJob* FTPManager::startDownload(uint8_t fromCompId, const QString& fro
     _activeJob = job;
     _startStateMachine();
 
-    return job;
+    return DownloadStartResult::success(job);
 }
 
-bool FTPManager::upload(uint8_t toCompId, const QString& toURI, const QString& fromFile)
-{
-    return startUpload(toCompId, toURI, fromFile) != nullptr;
-}
-
-FTPUploadJob* FTPManager::startUpload(uint8_t toCompId, const QString& toURI, const QString& fromFile)
+FTPManager::UploadStartResult FTPManager::startUpload(uint8_t toCompId, const QString& toURI, const QString& fromFile)
 {
     qCDebug(FTPManagerLog) << "upload fromFile:" << fromFile << "toURI:" << toURI << "toCompId:" << toCompId;
 
     if (!_rgStateMachine.isEmpty()) {
         qCDebug(FTPManagerLog) << "Cannot upload. Already in another operation";
-        return nullptr;
+        return UploadStartResult::failure(StartError::Busy);
     }
 
     _resetSessionsRetryCount = 0;
@@ -100,17 +110,20 @@ FTPUploadJob* FTPManager::startUpload(uint8_t toCompId, const QString& toURI, co
             break;
         case UploadOperation::BeginResult::SourceMissing:
             qCWarning(FTPManagerLog) << "Cannot upload. Source file missing" << fromFile;
-            return nullptr;
+            return UploadStartResult::failure(StartError::SourceMissing);
         case UploadOperation::BeginResult::SourceTooLarge:
             qCWarning(FTPManagerLog) << "Cannot upload. File too large" << fromFile;
-            return nullptr;
+            return UploadStartResult::failure(StartError::SourceTooLarge);
         case UploadOperation::BeginResult::OpenFailed:
             qCWarning(FTPManagerLog) << "Cannot upload. Failed to open file" << fromFile
                                      << _uploadOperation->openErrorString;
-            return nullptr;
+            return UploadStartResult::failure(StartError::SourceOpenFailed);
         case UploadOperation::BeginResult::InvalidUri:
             qCWarning(FTPManagerLog) << "Unable to parse MAVLink FTP URI" << toURI;
-            return nullptr;
+            return UploadStartResult::failure(StartError::InvalidUri);
+        case UploadOperation::BeginResult::RemotePathTooLong:
+            qCWarning(FTPManagerLog) << "MAVLink FTP remote path is too long" << toURI;
+            return UploadStartResult::failure(StartError::RemotePathTooLong);
     }
 
     _rgStateMachine = _uploadOperation->stateMachine();
@@ -119,36 +132,34 @@ FTPUploadJob* FTPManager::startUpload(uint8_t toCompId, const QString& toURI, co
     _activeJob = job;
     _startStateMachine();
 
-    return job;
+    return UploadStartResult::success(job);
 }
 
-bool FTPManager::listDirectory(uint8_t fromCompId, const QString& fromURI, int maxEntries)
-{
-    return startListDirectory(fromCompId, fromURI, maxEntries) != nullptr;
-}
-
-FTPListDirectoryJob* FTPManager::startListDirectory(uint8_t fromCompId, const QString& fromURI, int maxEntries)
+FTPManager::ListDirectoryStartResult FTPManager::startListDirectory(uint8_t fromCompId, const QString& fromURI,
+                                                                    int maxEntries)
 {
     qCDebug(FTPManagerLog) << "list directory fromURI:" << fromURI << "fromCompId:" << fromCompId;
 
     if (!_rgStateMachine.isEmpty()) {
         qCDebug(FTPManagerLog) << "Cannot list directory. Already in another operation";
-        return nullptr;
+        return ListDirectoryStartResult::failure(StartError::Busy);
     }
 
     if (maxEntries < 0) {
         qCWarning(FTPManagerLog) << "Cannot list directory with a negative entry limit" << maxEntries;
-        return nullptr;
+        return ListDirectoryStartResult::failure(StartError::InvalidArgument);
     }
 
     // Prefer the timestamped listing unless we already learned this vehicle doesn't support it.
     const MAV_FTP_OPCODE listOpcode = (_listDirWithTimeSupport == WithTimeSupport_t::Unsupported)
                                           ? MAV_FTP_OPCODE_LISTDIRECTORY
                                           : MAV_FTP_OPCODE_LISTDIRECTORYWITHTIME;
-    if (!_listDirectoryOperation->begin(fromCompId, fromURI, maxEntries, listOpcode, _ftpCompId)) {
-        qCWarning(FTPManagerLog) << "Unable to parse MAVLink FTP URI" << fromURI;
+    const StartError beginError =
+        _listDirectoryOperation->begin(fromCompId, fromURI, maxEntries, listOpcode, _ftpCompId);
+    if (beginError != StartError::None) {
+        qCWarning(FTPManagerLog) << startErrorDescription(beginError) << fromURI;
         _rgStateMachine.clear();
-        return nullptr;
+        return ListDirectoryStartResult::failure(beginError);
     }
     _rgStateMachine = _listDirectoryOperation->stateMachine();
 
@@ -159,27 +170,23 @@ FTPListDirectoryJob* FTPManager::startListDirectory(uint8_t fromCompId, const QS
     _activeJob = job;
     _startStateMachine();
 
-    return job;
+    return ListDirectoryStartResult::success(job);
 }
 
-bool FTPManager::deleteFile(uint8_t fromCompId, const QString& fromURI)
-{
-    return startDeleteFile(fromCompId, fromURI) != nullptr;
-}
-
-FTPDeleteJob* FTPManager::startDeleteFile(uint8_t fromCompId, const QString& fromURI)
+FTPManager::DeleteStartResult FTPManager::startDeleteFile(uint8_t fromCompId, const QString& fromURI)
 {
     qCDebug(FTPManagerLog) << "delete file fromURI:" << fromURI << "fromCompId:" << fromCompId;
 
     if (!_rgStateMachine.isEmpty()) {
         qCDebug(FTPManagerLog) << "Cannot delete file. Already in another operation";
-        return nullptr;
+        return DeleteStartResult::failure(StartError::Busy);
     }
 
-    if (!_deleteOperation->begin(fromCompId, fromURI, _ftpCompId)) {
-        qCWarning(FTPManagerLog) << "Unable to parse MAVLink FTP URI" << fromURI;
+    const StartError beginError = _deleteOperation->begin(fromCompId, fromURI, _ftpCompId);
+    if (beginError != StartError::None) {
+        qCWarning(FTPManagerLog) << startErrorDescription(beginError) << fromURI;
         _rgStateMachine.clear();
-        return nullptr;
+        return DeleteStartResult::failure(beginError);
     }
     _rgStateMachine = _deleteOperation->stateMachine();
 
@@ -189,7 +196,7 @@ FTPDeleteJob* FTPManager::startDeleteFile(uint8_t fromCompId, const QString& fro
     _activeJob = job;
     _startStateMachine();
 
-    return job;
+    return DeleteStartResult::success(job);
 }
 
 void FTPManager::_cancelJob(FTPJob* job)
@@ -219,7 +226,6 @@ void FTPManager::_emitCommandProgress(float value)
     if (_activeJob) {
         _activeJob->_emitProgress(value);
     }
-    emit commandProgress(value);
 }
 
 void FTPManager::cancelDownload()
@@ -380,9 +386,10 @@ void FTPManager::_downloadComplete(const QString& errorMsg, const QString& warni
     if (job) {
         job->_finish();
     }
-    emit downloadComplete(downloadFilePath, finalErrorMsg, warningMsg);
     if (job) {
         job->_emitFinished(downloadFilePath, finalErrorMsg, warningMsg);
+    }
+    if (job) {
         job->deleteLater();
     }
 }
@@ -411,9 +418,10 @@ void FTPManager::_listDirectoryComplete(const QString& errorMsg)
     if (job) {
         job->_finish();
     }
-    emit listDirectoryComplete(completedList, errorMsg, truncated);
     if (job) {
         job->_emitFinished(completedList, errorMsg, truncated);
+    }
+    if (job) {
         job->deleteLater();
     }
 }
@@ -485,9 +493,10 @@ void FTPManager::_deleteComplete(const QString& errorMsg)
     if (job) {
         job->_finish();
     }
-    emit deleteComplete(deletedPath, errorMsg);
     if (job) {
         job->_emitFinished(deletedPath, errorMsg);
+    }
+    if (job) {
         job->deleteLater();
     }
 }
@@ -627,15 +636,19 @@ void FTPManager::_writeFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
         _uploadOperation->lastChunkSize = 0;
         _expectedIncomingSeqNumber = ackOrNak->hdr.seqNumber;
 
-        if (_uploadOperation->fileSize != 0) {
-            _emitCommandProgress(static_cast<float>(_uploadOperation->totalBytesSent) /
-                                 static_cast<float>(_uploadOperation->fileSize));
-        }
+        const float progress = _uploadOperation->fileSize != 0 ? static_cast<float>(_uploadOperation->totalBytesSent) /
+                                                                     static_cast<float>(_uploadOperation->fileSize)
+                                                               : 0.0F;
+        const bool emitProgress = _uploadOperation->fileSize != 0;
+        const QPointer<FTPUploadJob> progressJob = qobject_cast<FTPUploadJob*>(_activeJob);
 
         if (_uploadOperation->totalBytesSent >= _uploadOperation->fileSize) {
             _advanceStateMachine();
         } else {
             _writeFileWorker(true /* firstRequest */);
+        }
+        if (emitProgress && progressJob && (progressJob == _activeJob)) {
+            progressJob->_emitProgress(progress);
         }
     } else if (ackOrNak->hdr.opcode == MAV_FTP_OPCODE_NAK) {
         _ackOrNakTimeoutTimer.stop();
@@ -742,9 +755,10 @@ void FTPManager::_uploadComplete(const QString& errorMsg)
     if (job) {
         job->_finish();
     }
-    emit uploadComplete(remotePath, errorMsg);
     if (job) {
         job->_emitFinished(remotePath, errorMsg);
+    }
+    if (job) {
         job->deleteLater();
     }
 }
@@ -909,6 +923,14 @@ void FTPManager::_openFileROAckOrNak(const MavlinkFTP::Request* ackOrNak)
         _downloadOperation->fileSize = *openFileLength;
         _downloadOperation->expectedOffset = 0;
 
+        if (_downloadOperation->maximumFileSize.has_value() &&
+            (_downloadOperation->fileSize > *_downloadOperation->maximumFileSize)) {
+            _downloadComplete(tr("Download failed: Remote file size %1 exceeds expected maximum %2")
+                                  .arg(_downloadOperation->fileSize)
+                                  .arg(*_downloadOperation->maximumFileSize));
+            return;
+        }
+
         const QString finalFilePath = _downloadOperation->toDir.filePath(_downloadOperation->fileName);
         _downloadOperation->file.setFileName(finalFilePath + QStringLiteral(".part"));
         const QIODevice::OpenMode localOpenMode =
@@ -920,7 +942,8 @@ void FTPManager::_openFileROAckOrNak(const MavlinkFTP::Request* ackOrNak)
         } else {
             qCDebug(FTPManagerLog) << "_openFileROAckOrNak: Ack _downloadOperation->file open failed"
                                    << _downloadOperation->file.errorString();
-            _downloadComplete(tr("Download failed"));
+            _downloadComplete(tr("Download failed: Unable to open local file %1: %2")
+                                  .arg(_downloadOperation->file.fileName(), _downloadOperation->file.errorString()));
         }
     } else if (ackOrNak->hdr.opcode == MAV_FTP_OPCODE_NAK) {
         qCDebug(FTPManagerLog) << "_handlOpenFileROAck: Nak -" << _errorMsgFromNak(ackOrNak);
@@ -954,6 +977,39 @@ void FTPManager::_burstReadFileBegin(void)
     _burstReadFileWorker(true /* firstRequestr */);
 }
 
+bool FTPManager::_validateDownloadDataRange(const MavlinkFTP::Request* response, std::optional<uint32_t> remainingBytes)
+{
+    if (response->hdr.size == 0) {
+        _downloadComplete(tr("Download failed: Remote returned an empty data block"));
+        return false;
+    }
+
+    const uint64_t endOffset = static_cast<uint64_t>(response->hdr.offset) + response->hdr.size;
+    if (endOffset > (std::numeric_limits<uint32_t>::max)()) {
+        _downloadComplete(tr("Download failed: Remote data ending at %1 exceeds the FTP offset limit").arg(endOffset));
+        return false;
+    }
+    if (_downloadOperation->checkSize && (endOffset > _downloadOperation->fileSize)) {
+        _downloadComplete(tr("Download failed: Remote data ending at %1 exceeds reported file size %2")
+                              .arg(endOffset)
+                              .arg(_downloadOperation->fileSize));
+        return false;
+    }
+    if (_downloadOperation->maximumFileSize.has_value() && (endOffset > *_downloadOperation->maximumFileSize)) {
+        _downloadComplete(tr("Download failed: Remote data ending at %1 exceeds expected maximum %2")
+                              .arg(endOffset)
+                              .arg(*_downloadOperation->maximumFileSize));
+        return false;
+    }
+    if (remainingBytes.has_value() && (response->hdr.size > *remainingBytes)) {
+        _downloadComplete(tr("Download failed: Remote block size %1 exceeds the requested %2 bytes")
+                              .arg(response->hdr.size)
+                              .arg(*remainingBytes));
+        return false;
+    }
+    return true;
+}
+
 void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
 {
     if (_validateResponseEnvelope(ackOrNak, MAV_FTP_OPCODE_BURSTREADFILE, "_burstReadFileAckOrNak:") !=
@@ -975,6 +1031,10 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
         }
 
         _ackOrNakTimeoutTimer.stop();
+
+        if (!_validateDownloadDataRange(ackOrNak)) {
+            return;
+        }
 
         qCDebug(FTPManagerLog) << QString("_burstReadFileAckOrNak: Ack offset(%1) size(%2) burstComplete(%3)")
                                       .arg(ackOrNak->hdr.offset)
@@ -1000,10 +1060,16 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
             }
         }
 
-        _downloadOperation->file.seek(ackOrNak->hdr.offset);
-        int bytesWritten = _downloadOperation->file.write((const char*) ackOrNak->data, ackOrNak->hdr.size);
+        if (!_downloadOperation->file.seek(ackOrNak->hdr.offset)) {
+            _downloadComplete(tr("Download failed: Unable to seek in local file %1: %2")
+                                  .arg(_downloadOperation->file.fileName(), _downloadOperation->file.errorString()));
+            return;
+        }
+        const qint64 bytesWritten =
+            _downloadOperation->file.write(reinterpret_cast<const char*>(ackOrNak->data), ackOrNak->hdr.size);
         if (bytesWritten != ackOrNak->hdr.size) {
-            _downloadComplete(tr("Download failed: Error saving file"));
+            _downloadComplete(tr("Download failed: Unable to write local file %1: %2")
+                                  .arg(_downloadOperation->file.fileName(), _downloadOperation->file.errorString()));
             return;
         }
         _downloadOperation->bytesWritten += ackOrNak->hdr.size;
@@ -1298,15 +1364,24 @@ void FTPManager::_fillMissingBlocksAckOrNak(const MavlinkFTP::Request* ackOrNak)
             return;
         }
 
-        _downloadOperation->file.seek(ackOrNak->hdr.offset);
-        int bytesWritten = _downloadOperation->file.write((const char*) ackOrNak->data, ackOrNak->hdr.size);
+        DownloadOperation::MissingData& missingData = _downloadOperation->missingData.first();
+        if (!_validateDownloadDataRange(ackOrNak, missingData.bytesMissing)) {
+            return;
+        }
+        if (!_downloadOperation->file.seek(ackOrNak->hdr.offset)) {
+            _downloadComplete(tr("Download failed: Unable to seek in local file %1: %2")
+                                  .arg(_downloadOperation->file.fileName(), _downloadOperation->file.errorString()));
+            return;
+        }
+        const qint64 bytesWritten =
+            _downloadOperation->file.write(reinterpret_cast<const char*>(ackOrNak->data), ackOrNak->hdr.size);
         if (bytesWritten != ackOrNak->hdr.size) {
-            _downloadComplete(tr("Download failed: Error saving file"));
+            _downloadComplete(tr("Download failed: Unable to write local file %1: %2")
+                                  .arg(_downloadOperation->file.fileName(), _downloadOperation->file.errorString()));
             return;
         }
         _downloadOperation->bytesWritten += ackOrNak->hdr.size;
 
-        DownloadOperation::MissingData& missingData = _downloadOperation->missingData.first();
         missingData.offset += ackOrNak->hdr.size;
         missingData.bytesMissing -= ackOrNak->hdr.size;
         if (missingData.bytesMissing == 0) {

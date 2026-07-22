@@ -3,8 +3,9 @@
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QPointer>
-#include <QtCore/QSignalBlocker>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTimer>
+#include <algorithm>
 #include <utility>
 
 #include "AppSettings.h"
@@ -35,7 +36,47 @@ FtpTransport::FtpTransport(QObject* parent) : OnboardLogTransport(parent)
 FtpTransport::~FtpTransport()
 {
     qCDebug(FtpTransportLog) << this;
-    setVehicle(nullptr);
+    _shutdown();
+}
+
+void FtpTransport::_shutdown()
+{
+    (void) disconnect(this, nullptr, nullptr, nullptr);
+    if (_logEntriesModel) {
+        (void) disconnect(_logEntriesModel, nullptr, this, nullptr);
+    }
+
+    const QPointer<FTPListDirectoryJob> listingJob = _listingJob;
+    const QPointer<FTPDownloadJob> downloadJob = _downloadJob;
+    const QPointer<FTPDeleteJob> deleteJob = _deleteJob;
+    _listingJob = nullptr;
+    _downloadJob = nullptr;
+    _deleteJob = nullptr;
+    for (FTPJob* const job : {static_cast<FTPJob*>(listingJob.data()), static_cast<FTPJob*>(downloadJob.data()),
+                              static_cast<FTPJob*>(deleteJob.data())}) {
+        if (job) {
+            (void) disconnect(job, nullptr, this, nullptr);
+        }
+    }
+
+    _pendingLogInsertion.reset();
+    _listingSession.clear();
+    _downloadSession.clear();
+    _eraseSession.clear();
+    _vehicle = nullptr;
+    _communicationLostInhibitor.reset();
+    _operation = Operation::Idle;
+    _batchState.reset();
+
+    if (listingJob) {
+        listingJob->cancel();
+    }
+    if (downloadJob) {
+        downloadJob->cancel();
+    }
+    if (deleteJob) {
+        deleteJob->cancel();
+    }
 }
 
 void FtpTransport::setVehicle(Vehicle* vehicle)
@@ -44,48 +85,84 @@ void FtpTransport::setVehicle(Vehicle* vehicle)
         return;
     }
 
+    const QPointer<FtpTransport> self(this);
     _setBatchProgress(0.);
+    if (!self) {
+        return;
+    }
     _setErrorMessage(QString());
+    if (!self) {
+        return;
+    }
 
-    FTPManager* const ftp = _vehicle ? _vehicle->ftpManager() : nullptr;
-    _cancelListing(ftp);
-    _cancelDownload(ftp);
-    _cancelErase(ftp);
+    _cancelListing();
+    if (!self) {
+        return;
+    }
+    _cancelDownload();
+    if (!self) {
+        return;
+    }
+    _cancelErase();
+    if (!self) {
+        return;
+    }
+    if (_downloadJob) {
+        (void) disconnect(_downloadJob, nullptr, this, nullptr);
+        _downloadJob = nullptr;
+    }
     _listingSession.clear();
     _downloadSession.clear();
     _setDownloading(false);
+    if (!self) {
+        return;
+    }
     _eraseSession.clear();
 
     _logEntriesModel->clearAndDeleteContents();
+    if (!self) {
+        return;
+    }
 
     _vehicle = vehicle;
 }
 
 void FtpTransport::refresh()
 {
-    cancel();
-
-    if (_downloadSession.canceling()) {
-        _downloadSession.requestRefresh();
+    _refreshPending = true;
+    if (_cancelInProgress) {
         return;
     }
+    cancel();
+}
 
-    _refreshAfterCancel();
+void FtpTransport::_runPendingRefresh()
+{
+    if (!_refreshPending) {
+        return;
+    }
+    _refreshPending = false;
+    if (_downloadSession.canceling()) {
+        _downloadSession.requestRefresh();
+    } else {
+        _refreshAfterCancel();
+    }
 }
 
 void FtpTransport::_refreshAfterCancel()
 {
     const quint64 generation = _listingSession.generation();
+    const QPointer<FtpTransport> self(this);
     _setErrorMessage(QString());
-    if (generation != _listingSession.generation()) {
+    if (!self || (generation != _listingSession.generation())) {
         return;
     }
     _setBatchProgress(0.);
-    if (generation != _listingSession.generation()) {
+    if (!self || (generation != _listingSession.generation())) {
         return;
     }
     _logEntriesModel->clearAndDeleteContents();
-    if (generation != _listingSession.generation()) {
+    if (!self || (generation != _listingSession.generation())) {
         return;
     }
 
@@ -93,7 +170,7 @@ void FtpTransport::_refreshAfterCancel()
         const QString errorMessage = tr("No active vehicle is available for onboard log refresh");
         qCWarning(FtpTransportLog) << errorMessage;
         _setErrorMessage(errorMessage);
-        if (generation == _listingSession.generation()) {
+        if (self && (generation == _listingSession.generation())) {
             _finishListing(ListingResult::Failed);
         }
         return;
@@ -105,9 +182,11 @@ void FtpTransport::_refreshAfterCancel()
 void FtpTransport::_startListing()
 {
     const quint64 generation = _listingSession.begin(QString::fromLatin1(kMavlinkLogRoot));
+    _pendingLogInsertion = PendingLogInsertion{{}, 0, generation};
 
+    const QPointer<FtpTransport> self(this);
     _setListing(true);
-    if (!_listingSession.isCurrent(generation) || !_vehicle) {
+    if (!self || !_listingSession.isCurrent(generation) || !_vehicle) {
         return;
     }
     _listRoot();
@@ -116,14 +195,16 @@ void FtpTransport::_startListing()
 void FtpTransport::_listRoot()
 {
     const quint64 generation = _listingSession.generation();
+    const QPointer<FtpTransport> self(this);
 
     qCDebug(FtpTransportLog) << "listing root" << _listingSession.root();
 
     QPointer<Vehicle> vehicle(_vehicle);
-    FTPListDirectoryJob* const listingJob =
+    const FTPManager::ListDirectoryStartResult startResult =
         vehicle ? vehicle->ftpManager()->startListDirectory(MAV_COMP_ID_AUTOPILOT1, _listingSession.root(),
                                                             _listingSession.remainingEntryBudget())
-                : nullptr;
+                : FTPManager::ListDirectoryStartResult::failure(FTPManager::StartError::InvalidArgument);
+    FTPListDirectoryJob* const listingJob = startResult.job();
     if (!_listingSession.isCurrent(generation) || (vehicle != _vehicle)) {
         if (listingJob) {
             listingJob->cancel();
@@ -131,10 +212,12 @@ void FtpTransport::_listRoot()
         return;
     }
     if (!listingJob) {
-        const QString errorMessage = tr("Unable to start the onboard log directory listing");
+        const QString errorMessage = startResult.error() == FTPManager::StartError::Busy
+                                         ? tr("Vehicle FTP service is busy")
+                                         : tr("Unable to start the onboard log directory listing");
         qCWarning(FtpTransportLog) << errorMessage << _listingSession.root();
         _setErrorMessage(errorMessage);
-        if (!_listingSession.isCurrent(generation)) {
+        if (!self || !_listingSession.isCurrent(generation)) {
             return;
         }
         _finishListing(ListingResult::Failed);
@@ -142,7 +225,13 @@ void FtpTransport::_listRoot()
     }
 
     _listingJob = listingJob;
-    (void) connect(listingJob, &FTPListDirectoryJob::finished, this, &FtpTransport::_listDirComplete);
+    const QPointer<FTPListDirectoryJob> guardedJob(listingJob);
+    (void) connect(listingJob, &FTPListDirectoryJob::finished, this,
+                   [this, guardedJob, generation](const QStringList& dirList, const QString& errorMsg, bool truncated) {
+                       if (guardedJob && (guardedJob == _listingJob) && _listingSession.isCurrent(generation)) {
+                           _listDirComplete(dirList, errorMsg, truncated);
+                       }
+                   });
 }
 
 void FtpTransport::_listDirComplete(const QStringList& dirList, const QString& errorMsg, bool truncated)
@@ -153,7 +242,8 @@ void FtpTransport::_listDirComplete(const QStringList& dirList, const QString& e
     }
 
     const quint64 generation = _listingSession.generation();
-    const auto listingIsCurrent = [this, generation]() { return _listingSession.isCurrent(generation); };
+    const QPointer<FtpTransport> self(this);
+    const auto listingIsCurrent = [self, generation]() { return self && self->_listingSession.isCurrent(generation); };
 
     if (!errorMsg.isEmpty()) {
         if (_listingSession.state() == FtpListingSession::State::ListingRoot) {
@@ -203,13 +293,13 @@ void FtpTransport::_listDirComplete(const QStringList& dirList, const QString& e
     if (_listingSession.state() == FtpListingSession::State::ListingRoot) {
         // The root listing may contain log files directly (flat layout, e.g. @MAV_LOG)
         // and/or date subdirectories to descend into (physical fallback directories).
-        const uint flatLogs = _processFileEntries(dirList, QString());
-        if (!listingIsCurrent()) {
+        const std::optional<uint> flatLogs = _processFileEntries(dirList, QString());
+        if (!flatLogs.has_value() || !_listingSession.isCurrent(generation)) {
             return;
         }
 
         _listingSession.beginSubdirectories();
-        qCDebug(FtpTransportLog) << "root listing of" << _listingSession.root() << "found" << flatLogs
+        qCDebug(FtpTransportLog) << "root listing of" << _listingSession.root() << "found" << *flatLogs
                                  << "flat logs and" << _listingSession.pendingDirectoryCount() << "subdirectories";
 
         _listNextSubdir();
@@ -217,24 +307,21 @@ void FtpTransport::_listDirComplete(const QStringList& dirList, const QString& e
     }
 
     const QString currentDir = _listingSession.currentDirectory();
-    const uint logsFoundInDir = _processFileEntries(dirList, currentDir);
-    if (!listingIsCurrent()) {
+    const std::optional<uint> logsFoundInDir = _processFileEntries(dirList, currentDir);
+    if (!logsFoundInDir.has_value() || !_listingSession.isCurrent(generation)) {
         return;
     }
 
-    qCDebug(FtpTransportLog) << currentDir << "->" << logsFoundInDir << "logs";
-
+    qCDebug(FtpTransportLog) << currentDir << "->" << *logsFoundInDir << "logs";
     _listingSession.completeCurrentDirectory();
-
     _listNextSubdir();
 }
 
-uint FtpTransport::_processFileEntries(const QStringList& dirList, const QString& subdir)
+std::optional<uint> FtpTransport::_processFileEntries(const QStringList& dirList, const QString& subdir)
 {
     const quint64 generation = _listingSession.generation();
-    const FtpListingParser::ParseResult result = _listingSession.parse(dirList, subdir, subdir.isEmpty());
-    QList<OnboardLogEntry*> newEntries;
-    newEntries.reserve(result.logs.size());
+    const QPointer<FtpTransport> self(this);
+    FtpListingParser::ParseResult result = _listingSession.parse(dirList, subdir, subdir.isEmpty());
 
     for (const QString& unsafePath : result.unsafePaths) {
         qCWarning(FtpTransportLog) << "ignoring unsafe FTP path component:" << unsafePath;
@@ -242,8 +329,8 @@ uint FtpTransport::_processFileEntries(const QStringList& dirList, const QString
     if (!result.unsafePaths.isEmpty()) {
         _setErrorMessage(tr("The vehicle reported %1 unsafe onboard log path or paths; those entries were omitted")
                              .arg(result.unsafePaths.size()));
-        if (!_listingSession.isCurrent(generation)) {
-            return 0;
+        if (!self || !_listingSession.isCurrent(generation)) {
+            return std::nullopt;
         }
     }
     if (result.malformedSupportedLogs > 0) {
@@ -252,26 +339,26 @@ uint FtpTransport::_processFileEntries(const QStringList& dirList, const QString
                 .arg(result.malformedSupportedLogs);
         qCWarning(FtpTransportLog) << errorMessage;
         _setErrorMessage(errorMessage);
-        if (!_listingSession.isCurrent(generation)) {
-            return 0;
+        if (!self || !_listingSession.isCurrent(generation)) {
+            return std::nullopt;
         }
     }
     if (result.logLimitReached) {
         _setErrorMessage(tr("The vehicle reported more than %1 onboard logs; only the first %1 are shown")
                              .arg(FtpListingParser::kMaxLogEntries));
-        if (!_listingSession.isCurrent(generation)) {
-            return 0;
+        if (!self || !_listingSession.isCurrent(generation)) {
+            return std::nullopt;
         }
     }
     if (result.directoryLimitReached) {
         _setErrorMessage(tr("The vehicle reported more than %1 log directories; only the first %1 were scanned")
                              .arg(FtpListingParser::kMaxLogDirectories));
-        if (!_listingSession.isCurrent(generation)) {
-            return 0;
+        if (!self || !_listingSession.isCurrent(generation)) {
+            return std::nullopt;
         }
     }
     if (!_listingSession.isCurrent(generation)) {
-        return 0;
+        return std::nullopt;
     }
 
     if ((result.duplicateLogs > 0) || (result.duplicateDirectories > 0)) {
@@ -279,25 +366,80 @@ uint FtpTransport::_processFileEntries(const QStringList& dirList, const QString
                                  << result.duplicateDirectories << "duplicate directories";
     }
 
-    for (const FtpListingParser::LogDescriptor& descriptor : result.logs) {
+    if (!_pendingLogInsertion.has_value()) {
+        _pendingLogInsertion = PendingLogInsertion{{}, 0, generation};
+    } else if (_pendingLogInsertion->generation != generation) {
+        return std::nullopt;
+    }
+
+    const uint logCount = static_cast<uint>(result.logs.size());
+    _pendingLogInsertion->descriptors.append(std::move(result.logs));
+    return logCount;
+}
+
+void FtpTransport::_appendNextLogEntryBatch()
+{
+    if (!_pendingLogInsertion.has_value()) {
+        return;
+    }
+
+    const quint64 generation = _pendingLogInsertion->generation;
+    const QPointer<FtpTransport> self(this);
+    if (!_listingSession.isCurrent(generation)) {
+        _pendingLogInsertion.reset();
+        return;
+    }
+
+    const qsizetype begin = _pendingLogInsertion->nextIndex;
+    const qsizetype end = (std::min) (begin + kLogInsertionBatchSize, _pendingLogInsertion->descriptors.size());
+    QList<OnboardLogEntry*> newEntries;
+    newEntries.reserve(end - begin);
+    for (qsizetype index = begin; index < end; ++index) {
+        const FtpListingParser::LogDescriptor& descriptor = _pendingLogInsertion->descriptors.at(index);
         OnboardLogEntry* const logEntry =
             new OnboardLogEntry(descriptor.id, descriptor.time, descriptor.size, true, this);
         (void) connect(logEntry, &OnboardLogEntry::selectedChanged, this, &FtpTransport::selectionChanged);
         logEntry->setFtpPath(descriptor.ftpPath);
+        const QPointer<OnboardLogEntry> guardedEntry(logEntry);
         logEntry->setState(OnboardLogEntry::State::Available, tr("Available"));
+        if (!self) {
+            return;
+        }
+        if (!guardedEntry) {
+            continue;
+        }
         newEntries.append(logEntry);
     }
 
+    if (!_listingSession.isCurrent(generation)) {
+        qDeleteAll(newEntries);
+        _pendingLogInsertion.reset();
+        return;
+    }
     if (!newEntries.isEmpty()) {
         _logEntriesModel->append(newEntries);
+        if (!self) {
+            return;
+        }
+    }
+    if (!_pendingLogInsertion.has_value() || (_pendingLogInsertion->generation != generation) ||
+        !_listingSession.isCurrent(generation)) {
+        return;
     }
 
-    return static_cast<uint>(newEntries.size());
+    _pendingLogInsertion->nextIndex = end;
+    if (end < _pendingLogInsertion->descriptors.size()) {
+        QTimer::singleShot(0, this, &FtpTransport::_appendNextLogEntryBatch);
+        return;
+    }
+
+    _finishListing(_listingSession.partial() ? ListingResult::Partial : ListingResult::Success);
 }
 
 void FtpTransport::_listNextSubdir()
 {
     const quint64 generation = _listingSession.generation();
+    const QPointer<FtpTransport> self(this);
     while (_listingSession.canListNextDirectory()) {
         const QString subdir = _listingSession.currentDirectory();
         const QString path = _listingSession.currentDirectoryPath();
@@ -305,10 +447,11 @@ void FtpTransport::_listNextSubdir()
         qCDebug(FtpTransportLog) << "listing subdir" << path;
 
         QPointer<Vehicle> vehicle(_vehicle);
-        FTPListDirectoryJob* const listingJob =
+        const FTPManager::ListDirectoryStartResult startResult =
             vehicle ? vehicle->ftpManager()->startListDirectory(MAV_COMP_ID_AUTOPILOT1, path,
                                                                 _listingSession.remainingEntryBudget())
-                    : nullptr;
+                    : FTPManager::ListDirectoryStartResult::failure(FTPManager::StartError::InvalidArgument);
+        FTPListDirectoryJob* const listingJob = startResult.job();
         if (!_listingSession.isCurrent(generation) || (vehicle != _vehicle)) {
             if (listingJob) {
                 listingJob->cancel();
@@ -317,15 +460,24 @@ void FtpTransport::_listNextSubdir()
         }
         if (listingJob) {
             _listingJob = listingJob;
-            (void) connect(listingJob, &FTPListDirectoryJob::finished, this, &FtpTransport::_listDirComplete);
+            const QPointer<FTPListDirectoryJob> guardedJob(listingJob);
+            (void) connect(
+                listingJob, &FTPListDirectoryJob::finished, this,
+                [this, guardedJob, generation](const QStringList& dirList, const QString& errorMsg, bool truncated) {
+                    if (guardedJob && (guardedJob == _listingJob) && _listingSession.isCurrent(generation)) {
+                        _listDirComplete(dirList, errorMsg, truncated);
+                    }
+                });
             return;
         }
 
-        const QString errorMessage = tr("Unable to list onboard log directory %1").arg(subdir);
+        const QString errorMessage = startResult.error() == FTPManager::StartError::Busy
+                                         ? tr("Vehicle FTP service is busy")
+                                         : tr("Unable to list onboard log directory %1").arg(subdir);
         qCWarning(FtpTransportLog) << errorMessage;
         _listingSession.markPartial();
         _setErrorMessage(errorMessage);
-        if (!_listingSession.isCurrent(generation)) {
+        if (!self || !_listingSession.isCurrent(generation)) {
             return;
         }
         _listingSession.completeCurrentDirectory();
@@ -341,26 +493,37 @@ void FtpTransport::_listNextSubdir()
             tr("The onboard log scan reached its %1-entry safety limit; some directories may not have been scanned")
                 .arg(FtpListingSession::kMaxListingEntries));
     }
-    if (!_listingSession.isCurrent(generation)) {
+    if (!self || !_listingSession.isCurrent(generation)) {
         return;
     }
-    qCDebug(FtpTransportLog) << "listing complete, found" << _logEntriesModel->count() << "logs";
-    _finishListing(_listingSession.partial() ? ListingResult::Partial : ListingResult::Success);
+    const qsizetype logCount = _pendingLogInsertion.has_value() ? _pendingLogInsertion->descriptors.size() : 0;
+    qCDebug(FtpTransportLog) << "remote listing complete, found" << logCount << "logs";
+    if (logCount == 0) {
+        _finishListing(_listingSession.partial() ? ListingResult::Partial : ListingResult::Success);
+    } else {
+        _appendNextLogEntryBatch();
+    }
 }
 
 void FtpTransport::_finishListing(ListingResult result)
 {
     const quint64 generation = _listingSession.generation();
+    _pendingLogInsertion.reset();
     _listingJob = nullptr;
     _listingSession.finish();
+    const QPointer<FtpTransport> self(this);
     _setListing(false);
-    if ((generation == _listingSession.generation()) && !_listingSession.active()) {
+    if (self && (generation == _listingSession.generation()) && !_listingSession.active()) {
         emit listingFinished(result);
     }
 }
 
 void FtpTransport::download(const QString& path)
 {
+    if (_cancelInProgress) {
+        qCWarning(FtpTransportLog) << "Ignoring download request while onboard log cancellation is in progress";
+        return;
+    }
     if (busy()) {
         qCWarning(FtpTransportLog) << "Ignoring download request: another onboard log operation is in progress";
         return;
@@ -372,8 +535,15 @@ void FtpTransport::download(const QString& path)
 
 void FtpTransport::_downloadToDirectory(const QString& dir)
 {
+    const QPointer<FtpTransport> self(this);
     _setErrorMessage(QString());
+    if (!self) {
+        return;
+    }
     _setBatchProgress(0.);
+    if (!self) {
+        return;
+    }
 
     QString downloadPath = dir;
     QList<QPointer<OnboardLogEntry>> entries;
@@ -391,6 +561,9 @@ void FtpTransport::_downloadToDirectory(const QString& dir)
 
     const QString noSelectionError = tr("No selected onboard logs are available for FTP download");
     if (!_prepareDownload(_vehicle, downloadPath, !entries.isEmpty(), noSelectionError)) {
+        if (!self) {
+            return;
+        }
         qCWarning(FtpTransportLog) << errorMessage();
         _batchState.reset();
         return;
@@ -400,7 +573,7 @@ void FtpTransport::_downloadToDirectory(const QString& dir)
     qCDebug(FtpTransportLog) << "queued" << _downloadSession.pendingCount() << "logs for download to"
                              << _downloadSession.path();
     _setDownloading(true);
-    if (!_downloadSession.isCurrent(generation) || !downloadingLogs()) {
+    if (!self || !_downloadSession.isCurrent(generation) || !downloadingLogs()) {
         return;
     }
 
@@ -409,6 +582,7 @@ void FtpTransport::_downloadToDirectory(const QString& dir)
 
 void FtpTransport::_downloadNext()
 {
+    const QPointer<FtpTransport> self(this);
     if (!downloadingLogs() || !_downloadSession.active() || _downloadSession.canceling() ||
         _downloadSession.currentEntry()) {
         return;
@@ -418,8 +592,14 @@ void FtpTransport::_downloadNext()
         const QString errorMessage = tr("The active vehicle became unavailable during the onboard log download");
         qCWarning(FtpTransportLog) << errorMessage;
         _setErrorMessage(errorMessage);
+        if (!self) {
+            return;
+        }
         _downloadSession.finish();
         _resetSelection(false, tr("Skipped because the active vehicle became unavailable"));
+        if (!self) {
+            return;
+        }
         _setDownloading(false);
         return;
     }
@@ -435,7 +615,13 @@ void FtpTransport::_downloadNext()
 
     _downloadSession.finish();
     _setBatchProgress(1.);
+    if (!self) {
+        return;
+    }
     _resetSelection();
+    if (!self) {
+        return;
+    }
     _setDownloading(false);
 }
 
@@ -454,60 +640,94 @@ void FtpTransport::_downloadEntry(OnboardLogEntry* entry)
     if (!entry) {
         return;
     }
+    const QPointer<FtpTransport> self(this);
     if (!_vehicle) {
         const QString errorMessage = tr("The active vehicle became unavailable during the onboard log download");
         qCWarning(FtpTransportLog) << errorMessage;
         _setEntryError(entry, errorMessage);
+        if (!self) {
+            return;
+        }
         _downloadSession.finish();
         _resetSelection(false, tr("Skipped because the active vehicle became unavailable"));
+        if (!self) {
+            return;
+        }
         _setDownloading(false);
         return;
     }
 
     const quint64 generation = _downloadSession.generation();
     QPointer<OnboardLogEntry> guardedEntry(entry);
+    const QPointer<Vehicle> vehicle(_vehicle);
     const uint64_t entrySize = entry->size();
 
-    {
-        const QSignalBlocker blocker(this);
-        entry->setSelected(false);
+    const bool signalsWereBlocked = blockSignals(true);
+    entry->setSelected(false);
+    if (!self) {
+        return;
     }
-    if (!guardedEntry || !_downloadSession.isCurrent(generation, guardedEntry) || !downloadingLogs()) {
+    blockSignals(signalsWereBlocked);
+    if (!_downloadEntryIsCurrent(generation, guardedEntry) || (_vehicle != vehicle)) {
+        if (!guardedEntry || !_logEntriesModel->contains(guardedEntry)) {
+            _completeRemovedDownloadEntry(generation, entrySize);
+        }
         return;
     }
 
     entry->setState(OnboardLogEntry::State::Downloading, tr("Downloading"));
-    if (!guardedEntry || !_downloadSession.isCurrent(generation, guardedEntry) || !downloadingLogs()) {
+    if (!self) {
+        return;
+    }
+    if (!_downloadEntryIsCurrent(generation, guardedEntry) || (_vehicle != vehicle)) {
+        if (!guardedEntry || !_logEntriesModel->contains(guardedEntry)) {
+            _completeRemovedDownloadEntry(generation, entrySize);
+        }
         return;
     }
     entry->setErrorMessage(QString());
-    if (!guardedEntry || !_downloadSession.isCurrent(generation, guardedEntry) || !downloadingLogs()) {
+    if (!self) {
+        return;
+    }
+    if (!_downloadEntryIsCurrent(generation, guardedEntry) || (_vehicle != vehicle)) {
+        if (!guardedEntry || !_logEntriesModel->contains(guardedEntry)) {
+            _completeRemovedDownloadEntry(generation, entrySize);
+        }
         return;
     }
 
     const OnboardLogFileName::UniquePath localPath =
         OnboardLogFileName::uniquePath(_downloadSession.path(), _localFilenameForEntry(*entry));
 
-    FTPManager* const ftp = _vehicle->ftpManager();
+    FTPManager* const ftp = vehicle->ftpManager();
 
     qCDebug(FtpTransportLog) << "downloading" << entry->ftpPath() << "to" << localPath.filePath;
 
     _downloadSession.setInFlight(true);
-    FTPDownloadJob* const downloadJob =
+    const FTPManager::DownloadStartResult startResult =
         ftp->startDownload(MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(), _downloadSession.path(), localPath.fileName, true,
-                           FTPManager::ExistingFilePolicy::FailIfExists);
+                           FTPManager::ExistingFilePolicy::FailIfExists, entry->size());
+    FTPDownloadJob* const downloadJob = startResult.job();
     if (!downloadJob) {
         _downloadSession.setInFlight(false);
         const QString errorMessage =
-            tr("Unable to start FTP download for %1").arg(QFileInfo(entry->ftpPath()).fileName());
+            startResult.error() == FTPManager::StartError::Busy
+                ? tr("Vehicle FTP service is busy")
+                : tr("Unable to start FTP download for %1").arg(QFileInfo(entry->ftpPath()).fileName());
         qCWarning(FtpTransportLog) << errorMessage;
         _setEntryError(guardedEntry, errorMessage);
-        if (!guardedEntry || !_downloadSession.isCurrent(generation, guardedEntry) || !downloadingLogs()) {
+        if (!self) {
+            return;
+        }
+        if (!_downloadEntryIsCurrent(generation, guardedEntry)) {
+            if (!guardedEntry || !_logEntriesModel->contains(guardedEntry)) {
+                _completeRemovedDownloadEntry(generation, entrySize);
+            }
             return;
         }
         _batchState.completeFile(entrySize);
         _updateBatchProgress();
-        if (!_downloadSession.isCurrent(generation, guardedEntry) || !downloadingLogs()) {
+        if (!self || !_downloadSession.isCurrent(generation, guardedEntry) || !downloadingLogs()) {
             return;
         }
         _downloadSession.completeCurrent();
@@ -516,8 +736,50 @@ void FtpTransport::_downloadEntry(OnboardLogEntry* entry)
     }
 
     _downloadJob = downloadJob;
-    (void) connect(downloadJob, &FTPDownloadJob::finished, this, &FtpTransport::_downloadComplete);
-    (void) connect(downloadJob, &FTPJob::progress, this, &FtpTransport::_downloadProgress);
+    const QPointer<FTPDownloadJob> guardedJob(downloadJob);
+    (void) connect(
+        downloadJob, &FTPDownloadJob::finished, this,
+        [this, guardedJob, generation](const QString& file, const QString& errorMsg, const QString& warningMsg) {
+            if (guardedJob && (guardedJob == _downloadJob) &&
+                (_downloadSession.isCurrent(generation) || _downloadSession.canceling())) {
+                _downloadComplete(file, errorMsg, warningMsg);
+            }
+        });
+    (void) connect(downloadJob, &FTPJob::progress, this, [this, guardedJob, generation](float value) {
+        if (guardedJob && (guardedJob == _downloadJob) && _downloadSession.isCurrent(generation)) {
+            _downloadProgress(value);
+        }
+    });
+}
+
+void FtpTransport::_completeRemovedDownloadEntry(quint64 generation, uint64_t entrySize)
+{
+    if (!_downloadSession.isCurrent(generation) || !downloadingLogs()) {
+        return;
+    }
+
+    _downloadSession.completeCurrent();
+    _batchState.completeFile(entrySize);
+    _continueDownload(generation);
+}
+
+void FtpTransport::_continueDownload(quint64 generation)
+{
+    if (!_downloadSession.isCurrent(generation) || !downloadingLogs()) {
+        return;
+    }
+
+    const QPointer<FtpTransport> self(this);
+    _updateBatchProgress();
+    if (self && _downloadSession.isCurrent(generation) && downloadingLogs()) {
+        _scheduleDownloadNext();
+    }
+}
+
+bool FtpTransport::_downloadEntryIsCurrent(quint64 generation, const QPointer<OnboardLogEntry>& entry) const
+{
+    return entry && _logEntriesModel->contains(entry) && _downloadSession.isCurrent(generation, entry) &&
+           downloadingLogs();
 }
 
 QString FtpTransport::_localFilenameForEntry(const OnboardLogEntry& entry)
@@ -539,6 +801,7 @@ QString FtpTransport::_localFilenameForEntry(const OnboardLogEntry& entry)
 
 void FtpTransport::_downloadComplete(const QString& file, const QString& errorMsg, const QString& warningMsg)
 {
+    const QPointer<FtpTransport> self(this);
     _downloadJob = nullptr;
     const bool wasInFlight = _downloadSession.inFlight();
     _downloadSession.setInFlight(false);
@@ -556,14 +819,14 @@ void FtpTransport::_downloadComplete(const QString& file, const QString& errorMs
                 errorMsg.isEmpty() ? warningMsg : tr("FTP download failed: %1").arg(errorMsg);
             if (!completionMessage.isEmpty()) {
                 _setErrorMessage(completionMessage);
-                if (!_downloadSession.isCurrent(generation) || !downloadingLogs()) {
+                if (!self || !_downloadSession.isCurrent(generation) || !downloadingLogs()) {
                     return;
                 }
             }
             _downloadSession.completeCurrent();
             _batchState.completeFile(entrySize);
             _updateBatchProgress();
-            if (_downloadSession.isCurrent(generation) && downloadingLogs()) {
+            if (self && _downloadSession.isCurrent(generation) && downloadingLogs()) {
                 _scheduleDownloadNext();
             }
         }
@@ -575,40 +838,62 @@ void FtpTransport::_downloadComplete(const QString& file, const QString& errorMs
     const uint64_t entrySize = _downloadSession.currentEntrySize();
     _downloadSession.completeCurrent();
     _batchState.completeFile(entrySize);
-    if (!entry) {
+    if (!entry || !_logEntriesModel->contains(entry)) {
+        _continueDownload(generation);
         return;
     }
 
     if (errorMsg.isEmpty()) {
         entry->setErrorMessage(warningMsg);
-        if (!entry || !_downloadSession.isCurrent(generation) || !downloadingLogs()) {
+        if (!self) {
+            return;
+        }
+        if (!entry || !_logEntriesModel->contains(entry)) {
+            _continueDownload(generation);
+            return;
+        }
+        if (!_downloadSession.isCurrent(generation) || !downloadingLogs()) {
             return;
         }
         entry->setState(OnboardLogEntry::State::Downloaded, tr("Downloaded"));
+        if (!self) {
+            return;
+        }
+        if (!entry || !_logEntriesModel->contains(entry)) {
+            _continueDownload(generation);
+            return;
+        }
         qCDebug(FtpTransportLog) << "download complete" << file;
         if (!warningMsg.isEmpty()) {
             qCWarning(FtpTransportLog) << warningMsg;
             _setErrorMessage(warningMsg);
+            if (!self) {
+                return;
+            }
         }
     } else {
         const QString errorMessage = tr("FTP download failed: %1").arg(errorMsg);
         _setEntryError(entry, errorMessage);
+        if (!self) {
+            return;
+        }
         qCWarning(FtpTransportLog) << errorMessage;
     }
 
-    if (!entry || !_downloadSession.isCurrent(generation) || !downloadingLogs()) {
+    if (!entry || !_logEntriesModel->contains(entry)) {
+        _continueDownload(generation);
         return;
     }
-    _updateBatchProgress();
     if (!_downloadSession.isCurrent(generation) || !downloadingLogs()) {
         return;
     }
-    _scheduleDownloadNext();
+    _continueDownload(generation);
 }
 
 void FtpTransport::_downloadProgress(float value)
 {
     const quint64 generation = _downloadSession.generation();
+    const QPointer<FtpTransport> self(this);
     QPointer<OnboardLogEntry> entry(_downloadSession.currentEntry());
     if (!entry) {
         return;
@@ -625,7 +910,7 @@ void FtpTransport::_downloadProgress(float value)
                                .arg(QGC::bigSizeToString(progress->rate));
 
     entry->setStatus(status);
-    if (!entry || !_downloadSession.isCurrent(generation, entry)) {
+    if (!self || !entry || !_downloadSession.isCurrent(generation, entry)) {
         return;
     }
     _updateBatchProgress(progress->bytes, progress->progress);
@@ -633,32 +918,56 @@ void FtpTransport::_downloadProgress(float value)
 
 void FtpTransport::cancel()
 {
-    FTPManager* const ftp = _vehicle ? _vehicle->ftpManager() : nullptr;
-    _cancelListing(ftp);
-    _cancelDownload(ftp);
-    _cancelErase(ftp);
+    if (_cancelInProgress) {
+        return;
+    }
+
+    const QPointer<FtpTransport> self(this);
+    _cancelInProgress = true;
+    const auto finishCancellation = qScopeGuard([self]() {
+        if (!self) {
+            return;
+        }
+        self->_cancelInProgress = false;
+        self->_runPendingRefresh();
+    });
+
+    _cancelListing();
+    if (!self) {
+        return;
+    }
+    _cancelDownload();
+    if (!self) {
+        return;
+    }
+    _cancelErase();
+    if (!self) {
+        return;
+    }
 
     _resetSelection(true);
 }
 
-void FtpTransport::_cancelListing(FTPManager* ftpManager)
+void FtpTransport::_cancelListing()
 {
+    const QPointer<FtpTransport> self(this);
+    _pendingLogInsertion.reset();
     if (!_listingSession.cancel()) {
         return;
     }
 
-    if (ftpManager) {
-        if (_listingJob) {
-            _listingJob->cancel();
-        } else {
-            ftpManager->cancelListDirectory();
+    if (_listingJob) {
+        _listingJob->cancel();
+        if (!self) {
+            return;
         }
     }
     _finishListing(ListingResult::Canceled);
 }
 
-void FtpTransport::_cancelDownload(FTPManager* ftpManager)
+void FtpTransport::_cancelDownload()
 {
+    const QPointer<FtpTransport> self(this);
     if (_downloadSession.canceling()) {
         return;
     }
@@ -670,12 +979,14 @@ void FtpTransport::_cancelDownload(FTPManager* ftpManager)
 
     if (cancellation.currentEntry && _logEntriesModel->contains(cancellation.currentEntry)) {
         cancellation.currentEntry->setState(OnboardLogEntry::State::Canceled, tr("Canceled"));
+        if (!self) {
+            return;
+        }
     }
-    if (cancellation.cancelRemoteDownload && ftpManager) {
-        if (_downloadJob) {
-            _downloadJob->cancel();
-        } else {
-            ftpManager->cancelDownload();
+    if (cancellation.cancelRemoteDownload && _downloadJob) {
+        _downloadJob->cancel();
+        if (!self) {
+            return;
         }
     } else {
         _finishDownloadCancellation();
@@ -684,17 +995,25 @@ void FtpTransport::_cancelDownload(FTPManager* ftpManager)
 
 void FtpTransport::_finishDownloadCancellation()
 {
+    const QPointer<FtpTransport> self(this);
     const bool refreshRequested = _downloadSession.finishCancellation();
     _setDownloading(false);
+    if (!self) {
+        return;
+    }
     _setBatchProgress(0.);
+    if (!self) {
+        return;
+    }
 
     if (refreshRequested) {
         _refreshAfterCancel();
     }
 }
 
-void FtpTransport::_cancelErase(FTPManager* ftpManager)
+void FtpTransport::_cancelErase()
 {
+    const QPointer<FtpTransport> self(this);
     if (_eraseSession.canceling()) {
         return;
     }
@@ -704,28 +1023,28 @@ void FtpTransport::_cancelErase(FTPManager* ftpManager)
         return;
     }
 
-    for (const QPointer<OnboardLogEntry>& entry : cancellation.pendingEntries) {
-        if (_eraseEntryIsCurrent(entry)) {
-            entry->setState(OnboardLogEntry::State::Available, tr("Available"));
-        }
-    }
     if (_eraseEntryIsCurrent(cancellation.currentEntry)) {
         cancellation.currentEntry->setState(OnboardLogEntry::State::Canceled, tr("Canceled"));
+        if (!self) {
+            return;
+        }
     }
-    if (ftpManager) {
-        if (_deleteJob) {
-            _deleteJob->cancel();
-        } else {
-            ftpManager->cancelDelete();
+    if (_deleteJob) {
+        _deleteJob->cancel();
+        if (!self) {
+            return;
         }
     }
     _eraseSession.finishCancellation();
-    _eraseEntryIndexes.clear();
     _setIdle(_vehicle);
 }
 
 void FtpTransport::eraseAll()
 {
+    if (_cancelInProgress) {
+        qCWarning(FtpTransportLog) << "Ignoring erase request while onboard log cancellation is in progress";
+        return;
+    }
     if (busy()) {
         qCWarning(FtpTransportLog) << "Ignoring erase request: another onboard log operation is in progress";
         return;
@@ -742,15 +1061,12 @@ void FtpTransport::eraseAll()
     }
 
     QList<QPointer<OnboardLogEntry>> entries;
-    QHash<const OnboardLogEntry*, QPersistentModelIndex> entryIndexes;
     const int numLogs = _logEntriesModel->count();
     entries.reserve(numLogs);
-    entryIndexes.reserve(numLogs);
-    for (int i = 0; i < numLogs; i++) {
+    for (int i = numLogs - 1; i >= 0; --i) {
         OnboardLogEntry* const entry = _logEntriesModel->value<OnboardLogEntry*>(i);
         if (entry && !entry->ftpPath().isEmpty()) {
             entries.append(entry);
-            entryIndexes.insert(entry, QPersistentModelIndex(_logEntriesModel->index(i, 0)));
         }
     }
 
@@ -759,11 +1075,12 @@ void FtpTransport::eraseAll()
         return;
     }
 
-    _eraseEntryIndexes = std::move(entryIndexes);
     const quint64 generation = _eraseSession.begin(entries);
+    const QPointer<FtpTransport> self(this);
     QPointer<Vehicle> vehicle(_vehicle);
-    const auto eraseIsCurrent = [this, generation, &vehicle]() {
-        return (generation == _eraseSession.generation()) && _eraseSession.active() && vehicle && (vehicle == _vehicle);
+    const auto eraseIsCurrent = [self, generation, &vehicle]() {
+        return self && (generation == self->_eraseSession.generation()) && self->_eraseSession.active() && vehicle &&
+               (vehicle == self->_vehicle);
     };
 
     _setOperation(Operation::Erasing, vehicle);
@@ -773,24 +1090,6 @@ void FtpTransport::eraseAll()
     _setErrorMessage(QString());
     if (!eraseIsCurrent()) {
         return;
-    }
-
-    for (const QPointer<OnboardLogEntry>& entry : std::as_const(entries)) {
-        if (!_eraseEntryIsCurrent(entry)) {
-            continue;
-        }
-
-        entry->setState(OnboardLogEntry::State::Queued, tr("Waiting"));
-        if (!eraseIsCurrent()) {
-            return;
-        }
-        if (!_eraseEntryIsCurrent(entry)) {
-            continue;
-        }
-        entry->setErrorMessage(QString());
-        if (!eraseIsCurrent()) {
-            return;
-        }
     }
 
     if (!_eraseSession.active()) {
@@ -809,13 +1108,12 @@ void FtpTransport::eraseAll()
 
 void FtpTransport::_eraseNext()
 {
-    if (!_eraseSession.active() || _eraseSession.canceling() || _eraseSession.currentEntry()) {
+    if (!_eraseSession.active() || _eraseSession.canceling() || _eraseSession.hasCurrent()) {
         return;
     }
 
     QPointer<OnboardLogEntry> entry = _eraseSession.takeNext();
     while (entry && !_eraseEntryIsCurrent(entry)) {
-        _eraseEntryIndexes.remove(entry.data());
         _eraseSession.completeCurrent(false);
         entry = _eraseSession.takeNext();
     }
@@ -826,28 +1124,45 @@ void FtpTransport::_eraseNext()
     }
 
     const quint64 generation = _eraseSession.generation();
+    const QPointer<FtpTransport> self(this);
     QPointer<Vehicle> vehicle(_vehicle);
     const QString ftpPath = entry->ftpPath();
-    const auto eraseIsCurrent = [this, generation, &vehicle, &entry]() {
-        return (generation == _eraseSession.generation()) && _eraseSession.active() && vehicle &&
-               (vehicle == _vehicle) && entry && (_eraseSession.currentEntry() == entry) && _eraseEntryIsCurrent(entry);
+    const auto eraseIsCurrent = [self, generation, &vehicle, &entry]() {
+        return self && (generation == self->_eraseSession.generation()) && self->_eraseSession.active() && vehicle &&
+               (vehicle == self->_vehicle) && entry && (self->_eraseSession.currentEntry() == entry) &&
+               self->_eraseEntryIsCurrent(entry);
+    };
+    const auto continueAfterInvalidEntry = [self, generation, &entry]() {
+        if (self && (generation == self->_eraseSession.generation()) && self->_eraseSession.active() &&
+            !self->_eraseSession.canceling() && self->_eraseSession.hasCurrent() &&
+            !self->_eraseEntryIsCurrent(entry)) {
+            self->_eraseSession.completeCurrent(false);
+            self->_scheduleEraseNext();
+        }
     };
 
     entry->setState(OnboardLogEntry::State::Erasing, tr("Deleting"));
     if (!eraseIsCurrent()) {
+        continueAfterInvalidEntry();
         return;
     }
     entry->setErrorMessage(QString());
     if (!eraseIsCurrent()) {
+        continueAfterInvalidEntry();
         return;
     }
 
-    FTPDeleteJob* const deleteJob = vehicle->ftpManager()->startDeleteFile(MAV_COMP_ID_AUTOPILOT1, ftpPath);
+    const FTPManager::DeleteStartResult startResult =
+        vehicle->ftpManager()->startDeleteFile(MAV_COMP_ID_AUTOPILOT1, ftpPath);
+    FTPDeleteJob* const deleteJob = startResult.job();
     if (!deleteJob) {
         if (!eraseIsCurrent()) {
+            continueAfterInvalidEntry();
             return;
         }
-        const QString errorMessage = tr("Unable to start deletion of %1").arg(QFileInfo(ftpPath).fileName());
+        const QString errorMessage = startResult.error() == FTPManager::StartError::Busy
+                                         ? tr("Vehicle FTP service is busy")
+                                         : tr("Unable to start deletion of %1").arg(QFileInfo(ftpPath).fileName());
         qCWarning(FtpTransportLog) << errorMessage;
         entry->setState(OnboardLogEntry::State::Error, tr("Error"));
         if (!eraseIsCurrent()) {
@@ -867,7 +1182,13 @@ void FtpTransport::_eraseNext()
     }
 
     _deleteJob = deleteJob;
-    (void) connect(deleteJob, &FTPDeleteJob::finished, this, &FtpTransport::_deleteComplete);
+    const QPointer<FTPDeleteJob> guardedJob(deleteJob);
+    (void) connect(deleteJob, &FTPDeleteJob::finished, this,
+                   [this, guardedJob, generation](const QString& file, const QString& errorMsg) {
+                       if (guardedJob && (guardedJob == _deleteJob) && (generation == _eraseSession.generation())) {
+                           _deleteComplete(file, errorMsg);
+                       }
+                   });
 }
 
 void FtpTransport::_scheduleEraseNext()
@@ -883,23 +1204,24 @@ void FtpTransport::_scheduleEraseNext()
 void FtpTransport::_deleteComplete(const QString& file, const QString& errorMsg)
 {
     _deleteJob = nullptr;
-    if (_eraseSession.canceling() || !_eraseSession.currentEntry()) {
+    if (_eraseSession.canceling() || !_eraseSession.hasCurrent()) {
         return;
     }
 
     const quint64 generation = _eraseSession.generation();
+    const QPointer<FtpTransport> self(this);
     QPointer<Vehicle> vehicle(_vehicle);
     QPointer<OnboardLogEntry> entry(_eraseSession.currentEntry());
     _eraseSession.completeCurrent(!errorMsg.isEmpty());
 
-    const auto eraseIsCurrent = [this, generation, &vehicle, &entry]() {
-        return (generation == _eraseSession.generation()) && _eraseSession.active() && vehicle &&
-               (vehicle == _vehicle) && entry && _eraseEntryIsCurrent(entry);
+    const auto eraseIsCurrent = [self, generation, &vehicle, &entry]() {
+        return self && (generation == self->_eraseSession.generation()) && self->_eraseSession.active() && vehicle &&
+               (vehicle == self->_vehicle) && entry && self->_eraseEntryIsCurrent(entry);
     };
 
     if (!eraseIsCurrent()) {
         qCWarning(FtpTransportLog) << "delete completed for an entry outside the active model:" << file;
-        if ((generation == _eraseSession.generation()) && _eraseSession.active()) {
+        if (self && (generation == _eraseSession.generation()) && _eraseSession.active()) {
             _scheduleEraseNext();
         }
         return;
@@ -909,7 +1231,9 @@ void FtpTransport::_deleteComplete(const QString& file, const QString& errorMsg)
         qCDebug(FtpTransportLog) << "deleted" << file;
         // Remove the row from the model so the UI reflects the erase immediately.
         _logEntriesModel->removeOne(entry);
-        _eraseEntryIndexes.remove(entry.data());
+        if (!self) {
+            return;
+        }
         if (entry) {
             entry->deleteLater();
         }
@@ -930,7 +1254,7 @@ void FtpTransport::_deleteComplete(const QString& file, const QString& errorMsg)
         }
     }
 
-    if (generation == _eraseSession.generation()) {
+    if (self && (generation == _eraseSession.generation())) {
         _scheduleEraseNext();
     }
 }
@@ -939,9 +1263,9 @@ void FtpTransport::_finishErase()
 {
     const quint64 generation = _eraseSession.generation();
     const uint failureCount = _eraseSession.finish();
-    _eraseEntryIndexes.clear();
+    const QPointer<FtpTransport> self(this);
     _setIdle(_vehicle);
-    if ((generation != _eraseSession.generation()) || _eraseSession.active()) {
+    if (!self || (generation != _eraseSession.generation()) || _eraseSession.active()) {
         return;
     }
 
@@ -960,9 +1284,7 @@ bool FtpTransport::_eraseEntryIsCurrent(const QPointer<OnboardLogEntry>& entry) 
         return false;
     }
 
-    const auto index = _eraseEntryIndexes.constFind(entry.data());
-    return (index != _eraseEntryIndexes.cend()) && index->isValid() && (index->model() == _logEntriesModel) &&
-           (index->data(Qt::UserRole).value<QObject*>() == entry.data());
+    return _logEntriesModel->contains(entry);
 }
 
 void FtpTransport::_setDownloading(bool active)

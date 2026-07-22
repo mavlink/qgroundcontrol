@@ -1,9 +1,8 @@
 #pragma once
 
-#include <QtCore/QHash>
-#include <QtCore/QPersistentModelIndex>
 #include <QtCore/QPointer>
 #include <chrono>
+#include <optional>
 
 #include "FtpDownloadSession.h"
 #include "FtpEraseSession.h"
@@ -11,7 +10,6 @@
 #include "OnboardLogTransport.h"
 
 class OnboardLogEntry;
-class FTPManager;
 class FTPDeleteJob;
 class FTPDownloadJob;
 class FTPListDirectoryJob;
@@ -43,19 +41,25 @@ private slots:
     void _deleteComplete(const QString& file, const QString& errorMsg);
 
 private:
+    void _shutdown();
     void _startListing();
     void _listRoot();
     void _listNextSubdir();
-    uint _processFileEntries(const QStringList& dirList, const QString& subdir);
+    std::optional<uint> _processFileEntries(const QStringList& dirList, const QString& subdir);
+    void _appendNextLogEntryBatch();
     void _downloadNext();
     void _scheduleDownloadNext();
     void _downloadEntry(OnboardLogEntry* entry);
+    void _completeRemovedDownloadEntry(quint64 generation, uint64_t entrySize);
+    void _continueDownload(quint64 generation);
+    bool _downloadEntryIsCurrent(quint64 generation, const QPointer<OnboardLogEntry>& entry) const;
     void _downloadToDirectory(const QString& dir);
+    void _runPendingRefresh();
     void _refreshAfterCancel();
-    void _cancelListing(FTPManager* ftpManager);
-    void _cancelDownload(FTPManager* ftpManager);
+    void _cancelListing();
+    void _cancelDownload();
     void _finishDownloadCancellation();
-    void _cancelErase(FTPManager* ftpManager);
+    void _cancelErase();
     void _setDownloading(bool active);
     void _setListing(bool active);
     void _finishListing(ListingResult result);
@@ -73,7 +77,18 @@ private:
     QPointer<FTPListDirectoryJob> _listingJob;
     QPointer<FTPDownloadJob> _downloadJob;
     QPointer<FTPDeleteJob> _deleteJob;
-    QHash<const OnboardLogEntry*, QPersistentModelIndex> _eraseEntryIndexes;
+
+    struct PendingLogInsertion
+    {
+        QList<FtpListingParser::LogDescriptor> descriptors;
+        qsizetype nextIndex = 0;
+        quint64 generation = 0;
+    };
+
+    std::optional<PendingLogInsertion> _pendingLogInsertion = std::nullopt;
+    bool _cancelInProgress = false;
+    bool _refreshPending = false;
 
     static constexpr std::chrono::milliseconds kGuiUpdateInterval{100};
+    static constexpr qsizetype kLogInsertionBatchSize = 128;
 };

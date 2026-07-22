@@ -10,8 +10,13 @@ private slots:
     void _extractArchiveRejectsInvalidInput();
     void _extractArchiveHappyPath();
     void _extractArchiveConcurrentRejected();
+    void _extractArchiveReentrantCompletion();
     void _browseArchiveRejectsInvalidInput();
     void _browseArchiveHappyPath();
     void _noVehicleRejectsOperations();
     void _vehicleChangeCancelsOperation();
+    void _vehicleChangeCompletionDeletesController();
+    void _downloadWarningSurfaced();
+    void _directoryTruncationSurfacedAndReset();
+    void _completionDirectConnectionDeletion();
 };

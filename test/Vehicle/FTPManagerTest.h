@@ -14,6 +14,10 @@ private slots:
     void _testLostPackets();
     void _testDownloadCancelBeforeOpen();
     void _testDownloadSessionCleanup();
+    void _testDownloadSizeLimit();
+    void _testDownloadPacketSizeLimit();
+    void _testDownloadPacketValidation();
+    void _testDownloadLocalWriteFailure();
     void _testDownloadResetResponseLoss();
     void _testDownloadFinalizeFailure();
     void _testListDirectory();
@@ -31,6 +35,7 @@ private slots:
     void _testListDirectoryBadSequence();
     void _testListDirectoryCancel();
     void _testUpload();
+    void _testUploadCancelFromProgress();
     void _testUploadResetResponseLoss();
 
     // Overrides from UnitTest

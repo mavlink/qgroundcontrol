@@ -8,14 +8,23 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 #include <cstring>
+#include <limits>
+#include <type_traits>
 
 #include "FTPManager.h"
 #include "FTPManagerJob.h"
 #include "FTPManagerOperations.h"
+#include "MAVLinkFTP.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
+
+static_assert(std::is_copy_assignable_v<FTPManager::DownloadStartResult>);
+static_assert(std::is_move_assignable_v<FTPManager::DownloadStartResult>);
+static_assert(std::is_copy_assignable_v<FTPManager::UploadStartResult>);
+static_assert(std::is_move_assignable_v<FTPManager::UploadStartResult>);
+
 const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
     {"/general.json"},
 };
@@ -29,10 +38,12 @@ void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
-    // void downloadComplete   (const QString& file, const QString& errorMsg);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, testCase.file,
-                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+    FTPDownloadJob* const job = ftpManager
+                                    ->startDownload(MAV_COMP_ID_AUTOPILOT1, testCase.file,
+                                                    QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                                    .job();
+    QVERIFY(job);
+    QSignalSpy spyDownloadComplete(job, &FTPDownloadJob::finished);
     QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
     QCOMPARE(spyDownloadComplete.count(), 1);
     QList<QVariant> arguments = spyDownloadComplete.takeFirst();
@@ -45,12 +56,14 @@ void FTPManagerTest::_sizeTestCaseWorker(int fileSize)
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
-                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+    FTPDownloadJob* const job = ftpManager
+                                    ->startDownload(MAV_COMP_ID_AUTOPILOT1, filename,
+                                                    QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                                    .job();
+    QVERIFY(job);
+    QSignalSpy spyDownloadComplete(job, &FTPDownloadJob::finished);
     QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
     QCOMPARE(spyDownloadComplete.count(), 1);
-    // void downloadComplete   (const QString& file, const QString& errorMsg);
     QList<QVariant> arguments = spyDownloadComplete.takeFirst();
     QVERIFY(arguments[1].toString().isEmpty());
     _verifyFileSizeAndDelete(arguments[0].toString(), fileSize);
@@ -102,13 +115,15 @@ void FTPManagerTest::_testLostPackets()
     FTPManager* ftpManager = _vehicle->ftpManager();
     int fileSize = 4 * 1024;
     QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
-    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
     _mockLink->mockLinkFTP()->enableRandomDrops(true);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
-                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+    FTPDownloadJob* const job = ftpManager
+                                    ->startDownload(MAV_COMP_ID_AUTOPILOT1, filename,
+                                                    QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                                    .job();
+    QVERIFY(job);
+    QSignalSpy spyDownloadComplete(job, &FTPDownloadJob::finished);
     QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
     QCOMPARE(spyDownloadComplete.count(), 1);
-    // void downloadComplete   (const QString& file, const QString& errorMsg);
     QList<QVariant> arguments = spyDownloadComplete.takeFirst();
     QVERIFY(arguments[1].toString().isEmpty());
     _verifyFileSizeAndDelete(arguments[0].toString(), fileSize);
@@ -124,11 +139,12 @@ void FTPManagerTest::_testDownloadCancelBeforeOpen()
     QVERIFY(downloadDir.isValid());
 
     mockFtp->setErrorMode(MockLinkFTP::errModeNoResponse);
-    QSignalSpy downloadCompleteSpy(ftpManager, &FTPManager::downloadComplete);
     const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(64);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path()));
+    FTPDownloadJob* job = ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path()).job();
+    QVERIFY(job);
+    QSignalSpy downloadCompleteSpy(job, &FTPDownloadJob::finished);
 
-    ftpManager->cancelDownload();
+    job->cancel();
 
     QCOMPARE(downloadCompleteSpy.size(), 1);
     const QList<QVariant> canceledArguments = downloadCompleteSpy.takeFirst();
@@ -136,18 +152,23 @@ void FTPManagerTest::_testDownloadCancelBeforeOpen()
     QVERIFY(QDir(downloadDir.path()).entryList(QDir::Files).isEmpty());
 
     mockFtp->setErrorMode(MockLinkFTP::errModeNone);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path()));
-    QVERIFY_SIGNAL_WAIT(downloadCompleteSpy, TestTimeout::longMs());
-    const QList<QVariant> completedArguments = downloadCompleteSpy.takeFirst();
+    job = ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path()).job();
+    QVERIFY(job);
+    QSignalSpy completedSpy(job, &FTPDownloadJob::finished);
+    QVERIFY_SIGNAL_WAIT(completedSpy, TestTimeout::longMs());
+    const QList<QVariant> completedArguments = completedSpy.takeFirst();
     QVERIFY(completedArguments[1].toString().isEmpty());
     const QString completedFile = completedArguments[0].toString();
     QCOMPARE(QFileInfo(completedFile).size(), 64);
 
     mockFtp->setErrorMode(MockLinkFTP::errModeNoResponse);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path(), QStringLiteral("next.bin")));
-    ftpManager->cancelDownload();
-    QCOMPARE(downloadCompleteSpy.size(), 1);
-    QVERIFY(!downloadCompleteSpy.takeFirst()[1].toString().isEmpty());
+    job = ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path(), QStringLiteral("next.bin"))
+              .job();
+    QVERIFY(job);
+    QSignalSpy secondCancelSpy(job, &FTPDownloadJob::finished);
+    job->cancel();
+    QCOMPARE(secondCancelSpy.size(), 1);
+    QVERIFY(!secondCancelSpy.takeFirst()[1].toString().isEmpty());
     QVERIFY(QFileInfo::exists(completedFile));
 
     _verifyFileSizeAndDelete(completedFile, 64);
@@ -163,12 +184,13 @@ void FTPManagerTest::_testDownloadSessionCleanup()
     QVERIFY(downloadDir.isValid());
 
     QSignalSpy terminateSpy(mockFtp, &MockLinkFTP::terminateCommandReceived);
-    QSignalSpy completionSpy(ftpManager, &FTPManager::downloadComplete);
-
     mockFtp->setErrorMode(MockLinkFTP::errModeNoResponse);
     const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(64);
-    QVERIFY(
-        ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path(), QStringLiteral("malformed.bin")));
+    FTPDownloadJob* job =
+        ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path(), QStringLiteral("malformed.bin"))
+            .job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPDownloadJob::finished);
 
     MavlinkFTP::Request malformedOpenResponse{};
     malformedOpenResponse.hdr.opcode = MAV_FTP_OPCODE_ACK;
@@ -186,12 +208,239 @@ void FTPManagerTest::_testDownloadSessionCleanup()
     terminateSpy.clear();
     mockFtp->setErrorMode(MockLinkFTP::errModeNone);
     const QString missingDirectory = downloadDir.filePath(QStringLiteral("missing"));
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, missingDirectory, QStringLiteral("local-open.bin")));
-    QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
+    job =
+        ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, filename, missingDirectory, QStringLiteral("local-open.bin"))
+            .job();
+    QVERIFY(job);
+    QSignalSpy missingDirectorySpy(job, &FTPDownloadJob::finished);
+    QVERIFY_SIGNAL_WAIT(missingDirectorySpy, TestTimeout::longMs());
     QCOMPARE(terminateSpy.size(), 1);
-    QVERIFY(!completionSpy.takeFirst()[1].toString().isEmpty());
+    QVERIFY(!missingDirectorySpy.takeFirst()[1].toString().isEmpty());
     QVERIFY(!QFileInfo::exists(missingDirectory));
 
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testDownloadSizeLimit()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    QTemporaryDir downloadDir;
+    QVERIFY(downloadDir.isValid());
+
+    QSignalSpy terminateSpy(mockFtp, &MockLinkFTP::terminateCommandReceived);
+    const QString remoteFile = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(64);
+    const QString localFileName = QStringLiteral("oversized.bin");
+
+    FTPDownloadJob* job =
+        ftpManager
+            ->startDownload(MAV_COMP_ID_AUTOPILOT1, remoteFile, downloadDir.path(), localFileName, true,
+                            FTPManager::ExistingFilePolicy::Replace, std::optional<uint32_t>{63U})
+            .job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPDownloadJob::finished);
+    QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
+
+    QCOMPARE(terminateSpy.size(), 1);
+    const QList<QVariant> arguments = completionSpy.takeFirst();
+    QVERIFY(arguments[1].toString().contains(QStringLiteral("exceeds expected maximum")));
+    QVERIFY(QDir(downloadDir.path()).entryList(QDir::Files).isEmpty());
+    QVERIFY(!QFileInfo::exists(downloadDir.filePath(localFileName + QStringLiteral(".part"))));
+
+    terminateSpy.clear();
+    const QString exactFileName = QStringLiteral("exact-size.bin");
+    job = ftpManager
+              ->startDownload(MAV_COMP_ID_AUTOPILOT1, remoteFile, downloadDir.path(), exactFileName, true,
+                              FTPManager::ExistingFilePolicy::Replace, std::optional<uint32_t>{64U})
+              .job();
+    QVERIFY(job);
+    QSignalSpy exactCompletionSpy(job, &FTPDownloadJob::finished);
+    QVERIFY_SIGNAL_WAIT(exactCompletionSpy, TestTimeout::longMs());
+    const QList<QVariant> exactArguments = exactCompletionSpy.takeFirst();
+    QVERIFY2(exactArguments[1].toString().isEmpty(), qPrintable(exactArguments[1].toString()));
+    QCOMPARE(QFileInfo(exactArguments[0].toString()).size(), 64);
+    QCOMPARE(terminateSpy.size(), 0);
+    QVERIFY(QFile::remove(exactArguments[0].toString()));
+
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testDownloadPacketSizeLimit()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    QTemporaryDir downloadDir;
+    QVERIFY(downloadDir.isValid());
+
+    mockFtp->setErrorMode(MockLinkFTP::errModeNoResponse);
+    const QString remoteFile = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(64);
+    const QString localFileName = QStringLiteral("packet-oversized.bin");
+    FTPDownloadJob* const job =
+        ftpManager
+            ->startDownload(MAV_COMP_ID_AUTOPILOT1, remoteFile, downloadDir.path(), localFileName, true,
+                            FTPManager::ExistingFilePolicy::Replace, std::optional<uint32_t>{64U})
+            .job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPDownloadJob::finished);
+
+    MavlinkFTP::Request openResponse{};
+    openResponse.hdr.opcode = MAV_FTP_OPCODE_ACK;
+    openResponse.hdr.req_opcode = MAV_FTP_OPCODE_OPENFILERO;
+    openResponse.hdr.seqNumber = ftpManager->_expectedIncomingSeqNumber;
+    openResponse.hdr.session = 1;
+    MavlinkFTP::setOpenFileLength(openResponse, 64U);
+    ftpManager->_openFileROAckOrNak(&openResponse);
+    QVERIFY(ftpManager->_downloadOperation->file.isOpen());
+
+    MavlinkFTP::Request oversizedData{};
+    oversizedData.hdr.opcode = MAV_FTP_OPCODE_ACK;
+    oversizedData.hdr.req_opcode = MAV_FTP_OPCODE_BURSTREADFILE;
+    oversizedData.hdr.seqNumber = ftpManager->_expectedIncomingSeqNumber;
+    oversizedData.hdr.session = 1;
+    oversizedData.hdr.offset = 64U;
+    oversizedData.hdr.size = 1U;
+    oversizedData.data[0] = 0x5A;
+    ftpManager->_burstReadFileAckOrNak(&oversizedData);
+
+    QCOMPARE(ftpManager->_downloadOperation->file.size(), 0);
+    QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
+    QVERIFY(completionSpy.takeFirst()[1].toString().contains(QStringLiteral("exceeds reported file size")));
+    QVERIFY(QDir(downloadDir.path()).entryList(QDir::Files).isEmpty());
+
+    mockFtp->setErrorMode(MockLinkFTP::errModeNone);
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testDownloadPacketValidation()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    QTemporaryDir downloadDir;
+    QVERIFY(downloadDir.isValid());
+
+    mockFtp->setErrorMode(MockLinkFTP::errModeNoResponse);
+    const QString remoteFile = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(64);
+    auto beginManualDownload = [&](const QString& localFileName, bool checkSize) {
+        const std::optional<uint32_t> maximumFileSize =
+            checkSize ? std::nullopt : std::optional<uint32_t>{(std::numeric_limits<uint32_t>::max)()};
+        FTPDownloadJob* const job =
+            ftpManager
+                ->startDownload(MAV_COMP_ID_AUTOPILOT1, remoteFile, downloadDir.path(), localFileName, checkSize,
+                                FTPManager::ExistingFilePolicy::Replace, maximumFileSize)
+                .job();
+        if (!job) {
+            return static_cast<FTPDownloadJob*>(nullptr);
+        }
+
+        MavlinkFTP::Request openResponse{};
+        openResponse.hdr.opcode = MAV_FTP_OPCODE_ACK;
+        openResponse.hdr.req_opcode = MAV_FTP_OPCODE_OPENFILERO;
+        openResponse.hdr.seqNumber = ftpManager->_expectedIncomingSeqNumber;
+        openResponse.hdr.session = 1;
+        MavlinkFTP::setOpenFileLength(openResponse, 64U);
+        ftpManager->_openFileROAckOrNak(&openResponse);
+        return ftpManager->_downloadOperation->file.isOpen() ? job : nullptr;
+    };
+
+    FTPDownloadJob* job = beginManualDownload(QStringLiteral("empty-burst.bin"), true);
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPDownloadJob::finished);
+    MavlinkFTP::Request emptyBurst{};
+    emptyBurst.hdr.opcode = MAV_FTP_OPCODE_ACK;
+    emptyBurst.hdr.req_opcode = MAV_FTP_OPCODE_BURSTREADFILE;
+    emptyBurst.hdr.seqNumber = ftpManager->_expectedIncomingSeqNumber;
+    emptyBurst.hdr.session = 1;
+    emptyBurst.hdr.burstComplete = 1;
+    ftpManager->_burstReadFileAckOrNak(&emptyBurst);
+    QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
+    QVERIFY(completionSpy.takeFirst()[1].toString().contains(QStringLiteral("empty data block")));
+    QVERIFY(QDir(downloadDir.path()).entryList(QDir::Files).isEmpty());
+
+    job = beginManualDownload(QStringLiteral("empty-missing-block.bin"), true);
+    QVERIFY(job);
+    QSignalSpy missingBlockSpy(job, &FTPDownloadJob::finished);
+    FTPManager::DownloadOperation::MissingData missingData;
+    missingData.offset = 0;
+    missingData.bytesMissing = 1;
+    ftpManager->_downloadOperation->missingData.append(missingData);
+    MavlinkFTP::Request emptyMissingBlock{};
+    emptyMissingBlock.hdr.opcode = MAV_FTP_OPCODE_ACK;
+    emptyMissingBlock.hdr.req_opcode = MAV_FTP_OPCODE_READFILE;
+    emptyMissingBlock.hdr.seqNumber = ftpManager->_expectedIncomingSeqNumber;
+    emptyMissingBlock.hdr.session = 1;
+    ftpManager->_fillMissingBlocksAckOrNak(&emptyMissingBlock);
+    QVERIFY_SIGNAL_WAIT(missingBlockSpy, TestTimeout::longMs());
+    QVERIFY(missingBlockSpy.takeFirst()[1].toString().contains(QStringLiteral("empty data block")));
+    QVERIFY(QDir(downloadDir.path()).entryList(QDir::Files).isEmpty());
+
+    job = beginManualDownload(QStringLiteral("offset-overflow.bin"), false);
+    QVERIFY(job);
+    QSignalSpy overflowSpy(job, &FTPDownloadJob::finished);
+    ftpManager->_downloadOperation->expectedOffset = (std::numeric_limits<uint32_t>::max)();
+    MavlinkFTP::Request overflowingData{};
+    overflowingData.hdr.opcode = MAV_FTP_OPCODE_ACK;
+    overflowingData.hdr.req_opcode = MAV_FTP_OPCODE_BURSTREADFILE;
+    overflowingData.hdr.seqNumber = ftpManager->_expectedIncomingSeqNumber;
+    overflowingData.hdr.session = 1;
+    overflowingData.hdr.offset = (std::numeric_limits<uint32_t>::max)();
+    overflowingData.hdr.size = 1;
+    ftpManager->_burstReadFileAckOrNak(&overflowingData);
+    QVERIFY_SIGNAL_WAIT(overflowSpy, TestTimeout::longMs());
+    QVERIFY(overflowSpy.takeFirst()[1].toString().contains(QStringLiteral("FTP offset limit")));
+    QVERIFY(QDir(downloadDir.path()).entryList(QDir::Files).isEmpty());
+
+    mockFtp->setErrorMode(MockLinkFTP::errModeNone);
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testDownloadLocalWriteFailure()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    QTemporaryDir downloadDir;
+    QVERIFY(downloadDir.isValid());
+
+    mockFtp->setErrorMode(MockLinkFTP::errModeNoResponse);
+    const QString remoteFile = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(64);
+    const QString localFileName = QStringLiteral("write-failure.bin");
+    FTPDownloadJob* const job =
+        ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, remoteFile, downloadDir.path(), localFileName).job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPDownloadJob::finished);
+
+    MavlinkFTP::Request openResponse{};
+    openResponse.hdr.opcode = MAV_FTP_OPCODE_ACK;
+    openResponse.hdr.req_opcode = MAV_FTP_OPCODE_OPENFILERO;
+    openResponse.hdr.seqNumber = ftpManager->_expectedIncomingSeqNumber;
+    openResponse.hdr.session = 1;
+    MavlinkFTP::setOpenFileLength(openResponse, 64U);
+    ftpManager->_openFileROAckOrNak(&openResponse);
+    const QString partialFilePath = ftpManager->_downloadOperation->file.fileName();
+    ftpManager->_downloadOperation->file.close();
+    QVERIFY(ftpManager->_downloadOperation->file.open(QIODevice::ReadOnly));
+
+    MavlinkFTP::Request data{};
+    data.hdr.opcode = MAV_FTP_OPCODE_ACK;
+    data.hdr.req_opcode = MAV_FTP_OPCODE_BURSTREADFILE;
+    data.hdr.seqNumber = ftpManager->_expectedIncomingSeqNumber;
+    data.hdr.session = 1;
+    data.hdr.size = 1;
+    data.data[0] = 0x5A;
+    expectLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("QIODevice::write .*ReadOnly device")));
+    ftpManager->_burstReadFileAckOrNak(&data);
+    verifyExpectedLogMessage();
+
+    QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
+    const QString errorMessage = completionSpy.takeFirst()[1].toString();
+    QVERIFY(errorMessage.contains(QStringLiteral("Unable to write local file")));
+    QVERIFY(errorMessage.contains(partialFilePath));
+    QVERIFY(QDir(downloadDir.path()).entryList(QDir::Files).isEmpty());
+
+    mockFtp->setErrorMode(MockLinkFTP::errModeNone);
     _disconnectMockLink();
 }
 
@@ -205,9 +454,12 @@ void FTPManagerTest::_testDownloadFinalizeFailure()
     const QString finalPath = downloadDir.filePath(QStringLiteral("blocked.bin"));
     QVERIFY(QDir().mkpath(finalPath));
 
-    QSignalSpy completionSpy(ftpManager, &FTPManager::downloadComplete);
     const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(64);
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path(), QStringLiteral("blocked.bin")));
+    FTPDownloadJob* job =
+        ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path(), QStringLiteral("blocked.bin"))
+            .job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPDownloadJob::finished);
     QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
 
     const QList<QVariant> arguments = completionSpy.takeFirst();
@@ -223,12 +475,15 @@ void FTPManagerTest::_testDownloadFinalizeFailure()
     QCOMPARE(protectedFile.write(protectedContents), protectedContents.size());
     protectedFile.close();
 
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path(),
-                                 QFileInfo(protectedPath).fileName(), true,
-                                 FTPManager::ExistingFilePolicy::FailIfExists));
-    QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
+    job = ftpManager
+              ->startDownload(MAV_COMP_ID_AUTOPILOT1, filename, downloadDir.path(), QFileInfo(protectedPath).fileName(),
+                              true, FTPManager::ExistingFilePolicy::FailIfExists)
+              .job();
+    QVERIFY(job);
+    QSignalSpy protectedCompletionSpy(job, &FTPDownloadJob::finished);
+    QVERIFY_SIGNAL_WAIT(protectedCompletionSpy, TestTimeout::longMs());
 
-    const QList<QVariant> protectedArguments = completionSpy.takeFirst();
+    const QList<QVariant> protectedArguments = protectedCompletionSpy.takeFirst();
     QCOMPARE(protectedArguments[0].toString(), protectedPath);
     QVERIFY(protectedArguments[1].toString().contains(QStringLiteral("destination already exists")));
     QVERIFY(protectedArguments[2].toString().isEmpty());
@@ -249,12 +504,14 @@ void FTPManagerTest::_testDownloadResetResponseLoss()
     QVERIFY(downloadDir.isValid());
 
     QSignalSpy resetSpy(mockFtp, &MockLinkFTP::resetCommandReceived);
-    QSignalSpy completionSpy(ftpManager, &FTPManager::downloadComplete);
     mockFtp->setResetCommandResponseDropCount(1);
 
     const QString remoteFile = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(64);
     const QString localFileName = QStringLiteral("reset-warning.bin");
-    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, remoteFile, downloadDir.path(), localFileName));
+    FTPDownloadJob* const job =
+        ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, remoteFile, downloadDir.path(), localFileName).job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPDownloadJob::finished);
     QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
 
     QCOMPARE(resetSpy.size(), 1);
@@ -287,8 +544,9 @@ void FTPManagerTest::_testListDirectory()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponseAllowRetry);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -301,13 +559,17 @@ void FTPManagerTest::_testListDirectoryLimit()
 {
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* const ftpManager = _vehicle->ftpManager();
-    QSignalSpy completionSpy(ftpManager, &FTPManager::listDirectoryComplete);
-
     expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression(QStringLiteral("negative entry limit")));
-    QVERIFY(!ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"), -1));
+    const FTPManager::ListDirectoryStartResult invalidLimitResult =
+        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"), -1);
+    QVERIFY(!invalidLimitResult.job());
+    QCOMPARE(invalidLimitResult.error(), FTPManager::StartError::InvalidArgument);
     verifyExpectedLogMessage();
 
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"), 3));
+    FTPListDirectoryJob* const job =
+        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"), 3).job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
     QCOMPARE(completionSpy.size(), 1);
 
@@ -323,9 +585,10 @@ void FTPManagerTest::_testListDirectoryParsing()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* const ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoResponse);
-    QSignalSpy completionSpy(ftpManager, &FTPManager::listDirectoryComplete);
 
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")));
+    FTPListDirectoryJob* job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPListDirectoryJob::finished);
     MavlinkFTP::Request response{};
     response.hdr.opcode = MAV_FTP_OPCODE_ACK;
     response.hdr.req_opcode = ftpManager->_listDirectoryOperation->opCode;
@@ -347,11 +610,13 @@ void FTPManagerTest::_testListDirectoryParsing()
     QCOMPARE(ftpManager->_listDirectoryOperation->directoryEntries[1], QStringLiteral("Fnext.ulg\t32"));
     QCOMPARE(ftpManager->_listDirectoryOperation->expectedOffset, 2U);
 
-    ftpManager->cancelListDirectory();
+    job->cancel();
     QCOMPARE(completionSpy.size(), 1);
     completionSpy.clear();
 
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")));
+    job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(job);
+    QSignalSpy malformedSpy(job, &FTPListDirectoryJob::finished);
     response = {};
     response.hdr.opcode = MAV_FTP_OPCODE_ACK;
     response.hdr.req_opcode = ftpManager->_listDirectoryOperation->opCode;
@@ -365,13 +630,15 @@ void FTPManagerTest::_testListDirectoryParsing()
     ftpManager->_listDirectoryAckOrNak(&response);
     verifyExpectedLogMessage();
 
-    QCOMPARE(completionSpy.size(), 1);
-    const QList<QVariant> malformedArguments = completionSpy.takeFirst();
+    QCOMPARE(malformedSpy.size(), 1);
+    const QList<QVariant> malformedArguments = malformedSpy.takeFirst();
     QVERIFY(malformedArguments[0].toStringList().isEmpty());
     QVERIFY(malformedArguments[1].toString().contains(QStringLiteral("malformed response")));
     QVERIFY(!malformedArguments[2].toBool());
 
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")));
+    job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(job);
+    QSignalSpy emptySpy(job, &FTPListDirectoryJob::finished);
     response = {};
     response.hdr.opcode = MAV_FTP_OPCODE_ACK;
     response.hdr.req_opcode = ftpManager->_listDirectoryOperation->opCode;
@@ -382,13 +649,15 @@ void FTPManagerTest::_testListDirectoryParsing()
     ftpManager->_listDirectoryAckOrNak(&response);
     verifyExpectedLogMessage();
 
-    QCOMPARE(completionSpy.size(), 1);
-    const QList<QVariant> emptyArguments = completionSpy.takeFirst();
+    QCOMPARE(emptySpy.size(), 1);
+    const QList<QVariant> emptyArguments = emptySpy.takeFirst();
     QVERIFY(emptyArguments[0].toStringList().isEmpty());
     QVERIFY(emptyArguments[1].toString().contains(QStringLiteral("malformed response")));
     QVERIFY(!emptyArguments[2].toBool());
 
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")));
+    job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(job);
+    QSignalSpy utf8Spy(job, &FTPListDirectoryJob::finished);
     response = {};
     response.hdr.opcode = MAV_FTP_OPCODE_ACK;
     response.hdr.req_opcode = ftpManager->_listDirectoryOperation->opCode;
@@ -402,13 +671,15 @@ void FTPManagerTest::_testListDirectoryParsing()
     ftpManager->_listDirectoryAckOrNak(&response);
     verifyExpectedLogMessage();
 
-    QCOMPARE(completionSpy.size(), 1);
-    const QList<QVariant> utf8Arguments = completionSpy.takeFirst();
+    QCOMPARE(utf8Spy.size(), 1);
+    const QList<QVariant> utf8Arguments = utf8Spy.takeFirst();
     QVERIFY(utf8Arguments[0].toStringList().isEmpty());
     QVERIFY(utf8Arguments[1].toString().contains(QStringLiteral("malformed response")));
     QVERIFY(!utf8Arguments[2].toBool());
 
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")));
+    job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(job);
+    QSignalSpy opcodeSpy(job, &FTPListDirectoryJob::finished);
     response = {};
     response.hdr.opcode = MAV_FTP_OPCODE_NONE;
     response.hdr.req_opcode = ftpManager->_listDirectoryOperation->opCode;
@@ -419,12 +690,14 @@ void FTPManagerTest::_testListDirectoryParsing()
     ftpManager->_listDirectoryAckOrNak(&response);
     verifyExpectedLogMessage();
 
-    QCOMPARE(completionSpy.size(), 1);
-    const QList<QVariant> opcodeArguments = completionSpy.takeFirst();
+    QCOMPARE(opcodeSpy.size(), 1);
+    const QList<QVariant> opcodeArguments = opcodeSpy.takeFirst();
     QVERIFY(opcodeArguments[0].toStringList().isEmpty());
     QVERIFY(opcodeArguments[1].toString().contains(QStringLiteral("malformed response")));
 
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")));
+    job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(job);
+    QSignalSpy nakSpy(job, &FTPListDirectoryJob::finished);
     response = {};
     response.hdr.opcode = MAV_FTP_OPCODE_NAK;
     response.hdr.req_opcode = ftpManager->_listDirectoryOperation->opCode;
@@ -435,14 +708,16 @@ void FTPManagerTest::_testListDirectoryParsing()
     ftpManager->_listDirectoryAckOrNak(&response);
     verifyExpectedLogMessage();
 
-    QCOMPARE(completionSpy.size(), 1);
-    const QList<QVariant> nakArguments = completionSpy.takeFirst();
+    QCOMPARE(nakSpy.size(), 1);
+    const QList<QVariant> nakArguments = nakSpy.takeFirst();
     QVERIFY(nakArguments[0].toStringList().isEmpty());
     QVERIFY(nakArguments[1].toString().contains(QStringLiteral("malformed response")));
 
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")));
-    ftpManager->cancelListDirectory();
-    QCOMPARE(completionSpy.size(), 1);
+    job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(job);
+    QSignalSpy cancelSpy(job, &FTPListDirectoryJob::finished);
+    job->cancel();
+    QCOMPARE(cancelSpy.size(), 1);
     _disconnectMockLink();
 }
 
@@ -456,21 +731,40 @@ void FTPManagerTest::_testOperationStartValidation()
     const QString invalidUri = QStringLiteral("https://example.com/file");
     expectLogMessage("Vehicle.FTPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Unable to parse MAVLink FTP URI")));
-    QVERIFY(!ftpManager->download(MAV_COMP_ID_AUTOPILOT1, invalidUri, destination.path()));
+    const FTPManager::DownloadStartResult invalidDownloadResult =
+        ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, invalidUri, destination.path());
+    QVERIFY(!invalidDownloadResult.job());
+    QCOMPARE(invalidDownloadResult.error(), FTPManager::StartError::InvalidUri);
+    verifyExpectedLogMessage();
+    QVERIFY(ftpManager->_rgStateMachine.isEmpty());
+    QVERIFY(!ftpManager->_downloadOperation->inProgress());
+
+    expectLogMessage("Vehicle.FTPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("require a maximum file size")));
+    const FTPManager::DownloadStartResult invalidArgumentResult = ftpManager->startDownload(
+        MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/dynamic-file"), destination.path(), QString(), false);
+    QVERIFY(!invalidArgumentResult.job());
+    QCOMPARE(invalidArgumentResult.error(), FTPManager::StartError::InvalidArgument);
     verifyExpectedLogMessage();
     QVERIFY(ftpManager->_rgStateMachine.isEmpty());
     QVERIFY(!ftpManager->_downloadOperation->inProgress());
 
     expectLogMessage("Vehicle.FTPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Unable to parse MAVLink FTP URI")));
-    QVERIFY(!ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, invalidUri));
+    const FTPManager::ListDirectoryStartResult invalidListResult =
+        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, invalidUri);
+    QVERIFY(!invalidListResult.job());
+    QCOMPARE(invalidListResult.error(), FTPManager::StartError::InvalidUri);
     verifyExpectedLogMessage();
     QVERIFY(ftpManager->_rgStateMachine.isEmpty());
     QVERIFY(!ftpManager->_listDirectoryOperation->inProgress());
 
     expectLogMessage("Vehicle.FTPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Unable to parse MAVLink FTP URI")));
-    QVERIFY(!ftpManager->deleteFile(MAV_COMP_ID_AUTOPILOT1, invalidUri));
+    const FTPManager::DeleteStartResult invalidDeleteResult =
+        ftpManager->startDeleteFile(MAV_COMP_ID_AUTOPILOT1, invalidUri);
+    QVERIFY(!invalidDeleteResult.job());
+    QCOMPARE(invalidDeleteResult.error(), FTPManager::StartError::InvalidUri);
     verifyExpectedLogMessage();
     QVERIFY(ftpManager->_rgStateMachine.isEmpty());
     QVERIFY(!ftpManager->_deleteOperation->inProgress());
@@ -482,7 +776,10 @@ void FTPManagerTest::_testOperationStartValidation()
 
     expectLogMessage("Vehicle.FTPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Unable to parse MAVLink FTP URI")));
-    QVERIFY(!ftpManager->upload(MAV_COMP_ID_AUTOPILOT1, invalidUri, source.fileName()));
+    const FTPManager::UploadStartResult invalidUploadResult =
+        ftpManager->startUpload(MAV_COMP_ID_AUTOPILOT1, invalidUri, source.fileName());
+    QVERIFY(!invalidUploadResult.job());
+    QCOMPARE(invalidUploadResult.error(), FTPManager::StartError::InvalidUri);
     verifyExpectedLogMessage();
     QVERIFY(ftpManager->_rgStateMachine.isEmpty());
     QVERIFY(!ftpManager->_uploadOperation->inProgress());
@@ -490,9 +787,67 @@ void FTPManagerTest::_testOperationStartValidation()
     const QString embeddedNullUri = QStringLiteral("mftp:///file") + QChar::Null + QStringLiteral("hidden");
     expectLogMessage("Vehicle.FTPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Unable to parse MAVLink FTP URI")));
-    QVERIFY(!ftpManager->deleteFile(MAV_COMP_ID_AUTOPILOT1, embeddedNullUri));
+    const FTPManager::DeleteStartResult embeddedNullResult =
+        ftpManager->startDeleteFile(MAV_COMP_ID_AUTOPILOT1, embeddedNullUri);
+    QVERIFY(!embeddedNullResult.job());
+    QCOMPARE(embeddedNullResult.error(), FTPManager::StartError::InvalidUri);
     verifyExpectedLogMessage();
     QVERIFY(!ftpManager->_deleteOperation->inProgress());
+
+    const QString missingSource = destination.filePath(QStringLiteral("missing.bin"));
+    expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Source file missing")));
+    const FTPManager::UploadStartResult missingSourceResult =
+        ftpManager->startUpload(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/upload.bin"), missingSource);
+    QVERIFY(!missingSourceResult.job());
+    QCOMPARE(missingSourceResult.error(), FTPManager::StartError::SourceMissing);
+    verifyExpectedLogMessage();
+
+    const QString oversizedRemotePath(MavlinkFTP::dataCapacity + 1, QLatin1Char('x'));
+
+    expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression(QStringLiteral("remote path is too long")));
+    const FTPManager::DownloadStartResult oversizedDownloadResult =
+        ftpManager->startDownload(MAV_COMP_ID_AUTOPILOT1, oversizedRemotePath, destination.path());
+    QVERIFY(!oversizedDownloadResult.job());
+    QCOMPARE(oversizedDownloadResult.error(), FTPManager::StartError::RemotePathTooLong);
+    verifyExpectedLogMessage();
+
+    expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression(QStringLiteral("remote path is too long")));
+    const FTPManager::UploadStartResult oversizedUploadResult =
+        ftpManager->startUpload(MAV_COMP_ID_AUTOPILOT1, oversizedRemotePath, source.fileName());
+    QVERIFY(!oversizedUploadResult.job());
+    QCOMPARE(oversizedUploadResult.error(), FTPManager::StartError::RemotePathTooLong);
+    verifyExpectedLogMessage();
+
+    expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression(QStringLiteral("remote path is too long")));
+    const FTPManager::ListDirectoryStartResult oversizedListResult =
+        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, oversizedRemotePath);
+    QVERIFY(!oversizedListResult.job());
+    QCOMPARE(oversizedListResult.error(), FTPManager::StartError::RemotePathTooLong);
+    verifyExpectedLogMessage();
+
+    expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression(QStringLiteral("remote path is too long")));
+    const FTPManager::DeleteStartResult oversizedDeleteResult =
+        ftpManager->startDeleteFile(MAV_COMP_ID_AUTOPILOT1, oversizedRemotePath);
+    QVERIFY(!oversizedDeleteResult.job());
+    QCOMPARE(oversizedDeleteResult.error(), FTPManager::StartError::RemotePathTooLong);
+    verifyExpectedLogMessage();
+
+    QVERIFY(ftpManager->_rgStateMachine.isEmpty());
+    QVERIFY(!ftpManager->_activeJob);
+
+    _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoResponse);
+    const FTPManager::ListDirectoryStartResult activeListResult =
+        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"));
+    QVERIFY(activeListResult.job());
+    QCOMPARE(activeListResult.error(), FTPManager::StartError::None);
+
+    const FTPManager::DeleteStartResult busyResult =
+        ftpManager->startDeleteFile(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/busy.bin"));
+    QVERIFY(!busyResult.job());
+    QCOMPARE(busyResult.error(), FTPManager::StartError::Busy);
+
+    activeListResult.job()->cancel();
+    _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNone);
 
     _disconnectMockLink();
 }
@@ -502,26 +857,39 @@ void FTPManagerTest::_testScopedListDirectoryJob()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* const ftpManager = _vehicle->ftpManager();
 
-    FTPListDirectoryJob* const completedJob =
+    const FTPManager::ListDirectoryStartResult completedResult =
         ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"));
+    FTPListDirectoryJob* const completedJob = completedResult.job();
     QVERIFY(completedJob);
     QCOMPARE(completedJob->type(), FTPJob::Type::ListDirectory);
     QVERIFY(completedJob->active());
 
     QSignalSpy jobCompletionSpy(completedJob, &FTPListDirectoryJob::finished);
-    QSignalSpy legacyCompletionSpy(ftpManager, &FTPManager::listDirectoryComplete);
     QVERIFY_SIGNAL_WAIT(jobCompletionSpy, TestTimeout::longMs());
     QCOMPARE(jobCompletionSpy.size(), 1);
-    QCOMPARE(legacyCompletionSpy.size(), 1);
     const QList<QVariant> completedArguments = jobCompletionSpy.takeFirst();
     QCOMPARE(completedArguments[0].toStringList().size(), 6);
     QVERIFY(completedArguments[1].toString().isEmpty());
     QVERIFY(!completedArguments[2].toBool());
     QVERIFY(!completedJob->active());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(completedResult);
+    QVERIFY(completedResult.succeeded());
+    QCOMPARE(completedResult.error(), FTPManager::StartError::None);
+    QVERIFY(!completedResult.job());
+
+    FTPListDirectoryJob* const selfDeletingJob =
+        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(selfDeletingJob);
+    QPointer<FTPListDirectoryJob> selfDeletingGuard(selfDeletingJob);
+    (void) connect(selfDeletingJob, &FTPListDirectoryJob::finished, selfDeletingJob,
+                   [selfDeletingJob]() { delete selfDeletingJob; });
+    QTRY_VERIFY_WITH_TIMEOUT(!selfDeletingGuard, TestTimeout::longMs());
+    QVERIFY(!ftpManager->_activeJob);
 
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoResponse);
     FTPListDirectoryJob* const canceledJob =
-        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/"));
+        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
     QVERIFY(canceledJob);
     QSignalSpy canceledSpy(canceledJob, &FTPListDirectoryJob::finished);
 
@@ -533,6 +901,15 @@ void FTPManagerTest::_testScopedListDirectoryJob()
     QCOMPARE(canceledArguments[1].toString(), QStringLiteral("Aborted"));
     QVERIFY(!canceledJob->active());
 
+    FTPListDirectoryJob* const abandonedJob =
+        ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/")).job();
+    QVERIFY(abandonedJob);
+    QPointer<FTPListDirectoryJob> abandonedGuard(abandonedJob);
+    delete abandonedJob;
+    QVERIFY(!abandonedGuard);
+    QVERIFY(!ftpManager->_activeJob);
+    QVERIFY(ftpManager->_rgStateMachine.isEmpty());
+
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNone);
     _disconnectMockLink();
 }
@@ -541,8 +918,9 @@ void FTPManagerTest::_testListDirectoryWithTime()
 {
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -567,8 +945,9 @@ void FTPManagerTest::_testListDirectoryWithTimeFallback()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -588,8 +967,9 @@ void FTPManagerTest::_testListDirectoryNoResponse()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoResponse);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -603,8 +983,9 @@ void FTPManagerTest::_testListDirectoryNakResponse()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNakResponse);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -618,8 +999,9 @@ void FTPManagerTest::_testListDirectoryNoSecondResponse()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponse);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -633,8 +1015,9 @@ void FTPManagerTest::_testListDirectoryNoSecondResponseAllowRetry()
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponseAllowRetry);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -650,8 +1033,9 @@ void FTPManagerTest::_testListDirectoryNakSecondResponse()
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     FTPManager* ftpManager = vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNakSecondResponse);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -667,8 +1051,9 @@ void FTPManagerTest::_testListDirectoryBadSequence()
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     FTPManager* ftpManager = vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeBadSequence);
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
@@ -683,10 +1068,10 @@ void FTPManagerTest::_testListDirectoryCancel()
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     FTPManager* ftpManager = vehicle->ftpManager();
-    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
-    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/"));
-    ftpManager->cancelListDirectory();
-    // listDirectoryComplete is signalled immediately on calling cancelListDirectory so no need to wait
+    FTPListDirectoryJob* const job = ftpManager->startListDirectory(MAV_COMP_ID_AUTOPILOT1, "/").job();
+    QVERIFY(job);
+    QSignalSpy spyListDirectoryComplete(job, &FTPListDirectoryJob::finished);
+    job->cancel();
     QCOMPARE(spyListDirectoryComplete.count(), 1);
     QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
     QCOMPARE(arguments[0].toStringList().count(), 0);
@@ -710,8 +1095,9 @@ void FTPManagerTest::_testUpload()
     QVERIFY(tempFile.open());
     QCOMPARE(tempFile.write(payload), static_cast<qint64>(payload.size()));
     tempFile.close();
-    QSignalSpy spyUploadComplete(ftpManager, &FTPManager::uploadComplete);
-    QVERIFY(ftpManager->upload(MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName()));
+    FTPUploadJob* const job = ftpManager->startUpload(MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName()).job();
+    QVERIFY(job);
+    QSignalSpy spyUploadComplete(job, &FTPUploadJob::finished);
     QVERIFY_SIGNAL_WAIT(spyUploadComplete, TestTimeout::longMs());
     QCOMPARE(spyUploadComplete.count(), 1);
     QList<QVariant> arguments = spyUploadComplete.takeFirst();
@@ -721,6 +1107,45 @@ void FTPManagerTest::_testUpload()
     const QByteArray uploadedPayload = _mockLink->mockLinkFTP()->uploadedFileContents(remotePath);
     QCOMPARE(uploadedPayload, payload);
     _mockLink->mockLinkFTP()->clearUploadedFiles();
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testUploadCancelFromProgress()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    MockLinkFTP* const mockFtp = _mockLink->mockLinkFTP();
+    mockFtp->clearUploadedFiles();
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+    const QString remotePath(QStringLiteral("/mock/upload/cancel-from-progress.bin"));
+    const int chunkSize = sizeof(((MavlinkFTP::Request*) nullptr)->data);
+    const QByteArray payload(chunkSize * 4, 'x');
+    QTemporaryFile tempFile;
+    QVERIFY(tempFile.open());
+    QCOMPARE(tempFile.write(payload), static_cast<qint64>(payload.size()));
+    tempFile.close();
+
+    FTPUploadJob* const job = ftpManager->startUpload(MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName()).job();
+    QVERIFY(job);
+    QSignalSpy completionSpy(job, &FTPUploadJob::finished);
+    bool canceledFromProgress = false;
+    connect(
+        job, &FTPJob::progress, this,
+        [job, &canceledFromProgress](float) {
+            if (!canceledFromProgress) {
+                canceledFromProgress = true;
+                job->cancel();
+            }
+        },
+        Qt::DirectConnection);
+
+    QVERIFY_SIGNAL_WAIT(completionSpy, TestTimeout::longMs());
+    QVERIFY(canceledFromProgress);
+    QCOMPARE(completionSpy.size(), 1);
+    const QList<QVariant> arguments = completionSpy.takeFirst();
+    QCOMPARE(arguments[0].toString(), remotePath);
+    QVERIFY(arguments[1].toString().contains(QStringLiteral("Aborted")));
+    QVERIFY(!ftpManager->_activeJob);
+    mockFtp->clearUploadedFiles();
     _disconnectMockLink();
 }
 
@@ -739,10 +1164,12 @@ void FTPManagerTest::_testUploadResetResponseLoss()
         }
         tempFile.close();
 
-        QSignalSpy completionSpy(ftpManager, &FTPManager::uploadComplete);
-        if (!ftpManager->upload(MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName())) {
+        FTPUploadJob* const job =
+            ftpManager->startUpload(MAV_COMP_ID_AUTOPILOT1, remotePath, tempFile.fileName()).job();
+        if (!job) {
             return false;
         }
+        QSignalSpy completionSpy(job, &FTPUploadJob::finished);
         if (completionSpy.isEmpty() && !completionSpy.wait(TestTimeout::longMs())) {
             return false;
         }

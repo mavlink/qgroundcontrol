@@ -5,9 +5,10 @@
 #include <cstdint>
 
 #include "FtpListingParser.h"
+#include "OnboardLogSession.h"
 
 /// Directory traversal and parser state for one MAVLink FTP onboard-log scan.
-class FtpListingSession final
+class FtpListingSession final : public OnboardLogSessionBase
 {
     Q_DISABLE_COPY_MOVE(FtpListingSession)
 
@@ -34,10 +35,6 @@ public:
 
     void markPartial() { _partial = true; }
 
-    bool active() const { return _state != State::Idle; }
-
-    bool canceling() const { return _canceling; }
-
     bool partial() const { return _partial; }
 
     bool isCurrent(quint64 generation) const;
@@ -46,8 +43,6 @@ public:
     bool hasPendingDirectories() const { return !_directories.isEmpty(); }
 
     bool logLimitReached() const { return _parser.nextLogId() >= FtpListingParser::kMaxLogEntries; }
-
-    quint64 generation() const { return _generation; }
 
     State state() const { return _state; }
 
@@ -64,7 +59,6 @@ public:
         static_cast<int>(FtpListingParser::kMaxLogEntries + FtpListingParser::kMaxLogDirectories);
 
 private:
-    quint64 _generation = 0;
     State _state = State::Idle;
     QString _root;
     QStringList _directories;
@@ -73,5 +67,4 @@ private:
     int _remainingEntryBudget = 0;
     bool _triedFallbackRoot = false;
     bool _partial = false;
-    bool _canceling = false;
 };

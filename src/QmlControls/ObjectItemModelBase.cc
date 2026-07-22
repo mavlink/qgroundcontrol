@@ -8,14 +8,15 @@
  ****************************************************************************/
 
 #include "ObjectItemModelBase.h"
-#include "QGCLoggingCategory.h"
 
+#include <QtCore/QPointer>
 #include <QtQml/QQmlEngine>
+
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(ObjectItemModelBaseLog, "API.ObjectItemModelBase")
 
-ObjectItemModelBase::ObjectItemModelBase(QObject* parent)
-    : QAbstractItemModel(parent)
+ObjectItemModelBase::ObjectItemModelBase(QObject* parent) : QAbstractItemModel(parent)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
@@ -23,7 +24,9 @@ ObjectItemModelBase::ObjectItemModelBase(QObject* parent)
 ObjectItemModelBase::~ObjectItemModelBase()
 {
     if (_resetModelNestingCount > 0) {
-        qCWarning(ObjectItemModelBaseLog) << "Destroyed with unbalanced nesting of begin/endResetModel calls - _resetModelNestingCount:" << _resetModelNestingCount << this;
+        qCWarning(ObjectItemModelBaseLog)
+            << "Destroyed with unbalanced nesting of begin/endResetModel calls - _resetModelNestingCount:"
+            << _resetModelNestingCount << this;
     }
 }
 
@@ -43,12 +46,14 @@ void ObjectItemModelBase::_childDirtyChanged(bool dirty)
 
 void ObjectItemModelBase::beginResetModel()
 {
-    if (_resetModelNestingCount == 0) {
-        qCDebug(ObjectItemModelBaseLog) << "First beginResetModel - calling QAbstractItemModel::beginResetModel" << this;
+    const bool outermostReset = _resetModelNestingCount == 0;
+    ++_resetModelNestingCount;
+    qCDebug(ObjectItemModelBaseLog) << "Reset model nesting count" << _resetModelNestingCount << this;
+    if (outermostReset) {
+        qCDebug(ObjectItemModelBaseLog) << "First beginResetModel - calling QAbstractItemModel::beginResetModel"
+                                        << this;
         QAbstractItemModel::beginResetModel();
     }
-    _resetModelNestingCount++;
-    qCDebug(ObjectItemModelBaseLog) << "Reset model nesting count" << _resetModelNestingCount << this;
 }
 
 void ObjectItemModelBase::endResetModel()
@@ -61,7 +66,11 @@ void ObjectItemModelBase::endResetModel()
     qCDebug(ObjectItemModelBaseLog) << "Reset model nesting count" << _resetModelNestingCount << this;
     if (_resetModelNestingCount == 0) {
         qCDebug(ObjectItemModelBaseLog) << "Last endResetModel - calling QAbstractItemModel::endResetModel" << this;
+        const QPointer<ObjectItemModelBase> self(this);
         QAbstractItemModel::endResetModel();
+        if (!self) {
+            return;
+        }
         emit countChanged(count());
     }
 }

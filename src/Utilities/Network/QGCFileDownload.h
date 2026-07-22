@@ -3,17 +3,20 @@
 /// @file QGCFileDownload.h
 /// @brief Unified file download utility with decompression, verification, and QML support
 
-#include "QGCNetworkHelper.h"
-
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
+#include <memory>
+#include <optional>
+
+#include "QGCNetworkHelper.h"
 
 class QNetworkAccessManager;
 class QAbstractNetworkCache;
 class QGCCompressionJob;
-class QFile;
+class QCryptographicHash;
+class QSaveFile;
 
 /// \brief File download with progress, decompression, and hash verification
 ///
@@ -200,44 +203,73 @@ signals:
     /// Emitted during decompression (0.0 to 1.0)
     void decompressionProgress(qreal progress);
 
-private slots:
-    void _onDownloadProgress(qint64 bytesReceived, qint64 totalBytes);
-    void _onDownloadFinished();
-    void _onDownloadError(QNetworkReply::NetworkError code);
-    void _onDecompressionFinished(bool success);
-    void _onReadyRead();
-
 private:
+    struct PendingDownload
+    {
+        QString remoteUrl;
+        QGCNetworkHelper::RequestConfig config;
+        QString outputPath;
+        QString expectedHash;
+        bool autoDecompress = false;
+    };
+
+    bool _startDownload(PendingDownload request);
+    void _onMetaDataChanged(QNetworkReply* reply, quint64 operationId, qint64 maximumDownloadBytes);
+    void _onDownloadProgress(QNetworkReply* reply, quint64 operationId, qint64 maximumDownloadBytes,
+                             qint64 bytesReceived, qint64 totalBytes);
+    void _onDownloadFinished(QNetworkReply* reply, quint64 operationId);
+    void _onDownloadError(QNetworkReply* reply, quint64 operationId, QNetworkReply::NetworkError code);
+    void _onReadyRead(QNetworkReply* reply, quint64 operationId);
+    bool _isCurrentReply(const QNetworkReply* reply, quint64 operationId) const;
     void _setState(State newState);
     void _setProgress(qreal progress);
-    void _setErrorString(const QString &error);
+    void _setErrorString(const QString& error);
     void _cleanup();
-    void _emitFinished(bool success, const QString &localPath, const QString &errorMessage);
-    bool _writeReplyData(const QByteArray &data);
-    bool _failForWriteError(const QString &context);
-    QString _generateOutputPath(const QString &remoteUrl) const;
+    bool _completeStartupCancellation(quint64 operationId);
+    void _completeOperation(quint64 operationId, State terminalState, bool success, const QString& localPath,
+                            const QString& errorMessage);
+    void _drainPendingDownload();
+    void _onDecompressionFinished(QGCCompressionJob* job, quint64 operationId, bool success);
+    bool _drainReplyData(QNetworkReply* reply, const QString& context);
+    bool _writeReplyData(const QByteArray& data);
+    bool _failForWriteError(const QString& context);
+    bool _failForSizeLimit();
+    bool _canAcceptBytes(qint64 byteCount) const;
+    QString _generateOutputPath(const QString& remoteUrl, const QString& requestedOutputPath) const;
     bool _verifyHash();
+    bool _commitDownloadedFile();
     void _startDecompression();
 
-    QNetworkAccessManager *_networkManager = nullptr;
-    QNetworkReply *_currentReply = nullptr;
-    QGCCompressionJob *_decompressionJob = nullptr;
-    QFile *_outputFile = nullptr;
+    QNetworkAccessManager* _networkManager = nullptr;
+    QNetworkReply* _currentReply = nullptr;
+    QGCCompressionJob* _decompressionJob = nullptr;
+    QSaveFile* _outputFile = nullptr;
+    std::unique_ptr<QCryptographicHash> _downloadHash;
 
     QUrl _url;
     QString _localPath;
     QString _outputPath;
     QString _expectedHash;
+    QString _activeExpectedHash;
     QString _errorString;
     QString _compressedFilePath;
 
     qreal _progress = 0.0;
     qint64 _totalBytes = -1;
     qint64 _bytesReceived = 0;
+    qint64 _bytesWritten = 0;
+    qint64 _maximumDownloadBytes = 0;
+    qint64 _maximumDecompressedBytes = 0;
     int _timeoutMs = QGCNetworkHelper::kDefaultTimeoutMs;
 
     State _state = State::Idle;
     bool _autoDecompress = false;
-    bool _finishEmitted = false;
+    bool _activeAutoDecompress = false;
     bool _lastResultFromCache = false;
+    bool _cancelRequested = false;
+    bool _starting = false;
+    bool _completing = false;
+    quint64 _operationId = 0;
+    quint64 _lastFinishedOperationId = 0;
+    std::optional<PendingDownload> _pendingDownload = std::nullopt;
 };

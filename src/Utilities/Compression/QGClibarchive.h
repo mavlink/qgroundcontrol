@@ -37,6 +37,17 @@ enum class ReaderMode {
     RawFormat    ///< Raw format for single-file decompression (.gz, .xz, etc.)
 };
 
+enum class OperationResult
+{
+    Success,
+    Failed,
+    NotFound,
+    Cancelled,
+    SizeLimitExceeded,
+};
+
+OperationResult lastOperationResult();
+
 // ============================================================================
 // RAII Archive Reader
 // ============================================================================
@@ -169,23 +180,29 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileName Name of file inside archive
 /// @param outputPath Output file path
+/// @param progress Optional progress callback (return false to cancel)
+/// @param maxBytes Maximum extracted size (0 = unlimited)
 /// @return true on success, false if not found or extraction failed
-bool extractSingleFile(const QString &archivePath, const QString &fileName,
-                       const QString &outputPath);
+bool extractSingleFile(const QString& archivePath, const QString& fileName, const QString& outputPath,
+                       ProgressCallback progress = nullptr, qint64 maxBytes = 0);
 
 /// Extract a single file from any archive directly to memory
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileName Name of file inside archive
+/// @param maxBytes Maximum returned size (0 = unlimited)
 /// @return File contents, or empty QByteArray if not found or extraction failed
-QByteArray extractFileToMemory(const QString &archivePath, const QString &fileName);
+QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes = 0);
 
 /// Extract multiple files from any archive by name in one pass
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory
+/// @param progress Optional progress callback (return false to cancel)
+/// @param maxBytes Maximum aggregate extracted size (0 = unlimited)
+/// Selected files are committed only after every requested file is extracted successfully.
 /// @return true if all files found and extracted
-bool extractMultipleFiles(const QString &archivePath, const QStringList &fileNames,
-                          const QString &outputDirectoryPath);
+bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
+                          ProgressCallback progress = nullptr, qint64 maxBytes = 0);
 
 /// Extract files matching glob patterns from archive (uses libarchive archive_match)
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
@@ -193,10 +210,11 @@ bool extractMultipleFiles(const QString &archivePath, const QStringList &fileNam
 /// @param patterns Glob patterns to match (e.g., "*.json", "dir/*", "file.txt")
 /// @param outputDirectoryPath Output directory
 /// @param extractedFiles Optional output list of files that were extracted
+/// @param maxBytes Maximum aggregate extracted size (0 = unlimited)
+/// Selected files and extractedFiles are committed only after the complete operation succeeds.
 /// @return true if at least one file matched and extracted, false on error or no matches
-bool extractByPattern(const QString &archivePath, const QStringList &patterns,
-                      const QString &outputDirectoryPath,
-                      QStringList *extractedFiles = nullptr);
+bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
+                      QStringList* extractedFiles = nullptr, qint64 maxBytes = 0);
 
 /// Validate archive integrity by reading all entries
 /// @param archivePath Path to the archive file
@@ -230,6 +248,7 @@ ArchiveStats getArchiveStats(const QString &archivePath);
 /// @param filter Callback to decide which entries to extract
 /// @param progress Optional progress callback (return false to cancel)
 /// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
+/// Selected files are committed only after the complete operation succeeds.
 /// @return true on success (even if all entries filtered out), false on failure
 bool extractWithFilter(const QString &archivePath, const QString &outputDirectoryPath,
                        EntryFilter filter,
@@ -246,9 +265,8 @@ bool extractWithFilter(const QString &archivePath, const QString &outputDirector
 /// @param progress Optional progress callback
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
 /// @return true on success, false on failure or size limit exceeded
-bool decompressSingleFile(const QString &inputPath, const QString &outputPath,
-                          ProgressCallback progress = nullptr,
-                          qint64 maxBytes = 0);
+OperationResult decompressSingleFile(const QString& inputPath, const QString& outputPath,
+                                     ProgressCallback progress = nullptr, qint64 maxBytes = 0);
 
 /// Decompress data in memory
 /// @param data Compressed input data

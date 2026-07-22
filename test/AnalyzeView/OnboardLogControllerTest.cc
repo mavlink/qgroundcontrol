@@ -14,13 +14,13 @@
 #include <limits>
 
 #include "ArduCopterFirmwarePlugin.h"
+#include "FTP/FtpDownloadSession.h"
+#include "FTP/FtpListingParser.h"
+#include "FTP/FtpListingSession.h"
+#include "FTP/FtpTransport.h"
 #include "FTPManager.h"
 #include "Fact.h"
 #include "FirmwarePlugin.h"
-#include "FtpDownloadSession.h"
-#include "FtpListingParser.h"
-#include "FtpListingSession.h"
-#include "FtpTransport.h"
 #include "LogProtocolDownloadBatchSession.h"
 #include "LogProtocolDownloadSession.h"
 #include "LogProtocolTransport.h"
@@ -146,6 +146,227 @@ void OnboardLogDownloadTest::_typedModelRoleTest()
     QCOMPARE(model.count(), 0);
     QCOMPARE(countSpy.size(), 2);
     delete entry;
+
+    constexpr int kLargeModelSize = 10000;
+    QList<OnboardLogEntry*> largeBatch;
+    largeBatch.reserve(kLargeModelSize);
+    for (int i = 0; i < kLargeModelSize; ++i) {
+        largeBatch.append(new OnboardLogEntry(static_cast<uint>(i), QDateTime(), 0, false, &model));
+    }
+    model.append(largeBatch);
+    QCOMPARE(model.count(), kLargeModelSize);
+    OnboardLogEntry* const lastEntry = model.at(kLargeModelSize - 1);
+    QVERIFY(lastEntry);
+    dataChangedSpy.clear();
+    lastEntry->setSize(64);
+    QCOMPARE(dataChangedSpy.size(), 1);
+    QCOMPARE(model.index(kLargeModelSize - 1, 0).data(OnboardLogModel::SizeRole).toUInt(), 64U);
+    model.clearAndDeleteContents();
+
+    auto* const survivingInsert = new OnboardLogEntry(10001, QDateTime(), 0, false, &model);
+    auto* const vanishingInsert = new OnboardLogEntry(10002, QDateTime(), 0, false, &model);
+    const QMetaObject::Connection insertConnection = connect(&model, &QAbstractItemModel::rowsAboutToBeInserted, &model,
+                                                             [vanishingInsert]() { delete vanishingInsert; });
+    model.append({survivingInsert, vanishingInsert});
+    (void) disconnect(insertConnection);
+    QCOMPARE(model.count(), 1);
+    QCOMPARE(model.at(0), survivingInsert);
+
+    const QMetaObject::Connection resetConnection = connect(&model, &QAbstractItemModel::modelAboutToBeReset, &model,
+                                                            [survivingInsert]() { delete survivingInsert; });
+    model.clear();
+    (void) disconnect(resetConnection);
+    QCOMPARE(model.count(), 0);
+
+    auto* const vanishingRemoval = new OnboardLogEntry(10003, QDateTime(), 0, false, &model);
+    model.append(vanishingRemoval);
+    const QMetaObject::Connection removeConnection = connect(&model, &QAbstractItemModel::rowsAboutToBeRemoved, &model,
+                                                             [vanishingRemoval]() { delete vanishingRemoval; });
+    QCOMPARE(model.removeOne(vanishingRemoval), nullptr);
+    (void) disconnect(removeConnection);
+    QCOMPARE(model.count(), 0);
+
+    QPointer<OnboardLogEntry> clearedOuter = new OnboardLogEntry(10004, QDateTime(), 0, false, &model);
+    OnboardLogEntry* const deferredInsert = new OnboardLogEntry(10005, QDateTime(), 0, false, &model);
+    bool handledDeferredChange = false;
+    const QMetaObject::Connection deferredConnection =
+        connect(&model, &QAbstractItemModel::rowsAboutToBeInserted, &model, [&]() {
+            if (handledDeferredChange) {
+                return;
+            }
+            handledDeferredChange = true;
+            model.clearAndDeleteContents();
+            model.append(deferredInsert);
+        });
+    model.append(clearedOuter);
+    (void) disconnect(deferredConnection);
+
+    QVERIFY(handledDeferredChange);
+    QCOMPARE(model.count(), 1);
+    QCOMPARE(model.at(0), deferredInsert);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(!clearedOuter);
+    model.clearAndDeleteContents();
+}
+
+void OnboardLogDownloadTest::_modelReentrancyCleanupTest()
+{
+    OnboardLogModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Fatal);
+
+    auto* const roleChangedDuringRemoval = new OnboardLogEntry(0, QDateTime(), 0, false, &model);
+    model.append(roleChangedDuringRemoval);
+    bool structuralChangeActive = false;
+    bool nestedDataChange = false;
+    const QMetaObject::Connection roleRemoveConnection =
+        connect(&model, &QAbstractItemModel::rowsAboutToBeRemoved, &model, [&]() {
+            structuralChangeActive = true;
+            roleChangedDuringRemoval->setStatus(QStringLiteral("changed during removal"));
+        });
+    const QMetaObject::Connection roleDataConnection = connect(&model, &QAbstractItemModel::dataChanged, &model, [&]() {
+        nestedDataChange = nestedDataChange || structuralChangeActive;
+    });
+    const QMetaObject::Connection roleRemovedConnection =
+        connect(&model, &QAbstractItemModel::rowsRemoved, &model, [&]() { structuralChangeActive = false; });
+    QCOMPARE(model.removeOne(roleChangedDuringRemoval), roleChangedDuringRemoval);
+    (void) disconnect(roleRemoveConnection);
+    (void) disconnect(roleDataConnection);
+    (void) disconnect(roleRemovedConnection);
+    QVERIFY(!nestedDataChange);
+    delete roleChangedDuringRemoval;
+
+    QPointer<OnboardLogEntry> deleteRequestedDuringReset = new OnboardLogEntry(1);
+    model.append(deleteRequestedDuringReset);
+    bool deleteRequested = false;
+    const QMetaObject::Connection resetConnection =
+        connect(&model, &QAbstractItemModel::modelAboutToBeReset, &model, [&]() {
+            if (!deleteRequested) {
+                deleteRequested = true;
+                model.clearAndDeleteContents();
+            }
+        });
+    model.clear();
+    (void) disconnect(resetConnection);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(deleteRequested);
+    QVERIFY(!deleteRequestedDuringReset);
+
+    OnboardLogEntry* const survivor = new OnboardLogEntry(2, QDateTime(), 0, false, &model);
+    OnboardLogEntry* const vanishingEntry = new OnboardLogEntry(3, QDateTime(), 0, false, &model);
+    const QMetaObject::Connection insertionConnection = connect(&model, &QAbstractItemModel::rowsAboutToBeInserted,
+                                                                &model, [vanishingEntry]() { delete vanishingEntry; });
+    bool clearedDuringCleanup = false;
+    const QMetaObject::Connection countConnection = connect(&model, &OnboardLogModel::countChanged, &model, [&]() {
+        if (!clearedDuringCleanup && (model.count() == 1)) {
+            clearedDuringCleanup = true;
+            model.clear();
+        }
+    });
+    model.append({survivor, vanishingEntry});
+    (void) disconnect(insertionConnection);
+    (void) disconnect(countConnection);
+    QVERIFY(clearedDuringCleanup);
+    QCOMPARE(model.count(), 0);
+
+    QList<OnboardLogEntry*> sparseRanges;
+    QList<OnboardLogEntry*> sparseEntriesToDelete;
+    for (int index = 0; index < 6; ++index) {
+        OnboardLogEntry* const entry = new OnboardLogEntry(static_cast<uint>(index), QDateTime(), 0, false, &model);
+        sparseRanges.append(entry);
+        if ((index == 1) || (index == 4)) {
+            sparseEntriesToDelete.append(entry);
+        }
+    }
+    QSignalSpy sparseResetSpy(&model, &QAbstractItemModel::modelReset);
+    QSignalSpy sparseRemovalSpy(&model, &QAbstractItemModel::rowsRemoved);
+    const QMetaObject::Connection sparseRangesConnection =
+        connect(&model, &QAbstractItemModel::rowsAboutToBeInserted, &model, [&sparseEntriesToDelete]() {
+            for (OnboardLogEntry* const entry : sparseEntriesToDelete) {
+                delete entry;
+            }
+        });
+    model.append(sparseRanges);
+    (void) disconnect(sparseRangesConnection);
+    QCOMPARE(model.count(), 4);
+    QCOMPARE(sparseResetSpy.size(), 0);
+    QCOMPARE(sparseRemovalSpy.size(), 2);
+    model.clearAndDeleteContents();
+
+    constexpr int kSparseBatchSize = 200;
+    QList<OnboardLogEntry*> sparseBatch;
+    QList<OnboardLogEntry*> entriesToDelete;
+    sparseBatch.reserve(kSparseBatchSize);
+    entriesToDelete.reserve(kSparseBatchSize / 2);
+    for (int index = 0; index < kSparseBatchSize; ++index) {
+        OnboardLogEntry* const entry = new OnboardLogEntry(static_cast<uint>(index), QDateTime(), 0, false, &model);
+        sparseBatch.append(entry);
+        if ((index % 2) != 0) {
+            entriesToDelete.append(entry);
+        }
+    }
+    QSignalSpy modelResetSpy(&model, &QAbstractItemModel::modelReset);
+    const QMetaObject::Connection sparseConnection =
+        connect(&model, &QAbstractItemModel::rowsAboutToBeInserted, &model, [&entriesToDelete]() {
+            for (OnboardLogEntry* const entry : entriesToDelete) {
+                delete entry;
+            }
+        });
+    model.append(sparseBatch);
+    (void) disconnect(sparseConnection);
+    QCOMPARE(model.count(), kSparseBatchSize / 2);
+    QCOMPARE(modelResetSpy.size(), 1);
+    for (int row = 0; row < model.count(); ++row) {
+        QVERIFY(model.at(row));
+        QCOMPARE(model.at(row)->id() % 2U, 0U);
+    }
+    model.clearAndDeleteContents();
+
+    auto* const firstDeferredEntry = new OnboardLogEntry(2000, QDateTime(), 0, false, &model);
+    auto* const secondDeferredEntry = new OnboardLogEntry(2001, QDateTime(), 0, false, &model);
+    QPointer<OnboardLogEntry> deletedDuringDeferredDataChange =
+        new OnboardLogEntry(2002, QDateTime(), 0, false, &model);
+    model.append({firstDeferredEntry, secondDeferredEntry, deletedDuringDeferredDataChange});
+
+    bool queuedInitialRoleChange = false;
+    const QMetaObject::Connection queueRoleConnection =
+        connect(&model, &QAbstractItemModel::rowsAboutToBeInserted, &model, [&]() {
+            if (!queuedInitialRoleChange) {
+                queuedInitialRoleChange = true;
+                firstDeferredEntry->setStatus(QStringLiteral("first deferred change"));
+            }
+        });
+    bool handledDeferredDataChange = false;
+    const QMetaObject::Connection deferredDataConnection =
+        connect(&model, &QAbstractItemModel::dataChanged, &model, [&](const QModelIndex& topLeft) {
+            if (!handledDeferredDataChange && (model.at(topLeft.row()) == firstDeferredEntry)) {
+                handledDeferredDataChange = true;
+                secondDeferredEntry->setStatus(QStringLiteral("second deferred change"));
+                delete deletedDuringDeferredDataChange.data();
+            }
+        });
+    QSignalSpy deferredDataSpy(&model, &QAbstractItemModel::dataChanged);
+    auto* const triggerEntry = new OnboardLogEntry(2003, QDateTime(), 0, false, &model);
+    model.append(triggerEntry);
+    (void) disconnect(queueRoleConnection);
+    (void) disconnect(deferredDataConnection);
+
+    QVERIFY(queuedInitialRoleChange);
+    QVERIFY(handledDeferredDataChange);
+    QVERIFY(!deletedDuringDeferredDataChange);
+    QCOMPARE(model.count(), 3);
+    QCOMPARE(deferredDataSpy.size(), 2);
+    QCOMPARE(secondDeferredEntry->status(), QStringLiteral("second deferred change"));
+    model.clearAndDeleteContents();
+
+    {
+        QPointer<OnboardLogModel> deletedFromCount = new OnboardLogModel;
+        auto* const entry = new OnboardLogEntry(1000, QDateTime(), 0, false, deletedFromCount);
+        connect(
+            deletedFromCount, &OnboardLogModel::countChanged, this,
+            [deletedFromCount]() { delete deletedFromCount.data(); }, Qt::DirectConnection);
+        deletedFromCount->append(entry);
+        QVERIFY(!deletedFromCount);
+    }
 }
 
 void OnboardLogDownloadTest::_selectionInvalidationTest()
@@ -191,9 +412,11 @@ void OnboardLogDownloadTest::_selectionInvalidationTest()
     ftpModel->clearAndDeleteContents();
     (void) ftpTransport->_listingSession.begin(QStringLiteral("/logs"));
     QSignalSpy batchedFtpInsertSpy(ftpTransport, &FtpTransport::selectionChanged);
-    QCOMPARE(ftpTransport->_processFileEntries({QStringLiteral("Ffirst.ulg\t100"), QStringLiteral("Fsecond.ulg\t100")},
-                                               QString()),
-             2U);
+    const std::optional<uint> processedFtpEntries = ftpTransport->_processFileEntries(
+        {QStringLiteral("Ffirst.ulg\t100"), QStringLiteral("Fsecond.ulg\t100")}, QString());
+    QVERIFY(processedFtpEntries.has_value());
+    QCOMPARE(*processedFtpEntries, 2U);
+    ftpTransport->_appendNextLogEntryBatch();
     QCOMPARE(batchedFtpInsertSpy.size(), 1);
 
     OnboardLogEntry* const selectedEntry = ftpModel->value<OnboardLogEntry*>(0);

@@ -3,15 +3,18 @@
 #include <QtCore/QFileInfo>
 #include <limits>
 
-bool FTPManager::DownloadOperation::begin(uint8_t componentId, const QString& uri, const QString& destinationDirectory,
-                                          const QString& requestedFileName, bool verifySize,
-                                          ExistingFilePolicy filePolicy, uint8_t& resolvedComponentId)
+FTPManager::StartError FTPManager::DownloadOperation::begin(
+    uint8_t componentId, const QString& uri, const QString& destinationDirectory, const QString& requestedFileName,
+    bool verifySize, ExistingFilePolicy filePolicy, std::optional<uint32_t> maximumSize, uint8_t& resolvedComponentId)
 {
     reset();
 
     const MavlinkFTP::UriParseResult parsedUri = MavlinkFTP::parseUri(componentId, uri);
     if (!parsedUri.valid()) {
-        return false;
+        if (parsedUri.error == MavlinkFTP::UriParseError::PathTooLong) {
+            return StartError::RemotePathTooLong;
+        }
+        return StartError::InvalidUri;
     }
 
     resolvedComponentId = parsedUri.componentId;
@@ -19,10 +22,11 @@ bool FTPManager::DownloadOperation::begin(uint8_t componentId, const QString& ur
     toDir.setPath(destinationDirectory);
     checkSize = verifySize;
     existingFilePolicy = filePolicy;
+    maximumFileSize = maximumSize;
 
     const qsizetype lastSlash = fullPathOnVehicle.lastIndexOf(QLatin1Char('/'));
     fileName = requestedFileName.isEmpty() ? fullPathOnVehicle.sliced(lastSlash + 1) : requestedFileName;
-    return true;
+    return StartError::None;
 }
 
 QList<FTPManager::StateFunctions_t> FTPManager::DownloadOperation::stateMachine() const
@@ -55,6 +59,7 @@ void FTPManager::DownloadOperation::reset()
     fileSize = 0;
     checkSize = true;
     existingFilePolicy = ExistingFilePolicy::Replace;
+    maximumFileSize = std::nullopt;
     remoteSessionOpen = false;
     fullPathOnVehicle.clear();
     fileName.clear();
@@ -90,6 +95,9 @@ FTPManager::UploadOperation::BeginResult FTPManager::UploadOperation::begin(uint
     const MavlinkFTP::UriParseResult parsedUri = MavlinkFTP::parseUri(componentId, uri);
     if (!parsedUri.valid()) {
         reset();
+        if (parsedUri.error == MavlinkFTP::UriParseError::PathTooLong) {
+            return BeginResult::RemotePathTooLong;
+        }
         return BeginResult::InvalidUri;
     }
 
@@ -133,24 +141,28 @@ void FTPManager::UploadOperation::reset()
     file.setFileName(QString());
 }
 
-bool FTPManager::ListDirectoryOperation::begin(uint8_t componentId, const QString& uri, int entryLimit,
-                                               MAV_FTP_OPCODE listOpcode, uint8_t& resolvedComponentId)
+FTPManager::StartError FTPManager::ListDirectoryOperation::begin(uint8_t componentId, const QString& uri,
+                                                                 int entryLimit, MAV_FTP_OPCODE listOpcode,
+                                                                 uint8_t& resolvedComponentId)
 {
     reset();
     if (entryLimit < 0) {
-        return false;
+        return StartError::InvalidArgument;
     }
 
     const MavlinkFTP::UriParseResult parsedUri = MavlinkFTP::parseUri(componentId, uri);
     if (!parsedUri.valid()) {
-        return false;
+        if (parsedUri.error == MavlinkFTP::UriParseError::PathTooLong) {
+            return StartError::RemotePathTooLong;
+        }
+        return StartError::InvalidUri;
     }
 
     resolvedComponentId = parsedUri.componentId;
     fullPathOnVehicle = parsedUri.path;
     maxEntries = entryLimit;
     opCode = listOpcode;
-    return true;
+    return StartError::None;
 }
 
 QList<FTPManager::StateFunctions_t> FTPManager::ListDirectoryOperation::stateMachine() const
@@ -173,17 +185,21 @@ void FTPManager::ListDirectoryOperation::reset()
     opCode = MAV_FTP_OPCODE_LISTDIRECTORY;
 }
 
-bool FTPManager::DeleteOperation::begin(uint8_t componentId, const QString& uri, uint8_t& resolvedComponentId)
+FTPManager::StartError FTPManager::DeleteOperation::begin(uint8_t componentId, const QString& uri,
+                                                          uint8_t& resolvedComponentId)
 {
     reset();
     const MavlinkFTP::UriParseResult parsedUri = MavlinkFTP::parseUri(componentId, uri);
     if (!parsedUri.valid()) {
-        return false;
+        if (parsedUri.error == MavlinkFTP::UriParseError::PathTooLong) {
+            return StartError::RemotePathTooLong;
+        }
+        return StartError::InvalidUri;
     }
 
     resolvedComponentId = parsedUri.componentId;
     fullPathOnVehicle = parsedUri.path;
-    return true;
+    return StartError::None;
 }
 
 QList<FTPManager::StateFunctions_t> FTPManager::DeleteOperation::stateMachine() const

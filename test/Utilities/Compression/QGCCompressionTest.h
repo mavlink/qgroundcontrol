@@ -35,6 +35,9 @@ private slots:
     void _testExtractFileData();
     void _testExtractMultipleFiles();
     void _testExtractByPattern();
+    void _testSelectiveExtractionSizeLimits();
+    void _testSelectiveExtractionTransactions();
+    void _testSelectiveExtractionRejectsUnsafePaths();
 
     // Single-file decompression from Qt resources
     void _testDecompressFromResource();
@@ -43,6 +46,7 @@ private slots:
 
     // Progress callbacks
     void _testProgressCallbackExtract();
+    void _testFilteredExtractionCancellation();
 
     // Edge cases and error handling
     void _testCorruptArchive();
@@ -55,7 +59,10 @@ private slots:
 
     // QGCCompressionJob (async operations)
     void _testCompressionJobExtract();
+    void _testCompressionJobStartReentrancy();
     void _testCompressionJobReentrantStartFromFinished();
+    void _testCompressionJobDirectConnectionDeletion();
+    void _testCompressionJobWorkerError();
     void _testCompressionJobCancel();
     void _testCompressionJobAsyncStatic();
 

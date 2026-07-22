@@ -147,6 +147,10 @@ QUrl urlWithoutQuery(const QUrl& url);
 struct RequestConfig
 {
     int timeoutMs = kDefaultTimeoutMs;
+    /// Maximum bytes transferred from the source (0 = unlimited).
+    qint64 maximumDownloadBytes = 0;
+    /// Maximum bytes produced by automatic decompression (0 = unlimited).
+    qint64 maximumDecompressedBytes = 0;
     bool allowRedirects = true;
     bool http2Allowed = true;
     bool cacheEnabled = true;

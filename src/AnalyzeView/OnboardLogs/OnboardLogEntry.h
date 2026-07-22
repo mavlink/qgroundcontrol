@@ -2,6 +2,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <cstdint>
@@ -101,8 +102,12 @@ public:
         _state = state;
         _status = status;
 
+        const QPointer<OnboardLogEntry> self(this);
         if (stateDidChange) {
             emit stateChanged();
+            if (!self) {
+                return;
+            }
         }
         if (statusDidChange) {
             emit statusChanged();
