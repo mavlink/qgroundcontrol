@@ -160,4 +160,25 @@ void QGCMathTest::_crc32Incremental_test()
     QCOMPARE(crc, 0xCBF43926u);
 }
 
+
+void QGCMathTest::_crc32SingleByte_test()
+{
+    const quint8 byte = 0x00;
+    const quint32 crc = QGC::crc32(&byte, 1, 0xFFFFFFFF) ^ 0xFFFFFFFF;
+    // ISO-HDLC CRC-32 of a single 0x00 byte
+    QCOMPARE(crc, 0xD202EF8Du);
+}
+
+void QGCMathTest::_crc32AllZerosBuffer_test()
+{
+    const quint8 zeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    const quint32 single = QGC::crc32(zeros, 8, 0xFFFFFFFF) ^ 0xFFFFFFFF;
+    quint32 incremental = 0xFFFFFFFF;
+    for (int i = 0; i < 8; ++i) {
+        incremental = QGC::crc32(zeros + i, 1, incremental);
+    }
+    incremental ^= 0xFFFFFFFF;
+    QCOMPARE(incremental, single);
+}
+
 UT_REGISTER_TEST(QGCMathTest, TestLabel::Unit, TestLabel::Utilities)
