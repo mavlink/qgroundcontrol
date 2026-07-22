@@ -11,6 +11,7 @@ Item {
     property real t: SVSettings.joystickRatio
     property int hoverIndex: -1
     property int pressedIndex: -1
+    readonly property point hoverPosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
 
     property var  innerClicked: [false, false, false, false]
     property var  outerClicked: [false, false, false, false]
@@ -144,6 +145,7 @@ Item {
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: root.borderColor
         hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
+        hoverPosition: outerButtons.mapFromItem(root, root.hoverPosition.x, root.hoverPosition.y)
         clicked: outerClicked
 
         arrowFilled: (qgcPalette.globalTheme === QGCPalette.Light) ? false : true
@@ -164,6 +166,7 @@ Item {
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: root.borderColor
         hoverIndex: (root.hoverIndex >= 4) ? root.hoverIndex - 4 : -1
+        hoverPosition: innerButtons.mapFromItem(root, root.hoverPosition.x, root.hoverPosition.y)
 
         clicked: innerClicked
         arrowSize: 0.3
@@ -181,6 +184,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         height: 1
         rotation: 45
+        visible: false
     }
 
     Rectangle {
@@ -190,9 +194,11 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         height: 1
         rotation: -45
+        visible: false
     }
 
     MouseArea {
+        id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
         z: 999

@@ -23,6 +23,7 @@ Item {
 
     property int _widgetMargin: 0
     property int _toolBarHeight: 0
+    property var _pipViewWidth
     property string _savedRtspUrl: ""
     property bool _rtspOverrideApplied: false
 
@@ -206,13 +207,12 @@ Item {
 
         delegate: SVCameraLayer {
             required property var modelData
-            required property int index
 
             width: modelData.w * root.width
             height: modelData.h * root.height
             x: modelData.x * root.width
             y: modelData.y * root.height
-            cameraIndex: index
+            cameraSlot: modelData.slot
             previewMode: root.previewMode
 
             _widgetMargin: root._widgetMargin
@@ -246,7 +246,7 @@ Item {
     SVBorder {
         id: recordBorder
         anchors.fill: parent
-        borderWidth: SVUnits.thickLineWidth + SVUnits.lineWidth * 2
+        borderWidth: SVUnits.thickLineWidth + SVUnits.lineWidth * 3
         borderColor: qgcPalette.colorRed
         borderVisible: !root.previewMode && SVState.record
         pulse: true
@@ -271,6 +271,7 @@ Item {
         anchors.topMargin: _widgetMargin + _toolBarHeight
         leftToolStripBottom: root.leftToolStripBottom
         activeLayoutId: root.resolvedActiveLayoutId
+        pipViewWidth: root.pipViewWidth
         visible: !root.previewMode
         onLayoutSelected: (layoutId) => SVState.layout = layoutId
     }

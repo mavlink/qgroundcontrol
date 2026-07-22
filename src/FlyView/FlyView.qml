@@ -96,6 +96,7 @@ Item {
                 anchors.fill:       parent
                 _widgetMargin:      _root._widgetMargin
                 _toolBarHeight:     SVState.toolbar ? toolbar.height : 0
+                _pipViewWidth:      _pipView.left
                 leftToolStripBottom: widgetLayer.leftToolStripBottom
                 previewMode:        videoControl.pipState.state === videoControl.pipState.pipState
                 z:                  1

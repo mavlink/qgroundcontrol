@@ -21,6 +21,7 @@ Item {
     property real leftToolStripBottom
     property string activeLayoutId: "four_square"
     property string activeSettingsId: ""
+    property var pipViewWidth
     readonly property var settingsModel: SVFlyViewMenusList.getSettingsModel()
 
     property bool uiInteractionEnabled: SVState.uiInteractionEnabled
@@ -84,6 +85,7 @@ Item {
         leftToolStripBottom: root.leftToolStripBottom
         activeLayoutId: root.activeLayoutId
         activeSettingsId: root.activeSettingsId
+        pipViewWidth: root.pipViewWidth
         settingsModel: root.settingsModel
         uiInteractionEnabled: root.uiInteractionEnabled
         controlPanelRight: controlPanel.x + controlPanel.width + SVUnits.objectWidth
@@ -111,7 +113,9 @@ Item {
         id: statsBox
         anchors.right: parent.right
         anchors.top: parent.verticalCenter
+        height: parent / 2
         open: true
+        visible: false
 
     }
 

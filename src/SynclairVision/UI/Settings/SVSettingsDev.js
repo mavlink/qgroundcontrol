@@ -79,6 +79,30 @@ function getSections() {
                     value: 40
                 }
             ]
-        }
+        },
+        {
+            id: 'tracking',
+            title: 'Tracking',
+            items: [
+                {
+                    id: 'longitude',
+                    type: 'dropdown',
+                    label: 'Longitude',
+                    description: 'longitud',
+                },
+                {
+                    id: 'latitude',
+                    type: 'dropdown',
+                    label: 'Latitude',
+                    description: 'latitude',
+                },
+                {
+                    id: 'altitude',
+                    type: 'dropdown',
+                    label: 'Altitude',
+                    description: 'altitude',
+                },
+            ]
+        },
     ]
 }

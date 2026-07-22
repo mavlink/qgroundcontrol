@@ -20,27 +20,32 @@ Item {
 
     QGCPalette { id: qgcPalette }
 
-    HorizontalCompassAttitude {
+    SVBackground {
+        width: compass.width + 6
+        height: compass.height + 6
+        
+        enabled: true
+        borderColor: qgcPalette.windowShade
+        hoverEnabled: false
+        checkable: false
+        checked: false
+        hovered: false
+        pressed: false
+        borderWidth: 1
+        radius: height / 2
+
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+
+        HorizontalCompassAttitude {
             id: compass
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.horizontalCenter: parent.horizontalCenter
             width: 200
-            border.width: 1
-            border.color: qgcPalette.windowShade
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            gradient: Gradient {
-                GradientStop { position: 0.0;  color: qgcPalette.windowTransparent }
-                GradientStop { position: 0.90;  color: qgcPalette.windowTransparent }
-                GradientStop { position: 1.0;  color: Qt.tint(
-                    qgcPalette.windowTransparent,
-                    Qt.rgba(
-                        qgcPalette.windowShade.r,
-                        qgcPalette.windowShade.g,
-                        qgcPalette.windowShade.b,
-                        0.25
-                    )
-                ) }
-            }
+            color: "transparent"
         }
-    
+    }
 }
+
+    
 
