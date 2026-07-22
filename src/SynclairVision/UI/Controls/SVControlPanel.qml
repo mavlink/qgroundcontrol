@@ -24,9 +24,11 @@ Item {
         anchors.bottom: parent.bottom
         width: joystick.width + zoom.width - borderWidth
         height: Math.max(joystick.height, zoom.height)
-        opacity: (SVSettings.controlPanelPassiveOpacity && (!contentHoverHandler.hovered || !(!SVState.lockControls && SVState.cameraSelected !== -1)))
-                 ? SVSettings.controlPanelPassiveOpacityValue
-                 : 1
+        opacity: (SVSettings.controlPanelPassiveOpacity && (!contentHoverHandler.hovered || !(!SVState.lockControls && SVState.cameraSelected !== -1))
+                  && !SVState.shortcutJoystickHeld.some(held => held) && !SVState.shortcutZoomInHeld
+                  && !SVState.shortcutZoomOutHeld && !SVState.shortcutSmallMovementHeld)
+                  ? SVSettings.controlPanelPassiveOpacityValue
+                  : 1
 
         Behavior on opacity {
             NumberAnimation {

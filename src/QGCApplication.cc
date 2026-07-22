@@ -136,6 +136,16 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
             }
         }
     }
+
+    if (settings.value(_synclairShortcutSettingsVersionKey, 0).toInt() < _synclairShortcutSettingsVersion) {
+        settings.beginGroup(QStringLiteral("SynclairVisionSettings"));
+        settings.setValue(QStringLiteral("shortcutZoomIn"), Qt::Key_PageUp);
+        settings.setValue(QStringLiteral("shortcutZoomOut"), Qt::Key_PageDown);
+        settings.setValue(QStringLiteral("shortcutDeselectCamera"), 0);
+        settings.endGroup();
+        settings.setValue(_synclairShortcutSettingsVersionKey, _synclairShortcutSettingsVersion);
+    }
+
     settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
 
     if (fClearCache) {
@@ -671,7 +681,22 @@ bool QGCApplication::notify(QObject* receiver, QEvent* event)
 
     // QQuickWindow performs delivery to the final QML target from its event handler. Inspecting
     // acceptance here therefore observes the result of normal target delivery without filtering it.
-    if ((receiver != _mainRootWindow) || event->isAccepted()) {
+    if (receiver != _mainRootWindow) {
+        return delivered;
+    }
+
+    // Key releases can be accepted by the focused QML item even when the
+    // matching press was unaccepted. Visual shortcut tracking only acts on
+    // keys it previously tracked, so it must always receive the release.
+    if (event->type() == QEvent::KeyRelease) {
+        const auto* keyEvent = static_cast<const QKeyEvent*>(event);
+        if (!keyEvent->isAutoRepeat()) {
+            emit unacceptedKeyRelease(keyEvent->key());
+        }
+        return delivered;
+    }
+
+    if (event->isAccepted()) {
         return delivered;
     }
 

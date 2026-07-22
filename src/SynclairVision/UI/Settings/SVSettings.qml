@@ -60,8 +60,8 @@ QtObject {
         shortcutPitchDown: Qt.Key_Down,
         shortcutJawLeft: Qt.Key_Left,
         shortcutJawRight: Qt.Key_Right,
-        shortcutZoomIn: scrollUp,
-        shortcutZoomOut: scrollDown,
+        shortcutZoomIn: Qt.Key_PageUp,
+        shortcutZoomOut: Qt.Key_PageDown,
         shortcutSmallMovement: Qt.Key_Shift,
         shortcutSynclair: Qt.Key_S,
         shortcutHUD: Qt.Key_H,
@@ -76,7 +76,7 @@ QtObject {
         shortcutCamera4: Qt.Key_4,
         shortcutCamera5: Qt.Key_5,
         shortcutNextCamera: Qt.Key_G,
-        shortcutDeselectCamera: Qt.Key_Up,
+        shortcutDeselectCamera: 0,
         aiDetectionOverlay: "right",
         aiSortingMode: "test",
         aiCropConfidenceTreshold: 0,
@@ -445,13 +445,13 @@ QtObject {
         //property int shortcutRollLeft: Qt.Key_Up
         //property int shortcutRollRight: Qt.Key_Up
 
-        property int shortcutZoomIn: scrollUp
-        property int shortcutZoomOut: scrollDown
+        property int shortcutZoomIn: Qt.Key_PageUp
+        property int shortcutZoomOut: Qt.Key_PageDown
         property int shortcutSmallMovement: Qt.Key_Shift
         property int shortcutSynclair: Qt.Key_S
         property int shortcutHUD: Qt.Key_H
         property int shortcutToolbar: Qt.Key_T
-        property int shortcutLayout: Qt.Key_Up
+        property int shortcutLayout: Qt.Space
         property int shortcutLockControls: Qt.Key_L
         property int shortcutPhoto: Qt.Key_P
         property int shortcutRecord: Qt.Key_R
@@ -461,7 +461,7 @@ QtObject {
         property int shortcutCamera4: Qt.Key_4
         property int shortcutCamera5: Qt.Key_5
         property int shortcutNextCamera: Qt.Key_G
-        property int shortcutDeselectCamera: Qt.Key_Up
+        property int shortcutDeselectCamera: 0
 
 
 //---------------------------------

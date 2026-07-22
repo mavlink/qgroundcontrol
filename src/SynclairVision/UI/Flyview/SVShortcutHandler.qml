@@ -22,11 +22,29 @@ Item {
     readonly property int actionLockControls: 13
     property bool toolbarVisible: false
 
+    readonly property int joystickRightRole: 0
+    readonly property int joystickDownRole: 1
+    readonly property int joystickLeftRole: 2
+    readonly property int joystickUpRole: 3
+    readonly property int zoomInRole: 4
+    readonly property int zoomOutRole: 5
+    readonly property int smallMovementRole: 6
+    property var heldVisualKeys: ({})
+    property var heldVisualRoleCounts: [0, 0, 0, 0, 0, 0, 0]
+    readonly property bool shortcutInputEligible: root.visible
+        && root.Window.window && root.Window.window.active
+        && !SVSettings.shortcutCaptureActive && !root.textInputHasFocus()
+        && !(Overlay.overlay && Overlay.overlay.visible)
+        && !SVState.cursorTrackingSessionActive
+    readonly property bool visualShortcutsEligible: root.shortcutInputEligible && root.enabled
+        && !SVState.lockControls && SVState.cameraSelected !== -1
+
     // Actions not listed here are disabled when shortcutsEnabled is false.
     readonly property var actionPolicies: ({
         [root.actionSynclair]: {
             allowWhenShortcutsDisabled: true,
-            requiresVisibleToolbar: true
+            requiresVisibleToolbar: true,
+            requiresSynclairOverlayOff: true
         }
     })
 
@@ -80,13 +98,116 @@ Item {
         return focusItem instanceof TextInput || focusItem instanceof TextEdit
     }
 
+    function visualRolesForKey(key) {
+        const roles = []
+
+        if (key !== 0 && key === SVSettings.shortcutJawRight) {
+            roles.push(root.joystickRightRole)
+        }
+        if (key !== 0 && key === SVSettings.shortcutPitchDown) {
+            roles.push(root.joystickDownRole)
+        }
+        if (key !== 0 && key === SVSettings.shortcutJawLeft) {
+            roles.push(root.joystickLeftRole)
+        }
+        if (key !== 0 && key === SVSettings.shortcutPitchUp) {
+            roles.push(root.joystickUpRole)
+        }
+        if (key !== 0 && key === SVSettings.shortcutZoomIn) {
+            roles.push(root.zoomInRole)
+        }
+        if (key !== 0 && key === SVSettings.shortcutZoomOut) {
+            roles.push(root.zoomOutRole)
+        }
+        if (key !== 0 && key === SVSettings.shortcutSmallMovement) {
+            roles.push(root.smallMovementRole)
+        }
+
+        return roles
+    }
+
+    function setVisualRoleHeld(role, held) {
+        const nextCount = root.heldVisualRoleCounts[role] + (held ? 1 : -1)
+        root.heldVisualRoleCounts[role] = nextCount
+
+        if (role <= root.joystickUpRole) {
+            const directions = SVState.shortcutJoystickHeld.slice()
+            directions[role] = nextCount > 0
+            SVState.shortcutJoystickHeld = directions
+            return
+        }
+
+        if (role === root.zoomInRole) {
+            SVState.shortcutZoomInHeld = nextCount > 0
+        } else if (role === root.zoomOutRole) {
+            SVState.shortcutZoomOutHeld = nextCount > 0
+        } else {
+            SVState.shortcutSmallMovementHeld = nextCount > 0
+        }
+    }
+
+    function setVisualRolesHeld(roles, held) {
+        for (let index = 0; index < roles.length; ++index) {
+            root.setVisualRoleHeld(roles[index], held)
+        }
+    }
+
+    function clearVisualHeldState() {
+        root.heldVisualKeys = ({})
+        root.heldVisualRoleCounts = [0, 0, 0, 0, 0, 0, 0]
+        SVState.shortcutJoystickHeld = [false, false, false, false]
+        SVState.shortcutZoomInHeld = false
+        SVState.shortcutZoomOutHeld = false
+        SVState.shortcutSmallMovementHeld = false
+    }
+
+    function trackVisualKeyPress(key) {
+        if (!root.visualShortcutsEligible) {
+            root.clearVisualHeldState()
+            return
+        }
+
+        const keyId = key.toString()
+        if (root.heldVisualKeys[keyId] !== undefined) {
+            return
+        }
+
+        const roles = root.visualRolesForKey(key)
+        if (roles.length === 0) {
+            return
+        }
+
+        root.heldVisualKeys[keyId] = roles
+        root.setVisualRolesHeld(roles, true)
+    }
+
+    function trackVisualKeyRelease(key) {
+        const keyId = key.toString()
+        const roles = root.heldVisualKeys[keyId]
+        if (roles === undefined) {
+            return
+        }
+
+        delete root.heldVisualKeys[keyId]
+        root.setVisualRolesHeld(roles, false)
+    }
+
+    onVisualShortcutsEligibleChanged: {
+        if (!visualShortcutsEligible) {
+            clearVisualHeldState()
+        }
+    }
+
+    Component.onDestruction: clearVisualHeldState()
+
     function dispatch(shortcut) {
         const action = root.shortcutRegistry[shortcut]
         const policy = root.actionPolicies[action]
-        if (!root.visible || !root.Window.window || !root.Window.window.active
-                || SVSettings.shortcutCaptureActive || root.textInputHasFocus()
-                || (Overlay.overlay && Overlay.overlay.visible)
-                || SVState.cursorTrackingSessionActive) {
+        if (!root.shortcutInputEligible) {
+            return
+        }
+
+        if (policy && policy.requiresSynclairOverlayOff && SVState.synclairOverlay) {
             return
         }
 
@@ -145,7 +266,12 @@ Item {
         target: QGroundControl.application
 
         function onUnacceptedKeyPress(key) {
+            root.trackVisualKeyPress(key)
             root.dispatch(key)
+        }
+
+        function onUnacceptedKeyRelease(key) {
+            root.trackVisualKeyRelease(key)
         }
 
         function onUnacceptedMouseRelease(button) {

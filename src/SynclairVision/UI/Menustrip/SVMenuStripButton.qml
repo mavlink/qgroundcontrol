@@ -83,7 +83,7 @@ Item {
 
     Timer {
         id: hoverTimer
-        interval: 700
+        interval: 300
         repeat: false
         onTriggered: {
             tooltipVisible = true

@@ -17,7 +17,8 @@ Item {
         id: border
         anchors.fill: parent
         radius: width / 2
-        color: qgcPalette.window
+        color: qgcPalette.windowTransparent
+        visible: false
         border.width: 1
         border.color: qgcPalette.windowShadeLight
     }

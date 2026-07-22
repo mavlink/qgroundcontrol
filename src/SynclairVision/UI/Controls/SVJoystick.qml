@@ -22,6 +22,7 @@ Item {
         color: qgcPalette.window
         border.width: 1
         border.color: qgcPalette.windowShadeLight
+        visible: false
     }
 
     Item {

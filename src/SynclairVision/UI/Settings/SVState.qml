@@ -233,6 +233,10 @@ QtObject {
     property bool hud: true
     property bool toolbar: true
     property bool lockControls: false
+    property var shortcutJoystickHeld: [false, false, false, false]
+    property bool shortcutZoomInHeld: false
+    property bool shortcutZoomOutHeld: false
+    property bool shortcutSmallMovementHeld: false
     property string layout: "single"
     property int  cameraSelected: -1
     property bool record: false
