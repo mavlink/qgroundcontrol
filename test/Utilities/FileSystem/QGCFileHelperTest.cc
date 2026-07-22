@@ -300,6 +300,29 @@ void QGCFileHelperTest::_testHasSufficientDiskSpaceWithMargin()
 // ============================================================================
 // URL/Path utilities tests
 // ============================================================================
+void QGCFileHelperTest::_testJoinPath()
+{
+    // Empty directory keeps the leaf name (including empty).
+    QCOMPARE(QGCFileHelper::joinPath(QString(), QStringLiteral("file.txt")), QStringLiteral("file.txt"));
+    QCOMPARE(QGCFileHelper::joinPath(QString(), QString()), QString());
+
+    // No trailing separator → insert '/'.
+    QCOMPARE(QGCFileHelper::joinPath(QStringLiteral("/tmp"), QStringLiteral("a.txt")),
+             QStringLiteral("/tmp/a.txt"));
+    QCOMPARE(QGCFileHelper::joinPath(QStringLiteral("relative"), QStringLiteral("b")),
+             QStringLiteral("relative/b"));
+
+    // Already ends with '/' → do not double-slash.
+    QCOMPARE(QGCFileHelper::joinPath(QStringLiteral("/tmp/"), QStringLiteral("a.txt")),
+             QStringLiteral("/tmp/a.txt"));
+    QCOMPARE(QGCFileHelper::joinPath(QStringLiteral("/"), QStringLiteral("root.txt")),
+             QStringLiteral("/root.txt"));
+
+    // Empty leaf still produces trailing-slash form of dir join.
+    QCOMPARE(QGCFileHelper::joinPath(QStringLiteral("/tmp"), QString()), QStringLiteral("/tmp/"));
+    QCOMPARE(QGCFileHelper::joinPath(QStringLiteral("/tmp/"), QString()), QStringLiteral("/tmp/"));
+}
+
 void QGCFileHelperTest::_testToLocalPathPlainPaths()
 {
     // Plain paths should pass through unchanged

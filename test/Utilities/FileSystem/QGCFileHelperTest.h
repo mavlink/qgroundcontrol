@@ -46,6 +46,9 @@ private slots:
     void _testHasSufficientDiskSpaceZeroBytes();
     void _testHasSufficientDiskSpaceWithMargin();
 
+    // Path join helpers
+    void _testJoinPath();
+
     // URL/Path utilities tests
     void _testToLocalPathPlainPaths();
     void _testToLocalPathFileUrls();
