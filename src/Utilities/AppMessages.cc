@@ -27,6 +27,13 @@ void showRebootAppMessage(const QString &message, const QString &title)
     }
 }
 
+void showRebootVehicleMessage(const QString &message, const QString &title)
+{
+    if (auto *const app = qgcApp()) {
+        app->showRebootVehicleMessage(message, title);
+    }
+}
+
 bool runningUnitTests()
 {
     auto *const app = qgcApp();

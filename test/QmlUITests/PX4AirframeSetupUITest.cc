@@ -240,8 +240,9 @@ void PX4AirframeSetupUITest::_testApplyAirframe()
              "Vehicle never disconnected after Apply and Restart");
 
     // By now the SYS_AUTOSTART ack has round-tripped, so the reboot app
-    // message dialog must have been shown — dismiss and verify it
-    QVERIFY2(acceptDialog(5000), "Reboot app message dialog never shown");
+    // message dialog must have been shown — dismiss and verify it. Cancel
+    // rather than Ok — Ok would reboot the (already disconnected) vehicle.
+    QVERIFY2(rejectDialog(5000), "Reboot app message dialog never shown");
     verifyExpectedLogMessage();
     });
 }

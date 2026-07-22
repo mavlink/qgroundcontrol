@@ -930,7 +930,7 @@ void Fact::_checkForRebootMessaging()
         // showAppMessage() logs during unit tests (and additionally shows the real
         // dialog in UI test mode), so tests assert this messaging via expectAppMessage()
         if (vehicleRebootRequired()) {
-            QGC::showRebootAppMessage(tr("Reboot vehicle for changes to take effect."));
+            QGC::showRebootVehicleMessage(tr("Reboot vehicle for changes to take effect."));
         } else if (qgcRebootRequired()) {
             QGC::showRebootAppMessage(tr("Restart application for changes to take effect."));
         }
