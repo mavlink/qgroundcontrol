@@ -58,6 +58,7 @@ tools/
 ├── configure.py             # CMake configuration wrapper
 ├── coverage.py               # Code coverage reports
 ├── generate_docs.py         # Generate API docs (Doxygen)
+├── moccache.py              # Content-addressed cache for Qt moc (AUTOMOC wrapper)
 ├── pre_commit.py            # Pre-commit hook runner
 ├── pseudo_loc.py             # Generate pseudo-localized .ts files for layout testing
 ├── release.py                # Semantic versioning and release automation
@@ -194,6 +195,16 @@ python3 ./tools/build_profile.py -B build --json          # Machine-readable out
 
 For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`, rebuild, then rerun
 the report — it scans the build dir for Clang `-ftime-trace` JSON and highlights the slowest events.
+
+### moccache.py
+
+Content-addressed cache for Qt's moc, wired in automatically as the `CMAKE_AUTOMOC_EXECUTABLE`
+(controlled by the `QGC_USE_MOCCACHE` CMake option, ON by default, non-Windows). Clean builds,
+branch switches, and sibling build trees reuse previous moc runs. Misses fall through to the
+real moc and never fail the build. See the
+[dev guide Build Caching section](../docs/en/qgc-dev-guide/getting_started/index.md#build-caching)
+for the cache key, environment variable reference, and usage examples. Tests:
+`tools/tests/test_moccache.py`.
 
 ### coverage.py
 

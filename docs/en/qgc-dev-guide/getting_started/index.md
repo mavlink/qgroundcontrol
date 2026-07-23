@@ -139,10 +139,10 @@ Example commands to build a default QGC and run it afterwards:
 
    **Mac**: To Sign/Notarize/Staple the QGC app bundle, add `-DQGC_MACOS_SIGN_WITH_IDENTITY=ON` to the configure command line. During the `install` phase the following environment variables will need to be available:
 
-   * `QGC_MACOS_SIGNING_IDENTITY` - Signing identity for your Developer ID certificate which must be in the keychain
-   * `QGC_MACOS_NOTARIZATION_USERNAME` - Username for your Apple Developer Account
-   * `QGC_MACOS_NOTARIZATION_PASSWORD` - App specific password for Notarization from your Apple Developer Account
-   * `QGC_MACOS_NOTARIZATION_TEAM_ID` - Apple Developer Account Team ID
+   - `QGC_MACOS_SIGNING_IDENTITY` - Signing identity for your Developer ID certificate which must be in the keychain
+   - `QGC_MACOS_NOTARIZATION_USERNAME` - Username for your Apple Developer Account
+   - `QGC_MACOS_NOTARIZATION_PASSWORD` - App specific password for Notarization from your Apple Developer Account
+   - `QGC_MACOS_NOTARIZATION_TEAM_ID` - Apple Developer Account Team ID
 
 1. Build
 
@@ -171,6 +171,48 @@ Example commands to build a default QGC and run it afterwards:
 - **Parallel builds:** You can use the `-j#` option with `cmake --build` to control the number of parallel build jobs.
 - **If you get this error when running _QGroundControl_**: `/usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.20' not found.`, you need to either update to the latest _gcc_, or install the latest _libstdc++.6_ using: `sudo apt-get install libstdc++6`.
 - **Unit tests:** To run the [unit tests](../contribute/unit_tests.md), build in `debug` mode with `QGC_UNITTEST_BUILD` definition, and then copy `deploy/qgroundcontrol-start.sh` script into the `debug` directory before running the tests.
+
+### Build Caching
+
+QGC uses two build caches, both enabled automatically at configure time and stored in the source
+tree so they survive build directory deletion:
+
+- **ccache** caches compiler output (`.ccache/`). Used if `ccache` is installed and on your `PATH`.
+- **moccache** caches Qt moc output (`.cache/moccache/`). QGC has a large number of moc-processed
+  headers, so on clean builds, branch switches, and rebuilds after deleting the build directory a
+  warm moccache skips the entire moc phase. Controlled by the `QGC_USE_MOCCACHE` CMake option
+  (ON by default; not supported on Windows).
+
+Neither cache requires any setup. To bypass moccache for a single build set `MOCCACHE_DISABLE=1`,
+or configure with `-DQGC_USE_MOCCACHE=OFF` to turn it off entirely.
+
+#### moccache Details
+
+moccache (`tools/moccache.py`) is a content-addressed cache wired in automatically as the
+`CMAKE_AUTOMOC_EXECUTABLE` via a launcher script generated at configure time. Cached moc output
+is keyed on moc version + arguments + input content + transitive include contents + the input's
+path relative to the output directory (moc embeds that relative path as an `#include` in its
+output, so build trees laid out at a different depth intentionally don't share entries). Entries
+are otherwise shared across build trees: build-dir paths are rewritten to a token, like ccache's
+`base_dir`.
+
+Cache misses fall through to the real moc and never fail the build; corrupt or stale entries are
+re-validated by content hash on every use.
+
+Environment variables (set by the launcher, overridable at build time):
+
+| Variable            | Default                  | Purpose                                            |
+| ------------------- | ------------------------ | -------------------------------------------------- |
+| `MOCCACHE_DIR`      | `<repo>/.cache/moccache` | Cache location (persisted by CI, like ccache)      |
+| `MOCCACHE_MAX_SIZE` | `256M`                   | LRU auto-trim threshold (trims after misses)       |
+| `MOCCACHE_DISABLE`  | unset                    | Pass through to real moc (no caching)              |
+| `MOCCACHE_STATS`    | unset                    | Append hit/miss lines to `$MOCCACHE_DIR/stats.log` |
+
+```sh
+MOCCACHE_STATS=1 just build                             # Log hits/misses during a build
+python3 ./tools/moccache.py --trim --max-size 256M      # Explicitly trim the cache (LRU)
+MOCCACHE_DISABLE=1 just build                           # Bypass the cache for one build
+```
 
 ## Building QGC Installation Files
 
