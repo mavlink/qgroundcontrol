@@ -11,8 +11,8 @@ gstreamer_version := `python3 ./tools/setup/read_config.py --get gstreamer.versi
 qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
 build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
-# Leave cores free for the user's other work; override with JOBS=N.
-jobs := env_var_or_default("JOBS", `python3 -c "import os; print(max(1, (os.cpu_count() or 4)//2))" 2>/dev/null || echo 4`)
+# Use all cores by default; override with JOBS=N.
+jobs := env_var_or_default("JOBS", `python3 -c "import os; print(os.cpu_count() or 4)" 2>/dev/null || echo 4`)
 
 # Default: show available commands
 default:
