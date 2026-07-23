@@ -15,6 +15,7 @@ Item {
     property var map ///< Map control to place item in
     property var vehicle ///< Vehicle associated with this item
     property bool interactive: true
+    property MissionItemIndicatorGroup indicatorGroup
 
     /// Subclasses must set this to their indicator Component
     property Component indicatorComponent
@@ -48,7 +49,7 @@ Item {
     }
 
     function updateDragArea() {
-        if (_missionItem.isCurrentItem && map.planView && _missionItem.specifiesCoordinate) {
+        if (_missionItem.isCurrentItem && map.planView && _missionItem.specifiesCoordinate && itemVisualLoader.item) {
             showDragArea()
         } else {
             hideDragArea()
@@ -108,6 +109,7 @@ Item {
             if (item) {
                 item.parent = map
                 map.addMapItem(item)
+                updateDragArea()
             }
         }
     }
@@ -121,6 +123,14 @@ Item {
             itemIndicator: itemVisualLoader.item
             itemCoordinate: _missionItem.coordinate
             visible: control.interactive
+            onClicked: {
+                const indicator = itemVisualLoader.item
+                if (indicator && indicator.activate) {
+                    indicator.activate()
+                } else {
+                    control.clicked(control._missionItem.sequenceNumber)
+                }
+            }
             onItemCoordinateChanged: _missionItem.coordinate = itemCoordinate
         }
     }

@@ -309,6 +309,16 @@ Item {
                 }
             }
 
+            MissionItemIndicatorGroup {
+                id: _missionItemIndicatorGroup
+
+                map: editorMap
+                missionItems: _root._missionController.visualItems
+                onItemSelected: (sequenceNumber) => {
+                    _root._missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
+                }
+            }
+
             // Add the mission item visuals to the map
             Repeater {
                 model: _missionController.visualItems
@@ -317,7 +327,10 @@ Item {
                     opacity: _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
                     interactive: _editingLayer == _layerMission
                     vehicle: _planMasterController.controllerVehicle
-                    onClicked: (sequenceNumber) => { _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false) }
+                    indicatorGroup: _missionItemIndicatorGroup
+                    onClicked: (sequenceNumber) => {
+                        _root._missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
+                    }
                 }
             }
 
@@ -336,6 +349,7 @@ Item {
                     fromCoord: object ? object.coordinate1 : undefined
                     toCoord: object ? object.coordinate2 : undefined
                     arrowPosition: 3
+                    mapControl: editorMap
                     z: QGroundControl.zOrderWaypointLines + 1
                 }
             }
@@ -343,15 +357,30 @@ Item {
             // UI for splitting the current segment
             MapQuickItem {
                 id: splitSegmentItem
+
+                property real _screenLegLength: 0
+
                 anchorPoint.x: sourceItem.width / 2
                 anchorPoint.y: sourceItem.height / 2
                 z: QGroundControl.zOrderWaypointLines + 1
                 visible: _editingLayer == _layerMission
+                         && _screenLegLength > _missionItemIndicatorGroup.groupingDistance * 2
 
                 sourceItem: SplitIndicator {
                     onClicked: _missionController.insertSimpleMissionItem(splitSegmentItem.coordinate,
                                                                            _missionController.currentPlanViewVIIndex,
                                                                            true /* makeCurrentItem */)
+                }
+
+                function _updateScreenLegLength() {
+                    const segment = _root._missionController.splitSegment
+                    if (segment && segment.coordinate1.isValid && segment.coordinate2.isValid) {
+                        const fromPoint = editorMap.fromCoordinate(segment.coordinate1, false /* clipToViewPort */)
+                        const toPoint = editorMap.fromCoordinate(segment.coordinate2, false /* clipToViewPort */)
+                        _screenLegLength = Math.hypot(toPoint.x - fromPoint.x, toPoint.y - fromPoint.y)
+                    } else {
+                        _screenLegLength = 0
+                    }
                 }
 
                 function _updateSplitCoord() {
@@ -362,6 +391,7 @@ Item {
                     } else {
                         coordinate = QtPositioning.coordinate()
                     }
+                    _updateScreenLegLength()
                 }
 
                 Connections {
@@ -373,6 +403,12 @@ Item {
                     target: _missionController.splitSegment
                     function onCoordinate1Changed()   { splitSegmentItem._updateSplitCoord() }
                     function onCoordinate2Changed()   { splitSegmentItem._updateSplitCoord() }
+                }
+
+                Connections {
+                    target: editorMap
+                    function onCenterChanged() { splitSegmentItem._updateScreenLegLength() }
+                    function onZoomLevelChanged() { splitSegmentItem._updateScreenLegLength() }
                 }
             }
 
