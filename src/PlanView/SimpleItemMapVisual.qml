@@ -17,6 +17,7 @@ MissionItemMapVisualBase {
         if (_itemVisualShowing) {
             _hideItemVisuals()
             loiterVisualLoader.active = false
+            waypointRadiusVisualLoader.active = false
         }
     }
 
@@ -24,6 +25,7 @@ MissionItemMapVisualBase {
         if (!_itemVisualShowing) {
             _showItemVisuals()
             loiterVisualLoader.active = true
+            waypointRadiusVisualLoader.active = true
         }
     }
 
@@ -36,9 +38,24 @@ MissionItemMapVisualBase {
             }
         }
 
+        function onWaypointRadiusChanged(waypointRadius) {
+            if (waypointRadiusVisualLoader.item) {
+                waypointRadiusVisualLoader.item.handleWaypointRadiusChange()
+            }
+        }
+
+        function onShowWaypointRadiusChanged() {
+            if (waypointRadiusVisualLoader.item) {
+                waypointRadiusVisualLoader.item.handleWaypointRadiusChange()
+            }
+        }
+
         function onCoordinateChanged(coordinate) {
             if (loiterVisualLoader.item) {
                 loiterVisualLoader.item.handleCoordinateChange()
+            }
+            if (waypointRadiusVisualLoader.item) {
+                waypointRadiusVisualLoader.item.handleCoordinateChange()
             }
         }
     }
@@ -50,6 +67,22 @@ MissionItemMapVisualBase {
         active: false
 
         sourceComponent: loiterComponent
+
+        onLoaded: {
+            if (item) {
+                item.parent = map
+                map.addMapItem(item)
+            }
+        }
+    }
+
+    Loader {
+        id: waypointRadiusVisualLoader
+
+        asynchronous: true
+        active: false
+
+        sourceComponent: waypointRadiusComponent
 
         onLoaded: {
             if (item) {
@@ -129,6 +162,64 @@ MissionItemMapVisualBase {
 
             Component.onCompleted: {
                 handleLoiterRadiusChange()
+                handleCoordinateChange()
+            }
+        }
+    }
+
+    Component  {
+        id: waypointRadiusComponent
+
+        MapQuickItem {
+            id:                               waypointRadiusMapQuickItem
+            coordinate:                       _root._missionItem.coordinate
+            visible:                          _root.interactive && _missionItem.isSimpleItem && _missionItem.showWaypointRadius
+
+            property alias blockSignals:      waypointRadiusMapCircleVisuals.blockSignals
+            property alias radius:            _mapCircle.radius
+
+            function handleWaypointRadiusChange() {
+                blockSignals = true
+                radius.rawValue = _missionItem.waypointRadius.rawValue
+                blockSignals = false
+            }
+
+            function handleCoordinateChange() {
+                coordinate = _missionItem.coordinate
+            }
+
+            onCoordinateChanged:              _mapCircle.center = coordinate
+
+            sourceItem: QGCMapCircleVisuals {
+                id:                      waypointRadiusMapCircleVisuals
+                mapControl:              _root.map
+                mapCircle:               _mapCircle
+                centerDragHandleVisible: false
+                borderColor:             _missionItem.terrainCollision ? "red" : QGroundControl.globalPalette.mapMissionTrajectory
+
+                property bool blockSignals: false
+
+                function updateMissionItem() {
+                    _missionItem.waypointRadius.rawValue = _mapCircle.radius.rawValue
+                }
+
+                QGCMapCircle {
+                    id:                         _mapCircle
+                    center:                     waypointRadiusMapQuickItem.coordinate
+                    interactive:                _root.interactive && _missionItem.isCurrentItem && map.planView
+                    showRotation:               false
+                }
+
+                Connections {
+                    target:            _mapCircle.radius
+                    function onRawValueChanged() {
+                        if (!blockSignals) waypointRadiusMapCircleVisuals.updateMissionItem()
+                    }
+                }
+            }
+
+            Component.onCompleted: {
+                handleWaypointRadiusChange()
                 handleCoordinateChange()
             }
         }

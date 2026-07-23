@@ -12,6 +12,7 @@
 #include "PlanMasterController.h"
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
+#include "MissionSettingsItem.h"
 #include "SpeedSection.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
@@ -25,6 +26,8 @@ void SimpleMissionItemTest::init()
                             20.1234567, 30.1234567, 40.1234567, 50.1234567, 60.1234567, 70.1234567,
                             true,        // autoContinue
                             false);      // isCurrentItem
+    MissionSettingsItem* settingsItem = new MissionSettingsItem(planController(), false /* flyView */);
+    planController()->missionController()->visualItems()->append(settingsItem);
     _simpleItem = new SimpleMissionItem(planController(), false /* flyView */, missionItem);
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be.
@@ -326,6 +329,18 @@ void SimpleMissionItemTest::_testAltitudePropogation()
     _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL);
+}
+
+void SimpleMissionItemTest::_testWaypointRadiusPropogation()
+{
+    Fact* fact = _simpleItem->waypointRadius();
+    QVERIFY(fact != nullptr);
+    QCOMPARE(fact->name(), QStringLiteral("Waypoint Radius"));
+
+    double originalVal = fact->rawValue().toDouble();
+    fact->setRawValue(12.34);
+    QCOMPARE(fact->rawValue().toDouble(), 12.34);
+    fact->setRawValue(originalVal);
 }
 
 void SimpleMissionItemTest::_testCalcAboveTerrainSaveLoad()
