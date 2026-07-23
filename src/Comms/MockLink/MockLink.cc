@@ -67,6 +67,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _enableProximity(_mockConfig->enableProximity())
     , _failureMode(_mockConfig->failureMode())
     , _stayMavlinkV1(_mockConfig->stayMavlinkV1())
+    , _ftpCapability(_mockConfig->ftpCapability())
     , _vehicleSystemId(_mockConfig->incrementVehicleId() ? _nextVehicleSystemId++ : static_cast<int>(_nextVehicleSystemId))
     , _vehicleLatitude(_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))
     , _vehicleLongitude(_defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001))
@@ -1030,6 +1031,9 @@ void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
         break;
     case MAVLINK_MSG_ID_LOG_REQUEST_DATA:
         _handleLogRequestData(msg);
+        break;
+    case MAVLINK_MSG_ID_LOG_ERASE:
+        _handleLogErase(msg);
         break;
     case MAVLINK_MSG_ID_PARAM_MAP_RC:
         _handleParamMapRC(msg);
@@ -2029,7 +2033,9 @@ void MockLink::_respondWithAutopilotVersion()
 #endif
 
     const uint8_t customVersion[8]{};
-    const uint64_t capabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MISSION_INT | ((_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0);
+    const uint64_t capabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MISSION_INT
+        | ((_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0)
+        | (_ftpCapability ? MAV_PROTOCOL_CAPABILITY_FTP : 0);
 
     mavlink_message_t msg{};
     (void) mavlink_msg_autopilot_version_pack_chan(
@@ -2385,6 +2391,7 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setPreloadMission(options.testFlag(MockConfiguration::OptionPreloadMission));
     mockConfig->setStayMavlinkV1(options.testFlag(MockConfiguration::OptionStayMavlinkV1));
     mockConfig->setApmStartFreshParams(options.testFlag(MockConfiguration::OptionAPMStartFreshParams));
+    mockConfig->setFtpCapability(options.testFlag(MockConfiguration::OptionFtpCapability));
     mockConfig->setFailureMode(failureMode);
 
     return _startMockLink(mockConfig);
@@ -2536,19 +2543,35 @@ void MockLink::_handleLogRequestList(const mavlink_message_t &msg)
         return;
     }
 
+    const uint16_t numLogs = _logsErased ? 0 : 1;
+    const uint16_t logId   = _logsErased ? 0 : _logDownloadLogId;
+    const uint32_t logSize = _logsErased ? 0 : _logDownloadFileSize;
     mavlink_message_t responseMsg{};
     mavlink_msg_log_entry_pack_chan(
         _vehicleSystemId,
         _vehicleComponentId,
         _outgoingMavlinkChannel,
         &responseMsg,
-        _logDownloadLogId,      // log id
-        1,                      // num_logs
-        1,                      // last_log_num
+        logId,                  // log id
+        numLogs,                // num_logs
+        numLogs,                // last_log_num
         0,                      // time_utc
-        _logDownloadFileSize    // size
+        logSize                 // size
     );
     respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_handleLogErase(const mavlink_message_t &msg)
+{
+    mavlink_log_erase_t request{};
+    mavlink_msg_log_erase_decode(&msg, &request);
+
+    if ((request.target_system != _vehicleSystemId) || (request.target_component != _vehicleComponentId)) {
+        return;
+    }
+
+    _logsErased = true;
+    _mockLinkFTP->setLogFiles({});
 }
 
 QString MockLink::_createRandomFile(uint32_t byteCount)

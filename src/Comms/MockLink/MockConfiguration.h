@@ -47,6 +47,7 @@ public:
         OptionPreloadMission      = 1 << 4,
         OptionStayMavlinkV1       = 1 << 5,
         OptionAPMStartFreshParams = 1 << 6,
+        OptionFtpCapability       = 1 << 7,
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
@@ -141,6 +142,11 @@ public:
     bool stayMavlinkV1() const { return _stayMavlinkV1; }
     void setStayMavlinkV1(bool stayV1) { _stayMavlinkV1 = stayV1; }
 
+    // Test-only: when true, the vehicle advertises MAV_PROTOCOL_CAPABILITY_FTP
+    // in AUTOPILOT_VERSION. Not persisted.
+    bool ftpCapability() const { return _ftpCapability; }
+    void setFtpCapability(bool ftpCapability) { _ftpCapability = ftpCapability; }
+
 signals:
     void firmwareChanged();
     void vehicleChanged();
@@ -182,6 +188,7 @@ private:
     bool _startArmed = false;
     bool _preloadMission = false;
     bool _stayMavlinkV1 = false;
+    bool _ftpCapability = false;
 
     // Camera capability flags (defaults match current Camera 1 configuration)
     bool _cameraCaptureVideo = true;

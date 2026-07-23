@@ -271,6 +271,7 @@ private:
     void _handlePreFlightCalibration(const mavlink_command_long_t &request);
     void _handleTakeoff(const mavlink_command_long_t &request);
     void _handleLogRequestList(const mavlink_message_t &msg);
+    void _handleLogErase(const mavlink_message_t &msg);
     void _handleLogRequestData(const mavlink_message_t &msg);
     void _handleParamMapRC(const mavlink_message_t &msg);
     void _handleSetupSigning(const mavlink_message_t &msg);
@@ -336,6 +337,7 @@ private:
     const bool _enableProximity = false;
     const MockConfiguration::FailureMode_t _failureMode = MockConfiguration::FailNone;
     const bool _stayMavlinkV1 = false;  ///< Test-only: never upgrade outgoing traffic to MAVLink v2
+    const bool _ftpCapability = false;  ///< Test-only: advertise MAV_PROTOCOL_CAPABILITY_FTP
     const uint8_t _vehicleSystemId = 0;
     const double _vehicleLatitude = 0.0;
     const double _vehicleLongitude = 0.0;
@@ -402,6 +404,7 @@ private:
     uint8_t _availableModesMonitorSeqNumber = 0;        ///< Sequence number for the next available mode message to send
 
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
+    bool _logsErased = false;                           ///< Set by LOG_ERASE, LOG_REQUEST_LIST reports no logs
     uint32_t _logDownloadCurrentOffset = 0;             ///< Current offset we are sending from
     uint32_t _logDownloadBytesRemaining = 0;            ///< Number of bytes still to send, 0 = send inactive
     /// Protects log download state from race conditions between:
