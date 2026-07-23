@@ -15,6 +15,25 @@ void FactTest::_constructWithTypeAndName_test()
     QCOMPARE(fact.type(), FactMetaData::valueTypeInt32);
 }
 
+void FactTest::_labelFallback_test()
+{
+    Fact fact(0, "FallbackParam", FactMetaData::valueTypeInt32);
+
+    auto *meta = fact.metaData();
+    QVERIFY(meta);
+
+    // No label, no short description -> falls back to name
+    QCOMPARE(fact.label(), QStringLiteral("FallbackParam"));
+
+    // No label, short description set -> falls back to short description
+    meta->setShortDescription("Short desc");
+    QCOMPARE(fact.label(), QStringLiteral("Short desc"));
+
+    // Label set -> returned as-is
+    meta->setLabel("The Label");
+    QCOMPARE(fact.label(), QStringLiteral("The Label"));
+}
+
 void FactTest::_setRawValueInt_test()
 {
     Fact fact(0, "IntParam", FactMetaData::valueTypeInt32);

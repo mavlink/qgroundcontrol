@@ -27,4 +27,5 @@ private slots:
     void _valueEqualsDefault_test();
     void _rawValueStringFullPrecisionFloat_test();
     void _rawValueStringFullPrecisionDouble_test();
+    void _labelFallback_test();
 };
