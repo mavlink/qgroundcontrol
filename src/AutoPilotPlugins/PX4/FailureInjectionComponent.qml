@@ -26,7 +26,7 @@ SetupPage {
     property Fact _sysFailureEn:        controller.getParameterFact(-1, "SYS_FAILURE_EN", true /* reportMissing */)
     property bool _paramSet:            _sysFailureEn && _sysFailureEn.value === 1
     property bool _pendingReboot:       false   // SYS_FAILURE_EN just toggled, reboot not yet triggered
-    property bool _armed:               _paramSet   // PX4 honors SYS_FAILURE_EN at boot; arm once the param reads 1
+    property bool _armed:               _paramSet && !_pendingReboot
 
     readonly property int _cmdInjectFailure: 420   // MAV_CMD_INJECT_FAILURE
 
@@ -35,14 +35,17 @@ SetupPage {
     property var _units: FailureInjection.units   // [{ name, unit }]
     property var _types: FailureInjection.types   // [{ name, type }]
 
-    property int _unitIndex:          4    // GPS
-    property int _typeIndex:          1    // Off
+    property int _unitIndex:          Instances.indexOfUnit(_units, 4)   // FAILURE_UNIT_SENSOR_GPS
+    property int _typeIndex:          Instances.indexOfType(_types, 1)   // FAILURE_TYPE_OFF
     property var _selectedInstances:  [1]  // 1-based instance numbers
     readonly property int _instanceCount: 8   // fixed number of selectable instances (not tied to the unit)
 
     // Detail parameters for the selected unit/type combo (e.g. BATTERY + WRONG -> SYS_FAIL_BAT_LVL).
     // Re-evaluates when either picker updates _unitIndex/_typeIndex.
-    property var _detailParams: FailureInjection.detailParams(_units[_unitIndex].unit, _types[_typeIndex].type)
+    property var _detailParams: (_unitIndex >= 0 && _unitIndex < _units.length &&
+                                 _typeIndex >= 0 && _typeIndex < _types.length)
+                                ? FailureInjection.detailParams(_units[_unitIndex].unit, _types[_typeIndex].type)
+                                : []
 
     // Activity log column widths — shared by the header and every row so the fields line up.
     readonly property real _colTimeWidth: ScreenTools.defaultFontPixelWidth * 9
@@ -122,7 +125,7 @@ SetupPage {
 
     // One ack arrived: resolve the matching log row (only one is pending at a time), then send the next.
     function _onAck(ackResult) {
-        FailureInjection.resolveResult(ackResult)   // no-op when the head was a reset (no pending row)
+        FailureInjection.resolveResult(ackResult)   // resolves the oldest pending row (both injections and resets log one)
         if (_sendQueue.length > 0) {
             var q = _sendQueue.slice()
             q.shift()

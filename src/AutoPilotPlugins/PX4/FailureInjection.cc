@@ -132,20 +132,19 @@ QVariantList FailureInjection::detailParams(int unitEnum, int typeEnum) const
     // an editor per entry, but only when the connected vehicle actually exposes the parameter.
     // Adding a new combo is one more table line.
     struct DetailParam {
-        int     unitEnum;
-        int     typeEnum;
-        QString param;
-        QString label;
+        int         unitEnum;
+        int         typeEnum;
+        const char *param;
+        const char *label;
     };
-    static const QList<DetailParam> table = {
-        { FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_WRONG,
-          QStringLiteral("SYS_FAIL_BAT_LVL"), tr("Battery level") },
+    static const DetailParam table[] = {
+        { FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_WRONG, "SYS_FAIL_BAT_LVL", QT_TR_NOOP("Battery level") },
     };
 
     QVariantList list;
     for (const DetailParam &entry : table) {
         if (entry.unitEnum == unitEnum && entry.typeEnum == typeEnum) {
-            list.append(QVariantMap{ {"param", entry.param}, {"label", entry.label} });
+            list.append(QVariantMap{ {"param", QString::fromLatin1(entry.param)}, {"label", tr(entry.label)} });
         }
     }
     return list;

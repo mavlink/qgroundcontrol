@@ -45,3 +45,21 @@ function typeName(types, typeEnum) {
     }
     return "" + typeEnum
 }
+
+// Catalog index of a FAILURE_UNIT value in a [{ name, unit }] list, or 0 if absent. Used to pick
+// defaults by (stable) enum value rather than by list position, which shifts as the MAVLink dialect
+// gains/reorders entries.
+function indexOfUnit(units, unitEnum) {
+    for (var i = 0; i < units.length; ++i) {
+        if (units[i].unit === unitEnum) { return i }
+    }
+    return 0
+}
+
+// Catalog index of a FAILURE_TYPE value in a [{ name, type }] list, or 0 if absent.
+function indexOfType(types, typeEnum) {
+    for (var i = 0; i < types.length; ++i) {
+        if (types[i].type === typeEnum) { return i }
+    }
+    return 0
+}
