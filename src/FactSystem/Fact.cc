@@ -534,7 +534,14 @@ QString Fact::shortDescription() const
 QString Fact::label() const
 {
     if (_metaData) {
-        return _metaData->label();
+        // Fall back for older metadata which is missing a label
+        if (!_metaData->label().isEmpty()) {
+            return _metaData->label();
+        }
+        if (!_metaData->shortDescription().isEmpty()) {
+            return _metaData->shortDescription();
+        }
+        return name();
     } else {
         qCWarning(FactLog) << kMissingMetadata << name();
         return QString();
