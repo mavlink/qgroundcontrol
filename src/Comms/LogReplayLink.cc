@@ -379,8 +379,8 @@ quint64 LogReplayWorker::_findLastTimestamp()
 
     quint64 lastTimestamp = 0;
 
-    while (_logFile.bytesAvailable() > static_cast<qint64>(kTimestamp)) {
-        lastTimestamp = _parseTimestamp(_logFile.read(kTimestamp));
+    while (_logFile.bytesAvailable() >= static_cast<qint64>(kTimestamp)) {
+        const quint64 candidateTimestamp = _parseTimestamp(_logFile.read(kTimestamp));
 
         bool endOfMessage = false;
         char nextByte;
@@ -389,6 +389,21 @@ quint64 LogReplayWorker::_findLastTimestamp()
             mavlink_status_t status{};
             endOfMessage = mavlink_parse_char(_mavlinkChannel, nextByte, &msg, &status);
         }
+
+        if (!endOfMessage) {
+            if (lastTimestamp != 0) {
+                // Trailing bytes which don't form a complete MAVLink message (e.g. the log was not
+                // closed cleanly due to a crash or power loss). Ignore them and keep the timestamp
+                // of the last complete message.
+                qCWarning(LogReplayLinkLog)
+                    << "Ignoring trailing bytes at end of log file which do not form a complete MAVLink message";
+            } else {
+                qCWarning(LogReplayLinkLog) << "No complete MAVLink message found in log file";
+            }
+            break;
+        }
+
+        lastTimestamp = candidateTimestamp;
     }
 
     return lastTimestamp;
