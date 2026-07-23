@@ -8,7 +8,6 @@ add_subdirectory(LogViewer)
 add_subdirectory(MAVLinkConsole)
 add_subdirectory(MAVLinkInspector)
 add_subdirectory(OnboardLogs)
-add_subdirectory(OnboardLogsFtp)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -30,7 +29,6 @@ qt_add_qml_module(AnalyzeViewModule
         MAVLinkInspector/MAVLinkInspectorPage.qml
         LogViewer/LogViewerPage.qml
         OnboardLogs/OnboardLogPage.qml
-        OnboardLogsFtp/OnboardLogFtpPage.qml
         Vibration/VibrationPage.qml
     NO_PLUGIN
 )
