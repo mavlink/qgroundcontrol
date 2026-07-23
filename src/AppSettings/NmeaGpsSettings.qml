@@ -15,29 +15,49 @@ SettingsGroupLayout {
 
         model: ListModel {}
 
+        // Untranslated value stored in the setting for each entry, parallel to the display model.
+        // LinkManager compares these against fixed strings, so they must not be translated.
+        property var _values: []
+
         onActivated: (index) => {
             if (index !== -1) {
-                QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = comboBox.textAt(index);
+                QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = nmeaPortCombo._values[index];
             }
         }
 
         Component.onCompleted: {
             var model = []
+            var values = []
 
             model.push(qsTr("Disabled"))
+            values.push("Disabled")
+
             model.push(qsTr("UDP Port"))
+            values.push("UDP Port")
 
             if (QGroundControl.linkManager.serialPorts.length === 0) {
                 model.push(qsTr("Serial <none available>"))
+                values.push("Serial <none available>")
             } else {
                 for (var i in QGroundControl.linkManager.serialPorts) {
                     model.push(QGroundControl.linkManager.serialPorts[i])
+                    values.push(QGroundControl.linkManager.serialPorts[i])
                 }
             }
+            nmeaPortCombo._values = values
             nmeaPortCombo.model = model
 
-            const index = nmeaPortCombo.comboBox.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
-            nmeaPortCombo.currentIndex = index;
+            const savedValue = QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString
+            var index = values.indexOf(savedValue)
+            if (index === -1) {
+                // Settings written by an older build stored the translated label. Match the
+                // displayed text instead and rewrite the setting to the untranslated value.
+                index = nmeaPortCombo.comboBox.find(savedValue)
+                if (index !== -1) {
+                    QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = values[index]
+                }
+            }
+            nmeaPortCombo.currentIndex = index
         }
     }
 

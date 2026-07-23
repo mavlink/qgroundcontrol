@@ -85,7 +85,7 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice *device)
 {
     if (_nmeaSource) {
         _nmeaSource->stopUpdates();
-        (void) disconnect(_nmeaSource);
+        (void) _nmeaSource->disconnect(this);
 
         if (_currentSource == _nmeaSource) {
             _currentSource = nullptr;
@@ -99,6 +99,26 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice *device)
     _nmeaSource->setDevice(device);
     _nmeaSource->setUserEquivalentRangeError(5.1);
     _setPositionSource(QGCPositionManager::NmeaGPS);
+}
+
+void QGCPositionManager::resetNmeaSourceDevice()
+{
+    if (!_nmeaSource) {
+        return;
+    }
+
+    if (_currentSource == _nmeaSource) {
+        // Switch away while the NMEA source is still valid so _setPositionSource() can run its
+        // usual cleanup (stop updates, disconnect, and reset the stale GCS position/accuracy)
+        // before we delete it. Falls back to the platform's default source (e.g. integrated GPS).
+        _setPositionSource(QGCPositionManager::InternalGPS);
+    } else {
+        _nmeaSource->stopUpdates();
+        (void) _nmeaSource->disconnect(this);
+    }
+
+    delete _nmeaSource;
+    _nmeaSource = nullptr;
 }
 
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
@@ -168,7 +188,10 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
 {
     if (_currentSource != nullptr) {
         _currentSource->stopUpdates();
-        (void) disconnect(_currentSource);
+        // Note the receiver-side overload: disconnect(_currentSource) would drop our own signals
+        // to the source (of which there are none), leaving source->this connected and duplicating
+        // it every time a source is re-selected.
+        (void) _currentSource->disconnect(this);
 
         _geoPositionInfo = QGeoPositionInfo();
         emit positionInfoUpdated(_geoPositionInfo);
