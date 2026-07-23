@@ -110,6 +110,54 @@ function(qgc_config_caching)
 endfunction()
 
 # ----------------------------------------------------------------------------
+# qgc_config_moccache
+# Routes AUTOMOC through tools/moccache.py so moc output is cached across
+# clean builds. Must be called after find_package(Qt6) and before any
+# AUTOMOC targets are created. No-op on Windows hosts, including Android
+# cross-builds (the wrapper is a shell script).
+# ----------------------------------------------------------------------------
+function(qgc_config_moccache)
+    if(CMAKE_HOST_WIN32 OR CMAKE_AUTOMOC_EXECUTABLE)
+        return()
+    endif()
+
+    set(_moccache_py "${CMAKE_SOURCE_DIR}/tools/moccache.py")
+    if(NOT EXISTS "${_moccache_py}" OR NOT TARGET Qt6::moc)
+        return()
+    endif()
+
+    find_program(QGC_MOCCACHE_PYTHON NAMES python3 python)
+    if(NOT QGC_MOCCACHE_PYTHON)
+        message(STATUS "QGC: python3 not found - building without moc caching")
+        return()
+    endif()
+
+    get_target_property(_real_moc Qt6::moc IMPORTED_LOCATION)
+    if(NOT _real_moc)
+        get_target_property(_real_moc Qt6::moc IMPORTED_LOCATION_RELEASE)
+    endif()
+    if(NOT _real_moc OR NOT EXISTS "${_real_moc}")
+        message(STATUS "QGC: real moc not found - building without moc caching")
+        return()
+    endif()
+
+    # Launcher in the build dir baking in the real moc path. Cache dir lives
+    # in the source tree (like .ccache) so it survives build dir deletion;
+    # override with MOCCACHE_DIR at build time.
+    set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher")
+    set(_wrapper "#!/bin/sh\n")
+    string(APPEND _wrapper "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
+    string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
+    string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-256M}\"\n")
+    string(APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n")
+    file(WRITE "${_moccache_wrapper}" "${_wrapper}")
+    file(CHMOD "${_moccache_wrapper}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+    set(CMAKE_AUTOMOC_EXECUTABLE "${_moccache_wrapper}" PARENT_SCOPE)
+    message(STATUS "QGC: Using moccache for AUTOMOC (${_real_moc})")
+endfunction()
+
+# ----------------------------------------------------------------------------
 # qgc_set_linker
 # Attempts to use a faster linker (mold, lld, or gold) if available
 # Falls back to the system default linker
