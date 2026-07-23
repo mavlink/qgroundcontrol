@@ -34,6 +34,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewProximityRadarUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/RemoteIDSettingsUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/RemoteIDSettingsUITest.h
 )
@@ -53,4 +55,5 @@ add_qgc_test(PX4AirframeSetupUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(AppCloseWarningUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(FlyViewProximityRadarUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(NTRIPSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
+add_qgc_test(OnboardLogUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(RemoteIDSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
