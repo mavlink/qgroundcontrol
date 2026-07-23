@@ -44,6 +44,9 @@ public:
     Q_INVOKABLE QVariantList injectedUnits(void) const;
     /// Forget the injected-units set (after a Reset reverted them); the activity log is left intact.
     Q_INVOKABLE void clearInjectedUnits(void);
+    /// Vehicle parameters that refine how a (unit, type) failure manifests, e.g. BATTERY+WRONG ->
+    /// SYS_FAIL_BAT_LVL. Returns [{ param, label }]; empty when the combo has no detail parameters.
+    Q_INVOKABLE QVariantList detailParams(int unitEnum, int typeEnum) const;
 
 signals:
     void activityChanged(void);

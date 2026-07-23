@@ -24,7 +24,7 @@ QString FailureInjectionComponent::description(void) const
 
 QString FailureInjectionComponent::iconResource(void) const
 {
-    return QStringLiteral("/qmlimages/subMenuButtonImage.png");
+    return QStringLiteral("/qmlimages/WarningEmergency.svg");
 }
 
 QUrl FailureInjectionComponent::setupSource(void) const

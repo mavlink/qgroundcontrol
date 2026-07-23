@@ -40,6 +40,10 @@ SetupPage {
     property var _selectedInstances:  [1]  // 1-based instance numbers
     readonly property int _instanceCount: 8   // fixed number of selectable instances (not tied to the unit)
 
+    // Detail parameters for the selected unit/type combo (e.g. BATTERY + WRONG -> SYS_FAIL_BAT_LVL).
+    // Re-evaluates when either picker updates _unitIndex/_typeIndex.
+    property var _detailParams: FailureInjection.detailParams(_units[_unitIndex].unit, _types[_typeIndex].type)
+
     // Activity log column widths — shared by the header and every row so the fields line up.
     readonly property real _colTimeWidth: ScreenTools.defaultFontPixelWidth * 9
     readonly property real _colUnitWidth: ScreenTools.defaultFontPixelWidth * 17
@@ -278,6 +282,32 @@ SetupPage {
                                 model:              _types.map(function(t){ return t.name })
                                 currentIndex:       _typeIndex
                                 onActivated:        function(index) { _typeIndex = index }
+                            }
+                        }
+                        // Detail parameters for the selected combo, styled like the pickers to their
+                        // left. Each editor appears only when the vehicle exposes the parameter:
+                        // enum metadata -> dropdown, otherwise numeric field.
+                        Repeater {
+                            model: _detailParams
+                            ColumnLayout {
+                                id: detailCol
+                                property Fact _detailFact: controller.parameterExists(-1, modelData.param)
+                                                               ? controller.getParameterFact(-1, modelData.param, false /* reportMissing */)
+                                                               : null
+                                visible: detailCol._detailFact !== null
+
+                                QGCLabel { text: modelData.label }
+                                FactComboBox {
+                                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
+                                    fact:       detailCol._detailFact
+                                    indexModel: false
+                                    visible:    detailCol._detailFact !== null && detailCol._detailFact.enumStrings.length > 0
+                                }
+                                FactTextField {
+                                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
+                                    fact:    detailCol._detailFact
+                                    visible: detailCol._detailFact !== null && detailCol._detailFact.enumStrings.length === 0
+                                }
                             }
                         }
                         Item { Layout.fillWidth: true }

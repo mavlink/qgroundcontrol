@@ -125,3 +125,28 @@ void FailureInjection::clearInjectedUnits(void)
 {
     _injectedUnits.clear();
 }
+
+QVariantList FailureInjection::detailParams(int unitEnum, int typeEnum) const
+{
+    // Vehicle parameters that refine how a failure manifests, keyed by (unit, type). The page shows
+    // an editor per entry, but only when the connected vehicle actually exposes the parameter.
+    // Adding a new combo is one more table line.
+    struct DetailParam {
+        int     unitEnum;
+        int     typeEnum;
+        QString param;
+        QString label;
+    };
+    static const QList<DetailParam> table = {
+        { FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_WRONG,
+          QStringLiteral("SYS_FAIL_BAT_LVL"), tr("Battery level") },
+    };
+
+    QVariantList list;
+    for (const DetailParam &entry : table) {
+        if (entry.unitEnum == unitEnum && entry.typeEnum == typeEnum) {
+            list.append(QVariantMap{ {"param", entry.param}, {"label", entry.label} });
+        }
+    }
+    return list;
+}

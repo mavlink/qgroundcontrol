@@ -188,4 +188,5 @@ qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_px4_qmlimages
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleTailDownRotate.png"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleUpsideDownRotate.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/WarningEmergency.svg"
 )

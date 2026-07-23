@@ -16,4 +16,5 @@ private slots:
     void _resolveResultIgnoresInProgress();
     void _resolveResultUnknownCodeFallsBackToMavResultString();
     void _clearInjectedUnitsForgetsTrackedUnits();
+    void _detailParamsMapCombos();
 };
