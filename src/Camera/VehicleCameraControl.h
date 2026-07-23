@@ -129,7 +129,8 @@ public:
     void        handleParamExtAck   (const mavlink_param_ext_ack_t& paramExtAck) override;
     void        handleParamExtValue (const mavlink_param_ext_value_t& paramExtValue) override;
     void        handleStorageInformation(const mavlink_storage_information_t& storageInformation) override;
-    void        handleBatteryStatus (const mavlink_battery_status_t& bs) override;
+    void        handleBatteryStatus   (const mavlink_battery_status_t& bs) override;
+    void        handleBatteryStatusV2 (const mavlink_battery_status_v2_t& bs) override;
     void        handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t &trackingImageStatus) override;
     void        handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation) override;
     void        handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus) override;
