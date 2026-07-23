@@ -20,8 +20,6 @@ unset GIO_EXTRA_MODULES
 unset GIO_MODULE_DIR
 unset GIO_USE_VFS
 
-# Preload system GLib 2.76+ for TTS compatibility.
-# Set QGC_NO_SYSTEM_GLIB=1 to disable.
 _resolve_system_lib() {
     # Try hardcoded paths first (fast), then ldconfig fallback (NixOS, Guix, etc.)
     local _lib="$1"
@@ -45,39 +43,14 @@ _resolve_system_lib() {
     return 1
 }
 
-if [ -z "$QGC_NO_SYSTEM_GLIB" ]; then
-    SYSTEM_GLIB=""
-    SYSTEM_GIO=""
-    SYSTEM_LIBDIR=""
-    SYSTEM_GLIB=$(_resolve_system_lib "libglib-2.0.so.0") || true
-    if [ -n "$SYSTEM_GLIB" ]; then
-        SYSTEM_LIBDIR="$(dirname "$SYSTEM_GLIB")"
-        SYSTEM_GIO="${SYSTEM_LIBDIR}/libgio-2.0.so.0"
-        if [ ! -f "$SYSTEM_GIO" ]; then
-            SYSTEM_GIO=$(_resolve_system_lib "libgio-2.0.so.0") || true
-        fi
-    fi
-
-    if [ -n "$SYSTEM_GLIB" ]; then
-        if nm -D "$SYSTEM_GLIB" 2>/dev/null | grep -qm1 g_string_free_and_steal; then
-            GLIB_PRELOAD="${SYSTEM_GLIB}"
-            if [ -f "$SYSTEM_GIO" ]; then
-                GLIB_PRELOAD="${GLIB_PRELOAD}:${SYSTEM_GIO}"
-                SYSTEM_LIBMOUNT="${SYSTEM_LIBDIR}/libmount.so.1"
-                if [ -f "$SYSTEM_LIBMOUNT" ]; then
-                    GLIB_PRELOAD="${GLIB_PRELOAD}:${SYSTEM_LIBMOUNT}"
-                fi
-            fi
-            export LD_PRELOAD="${GLIB_PRELOAD}${LD_PRELOAD:+:$LD_PRELOAD}"
-        fi
-    fi
-
-    if [ -n "$SYSTEM_GIO" ] && nm -D "$SYSTEM_GIO" 2>/dev/null | grep -qm1 g_task_set_static_name; then
-        export GIO_MODULE_DIR="${APPDIR}/usr/lib/gio/modules"
-        export GIO_USE_VFS="local"
-    else
-        export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
-    fi
+# If the system GIO is newer than bundled, use bundled GIO modules.
+# If the system GIO is older than bundled, use both bundled AND system GIO modules.
+# WARNING: Bundled GIO is now 2.80 so this particular symbol checking logic is outdated.
+# Seemingly harmless.
+SYSTEM_GIO=$(_resolve_system_lib "libgio-2.0.so.0") || true
+if [ -n "$SYSTEM_GIO" ] && nm -D "$SYSTEM_GIO" 2>/dev/null | grep -qm1 g_task_set_static_name; then
+    export GIO_MODULE_DIR="${APPDIR}/usr/lib/gio/modules"
+    export GIO_USE_VFS="local"
 else
     export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
 fi
