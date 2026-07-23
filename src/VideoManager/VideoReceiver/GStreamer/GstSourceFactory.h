@@ -25,8 +25,8 @@ struct Config
 };
 
 /// Build a source bin (`source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`)
-/// for `uri`. Supported schemes: rtsp/rtspt, tcp:// (MPEG-TS), udp:// (H.264 RTP),
-/// udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP).
+/// for `uri`. Supported schemes: rtsp/rtspt, http(s) WHEP, tcp:// (MPEG-TS),
+/// udp:// (H.264 RTP), udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP).
 ///
 /// Ghost pads on the returned bin are wired lazily; for `rtspsrc`/`tsdemux`/`parsebin`
 /// they appear only after upstream produces pads, so callers must connect any

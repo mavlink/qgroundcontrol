@@ -10,6 +10,7 @@
 
 namespace GStreamer {
 bool isValidRtspUri(const gchar* uri_str);
+bool isValidWhepUri(const gchar* uri_str);
 
 /// Dump @p pipeline's graph as a rotating .dot under CacheLocation/qgc-pipeline-dot/ for field reports.
 /// Returns empty (no-op) when GST_DEBUG_DUMP_DOT_DIR is set or on I/O failure.
