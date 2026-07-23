@@ -709,7 +709,7 @@ FlightMap {
                         visible:            globals.guidedControllerFlyView.showROI
                         onClicked: {
                             mapClickDropPanel.close()
-                            globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionROI, mapClickCoord, 0, false)
+                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, mapClickCoord)
                         }
                     }
 

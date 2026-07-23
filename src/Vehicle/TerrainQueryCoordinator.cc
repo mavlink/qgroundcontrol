@@ -84,7 +84,7 @@ void TerrainQueryCoordinator::_doSetHomeTerrainReceived(bool success, QList<doub
     _doSetHomeCoordinate = QGeoCoordinate(); // Invalidate for extra safety
 }
 
-void TerrainQueryCoordinator::roiWithTerrain(const QGeoCoordinate& coord)
+void TerrainQueryCoordinator::roiWithTerrain(const QGeoCoordinate& coord, double relativeAltitude)
 {
     if (!coord.isValid()) {
         return;
@@ -97,6 +97,7 @@ void TerrainQueryCoordinator::roiWithTerrain(const QGeoCoordinate& coord)
     }
 
     _roiCoordinate = coord;
+    _roiRelativeAltitude = relativeAltitude;
 
     _roiQuery = new TerrainAtCoordinateQuery(true /* autoDelete */);
     connect(_roiQuery, &TerrainAtCoordinateQuery::terrainDataReceived,
@@ -112,6 +113,7 @@ void TerrainQueryCoordinator::_roiTerrainReceived(bool success, QList<double> he
     _roiQuery = nullptr;
 
     if (!_roiCoordinate.isValid()) {
+        _roiRelativeAltitude = qQNaN();
         return;
     }
 
@@ -123,13 +125,19 @@ void TerrainQueryCoordinator::_roiTerrainReceived(bool success, QList<double> he
         roiAltitude = static_cast<float>(_vehicle->homePosition().altitude());
     }
 
+    if (!qIsNaN(_roiRelativeAltitude)) {
+        roiAltitude += static_cast<float>(_roiRelativeAltitude);
+    }
+
     qCDebug(TerrainQueryCoordinatorLog) << "roiWithTerrain: lat" << _roiCoordinate.latitude()
                                         << "lon" << _roiCoordinate.longitude()
-                                        << "terrainAltAMSL" << roiAltitude << "success" << success;
+                                        << "altAMSL" << roiAltitude << "success" << success
+                                        << "relativeAlt" << _roiRelativeAltitude;
 
     sendROICommand(_roiCoordinate, MAV_FRAME_GLOBAL, roiAltitude);
 
     _roiCoordinate = QGeoCoordinate();
+    _roiRelativeAltitude = qQNaN();
 }
 
 void TerrainQueryCoordinator::sendROICommand(const QGeoCoordinate& coord, MAV_FRAME frame, float altitude)
