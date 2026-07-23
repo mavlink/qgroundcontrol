@@ -10,7 +10,7 @@ UT_REGISTER_TEST(FailureInjectionUITest, TestLabel::Integration)
 void FailureInjectionUITest::_testInjectAndReset()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle * /*vehicle*/) {
 
     navigateToConfigureView();

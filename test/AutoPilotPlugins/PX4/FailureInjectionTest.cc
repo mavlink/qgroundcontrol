@@ -113,3 +113,18 @@ void FailureInjectionTest::_clearInjectedUnitsForgetsTrackedUnits()
     QVERIFY(failureInjection.injectedUnits().isEmpty());
     QCOMPARE(failureInjection.activity().count(), 1); // the activity log itself is left intact
 }
+
+void FailureInjectionTest::_detailParamsMapCombos()
+{
+    FailureInjection failureInjection;
+
+    // BATTERY + WRONG exposes the SYS_FAIL_BAT_LVL detail parameter.
+    const QVariantList batteryWrong = failureInjection.detailParams(FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_WRONG);
+    QCOMPARE(batteryWrong.count(), 1);
+    QCOMPARE(batteryWrong.first().toMap().value(QStringLiteral("param")).toString(), QStringLiteral("SYS_FAIL_BAT_LVL"));
+    QVERIFY2(!batteryWrong.first().toMap().value(QStringLiteral("label")).toString().isEmpty(), "detail param must have a display label");
+
+    // Combos without detail parameters return an empty list.
+    QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_OFF).isEmpty());
+    QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SENSOR_GPS, FAILURE_TYPE_WRONG).isEmpty());
+}
