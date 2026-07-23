@@ -5,6 +5,7 @@
 #include <QtCore/QDataStream>
 #include <QtCore/QDir>
 #include <QtCore/QTemporaryFile>
+#include <QtCore/QThread>
 
 QGC_LOGGING_CATEGORY(MockLinkFTPLog, "Comms.MockLink.MockLinkFTP")
 
@@ -21,6 +22,9 @@ MockLinkFTP::~MockLinkFTP()
 {
     if (!_paramPckTempFile.isEmpty()) {
         QFile::remove(_paramPckTempFile);
+    }
+    for (const QString &tempPath : std::as_const(_logFileTempPaths)) {
+        QFile::remove(tempPath);
     }
 }
 
@@ -47,9 +51,27 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
         return;
     }
 
-    // We only support root path
+    // We support the root path and the @MAV_LOG virtual log directory
     const QString path = reinterpret_cast<char*>(&request->data[0]);
-    if (!path.isEmpty() && path != "/") {
+    QStringList entries;
+    if (path.isEmpty() || path == QStringLiteral("/")) {
+        // Default mock listing: 6 fixed entries
+        for (uint32_t index = 0; index < 6; index++) {
+            QString entry = QStringLiteral("Ffile%1.txt\t%2").arg(index).arg(1024 + index);
+            if (withTime) {
+                entry += QStringLiteral("\t%1").arg(kMockModificationTime + index);
+            }
+            entries.append(entry);
+        }
+    } else if ((path == QStringLiteral("@MAV_LOG")) || (path == QStringLiteral("@MAV_LOG/"))) {
+        for (const LogFile &logFile : std::as_const(_logFiles)) {
+            QString entry = QStringLiteral("F%1\t%2").arg(logFile.name).arg(logFile.size);
+            if (withTime) {
+                entry += QStringLiteral("\t%1").arg(logFile.mtime);
+            }
+            entries.append(entry);
+        }
+    } else {
         _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, listOpCode);
         return;
     }
@@ -80,26 +102,18 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
     ackResponse.hdr.size = 0;
 
     // Entry format is "F<name>\t<size>", plus a trailing "\t<modification time>" for kCmdListDirectoryWithTime.
-    const auto makeEntry = [withTime](uint32_t index) {
-        QString entry = QStringLiteral("Ffile%1.txt\t%2").arg(index).arg(1024 + index);
-        if (withTime) {
-            entry += QStringLiteral("\t%1").arg(kMockModificationTime + index);
-        }
-        return entry;
-    };
-
-    // MockLink sends two directory entries per packet for a maximum of 3 packets, 6 total entries
-    if (request->hdr.offset <= 5) {
+    // MockLink sends up to two directory entries per packet.
+    if (request->hdr.offset < static_cast<uint32_t>(entries.count())) {
         char *bufPtr = reinterpret_cast<char*>(&ackResponse.data[0]);
-        QString dirEntry = makeEntry(request->hdr.offset);
-        auto cchDirEntry = dirEntry.length();
-        (void) strncpy(bufPtr, dirEntry.toStdString().c_str(), cchDirEntry);
-        ackResponse.hdr.size += dirEntry.length() + 1;
-        bufPtr += cchDirEntry + 1;
-        dirEntry = makeEntry(request->hdr.offset + 1);
-        cchDirEntry = dirEntry.length();
-        (void) strncpy(bufPtr, dirEntry.toStdString().c_str(), cchDirEntry);
-        ackResponse.hdr.size += dirEntry.length() + 1;
+        for (uint32_t index = request->hdr.offset; (index < request->hdr.offset + 2) && (index < static_cast<uint32_t>(entries.count())); index++) {
+            const QByteArray dirEntry = entries[static_cast<qsizetype>(index)].toUtf8();
+            if (ackResponse.hdr.size + dirEntry.length() + 1 > static_cast<int>(sizeof(ackResponse.data))) {
+                break;
+            }
+            (void) strncpy(bufPtr, dirEntry.constData(), dirEntry.length());
+            ackResponse.hdr.size += dirEntry.length() + 1;
+            bufPtr += dirEntry.length() + 1;
+        }
     } else {
         ackResponse.hdr.opcode = MavlinkFTP::kRspNak;
         ackResponse.data[0] = MavlinkFTP::kErrEOF;
@@ -141,6 +155,8 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
     } else if (path == "@PARAM/param.pck" || path.startsWith("@PARAM/param.pck?")) {
         const bool withDefaults = path.contains(QStringLiteral("withdefaults=1"));
         tmpFilename = _generateParamPck(withDefaults);
+    } else if (path.startsWith(QStringLiteral("@MAV_LOG/"))) {
+        tmpFilename = _logFileTempPath(path.mid(QStringLiteral("@MAV_LOG/").length()));
     }
 
     if (!tmpFilename.isEmpty()) {
@@ -264,8 +280,40 @@ void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId
     _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
 }
 
+void MockLinkFTP::_removeFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+{
+    ensureNullTemination(request);
+    const QString path = reinterpret_cast<char*>(request->data);
+    const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
+
+    const QString logPrefix = QStringLiteral("@MAV_LOG/");
+    if (path.startsWith(logPrefix)) {
+        const QString name = path.mid(logPrefix.length());
+        for (int i = 0; i < _logFiles.count(); i++) {
+            if (_logFiles[i].name == name) {
+                _logFiles.removeAt(i);
+
+                // Drop the cached temp file so the deleted log is no longer downloadable
+                const QString tempPath = _logFileTempPaths.take(name);
+                if (!tempPath.isEmpty()) {
+                    QFile::remove(tempPath);
+                }
+
+                _sendAck(senderSystemId, senderComponentId, outgoingSeqNumber, MavlinkFTP::kCmdRemoveFile);
+                return;
+            }
+        }
+    }
+
+    _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFailFileNotFound, outgoingSeqNumber, MavlinkFTP::kCmdRemoveFile);
+}
+
 void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
 {
+    if (_burstReadDelayMs > 0) {
+        QThread::msleep(_burstReadDelayMs);
+    }
+
     MavlinkFTP::Request response{};
     uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
@@ -480,6 +528,9 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
     case MavlinkFTP::kCmdBurstReadFile:
         _burstReadCommand(message.sysid, message.compid, request, incomingSeqNumber);
         break;
+    case MavlinkFTP::kCmdRemoveFile:
+        _removeFileCommand(message.sysid, message.compid, request, incomingSeqNumber);
+        break;
     case MavlinkFTP::kCmdWriteFile:
         _writeCommand(message.sysid, message.compid, request, incomingSeqNumber);
         break;
@@ -589,6 +640,63 @@ QString MockLinkFTP::_createTestTempFile(int size)
     }
 
     return tmpFile.fileName();
+}
+
+QByteArray MockLinkFTP::logFileContents(const QString &name) const
+{
+    for (const LogFile &logFile : _logFiles) {
+        if (logFile.name == name) {
+            return _generateLogFileContents(name, logFile.size);
+        }
+    }
+    return QByteArray();
+}
+
+QByteArray MockLinkFTP::_generateLogFileContents(const QString &name, int size)
+{
+    const uint seed = qHash(name);
+    QByteArray contents(size, Qt::Uninitialized);
+    for (int i = 0; i < size; i++) {
+        contents[i] = static_cast<char>((seed + static_cast<uint>(i)) & 0xFF);
+    }
+    return contents;
+}
+
+void MockLinkFTP::setLogFiles(const QList<LogFile> &logFiles)
+{
+    // Invalidate cached temp files so a reused name is regenerated with the new contents
+    for (const QString &tempPath : std::as_const(_logFileTempPaths)) {
+        QFile::remove(tempPath);
+    }
+    _logFileTempPaths.clear();
+
+    _logFiles = logFiles;
+}
+
+QString MockLinkFTP::_logFileTempPath(const QString &name)
+{
+    if (_logFileTempPaths.contains(name)) {
+        return _logFileTempPaths.value(name);
+    }
+
+    for (const LogFile &logFile : std::as_const(_logFiles)) {
+        if (logFile.name != name) {
+            continue;
+        }
+
+        QTemporaryFile tmpFile(QDir::tempPath() + QStringLiteral("/MockLinkFTPLogXXXXXX"));
+        tmpFile.setAutoRemove(false);
+        if (!tmpFile.open()) {
+            return QString();
+        }
+        (void) tmpFile.write(_generateLogFileContents(name, logFile.size));
+        tmpFile.close();
+
+        _logFileTempPaths.insert(name, tmpFile.fileName());
+        return tmpFile.fileName();
+    }
+
+    return QString();
 }
 
 QString MockLinkFTP::_generateParamPck(bool withDefaults)

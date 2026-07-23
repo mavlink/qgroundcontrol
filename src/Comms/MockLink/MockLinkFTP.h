@@ -24,6 +24,25 @@ public:
     /// to indicate (F)ile or (D)irectory.
     void setFileList(const QStringList &fileList) { _fileList = fileList; }
 
+    /// Describes a simulated onboard log file served from the @MAV_LOG virtual directory.
+    struct LogFile {
+        QString name;       ///< File name, e.g. "log_1.ulg"
+        int size = 0;       ///< File size in bytes
+        uint32_t mtime = 0; ///< Modification time (seconds since UNIX epoch UTC)
+    };
+
+    /// Sets the log files listed in and downloadable from the @MAV_LOG virtual directory.
+    /// Removes any temp files cached for the previous log set.
+    void setLogFiles(const QList<LogFile> &logFiles);
+
+    /// Returns the deterministic contents served for the named @MAV_LOG log file.
+    /// Empty if the name is unknown.
+    QByteArray logFileContents(const QString &name) const;
+
+    /// Delays each burst read by delayMs to simulate a slow link. Runs on the
+    /// MockLink worker thread so it paces transfers without blocking the main thread.
+    void setBurstReadDelayMs(int delayMs) { _burstReadDelayMs = delayMs; }
+
     /// Called to handle an FTP message
     void mavlinkMessageReceived(const mavlink_message_t &message);
 
@@ -98,6 +117,7 @@ private:
     void _openFileWOCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _readCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _removeFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
     void _writeCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
@@ -107,6 +127,8 @@ private:
     uint16_t _nextSeqNumber(uint16_t seqNumber) const;
     static QString _createTestTempFile(int size);
     QString _generateParamPck(bool withDefaults);
+    QString _logFileTempPath(const QString &name);
+    static QByteArray _generateLogFileContents(const QString &name, int size);
 
     /// if request is a string, this ensures it's null-terminated
     static void ensureNullTemination(MavlinkFTP::Request *request);
@@ -117,6 +139,7 @@ private:
 
     bool _lastReplyValid = false;
     bool _randomDropsEnabled = false;
+    int _burstReadDelayMs = 0;                  ///< Per-burst delay to simulate a slow link
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
     mavlink_message_t _lastReply{};
@@ -136,6 +159,8 @@ private:
     UploadSession _uploadSession;
     QHash<QString, QByteArray> _uploadedFiles;
     QStringList _fileList;                      ///< List of files returned by List command
+    QList<LogFile> _logFiles;                   ///< Log files served from the @MAV_LOG virtual directory
+    QHash<QString, QString> _logFileTempPaths;  ///< Temp files backing @MAV_LOG downloads
     uint16_t _lastReplySequence = 0;
 
     static constexpr uint8_t _sessionId = 1;    ///< We only support a single fixed session
