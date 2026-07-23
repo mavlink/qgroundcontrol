@@ -19,6 +19,19 @@ function(_qgc_windows_sdk_complete ROOT_DIR OUT_VAR)
     set(${OUT_VAR} "${_is_complete}" PARENT_SCOPE)
 endfunction()
 
+function(_qgc_windows_sdk_version ROOT_DIR OUT_VAR)
+    set(_pkg_config_file "${ROOT_DIR}/lib/pkgconfig/gstreamer-1.0.pc")
+    if(NOT EXISTS "${_pkg_config_file}")
+        set(${OUT_VAR} "" PARENT_SCOPE)
+        return()
+    endif()
+
+    file(STRINGS "${_pkg_config_file}" _version_line REGEX "^Version:[ \t]*" LIMIT_COUNT 1)
+    string(REGEX REPLACE "^Version:[ \t]*" "" _version "${_version_line}")
+    string(STRIP "${_version}" _version)
+    set(${OUT_VAR} "${_version}" PARENT_SCOPE)
+endfunction()
+
 function(_qgc_find_win_sdk_root EXTRACTED_DIR OUT_VAR)
     if(EXISTS "${EXTRACTED_DIR}/bin/pkg-config.exe")
         set(${OUT_VAR} "${EXTRACTED_DIR}" PARENT_SCOPE)
@@ -88,11 +101,21 @@ macro(_qgc_discover_windows_sdk)
 
     if(DEFINED GStreamer_ROOT_DIR AND EXISTS "${GStreamer_ROOT_DIR}")
         _qgc_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
+        _qgc_windows_sdk_version("${GStreamer_ROOT_DIR}" _gst_win_sdk_version)
         if(NOT _gst_win_sdk_complete)
             message(WARNING
                 "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} is incomplete "
                 "(missing devel/runtime artifacts). Falling back to auto-download.")
             unset(GStreamer_ROOT_DIR)
+            unset(GStreamer_ROOT_DIR CACHE)
+        elseif(NOT _gst_win_sdk_version
+               OR _gst_win_sdk_version VERSION_LESS GStreamer_FIND_VERSION)
+            message(WARNING
+                "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} has version "
+                "'${_gst_win_sdk_version}', but ${GStreamer_FIND_VERSION}+ is required. "
+                "Falling back to auto-download.")
+            unset(GStreamer_ROOT_DIR)
+            unset(GStreamer_ROOT_DIR CACHE)
         endif()
     endif()
 
