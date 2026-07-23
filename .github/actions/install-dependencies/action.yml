@@ -80,23 +80,42 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" enable-universe
 
+    # Cache downloaded .debs so slow apt mirrors only hurt on a cache miss.
+    # Keyed on the package-list sources plus a year-month stamp: actions/cache
+    # never re-saves on an exact key hit, so without the stamp the cache would
+    # go stale as noble-updates bumps package versions. The cache is saved by
+    # the post step even if the install step fails (see the chown note there).
+    - name: Compute apt cache stamps (Linux)
+      if: runner.os == 'Linux'
+      id: apt-cache-stamp
+      shell: bash
+      # The distro stamp (e.g. ubuntu-24.04) segregates caches per runner image:
+      # this action runs on multiple Ubuntu versions whose .debs don't overlap.
+      run: |
+        echo "month=$(date -u +%Y-%m)" >> "${GITHUB_OUTPUT}"
+        echo "distro=$(. /etc/os-release && echo "${ID}-${VERSION_ID}")" >> "${GITHUB_OUTPUT}"
+
+    - name: Restore apt download cache (Linux)
+      if: runner.os == 'Linux'
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/qgc-apt-archives
+        key: apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-${{ steps.apt-cache-stamp.outputs.month }}-${{ hashFiles('tools/setup/install_dependencies/_packages.py', 'tools/setup/install_dependencies/_debian.py') }}
+        restore-keys: |
+          apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-${{ steps.apt-cache-stamp.outputs.month }}-
+          apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-
+
     - name: Install apt packages (Linux)
       if: runner.os == 'Linux'
-      # Retry: a slow apt mirror can stall the download past the job timeout; fast-fail and retry.
-      uses: nick-fields/retry@v4
+      shell: bash
       env:
         APT_PACKAGES: ${{ steps.linux-deps.outputs.packages }}
-      with:
-        timeout_minutes: 20
-        max_attempts: 3
-        shell: bash
-        # Acquire::*::Timeout aborts a stalled mirror connection so retries can fire.
-        command: |
-          APT_OPTS="-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
-          # shellcheck disable=SC2086
-          sudo apt-get $APT_OPTS update -qq
-          # shellcheck disable=SC2086
-          sudo apt-get $APT_OPTS install -y --no-install-recommends $APT_PACKAGES
+      # Retry/cache/timeout rationale lives in .github/scripts/apt_install_retry.sh,
+      # which downloads .debs into the cached directory restored above.
+      run: |
+        read -ra packages <<< "${APT_PACKAGES}"
+        "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
+          --update --no-install-recommends --autoclean "${packages[@]}"
 
     - name: Fix apt alternatives (Linux)
       if: runner.os == 'Linux'
@@ -115,16 +134,17 @@ runs:
 
     - name: Install extra packages (Linux)
       if: runner.os == 'Linux' && inputs.extra-packages != ''
-      uses: nick-fields/retry@v4
+      shell: bash
       env:
         EXTRA_PACKAGES: ${{ inputs.extra-packages }}
-      with:
-        timeout_minutes: 5
-        max_attempts: 3
-        command: |
-          validated="$(python3 tools/setup/install_dependencies --validate-extra-packages $EXTRA_PACKAGES)"
-          # shellcheck disable=SC2086
-          sudo apt-get install -y $validated
+      # Same retry/cache helper as "Install apt packages" above; shorter install
+      # timeout since this only ever installs a handful of small packages.
+      run: |
+        read -ra extra <<< "${EXTRA_PACKAGES}"
+        validated="$(python3 tools/setup/install_dependencies --validate-extra-packages "${extra[@]}")"
+        read -ra packages <<< "${validated}"
+        "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
+          --install-timeout 300 --label "extra apt packages" "${packages[@]}"
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
