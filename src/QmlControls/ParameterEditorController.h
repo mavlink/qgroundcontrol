@@ -139,6 +139,9 @@ class ParameterEditorController : public FactPanelController
     Q_PROPERTY(bool                 diffOtherVehicle        MEMBER _diffOtherVehicle                                    NOTIFY diffOtherVehicleChanged)
     Q_PROPERTY(bool                 diffMultipleComponents  MEMBER _diffMultipleComponents                              NOTIFY diffMultipleComponentsChanged)
     Q_PROPERTY(QmlObjectListModel*  diffList                READ diffList                                               CONSTANT)
+    Q_PROPERTY(int                  diffUnchangedCount      MEMBER _diffUnchangedCount                                  NOTIFY diffUnchangedCountChanged)
+    Q_PROPERTY(int                  diffMissingCount        READ diffMissingCount                                       NOTIFY diffMissingCountChanged)
+    Q_PROPERTY(int                  diffParsedCount         MEMBER _diffParsedCount                                     NOTIFY diffParsedCountChanged)
 
 public:
     explicit ParameterEditorController(QObject *parent = nullptr);
@@ -159,6 +162,7 @@ public:
     QObject*            currentGroup            (void) { return _currentGroup; }
     QmlObjectListModel* categories              (void) { return &_categories; }
     QmlObjectListModel* diffList                (void) { return &_diffList; }
+    int                 diffMissingCount        (void) const { return _diffMissingParams.count(); }
     QStringList         favoriteParameterNames  (void) const;
     void                setCurrentCategory  (QObject* currentCategory);
     void                setCurrentGroup     (QObject* currentGroup);
@@ -173,6 +177,9 @@ signals:
     void favoritesChanged               (void);
     void diffOtherVehicleChanged        (bool diffOtherVehicle);
     void diffMultipleComponentsChanged  (bool diffMultipleComponents);
+    void diffUnchangedCountChanged      (int diffUnchangedCount);
+    void diffMissingCountChanged        (int diffMissingCount);
+    void diffParsedCountChanged         (int diffParsedCount);
     void parametersChanged              (void);
     void missingParamsFromFile          (const QStringList& missingParams);
 
@@ -202,6 +209,8 @@ private:
     bool                        _hideReadOnly           = false;
     bool                        _diffOtherVehicle       = false;
     bool                        _diffMultipleComponents = false;
+    int                         _diffUnchangedCount     = 0;
+    int                         _diffParsedCount        = 0;
     QStringList                 _diffMissingParams;
     QSet<QString>               _favoriteNames;
 
