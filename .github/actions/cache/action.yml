@@ -166,6 +166,29 @@ runs:
       shell: bash
       run: ccache -z
 
+    # moccache entries are content-addressed and basedir-normalized, so they
+    # are safe to share across build types and branches; keys exist only for
+    # scoping and eviction. Windows is skipped (moccache no-ops there).
+    - name: Cache moc output (moccache, save)
+      if: runner.os != 'Windows' && steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.workspace }}/.cache/moccache
+        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}
+        restore-keys: |
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+
+    - name: Cache moc output (moccache, read-only)
+      if: runner.os != 'Windows' && (steps.cache-policy.outputs.save != 'true' || inputs.variant == 'coverage')
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ github.workspace }}/.cache/moccache
+        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}
+        restore-keys: |
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+
     # CPM is content-identical across build types; only Release writes the
     # cache. Debug + sanitizer + coverage jobs are read-only to avoid parallel
     # save races on the same key (last-writer-wins waste).
