@@ -13,6 +13,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         AirframeComponentAirframes.h
         AirframeComponentController.cc
         AirframeComponentController.h
+        FailureInjection.cc
+        FailureInjection.h
+        FailureInjectionComponent.cc
+        FailureInjectionComponent.h
         FlightModesComponent.cc
         FlightModesComponent.h
         PowerComponent.cc
@@ -108,6 +112,8 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         CalcAmpsPerVoltDialog.qml
         CalcVoltageDividerDialog.qml
         ESCCalibrationDialog.qml
+        FailureInjectionComponent.qml
+        FailureInjectionInstances.js
         FlightModesComponentSummary.qml
         PowerComponentSummary.qml
         PX4FlightBehaviorCopter.qml
@@ -182,4 +188,5 @@ qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_px4_qmlimages
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleTailDownRotate.png"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png"
         "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/VehicleUpsideDownRotate.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/PX4/Images/WarningEmergency.svg"
 )
