@@ -23,9 +23,17 @@ QGCPopupDialog {
         QGCLabel {
             Layout.preferredWidth:  mainGrid.visible ? mainGrid.width : ScreenTools.defaultFontPixelWidth * 40
             wrapMode:               Text.WordWrap
-            text:                   paramController.diffList.count ?
-                                        qsTr("The following parameters from the loaded file differ from what is currently set on the Vehicle. Click 'Ok' to update them on the Vehicle.") :
-                                        qsTr("There are no differences between the file loaded and the current settings on the Vehicle.")
+            text:                   {
+                if (paramController.diffList.count > 0) {
+                    return qsTr("The following parameters from the loaded file differ from what is currently set on the Vehicle. Click 'Ok' to update them on the Vehicle.")
+                } else if (paramController.diffMissingCount > 0) {
+                    return qsTr("No differences found. %1 parameters from the file were not found on the vehicle (see console log for details).").arg(paramController.diffMissingCount)
+                } else if (paramController.diffUnchangedCount > 0) {
+                    return qsTr("All %1 parameters in the file already match the vehicle settings.").arg(paramController.diffUnchangedCount)
+                } else {
+                    return qsTr("There are no differences between the file loaded and the current settings on the Vehicle.")
+                }
+            }
         }
 
         GridLayout {

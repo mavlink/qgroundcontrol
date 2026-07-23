@@ -363,10 +363,15 @@ void ParameterEditorController::clearDiff(void)
     _diffList.clearAndDeleteContents();
     _diffOtherVehicle = false;
     _diffMultipleComponents = false;
+    _diffUnchangedCount = 0;
+    _diffParsedCount = 0;
     _diffMissingParams.clear();
 
     emit diffOtherVehicleChanged(_diffOtherVehicle);
     emit diffMultipleComponentsChanged(_diffMultipleComponents);
+    emit diffUnchangedCountChanged(_diffUnchangedCount);
+    emit diffMissingCountChanged(0);
+    emit diffParsedCountChanged(_diffParsedCount);
 }
 
 void ParameterEditorController::sendDiff(void)
@@ -398,8 +403,9 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
 
     QTextStream stream(&file);
 
-    int parsedLineCount = 0;
     int firstComponentId = -1;
+
+    qCDebug(ParameterEditorControllerLog) << "Loading parameter file:" << filename;
     while (!stream.atEnd()) {
         QString line = stream.readLine();
         if (!line.startsWith("#") && !line.trimmed().isEmpty()) {
@@ -437,7 +443,7 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 continue;
             }
 
-            parsedLineCount++;
+            _diffParsedCount++;
 
             QString     vehicleValueStr;
             QString     units;
@@ -462,7 +468,14 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 vehicleFactMetaData->setVehicleRebootRequired(vehicleRebootRequired);
                 readOnly = vehicleFact->readOnly();
 
+                qCDebug(ParameterEditorControllerLog) << "Comparing param:" << paramName
+                    << "vehicleValue:" << vehicleFact->rawValue()
+                    << "fileValue:" << fileFact->rawValue()
+                    << "fileValueStr:" << fileValueStr;
+
                 if (vehicleFact->rawValue() == fileFact->rawValue()) {
+                    _diffUnchangedCount++;
+                    qCDebug(ParameterEditorControllerLog) << "Param unchanged:" << paramName;
                     continue;
                 }
                 fileValueStr    = fileFact->enumOrValueString();
@@ -471,9 +484,11 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 units           = vehicleFact->cookedUnits();
             } else if (isMPFormat) {
                 // MP format: skip params not on vehicle and report them
+                qCDebug(ParameterEditorControllerLog) << "Param not on vehicle (MP format):" << paramName;
                 _diffMissingParams.append(paramName);
                 continue;
             } else {
+                qCDebug(ParameterEditorControllerLog) << "Param not on vehicle (QGC format):" << paramName;
                 noVehicleValue = true;
             }
 
@@ -496,13 +511,22 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
 
     file.close();
 
-    if (parsedLineCount == 0) {
+    if (_diffParsedCount == 0) {
         QGC::showAppMessage(tr("No valid parameters found in file. Check that the file is in QGC or Mission Planner format."));
         return false;
     }
 
+    qCDebug(ParameterEditorControllerLog) << "Parameter file load summary:"
+        << "parsed:" << _diffParsedCount
+        << "different:" << _diffList.count()
+        << "unchanged:" << _diffUnchangedCount
+        << "missing:" << _diffMissingParams.count();
+
     emit diffOtherVehicleChanged(_diffOtherVehicle);
     emit diffMultipleComponentsChanged(_diffMultipleComponents);
+    emit diffUnchangedCountChanged(_diffUnchangedCount);
+    emit diffMissingCountChanged(_diffMissingParams.count());
+    emit diffParsedCountChanged(_diffParsedCount);
     if (!_diffMissingParams.isEmpty()) {
         emit missingParamsFromFile(_diffMissingParams);
     }
