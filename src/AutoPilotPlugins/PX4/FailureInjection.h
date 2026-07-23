@@ -22,22 +22,27 @@ class FailureInjection : public QObject
     Q_OBJECT
     QML_NAMED_ELEMENT(FailureInjection)
     QML_SINGLETON
-    Q_PROPERTY(QVariantList units     READ units     CONSTANT)               ///< [{ name, unit }]
-    Q_PROPERTY(QVariantList types     READ types     CONSTANT)               ///< [{ name, type }]
-    Q_PROPERTY(QVariantList activity  READ activity  NOTIFY activityChanged) ///< newest first: [{ time, unitName, typeName, instance, result }]
+    Q_PROPERTY(QVariantList units READ units CONSTANT)  ///< [{ name, unit }]
+    Q_PROPERTY(QVariantList types READ types CONSTANT)  ///< [{ name, type }]
+    Q_PROPERTY(QVariantList activity READ activity NOTIFY
+                   activityChanged)  ///< newest first: [{ time, unitName, typeName, instance, result }]
 
 public:
-    explicit FailureInjection(QObject *parent = nullptr);
+    explicit FailureInjection(QObject* parent = nullptr);
 
     QVariantList units(void) const { return _units; }
+
     QVariantList types(void) const { return _types; }
+
     QVariantList activity(void) const { return _activity; }
 
     /// Add a log row (prepended, newest first, result "pending") without tracking the unit for Reset.
     /// instanceLabel is a display descriptor for the affected instance(s), e.g. "all", "2", "1, 3, 5".
-    Q_INVOKABLE void logRow(const QString &unitName, const QString &typeName, const QString &instanceLabel, const QString &time);
+    Q_INVOKABLE void logRow(const QString& unitName, const QString& typeName, const QString& instanceLabel,
+                            const QString& time);
     /// Record one injected failure: adds a log row and remembers the unit so Reset can restore it.
-    Q_INVOKABLE void logInjection(const QString &unitName, const QString &typeName, int unitEnum, const QString &instanceLabel, const QString &time);
+    Q_INVOKABLE void logInjection(const QString& unitName, const QString& typeName, int unitEnum,
+                                  const QString& instanceLabel, const QString& time);
     /// Resolve the oldest still-pending injection with a MAV_RESULT ack code; sets the row result.
     Q_INVOKABLE void resolveResult(int ackResult);
     /// Distinct FAILURE_UNIT values injected this session, so Reset restores only those.
@@ -55,5 +60,5 @@ private:
     QVariantList _units;
     QVariantList _types;
     QVariantList _activity;
-    QList<int>   _injectedUnits;
+    QList<int> _injectedUnits;
 };
