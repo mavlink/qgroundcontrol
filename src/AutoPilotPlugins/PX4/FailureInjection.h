@@ -3,9 +3,9 @@
  *
  * QML singleton backing the Failure Injection page. It serves two roles:
  *
- *  1. Static catalog: the MAVLink FAILURE_UNIT / FAILURE_TYPE enums. Enum
- *     values come from the MAVLink dialect headers, tracking common.xml;
- *     display names and per-unit instance maxima are defined in the .cc.
+ *  1. Static catalog: the MAVLink FAILURE_UNIT / FAILURE_TYPE enums. Values and
+ *     names come from the MAVLink dialect headers (tracking common.xml); the .cc
+ *     derives each display name by stripping the enum-name prefix.
  *
  *  2. Session state: the activity log and the set of units injected this
  *     session, persisted here so they survive navigating away from and back
@@ -22,7 +22,7 @@ class FailureInjection : public QObject
     Q_OBJECT
     QML_NAMED_ELEMENT(FailureInjection)
     QML_SINGLETON
-    Q_PROPERTY(QVariantList units     READ units     CONSTANT)               ///< [{ name, unit, max }]
+    Q_PROPERTY(QVariantList units     READ units     CONSTANT)               ///< [{ name, unit }]
     Q_PROPERTY(QVariantList types     READ types     CONSTANT)               ///< [{ name, type }]
     Q_PROPERTY(QVariantList activity  READ activity  NOTIFY activityChanged) ///< newest first: [{ time, unitName, typeName, instance, result }]
 
