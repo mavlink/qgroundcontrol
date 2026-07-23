@@ -11,6 +11,7 @@
 #include <glib.h>
 #include <gst/gstelement.h>
 #include <gst/gstpad.h>
+#include <gst/gstutils.h>
 
 #include "VideoReceiver.h"
 
@@ -52,6 +53,8 @@ class GstVideoReceiver : public VideoReceiver
     Q_PROPERTY(double  qosProportion     READ qosProportion     NOTIFY decoderStatsChanged)
     Q_PROPERTY(int     qosQuality        READ qosQuality        NOTIFY decoderStatsChanged)
 
+    friend class GStreamerTest;
+
 public:
     explicit GstVideoReceiver(QObject *parent = nullptr);
     ~GstVideoReceiver();
@@ -87,8 +90,11 @@ private slots:
 private:
     GstElement *_makeDecoder();
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
+    QString _uriForLogging() const;
+    static bool _isJpegNetworkSource(const QString &uri);
+    static bool _mustRedactPipelineDiagnostics(const QString &uri);
 
-    void _onNewSourcePad(GstPad *pad);
+    void _onNewSourcePad();
     void _onNewDecoderPad(GstPad *pad);
     bool _addDecoder(GstElement *src);
     void _ensureVideoSinkInPipeline();
@@ -96,9 +102,12 @@ private:
     void _noteTeeFrame();
     void _noteVideoSinkFrame();
     void _noteEndOfStream();
+    void _removeSourceProbe();
     /// -Unlink the branch from the src pad
     /// -Send an EOS event at the beginning of that branch
-    bool _unlinkBranch(GstElement *from);
+    bool _unlinkBranch(GstElement *from, guint32 eosSeqnum = GST_SEQNUM_INVALID);
+    bool _isRecordingEOSMessage(GstMessage *message) const;
+    void _handleBusEOS(bool recordingEOS, bool directPipelineEOS);
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
     void _logDecodebin3SelectedCodec(GstElement *decodebin3);
@@ -117,9 +126,8 @@ private:
 
     static gboolean _onBusMessage(GstBus *bus, GstMessage *message, gpointer user_data);
     static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
-    static GstPadProbeReturn _teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
+    static GstPadProbeReturn _sourceProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn _videoSinkProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-    static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _keyframeWatch(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
 
     GstElement *_decoder = nullptr;
@@ -132,16 +140,18 @@ private:
     GstElement *_tee = nullptr;
     GstElement *_videoSink = nullptr;
     GstVideoWorker *_worker = nullptr;
+    gulong _busHandlerId = 0;
     std::atomic<int> _reconnectAttempts = 0;     ///< Written on the streaming thread (_noteTeeFrame) and GUI thread (reconnect lambda); atomic.
     std::atomic<quint64> _reconnectEpoch = 0;    ///< Bumped on every stop() — pending singleShot lambdas check this before firing, replacing an explicit cancel/pending-flag pair.
+    std::atomic<quint64> _pipelineGeneration = 0; ///< Invalidates callbacks and queued work from a retired pipeline.
     std::atomic<quint64> _sourceFrameCount =
-        0;  ///< Tee-probe frame tally (streaming thread); drives the source-side flow heartbeat log.
-    gulong _teeProbeId = 0;
+        0;  ///< Source-probe frame tally (streaming thread); drives the source-side flow heartbeat log.
+    gulong _sourceProbeId = 0;
     gulong _videoSinkProbeId = 0;
-    gulong _eosProbeId = 0;
-    GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
-    gulong _keyframeWatchId = 0;
+    std::atomic<gulong> _keyframeWatchId = 0;
+    std::atomic<guint32> _recordingEosSeqnum{GST_SEQNUM_INVALID};
     bool _recordingStopRequested = false;
+    bool _activePipelineIsJpegNetworkSource = false;
 
     mutable QMutex _decoderNameMutex;  // QString refcount isn't thread-safe across reader/writer threads
     QString _decoderName;

@@ -182,11 +182,13 @@ function(gstreamer_build_apis_and_deps APIS_OUT DEPS_OUT)
     endforeach()
 
     # Platform extra deps — kept here as the single registration point.
+    # GstSourceFactory uses GTlsFileDatabase for custom-CA HTTPS sources on
+    # desktop. Mobile SDKs provide GIO through their bundled GStreamer target.
+    if(NOT ANDROID AND NOT IOS)
+        list(APPEND _deps gio-2.0)
+    endif()
     if(WIN32)
         list(APPEND _deps graphene-1.0)
-    endif()
-    if(ANDROID OR IOS)
-        list(APPEND _deps gio-2.0)
     endif()
     if(ANDROID)
         list(APPEND _deps gmodule-2.0 zlib)

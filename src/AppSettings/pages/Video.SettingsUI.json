@@ -6,7 +6,10 @@
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
         "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource",
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
-        "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue"
+        "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
+        "isHttpMjpeg": "videoSource === QGroundControl.settingsManager.videoSettings.httpMjpegVideoSource",
+        "isWebsocketJpeg": "videoSource === QGroundControl.settingsManager.videoSettings.websocketJpegVideoSource",
+        "isNetworkJpeg": "isHttpMjpeg || isWebsocketJpeg"
     },
     "groups": [
         {
@@ -37,8 +40,22 @@
                 {
                     "setting": "videoSettings.udpUrl",
                     "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource || videoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource || videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource"
+                },
+                {
+                    "setting": "videoSettings.httpMjpegUrl",
+                    "showWhen": "isHttpMjpeg"
+                },
+                {
+                    "setting": "videoSettings.websocketJpegUrl",
+                    "showWhen": "isWebsocketJpeg"
                 }
             ]
+        },
+        {
+            "component": "VideoNetworkSecuritySettings",
+            "sectionName": "Network Video Security",
+            "keywords": ["authentication", "basic", "bearer", "token", "password", "origin", "tls", "certificate"],
+            "showWhen": "isNetworkJpeg && !autoStreamConfig"
         },
         {
             "heading": "Settings",

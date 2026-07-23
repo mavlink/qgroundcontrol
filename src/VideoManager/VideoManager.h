@@ -123,6 +123,7 @@ private:
     void _restartVideo(VideoReceiver *receiver);
     void _startReceiver(VideoReceiver *receiver);
     void _stopReceiver(VideoReceiver *receiver);
+    static bool _isRecordingFormatSupported(const QString &source, int fileFormat);
     static void _cleanupOldVideos();
 
     QList<VideoReceiver*> _videoReceivers;

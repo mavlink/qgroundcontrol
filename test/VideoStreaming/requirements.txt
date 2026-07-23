@@ -1,0 +1,2 @@
+pillow>=10.0
+websockets>=15.0,<17.0

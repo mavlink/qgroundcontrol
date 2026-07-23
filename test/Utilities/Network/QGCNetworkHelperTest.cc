@@ -343,6 +343,18 @@ void QGCNetworkHelperTest::_testUrlWithoutQuery()
     QVERIFY(result.fragment().isEmpty());
 }
 
+void QGCNetworkHelperTest::_testRedactedUrlForLogging()
+{
+    const QUrl original(QStringLiteral("https://user:secret@example.com:8443/live?token=abc#viewer"));
+    const QString redacted = QGCNetworkHelper::redactedUrlForLogging(original);
+
+    QCOMPARE(redacted, QStringLiteral("https://example.com:8443/live"));
+    QVERIFY(!redacted.contains(QStringLiteral("user")));
+    QVERIFY(!redacted.contains(QStringLiteral("secret")));
+    QVERIFY(!redacted.contains(QStringLiteral("token")));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("not a URL")), QStringLiteral("<invalid-url>"));
+}
+
 // ============================================================================
 // Request Configuration Tests
 // ============================================================================

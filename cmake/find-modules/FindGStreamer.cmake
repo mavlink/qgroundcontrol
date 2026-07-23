@@ -17,6 +17,8 @@
 #        components without editing this file.
 #     4. Hash parsing moved out — qgc_parse_expected_hash lives in
 #        cmake/modules/Download.cmake; this module no longer parses hashes.
+#     5. Desktop GIO is resolved through the same repaired pkg-config path as
+#        GStreamer components for custom-CA HTTPS source support.
 #   When syncing from upstream, re-apply each listed patch and update this
 #   block. Do NOT remove this block during sync.
 
@@ -57,6 +59,9 @@ Configuration Variables
 # new GStreamer::NewOne target instead of silently inheriting the cached _FOUND.
 if (GStreamer_FOUND)
     set(_gst_all_present TRUE)
+    if("gio-2.0" IN_LIST GSTREAMER_EXTRA_DEPS AND NOT TARGET GStreamer::gio)
+        set(_gst_all_present FALSE)
+    endif()
     foreach(_gst_c IN LISTS GStreamer_FIND_COMPONENTS)
         if (NOT TARGET GStreamer::${_gst_c} AND NOT _gst_c IN_LIST GStreamer_ABSENT_COMPONENTS)
             set(_gst_all_present FALSE)
@@ -293,6 +298,16 @@ foreach(_gst_PLUGIN IN LISTS GSTREAMER_APIS)
     string(REPLACE "_" "-" _gst_PLUGIN_PC "${_gst_PLUGIN_PC}")
     _gst_create_component_target(${_gst_PLUGIN} "gstreamer-${_gst_PLUGIN_PC}-1.0")
 endforeach()
+
+# GIO is not a GStreamer API component, but GstSourceFactory calls it directly
+# for a custom TLS trust database. Reuse the component target path so Windows
+# pkg-config paths with spaces receive QGC's normal recovery and static/shared
+# linkage remains consistent with the selected GStreamer SDK.
+if("gio-2.0" IN_LIST GSTREAMER_EXTRA_DEPS)
+    set(GStreamer_FIND_REQUIRED_gio TRUE)
+    _gst_create_component_target(gio "gio-2.0")
+    unset(GStreamer_FIND_REQUIRED_gio)
+endif()
 
 # Link API component targets into the umbrella so consumers get the full set
 # of includes and libraries (rtsp, video, gl, etc.) transitively.

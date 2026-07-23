@@ -7,6 +7,7 @@
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 #include "QGCVideoStreamInfo.h"
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
@@ -178,6 +179,20 @@ void VideoManager::init(QQuickWindow *mainWindow)
     (void) connect(_videoSettings->udpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->httpMjpegUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->websocketJpegUrl(), &Fact::rawValueChanged, this,
+                   &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->networkVideoAuthType(), &Fact::rawValueChanged, this,
+                   &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->networkVideoUsername(), &Fact::rawValueChanged, this,
+                   &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->networkVideoSecretFile(), &Fact::rawValueChanged, this,
+                   &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->networkVideoOrigin(), &Fact::rawValueChanged, this,
+                   &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->networkVideoCaCertificateFile(), &Fact::rawValueChanged, this,
+                   &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings, &VideoSettings::networkVideoSecretChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, [this](const QVariant &value) { Q_UNUSED(value); _restartAllVideos(); });
     // rtpJitterLatencyMs needs a pipeline restart; route through _videoSourceChanged so _updateSettings
@@ -357,6 +372,14 @@ void VideoManager::startRecording(const QString &videoFile)
         return;
     }
 
+    const QString source = _videoSettings->videoSource()->rawValue().toString();
+    if (!_isRecordingFormatSupported(source, fileFormat)) {
+        QGC::showAppMessage(
+            tr("HTTP MJPEG and WebSocket JPEG streams can be recorded as MKV or MOV. Select one of those formats in "
+               "Video settings before recording."));
+        return;
+    }
+
     _cleanupOldVideos();
 
     const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
@@ -379,6 +402,13 @@ void VideoManager::startRecording(const QString &videoFile)
         const QString videoFileName = videoFileNameTemplate.arg(streamName);
         receiver->startRecording(videoFileName, fileFormat);
     }
+}
+
+bool VideoManager::_isRecordingFormatSupported(const QString &source, int fileFormat)
+{
+    const bool jpegNetworkSource = source == VideoSettings::videoSourceHTTPMJPEG ||
+                                   source == VideoSettings::videoSourceWebSocketJPEG;
+    return !jpegNetworkSource || fileFormat != VideoReceiver::FILE_FORMAT_MP4;
 }
 
 void VideoManager::stopRecording()
@@ -502,6 +532,8 @@ bool VideoManager::isStreamSource() const
         VideoSettings::videoSourceRTSP,
         VideoSettings::videoSourceTCP,
         VideoSettings::videoSourceMPEGTS,
+        VideoSettings::videoSourceHTTPMJPEG,
+        VideoSettings::videoSourceWebSocketJPEG,
         VideoSettings::videoSource3DRSolo,
         VideoSettings::videoSourceParrotDiscovery,
         VideoSettings::videoSourceYuneecMantisG,
@@ -593,7 +625,8 @@ bool VideoManager::_updateAutoStream(VideoReceiver *receiver)
         return false;
     }
 
-    qCDebug(VideoManagerLog) << QString("Configure stream (%1):").arg(receiver->name()) << pInfo->uri();
+    qCDebug(VideoManagerLog) << QString("Configure stream (%1):").arg(receiver->name())
+                             << QGCNetworkHelper::redactedUrlForLogging(pInfo->uri());
 
     QString source, url;
     switch (pInfo->type()) {
@@ -651,7 +684,8 @@ bool VideoManager::_updateVideoUri(VideoReceiver *receiver, const QString &uri)
         return false;
     }
 
-    qCDebug(VideoManagerLog) << "New Video URI" << uri;
+    qCDebug(VideoManagerLog) << "New Video URI"
+                              << (uri.isEmpty() ? QString() : QGCNetworkHelper::redactedUrlForLogging(uri));
 
     receiver->setUri(uri);
 
@@ -693,6 +727,48 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
     settingsChanged |= _updateAutoStream(receiver);
 
     const QString source = _videoSettings->videoSource()->rawValue().toString();
+    VideoReceiver::NetworkSourceConfig networkConfig;
+    QString networkVideoUri;
+    if (source == VideoSettings::videoSourceHTTPMJPEG) {
+        networkVideoUri = _videoSettings->httpMjpegUrl()->rawValue().toString();
+    } else if (source == VideoSettings::videoSourceWebSocketJPEG) {
+        networkVideoUri = _videoSettings->websocketJpegUrl()->rawValue().toString();
+    }
+
+    if (!networkVideoUri.isEmpty()) {
+        const QString configurationError = _videoSettings->networkVideoConfigurationError();
+        if (configurationError.isEmpty()) {
+            switch (_videoSettings->networkVideoAuthType()->rawValue().toInt()) {
+            case VideoSettings::NetworkVideoAuthBasic:
+                networkConfig.authentication = VideoReceiver::NetworkSourceConfig::Authentication::Basic;
+                break;
+            case VideoSettings::NetworkVideoAuthBearer:
+                networkConfig.authentication = VideoReceiver::NetworkSourceConfig::Authentication::Bearer;
+                break;
+            default:
+                networkConfig.authentication = VideoReceiver::NetworkSourceConfig::Authentication::None;
+                break;
+            }
+            networkConfig.username = _videoSettings->networkVideoUsername()->rawValue().toString();
+            networkConfig.origin = _videoSettings->networkVideoOrigin()->rawValue().toString();
+            networkConfig.caCertificateFile = _videoSettings->networkVideoCaCertificateFile()->rawValue().toString();
+
+            if (networkConfig.hasAuthentication()) {
+                QString secretError;
+                if (!_videoSettings->resolveNetworkVideoSecret(networkConfig.secret, secretError)) {
+                    qCWarning(VideoManagerLog) << "Network video credential unavailable:" << secretError;
+                    networkVideoUri.clear();
+                }
+            }
+        } else {
+            qCWarning(VideoManagerLog) << "Network video configuration rejected:" << configurationError;
+            networkVideoUri.clear();
+        }
+    }
+
+    settingsChanged |= receiver->setNetworkSourceConfig(networkConfig);
+    networkConfig.clearSecret();
+
     if (source == VideoSettings::videoSourceUDPH264) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("udp://%1").arg(_videoSettings->udpUrl()->rawValue().toString()));
     } else if (source == VideoSettings::videoSourceUDPH265) {
@@ -713,6 +789,8 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("rtsp://192.168.0.10:8554/H264Video"));
     } else if (source == VideoSettings::videoSourceHerelinkHotspot) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("rtsp://192.168.43.1:8554/fpv_stream"));
+    } else if (source == VideoSettings::videoSourceHTTPMJPEG || source == VideoSettings::videoSourceWebSocketJPEG) {
+        settingsChanged |= _updateVideoUri(receiver, networkVideoUri);
     } else if ((source == VideoSettings::videoDisabled) || (source == VideoSettings::videoSourceNoVideo)) {
         settingsChanged |= _updateVideoUri(receiver, QString());
     } else {
@@ -899,13 +977,15 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
     });
 
     (void) connect(receiver, &VideoReceiver::onStopComplete, this, [this, receiver](VideoReceiver::STATUS status) {
-        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name() << receiver->uri()  << ", status:" << status;
+        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name()
+                                 << QGCNetworkHelper::redactedUrlForLogging(receiver->uri()) << ", status:" << status;
         receiver->setStarted(false);
         if (status == VideoReceiver::STATUS_INVALID_URL) {
             qCDebug(VideoManagerLog) << "Invalid video URL. Not restarting";
         } else {
             QTimer::singleShot(1000, receiver, [this, receiver]() {
-                qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name() << receiver->uri();
+                qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name()
+                                         << QGCNetworkHelper::redactedUrlForLogging(receiver->uri());
                 _startReceiver(receiver);
             });
         }

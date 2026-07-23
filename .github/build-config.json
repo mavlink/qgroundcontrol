@@ -38,10 +38,12 @@
         "app",
         "coreelements",
         "isomp4",
+        "jpegformat",
         "libav",
         "matroska",
         "mpegtsdemux",
         "multifile",
+        "multipart",
         "opengl",
         "openh264",
         "playback",
@@ -49,6 +51,7 @@
         "rtpmanager",
         "rtsp",
         "sdpelem",
+        "soup",
         "tcp",
         "typefindfunctions",
         "udp",
@@ -58,10 +61,27 @@
         "videoconvert",
         "videoscale"
       ],
-      "android": ["androidmedia", "dav1d"],
-      "apple": ["applemedia", "dav1d"],
-      "windows": ["d3d", "d3d11", "d3d12", "dav1d", "nvcodec"],
-      "linux": ["nvcodec", "qsv", "va", "vulkan"]
+      "android": [
+        "androidmedia",
+        "dav1d"
+      ],
+      "apple": [
+        "applemedia",
+        "dav1d"
+      ],
+      "windows": [
+        "d3d",
+        "d3d11",
+        "d3d12",
+        "dav1d",
+        "nvcodec"
+      ],
+      "linux": [
+        "nvcodec",
+        "qsv",
+        "va",
+        "vulkan"
+      ]
     },
     "checksums": {
       "1.28.4": {
