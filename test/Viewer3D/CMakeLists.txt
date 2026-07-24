@@ -23,6 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         Viewer3DInstancingTest.h
         Viewer3DTerrainGeometryTest.cc
         Viewer3DTerrainGeometryTest.h
+        Viewer3DTileReplyTest.cc
+        Viewer3DTileReplyTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -41,6 +43,7 @@ add_qgc_test(OsmParserTest LABELS Unit Viewer3D)
 add_qgc_test(OsmParserThreadTest LABELS Unit Viewer3D RESOURCE_LOCK TempFiles)
 add_qgc_test(Viewer3DTerrainGeometryTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DTileQueryTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DTileReplyTest LABELS Unit Viewer3D)
 add_qgc_test(GeoCoordinateTypeTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DInstancingTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DManagerTest LABELS Unit Viewer3D)
