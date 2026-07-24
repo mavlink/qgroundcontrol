@@ -2,6 +2,11 @@
 
 DECLARE_SETTINGGROUP(Viewer3D, "Viewer3D")
 {
+#ifdef Q_OS_ANDROID
+    // 3D view is disabled on Android (see QGCCorePlugin::adjustSettingMetaData);
+    // hide the whole 3D View settings page
+    setUserVisible(false);
+#endif
 }
 
 DECLARE_SETTINGSFACT(Viewer3DSettings, enabled)
