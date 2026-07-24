@@ -51,8 +51,11 @@ Node {
         position.x: -10
         position.z: 30
 
-        QGCLabel {
+        // Plain Text instead of QGCLabel: QGCLabel sets font.pointSize, which
+        // conflicts with the explicit pixelSize needed for 3D scene scaling.
+        Text {
             color: "red"
+            font.family: ScreenTools.normalFontFamily
             font.pixelSize: 25
             text: vehicle ? Number(vehicle.id) : ""
         }

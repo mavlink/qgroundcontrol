@@ -38,6 +38,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/RemoteIDSettingsUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/RemoteIDSettingsUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DUITest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -57,3 +59,18 @@ add_qgc_test(FlyViewProximityRadarUITest LABELS Integration NoSanitizer TIMEOUT 
 add_qgc_test(NTRIPSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(OnboardLogUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(RemoteIDSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
+
+# Qt Quick 3D requires an RHI backend, which the default software Quick backend
+# cannot provide. On Linux the offscreen platform exposes GLX (CI runs ctest
+# under xvfb-run with Mesa llvmpipe), so drop the forced software backend and
+# request RHI OpenGL — View3D then genuinely renders. On other hosts (e.g.
+# macOS offscreen) the software backend stays and the test asserts the
+# documented View3D fallback warnings instead.
+set(_viewer3d_env_mod "")
+if(LINUX)
+    set(_viewer3d_env_mod ENV_MODIFICATION
+        "QT_QUICK_BACKEND=unset:"
+        "QSG_RHI_BACKEND=set:opengl"
+    )
+endif()
+add_qgc_test(Viewer3DUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})

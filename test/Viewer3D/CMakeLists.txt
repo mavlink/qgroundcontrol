@@ -7,6 +7,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         GeoCoordinateTypeTest.cc
         GeoCoordinateTypeTest.h
+        Viewer3DCameraControllerTest.cc
+        Viewer3DCameraControllerTest.h
         Viewer3DManagerTest.cc
         Viewer3DManagerTest.h
         Viewer3DMapProviderTest.cc
@@ -41,6 +43,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "Viewer3DTest_res"
 )
 
 add_qgc_test(CityMapGeometryTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DCameraControllerTest LABELS Unit Viewer3D)
 add_qgc_test(OsmParserTest LABELS Unit Viewer3D)
 add_qgc_test(OsmParserThreadTest LABELS Unit Viewer3D RESOURCE_LOCK TempFiles)
 add_qgc_test(Viewer3DTerrainGeometryTest LABELS Unit Viewer3D)
