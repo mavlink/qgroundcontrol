@@ -6,6 +6,8 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DTextureData>
 
+#include <utility>
+
 class FlightMapSettings;
 class Viewer3DMapProvider;
 class Viewer3DTileQuery;
@@ -17,7 +19,10 @@ class Viewer3DTerrainTexture : public QQuick3DTextureData
     QML_ELEMENT
     Q_MOC_INCLUDE("Viewer3DMapProvider.h")
 
+    friend class Viewer3DTerrainTextureTest;
+
     Q_PROPERTY(Viewer3DMapProvider *mapProvider              READ mapProvider              WRITE setMapProvider              NOTIFY mapProviderChanged)
+    Q_PROPERTY(QGeoCoordinate       fallbackCenter           READ fallbackCenter           WRITE setFallbackCenter           NOTIFY fallbackCenterChanged)
     Q_PROPERTY(QGeoCoordinate       roiMinCoordinate         READ roiMinCoordinate         WRITE setRoiMinCoordinate         NOTIFY roiMinCoordinateChanged)
     Q_PROPERTY(QGeoCoordinate       roiMaxCoordinate         READ roiMaxCoordinate         WRITE setRoiMaxCoordinate         NOTIFY roiMaxCoordinateChanged)
     Q_PROPERTY(QSize                tileCount                READ tileCount                                                  NOTIFY tileCountChanged)
@@ -31,6 +36,9 @@ public:
 
     Viewer3DMapProvider *mapProvider() const { return _mapProvider; }
     void setMapProvider(Viewer3DMapProvider *newMapProvider);
+
+    QGeoCoordinate fallbackCenter() const { return _fallbackCenter; }
+    void setFallbackCenter(const QGeoCoordinate &newFallbackCenter);
 
     QGeoCoordinate roiMinCoordinate() const { return _roiMinCoordinate; }
     void setRoiMinCoordinate(const QGeoCoordinate &newRoiMinCoordinate);
@@ -49,6 +57,7 @@ public:
 
 signals:
     void mapProviderChanged();
+    void fallbackCenterChanged();
     void roiMinCoordinateChanged();
     void roiMaxCoordinateChanged();
     void tileCountChanged();
@@ -59,11 +68,13 @@ private:
     void _updateTexture();
     void _setTextureLoaded(bool loaded) { _textureLoaded = loaded; emit textureLoadedChanged(); }
     void _onMapTypeChanged();
+    static std::pair<QGeoCoordinate, QGeoCoordinate> _fallbackBoundingBox(const QGeoCoordinate &center);
 
     Viewer3DTileQuery *_terrainTileLoader = nullptr;
     FlightMapSettings *_flightMapSettings = nullptr;
     Viewer3DMapProvider *_mapProvider = nullptr;
 
+    QGeoCoordinate _fallbackCenter;
     QGeoCoordinate _roiMinCoordinate;
     QGeoCoordinate _roiMaxCoordinate;
     QSize _tileCount;

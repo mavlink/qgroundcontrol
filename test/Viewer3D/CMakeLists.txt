@@ -23,6 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         Viewer3DInstancingTest.h
         Viewer3DTerrainGeometryTest.cc
         Viewer3DTerrainGeometryTest.h
+        Viewer3DTerrainTextureTest.cc
+        Viewer3DTerrainTextureTest.h
         Viewer3DTileReplyTest.cc
         Viewer3DTileReplyTest.h
 )
@@ -42,6 +44,7 @@ add_qgc_test(CityMapGeometryTest LABELS Unit Viewer3D)
 add_qgc_test(OsmParserTest LABELS Unit Viewer3D)
 add_qgc_test(OsmParserThreadTest LABELS Unit Viewer3D RESOURCE_LOCK TempFiles)
 add_qgc_test(Viewer3DTerrainGeometryTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DTerrainTextureTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DTileQueryTest LABELS Unit Viewer3D)
 add_qgc_test(Viewer3DTileReplyTest LABELS Unit Viewer3D)
 add_qgc_test(GeoCoordinateTypeTest LABELS Unit Viewer3D)
