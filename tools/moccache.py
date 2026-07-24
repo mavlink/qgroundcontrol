@@ -11,10 +11,14 @@ or set MOCCACHE_MOC=/path/to/moc and invoke:
     moccache.py [moc args...]
 or trim the cache to a size limit (LRU eviction):
     moccache.py --trim [--max-size 256M]
+or report / reset recorded stats (requires MOCCACHE_STATS during the build):
+    moccache.py --show-stats
+    moccache.py --zero-stats
 
 Environment:
     MOCCACHE_MOC      Path to the real moc (if --real-moc not given).
-    MOCCACHE_DIR      Cache directory (default ~/.cache/moccache).
+    MOCCACHE_DIR      Cache directory (default <source tree>/.cache/moccache,
+                      matching the CMake-generated launcher).
     MOCCACHE_BASEDIR  Build dir root; rewritten to a token in cache keys and
                       manifests so different build trees share cache entries
                       (same idea as ccache's base_dir).
@@ -264,7 +268,7 @@ def _log_stat(cache_dir: Path, what: str, input_file: str) -> None:
     if not os.environ.get("MOCCACHE_STATS"):
         return
     try:
-        with (cache_dir / "stats.log").open("a") as f:
+        with (cache_dir / "stats.log").open("a", encoding="utf-8") as f:
             f.write(f"{what}\t{input_file}\n")
     except OSError:
         pass
@@ -383,9 +387,53 @@ def _trim_main(argv: list[str]) -> int:
     except ValueError as e:
         print(f"moccache: {e}", file=sys.stderr)
         return 2
-    cache_dir = Path(os.environ.get("MOCCACHE_DIR", str(Path.home() / ".cache" / "moccache")))
+    cache_dir = _cache_dir()
     removed = _trim(cache_dir, max_bytes)
     print(f"moccache: trimmed {removed} entries from {cache_dir}")
+    return 0
+
+
+def _cache_dir() -> Path:
+    """Cache directory: $MOCCACHE_DIR, else <source tree>/.cache/moccache.
+
+    The source-tree default matches the CMake-generated launcher so the
+    --show-stats/--trim CLI works out-of-the-box after a normal build.
+    """
+    env = os.environ.get("MOCCACHE_DIR")
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parent.parent / ".cache" / "moccache"
+
+
+def _show_stats_main() -> int:
+    cache_dir = _cache_dir()
+    log = cache_dir / "stats.log"
+    counts: dict[str, int] = {}
+    try:
+        for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
+            what = line.split("\t", 1)[0]
+            counts[what] = counts.get(what, 0) + 1
+    except OSError:
+        pass
+    hits = counts.pop("hit", 0)
+    misses = counts.pop("miss", 0)
+    total = hits + misses
+    print(f"moccache stats ({cache_dir}):")
+    if total == 0 and not counts:
+        print("  no stats recorded")
+        return 0
+    print(f"  hits     {hits}")
+    print(f"  misses   {misses}")
+    if total:
+        print(f"  hit rate {100.0 * hits / total:.1f}%")
+    for what in sorted(counts):
+        print(f"  {what}  {counts[what]}")
+    return 0
+
+
+def _zero_stats_main() -> int:
+    with contextlib.suppress(OSError):
+        (_cache_dir() / "stats.log").unlink()
     return 0
 
 
@@ -393,6 +441,11 @@ def main() -> int:
     argv = sys.argv[1:]
     if argv and argv[0] == "--trim":
         return _trim_main(argv[1:])
+    if argv and argv[0] in ("--show-stats", "--zero-stats"):
+        if len(argv) > 1:
+            print(f"moccache: {argv[0]} takes no arguments: {argv[1]}", file=sys.stderr)
+            return 2
+        return _show_stats_main() if argv[0] == "--show-stats" else _zero_stats_main()
     real_moc = None
     if argv and argv[0] == "--real-moc":
         if len(argv) < 2:
@@ -418,7 +471,7 @@ def main() -> int:
     if not output or not input_file or not Path(input_file).is_file():
         return passthrough()
 
-    cache_dir = Path(os.environ.get("MOCCACHE_DIR", str(Path.home() / ".cache" / "moccache")))
+    cache_dir = _cache_dir()
     basedir_prefixes = _basedir_prefixes()
 
     # Manifest key: moc identity + args (minus output/dep paths) + input content

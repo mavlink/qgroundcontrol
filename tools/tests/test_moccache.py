@@ -710,6 +710,82 @@ class TestTrim:
         assert moccache.main() == 2
         assert "requires --max-size or MOCCACHE_MAX_SIZE" in capsys.readouterr().err
 
+
+# ---------------------------------------------------------------------------
+# Stats CLI (--show-stats / --zero-stats)
+# ---------------------------------------------------------------------------
+
+
+class TestStatsCli:
+    def _show(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(sys, "argv", ["moccache.py", "--show-stats"])
+        assert moccache.main() == 0
+
+    def test_show_stats_counts_hits_and_misses(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree, out=tree.out_path("a.cpp"))
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        harness.run(tree, out=tree.out_path("c.cpp"))
+        self._show(harness.monkeypatch)
+        out = capsys.readouterr().out
+        assert "hits     2" in out
+        assert "misses   1" in out
+        assert "hit rate 66.7%" in out
+
+    def test_show_stats_without_log_reports_zero(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        self._show(harness.monkeypatch)
+        out = capsys.readouterr().out
+        assert "no stats recorded" in out
+
+    def test_zero_stats_removes_log(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        assert (harness.cache / "stats.log").is_file()
+        harness.monkeypatch.setattr(sys, "argv", ["moccache.py", "--zero-stats"])
+        assert moccache.main() == 0
+        assert not (harness.cache / "stats.log").exists()
+
+    def test_zero_stats_without_log_succeeds(
+        self, harness: Harness, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["moccache.py", "--zero-stats"])
+        assert moccache.main() == 0
+
+    @pytest.mark.parametrize("flag", ["--show-stats", "--zero-stats"])
+    def test_stats_flags_reject_extra_arguments(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], flag: str
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["moccache.py", flag, "--frobnicate"])
+        assert moccache.main() == 2
+        assert f"{flag} takes no arguments: --frobnicate" in capsys.readouterr().err
+
+    def test_show_stats_with_only_other_events_still_prints_counts(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        harness.cache.mkdir(parents=True, exist_ok=True)
+        (harness.cache / "stats.log").write_text("bad-max-size\tx\n")
+        self._show(harness.monkeypatch)
+        out = capsys.readouterr().out
+        assert "no stats recorded" not in out
+        assert "hits     0" in out
+        assert "misses   0" in out
+        assert "hit rate" not in out
+        assert "bad-max-size  1" in out
+
+    def test_zero_then_show_reports_zero(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        harness.monkeypatch.setattr(sys, "argv", ["moccache.py", "--zero-stats"])
+        assert moccache.main() == 0
+        self._show(harness.monkeypatch)
+        assert "no stats recorded" in capsys.readouterr().out
+
     def test_auto_trim_on_miss_when_max_size_set(
         self, harness: Harness, monkeypatch: pytest.MonkeyPatch
     ) -> None:
