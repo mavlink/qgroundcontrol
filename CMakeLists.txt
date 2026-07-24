@@ -245,6 +245,10 @@ if(LINUX AND NOT ANDROID)
     find_package(Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
 
+if(QGC_USE_MOCCACHE)
+    qgc_config_moccache()
+endif()
+
 qt_standard_project_setup(
     REQUIRES ${QGC_QT_MINIMUM_VERSION}
     SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION}
