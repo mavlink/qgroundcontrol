@@ -113,6 +113,7 @@ function getLayoutModel(uiInteractionEnabled) {
     return [
         { 
             id: 'single', 
+            value: 0,
             description: "Single Camera",
             checkable: true, 
             iconSource: '/qmlimages/layout_single.svg',
@@ -120,6 +121,7 @@ function getLayoutModel(uiInteractionEnabled) {
         },
         { 
             id: 'two_stacked_square', 
+            value: 1,
             description: "Two Stacked Cameras",
             checkable: true, 
             iconSource: '/qmlimages/layout_double.svg',
@@ -127,6 +129,7 @@ function getLayoutModel(uiInteractionEnabled) {
         },
         { 
             id: 'four_square', 
+            value: 4,
             description: "Four Cameras",
             checkable: true, 
             iconSource: '/qmlimages/layout_quadruple.svg',
@@ -134,6 +137,7 @@ function getLayoutModel(uiInteractionEnabled) {
         },
         { 
             id: 'two_stacked_panorama', 
+            value: 2,
             description: "Two Stacked Panorama Cameras",
             checkable: true, 
             iconSource: '/qmlimages/layout_double_panorama.svg',
@@ -141,6 +145,7 @@ function getLayoutModel(uiInteractionEnabled) {
         },
         { 
             id: 'two_square_one_panorama', 
+            value: 3,
             description: "Two Square and One Panorama Cameras",
             checkable: true, 
             iconSource: '/qmlimages/layout_double+panorama.svg',
@@ -148,6 +153,7 @@ function getLayoutModel(uiInteractionEnabled) {
         },
         { 
             id: 'three_square_one_panorama', 
+            value: 5,
             description: "Three Square and One Panorama Cameras",
             checkable: true, 
             iconSource: '/qmlimages/layout_triple+panorama.svg',
@@ -155,6 +161,7 @@ function getLayoutModel(uiInteractionEnabled) {
         },
         { 
             id: 'entire_picture', 
+            value: 6,
             description: "Full 360 View",
             checkable: true, 
             iconSource: '/qmlimages/layout_single_panorama.svg',

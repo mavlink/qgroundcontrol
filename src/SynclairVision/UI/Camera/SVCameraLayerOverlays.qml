@@ -13,6 +13,9 @@ Item {
     property int crosshairSize: SVUnits.height * 2
     property int crosshairCenter: SVUnits.margin
 
+    property int borderWidth: 1
+    property color borderColor: "white"
+
     Item {
         id: grid
         anchors.fill: parent
@@ -21,10 +24,10 @@ Item {
         property int stepX: width / 3
         property int stepY: height / 3
 
-        SVLine { startX: 0;         startY: parent.stepY;      endX: parent.width; endY: parent.stepY }
-        SVLine { startX: 0;         startY: parent.stepY * 2;  endX: parent.width; endY: parent.stepY * 2 }
-        SVLine { startX: parent.stepX;     startY: 0;          endX: parent.stepX;        endY: parent.height }
-        SVLine { startX: parent.stepX * 2; startY: 0;          endX: parent.stepX * 2;    endY: parent.height }
+        SVLine { thickness: root.borderWidth; color: root.borderColor; startX: 0;         startY: parent.stepY;      endX: parent.width; endY: parent.stepY }
+        SVLine { thickness: root.borderWidth; color: root.borderColor; startX: 0;         startY: parent.stepY * 2;  endX: parent.width; endY: parent.stepY * 2 }
+        SVLine { thickness: root.borderWidth; color: root.borderColor; startX: parent.stepX;     startY: 0;          endX: parent.stepX;        endY: parent.height }
+        SVLine { thickness: root.borderWidth; color: root.borderColor; startX: parent.stepX * 2; startY: 0;          endX: parent.stepX * 2;    endY: parent.height }
 
         
     }
@@ -34,8 +37,8 @@ Item {
         anchors.fill: parent
         visible: root.crosshair
 
-        SVLine { startX: 0; startY: 0;             endX: parent.width; endY: parent.height }
-        SVLine { startX: 0; startY: parent.height; endX: parent.width; endY: 0}
+        SVLine { thickness: root.borderWidth; color: root.borderColor; startX: 0; startY: 0;             endX: parent.width; endY: parent.height }
+        SVLine { thickness: root.borderWidth; color: root.borderColor; startX: 0; startY: parent.height; endX: parent.width; endY: 0}
     }
 
     Item {

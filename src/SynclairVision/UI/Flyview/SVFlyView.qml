@@ -24,12 +24,8 @@ Item {
     property int _widgetMargin: 0
     property int _toolBarHeight: 0
     property real pipViewWidth: 0
-    property string _savedRtspUrl: ""
-    property bool _rtspOverrideApplied: false
-    property bool _digiviewWasStreaming: false
 
     readonly property var digiview: QGroundControl.digiviewManager
-    readonly property var rtspUrlFact: QGroundControl.settingsManager.videoSettings.rtspUrl
     readonly property var cameraLayouts: SVCameraLayouts.getCameraLayouts()
     readonly property var activeLayout: {
         for (let i = 0; i < cameraLayouts.length; i++) {
@@ -51,7 +47,7 @@ Item {
 
     function takePhoto() {
         if (digiview) {
-            digiview.sendCaptureParameters("stream", 1, 0, 0, 0)
+            digiview.sendCaptureParameters(digiview.streamName, 1, 0, 0, 0)
         }
 
         triggerPhotoBorder()
@@ -77,83 +73,13 @@ Item {
         return SVSettings.applySelectedNetworkProfile(digiview)
     }
 
-    function _rtspRawValueText() {
-        if (!rtspUrlFact || rtspUrlFact.rawValue === undefined || rtspUrlFact.rawValue === null) {
-            return ""
-        }
-
-        return rtspUrlFact.rawValue.toString().trim()
-    }
-
-    function _rtspPathForProfile(profile) {
-        const streamName = SVSettings.networkProfileStreamName(profile && profile.streamName)
-
-        return streamName.charAt(0) === "/" ? streamName : "/" + streamName
-    }
-
-    function _overrideRtspUrl() {
-        const profile = SVSettings.selectedNetworkProfile()
-
-        if (!profile) {
-            return ""
-        }
-
-        const host = SVSettings.networkProfileText(profile.host)
-        const videoPort = SVSettings.networkProfilePort(profile.videoPort, -1)
-
-        if (host === "" || videoPort <= 0) {
-            return ""
-        }
-
-        return "rtsp://" + host + ":" + videoPort + root._rtspPathForProfile(profile)
-    }
-
-    function _updateRtspUrlOverride() {
-        if (!rtspUrlFact) {
-            return
-        }
-
-        const shouldOverride = SVState.synclairOverlay && SVState.digiviewActive
-        const overrideRtspUrl = shouldOverride ? root._overrideRtspUrl() : ""
-
-        if (overrideRtspUrl !== "") {
-            if (!root._rtspOverrideApplied) {
-                root._savedRtspUrl = root._rtspRawValueText()
-                root._rtspOverrideApplied = true
-            }
-
-            if (root._rtspRawValueText() !== overrideRtspUrl) {
-                rtspUrlFact.rawValue = overrideRtspUrl
-            }
-
-            return
-        }
-
-        if (!root._rtspOverrideApplied) {
-            return
-        }
-
-        if (root._rtspRawValueText() !== root._savedRtspUrl) {
-            rtspUrlFact.rawValue = root._savedRtspUrl
-        }
-
-        root._rtspOverrideApplied = false
-        root._savedRtspUrl = ""
-    }
-
     Component.onCompleted: {
-        root._digiviewWasStreaming = digiview && digiview.connected && QGroundControl.videoManager.streaming
         root._applySelectedNetworkProfile()
         Qt.callLater(root.autoconnectDigiview)
-        Qt.callLater(root._updateRtspUrlOverride)
     }
 
     Component.onDestruction: {
         SVState.cancelCursorTrackingSelection()
-
-        if (root._rtspOverrideApplied && rtspUrlFact) {
-            rtspUrlFact.rawValue = root._savedRtspUrl
-        }
     }
 
     Connections {
@@ -161,10 +87,6 @@ Item {
 
         function onTakePhotoRequested() {
             root.takePhoto()
-        }
-
-        function onSynclairOverlayChanged() {
-            root._updateRtspUrlOverride()
         }
 
         function onLayoutChanged() {
@@ -177,12 +99,10 @@ Item {
 
         function onNetworkProfilesChanged() {
             root._applySelectedNetworkProfile()
-            root._updateRtspUrlOverride()
         }
 
         function onNetworkSelectedProfileIndexChanged() {
             root._applySelectedNetworkProfile()
-            root._updateRtspUrlOverride()
         }
     }
 
@@ -192,28 +112,7 @@ Item {
         function onConnectedChanged() {
             if (!digiview.connected) {
                 SVState.clearCamera()
-                root._digiviewWasStreaming = false
-            } else {
-                root._digiviewWasStreaming = QGroundControl.videoManager.streaming
             }
-
-            root._updateRtspUrlOverride()
-        }
-    }
-
-    Connections {
-        target: QGroundControl.videoManager
-
-        function onStreamingChanged() {
-            const streaming = QGroundControl.videoManager.streaming
-            const digiviewConnected = digiview && digiview.connected
-
-            if (root._digiviewWasStreaming && !streaming && digiviewConnected) {
-                SVState.clearCamera()
-            }
-
-            root._digiviewWasStreaming = digiviewConnected && streaming
-            root._updateRtspUrlOverride()
         }
     }
 
@@ -266,10 +165,11 @@ Item {
     SVBorder {
         id: recordBorder
         anchors.fill: parent
-        borderWidth: SVUnits.thickLineWidth + SVUnits.lineWidth * 3
+        borderWidth: SVUnits.thickLineWidth + SVUnits.lineWidth * 2
         borderColor: qgcPalette.colorRed
         borderVisible: !root.previewMode && SVState.record && !SVState.cursorTrackingSessionActive
         pulse: true
+        z: 2
     }
 
     SVBorder {
@@ -309,4 +209,42 @@ Item {
             SVState.cancelCursorTrackingSelection()
         }
     }
+
+    Item {
+        id: pipViewDecoration
+        anchors.fill: parent
+        visible:            root.previewMode
+
+        Rectangle {
+            anchors.fill: parent
+            color: "transparent"
+            border.width: 1
+            border.color: qgcPalette.windowShade
+            radius: SVUnits.radius
+        }
+
+        SVBackground {
+            id: labelBackground
+            width: label.width + SVUnits.margin * 6
+            height: label.height + SVUnits.margin * 2
+
+            radius: SVUnits.radius
+            borderColor: qgcPalette.windowShade
+            borderWidth: 0
+
+            anchors.bottom: parent.bottom
+            anchors.margins: SVUnits.margin
+            anchors.right: parent.right
+
+            QGCLabel {
+                id:                 label
+                text:               qsTr("SynclairQGC")
+                color:              "white"
+                font.pointSize:     SVUnits.smallFont
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+        }
+    }
+
 }

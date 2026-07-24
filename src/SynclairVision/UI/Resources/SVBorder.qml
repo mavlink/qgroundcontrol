@@ -48,6 +48,18 @@ Item {
         visible: opacity > 0.01
     }
 
+    Rectangle {
+        id: outerBorderFrame
+
+        anchors.fill: parent
+        color: root.fillColor
+        anchors.margins: root.borderWidth
+        border.width: SVUnits.lineWidth
+        border.color: "black"
+        opacity: Math.max(root._baseOpacity, root._flashOpacity)
+        visible: opacity > 0.01
+    }
+
     SequentialAnimation {
         id: pulseAnimation
 

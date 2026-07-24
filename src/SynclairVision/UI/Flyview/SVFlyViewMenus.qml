@@ -37,7 +37,7 @@ Item {
 
         for (i = 0; i < layoutModel.length; i++) {
             if (layoutModel[i].id === layoutId) {
-                layoutMode = i
+                layoutMode = layoutModel[i].value
                 break
             }
         }
@@ -47,13 +47,14 @@ Item {
         }
 
         digiview.sendSetVideoOutput(
-            "stream",
+            digiview.streamName,
             SVSettings.videoResolutionWidth,
             SVSettings.videoResolutionHeight,
             SVSettings.videoFps,
             layoutMode,
             0
         )
+        //digiview.requestVideoOutputParameters()
     }
 
     function activateTrackingMode(trackingId) {
@@ -286,7 +287,7 @@ Item {
 
             SVState.cameraSelected = -1
             root.layoutSelected(id)
-            root.setLayout(id);
+            root.setLayout(id)
         }
     }
 

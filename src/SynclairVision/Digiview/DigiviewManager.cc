@@ -1,6 +1,8 @@
 #include "DigiviewManager.h"
 
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
+#include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 #include "sv_mavlink_dialect/sv_mavlink_dialect.h"
 
@@ -10,6 +12,8 @@
 
 #include <cstring>
 #include <limits>
+
+#include <iostream>
 
 QGC_LOGGING_CATEGORY(DigiviewManagerLog, "Digiview.Manager")
 
@@ -34,17 +38,17 @@ QString stringFromCharBuf(const char* src, int size)
 
 uint8_t userViewCountForLayout(uint8_t layout)
 {
-    switch (layout & 0x0F) {
+    switch (layout) {
     case 0:
         return 1;
     case 1:
         return 2;
     case 2:
-        return 4;
-    case 3:
         return 2;
-    case 4:
+    case 3:
         return 3;
+    case 4:
+        return 4;
     case 5:
         return 4;
     case 6:
@@ -52,11 +56,6 @@ uint8_t userViewCountForLayout(uint8_t layout)
     default:
         return 0;
     }
-}
-
-uint8_t packLayoutMode(uint8_t layout, uint8_t numUserViews)
-{
-    return static_cast<uint8_t>(((numUserViews & 0x0F) << 4) | (layout & 0x0F));
 }
 
 } // namespace
@@ -115,17 +114,41 @@ QString DigiviewManager::lastError() const
 
 void DigiviewManager::setHost(const QString& host)
 {
+    if (host.trimmed() != _connection->host()) {
+        _resetRemoteSession();
+    }
+
     _connection->setHost(host);
 }
 
 void DigiviewManager::setPort(quint16 port)
 {
+    if (port != _connection->port()) {
+        _resetRemoteSession();
+    }
+
     _connection->setPort(port);
 }
 
 void DigiviewManager::setListenPort(quint16 listenPort)
 {
+    if (listenPort != _connection->listenPort()) {
+        _resetRemoteSession();
+    }
+
     _connection->setListenPort(listenPort);
+}
+
+void DigiviewManager::setStreamName(const QString& streamName)
+{
+    const QString trimmedStreamName = streamName.trimmed();
+    if (trimmedStreamName == _streamName) {
+        return;
+    }
+
+    _resetRemoteSession();
+    _streamName = trimmedStreamName;
+    emit streamNameChanged();
 }
 
 void DigiviewManager::setSenderSystemId(int senderSystemId)
@@ -162,11 +185,13 @@ void DigiviewManager::setSenderComponentId(int senderComponentId)
 
 bool DigiviewManager::connectToHost()
 {
+    _resetRemoteSession();
     return _connection->connectToEndpoint();
 }
 
 void DigiviewManager::disconnectFromHost()
 {
+    _resetRemoteSession();
     _connection->disconnectFromEndpoint();
 }
 
@@ -218,7 +243,7 @@ void DigiviewManager::sendSetVideoOutput(
         width,
         height,
         fps,
-        packLayoutMode(layout, numUserViews),
+        layout,
         detection_overlay_mode,
         numUserViews,
         {},
@@ -230,6 +255,35 @@ void DigiviewManager::sendSetVideoOutput(
         0,
         0,
         0);
+}
+
+void DigiviewManager::requestVideoOutputParameters()
+{
+    if (!_remoteIdentityValid) {
+        _pendingVideoOutputParametersRequest = true;
+        qCDebug(DigiviewManagerLog) << "Deferring MAVLink GET for VIDEO_OUTPUT_PARAMETERS until target HEARTBEAT";
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t command {};
+
+    command.target_system = _remoteSystemId;
+    command.target_component = _remoteComponentId;
+    command.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    command.param1 = static_cast<float>(MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS);
+    command.param2 = -1000.0F;
+
+    _encodeMessage(msg, command, mavlink_msg_command_long_encode);
+    qCDebug(DigiviewManagerLog) << "Sending MAVLink GET for VIDEO_OUTPUT_PARAMETERS:"
+                                  << "command" << "MAV_CMD_SET_MESSAGE_INTERVAL"
+                                  << "requestedMessageId" << MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS
+                                  << "intervalUs" << command.param2
+                                  << "senderSystem" << _senderSystemId
+                                  << "senderComponent" << _senderComponentId
+                                  << "targetSystem" << command.target_system
+                                  << "targetComponent" << command.target_component;
+    _sendMessage(msg);
 }
 
 void DigiviewManager::sendVideoOutputParameters(
@@ -265,6 +319,28 @@ void DigiviewManager::sendVideoOutputParameters(
     payload.single_detection_size = single_detection_size;
 
     _encodeMessage(msg, payload, mavlink_msg_video_output_parameters_encode);
+    qCDebug(DigiviewManagerLog) << "Sending VIDEO_OUTPUT_PARAMETERS:"
+                                << "stream" << stringFromCharBuf(payload.stream_name, 16)
+                                << "output" << payload.width << "x" << payload.height
+                                << "fps" << payload.fps
+                                << "layoutMode" << payload.layout_mode
+                                << "detectionOverlayMode" << payload.detection_overlay_mode
+                                << "numUserViews" << payload.num_user_views
+                                << "views"
+                                << "(" << payload.views_x[0] << "," << payload.views_y[0] << ","
+                                << payload.views_w[0] << "," << payload.views_h[0] << ")"
+                                << "(" << payload.views_x[1] << "," << payload.views_y[1] << ","
+                                << payload.views_w[1] << "," << payload.views_h[1] << ")"
+                                << "(" << payload.views_x[2] << "," << payload.views_y[2] << ","
+                                << payload.views_w[2] << "," << payload.views_h[2] << ")"
+                                << "(" << payload.views_x[3] << "," << payload.views_y[3] << ","
+                                << payload.views_w[3] << "," << payload.views_h[3] << ")"
+                                << "detectionOverlay" << "(" << payload.detection_overlay_x << ","
+                                << payload.detection_overlay_y << "," << payload.detection_overlay_w << ","
+                                << payload.detection_overlay_h << ")"
+                                << "singleDetectionSize" << payload.single_detection_size;
+
+    
     _sendMessage(msg);
 }
 
@@ -518,9 +594,10 @@ void DigiviewManager::sendNavigationParameters(
 
 void DigiviewManager::changeEuler(int camId, float yaw, float pitch)
 {
+    /*
     sendSingleTargetTrackingParameters(
         SV_STT_CMD_OFF,
-        "stream",
+        _streamName,
         camId,
         0,
         0,
@@ -536,9 +613,10 @@ void DigiviewManager::changeEuler(int camId, float yaw, float pitch)
         SV_STT_STATUS_OFF,
         0
     );
+    */
 
     sendCamTargetingParameters(
-        "stream",
+        _streamName,
         camId,
         SV_TARGETING_MODE_DIRECTIONAL,
         1,
@@ -557,7 +635,7 @@ void DigiviewManager::changeEuler(int camId, float yaw, float pitch)
 void DigiviewManager::changeZoom(int camId, float zoom)
 {
     sendCamOpticsAndControlParameters(
-        "stream",
+        _streamName,
         camId,
         zoom,
         0,
@@ -567,12 +645,59 @@ void DigiviewManager::changeZoom(int camId, float zoom)
 
 void DigiviewManager::_handleMessage(const mavlink_message_t& message)
 {
+    const mavlink_message_info_t* const messageInfo = mavlink_get_message_info_by_id(message.msgid);
+    const char* const messageName = messageInfo ? messageInfo->name : "UNKNOWN";
+
+    qCDebug(DigiviewManagerLog) << "Received Digiview MAVLink message:"
+                                << "msgid" << message.msgid
+                                << "name" << messageName
+                                << "senderSystem" << message.sysid
+                                << "senderComponent" << message.compid
+                                << "payloadLength" << message.len
+                                << "sequence" << message.seq;
+
     if (_lastReceivedMessageId != message.msgid) {
         _lastReceivedMessageId = message.msgid;
         emit lastReceivedMessageIdChanged();
     }
 
+    if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+        if (!_remoteIdentityValid) {
+            if ((message.sysid == 0) || (message.compid == MAV_COMP_ID_ALL)) {
+                qCWarning(DigiviewManagerLog) << "Ignoring Digiview HEARTBEAT with invalid target identity"
+                                             << message.sysid << message.compid;
+            } else {
+                _remoteSystemId = message.sysid;
+                _remoteComponentId = message.compid;
+                _remoteIdentityValid = true;
+
+                if (_pendingVideoOutputParametersRequest) {
+                    _pendingVideoOutputParametersRequest = false;
+                    //requestVideoOutputParameters();
+                }
+            }
+        } else if ((message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
+            qCWarning(DigiviewManagerLog) << "Ignoring Digiview HEARTBEAT from different MAVLink identity"
+                                         << message.sysid << message.compid;
+        }
+    }
+
     switch (message.msgid) {
+    case MAVLINK_MSG_ID_COMMAND_ACK: {
+        mavlink_command_ack_t ack;
+        mavlink_msg_command_ack_decode(&message, &ack);
+
+        qCDebug(DigiviewManagerLog) << "Received MAVLink COMMAND_ACK:"
+                                     << "senderSystem" << message.sysid
+                                     << "senderComponent" << message.compid
+                                     << "command" << ack.command
+                                     << "result" << QGCMAVLink::mavResultToString(ack.result)
+                                     << "progress" << ack.progress
+                                     << "resultParam2" << ack.result_param2
+                                     << "targetSystem" << ack.target_system
+                                     << "targetComponent" << ack.target_component;
+        break;
+    }
     case MAVLINK_MSG_ID_SYSTEM_STATUS_PARAMETERS: {
         mavlink_system_status_parameters_t payload;
         mavlink_msg_system_status_parameters_decode(&message, &payload);
@@ -594,27 +719,149 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         break;
     }
     case MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS: {
+        if (!_remoteIdentityValid) {
+            qCDebug(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS before target HEARTBEAT"
+                                        << message.sysid << message.compid;
+            break;
+        }
+
+        if ((message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
+            qCWarning(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS from different MAVLink identity"
+                                          << message.sysid << message.compid;
+            break;
+        }
+
         mavlink_video_output_parameters_t payload;
         mavlink_msg_video_output_parameters_decode(&message, &payload);
 
+        const QString streamName = stringFromCharBuf(payload.stream_name, 16);
+        if (streamName != _streamName) {
+            qCDebug(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS for unexpected stream"
+                                        << streamName << "expected" << _streamName;
+            break;
+        }
+
+        qCDebug(DigiviewManagerLog) << "Received VIDEO_OUTPUT_PARAMETERS:"
+                                    << "stream" << streamName
+                                    << "output" << payload.width << "x" << payload.height
+                                    << "fps" << payload.fps
+                                    << "layoutMode" << payload.layout_mode
+                                    << "detectionOverlayMode" << payload.detection_overlay_mode
+                                    << "numUserViews" << payload.num_user_views
+                                    << "views"
+                                    << "(" << payload.views_x[0] << "," << payload.views_y[0] << ","
+                                    << payload.views_w[0] << "," << payload.views_h[0] << ")"
+                                    << "(" << payload.views_x[1] << "," << payload.views_y[1] << ","
+                                    << payload.views_w[1] << "," << payload.views_h[1] << ")"
+                                    << "(" << payload.views_x[2] << "," << payload.views_y[2] << ","
+                                    << payload.views_w[2] << "," << payload.views_h[2] << ")"
+                                    << "(" << payload.views_x[3] << "," << payload.views_y[3] << ","
+                                    << payload.views_w[3] << "," << payload.views_h[3] << ")"
+                                    << "detectionOverlay" << "(" << payload.detection_overlay_x << ","
+                                    << payload.detection_overlay_y << "," << payload.detection_overlay_w << ","
+                                    << payload.detection_overlay_h << ")"
+                                    << "singleDetectionSize" << payload.single_detection_size;
         QVector<int> viewsX;
         QVector<int> viewsY;
         QVector<int> viewsW;
         QVector<int> viewsH;
+        QVariantList views;
         viewsX.reserve(4);
         viewsY.reserve(4);
         viewsW.reserve(4);
         viewsH.reserve(4);
+        views.reserve(4);
 
         for (int i = 0; i < 4; ++i) {
             viewsX.append(payload.views_x[i]);
             viewsY.append(payload.views_y[i]);
             viewsW.append(payload.views_w[i]);
             viewsH.append(payload.views_h[i]);
+
+            QVariantMap view;
+            view.insert(QStringLiteral("x"), payload.views_x[i]);
+            view.insert(QStringLiteral("y"), payload.views_y[i]);
+            view.insert(QStringLiteral("width"), payload.views_w[i]);
+            view.insert(QStringLiteral("height"), payload.views_h[i]);
+            views.append(view);
+        }
+
+        QVariantMap detectionOverlayRect;
+        detectionOverlayRect.insert(QStringLiteral("x"), payload.detection_overlay_x);
+        detectionOverlayRect.insert(QStringLiteral("y"), payload.detection_overlay_y);
+        detectionOverlayRect.insert(QStringLiteral("width"), payload.detection_overlay_w);
+        detectionOverlayRect.insert(QStringLiteral("height"), payload.detection_overlay_h);
+
+        const int width = payload.width;
+        const int height = payload.height;
+        const int fps = payload.fps;
+        const int layoutMode = payload.layout_mode;
+        const int detectionOverlayMode = payload.detection_overlay_mode;
+        const int numUserViews = payload.num_user_views;
+        const int singleDetectionSize = payload.single_detection_size;
+
+        const bool hasVideoOutputParametersChangedValue = !_hasVideoOutputParameters;
+        const bool videoOutputStreamNameChangedValue = _videoOutputStreamName != streamName;
+        const bool videoOutputWidthChangedValue = _videoOutputWidth != width;
+        const bool videoOutputHeightChangedValue = _videoOutputHeight != height;
+        const bool videoOutputFpsChangedValue = _videoOutputFps != fps;
+        const bool videoOutputLayoutModeChangedValue = _videoOutputLayoutMode != layoutMode;
+        const bool videoOutputDetectionOverlayModeChangedValue =
+            _videoOutputDetectionOverlayMode != detectionOverlayMode;
+        const bool videoOutputNumUserViewsChangedValue = _videoOutputNumUserViews != numUserViews;
+        const bool videoOutputViewsChangedValue = _videoOutputViews != views;
+        const bool videoOutputDetectionOverlayRectChangedValue =
+            _videoOutputDetectionOverlayRect != detectionOverlayRect;
+        const bool videoOutputSingleDetectionSizeChangedValue = _videoOutputSingleDetectionSize != singleDetectionSize;
+
+        _hasVideoOutputParameters = true;
+        _videoOutputStreamName = streamName;
+        _videoOutputWidth = width;
+        _videoOutputHeight = height;
+        _videoOutputFps = fps;
+        _videoOutputLayoutMode = layoutMode;
+        _videoOutputDetectionOverlayMode = detectionOverlayMode;
+        _videoOutputNumUserViews = numUserViews;
+        _videoOutputViews = views;
+        _videoOutputDetectionOverlayRect = detectionOverlayRect;
+        _videoOutputSingleDetectionSize = singleDetectionSize;
+
+        if (hasVideoOutputParametersChangedValue) {
+            emit hasVideoOutputParametersChanged();
+        }
+        if (videoOutputStreamNameChangedValue) {
+            emit videoOutputStreamNameChanged();
+        }
+        if (videoOutputWidthChangedValue) {
+            emit videoOutputWidthChanged();
+        }
+        if (videoOutputHeightChangedValue) {
+            emit videoOutputHeightChanged();
+        }
+        if (videoOutputFpsChangedValue) {
+            emit videoOutputFpsChanged();
+        }
+        if (videoOutputLayoutModeChangedValue) {
+            emit videoOutputLayoutModeChanged();
+        }
+        if (videoOutputDetectionOverlayModeChangedValue) {
+            emit videoOutputDetectionOverlayModeChanged();
+        }
+        if (videoOutputNumUserViewsChangedValue) {
+            emit videoOutputNumUserViewsChanged();
+        }
+        if (videoOutputViewsChangedValue) {
+            emit videoOutputViewsChanged();
+        }
+        if (videoOutputDetectionOverlayRectChangedValue) {
+            emit videoOutputDetectionOverlayRectChanged();
+        }
+        if (videoOutputSingleDetectionSizeChangedValue) {
+            emit videoOutputSingleDetectionSizeChanged();
         }
 
         emit videoOutputParametersReceived(
-            stringFromCharBuf(payload.stream_name, 16),
+            streamName,
             payload.width,
             payload.height,
             payload.fps,
@@ -796,7 +1043,13 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         break;
     }
     default:
-        qCDebug(DigiviewManagerLog) << "Unhandled Digiview MAVLink message" << message.msgid;
+        qCDebug(DigiviewManagerLog) << "Unhandled Digiview MAVLink message:"
+                                    << "msgid" << message.msgid
+                                    << "name" << messageName
+                                    << "senderSystem" << message.sysid
+                                    << "senderComponent" << message.compid
+                                    << "payloadLength" << message.len
+                                    << "sequence" << message.seq;
         break;
     }
 
@@ -807,5 +1060,71 @@ void DigiviewManager::_sendMessage(const mavlink_message_t& message)
 {
     if (!_connection->sendMessage(message)) {
         qCWarning(DigiviewManagerLog) << "Failed to send Digiview MAVLink message" << message.msgid << _connection->lastError();
+    }
+}
+
+void DigiviewManager::_resetRemoteSession()
+{
+    _remoteSystemId = 0;
+    _remoteComponentId = 0;
+    _remoteIdentityValid = false;
+    _pendingVideoOutputParametersRequest = false;
+
+    const bool hasVideoOutputParametersChangedValue = _hasVideoOutputParameters;
+    const bool videoOutputStreamNameChangedValue = !_videoOutputStreamName.isEmpty();
+    const bool videoOutputWidthChangedValue = _videoOutputWidth != 0;
+    const bool videoOutputHeightChangedValue = _videoOutputHeight != 0;
+    const bool videoOutputFpsChangedValue = _videoOutputFps != 0;
+    const bool videoOutputLayoutModeChangedValue = _videoOutputLayoutMode != 0;
+    const bool videoOutputDetectionOverlayModeChangedValue = _videoOutputDetectionOverlayMode != 0;
+    const bool videoOutputNumUserViewsChangedValue = _videoOutputNumUserViews != 0;
+    const bool videoOutputViewsChangedValue = !_videoOutputViews.isEmpty();
+    const bool videoOutputDetectionOverlayRectChangedValue = !_videoOutputDetectionOverlayRect.isEmpty();
+    const bool videoOutputSingleDetectionSizeChangedValue = _videoOutputSingleDetectionSize != 0;
+
+    _hasVideoOutputParameters = false;
+    _videoOutputStreamName.clear();
+    _videoOutputWidth = 0;
+    _videoOutputHeight = 0;
+    _videoOutputFps = 0;
+    _videoOutputLayoutMode = 0;
+    _videoOutputDetectionOverlayMode = 0;
+    _videoOutputNumUserViews = 0;
+    _videoOutputViews.clear();
+    _videoOutputDetectionOverlayRect.clear();
+    _videoOutputSingleDetectionSize = 0;
+
+    if (hasVideoOutputParametersChangedValue) {
+        emit hasVideoOutputParametersChanged();
+    }
+    if (videoOutputStreamNameChangedValue) {
+        emit videoOutputStreamNameChanged();
+    }
+    if (videoOutputWidthChangedValue) {
+        emit videoOutputWidthChanged();
+    }
+    if (videoOutputHeightChangedValue) {
+        emit videoOutputHeightChanged();
+    }
+    if (videoOutputFpsChangedValue) {
+        emit videoOutputFpsChanged();
+    }
+    if (videoOutputLayoutModeChangedValue) {
+        emit videoOutputLayoutModeChanged();
+    }
+    if (videoOutputDetectionOverlayModeChangedValue) {
+        emit videoOutputDetectionOverlayModeChanged();
+    }
+    if (videoOutputNumUserViewsChangedValue) {
+        emit videoOutputNumUserViewsChanged();
+    }
+    if (videoOutputViewsChangedValue) {
+        emit videoOutputViewsChanged();
+    }
+    if (videoOutputDetectionOverlayRectChangedValue) {
+        emit videoOutputDetectionOverlayRectChanged();
+    }
+    if (videoOutputSingleDetectionSizeChangedValue) {
+        emit videoOutputSingleDetectionSizeChanged();
     }
 }

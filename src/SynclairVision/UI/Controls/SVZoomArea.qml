@@ -7,8 +7,6 @@ Item {
 
     QGCPalette { id: qgcPalette }
 
-    readonly property var digiview: QGroundControl.digiviewManager
-
     property int hoverIndex: -1
     readonly property bool controlsUsable: !SVState.lockControls && SVState.cameraSelected !== -1
 
@@ -69,7 +67,7 @@ Item {
             zoom = -SVSettings.zoomSensitivity
         }
 
-        digiview.changeZoom(SVState.cameraSelected, zoom)
+        SVState.changeZoom(zoom)
     }
 
     SVZoomButton {

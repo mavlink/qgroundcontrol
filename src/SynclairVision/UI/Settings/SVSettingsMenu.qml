@@ -150,13 +150,15 @@ Item {
 
     function buttonText(settingData) {
         if (settingData.buttonRole === 'connectToggle') {
-            if (root.networkConnectionActive) {
-                return 'Disconnect'
+            if(root.networkConnectionActive) {
+                if(QGroundControl.videoManager.decoding) {
+                    return 'Disconnect'
+                } else {
+                    return 'Connecting...'
+                }
+            } else {
+                return 'Connect'
             }
-
-            return (root.networkConnectionPending || (root.digiview && root.digiview.connected))
-                ? 'Connecting...'
-                : 'Connect'
         }
 
         if (settingData.buttonRole === 'editSelectedProfile') {
@@ -1397,8 +1399,8 @@ Item {
                                                                  Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.55
                                                                  Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.55
                                                                  radius: width / 2
-                                                                 color: "#47c266"
-                                                                 visible: settingData.buttonRole === 'connectToggle' && root.networkConnectionActive
+                                                                 color: qgcPalette.colorGreen
+                                                                 visible: settingData.buttonRole === 'connectToggle' && root.networkConnectionActive && QGroundControl.videoManager.decoding
 
                                                                  SequentialAnimation on opacity {
                                                                      running: parent.visible

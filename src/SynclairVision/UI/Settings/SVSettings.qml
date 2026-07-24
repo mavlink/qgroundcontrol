@@ -23,7 +23,7 @@ QtObject {
             {
                 name: "Digiview 60",
                 host: "192.168.4.60",
-                port: 14570,
+                port: 14770,
                 videoPort: 8556,
                 listenPort: 14571,
                 streamName: defaultNetworkProfileStreamName
@@ -31,7 +31,7 @@ QtObject {
             {
                 name: "Digiview 126",
                 host: "192.168.4.126",
-                port: 14570,
+                port: 14770,
                 videoPort: 8556,
                 listenPort: 14571,
                 streamName: defaultNetworkProfileStreamName
@@ -188,7 +188,7 @@ QtObject {
             {
                 name: "Digiview 60",
                 host: "192.168.4.60",
-                port: 14570,
+                port: 14770,
                 videoPort: 8556,
                 listenPort: 14571,
                 streamName: defaultNetworkProfileStreamName
@@ -196,7 +196,7 @@ QtObject {
             {
                 name: "Digiview 126",
                 host: "192.168.4.126",
-                port: 14570,
+                port: 14770,
                 videoPort: 8556,
                 listenPort: 14571,
                 streamName: defaultNetworkProfileStreamName
@@ -233,6 +233,23 @@ QtObject {
             }
 
             return defaultNetworkProfileStreamName
+        }
+
+        function networkProfileRtspUrl(profile) {
+            const host = networkProfileText(profile && profile.host)
+            const videoPort = networkProfilePort(profile && profile.videoPort, -1)
+            const streamName = networkProfileStreamName(profile && profile.streamName)
+
+            if (host === '' || videoPort <= 0 || streamName === '') {
+                return ''
+            }
+
+            return 'rtsp://' + host + ':' + videoPort
+                + (streamName.charAt(0) === '/' ? streamName : '/' + streamName)
+        }
+
+        function selectedNetworkProfileRtspUrl() {
+            return networkProfileRtspUrl(selectedNetworkProfile())
         }
 
         function defaultNetworkProfiles() {
@@ -286,7 +303,7 @@ QtObject {
             return {
                 name: networkProfileText(profileData && profileData.name) || fallbackName,
                 host: networkProfileText(profileData && profileData.host) || fallbackHost,
-                port: networkProfilePort(profileData && profileData.port, defaultProfile.port !== undefined ? defaultProfile.port : 14570),
+                port: networkProfilePort(profileData && profileData.port, defaultProfile.port !== undefined ? defaultProfile.port : 14770),
                 videoPort: networkProfilePort(profileData && profileData.videoPort, defaultProfile.videoPort !== undefined ? defaultProfile.videoPort : 5600),
                 listenPort: networkProfilePort(profileData && profileData.listenPort, defaultProfile.listenPort !== undefined ? defaultProfile.listenPort : 14571),
                 streamName: networkProfileStreamName(profileData && profileData.streamName, defaultProfile.streamName)
@@ -398,6 +415,8 @@ QtObject {
             if (profile.listenPort !== undefined) {
                 digiview.listenPort = networkProfilePort(profile.listenPort, digiview.listenPort)
             }
+
+            digiview.streamName = networkProfileStreamName(profile.streamName)
 
             return true
         }
