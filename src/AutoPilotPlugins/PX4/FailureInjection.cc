@@ -142,9 +142,37 @@ QVariantList FailureInjection::injectedUnits(void) const
     return list;
 }
 
-void FailureInjection::clearInjectedUnits(void)
+void FailureInjection::markUnitReset(int unitEnum)
 {
+    _injectedUnits.removeAll(unitEnum);
+}
+
+void FailureInjection::resolvePendingInterrupted(void)
+{
+    bool changed = false;
+    for (int i = 0; i < _activity.size(); ++i) {
+        QVariantMap row = _activity.at(i).toMap();
+        if (row.value(QStringLiteral("result")).toString() == QStringLiteral("pending")) {
+            row[QStringLiteral("result")] = tr("Interrupted");
+            _activity[i] = row;
+            changed = true;
+        }
+    }
+    if (changed) {
+        emit activityChanged();
+    }
+}
+
+void FailureInjection::notifyActiveVehicle(int vehicleId)
+{
+    if ((vehicleId < 0) || (vehicleId == _currentVehicleId)) {
+        // No vehicle / transient disconnect, or the same vehicle (e.g. after a reboot) — keep the session.
+        return;
+    }
+    _currentVehicleId = vehicleId;
     _injectedUnits.clear();
+    _activity.clear();
+    emit activityChanged();
 }
 
 QVariantList FailureInjection::detailParams(int unitEnum, int typeEnum) const

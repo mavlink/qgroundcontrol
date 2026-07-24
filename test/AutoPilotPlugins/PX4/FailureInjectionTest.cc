@@ -113,17 +113,68 @@ void FailureInjectionTest::_resolveResultUnknownCodeFallsBackToMavResultString()
              QStringLiteral("MAV_RESULT unknown 99"));
 }
 
-void FailureInjectionTest::_clearInjectedUnitsForgetsTrackedUnits()
+void FailureInjectionTest::_markUnitResetRemovesTrackedUnit()
 {
     FailureInjection failureInjection;
     failureInjection.logInjection(QStringLiteral("GPS"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GPS,
                                   QStringLiteral("1"), QStringLiteral("12:00:00"));
-    QVERIFY(!failureInjection.injectedUnits().isEmpty());
+    failureInjection.logInjection(QStringLiteral("GYRO"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GYRO,
+                                  QStringLiteral("1"), QStringLiteral("12:00:01"));
+    QCOMPARE(failureInjection.injectedUnits().count(), 2);
 
-    failureInjection.clearInjectedUnits();
+    failureInjection.markUnitReset(FAILURE_UNIT_SENSOR_GPS);
 
+    // Only the reset unit is forgotten; the other stays tracked so an interrupted Reset all can retry it.
+    const QVariantList remaining = failureInjection.injectedUnits();
+    QCOMPARE(remaining.count(), 1);
+    QCOMPARE(remaining.first().toInt(), static_cast<int>(FAILURE_UNIT_SENSOR_GYRO));
+    QCOMPARE(failureInjection.activity().count(), 2);  // activity log left intact
+}
+
+void FailureInjectionTest::_resolvePendingInterruptedResolvesStragglers()
+{
+    FailureInjection failureInjection;
+    failureInjection.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:00"));
+    failureInjection.logRow(QStringLiteral("GYRO"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:01"));
+    // Resolve the oldest normally; the newest stays pending, as if its ack was lost on navigation.
+    failureInjection.resolveResult(MAV_RESULT_ACCEPTED);
+
+    QSignalSpy activityChangedSpy(&failureInjection, &FailureInjection::activityChanged);
+    failureInjection.resolvePendingInterrupted();
+
+    QCOMPARE(activityChangedSpy.count(), 1);
+    QCOMPARE(failureInjection.activity().count(), 2);  // rows are resolved in place, not dropped
+    for (const QVariant& entry : failureInjection.activity()) {
+        QVERIFY2(entry.toMap().value(QStringLiteral("result")).toString() != QStringLiteral("pending"),
+                 "no row should remain pending after resolvePendingInterrupted()");
+    }
+}
+
+void FailureInjectionTest::_activeVehicleSwitchClearsSession()
+{
+    FailureInjection failureInjection;
+
+    // Establish vehicle 1 and inject a failure into it.
+    failureInjection.notifyActiveVehicle(1);
+    failureInjection.logInjection(QStringLiteral("GPS"), QStringLiteral("Off"), FAILURE_UNIT_SENSOR_GPS,
+                                  QStringLiteral("1"), QStringLiteral("12:00:00"));
+    QCOMPARE(failureInjection.injectedUnits().count(), 1);
+    QCOMPARE(failureInjection.activity().count(), 1);
+
+    // A transient disconnect (id < 0) and the same vehicle reconnecting (e.g. after a reboot) keep the session.
+    failureInjection.notifyActiveVehicle(-1);
+    failureInjection.notifyActiveVehicle(1);
+    QCOMPARE(failureInjection.injectedUnits().count(), 1);
+    QCOMPARE(failureInjection.activity().count(), 1);
+
+    // A genuine switch to a different vehicle clears the session so Reset all can't target the wrong vehicle.
+    QSignalSpy activityChangedSpy(&failureInjection, &FailureInjection::activityChanged);
+    failureInjection.notifyActiveVehicle(2);
+    QCOMPARE(activityChangedSpy.count(), 1);
     QVERIFY(failureInjection.injectedUnits().isEmpty());
-    QCOMPARE(failureInjection.activity().count(), 1);  // the activity log itself is left intact
+    QVERIFY(failureInjection.activity().isEmpty());
 }
 
 void FailureInjectionTest::_detailParamsMapCombos()

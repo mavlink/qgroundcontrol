@@ -4,7 +4,6 @@
 #include "FailureInjectionComponent.h"
 
 #include "AutoPilotPlugin.h"
-#include "Vehicle.h"
 
 FailureInjectionComponent::FailureInjectionComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent),

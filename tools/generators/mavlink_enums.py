@@ -151,6 +151,11 @@ def build_qml_header(enum_names, enums_text):
     for n in enum_names:
         if n in _QML_REFLECTED_ENUMS:
             entries = _raw_enum_entries(enums_text, n)
+            if not entries:
+                sys.exit(
+                    f"mavlink_enums.py: QML-reflected enum '{n}' has no parseable entries; "
+                    "cannot generate MAVLinkEnumsQml.h (check the dialect headers / _QML_REFLECTED_ENUMS)"
+                )
             body = ",\n".join(f"        {name} = {value}" for name, value in entries)
             decl_lines.append(f"    enum {n} {{\n{body}\n    }};")
         else:

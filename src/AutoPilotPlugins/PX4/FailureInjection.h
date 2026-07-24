@@ -10,6 +10,7 @@
  *  2. Session state: the activity log and the set of units injected this
  *     session, persisted here so they survive navigating away from and back
  *     to the page, which destroys/recreates the page via its SetupPage Loader.
+ *     notifyActiveVehicle() clears the session when the active vehicle changes.
  ****************************************************************************/
 #pragma once
 
@@ -47,8 +48,14 @@ public:
     Q_INVOKABLE void resolveResult(int ackResult);
     /// Distinct FAILURE_UNIT values injected this session, so Reset restores only those.
     Q_INVOKABLE QVariantList injectedUnits(void) const;
-    /// Forget the injected-units set (after a Reset reverted them); the activity log is left intact.
-    Q_INVOKABLE void clearInjectedUnits(void);
+    /// Untrack one FAILURE_UNIT once its reset is accepted, so an interrupted Reset all keeps the rest retryable.
+    Q_INVOKABLE void markUnitReset(int unitEnum);
+    /// Resolve any still-"pending" rows to "Interrupted"; called on page (re)load to clear stragglers whose
+    /// ack was lost when the previous page instance was destroyed mid-send.
+    Q_INVOKABLE void resolvePendingInterrupted(void);
+    /// Note the active vehicle's system id; a switch to a different vehicle clears the session so Reset all
+    /// can't target the wrong vehicle. A negative id (transient disconnect/reboot) is ignored.
+    Q_INVOKABLE void notifyActiveVehicle(int vehicleId);
     /// Vehicle parameters that refine how a (unit, type) failure manifests, e.g. BATTERY+WRONG ->
     /// SYS_FAIL_BAT_LVL. Returns [{ param, label }]; empty when the combo has no detail parameters.
     Q_INVOKABLE QVariantList detailParams(int unitEnum, int typeEnum) const;
@@ -61,4 +68,5 @@ private:
     QVariantList _types;
     QVariantList _activity;
     QList<int> _injectedUnits;
+    int _currentVehicleId = -1;  ///< MAVLink system id the session belongs to; -1 until the first vehicle is known
 };

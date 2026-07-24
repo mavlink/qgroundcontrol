@@ -29,6 +29,7 @@ SetupPage {
     property bool _armed:               _paramSet && !_pendingReboot
 
     readonly property int _cmdInjectFailure: 420   // MAV_CMD_INJECT_FAILURE
+    readonly property int _mavResultAccepted: 0     // MAV_RESULT_ACCEPTED
 
     // FAILURE_UNIT / FAILURE_TYPE sourced from the MAVLink dialect via the C++ singleton
     // (enum values + names track common.xml).
@@ -69,6 +70,16 @@ SetupPage {
             if (command === _cmdInjectFailure) {
                 _onAck(ackResult)
             }
+        }
+    }
+
+    // Active-vehicle switch: clear the singleton's session and drop queued sends aimed at the old vehicle.
+    // Fires only while the page is loaded; switches made while unloaded are caught by Component.onCompleted.
+    Connections {
+        target: QGroundControl.multiVehicleManager
+        function onActiveVehicleChanged(vehicle) {
+            FailureInjection.notifyActiveVehicle(vehicle ? vehicle.id : -1)
+            _sendQueue = []
         }
     }
 
@@ -125,7 +136,12 @@ SetupPage {
 
     // One ack arrived: resolve the matching log row (only one is pending at a time), then send the next.
     function _onAck(ackResult) {
+        var acked = _sendQueue.length > 0 ? _sendQueue[0] : null   // head is the send being acked
         FailureInjection.resolveResult(ackResult)   // resolves the oldest pending row (both injections and resets log one)
+        // An accepted reset (track:false) untracks its unit — on ack, not up front, so an interrupted Reset all keeps the rest retryable.
+        if (acked && acked.logArgs && !acked.logArgs.track && ackResult === _mavResultAccepted) {
+            FailureInjection.markUnitReset(acked.unit)
+        }
         if (_sendQueue.length > 0) {
             var q = _sendQueue.slice()
             q.shift()
@@ -164,11 +180,10 @@ SetupPage {
         return Instances.typeName(_types, typeEnum)
     }
 
-    // Send FAILURE_TYPE_OK (all instances) to every unit injected this session and log each as a row.
-    // The activity list is kept; the injected-units set is cleared since those failures are now reverted.
+    // Send FAILURE_TYPE_OK (all instances) to every injected unit; each is untracked on its accepted ack
+    // (see _onAck), so an interrupted Reset all leaves the rest retryable. Activity list is kept.
     function _resetAll() {
         var injected = FailureInjection.injectedUnits()   // Q_INVOKABLE method — needs the call parentheses
-        FailureInjection.clearInjectedUnits()
         for (var i = 0; i < injected.length; ++i) {
             _enqueueSend({ unit: injected[i], type: 0 /* FAILURE_TYPE_OK */, param3: 0 /* all instances */, param4: 0,
                            logArgs: { unitName: _unitName(injected[i]), typeName: _typeName(0), instanceLabel: "all", track: false } })
@@ -184,10 +199,17 @@ SetupPage {
             width:   availableWidth
             spacing: ScreenTools.defaultFontPixelHeight
 
+            // On (re)load: clear the session if the vehicle changed while the page was unloaded, then
+            // resolve any row left "pending" when a prior page instance was destroyed mid-send.
+            Component.onCompleted: {
+                FailureInjection.notifyActiveVehicle(_activeVehicle ? _activeVehicle.id : -1)
+                FailureInjection.resolvePendingInterrupted()
+            }
+
             QGCLabel {
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
-                text:               qsTr("Injects simulated failures into flight components (sensors, GPS, motors, and more) to test failsafe behavior, " +
+                text:               qsTr("Injects simulated failures into flight components (sensors, GPS, motors, and more) to test failsafe behavior. " +
                                           "Use with care — an injected failure affects the vehicle immediately.")
             }
 
