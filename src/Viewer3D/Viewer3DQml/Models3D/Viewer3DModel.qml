@@ -1,3 +1,4 @@
+import QtPositioning
 import QtQuick3D
 
 import QGroundControl
@@ -134,6 +135,9 @@ View3D {
                 geometry: CityMapGeometry {
                     id: cityMapGeometry
 
+                    readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+                    fallbackCenter: _activeVehicle ? _activeVehicle.homePosition : QtPositioning.coordinate()
                     mapProvider: QGCViewer3DManager.mapProvider
                     modelName: "city_map"
                 }
