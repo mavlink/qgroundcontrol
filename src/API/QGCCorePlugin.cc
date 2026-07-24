@@ -3,6 +3,9 @@
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 #include "MavlinkSettings.h"
 #endif
+#ifdef Q_OS_ANDROID
+#include "Viewer3DSettings.h"
+#endif
 #include "FactMetaData.h"
 #include "QGCMAVLink.h"
 #include "HorizontalFactValueGrid.h"
@@ -123,7 +126,13 @@ const QmlObjectListModel *QGCCorePlugin::customMapItems()
 void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible)
 {
 #ifdef Q_OS_ANDROID
-    Q_UNUSED(userVisible);
+    // 3D view rendering is too flaky on Android GPUs/drivers; force the
+    // feature off. Hiding the setting also forces it to its default value
+    // (false) regardless of any previously saved user setting.
+    if ((settingsGroup == Viewer3DSettings::settingsGroup) && (metaData.name() == Viewer3DSettings::enabledName)) {
+        userVisible = false;
+        return;
+    }
 #endif
 
     if (settingsGroup == AppSettings::settingsGroup) {
