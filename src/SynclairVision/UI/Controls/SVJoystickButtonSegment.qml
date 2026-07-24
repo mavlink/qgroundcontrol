@@ -40,7 +40,7 @@ Item {
             required property int index
             rotation: index * 90
             anchors.fill: parent
-            z: index === root.hoverIndex ? 1 : 0
+            z: (clicked[index] || index === hoverIndex) ? 1 : 0
             layer.enabled: true
             layer.samples: 8
 

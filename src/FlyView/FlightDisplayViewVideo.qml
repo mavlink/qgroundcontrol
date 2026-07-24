@@ -1,10 +1,10 @@
 import QtQuick
 import QtQuick.Controls
-
 import QGroundControl
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
 import QGroundControl.Controls
+import QGroundControl.SynclairVisionUI
 
 Item {
     id:     root
@@ -27,7 +27,9 @@ Item {
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
     property bool   _showStreamLoader:  QGroundControl.videoManager.decoding
     property bool   _showUvcLoader:     QGroundControl.videoManager.isUvc
-
+    property bool   _synclairOverlay:             SVState.synclairOverlay
+    property bool   _synclairOverlayVideoActive:  SVState.synclairOverlayVideoActive
+    property bool   _showVideoStream:             _showStreamLoader && (!_synclairOverlay || _synclairOverlayVideoActive)
     property bool   _isMode_FIT_WIDTH:  _fitMode === 0
     property bool   _isMode_FIT_HEIGHT: _fitMode === 1
     property bool   _isMode_FILL:       _fitMode === 2
@@ -42,37 +44,62 @@ Item {
 
     property double _thermalHeightFactor: 0.85 //-- TODO
 
-        Image {
-            id:             noVideo
-            anchors.fill:   parent
-            source:         "/res/NoVideoBackground.jpg"
-            fillMode:       Image.PreserveAspectCrop
-            visible:        !_showStreamLoader && !_showUvcLoader
+    function _updateSynclairVideoOverride() {
+        QGroundControl.videoManager.setVideoUriOverride(
+            _synclairOverlay,
+            _synclairOverlay && SVState.digiviewActive ? SVState.synclairOverlayVideoUri : "")
+    }
 
-            Rectangle {
-                anchors.centerIn:   parent
-                width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
-                height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
-                radius:             ScreenTools.defaultFontPixelWidth / 2
-                color:              "black"
-                opacity:            0.5
-            }
+    Component.onCompleted: _updateSynclairVideoOverride()
+    Component.onDestruction: QGroundControl.videoManager.setVideoUriOverride(false, "")
 
-            QGCLabel {
-                id:                 noVideoLabel
-                text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
-                font.bold:          true
-                color:              "white"
-                font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
-                anchors.centerIn:   parent
-            }
+    Connections {
+        target: SVState
+
+        function onSynclairOverlayChanged() {
+            root._updateSynclairVideoOverride()
         }
+
+        function onDigiviewActiveChanged() {
+            root._updateSynclairVideoOverride()
+        }
+
+        function onSynclairOverlayVideoUriChanged() {
+            root._updateSynclairVideoOverride()
+        }
+    }
+
+    Image {
+        id:             noVideo
+        anchors.fill:   parent
+        source:         "/res/NoVideoBackground.jpg"
+        fillMode:       Image.PreserveAspectCrop
+        visible:        !_showVideoStream && (_synclairOverlay || !_showUvcLoader)
+
+        Rectangle {
+            anchors.centerIn:   parent
+            width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
+            height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
+            radius:             ScreenTools.defaultFontPixelWidth / 2
+            color:              "black"
+            opacity:            0.5
+        }
+
+        QGCLabel {
+            id:                 noVideoLabel
+            text:                _synclairOverlay ? qsTr("NO VIDEO") : QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
+            font.bold:          true
+            color:              "white"
+            font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
+            anchors.centerIn:   parent
+        }
+    }
 
     Rectangle {
         id:             videoBackground
         anchors.fill:   parent
         color:          "black"
-        visible:        _showStreamLoader || _showUvcLoader
+        visible:        _showVideoStream || (!_synclairOverlay && _showUvcLoader)
         function getWidth() {
             if(_ar != 0.0){
                 if(_isMode_FIT_HEIGHT
@@ -106,8 +133,8 @@ Item {
         Loader {
             id:                 videoStreamLoader
             anchors.fill:       videoContentArea
-            visible:            _showStreamLoader
             sourceComponent:    videoOutputComponent
+            visible:            _showVideoStream
 
             property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
         }
@@ -120,7 +147,7 @@ Item {
         Loader {
             id:             cameraLoader
             anchors.fill:   videoContentArea
-            visible:        _showUvcLoader
+            visible:        !_synclairOverlay && _showUvcLoader
             source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/QGroundControl/FlyView/FlightDisplayViewUVC.qml" : "qrc:/qml/QGroundControl/FlyView//FlightDisplayViewDummy.qml"
         }
 
@@ -129,7 +156,7 @@ Item {
             height:             parent.getHeight()
             width:              parent.getWidth()
             anchors.centerIn:   parent
-            visible:           _showStreamLoader || _showUvcLoader
+            visible:           _showVideoStream || (!_synclairOverlay && _showUvcLoader)
 
             // grid lines
             Item {
@@ -169,7 +196,9 @@ Item {
             width:              height * QGroundControl.videoManager.thermalAspectRatio
             height:             _camera ? (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_FULL ? parent.height : (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
             anchors.centerIn:   parent
-            visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
+            visible:            !SVState.synclairOverlay
+                                 && QGroundControl.videoManager.hasThermal
+                                 && _camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
             function pipOrNot() {
                 if(_camera) {
                     if(_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP) {

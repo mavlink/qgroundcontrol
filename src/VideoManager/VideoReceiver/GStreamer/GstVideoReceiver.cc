@@ -256,11 +256,6 @@ void GstVideoReceiver::stop()
         return;
     }
 
-    if (_uri.isEmpty()) {
-        qCDebug(GstVideoReceiverLog) << "Stop called on empty URI (no-op)";
-        return;
-    }
-
     qCDebug(GstVideoReceiverLog) << "Stopping" << _uri;
 
     QMetaObject::invokeMethod(this, [this]() { _watchdogTimer.stop(); }, Qt::QueuedConnection);

@@ -7,10 +7,29 @@ QtObject {
     id: root
 
     readonly property var digiview: QGroundControl.digiviewManager
-    readonly property bool digiviewActive: !!(digiview
-        && digiview.connected
-        && QGroundControl.videoManager.streaming)
-    readonly property bool uiInteractionEnabled: digiviewActive || SVSettings.devBypassDisconnectedUiDisable
+    readonly property bool digiviewActive: !!(digiview && digiview.connected)
+    readonly property string synclairOverlayVideoUri: {
+        const profile = SVSettings.selectedNetworkProfile()
+        const videoPortText = profile ? SVSettings.networkProfileText(profile.videoPort) : ""
+
+        if (!profile
+                || SVSettings.networkProfileText(profile.host) === ""
+                || !/^\d+$/.test(videoPortText)
+                || SVSettings.networkProfileText(profile.streamName) === "") {
+            return ""
+        }
+
+        const videoPort = SVSettings.networkProfilePort(profile.videoPort, -1)
+        if (videoPort <= 0 || videoPort > 65535) {
+            return ""
+        }
+
+        return SVSettings.networkProfileRtspUrl(profile)
+    }
+    readonly property bool synclairOverlayVideoActive: synclairOverlay
+        && digiviewActive
+        && synclairOverlayVideoUri !== ""
+    readonly property bool uiInteractionEnabled: (digiviewActive || SVSettings.devBypassDisconnectedUiDisable) && QGroundControl.videoManager.decoding
     readonly property bool cameraSelectionEnabled: uiInteractionEnabled
 
     signal takePhotoRequested()
@@ -115,6 +134,55 @@ QtObject {
 
     function toggleSynclairOverlay() {
         synclairOverlay = !synclairOverlay
+    }
+
+    function changeEuler(direction, smallMovement) {
+        if (!digiview || !hasActiveCamera || lockControls) {
+            return
+        }
+
+        let yaw = 0
+        let pitch = 0
+        let strength = SVSettings.joystickSensitivity * 0.50
+
+        if (smallMovement) {
+            strength *= 0.333
+        }
+
+        switch (direction) {
+        case 0:
+            yaw = -strength
+            break
+        case 1:
+            pitch = -strength
+            break
+        case 2:
+            yaw = strength
+            break
+        case 3:
+            pitch = strength
+            break
+        default:
+            return
+        }
+
+        if (SVSettings.invertJoystickX) {
+            yaw = -yaw
+        }
+
+        if (SVSettings.invertJoystickY) {
+            pitch = -pitch
+        }
+
+        digiview.changeEuler(cameraSelected, yaw, pitch)
+    }
+
+    function changeZoom(zoom) {
+        if (!digiview || !hasActiveCamera || lockControls) {
+            return
+        }
+
+        digiview.changeZoom(cameraSelected, zoom)
     }
 
     function setActiveCameraTrackingId(trackingId) {

@@ -167,12 +167,6 @@ void QtMultimediaReceiver::stop()
 {
     qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
 
-    if (!_mediaPlayer->isPlaying()) {
-        qCDebug(QtMultimediaReceiverLog) << "Already stopped!";
-        emit onStopComplete(STATUS_INVALID_STATE);
-        return;
-    }
-
     if (_mediaPlayer->source().isEmpty()) {
         qCWarning(QtMultimediaReceiverLog) << "Stop called on empty URI";
         emit onStopComplete(STATUS_FAIL);

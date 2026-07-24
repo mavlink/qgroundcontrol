@@ -4,6 +4,11 @@
 #include "MAVLinkEnums.h"
 
 #include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QVariantList>
+#include <QtCore/QVariantMap>
+
+#include <cstdint>
 
 #include <QVector>
 
@@ -14,17 +19,30 @@ class DigiviewManager : public QObject
     Q_PROPERTY(QString host READ host WRITE setHost NOTIFY hostChanged)
     Q_PROPERTY(quint16 port READ port WRITE setPort NOTIFY portChanged)
     Q_PROPERTY(quint16 listenPort READ listenPort WRITE setListenPort NOTIFY listenPortChanged)
+    Q_PROPERTY(QString streamName READ streamName WRITE setStreamName NOTIFY streamNameChanged)
     Q_PROPERTY(int senderSystemId READ senderSystemId WRITE setSenderSystemId NOTIFY senderIdentityChanged)
     Q_PROPERTY(int senderComponentId READ senderComponentId WRITE setSenderComponentId NOTIFY senderIdentityChanged)
     Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(quint32 lastReceivedMessageId READ lastReceivedMessageId NOTIFY lastReceivedMessageIdChanged)
+    Q_PROPERTY(bool hasVideoOutputParameters READ hasVideoOutputParameters NOTIFY hasVideoOutputParametersChanged)
+    Q_PROPERTY(QString videoOutputStreamName READ videoOutputStreamName NOTIFY videoOutputStreamNameChanged)
+    Q_PROPERTY(int videoOutputWidth READ videoOutputWidth NOTIFY videoOutputWidthChanged)
+    Q_PROPERTY(int videoOutputHeight READ videoOutputHeight NOTIFY videoOutputHeightChanged)
+    Q_PROPERTY(int videoOutputFps READ videoOutputFps NOTIFY videoOutputFpsChanged)
+    Q_PROPERTY(int videoOutputLayoutMode READ videoOutputLayoutMode NOTIFY videoOutputLayoutModeChanged)
+    Q_PROPERTY(int videoOutputDetectionOverlayMode READ videoOutputDetectionOverlayMode NOTIFY
+               videoOutputDetectionOverlayModeChanged)
+    Q_PROPERTY(int videoOutputNumUserViews READ videoOutputNumUserViews NOTIFY videoOutputNumUserViewsChanged)
+    Q_PROPERTY(QVariantList videoOutputViews READ videoOutputViews NOTIFY videoOutputViewsChanged)
+    Q_PROPERTY(QVariantMap videoOutputDetectionOverlayRect READ videoOutputDetectionOverlayRect NOTIFY
+               videoOutputDetectionOverlayRectChanged)
+    Q_PROPERTY(int videoOutputSingleDetectionSize READ videoOutputSingleDetectionSize NOTIFY
+               videoOutputSingleDetectionSizeChanged)
 
 public:
-    // Defaults match QGC's normal GCS MAVLink identity. senderSystemId falls back to
-    // 255 when MAVLinkProtocol is not available during startup.
-    static constexpr uint8_t kDefaultSenderSystemId = 252;
-    static constexpr uint8_t kDefaultSenderComponentId = 69;//MAV_COMP_ID_MISSIONPLANNER;
+    static constexpr uint8_t kDefaultSenderSystemId = 255;
+    static constexpr uint8_t kDefaultSenderComponentId = MAV_COMP_ID_MISSIONPLANNER;
 
     explicit DigiviewManager(QObject* parent = nullptr);
     ~DigiviewManager() override;
@@ -34,15 +52,28 @@ public:
     QString host() const;
     quint16 port() const;
     quint16 listenPort() const;
+    QString streamName() const { return _streamName; }
     int senderSystemId() const { return _senderSystemId; }
     int senderComponentId() const { return _senderComponentId; }
     bool connected() const;
     QString lastError() const;
     quint32 lastReceivedMessageId() const { return _lastReceivedMessageId; }
+    bool hasVideoOutputParameters() const { return _hasVideoOutputParameters; }
+    QString videoOutputStreamName() const { return _videoOutputStreamName; }
+    int videoOutputWidth() const { return _videoOutputWidth; }
+    int videoOutputHeight() const { return _videoOutputHeight; }
+    int videoOutputFps() const { return _videoOutputFps; }
+    int videoOutputLayoutMode() const { return _videoOutputLayoutMode; }
+    int videoOutputDetectionOverlayMode() const { return _videoOutputDetectionOverlayMode; }
+    int videoOutputNumUserViews() const { return _videoOutputNumUserViews; }
+    QVariantList videoOutputViews() const { return _videoOutputViews; }
+    QVariantMap videoOutputDetectionOverlayRect() const { return _videoOutputDetectionOverlayRect; }
+    int videoOutputSingleDetectionSize() const { return _videoOutputSingleDetectionSize; }
 
     void setHost(const QString& host);
     void setPort(quint16 port);
     void setListenPort(quint16 listenPort);
+    void setStreamName(const QString& streamName);
     void setSenderSystemId(int senderSystemId);
     void setSenderComponentId(int senderComponentId);
 
@@ -55,6 +86,7 @@ public:
     Q_INVOKABLE void sendSetVideoOutput(
         QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
         uint8_t layout, uint8_t detection_overlay_mode);
+    Q_INVOKABLE void requestVideoOutputParameters();
     Q_INVOKABLE void sendVideoOutputParameters(
         QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
         uint8_t layout_mode, uint8_t detection_overlay_mode, uint8_t num_user_views,
@@ -123,10 +155,22 @@ signals:
     void hostChanged();
     void portChanged();
     void listenPortChanged();
+    void streamNameChanged();
     void senderIdentityChanged();
     void connectedChanged();
     void lastErrorChanged();
     void lastReceivedMessageIdChanged();
+    void hasVideoOutputParametersChanged();
+    void videoOutputStreamNameChanged();
+    void videoOutputWidthChanged();
+    void videoOutputHeightChanged();
+    void videoOutputFpsChanged();
+    void videoOutputLayoutModeChanged();
+    void videoOutputDetectionOverlayModeChanged();
+    void videoOutputNumUserViewsChanged();
+    void videoOutputViewsChanged();
+    void videoOutputDetectionOverlayRectChanged();
+    void videoOutputSingleDetectionSizeChanged();
     void messageDecoded(quint32 messageId);
     void systemStatusParametersReceived(uint8_t status, uint8_t error, float jetson_temp);
     void aiParametersReceived(uint8_t run_ai, const QString& track_model_name, const QString& scan_model_name);
@@ -198,9 +242,26 @@ private:
 
     void _handleMessage(const mavlink_message_t& message);
     void _sendMessage(const mavlink_message_t& message);
+    void _resetRemoteSession();
 
     DigiviewConnection* _connection = nullptr;
     uint8_t _senderSystemId = kDefaultSenderSystemId;
     uint8_t _senderComponentId = kDefaultSenderComponentId;
+    uint8_t _remoteSystemId = 0;
+    uint8_t _remoteComponentId = 0;
+    bool _remoteIdentityValid = false;
+    bool _pendingVideoOutputParametersRequest = false;
+    QString _streamName = QStringLiteral("stream");
     quint32 _lastReceivedMessageId = 0;
+    bool _hasVideoOutputParameters = false;
+    QString _videoOutputStreamName;
+    int _videoOutputWidth = 0;
+    int _videoOutputHeight = 0;
+    int _videoOutputFps = 0;
+    int _videoOutputLayoutMode = 0;
+    int _videoOutputDetectionOverlayMode = 0;
+    int _videoOutputNumUserViews = 0;
+    QVariantList _videoOutputViews;
+    QVariantMap _videoOutputDetectionOverlayRect;
+    int _videoOutputSingleDetectionSize = 0;
 };

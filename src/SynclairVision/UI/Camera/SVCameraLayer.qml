@@ -7,6 +7,7 @@ import QtPositioning
 import QtQuick.Window
 import QtQml.Models
 import QtQuick.Shapes 2.15
+import QtQuick.Effects  // <--- ADD THIS LINE
 
 import QGroundControl
 import QGroundControl.Controls
@@ -17,7 +18,9 @@ Item {
     id: root
 
     property int _widgetMargin: 0
-    property bool cameraActive: !QGroundControl.videoManager.decoding && !QGroundControl.videoManager.isUvc
+    property bool cameraActive: SVState.synclairOverlay
+    && !(QGroundControl.digiviewManager.connected && QGroundControl.videoManager.decoding)
+
     property int cameraSlot
     property bool previewMode: false
     property real _noVideoLabelPadding: previewMode ? SVUnits.margin : SVUnits.bigMargin
@@ -36,13 +39,16 @@ Item {
         && cameraSlot < SVState.cameraOverlays.length
         && SVState.cameraOverlays[cameraSlot].grid
 
+    readonly property url lockedTextureSource: Qt.resolvedUrl("../Resources/Images/halftone_texture_2.png")
+    readonly property int lockedTextureTileSize: 250
+
     QGCPalette { id: qgcPalette}
 
     Rectangle {
         id: noVideo
         anchors.fill: parent
         color: "black"
-        visible: false//cameraActive
+        visible: cameraActive
 
         Rectangle {
             id:                 noVideoLabelBackground
@@ -68,7 +74,20 @@ Item {
         anchors.fill: parent
         grid: parent.grid
         crosshair: parent.crosshair
+        //visible: !SVState.cursorTrackingSessionActive
+        borderWidth: 3
+        borderColor: "black"
+        visible: false
+    }
+
+    SVCameraLayerOverlays {
+        id: overlays2
+        anchors.fill: parent
+        grid: parent.grid
+        crosshair: parent.crosshair
         visible: !SVState.cursorTrackingSessionActive
+        borderWidth: 1
+        borderColor: "white"
     }
 
     SVCameraWidgetLayer {
@@ -84,22 +103,69 @@ Item {
         effect: false
     }
 
+    Item {
+            id: lockOverlay
+            anchors.fill: parent
+            anchors.margins: SVUnits.margin / 2
+            visible: !root.previewMode && root.cursorTrackingOtherCamera
+
+            Image {
+                id: lockOverlayTexture
+                anchors.fill: parent
+                fillMode: Image.Tile
+                sourceSize.width: root.lockedTextureTileSize
+                sourceSize.height: root.lockedTextureTileSize
+                visible: false
+                source: root.lockedTextureSource
+            }
+
+            MultiEffect {
+                anchors.fill: parent
+                source: lockOverlayTexture
+                maskEnabled: true
+                maskSource: lockOverlayMask
+                opacity: 0.05
+            }
+
+            Item {
+                id: lockOverlayMask
+                anchors.fill: parent
+                layer.enabled: true
+                visible: false
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "black"
+                }
+            }
+        }
+
+    SVBorder {
+        id: trackingSelected
+        anchors.fill: parent
+        borderWidth: 3
+        borderColor: "white"
+        borderVisible: !root.previewMode && cursorTrackingSessionCamera
+    }
+
     
 
     SVBorder {
         id: selected
         anchors.fill: parent
-        borderWidth: SVUnits.thickLineWidth - SVUnits.lineWidth
+        borderWidth: SVUnits.thickLineWidth + SVUnits.lineWidth * 2
         borderColor: qgcPalette.colorYellowGreen
         borderVisible: !root.previewMode
             && SVState.cameraSelectionEnabled
             && SVState.cameraSelected === cameraSlot
-            && SVState.hud && !SVState.cursorTrackingSessionActive
+            && !SVState.cursorTrackingSessionActive
+            && SVState.hud 
+
     }
 
     MouseArea {
         anchors.fill: parent
-        enabled: !root.previewMode && !SVState.cursorTrackingSessionActive && SVState.cameraSelectionEnabled
+        enabled: !root.previewMode && !SVState.cursorTrackingSessionActive && SVState.cameraSelectionEnabled && SVState.hud
         onClicked: {
             if (SVState.lockControls) {
                 SVState.clearCamera()

@@ -55,6 +55,7 @@ public:
     Q_INVOKABLE void startVideo();
     Q_INVOKABLE void stopRecording();
     Q_INVOKABLE void stopVideo();
+    Q_INVOKABLE void setVideoUriOverride(bool enabled, const QString &uri);
 
     void init(QQuickWindow *mainWindow);
     void startGStreamerInit();
@@ -140,6 +141,7 @@ private:
     bool _initialized = false;
     bool _gstreamerDisabledForUnitTests = false;
     bool _fullScreen = false;
+    bool _videoUriOverrideEnabled = false;
 
     QAtomicInteger<bool> _decoding = false;
     QAtomicInteger<bool> _recording = false;
@@ -147,6 +149,7 @@ private:
     QSize _videoSize;
     QString _imageFile;
     QString _uvcVideoSourceID;
+    QString _videoUriOverride;
 
 #ifdef QGC_UNITTEST_BUILD
     std::function<void()> _createVideoReceiversForTest;

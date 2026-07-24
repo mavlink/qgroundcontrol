@@ -164,21 +164,22 @@ Item {
     function trackVisualKeyPress(key) {
         if (!root.visualShortcutsEligible) {
             root.clearVisualHeldState()
-            return
+            return []
         }
 
         const keyId = key.toString()
         if (root.heldVisualKeys[keyId] !== undefined) {
-            return
+            return []
         }
 
         const roles = root.visualRolesForKey(key)
         if (roles.length === 0) {
-            return
+            return []
         }
 
         root.heldVisualKeys[keyId] = roles
         root.setVisualRolesHeld(roles, true)
+        return roles
     }
 
     function trackVisualKeyRelease(key) {
@@ -200,7 +201,7 @@ Item {
 
     Component.onDestruction: clearVisualHeldState()
 
-    function dispatch(shortcut) {
+    function dispatch(shortcut, visualRoles) {
         const action = root.shortcutRegistry[shortcut]
         const policy = root.actionPolicies[action]
         if (!root.shortcutInputEligible) {
@@ -215,6 +216,30 @@ Item {
                 && (!policy || !policy.allowWhenShortcutsDisabled
                     || (policy.requiresVisibleToolbar && !root.toolbarVisible))) {
             return
+        }
+
+        if (visualRoles) {
+            const smallMovementPressed = visualRoles.indexOf(root.smallMovementRole) !== -1
+
+            for (let index = 0; index < visualRoles.length; ++index) {
+                const role = visualRoles[index]
+
+                if (role <= root.joystickUpRole && !smallMovementPressed) {
+                    SVState.changeEuler(role, SVState.shortcutSmallMovementHeld)
+                } else if (role === root.zoomInRole) {
+                    SVState.changeZoom(SVSettings.zoomSensitivity)
+                } else if (role === root.zoomOutRole) {
+                    SVState.changeZoom(-SVSettings.zoomSensitivity)
+                }
+            }
+
+            if (smallMovementPressed) {
+                for (let direction = root.joystickRightRole; direction <= root.joystickUpRole; ++direction) {
+                    if (SVState.shortcutJoystickHeld[direction]) {
+                        SVState.changeEuler(direction, true)
+                    }
+                }
+            }
         }
 
         switch (action) {
@@ -266,8 +291,7 @@ Item {
         target: QGroundControl.application
 
         function onUnacceptedKeyPress(key) {
-            root.trackVisualKeyPress(key)
-            root.dispatch(key)
+            root.dispatch(key, root.trackVisualKeyPress(key))
         }
 
         function onUnacceptedKeyRelease(key) {
