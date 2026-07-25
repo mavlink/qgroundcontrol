@@ -14,6 +14,14 @@ inputs:
     description: Optional discriminator (e.g. coverage|asan) — distinct compile flags must not share a ccache key.
     required: false
     default: ''
+  key-suffix:
+    description: >-
+      Optional per-job discriminator appended to the moccache save key. Required
+      when multiple matrix legs share the same host/target/build-type (e.g.
+      android.yml linux vs linux-emulator); without it those legs race to save
+      the same exact key and the loser's new entries are dropped.
+    required: false
+    default: ''
   cpm-modules:
     description: Path to CPM Modules
     required: false
@@ -169,13 +177,22 @@ runs:
     # moccache entries are content-addressed and basedir-normalized, so they
     # are safe to share across build types and branches; keys exist only for
     # scoping and eviction. Windows is skipped (moccache no-ops there).
+    #
+    # The saved key ends in key-suffix + run id + attempt so every saving job
+    # (including matrix legs sharing host/target and re-run attempts) writes a
+    # fresh cache (an exact-key hit would otherwise freeze the cache: new
+    # entries from jobs like linux-emulator or custom builds would never be
+    # saved back). Lookups go through the restore-keys prefixes, and each save
+    # includes the restored entries, so caches converge over successive runs.
+    # MOCCACHE_MAX_SIZE (set by the launcher) bounds growth via LRU trim.
     - name: Cache moc output (moccache, save)
       if: runner.os != 'Windows' && steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
       uses: actions/cache@v5
       with:
         path: ${{ github.workspace }}/.cache/moccache
-        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}
+        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}${{ inputs.key-suffix && format('-{0}', inputs.key-suffix) || '' }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}-
           moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
           moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
 
@@ -184,8 +201,9 @@ runs:
       uses: actions/cache/restore@v5
       with:
         path: ${{ github.workspace }}/.cache/moccache
-        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}
+        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}${{ inputs.key-suffix && format('-{0}', inputs.key-suffix) || '' }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}-
           moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
           moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
 

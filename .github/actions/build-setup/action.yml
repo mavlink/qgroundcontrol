@@ -34,6 +34,13 @@ inputs:
     description: Optional ccache key discriminator for compile-flag-distinct builds (e.g. coverage|asan).
     required: false
     default: ""
+  cache-key-suffix:
+    description: >-
+      Per-matrix-leg moccache save-key discriminator, forwarded to the cache
+      action. Set when multiple legs share the same host/target/build-type
+      (e.g. android.yml linux vs linux-emulator).
+    required: false
+    default: ""
   cpm-modules:
     description: CPM cache path (mobile modes; desktop derives this internally)
     required: false
@@ -141,6 +148,7 @@ runs:
         target: ${{ inputs.qt-arch }}
         build-type: ${{ inputs.build-type }}
         variant: ${{ inputs.cache-variant }}
+        key-suffix: ${{ inputs.cache-key-suffix }}
         cpm-modules: ${{ runner.temp }}/build/cpm_modules
         save-cache: ${{ inputs.save-cache }}
 
@@ -217,6 +225,7 @@ runs:
         android-cmdline-tools: ${{ steps.prereq.outputs.android_cmdline_tools }}
         android-build-tools: ${{ steps.prereq.outputs.android_build_tools }}
         save-cache: ${{ inputs.save-cache }}
+        cache-key-suffix: ${{ inputs.cache-key-suffix }}
         aqt-source: ${{ inputs.aqt-source }}
 
     - name: Install Qt for iOS
