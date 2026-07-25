@@ -9,7 +9,13 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QtMath>
 
+#include <limits>
+
 QGC_LOGGING_CATEGORY(FactMetaDataLog, "FactSystem.FactMetaData")
+
+// Bitmask values are built with `1u << index`, so valid indices are bounded by the
+// width of unsigned int. Keep this in sync with the shift in createFromJsonObject.
+static constexpr int kMaxBitmaskIndex = std::numeric_limits<unsigned int>::digits - 1;
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
@@ -1274,7 +1280,7 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
     if (errorString.isEmpty() && !rgDescriptions.isEmpty()) {
         for (qsizetype i = 0; i < rgDescriptions.count(); i++) {
             if (foundBitmask) {
-                metaData->addBitmaskInfo(rgDescriptions[i], 1 << rgIntValues[i]);
+                metaData->addBitmaskInfo(rgDescriptions[i], 1u << rgIntValues[i]);
             } else {
                 const QVariant rawValueVariant = !rgDoubleValues.isEmpty() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
                 QVariant convertedValueVariant;
@@ -1625,8 +1631,15 @@ bool FactMetaData::_parseBitmaskArray(const QJsonObject &jsonObject, QStringList
             return false;
         }
 
-        rgDescriptions.append(valueDescriptionObject[_enumBitmaskArrayDescriptionJsonKey].toString());
-        rgValues.append(valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toInt());
+        const QString description = valueDescriptionObject[_enumBitmaskArrayDescriptionJsonKey].toString();
+        const int index = valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toInt();
+        if (index < 0 || index > kMaxBitmaskIndex) {
+            qCDebug(FactMetaDataLog) << "Ignoring out-of-range bitmask index" << index << "for" << description;
+            continue;
+        }
+
+        rgDescriptions.append(description);
+        rgValues.append(index);
     }
 
     return true;
