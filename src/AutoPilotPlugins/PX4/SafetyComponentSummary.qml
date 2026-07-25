@@ -21,15 +21,35 @@ Item {
     property Fact   rcLossAction:       controller.getParameterFact(-1, "NAV_RCL_ACT")
     property Fact   dataLossAction:     controller.getParameterFact(-1, "NAV_DLL_ACT")
     property Fact   _rtlLandDelayFact:  controller.getParameterFact(-1, "RTL_LAND_DELAY")
-    property int    _rtlLandDelayValue: _rtlLandDelayFact.value
+    property var    _lowBattParts:      lowBattAction ? lowBattAction.enumStringValue.split(",") : []
+
+    function _cleanBehavior(str) {
+        if (!str) return ""
+        var cleaned = str.replace(/at\s+(critical|emergency)\s+level/gi, "").trim()
+        if (cleaned === "") return str.trim()
+        return cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
+    }
 
     ColumnLayout {
         id: mainLayout
+        width: parent.width
         spacing: 0
 
         VehicleSummaryRow {
             labelText: qsTr("Low Battery Failsafe")
-            valueText: lowBattAction ? lowBattAction.enumStringValue : ""
+            valueText: _lowBattParts.length > 1 ? "" : (lowBattAction ? lowBattAction.enumStringValue : "")
+        }
+
+        VehicleSummaryRow {
+            visible:   _lowBattParts.length > 1
+            labelText: qsTr("  Critical Level")
+            valueText: _lowBattParts.length > 0 ? _cleanBehavior(_lowBattParts[0]) : ""
+        }
+
+        VehicleSummaryRow {
+            visible:   _lowBattParts.length > 1
+            labelText: qsTr("  Emergency Level")
+            valueText: _lowBattParts.length > 1 ? _cleanBehavior(_lowBattParts[1]) : ""
         }
 
         VehicleSummaryRow {
