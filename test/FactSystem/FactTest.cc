@@ -15,6 +15,21 @@ void FactTest::_constructWithTypeAndName_test()
     QCOMPARE(fact.type(), FactMetaData::valueTypeInt32);
 }
 
+void FactTest::_selectedBitmaskStringsBit31_test()
+{
+    // Bit 31 bitmask values (0x80000000) exceed INT_MAX. The selection logic must
+    // compare them unsigned or bit-31 entries never report as selected.
+    Fact fact(0, "BitmaskParam", FactMetaData::valueTypeUint32);
+
+    auto *meta = fact.metaData();
+    QVERIFY(meta);
+    meta->addBitmaskInfo("Bit 0", QVariant(1u << 0));
+    meta->addBitmaskInfo("Bit 31", QVariant(1u << 31));
+
+    fact.setRawValue(QVariant((1u << 0) | (1u << 31)));
+    QCOMPARE(fact.selectedBitmaskStrings(), (QStringList{"Bit 0", "Bit 31"}));
+}
+
 void FactTest::_labelFallback_test()
 {
     Fact fact(0, "FallbackParam", FactMetaData::valueTypeInt32);
