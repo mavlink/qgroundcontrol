@@ -308,8 +308,15 @@ bool LogReplayWorker::_loadLogFile()
 
 quint64 LogReplayWorker::_parseTimestamp(const QByteArray &bytes)
 {
+    // Truncated log files can produce a short read; never read past the buffer.
+    if (bytes.size() < static_cast<qsizetype>(sizeof(quint64))) {
+        return 0;
+    }
+
     const quint64 currentTimestamp = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch()) * 1000;
-    quint64 timestamp = qFromBigEndian(*reinterpret_cast<const quint64*>(bytes.constData()));
+    // qFromBigEndian(const void *src) handles unaligned reads; dereferencing a
+    // cast pointer here would be a misaligned load (UB).
+    quint64 timestamp = qFromBigEndian<quint64>(bytes.constData());
     if (timestamp > currentTimestamp) {
         timestamp = qbswap(timestamp);
     }
