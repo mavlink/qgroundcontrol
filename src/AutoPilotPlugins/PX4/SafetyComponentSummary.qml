@@ -43,13 +43,13 @@ Item {
 
         VehicleSummaryRow {
             visible:   _lowBattParts.length > 1
-            labelText: qsTr("  Critical Level")
+            labelText: "  " + qsTr("Critical Level")
             valueText: _lowBattParts.length > 0 ? _cleanBehavior(_lowBattParts[0]) : ""
         }
 
         VehicleSummaryRow {
             visible:   _lowBattParts.length > 1
-            labelText: qsTr("  Emergency Level")
+            labelText: "  " + qsTr("Emergency Level")
             valueText: _lowBattParts.length > 1 ? _cleanBehavior(_lowBattParts[1]) : ""
         }
 
