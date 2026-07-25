@@ -21,6 +21,7 @@ Item {
     property Fact   rcLossAction:       controller.getParameterFact(-1, "NAV_RCL_ACT")
     property Fact   dataLossAction:     controller.getParameterFact(-1, "NAV_DLL_ACT")
     property Fact   _rtlLandDelayFact:  controller.getParameterFact(-1, "RTL_LAND_DELAY")
+    property int    _rtlLandDelayValue: _rtlLandDelayFact ? _rtlLandDelayFact.value : 0
     property var    _lowBattParts:      lowBattAction ? lowBattAction.enumStringValue.split(",") : []
 
     function _cleanBehavior(str) {
