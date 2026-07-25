@@ -141,6 +141,10 @@ jobs:
           aqt-source: ${{ matrix.aqt_source || '' }}
           abis: ${{ env.QT_ANDROID_ABIS }}
           build-type: ${{ env.BUILD_TYPE }}
+          # matrix.host is unique per leg; linux and linux-emulator otherwise
+          # resolve to identical cache inputs and would race on the moccache
+          # save key.
+          cache-key-suffix: ${{ matrix.host }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Install host build dependencies

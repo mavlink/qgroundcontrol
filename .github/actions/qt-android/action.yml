@@ -50,6 +50,10 @@ inputs:
     description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
     default: 'auto'
+  cache-key-suffix:
+    description: Forwarded to the cache action's key-suffix (per-matrix-leg moccache save-key discriminator).
+    required: false
+    default: ''
   aqt-source:
     description: Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
     required: false
@@ -86,6 +90,7 @@ runs:
         host: ${{ inputs.host }}
         target: android
         build-type: ${{ inputs.build-type }}
+        key-suffix: ${{ inputs.cache-key-suffix }}
         cpm-modules: ${{ inputs.cpm-modules }}
         save-cache: ${{ inputs.save-cache }}
 
