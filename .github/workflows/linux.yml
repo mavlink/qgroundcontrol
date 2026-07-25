@@ -201,8 +201,6 @@ jobs:
           persist-credentials: false
       - name: Build matrix
         id: build
-        env:
-          IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
         run: python3 .github/scripts/linux_debug_matrix.py
 
   debug-validation:
