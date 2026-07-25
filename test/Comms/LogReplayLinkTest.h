@@ -17,6 +17,8 @@ private slots:
     void _testTrailingBytesIgnored_data();
     void _testTrailingBytesIgnored();
     void _testGarbageOnlyLogFails();
+    void _testTruncatedLogFails_data();
+    void _testTruncatedLogFails();
 
 private:
     QString _writeLogFile(const QByteArray& contents);

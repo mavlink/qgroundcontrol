@@ -167,4 +167,38 @@ void LogReplayLinkTest::_testGarbageOnlyLogFails()
     QVERIFY(errorSpy.first().first().toString().contains(QStringLiteral("corrupt or empty")));
 }
 
+void LogReplayLinkTest::_testTruncatedLogFails_data()
+{
+    QTest::addColumn<int>("cBytes");
+
+    QTest::newRow("empty file") << 0;
+    QTest::newRow("5 bytes") << 5;
+    QTest::newRow("7 bytes (one short of timestamp)") << 7;
+}
+
+void LogReplayLinkTest::_testTruncatedLogFails()
+{
+    QFETCH(int, cBytes);
+
+    // A log smaller than the leading 8 byte timestamp must be rejected as corrupt.
+    // _parseTimestamp must not read past the end of the short buffer (ASan-visible).
+    const QString filename = _writeLogFile(QByteArray(cBytes, 'x'));
+    QVERIFY(!filename.isEmpty());
+
+    LogReplayConfiguration config(QStringLiteral("LogReplayLinkTest"));
+    config.setLogFilename(filename);
+
+    LogReplayWorker worker(&config);
+    worker.setup();
+
+    QSignalSpy connectedSpy(&worker, &LogReplayWorker::connected);
+    QSignalSpy errorSpy(&worker, &LogReplayWorker::errorOccurred);
+
+    worker.connectToLog();
+
+    QCOMPARE(connectedSpy.count(), 0);
+    QCOMPARE(errorSpy.count(), 1);
+    QVERIFY(errorSpy.first().first().toString().contains(QStringLiteral("corrupt or empty")));
+}
+
 UT_REGISTER_TEST(LogReplayLinkTest, TestLabel::Unit, TestLabel::Comms)
