@@ -77,26 +77,27 @@ Rectangle {
                 property bool setupComplete: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.setupComplete : false
             }
 
-            Flow {
-                id:         _flowCtl
-                width:      _summaryRoot.width
-                spacing:    _summaryBoxSpace
+            GridLayout {
+                id:             _gridCtl
+                width:          _summaryRoot.width
+                columns:        Math.max(1, Math.floor(_summaryRoot.width / (_minSummaryW + ScreenTools.defaultFontPixelWidth)))
+                columnSpacing:  _summaryBoxSpace
+                rowSpacing:     ScreenTools.defaultFontPixelHeight
 
                 Repeater {
                     model: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents : undefined
 
                     // Outer summary item rectangle
                     Rectangle {
-                        width: mainLayout.width + (_margins * 2)
-                        height: mainLayout.height + (_margins * 2)
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        implicitWidth: _summaryBoxWidth
+                        implicitHeight: mainLayout.implicitHeight + (_margins * 2)
+                        radius: ScreenTools.defaultFontPixelHeight / 4
                         color: qgcPal.windowShade
                         visible: modelData.summaryQmlSource.toString() !== ""
                         border.width: 1
-                        border.color: qgcPal.text
-
-                        Component.onCompleted: {
-                            border.color = Qt.rgba(border.color.r, border.color.g, border.color.b, 0.1)
-                        }
+                        border.color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.1)
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 2
 
@@ -104,6 +105,7 @@ Rectangle {
                             id: mainLayout
                             anchors.margins: _margins
                             anchors.left: parent.left
+                            anchors.right: parent.right
                             anchors.top: parent.top
                             spacing: ScreenTools.defaultFontPixelHeight / 2
 
@@ -118,10 +120,10 @@ Rectangle {
                                     anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                                     anchors.right:          parent.right
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width:                  ScreenTools.defaultFontPixelWidth * 1.75
+                                    width:                  ScreenTools.defaultFontPixelWidth * 1.5
                                     height:                 width
                                     radius:                 width / 2
-                                    color:                  modelData.setupComplete ? "#00d932" : "red"
+                                    color:                  modelData.setupComplete ? qgcPal.colorGreen : qgcPal.colorRed
                                     visible:                modelData.requiresSetup && modelData.setupSource !== ""
                                 }
 
