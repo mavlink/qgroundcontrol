@@ -8,13 +8,16 @@ The Fly View is used to command and monitor the vehicle.
 
 ## Overview
 
-- **[Toolbar](fly_view_toolbar.md):** The toolbar is at the top of the screen. It provides controls to select views, show flight status and mode as well as the status of the main components of the vehicle.
-- **[Vehicle Actions](fly_tools.md):** Allows you command the vehicle to take a specific action.
-- **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
-- **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
-- **[Camera Tools](camera_tools.md)**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
+<img src="../../../assets/fly/fly_view_overview.svg" alt="Fly View overview" style="height: 30em; vertical-align: text-bottom;" />
+
+- **View Selector:** Allows you to switch between the main views (Fly, Plan, Analyze, Vehicle Configuration, Application Settings).
+- **[Status Indicators](fly_view_toolbar.md):** Shows flight status and mode as well as the status of the main components of the vehicle.
+- **[Actions](fly_tools.md):** Allows you to command the vehicle to take a specific action.
+- **[Camera Tools](camera_tools.md):** Switch between still and video modes, start/stop capture, and control camera settings.
 - **[Video](video.md):** Display the video from the vehicle. Allows you to toggle between video or map as the main display.
-- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
+- **[Telemetry Values](instrument_panel.md):** Displays configurable telemetry values.
+- **[Attitude/Compass](hud.md):** Provides virtual horizon and heading information.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle. Can be switched between multiple variations.
   - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
   - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
   - Once flying, you can click on the map to set a [Go to](#map_actions) or [Orbit at](#map_actions) location.
@@ -50,7 +53,7 @@ _위치 이동_ 작업은 일시 중지가 불가능 합니다.
 
 일시 중지하려면:
 
-1. _비행 도구_에서 **일시중지** 버튼을 클릭합니다.
+1. _비행 도&#xAD6C;_&#xC5D0;서 **일시중지** 버튼을 클릭합니다.
 2. 선택적으로 오른쪽 수직 슬라이더를 사용하여 새 고도를 설정합니다.
 3. [Confirm](fly_tools.md#confirmation) the action.
 
@@ -62,7 +65,7 @@ You can start a mission when the vehicle is landed (the start mission confirmati
 
 착륙후 임무를 시작하려면:
 
-1. _비행 도구_에서 **액션** 버튼을 클릭합니다.
+1. _비행 도&#xAD6C;_&#xC5D0;서 **액션** 버튼을 클릭합니다.
 
 2. 대화 상자에서 _미션 시작_ 작업을 선택합니다.
 
@@ -80,7 +83,7 @@ You can _continue_ mission from the _next_ waypoint when you're flying (the _Con
 
 현재 임무를 계속할 수 있습니다(이미 임무에 참여하지 않는 한!):
 
-1. _비행 도구_에서 **액션** 버튼을 클릭합니다.
+1. _비행 도&#xAD6C;_&#xC5D0;서 **액션** 버튼을 클릭합니다.
 
 2. 대화 상자에서 _임무 지속_ 작업을 선택합니다.
 
@@ -92,17 +95,17 @@ _Resume Mission_ is used to resume a mission after performing an [RTL/Return](hu
 
 :::info
 배터리를 교체하는 경우에는 배터리를 분리한 후 기체에서 QGroundControl를 분리하지 **마십시오**.
-새 배터리를 교체하면 _QGroundControl_에서 차량을 다시 감지하고 자동으로 연결을 복원합니다.
+새 배터리를 교체하면 _QGroundContro&#x6C;_&#xC5D0;서 차량을 다시 감지하고 자동으로 연결을 복원합니다.
 :::
 
 착륙 후에는 _비행 계획 완료_ 대화상자가 표시되며, 이 대화상자에서는 계획을 기체에서 제거하거나, 기체에 그대로 두거나, 또는 통과한 마지막 웨이포인트에서 임무를 재개합니다.
 
-임무 재개를 선택하면 _QGroundControl_에서 임무를 재구성하고 차량에 업로드합니다.
+임무 재개를 선택하면 _QGroundContro&#x6C;_&#xC5D0;서 임무를 재구성하고 차량에 업로드합니다.
 Then [confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 :::info
 임무는 임무의 다음 단계에 영향을 미치는 마지막 웨이포인트에 여러 항목이 있을 수 있으므로, 기체가 실행한 마지막 미션 항목에서 단순히 재개할 수 없습니다(예: 속도 명령 또는 카메라 제어 명령).
-대신 _QGroundControl_은 비행한 마지막 임무 항목부터 시작하여 임무를 재구성하고 자동으로 임무 앞에 관련 명령을 추가합니다.
+대신 _QGroundContro&#x6C;_&#xC740; 비행한 마지막 임무 항목부터 시작하여 임무를 재구성하고 자동으로 임무 앞에 관련 명령을 추가합니다.
 :::
 
 #### 착륙 후 임무 프롬프트 제거 {#resume_mission_prompt}
@@ -112,7 +115,7 @@ Then [confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 ### 비디오 출력 {#video_switcher}
 
-비디오 스트리밍이 활성화되면, _QGroundControl_은 지도 왼쪽 하단의 "비디오 전환기 창"에 현재 선택된 기체의 비디오 스트림을 표시합니다.
+비디오 스트리밍이 활성화되면, _QGroundContro&#x6C;_&#xC740; 지도 왼쪽 하단의 "비디오 전환기 창"에 현재 선택된 기체의 비디오 스트림을 표시합니다.
 You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 :::info
@@ -128,7 +131,7 @@ You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 ### 동영상 녹화
 
-카메라와 기체에서 지원하는 경우 _QGroundControl_에서 카메라 자체의 동영상 녹화를 시작하거나 중지할 수 있습니다. _QGroundControl_은 또한 비디오 스트림을 녹화하고 로컬에 저장할 수 있습니다.
+카메라와 기체에서 지원하는 경우 _QGroundContro&#x6C;_&#xC5D0;서 카메라 자체의 동영상 녹화를 시작하거나 중지할 수 있습니다. _QGroundContro&#x6C;_&#xC740; 또한 비디오 스트림을 녹화하고 로컬에 저장할 수 있습니다.
 
 :::tip
 카메라에 저장된 동영상의 품질은 훨씬 높을 수 있지만, 지상국의 녹화 용량은 훨씬 더 클 수 있습니다.

@@ -8,13 +8,16 @@ For connection issues, see [Connection Problems](../troubleshooting/vehicle_conn
 
 ## 概述
 
-- **[工具栏](fly_view_toolbar.md):** 工具栏位于屏幕顶部。 它提供了选择视图的控制，显示飞行状态和方式以及车辆主要部件的状况。
-- **[载具动作](fly_tools.md)：** 允许您命令车辆采取特定行动。
-- **[仪器面板](instrument_panel.md)：** 显示载具遥测器的部件。
-- **[姿态/罗盘](hud.md)：** 一个提供虚拟地平线和航向信息的部件。
-- **[相机工具](camera_tools.md)**：用于在仍然和视频模式之间切换、开始/停止捕获以及控制相机设置的部件。
+<img src="../../../assets/fly/fly_view_overview.svg" alt="Fly View overview" style="height: 30em; vertical-align: text-bottom;" />
+
+- **View Selector:** Allows you to switch between the main views (Fly, Plan, Analyze, Vehicle Configuration, Application Settings).
+- **[Status Indicators](fly_view_toolbar.md):** Shows flight status and mode as well as the status of the main components of the vehicle.
+- **[Actions](fly_tools.md):** Allows you to command the vehicle to take a specific action.
+- **[Camera Tools](camera_tools.md):** Switch between still and video modes, start/stop capture, and control camera settings.
 - **[视频](video.md):** 显示载具中的视频。 允许您在视频或地图之间切换为主显示。
-- **地图：** 显示所有连接车辆的位置和当前车辆的任务。
+- **[Telemetry Values](instrument_panel.md):** Displays configurable telemetry values.
+- **[Attitude/Compass](hud.md):** Provides virtual horizon and heading information.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle. Can be switched between multiple variations.
   - 你可以拖动地图来移动它周围(地图在一定时间后自动重置在车上)。
   - 你可以使用缩放按钮、鼠标滚轮、触控板或在平板电脑上捏合操作来缩放地图。
   - Once flying, you can click on the map to set a [Go to](#map_actions) or [Orbit at](#map_actions) location.
