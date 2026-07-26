@@ -121,6 +121,7 @@
     - [参数](qgc-dev-guide/file_formats/parameters.md)
     - [计划](qgc-dev-guide/file_formats/plan.md)
     - [MAVLink 日志](qgc-dev-guide/file_formats/mavlink.md)
+    - [Settings Override Files](qgc-dev-guide/file_formats/settings_override.md)
   - [开发者工具](qgc-dev-guide/tools/index.md)
     - [模拟链接](qgc-dev-guide/tools/mock_link.md)
   - [命令行选项](qgc-dev-guide/command_line_options.md)
