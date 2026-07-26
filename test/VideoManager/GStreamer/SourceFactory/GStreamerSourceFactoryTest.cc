@@ -8,12 +8,24 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtGui/QImage>
+#include <QtGui/QImageReader>
+#include <QtGui/QImageWriter>
+#include <QtNetwork/QHostAddress>
+#include <QtNetwork/QSslCertificate>
+#include <QtNetwork/QSslConfiguration>
+#include <QtNetwork/QSslKey>
+#include <QtNetwork/QSslSocket>
+#include <QtTest/QSignalSpy>
+#include <QtWebSockets/QWebSocket>
+#include <QtWebSockets/QWebSocketServer>
+#include <array>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 
 #include "GstSourceFactory.h"
 #include "LocalHttpTestServer.h"
 #include "QGCNetworkHelper.h"
+#include "QGCWebSocketVideoSource.h"
 
 namespace {
 
@@ -55,6 +67,96 @@ GstElement* findChildByFactoryName(GstElement* bin, const char* factoryName)
     g_value_unset(&item);
     gst_iterator_free(it);
     return match;
+}
+
+QByteArray makeTestJpeg(int width = 4, int height = 4, bool progressive = false)
+{
+    QImage image(width, height, QImage::Format_RGB32);
+    image.fill(Qt::green);
+
+    QByteArray jpeg;
+    QBuffer buffer(&jpeg);
+    if (!buffer.open(QIODevice::WriteOnly)) {
+        return {};
+    }
+
+    QImageWriter writer(&buffer, "JPEG");
+    writer.setProgressiveScanWrite(progressive);
+    if (!writer.write(image)) {
+        return {};
+    }
+    return jpeg;
+}
+
+QByteArray withJpegDimensions(QByteArray jpeg, quint16 width, quint16 height)
+{
+    constexpr std::array<unsigned char, 9> kStartOfFrameMarkers = {
+        0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA,
+    };
+
+    for (const unsigned char markerCode : kStartOfFrameMarkers) {
+        QByteArray marker;
+        marker.append(static_cast<char>(0xFF));
+        marker.append(static_cast<char>(markerCode));
+        const qsizetype markerOffset = jpeg.indexOf(marker);
+        if ((markerOffset < 0) || ((markerOffset + 8) >= jpeg.size())) {
+            continue;
+        }
+
+        jpeg[markerOffset + 5] = static_cast<char>((height >> 8) & 0xFF);
+        jpeg[markerOffset + 6] = static_cast<char>(height & 0xFF);
+        jpeg[markerOffset + 7] = static_cast<char>((width >> 8) & 0xFF);
+        jpeg[markerOffset + 8] = static_cast<char>(width & 0xFF);
+        return jpeg;
+    }
+
+    return {};
+}
+
+QSize jpegDimensions(const QByteArray& jpeg)
+{
+    QBuffer buffer;
+    buffer.setData(jpeg);
+    if (!buffer.open(QIODevice::ReadOnly)) {
+        return {};
+    }
+
+    QImageReader reader(&buffer, "JPEG");
+    return reader.size();
+}
+
+// Throwaway localhost-only test material. It is intentionally not stored as a PEM credential.
+QSslCertificate testTlsCertificate()
+{
+    static constexpr auto kCertificateDer =
+        "MIIBmzCCAUGgAwIBAgIUFbcEH9kmwztc5b9Ha3cY4x9FDO8wCgYIKoZIzj0EAwIwFDESMBAGA1UEAwwJbG9jYWxob3N0MCAX"
+        "DTI2MDcyODA2MjMwOFoYDzIxMjYwNzA0MDYyMzA4WjAUMRIwEAYDVQQDDAlsb2NhbGhvc3QwWTATBgcqhkjOPQIBBggqhkjO"
+        "PQMBBwNCAAR4OSsMTUhwl3a5KP18gdm/QNswKq5NFg0JqeUNF7BgFzAa10WVKA7/c6TEoaKsSn32iXesOUYI7Fs1WH7zFsjA"
+        "o28wbTAdBgNVHQ4EFgQUvOEXyJbTXCPncAQ5EWRp6XuZ1WgwHwYDVR0jBBgwFoAUvOEXyJbTXCPncAQ5EWRp6XuZ1WgwDwYD"
+        "VR0TAQH/BAUwAwEB/zAaBgNVHREEEzARgglsb2NhbGhvc3SHBH8AAAEwCgYIKoZIzj0EAwIDSAAwRQIhAP8NQO0HrtST24NQ"
+        "2BiGZOoyNmjgnlJ7U9vkDcwNXjYKAiBkOpNock+KqNb9qooUWnkxz0VUBbkKBcs9EFtS3EQndw==";
+    return QSslCertificate(QByteArray::fromBase64(QByteArrayView(kCertificateDer)), QSsl::Der);
+}
+
+QSslKey testTlsPrivateKey()
+{
+    static constexpr auto kPrivateKeyDer =
+        "MHcCAQEEIEdHEf9aQn1QFwpXUAWdVOLDXr8LbWlidiIpShmGvco5oAoGCCqGSM49AwEHoUQDQgAEeDkrDE1IcJd2uSj9fIHZ"
+        "v0DbMCquTRYNCanlDRewYBcwGtdFlSgO/3OkxKGirEp99ol3rDlGCOxbNVh+8xbIwA==";
+    return QSslKey(QByteArray::fromBase64(QByteArrayView(kPrivateKeyDer)), QSsl::Ec, QSsl::Der, QSsl::PrivateKey);
+}
+
+bool configureSecureTestServer(QWebSocketServer& server, const QSslCertificate& certificate, const QSslKey& privateKey)
+{
+    if (certificate.isNull() || privateKey.isNull()) {
+        return false;
+    }
+
+    QSslConfiguration configuration = server.sslConfiguration();
+    configuration.setLocalCertificate(certificate);
+    configuration.setPrivateKey(privateKey);
+    server.setSslConfiguration(configuration);
+    return true;
 }
 
 }  // namespace
@@ -338,6 +440,355 @@ void GStreamerTest::_testSourceFactoryRejectsUnsafeHttpMjpegUrl()
     QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("http://video.example.test:0/camera.mjpg"), config));
     QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("https://operator:secret@video.example.test/camera.mjpg"),
                                               config));
+}
+
+void GStreamerTest::_testSourceFactoryWebSocketJpeg()
+{
+    if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
+        QSKIP("appsrc/jpegparse plugins unavailable");
+    }
+
+    GStreamer::SourceFactory::Config config;
+    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("ws://127.0.0.1:9/video"), config);
+    QVERIFY(bin);
+    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
+
+    GstElement* appsrc = findChildByFactoryName(bin, "appsrc");
+    GstElement* parser = findChildByFactoryName(bin, "jpegparse");
+    QVERIFY(appsrc);
+    QVERIFY(parser);
+
+    gboolean isLive = FALSE;
+    gboolean doTimestamp = FALSE;
+    gboolean block = TRUE;
+    gboolean emitSignals = TRUE;
+    GstFormat format = GST_FORMAT_UNDEFINED;
+    guint64 maxBuffers = 0;
+    guint64 maxBytes = 0;
+    GstAppLeakyType leakyType = GST_APP_LEAKY_TYPE_NONE;
+    g_object_get(appsrc, "is-live", &isLive, "do-timestamp", &doTimestamp, "format", &format, "block", &block,
+                 "max-buffers", &maxBuffers, "max-bytes", &maxBytes, "leaky-type", &leakyType, "emit-signals",
+                 &emitSignals, nullptr);
+    QCOMPARE(isLive, TRUE);
+    QCOMPARE(doTimestamp, TRUE);
+    QCOMPARE(format, GST_FORMAT_TIME);
+    QCOMPARE(block, FALSE);
+    QCOMPARE(maxBuffers, 2u);
+    QCOMPARE(maxBytes, static_cast<guint64>(QGCWebSocketVideoSource::kMaximumJpegBytes * 2));
+    QCOMPARE(leakyType, GST_APP_LEAKY_TYPE_DOWNSTREAM);
+    QCOMPARE(emitSignals, FALSE);
+
+    GstPad* srcPad = gst_element_get_static_pad(bin, "src");
+    QVERIFY2(srcPad, "WebSocket JPEG source bin must expose a static parsed-JPEG source pad");
+    gst_object_unref(srcPad);
+}
+
+void GStreamerTest::_testWebSocketJpegValidation()
+{
+    const QByteArray jpeg = makeTestJpeg();
+    QVERIFY(!jpeg.isEmpty());
+    QVERIFY(QGCWebSocketVideoSource::isCompleteJpeg(jpeg));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(QByteArrayLiteral("not-a-jpeg")));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(jpeg + jpeg));
+
+    QByteArray jpegWithTrailingByte = jpeg;
+    jpegWithTrailingByte.append('\0');
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(jpegWithTrailingByte));
+
+    QByteArray missingEndOfImage = jpeg;
+    missingEndOfImage.chop(2);
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(missingEndOfImage));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(QByteArray::fromHex("ffd8ffd9")));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(QByteArray::fromHex("ffd8ffe10001ffd9")));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(QByteArray::fromHex("ffd8ffe10010abcdffd9")));
+
+    QByteArray jpegWithEmbeddedEndMarker = jpeg;
+    jpegWithEmbeddedEndMarker.insert(2, QByteArray::fromHex("ffe1000678ffd979"));
+    QVERIFY(QGCWebSocketVideoSource::isCompleteJpeg(jpegWithEmbeddedEndMarker));
+
+    const QByteArray progressiveJpeg = makeTestJpeg(4, 4, true);
+    QVERIFY(!progressiveJpeg.isEmpty());
+    QVERIFY(QGCWebSocketVideoSource::isCompleteJpeg(progressiveJpeg));
+
+    const QByteArray oversized(QGCWebSocketVideoSource::kMaximumJpegBytes + 1, '\0');
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(oversized));
+
+    const QByteArray excessiveWidth = withJpegDimensions(jpeg, QGCWebSocketVideoSource::kMaximumJpegDimension + 1, 1);
+    QVERIFY(!excessiveWidth.isEmpty());
+    QCOMPARE(jpegDimensions(excessiveWidth), QSize(QGCWebSocketVideoSource::kMaximumJpegDimension + 1, 1));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(excessiveWidth));
+
+    const QByteArray excessivePixels = withJpegDimensions(jpeg, QGCWebSocketVideoSource::kMaximumJpegDimension, 4097);
+    QVERIFY(!excessivePixels.isEmpty());
+    QCOMPARE(jpegDimensions(excessivePixels), QSize(QGCWebSocketVideoSource::kMaximumJpegDimension, 4097));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(excessivePixels));
+}
+
+void GStreamerTest::_testSourceFactoryWebSocketJpegDelivery()
+{
+    if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse") ||
+        !gst_element_factory_find("appsink")) {
+        QSKIP("appsrc/jpegparse/appsink plugins unavailable");
+    }
+
+    QWebSocketServer server(QStringLiteral("QGC WebSocket JPEG test"), QWebSocketServer::NonSecureMode);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    QSignalSpy connectionSpy(&server, &QWebSocketServer::newConnection);
+
+    GStreamer::SourceFactory::Config config;
+    const QString url = QStringLiteral("ws://127.0.0.1:%1/video?camera=front#local-fragment").arg(server.serverPort());
+    GstElement* bin = GStreamer::SourceFactory::create(url, config);
+    QVERIFY(bin);
+
+    GstElement* pipeline = gst_pipeline_new("websocket-jpeg-test");
+    GstElement* sink = gst_element_factory_make("appsink", "sink");
+    QVERIFY(pipeline);
+    QVERIFY(sink);
+    const auto pipelineCleanup = qScopeGuard([&] {
+        if (pipeline) {
+            (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+            gst_object_unref(pipeline);
+        }
+        gst_clear_object(&sink);
+        gst_clear_object(&bin);
+    });
+
+    g_object_set(sink, "sync", FALSE, "emit-signals", FALSE, "max-buffers", 1u, "drop", TRUE, nullptr);
+    GstElement* sourceBin = bin;
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), bin));
+    bin = nullptr;
+    GstElement* binSink = sink;
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), sink));
+    sink = nullptr;
+    QVERIFY(gst_element_link(sourceBin, binSink));
+
+    QVERIFY(GStreamer::SourceFactory::activate(sourceBin));
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY_SIGNAL_WAIT(connectionSpy, TestTimeout::mediumMs());
+    QWebSocket* peer = server.nextPendingConnection();
+    QVERIFY(peer);
+    QCOMPARE(peer->requestUrl().path(), QStringLiteral("/video"));
+    QCOMPARE(peer->requestUrl().query(), QStringLiteral("camera=front"));
+    QVERIFY(peer->requestUrl().fragment().isEmpty());
+
+    const QByteArray jpeg = makeTestJpeg();
+    QVERIFY(!jpeg.isEmpty());
+    peer->setOutgoingFrameSize(64);
+    (void) peer->sendTextMessage(QStringLiteral("metadata is ignored"));
+    QCOMPARE(peer->sendBinaryMessage(jpeg), static_cast<qint64>(jpeg.size()));
+    (void) peer->flush();
+
+    GstSample* sample = nullptr;
+    QTRY_VERIFY_WITH_TIMEOUT((sample = gst_app_sink_try_pull_sample(GST_APP_SINK(binSink), 0)) != nullptr,
+                             TestTimeout::mediumMs());
+    QVERIFY(gst_buffer_get_size(gst_sample_get_buffer(sample)) > 0);
+    gst_sample_unref(sample);
+
+    QSignalSpy disconnectedSpy(peer, &QWebSocket::disconnected);
+    GStreamer::SourceFactory::deactivate(sourceBin);
+    (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+    gst_object_unref(pipeline);
+    pipeline = nullptr;
+    QVERIFY_SIGNAL_WAIT(disconnectedSpy, TestTimeout::mediumMs());
+}
+
+void GStreamerTest::_testSourceFactoryWebSocketJpegWssTrusted()
+{
+    if (!QSslSocket::supportsSsl()) {
+        QSKIP("TLS backend unavailable");
+    }
+    if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
+        QSKIP("appsrc/jpegparse plugins unavailable");
+    }
+
+    const QSslCertificate certificate = testTlsCertificate();
+    const QSslKey privateKey = testTlsPrivateKey();
+    QVERIFY(!certificate.isNull());
+    QVERIFY(!privateKey.isNull());
+
+    const QSslConfiguration previousDefault = QSslConfiguration::defaultConfiguration();
+    const auto restoreDefault = qScopeGuard([&] { QSslConfiguration::setDefaultConfiguration(previousDefault); });
+    QSslConfiguration trustedDefault = previousDefault;
+    QList<QSslCertificate> authorities = trustedDefault.caCertificates();
+    authorities.append(certificate);
+    trustedDefault.setCaCertificates(authorities);
+    QSslConfiguration::setDefaultConfiguration(trustedDefault);
+
+    QWebSocketServer server(QStringLiteral("QGC trusted WSS JPEG test"), QWebSocketServer::SecureMode);
+    QVERIFY(configureSecureTestServer(server, certificate, privateKey));
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    QSignalSpy connectionSpy(&server, &QWebSocketServer::newConnection);
+
+    GStreamer::SourceFactory::Config config;
+    GstElement* source =
+        GStreamer::SourceFactory::create(QStringLiteral("wss://127.0.0.1:%1/video").arg(server.serverPort()), config);
+    GstElement* pipeline = gst_pipeline_new("websocket-jpeg-trusted-wss-test");
+    QVERIFY(source);
+    QVERIFY(pipeline);
+    const auto cleanup = qScopeGuard([&] {
+        GStreamer::SourceFactory::deactivate(source);
+        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+        gst_object_unref(pipeline);
+    });
+
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
+    QVERIFY(GStreamer::SourceFactory::activate(source));
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY_SIGNAL_WAIT(connectionSpy, TestTimeout::mediumMs());
+}
+
+void GStreamerTest::_testSourceFactoryWebSocketJpegWssRejectsUntrusted()
+{
+    if (!QSslSocket::supportsSsl()) {
+        QSKIP("TLS backend unavailable");
+    }
+    if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
+        QSKIP("appsrc/jpegparse plugins unavailable");
+    }
+
+    const QSslCertificate certificate = testTlsCertificate();
+    const QSslKey privateKey = testTlsPrivateKey();
+    QVERIFY(!certificate.isNull());
+    QVERIFY(!privateKey.isNull());
+
+    QWebSocketServer server(QStringLiteral("QGC untrusted WSS JPEG test"), QWebSocketServer::SecureMode);
+    QVERIFY(configureSecureTestServer(server, certificate, privateKey));
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+
+    GStreamer::SourceFactory::Config config;
+    GstElement* source =
+        GStreamer::SourceFactory::create(QStringLiteral("wss://127.0.0.1:%1/video").arg(server.serverPort()), config);
+    GstElement* pipeline = gst_pipeline_new("websocket-jpeg-untrusted-wss-test");
+    QVERIFY(source);
+    QVERIFY(pipeline);
+    const auto cleanup = qScopeGuard([&] {
+        GStreamer::SourceFactory::deactivate(source);
+        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+        gst_object_unref(pipeline);
+    });
+
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
+    QVERIFY(GStreamer::SourceFactory::activate(source));
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+
+    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    QVERIFY(bus);
+    const auto busCleanup = qScopeGuard([&] { gst_object_unref(bus); });
+    GstMessage* message = nullptr;
+    QTRY_VERIFY_WITH_TIMEOUT(
+        (message = gst_bus_pop_filtered(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR))) != nullptr,
+        TestTimeout::mediumMs());
+    gst_message_unref(message);
+}
+
+void GStreamerTest::_testSourceFactoryWebSocketJpegFailedHandshake()
+{
+    if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
+        QSKIP("appsrc/jpegparse plugins unavailable");
+    }
+
+    QWebSocketServer portReservation(QStringLiteral("QGC WebSocket closed-port test"), QWebSocketServer::NonSecureMode);
+    QVERIFY(portReservation.listen(QHostAddress::LocalHost, 0));
+    const quint16 closedPort = portReservation.serverPort();
+    portReservation.close();
+
+    GStreamer::SourceFactory::Config config;
+    GstElement* source =
+        GStreamer::SourceFactory::create(QStringLiteral("ws://127.0.0.1:%1/video").arg(closedPort), config);
+    GstElement* pipeline = gst_pipeline_new("websocket-jpeg-failed-handshake-test");
+    QVERIFY(source);
+    QVERIFY(pipeline);
+    const auto cleanup = qScopeGuard([&] {
+        GStreamer::SourceFactory::deactivate(source);
+        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+        gst_object_unref(pipeline);
+    });
+
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
+    QVERIFY(GStreamer::SourceFactory::activate(source));
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+
+    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    QVERIFY(bus);
+    const auto busCleanup = qScopeGuard([&] { gst_object_unref(bus); });
+    GstMessage* message = gst_bus_timed_pop_filtered(
+        bus, static_cast<GstClockTime>(TestTimeout::mediumMs()) * GST_MSECOND, GST_MESSAGE_ERROR);
+    QVERIFY2(message, "A failed WebSocket handshake must surface as a GStreamer bus error");
+    gst_message_unref(message);
+}
+
+void GStreamerTest::_testSourceFactoryWebSocketJpegRemoteDisconnect()
+{
+    if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
+        QSKIP("appsrc/jpegparse plugins unavailable");
+    }
+
+    QWebSocketServer server(QStringLiteral("QGC WebSocket disconnect test"), QWebSocketServer::NonSecureMode);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    QSignalSpy connectionSpy(&server, &QWebSocketServer::newConnection);
+
+    GStreamer::SourceFactory::Config config;
+    GstElement* source =
+        GStreamer::SourceFactory::create(QStringLiteral("ws://127.0.0.1:%1/video").arg(server.serverPort()), config);
+    GstElement* pipeline = gst_pipeline_new("websocket-jpeg-remote-disconnect-test");
+    QVERIFY(source);
+    QVERIFY(pipeline);
+    const auto cleanup = qScopeGuard([&] {
+        GStreamer::SourceFactory::deactivate(source);
+        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+        gst_object_unref(pipeline);
+    });
+
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
+    QVERIFY(GStreamer::SourceFactory::activate(source));
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY_SIGNAL_WAIT(connectionSpy, TestTimeout::mediumMs());
+
+    QWebSocket* peer = server.nextPendingConnection();
+    QVERIFY(peer);
+    peer->abort();
+
+    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    QVERIFY(bus);
+    const auto busCleanup = qScopeGuard([&] { gst_object_unref(bus); });
+    GstMessage* message = gst_bus_timed_pop_filtered(
+        bus, static_cast<GstClockTime>(TestTimeout::mediumMs()) * GST_MSECOND, GST_MESSAGE_ERROR);
+    QVERIFY2(message, "A remote WebSocket disconnect must surface as a GStreamer bus error");
+    gst_message_unref(message);
+}
+
+void GStreamerTest::_testSourceFactoryWebSocketJpegImmediateStop()
+{
+    if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
+        QSKIP("appsrc/jpegparse plugins unavailable");
+    }
+
+    QWebSocketServer server(QStringLiteral("QGC WebSocket lifecycle test"), QWebSocketServer::NonSecureMode);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    const QString url = QStringLiteral("ws://127.0.0.1:%1/video").arg(server.serverPort());
+
+    for (int iteration = 0; iteration < 8; ++iteration) {
+        GStreamer::SourceFactory::Config config;
+        GstElement* source = GStreamer::SourceFactory::create(url, config);
+        QVERIFY(source);
+        QVERIFY(GStreamer::SourceFactory::activate(source));
+        GStreamer::SourceFactory::deactivate(source);
+        gst_object_unref(source);
+    }
+}
+
+void GStreamerTest::_testSourceFactoryRejectsUnsafeWebSocketJpegUrl()
+{
+    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid WebSocket JPEG URL")));
+    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("WebSocket JPEG credentials in URLs are not supported")));
+
+    GStreamer::SourceFactory::Config config;
+    QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("ws:///video"), config));
+    QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("ws://video.example.test:0/video"), config));
+    QVERIFY(
+        !GStreamer::SourceFactory::create(QStringLiteral("wss://operator:secret@video.example.test/video"), config));
 }
 
 void GStreamerTest::_testSourceFactoryRejectsBadUri()

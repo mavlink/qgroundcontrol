@@ -3,12 +3,14 @@
 #include <QtCore/QFile>
 #include <QtCore/QUrl>
 #include <algorithm>
+#include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 #include <gst/rtsp/gstrtsptransport.h>
 
 #include "GStreamerHelpers.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
+#include "QGCWebSocketVideoSource.h"
 
 QGC_LOGGING_CATEGORY(GstSourceFactoryLog, "Video.GStreamer.GstSourceFactory")
 
@@ -17,6 +19,7 @@ namespace {
 constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
 constexpr int kRtspRetry = 3;
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
+constexpr char kWebSocketSourceContextKey[] = "qgc-websocket-source-context";
 
 // Older Linux/system GStreamer needs an autoplug-query caps filter to keep parsebin on byte-stream output.
 #if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
@@ -514,6 +517,79 @@ GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
     return sourceBin;
 }
 
+GstElement* buildWebSocketJpegSource(const QUrl& sourceUrl)
+{
+    if (!sourceUrl.isValid() || sourceUrl.isRelative() || sourceUrl.host().isEmpty() || (sourceUrl.port() == 0)) {
+        qCWarning(GstSourceFactoryLog) << "Invalid WebSocket JPEG URL:"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
+        return nullptr;
+    }
+    if (!sourceUrl.userInfo().isEmpty()) {
+        qCWarning(GstSourceFactoryLog) << "WebSocket JPEG credentials in URLs are not supported";
+        return nullptr;
+    }
+
+    GstElement* appsrc = gst_element_factory_make("appsrc", "source");
+    GstElement* parser = gst_element_factory_make("jpegparse", "jpeg-parser");
+    GstElement* bin = gst_bin_new("sourcebin");
+    GstElement* sourceBin = nullptr;
+
+    do {
+        if (!appsrc || !parser || !bin) {
+            qCWarning(GstSourceFactoryLog) << "WebSocket JPEG requires appsrc and jpegparse";
+            break;
+        }
+
+        GstCaps* caps = gst_caps_from_string("image/jpeg");
+        if (!caps) {
+            qCWarning(GstSourceFactoryLog) << "Failed to create WebSocket JPEG caps";
+            break;
+        }
+        g_object_set(appsrc, "caps", caps, "is-live", TRUE, "do-timestamp", TRUE, "format", GST_FORMAT_TIME, "block",
+                     FALSE, "max-buffers", static_cast<guint64>(2), "max-bytes",
+                     static_cast<guint64>(QGCWebSocketVideoSource::kMaximumJpegBytes * 2), "leaky-type",
+                     GST_APP_LEAKY_TYPE_DOWNSTREAM, "emit-signals", FALSE, nullptr);
+        gst_clear_caps(&caps);
+
+        if (!gst_bin_add(GST_BIN(bin), appsrc)) {
+            qCWarning(GstSourceFactoryLog) << "Failed to add WebSocket appsrc to source bin";
+            break;
+        }
+        GstElement* binAppsrc = appsrc;
+        appsrc = nullptr;
+
+        if (!gst_bin_add(GST_BIN(bin), parser)) {
+            qCWarning(GstSourceFactoryLog) << "Failed to add WebSocket JPEG parser to source bin";
+            break;
+        }
+        GstElement* binParser = parser;
+        parser = nullptr;
+
+        if (!gst_element_link(binAppsrc, binParser)) {
+            qCWarning(GstSourceFactoryLog) << "Failed to link WebSocket JPEG source";
+            break;
+        }
+        if (!addStaticGhostPad(binParser)) {
+            break;
+        }
+
+        QUrl cleanUrl(sourceUrl);
+        cleanUrl.setUserInfo(QString());
+        cleanUrl.setFragment(QString());
+        auto* context = new QGCWebSocketVideoSource(cleanUrl, binAppsrc);
+        g_object_set_data_full(G_OBJECT(bin), kWebSocketSourceContextKey, context,
+                               [](gpointer data) { delete static_cast<QGCWebSocketVideoSource*>(data); });
+
+        sourceBin = bin;
+        bin = nullptr;
+    } while (false);
+
+    gst_clear_object(&bin);
+    gst_clear_object(&parser);
+    gst_clear_object(&appsrc);
+    return sourceBin;
+}
+
 // Wire upstream → (optional rtpjitterbuffer) → binParser, topology chosen by RTP probe (MPEG-TS
 // links via pad-added). Created elements join @p bin; returns false (logged) on failure.
 bool linkSourceToParser(GstElement* bin, GstElement* upstream, GstElement* binParser, const Config& config,
@@ -620,8 +696,9 @@ GstElement* create(const QString& uri, const Config& config)
     const bool isUdpMPEGTS = (scheme == QLatin1String("mpegts"));
     const bool isTcpMPEGTS = (scheme == QLatin1String("tcp"));
     const bool isHttpMjpeg = (scheme == QLatin1String("http")) || (scheme == QLatin1String("https"));
+    const bool isWebSocketJpeg = (scheme == QLatin1String("ws")) || (scheme == QLatin1String("wss"));
 
-    if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS && !isHttpMjpeg) {
+    if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS && !isHttpMjpeg && !isWebSocketJpeg) {
         qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in"
                                        << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
         return nullptr;
@@ -629,6 +706,9 @@ GstElement* create(const QString& uri, const Config& config)
 
     if (isHttpMjpeg) {
         return buildHttpMjpegSource(sourceUrl, config);
+    }
+    if (isWebSocketJpeg) {
+        return buildWebSocketJpegSource(sourceUrl);
     }
 
     // Owning locals until gst_bin_add*, then nulled (non-owning alias used downstream) so the
@@ -755,6 +835,30 @@ GstElement* create(const QString& uri, const Config& config)
     gst_clear_object(&source);
 
     return srcbin;
+}
+
+bool activate(GstElement* source)
+{
+    if (!source) {
+        return false;
+    }
+
+    auto* context =
+        static_cast<QGCWebSocketVideoSource*>(g_object_get_data(G_OBJECT(source), kWebSocketSourceContextKey));
+    return !context || context->start();
+}
+
+void deactivate(GstElement* source)
+{
+    if (!source) {
+        return;
+    }
+
+    auto* context =
+        static_cast<QGCWebSocketVideoSource*>(g_object_get_data(G_OBJECT(source), kWebSocketSourceContextKey));
+    if (context) {
+        context->stop();
+    }
 }
 
 }  // namespace GStreamer::SourceFactory
