@@ -201,7 +201,7 @@ The _Video_ section is used to define the source and connection settings for vid
 
 The settings are:
 
-- **Video Source**: Video Stream Disabled | RTSP Video Stream | HTTP MJPEG Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS Video Stream | Integrated Camera
+- **Video Source**: Video Stream Disabled | RTSP Video Stream | HTTP MJPEG Video Stream | WebSocket JPEG Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS Video Stream | Integrated Camera
 
   ::: info
   If no video source is specified then no other video or _video recording_ settings will be displayed.
@@ -210,6 +210,8 @@ The settings are:
 - **URL/Port**: Connection type-specific stream address (may be port or URL).
   HTTP MJPEG requires a full `http://` or `https://` URL serving
   `multipart/x-mixed-replace` JPEG frames.
+  WebSocket JPEG requires a full `ws://` or `wss://` URL and one complete JPEG
+  image in each binary message.
 - **Aspect Ratio**: Aspect ratio for scaling video in video widget (set to 0.0 to ignore scaling)
 - **Disabled When Disarmed**: Disable video feed when vehicle is disarmed.
 - **Low Latency Mode**: Enabling low latency mode reduces the video stream latency, but may cause frame loss and choppy video (especially with a poor network connection). <!-- disables the internal jitter buffer -->

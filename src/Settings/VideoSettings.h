@@ -18,6 +18,7 @@ public:
     DEFINE_SETTINGFACT(tcpUrl)
     DEFINE_SETTINGFACT(rtspUrl)
     DEFINE_SETTINGFACT(httpMjpegUrl)
+    DEFINE_SETTINGFACT(webSocketJpegUrl)
     DEFINE_SETTINGFACT(aspectRatio)
     DEFINE_SETTINGFACT(videoFit)
     DEFINE_SETTINGFACT(gridLines)
@@ -39,6 +40,7 @@ public:
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  httpMjpegVideoSource    READ httpMjpegVideoSource   CONSTANT)
+    Q_PROPERTY(QString webSocketJpegVideoSource READ webSocketJpegVideoSource CONSTANT)
     Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)
     Q_PROPERTY(QString  udp265VideoSource       READ udp265VideoSource      CONSTANT)
     Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
@@ -47,7 +49,9 @@ public:
 
     bool     streamConfigured       ();
     QString  rtspVideoSource        () { return videoSourceRTSP; }
-    QString  httpMjpegVideoSource   () { return videoSourceHTTPMJPEG; }
+    QString httpMjpegVideoSource() { return videoSourceHTTPMJPEG; }
+
+    QString webSocketJpegVideoSource() { return videoSourceWebSocketJPEG; }
     QString  udp264VideoSource      () { return videoSourceUDPH264; }
     QString  udp265VideoSource      () { return videoSourceUDPH265; }
     QString  tcpVideoSource         () { return videoSourceTCP; }
@@ -63,6 +67,8 @@ public:
     static constexpr const char* videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
     static constexpr const char* videoSourceRTSP              = QT_TRANSLATE_NOOP("VideoSettings", "RTSP Video Stream");
     static constexpr const char* videoSourceHTTPMJPEG         = QT_TRANSLATE_NOOP("VideoSettings", "HTTP MJPEG Video Stream");
+    static constexpr const char* videoSourceWebSocketJPEG =
+        QT_TRANSLATE_NOOP("VideoSettings", "WebSocket JPEG Video Stream");
     static constexpr const char* videoSourceUDPH264           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.264 Video Stream");
     static constexpr const char* videoSourceUDPH265           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.265 Video Stream");
     static constexpr const char* videoSourceTCP               = QT_TRANSLATE_NOOP("VideoSettings", "TCP-MPEG2 Video Stream");

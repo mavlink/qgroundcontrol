@@ -103,6 +103,8 @@ private:
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
     void _logDecodebin3SelectedCodec(GstElement *decodebin3);
+    void _removeTeeProbe();
+    void _clearPipelineAliases();
 
     bool _needDispatch();
 

@@ -179,6 +179,8 @@ void VideoManager::init(QQuickWindow *mainWindow)
     (void) connect(_videoSettings->udpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->rtspUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->httpMjpegUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+    (void) connect(_videoSettings->webSocketJpegUrl(), &Fact::rawValueChanged, this,
+                   &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, [this](const QVariant &value) { Q_UNUSED(value); _restartAllVideos(); });
@@ -503,6 +505,7 @@ bool VideoManager::isStreamSource() const
         VideoSettings::videoSourceUDPH265,
         VideoSettings::videoSourceRTSP,
         VideoSettings::videoSourceHTTPMJPEG,
+        VideoSettings::videoSourceWebSocketJPEG,
         VideoSettings::videoSourceTCP,
         VideoSettings::videoSourceMPEGTS,
         VideoSettings::videoSource3DRSolo,
@@ -707,6 +710,8 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
         settingsChanged |= _updateVideoUri(receiver, _videoSettings->rtspUrl()->rawValue().toString());
     } else if (source == VideoSettings::videoSourceHTTPMJPEG) {
         settingsChanged |= _updateVideoUri(receiver, _videoSettings->httpMjpegUrl()->rawValue().toString());
+    } else if (source == VideoSettings::videoSourceWebSocketJPEG) {
+        settingsChanged |= _updateVideoUri(receiver, _videoSettings->webSocketJpegUrl()->rawValue().toString());
     } else if (source == VideoSettings::videoSourceTCP) {
         settingsChanged |= _updateVideoUri(receiver, QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
     } else if (source == VideoSettings::videoSource3DRSolo) {
@@ -848,8 +853,9 @@ void VideoManager::_startReceiver(VideoReceiver *receiver)
     }
 
     const QString source = _videoSettings->videoSource()->rawValue().toString();
-    const bool usesNetworkTimeout =
-        (source == VideoSettings::videoSourceRTSP) || (source == VideoSettings::videoSourceHTTPMJPEG);
+    const bool usesNetworkTimeout = (source == VideoSettings::videoSourceRTSP) ||
+                                    (source == VideoSettings::videoSourceHTTPMJPEG) ||
+                                    (source == VideoSettings::videoSourceWebSocketJPEG);
     // Keep the existing Fact/persistence key for compatibility while its UI meaning expands to timeout-based sources.
     const uint32_t timeout = usesNetworkTimeout ? _videoSettings->rtspTimeout()->rawValue().toUInt() : 3;
 

@@ -88,6 +88,15 @@ private slots:
     void _testSourceFactoryHttpMjpeg();
     void _testSourceFactoryHttpMjpegDelivery();
     void _testSourceFactoryRejectsUnsafeHttpMjpegUrl();
+    void _testSourceFactoryWebSocketJpeg();
+    void _testWebSocketJpegValidation();
+    void _testSourceFactoryWebSocketJpegDelivery();
+    void _testSourceFactoryWebSocketJpegWssTrusted();
+    void _testSourceFactoryWebSocketJpegWssRejectsUntrusted();
+    void _testSourceFactoryWebSocketJpegFailedHandshake();
+    void _testSourceFactoryWebSocketJpegRemoteDisconnect();
+    void _testSourceFactoryWebSocketJpegImmediateStop();
+    void _testSourceFactoryRejectsUnsafeWebSocketJpegUrl();
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();
     void _testSourceFactoryRejectsBadTcpUri();

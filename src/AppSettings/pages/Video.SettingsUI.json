@@ -23,7 +23,7 @@
         },
         {
             "heading": "Connection",
-            "keywords": ["rtsp", "http", "https", "mjpeg", "jpeg", "tcp", "udp", "mpegts", "video url", "stream url"],
+            "keywords": ["rtsp", "http", "https", "mjpeg", "websocket", "ws", "wss", "jpeg", "tcp", "udp", "mpegts", "video url", "stream url"],
             "showWhen": "!sourceDisabled && !autoStreamConfig",
             "controls": [
                 {
@@ -33,6 +33,10 @@
                 {
                     "setting": "videoSettings.httpMjpegUrl",
                     "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.httpMjpegVideoSource"
+                },
+                {
+                    "setting": "videoSettings.webSocketJpegUrl",
+                    "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.webSocketJpegVideoSource"
                 },
                 {
                     "setting": "videoSettings.tcpUrl",
