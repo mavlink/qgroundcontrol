@@ -107,7 +107,11 @@ target_sources(${CMAKE_PROJECT_NAME}
         GstVideoReceiver.h
         QGCQVideoSinkController.cc
         QGCQVideoSinkController.h
+        QGCWebSocketVideoSource.cc
+        QGCWebSocketVideoSource.h
 )
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::WebSockets)
 
 # iOS xcframework ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
 # libgioopenssl (fetched at configure time, IOS.cmake). On the app target for MACOSX_PACKAGE_LOCATION.

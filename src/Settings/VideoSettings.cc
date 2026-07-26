@@ -22,6 +22,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceRTSP);
     if (kGstEnabled) {
         videoSourceList.append(videoSourceHTTPMJPEG);
+        videoSourceList.append(videoSourceWebSocketJPEG);
     }
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
@@ -232,6 +233,15 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpMjpegUrl)
     return _httpMjpegUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, webSocketJpegUrl)
+{
+    if (!_webSocketJpegUrlFact) {
+        _webSocketJpegUrlFact = _createSettingsFact(webSocketJpegUrlName);
+        connect(_webSocketJpegUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _webSocketJpegUrlFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 {
     if (!_tcpUrlFact) {
@@ -267,6 +277,12 @@ bool VideoSettings::streamConfigured(void)
     if (vSource == videoSourceHTTPMJPEG) {
         qCDebug(VideoSettingsLog) << "Testing configuration for HTTP MJPEG Stream";
         return !httpMjpegUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If WebSocket JPEG, check for URL
+    if (vSource == videoSourceWebSocketJPEG) {
+        qCDebug(VideoSettingsLog) << "Testing configuration for WebSocket JPEG Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(webSocketJpegUrl()->rawValue().toString());
+        return !webSocketJpegUrl()->rawValue().toString().isEmpty();
     }
     //-- If TCP, check for URL
     if(vSource == videoSourceTCP) {

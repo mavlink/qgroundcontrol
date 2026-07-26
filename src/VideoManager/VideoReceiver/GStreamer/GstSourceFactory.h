@@ -30,12 +30,20 @@ struct Config
 /// Build a source bin that exposes parsed encoded video for `uri`.
 /// Supported schemes: rtsp/rtspt, tcp:// (MPEG-TS), udp:// (H.264 RTP),
 /// udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP), and http(s)://
-/// (multipart MJPEG).
+/// (multipart MJPEG), and ws(s):// (one JPEG per binary message).
 ///
 /// Ghost pads on RTP/MPEG-TS bins are wired lazily after upstream produces pads.
-/// The HTTP MJPEG bin exposes its parsed-JPEG pad immediately.
+/// The HTTP and WebSocket JPEG bins expose their parsed-JPEG pads immediately.
 ///
 /// Returns the source bin or nullptr on failure.
 GstElement* create(const QString& uri, const Config& config);
+
+/// Activate sources whose network client requires a Qt event loop after the source bin has been
+/// attached to a pipeline and its bus handler is installed. No-op for other source families.
+bool activate(GstElement* source);
+
+/// Stop source-specific network clients before their GStreamer bin is released.
+/// No-op for source families whose lifetime is managed entirely by GStreamer.
+void deactivate(GstElement* source);
 
 }  // namespace GStreamer::SourceFactory

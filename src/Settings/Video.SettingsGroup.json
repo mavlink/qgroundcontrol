@@ -4,8 +4,8 @@
     "QGC.MetaData.Facts": [
         {
             "name": "videoSource",
-            "shortDesc": "Source for video stream (UDP, TCP, RTSP, HTTP MJPEG, or connected USB camera).",
-            "longDesc": "Source for video. UDP, TCP, RTSP, HTTP multipart MJPEG and UVC cameras may be supported depending on the ground station build.",
+            "shortDesc": "Source for video stream (UDP, TCP, RTSP, HTTP MJPEG, WebSocket JPEG, or connected USB camera).",
+            "longDesc": "Source for video. UDP, TCP, RTSP, HTTP multipart MJPEG, WebSocket JPEG and UVC cameras may be supported depending on the ground station build.",
             "type": "string",
             "default": "",
             "label": "Source",
@@ -37,6 +37,15 @@
             "default": "",
             "label": "HTTP MJPEG URL",
             "keywords": "http,https,mjpeg,jpeg,video url,stream url"
+        },
+        {
+            "name": "webSocketJpegUrl",
+            "shortDesc": "Full URL for a WebSocket JPEG stream.",
+            "longDesc": "Full ws:// or wss:// URL. Each binary WebSocket message must contain exactly one complete JPEG image. Text messages are ignored. URL-embedded credentials are not supported.",
+            "type": "string",
+            "default": "",
+            "label": "WebSocket JPEG URL",
+            "keywords": "websocket,ws,wss,jpeg,video url,stream url"
         },
         {
             "name": "tcpUrl",
