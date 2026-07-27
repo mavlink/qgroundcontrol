@@ -68,28 +68,42 @@ Rectangle {
                 readonly property string selectedKey: currentIndex >= 0 ? _vehicleKeys[currentIndex] : "px4"
                 readonly property bool apmSelected: selectedKey.startsWith("apm")
             }
+            LabelledComboBox {
+                id:                 videoStreamTypeCombo
+                label:              qsTr("Served Video Stream")
+                Layout.fillWidth:   true
+                visible:            enableCamera.checked
+                model: [
+                    qsTr("Disabled"),
+                    qsTr("RTP/UDP H.264"),
+                    qsTr("RTP/UDP H.265"),
+                    qsTr("RTSP (H.264)"),
+                    qsTr("MPEG-TS (UDP)"),
+                    qsTr("MPEG-TS (TCP)")
+                ]
+            }
             QGCButton {
                 text:               qsTr("Start MockLink")
                 Layout.fillWidth:   true
                 onClicked: {
                     switch (vehicleTypeCombo.selectedKey) {
                     case "px4":
-                        QGroundControl.startPX4MockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
+                        QGroundControl.startPX4MockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, videoStreamTypeCombo.currentIndex)
                         break
                     case "apmCopter":
-                        QGroundControl.startAPMArduCopterMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked)
+                        QGroundControl.startAPMArduCopterMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked, videoStreamTypeCombo.currentIndex)
                         break
                     case "apmPlane":
-                        QGroundControl.startAPMArduPlaneMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked)
+                        QGroundControl.startAPMArduPlaneMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked, videoStreamTypeCombo.currentIndex)
                         break
                     case "apmSub":
-                        QGroundControl.startAPMArduSubMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked)
+                        QGroundControl.startAPMArduSubMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked, videoStreamTypeCombo.currentIndex)
                         break
                     case "apmRover":
-                        QGroundControl.startAPMArduRoverMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked)
+                        QGroundControl.startAPMArduRoverMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, apmStartFreshParams.checked, videoStreamTypeCombo.currentIndex)
                         break
                     default:
-                        QGroundControl.startGenericMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked)
+                        QGroundControl.startGenericMockLink(sendStatusText.checked, enableCamera.checked, enableGimbal.checked, enableProximity.checked, videoStreamTypeCombo.currentIndex)
                         break
                     }
                 }

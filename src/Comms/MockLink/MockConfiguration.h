@@ -31,6 +31,7 @@ class MockConfiguration : public LinkConfiguration
     Q_PROPERTY(bool cameraHasBasicZoom                   READ cameraHasBasicZoom                  WRITE setCameraHasBasicZoom                  NOTIFY cameraHasBasicZoomChanged)
     Q_PROPERTY(bool cameraHasTrackingPoint               READ cameraHasTrackingPoint              WRITE setCameraHasTrackingPoint              NOTIFY cameraHasTrackingPointChanged)
     Q_PROPERTY(bool cameraHasTrackingRectangle           READ cameraHasTrackingRectangle          WRITE setCameraHasTrackingRectangle          NOTIFY cameraHasTrackingRectangleChanged)
+    Q_PROPERTY(int  videoStreamType                      READ videoStreamType                     WRITE setVideoStreamType                     NOTIFY videoStreamTypeChanged)
 
 public:
     explicit MockConfiguration(const QString &name, QObject *parent = nullptr);
@@ -51,6 +52,18 @@ public:
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
+
+    /// Kind of live video stream MockLink serves (and advertises via VIDEO_STREAM_INFORMATION).
+    /// Order must match the combo box model in MockLinkSettings.qml / MockLink.qml.
+    enum VideoStreamType {
+        VideoStreamNone = 0,    ///< No stream served
+        VideoStreamRtpUdpH264,  ///< RTP/UDP H.264    -> udp://
+        VideoStreamRtpUdpH265,  ///< RTP/UDP H.265    -> udp265://
+        VideoStreamRtspH264,    ///< RTSP H.264       -> rtsp://
+        VideoStreamMpegTsUdp,   ///< MPEG-TS over UDP -> mpegts://
+        VideoStreamMpegTsTcp,   ///< MPEG-TS over TCP -> tcp://
+    };
+    Q_ENUM(VideoStreamType)
 
     LinkType type() const final { return LinkConfiguration::TypeMock; }
     void copyFrom(const LinkConfiguration *source) final;
@@ -117,6 +130,17 @@ public:
     bool cameraHasTrackingRectangle() const { return _cameraHasTrackingRectangle; }
     void setCameraHasTrackingRectangle(bool value) { _cameraHasTrackingRectangle = value; emit cameraHasTrackingRectangleChanged(); }
 
+    int videoStreamType() const { return static_cast<int>(_videoStreamType); }
+    void setVideoStreamType(int value) { _videoStreamType = videoStreamTypeFromInt(value); emit videoStreamTypeChanged(); }
+    VideoStreamType videoStreamTypeEnum() const { return _videoStreamType; }
+
+    /// Maps an int (QML combo index / persisted setting) to a valid VideoStreamType.
+    /// Out-of-range values (e.g. corrupted settings) map to VideoStreamNone.
+    static VideoStreamType videoStreamTypeFromInt(int value)
+    {
+        return ((value >= VideoStreamNone) && (value <= VideoStreamMpegTsTcp)) ? static_cast<VideoStreamType>(value) : VideoStreamNone;
+    }
+
     enum FailureMode_t {
         FailNone,                                                   ///< No failures
         FailParamNoResponseToRequestList,                           ///< Do not respond to PARAM_REQUEST_LIST
@@ -172,6 +196,7 @@ signals:
     void cameraHasBasicZoomChanged();
     void cameraHasTrackingPointChanged();
     void cameraHasTrackingRectangleChanged();
+    void videoStreamTypeChanged();
 
 private:
     MAV_AUTOPILOT _firmwareType = MAV_AUTOPILOT_PX4;
@@ -200,6 +225,7 @@ private:
     bool _cameraHasBasicZoom = true;
     bool _cameraHasTrackingPoint = true;
     bool _cameraHasTrackingRectangle = true;
+    VideoStreamType _videoStreamType = VideoStreamNone;
 
     // Gimbal capability flags (defaults - all enabled)
     bool _gimbalHasRollAxis = true;
@@ -235,6 +261,7 @@ private:
     static constexpr const char *_cameraHasBasicZoomKey = "CameraHasBasicZoom";
     static constexpr const char *_cameraHasTrackingPointKey = "CameraHasTrackingPoint";
     static constexpr const char *_cameraHasTrackingRectangleKey = "CameraHasTrackingRectangle";
+    static constexpr const char *_videoStreamTypeKey = "VideoStreamType";
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MockConfiguration::Options)

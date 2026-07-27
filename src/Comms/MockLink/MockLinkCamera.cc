@@ -690,7 +690,57 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
     QByteArray nameBA = name.toLocal8Bit();
     nameBA.resize(MAVLINK_MSG_VIDEO_STREAM_INFORMATION_FIELD_NAME_LEN);
 
-    const QString uri = QStringLiteral("udp://127.0.0.1:5600");
+    // Match the transport/codec/URI to whatever MockLink is actually serving so QGC's
+    // receiver auto-configures correctly. Falls back to a static UDP H.264 advertisement
+    // when no live stream is being served (e.g. GStreamer streaming disabled at build).
+    uint8_t streamType = VIDEO_STREAM_TYPE_RTPUDP;
+    uint8_t encoding = VIDEO_STREAM_ENCODING_H264;
+    QString uri = QStringLiteral("udp://127.0.0.1:5600");
+    uint16_t flags = VIDEO_STREAM_STATUS_FLAGS_RUNNING;
+
+    MockConfiguration::VideoStreamType servedType = MockConfiguration::VideoStreamNone;
+    QString servedUri;
+    _mockLink->servedVideoStream(servedType, servedUri);
+    switch (servedType) {
+    case MockConfiguration::VideoStreamRtpUdpH264:
+        streamType = VIDEO_STREAM_TYPE_RTPUDP;
+        encoding = VIDEO_STREAM_ENCODING_H264;
+        uri = servedUri;
+        break;
+    case MockConfiguration::VideoStreamRtpUdpH265:
+        streamType = VIDEO_STREAM_TYPE_RTPUDP;
+        encoding = VIDEO_STREAM_ENCODING_H265;
+        uri = servedUri;
+        break;
+    case MockConfiguration::VideoStreamRtspH264:
+        streamType = VIDEO_STREAM_TYPE_RTSP;
+        encoding = VIDEO_STREAM_ENCODING_H264;
+        uri = servedUri;
+        break;
+    case MockConfiguration::VideoStreamMpegTsUdp:
+        streamType = VIDEO_STREAM_TYPE_MPEG_TS;
+        encoding = VIDEO_STREAM_ENCODING_H264;
+        uri = servedUri;
+        break;
+    case MockConfiguration::VideoStreamMpegTsTcp:
+        streamType = VIDEO_STREAM_TYPE_TCP_MPEG;
+        encoding = VIDEO_STREAM_ENCODING_H264;
+        uri = servedUri;
+        break;
+    case MockConfiguration::VideoStreamNone:
+#ifdef QGC_GST_STREAMING
+        // A specific stream type was requested but no live server is running (start failed).
+        // Advertise it as not-running with an empty URI so QGC doesn't try to open a receiver
+        // on a dead stream (video auto-configuration keys off the URI, not the RUNNING flag).
+        // When nothing was requested (the default), keep the historical static UDP advertisement.
+        if (_mockLink->requestedVideoStreamType() != MockConfiguration::VideoStreamNone) {
+            flags = 0;
+            uri.clear();
+        }
+#endif
+        break;
+    }
+
     QByteArray uriBA = uri.toLocal8Bit();
     uriBA.resize(MAVLINK_MSG_VIDEO_STREAM_INFORMATION_FIELD_URI_LEN);
 
@@ -702,25 +752,40 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
         &msg,
         streamId,                               // stream_id
         kNumStreams,                            // count
-        VIDEO_STREAM_TYPE_RTPUDP,               // type
-        VIDEO_STREAM_STATUS_FLAGS_RUNNING,      // flags
+        streamType,                             // type
+        flags,                                  // flags
         30,                                     // framerate
-        1920,                                   // resolution_h
-        1080,                                   // resolution_v
-        4000,                                   // bitrate (kbit/s)
+        1280,                                   // resolution_h (matches MockVideoStreamServer test source)
+        720,                                    // resolution_v
+        2000,                                   // bitrate (kbit/s, matches encoder settings)
         0,                                      // rotation
         70,                                     // hfov
         nameBA.constData(),
         uriBA.constData(),
-        VIDEO_STREAM_ENCODING_H264,
+        encoding,
         0);                                     // encoding_sub
     _mockLink->respondWithMavlinkMessage(msg);
 
-    qCDebug(MockLinkCameraLog) << "Sent VIDEO_STREAM_INFORMATION for compId:" << compId << "stream:" << streamId;
+    qCDebug(MockLinkCameraLog) << "Sent VIDEO_STREAM_INFORMATION for compId:" << compId << "stream:" << streamId
+                               << "type:" << streamType << "uri:" << uri;
 }
 
 void MockLinkCamera::_sendVideoStreamStatus(uint8_t compId, uint8_t streamId)
 {
+    // Mirror the served/requested logic in _sendVideoStreamInformation: when a specific
+    // stream type was requested but no live server is running, report not-running so
+    // STATUS doesn't overwrite the non-running state advertised in INFORMATION.
+    uint16_t flags = VIDEO_STREAM_STATUS_FLAGS_RUNNING;
+#ifdef QGC_GST_STREAMING
+    MockConfiguration::VideoStreamType servedType = MockConfiguration::VideoStreamNone;
+    QString servedUri;
+    _mockLink->servedVideoStream(servedType, servedUri);
+    if (servedType == MockConfiguration::VideoStreamNone
+            && _mockLink->requestedVideoStreamType() != MockConfiguration::VideoStreamNone) {
+        flags = 0;
+    }
+#endif
+
     mavlink_message_t msg{};
     (void) mavlink_msg_video_stream_status_pack_chan(
         _mockLink->vehicleId(),
@@ -728,11 +793,11 @@ void MockLinkCamera::_sendVideoStreamStatus(uint8_t compId, uint8_t streamId)
         _mockLink->outgoingMavlinkChannel(),
         &msg,
         streamId,                               // stream_id
-        VIDEO_STREAM_STATUS_FLAGS_RUNNING,      // flags
+        flags,                                  // flags
         30,                                     // framerate
-        1920,                                   // resolution_h
-        1080,                                   // resolution_v
-        4000,                                   // bitrate (kbit/s)
+        1280,                                   // resolution_h (matches MockVideoStreamServer test source)
+        720,                                    // resolution_v
+        2000,                                   // bitrate (kbit/s, matches encoder settings)
         0,                                      // rotation
         70,                                     // hfov
         0);                                     // encoding (reserved in status)

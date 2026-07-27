@@ -22,6 +22,7 @@ class MockLinkCamera;
 class MockLinkFTP;
 class MockLinkGimbal;
 class MockLinkWorker;
+class MockVideoStreamServer;
 class QThread;
 
 class MockLink : public LinkInterface
@@ -195,14 +196,23 @@ public:
     /// status is a MAV_ODID_ARM_STATUS value.
     void setRemoteIDArmStatus(uint8_t status, const QString& error);
 
-    static MockLink *startPX4MockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startPX4MockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
     static MockLink *startPX4MockLinkWithMission(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startGenericMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startGenericMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
     static MockLink *startNoInitialConnectMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startAPMArduCopterMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startAPMArduPlaneMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startAPMArduSubMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
-    static MockLink *startAPMArduRoverMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
+    static MockLink *startAPMArduCopterMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
+    static MockLink *startAPMArduPlaneMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
+    static MockLink *startAPMArduSubMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
+    static MockLink *startAPMArduRoverMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
+
+    /// Thread-safe snapshot of the video stream actually being served (VideoStreamNone/empty
+    /// when none is served). Safe to call from the worker thread while _connect()/disconnect()
+    /// mutate the served state on the main thread. MockLinkCamera advertises
+    /// VIDEO_STREAM_INFORMATION consistent with this snapshot.
+    void servedVideoStream(MockConfiguration::VideoStreamType &type, QString &uri) const;
+
+    /// Video stream type the configuration requested (immutable after construction).
+    MockConfiguration::VideoStreamType requestedVideoStreamType() const { return _requestedVideoStreamType; }
 
     // Special commands for testing Vehicle::sendMavCommandWithHandler
     static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED = MAV_CMD_USER_1;
@@ -317,8 +327,11 @@ private:
     int  _availableModesCount() const;
     void _moveADSBVehicle(int vehicleIndex);
 
-    static MockLink *_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode);
+    static MockLink *_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
     static MockLink *_startMockLink(MockConfiguration *mockConfig);
+
+    void _startVideoStreamServer();
+    void _stopVideoStreamServer();
 
     /// Creates a file with random contents of the specified size.
     /// @return Fully qualified path to created file
@@ -351,6 +364,14 @@ private:
     MockLinkGimbal *const _mockLinkGimbal = nullptr;
     MockLinkPX4Calibration *const _mockLinkPX4Calibration = nullptr;
     MockLinkFTP *const _mockLinkFTP = nullptr;
+
+    const MockConfiguration::VideoStreamType _requestedVideoStreamType = MockConfiguration::VideoStreamNone;
+    MockVideoStreamServer *_videoStreamServer = nullptr;
+    // Served state is written on the connect/disconnect thread and read from the worker
+    // thread (MockLinkCamera), so it is guarded by _videoStreamMutex.
+    mutable QMutex _videoStreamMutex;
+    MockConfiguration::VideoStreamType _servedVideoStreamType = MockConfiguration::VideoStreamNone;
+    QString _videoStreamUri;
 
     uint8_t _incomingMavlinkChannel = std::numeric_limits<uint8_t>::max();
     QMutex _incomingMavlinkMutex;

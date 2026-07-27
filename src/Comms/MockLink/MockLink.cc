@@ -15,6 +15,10 @@
 #include "AppMessages.h"
 #include "QGCMath.h"
 
+#ifdef QGC_GST_STREAMING
+#include "MockVideoStreamServer.h"
+#endif
+
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
@@ -96,6 +100,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
                                     : nullptr)
     , _mockLinkPX4Calibration(new MockLinkPX4Calibration(this))
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
+    , _requestedVideoStreamType(_mockConfig->videoStreamTypeEnum())
 {
     qCDebug(MockLinkLog) << this;
 
@@ -176,6 +181,9 @@ bool MockLink::_connect()
         }
         mavlink_status_t *const incomingStatus = mavlink_get_channel_status(_incomingMavlinkChannel);
         incomingStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+
+        _startVideoStreamServer();
+
         emit connected();
     }
 
@@ -203,12 +211,93 @@ void MockLink::disconnect()
         mavlink_reset_channel_status(_outgoingMavlinkChannel);
     }
 
+    // Must run before the disconnected emit below: that signal can release the last
+    // shared_ptr to this MockLink, so touching members afterwards is use-after-free.
+    _stopVideoStreamServer();
+
     if (_connected) {
         _connected = false;
         if (!_disconnectedEmitted.exchange(true)) {
             emit disconnected();
         }
     }
+}
+
+void MockLink::_startVideoStreamServer()
+{
+#ifdef QGC_GST_STREAMING
+    // Only serve a stream when a camera advertising a video stream is present and a type was requested.
+    if (_videoStreamServer || !_mockLinkCamera || !_mockConfig->cameraHasVideoStream()
+            || _requestedVideoStreamType == MockConfiguration::VideoStreamNone) {
+        return;
+    }
+
+    MockVideoStreamServer::StreamType serverType = MockVideoStreamServer::StreamType::RtpUdpH264;
+    quint16 port = 5600;
+    switch (_requestedVideoStreamType) {
+    case MockConfiguration::VideoStreamRtpUdpH264:
+        serverType = MockVideoStreamServer::StreamType::RtpUdpH264;
+        port = 5600;
+        break;
+    case MockConfiguration::VideoStreamRtpUdpH265:
+        serverType = MockVideoStreamServer::StreamType::RtpUdpH265;
+        port = 5601;
+        break;
+    case MockConfiguration::VideoStreamRtspH264:
+        serverType = MockVideoStreamServer::StreamType::RtspH264;
+        port = 8554;
+        break;
+    case MockConfiguration::VideoStreamMpegTsUdp:
+        serverType = MockVideoStreamServer::StreamType::MpegTsUdp;
+        port = 5600;
+        break;
+    case MockConfiguration::VideoStreamMpegTsTcp:
+        serverType = MockVideoStreamServer::StreamType::MpegTsTcp;
+        port = 5600;
+        break;
+    case MockConfiguration::VideoStreamNone:
+        return;
+    }
+
+    auto *server = new MockVideoStreamServer();
+    if (!server->start(serverType, QStringLiteral("127.0.0.1"), port)) {
+        qCWarning(MockLinkLog) << "Failed to start mock video stream server for type" << _requestedVideoStreamType;
+        delete server;
+        return;
+    }
+
+    _videoStreamServer = server;
+    {
+        QMutexLocker locker(&_videoStreamMutex);
+        _servedVideoStreamType = _requestedVideoStreamType;
+        _videoStreamUri = server->servedUri();
+    }
+    qCDebug(MockLinkLog) << "Mock video stream server serving" << server->servedUri();
+#endif
+}
+
+void MockLink::_stopVideoStreamServer()
+{
+#ifdef QGC_GST_STREAMING
+    // Clear the served-stream snapshot first so observers (servedVideoStream) stop
+    // advertising the URI before the server actually goes away.
+    {
+        QMutexLocker locker(&_videoStreamMutex);
+        _servedVideoStreamType = MockConfiguration::VideoStreamNone;
+        _videoStreamUri.clear();
+    }
+    if (_videoStreamServer) {
+        delete _videoStreamServer;
+        _videoStreamServer = nullptr;
+    }
+#endif
+}
+
+void MockLink::servedVideoStream(MockConfiguration::VideoStreamType &type, QString &uri) const
+{
+    QMutexLocker locker(&_videoStreamMutex);
+    type = _servedVideoStreamType;
+    uri = _videoStreamUri;
 }
 
 void MockLink::run1HzTasks()
@@ -2405,7 +2494,7 @@ MockLink *MockLink::_startMockLink(MockConfiguration *mockConfig)
     return nullptr;
 }
 
-MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode, MockConfiguration::VideoStreamType videoStreamType)
 {
     MockConfiguration *const mockConfig = new MockConfiguration(configName);
 
@@ -2419,14 +2508,15 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setStayMavlinkV1(options.testFlag(MockConfiguration::OptionStayMavlinkV1));
     mockConfig->setApmStartFreshParams(options.testFlag(MockConfiguration::OptionAPMStartFreshParams));
     mockConfig->setFtpCapability(options.testFlag(MockConfiguration::OptionFtpCapability));
+    mockConfig->setVideoStreamType(videoStreamType);
     mockConfig->setFailureMode(failureMode);
 
     return _startMockLink(mockConfig);
 }
 
-MockLink *MockLink::startPX4MockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startPX4MockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode, MockConfiguration::VideoStreamType videoStreamType)
 {
-    return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, options, failureMode);
+    return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, options, failureMode, videoStreamType);
 }
 
 MockLink *MockLink::startPX4MockLinkWithMission(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
@@ -2434,9 +2524,9 @@ MockLink *MockLink::startPX4MockLinkWithMission(MockConfiguration::Options optio
     return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, options | MockConfiguration::OptionPreloadMission, failureMode);
 }
 
-MockLink *MockLink::startGenericMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startGenericMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode, MockConfiguration::VideoStreamType videoStreamType)
 {
-    return _startMockLinkWorker(QStringLiteral("Generic MockLink"), MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR, options, failureMode);
+    return _startMockLinkWorker(QStringLiteral("Generic MockLink"), MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR, options, failureMode, videoStreamType);
 }
 
 MockLink *MockLink::startNoInitialConnectMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
@@ -2444,24 +2534,24 @@ MockLink *MockLink::startNoInitialConnectMockLink(MockConfiguration::Options opt
     return _startMockLinkWorker(QStringLiteral("No Initial Connect MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC, options, failureMode);
 }
 
-MockLink *MockLink::startAPMArduCopterMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startAPMArduCopterMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode, MockConfiguration::VideoStreamType videoStreamType)
 {
-    return _startMockLinkWorker(QStringLiteral("ArduCopter MockLink"),MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_QUADROTOR, options, failureMode);
+    return _startMockLinkWorker(QStringLiteral("ArduCopter MockLink"),MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_QUADROTOR, options, failureMode, videoStreamType);
 }
 
-MockLink *MockLink::startAPMArduPlaneMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startAPMArduPlaneMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode, MockConfiguration::VideoStreamType videoStreamType)
 {
-    return _startMockLinkWorker(QStringLiteral("ArduPlane MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, options, failureMode);
+    return _startMockLinkWorker(QStringLiteral("ArduPlane MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, options, failureMode, videoStreamType);
 }
 
-MockLink *MockLink::startAPMArduSubMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startAPMArduSubMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode, MockConfiguration::VideoStreamType videoStreamType)
 {
-    return _startMockLinkWorker(QStringLiteral("ArduSub MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_SUBMARINE, options, failureMode);
+    return _startMockLinkWorker(QStringLiteral("ArduSub MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_SUBMARINE, options, failureMode, videoStreamType);
 }
 
-MockLink *MockLink::startAPMArduRoverMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::startAPMArduRoverMockLink(MockConfiguration::Options options, MockConfiguration::FailureMode_t failureMode, MockConfiguration::VideoStreamType videoStreamType)
 {
-    return _startMockLinkWorker(QStringLiteral("ArduRover MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_GROUND_ROVER, options, failureMode);
+    return _startMockLinkWorker(QStringLiteral("ArduRover MockLink"), MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_GROUND_ROVER, options, failureMode, videoStreamType);
 }
 
 void MockLink::_sendRCChannels()
