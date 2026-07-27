@@ -59,7 +59,7 @@ The `just` recipes are the canonical workflow — see [tools/README.md](tools/RE
 
 ```bash
 just configure          # CMake configure (pulls submodules first)
-just build              # incremental build; leaves ~half the cores free
+just build              # incremental build; uses all cores (override with JOBS=N)
 just test               # ctest, LABELS="Unit|Integration" EXCLUDE="Flaky|Network"
 just lint               # fast pre-commit gate (clang-format, ruff, qmllint, ...)
 just check              # lint + test (run before declaring done)
