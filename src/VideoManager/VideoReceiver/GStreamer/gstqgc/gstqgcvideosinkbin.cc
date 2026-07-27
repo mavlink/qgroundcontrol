@@ -296,43 +296,12 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
     }
 #else
     GstElement* glupload = nullptr;
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    // Memory-aware D3D11 conversion: d3d11upload lifts a software decoder's system-memory frame into
-    // D3D11Memory and d3d11convert normalizes any non-Qt-renderable format (e.g. 4:4:4/packed) to a sink
-    // format. Both passthrough (no copy) when the HW decoder already delivers an advertised D3D11Memory
-    // format, so the zero-copy fast path is preserved. Missing factories fall back to the direct link.
-    // D3D11-only is safe: gpuZeroCopyAllowedForCurrentGraphicsApi() routes a D3D12 RHI to the CPU path, so
-    // wireGpuPath only runs under D3D11 RHI where the decoder family is aligned to D3D11Memory output.
-    GstElement* d3d11upload = gst_element_factory_make("d3d11upload", nullptr);
-    GstElement* d3d11convert = gst_element_factory_make("d3d11convert", nullptr);
-    if (d3d11upload && d3d11convert) {
-        if (!chain.adopt(d3d11upload)) {
-            gst_clear_object(&d3d11convert);
-            GST_ERROR_OBJECT(self, "Failed to add d3d11upload to GPU path");
-            return FALSE;
-        }
-        if (!chain.adopt(d3d11convert)) {
-            GST_ERROR_OBJECT(self, "Failed to add d3d11convert to GPU path");
-            return FALSE;
-        }
-        if (!chain.linkChain({d3d11upload, d3d11convert, capsf, videosink}) || !chain.ghostSink(d3d11upload)) {
-            GST_ERROR_OBJECT(self, "Failed to link/ghost d3d11upload→d3d11convert→capsfilter→qgcqvideosink");
-            return FALSE;
-        }
-    } else {
-        gst_clear_object(&d3d11upload);
-        gst_clear_object(&d3d11convert);
-        if (!chain.linkChain({capsf, videosink}) || !chain.ghostSink(capsf)) {
-            GST_ERROR_OBJECT(self, "Failed to link/ghost qgcqvideosink (GPU path, d3d11 convert unavailable)");
-            return FALSE;
-        }
-    }
-#else
+    // Keep native GPU memory direct. buildGpuCapsString() also offers system memory, which
+    // qgcqvideosink maps through its CPU fallback instead of uploading software-decoded frames.
     if (!chain.linkChain({capsf, videosink}) || !chain.ghostSink(capsf)) {
         GST_ERROR_OBJECT(self, "Failed to link/ghost qgcqvideosink (GPU path)");
         return FALSE;
     }
-#endif
 #endif
 
     chain.commit();
