@@ -1,6 +1,7 @@
 #include "GraphicsSetup.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRunnable>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QString>
@@ -53,7 +54,12 @@ void configurePipelineCache(QQuickGraphicsConfiguration& config)
     }
 
     const QString cacheFile = cacheDir + QStringLiteral("/qgc_rhi_pipeline.cache");
-    config.setPipelineCacheLoadFile(cacheFile);
+    // Only load when the cache already exists: Qt 6.11 warns if the load file
+    // can't be opened, which is expected on first run. Always set the save file
+    // so the cache is written at shutdown and picked up on the next launch.
+    if (QFileInfo::exists(cacheFile)) {
+        config.setPipelineCacheLoadFile(cacheFile);
+    }
     config.setPipelineCacheSaveFile(cacheFile);
     qCDebug(GraphicsSetupLog) << "RHI pipeline cache:" << cacheFile;
 }
