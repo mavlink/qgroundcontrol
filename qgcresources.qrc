@@ -37,13 +37,13 @@
         <file alias="pencil.svg">resources/pencil.svg</file>
         <file alias="Play.svg">resources/Play.svg</file>
         <file alias="PowerButton.svg">resources/PowerButton.svg</file>
-        <file alias="QGCLogoBlack.svg">resources/QGCLogoBlack.svg</file>
-        <file alias="QGCLogoFull.svg">resources/QGCLogoFull.svg</file>
-        <file alias="QGCLogoWhite.svg">resources/QGCLogoWhite.svg</file>
-        <file alias="QGCLogoArrow.svg">resources/QGCLogoArrow.svg</file>
+        <file alias="QGCLogoBlack.svg">resources/brand/QGCLogoBlack.svg</file>
+        <file alias="QGCLogoFull.svg">resources/brand/QGCLogoFull.svg</file>
+        <file alias="QGCLogoWhite.svg">resources/brand/QGCLogoWhite.svg</file>
+        <file alias="QGCLogoArrow.svg">resources/brand/QGCLogoArrow.svg</file>
         <file alias="QGroundControlConnect.svg">resources/QGroundControlConnect.svg</file>
         <file alias="rtl.svg">resources/rtl.svg</file>
-        <file alias="SplashScreen">resources/SplashScreen.png</file>
+        <file alias="SplashScreen">resources/brand/SplashScreen.png</file>
         <file alias="Stop.svg">resources/Stop.svg</file>
         <file alias="takeoff.svg">resources/takeoff.svg</file>
         <file alias="terrain.svg">resources/terrain.svg</file>
@@ -60,7 +60,7 @@
         <file alias="Gripper.svg">resources/Gripper.svg</file>
         <file alias="GripperRelease.svg">resources/GripperRelease.svg</file>
         <file alias="GripperGrab.svg">resources/GripperGrab.svg</file>
-        <file alias="qgroundcontrol.ico">resources/icons/qgroundcontrol.ico</file>
+        <file alias="qgroundcontrol.ico">resources/brand/qgroundcontrol.ico</file>
     </qresource>
     <qresource prefix="/res/firmware">
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>
