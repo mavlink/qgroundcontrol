@@ -57,7 +57,7 @@ Button {
             height:                 ScreenTools.defaultFontPixelHeight * 2
             fillMode:               Image.PreserveAspectFit
             mipmap:                 true
-            color:                  imageColor ? imageColor : (control.setupComplete ? titleBar.color : "red")
+            color:                  imageColor ? imageColor : (control.setupComplete ? (typeof titleBar !== "undefined" ? titleBar.color : qgcPal.text) : "red")
             source:                 control.imageResource
             sourceSize:             control.sourceSize
         }
