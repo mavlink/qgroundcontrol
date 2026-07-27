@@ -662,6 +662,149 @@ class TestGeneratePageQml:
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledFactBrowse {" in qml
 
+    def test_browse_control_properties(self, settings_dir: Path):
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    controls=[
+                        ControlDef(
+                            setting="appSettings.savePath",
+                            control="browse",
+                            properties={"selectFolder": "false", "nameFilters": '[ qsTr("OSM (*.osm)") ]'},
+                        )
+                    ]
+                ),
+            ]
+        )
+        qml = generate_page_qml(page, settings_dir)
+        assert "selectFolder: false" in qml
+        assert 'nameFilters: [ qsTr("OSM (*.osm)") ]' in qml
+
+    def test_properties_rejected_on_non_browse_control(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "controls": [
+                        {"setting": "appSettings.x", "control": "textfield", "properties": {"a": "b"}}
+                    ],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="properties"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_properties_bad_name_rejected(self, tmp_path: Path):
+        # Property names are emitted verbatim into QML; invalid ones must fail at load time
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "controls": [
+                        {
+                            "setting": "appSettings.x",
+                            "control": "browse",
+                            "properties": {"name filters": "[]"},
+                        }
+                    ],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="valid QML property name"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    @pytest.mark.parametrize("reserved", ["id", "objectName", "label", "fact", "enabled"])
+    def test_properties_reserved_name_rejected(self, tmp_path: Path, reserved: str):
+        # These are already emitted by the control template; a JSON override would
+        # generate a duplicate binding that only fails later at qmllint/build time
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "controls": [
+                        {
+                            "setting": "appSettings.x",
+                            "control": "browse",
+                            "properties": {reserved: "oops"},
+                        }
+                    ],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="reserved"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_properties_primitive_values_coerced(self, tmp_path: Path):
+        # JSON booleans/numbers must become QML literals, not Python reprs (True/False)
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "controls": [
+                        {
+                            "setting": "appSettings.x",
+                            "control": "browse",
+                            "properties": {"selectFolder": False, "maxCount": 42},
+                        }
+                    ],
+                }
+            ],
+        }
+        page = load_page_def(_make_page_json(tmp_path, data))
+        props = page.groups[0].controls[0].properties
+        assert props["selectFolder"] == "false"
+        assert props["maxCount"] == "42"
+
+    def test_properties_non_primitive_value_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "controls": [
+                        {
+                            "setting": "appSettings.x",
+                            "control": "browse",
+                            "properties": {"nameFilters": ["*.osm"]},
+                        }
+                    ],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="string, boolean, or number"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_properties_end_to_end_json_to_qml(self, tmp_path: Path, settings_dir: Path):
+        # Full pipeline: JSON schema -> load_page_def (coercion) -> generate_page_qml.
+        # Guards the seam between loader and emitter that the unit tests above bypass.
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "controls": [
+                        {
+                            "setting": "appSettings.savePath",
+                            "control": "browse",
+                            "properties": {
+                                "selectFolder": False,
+                                "nameFilters": '[ qsTr("OSM (*.osm)") ]',
+                            },
+                        }
+                    ],
+                }
+            ],
+        }
+        page = load_page_def(_make_page_json(tmp_path, data))
+        qml = generate_page_qml(page, settings_dir)
+        assert "LabelledFactBrowse {" in qml
+        assert "selectFolder: false" in qml
+        assert 'nameFilters: [ qsTr("OSM (*.osm)") ]' in qml
+
     def test_slider_control(self, settings_dir: Path):
         page = PageDef(
             groups=[
@@ -981,6 +1124,10 @@ class TestRealPageDefinitions:
         assert 'heading: qsTr("General")' in qml
         assert 'heading: qsTr("Data")' in qml
         assert "viewer3DSettings.enabled" in qml
+        # osmFilePath browse control: properties from the JSON must survive to QML
+        assert "LabelledFactBrowse {" in qml
+        assert "selectFolder: false" in qml
+        assert "nameFilters:" in qml
 
     def test_pages_model_generates(self, repo_root: Path):
         pages_path = repo_root / "src" / "AppSettings" / "pages" / "SettingsPages.json"

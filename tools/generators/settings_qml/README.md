@@ -118,6 +118,7 @@ A collapsible group with an optional heading.
 | `showWhen` | string | no | Extra QML visibility expression (combined with `fact.userVisible` via logical AND) |
 | `enableWhen` | string | no | QML expression bound to `enabled` |
 | `placeholder` | string | no | Placeholder text for text fields |
+| `properties` | object | no | Extra QML property bindings for `browse`/`scaler` controls (see below) |
 | `enableCheckbox` | object | no | Enable-checkbox for sliders (see below) |
 | `button` | object | no | Adjacent button (see below) |
 
@@ -155,6 +156,25 @@ Explicit `control` values:
 | --- | --- | --- |
 | `enableCheckbox` | object | `{ "checked": "expr", "onClicked": "body" }` |
 | `button` | object | `{ "text": "label", "onClicked": "body", "enabled": "expr" }` |
+
+#### `browse` / `scaler` extra keys
+
+`properties` maps QML property names to values emitted into the control.
+Booleans and numbers map to their QML literals; strings are emitted verbatim
+as QML expressions. For example, to make a `browse` control pick a file
+instead of a folder:
+
+```json
+{
+    "setting": "viewer3DSettings.osmFilePath",
+    "control": "browse",
+    "showWhen": "!ScreenTools.isMobile",
+    "properties": {
+        "selectFolder": false,
+        "nameFilters": "[ qsTr(\"OpenStreetMap files (*.osm)\") ]"
+    }
+}
+```
 
 ---
 

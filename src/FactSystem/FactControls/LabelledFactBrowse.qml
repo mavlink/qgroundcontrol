@@ -14,6 +14,7 @@ import QGroundControl.FactControls
 ///   label        - Display label (defaults to fact.shortDescription).
 ///   dialogTitle  - Title for the file dialog (defaults to label).
 ///   selectFolder - true to browse folders, false for files (default true).
+///   nameFilters  - Name filters for file browsing (simple wildcards only).
 ///   defaultText  - Placeholder shown when the Fact value is empty.
 RowLayout {
     id:      root
@@ -22,6 +23,7 @@ RowLayout {
     property Fact   fact
     property string dialogTitle:    label
     property bool   selectFolder:   true
+    property var    nameFilters:    []
     property string defaultText:    qsTr("<not set>")
 
     spacing: ScreenTools.defaultFontPixelWidth * 2
@@ -53,6 +55,7 @@ RowLayout {
             title:              root.dialogTitle
             folder:             root.fact.rawValue
             selectFolder:       root.selectFolder
+            nameFilters:        root.nameFilters
             onAcceptedForLoad:  (file) => root.fact.rawValue = file
         }
     }

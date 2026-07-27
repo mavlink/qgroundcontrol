@@ -23,7 +23,18 @@
             "enableWhen": "QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue",
             "controls": [
                 {
-                    "setting": "viewer3DSettings.osmFilePath"
+                    "setting": "viewer3DSettings.osmFilePath",
+                    "control": "browse",
+                    "showWhen": "!ScreenTools.isMobile",
+                    "properties": {
+                        "selectFolder": false,
+                        "nameFilters": "[ qsTr(\"OpenStreetMap files (*.osm)\"), qsTr(\"All Files (*)\") ]"
+                    }
+                },
+                {
+                    "setting": "viewer3DSettings.osmFilePath",
+                    "control": "textfield",
+                    "showWhen": "ScreenTools.isMobile"
                 },
                 {
                     "setting": "viewer3DSettings.buildingLevelHeight"

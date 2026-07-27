@@ -21,12 +21,40 @@ _TRANSLATED_LIST_RE = re.compile("[,，、]")
 # ASCII-only, non-empty segments: fact_name feeds objectNames, which must stay grep-able.
 _SETTING_RE = re.compile(r"[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+")
 
+# QML property names emitted verbatim into generated QML; a bad name must fail here
+# with context, not as a qmllint/build error pointing at generated code.
+_QML_PROPERTY_NAME_RE = re.compile(r"[a-z_][A-Za-z0-9_]*")
+
+# Names the control template already emits (or that QML treats specially); a JSON
+# 'properties' entry using one would generate a duplicate binding.
+_RESERVED_PROPERTY_NAMES = frozenset({"id", "objectName", "label", "fact", "enabled"})
+
+
+def _coerce_property_value(value: object) -> str:
+    """Convert a JSON property value to a QML expression string.
+
+    JSON booleans and numbers map to their QML literals so authors can write
+    the natural spelling (e.g. ``"selectFolder": false``); strings pass
+    through verbatim as QML expressions. Anything else is a schema error.
+    """
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return repr(value)
+    if isinstance(value, str):
+        return value
+    raise ValueError(
+        f"'properties' value must be a string, boolean, or number, "
+        f"got {type(value).__name__}: {clamped_repr(value)}"
+    )
+
 
 @dataclass
 class ControlDef(BaseControlDef):
     """A single control referencing a setting."""
     placeholder: str = ""
     value: str = ""
+    properties: dict[str, str] = field(default_factory=dict)
 
     @property
     def settings_group(self) -> str:
@@ -86,7 +114,7 @@ _ALLOWED_GROUP_KEYS = frozenset({
 })
 _ALLOWED_CONTROL_KEYS = frozenset({
     "comment", "setting", "label", "control", "showWhen", "enableWhen",
-    "placeholder", "value", "component",
+    "placeholder", "value", "component", "properties",
     "enableCheckbox", "button",
 })
 
@@ -125,9 +153,30 @@ def load_page_def(json_path: Path) -> PageDef:
                 placeholder=ctrl_data.get("placeholder", ""),
                 value=ctrl_data.get("value", ""),
                 component=ctrl_data.get("component", ""),
+                properties=require_dict(ctrl_data.get("properties", {}), "control 'properties'", json_path),
                 enableCheckbox=parse_enable_checkbox(ctrl_data.get("enableCheckbox")),
                 button=parse_button(ctrl_data.get("button")),
             )
+            if ctrl.properties and ctrl.control not in ("browse", "scaler"):
+                raise ValueError(
+                    f"{json_path}: 'properties' is only supported on 'browse'/'scaler' controls, "
+                    f"got control {ctrl.control!r} (control: {clamped_repr(ctrl_data)})"
+                )
+            for prop_name, prop_value in ctrl.properties.items():
+                if not _QML_PROPERTY_NAME_RE.fullmatch(prop_name):
+                    raise ValueError(
+                        f"{json_path}: 'properties' key must be a valid QML property name, "
+                        f"got: {prop_name!r} (control: {clamped_repr(ctrl_data)})"
+                    )
+                if prop_name in _RESERVED_PROPERTY_NAMES:
+                    raise ValueError(
+                        f"{json_path}: 'properties' key {prop_name!r} is reserved (already emitted "
+                        f"by the generator) (control: {clamped_repr(ctrl_data)})"
+                    )
+                try:
+                    ctrl.properties[prop_name] = _coerce_property_value(prop_value)
+                except ValueError as exc:
+                    raise ValueError(f"{json_path}: {exc} (control: {clamped_repr(ctrl_data)})") from None
             # component/info controls have no fact; every other kind derives its fact
             # reference and objectName from setting, so a bad one must fail here with
             # context, not deep inside the emitter with an IndexError
