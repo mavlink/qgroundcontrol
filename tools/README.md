@@ -102,7 +102,7 @@ with no arguments to print this list from the tool itself.
 | Recipe              | Description                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------------ |
 | `just configure`    | Configure CMake build (Debug by default; pulls submodules first)                                 |
-| `just build`        | Build the project (`--parallel` capped at half of `nproc`; override with `JOBS=N`)               |
+| `just build`        | Build the project (uses all cores by default; override with `JOBS=N`)                            |
 | `just release`      | Configure and build in Release mode (testing disabled)                                           |
 | `just clean [ARGS]` | Clean the build directory; forwards `ARGS` to `tools/clean.py` (`--cache`, `--all`, `--dry-run`) |
 | `just rebuild`      | `clean` + `configure` + `build`                                                                  |
