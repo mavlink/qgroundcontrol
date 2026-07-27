@@ -70,8 +70,13 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
  * @return exit code, 0 for normal exit and !=0 for error cases
  */
 
+#include <fstream>
+
 int main(int argc, char *argv[])
 {
+    std::ofstream log("C:\\projects\\qgroundcontrol\\startup.log", std::ios::out | std::ios::app);
+    log << "main() started" << std::endl;
+
     bool runUnitTests = false;
     bool simpleBootTest = false;
     QString systemIdStr = QString();
@@ -87,8 +92,8 @@ int main(int argc, char *argv[])
         { "--unittest",             &runUnitTests,          &unitTestOptions },
         { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
         { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
-        { "--allow-multiple",       &bypassRunGuard,        nullptr },
 #endif
+        { "--allow-multiple",       &bypassRunGuard,        nullptr },
         { "--system-id",            &hasSystemId,           &systemIdStr },
         { "--simple-boot-test",     &simpleBootTest,        nullptr },
         // Add additional command line option flags here
@@ -97,133 +102,47 @@ int main(int argc, char *argv[])
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-    // We make the runguard key different for custom and non custom
-    // builds, so they can be executed together in the same device.
-    // Stable and Daily have same QGC_APP_NAME so they would
-    // not be able to run at the same time
     const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QGC_APP_NAME);
 
     RunGuard guard(runguardString);
     if (!bypassRunGuard && !guard.tryToRun()) {
+        log << "RunGuard failed, exiting" << std::endl;
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APP_NAME)
         );
         return -1;
     }
+    log << "RunGuard passed" << std::endl;
 #endif
 
-#ifdef Q_OS_LINUX
-#ifndef Q_OS_ANDROID
-    if (getuid() == 0) {
-        QApplication errorApp(argc, argv);
-        QMessageBox::critical(nullptr, QObject::tr("Error"),
-            QObject::tr("You are running %1 as root. "
-                "You should not do this since it will cause other issues with %1."
-                "%1 will now exit.<br/><br/>").arg(QGC_APP_NAME)
-        );
-        return -1;
-    }
-#endif
-#endif
-
-#ifdef Q_OS_UNIX
-    if (!qEnvironmentVariableIsSet("QT_LOGGING_TO_CONSOLE")) {
-        qputenv("QT_LOGGING_TO_CONSOLE", "1");
-    }
-#endif
-
-    QGCLogging::installHandler();
-
-#ifdef Q_OS_MACOS
-    // Prevent Apple's app nap from screwing us over
-    // tip: the domain can be cross-checked on the command line with <defaults domains>
-    QProcess::execute("defaults", {"write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES"});
-#endif
-
-#ifdef Q_OS_WIN
-    // Set our own OpenGL buglist
-    // qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
-
-    // Allow for command line override of renderer
-    for (int i = 0; i < argc; i++) {
-        const QString arg(argv[i]);
-        if (arg == QStringLiteral("-desktop")) {
-            QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
-            break;
-        } else if (arg == QStringLiteral("-swrast")) {
-            QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
-            break;
-        }
-    }
-#endif
-
-#ifdef QT_DEBUG
-    if (stressUnitTests) {
-        runUnitTests = true;
-    }
-
-#ifdef Q_OS_WIN
-    if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
-        qputenv("QT_WIN_DEBUG_CONSOLE", "attach"); // new
-    }
-
-    if (quietWindowsAsserts) {
-        _CrtSetReportHook(WindowsCrtReportHook);
-    }
-
-    if (runUnitTests) {
-        // Don't pop up Windows Error Reporting dialog when app crashes. This prevents TeamCity from
-        // hanging.
-        const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
-        SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
-    }
-#endif // Q_OS_WIN
-#endif // QT_DEBUG
-
+    log << "Creating QGCApplication" << std::endl;
     QGCApplication app(argc, argv, runUnitTests, simpleBootTest);
 
-#ifdef Q_OS_LINUX
-#ifndef Q_OS_ANDROID
-    SignalHandler::instance();
-    (void) SignalHandler::setupSignalHandlers();
-#endif
-#endif
-
+    log << "Initializing app" << std::endl;
     app.init();
-
-    // Set system ID if specified via command line, for example --system-id:255
-    if (hasSystemId) {
-        bool ok;
-        int systemId = systemIdStr.toInt(&ok);
-        if (ok && systemId >= 1 && systemId <= 255) {  // MAVLink system IDs are 8-bit
-            qDebug() << "Setting MAVLink System ID to:" << systemId;
-            SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(systemId);
-        } else {
-            qDebug() << "Not setting MAVLink System ID. It must be between 0 and 255. Invalid system ID value:" << systemIdStr;
-        }
-    }
+    log << "app.init() completed" << std::endl;
 
     int exitCode = 0;
 
 #ifdef QGC_UNITTEST_BUILD
     if (runUnitTests) {
+        log << "Running unit tests" << std::endl;
         exitCode = runTests(stressUnitTests, unitTestOptions);
     } else
 #endif
     {
-        #ifdef Q_OS_ANDROID
-            AndroidInterface::checkStoragePermissions();
-        #endif
-
         if (!simpleBootTest) {
+            log << "Calling app.exec()" << std::endl;
             exitCode = app.exec();
+            log << "app.exec() returned code " << exitCode << std::endl;
         }
     }
 
+    log << "Calling app.shutdown()" << std::endl;
     app.shutdown();
 
-    qDebug() << "Exiting main";
+    log << "Exiting main cleanly" << std::endl;
 
     return exitCode;
 }

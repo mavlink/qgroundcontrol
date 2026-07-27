@@ -28,7 +28,7 @@ SettingsFact* SettingsGroup::_createSettingsFact(const QString& factName)
     FactMetaData* m = _nameToMetaDataMap[factName];
     if(!m) {
         qCritical() << "Fact name " << factName << "not found in" << QString(kJsonFile).arg(_name);
-        exit(-1);
+        return nullptr;
     }
     return new SettingsFact(_settingsGroup, m, this);
 }

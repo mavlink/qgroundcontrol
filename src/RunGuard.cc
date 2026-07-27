@@ -63,11 +63,15 @@ bool RunGuard::isAnotherRunning()
 
 bool RunGuard::tryToRun()
 {
-    if ( isAnotherRunning() )   // Extra check
-        return false;
-
     memLock.acquire();
-    const bool result = sharedMem.create( sizeof( quint64 ) );
+    bool result = sharedMem.create( sizeof( quint64 ) );
+    if ( !result ) {
+        // Cleanup stale shared memory segment from previous crashed/killed process
+        if ( sharedMem.attach() ) {
+            sharedMem.detach();
+            result = sharedMem.create( sizeof( quint64 ) );
+        }
+    }
     memLock.release();
     if ( !result )
     {
