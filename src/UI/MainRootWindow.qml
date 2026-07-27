@@ -351,6 +351,32 @@ ApplicationWindow {
                         SubMenuButton {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
+                            text:               qsTr("Volador Platform")
+                            imageResource:      "/res/QGCLogoArrow.svg"
+                            onClicked: {
+                                if (mainWindow.allowViewSwitch()) {
+                                    mainWindow.closeIndicatorDrawer()
+                                    mainWindow.showSettingsTool()
+                                }
+                            }
+                        }
+
+                        SubMenuButton {
+                            height:             toolSelectDialog._toolButtonHeight
+                            Layout.fillWidth:   true
+                            text:               qsTr("Fleet Management")
+                            imageResource:      "/qmlimages/Quad.svg"
+                            onClicked: {
+                                if (mainWindow.allowViewSwitch()) {
+                                    mainWindow.closeIndicatorDrawer()
+                                    mainWindow.showSettingsTool("Fleet Management")
+                                }
+                            }
+                        }
+
+                        SubMenuButton {
+                            height:             toolSelectDialog._toolButtonHeight
+                            Layout.fillWidth:   true
                             text:               qsTr("Plan Flight")
                             imageResource:      "/qmlimages/Plan.svg"
                             onClicked: {
