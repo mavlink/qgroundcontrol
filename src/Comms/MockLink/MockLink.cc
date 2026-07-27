@@ -1568,10 +1568,25 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
         return;
     }
 
-    Q_ASSERT(_mapParamName2Value.contains(componentId));
-    Q_ASSERT(_mapParamName2MavParamType.contains(componentId));
-    Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
-    Q_ASSERT(request.param_type == _mapParamName2MavParamType[componentId][paramId]);
+    // Real firmware rejects a PARAM_SET it doesn't recognize rather than crashing.
+    // QGC can legitimately send these: loading a QGC-format param file sends params
+    // not currently known to the vehicle (e.g. params unlocked by another param).
+    if (!_mapParamName2Value.contains(componentId) || !_mapParamName2MavParamType.contains(componentId)) {
+        qCDebug(MockLinkLog) << "_handleParamSet unknown component, rejecting with PARAM_ERROR - componentId:" << componentId << "param:" << paramId;
+        _sendParamError(componentId, paramId, -1, MAV_PARAM_ERROR_COMPONENT_NOT_FOUND);
+        return;
+    }
+    if (!_mapParamName2Value[componentId].contains(paramId)) {
+        qCDebug(MockLinkLog) << "_handleParamSet unknown param, rejecting with PARAM_ERROR - componentId:" << componentId << "param:" << paramId;
+        _sendParamError(componentId, paramId, -1, MAV_PARAM_ERROR_DOES_NOT_EXIST);
+        return;
+    }
+    if (request.param_type != _mapParamName2MavParamType[componentId][paramId]) {
+        qCDebug(MockLinkLog) << "_handleParamSet type mismatch, rejecting with PARAM_ERROR - param:" << paramId
+                             << "requested type:" << request.param_type << "actual type:" << _mapParamName2MavParamType[componentId][paramId];
+        _sendParamError(componentId, paramId, -1, MAV_PARAM_ERROR_TYPE_MISMATCH);
+        return;
+    }
 
     // Apply failure behaviors before committing change.
     if (_paramSetFailureMode == FailParamSetFirstAttemptNoAck && _paramSetFailureFirstAttemptPending) {
@@ -1649,7 +1664,12 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         return;
     }
 
-    Q_ASSERT(_mapParamName2Value.contains(componentId));
+    if (!_mapParamName2Value.contains(componentId)) {
+        qCDebug(MockLinkLog) << "_handleParamRequestRead unknown component, rejecting with PARAM_ERROR - componentId:" << componentId << "param:" << paramName;
+        const QByteArray paramIdBytes = paramName.toLocal8Bit();
+        _sendParamError(componentId, paramIdBytes.constData(), request.param_index, MAV_PARAM_ERROR_COMPONENT_NOT_FOUND);
+        return;
+    }
 
     char paramId[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN + 1]{};
     paramId[0] = 0;
@@ -1668,8 +1688,13 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         strcpy(paramId, key.toLocal8Bit().constData());
     }
 
-    Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
-    Q_ASSERT(_mapParamName2MavParamType[componentId].contains(paramId));
+    if (!_mapParamName2Value[componentId].contains(paramId) || !_mapParamName2MavParamType[componentId].contains(paramId)) {
+        // Real firmware rejects a read of a parameter it doesn't know about (e.g. QGC
+        // refreshing a param after a failed PARAM_SET for a param not on the vehicle)
+        qCDebug(MockLinkLog) << "_handleParamRequestRead unknown param, rejecting with PARAM_ERROR - componentId:" << componentId << "param:" << paramId;
+        _sendParamError(componentId, paramId, request.param_index, MAV_PARAM_ERROR_DOES_NOT_EXIST);
+        return;
+    }
 
     if ((_failureMode == MockConfiguration::FailMissingParamOnAllRequests) && (strcmp(paramId, _failParam) == 0)) {
         qCDebug(MockLinkLog) << "Ignoring request read for " << _failParam;
@@ -2638,14 +2663,23 @@ void MockLink::_logDownloadWorker()
     QFile file(_logDownloadFilename);
     if (!file.open(QIODevice::ReadOnly)) {
         qCWarning(MockLinkLog) << "_logDownloadWorker open failed" << file.errorString();
+        _logDownloadBytesRemaining = 0; // Abort transfer on I/O failure
         return;
     }
 
     uint8_t buffer[MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN]{};
 
     const qint64 bytesToRead = qMin(_logDownloadBytesRemaining, (uint32_t)MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-    Q_ASSERT(file.seek(_logDownloadCurrentOffset));
-    Q_ASSERT(file.read(reinterpret_cast<char*>(buffer), bytesToRead) == bytesToRead);
+    if (!file.seek(_logDownloadCurrentOffset)) {
+        qCWarning(MockLinkLog) << "_logDownloadWorker seek failed - offset:" << _logDownloadCurrentOffset << file.errorString();
+        _logDownloadBytesRemaining = 0; // Abort transfer on I/O failure
+        return;
+    }
+    if (file.read(reinterpret_cast<char*>(buffer), bytesToRead) != bytesToRead) {
+        qCWarning(MockLinkLog) << "_logDownloadWorker read failed - bytesToRead:" << bytesToRead << file.errorString();
+        _logDownloadBytesRemaining = 0; // Abort transfer on I/O failure
+        return;
+    }
 
     qCDebug(MockLinkLog) << "_logDownloadWorker" << _logDownloadCurrentOffset << _logDownloadBytesRemaining;
 
