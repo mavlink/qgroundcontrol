@@ -14,6 +14,13 @@ import QGroundControl.ScreenTools
 
 ListModel {
     ListElement {
+        name: qsTr("Volador Platform")
+        url: "/qml/VoladorPlatform.qml"
+        iconUrl: "qrc:/res/QGCLogoArrow.svg"
+        pageVisible: function() { return true }
+    }
+
+    ListElement {
         name: qsTr("General")
         url: "/qml/GeneralSettings.qml"
         iconUrl: "qrc:/res/QGCLogoWhite.svg"
