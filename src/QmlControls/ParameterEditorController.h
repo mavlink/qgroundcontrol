@@ -104,6 +104,7 @@ public:
     Q_PROPERTY(QString  fileValue           MEMBER fileValue        CONSTANT)
     Q_PROPERTY(QString  vehicleValue        MEMBER vehicleValue     CONSTANT)
     Q_PROPERTY(bool     noVehicleValue      MEMBER noVehicleValue   CONSTANT)
+    Q_PROPERTY(bool     cannotSend          MEMBER cannotSend       CONSTANT)
     Q_PROPERTY(QString  units               MEMBER units            CONSTANT)
     Q_PROPERTY(bool     load                MEMBER load             NOTIFY loadChanged)
 
@@ -114,6 +115,7 @@ public:
     QVariant                    fileValueVar;
     QString                     vehicleValue;
     bool                        noVehicleValue  = false;
+    bool                        cannotSend      = false;    ///< Param not on vehicle and file has no type info (MP format) - shown but never sent
     QString                     units;
     bool                        load            = true;
 
@@ -136,9 +138,16 @@ class ParameterEditorController : public FactPanelController
     Q_PROPERTY(QStringList          favoriteParameterNames  READ favoriteParameterNames                                 NOTIFY favoritesChanged)
 
     // These property are related to the diff associated with a load from file
-    Q_PROPERTY(bool                 diffOtherVehicle        MEMBER _diffOtherVehicle                                    NOTIFY diffOtherVehicleChanged)
-    Q_PROPERTY(bool                 diffMultipleComponents  MEMBER _diffMultipleComponents                              NOTIFY diffMultipleComponentsChanged)
+    Q_PROPERTY(bool                 diffOtherVehicle        READ diffOtherVehicle                                       NOTIFY diffOtherVehicleChanged)
+    Q_PROPERTY(bool                 diffMultipleComponents  READ diffMultipleComponents                                 NOTIFY diffMultipleComponentsChanged)
     Q_PROPERTY(QmlObjectListModel*  diffList                READ diffList                                               CONSTANT)
+    Q_PROPERTY(int                  diffParsedCount         READ diffParsedCount                                        NOTIFY diffParsedCountChanged)
+    Q_PROPERTY(int                  diffUnchangedCount      READ diffUnchangedCount                                     NOTIFY diffUnchangedCountChanged)
+    Q_PROPERTY(int                  diffReadOnlyCount       READ diffReadOnlyCount                                      NOTIFY diffReadOnlyCountChanged)
+    Q_PROPERTY(int                  diffNoVehicleCount      READ diffNoVehicleCount                                     NOTIFY diffNoVehicleCountChanged)
+    Q_PROPERTY(int                  diffSendableCount       READ diffSendableCount                                      NOTIFY diffSendableCountChanged)
+    Q_PROPERTY(int                  diffSelectedCount       READ diffSelectedCount                                      NOTIFY diffSelectedCountChanged)
+    Q_PROPERTY(QStringList          diffMissingParams       READ diffMissingParams                                      NOTIFY diffMissingParamsChanged)
 
 public:
     explicit ParameterEditorController(QObject *parent = nullptr);
@@ -159,6 +168,15 @@ public:
     QObject*            currentGroup            (void) { return _currentGroup; }
     QmlObjectListModel* categories              (void) { return &_categories; }
     QmlObjectListModel* diffList                (void) { return &_diffList; }
+    bool                diffOtherVehicle        (void) const { return _diffOtherVehicle; }
+    bool                diffMultipleComponents  (void) const { return _diffMultipleComponents; }
+    int                 diffParsedCount         (void) const { return _diffParsedCount; }
+    int                 diffUnchangedCount      (void) const { return _diffUnchangedCount; }
+    int                 diffReadOnlyCount       (void) const { return _diffReadOnlyCount; }
+    int                 diffNoVehicleCount      (void) const { return _diffNoVehicleCount; }
+    int                 diffSendableCount       (void) const { return _diffSendableCount; }
+    int                 diffSelectedCount       (void) const { return _diffSelectedCount; }
+    QStringList         diffMissingParams       (void) const { return _diffMissingParams; }
     QStringList         favoriteParameterNames  (void) const;
     void                setCurrentCategory  (QObject* currentCategory);
     void                setCurrentGroup     (QObject* currentGroup);
@@ -173,8 +191,14 @@ signals:
     void favoritesChanged               (void);
     void diffOtherVehicleChanged        (bool diffOtherVehicle);
     void diffMultipleComponentsChanged  (bool diffMultipleComponents);
+    void diffParsedCountChanged         (int diffParsedCount);
+    void diffUnchangedCountChanged      (int diffUnchangedCount);
+    void diffReadOnlyCountChanged       (int diffReadOnlyCount);
+    void diffNoVehicleCountChanged      (int diffNoVehicleCount);
+    void diffSendableCountChanged       (int diffSendableCount);
+    void diffSelectedCountChanged       (int diffSelectedCount);
+    void diffMissingParamsChanged       (const QStringList& diffMissingParams);
     void parametersChanged              (void);
-    void missingParamsFromFile          (const QStringList& missingParams);
 
 private slots:
     void _currentCategoryChanged(void);
@@ -190,8 +214,12 @@ private:
     void _performSearch();
     void _loadFavorites();
     void _saveFavorites();
+    void _updateDiffSelectedCount();
 
-private:
+    /// Assigns value to member and emits changedSignal only if the value actually changed.
+    template <typename T, typename SignalFn>
+    void _setDiffProperty(T& member, const T& value, SignalFn changedSignal);
+
     ParameterManager*           _parameterMgr           = nullptr;
     QString                     _searchText;
     QTimer                      _searchTimer;
@@ -202,6 +230,12 @@ private:
     bool                        _hideReadOnly           = false;
     bool                        _diffOtherVehicle       = false;
     bool                        _diffMultipleComponents = false;
+    int                         _diffParsedCount        = 0;
+    int                         _diffUnchangedCount     = 0;
+    int                         _diffReadOnlyCount      = 0;
+    int                         _diffNoVehicleCount     = 0;
+    int                         _diffSendableCount      = 0;
+    int                         _diffSelectedCount      = 0;
     QStringList                 _diffMissingParams;
     QSet<QString>               _favoriteNames;
 
