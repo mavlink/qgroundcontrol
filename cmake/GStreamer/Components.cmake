@@ -65,6 +65,7 @@ set(GSTREAMER_COMPONENT_REGISTRY
     "Rtsp:api_rtsp:gstreamer-rtsp-1.0:1"
     "Video:api_video:gstreamer-video-1.0:1"
     "App:api_app:gstreamer-app-1.0:0"
+    "RtspServer:api_rtsp_server:gstreamer-rtsp-server-1.0:0"
     "Allocators:api_allocators:gstreamer-allocators-1.0:0"
     "Pbutils:api_pbutils:gstreamer-pbutils-1.0:0"
     "Tag:api_tag:gstreamer-tag-1.0:0"

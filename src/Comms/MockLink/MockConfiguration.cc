@@ -32,6 +32,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _cameraHasBasicZoom(copy->cameraHasBasicZoom())
     , _cameraHasTrackingPoint(copy->cameraHasTrackingPoint())
     , _cameraHasTrackingRectangle(copy->cameraHasTrackingRectangle())
+    , _videoStreamType(copy->videoStreamTypeEnum())
     , _gimbalHasRollAxis(copy->gimbalHasRollAxis())
     , _gimbalHasPitchAxis(copy->gimbalHasPitchAxis())
     , _gimbalHasYawAxis(copy->gimbalHasYawAxis())
@@ -72,6 +73,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setCameraHasBasicZoom(mockLinkSource->cameraHasBasicZoom());
     setCameraHasTrackingPoint(mockLinkSource->cameraHasTrackingPoint());
     setCameraHasTrackingRectangle(mockLinkSource->cameraHasTrackingRectangle());
+    setVideoStreamType(mockLinkSource->videoStreamType());
     setGimbalHasRollAxis(mockLinkSource->gimbalHasRollAxis());
     setGimbalHasPitchAxis(mockLinkSource->gimbalHasPitchAxis());
     setGimbalHasYawAxis(mockLinkSource->gimbalHasYawAxis());
@@ -106,6 +108,7 @@ void MockConfiguration::loadSettings(QSettings &settings, const QString &root)
     setCameraHasBasicZoom(settings.value(_cameraHasBasicZoomKey, true).toBool());
     setCameraHasTrackingPoint(settings.value(_cameraHasTrackingPointKey, true).toBool());
     setCameraHasTrackingRectangle(settings.value(_cameraHasTrackingRectangleKey, true).toBool());
+    setVideoStreamType(settings.value(_videoStreamTypeKey, static_cast<int>(VideoStreamNone)).toInt());
     setGimbalHasRollAxis(settings.value(_gimbalHasRollAxisKey, true).toBool());
     setGimbalHasPitchAxis(settings.value(_gimbalHasPitchAxisKey, true).toBool());
     setGimbalHasYawAxis(settings.value(_gimbalHasYawAxisKey, true).toBool());
@@ -139,6 +142,7 @@ void MockConfiguration::saveSettings(QSettings &settings, const QString &root) c
     settings.setValue(_cameraHasBasicZoomKey, cameraHasBasicZoom());
     settings.setValue(_cameraHasTrackingPointKey, cameraHasTrackingPoint());
     settings.setValue(_cameraHasTrackingRectangleKey, cameraHasTrackingRectangle());
+    settings.setValue(_videoStreamTypeKey, videoStreamType());
     settings.setValue(_gimbalHasRollAxisKey, gimbalHasRollAxis());
     settings.setValue(_gimbalHasPitchAxisKey, gimbalHasPitchAxis());
     settings.setValue(_gimbalHasYawAxisKey, gimbalHasYawAxis());
