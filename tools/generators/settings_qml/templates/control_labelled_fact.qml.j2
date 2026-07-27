@@ -2,6 +2,9 @@
 {{ indent }}    Layout.fillWidth: true
 {{ indent }}    label: {{ label_expr }}
 {{ indent }}    fact: {{ fact_ref }}
+{% for name, expr in (properties | default({})).items() %}
+{{ indent }}    {{ name }}: {{ expr }}
+{% endfor %}
 {% if enable_when %}
 {{ indent }}    enabled: {{ enable_when }}
 {% endif %}

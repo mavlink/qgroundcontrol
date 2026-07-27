@@ -100,6 +100,7 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path, json_context: str = "") -
             label_expr=label_expr,
             fact_ref=fact_ref,
             enable_when=ctrl.enableWhen,
+            properties=ctrl.properties,
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif ctrl.control == "checkbox":
