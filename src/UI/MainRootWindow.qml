@@ -27,6 +27,7 @@ import QGroundControl.UTMSP
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
     id:             mainWindow
+    title:          QGroundControl.appName
     minimumWidth:   ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
     minimumHeight:  ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
     visible:        true
