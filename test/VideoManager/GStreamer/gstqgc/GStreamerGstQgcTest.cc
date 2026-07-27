@@ -47,15 +47,17 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
+#include <QtGui/QColor>
+#include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
-#include <gst/gst.h>
-#include <gst/video/gstvideometa.h>
 #include <atomic>
 #include <cstring>
+#include <gst/gst.h>
+#include <gst/video/gstvideometa.h>
 #include <iterator>
 #include <memory>
 #include <string_view>
@@ -408,6 +410,10 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         bool sawGlupload = false;
         bool sawGlColorConvert = false;
 #endif
+#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
+        bool sawD3D11Upload = false;
+        bool sawD3D11Convert = false;
+#endif
         gboolean done = FALSE;
         GValue val = G_VALUE_INIT;
         while (!done) {
@@ -422,6 +428,14 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
                     }
                     if (name && QString::fromUtf8(name).startsWith(QStringLiteral("glcolorconvert"))) {
                         sawGlColorConvert = true;
+                    }
+#endif
+#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
+                    if (name && QString::fromUtf8(name).startsWith(QStringLiteral("d3d11upload"))) {
+                        sawD3D11Upload = true;
+                    }
+                    if (name && QString::fromUtf8(name).startsWith(QStringLiteral("d3d11convert"))) {
+                        sawD3D11Convert = true;
                     }
 #endif
                     g_free(name);
@@ -445,6 +459,16 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         GstCaps* caps = nullptr;
         g_object_get(formatFilter, "caps", &caps, NULL);
         QVERIFY2(caps, "GPU bin format capsfilter has null caps");
+#if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
+        bool hasSystemMemoryCaps = false;
+        for (guint i = 0; i < gst_caps_get_size(caps); ++i) {
+            const GstCapsFeatures* features = gst_caps_get_features(caps, i);
+            if (!features || gst_caps_features_is_equal(features, GST_CAPS_FEATURES_MEMORY_SYSTEM_MEMORY)) {
+                hasSystemMemoryCaps = true;
+                break;
+            }
+        }
+#endif
         gchar* capsStr = gst_caps_to_string(caps);
         const QString s = QString::fromUtf8(capsStr ? capsStr : "");
         g_free(capsStr);
@@ -475,6 +499,9 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
                  qUtf8Printable(QStringLiteral("Direct DMABuf bin caps must not advertise GLMemory first: ") + s));
 #elif defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
         QCOMPARE(elementCount, 2);
+        QVERIFY2(!sawD3D11Upload, "Windows GPU sink must not upload software-decoded frames to D3D11");
+        QVERIFY2(!sawD3D11Convert, "Windows GPU sink must not force software-decoded frames through D3D11 conversion");
+        QVERIFY2(hasSystemMemoryCaps, "Windows GPU sink must retain a system-memory fallback for software decoders");
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         QVERIFY2(s.contains(QStringLiteral("memory:D3D11Memory")),
                  qUtf8Printable(QStringLiteral("GPU bin caps missing memory:D3D11Memory: ") + s));
@@ -539,16 +566,20 @@ struct PipelineRunResult
     int frameCount = 0;
     QSize lastFrameSize;
     QVideoFrameFormat::PixelFormat lastPixelFormat = QVideoFrameFormat::Format_Invalid;
+    QColor centerPixel;
+    bool centerPixelValid = false;
     bool eos = false;
     QString errorMessage;
 };
 
 PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, QGCQVideoSinkController*& outController,
-                                               const char* capsLine, int numBuffers = 5, bool gpuZerocopy = false)
+                                               const char* capsLine, int numBuffers = 5, bool gpuZerocopy = false,
+                                               const char* sourceProperties = "", bool captureCenterPixel = false)
 {
     PipelineRunResult r;
     const QString launch =
-        QStringLiteral("videotestsrc num-buffers=%1 ! %2 ! qgcvideosinkbin name=sink gpu-zerocopy=%3")
+        QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3 ! qgcvideosinkbin name=sink gpu-zerocopy=%4")
+            .arg(QString::fromUtf8(sourceProperties))
             .arg(numBuffers)
             .arg(QString::fromUtf8(capsLine))
             .arg(gpuZerocopy ? "true" : "false");
@@ -583,6 +614,13 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, QGCQVideoS
         ++r.frameCount;
         r.lastFrameSize = f.size();
         r.lastPixelFormat = f.pixelFormat();
+        if (captureCenterPixel) {
+            const QImage image = f.toImage();
+            if (!image.isNull()) {
+                r.centerPixel = image.pixelColor(image.width() / 2, image.height() / 2);
+                r.centerPixelValid = true;
+            }
+        }
     });
     gst_object_unref(sinkBin);
 
@@ -677,6 +715,65 @@ void GStreamerTest::_testGpuZeroCopyFallback()
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QCOMPARE(GstHwPathTelemetry::peekMapFailureCount(HwVideoBufferPath::DmaBuf), dmabufBefore);
+#endif
+}
+
+void GStreamerTest::_testWindowsGpuSinkPreservesSoftwarePixels()
+{
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    GStreamer::redirectGLibLogging();
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    QVideoSink videoSink;
+    QGCQVideoSinkController* controller = nullptr;
+    const auto result = runPipelineThroughQVideoSink(videoSink, controller,
+                                                     "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
+                                                     /*numBuffers*/ 5, /*gpuZerocopy*/ true, "pattern=red",
+                                                     /*captureCenterPixel*/ true);
+
+    QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("Software-frame pipeline: %1").arg(result.errorMessage)));
+    QTRY_VERIFY_WITH_TIMEOUT(result.frameCount > 0, 2000);
+    QCOMPARE(result.lastPixelFormat, QVideoFrameFormat::Format_BGRA8888);
+    QVERIFY2(result.centerPixelValid, "System-memory fallback frame could not be mapped for pixel verification");
+    QVERIFY2((result.centerPixel.red() > 200) && (result.centerPixel.green() < 50) && (result.centerPixel.blue() < 50),
+             qUtf8Printable(QStringLiteral("Expected a red software frame, received RGB(%1,%2,%3)")
+                                .arg(result.centerPixel.red())
+                                .arg(result.centerPixel.green())
+                                .arg(result.centerPixel.blue())));
+#else
+    QSKIP("Windows D3D11 GPU sink path is unavailable in this build");
+#endif
+}
+
+void GStreamerTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
+{
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    GStreamer::redirectGLibLogging();
+    QVERIFY2(GStreamer::completeInit(), "completeInit failed");
+
+    GstElementFactory* uploadFactory = gst_element_factory_find("d3d11upload");
+    if (!uploadFactory) {
+        QSKIP("d3d11upload is unavailable");
+    }
+    gst_object_unref(uploadFactory);
+
+    QVideoSink videoSink;
+    QGCQVideoSinkController* controller = nullptr;
+    auto result =
+        runPipelineThroughQVideoSink(videoSink, controller,
+                                     "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! d3d11upload ! "
+                                     "video/x-raw(memory:D3D11Memory),format=NV12",
+                                     /*numBuffers*/ 5, /*gpuZerocopy*/ true, "pattern=red");
+    if (!result.eos && (result.errorMessage.contains(QStringLiteral("D3D"), Qt::CaseInsensitive) ||
+                        result.errorMessage.contains(QStringLiteral("device"), Qt::CaseInsensitive))) {
+        QSKIP(qPrintable(QStringLiteral("D3D11 device unavailable in this runner: %1").arg(result.errorMessage)));
+    }
+
+    QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("D3D11 pipeline: %1").arg(result.errorMessage)));
+    QTRY_VERIFY_WITH_TIMEOUT(result.frameCount > 0, 2000);
+    QCOMPARE(result.lastPixelFormat, QVideoFrameFormat::Format_NV12);
+#else
+    QSKIP("D3D11 GPU sink path is only available in supported Windows builds");
 #endif
 }
 
