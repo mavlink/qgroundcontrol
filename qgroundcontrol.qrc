@@ -24,6 +24,7 @@
     </qresource>
     <qresource prefix="/qml">
         <file alias="VoladorPlatform.qml">src/UI/preferences/VoladorPlatform.qml</file>
+        <file alias="FleetManagement.qml">src/UI/preferences/FleetManagement.qml</file>
         <file alias="QGroundControl/Controls/HeightIndicator.qml">src/QmlControls/HeightIndicator.qml</file>
         <file alias="QGroundControl/Controls/QGCDynamicObjectManager.qml">src/QmlControls/QGCDynamicObjectManager.qml</file>
         <file alias="QGroundControl/Controls/QGCOptionsComboBox.qml">src/QmlControls/QGCOptionsComboBox.qml</file>

@@ -21,6 +21,13 @@ ListModel {
     }
 
     ListElement {
+        name: qsTr("Fleet Management")
+        url: "/qml/FleetManagement.qml"
+        iconUrl: "qrc:/qmlimages/Quad.svg"
+        pageVisible: function() { return true }
+    }
+
+    ListElement {
         name: qsTr("General")
         url: "/qml/GeneralSettings.qml"
         iconUrl: "qrc:/res/QGCLogoWhite.svg"
