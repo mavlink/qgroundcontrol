@@ -1,5 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="215" height="215" viewBox="0 0 215 215">
-  <rect width="215" height="215" rx="40" fill="none" stroke="#14171A" stroke-width="8"/>
-  <path d="M40 60 L107.5 155 L175 60 L140 60 L107.5 107.5 L75 60 Z" fill="#14171A"/>
-  <path d="M68 48 L107.5 102 L147 48 L125 48 L107.5 73 L90 48 Z" fill="#007ACC"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <g transform="translate(10, 5)">
+    <circle cx="35" cy="35" r="32" fill="none" stroke="#FF6A00" stroke-width="3"/>
+    <polygon points="12,22 30,52 30,42 18,27" fill="#FF6A00"/>
+    <polygon points="58,22 40,52 40,42 52,27" fill="#FF6A00"/>
+    <polygon points="35,20 42,37 35,52 28,37" fill="#121417"/>
+  </g>
+  <text x="90" y="38" font-family="'Segoe UI', 'Roboto', sans-serif" font-weight="900" font-size="28" fill="#121417" letter-spacing="3">VOLADOR</text>
+  <text x="90" y="60" font-family="'Segoe UI', 'Roboto', sans-serif" font-weight="700" font-size="16" fill="#FF6A00" letter-spacing="2">GROUND CONTROL</text>
 </svg>

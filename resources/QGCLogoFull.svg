@@ -1,6 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72">
-  <rect width="72" height="72" rx="16" fill="#14171A"/>
-  <path d="M12 20 L36 52 L60 20 L48 20 L36 36 L24 20 Z" fill="#007ACC"/>
-  <path d="M22 16 L36 34 L50 16 L42 16 L36 24 L30 16 Z" fill="#0099FF"/>
-  <circle cx="36" cy="52" r="3" fill="#0099FF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+  <!-- Volador Wing Emblem -->
+  <g transform="translate(10, 5)">
+    <circle cx="35" cy="35" r="32" fill="#181B20" stroke="#FF6A00" stroke-width="3"/>
+    <!-- Left Wing -->
+    <polygon points="12,22 30,52 30,42 18,27" fill="#FF6A00"/>
+    <!-- Right Wing -->
+    <polygon points="58,22 40,52 40,42 52,27" fill="#FF6A00"/>
+    <!-- Center Core -->
+    <polygon points="35,20 42,37 35,52 28,37" fill="#FFFFFF"/>
+  </g>
+  <!-- Text Branding -->
+  <text x="90" y="38" font-family="'Segoe UI', 'Roboto', sans-serif" font-weight="900" font-size="28" fill="#FFFFFF" letter-spacing="3">VOLADOR</text>
+  <text x="90" y="60" font-family="'Segoe UI', 'Roboto', sans-serif" font-weight="700" font-size="16" fill="#FF6A00" letter-spacing="2">GROUND CONTROL</text>
 </svg>
