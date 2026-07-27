@@ -394,7 +394,13 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
         _decrementPendingWriteCount();
     });
     auto waitAckState = new WaitForParamResponseState(stateMachine, _waitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
-    auto paramRefreshState = new FunctionState(QStringLiteral("ParameterManager param refresh"), stateMachine, [this, componentId, paramName]() {
+    auto paramRefreshState = new FunctionState(QStringLiteral("ParameterManager param refresh"), stateMachine, [this, waitAckState, componentId, paramName]() {
+        // A definitive "does not exist" rejection means there is nothing on the vehicle
+        // to refresh - stop here rather than generating a redundant read failure.
+        if (waitAckState->lastParamError() == MAV_PARAM_ERROR_DOES_NOT_EXIST) {
+            qCDebug(ParameterManagerLog) << "Skipping post-write-failure refresh, param does not exist on vehicle:" << paramName << _vehicleAndComponentString(componentId);
+            return;
+        }
         refreshParameter(componentId, paramName);
     });
     auto userNotifyState = new FunctionState(QStringLiteral("ParameterManager user notify"), stateMachine, [waitAckState, paramName, this, componentId]() {
