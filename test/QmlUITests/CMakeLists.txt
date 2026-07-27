@@ -36,6 +36,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ParameterDiffDialogUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ParameterDiffDialogUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/RemoteIDSettingsUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/RemoteIDSettingsUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/Viewer3DUITest.cc
@@ -58,6 +60,7 @@ add_qgc_test(AppCloseWarningUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(FlyViewProximityRadarUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(NTRIPSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(OnboardLogUITest LABELS Integration NoSanitizer TIMEOUT 180)
+add_qgc_test(ParameterDiffDialogUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(RemoteIDSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
 
 # Qt Quick 3D requires an RHI backend, which the default software Quick backend
