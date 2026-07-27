@@ -26,14 +26,6 @@ Item {
         id: controller
     }
 
-    Connections {
-        target: controller
-        function onMissingParamsFromFile(missingParams) {
-            QGroundControl.showMessageDialog(_root, qsTr("Missing Parameters"),
-                qsTr("The following parameters from the file were not found on the vehicle and were skipped: %1").arg(missingParams.join("\n")))
-        }
-    }
-
     Timer {
         id:         clearTimer
         interval:   100;
@@ -68,6 +60,7 @@ Item {
         }
         QGCMenuSeparator { }
         QGCMenuItem {
+            objectName:     "parameterEditor_toolLoadFromFile"
             text:           qsTr("Load from file for review...")
             onTriggered: {
                 fileDialog.title =          qsTr("Load Parameters")
@@ -184,6 +177,7 @@ Item {
 
         QGCButton {
             Layout.alignment:   Qt.AlignRight
+            objectName:         "parameterEditor_toolsButton"
             text:               qsTr("Tools")
             onClicked:          toolsMenu.popup()
         }

@@ -348,41 +348,87 @@ void ParameterEditorController::saveToFile(const QString& filename)
         QFile file(parameterFilename);
 
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            qCWarning(ParameterEditorControllerLog) << "saveToFile: unable to create file" << parameterFilename;
             QGC::showAppMessage(tr("Unable to create file: %1").arg(parameterFilename));
             return;
         }
 
+        qCDebug(ParameterEditorControllerLog) << "saveToFile:" << parameterFilename;
         QTextStream stream(&file);
         _parameterMgr->writeParametersToStream(stream);
         file.close();
     }
 }
 
+template <typename T, typename SignalFn>
+void ParameterEditorController::_setDiffProperty(T& member, const T& value, SignalFn changedSignal)
+{
+    if (member == value) {
+        return;
+    }
+    member = value;
+    emit (this->*changedSignal)(member);
+}
+
 void ParameterEditorController::clearDiff(void)
 {
     _diffList.clearAndDeleteContents();
-    _diffOtherVehicle = false;
-    _diffMultipleComponents = false;
-    _diffMissingParams.clear();
+    _setDiffProperty(_diffOtherVehicle,         false,          &ParameterEditorController::diffOtherVehicleChanged);
+    _setDiffProperty(_diffMultipleComponents,   false,          &ParameterEditorController::diffMultipleComponentsChanged);
+    _setDiffProperty(_diffParsedCount,          0,              &ParameterEditorController::diffParsedCountChanged);
+    _setDiffProperty(_diffUnchangedCount,       0,              &ParameterEditorController::diffUnchangedCountChanged);
+    _setDiffProperty(_diffReadOnlyCount,        0,              &ParameterEditorController::diffReadOnlyCountChanged);
+    _setDiffProperty(_diffNoVehicleCount,       0,              &ParameterEditorController::diffNoVehicleCountChanged);
+    _setDiffProperty(_diffSendableCount,        0,              &ParameterEditorController::diffSendableCountChanged);
+    _setDiffProperty(_diffSelectedCount,        0,              &ParameterEditorController::diffSelectedCountChanged);
+    _setDiffProperty(_diffMissingParams,        QStringList(),  &ParameterEditorController::diffMissingParamsChanged);
+}
 
-    emit diffOtherVehicleChanged(_diffOtherVehicle);
-    emit diffMultipleComponentsChanged(_diffMultipleComponents);
+// Recomputed whenever a diff row's load checkbox changes. Drives the dialog's Ok button enabled state.
+void ParameterEditorController::_updateDiffSelectedCount()
+{
+    int selectedCount = 0;
+    for (int i=0; i<_diffList.count(); i++) {
+        const ParameterEditorDiff* paramDiff = _diffList.value<ParameterEditorDiff*>(i);
+        if (paramDiff->load && !paramDiff->cannotSend) {
+            selectedCount++;
+        }
+    }
+    _setDiffProperty(_diffSelectedCount, selectedCount, &ParameterEditorController::diffSelectedCountChanged);
 }
 
 void ParameterEditorController::sendDiff(void)
 {
+    int sentCount = 0;
+    int uncheckedCount = 0;
+
     for (int i=0; i<_diffList.count(); i++) {
         ParameterEditorDiff* paramDiff = _diffList.value<ParameterEditorDiff*>(i);
 
+        if (paramDiff->cannotSend) {
+            qCDebug(ParameterEditorControllerLog) << "sendDiff: skipped (cannot send, not on vehicle) -" << paramDiff->name;
+            continue;
+        }
+
         if (paramDiff->load) {
+            sentCount++;
             if (paramDiff->noVehicleValue) {
+                qCDebug(ParameterEditorControllerLog) << "sendDiff: PARAM_SET new param -" << paramDiff->name
+                    << "componentId:" << paramDiff->componentId << "value:" << paramDiff->fileValueVar;
                 _parameterMgr->_mavlinkParamSet(paramDiff->componentId, paramDiff->name, paramDiff->valueType, paramDiff->fileValueVar);
             } else {
+                qCDebug(ParameterEditorControllerLog) << "sendDiff: fact write -" << paramDiff->name
+                    << "componentId:" << paramDiff->componentId << "value:" << paramDiff->fileValueVar;
                 Fact* fact = _parameterMgr->getParameter(paramDiff->componentId, paramDiff->name);
                 fact->setRawValue(paramDiff->fileValueVar);
             }
+        } else {
+            uncheckedCount++;
+            qCDebug(ParameterEditorControllerLog) << "sendDiff: skipped (unchecked) -" << paramDiff->name;
         }
     }
+
+    qCDebug(ParameterEditorControllerLog) << "sendDiff summary - sent:" << sentCount << "unchecked:" << uncheckedCount;
 }
 
 bool ParameterEditorController::buildDiffFromFile(const QString& filename)
@@ -390,15 +436,27 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
     QFile file(filename);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qCWarning(ParameterEditorControllerLog) << "buildDiffFromFile: unable to open file" << filename;
         QGC::showAppMessage(tr("Unable to open file: %1").arg(filename));
         return false;
     }
 
     clearDiff();
 
+    qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile:" << filename;
+
     QTextStream stream(&file);
 
-    int parsedLineCount = 0;
+    // Accumulate in locals; property setters at the end emit only for values that changed.
+    bool        diffOtherVehicle        = false;
+    bool        diffMultipleComponents  = false;
+    int         diffParsedCount         = 0;
+    int         diffUnchangedCount      = 0;
+    int         diffReadOnlyCount       = 0;
+    int         diffNoVehicleCount      = 0;
+    int         diffSendableCount       = 0;
+    QStringList diffMissingParams;
+
     int firstComponentId = -1;
     while (!stream.atEnd()) {
         QString line = stream.readLine();
@@ -420,12 +478,18 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 mavParamType    = wpParams.at(4).toInt();
 
                 if (_vehicle->id() != vehicleId) {
-                    _diffOtherVehicle = true;
+                    if (!diffOtherVehicle) {
+                        qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: file is from other vehicle - file vehicleId:" << vehicleId << "connected vehicleId:" << _vehicle->id();
+                    }
+                    diffOtherVehicle = true;
                 }
                 if (firstComponentId == -1) {
                     firstComponentId = componentId;
                 } else if (firstComponentId != componentId) {
-                    _diffMultipleComponents = true;
+                    if (!diffMultipleComponents) {
+                        qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: file contains multiple componentIds:" << firstComponentId << componentId;
+                    }
+                    diffMultipleComponents = true;
                 }
             } else if (wpParams.size() == 2) {
                 // Mission Planner 2-column: Name Value
@@ -434,10 +498,11 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 componentId     = ParameterManager::defaultComponentId;
                 isMPFormat      = true;
             } else {
+                qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: skipping unparseable line:" << line.trimmed().left(80);
                 continue;
             }
 
-            parsedLineCount++;
+            diffParsedCount++;
 
             QString     vehicleValueStr;
             QString     units;
@@ -448,7 +513,7 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
             if (_parameterMgr->parameterExists(componentId, paramName)) {
                 Fact*           vehicleFact         = _parameterMgr->getParameter(componentId, paramName);
                 FactMetaData*   vehicleFactMetaData = vehicleFact->metaData();
-                Fact*           fileFact            = new Fact(vehicleFact->componentId(), vehicleFact->name(), vehicleFact->type(), this);
+                Fact            fileFact(vehicleFact->componentId(), vehicleFact->name(), vehicleFact->type());
 
                 if (mavParamType == -1) {
                     mavParamType = ParameterManager::factTypeToMavType(vehicleFact->type());
@@ -457,24 +522,57 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 // Turn off reboot messaging before setting value in fileFact
                 bool vehicleRebootRequired = vehicleFactMetaData->vehicleRebootRequired();
                 vehicleFactMetaData->setVehicleRebootRequired(false);
-                fileFact->setMetaData(vehicleFact->metaData());
-                fileFact->setRawValue(fileValueStr);
+                fileFact.setMetaData(vehicleFact->metaData());
+                fileFact.setRawValue(fileValueStr);
                 vehicleFactMetaData->setVehicleRebootRequired(vehicleRebootRequired);
                 readOnly = vehicleFact->readOnly();
 
-                if (vehicleFact->rawValue() == fileFact->rawValue()) {
+                if (vehicleFact->rawValue() == fileFact.rawValue()) {
+                    diffUnchangedCount++;
                     continue;
                 }
-                fileValueStr    = fileFact->enumOrValueString();
-                fileValueVar    = fileFact->rawValue();
+                qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: changed -" << paramName
+                    << "vehicle:" << vehicleFact->rawValue() << "file:" << fileFact.rawValue();
+                fileValueStr    = fileFact.enumOrValueString();
+                fileValueVar    = fileFact.rawValue();
                 vehicleValueStr = vehicleFact->enumOrValueString();
                 units           = vehicleFact->cookedUnits();
             } else if (isMPFormat) {
-                // MP format: skip params not on vehicle and report them
-                _diffMissingParams.append(paramName);
+                // MP format: param not on vehicle and file carries no type info, so it can never
+                // be sent. Show it in the diff list as a disabled (cannot-send) row.
+                qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: not on vehicle, cannot send (MP format) -" << paramName;
+                diffMissingParams.append(paramName);
+
+                ParameterEditorDiff* paramDiff = new ParameterEditorDiff(this);
+
+                paramDiff->componentId  = componentId;
+                paramDiff->name         = paramName;
+                paramDiff->valueType    = FactMetaData::valueTypeFloat;    // Unknown - never sent
+                paramDiff->fileValue    = fileValueStr;
+                paramDiff->fileValueVar = fileValueVar;
+                paramDiff->cannotSend   = true;
+                paramDiff->load         = false;
+
+                _diffList.append(paramDiff);
                 continue;
             } else {
+                qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: not on vehicle, will send as new (QGC format) -" << paramName << "value:" << fileValueStr;
                 noVehicleValue = true;
+
+                // fileValueVar is still a QString variant. Convert it to the typed variant matching the
+                // file's param type, otherwise the PARAM_VALUE ack type check in _mavlinkParamSet fails
+                // and the send would retry/time out.
+                const FactMetaData metaData(ParameterManager::mavTypeToFactType(static_cast<MAV_PARAM_TYPE>(mavParamType)));
+                QVariant    typedValue;
+                QString     errorString;
+                if (metaData.convertAndValidateRaw(fileValueVar, true /* convertOnly */, typedValue, errorString)) {
+                    fileValueVar = typedValue;
+                } else {
+                    qCWarning(ParameterEditorControllerLog) << "buildDiffFromFile: value conversion failed, skipping -" << paramName
+                        << "value:" << fileValueStr << "error:" << errorString;
+                    diffParsedCount--;
+                    continue;
+                }
             }
 
             if (!readOnly) {
@@ -489,23 +587,46 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 paramDiff->noVehicleValue   = noVehicleValue;
                 paramDiff->units            = units;
 
+                (void) connect(paramDiff, &ParameterEditorDiff::loadChanged, this, &ParameterEditorController::_updateDiffSelectedCount);
+
                 _diffList.append(paramDiff);
+                diffSendableCount++;
+
+                if (noVehicleValue) {
+                    diffNoVehicleCount++;
+                }
+            } else {
+                qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: skipping read-only param -" << paramName;
+                diffReadOnlyCount++;
             }
         }
     }
 
     file.close();
 
-    if (parsedLineCount == 0) {
+    if (diffParsedCount == 0) {
         QGC::showAppMessage(tr("No valid parameters found in file. Check that the file is in QGC or Mission Planner format."));
         return false;
     }
 
-    emit diffOtherVehicleChanged(_diffOtherVehicle);
-    emit diffMultipleComponentsChanged(_diffMultipleComponents);
-    if (!_diffMissingParams.isEmpty()) {
-        emit missingParamsFromFile(_diffMissingParams);
-    }
+    qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile summary -"
+        << "parsed:" << diffParsedCount
+        << "changed:" << diffSendableCount
+        << "unchanged:" << diffUnchangedCount
+        << "readOnly:" << diffReadOnlyCount
+        << "noVehicleValue:" << diffNoVehicleCount
+        << "missing:" << diffMissingParams.count()
+        << (diffMissingParams.isEmpty() ? QString() : diffMissingParams.join(QStringLiteral(", ")));
+
+    _setDiffProperty(_diffOtherVehicle,         diffOtherVehicle,       &ParameterEditorController::diffOtherVehicleChanged);
+    _setDiffProperty(_diffMultipleComponents,   diffMultipleComponents, &ParameterEditorController::diffMultipleComponentsChanged);
+    _setDiffProperty(_diffParsedCount,          diffParsedCount,        &ParameterEditorController::diffParsedCountChanged);
+    _setDiffProperty(_diffUnchangedCount,       diffUnchangedCount,     &ParameterEditorController::diffUnchangedCountChanged);
+    _setDiffProperty(_diffReadOnlyCount,        diffReadOnlyCount,      &ParameterEditorController::diffReadOnlyCountChanged);
+    _setDiffProperty(_diffNoVehicleCount,       diffNoVehicleCount,     &ParameterEditorController::diffNoVehicleCountChanged);
+    _setDiffProperty(_diffSendableCount,        diffSendableCount,      &ParameterEditorController::diffSendableCountChanged);
+    _setDiffProperty(_diffSelectedCount,        diffSendableCount,      &ParameterEditorController::diffSelectedCountChanged); // All sendable rows start checked
+    _setDiffProperty(_diffMissingParams,        diffMissingParams,      &ParameterEditorController::diffMissingParamsChanged);
 
     return true;
 }
