@@ -585,10 +585,11 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegDelivery()
     (void) peer->sendTextMessage(QStringLiteral("metadata is ignored"));
     QCOMPARE(peer->sendBinaryMessage(jpeg), static_cast<qint64>(jpeg.size()));
     (void) peer->flush();
+    QTRY_COMPARE_WITH_TIMEOUT(peer->bytesToWrite(), 0, TestTimeout::mediumMs());
 
-    GstSample* sample = nullptr;
-    QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(binSink))) != nullptr,
-                             TestTimeout::mediumMs());
+    GstSample* sample =
+        tryPullSampleOrPreroll(GST_APP_SINK(binSink), TestTimeout::mediumDuration().count() * GST_MSECOND);
+    QVERIFY2(sample, "WebSocket JPEG stream did not deliver a sample before timeout");
     QVERIFY(gst_buffer_get_size(gst_sample_get_buffer(sample)) > 0);
     gst_sample_unref(sample);
 
@@ -731,12 +732,12 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegWssRejectsUntrusted()
     });
 
     QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
-    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-    QVERIFY(GStreamer::SourceFactory::activate(source));
-
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     QVERIFY(bus);
     const auto busCleanup = qScopeGuard([&] { gst_object_unref(bus); });
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(GStreamer::SourceFactory::activate(source));
+
     GstMessage* message = nullptr;
     QTRY_VERIFY_WITH_TIMEOUT(
         (message = gst_bus_pop_filtered(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR))) != nullptr,
