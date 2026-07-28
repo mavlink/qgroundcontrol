@@ -321,8 +321,7 @@ void QGCNetworkHelperTest::_testBuildUrlFromMap()
 void QGCNetworkHelperTest::_testBuildUrlFromList()
 {
     QList<QPair<QString, QString>> params = {
-        {"key1", "value1"},
-        {"key1", "value2"},  // Duplicate key allowed with list
+        {"key1", "value1"}, {"key1", "value2"},  // Duplicate key allowed with list
     };
     QUrl url = QGCNetworkHelper::buildUrl("http://example.com/api", params);
     QVERIFY(url.isValid());
