@@ -249,6 +249,16 @@
             "keywords": "sd card,storage,android,save path"
         },
         {
+            "name": "androidUsePosixSerial",
+            "shortDesc": "Use the device's built-in serial ports instead of USB serial devices.",
+            "longDesc": "If this option is enabled, the built-in serial ports (/dev/tty*) are used instead of USB serial devices. This requires a device which allows access to the serial ports.",
+            "type": "bool",
+            "default": false,
+            "qgcRebootRequired": true,
+            "label": "Use built-in serial ports",
+            "keywords": "serial,posix,uart,tty,android"
+        },
+        {
             "name": "tiandituToken",
             "shortDesc": "Personal API token for accessing TianDiTu map tiles.",
             "longDesc": "Your personal access token for TianDiTu maps",
