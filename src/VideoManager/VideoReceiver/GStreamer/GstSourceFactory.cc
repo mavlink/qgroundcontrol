@@ -21,6 +21,24 @@ constexpr int kRtspRetry = 3;
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
 constexpr char kWebSocketSourceContextKey[] = "qgc-websocket-source-context";
 
+GstBus* pipelineBusForSource(GstElement* source)
+{
+    GstObject* current = GST_OBJECT(gst_object_ref(source));
+    while (current) {
+        if (GST_IS_PIPELINE(current)) {
+            GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(current));
+            gst_object_unref(current);
+            return bus;
+        }
+
+        GstObject* parent = gst_object_get_parent(current);
+        gst_object_unref(current);
+        current = parent;
+    }
+
+    return nullptr;
+}
+
 // Older Linux/system GStreamer needs an autoplug-query caps filter to keep parsebin on byte-stream output.
 #if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
 gboolean filterParserCaps([[maybe_unused]] GstElement* bin, [[maybe_unused]] GstPad* pad,
@@ -845,7 +863,18 @@ bool activate(GstElement* source)
 
     auto* context =
         static_cast<QGCWebSocketVideoSource*>(g_object_get_data(G_OBJECT(source), kWebSocketSourceContextKey));
-    return !context || context->start();
+    if (!context) {
+        return true;
+    }
+
+    GstBus* bus = pipelineBusForSource(source);
+    if (!bus) {
+        qCWarning(GstSourceFactoryLog) << "WebSocket JPEG source must be attached to a pipeline before activation";
+        return false;
+    }
+    const bool started = context->start(bus);
+    gst_object_unref(bus);
+    return started;
 }
 
 void deactivate(GstElement* source)
