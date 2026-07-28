@@ -40,7 +40,7 @@ Button {
         id:     innerRect
         color:  qgcPal.windowShade
 
-        implicitWidth: titleBar.x + titleBar.contentWidth + ScreenTools.defaultFontPixelWidth
+        implicitWidth: titleBar ? (titleBar.x + titleBar.contentWidth + ScreenTools.defaultFontPixelWidth) : (ScreenTools.defaultFontPixelWidth * 10)
 
         Rectangle {
             anchors.fill:   parent
