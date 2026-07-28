@@ -5,6 +5,7 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QTimer>
 #include <QtTextToSpeech/QTextToSpeech>
 #include <QtTextToSpeech/QVoice>
 
@@ -98,16 +99,22 @@ void AudioOutput::init(Fact* volumeFact, Fact* mutedFact)
         _applyEngineSettings();
     });
 
-    switch (_engine->state()) {
-    case QTextToSpeech::State::Ready:
+    if (_engine->state() == QTextToSpeech::State::Ready) {
         _finishInit();
-        break;
-    case QTextToSpeech::State::Error:
-        qCWarning(AudioOutputLog) << "No usable QTextToSpeech engine available.";
-        break;
-    default:
+    } else {
+        // Some backends (notably Android) start in Error state while binding to the system TTS
+        // service, then transition to Ready. Defer and only warn if the engine never becomes usable.
         qCDebug(AudioOutputLog) << "QTextToSpeech engine not ready; deferring init. State:" << _engine->state();
-        break;
+        if (!QGC::runningUnitTests()) {
+            // Skip under unit tests: the "none" backend never becomes Ready and the warning would trip the strict log check.
+            QTimer::singleShot(kEngineInitWarnTimeout, this, [this]() {
+                if (!_initialized) {
+                    qCWarning(AudioOutputLog) << "No usable QTextToSpeech engine available. Engine:" << _engine->engine()
+                                              << "State:" << _engine->state()
+                                              << "Reason:" << _engine->errorReason() << _engine->errorString();
+                }
+            });
+        }
     }
 }
 

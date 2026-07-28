@@ -2,6 +2,8 @@
 
 #include <QtCore/QObject>
 
+#include <chrono>
+
 class QTextToSpeech;
 class Fact;
 class AudioOutputTest;
@@ -72,6 +74,9 @@ private:
     static const QHash<QString, QString> _textHash;
 
     static constexpr qsizetype kMaxTextQueueSize = 20;
+
+    /// Grace period for async TTS backends (e.g. Android service binding) to reach Ready before warning.
+    static constexpr std::chrono::seconds kEngineInitWarnTimeout{10};
 
     /// Fixes text messages for audio output.
     ///     @param string The text message to fix.
