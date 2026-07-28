@@ -45,24 +45,33 @@ namespace {
 QByteArray httpReasonPhrase(int statusCode)
 {
     switch (statusCode) {
-    case 200: return QByteArrayLiteral("OK");
-    case 204: return QByteArrayLiteral("No Content");
-    case 206: return QByteArrayLiteral("Partial Content");
-    case 304: return QByteArrayLiteral("Not Modified");
-    case 400: return QByteArrayLiteral("Bad Request");
-    case 404: return QByteArrayLiteral("Not Found");
-    case 500: return QByteArrayLiteral("Internal Server Error");
-    default: return QByteArrayLiteral("Status");
+        case 200:
+            return QByteArrayLiteral("OK");
+        case 204:
+            return QByteArrayLiteral("No Content");
+        case 206:
+            return QByteArrayLiteral("Partial Content");
+        case 304:
+            return QByteArrayLiteral("Not Modified");
+        case 400:
+            return QByteArrayLiteral("Bad Request");
+        case 404:
+            return QByteArrayLiteral("Not Found");
+        case 500:
+            return QByteArrayLiteral("Internal Server Error");
+        default:
+            return QByteArrayLiteral("Status");
     }
 }
-} // namespace
+}  // namespace
 
 void LocalHttpTestServer::installHttpResponder(const QByteArray& body, int statusCode, const QByteArray& contentType,
                                                int cacheMaxAge)
 {
-    QByteArray header = QStringLiteral("HTTP/1.1 %1 %2\r\n"
-                                       "Content-Type: %3\r\n"
-                                       "Connection: close\r\n")
+    QByteArray header = QStringLiteral(
+                            "HTTP/1.1 %1 %2\r\n"
+                            "Content-Type: %3\r\n"
+                            "Connection: close\r\n")
                             .arg(statusCode)
                             .arg(QString::fromLatin1(httpReasonPhrase(statusCode)))
                             .arg(QString::fromLatin1(contentType))
@@ -80,16 +89,20 @@ void LocalHttpTestServer::installRawResponder(const QByteArray& rawResponse)
     (void) QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this, rawResponse]() {
         while (_server.hasPendingConnections()) {
             QTcpSocket* const socket = _server.nextPendingConnection();
-            (void) QObject::connect(
-                socket, &QTcpSocket::readyRead, socket,
-                [socket, rawResponse]() {
-                    socket->readAll();
-                    socket->write(rawResponse);
-                    socket->flush();
-                    socket->disconnectFromHost();
-                },
-                Qt::SingleShotConnection);
             (void) QObject::connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
+
+            const auto sendResponse = [socket, rawResponse]() {
+                socket->readAll();
+                socket->write(rawResponse);
+                socket->flush();
+                socket->disconnectFromHost();
+            };
+
+            if (socket->bytesAvailable() > 0) {
+                sendResponse();
+            } else {
+                (void) QObject::connect(socket, &QTcpSocket::readyRead, socket, sendResponse, Qt::SingleShotConnection);
+            }
         }
     });
 }
