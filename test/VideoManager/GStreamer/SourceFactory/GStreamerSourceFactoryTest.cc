@@ -739,8 +739,11 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegWssRejectsUntrusted()
     QVERIFY(GStreamer::SourceFactory::activate(source));
 
     GstMessage* message = nullptr;
+    // QTRY re-evaluates its expression after the wait loop. Retain the first popped message so
+    // the final verification does not consume the bus a second time.
     QTRY_VERIFY_WITH_TIMEOUT(
-        (message = gst_bus_pop_filtered(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR))) != nullptr,
+        (message != nullptr) ||
+            ((message = gst_bus_pop_filtered(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR))) != nullptr),
         TestTimeout::mediumMs());
     gst_message_unref(message);
     verifyExpectedLogMessage();
