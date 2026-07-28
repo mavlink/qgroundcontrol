@@ -70,6 +70,10 @@
                     "showWhen": "!autoStreamConfig && isStreamSource && rtpLatencyVisible && QGroundControl.settingsManager.videoSettings.rtpJitterLatencyMs.userVisible"
                 },
                 {
+                    "setting": "videoSettings.rtspTimeout",
+                    "showWhen": "!autoStreamConfig && (videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource || videoSource === QGroundControl.settingsManager.videoSettings.httpMjpegVideoSource || videoSource === QGroundControl.settingsManager.videoSettings.webSocketJpegVideoSource)"
+                },
+                {
                     "setting": "videoSettings.rtspAutoReconnect",
                     "showWhen": "!autoStreamConfig && isStreamSource"
                 },

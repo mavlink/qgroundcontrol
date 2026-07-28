@@ -518,9 +518,16 @@ void GStreamerTest::_testWebSocketJpegValidation()
     QCOMPARE(jpegDimensions(excessiveWidth), QSize(QGCWebSocketVideoSource::kMaximumJpegDimension + 1, 1));
     QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(excessiveWidth));
 
-    const QByteArray excessivePixels = withJpegDimensions(jpeg, QGCWebSocketVideoSource::kMaximumJpegDimension, 4097);
+    const QByteArray uhd = withJpegDimensions(jpeg, 3840, 2160);
+    QVERIFY(!uhd.isEmpty());
+    QVERIFY(QGCWebSocketVideoSource::isCompleteJpeg(uhd));
+
+    const quint16 excessiveHeight = static_cast<quint16>(
+        (QGCWebSocketVideoSource::kMaximumDecodedPixels / QGCWebSocketVideoSource::kMaximumJpegDimension) + 1);
+    const QByteArray excessivePixels =
+        withJpegDimensions(jpeg, QGCWebSocketVideoSource::kMaximumJpegDimension, excessiveHeight);
     QVERIFY(!excessivePixels.isEmpty());
-    QCOMPARE(jpegDimensions(excessivePixels), QSize(QGCWebSocketVideoSource::kMaximumJpegDimension, 4097));
+    QCOMPARE(jpegDimensions(excessivePixels), QSize(QGCWebSocketVideoSource::kMaximumJpegDimension, excessiveHeight));
     QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(excessivePixels));
 }
 
@@ -590,6 +597,52 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegDelivery()
     gst_object_unref(pipeline);
     pipeline = nullptr;
     QVERIFY_SIGNAL_WAIT(disconnectedSpy, TestTimeout::mediumMs());
+}
+
+void GStreamerTest::_testSourceFactoryWebSocketJpegRejectsMalformedMessage()
+{
+    if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
+        QSKIP("appsrc/jpegparse plugins unavailable");
+    }
+
+    QWebSocketServer server(QStringLiteral("QGC malformed WebSocket JPEG test"), QWebSocketServer::NonSecureMode);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    QSignalSpy connectionSpy(&server, &QWebSocketServer::newConnection);
+
+    GStreamer::SourceFactory::Config config;
+    GstElement* source =
+        GStreamer::SourceFactory::create(QStringLiteral("ws://127.0.0.1:%1/video").arg(server.serverPort()), config);
+    GstElement* pipeline = gst_pipeline_new("websocket-jpeg-malformed-message-test");
+    QVERIFY(source);
+    QVERIFY(pipeline);
+    const auto cleanup = qScopeGuard([&] {
+        GStreamer::SourceFactory::deactivate(source);
+        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+        gst_object_unref(pipeline);
+    });
+
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
+    QVERIFY(GStreamer::SourceFactory::activate(source));
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY_SIGNAL_WAIT(connectionSpy, TestTimeout::mediumMs());
+
+    QWebSocket* peer = server.nextPendingConnection();
+    QVERIFY(peer);
+    QSignalSpy disconnectedSpy(peer, &QWebSocket::disconnected);
+    const QByteArray malformed = QByteArrayLiteral("not-a-jpeg");
+    QCOMPARE(peer->sendBinaryMessage(malformed), static_cast<qint64>(malformed.size()));
+    (void) peer->flush();
+
+    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    QVERIFY(bus);
+    const auto busCleanup = qScopeGuard([&] { gst_object_unref(bus); });
+    GstMessage* message = gst_bus_timed_pop_filtered(
+        bus, static_cast<GstClockTime>(TestTimeout::mediumMs()) * GST_MSECOND, GST_MESSAGE_ERROR);
+    QVERIFY2(message, "A malformed WebSocket JPEG message must surface as a GStreamer bus error");
+    gst_message_unref(message);
+
+    QVERIFY_SIGNAL_WAIT(disconnectedSpy, TestTimeout::mediumMs());
+    QCOMPARE(peer->closeCode(), QWebSocketProtocol::CloseCodeProtocolError);
 }
 
 void GStreamerTest::_testSourceFactoryWebSocketJpegWssTrusted()

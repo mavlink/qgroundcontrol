@@ -142,7 +142,7 @@
             "units": "s",
             "default": 8,
             "label": "Network Video Timeout",
-            "keywords": "rtsp,http,mjpeg,network,video timeout"
+            "keywords": "rtsp,http,mjpeg,websocket,ws,wss,network,video timeout"
         },
         {
             "name": "streamEnabled",
