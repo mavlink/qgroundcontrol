@@ -321,7 +321,8 @@ void QGCNetworkHelperTest::_testBuildUrlFromMap()
 void QGCNetworkHelperTest::_testBuildUrlFromList()
 {
     QList<QPair<QString, QString>> params = {
-        {"key1", "value1"}, {"key1", "value2"},  // Duplicate key allowed with list
+        {"key1", "value1"},
+        {"key1", "value2"},  // Duplicate key allowed with list
     };
     QUrl url = QGCNetworkHelper::buildUrl("http://example.com/api", params);
     QVERIFY(url.isValid());
@@ -358,6 +359,14 @@ void QGCNetworkHelperTest::_testRedactedUrlForLogging()
              QStringLiteral("udp://0.0.0.0:5600"));
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("https://example.com/?token=abc123")),
              QStringLiteral("https://example.com/"));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("https://[2001:db8::1]:8443/video?token=abc123")),
+             QStringLiteral("https://[2001:db8::1]:8443/<redacted>"));
+
+    const QString encodedUserInfo = QGCNetworkHelper::redactedUrlForLogging(
+        QStringLiteral("https://pilot%40ops:secret%2Fvalue@example.com/video?token=abc123"));
+    QCOMPARE(encodedUserInfo, QStringLiteral("https://example.com/<redacted>"));
+    QVERIFY(!encodedUserInfo.contains(QStringLiteral("pilot")));
+    QVERIFY(!encodedUserInfo.contains(QStringLiteral("secret")));
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("token-only-value")),
              QStringLiteral("<invalid-url>"));
 }
