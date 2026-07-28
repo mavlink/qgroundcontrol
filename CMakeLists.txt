@@ -549,6 +549,15 @@ qt_import_plugins(${CMAKE_PROJECT_NAME}
 
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME "VoladorGroundControl")
 
+if(WIN32 AND EXISTS "C:/gstreamer/1.0/msvc_x86_64/bin")
+    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "C:/gstreamer/1.0/msvc_x86_64/bin"
+        "$<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>"
+        COMMENT "Deploying GStreamer binaries to build output directory"
+    )
+endif()
+
 include(Install)
 
 include(PrintSummary)
