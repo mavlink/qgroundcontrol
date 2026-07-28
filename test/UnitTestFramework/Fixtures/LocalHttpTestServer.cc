@@ -1,12 +1,23 @@
 #include "LocalHttpTestServer.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QSharedPointer>
 #include <QtNetwork/QAbstractSocket>
 #include <QtNetwork/QHostAddress>
 
 #include "UnitTest.h"
 
 namespace TestFixtures {
+
+namespace {
+constexpr qsizetype MAX_REQUEST_HEADER_SIZE = 64 * 1024;
+
+struct RawResponderState
+{
+    QByteArray request;
+    bool responseSent = false;
+};
+}  // namespace
 
 LocalHttpTestServer::~LocalHttpTestServer()
 {
@@ -91,18 +102,28 @@ void LocalHttpTestServer::installRawResponder(const QByteArray& rawResponse)
             QTcpSocket* const socket = _server.nextPendingConnection();
             (void) QObject::connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
 
-            const auto sendResponse = [socket, rawResponse]() {
-                socket->readAll();
+            const auto state = QSharedPointer<RawResponderState>::create();
+            const auto sendResponseWhenRequestComplete = [socket, rawResponse, state]() {
+                if (state->responseSent) {
+                    return;
+                }
+
+                state->request.append(socket->readAll());
+                if (!state->request.contains(QByteArrayLiteral("\r\n\r\n"))) {
+                    if (state->request.size() > MAX_REQUEST_HEADER_SIZE) {
+                        socket->disconnectFromHost();
+                    }
+                    return;
+                }
+
+                state->responseSent = true;
                 socket->write(rawResponse);
                 socket->flush();
                 socket->disconnectFromHost();
             };
 
-            if (socket->bytesAvailable() > 0) {
-                sendResponse();
-            } else {
-                (void) QObject::connect(socket, &QTcpSocket::readyRead, socket, sendResponse, Qt::SingleShotConnection);
-            }
+            (void) QObject::connect(socket, &QTcpSocket::readyRead, socket, sendResponseWhenRequestComplete);
+            sendResponseWhenRequestComplete();
         }
     });
 }
