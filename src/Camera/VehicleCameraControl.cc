@@ -1813,7 +1813,8 @@ void VehicleCameraControl::setCurrentStream(int stream)
     if (stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
         QGCVideoStreamInfo* pInfo = currentStreamInstance();
         if(pInfo) {
-            qCDebug(VehicleCameraControlLog) << "Stopping stream:" << pInfo->uri();
+            qCDebug(VehicleCameraControlLog)
+                << "Stopping stream:" << QGCNetworkHelper::redactedUrlForLogging(pInfo->uri());
             //-- Stop current stream
             _vehicle->sendMavCommand(
                 _compID,                                // Target component
@@ -1825,7 +1826,8 @@ void VehicleCameraControl::setCurrentStream(int stream)
         pInfo = currentStreamInstance();
         if(pInfo) {
             //-- Start new stream
-            qCDebug(VehicleCameraControlLog) << "Starting stream:" << pInfo->uri();
+            qCDebug(VehicleCameraControlLog)
+                << "Starting stream:" << QGCNetworkHelper::redactedUrlForLogging(pInfo->uri());
             _vehicle->sendMavCommand(
                 _compID,                                // Target component
                 MAV_CMD_VIDEO_START_STREAMING,          // Command id
