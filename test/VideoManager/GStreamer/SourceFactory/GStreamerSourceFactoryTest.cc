@@ -175,7 +175,6 @@ void GStreamerTest::_testSourceFactoryHttpMjpeg()
     gboolean iradioMode = TRUE;
     gboolean automaticRedirect = TRUE;
     gboolean sslStrict = FALSE;
-    gboolean sslUseSystemCaFile = FALSE;
     gboolean singleStream = FALSE;
     gint retries = -1;
     guint timeout = 0;
@@ -184,8 +183,7 @@ void GStreamerTest::_testSourceFactoryHttpMjpeg()
     g_object_get(source, "location", &location, "method", &method, "is-live", &isLive, "do-timestamp", &doTimestamp,
                  "keep-alive", &keepAlive, "compress", &compress, "iradio-mode", &iradioMode, "automatic-redirect",
                  &automaticRedirect, "retries", &retries, "timeout", &timeout, "ssl-strict", &sslStrict,
-                 "ssl-use-system-ca-file", &sslUseSystemCaFile, "http-log-level", &httpLogLevel, "user-agent",
-                 &userAgent, nullptr);
+                 "http-log-level", &httpLogLevel, "user-agent", &userAgent, nullptr);
     const auto stringsCleanup = qScopeGuard([&] {
         g_free(location);
         g_free(method);
@@ -204,7 +202,6 @@ void GStreamerTest::_testSourceFactoryHttpMjpeg()
     QCOMPARE(retries, 0);
     QCOMPARE(timeout, 9u);
     QCOMPARE(sslStrict, TRUE);
-    QCOMPARE(sslUseSystemCaFile, TRUE);
     QCOMPARE(httpLogLevel, 0);
     QCOMPARE(QString::fromUtf8(userAgent), QGCNetworkHelper::defaultUserAgent());
     QCOMPARE(singleStream, TRUE);
@@ -264,7 +261,6 @@ void GStreamerTest::_testSourceFactoryHttpMjpegDelivery()
 
     TestFixtures::LocalHttpTestServer server;
     QVERIFY2(server.listen(), "Could not start local MJPEG test server");
-    server.installRawResponder(response);
 
     GStreamer::SourceFactory::Config config;
     config.timeoutS = 5;
@@ -287,6 +283,20 @@ void GStreamerTest::_testSourceFactoryHttpMjpegDelivery()
     QVERIFY2(gst_element_link(source, sink), "Could not link HTTP MJPEG source to appsink");
     QVERIFY2(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE,
              "HTTP MJPEG delivery pipeline failed to start");
+
+    QTcpSocket* client = server.waitForConnection(TestTimeout::mediumMs());
+    QVERIFY2(client, "HTTP MJPEG source did not connect to the local test server");
+    const auto clientCleanup = qScopeGuard([&] {
+        client->disconnectFromHost();
+        client->deleteLater();
+    });
+    if (client->bytesAvailable() == 0) {
+        QVERIFY2(client->waitForReadyRead(TestTimeout::mediumMs()), "HTTP MJPEG source did not send a request");
+    }
+    const QByteArray request = client->readAll();
+    QVERIFY2(request.startsWith("GET /video_feed HTTP/1.1\r\n"), "HTTP MJPEG source sent an unexpected request");
+    QCOMPARE(client->write(response), response.size());
+    QVERIFY2(client->waitForBytesWritten(TestTimeout::mediumMs()), "Could not deliver the local MJPEG response");
 
     GstSample* sample = nullptr;
     QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(sink))) != nullptr, TestTimeout::mediumMs());

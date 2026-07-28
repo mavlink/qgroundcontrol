@@ -467,10 +467,13 @@ GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
         const QByteArray location = cleanUrl.toEncoded(QUrl::FullyEncoded);
         const QByteArray userAgent = QGCNetworkHelper::defaultUserAgent().toUtf8();
         const guint timeoutS = std::clamp<guint>(config.timeoutS, 1u, 3600u);
+        // ssl-strict keeps certificate validation enabled. The active GLib TLS
+        // backend supplies the platform trust database; the legacy
+        // ssl-use-system-ca-file property is a no-op with libsoup3.
         g_object_set(source, "location", location.constData(), "method", "GET", "is-live", TRUE, "do-timestamp", TRUE,
                      "keep-alive", TRUE, "compress", FALSE, "iradio-mode", FALSE, "automatic-redirect", FALSE,
-                     "retries", 0, "timeout", timeoutS, "ssl-strict", TRUE, "ssl-use-system-ca-file", TRUE,
-                     "http-log-level", 0, "user-agent", userAgent.constData(), nullptr);
+                     "retries", 0, "timeout", timeoutS, "ssl-strict", TRUE, "http-log-level", 0, "user-agent",
+                     userAgent.constData(), nullptr);
         g_object_set(demux, "single-stream", TRUE, nullptr);
 
         if (!gst_bin_add(GST_BIN(bin), source)) {
