@@ -91,6 +91,7 @@ private slots:
     void _testSourceFactoryWebSocketJpeg();
     void _testWebSocketJpegValidation();
     void _testSourceFactoryWebSocketJpegDelivery();
+    void _testSourceFactoryWebSocketJpegRejectsMalformedMessage();
     void _testSourceFactoryWebSocketJpegWssTrusted();
     void _testSourceFactoryWebSocketJpegWssRejectsUntrusted();
     void _testSourceFactoryWebSocketJpegFailedHandshake();

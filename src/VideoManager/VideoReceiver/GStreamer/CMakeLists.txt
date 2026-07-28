@@ -2,6 +2,12 @@ if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
     return()
 endif()
 
+find_package(Qt6
+    ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
+    REQUIRED
+    COMPONENTS WebSockets
+)
+
 # Linux adds Allocators (gstreamer-allocators-1.0) for the DMABuf header probe in Orchestrator.cmake.
 # RtspServer (gstreamer-rtsp-server-1.0) drives the MockLink test video stream server, which is
 # Debug-only (see Comms/MockLink/CMakeLists.txt) — so only request it in Debug to keep the

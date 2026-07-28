@@ -229,7 +229,6 @@ find_package(Qt6
         Sql
         Svg
         TextToSpeech
-        WebSockets
         Xml
         Quick3D
         StateMachine

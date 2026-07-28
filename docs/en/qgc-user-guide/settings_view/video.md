@@ -22,18 +22,24 @@ HTTPS certificate validation remains enabled in GStreamer, redirects are not fol
 (`user:password@host`) is rejected.
 
 WebSocket JPEG expects exactly one complete JPEG image in each binary message.
-Text messages are ignored. Messages larger than 16 MiB, images over 16,384
-pixels in either dimension, and images over 64 megapixels are rejected. The
-receiver drops older queued images when decoding falls behind. `wss://`
-certificates are verified using QGroundControl's configured trust store.
-Credentials embedded in the URL are rejected. Use unencrypted `ws://` only on
-a trusted network.
+Text messages are ignored. Messages larger than 16 MiB, images over 8,192
+pixels in either dimension, and images exceeding the 64 MiB decoded-surface
+budget are rejected. The receiver drops older queued images when decoding
+falls behind. `wss://` certificates are verified using QGroundControl's
+configured trust store.
+
+This source supports unauthenticated endpoints only. Authorization headers are
+not supported, credentials embedded in the URL are rejected, and query values
+are stored as ordinary settings. Use unencrypted `ws://` only on a trusted
+network.
 
 ## Settings
 
 - **Aspect Ratio** — aspect ratio for scaling video in the display widget (default: 16:9; set to 0.0 to disable scaling)
 - **Stop recording when disarmed** — automatically stop recording when the vehicle disarms
 - **Low Latency Mode** — minimize video decode latency at the cost of some smoothness
+- **Network Video Timeout** — time before a stalled RTSP, HTTP MJPEG, or WebSocket JPEG source is considered unavailable
+- **Auto-reconnect on stream loss** — restart a timed-out or failed stream with exponential backoff
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly)
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / DirectX 3D11 / VideoToolbox / Intel / Vulkan
 
