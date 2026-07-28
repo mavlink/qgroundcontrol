@@ -2,10 +2,11 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QBuffer>
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtConcurrent/QtConcurrent>
 #include <QtGui/QImage>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
@@ -16,9 +17,9 @@
 
 namespace {
 
-GstSample* tryPullSampleOrPreroll(GstAppSink* sink)
+GstSample* tryPullSampleOrPreroll(GstAppSink* sink, GstClockTime timeout = 0)
 {
-    if (GstSample* sample = gst_app_sink_try_pull_sample(sink, 0)) {
+    if (GstSample* sample = gst_app_sink_try_pull_sample(sink, timeout)) {
         return sample;
     }
     return gst_app_sink_try_pull_preroll(sink, 0);
@@ -248,21 +249,18 @@ void GStreamerTest::_testSourceFactoryHttpMjpegDelivery()
                                  "Content-Type: image/jpeg\r\n"
                                  "Content-Length: " +
                                  QByteArray::number(jpeg.size()) + "\r\n\r\n" + jpeg + "\r\n";
-    // A multipart video stream contains repeated images. Supplying two also
-    // verifies delivery after multipartdemux exposes and links its dynamic pad.
-    const QByteArray body = framePart + framePart + "--" + boundary + "--\r\n";
+    // Keep the multipart response open like a camera stream so delivery does
+    // not depend on the timing of a finite response reaching EOS.
     const QByteArray response =
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: multipart/x-mixed-replace; boundary=" +
         boundary +
         "\r\n"
-        "Connection: close\r\n"
-        "Content-Length: " +
-        QByteArray::number(body.size()) + "\r\n\r\n" + body;
+        "Connection: keep-alive\r\n\r\n" +
+        framePart + framePart;
 
     TestFixtures::LocalHttpTestServer server;
     QVERIFY2(server.listen(), "Could not start local MJPEG test server");
-    server.installRawResponder(response);
 
     GStreamer::SourceFactory::Config config;
     config.timeoutS = 5;
@@ -285,16 +283,40 @@ void GStreamerTest::_testSourceFactoryHttpMjpegDelivery()
     QVERIFY2(gst_element_link(source, sink), "Could not link HTTP MJPEG source to appsink");
 
     // souphttpsrc can wait for the HTTP response while changing state. Run that
-    // transition off-thread so this test's Qt event loop can serve the request.
+    // transition off-thread so this thread can accept and serve the request.
     const QFuture<GstStateChangeReturn> stateFuture =
         QtConcurrent::run([pipeline]() { return gst_element_set_state(pipeline, GST_STATE_PLAYING); });
-    QTRY_VERIFY_WITH_TIMEOUT(stateFuture.isFinished(), TestTimeout::mediumMs());
-    QVERIFY2(stateFuture.result() != GST_STATE_CHANGE_FAILURE,
-             "HTTP MJPEG delivery pipeline failed to start");
 
-    GstSample* sample = nullptr;
-    QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(sink))) != nullptr,
-                             TestTimeout::mediumMs());
+    QTcpSocket* client = server.waitForConnection(TestTimeout::mediumMs());
+    QVERIFY2(client, "HTTP MJPEG source did not connect to the local test server");
+    const auto clientCleanup = qScopeGuard([&] {
+        client->disconnectFromHost();
+        client->deleteLater();
+    });
+
+    QByteArray request;
+    QDeadlineTimer requestDeadline(TestTimeout::mediumDuration());
+    while (!request.contains(QByteArrayLiteral("\r\n\r\n")) && !requestDeadline.hasExpired()) {
+        request.append(client->readAll());
+        if (!request.contains(QByteArrayLiteral("\r\n\r\n"))) {
+            (void) client->waitForReadyRead(static_cast<int>(requestDeadline.remainingTime()));
+        }
+    }
+    QVERIFY2(request.startsWith(QByteArrayLiteral("GET /video_feed HTTP/1.1\r\n")),
+             "HTTP MJPEG source sent an unexpected request");
+
+    QCOMPARE(client->write(response), static_cast<qint64>(response.size()));
+    QDeadlineTimer responseDeadline(TestTimeout::mediumDuration());
+    while ((client->bytesToWrite() > 0) && !responseDeadline.hasExpired()) {
+        (void) client->waitForBytesWritten(static_cast<int>(responseDeadline.remainingTime()));
+    }
+    QCOMPARE(client->bytesToWrite(), 0);
+
+    QTRY_VERIFY_WITH_TIMEOUT(stateFuture.isFinished(), TestTimeout::mediumMs());
+    QVERIFY2(stateFuture.result() != GST_STATE_CHANGE_FAILURE, "HTTP MJPEG delivery pipeline failed to start");
+
+    GstSample* sample = tryPullSampleOrPreroll(GST_APP_SINK(sink), TestTimeout::mediumDuration().count() * GST_MSECOND);
+    QVERIFY2(sample, "HTTP MJPEG stream did not deliver a JPEG sample before timeout");
     const auto sampleCleanup = qScopeGuard([&] { gst_sample_unref(sample); });
     GstBuffer* buffer = gst_sample_get_buffer(sample);
     QVERIFY(buffer);
