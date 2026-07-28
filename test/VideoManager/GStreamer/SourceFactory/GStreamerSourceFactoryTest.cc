@@ -840,9 +840,20 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegImmediateStop()
         GStreamer::SourceFactory::Config config;
         GstElement* source = GStreamer::SourceFactory::create(url, config);
         QVERIFY(source);
+        auto sourceCleanup = qScopeGuard([&] { gst_object_unref(source); });
+
+        GstElement* pipeline = gst_pipeline_new("websocket-jpeg-lifecycle-test");
+        QVERIFY(pipeline);
+        const auto pipelineCleanup = qScopeGuard([&] {
+            GStreamer::SourceFactory::deactivate(source);
+            (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+            gst_object_unref(pipeline);
+        });
+
+        QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
+        sourceCleanup.dismiss();
+        QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
         QVERIFY(GStreamer::SourceFactory::activate(source));
-        GStreamer::SourceFactory::deactivate(source);
-        gst_object_unref(source);
     }
 }
 

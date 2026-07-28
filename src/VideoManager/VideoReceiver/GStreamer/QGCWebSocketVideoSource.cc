@@ -148,7 +148,7 @@ bool parseSingleJpeg(QByteArrayView message, QSize& dimensions)
 class WebSocketWorker final : public QObject
 {
 public:
-    WebSocketWorker(const QUrl& url, GstElement* appsrc) : _url(url), _appsrc(appsrc) {}
+    WebSocketWorker(const QUrl& url, GstElement* appsrc, GstBus* bus) : _url(url), _appsrc(appsrc), _bus(bus) {}
 
     ~WebSocketWorker() override { stop(); }
 
@@ -225,7 +225,7 @@ public:
 private:
     void _failStream(GQuark domain, gint code, const char* message, const QString& debug)
     {
-        if (!_accepting.load(std::memory_order_acquire) || !_running || _terminalError || !_appsrc) {
+        if (!_accepting.load(std::memory_order_acquire) || !_running || _terminalError || !_appsrc || !_bus) {
             return;
         }
 
@@ -234,7 +234,9 @@ private:
         const QByteArray debugUtf8 = debug.toUtf8();
         GstMessage* errorMessage = gst_message_new_error(GST_OBJECT(_appsrc), error, debugUtf8.constData());
         g_clear_error(&error);
-        (void) gst_element_post_message(_appsrc, errorMessage);
+        if (!gst_bus_post(_bus, errorMessage)) {
+            qCWarning(QGCWebSocketVideoSourceLog) << "Failed to post WebSocket terminal error to the pipeline bus";
+        }
     }
 
     void _handleBinaryMessage(const QByteArray& message)
@@ -283,6 +285,7 @@ private:
 
     const QUrl _url;
     GstElement* _appsrc = nullptr;
+    GstBus* _bus = nullptr;
     QWebSocket* _webSocket = nullptr;
     std::atomic<bool> _accepting{true};
     bool _running = false;
@@ -298,14 +301,23 @@ public:
         setObjectName(QStringLiteral("QGCWebSocketVideo"));
     }
 
-    ~WebSocketThread() override { gst_clear_object(&_appsrc); }
-
-    bool startSession()
+    ~WebSocketThread() override
     {
+        gst_clear_object(&_bus);
+        gst_clear_object(&_appsrc);
+    }
+
+    bool startSession(GstBus* bus)
+    {
+        if (!bus) {
+            qCCritical(QGCWebSocketVideoSourceLog) << "WebSocket source activation requires a pipeline bus";
+            return false;
+        }
         if (_started.exchange(true, std::memory_order_acq_rel)) {
             return isRunning() && !_stopRequested.load(std::memory_order_acquire);
         }
 
+        _bus = GST_BUS(gst_object_ref(bus));
         start();
         if (!_initialized.tryAcquire(1, kThreadLifecycleTimeoutMs)) {
             qCCritical(QGCWebSocketVideoSourceLog) << "Timed out starting the WebSocket video worker";
@@ -352,7 +364,7 @@ public:
 protected:
     void run() final
     {
-        WebSocketWorker worker(_url, _appsrc);
+        WebSocketWorker worker(_url, _appsrc, _bus);
         {
             QMutexLocker lock(&_workerMutex);
             _worker = &worker;
@@ -379,6 +391,7 @@ protected:
 private:
     const QUrl _url;
     GstElement* _appsrc = nullptr;
+    GstBus* _bus = nullptr;
     QMutex _workerMutex;
     WebSocketWorker* _worker = nullptr;
     QSemaphore _initialized;
@@ -395,7 +408,7 @@ public:
 
     ~Impl() { stop(); }
 
-    bool start() { return _thread && _thread->startSession(); }
+    bool start(GstBus* bus) { return _thread && _thread->startSession(bus); }
 
     void stop()
     {
@@ -417,9 +430,9 @@ QGCWebSocketVideoSource::QGCWebSocketVideoSource(const QUrl& url, GstElement* ap
 
 QGCWebSocketVideoSource::~QGCWebSocketVideoSource() = default;
 
-bool QGCWebSocketVideoSource::start()
+bool QGCWebSocketVideoSource::start(GstBus* bus)
 {
-    return _impl && _impl->start();
+    return _impl && _impl->start(bus);
 }
 
 void QGCWebSocketVideoSource::stop()
