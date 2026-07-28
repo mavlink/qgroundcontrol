@@ -7,6 +7,7 @@
 
 #include "GStreamerHelpers.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(GstSourceFactoryLog, "Video.GStreamer.GstSourceFactory")
 
@@ -273,7 +274,8 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
 GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Config& config, guint latencyMs)
 {
     if (!GStreamer::isValidRtspUri(uri.toUtf8().constData())) {
-        qCCritical(GstSourceFactoryLog) << "Invalid RTSP URI:" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Invalid RTSP URI:"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -313,12 +315,14 @@ GstElement* buildTcpSource(const QUrl& sourceUrl)
 {
     const int port = sourceUrl.port();
     if (!validPort(port)) {
-        qCCritical(GstSourceFactoryLog) << "Invalid TCP port" << port << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Invalid TCP port" << port << "in"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
     const QString host = sourceUrl.host();
     if (host.isEmpty()) {
-        qCCritical(GstSourceFactoryLog) << "Missing host in TCP URI" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Missing host in TCP URI"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -336,7 +340,8 @@ GstElement* buildUdpSource(const QUrl& sourceUrl, bool isUdpH264, bool isUdpH265
 {
     const int port = sourceUrl.port();
     if (!validPort(port)) {
-        qCCritical(GstSourceFactoryLog) << "Invalid UDP port" << port << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCCritical(GstSourceFactoryLog) << "Invalid UDP port" << port << "in"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -505,7 +510,8 @@ GstElement* create(const QString& uri, const Config& config)
     const bool isTcpMPEGTS = (scheme == QLatin1String("tcp"));
 
     if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS) {
-        qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in"
+                                      << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 

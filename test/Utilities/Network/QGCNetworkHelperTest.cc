@@ -343,6 +343,25 @@ void QGCNetworkHelperTest::_testUrlWithoutQuery()
     QVERIFY(result.fragment().isEmpty());
 }
 
+void QGCNetworkHelperTest::_testRedactedUrlForLogging()
+{
+    const QString sensitiveUrl =
+        QStringLiteral("https://pilot:secret@example.com:8443/video%20feed?token=abc123#session");
+    const QString redacted = QGCNetworkHelper::redactedUrlForLogging(sensitiveUrl);
+
+    QCOMPARE(redacted, QStringLiteral("https://example.com:8443/<redacted>"));
+    QVERIFY(!redacted.contains(QStringLiteral("pilot")));
+    QVERIFY(!redacted.contains(QStringLiteral("secret")));
+    QVERIFY(!redacted.contains(QStringLiteral("abc123")));
+    QVERIFY(!redacted.contains(QStringLiteral("video")));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("udp://0.0.0.0:5600")),
+             QStringLiteral("udp://0.0.0.0:5600"));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("https://example.com/?token=abc123")),
+             QStringLiteral("https://example.com/"));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("token-only-value")),
+             QStringLiteral("<invalid-url>"));
+}
+
 // ============================================================================
 // Request Configuration Tests
 // ============================================================================

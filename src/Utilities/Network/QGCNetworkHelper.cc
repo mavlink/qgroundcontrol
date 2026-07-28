@@ -342,6 +342,31 @@ QUrl urlWithoutQuery(const QUrl& url)
     return url.adjusted(QUrl::RemoveQuery | QUrl::RemoveFragment);
 }
 
+QString redactedUrlForLogging(const QUrl& url)
+{
+    if (!url.isValid() || url.scheme().isEmpty()) {
+        return QStringLiteral("<invalid-url>");
+    }
+
+    QUrl redactedUrl(url);
+    const bool hadPath = !redactedUrl.path().isEmpty() && (redactedUrl.path() != QLatin1String("/"));
+    redactedUrl.setUserInfo(QString());
+    redactedUrl.setPath(hadPath ? QString() : redactedUrl.path());
+    redactedUrl.setQuery(QString());
+    redactedUrl.setFragment(QString());
+
+    QString displayUrl = redactedUrl.toDisplayString(QUrl::FullyEncoded);
+    if (hadPath) {
+        displayUrl += QStringLiteral("/<redacted>");
+    }
+    return displayUrl;
+}
+
+QString redactedUrlForLogging(const QString& url)
+{
+    return redactedUrlForLogging(QUrl(url));
+}
+
 // ============================================================================
 // Request Configuration
 // ============================================================================
