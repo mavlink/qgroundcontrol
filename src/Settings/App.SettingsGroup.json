@@ -245,7 +245,6 @@
             "longDesc": "If this option is enabled, application data will not be saved to the SD card.",
             "type": "bool",
             "default": false,
-            "qgcRebootRequired": true,
             "label": "Don't save to SD card, even if available",
             "keywords": "sd card,storage,android,save path"
         },

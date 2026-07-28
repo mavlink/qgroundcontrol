@@ -10,10 +10,6 @@
 
 #include "QGCCommandLineParser.h"
 
-#ifdef Q_OS_ANDROID
-    #include "AndroidInterface.h"
-#endif
-
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
     #include "RunGuard.h"
     #include "SignalHandler.h"
@@ -244,10 +240,6 @@ void Platform::setupPostApp()
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
     SignalHandler* signalHandler = new SignalHandler(QCoreApplication::instance());
     (void) signalHandler->setupSignalHandlers();
-#endif
-
-#ifdef Q_OS_ANDROID
-    AndroidInterface::checkStoragePermissions();
 #endif
 }
 

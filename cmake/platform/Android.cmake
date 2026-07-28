@@ -154,12 +154,11 @@ qt_add_android_permission(${CMAKE_PROJECT_NAME}
         maxSdkVersion 33
 )
 
-option(QGC_ANDROID_ENABLE_MANAGE_EXTERNAL_STORAGE "Request MANAGE_EXTERNAL_STORAGE (not Play Store compliant by default)" OFF)
-if(QGC_ANDROID_ENABLE_MANAGE_EXTERNAL_STORAGE)
-    qt_add_android_permission(${CMAKE_PROJECT_NAME}
-        NAME android.permission.MANAGE_EXTERNAL_STORAGE
-    )
-endif()
+# All files access on Android 11+ so the save path can live at the SD card root.
+# Requires Play Store approval via a permissions declaration if distributed there.
+qt_add_android_permission(${CMAKE_PROJECT_NAME}
+    NAME android.permission.MANAGE_EXTERNAL_STORAGE
+)
 
 # Joystick
 qt_add_android_permission(${CMAKE_PROJECT_NAME}
