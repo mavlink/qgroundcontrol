@@ -20,6 +20,7 @@
 #include <QtWebSockets/QWebSocketServer>
 #include <array>
 #include <gst/app/gstappsink.h>
+#include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 
 #include "GstSourceFactory.h"
@@ -135,7 +136,7 @@ QSslCertificate testTlsCertificate()
         "o28wbTAdBgNVHQ4EFgQUvOEXyJbTXCPncAQ5EWRp6XuZ1WgwHwYDVR0jBBgwFoAUvOEXyJbTXCPncAQ5EWRp6XuZ1WgwDwYD"
         "VR0TAQH/BAUwAwEB/zAaBgNVHREEEzARgglsb2NhbGhvc3SHBH8AAAEwCgYIKoZIzj0EAwIDSAAwRQIhAP8NQO0HrtST24NQ"
         "2BiGZOoyNmjgnlJ7U9vkDcwNXjYKAiBkOpNock+KqNb9qooUWnkxz0VUBbkKBcs9EFtS3EQndw==";
-    return QSslCertificate(QByteArray::fromBase64(QByteArrayView(kCertificateDer)), QSsl::Der);
+    return QSslCertificate(QByteArray::fromBase64(QByteArray(kCertificateDer)), QSsl::Der);
 }
 
 QSslKey testTlsPrivateKey()
@@ -143,7 +144,7 @@ QSslKey testTlsPrivateKey()
     static constexpr auto kPrivateKeyDer =
         "MHcCAQEEIEdHEf9aQn1QFwpXUAWdVOLDXr8LbWlidiIpShmGvco5oAoGCCqGSM49AwEHoUQDQgAEeDkrDE1IcJd2uSj9fIHZ"
         "v0DbMCquTRYNCanlDRewYBcwGtdFlSgO/3OkxKGirEp99ol3rDlGCOxbNVh+8xbIwA==";
-    return QSslKey(QByteArray::fromBase64(QByteArrayView(kPrivateKeyDer)), QSsl::Ec, QSsl::Der, QSsl::PrivateKey);
+    return QSslKey(QByteArray::fromBase64(QByteArray(kPrivateKeyDer)), QSsl::Ec, QSsl::Der, QSsl::PrivateKey);
 }
 
 bool configureSecureTestServer(QWebSocketServer& server, const QSslCertificate& certificate, const QSslKey& privateKey)
