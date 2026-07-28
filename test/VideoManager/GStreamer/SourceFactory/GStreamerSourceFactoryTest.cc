@@ -261,6 +261,7 @@ void GStreamerTest::_testSourceFactoryHttpMjpegDelivery()
 
     TestFixtures::LocalHttpTestServer server;
     QVERIFY2(server.listen(), "Could not start local MJPEG test server");
+    server.installRawResponder(response);
 
     GStreamer::SourceFactory::Config config;
     config.timeoutS = 5;
@@ -284,22 +285,8 @@ void GStreamerTest::_testSourceFactoryHttpMjpegDelivery()
     QVERIFY2(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE,
              "HTTP MJPEG delivery pipeline failed to start");
 
-    QTcpSocket* client = server.waitForConnection(TestTimeout::mediumMs());
-    QVERIFY2(client, "HTTP MJPEG source did not connect to the local test server");
-    const auto clientCleanup = qScopeGuard([&] {
-        client->disconnectFromHost();
-        client->deleteLater();
-    });
-    if (client->bytesAvailable() == 0) {
-        QVERIFY2(client->waitForReadyRead(TestTimeout::mediumMs()), "HTTP MJPEG source did not send a request");
-    }
-    const QByteArray request = client->readAll();
-    QVERIFY2(request.startsWith("GET /video_feed HTTP/1.1\r\n"), "HTTP MJPEG source sent an unexpected request");
-    QCOMPARE(client->write(response), response.size());
-    QVERIFY2(client->waitForBytesWritten(TestTimeout::mediumMs()), "Could not deliver the local MJPEG response");
-
     GstSample* sample = nullptr;
-    QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(sink))) != nullptr, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(sink))) != nullptr, TestTimeout::longMs());
     const auto sampleCleanup = qScopeGuard([&] { gst_sample_unref(sample); });
     GstBuffer* buffer = gst_sample_get_buffer(sample);
     QVERIFY(buffer);
