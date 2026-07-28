@@ -144,9 +144,7 @@ QGCPopupDialog {
                         visible: treeViewRowLayout.hasChildren
 
                         QGCMouseArea {
-                            anchors.fill: parent
-                            anchors.margins: -ScreenTools.defaultFontPixelWidth
-
+                            fillItem: parent
                             onClicked: treeView.toggleExpanded(treeViewRowLayout.row)
                         }
                     }
