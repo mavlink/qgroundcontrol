@@ -15,8 +15,9 @@ class QGCWebSocketVideoSource final
 {
 public:
     static constexpr qsizetype kMaximumJpegBytes = 16 * 1024 * 1024;
-    static constexpr int kMaximumJpegDimension = 16384;
-    static constexpr quint64 kMaximumDecodedPixels = 64 * 1024 * 1024;
+    static constexpr int kMaximumJpegDimension = 8192;
+    // Bound a decoded four-byte display surface to 64 MiB while retaining 4K and 5K sources.
+    static constexpr quint64 kMaximumDecodedPixels = 16 * 1024 * 1024;
 
     QGCWebSocketVideoSource(const QUrl& url, GstElement* appsrc);
     ~QGCWebSocketVideoSource();
