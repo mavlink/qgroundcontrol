@@ -19,6 +19,10 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
 {
     _editorQml = "qrc:/qml/QGroundControl/PlanView/CorridorScanEditor.qml";
 
+    // specifiesCoordinate() depends on _corridorPolyline.count(), so cache the
+    // initial value before any signal connections fire to keep the cache in sync.
+    _specifiesCoordinate = specifiesCoordinate();
+
     // We override the altitude to the mission default
     if (_cameraCalc.isManualCamera() || !_cameraCalc.valueSetIsDistance()->rawValue().toBool()) {
         _cameraCalc.distanceToSurface()->setRawValue(SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue());
@@ -211,6 +215,16 @@ void CorridorScanComplexItem::rotateEntryPoint(void)
 
 void CorridorScanComplexItem::_rebuildCorridorPolygon(void)
 {
+    // specifiesCoordinate() flips when the polyline crosses the 2-vertex threshold.
+    // MissionController only re-evaluates waypoint connector lines on this signal,
+    // so emit it here to link the corridor entry to the previous waypoint once the
+    // corridor polyline becomes valid.
+    const bool specifiesCoord = specifiesCoordinate();
+    if (specifiesCoord != _specifiesCoordinate) {
+        _specifiesCoordinate = specifiesCoord;
+        emit specifiesCoordinateChanged();
+    }
+
     if (_corridorPolyline.count() < 2) {
         _surveyAreaPolygon.clear();
         return;

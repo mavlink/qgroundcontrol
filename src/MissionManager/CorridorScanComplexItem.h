@@ -82,5 +82,9 @@ private:
     QMap<QString, FactMetaData*>    _metaDataMap;
     SettingsFact                    _corridorWidthFact;
 
+    // Cache of the last specifiesCoordinate() value so we can emit
+    // specifiesCoordinateChanged when the polyline crosses the 2-vertex threshold.
+    bool                            _specifiesCoordinate =   false;
+
     static constexpr const char* _jsonEntryPointKey =       "EntryPoint";
 };
