@@ -502,7 +502,7 @@ GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
             break;
         }
         (void) g_signal_connect_object(binDemux, "pad-added", G_CALLBACK(linkMultipartJpegPad), binParser,
-                                       G_CONNECT_DEFAULT);
+                                       static_cast<GConnectFlags>(0));
         if (!addStaticGhostPad(binParser)) {
             break;
         }
