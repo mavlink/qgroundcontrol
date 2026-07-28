@@ -1,5 +1,6 @@
 #include "AndroidSerial.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QHash>
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
@@ -11,6 +12,9 @@
 #include <qserialport_p.h>
 #include <qserialportinfo_p.h>
 
+#include <unistd.h>
+
+#include <atomic>
 #include <utility>
 
 #include "AndroidInterface.h"
@@ -19,6 +23,56 @@
 QGC_LOGGING_CATEGORY(AndroidSerialLog, "Android.AndroidSerial");
 
 namespace AndroidSerial {
+
+// ----------------------------------------------------------------------------
+// POSIX serial backend support
+// ----------------------------------------------------------------------------
+
+static std::atomic<bool> s_usePosixSerial{false};
+
+void setUsePosixSerial(bool use)
+{
+    s_usePosixSerial.store(use);
+    qCDebug(AndroidSerialLog) << "Serial backend:" << (use ? "POSIX" : "Java USB");
+}
+
+bool usePosixSerial()
+{
+    return s_usePosixSerial.load();
+}
+
+QList<QSerialPortInfo> availablePosixPorts()
+{
+    // Common SoC UART device node name patterns
+    static const QStringList kUartPatterns = {
+        QStringLiteral("ttyS*"),   QStringLiteral("ttyHS*"),  QStringLiteral("ttyMSM*"),
+        QStringLiteral("ttyHSL*"), QStringLiteral("ttymxc*"), QStringLiteral("ttyAMA*"),
+        QStringLiteral("ttyTHS*"),
+    };
+
+    QList<QSerialPortInfo> serialPortInfoList;
+
+    const QStringList deviceNames =
+        QDir(QStringLiteral("/dev")).entryList(kUartPatterns, QDir::System | QDir::Files, QDir::Name);
+    for (const QString& deviceName : deviceNames) {
+        const QString systemLocation = QStringLiteral("/dev/") + deviceName;
+        if (::access(systemLocation.toLocal8Bit().constData(), R_OK | W_OK) != 0) {
+            continue;
+        }
+
+        QSerialPortInfoPrivate info;
+        info.portName = deviceName;
+        info.device = systemLocation;
+        serialPortInfoList.append(info);
+    }
+
+    return serialPortInfoList;
+}
+
+bool hasPosixSerialPorts()
+{
+    return !availablePosixPorts().isEmpty();
+}
 
 // ----------------------------------------------------------------------------
 // Token-based pointer tracking (UAF protection)

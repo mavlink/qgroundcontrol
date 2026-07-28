@@ -11,6 +11,7 @@ qt_add_library(QGCAndroidSerialPort STATIC
     qserialport.h
     qserialport_android.cpp
     qserialport_p.h
+    qserialport_posix.cpp
     qserialportglobal.h
     qserialportinfo.cpp
     qserialportinfo.h

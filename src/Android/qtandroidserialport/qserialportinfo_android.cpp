@@ -37,6 +37,10 @@ QList<QSerialPortInfo> availablePortsByUdev(bool& ok)
 
 QList<QSerialPortInfo> QSerialPortInfo::availablePorts()
 {
+    if (AndroidSerial::usePosixSerial()) {
+        return AndroidSerial::availablePosixPorts();
+    }
+
     bool ok = false;
     const QList<QSerialPortInfo> serialPortInfoList = availablePortsByFiltersOfDevices(ok);
     return (ok ? serialPortInfoList : QList<QSerialPortInfo>());

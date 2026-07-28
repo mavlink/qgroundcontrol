@@ -21,6 +21,10 @@
 #include "SerialLink.h"
 #include "GPSManager.h"
 #include "GPSRtk.h"
+#ifdef Q_OS_ANDROID
+#include "AndroidSerial.h"
+#include "AppSettings.h"
+#endif
 #endif
 
 #ifdef QT_DEBUG
@@ -63,6 +67,12 @@ LinkManager *LinkManager::instance()
 void LinkManager::init()
 {
     _autoConnectSettings = SettingsManager::instance()->autoConnectSettings();
+
+#if defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
+    // The serial backend is fixed at startup. Changing the setting requires an app restart.
+    AndroidSerial::setUsePosixSerial(
+        SettingsManager::instance()->appSettings()->androidUsePosixSerial()->rawValue().toBool());
+#endif
 
     if (!QGC::runningUnitTests()) {
         (void) connect(_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
@@ -807,10 +817,11 @@ void LinkManager::_addSerialAutoConnectLink()
 {
     QList<QGCSerialPortInfo> portList;
 #ifdef Q_OS_ANDROID
-    // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
-    // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
-    // bug after we connect the first serial port we stop probing for additional ports.
-    if (!_isSerialPortConnected()) {
+    // With the Java USB serial backend only a single serial connection is supported. Repeatedly calling
+    // availablePorts after that one serial port is connected leaks file handles due to a bug somewhere in the
+    // android serial code. In order to work around that bug after we connect the first serial port we stop
+    // probing for additional ports. The POSIX backend does not have this problem.
+    if (AndroidSerial::usePosixSerial() || !_isSerialPortConnected()) {
         portList = QGCSerialPortInfo::availablePorts();
     }
 #else

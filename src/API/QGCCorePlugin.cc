@@ -5,6 +5,9 @@
 #endif
 #ifdef Q_OS_ANDROID
 #include "Viewer3DSettings.h"
+#ifndef QGC_NO_SERIAL_LINK
+#include "AndroidSerial.h"
+#endif
 #endif
 #include "FactMetaData.h"
 #include "QGCMAVLink.h"
@@ -158,6 +161,15 @@ void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMeta
             return;
         }
 #endif
+        else if (metaData.name() == AppSettings::androidUsePosixSerialName) {
+#if defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
+            // Only show when the device actually exposes accessible serial device nodes
+            userVisible = AndroidSerial::hasPosixSerialPorts();
+#else
+            userVisible = false;
+#endif
+            return;
+        }
     }
 }
 
