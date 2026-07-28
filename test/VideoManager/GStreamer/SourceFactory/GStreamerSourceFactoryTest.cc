@@ -2,13 +2,26 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <QtCore/QBuffer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtGui/QImage>
+#include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 
 #include "GstSourceFactory.h"
+#include "LocalHttpTestServer.h"
+#include "QGCNetworkHelper.h"
 
 namespace {
+
+GstSample* tryPullSampleOrPreroll(GstAppSink* sink)
+{
+    if (GstSample* sample = gst_app_sink_try_pull_sample(sink, 0)) {
+        return sample;
+    }
+    return gst_app_sink_try_pull_preroll(sink, 0);
+}
 
 // Borrowed (bin-owned) first child whose element-factory name matches, or nullptr.
 GstElement* findChildByFactoryName(GstElement* bin, const char* factoryName)
@@ -130,6 +143,174 @@ void GStreamerTest::_testSourceFactoryRtspExcludesStaticJitterBuffer()
 
     QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"),
              "rtspsrc owns its internal jitterbuffer; the factory must not add a second one");
+}
+
+void GStreamerTest::_testSourceFactoryHttpMjpeg()
+{
+    if (!gst_element_factory_find("souphttpsrc") || !gst_element_factory_find("multipartdemux") ||
+        !gst_element_factory_find("jpegparse")) {
+        QSKIP("souphttpsrc/multipartdemux/jpegparse plugins unavailable");
+    }
+
+    GStreamer::SourceFactory::Config config;
+    config.timeoutS = 9;
+    GstElement* bin = GStreamer::SourceFactory::create(
+        QStringLiteral("https://video.example.test:8443/camera.mjpg?quality=80#local-view"), config);
+    QVERIFY(bin);
+    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
+
+    GstElement* source = findChildByFactoryName(bin, "souphttpsrc");
+    GstElement* demux = findChildByFactoryName(bin, "multipartdemux");
+    GstElement* parser = findChildByFactoryName(bin, "jpegparse");
+    QVERIFY(source);
+    QVERIFY(demux);
+    QVERIFY(parser);
+
+    gchar* location = nullptr;
+    gchar* method = nullptr;
+    gboolean isLive = FALSE;
+    gboolean doTimestamp = FALSE;
+    gboolean keepAlive = FALSE;
+    gboolean compress = TRUE;
+    gboolean iradioMode = TRUE;
+    gboolean automaticRedirect = TRUE;
+    gboolean sslStrict = FALSE;
+    gboolean sslUseSystemCaFile = FALSE;
+    gboolean singleStream = FALSE;
+    gint retries = -1;
+    guint timeout = 0;
+    gint httpLogLevel = -1;
+    gchar* userAgent = nullptr;
+    g_object_get(source, "location", &location, "method", &method, "is-live", &isLive, "do-timestamp", &doTimestamp,
+                 "keep-alive", &keepAlive, "compress", &compress, "iradio-mode", &iradioMode, "automatic-redirect",
+                 &automaticRedirect, "retries", &retries, "timeout", &timeout, "ssl-strict", &sslStrict,
+                 "ssl-use-system-ca-file", &sslUseSystemCaFile, "http-log-level", &httpLogLevel, "user-agent",
+                 &userAgent, nullptr);
+    const auto stringsCleanup = qScopeGuard([&] {
+        g_free(location);
+        g_free(method);
+        g_free(userAgent);
+    });
+    g_object_get(demux, "single-stream", &singleStream, nullptr);
+
+    QCOMPARE(QString::fromUtf8(location), QStringLiteral("https://video.example.test:8443/camera.mjpg?quality=80"));
+    QCOMPARE(QString::fromUtf8(method), QStringLiteral("GET"));
+    QCOMPARE(isLive, TRUE);
+    QCOMPARE(doTimestamp, TRUE);
+    QCOMPARE(keepAlive, TRUE);
+    QCOMPARE(compress, FALSE);
+    QCOMPARE(iradioMode, FALSE);
+    QCOMPARE(automaticRedirect, FALSE);
+    QCOMPARE(retries, 0);
+    QCOMPARE(timeout, 9u);
+    QCOMPARE(sslStrict, TRUE);
+    QCOMPARE(sslUseSystemCaFile, TRUE);
+    QCOMPARE(httpLogLevel, 0);
+    QCOMPARE(QString::fromUtf8(userAgent), QGCNetworkHelper::defaultUserAgent());
+    QCOMPARE(singleStream, TRUE);
+
+    static GstStaticPadTemplate jpegPadTemplate =
+        GST_STATIC_PAD_TEMPLATE("src_%u", GST_PAD_SRC, GST_PAD_SOMETIMES, GST_STATIC_CAPS("image/jpeg"));
+    GstPad* jpegPad = gst_pad_new_from_static_template(&jpegPadTemplate, "src_0");
+    QVERIFY(jpegPad);
+    QVERIFY2(gst_element_add_pad(demux, jpegPad), "multipartdemux test pad must be accepted");
+
+    GstPad* parserSink = gst_element_get_static_pad(parser, "sink");
+    QVERIFY(parserSink);
+    const auto parserSinkCleanup = qScopeGuard([&] { gst_object_unref(parserSink); });
+    QVERIFY2(gst_pad_is_linked(parserSink), "multipart JPEG pad-added must link to jpegparse");
+    GstPad* peer = gst_pad_get_peer(parserSink);
+    QVERIFY(peer);
+    QCOMPARE(peer, jpegPad);
+    gst_object_unref(peer);
+    QVERIFY(gst_element_remove_pad(demux, jpegPad));
+
+    GstPad* srcPad = gst_element_get_static_pad(bin, "src");
+    QVERIFY2(srcPad, "HTTP MJPEG source bin must expose a static parsed-JPEG source pad");
+    gst_object_unref(srcPad);
+}
+
+void GStreamerTest::_testSourceFactoryHttpMjpegDelivery()
+{
+    if (!gst_element_factory_find("souphttpsrc") || !gst_element_factory_find("multipartdemux") ||
+        !gst_element_factory_find("jpegparse") || !gst_element_factory_find("appsink")) {
+        QSKIP("souphttpsrc/multipartdemux/jpegparse/appsink plugins unavailable");
+    }
+
+    QByteArray jpeg;
+    QBuffer jpegBuffer(&jpeg);
+    QVERIFY(jpegBuffer.open(QIODevice::WriteOnly));
+    QImage image(16, 16, QImage::Format_RGB32);
+    image.fill(Qt::green);
+    QVERIFY2(image.save(&jpegBuffer, "JPEG"), "Qt JPEG encoder unavailable");
+
+    const QByteArray boundary("qgc-test-boundary");
+    const QByteArray framePart = "--" + boundary +
+                                 "\r\n"
+                                 "Content-Type: image/jpeg\r\n"
+                                 "Content-Length: " +
+                                 QByteArray::number(jpeg.size()) + "\r\n\r\n" + jpeg + "\r\n";
+    // A multipart video stream contains repeated images. Supplying two also
+    // verifies delivery after multipartdemux exposes and links its dynamic pad.
+    const QByteArray body = framePart + framePart + "--" + boundary + "--\r\n";
+    const QByteArray response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: multipart/x-mixed-replace; boundary=" +
+        boundary +
+        "\r\n"
+        "Connection: close\r\n"
+        "Content-Length: " +
+        QByteArray::number(body.size()) + "\r\n\r\n" + body;
+
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local MJPEG test server");
+    server.installRawResponder(response);
+
+    GStreamer::SourceFactory::Config config;
+    config.timeoutS = 5;
+    GstElement* source = GStreamer::SourceFactory::create(server.url(QStringLiteral("/video_feed")), config);
+    GstElement* sink = gst_element_factory_make("appsink", "sink");
+    GstElement* pipeline = gst_pipeline_new("http-mjpeg-delivery-test");
+    if (!source || !sink || !pipeline) {
+        gst_clear_object(&source);
+        gst_clear_object(&sink);
+        gst_clear_object(&pipeline);
+        QFAIL("Could not create HTTP MJPEG delivery pipeline");
+    }
+    const auto pipelineCleanup = qScopeGuard([&] {
+        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+        gst_object_unref(pipeline);
+    });
+
+    g_object_set(sink, "sync", FALSE, "max-buffers", 1u, "drop", TRUE, nullptr);
+    gst_bin_add_many(GST_BIN(pipeline), source, sink, nullptr);
+    QVERIFY2(gst_element_link(source, sink), "Could not link HTTP MJPEG source to appsink");
+    QVERIFY2(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE,
+             "HTTP MJPEG delivery pipeline failed to start");
+
+    GstSample* sample = nullptr;
+    QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(sink))) != nullptr, TestTimeout::mediumMs());
+    const auto sampleCleanup = qScopeGuard([&] { gst_sample_unref(sample); });
+    GstBuffer* buffer = gst_sample_get_buffer(sample);
+    QVERIFY(buffer);
+    QVERIFY(gst_buffer_get_size(buffer) > 0);
+    GstCaps* caps = gst_sample_get_caps(sample);
+    QVERIFY(caps);
+    QCOMPARE(QString::fromUtf8(gst_structure_get_name(gst_caps_get_structure(caps, 0))), QStringLiteral("image/jpeg"));
+}
+
+void GStreamerTest::_testSourceFactoryRejectsUnsafeHttpMjpegUrl()
+{
+    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid HTTP MJPEG URL")));
+    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("HTTP MJPEG credentials in URLs are not supported")));
+
+    GStreamer::SourceFactory::Config config;
+    QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("http:///camera.mjpg"), config));
+    QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("http://video.example.test:0/camera.mjpg"), config));
+    QVERIFY(!GStreamer::SourceFactory::create(QStringLiteral("https://operator:secret@video.example.test/camera.mjpg"),
+                                              config));
 }
 
 void GStreamerTest::_testSourceFactoryRejectsBadUri()
