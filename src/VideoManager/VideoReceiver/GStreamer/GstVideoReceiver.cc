@@ -293,13 +293,19 @@ void GstVideoReceiver::start(uint32_t timeout)
             gst_clear_object(&bus);
         }
 
+        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-initial");
+        if (gst_element_set_state(_pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
+            break;
+        }
+
+        // External source controllers report terminal failures through this pipeline's bus.
+        // Leave NULL first so early connection and TLS errors are not discarded while it is flushing.
         if (!GStreamer::SourceFactory::activate(_source)) {
             qCCritical(GstVideoReceiverLog) << "SourceFactory::activate() failed";
             break;
         }
 
-        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-initial");
-        running = (gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+        running = true;
     } while(0);
 
     if (!running) {
