@@ -6,6 +6,7 @@
 #include <memory>
 
 typedef struct _GstElement GstElement;
+typedef struct _GstBus GstBus;
 
 /// Bridges one-JPEG-per-binary-message WebSocket streams into a bounded GStreamer appsrc.
 ///
@@ -24,7 +25,7 @@ public:
 
     Q_DISABLE_COPY_MOVE(QGCWebSocketVideoSource)
 
-    bool start();
+    bool start(GstBus* bus);
     void stop();
 
     static bool isCompleteJpeg(QByteArrayView message);
