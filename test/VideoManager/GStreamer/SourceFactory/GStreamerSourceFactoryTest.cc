@@ -570,8 +570,8 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegDelivery()
     sink = nullptr;
     QVERIFY(gst_element_link(sourceBin, binSink));
 
-    QVERIFY(GStreamer::SourceFactory::activate(sourceBin));
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(GStreamer::SourceFactory::activate(sourceBin));
     QVERIFY_SIGNAL_WAIT(connectionSpy, TestTimeout::mediumMs());
     QWebSocket* peer = server.nextPendingConnection();
     QVERIFY(peer);
@@ -587,7 +587,7 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegDelivery()
     (void) peer->flush();
 
     GstSample* sample = nullptr;
-    QTRY_VERIFY_WITH_TIMEOUT((sample = gst_app_sink_try_pull_sample(GST_APP_SINK(binSink), 0)) != nullptr,
+    QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(binSink))) != nullptr,
                              TestTimeout::mediumMs());
     QVERIFY(gst_buffer_get_size(gst_sample_get_buffer(sample)) > 0);
     gst_sample_unref(sample);
@@ -606,6 +606,9 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegRejectsMalformedMessage()
         QSKIP("appsrc/jpegparse plugins unavailable");
     }
 
+    expectLogMessage("Video.GStreamer.WebSocketVideoSource", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Rejecting WebSocket message")));
+
     QWebSocketServer server(QStringLiteral("QGC malformed WebSocket JPEG test"), QWebSocketServer::NonSecureMode);
     QVERIFY(server.listen(QHostAddress::LocalHost, 0));
     QSignalSpy connectionSpy(&server, &QWebSocketServer::newConnection);
@@ -623,8 +626,8 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegRejectsMalformedMessage()
     });
 
     QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
-    QVERIFY(GStreamer::SourceFactory::activate(source));
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(GStreamer::SourceFactory::activate(source));
     QVERIFY_SIGNAL_WAIT(connectionSpy, TestTimeout::mediumMs());
 
     QWebSocket* peer = server.nextPendingConnection();
@@ -641,6 +644,7 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegRejectsMalformedMessage()
         bus, static_cast<GstClockTime>(TestTimeout::mediumMs()) * GST_MSECOND, GST_MESSAGE_ERROR);
     QVERIFY2(message, "A malformed WebSocket JPEG message must surface as a GStreamer bus error");
     gst_message_unref(message);
+    verifyExpectedLogMessage();
 
     QVERIFY_SIGNAL_WAIT(disconnectedSpy, TestTimeout::mediumMs());
     QCOMPARE(peer->closeCode(), QWebSocketProtocol::CloseCodeProtocolError);
@@ -686,8 +690,8 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegWssTrusted()
     });
 
     QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
-    QVERIFY(GStreamer::SourceFactory::activate(source));
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(GStreamer::SourceFactory::activate(source));
     QVERIFY_SIGNAL_WAIT(connectionSpy, TestTimeout::mediumMs());
 }
 
@@ -699,6 +703,11 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegWssRejectsUntrusted()
     if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
         QSKIP("appsrc/jpegparse plugins unavailable");
     }
+
+    expectLogMessage("Video.GStreamer.WebSocketVideoSource", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("WebSocket TLS verification failed")));
+    expectLogMessage("Video.GStreamer.WebSocketVideoSource", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("WebSocket transport error code")));
 
     const QSslCertificate certificate = testTlsCertificate();
     const QSslKey privateKey = testTlsPrivateKey();
@@ -722,8 +731,8 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegWssRejectsUntrusted()
     });
 
     QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
-    QVERIFY(GStreamer::SourceFactory::activate(source));
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(GStreamer::SourceFactory::activate(source));
 
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     QVERIFY(bus);
@@ -733,6 +742,8 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegWssRejectsUntrusted()
         (message = gst_bus_pop_filtered(bus, static_cast<GstMessageType>(GST_MESSAGE_ERROR))) != nullptr,
         TestTimeout::mediumMs());
     gst_message_unref(message);
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
 }
 
 void GStreamerTest::_testSourceFactoryWebSocketJpegFailedHandshake()
@@ -759,8 +770,8 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegFailedHandshake()
     });
 
     QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
-    QVERIFY(GStreamer::SourceFactory::activate(source));
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(GStreamer::SourceFactory::activate(source));
 
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     QVERIFY(bus);
@@ -776,6 +787,9 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegRemoteDisconnect()
     if (!gst_element_factory_find("appsrc") || !gst_element_factory_find("jpegparse")) {
         QSKIP("appsrc/jpegparse plugins unavailable");
     }
+
+    ignoreLogMessage("Video.GStreamer.WebSocketVideoSource", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("WebSocket transport error code")));
 
     QWebSocketServer server(QStringLiteral("QGC WebSocket disconnect test"), QWebSocketServer::NonSecureMode);
     QVERIFY(server.listen(QHostAddress::LocalHost, 0));
@@ -794,8 +808,8 @@ void GStreamerTest::_testSourceFactoryWebSocketJpegRemoteDisconnect()
     });
 
     QVERIFY(gst_bin_add(GST_BIN(pipeline), source));
-    QVERIFY(GStreamer::SourceFactory::activate(source));
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(GStreamer::SourceFactory::activate(source));
     QVERIFY_SIGNAL_WAIT(connectionSpy, TestTimeout::mediumMs());
 
     QWebSocket* peer = server.nextPendingConnection();
