@@ -28,3 +28,5 @@ void QGCNetworkRedactionTest::_testRedactedUrlForLogging()
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("token-only-value")),
              QStringLiteral("<invalid-url>"));
 }
+
+UT_REGISTER_TEST(QGCNetworkRedactionTest, TestLabel::Unit, TestLabel::Utilities)
