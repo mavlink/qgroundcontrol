@@ -88,6 +88,9 @@ private slots:
     void _testSourceFactoryNoRetransmission();
     void _testSourceFactoryRtspJitterBufferPolicy_data();
     void _testSourceFactoryRtspJitterBufferPolicy();
+    void _testSourceFactoryHttpMjpeg();
+    void _testSourceFactoryHttpMjpegDelivery();
+    void _testSourceFactoryRejectsUnsafeHttpMjpegUrl();
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();
     void _testSourceFactoryRejectsBadTcpUri();
