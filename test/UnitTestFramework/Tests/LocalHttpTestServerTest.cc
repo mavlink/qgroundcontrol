@@ -2,6 +2,7 @@
 
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QTcpSocket>
+#include <QtTest/QSignalSpy>
 
 #include "Fixtures/LocalHttpTestServer.h"
 
@@ -15,8 +16,16 @@ void LocalHttpTestServerTest::_testEarlyRequest()
     client.connectToHost(QHostAddress::LocalHost, server.port());
     QVERIFY(client.waitForConnected(TestTimeout::mediumMs()));
 
-    const QByteArray request = QByteArrayLiteral("GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
-    QCOMPARE(client.write(request), request.size());
+    QSignalSpy readyReadSpy(&client, &QTcpSocket::readyRead);
+    const QByteArray firstRequestFragment =
+        QByteArrayLiteral("GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n");
+    QCOMPARE(client.write(firstRequestFragment), firstRequestFragment.size());
+    QVERIFY(client.waitForBytesWritten(TestTimeout::mediumMs()));
+    QVERIFY(!readyReadSpy.wait(TestTimeout::shortMs()));
+    QCOMPARE(client.state(), QAbstractSocket::ConnectedState);
+
+    const QByteArray finalRequestFragment = QByteArrayLiteral("\r\n");
+    QCOMPARE(client.write(finalRequestFragment), finalRequestFragment.size());
     QVERIFY(client.waitForBytesWritten(TestTimeout::mediumMs()));
 
     QTRY_COMPARE_WITH_TIMEOUT(client.state(), QAbstractSocket::UnconnectedState, TestTimeout::mediumMs());
