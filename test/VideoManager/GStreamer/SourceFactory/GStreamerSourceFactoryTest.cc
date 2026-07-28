@@ -5,6 +5,7 @@
 #include <QtCore/QBuffer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtConcurrent/QtConcurrent>
 #include <QtGui/QImage>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
@@ -282,11 +283,18 @@ void GStreamerTest::_testSourceFactoryHttpMjpegDelivery()
     g_object_set(sink, "sync", FALSE, "max-buffers", 1u, "drop", TRUE, nullptr);
     gst_bin_add_many(GST_BIN(pipeline), source, sink, nullptr);
     QVERIFY2(gst_element_link(source, sink), "Could not link HTTP MJPEG source to appsink");
-    QVERIFY2(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE,
+
+    // souphttpsrc can wait for the HTTP response while changing state. Run that
+    // transition off-thread so this test's Qt event loop can serve the request.
+    const QFuture<GstStateChangeReturn> stateFuture =
+        QtConcurrent::run([pipeline]() { return gst_element_set_state(pipeline, GST_STATE_PLAYING); });
+    QTRY_VERIFY_WITH_TIMEOUT(stateFuture.isFinished(), TestTimeout::mediumMs());
+    QVERIFY2(stateFuture.result() != GST_STATE_CHANGE_FAILURE,
              "HTTP MJPEG delivery pipeline failed to start");
 
     GstSample* sample = nullptr;
-    QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(sink))) != nullptr, TestTimeout::longMs());
+    QTRY_VERIFY_WITH_TIMEOUT((sample = tryPullSampleOrPreroll(GST_APP_SINK(sink))) != nullptr,
+                             TestTimeout::mediumMs());
     const auto sampleCleanup = qScopeGuard([&] { gst_sample_unref(sample); });
     GstBuffer* buffer = gst_sample_get_buffer(sample);
     QVERIFY(buffer);
