@@ -45,8 +45,12 @@ void SerialConfiguration::setPortName(const QString &name)
         emit portNameChanged();
     }
 
+    // Only update the display name if the port is currently available. Otherwise keep
+    // the existing (e.g. persisted) display name rather than clearing it.
     const QString portDisplayName = cleanPortDisplayName(portName);
-    setPortDisplayName(portDisplayName);
+    if (!portDisplayName.isEmpty()) {
+        setPortDisplayName(portDisplayName);
+    }
 }
 
 void SerialConfiguration::copyFrom(const LinkConfiguration *source)
@@ -75,8 +79,10 @@ void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
     setFlowControl(static_cast<QSerialPort::FlowControl>(settings.value("flowControl", _flowControl).toInt()));
     setStopBits(static_cast<QSerialPort::StopBits>(settings.value("stopBits", _stopBits).toInt()));
     setParity(static_cast<QSerialPort::Parity>(settings.value("parity", _parity).toInt()));
-    setPortName(settings.value("portName", _portName).toString());
+    // Load the saved display name first as a fallback; setPortName() recomputes a
+    // fresh display name which takes precedence when the device is present.
     setPortDisplayName(settings.value("portDisplayName", _portDisplayName).toString());
+    setPortName(settings.value("portName", _portName).toString());
     setdtrForceLow(settings.value("dtrForceLow", _dtrForceLow).toBool());
 
     settings.endGroup();
@@ -167,6 +173,19 @@ QString SerialConfiguration::cleanPortDisplayName(const QString &name)
     const QList<QSerialPortInfo> availablePorts = QSerialPortInfo::availablePorts();
     for (const QSerialPortInfo &portInfo : availablePorts) {
         if (portInfo.systemLocation() == name) {
+#ifdef Q_OS_ANDROID
+            // Android port names (bus/usb/001/003) aren't human-readable. Prefer the USB
+            // description/manufacturer, with the port name appended to keep entries unique.
+            QString displayName;
+            if (!portInfo.description().isEmpty()) {
+                displayName = portInfo.description();
+            } else if (!portInfo.manufacturer().isEmpty()) {
+                displayName = portInfo.manufacturer();
+            }
+            if (!displayName.isEmpty()) {
+                return QStringLiteral("%1 (%2)").arg(displayName, portInfo.portName());
+            }
+#endif
             return portInfo.portName();
         }
     }
@@ -382,9 +401,12 @@ void SerialWorker::_checkPortAvailability()
     }
 
     bool portExists = false;
+    const QString configuredPort = _serialConfig->portName();
     const auto availablePorts = QSerialPortInfo::availablePorts();
     for (const QSerialPortInfo &info : availablePorts) {
-        if (info.portName() == _serialConfig->portDisplayName()) {
+        // Compare against the real port identity, not the human-readable display
+        // name, which may be a USB description string (e.g. on Android).
+        if ((info.systemLocation() == configuredPort) || (info.portName() == configuredPort)) {
             portExists = true;
             break;
         }
