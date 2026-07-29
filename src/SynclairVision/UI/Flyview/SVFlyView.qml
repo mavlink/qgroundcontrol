@@ -37,7 +37,59 @@ Item {
         return cameraLayouts.length > 0 ? cameraLayouts[0] : null
     }
     readonly property string resolvedActiveLayoutId: activeLayout ? activeLayout.id : ""
-    readonly property var visibleCameraSlots: activeLayout ? activeLayout.panes.map((pane) => pane.slot) : []
+    readonly property bool digiviewOutputGeometryAvailable: !!digiview
+        && digiview.hasVideoOutputParameters
+        && digiview.videoOutputStreamName === digiview.streamName
+        && digiview.videoOutputWidth > 0
+        && digiview.videoOutputHeight > 0
+    readonly property var digiviewCameraViews: {
+        if (!digiviewOutputGeometryAvailable || !digiview.videoOutputViews) {
+            return []
+        }
+
+        const requestedViewCount = Number(digiview.videoOutputNumUserViews)
+        if (!isFinite(requestedViewCount)) {
+            return []
+        }
+
+        const outputWidth = digiview.videoOutputWidth
+        const outputHeight = digiview.videoOutputHeight
+        const viewCount = Math.max(0, Math.min(Math.floor(requestedViewCount), digiview.videoOutputViews.length))
+        const views = []
+
+        for (let i = 0; i < viewCount; ++i) {
+            const view = digiview.videoOutputViews[i]
+            const viewX = Number(view.x)
+            const viewY = Number(view.y)
+            const viewWidth = Number(view.width)
+            const viewHeight = Number(view.height)
+
+            if (!isFinite(viewX) || !isFinite(viewY) || !isFinite(viewWidth) || !isFinite(viewHeight)) {
+                continue
+            }
+
+            const left = Math.max(0, Math.min(viewX, outputWidth))
+            const top = Math.max(0, Math.min(viewY, outputHeight))
+            const right = Math.max(left, Math.min(viewX + viewWidth, outputWidth))
+            const bottom = Math.max(top, Math.min(viewY + viewHeight, outputHeight))
+
+            if (right <= left || bottom <= top) {
+                continue
+            }
+
+            // VIDEO_OUTPUT_PARAMETERS has no camera id; view order remains the established slot mapping.
+            views.push({ slot: i, x: left, y: top, width: right - left, height: bottom - top })
+        }
+
+        return views
+    }
+    readonly property bool usingDigiviewLayout: digiviewCameraViews.length > 0
+    readonly property real digiviewScaleX: usingDigiviewLayout ? width / digiview.videoOutputWidth : 0
+    readonly property real digiviewScaleY: usingDigiviewLayout ? height / digiview.videoOutputHeight : 0
+    readonly property var displayedCameraViews: usingDigiviewLayout
+        ? digiviewCameraViews
+        : (activeLayout ? activeLayout.panes : [])
+    readonly property var visibleCameraSlots: displayedCameraViews.map((view) => view.slot)
 
     QGCPalette { id: qgcPalette}
 
@@ -118,15 +170,15 @@ Item {
 
 
     Repeater {
-        model: root.activeLayout ? root.activeLayout.panes : []
+        model: root.displayedCameraViews
 
         delegate: SVCameraLayer {
             required property var modelData
 
-            width: modelData.w * root.width
-            height: modelData.h * root.height
-            x: modelData.x * root.width
-            y: modelData.y * root.height
+            width: root.usingDigiviewLayout ? modelData.width * root.digiviewScaleX : modelData.w * root.width
+            height: root.usingDigiviewLayout ? modelData.height * root.digiviewScaleY : modelData.h * root.height
+            x: root.usingDigiviewLayout ? modelData.x * root.digiviewScaleX : modelData.x * root.width
+            y: root.usingDigiviewLayout ? modelData.y * root.digiviewScaleY : modelData.y * root.height
             cameraSlot: modelData.slot
             previewMode: root.previewMode
 
@@ -144,7 +196,7 @@ Item {
         z: 1
 
         Repeater {
-            model: root.activeLayout ? root.activeLayout.separators : []
+            model: !root.usingDigiviewLayout && root.activeLayout ? root.activeLayout.separators : []
 
             delegate: Rectangle {
                 required property var modelData

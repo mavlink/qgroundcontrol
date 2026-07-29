@@ -22,6 +22,8 @@ Q_APPLICATION_STATIC(DigiviewManager, _digiviewManagerInstance);
 namespace {
 
 constexpr uint8_t kCamTargetingLockFlagsUnchanged = 0xFF;
+constexpr float kVideoOutputParametersOneShotIntervalUs = -1000.0F;
+constexpr float kVideoOutputParametersSubscriptionIntervalUs = 100000.0F;
 
 void copyStringToCharBuf(const QString& src, char* dest, int size)
 {
@@ -154,7 +156,7 @@ void DigiviewManager::setStreamName(const QString& streamName)
 void DigiviewManager::setSenderSystemId(int senderSystemId)
 {
     if ((senderSystemId < 0) || (senderSystemId > std::numeric_limits<uint8_t>::max())) {
-        qCWarning(DigiviewManagerLog) << "Ignoring invalid Digiview sender system id" << senderSystemId;
+        //qCWarning(DigiviewManagerLog) << "Ignoring invalid Digiview sender system id" << senderSystemId;
         return;
     }
 
@@ -164,13 +166,14 @@ void DigiviewManager::setSenderSystemId(int senderSystemId)
     }
 
     _senderSystemId = senderId;
+    _resetRemoteSessionForSenderIdentityChange();
     emit senderIdentityChanged();
 }
 
 void DigiviewManager::setSenderComponentId(int senderComponentId)
 {
     if ((senderComponentId < 0) || (senderComponentId > std::numeric_limits<uint8_t>::max())) {
-        qCWarning(DigiviewManagerLog) << "Ignoring invalid Digiview sender component id" << senderComponentId;
+        //qCWarning(DigiviewManagerLog) << "Ignoring invalid Digiview sender component id" << senderComponentId;
         return;
     }
 
@@ -180,6 +183,7 @@ void DigiviewManager::setSenderComponentId(int senderComponentId)
     }
 
     _senderComponentId = componentId;
+    _resetRemoteSessionForSenderIdentityChange();
     emit senderIdentityChanged();
 }
 
@@ -255,6 +259,7 @@ void DigiviewManager::sendSetVideoOutput(
         0,
         0,
         0);
+    requestVideoOutputParameters();
 }
 
 void DigiviewManager::requestVideoOutputParameters()
@@ -272,18 +277,18 @@ void DigiviewManager::requestVideoOutputParameters()
     command.target_component = _remoteComponentId;
     command.command = MAV_CMD_SET_MESSAGE_INTERVAL;
     command.param1 = static_cast<float>(MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS);
-    command.param2 = -1000.0F;
+    command.param2 = kVideoOutputParametersOneShotIntervalUs;
 
     _encodeMessage(msg, command, mavlink_msg_command_long_encode);
-    qCDebug(DigiviewManagerLog) << "Sending MAVLink GET for VIDEO_OUTPUT_PARAMETERS:"
-                                  << "command" << "MAV_CMD_SET_MESSAGE_INTERVAL"
-                                  << "requestedMessageId" << MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS
-                                  << "intervalUs" << command.param2
+    qCDebug(DigiviewManagerLog) << "Sending one-shot MAVLink GET for VIDEO_OUTPUT_PARAMETERS:"
+                                   << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
+                                   << "messageId" << MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS
+                                   << "intervalUs" << command.param2
                                   << "senderSystem" << _senderSystemId
-                                  << "senderComponent" << _senderComponentId
-                                  << "targetSystem" << command.target_system
-                                  << "targetComponent" << command.target_component;
-    _sendMessage(msg);
+                                   << "senderComponent" << _senderComponentId
+                                   << "targetSystem" << command.target_system
+                                   << "targetComponent" << command.target_component;
+    _pendingVideoOutputParametersRequest = !_sendMessage(msg);
 }
 
 void DigiviewManager::sendVideoOutputParameters(
@@ -665,20 +670,17 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         if (!_remoteIdentityValid) {
             if ((message.sysid == 0) || (message.compid == MAV_COMP_ID_ALL)) {
                 qCWarning(DigiviewManagerLog) << "Ignoring Digiview HEARTBEAT with invalid target identity"
-                                             << message.sysid << message.compid;
+                                              << "senderSystem" << message.sysid
+                                              << "senderComponent" << message.compid;
             } else {
-                _remoteSystemId = message.sysid;
-                _remoteComponentId = message.compid;
-                _remoteIdentityValid = true;
-
-                if (_pendingVideoOutputParametersRequest) {
-                    _pendingVideoOutputParametersRequest = false;
-                    //requestVideoOutputParameters();
-                }
+                _establishRemoteSession(message.sysid, message.compid);
             }
         } else if ((message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
             qCWarning(DigiviewManagerLog) << "Ignoring Digiview HEARTBEAT from different MAVLink identity"
-                                         << message.sysid << message.compid;
+                                          << "senderSystem" << message.sysid
+                                          << "senderComponent" << message.compid;
+        } else {
+            _establishRemoteSession(message.sysid, message.compid);
         }
     }
 
@@ -721,13 +723,15 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
     case MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS: {
         if (!_remoteIdentityValid) {
             qCDebug(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS before target HEARTBEAT"
-                                        << message.sysid << message.compid;
+                                        << "senderSystem" << message.sysid
+                                        << "senderComponent" << message.compid;
             break;
         }
 
         if ((message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
             qCWarning(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS from different MAVLink identity"
-                                          << message.sysid << message.compid;
+                                          << "senderSystem" << message.sysid
+                                          << "senderComponent" << message.compid;
             break;
         }
 
@@ -737,7 +741,8 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         const QString streamName = stringFromCharBuf(payload.stream_name, 16);
         if (streamName != _streamName) {
             qCDebug(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS for unexpected stream"
-                                        << streamName << "expected" << _streamName;
+                                        << "stream" << streamName
+                                        << "expected" << _streamName;
             break;
         }
 
@@ -1056,10 +1061,57 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
     emit messageDecoded(message.msgid);
 }
 
-void DigiviewManager::_sendMessage(const mavlink_message_t& message)
+bool DigiviewManager::_sendMessage(const mavlink_message_t& message)
 {
-    if (!_connection->sendMessage(message)) {
+    const bool sent = _connection->sendMessage(message);
+    if (!sent) {
         qCWarning(DigiviewManagerLog) << "Failed to send Digiview MAVLink message" << message.msgid << _connection->lastError();
+    }
+
+    return sent;
+}
+
+void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componentId)
+{
+    const bool initialSubscription = !_remoteIdentityValid;
+
+    _remoteSystemId = systemId;
+    _remoteComponentId = componentId;
+    _remoteIdentityValid = true;
+
+    mavlink_message_t msg;
+    mavlink_command_long_t command {};
+
+    command.target_system = _remoteSystemId;
+    command.target_component = _remoteComponentId;
+    command.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    command.param1 = static_cast<float>(MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS);
+    command.param2 = kVideoOutputParametersSubscriptionIntervalUs;
+
+    _encodeMessage(msg, command, mavlink_msg_command_long_encode);
+    if (initialSubscription) {
+        qCDebug(DigiviewManagerLog) << "Starting recurring MAVLink VIDEO_OUTPUT_PARAMETERS subscription:"
+                                     << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
+                                     << "messageId" << MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS
+                                     << "intervalUs" << command.param2
+                                     << "senderSystem" << _senderSystemId
+                                     << "senderComponent" << _senderComponentId
+                                     << "targetSystem" << command.target_system
+                                     << "targetComponent" << command.target_component;
+    } else {
+        qCDebug(DigiviewManagerLog) << "Renewing recurring MAVLink VIDEO_OUTPUT_PARAMETERS subscription after target HEARTBEAT:"
+                                     << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
+                                     << "messageId" << MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS
+                                     << "intervalUs" << command.param2
+                                     << "senderSystem" << _senderSystemId
+                                     << "senderComponent" << _senderComponentId
+                                     << "targetSystem" << command.target_system
+                                     << "targetComponent" << command.target_component;
+    }
+    _videoOutputParametersSubscriptionActive = _sendMessage(msg);
+
+    if (_pendingVideoOutputParametersRequest) {
+        requestVideoOutputParameters();
     }
 }
 
@@ -1069,6 +1121,7 @@ void DigiviewManager::_resetRemoteSession()
     _remoteComponentId = 0;
     _remoteIdentityValid = false;
     _pendingVideoOutputParametersRequest = false;
+    _videoOutputParametersSubscriptionActive = false;
 
     const bool hasVideoOutputParametersChangedValue = _hasVideoOutputParameters;
     const bool videoOutputStreamNameChangedValue = !_videoOutputStreamName.isEmpty();
@@ -1126,5 +1179,20 @@ void DigiviewManager::_resetRemoteSession()
     }
     if (videoOutputSingleDetectionSizeChangedValue) {
         emit videoOutputSingleDetectionSizeChanged();
+    }
+}
+
+void DigiviewManager::_resetRemoteSessionForSenderIdentityChange()
+{
+    const bool reconnect = _connection->connected() && _remoteIdentityValid;
+    const uint8_t remoteSystemId = _remoteSystemId;
+    const uint8_t remoteComponentId = _remoteComponentId;
+    const bool pendingVideoOutputParametersRequest = _pendingVideoOutputParametersRequest;
+
+    _resetRemoteSession();
+    _pendingVideoOutputParametersRequest = pendingVideoOutputParametersRequest;
+
+    if (reconnect) {
+        _establishRemoteSession(remoteSystemId, remoteComponentId);
     }
 }

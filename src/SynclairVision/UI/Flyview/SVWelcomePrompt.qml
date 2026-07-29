@@ -25,7 +25,6 @@ FirstRunPrompt {
     }
     Flickable {
         id: contentFlickable
-        readonly property real scrollBarGutterWidth: Math.max(contentScrollBar.implicitWidth, ScreenTools.defaultFontPixelWidth)
 
         width: 700
         height: 600
@@ -45,6 +44,7 @@ FirstRunPrompt {
             height: 1500
             color: "red"
             opacity: 0.1
+            visible: false
         }
     }
 }
