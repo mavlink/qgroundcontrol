@@ -78,6 +78,16 @@ void QSerialPortPrivate::close()
 
     _stopAsyncRead();
 
+    {
+        // Drop any undelivered data so a queued drain or later re-open can't
+        // deliver stale bytes into cleared QIODevice buffers.
+        QMutexLocker locker(&_readMutex);
+        _pendingData.clear();
+        _pendingDataOffset = 0;
+        _readyReadPending.store(false);
+        _bufferBytesEstimate.store(0, std::memory_order_relaxed);
+    }
+
     if (_deviceId != INVALID_DEVICE_ID) {
         if (!AndroidSerial::close(_deviceId)) {
             qCWarning(AndroidSerialPortLog) << "Failed to close device with ID" << _deviceId;
@@ -243,7 +253,10 @@ void QSerialPortPrivate::_scheduleReadyRead()
         QMetaObject::invokeMethod(
             q,
             [this, guard]() {
-                if (!guard) {
+                if (!guard || !guard->isOpen()) {
+                    // Device closed before the queued drain ran. close() clears the
+                    // QIODevice read buffers, so draining into them would assert.
+                    _readyReadPending.store(false);
                     return;
                 }
 
