@@ -518,27 +518,33 @@ void LinkManager::_updateAutoConnectLinks()
     _addMAVLinkForwardingLink();
     _reconnectAutoConnectLinks();
 
-    // check to see if nmea gps is configured for UDP input, if so, set it up to connect
-    if (_autoConnectSettings->autoConnectNmeaPort()->cookedValueString() == "UDP Port") {
+    const int nmeaSource = _autoConnectSettings->nmeaSource()->rawValue().toInt();
+    if (nmeaSource == AutoConnectSettings::NmeaSourceUdp) {
         if ((_nmeaSocket->localPort() != _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt()) || (_nmeaSocket->state() != UdpIODevice::BoundState)) {
             qCDebug(LinkManagerLog) << "Changing port for UDP NMEA stream";
             _nmeaSocket->close();
             _nmeaSocket->bind(QHostAddress::AnyIPv4, _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt());
             QGCPositionManager::instance()->setNmeaSourceDevice(_nmeaSocket);
         }
-#ifndef QGC_NO_SERIAL_LINK
-        if (_nmeaPort) {
-            _nmeaPort->close();
-            delete _nmeaPort;
-            _nmeaPort = nullptr;
-            _nmeaDeviceName = "";
-        }
-#endif
     } else {
         _nmeaSocket->close();
+
+        if (nmeaSource == AutoConnectSettings::NmeaSourceDisabled) {
+            // Revert QGCPositionManager to the integrated GPS if it was using an NMEA source.
+            // Reset before deleting the port so the NMEA source never holds a dangling device.
+            QGCPositionManager::instance()->resetNmeaSourceDevice();
+        }
     }
 
 #ifndef QGC_NO_SERIAL_LINK
+    // Serial NMEA ports are set up by _addSerialAutoConnectLink() below
+    if ((nmeaSource != AutoConnectSettings::NmeaSourceSerial) && _nmeaPort) {
+        _nmeaPort->close();
+        delete _nmeaPort;
+        _nmeaPort = nullptr;
+        _nmeaDeviceName = "";
+    }
+
     _addSerialAutoConnectLink();
 #endif
 }
@@ -847,7 +853,8 @@ void LinkManager::_addSerialAutoConnectLink()
         QString boardName;
 
         // check to see if nmea gps is configured for current Serial port, if so, set it up to connect
-        if (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString()) {
+        if ((_autoConnectSettings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceSerial) &&
+                (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString())) {
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
                 _nmeaDeviceName = portInfo.systemLocation().trimmed();
                 qCDebug(LinkManagerLog) << "Configuring nmea port" << _nmeaDeviceName;

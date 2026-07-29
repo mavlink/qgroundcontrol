@@ -7,28 +7,34 @@ import QGroundControl.FactControls
 
 SettingsGroupLayout {
     heading: qsTr("NMEA GPS")
-    visible: QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.userVisible && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.userVisible
+    visible: _autoConnectSettings.nmeaSource.userVisible && _autoConnectSettings.autoConnectNmeaBaud.userVisible
+
+    readonly property var  _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
+    readonly property bool _serialSource: _autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceSerial
+
+    LabelledFactComboBox {
+        label: qsTr("Source")
+        fact: _autoConnectSettings.nmeaSource
+    }
 
     LabelledComboBox {
         id: nmeaPortCombo
+        visible: _serialSource
         label: qsTr("Device")
 
         model: ListModel {}
 
         onActivated: (index) => {
-            if (index !== -1) {
-                QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = comboBox.textAt(index);
+            if (index !== -1 && QGroundControl.linkManager.serialPorts.length !== 0) {
+                _autoConnectSettings.autoConnectNmeaPort.value = comboBox.textAt(index)
             }
         }
 
         Component.onCompleted: {
             var model = []
 
-            model.push(qsTr("Disabled"))
-            model.push(qsTr("UDP Port"))
-
             if (QGroundControl.linkManager.serialPorts.length === 0) {
-                model.push(qsTr("Serial <none available>"))
+                model.push(qsTr("<none available>"))
             } else {
                 for (var i in QGroundControl.linkManager.serialPorts) {
                     model.push(QGroundControl.linkManager.serialPorts[i])
@@ -36,14 +42,13 @@ SettingsGroupLayout {
             }
             nmeaPortCombo.model = model
 
-            const index = nmeaPortCombo.comboBox.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
-            nmeaPortCombo.currentIndex = index;
+            nmeaPortCombo.currentIndex = nmeaPortCombo.comboBox.find(_autoConnectSettings.autoConnectNmeaPort.valueString)
         }
     }
 
     LabelledComboBox {
         id: nmeaBaudCombo
-        visible: nmeaPortCombo.currentIndex > 1
+        visible: _serialSource
         label: qsTr("Baudrate")
 
         readonly property string _customLabel:  qsTr("Custom")
@@ -60,7 +65,7 @@ SettingsGroupLayout {
             rates.push(_customLabel)
             nmeaBaudCombo.model = rates
 
-            var baud = QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString
+            var baud = _autoConnectSettings.autoConnectNmeaBaud.valueString
             const index = nmeaBaudCombo.comboBox.find(baud);
             if (index === -1) {
                 nmeaBaudCombo.currentIndex = nmeaBaudCombo.comboBox.count - 1
@@ -87,15 +92,15 @@ SettingsGroupLayout {
                 if (!nmeaBaudCombo.isCustomBaud) return
                 var baud = parseInt(text)
                 if (baud > 0) {
-                    QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = baud
+                    _autoConnectSettings.autoConnectNmeaBaud.value = baud
                 }
             }
         }
     }
 
     LabelledFactTextField {
-        visible: nmeaPortCombo.currentIndex === 1
+        visible: _autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceUdp
         label: qsTr("NMEA stream UDP port")
-        fact: QGroundControl.settingsManager.autoConnectSettings.nmeaUdpPort
+        fact: _autoConnectSettings.nmeaUdpPort
     }
 }
