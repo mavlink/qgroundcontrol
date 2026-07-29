@@ -22,6 +22,14 @@ Item {
     readonly property int actionLockControls: 13
     property bool toolbarVisible: false
 
+    // --- MODE-INSTÄLLNINGAR FÖR SHORTCUTS ---
+    // 0 = Click (Endast vid nedtryckning)
+    // 1 = Press (Kör kontinuerligt direkt)
+    // 2 = Click + Press (Klicka direkt, vänta delay, sedan kontinuerlig)
+    property int inputMode: SVSettings.controlPanelInteraction
+    property int holdDelay: 400       // Fördröjning i ms innan upprepning startar (för läge 2)
+    property int repeatInterval: 50   // Hastighet i ms mellan varje steg (rekommenderat ~50ms)
+
     readonly property int joystickRightRole: 0
     readonly property int joystickDownRole: 1
     readonly property int joystickLeftRole: 2
@@ -39,7 +47,6 @@ Item {
     readonly property bool visualShortcutsEligible: root.shortcutInputEligible && root.enabled
         && !SVState.lockControls && SVState.cameraSelected !== -1
 
-    // Actions not listed here are disabled when shortcutsEnabled is false.
     readonly property var actionPolicies: ({
         [root.actionSynclair]: {
             allowWhenShortcutsDisabled: true,
@@ -47,6 +54,80 @@ Item {
             requiresSynclairOverlayOff: true
         }
     })
+
+    // --- GEMENSAM AKTIONSTRIGGER ---
+    function triggerHeldActions(strength) {
+        if (!root.visualShortcutsEligible) return
+
+        const smallMovement = SVState.shortcutSmallMovementHeld
+
+        // Kör rörelse för alla aktiva joystick-riktningar
+        for (let direction = root.joystickRightRole; direction <= root.joystickUpRole; ++direction) {
+            if (SVState.shortcutJoystickHeld[direction]) {
+                SVState.changeEuler(direction, smallMovement, SVSettings.joystickSensitivity * strength)
+            }
+        }
+
+        // Kör zoom (använd Math.max för att garantera att steget inte avrundas till 0 i backend)
+        const zoomStep = Math.max(1, Math.round(SVSettings.zoomSensitivity * strength))
+        if (SVState.shortcutZoomInHeld) {
+            SVState.changeZoom(zoomStep)
+        }
+        if (SVState.shortcutZoomOutHeld) {
+            SVState.changeZoom(-zoomStep)
+        }
+    }
+
+    Timer {
+        id: holdDelayTimer
+        interval: root.holdDelay
+        repeat: false
+        onTriggered: {
+            root.triggerHeldActions(1.0)
+            repeatTimer.restart()
+        }
+    }
+
+    Timer {
+        id: repeatTimer
+        interval: root.repeatInterval
+        repeat: true
+        onTriggered: root.triggerHeldActions(1.0)
+    }
+
+    function stopShortcutTimers() {
+        holdDelayTimer.stop()
+        repeatTimer.stop()
+    }
+
+    function startShortcutInputModeLogic() {
+        const hasHeldMovement = SVState.shortcutJoystickHeld.some(h => h) || 
+                                SVState.shortcutZoomInHeld || 
+                                SVState.shortcutZoomOutHeld
+
+        if (!hasHeldMovement) {
+            stopShortcutTimers()
+            return
+        }
+
+        // 1. Kör första klicket DIREKT för alla lägen
+        root.triggerHeldActions(1.0)
+
+        // 2. Hantera timers beroende på läge
+        if (root.inputMode === 0) {
+            // Mode 0: Click (Bara klicket ovan, ingen timer)
+            stopShortcutTimers()
+        } else if (root.inputMode === 1) {
+            // Mode 1: Press (Starta kontinuerlig repeat direkt)
+            stopShortcutTimers()
+            repeatTimer.restart()
+        } else if (root.inputMode === 2) {
+            // Mode 2: Click + Press (Vänta holdDelay -> starta repeatTimer)
+            stopShortcutTimers()
+            holdDelayTimer.interval = root.holdDelay
+            holdDelayTimer.restart()
+        }
+    }
 
     // Keep the case order from the legacy handler: the first action wins duplicate bindings.
     readonly property var shortcutRegistry: buildShortcutRegistry(
@@ -127,7 +208,7 @@ Item {
     }
 
     function setVisualRoleHeld(role, held) {
-        const nextCount = root.heldVisualRoleCounts[role] + (held ? 1 : -1)
+        const nextCount = Math.max(0, root.heldVisualRoleCounts[role] + (held ? 1 : -1))
         root.heldVisualRoleCounts[role] = nextCount
 
         if (role <= root.joystickUpRole) {
@@ -153,6 +234,7 @@ Item {
     }
 
     function clearVisualHeldState() {
+        root.stopShortcutTimers()
         root.heldVisualKeys = ({})
         root.heldVisualRoleCounts = [0, 0, 0, 0, 0, 0, 0]
         SVState.shortcutJoystickHeld = [false, false, false, false]
@@ -168,6 +250,7 @@ Item {
         }
 
         const keyId = key.toString()
+        // Ignorera operativsystemets egna tangentupprepningar
         if (root.heldVisualKeys[keyId] !== undefined) {
             return []
         }
@@ -179,6 +262,9 @@ Item {
 
         root.heldVisualKeys[keyId] = roles
         root.setVisualRolesHeld(roles, true)
+
+        root.startShortcutInputModeLogic()
+
         return roles
     }
 
@@ -191,6 +277,14 @@ Item {
 
         delete root.heldVisualKeys[keyId]
         root.setVisualRolesHeld(roles, false)
+
+        const hasHeldMovement = SVState.shortcutJoystickHeld.some(h => h) || 
+                                SVState.shortcutZoomInHeld || 
+                                SVState.shortcutZoomOutHeld
+
+        if (!hasHeldMovement) {
+            root.stopShortcutTimers()
+        }
     }
 
     onVisualShortcutsEligibleChanged: {
@@ -204,6 +298,9 @@ Item {
     function dispatch(shortcut, visualRoles) {
         const action = root.shortcutRegistry[shortcut]
         const policy = root.actionPolicies[action]
+
+
+
         if (!root.shortcutInputEligible) {
             return
         }
@@ -216,30 +313,6 @@ Item {
                 && (!policy || !policy.allowWhenShortcutsDisabled
                     || (policy.requiresVisibleToolbar && !root.toolbarVisible))) {
             return
-        }
-
-        if (visualRoles) {
-            const smallMovementPressed = visualRoles.indexOf(root.smallMovementRole) !== -1
-
-            for (let index = 0; index < visualRoles.length; ++index) {
-                const role = visualRoles[index]
-
-                if (role <= root.joystickUpRole && !smallMovementPressed) {
-                    SVState.changeEuler(role, SVState.shortcutSmallMovementHeld)
-                } else if (role === root.zoomInRole) {
-                    SVState.changeZoom(SVSettings.zoomSensitivity)
-                } else if (role === root.zoomOutRole) {
-                    SVState.changeZoom(-SVSettings.zoomSensitivity)
-                }
-            }
-
-            if (smallMovementPressed) {
-                for (let direction = root.joystickRightRole; direction <= root.joystickUpRole; ++direction) {
-                    if (SVState.shortcutJoystickHeld[direction]) {
-                        SVState.changeEuler(direction, true)
-                    }
-                }
-            }
         }
 
         switch (action) {
@@ -258,7 +331,7 @@ Item {
         case root.actionCamera2:
             SVState.setCamera(1)
             break
-        case root.actionCamera3:
+        case root.actionCamera3:            
             SVState.setCamera(2)
             break
         case root.actionCamera4:

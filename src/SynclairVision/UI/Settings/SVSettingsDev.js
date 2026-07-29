@@ -86,19 +86,19 @@ function getSections() {
             items: [
                 {
                     id: 'longitude',
-                    type: 'dropdown',
+                    type: 'textarea',
                     label: 'Longitude',
                     description: 'longitud',
                 },
                 {
                     id: 'latitude',
-                    type: 'dropdown',
+                    type: 'textarea',
                     label: 'Latitude',
                     description: 'latitude',
                 },
                 {
                     id: 'altitude',
-                    type: 'dropdown',
+                    type: 'textarea',
                     label: 'Altitude',
                     description: 'altitude',
                 },

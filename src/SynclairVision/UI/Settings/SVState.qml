@@ -8,6 +8,15 @@ QtObject {
 
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property bool digiviewActive: !!(digiview && digiview.connected)
+    property bool userInitiatedDisconnect: false
+    // True once the current connection attempt has actually reached the "connected" (decoding) state.
+    // Reset every time a new connection attempt starts, so we can tell "was connected, then dropped"
+    // apart from "was still connecting, then cancelled/failed".
+    property bool _reachedConnectedState: false
+    // Guards against reporting "Connection Lost" twice for the same drop — decoding usually stops
+    // (uiInteractionEnabled -> false) well before the socket itself notices (digiviewActive -> false),
+    // since that can rely on an OS-level TCP timeout that may take a long time or never fire cleanly.
+    property bool _connectionLostReported: false
     readonly property string synclairOverlayVideoUri: {
         const profile = SVSettings.selectedNetworkProfile()
         const videoPortText = profile ? SVSettings.networkProfileText(profile.videoPort) : ""
@@ -136,14 +145,30 @@ QtObject {
         synclairOverlay = !synclairOverlay
     }
 
-    function changeEuler(direction, smallMovement) {
+    function _reportConnectionLost(profileName, profileHost) {
+        if (_connectionLostReported) {
+            return
+        }
+        _connectionLostReported = true
+
+        SVNotificationManager.add(
+            "Connection Lost",
+            "Unexpectedly lost connection to " + "<i>" + profileName + "</i>" + ".",
+            "error",
+            "network_disconnected"
+        )
+
+        stopRecording()
+        cancelCursorTrackingSelection()
+    }
+
+    function changeEuler(direction, smallMovement, strength) {
         if (!digiview || !hasActiveCamera || lockControls) {
             return
         }
 
         let yaw = 0
         let pitch = 0
-        let strength = SVSettings.joystickSensitivity * 0.50
 
         if (smallMovement) {
             strength *= 0.333
@@ -151,13 +176,13 @@ QtObject {
 
         switch (direction) {
         case 0:
-            yaw = -strength
+            yaw = strength
             break
         case 1:
             pitch = -strength
             break
         case 2:
-            yaw = strength
+            yaw = -strength
             break
         case 3:
             pitch = strength
@@ -333,12 +358,80 @@ QtObject {
         && cameraOverlays[cameraSelected].crosshair
 
     onDigiviewActiveChanged: {
-        if (digiviewActive) {
-            return
-        }
+        var profile = SVSettings.selectedNetworkProfile()
+        var profileName = profile ? profile.name : "Stream"
+        var profileHost = profile ? profile.host : "Unknown Host"
 
-        stopRecording()
-        cancelCursorTrackingSelection()
+        if (digiviewActive) {
+            // State 1: Connecting (Socket open, but waiting for video)
+            _reachedConnectedState = false
+            _connectionLostReported = false
+
+            SVNotificationManager.add(
+                "Connecting...",
+                "Attempting a connection to " + "<i>" + profileName + "</i>" + ".",
+                "info",
+                "network_connecting"
+            )
+        } else {
+            // State 3: Disconnected
+            if (userInitiatedDisconnect) {
+                if (_reachedConnectedState) {
+                    SVNotificationManager.add(
+                        "Disconnected",
+                        "Manually disconnected from " + "<i>" + profileName + "</i>" + ".",
+                        "warning",
+                        "network_disconnected"
+                    )
+                } else {
+                    SVNotificationManager.add(
+                        "Connecting Canceled",
+                        "Canceled connection attempt to " + "<i>" + profileName + "</i>" + ".",
+                        "info",
+                        "network_disconnected"
+                    )
+                }
+
+                userInitiatedDisconnect = false
+                _reachedConnectedState = false
+                _connectionLostReported = false
+                stopRecording()
+                cancelCursorTrackingSelection()
+            } else {
+                // Socket finally noticed the drop. If decoding already reported it (the common case
+                // when wifi just vanishes), this is a no-op — _reportConnectionLost only fires once.
+                _reportConnectionLost(profileName, profileHost)
+                _reachedConnectedState = false
+            }
+        }
+    }
+
+    onUiInteractionEnabledChanged: {
+        // State 2: Connected (Stream is actively decoding)
+        // We ensure devBypassDisconnectedUiDisable isn't the reason it turned true
+        if (uiInteractionEnabled && digiviewActive) {
+            _reachedConnectedState = true
+
+            var profile = SVSettings.selectedNetworkProfile()
+            var profileName = profile ? profile.name : "Stream"
+            var profileHost = profile ? profile.host : "Unknown Host"
+
+            SVNotificationManager.add(
+                "Connected",
+                "Stream successfully connected to " + "<i>" + profileName + "</i>" + ".",
+                "success",
+                "network_connected"
+            )
+        } else if (!uiInteractionEnabled && digiviewActive && _reachedConnectedState && !userInitiatedDisconnect) {
+            // Decoding stopped while the socket still thinks it's connected — e.g. wifi was cut.
+            // This is usually the first (and sometimes only) signal we get that the stream died,
+            // since the socket-level "connected" flag can lag far behind (or never flip on its own).
+            var lostProfile = SVSettings.selectedNetworkProfile()
+            var lostProfileName = lostProfile ? lostProfile.name : "Stream"
+            var lostProfileHost = lostProfile ? lostProfile.host : "Unknown Host"
+
+            _reportConnectionLost(lostProfileName, lostProfileHost)
+        }
     }
 
     onCameraSelectedChanged: {

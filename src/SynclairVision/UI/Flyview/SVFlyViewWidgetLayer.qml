@@ -170,6 +170,13 @@ Item {
         onLayoutSelected: (layoutId) => root.layoutSelected(layoutId)
     }
 
+    SVNotificationBox {
+        id: notificationBox
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.leftMargin: SVUnits.objectWidth + SVUnits.margin + SVUnits.lineWidth
+    }
+
     SVRecordInfoBox {
         id: recordInfoBox
         anchors.left: parent.left

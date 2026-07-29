@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import QtQuick.Effects
 
 import QGroundControl
 import QGroundControl.Controls
@@ -11,6 +12,7 @@ import QGroundControl.SynclairVisionUI
 
 Item {
     required property var guidedValueSlider
+    property var flyView   // Reference to the parent FlyView, set by whoever instantiates this toolbar
 
     id:     control
     width:  parent.width
@@ -149,14 +151,95 @@ Item {
                     height: parent.height
                 }
 
-                QGCCheckBoxSlider {
-                    id: overlayButton
-                    text: "Synclair Vision: QGroundControl"
-                    checked: SVState.synclairOverlay
-                    onCheckedChanged: SVState.synclairOverlay = checked
+                Item {
+                    id:     overlayButtonWrapper
                     anchors.right: flyViewIndicators.right
                     anchors.rightMargin: _margins * 2
                     anchors.verticalCenter: parent.verticalCenter
+                    width:  overlayButton.width
+                    height: overlayButton.height
+
+                    // True as long as the SV welcome prompt has NOT been closed/acked yet
+                    readonly property bool _svWelcomeNotYetShown: {
+                        var shownIds = QGroundControl.settingsManager.appSettings.firstRunPromptIdsShown.rawValue
+                        return !shownIds.includes(QGroundControl.corePlugin.svInitialWelcomePromptId)
+                    }
+
+                    // Glow sits BEHIND and OUTSIDE overlayButton — sibling, not child
+                    MultiEffect {
+                        id:             overlayGlow
+                        anchors.fill:   overlayButton
+                        source:         overlayButton
+                        z:              -1
+                        visible:        overlayButtonWrapper._svWelcomeNotYetShown && !SVState.synclairOverlay
+
+                        shadowEnabled:  true
+                        shadowColor:    "yellow"
+                        shadowScale:    1.0
+                        shadowBlur:     1.0
+                        shadowHorizontalOffset: 0
+                        shadowVerticalOffset:   0
+
+                        SequentialAnimation {
+                            running: overlayGlow.visible
+                            loops:   Animation.Infinite
+
+                            NumberAnimation {
+                                target:     overlayGlow
+                                property:   "shadowOpacity"
+                                from:       0
+                                to:         1
+                                duration:   1000
+                                easing.type: Easing.InOutSine
+                            }
+                            NumberAnimation {
+                                target:     overlayGlow
+                                property:   "shadowOpacity"
+                                from:       1
+                                to:         0
+                                duration:   1000
+                                easing.type: Easing.InOutSine
+                            }
+                        }
+                    }
+
+                    QGCCheckBoxSlider {
+                        id: overlayButton
+                        text: "Synclair Vision: QGroundControl"
+                        checked: SVState.synclairOverlay
+
+                        onCheckedChanged: {
+                            SVState.synclairOverlay = checked
+
+                            if (checked) {
+                                var appSettings = QGroundControl.settingsManager.appSettings
+                                var shownIds = appSettings.firstRunPromptIdsShown.rawValue
+                                var promptId = QGroundControl.corePlugin.svInitialWelcomePromptId
+
+                                // ONLY RUNS THE FIRST TIME EVER
+                                if (!shownIds.includes(promptId)) {
+
+                                    // 1. Swap main screen to Video/Overlay BEFORE prompting
+                                    if (control.flyView && control.flyView.showVideoFullScreen) {
+                                        control.flyView.showVideoFullScreen()
+                                    }
+
+                                    // 2. Open the welcome prompt
+                                    welcomePromptLoader.active = true
+                                }
+                            }
+                        }
+
+                        Loader {
+                            id: welcomePromptLoader
+                            active: false
+                            source: "qrc:/qml/QGroundControl/SynclairVisionUI/Flyview/SVWelcomePrompt.qml"
+
+                            onLoaded: {
+                                item.open()
+                            }
+                        }
+                    }
                 }
                 
             }

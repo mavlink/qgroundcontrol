@@ -6,6 +6,7 @@ qt_add_library(SynclairVisionUIModule STATIC)
 set_source_files_properties(
     Settings/SVSettings.qml
     Settings/SVState.qml
+    Flyview/SVNotificationManager.qml
     Resources/SVUnits.qml
     PROPERTIES QT_QML_SINGLETON_TYPE TRUE
 )
@@ -22,6 +23,9 @@ qt_add_qml_module(SynclairVisionUIModule
         Flyview/SVRecordInfoBox.qml
         Flyview/SVFlyViewStats.qml
         Flyview/SVShortcutHandler.qml
+        Flyview/SVWelcomePrompt.qml
+        Flyview/SVNotificationManager.qml
+        Flyview/SVNotificationBox.qml
 
         Camera/SVCameraLayer.qml
         Camera/SVCameraWidgetLayer.qml
@@ -99,6 +103,11 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/tracking_cursor.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/tracking_manual.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/tracking_single.svg"
+
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/network_disconnected.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/network_connected.svg"
+
+
 
 
 

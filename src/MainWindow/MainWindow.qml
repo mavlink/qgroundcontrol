@@ -11,6 +11,7 @@ import QGroundControl.FlyView
 import QGroundControl.FlightMap
 import QGroundControl.PlanView
 import QGroundControl.Toolbar
+import QGroundControl.FactControls
 
 import QGroundControl.SynclairVisionUI
 
@@ -835,5 +836,9 @@ ApplicationWindow {
                 Qt.callLater(destroy)
             }
         }
+    }
+
+    SVWelcomePrompt {
+        id: promptTest
     }
 }

@@ -44,8 +44,9 @@ function getSections() {
                     enabledWhen: controlPanelEnabledWhen,
                     currentIndex: 0,
                     options: [
-                        { label: 'Click', value: true },
-                        { label: 'Press', value: false }
+                        { label: 'Click', value: 0 },
+                        { label: 'Press', value: 1 },
+                        { label: 'Click + Press', value: 2}
                     ]
                 },
                 {

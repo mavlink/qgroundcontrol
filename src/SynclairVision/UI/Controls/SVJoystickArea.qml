@@ -13,6 +13,14 @@ Item {
     property int pressedIndex: -1
     readonly property point hoverPosition: Qt.point(mouseArea.mouseX, mouseArea.mouseY)
 
+    // Mode-inställningar:
+    // 0 = Click (Endast vid nedtryckning)
+    // 1 = Press (Kör kontinuerligt direkt)
+    // 2 = Click + Press (Klickar direkt, väntar fördröjning, kör sedan kontinuerligt)
+    property int inputMode: SVSettings.controlPanelInteraction
+    property int holdDelay: 400       // Fördröjning i ms innan upprepning startar (för läge 2)
+    property int repeatInterval: 20  // Hastighet i ms mellan varje steg
+
     property var  innerClicked: [false, false, false, false]
     property var  outerClicked: [false, false, false, false]
     property var  hasInnerRing: true
@@ -36,6 +44,51 @@ Item {
     readonly property color borderColor: !root.controlsUsable ? qgcPalette.windowShadeLight : qgcPalette.statusPassedText
 
     QGCPalette { id: qgcPalette}
+
+    // --- TIMER-LOGIK FÖR DE 3 LÄGENA ---
+    function triggerAction(strength) {
+        if (root.pressedIndex >= 0 && root.controlsUsable) {
+            SVState.changeEuler(root.pressedIndex % 4, root.pressedIndex >= 4, SVSettings.joystickSensitivity * strength)
+        }
+    }
+
+    Timer {
+        id: holdDelayTimer
+        interval: root.holdDelay
+        repeat: false
+        onTriggered: repeatTimer.restart()
+    }
+
+    Timer {
+        id: repeatTimer
+        interval: root.repeatInterval
+        repeat: true
+        onTriggered: root.triggerAction(0.1)
+    }
+
+    function stopTimers() {
+        holdDelayTimer.stop()
+        repeatTimer.stop()
+    }
+
+    function startInputModeLogic() {
+        stopTimers()
+        if (!root.controlsUsable || root.pressedIndex < 0) return
+
+        if (root.inputMode === 0) {
+            // Mode 0: Click (Bara en gång)
+            root.triggerAction(0.5)
+        } else if (root.inputMode === 1) {
+            // Mode 1: Press (Direkt kontinuerlig)
+            root.triggerAction(0.5)
+            repeatTimer.restart()
+        } else if (root.inputMode === 2) {
+            // Mode 2: Click + Press (Klicka direkt, vänta delay, sedan kontinuerlig)
+            root.triggerAction(0.5)
+            holdDelayTimer.restart()
+        }
+    }
+    // ----------------------------------
 
     function getAngleStep(dx, dy) {
         let angle = Math.atan2(dy, dx)
@@ -172,62 +225,115 @@ Item {
         hoverEnabled: true
         z: 999
 
+        property int initialPressedIndex: -1
+
         onPositionChanged: (mouse) => {
             const index = root.getHoveredButton(mouse.x, mouse.y)
 
             if (!root.controlsUsable) {
                 root.hoverIndex = -1
+                root.stopTimers()
                 return
             }
 
             root.hoverIndex = index
 
-            if (pressed && index !== root.pressedIndex) {
-                root.clearClicked(root.pressedIndex)
-                root.setClicked(index)
-                root.pressedIndex = index
+            if (pressed) {
+                if (root.inputMode === 1) {
+                    // Mode 1 (Press): Allow dragging between different buttons seamlessly
+                    if (index !== root.pressedIndex) {
+                        if (root.pressedIndex !== -1) {
+                            root.clearClicked(root.pressedIndex)
+                        }
+                        
+                        root.pressedIndex = index
+                        
+                        if (index >= 0) {
+                            root.setClicked(index)
+                            root.startInputModeLogic()
+                        } else {
+                            root.stopTimers()
+                        }
+                    }
+                } else {
+                    // Mode 0 & 2 (Click / Click + Press): Lock strictly to the initially clicked button
+                    if (index === initialPressedIndex && initialPressedIndex >= 0) {
+                        if (root.pressedIndex !== initialPressedIndex) {
+                            root.pressedIndex = initialPressedIndex
+                            root.setClicked(initialPressedIndex)
+                            root.startInputModeLogic()
+                        }
+                    } else {
+                        if (root.pressedIndex !== -1) {
+                            root.clearClicked(root.pressedIndex)
+                            root.pressedIndex = -1
+                            root.stopTimers()
+                        }
+                    }
+                }
             }
         }
 
         onExited: {
+            root.stopTimers()
             root.hoverIndex = -1
-            root.clearClicked(root.pressedIndex)
-            root.pressedIndex = -1
+            if (root.pressedIndex !== -1) {
+                root.clearClicked(root.pressedIndex)
+                root.pressedIndex = -1
+            }
         }
 
         onPressed: (mouse) => {
             const index = root.getHoveredButton(mouse.x, mouse.y)
 
             if (index < 0) {
+                root.stopTimers()
                 root.hoverIndex = -1
-                root.clearClicked(root.pressedIndex)
-                root.pressedIndex = -1
+                if (root.pressedIndex !== -1) {
+                    root.clearClicked(root.pressedIndex)
+                    root.pressedIndex = -1
+                }
+                initialPressedIndex = -1
                 mouse.accepted = false
                 return
             }
 
             if (!root.controlsUsable) {
+                root.stopTimers()
                 root.hoverIndex = -1
-                root.pressedIndex = -1
+                if (root.pressedIndex !== -1) {
+                    root.clearClicked(root.pressedIndex)
+                    root.pressedIndex = -1
+                }
+                initialPressedIndex = -1
                 return
             }
 
+            initialPressedIndex = index
             root.hoverIndex = index
             root.pressedIndex = index
             root.setClicked(index)
 
-            SVState.changeEuler(root.pressedIndex % 4, root.pressedIndex >= 4)
+            root.startInputModeLogic()
         }
 
         onReleased: {
-            root.clearClicked(root.pressedIndex)
-            root.pressedIndex = -1
+            root.stopTimers()
+            if (root.pressedIndex !== -1) {
+                root.clearClicked(root.pressedIndex)
+                root.pressedIndex = -1
+            }
+            initialPressedIndex = -1
         }
 
         onCanceled: {
-            root.clearClicked(root.pressedIndex)
-            root.pressedIndex = -1
+            root.stopTimers()
+            if (root.pressedIndex !== -1) {
+                root.clearClicked(root.pressedIndex)
+                root.pressedIndex = -1
+            }
             root.hoverIndex = -1
+            initialPressedIndex = -1
         }
     }
 }

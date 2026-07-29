@@ -42,6 +42,22 @@ Item {
         window.show()
     }
 
+    function showItemFull(item) {
+        if (!item1 || !item2) {
+            return
+        }
+        var otherItem = (item === item1) ? item2 : item1
+        if (item.pipState.state !== item.pipState.fullState) {
+            item.pipState.state = item.pipState.fullState
+        }
+        if (otherItem.pipState.state !== otherItem.pipState.pipState) {
+            otherItem.pipState.state = otherItem.pipState.pipState
+        }
+        _fullItem = item
+        _pipOrWindowItem = otherItem
+        QGroundControl.saveBoolGlobalSetting(item1IsFullSettingsKey, item === item1)
+    }
+
     function _initForItems() {
         if (!item1) {
             // Engine swap in flight: wait for the new item1
