@@ -26,6 +26,32 @@ Item {
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property bool digiviewActive: SVState.digiviewActive
 
+    function setAiDetectionOverlayPosition(positionId) {
+        if (!root.digiviewActive) {
+            return
+        }
+
+        var position = 0
+
+        if (SVState.aiOverlay) {
+            if (positionId === 'Single') { position = 1 } 
+            else if (positionId === 'ColumnRight') { position = 2 }
+            else if (positionId === 'ColumnLeft') { position = 3 } 
+            else if (positionId === 'RowRight') { position = 4 } 
+            else if (positionId === 'RowLeft') { position = 5 } 
+            else { return }
+        } 
+
+        digiview.sendSetVideoOutput(
+            digiview.streamName,
+            0,
+            0,
+            0,
+            0xFF,
+            position
+        )   
+    }
+
     function setLayout(layoutId) {
         if (!root.digiviewActive) {
             return
@@ -48,11 +74,11 @@ Item {
 
         digiview.sendSetVideoOutput(
             digiview.streamName,
-            SVSettings.videoResolutionWidth,
-            SVSettings.videoResolutionHeight,
-            SVSettings.videoFps,
+            0,
+            0,
+            0,
             layoutMode,
-            0
+            0xFF
         )
         //digiview.requestVideoOutputParameters()
     }
@@ -74,6 +100,10 @@ Item {
         function onCursorTrackingSelectionCancelled() {
             root.trackingSelected("")
         }
+
+        function onAiDetectionOverlayPositionChanged() {
+            root.setAiDetectionOverlayPosition(SVSettings.aiDetectionOverlayPosition)   
+        }  
     }
 
     QGCPopupDialogFactory {
@@ -217,7 +247,7 @@ Item {
             }
 
             SVState.toggleAiOverlay()
-            return
+            root.setAiDetectionOverlayPosition(SVSettings.aiDetectionOverlayPosition)
         }
     }
 

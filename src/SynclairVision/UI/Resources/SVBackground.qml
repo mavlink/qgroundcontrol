@@ -9,7 +9,7 @@ Item {
     property color hoverColor: qgcPalette.windowShadeLight
     property color checkedColor: qgcPalette.buttonHighlight
     property color pressedColor: qgcPalette.buttonHighlight
-    property color normalColor: transparentBackground ? "transparent" : qgcPalette.windowTransparent
+    property color normalColor: transparentBackground ? "transparent" : (SVSettings.simplifiedUserInterface ? qgcPalette.window : qgcPalette.windowTransparent)
     property color borderColor: "transparent"
     property color frameBorderColor: qgcPalette.windowShade
 

@@ -152,6 +152,7 @@ QtObject {
         property alias shortcutDeselectCamera: root.shortcutDeselectCamera
 
         property alias aiDetectionOverlay: root.aiDetectionOverlay
+        property alias aiDetectionOverlayPosition: root.aiDetectionOverlayPosition
         property alias aiSortingMode: root.aiSortingMode
         property alias aiCropConfidenceTreshold: root.aiCropConfidenceTreshold
         property alias aiScanConfidenceTreshold: root.aiScanConfidenceTreshold
@@ -180,6 +181,7 @@ QtObject {
         property real videoTargetBrightness: 1
         property bool recordHighlight: true
         property bool recordInformationBox: true
+        property string aiDetectionOverlayPosition: 'Single'
 
     //Network
         readonly property string defaultNetworkProfileStreamName: "stream"
@@ -423,6 +425,34 @@ QtObject {
 
         onNetworkProfilesChanged: syncSelectedNetworkProfileState()
         onNetworkSelectedProfileIndexChanged: syncSelectedNetworkProfileState()
+        onAiDetectionOverlayPositionChanged: {
+            if (!root.digiviewActive) {
+                return
+            }
+
+            // 1. Hämta strängvärdet från variabeln/egenskapen (inte signalens namn)
+            var positionId = root.aiDetectionOverlayPosition
+            var position = 0
+
+            if (SVState.aiOverlay) {
+                if (positionId === 'Single') { position = 1 } 
+                else if (positionId === 'ColumnRight') { position = 2 }
+                else if (positionId === 'ColumnLeft') { position = 3 } 
+                else if (positionId === 'RowRight') { position = 4 } 
+                else if (positionId === 'RowLeft') { position = 5 } 
+                else { return }
+            } 
+
+            // 2. Skicka datan vidare
+            digiview.sendSetVideoOutput(
+                digiview.streamName,
+                0,
+                0,
+                0,
+                0xFF,
+                position
+            )   
+        }
 
         Component.onCompleted: setNetworkProfiles(networkProfiles ? networkProfiles.slice() : [], networkSelectedProfileIndex)
 
@@ -438,7 +468,7 @@ QtObject {
     //Control Panel
         property bool controlPanel: true
         property string controlPanelPosition: "Bottom-center"
-        property bool controlPanelInteraction: true //Press or click
+        property int controlPanelInteraction: 1 //Press, click or click + press
         property bool controlPanelPassiveOpacity: false
         property real controlPanelPassiveOpacityValue: 1
 
@@ -507,4 +537,8 @@ QtObject {
         property int cameraMaximalExposure
         property int cameraMinimalGain
         property int cameraMaximalGain
+
+        property string trackingLongitude
+        property string trackingLatitude
+        property string trackingAltitude 
 }

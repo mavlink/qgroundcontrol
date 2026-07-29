@@ -40,6 +40,22 @@ Item {
         window.show()
     }
 
+    function showItemFull(item) {
+        if (!item1 || !item2) {
+            return
+        }
+        var otherItem = (item === item1) ? item2 : item1
+        if (item.pipState.state !== item.pipState.fullState) {
+            item.pipState.state = item.pipState.fullState
+        }
+        if (otherItem.pipState.state !== otherItem.pipState.pipState) {
+            otherItem.pipState.state = otherItem.pipState.pipState
+        }
+        _fullItem = item
+        _pipOrWindowItem = otherItem
+        QGroundControl.saveBoolGlobalSetting(item1IsFullSettingsKey, item === item1)
+    }
+
     function _initForItems() {
         var item1IsFull = QGroundControl.loadBoolGlobalSetting(item1IsFullSettingsKey, true)
         if (item1 && item2) {

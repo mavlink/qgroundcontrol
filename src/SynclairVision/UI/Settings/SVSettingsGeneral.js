@@ -83,6 +83,27 @@ function getSections() {
                     checked: true
                 },
             ]
+        },
+        {
+            id: 'ai',
+            title: 'AI Detection',
+            items: [
+                {
+                    id: 'aiDetectionOverlay',
+                    property: 'aiDetectionOverlayPosition',
+                    type: 'dropdown',
+                    label: 'AI Detection Overlay Position',
+                    description: 'Pick the position of the AI detection overlay',
+                    currentIndex: 0,
+                    options: [
+                        { label: 'Single Box', value: 'Single' },
+                        { label: 'Column Right', value: 'ColumnRight' },
+                        { label: 'Column Left', value: 'ColumnLeft' },
+                        { label: 'Row Top', value: 'RowTop' },
+                        { label: 'Row Bottom', value: 'RowBottom' },
+                    ]
+                }
+            ]
         }
     ]
 }

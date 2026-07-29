@@ -62,6 +62,8 @@ Item {
         toolbar.dropMainStatusIndicatorTool();
     }
 
+    
+
     QGCToolInsets {
         id:                     _toolInsets
         topEdgeLeftInset:       toolbar.height
@@ -204,8 +206,15 @@ Item {
         }
     }
 
+    function showVideoFullScreen() {
+        if (_pipView && _pipView.item2) {
+            _pipView.showItemFull(_pipView.item2)
+        }
+    }
+
     FlyViewToolBar {
         id:                 toolbar
+        flyView:            _root
         guidedValueSlider:  _guidedValueSlider
         visible:            !QGroundControl.videoManager.fullScreen && SVState.toolbar && !SVState.cursorTrackingSessionActive
     }

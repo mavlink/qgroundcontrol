@@ -47,8 +47,8 @@ class QGCCorePlugin : public QObject
     Q_PROPERTY(const QmlObjectListModel *customMapItems READ customMapItems                                                 CONSTANT)
     Q_PROPERTY(QString showAdvancedUIMessage            READ showAdvancedUIMessage                                          CONSTANT)
     Q_PROPERTY(QVariantList analyzePages                READ analyzePages                                                   CONSTANT)
-    Q_PROPERTY(QVariantList toolBarIndicators           READ toolBarIndicators                                              CONSTANT)
-
+    Q_PROPERTY(QVariantList toolBarIndicators           READ toolBarIndicators               CONSTANT)
+    Q_PROPERTY(int svInitialWelcomePromptId             MEMBER kSVInitialWelcomePromptId     CONSTANT)
 public:
     explicit QGCCorePlugin(QObject *parent = nullptr);
     virtual ~QGCCorePlugin();
@@ -186,7 +186,7 @@ public:
     /// Returns the custom build list of first run prompt ids for possible display. Actual display is based on the
     /// current AppSettings::firstRunPromptIds value. The order of this list also determines the order the prompts
     /// will be displayed in.
-    virtual QList<int> firstRunPromptCustomIds() { return QList<int>(); }
+    virtual QList<int> firstRunPromptCustomIds();
 
     /// Returns the resource which contains the specified first run prompt for display
     Q_INVOKABLE virtual QString firstRunPromptResource(int id) const;
@@ -215,6 +215,9 @@ public:
 
     // Custom builds can start there first run prompt ids from here
     static constexpr int kFirstRunPromptIdsFirstCustomId = 10000;
+
+    //SynclairVision Overlay Welcome Message
+    static constexpr int kSVInitialWelcomePromptId = kFirstRunPromptIdsFirstCustomId + 1;
 
 signals:
     void showTouchAreasChanged(bool showTouchAreas);

@@ -107,6 +107,7 @@ Item {
         }
 
         SVSettings[settingData.property] = value
+
     }
 
     function settingOptions(settingData) {
@@ -253,11 +254,17 @@ Item {
             }
 
             if (root.digiview.connected) {
+                // LÄGG TILL HÄR: Användaren klickade aktivt på Disconnect
+                SVState.userInitiatedDisconnect = true 
+                
                 networkConnectTimer.stop()
                 root.networkConnectionPending = false
                 root.digiview.disconnectFromHost()
                 return
             }
+
+            // LÄGG TILL HÄR: Återställ flaggan vid ett nytt anslutningsförsök
+            SVState.userInitiatedDisconnect = false 
 
             if (!applySelectedNetworkProfile()) {
                 root.networkConnectionPending = false
@@ -298,6 +305,8 @@ Item {
             resetSettingsDialogFactory.open()
             return
         }
+
+        
     }
 
     function dropdownCurrentIndex(settingData) {
@@ -1130,6 +1139,10 @@ Item {
                                                             return buttonComponent
                                                         }
 
+                                                        if (settingData.type === 'textarea') {
+                                                            return textareaComponent
+                                                        }
+
                                                         return null
                                                     }
                                                 }
@@ -1476,6 +1489,67 @@ Item {
 
                                                             onMoved: root.setSettingValue(settingData, value)
                                                         }
+
+                                                        RowLayout {
+                                                            Layout.fillWidth: true
+
+                                                            QGCLabel {
+                                                                text: root.formatValue(settingData.min)
+                                                                font.pointSize: ScreenTools.smallFontPointSize
+                                                                color: qgcPalette.buttonText
+                                                            }
+
+                                                            Item {
+                                                                Layout.fillWidth: true
+                                                            }
+
+                                                            QGCLabel {
+                                                                text: root.formatValue(settingData.max)
+                                                                font.pointSize: ScreenTools.smallFontPointSize
+                                                                color: qgcPalette.buttonText
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                Component {
+                                                    id: textareaComponent
+
+                                                    ColumnLayout {
+                                                        width: settingControlLoader.width
+                                                        spacing: root.controlSpacing / 3
+
+                                                        RowLayout {
+                                                            Layout.fillWidth: true
+                                                            spacing: root.settingColumnSpacing
+
+                                                            ColumnLayout {
+                                                                Layout.fillWidth: true
+                                                                spacing: 0
+
+                                                                QGCLabel {
+                                                                    Layout.fillWidth: true
+                                                                    text: settingData.label + ":"
+                                                                    wrapMode: Text.WordWrap
+                                                                }
+                                                            }
+
+                                                            QGCLabel {
+                                                                Layout.alignment: Qt.AlignTop
+                                                                text: root.formatValue(root.sliderDisplayValue(settingData, sliderControl.value))
+                                                                color: qgcPalette.text
+                                                            }
+
+                                                            QGCTextField {
+                                                                Layout.fillWidth: true
+                                                                Layout.minimumWidth: root.controlColumnWidth
+                                                                Layout.maximumWidth: SVUnits.width * 30
+                                                                text: "test"
+                                                                placeholderText: qsTr('Enter IP address')
+                                                            }
+                                                        }
+
+                                                        
 
                                                         RowLayout {
                                                             Layout.fillWidth: true
