@@ -33,7 +33,6 @@ Item {
 
             Loader {
                 Layout.fillWidth: true
-                width: parent.width
                 sourceComponent: batterySummaryComponent
 
                 property int    batteryIndex:       index + 1
