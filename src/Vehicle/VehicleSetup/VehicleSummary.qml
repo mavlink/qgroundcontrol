@@ -13,27 +13,8 @@ Rectangle {
     color:          qgcPal.window
 
     property real _minSummaryW:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 28 : ScreenTools.defaultFontPixelWidth * 36
-    property real _summaryBoxWidth: _minSummaryW
     property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth * 2
     property real _margins:        ScreenTools.defaultFontPixelHeight / 2
-
-    function computeSummaryBoxSize() {
-        var sw  = 0
-        var rw  = 0
-        var idx = Math.floor(_summaryRoot.width / (_minSummaryW + ScreenTools.defaultFontPixelWidth))
-        if(idx < 1) {
-            _summaryBoxWidth = _summaryRoot.width
-            _summaryBoxSpace = 0
-        } else {
-            _summaryBoxSpace = 0
-            if(idx > 1) {
-                _summaryBoxSpace = ScreenTools.defaultFontPixelWidth * 2
-                sw = _summaryBoxSpace * (idx - 1)
-            }
-            rw = _summaryRoot.width - sw
-            _summaryBoxWidth = rw / idx
-        }
-    }
 
     function capitalizeWords(sentence) {
         return sentence.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
@@ -42,14 +23,6 @@ Rectangle {
     QGCPalette {
         id:                 qgcPal
         colorGroupEnabled:  enabled
-    }
-
-    Component.onCompleted: {
-        computeSummaryBoxSize()
-    }
-
-    onWidthChanged: {
-        computeSummaryBoxSize()
     }
 
     QGCFlickable {
@@ -80,7 +53,7 @@ Rectangle {
             GridLayout {
                 id:             _gridCtl
                 width:          _summaryRoot.width
-                columns:        Math.max(1, Math.floor(_summaryRoot.width / (_minSummaryW + ScreenTools.defaultFontPixelWidth)))
+                columns:        Math.max(1, Math.floor((_summaryRoot.width + _summaryBoxSpace) / (_minSummaryW + _summaryBoxSpace)))
                 columnSpacing:  _summaryBoxSpace
                 rowSpacing:     ScreenTools.defaultFontPixelHeight
 
@@ -91,7 +64,7 @@ Rectangle {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        implicitWidth: _summaryBoxWidth
+                        implicitWidth: _minSummaryW
                         implicitHeight: mainLayout.implicitHeight + (_margins * 2)
                         radius: ScreenTools.defaultFontPixelHeight / 4
                         color: qgcPal.windowShade
@@ -114,9 +87,11 @@ Rectangle {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: titleHeight
                                 text: capitalizeWords(modelData.name)
+                                rightPadding: setupIndicator.visible ? setupIndicator.width + ScreenTools.defaultFontPixelWidth * 2 : leftPadding
 
                                 // Setup indicator
                                 Rectangle {
+                                    id:                     setupIndicator
                                     anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                                     anchors.right:          parent.right
                                     anchors.verticalCenter: parent.verticalCenter

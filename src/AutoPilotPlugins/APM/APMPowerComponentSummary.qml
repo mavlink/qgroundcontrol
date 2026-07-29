@@ -28,7 +28,7 @@ Item {
             model: battParams.getBatteryCount()
 
             delegate: ColumnLayout {
-                width: parent.width
+                Layout.fillWidth: true
                 required property int index
                 spacing: 0
                 visible: _monitorEnabled

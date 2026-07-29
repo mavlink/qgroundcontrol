@@ -15,8 +15,6 @@ ColumnLayout {
     property string valueColor: ""
     property bool showDivider: true
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
-
     RowLayout {
         id: rowLayout
         Layout.fillWidth: true
@@ -38,15 +36,15 @@ ColumnLayout {
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             horizontalAlignment: Text.AlignRight
             text: root.valueText
-            color: root.valueColor !== "" ? root.valueColor : qgcPal.text
+            color: root.valueColor !== "" ? root.valueColor : QGroundControl.globalPalette.text
             wrapMode: Text.WordWrap
         }
     }
 
     Rectangle {
         Layout.fillWidth: true
-        height: 1
-        color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.08)
+        Layout.preferredHeight: 1
+        color: Qt.rgba(QGroundControl.globalPalette.text.r, QGroundControl.globalPalette.text.g, QGroundControl.globalPalette.text.b, 0.08)
         visible: root.showDivider
     }
 }
