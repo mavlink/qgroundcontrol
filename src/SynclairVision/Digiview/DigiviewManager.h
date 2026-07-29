@@ -241,8 +241,10 @@ private:
     }
 
     void _handleMessage(const mavlink_message_t& message);
-    void _sendMessage(const mavlink_message_t& message);
+    bool _sendMessage(const mavlink_message_t& message);
+    void _establishRemoteSession(uint8_t systemId, uint8_t componentId);
     void _resetRemoteSession();
+    void _resetRemoteSessionForSenderIdentityChange();
 
     DigiviewConnection* _connection = nullptr;
     uint8_t _senderSystemId = kDefaultSenderSystemId;
@@ -251,6 +253,7 @@ private:
     uint8_t _remoteComponentId = 0;
     bool _remoteIdentityValid = false;
     bool _pendingVideoOutputParametersRequest = false;
+    bool _videoOutputParametersSubscriptionActive = false;
     QString _streamName = QStringLiteral("stream");
     quint32 _lastReceivedMessageId = 0;
     bool _hasVideoOutputParameters = false;

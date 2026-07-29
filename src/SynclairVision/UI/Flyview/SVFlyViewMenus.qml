@@ -80,7 +80,6 @@ Item {
             layoutMode,
             0xFF
         )
-        //digiview.requestVideoOutputParameters()
     }
 
     function activateTrackingMode(trackingId) {

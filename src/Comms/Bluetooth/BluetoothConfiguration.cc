@@ -206,8 +206,8 @@ void BluetoothConfiguration::_deviceUpdated(const QBluetoothDeviceInfo &info, QB
     qCDebug(BluetoothConfigurationLog) << "Device Updated:" << info.name() << "Fields:" << updatedFields;
 
     if (!info.isValid() || (updatedFields == QBluetoothDeviceInfo::Field::None)) {
-        qCDebug(BluetoothConfigurationVerboseLog) << "Ignoring device update: invalid or no updated fields"
-                                         << info.name() << info.address().toString() << updatedFields;
+        //qCDebug(BluetoothConfigurationVerboseLog) << "Ignoring device update: invalid or no updated fields"
+        //                                 << info.name() << info.address().toString() << updatedFields;
         return;
     }
 

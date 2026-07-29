@@ -837,8 +837,4 @@ ApplicationWindow {
             }
         }
     }
-
-    SVWelcomePrompt {
-        id: promptTest
-    }
 }

@@ -186,10 +186,10 @@ void DigiviewConnection::_readPendingDatagrams()
         }
 
         if (filterByHost && !senderAddress.isEqual(remoteAddress, QHostAddress::TolerantConversion)) {
-            qCDebug(DigiviewConnectionLog)
-                << "Ignoring Digiview datagram from unexpected host"
-                << senderAddress.toString()
-                << "expected" << remoteAddress.toString();
+            //qCDebug(DigiviewConnectionLog)
+            //    << "Ignoring Digiview datagram from unexpected host"
+            //    << senderAddress.toString()
+            //    << "expected" << remoteAddress.toString();
             continue;
         }
 
