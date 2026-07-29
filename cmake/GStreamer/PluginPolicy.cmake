@@ -34,6 +34,14 @@ set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS
     x265
 )
 
+# Encode-side plugins needed only by the Debug-only MockLink test video stream
+# server (MockVideoStreamServer). Statically registered on Android Debug builds
+# only — desktop builds find them via the full SDK plugin scan, and release
+# builds must not ship them (APK size; x264/x265 are GPL).
+set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS
+    mpegtsmux videotestsrc x264 x265
+)
+
 # Invariant: no plugin may be both runtime-required and xcframework-skipped.
 function(_gstreamer_assert_policy_consistent)
     foreach(_skip IN LISTS GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS)
