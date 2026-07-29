@@ -37,6 +37,9 @@ public:
     int updateInterval() const { return _updateInterval; }
 
     void setNmeaSourceDevice(QIODevice *device);
+    /// Tears down any active NMEA source and falls back to the platform's default
+    /// position source (e.g. the integrated Android GPS).
+    void resetNmeaSourceDevice();
 
 signals:
     void gcsPositionChanged(QGeoCoordinate gcsPosition);
