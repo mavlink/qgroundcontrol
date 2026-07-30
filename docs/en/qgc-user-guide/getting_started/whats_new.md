@@ -1,6 +1,6 @@
 # What's New
 
-This page highlights user-facing changes since the last stable release (V5.0).
+This page highlights user-facing changes since the last stable release (V5.1).
 
 ## Fly View
 
