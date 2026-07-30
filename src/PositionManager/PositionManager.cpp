@@ -134,6 +134,10 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
             if (_gcsPositionHorizontalAccuracy <= kMinHorizonalAccuracyMeters) {
                 newGCSPosition.setLatitude(update.coordinate().latitude());
                 newGCSPosition.setLongitude(update.coordinate().longitude());
+                // Stamp the local arrival time so consumers can tell how fresh gcsPosition is.
+                // Updates rejected by the accuracy gate leave the stamp alone, since they leave
+                // the previous coordinate in place as well.
+                _gcsPositionTimestamp = QDateTime::currentDateTimeUtc();
             }
             emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
         }
@@ -197,6 +201,7 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
         emit positionInfoUpdated(_geoPositionInfo);
 
         _setGCSPosition(QGeoCoordinate());
+        _gcsPositionTimestamp = QDateTime();
 
         _setGCSHeading(qQNaN());
 
