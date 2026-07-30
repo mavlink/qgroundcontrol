@@ -45,9 +45,6 @@ RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
     _sendMessagesTimer.setInterval(SENDING_RATE_MSEC);
     connect(&_sendMessagesTimer, &QTimer::timeout, this, &RemoteIDManager::_sendMessages);
 
-    // GCS GPS position updates to track the health of the GPS data
-    connect(QGCPositionManager::instance(), &QGCPositionManager::positionInfoUpdated, this, &RemoteIDManager::_updateLastGCSPositionInfo);
-
     // Assign vehicle sysid and compid. GCS must target these messages to autopilot, and autopilot will redirect them to RID device
     _targetSystem = _vehicle->id();
     _targetComponent = _vehicle->compId();
@@ -302,11 +299,22 @@ void RemoteIDManager::_sendSystem()
         QGCPositionManager* positionManager = QGCPositionManager::instance();
         QGeoPositionInfo geoPositionInfo = positionManager->geoPositionInfo();
         gcsPosition = positionManager->gcsPosition();
+        const QDateTime gcsPositionTimestamp = positionManager->gcsPositionTimestamp();
+
+        // gcsPosition only carries an altitude when the fix's vertical accuracy is within the
+        // strict gate QGCPositionManager applies for consumers which act on it, such as Follow Me
+        // and update-home-position. Remote ID mandates an operator altitude in FAA regions and
+        // OPEN_DRONE_ID_SYSTEM has no accuracy field for it, so a loosely known altitude is better
+        // than none here: take it straight from the fix whenever the fix reports one.
+        const QGeoCoordinate fixCoordinate = geoPositionInfo.coordinate();
+        if (fixCoordinate.type() == QGeoCoordinate::Coordinate3D) {
+            gcsPosition.setAltitude(fixCoordinate.altitude());
+        }
 
         if (!geoPositionInfo.isValid()) {
             // Only warn if we've previously received a valid fix; otherwise the source is
             // still initializing and the absence of data is expected, not an error.
-            _updateGcsPositionStatus(false, _lastGeoPositionTimeStamp.isValid()
+            _updateGcsPositionStatus(false, gcsPositionTimestamp.isValid()
                                             ? QStringLiteral("GCS GPS data is not valid.")
                                             : QString());
         } else if (positionManager->gcsPositioningError() != QGeoPositionInfoSource::NoError && positionManager->gcsPositioningError() != QGeoPositionInfoSource::UpdateTimeoutError) {
@@ -316,7 +324,7 @@ void RemoteIDManager::_sendSystem()
         } else if (_settings->region()->rawValue().toInt() == static_cast<int>(RemoteIDSettings::RegionOperation::FAA) && gcsPosition.type() != QGeoCoordinate::Coordinate3D) {
             // FAA requires altitude data, or else the GPS data is not good
             _updateGcsPositionStatus(false, "GCS GPS data error: Altitude data is mandatory for FAA regions.");
-        } else if (_lastGeoPositionTimeStamp.msecsTo(QDateTime::currentDateTime().currentDateTimeUtc()) > ALLOWED_GPS_DELAY) {
+        } else if (!gcsPositionTimestamp.isValid() || (gcsPositionTimestamp.msecsTo(QDateTime::currentDateTimeUtc()) > ALLOWED_GPS_DELAY)) {
             _updateGcsPositionStatus(false, "GCS GPS data is older than 5 seconds");
         } else {
             _updateGcsPositionStatus(true);
@@ -398,11 +406,4 @@ void RemoteIDManager::setEmergency(bool declare)
     _enforceSendingSelfID = true;
 
     qCDebug(RemoteIDManagerLog) << ( declare ? "Emergency declared." : "Emergency cleared.");
-}
-
-void RemoteIDManager::_updateLastGCSPositionInfo(QGeoPositionInfo update)
-{
-    if (update.isValid()) {
-        _lastGeoPositionTimeStamp = update.timestamp().toUTC();
-    }
 }
