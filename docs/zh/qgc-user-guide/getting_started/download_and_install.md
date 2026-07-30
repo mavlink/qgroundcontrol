@@ -1,8 +1,6 @@
 # 下载和安装
 
-:::tip
-These are **daily build** download links with the latest features. If you are looking for the last stable release, see the [stable docs](https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html).
-:::
+The sections below can be used to download the [current stable release](https://github.com/mavlink/qgroundcontrol/releases) of _QGroundControl_ for each platform.
 
 :::tip
 如果 _QGroundControl_ 没有在安装后启动和正常运行，请参阅[故障排除QGC配置](../troubleshooting/qgc_setup.md)！
@@ -21,8 +19,8 @@ QGC可以在任何当下流行的计算机或移动设备上正常运行。 性�
 Supported versions: Windows 10 (1809 or later), Windows 11:
 
 1. Download the installer:
-   - [x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-AMD64.exe)
-   - [Arm64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-ARM64.exe)
+   - [x86_64](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer-AMD64.exe)
+   - [Arm64](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer-ARM64.exe)
 2. 双击可执行文件来启动安装程序。
 
 :::info
@@ -39,7 +37,7 @@ Supported versions: macOS 13 (Ventura) or later:
 
 <!-- usually based on Qt macOS dependency -->
 
-1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg).
+1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg).
 2. 双击 .dmg 文件以挂载它，然后将 _QGroundControl_ 应用程序拖动到您的 _Application_ 文件夹。
 
 :::info
@@ -90,8 +88,8 @@ sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
 **To install _QGroundControl_:**
 
 1. Download the AppImage for your architecture:
-   - [Linux x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage)
-   - [Linux aarch64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-aarch64.AppImage)
+   - [Linux x86_64](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage)
+   - [Linux aarch64](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-aarch64.AppImage)
 
 2. Make the AppImage executable
 
@@ -110,7 +108,7 @@ chmod +x QGroundControl-<arch>.AppImage
 
 Supported versions: Android 9 (API 28) or later (arm 32/64):
 
-- [Android APK](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
+- [Android APK](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.apk)
 
 :::important
 The version of Qt used by QGroundControl requires Android 9 (API 28) as the minimum supported version. It is not possible to support older Android releases. This means that some integrated controllers running older versions of Android are no longer compatible with current builds of QGroundControl. QGroundControl 5.0 stable is the last release that supports these older devices. Note that 5.0 may not fully support firmware versions released after it, so users on older controllers may experience limited compatibility with newer autopilot firmware.
