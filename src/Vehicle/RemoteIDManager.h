@@ -59,7 +59,6 @@ signals:
 private slots:
     void _odidTimeout();
     void _sendMessages();
-    void _updateLastGCSPositionInfo(QGeoPositionInfo update);
 
 private:
     void _handleArmStatus(mavlink_message_t& message);
@@ -94,7 +93,6 @@ private:
     bool    _vehicleReportsBasicIDMissing;
 
     bool        _emergencyDeclared;
-    QDateTime   _lastGeoPositionTimeStamp;
     int         _targetSystem;
     int         _targetComponent;
 
