@@ -1,7 +1,7 @@
 # 다운로드 및 설치
 
 :::tip
-These are **daily build** download links with the latest features. If you are looking for the last stable release, see the [stable docs](https://docs.qgroundcontrol.com/Stable_V5.0/en/qgc-user-guide/getting_started/download_and_install.html).
+These are **daily build** download links with the latest features. If you are looking for the last stable release, see the [stable docs](https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html).
 :::
 
 :::tip
