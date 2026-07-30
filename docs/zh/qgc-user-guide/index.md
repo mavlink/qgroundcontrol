@@ -19,7 +19,7 @@ _QGroundControl_ 向PX4 或 ArduPilot 驱动的载具平台提供了全方位的
 
 :::info
 These docs cover the **daily build** (master branch).
-If you are using the stable release, see the [Stable V5.0 docs](https://docs.qgroundcontrol.com/Stable_V5.0/en/qgc-user-guide/).
+If you are using the stable release, see the [Stable V5.1 docs](https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/).
 :::
 
 ## Getting Started
