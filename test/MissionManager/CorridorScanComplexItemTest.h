@@ -22,6 +22,7 @@ protected:
 
 private slots:
     void _testDirty();
+    void _testSpecifiesCoordinateChanged();
     void _testPathChanges();
     void _testItemGeneration();
     void _testItemCount();

@@ -32,8 +32,13 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                   this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
     connect(&_corridorWidthFact,    &Fact::valueChanged,                            this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
 
+    connect(&_corridorPolyline,     &QGCMapPolyline::countChanged,                  this, &CorridorScanComplexItem::_updateSpecifiesCoordinate);
+
     connect(&_corridorPolyline,     &QGCMapPolyline::isValidChanged,                this, &CorridorScanComplexItem::_updateWizardMode);
     connect(&_corridorPolyline,     &QGCMapPolyline::traceModeChanged,              this, &CorridorScanComplexItem::_updateWizardMode);
+
+    // Anchor the cache to current state so correctness doesn't depend on constructor ordering
+    _updateSpecifiesCoordinate();
 
     if (!kmlOrShpFile.isEmpty()) {
         _corridorPolyline.loadKMLOrSHPFile(kmlOrShpFile);
@@ -151,6 +156,16 @@ bool CorridorScanComplexItem::load(const QJsonObject& complexObject, int sequenc
 bool CorridorScanComplexItem::specifiesCoordinate(void) const
 {
     return _corridorPolyline.count() > 1;
+}
+
+// specifiesCoordinate() depends on polyline count, so the NOTIFY signal must be emitted when it flips
+void CorridorScanComplexItem::_updateSpecifiesCoordinate(void)
+{
+    const bool newSpecifiesCoordinate = specifiesCoordinate();
+    if (newSpecifiesCoordinate != _specifiesCoordinate) {
+        _specifiesCoordinate = newSpecifiesCoordinate;
+        emit specifiesCoordinateChanged();
+    }
 }
 
 void CorridorScanComplexItem::setCoordinate(const QGeoCoordinate& coordinate)

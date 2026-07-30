@@ -63,6 +63,7 @@ private slots:
     void _polylineDirtyChanged          (bool dirty);
     void _rebuildCorridorPolygon        (void);
     void _updateWizardMode              (void);
+    void _updateSpecifiesCoordinate     (void);
 
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1    (void) final;
@@ -81,6 +82,7 @@ private:
 
     QMap<QString, FactMetaData*>    _metaDataMap;
     SettingsFact                    _corridorWidthFact;
+    bool                            _specifiesCoordinate = false;
 
     static constexpr const char* _jsonEntryPointKey =       "EntryPoint";
 };
