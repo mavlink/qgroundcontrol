@@ -1,9 +1,9 @@
 #include "QGCNetworkRedactionTest.h"
 
-#include "QGCNetworkHelper.h"
-
 #include <QtCore/QUrl>
 #include <QtCore/QUrlQuery>
+
+#include "QGCNetworkHelper.h"
 
 void QGCNetworkRedactionTest::_testPreservesStreamIdentity()
 {
