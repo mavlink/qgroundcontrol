@@ -296,8 +296,9 @@ static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstElement* videosink, Gst
     }
 #else
     GstElement* glupload = nullptr;
-    // Keep native GPU memory direct. buildGpuCapsString() also offers system memory, which
-    // qgcqvideosink maps through its CPU fallback instead of uploading software-decoded frames.
+    // Keep advertised native GPU formats direct. Formats outside buildGpuCapsString() must
+    // renegotiate upstream; converting here would also upload software frames instead of
+    // letting qgcqvideosink use its CPU mapping fallback.
     if (!chain.linkChain({capsf, videosink}) || !chain.ghostSink(capsf)) {
         GST_ERROR_OBJECT(self, "Failed to link/ghost qgcqvideosink (GPU path)");
         return FALSE;
