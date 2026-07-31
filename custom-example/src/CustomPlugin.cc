@@ -52,7 +52,10 @@ void CustomPlugin::cleanup()
         _qmlEngine->removeUrlInterceptor(_selector);
     }
 
+    // Nulled so a second cleanup is a no-op: shutdown owns one call, and the regression test that
+    // pins the engine guard above exercises the call twice on purpose.
     delete _selector;
+    _selector = nullptr;
 }
 
 void CustomPlugin::_advancedChanged(bool changed)
