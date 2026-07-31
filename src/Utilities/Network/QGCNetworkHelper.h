@@ -139,8 +139,8 @@ QUrl buildUrl(const QString& baseUrl, const QList<QPair<QString, QString>>& para
 /// Get URL without query string and fragment
 QUrl urlWithoutQuery(const QUrl& url);
 
-/// Return a URL suitable for diagnostics without user info, path, query, or fragment secrets.
-/// Invalid and relative input is not echoed.
+/// Return a URL suitable for diagnostics. Stream identity is preserved while user info,
+/// query values, and fragment content are redacted.
 QString redactedUrlForLogging(const QUrl& url);
 QString redactedUrlForLogging(const QString& url);
 

@@ -431,6 +431,33 @@ void GStreamerTest::_testWritePipelineDotReturnsEmptyOnWriteFailure()
     QVERIFY2(path.isEmpty(), qPrintable(QStringLiteral("Expected empty path for failed dot write, got %1").arg(path)));
 }
 
+void GStreamerTest::_testPipelineDotOmitsElementProperties()
+{
+    GstElement* pipeline = gst_pipeline_new("safe-dot-test");
+    QVERIFY(pipeline);
+    const auto pipelineCleanup = qScopeGuard([&] { gst_object_unref(pipeline); });
+
+    GstElement* source = gst_element_factory_make("filesrc", "source");
+    GstElement* sink = gst_element_factory_make("fakesink", "sink");
+    QVERIFY(source);
+    QVERIFY(sink);
+
+    constexpr auto kSecretLocation = "/tmp/qgc-dot-secret-token";
+    g_object_set(source, "location", kSecretLocation, nullptr);
+    gst_bin_add_many(GST_BIN(pipeline), source, sink, nullptr);
+    QVERIFY(gst_element_link(source, sink));
+
+    gchar* dotData = gst_debug_bin_to_dot_data(GST_BIN(pipeline), GStreamer::kDiagnosticDotGraphDetails);
+    QVERIFY(dotData);
+    const QByteArray dot(dotData);
+    g_free(dotData);
+
+    QVERIFY(dot.contains("source"));
+    QVERIFY(dot.contains("sink"));
+    QVERIFY(!dot.contains(kSecretLocation));
+    QVERIFY(!dot.contains("qgc-dot-secret-token"));
+}
+
 void GStreamerTest::_testCompleteInit()
 {
     GStreamer::redirectGLibLogging();
@@ -517,6 +544,7 @@ QGC_GST_SKIP_TEST(_testConfigureDebugLoggingIsIdempotent)
 QGC_GST_SKIP_TEST(_testVerifyRequiredPlugins)
 QGC_GST_SKIP_TEST(_testEnvironmentSetup)
 QGC_GST_SKIP_TEST(_testWritePipelineDotReturnsEmptyOnWriteFailure)
+QGC_GST_SKIP_TEST(_testPipelineDotOmitsElementProperties)
 QGC_GST_SKIP_TEST(_testCompleteInit)
 QGC_GST_SKIP_TEST(_testCreateVideoReceiver)
 QGC_GST_SKIP_TEST(_testBindDebugLevelFactRejectsNullContext)
