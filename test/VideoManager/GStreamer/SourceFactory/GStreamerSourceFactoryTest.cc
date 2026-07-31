@@ -877,9 +877,9 @@ void GStreamerTest::_testSourceFactoryRejectsUnsafeWebSocketJpegUrl()
 void GStreamerTest::_testSourceFactoryRejectsBadUri()
 {
     ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtCriticalMsg,
-                     QRegularExpression(QStringLiteral("URI is not specified|Invalid UDP port")));
+                     QRegularExpression(QStringLiteral("URI is not specified")));
     ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Unsupported URI scheme")));
+                     QRegularExpression(QStringLiteral("Unsupported URI scheme|Invalid UDP port")));
 
     GStreamer::SourceFactory::Config config;
     QVERIFY(!GStreamer::SourceFactory::create(QString(), config));
@@ -914,7 +914,7 @@ void GStreamerTest::_testSourceFactoryTcpMpegTs()
 
 void GStreamerTest::_testSourceFactoryRejectsBadTcpUri()
 {
-    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtCriticalMsg,
+    ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid TCP port|Missing host in TCP URI")));
 
     GStreamer::SourceFactory::Config config;
