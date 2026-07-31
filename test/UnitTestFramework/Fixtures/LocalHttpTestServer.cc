@@ -17,7 +17,21 @@ struct RawResponderState
     QByteArray request;
     bool responseSent = false;
 };
-}  // namespace
+
+QByteArray httpReasonPhrase(int statusCode)
+{
+    switch (statusCode) {
+    case 200: return QByteArrayLiteral("OK");
+    case 204: return QByteArrayLiteral("No Content");
+    case 206: return QByteArrayLiteral("Partial Content");
+    case 304: return QByteArrayLiteral("Not Modified");
+    case 400: return QByteArrayLiteral("Bad Request");
+    case 404: return QByteArrayLiteral("Not Found");
+    case 500: return QByteArrayLiteral("Internal Server Error");
+    default: return QByteArrayLiteral("Status");
+    }
+}
+} // namespace
 
 LocalHttpTestServer::~LocalHttpTestServer()
 {
@@ -52,37 +66,12 @@ QString LocalHttpTestServer::url(const QString& path) const
     return QStringLiteral("http://%1:%2%3").arg(host).arg(port()).arg(path);
 }
 
-namespace {
-QByteArray httpReasonPhrase(int statusCode)
-{
-    switch (statusCode) {
-        case 200:
-            return QByteArrayLiteral("OK");
-        case 204:
-            return QByteArrayLiteral("No Content");
-        case 206:
-            return QByteArrayLiteral("Partial Content");
-        case 304:
-            return QByteArrayLiteral("Not Modified");
-        case 400:
-            return QByteArrayLiteral("Bad Request");
-        case 404:
-            return QByteArrayLiteral("Not Found");
-        case 500:
-            return QByteArrayLiteral("Internal Server Error");
-        default:
-            return QByteArrayLiteral("Status");
-    }
-}
-}  // namespace
-
 void LocalHttpTestServer::installHttpResponder(const QByteArray& body, int statusCode, const QByteArray& contentType,
                                                int cacheMaxAge)
 {
-    QByteArray header = QStringLiteral(
-                            "HTTP/1.1 %1 %2\r\n"
-                            "Content-Type: %3\r\n"
-                            "Connection: close\r\n")
+    QByteArray header = QStringLiteral("HTTP/1.1 %1 %2\r\n"
+                                       "Content-Type: %3\r\n"
+                                       "Connection: close\r\n")
                             .arg(statusCode)
                             .arg(QString::fromLatin1(httpReasonPhrase(statusCode)))
                             .arg(QString::fromLatin1(contentType))
@@ -111,6 +100,7 @@ void LocalHttpTestServer::installRawResponder(const QByteArray& rawResponse)
                 state->request.append(socket->readAll());
                 if (!state->request.contains(QByteArrayLiteral("\r\n\r\n"))) {
                     if (state->request.size() > MAX_REQUEST_HEADER_SIZE) {
+                        state->responseSent = true;
                         socket->disconnectFromHost();
                     }
                     return;

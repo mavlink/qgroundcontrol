@@ -1,19 +1,22 @@
 #include "LocalHttpTestServerTest.h"
 
-#include <QtNetwork/QHostAddress>
+#include "Fixtures/LocalHttpTestServer.h"
+
+#include <QtCore/QUrl>
 #include <QtNetwork/QTcpSocket>
 #include <QtTest/QSignalSpy>
 
-#include "Fixtures/LocalHttpTestServer.h"
-
-void LocalHttpTestServerTest::_testEarlyRequest()
+void LocalHttpTestServerTest::_testFragmentedRequestHeader()
 {
     TestFixtures::LocalHttpTestServer server;
     QVERIFY(server.listen());
     server.installHttpResponder(QByteArrayLiteral("ready"));
 
+    const QUrl serverUrl(server.url());
+    QVERIFY(serverUrl.isValid());
+
     QTcpSocket client;
-    client.connectToHost(QHostAddress::LocalHost, server.port());
+    client.connectToHost(serverUrl.host(), static_cast<quint16>(serverUrl.port()));
     QVERIFY(client.waitForConnected(TestTimeout::mediumMs()));
 
     QSignalSpy readyReadSpy(&client, &QTcpSocket::readyRead);
