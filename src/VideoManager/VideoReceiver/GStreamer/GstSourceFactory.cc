@@ -627,7 +627,7 @@ GstElement* create(const QString& uri, const Config& config)
 
     if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS && !isHttpMjpeg) {
         qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in"
-                                      << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
