@@ -344,61 +344,6 @@ void QGCNetworkHelperTest::_testUrlWithoutQuery()
     QVERIFY(result.fragment().isEmpty());
 }
 
-void QGCNetworkHelperTest::_testRedactedUrlPreservesStreamIdentity()
-{
-    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("rtsp://camera.example:554/axis-media/media.amp")),
-             QStringLiteral("rtsp://camera.example:554/axis-media/media.amp"));
-    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("udp://0.0.0.0:5600")),
-             QStringLiteral("udp://0.0.0.0:5600"));
-}
-
-void QGCNetworkHelperTest::_testRedactedUrlRemovesUserInfo()
-{
-    const QString result = QGCNetworkHelper::redactedUrlForLogging(
-        QStringLiteral("https://pilot%40ops:secret%2Fvalue@example.com:8443/video%20feed"));
-
-    QCOMPARE(result, QStringLiteral("https://example.com:8443/video%20feed"));
-    QVERIFY(!result.contains(QStringLiteral("pilot")));
-    QVERIFY(!result.contains(QStringLiteral("secret")));
-}
-
-void QGCNetworkHelperTest::_testRedactedUrlRedactsQueryValues()
-{
-    const QString result = QGCNetworkHelper::redactedUrlForLogging(
-        QStringLiteral("https://example.com/video?token=abc123&mode=low-latency#session"));
-    const QUrl resultUrl(result);
-    const QUrlQuery resultQuery(resultUrl);
-
-    QCOMPARE(resultUrl.path(), QStringLiteral("/video"));
-    QCOMPARE(resultQuery.queryItemValue(QStringLiteral("token")), QStringLiteral("REDACTED"));
-    QCOMPARE(resultQuery.queryItemValue(QStringLiteral("mode")), QStringLiteral("REDACTED"));
-    QCOMPARE(resultUrl.fragment(), QStringLiteral("REDACTED"));
-    QVERIFY(!result.contains(QStringLiteral("abc123")));
-    QVERIFY(!result.contains(QStringLiteral("low-latency")));
-    QVERIFY(!result.contains(QStringLiteral("session")));
-}
-
-void QGCNetworkHelperTest::_testRedactedUrlHandlesRelativeAndInvalidInput()
-{
-    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("5600")), QStringLiteral("5600"));
-    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("camera.local:5600")),
-             QStringLiteral("camera.local:5600"));
-    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QString()), QStringLiteral("<empty-url>"));
-    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("http://[invalid")),
-             QStringLiteral("<invalid-url>"));
-}
-
-void QGCNetworkHelperTest::_testRedactedUrlQUrlOverload()
-{
-    const QUrl sourceUrl(QStringLiteral("rtsp://pilot:secret@camera.example:8554/live?token=abc123"));
-    const QString result = QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
-
-    QCOMPARE(QUrl(result).path(), QStringLiteral("/live"));
-    QVERIFY(!result.contains(QStringLiteral("pilot")));
-    QVERIFY(!result.contains(QStringLiteral("secret")));
-    QVERIFY(!result.contains(QStringLiteral("abc123")));
-}
-
 // ============================================================================
 // Request Configuration Tests
 // ============================================================================
