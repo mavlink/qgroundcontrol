@@ -137,6 +137,8 @@ dot -Tpng /tmp/qgc-pipeline-dots/0.00.00.*-pipeline-started.dot -o pipeline.png
 
 When the env var is **unset**, QGC still writes a rotating snapshot (≤10 files) to `<CacheLocation>/qgc-pipeline-dot/<tag>-<ts>.dot` on `ERROR` and on watchdog timeout, so field-bug-report bundles include the topology automatically. The `GstVideoReceiver::dumpPipelineGraph(tag)` slot (callable from QML) writes a snapshot on demand for use from a debug menu.
 
+QGC graph dumps include topology, caps, media types, and states. Element property values are omitted because source properties can contain stream credentials.
+
 ### Latency tracer
 
 Per-element latency from source to sink:
