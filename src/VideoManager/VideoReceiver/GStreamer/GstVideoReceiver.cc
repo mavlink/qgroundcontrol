@@ -252,7 +252,7 @@ void GstVideoReceiver::start(uint32_t timeout)
             gst_clear_object(&bus);
         }
 
-        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-initial");
+        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-initial");
         running = (gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
     } while(0);
 
@@ -276,7 +276,7 @@ void GstVideoReceiver::start(uint32_t timeout)
 
         emit onStartComplete(STATUS_FAIL);
     } else {
-        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-started");
+        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-started");
         qCDebug(GstVideoReceiverLog) << "Started" << _redactedUri();
 
         // _watchdogTimer lives on `this` (GUI thread); the emit runs synchronously on the
@@ -394,7 +394,7 @@ void GstVideoReceiver::stop()
             _shutdownDecodingBranch();
         }
 
-        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-stopped");
+        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-stopped");
 
         // Lock before nulling so an in-flight _onBusMessage on the streaming thread cannot read
         // a half-destroyed _pipeline. _acquirePipelineRef takes its own ref under the same lock.
@@ -579,7 +579,7 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
 
     (void) gst_element_sync_state_with_parent(_fileSink);
 
-    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-filesink");
+    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-with-filesink");
 
     // Install a probe on the recording branch to drop buffers until we hit our first keyframe
     // When we hit our first keyframe, we can offset the timestamps appropriately according to the first keyframe time
@@ -680,7 +680,7 @@ void GstVideoReceiver::_watchdog()
         qint64 elapsed = now - lastSourceFrameTime;
         if (elapsed > _timeout) {
             qCDebug(GstVideoReceiverLog) << "Stream timeout, no frames for" << elapsed << _redactedUri();
-            GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-watchdog-timeout");
+            GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-watchdog-timeout");
             emit timeout();
             _scheduleReconnect("source watchdog");
             return;
@@ -696,7 +696,8 @@ void GstVideoReceiver::_watchdog()
             elapsed = now - lastVideoFrameTime;
             if (elapsed > (_timeout * 2)) {
                 qCDebug(GstVideoReceiverLog) << "Video decoder timeout, no frames for" << elapsed << _redactedUri();
-                GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-watchdog-timeout");
+                GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails,
+                                          "pipeline-watchdog-timeout");
                 emit timeout();
                 _scheduleReconnect("decoder watchdog");
             }
@@ -762,7 +763,7 @@ void GstVideoReceiver::dumpPipelineGraph(const QString &tag)
             return;
         }
         const QByteArray tagUtf8 = tag.toUtf8();
-        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(pipelineRef), GST_DEBUG_GRAPH_SHOW_ALL, tagUtf8.constData());
+        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(pipelineRef), GStreamer::kDiagnosticDotGraphDetails, tagUtf8.constData());
         const QString dotPath = GStreamer::writePipelineDot(pipelineRef, tagUtf8.constData());
         if (!dotPath.isEmpty()) {
             qCInfo(GstVideoReceiverLog) << "Pipeline graph saved to" << dotPath;
@@ -916,7 +917,7 @@ void GstVideoReceiver::_onNewSourcePad(GstPad *pad)
         return;
     }
 
-    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-new-source-pad");
+    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-with-new-source-pad");
 
     _ensureVideoSinkInPipeline();
 
@@ -992,7 +993,7 @@ void GstVideoReceiver::_onNewDecoderPad(GstPad *pad)
 {
     qCDebug(GstVideoReceiverLog) << "_onNewDecoderPad" << _redactedUri();
 
-    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-new-decoder-pad");
+    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-with-new-decoder-pad");
 
     // We should now know what codec decodebin3 selected.
     _logDecodebin3SelectedCodec(_decoder);
@@ -1015,7 +1016,7 @@ bool GstVideoReceiver::_addDecoder(GstElement *src)
     (void) gst_bin_add(GST_BIN(_pipeline), _decoder);
     (void) gst_element_sync_state_with_parent(_decoder);
 
-    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-decoder");
+    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-with-decoder");
 
     if (!gst_element_link(src, _decoder)) {
         qCCritical(GstVideoReceiverLog) << "Unable to link decoder";
@@ -1090,7 +1091,7 @@ bool GstVideoReceiver::_addVideoSink(GstPad *pad)
 
     (void) gst_element_sync_state_with_parent(_videoSink);
 
-    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-videosink");
+    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-with-videosink");
 
     // Determine video size. Errors here are non-fatal.
     QSize videoSize;
@@ -1275,7 +1276,7 @@ void GstVideoReceiver::_shutdownDecodingBranch()
         emit decodingChanged(_decoding);
     }
 
-    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-decoding-stopped");
+    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-decoding-stopped");
 }
 
 void GstVideoReceiver::_shutdownRecordingBranch()
@@ -1307,7 +1308,7 @@ void GstVideoReceiver::_shutdownRecordingBranch()
         emit onStopRecordingComplete(STATUS_OK);
     }
 
-    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-recording-stopped");
+    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GStreamer::kDiagnosticDotGraphDetails, "pipeline-recording-stopped");
 }
 
 bool GstVideoReceiver::_needDispatch()
@@ -1366,7 +1367,7 @@ gboolean GstVideoReceiver::_onBusMessage(GstBus * /* bus */, GstMessage *msg, gp
         if (GstElement *pipelineRef = pThis->_acquirePipelineRef()) {
             // Native dump path (no-op without GST_DEBUG_DUMP_DOT_DIR) plus an unconditional
             // CacheLocation fallback so field-bug-report bundles include pipeline topology.
-            GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(pipelineRef), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-error");
+            GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(pipelineRef), GStreamer::kDiagnosticDotGraphDetails, "pipeline-error");
             const QString dotPath = GStreamer::writePipelineDot(pipelineRef, "pipeline-error");
             if (!dotPath.isEmpty()) {
                 qCInfo(GstVideoReceiverLog) << "Pipeline graph saved to" << dotPath;

@@ -2,6 +2,7 @@
 #include "VideoManager.h"
 
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 #include <QtCore/QSettings>
 #include <QtCore/QVariantList>
 
@@ -243,23 +244,31 @@ bool VideoSettings::streamConfigured(void)
     }
     //-- If UDP, check for URL
     if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
-        qCDebug(VideoSettingsLog) << "Testing configuration for UDP Stream";
-        return !udpUrl()->rawValue().toString().isEmpty();
+        const QString url = udpUrl()->rawValue().toString();
+        qCDebug(VideoSettingsLog) << "Testing configuration for UDP Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(url);
+        return !url.isEmpty();
     }
     //-- If RTSP, check for URL
     if(vSource == videoSourceRTSP) {
-        qCDebug(VideoSettingsLog) << "Testing configuration for RTSP Stream";
-        return !rtspUrl()->rawValue().toString().isEmpty();
+        const QString url = rtspUrl()->rawValue().toString();
+        qCDebug(VideoSettingsLog) << "Testing configuration for RTSP Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(url);
+        return !url.isEmpty();
     }
     //-- If TCP, check for URL
     if(vSource == videoSourceTCP) {
-        qCDebug(VideoSettingsLog) << "Testing configuration for TCP Stream";
-        return !tcpUrl()->rawValue().toString().isEmpty();
+        const QString url = tcpUrl()->rawValue().toString();
+        qCDebug(VideoSettingsLog) << "Testing configuration for TCP Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(url);
+        return !url.isEmpty();
     }
     //-- If MPEG-TS, check for URL
     if(vSource == videoSourceMPEGTS) {
-        qCDebug(VideoSettingsLog) << "Testing configuration for MPEG-TS Stream";
-        return !udpUrl()->rawValue().toString().isEmpty();
+        const QString url = udpUrl()->rawValue().toString();
+        qCDebug(VideoSettingsLog) << "Testing configuration for MPEG-TS Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(url);
+        return !url.isEmpty();
     }
     //-- If Herelink Air unit, good to go
     if(vSource == videoSourceHerelinkAirUnit) {
