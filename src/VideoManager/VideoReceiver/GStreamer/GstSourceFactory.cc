@@ -645,7 +645,8 @@ GstElement* create(const QString& uri, const Config& config)
     const bool isHttpMjpeg = (scheme == QLatin1String("http")) || (scheme == QLatin1String("https"));
 
     if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS && !isHttpMjpeg) {
-        qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in"
+                                       << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
         return nullptr;
     }
 
