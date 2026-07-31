@@ -7,5 +7,5 @@ class LocalHttpTestServerTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _testEarlyRequest();
+    void _testFragmentedRequestHeader();
 };
