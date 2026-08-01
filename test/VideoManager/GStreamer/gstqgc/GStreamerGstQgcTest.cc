@@ -732,7 +732,7 @@ void GStreamerTest::_testWindowsGpuSinkPreservesSoftwarePixels()
                                                      /*captureCenterPixel*/ true);
 
     QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("Software-frame pipeline: %1").arg(result.errorMessage)));
-    QTRY_VERIFY_WITH_TIMEOUT(result.frameCount > 0, 2000);
+    QVERIFY(result.frameCount > 0);
     QCOMPARE(result.lastPixelFormat, QVideoFrameFormat::Format_BGRA8888);
     QVERIFY2(result.centerPixelValid, "System-memory fallback frame could not be mapped for pixel verification");
     QVERIFY2((result.centerPixel.red() > 200) && (result.centerPixel.green() < 50) && (result.centerPixel.blue() < 50),
@@ -763,14 +763,13 @@ void GStreamerTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
         runPipelineThroughQVideoSink(videoSink, controller,
                                      "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! d3d11upload ! "
                                      "video/x-raw(memory:D3D11Memory),format=NV12",
-                                     /*numBuffers*/ 5, /*gpuZerocopy*/ true, "pattern=red");
-    if (!result.eos && (result.errorMessage.contains(QStringLiteral("D3D"), Qt::CaseInsensitive) ||
-                        result.errorMessage.contains(QStringLiteral("device"), Qt::CaseInsensitive))) {
+                                     /*numBuffers*/ 5, /*gpuZerocopy*/ true);
+    if (!result.eos && result.errorMessage.contains(QStringLiteral("d3d11"), Qt::CaseInsensitive)) {
         QSKIP(qPrintable(QStringLiteral("D3D11 device unavailable in this runner: %1").arg(result.errorMessage)));
     }
 
     QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("D3D11 pipeline: %1").arg(result.errorMessage)));
-    QTRY_VERIFY_WITH_TIMEOUT(result.frameCount > 0, 2000);
+    QVERIFY(result.frameCount > 0);
     QCOMPARE(result.lastPixelFormat, QVideoFrameFormat::Format_NV12);
 #else
     QSKIP("D3D11 GPU sink path is only available in supported Windows builds");
