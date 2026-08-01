@@ -55,7 +55,6 @@ The AppImage downloads below run on Ubuntu 24.04 LTS and 26.04 LTS. If you need 
 
 Ubuntu comes with a serial modem manager that interferes with any robotics related use of a serial port (or USB serial).
 Before installing _QGroundControl_ you should remove the modem manager and grant yourself permissions to access the serial port.
-You also need to install _GStreamer_ in order to support video streaming.
 
 **Before installing _QGroundControl_ for the first time:**
 
@@ -82,10 +81,8 @@ sudo apt remove --purge modemmanager
 
 1. On the command prompt, enter:
 ```sh
-sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
-sudo apt install python3-gi python3-gst-1.0 -y
 sudo apt install libfuse2 -y
-sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
+sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0 -y
 ```
 
 **To install _QGroundControl_:**
