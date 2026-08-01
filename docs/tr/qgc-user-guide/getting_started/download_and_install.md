@@ -84,8 +84,7 @@ sudo apt remove --purge modemmanager
 1. On the command prompt, enter:
 
 ```sh
-sudo apt install libfuse2 -y
-sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0 -y
+sudo apt install -y libfuse2 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0
 ```
 
 **To install _QGroundControl_:**
