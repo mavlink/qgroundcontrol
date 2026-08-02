@@ -55,7 +55,7 @@ The AppImage downloads below run on Ubuntu 24.04 LTS and 26.04 LTS. If you need 
 :::
 
 Ubuntu comes with a serial modem manager that interferes with any robotics related use of a serial port (or USB serial).
-_QGroundControl_을 설치 전에 모뎀 관리자를 제거하고, 직렬 포트 접근 권한을 부여합니다.
+_QGroundContro&#x6C;_&#xC744; 설치 전에 모뎀 관리자를 제거하고, 직렬 포트 접근 권한을 부여합니다.
 
 **Before installing _QGroundControl_ for the first time:**
 
