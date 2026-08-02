@@ -15,6 +15,8 @@ ensure_tools_dir(__file__)
 
 from common.git import run_git
 
+PUSH_ATTEMPTS = 3
+
 
 def sanitize_branch(name: str) -> str:
     """Remove unsafe characters from branch name for use as a directory."""
@@ -61,8 +63,21 @@ def deploy_branch(
 
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     run_git("commit", "-m", f"{commit_message} {today}", cwd=target_dir, check=True)
-    run_git("push", "origin", target_branch, cwd=target_dir, check=True)
+    _push_with_retry(target_dir, target_branch)
     return True
+
+
+def _push_with_retry(target_dir: Path, target_branch: str) -> None:
+    """Push, rebasing onto concurrent deploys from other branches on rejection."""
+    for attempt in range(1, PUSH_ATTEMPTS + 1):
+        push = run_git("push", "origin", target_branch, cwd=target_dir)
+        if push.returncode == 0:
+            return
+        print(f"Push attempt {attempt}/{PUSH_ATTEMPTS} failed:\n{push.stderr.strip()}")
+        if attempt < PUSH_ATTEMPTS:
+            run_git("pull", "--rebase", "origin", target_branch, cwd=target_dir, check=True)
+    msg = f"git push failed after {PUSH_ATTEMPTS} attempts"
+    raise RuntimeError(msg)
 
 
 def main() -> None:
