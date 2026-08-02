@@ -4,19 +4,18 @@ GeoFences를 사용하면 비행이 가능한 가상 영역 또는 비행이 _�
 또한 허용된 지역을 벗어나 비행하는 경우 취해야 할 조치를 설정할 수 있습니다.
 
 :::info
-**ArduPilot 사용자:** GeoFence 지원은 Rover 3.6 및 Copter 3.7 이상에서만 지원됩니다. 또한 일일 빌드 또는 Stable 3.6버전을 사용하여야 합니다(한 번 사용 가능).
-연결된 차량에서 지원하지 않는 경우에는 _QGroundControl_은 GeoFence 옵션을 표시하지 않습니다.
+_QGroundControl_ will not display the GeoFence options if they are not supported by the connected vehicle firmware.
 :::
 
-## 지오펜스 생성
+## Create a GeoFence
 
 지오펜스를 생성하려면:
 
 1. 계획 뷰로 이동
 
-2. 임무 명령 목록 위의 _지오펜스_ 라디오 버튼을 선택합니다.
+2. Select the **GeoFence** layer using the [Layer Switcher](plan_view.md#layer_switcher) in the top-right area of the map (or expand the **GeoFence** section in the [Plan Editor Panel](plan_view.md#plan_editor_panel))
 
-3. **원형 울타리** 또는 **폴리곤 울타리** 버튼을 각각 눌러 원형 또는 다각형 영역을 삽입합니다.
+3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button in the GeoFence section.
    새로운 지역이 지도와 버튼 아래의 관련 울타리 목록에 추가됩니다.
 
 :::tip
@@ -37,17 +36,15 @@ GeoFences를 사용하면 비행이 가능한 가상 영역 또는 비행이 _�
 1. 기본적으로 새 지역은 _포함_ 영역으로 생성됩니다(차량은 지역 내에 있어야 함).
    울타리 패널에서 연결된 _포함_ 확인란을 선택 취소하여 차량이 이동할 수 없는 제외 구역으로 변경합니다.
 
+Depending on the firmware, the GeoFence section may also show fence parameters (e.g. breach action) and a **Breach Return Point** that the vehicle will fly to if it breaches the fence.
+
 ## 지오펜스 편집/삭제
 
-GeoFence 패널에서 _편집_ 라디오 버튼을 선택하여 편집할 지오펜스 영역을 선택할 수 있습니다.
+You can select a GeoFence region to edit by selecting its _Edit_ radio button in the GeoFence section.
 그런 다음 이전 섹션에서 설명한 대로 지도에서 지역을 편집할 수 있습니다.
 
 지역은 연결된 **Del** 버튼을 눌러 삭제할 수 있습니다.
 
 ## 지오펜스 업로드
 
-GeoFence는 [계획 도구](../plan_view/plan_view.md)의 **파일**을 사용하여 임무와 동일한 방식으로 업로드됩니다.
-
-## 기타 도구
-
-나머지 도구는 임무를 편집할 때와 똑같이 동작합니다.
+The GeoFence is uploaded along with the rest of the plan using the **Upload** button in the [Plan Toolbar](plan_view.md#file).
