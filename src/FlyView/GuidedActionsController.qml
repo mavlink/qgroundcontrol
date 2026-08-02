@@ -225,7 +225,7 @@ Item {
             } else {
                 console.error("setupSlider called for inapproproate change speed action", _vehicleInFwdFlight, _activeVehicle.haveMRSpeedLimits)
             }
-        } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionGoto || actionCode === actionPause) {
+        } else if (actionCode === actionChangeAlt || actionCode === actionOrbit || actionCode === actionROI || actionCode === actionGoto || actionCode === actionPause) {
             guidedValueSlider.setupSlider(
                 GuidedValueSlider.SliderType.Altitude,
                 _flyViewSettings.guidedMinimumAltitude.value,
@@ -653,7 +653,12 @@ Item {
             }
             break
         case actionROI:
-            _activeVehicle.guidedModeROI(actionData)
+            var roiCoordinate = actionData
+            var valueInMeters = _unitsConversion.appSettingsVerticalDistanceUnitsToMeters(sliderOutputValue)
+            if (!isNaN(valueInMeters)) {
+                roiCoordinate = QtPositioning.coordinate(actionData.latitude, actionData.longitude, valueInMeters)
+            }
+            _activeVehicle.guidedModeROI(roiCoordinate)
             break
         case actionChangeSpeed:
             if (_activeVehicle) {

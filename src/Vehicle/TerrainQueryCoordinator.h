@@ -37,8 +37,8 @@ public:
 
     /// PX4 ROI flow. Starts a terrain query; when it resolves, sends
     /// MAV_CMD_DO_SET_ROI_LOCATION in MAV_FRAME_GLOBAL at the resolved altitude
-    /// (falling back to home altitude on query failure).
-    void roiWithTerrain(const QGeoCoordinate& coord);
+    /// or at resolved altitude plus requested relative altitude.
+    void roiWithTerrain(const QGeoCoordinate& coord, double relativeAltitude = qQNaN());
 
     /// Build + send MAV_CMD_DO_SET_ROI_LOCATION directly (no terrain query).
     /// Used by the ArduPilot MAV_FRAME_GLOBAL_RELATIVE_ALT direct path.
@@ -62,6 +62,7 @@ private:
 
     QPointer<TerrainAtCoordinateQuery> _roiQuery;
     QGeoCoordinate                     _roiCoordinate;
+    double                              _roiRelativeAltitude = qQNaN();
 
     QElapsedTimer                      _altQueryTimer;
     QPointer<TerrainAtCoordinateQuery> _altQuery;
