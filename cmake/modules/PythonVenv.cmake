@@ -6,6 +6,31 @@ else()
     set(_qgc_venv_python "${CMAKE_SOURCE_DIR}/.venv/bin/python")
 endif()
 
+
+function(_qgc_ensure_pip _py)
+    execute_process(
+        COMMAND "${_py}" -m pip -V
+        RESULT_VARIABLE _pip_result
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(_pip_result EQUAL 0)
+        return()
+    endif()
+    message(STATUS "QGC: .venv has no pip (required by mavlink) — bootstrapping via ensurepip")
+    execute_process(
+        COMMAND "${_py}" -m ensurepip --upgrade
+        RESULT_VARIABLE _ensurepip_result
+        OUTPUT_VARIABLE _ensurepip_output
+        ERROR_VARIABLE  _ensurepip_output
+    )
+    if(NOT _ensurepip_result EQUAL 0)
+        message(FATAL_ERROR "QGC: failed to bootstrap pip into .venv (exit ${_ensurepip_result}):\n"
+                            "${_ensurepip_output}\n"
+                            "Run manually: ${_py} -m ensurepip --upgrade")
+    endif()
+endfunction()
+
 function(_qgc_sync_venv_if_stale _py)
     if(NOT QGC_AUTO_PYTHON_VENV)
         return()
@@ -43,6 +68,7 @@ endmacro()
 if(DEFINED CACHE{Python3_EXECUTABLE})
     if(EXISTS "${_qgc_venv_python}" AND "${Python3_EXECUTABLE}" STREQUAL "${_qgc_venv_python}")
         _qgc_sync_venv_if_stale("${_qgc_venv_python}")
+        _qgc_ensure_pip("${_qgc_venv_python}")
         _qgc_pin_python("${_qgc_venv_python}")
     endif()
     return()
@@ -85,6 +111,7 @@ endif()
 
 if(EXISTS "${_qgc_venv_python}")
     _qgc_sync_venv_if_stale("${_qgc_venv_python}")
+    _qgc_ensure_pip("${_qgc_venv_python}")
     _qgc_pin_python("${_qgc_venv_python}")
     message(STATUS "QGC: using Python venv interpreter ${Python3_EXECUTABLE}")
 else()
