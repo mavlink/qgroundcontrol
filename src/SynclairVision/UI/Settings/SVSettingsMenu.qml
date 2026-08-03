@@ -5,11 +5,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-import "SVSettingsControls.js" as SVSettingsControls
-import "SVSettingsDev.js" as SVSettingsDev
-import "SVSettingsGeneral.js" as SVSettingsGeneral
-import "SVSettingsNetwork.js" as SVSettingsNetwork
-import "SVSettingsShortcuts.js" as SVSettingsShortcuts
+import "SVSettingsDefinitions.js" as SVSettingsDefinitions
 
 Item {
     id: root
@@ -48,15 +44,15 @@ Item {
     readonly property var sectionModel: categoryData.sections ? categoryData.sections : []
         function getCategoryData(settingsId) {
         if (settingsId === 'General') {
-            return { title: 'General', sections: SVSettingsGeneral.getSections() }
+            return { title: 'General', sections: SVSettingsDefinitions.getGeneralSections() }
         } else if (settingsId === 'Network') {
-            return { title: 'Network', sections: SVSettingsNetwork.getSections() }
+            return { title: 'Network', sections: SVSettingsDefinitions.getNetworkSections() }
         } else if (settingsId === 'Controls') {
-            return { title: 'Controls', sections: SVSettingsControls.getSections() }
+            return { title: 'Controls', sections: SVSettingsDefinitions.getControlsSections() }
         } else if (settingsId === 'Shortcuts') {
-            return { title: 'Shortcuts', sections: SVSettingsShortcuts.getSections() }
+            return { title: 'Shortcuts', sections: SVSettingsDefinitions.getShortcutsSections() }
         } else if (settingsId === 'Dev') {
-            return { title: 'Dev', sections: SVSettingsDev.getSections() }
+            return { title: 'Dev', sections: SVSettingsDefinitions.getDevSections() }
         }
     }
 
@@ -239,7 +235,7 @@ Item {
 
         networkConnectTimer.stop()
         root.networkConnectionPending = false
-        root.digiview.disconnectFromHost()
+        root.digiview.disconnectFromHost(true)
     }
 
     function handleButtonClick(settingData) {
@@ -254,17 +250,14 @@ Item {
             }
 
             if (root.digiview.connected) {
-                // LÄGG TILL HÄR: Användaren klickade aktivt på Disconnect
-                SVState.userInitiatedDisconnect = true 
-                
+                SVState.userInitiatedDisconnect = true
                 networkConnectTimer.stop()
                 root.networkConnectionPending = false
-                root.digiview.disconnectFromHost()
+                root.digiview.disconnectFromHost(true)
                 return
             }
 
-            // LÄGG TILL HÄR: Återställ flaggan vid ett nytt anslutningsförsök
-            SVState.userInitiatedDisconnect = false 
+            SVState.userInitiatedDisconnect = false
 
             if (!applySelectedNetworkProfile()) {
                 root.networkConnectionPending = false
@@ -431,6 +424,10 @@ Item {
     }
 
     function isSettingEnabled(settingData) {
+        if (settingData && settingData.enabled === false) {
+            return false
+        }
+
         return matchesCondition(settingData ? settingData.enabledWhen : undefined)
     }
 

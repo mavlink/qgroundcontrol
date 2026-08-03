@@ -44,42 +44,6 @@ Item {
 
     QGCPalette { id: qgcPalette}
 
-    Rectangle {
-        id: noVideo
-        anchors.fill: parent
-        color: "black"
-        visible: cameraActive
-
-        Rectangle {
-            id:                 noVideoLabelBackground
-            anchors.centerIn:   parent
-            width:              noVideoLabel.contentWidth + root._noVideoLabelPadding * 2
-            height:             noVideoLabel.contentHeight + root._noVideoLabelPadding * 2
-            radius:             SVUnits.radius
-            color:              qgcPalette.windowTransparent
-
-            QGCLabel {
-                id:                 noVideoLabel
-                text:               qsTr("NO VIDEO AVAILABLE")
-                font.bold:          true
-                color:              qgcPalette.text
-                font.pointSize:     root._noVideoLabelPointSize
-                anchors.centerIn:   parent
-            }
-        }
-    }
-
-    SVCameraLayerOverlays {
-        id: overlays
-        anchors.fill: parent
-        grid: parent.grid
-        crosshair: parent.crosshair
-        //visible: !SVState.cursorTrackingSessionActive
-        borderWidth: 3
-        borderColor: "black"
-        visible: false
-    }
-
     SVCameraLayerOverlays {
         id: overlays2
         anchors.fill: parent
@@ -90,12 +54,7 @@ Item {
         borderColor: "white"
     }
 
-    SVCameraWidgetLayer {
-        id: widgetLayer
-        anchors.fill: parent
-        anchors.margins: SVUnits.bigMargin
-        visible: !root.previewMode && SVState.hud && !SVState.cursorTrackingSessionActive
-    }
+    
 
     SVBackground {
         anchors.fill: parent
@@ -160,8 +119,31 @@ Item {
             && SVState.cameraSelected === cameraSlot
             && !SVState.cursorTrackingSessionActive
             && SVState.hud 
+        z: 100000000
 
     }
+
+    SVLine { 
+        thickness: SVUnits.lineWidth; 
+        color: qgcPalette.windowShadeLight; 
+        startX: 0
+        startY: 0
+        endX: root.width
+        endY: 0
+        z: -10000
+    }
+
+    SVLine { 
+        thickness: SVUnits.lineWidth; 
+        color: qgcPalette.windowShadeLight; 
+        startX: root.width
+        startY: 0
+        endX: root.width
+        endY: root.height
+        z: -10000
+
+    }
+
 
     MouseArea {
         anchors.fill: parent
@@ -194,5 +176,13 @@ Item {
 
             SVState.cancelCursorTrackingSelectionFromBackground()
         }
+    }
+
+    SVCameraWidgetLayer {
+        id: widgetLayer
+        anchors.fill: parent
+        anchors.margins: SVUnits.bigMargin
+        cameraSlot: root.cameraSlot
+        visible: !root.previewMode && SVState.hud && !SVState.cursorTrackingSessionActive
     }
 }

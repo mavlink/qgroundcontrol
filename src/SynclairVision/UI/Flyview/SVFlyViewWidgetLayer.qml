@@ -19,7 +19,6 @@ Item {
     id: root
 
     property real leftToolStripBottom
-    property string activeLayoutId: "four_square"
     property string activeSettingsId: ""
     property real pipViewWidth: 0
     property var visibleCameraSlots: []
@@ -150,7 +149,6 @@ Item {
         anchors.fill: parent
 
         leftToolStripBottom: root.leftToolStripBottom
-        activeLayoutId: root.activeLayoutId
         activeSettingsId: root.activeSettingsId
         pipViewWidth: root.pipViewWidth
         visibleCameraSlots: root.visibleCameraSlots

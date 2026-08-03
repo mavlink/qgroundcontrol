@@ -8,9 +8,20 @@
 #include <QtCore/QVariantList>
 #include <QtCore/QVariantMap>
 
+#include <array>
+#include <cstddef>
 #include <cstdint>
 
-#include <QVector>
+#include <QtCore/QVector>
+
+struct CameraTrackingState {
+    uint8_t sttStatus = 0;       // SV_STT_STATUS_OFF, RUNNING, etc.
+    float confidence = 0.0f;
+    uint16_t trackId = 0;
+    int16_t viewId = -1;
+    bool lockTarget = false;
+    uint8_t targetingMode = 0;
+};
 
 class DigiviewManager : public QObject
 {
@@ -39,10 +50,20 @@ class DigiviewManager : public QObject
                videoOutputDetectionOverlayRectChanged)
     Q_PROPERTY(int videoOutputSingleDetectionSize READ videoOutputSingleDetectionSize NOTIFY
                videoOutputSingleDetectionSizeChanged)
+    Q_PROPERTY(bool hasSttParameters READ hasSttParameters NOTIFY hasSttParametersChanged)
+    Q_PROPERTY(int sttStatus READ sttStatus NOTIFY sttStatusChanged)
+    Q_PROPERTY(int sttCamId READ sttCamId NOTIFY sttCamIdChanged)
+    Q_PROPERTY(float sttConfidence READ sttConfidence NOTIFY sttConfidenceChanged)
+    Q_PROPERTY(bool sttLockTarget READ sttLockTarget NOTIFY sttLockTargetChanged)
+    Q_PROPERTY(QVariantList cameraStates READ cameraStates NOTIFY cameraStatesChanged)
 
 public:
     static constexpr uint8_t kDefaultSenderSystemId = 255;
     static constexpr uint8_t kDefaultSenderComponentId = MAV_COMP_ID_MISSIONPLANNER;
+
+    static constexpr size_t kMaxCameras = 6;
+
+    QVariantList cameraStates() const;
 
     explicit DigiviewManager(QObject* parent = nullptr);
     ~DigiviewManager() override;
@@ -79,6 +100,7 @@ public:
 
     Q_INVOKABLE bool connectToHost();
     Q_INVOKABLE void disconnectFromHost();
+    Q_INVOKABLE void disconnectFromHost(bool preventAutomaticReconnect);
 
     Q_INVOKABLE void sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp);
     Q_INVOKABLE void sendAIParameters(uint8_t run_ai, QString track_model_name, QString scan_model_name);
@@ -86,6 +108,8 @@ public:
     Q_INVOKABLE void sendSetVideoOutput(
         QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
         uint8_t layout, uint8_t detection_overlay_mode);
+    Q_INVOKABLE void setDetectionTracking(int cam, int view_id, bool lock_target);
+    Q_INVOKABLE void clearDetectionTracking(int cam);
     Q_INVOKABLE void requestVideoOutputParameters();
     Q_INVOKABLE void sendVideoOutputParameters(
         QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
@@ -142,6 +166,14 @@ public:
         float altitude, float visual_lat, float visual_lon,
         float next_waypoint_target_yaw, float next_waypoint_target_pitch, float next_waypoint_target_roll,
         float visual_vel_x, float visual_vel_y, float visual_vel_z);
+
+    bool hasSttParameters() const { return _hasSttParameters; }
+    int sttStatus() const { return _sttStatus; }
+    int sttCamId() const { return _sttCamId; }
+    float sttConfidence() const { return _sttConfidence; }
+    bool sttLockTarget() const { return _sttLockTarget != 0; }
+
+    Q_INVOKABLE void requestSingleTargetTrackingParameters();
 
 
     //////////////////////////////////////////////////////////
@@ -229,6 +261,12 @@ signals:
         float altitude, float visual_lat, float visual_lon,
         float next_waypoint_target_yaw, float next_waypoint_target_pitch, float next_waypoint_target_roll,
         float visual_vel_x, float visual_vel_y, float visual_vel_z);
+    void hasSttParametersChanged();
+    void sttStatusChanged();
+    void sttCamIdChanged();
+    void sttConfidenceChanged();
+    void sttLockTargetChanged();
+    void cameraStatesChanged();
 
 private:
     template<typename Payload>
@@ -251,9 +289,11 @@ private:
     uint8_t _senderComponentId = kDefaultSenderComponentId;
     uint8_t _remoteSystemId = 0;
     uint8_t _remoteComponentId = 0;
+    bool _logicalSessionActive = false;
     bool _remoteIdentityValid = false;
+    bool _remoteComponentPinnedByVideoOutputParameters = false;
     bool _pendingVideoOutputParametersRequest = false;
-    bool _videoOutputParametersSubscriptionActive = false;
+    bool _pendingSingleTargetTrackingParametersRequest = true;
     QString _streamName = QStringLiteral("stream");
     quint32 _lastReceivedMessageId = 0;
     bool _hasVideoOutputParameters = false;
@@ -267,4 +307,11 @@ private:
     QVariantList _videoOutputViews;
     QVariantMap _videoOutputDetectionOverlayRect;
     int _videoOutputSingleDetectionSize = 0;
+
+    bool _hasSttParameters = false;
+    uint8_t _sttStatus = 0; // 0=OFF, 1=INIT, 2=RUNNING, 3=DROPPED
+    uint8_t _sttCamId = 0;
+    float _sttConfidence = 0.0f;
+    uint8_t _sttLockTarget = 0;
+    std::array<CameraTrackingState, kMaxCameras> _cameraStates{};
 };

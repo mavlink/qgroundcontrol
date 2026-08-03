@@ -1,5 +1,7 @@
 #include "DigiviewManager.h"
 
+#include "MAVLinkLib.h"
+#include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 #include "sv_mavlink_dialect/sv_mavlink_dialect.h"
@@ -10,6 +12,8 @@
 
 #include <cstring>
 #include <limits>
+
+#include <iostream>
 
 QGC_LOGGING_CATEGORY(DigiviewManagerLog, "Digiview.Manager")
 
@@ -75,14 +79,14 @@ DigiviewManager::DigiviewManager(QObject* parent)
     connect(_connection, &DigiviewConnection::messageReceived, this, &DigiviewManager::_handleMessage);
 
     if (qApp) {
-        connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { disconnectFromHost(); }, Qt::QueuedConnection);
+        connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { disconnectFromHost(false); }, Qt::QueuedConnection);
     }
 
 }
 
 DigiviewManager::~DigiviewManager()
 {
-    disconnectFromHost();
+    disconnectFromHost(false);
 }
 
 QString DigiviewManager::host() const
@@ -152,6 +156,7 @@ void DigiviewManager::setStreamName(const QString& streamName)
 void DigiviewManager::setSenderSystemId(int senderSystemId)
 {
     if ((senderSystemId < 0) || (senderSystemId > std::numeric_limits<uint8_t>::max())) {
+        //qCWarning(DigiviewManagerLog) << "Ignoring invalid Digiview sender system id" << senderSystemId;
         return;
     }
 
@@ -168,6 +173,7 @@ void DigiviewManager::setSenderSystemId(int senderSystemId)
 void DigiviewManager::setSenderComponentId(int senderComponentId)
 {
     if ((senderComponentId < 0) || (senderComponentId > std::numeric_limits<uint8_t>::max())) {
+        //qCWarning(DigiviewManagerLog) << "Ignoring invalid Digiview sender component id" << senderComponentId;
         return;
     }
 
@@ -187,11 +193,6 @@ bool DigiviewManager::connectToHost()
     _resetRemoteSession();
     _logicalSessionActive = _connection->connectToEndpoint();
     return _logicalSessionActive;
-}
-
-void DigiviewManager::disconnectFromHost()
-{
-    disconnectFromHost(false);
 }
 
 void DigiviewManager::disconnectFromHost(bool preventAutomaticReconnect)
@@ -277,7 +278,7 @@ void DigiviewManager::setDetectionTracking(
         0.0f,
         0.0f,
         0.0f,
-        0x07,
+        0x07, 
         0.0f,
         0.0f,
         0.0f,
@@ -288,19 +289,21 @@ void DigiviewManager::setDetectionTracking(
         lock_target
     );
 
-    // SINGLE_TARGET_TRACKING_PARAMETERS controls the STT state exposed to the UI.
+    // CAM_TARGETING_PARAMETERS pekar bara kameran mot detektionen.
+    // Det är SINGLE_TARGET_TRACKING_PARAMETERS som styr sttStatus, dvs
+    // det som flaggan i SVCameraWidgetLayer.qml faktiskt läser. Utan
+    // detta anrop startas STT-subsystemet aldrig, oavsett vad UI gör.
     sendSingleTargetTrackingParameters(
         SV_STT_CMD_SET_TARGET_VECTOR,
         _streamName,
         static_cast<uint8_t>(cam),
-        0.0f, 0.0f,
-        // TODO: Verify with middleware that view_id is a valid detection_id.
-        static_cast<uint8_t>(view_id),
-        0,
+        0.0f, 0.0f,                     // x_offset, y_offset (inte relevant i denna view_id-baserade flow)
+        static_cast<uint8_t>(view_id),  // detection_id -- OBS: verifiera mot middleware att view_id kan användas som detection_id
+        0,                               // zoom_level
         0.0f, 0.0f, 0.0f,
         0, 0.0f, 0.0f,
-        0,
-        0,
+        0,                                // publish_timestamp_us
+        0,                                // status (ignoreras av mottagaren vid SET)
         lock_target ? 1 : 0
     );
 }
@@ -318,7 +321,7 @@ void DigiviewManager::clearDetectionTracking(
         0.0f,
         0.0f,
         0.0f,
-        0x07,
+        0x07, 
         0.0f,
         0.0f,
         0.0f,
@@ -373,10 +376,10 @@ void DigiviewManager::requestVideoOutputParameters()
     _pendingVideoOutputParametersRequest = !_sendMessage(msg);
 }
 
-void DigiviewManager::requestSingleTargetTrackingParameters()
+void DigiviewManager::requestSingleTargetTrackingParameters() 
 {
     if (!_remoteIdentityValid) {
-        _pendingSingleTargetTrackingParametersRequest = true;
+        _pendingSttParametersRequest = true;
         qCDebug(DigiviewManagerLog) << "Deferring MAVLink GET for SINGLE_TARGET_TRACKING_PARAMETERS until target HEARTBEAT";
         return;
     }
@@ -388,16 +391,16 @@ void DigiviewManager::requestSingleTargetTrackingParameters()
     command.target_component = _remoteComponentId;
     command.command = MAV_CMD_SET_MESSAGE_INTERVAL;
     command.param1 = static_cast<float>(MAVLINK_MSG_ID_SINGLE_TARGET_TRACKING_PARAMETERS);
-    command.param2 = kVideoOutputParametersOneShotIntervalUs;
+    command.param2 = kVideoOutputParametersOneShotIntervalUs; // -1000.0f ber om en engångsuppdatering (one-shot)
 
     _encodeMessage(msg, command, mavlink_msg_command_long_encode);
     qCDebug(DigiviewManagerLog) << "Sending one-shot MAVLink GET for SINGLE_TARGET_TRACKING_PARAMETERS:"
-                                 << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
-                                 << "messageId" << MAVLINK_MSG_ID_SINGLE_TARGET_TRACKING_PARAMETERS
-                                 << "targetSystem" << command.target_system
-                                 << "targetComponent" << command.target_component;
-
-    _pendingSingleTargetTrackingParametersRequest = !_sendMessage(msg);
+                                << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
+                                << "messageId" << MAVLINK_MSG_ID_SINGLE_TARGET_TRACKING_PARAMETERS
+                                << "targetSystem" << command.target_system
+                                << "targetComponent" << command.target_component;
+                                
+    _pendingSttParametersRequest = !_sendMessage(msg);
 }
 
 void DigiviewManager::sendVideoOutputParameters(
@@ -454,6 +457,7 @@ void DigiviewManager::sendVideoOutputParameters(
                                 << payload.detection_overlay_h << ")"
                                 << "singleDetectionSize" << payload.single_detection_size;
 
+    
     _sendMessage(msg);
 }
 
@@ -703,8 +707,31 @@ void DigiviewManager::sendNavigationParameters(
     _sendMessage(msg);
 }
 
+////////////// HELPERS ///////////////////////////
+
 void DigiviewManager::changeEuler(int camId, float yaw, float pitch)
 {
+    /*
+    sendSingleTargetTrackingParameters(
+        SV_STT_CMD_OFF,
+        _streamName,
+        camId,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        SV_STT_STATUS_OFF,
+        0
+    );
+    */
+
     sendCamTargetingParameters(
         _streamName,
         camId,
@@ -768,8 +795,6 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             qCWarning(DigiviewManagerLog) << "Ignoring Digiview HEARTBEAT from different MAVLink identity"
                                           << "senderSystem" << message.sysid
                                           << "senderComponent" << message.compid;
-        } else {
-            _establishRemoteSession(message.sysid, message.compid);
         }
     }
 
@@ -1045,23 +1070,6 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
     case MAVLINK_MSG_ID_CAM_TARGETING_PARAMETERS: {
         mavlink_cam_targeting_parameters_t payload;
         mavlink_msg_cam_targeting_parameters_decode(&message, &payload);
-        emit camTargetingParametersReceived(
-            stringFromCharBuf(payload.stream_name, 16),
-            payload.cam_id,
-            payload.targeting_mode,
-            payload.euler_delta,
-            payload.yaw,
-            payload.pitch,
-            payload.roll,
-            payload.lock_flags,
-            payload.x_offset,
-            payload.y_offset,
-            payload.target_latitude,
-            payload.target_longitude,
-            payload.target_altitude,
-            payload.track_id,
-            payload.view_id,
-            payload.lock_target);
 
         if (payload.cam_id < kMaxCameras) {
             auto& state = _cameraStates[payload.cam_id];
@@ -1120,48 +1128,26 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         break;
     }
     case MAVLINK_MSG_ID_SINGLE_TARGET_TRACKING_PARAMETERS: {
-        if (!_remoteIdentityValid) {
-            qCDebug(DigiviewManagerLog) << "Ignoring SINGLE_TARGET_TRACKING_PARAMETERS before target HEARTBEAT"
-                                        << "senderSystem" << message.sysid
-                                        << "senderComponent" << message.compid;
-            break;
-        }
-
-        if ((message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
-            qCWarning(DigiviewManagerLog) << "Ignoring SINGLE_TARGET_TRACKING_PARAMETERS from different MAVLink identity"
-                                          << "senderSystem" << message.sysid
-                                          << "senderComponent" << message.compid;
-            break;
-        }
-
         mavlink_single_target_tracking_parameters_t payload;
         mavlink_msg_single_target_tracking_parameters_decode(&message, &payload);
-        const QString streamName = stringFromCharBuf(payload.stream_name, 16);
 
-        if (streamName != _streamName) {
-            qCDebug(DigiviewManagerLog) << "Ignoring SINGLE_TARGET_TRACKING_PARAMETERS for unexpected stream"
-                                        << "stream" << streamName
-                                        << "expected" << _streamName;
-            break;
-        }
-
-        qCDebug(DigiviewManagerLog)
-            << "command =" << payload.command
-            << "stream =" << streamName
-            << "cam =" << payload.cam_id
-            << "x =" << payload.x_offset
-            << "y =" << payload.y_offset
-            << "det =" << payload.detection_id
-            << "zoom =" << payload.zoom_level
-            << "conf =" << payload.confidence
-            << "yaw =" << payload.yaw_global
-            << "pitch =" << payload.pitch_global
-            << "status =" << payload.status
-            << "lock =" << payload.lock_target;
+        qDebug()
+    << "command =" << payload.command
+    << "stream =" << QString::fromLatin1(payload.stream_name)
+    << "cam =" << payload.cam_id
+    << "x =" << payload.x_offset
+    << "y =" << payload.y_offset
+    << "det =" << payload.detection_id
+    << "zoom =" << payload.zoom_level
+    << "conf =" << payload.confidence
+    << "yaw =" << payload.yaw_global
+    << "pitch =" << payload.pitch_global
+    << "status =" << payload.status
+    << "lock =" << payload.lock_target;
 
         emit singleTargetTrackingParametersReceived(
             payload.command,
-            streamName,
+            QString::fromLatin1(payload.stream_name),
             payload.cam_id,
             payload.x_offset,
             payload.y_offset,
@@ -1261,7 +1247,6 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
         return;
     }
 
-    const bool initialSubscription = !_remoteIdentityValid;
     _remoteSystemId = systemId;
     _remoteComponentId = componentId;
     _remoteIdentityValid = true;
@@ -1276,25 +1261,14 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
     command.param2 = kVideoOutputParametersSubscriptionIntervalUs;
 
     _encodeMessage(msg, command, mavlink_msg_command_long_encode);
-    if (initialSubscription) {
-        qCDebug(DigiviewManagerLog) << "Starting recurring MAVLink VIDEO_OUTPUT_PARAMETERS subscription:"
-                                     << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
-                                     << "messageId" << MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS
-                                     << "intervalUs" << command.param2
-                                     << "senderSystem" << _senderSystemId
-                                     << "senderComponent" << _senderComponentId
-                                     << "targetSystem" << command.target_system
-                                     << "targetComponent" << command.target_component;
-    } else {
-        qCDebug(DigiviewManagerLog) << "Renewing recurring MAVLink VIDEO_OUTPUT_PARAMETERS subscription after target HEARTBEAT:"
-                                     << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
-                                     << "messageId" << MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS
-                                     << "intervalUs" << command.param2
-                                     << "senderSystem" << _senderSystemId
-                                     << "senderComponent" << _senderComponentId
-                                     << "targetSystem" << command.target_system
-                                     << "targetComponent" << command.target_component;
-    }
+    qCDebug(DigiviewManagerLog) << "Starting recurring MAVLink VIDEO_OUTPUT_PARAMETERS subscription:"
+                                 << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
+                                 << "messageId" << MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS
+                                 << "intervalUs" << command.param2
+                                 << "senderSystem" << _senderSystemId
+                                 << "senderComponent" << _senderComponentId
+                                 << "targetSystem" << command.target_system
+                                 << "targetComponent" << command.target_component;
     _sendMessage(msg);
 
     command.param1 = static_cast<float>(MAVLINK_MSG_ID_CAM_TARGETING_PARAMETERS);
@@ -1314,12 +1288,8 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
 
     _sendMessage(msg);
 
-    if (_pendingVideoOutputParametersRequest) {
-        requestVideoOutputParameters();
-    }
-    if (_pendingSingleTargetTrackingParametersRequest) {
-        requestSingleTargetTrackingParameters();
-    }
+    requestVideoOutputParameters();
+    requestSingleTargetTrackingParameters();
 }
 
 void DigiviewManager::_resetRemoteSession()
@@ -1329,7 +1299,6 @@ void DigiviewManager::_resetRemoteSession()
     _remoteIdentityValid = false;
     _remoteComponentPinnedByVideoOutputParameters = false;
     _pendingVideoOutputParametersRequest = false;
-    _pendingSingleTargetTrackingParametersRequest = true;
 
     _cameraStates.fill(CameraTrackingState{});
     _hasSttParameters = false;

@@ -65,8 +65,7 @@ function getOneShotModel(uiInteractionEnabled) {
             text: 'Photo',
             description: "Take a Photo",
             checkable: true,
-            iconSource: '/qmlimages/camera_photo.svg',
-            tintIcon: false,
+            iconSource: '/qmlimages/camera_photo_.svg',
             enabled: uiInteractionEnabled
         },
         {
@@ -84,8 +83,8 @@ function getTrackingModel(uiInteractionEnabled) {
     return [
         {
             id: 'singleTarget',
-            text: 'Single',
-            description: "Track a Single Target",
+            text: 'STT',
+            description: "Single Target Tracking",
             checkable: true,
             iconSource: '/qmlimages/tracking_single.svg',
             enabled: uiInteractionEnabled
@@ -93,7 +92,7 @@ function getTrackingModel(uiInteractionEnabled) {
         {
             id: 'cursorTrack',
             text: 'Cursor',
-            description: "Track a Target from Cursor",
+            description: "Track from cursor",
             checkable: true,
             iconSource: '/qmlimages/tracking_cursor.svg',
             enabled: uiInteractionEnabled
@@ -101,7 +100,7 @@ function getTrackingModel(uiInteractionEnabled) {
         {
             id: 'coordsTrack',
             text: 'Manual',
-            description: "Track a Target based on Manual Coordinates",
+            description: "Track from coordinates",
             checkable: true,
             iconSource: '/qmlimages/tracking_manual.svg',
             enabled: uiInteractionEnabled

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QUdpSocket>
 
@@ -34,7 +35,7 @@ public:
     void setListenPort(quint16 listenPort);
 
     bool connectToEndpoint();
-    void disconnectFromEndpoint();
+    void disconnectFromEndpoint(bool preventAutomaticReconnect = false);
     bool sendMessage(const mavlink_message_t& message);
 
 signals:
@@ -60,6 +61,7 @@ private:
     quint16 _port = kDefaultPort;
     quint16 _listenPort = kDefaultListenPort;
     bool _connected = false;
+    bool _automaticReconnectAllowed = true;
     QString _lastError;
     mavlink_status_t _mavlinkStatus {};
 };

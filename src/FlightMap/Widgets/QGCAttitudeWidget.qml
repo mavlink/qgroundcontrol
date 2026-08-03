@@ -11,9 +11,10 @@ Item {
     property var  vehicle:      null
     property real size
     property bool showHeading:  false
+    property real pitchOverride: NaN
 
     property real _rollAngle:   vehicle ? vehicle.roll.rawValue  : 0
-    property real _pitchAngle:  vehicle ? vehicle.pitch.rawValue : 0
+    property real _pitchAngle:  Number.isFinite(pitchOverride) ? pitchOverride : vehicle ? vehicle.pitch.rawValue : 0
 
     width:  size
     height: size

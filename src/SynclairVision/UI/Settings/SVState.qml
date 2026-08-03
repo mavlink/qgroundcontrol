@@ -58,21 +58,36 @@ QtObject {
     }
 
     function cancelCursorTrackingSelection() {
+        if (cursorTrackingSessionActive
+                && cursorTrackingSessionSlot >= 0
+                && cursorTrackingSessionSlot < cameraTrackingIds.length
+                && cameraTrackingIds[cursorTrackingSessionSlot] === 'cursorTrack') {
+            var trackingIds = cameraTrackingIds.slice()
+            trackingIds[cursorTrackingSessionSlot] = ""
+            cameraTrackingIds = trackingIds
+        }
+
         cursorTrackingSessionSlot = -1
         cursorTrackingSelect = true
     }
 
     function cancelCursorTrackingSelectionFromBackground() {
         const sessionSlot = cursorTrackingSessionSlot
-
-        if (!cursorTrackingSessionActive || sessionSlot >= cameraTrackingIds.length) {
+        if (!cursorTrackingSessionActive || sessionSlot < 0) {
             cancelCursorTrackingSelection()
             return
         }
 
-        var trackingIds = cameraTrackingIds.slice()
-        trackingIds[sessionSlot] = ""
-        cameraTrackingIds = trackingIds
+        // 1. Skicka avbryt-kommando till C++ backend
+        digiview.clearDetectionTracking(sessionSlot)
+
+        // 2. Rensa lokal spårnings-ID om arrayen fortfarande används
+        if (sessionSlot < cameraTrackingIds.length) {
+            var trackingIds = cameraTrackingIds.slice()
+            trackingIds[sessionSlot] = ""
+            cameraTrackingIds = trackingIds
+        }
+
         cancelCursorTrackingSelection()
         cursorTrackingSelectionCancelled()
     }
@@ -220,6 +235,61 @@ QtObject {
         cameraTrackingIds = trackingIds
     }
 
+    // TODO: layoutCount and nextLayout() are placeholders. Wire layoutIndex up to
+    // whatever actually drives the video grid layout elsewhere in the app (not present
+    // in the files reviewed here), and set layoutCount to the real number of layouts.
+    property int layoutIndex: 0
+    readonly property int layoutCount: 3
+
+    function nextLayout() {
+        layoutIndex = (layoutIndex + 1) % layoutCount
+    }
+
+    // TODO: the three tracking-mode functions below are stubs. They currently just
+    // record a mode string locally via setActiveCameraTrackingId so the shortcut wiring
+    // is complete end-to-end, but they need to be replaced with the actual DigiviewManager
+    // calls that start STT / cursor-target / manual tracking on the backend (that API
+    // wasn't visible in the files provided). cursorTrackingSelectionEnabled note:
+    // beginCursorTrackingSelection() already exists and expects a list of currently
+    // visible camera slots — that list needs to come from wherever your video layout
+    // lives, so activateCursorTracking() below is a simplified placeholder until that's
+    // wired through.
+    function activateSttTracking() {
+        if (!digiview || !hasActiveCamera || lockControls) {
+            return
+        }
+
+        // TODO: replace with the real STT-start call, e.g. digiview.startDetectionTracking(cameraSelected)
+        setActiveCameraTrackingId('stt')
+    }
+
+    function activateCursorTracking() {
+        if (!hasActiveCamera || lockControls) {
+            return
+        }
+
+        // TODO: confirm this is how cursor-tracking selection should be entered via a shortcut
+        setActiveCameraTrackingId('cursor')
+    }
+
+    function activateManualTracking() {
+        if (!hasActiveCamera || lockControls) {
+            return
+        }
+
+        // TODO: replace with the real manual-tracking-mode call
+        setActiveCameraTrackingId('manual')
+    }
+
+    function deselectTracking() {
+        if (!hasActiveCamera) {
+            return
+        }
+
+        cancelCursorTrackingSelectionFromBackground()
+        setActiveCameraTrackingId('')
+    }
+
     function toggleCrosshair() {
         if (cameraSelected < 0 || cameraSelected >= cameraOverlays.length) {
             return
@@ -287,6 +357,23 @@ QtObject {
         }
     }
 
+    function previousCamera() {
+        if (cursorTrackingSessionActive) {
+            return
+        }
+
+        if (!cameraSelectionEnabled) {
+            clearCamera()
+            return
+        }
+
+        cameraSelected = cameraSelected - 1
+
+        if (cameraSelected < 0) {
+            cameraSelected = 5
+        }
+    }
+
     function toggleRecord() {
         if(record) {
             stopRecording()
@@ -330,7 +417,6 @@ QtObject {
     property bool shortcutZoomInHeld: false
     property bool shortcutZoomOutHeld: false
     property bool shortcutSmallMovementHeld: false
-    property string layout: "single"
     property int  cameraSelected: -1
     property bool record: false
     property real recordStartTimeMs: 0
@@ -348,7 +434,30 @@ QtObject {
         { grid: false, crosshair: false }
     ]
     readonly property bool hasActiveCamera: cameraSelected >= 0 && cameraSelected < cameraTrackingIds.length
-    readonly property string activeCameraTrackingId: hasActiveCamera ? cameraTrackingIds[cameraSelected] : ""
+    
+    readonly property var activeCameraState: (digiview && digiview.cameraStates && cameraSelected >= 0 && cameraSelected < digiview.cameraStates.length)
+                                             ? digiview.cameraStates[cameraSelected]
+                                             : null
+
+    readonly property bool isCurrentCamTracking: activeCameraState ? (activeCameraState.sttStatus === 2) : false // 2 = SV_STT_STATUS_RUNNING                                         
+    
+    
+    // Prefer the confirmed hardware track ID once the backend reports one is running.
+    // Until then (or if the backend never reports one, since the tracking-start calls
+    // are currently stubs — see the TODO above activateSttTracking()), fall back to the
+    // locally-recorded selection in cameraTrackingIds so the tracking menu buttons
+    // actually reflect what the user clicked instead of staying permanently unhighlighted.
+    readonly property string activeCameraTrackingId: {
+        if (activeCameraState && activeCameraState.trackId > 0) {
+            return activeCameraState.trackId.toString()
+        }
+
+        if (hasActiveCamera && cameraTrackingIds[cameraSelected]) {
+            return cameraTrackingIds[cameraSelected]
+        }
+
+        return ""
+    }
     readonly property bool cursorTrackingSessionActive: !cursorTrackingSelect && cursorTrackingSessionSlot >= 0
     readonly property bool grid: cameraSelected >= 0
         && cameraSelected < cameraOverlays.length
@@ -405,6 +514,8 @@ QtObject {
             }
         }
     }
+
+    
 
     onUiInteractionEnabledChanged: {
         // State 2: Connected (Stream is actively decoding)

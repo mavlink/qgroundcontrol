@@ -10,7 +10,6 @@ Item {
     id: root
 
     property real leftToolStripBottom: 0
-    property string activeLayoutId: "four_square"
     property string activeSettingsId: ""
     property var settingsModel: []
     property bool uiInteractionEnabled: false
@@ -25,6 +24,9 @@ Item {
 
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property bool digiviewActive: SVState.digiviewActive
+    readonly property bool hasCurrentVideoOutputParameters: digiviewActive
+        && digiview.hasVideoOutputParameters
+        && digiview.videoOutputStreamName === digiview.streamName
 
     function setAiDetectionOverlayPosition(positionId) {
         if (!root.digiviewActive) {
@@ -83,7 +85,7 @@ Item {
     }
 
     function activateTrackingMode(trackingId) {
-        if (trackingId === "cursorTrack"
+        if ((trackingId === "cursorTrack" || trackingId === "singleTarget")
                 && (!root.cursorTargetingAvailable
                     || !SVState.beginCursorTrackingSelection(SVState.cameraSelected, root.visibleCameraSlots))) {
             return
@@ -97,6 +99,7 @@ Item {
         target: SVState
 
         function onCursorTrackingSelectionCancelled() {
+            SVState.setActiveCameraTrackingId("")
             root.trackingSelected("")
         }
 
@@ -230,8 +233,8 @@ Item {
         model: [
             { 
                 id: "aiOverlay",
-                text: "Overlay",
-                description: "Show/Hide AI Overlay",
+                text: "Detection",
+                description: "Show/Hide AI Detection Overlay",
                 checkable: true,
                 iconSource: "/qmlimages/layout_ai.svg",
                 alternateIconSource: "/qmlimages/layout_ai_bold.svg",
@@ -305,7 +308,21 @@ Item {
         isTop: true
         open: false
         autoUpdateActiveId: false
-        activeId: root.activeLayoutId
+        activeId: {
+            if (!root.hasCurrentVideoOutputParameters) {
+                return ""
+            }
+
+            const layoutMode = root.digiview.videoOutputLayoutMode
+            const layoutModel = SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled)
+            for (let i = 0; i < layoutModel.length; ++i) {
+                if (layoutModel[i].value === layoutMode) {
+                    return layoutModel[i].id
+                }
+            }
+
+            return ""
+        }
 
         model: SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled)
 

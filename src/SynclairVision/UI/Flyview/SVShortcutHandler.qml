@@ -20,6 +20,15 @@ Item {
     readonly property int actionRecord: 11
     readonly property int actionPhoto: 12
     readonly property int actionLockControls: 13
+    readonly property int actionPreviousCamera: 14
+    readonly property int actionAiDetection: 15
+    readonly property int actionNextLayout: 16
+    readonly property int actionGrid: 17
+    readonly property int actionCrosshair: 18
+    readonly property int actionSTT: 19
+    readonly property int actionCursorTracking: 20
+    readonly property int actionManualTracking: 21
+    readonly property int actionDeselectTracking: 22
     property bool toolbarVisible: false
 
     // --- MODE-INSTÄLLNINGAR FÖR SHORTCUTS ---
@@ -140,13 +149,24 @@ Item {
         SVSettings.shortcutCamera4,
         SVSettings.shortcutCamera5,
         SVSettings.shortcutNextCamera,
+        SVSettings.shortcutPreviousCamera,
         SVSettings.shortcutDeselectCamera,
         SVSettings.shortcutRecord,
         SVSettings.shortcutPhoto,
-        SVSettings.shortcutLockControls)
+        SVSettings.shortcutLockControls,
+        SVSettings.shortcutAiDetection,
+        SVSettings.shortcutNextLayout,
+        SVSettings.shortcutGrid,
+        SVSettings.shortcutCrosshair,
+        SVSettings.shortcutSTT,
+        SVSettings.shortcutCursorTracking,
+        SVSettings.shortcutManualTracking,
+        SVSettings.shortcutDeselectTracking)
 
     function buildShortcutRegistry(hud, toolbar, synclair, camera1, camera2, camera3, camera4, camera5,
-                                   nextCamera, deselectCamera, record, photo, lockControls) {
+                                   nextCamera, previousCamera, deselectCamera, record, photo, lockControls,
+                                   aiDetection, nextLayout, grid, crosshair,
+                                   stt, cursorTracking, manualTracking, deselectTracking) {
         const registry = {}
         const bindings = [
             [hud, root.actionHUD],
@@ -158,10 +178,19 @@ Item {
             [camera4, root.actionCamera4],
             [camera5, root.actionCamera5],
             [nextCamera, root.actionNextCamera],
+            [previousCamera, root.actionPreviousCamera],
             [deselectCamera, root.actionDeselectCamera],
             [record, root.actionRecord],
             [photo, root.actionPhoto],
-            [lockControls, root.actionLockControls]
+            [lockControls, root.actionLockControls],
+            [aiDetection, root.actionAiDetection],
+            [nextLayout, root.actionNextLayout],
+            [grid, root.actionGrid],
+            [crosshair, root.actionCrosshair],
+            [stt, root.actionSTT],
+            [cursorTracking, root.actionCursorTracking],
+            [manualTracking, root.actionManualTracking],
+            [deselectTracking, root.actionDeselectTracking]
         ]
 
         for (let index = 0; index < bindings.length; ++index) {
@@ -354,6 +383,33 @@ Item {
             break
         case root.actionLockControls:
             SVState.toggleLockControls()
+            break
+        case root.actionPreviousCamera:
+            SVState.previousCamera()
+            break
+        case root.actionAiDetection:
+            SVState.toggleAiOverlay()
+            break
+        case root.actionNextLayout:
+            SVState.nextLayout()
+            break
+        case root.actionGrid:
+            SVState.toggleGrid()
+            break
+        case root.actionCrosshair:
+            SVState.toggleCrosshair()
+            break
+        case root.actionSTT:
+            SVState.activateSttTracking()
+            break
+        case root.actionCursorTracking:
+            SVState.activateCursorTracking()
+            break
+        case root.actionManualTracking:
+            SVState.activateManualTracking()
+            break
+        case root.actionDeselectTracking:
+            SVState.deselectTracking()
             break
         default:
             break

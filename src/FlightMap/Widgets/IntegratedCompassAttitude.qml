@@ -21,13 +21,16 @@ Item {
     property var  vehicle:                      globals.activeVehicle
     property var  qgcPal:                       QGroundControl.globalPalette
     property bool usedByMultipleVehicleList:    false
+    property real headingOverride:              NaN
+    property real pitchOverride:                NaN
+    property real rollOverride:                 NaN
 
     property real _totalAttitudeSize: attitudeSize + attitudeSpacing
 
     IntegratedAttitudeIndicator {
         id:                     rollIndicator
         x:                      -_totalAttitudeSize
-        attitudeAngleDegrees:   vehicle ? vehicle.roll.rawValue : 0
+        attitudeAngleDegrees:   Number.isFinite(control.rollOverride) ? control.rollOverride : vehicle ? vehicle.roll.rawValue : 0
         compassRadius:          control.compassRadius
     }
 
@@ -35,7 +38,7 @@ Item {
         x:                      -_totalAttitudeSize
         // Negated: rotating the indicator 90° clockwise moves its zero tick to the right of the
         // compass but leaves the sweep direction clockwise, which would draw nose up as downward.
-        attitudeAngleDegrees:   vehicle ? -vehicle.pitch.rawValue : 0
+        attitudeAngleDegrees:   -(Number.isFinite(control.pitchOverride) ? control.pitchOverride : vehicle ? vehicle.pitch.rawValue : 0)
         compassRadius:          control.compassRadius
         attitudeSize:           control.attitudeSize
         attitudeSpacing:        control.attitudeSpacing
@@ -54,6 +57,7 @@ Item {
             size:                       parent.width - compassBorder
             vehicle:                    control.vehicle
             usedByMultipleVehicleList:  control.usedByMultipleVehicleList
+            headingOverride:            control.headingOverride
             anchors.centerIn:           parent
         }
     }
