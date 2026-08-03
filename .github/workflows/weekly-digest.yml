@@ -68,7 +68,7 @@ jobs:
 
       - name: Summarize with AI
         id: ai
-        uses: actions/ai-inference@v2
+        uses: actions/ai-inference@v3
         with:
           prompt-file: activity.md
           max-completion-tokens: 4000
