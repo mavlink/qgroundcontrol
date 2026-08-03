@@ -4,11 +4,8 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtLocation
 import QtPositioning
-import QtQuick.Window
 import QtQml.Models
 import QtQuick.Shapes 2.15
-import "../Camera/SVCameraLayouts.js" as SVCameraLayouts
-
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlyView
@@ -16,6 +13,7 @@ import QGroundControl.FlightMap
 
 Item {
     id: root
+    clip: true
 
     property var parentToolInsets
     property real leftToolStripBottom: 0
@@ -25,19 +23,17 @@ Item {
     property int _toolBarHeight: 0
     property real pipViewWidth: 0
 
+    property double _ar: QGroundControl.videoManager.gstreamerEnabled
+        ? QGroundControl.videoManager.videoSize.width / QGroundControl.videoManager.videoSize.height
+        : QGroundControl.videoManager.aspectRatio
+    property int _fitMode: QGroundControl.settingsManager.videoSettings.videoFit.rawValue
+    property bool _isMode_FIT_WIDTH: _fitMode === 0
+    property bool _isMode_FIT_HEIGHT: _fitMode === 1
+    property bool _isMode_FILL: _fitMode === 2
+    property bool _isMode_NO_CROP: _fitMode === 3
     readonly property var digiview: QGroundControl.digiviewManager
-    readonly property var cameraLayouts: SVCameraLayouts.getCameraLayouts()
-    readonly property var activeLayout: {
-        for (let i = 0; i < cameraLayouts.length; i++) {
-            if (cameraLayouts[i].id === SVState.layout) {
-                return cameraLayouts[i]
-            }
-        }
-
-        return cameraLayouts.length > 0 ? cameraLayouts[0] : null
-    }
-    readonly property string resolvedActiveLayoutId: activeLayout ? activeLayout.id : ""
     readonly property bool digiviewOutputGeometryAvailable: !!digiview
+        && digiview.connected
         && digiview.hasVideoOutputParameters
         && digiview.videoOutputStreamName === digiview.streamName
         && digiview.videoOutputWidth > 0
@@ -84,12 +80,13 @@ Item {
         return views
     }
     readonly property bool usingDigiviewLayout: digiviewCameraViews.length > 0
-    readonly property real digiviewScaleX: usingDigiviewLayout ? width / digiview.videoOutputWidth : 0
-    readonly property real digiviewScaleY: usingDigiviewLayout ? height / digiview.videoOutputHeight : 0
-    readonly property var displayedCameraViews: usingDigiviewLayout
-        ? digiviewCameraViews
-        : (activeLayout ? activeLayout.panes : [])
-    readonly property var visibleCameraSlots: displayedCameraViews.map((view) => view.slot)
+    readonly property real digiviewScaleX: digiviewOutputGeometryAvailable ? videoContentArea.width / digiview.videoOutputWidth : 0
+    readonly property real digiviewScaleY: digiviewOutputGeometryAvailable ? videoContentArea.height / digiview.videoOutputHeight : 0
+
+    readonly property var visibleCameraSlots: digiviewCameraViews.map((view) => view.slot)
+
+
+
 
     QGCPalette { id: qgcPalette}
 
@@ -140,10 +137,6 @@ Item {
         function onTakePhotoRequested() {
             root.takePhoto()
         }
-
-        function onLayoutChanged() {
-            SVState.cancelCursorTrackingSelection()
-        }
     }
 
     Connections {
@@ -169,49 +162,94 @@ Item {
     }
 
 
-    Repeater {
-        model: root.displayedCameraViews
-
-        delegate: SVCameraLayer {
-            required property var modelData
-
-            width: root.usingDigiviewLayout ? modelData.width * root.digiviewScaleX : modelData.w * root.width
-            height: root.usingDigiviewLayout ? modelData.height * root.digiviewScaleY : modelData.h * root.height
-            x: root.usingDigiviewLayout ? modelData.x * root.digiviewScaleX : modelData.x * root.width
-            y: root.usingDigiviewLayout ? modelData.y * root.digiviewScaleY : modelData.y * root.height
-            cameraSlot: modelData.slot
-            previewMode: root.previewMode
-
-            _widgetMargin: root._widgetMargin
-
-            onCursorTargetSelected: (cameraSlot, normalizedX, normalizedY) => {
-                SVState.recordCursorTarget(cameraSlot, normalizedX, normalizedY)
-            }
-        }
-    }
-
     Item {
-        id: separatorLayer
-        anchors.fill: parent
-        z: 1
+        id: videoContentArea
 
+        visible: QGroundControl.videoManager.decoding
+
+        width: {
+            if (!isFinite(root._ar) || root._ar <= 0.0) {
+                return root.width
+            }
+
+            if (SVState.synclairOverlay) {
+                return Math.min(root.width, root.height * root._ar)
+            }
+
+            if (root._isMode_FIT_HEIGHT
+                    || (root._isMode_FILL && (root.width / root.height < root._ar))
+                    || (root._isMode_NO_CROP && (root.width / root.height > root._ar))) {
+                return root.height * root._ar
+            }
+            return root.width
+        }
+        height: {
+            if (!isFinite(root._ar) || root._ar <= 0.0) {
+                return root.height
+            }
+
+            if (SVState.synclairOverlay) {
+                return Math.min(root.height, root.width * (1 / root._ar))
+            }
+
+            if (root._isMode_FIT_WIDTH
+                    || (root._isMode_FILL && (root.width / root.height > root._ar))
+                    || (root._isMode_NO_CROP && (root.width / root.height < root._ar))) {
+                return root.width * (1 / root._ar)
+            }
+            return root.height
+        }
+        anchors.centerIn: parent
+
+        
         Repeater {
-            model: !root.usingDigiviewLayout && root.activeLayout ? root.activeLayout.separators : []
+            model: root.digiviewCameraViews
 
-            delegate: Rectangle {
+            delegate: SVCameraLayer {
                 required property var modelData
-                readonly property bool isVertical: modelData.orientation === 'vertical'
-                readonly property bool isHorizontal: modelData.orientation === 'horizontal'
 
-                width:  isVertical   ? SVUnits.lineWidth : modelData.length * root.width
-                height: isHorizontal ? SVUnits.lineWidth : modelData.length * root.height 
-                x: modelData.x * root.width - (isVertical ? width / 2 : 0)
-                y: modelData.y * root.height - (isHorizontal ? height / 2: 0)
+                width: modelData.width * root.digiviewScaleX
+                height: modelData.height * root.digiviewScaleY
+                x: modelData.x * root.digiviewScaleX
+                y: modelData.y * root.digiviewScaleY
+                cameraSlot: modelData.slot
+                previewMode: root.previewMode
+                z: !root.previewMode
+                    && SVState.cameraSelectionEnabled
+                    && SVState.cameraSelected === cameraSlot
+                    && !SVState.cursorTrackingSessionActive
+                    && SVState.hud ? 3 : 0
 
+                _widgetMargin: root._widgetMargin
 
-                color: qgcPalette.windowShade
+                onCursorTargetSelected: (cameraSlot, normalizedX, normalizedY) => {
+                    SVState.recordCursorTarget(cameraSlot, normalizedX, normalizedY)
+                }
             }
         }
+
+        SVFlyViewDetectionOverlay {
+            id: detectionOverlay
+            x: root.digiview.videoOutputDetectionOverlayRect.x * root.digiviewScaleX
+            y: root.digiview.videoOutputDetectionOverlayRect.y * root.digiviewScaleY
+            width: root.digiview.videoOutputDetectionOverlayRect.width * root.digiviewScaleX 
+            height: root.digiview.videoOutputDetectionOverlayRect.height * root.digiviewScaleY
+            visible: root.digiviewOutputGeometryAvailable
+                && root.digiview.videoOutputDetectionOverlayRect.width > 0
+                && root.digiview.videoOutputDetectionOverlayRect.height > 0
+        }
+
+        
+
+        
+    }
+    SVBorder {
+        id: cameraBorder
+        anchors.fill: videoContentArea
+        borderWidth: SVUnits.lineWidth * 1
+        borderColor: qgcPalette.windowShadeLight
+        borderVisible: QGroundControl.videoManager.decoding
+        z: 2
     }
 
     SVBorder {
@@ -242,10 +280,8 @@ Item {
         anchors.margins: _widgetMargin
         anchors.topMargin: _widgetMargin + _toolBarHeight
         leftToolStripBottom: root.leftToolStripBottom
-        activeLayoutId: root.resolvedActiveLayoutId
         pipViewWidth: root.pipViewWidth
         visible: !root.previewMode && !SVState.cursorTrackingSessionActive
-        onLayoutSelected: (layoutId) => SVState.layout = layoutId
         visibleCameraSlots: root.visibleCameraSlots
         cursorTargetingAvailable: root.visible && !root.previewMode && root.width > 0 && root.height > 0
     }
@@ -254,6 +290,15 @@ Item {
         if (previewMode) {
             SVState.cancelCursorTrackingSelection()
         }
+    }
+
+    onVisibleCameraSlotsChanged: {
+        if (SVState.cameraSelected < 0
+                || visibleCameraSlots.indexOf(SVState.cameraSelected) !== -1) {
+            return
+        }
+
+        SVState.clearCamera()
     }
 
     onVisibleChanged: {

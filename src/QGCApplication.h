@@ -176,8 +176,6 @@ private:
     CompressedSignalList _compressedSignals;
 
     const QString _settingsVersionKey = QStringLiteral("SettingsVersion"); ///< Settings key which hold settings version
-    const QString _synclairShortcutSettingsVersionKey = QStringLiteral("SynclairShortcutSettingsVersion");
-    static constexpr int _synclairShortcutSettingsVersion = 1;
 
     const QString _qgcImageProviderId = QStringLiteral("QGCImages");
 };

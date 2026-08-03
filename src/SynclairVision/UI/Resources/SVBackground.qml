@@ -24,6 +24,7 @@ Item {
     property point hoverPosition: Qt.point(width / 2, height / 2)
     property color hoverGlowColor: "white"
     property real hoverGlowOpacity: 0.15
+    property real hoverGlowStrength: 1.0
     property real hoverGlowRadius: Math.max(width, height) * 0.6
 
     property real radius: 0
@@ -63,6 +64,12 @@ Item {
     }
 
     onHoverGlowOpacityChanged: {
+        if (hoverGlow.visible) {
+            hoverGlow.requestPaint()
+        }
+    }
+
+    onHoverGlowStrengthChanged: {
         if (hoverGlow.visible) {
             hoverGlow.requestPaint()
         }
@@ -168,7 +175,7 @@ Item {
                 context.clip()
 
                 const gradient = context.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowRadius)
-                gradient.addColorStop(0, Qt.rgba(root.hoverGlowColor.r, root.hoverGlowColor.g, root.hoverGlowColor.b, root.hoverGlowOpacity))
+                gradient.addColorStop(0, Qt.rgba(root.hoverGlowColor.r, root.hoverGlowColor.g, root.hoverGlowColor.b, root.hoverGlowOpacity * root.hoverGlowStrength))
                 gradient.addColorStop(1, "rgba(255, 255, 255, 0.0)")
                 context.fillStyle = gradient
                 context.fillRect(0, 0, width, height)

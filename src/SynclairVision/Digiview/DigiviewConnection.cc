@@ -7,51 +7,6 @@
 
 #include <array>
 
-namespace {
-
-[[maybe_unused]] constexpr uint8_t kDigiviewCrc8Polynomial = 0xA7;
-[[maybe_unused]] constexpr uint8_t kDigiviewMavlink1Magic = 0xFE;
-[[maybe_unused]] constexpr uint8_t kDigiviewMavlink2Magic = 0xFD;
-[[maybe_unused]] constexpr uint16_t kDigiviewMavlink2IncompatFlagsOffset = 2;
-[[maybe_unused]] constexpr uint16_t kDigiviewMavlink1HeaderLength = 6;
-[[maybe_unused]] constexpr uint16_t kDigiviewMavlink2HeaderLength = 10;
-[[maybe_unused]] constexpr uint16_t kDigiviewChecksumBytes = 2;
-
-// Matches the DigiView BLUETOOTH CRC8 preset in message-definitions/msg_defs.hpp,
-// but stays local to avoid pulling the full native protocol header into this TU.
-[[maybe_unused]] uint8_t _reflectByte(uint8_t value)
-{
-    uint8_t reflection = 0;
-    for (uint8_t bit = 0; bit < 8; ++bit) {
-        if ((value & (1U << bit)) != 0U) {
-            reflection |= static_cast<uint8_t>(1U << (7U - bit));
-        }
-    }
-
-    return reflection;
-}
-
-[[maybe_unused]] uint8_t _digiviewCrc8(const uint8_t* data, uint16_t length)
-{
-    uint8_t checksum = 0;
-
-    for (uint16_t index = 0; index < length; ++index) {
-        checksum ^= _reflectByte(data[index]);
-
-        for (uint8_t bit = 0; bit < 8; ++bit) {
-            if ((checksum & 0x80U) != 0U) {
-                checksum = static_cast<uint8_t>((checksum << 1U) ^ kDigiviewCrc8Polynomial);
-            } else {
-                checksum = static_cast<uint8_t>(checksum << 1U);
-            }
-        }
-    }
-
-    return _reflectByte(checksum);
-}
-
-} // namespace
-
 QGC_LOGGING_CATEGORY(DigiviewConnectionLog, "Digiview.Connection")
 
 DigiviewConnection::DigiviewConnection(QObject* parent)
@@ -102,6 +57,8 @@ void DigiviewConnection::setListenPort(quint16 listenPort)
 
 bool DigiviewConnection::connectToEndpoint()
 {
+    _automaticReconnectAllowed = true;
+
     QHostAddress remoteAddress;
     if (!_resolveRemoteAddress(remoteAddress)) {
         return false;
@@ -125,8 +82,10 @@ bool DigiviewConnection::connectToEndpoint()
     return true;
 }
 
-void DigiviewConnection::disconnectFromEndpoint()
+void DigiviewConnection::disconnectFromEndpoint(bool preventAutomaticReconnect)
 {
+    _automaticReconnectAllowed = !preventAutomaticReconnect;
+
     if (_socket.isOpen()) {
         _socket.close();
     }
@@ -136,8 +95,10 @@ void DigiviewConnection::disconnectFromEndpoint()
 
 bool DigiviewConnection::sendMessage(const mavlink_message_t& message)
 {
-    if (!_connected && !connectToEndpoint()) {
-        return false;
+    if (!_connected) {
+        if (!_automaticReconnectAllowed || !connectToEndpoint()) {
+            return false;
+        }
     }
 
     QHostAddress remoteAddress;
@@ -186,10 +147,6 @@ void DigiviewConnection::_readPendingDatagrams()
         }
 
         if (filterByHost && !senderAddress.isEqual(remoteAddress, QHostAddress::TolerantConversion)) {
-            //qCDebug(DigiviewConnectionLog)
-            //    << "Ignoring Digiview datagram from unexpected host"
-            //    << senderAddress.toString()
-            //    << "expected" << remoteAddress.toString();
             continue;
         }
 

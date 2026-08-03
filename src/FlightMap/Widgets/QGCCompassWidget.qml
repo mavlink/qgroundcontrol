@@ -16,11 +16,12 @@ Rectangle {
     property real size:                         _defaultSize
     property var  vehicle:                      null
     property bool usedByMultipleVehicleList:    false
+    property real headingOverride:              NaN
 
     property real _defaultSize:                 usedByMultipleVehicleList ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight * 10
     property real _sizeRatio:                   (usedByMultipleVehicleList || ScreenTools.isTinyScreen) ? (size / _defaultSize) * 0.5 : size / _defaultSize
     property int  _fontSize:                    ScreenTools.defaultFontPointSize * _sizeRatio < 8 ? 8 : ScreenTools.defaultFontPointSize * _sizeRatio
-    property real _heading:                     vehicle ? vehicle.heading.rawValue : 0
+    property real _heading:                     Number.isFinite(headingOverride) ? headingOverride : vehicle ? vehicle.heading.rawValue : 0
     property real _headingToHome:               vehicle ? vehicle.headingToHome.rawValue : 0
     property real _groundSpeed:                 vehicle ? vehicle.groundSpeed.rawValue : 0
     property real _headingToNextWP:             vehicle ? vehicle.headingToNextWP.rawValue : 0
@@ -124,7 +125,7 @@ Rectangle {
     QGCLabel {
         anchors.horizontalCenter:   parent.horizontalCenter
         y:                          size * 0.74
-        text:                       vehicle && !usedByMultipleVehicleList ? _heading.toFixed(0) + "°" : ""
+        text:                       (Number.isFinite(headingOverride) || vehicle) && !usedByMultipleVehicleList ? _heading.toFixed(0) + "°" : ""
         horizontalAlignment:        Text.AlignHCenter
     }
 }

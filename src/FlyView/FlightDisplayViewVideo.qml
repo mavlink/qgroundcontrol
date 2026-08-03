@@ -10,6 +10,9 @@ Item {
     id:     root
     clip:   true
 
+        QGCPalette { id: qgcPalette}
+
+
     property bool useSmallFont: true
 
     property double _ar:                (cameraLoader.visible && cameraLoader.status === Loader.Ready)
@@ -74,20 +77,27 @@ Item {
         anchors.fill:   parent
         source:         "/res/NoVideoBackground.jpg"
         fillMode:       Image.PreserveAspectCrop
-        visible:        !_showVideoStream && (_synclairOverlay || !_showUvcLoader)
+        visible:        !_showVideoStream && !_showUvcLoader
 
         Rectangle {
+            id: synclairBackground
+            anchors.fill: parent
+            color: "black"
+            visible: _synclairOverlay
+        }
+
+        SVBackground {
             anchors.centerIn:   parent
             width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
             height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
-            radius:             ScreenTools.defaultFontPixelWidth / 2
-            color:              "black"
-            opacity:            0.5
+            radius:             SVUnits.radius
+            borderWidth: 0
+
         }
 
         QGCLabel {
             id:                 noVideoLabel
-            text:                _synclairOverlay ? qsTr("NO VIDEO") : QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
+            text:                _synclairOverlay ? qsTr("NO VIDEO AVAILABLE") : QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
             font.bold:          true
             color:              "white"
             font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
@@ -101,6 +111,14 @@ Item {
         color:          "black"
         visible:        _showVideoStream || (!_synclairOverlay && _showUvcLoader)
         function getWidth() {
+            if (!isFinite(_ar) || _ar <= 0.0) {
+                return root.width
+            }
+
+            if (_synclairOverlay) {
+                return Math.min(root.width, root.height * _ar)
+            }
+
             if(_ar != 0.0){
                 if(_isMode_FIT_HEIGHT
                         || (_isMode_FILL && (root.width/root.height < _ar))
@@ -116,6 +134,14 @@ Item {
             return root.width
         }
         function getHeight() {
+            if (!isFinite(_ar) || _ar <= 0.0) {
+                return root.height
+            }
+
+            if (_synclairOverlay) {
+                return Math.min(root.height, root.width * (1 / _ar))
+            }
+
             if(_ar != 0.0){
                 if(_isMode_FIT_WIDTH
                         || (_isMode_FILL && (root.width/root.height > _ar))

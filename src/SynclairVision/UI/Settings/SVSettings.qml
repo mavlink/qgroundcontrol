@@ -18,6 +18,7 @@ QtObject {
         recordHighlight: true,
         recordInformationBox: true,
         simplifiedUserInterface: false,
+        compassType: "horizontal",
         networkIPAdress: "192.168.4.60",
         networkProfiles: [
             {
@@ -56,43 +57,54 @@ QtObject {
         joystickKnobSize: 0.3,
         zoomSize: 25,
         zoomSensitivity: 10,
-        shortcutPitchUp: Qt.Key_Up,
-        shortcutPitchDown: Qt.Key_Down,
-        shortcutJawLeft: Qt.Key_Left,
-        shortcutJawRight: Qt.Key_Right,
-        shortcutZoomIn: Qt.Key_PageUp,
-        shortcutZoomOut: Qt.Key_PageDown,
+        shortcutPitchUp: Qt.Key_W,
+        shortcutPitchDown: Qt.Key_S,
+        shortcutJawLeft: Qt.Key_A,
+        shortcutJawRight: Qt.Key_D,
+        shortcutZoomIn: Qt.Key_Q,
+        shortcutZoomOut: Qt.Key_E,
         shortcutSmallMovement: Qt.Key_Shift,
-        shortcutSynclair: Qt.Key_S,
+        shortcutLockControls: 0,
+        shortcutSynclair: Qt.Key_O,
         shortcutHUD: Qt.Key_H,
-        shortcutToolbar: Qt.Key_T,
-        shortcutLayout: Qt.Key_Up,
-        shortcutLockControls: Qt.Key_L,
+        shortcutToolbar: Qt.Key_B,
+        shortcutAiDetection: Qt.Key_F,
+        shortcutNextLayout: Qt.Key_L,
+        shortcutGrid: Qt.Key_G,
+        shortcutCrosshair: 0,
         shortcutPhoto: Qt.Key_P,
         shortcutRecord: Qt.Key_R,
         shortcutCamera1: Qt.Key_1,
         shortcutCamera2: Qt.Key_2,
         shortcutCamera3: Qt.Key_3,
         shortcutCamera4: Qt.Key_4,
-        shortcutCamera5: Qt.Key_5,
-        shortcutNextCamera: Qt.Key_G,
-        shortcutDeselectCamera: 0,
+        shortcutCamera5: 0,
+        shortcutNextCamera: Qt.Key_V,
+        shortcutPreviousCamera: 0,
+        shortcutDeselectCamera: Qt.Key_C,
+        shortcutSTT: Qt.Key_T,
+        shortcutCursorTracking: Qt.Key_Y,
+        shortcutManualTracking: Qt.Key_U,
+        shortcutDeselectTracking: Qt.Key_I,
         aiDetectionOverlay: "right",
-        aiSortingMode: "test",
-        aiCropConfidenceTreshold: 0,
-        aiScanConfidenceTreshold: 0,
-        aiCreationScoreScale: 0,
-        aiBonusDetectionScale: 0,
-        aiBonusRedetectionScale: 0,
-        aiMissedDetectionPenaltyScale: 0,
-        aiMissedRedetectionPenaltyScale: 0,
-        aiCropBoxOverlay: 0,
-        aiVarBoxOverlap: 0,
+        aiSortingMode: 0,
+        aiCropConfidenceTreshold: 0.8,
+        aiScanConfidenceTreshold: 0.8,
+        aiCreationScoreScale: 50,
+        aiBonusDetectionScale: 50,
+        aiBonusRedetectionScale: 50,
+        aiMissedDetectionPenaltyScale: 50,
+        aiMissedRedetectionPenaltyScale: 50,
+        aiCropBoxOverlay: 0.5,
+        aiVarBoxOverlap: 0.5,
         devBypassDisconnectedUiDisable: false,
-        cameraMinimalExposure: 0,
-        cameraMaximalExposure: 0,
-        cameraMinimalGain: 0,
-        cameraMaximalGain: 0
+        cameraMinimalExposure: 40,
+        cameraMaximalExposure: 40,
+        cameraMinimalGain: 40,
+        cameraMaximalGain: 40,
+        trackingLongitude: "",
+        trackingLatitude: "",
+        trackingAltitude: ""
     })
 
     property var persistedSettings: Settings {
@@ -114,6 +126,7 @@ QtObject {
 
         property alias controlPanel: root.controlPanel
         property alias simplifiedUserInterface: root.simplifiedUserInterface
+        property alias compassType: root.compassType
         property alias controlPanelPosition: root.controlPanelPosition
         property alias controlPanelInteraction: root.controlPanelInteraction
         property alias controlPanelPassiveOpacity: root.controlPanelPassiveOpacity
@@ -136,11 +149,14 @@ QtObject {
         property alias shortcutZoomIn: root.shortcutZoomIn
         property alias shortcutZoomOut: root.shortcutZoomOut
         property alias shortcutSmallMovement: root.shortcutSmallMovement
+        property alias shortcutLockControls: root.shortcutLockControls
         property alias shortcutSynclair: root.shortcutSynclair
         property alias shortcutHUD: root.shortcutHUD
         property alias shortcutToolbar: root.shortcutToolbar
-        property alias shortcutLayout: root.shortcutLayout
-        property alias shortcutLockControls: root.shortcutLockControls
+        property alias shortcutAiDetection: root.shortcutAiDetection
+        property alias shortcutNextLayout: root.shortcutNextLayout
+        property alias shortcutGrid: root.shortcutGrid
+        property alias shortcutCrosshair: root.shortcutCrosshair
         property alias shortcutPhoto: root.shortcutPhoto
         property alias shortcutRecord: root.shortcutRecord
         property alias shortcutCamera1: root.shortcutCamera1
@@ -149,7 +165,13 @@ QtObject {
         property alias shortcutCamera4: root.shortcutCamera4
         property alias shortcutCamera5: root.shortcutCamera5
         property alias shortcutNextCamera: root.shortcutNextCamera
+        property alias shortcutPreviousCamera: root.shortcutPreviousCamera
         property alias shortcutDeselectCamera: root.shortcutDeselectCamera
+        property alias shortcutSTT: root.shortcutSTT
+        property alias shortcutCursorTracking: root.shortcutCursorTracking
+        property alias shortcutManualTracking: root.shortcutManualTracking
+        property alias shortcutDeselectTracking: root.shortcutDeselectTracking
+        property alias shortcutSchemaVersion: root.shortcutSchemaVersion
 
         property alias aiDetectionOverlay: root.aiDetectionOverlay
         property alias aiDetectionOverlayPosition: root.aiDetectionOverlayPosition
@@ -168,6 +190,10 @@ QtObject {
         property alias cameraMaximalExposure: root.cameraMaximalExposure
         property alias cameraMinimalGain: root.cameraMinimalGain
         property alias cameraMaximalGain: root.cameraMaximalGain
+
+        property alias trackingLongitude: root.trackingLongitude
+        property alias trackingLatitude: root.trackingLatitude
+        property alias trackingAltitude: root.trackingAltitude
     }
 
 //---------------------------------
@@ -426,11 +452,10 @@ QtObject {
         onNetworkProfilesChanged: syncSelectedNetworkProfileState()
         onNetworkSelectedProfileIndexChanged: syncSelectedNetworkProfileState()
         onAiDetectionOverlayPositionChanged: {
-            if (!root.digiviewActive) {
+            if (!SVState.digiviewActive) {
                 return
             }
 
-            // 1. Hämta strängvärdet från variabeln/egenskapen (inte signalens namn)
             var positionId = root.aiDetectionOverlayPosition
             var position = 0
 
@@ -443,9 +468,8 @@ QtObject {
                 else { return }
             } 
 
-            // 2. Skicka datan vidare
-            digiview.sendSetVideoOutput(
-                digiview.streamName,
+            QGroundControl.digiviewManager.sendSetVideoOutput(
+                QGroundControl.digiviewManager.streamName,
                 0,
                 0,
                 0,
@@ -454,7 +478,10 @@ QtObject {
             )   
         }
 
-        Component.onCompleted: setNetworkProfiles(networkProfiles ? networkProfiles.slice() : [], networkSelectedProfileIndex)
+        Component.onCompleted: {
+            setNetworkProfiles(networkProfiles ? networkProfiles.slice() : [], networkSelectedProfileIndex)
+            migrateShortcutsIfNeeded()
+        }
 
     //Calibration
         property string calibrationCommand: "test"
@@ -464,6 +491,7 @@ QtObject {
 // Controls
 //---------------------------------
     property bool simplifiedUserInterface: false
+    property string compassType: "horizontal"
 
     //Control Panel
         property bool controlPanel: true
@@ -487,58 +515,98 @@ QtObject {
         property int zoomSensitivity: 10
 
     //Shortcuts
-        property int shortcutPitchUp: Qt.Key_Up
-        property int shortcutPitchDown: Qt.Key_Down
-        property int shortcutJawLeft: Qt.Key_Left
-        property int shortcutJawRight: Qt.Key_Right
-        //property int shortcutRollLeft: Qt.Key_Up
-        //property int shortcutRollRight: Qt.Key_Up
 
-        property int shortcutZoomIn: Qt.Key_PageUp
-        property int shortcutZoomOut: Qt.Key_PageDown
+        //Control Panel
+        property int shortcutPitchUp: Qt.Key_W
+        property int shortcutPitchDown: Qt.Key_S
+        property int shortcutJawLeft: Qt.Key_A
+        property int shortcutJawRight: Qt.Key_D
+
+        property int shortcutZoomIn: Qt.Key_Q
+        property int shortcutZoomOut: Qt.Key_E
         property int shortcutSmallMovement: Qt.Key_Shift
-        property int shortcutSynclair: Qt.Key_S
-        property int shortcutHUD: Qt.Key_H
-        property int shortcutToolbar: Qt.Key_T
-        property int shortcutLayout: Qt.Space
-        property int shortcutLockControls: Qt.Key_L
-        property int shortcutPhoto: Qt.Key_P
-        property int shortcutRecord: Qt.Key_R
+        property int shortcutLockControls: 0
+
+        //Camera Views
         property int shortcutCamera1: Qt.Key_1
         property int shortcutCamera2: Qt.Key_2
         property int shortcutCamera3: Qt.Key_3
         property int shortcutCamera4: Qt.Key_4
-        property int shortcutCamera5: Qt.Key_5
-        property int shortcutNextCamera: Qt.Key_G
-        property int shortcutDeselectCamera: 0
+        property int shortcutCamera5: 0
+        property int shortcutNextCamera: Qt.Key_V
+        property int shortcutPreviousCamera: 0
+        property int shortcutDeselectCamera: Qt.Key_C
 
+        //Overlays
+        property int shortcutSynclair: Qt.Key_O
+        property int shortcutHUD: Qt.Key_H
+        property int shortcutToolbar: Qt.Key_B
+        property int shortcutAiDetection: Qt.Key_F
+        property int shortcutNextLayout: Qt.Key_L
+        property int shortcutGrid: Qt.Key_G
+        property int shortcutCrosshair: 0
+
+        //Tracking
+        property int shortcutSTT: Qt.Key_T
+        property int shortcutCursorTracking: Qt.Key_Y
+        property int shortcutManualTracking: Qt.Key_U
+        property int shortcutDeselectTracking: Qt.Key_I
+
+        //Misc
+        property int shortcutPhoto: Qt.Key_P
+        property int shortcutRecord: Qt.Key_R
+
+        property int shortcutSchemaVersion: 0
+        readonly property int currentShortcutSchemaVersion: 1
+
+        function migrateShortcutsIfNeeded() {
+            if (shortcutSchemaVersion >= currentShortcutSchemaVersion) {
+                return
+            }
+
+            shortcutPitchUp = Qt.Key_W
+            shortcutPitchDown = Qt.Key_S
+            shortcutJawLeft = Qt.Key_A
+            shortcutJawRight = Qt.Key_D
+            shortcutZoomIn = Qt.Key_Q
+            shortcutZoomOut = Qt.Key_E
+            shortcutLockControls = 0
+            shortcutSynclair = Qt.Key_O
+            shortcutToolbar = Qt.Key_B
+            shortcutNextCamera = Qt.Key_V
+            shortcutDeselectCamera = Qt.Key_C
+            shortcutCamera5 = 0
+
+            shortcutSchemaVersion = currentShortcutSchemaVersion
+        }
 
 //---------------------------------
 // Developer
 //---------------------------------
     //AI
         property string aiDetectionOverlay: "right"
-        property string aiSortingMode: "test"
-        property int aiCropConfidenceTreshold
-        property int aiScanConfidenceTreshold
-        property int aiCreationScoreScale
-        property int aiBonusDetectionScale
-        property int aiBonusRedetectionScale
-        property int aiMissedDetectionPenaltyScale
-        property int aiMissedRedetectionPenaltyScale
-        property int aiCropBoxOverlay
-        property int aiVarBoxOverlap
+        property int aiSortingMode: 0
+        property real aiCropConfidenceTreshold: 0.8
+        property real aiScanConfidenceTreshold: 0.8
+        property int aiCreationScoreScale: 50
+        property int aiBonusDetectionScale: 50
+        property int aiBonusRedetectionScale: 50
+        property int aiMissedDetectionPenaltyScale: 50
+        property int aiMissedRedetectionPenaltyScale: 50
+        property real aiCropBoxOverlay: 0.5
+        property real aiVarBoxOverlap: 0.5
 
     //UI
         property bool devBypassDisconnectedUiDisable: false
 
     //Camera
-        property int cameraMinimalExposure
-        property int cameraMaximalExposure
-        property int cameraMinimalGain
-        property int cameraMaximalGain
+        property int cameraMinimalExposure: 40
+        property int cameraMaximalExposure: 40
+        property int cameraMinimalGain: 40
+        property int cameraMaximalGain: 40
 
-        property string trackingLongitude
-        property string trackingLatitude
-        property string trackingAltitude 
+    //Tracking Coordinates
+        property string trackingLongitude: ""
+        property string trackingLatitude: ""
+        property string trackingAltitude: ""
 }

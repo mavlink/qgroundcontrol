@@ -26,11 +26,13 @@ qt_add_qml_module(SynclairVisionUIModule
         Flyview/SVWelcomePrompt.qml
         Flyview/SVNotificationManager.qml
         Flyview/SVNotificationBox.qml
+        Flyview/SVFlyViewDetectionOverlay.qml
+        Flyview/SVFlyViewDetectionButton.qml
 
         Camera/SVCameraLayer.qml
         Camera/SVCameraWidgetLayer.qml
-        Camera/SVCameraLayouts.js
         Camera/SVCameraLayerOverlays.qml
+        Camera/SVCameraDetectionFlag.qml
 
         Controls/SVControlPanel.qml
         Controls/SVJoystick.qml
@@ -50,11 +52,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Resources/SVUnits.qml
         
         Settings/SVSettingsMenu.qml
-        Settings/SVSettingsGeneral.js
-        Settings/SVSettingsNetwork.js
-        Settings/SVSettingsControls.js
-        Settings/SVSettingsShortcuts.js
-        Settings/SVSettingsDev.js
+        Settings/SVSettingsDefinitions.js
 
         Resources/SVArrow.qml
         Resources/SVBackground.qml
@@ -84,7 +82,7 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_single_panorama.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_main.svg"
 
-        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/camera_photo.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/camera_photo_.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/camera_record.svg"
 
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/settings_main.svg"

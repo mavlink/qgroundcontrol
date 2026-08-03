@@ -137,15 +137,6 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
         }
     }
 
-    if (settings.value(_synclairShortcutSettingsVersionKey, 0).toInt() < _synclairShortcutSettingsVersion) {
-        settings.beginGroup(QStringLiteral("SynclairVisionSettings"));
-        settings.setValue(QStringLiteral("shortcutZoomIn"), Qt::Key_PageUp);
-        settings.setValue(QStringLiteral("shortcutZoomOut"), Qt::Key_PageDown);
-        settings.setValue(QStringLiteral("shortcutDeselectCamera"), 0);
-        settings.endGroup();
-        settings.setValue(_synclairShortcutSettingsVersionKey, _synclairShortcutSettingsVersion);
-    }
-
     settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
 
     if (fClearCache) {
