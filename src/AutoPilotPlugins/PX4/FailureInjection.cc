@@ -189,6 +189,7 @@ QVariantList FailureInjection::detailParams(int unitEnum, int typeEnum) const
     };
 
     static const DetailParam table[] = {
+        {FAILURE_UNIT_SENSOR_GPS, FAILURE_TYPE_WRONG, "SYS_FAIL_GPS_WRG", QT_TR_NOOP("GPS fix type")},
         {FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_WRONG, "SYS_FAIL_BAT_LVL", QT_TR_NOOP("Battery level")},
     };
 

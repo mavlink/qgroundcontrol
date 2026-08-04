@@ -189,7 +189,15 @@ void FailureInjectionTest::_detailParamsMapCombos()
     QVERIFY2(!batteryWrong.first().toMap().value(QStringLiteral("label")).toString().isEmpty(),
              "detail param must have a display label");
 
-    // Combos without detail parameters return an empty list.
+    // GPS + WRONG exposes the SYS_FAIL_GPS_WRG detail parameter.
+    const QVariantList gpsWrong = failureInjection.detailParams(FAILURE_UNIT_SENSOR_GPS, FAILURE_TYPE_WRONG);
+    QCOMPARE(gpsWrong.count(), 1);
+    QCOMPARE(gpsWrong.first().toMap().value(QStringLiteral("param")).toString(), QStringLiteral("SYS_FAIL_GPS_WRG"));
+    QVERIFY2(!gpsWrong.first().toMap().value(QStringLiteral("label")).toString().isEmpty(),
+             "detail param must have a display label");
+
+    // Combos without detail parameters return an empty list: both the unit and the type must match.
     QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SYSTEM_BATTERY, FAILURE_TYPE_OFF).isEmpty());
-    QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SENSOR_GPS, FAILURE_TYPE_WRONG).isEmpty());
+    QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SENSOR_GPS, FAILURE_TYPE_OFF).isEmpty());
+    QVERIFY(failureInjection.detailParams(FAILURE_UNIT_SENSOR_GYRO, FAILURE_TYPE_WRONG).isEmpty());
 }
