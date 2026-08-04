@@ -1,5 +1,7 @@
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/LocalHttpTestServerTest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/LocalHttpTestServerTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpyTest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/MultiSignalSpyTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/SignalEmitter.h
@@ -15,6 +17,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_qgc_test(LocalHttpTestServerTest LABELS Unit)
 add_qgc_test(MultiSignalSpyTest LABELS Unit)
 add_qgc_test(TestBaseClassesTest LABELS Unit)
 add_qgc_test(TestFixturesTest LABELS Unit)

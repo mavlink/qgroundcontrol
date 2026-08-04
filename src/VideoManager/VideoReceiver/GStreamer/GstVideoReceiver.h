@@ -85,6 +85,7 @@ private slots:
     void _handleEOS();
 
 private:
+    QString _redactedUri() const;
     GstElement *_makeDecoder();
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
 
@@ -102,6 +103,8 @@ private:
     void _shutdownDecodingBranch();
     void _shutdownRecordingBranch();
     void _logDecodebin3SelectedCodec(GstElement *decodebin3);
+    void _removeTeeProbe();
+    void _clearPipelineAliases();
 
     bool _needDispatch();
 

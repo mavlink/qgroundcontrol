@@ -9,6 +9,10 @@
 #include "GStreamer.h"  // VideoDecoderOptions
 
 namespace GStreamer {
+/// Diagnostic graphs omit element properties because source properties can contain credentials.
+inline constexpr GstDebugGraphDetails kDiagnosticDotGraphDetails = static_cast<GstDebugGraphDetails>(
+    GST_DEBUG_GRAPH_SHOW_MEDIA_TYPE | GST_DEBUG_GRAPH_SHOW_CAPS_DETAILS | GST_DEBUG_GRAPH_SHOW_STATES);
+
 bool isValidRtspUri(const gchar* uri_str);
 
 /// Dump @p pipeline's graph as a rotating .dot under CacheLocation/qgc-pipeline-dot/ for field reports.
