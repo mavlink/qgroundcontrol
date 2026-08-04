@@ -2,11 +2,13 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QUrl>
+#include <algorithm>
 #include <gst/gst.h>
 #include <gst/rtsp/gstrtsptransport.h>
 
 #include "GStreamerHelpers.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(GstSourceFactoryLog, "Video.GStreamer.GstSourceFactory")
 
@@ -273,7 +275,7 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
 GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Config& config, guint latencyMs)
 {
     if (!GStreamer::isValidRtspUri(uri.toUtf8().constData())) {
-        qCCritical(GstSourceFactoryLog) << "Invalid RTSP URI:" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCWarning(GstSourceFactoryLog) << "Invalid RTSP URI:" << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -313,12 +315,14 @@ GstElement* buildTcpSource(const QUrl& sourceUrl)
 {
     const int port = sourceUrl.port();
     if (!validPort(port)) {
-        qCCritical(GstSourceFactoryLog) << "Invalid TCP port" << port << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCWarning(GstSourceFactoryLog) << "Invalid TCP port" << port << "in"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
     const QString host = sourceUrl.host();
     if (host.isEmpty()) {
-        qCCritical(GstSourceFactoryLog) << "Missing host in TCP URI" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCWarning(GstSourceFactoryLog) << "Missing host in TCP URI"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -336,7 +340,8 @@ GstElement* buildUdpSource(const QUrl& sourceUrl, bool isUdpH264, bool isUdpH265
 {
     const int port = sourceUrl.port();
     if (!validPort(port)) {
-        qCCritical(GstSourceFactoryLog) << "Invalid UDP port" << port << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+        qCWarning(GstSourceFactoryLog) << "Invalid UDP port" << port << "in"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
@@ -396,6 +401,121 @@ GstElement* buildUdpSource(const QUrl& sourceUrl, bool isUdpH264, bool isUdpH265
         gst_clear_caps(&caps);
     }
     return source;
+}
+
+void linkMultipartJpegPad(GstElement* element, GstPad* pad, gpointer data)
+{
+    GstElement* parser = GST_ELEMENT(data);
+    if (!element || !pad || !parser || (GST_PAD_DIRECTION(pad) != GST_PAD_SRC)) {
+        return;
+    }
+
+    GstCaps* jpegCaps = gst_caps_from_string("image/jpeg");
+    GstCaps* padCaps = gst_pad_get_current_caps(pad);
+    if (!padCaps) {
+        padCaps = gst_pad_query_caps(pad, nullptr);
+    }
+    const bool isJpeg = jpegCaps && padCaps && gst_caps_can_intersect(padCaps, jpegCaps);
+    gst_clear_caps(&padCaps);
+    gst_clear_caps(&jpegCaps);
+    if (!isJpeg) {
+        return;
+    }
+
+    GstPad* parserSink = gst_element_get_static_pad(parser, "sink");
+    if (!parserSink) {
+        qCWarning(GstSourceFactoryLog) << "HTTP MJPEG parser sink pad is unavailable";
+        return;
+    }
+
+    if (!gst_pad_is_linked(parserSink)) {
+        const GstPadLinkReturn result = gst_pad_link(pad, parserSink);
+        if (result != GST_PAD_LINK_OK) {
+            qCWarning(GstSourceFactoryLog) << "HTTP MJPEG demux/parser link failed:" << result;
+        }
+    }
+    gst_object_unref(parserSink);
+}
+
+GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
+{
+    if (!sourceUrl.isValid() || sourceUrl.isRelative() || sourceUrl.host().isEmpty() || (sourceUrl.port() == 0)) {
+        qCWarning(GstSourceFactoryLog) << "Invalid HTTP MJPEG URL:"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
+        return nullptr;
+    }
+    if (!sourceUrl.userInfo().isEmpty()) {
+        qCWarning(GstSourceFactoryLog) << "HTTP MJPEG credentials in URLs are not supported";
+        return nullptr;
+    }
+
+    GstElement* source = gst_element_factory_make("souphttpsrc", "source");
+    GstElement* demux = gst_element_factory_make("multipartdemux", "multipart-demux");
+    GstElement* parser = gst_element_factory_make("jpegparse", "jpeg-parser");
+    GstElement* bin = gst_bin_new("sourcebin");
+    GstElement* sourceBin = nullptr;
+
+    do {
+        if (!source || !demux || !parser || !bin) {
+            qCWarning(GstSourceFactoryLog) << "HTTP MJPEG requires souphttpsrc, multipartdemux, and jpegparse";
+            break;
+        }
+
+        QUrl cleanUrl(sourceUrl);
+        cleanUrl.setUserInfo(QString());
+        cleanUrl.setFragment(QString());
+        const QByteArray location = cleanUrl.toEncoded(QUrl::FullyEncoded);
+        const QByteArray userAgent = QGCNetworkHelper::defaultUserAgent().toUtf8();
+        const guint timeoutS = std::clamp<guint>(config.timeoutS, 1u, 3600u);
+        // ssl-strict keeps certificate validation enabled. The active GLib TLS
+        // backend supplies the platform trust database; the legacy
+        // ssl-use-system-ca-file property is a no-op with libsoup3.
+        g_object_set(source, "location", location.constData(), "method", "GET", "is-live", TRUE, "do-timestamp", TRUE,
+                     "keep-alive", TRUE, "compress", FALSE, "iradio-mode", FALSE, "automatic-redirect", FALSE,
+                     "retries", 0, "timeout", timeoutS, "ssl-strict", TRUE, "http-log-level", 0, "user-agent",
+                     userAgent.constData(), nullptr);
+        g_object_set(demux, "single-stream", TRUE, nullptr);
+
+        if (!gst_bin_add(GST_BIN(bin), source)) {
+            qCWarning(GstSourceFactoryLog) << "Failed to add HTTP source to source bin";
+            break;
+        }
+        GstElement* binSource = source;
+        source = nullptr;
+
+        if (!gst_bin_add(GST_BIN(bin), demux)) {
+            qCWarning(GstSourceFactoryLog) << "Failed to add multipart demuxer to source bin";
+            break;
+        }
+        GstElement* binDemux = demux;
+        demux = nullptr;
+
+        if (!gst_bin_add(GST_BIN(bin), parser)) {
+            qCWarning(GstSourceFactoryLog) << "Failed to add JPEG parser to source bin";
+            break;
+        }
+        GstElement* binParser = parser;
+        parser = nullptr;
+
+        if (!gst_element_link(binSource, binDemux)) {
+            qCWarning(GstSourceFactoryLog) << "Failed to link HTTP source to multipart demuxer";
+            break;
+        }
+        (void) g_signal_connect_object(binDemux, "pad-added", G_CALLBACK(linkMultipartJpegPad), binParser,
+                                       static_cast<GConnectFlags>(0));
+        if (!addStaticGhostPad(binParser)) {
+            break;
+        }
+
+        sourceBin = bin;
+        bin = nullptr;
+    } while (false);
+
+    gst_clear_object(&bin);
+    gst_clear_object(&parser);
+    gst_clear_object(&demux);
+    gst_clear_object(&source);
+    return sourceBin;
 }
 
 // Wire upstream → (optional rtpjitterbuffer) → binParser, topology chosen by RTP probe (MPEG-TS
@@ -503,10 +623,16 @@ GstElement* create(const QString& uri, const Config& config)
     const bool isUdpH265 = (scheme == QLatin1String("udp265"));
     const bool isUdpMPEGTS = (scheme == QLatin1String("mpegts"));
     const bool isTcpMPEGTS = (scheme == QLatin1String("tcp"));
+    const bool isHttpMjpeg = (scheme == QLatin1String("http")) || (scheme == QLatin1String("https"));
 
-    if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS) {
-        qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in" << sourceUrl.toDisplayString(QUrl::RemoveUserInfo);
+    if (!isRtsp && !isUdpH264 && !isUdpH265 && !isUdpMPEGTS && !isTcpMPEGTS && !isHttpMjpeg) {
+        qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << scheme << "in"
+                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
+    }
+
+    if (isHttpMjpeg) {
+        return buildHttpMjpegSource(sourceUrl, config);
     }
 
     // Owning locals until gst_bin_add*, then nulled (non-owning alias used downstream) so the

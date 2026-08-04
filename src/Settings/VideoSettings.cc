@@ -2,6 +2,7 @@
 #include "VideoManager.h"
 
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 #include <QtCore/QSettings>
 #include <QtCore/QVariantList>
 
@@ -20,6 +21,9 @@ DECLARE_SETTINGGROUP(Video, "Video")
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
     videoSourceList.append(videoSourceRTSP);
+    if (kGstEnabled) {
+        videoSourceList.append(videoSourceHTTPMJPEG);
+    }
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
     videoSourceList.append(videoSourceTCP);
@@ -220,6 +224,15 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
     return _rtspUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpMjpegUrl)
+{
+    if (!_httpMjpegUrlFact) {
+        _httpMjpegUrlFact = _createSettingsFact(httpMjpegUrlName);
+        connect(_httpMjpegUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _httpMjpegUrlFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 {
     if (!_tcpUrlFact) {
@@ -243,23 +256,36 @@ bool VideoSettings::streamConfigured(void)
     }
     //-- If UDP, check for URL
     if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
-        qCDebug(VideoSettingsLog) << "Testing configuration for UDP Stream:" << udpUrl()->rawValue().toString();
-        return !udpUrl()->rawValue().toString().isEmpty();
+        const QString url = udpUrl()->rawValue().toString();
+        qCDebug(VideoSettingsLog) << "Testing configuration for UDP Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(url);
+        return !url.isEmpty();
     }
     //-- If RTSP, check for URL
     if(vSource == videoSourceRTSP) {
-        qCDebug(VideoSettingsLog) << "Testing configuration for RTSP Stream:" << rtspUrl()->rawValue().toString();
-        return !rtspUrl()->rawValue().toString().isEmpty();
+        const QString url = rtspUrl()->rawValue().toString();
+        qCDebug(VideoSettingsLog) << "Testing configuration for RTSP Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(url);
+        return !url.isEmpty();
+    }
+    //-- If HTTP MJPEG, check for URL
+    if (vSource == videoSourceHTTPMJPEG) {
+        qCDebug(VideoSettingsLog) << "Testing configuration for HTTP MJPEG Stream";
+        return !httpMjpegUrl()->rawValue().toString().isEmpty();
     }
     //-- If TCP, check for URL
     if(vSource == videoSourceTCP) {
-        qCDebug(VideoSettingsLog) << "Testing configuration for TCP Stream:" << tcpUrl()->rawValue().toString();
-        return !tcpUrl()->rawValue().toString().isEmpty();
+        const QString url = tcpUrl()->rawValue().toString();
+        qCDebug(VideoSettingsLog) << "Testing configuration for TCP Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(url);
+        return !url.isEmpty();
     }
     //-- If MPEG-TS, check for URL
     if(vSource == videoSourceMPEGTS) {
-        qCDebug(VideoSettingsLog) << "Testing configuration for MPEG-TS Stream:" << udpUrl()->rawValue().toString();
-        return !udpUrl()->rawValue().toString().isEmpty();
+        const QString url = udpUrl()->rawValue().toString();
+        qCDebug(VideoSettingsLog) << "Testing configuration for MPEG-TS Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(url);
+        return !url.isEmpty();
     }
     //-- If Herelink Air unit, good to go
     if(vSource == videoSourceHerelinkAirUnit) {

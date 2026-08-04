@@ -2,6 +2,7 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMap>
+#include <QtCore/QUrlQuery>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 #include <chrono>

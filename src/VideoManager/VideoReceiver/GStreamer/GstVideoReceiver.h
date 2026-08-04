@@ -85,6 +85,7 @@ private slots:
     void _handleEOS();
 
 private:
+    QString _redactedUri() const;
     GstElement *_makeDecoder();
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
 
