@@ -18,6 +18,9 @@ import "SVFlyViewMenusList.js" as SVFlyViewMenusList
 Item {
     id: root
 
+
+    property var offsetX: 0
+    property var offsetY: 0
     property real leftToolStripBottom
     property string activeSettingsId: ""
     property real pipViewWidth: 0
@@ -140,6 +143,8 @@ Item {
 
         activeSettingsId: root.activeSettingsId
         settingsModel: root.settingsModel
+        offsetX: root.offsetX
+        offsetY: root.offsetY
 
         onSettingsSelected: (settingsId) => root.activeSettingsId = settingsId
         onDismissed: root.activeSettingsId = ""

@@ -8,6 +8,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>
 
+#include <cmath>
 #include <cstring>
 #include <limits>
 
@@ -18,6 +19,9 @@ Q_APPLICATION_STATIC(DigiviewManager, _digiviewManagerInstance);
 namespace {
 
 constexpr uint8_t kCamTargetingLockFlagsUnchanged = 0xFF;
+constexpr uint8_t kTargetingModeDetection = 2;
+constexpr uint8_t kSttStatusOff = 0;
+constexpr uint8_t kSttStatusDropped = 3;
 constexpr float kVideoOutputParametersOneShotIntervalUs = -1000.0F;
 constexpr float kVideoOutputParametersSubscriptionIntervalUs = 100000.0F;
 
@@ -264,15 +268,26 @@ void DigiviewManager::sendSetVideoOutput(
     requestVideoOutputParameters();
 }
 
-void DigiviewManager::setDetectionTracking(
+bool DigiviewManager::setDetectionTracking(
     int cam, int view_id, bool lock_target
     )
 
 {
-    sendCamTargetingParameters(
+    const bool validCameraSlot = (cam >= 0) && (cam <= std::numeric_limits<uint8_t>::max())
+        && (static_cast<size_t>(cam) < _activeTargets.size());
+    const bool validViewId = (view_id >= std::numeric_limits<int16_t>::min())
+        && (view_id <= std::numeric_limits<int16_t>::max())
+        && (view_id >= 0) && (view_id <= std::numeric_limits<uint8_t>::max());
+    if (!validCameraSlot || !validViewId) {
+        return false;
+    }
+
+    const ActiveTarget previousTarget = _activeTargets[cam];
+
+    const bool camTargetSent = sendCamTargetingParameters(
         _streamName,
         cam,
-        2,  // SV_TARGETING_MODE_DETECTION
+        kTargetingModeDetection,
         true,
         0.0f,
         0.0f,
@@ -289,7 +304,7 @@ void DigiviewManager::setDetectionTracking(
     );
 
     // SINGLE_TARGET_TRACKING_PARAMETERS controls the STT state exposed to the UI.
-    sendSingleTargetTrackingParameters(
+    const bool sttTargetSent = sendSingleTargetTrackingParameters(
         SV_STT_CMD_SET_TARGET_VECTOR,
         _streamName,
         static_cast<uint8_t>(cam),
@@ -303,14 +318,35 @@ void DigiviewManager::setDetectionTracking(
         0,
         lock_target ? 1 : 0
     );
+
+    if (!(camTargetSent && sttTargetSent)) {
+        if (!camTargetSent && !sttTargetSent) {
+            _activeTargets[cam] = previousTarget;
+        }
+        return false;
+    }
+
+    ActiveTarget& activeTarget = _activeTargets[cam];
+    activeTarget.type = ActiveTarget::Type::Detection;
+    activeTarget.camTargeting.lock_target = lock_target ? 1 : 0;
+    activeTarget.singleTargetTracking.lock_target = lock_target ? 1 : 0;
+    return true;
 }
 
-void DigiviewManager::clearDetectionTracking(
+bool DigiviewManager::clearDetectionTracking(
     int cam
     )
 
 {
-    sendCamTargetingParameters(
+    const bool validCameraSlot = (cam >= 0) && (cam <= std::numeric_limits<uint8_t>::max())
+        && (static_cast<size_t>(cam) < _activeTargets.size());
+    if (!validCameraSlot) {
+        return false;
+    }
+
+    const ActiveTarget previousTarget = _activeTargets[cam];
+
+    const bool camTargetSent = sendCamTargetingParameters(
         _streamName,
         cam,
         0,  // SV_TARGETING_MODE_DETECTION
@@ -329,7 +365,7 @@ void DigiviewManager::clearDetectionTracking(
         0
     );
 
-    sendSingleTargetTrackingParameters(
+    const bool sttTargetSent = sendSingleTargetTrackingParameters(
         SV_STT_CMD_OFF,
         _streamName,
         static_cast<uint8_t>(cam),
@@ -342,6 +378,34 @@ void DigiviewManager::clearDetectionTracking(
         0,
         0
     );
+
+    if (!(camTargetSent && sttTargetSent)) {
+        if (!camTargetSent && !sttTargetSent) {
+            _activeTargets[cam] = previousTarget;
+        } else if (camTargetSent) {
+            if ((previousTarget.type == ActiveTarget::Type::Detection)
+                || (previousTarget.type == ActiveTarget::Type::SingleTargetTracking)) {
+                _activeTargets[cam] = previousTarget;
+                _activeTargets[cam].type = ActiveTarget::Type::SingleTargetTracking;
+            } else {
+                _activeTargets[cam] = {};
+            }
+        } else if (previousTarget.type == ActiveTarget::Type::Detection) {
+            _activeTargets[cam] = previousTarget;
+            _activeTargets[cam].type = ActiveTarget::Type::CamTargeting;
+        }
+        return false;
+    }
+
+    const ActiveTarget& activeTarget = _activeTargets[cam];
+    if ((activeTarget.type == ActiveTarget::Type::Detection)
+        || (activeTarget.type == ActiveTarget::Type::PendingDetection)
+        || ((activeTarget.type == ActiveTarget::Type::CamTargeting)
+            && (activeTarget.camTargeting.targeting_mode == kTargetingModeDetection))) {
+        _activeTargets[cam] = {};
+    }
+
+    return true;
 }
 
 void DigiviewManager::requestVideoOutputParameters()
@@ -371,6 +435,60 @@ void DigiviewManager::requestVideoOutputParameters()
                                    << "targetSystem" << command.target_system
                                    << "targetComponent" << command.target_component;
     _pendingVideoOutputParametersRequest = !_sendMessage(msg);
+}
+
+void DigiviewManager::requestSensorParameters()
+{
+    if (!_remoteIdentityValid) {
+        _pendingSensorParametersRequest = true;
+        qCDebug(DigiviewManagerLog) << "Deferring MAVLink GET for SENSOR_PARAMETERS until target HEARTBEAT";
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t command {};
+
+    command.target_system = _remoteSystemId;
+    command.target_component = _remoteComponentId;
+    command.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    command.param1 = static_cast<float>(MAVLINK_MSG_ID_SENSOR_PARAMETERS);
+    command.param2 = kVideoOutputParametersOneShotIntervalUs;
+
+    _encodeMessage(msg, command, mavlink_msg_command_long_encode);
+    qCDebug(DigiviewManagerLog) << "Sending one-shot MAVLink GET for SENSOR_PARAMETERS:"
+                                 << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
+                                 << "messageId" << MAVLINK_MSG_ID_SENSOR_PARAMETERS
+                                 << "intervalUs" << command.param2
+                                 << "targetSystem" << command.target_system
+                                 << "targetComponent" << command.target_component;
+    _pendingSensorParametersRequest = !_sendMessage(msg);
+}
+
+void DigiviewManager::requestDetectionParameters()
+{
+    if (!_remoteIdentityValid) {
+        _pendingDetectionParametersRequest = true;
+        qCDebug(DigiviewManagerLog) << "Deferring MAVLink GET for DETECTION_PARAMETERS until target HEARTBEAT";
+        return;
+    }
+
+    mavlink_message_t msg;
+    mavlink_command_long_t command {};
+
+    command.target_system = _remoteSystemId;
+    command.target_component = _remoteComponentId;
+    command.command = MAV_CMD_SET_MESSAGE_INTERVAL;
+    command.param1 = static_cast<float>(MAVLINK_MSG_ID_DETECTION_PARAMETERS);
+    command.param2 = kVideoOutputParametersOneShotIntervalUs;
+
+    _encodeMessage(msg, command, mavlink_msg_command_long_encode);
+    qCDebug(DigiviewManagerLog) << "Sending one-shot MAVLink GET for DETECTION_PARAMETERS:"
+                                 << "command" << MAV_CMD_SET_MESSAGE_INTERVAL
+                                 << "messageId" << MAVLINK_MSG_ID_DETECTION_PARAMETERS
+                                 << "intervalUs" << command.param2
+                                 << "targetSystem" << command.target_system
+                                 << "targetComponent" << command.target_component;
+    _pendingDetectionParametersRequest = !_sendMessage(msg);
 }
 
 void DigiviewManager::requestSingleTargetTrackingParameters()
@@ -535,14 +653,13 @@ void DigiviewManager::sendTrackedDetectionParameters(
     _sendMessage(msg);
 }
 
-void DigiviewManager::sendCamTargetingParameters(
+bool DigiviewManager::sendCamTargetingParameters(
     QString stream_name, uint8_t cam_id, uint8_t targeting_mode, uint8_t euler_delta,
     float yaw, float pitch, float roll, uint8_t lock_flags,
     float x_offset, float y_offset,
     float target_latitude, float target_longitude, float target_altitude,
     uint16_t track_id, int16_t view_id, uint8_t lock_target)
 {
-    mavlink_message_t msg;
     mavlink_cam_targeting_parameters_t payload {};
 
     copyStringToCharBuf(stream_name, payload.stream_name, 16);
@@ -562,8 +679,31 @@ void DigiviewManager::sendCamTargetingParameters(
     payload.view_id = view_id;
     payload.lock_target = lock_target;
 
+    const bool sent = _sendCamTargetingParameters(payload);
+    if (sent) {
+        _rememberCamTargeting(payload);
+    }
+    return sent;
+}
+
+bool DigiviewManager::_sendCamTargetingParameters(const mavlink_cam_targeting_parameters_t& payload)
+{
+    mavlink_message_t msg;
     _encodeMessage(msg, payload, mavlink_msg_cam_targeting_parameters_encode);
-    _sendMessage(msg);
+    return _sendMessage(msg);
+}
+
+void DigiviewManager::_rememberCamTargeting(const mavlink_cam_targeting_parameters_t& payload)
+{
+    if ((payload.cam_id >= _activeTargets.size())
+        || ((payload.targeting_mode != SV_TARGETING_MODE_COORDINAL)
+            && (payload.targeting_mode != kTargetingModeDetection))) {
+        return;
+    }
+
+    ActiveTarget& activeTarget = _activeTargets[payload.cam_id];
+    activeTarget.type = ActiveTarget::Type::CamTargeting;
+    activeTarget.camTargeting = payload;
 }
 
 void DigiviewManager::sendCamOpticsAndControlParameters(
@@ -636,7 +776,7 @@ void DigiviewManager::sendCamDepthEstimationParameters(
     _sendMessage(msg);
 }
 
-void DigiviewManager::sendSingleTargetTrackingParameters(
+bool DigiviewManager::sendSingleTargetTrackingParameters(
     uint8_t command, QString stream_name, uint8_t cam_id,
     float x_offset, float y_offset,
     uint8_t detection_id, uint16_t zoom_level, float confidence,
@@ -644,7 +784,6 @@ void DigiviewManager::sendSingleTargetTrackingParameters(
     uint8_t rel_frame_of_reference, float yaw_rel, float pitch_rel,
     quint64 publish_timestamp_us, uint8_t status, uint8_t lock_target)
 {
-    mavlink_message_t msg;
     mavlink_single_target_tracking_parameters_t payload {};
 
     payload.command = command;
@@ -664,8 +803,312 @@ void DigiviewManager::sendSingleTargetTrackingParameters(
     payload.status = status;
     payload.lock_target = lock_target;
 
+    const bool sent = _sendSingleTargetTrackingParameters(payload);
+    if (sent) {
+        _rememberSingleTargetTracking(payload);
+    }
+    return sent;
+}
+
+bool DigiviewManager::_sendSingleTargetTrackingParameters(const mavlink_single_target_tracking_parameters_t& payload)
+{
+    mavlink_message_t msg;
     _encodeMessage(msg, payload, mavlink_msg_single_target_tracking_parameters_encode);
-    _sendMessage(msg);
+    return _sendMessage(msg);
+}
+
+void DigiviewManager::_rememberSingleTargetTracking(const mavlink_single_target_tracking_parameters_t& payload)
+{
+    if (payload.cam_id >= _activeTargets.size()) {
+        return;
+    }
+
+    ActiveTarget& activeTarget = _activeTargets[payload.cam_id];
+    if (payload.command == SV_STT_CMD_OFF) {
+        if ((activeTarget.type == ActiveTarget::Type::SingleTargetTracking)
+            || (activeTarget.type == ActiveTarget::Type::Detection)) {
+            activeTarget = {};
+        }
+        return;
+    }
+
+    activeTarget.type = ActiveTarget::Type::SingleTargetTracking;
+    activeTarget.singleTargetTracking = payload;
+}
+
+void DigiviewManager::_rememberInboundCamTargeting(const mavlink_cam_targeting_parameters_t& payload)
+{
+    if (payload.cam_id >= _activeTargets.size()) {
+        return;
+    }
+
+    ActiveTarget& activeTarget = _activeTargets[payload.cam_id];
+    if (payload.targeting_mode == 0) {
+        activeTarget = {};
+        return;
+    }
+
+    if (payload.targeting_mode == SV_TARGETING_MODE_COORDINAL) {
+        activeTarget.type = ActiveTarget::Type::CamTargeting;
+        activeTarget.camTargeting = payload;
+        return;
+    }
+
+    if (payload.targeting_mode != kTargetingModeDetection) {
+        return;
+    }
+
+    if (((activeTarget.type == ActiveTarget::Type::SingleTargetTracking)
+         || (activeTarget.type == ActiveTarget::Type::Detection))
+        && (activeTarget.singleTargetTracking.command == SV_STT_CMD_SET_TARGET_VECTOR)
+        && (payload.view_id >= 0)
+        && (payload.view_id <= std::numeric_limits<uint8_t>::max())
+        && (static_cast<uint8_t>(payload.view_id) == activeTarget.singleTargetTracking.detection_id)) {
+        activeTarget.type = ActiveTarget::Type::Detection;
+        activeTarget.camTargeting = payload;
+        return;
+    }
+
+    activeTarget = {};
+    activeTarget.type = ActiveTarget::Type::PendingDetection;
+    activeTarget.camTargeting = payload;
+}
+
+void DigiviewManager::_rememberInboundSingleTargetTracking(
+    const mavlink_single_target_tracking_parameters_t& payload)
+{
+    if (payload.cam_id >= _activeTargets.size()) {
+        return;
+    }
+
+    ActiveTarget& activeTarget = _activeTargets[payload.cam_id];
+    if ((payload.command == SV_STT_CMD_OFF) || (payload.status == kSttStatusOff)
+        || (payload.status == kSttStatusDropped)) {
+        if (activeTarget.type != ActiveTarget::Type::CamTargeting
+            || (activeTarget.camTargeting.targeting_mode != SV_TARGETING_MODE_COORDINAL)) {
+            activeTarget = {};
+        }
+        return;
+    }
+
+    if ((activeTarget.type == ActiveTarget::Type::Detection)
+        && (activeTarget.camTargeting.view_id >= 0)
+        && (activeTarget.camTargeting.view_id <= std::numeric_limits<uint8_t>::max())
+        && (payload.command == SV_STT_CMD_SET_TARGET_VECTOR)
+        && (static_cast<uint8_t>(activeTarget.camTargeting.view_id) == payload.detection_id)) {
+        activeTarget.singleTargetTracking = payload;
+        return;
+    }
+
+    if ((activeTarget.type == ActiveTarget::Type::PendingDetection)
+        && (payload.command == SV_STT_CMD_SET_TARGET_VECTOR)
+        && (activeTarget.camTargeting.view_id >= 0)
+        && (activeTarget.camTargeting.view_id <= std::numeric_limits<uint8_t>::max())
+        && (static_cast<uint8_t>(activeTarget.camTargeting.view_id) == payload.detection_id)) {
+        activeTarget.type = ActiveTarget::Type::Detection;
+        activeTarget.singleTargetTracking = payload;
+        return;
+    }
+
+    activeTarget.type = ActiveTarget::Type::SingleTargetTracking;
+    activeTarget.singleTargetTracking = payload;
+}
+
+bool DigiviewManager::setSingleTargetTrackingTarget(int camId, float xOffset, float yOffset)
+{
+    if ((camId < 0) || (camId > std::numeric_limits<uint8_t>::max())
+        || !std::isfinite(xOffset) || !std::isfinite(yOffset)
+        || (xOffset < -1.0f) || (xOffset > 1.0f)
+        || (yOffset < -1.0f) || (yOffset > 1.0f)) {
+        return false;
+    }
+
+    return sendSingleTargetTrackingParameters(
+        SV_STT_CMD_SET_TARGET_VECTOR,
+        _streamName,
+        static_cast<uint8_t>(camId),
+        xOffset,
+        yOffset,
+        0,
+        0,
+        0.0f,
+        0.0f,
+        0.0f,
+        0,
+        0.0f,
+        0.0f,
+        0,
+        0,
+        0);
+}
+
+bool DigiviewManager::setCameraCursorTarget(int camId, float xOffset, float yOffset)
+{
+    if ((camId < 0) || (camId > std::numeric_limits<uint8_t>::max())
+        || !std::isfinite(xOffset) || !std::isfinite(yOffset)
+        || (xOffset < -1.0f) || (xOffset > 1.0f)
+        || (yOffset < -1.0f) || (yOffset > 1.0f)) {
+        return false;
+    }
+
+    return sendCamTargetingParameters(
+        _streamName,
+        static_cast<uint8_t>(camId),
+        SV_TARGETING_MODE_COORDINAL,
+        0,
+        0.0f,
+        0.0f,
+        0.0f,
+        kCamTargetingLockFlagsUnchanged,
+        xOffset,
+        yOffset,
+        0.0f,
+        0.0f,
+        0.0f,
+        0,
+        -1,
+        0);
+}
+
+bool DigiviewManager::setCameraManualTarget(int camId, float latitude, float longitude, float altitude)
+{
+    if ((camId < 0) || (camId > std::numeric_limits<uint8_t>::max())
+        || !std::isfinite(latitude) || !std::isfinite(longitude) || !std::isfinite(altitude)
+        || (latitude < -90.0f) || (latitude > 90.0f)
+        || (longitude < -180.0f) || (longitude > 180.0f)) {
+        return false;
+    }
+
+    return sendCamTargetingParameters(
+        _streamName,
+        static_cast<uint8_t>(camId),
+        SV_TARGETING_MODE_COORDINAL,
+        0,
+        0.0f,
+        0.0f,
+        0.0f,
+        kCamTargetingLockFlagsUnchanged,
+        0.0f,
+        0.0f,
+        latitude,
+        longitude,
+        altitude,
+        0,
+        -1,
+        0);
+}
+
+bool DigiviewManager::stopSingleTargetTracking(int camId)
+{
+    if ((camId < 0) || (camId > std::numeric_limits<uint8_t>::max())) {
+        return false;
+    }
+
+    return sendSingleTargetTrackingParameters(
+        SV_STT_CMD_OFF,
+        _streamName,
+        static_cast<uint8_t>(camId),
+        0.0f,
+        0.0f,
+        0,
+        0,
+        0.0f,
+        0.0f,
+        0.0f,
+        0,
+        0.0f,
+        0.0f,
+        0,
+        0,
+        0);
+}
+
+bool DigiviewManager::lockCurrentTarget(int cameraSlot)
+{
+    if ((cameraSlot < 0) || (static_cast<size_t>(cameraSlot) >= _activeTargets.size())) {
+        return false;
+    }
+
+    const ActiveTarget activeTarget = _activeTargets[cameraSlot];
+    switch (activeTarget.type) {
+    case ActiveTarget::Type::CamTargeting: {
+        auto payload = activeTarget.camTargeting;
+        payload.lock_target = 1;
+        return _sendCamTargetingParameters(payload);
+    }
+    case ActiveTarget::Type::PendingDetection: {
+        auto payload = activeTarget.camTargeting;
+        payload.lock_target = 1;
+        return _sendCamTargetingParameters(payload);
+    }
+    case ActiveTarget::Type::SingleTargetTracking: {
+        auto payload = activeTarget.singleTargetTracking;
+        payload.lock_target = 1;
+        return _sendSingleTargetTrackingParameters(payload);
+    }
+    case ActiveTarget::Type::Detection: {
+        auto camTargeting = activeTarget.camTargeting;
+        auto singleTargetTracking = activeTarget.singleTargetTracking;
+        camTargeting.lock_target = 1;
+        singleTargetTracking.lock_target = 1;
+        return _sendCamTargetingParameters(camTargeting)
+            && _sendSingleTargetTrackingParameters(singleTargetTracking);
+    }
+    case ActiveTarget::Type::None:
+        return false;
+    }
+
+    return false;
+}
+
+bool DigiviewManager::clearCurrentTarget(int cameraSlot)
+{
+    if ((cameraSlot < 0) || (static_cast<size_t>(cameraSlot) >= _activeTargets.size())) {
+        return false;
+    }
+
+    const ActiveTarget activeTarget = _activeTargets[cameraSlot];
+    switch (activeTarget.type) {
+    case ActiveTarget::Type::SingleTargetTracking:
+        return stopSingleTargetTracking(cameraSlot);
+    case ActiveTarget::Type::Detection:
+        return clearDetectionTracking(cameraSlot);
+    case ActiveTarget::Type::PendingDetection:
+        return clearDetectionTracking(cameraSlot);
+    case ActiveTarget::Type::CamTargeting: {
+        if ((activeTarget.type == ActiveTarget::Type::CamTargeting)
+            && (activeTarget.camTargeting.targeting_mode == kTargetingModeDetection)) {
+            return clearDetectionTracking(cameraSlot);
+        }
+
+        auto payload = activeTarget.camTargeting;
+        payload.targeting_mode = 0;
+        payload.euler_delta = 1;
+        payload.yaw = 0.0f;
+        payload.pitch = 0.0f;
+        payload.roll = 0.0f;
+        payload.lock_flags = 0x07;
+        payload.x_offset = 0.0f;
+        payload.y_offset = 0.0f;
+        payload.target_latitude = 0.0f;
+        payload.target_longitude = 0.0f;
+        payload.target_altitude = 0.0f;
+        payload.track_id = 0;
+        payload.view_id = -1;
+        payload.lock_target = 0;
+
+        if (!_sendCamTargetingParameters(payload)) {
+            return false;
+        }
+
+        _activeTargets[cameraSlot] = {};
+        return true;
+    }
+    case ActiveTarget::Type::None:
+        return false;
+    }
+
+    return false;
 }
 
 void DigiviewManager::sendCalibrationParameters(uint8_t cam_id, uint8_t calib_command, uint8_t calib_status)
@@ -1002,8 +1445,94 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         break;
     }
     case MAVLINK_MSG_ID_DETECTION_PARAMETERS: {
+        if (!_remoteIdentityValid || (message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
+            qCDebug(DigiviewManagerLog) << "Ignoring DETECTION_PARAMETERS from an unexpected MAVLink identity"
+                                        << "senderSystem" << message.sysid
+                                        << "senderComponent" << message.compid;
+            break;
+        }
+
         mavlink_detection_parameters_t payload;
         mavlink_msg_detection_parameters_decode(&message, &payload);
+
+        const bool hasDetectionParametersChangedValue = !_hasDetectionParameters;
+        const bool detectionModeChangedValue = _detectionMode != payload.mode;
+        const bool detectionSortingModeChangedValue = _detectionSortingMode != payload.sorting_mode;
+        const bool detectionTrackConfidenceThresholdChangedValue =
+            !qFuzzyCompare(_detectionTrackConfidenceThreshold, payload.track_confidence_threshold);
+        const bool detectionScanConfidenceThresholdChangedValue =
+            !qFuzzyCompare(_detectionScanConfidenceThreshold, payload.scan_confidence_threshold);
+        const bool detectionTrackBoxOverlapChangedValue =
+            !qFuzzyCompare(_detectionTrackBoxOverlap, payload.track_box_overlap);
+        const bool detectionScanBoxOverlapChangedValue =
+            !qFuzzyCompare(_detectionScanBoxOverlap, payload.scan_box_overlap);
+        const bool detectionCreationScoreScaleChangedValue = _detectionCreationScoreScale != payload.creation_score_scale;
+        const bool detectionBonusDetectionScaleChangedValue = _detectionBonusDetectionScale != payload.bonus_detection_scale;
+        const bool detectionBonusRedetectionScaleChangedValue =
+            _detectionBonusRedetectionScale != payload.bonus_redetection_scale;
+        const bool detectionMissedDetectionPenaltyChangedValue =
+            _detectionMissedDetectionPenalty != payload.missed_detection_penalty;
+        const bool detectionMissedRedetectionPenaltyChangedValue =
+            _detectionMissedRedetectionPenalty != payload.missed_redetection_penalty;
+
+        _hasDetectionParameters = true;
+        _detectionMode = payload.mode;
+        _detectionSortingMode = payload.sorting_mode;
+        _detectionTrackConfidenceThreshold = payload.track_confidence_threshold;
+        _detectionScanConfidenceThreshold = payload.scan_confidence_threshold;
+        _detectionTrackBoxOverlap = payload.track_box_overlap;
+        _detectionScanBoxOverlap = payload.scan_box_overlap;
+        _detectionCreationScoreScale = payload.creation_score_scale;
+        _detectionBonusDetectionScale = payload.bonus_detection_scale;
+        _detectionBonusRedetectionScale = payload.bonus_redetection_scale;
+        _detectionMissedDetectionPenalty = payload.missed_detection_penalty;
+        _detectionMissedRedetectionPenalty = payload.missed_redetection_penalty;
+
+        if (hasDetectionParametersChangedValue) {
+            emit hasDetectionParametersChanged();
+        }
+        if (detectionModeChangedValue) {
+            emit detectionModeChanged();
+        }
+        if (detectionSortingModeChangedValue) {
+            emit detectionSortingModeChanged();
+        }
+        if (detectionTrackConfidenceThresholdChangedValue) {
+            emit detectionTrackConfidenceThresholdChanged();
+        }
+        if (detectionScanConfidenceThresholdChangedValue) {
+            emit detectionScanConfidenceThresholdChanged();
+        }
+        if (detectionTrackBoxOverlapChangedValue) {
+            emit detectionTrackBoxOverlapChanged();
+        }
+        if (detectionScanBoxOverlapChangedValue) {
+            emit detectionScanBoxOverlapChanged();
+        }
+        if (detectionCreationScoreScaleChangedValue) {
+            emit detectionCreationScoreScaleChanged();
+        }
+        if (detectionBonusDetectionScaleChangedValue) {
+            emit detectionBonusDetectionScaleChanged();
+        }
+        if (detectionBonusRedetectionScaleChangedValue) {
+            emit detectionBonusRedetectionScaleChanged();
+        }
+        if (detectionMissedDetectionPenaltyChangedValue) {
+            emit detectionMissedDetectionPenaltyChanged();
+        }
+        if (detectionMissedRedetectionPenaltyChangedValue) {
+            emit detectionMissedRedetectionPenaltyChanged();
+        }
+        if (hasDetectionParametersChangedValue || detectionModeChangedValue || detectionSortingModeChangedValue
+            || detectionTrackConfidenceThresholdChangedValue || detectionScanConfidenceThresholdChangedValue
+            || detectionTrackBoxOverlapChangedValue || detectionScanBoxOverlapChangedValue
+            || detectionCreationScoreScaleChangedValue || detectionBonusDetectionScaleChangedValue
+            || detectionBonusRedetectionScaleChangedValue || detectionMissedDetectionPenaltyChangedValue
+            || detectionMissedRedetectionPenaltyChangedValue) {
+            emit detectionParametersChanged();
+        }
+
         emit detectionParametersReceived(
             payload.mode,
             payload.sorting_mode,
@@ -1043,10 +1572,33 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         break;
     }
     case MAVLINK_MSG_ID_CAM_TARGETING_PARAMETERS: {
+        if (!_remoteIdentityValid) {
+            qCDebug(DigiviewManagerLog) << "Ignoring CAM_TARGETING_PARAMETERS before target HEARTBEAT"
+                                        << "senderSystem" << message.sysid
+                                        << "senderComponent" << message.compid;
+            break;
+        }
+
+        if ((message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
+            qCWarning(DigiviewManagerLog) << "Ignoring CAM_TARGETING_PARAMETERS from different MAVLink identity"
+                                          << "senderSystem" << message.sysid
+                                          << "senderComponent" << message.compid;
+            break;
+        }
+
         mavlink_cam_targeting_parameters_t payload;
         mavlink_msg_cam_targeting_parameters_decode(&message, &payload);
+        const QString streamName = stringFromCharBuf(payload.stream_name, 16);
+
+        if (streamName != _streamName) {
+            qCDebug(DigiviewManagerLog) << "Ignoring CAM_TARGETING_PARAMETERS for unexpected stream"
+                                        << "stream" << streamName
+                                        << "expected" << _streamName;
+            break;
+        }
+
         emit camTargetingParametersReceived(
-            stringFromCharBuf(payload.stream_name, 16),
+            streamName,
             payload.cam_id,
             payload.targeting_mode,
             payload.euler_delta,
@@ -1063,11 +1615,15 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.view_id,
             payload.lock_target);
 
+        _rememberInboundCamTargeting(payload);
+
         if (payload.cam_id < kMaxCameras) {
             auto& state = _cameraStates[payload.cam_id];
             state.targetingMode = payload.targeting_mode;
             state.trackId = payload.track_id;
             state.viewId = payload.view_id;
+            state.hasActiveTarget = _activeTargets[payload.cam_id].type != ActiveTarget::Type::None;
+            state.hasTargetState = true;
 
             emit cameraStatesChanged();
         }
@@ -1099,8 +1655,54 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         break;
     }
     case MAVLINK_MSG_ID_SENSOR_PARAMETERS: {
+        if (!_remoteIdentityValid || (message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
+            qCDebug(DigiviewManagerLog) << "Ignoring SENSOR_PARAMETERS from an unexpected MAVLink identity"
+                                        << "senderSystem" << message.sysid
+                                        << "senderComponent" << message.compid;
+            break;
+        }
+
         mavlink_sensor_parameters_t payload;
         mavlink_msg_sensor_parameters_decode(&message, &payload);
+
+        const bool hasSensorParametersChangedValue = !_hasSensorParameters;
+        const bool sensorMinExposureChangedValue = _sensorMinExposure != payload.min_exposure;
+        const bool sensorMaxExposureChangedValue = _sensorMaxExposure != payload.max_exposure;
+        const bool sensorMinGainChangedValue = _sensorMinGain != payload.min_gain;
+        const bool sensorMaxGainChangedValue = _sensorMaxGain != payload.max_gain;
+        const bool sensorTargetBrightnessChangedValue =
+            !qFuzzyCompare(_sensorTargetBrightness, payload.target_brightness);
+
+        _hasSensorParameters = true;
+        _sensorMinExposure = payload.min_exposure;
+        _sensorMaxExposure = payload.max_exposure;
+        _sensorMinGain = payload.min_gain;
+        _sensorMaxGain = payload.max_gain;
+        _sensorTargetBrightness = payload.target_brightness;
+
+        if (hasSensorParametersChangedValue) {
+            emit hasSensorParametersChanged();
+        }
+        if (sensorMinExposureChangedValue) {
+            emit sensorMinExposureChanged();
+        }
+        if (sensorMaxExposureChangedValue) {
+            emit sensorMaxExposureChanged();
+        }
+        if (sensorMinGainChangedValue) {
+            emit sensorMinGainChanged();
+        }
+        if (sensorMaxGainChangedValue) {
+            emit sensorMaxGainChanged();
+        }
+        if (sensorTargetBrightnessChangedValue) {
+            emit sensorTargetBrightnessChanged();
+        }
+        if (hasSensorParametersChangedValue || sensorMinExposureChangedValue || sensorMaxExposureChangedValue
+            || sensorMinGainChangedValue || sensorMaxGainChangedValue || sensorTargetBrightnessChangedValue) {
+            emit sensorParametersChanged();
+        }
+
         emit sensorParametersReceived(
             payload.min_exposure,
             payload.max_exposure,
@@ -1177,11 +1779,15 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.status,
             payload.lock_target);
 
+        _rememberInboundSingleTargetTracking(payload);
+
         if (payload.cam_id < kMaxCameras) {
             auto& state = _cameraStates[payload.cam_id];
             state.sttStatus = payload.status;
             state.confidence = payload.confidence;
             state.lockTarget = (payload.lock_target != 0);
+            state.hasActiveTarget = _activeTargets[payload.cam_id].type != ActiveTarget::Type::None;
+            state.hasTargetState = true;
 
             emit cameraStatesChanged();
         }
@@ -1314,8 +1920,24 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
 
     _sendMessage(msg);
 
+    command.param1 = static_cast<float>(MAVLINK_MSG_ID_SENSOR_PARAMETERS);
+    _encodeMessage(msg, command, mavlink_msg_command_long_encode);
+    qCDebug(DigiviewManagerLog) << "Subscribing to SENSOR_PARAMETERS at" << command.param2 << "us";
+    _sendMessage(msg);
+
+    command.param1 = static_cast<float>(MAVLINK_MSG_ID_DETECTION_PARAMETERS);
+    _encodeMessage(msg, command, mavlink_msg_command_long_encode);
+    qCDebug(DigiviewManagerLog) << "Subscribing to DETECTION_PARAMETERS at" << command.param2 << "us";
+    _sendMessage(msg);
+
     if (_pendingVideoOutputParametersRequest) {
         requestVideoOutputParameters();
+    }
+    if (_pendingSensorParametersRequest) {
+        requestSensorParameters();
+    }
+    if (_pendingDetectionParametersRequest) {
+        requestDetectionParameters();
     }
     if (_pendingSingleTargetTrackingParametersRequest) {
         requestSingleTargetTrackingParameters();
@@ -1329,9 +1951,12 @@ void DigiviewManager::_resetRemoteSession()
     _remoteIdentityValid = false;
     _remoteComponentPinnedByVideoOutputParameters = false;
     _pendingVideoOutputParametersRequest = false;
+    _pendingSensorParametersRequest = true;
+    _pendingDetectionParametersRequest = true;
     _pendingSingleTargetTrackingParametersRequest = true;
 
     _cameraStates.fill(CameraTrackingState{});
+    _activeTargets.fill(ActiveTarget{});
     _hasSttParameters = false;
     _sttStatus = 0; // SV_STT_STATUS_OFF
     _sttCamId = 0;
@@ -1402,6 +2027,114 @@ void DigiviewManager::_resetRemoteSession()
     if (videoOutputSingleDetectionSizeChangedValue) {
         emit videoOutputSingleDetectionSizeChanged();
     }
+
+    const bool hasSensorParametersChangedValue = _hasSensorParameters;
+    const bool sensorMinExposureChangedValue = _sensorMinExposure != 0;
+    const bool sensorMaxExposureChangedValue = _sensorMaxExposure != 0;
+    const bool sensorMinGainChangedValue = _sensorMinGain != 0;
+    const bool sensorMaxGainChangedValue = _sensorMaxGain != 0;
+    const bool sensorTargetBrightnessChangedValue = !qFuzzyIsNull(_sensorTargetBrightness);
+
+    _hasSensorParameters = false;
+    _sensorMinExposure = 0;
+    _sensorMaxExposure = 0;
+    _sensorMinGain = 0;
+    _sensorMaxGain = 0;
+    _sensorTargetBrightness = 0.0f;
+
+    if (hasSensorParametersChangedValue) {
+        emit hasSensorParametersChanged();
+    }
+    if (sensorMinExposureChangedValue) {
+        emit sensorMinExposureChanged();
+    }
+    if (sensorMaxExposureChangedValue) {
+        emit sensorMaxExposureChanged();
+    }
+    if (sensorMinGainChangedValue) {
+        emit sensorMinGainChanged();
+    }
+    if (sensorMaxGainChangedValue) {
+        emit sensorMaxGainChanged();
+    }
+    if (sensorTargetBrightnessChangedValue) {
+        emit sensorTargetBrightnessChanged();
+    }
+    if (hasSensorParametersChangedValue || sensorMinExposureChangedValue || sensorMaxExposureChangedValue
+        || sensorMinGainChangedValue || sensorMaxGainChangedValue || sensorTargetBrightnessChangedValue) {
+        emit sensorParametersChanged();
+    }
+
+    const bool hasDetectionParametersChangedValue = _hasDetectionParameters;
+    const bool detectionModeChangedValue = _detectionMode != 0;
+    const bool detectionSortingModeChangedValue = _detectionSortingMode != 0;
+    const bool detectionTrackConfidenceThresholdChangedValue = !qFuzzyIsNull(_detectionTrackConfidenceThreshold);
+    const bool detectionScanConfidenceThresholdChangedValue = !qFuzzyIsNull(_detectionScanConfidenceThreshold);
+    const bool detectionTrackBoxOverlapChangedValue = !qFuzzyIsNull(_detectionTrackBoxOverlap);
+    const bool detectionScanBoxOverlapChangedValue = !qFuzzyIsNull(_detectionScanBoxOverlap);
+    const bool detectionCreationScoreScaleChangedValue = _detectionCreationScoreScale != 0;
+    const bool detectionBonusDetectionScaleChangedValue = _detectionBonusDetectionScale != 0;
+    const bool detectionBonusRedetectionScaleChangedValue = _detectionBonusRedetectionScale != 0;
+    const bool detectionMissedDetectionPenaltyChangedValue = _detectionMissedDetectionPenalty != 0;
+    const bool detectionMissedRedetectionPenaltyChangedValue = _detectionMissedRedetectionPenalty != 0;
+
+    _hasDetectionParameters = false;
+    _detectionMode = 0;
+    _detectionSortingMode = 0;
+    _detectionTrackConfidenceThreshold = 0.0f;
+    _detectionScanConfidenceThreshold = 0.0f;
+    _detectionTrackBoxOverlap = 0.0f;
+    _detectionScanBoxOverlap = 0.0f;
+    _detectionCreationScoreScale = 0;
+    _detectionBonusDetectionScale = 0;
+    _detectionBonusRedetectionScale = 0;
+    _detectionMissedDetectionPenalty = 0;
+    _detectionMissedRedetectionPenalty = 0;
+
+    if (hasDetectionParametersChangedValue) {
+        emit hasDetectionParametersChanged();
+    }
+    if (detectionModeChangedValue) {
+        emit detectionModeChanged();
+    }
+    if (detectionSortingModeChangedValue) {
+        emit detectionSortingModeChanged();
+    }
+    if (detectionTrackConfidenceThresholdChangedValue) {
+        emit detectionTrackConfidenceThresholdChanged();
+    }
+    if (detectionScanConfidenceThresholdChangedValue) {
+        emit detectionScanConfidenceThresholdChanged();
+    }
+    if (detectionTrackBoxOverlapChangedValue) {
+        emit detectionTrackBoxOverlapChanged();
+    }
+    if (detectionScanBoxOverlapChangedValue) {
+        emit detectionScanBoxOverlapChanged();
+    }
+    if (detectionCreationScoreScaleChangedValue) {
+        emit detectionCreationScoreScaleChanged();
+    }
+    if (detectionBonusDetectionScaleChangedValue) {
+        emit detectionBonusDetectionScaleChanged();
+    }
+    if (detectionBonusRedetectionScaleChangedValue) {
+        emit detectionBonusRedetectionScaleChanged();
+    }
+    if (detectionMissedDetectionPenaltyChangedValue) {
+        emit detectionMissedDetectionPenaltyChanged();
+    }
+    if (detectionMissedRedetectionPenaltyChangedValue) {
+        emit detectionMissedRedetectionPenaltyChanged();
+    }
+    if (hasDetectionParametersChangedValue || detectionModeChangedValue || detectionSortingModeChangedValue
+        || detectionTrackConfidenceThresholdChangedValue || detectionScanConfidenceThresholdChangedValue
+        || detectionTrackBoxOverlapChangedValue || detectionScanBoxOverlapChangedValue
+        || detectionCreationScoreScaleChangedValue || detectionBonusDetectionScaleChangedValue
+        || detectionBonusRedetectionScaleChangedValue || detectionMissedDetectionPenaltyChangedValue
+        || detectionMissedRedetectionPenaltyChangedValue) {
+        emit detectionParametersChanged();
+    }
 }
 
 void DigiviewManager::_resetRemoteSessionForSenderIdentityChange()
@@ -1432,6 +2165,8 @@ QVariantList DigiviewManager::cameraStates() const
         map.insert(QStringLiteral("viewId"), cam.viewId);
         map.insert(QStringLiteral("lockTarget"), cam.lockTarget);
         map.insert(QStringLiteral("targetingMode"), cam.targetingMode);
+        map.insert(QStringLiteral("hasActiveTarget"), cam.hasActiveTarget);
+        map.insert(QStringLiteral("hasTargetState"), cam.hasTargetState);
         list.append(map);
     }
     return list;

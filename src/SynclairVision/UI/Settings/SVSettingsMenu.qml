@@ -17,6 +17,8 @@ Item {
     readonly property int settingsResetToken: SVSettings.resetToken
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property bool networkConnectionActive: SVState.digiviewActive
+    property var sensorParameterValues: ({})
+    property var detectionParameterValues: ({})
 
     readonly property real panelMargin: ScreenTools.defaultFontPixelHeight / 2
     readonly property real sectionSpacing: ScreenTools.defaultFontPixelHeight / 2
@@ -87,11 +89,41 @@ Item {
             && settingSourceValue('settings', settingData.property) !== undefined
     }
 
+    function remoteParameterValues(parameterGroup) {
+        if (!root.digiview || !root.digiview.connected) {
+            return null
+        }
+
+        if (parameterGroup === 'sensor' && root.digiview.hasSensorParameters) {
+            return root.sensorParameterValues
+        }
+
+        if (parameterGroup === 'detection' && root.digiview.hasDetectionParameters) {
+            return root.detectionParameterValues
+        }
+
+        return null
+    }
+
+    function displayedSettingValue(propertyName, parameterGroup) {
+        if (propertyName === 'aiDetectionOverlayPosition') {
+            return SVState.effectiveAiDetectionOverlayPosition
+        }
+
+        const parameterValues = remoteParameterValues(parameterGroup)
+
+        if (parameterValues && parameterValues[propertyName] !== undefined) {
+            return parameterValues[propertyName]
+        }
+
+        return SVSettings[propertyName]
+    }
+
     function settingValue(settingData, fallbackValue) {
         root.settingsResetToken
 
         if (useSettingsBridge(settingData)) {
-            return SVSettings[settingData.property]
+            return displayedSettingValue(settingData.property, settingData.digiviewParameterGroup)
         }
 
         return fallbackValue
@@ -307,7 +339,7 @@ Item {
         const options = settingOptions(settingData)
 
         if (useSettingsBridge(settingData)) {
-            const currentValue = SVSettings[settingData.property]
+            const currentValue = displayedSettingValue(settingData.property, settingData.digiviewParameterGroup)
 
             for (let index = 0; index < options.length; index++) {
                 if (options[index].value === currentValue) {
@@ -326,7 +358,110 @@ Item {
             return
         }
 
-        setSettingValue(settingData, options[currentIndex].value)
+        const value = options[currentIndex].value
+
+        if (settingData.property === 'aiDetectionOverlayPosition') {
+            setSettingValue(settingData, value)
+            SVState.setAiDetectionOverlayPosition(value)
+            return
+        }
+
+        commitSettingValue(settingData, value)
+    }
+
+    function sendSensorSettings() {
+        if (!root.digiview || !root.digiview.connected || !root.digiview.hasSensorParameters) {
+            return
+        }
+
+        root.digiview.sendSensorParameters(
+            displayedSettingValue('cameraMinimalExposure', 'sensor'),
+            displayedSettingValue('cameraMaximalExposure', 'sensor'),
+            displayedSettingValue('cameraMinimalGain', 'sensor'),
+            displayedSettingValue('cameraMaximalGain', 'sensor'),
+            displayedSettingValue('videoTargetBrightness', 'sensor'))
+    }
+
+    function sendDetectionSettings() {
+        if (!root.digiview || !root.digiview.connected || !root.digiview.hasDetectionParameters) {
+            return
+        }
+
+        root.digiview.sendDetectionParameters(
+            root.digiview.detectionMode,
+            displayedSettingValue('aiSortingMode', 'detection'),
+            displayedSettingValue('aiCropConfidenceTreshold', 'detection'),
+            displayedSettingValue('aiScanConfidenceTreshold', 'detection'),
+            displayedSettingValue('aiCropBoxOverlay', 'detection'),
+            displayedSettingValue('aiVarBoxOverlap', 'detection'),
+            displayedSettingValue('aiCreationScoreScale', 'detection'),
+            displayedSettingValue('aiBonusDetectionScale', 'detection'),
+            displayedSettingValue('aiBonusRedetectionScale', 'detection'),
+            displayedSettingValue('aiMissedDetectionPenaltyScale', 'detection'),
+            displayedSettingValue('aiMissedRedetectionPenaltyScale', 'detection'))
+    }
+
+    function updateRemoteSettingValue(settingData, value) {
+        const parameterValues = remoteParameterValues(settingData.digiviewParameterGroup)
+
+        if (!parameterValues || settingData.property === undefined) {
+            return
+        }
+
+        const nextValues = Object.assign({}, parameterValues)
+        nextValues[settingData.property] = value
+
+        if (settingData.digiviewParameterGroup === 'sensor') {
+            root.sensorParameterValues = nextValues
+        } else if (settingData.digiviewParameterGroup === 'detection') {
+            root.detectionParameterValues = nextValues
+        }
+    }
+
+    function commitSettingValue(settingData, value) {
+        updateRemoteSettingValue(settingData, value)
+        setSettingValue(settingData, value)
+
+        if (settingData.digiviewParameterGroup === 'sensor') {
+            sendSensorSettings()
+        } else if (settingData.digiviewParameterGroup === 'detection') {
+            sendDetectionSettings()
+        }
+    }
+
+    function syncSensorSettingsFromDigiview() {
+        if (!root.digiview || !root.digiview.connected || !root.digiview.hasSensorParameters) {
+            root.sensorParameterValues = ({})
+            return
+        }
+
+        root.sensorParameterValues = {
+            videoTargetBrightness: root.digiview.sensorTargetBrightness,
+            cameraMinimalExposure: root.digiview.sensorMinExposure,
+            cameraMaximalExposure: root.digiview.sensorMaxExposure,
+            cameraMinimalGain: root.digiview.sensorMinGain,
+            cameraMaximalGain: root.digiview.sensorMaxGain
+        }
+    }
+
+    function syncDetectionSettingsFromDigiview() {
+        if (!root.digiview || !root.digiview.connected || !root.digiview.hasDetectionParameters) {
+            root.detectionParameterValues = ({})
+            return
+        }
+
+        root.detectionParameterValues = {
+            aiSortingMode: root.digiview.detectionSortingMode,
+            aiCropConfidenceTreshold: root.digiview.detectionTrackConfidenceThreshold,
+            aiScanConfidenceTreshold: root.digiview.detectionScanConfidenceThreshold,
+            aiCropBoxOverlay: root.digiview.detectionTrackBoxOverlap,
+            aiVarBoxOverlap: root.digiview.detectionScanBoxOverlap,
+            aiCreationScoreScale: root.digiview.detectionCreationScoreScale,
+            aiBonusDetectionScale: root.digiview.detectionBonusDetectionScale,
+            aiBonusRedetectionScale: root.digiview.detectionBonusRedetectionScale,
+            aiMissedDetectionPenaltyScale: root.digiview.detectionMissedDetectionPenalty,
+            aiMissedRedetectionPenaltyScale: root.digiview.detectionMissedRedetectionPenalty
+        }
     }
 
     Timer {
@@ -351,6 +486,11 @@ Item {
         }
     }
 
+    Component.onCompleted: {
+        syncSensorSettingsFromDigiview()
+        syncDetectionSettingsFromDigiview()
+    }
+
     onNetworkConnectionActiveChanged: {
         if (networkConnectionActive) {
             root.networkConnectionPending = false
@@ -363,6 +503,8 @@ Item {
         function onConnectedChanged() {
             if (!root.digiview || !root.digiview.connected) {
                 root.networkConnectionPending = false
+                root.sensorParameterValues = ({})
+                root.detectionParameterValues = ({})
             }
         }
 
@@ -370,6 +512,22 @@ Item {
             if (!root.digiview || !root.digiview.connected) {
                 root.networkConnectionPending = false
             }
+        }
+
+        function onSensorParametersChanged() {
+            root.syncSensorSettingsFromDigiview()
+        }
+
+        function onDetectionParametersChanged() {
+            root.syncDetectionSettingsFromDigiview()
+        }
+
+        function onHasSensorParametersChanged() {
+            root.syncSensorSettingsFromDigiview()
+        }
+
+        function onHasDetectionParametersChanged() {
+            root.syncDetectionSettingsFromDigiview()
         }
     }
 
@@ -435,7 +593,7 @@ Item {
         root.settingsResetToken
 
         if (useSettingsBridge(settingData)) {
-            return SVSettings[settingData.property]
+            return displayedSettingValue(settingData.property, settingData.digiviewParameterGroup)
         }
 
         return sliderValue
@@ -1479,12 +1637,20 @@ Item {
                                                             id: sliderControl
 
                                                             Layout.fillWidth: true
+                                                            property bool wasPressed: false
                                                             from: settingData.min !== undefined ? settingData.min : 0
                                                             to: settingData.max !== undefined ? settingData.max : 100
                                                             stepSize: settingData.step !== undefined ? settingData.step : 1
                                                             value: root.settingValue(settingData, settingData.value !== undefined ? settingData.value : from)
 
-                                                            onMoved: root.setSettingValue(settingData, value)
+                                                            onPressedChanged: {
+                                                                if (pressed) {
+                                                                    wasPressed = true
+                                                                } else if (wasPressed) {
+                                                                    wasPressed = false
+                                                                    root.commitSettingValue(settingData, value)
+                                                                }
+                                                            }
                                                         }
 
                                                         RowLayout {
@@ -1520,29 +1686,18 @@ Item {
                                                             Layout.fillWidth: true
                                                             spacing: root.settingColumnSpacing
 
-                                                            ColumnLayout {
-                                                                Layout.fillWidth: true
-                                                                spacing: 0
-
-                                                                QGCLabel {
-                                                                    Layout.fillWidth: true
-                                                                    text: settingData.label + ":"
-                                                                    wrapMode: Text.WordWrap
-                                                                }
-                                                            }
-
                                                             QGCLabel {
-                                                                Layout.alignment: Qt.AlignTop
-                                                                text: root.formatValue(root.sliderDisplayValue(settingData, sliderControl.value))
-                                                                color: qgcPalette.text
+                                                                Layout.fillWidth: true
+                                                                text: settingData.label
+                                                                wrapMode: Text.WordWrap
                                                             }
-
+                                                        
                                                             QGCTextField {
                                                                 Layout.fillWidth: true
-                                                                Layout.minimumWidth: root.controlColumnWidth
-                                                                Layout.maximumWidth: SVUnits.width * 30
-                                                                text: "test"
-                                                                placeholderText: qsTr('Enter IP address')
+                                                                Layout.minimumWidth: SVUnits.width * 25
+                                                                Layout.maximumWidth: SVUnits.width * 25
+                                                                text: settingData.value
+                                                                placeholderText: qsTr(settingData.placeholder)
                                                             }
                                                         }
 

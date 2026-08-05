@@ -77,7 +77,7 @@ Item {
         id: horizontalCompassComponent
 
         SVBackground {
-            width:  attitude.width + SVUnits.margin + compass.width + SVUnits.bigMargin * 2
+            width:  attitude.width + compass.width + SVUnits.bigMargin * 3
             height: Math.max(attitude.height, compass.height) + SVUnits.bigMargin * 2
 
             enabled:        true
@@ -108,8 +108,7 @@ Item {
                 size:                   SVUnits.objectWidth * 1.4
                 vehicle:                globals.activeVehicle
                 headingOverride:        root._heading
-                _fontSize:              0
-                border.width:           1
+                border.width:             SVSettings.simplifiedUserInterface ? 0 : 1
                 _lockNoseUpCompass:     true
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -121,7 +120,7 @@ Item {
 
         SVBackground {
             width:  Math.max(attitude.width, compass.width) + SVUnits.bigMargin * 2
-            height: attitude.height + SVUnits.bigMargin + compass.height + SVUnits.bigMargin * 2
+            height: attitude.height + compass.height + SVUnits.bigMargin * 3
 
             enabled:      true
             borderColor:  qgcPalette.windowShade
@@ -151,8 +150,7 @@ Item {
                 size:                     SVUnits.objectWidth * 1.4
                 vehicle:                  globals.activeVehicle
                 headingOverride:          root._heading
-                _fontSize:                0
-                border.width:             1
+                border.width:             SVSettings.simplifiedUserInterface ? 0 : 1
                 _lockNoseUpCompass:     true
                 anchors.horizontalCenter: parent.horizontalCenter
             }
@@ -162,12 +160,45 @@ Item {
     Component {
         id: combinedCompassComponent
 
-        IntegratedCompassAttitude {
-            width:           implicitWidth
-            height:          implicitHeight
-            headingOverride: root._heading
-            pitchOverride:   root._pitch
-            maxCompassRadius:   SVUnits.objectWidth * 1.4
+        Item {
+            // Container bound matching the horizontal/vertical backgrounds
+            width:  SVUnits.objectWidth * 1
+            height: SVUnits.objectWidth * 1
+
+            Rectangle {
+                id: border
+                anchors.left: combinedWidget.left
+                anchors.bottom: combinedWidget.bottom
+                anchors.leftMargin: -SVUnits.lineWidth
+                anchors.bottomMargin: -SVUnits.lineWidth
+                width: SVUnits.objectWidth * 2 + SVUnits.lineWidth * 2
+                height: SVUnits.objectWidth * 2 + SVUnits.lineWidth * 2
+                color: "white"
+                radius: height / 2
+                visible: !SVSettings.simplifiedUserInterface
+            }
+
+            IntegratedCompassAttitude {
+                id: combinedWidget
+                
+                // Explicitly define attitude dimensions so child elements position properly
+                attitudeSize:    SVUnits.objectWidth * 0.20
+                attitudeSpacing: SVUnits.margin
+
+                // Keep your max radius constraint
+                maxCompassRadius: SVUnits.objectWidth * 1.0
+
+                // Pass the overrides
+                headingOverride: root._heading
+                pitchOverride:   root._pitch
+                rollOverride:    root._rollAngle
+
+                // Center inside the container padding box, taking child negative offsets into account
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+
+                
+            }
         }
     }
 
@@ -188,19 +219,19 @@ Item {
                                ? QGroundControl.digiviewManager.cameraStates[root.cameraSlot]
                                : null
 
-        // 2. Make visible ONLY if tracking is active (sttStatus === 2)
-        visible: (camState ? (camState.sttStatus === 2) : false) || SVState.activeCameraTrackingId !== -1
+        // 2. Make visible for backend or local tracking/selection state.
+        visible: (camState ? camState.hasActiveTarget : false)
+            || (root.cameraSlot >= 0 && root.cameraSlot < SVState.cameraTrackingIds.length
+                && SVState.cameraTrackingIds[root.cameraSlot] !== "")
+            || (SVState.cursorTrackingSessionActive
+                && SVState.cursorTrackingSessionSlot === root.cameraSlot)
 
         // 3. Dynamically set the color based on the camera slot index
         // 3. Color reflects actual tracking state, not the slot index
-        normalColor: {
-            if (!camState) return "gray"
-            if (camState.lockTarget) return "green"       // låst mål
-            if (camState.sttStatus === 2) return "yellow"  // RUNNING men inte låst
-            return "gray"
-        }
-
-        hoverColor: "blue"
+        normalColor: qgcPalette.windowTransparent
+        hoverColor: qgcPalette.windowShadeLight
+        borderColor: qgcPalette.windowShadeLight
+        borderHoverColor: "white"
     }
 
     Connections {

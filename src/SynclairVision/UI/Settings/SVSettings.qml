@@ -14,10 +14,12 @@ QtObject {
         videoResolutionWidth: 1280,
         videoResolutionHeight: 720,
         videoFps: 30,
-        videoTargetBrightness: 1,
+        videoTargetBrightness: 0,
         recordHighlight: true,
         recordInformationBox: true,
+        aiDetectionOverlayPosition: "Single",
         simplifiedUserInterface: false,
+        alignHud: true,
         compassType: "horizontal",
         networkIPAdress: "192.168.4.60",
         networkProfiles: [
@@ -97,11 +99,10 @@ QtObject {
         aiMissedRedetectionPenaltyScale: 50,
         aiCropBoxOverlay: 0.5,
         aiVarBoxOverlap: 0.5,
-        devBypassDisconnectedUiDisable: false,
-        cameraMinimalExposure: 40,
-        cameraMaximalExposure: 40,
-        cameraMinimalGain: 40,
-        cameraMaximalGain: 40,
+        cameraMinimalExposure: 1000,
+        cameraMaximalExposure: 20000,
+        cameraMinimalGain: 1000,
+        cameraMaximalGain: 1000,
         trackingLongitude: "",
         trackingLatitude: "",
         trackingAltitude: ""
@@ -126,6 +127,7 @@ QtObject {
 
         property alias controlPanel: root.controlPanel
         property alias simplifiedUserInterface: root.simplifiedUserInterface
+        property alias alignHud: root.alignHud
         property alias compassType: root.compassType
         property alias controlPanelPosition: root.controlPanelPosition
         property alias controlPanelInteraction: root.controlPanelInteraction
@@ -185,7 +187,6 @@ QtObject {
         property alias aiMissedRedetectionPenaltyScale: root.aiMissedRedetectionPenaltyScale
         property alias aiCropBoxOverlay: root.aiCropBoxOverlay
         property alias aiVarBoxOverlap: root.aiVarBoxOverlap
-        property alias devBypassDisconnectedUiDisable: root.devBypassDisconnectedUiDisable
         property alias cameraMinimalExposure: root.cameraMinimalExposure
         property alias cameraMaximalExposure: root.cameraMaximalExposure
         property alias cameraMinimalGain: root.cameraMinimalGain
@@ -451,33 +452,6 @@ QtObject {
 
         onNetworkProfilesChanged: syncSelectedNetworkProfileState()
         onNetworkSelectedProfileIndexChanged: syncSelectedNetworkProfileState()
-        onAiDetectionOverlayPositionChanged: {
-            if (!SVState.digiviewActive) {
-                return
-            }
-
-            var positionId = root.aiDetectionOverlayPosition
-            var position = 0
-
-            if (SVState.aiOverlay) {
-                if (positionId === 'Single') { position = 1 } 
-                else if (positionId === 'ColumnRight') { position = 2 }
-                else if (positionId === 'ColumnLeft') { position = 3 } 
-                else if (positionId === 'RowRight') { position = 4 } 
-                else if (positionId === 'RowLeft') { position = 5 } 
-                else { return }
-            } 
-
-            QGroundControl.digiviewManager.sendSetVideoOutput(
-                QGroundControl.digiviewManager.streamName,
-                0,
-                0,
-                0,
-                0xFF,
-                position
-            )   
-        }
-
         Component.onCompleted: {
             setNetworkProfiles(networkProfiles ? networkProfiles.slice() : [], networkSelectedProfileIndex)
             migrateShortcutsIfNeeded()
@@ -491,6 +465,7 @@ QtObject {
 // Controls
 //---------------------------------
     property bool simplifiedUserInterface: false
+    property bool alignHud: true
     property string compassType: "horizontal"
 
     //Control Panel
@@ -597,7 +572,6 @@ QtObject {
         property real aiVarBoxOverlap: 0.5
 
     //UI
-        property bool devBypassDisconnectedUiDisable: false
 
     //Camera
         property int cameraMinimalExposure: 40

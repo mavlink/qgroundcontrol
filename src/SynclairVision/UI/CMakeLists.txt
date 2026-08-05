@@ -82,6 +82,9 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_single_panorama.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/layout_main.svg"
 
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/external_link.svg"
+
+
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/camera_photo_.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Images/Icons/camera_record.svg"
 

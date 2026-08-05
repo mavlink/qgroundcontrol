@@ -23,6 +23,20 @@ Item {
     readonly property bool _is3DMode:       QGCViewer3DManager.displayMode === QGCViewer3DManager.View3D
     readonly property bool _keepSceneAlive: QGroundControl.settingsManager.viewer3DSettings.keepSceneAlive.rawValue
 
+    property bool adjustHud: SVSettings.alignHud && QGroundControl.videoManager.decoding
+    property var detectionPosition: SVSettings.aiDetectionOverlayPosition
+    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property bool digiviewOutputGeometryAvailable: !!digiview
+        && digiview.connected
+        && digiview.hasVideoOutputParameters
+        && digiview.videoOutputStreamName === digiview.streamName
+        && digiview.videoOutputWidth > 0
+        && digiview.videoOutputHeight > 0
+    property real detectionWidth: digiview.videoOutputDetectionOverlayRect.width * digiviewScaleX    
+    property real detectionHeight: digiview.videoOutputDetectionOverlayRect.height * digiviewScaleY
+    readonly property real digiviewScaleX: digiviewOutputGeometryAvailable ? videoContentArea.width / digiview.videoOutputWidth : 0
+    readonly property real digiviewScaleY: digiviewOutputGeometryAvailable ? videoContentArea.height / digiview.videoOutputHeight : 0
+
     // These should only be used by MainRootWindow
     property var planController:    _planController
     property var guidedController:  _guidedController
@@ -104,17 +118,17 @@ Item {
                 z:                  1
 
                 //parentToolInsets:   _toolInsets
-                visible:            !QGroundControl.videoManager.fullScreen
-                                        && SVState.synclairOverlay
-                                        && videoControl.pipState.state !== videoControl.pipState.windowState
+                visible:            SVState.synclairOverlay
+                                         && videoControl.pipState.state !== videoControl.pipState.windowState
             }
         }
 
         PipView {
             id:                     _pipView
-            anchors.left:           parent.left
-            anchors.bottom:         parent.bottom
-            anchors.margins:        _toolsMargin
+            anchors.left:           adjustHud ? videoContentArea.left : parent.left
+            anchors.bottom:         adjustHud ? videoContentArea.bottom : parent.bottom
+            anchors.leftMargin:     _widgetMargin + ((adjustHud && detectionPosition === "ColumnLeft") ? detectionWidth : 0)
+            anchors.bottomMargin:   _widgetMargin + ((adjustHud && detectionPosition === "RowBottom") ? detectionHeight : 0)
             item1IsFullSettingsKey: "MainFlyWindowIsMap"
             item1:                  mapControl
             item2:                  _showVideoView ? videoControl : null
@@ -128,21 +142,71 @@ Item {
             visible: SVState.hud && !SVState.cursorTrackingSessionActive
         }
 
+        Item {
+            id: videoContentArea
+
+            property var _ar: QGroundControl.videoManager.gstreamerEnabled
+                ? QGroundControl.videoManager.videoSize.width / QGroundControl.videoManager.videoSize.height
+                : QGroundControl.videoManager.aspectRatio
+
+            visible: QGroundControl.videoManager.decoding
+
+            width: {
+                if (SVState.synclairOverlay) {
+                    return Math.min(_root.width, _root.height * _ar)
+                }
+
+                return _root.width
+            }
+            height: {
+                if (SVState.synclairOverlay) {
+                    return Math.min(_root.height, _root.width * (1 / _ar))
+                }
+
+                return _root.height
+            }
+            anchors.centerIn: parent
+        }
+
         FlyViewWidgetLayer {
-            id:                     widgetLayer
+            id: widgetLayer
+
+            
+            //property bool adjustHud:  && QGroundControl.videoManager.decoding + SVState.aiOverlay
+            readonly property real toolbarInset: SVState.toolbar ? toolbar.height : 0
+
+            property real heightOffset: (_root.height - videoContentArea.height) / 2
+            property real widthOffset: (_root.width - videoContentArea.width) / 2
+
+            /*
+            
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
-            anchors.left:           parent.left
-            anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
+            anchors.left:           videoContentAreaProxy.left
+            anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : videoContentAreaProxy.right
             anchors.margins:        _widgetMargin
             anchors.topMargin:      (SVState.toolbar) ? toolbar.height + _widgetMargin : _widgetMargin
+
+            
+            */
+            
+            anchors.left: adjustHud ? videoContentArea.left : parent.left
+            anchors.right: adjustHud ? videoContentArea.right : parent.right
+            anchors.top: adjustHud ? videoContentArea.top : parent.top
+            anchors.bottom: adjustHud ? videoContentArea.bottom : parent.bottom
+            
+            anchors.leftMargin: _widgetMargin + ((adjustHud && detectionPosition === "ColumnLeft") ? detectionWidth : 0)
+            anchors.rightMargin: _widgetMargin + ((adjustHud && (detectionPosition === "ColumnRight" || detectionPosition === "Single")) ? detectionWidth : 0)
+            anchors.bottomMargin: _widgetMargin + ((adjustHud && detectionPosition === "RowBottom") ? detectionHeight : 0)
+            anchors.topMargin: _widgetMargin + (adjustHud ? (Math.max(Math.max(0, toolbarInset - heightOffset), adjustHud && detectionPosition === "RowTop" ? detectionHeight : 0)) : toolbarInset)
+
+
             z:                      _fullItemZorder + 2
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             visible:                SVState.hud && !SVState.cursorTrackingSessionActive
         }
 
-        
 
         FlyViewCustomLayer {
             id:                 customOverlay
