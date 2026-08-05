@@ -133,12 +133,8 @@ Item {
         checked: false
         hovered: false
         pressed: false
-        borderWidth: 1
+        borderWidth: SVSettings.simplifiedUserInterface ? 0 : 1
     }
-
-    
-
-
 
     Grid {
         id: layoutGrid

@@ -28,32 +28,6 @@ Item {
         && digiview.hasVideoOutputParameters
         && digiview.videoOutputStreamName === digiview.streamName
 
-    function setAiDetectionOverlayPosition(positionId) {
-        if (!root.digiviewActive) {
-            return
-        }
-
-        var position = 0
-
-        if (SVState.aiOverlay) {
-            if (positionId === 'Single') { position = 1 } 
-            else if (positionId === 'ColumnRight') { position = 2 }
-            else if (positionId === 'ColumnLeft') { position = 3 } 
-            else if (positionId === 'RowRight') { position = 4 } 
-            else if (positionId === 'RowLeft') { position = 5 } 
-            else { return }
-        } 
-
-        digiview.sendSetVideoOutput(
-            digiview.streamName,
-            0,
-            0,
-            0,
-            0xFF,
-            position
-        )   
-    }
-
     function setLayout(layoutId) {
         if (!root.digiviewActive) {
             return
@@ -85,13 +59,20 @@ Item {
     }
 
     function activateTrackingMode(trackingId) {
-        if ((trackingId === "cursorTrack" || trackingId === "singleTarget")
-                && (!root.cursorTargetingAvailable
-                    || !SVState.beginCursorTrackingSelection(SVState.cameraSelected, root.visibleCameraSlots))) {
+        if (trackingId === "coordsTrack") {
+            if (SVState.activateManualTracking()) {
+                root.trackingSelected("manual")
+            }
             return
         }
 
-        SVState.setActiveCameraTrackingId(trackingId)
+        if ((trackingId === "cursorTrack" || trackingId === "singleTarget")
+                && (!root.cursorTargetingAvailable
+                    || !SVState.beginPointTrackingSelection(
+                        trackingId, SVState.cameraSelected, root.visibleCameraSlots))) {
+            return
+        }
+
         root.trackingSelected(trackingId)
     }
 
@@ -99,13 +80,8 @@ Item {
         target: SVState
 
         function onCursorTrackingSelectionCancelled() {
-            SVState.setActiveCameraTrackingId("")
             root.trackingSelected("")
         }
-
-        function onAiDetectionOverlayPositionChanged() {
-            root.setAiDetectionOverlayPosition(SVSettings.aiDetectionOverlayPosition)   
-        }  
     }
 
     QGCPopupDialogFactory {
@@ -233,7 +209,7 @@ Item {
         model: [
             { 
                 id: "aiOverlay",
-                text: "Detection",
+                text: "Detect",
                 description: "Show/Hide AI Detection Overlay",
                 checkable: true,
                 iconSource: "/qmlimages/layout_ai.svg",
@@ -249,7 +225,6 @@ Item {
             }
 
             SVState.toggleAiOverlay()
-            root.setAiDetectionOverlayPosition(SVSettings.aiDetectionOverlayPosition)
         }
     }
 
@@ -276,14 +251,16 @@ Item {
         model: SVFlyViewMenusList.getTrackingModel(SVState.hasActiveCamera && root.uiInteractionEnabled)
 
         onItemSelected: (id) => {
+            const trackingStateId = id === "coordsTrack" ? "manual" : id
             if (SVState.activeCameraTrackingId === "") {
                 root.activateTrackingMode(id)
                 return
             }
 
-            if (SVState.activeCameraTrackingId === id) {
-                SVState.setActiveCameraTrackingId("")
-                root.trackingSelected("")
+            if (SVState.activeCameraTrackingId === trackingStateId) {
+                if (SVState.stopActiveTracking()) {
+                    root.trackingSelected("")
+                }
                 return
             }
 

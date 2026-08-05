@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
@@ -14,6 +15,11 @@ import QGroundControl.FlightMap
 Item {
     id: root
     clip: true
+
+    property alias videoContentAreaItem: videoContentArea
+    property var detectionPosition: SVSettings.aiDetectionOverlayPosition
+
+    property bool isMaximized: mainWindow.visibility === Window.Maximized
 
     property var parentToolInsets
     property real leftToolStripBottom: 0
@@ -102,6 +108,14 @@ Item {
         triggerPhotoBorder()
     }
 
+    function beginPointTrackingSelection(trackingId) {
+        if (!root.visible || root.previewMode || root.width <= 0 || root.height <= 0
+                || !SVState.beginPointTrackingSelection(
+                    trackingId, SVState.cameraSelected, root.visibleCameraSlots)) {
+            return
+        }
+    }
+
     function autoconnectDigiview() {
         if (!SVSettings.networkAutoconnectOnStart || !digiview || digiview.connected) {
             return
@@ -136,6 +150,10 @@ Item {
 
         function onTakePhotoRequested() {
             root.takePhoto()
+        }
+
+        function onPointTrackingSelectionRequested(trackingId) {
+            root.beginPointTrackingSelection(trackingId)
         }
     }
 
@@ -274,11 +292,29 @@ Item {
     }
 
     SVFlyViewWidgetLayer {
+        //(root.isMaximized || QGroundControl.videoManager.fullScreen)
+        property bool adjustHud: SVSettings.alignHud && QGroundControl.videoManager.decoding
+        //property bool adjustHud:  && QGroundControl.videoManager.decoding + SVState.aiOverlay
+        readonly property real toolbarInset: SVState.toolbar ? _toolBarHeight : 0
+
+        property real heightOffset: (root.height - videoContentArea.height) / 2
+        property real widthOffset: (root.width - videoContentArea.width) / 2
+
         id: widgetLayer
         z: 2
-        anchors.fill: parent
-        anchors.margins: _widgetMargin
-        anchors.topMargin: _widgetMargin + _toolBarHeight
+        anchors.left: adjustHud ? videoContentArea.left : parent.left
+        anchors.right: adjustHud ? videoContentArea.right : parent.right
+        anchors.top: adjustHud ? videoContentArea.top : parent.top
+        anchors.bottom: adjustHud ? videoContentArea.bottom : parent.bottom
+        
+        anchors.leftMargin: _widgetMargin + ((adjustHud && detectionPosition === "ColumnLeft") ? detectionOverlay.width : 0)
+        anchors.rightMargin: _widgetMargin + ((adjustHud && (detectionPosition === "ColumnRight" || detectionPosition === "Single")) ? detectionOverlay.width : 0)
+        anchors.bottomMargin: _widgetMargin + ((adjustHud && detectionPosition === "RowBottom") ? detectionOverlay.height : 0)
+        //anchors.topMargin: _widgetMargin + (adjustHud ? (Math.max(Math.max(toolbarInset, heightOffset), adjustHud && detectionPosition === "RowTop" ? detectionOverlay.height : 0)
+        anchors.topMargin: _widgetMargin + (adjustHud ? (Math.max(Math.max(0, toolbarInset - heightOffset), adjustHud && detectionPosition === "RowTop" ? detectionOverlay.height : 0)) : toolbarInset)
+        offsetX: adjustHud ? (anchors.rightMargin - _widgetMargin + Math.floor(widthOffset)) : 0 
+        //offsetY: SVUnits.objectWidth + toolbarInset + (adjustHud ? Math.max(Math.max(toolbarInset, heightOffset), detectionPosition === "RowTop" ? detectionOverlay.height : 0)
+        offsetY: SVUnits.objectWidth + (adjustHud ? (Math.max(Math.max(toolbarInset, heightOffset) - toolbarInset, detectionPosition === "RowTop")) : 0)       
         leftToolStripBottom: root.leftToolStripBottom
         pipViewWidth: root.pipViewWidth
         visible: !root.previewMode && !SVState.cursorTrackingSessionActive
@@ -337,7 +373,7 @@ Item {
                 id:                 label
                 text:               qsTr("SynclairQGC")
                 color:              "white"
-                font.pointSize:     SVUnits.smallFont
+                font.pointSize:     SVUnits.smallText
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
             }

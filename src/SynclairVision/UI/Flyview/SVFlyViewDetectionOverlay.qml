@@ -44,7 +44,6 @@ Item {
                 y: !root.isHorizontal ? width : 0
 
                 color: qgcPalette.windowShadeLight
-                visible: index > 0
             }
         }
     }
@@ -55,7 +54,7 @@ Item {
         width: root.isHorizontal ? root.width % root.height : root.width 
         height: !root.isHorizontal ? root.height % root.width : root.height
                 
-        color: qgcPalette.window
+        color: "black"
         border.width: 1
         border.color: qgcPalette.windowShadeLight
         visible: root.legitValues

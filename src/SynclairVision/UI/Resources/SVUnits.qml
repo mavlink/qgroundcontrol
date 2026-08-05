@@ -19,6 +19,7 @@ QtObject {
     property int thickLineWidth: 3
 
     property real smallText: ScreenTools.smallFontPointSize
+    property real svText: ScreenTools.mediumFontPointSize  * 0.7
     property real mediumText: ScreenTools.mediumFontPointSize
     property real largeText: ScreenTools.largeFontPointSize
 

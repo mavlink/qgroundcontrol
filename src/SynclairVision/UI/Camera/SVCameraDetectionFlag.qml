@@ -10,6 +10,8 @@ Item {
     property int radius: SVUnits.radius
     property color normalColor
     property color hoverColor
+    property color borderColor
+    property color borderHoverColor
 
     property int index
 
@@ -21,8 +23,8 @@ Item {
         anchors.fill: parent
 
         // Properties to dynamic set colors & dimensions
-        property color fillColor: mouseArea.containsMouse ? hoverColor : normalColor      // Inner fill color
-        property color strokeColor: "white"    // Outline color
+        property color fillColor: mouseArea.pressed ? hoverColor : normalColor      // Inner fill color
+        property color strokeColor: mouseArea.containsMouse ? borderHoverColor : borderColor    // Outline color
         property real strokeWidth: 1             // Outline thickness
         property real cornerRadius: root.radius / 2           // Corner radius
 
@@ -76,8 +78,9 @@ Item {
         hoverEnabled: true
 
         onClicked: (mouse) => {
-            digiview.clearDetectionTracking(index)
-            SVState.deselectTracking()
+            if (digiview.clearCurrentTarget(index)) {
+                SVState.setCameraTrackingId(index, '')
+            }
         }
     }
 }

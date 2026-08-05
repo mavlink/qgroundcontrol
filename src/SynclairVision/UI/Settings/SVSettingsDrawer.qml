@@ -11,6 +11,9 @@ Item {
     property string activeSettingsId: ""
     property var settingsModel: []
 
+    property real offsetX: 0
+    property real offsetY: 0
+
     signal settingsSelected(string settingsId)
     signal dismissed()
 
@@ -38,7 +41,7 @@ Item {
             property bool indicatorDrawerUseRightEdgeAlignment: true
             property real indicatorDrawerRightEdgeMargin: -(SVUnits.height / 8) - (SVUnits.lineWidth * 2)
             readonly property real drawerSpacing: SVUnits.bigMargin * 2
-            readonly property real settingsCategoryStripTopOffset: SVUnits.objectWidth - SVUnits.margin  -  2.5 * SVUnits.lineWidth
+            readonly property real settingsCategoryStripTopOffset: root.offsetY //SVUnits.objectWidth - SVUnits.margin  -  2.5 * SVUnits.lineWidth
             readonly property real minimumSettingsPanelWidth: SVUnits.width * 75
             readonly property real maximumSettingsPanelWidth: Math.max(minimumSettingsPanelWidth,
                                                                         drawerViewportWidth - settingsCategoryStripContainer.width - drawerSpacing - (SVUnits.width * 12))
@@ -89,6 +92,7 @@ Item {
 
             Row {
                 spacing: parent.drawerSpacing
+
 
                 Item {
                     id: settingsPanelContainer
@@ -179,14 +183,15 @@ Item {
 
                 Item {
                     id: settingsCategoryStripContainer
-                    width: settingsCategoryStrip.width
+                    width: settingsCategoryStrip.width + root.offsetX
                     height: settingsDrawerRoot.settingsCategoryStripTopOffset + settingsCategoryStrip.height
 
                     SVMenuStrip {
                         id: settingsCategoryStrip
                         anchors.top: parent.top
-                        anchors.topMargin: settingsDrawerRoot.settingsCategoryStripTopOffset + 6
-                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.topMargin: settingsDrawerRoot.settingsCategoryStripTopOffset
+                        anchors.left: parent.left
+                        anchors.leftMargin: 0
 
                         headerless: true
                         autoUpdateActiveId: false

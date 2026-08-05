@@ -167,7 +167,10 @@ Item {
 
             if (root.cursorTrackingSessionCamera) {
                 if (width > 0 && height > 0) {
-                    root.cursorTargetSelected(root.cameraSlot, mouse.x / width, mouse.y / height)
+                    root.cursorTargetSelected(
+                        root.cameraSlot,
+                        mouse.x / width * 2.0 - 1.0,
+                        1.0 - mouse.y / height * 2.0)
                 } else {
                     SVState.cancelCursorTrackingSelection()
                 }

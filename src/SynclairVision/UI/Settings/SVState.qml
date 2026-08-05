@@ -6,6 +6,7 @@ import QGroundControl
 QtObject {
     id: root
 
+
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property bool digiviewActive: !!(digiview && digiview.connected)
     property bool userInitiatedDisconnect: false
@@ -44,31 +45,37 @@ QtObject {
     signal takePhotoRequested()
     signal cursorTargetRequested(int cameraSlot, real normalizedX, real normalizedY)
     signal cursorTrackingSelectionCancelled()
+    signal pointTrackingSelectionRequested(string trackingId)
 
-    function beginCursorTrackingSelection(cameraSlot, visibleCameraSlots) {
+    function beginPointTrackingSelection(trackingId, cameraSlot, visibleCameraSlots) {
         if (!cameraSelectionEnabled || cameraSlot !== cameraSelected
                 || cameraSlot < 0 || cameraSlot >= cameraTrackingIds.length
-                || !visibleCameraSlots || visibleCameraSlots.indexOf(cameraSlot) === -1) {
+                || !visibleCameraSlots || visibleCameraSlots.indexOf(cameraSlot) === -1
+                || (trackingId !== 'cursorTrack' && trackingId !== 'singleTarget')) {
             return false
         }
 
         cursorTrackingSessionSlot = cameraSlot
+        pointTrackingSelectionMode = trackingId
         cursorTrackingSelect = false
         return true
+    }
+
+    function _endPointTrackingSelection() {
+        cursorTrackingSessionSlot = -1
+        pointTrackingSelectionMode = ''
+        cursorTrackingSelect = true
     }
 
     function cancelCursorTrackingSelection() {
         if (cursorTrackingSessionActive
                 && cursorTrackingSessionSlot >= 0
                 && cursorTrackingSessionSlot < cameraTrackingIds.length
-                && cameraTrackingIds[cursorTrackingSessionSlot] === 'cursorTrack') {
-            var trackingIds = cameraTrackingIds.slice()
-            trackingIds[cursorTrackingSessionSlot] = ""
-            cameraTrackingIds = trackingIds
+                && cameraTrackingIds[cursorTrackingSessionSlot] === pointTrackingSelectionMode) {
+            setCameraTrackingId(cursorTrackingSessionSlot, '')
         }
 
-        cursorTrackingSessionSlot = -1
-        cursorTrackingSelect = true
+        _endPointTrackingSelection()
     }
 
     function cancelCursorTrackingSelectionFromBackground() {
@@ -78,22 +85,27 @@ QtObject {
             return
         }
 
-        // 1. Skicka avbryt-kommando till C++ backend
-        digiview.clearDetectionTracking(sessionSlot)
-
-        // 2. Rensa lokal spårnings-ID om arrayen fortfarande används
-        if (sessionSlot < cameraTrackingIds.length) {
-            var trackingIds = cameraTrackingIds.slice()
-            trackingIds[sessionSlot] = ""
-            cameraTrackingIds = trackingIds
-        }
-
         cancelCursorTrackingSelection()
         cursorTrackingSelectionCancelled()
     }
 
     function recordCursorTarget(cameraSlot, normalizedX, normalizedY) {
-        if (!cursorTrackingSessionActive || cameraSlot !== cursorTrackingSessionSlot) {
+        if (!cursorTrackingSessionActive || cameraSlot !== cursorTrackingSessionSlot
+                || !Number.isFinite(normalizedX) || !Number.isFinite(normalizedY)) {
+            return false
+        }
+
+        var submitted = false
+        if (pointTrackingSelectionMode === 'singleTarget') {
+            submitted = digiview && digiview.setSingleTargetTrackingTarget(
+                cameraSlot, normalizedX, normalizedY)
+        } else if (pointTrackingSelectionMode === 'cursorTrack') {
+            submitted = digiview && digiview.setCameraCursorTarget(
+                cameraSlot, normalizedX, normalizedY)
+        }
+
+        if (!submitted) {
+            cancelCursorTrackingSelection()
             return false
         }
 
@@ -102,8 +114,9 @@ QtObject {
             normalizedX: normalizedX,
             normalizedY: normalizedY
         }
+        setActiveCameraTrackingId(pointTrackingSelectionMode, true)
         cursorTargetRequested(cameraSlot, normalizedX, normalizedY)
-        cancelCursorTrackingSelection()
+        _endPointTrackingSelection()
         return true
     }
 
@@ -148,12 +161,80 @@ QtObject {
         toolbar = !toolbar
     }
 
+    function aiDetectionOverlayModeForPosition(positionId) {
+        switch (positionId) {
+        case 'Single':
+            return 1
+        case 'ColumnRight':
+            return 2
+        case 'ColumnLeft':
+            return 3
+        case 'RowTop':
+            return 4
+        case 'RowBottom':
+            return 5
+        default:
+            return 0
+        }
+    }
+
+    function aiDetectionOverlayPositionForMode(mode) {
+        switch (mode) {
+        case 1:
+            return 'Single'
+        case 2:
+            return 'ColumnRight'
+        case 3:
+            return 'ColumnLeft'
+        case 4:
+            return 'RowTop'
+        case 5:
+            return 'RowBottom'
+        default:
+            return ''
+        }
+    }
+
+    function sendAiDetectionOverlayMode(mode) {
+        if (!hasCurrentVideoOutputState) {
+            return
+        }
+
+        digiview.sendSetVideoOutput(
+            digiview.streamName,
+            0,
+            0,
+            0,
+            0xFF,
+            mode)
+    }
+
+    function setAiDetectionOverlayPosition(positionId) {
+        const mode = aiDetectionOverlayModeForPosition(positionId)
+
+        if (mode !== 0) {
+            sendAiDetectionOverlayMode(mode)
+        }
+    }
+
     function toggleAiOverlay() {
-        aiOverlay = !aiOverlay
+        if (aiOverlay) {
+            sendAiDetectionOverlayMode(0)
+            return
+        }
+
+        setAiDetectionOverlayPosition(effectiveAiDetectionOverlayPosition)
     }
 
     function toggleLockControls() {
-        lockControls = !lockControls
+        if (lockControls) {
+            lockControls = false
+            return
+        }
+
+        if (digiview && hasActiveCamera && digiview.lockCurrentTarget(cameraSelected)) {
+            lockControls = true
+        }
     }
 
     function toggleSynclairOverlay() {
@@ -225,14 +306,26 @@ QtObject {
         digiview.changeZoom(cameraSelected, zoom)
     }
 
-    function setActiveCameraTrackingId(trackingId) {
-        if (!hasActiveCamera) {
+    function setCameraTrackingId(cameraSlot, trackingId, awaitingConfirmation) {
+        if (cameraSlot < 0 || cameraSlot >= cameraTrackingIds.length) {
             return
         }
 
         var trackingIds = cameraTrackingIds.slice()
-        trackingIds[cameraSelected] = trackingId
+        trackingIds[cameraSlot] = trackingId
         cameraTrackingIds = trackingIds
+
+        var pending = cameraTrackingAwaitingConfirmation.slice()
+        pending[cameraSlot] = trackingId !== '' && awaitingConfirmation === true
+        cameraTrackingAwaitingConfirmation = pending
+    }
+
+    function setActiveCameraTrackingId(trackingId, awaitingConfirmation) {
+        if (!hasActiveCamera) {
+            return
+        }
+
+        setCameraTrackingId(cameraSelected, trackingId, awaitingConfirmation)
     }
 
     // TODO: layoutCount and nextLayout() are placeholders. Wire layoutIndex up to
@@ -245,22 +338,12 @@ QtObject {
         layoutIndex = (layoutIndex + 1) % layoutCount
     }
 
-    // TODO: the three tracking-mode functions below are stubs. They currently just
-    // record a mode string locally via setActiveCameraTrackingId so the shortcut wiring
-    // is complete end-to-end, but they need to be replaced with the actual DigiviewManager
-    // calls that start STT / cursor-target / manual tracking on the backend (that API
-    // wasn't visible in the files provided). cursorTrackingSelectionEnabled note:
-    // beginCursorTrackingSelection() already exists and expects a list of currently
-    // visible camera slots — that list needs to come from wherever your video layout
-    // lives, so activateCursorTracking() below is a simplified placeholder until that's
-    // wired through.
     function activateSttTracking() {
         if (!digiview || !hasActiveCamera || lockControls) {
             return
         }
 
-        // TODO: replace with the real STT-start call, e.g. digiview.startDetectionTracking(cameraSelected)
-        setActiveCameraTrackingId('stt')
+        pointTrackingSelectionRequested('singleTarget')
     }
 
     function activateCursorTracking() {
@@ -268,17 +351,31 @@ QtObject {
             return
         }
 
-        // TODO: confirm this is how cursor-tracking selection should be entered via a shortcut
-        setActiveCameraTrackingId('cursor')
+        pointTrackingSelectionRequested('cursorTrack')
     }
 
     function activateManualTracking() {
-        if (!hasActiveCamera || lockControls) {
-            return
+        if (!digiview || !hasActiveCamera || lockControls) {
+            return false
         }
 
-        // TODO: replace with the real manual-tracking-mode call
-        setActiveCameraTrackingId('manual')
+        const latitudeText = SVSettings.trackingLatitude.trim()
+        const longitudeText = SVSettings.trackingLongitude.trim()
+        const altitudeText = SVSettings.trackingAltitude.trim()
+        if (latitudeText === '' || longitudeText === '' || altitudeText === '') {
+            return false
+        }
+
+        const latitude = Number(latitudeText)
+        const longitude = Number(longitudeText)
+        const altitude = Number(altitudeText)
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(altitude)
+                || !digiview.setCameraManualTarget(cameraSelected, latitude, longitude, altitude)) {
+            return false
+        }
+
+        setActiveCameraTrackingId('manual', true)
+        return true
     }
 
     function deselectTracking() {
@@ -286,8 +383,48 @@ QtObject {
             return
         }
 
-        cancelCursorTrackingSelectionFromBackground()
-        setActiveCameraTrackingId('')
+        stopActiveTracking()
+    }
+
+    function stopActiveTracking() {
+        const cameraSlot = cameraSelected
+        const trackingId = cameraSlot >= 0 && cameraSlot < cameraTrackingIds.length
+            ? cameraTrackingIds[cameraSlot]
+            : activeCameraTrackingId
+
+        if (trackingId !== '') {
+            if (!digiview || !digiview.clearCurrentTarget(cameraSlot)) {
+                return false
+            }
+            setActiveCameraTrackingId('')
+        }
+
+        cancelCursorTrackingSelection()
+        return true
+    }
+
+    function synchronizeCameraTrackingStates() {
+        if (!digiview || !digiview.cameraStates) {
+            return
+        }
+
+        const cameraStates = digiview.cameraStates
+        const cameraCount = Math.min(cameraTrackingIds.length, cameraStates.length)
+        for (let cameraSlot = 0; cameraSlot < cameraCount; ++cameraSlot) {
+            const state = cameraStates[cameraSlot]
+            if (!state || !state.hasTargetState) {
+                continue
+            }
+
+            if (state.hasActiveTarget) {
+                if (cameraTrackingAwaitingConfirmation[cameraSlot]) {
+                    setCameraTrackingId(cameraSlot, cameraTrackingIds[cameraSlot], false)
+                }
+            } else if (!cameraTrackingAwaitingConfirmation[cameraSlot]
+                       && cameraTrackingIds[cameraSlot] !== '') {
+                setCameraTrackingId(cameraSlot, '')
+            }
+        }
     }
 
     function toggleCrosshair() {
@@ -408,6 +545,7 @@ QtObject {
     property bool synclairOverlay: false
     property bool cursorTrackingSelect: true
     property int cursorTrackingSessionSlot: -1
+    property string pointTrackingSelectionMode: ''
     property var cursorTargetRequest: ({ cameraSlot: -1, normalizedX: 0, normalizedY: 0 })
     readonly property bool shortcutsEnabled: synclairOverlay
     property bool hud: true
@@ -423,8 +561,26 @@ QtObject {
     property string recordElapsedText: "00:00:00"
     property int photoCooldownMs: 500
     property real lastPhotoRequestTimeMs: 0
-    property bool aiOverlay: false
+    readonly property bool hasCurrentVideoOutputState: !!digiview
+        && digiview.connected
+        && digiview.hasVideoOutputParameters
+        && digiview.videoOutputStreamName === digiview.streamName
+    readonly property bool aiOverlay: hasCurrentVideoOutputState
+        && aiDetectionOverlayPositionForMode(digiview.videoOutputDetectionOverlayMode) !== ''
+    readonly property string effectiveAiDetectionOverlayPosition: {
+        if (hasCurrentVideoOutputState) {
+            const remotePosition = aiDetectionOverlayPositionForMode(digiview.videoOutputDetectionOverlayMode)
+            if (remotePosition !== '') {
+                return remotePosition
+            }
+        }
+
+        return aiDetectionOverlayModeForPosition(SVSettings.aiDetectionOverlayPosition) !== 0
+            ? SVSettings.aiDetectionOverlayPosition
+            : 'Single'
+    }
     property var cameraTrackingIds: ["", "", "", "", "", ""]
+    property var cameraTrackingAwaitingConfirmation: [false, false, false, false, false, false]
     property var cameraOverlays: [
         { grid: false, crosshair: false },
         { grid: false, crosshair: false },
@@ -442,18 +598,21 @@ QtObject {
     readonly property bool isCurrentCamTracking: activeCameraState ? (activeCameraState.sttStatus === 2) : false // 2 = SV_STT_STATUS_RUNNING                                         
     
     
-    // Prefer the confirmed hardware track ID once the backend reports one is running.
-    // Until then (or if the backend never reports one, since the tracking-start calls
-    // are currently stubs — see the TODO above activateSttTracking()), fall back to the
-    // locally-recorded selection in cameraTrackingIds so the tracking menu buttons
-    // actually reflect what the user clicked instead of staying permanently unhighlighted.
-    readonly property string activeCameraTrackingId: {
-        if (activeCameraState && activeCameraState.trackId > 0) {
-            return activeCameraState.trackId.toString()
-        }
+    readonly property int activeCameraTrackId: activeCameraState ? activeCameraState.trackId : 0
 
+    // Keep the local mode after a successful selection. Remote state only supplies
+    // a menu mode where the camera-state fields identify one unambiguously.
+    readonly property string activeCameraTrackingId: {
         if (hasActiveCamera && cameraTrackingIds[cameraSelected]) {
             return cameraTrackingIds[cameraSelected]
+        }
+
+        if (activeCameraState && activeCameraState.targetingMode === 2) {
+            return 'detection'
+        }
+
+        if (activeCameraState && activeCameraState.sttStatus === 2) {
+            return 'singleTarget'
         }
 
         return ""
@@ -465,6 +624,14 @@ QtObject {
     readonly property bool crosshair: cameraSelected >= 0
         && cameraSelected < cameraOverlays.length
         && cameraOverlays[cameraSelected].crosshair
+
+    property Connections _cameraStatesConnection: Connections {
+        target: digiview
+
+        function onCameraStatesChanged() {
+            root.synchronizeCameraTrackingStates()
+        }
+    }
 
     onDigiviewActiveChanged: {
         var profile = SVSettings.selectedNetworkProfile()
@@ -484,6 +651,9 @@ QtObject {
             )
         } else {
             // State 3: Disconnected
+            cameraTrackingIds = ["", "", "", "", "", ""]
+            cameraTrackingAwaitingConfirmation = [false, false, false, false, false, false]
+
             if (userInitiatedDisconnect) {
                 if (_reachedConnectedState) {
                     SVNotificationManager.add(
