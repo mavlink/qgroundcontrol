@@ -25,8 +25,6 @@ Motorları manuel olarak kurmak ve test etmek için sayfadaki talimatları okuyu
 Aracı devreye almak ve testi etkinleştirmek için anahtarı kaydırmadan önce motorların ve pervanelerin engellerden uzak olduğundan emin olun!
 :::
 
-![Ardusub Motorların Testi](../../../assets/setup/motors-sub.jpg)
-
 ## Otomatik Yön Algılama {#automatic}
 
 Ardusub 4.0 ve daha yeni sürümler, motor yönlerinin otomatik olarak algılanmasını destekler.
@@ -40,4 +38,3 @@ Otomatik motor yönü algılamasını gerçekleştirmek için \*\*Vehicle Setup-
 Bu prosedür hala motorların gövde görünümünde gösterildiği gibi _ doğru çıkışlara _ bağlanmasını gerektirir!
 :::
 
-![Ardusub Motorların Otomatik Kurulumu](../../../assets/setup/motors-sub-auto.jpg)

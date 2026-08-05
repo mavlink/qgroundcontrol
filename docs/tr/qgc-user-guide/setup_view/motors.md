@@ -7,8 +7,6 @@ Bu talimatlar PX4 ve ArduPilot'taki çoğu araç türü için geçerlidir.
 Araca özel talimatlar, alt konular olarak sağlanır (örn. [ Motor Kurulumu (ArduSub) ](../setup_view/motors_ardusub.md)).
 :::
 
-![Motorların Testi](../../../assets/setup/Motors.png)
-
 ## Test Adımları
 
 Motorları test etmek için:

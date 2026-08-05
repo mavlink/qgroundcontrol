@@ -7,6 +7,7 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QSettings>
 
 void JoystickTest::initTestCase()
 {
@@ -43,6 +44,17 @@ JoystickSDL* JoystickTest::_findJoystickByInstanceId(int instanceId)
 void JoystickTest::_pumpEvents()
 {
     SDLJoystick::pumpEvents();
+}
+
+// Seeds a stored button action assignment as if it was saved by a previous session
+void JoystickTest::_seedButtonActionSetting(const QString &joystickName, int buttonIndex, const QString &actionName)
+{
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("JoystickSettingsV2/%1").arg(joystickName));
+    settings.beginGroup(QStringLiteral("JoystickButtonActionSettingsArray"));
+    settings.beginGroup(QString::number(buttonIndex));
+    settings.setValue(QStringLiteral("actionName"), actionName);
+    settings.setValue(QStringLiteral("repeat"), false);
 }
 
 //-----------------------------------------------------------------------------
@@ -819,6 +831,117 @@ void JoystickTest::_adjustRangeToRcOverridePwmTest()
     QCOMPARE(js->_adjustRangeToRcOverridePwm(Joystick::AxisMin,  cal, true),  static_cast<uint16_t>(1000));  // full negative
 
     js->_close();
+}
+
+// Regression test for #13918: stored button assignments whose action is not in the
+// currently-available actions list (e.g. flight-mode actions saved while a vehicle was
+// connected) must NOT be scrubbed when the joystick is created without a vehicle. The
+// available flight modes can change dynamically (standard modes protocol), so the
+// assignment is kept and availability is checked at button press time.
+void JoystickTest::_buttonActionUnknownActionPreservedTest()
+{
+    const QString joystickName = QStringLiteral("Unknown Action Test");
+    const QString settingsGroup = QStringLiteral("JoystickSettingsV2/%1").arg(joystickName);
+    const QString buttonArrayGroup = QStringLiteral("JoystickButtonActionSettingsArray");
+    const QString actionNameKey = QStringLiteral("actionName");
+
+    // "Position" is a vehicle flight-mode action: only available when a vehicle is active.
+    const QString knownAction1 = QStringLiteral("Arm");
+    const QString vehicleOnlyAction = QStringLiteral("Position");
+    const QString knownAction2 = QStringLiteral("Disarm");
+
+    // Seed settings as if a previous session assigned three buttons while a vehicle was connected
+    _seedButtonActionSetting(joystickName, 0, knownAction1);
+    _seedButtonActionSetting(joystickName, 1, vehicleOnlyAction);
+    _seedButtonActionSetting(joystickName, 2, knownAction2);
+
+    // Create the joystick with no active vehicle: flight-mode actions are not in the available list
+    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(joystickName, 4, 16, 1));
+    QVERIFY(_mockJoystick->isValid());
+    _pumpEvents();
+    _discoveredJoysticks = JoystickSDL::discover();
+    JoystickSDL* js = _findJoystickByInstanceId(_mockJoystick->instanceId());
+    QVERIFY(js != nullptr);
+
+    // Known actions must be assigned in memory
+    QCOMPARE(js->getButtonAction(0), knownAction1);
+    QCOMPARE(js->getButtonAction(2), knownAction2);
+
+    // The vehicle-only action assignment must be kept even though the action is not
+    // currently available. It becomes usable once a vehicle provides that flight mode.
+    QCOMPARE(js->getButtonAction(1), vehicleOnlyAction);
+
+    // The assigned action must also be added to the available actions list so the button
+    // assignment combo in the UI always shows the real assignment.
+    QVERIFY(js->assignableActionTitles().contains(vehicleOnlyAction));
+
+    // THE BUG (#13918): loading must not permanently delete the stored assignment for the
+    // vehicle-only action. It must still be present in settings so it comes back when a
+    // vehicle next provides that flight mode.
+    {
+        QSettings settings;
+        settings.beginGroup(settingsGroup);
+        settings.beginGroup(buttonArrayGroup);
+        settings.beginGroup(QStringLiteral("1"));
+        QCOMPARE(settings.value(actionNameKey).toString(), vehicleOnlyAction);
+    }
+}
+
+// Companion to _buttonActionUnknownActionPreservedTest: a full save cycle
+// (_saveFromCalibrationDataIntoSettings does _clearButtonSettings + _saveButtonSettings)
+// must not lose an assignment whose action is not currently available.
+void JoystickTest::_buttonActionUnknownActionSaveRoundTripTest()
+{
+    const QString joystickName = QStringLiteral("Save Round Trip Test");
+    const QString settingsGroup = QStringLiteral("JoystickSettingsV2/%1").arg(joystickName);
+    const QString buttonArrayGroup = QStringLiteral("JoystickButtonActionSettingsArray");
+    const QString actionNameKey = QStringLiteral("actionName");
+    const QString vehicleOnlyAction = QStringLiteral("Position");
+
+    _seedButtonActionSetting(joystickName, 1, vehicleOnlyAction);
+
+    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(joystickName, 4, 16, 1));
+    QVERIFY(_mockJoystick->isValid());
+    _pumpEvents();
+    _discoveredJoysticks = JoystickSDL::discover();
+    JoystickSDL* js = _findJoystickByInstanceId(_mockJoystick->instanceId());
+    QVERIFY(js != nullptr);
+    QCOMPARE(js->getButtonAction(1), vehicleOnlyAction);
+
+    // Full save cycle: clears the settings group and rewrites it from in-memory data
+    js->_saveFromCalibrationDataIntoSettings();
+
+    QSettings settings;
+    settings.beginGroup(settingsGroup);
+    settings.beginGroup(buttonArrayGroup);
+    settings.beginGroup(QStringLiteral("1"));
+    QCOMPARE(settings.value(actionNameKey).toString(), vehicleOnlyAction);
+}
+
+// The available actions list is rebuilt whenever the vehicle changes or the vehicle's
+// flight modes change (standard modes protocol). Assigned actions must survive the
+// rebuild so the UI combo always contains them.
+void JoystickTest::_buttonActionAvailableListRebuildTest()
+{
+    const QString joystickName = QStringLiteral("List Rebuild Test");
+    const QString vehicleOnlyAction = QStringLiteral("Position");
+
+    _seedButtonActionSetting(joystickName, 1, vehicleOnlyAction);
+
+    _mockJoystick = std::unique_ptr<MockJoystick>(MockJoystick::create(joystickName, 4, 16, 1));
+    QVERIFY(_mockJoystick->isValid());
+    _pumpEvents();
+    _discoveredJoysticks = JoystickSDL::discover();
+    JoystickSDL* js = _findJoystickByInstanceId(_mockJoystick->instanceId());
+    QVERIFY(js != nullptr);
+    QVERIFY(js->assignableActionTitles().contains(vehicleOnlyAction));
+
+    // Simulate the rebuild that happens on vehicle change / flightModesChanged
+    js->_buildAvailableButtonsActionList(nullptr);
+
+    // Assignment and its presence in the available list must both survive
+    QCOMPARE(js->getButtonAction(1), vehicleOnlyAction);
+    QVERIFY(js->assignableActionTitles().contains(vehicleOnlyAction));
 }
 
 UT_REGISTER_TEST(JoystickTest, TestLabel::Unit, TestLabel::Joystick)

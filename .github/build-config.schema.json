@@ -4,142 +4,170 @@
   "description": "Centralized version numbers and build settings for QGroundControl CI",
   "type": "object",
   "required": [
-    "qt_version",
-    "qt_minimum_version",
-    "cmake_minimum_version",
-    "ndk_version",
-    "ndk_full_version",
-    "android_platform",
-    "android_min_sdk",
-    "android_build_tools",
-    "java_version",
-    "gstreamer_default_version",
-    "gstreamer_minimum_version",
-    "platform_workflows"
+    "qt",
+    "android",
+    "apple",
+    "build",
+    "gstreamer"
   ],
   "properties": {
     "$schema": {
       "type": "string",
       "description": "JSON Schema reference (ignored by validators)"
     },
-    "qt_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Target Qt version"
-    },
-    "qt_minimum_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Minimum supported Qt version"
-    },
-    "qt_modules": {
-      "type": "string",
-      "description": "Space-separated list of Qt modules to install"
-    },
-    "cmake_minimum_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+$",
-      "description": "Minimum required CMake version"
-    },
-    "ndk_version": {
-      "type": "string",
-      "pattern": "^r[0-9]+[a-z]?$",
-      "description": "Android NDK short version (e.g. r27c)"
-    },
-    "ndk_full_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Android NDK full version number"
-    },
-    "android_platform": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Android target API level"
-    },
-    "android_min_sdk": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Android minimum SDK version"
-    },
-    "android_build_tools": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Android build tools version"
-    },
-    "android_cmdline_tools": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Android command-line tools version"
-    },
-    "java_version": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Java version for Android builds"
-    },
-    "gstreamer_default_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "gstreamer_minimum_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "gstreamer_android_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "gstreamer_ios_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "gstreamer_macos_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "gstreamer_windows_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "gstreamer_checksums": {
+    "qt": {
       "type": "object",
-      "description": "Per-version checksums for GStreamer SDK downloads",
-      "patternProperties": {
-        "^[0-9]+\\.[0-9]+\\.[0-9]+$": {
-          "type": "object",
-          "patternProperties": {
-            ".*": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
-          }
+      "required": ["version", "minimum_version"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Target Qt version"
+        },
+        "minimum_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Minimum supported Qt version"
+        },
+        "modules": {
+          "type": "string",
+          "description": "Space-separated list of Qt modules to install"
         }
       }
     },
-    "ios_deployment_target": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+$"
+    "android": {
+      "type": "object",
+      "required": ["platform", "min_sdk", "build_tools", "ndk_version", "ndk_full_version", "java_version"],
+      "additionalProperties": false,
+      "properties": {
+        "platform": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Android target API level"
+        },
+        "min_sdk": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Android minimum SDK version"
+        },
+        "build_tools": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Android build tools version"
+        },
+        "cmdline_tools": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Android command-line tools version"
+        },
+        "ndk_version": {
+          "type": "string",
+          "pattern": "^r[0-9]+[a-z]?$",
+          "description": "Android NDK short version (e.g. r27c)"
+        },
+        "ndk_full_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Android NDK full version number"
+        },
+        "java_version": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Java version for Android builds"
+        }
+      }
     },
-    "macos_deployment_target": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+$"
+    "apple": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "xcode_version": { "type": "string", "description": "Xcode version (macOS/desktop)" },
+        "xcode_ios_version": { "type": "string", "description": "Xcode version (iOS)" },
+        "macos_deployment_target": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "macOS minimum deployment target"
+        },
+        "ios_deployment_target": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "iOS minimum deployment target"
+        }
+      }
     },
-    "ccache_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    "build": {
+      "type": "object",
+      "required": ["cmake_minimum_version", "platform_workflows"],
+      "additionalProperties": false,
+      "properties": {
+        "cmake_minimum_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Minimum required CMake version"
+        },
+        "platform_workflows": {
+          "type": "string",
+          "description": "Comma-separated list of platform workflow names"
+        }
+      }
     },
-    "mold_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "vulkan_sdk_version": {
-      "type": "string"
-    },
-    "xcode_version": {
-      "type": "string"
-    },
-    "xcode_ios_version": {
-      "type": "string"
-    },
-    "platform_workflows": {
-      "type": "string",
-      "description": "Comma-separated list of platform workflow names"
+    "gstreamer": {
+      "type": "object",
+      "required": ["version"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "object",
+          "required": ["default", "minimum"],
+          "additionalProperties": false,
+          "properties": {
+            "default":  { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+            "minimum":  { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+            "android":  { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+            "ios":      { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+            "macos":    { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+            "windows":  { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+          }
+        },
+        "plugins": {
+          "type": "object",
+          "description": "GStreamer plugin allow-list. 'common' applies to every platform; per-platform keys are appended.",
+          "required": ["common"],
+          "additionalProperties": false,
+          "properties": {
+            "common":  { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
+            "android": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
+            "apple":   { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
+            "windows": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } },
+            "linux":   { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9_]+$" } }
+          }
+        },
+        "checksums": {
+          "type": "object",
+          "description": "Per-version SHA256 checksums for SDK downloads",
+          "patternProperties": {
+            "^[0-9]+\\.[0-9]+\\.[0-9]+$": {
+              "type": "object",
+              "properties": {
+                "android":            { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "ios":                { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "macos":              { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "macos_devel":        { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "windows_msvc_x64":   { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "windows_msvc_arm64": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "ca_bundle_sha256": {
+          "type": "string",
+          "description": "SHA256 of the curl.se Mozilla CA bundle baked into the iOS app; refresh on intentional bundle bumps (https://curl.se/ca/cacert.pem.sha256)",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     }
   },
   "additionalProperties": false

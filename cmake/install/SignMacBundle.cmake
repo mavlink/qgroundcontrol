@@ -96,7 +96,6 @@ foreach(FRAMEWORK_DIR ${FRAMEWORK_DIRS})
     )
 endforeach()
 
-# Verify GStreamer framework signing
 if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
     execute_process(
         COMMAND codesign --verify --deep --strict --verbose=2 "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework"

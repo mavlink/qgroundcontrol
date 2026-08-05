@@ -21,6 +21,7 @@ Item {
     property var    parentToolInsets
     property var    totalToolInsets:        _totalToolInsets
     property var    mapControl
+    property var    viewer3DCameraController
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _planMasterController:  globals.planMasterControllerFlyView
@@ -90,6 +91,13 @@ Item {
         missionController:      _missionController
         geoFenceController:     _geoFenceController
         rallyPointController:   _rallyPointController
+    }
+
+    // Prevent the map's PinchHandler from stealing touch grabs from the joystick pads (issue #13450)
+    Binding {
+        target:   mapControl
+        property: "pinchZoomDisabledByVirtualJoysticks"
+        value:    virtualJoystickMultiTouch.visible && virtualJoystickMultiTouch.item && virtualJoystickMultiTouch.item.stickActive
     }
 
     //-- Virtual Joystick
@@ -173,6 +181,16 @@ Item {
         visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && QGCViewer3DManager.displayMode !== QGCViewer3DManager.View3D && mapControl.pipState.state === mapControl.pipState.fullState
 
         property real topEdgeCenterInset: visible ? y + height : 0
+    }
+
+    Viewer3DScaleBar {
+        objectName:         "viewer3DScaleBar"
+        anchors.left:       toolStrip.right
+        anchors.leftMargin: _toolsMargin
+        anchors.top:        parent.top
+        controller:         _root.viewer3DCameraController
+        autoHide:           true
+        visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && QGCViewer3DManager.displayMode === QGCViewer3DManager.View3D && !!_root.viewer3DCameraController
     }
 
     Loader {

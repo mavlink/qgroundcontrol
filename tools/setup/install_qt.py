@@ -32,7 +32,7 @@ from _bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common import pip_install
-from common.gh_actions import write_github_output
+from common.gh_actions import gh_error, gh_warning, write_github_output
 
 # aqtinstall creates directories that differ from the arch parameter.
 # This mapping resolves the actual on-disk directory name.
@@ -56,11 +56,10 @@ def validate_aqt_source(spec: str) -> str:
     """Return `spec` unchanged if it matches the allowlist; sys.exit(1) otherwise."""
     if not spec or _AQT_SOURCE_ALLOWLIST.match(spec):
         return spec
-    print(
-        f"::error::--aqt-source '{spec}' is not allowed. "
+    gh_error(
+        f"--aqt-source '{spec}' is not allowed. "
         "Must be 'aqtinstall' (optionally ==<version>) or "
-        "'git+https://github.com/miurahr/aqtinstall@<sha>'.",
-        file=sys.stderr,
+        "'git+https://github.com/miurahr/aqtinstall@<sha>'."
     )
     sys.exit(1)
 
@@ -93,7 +92,7 @@ def resolve_qt_root(outdir: Path, version: str, arch_dir: str) -> Path:
             available = (
                 ", ".join(sorted(p.name for p in version_dir.iterdir() if p.is_dir())) or "none"
             )
-        print(f"::error::Qt root not found at {qt_root}")
+        gh_error(f"Qt root not found at {qt_root}")
         print(f"Expected arch_dir '{arch_dir}' from arch, available: {available}")
         sys.exit(1)
     return qt_root
@@ -111,10 +110,10 @@ def _run_aqt_with_retries(args: list[str]) -> None:
             return
         if attempt == _AQT_MAX_ATTEMPTS:
             raise subprocess.CalledProcessError(result.returncode, args)
-        print(
-            f"::warning::aqtinstall failed (exit {result.returncode}), "
+        gh_warning(
+            f"aqtinstall failed (exit {result.returncode}), "
             f"attempt {attempt}/{_AQT_MAX_ATTEMPTS}; retrying in "
-            f"{_AQT_RETRY_DELAY_SECONDS}s",
+            f"{_AQT_RETRY_DELAY_SECONDS}s"
         )
         time.sleep(_AQT_RETRY_DELAY_SECONDS)
 
@@ -144,7 +143,7 @@ def install_qt(
             pip_install(["aqtinstall"])
         aqt = shutil.which("aqt")
         if not aqt:
-            print("::error::aqtinstall not found after pip install")
+            gh_error("aqtinstall not found after pip install")
             sys.exit(1)
 
     args = [aqt, "install-qt", host, target, version, arch, "--outputdir", str(outdir)]
@@ -187,7 +186,7 @@ def resolve_android_qt_root(abis: str, roots: dict[str, str]) -> str:
     for abi, key in _ANDROID_ABI_ORDER:
         if abi in abi_set and roots.get(key):
             return roots[key]
-    print(f"::error::Failed to resolve an installed Android Qt root for ABIs: {abis}")
+    gh_error(f"Failed to resolve an installed Android Qt root for ABIs: {abis}")
     sys.exit(1)
 
 

@@ -15,6 +15,8 @@ private slots:
     void _testUpdateTotalsOnInit();
     void _testSaveAndFetchTile();
     void _testFetchTileNotFound();
+    void _testFetchMapTileMissServesFakeTile();
+    void _testFetchElevationTileMissServesSyntheticTerrain();
     void _testFetchTileSets();
     void _testCreateAndDeleteTileSet();
     void _testPruneCache();

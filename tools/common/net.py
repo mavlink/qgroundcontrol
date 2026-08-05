@@ -14,6 +14,8 @@ import urllib.request
 from typing import TYPE_CHECKING
 from urllib.error import URLError
 
+from .gh_actions import gh_warning
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
@@ -32,10 +34,7 @@ def run_with_retries(
         except subprocess.CalledProcessError:
             if attempt == attempts:
                 raise
-            print(
-                f"::warning::{cmd[0]} failed (attempt {attempt}/{attempts}); retrying in {backoff:g}s",
-                file=sys.stderr,
-            )
+            gh_warning(f"{cmd[0]} failed (attempt {attempt}/{attempts}); retrying in {backoff:g}s")
             time.sleep(backoff)
             backoff *= 2
 

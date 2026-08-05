@@ -44,6 +44,8 @@ Q_DECLARE_LOGGING_CATEGORY(AndroidSerialPortLog)
 
 QT_BEGIN_NAMESPACE
 
+class QSocketNotifier;
+
 class QSerialPortErrorInfo
 {
 public:
@@ -157,6 +159,25 @@ private:
     static int _dataBitsToAndroidDataBits(QSerialPort::DataBits dataBits);
     static int _parityToAndroidParity(QSerialPort::Parity parity);
     static int _flowControlToAndroidFlowControl(QSerialPort::FlowControl flowControl);
+
+    // POSIX backend (AndroidSerial::usePosixSerial()) — implemented in qserialport_posix.cpp
+    bool _posixOpen(QIODevice::OpenMode mode);
+    void _posixClose();
+    bool _posixStartAsyncRead();
+    bool _posixStopAsyncRead();
+    qint64 _posixWrite(const char* data, qint64 maxSize, int timeoutMs);
+    bool _posixApplyPortSettings(qint32 baudRate, QSerialPort::DataBits dataBits,
+                                 QSerialPort::StopBits stopBits, QSerialPort::Parity parity,
+                                 QSerialPort::FlowControl flowControl);
+    bool _posixClear(QSerialPort::Directions directions);
+    QSerialPort::PinoutSignals _posixPinoutSignals();
+    bool _posixSetDataTerminalReady(bool set);
+    bool _posixSetRequestToSend(bool set);
+    bool _posixSetBreakEnabled(bool set);
+    bool _posixWaitForReadyRead(int msecs);
+    void _posixReadActivated();
+
+    QSocketNotifier* _posixReadNotifier = nullptr;
 
     int _deviceId = INVALID_DEVICE_ID;
 

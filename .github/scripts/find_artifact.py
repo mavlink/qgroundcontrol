@@ -15,7 +15,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output
+from common.gh_actions import gh_warning, write_github_output
 
 
 def find_first(build_dir: Path, pattern: str) -> Path | None:
@@ -48,7 +48,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if not args.build_dir.is_dir():
-        print(f"::warning::Build directory does not exist: {args.build_dir}")
+        gh_warning(f"Build directory does not exist: {args.build_dir}")
         if args.pattern is not None:
             write_github_output({"found": "false"})
         else:
@@ -58,7 +58,7 @@ def main() -> int:
     if args.pattern is not None:
         artifact = find_first(args.build_dir, args.pattern)
         if artifact is None:
-            print(f"::warning::No artifact matching {args.pattern} found")
+            gh_warning(f"No artifact matching {args.pattern} found")
             write_github_output({"found": "false"})
             return 0
         print(f"Found artifact: {artifact}")
@@ -69,7 +69,7 @@ def main() -> int:
     for name, pattern in args.match:
         artifact = find_first(args.build_dir, pattern)
         if artifact is None:
-            print(f"::warning::No artifact matching {pattern} found ({name})")
+            gh_warning(f"No artifact matching {pattern} found ({name})")
             outputs[name] = ""
         else:
             print(f"Found {name}: {artifact}")

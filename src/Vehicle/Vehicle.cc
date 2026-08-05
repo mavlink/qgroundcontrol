@@ -1263,12 +1263,13 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
 }
 
 void Vehicle::setActuatorsMetadata([[maybe_unused]] uint8_t compid,
-                                   const QString &metadataJsonFileName)
+                                   const QString &metadataJsonFileName,
+                                   const QJsonDocument &metadataJson)
 {
     if (!_actuators) {
         _actuators = new Actuators(this, this);
     }
-    _actuators->load(metadataJsonFileName);
+    _actuators->load(metadataJsonFileName, metadataJson);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
@@ -2182,6 +2183,11 @@ void Vehicle::sendMavCommandIntWithHandler(const MavCmdAckHandlerInfo_t* ackHand
 void Vehicle::sendMavCommandWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
     _mavCmdQueue->sendCommandWithLambdaFallback(std::move(lambda), compId, command, showError, param1, param2, param3, param4, param5, param6, param7);
+}
+
+void Vehicle::sendMavCommandIntWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+{
+    _mavCmdQueue->sendCommandIntWithLambdaFallback(std::move(lambda), compId, command, frame, showError, param1, param2, param3, param4, param5, param6, param7);
 }
 
 bool Vehicle::isMavCommandPending(int targetCompId, MAV_CMD command)
@@ -3142,6 +3148,24 @@ void Vehicle::sendGripperAction(GRIPPER_ACTIONS gripperAction)
 }
 
 void Vehicle::setEstimatorOrigin(const QGeoCoordinate& centerCoord)
+{
+    // Prefer MAV_CMD_DO_SET_GLOBAL_ORIGIN (sent as COMMAND_INT, supersedes SET_GPS_GLOBAL_ORIGIN).
+    sendMavCommandIntWithLambdaFallback(
+        [this, centerCoord]() {  // fallback: deprecated SET_GPS_GLOBAL_ORIGIN message
+            setEstimatorOrigin_SET_GPS_GLOBAL_ORIGIN(centerCoord);
+        },
+        defaultComponentId(),
+        MAV_CMD_DO_SET_GLOBAL_ORIGIN,
+        MAV_FRAME_GLOBAL,
+        false,                                          // showError
+        0.0f, 0.0f, 0.0f, 0.0f,                         // param 1-4 empty
+        centerCoord.latitude(),                         // param5: latitude (deg) -> degE7
+        centerCoord.longitude(),                        // param6: longitude (deg) -> degE7
+        static_cast<float>(centerCoord.altitude())      // param7: altitude (m)
+    );
+}
+
+void Vehicle::setEstimatorOrigin_SET_GPS_GLOBAL_ORIGIN(const QGeoCoordinate& centerCoord)
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {

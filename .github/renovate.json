@@ -3,23 +3,17 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
-    ":semanticCommitTypeAll(chore)"
+    ":semanticCommitTypeAll(deps)"
   ],
-  "git-submodules": {
-    "enabled": true
-  },
   "labels": [
     "dependencies"
   ],
   "ignorePaths": [
     ".github/workflows/**"
   ],
-  "description": "Manages npm, git-submodules, pip, pre-commit. GitHub Actions are handled by Dependabot (see dependabot.yml).",
+  "description": "Active manager for npm, python (pep621/uv), and pre-commit. GitHub Actions are handled by Dependabot (see dependabot.yml); excluded here via ignorePaths.",
   "enabledManagers": [
     "npm",
-    "git-submodules",
-    "pip_requirements",
-    "pip_setup",
     "pep621",
     "pre-commit"
   ],
@@ -30,40 +24,11 @@
       "automerge": true
     },
     {
-      "description": "Group all git submodule updates",
-      "groupName": "Git Submodules",
+      "description": "Combine npm, python, and pre-commit updates into a single PR",
+      "groupName": "all dependencies",
       "matchManagers": [
-        "git-submodules"
-      ],
-      "schedule": [
-        "before 6am on monday"
-      ]
-    },
-    {
-      "description": "Group Node.js updates (docs)",
-      "groupName": "Node.js Dependencies",
-      "matchManagers": [
-        "npm"
-      ],
-      "schedule": [
-        "before 6am on monday"
-      ]
-    },
-    {
-      "description": "Group Python updates (tools)",
-      "groupName": "Python Dependencies",
-      "matchManagers": [
-        "pip_requirements",
-        "pip_setup"
-      ],
-      "schedule": [
-        "before 6am on monday"
-      ]
-    },
-    {
-      "description": "Group pre-commit hook updates",
-      "groupName": "pre-commit hooks",
-      "matchManagers": [
+        "npm",
+        "pep621",
         "pre-commit"
       ],
       "schedule": [

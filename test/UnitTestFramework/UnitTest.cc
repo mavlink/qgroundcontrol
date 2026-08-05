@@ -19,6 +19,7 @@
 #include <iterator>
 
 #include "AppSettings.h"
+#include "AutoPilotPlugin.h"
 #include "LinkManager.h"
 #include "LogEntry.h"
 #include "MultiVehicleManager.h"
@@ -28,6 +29,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleComponent.h"
 
 struct UnitTest::ExpectedLogMessages
 {
@@ -537,6 +539,22 @@ void UnitTest::settleEventLoopForCleanup(int iterations, int waitMs)
     }
 }
 
+VehicleComponent *UnitTest::findVehicleComponent(Vehicle *vehicle, const QString &name)
+{
+    if (!vehicle || !vehicle->autopilotPlugin()) {
+        return nullptr;
+    }
+
+    const QVariantList components = vehicle->autopilotPlugin()->vehicleComponents();
+    for (const QVariant &compVariant : components) {
+        auto *comp = compVariant.value<VehicleComponent *>();
+        if (comp && (comp->name() == name)) {
+            return comp;
+        }
+    }
+    return nullptr;
+}
+
 int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels labelFilter)
 {
     int ret = 0;
@@ -790,6 +808,13 @@ void UnitTest::init()
     _expectedLogMessages->pending.clear();
     _expectedLogMessages->consumedMessageIndices.clear();
 
+    // showRebootAppMessage() debounces repeats (2 min) across tests — reset so each
+    // test deterministically sees its own reboot message. Lightweight harness runs a
+    // bare QCoreApplication, hence the cast check.
+    if (auto *app = qobject_cast<QGCApplication *>(QCoreApplication::instance())) {
+        app->resetRebootMessageDebounce();
+    }
+
     // MockLink emulates an Open Drone ID device (sends OPEN_DRONE_ID_ARM_STATUS at
     // 1Hz), which makes RemoteIDManager start its periodic send timer. That timer
     // warns about the missing GCS GPS fix — but headless unit tests never have a
@@ -800,6 +825,27 @@ void UnitTest::init()
     ignoreLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^GCS GPS error:")));
 
+    // offscreen QPA exposes no GLX/EGL display, so Qt 6.11's QRhiGles2 probe can't
+    // create a context and warns; UI tests use the software backend, so it's benign.
+    ignoreLogMessage("default", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^QRhiGles2: Failed to create")));
+
+    // QQuickPinchArea declares its own `enabled` property (gesture enable, distinct
+    // from QQuickItem::enabled); Qt 6.11's property-cache shadow check warns once per
+    // QML engine. A framework quirk, not QGC's — every UI test scene hits it.
+    ignoreLogMessage("qt.qml.propertyCache.append", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("QQuickPinchArea overrides a member")));
+
+    // QtGraphs warns when a LineSeries is given the GraphsView's own axes (redundant
+    // association); cosmetic, the chart still renders. Surfaces in the Analyze charts.
+    ignoreLogMessage("qt.graphs2d.axis.properties", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("axis already associated with")));
+
+    // Headless software-GL (xvfb) gives GStreamer no usable X11/EGL GL context, so the
+    // GL bridge disables itself and falls back to software decode — by design in tests.
+    ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBridge", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("GL bridge disabled")));
+
     // Start capturing log messages for this test (cleared from previous test)
     LogManager::clearCapturedMessages();
     LogManager::setCaptureEnabled(true);
@@ -808,7 +854,7 @@ void UnitTest::init()
     // when running unit tests, but every test function of a class shares that one process,
     // so persisted QSettings values written by one test function (or left over from a prior
     // crashed run) otherwise bleed into the next. Clear the persistent store at the start of
-    // every test function so each starts from an empty scope. Facts re-read defaults below.
+    // every test function so each starts from an empty scope.
     {
         QSettings settings;
         settings.clear();
@@ -817,7 +863,12 @@ void UnitTest::init()
 
     // Force offline vehicle back to defaults. Lightweight (bare QCoreApplication) tests run
     // without the SettingsManager toolbox, so guard against a missing AppSettings rather than
-    // dereferencing null. On the default full-app path appSettings is always present.
+    // dereferencing null.
+    // Note: There is deliberately no generic "reset all settings facts to defaults" sweep here.
+    // Some facts (e.g. AppSettings::savePath) are boot-initialized programmatically to values
+    // that differ from their JSON defaults; resetting them to defaults mid-run breaks the app
+    // (savePath in particular falls back to relative paths under the ctest cwd — the build
+    // directory). Tests that mutate settings facts must save and restore them explicitly.
     if (AppSettings* const appSettings = SettingsManager::instance()->appSettings()) {
         appSettings->offlineEditingFirmwareClass()->setRawValue(
             appSettings->offlineEditingFirmwareClass()->rawDefaultValue());

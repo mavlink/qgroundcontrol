@@ -3,12 +3,11 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-from pathlib import Path
 
+from _helpers import REPO_ROOT
 from plan_docker_builds import build_args_str, load_variants, plan_builds
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_DOCKER_DIR = _REPO_ROOT / "deploy" / "docker"
+_DOCKER_DIR = REPO_ROOT / "deploy" / "docker"
 
 # Build-arg strings pinned independently of variants.json so a bad edit to the
 # JSON is caught here, not silently propagated into the CI matrix.

@@ -101,7 +101,7 @@ void PX4AirframeSetupUITest::_verifyAirframePrereq(const QString &compObjectName
 void PX4AirframeSetupUITest::_testNavigateToAirframe()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     // Reset all params including SYS_AUTOSTART so the test starts with no
     // airframe configured
@@ -116,7 +116,7 @@ void PX4AirframeSetupUITest::_testNavigateToAirframe()
 void PX4AirframeSetupUITest::_testAirframePrereqPages()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     // Reset all params including SYS_AUTOSTART so Airframe setup is incomplete
     mockLink->setResetSysAutostartOnParamReset(true);
@@ -157,7 +157,7 @@ void PX4AirframeSetupUITest::_testAirframePrereqPages()
 void PX4AirframeSetupUITest::_testApplyAirframe()
 {
     runWithMockLink(
-        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [] { return MockLink::startPX4MockLink(); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
     // Reset all params including SYS_AUTOSTART so the test starts with no
     // airframe configured
@@ -203,6 +203,10 @@ void PX4AirframeSetupUITest::_testApplyAirframe()
     QSignalSpy spyCmdResult(vehicle, &Vehicle::mavCommandResult);
     QVERIFY2(spyCmdResult.isValid(), "Failed to create mavCommandResult spy");
 
+    // SYS_AUTOSTART requires a vehicle reboot, so applying the airframe must
+    // pop the reboot app message
+    expectAppMessage(QRegularExpression(QStringLiteral("Reboot vehicle for changes to take effect")));
+
     QVERIFY2(clickButton(QStringLiteral("airframeSetup_applyButton")), "Failed to click Apply and Restart");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), 3000),
              "Apply confirmation dialog not shown");
@@ -234,5 +238,11 @@ void PX4AirframeSetupUITest::_testApplyAirframe()
     // The restart flow disconnects the link, dropping the active vehicle
     QVERIFY2(QTest::qWaitFor([&] { return MultiVehicleManager::instance()->activeVehicle() == nullptr; }, 10000),
              "Vehicle never disconnected after Apply and Restart");
+
+    // By now the SYS_AUTOSTART ack has round-tripped, so the vehicle
+    // reboot-required dialog must have been shown — dismiss and verify it.
+    // Cancel rather than Ok — Ok would reboot the (already disconnected) vehicle.
+    QVERIFY2(rejectDialog(5000), "Vehicle reboot-required dialog never shown");
+    verifyExpectedLogMessage();
     });
 }

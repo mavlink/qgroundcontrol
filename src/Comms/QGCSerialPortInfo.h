@@ -16,6 +16,7 @@ class QGCSerialPortInfoTest;
 class QGCSerialPortInfo : public QSerialPortInfo
 {
     friend class QGCSerialPortInfoTest;
+    friend class JsonResourceAuditTest;
 public:
     QGCSerialPortInfo();
     explicit QGCSerialPortInfo(const QSerialPort &port);

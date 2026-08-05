@@ -20,15 +20,11 @@ To calibrate the radio:
 
 3. **확인**을 눌러 보정작업을 시작합니다.
 
-   ![무선 조종기 설정 - 시작하기 전에](../../../assets/setup/radio_start_setup.jpg)
-
    ::: info
-   위 이미지는 PX4 Pro용입니다. 보정/상단 섹션은 두 펌웨어 모두 동일하지만 _추가 라디오 설정_ 섹션은 다릅니다.
+   Calibration steps are the same for both PX4 and ArduPilot firmware, but the _Additional Radio setup_ section will differ.
    :::
 
 4. 트랜스미터와 일치하는 _송신기 모드_ 라디오 버튼을 설정합니다 (이렇게하면 _QGroundControl_이 교정 중에 따라야 할 올바른 스틱 위치를 표시함).
-
-   ![ 무선 조종기 설정-스틱 이동](../../../assets/setup/radio_sticks_throttle.jpg)
 
 5. 스틱을 텍스트(및 송신기 이미지)에 표시된 위치로 이동합니다. 스틱이 제자리에 있으면 **다음**을 누르십시오. 모든 위치에 대하여 반복하십시오.
 
@@ -42,9 +38,7 @@ To calibrate the radio:
 
 _무선 설정_ 화면 하단에는 펌웨어 관련 _추가 무선 설정_ 섹션이 있습니다. 각 자동조종장치의 옵션은 다음과 같습니다.
 
-| PX4                                                                                                                   | ArduPilot                                                                                                                         |
-| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| <img src="../../../assets/setup/radio_additional_radio_setup_px4.jpg" title="무선 조종기 설정 -  PX4 추가 설정" width="300px" /> | <img src="../../../assets/setup/radio_additional_radio_setup_ardupilot.jpg" title="무선 조종기 설정 -  ArduPilot 추가 설정" width="300px" /> |
+The additional settings differ between PX4 and ArduPilot firmware.
 
 ### 스펙트럼 바인드(ArduPilot/PX4)
 
@@ -57,8 +51,6 @@ Spektrum 송신기/수신기 바인딩 절차
 2. 수신기의 라디오 버튼을 선택하십시오.
 
 3. **Ok** 버튼을 누릅니다
-
-   ![Spektrum 바인딩](../../../assets/setup/radio_additional_setup_spectrum_bind_select_channels.jpg)
 
 4. 바인드 버튼을 누른 상태에서 Spektrum 송신기의 전원을 켭니다.
 
@@ -74,8 +66,6 @@ To copy the trims:
 
 3. **Ok** 버튼을 누릅니다.
 
-   ![트림 복사](../../../assets/setup/radio_additional_radio_setup_copy_trims_px4.jpg)
-
 4. 송신기의 트림을 다시 0으로 설정하십시오.
 
 ### AUX 패스스루 채널(PX4)
@@ -86,8 +76,6 @@ AUX 패스스루 채널을 사용하려면:
 
 1. 최대 2 개의 송신기 컨트롤을 별도의 채널에 매핑합니다.
 2. 아래에 표시된 것처럼 이러한 채널을 지정하여 AUX1 및 AUX2 포트에 각각 매핑합니다. 값은 설정되는 즉시 기체에 저장됩니다.
-
-   ![AUX1 및 AUX2 RC 패스 스루 채널](../../../assets/setup/radio_additional_setup_aux_passthrough_channels_px4.jpg)
 
 비행 컨트롤러는 AUX1/AUX2의 지정된 채널에서 수정되지 않은 값을 통해 하드웨어를 구동하는 연결된 서보/릴레이로 전달합니다.
 
@@ -106,8 +94,6 @@ AUX 패스스루 채널을 사용하려면:
 1. 최대 3 개의 송신기 컨트롤 (다이얼 또는 슬라이더)을 개별 채널에 매핑합니다.
 2. 선택 목록을 사용하여 라디오 채널에 대한 _PARAM Tuning Id_ 매핑을 선택합니다. 값은 설정되는 즉시 기체에 저장됩니다.
 
-   ![라디오 채널을 튜닝 채널에 매핑](../../../assets/setup/radio_additional_radio_setup_param_tuning_px4.jpg)
-
 PARAM 튜닝 채널을 매개변수에 매핑하려면:
 
 1. **매개 변수** 사이드 바를 오픈합니다.
@@ -117,8 +103,6 @@ PARAM 튜닝 채널을 매개변수에 매핑하려면:
 3. **고급 설정** 확인란을 선택합니다.
 
 4. **RC를 Param으로 설정 ...** 버튼을 클릭합니다 (아래에 표시된 전경 대화 상자가 팝업됩니다).
-
-   ![매개 변수에 튜닝 채널 매핑](../../../assets/setup/parameters_radio_channel_mapping_px4.jpg)
 
 5. _Parameter Tuning ID_ 선택 목록에서 매핑 할 튜닝 채널 (1, 2 또는 3)을 선택합니다.
 

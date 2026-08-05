@@ -148,6 +148,9 @@ void Viewer3DTileReply::_onTimeout()
 
 void Viewer3DTileReply::_disconnectReply()
 {
+    if (!_reply) {
+        return;
+    }
     disconnect(_reply, &QNetworkReply::finished, this, &Viewer3DTileReply::_onRequestFinished);
     disconnect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::_onRequestError);
 }

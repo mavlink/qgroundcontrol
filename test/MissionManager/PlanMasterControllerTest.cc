@@ -6,7 +6,9 @@
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
 #include "PlanMasterController.h"
+#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "TakeoffMissionItem.h"
 #include "Vehicle.h"
 
 #include <QtCore/QDateTime>
@@ -37,6 +39,46 @@ void PlanMasterControllerTest::_testMissionPlannerFileLoad()
 {
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
     QCOMPARE(_masterController->missionController()->visualItems()->count(), 6);
+}
+
+void PlanMasterControllerTest::_testTakeoffTextFileLoad()
+{
+    // Plain-text mission file with home position, takeoff and one waypoint (#13167)
+    static const char* kTakeoffMission =
+        "QGC WPL 110\r\n"
+        "0\t1\t0\t16\t0\t0\t0\t0\t34.577822\t-112.469101\t584.380005\t1\r\n"
+        "1\t0\t3\t22\t20.000000\t0.000000\t0.000000\t0.000000\t0.000000\t0.000000\t30.000000\t1\r\n"
+        "2\t0\t3\t16\t0.000000\t0.000000\t0.000000\t0.000000\t34.469587\t-112.534801\t90.000000\t1\r\n";
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString filename = tempDir.filePath(QStringLiteral("TakeoffMission.waypoints"));
+    QFile file(filename);
+    // No QIODevice::Text: write the CRLF line endings verbatim on all platforms to match
+    // the original repro file from the issue.
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.write(kTakeoffMission) != -1);
+    file.close();
+
+    SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::FirmwareClassArduPilot);
+
+    _masterController->loadFromFile(filename);
+
+    QmlObjectListModel* visualItems = _masterController->missionController()->visualItems();
+    QCOMPARE(visualItems->count(), 3); // Mission settings, takeoff, waypoint
+
+    // The original bug caused the takeoff item to consume the following waypoint line,
+    // resulting in a single takeoff item carrying the waypoint's values.
+    TakeoffMissionItem* takeoffItem = visualItems->value<TakeoffMissionItem*>(1);
+    QVERIFY(takeoffItem);
+    QCOMPARE(static_cast<MAV_CMD>(takeoffItem->command()), MAV_CMD_NAV_TAKEOFF);
+    QCOMPARE(takeoffItem->missionItem().param7(), 30.0);
+
+    SimpleMissionItem* waypointItem = visualItems->value<SimpleMissionItem*>(2);
+    QVERIFY(waypointItem);
+    QVERIFY(!waypointItem->isTakeoffItem());
+    QCOMPARE(static_cast<MAV_CMD>(waypointItem->command()), MAV_CMD_NAV_WAYPOINT);
+    QCOMPARE(waypointItem->missionItem().param7(), 90.0);
 }
 
 void PlanMasterControllerTest::_testActiveVehicleChanged()

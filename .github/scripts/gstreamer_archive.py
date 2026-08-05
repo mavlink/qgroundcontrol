@@ -26,6 +26,7 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import write_github_output, write_step_summary
+from common.markdown import md_table
 from common.proc import run_captured
 
 
@@ -303,20 +304,16 @@ class GStreamerArchiver:
         platform_title = self.platform.capitalize()
         full_name = f"{self._archive_result.name}.{self._archive_result.extension}"
 
-        lines = [
-            f"## GStreamer {platform_title} Build Complete",
-            "",
-            "| Property | Value |",
-            "|----------|-------|",
-            f"| Version | {self.version} |",
-            f"| Architecture | {arch_display} |",
-            f"| Archive | {full_name} |",
+        rows = [
+            ["Version", self.version],
+            ["Architecture", arch_display],
+            ["Archive", full_name],
         ]
-
         if uploaded:
-            lines.append(f"| S3 Path | dependencies/gstreamer/{self.platform}/{self.version}/ |")
+            rows.append(["S3 Path", f"dependencies/gstreamer/{self.platform}/{self.version}/"])
 
-        write_step_summary("\n".join(lines) + "\n")
+        table = md_table(["Property", "Value"], rows)
+        write_step_summary(f"## GStreamer {platform_title} Build Complete\n\n{table}\n")
 
 
 def parse_args() -> argparse.Namespace:

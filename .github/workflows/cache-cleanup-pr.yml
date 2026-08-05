@@ -1,7 +1,7 @@
 name: Cache Cleanup (PR)
 
 on:
-  pull_request_target:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] deletes the PR merge-ref cache via trusted base script; no PR code checkout/execution
     types: [closed]
 
 permissions:

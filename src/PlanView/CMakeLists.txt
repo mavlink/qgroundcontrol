@@ -5,6 +5,10 @@
 
 qt_add_library(PlanViewModule STATIC)
 
+set_source_files_properties(PlanEditLayers.qml PROPERTIES
+    QT_QML_SINGLETON_TYPE TRUE
+)
+
 qt_add_qml_module(PlanViewModule
     URI QGroundControl.PlanView
     VERSION 1.0
@@ -28,6 +32,7 @@ qt_add_qml_module(PlanViewModule
         MissionItemStatus.qml
         MissionSettingsEditor.qml
         MissionStats.qml
+        PlanEditLayers.qml
         PlanEditToolbar.qml
         PlanInfoEditor.qml
         PlanToolBarIndicators.qml

@@ -3,8 +3,6 @@
 _Fixed Wing Landing Pattern_ aracı, göreve sabit kanat iniş yolu eklemenize olanak tanır.
 Hem ArduPilot hem de PX4'de desteklenir.
 
-![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern.jpg)
-
 Yolun ilk noktası, belirli bir yükseklikte oyalanacağı yer; ikincisi de iniş noktasıdır.
 Araç, ilk noktada hedeflenen yüksekliğe erişene kadar oyalanacaktır, ardından iniş için belirlenen iniş noktasına doğru alçalmaya başlayacaktır.
 
@@ -18,14 +16,10 @@ Hem oyalanma hem de iniş noktaları, istenilen yeni noktalara sürüklenebilir 
 
 2. _Plan Tools_ 'dan _Plan Tools_'u açın ve _Fixed Wing Landing Pattern_'i seçin.
 
-  ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_menu.jpg)
-
-  Bu, görev listesine (sağda) _Landing Pattern_ öğesi ekleyecektir.
-
-  ![Sabit Kanat İniş Yolu](../../../assets/plan/pattern/fixed_wing_landing_pattern_mission_item_initial.jpg)
+   Bu, görev listesine (sağda) _Landing Pattern_ öğesi ekleyecektir.
 
 3. Click on the map to create both the loiter point and the landing point.
-  Bu noktalar harita üzerinde hareket ettirilebilir.
+   Bu noktalar harita üzerinde hareket ettirilebilir.
 
 Ek ayarlar bir sonraki bölümde ele alınmıştır.
 
@@ -37,8 +31,6 @@ Ek ayarlar bir sonraki bölümde ele alınmıştır.
 
 _Loiter Point_ ayarları, oyalanmanın yüksekliğini, yarı çapını ve yönünü ayarlamak için kullanılır.
 
-![İniş Yolu - Oyalanma Noktası](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_loiter.jpg)
-
 Ayarlanabilir seçenekler şunlardır:
 
 - **Altitude** - Oyalanma yüksekliği.
@@ -48,8 +40,6 @@ Ayarlanabilir seçenekler şunlardır:
 ### Oyalanma Noktası
 
 _Landing Point_ ayarları, iniş pozisyonunu ve yolunu ayarlamak için kullanılır.
-
-![İniş Yolu - İniş Noktası](../../../assets/plan/pattern/fixed_wing_landing_pattern_settings_landing.jpg)
 
 Ayarlanabilir seçenekler şunlardır:
 

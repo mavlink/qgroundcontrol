@@ -349,8 +349,13 @@ Rectangle {
         anchors.margins:    _innerMargin
         anchors.left:       parent.left
         anchors.top:        topRowLayout.bottom
-        asynchronous:       true
 
+        // Deliberately not asynchronous. With asynchronous: true the editor is built
+        // incrementally over later event-loop ticks. If the user switches layers before
+        // that finishes, the TreeView collapses the mission group and destroys this
+        // delegate, and the still-running load then warns "Cannot create a component in
+        // an invalid context". Synchronous loading closes that window: the editor is
+        // fully built before control returns to the event loop.
         Component.onCompleted: _root._loadEditor()
     }
 

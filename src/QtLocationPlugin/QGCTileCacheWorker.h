@@ -9,8 +9,16 @@
 
 #include <memory>
 
+#ifdef QGC_UNITTEST_BUILD
+#include <functional>
+#endif
+
 class QGCMapTask;
 class QGCTileCacheDatabase;
+
+#ifdef QGC_UNITTEST_BUILD
+struct QGCCacheTile;
+#endif
 
 class QGCCacheWorker : public QThread
 {
@@ -21,6 +29,18 @@ public:
     ~QGCCacheWorker();
 
     void setDatabaseFile(const QString &path) { if (isRunning()) { return; } _databasePath = path; }
+
+#ifdef QGC_UNITTEST_BUILD
+    /// Unit-test hook: consulted on tile cache miss to synthesize a tile instead of
+    /// erroring, so tests never fall back to real network fetches. Only active while
+    /// running unit tests. A nullptr result falls through to the normal miss error.
+    ///
+    /// Threading contract: the generator is read from worker threads without
+    /// synchronization. It must be installed once, before any QGCCacheWorker thread
+    /// has started, and never changed afterward (see UnitTestTileGenerator::install,
+    /// called at test-run startup). The generator itself must be thread-safe.
+    static void setUnitTestTileGenerator(std::function<QGCCacheTile*(const QString &hash)> generator);
+#endif
 
 public slots:
     bool enqueueTask(QGCMapTask *task);
@@ -62,4 +82,8 @@ private:
 
     static constexpr int kShortTimeoutMs = 2000;
     static constexpr int kLongTimeoutMs = 5000;
+
+#ifdef QGC_UNITTEST_BUILD
+    static std::function<QGCCacheTile*(const QString&)> _unitTestTileGenerator;
+#endif
 };

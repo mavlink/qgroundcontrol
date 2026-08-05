@@ -53,11 +53,17 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
+        INPUTS_BRANCH: ${{ inputs.branch }}
+        INPUTS_DRY_RUN: ${{ inputs.dry-run }}
+        INPUTS_SUMMARY: ${{ inputs.summary }}
+        INPUTS_PRUNE: ${{ inputs.prune }}
+        INPUTS_HIGH_WATER_MB: ${{ inputs.high-water-mb }}
+        INPUTS_KEEP_MB: ${{ inputs.keep-mb }}
       run: |
-        ARGS=(--branch "${{ inputs.branch }}")
-        [[ "${{ inputs.dry-run }}" != "true" ]] && ARGS+=(--delete)
-        [[ "${{ inputs.summary }}" == "true" ]] && ARGS+=(--summary)
-        if [[ "${{ inputs.prune }}" == "true" ]]; then
-          ARGS+=(--prune --high-water-mb "${{ inputs.high-water-mb }}" --keep-mb "${{ inputs.keep-mb }}")
+        ARGS=(--branch "${INPUTS_BRANCH}")
+        [[ "${INPUTS_DRY_RUN}" != "true" ]] && ARGS+=(--delete)
+        [[ "${INPUTS_SUMMARY}" == "true" ]] && ARGS+=(--summary)
+        if [[ "${INPUTS_PRUNE}" == "true" ]]; then
+          ARGS+=(--prune --high-water-mb "${INPUTS_HIGH_WATER_MB}" --keep-mb "${INPUTS_KEEP_MB}")
         fi
         python3 "${GITHUB_WORKSPACE}/.github/scripts/gh_cache_cleanup.py" "${ARGS[@]}"

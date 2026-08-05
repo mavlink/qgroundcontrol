@@ -158,10 +158,12 @@ SetupPage {
 
                 onCalibrationComplete: (calType) => {
                     switch (calType) {
-                    case MAVLink.CalibrationAccel:
                     case MAVLink.CalibrationMag:
                         _singleCompassSettingsComponentShowPriority = true
                         postOnboardCompassCalibrationFactory.open()
+                        break
+                    case MAVLink.CalibrationAccel:
+                        postCalibrationFactory.open()
                         break
                     }
                 }
@@ -287,6 +289,7 @@ SetupPage {
                     buttons:    Dialog.Ok
 
                     Column {
+                        objectName: "postOnboardCompassCalibrationDialog"
                         width:      40 * ScreenTools.defaultFontPixelWidth
                         spacing:    ScreenTools.defaultFontPixelHeight
 
@@ -317,6 +320,12 @@ SetupPage {
                 }
             }
 
+            QGCPopupDialogFactory {
+                id: postCalibrationFactory
+
+                dialogComponent: postCalibrationComponent
+            }
+
             Component {
                 id: postCalibrationComponent
 
@@ -325,6 +334,7 @@ SetupPage {
                     title:  qsTr("Calibration complete")
 
                     Column {
+                        objectName: "postCalibrationDialog"
                         width:      40 * ScreenTools.defaultFontPixelWidth
                         spacing:    ScreenTools.defaultFontPixelHeight
 

@@ -12,9 +12,7 @@ QGroundControl \* ayrıca SiK Radyoları ve PX4 Flow cihazları için yazılıml
 
 1. İlk olarak üstteki araç çubuğundan **dişli** simgesini (_Vehicle Setup_), daha sonra kenar çubuğundan **Firmware**'i seçin.
 
-![Yazılım bağlantısı kesildi](../../../assets/setup/firmware/firmware_disconnected.jpg)
-
-1. Cihazınızı (Pixhawk, SiK Radio, PX4 Flow) USB aracılığıyla doğrudan bilgisayarınıza bağlayın.
+2. Cihazınızı (Pixhawk, SiK Radio, PX4 Flow) USB aracılığıyla doğrudan bilgisayarınıza bağlayın.
 
    ::: info
    Doğrudan makinenizdeki elektrik akışı olan bir USB bağlantı noktasına bağlayın (bir USB hub aracılığıyla bağlamayın).
@@ -26,15 +24,9 @@ Cihaz bağlandıktan sonra, hangi aygıt yazılımının yükleneceğini seçebi
 
 1. Pixhawk uyumlu bir anakart için _ mevcut kararlı sürümü _ indirmek için \*\* PX4 Flight Stack vX.X.X Stable Release \*\* veya \*\* ArduPilot Flight Stack \*\* seçeneklerinden birini seçin.
 
-   ![PX4'ü seçin](../../../assets/setup/firmware/firmware_select_default_px4.jpg)
-
    If you select _ArduPilot_ you will also have to choose the specific firmware and the type of vehicle (as shown below).
 
-   ![ArduPilot'ı seçin](../../../assets/setup/firmware/firmware_selection_ardupilot.jpg)
-
 2. Belirli geliştirici sürümlerini seçmek veya yerel dosya sisteminizden ürün yazılımı yüklemek için \*\* Advanced settings \*\*'i kontrol edin.
-
-   ![ArduPilot - Advanced Settings](../../../assets/setup/firmware/firmware_selection_advanced_settings.jpg)
 
 ## Update the firmware
 
@@ -42,8 +34,6 @@ Cihaz bağlandıktan sonra, hangi aygıt yazılımının yükleneceğini seçebi
 
    Ardından, aygıt yazılımı bir dizi yükseltme adımından geçecektir (yeni aygıt yazılımının indirilmesi, eski aygıt yazılımının silinmesi vb.).
    Her adım ekrana yazdırılır ve genel ilerleme bir ilerleme çubuğunda görüntülenir.
-
-   ![Yazılım güncellemesi tamamlandı](../../../assets/setup/firmware/firmware_upgrade_complete.jpg)
 
 Once the firmware has finished loading the device/vehicle will reboot and reconnect.
 Daha sonra [ gövdeyi](../setup_view/airframe.md) (ve sonra sensörler, radyo vb.)

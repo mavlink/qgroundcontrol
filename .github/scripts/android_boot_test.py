@@ -15,6 +15,7 @@ ensure_tools_dir(__file__)
 
 from typing import TYPE_CHECKING
 
+from common.gh_actions import gh_error, gh_notice, gh_warning
 from common.proc import run_bytes
 
 if TYPE_CHECKING:
@@ -59,8 +60,8 @@ def install_with_retries(apk_path: Path, retries: int, retry_delay: int) -> bool
 
         stdout = _decode(result.stdout).strip()
         stderr = _decode(result.stderr).strip()
-        print(
-            f"::warning::adb install attempt {attempt}/{retries} failed."
+        gh_warning(
+            f"adb install attempt {attempt}/{retries} failed."
             f" stdout={stdout!r} stderr={stderr!r}"
         )
         if attempt < retries:
@@ -106,7 +107,7 @@ _GSTREAMER_FAILURE_PATTERN = re.compile(
 def print_gstreamer_log_group(content: str, max_lines: int = 120) -> None:
     matches = [line for line in content.splitlines() if _GSTREAMER_LOG_PATTERN.search(line)]
     if not matches:
-        print("::notice::No GStreamer-related logcat lines found")
+        gh_notice("No GStreamer-related logcat lines found")
         return
     print(f"::group::GStreamer logcat ({len(matches)} lines)")
     for line in matches[-max_lines:]:
@@ -196,9 +197,9 @@ def emit_failure(
     log_pattern: re.Pattern[str],
     notice: str | None = None,
 ) -> int:
-    print(f"::error::{message}")
+    gh_error(message)
     if notice:
-        print(f"::notice::{notice}")
+        gh_notice(notice)
     logcat_content = read_logcat()
     write_log(log_output, logcat_content)
     print_log_group(logcat_content, log_pattern)
@@ -468,8 +469,8 @@ def main() -> int:
         final_log_pattern = log_pattern
 
         if attempt < args.launch_retries:
-            print(
-                f"::warning::{final_error_message} on attempt "
+            gh_warning(
+                f"{final_error_message} on attempt "
                 f"{attempt}/{args.launch_retries}; retrying..."
             )
             time.sleep(2)
@@ -478,9 +479,9 @@ def main() -> int:
         final_logcat = read_logcat()
 
     write_log(args.log_output, final_logcat)
-    print(f"::error::{final_error_message}")
+    gh_error(final_error_message)
     if final_notice:
-        print(f"::notice::{final_notice}")
+        gh_notice(final_notice)
     print_log_group(final_logcat, final_log_pattern)
     print_gstreamer_log_group(final_logcat)
     return 1

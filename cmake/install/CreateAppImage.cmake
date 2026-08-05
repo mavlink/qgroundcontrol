@@ -164,8 +164,11 @@ message(STATUS "QGC: Building AppImage package...")
 set(ENV{ARCH} ${CMAKE_SYSTEM_PROCESSOR})
 set(ENV{VERSION} ${CMAKE_PROJECT_VERSION})
 
+# --no-appstream: appimagetool's AppStream validation fetches remote URLs (e.g.
+# screenshot links), making packaging fail on unrelated web changes. The metainfo
+# is already validated offline (appstreamcli validate --no-net) in Install.cmake.
 execute_process(
-    COMMAND "${APPIMAGETOOL_PATH}" "${APPDIR_PATH}" "${APPIMAGE_PATH}"
+    COMMAND "${APPIMAGETOOL_PATH}" --no-appstream "${APPDIR_PATH}" "${APPIMAGE_PATH}"
     COMMAND_ECHO STDOUT
     COMMAND_ERROR_IS_FATAL ANY
 )

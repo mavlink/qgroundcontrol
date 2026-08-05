@@ -9,7 +9,7 @@ class VideoManagerInitTest : public UnitTest
 private slots:
     void init() override;
 
-    void _testQmlReadyBeforeGstReady();
-    void _testGstReadyBeforeQmlReady();
-    void _testGstInitFailure();
+    void _testQmlReadyBeforeBackendReady();
+    void _testBackendReadyBeforeQmlReady();
+    void _testBackendInitFailure();
 };

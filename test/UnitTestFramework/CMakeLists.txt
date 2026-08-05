@@ -5,12 +5,11 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/PropertyTestHelper.h
         ${CMAKE_CURRENT_SOURCE_DIR}/UnitTest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/UnitTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestTileGenerator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/UnitTestTileGenerator.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(BaseClasses)
 add_subdirectory(Benchmarking)

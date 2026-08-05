@@ -1,31 +1,19 @@
 import QtQuick3D
 
 Node {
-    property real _pan: 0.001
-    property real _tilt: 0.001
-    property real _zoom: 1500
     property alias cameraOne: cameraPerspectiveOne
-    property alias cameraOneRotation: cameraPerspectiveOne.eulerRotation
-    property alias cameraTwoPosition: cameraPerspectiveTwo.position
-    property real lightsBrightness: 0.3
+    property alias orbitCenter: orbitCenterNode.position
+    property real cameraHeading: 0
+    property real cameraTilt: 0
+    property real cameraZoom: 1500
+    property real lightsBrightness: 0.5
     property real viewDistance: 50000
 
-    function resetCamera() {
-        camNode.position = Qt.vector3d(0, 0, 0);
-        camNode.eulerRotation = Qt.vector3d(90, 0, 0);
+    // Two directional lights maximum: mobile GPUs with small uniform buffers
+    // make Qt Quick 3D reduce the directional light limit to 2 and silently
+    // drop the rest ("Too many directional lights in scene, maximum is 2").
 
-        cameraPerspectiveTwo.position = Qt.vector3d(_zoom * Math.sin(_tilt) * Math.cos(_pan), _zoom * Math.cos(_tilt), _zoom * Math.sin(_tilt) * Math.sin(_pan));
-        cameraPerspectiveTwo.eulerRotation = Qt.vector3d(0, 0, 0);
-
-        cameraPerspectiveOne.position = Qt.vector3d(0, 0, 0);
-        cameraPerspectiveOne.eulerRotation = Qt.vector3d(-90, 0, 0);
-    }
-
-    DirectionalLight {
-        brightness: lightsBrightness
-        eulerRotation.x: 180
-    }
-
+    // Shadow-casting key light, shining straight down (scene is z-up)
     DirectionalLight {
         brightness: 0.6
         castsShadow: true
@@ -41,51 +29,41 @@ Node {
         softShadowQuality: Light.PCF16
     }
 
+    // Slanted up/side fill so vertical faces and undersides aren't black
     DirectionalLight {
         brightness: lightsBrightness
-        eulerRotation.x: 90
+        eulerRotation.x: 225
+        eulerRotation.y: 45
     }
 
-    DirectionalLight {
-        brightness: lightsBrightness
-        eulerRotation.x: 270
-    }
-
-    DirectionalLight {
-        brightness: lightsBrightness
-        eulerRotation.y: 90
-    }
-
-    DirectionalLight {
-        brightness: lightsBrightness
-        eulerRotation.y: -90
-    }
-
+    // Orbit camera rig: heading rotates around the scene up axis (z),
+    // tilt rotates around the local x axis, camera sits cameraZoom away
+    // looking back at the orbit center.
     Node {
-        id: camNode
+        id: orbitCenterNode
 
-        eulerRotation {
-            x: 90
-        }
+        eulerRotation.z: cameraHeading
 
         Node {
-            id: cameraPerspectiveTwo
+            id: camNode
 
-            position {
-                x: _zoom * Math.sin(_tilt) * Math.cos(_pan)
-                y: _zoom * Math.cos(_tilt)
-                z: _zoom * Math.sin(_tilt) * Math.sin(_pan)
-            }
+            eulerRotation.x: 90 + cameraTilt
 
-            PerspectiveCamera {
-                id: cameraPerspectiveOne
+            Node {
+                id: cameraPerspectiveTwo
 
-                clipFar: viewDistance
-                clipNear: 25
-                frustumCullingEnabled: true
+                position.y: cameraZoom
 
-                eulerRotation {
-                    x: -90
+                PerspectiveCamera {
+                    id: cameraPerspectiveOne
+
+                    clipFar: viewDistance
+                    clipNear: 25
+                    frustumCullingEnabled: true
+
+                    eulerRotation {
+                        x: -90
+                    }
                 }
             }
         }

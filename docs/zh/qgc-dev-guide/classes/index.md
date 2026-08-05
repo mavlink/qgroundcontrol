@@ -1,5 +1,9 @@
 # 类层次结构（上层）
 
+:::tip
+Doxygen documentation for classes can be found at <https://api.qgroundcontrol.com/master/annotated.html>.
+:::
+
 ## （LinkManager, LinkInterface）连接管理器类和链接接口类
 
 QGC中的“链接”是一种特定类型的通信管道，例如串行端口或WiFi上的UDP。 LinkInterface为所有链接的基类。 每个链接都在它自己的线程上运行，并且发送字节（bytes）到MAVLink协议中。

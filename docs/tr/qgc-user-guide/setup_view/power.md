@@ -2,8 +2,6 @@
 
 _Power Setup_ ekranı batarya parametrelerini düzenlemek için kullanılır ve ayrıca pervaneler hakkında gelişmiş ayarlar sunar.
 
-![Batarya Kalibrasyonu](../../../assets/setup/px4_power.jpg)
-
 ## Batarya Voltaj/Akım Kalibrasyonu
 
 Batarya/güç modülünüz için veri sayfasından verileri girin: hücre sayısı, hücre başına tam voltaj, hücre başına boş voltaj. Eğer varsa, voltaj bölücü ve volt başına amper bilgilerini de girin.

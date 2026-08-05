@@ -7,10 +7,7 @@ qt_add_library(QGCFileSystem STATIC
     QGCFileWriter.h
 )
 
-target_include_directories(QGCFileSystem
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(QGCFileSystem PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(QGCFileSystem
     PUBLIC

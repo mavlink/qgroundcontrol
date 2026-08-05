@@ -20,7 +20,7 @@
     "shortDesc":        "Altitude (rel)",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "m",
+    "units":            "vertical m",
     "default":          0.0
 }
 ]

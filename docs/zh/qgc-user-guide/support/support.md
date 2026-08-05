@@ -8,7 +8,7 @@
 - [PX4 Pro Flight Stack](http://discuss.px4.io/c/qgroundcontrol/qgroundcontrol-usage) (discuss.px4.io)。
 - [ArduPilot Flight Stack](http://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol) (discuss.ardupilot.org)。
 
-这些论坛也主要靠其他QGC社区成员进行互助。 QGC 的开发人员对它们进行的监管非常有限。
+These forums are completely self-help from other QGC users.
 
 ### 开发者交流 {#developer_chat}
 

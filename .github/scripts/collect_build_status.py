@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+from pathlib import Path
 from typing import Any
 
 from ci_bootstrap import ensure_tools_dir
@@ -13,6 +13,8 @@ ensure_tools_dir(__file__)
 
 from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_github_output
 from common.github_runs import select_latest_runs_by_name
+from common.io import read_json, write_json
+from common.markdown import md_table
 
 
 def platform_status(
@@ -51,12 +53,12 @@ def precommit_status(run: dict[str, Any] | None) -> dict[str, str]:
 
 
 def render_table(platforms: list[str], states: dict[str, dict[str, str]]) -> str:
-    lines = ["| Platform | Status | Details |", "|----------|--------|--------|"]
+    rows = []
     for name in platforms:
         info = states[name]
         link = f"[View]({info['url']})" if info["url"] else "-"
-        lines.append(f"| {name} | {info['status']} | {link} |")
-    return "\n".join(lines)
+        rows.append([name, info["status"], link])
+    return md_table(["Platform", "Status", "Details"], rows)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -95,14 +97,12 @@ def main(argv: list[str] | None = None) -> int:
     target_names.add("pre-commit")
 
     if args.runs_input:
-        with open(args.runs_input, encoding="utf-8") as f:
-            runs = json.load(f)
+        runs = read_json(Path(args.runs_input))
     else:
         runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
-        with open(args.runs_cache, "w", encoding="utf-8") as f:
-            json.dump(runs, f)
+        write_json(Path(args.runs_cache), runs)
 
     latest = select_latest_runs_by_name(runs, target_names, event=args.event)
 

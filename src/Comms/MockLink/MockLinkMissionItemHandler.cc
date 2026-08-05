@@ -171,7 +171,7 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
     (void) mavlink_msg_mission_count_pack_chan(
         _mockLink->vehicleId(),
         MAV_COMP_ID_AUTOPILOT1,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &responseMsg,               // Outgoing message
         msg.sysid,                  // Target is original sender
         msg.compid,                 // Target is original sender
@@ -250,7 +250,7 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t &
     (void) mavlink_msg_mission_item_int_pack_chan(
         _mockLink->vehicleId(),
         MAV_COMP_ID_AUTOPILOT1,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &responseMsg,                // Outgoing message
         msg.sysid,                   // Target is original sender
         msg.compid,                  // Target is original sender
@@ -342,7 +342,7 @@ void MockLinkMissionItemHandler::_requestNextMissionItem(int sequenceNumber)
     (void) mavlink_msg_mission_request_int_pack_chan(
         _mockLink->vehicleId(),
         MAV_COMP_ID_AUTOPILOT1,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &message,
         MAVLinkProtocol::instance()->getSystemId(),
         MAVLinkProtocol::getComponentId(),
@@ -363,7 +363,7 @@ void MockLinkMissionItemHandler::_sendAck(MAV_MISSION_RESULT ackType) const
     (void) mavlink_msg_mission_ack_pack_chan(
         _mockLink->vehicleId(),
         MAV_COMP_ID_AUTOPILOT1,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &message,
         MAVLinkProtocol::instance()->getSystemId(),
         MAVLinkProtocol::getComponentId(),

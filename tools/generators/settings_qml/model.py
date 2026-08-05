@@ -12,9 +12,41 @@ from ..common.controls import (
     parse_button,
     parse_enable_checkbox,
 )
+from ..common.validation import clamped_repr, reject_unknown_keys, require_dict, require_list
 
 # Matches C++ FactMetaData::splitTranslatedList: [,，、] (ASCII / fullwidth / enumeration commas).
 _TRANSLATED_LIST_RE = re.compile("[,，、]")
+
+# Fact-backed control settings: "settingsGroupAccessor.factName" (nested fact names allowed).
+# ASCII-only, non-empty segments: fact_name feeds objectNames, which must stay grep-able.
+_SETTING_RE = re.compile(r"[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+")
+
+# QML property names emitted verbatim into generated QML; a bad name must fail here
+# with context, not as a qmllint/build error pointing at generated code.
+_QML_PROPERTY_NAME_RE = re.compile(r"[a-z_][A-Za-z0-9_]*")
+
+# Names the control template already emits (or that QML treats specially); a JSON
+# 'properties' entry using one would generate a duplicate binding.
+_RESERVED_PROPERTY_NAMES = frozenset({"id", "objectName", "label", "fact", "enabled"})
+
+
+def _coerce_property_value(value: object) -> str:
+    """Convert a JSON property value to a QML expression string.
+
+    JSON booleans and numbers map to their QML literals so authors can write
+    the natural spelling (e.g. ``"selectFolder": false``); strings pass
+    through verbatim as QML expressions. Anything else is a schema error.
+    """
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return repr(value)
+    if isinstance(value, str):
+        return value
+    raise ValueError(
+        f"'properties' value must be a string, boolean, or number, "
+        f"got {type(value).__name__}: {clamped_repr(value)}"
+    )
 
 
 @dataclass
@@ -22,6 +54,7 @@ class ControlDef(BaseControlDef):
     """A single control referencing a setting."""
     placeholder: str = ""
     value: str = ""
+    properties: dict[str, str] = field(default_factory=dict)
 
     @property
     def settings_group(self) -> str:
@@ -72,13 +105,33 @@ def parse_keywords(raw: list[str] | str) -> list[str]:
     return []
 
 
+_ALLOWED_ROOT_KEYS = frozenset({
+    "fileType", "version", "comment", "imports", "bindings", "groups",
+})
+_ALLOWED_GROUP_KEYS = frozenset({
+    "comment", "heading", "showWhen", "enableWhen", "headingDescription",
+    "component", "sectionName", "keywords", "missing", "controls",
+})
+_ALLOWED_CONTROL_KEYS = frozenset({
+    "comment", "setting", "label", "control", "showWhen", "enableWhen",
+    "placeholder", "value", "component", "properties",
+    "enableCheckbox", "button",
+})
+
+
 def load_page_def(json_path: Path) -> PageDef:
     """Load a page definition from a JSON file."""
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
 
-    page = PageDef(imports=data.get("imports", []), bindings=data.get("bindings", {}))
-    for grp_data in data.get("groups", []):
+    reject_unknown_keys(data, _ALLOWED_ROOT_KEYS, "page", json_path)
+
+    page = PageDef(
+        imports=require_list(data.get("imports", []), "'imports'", json_path),
+        bindings=require_dict(data.get("bindings", {}), "'bindings'", json_path),
+    )
+    for grp_data in require_list(data.get("groups", []), "'groups'", json_path):
+        reject_unknown_keys(grp_data, _ALLOWED_GROUP_KEYS, "group", json_path)
         grp = GroupDef(
             heading=grp_data.get("heading", ""),
             showWhen=grp_data.get("showWhen", ""),
@@ -87,10 +140,11 @@ def load_page_def(json_path: Path) -> PageDef:
             component=grp_data.get("component", ""),
             sectionName=grp_data.get("sectionName", ""),
             keywords=parse_keywords(grp_data.get("keywords", [])),
-            missing=grp_data.get("missing", []),
+            missing=require_list(grp_data.get("missing", []), "group 'missing'", json_path),
         )
-        for ctrl_data in grp_data.get("controls", []):
-            grp.controls.append(ControlDef(
+        for ctrl_data in require_list(grp_data.get("controls", []), "group 'controls'", json_path):
+            reject_unknown_keys(ctrl_data, _ALLOWED_CONTROL_KEYS, "control", json_path)
+            ctrl = ControlDef(
                 setting=ctrl_data.get("setting", ""),
                 label=ctrl_data.get("label", ""),
                 control=ctrl_data.get("control", ""),
@@ -99,8 +153,38 @@ def load_page_def(json_path: Path) -> PageDef:
                 placeholder=ctrl_data.get("placeholder", ""),
                 value=ctrl_data.get("value", ""),
                 component=ctrl_data.get("component", ""),
+                properties=require_dict(ctrl_data.get("properties", {}), "control 'properties'", json_path),
                 enableCheckbox=parse_enable_checkbox(ctrl_data.get("enableCheckbox")),
                 button=parse_button(ctrl_data.get("button")),
-            ))
+            )
+            if ctrl.properties and ctrl.control not in ("browse", "scaler"):
+                raise ValueError(
+                    f"{json_path}: 'properties' is only supported on 'browse'/'scaler' controls, "
+                    f"got control {ctrl.control!r} (control: {clamped_repr(ctrl_data)})"
+                )
+            for prop_name, prop_value in ctrl.properties.items():
+                if not _QML_PROPERTY_NAME_RE.fullmatch(prop_name):
+                    raise ValueError(
+                        f"{json_path}: 'properties' key must be a valid QML property name, "
+                        f"got: {prop_name!r} (control: {clamped_repr(ctrl_data)})"
+                    )
+                if prop_name in _RESERVED_PROPERTY_NAMES:
+                    raise ValueError(
+                        f"{json_path}: 'properties' key {prop_name!r} is reserved (already emitted "
+                        f"by the generator) (control: {clamped_repr(ctrl_data)})"
+                    )
+                try:
+                    ctrl.properties[prop_name] = _coerce_property_value(prop_value)
+                except ValueError as exc:
+                    raise ValueError(f"{json_path}: {exc} (control: {clamped_repr(ctrl_data)})") from None
+            # component/info controls have no fact; every other kind derives its fact
+            # reference and objectName from setting, so a bad one must fail here with
+            # context, not deep inside the emitter with an IndexError
+            if ctrl.control not in ("component", "info") and not _SETTING_RE.fullmatch(ctrl.setting):
+                raise ValueError(
+                    f"{json_path}: control setting must be 'settingsGroupAccessor.factName', "
+                    f"got: {ctrl.setting!r} (control: {clamped_repr(ctrl_data)})"
+                )
+            grp.controls.append(ctrl)
         page.groups.append(grp)
     return page

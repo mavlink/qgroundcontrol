@@ -17,6 +17,14 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
         _CRT_SECURE_NO_WARNINGS # Disable warnings for unsafe C functions
 )
 
+if(MSVC)
+    target_compile_options(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            /bigobj
+            /Zc:preprocessor
+    )
+endif()
+
 # ----------------------------------------------------------------------------
 # Windows Executable Configuration
 # ----------------------------------------------------------------------------

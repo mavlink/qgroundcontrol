@@ -137,9 +137,6 @@ void ComponentInformationManagerTest::_compInfoAccessorsReturnValidObjects()
 
 void ComponentInformationManagerTest::_requestCompletesForArduPilot()
 {
-    // ArduPilot mock link has no metadata source; this warning is expected.
-    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
-                     QRegularExpression("failed to load metadata"));
     _disconnectMockLink();
     _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 

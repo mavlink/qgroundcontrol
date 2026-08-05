@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import subprocess
+from typing import TYPE_CHECKING
 
 import pytest
 from setup import install_qt
@@ -15,6 +16,9 @@ from setup.install_qt import (
     resolve_qt_root,
     validate_aqt_source,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestResolveArchDir:
@@ -63,13 +67,13 @@ class TestComputeCacheDigest:
 
 
 class TestResolveQtRoot:
-    def test_valid_path(self, tmp_path: pytest.TempPathFactory) -> None:
+    def test_valid_path(self, tmp_path: Path) -> None:
         qt_root = tmp_path / "6.8.3" / "gcc_64"
         qt_root.mkdir(parents=True)
         result = resolve_qt_root(tmp_path, "6.8.3", "gcc_64")
         assert result == qt_root
 
-    def test_missing_path_exits(self, tmp_path: pytest.TempPathFactory) -> None:
+    def test_missing_path_exits(self, tmp_path: Path) -> None:
         with pytest.raises(SystemExit):
             resolve_qt_root(tmp_path, "6.8.3", "gcc_64")
 

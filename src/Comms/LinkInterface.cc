@@ -132,16 +132,27 @@ void LinkInterface::_connectionRemoved()
 
 void LinkInterface::reportMavlinkV1Traffic()
 {
-    if (!_mavlinkV1TrafficReported) {
-        _mavlinkV1TrafficReported = true;
-
-        const SharedLinkConfigurationPtr linkConfig = linkConfiguration();
-        const QString linkName = linkConfig ? linkConfig->name() : QStringLiteral("unknown");
-        qCWarning(LinkInterfaceLog) << "MAVLink v1 traffic detected on link" << linkName;
-        const QString message = tr("MAVLink v1 traffic detected on link '%1'. "
-                                   "%2 only supports MAVLink v2. "
-                                   "Please ensure your vehicle is configured to use MAVLink v2.")
-                                    .arg(linkName).arg(qgcApp()->applicationName());
-        QGC::showAppMessage(message);
+    if (_mavlinkV1TrafficReported || _mavlinkV2TrafficSeen) {
+        return;
     }
+
+    // Defer the warning: ArduPilot starts out sending v1 and upgrades to v2 once it sees v2
+    // traffic from QGC. Only warn if the link never produces v2 within the grace period.
+    if (!_mavlinkV1FirstSeenTimer.isValid()) {
+        _mavlinkV1FirstSeenTimer.start();
+    }
+    if (_mavlinkV1FirstSeenTimer.elapsed() < _mavlinkV1TrafficGraceMsecs) {
+        return;
+    }
+
+    _mavlinkV1TrafficReported = true;
+
+    const SharedLinkConfigurationPtr linkConfig = linkConfiguration();
+    const QString linkName = linkConfig ? linkConfig->name() : QStringLiteral("unknown");
+    qCWarning(LinkInterfaceLog) << "MAVLink v1 traffic detected on link" << linkName;
+    const QString message = tr("MAVLink v1 traffic detected on link '%1'. "
+                               "%2 only supports MAVLink v2. "
+                               "Please ensure your vehicle is configured to use MAVLink v2.")
+                                .arg(linkName).arg(qgcApp()->applicationName());
+    QGC::showAppMessage(message);
 }

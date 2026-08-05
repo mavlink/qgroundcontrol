@@ -2,9 +2,13 @@
 # https://github.com/crate-ci/typos
 
 [default]
+# Color literals (#RRGGBB / #AARRGGBB); the # keeps real words out of the match.
+extend-ignore-re = ["#[0-9a-fA-F]{3,8}\\b"]
 extend-ignore-identifiers-re = [
-    # Hexadecimal values
-    "[0-9a-fA-F]+",
+    # 0x-prefixed hex literals and hash-like bare hex (SHAs). Must stay anchored and
+    # long — shorter bounds exempt all-hex-letter words (facade, decade), hiding typos.
+    "\\b0x[0-9a-fA-F]+\\b",
+    "\\b[0-9a-fA-F]{16,}\\b",
 ]
 
 [default.extend-words]
@@ -53,15 +57,14 @@ THR = "THR"
 Thr = "Thr"
 thr = "thr"
 
-# Thread abbreviation (e.g., osmThr for OSM parser thread)
-# Note: Thr already covered above
-
 # Geographic/organizational acronyms
 LINZ = "LINZ"  # Land Information New Zealand
 
 [files]
 extend-exclude = [
     "build/",
+    # Skills vendored from Qt (downloaded, not authored here) — held to their own standards.
+    "tools/skills/",
     "translations/",
     "*.ts",
     "libs/",

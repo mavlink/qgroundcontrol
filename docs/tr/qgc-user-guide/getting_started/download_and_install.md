@@ -1,6 +1,8 @@
 # İndirme ve Kurulum
 
-The sections below can be used to download the [current stable release](../releases/release_notes.md) of _QGroundControl_ for each platform.
+:::tip
+These are **daily build** download links with the latest features. If you are looking for the last stable release, see the [stable docs](https://docs.qgroundcontrol.com/Stable_V5.1/en/qgc-user-guide/getting_started/download_and_install.html).
+:::
 
 :::tip
 See [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md) if _QGroundControl_ doesn't start and run properly after installation!
@@ -18,7 +20,9 @@ En iyi deneyim ve uyumluluk için size işletim sisteminizin en yeni sürümün�
 
 Supported versions: Windows 10 (1809 or later), Windows 11:
 
-1. Download [QGroundControl-installer.exe](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-installer.exe).
+1. Download the installer:
+   - [x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-AMD64.exe)
+   - [Arm64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-ARM64.exe)
 2. exe'ye çift tıklayın.
 
 :::info
@@ -29,13 +33,13 @@ For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Vide
 
 ## Mac OS {#macOS}
 
-Supported versions: macOS 12 (Monterey) or later:
+Supported versions: macOS 13 (Ventura) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 
 <!-- usually based on Qt macOS dependency -->
 
-1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.dmg).
+1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg).
 2. .dmg dosyasına çift tıklayın, ardından çıkan ekranda _QGroundControl_'ü _Application_ dosyasına sürükleyin.
 
 :::info
@@ -44,11 +48,14 @@ QGroundControl continues to not be signed. You will not to allow permission for 
 
 ## Ubuntu Linux {#ubuntu}
 
-Supported versions: Ubuntu 22.04, 24.04:
+Supported versions: Ubuntu 24.04 LTS, 26.04 LTS:
+
+:::info
+The AppImage downloads below run on Ubuntu 24.04 LTS and 26.04 LTS. If you need a version of _QGroundControl_ that runs on Ubuntu 22.04, it is possible, but you have to [build it yourself](../../qgc-dev-guide/getting_started/index.md).
+:::
 
 Ubuntu, bir seri bağlantı noktasının (veya USB serisinin) robotikle ilgili kullanımına müdahale eden bir seri modem yöneticisi ile birlikte gelir.
 _ QGroundControl _ 'ü kurmadan önce modem yöneticisini kaldırmalı ve seri bağlantı noktasına erişim için kendinize izin vermelisiniz.
-Ayrıca video akışını desteklemek için _ GStreamer _ 'ı da yüklemeniz gerekmektedir.
 
 **Before installing _QGroundControl_ for the first time:**
 
@@ -77,15 +84,14 @@ sudo apt remove --purge modemmanager
 1. On the command prompt, enter:
 
 ```sh
-sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
-sudo apt install python3-gi python3-gst-1.0 -y
-sudo apt install libfuse2 -y
-sudo apt install libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor-dev -y
+sudo apt install -y libfuse2 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0
 ```
 
 **To install _QGroundControl_:**
 
-1. Download [QGroundControl-x86_64.AppImage](https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl-x86_64.AppImage).
+1. Download the AppImage for your architecture:
+   - [Linux x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-x86_64.AppImage)
+   - [Linux aarch64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-aarch64.AppImage)
 
 2. Make the AppImage executable
 
@@ -102,14 +108,14 @@ chmod +x QGroundControl-<arch>.AppImage
 
 ## Android {#android}
 
-Supported versions: Android 9 to 15 (arm 32/64):
+Supported versions: Android 9 (API 28) or later (arm 32/64):
 
-- [Android 32/64 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl.apk)
+- [Android APK](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.apk)
+
+:::important
+The version of Qt used by QGroundControl requires Android 9 (API 28) as the minimum supported version. It is not possible to support older Android releases. This means that some integrated controllers running older versions of Android are no longer compatible with current builds of QGroundControl. QGroundControl 5.0 stable is the last release that supports these older devices. Note that 5.0 may not fully support firmware versions released after it, so users on older controllers may experience limited compatibility with newer autopilot firmware.
+:::
 
 ## Old Stable Releases
 
-Old stable releases can be found on <a href="https://github.com/mavlink/qgroundcontrol/releases/" target="_blank">GitHub</a>.
-
-## Daily Builds
-
-Daily builds can be [downloaded from here](../releases/daily_builds.md).
+Old stable releases can be found on <a href="https://github.com/mavlink/qgroundcontrol/releases/" target="_blank">GitHub</a>.

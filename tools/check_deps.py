@@ -112,7 +112,7 @@ def check_qt_version() -> None:
     """Check configured and installed Qt versions."""
     log_info("Checking Qt version...")
     current_version = get_build_config_value(
-        "qt_version", "unknown", start=Path(__file__).resolve()
+        "qt.version", "unknown", start=Path(__file__).resolve()
     )
     print(f"  Current: Qt {current_version}")
 
@@ -140,7 +140,7 @@ def check_gstreamer_version() -> None:
     """Check configured and installed GStreamer versions."""
     log_info("Checking GStreamer version...")
     current_version = get_build_config_value(
-        "gstreamer_version",
+        "gstreamer.version.default",
         "unknown",
         start=Path(__file__).resolve(),
     )

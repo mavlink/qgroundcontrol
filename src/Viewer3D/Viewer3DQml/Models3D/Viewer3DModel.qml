@@ -1,3 +1,4 @@
+import QtPositioning
 import QtQuick3D
 
 import QGroundControl
@@ -6,61 +7,14 @@ import QGroundControl.Controls
 View3D {
     id: topView
 
+    objectName: "viewer3DView"
+
     readonly property real _viewDistance: 50000
     readonly property var _gpsRef: QGCViewer3DManager.gpsRef
+    readonly property bool _mapLoaded: QGCViewer3DManager.mapProvider ? QGCViewer3DManager.mapProvider.mapLoaded : false
 
-    property real movementSpeed: 1
-    property real rotationSpeed: 0.1
-    property real zoomSpeed: 0.3
-
-    function moveCamera(newPose: vector2d, lastPose: vector2d) {
-        let _roll = standAloneScene.cameraOneRotation.x * (Math.PI / 180);
-        let _pitch = standAloneScene.cameraOneRotation.y * (Math.PI / 180);
-
-        let dx_l = (newPose.x - lastPose.x) * movementSpeed * movementSpeedAdjustment(2000.0, 4);
-        let dy_l = (newPose.y - lastPose.y) * movementSpeed * movementSpeedAdjustment(2000.0, 4);
-
-        //Note: Rotation Matrix is computed as: R = R(-_pitch) * R(_roll)
-        // Then the corerxt tramslation is: d = R * [dx_l; dy_l; dz_l]
-
-        let dx = dx_l * Math.cos(_pitch) - dy_l * Math.sin(_pitch) * Math.sin(_roll);
-        let dy = dy_l * Math.cos(_roll);
-        let dz = dx_l * Math.sin(_pitch) + dy_l * Math.cos(_pitch) * Math.sin(_roll);
-
-        standAloneScene.cameraTwoPosition.x -= dx;
-        standAloneScene.cameraTwoPosition.y += dy;
-        standAloneScene.cameraTwoPosition.z += dz;
-    }
-
-    function movementSpeedAdjustment(adjustmentScale, maxValue) {
-        let _adjustmentValue = standAloneScene.cameraTwoPosition.length() / adjustmentScale;
-        return Math.min(Math.max(1, _adjustmentValue), maxValue);
-    }
-
-    function rotateCamera(newPose: vector2d, lastPose: vector2d) {
-        let rotation_vec = Qt.vector2d(newPose.y - lastPose.y, newPose.x - lastPose.x);
-
-        let dx_l = rotation_vec.x * rotationSpeed;
-        let dy_l = rotation_vec.y * rotationSpeed;
-
-        standAloneScene.cameraOneRotation.x += dx_l;
-        standAloneScene.cameraOneRotation.y += dy_l;
-    }
-
-    function zoomCamera(zoomValue) {
-        let dz_l = zoomValue * zoomSpeed * movementSpeedAdjustment(2000.0, 4);
-
-        let _roll = standAloneScene.cameraOneRotation.x * (Math.PI / 180);
-        let _pitch = standAloneScene.cameraOneRotation.y * (Math.PI / 180);
-
-        let dx = -dz_l * Math.cos(_roll) * Math.sin(_pitch);
-        let dy = -dz_l * Math.sin(_roll);
-        let dz = dz_l * Math.cos(_pitch) * Math.cos(_roll);
-
-        standAloneScene.cameraTwoPosition.x -= dx;
-        standAloneScene.cameraTwoPosition.y += dy;
-        standAloneScene.cameraTwoPosition.z += dz;
-    }
+    // Exposed so FlyView can position the scale bar alongside the other widgets
+    readonly property Viewer3DCameraController cameraController: _cameraController
 
     camera: standAloneScene.cameraOne
 
@@ -86,43 +40,46 @@ View3D {
     importScene: CameraLightModel {
         id: standAloneScene
 
+        cameraHeading: cameraController.heading
+        cameraTilt: cameraController.tilt
+        cameraZoom: cameraController.distance
+        orbitCenter: cameraController.orbitCenter
         viewDistance: _viewDistance
+    }
+
+    Viewer3DCameraController {
+        id: _cameraController
+
+        fieldOfView: standAloneScene.cameraOne.fieldOfView
+        viewportSize: Qt.size(topView.width, topView.height)
+    }
+
+    function _resetCameraForContent() {
+        if (_mapLoaded) {
+            cameraController.reset();
+        } else {
+            // Without an OSM map there is no terrain; a top-down view shows
+            // nothing useful. Look at the vehicle from the side, slightly above.
+            cameraController.lookAt(Qt.vector3d(0, 0, 0), 0, 75, 400);
+        }
     }
 
     Component.onCompleted: {
         vehicle3DLoader.active = true;
         mapGeometryLoader.active = true;
+        _resetCameraForContent();
     }
     on_GpsRefChanged: {
-        standAloneScene.resetCamera();
+        _resetCameraForContent();
     }
-
-    Viewer3DProgressBar {
-        id: _terrainProgressBar
-
-        progressText: qsTr("Downloading Imageries: ")
-        width: ScreenTools.screenWidth * 0.2
-
-        anchors {
-            bottom: parent.bottom
-            horizontalCenter: parent.horizontalCenter
-            margins: ScreenTools.defaultFontPixelWidth
-        }
-    }
-
-    Binding {
-        property: "progressValue"
-        target: _terrainProgressBar
-        value: (mapGeometryLoader.active) ? (mapGeometryLoader.item.textureDownloadProgress) : (100)
-        when: mapGeometryLoader.status == Loader.Ready
+    on_MapLoadedChanged: {
+        _resetCameraForContent();
     }
 
     Component {
         id: buildingsGeometryComponent
 
         Node {
-            property real textureDownloadProgress: _terrainTextureManager.textureDownloadProgress
-
             Model {
                 id: cityMapModel
 
@@ -173,6 +130,9 @@ View3D {
             Viewer3DTerrainTexture {
                 id: _terrainTextureManager
 
+                readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+                fallbackCenter: _activeVehicle ? _activeVehicle.homePosition : QtPositioning.coordinate()
                 mapProvider: QGCViewer3DManager.mapProvider
 
                 onTextureGeometryDoneChanged: {
@@ -223,100 +183,9 @@ View3D {
         sourceComponent: vehicle3DComponent
     }
 
-    DragHandler {
-        id: cameraMovementDragHandler
-
-        property bool _isMoving: false
-        property point _lastPose
-
-        acceptedButtons: Qt.LeftButton
-        acceptedModifiers: Qt.NoModifier
-        target: null
-
-        onActiveChanged: {
-            if (active) { // When mouse is pressed
-                _lastPose = Qt.point(centroid.position.x, centroid.position.y);
-                _isMoving = true;
-            } else { // When mouse is released
-                _isMoving = false;
-            }
-        }
-        onCentroidChanged: {
-            if (_isMoving) {
-                moveCamera(centroid.position, _lastPose);
-                _lastPose = Qt.point(centroid.position.x, centroid.position.y);
-            }
-        }
-    }
-
-    DragHandler {
-        id: cameraRotationDragHandler
-
-        property bool _isRotating: false
-        property point _lastPose
-
-        acceptedButtons: Qt.RightButton
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        acceptedModifiers: Qt.NoModifier
-        target: null
-
-        onActiveChanged: {
-            if (active) { // When mouse is pressed
-                _lastPose = Qt.point(centroid.position.x, centroid.position.y);
-                _isRotating = true;
-            } else {// When mouse is released
-                _isRotating = false;
-            }
-        }
-        onCentroidChanged: {
-            if (_isRotating) {
-                rotateCamera(centroid.position, _lastPose);
-                _lastPose = Qt.point(centroid.position.x, centroid.position.y);
-            }
-        }
-    }
-
-    PinchHandler {
-        id: zoomRotationPinchHandler
-
-        property bool _isRotating: false
-        property point _lastPose
-        property real _lastZoomValue
-
-        target: null
-
-        onActiveChanged: {
-            if (active) {
-                _lastPose = Qt.point(centroid.position.x, centroid.position.y);
-                _lastZoomValue = 0;
-                _isRotating = true;
-            } else {
-                _isRotating = false;
-            }
-        }
-        onActiveScaleChanged: {
-            let zoomValue = (activeScale > 1) ? (activeScale - 1) : (-((1 / activeScale) - 1));
-            zoomCamera(-1000 * (zoomValue - _lastZoomValue));
-            _lastZoomValue = zoomValue;
-        }
-        onCentroidChanged: {
-            if (_isRotating) {
-                rotateCamera(centroid.position, _lastPose);
-                _lastPose = Qt.point(centroid.position.x, centroid.position.y);
-            }
-        }
-    }
-
-    WheelHandler {
-        id: wheelHandler
-
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        orientation: Qt.Vertical
-        target: null
-
-        onWheel: event => {
-            zoomCamera(-event.angleDelta.y);
-        }
+    Viewer3DCameraControls {
+        anchors.fill: parent
+        controller: cameraController
     }
 
     TapHandler {

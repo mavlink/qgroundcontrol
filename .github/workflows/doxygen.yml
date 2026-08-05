@@ -31,6 +31,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install Doxygen and Graphviz
         run: |
@@ -72,6 +74,7 @@ jobs:
             tools/common/git.py
             tools/common/proc.py
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Deploy docs
         uses: ./.github/actions/deploy-docs

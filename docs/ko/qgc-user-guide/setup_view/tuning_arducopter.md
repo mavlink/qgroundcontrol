@@ -1,7 +1,5 @@
 # ArduCopter 튜닝
 
-![ArduCopter 튜닝 페이지](../../../assets/setup/tuning/arducopter.png)
-
 ## 튜닝 기초
 
 원하는 슬라이더를 왼쪽이나 오른쪽으로 이동하여 비행 특성을 설정합니다.

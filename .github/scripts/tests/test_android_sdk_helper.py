@@ -36,7 +36,7 @@ def test_missing_sdk_root_exits(monkeypatch, capsys) -> None:
     with pytest.raises(SystemExit) as exc:
         mod.main()
     assert exc.value.code == 1
-    assert "ANDROID_SDK_ROOT not set" in capsys.readouterr().err
+    assert "ANDROID_SDK_ROOT not set" in capsys.readouterr().out
 
 
 def test_missing_ndk_path_exits(monkeypatch, tmp_path: Path, capsys) -> None:
@@ -47,7 +47,7 @@ def test_missing_ndk_path_exits(monkeypatch, tmp_path: Path, capsys) -> None:
     with pytest.raises(SystemExit) as exc:
         mod.main()
     assert exc.value.code == 1
-    assert "NDK path not found" in capsys.readouterr().err
+    assert "NDK path not found" in capsys.readouterr().out
 
 
 def test_unix_invokes_sdkmanager_and_gradlew(monkeypatch, tmp_path: Path) -> None:
@@ -108,7 +108,7 @@ def test_windows_missing_sdkmanager_exits(monkeypatch, tmp_path: Path, capsys) -
     with pytest.raises(SystemExit) as exc:
         mod.main()
     assert exc.value.code == 1
-    assert "sdkmanager.bat not found" in capsys.readouterr().err
+    assert "sdkmanager.bat not found" in capsys.readouterr().out
 
 
 def test_subprocess_failure_propagates(monkeypatch, tmp_path: Path) -> None:

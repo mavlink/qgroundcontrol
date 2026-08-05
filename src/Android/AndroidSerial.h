@@ -56,6 +56,13 @@ constexpr char CHAR_XOFF = 19;
 
 constexpr const char* kJniUsbSerialManagerClassName = "org/mavlink/qgroundcontrol/QGCUsbSerialManager";
 
+// POSIX serial backend (devices which expose accessible /dev/tty* nodes, e.g. rooted devices).
+// The backend is selected once at startup from the androidUsePosixSerial app setting.
+void setUsePosixSerial(bool use);
+bool usePosixSerial();
+bool hasPosixSerialPorts();
+QList<QSerialPortInfo> availablePosixPorts();
+
 void setNativeMethods();
 QList<QSerialPortInfo> availableDevices();
 int getDeviceId(const QString& portName);

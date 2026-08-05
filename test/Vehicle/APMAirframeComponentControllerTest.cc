@@ -14,9 +14,6 @@ APMAirframeComponentControllerTest::APMAirframeComponentControllerTest()
 
 void APMAirframeComponentControllerTest::_downloadCompleteSlotsRestoreCursor()
 {
-    // ArduPilot mock link has no metadata source; failure to load metadata is expected.
-    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
-                     QRegularExpression("failed to load metadata"));
     // The test explicitly injects download and parse errors; all resulting showAppMessage logs are expected.
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression("Param file.*failed"));

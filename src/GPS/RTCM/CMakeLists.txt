@@ -1,13 +1,15 @@
 # ============================================================================
 # RTCM Module
-# UDP correction input and MAVLink injection. RTCM3 framing/parsing lives in
-# Utilities/RTCMParser; UDP socket helpers in Utilities/Network.
+# RTCM3 framing/parsing, UDP correction input, and MAVLink injection.
+# UDP socket helpers live in Utilities/Network.
 # ============================================================================
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         RTCMMavlink.cc
         RTCMMavlink.h
+        RTCMParser.cc
+        RTCMParser.h
         RTCMUdpInput.cc
         RTCMUdpInput.h
 )

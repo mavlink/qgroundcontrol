@@ -1,4 +1,7 @@
     SettingsGroupLayout {
+{% if object_name %}
+        objectName: "{{ object_name }}"
+{% endif %}
         Layout.fillWidth: true
 {% if heading %}
         heading: {{ heading }}

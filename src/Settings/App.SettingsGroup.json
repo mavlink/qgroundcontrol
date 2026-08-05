@@ -112,7 +112,7 @@
             "type": "double",
             "default": 50.0,
             "min": 0.0,
-            "units": "m",
+            "units": "vertical m",
             "decimalPlaces": 1,
             "userMin": 0.0,
             "userMax": 121.92,
@@ -245,9 +245,18 @@
             "longDesc": "If this option is enabled, application data will not be saved to the SD card.",
             "type": "bool",
             "default": false,
-            "qgcRebootRequired": true,
             "label": "Don't save to SD card, even if available",
             "keywords": "sd card,storage,android,save path"
+        },
+        {
+            "name": "androidUsePosixSerial",
+            "shortDesc": "Use the device's built-in serial ports instead of USB serial devices.",
+            "longDesc": "If this option is enabled, the built-in serial ports (/dev/tty*) are used instead of USB serial devices. This requires a device which allows access to the serial ports.",
+            "type": "bool",
+            "default": false,
+            "qgcRebootRequired": true,
+            "label": "Use built-in serial ports",
+            "keywords": "serial,posix,uart,tty,android"
         },
         {
             "name": "tiandituToken",

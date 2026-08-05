@@ -89,3 +89,10 @@ runs:
         if command -v ccache >/dev/null 2>&1; then
           python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" summary
         fi
+
+    - name: Moc Cache Stats
+      if: always() && runner.os != 'Windows'
+      shell: bash
+      env:
+        MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
+      run: python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --show-stats

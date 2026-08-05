@@ -6,6 +6,12 @@
 	<string>QGC uses UVC devices for video streaming.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Qt Multimedia for iOS uses the camera and microphone.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>QGC connects to vehicles and receives UDP/RTSP video over the local network.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_rtsp._tcp</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>QGroundControl</string>
 	<key>CFBundleExecutable</key>

@@ -7,7 +7,7 @@
     "name":             "PlannedHomePositionAltitude",
     "shortDesc": "Launch position altitude",
     "type":             "double",
-    "units":            "m",
+    "units":            "vertical m",
     "decimalPlaces":    1,
     "default":     0
 }

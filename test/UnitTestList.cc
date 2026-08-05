@@ -5,6 +5,7 @@
 #include <QtCore/QSet>
 
 #include "QGCLoggingCategory.h"
+#include "UnitTestTileGenerator.h"
 
 QGC_LOGGING_CATEGORY(UnitTestListLog, "Test.UnitTestList")
 
@@ -16,6 +17,9 @@ namespace QGCUnitTest {
 
 int runTests(const QStringList& unitTests, int iterations, const QString& outputFile, TestLabels labelFilter)
 {
+    // Serve synthetic tiles on tile cache misses so no test ever hits the network
+    UnitTestTileGenerator::install();
+
     // Determine which tests to run
     QStringList testsToRun;
     if (unitTests.isEmpty()) {
@@ -36,6 +40,11 @@ int runTests(const QStringList& unitTests, int iterations, const QString& output
         qCWarning(UnitTestListLog) << "No tests to run";
         return 0;
     }
+
+    // Started only after the early returns above: the worker thread must be shut down
+    // before returning (see shutdownMapEngine below), so don't start it until the run
+    // is definitely happening.
+    UnitTestTileGenerator::initMapEngine();
 
     iterations = qMax(1, iterations);
     int result = 0;
@@ -61,6 +70,10 @@ int runTests(const QStringList& unitTests, int iterations, const QString& output
         }
     }
 
+    // Stop the tile cache worker while the app still exists: its database teardown
+    // cannot run after QApplication destruction.
+    UnitTestTileGenerator::shutdownMapEngine();
+
     return result;
 }
 
@@ -71,6 +84,9 @@ int runLightweightTests(const QStringList& unitTests, int iterations, const QStr
         qCWarning(UnitTestListLog) << "runLightweightTests called with no QCoreApplication instance";
         return -1;
     }
+
+    // Serve synthetic tiles on tile cache misses so no test ever hits the network
+    UnitTestTileGenerator::install();
 
     QStringList testsToRun;
     if (unitTests.isEmpty()) {

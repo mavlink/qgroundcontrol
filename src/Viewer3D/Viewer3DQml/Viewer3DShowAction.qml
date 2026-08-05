@@ -4,6 +4,8 @@ import QGroundControl.Controls
 ToolStripAction {
     id: root
 
+    objectName: "flyToolStrip_viewer3DButton"
+
     property bool _is3DViewOpen: QGCViewer3DManager.displayMode === QGCViewer3DManager.View3D
     property bool _viewer3DEnabled: QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue
 

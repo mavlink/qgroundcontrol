@@ -38,13 +38,15 @@ runs:
         AWS_ROLE_ARN: ${{ inputs.aws-role-arn }}
         AWS_KEY_ID: ${{ inputs.aws-key-id }}
         AWS_SECRET_KEY: ${{ inputs.aws-secret-access-key }}
+        INPUTS_ARTIFACT_PATH: ${{ inputs.artifact-path }}
+        INPUTS_ARTIFACT_NAME: ${{ inputs.artifact-name }}
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" validate \
           --role-arn "${AWS_ROLE_ARN:-}" \
           --key-id "${AWS_KEY_ID:-}" \
           --secret-key "${AWS_SECRET_KEY:-}" \
-          --artifact-path "${{ inputs.artifact-path }}" \
-          --artifact-name "${{ inputs.artifact-name }}"
+          --artifact-path "${INPUTS_ARTIFACT_PATH}" \
+          --artifact-name "${INPUTS_ARTIFACT_NAME}"
 
     - name: Configure AWS Credentials
       uses: ./.github/actions/aws-credentials
@@ -58,24 +60,35 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" upload \
-          --artifact-path "${{ inputs.artifact-path }}" \
-          --artifact-name "${{ inputs.artifact-name }}" \
-          --ref-name "${{ github.ref_name }}" \
-          --s3-bucket "${{ inputs.s3-bucket }}"
+          --artifact-path "${INPUTS_ARTIFACT_PATH}" \
+          --artifact-name "${INPUTS_ARTIFACT_NAME}" \
+          --ref-name "${GITHUB_REF_NAME}" \
+          --s3-bucket "${INPUTS_S3_BUCKET}"
+      env:
+        INPUTS_ARTIFACT_PATH: ${{ inputs.artifact-path }}
+        INPUTS_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        INPUTS_S3_BUCKET: ${{ inputs.s3-bucket }}
 
     - name: Upload to S3 latest folder
       if: github.ref_type == 'tag'
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" upload-latest \
-          --artifact-path "${{ inputs.artifact-path }}" \
-          --artifact-name "${{ inputs.artifact-name }}" \
-          --s3-bucket "${{ inputs.s3-bucket }}"
+          --artifact-path "${INPUTS_ARTIFACT_PATH}" \
+          --artifact-name "${INPUTS_ARTIFACT_NAME}" \
+          --s3-bucket "${INPUTS_S3_BUCKET}"
+      env:
+        INPUTS_ARTIFACT_PATH: ${{ inputs.artifact-path }}
+        INPUTS_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        INPUTS_S3_BUCKET: ${{ inputs.s3-bucket }}
 
     - name: Invalidate CloudFront cache
       if: github.ref_type == 'tag' && inputs.aws-distribution-id != ''
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" invalidate \
-          --artifact-name "${{ inputs.artifact-name }}" \
-          --distribution-id "${{ inputs.aws-distribution-id }}"
+          --artifact-name "${INPUTS_ARTIFACT_NAME}" \
+          --distribution-id "${INPUTS_AWS_DISTRIBUTION_ID}"
+      env:
+        INPUTS_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        INPUTS_AWS_DISTRIBUTION_ID: ${{ inputs.aws-distribution-id }}

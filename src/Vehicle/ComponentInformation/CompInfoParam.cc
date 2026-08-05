@@ -1,6 +1,7 @@
 #include "CompInfoParam.h"
 #include "FirmwarePlugin.h"
 #include "JsonParsing.h"
+#include "JsonSchemaValidator.h"
 #include "ParameterMetaData.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
@@ -28,6 +29,11 @@ void CompInfoParam::setJson(const QString &metadataJsonFileName)
     if (!JsonParsing::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
         qCWarning(CompInfoParamLog) << "Metadata json file open failed: compid:" << compId << errorString;
         return;
+    }
+
+    QString schemaError;
+    if (!JsonSchemaValidator::validate(jsonDoc, QStringLiteral(":/json/component_metadata/parameter.schema.json"), schemaError)) {
+        qCWarning(CompInfoParamLog) << "Metadata json schema validation failed: compid:" << compId << schemaError;
     }
 
     const QJsonObject jsonObj = jsonDoc.object();

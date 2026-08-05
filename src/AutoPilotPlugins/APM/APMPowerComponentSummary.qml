@@ -21,12 +21,14 @@ Item {
 
     ColumnLayout {
         id: mainLayout
+        width: parent.width
         spacing: 0
 
         Repeater {
             model: battParams.getBatteryCount()
 
             delegate: ColumnLayout {
+                Layout.fillWidth: true
                 required property int index
                 spacing: 0
                 visible: _monitorEnabled

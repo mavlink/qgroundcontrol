@@ -36,9 +36,9 @@ public:
     Q_INVOKABLE void selectActuatorOutput(int index);
 
     /**
-     * load JSON metadata file
+     * Load already-parsed JSON metadata (json_file is used for error reporting only)
      */
-    void load(const QString& json_file);
+    void load(const QString& json_file, const QJsonDocument& metadata);
 
     /**
      * Initialize the loaded metadata. Call this after all vehicle parameters are loaded.

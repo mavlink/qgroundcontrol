@@ -14,6 +14,7 @@ Item {
     property int sectionFilter: -1
 
     QGCFlickable {
+        objectName:     "settingsPageFlickable"
         anchors.fill:   parent
         contentWidth:   mainLayout.width
         contentHeight:  mainLayout.height

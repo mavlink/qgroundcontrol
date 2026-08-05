@@ -1,7 +1,5 @@
 # 飞行视图工具栏
 
-![飞行视图](../../../assets/fly/toolbar/fly_view_toolbar.jpg)
-
 ## 视图
 
 工具栏左边的“Q”图标允许您在其他顶级视图中选择：
@@ -14,8 +12,6 @@
 ## 工具栏指示器
 
 Next are multiple toolbar indicators for vehicle status. 每个工具栏指示器的下拉功能提供了关于状态的更多细节。 您也可以展开指示器以显示与指示器相关联的其他应用程序和载具设置。 按">"按钮来扩展。
-
-![工具栏指示器 - 展开按钮](../../../assets/fly/toolbar_indicator_expand.png)
 
 ### Flight Status <img src="../../../assets/fly/toolbar/main_status_indicator.png" alt="Flight Status indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
@@ -36,8 +32,6 @@ The Flight Status indicator dropdown also gives you access to:
 - **紧急停机** - 在载具飞行时用紧急停机锁定载具。 仅供紧急情况使用，你的飞行器会坠毁！
 
 在警告或尚未准备好状态的情况下，您可以点击指示器来显示下拉菜单，显示原因(s)。 右侧的切换按钮会展开每个错误，并显示更多信息及可能的解决方案。
-
-![用于检查解锁警告的用户界面](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
 
 每个问题解决后，将从用户界面中消失。 当所有阻止解锁的问题被移除时，你现在应该可以准备飞行了。
 
@@ -100,6 +94,17 @@ The Gimbal indicator is shown when the vehicle supports the [MAVLink Gimbal Prot
 ### VTOL Transitions <img src="../../../assets/fly/toolbar/vtol_indicator.png" alt="VTOL indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
 For VTOL vehicles, a VTOL transition status indicator is shown when applicable. It indicates the current VTOL mode/state and provides transition-related status information.
+
+### MAVLink Signing
+
+The MAVLink Signing indicator appears when signing keys have been configured (see [MAVLink 2 Signing](../settings_view/telemetry.md#signing)).
+It shows a lock icon that indicates whether MAVLink 2 message signing is active on the current vehicle connection:
+
+- **Locked (green):** Signing is active — the vehicle's incoming packets matched a stored key, or a key was manually enabled.
+- **Unlocked:** Signing is not active on the current connection.
+
+The dropdown shows the signing status, the name of the active key (if any), and the number of saved keys.
+Expanding the indicator provides full key management: you can enable a key on the vehicle, disable the active key, delete unused keys, or add new keys.
 
 ### Multi-Vehicle Selector <img src="../../../assets/fly/toolbar/multi_vehicle_indicator.png" alt="Multi-Vehicle indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 

@@ -26,10 +26,7 @@ CPMAddPackage(
     URL_HASH "${_android_openssl_hash}"
 )
 
-if(NOT android_openssl_ADDED)
-    message(WARNING "QGC: Failed to add Android OpenSSL libraries")
-    return()
-endif()
+qgc_require_cpm_added(android_openssl)
 
 file(REMOVE_RECURSE
     "${android_openssl_SOURCE_DIR}/ssl_1.1"

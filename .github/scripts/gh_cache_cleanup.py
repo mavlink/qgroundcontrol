@@ -22,7 +22,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, write_github_output, write_step_summary
+from common.gh_actions import gh, gh_error, write_github_output, write_step_summary
+from common.markdown import md_table
 
 # Build caches are the expensive-to-rebuild data the GC must never evict; the
 # 10 GiB/repo pool is reclaimed from everything else first.
@@ -48,7 +49,8 @@ class CacheUsage:
 def _repo() -> str:
     repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
     if not repo:
-        sys.exit("::error::GH_REPO or GITHUB_REPOSITORY must be set")
+        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
+        sys.exit(1)
     return repo
 
 
@@ -168,9 +170,11 @@ def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, del
         f"({verb.lower()} {len(victims)} cache(s))\n",
     ]
     if victims:
-        lines.append("\n| Key | Size | Branch |\n|-----|------|--------|\n")
-        for cache in victims:
-            lines.append(f"| `{cache.key[:50]}` | {cache.size_bytes // _MIB} MiB | {cache.ref} |\n")
+        table = md_table(
+            ["Key", "Size", "Branch"],
+            [(f"`{c.key[:50]}`", f"{c.size_bytes // _MIB} MiB", c.ref) for c in victims],
+        )
+        lines.append(f"\n{table}\n")
     else:
         lines.append("\nUnder high-water mark — nothing to evict.\n")
     return "".join(lines)
@@ -202,9 +206,11 @@ def _list_summary(rows: list[CacheRow], branch: str) -> str:
     if not rows:
         lines.append("\nNo caches found\n")
         return "".join(lines)
-    lines.append("\n| Key | Size | Branch |\n|-----|------|--------|\n")
-    for row in rows:
-        lines.append(f"| `{row.key[:50]}` | {row.size} | {row.ref} |\n")
+    table = md_table(
+        ["Key", "Size", "Branch"],
+        [(f"`{row.key[:50]}`", row.size, row.ref) for row in rows],
+    )
+    lines.append(f"\n{table}\n")
     lines.append(f"\n**Total: {len(rows)} caches**\n")
     return "".join(lines)
 

@@ -16,7 +16,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output, write_step_summary
+from common.gh_actions import gh_warning, write_github_output, write_step_summary
+from common.markdown import md_table
 from xml_utils import xml_parse
 
 
@@ -91,10 +92,13 @@ def build_summary(report: dict[str, Any], *, missing_junit: str = "") -> str:
     if top_slowest:
         lines.append(f"### Top {len(top_slowest)} Slowest Tests")
         lines.append("")
-        lines.append("| Test | Seconds |")
-        lines.append("|---|---:|")
-        for item in top_slowest:
-            lines.append(f"| `{item['test']}` | {item['seconds']:.3f} |")
+        lines.append(
+            md_table(
+                ["Test", "Seconds"],
+                [[f"`{item['test']}`", f"{item['seconds']:.3f}"] for item in top_slowest],
+                align=["left", "right"],
+            )
+        )
         lines.append("")
 
     return "\n".join(lines)
@@ -118,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not junit_path.exists():
         message = f"JUnit report not found at {junit_path}"
-        print(f"::warning::{message}")
+        gh_warning(message)
         write_step_summary(build_summary({}, missing_junit=message))
         write_github_output({"slow_count": "0"})
         return 0
@@ -137,9 +141,7 @@ def main(argv: list[str] | None = None) -> int:
     write_github_output({"slow_count": str(report["slow_count"])})
 
     for key, secs in report["slow_warnings"]:
-        print(
-            f"::warning::Slow test (>={args.slow_threshold_seconds:.1f}s): {key} took {secs:.3f}s"
-        )
+        gh_warning(f"Slow test (>={args.slow_threshold_seconds:.1f}s): {key} took {secs:.3f}s")
 
     return 0
 

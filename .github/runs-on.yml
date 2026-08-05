@@ -1,5 +1,5 @@
-# RunsOn self-hosted runner pools. Not yet referenced by the workflows (they
-# still inline their runner specs); switch jobs to `runner=<pool>` after merge.
+# RunsOn self-hosted runner pools, referenced by the workflows via
+# `runs-on=<run_id>/runner=<pool>`. Edit a pool here to change every job that uses it.
 runners:
   linux-x64-builder:
     family: ["c8i.2xlarge"]

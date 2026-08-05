@@ -5,19 +5,16 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 from unittest.mock import patch
 
 from common import gh_actions as mod
 
-
-def _cp(stdout: str = "", stderr: str = "", returncode: int = 0) -> subprocess.CompletedProcess:
-    return subprocess.CompletedProcess(args=["gh"], returncode=returncode, stdout=stdout, stderr=stderr)
+from ._helpers import completed
 
 
 def test_list_workflow_runs_for_sha_uses_jq_get_method() -> None:
     payload = json.dumps({"id": 1, "name": "Linux"})
-    with patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
+    with patch.object(mod, "gh", return_value=completed(stdout=payload)) as gh_mock:
         runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
 
     assert runs == [{"id": 1, "name": "Linux"}]
@@ -29,11 +26,9 @@ def test_list_workflow_runs_for_sha_uses_jq_get_method() -> None:
 
 def test_list_workflow_runs_for_sha_unpacks_ndjson_stream() -> None:
     payload = (
-        json.dumps({"id": 1, "name": "Linux"})
-        + "\n"
-        + json.dumps({"id": 2, "name": "Windows"})
+        json.dumps({"id": 1, "name": "Linux"}) + "\n" + json.dumps({"id": 2, "name": "Windows"})
     )
-    with patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
+    with patch.object(mod, "gh", return_value=completed(stdout=payload)) as gh_mock:
         runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
 
     assert [run["id"] for run in runs] == [1, 2]
@@ -46,7 +41,7 @@ def test_list_run_artifacts_parses_ndjson_stream() -> None:
         + "\n"
         + json.dumps({"name": "QGroundControl2", "size_in_bytes": 2})
     )
-    with patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
+    with patch.object(mod, "gh", return_value=completed(stdout=payload)) as gh_mock:
         artifacts = mod.list_run_artifacts("owner/repo", 77)
 
     assert [a["name"] for a in artifacts] == ["QGroundControl", "QGroundControl2"]
@@ -107,7 +102,11 @@ class TestResolveCachePolicy:
             assert mod.resolve_cache_policy("auto") == "false"
 
     def test_auto_pull_request_target(self) -> None:
-        env = {"EVENT_NAME": "pull_request_target", "PR_REPO": "owner/repo", "THIS_REPO": "owner/repo"}
+        env = {
+            "EVENT_NAME": "pull_request_target",
+            "PR_REPO": "owner/repo",
+            "THIS_REPO": "owner/repo",
+        }
         with patch.dict(os.environ, env, clear=False):
             assert mod.resolve_cache_policy("auto") == "false"
 
@@ -139,6 +138,17 @@ class TestWriteGithubOutput:
         assert "body<<EOF_body_" in content
         assert "line1\nline2\n" in content
 
+    def test_multiline_delimiter_resists_collision(self, tmp_path) -> None:
+        out = tmp_path / "output"
+        out.touch()
+        value = "line1\nEOF_body_deadbeef\ntail"
+        with patch.dict(os.environ, {"GITHUB_OUTPUT": str(out)}, clear=False):
+            mod.write_github_output({"body": value})
+        content = out.read_text()
+        assert "body<<EOF_body_" in content
+        assert "EOF_body\n" not in content
+        assert value in content
+
     def test_noop_without_env(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
             mod.write_github_output({"key": "val"})
@@ -155,6 +165,30 @@ class TestWriteStepSummary:
     def test_noop_without_env(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
             mod.write_step_summary("test")
+
+
+class TestAnnotations:
+    def test_gh_error_format(self, capsys) -> None:
+        mod.gh_error("boom")
+        assert capsys.readouterr().out == "::error::boom\n"
+
+    def test_gh_warning_format(self, capsys) -> None:
+        mod.gh_warning("careful")
+        assert capsys.readouterr().out == "::warning::careful\n"
+
+    def test_gh_notice_format(self, capsys) -> None:
+        mod.gh_notice("fyi")
+        assert capsys.readouterr().out == "::notice::fyi\n"
+
+    def test_escapes_newlines_and_percent(self, capsys) -> None:
+        mod.gh_error("a\nb\rc%d")
+        assert capsys.readouterr().out == "::error::a%0Ab%0Dc%25d\n"
+
+    def test_emits_to_stdout_not_stderr(self, capsys) -> None:
+        mod.gh_warning("x")
+        captured = capsys.readouterr()
+        assert captured.out == "::warning::x\n"
+        assert captured.err == ""
 
 
 class TestAppendGithubEnv:

@@ -86,6 +86,7 @@ jobs:
             .github
             tools
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Build Config
         id: buildconfig

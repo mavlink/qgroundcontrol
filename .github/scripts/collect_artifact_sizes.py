@@ -17,6 +17,7 @@ ensure_tools_dir(__file__)
 from common.format import format_bytes
 from common.gh_actions import list_run_artifacts, list_workflow_runs_for_sha, parse_csv_list
 from common.github_runs import select_latest_runs_by_name
+from common.io import read_json, write_json
 
 _DISTRIBUTABLE_PREFIXES = (
     "QGroundControl",
@@ -158,8 +159,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.runs_file:
         try:
-            with open(args.runs_file, encoding="utf-8") as f:
-                loaded_runs = json.load(f)
+            loaded_runs = read_json(Path(args.runs_file))
         except (json.JSONDecodeError, OSError) as e:
             print(f"Error: failed to read runs file {args.runs_file}: {e}", file=sys.stderr)
             return 1
@@ -177,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         artifacts_path = Path(args.artifacts_file)
         if artifacts_path.exists():
             try:
-                data = json.loads(artifacts_path.read_text(encoding="utf-8"))
+                data = read_json(artifacts_path)
             except (json.JSONDecodeError, OSError):
                 data = {}
             runs_data = data.get("runs", {})
@@ -204,7 +204,7 @@ def main(argv: list[str] | None = None) -> int:
 
     output_path = Path(args.output_file)
     if artifacts:
-        output_path.write_text(json.dumps({"artifacts": artifacts}, indent=2), encoding="utf-8")
+        write_json(output_path, {"artifacts": artifacts})
         print(f"Wrote {len(artifacts)} artifacts to {output_path}")
     else:
         print("No artifacts found")

@@ -208,6 +208,8 @@ Q_DECLARE_LOGGING_CATEGORY(UnitTestLog)
 class Fact;
 class MissionItem;
 class QSignalSpy;
+class Vehicle;
+class VehicleComponent;
 
 // ============================================================================
 // Test Context - Improved failure diagnostics
@@ -363,6 +365,10 @@ public:
     /// If iterations <= 0, CI-aware defaults are used.
     /// If waitMs < 0, CI-aware defaults are used. If waitMs == 0, no sleep between iterations.
     static void settleEventLoopForCleanup(int iterations = 0, int waitMs = 0);
+
+    /// Find a vehicle setup component (e.g. "Frame", "Sensors", "Radio") by display name.
+    /// Returns nullptr if not found.
+    static VehicleComponent *findVehicleComponent(Vehicle *vehicle, const QString &name);
 
     // ========================================================================
     // Test Properties

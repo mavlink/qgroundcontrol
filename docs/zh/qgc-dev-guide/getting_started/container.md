@@ -27,7 +27,7 @@ The main advantage of using the container is the usage of the `CMake` build syst
 您可以使用 docker 完成这个操作，从QGC 源代码目录的根目录运行下面的脚本。
 
 ```sh
-docker build --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
+docker build --target linux --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
 ```
 
 :::info
@@ -39,7 +39,7 @@ docker build --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
 If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
 
 ```sh
-docker build --platform linux/x86_64 --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
+docker build --platform linux/x86_64 --target linux --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
 ```
 
 否则，你将会遇到一个构建错误，比如：
@@ -61,7 +61,7 @@ docker run --rm -v ${PWD}:/project/source -v ${PWD}/build:/project/build qgc-ubu
 ```
 
 ::: info
-For up to date docker command and options reference relevant run-script in `deploy/docker`, for example [run-docker.sh](https://github.com/mavlink/qgroundcontrol/blob/master/deploy/docker/run-docker.sh).
+For up to date docker commands and options, reference the run scripts in [`deploy/docker`](https://github.com/mavlink/qgroundcontrol/tree/master/deploy/docker).
 
 :::
 

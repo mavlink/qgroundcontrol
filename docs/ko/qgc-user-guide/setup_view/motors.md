@@ -7,8 +7,6 @@
 기체별 설명서는 하위 주제로 제공됩니다(예: [모터 설정(ArduSub)](../setup_view/motors_ardusub.md)).
 :::
 
-![모터 테스트](../../../assets/setup/Motors.png)
-
 ## 테스트 절차
 
 모터를 테스트하려면:

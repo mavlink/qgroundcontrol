@@ -32,13 +32,18 @@ ColumnLayout {
             break
         }
         subEditConfig.sendStatus = sendStatus.checked
+        subEditConfig.apmStartFreshParams = apmStartFreshParams.checked
         subEditConfig.enableCamera = enableCamera.checked
         subEditConfig.enableGimbal = enableGimbal.checked
+        subEditConfig.enableProximity = enableProximity.checked
         subEditConfig.incrementVehicleId = incrementVehicleId.checked
         subEditConfig.cameraCaptureVideo = cameraCaptureVideo.checked
         subEditConfig.cameraCaptureImage = cameraCaptureImage.checked
         subEditConfig.cameraHasModes = cameraHasModes.checked
         subEditConfig.cameraHasVideoStream = cameraHasVideoStream.checked
+        // The stream type combo only applies when the camera advertises a video stream;
+        // persist Disabled otherwise so a stale selection can't linger in settings.
+        subEditConfig.videoStreamType = cameraHasVideoStream.checked ? videoStreamTypeCombo.currentIndex : 0
         subEditConfig.cameraCanCaptureImageInVideoMode = cameraCanCaptureImageInVideoMode.checked
         subEditConfig.cameraCanCaptureVideoInImageMode = cameraCanCaptureVideoInImageMode.checked
         subEditConfig.cameraHasBasicZoom = cameraHasBasicZoom.checked
@@ -70,6 +75,7 @@ ColumnLayout {
         } else {
             vehicleTypeCombo.currentIndex = 0
         }
+        videoStreamTypeCombo.currentIndex = subEditConfig.videoStreamType
     }
 
     QGCCheckBoxSlider {
@@ -91,6 +97,13 @@ ColumnLayout {
         Layout.fillWidth: true
         text: qsTr("Enable Gimbal")
         checked: subEditConfig.enableGimbal
+    }
+
+    QGCCheckBoxSlider {
+        id: enableProximity
+        Layout.fillWidth: true
+        text: qsTr("Enable Proximity Sensors")
+        checked: subEditConfig.enableProximity
     }
 
     QGCCheckBoxSlider {
@@ -117,6 +130,22 @@ ColumnLayout {
         visible:                firmwareTypeCombo.apmFirmwareSelected
     }
 
+    QGCCheckBoxSlider {
+        id: apmStartFreshParams
+        Layout.fillWidth: true
+        text: qsTr("Start With Fresh Firmware Parameters (Setup Required)")
+        checked: subEditConfig.apmStartFreshParams
+        visible: firmwareTypeCombo.apmFirmwareSelected
+
+        onVisibleChanged: {
+            if (!visible) {
+                // Reset the model, not the view — an imperative write to checked
+                // would sever its declarative binding
+                subEditConfig.apmStartFreshParams = false
+            }
+        }
+    }
+
     SettingsGroupLayout {
         Layout.fillWidth: true
         heading: qsTr("Camera Capabilities")
@@ -128,6 +157,21 @@ ColumnLayout {
             text: "CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM"
             checked: subEditConfig.cameraHasVideoStream
             visible: enableCamera.checked
+        }
+
+        LabelledComboBox {
+            id: videoStreamTypeCombo
+            Layout.fillWidth: true
+            label: qsTr("Served Video Stream")
+            visible: enableCamera.checked && cameraHasVideoStream.checked
+            model: [
+                qsTr("Disabled"),
+                qsTr("RTP/UDP H.264"),
+                qsTr("RTP/UDP H.265"),
+                qsTr("RTSP (H.264)"),
+                qsTr("MPEG-TS (UDP)"),
+                qsTr("MPEG-TS (TCP)")
+            ]
         }
 
         QGCCheckBoxSlider {

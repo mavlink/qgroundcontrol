@@ -26,7 +26,7 @@
     "name":             "FinalApproachAltitude",
     "shortDesc":        "Altitude to begin landing approach from.",
     "type":             "double",
-    "units":            "m",
+    "units":            "vertical m",
     "decimalPlaces":    1,
     "default":          30.0
 },
@@ -64,7 +64,7 @@
     "name":             "LandingAltitude",
     "shortDesc":        "Altitude for landing point on ground.",
     "type":             "double",
-    "units":            "m",
+    "units":            "vertical m",
     "decimalPlaces":    1,
     "default":          0.0
 },

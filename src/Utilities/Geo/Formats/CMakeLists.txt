@@ -36,9 +36,9 @@ CPMAddPackage(
         "BUILD_TESTING OFF"
 )
 
-if(Shapelib_ADDED)
-    qgc_disable_dependency_warnings(shp)
-endif()
+qgc_require_cpm_added(Shapelib)
+
+qgc_disable_dependency_warnings(shp)
 
 target_link_libraries(QGCGeoFormats
     PUBLIC
@@ -50,17 +50,14 @@ target_link_libraries(QGCGeoFormats
         Qt6::Xml
     PRIVATE
         Qt6::Location
-        Qt6::LocationPrivate   # qgeojson_p.h
+        Qt6::LocationPrivate
         shp
         QGCGeoMath
         QGCLogging
-        QGCParsing             # JsonParsing::possibleNaNJsonValue / isJsonFile
+        QGCParsing
 )
 
-target_include_directories(QGCGeoFormats
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(QGCGeoFormats PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_precompile_headers(QGCGeoFormats PRIVATE
     <QtCore/QObject>

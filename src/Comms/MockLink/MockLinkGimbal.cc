@@ -120,7 +120,7 @@ void MockLinkGimbal::_sendCommandAck(uint16_t command, uint8_t result, uint8_t s
     (void) mavlink_msg_command_ack_pack_chan(
         _mockLink->vehicleId(),
         sourceCompId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         command,
         result,
@@ -274,7 +274,7 @@ void MockLinkGimbal::_sendGimbalManagerStatus()
     (void) mavlink_msg_gimbal_manager_status_pack_chan(
         _mockLink->vehicleId(),
         MAV_COMP_ID_AUTOPILOT1,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         0, // time_boot_ms
         0, // flags
@@ -312,7 +312,7 @@ void MockLinkGimbal::_sendGimbalDeviceAttitudeStatus()
     (void) mavlink_msg_gimbal_device_attitude_status_pack_chan(
         _mockLink->vehicleId(),
         kGimbalCompId,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         0, 0,   // target system, component
         0,      // time_boot_ms
@@ -343,7 +343,7 @@ void MockLinkGimbal::_sendGimbalManagerInformation()
     (void) mavlink_msg_gimbal_manager_information_pack_chan(
         _mockLink->vehicleId(),
         MAV_COMP_ID_AUTOPILOT1,
-        _mockLink->mavlinkChannel(),
+        _mockLink->outgoingMavlinkChannel(),
         &msg,
         0, // time_boot_ms
         capFlags,

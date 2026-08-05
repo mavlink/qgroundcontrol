@@ -1,5 +1,24 @@
 # SPDX-FileCopyrightText: 2024 L. E. Segovia <amy@centricular.com>
 # SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# QGC vendoring notes:
+#   Source: https://invent.kde.org/qt/qt/qtmultimedia (Qt 6.x branch)
+#   This module is consumed by cmake/GStreamer/Orchestrator.cmake → platform helpers.
+#   Local QGC patches (not in upstream):
+#     1. _gst_resolve_and_link_libraries converted from macro to function for
+#        scope hygiene; callers pass values (not names).
+#     2. Pkg-config env management (PKG_CONFIG_PATH/LIBDIR/DONT_DEFINE_PREFIX)
+#        moved out — every in-tree caller routes through
+#        gstreamer_apply_pkgconfig_env (cmake/GStreamer/PkgConfig.cmake) before
+#        find_package(GStreamer), so the upstream standalone-fallback block
+#        and the trailing DONT_DEFINE_PREFIX env-reset have been deleted.
+#     3. Component target generation walks GSTREAMER_APIS instead of a fixed
+#        list so xcframework / mobile static-build paths can introduce new
+#        components without editing this file.
+#     4. Hash parsing moved out — qgc_parse_expected_hash lives in
+#        cmake/modules/Download.cmake; this module no longer parses hashes.
+#   When syncing from upstream, re-apply each listed patch and update this
+#   block. Do NOT remove this block during sync.
 
 #[=======================================================================[.rst:
 FindGStreamer
@@ -39,7 +58,7 @@ Configuration Variables
 if (GStreamer_FOUND)
     set(_gst_all_present TRUE)
     foreach(_gst_c IN LISTS GStreamer_FIND_COMPONENTS)
-        if (NOT TARGET GStreamer::${_gst_c})
+        if (NOT TARGET GStreamer::${_gst_c} AND NOT _gst_c IN_LIST GStreamer_ABSENT_COMPONENTS)
             set(_gst_all_present FALSE)
             break()
         endif()
@@ -48,6 +67,9 @@ if (GStreamer_FOUND)
         return()
     endif()
 endif()
+
+# Rebuilt fresh each configure; the cache entry would otherwise keep stale absences.
+unset(GStreamer_ABSENT_COMPONENTS CACHE)
 
 if (NOT GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
     message(FATAL_ERROR "GStreamer_ROOT_DIR must be set to a valid directory before including FindGStreamer "
@@ -58,33 +80,22 @@ if (NOT DEFINED GStreamer_USE_STATIC_LIBS)
     set(GStreamer_USE_STATIC_LIBS OFF)
 endif()
 
-# Only set pkg-config paths if the orchestrator (FindQGCGStreamer) hasn't already
-# configured them via PKG_CONFIG_LIBDIR / _gst_configure_pkg_config.
-if (NOT DEFINED ENV{PKG_CONFIG_LIBDIR} OR "$ENV{PKG_CONFIG_LIBDIR}" STREQUAL "")
-    if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-        set(ENV{PKG_CONFIG_PATH} "${GStreamer_ROOT_DIR}/lib/pkgconfig;${GStreamer_ROOT_DIR}/lib/gstreamer-1.0/pkgconfig;${GStreamer_ROOT_DIR}/lib/gio/modules/pkgconfig")
-        # Block pkgconf's forced relocation for non-lib/pkgconfig modules on Windows
-        # https://github.com/pkgconf/pkgconf/commit/dcf529b83d621ed09e99e41fc35fdffd068bd87a
-        set(ENV{PKG_CONFIG_DONT_DEFINE_PREFIX} 1)
-    else()
-        set(ENV{PKG_CONFIG_PATH} "${GStreamer_ROOT_DIR}/lib/pkgconfig:${GStreamer_ROOT_DIR}/lib/gstreamer-1.0/pkgconfig:${GStreamer_ROOT_DIR}/lib/gio/modules/pkgconfig")
-    endif()
-endif()
+# Pkg-config env (PKG_CONFIG_PATH / LIBDIR / DONT_DEFINE_PREFIX) is configured
+# by the orchestrator via gstreamer_apply_pkgconfig_env() before this module
+# runs — see QGC patch #2 in the vendoring header.
 
 macro(_gst_filter_missing_directories GST_INCLUDE_DIRS)
+    _gst_coalesce_existing_paths(${GST_INCLUDE_DIRS})
     set(_gst_include_dirs)
     foreach(DIR IN LISTS ${GST_INCLUDE_DIRS})
         string(MAKE_C_IDENTIFIER "${DIR}" _gst_dir_id)
-        if (DEFINED _gst_exists_${_gst_dir_id})
-            if (_gst_exists_${_gst_dir_id})
-                list(APPEND _gst_include_dirs "${DIR}")
-            endif()
+        if (DEFINED _gst_exists_${_gst_dir_id} AND _gst_exists_${_gst_dir_id})
+            list(APPEND _gst_include_dirs "${DIR}")
         elseif (EXISTS "${DIR}")
             list(APPEND _gst_include_dirs "${DIR}")
             set(_gst_exists_${_gst_dir_id} TRUE)
         else()
             message(WARNING "Skipping missing include folder ${DIR}.")
-            set(_gst_exists_${_gst_dir_id} FALSE)
         endif()
     endforeach()
     set(${GST_INCLUDE_DIRS} "${_gst_include_dirs}")
@@ -98,11 +109,17 @@ macro(_gst_apply_frameworks PC_STATIC_LDFLAGS_OTHER GST_TARGET)
         foreach(_arg IN LISTS ${PC_STATIC_LDFLAGS_OTHER})
             if (assemble_framework)
                 set(assemble_framework FALSE)
-                find_library(GST_${_arg}_LIB ${_arg} REQUIRED)
-                target_link_libraries(${GST_TARGET}
-                    INTERFACE
-                        "${GST_${_arg}_LIB}"
-                )
+                if (GStreamer_FIND_QUIETLY)
+                    find_library(GStreamer_FW_${_arg}_LIB ${_arg})
+                else()
+                    find_library(GStreamer_FW_${_arg}_LIB ${_arg} REQUIRED)
+                endif()
+                if (GStreamer_FW_${_arg}_LIB)
+                    target_link_libraries(${GST_TARGET}
+                        INTERFACE
+                            "${GStreamer_FW_${_arg}_LIB}"
+                    )
+                endif()
             elseif (_arg STREQUAL "-framework")
                 set(assemble_framework TRUE)
             else()
@@ -113,6 +130,7 @@ macro(_gst_apply_frameworks PC_STATIC_LDFLAGS_OTHER GST_TARGET)
         if (assemble_framework)
             message(WARNING "GStreamer: trailing -framework with no name in ${${PC_STATIC_LDFLAGS_OTHER}}")
         endif()
+        # Overwrites (not appends) INTERFACE_LINK_OPTIONS — sole writer for this target.
         set_target_properties(${GST_TARGET} PROPERTIES
             INTERFACE_LINK_OPTIONS "${new_ldflags}"
         )
@@ -133,6 +151,12 @@ if(GStreamer_FIND_VERSION)
 else()
     pkg_check_modules(PC_GStreamer REQUIRED gstreamer-1.0)
 endif()
+_gst_recover_split_pkgconfig_paths(PC_GStreamer
+    INCLUDE_DIRS CFLAGS_OTHER
+    STATIC_INCLUDE_DIRS STATIC_CFLAGS_OTHER
+    LIBRARY_DIRS LDFLAGS_OTHER
+    STATIC_LIBRARY_DIRS STATIC_LDFLAGS_OTHER
+)
 
 if(PC_GStreamer_VERSION)
     set(GStreamer_VERSION "${PC_GStreamer_VERSION}")
@@ -146,7 +170,13 @@ if(GStreamer_DEBUG)
     message(STATUS "[GstFind] GSTREAMER_APIS = ${GSTREAMER_APIS}")
 endif()
 
-# _gst_IGNORED_SYSTEM_LIBRARIES and _gst_SRT_REGEX_PATCH are defined in GStreamerHelpers.cmake
+# _gst_IGNORED_SYSTEM_LIBRARIES, _gst_SRT_REGEX_PATCH, and _gst_resolve_and_link_libraries
+# (used below) come from cmake/GStreamer/Link.cmake, included via GStreamer/Helpers before
+# find_package(GStreamer). Fail loudly if that prerequisite is missing.
+if(NOT COMMAND _gst_resolve_and_link_libraries)
+    message(FATAL_ERROR "FindGStreamer: _gst_resolve_and_link_libraries is undefined. "
+        "Include cmake/GStreamer/Link.cmake (via GStreamer/Helpers) before find_package(GStreamer).")
+endif()
 
 if(PC_GStreamer_FOUND AND (NOT TARGET GStreamer::GStreamer))
     add_library(GStreamer::GStreamer INTERFACE IMPORTED GLOBAL)
@@ -154,6 +184,7 @@ if(PC_GStreamer_FOUND AND (NOT TARGET GStreamer::GStreamer))
 
     if (GStreamer_USE_STATIC_LIBS)
         _gst_filter_missing_directories(PC_GStreamer_STATIC_INCLUDE_DIRS)
+        _gst_coalesce_existing_paths(PC_GStreamer_STATIC_LIBRARY_DIRS)
         set_target_properties(GStreamer::GStreamer PROPERTIES
             INTERFACE_COMPILE_OPTIONS "${PC_GStreamer_STATIC_CFLAGS_OTHER}"
         )
@@ -163,14 +194,17 @@ if(PC_GStreamer_FOUND AND (NOT TARGET GStreamer::GStreamer))
             )
         endif()
         _gst_apply_frameworks(PC_GStreamer_STATIC_LDFLAGS_OTHER GStreamer::GStreamer)
-        _gst_resolve_and_link_libraries(GStreamer::GStreamer INTERFACE PC_GStreamer_LIBRARIES PC_GStreamer_STATIC_LIBRARY_DIRS)
-        _gst_resolve_and_link_libraries(GStreamer::deps INTERFACE PC_GStreamer_STATIC_LIBRARIES PC_GStreamer_STATIC_LIBRARY_DIRS HIDE)
+        _gst_resolve_and_link_libraries(GStreamer::GStreamer INTERFACE "${PC_GStreamer_LIBRARIES}" "${PC_GStreamer_STATIC_LIBRARY_DIRS}")
+        _gst_resolve_and_link_libraries(GStreamer::deps INTERFACE "${PC_GStreamer_STATIC_LIBRARIES}" "${PC_GStreamer_STATIC_LIBRARY_DIRS}" HIDE)
     else()
+        _gst_filter_missing_directories(PC_GStreamer_INCLUDE_DIRS)
+        _gst_coalesce_existing_paths(PC_GStreamer_LIBRARY_DIRS)
         set_target_properties(GStreamer::GStreamer PROPERTIES
             INTERFACE_COMPILE_OPTIONS "${PC_GStreamer_CFLAGS_OTHER}"
             INTERFACE_INCLUDE_DIRECTORIES "${PC_GStreamer_INCLUDE_DIRS}"
             INTERFACE_LINK_OPTIONS "${PC_GStreamer_LDFLAGS_OTHER}"
         )
+        _gst_strip_macos_absent_link_libs(PC_GStreamer_LINK_LIBRARIES)
         set_target_properties(GStreamer::deps PROPERTIES
             INTERFACE_LINK_LIBRARIES "${PC_GStreamer_LINK_LIBRARIES}"
         )
@@ -191,12 +225,21 @@ function(_gst_create_component_target _gst_PLUGIN _gst_PC_NAME)
     endif()
 
     pkg_check_modules(PC_GStreamer_${_gst_PLUGIN} ${_gst_PLUGIN_REQUIRED} "${_gst_PC_NAME}")
+    _gst_recover_split_pkgconfig_paths(PC_GStreamer_${_gst_PLUGIN}
+        INCLUDE_DIRS CFLAGS_OTHER
+        STATIC_INCLUDE_DIRS STATIC_CFLAGS_OTHER
+        LIBRARY_DIRS LDFLAGS_OTHER
+        STATIC_LIBRARY_DIRS STATIC_LDFLAGS_OTHER
+    )
 
     set(GStreamer_${_gst_PLUGIN}_FOUND "${PC_GStreamer_${_gst_PLUGIN}_FOUND}" PARENT_SCOPE)
     if (NOT PC_GStreamer_${_gst_PLUGIN}_FOUND)
         if(GStreamer_DEBUG)
             message(STATUS "[GstFind] Component ${_gst_PLUGIN} (${_gst_PC_NAME}): NOT FOUND")
         endif()
+        list(APPEND GStreamer_ABSENT_COMPONENTS ${_gst_PLUGIN})
+        set(GStreamer_ABSENT_COMPONENTS "${GStreamer_ABSENT_COMPONENTS}"
+            CACHE INTERNAL "GStreamer components probed and found absent")
         return()
     endif()
     if(GStreamer_DEBUG)
@@ -228,9 +271,12 @@ function(_gst_create_component_target _gst_PLUGIN _gst_PC_NAME)
     endif()
 
     if (GStreamer_USE_STATIC_LIBS)
+        _gst_coalesce_existing_paths(${_pc}_STATIC_LIBRARY_DIRS)
         _gst_apply_frameworks(${_ldflags_var} GStreamer::${_gst_PLUGIN})
-        _gst_resolve_and_link_libraries(GStreamer::${_gst_PLUGIN} INTERFACE ${_pc}_STATIC_LIBRARIES ${_pc}_STATIC_LIBRARY_DIRS)
+        _gst_resolve_and_link_libraries(GStreamer::${_gst_PLUGIN} INTERFACE "${${_pc}_STATIC_LIBRARIES}" "${${_pc}_STATIC_LIBRARY_DIRS}")
     else()
+        _gst_coalesce_existing_paths(${_pc}_LIBRARY_DIRS)
+        _gst_strip_macos_absent_link_libs(${_pc}_LINK_LIBRARIES)
         set_target_properties(GStreamer::${_gst_PLUGIN} PROPERTIES
             INTERFACE_LINK_OPTIONS "${${_ldflags_var}}"
             INTERFACE_LINK_LIBRARIES "${${_pc}_LINK_LIBRARIES}"
@@ -265,13 +311,14 @@ if(TARGET GStreamer::GStreamer)
     endif()
 endif()
 
-if (DEFINED ENV{PKG_CONFIG_DONT_DEFINE_PREFIX})
-    set(ENV{PKG_CONFIG_DONT_DEFINE_PREFIX})
+if(PC_GStreamer_FOUND AND TARGET GStreamer::GStreamer)
+    set(GStreamer_CORE_TARGET GStreamer::GStreamer)
 endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GStreamer
     REQUIRED_VARS
+        GStreamer_CORE_TARGET
         GStreamer_VERSION
         GStreamer_ROOT_DIR
     VERSION_VAR GStreamer_VERSION

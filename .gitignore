@@ -11,6 +11,7 @@
 .fleet/
 .vs/
 .settings/
+.codex/
 
 # VS Code - track .default files, ignore personal overrides
 .vscode/*
@@ -122,6 +123,12 @@ ios/iOSForAppStore-Info.plist
 android/local.properties
 .gradle/
 *.class
+# GStreamer plugin Java + fonts/CA assets copied in by the copyjavasource_<abi> /
+# copyfontsres_<abi> / copycacertificatesres_<abi> CMake targets
+# (cmake/GStreamer/platform/Android.cmake) at build time — version-matched, regenerated.
+android/src/org/freedesktop/
+android/assets/fontconfig/
+android/assets/ssl/
 
 # Linux
 *.nfs
@@ -180,3 +187,4 @@ Qt*-linux*.tar.*
 .direnv/
 .tool-versions
 .python-version
+!tools/.python-version

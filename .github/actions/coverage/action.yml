@@ -45,10 +45,13 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/coverage.py" \
-          --mode "${{ inputs.mode }}" \
-          --build-dir "${{ inputs.build-dir }}" \
-          --log-file "${{ inputs.build-dir }}/coverage-output.txt" \
+          --mode "${INPUTS_MODE}" \
+          --build-dir "${INPUTS_BUILD_DIR}" \
+          --log-file "${INPUTS_BUILD_DIR}/coverage-output.txt" \
           --step-summary
+      env:
+        INPUTS_MODE: ${{ inputs.mode }}
+        INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
 
     - name: Upload to Codecov
       uses: codecov/codecov-action@v6
@@ -76,9 +79,12 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/coverage_comment.py" \
-          --coverage-xml "${{ inputs.build-dir }}/coverage.xml" \
-          --baseline-xml "${{ inputs.baseline-xml }}" \
+          --coverage-xml "${INPUTS_BUILD_DIR}/coverage.xml" \
+          --baseline-xml "${INPUTS_BASELINE_XML}" \
           --output coverage-comment.md
+      env:
+        INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
+        INPUTS_BASELINE_XML: ${{ inputs.baseline-xml }}
 
     - name: Post PR comment
       if: inputs.pr-number != ''

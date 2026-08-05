@@ -12,7 +12,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import append_github_env
+from common.gh_actions import append_github_env, gh_error
 from common.net import run_with_retries
 
 
@@ -28,7 +28,7 @@ def _find_sdkmanager(sdk_root: str) -> str:
     )
     found = next((c for c in (default, *versioned) if c.is_file()), None)
     if found is None:
-        print(f"::error::sdkmanager.bat not found under {cmdline_tools}", file=sys.stderr)
+        gh_error(f"sdkmanager.bat not found under {cmdline_tools}")
         sys.exit(1)
     return str(found)
 
@@ -41,14 +41,14 @@ def main() -> None:
 
     sdk_root = os.environ.get("ANDROID_SDK_ROOT", "")
     if not sdk_root:
-        print("::error::ANDROID_SDK_ROOT not set", file=sys.stderr)
+        gh_error("ANDROID_SDK_ROOT not set")
         sys.exit(1)
 
     sdk_root_unix = sdk_root.replace("\\", "/")
     ndk_path = f"{sdk_root_unix}/ndk/{args.ndk_version}"
 
     if not Path(ndk_path).is_dir():
-        print(f"::error::NDK path not found: {ndk_path}", file=sys.stderr)
+        gh_error(f"NDK path not found: {ndk_path}")
         sys.exit(1)
 
     append_github_env(

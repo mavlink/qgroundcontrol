@@ -17,6 +17,11 @@ public:
     void init(const QString &databasePath);
     bool addTask(QGCMapTask *task);
 
+    /// Stops the cache worker thread and closes the database. Call before
+    /// QCoreApplication teardown when the engine was initialized outside the
+    /// normal QML map lifecycle (e.g. unit test runs).
+    void shutdown();
+
     static QGCMapEngine *instance();
 
 signals:

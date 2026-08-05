@@ -5,6 +5,6 @@
     "firmwareVersion":              "1.0.0",
     "hardwareVersion":              "1.0.0",
 	"metadataTypes": [
-		{"type": 1, "uri": "mftp://[;comp=1]parameter.json.xz", "fileCrc": 1}
+		{"type": 1, "uri": "mftp://[;comp=1]parameter.json.xz", "fileCrc": 2631777525}
 	]
 }

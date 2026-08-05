@@ -75,8 +75,25 @@ protected:
     static QQuickItem *findVisibleItem(QQuickItem *root, const QString &objectName, int timeoutMs = 1000);
 
     /// Click the visible QQuickItem with \a objectName in the current window.
-    /// Returns false if the item cannot be found.
+    /// Waits for the item's scene position to settle before clicking and fails
+    /// the test if the click point lies outside the window. Returns false if
+    /// the item cannot be found or cannot be clicked.
     bool clickButton(const QString &objectName);
+
+    /// Click the visible QQuickItem with \a objectName at a fractional position
+    /// within the item ((0.5, 0.5) is the center). Returns false if the item
+    /// cannot be found.
+    bool clickItemFraction(const QString &objectName, qreal fractionX, qreal fractionY);
+
+    /// Find an item that may live in a virtualized view (ListView/TableView/
+    /// TreeView) inside the flickable with \a flickableObjectName. Virtualized
+    /// delegates only exist near the viewport, so this steps the flickable
+    /// through its content range until the item instantiates, then scrolls it
+    /// into view. Returns nullptr if the item never appears.
+    QQuickItem *findVisibleItemScrolled(const QString &objectName, const QString &flickableObjectName);
+
+    /// Convenience: findVisibleItemScrolled() followed by clickButton().
+    bool clickButtonScrolled(const QString &objectName, const QString &flickableObjectName);
 
     /// Open the toolbar Q-logo tool-select dropdown and click the entry with
     /// objectName \a viewObjectName (e.g. "toolbar_viewPlan", "toolbar_viewClose").
@@ -118,10 +135,29 @@ protected:
     /// Same semantics as verifyEnabled().
     bool verifyText(const QString &objectName, const QString &expectedText, const QString &context);
 
+    /// Verify an arbitrary property of a visible item found by \a objectName,
+    /// waiting up to 2 seconds for bindings to settle. Fails the test if the
+    /// item is missing, the property does not exist, or the value never matches.
+    bool verifyProperty(const QString &objectName, const char *propertyName,
+                        const QVariant &expectedValue, const QString &context);
+
+    /// Verify that an item found by \a objectName is present-and-visible
+    /// (\a expectedVisible true) or absent/hidden (false), waiting up to
+    /// 2 seconds. Fails the test on mismatch.
+    bool verifyVisibility(const QString &objectName, bool expectedVisible, const QString &context);
+
     /// Scroll the QQuickFlickable identified by \a flickableObjectName so that
-    /// \a item's centre is fully visible inside the flickable. Does nothing if
-    /// \a item is already visible or if the flickable cannot be found.
-    void scrollIntoView(QQuickItem *item, const QString &flickableObjectName);
+    /// \a item's centre is fully visible inside the flickable. Fails the test
+    /// and returns false if the item never settles inside the flickable's
+    /// clickable region; returns false without failing if \a item is null or
+    /// the flickable cannot be found.
+    bool scrollIntoView(QQuickItem *item, const QString &flickableObjectName);
+
+    /// Shared click implementation: waits for the item's mapped scene position to
+    /// settle (positioners/animations may still be moving a freshly-visible item),
+    /// verifies the click point is inside the window, then clicks. Fails the test
+    /// and returns false if the point never lands inside the window.
+    bool _clickItemAt(QQuickItem *item, qreal fractionX, qreal fractionY, const QString &objectName);
 
     /// Convenience wrapper: boots the UI, connects a MockLink, runs \a body
     /// with the active MockLink and Vehicle, then tears down in the correct
@@ -138,10 +174,6 @@ protected:
     /// QML handles a null vehicle while the window is still open, exposing
     /// binding bugs.
     void disconnectMockLink(QPointer<MockLink> mockLink);
-
-    /// Register ignores for known warnings produced by any ArduPilot MockLink
-    /// connection. Call once before connectMockLinkAndWaitReady().
-    void ignoreAPMMockLinkWarnings();
 
     /// Start a MockLink using \a factory, wait for the vehicle to connect and
     /// parameters to be fully loaded, then return the MockLink pointer and set
@@ -167,6 +199,7 @@ private:
     /// guard against the property not existing (an invalid QVariant silently
     /// converts to false/"" which would make false/empty expectations pass
     /// vacuously), then wait up to 2 seconds for the property to match.
+    /// Exposed publicly as verifyProperty().
     bool _verifyItemProperty(const QString &objectName, const char *propertyName,
                              const QVariant &expectedValue, const QString &context);
 };

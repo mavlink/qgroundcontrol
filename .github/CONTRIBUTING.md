@@ -1,6 +1,12 @@
 # Contributing to QGroundControl
 
-Thank you for considering contributing to QGroundControl! This guide will help you get started with contributing code, reporting issues, and improving documentation.
+Thank you for considering contributing to QGroundControl! This guide will help you get started with
+contributing code, reporting issues, and improving documentation.
+
+> **AI coding agents** (Claude Code, Codex, etc.): see [AGENTS.md](../AGENTS.md) for the canonical
+> agent-facing guide (golden rules, `just` build/test commands, definition of done, commit conventions).
+> This document remains the human-facing source of truth for the
+> [Architecture Patterns](#architecture-patterns) that AGENTS.md links back to.
 
 ## Table of Contents
 
@@ -10,6 +16,7 @@ Thank you for considering contributing to QGroundControl! This guide will help y
 4. [Testing Requirements](#testing-requirements)
 5. [Pull Request Process](#pull-request-process)
 6. [License Requirements](#license-requirements)
+7. [Additional Resources](#additional-resources)
 
 ---
 
@@ -29,6 +36,8 @@ Before you begin, please:
 - **Build System**: CMake 3.25+
 - **Platforms**: Windows, macOS, Linux, Android, iOS
 - **IDE**: Qt Creator (recommended), VS Code, or your preferred IDE
+- **Build/test/lint commands**: see [tools/README.md](../tools/README.md) for the `just configure` /
+  `build` / `test` / `lint` / `check` workflow
 
 ---
 
@@ -61,7 +70,8 @@ Feature requests are welcome! Please:
 
 ### Contributing Translations
 
-QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for community translations. See [tools/translations/README.md](../tools/translations/README.md) for details on how translations are managed.
+QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for community translations. See
+[tools/translations/README.md](../tools/translations/README.md) for details on how translations are managed.
 
 ### Contributing Code
 
@@ -81,11 +91,11 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 3. **Make your changes** following our [coding standards](#coding-standards)
 
 4. **Test your changes thoroughly**
-   - Run unit tests: `./qgroundcontrol --unittest`
+   - Run `just test` (or `ctest --output-on-failure -L Unit` for the unit-test label only)
    - Test on all relevant platforms when possible
    - Test with both PX4 and ArduPilot if applicable
 
-5. **Commit your changes**
+5. **Commit your changes** using [Conventional Commits](../AGENTS.md#commit--review-conventions)
 
    ```bash
    git add .
@@ -104,11 +114,13 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 
 ## Coding Standards
 
-Follow [CODING_STYLE.md](../CODING_STYLE.md) for naming, formatting, C++20 features, QML style, and logging conventions. Run `clang-format` and `pre-commit run` before committing.
+Follow [CODING_STYLE.md](../CODING_STYLE.md) for naming, formatting, C++20 features, QML style, and logging
+conventions. Run `just lint` (or `pre-commit run --all-files`) before committing.
 
 ### Architecture Patterns
 
-QGroundControl has several core architecture patterns you must follow. See [CODING_STYLE.md](../CODING_STYLE.md) for full details with code examples:
+QGroundControl has several core architecture patterns you must follow. See [CODING_STYLE.md](../CODING_STYLE.md)
+for full details with code examples:
 
 - **Fact System**: ALL vehicle parameters use Facts — never create custom parameter storage
 - **Multi-Vehicle**: ALWAYS null-check `activeVehicle()` before use
@@ -119,7 +131,8 @@ QGroundControl has several core architecture patterns you must follow. See [CODI
 
 ## Testing Requirements
 
-See [test/TESTING.md](../test/TESTING.md) for the complete testing guide, including base classes, CTest labels, `MultiSignalSpy`, and coverage.
+See [test/README.md](../test/README.md) for the complete testing guide, including base classes, CTest labels,
+`MultiSignalSpy`, and coverage.
 
 **Key points:**
 
@@ -130,14 +143,8 @@ See [test/TESTING.md](../test/TESTING.md) for the complete testing guide, includ
 
 ### Pre-commit Checks
 
-Run before committing:
-
-```bash
-just lint                    # quick check
-pre-commit run --all-files   # full check
-```
-
-See [tools/README.md](../tools/README.md) for all available development commands.
+Run the lint gate before committing (`just lint`, or `pre-commit run --all-files` for the full sweep) —
+see [tools/README.md](../tools/README.md) for all available development commands.
 
 ---
 
@@ -152,7 +159,7 @@ See [tools/README.md](../tools/README.md) for all available development commands
    git rebase upstream/master
    ```
 
-2. **Ensure all tests pass**
+2. **Ensure all tests pass** (`just check`)
 3. **Update documentation** if needed
 4. **Write a clear PR description**:
    - What problem does it solve?
@@ -162,11 +169,12 @@ See [tools/README.md](../tools/README.md) for all available development commands
 
 ### PR Requirements
 
-- ✅ All CI checks must pass
-- ✅ Code follows style guidelines
-- ✅ Tests added for new features
-- ✅ No unrelated changes
-- ✅ Commit messages are clear and descriptive
+- All CI checks must pass
+- Code follows style guidelines
+- Tests added for new features
+- No unrelated changes
+- Commit messages are clear and descriptive (Conventional Commits, see
+  [AGENTS.md](../AGENTS.md#commit--review-conventions))
 
 ### Review Process
 
@@ -178,13 +186,14 @@ See [tools/README.md](../tools/README.md) for all available development commands
 
 - Delete your feature branch
 - Your contribution will appear in the next release
-- Thank you for contributing! 🎉
+- Thank you for contributing!
 
 ---
 
 ## License Requirements
 
-All contributions must be compatible with QGroundControl's **dual-license system** (Apache 2.0 AND GPL v3). Your code must be original or from a compatible license (BSD, MIT, Apache 2.0).
+All contributions must be compatible with QGroundControl's **dual-license system** (Apache 2.0 AND GPL v3).
+Your code must be original or from a compatible license (BSD, MIT, Apache 2.0).
 
 See [COPYING.md](COPYING.md) for full license details, compatible licenses, and contact information.
 
@@ -197,12 +206,8 @@ See [COPYING.md](COPYING.md) for full license details, compatible licenses, and 
 - **Support Guide**: For help and community resources, see [SUPPORT.md](SUPPORT.md)
 - **Discussion Forum**: <https://discuss.px4.io/c/qgroundcontrol>
 - **Discord**: <https://discord.gg/dronecode>
-
----
-
-## Code of Conduct
-
-QGroundControl is part of the Dronecode Foundation. Please follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+- **Code of Conduct**: QGroundControl is part of the Dronecode Foundation — see our
+  [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ---
 

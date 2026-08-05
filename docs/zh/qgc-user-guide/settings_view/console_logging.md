@@ -2,8 +2,6 @@
 
 _控制台_ 可以成为诊断 _QGroundControl_ 问题的有用工具。 可以在 **设置 > 控制台**中找到。
 
-![控制台日志](../../../assets/support/console.jpg)
-
 点击 **设置日志** 按钮来启用/禁用由 _QGroundControl_显示的日志信息。
 
 ## 常见日志选项

@@ -28,7 +28,7 @@
     "type": "double",
     "min": 0,
     "decimalPlaces": 1,
-    "units": "m",
+    "units": "vertical m",
     "default": 5
 }
 ]

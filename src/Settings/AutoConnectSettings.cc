@@ -1,6 +1,8 @@
 #include "AutoConnectSettings.h"
 #include "LinkManager.h"
 
+#include <QtCore/QCoreApplication>
+
 DECLARE_SETTINGGROUP(AutoConnect, "AutoConnect")
 {
     // Settings group name was changed from "LinkManager" to "AutoConnect" in v5.0.0
@@ -22,6 +24,29 @@ DECLARE_SETTINGGROUP(AutoConnect, "AutoConnect")
         }
         settings.endGroup();
     }
+
+    // autoConnectNmeaPort used to store a combo label ("Disabled"/"UDP Port"/serial device),
+    // sometimes translated. Migrate it to the nmeaSource enum, leaving only a serial device
+    // name in autoConnectNmeaPort.
+    settings.beginGroup(_name);
+    if (!settings.contains(nmeaSourceName) && settings.contains(autoConnectNmeaPortName)) {
+        const QString oldValue = settings.value(autoConnectNmeaPortName).toString();
+        // The legacy combo labels were written translated from two different QML contexts
+        const auto matches = [&oldValue](const char* source) {
+            return (oldValue == QLatin1String(source)) ||
+                   (oldValue == QCoreApplication::translate("NmeaGpsSettings", source)) ||
+                   (oldValue == QCoreApplication::translate("RemoteIDGpsLocation", source));
+        };
+        if (oldValue.isEmpty() || matches("Disabled") || matches("Serial <none available>")) {
+            settings.remove(autoConnectNmeaPortName);
+        } else if (matches("UDP Port")) {
+            settings.setValue(nmeaSourceName, static_cast<int>(NmeaSourceUdp));
+            settings.remove(autoConnectNmeaPortName);
+        } else {
+            settings.setValue(nmeaSourceName, static_cast<int>(NmeaSourceSerial));
+        }
+    }
+    settings.endGroup();
 }
 
 DECLARE_SETTINGSFACT(AutoConnectSettings, autoConnectUDP)
@@ -72,6 +97,17 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectLibrePilot)
 #endif
     }
     return _autoConnectLibrePilotFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, nmeaSource)
+{
+    if (!_nmeaSourceFact) {
+        _nmeaSourceFact = _createSettingsFact(nmeaSourceName);
+#ifdef Q_OS_IOS
+        _nmeaSourceFact->setUserVisible(false);
+#endif
+    }
+    return _nmeaSourceFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaPort)

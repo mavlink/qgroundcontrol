@@ -29,20 +29,14 @@ class TestDetectJobs:
             assert detect_jobs("auto") == 2
 
     def test_invalid_exits(self) -> None:
-        import pytest
-
         with pytest.raises(SystemExit):
             detect_jobs("abc")
 
     def test_zero_exits(self) -> None:
-        import pytest
-
         with pytest.raises(SystemExit):
             detect_jobs("0")
 
     def test_negative_exits(self) -> None:
-        import pytest
-
         with pytest.raises(SystemExit):
             detect_jobs("-1")
 
@@ -82,29 +76,26 @@ class TestReadCacheVar:
 
     def test_partial_name_does_not_match(self, tmp_path: Path) -> None:
         cache = _write_cache(tmp_path)
-        # `QGC_COVERAGE_LINE` is a prefix of an existing var; must not match.
         assert read_cache_var(str(cache), "QGC_COVERAGE_LINE") is None
 
 
 class TestCmdCacheVar:
-    def test_main_prints_and_writes_output(self, tmp_path: Path, monkeypatch, capsys) -> None:
+    def test_main_prints_and_writes_output(
+        self, tmp_path: Path, monkeypatch, capsys, gh_output: Path
+    ) -> None:
         _write_cache(tmp_path)
-        output_file = tmp_path / "gh_output"
-        output_file.write_text("")
-        monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
         monkeypatch.setattr(
             "sys.argv",
             ["prog", "cache-var", "--build-dir", str(tmp_path), "--name", "CMAKE_BUILD_TYPE"],
         )
         main()
         assert capsys.readouterr().out.strip() == "Release"
-        assert "cmake_build_type=Release" in output_file.read_text()
+        assert "cmake_build_type=Release" in gh_output.read_text()
 
-    def test_main_uses_default_when_missing(self, tmp_path: Path, monkeypatch, capsys) -> None:
+    def test_main_uses_default_when_missing(
+        self, tmp_path: Path, monkeypatch, capsys, gh_output: Path
+    ) -> None:
         _write_cache(tmp_path)
-        output_file = tmp_path / "gh_output"
-        output_file.write_text("")
-        monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
         monkeypatch.setattr(
             "sys.argv",
             [
@@ -122,7 +113,7 @@ class TestCmdCacheVar:
         )
         main()
         assert capsys.readouterr().out.strip() == "fallback"
-        assert "value=fallback" in output_file.read_text()
+        assert "value=fallback" in gh_output.read_text()
 
     def test_main_required_missing_exits(self, tmp_path: Path, monkeypatch) -> None:
         _write_cache(tmp_path)

@@ -34,15 +34,11 @@ dev = [
   "jinja2",
   "pyyaml",
   "pymavlink",
-  "rust-just>=1.53.0",
+  "rust-just>=1.55.1",
   "tomli>=2.0; python_version < '3.11'",
 ]
-lsp = [
-  "pygls",
-  "lsprotocol",
-]
 lint = [
-  "import-linter",
+  "import-linter>=2.0",
 ]
 
 [tool.pytest.ini_options]
@@ -50,15 +46,15 @@ pythonpath = ["."]
 testpaths = ["tests"]
 
 [tool.importlinter]
-root_packages = ["common", "analyzers", "generators", "lsp"]
+root_packages = ["common", "analyzers", "generators"]
 
 [[tool.importlinter.contracts]]
 name = "common is a dependency-free foundation"
 type = "forbidden"
 source_modules = ["common"]
-forbidden_modules = ["analyzers", "generators", "lsp"]
+forbidden_modules = ["analyzers", "generators"]
 
 [[tool.importlinter.contracts]]
 name = "tool packages are mutually independent"
 type = "independence"
-modules = ["analyzers", "generators", "lsp"]
+modules = ["analyzers", "generators"]

@@ -173,6 +173,8 @@ Node {
     DroneModelDjiF450 {
         id: droneDji3DModel
 
+        objectName: "viewer3DDroneModel"
+
         altitudeBias: _altitudeBias
         gpsRef: _backendQml.gpsRef
         modelScale: Qt.vector3d(0.05, 0.05, 0.05)
@@ -204,13 +206,20 @@ Node {
         delegate: Node {
             position: Qt.vector3d(model.x * 10, model.y * 10, (model.z + _altitudeBias) * 10)
 
-            LookAtNode {
+            // Billboard: copy the camera's orientation so the label plane stays
+            // parallel to the screen and upright. LookAtNode is unsuitable here
+            // because it assumes a Y-up world while this scene is Z-up.
+            Node {
                 position.x: -6
                 position.z: 30
-                target: _camera
+                rotation: vehicle3DBody._camera ? vehicle3DBody._camera.sceneRotation : Qt.quaternion(1, 0, 0, 0)
 
-                QGCLabel {
+                // Plain Text (not QGCLabel): QGCLabel sets font.pointSize, and
+                // combining that with the fixed pixelSize needed here makes Qt
+                // warn "Both point size and pixel size set".
+                Text {
                     color: "black"
+                    font.family: ScreenTools.normalFontFamily
                     font.pixelSize: 20
                     text: (model.itemName === "W") ? String(model.index) : model.itemName
                 }

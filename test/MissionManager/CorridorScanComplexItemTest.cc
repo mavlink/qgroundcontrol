@@ -57,6 +57,41 @@ void CorridorScanComplexItemTest::_testDirty()
     _corridorItem->setDirty(false);
 }
 
+void CorridorScanComplexItemTest::_testSpecifiesCoordinateChanged()
+{
+    // Fresh item with an empty polyline so we can watch the 1 -> 2 vertex transition
+    CorridorScanComplexItem* item = new CorridorScanComplexItem(planController(), false /* flyView */, QString() /* kmlOrShpFile */);
+
+    MultiSignalSpy spy;
+    QVERIFY(spy.init(item, QStringList{QStringLiteral("specifiesCoordinateChanged")}));
+
+    QVERIFY(!item->specifiesCoordinate());
+
+    item->corridorPolyline()->appendVertex(_polyLineVertices[0]);
+    QVERIFY(!item->specifiesCoordinate());
+    QVERIFY(spy.noneEmitted());
+
+    item->corridorPolyline()->appendVertex(_polyLineVertices[1]);
+    QVERIFY(item->specifiesCoordinate());
+    QVERIFY(spy.emittedOnce("specifiesCoordinateChanged"));
+
+    spy.clearAllSignals();
+    item->corridorPolyline()->appendVertex(_polyLineVertices[2]);
+    QVERIFY(item->specifiesCoordinate());
+    QVERIFY(spy.noneEmitted());
+
+    // Unrelated corridor rebuild triggers must not emit spuriously
+    spy.clearAllSignals();
+    changeFactValue(item->corridorWidth());
+    QVERIFY(spy.noneEmitted());
+
+    // true -> false transition when the polyline is cleared
+    spy.clearAllSignals();
+    item->corridorPolyline()->clear();
+    QVERIFY(!item->specifiesCoordinate());
+    QVERIFY(spy.emittedOnce("specifiesCoordinateChanged"));
+}
+
 void CorridorScanComplexItemTest::_waitForReadyForSave()
 {
     QVERIFY_TRUE_WAIT(_corridorItem->readyForSaveState() == CorridorScanComplexItem::ReadyForSave,

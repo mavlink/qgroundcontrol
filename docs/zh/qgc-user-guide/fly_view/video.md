@@ -1,17 +1,13 @@
 # 视频
 
 当视频流启用时(应用程序设置-视频)， _QGroundControl_ 将在地图底部的“视频切换窗口”中显示当前选中载具的视频流。
-您可以在任何地方按切换器来切换_视频_ 和 _地图_ 到前台(在下面的图像中，视频会显示在前台)。
-
-![视频流录制](../../../assets/fly/video_record.jpg)
+You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 :::info
 视频流已配置/启用在 [应用程序设置 > 常规 > 视频](../settings_view/general.md#video)。
 :::
 
 您可以在开关上使用控件来进一步配置视频显示：
-
-![视频窗口](../../../assets/fly/video_pop.jpg)
 
 - 通过拖动右上角的图标来调整切换器的大小。
 - 点击左下方的切换图标来隐藏切换器。
@@ -29,10 +25,8 @@
 
 #### 录制视频流 (GCS)
 
-视频流录制在 [视频流仪表页面](#video_instrument_page) 上进行控制。
+Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 按下红色圆圈开始录制新视频(每次按下圆圈时创建新视频文件)； 正在录制时，圆圈将会变成红色正方形。
-
-![视频流录制](../../../assets/fly/video_record.jpg)
 
 视频流录制已配置在 [应用程序设置 > 常规](../settings_view/general.md)：
 
@@ -52,7 +46,6 @@
 
 #### 在相机上录制视频
 
-使用[相机仪表页面](#camera_instrument_page)来 _在相机自身上_ 开始/停止视频录制。
+Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 先切换到视频模式，然后选择红色按钮开始录制。
 
-![仪表页面 - 相机MAVLink设置](../../../assets/fly/instrument_page_camera_mavlink.jpg)

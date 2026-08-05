@@ -3,6 +3,7 @@
 #include "QGCPalette.h"
 #include "AppMessages.h"
 #include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
 
@@ -13,6 +14,8 @@
 #include <QtCore/QStandardPaths>
 #include <QtCore/QDir>
 #include <QtCore/QSettings>
+
+QGC_LOGGING_CATEGORY(AppSettingsLog, "Settings.AppSettings")
 
 // Release languages are 90%+ complete
 QList<QLocale::Language> AppSettings::_rgReleaseLanguages = {
@@ -80,10 +83,10 @@ DECLARE_SETTINGGROUP(App, "")
         #ifdef Q_OS_ANDROID
             if (!androidDontSaveToSDCard()->rawValue().toBool()) {
                 rootDirPath = AndroidInterface::getSDCardPath();
-                qDebug() << "AndroidInterface::getSDCardPath();" << rootDirPath;
+                qCDebug(AppSettingsLog) << "AndroidInterface::getSDCardPath()" << rootDirPath;
                 if (rootDirPath.isEmpty() || !QDir(rootDirPath).exists()) {
                     rootDirPath.clear();
-                    qDebug() << "Save to SD card specified for application data. But no SD card present or permissions not granted. Using internal storage.";
+                    qCWarning(AppSettingsLog) << "Save to SD card specified for application data. But no SD card present or permissions not granted. Using internal storage.";
                 } else if (!QFileInfo(rootDirPath).isWritable()) {
                     rootDirPath.clear();
                     QGC::showAppMessage(AppSettings::tr("Save to SD card specified for application data. But SD card is write protected. Using internal storage."));
@@ -109,6 +112,25 @@ DECLARE_SETTINGGROUP(App, "")
 
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::savePathsChanged);
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
+
+#ifdef Q_OS_ANDROID
+    // React to runtime toggling of the SD card setting
+    connect(androidDontSaveToSDCard(), &Fact::rawValueChanged, this, [this, appName](QVariant value) {
+        Fact* const fact = savePath();
+        if (value.toBool()) {
+            const QString internalBasePath = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+            fact->setRawValue(QDir(internalBasePath).filePath(appName));
+        } else {
+            // If permission is already granted this returns the SD card root and we set the path here.
+            // If not, it returns empty and launches the system permission UI. The result comes back through
+            // jniStoragePermissionsResult, which sets the SD card save path (or reverts this setting on denial).
+            const QString sdRootPath = AndroidInterface::getSDCardPath();
+            if (!sdRootPath.isEmpty() && QDir(sdRootPath).exists() && QFileInfo(sdRootPath).isWritable()) {
+                fact->setRawValue(QDir(sdRootPath).filePath(appName));
+            }
+        }
+    });
+#endif
 
     _checkSavePathDirectories();
 
@@ -143,6 +165,7 @@ DECLARE_SETTINGSFACT(AppSettings, virtualJoystickLeftHandedMode)
 DECLARE_SETTINGSFACT(AppSettings, uiScalePercent)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
 DECLARE_SETTINGSFACT(AppSettings, androidDontSaveToSDCard)
+DECLARE_SETTINGSFACT(AppSettings, androidUsePosixSerial)
 DECLARE_SETTINGSFACT(AppSettings, useChecklist)
 DECLARE_SETTINGSFACT(AppSettings, enforceChecklist)
 DECLARE_SETTINGSFACT(AppSettings, enableMultiVehiclePanel)

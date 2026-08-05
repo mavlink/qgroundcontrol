@@ -90,14 +90,40 @@ Item {
         property real _pressX:      0
         property real _pressY:      0
         property bool _dragging:    false
+        property bool _doubleClicked: false
         readonly property real _dragThreshold: 10
 
-        onDoubleClicked: QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
+        // Defer single-click handling so a double-click (fullscreen toggle) doesn't also
+        // fire an unintended gimbal click-to-point/tracking command on its first click.
+        Timer {
+            id:         singleClickTimer
+            interval:   Qt.styleHints.mouseDoubleClickInterval
+            repeat:     false
+
+            property real clickX: 0
+            property real clickY: 0
+
+            onTriggered: {
+                onScreenGimbalController.mouseClicked(clickX, clickY)
+                cameraTrackingController.mouseClicked(clickX, clickY)
+            }
+        }
+
+        onDoubleClicked: {
+            // Fires on the second press of a double-click. The second release still emits
+            // onReleased, so flag it to prevent re-arming the single-click timer.
+            _doubleClicked = true
+            singleClickTimer.stop()
+            QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
+        }
 
         onPressed: (mouse) => {
             _pressX = mouse.x
             _pressY = mouse.y
             _dragging = false
+            // Clear any stale flag (e.g. double-click followed by drag releases through the
+            // drag branch without consuming it). Safe: pressed is emitted before doubleClicked.
+            _doubleClicked = false
         }
 
         onPositionChanged: (mouse) => {
@@ -116,9 +142,13 @@ Item {
             if (_dragging) {
                 onScreenGimbalController.mouseDragEnd()
                 cameraTrackingController.mouseDragEnd(mouse.x, mouse.y)
+            } else if (_doubleClicked) {
+                // Second release of a double-click - fullscreen toggle already handled
+                _doubleClicked = false
             } else {
-                onScreenGimbalController.mouseClicked(mouse.x, mouse.y)
-                cameraTrackingController.mouseClicked(mouse.x, mouse.y)
+                singleClickTimer.clickX = mouse.x
+                singleClickTimer.clickY = mouse.y
+                singleClickTimer.restart()
             }
             _dragging = false
         }

@@ -14,8 +14,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 콥터의 안전 페이지는 아래와 같습니다.
 
-![안전 설정 - 콥터(Ardupilot)](../../../assets/setup/safety/safety_arducopter.jpg)
-
 :::info
 추가 안전 설정 및 정보는 [안전장치](http://ardupilot.org/copter/docs/failsafe-landing-page.html)를 참고하십시오.
 :::
@@ -30,8 +28,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 두 번째 배터리가 있는 경우([전원 설정](../setup_view/power.md)에서 활성화됨) 두 번째 패널이 동일한 설정으로 표시됩니다.
 :::
 
-![안전 설정 - Battery1 페일세이프 트리거(콥터)](../../../assets/setup/safety/safety_arducopter_battery1_failsafe_triggers.jpg)
-
 설정 옵션은 다음과 같습니다:
 
 - **Low action**([BATT_FS_LOW_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-low-act-low-battery-failsafe-action)) - 없음, Land, RTL, SmartRTL, SmartRTL 또는 Land, Terminate 중 하나를 선택합니다.
@@ -45,8 +41,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 이 패널은 [GCS 안전장치](http://ardupilot.org/copter/docs/gcs-failsafe.html)를 활성화하고 스로틀 안전장치를 설정합니다.
 
-![안전 설정 - 일반 비상 안전 트리거(콥터)](../../../assets/setup/safety/safety_arducopter_general_failsafe_triggers.jpg)
-
 설정 옵션은 다음과 같습니다:
 
 - **Ground Station failsafe** - 비활성화, 항상 RTL 활성화, 자동 모드에서 미션 계속 활성화, 항상 SmartRTL 또는 RTL 활성화, 항상 SmartRTL 또는 Land 활성화.
@@ -57,8 +51,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 이 패널은 원통형 [Simple Geofence](http://ardupilot.org/copter/docs/ac2_simple_geofence.html)에 대한 매개변수를 설정합니다.
 울타리 반경 또는 높이 활성화 여부, 위반 최대값 및 위반 시 조치를 설정할 수 있습니다.
-
-![안전 설정 - 지오펜스(콥터)](../../../assets/setup/safety/safety_arducopter_geofence.jpg)
 
 설정 옵션은 다음과 같습니다:
 
@@ -74,8 +66,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 이 패널은 [RTL 모드](http://ardupilot.org/copter/docs/rtl-mode.html)의 기능을 설정합니다.
 
-![안전 설정 - RTL(콥터)](../../../assets/setup/safety/safety_arducopter_return_to_launch.jpg)
-
 설정 옵션은 다음과 같습니다:
 
 - RTL 복귀 고도 선택([RTL_ALT](http://ardupilot.org/copter/docs/parameters.html#rtl-alt-rtl-altitude)):
@@ -90,8 +80,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 이 패널은 어떤 [사전 ARM 안전 검사](http://ardupilot.org/copter/docs/prearm_safety_check.html) 활성 여부를 설정합니다.
 
-![안전 설정 - 시동 점검(콥터)](../../../assets/setup/safety/safety_arducopter_arming_checks.jpg)
-
 설정 옵션은 다음과 같습니다:
 
 - **수행할 무장 점검**([ARMING_CHECK](http://ardupilot.org/copter/docs/parameters.html#arming-check-arm-checks-to-peform-bitmask)) - 모든 적절한 점검: 기압계, 나침반, GPS 잠금, INS, 매개변수, RC 채널, 보드 전압, 배터리 잔량, 대기 속도, 사용 가능한 로깅 , 하드웨어 안전 스위치, GPS 구성, 시스템.
@@ -99,8 +87,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 ## 비행기
 
 비행기의 안전 페이지는 아래와 같습니다.
-
-![안전 설정 - 비행기(Ardupilot)](../../../assets/setup/safety/safety_arduplane.jpg)
 
 :::info
 추가 안전 설정 및 정보는 [비행기 안전 장치 기능](http://ardupilot.org/plane/docs/apms-failsafe-function.html) 및 [고급 안전 장치 설정](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html)을 참고하십시오.
@@ -116,8 +102,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 이 패널은 [GCS 안전장치](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html#ground-station-communications-loss)를 활성화하고 스로틀 안전장치를 설정합니다.
 
-![안전 설정 - 비상안전장치 트리거(콥터)](../../../assets/setup/safety/safety_arduplane_failsafe_triggers.jpg)
-
 설정 옵션은 다음과 같습니다:
 
 - **스로틀 PWM 임계치**([THR_FS_VALUE](http://ardupilot.org/plane/docs/parameters.html#thr-fs-value-throttle-failsafe-value)) - 스로틀 페일세이프가 트리거되는 PWM 값입니다.
@@ -126,8 +110,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 ### 출발지 복귀 {#rtl_plane}
 
 이 패널은 [RTL 모드](http://ardupilot.org/copter/docs/rtl-mode.html)의 기능을 설정합니다.
-
-![안전 설정 - RTL(고정익)](../../../assets/setup/safety/safety_arduplane_return_to_launch.jpg)
 
 설정 옵션은 다음과 같습니다:
 
@@ -143,8 +125,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 로버의 안전 페이지는 아래와 같습니다.
 
-![안전 설정 - 로버(Ardupilot)](../../../assets/setup/safety/safety_ardurover.jpg)
-
 :::info
 추가 안전 설정 및 정보는 [비상안전장치](http://ardupilot.org/rover/docs/rover-failsafes.html)를 참고하십시오.
 :::
@@ -156,8 +136,6 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 ### 비상안전장치 트리거 {#failsafe_triggers_rover}
 
 이 패널은 로버 [비상안전장치](http://ardupilot.org/rover/docs/rover-failsafes.html)를 활성화합니다.
-
-![안전 설정 - 비상안전장치 트리거(로버)](../../../assets/setup/safety/safety_ardurover_failsafe_triggers.jpg)
 
 설정 옵션은 다음과 같습니다:
 
@@ -174,15 +152,13 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 잠수정의 안전 페이지는 아래와 같습니다.
 
-![안전 설정 - 잠수정(Ardupilot)](../../../assets/setup/safety/safety_ardusub.jpg)
-
 :::info
 추가 안전 설정 및 정보는 [비상안전장치](https://www.ardusub.com/operators-manual/failsafes.html)를 참고하십시오.
 :::
 
 ### 비상안전장치 동작 {#failsafe_actions_sub}
 
-설정 옵션은 다음과 같습니다:
+The configuration options are:
 
 - **GCS 하트비트** - 비활성화, 경고만, 무장 해제, 수심 유지 모드로 들어가기, 수면 모드로 들어가기 중 하나를 선택합니다.
 - **누출** - 사용 안 함, 경고만, 수면 모드로 전환 중 하나를 선택합니다.

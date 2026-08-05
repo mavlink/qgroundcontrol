@@ -22,7 +22,7 @@ void InitialConnectPeripheralStartupTest::_noCameraOrGimbalRequestsBeforeInitial
     QSignalSpy activeVehicleSpy(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
     QVERIFY(activeVehicleSpy.isValid());
 
-    _mockLink = MockLink::startPX4MockLink(false /* sendStatusText */, true /* enableCamera */, true /* enableGimbal */);
+    _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionEnableCamera | MockConfiguration::OptionEnableGimbal);
     QVERIFY(_mockLink);
 
     QVERIFY_SIGNAL_WAIT(activeVehicleSpy, TestTimeout::longMs());

@@ -12,11 +12,14 @@ private slots:
     void _setRawValueDouble_test();
     void _setRawValueString_test();
     void _setCookedValueWithTranslator_test();
+    void _rawToCooked_test();
     void _validateValid_test();
     void _validateInvalid_test();
     void _validateConvertOnly_test();
     void _clampOutOfRange_test();
     void _enumOperations_test();
+    void _selectedBitmaskStringsBit31_test();
+    void _enumIndexUnknownValueNoSyncSignal_test();
     void _valueChangedSignal_test();
     void _rawValueChangedSignal_test();
     void _noSignalOnSameValue_test();
@@ -25,4 +28,5 @@ private slots:
     void _valueEqualsDefault_test();
     void _rawValueStringFullPrecisionFloat_test();
     void _rawValueStringFullPrecisionDouble_test();
+    void _labelFallback_test();
 };

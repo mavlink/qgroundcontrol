@@ -8,6 +8,8 @@ class TerrainQueryTest : public TerrainTest
 
 private slots:
     void _testRequestCoordinateHeights();
+    void _testRequestCoordinateHeightsSlope();
+    void _testRequestCoordinateHeightsOutsideRegions();
     void _testRequestPathHeights();
     void _testRequestPathHeightsSpacing();
     void _testRequestCarpetHeights();
@@ -16,5 +18,4 @@ private slots:
     void _testPolyPathQueryEmptyPath();
     void _testPolyPathQuerySingleCoord();
     void _testPolyPathQueryFailureClearsAccumulatedSegments();
-    void _testTerrainAtCoordinateQuery();
 };

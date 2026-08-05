@@ -11,8 +11,6 @@ In order to set up flight modes you must already have
 
 이 섹션에 액세스하려면, 상단 툴바에서 **기어** 아이콘(차량 설정)을 선택한 다음 사이드바에서 **비행 모드**를 선택하세요.
 
-![비행 모드 단일 채널](../../../assets/setup/flight_modes/px4_single_channel.jpg)
-
 ## 비행 모드 설정
 
 화면에서 "모드" 채널을 지정하고 채널에서 전송된 값을 기반으로 활성화될 최대 6개의 비행 모드를 선택할 수 있습니다.
@@ -23,8 +21,6 @@ In order to set up flight modes you must already have
 1. RC 송신기를 켭니다.
 
 2. 상단 툴바에서 **기어** 아이콘(차량 설정)을 선택한 다음 사이드바에서 **비행 모드**를 선택합니다.
-
-   ![비행 모드 단일 채널](../../../assets/setup/flight_modes/px4_single_channel.jpg)
 
 3. _비행 모드 설정_ 설정
 
@@ -47,4 +43,4 @@ In order to set up flight modes you must already have
 
 ## See Also
 
-- [PX4 비행 모드 ](https://docs.px4.io/main/en/flight_modes/)
+- [PX4 Flight Modes](https://docs.px4.io/main/en/flight_modes/)

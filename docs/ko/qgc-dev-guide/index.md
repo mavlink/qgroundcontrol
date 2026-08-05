@@ -48,8 +48,8 @@ The translation projects (and join links) are listed below:
 
 The PX4 Developer Guide contains additional information about the (common) docs/translation toolchain:
 
-- [Documentation](https://dev.px4.io/en/contribute/docs.html)
-- [Translation](https://dev.px4.io/en/contribute/docs.html)
+- [Documentation](https://docs.px4.io/main/en/contribute/docs)
+- [Translation](https://docs.px4.io/main/en/contribute/docs.html)
 
 ## License
 

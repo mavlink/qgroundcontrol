@@ -38,7 +38,9 @@
   <screenshots>
     <screenshot type="default">
       <caption>Connected Vehicle</caption>
-      <image>https://docs.qgroundcontrol.com/master/assets/connected_vehicle.BmASIvhv.jpg</image>
+      <!-- AppStream requires a remote URL; keep the image alongside this file so it
+           can never rot due to docs-site restructuring -->
+      <image>https://raw.githubusercontent.com/mavlink/qgroundcontrol/master/deploy/linux/connected_vehicle.jpg</image>
     </screenshot>
   </screenshots>
 

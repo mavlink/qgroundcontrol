@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.FactControls
@@ -10,7 +11,9 @@ import QGroundControl.Controls
 */
 
 Item {
-    anchors.fill:   parent
+    implicitWidth:  mainLayout.implicitWidth
+    implicitHeight: mainLayout.implicitHeight
+    width:          parent.width  // grows when Loader is wider than implicitWidth
 
     FactPanelController { id: controller; }
 
@@ -18,26 +21,28 @@ Item {
     property Fact gyro0IdFact:          controller.getParameterFact(-1, "CAL_GYRO0_ID")
     property Fact accel0IdFact:         controller.getParameterFact(-1, "CAL_ACC0_ID")
 
-    Column {
-        anchors.fill:       parent
+    ColumnLayout {
+        id: mainLayout
+        width: parent.width
+        spacing: 0
 
         VehicleSummaryRow {
-            labelText: qsTr("Compass:")
-            valueText: mag0IdFact ? (mag0IdFact.value  === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
+            labelText: qsTr("Compass")
+            valueText: mag0IdFact ? (mag0IdFact.value === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Gyro:")
+            labelText: qsTr("Gyro")
             valueText: gyro0IdFact ? (gyro0IdFact.value === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Accelerometer:")
+            labelText: qsTr("Accelerometer")
             valueText: accel0IdFact ? (accel0IdFact.value === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
         }
 
         VehicleSummaryRow {
-            labelText:  qsTr("Airspeed:")
+            labelText:  qsTr("Airspeed")
             visible:    vehicleComponent.airspeedCalSupported
             valueText:  vehicleComponent.airspeedCalRequired ? qsTr("Setup required") : qsTr("Ready")
         }

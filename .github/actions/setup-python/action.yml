@@ -3,7 +3,7 @@ description: Setup Python with uv for fast dependency installation
 
 inputs:
   groups:
-    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, ci, qt, coverage, dev, lsp, all)'
+    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, ci, qt, coverage, dev, all)'
     required: false
     default: 'ci'
   python-version:
@@ -32,7 +32,7 @@ runs:
 
     - name: Add venv to PATH
       shell: bash
-      run: |
+      run: | # zizmor: ignore[github-env] writes fixed runner workspace .venv path to PATH; not attacker-controllable
         if [[ "$RUNNER_OS" == "Windows" ]]; then
           echo "$GITHUB_WORKSPACE/.venv/Scripts" >> "$GITHUB_PATH"
         else

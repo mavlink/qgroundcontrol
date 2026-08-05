@@ -1,21 +1,26 @@
 # 飞行视图
 
+:::tip Having trouble?
+For connection issues, see [Connection Problems](../troubleshooting/vehicle_connection.md). For mission resume issues during flight, see [Resume Mission Failures](../troubleshooting/resume_mission.md).
+:::
+
 飞行视图用于指挥和监视载具。
 
 ## 概述
 
-![飞行视图](../../../assets/fly/fly_view_overview.jpg)
+<img src="../../../assets/fly/fly_view_overview.svg" alt="Fly View overview" style="height: 30em; vertical-align: text-bottom;" />
 
-- **[工具栏](fly_view_toolbar.md):** 工具栏位于屏幕顶部。 它提供了选择视图的控制，显示飞行状态和方式以及车辆主要部件的状况。
-- **[载具动作](fly_tools.md)：** 允许您命令车辆采取特定行动。
-- **[仪器面板](instrument_panel.md)：** 显示载具遥测器的部件。
-- **[姿态/罗盘](hud.md)：** 一个提供虚拟地平线和航向信息的部件。
-- **[相机工具](camera_tools.md)**：用于在仍然和视频模式之间切换、开始/停止捕获以及控制相机设置的部件。
+- **View Selector:** Allows you to switch between the main views (Fly, Plan, Analyze, Vehicle Configuration, Application Settings).
+- **[Status Indicators](fly_view_toolbar.md):** Shows flight status and mode as well as the status of the main components of the vehicle.
+- **[Actions](fly_tools.md):** Allows you to command the vehicle to take a specific action.
+- **[Camera Tools](camera_tools.md):** Switch between still and video modes, start/stop capture, and control camera settings.
 - **[视频](video.md):** 显示载具中的视频。 允许您在视频或地图之间切换为主显示。
-- **地图：** 显示所有连接车辆的位置和当前车辆的任务。
+- **[Telemetry Values](instrument_panel.md):** Displays configurable telemetry values.
+- **[Attitude/Compass](hud.md):** Provides virtual horizon and heading information.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle. Can be switched between multiple variations.
   - 你可以拖动地图来移动它周围(地图在一定时间后自动重置在车上)。
   - 你可以使用缩放按钮、鼠标滚轮、触控板或在平板电脑上捏合操作来缩放地图。
-  - 一旦飞行，您可以点击地图来设置[前往](#goto)或[轨道](#orbit) 位置。
+  - Once flying, you can click on the map to set a [Go to](#map_actions) or [Orbit at](#map_actions) location.
 
 还有一些其他元素没有默认显示并且只显示在某些条件下或某些类型的车辆。
 
@@ -27,7 +32,7 @@
 许多可用的选项都取决于车辆类型及其目前状态。
 :::
 
-### 与地图位置相关联的动作 (#map_actions)
+### Actions associated with a map position {#map_actions}
 
 可以采取一些与地图上的具体立场相关的行动。 要使用这些动作：
 
@@ -50,13 +55,13 @@
 
 1. 按 _飞行工具_ 中的 **返航** 按钮。
 2. 可选使用右侧垂直滑块设置新海拔。
-3. 使用滑块确认暂停。
+3. [Confirm](fly_tools.md#confirmation) the action.
 
 ### 任务
 
 #### 开始任务 {#start_mission}
 
-飞行器着陆时你可以启动任务（默认情况下通常会显示启动任务确认滑块）。
+You can start a mission when the vehicle is landed (the start mission confirmation button is often displayed by default).
 
 要从着陆状态启动任务：
 
@@ -64,17 +69,11 @@
 
 2. 在对话框中选择  _开始任务_ 操作。
 
-  ![开始任务操作](../../../assets/fly/start_mission_action.jpg)
-
-  (以显示确认滑块)
-
-3. 当确认滑块出现时，拖动它以启动任务。
-
-  ![启动任务](../../../assets/fly/start_mission.jpg)
+3. [Confirm](fly_tools.md#confirmation) the action to start the mission.
 
 #### 继续任务{#continue_mission}
 
-飞行过程中，你可以从下一个航点 _继续_ 任务（起飞后，默认情况下通常会显示 _继续任务_ 确认滑块）。
+You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation button is often displayed by default after you takeoff).
 
 :::info
 继续和 [回复任务](#resume_mission) 是不一样的！
@@ -88,15 +87,11 @@ _继续_ 用于重新启动已暂停的任务，或者你已经起飞，因此�
 
 2. 在对话框中选择 _继续任务_ 操作。
 
-  ![继续任务/改变高度](../../../assets/fly/continue_mission_change_altitude_action.jpg)
-
-3. 拖动滑块以确认继续执行任务。
-
-  ![继续任务](../../../assets/fly/continue_mission.jpg)
+3. [Confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 #### 回复任务{#resume_mission}
 
-_恢复任务_ 用于在任务中执行[返航（RTL）/返回](#rtl)或[着陆](#land)操作（例如，为了更换电池）后恢复任务。
+_Resume Mission_ is used to resume a mission after performing an [RTL/Return](hud.md#rtl) or [Land](hud.md#land) from within a mission (in order, for example, to perform a battery change).
 
 :::info
 如果你正在更换电池，断开电池后**请勿**断开 QGC 与飞行器的连接。
@@ -105,14 +100,8 @@ _恢复任务_ 用于在任务中执行[返航（RTL）/返回](#rtl)或[着陆]
 
 着陆后，系统将弹出 _飞行计划完成” 对话框，你可以选择从飞行器中删除该计划、_将其保留在飞行器上，或者从最后经过的航点恢复任务。
 
-![恢复任务](../../../assets/fly/resume_mission.jpg)
-
 如果你选择回复任务，_QGroundControl_ 会重新构建任务并将它上传到载具。
-然后使用 _启动任务_ 滑块以继续任务。
-
-下图展示了在上述返航操作后重新生成的任务。
-
-![恢复重构任务](../../../assets/fly/resume_mission_rebuilt.jpg)
+Then [confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 :::info
 任务不能简单地从飞行器执行的最后一个任务项目继续，因为在最后一个航点可能有多个影响任务下一阶段的项目（例如速度指令或相机控制指令）。
@@ -127,17 +116,13 @@ _恢复任务_ 用于在任务中执行[返航（RTL）/返回](#rtl)或[着陆]
 ### 显示视频 {#video_switcher}
 
 启用视频流传输后，_QGroundControl_ 会在地图左下角的 “视频切换窗口” 中显示当前选定飞行器的视频流。
-您可以在任何地方按切换器来切换 _视频_ 和 _地图_ 到前台(在下面的图像中，视频会显示在前台)。
-
-![录制视频流](../../../assets/fly/video_record.jpg)
+You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 :::info
 视频流已配置/启用在 [应用程序设置 > 常规 > 视频](../settings_view/general.md#video)。
 :::
 
 您可以在开关上使用控件来进一步配置视频显示：
-
-![视频窗口](../../../assets/fly/video_pop.jpg)
 
 - 通过拖动右上角的图标来调整切换器的大小。
 - 点击左下方的切换图标来隐藏切换器。
@@ -154,10 +139,8 @@ _恢复任务_ 用于在任务中执行[返航（RTL）/返回](#rtl)或[着陆]
 
 #### 录制视频流 (GCS)
 
-视频流录制在[视频流仪表页面](#video_instrument_page)进行控制。
+Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 按下红色圆圈开始录制新视频(每次按下圆圈时创建新视频文件)； 正在录制时，圆圈将会变成红色正方形。
-
-![视频流录制](../../../assets/fly/video_record.jpg)
 
 视频流录制已配置在 [应用程序设置 > 常规](../settings_view/general.md)：
 
@@ -177,7 +160,6 @@ _恢复任务_ 用于在任务中执行[返航（RTL）/返回](#rtl)或[着陆]
 
 #### 在相机上录制视频
 
-通过[相机仪表页面](#camera_instrument_page)开始/暂停视频录制 _相机本身_ 。
+Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 首先切换到视频模式，然后选择红色按钮开始录制。
 
-![仪表页面 - 相机 MAVLink 设置](../../../assets/fly/instrument_page_camera_mavlink.jpg)

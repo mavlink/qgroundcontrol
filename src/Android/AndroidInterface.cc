@@ -36,12 +36,31 @@ static void jniLogWarning(JNIEnv*, jobject, jstring message)
 
 static void jniStoragePermissionsResult(JNIEnv*, jobject, jboolean granted)
 {
-    if (!granted) {
-        qCWarning(AndroidInterfaceLog) << "Storage permission request denied";
+    if (!qgcApp()) {
         return;
     }
 
-    if (!qgcApp()) {
+    if (!granted) {
+        qCWarning(AndroidInterfaceLog) << "Storage permission request denied; disabling save to SD card";
+
+        (void)QMetaObject::invokeMethod(
+            qgcApp(),
+            []() {
+                SettingsManager* const settingsManager = SettingsManager::instance();
+                if (!settingsManager) {
+                    return;
+                }
+
+                AppSettings* const appSettings = settingsManager->appSettings();
+                if (!appSettings) {
+                    return;
+                }
+
+                if (!appSettings->androidDontSaveToSDCard()->rawValue().toBool()) {
+                    appSettings->androidDontSaveToSDCard()->setRawValue(true);
+                }
+            },
+            Qt::QueuedConnection);
         return;
     }
 

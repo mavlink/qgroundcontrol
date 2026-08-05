@@ -15,5 +15,8 @@ namespace QGC
     /// Modal reboot-required message. Debounced within 2 minutes.
     void showRebootAppMessage(const QString &message, const QString &title = QString());
 
+    /// Modal vehicle-reboot-required message with a reboot button. Debounced within 2 minutes.
+    void showRebootVehicleMessage(const QString &message, const QString &title = QString());
+
     bool runningUnitTests();
 }

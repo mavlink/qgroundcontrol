@@ -14,6 +14,14 @@ inputs:
     description: Optional discriminator (e.g. coverage|asan) — distinct compile flags must not share a ccache key.
     required: false
     default: ''
+  key-suffix:
+    description: >-
+      Optional per-job discriminator appended to the moccache save key. Required
+      when multiple matrix legs share the same host/target/build-type (e.g.
+      android.yml linux vs linux-emulator); without it those legs race to save
+      the same exact key and the loser's new entries are dropped.
+    required: false
+    default: ''
   cpm-modules:
     description: Path to CPM Modules
     required: false
@@ -48,23 +56,30 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" config \
-          --target "${{ inputs.target }}" \
+          --target "${INPUTS_TARGET}" \
           --conf "${GITHUB_WORKSPACE}/tools/configs/ccache.conf"
+      env:
+        INPUTS_TARGET: ${{ inputs.target }}
 
     - name: Install ccache (Linux)
       if: runner.os == 'Linux'
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install \
-          --version "${{ steps.ccache-config.outputs.version }}" \
-          --arch "${{ steps.ccache-config.outputs.arch }}"
+          --version "${STEPS_CCACHE_CONFIG_OUTPUTS_VERSION}" \
+          --arch "${STEPS_CCACHE_CONFIG_OUTPUTS_ARCH}"
+      env:
+        STEPS_CCACHE_CONFIG_OUTPUTS_VERSION: ${{ steps.ccache-config.outputs.version }}
+        STEPS_CCACHE_CONFIG_OUTPUTS_ARCH: ${{ steps.ccache-config.outputs.arch }}
 
     - name: Install mold (Linux)
       if: runner.os == 'Linux'
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/mold_helper.py" install \
-          --arch "${{ steps.ccache-config.outputs.arch }}"
+          --arch "${STEPS_CCACHE_CONFIG_OUTPUTS_ARCH}"
+      env:
+        STEPS_CCACHE_CONFIG_OUTPUTS_ARCH: ${{ steps.ccache-config.outputs.arch }}
 
     - name: Resolve macOS ccache SHA256
       if: runner.os == 'macOS'
@@ -88,7 +103,10 @@ runs:
       if: runner.os == 'Windows'
       id: win-ccache
       shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" windows-config --host "${{ inputs.host }}" --target "${{ inputs.target }}"
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" windows-config --host "${INPUTS_HOST}" --target "${INPUTS_TARGET}"
+      env:
+        INPUTS_HOST: ${{ inputs.host }}
+        INPUTS_TARGET: ${{ inputs.target }}
 
     - name: Install ccache (Windows)
       if: runner.os == 'Windows'
@@ -155,6 +173,50 @@ runs:
     - name: Initialize ccache stats
       shell: bash
       run: ccache -z
+
+    # moccache entries are content-addressed and basedir-normalized, so they
+    # are safe to share across build types and branches; keys exist only for
+    # scoping and eviction. Windows is skipped (moccache no-ops there).
+    #
+    # The saved key ends in key-suffix + run id + attempt so every saving job
+    # (including matrix legs sharing host/target and re-run attempts) writes a
+    # fresh cache (an exact-key hit would otherwise freeze the cache: new
+    # entries from jobs like linux-emulator or custom builds would never be
+    # saved back). Lookups go through the restore-keys prefixes, and each save
+    # includes the restored entries, so caches converge over successive runs.
+    # MOCCACHE_MAX_SIZE (set by the launcher) bounds growth via LRU trim.
+    - name: Cache moc output (moccache, save)
+      if: runner.os != 'Windows' && steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
+      uses: actions/cache@v5
+      with:
+        path: ${{ github.workspace }}/.cache/moccache
+        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}${{ inputs.key-suffix && format('-{0}', inputs.key-suffix) || '' }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: |
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}-
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+
+    - name: Cache moc output (moccache, read-only)
+      if: runner.os != 'Windows' && (steps.cache-policy.outputs.save != 'true' || inputs.variant == 'coverage')
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ github.workspace }}/.cache/moccache
+        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}${{ inputs.key-suffix && format('-{0}', inputs.key-suffix) || '' }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: |
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}-
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
+          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+
+    # Record per-run moc hit/miss stats; a restored cache may carry the
+    # previous run's stats.log, so reset it for accurate numbers.
+    - name: Enable moccache stats
+      if: runner.os != 'Windows'
+      shell: bash
+      env:
+        MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
+      run: |
+        echo "MOCCACHE_STATS=1" >> "$GITHUB_ENV"
+        python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --zero-stats
 
     # CPM is content-identical across build types; only Release writes the
     # cache. Debug + sanitizer + coverage jobs are read-only to avoid parallel

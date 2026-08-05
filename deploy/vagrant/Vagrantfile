@@ -18,13 +18,15 @@ env_global = [
   'CODESIGN=nocodesign',
 ]
 
+# QGC_CI=1 builds headless: drop the desktop/IDE packages a CI runner can't use.
+ci_mode = !ENV.fetch('QGC_CI', '').empty?
+
 packages = [
   'libudev-dev',
   'speech-dispatcher',
   'wget',
-  'xubuntu-desktop',
-  'qtcreator',
 ]
+packages += ['xubuntu-desktop', 'qtcreator'] unless ci_mode
 
 
 Vagrant.configure(2) do |config|
@@ -33,6 +35,14 @@ Vagrant.configure(2) do |config|
   config.vm.provider "vmware_fusion"
 
   config.vm.box = "alvistack/ubuntu-25.10"
+  # Provisioning builds from /vagrant as the repo root, but Vagrant maps the
+  # Vagrantfile's own dir (deploy/vagrant) there. In CI remap it to the repo root.
+  if ci_mode
+    # rsync (not 9p): the guest needs a writable, vagrant-owned copy — QGC's cmake
+    # creates .venv inside the source tree, impossible on a foreign-uid 9p share.
+    config.vm.synced_folder "../..", "/vagrant", type: "rsync",
+      rsync__exclude: ["shadow_build/", ".venv/", "build/"]
+  end
   config.vm.provider :docker do |docker, override|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
   end
@@ -40,6 +50,12 @@ Vagrant.configure(2) do |config|
     vb.customize ["modifyvm", :id, "--memory", "6144"]
     vb.customize ["modifyvm", :id, "--cpus", "1"]
     vb.gui = true
+  end
+  # libvirt/KVM provider: the only way to run a real `vagrant up` build on a
+  # GitHub-hosted runner (VirtualBox has no nested-virt there). Headless.
+  config.vm.provider :libvirt do |lv|
+    lv.memory = Integer(ENV.fetch('QGC_VM_MEM_MB', '8192'))
+    lv.cpus   = Integer(ENV.fetch('QGC_VM_CPUS', '4'))
   end
   ["vmware_fusion", "vmware_workstation"].each do |p|
     config.vm.provider p do |v|
@@ -85,9 +101,11 @@ Vagrant.configure(2) do |config|
      # use common package installation:
      python3 /vagrant/tools/setup/install_dependencies --platform debian
 
-     sudo systemctl set-default graphical.target
+     if [ -z "${QGC_CI:-}" ]; then sudo systemctl set-default graphical.target; fi
 
      echo 'Initialising submodules'
+     # Belt-and-braces against git "dubious ownership" on the synced /vagrant tree.
+     su - vagrant -c "git config --global --add safe.directory '*'"
      su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
 
      # with reference to https://github.com/jurplel/install-qt-action@v3/blob/master/src/main.ts and .github/workflows/linux_release.yml:
@@ -151,8 +169,6 @@ time cmake --build . --target all --config Release  # 75m
 rm -rf AppDir
 time cmake --install . --config Release
 
-rsync --delete -aPH \"\\\$SHADOW_BUILD\" /vagrant/shadow_build
-
 MAKE
 "
 
@@ -166,9 +182,15 @@ echo '*               soft    nofile          2048' >/etc/security/limits.d/file
     su - vagrant -c ./do-configure.sh
     su - vagrant -c ./do-make.sh
 
+    # local dev only: expose build products on the host via the two-way
+    # /vagrant share (CI pulls the AppImage over scp instead; see vm-builds.yml)
+    if [ -z "${QGC_CI:-}" ]; then
+      su - vagrant -c 'rsync --delete -aPH "$HOME/shadow_build" /vagrant/shadow_build'
+    fi
+
    SHELL
 
-  config.vm.provision "dev", type: "shell", inline: $config_shell  % {
+  config.vm.provision "dev", type: "shell", env: {"QGC_CI" => ENV.fetch('QGC_CI', '')}, inline: $config_shell  % {
     :shadow_build_dir => yaml_config['shadow_build_dir'],
     :spec => yaml_config['spec'],
     :apt_pkgs => (packages).join(' '),
@@ -184,8 +206,8 @@ echo '*               soft    nofile          2048' >/etc/security/limits.d/file
     :qt_deps_plugins_dir => yaml_config['qt_deps_plugins_dir'],
     :qt_deps_qml_dir => yaml_config['qt_deps_qml_dir'],
 
-    :qt_version => build_config['qt_version'],
-    :qt_modules => build_config['qt_modules'],
+    :qt_version => build_config['qt']['version'],
+    :qt_modules => build_config['qt']['modules'],
   }
 
 

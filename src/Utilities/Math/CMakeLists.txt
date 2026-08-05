@@ -8,9 +8,6 @@ target_link_libraries(QGCMath
         Qt6::Core
 )
 
-target_include_directories(QGCMath
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(QGCMath PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCMath)

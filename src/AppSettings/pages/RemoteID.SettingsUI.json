@@ -50,10 +50,16 @@
                     "enableWhen": "isFAARegion"
                 },
                 {
-                    "setting": "remoteIDSettings.operatorIDType"
+                    "setting": "remoteIDSettings.operatorIDType",
+                    "showWhen": "ridSettings.operatorIDType.enumValues.length > 1"
                 },
                 {
-                    "setting": "remoteIDSettings.operatorID"
+                    "setting": "remoteIDSettings.operatorIDEU",
+                    "showWhen": "isEURegion"
+                },
+                {
+                    "setting": "remoteIDSettings.operatorIDFAA",
+                    "showWhen": "!isEURegion"
                 }
             ]
         },

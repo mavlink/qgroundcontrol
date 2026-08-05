@@ -18,12 +18,12 @@ Item {
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property var    remoteIDManager:    activeVehicle ? activeVehicle.remoteIDManager : null
 
-    property bool   gpsFlag:            activeVehicle && remoteIDManager ? remoteIDManager.gcsGPSGood         : false
-    property bool   basicIDFlag:        activeVehicle && remoteIDManager ? remoteIDManager.basicIDGood        : false
-    property bool   armFlag:            activeVehicle && remoteIDManager ? remoteIDManager.armStatusGood      : false
-    property bool   commsFlag:          activeVehicle && remoteIDManager ? remoteIDManager.commsGood          : false
+    property bool   gpsFlag:            activeVehicle && remoteIDManager ? remoteIDManager.gcsPositionUsable             : false
+    property bool   basicIDFlag:        activeVehicle && remoteIDManager ? !remoteIDManager.vehicleReportsBasicIDMissing : false
+    property bool   armFlag:            activeVehicle && remoteIDManager ? remoteIDManager.armStatusGoodToArm            : false
+    property bool   commsFlag:          activeVehicle && remoteIDManager ? remoteIDManager.ridDeviceCommsGood            : false
     property bool   emergencyDeclared:  activeVehicle && remoteIDManager ? remoteIDManager.emergencyDeclared  : false
-    property bool   operatorIDFlag:     activeVehicle && remoteIDManager ? remoteIDManager.operatorIDGood     : false
+    property bool   operatorIDFlag:     QGroundControl.settingsManager.remoteIDSettings.operatorIDValidForRegion
     property int    remoteIDState:      getRemoteIDState()
 
     property int    regionOperation:    QGroundControl.settingsManager.remoteIDSettings.region.value

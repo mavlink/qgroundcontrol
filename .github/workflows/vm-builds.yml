@@ -1,0 +1,214 @@
+name: VM Builds
+
+# Full QGC builds inside the developer VM provisioners (deploy/multipass, deploy/vagrant)
+# to keep them from bit-rotting. Heavy nested-VM builds: scoped to those dirs + manual dispatch.
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    paths:
+      - 'deploy/multipass/**'
+      - 'deploy/vagrant/**'
+      - '.github/workflows/vm-builds.yml'
+  pull_request:
+    paths:
+      - 'deploy/multipass/**'
+      - 'deploy/vagrant/**'
+      - '.github/workflows/vm-builds.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  multipass-build:
+    name: Multipass Build
+    # Heavy nested-VM build that depends on fragile external resources (snap
+    # store, image mirrors); informational only, never gate the PR on it.
+    continue-on-error: true
+    # linux-x64-emulator is the only RunsOn pool with nested-virt (/dev/kvm); forks
+    # fall back to ubuntu-latest, which also exposes /dev/kvm.
+    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
+    timeout-minutes: 120
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Multipass
+        run: |
+          # The RunsOn emulator AMI ships without snapd, so `snap` is absent; install and
+          # seed it first. No-op on the ubuntu-latest fork fallback (snapd already present).
+          if ! command -v snap >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --allow-change-held-packages snapd
+            sudo systemctl enable --now snapd.socket
+          fi
+          sudo snap wait system seed.loaded
+          sudo snap install multipass
+          # `snap install` no-ops on the AMI's cached multipass; force latest stable — older
+          # manifests still list retired core16, whose blob 403s and aborts find/launch (multipass#2794).
+          sudo snap refresh multipass
+          # snapd's control socket is group-`sudo`, gained only on re-login; wait for the
+          # socket, then open group access for this job.
+          for _ in $(seq 1 30); do
+            [ -S /var/snap/multipass/common/multipass_socket ] && break
+            sleep 2
+          done
+          sudo chmod a+rw /var/snap/multipass/common/multipass_socket
+          multipass version
+          # The first `launch` races the daemon's initial manifest sync (`Remote "release" is
+          # unknown`), so wait for `find`. Don't hard-gate on its exit: it refreshes every
+          # remote and can trip over a retired image; the build launches from `release:` only.
+          for _ in $(seq 1 30); do
+            multipass find >/dev/null 2>&1 && break
+            sleep 5
+          done
+
+      - name: Allow VM bridge networking
+        run: |
+          # Docker sets the iptables FORWARD policy to DROP, blocking the multipass bridge NAT
+          # (guest has no outbound network). libvirt adds its own rules, so Vagrant is unaffected.
+          sudo iptables -P FORWARD ACCEPT
+          sudo sysctl -w net.ipv4.ip_forward=1
+
+      - name: Build QGC in Multipass VM
+        env:
+          QGC_SOURCE_DIR: ${{ github.workspace }}
+          # Pin the LTS via the `release:` remote: the bare-launch `lts` alias only promotes at
+          # the .1 point release (~Aug), and `release:` scopes resolution away from the Ubuntu-Core
+          # catalog whose retired core16 blob 403s and aborts the op (canonical/multipass#2794).
+          MP_IMAGE: 'release:26.04'
+          MP_CPUS: '4'
+          MP_MEM: '12G'
+          MP_DISK: '30G'
+          OUTPUT_DIR: ${{ github.workspace }}/artifacts
+        run: |
+          mkdir -p "${OUTPUT_DIR}"
+          ./deploy/multipass/run-multipass.sh
+
+      - name: Upload AppImage
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qgc-multipass-appimage
+          path: artifacts/*.AppImage
+          if-no-files-found: error
+
+  vagrant-build:
+    name: Vagrant (libvirt) Build
+    # Heavy nested-VM build (~75 min) on a fragile libvirt synced-folder path;
+    # informational only, never gate the PR on it.
+    continue-on-error: true
+    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Vagrant + libvirt
+        run: |
+          # Ubuntu 24.04 (noble) dropped the `vagrant` package from its repos, so
+          # pull it from HashiCorp's official apt repo (which publishes for noble).
+          wget -qO- https://apt.releases.hashicorp.com/gpg \
+            | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+            | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            vagrant qemu-kvm qemu-utils libvirt-daemon-system libvirt-dev \
+            ebtables dnsmasq-base build-essential ruby-dev
+          sudo systemctl enable --now libvirtd
+          sudo usermod -aG libvirt,kvm "$USER"
+          sudo -u "$USER" vagrant plugin install vagrant-libvirt
+
+      - name: Validate Vagrantfile
+        working-directory: deploy/vagrant
+        # --ignore-provider: the Vagrantfile carries a docker override (no image) for desktop
+        # use; CI only builds with libvirt, so skip per-provider config checks.
+        run: vagrant validate --ignore-provider
+
+      - name: Build QGC in Vagrant VM
+        working-directory: deploy/vagrant
+        env:
+          QGC_CI: '1'
+          QGC_VM_CPUS: '4'
+          QGC_VM_MEM_MB: '12288'
+        # `sg libvirt` picks up the group membership added above without a re-login.
+        run: sg libvirt -c 'vagrant up --provider=libvirt'
+
+      - name: Collect build output
+        if: success()
+        working-directory: deploy/vagrant
+        run: |
+          # The build runs in the guest's $HOME, so pull the AppImage out over SSH.
+          mkdir -p "${GITHUB_WORKSPACE}/artifacts"
+          sg libvirt -c 'vagrant ssh-config > /tmp/vagrant-ssh-config'
+          scp -F /tmp/vagrant-ssh-config \
+            'default:/home/vagrant/shadow_build/*.AppImage' \
+            "${GITHUB_WORKSPACE}/artifacts/"
+
+      - name: Upload AppImage
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qgc-vagrant-appimage
+          path: artifacts/*.AppImage
+          if-no-files-found: error
+
+      - name: Destroy VM
+        if: always()
+        working-directory: deploy/vagrant
+        run: sg libvirt -c 'vagrant destroy -f' || true
