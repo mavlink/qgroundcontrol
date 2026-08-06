@@ -51,7 +51,7 @@ def install_macos(dry_run: bool = False) -> bool:
     if not _c.run_command(_c.get_brew_install_command(packages), dry_run):
         return False
 
-    gst_version = _c.get_config_value("gstreamer_macos_version")
+    gst_version = _c.get_config_value("gstreamer.version.macos")
     macos_gst_root = Path("/Library/Frameworks/GStreamer.framework")
     if not gst_version:
         print()

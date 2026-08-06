@@ -9,13 +9,10 @@
 
 class TerrainTile;
 class QNetworkAccessManager;
-class UnitTestTerrainQuery;
 
 class TerrainTileManager : public QObject
 {
     Q_OBJECT
-
-    friend class UnitTestTerrainQuery;
 public:
     explicit TerrainTileManager(QObject *parent = nullptr);
     ~TerrainTileManager();

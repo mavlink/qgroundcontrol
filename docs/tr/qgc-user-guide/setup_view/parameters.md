@@ -2,7 +2,9 @@
 
 _Parametreler_ ekranı, araçla ilişkili parametrelerden herhangi birini bulmanıza ve düzenlemenizi sağlar.
 
-![Parametreler Ekranı](../../../assets/setup/parameters_px4.jpg)
+:::tip Having trouble?
+If parameters fail to download, see [Parameter Download Failures](../troubleshooting/parameter_download.md).
+:::
 
 :::info
 PX4 Pro ve ArduPilot farklı parametre setleri kullanır, ancak her ikisi de bu bölümde açıklandığı gibi yönetilir.
@@ -10,17 +12,13 @@ PX4 Pro ve ArduPilot farklı parametre setleri kullanır, ancak her ikisi de bu 
 
 ## Bir Parametreyi Bulma
 
-Parametreler gruplar halinde düzenlenmiştir. Soldaki butonlara tıklayarak görüntülemek için bir parametre grubu seçin (yukarıdaki görüntüde _ Pil Kalibrasyonu _ grubu seçilir).
+Parametreler gruplar halinde düzenlenmiştir. Select a group of parameters to view by clicking on the buttons to the left.
 
 Ayrıca _ Search_ alanına bir terim girerek bir parametre için _ arama _ yapabilirsiniz. Bu size girilen alt diziyi içeren tüm parametre adlarının ve açıklamalarının bir listesini gösterecektir (aramayı sıfırlamak için \*\* Clear \*\* tuşuna basın).
 
-![Parametreler Araması](../../../assets/setup/parameters_search.jpg)
+## Changing a Parameter
 
-## Bir Parametreyi Değiştirme
-
-Bir parametrenin değerini değiştirmek için bir grup ya da arama listesindeki parametre satırına tıklayın. Bu size değeri güncellemenizi sağlayacak bir yan diyalog açar (bu diyalog ayrıca parametre hakkında ek detaylı bilgilerde gösterir - değişikliğin etki etmesi için yeniden başlatmanın gerekip gerekmediği bilgisi de dahil).
-
-![Bir parametre değerini değiştirme](../../../assets/setup/parameters_changing.png)
+To change the value of a parameter click on the parameter row in a group or search list. This will open a side dialog in which you can update the value (this dialog also provides additional detailed information about the parameter - including whether a reboot is required for the change to take effect).
 
 :::info
 **Save** butonuna basıldığında, parametre sessizce ve otomatik olarak bağlı cihaza yüklenir. Parametreye bağlı olarak, değişikliğin etki etmesi için uçuş kontrolcüsünü yeniden başlatmanız gerekebilir.
@@ -29,8 +27,6 @@ Bir parametrenin değerini değiştirmek için bir grup ya da arama listesindeki
 ## Araçlar
 
 Ekranın sağ üstündeki **Tools** menüsünden ek seçenekler seçebilirsiniz.
-
-![Araçlar Menüsü](../../../assets/setup/parameters_tools_menu.png)
 
 **Refresh** <br /> Tüm parametreleri araçtan tekrar isteyerek yenileyin.
 

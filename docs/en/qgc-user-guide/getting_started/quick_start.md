@@ -65,7 +65,7 @@ Switch to the **Flying** view. You should see a map centered on your vehicle's G
 **To fly manually:**
 1. Arm the vehicle via QGC or your transmitter
 2. Take off using your transmitter
-3. Use the **Fly Tools** (left edge of the map) for guided actions: Return to Launch, Land, Pause, Change Altitude, Go To Location, Orbit
+3. Use the **Fly Tools** (left edge of the map) for vehicle actions: Return to Launch, Land, Pause, Change Altitude, Go To Location, Orbit
 
 ## 6. After Landing
 

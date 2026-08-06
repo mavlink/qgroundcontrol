@@ -45,9 +45,10 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Build Setup (clazy/iwyu)
         if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)

@@ -275,7 +275,7 @@ The object definition for a `StructureScan` complex mission item is given below.
 
 #### `TransectStyleComplexItem` {#TransectStyleComplexItem}
 
-`TransectStyleComplexItem` contains the common base definition for [`survey`](#survey) and [`CorridorScan`](#CorridorScan) complex items.
+`TransectStyleComplexItem` contains the common base definition for [`survey`](#survey) and [`CorridorScan`](#corridor_scan) complex items.
 
 ```json
                 "TransectStyleComplexItem": {

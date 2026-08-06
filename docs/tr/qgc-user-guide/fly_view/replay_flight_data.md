@@ -21,8 +21,6 @@ Bir uçuşu tekrar etmek için:
 
 3. Ekranın altında uçuşu tekrar oynat butonunu görebilmek için **Show Telemetry Log Replay Status Bar**'ı işaretleyin.
 
-   ![Uçuş Tekrarını Aç / Kapat](../../../assets/fly/flight_replay/flight_replay_toggle.jpg)
-
 4. _file selection_ seçeneğine erişmek için **Load Telemetry Log**'a tıklayın.
    - Tekrar oynatılması için uygun telemetri kayıtlarından bir kayıt dosyası seçin.
    - QGroundControl \*, kayıtı hemen oynatmaya başlar.

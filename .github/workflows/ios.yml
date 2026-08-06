@@ -19,8 +19,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
-  attestations: write
   actions: read
 
 jobs:
@@ -34,6 +32,13 @@ jobs:
     if: needs.changes.outputs.should_build == 'true'
     runs-on: macos-15
     timeout-minutes: 120
+
+    # id-token/attestations scoped here: only the attestation upload step needs them.
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
 
     strategy:
       matrix:
@@ -53,9 +58,10 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          persist-credentials: false
 
       - name: Build Setup (iOS)
         id: setup

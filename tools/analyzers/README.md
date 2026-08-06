@@ -25,14 +25,14 @@ python3 tools/analyzers/vehicle_null_check.py --help
 ### Detected Patterns
 
 | Pattern | Risk | Example |
-|---------|------|---------|
+| --- | --- | --- |
 | `unsafe_active_vehicle_direct` | High | `activeVehicle()->method()` |
 | `unsafe_active_vehicle_use` | High | Variable used after `activeVehicle()` without check |
 | `unsafe_get_parameter` | Medium | `getParameter(...)->rawValue()` |
 
 ### Example Output
 
-```
+```text
 src/Example.cc:42:15: warning: unsafe_active_vehicle_direct
   activeVehicle()->parameterManager()->getParameter(...);
   Suggestion: Add null check before using activeVehicle():

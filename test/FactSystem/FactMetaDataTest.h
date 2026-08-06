@@ -22,10 +22,18 @@ private slots:
     void _clampValueDouble_test();
     void _enumOperations_test();
     void _bitmaskOperations_test();
+    void _bitmaskIndexOutOfRangeRejected_test();
     void _defaultValue_test();
     void _defaultValueOutOfRange_test();
     void _builtInTranslatorRadians_test();
     void _builtInTranslatorCentiDegrees_test();
     void _builtInTranslatorNorm_test();
+    void _verticalMetersUnitsIntType_test();
+    void _verticalMetersUnitsFeetTranslation_test();
     void _setMinMax_test();
+    void _maxStringLength_test();
+    void _maxStringLengthNegativeRejected_test();
+    void _maxStringLengthValidation_test();
+    void _commentKeyAccepted_test();
+    void _unknownKeyRejected_test();
 };

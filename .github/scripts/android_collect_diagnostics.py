@@ -22,6 +22,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.gh_actions import gh_warning
 from common.proc import run_captured
 
 ADB_TIMEOUT_SHORT = 20
@@ -52,7 +53,7 @@ def _copy_if_exists(src: Path, dst: Path) -> bool:
         shutil.copy2(src, dst)
         return True
     except OSError as e:
-        print(f"::warning::Failed to copy {src} -> {dst}: {e}")
+        gh_warning(f"Failed to copy {src} -> {dst}: {e}")
         return False
 
 

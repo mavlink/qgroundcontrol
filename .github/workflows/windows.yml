@@ -28,9 +28,10 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
-  attestations: write
   actions: read
+
+env:
+  AQT_SOURCE: 'git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95'
 
 jobs:
   changes:
@@ -45,6 +46,13 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
 
+    # id-token/attestations scoped here: only the attestation upload step needs them.
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+
     strategy:
       fail-fast: false
       matrix:
@@ -52,23 +60,25 @@ jobs:
         variant: [amd64, arm64, arm64-cross]
         include:
           - variant: amd64
-            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
+            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
             package: QGroundControl-installer-AMD64
+            gstreamer: true
 
           - variant: arm64
             runs_on: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
             package: QGroundControl-installer-ARM64
+            gstreamer: true
 
           - variant: arm64-cross
-            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
+            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             package: QGroundControl-installer-AMD64-ARM64
-            aqt_source: 'git+https://github.com/miurahr/aqtinstall.git@c84e1470349e5bedbeee977bd62ec495d50d65b6'
+            gstreamer: false
 
     defaults:
       run:
@@ -88,9 +98,10 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          persist-credentials: false
 
       - name: Install Visual Studio Build Tools
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
@@ -107,7 +118,7 @@ jobs:
         with:
           qt-host: ${{ matrix.host }}
           qt-arch: ${{ matrix.arch }}
-          aqt-source: ${{ matrix.aqt_source || '' }}
+          aqt-source: ${{ env.AQT_SOURCE }}
           build-type: ${{ matrix.build_type }}
 
       - name: Configure
@@ -116,12 +127,12 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
           extra-args: >-
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }}
             ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
 
       - name: Resolve GStreamer root
         id: gst-root
-        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.gstreamer
         shell: bash
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" cache-var \
@@ -131,9 +142,11 @@ jobs:
             --output-key gst_root
 
       - name: Add GStreamer to PATH
-        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.gstreamer
         shell: bash
-        run: echo "${{ steps.gst-root.outputs.gst_root }}/bin" >> "$GITHUB_PATH"
+        run: echo "${STEPS_GST_ROOT_OUTPUTS_GST_ROOT}/bin" >> "$GITHUB_PATH"
+        env:
+          STEPS_GST_ROOT_OUTPUTS_GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -174,8 +187,11 @@ jobs:
             Get-ChildItem -Path $installDir -Recurse | Select-Object FullName
             exit 1
           }
+          $expectGstreamer = "${{ matrix.gstreamer }}" -eq "true"
           $pluginDir = Join-Path $installDir "lib\gstreamer-1.0"
-          if (Test-Path $pluginDir) {
+          if (-not $expectGstreamer) {
+            Write-Host "GStreamer disabled for this build; skipping plugin verification"
+          } elseif (Test-Path $pluginDir) {
             $pluginCount = (Get-ChildItem -Path $pluginDir -Filter "*.dll" | Measure-Object).Count
             Write-Host "GStreamer plugins found: $pluginCount"
             if ($pluginCount -eq 0) {
@@ -188,7 +204,7 @@ jobs:
           }
 
       - name: Remove build SDK from PATH for installed verification
-        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.build_type == 'Release' && matrix.gstreamer
         shell: pwsh
         env:
           GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
@@ -201,7 +217,7 @@ jobs:
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
         uses: ./.github/actions/verify-executable
         env:
-          PATH: ${{ env.QGC_VERIFY_INSTALLED_PATH }}
+          PATH: ${{ env.QGC_VERIFY_INSTALLED_PATH || env.PATH }}
         with:
           binary-path: ${{ runner.temp }}\qgc-install-test\bin\QGroundControl.exe
           type: exe

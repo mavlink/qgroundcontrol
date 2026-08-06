@@ -21,22 +21,27 @@ set(CPACK_DEBIAN_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 # set(CPACK_DEBIAN_PACKAGE_EPOCH
 set(CPACK_DEBIAN_PACKAGE_VERSION ${CPACK_PACKAGE_VERSION})
-set(CPACK_DEBIAN_PACKAGE_RELEASE ${QGC_GIT_HASH})
+# Monotonic release so apt orders rebuilds of the same version: commits-since-tag
+# (increments per commit) with the short hash appended for traceability.
+set(CPACK_DEBIAN_PACKAGE_RELEASE "${QGC_APP_VERSION_DEV}.g${QGC_GIT_HASH}")
 # set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 # set(CPACK_DEBIAN_PACKAGE_DEPENDS
 # set(CPACK_DEBIAN_ENABLE_COMPONENT_DEPENDS
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Dronecode")
+# Debian policy requires "Name <email>"; bare "Dronecode" is malformed.
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Dronecode <dev@dronecode.org>")
 # set(CPACK_DEBIAN_PACKAGE_DESCRIPTION
 # set(CPACK_DEBIAN_PACKAGE_SECTION
-set(CPACK_DEBIAN_ARCHIVE_TYPE xz)
-# set(CPACK_DEBIAN_COMPRESSION_TYPE
+# CPACK_DEBIAN_ARCHIVE_TYPE is the data.tar archive *format* (gnutar/paxr), not
+# the compressor; xz is a compression type and belongs in COMPRESSION_TYPE.
+set(CPACK_DEBIAN_ARCHIVE_TYPE gnutar)
+set(CPACK_DEBIAN_COMPRESSION_TYPE xz)
 # set(CPACK_DEBIAN_PACKAGE_PRIORITY
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${PROJECT_HOMEPAGE_URL})
 
 # ----------------------------------------------------------------------------
 # Advanced DEB Options
 # ----------------------------------------------------------------------------
-# set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS 1)
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 # set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS_PRIVATE_DIRS
 # set(CPACK_DEBIAN_PACKAGE_DEBUG
 # set(CPACK_DEBIAN_PACKAGE_PREDEPENDS

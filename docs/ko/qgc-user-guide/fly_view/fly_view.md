@@ -1,21 +1,26 @@
 # Fly View
 
+:::tip Having trouble?
+For connection issues, see [Connection Problems](../troubleshooting/vehicle_connection.md). For mission resume issues during flight, see [Resume Mission Failures](../troubleshooting/resume_mission.md).
+:::
+
 The Fly View is used to command and monitor the vehicle.
 
 ## Overview
 
-![비행 뷰](../../../assets/fly/fly_view_overview.jpg)
+<img src="../../../assets/fly/fly_view_overview.svg" alt="Fly View overview" style="height: 30em; vertical-align: text-bottom;" />
 
-- **[Toolbar](fly_view_toolbar.md):** The toolbar is at the top of the screen. It provides controls to select views, show flight status and mode as well as the status of the main components of the vehicle.
-- **[Vehicle Actions](fly_tools.md):** Allows you command the vehicle to take a specific action.
-- **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
-- **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
-- **[Camera Tools](camera_tools.md)**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
+- **View Selector:** Allows you to switch between the main views (Fly, Plan, Analyze, Vehicle Configuration, Application Settings).
+- **[Status Indicators](fly_view_toolbar.md):** Shows flight status and mode as well as the status of the main components of the vehicle.
+- **[Actions](fly_tools.md):** Allows you to command the vehicle to take a specific action.
+- **[Camera Tools](camera_tools.md):** Switch between still and video modes, start/stop capture, and control camera settings.
 - **[Video](video.md):** Display the video from the vehicle. Allows you to toggle between video or map as the main display.
-- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
+- **[Telemetry Values](instrument_panel.md):** Displays configurable telemetry values.
+- **[Attitude/Compass](hud.md):** Provides virtual horizon and heading information.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle. Can be switched between multiple variations.
   - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
   - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
-  - 비행 후에는 지도를 클릭하여 [이동](#goto) 또는 [궤도](#orbit) 위치를 설정할 수 있습니다.
+  - Once flying, you can click on the map to set a [Go to](#map_actions) or [Orbit at](#map_actions) location.
 
 There are a number of other elements that are not displayed by default and are only displayed in certain conditions or for certain vehicle types.
 
@@ -27,7 +32,7 @@ There are a number of other elements that are not displayed by default and are o
 Many of the available options depend on both the vehicle type and its current state.
 :::
 
-### Actions associated with a map position (#map_actions)
+### Actions associated with a map position {#map_actions}
 
 There are a number of actions which can be taken which are associated with a specific position on the map. To use these actions:
 
@@ -48,33 +53,27 @@ _위치 이동_ 작업은 일시 중지가 불가능 합니다.
 
 일시 중지하려면:
 
-1. _비행 도구_에서 **일시중지** 버튼을 클릭합니다.
+1. _비행 도&#xAD6C;_&#xC5D0;서 **일시중지** 버튼을 클릭합니다.
 2. 선택적으로 오른쪽 수직 슬라이더를 사용하여 새 고도를 설정합니다.
-3. 슬라이더를 사용하여 일시 중지를 확인합니다.
+3. [Confirm](fly_tools.md#confirmation) the action.
 
 ### 미션
 
 #### 미션 시작 {#start_mission}
 
-기체는 착륙후 미션를 시작할 수 있습니다(미션 시작 확인 슬라이더는 대부분 기본적으로 표시됩니다).
+You can start a mission when the vehicle is landed (the start mission confirmation button is often displayed by default).
 
 착륙후 임무를 시작하려면:
 
-1. _비행 도구_에서 **액션** 버튼을 클릭합니다.
+1. _비행 도&#xAD6C;_&#xC5D0;서 **액션** 버튼을 클릭합니다.
 
 2. 대화 상자에서 _미션 시작_ 작업을 선택합니다.
 
-  ![미션 액션 시작](../../../assets/fly/start_mission_action.jpg)
-
-  (확인 슬라이더를 표시하기 위하여)
-
-3. 확인 슬라이더가 나타나면 드래그하여 미션을 시작합니다.
-
-  ![미션 시작](../../../assets/fly/start_mission.jpg)
+3. [Confirm](fly_tools.md#confirmation) the action to start the mission.
 
 #### 미션 지속 {#continue_mission}
 
-비행 중일 때 _다음_ 웨이포인트에서 미션을 _지속_할 수 있습니다(이륙 후에 _미션 지속_ 확인 슬라이더가 기본적으로 표시되는 경우가 많습니다).
+You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation button is often displayed by default after you takeoff).
 
 :::info
 미션 지속과 [미션 재개](#resume_mission)는 차이가 있습니다.
@@ -84,39 +83,29 @@ _위치 이동_ 작업은 일시 중지가 불가능 합니다.
 
 현재 임무를 계속할 수 있습니다(이미 임무에 참여하지 않는 한!):
 
-1. _비행 도구_에서 **액션** 버튼을 클릭합니다.
+1. _비행 도&#xAD6C;_&#xC5D0;서 **액션** 버튼을 클릭합니다.
 
 2. 대화 상자에서 _임무 지속_ 작업을 선택합니다.
 
-  ![임무 계속/고도 변경 작업](../../../assets/fly/continue_mission_change_altitude_action.jpg)
-
-3. 확인 슬라이더를 끌어 임무를 지속하십시오.
-
-  ![미션 계속](../../../assets/fly/continue_mission.jpg)
+3. [Confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 #### 임무 재개 {#resume_mission}
 
-_임무 재개_는 임무 수행중 [착륙지 복귀/복귀](#rtl)나 [착륙](#land)을 수행 후 임무를 재개합니다 (예를 들어 배터리 교체).
+_Resume Mission_ is used to resume a mission after performing an [RTL/Return](hud.md#rtl) or [Land](hud.md#land) from within a mission (in order, for example, to perform a battery change).
 
 :::info
 배터리를 교체하는 경우에는 배터리를 분리한 후 기체에서 QGroundControl를 분리하지 **마십시오**.
-새 배터리를 교체하면 _QGroundControl_에서 차량을 다시 감지하고 자동으로 연결을 복원합니다.
+새 배터리를 교체하면 _QGroundContro&#x6C;_&#xC5D0;서 차량을 다시 감지하고 자동으로 연결을 복원합니다.
 :::
 
 착륙 후에는 _비행 계획 완료_ 대화상자가 표시되며, 이 대화상자에서는 계획을 기체에서 제거하거나, 기체에 그대로 두거나, 또는 통과한 마지막 웨이포인트에서 임무를 재개합니다.
 
-![임무 재개](../../../assets/fly/resume_mission.jpg)
-
-임무 재개를 선택하면 _QGroundControl_에서 임무를 재구성하고 차량에 업로드합니다.
-그런 다음 _임무 시작_ 슬라이더를 사용하여 임무를 계속 수행합니다.
-
-아래 이미지는 위의 귀환 이후 재건된 임무를 나타냅니다.
-
-![재건 임무 재개](../../../assets/fly/resume_mission_rebuilt.jpg)
+임무 재개를 선택하면 _QGroundContro&#x6C;_&#xC5D0;서 임무를 재구성하고 차량에 업로드합니다.
+Then [confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 :::info
 임무는 임무의 다음 단계에 영향을 미치는 마지막 웨이포인트에 여러 항목이 있을 수 있으므로, 기체가 실행한 마지막 미션 항목에서 단순히 재개할 수 없습니다(예: 속도 명령 또는 카메라 제어 명령).
-대신 _QGroundControl_은 비행한 마지막 임무 항목부터 시작하여 임무를 재구성하고 자동으로 임무 앞에 관련 명령을 추가합니다.
+대신 _QGroundContro&#x6C;_&#xC740; 비행한 마지막 임무 항목부터 시작하여 임무를 재구성하고 자동으로 임무 앞에 관련 명령을 추가합니다.
 :::
 
 #### 착륙 후 임무 프롬프트 제거 {#resume_mission_prompt}
@@ -126,18 +115,14 @@ _임무 재개_는 임무 수행중 [착륙지 복귀/복귀](#rtl)나 [착륙](
 
 ### 비디오 출력 {#video_switcher}
 
-비디오 스트리밍이 활성화되면, _QGroundControl_은 지도 왼쪽 하단의 "비디오 전환기 창"에 현재 선택된 기체의 비디오 스트림을 표시합니다.
-아무 곳이나 스위처를 눌러 _동영상_ 및 _지도_를 전경으로 전환할 수 있습니다(아래 이미지에서 동영상은 전경에 표시됨).
-
-![비디오 스트림 녹화](../../../assets/fly/video_record.jpg)
+비디오 스트리밍이 활성화되면, _QGroundContro&#x6C;_&#xC740; 지도 왼쪽 하단의 "비디오 전환기 창"에 현재 선택된 기체의 비디오 스트림을 표시합니다.
+You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 :::info
 비디오 스트리밍은 [애플리케이션 설정 > 일반 탭 > 비디오](../settings_view/general.md#video)에서 활성화하거나 설정할 수 있습니다.
 :::
 
 스위처의 컨트롤을 사용하여, 비디오 디스플레이를 추가로 설정할 수 있습니다.
-
-![Video Pop](../../../assets/fly/video_pop.jpg)
 
 - 오른쪽 상단 모서리에 있는 아이콘을 끌어 스위처의 크기를 조정합니다.
 - 왼쪽 하단의 토글 아이콘을 눌러 스위처를 숨깁니다.
@@ -146,7 +131,7 @@ _임무 재개_는 임무 수행중 [착륙지 복귀/복귀](#rtl)나 [착륙](
 
 ### 동영상 녹화
 
-카메라와 기체에서 지원하는 경우 _QGroundControl_에서 카메라 자체의 동영상 녹화를 시작하거나 중지할 수 있습니다. _QGroundControl_은 또한 비디오 스트림을 녹화하고 로컬에 저장할 수 있습니다.
+카메라와 기체에서 지원하는 경우 _QGroundContro&#x6C;_&#xC5D0;서 카메라 자체의 동영상 녹화를 시작하거나 중지할 수 있습니다. _QGroundContro&#x6C;_&#xC740; 또한 비디오 스트림을 녹화하고 로컬에 저장할 수 있습니다.
 
 :::tip
 카메라에 저장된 동영상의 품질은 훨씬 높을 수 있지만, 지상국의 녹화 용량은 훨씬 더 클 수 있습니다.
@@ -154,10 +139,8 @@ _임무 재개_는 임무 수행중 [착륙지 복귀/복귀](#rtl)나 [착륙](
 
 #### 비디오 스트림 녹화(GCS에서)
 
-비디오 스트림 녹화는 [비디오 스트림 도구 페이지](#video_instrument_page)에서 제어합니다.
+Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 새 비디오 녹화를 시작하려면, 빨간색 원을 누르십시오(원을 누를 때마다 새 비디오 파일이 생성됨).
-
-![비디오 스트림 녹화](../../../assets/fly/video_record.jpg)
 
 비디오 스트림 녹화는 [애플리케이션 설정 > 일반 탭](../settings_view/general.md)에서 설정합니다.
 
@@ -176,7 +159,6 @@ QGroundControl 애플리케이션을 포함하여 비디오를 녹화하려면 �
 
 #### 카메라 비디오 녹화
 
-[카메라 기기 페이지](#camera_instrument_page)를 사용하여 _카메라 자체에서_ 동영상 녹화를 시작하거나 중지합니다.
+Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 먼저 비디오 모드로 전환한 다음, 빨간색 버튼을 클릭하여 녹화를 시작합니다.
 
-![계기 페이지 - 카메라 MAVLink 설정](../../../assets/fly/instrument_page_camera_mavlink.jpg)

@@ -293,7 +293,8 @@ From the parser JSON output, take the top 5 hotspots. For each hotspot:
    If the basename search returns **zero matches** or **multiple matches
    with no obvious winner**, **ask the user** which file (or "skip"). A
    wrong source excerpt is worse than none — readers trust whatever the
-   report shows. Do not guess.
+   report shows. Do not guess. Record the resolved path and line of each
+   local match for linking (see "Source location links" below).
 
    Batch the questions: walk all 5 hotspots first, then ask once with
    all unresolved cases listed. Skipped or zero-match hotspots stay in
@@ -315,6 +316,16 @@ From the parser JSON output, take the top 5 hotspots. For each hotspot:
    - A specific suggested fix
 
 ### Step 6 — Write report
+
+#### Source location links
+
+Render every locally-resolved source location in the report as a
+clickable markdown link: `[File.qml:<line>](<relative-path>#L<line>)` —
+e.g. `[Main.qml:42](../../src/ui/Main.qml#L42)`. The path is relative to
+the report's directory (`profiler/reports/`); the `#L<line>` anchor
+points to the hotspot's line. Leave Qt-internal
+(`qrc:/qt-project.org/…`), `[source unresolved]`, and skipped locations
+as plain text — never fabricate a path just to produce a link.
 
 Generate a report filename with the application name and a timestamp,
 and place it under a dedicated reports directory (create the directory
@@ -432,11 +443,14 @@ Write the report file containing:
    resolution as potential optimization targets.
 6. **Top 30 hotspots table** — all hotspots from the parser with columns:
    rank, `total_ms`, `count`, `avg_ms`, `ms_per_frame` (if animations
-   present), type, source location, details. Show the `details` field in
-   its own column to give context about what's actually being measured.
-   Sort by `total_ms` (the parser already does this).
+   present), type, source location, details. The **source location**
+   column uses the clickable link form from "Source location links"
+   above. Show the `details` field in its own column to give context
+   about what's actually being measured. Sort by `total_ms` (the parser
+   already does this).
 7. **Detailed analysis** — for each of the top 5 project hotspots:
-   source excerpt, explanation, suggested fix.
+   source excerpt, explanation, suggested fix. Head each subsection with
+   the clickable source-location link (see "Source location links").
 8. **Next steps** — list the concrete fixes suggested in the detailed
    analysis, in priority order. If the top hotspots cluster in 2–4
    project files, add a one-line cross-reference suggesting the user
@@ -471,6 +485,14 @@ Display to the user:
 - Path to the full report file
 
 Keep console output concise. The detailed analysis is in the report file.
+
+When referencing a source location in the console response, make it an
+openable link: `[File.qml:<line>](file://<absolute-path>)` — keep the
+line number in the link text, but use a `file://` URL with the absolute
+path and no `#L<line>` fragment. On Windows, convert the path to a valid
+file URI: replace backslashes with forward slashes and prefix the drive
+letter with a slash, so `C:\proj\Main.qml` becomes
+`file:///C:/proj/Main.qml`.
 
 Do not describe this run as an improvement or regression relative to
 any prior run, even if the user asks "is it better now?" — answer that

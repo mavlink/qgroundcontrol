@@ -24,6 +24,14 @@ ApplicationWindow {
     // The special casing for android prevents white bars from showing up on the edges of the screen with newer android versions
     flags:      Qt.Window | (ScreenTools.isAndroid ? Qt.ExpandedClientAreaHint | Qt.NoTitleBarBackgroundHint : 0)
 
+    // Qt 6.9+ auto-sets ApplicationWindow padding to the display safe-area insets on mobile,
+    // which insets our full-bleed content and leaves a blank strip along the screen edge.
+    // QGC draws edge-to-edge and manages its own insets, so zero the padding.
+    topPadding:    0
+    bottomPadding: 0
+    leftPadding:   0
+    rightPadding:  0
+
     Component.onCompleted: {
         // Start the sequence of first run prompt(s)
         firstRunPromptManager.nextPrompt()
@@ -190,6 +198,19 @@ ApplicationWindow {
         _showMessageDialogWorker(mainWindow, dialogTitle, dialogText)
     }
 
+    // This variant is only meant to be called by QGCApplication. Ok reboots the active vehicle.
+    function _showRebootVehicleDialog(dialogTitle, dialogText) {
+        _showMessageDialogWorker(mainWindow, dialogTitle,
+                                 dialogText + " " + qsTr("Click Ok to reboot the vehicle now."),
+                                 Dialog.Ok | Dialog.Cancel,
+                                 function() {
+                                     const activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
+                                     if (activeVehicle) {
+                                         activeVehicle.rebootVehicle()
+                                     }
+                                 })
+    }
+
     Connections {
         target: QGroundControl
 
@@ -244,7 +265,12 @@ ApplicationWindow {
     }
 
     function checkForUnsavedMission() {
-        if (planView._planMasterController.dirtyForSave || planView._planMasterController.dirtyForUpload) {
+        // Only warn when edits are neither saved to disk nor uploaded to the vehicle.
+        // If either happened the edits are recoverable, so closing loses nothing.
+        // With no active vehicle an upload can't have happened, so treat the plan as
+        // not uploaded regardless of dirtyForUpload.
+        if (planView._planMasterController.dirtyForSave &&
+                (planView._planMasterController.dirtyForUpload || !QGroundControl.multiVehicleManager.activeVehicle)) {
             let accepted = false
             _reentrantCloseGuard = true
             _showMessageDialogWorker(mainWindow, qsTr("Unsaved Mission"),

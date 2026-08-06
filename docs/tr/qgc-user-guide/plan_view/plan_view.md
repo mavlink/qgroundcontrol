@@ -1,203 +1,196 @@
 # Plan Ekranı
 
+:::tip Having trouble?
+If missions fail to upload or download, see [Plan Upload/Download Failures](../troubleshooting/plan_upload_download.md). For mission resume issues, see [Resume Mission Failures](../troubleshooting/resume_mission.md).
+:::
+
 _Plan View_, aracınız için _ otonom görevler _ planlamak ve onları araca yüklemek için kullanılır. Görev [planlanıp](#plan_mission) araca gönderildiğinde, görevi gerçekleştirmek için [Uçuş Ekranı](../fly_view/fly_view.md)'na geçillir.
 
-Ayrıca eğer yazılım tarafından destekleniyorsa [GeoFence](plan_geofence.md) ve [Rally Points](plan_rally_points.md)'leri ayalarmak için kullanılır.
-
-<span id="plan_screenshot"></span>
-![Plan Ekranı](../../../assets/plan/plan_view_overview.png)
+It is also used to configure the [GeoFence](plan_geofence.md) and [Rally Points](plan_rally_points.md) if these are supported by the firmware.
 
 ## Kullanıcı Arayüzü'ne Genel Bakış {#ui_overview}
 
-Yukarıdaki [ ekran görüntüsü ](#plan_screenshot), [ Planlanan Ev ](#planned_home) konumundan (H) kalkışla başlayan basit bir görev planını gösterir, üç hedef noktadan geçer ve ardından son hedef noktaya (yani hedef noktası 3) iner.
+The main elements of the UI are:
 
-Arayüzün temel elemanları şunlardır:
+- **Map:** Displays the numbered indicators for the current mission, including the [Planned Home](#planned_home).
+  Click on the indicators to select them (for editing) or drag them around to reposition them.
+  Flight path lines and direction arrows show the planned route between waypoints.
+- **Plan Toolbar:** Located at the top of the view with buttons for **Open**, **Save**, **Upload**, and **Clear**.
+  A hamburger menu (☰) provides additional options such as _Save as KML_ and _Download_ (load plan from vehicle).
+  The **Save** and **Upload** buttons are highlighted when there are unsaved or un-uploaded changes.
+- **[Plan Tools](#plan_tools):** A vertical tool strip on the left side of the map used to add mission items (Takeoff, Waypoint, Pattern, ROI, Return/Land) and toggle the stats panel.
+- **[Plan Editor Panel](#plan_editor_panel):** A collapsible tree view on the right side containing the plan file info, mission items, GeoFence, and rally point editors.
+- **Layer Switcher:** Buttons in the top-right area for switching between **Mission**, **Geo-Fence**, and **Rally Point** editing layers.
+- **Mission Stats / Terrain Panel:** A panel at the bottom of the map that can toggle between a terrain altitude profile chart (height AMSL vs. distance) and mission statistics (selected waypoint info, total distance, max telemetry distance, estimated flight time, and battery info).
 
-- **Map:** [ Planlanan Ev ](#planned_home) konumu dahil olmak üzere mevcut görev için numaralandırılmış konumları görüntüler.
-  Noktaları seçmek için tıklayın (düzenlemek için) ya da konumlarını değiştirmek için sürükleyin.
-- **Plan Araçları:** Önceki hedef noktaya göre halihazırda seçili olan hedef nokta için durum bilgisi ve tüm görevin istatistikleri (örn. Yatay mesafe ve görev süresi).
-  - `Max telem dist`, [Planlanan Ev](#planned_home) konumu ile en uzak hedef nokta arasındaki mesafedir.
-  - Bir cihaza bağlanıldığında bir **Upload** butonu da belirir ve planı araca yüklemek için kullanılabilir.
-- **[Plan Araçları](#plan_tools):** Görevleri oluşturmak ve yönetmek çin kullanılır.
-- **[Mission Command List/Overlay](#mission_command_list):** Mevcut görevin öğelerinin listesini görüntüler (öğeleri [düzenlemek](#mission_command_editors) için seçin).
-- **Terrain Altitude Overlay:** Her görev komutunun göreceli yüksekliğini gösterir.
+## Planning a Mission {#plan_mission}
 
-Size o anda seçili olan hedef noktasıyla ilgili bilgilerin yanı sıra tüm görevin istatistiklerini gösterir.
-
-## Görev Planlama {#plan_mission}
-
-At very high level, the steps to create a mission are:
+At a very high level, the steps to create a mission are:
 
 1. Change to _Plan View_.
-2. Göreve hedef noktalar veya komutlar ekleyin, gerektiği şekilde düzenleyin.
+2. Add waypoints or commands to the mission and edit as needed.
 3. Upload the mission to the vehicle.
 4. Change to _Fly View_ and fly the mission.
 
-Aşağıdaki bölümler, ekrandaki bazı ayrıntıları açıklamaktadır.
+The following sections explain some of the details in the view.
 
-## Planlanmış Ev Konumu {#planned_home}
+## Planned Home Position {#planned_home}
 
 The _Planned Home_ shown in _Plan View_ is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC).
-QGC tarafından görev sürelerini tahmin etmek ve hedef noktalar arası çizgileri çizmek için kullanılır.
+It is used by QGC to estimate mission times and to draw waypoint lines.
 
-![Planlanmış Ev Konumu](../../../assets/plan/mission/mission_settings_planned_home.jpg)
-
-Planlanan ev konumunu yaklaşık olarak kalkış yapmayı planladığınız konuma taşımanız/sürüklemeniz gerekir.
-Planlanan ana konumun yüksekliği, [ Mission Settings ](#mission_settings) panelinde ayarlanır.
-
-<img src="../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg" style="width: 200px;"/>
+You should move/drag the planned home position to roughly the location where you plan to takeoff.
+The altitude for the planned home position is determined automatically from terrain data.
 
 :::tip
 The Fly View displays the _actual_ home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
 :::
 
-## Plan Araçları {#plan_tools}
+## Plan Tools {#plan_tools}
 
-Plan araçları, ara noktalar eklemek, karmaşık yerler için görev oluşturmayı kolaylaştırmak, görevleri yüklemek/indirmek/kaydetmek/geri yüklemek ve haritada gezinmek için kullanılır. Ana araçlar aşağıda açıklanmıştır.
+The plan tools are a vertical tool strip on the left side of the map, used for adding mission items. The tools are only visible when editing the Mission layer. The main tools (top to bottom) are described below.
 
-:::info
-**Center map**, **Zoom In**, **Zoom Out** araçlar kullanıcıların daha iyi görüntü almasına ve _Plan Ekranı_'ndaki haritada gezinmelerine yardımcı olur (araca gönderilen görev komutlarını etkilemezler).
-:::
+### Takeoff
 
-### Hedef Noktası Ekle
+Inserts a takeoff command into the mission. This tool is available for all vehicle types except rovers.
 
-**Add Waypoint** aracına tıklayarak aktive edin. Aktifken haritaya tıklandığında, tıklanan noktaya yeni bir hedef konum eklenecektir.
-Tekrar tıklayana kadar araç aktif kalacaktır.
-Bir hedef nokta ekledikten sonra, konumunu değiştirmek için onu seçebilir ve sürükleyebilirsiniz.
-
-### Dosya (Senkronizasyon) {#file}
-
-Dosya araçları \*, görevleri yer istasyonu ile araç arasında taşımak ve bunları dosyalara kaydetmek/dosyalardan geri yüklemek için kullanılır.
-Araçlar, araca göndermediğiniz görev değişiklikleri olduğunu belirtmek için bir \`!
-
-:::info
-Bir görevi gerçekleştirmeden önce görevi araca yüklemeniz gerekmektedir.
-:::
-
-_Dosya araçları_ aşağıdaki fonksiyonları sağlar:
-
-- Yükle (Araca göndermek)
-- İndir (Araçtan yüklemek)
-- KML dosyası dahil olmak üzere Dosyaya Kaydet/Farklı Kaydet.
-- Dosyadan Yükle
-- Tümünü Kaldır (tüm görev hedef noktalarını _ Plan ekranından_ ve araçtan kaldırır)
-
-### Şablon
+### Pattern
 
 The [Pattern](pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).
+If multiple pattern types are available for the vehicle, clicking the button opens a dropdown to select from Survey, Corridor Scan, Structure Scan, and landing patterns.
 
-## Görev Komutları Listesi {#mission_command_list}
+### Waypoint
 
-Mission commands for the current mission are listed on the right side of the view.
-En üstte görev, coğrafi sınır ve toparlanma noktaları arasında geçiş yapmak için bir dizi seçenek vardır.
-Listede, değerlerini düzenlemek için görev öğelerini ayrı ayrı seçebilirsiniz.
+Click the **Waypoint** tool to toggle waypoint-on-click mode. While active, clicking on the map will add a new mission waypoint at the clicked location.
+The tool stays active until you click it again to deactivate.
+Once you have added a waypoint, you can select it and drag it around to reposition it.
 
-![Görev Komutları Listesi](../../../assets/plan/mission/mission_command_list.jpg)
+### ROI
 
-### Görev Komutları Düzenleyicisi {#mission_command_editors}
+Toggles Region of Interest mode. When active, clicking on the map sets an ROI location.
+This tool is only visible if the vehicle firmware supports ROI mode.
 
-Düzenleyicisini görüntülemek için listedeki bir görev komutuna tıklayın (buradan komut özellikerini ayarlayabilir/değiştirebilirsiniz).
+### Return / Land
 
-Komut adına tıklayarak komutun \*\* tipini \*\* değiştirebilirsiniz (örneğin: _Waypoint_).
-Bu, aşağıda gösterilen _ Select Mission Command_ diyaloğunu görüntüler.
-Varsayılan olarak bu sadece "Temel Komutlar" görüntülenir, daha fazlasını görüntülemek için \*\* Category\*\* açılır menüsünü kullanabilirsiniz (örneğin tüm seçenekleri görmek için \*\* All commands \*\* 'ı seçin).
+Adds a return or land command to the mission. The label varies by vehicle type:
 
-<img src="../../../assets/plan/mission/mission_commands.jpg" style="width: 200px;"/>
+- **Multicopters:** _Return_
+- **Fixed-wing:** _Land_ (or _Alt Land_ if a land item already exists in the mission)
 
-Her komut adının sağında, _ Ekle _ ve _ Sil _ gibi ek seçeneklere erişmek için tıklayabileceğiniz bir menü bulunur.
+### Stats
 
-:::info
-Kullanılabilir komutların listesi aracın yazılımına ve türüne bağlıdır.
-Örnek olarak şunlar verilebilir: Hedef nokta, Görüntü yakalamayı başlat, Öğeye atla (görevi tekrarlamak için) ve diğer komutlar.
-:::
+Toggles the [Mission Stats / Terrain panel](#stats_terrain) at the bottom of the map. Only visible when that panel is currently hidden.
 
-### Görev Ayarları {#mission_settings}
+## File Operations {#file}
 
-_Mission Start_ paneli [ görev komut listesinde ](#mission_command_list) görünen ilk öğedir.
-Görevin başlangıcını veya sonunu etkileyebilecek bir takım varsayılan ayarı düzenlemek için kullanılabilir.
+File operations are located in the **Plan Toolbar** at the top of the view:
 
-![Görev Komutları Listesi - Görev Ayarlarını Gösterme](../../../assets/plan/mission_start.png)
-
-![Görev Ayarları](../../../assets/plan/mission/mission_settings.png)
-
-#### Görevin Varsayılan Ayarları
-
-##### Waypoint alt
-
-Bir plana eklenen ilk görev öğesi için varsayılan irtifayı ayarlayın (sonraki öğeler, önceki öğeden ilk irtifayı alır).
-Bu aynı zamanda bir plandaki tüm öğelerin yüksekliğni aynı değere ayarlamak için de kullanılabilir; planda öğeler varken eğer değeri değiştirirseniz bu seçenek size sorulacaktır.
-
-##### Uçuş Hızı
-
-Görev için varsayılan görev hızından farklı bir uçuş hızı belirleyin.
-
-#### Görevin Sonu
-
-##### Görev bittiğinde kalkış yerine dön
-
-Aracınızın son görev öğesinden sonra Geri Dönmesini/RTL istiyorsanız bunu işaretleyin.
-
-#### Planlanmış Ev Konumu
-
-[Planned Home Position ](#planned_home) bölümü, bir görev planlarken aracın ev konumunu simüle etmenizi sağlar.
-Bu, kalkıştan görevin tamamlanmasına kadar aracınızın hedef noktalar arası rotasını görüntülemenizi sağlar.
-
-![Görev Ayarları Planlanmış Ev Konumu Bölümü](../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg)
+- **Open** — Load a plan from a file.
+- **Save** — Save the current plan to a file. Highlighted when there are unsaved changes.
+- **Upload** — Upload the plan to the vehicle. Highlighted when the plan has un-uploaded changes.
+- **Clear** — Remove all mission items, geofence, and rally points. If connected to a vehicle, also clears them from the vehicle.
+- **Hamburger menu** (☰) — Additional options:
+  - _Save as KML_ — Export the plan as a KML file.
+  - _Download_ — Download the current plan from the vehicle (only available when connected).
 
 :::info
-Bu yalnızca _ planlanan _ ev konumudur ve aracı çalıştırmayı planladığınız yere konumlandırılmalıdır.
-Görevin gerçekleşmesinde gerçek bir etkisi yoktur.
-Asıl ev konumu, araç tarafından devreye alınırken ayarlanır.
+Before you fly a mission you must upload it to the vehicle.
 :::
 
-This section allows you to set the **Altitude** and **Set Home to Map Centre** (you can move it to another position by dragging it on the map).
+## Plan Editor Panel {#plan_editor_panel}
 
-#### Kamera
+The Plan Editor Panel is a collapsible tree view on the right side of the view.
+The panel can be collapsed or expanded using the toggle button on its left edge.
+It is organized into the following collapsible sections: **Plan Info**, **Defaults**, **Mission**, **GeoFence**, **Rally Points**, and **Transform**.
 
-Kamera bölümü, gerçekleştirilecek bir kamera eylemi belirlemenizi, gimbali kontrol etmenizi ve kameranızı fotoğraf veya video moduna ayarlamanızı sağlar.
+### Layer Switcher {#layer_switcher}
 
-![Görev Ayarları Kamera Bölümü](../../../assets/plan/mission/mission_settings_camera_section.jpg)
+Buttons in the top-right area of the map allow switching between the **Mission**, **Geo-Fence**, and **Rally Point** editing layers.
+The active layer button is always visible; the other layer buttons slide in briefly when toggled and auto-hide after a few seconds.
 
-Mevcut kamera eylemleri şunlardır:
+### Plan Info {#plan_info}
 
-- Değişiklik yok (mevcut eyleme devam et)
-- Fotoğraf çek (zaman aralıklı)
-- Fotoğraf Çek (mesafe aralıklı)
-- Fotoğraf çekimini durdur
-- Video çekmeye başla
-- Video çekimi durdur
+The Plan Info section contains general plan-level settings:
 
-#### Araç Bilgisi
+- **Plan File** — An editable name for the plan file.
+- **Vehicle Info** — Firmware and vehicle type selectors. When connected to a vehicle these are determined automatically; when planning offline you must set them before adding any mission items so that the correct mission commands are available.
+- **Expected Home Position** — The altitude (AMSL) for the planned home position is determined automatically from terrain data. A **Move To Map Center** button repositions the home marker to the center of the map. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
 
-Araç için uygun görev komutları, aracın yazılımına ve türüne bağlıdır.
+### Defaults {#mission_settings}
 
-Bir araca bağlıyken \* bir görev planlıyorsanız aracın yazılımı ve türü araçtan belirlenir.
-Bu bölüm, bir araca bağlı değilken aracın donanımını yazılımını/türünü belirlemenize olanak tanır.
+The Defaults section sets plan-wide values that apply to new mission items:
 
-![Görev Ayarları Araç Bilgisi Bölümü](../../../assets/plan/mission/mission_settings_vehicle_info_section.jpg)
+- **Altitude Frame** — Select the altitude reference frame for waypoints.
+- **Waypoints Altitude** — The default altitude for the first mission item added (subsequent items take their initial altitude from the previous item). Changing this value when items already exist will prompt to update all items to the new altitude.
+- **Flight Speed** — Set a flight speed that differs from the default mission speed.
+- **Vehicle Speeds** — Cruise speed (fixed-wing) and/or hover speed (multi-rotor/VTOL), used for estimating mission time.
 
-Bir görev planlarken belirtilebilecek ek değer, aracın uçuş hızıdır.
-Bu değer belirtilerek, bir araca bağlı olmasa bile toplam görev veya anket süreleri yaklaşık olarak tahmin edilebilir.
+### Mission Items {#mission_items}
 
-## Sorun Giderme
+The Mission section lists all mission items (waypoints, commands, patterns, etc.) in order.
+Each item can be expanded to edit its parameters.
 
-### Görev (Plan) Yükleme/İndirme Hataları {#plan_transfer_fail}
+- Click an item to select it on the map and expand its editor.
+- Click the **command name** dropdown to change the item type. A dialog shows "Basic Commands" by default; use the **Category** dropdown to see all available commands.
+- Each item has a **hamburger menu** (☰) with options such as _Show all values_, _Move to vehicle position_, _Move to previous item position_, and _Edit position_.
+- A **delete button** (trash icon) removes the item.
+- Items that are incomplete or missing required values show a **?** status indicator.
 
-Plan yükleme ve indirme, kötü bir iletişim bağlantısında hata verebilir (görevleri, coğrafi sınırları ve toparlanma noktalarını etkiler).
-Bir arıza meydana gelirse, QGC kullanıcı arayüzünde aşağıdakine benzer bir durum mesajı görmelisiniz:
+:::info
+The list of available commands depends on firmware and vehicle type.
+Examples include: Waypoint, Start image capture, Jump to item (to repeat mission), and other commands.
+:::
 
-> (Mission transfer failed.) (Retry transfer.) (Error: Mission write mission count failed, maximum retries exceeded.)
+#### Initial Camera Settings
 
-Bağlantınız için kayıp oranı [ Settings View > MAVLink ](../settings_view/mavlink.md) 'de görüntülenebilir.
-Kayıp oranı düşük tek haneli değerlerde olmalıdır (yani maksimum 2 veya 3):
+This allows you to set camera options before any mission items take place.
+This includes camera actions (take photos by time/distance, start/stop video recording) and gimbal control.
 
-- Yüksek tek haneli bir kayıp oranı, aralıklı arızalara neden olabilir.
-- Daha yüksek kayıp oranları genellikle% 100 başarısızlığa neden olur.
+### GeoFence {#geofence}
 
-Hatalar çok küçük bir ihtimalle QGC'deki ya da uçuş modlarındaki buglardan dolayı ortaya çıkabilir.
-Bu olasılığı analiz etmek için, Plan yükleme/indirme için [ Console Logging ](../settings_view/console_logging.md) 'i etkinleştirebilir ve protokol mesaj trafiğini gözden geçirebilirsiniz.
+The GeoFence section allows you to define geofence boundaries:
 
-## Daha Fazla Bilgi
+- **Polygon Fences** — Add inclusion or exclusion polygon fences. Each polygon can be toggled between inclusion/exclusion, edited, or deleted.
+- **Circular Fences** — Add inclusion or exclusion circular fences with a configurable radius.
+- **Breach Return Point** — Optionally set a return point (with altitude) that the vehicle will fly to if it breaches the geofence.
 
-- New Plan View features for [QGC release v3.2](../releases/release_note_stable_v3.md#plan_view)
-- New Plan View features for [QGC release v3.3](../releases/release_note_stable_v3.md#plan-view-1)
+### Rally Points {#rally_points}
+
+The Rally Points section displays and manages rally points. When a rally point is selected, its position fields are shown for editing.
+
+### Transform {#transform}
+
+The Transform section provides tools to adjust the entire mission after it has been created:
+
+- **Offset Mission** — Shift the mission by a specified distance in the East, North, and Up directions. Optionally include takeoff and/or landing items in the offset.
+- **Reposition Mission** — Move the mission to a new location specified by geographic coordinates (Lat/Lon), UTM, MGRS, or the current vehicle position.
+- **Rotate Mission** — Rotate the mission clockwise by a specified number of degrees. Optionally include takeoff and/or landing items in the rotation.
+
+## Mission Stats / Terrain Panel {#stats_terrain}
+
+A panel at the bottom of the map provides two toggleable views:
+
+- **Terrain Profile** — A chart showing height AMSL vs. distance from start across the mission.
+- **Mission Statistics** — Displays details for the selected waypoint (altitude difference, azimuth, distance to previous waypoint, gradient, heading) and for the total mission (distance, max telemetry distance, estimated flight time). Battery information (batteries required and change point) is also shown when available.
+
+Toggle buttons on the left side of the panel let you switch between the terrain profile and mission statistics views, or collapse the panel entirely.
+
+## Troubleshooting
+
+### Mission (Plan) Upload/Download Failures {#plan_transfer_fail}
+
+Plan uploading and downloading can fail over a noisy communication link (affecting missions, GeoFence, and rally points).
+If a failure occurs you should see a status message in the QGC UI similar to:
+
+> Mission transfer failed. Retry transfer. Error: Mission write mission count failed, maximum retries exceeded.
+
+The loss rate for your link can be viewed in [App Settings > Telemetry](../settings_view/telemetry.md).
+The loss rate should be in the low single digits (i.e. maximum of 2 or 3):
+
+- A loss rate in the high single digits can lead to intermittent failures.
+- Higher loss rates often lead to 100% failure.
+
+There is a much smaller possibility that issues are caused by bugs in either flight stack or QGC.
+To analyze this possibility you can turn on [Console Logging](../settings_view/console_logging.md) for Plan upload/download and review the protocol message traffic.
+
+

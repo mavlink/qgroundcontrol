@@ -142,6 +142,18 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     _videoRecordTimeUpdateTimer.setInterval(333);
     connect(&_videoRecordTimeUpdateTimer, &QTimer::timeout, this, &VehicleCameraControl::_recTimerHandler);
 
+    // Cameras are not required to broadcast CAMERA_SETTINGS when zoom/focus changes,
+    // so re-request it after an accepted zoom/focus command to keep zoom level and
+    // FOV current. The delay also coalesces bursts of zoom/focus commands into a
+    // single request.
+    constexpr int kCameraSettingsRefreshDelayMsecs = 1000;
+    _cameraSettingsRefreshTimer.setSingleShot(true);
+    _cameraSettingsRefreshTimer.setInterval(kCameraSettingsRefreshDelayMsecs);
+    connect(&_cameraSettingsRefreshTimer, &QTimer::timeout, this, [this]() {
+        _cameraSettingsRetries = 0; // Start a fresh request/retry cycle
+        _requestCameraSettings();
+    });
+
     //-- Tracking capabilities
     _hasTrackingRectCapability = _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE;
     _hasTrackingPointCapability = _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT;
@@ -173,6 +185,7 @@ VehicleCameraControl::~VehicleCameraControl()
     _streamInfoTimer.stop();
     _streamStatusTimer.stop();
     _cameraSettingsTimer.stop();
+    _cameraSettingsRefreshTimer.stop();
     _storageInfoTimer.stop();
 
     delete _netManager;
@@ -782,6 +795,10 @@ void VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int c
                 break;
             case MAV_CMD_IMAGE_START_CAPTURE:
                 _captureStatusTimer.start(1000);
+                break;
+            case MAV_CMD_SET_CAMERA_ZOOM:
+            case MAV_CMD_SET_CAMERA_FOCUS:
+                _cameraSettingsRefreshTimer.start();
                 break;
         }
     } else {

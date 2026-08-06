@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: |
             .github/actions/cache-cleanup
@@ -50,8 +50,10 @@ jobs:
             tools/common/__init__.py
             tools/common/file_traversal.py
             tools/common/gh_actions.py
+            tools/common/markdown.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
+          persist-credentials: false
       - uses: ./.github/actions/cache-cleanup
         with:
           branch: ${{ inputs.branch }}

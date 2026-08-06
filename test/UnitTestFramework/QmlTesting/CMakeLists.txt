@@ -15,10 +15,12 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/QmlTestFileValidator.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+# QmlTestFileValidator reads the QML test files straight from the source tree
+# (same directory QGCQmlQuickTests runs them from) so there is no build copy
+# to go stale
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_QML_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests")
 
 # Dedicated out-of-process Qt Quick Test executable.
 # This runs tst_*.qml files through quick_test_main(), which cannot run
@@ -58,9 +60,5 @@ foreach(_check_target check check-unit check-fast check-ci)
         add_dependencies(${_check_target} QGCQmlQuickTests)
     endif()
 endforeach()
-
-# Copy QML test files to build directory
-file(GLOB QML_TEST_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.qml")
-file(COPY ${QML_TEST_FILES} DESTINATION ${CMAKE_BINARY_DIR}/qmltests)
 
 add_qgc_test(QmlTestFileValidator LABELS Unit)

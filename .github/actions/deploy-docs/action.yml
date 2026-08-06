@@ -33,11 +33,12 @@ runs:
         path: ~/_docs_build
 
     - name: Checkout target repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: ${{ inputs.target-repo }}
         token: ${{ inputs.deploy-token }}
         path: _deploy_target
+        persist-credentials: true  # zizmor: ignore[artipacked] — deploy step pushes to target repo with this scoped token
 
     - name: Deploy docs
       shell: bash
@@ -45,6 +46,10 @@ runs:
         python3 "${GITHUB_WORKSPACE}/.github/scripts/deploy_docs.py" \
           --source-dir ~/_docs_build \
           --target-dir _deploy_target \
-          --branch "${{ inputs.source-branch }}" \
-          --target-branch "${{ inputs.target-branch }}" \
-          --commit-message "${{ inputs.commit-message }}"
+          --branch "${INPUTS_SOURCE_BRANCH}" \
+          --target-branch "${INPUTS_TARGET_BRANCH}" \
+          --commit-message "${INPUTS_COMMIT_MESSAGE}"
+      env:
+        INPUTS_SOURCE_BRANCH: ${{ inputs.source-branch }}
+        INPUTS_TARGET_BRANCH: ${{ inputs.target-branch }}
+        INPUTS_COMMIT_MESSAGE: ${{ inputs.commit-message }}

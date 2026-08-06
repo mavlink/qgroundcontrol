@@ -6,7 +6,6 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QString>
-#include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
 
@@ -111,29 +110,18 @@ bool Actuators::isMultirotor() const
     return _mixer.configuredType() == "multirotor";
 }
 
-void Actuators::load(const QString &json_file)
+void Actuators::load(const QString &json_file, const QJsonDocument &metadata)
 {
     _initError.clear();
 
-    QFile file(json_file);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        _initError = QStringLiteral("Could not open metadata file: %1").arg(file.fileName());
+    if (metadata.isNull()) {
+        _initError = QStringLiteral("Could not load metadata file: %1").arg(json_file);
         _jsonMetadata = {};
         qCWarning(ActuatorsLog) << _initError;
         return;
     }
 
-    const QByteArray json_data = file.readAll();
-    file.close();
-
-    QJsonParseError parseError;
-    _jsonMetadata = QJsonDocument::fromJson(json_data, &parseError);
-    if (_jsonMetadata.isNull()) {
-        _initError = QStringLiteral("Invalid JSON in metadata file %1: %2").arg(file.fileName(), parseError.errorString());
-        _jsonMetadata = {};
-        qCWarning(ActuatorsLog) << _initError;
-        return;
-    }
+    _jsonMetadata = metadata;
 }
 
 void Actuators::init()

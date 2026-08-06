@@ -204,6 +204,7 @@ Item {
             z:                      _fullItemZorder + 2
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
+            viewer3DCameraController: viewer3DLoader.item ? viewer3DLoader.item.cameraController : null
             visible:                SVState.hud && !SVState.cursorTrackingSessionActive
         }
 
@@ -258,10 +259,7 @@ Item {
             function onDisplayModeChanged() {
                 if (QGCViewer3DManager.displayMode === QGCViewer3DManager.View3D) {
                     if (!viewer3DLoader.item) {
-                        viewer3DLoader.setSource(
-                            "qrc:/qml/QGroundControl/Viewer3D/Models3D/Viewer3DModel.qml",
-                            { missionController: Qt.binding(() => _missionController) }
-                        )
+                        viewer3DLoader.setSource("qrc:/qml/QGroundControl/Viewer3D/Models3D/Viewer3DModel.qml")
                     }
                 } else if (!_keepSceneAlive) {
                     viewer3DLoader.source = ""

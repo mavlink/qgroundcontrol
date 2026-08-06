@@ -30,6 +30,8 @@ final class QGCFtdiDriver {
         sAppContext = context.getApplicationContext();
         try {
             sManager = D2xxManager.getInstance(sAppContext);
+            // QGC handles USB permission requests itself; don't let D2XX pop its own dialog.
+            sManager.setRequestPermission(false);
         } catch (D2xxManager.D2xxException e) {
             sManager = null;
             QGCLogger.w(TAG, "D2XX manager unavailable: " + e.getMessage());
@@ -60,8 +62,14 @@ final class QGCFtdiDriver {
         }
 
         try {
+            // openByUsbDevice() only finds devices registered in the manager's internal
+            // list, which is populated by createDeviceInfoList(). USB permission has already
+            // been granted by this point, so this cannot trigger a permission dialog.
+            final int deviceCount = sManager.createDeviceInfoList(sAppContext);
             final FT_Device d2xxDevice = sManager.openByUsbDevice(sAppContext, device);
             if (d2xxDevice == null || !d2xxDevice.isOpen()) {
+                QGCLogger.w(TAG, "D2XX openByUsbDevice returned no open device for " + device.getDeviceName()
+                        + " (enumerated FTDI device count: " + deviceCount + ")");
                 return null;
             }
             return new QGCFtdiDriver(d2xxDevice);

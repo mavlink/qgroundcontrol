@@ -5,12 +5,11 @@ qt_add_library(QGCNetwork STATIC
     QGCFileDownload.h
     QGCNetworkHelper.cc
     QGCNetworkHelper.h
+    UdpForwarder.cc
+    UdpForwarder.h
 )
 
-target_include_directories(QGCNetwork
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(QGCNetwork PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(QGCNetwork
     PUBLIC

@@ -152,6 +152,27 @@
             "keywords": "low latency"
         },
         {
+            "name": "rtpJitterLatencyMs",
+            "shortDesc": "RTP jitter-buffer playout latency (ms).",
+            "longDesc": "Latency budget for the RTP jitter buffer (rtspsrc.latency / rtpjitterbuffer.latency). Lower = less glass-to-glass delay; higher = more headroom for packet reordering and retransmission. The default of 80 ms allows RFC 4588 retransmission to recover lost packets before the playout deadline; values <40 ms effectively disable retransmission. Ignored when Low Latency Mode is enabled.",
+            "type": "uint32",
+            "min": 0,
+            "max": 2000,
+            "units": "ms",
+            "default": 80,
+            "label": "RTP jitter latency",
+            "keywords": "rtp,jitter,latency,rtsp,rtx,retransmission,advanced"
+        },
+        {
+            "name": "rtspAutoReconnect",
+            "shortDesc": "Automatically restart the pipeline on watchdog timeout or pipeline error.",
+            "longDesc": "When enabled, the receiver reconnects with exponential backoff (1s → 30s) after a stream timeout or a fatal pipeline error. Disable to fall back to the legacy behaviour of giving up after one failure.",
+            "type": "bool",
+            "default": true,
+            "label": "Auto-reconnect on stream loss",
+            "keywords": "rtsp,reconnect,watchdog,recovery,advanced"
+        },
+        {
             "name": "forceVideoDecoder",
             "shortDesc": "Override automatic video decoder selection to force a specific decoding method.",
             "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
@@ -190,15 +211,6 @@
             "default": false,
             "label": "Disable pixel-aspect-ratio normalization",
             "keywords": "pixel aspect ratio,capsfilter,v4l2,workaround,advanced"
-        },
-        {
-            "name": "frameSmoothingEnabled",
-            "shortDesc": "Buffer up to 3 decoded frames and pace delivery to the display refresh rate.",
-            "longDesc": "Off by default — appsink frames are delivered to the renderer immediately. When enabled, the adapter holds a 3-frame ring and a display-rate timer picks the frame closest to the expected presentation time (PTS-anchored, 70 ms tolerance). Smooths out jitter from bursty decoders or variable network at the cost of up to one frame of added latency. Frozen sources keep the last good frame on screen. Takes effect on next stream restart.",
-            "type": "bool",
-            "default": false,
-            "label": "Smooth frame pacing (experimental)",
-            "keywords": "smoothing,jitter,pacing,latency,obs"
         }
     ]
 }

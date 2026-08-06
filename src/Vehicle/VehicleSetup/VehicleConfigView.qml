@@ -524,6 +524,7 @@ Rectangle {
 
                 ConfigButton {
                     id:                 parametersButton
+                    objectName:         "vehicleConfig_parametersButton"
                     visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable &&
                                         !_activeVehicle.usingHighLatencyLink &&
                                         _corePlugin.showAdvancedUI &&

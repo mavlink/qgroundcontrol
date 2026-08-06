@@ -1,7 +1,5 @@
 # ArduSub Tuning
 
-![ArduSub Tuning Page](../../../assets/setup/tuning/ardusub.jpg)
-
 ## Basic Tuning
 
 This page allows changing the PID controller gains to better suit your vehicle and application. Changing these may help you get a snappier response for more precise movements, or a smoother response for recording cinematic footages. Adjust a parameter by moving the desired slider, or by clicking the increase/decrease buttons. There are three controllers that can be adjusted here:

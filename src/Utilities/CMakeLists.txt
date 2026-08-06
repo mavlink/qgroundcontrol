@@ -3,13 +3,12 @@
 # Core utilities, logging, file system helpers, and platform abstractions
 # ============================================================================
 
-# ----------------------------------------------------------------------------
-# Core Utility Sources
-# ----------------------------------------------------------------------------
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         AppMessages.cc
         AppMessages.h
+        DataRateTracker.cc
+        DataRateTracker.h
         QGCCommandLineParser.cc
         QGCCommandLineParser.h
 )

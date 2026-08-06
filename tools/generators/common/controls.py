@@ -16,6 +16,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .validation import clamped_repr
+
+
+def _require_object(data: object, key: str) -> None:
+    """Nested control fields must be JSON objects; a clear schema error beats an
+    AttributeError from .get() on a string."""
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"'{key}' must be a JSON object, got {type(data).__name__}: {clamped_repr(data)}"
+        )
+
 # --------------------------------------------------------------------------- #
 # Shared data fragments — callers compose these into their own ControlDef
 # --------------------------------------------------------------------------- #
@@ -200,15 +211,18 @@ def render_checkbox(
     label_source: str = "fact.label",
     qml_type: str = "FactCheckBox",
     tr_context: str = "",
+    object_name: str = "",
 ) -> str:
     """Render a ``FactCheckBox`` (or variant like ``FactCheckBoxSlider``)."""
     label_line = f'    {label_property}: {qml_tr(label, tr_context)}' if label else f"    {label_property}: {label_source}"
-    lines = [
-        f"{indent}{qml_type} {{",
+    lines = [f"{indent}{qml_type} {{"]
+    if object_name:
+        lines.append(f'{indent}    objectName: "{object_name}"')
+    lines.extend([
         f"{indent}    Layout.fillWidth: true",
         f"{indent}{label_line}",
         f"{indent}    fact: {fact_ref}",
-    ]
+    ])
     if enable_when:
         lines.append(f"{indent}    enabled: {enable_when}")
     lines.append(f"{indent}}}")
@@ -309,8 +323,11 @@ def render_textfield(
     return "\n".join(lines)
 
 
-def parse_enable_checkbox(data: dict) -> EnableCheckboxDef | None:
+def parse_enable_checkbox(data: object) -> EnableCheckboxDef | None:
     """Parse an enableCheckbox dict from JSON into an EnableCheckboxDef."""
+    if data is None:
+        return None
+    _require_object(data, "enableCheckbox")
     if not data:
         return None
     return EnableCheckboxDef(
@@ -319,8 +336,11 @@ def parse_enable_checkbox(data: dict) -> EnableCheckboxDef | None:
     )
 
 
-def parse_button(data: dict) -> ButtonDef | None:
+def parse_button(data: object) -> ButtonDef | None:
     """Parse a button dict from JSON into a ButtonDef."""
+    if data is None:
+        return None
+    _require_object(data, "button")
     if not data:
         return None
     return ButtonDef(
@@ -330,10 +350,16 @@ def parse_button(data: dict) -> ButtonDef | None:
     )
 
 
-def parse_radio_options(data: list | None) -> list[RadioOptionDef]:
+def parse_radio_options(data: object) -> list[RadioOptionDef]:
     """Parse a list of radio option dicts from JSON."""
-    if not data:
+    if data is None:
         return []
+    if not isinstance(data, list):
+        raise ValueError(
+            f"'options' must be a JSON array, got {type(data).__name__}: {clamped_repr(data)}"
+        )
+    for opt in data:
+        _require_object(opt, "options entry")
     return [
         RadioOptionDef(
             label=opt.get("label", ""),
@@ -384,8 +410,11 @@ def render_radiogroup(
     return "\n".join(lines)
 
 
-def parse_dialog_button(data: dict | None) -> DialogButtonDef | None:
+def parse_dialog_button(data: object) -> DialogButtonDef | None:
     """Parse a dialogButton dict from JSON into a DialogButtonDef."""
+    if data is None:
+        return None
+    _require_object(data, "dialogButton")
     if not data:
         return None
     return DialogButtonDef(
@@ -396,8 +425,11 @@ def parse_dialog_button(data: dict | None) -> DialogButtonDef | None:
     )
 
 
-def parse_action_button(data: dict | None) -> ActionButtonDef | None:
+def parse_action_button(data: object) -> ActionButtonDef | None:
     """Parse an actionButton dict from JSON into an ActionButtonDef."""
+    if data is None:
+        return None
+    _require_object(data, "actionButton")
     if not data:
         return None
     return ActionButtonDef(
@@ -544,8 +576,11 @@ def render_toggle_checkbox(
     return "\n".join(lines)
 
 
-def parse_toggle_checkbox(data: dict | None) -> ToggleCheckboxDef | None:
+def parse_toggle_checkbox(data: object) -> ToggleCheckboxDef | None:
     """Parse a toggleCheckbox dict from JSON."""
+    if data is None:
+        return None
+    _require_object(data, "toggleCheckbox")
     if not data:
         return None
     return ToggleCheckboxDef(
@@ -555,13 +590,14 @@ def parse_toggle_checkbox(data: dict | None) -> ToggleCheckboxDef | None:
     )
 
 
-def parse_linked_params(data: dict | None) -> list[LinkedParamDef]:
+def parse_linked_params(data: object) -> list[LinkedParamDef]:
     """Parse a linkedParams dict from JSON.
 
     Input is ``{"PARAM_NAME": "expression", ...}``.
     """
-    if not data:
+    if data is None:
         return []
+    _require_object(data, "linkedParams")
     return [
         LinkedParamDef(param=name, expression=expr)
         for name, expr in data.items()

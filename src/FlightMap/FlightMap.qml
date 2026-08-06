@@ -24,6 +24,7 @@ Map {
     property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
     property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
     property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
+    property bool   pinchZoomDisabledByVirtualJoysticks: false ///< true: disable pinch-to-zoom while virtual joystick thumbs are down
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
@@ -116,8 +117,14 @@ Map {
     signal mapPressAndHold(var position)
 
     PinchHandler {
-        id:     pinchHandler
-        target: null
+        id:      pinchHandler
+        target:  null
+        // Disabled while virtual joystick thumbs are down. The default grabPermissions include
+        // CanTakeOverFromItems, which lets this handler steal touch grabs from the joystick pads'
+        // MultiPointTouchAreas and zoom the map instead. The permission can't be removed since
+        // pinch on the map itself must take over from the panning MultiPointTouchArea below.
+        // See GitHub issue #13450.
+        enabled: !_map.pinchZoomDisabledByVirtualJoysticks
 
         property var pinchStartGeoCoord     // geo coordinate under centroid at pinch start
         property var pinchStartScreenPoint  // screen point of centroid at pinch start

@@ -35,9 +35,9 @@ Item {
     property bool   _addROIOnClick: false
     property bool   _addWaypointOnClick: false
 
-    readonly property int _layerMission: 1
-    readonly property int _layerFence: 2
-    readonly property int _layerRally: 3
+    readonly property int _layerMission: PlanEditLayers.layerMission
+    readonly property int _layerFence: PlanEditLayers.layerFence
+    readonly property int _layerRally: PlanEditLayers.layerRally
 
     onVisibleChanged: {
         if(visible) {
@@ -389,6 +389,7 @@ Item {
             }
 
             GeoFenceMapVisuals {
+                objectName: "planView_geoFenceMapVisuals"
                 map: editorMap
                 myGeoFenceController: _geoFenceController
                 interactive: _editingLayer == _layerFence
@@ -398,6 +399,7 @@ Item {
             }
 
             RallyPointMapVisuals {
+                objectName: "planView_rallyPointMapVisuals"
                 map: editorMap
                 myRallyPointController: _rallyPointController
                 interactive: _editingLayer == _layerRally
@@ -466,7 +468,15 @@ Item {
                         enabled: _missionController.flyThroughCommandsAllowed
                         visible: toolStrip._isMissionLayer
                         checkable: true
-                        onTriggered: { _addWaypointOnClick = !_addWaypointOnClick; if (_addWaypointOnClick) _addROIOnClick = false }
+                        onTriggered: {
+                            _addWaypointOnClick = !_addWaypointOnClick
+                            if (_addWaypointOnClick) {
+                                _addROIOnClick = false
+                                // Arming an insert tool leaves template-creation mode, otherwise
+                                // map clicks keep moving the home position instead of inserting
+                                _planMasterController.userSelectedManualCreation = true
+                            }
+                        }
                     },
                     ToolStripAction {
                         id: roiButton
@@ -476,7 +486,13 @@ Item {
                         enabled: _missionController.isInsertROIValid
                         visible: toolStrip._isMissionLayer && _planMasterController.controllerVehicle.supports.roiMode
                         checkable: true
-                        onTriggered: { _addROIOnClick = !_addROIOnClick; if (_addROIOnClick) _addWaypointOnClick = false }
+                        onTriggered: {
+                            _addROIOnClick = !_addROIOnClick
+                            if (_addROIOnClick) {
+                                _addWaypointOnClick = false
+                                _planMasterController.userSelectedManualCreation = true
+                            }
+                        }
                     },
                     ToolStripAction {
                         objectName: "planToolStrip_landButton"
@@ -526,6 +542,7 @@ Item {
         // Layer switching icons — only active icon visible; click to expand choices leftward
         Item {
             id:                     layerSwitcher
+            objectName:             "planView_layerSwitcher"
             anchors.right:          rightPanel.left
             anchors.rightMargin:    _toolsMargin
             anchors.top:            parent.top
@@ -533,16 +550,11 @@ Item {
             width:                  layerRow.width
             height:                 _layerButtonSize
             z:                      QGroundControl.zOrderWidgets
+            visible:                !_planMasterController.showCreateFromTemplate
 
             property bool   expanded: false
             property real   _layerButtonSize: ScreenTools.defaultFontPixelHeight * 2.0
             property real   _spacing: ScreenTools.defaultFontPixelHeight * 0.25
-
-            readonly property var _layers: [
-                { layer: _layerMission, icon: "/res/waypoint.svg",      nodeType: "missionGroup" },
-                { layer: _layerFence,   icon: "/res/GeoFence.svg",      nodeType: "fenceGroup" },
-                { layer: _layerRally,   icon: "/res/RallyPoint.svg",    nodeType: "rallyGroup" }
-            ]
 
             Timer {
                 id: collapseTimer
@@ -574,6 +586,7 @@ Item {
 
                 // Active layer button (always visible)
                 Rectangle {
+                    objectName: "layerSwitcher_activeButton"
                     width:  layerSwitcher._layerButtonSize
                     height: width
                     radius: ScreenTools.defaultBorderRadius
@@ -583,7 +596,7 @@ Item {
                         anchors.centerIn:   parent
                         width:              parent.width * 0.6
                         height:             width
-                        source:             layerSwitcher._layers.find(l => l.layer === _editingLayer)?.icon ?? "/res/waypoint.svg"
+                        source:             PlanEditLayers.layerInfos.find(l => l.layer === _editingLayer)?.icon ?? "/res/waypoint.svg"
                         color:              QGroundControl.globalPalette.buttonHighlightText
                     }
 
@@ -595,12 +608,13 @@ Item {
 
                 // Choice buttons (only layers that are NOT the current one)
                 Repeater {
-                    model: layerSwitcher._layers.filter(l => l.layer !== _editingLayer)
+                    model: PlanEditLayers.layerInfos.filter(l => l.layer !== _editingLayer)
 
                     Rectangle {
                         required property var modelData
-                        width:   layerSwitcher._layerButtonSize
-                        height:  width
+                        objectName: "layerSwitcher_choice_" + modelData.nodeType
+                        width:   choiceRow.implicitWidth + layerSwitcher._spacing * 2
+                        height:  layerSwitcher._layerButtonSize
                         radius:  ScreenTools.defaultBorderRadius
                         color:   QGroundControl.globalPalette.button
                         visible: opacity > 0
@@ -608,12 +622,24 @@ Item {
 
                         Behavior on opacity { NumberAnimation { duration: 150 } }
 
-                        QGCColoredImage {
-                            anchors.centerIn:   parent
-                            width:              parent.width * 0.6
-                            height:             width
-                            source:             modelData.icon
-                            color:              QGroundControl.globalPalette.buttonText
+                        Row {
+                            id:                     choiceRow
+                            anchors.centerIn:       parent
+                            spacing:                layerSwitcher._spacing
+
+                            QGCColoredImage {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width:                  layerSwitcher._layerButtonSize * 0.6
+                                height:                 width
+                                source:                 modelData.icon
+                                color:                  QGroundControl.globalPalette.buttonText
+                            }
+
+                            QGCLabel {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text:                   modelData.name
+                                color:                  QGroundControl.globalPalette.buttonText
+                            }
                         }
 
                         QGCMouseArea {

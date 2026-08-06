@@ -86,7 +86,7 @@ The settings are:
 
 - **Lock Compass Nose-Up**: Check to rotate the compass rose (default is to rotate the vehicle inside the compass indicateor).
 - **Guided Minimum Altitude**: Minimum value for guided actions altitude slider.
-- **Guided Maximum Altitude**: Minimum value for guided actions altitude slider.
+- **Guided Maximum Altitude**: Maximum value for guided actions altitude slider.
 - **Go To Location Max Distance**: The maximum distance that a Go To location can be set from the current vehicle location (in guided mode).
 
 ## Plan View {#plan_view}

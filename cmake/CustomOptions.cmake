@@ -33,6 +33,7 @@ set(QGC_SETTINGS_VERSION "9" CACHE STRING "Settings schema version")
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(QGC_STABLE_BUILD "Stable release build (disables daily build features)" ON)
 option(QGC_USE_CACHE "Enable compiler caching (ccache/sccache)" ON)
+option(QGC_USE_MOCCACHE "Cache moc output across clean builds" ON)
 option(QGC_UNITY_BUILD "Enable unity builds for faster compilation" OFF)
 option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
 option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code" ON)
@@ -58,8 +59,35 @@ option(QGC_SPLIT_DWARF "Use -gsplit-dwarf + --gdb-index for faster Debug links (
 # Git options
 option(GIT_SUBMODULE "Update submodules during configuration" OFF)
 
+# ============================================================================
+# Dependency Resolution (system libraries vs CPM downloads)
+# ============================================================================
+# Lets packagers (FreeBSD Ports, flatpak, snap, Debian) build against system
+# libraries instead of fetching sources. These drive CPM's built-in switches:
+#   QGC_USE_SYSTEM_LIBS  -> find_package() first, fall back to CPM download.
+#   QGC_SYSTEM_LIBS_ONLY -> find_package() only; misses are hard configure errors.
+# Per-package FIND_PACKAGE_ARGUMENTS wiring is incremental (geographiclib is the
+# reference conversion): unconverted packages error under SYSTEM_LIBS_ONLY, and
+# packages needing the CPM source tree (qgc_require_cpm_added sites) fail either way.
+option(QGC_USE_SYSTEM_LIBS "Prefer system libraries (find_package) over CPM downloads" OFF)
+option(QGC_SYSTEM_LIBS_ONLY "Require system libraries; never download dependencies" OFF)
+
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    set(CPM_USE_LOCAL_PACKAGES ON)
+endif()
+if(QGC_SYSTEM_LIBS_ONLY)
+    set(CPM_LOCAL_PACKAGES_ONLY ON)
+endif()
+
 # Link parallelism (Ninja only)
 set(QGC_LINK_PARALLEL_LEVEL 2 CACHE STRING "Maximum parallel link jobs (prevents OOM during LTO)")
+# ---- GStreamer SDK download / debug ----
+# Fail closed: only the SDK-download platforms (Android/macOS/iOS/Windows) hit this path;
+# Linux uses system pkg-config and never downloads, so ON is a no-op there.
+option(GStreamer_REQUIRE_CHECKSUM "Fail if an SDK download's checksum cannot be verified (set OFF to bypass)" ON)
+option(GStreamer_DEBUG "Print GStreamer CMake debug messages" OFF)
+set(QGC_GST_DOWNLOAD_TIMEOUT "" CACHE STRING "GStreamer SDK download wall-clock timeout (seconds, default 1200)")
+set(QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT "" CACHE STRING "GStreamer SDK download inactivity timeout (seconds, default 60)")
 
 # Coverage thresholds
 set(QGC_COVERAGE_LINE_THRESHOLD 30 CACHE STRING "Minimum line coverage percentage")
@@ -87,9 +115,7 @@ option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 # Video Streaming Options
 # ============================================================================
 
-option(QGC_ENABLE_UVC "Enable UVC (USB Video Class) device support" ON)
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer video backend" ON)
-option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 
 # ============================================================================
 # MAVLink Configuration
@@ -150,13 +176,44 @@ set(QGC_IOS_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "iOS targeted device famil
 # ----------------------------------------------------------------------------
 # Linux Platform
 # ----------------------------------------------------------------------------
+# Distro-aware defaults for native (non-Docker) builds. Docker builds pass these
+# explicitly via -D (see deploy/docker/entrypoint.sh), which overrides the cache.
+include(LinuxDistro)
+
+# Fedora/Arch glibc exceeds the AppImage floor (appimagelint noise there); native
+# package generator follows the distro (DEB/RPM via CPack, Arch via makepkg).
+set(_qgc_appimagelint_default ON)
+set(_qgc_cpack_default "")
+if(QGC_LINUX_DISTRO_FAMILY STREQUAL "debian")
+    set(_qgc_cpack_default "DEB")
+elseif(QGC_LINUX_DISTRO_FAMILY STREQUAL "rhel")
+    set(_qgc_appimagelint_default OFF)
+    set(_qgc_cpack_default "RPM")
+elseif(QGC_LINUX_DISTRO_FAMILY STREQUAL "arch")
+    set(_qgc_appimagelint_default OFF)
+endif()
+
 option(QGC_CREATE_APPIMAGE "Create AppImage package after build" ON)
+option(QGC_RUN_APPIMAGELINT "Run the appimagelint distro-compatibility check after AppImage creation" ${_qgc_appimagelint_default})
 set(QGC_APPIMAGE_ICON_256_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/QGroundControl_256.png" CACHE FILEPATH "AppImage 256x256 icon path")
 set(QGC_APPIMAGE_ICON_SCALABLE_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/QGroundControl.svg" CACHE FILEPATH "AppImage SVG icon path")
 set(QGC_APPIMAGE_APPRUN_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/AppRun" CACHE FILEPATH "AppImage AppRun script path")
 set(QGC_APPIMAGE_DESKTOP_ENTRY_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in" CACHE FILEPATH "AppImage desktop entry path")
 set(QGC_APPIMAGE_METADATA_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.appdata.xml.in" CACHE FILEPATH "AppImage metadata path")
 set(QGC_APPIMAGE_APPDATA_DEVELOPER "qgroundcontrol" CACHE STRING "AppImage developer name")
+# Optional CPack native package built by the `qgc-package` target, alongside the
+# platform's default installer (AppImage / NSIS .exe / DMG). Empty = installer only.
+# WIN32/APPLE (not MACOS/LINUX) because Toolchain.cmake — which sets those — is
+# included after this file.
+if(WIN32)
+    set(_qgc_cpack_strings "" "NSIS" "IFW" "TXZ")
+elseif(APPLE)
+    set(_qgc_cpack_strings "" "DragNDrop" "Bundle" "productbuild" "IFW" "TXZ")
+else()
+    set(_qgc_cpack_strings "" "DEB" "RPM" "TXZ")
+endif()
+set(QGC_CPACK_GENERATOR "${_qgc_cpack_default}" CACHE STRING "Optional CPack generator for the qgc-package target (alongside the default installer)")
+set_property(CACHE QGC_CPACK_GENERATOR PROPERTY STRINGS ${_qgc_cpack_strings})
 
 # ----------------------------------------------------------------------------
 # Windows Platform
@@ -189,8 +246,8 @@ unset(_qmlls_ini_default)
 option(QT_QMLLINT_CONTEXT_PROPERTY_DUMP "Emit qmllint context property data (Qt 6.11+; no-op on older)" ON)
 option(QT_QML_GENERATE_QMLLINT "Run qmllint at build time" OFF)
 
-set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x060A00" CACHE STRING "Disable Qt APIs deprecated before this version")
-set(QGC_QT_ENABLE_STRICT_MODE_UP_TO "0x060A00" CACHE STRING "Enable strict Qt API mode up to this version")
+set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x060B00" CACHE STRING "Disable Qt APIs deprecated before this version")
+set(QGC_QT_ENABLE_STRICT_MODE_UP_TO "0x060B00" CACHE STRING "Enable strict Qt API mode up to this version")
 
 # Debug environment variables (uncomment to enable)
 # set(ENV{QT_DEBUG_PLUGINS} "1")

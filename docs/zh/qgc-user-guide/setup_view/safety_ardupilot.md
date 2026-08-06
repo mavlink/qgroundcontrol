@@ -14,8 +14,6 @@ _QGroundControl_ does not support polygon fences or rally points on ArduPilot.
 
 The Copter safety page is shown below.
 
-![Safety Setup - Copter (Ardupilot)](../../../assets/setup/safety/safety_arducopter.jpg)
-
 :::info
 For additional safety settings and information see: [Failsafe](http://ardupilot.org/copter/docs/failsafe-landing-page.html).
 :::
@@ -30,8 +28,6 @@ The thresholds can be disabled by setting them to zero.
 If there is a second battery (enabled in the [Power Setup](../setup_view/power.md)) a second panel will be displayed with the same settings.
 :::
 
-![Safety Setup - Battery1 Failsafe Triggers (Copter)](../../../assets/setup/safety/safety_arducopter_battery1_failsafe_triggers.jpg)
-
 The configuration options are:
 
 - **Low action** ([BATT_FS_LOW_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-low-act-low-battery-failsafe-action)) - Select one of: None, Land, RTL, SmartRTL, SmartRTL or Land, Terminate.
@@ -45,8 +41,6 @@ The configuration options are:
 
 This panel enables the [GCS Failsafe](http://ardupilot.org/copter/docs/gcs-failsafe.html) and enables/configures the throttle failsafe.
 
-![Safety Setup - General Failsafe Triggers (Copter)](../../../assets/setup/safety/safety_arducopter_general_failsafe_triggers.jpg)
-
 The configuration options are:
 
 - **Ground Station failsafe** - Disabled, Enabled always RTL, Enabled Continue with Mission in Auto Mode, Enabled Always SmartRTL or RTL, Enabled Always SmartRTL or Land.
@@ -57,8 +51,6 @@ The configuration options are:
 
 This panel sets the parameters for the cylindrical [Simple Geofence](http://ardupilot.org/copter/docs/ac2_simple_geofence.html).
 You can set whether the fence radius or height are enabled, the maximum values for causing a breach, and the action in the event of a breach.
-
-![Safety Setup - Geofence (Copter)](../../../assets/setup/safety/safety_arducopter_geofence.jpg)
 
 The configuration options are:
 
@@ -74,8 +66,6 @@ The configuration options are:
 
 This panel sets the [RTL Mode](http://ardupilot.org/copter/docs/rtl-mode.html) behaviour.
 
-![Safety Setup - RTL (Copter)](../../../assets/setup/safety/safety_arducopter_return_to_launch.jpg)
-
 The configuration options are:
 
 - Select RTL return altitude ([RTL_ALT](http://ardupilot.org/copter/docs/parameters.html#rtl-alt-rtl-altitude)):
@@ -90,8 +80,6 @@ The configuration options are:
 
 此面板用于设置启用哪些[预启动安全检查](http://ardupilot.org/copter/docs/prearm_safety_check.html)。
 
-![安全设置 - 启动检查（多旋翼飞行器）](../../../assets/setup/safety/safety_arducopter_arming_checks.jpg)
-
 The configuration options are:
 
 - **要执行的启动检查**（[ARMING_CHECK](http://ardupilot.org/copter/docs/parameters.html#arming-check-arm-checks-to-peform-bitmask)） - 勾选所有适用项：气压计、指南针、GPS锁定、惯性导航系统、参数、遥控通道、电路板电压、电池电量、空速、日志记录可用、硬件安全开关、GPS配置、系统。
@@ -99,8 +87,6 @@ The configuration options are:
 ## Plane
 
 The Plane safety page is shown below.
-
-![Safety Setup - Plane (Ardupilot)](../../../assets/setup/safety/safety_arduplane.jpg)
 
 :::info
 For additional safety settings and information see: [Plane Failsafe Function](http://ardupilot.org/plane/docs/apms-failsafe-function.html) and [Advanced Failsafe Configuration](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html).
@@ -116,8 +102,6 @@ For more information see: [battery failsafe](#battery_failsafe_copter) (copter).
 
 This panel enables the [GCS Failsafe](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html#ground-station-communications-loss) and enables/configures the throttle failsafe.
 
-![Safety Setup - Failsafe Triggers (Plane)](../../../assets/setup/safety/safety_arduplane_failsafe_triggers.jpg)
-
 The configuration options are:
 
 - **Throttle PWM threshold** ([THR_FS_VALUE](http://ardupilot.org/plane/docs/parameters.html#thr-fs-value-throttle-failsafe-value)) - PWM value below which throttle failsafe triggers.
@@ -126,8 +110,6 @@ The configuration options are:
 ### Return to Launch {#rtl_plane}
 
 This panel sets the [RTL Mode](http://ardupilot.org/copter/docs/rtl-mode.html) behaviour.
-
-![Safety Setup - RTL (Plane)](../../../assets/setup/safety/safety_arduplane_return_to_launch.jpg)
 
 The configuration options are:
 
@@ -143,8 +125,6 @@ The configuration options are:
 
 The Rover safety page is shown below.
 
-![Safety Setup - Rover (Ardupilot)](../../../assets/setup/safety/safety_ardurover.jpg)
-
 :::info
 For additional safety settings and information see: [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
 :::
@@ -156,8 +136,6 @@ The rover battery failsafe is the same as for [copter](#battery_failsafe_copter)
 ### Failsafe Triggers {#failsafe_triggers_rover}
 
 This panel enables the rover [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
-
-![Safety Setup - Failsafe Triggers (Rover)](../../../assets/setup/safety/safety_ardurover_failsafe_triggers.jpg)
 
 The configuration options are:
 
@@ -173,8 +151,6 @@ The configuration options are:
 ## Sub
 
 The Sub safety page is shown below.
-
-![Safety Setup - Sub (Ardupilot)](../../../assets/setup/safety/safety_ardusub.jpg)
 
 :::info
 For additional safety settings and information see: [Failsafes](https://www.ardusub.com/operators-manual/failsafes.html).

@@ -81,13 +81,9 @@
             <meta-data
                 android:name="android.app.splash_screen_drawable"
                 android:resource="@drawable/splashscreen" />
-            <!-- <meta-data android:name="android.app.splash_screen_drawable_portrait" -->
-            <!-- <meta-data android:name="android.app.splash_screen_drawable_landscape" -->
             <meta-data
                 android:name="android.app.splash_screen_sticky"
                 android:value="false" />
-            <!-- <meta-data android:name="android.app.background_running" -->
-            <!-- <meta-data android:name="android.app.trace_location" -->
         </activity>
 
         <provider

@@ -2,8 +2,6 @@
 
 The _Power Setup_ screen is used to configure battery parameters and also provide advanced settings for propellers.
 
-![Battery Calibration](../../../assets/setup/px4_power.jpg)
-
 ## Battery Voltage/Current Calibration
 
 Enter data for your battery/power module from its data sheet: number of cells, full voltage per cell, empty voltage per cell. If provided, also enter voltage divider and amps-per-volt information.

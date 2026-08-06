@@ -3,10 +3,7 @@ qt_add_library(QGCDatabase STATIC
     QGCSqlHelper.h
 )
 
-target_include_directories(QGCDatabase
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+target_include_directories(QGCDatabase PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(QGCDatabase
     PUBLIC

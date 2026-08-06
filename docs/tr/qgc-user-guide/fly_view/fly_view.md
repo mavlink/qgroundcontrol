@@ -1,21 +1,26 @@
 # Fly View
 
+:::tip Having trouble?
+For connection issues, see [Connection Problems](../troubleshooting/vehicle_connection.md). For mission resume issues during flight, see [Resume Mission Failures](../troubleshooting/resume_mission.md).
+:::
+
 The Fly View is used to command and monitor the vehicle.
 
 ## Overview
 
-![Uçuş Ekranı](../../../assets/fly/fly_view_overview.jpg)
+<img src="../../../assets/fly/fly_view_overview.svg" alt="Fly View overview" style="height: 30em; vertical-align: text-bottom;" />
 
-- **[Toolbar](fly_view_toolbar.md):** The toolbar is at the top of the screen. It provides controls to select views, show flight status and mode as well as the status of the main components of the vehicle.
-- **[Vehicle Actions](fly_tools.md):** Allows you command the vehicle to take a specific action.
-- **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
-- **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
-- **[Camera Tools](camera_tools.md)**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
+- **View Selector:** Allows you to switch between the main views (Fly, Plan, Analyze, Vehicle Configuration, Application Settings).
+- **[Status Indicators](fly_view_toolbar.md):** Shows flight status and mode as well as the status of the main components of the vehicle.
+- **[Actions](fly_tools.md):** Allows you to command the vehicle to take a specific action.
+- **[Camera Tools](camera_tools.md):** Switch between still and video modes, start/stop capture, and control camera settings.
 - **[Video](video.md):** Display the video from the vehicle. Allows you to toggle between video or map as the main display.
-- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
+- **[Telemetry Values](instrument_panel.md):** Displays configurable telemetry values.
+- **[Attitude/Compass](hud.md):** Provides virtual horizon and heading information.
+- **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle. Can be switched between multiple variations.
   - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
   - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
-  - Kalkıştan sonra, haritaya tıklayarak bir konuma [Go to](#goto) veya [Orbit at](#orbit) ayarlayabilirsiniz.
+  - Once flying, you can click on the map to set a [Go to](#map_actions) or [Orbit at](#map_actions) location.
 
 There are a number of other elements that are not displayed by default and are only displayed in certain conditions or for certain vehicle types.
 
@@ -27,7 +32,7 @@ Aşağıdaki bölümler, Uçuş Ekranı'nda genel işlemlerin / görevlerin nas�
 Many of the available options depend on both the vehicle type and its current state.
 :::
 
-### Actions associated with a map position (#map_actions)
+### Actions associated with a map position {#map_actions}
 
 There are a number of actions which can be taken which are associated with a specific position on the map. To use these actions:
 
@@ -50,13 +55,13 @@ Durdurmak için:
 
 1. _Fly Tools_'dan **Pause** butonuna basın.
 2. İsterseniz yeni bir yüksekliği sağda bulunan dikey kaydırıcıyla ayarlayabilirsiniz.
-3. Confirm the pause using the slider.
+3. [Confirm](fly_tools.md#confirmation) the action.
 
 ### Görevler
 
 #### Görevi Başlatma {#start_mission}
 
-Araç inmiş durumdayken bir görevi başlatabilirsiniz (görevi başlatma onay kaydıracı varsayılan olarak çoğu kez gösterilir).
+You can start a mission when the vehicle is landed (the start mission confirmation button is often displayed by default).
 
 Yerdeki bir aracın görevini başlatmak için:
 
@@ -64,17 +69,11 @@ Yerdeki bir aracın görevini başlatmak için:
 
 2. İletişim kutusundan _Start Mission_'ı seçin.
 
-  ![Görevi Başlatma Eylemi](../../../assets/fly/start_mission_action.jpg)
-
-  (kaydırmalı onay çubuğunu görüntülemek için)
-
-3. Onay kaydıracı belirdiğinde görevi başlatmak için kaydırın.
-
-  ![Görevi Başlatma](../../../assets/fly/start_mission.jpg)
+3. [Confirm](fly_tools.md#confirmation) the action to start the mission.
 
 #### Göreve Devam Etme (Continue Mission) {#continue_mission}
 
-Göreve _sıradaki_ hedef noktanızdan _devam_ edebilirsiniz (_Continue Mission_ kaydırmalı onay butonu kalkıştan sonra çoğu kez varsayılan olarak gösterilir).
+You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation button is often displayed by default after you takeoff).
 
 :::info
 Continue ve [Resume mission](#resume_mission) farklıdır!
@@ -88,15 +87,11 @@ Görevinize aşağıdakileri yaparak devam edebilirsiniz (hali hazırda bir gör
 
 2. İletişim kutusundan _Continue Mission_'ı seçin.
 
-  ![Göreve Devam Etme/Yüksekliği Değiştirme ](../../../assets/fly/continue_mission_change_altitude_action.jpg)
-
-3. Kaydırmalı onay butonunu kaydırarak göreve devam edin.
-
-  ![Göreve Devam Etme (Continue Mission)](../../../assets/fly/continue_mission.jpg)
+3. [Confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 #### Göreve Devam Etme (Resume Mission) {#resume_mission}
 
-_Resume Mission_, bir görevin içinde [RTL/Return](#rtl) ya da [Land](#land) gerçekleştirdikten sonra (ör. batarya değiştirmek için) kullanılır.
+_Resume Mission_ is used to resume a mission after performing an [RTL/Return](hud.md#rtl) or [Land](hud.md#land) from within a mission (in order, for example, to perform a battery change).
 
 :::info
 Eğer bataryayı değiştiricekseniz, bataryanın bağlantısını kestikten sonra QGC ile aracın bağlantısını **kesmeyin**.
@@ -105,14 +100,8 @@ Yeni bataryayı yerleştirdikten sonra _QGroundControl_ cihazı tekrar tespit ed
 
 İnişten sonra size görev planını cihazdan kaldırma, cihazda bırakma ya da göreve kaldığı yerden devam etme seçeneklerini sunan bir _Flight Plan complete_ iletişim kutusu karşınıza çıkacaktır.
 
-![Göreve Devam Etme (Resume Mission)](../../../assets/fly/resume_mission.jpg)
-
 If you select to resume the mission, then _QGroundControl_ will rebuild the mission and upload it to the vehicle.
-Ardından _Start Mission_ kaydıracıyla göreve devam edebilirsiniz.
-
-Aşağıdaki görüntü inişten sonra yeniden yapılandırılan bir görevi göstermektedir.
-
-![Yapılandırılmış Göreve Devam Etme](../../../assets/fly/resume_mission_rebuilt.jpg)
+Then [confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 :::info
 Bir görev, basit bir şekilde aracın son gerçekleştirdiği görev aşamasından devam edemez, çünkü son yapılan aşamada görevin sonraki aşamalarına etki edebilecek birden fazla etken olabilir (ör. hız komutları ya da kameranın kontrol komutları).
@@ -127,17 +116,13 @@ This is meant to prevent issues where stale missions are unknowingly left on a v
 ### Videoyu Görüntüleme {#video_switcher}
 
 Video akışı etkinleştirildiğinde, _QGroundControl_ haritanın sol altında bulunan "videoya geçiş penceresi"nde videoyu göstermeye başlıyacaktır.
-You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).
-
-![Video Akışı Kaydı](../../../assets/fly/video_record.jpg)
+You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 :::info
 video akışı [Application Settings > General tab > Video](../settings_view/general.md#video)'dan etkinleştirilebilir/düzenlenebilir.
 :::
 
 Video görüntüsünü geçiş penceresindeki kontrolleri kullanararak daha da düzenleyebilirsiniz:
-
-![Video Pop](../../../assets/fly/video_pop.jpg)
 
 - Resize the switcher by dragging the icon in the top right corner.
 - Hide the switcher by pressing the toggle icon in the lower left.
@@ -154,10 +139,8 @@ Kameranın kendisinde kaydedilen video daha kaliteli olacak olsa da, yüksek iht
 
 #### Video Akışını Kaydetme (GCS'de)
 
-Video akışı kaydı [video stream instrument page](#video_instrument_page)'dan kontrol edilir.
+Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 Yeni bir video kaydı başlatmak için kırmızı daireye tıklayın (daireye her tıklanıldığında yeni bir video dosyası oluşturulur); kayıt devam ederken çember kırmızı bir kareye dönüşecektir.
-
-![Video Akışı Kaydı](../../../assets/fly/video_record.jpg)
 
 Video akışı kaydı [Application Settings > General tab](../settings_view/general.md)'dan düzenlenir:
 
@@ -177,7 +160,6 @@ QGroundControl uygulamasının öğeleriyle videoyu kaydetmek için başka bir e
 
 #### Videoyu Kamerada Kaydetme
 
-_Kameranın kendisinde_ video kaydını durdurup/başlatmak için [camera instrument page](#camera_instrument_page)'i kullanabilirsiniz.
+Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 İlk olarak video moduna geçiş yapın, ardından kırmızı butona basarak kaydı başlatabilirsiniz.
 
-![Bilgi Paneli - Kameranın MAVLink ayarları](../../../assets/fly/instrument_page_camera_mavlink_settings.jpg)

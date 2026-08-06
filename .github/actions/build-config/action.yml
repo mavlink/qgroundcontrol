@@ -26,15 +26,15 @@ outputs:
   gstreamer_ios_version:
     description: GStreamer version (iOS)
     value: ${{ steps.read.outputs.gstreamer_ios_version }}
-  ndk_version:
+  android_ndk_version:
     description: Android NDK version (short form)
-    value: ${{ steps.read.outputs.ndk_version }}
-  ndk_full_version:
+    value: ${{ steps.read.outputs.android_ndk_version }}
+  android_ndk_full_version:
     description: Android NDK version (full form for sdkmanager)
-    value: ${{ steps.read.outputs.ndk_full_version }}
-  java_version:
+    value: ${{ steps.read.outputs.android_ndk_full_version }}
+  android_java_version:
     description: Java version
-    value: ${{ steps.read.outputs.java_version }}
+    value: ${{ steps.read.outputs.android_java_version }}
   android_platform:
     description: Android platform/API level
     value: ${{ steps.read.outputs.android_platform }}
@@ -44,21 +44,21 @@ outputs:
   android_cmdline_tools:
     description: Android command line tools version
     value: ${{ steps.read.outputs.android_cmdline_tools }}
-  xcode_version:
+  apple_xcode_version:
     description: Xcode version (macOS)
-    value: ${{ steps.read.outputs.xcode_version }}
-  xcode_ios_version:
+    value: ${{ steps.read.outputs.apple_xcode_version }}
+  apple_xcode_ios_version:
     description: Xcode version (iOS)
-    value: ${{ steps.read.outputs.xcode_ios_version }}
-  macos_deployment_target:
+    value: ${{ steps.read.outputs.apple_xcode_ios_version }}
+  apple_macos_deployment_target:
     description: macOS deployment target version
-    value: ${{ steps.read.outputs.macos_deployment_target }}
-  ios_deployment_target:
+    value: ${{ steps.read.outputs.apple_macos_deployment_target }}
+  apple_ios_deployment_target:
     description: iOS deployment target version
-    value: ${{ steps.read.outputs.ios_deployment_target }}
-  platform_workflows:
+    value: ${{ steps.read.outputs.apple_ios_deployment_target }}
+  build_platform_workflows:
     description: Comma-separated platform workflow names
-    value: ${{ steps.read.outputs.platform_workflows }}
+    value: ${{ steps.read.outputs.build_platform_workflows }}
 
 runs:
   using: composite

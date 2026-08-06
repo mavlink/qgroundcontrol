@@ -1,6 +1,7 @@
 #include "CompInfoGeneral.h"
 #include "ComponentInformationManager.h"
 #include "JsonParsing.h"
+#include "JsonSchemaValidator.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonDocument>
@@ -37,6 +38,12 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName)
         qCWarning(CompInfoGeneralLog) << "Metadata json file open failed: compid:" << compId << errorString;
         return;
     }
+
+    QString schemaError;
+    if (!JsonSchemaValidator::validate(jsonDoc, QStringLiteral(":/json/component_metadata/general.schema.json"), schemaError)) {
+        qCWarning(CompInfoGeneralLog) << "Metadata json schema validation failed: compid:" << compId << schemaError;
+    }
+
     QJsonObject jsonObj = jsonDoc.object();
 
     QList<JsonParsing::KeyValidateInfo> keyInfoList = {

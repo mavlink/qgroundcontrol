@@ -101,6 +101,7 @@ Rectangle {
                 }
 
                 SubMenuButton {
+                    objectName:         "analyzeButton_" + modelData.title
                     imageResource:      modelData.icon
                     autoExclusive:      true
                     text:               modelData.title

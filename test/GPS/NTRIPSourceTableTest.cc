@@ -1,46 +1,46 @@
 #include "NTRIPSourceTableTest.h"
-#include "NTRIPSourceTable.h"
-#include "QmlObjectListModel.h"
 
 #include <QtPositioning/QGeoCoordinate>
 
+#include "NTRIPSourceTable.h"
+
 void NTRIPSourceTableTest::_testParseSTRLine()
 {
-    const QString line = "STR;MOUNT01;Mount Identifier;RTCM 3.2;1005(1),1074(1),1084(1),1094(1);2;GPS+GLO+GAL;NET01;USA;40.0000;-74.0000;0;1;QGC Test;none;B;N;4800;misc";
-    auto* mp = NTRIPMountpointModel::fromSourceTableLine(line);
-    QVERIFY(mp != nullptr);
+    const QString line =
+        "STR;MOUNT01;Mount Identifier;RTCM 3.2;"
+        "1005(1),1074(1),1084(1),1094(1);2;GPS+GLO+GAL;NET01;USA;40.0000;-74.0000;0;1;QGC Test;none;B;N;4800;misc";
+    NTRIPMountpoint mp;
+    QVERIFY(NTRIPMountpoint::fromSourceTableLine(line, mp));
 
-    QCOMPARE(mp->mountpoint(), QStringLiteral("MOUNT01"));
-    QCOMPARE(mp->identifier(), QStringLiteral("Mount Identifier"));
-    QCOMPARE(mp->format(), QStringLiteral("RTCM 3.2"));
-    QCOMPARE(mp->carrier(), 2);
-    QCOMPARE(mp->navSystem(), QStringLiteral("GPS+GLO+GAL"));
-    QCOMPARE(mp->network(), QStringLiteral("NET01"));
-    QCOMPARE(mp->country(), QStringLiteral("USA"));
-    QVERIFY(qFuzzyCompare(mp->latitude(), 40.0));
-    QVERIFY(qFuzzyCompare(mp->longitude(), -74.0));
-    QVERIFY(!mp->nmea());
-    QVERIFY(mp->solution());
-    QCOMPARE(mp->generator(), QStringLiteral("QGC Test"));
-    QCOMPARE(mp->authentication(), QStringLiteral("B"));
-    QVERIFY(!mp->fee());
-    QCOMPARE(mp->bitrate(), 4800);
-
-    delete mp;
+    QCOMPARE(mp.mountpoint, QStringLiteral("MOUNT01"));
+    QCOMPARE(mp.identifier, QStringLiteral("Mount Identifier"));
+    QCOMPARE(mp.format, QStringLiteral("RTCM 3.2"));
+    QCOMPARE(mp.carrier, 2);
+    QCOMPARE(mp.navSystem, QStringLiteral("GPS+GLO+GAL"));
+    QCOMPARE(mp.network, QStringLiteral("NET01"));
+    QCOMPARE(mp.country, QStringLiteral("USA"));
+    QVERIFY(qFuzzyCompare(mp.latitude, 40.0));
+    QVERIFY(qFuzzyCompare(mp.longitude, -74.0));
+    QVERIFY(!mp.nmea);
+    QVERIFY(mp.solution);
+    QCOMPARE(mp.generator, QStringLiteral("QGC Test"));
+    QCOMPARE(mp.authentication, QStringLiteral("B"));
+    QVERIFY(!mp.fee);
+    QCOMPARE(mp.bitrate, 4800);
 }
 
 void NTRIPSourceTableTest::_testParseShortLine()
 {
     const QString line = "STR;SHORT;Too;Few;Fields";
-    auto* mp = NTRIPMountpointModel::fromSourceTableLine(line);
-    QVERIFY(mp == nullptr);
+    NTRIPMountpoint mp;
+    QVERIFY(!NTRIPMountpoint::fromSourceTableLine(line, mp));
 }
 
 void NTRIPSourceTableTest::_testParseNonSTRLine()
 {
     const QString line = "CAS;caster.example.com;2101;NTRIP Caster;Operator;0;USA;0.0;0.0;0.0;0.0;0;0;misc";
-    auto* mp = NTRIPMountpointModel::fromSourceTableLine(line);
-    QVERIFY(mp == nullptr);
+    NTRIPMountpoint mp;
+    QVERIFY(!NTRIPMountpoint::fromSourceTableLine(line, mp));
 }
 
 void NTRIPSourceTableTest::_testParseFullTable()
@@ -56,26 +56,25 @@ void NTRIPSourceTableTest::_testParseFullTable()
     model.parseSourceTable(table);
 
     QCOMPARE(model.count(), 2);
+    QCOMPARE(model.rowCount(), 2);
 }
 
 void NTRIPSourceTableTest::_testDistanceCalculation()
 {
     const QString line = "STR;NEAR;Id;RTCM 3.2;details;2;GPS;NET;USA;40.7128;-74.0060;0;1;gen;none;B;N;4800;misc";
-    auto* mp = NTRIPMountpointModel::fromSourceTableLine(line);
-    QVERIFY(mp != nullptr);
+    NTRIPMountpoint mp;
+    QVERIFY(NTRIPMountpoint::fromSourceTableLine(line, mp));
 
-    QVERIFY(mp->distanceKm() < 0.0);
+    QVERIFY(mp.distanceKm < 0.0);
 
     QGeoCoordinate userPos(40.7128, -74.0060);
-    mp->updateDistance(userPos);
-    QVERIFY(mp->distanceKm() >= 0.0);
-    QVERIFY(mp->distanceKm() < 1.0);
+    mp.updateDistance(userPos);
+    QVERIFY(mp.distanceKm >= 0.0);
+    QVERIFY(mp.distanceKm < 1.0);
 
     QGeoCoordinate farPos(51.5074, -0.1278);
-    mp->updateDistance(farPos);
-    QVERIFY(mp->distanceKm() > 5000.0);
-
-    delete mp;
+    mp.updateDistance(farPos);
+    QVERIFY(mp.distanceKm > 5000.0);
 }
 
 void NTRIPSourceTableTest::_testUpdateDistancesAll()
@@ -89,20 +88,20 @@ void NTRIPSourceTableTest::_testUpdateDistancesAll()
     model.parseSourceTable(table);
     QCOMPARE(model.count(), 2);
 
-    // Before update, distances should be negative (unset)
-    auto* mp0 = qobject_cast<NTRIPMountpointModel*>(model.mountpoints()->get(0));
-    auto* mp1 = qobject_cast<NTRIPMountpointModel*>(model.mountpoints()->get(1));
-    QVERIFY(mp0->distanceKm() < 0.0);
-    QVERIFY(mp1->distanceKm() < 0.0);
+    const auto distanceAt = [&model](int row) {
+        return model.data(model.index(row), NTRIPSourceTableModel::DistanceKmRole).toDouble();
+    };
 
-    // Update from NYC position
+    QVERIFY(distanceAt(0) < 0.0);
+    QVERIFY(distanceAt(1) < 0.0);
+
     QGeoCoordinate nycPos(40.7128, -74.0060);
     model.updateDistances(nycPos);
 
-    // NYC mount should be very close, London should be far
-    QVERIFY(mp0->distanceKm() >= 0.0);
-    QVERIFY(mp0->distanceKm() < 1.0);
-    QVERIFY(mp1->distanceKm() > 5000.0);
+    // After sortByDistance, the NYC mount is first (closest), London last.
+    QVERIFY(distanceAt(0) >= 0.0);
+    QVERIFY(distanceAt(0) < 1.0);
+    QVERIFY(distanceAt(1) > 5000.0);
 }
 
 void NTRIPSourceTableTest::_testEmptyTable()

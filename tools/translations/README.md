@@ -1,65 +1,76 @@
 # QGroundControl string translations
 
-QGC uses the standard Qt Linguist mechanisms for string translation. QGC uses crowd sourced string translation through a [Crowdin project](https://crowdin.com/project/qgroundcontrol) for translation.
+QGC uses the standard Qt Linguist mechanism for string translation, sourced through a crowd-sourced
+[Crowdin project](https://crowdin.com/project/qgroundcontrol).
 
 ## Crowdin integration
 
-Crowdin is configured to automatically sychronize the qgc.ts file once a day. So it will pick up any new changes automatically. Once it has processed those changes it will submit a pull request back with the translations.
+Crowdin synchronizes `qgc.ts` once a day, picking up new changes automatically and opening a pull
+request with the resulting translations.
 
-### Adding a new language for translation
+### Adding a new language
 
-Add the new language from the CrowdIn settings as the first step.
+Add the language from the Crowdin settings.
 
-### Periodically update the base translation files during the release cycle
+### Updating base translation files during the release cycle
 
-The `lupdate.yml` workflow runs automatically every Sunday to regenerate the `.ts` source files and open a PR with any changes. You can also trigger it manually from the Actions tab or run it locally with `python3 tools/translations/qgc_lupdate.py` from the repository root. Crowdin will automatically pull these up and submit a pull request back when new translations are available.
+The `lupdate.yml` workflow runs every Sunday to regenerate the `.ts` source files and open a PR with
+any changes. Trigger it manually from the Actions tab, or run it locally from the repo root:
 
-## C++ and Qml code strings
-
-These are coded using the standard Qt tr() for C++ and qsTr() for Qml mechanisms.
-
-## Translating strings within Json files
-
-QGC uses json files internally for metadata. These files need to be translated as well. There is a [python json parser](https://github.com/mavlink/qgroundcontrol/blob/master/tools/translations/qgc_lupdate_json.py) which is used to find all the json files in the source tree and pull all the strings out for translation. This parser outputs the localization file for json strings in Qt .ts file format.
-
-In order for the parser to know which strings must be translated additional keys must be available at the root object level.
-
-> Important: Json files which have the same name are not allowed. Since the name is used as the context for the translation lookup it must be unique. The parse will throw an error if it finds duplicate file names.
-
-> Important: The root file name for the json file must be the same as the root filename for the Qt resource alias. This due to the fact that the root filename is used as the translation context. The json parser reads files from the file system and sees file system names. Whereas the QGC C++ code reads json files from the QT resource system and see the file alias as the full path and root name.
-
-### Specifying known file type
-
-The parser supports two known file types: "MAVCmdInfo" and "FactMetaData". If your json file is one of these types you should place a `fileType` key at the root with one of these values. This will cause the parser to use these defaults for instructions:
-
-#### MAVCmdInfo
-
-```
-    "translateKeys":    "label,enumStrings,friendlyName,description",
-    "arrayIDKeys":      "rawName,comment"
+```bash
+python3 tools/translations/qgc_lupdate.py
 ```
 
-#### FactMetaData
+Crowdin picks these up and submits translations back as they become available.
 
+## C++ and QML code strings
+
+Use the standard Qt `tr()` (C++) and `qsTr()` (QML) mechanisms.
+
+## Translating strings in JSON files
+
+QGC stores metadata in JSON files that also need translation. The
+[JSON parser](https://github.com/mavlink/qgroundcontrol/blob/master/tools/translations/qgc_lupdate_json.py)
+finds every JSON file in the source tree, extracts translatable strings, and emits a Qt `.ts`
+localization file. To mark which strings to translate, add keys at the root object level.
+
+> **Important:** JSON files may not share a name — the filename is the translation-lookup context and
+> must be unique (duplicates raise a parser error). The root filename must also match the Qt resource
+> alias, because the parser sees filesystem names while QGC C++ reads files through the Qt resource
+> system (which sees the alias path).
+
+### Known file types
+
+The parser supports two known types. Set a root `fileType` key to `MAVCmdInfo` or `FactMetaData` to
+apply its default instructions:
+
+```json
+// MAVCmdInfo
+"translateKeys": "label,enumStrings,friendlyName,description",
+"arrayIDKeys":   "rawName,comment"
+
+// FactMetaData
+"translateKeys": "shortDescription,longDescription,enumStrings",
+"arrayIDKeys":   "name"
 ```
-    "translateKeys":    "shortDescription,longDescription,enumStrings"
-    "arrayIDKeys":      "name"
-```
 
-### Manually specify parser instructions
+### Manual parser instructions
 
-For this case dont include the `fileType` key/value pair. And include the followings keys (as needed) in the root object:
+Omit `fileType` and set these root keys as needed:
 
-- `translateKeys` This key is a string which is a list of all the keys which should be translated.  
-- `arrayIDKeys` The json localization parser provides additional information to the translator about where this string came from in the json hierarchy. If there is an array in the json, just displaying an array index as to where this came from is not that helpful. In most cases there is a key within each array element for which the value is unique. If this is the case then specify this key name(s) as the value for `arrayIDKeys`.
+- `translateKeys` — comma-separated list of keys to translate.
+- `arrayIDKeys` — for arrays, the per-element key(s) whose value uniquely identifies an entry, so the
+  translator gets meaningful context instead of a bare array index.
 
 ### Disambiguation
 
-This is used when you have two strings in the same file which are equal, but there meaning ar different enough that when translated they may each have their own different translation. In order to specific that you include a special prefix marker in the string which includes comments to the translator to explain the specifics of the string.
+When two equal strings in the same file need different translations, prefix the value with a
+disambiguation marker:
 
-```
-    "foo": "#loc.disambiguation#This is the foo version of baz#baz"
-    "bar": "#loc.disambiguation#This is the bar version of baz#baz"
+```json
+"foo": "#loc.disambiguation#This is the foo version of baz#baz"
+"bar": "#loc.disambiguation#This is the bar version of baz#baz"
 ```
 
-In the example above "baz" is the string which is the same for two different keys. The prefix `#loc.disambiguation#` indicates a disambiguation is to follow which is the string between the next set of `#`s.
+Here `baz` is the shared string; `#loc.disambiguation#...#` carries a note to the translator, with the
+actual string following the final `#`.

@@ -50,13 +50,16 @@ ensure_tools_dir(__file__)
 from common.build_config import get_build_config_value
 from common.gh_actions import write_github_output
 from common.logging import log_error, log_info, log_ok, log_warn
+from common.tool_version import uv_lock_version
 
 # ============================================================================
 # Shared Utilities
 # ============================================================================
 
-MESON_VERSION = "1.10.1"
-NINJA_VERSION = "1.13.0"
+# Fallbacks for contexts without tools/uv.lock; the lock's pins are the source of
+# truth otherwise, so the pip fallback here can't drift from the dev/CI venv.
+MESON_VERSION = uv_lock_version("meson") or "1.11.1"
+NINJA_VERSION = uv_lock_version("ninja") or "1.13.0"
 
 
 def run_cmd(
@@ -693,7 +696,7 @@ def main() -> int:
     args = parse_args()
 
     # Resolve defaults
-    version = args.version or get_build_config_value("gstreamer_default_version", "1.24.13")
+    version = args.version or get_build_config_value("gstreamer.version.default", "1.24.13")
     arch = args.arch or get_default_arch(args.platform)
     prefix = Path(args.prefix) if args.prefix else None
     work_dir = Path(args.work_dir)

@@ -1,20 +1,17 @@
 name: Build Results
 
 on:
-  workflow_run:
+  workflow_run:  # zizmor: ignore[dangerous-triggers] consumes completed-build artifacts + PR metadata; never checks out or runs PR head code
     # GitHub requires literal workflow names here (no expressions). Keep this
     # list in sync with build-config.json's `platform_workflows` plus any
     # non-platform triggers (pre-commit). Drift is enforced by
-    # .github/scripts/tests/test_build_results_workflow_sync.py.
+    # .github/scripts/tests/test_platform_workflow_names.py.
     workflows: [Linux, Windows, MacOS, Android, pre-commit]
     types: [completed]
 
 permissions:
   contents: read
   actions: read
-  checks: write
-  pull-requests: write
-  issues: write
 
 env:
   QGC_GH_API_MODE: http
@@ -31,20 +28,24 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: |
             .github/build-config.json
+            tools/_bootstrap.py
             tools/setup/read_config.py
             tools/common/__init__.py
             tools/common/build_config.py
+            tools/common/file_traversal.py
+            tools/common/gh_actions.py
             tools/common/io.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
+          persist-credentials: false
       - name: Read platform_workflows
         id: read
         run: |
-          value=$(python3 tools/setup/read_config.py --get platform_workflows)
+          value=$(python3 tools/setup/read_config.py --get build.platform_workflows)
           if [[ -z "$value" || "$value" == "null" ]]; then
             echo "::error::platform_workflows missing from build-config.json"
             exit 1
@@ -61,6 +62,14 @@ jobs:
       cancel-in-progress: false
     timeout-minutes: 10
 
+    # checks/pull-requests/issues write used only by this results-posting job.
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      pull-requests: write
+      issues: write
+
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -68,13 +77,14 @@ jobs:
           egress-policy: audit
 
       - name: Checkout local actions
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           sparse-checkout: |
             .github/actions/gate-platform-workflows
             .github/actions/build-results-bootstrap
           sparse-checkout-cone-mode: false
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Get PR number
         id: pr
@@ -186,7 +196,7 @@ jobs:
 
       - name: Restore baseline sizes
         if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           path: baseline-sizes.json
@@ -194,7 +204,7 @@ jobs:
 
       - name: Restore baseline coverage
         if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           path: baseline-coverage.xml
@@ -286,13 +296,14 @@ jobs:
           egress-policy: audit
 
       - name: Checkout local actions
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           sparse-checkout: |
             .github/actions/gate-platform-workflows
             .github/actions/build-results-bootstrap
           sparse-checkout-cone-mode: false
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Check if all platform workflows succeeded
         id: gate

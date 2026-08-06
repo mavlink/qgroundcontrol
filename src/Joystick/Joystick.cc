@@ -242,13 +242,17 @@ void Joystick::_loadButtonSettings()
                 continue;
             }
             if (_findAvailableButtonActionIndex(actionName) == -1) {
-                qCWarning(JoystickLog)
+                // The action may not be available right now but may become available later.
+                // For example flight modes can change dynamically based on the standard modes
+                // protocol and are only known once a vehicle is connected. Keep the assignment
+                // and add it to the available actions list so the UI always shows it;
+                // _executeButtonAction() checks real availability at button press time.
+                qCDebug(JoystickLog)
                     << "    "
                     << "button:" << buttonIndex
-                    << "has unknown action name:" << actionName
-                    << ", clearing action from data";
-                buttonSettings.remove(QString::number(buttonIndex));
-                continue;
+                    << "action name not currently available:" << actionName
+                    << ", keeping assignment";
+                _addAvailableButtonActionIfMissing(actionName);
             }
             if (actionName == _buttonActionNone) {
                 buttonSettings.remove(QString::number(buttonIndex));
@@ -1682,6 +1686,19 @@ int Joystick::_findAvailableButtonActionIndex(const QString &action)
     return -1;
 }
 
+void Joystick::_addAvailableButtonActionIfMissing(const QString &action)
+{
+    if (_findAvailableButtonActionIndex(action) != -1) {
+        return;
+    }
+
+    // No onDown handler: _executeButtonAction() falls through to flight mode / MAVLink
+    // dispatch at button press time.
+    _availableButtonActions->append(new AvailableButtonAction(action, nullptr));
+    _availableActionTitles << action;
+    emit assignableActionsChanged();
+}
+
 void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
 {
     if (_availableButtonActions->count()) {
@@ -1800,6 +1817,17 @@ void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
     for (int i = 0; i < _mavlinkActionManager->actions()->count(); i++) {
         const MavlinkAction *const mavlinkAction = _mavlinkActionManager->actions()->value<const MavlinkAction*>(i);
         _availableButtonActions->append(new AvailableButtonAction(mavlinkAction->label(), nullptr));
+    }
+
+    // Always include actions currently assigned to buttons even if they are not otherwise
+    // available right now. Flight modes can change dynamically (standard modes protocol),
+    // so an assignment stored in settings may reference a mode which only shows up later.
+    // Keeping them in the list means the UI combo always displays the real assignment.
+    for (int buttonIndex = 0; buttonIndex < _assignedButtonActions.count(); buttonIndex++) {
+        const AssignedButtonAction *const assigned = _assignedButtonActions[buttonIndex];
+        if (assigned && (_findAvailableButtonActionIndex(assigned->actionName) == -1)) {
+            _availableButtonActions->append(new AvailableButtonAction(assigned->actionName, nullptr));
+        }
     }
 
     for (int i = 0; i < _availableButtonActions->count(); i++) {

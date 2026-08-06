@@ -3,6 +3,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
+#include <QtCore/QtMath>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QVariant>
@@ -24,8 +25,6 @@
 #include "QGCFileDialogController.h"
 #include "QGCImageProvider.h"
 #include "SettingsManager.h"
-#include "TerrainQuery.h"
-#include "TerrainTest.h"
 #include "Vehicle.h"
 
 // Bounded real-time window for render/GC/deferred-delete settle drains during UI teardown.
@@ -82,12 +81,6 @@ void QmlUITestBase::startUI()
     MAVLinkProtocol::instance()->init();
     MultiVehicleManager::instance()->init();
 
-    // Replace the live terrain backend with the synthetic unit-test provider so
-    // mission editing in the UI never makes real HTTP terrain requests. Live
-    // fetches can return HTTP 500, emitting warning logs that trip the
-    // strict-mode log check. Restored to the default backend in stopUI().
-    TerrainAtCoordinateBatchManager::instance()->setTerrainQueryInterface(new UnitTestTerrainQuery());
-
     // Suppress first-run prompts so they don't block the UI
     AppSettings *appSettings = SettingsManager::instance()->appSettings();
     const QList<int> promptIds = QGCCorePlugin::instance()->firstRunPromptStdIds();
@@ -112,16 +105,13 @@ void QmlUITestBase::startUI()
     ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("in the process of being created at engine destruction")));
 
-    // The synthetic terrain provider installed above only covers coordinate
-    // queries routed through TerrainAtCoordinateBatchManager. Path/carpet queries
-    // (TerrainPathQuery, TerrainAreaQuery) hardcode their own online backend and
-    // hit the live terrain server, which intermittently returns HTTP errors. Those
-    // are external-server reachability warnings, never something a UI smoke test
-    // should assert on, so ignore them to keep the full run deterministic.
-    ignoreLogMessage("QtLocationPlugin.QGeoTiledMapReplyQGC", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Error transferring")));
-    ignoreLogMessage("Terrain.TerrainTileManager", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Elevation tile fetching returned error")));
+    // Slow headless/software-GL runners can leave async-incubated QML items still
+    // creating when the engine is torn down (destroyUIEngine drains best-effort but
+    // cannot guarantee completion). Benign at shutdown, so ignore it rather than fail
+    // strict mode on a timing artifact.
+    ignoreLogMessage("default", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("items in the process of being created at engine destruction")));
+
 #ifdef QT_DEBUG
     // Debug builds on macOS are ad-hoc signed with an unbound Info.plist, so
     // macOS never shows the camera permission dialog and silently denies access.
@@ -138,6 +128,10 @@ void QmlUITestBase::startUI()
     _engine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow.qml")));
     QVERIFY(!_engine->rootObjects().isEmpty());
 
+    // Register the engine with the app so showAppMessage() reaches this MainWindow
+    // and app message dialogs are shown for real during UI tests.
+    qgcApp()->setQmlAppEngine(_engine);
+
     _window = qobject_cast<QQuickWindow *>(_engine->rootObjects().first());
     QVERIFY(_window);
 
@@ -147,15 +141,6 @@ void QmlUITestBase::startUI()
     _pageDelay = (qApp->platformName() != QLatin1String("offscreen")) ? 400 : 0;
 
     _rootItem = _window->contentItem();
-}
-
-void QmlUITestBase::ignoreAPMMockLinkWarnings()
-{
-    // ArduPilot MockLink does not serve COMP_METADATA_TYPE_GENERAL.
-    ignoreLogMessage(
-        "ComponentInformation.RequestMetaDataTypeStateMachine",
-        QtWarningMsg,
-        QRegularExpression(QStringLiteral("\"COMP_METADATA_TYPE_GENERAL\" : failed to load metadata \\(primary and fallback\\) \"\"")));
 }
 
 void QmlUITestBase::closeUIWindow()
@@ -216,6 +201,7 @@ void QmlUITestBase::destroyUIEngine()
         _window = nullptr;
         QCoreApplication::processEvents();
     }
+    qgcApp()->setQmlAppEngine(nullptr);
     delete _engine;
     _engine   = nullptr;
     _window   = nullptr;
@@ -227,11 +213,6 @@ void QmlUITestBase::stopUI()
 {
     closeUIWindow();
     destroyUIEngine();
-
-    // Restore the default terrain backend. The batch manager is a process-global
-    // singleton shared across all tests in a single-process --unittest run, so the
-    // mock must not leak into later tests.
-    TerrainAtCoordinateBatchManager::instance()->setTerrainQueryInterface(new TerrainOfflineQuery());
 }
 
 void QmlUITestBase::_verifyFileDialogTestHookConsumed()
@@ -248,9 +229,131 @@ bool QmlUITestBase::clickButton(const QString &objectName)
     if (!btn) {
         return false;
     }
-    const QPointF center = btn->mapToScene(QPointF(btn->width() / 2, btn->height() / 2));
-    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
+    return _clickItemAt(btn, 0.5, 0.5, objectName);
+}
+
+bool QmlUITestBase::_clickItemAt(QQuickItem *item, qreal fractionX, qreal fractionY, const QString &objectName)
+{
+    const QPointer<QQuickItem> guarded(item);
+
+    // A freshly-visible item can report a stale position: positioners lay out
+    // their children in a polish pass that has not necessarily run yet (e.g. layer
+    // switcher choices fading in inside a RightToLeft Row report the Row origin
+    // until polished). Clicking a stale position silently lands on the wrong item.
+    // Flush pending polish up the ancestor chain, then require the mapped scene
+    // position to be identical across two consecutive event-loop passes so
+    // animated reflows have finished too.
+    const auto scenePoint = [&]() -> QPointF {
+        for (QQuickItem *ancestor = guarded; ancestor; ancestor = ancestor->parentItem()) {
+            ancestor->ensurePolished();
+        }
+        return guarded->mapToScene(QPointF(guarded->width() * fractionX, guarded->height() * fractionY));
+    };
+    QPointF lastPos(qQNaN(), qQNaN());
+    const bool settled = waitForCondition(
+        [&] {
+            if (!guarded) {
+                return false;
+            }
+            const QPointF pos = scenePoint();
+            const bool stable = (pos == lastPos);
+            lastPos = pos;
+            return stable;
+        },
+        TestTimeout::shortMs(),
+        QStringLiteral("%1 position settled").arg(objectName));
+    if (!guarded) {
+        QTest::qFail(qPrintable(QStringLiteral("%1 destroyed while waiting to click it").arg(objectName)),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    if (!settled) {
+        return false; // waitForCondition already logged the timeout
+    }
+
+    // QTest::mouseClick warns and drops clicks outside the window (valid range is
+    // 0..width-1 / 0..height-1); a centre exactly on the bottom edge is outside.
+    // Fail loudly here instead of letting the dropped click surface as an
+    // unrelated failure (or silent no-op) later in the test. Validate in
+    // floating-point space and convert by truncation: rounding could push an
+    // in-window position like x=799.6 in an 800px window to the invalid x=800.
+    const QPointF scenePos = scenePoint();
+    if (scenePos.x() < 0 || scenePos.x() >= _window->width()
+        || scenePos.y() < 0 || scenePos.y() >= _window->height()) {
+        QTest::qFail(qPrintable(QStringLiteral("%1 click point (%2, %3) is outside the window (%4x%5)")
+                                    .arg(objectName).arg(scenePos.x()).arg(scenePos.y())
+                                    .arg(_window->width()).arg(_window->height())),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    const QPoint clickPoint(qFloor(scenePos.x()), qFloor(scenePos.y()));
+
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, clickPoint);
     return true;
+}
+
+bool QmlUITestBase::clickItemFraction(const QString &objectName, qreal fractionX, qreal fractionY)
+{
+    // Fail loudly on nonsense fractions rather than silently clicking outside
+    // the item (which would surface as an unrelated failure later in the test)
+    if (!qIsFinite(fractionX) || !qIsFinite(fractionY)
+        || (fractionX < 0) || (fractionX > 1) || (fractionY < 0) || (fractionY > 1)) {
+        QTest::qFail(qPrintable(QStringLiteral("clickItemFraction: fractions out of [0,1]: (%1, %2)")
+                                    .arg(fractionX).arg(fractionY)),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    QQuickItem *item = findVisibleItem(_rootItem, objectName);
+    if (!item) {
+        return false;
+    }
+    return _clickItemAt(item, fractionX, fractionY, objectName);
+}
+
+QQuickItem *QmlUITestBase::findVisibleItemScrolled(const QString &objectName, const QString &flickableObjectName)
+{
+    // Fast path: delegate already instantiated somewhere in the visual tree
+    QQuickItem *item = findVisibleItem(_rootItem, objectName, 500);
+    if (item) {
+        return scrollIntoView(item, flickableObjectName) ? item : nullptr;
+    }
+
+    QQuickItem *flickable = findVisibleItem(_rootItem, flickableObjectName);
+    if (!flickable) {
+        return nullptr;
+    }
+
+    // Virtualized delegates only exist for rows near the viewport. Step the
+    // flickable through its content range to force the target row to instantiate.
+    const double viewportHeight = flickable->height();
+    if (viewportHeight <= 0) {
+        return nullptr; // not laid out yet: stepping cannot advance
+    }
+    // Iteration cap guards against content that grows as delegates instantiate
+    constexpr int kMaxScrollSteps = 100;
+    double y = 0;
+    for (int step = 0; step < kMaxScrollSteps; step++, y += viewportHeight) {
+        const double maxContentY =
+            qMax(0.0, flickable->property("contentHeight").toDouble() - viewportHeight);
+        const double clampedY = qMin(y, maxContentY);
+        flickable->setProperty("contentY", clampedY);
+        item = findVisibleItem(_rootItem, objectName, 100);
+        if (item) {
+            return scrollIntoView(item, flickableObjectName) ? item : nullptr;
+        }
+        if (clampedY >= maxContentY) {
+            break;
+        }
+    }
+    return nullptr;
+}
+
+bool QmlUITestBase::clickButtonScrolled(const QString &objectName, const QString &flickableObjectName)
+{
+    if (!findVisibleItemScrolled(objectName, flickableObjectName)) {
+        return false;
+    }
+    return clickButton(objectName);
 }
 
 bool QmlUITestBase::clickToolSelectDropdownButton(const QString &viewObjectName, int timeoutMs)
@@ -354,16 +457,22 @@ bool QmlUITestBase::_verifyItemProperty(const QString &objectName, const char *p
         return false;
     }
 
+    // Guard against the item being destroyed while waiting (e.g. view rebuilds)
+    const QPointer<QQuickItem> guardedItem(item);
+
     // State changes propagate through bindings; allow them to settle
     const bool matched = waitForCondition(
-        [item, propertyName, expectedValue] { return item->property(propertyName) == expectedValue; },
+        [guardedItem, propertyName, expectedValue] {
+            return guardedItem && (guardedItem->property(propertyName) == expectedValue);
+        },
         2000,
         QStringLiteral("%1 %2 == %3").arg(objectName, QLatin1String(propertyName), _displayValue(expectedValue)));
     if (!matched) {
         QTest::qFail(qPrintable(QStringLiteral("%1: %2 expected %3=%4 but was %5")
                                     .arg(context, objectName, QLatin1String(propertyName),
                                          _displayValue(expectedValue),
-                                         _displayValue(item->property(propertyName)))),
+                                         guardedItem ? _displayValue(guardedItem->property(propertyName))
+                                                     : QStringLiteral("<item destroyed>"))),
                      __FILE__, __LINE__);
         return false;
     }
@@ -373,6 +482,29 @@ bool QmlUITestBase::_verifyItemProperty(const QString &objectName, const char *p
 bool QmlUITestBase::verifyEnabled(const QString &objectName, bool expectedEnabled, const QString &context)
 {
     return _verifyItemProperty(objectName, "enabled", expectedEnabled, context);
+}
+
+bool QmlUITestBase::verifyProperty(const QString &objectName, const char *propertyName,
+                                   const QVariant &expectedValue, const QString &context)
+{
+    return _verifyItemProperty(objectName, propertyName, expectedValue, context);
+}
+
+bool QmlUITestBase::verifyVisibility(const QString &objectName, bool expectedVisible, const QString &context)
+{
+    const bool result = waitForCondition(
+        [this, objectName, expectedVisible] {
+            return (findVisibleItem(_rootItem, objectName, 0) != nullptr) == expectedVisible;
+        },
+        2000,
+        QStringLiteral("%1 %2").arg(objectName, expectedVisible ? QStringLiteral("visible") : QStringLiteral("absent")));
+    if (!result) {
+        QTest::qFail(qPrintable(QStringLiteral("%1: %2 expected %3")
+                                    .arg(context, objectName,
+                                         expectedVisible ? QStringLiteral("visible") : QStringLiteral("absent"))),
+                     __FILE__, __LINE__);
+    }
+    return result;
 }
 
 bool QmlUITestBase::verifyPrimary(const QString &objectName, bool expectedPrimary, const QString &context)
@@ -390,49 +522,77 @@ bool QmlUITestBase::verifyText(const QString &objectName, const QString &expecte
     return _verifyItemProperty(objectName, "text", expectedText, context);
 }
 
-void QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObjectName)
+bool QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObjectName)
 {
     if (!item || !_rootItem || !_window) {
-        return;
+        return false;
     }
 
     QQuickItem *flickable = findVisibleItem(_rootItem, flickableObjectName);
     if (!flickable) {
-        return;
+        return false;
     }
 
-    // Check whether the item's centre is already within the flickable's visible viewport.
-    const QPointF sceneCenter        = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
-    const QPointF flickableScenePos  = flickable->mapToScene(QPointF(0, 0));
-    const QRectF  flickableViewport(flickableScenePos, QSizeF(flickable->width(), flickable->height()));
-    if (flickableViewport.contains(sceneCenter)) {
-        return; // already within the flickable's clip region
+    // Scroll until the item's centre sits inside the flickable's clickable region
+    // and stays there. A single scroll is not enough: expand/collapse reflows and
+    // pending polish passes can shift content after contentY is applied (a row that
+    // was centred can end up hanging past the window edge where clicks are dropped).
+    // Each poll flushes polish, re-checks containment, and re-issues the scroll if
+    // the item has drifted out again; success requires the centre to be stable in
+    // the clickable region across two consecutive event-loop passes.
+    //
+    // The clickable region is the viewport clipped to the window, inset by 1px
+    // because QRectF::contains includes edges: a centre exactly on the window's
+    // bottom edge (y == height) maps to a click outside the window's valid
+    // 0..height-1 range.
+    const QPointer<QQuickItem> guardedItem(item);
+    const QPointer<QQuickItem> guardedFlickable(flickable);
+    QPointF lastCenter(qQNaN(), qQNaN());
+    const bool settled = waitForCondition(
+        [&] {
+            if (!guardedItem || !guardedFlickable) {
+                return false;
+            }
+            for (QQuickItem *ancestor = guardedItem; ancestor; ancestor = ancestor->parentItem()) {
+                ancestor->ensurePolished();
+            }
+            const QPointF sceneCenter =
+                guardedItem->mapToScene(QPointF(guardedItem->width() / 2, guardedItem->height() / 2));
+            const QRectF flickableViewport(guardedFlickable->mapToScene(QPointF(0, 0)),
+                                           QSizeF(guardedFlickable->width(), guardedFlickable->height()));
+            const QRectF windowRect(0, 0, _window->width(), _window->height());
+            const QRectF clickableViewport = flickableViewport.intersected(windowRect).adjusted(1, 1, -1, -1);
+
+            const bool stable = (sceneCenter == lastCenter);
+            lastCenter = sceneCenter;
+            if (clickableViewport.contains(sceneCenter)) {
+                return stable;
+            }
+
+            // mapToItem gives a viewport-relative position (already offset by contentY).
+            // Add current contentY to get the absolute content-space position, then
+            // target a contentY that centres the item in the flickable.
+            const QPointF itemInFlickable = guardedItem->mapToItem(guardedFlickable, QPointF(0, 0));
+            const double currentContentY = guardedFlickable->property("contentY").toDouble();
+            const double absoluteY = itemInFlickable.y() + currentContentY;
+            const double targetY = absoluteY + guardedItem->height() / 2.0 - guardedFlickable->height() / 2.0;
+            const double maxContentY =
+                guardedFlickable->property("contentHeight").toDouble() - guardedFlickable->height();
+            guardedFlickable->setProperty("contentY", qBound(0.0, targetY, qMax(0.0, maxContentY)));
+            return false;
+        },
+        TestTimeout::shortMs(),
+        QStringLiteral("scrollIntoView settled"));
+    if (!settled) {
+        // Record a test failure (as the pre-refactor QTRY_VERIFY_WITH_TIMEOUT did)
+        // rather than letting a click on a still-clipped item surface as a
+        // harder-to-diagnose failure later in the test.
+        QTest::qFail(qPrintable(QStringLiteral("scrollIntoView: item never settled inside flickable %1")
+                                    .arg(flickableObjectName)),
+                     __FILE__, __LINE__);
+        return false;
     }
-
-    // mapToItem gives a viewport-relative position (already offset by contentY).
-    // Add current contentY to get the absolute content-space position.
-    const QPointF itemInFlickable = item->mapToItem(flickable, QPointF(0, 0));
-    const double currentContentY = flickable->property("contentY").toDouble();
-    const double absoluteY = itemInFlickable.y() + currentContentY;
-    // Target contentY that places the item's centre in the middle of the flickable.
-    const double targetY = absoluteY + item->height() / 2.0 - flickable->height() / 2.0;
-    const double maxContentY = flickable->property("contentHeight").toDouble() - flickable->height();
-    const double clampedTargetY = qBound(0.0, targetY, qMax(0.0, maxContentY));
-    flickable->setProperty("contentY", clampedTargetY);
-
-    // Wait for the flickable to apply the new contentY and re-lay-out the item, so callers
-    // that immediately query/click the item see it at its scrolled position. The observable
-    // condition is that the item's scene centre now falls inside the flickable viewport, or
-    // contentY settled at its clamped target when the item can't be fully centred.
-    QTRY_VERIFY_WITH_TIMEOUT(
-        ([&] {
-            const QPointF center = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
-            const QRectF viewport(flickable->mapToScene(QPointF(0, 0)),
-                                  QSizeF(flickable->width(), flickable->height()));
-            return viewport.contains(center)
-                || qFuzzyCompare(flickable->property("contentY").toDouble() + 1.0, clampedTargetY + 1.0);
-        }()),
-        TestTimeout::shortMs());
+    return true;
 }
 
 void QmlUITestBase::runWithMockLink(

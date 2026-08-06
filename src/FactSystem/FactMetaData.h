@@ -115,6 +115,12 @@ public:
     static QStringList splitTranslatedList(const QString &translatedList);
 
     int decimalPlaces() const;
+
+    /// Maximum string length for valueTypeString facts. 0 means no limit.
+    int maxStringLength() const { return _maxStringLength; }
+    /// Negative values are invalid (they would silently disable length validation): warns and clamps to 0.
+    void setMaxStringLength(int maxStringLength);
+
     QVariant rawDefaultValue() const;
     QVariant cookedDefaultValue() const { return _rawTranslator(rawDefaultValue()); }
     bool defaultValueAvailable() const { return _defaultValueAvailable; }
@@ -334,6 +340,7 @@ private:
 
     ValueType_t _type = valueTypeInt32; // must be first for correct constructor init
     int _decimalPlaces = kUnknownDecimalPlaces;
+    int _maxStringLength = 0;
     QVariant _rawDefaultValue = 0;
     bool _defaultValueAvailable = false;
     QStringList _bitmaskStrings;
@@ -438,6 +445,9 @@ private:
     };
 
     static constexpr const char *_decimalPlacesJsonKey = "decimalPlaces";
+    static constexpr const char *_maxStringLengthJsonKey = "maxStringLength";
+    static constexpr const char *_commentJsonKey = "comment";
+    static constexpr const char *_keywordsJsonKey = "keywords";
     static constexpr const char *_nameJsonKey = "name";
     static constexpr const char *_labelJsonKey = "label";
     static constexpr const char *_typeJsonKey = "type";

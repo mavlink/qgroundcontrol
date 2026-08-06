@@ -1,7 +1,7 @@
 name: Welcome
 
 on:
-  pull_request_target:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] posts a welcome comment via github-script; no checkout or PR code execution
     types: [opened]
   issues:
     types: [opened]

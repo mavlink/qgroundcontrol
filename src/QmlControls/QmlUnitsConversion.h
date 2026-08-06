@@ -25,6 +25,13 @@ public:
 
     QString appSettingsHorizontalDistanceUnitsString(void) const { return FactMetaData::appSettingsHorizontalDistanceUnitsString(); }
 
+    /// Converts from meters to the user specified horizontal distance unit with units appended, e.g. "16.4 ft".
+    /// Keeps the converted value and units label paired so they can never disagree.
+    Q_INVOKABLE QString metersToAppSettingsHorizontalDistanceUnitsString(const QVariant& meters, int decimalPlaces = 1) const
+    {
+        return QStringLiteral("%1 %2").arg(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(meters).toDouble(), 0, 'f', decimalPlaces).arg(FactMetaData::appSettingsHorizontalDistanceUnitsString());
+    }
+
     /// Converts from meters to the user specified distance unit
     Q_INVOKABLE QVariant metersToAppSettingsVerticalDistanceUnits(const QVariant& meters) const { return FactMetaData::metersToAppSettingsVerticalDistanceUnits(meters); }
 
@@ -32,6 +39,13 @@ public:
     Q_INVOKABLE QVariant appSettingsVerticalDistanceUnitsToMeters(const QVariant& distance) const { return FactMetaData::appSettingsVerticalDistanceUnitsToMeters(distance); }
 
     QString appSettingsVerticalDistanceUnitsString(void) const { return FactMetaData::appSettingsVerticalDistanceUnitsString(); }
+
+    /// Converts from meters to the user specified vertical distance unit with units appended, e.g. "16.4 ft".
+    /// Keeps the converted value and units label paired so they can never disagree.
+    Q_INVOKABLE QString metersToAppSettingsVerticalDistanceUnitsString(const QVariant& meters, int decimalPlaces = 1) const
+    {
+        return QStringLiteral("%1 %2").arg(FactMetaData::metersToAppSettingsVerticalDistanceUnits(meters).toDouble(), 0, 'f', decimalPlaces).arg(FactMetaData::appSettingsVerticalDistanceUnitsString());
+    }
 
     /// Converts from grams to the user specified weight unit
     Q_INVOKABLE QVariant gramsToAppSettingsWeightUnits(const QVariant& meters) const { return FactMetaData::gramsToAppSettingsWeightUnits(meters); }

@@ -42,18 +42,21 @@ qt_add_qml_module(Viewer3DModule
     VERSION 1.0
     RESOURCE_PREFIX /qml
     SOURCES
+        Viewer3DCameraController.cc
+        Viewer3DCameraController.h
         Viewer3DGeoCoordinateType.cc
         Viewer3DGeoCoordinateType.h
         Viewer3DInstancing.cc
         Viewer3DInstancing.h
     QML_FILES
         Viewer3DQml/Models3D/CameraLightModel.qml
+        Viewer3DQml/Models3D/Viewer3DCameraControls.qml
         Viewer3DQml/Models3D/Viewer3DModel.qml
+        Viewer3DQml/Models3D/Viewer3DScaleBar.qml
         Viewer3DQml/Drones/DronePart.qml
         Viewer3DQml/Drones/AnimatedPropeller.qml
         Viewer3DQml/Drones/DroneModelDjiF450.qml
         Viewer3DQml/Models3D/Viewer3DVehicleItems.qml
-        Viewer3DQml/Viewer3DProgressBar.qml
         Viewer3DQml/Viewer3DShowAction.qml
     RESOURCES
         Viewer3DQml/Images/city_3d_map_icon.svg

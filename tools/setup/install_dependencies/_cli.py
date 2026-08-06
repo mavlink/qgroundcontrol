@@ -6,24 +6,36 @@ import argparse
 import sys
 
 from . import _common as _c
+from ._arch import install_arch
 from ._debian import install_debian
+from ._fedora import install_fedora
 from ._macos import install_macos
 from ._packages import (
     DEBIAN_PACKAGES,
     MACOS_PACKAGES,
     PIPX_PACKAGES,
+    get_arch_packages,
     get_debian_packages,
+    get_fedora_packages,
     get_macos_packages,
     validate_extra_packages,
 )
 from ._windows import install_windows
+
+LINUX_PLATFORMS = ("debian", "fedora", "arch")
 
 
 def print_packages(platform: str, category: str | None = None) -> None:
     """Print packages as a single space-separated line (machine-readable)."""
     if platform == "debian":
         print(" ".join(get_debian_packages(category)))
+    elif platform == "fedora":
+        print(" ".join(get_fedora_packages(category)))
+    elif platform == "arch":
+        print(" ".join(get_arch_packages(category)))
     elif platform == "macos":
+        if category:
+            _c.log_warn(f"--category {category} ignored for macos (no categorized package list)")
         print(" ".join(get_macos_packages()))
     else:
         _c.log_error(f"--print-packages not supported for {platform}")
@@ -60,10 +72,12 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         epilog="""
 Platforms:
   debian    Debian/Ubuntu (apt-get)
+  fedora    Fedora/RHEL (dnf)
+  arch      Arch Linux (pacman)
   macos     macOS (Homebrew)
   windows   Windows (MSI/exe installers)
 
-Categories (Debian only):
+Categories (Linux only):
   core        Build tools (cmake, ninja, git, etc.)
   qt          Qt6 development libraries
   gstreamer   GStreamer multimedia
@@ -85,7 +99,9 @@ Examples:
         "--dry-run", action="store_true", help="Show what would be installed without installing"
     )
     parser.add_argument(
-        "--platform", choices=["debian", "macos", "windows"], help="Override platform detection"
+        "--platform",
+        choices=["debian", "fedora", "arch", "macos", "windows"],
+        help="Override platform detection",
     )
     parser.add_argument(
         "--list", dest="list_packages", action="store_true", help="List packages by category"
@@ -95,7 +111,7 @@ Examples:
         action="store_true",
         help="Print space-separated package list (machine-readable, for CI caching)",
     )
-    parser.add_argument("--category", help="Install only specific category (Debian only)")
+    parser.add_argument("--category", help="Install only specific category (Linux only)")
     parser.add_argument(
         "--skip-system-packages",
         action="store_true",
@@ -173,7 +189,7 @@ def main() -> int:
 
     if platform is None:
         _c.log_error("Could not detect platform")
-        _c.log_info("Use --platform to specify: debian, macos, windows")
+        _c.log_info("Use --platform to specify: debian, fedora, arch, macos, windows")
         return 1
 
     print(f"Platform: {platform}")
@@ -182,6 +198,10 @@ def main() -> int:
 
     if platform == "debian":
         success = install_debian(args.dry_run, args.category, args.skip_system_packages)
+    elif platform == "fedora":
+        success = install_fedora(args.dry_run, args.category, args.skip_system_packages)
+    elif platform == "arch":
+        success = install_arch(args.dry_run, args.category, args.skip_system_packages)
     elif platform == "macos":
         if args.category:
             _c.log_warn("--category is only supported for Debian")

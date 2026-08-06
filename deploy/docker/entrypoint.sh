@@ -77,11 +77,19 @@ elif [[ -n "${SYSROOT:-}" ]]; then
     cmake --install /project/build --config "${BUILD_TYPE}"
 else
     echo "Building QGroundControl (${BUILD_TYPE})..."
+    # CMake derives the native package method (DEB/RPM via CPack, Arch via
+    # makepkg) and the appimagelint default from the detected distro
+    # (cmake/modules/LinuxDistro.cmake), so no per-distro flags are passed here.
     qt-cmake -S /project/source -B /project/build -G Ninja \
         -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
         -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python
     cmake --build /project/build --target all "${BUILD_PARALLEL[@]}"
     cmake --install /project/build --config "${BUILD_TYPE}"
+
+    # One packaging entry point; the distro→method dispatch lives in
+    # cmake/install/Install.cmake (qgc-package target).
+    echo "Creating native package..."
+    cmake --build /project/build --target qgc-package
 fi
 
 echo "Build complete!"

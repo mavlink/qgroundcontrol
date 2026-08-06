@@ -25,12 +25,14 @@ Item {
 
     ColumnLayout {
         id: mainLayout
+        width: parent.width
         spacing: 0
 
         Repeater {
             model: _indexedBatteryParamCount
 
             Loader {
+                Layout.fillWidth: true
                 sourceComponent: batterySummaryComponent
 
                 property int    batteryIndex:       index + 1
@@ -43,6 +45,7 @@ Item {
         id: batterySummaryComponent
 
         ColumnLayout {
+            width: parent.width
             spacing: 0
 
             property var  _controller:      controller

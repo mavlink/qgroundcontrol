@@ -35,10 +35,12 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 'lts/*'
 
@@ -70,12 +72,13 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           sparse-checkout: |
             .github/actions
             .github/scripts
             tools/common
+          persist-credentials: false
 
       - name: Deploy docs
         uses: ./.github/actions/deploy-docs

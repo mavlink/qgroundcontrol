@@ -48,7 +48,7 @@ Item {
     }
 
     function updateDragArea() {
-        if (_missionItem.isCurrentItem && map.planView && _missionItem.specifiesCoordinate) {
+        if (_missionItem.isCurrentItem && map.planView && _missionItem.specifiesCoordinate && itemVisualLoader.item) {
             showDragArea()
         } else {
             hideDragArea()
@@ -108,6 +108,7 @@ Item {
             if (item) {
                 item.parent = map
                 map.addMapItem(item)
+                updateDragArea()
             }
         }
     }

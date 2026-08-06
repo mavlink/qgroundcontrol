@@ -57,7 +57,7 @@
     "shortDesc":        "East offset",
     "type":             "double",
     "units":            "m",
-    "defaultValue":     0,
+    "default":          0,
     "decimalPlaces":    2
 },
 {
@@ -65,15 +65,15 @@
     "shortDesc":        "North offset",
     "type":             "double",
     "units":            "m",
-    "defaultValue":     0,
+    "default":          0,
     "decimalPlaces":    2
 },
 {
     "name":             "OffsetUp",
     "shortDesc":        "Up offset",
     "type":             "double",
-    "units":            "m",
-    "defaultValue":     0,
+    "units":            "vertical m",
+    "default":          0,
     "decimalPlaces":    2
 },
 {
@@ -81,7 +81,7 @@
     "shortDesc":        "Clockwise rotation",
     "type":             "double",
     "units":            "deg",
-    "defaultValue":     0,
+    "default":          0,
     "decimalPlaces":    1
 }
 ]

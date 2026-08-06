@@ -10,8 +10,6 @@ PX4 지원은 PX4 v1.10에 계획되어 있습니다.
 연결된 차량에서 지원하지 않는 경우 _QGroundControl_은 랠리 포인트 옵션을 표시하지 않습니다.
 :::
 
-![랠리 포인트](../../../assets/plan/rally/rally_points_overview.jpg)
-
 ## 랠리 포인트 사용법
 
 랠리 포인트를 생성하려면:
@@ -23,7 +21,7 @@ PX4 지원은 PX4 v1.10에 계획되어 있습니다.
    - 현재 활성화된 마커는 다른 색상(녹색)을 가지며 _집합 포인트_ 패널을 사용하여 편집할 수 있습니다.
 4. 지도에서 랠리 포인트를 선택하여 활성화합니다.
    - 지도에서 드래그하거나 패널에서 위치를 편집하여 활성 랠리 포인트를 이동합니다.
-   - ![랠리 포인트 삭제](../../../assets/plan/rally/rally_points_delete.jpg)
+   - Delete the active rally point by selecting the menu option on the _Rally Point_ panel
 
 ## 랠리 포인트 업로드
 

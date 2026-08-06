@@ -6,7 +6,7 @@
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
         "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource",
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
-        "isGST": "QGroundControl.videoManager.gstreamerEnabled"
+        "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue"
     },
     "groups": [
         {
@@ -55,11 +55,19 @@
                 },
                 {
                     "setting": "videoSettings.lowLatencyMode",
-                    "showWhen": "!autoStreamConfig && isStreamSource && isGST"
+                    "showWhen": "!autoStreamConfig && isStreamSource && QGroundControl.settingsManager.videoSettings.lowLatencyMode.userVisible"
+                },
+                {
+                    "setting": "videoSettings.rtpJitterLatencyMs",
+                    "showWhen": "!autoStreamConfig && isStreamSource && rtpLatencyVisible && QGroundControl.settingsManager.videoSettings.rtpJitterLatencyMs.userVisible"
+                },
+                {
+                    "setting": "videoSettings.rtspAutoReconnect",
+                    "showWhen": "!autoStreamConfig && isStreamSource"
                 },
                 {
                     "setting": "videoSettings.forceCpuVideoPath",
-                    "showWhen": "isGST && QGroundControl.settingsManager.videoSettings.forceCpuVideoPath.userVisible"
+                    "showWhen": "QGroundControl.settingsManager.videoSettings.forceCpuVideoPath.userVisible"
                 },
                 {
                     "setting": "videoSettings.forceVideoDecoder"

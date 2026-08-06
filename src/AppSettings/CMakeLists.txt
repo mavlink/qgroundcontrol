@@ -76,7 +76,7 @@ qt_add_qml_module(AppSettingsModule
         MockLink.qml
         MockLinkSettings.qml
         NmeaGpsSettings.qml
-        NtripConnectionStatus.qml
+        NtripConnectionSettings.qml
         NtripMountpointBrowser.qml
         NtripServerSettings.qml
         OfflineMapEditor.qml

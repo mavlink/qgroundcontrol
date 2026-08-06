@@ -3,34 +3,42 @@
 
 from __future__ import annotations
 
-import subprocess
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import call, patch
 
 import pytest
 from setup.install_dependencies import (
+    ARCH_PACKAGES,
     DEBIAN_PACKAGES,
+    FEDORA_PACKAGES,
     JUST_MIN_VERSION,
     MACOS_PACKAGES,
+    PACKAGE_NAME_RE,
     PIPX_PACKAGES,
+    _arch,
     _detect_just_version,
+    _fedora,
     _windows,
     detect_platform,
     get_apt_install_command,
     get_apt_update_command,
+    get_arch_packages,
     get_available_debian_packages,
     get_brew_install_command,
     get_debian_packages,
+    get_fedora_packages,
     get_macos_packages,
     install_just_debian,
     parse_args,
+    resolve_package_alternatives,
     run_apt_install_with_retry,
     validate_extra_packages,
 )
 
-# ---------------------------------------------------------------------------
-# Package list integrity
-# ---------------------------------------------------------------------------
+from ._helpers import REPO_ROOT, completed
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_debian_packages_not_empty() -> None:
@@ -83,9 +91,7 @@ def test_cross_arm64_excluded_from_aggregate() -> None:
 
 
 def test_sysroot_script_single_sources_cross_arm64() -> None:
-    script = (
-        Path(__file__).resolve().parents[2] / "deploy" / "docker" / "install-sysroot-aarch64.sh"
-    ).read_text()
+    script = (REPO_ROOT / "deploy" / "docker" / "install-sysroot-aarch64.sh").read_text()
     assert "--category cross_arm64" in script
     for pkg in ("libxcb1-dev", "libgstreamer1.0-dev", "libssl-dev"):
         assert f"{pkg}:arm64" not in script, (
@@ -106,6 +112,38 @@ def test_get_available_debian_packages_filters_unavailable() -> None:
         assert get_available_debian_packages("core") == ["cmake"]
 
 
+def test_resolve_package_alternatives_keeps_available_primary() -> None:
+    with patch(
+        "setup.install_dependencies._common.check_apt_package_available",
+        side_effect=lambda pkg: True,
+    ):
+        assert resolve_package_alternatives(["libgstreamer-plugins-good1.0-dev"]) == [
+            "libgstreamer-plugins-good1.0-dev"
+        ]
+
+
+def test_resolve_package_alternatives_swaps_to_available_alternative() -> None:
+    with patch(
+        "setup.install_dependencies._common.check_apt_package_available",
+        side_effect=lambda pkg: pkg == "libgstreamer-plugins-extra1.0-dev",
+    ):
+        assert resolve_package_alternatives(["libgstreamer-plugins-good1.0-dev"]) == [
+            "libgstreamer-plugins-extra1.0-dev"
+        ]
+
+
+def test_resolve_package_alternatives_drops_when_none_available() -> None:
+    # Regression: Debian bookworm has neither the good-dev package nor its
+    # alternative; keeping the unknown name made apt abort the whole install.
+    with patch(
+        "setup.install_dependencies._common.check_apt_package_available",
+        side_effect=lambda pkg: False,
+    ):
+        assert resolve_package_alternatives(["cmake", "libgstreamer-plugins-good1.0-dev"]) == [
+            "cmake"
+        ]
+
+
 def test_get_macos_packages() -> None:
     pkgs = get_macos_packages()
     assert "cmake" in pkgs
@@ -113,14 +151,72 @@ def test_get_macos_packages() -> None:
     assert "ccache" in pkgs
 
 
-# ---------------------------------------------------------------------------
-# Platform detection
-# ---------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    ("table", "getter"),
+    [(FEDORA_PACKAGES, get_fedora_packages), (ARCH_PACKAGES, get_arch_packages)],
+)
+def test_linux_package_tables_well_formed(table, getter) -> None:
+    assert table
+    for category, pkgs in table.items():
+        assert pkgs, f"Category '{category}' is empty"
+        assert len(pkgs) == len(set(pkgs)), f"Duplicates in category '{category}'"
+        for pkg in pkgs:
+            assert PACKAGE_NAME_RE.match(pkg), f"Invalid package name '{pkg}'"
+    aggregate = getter()
+    assert len(aggregate) == len(set(aggregate))
+
+
+def test_get_fedora_packages_categories() -> None:
+    assert "cmake" in get_fedora_packages("core")
+    assert "just" in get_fedora_packages("core")
+    assert any("gstreamer1" in p for p in get_fedora_packages("gstreamer"))
+    assert get_fedora_packages("nonexistent") == []
+
+
+def test_get_arch_packages_categories() -> None:
+    assert "cmake" in get_arch_packages("core")
+    assert "base-devel" in get_arch_packages("core")
+    assert "gstreamer" in get_arch_packages("gstreamer")
+    assert get_arch_packages("nonexistent") == []
+
+
+_OS_RELEASE = "setup.install_dependencies._common._os_release_ids"
 
 
 def test_detect_platform_linux_debian() -> None:
-    with patch("sys.platform", "linux"), patch("pathlib.Path.exists", return_value=True):
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=True),
+        patch(_OS_RELEASE, return_value={"debian"}),
+    ):
         assert detect_platform() == "debian"
+
+
+def test_detect_platform_linux_ubuntu() -> None:
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=True),
+        patch(_OS_RELEASE, return_value={"ubuntu", "debian"}),
+    ):
+        assert detect_platform() == "debian"
+
+
+def test_detect_platform_linux_fedora() -> None:
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=False),
+        patch(_OS_RELEASE, return_value={"fedora"}),
+    ):
+        assert detect_platform() == "fedora"
+
+
+def test_detect_platform_linux_arch() -> None:
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=False),
+        patch(_OS_RELEASE, return_value={"arch"}),
+    ):
+        assert detect_platform() == "arch"
 
 
 def test_detect_platform_macos() -> None:
@@ -134,13 +230,12 @@ def test_detect_platform_windows() -> None:
 
 
 def test_detect_platform_unknown_linux() -> None:
-    with patch("sys.platform", "linux"), patch("pathlib.Path.exists", return_value=False):
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=False),
+        patch(_OS_RELEASE, return_value=set()),
+    ):
         assert detect_platform() == "linux"
-
-
-# ---------------------------------------------------------------------------
-# Argument parsing
-# ---------------------------------------------------------------------------
 
 
 def test_parse_args_defaults() -> None:
@@ -210,11 +305,6 @@ def test_validate_extra_packages_rejects_invalid_names() -> None:
         validate_extra_packages(["good", "bad;rm"])
 
 
-# ---------------------------------------------------------------------------
-# download_file (network call mocked)
-# ---------------------------------------------------------------------------
-
-
 def test_download_file_dry_run(tmp_path: Path) -> None:
     from setup.install_dependencies import download_file
 
@@ -232,11 +322,6 @@ def test_download_file_network_error(tmp_path: Path) -> None:
     with patch("urllib.request.urlopen", side_effect=OSError("unreachable")):
         result = download_file("https://example.com/test.bin", dest, dry_run=False)
     assert result is False
-
-
-# ---------------------------------------------------------------------------
-# apt install retry behavior
-# ---------------------------------------------------------------------------
 
 
 def test_run_apt_install_with_retry_success_first_try() -> None:
@@ -263,14 +348,10 @@ def test_run_apt_install_with_retry_refreshes_index_then_retries() -> None:
     )
 
 
-def _brew_list_result(stdout: str, returncode: int = 0):
-    return type("R", (), {"stdout": stdout, "returncode": returncode})()
-
-
 def test_get_brew_install_command_filters_already_installed() -> None:
     with patch(
         "setup.install_dependencies._common.subprocess.run",
-        return_value=_brew_list_result("pkgconf\nqt\ncmake\n"),
+        return_value=completed("pkgconf\nqt\ncmake\n"),
     ):
         cmd = get_brew_install_command(["pkgconf", "ninja", "qt"])
     assert cmd == ["brew", "install", "--quiet", "ninja"]
@@ -279,7 +360,7 @@ def test_get_brew_install_command_filters_already_installed() -> None:
 def test_get_brew_install_command_all_installed_returns_noop() -> None:
     with patch(
         "setup.install_dependencies._common.subprocess.run",
-        return_value=_brew_list_result("pkgconf\nninja\n"),
+        return_value=completed("pkgconf\nninja\n"),
     ):
         cmd = get_brew_install_command(["pkgconf", "ninja"])
     assert cmd == ["true"]
@@ -294,7 +375,7 @@ def test_get_brew_install_command_brew_list_failure_passes_all() -> None:
     # brew list failure (e.g. brew not yet on PATH) shouldn't suppress installs.
     with patch(
         "setup.install_dependencies._common.subprocess.run",
-        return_value=_brew_list_result("", returncode=1),
+        return_value=completed(returncode=1),
     ):
         cmd = get_brew_install_command(["pkgconf", "ninja"])
     assert cmd == ["brew", "install", "--quiet", "pkgconf", "ninja"]
@@ -306,19 +387,19 @@ def test_detect_just_version_absent() -> None:
 
 
 def test_detect_just_version_parses_output() -> None:
-    completed = type("R", (), {"stdout": "just 1.36.0\n"})()
+    result = completed("just 1.36.0\n")
     with (
         patch("setup.install_dependencies._common.has_command", return_value=True),
-        patch("setup.install_dependencies._debian.subprocess.run", return_value=completed),
+        patch("setup.install_dependencies._debian.subprocess.run", return_value=result),
     ):
         assert _detect_just_version() == (1, 36, 0)
 
 
 def test_detect_just_version_handles_missing_patch() -> None:
-    completed = type("R", (), {"stdout": "just 1.30\n"})()
+    result = completed("just 1.30\n")
     with (
         patch("setup.install_dependencies._common.has_command", return_value=True),
-        patch("setup.install_dependencies._debian.subprocess.run", return_value=completed),
+        patch("setup.install_dependencies._debian.subprocess.run", return_value=result),
     ):
         assert _detect_just_version() == (1, 30, 0)
 
@@ -378,6 +459,42 @@ def test_install_windows_nsis_dry_run() -> None:
     rc.assert_called_once()
 
 
+def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("PROCESSOR_ARCHITECTURE", "AMD64")
+    monkeypatch.setattr(_windows, "WINDOWS_GSTREAMER_PREFIX", str(tmp_path))
+    with (
+        patch.object(_windows._c, "download_file", side_effect=[False, True]) as dl,
+        patch.object(_windows._c, "run_command", return_value=True) as rc,
+        patch.object(_windows._c, "set_env_var"),
+        patch.object(_windows._c, "add_to_path"),
+    ):
+        assert _windows.install_windows_gstreamer("1.28.4") is True
+
+    installer = dl.call_args_list[0].args[1]
+    assert installer.name == "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+    assert [call.args[0] for call in dl.call_args_list] == [
+        (
+            f"{_windows.WINDOWS_GSTREAMER_BASE_URL}/"
+            "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+        ),
+        (
+            "https://gstreamer.freedesktop.org/data/pkg/windows/1.28.4/msvc/"
+            "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+        ),
+    ]
+    assert dl.call_args_list[0].kwargs == {"warn_on_failure": True}
+    assert dl.call_args_list[1].kwargs == {}
+    assert rc.call_args.args[0] == [
+        str(installer),
+        "/VERYSILENT",
+        "/SUPPRESSMSGBOXES",
+        "/SP-",
+        "/NORESTART",
+        "/TYPE=devel",
+        f"/DIR={_windows.WINDOWS_GSTREAMER_PREFIX}",
+    ]
+
+
 def test_install_windows_nsis_already_installed(monkeypatch, tmp_path: Path) -> None:
     makensis = tmp_path / "NSIS" / "makensis.exe"
     makensis.parent.mkdir(parents=True)
@@ -435,7 +552,7 @@ def test_verify_msvc_fails_when_component_missing(monkeypatch, tmp_path: Path) -
     with patch.object(
         _windows.subprocess,
         "run",
-        return_value=subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+        return_value=completed(),
     ):
         assert _windows._verify_msvc(arm64=False) is False
 
@@ -459,3 +576,83 @@ def test_install_windows_dispatch_invokes_msvc_and_nsis() -> None:
         )
     msvc.assert_called_once_with(False, True)
     nsis.assert_called_once_with(False)
+
+
+def test_install_fedora_installs_packages_pipx_then_cleans() -> None:
+    with (
+        patch.object(_fedora, "get_fedora_packages", return_value=["cmake"]),
+        patch.object(_fedora._c, "run_dnf_install_with_retry", return_value=True) as dnf,
+        patch.object(_fedora._c, "run_pipx_install", return_value=True) as pipx,
+        patch.object(_fedora._c, "run_command", return_value=True) as cleanup,
+    ):
+        assert _fedora.install_fedora(dry_run=False) is True
+    dnf.assert_called_once_with(["cmake"], False, sudo=True)
+    pipx.assert_called_once_with(False)
+    cleanup.assert_called_once_with(["dnf", "clean", "all"], False, sudo=True)
+
+
+def test_install_fedora_skip_system_packages_skips_dnf_and_cleanup() -> None:
+    with (
+        patch.object(_fedora._c, "run_dnf_install_with_retry", return_value=True) as dnf,
+        patch.object(_fedora._c, "run_pipx_install", return_value=True) as pipx,
+        patch.object(_fedora._c, "run_command", return_value=True) as cleanup,
+    ):
+        assert _fedora.install_fedora(dry_run=False, skip_system_packages=True) is True
+    dnf.assert_not_called()
+    cleanup.assert_not_called()
+    pipx.assert_called_once_with(False)
+
+
+def test_install_fedora_returns_false_when_dnf_fails() -> None:
+    with (
+        patch.object(_fedora, "get_fedora_packages", return_value=["cmake"]),
+        patch.object(_fedora._c, "run_dnf_install_with_retry", return_value=False),
+        patch.object(_fedora._c, "run_pipx_install", return_value=True) as pipx,
+    ):
+        assert _fedora.install_fedora(dry_run=False) is False
+    pipx.assert_not_called()
+
+
+def test_install_fedora_unknown_category_returns_false() -> None:
+    with (
+        patch.object(_fedora, "get_fedora_packages", return_value=[]),
+        patch.object(_fedora._c, "run_dnf_install_with_retry", return_value=True) as dnf,
+    ):
+        assert _fedora.install_fedora(dry_run=False, category="bogus") is False
+    dnf.assert_not_called()
+
+
+def test_install_arch_syncs_installs_then_cleans() -> None:
+    with (
+        patch.object(_arch, "get_arch_packages", return_value=["cmake"]),
+        patch.object(_arch._c, "run_command", return_value=True) as run_command,
+        patch.object(_arch._c, "run_pacman_install_with_retry", return_value=True) as pac,
+        patch.object(_arch._c, "run_pipx_install", return_value=True) as pipx,
+    ):
+        assert _arch.install_arch(dry_run=False) is True
+    run_command.assert_any_call(["pacman", "-Syu", "--noconfirm"], False, sudo=True)
+    run_command.assert_any_call(["pacman", "-Sc", "--noconfirm"], False, sudo=True)
+    pac.assert_called_once_with(["cmake"], False, sudo=True)
+    pipx.assert_called_once_with(False)
+
+
+def test_install_arch_aborts_when_sync_fails() -> None:
+    with (
+        patch.object(_arch._c, "run_command", return_value=False),
+        patch.object(_arch._c, "run_pacman_install_with_retry", return_value=True) as pac,
+    ):
+        assert _arch.install_arch(dry_run=False) is False
+    pac.assert_not_called()
+
+
+def test_install_arch_category_skips_pipx_and_cleanup() -> None:
+    with (
+        patch.object(_arch, "get_arch_packages", return_value=["cmake"]),
+        patch.object(_arch._c, "run_command", return_value=True) as run_command,
+        patch.object(_arch._c, "run_pacman_install_with_retry", return_value=True),
+        patch.object(_arch._c, "run_pipx_install", return_value=True) as pipx,
+    ):
+        assert _arch.install_arch(dry_run=False, category="gstreamer") is True
+    pipx.assert_not_called()
+    cleanup_calls = [c for c in run_command.call_args_list if c.args[0][:2] == ["pacman", "-Sc"]]
+    assert cleanup_calls == []

@@ -9,6 +9,8 @@
 #endif
 #include "QGCLoggingCategory.h"
 
+#include <algorithm>
+
 QGC_LOGGING_CATEGORY(VehicleLinkManagerLog, "Vehicle.VehicleLinkManager")
 
 VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle)
@@ -86,20 +88,10 @@ void VehicleLinkManager::_commRegainedOnLink(LinkInterface *link)
 
     emit linkStatusesChanged();
 
-    // Check recovery from total communication loss
-    if (!_communicationLost) {
-        return;
-    }
-
-    bool noCommunicationLoss = true;
-    for (const LinkInfo_t &linkInfo: _rgLinkInfo) {
-        if (linkInfo.commLost) {
-            noCommunicationLoss = false;
-            break;
-        }
-    }
-
-    if (noCommunicationLoss) {
+    // Any single regained link ends total communication loss
+    if (_communicationLost &&
+        std::any_of(_rgLinkInfo.cbegin(), _rgLinkInfo.cend(),
+                    [](const LinkInfo_t &info) { return !info.commLost; })) {
         _communicationLost = false;
         emit communicationLostChanged(_communicationLost);
     }

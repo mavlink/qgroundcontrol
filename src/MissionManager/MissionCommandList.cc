@@ -28,13 +28,13 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
         QStringList{"label", "enumStrings", "friendlyName", "description", "category"},
         QStringList{"rawName", "comment"});
     if (!errorString.isEmpty()) {
-        qWarning() << "Internal Error: " << errorString;
+        qCWarning(MissionCommandListLog) << "Internal Error: " << errorString;
         return;
     }
 
     QJsonValue jsonValue = jsonObject.value(_mavCmdInfoJsonKey);
     if (!jsonValue.isArray()) {
-        qWarning() << jsonFilename << "mavCmdInfo not array";
+        qCWarning(MissionCommandListLog) << jsonFilename << "mavCmdInfo not array";
         return;
     }
 
@@ -42,7 +42,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
     QJsonArray jsonArray = jsonValue.toArray();
     for(QJsonValue info: jsonArray) {
         if (!info.isObject()) {
-            qWarning() << jsonFilename << "mavCmdArray should contain objects";
+            qCWarning(MissionCommandListLog) << jsonFilename << "mavCmdArray should contain objects";
             return;
         }
 
@@ -51,7 +51,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
         QString uiInfoErrorString;
         if (!uiInfo->loadJsonInfo(info.toObject(), baseCommandList, uiInfoErrorString)) {
             uiInfo->deleteLater();
-            qWarning() << jsonFilename << uiInfoErrorString;
+            qCWarning(MissionCommandListLog) << jsonFilename << uiInfoErrorString;
             return;
         }
 

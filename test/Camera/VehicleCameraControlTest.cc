@@ -181,4 +181,84 @@ void VehicleCameraControlTest::_testCameraCapFlags()
     QCOMPARE(camera->hasFocus(), false);
 }
 
+void VehicleCameraControlTest::_testZoomTriggersCameraSettingsRequest()
+{
+    // A spec-minimal camera does not broadcast CAMERA_SETTINGS after a zoom change,
+    // so QGC must re-request it itself once a zoom command is accepted. Otherwise
+    // the zoom level (and FOV) shown by QGC goes stale after the first zoom.
+
+    auto* mockConfig = new MockConfiguration(QStringLiteral("CameraZoomSettingsTest"));
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
+    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig->setDynamic(true);
+    mockConfig->setEnableCamera(true);
+    mockConfig->setCameraCaptureImage(true);
+    mockConfig->setCameraHasBasicZoom(true);
+
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
+    QVERIFY(spyVehicle.isValid());
+
+    SharedLinkConfigurationPtr linkConfig = LinkManager::instance()->addConfiguration(mockConfig);
+    QVERIFY(LinkManager::instance()->createConnectedLink(linkConfig));
+
+    QVERIFY2(UnitTest::waitForSignal(spyVehicle, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged")),
+             "Timeout waiting for vehicle connection");
+
+    _vehicle = MultiVehicleManager::instance()->activeVehicle();
+    QVERIFY(_vehicle);
+
+    _mockLink = qobject_cast<MockLink*>(linkConfig->link());
+    QVERIFY(_mockLink);
+
+    if (!_vehicle->isInitialConnectComplete()) {
+        QSignalSpy spyConnect(_vehicle, &Vehicle::initialConnectComplete);
+        QVERIFY(spyConnect.isValid());
+        QVERIFY2(UnitTest::waitForSignal(spyConnect, TestTimeout::longMs(), QStringLiteral("initialConnectComplete")),
+                 "Timeout waiting for initial connect");
+    }
+
+    QGCCameraManager* cameraManager = _vehicle->cameraManager();
+    QVERIFY(cameraManager);
+    QVERIFY_TRUE_WAIT(cameraManager->cameras()->count() >= 2, TestTimeout::longMs());
+
+    MavlinkCameraControlInterface* camera = nullptr;
+    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
+        auto* cam = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
+        if (cam && cam->compID() == MAV_COMP_ID_CAMERA) {
+            camera = cam;
+            break;
+        }
+    }
+    QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
+    QVERIFY(camera->hasZoom());
+
+    // Wait for the initial CAMERA_SETTINGS exchange to settle: the mock reports zoom
+    // level 1.0, so once QGC shows it the initial request/retry cycle is complete.
+    QVERIFY_TRUE_WAIT(qFuzzyCompare(camera->zoomLevel(), 1.0), TestTimeout::longMs());
+
+    // QGC alternates between REQUEST_MESSAGE and the deprecated REQUEST_CAMERA_SETTINGS
+    // on retries (dual-transport migration), so accept either as a settings request.
+    auto settingsRequestCount = [this]() {
+        return _mockLink->receivedRequestMessageCount(MAV_COMP_ID_CAMERA, MAVLINK_MSG_ID_CAMERA_SETTINGS)
+             + _mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_CAMERA_SETTINGS, MAV_COMP_ID_CAMERA);
+    };
+
+    // An accepted zoom command must cause QGC to re-request CAMERA_SETTINGS on its own
+    const int baselineAfterConnect = settingsRequestCount();
+    camera->setZoomLevel(50.0);
+    QTRY_VERIFY2_WITH_TIMEOUT(settingsRequestCount() > baselineAfterConnect,
+                              "QGC did not re-request CAMERA_SETTINGS after setZoomLevel was accepted",
+                              TestTimeout::longMs());
+    // And the fresh settings update QGC's stale zoom level
+    QVERIFY_TRUE_WAIT(qFuzzyCompare(camera->zoomLevel(), 50.0), TestTimeout::longMs());
+
+    // Continuous zoom (start/stop) must trigger a refresh as well
+    const int baselineAfterSetZoom = settingsRequestCount();
+    camera->startZoom(1);
+    camera->stopZoom();
+    QTRY_VERIFY2_WITH_TIMEOUT(settingsRequestCount() > baselineAfterSetZoom,
+                              "QGC did not re-request CAMERA_SETTINGS after startZoom/stopZoom were accepted",
+                              TestTimeout::longMs());
+}
+
 UT_REGISTER_TEST(VehicleCameraControlTest, TestLabel::Integration, TestLabel::Vehicle)

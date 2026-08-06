@@ -386,7 +386,7 @@ public:
     /// Creates Autotune object.
     virtual Autotune *createAutotune(Vehicle *vehicle) const;
 
-    /// Update Available flight modes recieved from vehicle
+    /// Update Available flight modes received from vehicle
     virtual void updateAvailableFlightModes(FlightModeList &flightModeList) { _updateFlightModeList(flightModeList); }
 
     ParameterMetaData *loadParameterMetaData(const Vehicle *vehicle);

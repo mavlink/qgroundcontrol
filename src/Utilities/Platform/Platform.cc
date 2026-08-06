@@ -3,20 +3,19 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QProcessEnvironment>
+#include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGRendererInterface>
+
+#include <cstdio>
 
 #include "QGCCommandLineParser.h"
-
-#ifdef Q_OS_ANDROID
-    #include "AndroidInterface.h"
-#endif
 
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
     #include "RunGuard.h"
     #include "SignalHandler.h"
 #endif
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    #include <cstdio>
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
     #include <unistd.h>
     #include <sys/types.h>
     #include <sys/wait.h>
@@ -32,13 +31,12 @@
     #if defined(_MSC_VER)
         #include <crtdbg.h>
         #include <stdlib.h>
-        #include <cstdio> // _snwprintf_s
     #endif
 #endif
 
 namespace {
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
 static void showLinuxErrorDialog(const QByteArray& msg)
 {
     // Try to show a GUI dialog — important for AppImage users where stderr is invisible.
@@ -159,7 +157,7 @@ void setWindowsErrorModes(bool quietWindowsAsserts)
 std::optional<int> Platform::initialize(int argc, char* argv[],
                                          const QGCCommandLineParser::CommandLineParseResult& args)
 {
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
     if (isRunningAsRoot()) {
         return showRootError(argc, argv);
     }
@@ -192,6 +190,11 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
     if (!qEnvironmentVariableIsSet("QT_WIN_DEBUG_CONSOLE")) {
         (void) qputenv("QT_WIN_DEBUG_CONSOLE", "attach");
     }
+    if (qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) == 0) {
+        // Qt 6.10 does not reliably select D3D12 from QSG_RHI_BACKEND on Windows. Make the test/diagnostic override
+        // explicit before the scene graph is initialized; the default path remains Qt's D3D11 backend.
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D12);
+    }
     setWindowsErrorModes(args.quietWindowsAsserts);
 #endif
 
@@ -208,15 +211,25 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
 #endif
 
     // --- Qt attributes ---
-    if (args.useDesktopGL) {
-        QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
-    }
-
     if (args.useSwRast) {
+        // RHI defaults to D3D11/Metal on Win/macOS; AA_UseSoftwareOpenGL only bites once the scene graph is on GL.
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
         QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
     }
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
+    (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
+    // GL is the only working desktop-Linux GStreamer zero-copy backend (GLMemory and DMABuf/EGLImage both import into a
+    // GL RHI; Vulkan import dormant); pin it unless the user set QSG_RHI_BACKEND. No QRhi::probe — needs GuiPrivate (not
+    // linked here) and GL is always present on Linux.
+    else if (!qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) {
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    }
+#endif
 
+    // GStreamer's GL/DMABuf zero-copy paths both need QOpenGLContext::globalShareContext(), which this attribute enables.
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
     QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
 
     return std::nullopt;
@@ -228,13 +241,9 @@ void Platform::setupPostApp()
     SignalHandler* signalHandler = new SignalHandler(QCoreApplication::instance());
     (void) signalHandler->setupSignalHandlers();
 #endif
-
-#ifdef Q_OS_ANDROID
-    AndroidInterface::checkStoragePermissions();
-#endif
 }
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
 bool Platform::isRunningAsRoot()
 {
     return ::getuid() == 0;
@@ -258,6 +267,8 @@ int Platform::showMultipleInstanceError([[maybe_unused]] int argc, [[maybe_unuse
         "A second instance of %1 is already running. "
         "Please close the other instance and try again.").arg(QLatin1String(QGC_APP_NAME));
 #if defined(Q_OS_MACOS)
+    // The native alert is GUI-only; also write to stderr so a CLI/headless launch sees the reason.
+    fprintf(stderr, "Error: %s\n", message.toLocal8Bit().constData());
     CFStringRef cfMessage = CFStringCreateWithCString(nullptr, message.toUtf8().constData(), kCFStringEncodingUTF8);
     CFUserNotificationDisplayAlert(0, kCFUserNotificationStopAlertLevel,
                                    nullptr, nullptr, nullptr,
@@ -265,6 +276,8 @@ int Platform::showMultipleInstanceError([[maybe_unused]] int argc, [[maybe_unuse
                                    nullptr, nullptr, nullptr, nullptr);
     CFRelease(cfMessage);
 #elif defined(Q_OS_WIN)
+    // MessageBoxW is GUI-only; also write to stderr so a CLI/headless launch sees the reason.
+    fprintf(stderr, "Error: %s\n", message.toLocal8Bit().constData());
     MessageBoxW(nullptr, message.toStdWString().c_str(), L"Error", MB_OK | MB_ICONERROR);
 #else
     showLinuxErrorDialog(message.toLocal8Bit());

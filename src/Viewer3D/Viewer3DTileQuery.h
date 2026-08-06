@@ -33,7 +33,6 @@ public:
 
 signals:
     void loadingMapCompleted();
-    void mapTileDownloaded(float progress);
     void textureGeometryReady(TileStatistics_t tileInfo);
 
 private:
@@ -73,7 +72,6 @@ private:
     QString _mapType;
 
     int _totalTilesCount = 0;
-    int _downloadedTilesCount = 0;
     int _mapId = 0;
     int _zoomLevel = 0;
 };

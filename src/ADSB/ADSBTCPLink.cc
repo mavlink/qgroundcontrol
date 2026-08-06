@@ -2,17 +2,15 @@
 // #include "QGCSensors.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QTimer>
 #include <QtNetwork/QTcpSocket>
 
 QGC_LOGGING_CATEGORY(ADSBTCPLinkLog, "ADSB.ADSBTCPLink")
 
-ADSBTCPLink::ADSBTCPLink(const QHostAddress &hostAddress, quint16 port, QObject *parent)
+ADSBTCPLink::ADSBTCPLink(const QString &hostAddress, quint16 port, QObject *parent)
     : QObject(parent)
     , _hostAddress(hostAddress)
     , _port(port)
     , _socket(new QTcpSocket(this))
-    , _processTimer(new QTimer(this))
 {
     if (ADSBTCPLinkLog().isDebugEnabled()) {
         (void) connect(_socket, &QTcpSocket::stateChanged, this, [](QTcpSocket::SocketState state) {
@@ -43,9 +41,6 @@ ADSBTCPLink::ADSBTCPLink(const QHostAddress &hostAddress, quint16 port, QObject 
 
     (void) connect(_socket, &QTcpSocket::readyRead, this, &ADSBTCPLink::_readBytes);
 
-    _processTimer->setInterval(_processInterval); // Set an interval for processing lines
-    (void) connect(_processTimer, &QTimer::timeout, this, &ADSBTCPLink::_processLines);
-
     // qCDebug(ADSBTCPLinkLog) << Q_FUNC_INFO << this;
 }
 
@@ -60,10 +55,11 @@ bool ADSBTCPLink::init()
         return false;
     } */
 
-    if (_hostAddress.isNull()) {
+    if (_hostAddress.isEmpty()) {
         return false;
     }
 
+    // connectToHost with a hostname resolves DNS asynchronously
     _socket->connectToHost(_hostAddress, _port);
 
     return true;
@@ -73,27 +69,7 @@ void ADSBTCPLink::_readBytes()
 {
     while (_socket && _socket->canReadLine()) {
         const QByteArray bytes = _socket->readLine();
-        (void) _lineBuffer.append(QString::fromLocal8Bit(bytes));
-    }
-
-    // Start or restart the timer to process lines
-    if (!_processTimer->isActive()) {
-        _processTimer->start();
-    }
-}
-
-void ADSBTCPLink::_processLines()
-{
-    int linesProcessed = 0;
-    while (!_lineBuffer.isEmpty() && (linesProcessed < _maxLinesToProcess)) {
-        const QString line = _lineBuffer.takeFirst();
-        _parseLine(line);
-        ++linesProcessed;
-    }
-
-    // Stop the timer if there are no more lines to process
-    if (_lineBuffer.isEmpty()) {
-        _processTimer->stop();
+        _parseLine(QString::fromLocal8Bit(bytes));
     }
 }
 

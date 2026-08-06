@@ -11,7 +11,7 @@ inputs:
     required: false
     default: 'linux'
   build-args:
-    description: Newline-separated KEY=VALUE docker build args (e.g. UBUNTU_REF=...)
+    description: Newline-separated KEY=VALUE docker build args (e.g. BASE_REF=...)
     required: false
     default: ''
   build-type:

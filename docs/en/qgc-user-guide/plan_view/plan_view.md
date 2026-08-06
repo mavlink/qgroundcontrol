@@ -20,7 +20,7 @@ The main elements of the UI are:
   The **Save** and **Upload** buttons are highlighted when there are unsaved or un-uploaded changes.
 - **[Plan Tools](#plan_tools):** A vertical tool strip on the left side of the map used to add mission items (Takeoff, Waypoint, Pattern, ROI, Return/Land) and toggle the stats panel.
 - **[Plan Editor Panel](#plan_editor_panel):** A collapsible tree view on the right side containing the plan file info, mission items, GeoFence, and rally point editors.
-- **Layer Switcher:** Buttons in the top-right area for switching between **Mission**, **Geo-Fence**, and **Rally Point** editing layers.
+- **Layer Switcher:** Buttons in the top-right area for switching between the **Mission**, **GeoFence**, and **Rally Points** editing layers.
 - **Mission Stats / Terrain Panel:** A panel at the bottom of the map that can toggle between a terrain altitude profile chart (height AMSL vs. distance) and mission statistics (selected waypoint info, total distance, max telemetry distance, estimated flight time, and battery info).
 
 ## Planning a Mission {#plan_mission}
@@ -100,12 +100,15 @@ Before you fly a mission you must upload it to the vehicle.
 
 The Plan Editor Panel is a collapsible tree view on the right side of the view.
 The panel can be collapsed or expanded using the toggle button on its left edge.
-It is organized into the following collapsible sections: **Plan Info**, **Defaults**, **Mission**, **GeoFence**, **Rally Points**, and **Transform**.
+It is organized into the following collapsible sections: **Plan Info**, **Defaults**, **Mission Items**, **GeoFence**, **Rally Points**, and **Transform**.
+
+The **Mission Items**, **GeoFence**, and **Rally Points** sections correspond to the map editing layers and are mutually exclusive — expanding one collapses the others and makes it the active editing layer.
 
 ### Layer Switcher {#layer_switcher}
 
-Buttons in the top-right area of the map allow switching between the **Mission**, **Geo-Fence**, and **Rally Point** editing layers.
-The active layer button is always visible; the other layer buttons slide in briefly when toggled and auto-hide after a few seconds.
+Buttons in the top-right area of the map allow switching between the **Mission**, **GeoFence**, and **Rally Points** editing layers.
+Only the active layer's button is shown; click it to expand the other layer choices, which auto-collapse after a few seconds.
+Selecting a layer also expands the corresponding section in the [Plan Editor Panel](#plan_editor_panel).
 
 ### Plan Info {#plan_info}
 
@@ -115,7 +118,7 @@ The Plan Info section contains general plan-level settings:
 - **Vehicle Info** — Firmware and vehicle type selectors. When connected to a vehicle these are determined automatically; when planning offline you must set them before adding any mission items so that the correct mission commands are available.
 - **Expected Home Position** — The altitude (AMSL) for the planned home position is determined automatically from terrain data. A **Move To Map Center** button repositions the home marker to the center of the map. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
 
-### Defaults {#mission_settings}
+### Defaults {#defaults}
 
 The Defaults section sets plan-wide values that apply to new mission items:
 
@@ -126,7 +129,7 @@ The Defaults section sets plan-wide values that apply to new mission items:
 
 ### Mission Items {#mission_items}
 
-The Mission section lists all mission items (waypoints, commands, patterns, etc.) in order.
+The Mission Items section lists all mission items (waypoints, commands, patterns, etc.) in order.
 Each item can be expanded to edit its parameters.
 
 - Click an item to select it on the map and expand its editor.

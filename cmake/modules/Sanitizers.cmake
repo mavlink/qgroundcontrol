@@ -91,7 +91,6 @@ if((QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
         "Current CMAKE_BUILD_TYPE='${CMAKE_BUILD_TYPE}'.")
 endif()
 
-# Validate incompatible combinations
 if(QGC_ENABLE_ASAN AND QGC_ENABLE_TSAN)
     message(FATAL_ERROR "QGC: ASan and TSan cannot be used together. Choose one.")
 endif()
@@ -104,7 +103,6 @@ if(QGC_ENABLE_TSAN AND QGC_ENABLE_MSAN)
     message(FATAL_ERROR "QGC: TSan and MSan cannot be used together. Choose one.")
 endif()
 
-# Check compiler support
 if(QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
     if(NOT (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang"))
         message(FATAL_ERROR "QGC: Sanitizers are only supported with GCC and Clang")

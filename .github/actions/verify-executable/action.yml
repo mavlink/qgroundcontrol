@@ -29,8 +29,14 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_executable.py" \
-          --binary-path "${{ inputs.binary-path }}" \
-          --type "${{ inputs.type }}" \
-          --working-dir "${{ inputs.working-dir }}" \
-          --build-dir "${{ inputs.build-dir }}" \
-          --timeout "${{ inputs.timeout }}"
+          --binary-path "${INPUTS_BINARY_PATH}" \
+          --type "${INPUTS_TYPE}" \
+          --working-dir "${INPUTS_WORKING_DIR}" \
+          --build-dir "${INPUTS_BUILD_DIR}" \
+          --timeout "${INPUTS_TIMEOUT}"
+      env:
+        INPUTS_BINARY_PATH: ${{ inputs.binary-path }}
+        INPUTS_TYPE: ${{ inputs.type }}
+        INPUTS_WORKING_DIR: ${{ inputs.working-dir }}
+        INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
+        INPUTS_TIMEOUT: ${{ inputs.timeout }}

@@ -28,6 +28,23 @@ private slots:
     void _testFilterWithWhitelist();
     void _testFilterRejectsBadCrc();
 
+    // Transport config validation
+    void testConfigValidEmpty();
+    void testConfigValidGood();
+    void testConfigValidBadPort();
+    void testConfigRejectsColonUsername();
+    void testConfigRejectsControlChars();
+    void testConfigDiffClassifiersCoverIndependentFields();
+    void testConfigCasterIdentityExcludesMountpointAndSinks();
+
+    // Live TLS error path
+    void testTlsFatalErrorEmitsSingleError();
+
+    // HTTP request building
+    void _testBuildRequestPlaintextCredentialsWarns();
+    void _testBuildRequestTlsCredentialsNoWarn();
+    void _testBuildRequestNoCredentialsNoWarn();
+
     // NMEA checksum repair
     void _testRepairNmeaChecksumCorrect();
     void _testRepairNmeaChecksumWrong();

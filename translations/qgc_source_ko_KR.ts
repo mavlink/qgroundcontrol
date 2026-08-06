@@ -2812,7 +2812,7 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="83"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="710"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="709"/>
       <source>Calibrate Compass</source>
       <translation>지자기 센서 캘리브레이션 시작</translation>
     </message>
@@ -2823,7 +2823,7 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="95"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="767"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="766"/>
       <source>Sensor Settings</source>
       <translation>센서 세팅</translation>
     </message>
@@ -2948,147 +2948,147 @@
       <translation>설정되지 않음</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="413"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="412"/>
       <source>Orientation:</source>
       <translation>방향:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="479"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="478"/>
       <source>Autopilot Rotation:</source>
       <translation>비행 컨트롤러 회전:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="496"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="495"/>
       <source>Simple accelerometer calibration is less precise but allows calibrating without rotating the vehicle. Check this if you have a large/heavy vehicle.</source>
       <translation type="unfinished">Simple accelerometer calibration is less precise but allows calibrating without rotating the vehicle. Check this if you have a large/heavy vehicle.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="514"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="513"/>
       <source>Magnetic Declination</source>
       <translation type="unfinished">Magnetic Declination</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="526"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="525"/>
       <source>Manual Magnetic Declination</source>
       <translation type="unfinished">Manual Magnetic Declination</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="548"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="547"/>
       <source>Fast compass calibration given vehicle position and yaw. This </source>
       <translation type="unfinished">Fast compass calibration given vehicle position and yaw. This </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="549"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="548"/>
       <source>results in zero diagonal and off-diagonal elements, so is only </source>
       <translation type="unfinished">results in zero diagonal and off-diagonal elements, so is only </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="550"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="549"/>
       <source>suitable for vehicles where the field is close to spherical. It is </source>
       <translation type="unfinished">suitable for vehicles where the field is close to spherical. It is </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="551"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="550"/>
       <source>useful for large vehicles where moving the vehicle to calibrate it </source>
       <translation type="unfinished">useful for large vehicles where moving the vehicle to calibrate it </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="552"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="551"/>
       <source>is difficult. Point the vehicle North before using it.</source>
       <translation type="unfinished">is difficult. Point the vehicle North before using it.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="565"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="564"/>
       <source>Fast Calibration</source>
       <translation type="unfinished">Fast Calibration</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="573"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="572"/>
       <source>Vehicle has no Valid positon, please provide it</source>
       <translation type="unfinished">Vehicle has no Valid positon, please provide it</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="579"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="578"/>
       <source>Use GCS position instead</source>
       <translation type="unfinished">Use GCS position instead</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="585"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="584"/>
       <source>Use current map position instead</source>
       <translation type="unfinished">Use current map position instead</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="625"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="624"/>
       <source>Compass Motor Interference Calibration</source>
       <translation type="unfinished">Compass Motor Interference Calibration</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="638"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="637"/>
       <source>This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. </source>
       <translation>이것은 내부 지자기 센서만 장착하고 있거나 모터, 전선에 의한 간섭이 심한 경우에 추천합니다. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="639"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="638"/>
       <source>CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. </source>
       <translation>지자기센서는 전류와 자기간섭을 측정하기 때문에 배터리 전류 측정이 설정되어있어야 올바르게 작동할 수 있습니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="640"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="639"/>
       <source>It is technically possible to set-up CompassMot using throttle but this is not recommended.</source>
       <translation>지자기센서를 설정하는것이 가능하나, 사용이 권장되지 않습니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="647"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="646"/>
       <source>Disconnect your props, flip them over and rotate them one position around the frame. </source>
       <translation>프로펠러를 분리하고 뒤집어서 옆의 모터로 한 칸 이동하여 다시 부착해주십시오. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="648"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="647"/>
       <source>In this configuration they should push the copter down into the ground when the throttle is raised.</source>
       <translation>이 구성에서 스로틀이 켜져있을 때 기체를 지면 방향으로 밀어주어야 합니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="655"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="654"/>
       <source>Secure the copter (perhaps with tape) so that it does not move.</source>
       <translation>기체가 움직이지 않도록 (테이프 등으로) 고정해주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="662"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="661"/>
       <source>Turn on your transmitter and keep throttle at zero.</source>
       <translation>조종기를 켜고 스로틀을 0지점에 놓아주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="669"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="668"/>
       <source>Click Ok to start CompassMot calibration.</source>
       <translation>지자기센서 캘리브레이션을 시작하려면 확인을 눌러주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="728"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="727"/>
       <source>To level the horizon you need to place the vehicle in its level flight position and press Ok.</source>
       <translation>수평을 보정하기 위해서 기체를 수평 하게 위치하고 확인을 눌러주십시오</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="753"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="752"/>
       <source>depth</source>
       <translation>깊이</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="753"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="752"/>
       <source>altitude</source>
       <translation>고도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="749"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="748"/>
       <source>Pressure calibration will set the %1 to zero at the current pressure reading. %2</source>
       <translation>기압 캘리브레이션은 기압값 %1를 현재의 기압값 %2을 0으로 변경합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="754"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="753"/>
       <source>To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.</source>
       <translation>대기 속도 센서를 보정하기 위해 바람으로부터 보호해주십시오. 보정 중 센서를 만지거나 구멍을 막지 않도록 주의하십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="740"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="739"/>
       <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.
 
 Click Ok to start calibration.</source>
@@ -3097,82 +3097,82 @@ Click Ok to start calibration.</source>
 보정을 시작하려면 확인 버튼을 누르십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="693"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="692"/>
       <source>Accelerometer</source>
       <translation>가속도 센서</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="705"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="704"/>
       <source>Compass</source>
       <translation>지자기 센서</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="710"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="709"/>
       <source>Accelerometer must be calibrated prior to Compass.</source>
       <translation>가속도 센서 캘리브레이션은 지자기 센서 캘리브레이션 전에 완료되어야 합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="721"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="720"/>
       <source>Level Horizon</source>
       <translation>수평 조정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="725"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="724"/>
       <source>Accelerometer must be calibrated prior to Level Horizon.</source>
       <translation>가속도 센서 캘리브레이션은 수평 센서 캘리브레이션 전에 완료되어야 합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="737"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="736"/>
       <source>Gyro</source>
       <translation>자이로</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="739"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="738"/>
       <source>Calibrate Gyro</source>
       <translation>자이로 센서 조정하기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="755"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="754"/>
       <source>Baro/Airspeed</source>
       <translation>기압/대기 속도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="755"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="754"/>
       <source>Pressure</source>
       <translation>기압</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="760"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="759"/>
       <source>CompassMot</source>
       <translation>지자기센서</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="783"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="782"/>
       <source>Next</source>
       <translation>다음</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="792"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="791"/>
       <source>Cancel</source>
       <translation>취소</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="863"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="872"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="881"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="890"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="899"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="908"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="862"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="871"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="880"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="889"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="898"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="907"/>
       <source>Rotate</source>
       <translation>회전</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="863"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="872"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="881"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="890"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="899"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="908"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="862"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="871"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="880"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="889"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="898"/>
+      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="907"/>
       <source>Hold Still</source>
       <translation>대기</translation>
     </message>
@@ -4411,12 +4411,12 @@ Please place your vehicle in water, click the button, and wait. Note that the th
   <context>
     <name>AudioOutput</name>
     <message>
-      <location filename="../src/Utilities/Audio/AudioOutput.cc" line="185"/>
+      <location filename="../src/Utilities/Audio/AudioOutput.cc" line="219"/>
       <source>%1</source>
       <translation type="unfinished">%1</translation>
     </message>
     <message>
-      <location filename="../src/Utilities/Audio/AudioOutput.cc" line="209"/>
+      <location filename="../src/Utilities/Audio/AudioOutput.cc" line="257"/>
       <source>Audio test. Volume is %1 percent</source>
       <translation type="unfinished">Audio test. Volume is %1 percent</translation>
     </message>
@@ -6447,82 +6447,82 @@ Click Ok to start the auto-tuning process.
   <context>
     <name>FTPManager</name>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="719"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="724"/>
       <source>Invalid Nak format</source>
       <translation type="unfinished">Invalid Nak format</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="721"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="726"/>
       <source>errno %1</source>
       <translation>오류 넘버 %1</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="980"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="989"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="1004"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="1013"/>
       <source>List directory failed</source>
       <translation type="unfinished">List directory failed</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="299"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="743"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="765"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="778"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="782"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="891"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="900"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="1027"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="1062"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="1108"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="1116"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="304"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="748"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="770"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="783"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="787"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="896"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="905"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="1051"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="1086"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="1132"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="1140"/>
       <source>Download failed</source>
       <translation>다운로드 실패</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="234"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="258"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="268"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="239"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="263"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="273"/>
       <source>Aborted</source>
       <translation type="unfinished">Aborted</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="386"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="394"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="391"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="399"/>
       <source>Delete failed</source>
       <translation type="unfinished">Delete failed</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="450"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="555"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="603"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="455"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="560"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="608"/>
       <source>Upload failed for: %1 - error: %2</source>
       <translation type="unfinished">Upload failed for: %1 - error: %2</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="457"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="563"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="611"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="462"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="568"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="616"/>
       <source>Upload failed for: %1 - no response from vehicle</source>
       <translation type="unfinished">Upload failed for: %1 - no response from vehicle</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="468"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="473"/>
       <source>Upload failed for: %1 - file not open</source>
       <translation type="unfinished">Upload failed for: %1 - file not open</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="498"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="505"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="503"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="510"/>
       <source>Upload failed for: %1 - error reading file</source>
       <translation type="unfinished">Upload failed for: %1 - error reading file</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="620"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="625"/>
       <source>Aborted for: %1</source>
       <translation type="unfinished">Aborted for: %1</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/FTPManager.cc" line="853"/>
-      <location filename="../src/Vehicle/FTPManager.cc" line="1075"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="858"/>
+      <location filename="../src/Vehicle/FTPManager.cc" line="1099"/>
       <source>Download failed: Error saving file</source>
       <translation>다운로드 실패: 파일 저장 중 오류 발생</translation>
     </message>
@@ -7175,87 +7175,87 @@ Click Ok to start the auto-tuning process.
   <context>
     <name>FirmwareUpgradeController</name>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="165"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="166"/>
       <source>Connect not allowed during Firmware Upgrade.</source>
       <translation>펌웨어 업그레이드 중 연결할 수 없습니다.</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="307"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="308"/>
       <source>Connected to bootloader:</source>
       <translation>부트로더에 연결했습니다:</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="308"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="309"/>
       <source>  Version: %1</source>
       <translation>  버전: %1</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="309"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="310"/>
       <source>  Board ID: %1</source>
       <translation>  보드 ID: %1</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="310"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="311"/>
       <source>  Flash size: %1</source>
       <translation>  플래시 용량: %1</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="365"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="366"/>
       <source>Custom firmware selected but no filename given.</source>
       <translation>사용자 정의 펌웨어가 선택 되었지만 파일 이름이 지정되지 않았습니다.</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="370"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="371"/>
       <source>Unable to find specified firmware for board type</source>
       <translation>해당 보드 유형에 대해 지정된 펌웨어를 찾을 수 없습니다</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="376"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="377"/>
       <source>No firmware file selected</source>
       <translation>펌웨어 파일이 선택되지 않았습니다</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="391"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="392"/>
       <source>Downloading firmware from %1</source>
       <translation type="unfinished">Downloading firmware from %1</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="393"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="394"/>
       <source>Using firmware file %1</source>
       <translation type="unfinished">Using firmware file %1</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="431"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="432"/>
       <source>Download complete</source>
       <translation>다운로드 완료</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="440"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="441"/>
       <source>Image load failed</source>
       <translation>이미지 로드에 실패했습니다</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="446"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="447"/>
       <source>Bootloader not found</source>
       <translation>부트로더를 찾을 수 없습니다</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="451"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="452"/>
       <source>Image size of %1 is too large for board flash size %2</source>
       <translation>보드 플래시 사이즈:%2에 비해 이미지사이즈:%1이 큽니다</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="483"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="484"/>
       <source>Upgrade complete</source>
       <translation>업그레이드 완료</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="538"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="539"/>
       <source>Upgrade cancelled</source>
       <translation>업그레이드 취소</translation>
     </message>
     <message>
-      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="610"/>
+      <location filename="../src/Vehicle/VehicleSetup/FirmwareUpgradeController.cc" line="611"/>
       <source>Choose board type</source>
       <translation>보드 유형 선택</translation>
     </message>
@@ -10401,50 +10401,50 @@ VTOL</translation>
   <context>
     <name>LinkManager</name>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="269"/>
+      <location filename="../src/Comms/LinkManager.cc" line="321"/>
       <source>Connect not allowed: %1</source>
       <translation>연결할 수 없습니다: %1</translation>
     </message>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="804"/>
-      <location filename="../src/Comms/LinkManager.cc" line="808"/>
-      <location filename="../src/Comms/LinkManager.cc" line="811"/>
+      <location filename="../src/Comms/LinkManager.cc" line="882"/>
+      <location filename="../src/Comms/LinkManager.cc" line="886"/>
+      <location filename="../src/Comms/LinkManager.cc" line="889"/>
       <source>%1 on %2 (AutoConnect)</source>
       <translation>%1 on %2 (자동 접속)</translation>
     </message>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="461"/>
+      <location filename="../src/Comms/LinkManager.cc" line="538"/>
       <source>Shutdown</source>
       <translation>시스템 종료</translation>
     </message>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="479"/>
+      <location filename="../src/Comms/LinkManager.cc" line="556"/>
       <source>Serial</source>
       <translation>직렬</translation>
     </message>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="481"/>
+      <location filename="../src/Comms/LinkManager.cc" line="558"/>
       <source>UDP</source>
       <translation>UDP</translation>
     </message>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="482"/>
+      <location filename="../src/Comms/LinkManager.cc" line="559"/>
       <source>TCP</source>
       <translation>TCP</translation>
     </message>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="483"/>
+      <location filename="../src/Comms/LinkManager.cc" line="560"/>
       <source>Bluetooth</source>
       <translation type="unfinished">Bluetooth</translation>
     </message>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="485"/>
+      <location filename="../src/Comms/LinkManager.cc" line="562"/>
       <source>Mock Link</source>
       <translation>가상 링크</translation>
     </message>
     <message>
-      <location filename="../src/Comms/LinkManager.cc" line="487"/>
-      <location filename="../src/Comms/LinkManager.cc" line="653"/>
+      <location filename="../src/Comms/LinkManager.cc" line="564"/>
+      <location filename="../src/Comms/LinkManager.cc" line="731"/>
       <source>Log Replay</source>
       <translation>로그 리플레이</translation>
     </message>
@@ -12348,59 +12348,69 @@ VTOL</translation>
       <translation type="unfinished">Application Settings</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="238"/>
-      <source>Close %1</source>
-      <translation type="unfinished">Close %1</translation>
-    </message>
-    <message>
       <location filename="../src/MainWindow/MainWindow.qml" line="119"/>
-      <location filename="../src/MainWindow/MainWindow.qml" line="366"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="364"/>
       <source>Please correct the invalid value before continuing</source>
       <translation type="unfinished">Please correct the invalid value before continuing</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="245"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="242"/>
+      <source>Unsaved Mission</source>
+      <translation type="unfinished">Unsaved Mission</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow/MainWindow.qml" line="243"/>
       <source>You have a mission edit in progress which has not been saved/uploaded. If you close you will lose changes. Are you sure you want to close?</source>
       <translation type="unfinished">You have a mission edit in progress which has not been saved/uploaded. If you close you will lose changes. Are you sure you want to close?</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="262"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="259"/>
+      <source>Pending Parameter Updates</source>
+      <translation type="unfinished">Pending Parameter Updates</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow/MainWindow.qml" line="260"/>
       <source>You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</source>
       <translation type="unfinished">You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="278"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="275"/>
+      <source>Active Vehicle Connections</source>
+      <translation type="unfinished">Active Vehicle Connections</translation>
+    </message>
+    <message>
+      <location filename="../src/MainWindow/MainWindow.qml" line="276"/>
       <source>There are still active connections to vehicles. Are you sure you want to exit?</source>
       <translation type="unfinished">There are still active connections to vehicles. Are you sure you want to exit?</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="324"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="322"/>
       <source>Debug Touch Areas</source>
       <translation type="unfinished">Debug Touch Areas</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="325"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="323"/>
       <source>Touch Area display toggled</source>
       <translation type="unfinished">Touch Area display toggled</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="331"/>
-      <location filename="../src/MainWindow/MainWindow.qml" line="343"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="329"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="341"/>
       <source>Advanced Mode</source>
       <translation type="unfinished">Advanced Mode</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="344"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="342"/>
       <source>Turn off Advanced Mode?</source>
       <translation type="unfinished">Turn off Advanced Mode?</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="504"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="502"/>
       <source>Vehicle Error</source>
       <translation type="unfinished">Vehicle Error</translation>
     </message>
     <message>
-      <location filename="../src/MainWindow/MainWindow.qml" line="528"/>
+      <location filename="../src/MainWindow/MainWindow.qml" line="526"/>
       <source>Additional errors received</source>
       <translation type="unfinished">Additional errors received</translation>
     </message>
@@ -13391,39 +13401,39 @@ Do you wish to proceed?</translation>
   <context>
     <name>NTRIPManager</name>
     <message>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="199"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="200"/>
       <source>No host address</source>
       <translation type="unfinished">No host address</translation>
     </message>
     <message>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="206"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="207"/>
       <source>Invalid port</source>
       <translation type="unfinished">Invalid port</translation>
     </message>
     <message>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="214"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="215"/>
       <source>Connecting to %1:%2...</source>
       <translation type="unfinished">Connecting to %1:%2...</translation>
     </message>
     <message>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="239"/>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="365"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="240"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="366"/>
       <source>Connected</source>
       <translation type="unfinished">Connected</translation>
     </message>
     <message>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="280"/>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="548"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="281"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="549"/>
       <source>Disconnected</source>
       <translation type="unfinished">Disconnected</translation>
     </message>
     <message>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="335"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="336"/>
       <source>Reconnecting in %1s...</source>
       <translation type="unfinished">Reconnecting in %1s...</translation>
     </message>
     <message>
-      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="589"/>
+      <location filename="../src/GPS/NTRIP/NTRIPManager.cc" line="590"/>
       <source>Host address is empty</source>
       <translation type="unfinished">Host address is empty</translation>
     </message>
@@ -13879,34 +13889,34 @@ Is this really what you want?</translation>
   <context>
     <name>OnboardLogFtpController</name>
     <message>
-      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="218"/>
+      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="230"/>
       <source>Available</source>
       <translation type="unfinished">Available</translation>
     </message>
     <message>
-      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="274"/>
+      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="286"/>
       <source>Waiting</source>
       <translation type="unfinished">Waiting</translation>
     </message>
     <message>
-      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="304"/>
+      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="316"/>
       <source>Downloading</source>
       <translation type="unfinished">Downloading</translation>
     </message>
     <message>
-      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="332"/>
-      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="353"/>
+      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="344"/>
+      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="365"/>
       <source>Error</source>
       <translation type="unfinished">Error</translation>
     </message>
     <message>
-      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="350"/>
+      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="362"/>
       <source>Downloaded</source>
       <translation type="unfinished">Downloaded</translation>
     </message>
     <message>
-      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="406"/>
-      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="427"/>
+      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="418"/>
+      <location filename="../src/AnalyzeView/OnboardLogsFtp/OnboardLogFtpController.cc" line="439"/>
       <source>Canceled</source>
       <translation type="unfinished">Canceled</translation>
     </message>
@@ -16295,70 +16305,70 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
       <translation>지연이 큰 링크에서는 다운로드가 지원되지 않습니다.</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="309"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="311"/>
       <source>Upload not supported on high latency links.</source>
       <translation>지연이 큰 링크에서는 업로드가 지원되지 않습니다.</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="331"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="333"/>
       <source>Error loading Plan file (%1). %2</source>
       <translation>플랜 파일 로드 중 에러가 발생했습니다(%1). %2
 </translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="481"/>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="487"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="483"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="489"/>
       <source>Plan save error %1 : %2</source>
       <translation>계획 저장 오류 %1: %2</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="527"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="529"/>
       <source>KML save error %1 : %2</source>
       <translation>KML 저장 오류 %1 : %2</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="679"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="681"/>
       <source>Supported types (*.%1 *.%2 *.%3)</source>
       <translation type="unfinished">Supported types (*.%1 *.%2 *.%3)</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="856"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="858"/>
       <source>Archive file not found: %1</source>
       <translation type="unfinished">Archive file not found: %1</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="861"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="863"/>
       <source>Not a supported archive format: %1</source>
       <translation type="unfinished">Not a supported archive format: %1</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="867"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="869"/>
       <source>Could not create temporary directory</source>
       <translation type="unfinished">Could not create temporary directory</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="885"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="887"/>
       <source>Extraction failed</source>
       <translation type="unfinished">Extraction failed</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="886"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="888"/>
       <source>Failed to extract plan archive: %1</source>
       <translation type="unfinished">Failed to extract plan archive: %1</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="900"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="902"/>
       <source>No plan file found in archive</source>
       <translation type="unfinished">No plan file found in archive</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="680"/>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="689"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="682"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="691"/>
       <source>All Files (*)</source>
       <translation>모든 파일 (*)</translation>
     </message>
     <message>
-      <location filename="../src/MissionManager/PlanMasterController.cc" line="689"/>
+      <location filename="../src/MissionManager/PlanMasterController.cc" line="691"/>
       <source>Plan Files (*.%1)</source>
       <translation>계획 파일 (*.*)</translation>
     </message>
@@ -19002,7 +19012,7 @@ sudo apt-get remove modemmanager</translation>
       <translation type="unfinished">Close</translation>
     </message>
     <message>
-      <location filename="../src/Toolbar/SelectViewDropdown.qml" line="117"/>
+      <location filename="../src/Toolbar/SelectViewDropdown.qml" line="121"/>
       <source>%1 Version</source>
       <translation type="unfinished">%1 Version</translation>
     </message>
@@ -20876,7 +20886,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
   <context>
     <name>UDPConfiguration</name>
     <message>
-      <location filename="../src/Comms/UDPLink.h" line="73"/>
+      <location filename="../src/Comms/UDPLink.h" line="82"/>
       <source>UDP Link Settings</source>
       <translation>UDP 링크 세팅</translation>
     </message>
@@ -20884,12 +20894,12 @@ If a vehicle still has this key configured, you will no longer be able to commun
   <context>
     <name>UDPLink</name>
     <message>
-      <location filename="../src/Comms/UDPLink.cc" line="552"/>
+      <location filename="../src/Comms/UDPLink.cc" line="581"/>
       <source>UDP Link Error</source>
       <translation>UDP 링크 오류</translation>
     </message>
     <message>
-      <location filename="../src/Comms/UDPLink.cc" line="552"/>
+      <location filename="../src/Comms/UDPLink.cc" line="581"/>
       <source>Link %1: %2</source>
       <translation type="unfinished">Link %1: %2</translation>
     </message>
@@ -20897,22 +20907,22 @@ If a vehicle still has this key configured, you will no longer be able to commun
   <context>
     <name>UDPWorker</name>
     <message>
-      <location filename="../src/Comms/UDPLink.cc" line="329"/>
+      <location filename="../src/Comms/UDPLink.cc" line="355"/>
       <source>Failed to bind UDP socket to port</source>
       <translation type="unfinished">Failed to bind UDP socket to port</translation>
     </message>
     <message>
-      <location filename="../src/Comms/UDPLink.cc" line="367"/>
+      <location filename="../src/Comms/UDPLink.cc" line="393"/>
       <source>Could Not Send Data - Link is Disconnected!</source>
       <translation type="unfinished">Could Not Send Data - Link is Disconnected!</translation>
     </message>
     <message>
-      <location filename="../src/Comms/UDPLink.cc" line="413"/>
+      <location filename="../src/Comms/UDPLink.cc" line="442"/>
       <source>Could Not Read Data - Link is Disconnected!</source>
       <translation type="unfinished">Could Not Read Data - Link is Disconnected!</translation>
     </message>
     <message>
-      <location filename="../src/Comms/UDPLink.cc" line="419"/>
+      <location filename="../src/Comms/UDPLink.cc" line="448"/>
       <source>Could Not Read Data - No Data Available!</source>
       <translation type="unfinished">Could Not Read Data - No Data Available!</translation>
     </message>
@@ -20941,8 +20951,8 @@ If a vehicle still has this key configured, you will no longer be able to commun
     </message>
     <message>
       <location filename="../src/AppSettings/UdpSettings.qml" line="63"/>
-      <source>Example: 127.0.0.1:14550</source>
-      <translation>예 : 127.0.0.1:14550</translation>
+      <source>IP or hostname, e.g. 127.0.0.1:14550 or my-drone.local:14550</source>
+      <translation type="unfinished">IP or hostname, e.g. 127.0.0.1:14550 or my-drone.local:14550</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/UdpSettings.qml" line="66"/>
@@ -21870,12 +21880,12 @@ If a vehicle still has this key configured, you will no longer be able to commun
   <context>
     <name>main</name>
     <message>
-      <location filename="../src/Utilities/Platform/Platform.cc" line="242"/>
+      <location filename="../src/Utilities/Platform/Platform.cc" line="245"/>
       <source>You are running %1 as root. You should not do this since it will cause other issues with %1. %1 will now exit.</source>
       <translation type="unfinished">You are running %1 as root. You should not do this since it will cause other issues with %1. %1 will now exit.</translation>
     </message>
     <message>
-      <location filename="../src/Utilities/Platform/Platform.cc" line="254"/>
+      <location filename="../src/Utilities/Platform/Platform.cc" line="257"/>
       <source>A second instance of %1 is already running. Please close the other instance and try again.</source>
       <translation type="unfinished">A second instance of %1 is already running. Please close the other instance and try again.</translation>
     </message>

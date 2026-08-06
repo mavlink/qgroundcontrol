@@ -15,6 +15,40 @@ void FactTest::_constructWithTypeAndName_test()
     QCOMPARE(fact.type(), FactMetaData::valueTypeInt32);
 }
 
+void FactTest::_selectedBitmaskStringsBit31_test()
+{
+    // Bit 31 bitmask values (0x80000000) exceed INT_MAX. The selection logic must
+    // compare them unsigned or bit-31 entries never report as selected.
+    Fact fact(0, "BitmaskParam", FactMetaData::valueTypeUint32);
+
+    auto *meta = fact.metaData();
+    QVERIFY(meta);
+    meta->addBitmaskInfo("Bit 0", QVariant(1u << 0));
+    meta->addBitmaskInfo("Bit 31", QVariant(1u << 31));
+
+    fact.setRawValue(QVariant((1u << 0) | (1u << 31)));
+    QCOMPARE(fact.selectedBitmaskStrings(), (QStringList{"Bit 0", "Bit 31"}));
+}
+
+void FactTest::_labelFallback_test()
+{
+    Fact fact(0, "FallbackParam", FactMetaData::valueTypeInt32);
+
+    auto *meta = fact.metaData();
+    QVERIFY(meta);
+
+    // No label, no short description -> falls back to name
+    QCOMPARE(fact.label(), QStringLiteral("FallbackParam"));
+
+    // No label, short description set -> falls back to short description
+    meta->setShortDescription("Short desc");
+    QCOMPARE(fact.label(), QStringLiteral("Short desc"));
+
+    // Label set -> returned as-is
+    meta->setLabel("The Label");
+    QCOMPARE(fact.label(), QStringLiteral("The Label"));
+}
+
 void FactTest::_setRawValueInt_test()
 {
     Fact fact(0, "IntParam", FactMetaData::valueTypeInt32);
@@ -57,6 +91,22 @@ void FactTest::_setCookedValueWithTranslator_test()
     fact.setCookedValue(QVariant(180.0));
     QCOMPARE_FUZZY(fact.rawValue().toDouble(), M_PI, 1e-5);
     QCOMPARE_FUZZY(fact.cookedValue().toDouble(), 180.0, 1e-5);
+}
+
+void FactTest::_rawToCooked_test()
+{
+    // Converts an arbitrary raw value through the fact's own translator
+    Fact fact(0, "RadParam", FactMetaData::valueTypeDouble);
+
+    auto *meta = fact.metaData();
+    QVERIFY(meta);
+    meta->setRawUnits("radians");
+
+    QCOMPARE_FUZZY(fact.rawToCooked(QVariant(M_PI)).toDouble(), 180.0, 1e-5);
+
+    // Default identity translator - value passes through unchanged
+    Fact plainFact(0, "PlainParam", FactMetaData::valueTypeDouble);
+    QCOMPARE(plainFact.rawToCooked(QVariant(42.0)).toDouble(), 42.0);
 }
 
 void FactTest::_validateValid_test()
@@ -139,6 +189,31 @@ void FactTest::_enumOperations_test()
     fact.setEnumStringValue("High");
     QCOMPARE(fact.rawValue().toInt(), 3);
     QCOMPARE(fact.enumIndex(), 3);
+}
+
+void FactTest::_enumIndexUnknownValueNoSyncSignal_test()
+{
+    Fact fact(0, "EnumParam", FactMetaData::valueTypeInt32);
+
+    const QStringList strings = {"Off", "Low", "Medium", "High"};
+    const QVariantList values = {QVariant(0), QVariant(1), QVariant(2), QVariant(3)};
+    fact.setEnumInfo(strings, values);
+
+    fact.setRawValue(QVariant(42)); // Not in enum list
+
+    QSignalSpy spy(&fact, &Fact::enumsChanged);
+    QVERIFY(spy.isValid());
+
+    // Reading enumIndex for an unknown value adds an "Unknown" entry to the enum list.
+    // The enumsChanged signal must NOT be emitted synchronously during the read, since
+    // that causes QML binding loops for bindings which read both enumStrings and enumStringValue.
+    const int index = fact.enumIndex();
+    QCOMPARE(index, 4);
+    QCOMPARE(fact.enumStrings().count(), 5);
+    QCOMPARE(spy.count(), 0);
+
+    // Signal must still arrive once the event loop runs
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 1000);
 }
 
 void FactTest::_valueChangedSignal_test()

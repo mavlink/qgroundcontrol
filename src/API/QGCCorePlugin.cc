@@ -1,24 +1,26 @@
 #include "QGCCorePlugin.h"
 #include "AppSettings.h"
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 #include "MavlinkSettings.h"
+#endif
+#ifdef Q_OS_ANDROID
+#include "Viewer3DSettings.h"
+#ifndef QGC_NO_SERIAL_LINK
+#include "AndroidSerial.h"
+#endif
+#endif
 #include "FactMetaData.h"
 #include "QGCMAVLink.h"
-#ifdef QGC_GST_STREAMING
-#include "GStreamer.h"
-#endif
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
-#include "MAVLinkMessageType.h"
 #include "QGCLoggingCategory.h"
 #include "QGCOptions.h"
 #include "QmlComponentInfo.h"
 #include "QmlObjectListModel.h"
-#ifdef QGC_QT_STREAMING
-#include "QtMultimediaReceiver.h"
-#endif
 #include "SettingsManager.h"
 #include "VideoReceiver.h"
+#include "VideoBackend.h"
 #include "SurveyPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
 #include "StructureScanPlanCreator.h"
@@ -91,11 +93,6 @@ const QVariantList &QGCCorePlugin::analyzePages()
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")),
             nullptr, true /* requiresVehicle */)),
         QVariant::fromValue(new QmlComponentInfo(
-            tr("Onboard Logs (FTP)"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/OnboardLogsFtp/OnboardLogFtpPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")),
-            nullptr, true /* requiresVehicle */)),
-        QVariant::fromValue(new QmlComponentInfo(
             tr("GeoTag Images"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagIcon.svg")))),
@@ -132,7 +129,13 @@ const QmlObjectListModel *QGCCorePlugin::customMapItems()
 void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible)
 {
 #ifdef Q_OS_ANDROID
-    Q_UNUSED(userVisible);
+    // 3D view rendering is too flaky on Android GPUs/drivers; force the
+    // feature off. Hiding the setting also forces it to its default value
+    // (false) regardless of any previously saved user setting.
+    if ((settingsGroup == Viewer3DSettings::settingsGroup) && (metaData.name() == Viewer3DSettings::enabledName)) {
+        userVisible = false;
+        return;
+    }
 #endif
 
     if (settingsGroup == AppSettings::settingsGroup) {
@@ -158,6 +161,15 @@ void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMeta
             return;
         }
 #endif
+        else if (metaData.name() == AppSettings::androidUsePosixSerialName) {
+#if defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
+            // Only show when the device actually exposes accessible serial device nodes
+            userVisible = AndroidSerial::hasPosixSerialPorts();
+#else
+            userVisible = false;
+#endif
+            return;
+        }
     }
 }
 
@@ -298,36 +310,17 @@ void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
 {
-#ifdef QGC_GST_STREAMING
-    return GStreamer::createVideoReceiver(parent);
-#elif defined(QGC_QT_STREAMING)
-    return QtMultimediaReceiver::createVideoReceiver(parent);
-#else
-    Q_UNUSED(parent);
-    return nullptr;
-#endif
+    return VideoBackend::createReceiver(parent);
 }
 
 void *QGCCorePlugin::createVideoSink(QQuickItem *widget, QObject *parent)
 {
-#ifdef QGC_GST_STREAMING
-    return GStreamer::createVideoSink(widget, parent);
-#elif defined(QGC_QT_STREAMING)
-    return QtMultimediaReceiver::createVideoSink(widget, parent);
-#else
-    Q_UNUSED(widget); Q_UNUSED(parent);
-    return nullptr;
-#endif
+    return VideoBackend::createSink(widget, parent);
 }
+
 void QGCCorePlugin::releaseVideoSink(void *sink)
 {
-#ifdef QGC_GST_STREAMING
-    GStreamer::releaseVideoSink(sink);
-#elif defined(QGC_QT_STREAMING)
-    QtMultimediaReceiver::releaseVideoSink(sink);
-#else
-    Q_UNUSED(sink);
-#endif
+    VideoBackend::releaseSink(sink);
 }
 
 const QVariantList &QGCCorePlugin::toolBarIndicators()

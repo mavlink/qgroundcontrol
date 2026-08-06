@@ -1,5 +1,7 @@
 package org.mavlink.qgroundcontrol;
 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.util.Log;
 
 /**
@@ -7,8 +9,19 @@ import android.util.Log;
  * It controls log levels and formats based on build configurations.
  */
 public class QGCLogger {
-    // Determine if the build is a debug build
-    private static final boolean DEBUG = BuildConfig.DEBUG;
+    // Whether this is a debuggable build. Determined at runtime instead of via
+    // BuildConfig, since BuildConfig is generated in the (customizable) app
+    // namespace package rather than this fixed source package.
+    private static volatile boolean sDebug = false;
+
+    /**
+     * Initializes the logger. Should be called once, typically from QGCActivity.onCreate().
+     *
+     * @param context Any application context.
+     */
+    public static void initialize(Context context) {
+        sDebug = (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
 
     /**
      * Logs a debug message.
@@ -17,7 +30,7 @@ public class QGCLogger {
      * @param message The message to log.
      */
     public static void d(String tag, String message) {
-        if (DEBUG) {
+        if (sDebug) {
             Log.d(tag, message);
         }
     }

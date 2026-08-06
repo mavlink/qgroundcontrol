@@ -7,14 +7,32 @@ inputs:
   service_account_json:
     description: The service account json private key file to authorize the upload request
     required: true
+  track:
+    description: Play Store track to release on (production, beta, alpha, internal)
+    required: false
+    default: production
+  status:
+    description: Release status (completed, draft, halted, inProgress). Use inProgress with user_fraction for a staged rollout.
+    required: false
+    default: inProgress
+  user_fraction:
+    description: Fraction of users for a staged rollout (0.0-1.0); only applied when status is inProgress.
+    required: false
+    default: "0.2"
+  whats_new_directory:
+    description: Directory of release notes files named whatsnew-<locale> (e.g. whatsnew-en-US).
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
     - name: Deploy to Play Store
-      uses: r0adkll/upload-google-play@v1.1.3
+      uses: r0adkll/upload-google-play@v1
       with:
         serviceAccountJsonPlainText: ${{ inputs.service_account_json }}
-        packageName: com.mavlink.qgroundcontrol
+        packageName: org.mavlink.qgroundcontrol
         releaseFiles: ${{ inputs.artifact }}
-        track: production
-        status: completed
+        track: ${{ inputs.track }}
+        status: ${{ inputs.status }}
+        userFraction: ${{ inputs.status == 'inProgress' && inputs.user_fraction || '' }}
+        whatsNewDirectory: ${{ inputs.whats_new_directory }}

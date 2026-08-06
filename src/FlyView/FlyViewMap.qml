@@ -283,7 +283,7 @@ FlightMap {
     // Add ADSB vehicles to the map
     MapItemView {
         model: QGroundControl.adsbVehicleManager.adsbVehicles
-        delegate: VehicleMapItem {
+        delegate: ADSBVehicleMapItem {
             coordinate:     object.coordinate
             altitude:       object.altitude
             callsign:       object.callsign

@@ -15,7 +15,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
 from cmake_helper import read_cache_var
+from common.gh_actions import gh_error
 
 
 def _setup_gstreamer_env(build_dir: Path) -> None:
@@ -79,7 +84,7 @@ def main() -> None:
     work_dir = Path(args.working_dir) if args.working_dir else binary_path.parent
 
     if not work_dir.is_dir():
-        print(f"::error::Working directory not found: {work_dir}", file=sys.stderr)
+        gh_error(f"Working directory not found: {work_dir}")
         sys.exit(1)
 
     if args.build_dir:

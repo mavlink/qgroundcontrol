@@ -28,6 +28,7 @@ ensure_tools_dir(__file__)
 
 from common.gh_actions import gh, list_run_artifacts, list_workflow_runs_for_sha
 from common.github_runs import group_runs_by_name, select_latest_runs_by_name
+from common.io import read_json, write_json
 
 ARTIFACT_EXTENSIONS = (
     ".apk",
@@ -200,8 +201,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.runs_file:
         try:
-            with open(args.runs_file, encoding="utf-8") as f:
-                loaded_runs = json.load(f)
+            loaded_runs = read_json(Path(args.runs_file))
         except (json.JSONDecodeError, OSError) as e:
             print(f"Error: failed to read runs file {args.runs_file}: {e}", file=sys.stderr)
             return 1
@@ -287,10 +287,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if artifact_metadata_out is not None:
         artifact_metadata_out.parent.mkdir(parents=True, exist_ok=True)
-        artifact_metadata_out.write_text(
-            json.dumps({"runs": run_artifact_metadata}, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        write_json(artifact_metadata_out, {"runs": run_artifact_metadata})
         print(
             f"Wrote artifact metadata for {len(run_artifact_metadata)} run(s) to {artifact_metadata_out}"
         )

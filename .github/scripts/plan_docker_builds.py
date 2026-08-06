@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Plan Docker build matrix entries for the Docker workflow."""
+"""Plan Docker build matrix entries for the Docker workflow.
+
+The variant set (base images, build args, artifact patterns) is defined once in
+deploy/docker/variants.json and shared with run-docker.sh and gen_compose.py, so
+this planner stays a thin selector over that source.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +12,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 from ci_bootstrap import ensure_tools_dir
@@ -15,19 +21,17 @@ ensure_tools_dir(__file__)
 
 from common.gh_actions import parse_bool, write_github_output
 
-# Build args that turn the `linux` target (24.04 default) into the 22.04 image:
-# older glibc base, gcc-12 for full C++20, and a modern cmake via pip (jammy's
-# apt cmake 3.22 < required 3.25). Sync with run-docker.sh is enforced by
-# test_2204_build_args_match_run_docker_sh.
-LINUX_2204_BUILD_ARGS = "\n".join(
-    [
-        "UBUNTU_REF=ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
-        "APT_EXTRA=gcc-12 g++-12",
-        "PIP_CMAKE=cmake>=3.25,<4",
-        "CC_PIN=gcc-12",
-        "CXX_PIN=g++-12",
-    ]
-)
+VARIANTS_JSON = Path(__file__).resolve().parents[2] / "deploy" / "docker" / "variants.json"
+
+
+def load_variants() -> list[dict[str, Any]]:
+    """Load the shared Docker variant definitions."""
+    return json.loads(VARIANTS_JSON.read_text())["variants"]
+
+
+def build_args_str(build_args: dict[str, str]) -> str:
+    """Render an ordered build-arg map as the newline-joined KEY=VALUE the action expects."""
+    return "\n".join(f"{key}={value}" for key, value in build_args.items())
 
 
 def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> dict[str, Any]:
@@ -37,55 +41,24 @@ def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> 
     dict[str, Any] so callers can subscript matrix["include"] without
     pyright complaining about object indexing.
     """
-    include: list[dict[str, Any]] = []
+    selected = {
+        "linux": event_name != "pull_request" or linux_changed,
+        "android": event_name != "pull_request" or android_changed,
+    }
 
-    linux_selected = event_name != "pull_request" or linux_changed
-    android_selected = event_name != "pull_request" or android_changed
-
-    if linux_selected:
-        include.append(
-            {
-                "platform": "Linux",
-                "target": "linux",
-                "variant": "linux",
-                "build_args": "",
-                "fuse": True,
-                "artifact_pattern": "*.AppImage",
-            }
-        )
-        include.append(
-            {
-                "platform": "Linux-22.04",
-                # 22.04 reuses the `linux` target, overriding base + toolchain
-                # via build args; `variant` keys the cache/tags so it stays distinct.
-                "target": "linux",
-                "variant": "linux-2204",
-                "build_args": LINUX_2204_BUILD_ARGS,
-                "fuse": True,
-                "artifact_pattern": "*.AppImage",
-            }
-        )
-        include.append(
-            {
-                "platform": "Linux-aarch64",
-                "target": "linux-cross",
-                "variant": "linux-aarch64",
-                "build_args": "",
-                "fuse": False,
-                "artifact_pattern": "QGroundControl",
-            }
-        )
-    if android_selected:
-        include.append(
-            {
-                "platform": "Android",
-                "target": "android",
-                "variant": "android",
-                "build_args": "",
-                "fuse": False,
-                "artifact_pattern": "*.apk",
-            }
-        )
+    include: list[dict[str, Any]] = [
+        {
+            "platform": v["platform"],
+            "target": v["target"],
+            "variant": v["ci_variant"],
+            "build_args": build_args_str(v["build_args"]),
+            "fuse": v["fuse"],
+            "artifact_pattern": v["artifact_pattern"],
+            "package_pattern": v["package_pattern"],
+        }
+        for v in load_variants()
+        if selected.get(v["selector"], False)
+    ]
 
     return {"matrix": {"include": include}, "has_jobs": bool(include)}
 

@@ -43,93 +43,15 @@ bool CustomFirmwarePlugin::hasGimbal(Vehicle* /*vehicle*/, bool &rollSupported, 
 
 void CustomFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
-
+    // This custom build only allows Hold, Return and Mission to be set by the user.
     for (auto &mode: modeList) {
         const PX4CustomMode::Mode cMode = static_cast<PX4CustomMode::Mode>(mode.custom_mode);
-        // Update Multi Rotor
-        switch (cMode) {
-        case PX4CustomMode::MANUAL:
-        case PX4CustomMode::STABILIZED:
-        case PX4CustomMode::ACRO:
-        case PX4CustomMode::RATTITUDE:
-        case PX4CustomMode::ALTCTL:
-        case PX4CustomMode::OFFBOARD:
-        case PX4CustomMode::SIMPLE:
-        case PX4CustomMode::POSCTL_POSCTL:
-        case PX4CustomMode::AUTO_LOITER:
-        case PX4CustomMode::AUTO_MISSION:
-        case PX4CustomMode::AUTO_RTL:
-        case PX4CustomMode::AUTO_FOLLOW_TARGET:
-        case PX4CustomMode::AUTO_LAND:
-        case PX4CustomMode::AUTO_PRECLAND:
-        case PX4CustomMode::AUTO_READY:
-        case PX4CustomMode::AUTO_RTGS:
-        case PX4CustomMode::AUTO_TAKEOFF:
-            mode.multiRotor = true;
-            break;
-        case PX4CustomMode::POSCTL_ORBIT:
-            mode.multiRotor = false;
-            break;
-        default:
-            break;
-        }
-
-        // Update Fixed Wing
-        switch (cMode) {
-        case PX4CustomMode::OFFBOARD:
-        case PX4CustomMode::SIMPLE:
-        case PX4CustomMode::POSCTL_ORBIT:
-        case PX4CustomMode::AUTO_FOLLOW_TARGET:
-        case PX4CustomMode::AUTO_PRECLAND:
-            mode.fixedWing = false;
-            break;
-        case PX4CustomMode::MANUAL:
-        case PX4CustomMode::STABILIZED:
-        case PX4CustomMode::ACRO:
-        case PX4CustomMode::RATTITUDE:
-        case PX4CustomMode::ALTCTL:
-        case PX4CustomMode::POSCTL_POSCTL:
-        case PX4CustomMode::AUTO_LOITER:
-        case PX4CustomMode::AUTO_MISSION:
-        case PX4CustomMode::AUTO_RTL:
-        case PX4CustomMode::AUTO_LAND:
-        case PX4CustomMode::AUTO_READY:
-        case PX4CustomMode::AUTO_RTGS:
-        case PX4CustomMode::AUTO_TAKEOFF:
-            mode.fixedWing = true;
-            break;
-        default:
-            break;
-        }
-
-        // Update CanBeSet
-        switch (cMode){
-        case PX4CustomMode::AUTO_LOITER:
-        case PX4CustomMode::AUTO_RTL:
-        case PX4CustomMode::AUTO_MISSION:
-            mode.canBeSet = true;
-            break;
-        case PX4CustomMode::OFFBOARD:
-        case PX4CustomMode::SIMPLE:
-        case PX4CustomMode::POSCTL_ORBIT:
-        case PX4CustomMode::AUTO_FOLLOW_TARGET:
-        case PX4CustomMode::AUTO_PRECLAND:
-        case PX4CustomMode::MANUAL:
-        case PX4CustomMode::STABILIZED:
-        case PX4CustomMode::ACRO:
-        case PX4CustomMode::RATTITUDE:
-        case PX4CustomMode::ALTCTL:
-        case PX4CustomMode::POSCTL_POSCTL:
-        case PX4CustomMode::AUTO_LAND:
-        case PX4CustomMode::AUTO_READY:
-        case PX4CustomMode::AUTO_RTGS:
-        case PX4CustomMode::AUTO_TAKEOFF:
-            mode.canBeSet = false;
-            break;
-        default:
-            break;
-        }
+        mode.canBeSet = (cMode == PX4CustomMode::AUTO_LOITER) ||
+                        (cMode == PX4CustomMode::AUTO_RTL) ||
+                        (cMode == PX4CustomMode::AUTO_MISSION);
     }
 
-    _updateFlightModeList(modeList);
+    // Let the base class do the standard airframe (fixed wing / multi rotor) classification
+    // and update the internal flight mode lists.
+    PX4FirmwarePlugin::updateAvailableFlightModes(modeList);
 }

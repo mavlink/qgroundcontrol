@@ -26,6 +26,7 @@ class Actuators;
 class HealthAndArmingCheckReport;
 class MAVLinkStreamConfig;
 class QGCMapCircle;
+class QJsonDocument;
 class QmlObjectListModel;
 class SysStatusSensorInfo;
 class VehicleLinkManager;
@@ -356,6 +357,9 @@ public:
     Q_INVOKABLE void sendPlan(QString planFile);
     Q_INVOKABLE void setEstimatorOrigin(const QGeoCoordinate& centerCoord);
 
+    /// Fallback for setEstimatorOrigin which sends the deprecated SET_GPS_GLOBAL_ORIGIN message.
+    void setEstimatorOrigin_SET_GPS_GLOBAL_ORIGIN(const QGeoCoordinate& centerCoord);
+
     /// Used to check if running current version is equal or higher than the one being compared.
     //  returns 1 if current > compare, 0 if current == compare, -1 if current < compare
     Q_INVOKABLE int versionCompare(const QString& compare) const;
@@ -636,6 +640,14 @@ public:
         bool showError,
         float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
 
+    /// Sends the command as a COMMAND_INT and calls the fallback lambda function in
+    /// case the command is MAV_RESULT_UNSUPPORTED
+    void sendMavCommandIntWithLambdaFallback(
+        std::function<void()> lambda,
+        int compId, MAV_CMD command, MAV_FRAME frame,
+        bool showError,
+        float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0, double param6 = 0.0, float param7 = 0.0f);
+
 
     static QString requestMessageResultHandlerFailureCodeToString(RequestMessageResultHandlerFailureCode_t failureCode);
 
@@ -726,7 +738,7 @@ public:
 
     double loadProgress                 () const { return _loadProgress; }
 
-    void setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName);
+    void setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QJsonDocument& metadataJson);
 
     GimbalController* gimbalController  () { return _gimbalController; }
 

@@ -22,7 +22,6 @@ public:
     explicit QtMultimediaReceiver(QObject *parent = nullptr);
     virtual ~QtMultimediaReceiver();
 
-    static bool enabled();
     static void *createVideoSink(QQuickItem *widget, QObject *parent = nullptr);
     static void releaseVideoSink(void *sink);
     static VideoReceiver *createVideoReceiver(QObject *parent);

@@ -10,6 +10,8 @@ Item {
 
     id: virtualJoysticks
 
+    readonly property bool stickActive:       leftStick.touchActive || rightStick.touchActive
+
     property var   _activeVehicle:            QGroundControl.multiVehicleManager.activeVehicle
     property bool  _initialConnectComplete:   _activeVehicle ? _activeVehicle.initialConnectComplete : false
     property real  leftYAxisValue:            autoCenterThrottle ? height / 2 : height

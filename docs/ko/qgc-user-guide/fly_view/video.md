@@ -1,17 +1,13 @@
 # Video
 
 When video streaming is enabled (Application Settings - Video), _QGroundControl_ will display the video stream for the currently selected vehicle in the "video switcher window" at the bottom left of the map.
-You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground (in the image below, the video is shown in the foreground).
-
-![Video Stream Record](../../../assets/fly/video_record.jpg)
+You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 :::info
 Video streaming is configured/enabled in [Application Settings > General tab > Video](../settings_view/general.md#video).
 :::
 
 You can further configure video display using controls on the switcher:
-
-![Video Pop](../../../assets/fly/video_pop.jpg)
 
 - Resize the switcher by dragging the icon in the top right corner.
 - Hide the switcher by pressing the toggle icon in the lower left.
@@ -29,10 +25,8 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 
 #### Record Video Stream (on GCS)
 
-Video stream recording is controlled on the [video stream instrument page](#video_instrument_page).
+Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
-
-![Video Stream Record](../../../assets/fly/video_record.jpg)
 
 Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
 
@@ -52,7 +46,6 @@ To record video with QGroundControl application elements displayed, you should u
 
 #### Record Video on Camera
 
-Start/stop video recording _on the camera itself_ using the [camera instrument page](#camera_instrument_page).
+Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 First toggle to video mode, then select the red button to start recording.
 
-![Instrument Page - Camera MAVLink Settings](../../../assets/fly/instrument_page_camera_mavlink.jpg)

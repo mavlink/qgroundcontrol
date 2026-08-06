@@ -394,7 +394,13 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
         _decrementPendingWriteCount();
     });
     auto waitAckState = new WaitForParamResponseState(stateMachine, _waitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
-    auto paramRefreshState = new FunctionState(QStringLiteral("ParameterManager param refresh"), stateMachine, [this, componentId, paramName]() {
+    auto paramRefreshState = new FunctionState(QStringLiteral("ParameterManager param refresh"), stateMachine, [this, waitAckState, componentId, paramName]() {
+        // A definitive "does not exist" rejection means there is nothing on the vehicle
+        // to refresh - stop here rather than generating a redundant read failure.
+        if (waitAckState->lastParamError() == MAV_PARAM_ERROR_DOES_NOT_EXIST) {
+            qCDebug(ParameterManagerLog) << "Skipping post-write-failure refresh, param does not exist on vehicle:" << paramName << _vehicleAndComponentString(componentId);
+            return;
+        }
         refreshParameter(componentId, paramName);
     });
     auto userNotifyState = new FunctionState(QStringLiteral("ParameterManager user notify"), stateMachine, [waitAckState, paramName, this, componentId]() {
@@ -489,16 +495,16 @@ bool ParameterManager::_mavlinkParamUnionToVariant(const mavlink_param_union_t &
         outValue = QVariant(paramUnion.param_float);
         return true;
     case MAV_PARAM_TYPE_UINT8:
-        outValue = QVariant(paramUnion.param_uint8);
+        outValue = QVariant(static_cast<quint32>(paramUnion.param_uint8));
         return true;
     case MAV_PARAM_TYPE_INT8:
-        outValue = QVariant(paramUnion.param_int8);
+        outValue = QVariant(static_cast<qint32>(paramUnion.param_int8));
         return true;
     case MAV_PARAM_TYPE_UINT16:
-        outValue = QVariant(paramUnion.param_uint16);
+        outValue = QVariant(static_cast<quint32>(paramUnion.param_uint16));
         return true;
     case MAV_PARAM_TYPE_INT16:
-        outValue = QVariant(paramUnion.param_int16);
+        outValue = QVariant(static_cast<qint32>(paramUnion.param_int16));
         return true;
     case MAV_PARAM_TYPE_UINT32:
         outValue = QVariant(paramUnion.param_uint32);
@@ -1656,22 +1662,22 @@ bool ParameterManager::_parseParamFile(const QString& filename)
         withdefault = (flags & 0x01) == 0x01;
         in >> byte;
         if (in.status() != QDataStream::Ok) {
-            qCritical(ParameterManagerLog) << "_parseParamFile: Error: Unexpected EOF while reading flags";
+            qCCritical(ParameterManagerLog) << "_parseParamFile: Error: Unexpected EOF while reading flags";
             goto Error;
         }
         name_len = ((byte >> 4) & 0x0F) + 1;
         common_len = byte & 0x0F;
         if ((name_len + common_len) > 16) {
-            qCritical(ParameterManagerLog) << "_parseParamFile: Error: common_len + name_len > 16"
-                                           << "name_len" << name_len
-                                           << "common_len" << common_len;
+            qCCritical(ParameterManagerLog) << "_parseParamFile: Error: common_len + name_len > 16"
+                                            << "name_len" << name_len
+                                            << "common_len" << common_len;
             goto Error;
         }
         no_read = in.readRawData(&name_buffer[common_len], static_cast<int>(name_len));
         if (no_read != name_len) {
-            qCritical(ParameterManagerLog) << "_parseParamFile: Error: Unexpected EOF while reading parameterName"
-                                           << "Expected:" << name_len
-                                           << "Actual:" << no_read;
+            qCCritical(ParameterManagerLog) << "_parseParamFile: Error: Unexpected EOF while reading parameterName"
+                                            << "Expected:" << name_len
+                                            << "Actual:" << no_read;
             goto Error;
         }
         name_buffer[common_len + name_len] = '\0';

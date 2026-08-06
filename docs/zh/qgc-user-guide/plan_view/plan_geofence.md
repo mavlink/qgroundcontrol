@@ -3,8 +3,6 @@
 GeoFences allow you to create virtual regions within which the vehicle can fly, or in which it is _not allowed_ to fly.
 You can also configure the action taken if you fly outside permitted areas.
 
-![Geofence overview](../../../assets/plan/geofence/geofence_overview.jpg)
-
 :::info
 GeoFence support is only supported by Rover 3.6 and Copter 3.7 or higher. It also requires usage of a Daily build or Stable 3.6 (once available).
 _QGroundControl_ will not display the GeoFence options if they are not supported by the connected vehicle.
@@ -18,10 +16,8 @@ To create a GeoFence:
 
 2. Select the _Geofence_ radio button above the Mission Command List
 
-  ![Select geofence radio button](../../../assets/plan/geofence/geofence_select.jpg)
-
 3. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively.
-  A new region will be added to the map and to the associated list of fences below the buttons.
+   A new region will be added to the map and to the associated list of fences below the buttons.
 
 :::tip
 您可以多次按下按钮创建多个区域，从而能够创建复杂的地理围栏定义。
@@ -29,21 +25,16 @@ To create a GeoFence:
 
 - Circular region:
 
-  ![Circular Geofence](../../../assets/plan/geofence/geofence_circular.jpg)
-
   - Move the region by dragging the central dot on the map
   - Resize the circle by dragging the dot on the edge of the circle (or you can change the radius value in the fence panel).
 
 - :::
 
-  Polygon region:
-  ![Polygon Geofence](../../../assets/plan/geofence/geofence_polygon.jpg)
-
   - Move the vertices by dragging the filled dots
   - Create new vertices by clicking the "unfilled" dots on the lines between the filled vertices.
 
 1. By default new regions are created as _inclusion_ zones (vehicles must stay within the region).
-  Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
+   Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
 
 ## Edit/Delete a GeoFence
 

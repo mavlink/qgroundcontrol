@@ -1,203 +1,196 @@
 # 계획 뷰
 
+:::tip Having trouble?
+If missions fail to upload or download, see [Plan Upload/Download Failures](../troubleshooting/plan_upload_download.md). For mission resume issues, see [Resume Mission Failures](../troubleshooting/resume_mission.md).
+:::
+
 _계획 뷰_에서는 차량에 대한 _자율 임무_를 계획하고 차량에 업로드합니다. 미션이 [계획](#plan_mission)되어 차량으로 전송되면 [비행 뷰](../fly_view/fly_view.md)로 전환하여 미션을 실행합니다.
 
-펌웨어에서 지원하는 경우 [지오 펜스](plan_geofence.md)와 [랠리 포인트](plan_rally_points.md)를 설정할 수 있습니다.
-
-<span id="plan_screenshot"></span>
-![계획 뷰 ](../../../assets/plan/plan_view_overview.png)
+It is also used to configure the [GeoFence](plan_geofence.md) and [Rally Points](plan_rally_points.md) if these are supported by the firmware.
 
 ## UI 개요 {#ui_overview}
 
-[위의 스크린샷](#plan_screenshot)은 [Planned Home](#planned_home) 위치(H)에서 이륙으로 시작하는 간단한 임무 계획을 보여줍니다.
+The main elements of the UI are:
 
-UI의 주요 요소는 다음과 같습니다.
+- **Map:** Displays the numbered indicators for the current mission, including the [Planned Home](#planned_home).
+  Click on the indicators to select them (for editing) or drag them around to reposition them.
+  Flight path lines and direction arrows show the planned route between waypoints.
+- **Plan Toolbar:** Located at the top of the view with buttons for **Open**, **Save**, **Upload**, and **Clear**.
+  A hamburger menu (☰) provides additional options such as _Save as KML_ and _Download_ (load plan from vehicle).
+  The **Save** and **Upload** buttons are highlighted when there are unsaved or un-uploaded changes.
+- **[Plan Tools](#plan_tools):** A vertical tool strip on the left side of the map used to add mission items (Takeoff, Waypoint, Pattern, ROI, Return/Land) and toggle the stats panel.
+- **[Plan Editor Panel](#plan_editor_panel):** A collapsible tree view on the right side containing the plan file info, mission items, GeoFence, and rally point editors.
+- **Layer Switcher:** Buttons in the top-right area for switching between **Mission**, **Geo-Fence**, and **Rally Point** editing layers.
+- **Mission Stats / Terrain Panel:** A panel at the bottom of the map that can toggle between a terrain altitude profile chart (height AMSL vs. distance) and mission statistics (selected waypoint info, total distance, max telemetry distance, estimated flight time, and battery info).
 
-- **지도:** [계획된 집](#planned_home)을 포함하여 현재 임무에 대한 번호가 매겨진 표시기를 표시합니다.
-  표시기를 클릭하여 선택하거나(편집용) 드래그하여 위치를 변경합니다.
-- **계획 툴바:** 이전 웨이포인트와 관련된 현재 선택된 웨이포인트의 상태 정보와 전체 임무에 대한 통계(예: 임무를 위한 수평 거리 및 시간).
-  - `최대 원격 거리`는 [계획된 홈](#planned_home)과 가장 먼 웨이포인트의 거리입니다.
-  - 차량에 연결하면 **업로드** 버튼도 표시되며, 차량에 계획을 업로드할 수 있습니다.
-- **[계획 도구](#plan_tools):** 임무를 만들고 관리하는 데 사용됩니다.
-- **[임무 명령 목록/오버레이](#mission_command_list):** 현재 임무 항목 목록을 표시합니다([편집](#mission_command_editors)할 항목 선택).
-- **지형 고도 오버레이:** 각 임무 명령의 상대 고도를 표시합니다.
+## Planning a Mission {#plan_mission}
 
-현재 선택된 웨이포인트와 관련된 정보와 전체 미션에 대한 통계를 보여줍니다.
+At a very high level, the steps to create a mission are:
 
-## 임무 계획 {#plan_mission}
+1. Change to _Plan View_.
+2. Add waypoints or commands to the mission and edit as needed.
+3. Upload the mission to the vehicle.
+4. Change to _Fly View_ and fly the mission.
 
-매우 높은 수준에서 임무를 생성하는 단계는 다음과 같습니다.
+The following sections explain some of the details in the view.
 
-1. _계획 뷰_로 변경합니다.
-2. 임무에 웨이포인트 또는 명령을 추가하고 필요에 따라 편집합니다.
-3. 차량에 임무를 업로드합니다.
-4. _비행 뷰_로 변경하여 임무 비행을 실히합니다.
+## Planned Home Position {#planned_home}
 
-다음 섹션에서는 보기의 일부 세부 정보에 대해 설명합니다.
+The _Planned Home_ shown in _Plan View_ is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC).
+It is used by QGC to estimate mission times and to draw waypoint lines.
 
-## 지정된 홈 위치 {#planned_home}
-
-_계획 뷰_에 표시된 _계획된 홈_은 임무 계획시 대략적인 시작 지점을 설정합니다(예: 차량이 QGC에 연결되지 않은 경우).
-QGC에서 임무 시간을 추정하고 웨이포인트 라인을 그립니다.
-
-![지정된 홈 위치](../../../assets/plan/mission/mission_settings_planned_home.jpg)
-
-계획된 홈 위치를 이륙 지점 근처로 끌어서 이동하여야 합니다.
-계획된 홈 위치의 고도는 [미션 설정](#mission_settings) 패널에서 설정합니다.
-
-<img src="../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg" style="width: 200px;"/>
+You should move/drag the planned home position to roughly the location where you plan to takeoff.
+The altitude for the planned home position is determined automatically from terrain data.
 
 :::tip
-비행 뷰는 시동시에 차량 펌웨어에 의해 설정된 _실제_ 홈 위치를 표시합니다(차량이 리턴/RTL 모드에서 복귀하는 위치).
+The Fly View displays the _actual_ home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
 :::
 
-## 계획 도구 {#plan_tools}
+## Plan Tools {#plan_tools}
 
-계획 도구는 개별 웨이포인트 추가, 복잡한 형상에 대한 쉬운 임무 생성, 임무 업로드/다운로드/저장/복원 및 지도를 탐색합니다. 주요 도구는 아래와 같습니다.
+The plan tools are a vertical tool strip on the left side of the map, used for adding mission items. The tools are only visible when editing the Mission layer. The main tools (top to bottom) are described below.
 
-:::info
-**지도 중심 이동**, **확대**, **축소** 도구는 사용자가 _계획 보기_ 지도를 탐색을 편리하게 합니다(차량에 전송되는 임무 명령에는 영향을 미치지 않음).
-:::
+### Takeoff
 
-### 경유지 추가
+Inserts a takeoff command into the mission. This tool is available for all vehicle types except rovers.
 
-**경유지 추가** 도구를 클릭하여 활성화합니다. 활성 상태에서 지도를 클릭하면 클릭한 위치에 새 임무의 경유지가 추가됩니다.
-도구는 다시 선택할 때까지 활성 상태를 유지합니다.
-경유지를 추가한 후에는 경유지를 선택하고 끌어서 위치를 변경할 수 있습니다.
-
-### 파일 (동기화) {#file}
-
-_파일 도구_는 지상국과 차량 간에 임무를 이동하고 파일에서 저장/복원하는 데 사용됩니다.
-도구에 `!`가 표시된면 차량에 임무 변경 내역이 완전하게 전송되지 않았음을 나타냅니다.
-
-:::info
-비행에 임무를 차량에 업로드하여야 합니다.
-:::
-
-_파일 도구_는 다음과 같은 기능을 제공합니다.
-
-- 업로드(차량으로 전송)
-- 다운로드(차량에서 적재)
-- KML 파일을 포함하여 파일로 저장합니다.
-- 파일로부터 불러오기
-- 모두 삭제(_계획 뷰_ 및 차량에서 모든 미션의 경유지 제거)
-
-### 패턴
+### Pattern
 
 The [Pattern](pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).
+If multiple pattern types are available for the vehicle, clicking the button opens a dropdown to select from Survey, Corridor Scan, Structure Scan, and landing patterns.
 
-## 임무 명령 목록 {#mission_command_list}
+### Waypoint
 
-현재 임무에 대한 임무 명령은 보기의 오른쪽에 나열됩니다.
-상단에는 임무 편집, GeoFence 및 집회 지점 간을 전환하는 옵션 세트가 있습니다.
-목록 내에서 개별 임무 항목을 선택하여 값을 편집할 수 있습니다.
+Click the **Waypoint** tool to toggle waypoint-on-click mode. While active, clicking on the map will add a new mission waypoint at the clicked location.
+The tool stays active until you click it again to deactivate.
+Once you have added a waypoint, you can select it and drag it around to reposition it.
 
-![임무 명령 목록](../../../assets/plan/mission/mission_command_list.jpg)
+### ROI
 
-### 임무 명령 편집자 {#mission_command_editors}
+Toggles Region of Interest mode. When active, clicking on the map sets an ROI location.
+This tool is only visible if the vehicle firmware supports ROI mode.
 
-목록에서 임무 명령을 클릭하면 편집기가 표시됩니다(여기에서 명령 속성을 설정/변경할 수 있음).
+### Return / Land
 
-명령 이름을 클릭하여 명령의 **유형**을 변경할 수 있습니다(예: _경유지_).
-그러면 아래와 같은 _임무 명령 선택_ 대화 상자가 표시됩니다.
-기본적으로 이것은 "기본 명령"만 표시하지만 **범주** 드롭다운 메뉴를 사용하여 더 많이 표시할 수 있습니다(예: 모든 옵션을 보려면 **모든 명령** 선택).
+Adds a return or land command to the mission. The label varies by vehicle type:
 
-<img src="../../../assets/plan/mission/mission_commands.jpg" style="width: 200px;"/>
+- **Multicopters:** _Return_
+- **Fixed-wing:** _Land_ (or _Alt Land_ if a land item already exists in the mission)
 
-각 명령 이름의 오른쪽에는 _삽입_ 및 _삭제_와 같은 추가 옵션에 액세스하기 위해 클릭할 수 있는 메뉴가 있습니다.
+### Stats
 
-:::info
-사용 가능한 명령 목록은 펌웨어 및 차량 유형에 따라 차이가 납니다.
-예로는 경유지, 이미지 캡처 시작, 항목으로 이동(임무 반복) 및 기타 명령이 포함될 수 있습니다.
-:::
+Toggles the [Mission Stats / Terrain panel](#stats_terrain) at the bottom of the map. Only visible when that panel is currently hidden.
 
-### 임무 설정 {#mission_settings}
+## File Operations {#file}
 
-_임무 시작_ 패널은 [임무 명령 목록](#mission_command_list)에 나타나는 첫 번째 항목입니다.
-임무 시작 또는 종료에 영향을 줄 수 있는 기본 설정 번호를 지정하는 데 사용할 수 있습니다.
+File operations are located in the **Plan Toolbar** at the top of the view:
 
-![임무 명령 목록 - 임무 설정 표시](../../../assets/plan/mission_start.png)
-
-![임무 설정](../../../assets/plan/mission/mission_settings.png)
-
-#### 임무 기본값
-
-##### Waypoint alt
-
-계획에 추가된 첫 번째 임무 항목의 기본 고도를 설정합니다(이후 항목은 이전 항목의 초기 고도를 가짐).
-이것은 또한 계획에 있는 모든 항목의 고도를 동일한 값으로 변경하는 데 사용할 수 있습니다.
-
-##### 비행 속도
-
-기본 미션 속도와 다른 미션의 비행 속도를 설정합니다.
-
-#### 미션 종료
-
-##### 미션 종료 후 출발지로 복귀하기
-
-최종 미션 아이템 이후에 차량이 Return/RTL이 되도록 하려면 체크하세요.
-
-#### 지정된 홈 위치
-
-[계획된 홈 위치](#planned_home) 섹션에서는 임무를 계획하는 동안 차량의 홈 위치를 시뮬레이션할 수 있습니다.
-이를 통해 이륙부터 임무 완료까지 차량의 경유지 궤적을 조회할 수 있습니다.
-
-![임무 설정 계획된 홈 위치 섹션](../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg)
+- **Open** — Load a plan from a file.
+- **Save** — Save the current plan to a file. Highlighted when there are unsaved changes.
+- **Upload** — Upload the plan to the vehicle. Highlighted when the plan has un-uploaded changes.
+- **Clear** — Remove all mission items, geofence, and rally points. If connected to a vehicle, also clears them from the vehicle.
+- **Hamburger menu** (☰) — Additional options:
+  - _Save as KML_ — Export the plan as a KML file.
+  - _Download_ — Download the current plan from the vehicle (only available when connected).
 
 :::info
-이것은 _계획된_ 홈 위치일 뿐이며 차량을 출발할 계획인 위치에 놓아야 합니다.
-미션 비행에 실질적인 영향은 없습니다.
-차량의 실제 홈 위치는 시동시 차량에 의해 설정됩니다.
+Before you fly a mission you must upload it to the vehicle.
 :::
 
-이 섹션에서는 **고도** 및 **홈을 지도 중심으로 설정**을 설정할 수 있습니다(지도에서 드래그하여 다른 위치로 이동할 수 있음).
+## Plan Editor Panel {#plan_editor_panel}
 
-#### 카메라
+The Plan Editor Panel is a collapsible tree view on the right side of the view.
+The panel can be collapsed or expanded using the toggle button on its left edge.
+It is organized into the following collapsible sections: **Plan Info**, **Defaults**, **Mission**, **GeoFence**, **Rally Points**, and **Transform**.
 
-카메라 섹션에서는 수행할 카메라 동작을 지정하고 짐벌을 제어하며 카메라를 사진 또는 비디오 모드로 설정합니다.
+### Layer Switcher {#layer_switcher}
 
-![임무 설정 카메라 섹션](../../../assets/plan/mission/mission_settings_camera_section.jpg)
+Buttons in the top-right area of the map allow switching between the **Mission**, **Geo-Fence**, and **Rally Point** editing layers.
+The active layer button is always visible; the other layer buttons slide in briefly when toggled and auto-hide after a few seconds.
 
-사용 가능한 카메라 동작은 다음과 같습니다.
+### Plan Info {#plan_info}
 
-- 변경 없음(현재 작업 계속)
-- 사진 찍기(시간)
-- 사직 찍기 (거리)
-- 사진 촬영 중지
-- 동영상 녹화 시작
-- 동영상 녹화 중지
+The Plan Info section contains general plan-level settings:
 
-#### 차량 정보
+- **Plan File** — An editable name for the plan file.
+- **Vehicle Info** — Firmware and vehicle type selectors. When connected to a vehicle these are determined automatically; when planning offline you must set them before adding any mission items so that the correct mission commands are available.
+- **Expected Home Position** — The altitude (AMSL) for the planned home position is determined automatically from terrain data. A **Move To Map Center** button repositions the home marker to the center of the map. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
 
-차량에 대한 적절한 임무 명령은 펌웨어 및 차량 유형에 따라 차이가 납니다.
+### Defaults {#mission_settings}
 
-_차량에 연결_한 상태에서 임무를 계획하고 있다면 차량에 따라 펌웨어 및 차량 유형이 결정됩니다.
-이 섹션에서는 차량에 연결되어 있지 않을 때 차량 펌웨어/유형을 지정할 수 있습니다.
+The Defaults section sets plan-wide values that apply to new mission items:
 
-![임무 설정 차량 섹션](../../../assets/plan/mission/mission_settings_vehicle_info_section.jpg)
+- **Altitude Frame** — Select the altitude reference frame for waypoints.
+- **Waypoints Altitude** — The default altitude for the first mission item added (subsequent items take their initial altitude from the previous item). Changing this value when items already exist will prompt to update all items to the new altitude.
+- **Flight Speed** — Set a flight speed that differs from the default mission speed.
+- **Vehicle Speeds** — Cruise speed (fixed-wing) and/or hover speed (multi-rotor/VTOL), used for estimating mission time.
 
-임무를 계획할 때 지정할 수 있는 추가 값은 차량 비행 속도입니다.
-이 값을 지정하면 차량에 연결되지 않은 상태에서도 총 임무 또는 조사 시간을 대략적으로 계산할 수 있습니다.
+### Mission Items {#mission_items}
 
-## 문제 해결
+The Mission section lists all mission items (waypoints, commands, patterns, etc.) in order.
+Each item can be expanded to edit its parameters.
 
-### 미션(계획) 업로드/다운로드 실패 {#plan_transfer_fail}
+- Click an item to select it on the map and expand its editor.
+- Click the **command name** dropdown to change the item type. A dialog shows "Basic Commands" by default; use the **Category** dropdown to see all available commands.
+- Each item has a **hamburger menu** (☰) with options such as _Show all values_, _Move to vehicle position_, _Move to previous item position_, and _Edit position_.
+- A **delete button** (trash icon) removes the item.
+- Items that are incomplete or missing required values show a **?** status indicator.
 
-계획 업로드 및 다운로드는 통신 장애로 인하여 실패할 수 있습니다(미션, GeoFence 및 집회 지점에 영향을 미침).
-오류가 발생하면 QGC UI에 다음과 유사한 상태 메시지가 표시되어야 합니다.
+:::info
+The list of available commands depends on firmware and vehicle type.
+Examples include: Waypoint, Start image capture, Jump to item (to repeat mission), and other commands.
+:::
 
-> 미션 전송 실패. 전송 재시도. 오류: 임무 쓰기 임무 수에 실패했습니다.
+#### Initial Camera Settings
 
-링크의 손실률은 [설정 보기 > MAVLink](../settings_view/mavlink.md)에서 볼 수 있습니다.
-손실률은 낮은 한 자릿수(즉, 최대 2 또는 3)이어야 합니다.
+This allows you to set camera options before any mission items take place.
+This includes camera actions (take photos by time/distance, start/stop video recording) and gimbal control.
 
-- 한 자릿수 이상보다 높은 손실률은 간헐적인 고장을 야기할 수 있습니다.
-- 높은 손실률은 종종 100% 실패로 이어집니다.
+### GeoFence {#geofence}
 
-문제가 플라이트 스택이나 QGC의 버그로 인해 발생할 가능성은 매우 적습니다.
-이 가능성을 분석하기 위해 계획 업로드/다운로드에 대해 [콘솔 로깅](../settings_view/console_logging.md)을 켜고 프로토콜 메시지 트래픽을 검토할 수 있습니다.
+The GeoFence section allows you to define geofence boundaries:
 
-## 추가 정보
+- **Polygon Fences** — Add inclusion or exclusion polygon fences. Each polygon can be toggled between inclusion/exclusion, edited, or deleted.
+- **Circular Fences** — Add inclusion or exclusion circular fences with a configurable radius.
+- **Breach Return Point** — Optionally set a return point (with altitude) that the vehicle will fly to if it breaches the geofence.
 
-- New Plan View features for [QGC release v3.2](../releases/release_note_stable_v3.md#plan_view)
-- New Plan View features for [QGC release v3.3](../releases/release_note_stable_v3.md#plan-view-1)
+### Rally Points {#rally_points}
+
+The Rally Points section displays and manages rally points. When a rally point is selected, its position fields are shown for editing.
+
+### Transform {#transform}
+
+The Transform section provides tools to adjust the entire mission after it has been created:
+
+- **Offset Mission** — Shift the mission by a specified distance in the East, North, and Up directions. Optionally include takeoff and/or landing items in the offset.
+- **Reposition Mission** — Move the mission to a new location specified by geographic coordinates (Lat/Lon), UTM, MGRS, or the current vehicle position.
+- **Rotate Mission** — Rotate the mission clockwise by a specified number of degrees. Optionally include takeoff and/or landing items in the rotation.
+
+## Mission Stats / Terrain Panel {#stats_terrain}
+
+A panel at the bottom of the map provides two toggleable views:
+
+- **Terrain Profile** — A chart showing height AMSL vs. distance from start across the mission.
+- **Mission Statistics** — Displays details for the selected waypoint (altitude difference, azimuth, distance to previous waypoint, gradient, heading) and for the total mission (distance, max telemetry distance, estimated flight time). Battery information (batteries required and change point) is also shown when available.
+
+Toggle buttons on the left side of the panel let you switch between the terrain profile and mission statistics views, or collapse the panel entirely.
+
+## Troubleshooting
+
+### Mission (Plan) Upload/Download Failures {#plan_transfer_fail}
+
+Plan uploading and downloading can fail over a noisy communication link (affecting missions, GeoFence, and rally points).
+If a failure occurs you should see a status message in the QGC UI similar to:
+
+> Mission transfer failed. Retry transfer. Error: Mission write mission count failed, maximum retries exceeded.
+
+The loss rate for your link can be viewed in [App Settings > Telemetry](../settings_view/telemetry.md).
+The loss rate should be in the low single digits (i.e. maximum of 2 or 3):
+
+- A loss rate in the high single digits can lead to intermittent failures.
+- Higher loss rates often lead to 100% failure.
+
+There is a much smaller possibility that issues are caused by bugs in either flight stack or QGC.
+To analyze this possibility you can turn on [Console Logging](../settings_view/console_logging.md) for Plan upload/download and review the protocol message traffic.
+
+

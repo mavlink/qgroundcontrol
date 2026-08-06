@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.mavlink.qgroundcontrol"
     android:installLocation="auto"
     android:versionCode="-- %%INSERT_VERSION_CODE%% --"
     android:versionName="-- %%INSERT_VERSION_NAME%% --">
@@ -13,7 +12,6 @@
 
     <!-- %%INSERT_PERMISSIONS -->
 
-    <uses-permission android:name="android.permission.USB_PERMISSION" />
     <!-- Need MulticastLock to receive broadcast UDP packets -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- Needed to keep working while 'asleep' -->
@@ -38,7 +36,6 @@
         android:allowBackup="true"
         android:fullBackupOnly="false"
         android:icon="@drawable/icon"
-        android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config">
         <!-- android:theme="@style/AppTheme" -->
 

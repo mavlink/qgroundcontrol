@@ -43,11 +43,7 @@ UVCReceiver::~UVCReceiver()
 
 bool UVCReceiver::enabled()
 {
-#ifdef QGC_DISABLE_UVC
-    return false;
-#else
     return !QMediaDevices::videoInputs().isEmpty();
-#endif
 }
 
 void UVCReceiver::adjustAspectRatio()

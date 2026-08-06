@@ -28,8 +28,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
-  attestations: write
   actions: read
 
 jobs:
@@ -38,46 +36,53 @@ jobs:
     with:
       platform: android
 
-  build:
-    name: Android (${{ matrix.host }})
+  # The windows leg is the PR long pole by a decent amount; android_matrix.py drops it
+  # for pull requests and keeps it for push / merge queue / dispatch.
+  build-matrix:
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      include: ${{ steps.build.outputs.include }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/scripts/android_matrix.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common/__init__.py
+            tools/common/file_traversal.py
+            tools/common/gh_actions.py
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Build matrix
+        id: build
+        env:
+          IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
+        run: python3 .github/scripts/android_matrix.py
+
+  build:
+    name: Android (${{ matrix.host }})
+    needs: [changes, build-matrix]
+    if: needs.changes.outputs.should_build == 'true'
+    # RunsOn runners only when the leg defines one, on mavlink, and not from a fork.
+    runs-on: ${{ github.repository_owner == 'mavlink' && matrix.runson_runner != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner={1}', github.run_id, matrix.runson_runner) || matrix.fallback_runner }}
     timeout-minutes: 120
+
+    # id-token/attestations scoped here: only the "Attest and Upload" step needs them.
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - host: linux
-            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=80gb', github.run_id) || 'ubuntu-latest' }}
-            arch: linux_gcc_64
-            qt_host_path: gcc_64
-            shell: bash
-            primary: true
-            emulator: false
-          - host: mac
-            runner: macos-15
-            arch: clang_64
-            qt_host_path: macos
-            shell: bash
-            primary: false
-            emulator: false
-          - host: windows
-            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
-            arch: win64_msvc2022_64
-            qt_host_path: msvc2022_64
-            shell: pwsh
-            primary: false
-            emulator: false
-          - host: linux-emulator
-            qt_host: linux
-            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/nested-virt=true/volume=80gb', github.run_id) || 'ubuntu-latest' }}
-            arch: linux_gcc_64
-            qt_host_path: gcc_64
-            shell: bash
-            primary: false
-            emulator: true
+        include: ${{ fromJSON(needs.build-matrix.outputs.include) }}
 
     defaults:
       run:
@@ -110,9 +115,10 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          persist-credentials: false
 
       # RunsOn images ship no Android SDK and don't preset ANDROID_SDK_ROOT (unlike
       # GitHub-hosted images), so setup-android@v4 has no install target. Point it
@@ -131,8 +137,13 @@ jobs:
           mode: android
           qt-host: ${{ matrix.qt_host || matrix.host }}
           qt-arch: ${{ matrix.arch }}
+          aqt-source: ${{ matrix.aqt_source || '' }}
           abis: ${{ env.QT_ANDROID_ABIS }}
           build-type: ${{ env.BUILD_TYPE }}
+          # matrix.host is unique per leg; linux and linux-emulator otherwise
+          # resolve to identical cache inputs and would race on the moccache
+          # save key.
+          cache-key-suffix: ${{ matrix.host }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Install host build dependencies
@@ -190,7 +201,7 @@ jobs:
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/android_build_retry.py" \
             --build-dir "${{ runner.temp }}/build" \
-            --build-type "${{ env.BUILD_TYPE }}"
+            --build-type "${BUILD_TYPE}"
 
       # `failure()` is required: build's continue-on-error makes outcome alone insufficient.
       - name: Annotate emulator build retry failure
@@ -244,7 +255,7 @@ jobs:
           package: org.mavlink.qgroundcontrol
           android-platform: ${{ steps.setup.outputs.android_platform }}
           qt-version: ${{ steps.setup.outputs.qt_version }}
-          ndk-version: ${{ steps.setup.outputs.ndk_full_version }}
+          ndk-version: ${{ steps.setup.outputs.android_ndk_full_version }}
           diagnostics-name: ${{ matrix.host }}
 
       - name: Attest and Upload
@@ -260,9 +271,27 @@ jobs:
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           upload-aws: ${{ matrix.primary }}
 
+      # Shell conditional, not a `&& x || y` GHA ternary whose `||` arm misfires
+      # if the truthy arm ever evaluates falsy. tag -> production; master -> beta.
+      - name: Compute Play Store rollout
+        id: playstore_rollout
+        if: ${{ !matrix.emulator && matrix.primary && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          if [ "${REF_TYPE}" = "tag" ]; then
+            { echo "track=production"; echo "status=inProgress"; echo "user_fraction=0.2"; } >> "${GITHUB_OUTPUT}"
+          else
+            { echo "track=beta"; echo "status=completed"; echo "user_fraction="; } >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Deploy to Play Store
-        if: ${{ !matrix.emulator && matrix.primary && github.ref_type == 'tag' && env.HAS_PLAYSTORE_SECRET == 'true' }}
+        if: ${{ !matrix.emulator && matrix.primary && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
         uses: ./.github/actions/playstore
         with:
           artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
           service_account_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+          track: ${{ steps.playstore_rollout.outputs.track }}
+          status: ${{ steps.playstore_rollout.outputs.status }}
+          user_fraction: ${{ steps.playstore_rollout.outputs.user_fraction }}
+          whats_new_directory: ${{ github.workspace }}/deploy/android/whatsnew

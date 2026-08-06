@@ -33,7 +33,7 @@ public:
 
     static LogManager* instance();
     static LogManager* create(QQmlEngine* qmlEngine, QJSEngine* jsEngine);
-    static void installHandler();
+    static void installHandler(bool logOutput);
     static void applyEnvironmentLogLevel();
 
     void init();

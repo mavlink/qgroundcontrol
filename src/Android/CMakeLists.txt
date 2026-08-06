@@ -38,65 +38,62 @@ add_subdirectory(qtandroidserialport)
 CPMAddPackage(
     NAME qtandroidextensions
     GITHUB_REPOSITORY 2gis/qtandroidextensions
-    GIT_TAG 97fdb473a4394254a8d8331cf2ac53bb41ff2e73
+    GIT_TAG qt6-beta1
     DOWNLOAD_ONLY YES
 )
 
-if(qtandroidextensions_ADDED)
-    set(_qae_root ${qtandroidextensions_SOURCE_DIR})
-    set(_qjni_dir ${_qae_root}/QJniHelpers)
-    set(_qtah_dir ${_qae_root}/QtAndroidHelpers)
+qgc_require_cpm_added(qtandroidextensions)
 
-    # MOC for QLock_p.h (has Q_OBJECT)
-    qt6_wrap_cpp(_qlocks_moc ${_qtah_dir}/QLocks/QLock_p.h)
+set(_qae_root ${qtandroidextensions_SOURCE_DIR})
+set(_qjni_dir ${_qae_root}/QJniHelpers)
+set(_qtah_dir ${_qae_root}/QtAndroidHelpers)
 
-    # Build as a separate static library with AUTOMOC OFF.
-    # The library disables AUTOMOC in its own CMakeLists; compiling these
-    # sources inside QGC's target (which has AUTOMOC ON) causes the scanner
-    # to try generating MOC outputs in the CPM cache with broken paths.
-    add_library(qtandroidextensions_lockers STATIC
-        # QJniHelpers
-        ${_qjni_dir}/QJniHelpers.cpp
-        ${_qjni_dir}/QAndroidQPAPluginGap.cpp
-        ${_qjni_dir}/QJniLangUtils.cpp
-        # QtAndroidHelpers — lockers only
-        ${_qtah_dir}/QAndroidPartialWakeLocker.cpp
-        ${_qtah_dir}/QAndroidWiFiLocker.cpp
-        # QLocks infrastructure
-        ${_qtah_dir}/QLocks/QLockedObject.cpp
-        ${_qtah_dir}/QLocks/QLock.cpp
-        ${_qtah_dir}/QLocks/QLockHandler.cpp
-        ${_qlocks_moc}
-    )
-    set_target_properties(qtandroidextensions_lockers PROPERTIES AUTOMOC OFF)
+# MOC for QLock_p.h (has Q_OBJECT)
+qt6_wrap_cpp(_qlocks_moc ${_qtah_dir}/QLocks/QLock_p.h)
 
-    target_include_directories(qtandroidextensions_lockers
-        PUBLIC
-            ${_qae_root}        # <QJniHelpers/QJniHelpers.h>, <QtAndroidHelpers/...>
-        PRIVATE
-            ${_qjni_dir}        # internal includes within QJniHelpers
-            ${_qtah_dir}        # internal includes within QtAndroidHelpers (QLocks/...)
-    )
+# qtandroidextensions disables AUTOMOC in its own CMakeLists; compiling its sources in
+# QGC's AUTOMOC-ON target makes the scanner emit MOC output into the CPM cache with
+# broken paths, so build it as a separate AUTOMOC-OFF static lib.
+add_library(qtandroidextensions_lockers STATIC
+    # QJniHelpers
+    ${_qjni_dir}/QJniHelpers.cpp
+    ${_qjni_dir}/QAndroidQPAPluginGap.cpp
+    ${_qjni_dir}/QJniLangUtils.cpp
+    # QtAndroidHelpers — lockers only
+    ${_qtah_dir}/QAndroidPartialWakeLocker.cpp
+    ${_qtah_dir}/QAndroidWiFiLocker.cpp
+    # QLocks infrastructure
+    ${_qtah_dir}/QLocks/QLockedObject.cpp
+    ${_qtah_dir}/QLocks/QLock.cpp
+    ${_qtah_dir}/QLocks/QLockHandler.cpp
+    ${_qlocks_moc}
+)
+set_target_properties(qtandroidextensions_lockers PROPERTIES AUTOMOC OFF)
 
-    # Suppress deprecated 'detectJavaVM' alias (namespace-scope variable defined in
-    # a header — causes duplicate-symbol errors under LTO).
-    target_compile_definitions(qtandroidextensions_lockers PRIVATE QTANDROIDEXTENSIONS_NO_DEPRECATES)
+target_include_directories(qtandroidextensions_lockers
+    PUBLIC
+        ${_qae_root}        # <QJniHelpers/QJniHelpers.h>, <QtAndroidHelpers/...>
+    PRIVATE
+        ${_qjni_dir}        # internal includes within QJniHelpers
+        ${_qtah_dir}        # internal includes within QtAndroidHelpers (QLocks/...)
+)
 
-    target_link_libraries(qtandroidextensions_lockers PUBLIC Qt6::Core PRIVATE Qt6::CorePrivate)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qtandroidextensions_lockers)
+# Suppress deprecated 'detectJavaVM' alias (namespace-scope variable defined in
+# a header — causes duplicate-symbol errors under LTO).
+target_compile_definitions(qtandroidextensions_lockers PRIVATE QTANDROIDEXTENSIONS_NO_DEPRECATES)
 
-    # Deploy Java sources to build tree (picked up by build.gradle via cpmJavaSrcDir)
-    file(GLOB _qjnihelpers_java "${_qjni_dir}/ru.dublgis.qjnihelpers/*.java")
-    file(GLOB _qtandroidhelpers_java "${_qtah_dir}/ru.dublgis.androidhelpers/*.java")
-    file(COPY ${_qjnihelpers_java}
-        DESTINATION "${CMAKE_BINARY_DIR}/extra_java_sources/ru/dublgis/qjnihelpers"
-    )
-    file(COPY ${_qtandroidhelpers_java}
-        DESTINATION "${CMAKE_BINARY_DIR}/extra_java_sources/ru/dublgis/androidhelpers"
-    )
-else()
-    message(WARNING "QGC: qtandroidextensions not available")
-endif()
+target_link_libraries(qtandroidextensions_lockers PUBLIC Qt6::Core PRIVATE Qt6::CorePrivate)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qtandroidextensions_lockers)
+
+# Deploy Java sources to QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR (added to build.gradle's source set)
+file(GLOB _qjnihelpers_java "${_qjni_dir}/ru.dublgis.qjnihelpers/*.java")
+file(GLOB _qtandroidhelpers_java "${_qtah_dir}/ru.dublgis.androidhelpers/*.java")
+file(COPY ${_qjnihelpers_java}
+    DESTINATION "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}/ru/dublgis/qjnihelpers"
+)
+file(COPY ${_qtandroidhelpers_java}
+    DESTINATION "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}/ru/dublgis/androidhelpers"
+)
 
 # ----------------------------------------------------------------------------
 # Qt Android Tools (FalsinSoft)
@@ -109,20 +106,18 @@ CPMAddPackage(
     DOWNLOAD_ONLY YES
 )
 
-if(QtAndroidTools_ADDED)
-    set(_qtat_dir ${QtAndroidTools_SOURCE_DIR}/QtAndroidTools)
+qgc_require_cpm_added(QtAndroidTools)
 
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            ${_qtat_dir}/QAndroidScreen.cpp
-            ${_qtat_dir}/QAndroidScreen.h
-    )
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${_qtat_dir})
+set(_qtat_dir ${QtAndroidTools_SOURCE_DIR}/QtAndroidTools)
 
-    # Deploy Java sources to build tree (picked up by build.gradle via cpmJavaSrcDir)
-    file(COPY "${_qtat_dir}/src/com/falsinsoft/qtandroidtools/AndroidScreen.java"
-        DESTINATION "${CMAKE_BINARY_DIR}/extra_java_sources/com/falsinsoft/qtandroidtools"
-    )
-else()
-    message(WARNING "QGC: QtAndroidTools not available")
-endif()
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${_qtat_dir}/QAndroidScreen.cpp
+        ${_qtat_dir}/QAndroidScreen.h
+)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${_qtat_dir})
+
+# Deploy Java sources to QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR (added to build.gradle's source set)
+file(COPY "${_qtat_dir}/src/com/falsinsoft/qtandroidtools/AndroidScreen.java"
+    DESTINATION "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}/com/falsinsoft/qtandroidtools"
+)

@@ -80,6 +80,15 @@ if TYPE_CHECKING:
         gh as gh,
     )
     from .gh_actions import (
+        gh_error as gh_error,
+    )
+    from .gh_actions import (
+        gh_notice as gh_notice,
+    )
+    from .gh_actions import (
+        gh_warning as gh_warning,
+    )
+    from .gh_actions import (
         list_run_artifacts as list_run_artifacts,
     )
     from .gh_actions import (
@@ -181,6 +190,9 @@ _LAZY_SYMBOLS: dict[str, str] = {
     "find_json_files": "file_traversal",
     "DEFAULT_SKIP_DIRS": "file_traversal",
     "gh": "gh_actions",
+    "gh_error": "gh_actions",
+    "gh_warning": "gh_actions",
+    "gh_notice": "gh_actions",
     "list_workflow_runs_for_sha": "gh_actions",
     "list_run_artifacts": "gh_actions",
     "write_github_output": "gh_actions",
@@ -238,6 +250,7 @@ _LAZY_SYMBOLS: dict[str, str] = {
     "open_in_default_app": "opener",
     "format_bytes": "format",
     "format_delta_bytes": "format",
+    "md_table": "markdown",
 }
 
 __all__ = [*_LAZY_SYMBOLS.keys(), "pip_install"]

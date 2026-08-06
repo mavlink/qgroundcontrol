@@ -25,7 +25,9 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Download PX4 airframe metadata
         run: curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors --max-time 300 https://artifacts.px4.io/Firmware/_general/airframes.xml -o src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml

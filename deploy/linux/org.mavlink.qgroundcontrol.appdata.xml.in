@@ -8,9 +8,9 @@
   <project_license>Apache-2.0 OR GPL-3.0</project_license>
   <content_rating type="oars-1.1"/>
 
- <!--  <developer id="org.@QGC_APPIMAGE_APPDATA_DEVELOPER@">
-    <name translate="no">@QGC_APPIMAGE_APPDATA_DEVELOPER@</name>
-  </developer> -->
+  <developer id="com.@QGC_APPIMAGE_APPDATA_DEVELOPER@">
+    <name translate="no">@QGC_APP_NAME@</name>
+  </developer>
 
   <summary>@QGC_APP_DESCRIPTION@</summary>
   <description>
@@ -38,7 +38,9 @@
   <screenshots>
     <screenshot type="default">
       <caption>Connected Vehicle</caption>
-      <image>https://docs.qgroundcontrol.com/master/assets/connected_vehicle.BmASIvhv.jpg</image>
+      <!-- AppStream requires a remote URL; keep the image alongside this file so it
+           can never rot due to docs-site restructuring -->
+      <image>https://raw.githubusercontent.com/mavlink/qgroundcontrol/master/deploy/linux/connected_vehicle.jpg</image>
     </screenshot>
   </screenshots>
 

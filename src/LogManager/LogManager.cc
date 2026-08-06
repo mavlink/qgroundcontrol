@@ -10,6 +10,7 @@
 #include <QtCore/QThread>
 #include <QtQml/QJSEngine>
 #include <atomic>
+#include <cstdio>
 #include <cstring>
 
 #include "LogFormatter.h"
@@ -40,6 +41,7 @@ static QElapsedTimer s_elapsedTimer = []() { QElapsedTimer t; t.start(); return 
 // ---------------------------------------------------------------------------
 
 static QtMessageHandler s_defaultHandler = nullptr;
+static std::atomic<bool> s_echoToStderr{false};
 
 void LogManager::msgHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
@@ -47,6 +49,11 @@ void LogManager::msgHandler(QtMsgType type, const QMessageLogContext& context, c
 
     if (s_defaultHandler) {
         s_defaultHandler(type, context, msg);
+    }
+    if (s_echoToStderr.load(std::memory_order_relaxed)) {
+        const QByteArray line = qFormatLogMessage(type, context, msg).toLocal8Bit();
+        std::fprintf(stderr, "%s\n", line.constData());
+        std::fflush(stderr);
     }
 
     if (!inst) {
@@ -118,10 +125,12 @@ LogManager::~LogManager()
     }
 }
 
-void LogManager::installHandler()
+void LogManager::installHandler(bool logOutput)
 {
     Q_ASSERT(!s_instance.load(std::memory_order_relaxed));
     auto* mgr = new LogManager();
+    Q_UNUSED(mgr)
+    s_echoToStderr.store(logOutput, std::memory_order_release);
 
     qSetMessagePattern(
         QStringLiteral("%{time process}%{if-warning} Warning:%{endif}%{if-critical} Critical:%{endif} %{message} - "

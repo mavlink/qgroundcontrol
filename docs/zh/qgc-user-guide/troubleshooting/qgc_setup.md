@@ -16,7 +16,6 @@ The solution is to set the desired _32-bit voice_ for your system:
 
 1. Run the control panel application: **C:\Windows\SysWOW64\Speech\SpeechUX\sapi.cpl**.
 2. Make your desired _Voice selection_ and then click **OK** at the bottom of the dialog.
-  ![Windows 32-bit Text-To-Speech Control Panel](../../../assets/support/windows_text_to_speech.png)
 
 :::info
 Additional information about the Windows speech APIs can be found [here](https://www.webbie.org.uk/blog/microsoft-speech/).
@@ -33,8 +32,6 @@ If you experience UI rendering issues or video driver crashes on Windows, this m
 ## Windows: Doesn't connect to Vehicle over WiFi {#waiting_for_connection}
 
 If _QGroundControl_ sits forever (for example, _Waiting For Vehicle Connection_) when trying to connect to the vehicle over Wifi, a possible cause is that IP traffic is being blocked by firewall software (e.g. Windows Defender, Norton, etc.).
-
-![Waiting for connection](../../../assets/support/waiting_for_connection.jpg)
 
 The solution is to allow the _QGroundControl_ app through the firewall.
 
@@ -65,8 +62,6 @@ VideoReceiver::start() failed. Error with gst_element_factory_make(‘avdec_h264
 The [download/install instructions for Ubuntu](../getting_started/download_and_install.md#ubuntu) include _GStreamer_ setup information.
 
 ## Ubuntu 18.04: Video Streaming Fails on Dual Video Adapter Systems {#dual_vga}
-
-![Video on Ubuntu 18.04](../../../assets/support/troubleshooting_dual_vga_driver.jpg)
 
 The version of GSteamer in Ubuntu 18.04 has a bug that prevents video displaying when using a VA API based decoder (i.e. vaapih264dec etc.) on systems that have both Intel and NVidia video display adapters.
 

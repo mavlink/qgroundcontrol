@@ -1,5 +1,9 @@
 # 飞行工具
 
+## Action Confirmation {#confirmation}
+
+Safety-critical actions (takeoff, land, RTL, etc.) require confirmation before they are executed. When you trigger one of these actions, a confirmation button appears with chevrons on its left side. To confirm, click and hold the button until the action is accepted. This prevents accidental activation of critical commands.
+
 ## 飞行检查清单 {#preflight_checklist}
 
 飞行前自动核对表可以用来进行标准检查，检查车辆配置正确，可以安全飞行。
@@ -7,8 +11,6 @@
 查看核对表， 首先通过导航到 [应用设置 > 常规> 飞行视图](../settings_view/general.md) 并选择 **使用预览列表** 复选框来启用工具。
 然后工具将被添加到 _飞行工具_。
 按下它以打开检查清单：
-
-![飞行检查清单](../../../assets/fly/pre_flight_checklist.jpg)
 
 完成每项测试后，在用户界面上选择该项，将其标记为已完成。
 
@@ -26,23 +28,21 @@
 - 您可以向上/向下滑动以更改高度
 - 您也可以点击指定的高度(例如10英尺)，然后输入特定的海拔。
 
-1. 使用滑块确认起飞。
-
-![起飞](../../../assets/fly/takeoff.png)
+1. [Confirm](#confirmation) the action.
 
 ## 着陆 {#land}
 
 你可以在飞行时随时降落在当前位置：
 
 1. 按下 _飞行工具_ 中的 **着陆** 按钮(当降落将切换到 **起飞** 按钮)。
-2. 使用滑块确认降落。
+2. [Confirm](#confirmation) the action.
 
 ## 返航/返回
 
 飞行时返回“安全点”：
 
 1. 按 _飞行工具_ 中的 **返航** 按钮。
-2. 使用滑块确认返航。
+2. [Confirm](#confirmation) the action.
 
 :::info
 飞行器通常返回 “Home点”（起飞）位置并着陆。

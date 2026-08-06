@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
 from ci_bootstrap import ensure_tools_dir
@@ -17,6 +16,7 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 import cmake_helper
+from common.gh_actions import gh_error, gh_warning
 
 _TRUNCATION_RE = re.compile(
     r"Invalid json file: .*android-QGroundControl-deployment-settings\.json\. "
@@ -76,18 +76,15 @@ def main(argv: list[str] | None = None) -> int:
     retry_log = args.build_dir / args.retry_log_name
 
     if not log_path.is_file():
-        print(f"::error::Build failed and '{log_path}' is missing.", file=sys.stderr)
+        gh_error(f"Build failed and '{log_path}' is missing.")
         return 1
 
     if not detect_truncation(log_path):
-        print(
-            "::error::Initial build failed for a non-retriable reason; skipping retry.",
-            file=sys.stderr,
-        )
+        gh_error("Initial build failed for a non-retriable reason; skipping retry.")
         return 1
 
-    print(
-        "::warning::Detected truncated android deployment settings JSON. "
+    gh_warning(
+        "Detected truncated android deployment settings JSON. "
         "Retrying build with --parallel 1."
     )
     clean_settings_json(settings_path)

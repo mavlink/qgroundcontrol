@@ -1,6 +1,5 @@
 #include "QmlTestFileValidator.h"
 
-#include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 
 #include "QmlTesting.h"
@@ -8,24 +7,13 @@
 // Register as standalone - quick_test_main calls exit() so can't run with other tests
 UT_REGISTER_TEST_STANDALONE(QmlTestFileValidator, TestLabel::Unit)
 
-QmlTestFileValidator::QmlTestFileValidator()
-{
-}
+QmlTestFileValidator::QmlTestFileValidator() {}
 
 QString QmlTestFileValidator::_testDirectory() const
 {
-    // Look for qmltests directory relative to executable
-    const QDir appDir(QCoreApplication::applicationDirPath());
-
-    // Try build directory structure
-    QDir testDir = appDir;
-    if (testDir.cd("qmltests")) {
-        return testDir.absolutePath();
-    }
-
-    // Try parent directory (for some build configurations)
-    testDir = appDir;
-    if (testDir.cdUp() && testDir.cd("qmltests")) {
+    // Same source-tree directory QGCQmlQuickTests runs the tests from
+    const QDir testDir(QStringLiteral(QGC_QML_TEST_SOURCE_DIR));
+    if (testDir.exists()) {
         return testDir.absolutePath();
     }
 

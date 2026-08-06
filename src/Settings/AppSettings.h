@@ -35,6 +35,7 @@ public:
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(savePath)
     DEFINE_SETTINGFACT(androidDontSaveToSDCard)
+    DEFINE_SETTINGFACT(androidUsePosixSerial)
     DEFINE_SETTINGFACT(useChecklist)
     DEFINE_SETTINGFACT(enforceChecklist)
     DEFINE_SETTINGFACT(enableMultiVehiclePanel)

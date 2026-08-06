@@ -3,7 +3,7 @@
 #
 # Usage:
 #   deploy/docker/run-docker.sh <variant> [build-type]
-#     variants:   ubuntu | ubuntu-2204 | aarch64 | android
+#     variants:   ubuntu | ubuntu-2204 | ubuntu-2604 | debian | fedora | arch | aarch64 | android
 #     build-type: Release (default) | Debug | RelWithDebInfo | MinSizeRel
 #
 # Env:
@@ -17,7 +17,8 @@ SOURCE_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 DOCKERFILE="${SCRIPT_DIR}/Dockerfile"
 
 usage() {
-    echo "Usage: $0 <ubuntu|ubuntu-2204|aarch64|android> [build-type]" >&2
+    echo "Usage: $0 <variant> [build-type]" >&2
+    python3 "${SCRIPT_DIR}/_variant_info.py" 2>&1 | sed -n 's/^Valid variants:/  variants:/p' >&2
     exit 1
 }
 
@@ -25,28 +26,16 @@ VARIANT="${1:-}"
 BUILD_TYPE="${2:-Release}"
 [[ -z "${VARIANT}" ]] && usage
 
-run_flags=()
+# Variant target/image/fuse/build_args come from the shared deploy/docker/variants.json
+# (same source CI's plan_docker_builds.py reads), emitted as eval-able bash. Declared
+# first so the eval-populated values are visible to shellcheck.
+target="" default_image="" fuse="0"
 build_args=()
-case "${VARIANT}" in
-    ubuntu)
-        target="linux";       default_image="qgc-ubuntu-docker";         run_flags=(--fuse) ;;
-    ubuntu-2204)
-        # 22.04 reuses the `linux` target, overriding the base + toolchain args.
-        target="linux";       default_image="qgc-ubuntu-2204-docker";    run_flags=(--fuse)
-        build_args=(
-            --build-arg "UBUNTU_REF=ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d"
-            --build-arg "APT_EXTRA=gcc-12 g++-12"
-            --build-arg "PIP_CMAKE=cmake>=3.25,<4"
-            --build-arg "CC_PIN=gcc-12"
-            --build-arg "CXX_PIN=g++-12"
-        ) ;;
-    aarch64)
-        target="linux-cross"; default_image="qgc-ubuntu-aarch64-docker" ;;
-    android)
-        target="android";     default_image="qgc-android-docker" ;;
-    *)
-        echo "Unknown variant: ${VARIANT}" >&2; usage ;;
-esac
+variant_info="$(python3 "${SCRIPT_DIR}/_variant_info.py" "${VARIANT}")" || usage
+eval "${variant_info}"
+
+run_flags=()
+[[ "${fuse}" == "1" ]] && run_flags=(--fuse)
 
 IMAGE_NAME="${IMAGE_NAME:-${default_image}}"
 

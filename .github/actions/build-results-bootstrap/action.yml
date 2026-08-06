@@ -1,9 +1,9 @@
 name: Build Results Bootstrap
 description: >-
   Sparse-checkout the scripts + composite actions consumed by build-results.yml
-  jobs and install the Python scripts group. Single source for the 18-path
+  jobs and install the Python scripts group. Single source for the
   sparse-checkout list previously duplicated across post-pr-comment and
-  save-baselines (drift was comment-enforced only).
+  save-baselines (drift guarded by test_bootstrap_sparse_checkout.py).
 
 inputs:
   python-groups:
@@ -14,7 +14,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         sparse-checkout: |
           .github/actions/download-all-artifacts
@@ -36,12 +36,14 @@ runs:
           tools/common/format.py
           tools/common/gh_actions.py
           tools/common/github_runs.py
+          tools/common/io.py
+          tools/common/markdown.py
           tools/common/platform.py
           tools/pyproject.toml
           tools/uv.lock
-          tools/setup/setup_bootstrap.py
           tools/setup/install_python.py
         sparse-checkout-cone-mode: false
+        persist-credentials: false
 
     - uses: ./.github/actions/setup-python
       with:

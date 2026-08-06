@@ -106,6 +106,10 @@ void APMSensorsComponentController::_resetInternalState()
 
 void APMSensorsComponentController::_stopCalibration(APMSensorsComponentController::StopCalibrationCode code)
 {
+    // Clear mag cal sequencing state first so a reentrant CANCEL ack can't trigger a new START
+    _magCalStartAccepted = false;
+    _magCalCancelBeforeStartPending = false;
+
     (void) disconnect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(true);
 
@@ -117,6 +121,10 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
 
     if (_calTypeInProgress == QGCMAVLink::CalibrationMag) {
         _restorePreviousCompassCalFitness();
+        if (code == StopCalibrationFailed) {
+            // ArduPilot keeps streaming the failed MAG_CAL_REPORT until cancelled
+            _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
+        }
     }
 
     if (code == StopCalibrationSuccess) {
@@ -168,8 +176,18 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
     }
 
     switch (command) {
+    case MAV_CMD_DO_CANCEL_MAG_CAL:
+        if (_magCalCancelBeforeStartPending) {
+            // Pre-start flush of stale cal state is complete (result doesn't matter - older
+            // firmwares reject CANCEL when no cal is running). Safe to start the new cal now.
+            _magCalCancelBeforeStartPending = false;
+            _sendStartMagCal();
+        }
+        break;
     case MAV_CMD_DO_START_MAG_CAL:
-        if (result != MAV_RESULT_ACCEPTED) {
+        if (result == MAV_RESULT_ACCEPTED) {
+            _magCalStartAccepted = true;
+        } else {
             _appendStatusLog(tr("Failed to start compass calibration"));
             _stopCalibration(StopCalibrationFailed);
         }
@@ -191,6 +209,7 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
 void APMSensorsComponentController::calibrateCompass()
 {
     _calTypeInProgress = QGCMAVLink::CalibrationMag;
+    _magCalStartAccepted = false;
     _rgCompassCalProgress[0] = 0;
     _rgCompassCalProgress[1] = 0;
     _rgCompassCalProgress[2] = 0;
@@ -236,15 +255,26 @@ void APMSensorsComponentController::calibrateCompass()
 
     _appendStatusLog(tr("Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right."));
     (void) connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult, Qt::UniqueConnection);
+
+    // A previously failed cal keeps streaming MAG_CAL_REPORT until cancelled. Flush that stale
+    // state before starting so it can't instantly complete the new calibration. START is sent
+    // from the CANCEL ack handler (_mavCommandResult) so the two commands can't race.
+    _magCalCompassBits = compassBits;
+    _magCalCancelBeforeStartPending = true;
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
+}
+
+void APMSensorsComponentController::_sendStartMagCal()
+{
     _vehicle->sendMavCommand(
         _vehicle->defaultComponentId(),
         MAV_CMD_DO_START_MAG_CAL,
-        true,          // showError
-        compassBits,   // which compass(es) to calibrate
-        0,             // no retry on failure
-        1,             // save values after complete
-        0,             // no delayed start
-        0              // no auto-reboot
+        true,                // showError
+        _magCalCompassBits,  // which compass(es) to calibrate
+        0,                   // no retry on failure
+        1,                   // save values after complete
+        0,                   // no delayed start
+        0                    // no auto-reboot
     );
 }
 
@@ -394,6 +424,8 @@ void APMSensorsComponentController::cancelCalibration()
     _cancelButton->setEnabled(false);
 
     if (_calTypeInProgress == QGCMAVLink::CalibrationMag) {
+        // Clear pending start first so a reentrant CANCEL ack can't trigger a new START
+        _magCalCancelBeforeStartPending = false;
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
         _stopCalibration(StopCalibrationCancelled);
     } else {
@@ -478,7 +510,7 @@ void APMSensorsComponentController::_handleCommandAck(const mavlink_message_t &m
 
 void APMSensorsComponentController::_handleMagCalProgress(const mavlink_message_t &message)
 {
-    if (_calTypeInProgress != QGCMAVLink::CalibrationMag) {
+    if ((_calTypeInProgress != QGCMAVLink::CalibrationMag) || !_magCalStartAccepted) {
         return;
     }
 
@@ -510,7 +542,7 @@ void APMSensorsComponentController::_handleMagCalProgress(const mavlink_message_
 
 void APMSensorsComponentController::_handleMagCalReport(const mavlink_message_t &message)
 {
-    if (_calTypeInProgress != QGCMAVLink::CalibrationMag) {
+    if ((_calTypeInProgress != QGCMAVLink::CalibrationMag) || !_magCalStartAccepted) {
         return;
     }
 

@@ -10,12 +10,12 @@ ToolIndicatorPage {
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
-    property bool   gpsFlag:            _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.gcsGPSGood         : false
-    property bool   basicIDFlag:        _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.basicIDGood        : false
-    property bool   armFlag:            _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.armStatusGood      : false
-    property bool   commsFlag:          _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.commsGood          : false
+    property bool   gpsFlag:            _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.gcsPositionUsable             : false
+    property bool   basicIDFlag:        _activeVehicle && _activeVehicle.remoteIDManager ? !_activeVehicle.remoteIDManager.vehicleReportsBasicIDMissing : false
+    property bool   armFlag:            _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.armStatusGoodToArm            : false
+    property bool   commsFlag:          _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.ridDeviceCommsGood            : false
     property bool   emergencyDeclared:  _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.emergencyDeclared  : false
-    property bool   operatorIDFlag:     _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.operatorIDGood     : false
+    property bool   operatorIDFlag:     QGroundControl.settingsManager.remoteIDSettings.operatorIDValidForRegion
 
     property int    _regionOperation:   QGroundControl.settingsManager.remoteIDSettings.region.value
 
@@ -293,23 +293,10 @@ ToolIndicatorPage {
             property Fact regionFact:           remoteIDSettings.region
             property Fact sendOperatorIdFact:   remoteIDSettings.sendOperatorID
             property Fact locationTypeFact:     remoteIDSettings.locationType
-            property Fact operatorIDFact:       remoteIDSettings.operatorID
             property bool isEURegion:           regionFact.rawValue == RemoteIDIndicatorPage.EU
             property bool isFAARegion:          regionFact.rawValue == RemoteIDIndicatorPage.FAA
             property real textFieldWidth:       ScreenTools.defaultFontPixelWidth * 24
             property real textLabelWidth:       ScreenTools.defaultFontPixelWidth * 30
-
-            Connections {
-                target: regionFact
-                onRawValueChanged: {
-                    if (regionFact.rawValue === RemoteIDIndicatorPage.EU) {
-                        sendOperatorIdFact.rawValue = true
-                    }
-                    if (regionFact.rawValue === RemoteIDIndicatorPage.FAA) {
-                        locationTypeFact.value = RemoteIDIndicatorPage.LocationType.LIVE
-                    }
-                }
-            }
 
             ColumnLayout {
                 spacing:            ScreenTools.defaultFontPixelHeight / 2

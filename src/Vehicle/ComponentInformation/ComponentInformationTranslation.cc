@@ -1,6 +1,7 @@
 #include "ComponentInformationTranslation.h"
 #include "QGCCachedFileDownload.h"
 #include "JsonParsing.h"
+#include "JsonSchemaValidator.h"
 #include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
 
@@ -114,6 +115,12 @@ QString ComponentInformationTranslation::translateJsonUsingTS(const QString &toT
         qCWarning(ComponentInformationTranslationLog) << "Metadata json file to translate open failed:" << errorString;
         return "";
     }
+
+    QString schemaError;
+    if (!JsonSchemaValidator::validate(jsonDoc, QStringLiteral(":/json/component_metadata/translation.schema.json"), schemaError)) {
+        qCWarning(ComponentInformationTranslationLog) << "Translation json schema validation failed:" << schemaError;
+    }
+
     QJsonObject jsonObj = jsonDoc.object();
 
     QJsonObject translationObj = jsonObj["translation"].toObject();

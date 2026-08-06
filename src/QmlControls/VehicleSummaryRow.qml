@@ -5,25 +5,46 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-RowLayout {
+ColumnLayout {
     id: root
     Layout.fillWidth: true
-    spacing: ScreenTools.defaultFontPixelHeight
+    spacing: 0
 
     property string labelText: "Label"
     property string valueText: "value"
     property string valueColor: ""
+    property bool showDivider: true
 
-    QGCLabel {
-        id: label
+    RowLayout {
+        id: rowLayout
         Layout.fillWidth: true
-        text: root.labelText
+        Layout.topMargin: ScreenTools.defaultFontPixelHeight * 0.2
+        Layout.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.2
+        spacing: ScreenTools.defaultFontPixelHeight
+
+        QGCLabel {
+            id: label
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            text: root.labelText
+            wrapMode: Text.WordWrap
+        }
+
+        QGCLabel {
+            id: valueLabel
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            horizontalAlignment: Text.AlignRight
+            text: root.valueText
+            color: root.valueColor !== "" ? root.valueColor : QGroundControl.globalPalette.text
+            wrapMode: Text.WordWrap
+        }
     }
 
-    QGCLabel {
-        Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 20
-        text: root.valueText
-        color: root.valueColor !== "" ? root.valueColor : QGroundControl.globalPalette.text
-        elide: Text.ElideRight
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 1
+        color: Qt.rgba(QGroundControl.globalPalette.text.r, QGroundControl.globalPalette.text.g, QGroundControl.globalPalette.text.b, 0.08)
+        visible: root.showDivider
     }
 }

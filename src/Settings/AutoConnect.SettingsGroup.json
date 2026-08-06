@@ -48,12 +48,22 @@
             "keywords": "auto connect,librepilot"
         },
         {
+            "name": "nmeaSource",
+            "shortDesc": "NMEA GPS source for GCS position",
+            "longDesc": "NMEA GPS source for GCS position",
+            "type": "uint32",
+            "enumStrings": "Disabled,UDP Port,Serial Port",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "NMEA GPS source for GCS position"
+        },
+        {
             "name": "autoConnectNmeaPort",
-            "shortDesc": "NMEA GPS device for GCS position",
-            "longDesc": "NMEA GPS device for GCS position",
+            "shortDesc": "NMEA GPS serial device for GCS position",
+            "longDesc": "NMEA GPS serial device for GCS position",
             "type": "string",
-            "default": "Disabled",
-            "label": "NMEA GPS device for GCS position"
+            "default": "",
+            "label": "NMEA GPS serial device for GCS position"
         },
         {
             "name": "autoConnectNmeaBaud",

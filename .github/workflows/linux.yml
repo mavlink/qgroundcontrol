@@ -24,10 +24,7 @@ env:
 
 permissions:
   contents: read
-  id-token: write
-  attestations: write
   actions: read
-  checks: write
 
 jobs:
   changes:
@@ -57,12 +54,12 @@ jobs:
       matrix:
         include:
           - arch: linux_gcc_arm64
-            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8g.2xlarge/image=ubuntu24-full-arm64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04-arm' }}
+            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-arm64-builder', github.run_id) || 'ubuntu-24.04-arm' }}
             package: QGroundControl-aarch64
             host: linux_arm64
 
           - arch: linux_gcc_64
-            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
+            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) || 'ubuntu-24.04' }}
             package: QGroundControl-x86_64
             host: linux
 
@@ -87,9 +84,10 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          persist-credentials: false
 
       - name: Build Setup
         uses: ./.github/actions/build-setup
@@ -189,7 +187,7 @@ jobs:
     outputs:
       include: ${{ steps.build.outputs.include }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: |
             .github/scripts/linux_debug_matrix.py
@@ -200,18 +198,22 @@ jobs:
             tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
+          persist-credentials: false
       - name: Build matrix
         id: build
-        env:
-          IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
         run: python3 .github/scripts/linux_debug_matrix.py
 
   debug-validation:
     name: ${{ matrix.job_name }}
     needs: [changes, debug-matrix]
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=m8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
+    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-tester', github.run_id) || 'ubuntu-24.04' }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
+
+    # checks: write scoped here: only this job reports test results (dorny/test-reporter).
+    permissions:
+      contents: read
+      checks: write
 
     strategy:
       fail-fast: false
@@ -236,7 +238,9 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Build Setup
         uses: ./.github/actions/build-setup
@@ -372,6 +376,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           mode: report-only
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Verify Coverage Thresholds
         if: matrix.mode == 'coverage'

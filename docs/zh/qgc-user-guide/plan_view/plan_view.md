@@ -1,183 +1,179 @@
 # 计划视图
 
+:::tip Having trouble?
+If missions fail to upload or download, see [Plan Upload/Download Failures](../troubleshooting/plan_upload_download.md). For mission resume issues, see [Resume Mission Failures](../troubleshooting/resume_mission.md).
+:::
+
 _计划视图_ 用于为你的载具规 划自动化任务_ 并上传到载具。 一旦任务已 [规划](#plan_mission) 并被送往载具，您将切换到[飞行视图](../fly_view/fly_view.md) 来执行任务。
 
-如果固件支持，它也可以用来配置 [地理围栏](plan_geofence.md) 和 [集结点](plan_rally_points.md)。
-
-<span id="plan_screenshot"></span>
-![计划视图](../../../assets/plan/plan_view_overview.png)
+It is also used to configure the [GeoFence](plan_geofence.md) and [Rally Points](plan_rally_points.md) if these are supported by the firmware.
 
 ## 界面概述{#ui_overview}
 
-[屏幕截图](#plan_screenshot) 显示一个简单的任务计划，该任务从计划起始点位置（H）起飞，途经三个航点，然后在最后一个航点（即航点 3）降落。
+The main elements of the UI are:
 
-界面的主要要素是：
+- **Map:** Displays the numbered indicators for the current mission, including the [Planned Home](#planned_home).
+  Click on the indicators to select them (for editing) or drag them around to reposition them.
+  Flight path lines and direction arrows show the planned route between waypoints.
+- **Plan Toolbar:** Located at the top of the view with buttons for **Open**, **Save**, **Upload**, and **Clear**.
+  A hamburger menu (☰) provides additional options such as _Save as KML_ and _Download_ (load plan from vehicle).
+  The **Save** and **Upload** buttons are highlighted when there are unsaved or un-uploaded changes.
+- **[Plan Tools](#plan_tools):** A vertical tool strip on the left side of the map used to add mission items (Takeoff, Waypoint, Pattern, ROI, Return/Land) and toggle the stats panel.
+- **[Plan Editor Panel](#plan_editor_panel):** A collapsible tree view on the right side containing the plan file info, mission items, GeoFence, and rally point editors.
+- **Layer Switcher:** Buttons in the top-right area for switching between **Mission**, **Geo-Fence**, and **Rally Point** editing layers.
+- **Mission Stats / Terrain Panel:** A panel at the bottom of the map that can toggle between a terrain altitude profile chart (height AMSL vs. distance) and mission statistics (selected waypoint info, total distance, max telemetry distance, estimated flight time, and battery info).
 
-- **地图：** 显示当前任务的带编号指示器，其中包括 [计划起始点](#planned_home)。
-  点击指示器来选择他们(用于编辑)或将他们拖动到周围来重新定位。
-- **计划工具栏：** 当前选定的航点相对于上一个航点的状态信息，以及整个任务的统计资料（飞行任务的水平距离和时间）。
-  - `最大距离`是[计划起始点](#planned_home)与最远路点之间的距离。
-  - 当连接到载具时，它也会显示一个 **上传** 按钮，可以用来上传计划到载具上。
-- **[计划工具](#plan_tools)：** 用于创建和管理任务。
-- **[任务命令列表](#mission_command_list):** 显示当前任务项目列表 (选择项目到 [编辑](#mission_command_editors))。
-- **地形高度概览：** 显示每个任务命令的相对高度.
+## Planning a Mission {#plan_mission}
 
-它显示了您当前选择的航点信息以及整个飞行任务的统计数据。
+At a very high level, the steps to create a mission are:
 
-## 规划一个任务 {#plan_mission}
+1. Change to _Plan View_.
+2. Add waypoints or commands to the mission and edit as needed.
+3. Upload the mission to the vehicle.
+4. Change to _Fly View_ and fly the mission.
 
-概括来说，创建任务的步骤如下：
+The following sections explain some of the details in the view.
 
-1. 更改 _计划视图_。
-2. 添加航点或命令到任务中并根据需要编辑。
-3. 将任务上传到载具上。
-4. 更改为 _飞行视图_ 并执行任务。
+## Planned Home Position {#planned_home}
 
-以下各节解释了视图中的一些细节。
+The _Planned Home_ shown in _Plan View_ is used to set the approximate start point when planning a mission (i.e. when a vehicle may not even be connected to QGC).
+It is used by QGC to estimate mission times and to draw waypoint lines.
 
-## 计划起始位置 {#planned_home}
-
-在 _计划视图_ 中显示的 _计划起始点_ 用于设置计划任务时的大致起点(此时飞行器甚至可能并未与 QGC 连接)。
-它被QGC会用来估计飞行任务时间和绘制航线。
-
-![计划的起始位置](../../../assets/plan/mission/mission_settings_planned_home.jpg)
-
-您应该移动/拖动计划中的起始位置到您计划起飞的大致位置。
-计划起始位置的高度设置在[任务设置](#mission_settings) 面板中。
-
-<img src="../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg" style="width: 200px;"/>
+You should move/drag the planned home position to roughly the location where you plan to takeoff.
+The altitude for the planned home position is determined automatically from terrain data.
 
 :::tip
-飞行视图显示由载具固件设置的 _实际_ 起始位置。(这是载具在返回/返航 模式返回的地方)。
+The Fly View displays the _actual_ home position set by the vehicle firmware when it arms (this is where the vehicle will return in Return/RTL mode).
 :::
 
-## 计划工具 {#plan_tools}
+## Plan Tools {#plan_tools}
 
-计划工具用于添加单独的航点，方便任务创建复杂的几何，上传/下载/保存/恢复飞行任务，以及导航地图。 主要工具说明如下。
+The plan tools are a vertical tool strip on the left side of the map, used for adding mission items. The tools are only visible when editing the Mission layer. The main tools (top to bottom) are described below.
 
-:::info
-**地图居中**, **放大**, **缩小**工具可以帮助用户更好地查看和浏览 _计划视图_ 地图 (他们不影响送往载具的任务命令)。
-:::
+### Takeoff
 
-### 添加航点
-
-点击**添加航点** 工具激活它。 当激活时，点击地图将在点击的位置添加新的飞行任务航点。
-该工具将保持激活状态，直到你再次选中它。
-一旦您添加了一个航点，您可以选择它并将它拖动到周围以改变它的位置。
-
-### 文件 (同步) {#file}
-
-_文件工具_ 用于在地面站和载具之间传输任务，并保存/还原文件。
-工具显示了一个 `!` 来表示你没有发送给载具进行任务变更。
-
-:::info
-在你执行飞行任务之前，你必须将它上传到载具上。
-:::
-
-_文件工具_ 提供以下功能：
-
-- 上传(向载具发送)
-- 下载 (从载具加载)
-- 保存/保存到文件, 包括 KML 文件。
-- 从文件加载
-- 移除所有 (从 _计划视图_ 和 从载具中移除所有飞行任务航点)
+Inserts a takeoff command into the mission. This tool is available for all vehicle types except rovers.
 
 ### Pattern
 
 The [Pattern](pattern.md) tool simplifies the creation of missions for flying complex geometries, including [surveys](../plan_view/pattern_survey.md) and [structure scans](../plan_view/pattern_structure_scan_v2.md).
+If multiple pattern types are available for the vehicle, clicking the button opens a dropdown to select from Survey, Corridor Scan, Structure Scan, and landing patterns.
 
-## Mission Command List {#mission_command_list}
+### Waypoint
 
-Mission commands for the current mission are listed on the right side of the view.
-At the top are a set of options to switch between editing the mission, GeoFence and rally points.
-Within the list you can select individual mission items to edit their values.
+Click the **Waypoint** tool to toggle waypoint-on-click mode. While active, clicking on the map will add a new mission waypoint at the clicked location.
+The tool stays active until you click it again to deactivate.
+Once you have added a waypoint, you can select it and drag it around to reposition it.
 
-![Mission Command List](../../../assets/plan/mission/mission_command_list.jpg)
+### ROI
 
-### Mission Command Editors {#mission_command_editors}
+Toggles Region of Interest mode. When active, clicking on the map sets an ROI location.
+This tool is only visible if the vehicle firmware supports ROI mode.
 
-Click on a mission command in the list to display its editor (in which you can set/change the command attributes).
+### Return / Land
 
-You can change the **type** of the command by clicking on the command name (for example: _Waypoint_).
-This will display the _Select Mission Command_ dialog shown below.
-By default this just displays the "Basic Commands", but you can use the **Category** drop down menu to display more (e.g. choose **All commands** to see all the options).
+Adds a return or land command to the mission. The label varies by vehicle type:
 
-<img src="../../../assets/plan/mission/mission_commands.jpg" style="width: 200px;"/>
+- **Multicopters:** _Return_
+- **Fixed-wing:** _Land_ (or _Alt Land_ if a land item already exists in the mission)
 
-To the right of each command name is a menu that you can click to access to additional options such as _Insert_ and _Delete_.
+### Stats
 
-:::info
-The list of available commands will depend on firmware and vehicle type.
-Examples may include: Waypoint, Start image capture, Jump to item (to repeat mission) and other commands.
-:::
+Toggles the [Mission Stats / Terrain panel](#stats_terrain) at the bottom of the map. Only visible when that panel is currently hidden.
 
-### Mission Settings {#mission_settings}
+## File Operations {#file}
 
-The _Mission Start_ panel is the first item that appears in the [mission command list](#mission_command_list).
-It may be used to specify a number default settings that may affect the start or end of the mission.
+File operations are located in the **Plan Toolbar** at the top of the view:
 
-![Mission Command List - showing mission settings](../../../assets/plan/mission_start.png)
-
-![Mission settings](../../../assets/plan/mission/mission_settings.png)
-
-#### Mission Defaults
-
-##### Waypoint alt
-
-Set the default altitude for the first mission item added to a plan (subsequent items take an initial altitude from the previous item).
-This can also be used to change the altitude of all items in a plan to the same value; you will be prompted if you change the value when there are items in a plan.
-
-##### Flight speed
-
-Set a flight speed for the mission that is different than the default mission speed.
-
-#### Mission End
-
-##### Return to Launch after mission end
-
-Check this if you want your vehicle to Return/RTL after the final mission item.
-
-#### Planned Home Position
-
-The [Planned Home Position](#planned_home) section allows you to simulate the vehicle's home position while planning a mission.
-This allows you to view the waypoint trajectory for your vehicle from takeoff to mission completion.
-
-![MissionSettings Planned Home Position Section](../../../assets/plan/mission/mission_settings_planned_home_position_section.jpg)
+- **Open** — Load a plan from a file.
+- **Save** — Save the current plan to a file. Highlighted when there are unsaved changes.
+- **Upload** — Upload the plan to the vehicle. Highlighted when the plan has un-uploaded changes.
+- **Clear** — Remove all mission items, geofence, and rally points. If connected to a vehicle, also clears them from the vehicle.
+- **Hamburger menu** (☰) — Additional options:
+  - _Save as KML_ — Export the plan as a KML file.
+  - _Download_ — Download the current plan from the vehicle (only available when connected).
 
 :::info
-This is only the _planned_ home position and you should place it where you plan to start the vehicle from.
-It has no actual impact on flying the mission.
-载具的实际Home位置由载具本身在解锁时确定。
+Before you fly a mission you must upload it to the vehicle.
 :::
 
-This section allows you to set the **Altitude** and **Set Home to Map Centre** (you can move it to another position by dragging it on the map).
+## Plan Editor Panel {#plan_editor_panel}
 
-#### Camera
+The Plan Editor Panel is a collapsible tree view on the right side of the view.
+The panel can be collapsed or expanded using the toggle button on its left edge.
+It is organized into the following collapsible sections: **Plan Info**, **Defaults**, **Mission**, **GeoFence**, **Rally Points**, and **Transform**.
 
-The camera section allows you to specify a camera action to take, control the gimbal and set your camera into photo or video mode.
+### Layer Switcher {#layer_switcher}
 
-![MissionSettings Camera Section](../../../assets/plan/mission/mission_settings_camera_section.jpg)
+Buttons in the top-right area of the map allow switching between the **Mission**, **Geo-Fence**, and **Rally Point** editing layers.
+The active layer button is always visible; the other layer buttons slide in briefly when toggled and auto-hide after a few seconds.
 
-The available camera actions are:
+### Plan Info {#plan_info}
 
-- No change (continue current action)
-- Take photos (time)
-- Take photos (distance)
-- Stop taking photos
-- Start recording video
-- Stop recording video
+The Plan Info section contains general plan-level settings:
 
-#### Vehicle Info
+- **Plan File** — An editable name for the plan file.
+- **Vehicle Info** — Firmware and vehicle type selectors. When connected to a vehicle these are determined automatically; when planning offline you must set them before adding any mission items so that the correct mission commands are available.
+- **Expected Home Position** — The altitude (AMSL) for the planned home position is determined automatically from terrain data. A **Move To Map Center** button repositions the home marker to the center of the map. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
 
-The appropriate mission commands for the vehicle depend on the firmware and vehicle type.
+### Defaults {#mission_settings}
 
-If you are planning a mission while you are _connected to a vehicle_ the firmware and vehicle type will be determined from the vehicle.
-This section allows you to specify the vehicle firmware/type when not connected to a vehicle.
+The Defaults section sets plan-wide values that apply to new mission items:
 
-![MissionSettings VehicleInfoSection](../../../assets/plan/mission/mission_settings_vehicle_info_section.jpg)
+- **Altitude Frame** — Select the altitude reference frame for waypoints.
+- **Waypoints Altitude** — The default altitude for the first mission item added (subsequent items take their initial altitude from the previous item). Changing this value when items already exist will prompt to update all items to the new altitude.
+- **Flight Speed** — Set a flight speed that differs from the default mission speed.
+- **Vehicle Speeds** — Cruise speed (fixed-wing) and/or hover speed (multi-rotor/VTOL), used for estimating mission time.
 
-The additional value that can be specified when planning a mission is the vehicle flight speed.
-By specifying this value, total mission or survey times can be approximated even when not connected to a vehicle.
+### Mission Items {#mission_items}
+
+The Mission section lists all mission items (waypoints, commands, patterns, etc.) in order.
+Each item can be expanded to edit its parameters.
+
+- Click an item to select it on the map and expand its editor.
+- Click the **command name** dropdown to change the item type. A dialog shows "Basic Commands" by default; use the **Category** dropdown to see all available commands.
+- Each item has a **hamburger menu** (☰) with options such as _Show all values_, _Move to vehicle position_, _Move to previous item position_, and _Edit position_.
+- A **delete button** (trash icon) removes the item.
+- Items that are incomplete or missing required values show a **?** status indicator.
+
+:::info
+The list of available commands depends on firmware and vehicle type.
+Examples include: Waypoint, Start image capture, Jump to item (to repeat mission), and other commands.
+:::
+
+#### Initial Camera Settings
+
+This allows you to set camera options before any mission items take place.
+This includes camera actions (take photos by time/distance, start/stop video recording) and gimbal control.
+
+### GeoFence {#geofence}
+
+The GeoFence section allows you to define geofence boundaries:
+
+- **Polygon Fences** — Add inclusion or exclusion polygon fences. Each polygon can be toggled between inclusion/exclusion, edited, or deleted.
+- **Circular Fences** — Add inclusion or exclusion circular fences with a configurable radius.
+- **Breach Return Point** — Optionally set a return point (with altitude) that the vehicle will fly to if it breaches the geofence.
+
+### Rally Points {#rally_points}
+
+The Rally Points section displays and manages rally points. When a rally point is selected, its position fields are shown for editing.
+
+### Transform {#transform}
+
+The Transform section provides tools to adjust the entire mission after it has been created:
+
+- **Offset Mission** — Shift the mission by a specified distance in the East, North, and Up directions. Optionally include takeoff and/or landing items in the offset.
+- **Reposition Mission** — Move the mission to a new location specified by geographic coordinates (Lat/Lon), UTM, MGRS, or the current vehicle position.
+- **Rotate Mission** — Rotate the mission clockwise by a specified number of degrees. Optionally include takeoff and/or landing items in the rotation.
+
+## Mission Stats / Terrain Panel {#stats_terrain}
+
+A panel at the bottom of the map provides two toggleable views:
+
+- **Terrain Profile** — A chart showing height AMSL vs. distance from start across the mission.
+- **Mission Statistics** — Displays details for the selected waypoint (altitude difference, azimuth, distance to previous waypoint, gradient, heading) and for the total mission (distance, max telemetry distance, estimated flight time). Battery information (batteries required and change point) is also shown when available.
+
+Toggle buttons on the left side of the panel let you switch between the terrain profile and mission statistics views, or collapse the panel entirely.
 
 ## Troubleshooting
 
@@ -188,16 +184,13 @@ If a failure occurs you should see a status message in the QGC UI similar to:
 
 > Mission transfer failed. Retry transfer. Error: Mission write mission count failed, maximum retries exceeded.
 
-The loss rate for your link can be viewed in [Settings View > MAVLink](../settings_view/mavlink.md).
+The loss rate for your link can be viewed in [App Settings > Telemetry](../settings_view/telemetry.md).
 The loss rate should be in the low single digits (i.e. maximum of 2 or 3):
 
 - A loss rate in the high single digits can lead to intermittent failures.
 - Higher loss rates often lead to 100% failure.
 
 There is a much smaller possibility that issues are caused by bugs in either flight stack or QGC.
-To analyse this possibility you can turn on [Console Logging](../settings_view/console_logging.md) for Plan upload/download and review the protocol message traffic.
+To analyze this possibility you can turn on [Console Logging](../settings_view/console_logging.md) for Plan upload/download and review the protocol message traffic.
 
-## Further Info
 
-- New Plan View features for [QGC release v3.2](../releases/release_note_stable_v3.md#plan_view)
-- New Plan View features for [QGC release v3.3](../releases/release_note_stable_v3.md#plan-view-1)

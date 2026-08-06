@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Drift guard: every workflow that sparse-checks out `ci_bootstrap.py` must
-also include the rest of the bootstrap shim plus every `common.*` module that
-the script it runs imports transitively.
+"""Drift guard: every workflow or composite action that sparse-checks out the
+bootstrap shim must also include every `common.*` module that the scripts it
+checks out import transitively.
 
 GitHub Actions can't share the bootstrap file list via a composite action
 (local actions require a prior checkout), so each lightweight script job
@@ -15,26 +15,28 @@ adding `tools/common/git.py` to its sparse-checkout list.
 from __future__ import annotations
 
 import ast
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 import yaml
+from _helpers import REPO_ROOT
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
+ACTIONS_DIR = REPO_ROOT / ".github" / "actions"
 TOOLS_DIR = REPO_ROOT / "tools"
 SCRIPTS_DIR = REPO_ROOT / ".github" / "scripts"
 
-BOOTSTRAP_TRIPWIRE = ".github/scripts/ci_bootstrap.py"
+CI_BOOTSTRAP = ".github/scripts/ci_bootstrap.py"
+TOOLS_BOOTSTRAP = "tools/_bootstrap.py"
+BOOTSTRAP_TRIPWIRES: frozenset[str] = frozenset({CI_BOOTSTRAP, TOOLS_BOOTSTRAP})
 
-# Always required when the tripwire is present, regardless of which script runs.
+# Always required when a tripwire is present, regardless of which script runs.
 BASE_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
     {
-        ".github/scripts/ci_bootstrap.py",
         "tools/_bootstrap.py",
         "tools/common/__init__.py",
     }
@@ -101,26 +103,26 @@ def _required_common_paths(script: Path) -> frozenset[str]:
 
 
 def _scripts_in_block(entries: frozenset[str]) -> list[Path]:
-    """Return the .github/scripts/*.py files (excluding the tripwire) in a sparse-checkout block."""
+    """Return every checked-out .py file (excluding the bootstrap shims) in a sparse-checkout block."""
     return [
         REPO_ROOT / e
         for e in entries
-        if e.startswith(".github/scripts/")
-        and e.endswith(".py")
-        and e != BOOTSTRAP_TRIPWIRE
-        and (REPO_ROOT / e).is_file()
+        if e.endswith(".py") and e not in BOOTSTRAP_TRIPWIRES and (REPO_ROOT / e).is_file()
     ]
 
 
-def _iter_sparse_checkout_blocks(workflow_path: Path) -> Iterator[tuple[str, frozenset[str]]]:
-    """Yield (step-context, paths) for each sparse-checkout step in a workflow."""
-    doc = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
-    if not isinstance(doc, dict):
-        return
-    for job_name, job in (doc.get("jobs") or {}).items():
-        if not isinstance(job, dict):
-            continue
-        for index, step in enumerate(job.get("steps") or []):
+def _iter_checkout_steps(doc: dict, source: str) -> Iterator[tuple[str, frozenset[str]]]:
+    """Yield (step-context, paths) for each actions/checkout step with a sparse-checkout list."""
+    if "jobs" in doc:
+        groups = [
+            (name, job.get("steps"))
+            for name, job in (doc.get("jobs") or {}).items()
+            if isinstance(job, dict)
+        ]
+    else:
+        groups = [("runs", (doc.get("runs") or {}).get("steps"))]
+    for group_name, steps in groups:
+        for index, step in enumerate(steps or []):
             if not isinstance(step, dict):
                 continue
             if not str(step.get("uses", "")).startswith("actions/checkout"):
@@ -129,7 +131,17 @@ def _iter_sparse_checkout_blocks(workflow_path: Path) -> Iterator[tuple[str, fro
             if not isinstance(paths, str):
                 continue
             entries = frozenset(p.strip() for p in paths.splitlines() if p.strip())
-            yield f"{workflow_path.name}::{job_name}[step {index}]", entries
+            yield f"{source}::{group_name}[step {index}]", entries
+
+
+def _iter_sparse_checkout_blocks() -> Iterator[tuple[str, frozenset[str]]]:
+    """Yield sparse-checkout blocks from every workflow and composite action."""
+    sources = sorted(WORKFLOWS_DIR.glob("*.yml")) + sorted(ACTIONS_DIR.glob("*/action.yml"))
+    for path in sources:
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if not isinstance(doc, dict):
+            continue
+        yield from _iter_checkout_steps(doc, str(path.relative_to(REPO_ROOT)))
 
 
 def test_bootstrap_sparse_checkout_matches_canonical() -> None:
@@ -137,22 +149,94 @@ def test_bootstrap_sparse_checkout_matches_canonical() -> None:
         pytest.skip("workflows dir not in checkout")
 
     drift: list[str] = []
-    for workflow in sorted(WORKFLOWS_DIR.glob("*.yml")):
-        for context, entries in _iter_sparse_checkout_blocks(workflow):
-            if BOOTSTRAP_TRIPWIRE not in entries:
-                continue
-            required: set[str] = set(BASE_BOOTSTRAP_PATHS)
-            # `import common` runs __init__ at runtime; an eager facade that pulls
-            # every submodule would need them all present even under a thin sparse set.
-            required |= _required_common_paths(TOOLS_DIR / "common" / "__init__.py")
-            for script in _scripts_in_block(entries):
-                required |= _required_common_paths(script)
-            missing = sorted(required - entries)
-            if missing:
-                drift.append(f"{context} missing: {missing}")
+    for context, entries in _iter_sparse_checkout_blocks():
+        stale = sorted(
+            e
+            for e in entries
+            if e.endswith(".py")
+            and not any(ch in e for ch in "*?[")
+            and not (REPO_ROOT / e).is_file()
+        )
+        if stale:
+            drift.append(f"{context} lists nonexistent files: {stale}")
+        if not entries & BOOTSTRAP_TRIPWIRES:
+            continue
+        required: set[str] = set(BASE_BOOTSTRAP_PATHS)
+        # `import common` runs __init__ at runtime; an eager facade that pulls
+        # every submodule would need them all present even under a thin sparse set.
+        required |= _required_common_paths(TOOLS_DIR / "common" / "__init__.py")
+        scripts = _scripts_in_block(entries)
+        if any(str(s.relative_to(REPO_ROOT)).startswith(".github/scripts/") for s in scripts):
+            required.add(CI_BOOTSTRAP)
+        for script in scripts:
+            required |= _required_common_paths(script)
+        missing = sorted(required - entries)
+        if missing:
+            drift.append(f"{context} missing: {missing}")
 
     if drift:
         pytest.fail(
-            "Workflows referencing the bootstrap shim are missing files required by their scripts:\n  "
+            "Workflows/actions referencing the bootstrap shim are missing files required by their scripts:\n  "
             + "\n  ".join(drift)
         )
+
+
+BOOTSTRAP_ACTION_YML = ACTIONS_DIR / "build-results-bootstrap" / "action.yml"
+
+EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
+    {
+        ".github/actions/download-all-artifacts",
+        ".github/actions/collect-artifact-sizes",
+        ".github/actions/replace-cache-entry",
+        ".github/actions/setup-python",
+        ".github/scripts/check_baseline_ready.py",
+        ".github/scripts/ci_bootstrap.py",
+        "tools/_bootstrap.py",
+        ".github/scripts/collect_artifact_sizes.py",
+        ".github/scripts/collect_build_status.py",
+        ".github/scripts/download_artifacts.py",
+        ".github/scripts/generate_build_results_comment.py",
+        ".github/scripts/templates/build_results.md.j2",
+        ".github/scripts/xml_utils.py",
+        "tools/common/__init__.py",
+        "tools/common/build_config.py",
+        "tools/common/file_traversal.py",
+        "tools/common/format.py",
+        "tools/common/gh_actions.py",
+        "tools/common/github_runs.py",
+        "tools/common/io.py",
+        "tools/common/markdown.py",
+        "tools/common/platform.py",
+        "tools/pyproject.toml",
+        "tools/uv.lock",
+        "tools/setup/install_python.py",
+    }
+)
+
+
+def test_build_results_bootstrap_sparse_checkout_matches_expected() -> None:
+    """Full-mirror guard for the build-results-bootstrap composite: the import
+    closure above only covers .py files, so removing an action dir, template,
+    or lockfile entry would still break post-pr-comment/save-baselines at
+    runtime. Update EXPECTED_BOOTSTRAP_PATHS in lockstep when it changes."""
+    if not BOOTSTRAP_ACTION_YML.exists():
+        pytest.skip("build-results-bootstrap action.yml not in checkout")
+
+    doc = yaml.safe_load(BOOTSTRAP_ACTION_YML.read_text(encoding="utf-8"))
+    blocks = dict(_iter_checkout_steps(doc, str(BOOTSTRAP_ACTION_YML.relative_to(REPO_ROOT))))
+    assert blocks, "build-results-bootstrap action.yml has no sparse-checkout step"
+    (actual,) = blocks.values()
+
+    missing = EXPECTED_BOOTSTRAP_PATHS - actual
+    extra = actual - EXPECTED_BOOTSTRAP_PATHS
+
+    msg_parts = []
+    if missing:
+        msg_parts.append(f"expected paths missing from composite: {sorted(missing)}")
+    if extra:
+        msg_parts.append(
+            f"composite has paths not in EXPECTED_BOOTSTRAP_PATHS "
+            f"(add them here if intentional): {sorted(extra)}"
+        )
+    if msg_parts:
+        pytest.fail(" / ".join(msg_parts))
