@@ -33,7 +33,7 @@ signals:
     void bandwidthChanged();
 
 private:
-    static void _sendMessageToVehicle(const mavlink_gps_rtcm_data_t& data);
+    static void _sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data);
 
     uint8_t _sequenceId = 0;
     DataRateTracker _rateTracker;

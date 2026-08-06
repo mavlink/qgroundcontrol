@@ -1,8 +1,10 @@
 #include "RTCMMavlink.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QSet>
 #include <QtCore/QThread>
 
+#include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
@@ -37,7 +39,7 @@ void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
         gpsRtcmData.len = data.size();
         gpsRtcmData.flags = (_sequenceId & 0x1FU) << 3;
         (void) memcpy(&gpsRtcmData.data, data.data(), data.size());
-        _sendMessageToVehicle(gpsRtcmData);
+        _sendMessageOnAllLinks(gpsRtcmData);
     } else {
         uint8_t fragmentId = 0;
         qsizetype start = 0;
@@ -50,7 +52,7 @@ void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
             gpsRtcmData.len = length;
 
             (void) memcpy(gpsRtcmData.data, data.constData() + start, length);
-            _sendMessageToVehicle(gpsRtcmData);
+            _sendMessageOnAllLinks(gpsRtcmData);
 
             start += length;
         }
@@ -72,21 +74,33 @@ void RTCMMavlink::sendSimulatedData(const std::atomic_bool& requestStop)
     }
 }
 
-void RTCMMavlink::_sendMessageToVehicle(const mavlink_gps_rtcm_data_t& data)
+void RTCMMavlink::_sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data)
 {
     QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
+    QSet<const LinkInterface*> sentLinks;
     for (qsizetype i = 0; i < vehicles->count(); i++) {
         Vehicle* const vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
         if (!vehicle) {
             continue;
         }
         const SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
-        if (sharedLink) {
-            mavlink_message_t message;
-            (void) mavlink_msg_gps_rtcm_data_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
-                                                         MAVLinkProtocol::getComponentId(),
-                                                         sharedLink->mavlinkChannel(), &message, &data);
-            (void) vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+        if (!sharedLink || !sharedLink->isConnected()) {
+            continue;
         }
+        // RTCM corrections are broadcast data. Send only once per link so that vehicles
+        // which share the same link don't cause duplicate sends. UDP links in particular
+        // send each write to all connected endpoints on the link. Send directly on the
+        // link rather than through a Vehicle so the send is not tied to whichever vehicle
+        // happens to be first on a shared link.
+        if (sentLinks.contains(sharedLink.get())) {
+            continue;
+        }
+        (void) sentLinks.insert(sharedLink.get());
+
+        mavlink_message_t message{};
+        (void) mavlink_msg_gps_rtcm_data_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                     MAVLinkProtocol::getComponentId(),
+                                                     sharedLink->mavlinkChannel(), &message, &data);
+        sharedLink->sendMessageThreadSafe(message);
     }
 }
