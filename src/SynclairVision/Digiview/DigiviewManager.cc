@@ -1176,6 +1176,39 @@ void DigiviewManager::changeZoom(int camId, float zoom)
     );
 }
 
+void DigiviewManager::startRecording() 
+{
+    sendCaptureParameters(
+        _streamName,
+        0,
+        1,
+        0xFF,
+        0xFF
+    );
+}
+
+void DigiviewManager::stopRecording() 
+{
+    sendCaptureParameters(
+        _streamName,
+        0,
+        0,
+        0xFF,
+        0xFF
+    );
+}
+
+void DigiviewManager::takePhoto()
+{
+    sendCaptureParameters(
+        _streamName,
+        1,
+        0xFF,
+        0xFF,
+        0xFF
+    );
+}
+
 void DigiviewManager::_handleMessage(const mavlink_message_t& message)
 {
     if (!_logicalSessionActive || !_connection->connected()) {

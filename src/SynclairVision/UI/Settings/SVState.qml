@@ -39,7 +39,7 @@ QtObject {
     readonly property bool synclairOverlayVideoActive: synclairOverlay
         && digiviewActive
         && synclairOverlayVideoUri !== ""
-    readonly property bool uiInteractionEnabled: (digiviewActive || SVSettings.devBypassDisconnectedUiDisable) && QGroundControl.videoManager.decoding
+    readonly property bool uiInteractionEnabled: digiviewActive && QGroundControl.videoManager.decoding
     readonly property bool cameraSelectionEnabled: uiInteractionEnabled
 
     signal takePhotoRequested()
@@ -227,14 +227,8 @@ QtObject {
     }
 
     function toggleLockControls() {
-        if (lockControls) {
-            lockControls = false
-            return
-        }
-
-        if (digiview && hasActiveCamera && digiview.lockCurrentTarget(cameraSelected)) {
-            lockControls = true
-        }
+        lockControls = !lockControls
+        return
     }
 
     function toggleSynclairOverlay() {
@@ -519,14 +513,59 @@ QtObject {
         }
     }
 
+    function recordingFileName() {
+        const now = new Date()
+
+        const year = now.getFullYear()
+        const month = String(now.getMonth() + 1).padStart(2, '0')
+        const day = String(now.getDate()).padStart(2, '0')
+        const hour = String(now.getHours()).padStart(2, '0')
+        const minute = String(now.getMinutes()).padStart(2, '0')
+        const second = String(now.getSeconds()).padStart(2, '0')
+
+        return `Synclair_${year}-${month}-${day}_${hour}-${minute}-${second}`
+    }
+
     function startRecording() {
         record = true
+        if(SVSettings.recordDestination === "digiview") {
+            digiview.startRecording()
+            return
+        }
+
+        if(SVSettings.recordDestination === "local") {
+            QGroundControl.videoManager.startRecording(recordingFileName());
+        }
     }
 
     function stopRecording() {
+        if(record === true) {
+            if(SVSettings.recordDestination === "digiview") {
+                digiview.stopRecording()
+                SVNotificationManager.add(
+                    "Recording Stopped",
+                    "Digiview: Saving recording to Jetson",
+                    "info",
+                    "recording_stopped"
+                ) 
+                return
+            }
+            
+            if(SVSettings.recordDestination === 'local') {
+                QGroundControl.videoManager.stopRecording();
+                SVNotificationManager.add(
+                    "Recording Stopped",
+                    "QGroundControl: Saving recording to local folder",
+                    "info",
+                    "recording_stopped"
+                ) 
+            }
+        }
+        
         record = false
         stopRecordTimer()
     }
+
 
     function takePhoto() {
         var now = Date.now()
@@ -536,7 +575,7 @@ QtObject {
         }
 
         lastPhotoRequestTimeMs = now
-        takePhotoRequested()
+        digiview.takePhoto()
     }
 
 //---------------------------------

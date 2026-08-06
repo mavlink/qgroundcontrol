@@ -35,7 +35,7 @@ ListView {
         "tracking_lost":        "qrc:/qmlimages/crosshair.svg",
 
         "recording_started":    "qrc:/qmlimages/record.svg",
-        "recording_stopped":    "qrc:/qmlimages/stop.svg",
+        "recording_stopped":    "qrc:/qmlimages/camera_record.svg",
         "recording_saved":      "qrc:/qmlimages/check.svg",
         "recording_failed":     "qrc:/qmlimages/record.svg"
     })

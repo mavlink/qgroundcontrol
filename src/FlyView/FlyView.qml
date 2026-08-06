@@ -23,7 +23,7 @@ Item {
     readonly property bool _is3DMode:       QGCViewer3DManager.displayMode === QGCViewer3DManager.View3D
     readonly property bool _keepSceneAlive: QGroundControl.settingsManager.viewer3DSettings.keepSceneAlive.rawValue
 
-    property bool adjustHud: SVSettings.alignHud && QGroundControl.videoManager.decoding
+    property bool adjustHud: SVSettings.alignHud && QGroundControl.videoManager.decoding && SVState.synclairOverlay
     property var detectionPosition: SVSettings.aiDetectionOverlayPosition
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property bool digiviewOutputGeometryAvailable: !!digiview
@@ -136,8 +136,8 @@ Item {
                                         (videoControl.pipState.state === videoControl.pipState.pipState || mapControl.pipState.state === mapControl.pipState.pipState)
             z:                      QGroundControl.zOrderWidgets
 
-            property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
-            property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
+            property real leftEdgeBottomInset: visible ? width + anchors.leftMargin : 0
+            property real bottomEdgeLeftInset: visible ? height + anchors.bottomMargin : 0
 
             visible: SVState.hud && !SVState.cursorTrackingSessionActive
         }

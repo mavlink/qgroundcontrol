@@ -15,7 +15,7 @@ QtObject {
         videoResolutionHeight: 720,
         videoFps: 30,
         videoTargetBrightness: 0,
-        recordHighlight: true,
+        recordDestination: 'digiview',
         recordInformationBox: true,
         aiDetectionOverlayPosition: "Single",
         simplifiedUserInterface: false,
@@ -115,7 +115,7 @@ QtObject {
         property alias videoResolutionHeight: root.videoResolutionHeight
         property alias videoFps: root.videoFps
         property alias videoTargetBrightness: root.videoTargetBrightness
-        property alias recordHighlight: root.recordHighlight
+        property alias recordDestination: root.recordDestination
         property alias recordInformationBox: root.recordInformationBox
 
         property alias networkIPAdress: root.networkIPAdress
@@ -206,7 +206,7 @@ QtObject {
         property int videoResolutionHeight: 720
         property int videoFps: 30
         property real videoTargetBrightness: 1
-        property bool recordHighlight: true
+        property string recordDestination: "digiview"
         property bool recordInformationBox: true
         property string aiDetectionOverlayPosition: 'Single'
 

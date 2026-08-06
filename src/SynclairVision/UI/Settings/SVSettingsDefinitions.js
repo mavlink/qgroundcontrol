@@ -1,6 +1,6 @@
 .pragma library
 
-function getGeneralSections() {
+function getGeneralSections(isRecording) {
     return [
         {
             id: 'video',
@@ -86,11 +86,13 @@ function getGeneralSections() {
             title: "Record",
             items: [
                 {
-                    id: 'recordDestination',
+                    id: 'record_destination',
+                    property: 'recordDestination',
                     type: 'dropdown',
                     label: 'Record Destination',
-                    description: 'Destination from recording in QGC',
+                    description: 'Destination for recording',
                     currentIndex: 0,
+                    enabled: !isRecording,
                     options: [
                         { label: 'DigiView', value: 'digiview' },
                         { label: 'QGroundControl', value: 'local' },

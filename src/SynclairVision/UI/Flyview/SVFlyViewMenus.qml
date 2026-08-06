@@ -368,8 +368,8 @@ Item {
     SVMenuStrip {
         id: lockButton
         headerless: true
-        anchors.left: parent.left
-        anchors.leftMargin: root.controlPanelRight
+        anchors.left: parent.horizontalCenter
+        anchors.leftMargin: parent.width / 4
         anchors.bottom: parent.bottom
         visible: SVState.hud && SVState.cursorTrackingSelect
         direction: horizontal

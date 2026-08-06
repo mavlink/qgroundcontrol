@@ -234,6 +234,9 @@ public:
 
     Q_INVOKABLE void changeEuler(int camId, float yaw, float pitch);
     Q_INVOKABLE void changeZoom(int camId, float zoom);
+    Q_INVOKABLE void startRecording();
+    Q_INVOKABLE void stopRecording();
+    Q_INVOKABLE void takePhoto();
 
 signals:
     void hostChanged();
