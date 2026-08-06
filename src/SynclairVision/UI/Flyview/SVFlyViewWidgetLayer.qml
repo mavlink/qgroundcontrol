@@ -173,13 +173,6 @@ Item {
         onLayoutSelected: (layoutId) => root.layoutSelected(layoutId)
     }
 
-    SVNotificationBox {
-        id: notificationBox
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.leftMargin: SVUnits.objectWidth + SVUnits.margin + SVUnits.lineWidth
-    }
-
     SVRecordInfoBox {
         id: recordInfoBox
         anchors.left: parent.left
@@ -188,6 +181,14 @@ Item {
         visible: SVState.record && SVSettings.recordInformationBox && !SVState.cursorTrackingSessionActive
     } 
 
+    SVNotificationBox {
+        id: notificationBox
+        anchors.top: recordInfoBox.visible ? recordInfoBox.bottom : parent.top
+        anchors.topMargin: recordInfoBox.visible ? SVUnits.margin : 0
+        anchors.left: parent.left
+        anchors.leftMargin: SVUnits.objectWidth + SVUnits.margin + SVUnits.lineWidth
+    }
+
     SVFlyViewStats {
         id: statsBox
         anchors.right: parent.right
@@ -195,8 +196,5 @@ Item {
         height: parent / 2
         open: true
         visible: false
-
     }
-
-    
 }

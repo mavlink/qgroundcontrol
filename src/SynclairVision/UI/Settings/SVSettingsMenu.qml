@@ -44,9 +44,9 @@ Item {
     readonly property real bottomEdgeGradientOpacity: Math.min(1, bottomHiddenContent / edgeGradientHeight)
     readonly property var categoryData: getCategoryData(activeSettingsId)
     readonly property var sectionModel: categoryData.sections ? categoryData.sections : []
-        function getCategoryData(settingsId) {
+    function getCategoryData(settingsId) {
         if (settingsId === 'General') {
-            return { title: 'General', sections: SVSettingsDefinitions.getGeneralSections() }
+            return { title: 'General', sections: SVSettingsDefinitions.getGeneralSections(SVState.record) }
         } else if (settingsId === 'Network') {
             return { title: 'Network', sections: SVSettingsDefinitions.getNetworkSections() }
         } else if (settingsId === 'Controls') {
@@ -56,6 +56,8 @@ Item {
         } else if (settingsId === 'Dev') {
             return { title: 'Dev', sections: SVSettingsDefinitions.getDevSections() }
         }
+
+        return { title: '', sections: [] }
     }
 
     function optionLabels(options) {
