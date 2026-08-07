@@ -259,6 +259,73 @@ FlightMap {
         }
     }
 
+    // ── Spline Waypoint Curve Display ─────────────────────────────────
+    // ArduPilot's NAV_SPLINE_WAYPOINT (cmd 82) flies smooth Hermite curves
+    // between waypoints, but QGC only draws straight lines. This adds a
+    // Catmull-Rom interpolation overlay showing the approximate spline curve.
+    MapPolyline {
+        id:         splineCurve
+        line.width: 3
+        line.color: "cyan"
+        opacity:    0.85
+        z:          QGroundControl.zOrderTrajectoryLines + 1
+        visible:    !pipMode && path.length > 0
+    }
+
+    property var _splineMissionController: _planMasterController ? _planMasterController.missionController : null
+
+    Timer {
+        interval: 3000; running: _root.visible; repeat: true
+        property int _prevCount: 0
+        onTriggered: {
+            try {
+                if (!_splineMissionController) return
+                var items = _splineMissionController.visualItems
+                if (!items || items.count < 2) return
+                if (items.count === _prevCount) return
+                _prevCount = items.count
+
+                // Extract waypoints that have coordinates, check for cmd 82
+                var wps = []
+                var hasSpline = false
+                for (var i = 0; i < items.count; i++) {
+                    var item = items.get(i)
+                    if (!item) continue
+                    if (typeof item.specifiesCoordinate === "undefined" || !item.specifiesCoordinate) continue
+                    var coord = item.coordinate
+                    if (!coord || !coord.isValid) continue
+                    var cmd = typeof item.command !== "undefined" ? item.command : -1
+                    wps.push({lat: coord.latitude, lon: coord.longitude, cmd: cmd})
+                    if (cmd === 82) hasSpline = true
+                }
+
+                if (!hasSpline || wps.length < 2) { splineCurve.path = []; return }
+
+                // Catmull-Rom interpolation between consecutive waypoints
+                var curve = []
+                var N = 10  // samples per segment
+                for (var s = 0; s < wps.length - 1; s++) {
+                    var p0 = wps[Math.max(0, s - 1)]
+                    var p1 = wps[s]
+                    var p2 = wps[s + 1]
+                    var p3 = wps[Math.min(wps.length - 1, s + 2)]
+                    for (var k = 0; k < N; k++) {
+                        var t = k / N
+                        var t2 = t * t, t3 = t2 * t
+                        var lat = 0.5 * ((2*p1.lat) + (-p0.lat+p2.lat)*t + (2*p0.lat-5*p1.lat+4*p2.lat-p3.lat)*t2 + (-p0.lat+3*p1.lat-3*p2.lat+p3.lat)*t3)
+                        var lon = 0.5 * ((2*p1.lon) + (-p0.lon+p2.lon)*t + (2*p0.lon-5*p1.lon+4*p2.lon-p3.lon)*t2 + (-p0.lon+3*p1.lon-3*p2.lon+p3.lon)*t3)
+                        curve.push(QtPositioning.coordinate(lat, lon))
+                    }
+                }
+                var last = wps[wps.length - 1]
+                curve.push(QtPositioning.coordinate(last.lat, last.lon))
+                splineCurve.path = curve
+            } catch(e) {
+                splineCurve.path = []
+            }
+        }
+    }
+
     // Add the vehicles to the map
     MapItemView {
         model: QGroundControl.multiVehicleManager.vehicles
