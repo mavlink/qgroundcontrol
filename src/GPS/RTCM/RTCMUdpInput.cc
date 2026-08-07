@@ -28,6 +28,11 @@ bool RTCMUdpInput::start()
     }
     connect(_socket, &QUdpSocket::readyRead, this, &RTCMUdpInput::_readDatagrams);
 
+    if (_port == 0) {
+        _port = _socket->localPort();
+        emit portChanged();
+    }
+
     _running = true;
     emit runningChanged();
     qCDebug(RTCMUdpInputLog) << "Listening for RTCM data on UDP port" << _port;
