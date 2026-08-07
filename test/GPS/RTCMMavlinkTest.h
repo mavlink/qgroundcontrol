@@ -13,6 +13,7 @@ private slots:
     void _testFragmented181();
     void _testExactMultiple360Terminator();
     void _testExactMultiple540Terminator();
+    void _testFourFragmentsPartialTail();
     void _testExact720NoTerminator();
     void _testOversizedStreamsUnfragmented();
     void _testSequenceAdvances();

@@ -40,6 +40,7 @@ public:
 
     /// Bind the socket and begin accepting datagrams.
     /// Safe to call on an already-running instance — restarts with the current port.
+    /// Port 0 binds an ephemeral port; port() then reports the bound port.
     bool start();
 
     /// Unbind the socket and stop accepting datagrams.
