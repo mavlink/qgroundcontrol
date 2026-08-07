@@ -30,6 +30,7 @@ public:
     Q_PROPERTY(bool guidedTakeoffWithAltitude       READ guidedTakeoffWithAltitude      CONSTANT)
     Q_PROPERTY(bool guidedTakeoffWithoutAltitude    READ guidedTakeoffWithoutAltitude   CONSTANT)
     Q_PROPERTY(bool changeHeading                   READ changeHeading                  CONSTANT)
+    Q_PROPERTY(bool restartMission                  READ restartMission                 CONSTANT)
 
     bool throttleModeCenterZero() const;
     bool negativeThrust() const;
@@ -46,6 +47,7 @@ public:
     bool guidedTakeoffWithAltitude() const;
     bool guidedTakeoffWithoutAltitude() const;
     bool changeHeading() const;
+    bool restartMission() const;
 
 signals:
     void terrainFrameChanged();
