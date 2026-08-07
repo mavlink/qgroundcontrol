@@ -107,6 +107,25 @@ void RTCMMavlinkTest::_testExactMultiple540Terminator()
     QCOMPARE(reassembled, data);
 }
 
+void RTCMMavlinkTest::_testFourFragmentsPartialTail()
+{
+    // 541..719: four fragments with a non-full last fragment — the short tail
+    // itself marks completion, so no terminator.
+    const QByteArray data = makePayload(700);  // 3 * 180 + 160
+    const auto packed = RTCMMavlink::pack(data, 9);
+
+    QCOMPARE(packed.packets.size(), 4);
+    QByteArray reassembled;
+    for (int i = 0; i < 4; ++i) {
+        QVERIFY(isFragmented(packed.packets[i].flags));
+        QCOMPARE(fragmentId(packed.packets[i].flags), static_cast<uint8_t>(i));
+        reassembled += packed.packets[i].data;
+    }
+    QCOMPARE(packed.packets[3].data.size(), 160);
+    QCOMPARE(reassembled, data);
+    QCOMPARE(packed.nextSequenceId, static_cast<uint8_t>(10));
+}
+
 void RTCMMavlinkTest::_testExact720NoTerminator()
 {
     // All four full fragments complete by the "all fragments present" rule.
