@@ -5,6 +5,7 @@ import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FlightMap
 
 /// Mission item map visual
 Item {
@@ -13,6 +14,7 @@ Item {
     property var map        ///< Map control to place item in
     property var vehicle    ///< Vehicle associated with this item
     property bool interactive: true    ///< Vehicle associated with this item
+    property MissionItemIndicatorGroup indicatorGroup
 
     signal clicked(int sequenceNumber)
 
@@ -22,12 +24,16 @@ Item {
         asynchronous: true
 
         Component.onCompleted: {
-            mapVisualLoader.setSource(object.mapVisualQML, {
+            const properties = {
                 map: _root.map,
                 vehicle: _root.vehicle,
                 opacity: Qt.binding(() => _root.opacity),
                 interactive: Qt.binding(() => _root.interactive)
-            })
+            }
+            if (object.isSimpleItem) {
+                properties.indicatorGroup = _root.indicatorGroup
+            }
+            mapVisualLoader.setSource(object.mapVisualQML, properties)
         }
 
         onLoaded: {
