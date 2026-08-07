@@ -25,7 +25,8 @@ class QUdpSocket;
  * The class accepts datagrams from any sender on the bound port. With validation
  * disabled each datagram is emitted as-is; with validation enabled (see
  * setValidation) datagrams are reframed through RTCMParser and only CRC-valid
- * RTCM3 frames are forwarded. Downstream (RTCMMavlink) fragments as needed.
+ * RTCM3 frames are forwarded — one signal per frame so each gets its own
+ * GPS_RTCM_DATA sequence. Downstream (RTCMMavlink) fragments as needed.
  */
 class RTCMUdpInput : public QObject
 {
@@ -56,7 +57,8 @@ public:
     void setValidation(const bool validate) { _validateRtcm = validate; }
 
 signals:
-    /// Emitted once per received datagram with the raw RTCM payload.
+    /// Emitted with RTCM payload to forward. With validation off: once per
+    /// datagram. With validation on: once per CRC-valid RTCM3 frame.
     /// Connect directly to RTCMMavlink::RTCMDataUpdate (same thread).
     void rtcmDataReceived(const QByteArray& data);
 

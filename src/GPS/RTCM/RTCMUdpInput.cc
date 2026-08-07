@@ -82,23 +82,31 @@ void RTCMUdpInput::_readDatagrams()
             continue;
         }
 
+        // Emit one complete RTCM3 frame per signal so RTCMMavlink assigns a distinct
+        // GPS_RTCM_DATA sequence per frame (required for correct MAVLink reassembly).
         int framesFound = 0;
         int framesDropped = 0;
-        const QByteArray validData = _rtcmParser.extractValidFrames(data, &framesFound, &framesDropped);
+        for (const char ch : data) {
+            if (!_rtcmParser.addByte(static_cast<uint8_t>(static_cast<unsigned char>(ch)))) {
+                continue;
+            }
+            if (_rtcmParser.validateCrc()) {
+                ++framesFound;
+                ++_validFrames;
+                emit rtcmDataReceived(_rtcmParser.currentFrame());
+            } else {
+                ++framesDropped;
+                ++_invalidFrames;
+            }
+            _rtcmParser.reset();
+        }
 
-        _validFrames += static_cast<quint64>(framesFound);
-        _invalidFrames += static_cast<quint64>(framesDropped);
         if (framesDropped > 0) {
             qCWarning(RTCMUdpInputLog) << "Dropped" << framesDropped << "RTCM frame(s) - CRC mismatch";
         }
 
-        qCDebug(RTCMUdpInputLog) << "Datagram" << data.size() << "bytes -"
-                                 << "framesFound:" << framesFound << "framesDropped:" << framesDropped
-                                 << "validData:" << validData.size() << "bytes";
-
-        if (!validData.isEmpty()) {
-            emit rtcmDataReceived(validData);
-        }
+        qCDebug(RTCMUdpInputLog) << "Datagram" << data.size() << "bytes -" << "framesFound:" << framesFound
+                                 << "framesDropped:" << framesDropped;
 
         const quint64 totalFrames = _validFrames + _invalidFrames;
         if (totalFrames > 0) {
