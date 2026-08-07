@@ -136,4 +136,28 @@ void SendMavCommandWithHandlerTest::_compIdAllFailure()
     QCOMPARE(_mockLink->receivedMavCommandCount(testCase.command), testCase.expectedSendCount);
 }
 
+void SendMavCommandWithHandlerTest::_px4AirspeedCalibrationCommand()
+{
+    _mockLink->clearReceivedMavCommandCounts();
+    _mockLink->clearReceivedMavlinkMessageCounts();
+
+    _vehicle->startCalibration(QGCMAVLink::CalibrationPX4Airspeed);
+
+    QVERIFY_TRUE_WAIT(_mockLink->receivedMavCommandCount(MAV_CMD_PREFLIGHT_CALIBRATION) == 1, TestTimeout::shortMs());
+
+    mavlink_message_t message{};
+    QVERIFY(_mockLink->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_COMMAND_LONG, message));
+
+    mavlink_command_long_t command{};
+    mavlink_msg_command_long_decode(&message, &command);
+    QCOMPARE(command.command, MAV_CMD_PREFLIGHT_CALIBRATION);
+    QCOMPARE(command.param1, 0.f);
+    QCOMPARE(command.param2, 0.f);
+    QCOMPARE(command.param3, 0.f);
+    QCOMPARE(command.param4, 0.f);
+    QCOMPARE(command.param5, 0.f);
+    QCOMPARE(command.param6, 2.f);
+    QCOMPARE(command.param7, 0.f);
+}
+
 UT_REGISTER_TEST(SendMavCommandWithHandlerTest, TestLabel::Integration, TestLabel::Vehicle)

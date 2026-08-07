@@ -18,6 +18,7 @@ private slots:
     void _performTestCases();
     void _compIdAllFailure();
     void _duplicateCommand();
+    void _px4AirspeedCalibrationCommand();
 
 private:
     struct TestCase_t

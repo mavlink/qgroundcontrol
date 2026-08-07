@@ -2364,7 +2364,7 @@ void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)
         param7 = 1;
         break;
     case QGCMAVLink::CalibrationPX4Airspeed:
-        param6 = 1;
+        param6 = 2;
         break;
     case QGCMAVLink::CalibrationPX4Pressure:
         param3 = 1;
