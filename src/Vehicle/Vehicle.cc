@@ -2,6 +2,7 @@
 #include "Actuators.h"
 #include "BatteryFactGroupListModel.h"
 #include "EscStatusFactGroupListModel.h"
+#include "AM32EepromFactGroupListModel.h"
 #include "RadioStatusFactGroup.h"
 #include "TerrainFactGroup.h"
 #include "VehicleClockFactGroup.h"
@@ -328,6 +329,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     _radioStatusFactGroup           = new RadioStatusFactGroup(this);
     _batteryFactGroupListModel      = new BatteryFactGroupListModel(this);
     _escStatusFactGroupListModel    = new EscStatusFactGroupListModel(this);
+    _am32EepromFactGroupListModel   = new AM32EepromFactGroupListModel(this);
 
     if (!_offlineEditingVehicle) {
         _terrainProtocolHandler = new TerrainProtocolHandler(this, _terrainFactGroup, this);
@@ -429,6 +431,8 @@ FactGroup* Vehicle::radioStatusFactGroup()          { return _radioStatusFactGro
 
 QmlObjectListModel* Vehicle::batteries()            { return _batteryFactGroupListModel; }
 QmlObjectListModel* Vehicle::escs()                 { return _escStatusFactGroupListModel; }
+QmlObjectListModel* Vehicle::am32eeproms()          { return _am32EepromFactGroupListModel; }
+
 
 QObject* Vehicle::sysStatusSensorInfo()                             { return _sysStatusSensorInfo.get(); }
 QmlObjectListModel* Vehicle::cameraTriggerPoints()                  { return _cameraTriggerPoints.get(); }
@@ -577,6 +581,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     // Handle creation of dynamic fact group lists
     _batteryFactGroupListModel->handleMessageForFactGroupCreation(this, message);
     _escStatusFactGroupListModel->handleMessageForFactGroupCreation(this, message);
+    _am32EepromFactGroupListModel->handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
     for (FactGroup* factGroup : factGroups()) {
