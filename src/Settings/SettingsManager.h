@@ -39,9 +39,7 @@ class SettingsManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("ADSBVehicleManagerSettings.h")
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     Q_MOC_INCLUDE("APMMavlinkStreamRateSettings.h")
-#endif
     Q_MOC_INCLUDE("AppSettings.h")
     Q_MOC_INCLUDE("AutoConnectSettings.h")
     Q_MOC_INCLUDE("BatteryIndicatorSettings.h")
@@ -65,9 +63,7 @@ class SettingsManager : public QObject
     Q_MOC_INCLUDE("LogViewerSettings.h")
     Q_MOC_INCLUDE("Viewer3DSettings.h")
     Q_PROPERTY(QObject *adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     Q_PROPERTY(QObject *apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
-#endif
     Q_PROPERTY(QObject *appSettings                     READ appSettings                    CONSTANT)
     Q_PROPERTY(QObject *autoConnectSettings             READ autoConnectSettings            CONSTANT)
     Q_PROPERTY(QObject *batteryIndicatorSettings        READ batteryIndicatorSettings       CONSTANT)
@@ -105,9 +101,7 @@ public:
     static void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible);
 
     ADSBVehicleManagerSettings *adsbVehicleManagerSettings() const;
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *apmMavlinkStreamRateSettings() const;
-#endif
     AppSettings *appSettings() const;
     AutoConnectSettings *autoConnectSettings() const;
     BatteryIndicatorSettings *batteryIndicatorSettings() const;
@@ -135,9 +129,7 @@ private:
     void _loadSettingsFiles();
 
     ADSBVehicleManagerSettings *_adsbVehicleManagerSettings = nullptr;
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *_apmMavlinkStreamRateSettings = nullptr;
-#endif
     AppSettings *_appSettings = nullptr;
     AutoConnectSettings *_autoConnectSettings = nullptr;
     BatteryIndicatorSettings *_batteryIndicatorSettings = nullptr;

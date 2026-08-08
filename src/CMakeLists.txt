@@ -148,13 +148,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 # Optional/Conditional Modules
 # ----------------------------------------------------------------------------
-if(NOT QGC_DISABLE_APM_PLUGIN)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
-endif()
-
-if(NOT QGC_DISABLE_PX4_PLUGIN)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
-endif()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsAPMModule)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 
@@ -166,7 +161,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
         $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
-        $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>
 )
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}

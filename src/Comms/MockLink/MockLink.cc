@@ -2132,21 +2132,17 @@ void MockLink::_respondWithAutopilotVersion()
     };
     FlightVersion flightVersion;
 
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         flightVersion.parts.major = 4;
         flightVersion.parts.minor = 7;
         flightVersion.parts.patch = 0;
         flightVersion.parts.type = FIRMWARE_VERSION_TYPE_OFFICIAL;
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
-#endif
         flightVersion.parts.major = 1;
         flightVersion.parts.minor = 17;
         flightVersion.parts.patch = 0;
         flightVersion.parts.type = FIRMWARE_VERSION_TYPE_OFFICIAL;
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     }
-#endif
 
     const uint8_t customVersion[8]{};
     const uint64_t capabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MISSION_INT

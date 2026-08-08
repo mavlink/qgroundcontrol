@@ -1798,12 +1798,10 @@ void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
         [this]() { emit landingGearDeploy(); }));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionLandingGearRetract,
         [this]() { emit landingGearRetract(); }));
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionMotorInterlockEnable,
         [this]() { emit motorInterlock(true); }));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionMotorInterlockDisable,
         [this]() { emit motorInterlock(false); }));
-#endif
 
     const auto customActions = QGCCorePlugin::instance()->joystickActions();
     for (const auto &action : customActions) {
