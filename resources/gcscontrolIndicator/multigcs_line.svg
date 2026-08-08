@@ -11,10 +11,10 @@
       }
     </style>
   </defs>
-  <g id="Capa_8" data-name="Capa 8">
+  <g id="Toolbar">
     <g>
       <rect class="cls-2" width="72" height="72"/>
-      <path class="cls-1" d="m33.39,65.3h-9v-3h9v3Zm-12,0h-9v-3h9v3Zm-12,0H3.47v-6.08h3v3.08h2.92v3Zm-2.92-9.08h-3v-9h3v9Zm0-12h-3v-9h3v9Zm0-12h-3v-9h3v9Z"/>
+      <path class="cls-1" d="M21.39,65.3h-9v-3h9v3ZM9.39,65.3H3.47v-6.08h3v3.08h2.92v3ZM6.47,56.22h-3v-9h3v9ZM6.47,44.22h-3v-9h3v9ZM6.47,32.22h-3v-9h3v9Z"/>
     </g>
   </g>
 </svg>

@@ -101,7 +101,10 @@ qt_add_resources(${CMAKE_PROJECT_NAME} toolbar_gcscontrol_resources
     PREFIX "/gcscontrolIndicator"
     BASE "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator"
     FILES
-        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/gcscontrol_device.svg"
-        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/gcscontrol_gcs.svg"
-        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/gcscontrol_line.svg"
+        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/multigcs_aircraft.svg"
+        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/multigcs_line.svg"
+        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/multigcs_device.svg"
+        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/multigcs_device_alt.svg"
+        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/multigcs_lock_open.svg"
+        "${CMAKE_SOURCE_DIR}/resources/gcscontrolIndicator/multigcs_lock_closed.svg"
 )

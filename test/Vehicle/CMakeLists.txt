@@ -11,6 +11,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FTPControllerTest.h
         FirmwareUpgradeControllerTest.cc
         FirmwareUpgradeControllerTest.h
+        GCSControlManagerTest.cc
+        GCSControlManagerTest.h
         InitialConnectTest.cc
         InitialConnectTest.h
         InitialConnectPeripheralStartupTest.cc
@@ -56,6 +58,7 @@ add_qgc_test(APMAirframeComponentControllerTest LABELS Integration Vehicle)
 add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK TempFiles)
 add_qgc_test(FTPManagerTest LABELS Integration Vehicle)
 add_qgc_test(FirmwareUpgradeControllerTest LABELS Unit Vehicle)
+add_qgc_test(GCSControlManagerTest LABELS Integration Vehicle)
 add_qgc_test(InitialConnectTest LABELS Integration Vehicle)
 add_qgc_test(InitialConnectPeripheralStartupTest LABELS Integration Vehicle)
 add_qgc_test(MAVLinkLogManagerTest LABELS Integration Vehicle)
