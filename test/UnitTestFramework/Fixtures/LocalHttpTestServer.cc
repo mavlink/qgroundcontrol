@@ -1,12 +1,37 @@
 #include "LocalHttpTestServer.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QSharedPointer>
 #include <QtNetwork/QAbstractSocket>
 #include <QtNetwork/QHostAddress>
 
 #include "UnitTest.h"
 
 namespace TestFixtures {
+
+namespace {
+constexpr qsizetype MAX_REQUEST_HEADER_SIZE = 64 * 1024;
+
+struct RawResponderState
+{
+    QByteArray request;
+    bool responseSent = false;
+};
+
+QByteArray httpReasonPhrase(int statusCode)
+{
+    switch (statusCode) {
+    case 200: return QByteArrayLiteral("OK");
+    case 204: return QByteArrayLiteral("No Content");
+    case 206: return QByteArrayLiteral("Partial Content");
+    case 304: return QByteArrayLiteral("Not Modified");
+    case 400: return QByteArrayLiteral("Bad Request");
+    case 404: return QByteArrayLiteral("Not Found");
+    case 500: return QByteArrayLiteral("Internal Server Error");
+    default: return QByteArrayLiteral("Status");
+    }
+}
+} // namespace
 
 LocalHttpTestServer::~LocalHttpTestServer()
 {
@@ -41,22 +66,6 @@ QString LocalHttpTestServer::url(const QString& path) const
     return QStringLiteral("http://%1:%2%3").arg(host).arg(port()).arg(path);
 }
 
-namespace {
-QByteArray httpReasonPhrase(int statusCode)
-{
-    switch (statusCode) {
-    case 200: return QByteArrayLiteral("OK");
-    case 204: return QByteArrayLiteral("No Content");
-    case 206: return QByteArrayLiteral("Partial Content");
-    case 304: return QByteArrayLiteral("Not Modified");
-    case 400: return QByteArrayLiteral("Bad Request");
-    case 404: return QByteArrayLiteral("Not Found");
-    case 500: return QByteArrayLiteral("Internal Server Error");
-    default: return QByteArrayLiteral("Status");
-    }
-}
-} // namespace
-
 void LocalHttpTestServer::installHttpResponder(const QByteArray& body, int statusCode, const QByteArray& contentType,
                                                int cacheMaxAge)
 {
@@ -80,16 +89,31 @@ void LocalHttpTestServer::installRawResponder(const QByteArray& rawResponse)
     (void) QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this, rawResponse]() {
         while (_server.hasPendingConnections()) {
             QTcpSocket* const socket = _server.nextPendingConnection();
-            (void) QObject::connect(
-                socket, &QTcpSocket::readyRead, socket,
-                [socket, rawResponse]() {
-                    socket->readAll();
-                    socket->write(rawResponse);
-                    socket->flush();
-                    socket->disconnectFromHost();
-                },
-                Qt::SingleShotConnection);
             (void) QObject::connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
+
+            const auto state = QSharedPointer<RawResponderState>::create();
+            const auto sendResponseWhenRequestComplete = [socket, rawResponse, state]() {
+                if (state->responseSent) {
+                    return;
+                }
+
+                state->request.append(socket->readAll());
+                if (!state->request.contains(QByteArrayLiteral("\r\n\r\n"))) {
+                    if (state->request.size() > MAX_REQUEST_HEADER_SIZE) {
+                        state->responseSent = true;
+                        socket->disconnectFromHost();
+                    }
+                    return;
+                }
+
+                state->responseSent = true;
+                socket->write(rawResponse);
+                socket->flush();
+                socket->disconnectFromHost();
+            };
+
+            (void) QObject::connect(socket, &QTcpSocket::readyRead, socket, sendResponseWhenRequestComplete);
+            sendResponseWhenRequestComplete();
         }
     });
 }
