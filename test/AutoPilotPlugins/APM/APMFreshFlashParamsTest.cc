@@ -62,6 +62,10 @@ void APMFreshFlashParamsTest::_testFreshFlashParams_data()
 
 void APMFreshFlashParamsTest::_testFreshFlashParams()
 {
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
     QFETCH(QString, vehicleKey);
     QFETCH(bool, hasFrameClass);
     QFETCH(bool, hasRadio);
@@ -144,6 +148,10 @@ void APMFreshFlashParamsTest::_testFreshFlashParams()
 
 void APMFreshFlashParamsTest::_testNormalConnectNoSetupRequiredMessage()
 {
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
     // ArduPilot MockLink does not serve COMP_METADATA_TYPE_GENERAL.
     ignoreLogMessage(
         "ComponentInformation.RequestMetaDataTypeStateMachine",

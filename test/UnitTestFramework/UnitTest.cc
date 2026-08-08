@@ -20,6 +20,7 @@
 
 #include "AppSettings.h"
 #include "AutoPilotPlugin.h"
+#include "FirmwarePluginManager.h"
 #include "LinkManager.h"
 #include "LogEntry.h"
 #include "MultiVehicleManager.h"
@@ -798,6 +799,11 @@ void UnitTest::ignoreLogMessage(const char *category, QtMsgType type, const QReg
 {
     Q_ASSERT_X(category && *category != '\0', "ignoreLogMessage", "category must not be empty — use the exact Qt logging category string (e.g. \"Utilities.QGCFileHelper\")");
     _expectedLogMessages->ignored.append({LogEntry::fromQtMsgType(type), pattern, QString::fromLatin1(category)});
+}
+
+bool UnitTest::apmFirmwareSupported()
+{
+    return FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot);
 }
 
 void UnitTest::init()

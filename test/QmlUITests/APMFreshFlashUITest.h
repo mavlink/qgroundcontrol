@@ -16,6 +16,9 @@ class APMFreshFlashUITest : public VehicleConfigUITestBase
 public:
     APMFreshFlashUITest() = default;
 
+protected slots:
+    void init() override;
+
 private slots:
     void _testFreshFlashSetupState();
 

@@ -21,6 +21,10 @@ VehicleTest::VehicleTest(QObject* parent) : UnitTest(parent)
 
 void VehicleTest::init()
 {
+    if ((_autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) && !apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
     UnitTest::init();
 
     // Initialize vehicle management systems
