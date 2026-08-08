@@ -8,9 +8,6 @@
       "generator": "Ninja",
       "inherits": ["ccache"],
       "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
-      "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "x86_64h;arm64"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
