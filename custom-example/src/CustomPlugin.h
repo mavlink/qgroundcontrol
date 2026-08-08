@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QPointer>
 #include <QtCore/QTranslator>
 #include <QtQml/QQmlAbstractUrlInterceptor>
 
@@ -91,7 +92,12 @@ private:
     void _addSettingsEntry(const QString& title, const char* qmlFile, const char* iconFile = nullptr);
 
     CustomOptions *_options = nullptr;
-    QQmlApplicationEngine *_qmlEngine = nullptr;
+
+    /// Guarded, because the engine is owned by the application and dies before this plugin does:
+    /// shutdown reaches cleanup() with the engine already destroyed, and a raw pointer there is a
+    /// use-after-free on every exit. The guard nulls itself with the engine.
+    QPointer<QQmlApplicationEngine> _qmlEngine;
+
     class CustomOverrideInterceptor *_selector = nullptr;
     QVariantList _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
 };

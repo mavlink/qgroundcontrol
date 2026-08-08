@@ -152,3 +152,10 @@ set(CUSTOM_QT_COMPONENTS
     Core
     CACHE INTERNAL "" FORCE
 )
+
+# Compiled into the application target and registered with CTest, but only when testing is
+# enabled, so a production overlay build carries no test code. The subdirectory appends to the
+# same CUSTOM_SOURCES cache src/CMakeLists.txt hands to the application target.
+if(QGC_BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
+    add_subdirectory(test)
+endif()
