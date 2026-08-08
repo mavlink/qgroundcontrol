@@ -342,6 +342,40 @@ QUrl urlWithoutQuery(const QUrl& url)
     return url.adjusted(QUrl::RemoveQuery | QUrl::RemoveFragment);
 }
 
+QString redactedUrlForLogging(const QUrl& url)
+{
+    if (url.isEmpty()) {
+        return QStringLiteral("<empty-url>");
+    }
+    if (!url.isValid()) {
+        return QStringLiteral("<invalid-url>");
+    }
+
+    QUrl redactedUrl = url.adjusted(QUrl::RemoveUserInfo);
+    if (redactedUrl.hasQuery()) {
+        const auto queryItems = QUrlQuery(redactedUrl).queryItems(QUrl::FullyDecoded);
+        QUrlQuery redactedQuery;
+        for (const auto& queryItem : queryItems) {
+            redactedQuery.addQueryItem(queryItem.first, QStringLiteral("REDACTED"));
+        }
+        if (queryItems.isEmpty()) {
+            redactedUrl.setQuery(QStringLiteral("REDACTED"));
+        } else {
+            redactedUrl.setQuery(redactedQuery);
+        }
+    }
+    if (redactedUrl.hasFragment()) {
+        redactedUrl.setFragment(QStringLiteral("REDACTED"));
+    }
+
+    return redactedUrl.toDisplayString(QUrl::FullyEncoded);
+}
+
+QString redactedUrlForLogging(const QString& url)
+{
+    return redactedUrlForLogging(QUrl(url));
+}
+
 // ============================================================================
 // Request Configuration
 // ============================================================================
