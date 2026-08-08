@@ -65,7 +65,6 @@ public:
 
     // Overrides from QGCCorePlugin
 
-    void cleanup() final;
     QGCOptions *options() final { return _options; }
     /// This allows you to override/hide QGC Application settings
     void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible) final;
@@ -73,6 +72,8 @@ public:
     void paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t &colorInfo) final;
     /// We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
     QQmlApplicationEngine *createQmlApplicationEngine(QObject *parent) final;
+    /// Releases the url interceptor attached in createQmlApplicationEngine before the engine is destroyed
+    void destroyQmlApplicationEngine(QQmlApplicationEngine *qmlEngine) final;
 
     /// Adds the Perimeter Scan item to the complex-item menu.
     QVariantList complexMissionItemNames(Vehicle *vehicle) final;
@@ -92,7 +93,7 @@ private:
 
     CustomOptions *_options = nullptr;
     QQmlApplicationEngine *_qmlEngine = nullptr;
-    class CustomOverrideInterceptor *_selector = nullptr;
+    class CustomOverrideInterceptor *_urlInterceptor = nullptr;
     QVariantList _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
 };
 
