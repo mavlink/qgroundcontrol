@@ -4,7 +4,7 @@ All pull requests go through the QGC CI build system which builds release and de
 
 ## Automatic Release Note Generation
 
-Releases notes are generated from the following GitHub labels qhich should be set on Pull Requests as appropriate:
+Release notes are generated from the following GitHub labels, which should be set on Pull Requests as appropriate:
 
 * "RN: MAJOR FEATURE"
 * "RN: MINOR FEATURE"
