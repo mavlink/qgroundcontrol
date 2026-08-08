@@ -99,6 +99,7 @@ jobs:
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
           build-dir: ${{ runner.temp }}/build
+          expect-archs: x86_64h arm64
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
@@ -132,6 +133,7 @@ jobs:
         uses: ./.github/actions/verify-executable
         with:
           binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl
+          expect-archs: x86_64h arm64
 
       - name: Attest and Upload
         if: matrix.build_type == 'Release'

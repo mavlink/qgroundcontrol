@@ -21,6 +21,10 @@ inputs:
     description: "Timeout in seconds"
     required: false
     default: "60"
+  expect-archs:
+    description: "Space-separated Mach-O architectures the binary must contain exactly (macOS only)"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -33,10 +37,12 @@ runs:
           --type "${INPUTS_TYPE}" \
           --working-dir "${INPUTS_WORKING_DIR}" \
           --build-dir "${INPUTS_BUILD_DIR}" \
-          --timeout "${INPUTS_TIMEOUT}"
+          --timeout "${INPUTS_TIMEOUT}" \
+          --expect-archs "${INPUTS_EXPECT_ARCHS}"
       env:
         INPUTS_BINARY_PATH: ${{ inputs.binary-path }}
         INPUTS_TYPE: ${{ inputs.type }}
         INPUTS_WORKING_DIR: ${{ inputs.working-dir }}
         INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
         INPUTS_TIMEOUT: ${{ inputs.timeout }}
+        INPUTS_EXPECT_ARCHS: ${{ inputs.expect-archs }}
