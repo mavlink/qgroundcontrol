@@ -38,6 +38,11 @@ QList<QGCMAVLink::FirmwareClass_t> FirmwarePluginManager::supportedFirmwareClass
     return _supportedFirmwareClasses;
 }
 
+bool FirmwarePluginManager::firmwareClassSupported(QGCMAVLink::FirmwareClass_t firmwareClass)
+{
+    return supportedFirmwareClasses().contains(firmwareClass);
+}
+
 QList<QGCMAVLink::VehicleClass_t> FirmwarePluginManager::supportedVehicleClasses(QGCMAVLink::FirmwareClass_t firmwareClass)
 {
     QList<QGCMAVLink::VehicleClass_t> vehicleClasses;
