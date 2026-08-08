@@ -15,6 +15,9 @@ class APMVehicleConfigUITest : public VehicleConfigUITestBase
 public:
     APMVehicleConfigUITest() = default;
 
+protected slots:
+    void init() override;
+
 private slots:
     void _testArduCopter();
     void _testArduPlane();

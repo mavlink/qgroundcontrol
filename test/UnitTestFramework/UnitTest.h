@@ -454,6 +454,10 @@ protected slots:
     virtual void cleanup();
 
 protected:
+    /// True when an ArduPilot firmware plugin factory is registered. Single-firmware
+    /// builds (e.g. custom) don't register one; APM-specific tests should QSKIP.
+    static bool apmFirmwareSupported();
+
     /// Emits a one-time failure context dump for the currently running test function.
     void dumpFailureContextIfTestFailed(QStringView reason = {});
 
