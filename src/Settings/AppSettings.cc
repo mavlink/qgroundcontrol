@@ -2,6 +2,7 @@
 #include "QGCFileHelper.h"
 #include "QGCPalette.h"
 #include "AppMessages.h"
+#include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
@@ -59,6 +60,36 @@ AppSettings::LanguageInfo_t AppSettings::_rgLanguageInfo[] = {
 
 DECLARE_SETTINGGROUP(App, "")
 {
+    // Don't offer firmware classes whose plugin factory is not registered in this build
+    const QList<QGCMAVLink::FirmwareClass_t> supportedFirmwareClasses = FirmwarePluginManager::instance()->supportedFirmwareClasses();
+    const auto isSupported = [&supportedFirmwareClasses](const QVariant &value) {
+        return supportedFirmwareClasses.contains(static_cast<QGCMAVLink::FirmwareClass_t>(value.toUInt()));
+    };
+    for (const char *factName : { preferredFirmwareClassName, offlineEditingFirmwareClassName }) {
+        FactMetaData *const metaData = _nameToMetaDataMap.value(factName);
+        if (!metaData) {
+            qCWarning(AppSettingsLog) << "Missing metadata for fact" << factName;
+            continue;
+        }
+        const QVariantList enumValues = metaData->enumValues();
+        for (const QVariant &enumValue : enumValues) {
+            if (!isSupported(enumValue)) {
+                metaData->removeEnumInfo(enumValue);
+            }
+        }
+    }
+
+    // A previously stored value (or even the default) may no longer be supported by this build
+    for (Fact *const fact : { preferredFirmwareClass(), offlineEditingFirmwareClass() }) {
+        if (!isSupported(fact->rawValue())) {
+            if (isSupported(fact->rawDefaultValue())) {
+                fact->setRawValue(fact->rawDefaultValue());
+            } else if (!fact->enumValues().isEmpty()) {
+                fact->setRawValue(fact->enumValues().constFirst());
+            }
+        }
+    }
+
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 
     // Instantiate savePath so we can check for override and setup default path if needed
