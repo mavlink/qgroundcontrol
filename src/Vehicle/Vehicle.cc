@@ -2364,7 +2364,7 @@ void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)
         param7 = 1;
         break;
     case QGCMAVLink::CalibrationPX4Airspeed:
-        param6 = 1;
+        param6 = 2;  // 1 is deprecated by PX4, still accepted but 2 is the standard value
         break;
     case QGCMAVLink::CalibrationPX4Pressure:
         param3 = 1;
