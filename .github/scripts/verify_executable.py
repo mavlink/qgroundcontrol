@@ -71,6 +71,28 @@ def _setup_gstreamer_env(build_dir: Path) -> None:
         os.environ["PATH"] = f"{bin_dir};{existing}" if existing else bin_dir
 
 
+def _verify_archs(binary_path: Path, expected: str) -> None:
+    """Fail if the Mach-O binary's architectures differ from the expected set."""
+    result = subprocess.run(
+        ["lipo", "-archs", str(binary_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        gh_error(f"lipo -archs failed for {binary_path}: {result.stderr.strip()}")
+        sys.exit(1)
+    actual = set(result.stdout.split())
+    wanted = set(expected.split())
+    if actual != wanted:
+        gh_error(
+            f"Architecture mismatch for {binary_path}: "
+            f"expected {sorted(wanted)}, got {sorted(actual)}"
+        )
+        sys.exit(1)
+    print(f"Verified architectures: {' '.join(sorted(actual))}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary-path", required=True)
@@ -78,6 +100,7 @@ def main() -> None:
     parser.add_argument("--build-dir", default="")
     parser.add_argument("--type", default="binary", dest="exe_type")
     parser.add_argument("--timeout", default="60")
+    parser.add_argument("--expect-archs", default="")
     args = parser.parse_args()
 
     binary_path = Path(args.binary_path)
@@ -89,6 +112,9 @@ def main() -> None:
 
     if args.build_dir:
         _setup_gstreamer_env(Path(args.build_dir))
+
+    if args.expect_archs and platform.system() == "Darwin":
+        _verify_archs(binary_path, args.expect_archs)
 
     binary_name = binary_path.name
     run_binary = binary_name
