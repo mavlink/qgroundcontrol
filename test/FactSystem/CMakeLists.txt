@@ -5,6 +5,8 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        APMParameterMetaDataTest.cc
+        APMParameterMetaDataTest.h
         FactGroupTest.cc
         FactGroupTest.h
         FactMetaDataTest.cc
@@ -27,14 +29,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         ParameterManagerTest.h
         ParameterMetaDataTestHelper.h
 )
-
-if(NOT QGC_DISABLE_APM_PLUGIN)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            APMParameterMetaDataTest.cc
-            APMParameterMetaDataTest.h
-    )
-endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

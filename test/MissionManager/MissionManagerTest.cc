@@ -249,12 +249,18 @@ void MissionManagerTest::_testReadFailureHandlingWorker()
 
 void MissionManagerTest::_testWriteFailureHandlingAPM()
 {
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
     _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
     _testWriteFailureHandlingWorker();
 }
 
 void MissionManagerTest::_testReadFailureHandlingAPM()
 {
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
     _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
     _testReadFailureHandlingWorker();
 }

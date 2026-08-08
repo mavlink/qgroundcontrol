@@ -126,6 +126,10 @@ void ToolbarIndicatorUITest::_testPX4Indicators()
 
 void ToolbarIndicatorUITest::_testAPMCopterIndicators()
 {
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
     _runIndicatorTest(
         [] { return MockLink::startAPMArduCopterMockLink(MockConfiguration::OptionEnableGimbal); },
         QStringLiteral("APMCopter"));
