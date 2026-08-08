@@ -767,6 +767,13 @@ void QGCApplication::shutdown()
         VideoManager::instance()->cleanup();
     }
 
+    // Engines from createQmlApplicationEngine must die through the destroy hook so the plugin
+    // can release per-engine state; parent-based teardown in ~QGCApplication would bypass it.
+    if (_qmlAppEngine) {
+        QGCCorePlugin::instance()->destroyQmlApplicationEngine(_qmlAppEngine);
+        _qmlAppEngine = nullptr;
+    }
+
     QGCCorePlugin::instance()->cleanup();
 
     if (_runningUnitTests || _simpleBootTest) {

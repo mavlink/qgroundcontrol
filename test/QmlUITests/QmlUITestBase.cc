@@ -202,7 +202,7 @@ void QmlUITestBase::destroyUIEngine()
         QCoreApplication::processEvents();
     }
     qgcApp()->setQmlAppEngine(nullptr);
-    delete _engine;
+    QGCCorePlugin::instance()->destroyQmlApplicationEngine(_engine);
     _engine   = nullptr;
     _window   = nullptr;
     _rootItem = nullptr;

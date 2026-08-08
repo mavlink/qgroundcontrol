@@ -47,7 +47,7 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLinkTypes::FirmwareC
                               vehicleClassString));
     qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MissionCommandTreeEditorTestWindow.qml")));
     QVERIFY_TRUE_WAIT(!qmlAppEngine->rootObjects().isEmpty(), TestTimeout::mediumMs());
-    delete qmlAppEngine;
+    QGCCorePlugin::instance()->destroyQmlApplicationEngine(qmlAppEngine);
 }
 
 void MissionCommandTreeEditorTest::testEditors()

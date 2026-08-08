@@ -97,6 +97,11 @@ public:
     /// path or stuff things into the context prior to window creation.
     virtual QQmlApplicationEngine *createQmlApplicationEngine(QObject *parent);
 
+    /// Symmetric counterpart to createQmlApplicationEngine. Engines obtained from the create hook
+    /// must be destroyed through this hook so the plugin can release any per-engine state it
+    /// attached at creation (url interceptors, etc) before the engine goes away.
+    virtual void destroyQmlApplicationEngine(QQmlApplicationEngine *qmlEngine);
+
     /// Allows the plugin to override the creation of the root (native) window.
     virtual void createRootWindow(QQmlApplicationEngine *qmlEngine);
 
