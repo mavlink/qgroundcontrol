@@ -6,6 +6,27 @@ else()
     set(_qgc_venv_python "${CMAKE_SOURCE_DIR}/.venv/bin/python")
 endif()
 
+# The mavlink CPM build runs "pip install -r pymavlink/requirements.txt" with the pinned
+# interpreter and hard-fails without pip. QGC's own bootstrap seeds pip (uv venv --seed),
+# but a hand-rolled "uv venv" does not — catch that here with an actionable message
+# instead of the opaque mavlink configure error.
+function(_qgc_check_venv_pip _py)
+    execute_process(
+        COMMAND "${_py}" -m pip -V
+        RESULT_VARIABLE _pip_result
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(_pip_result EQUAL 0)
+        return()
+    endif()
+    message(FATAL_ERROR "QGC: ${_py} has no pip (was .venv created with plain 'uv venv'?). "
+                        "The MAVLink build requires pip in the venv. Fix with:\n"
+                        "  \"${_py}\" -m ensurepip --upgrade\n"
+                        "or recreate it with pip seeded:\n"
+                        "  rm -rf .venv && python tools/setup/install_python.py scripts")
+endfunction()
+
 function(_qgc_sync_venv_if_stale _py)
     if(NOT QGC_AUTO_PYTHON_VENV)
         return()
@@ -42,6 +63,7 @@ endmacro()
 
 if(DEFINED CACHE{Python3_EXECUTABLE})
     if(EXISTS "${_qgc_venv_python}" AND "${Python3_EXECUTABLE}" STREQUAL "${_qgc_venv_python}")
+        _qgc_check_venv_pip("${_qgc_venv_python}")
         _qgc_sync_venv_if_stale("${_qgc_venv_python}")
         _qgc_pin_python("${_qgc_venv_python}")
     endif()
@@ -84,6 +106,7 @@ if(NOT EXISTS "${_qgc_venv_python}" AND QGC_AUTO_PYTHON_VENV)
 endif()
 
 if(EXISTS "${_qgc_venv_python}")
+    _qgc_check_venv_pip("${_qgc_venv_python}")
     _qgc_sync_venv_if_stale("${_qgc_venv_python}")
     _qgc_pin_python("${_qgc_venv_python}")
     message(STATUS "QGC: using Python venv interpreter ${Python3_EXECUTABLE}")
