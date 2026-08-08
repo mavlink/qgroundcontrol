@@ -47,6 +47,7 @@
         },
         {
             "heading": "Stream Rates (ArduPilot Only)",
+            "showWhen": "QGroundControl.apmFirmwareSupported",
             "keywords": ["stream rate", "ardupilot", "apm", "raw sensors", "rc channels", "position rate"],
             "controls": [
                 {

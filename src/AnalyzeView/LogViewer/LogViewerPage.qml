@@ -109,7 +109,7 @@ AnalyzePage {
 
                 QGCButton {
                     text: qsTr("Open .bin")
-                    visible: QGroundControl.hasAPMSupport
+                    visible: QGroundControl.apmFirmwareSupported
                     onClicked: {
                         openDialog.nameFilters = ["DataFlash Logs (*.bin *.BIN *.log *.LOG)"]
                         openDialog.openForLoad()
