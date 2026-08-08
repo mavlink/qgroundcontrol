@@ -3,6 +3,7 @@
 #include "MissionItem.h"
 #include "QGCMath.h"
 #include "Vehicle.h"
+#include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>
@@ -15,6 +16,7 @@ MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController,
     : ComplexMissionItem                (masterController, flyView)
     , _managerVehicle                   (masterController->managerVehicle())
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
+    , _waypointRadiusFact               (0, "Waypoint Radius",                  FactMetaData::valueTypeDouble)
     , _cameraSection                    (masterController)
     , _speedSection                     (masterController)
 {
@@ -28,6 +30,19 @@ MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController,
     _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
     _plannedHomePositionAltitudeFact.setRawValue    (_plannedHomePositionAltitudeFact.rawDefaultValue());
     setHomePositionSpecialCase(true);
+
+    FactMetaData* waypointRadiusMetaData = new FactMetaData(FactMetaData::valueTypeDouble, this);
+    waypointRadiusMetaData->setRawUnits("m");
+    waypointRadiusMetaData->setRawIncrement(1);
+    waypointRadiusMetaData->setDecimalPlaces(1);
+    waypointRadiusMetaData->setRawUserMin(1.0);
+    waypointRadiusMetaData->setRawUserMax(32767.0);
+    waypointRadiusMetaData->setRawDefaultValue(50.0);
+    _waypointRadiusFact.setMetaData(waypointRadiusMetaData);
+    _waypointRadiusFact.setRawValue(50.0);
+
+    connect(masterController, &PlanMasterController::managerVehicleChanged, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
+    _syncWaypointRadiusWithVehicle();
 
     _cameraSection.setAvailable(true);
     _speedSection.setAvailable(true);
@@ -241,5 +256,59 @@ void MissionSettingsItem::_updateFlyViewHomePosition(const QGeoCoordinate& homeP
 {
     if (_flyView) {
         setCoordinate(homePosition);
+    }
+}
+
+Fact* MissionSettingsItem::waypointRadius(void)
+{
+    return &_waypointRadiusFact;
+}
+
+void MissionSettingsItem::_syncWaypointRadiusWithVehicle(void)
+{
+    Vehicle* vehicle = masterController()->controllerVehicle();
+    if (!vehicle || !vehicle->parameterManager()) {
+        return;
+    }
+
+    static Vehicle* lastVehicle = nullptr;
+    if (lastVehicle != vehicle) {
+        if (lastVehicle && lastVehicle->parameterManager()) {
+            disconnect(lastVehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
+            disconnect(lastVehicle->parameterManager(), &ParameterManager::factAdded, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
+        }
+        lastVehicle = vehicle;
+        _vehicleWaypointRadiusConnected = false;
+        connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
+        connect(vehicle->parameterManager(), &ParameterManager::factAdded, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
+    }
+
+    Fact* paramFact = nullptr;
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("WP_RADIUS"))) {
+        paramFact = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("WP_RADIUS"));
+    } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("WPNAV_RADIUS"))) {
+        paramFact = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("WPNAV_RADIUS"));
+    } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("NAV_ACC_RAD"))) {
+        paramFact = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("NAV_ACC_RAD"));
+    }
+
+    if (paramFact && !_vehicleWaypointRadiusConnected) {
+        _vehicleWaypointRadiusConnected = true;
+        if (_waypointRadiusFact.rawValue().toDouble() != 50.0) {
+            paramFact->setRawValue(_waypointRadiusFact.rawValue());
+        } else if (paramFact->rawValue().toDouble() > 0.0) {
+            _waypointRadiusFact.setRawValue(paramFact->rawValue());
+        }
+
+        connect(&_waypointRadiusFact, &Fact::valueChanged, this, [paramFact](QVariant value){
+            if (paramFact->rawValue() != value) {
+                paramFact->setRawValue(value);
+            }
+        });
+        connect(paramFact, &Fact::valueChanged, this, [this](QVariant value){
+            if (_waypointRadiusFact.rawValue() != value) {
+                _waypointRadiusFact.setRawValue(value);
+            }
+        });
     }
 }

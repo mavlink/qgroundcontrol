@@ -1,4 +1,6 @@
 #include "PlanMasterController.h"
+#include "MissionSettingsItem.h"
+#include "ParameterManager.h"
 #include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "MultiVehicleManager.h"
@@ -322,6 +324,25 @@ void PlanMasterController::sendToVehicle(void)
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start mission sendToVehicle";
+
+        if (_missionController.visualItems() && _missionController.visualItems()->count() > 0) {
+            MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(_missionController.visualItems()->get(0));
+            if (settingsItem && settingsItem->waypointRadius()) {
+                Fact* paramFact = nullptr;
+                if (_managerVehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("WP_RADIUS"))) {
+                    paramFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("WP_RADIUS"));
+                } else if (_managerVehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("WPNAV_RADIUS"))) {
+                    paramFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("WPNAV_RADIUS"));
+                } else if (_managerVehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("NAV_ACC_RAD"))) {
+                    paramFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("NAV_ACC_RAD"));
+                }
+
+                if (paramFact) {
+                    paramFact->setRawValue(settingsItem->waypointRadius()->rawValue());
+                }
+            }
+        }
+
         _sendGeoFence = true;
         _missionController.sendToVehicle();
     }

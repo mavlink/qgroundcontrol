@@ -1,4 +1,5 @@
 #include "SimpleMissionItem.h"
+#include "MissionSettingsItem.h"
 #include "JsonParsing.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
@@ -11,6 +12,7 @@
 #include "CameraSection.h"
 #include "Vehicle.h"
 #include "QGCMath.h"
+#include "ParameterManager.h"
 
 #include <QtCore/QStringList>
 #include <QtCore/QJsonArray>
@@ -1155,4 +1157,33 @@ void SimpleMissionItem::_possibleRadiusChanged(void)
     if (isLoiterItem()) {
         emit loiterRadiusChanged(loiterRadius());
     }
+}
+
+bool SimpleMissionItem::showWaypointRadius(void) const
+{
+    Fact* fact = const_cast<SimpleMissionItem*>(this)->waypointRadius();
+    return command() == MAV_CMD_NAV_WAYPOINT && fact && fact->rawValue().toDouble() > 0.0;
+}
+
+Fact* SimpleMissionItem::waypointRadius(void)
+{
+    Fact* fact = nullptr;
+    if (_masterController && _masterController->missionController() && _masterController->missionController()->visualItems()) {
+        QmlObjectListModel* visualItems = _masterController->missionController()->visualItems();
+        if (visualItems->count() > 0) {
+            MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(visualItems->get(0));
+            if (settingsItem) {
+                fact = settingsItem->waypointRadius();
+            }
+        }
+    }
+
+    if (fact && !_waypointRadiusConnected) {
+        _waypointRadiusConnected = true;
+        connect(fact, &Fact::valueChanged, this, [this](QVariant value){
+            emit waypointRadiusChanged(value.toDouble());
+            emit showWaypointRadiusChanged();
+        });
+    }
+    return fact;
 }

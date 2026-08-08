@@ -28,6 +28,8 @@ public:
     Q_PROPERTY(Fact*            altitude                READ altitude                                           CONSTANT)                           ///< Altitude as specified by altitudeFrame. Not necessarily true mission item altitude
     Q_PROPERTY(QGroundControlQmlGlobal::AltitudeFrame altitudeFrame READ altitudeFrame WRITE setAltitudeFrame       NOTIFY altitudeFrameChanged)
     Q_PROPERTY(Fact*            amslAltAboveTerrain     READ amslAltAboveTerrain                                CONSTANT)                           ///< Actual AMSL altitude for item if altitudeFrame is AltitudeFrameCalcAboveTerrain or AltitudeFrameTerrain
+    Q_PROPERTY(Fact*            waypointRadius          READ waypointRadius                                     CONSTANT)
+    Q_PROPERTY(bool             showWaypointRadius      READ showWaypointRadius                                 NOTIFY showWaypointRadiusChanged)
     Q_PROPERTY(int              command                 READ command                WRITE setCommand            NOTIFY commandChanged)
     Q_PROPERTY(bool             isLoiterItem            READ isLoiterItem                                       NOTIFY isLoiterItemChanged)
     Q_PROPERTY(bool             showLoiterRadius        READ showLoiterRadius                                   NOTIFY showLoiterRadiusChanged)
@@ -68,6 +70,8 @@ public:
     QGroundControlQmlGlobal::AltitudeFrame altitudeFrame(void) const { return _altitudeFrame; }
     Fact*           altitude            (void) { return &_altitudeFact; }
     Fact*           amslAltAboveTerrain (void) { return &_amslAltAboveTerrainFact; }
+    Fact*           waypointRadius      (void);
+    bool            showWaypointRadius  (void) const;
     bool            isLoiterItem        (void) const;
     bool            showLoiterRadius    (void) const;
     double          loiterRadius        (void) const;
@@ -147,6 +151,8 @@ signals:
     void isLoiterItemChanged        (void);
     void showLoiterRadiusChanged    (void);
     void loiterRadiusChanged        (double loiterRadius);
+    void waypointRadiusChanged      (double waypointRadius);
+    void showWaypointRadiusChanged  (void);
 
 private slots:
     void _setDirty                              (void);
@@ -177,6 +183,7 @@ private:
     bool            _rawEdit =                  false;
     bool            _dirty =                    false;
     bool            _ignoreDirtyChangeSignals = false;
+    bool            _waypointRadiusConnected =  false;
     QGeoCoordinate  _mapCenterHint;
     SpeedSection*   _speedSection =             nullptr;
     CameraSection*  _cameraSection =             nullptr;

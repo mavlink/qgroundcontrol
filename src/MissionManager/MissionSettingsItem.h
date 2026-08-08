@@ -19,10 +19,12 @@ public:
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
     Q_PROPERTY(QObject* cameraSection               READ cameraSection                                          CONSTANT)
     Q_PROPERTY(QObject* speedSection                READ speedSection                                           CONSTANT)
+    Q_PROPERTY(Fact*    waypointRadius              READ waypointRadius                                         CONSTANT)
 
     Fact*           plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
     CameraSection*  cameraSection               (void) { return &_cameraSection; }
     SpeedSection*   speedSection                (void) { return &_speedSection; }
+    Fact*           waypointRadius              (void);
 
     /// Scans the loaded items for settings items
     bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex);
@@ -84,11 +86,14 @@ private slots:
     void _updateAltitudeInCoordinate            (QVariant value);
     void _setHomeAltFromTerrain                 (double terrainAltitude);
     void _updateFlyViewHomePosition             (const QGeoCoordinate& homePosition);
+    void _syncWaypointRadiusWithVehicle         (void);
 
 private:
     Vehicle*        _managerVehicle =                   nullptr;
     QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude
     Fact            _plannedHomePositionAltitudeFact;
+    Fact            _waypointRadiusFact;
+    bool            _vehicleWaypointRadiusConnected =   false;
     int             _sequenceNumber =                   0;
     CameraSection   _cameraSection;
     SpeedSection    _speedSection;
