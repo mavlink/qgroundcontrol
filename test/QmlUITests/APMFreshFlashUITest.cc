@@ -17,6 +17,14 @@
 
 UT_REGISTER_TEST(APMFreshFlashUITest, TestLabel::Integration)
 
+void APMFreshFlashUITest::init()
+{
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+    VehicleConfigUITestBase::init();
+}
+
 void APMFreshFlashUITest::_verifyFramePrereq(const QString &compObjectName, bool expectPrereqShown)
 {
     QQuickItem *compBtn = clickSidebarButton(compObjectName);

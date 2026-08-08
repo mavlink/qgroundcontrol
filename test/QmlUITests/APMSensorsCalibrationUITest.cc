@@ -9,6 +9,14 @@
 
 UT_REGISTER_TEST(APMSensorsCalibrationUITest, TestLabel::Integration)
 
+void APMSensorsCalibrationUITest::init()
+{
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+    VehicleConfigUITestBase::init();
+}
+
 // ---------------------------------------------------------------------------
 // _testCompassCalibration
 // ---------------------------------------------------------------------------

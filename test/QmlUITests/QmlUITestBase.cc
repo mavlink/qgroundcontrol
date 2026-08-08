@@ -88,6 +88,9 @@ void QmlUITestBase::startUI()
         appSettings->firstRunPromptIdsMarkIdAsShown(id);
     }
 
+    QVERIFY2(QGCCorePlugin::instance(), "Core plugin not available");
+    // Custom builds may default advanced UI off; these tests exercise the full UI.
+    QGCCorePlugin::instance()->setProperty("showAdvancedUI", true);
     QVERIFY2(QGCCorePlugin::instance()->showAdvancedUI(), "Test requires Advanced UI mode");
 
     // Ignore benign Qt platform warnings that cannot be avoided in offscreen mode

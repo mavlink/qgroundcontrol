@@ -11,6 +11,14 @@
 
 UT_REGISTER_TEST(APMVehicleConfigUITest, TestLabel::Integration)
 
+void APMVehicleConfigUITest::init()
+{
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+    VehicleConfigUITestBase::init();
+}
+
 // ---------------------------------------------------------------------------
 // Shared implementation
 // ---------------------------------------------------------------------------
