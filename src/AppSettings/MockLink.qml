@@ -59,13 +59,23 @@ Rectangle {
                 Layout.fillWidth:   true
                 model:              _vehicleNames
 
-                readonly property var _vehicleKeys: QGroundControl.hasAPMSupport ?
-                                                        [ "px4", "apmCopter", "apmPlane", "apmSub", "apmRover", "generic" ] :
-                                                        [ "px4", "generic" ]
-                readonly property var _vehicleNames: QGroundControl.hasAPMSupport ?
-                                                        [ qsTr("PX4 Vehicle"), qsTr("APM ArduCopter Vehicle"), qsTr("APM ArduPlane Vehicle"), qsTr("APM ArduSub Vehicle"), qsTr("APM ArduRover Vehicle"), qsTr("Generic Vehicle") ] :
-                                                        [ qsTr("PX4 Vehicle"), qsTr("Generic Vehicle") ]
-                readonly property string selectedKey: currentIndex >= 0 ? _vehicleKeys[currentIndex] : "px4"
+                readonly property var _vehicleEntries: {
+                    let entries = []
+                    if (QGroundControl.px4ProFirmwareSupported) {
+                        entries.push({ key: "px4", name: qsTr("PX4 Vehicle") })
+                    }
+                    if (QGroundControl.apmFirmwareSupported) {
+                        entries.push({ key: "apmCopter", name: qsTr("APM ArduCopter Vehicle") })
+                        entries.push({ key: "apmPlane", name: qsTr("APM ArduPlane Vehicle") })
+                        entries.push({ key: "apmSub", name: qsTr("APM ArduSub Vehicle") })
+                        entries.push({ key: "apmRover", name: qsTr("APM ArduRover Vehicle") })
+                    }
+                    entries.push({ key: "generic", name: qsTr("Generic Vehicle") })
+                    return entries
+                }
+                readonly property var _vehicleNames: _vehicleEntries.map(entry => entry.name)
+                // Entries are ordered supported firmwares first, Generic last resort
+                readonly property string selectedKey: currentIndex >= 0 ? _vehicleEntries[currentIndex].key : _vehicleEntries[0].key
                 readonly property bool apmSelected: selectedKey.startsWith("apm")
             }
             LabelledComboBox {

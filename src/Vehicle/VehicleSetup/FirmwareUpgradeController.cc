@@ -4,6 +4,7 @@
 #include "QGCFileDownload.h"
 #include "QGCOptions.h"
 #include "QGCCorePlugin.h"
+#include "FirmwarePluginManager.h"
 #include "FirmwareUpgradeSettings.h"
 #include "SettingsManager.h"
 #include "JsonParsing.h"
@@ -144,16 +145,17 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
 
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
-    connect(_apmChibiOSSetting,     &Fact::rawValueChanged, this, &FirmwareUpgradeController::_buildAPMFirmwareNames);
-    connect(_apmVehicleTypeSetting, &Fact::rawValueChanged, this, &FirmwareUpgradeController::_buildAPMFirmwareNames);
-#endif
+    // Only offer ArduPilot firmware when an ArduPilot plugin factory is registered
+    if (FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot)) {
+        connect(_apmChibiOSSetting,     &Fact::rawValueChanged, this, &FirmwareUpgradeController::_buildAPMFirmwareNames);
+        connect(_apmVehicleTypeSetting, &Fact::rawValueChanged, this, &FirmwareUpgradeController::_buildAPMFirmwareNames);
+    }
 
     _determinePX4StableVersion();
 
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
-    _downloadArduPilotManifest();
-#endif
+    if (FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot)) {
+        _downloadArduPilotManifest();
+    }
 }
 
 FirmwareUpgradeController::~FirmwareUpgradeController()
@@ -564,7 +566,10 @@ void FirmwareUpgradeController::setSelectedFirmwareBuildType(FirmwareBuildType_t
 
 void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 {
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
+    if (!FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot)) {
+        return;
+    }
+
     bool                    chibios =           _apmChibiOSSetting->rawValue().toInt() == 0;
     FirmwareVehicleType_t   vehicleType =       static_cast<FirmwareVehicleType_t>(_apmVehicleTypeSetting->rawValue().toInt());
     QString                 boardDescription =  _boardInfo.description();
@@ -614,7 +619,6 @@ void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
     }
 
     emit apmFirmwareNamesChanged();
-#endif
 }
 
 FirmwareUpgradeController::FirmwareVehicleType_t FirmwareUpgradeController::vehicleTypeFromFirmwareSelectionIndex(int index)
