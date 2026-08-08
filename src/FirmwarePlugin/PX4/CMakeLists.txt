@@ -6,16 +6,14 @@ if(NOT QGC_DISABLE_PX4_PLUGIN_FACTORY)
     )
 endif()
 
-if(NOT QGC_DISABLE_PX4_PLUGIN)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            px4_custom_mode.h
-            PX4FirmwarePlugin.cc
-            PX4FirmwarePlugin.h
-            PX4ParameterMetaData.cc
-            PX4ParameterMetaData.h
-    )
-endif()
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        px4_custom_mode.h
+        PX4FirmwarePlugin.cc
+        PX4FirmwarePlugin.h
+        PX4ParameterMetaData.cc
+        PX4ParameterMetaData.h
+)
 
 qgc_add_json_resources(json_firmaware_plugin_px4 NO_RECURSE PATTERN "PX4-MavCmdInfo*.json")
 

@@ -62,13 +62,11 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 # APM-Specific Settings
 # ----------------------------------------------------------------------------
-if(NOT QGC_DISABLE_APM_MAVLINK)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            APMMavlinkStreamRateSettings.cc
-            APMMavlinkStreamRateSettings.h
-    )
-endif()
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        APMMavlinkStreamRateSettings.cc
+        APMMavlinkStreamRateSettings.h
+)
 
 # ----------------------------------------------------------------------------
 # Settings Definition Resources
