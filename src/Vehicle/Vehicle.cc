@@ -712,11 +712,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
 
         // Following are ArduPilot dialect messages
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
         break;
-#endif
     case MAVLINK_MSG_ID_LOG_ENTRY:
     {
         mavlink_log_entry_t log{};
@@ -753,7 +751,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     emit mavlinkMessageReceived(message);
 }
 
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
 void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
 {
     // If CAMERA_IMAGE_CAPTURED is supported, then CAMERA_FEEDBACK is redundant and should be ignored
@@ -770,7 +767,6 @@ void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.img_idx;
     _cameraTriggerPoints->append(new QGCQGeoCoordinate(imageCoordinate, this));
 }
-#endif
 
 void Vehicle::_handleOrbitExecutionStatus(const mavlink_message_t& message)
 {
@@ -2237,11 +2233,9 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     if (ack.command == MAV_CMD_PREFLIGHT_STORAGE) {
         emit sensorsParametersResetAck(ack.result == MAV_RESULT_ACCEPTED);
     }
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     if (ack.command == MAV_CMD_FLASH_BOOTLOADER && ack.result == MAV_RESULT_ACCEPTED) {
         QGC::showAppMessage(tr("Bootloader flash succeeded"));
     }
-#endif
 
     // Delegate queue-matching + user callbacks to MavCommandQueue.
     _mavCmdQueue->handleCommandAck(message, ack);
