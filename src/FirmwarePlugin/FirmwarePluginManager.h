@@ -28,6 +28,9 @@ public:
     /// Returns list of firmwares which are supported by the system
     QList<QGCMAVLink::FirmwareClass_t> supportedFirmwareClasses();
 
+    /// Returns true if the specified firmware class is supported by the system
+    bool firmwareClassSupported(QGCMAVLink::FirmwareClass_t firmwareClass);
+
     /// Returns the list of supported vehicle types for the specified firmware
     QList<QGCMAVLink::VehicleClass_t> supportedVehicleClasses(QGCMAVLink::FirmwareClass_t firmwareClass);
 

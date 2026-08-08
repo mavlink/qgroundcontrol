@@ -80,7 +80,7 @@ public:
     Q_PROPERTY(bool                 singleFirmwareSupport   READ    singleFirmwareSupport   CONSTANT)
     Q_PROPERTY(bool                 singleVehicleSupport    READ    singleVehicleSupport    CONSTANT)
     Q_PROPERTY(bool                 px4ProFirmwareSupported READ    px4ProFirmwareSupported CONSTANT)
-    Q_PROPERTY(int                  apmFirmwareSupported    READ    apmFirmwareSupported    CONSTANT)
+    Q_PROPERTY(bool                 apmFirmwareSupported    READ    apmFirmwareSupported    CONSTANT)
     Q_PROPERTY(QGeoCoordinate       flightMapPosition       READ    flightMapPosition       WRITE setFlightMapPosition  NOTIFY flightMapPositionChanged)
     Q_PROPERTY(double               flightMapZoom           READ    flightMapZoom           WRITE setFlightMapZoom      NOTIFY flightMapZoomChanged)
     Q_PROPERTY(double               flightMapInitialZoom    MEMBER  _flightMapInitialZoom   CONSTANT)   ///< Zoom level to use when either gcs or vehicle shows up for first time
@@ -99,7 +99,6 @@ public:
     Q_PROPERTY(qreal zOrderWaypointIndicators   READ zOrderWaypointIndicators   CONSTANT)
     Q_PROPERTY(qreal zOrderTrajectoryLines      READ zOrderTrajectoryLines      CONSTANT)
     Q_PROPERTY(qreal zOrderWaypointLines        READ zOrderWaypointLines        CONSTANT)
-    Q_PROPERTY(bool     hasAPMSupport           READ hasAPMSupport              CONSTANT)
 
 
     //-------------------------------------------------------------------------
@@ -179,12 +178,6 @@ public:
     qreal zOrderVehicles            () { return 49; }
     qreal zOrderTrajectoryLines     () { return 48; }
     qreal zOrderWaypointLines       () { return 47; }
-
-#if defined(QGC_NO_ARDUPILOT_DIALECT)
-    bool    hasAPMSupport           () { return false; }
-#else
-    bool    hasAPMSupport           () { return true; }
-#endif
 
     QString elevationProviderName   ();
     QString elevationProviderNotice ();
