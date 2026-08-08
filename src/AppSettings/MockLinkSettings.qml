@@ -15,21 +15,13 @@ ColumnLayout {
     readonly property int _MAV_TYPE_QUADROTOR:          2
 
     function saveSettings() {
-        switch (firmwareTypeCombo.currentIndex) {
-        case 0:
-            subEditConfig.firmware = _MAV_AUTOPILOT_PX4
-            break
-        case 1:
-            subEditConfig.firmware = _MAV_AUTOPILOT_ARDUPILOTMEGA
+        subEditConfig.firmware = firmwareTypeCombo.selectedFirmware
+        if (firmwareTypeCombo.apmFirmwareSelected) {
             if (vehicleTypeCombo.currentIndex === 1) {          // Hardcoded _MAV_TYPE_FIXED_WING
                 subEditConfig.vehicle = _MAV_TYPE_FIXED_WING
             } else {
                 subEditConfig.vehicle = _MAV_TYPE_QUADROTOR
             }
-            break
-        default:
-            subEditConfig.firmware = _MAV_AUTOPILOT_GENERIC
-            break
         }
         subEditConfig.sendStatus = sendStatus.checked
         subEditConfig.apmStartFreshParams = apmStartFreshParams.checked
@@ -59,17 +51,12 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
-        switch (subEditConfig.firmware) {
-        case _MAV_AUTOPILOT_PX4:
-            firmwareTypeCombo.currentIndex = 0
-            break
-        case _MAV_AUTOPILOT_ARDUPILOTMEGA:
-            firmwareTypeCombo.currentIndex = 1
-            break
-        default:
-            firmwareTypeCombo.currentIndex = 2
-            break
+        let firmwareIndex = firmwareTypeCombo._firmwareValues.indexOf(subEditConfig.firmware)
+        if (firmwareIndex < 0) {
+            // Entries are ordered supported firmwares first, Generic last resort
+            firmwareIndex = 0
         }
+        firmwareTypeCombo.currentIndex = firmwareIndex
         if (subEditConfig.vehicle === _MAV_TYPE_FIXED_WING) {          // Hardcoded _MAV_TYPE_FIXED_WING
             vehicleTypeCombo.currentIndex = 1
         } else {
@@ -117,9 +104,22 @@ ColumnLayout {
         id: firmwareTypeCombo
         Layout.fillWidth: true
         label: qsTr("Firmware Type")
-        model: [ qsTr("PX4 Pro"), qsTr("ArduPilot"), qsTr("Generic MAVLink") ]
+        model: _firmwareEntries.map(entry => entry.name)
 
-        property bool apmFirmwareSelected: currentIndex === 1
+        readonly property var _firmwareEntries: {
+            let entries = []
+            if (QGroundControl.px4ProFirmwareSupported) {
+                entries.push({ value: _MAV_AUTOPILOT_PX4, name: qsTr("PX4 Pro") })
+            }
+            if (QGroundControl.apmFirmwareSupported) {
+                entries.push({ value: _MAV_AUTOPILOT_ARDUPILOTMEGA, name: qsTr("ArduPilot") })
+            }
+            entries.push({ value: _MAV_AUTOPILOT_GENERIC, name: qsTr("Generic MAVLink") })
+            return entries
+        }
+        readonly property var _firmwareValues: _firmwareEntries.map(entry => entry.value)
+        readonly property int selectedFirmware: currentIndex >= 0 ? _firmwareValues[currentIndex] : _firmwareValues[0]
+        readonly property bool apmFirmwareSelected: selectedFirmware === _MAV_AUTOPILOT_ARDUPILOTMEGA
     }
 
     LabelledComboBox {
