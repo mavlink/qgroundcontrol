@@ -46,15 +46,6 @@ QGCCorePlugin *CustomPlugin::instance()
     return _customPluginInstance();
 }
 
-void CustomPlugin::cleanup()
-{
-    if (_qmlEngine) {
-        _qmlEngine->removeUrlInterceptor(_selector);
-    }
-
-    delete _selector;
-}
-
 void CustomPlugin::_advancedChanged(bool changed)
 {
     // Firmware Upgrade page is only show in Advanced mode
@@ -261,10 +252,22 @@ QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
     _qmlEngine->addImportPath("qrc:/qml/Custom/Plan");
     // TODO: Investigate _qmlEngine->setExtraSelectors({"custom"})
 
-    _selector = new CustomOverrideInterceptor();
-    _qmlEngine->addUrlInterceptor(_selector);
+    _urlInterceptor = new CustomOverrideInterceptor();
+    _qmlEngine->addUrlInterceptor(_urlInterceptor);
 
     return _qmlEngine;
+}
+
+void CustomPlugin::destroyQmlApplicationEngine(QQmlApplicationEngine *qmlEngine)
+{
+    if (qmlEngine && (qmlEngine == _qmlEngine)) {
+        qmlEngine->removeUrlInterceptor(_urlInterceptor);
+        delete _urlInterceptor;
+        _urlInterceptor = nullptr;
+        _qmlEngine = nullptr;
+    }
+
+    QGCCorePlugin::destroyQmlApplicationEngine(qmlEngine);
 }
 
 /*===========================================================================*/

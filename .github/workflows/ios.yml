@@ -78,9 +78,12 @@ jobs:
           build-type: ${{ matrix.build_type }}
           # Qt6LinguistTools cmake config ships with the desktop qtbase install (host),
           # not iOS qtbase; point CMake at the host copy directly.
+          # CMAKE_OSX_ARCHITECTURES matches the iOS preset and opts out of the
+          # macOS universal-build default in the top-level CMakeLists.
           extra-args: >-
             -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../macos
             -DQt6LinguistTools_DIR=${{ env.QT_ROOT_DIR }}/../macos/lib/cmake/Qt6LinguistTools
+            -DCMAKE_OSX_ARCHITECTURES=arm64
 
       - name: Build
         uses: ./.github/actions/cmake-build
