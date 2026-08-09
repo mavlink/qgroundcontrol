@@ -186,6 +186,13 @@ void JoystickTest::_axisRangeTest()
     QVERIFY(js != nullptr);
 }
 
+void JoystickTest::_axisUpdateDueTest()
+{
+    QVERIFY(!Joystick::_axisUpdateDue(39, 40));
+    QVERIFY(Joystick::_axisUpdateDue(40, 40));
+    QVERIFY(Joystick::_axisUpdateDue(41, 40));
+}
+
 //-----------------------------------------------------------------------------
 // Button Tests
 //-----------------------------------------------------------------------------

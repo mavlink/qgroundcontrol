@@ -448,6 +448,8 @@ private:
     void _addAvailableButtonActionIfMissing(const QString &action);
     bool _validAxis(int axis) const;
     bool _validButton(int button) const;
+
+    static constexpr bool _axisUpdateDue(qint64 elapsed, int delay) { return elapsed >= delay; }
     void _handleAxis();
     void _handleButtons();
     void _buildAvailableButtonsActionList(Vehicle *vehicle);
