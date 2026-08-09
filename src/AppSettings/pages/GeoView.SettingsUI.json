@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "heading": "General",
+            "keywords": ["geoview", "3d map", "map engine", "preview", "experimental"],
+            "controls": [
+                {
+                    "setting": "geoViewSettings.enabled"
+                }
+            ]
+        }
+    ]
+}

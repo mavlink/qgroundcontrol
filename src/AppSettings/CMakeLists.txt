@@ -20,6 +20,7 @@ set(_generated_qml_names
     CommLinksSettings.qml
     FlyViewSettings.qml
     GeneralSettings.qml
+    GeoViewSettings.qml
     LoggingSettings.qml
     MapsSettings.qml
     NTRIPSettings.qml

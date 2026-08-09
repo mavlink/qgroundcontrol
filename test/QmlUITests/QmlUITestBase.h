@@ -1,10 +1,10 @@
 #pragma once
 
-#include "UnitTest.h"
-
 #include <QtCore/QPointer>
-
 #include <functional>
+#include <optional>
+
+#include "UnitTest.h"
 
 class MockLink;
 class QQmlApplicationEngine;
@@ -36,6 +36,7 @@ class QmlUITestBase : public UnitTest
     Q_OBJECT
 
 protected slots:
+
     void cleanup() override
     {
         _verifyFileDialogTestHookConsumed();
@@ -72,43 +73,43 @@ protected:
 
     /// Finds a visible QQuickItem by objectName in the visual tree, polling with
     /// 50ms intervals up to timeoutMs. Returns nullptr if not found within the timeout.
-    static QQuickItem *findVisibleItem(QQuickItem *root, const QString &objectName, int timeoutMs = 1000);
+    static QQuickItem* findVisibleItem(QQuickItem* root, const QString& objectName, int timeoutMs = 1000);
 
     /// Click the visible QQuickItem with \a objectName in the current window.
     /// Waits for the item's scene position to settle before clicking and fails
     /// the test if the click point lies outside the window. Returns false if
     /// the item cannot be found or cannot be clicked.
-    bool clickButton(const QString &objectName);
+    bool clickButton(const QString& objectName);
 
     /// Click the visible QQuickItem with \a objectName at a fractional position
     /// within the item ((0.5, 0.5) is the center). Returns false if the item
     /// cannot be found.
-    bool clickItemFraction(const QString &objectName, qreal fractionX, qreal fractionY);
+    bool clickItemFraction(const QString& objectName, qreal fractionX, qreal fractionY);
 
     /// Find an item that may live in a virtualized view (ListView/TableView/
     /// TreeView) inside the flickable with \a flickableObjectName. Virtualized
     /// delegates only exist near the viewport, so this steps the flickable
     /// through its content range until the item instantiates, then scrolls it
     /// into view. Returns nullptr if the item never appears.
-    QQuickItem *findVisibleItemScrolled(const QString &objectName, const QString &flickableObjectName);
+    QQuickItem* findVisibleItemScrolled(const QString& objectName, const QString& flickableObjectName);
 
     /// Convenience: findVisibleItemScrolled() followed by clickButton().
-    bool clickButtonScrolled(const QString &objectName, const QString &flickableObjectName);
+    bool clickButtonScrolled(const QString& objectName, const QString& flickableObjectName);
 
     /// Open the toolbar Q-logo tool-select dropdown and click the entry with
     /// objectName \a viewObjectName (e.g. "toolbar_viewPlan", "toolbar_viewClose").
     /// Clicks the Q logo, waits up to \a timeoutMs for the entry to appear, then
     /// clicks it. Returns false (after recording a test failure) if any step fails.
-    bool clickToolSelectDropdownButton(const QString &viewObjectName, int timeoutMs = 2000);
+    bool clickToolSelectDropdownButton(const QString& viewObjectName, int timeoutMs = 2000);
 
     /// Wait up to \a timeoutMs for a QGCPopupDialog whose title contains
     /// \a titleSubstring to become visible. Matches against the dialog title
     /// label (objectName "popupDialog_title"). Returns true once found.
-    bool waitForDialog(const QString &titleSubstring, int timeoutMs = 3000);
+    bool waitForDialog(const QString& titleSubstring, int timeoutMs = 3000);
 
     /// Returns true if a QGCPopupDialog whose title contains \a titleSubstring
     /// is currently visible. Does not wait — use to assert a dialog is absent.
-    bool dialogVisible(const QString &titleSubstring);
+    bool dialogVisible(const QString& titleSubstring);
 
     /// Wait up to \a timeoutMs for the popup dialog accept button to become
     /// visible, then click it. Returns false if the button never appears.
@@ -122,42 +123,57 @@ protected:
     /// waiting up to 2 seconds for bindings to settle. Returns false (after
     /// recording a test failure) if the item is missing or the enabled state
     /// does not match. \a context is prepended to failure messages.
-    bool verifyEnabled(const QString &objectName, bool expectedEnabled, const QString &context);
+    bool verifyEnabled(const QString& objectName, bool expectedEnabled, const QString& context);
 
     /// Verify the primary (highlight) state of a button found by \a objectName.
     /// Same semantics as verifyEnabled().
-    bool verifyPrimary(const QString &objectName, bool expectedPrimary, const QString &context);
+    bool verifyPrimary(const QString& objectName, bool expectedPrimary, const QString& context);
 
     /// Verify the checked state of a checkable button found by \a objectName.
     /// Same semantics as verifyEnabled().
-    bool verifyChecked(const QString &objectName, bool expectedChecked, const QString &context);
+    bool verifyChecked(const QString& objectName, bool expectedChecked, const QString& context);
 
     /// Same semantics as verifyEnabled().
-    bool verifyText(const QString &objectName, const QString &expectedText, const QString &context);
+    bool verifyText(const QString& objectName, const QString& expectedText, const QString& context);
 
     /// Verify an arbitrary property of a visible item found by \a objectName,
     /// waiting up to 2 seconds for bindings to settle. Fails the test if the
     /// item is missing, the property does not exist, or the value never matches.
-    bool verifyProperty(const QString &objectName, const char *propertyName,
-                        const QVariant &expectedValue, const QString &context);
+    bool verifyProperty(const QString& objectName, const char* propertyName, const QVariant& expectedValue,
+                        const QString& context);
 
     /// Verify that an item found by \a objectName is present-and-visible
     /// (\a expectedVisible true) or absent/hidden (false), waiting up to
     /// 2 seconds. Fails the test on mismatch.
-    bool verifyVisibility(const QString &objectName, bool expectedVisible, const QString &context);
+    bool verifyVisibility(const QString& objectName, bool expectedVisible, const QString& context);
+
+    /// Qt Quick 3D requires an RHI-based scene graph backend. Where the test
+    /// harness forces the software backend (e.g. macOS offscreen), View3D cannot
+    /// render — scene objects still instantiate — and Qt emits two known warnings
+    /// when a frame renders a View3D. When the live window's backend is not
+    /// RHI-based, registers log expectations for those warnings so strict-mode
+    /// log checking passes. With \a strict true the warnings MUST occur (caller
+    /// must call verifyExpectedLogMessage() twice after showing the 3D view —
+    /// catches Qt behavior changes); with \a strict false 0..N occurrences are
+    /// tolerated (for tests where no frame is guaranteed to render the View3D).
+    /// On RHI backends nothing is registered, so the warnings would fail the
+    /// test — as they should. Returns whether the backend is RHI-based, or
+    /// std::nullopt when it cannot be determined (caller must fail the test).
+    /// Call after startUI(), before showing any View3D.
+    std::optional<bool> expectSoftwareBackendWarnings(bool strict = true);
 
     /// Scroll the QQuickFlickable identified by \a flickableObjectName so that
     /// \a item's centre is fully visible inside the flickable. Fails the test
     /// and returns false if the item never settles inside the flickable's
     /// clickable region; returns false without failing if \a item is null or
     /// the flickable cannot be found.
-    bool scrollIntoView(QQuickItem *item, const QString &flickableObjectName);
+    bool scrollIntoView(QQuickItem* item, const QString& flickableObjectName);
 
     /// Shared click implementation: waits for the item's mapped scene position to
     /// settle (positioners/animations may still be moving a freshly-visible item),
     /// verifies the click point is inside the window, then clicks. Fails the test
     /// and returns false if the point never lands inside the window.
-    bool _clickItemAt(QQuickItem *item, qreal fractionX, qreal fractionY, const QString &objectName);
+    bool _clickItemAt(QQuickItem* item, qreal fractionX, qreal fractionY, const QString& objectName);
 
     /// Convenience wrapper: boots the UI, connects a MockLink, runs \a body
     /// with the active MockLink and Vehicle, then tears down in the correct
@@ -165,9 +181,8 @@ protected:
     ///
     /// \a body may use QVERIFY2/QFAIL; on failure the lambda returns early and
     /// teardown still runs via the scope guard.
-    void runWithMockLink(
-        const std::function<MockLink *()> &factory,
-        const std::function<void(QPointer<MockLink>, Vehicle *)> &body);
+    void runWithMockLink(const std::function<MockLink*()>& factory,
+                         const std::function<void(QPointer<MockLink>, Vehicle*)>& body);
 
     /// Disconnect a MockLink and wait for the active vehicle to clear.
     /// Safe to call with a null pointer. Always call before closeUIWindow() so
@@ -184,13 +199,11 @@ protected:
     /// mockLink->disconnect(), closeUIWindow(), and destroyUIEngine() in that
     /// order — disconnecting first forces QML to handle a null vehicle while
     /// the window is still open, exposing binding bugs.
-    QPointer<MockLink> connectMockLinkAndWaitReady(
-        const std::function<MockLink *()> &factory,
-        Vehicle *&vehicleOut);
+    QPointer<MockLink> connectMockLinkAndWaitReady(const std::function<MockLink*()>& factory, Vehicle*& vehicleOut);
 
-    QQmlApplicationEngine *_engine   = nullptr;
-    QQuickWindow          *_window   = nullptr;
-    QQuickItem            *_rootItem = nullptr;
+    QQmlApplicationEngine* _engine = nullptr;
+    QQuickWindow* _window = nullptr;
+    QQuickItem* _rootItem = nullptr;
     int _viewDelay = 0;  ///< ms to pause between view switches when onscreen
     int _pageDelay = 0;  ///< ms to pause between page switches when onscreen
 
@@ -200,6 +213,6 @@ private:
     /// converts to false/"" which would make false/empty expectations pass
     /// vacuously), then wait up to 2 seconds for the property to match.
     /// Exposed publicly as verifyProperty().
-    bool _verifyItemProperty(const QString &objectName, const char *propertyName,
-                             const QVariant &expectedValue, const QString &context);
+    bool _verifyItemProperty(const QString& objectName, const char* propertyName, const QVariant& expectedValue,
+                             const QString& context);
 };

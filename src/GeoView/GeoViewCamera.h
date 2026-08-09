@@ -1,0 +1,223 @@
+/****************************************************************************
+ *
+ * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+#pragma once
+
+#include <QtCore/QObject>
+#include <QtCore/QPointF>
+#include <QtCore/QSizeF>
+#include <QtGui/QQuaternion>
+#include <QtGui/QVector3D>
+#include <QtPositioning/QGeoCoordinate>
+#include <QtQmlIntegration/QtQmlIntegration>
+#include <optional>
+
+/// Camera pose model for the GeoView map engine.
+///
+/// Owns the pose as (center, heading, tilt, distance) where center is a geographic
+/// coordinate on the ground plane. Implements cursor-anchored pan, orbit, rotate,
+/// tilt and zoom: the ground point under the cursor at gesture start stays under
+/// the cursor for the duration of the gesture.
+///
+/// Scene space is Web Mercator meters (TileMath), z up, ground plane z=0.
+/// Camera position convention (matches the Viewer3D orbit camera):
+///   cameraPosition = center + distance * (sin(tilt)sin(heading), -sin(tilt)cos(heading), cos(tilt))
+/// tilt 0 = top-down, tilt kMaxTilt = most oblique 3D view. Angles in degrees.
+class GeoViewCamera : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+    Q_PROPERTY(QGeoCoordinate center READ center WRITE setCenter NOTIFY centerChanged)
+    Q_PROPERTY(qreal heading READ heading WRITE setHeading NOTIFY headingChanged)
+    Q_PROPERTY(qreal tilt READ tilt WRITE setTilt NOTIFY tiltChanged)
+    Q_PROPERTY(qreal distance READ distance WRITE setDistance NOTIFY distanceChanged)
+    Q_PROPERTY(QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
+    Q_PROPERTY(qreal fieldOfView READ fieldOfView WRITE setFieldOfView NOTIFY fieldOfViewChanged)
+    Q_PROPERTY(bool isTopDown READ isTopDown NOTIFY tiltChanged)
+    Q_PROPERTY(Mode mode READ mode WRITE setMode NOTIFY modeChanged)
+    Q_PROPERTY(qreal default3DTilt READ default3DTilt CONSTANT)
+    Q_PROPERTY(QPointF sceneOrigin READ sceneOrigin WRITE setSceneOrigin NOTIFY scenePoseChanged)
+    Q_PROPERTY(QVector3D scenePosition READ scenePosition NOTIFY scenePoseChanged)
+    Q_PROPERTY(QQuaternion sceneRotation READ sceneRotation NOTIFY scenePoseChanged)
+
+public:
+    explicit GeoViewCamera(QObject* parent = nullptr);
+
+    /// Map mode: 2D locks tilt against gestures (the map stays top-down until
+    /// the user explicitly switches to 3D). setTilt itself is not gated so the
+    /// QML-side mode-transition animation can drive it.
+    enum class Mode
+    {
+        Mode2D,
+        Mode3D
+    };
+    Q_ENUM(Mode)
+
+    static constexpr qreal kMinDistance = 10.0;
+    static constexpr qreal kMaxDistance = 40000000.0;
+    static constexpr qreal kMinTilt = 0.0;
+    static constexpr qreal kMaxTilt = 85.0;
+    static constexpr qreal kDefaultDistance = 1500.0;
+    static constexpr qreal kDefaultFieldOfView = 60.0;
+    static constexpr qreal kDefault3DTilt = 55.0;
+
+    QGeoCoordinate center() const;
+    void setCenter(const QGeoCoordinate& center);
+
+    qreal heading() const { return _heading; }
+
+    void setHeading(qreal heading);
+
+    qreal tilt() const { return _tilt; }
+
+    void setTilt(qreal tilt);
+
+    qreal distance() const { return _distance; }
+
+    void setDistance(qreal distance);
+
+    QSizeF viewportSize() const { return _viewportSize; }
+
+    void setViewportSize(const QSizeF& size);
+
+    qreal fieldOfView() const { return _fieldOfView; }
+
+    void setFieldOfView(qreal fov);
+
+    /// Pose predicate: the camera currently looks straight down (tilt ~0).
+    /// Distinct from mode(): Mode2D can be mid-transition with tilt > 0, and a
+    /// Mode3D user can gesture tilt down to 0.
+    bool isTopDown() const { return qFuzzyIsNull(_tilt); }
+
+    Mode mode() const { return _mode; }
+
+    void setMode(Mode mode);
+
+    qreal default3DTilt() const { return kDefault3DTilt; }
+
+    /// Restore the default pose at the current center (heading 0, tilt 0, default distance)
+    Q_INVOKABLE void reset();
+
+    /// Set the full pose in one call. tilt/distance are clamped.
+    Q_INVOKABLE void lookAt(const QGeoCoordinate& center, qreal heading, qreal tilt, qreal distance);
+
+    /// Instant 2D<->3D switch: sets the mode and snaps tilt (the animated
+    /// transition is driven QML-side via mode + tilt/terrain animations)
+    Q_INVOKABLE void goTo2D()
+    {
+        setMode(Mode::Mode2D);
+        setTilt(kMinTilt);
+    }
+
+    Q_INVOKABLE void goTo3D()
+    {
+        setMode(Mode::Mode3D);
+        setTilt(kDefault3DTilt);
+    }
+
+    /// Start a pan gesture at the given screen position (pixels)
+    Q_INVOKABLE void beginPan(const QPointF& screenPos);
+    /// Continue a pan gesture: the ground point picked at beginPan stays under the cursor
+    Q_INVOKABLE void panTo(const QPointF& screenPos);
+
+    /// Start an orbit gesture at the given screen position (pixels)
+    Q_INVOKABLE void beginOrbit(const QPointF& screenPos);
+    /// Continue an orbit gesture: rotate rigidly about the ground point picked at beginOrbit.
+    /// Full viewport width of drag = 360 deg heading, full height = 180 deg tilt.
+    Q_INVOKABLE void orbitTo(const QPointF& screenPos);
+
+    /// Rotate the camera rigidly by degrees about the ground point under screenPos
+    /// (positive = counterclockwise heading change). Used for two-finger twist gestures.
+    Q_INVOKABLE void rotateBy(qreal degrees, const QPointF& screenPos);
+
+    /// Tilt the camera by degrees (clamped), keeping the ground point under screenPos
+    /// fixed on screen. Used for two-finger vertical swipe gestures.
+    Q_INVOKABLE void tiltBy(qreal degrees, const QPointF& screenPos);
+
+    /// Zoom toward/away from the ground point under screenPos. amount is in wheel
+    /// angleDelta units (positive = zoom in). Distance is clamped.
+    Q_INVOKABLE void zoom(qreal amount, const QPointF& screenPos);
+
+    /// Scale the camera distance by factor (e.g. 0.5 halves the distance), keeping the
+    /// ground point under screenPos fixed on screen. Used for pinch gestures.
+    Q_INVOKABLE void zoomBy(qreal factor, const QPointF& screenPos);
+
+    /// Ground-plane world meters spanned by one horizontal pixel at screen center.
+    /// Returns 0 when the viewport size is not set.
+    Q_INVOKABLE qreal sceneUnitsPerPixel() const;
+
+    /// Derived camera position in world space (mercator meters, z up).
+    /// Float precision — for rendering/debug display; internal math is double.
+    QVector3D cameraPosition() const;
+
+    /// Ground projection of the camera position (world mercator meters) in
+    /// double precision, for consumers whose math must not lose meters at
+    /// world scale (LOD/culling distances).
+    QPointF cameraGroundPosition() const;
+
+    /// World-space reference origin for scene coordinates (set by the renderer,
+    /// normally bound to SurfacePatchModel::sceneOrigin)
+    QPointF sceneOrigin() const { return _sceneOrigin; }
+
+    void setSceneOrigin(const QPointF& origin);
+
+    /// Camera position in scene coordinates (world minus sceneOrigin, z up),
+    /// for binding to the View3D camera node
+    QVector3D scenePosition() const;
+
+    /// Camera orientation for the View3D camera node: identity = top-down with
+    /// north up (matches the pose convention R = Rz(heading) * Rx(tilt))
+    QQuaternion sceneRotation() const;
+
+    /// Intersect the pick ray through screenPos (pixels) with the ground plane z=0.
+    /// Returns the ground point in world meters, or std::nullopt when the ray misses
+    /// (at/above the horizon) or the viewport is not set.
+    std::optional<QPointF> screenToGround(const QPointF& screenPos) const;
+
+    /// Like screenToGround, but never fails for horizon misses: the result is capped
+    /// at maxRange ground meters from the camera's ground position, along the ray's
+    /// horizontal direction. Used for visible-region estimation. Returns std::nullopt
+    /// only when the viewport is not set.
+    std::optional<QPointF> groundPointCapped(const QPointF& screenPos, double maxRange) const;
+
+signals:
+    void centerChanged();
+    void headingChanged();
+    void tiltChanged();
+    void distanceChanged();
+    void viewportSizeChanged();
+    void fieldOfViewChanged();
+    void modeChanged();
+    /// Emitted whenever scenePosition/sceneRotation may have changed (any pose
+    /// component or the scene origin)
+    void scenePoseChanged();
+
+private:
+    void _setCenterWorld(const QPointF& world);
+    /// Shift the center so the ground point anchorWorld appears under screenPos
+    void _anchorToScreen(const QPointF& anchorWorld, const QPointF& screenPos);
+    static qreal _normalizedHeading(qreal heading);
+
+    QPointF _centerWorld;  // mercator meters
+    QPointF _sceneOrigin;  // mercator meters
+    Mode _mode = Mode::Mode2D;
+    qreal _heading = 0.0;
+    qreal _tilt = 0.0;
+    qreal _distance = kDefaultDistance;
+    QSizeF _viewportSize;
+    qreal _fieldOfView = kDefaultFieldOfView;
+
+    // Gesture state
+    std::optional<QPointF> _panAnchorWorld;
+    std::optional<QPointF> _orbitAnchorWorld;
+    QPointF _orbitAnchorScreen;
+    QPointF _orbitStartScreen;
+    qreal _orbitStartHeading = 0.0;
+    qreal _orbitStartTilt = 0.0;
+};

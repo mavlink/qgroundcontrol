@@ -32,6 +32,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/AppCloseWarningUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewProximityRadarUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewProximityRadarUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/GeoViewUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/GeoViewUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.cc
@@ -68,7 +70,7 @@ add_qgc_test(RemoteIDSettingsUITest LABELS Integration NoSanitizer TIMEOUT 120)
 # cannot provide. On Linux the offscreen platform exposes GLX (CI runs ctest
 # under xvfb-run with Mesa llvmpipe), so drop the forced software backend and
 # request RHI OpenGL — View3D then genuinely renders. On other hosts (e.g.
-# macOS offscreen) the software backend stays and the test asserts the
+# macOS offscreen) the software backend stays and the tests assert the
 # documented View3D fallback warnings instead.
 set(_viewer3d_env_mod "")
 if(LINUX)
@@ -78,3 +80,4 @@ if(LINUX)
     )
 endif()
 add_qgc_test(Viewer3DUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120 ${_viewer3d_env_mod})
+add_qgc_test(GeoViewUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})

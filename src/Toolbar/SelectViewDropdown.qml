@@ -45,6 +45,21 @@ ToolIndicatorPage {
             }
 
             SubMenuButton {
+                objectName: "toolbar_viewGeo"
+                implicitHeight: root._toolButtonHeight
+                Layout.fillWidth: true
+                text: qsTr("GeoView")
+                imageResource: "/InstrumentValueIcons/globe.svg"
+                visible: QGroundControl.settingsManager.geoViewSettings.enabled.rawValue
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.closeIndicatorDrawer()
+                        mainWindow.showGeoView()
+                    }
+                }
+            }
+
+            SubMenuButton {
                 objectName: "toolbar_viewAnalyze"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true

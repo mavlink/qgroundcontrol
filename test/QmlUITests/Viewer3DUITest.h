@@ -1,7 +1,5 @@
 #pragma once
 
-#include <optional>
-
 #include "QmlUITestBase.h"
 
 /// UI test that boots the full QML UI with a PX4 MockLink vehicle, opens the
@@ -15,7 +13,4 @@ class Viewer3DUITest : public QmlUITestBase
 private slots:
     void _test3DViewShowsVehicle();
     void _test3DViewCameraGestures();
-
-private:
-    std::optional<bool> _expectSoftwareBackendWarnings();
 };
