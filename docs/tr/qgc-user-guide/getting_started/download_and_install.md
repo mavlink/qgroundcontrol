@@ -23,7 +23,7 @@ Supported versions: Windows 10 (1809 or later), Windows 11:
 1. Download the installer:
    - [x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-AMD64.exe)
    - [Arm64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-ARM64.exe)
-2. exe'ye çift tıklayın.
+2. Double-click the executable to launch the installer.
 
 :::info
 Windows kurulum programı 3 kısayol oluşturur: **QGroundControl**, **GPU Compatibility Mode**, **GPU Safe Mode**.
@@ -40,10 +40,11 @@ Supported versions: macOS 13 (Ventura) or later:
 <!-- usually based on Qt macOS dependency -->
 
 1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg).
-2. .dmg dosyasına çift tıklayın, ardından çıkan ekranda _QGroundControl_'ü _Application_ dosyasına sürükleyin.
+2. Double-click the .dmg file to mount it. In the window that opens, drag the _QGroundControl_ icon onto the _Applications_ folder shortcut shown next to it.
 
 :::info
-QGroundControl continues to not be signed. You will not to allow permission for it to install based on your macOS version.
+The download is a universal binary that runs natively on both Apple Silicon and Intel Macs.
+Official builds are signed and notarized, so no Gatekeeper security overrides are needed to run the app.
 :::
 
 ## Ubuntu Linux {#ubuntu}
