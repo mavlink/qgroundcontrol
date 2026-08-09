@@ -61,7 +61,7 @@ Item {
                 id:                     gimbalIdLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 font.pointSize:         ScreenTools.smallFontPointSize
-                text:                   activeGimbal ? activeGimbal.deviceId.rawValue : ""
+                text:                   activeGimbal ? (activeGimbal.managerCompid.valueString + "-" + activeGimbal.deviceId.valueString) : ""
                 color:                  qgcPal.text
                 visible:                multiGimbalSetup
             }
@@ -141,7 +141,7 @@ Item {
                         let activeIndex = -1
                         for (var i = 0; i < gimbals.count; i++) {
                             var gimbal = gimbals.get(i)
-                            gimbalModel.push(qsTr("Gimbal %1").arg(gimbal.deviceId.valueString))
+                            gimbalModel.push(qsTr("Gimbal %1-%2").arg(gimbal.managerCompid.valueString).arg(gimbal.deviceId.valueString))
                             if (gimbal === activeGimbal) {
                                 activeIndex = i
                             }
