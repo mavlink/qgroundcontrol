@@ -93,10 +93,14 @@ private:
 
     void _requestGimbalInformation(uint8_t compid);
     static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+    static void _requestDeviceInformationResultHandler(
+        void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
+        const mavlink_message_t& message);
     void _handleHeartbeat(const mavlink_message_t &message);
     void _handleGimbalManagerInformation(const mavlink_message_t &message);
     void _handleGimbalManagerStatus(const mavlink_message_t &message);
     void _handleGimbalDeviceAttitudeStatus(const mavlink_message_t &message);
+    void _handleGimbalDeviceInformation(const mavlink_message_t& message);
     void _checkComplete(Gimbal &gimbal, GimbalPairId pairId);
     bool _tryGetGimbalControl();
     bool _yawInVehicleFrame(uint32_t flags);

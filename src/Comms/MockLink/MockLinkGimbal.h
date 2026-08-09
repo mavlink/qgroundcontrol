@@ -115,7 +115,7 @@ private:
     /// @return true if the message interval was for a gimbal message
     bool _handleSetMessageInterval(const mavlink_command_long_t &request);
 
-    /// Handle MAV_CMD_REQUEST_MESSAGE for GIMBAL_MANAGER_INFORMATION.
+    /// Handle MAV_CMD_REQUEST_MESSAGE for GIMBAL_MANAGER_INFORMATION and GIMBAL_DEVICE_INFORMATION.
     /// @return true if the request was handled
     bool _handleRequestMessage(const mavlink_command_long_t &request);
 
@@ -135,6 +135,7 @@ private:
     void _sendGimbalDeviceAttitudeStatus(uint8_t sourceCompid, uint8_t deviceIdField);
     void _sendGimbalManagerInformation();
     void _sendGimbalManagerInformation(uint8_t deviceIdField);
+    void _sendGimbalDeviceInformation();
     void _sendCommandAck(uint16_t command, uint8_t result, uint8_t sourceCompId);
 
     /// Applies one MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE sysid/compid pair; -3 releases only when the sender owns the pair
@@ -148,6 +149,8 @@ private:
     uint8_t _attitudeDeviceIdField() const { return (_gimbalDeviceId <= 6) ? _gimbalDeviceId : 0; }
 
     static constexpr int kDefaultIntervalUs = 1000000; // 1 Hz default
+    static constexpr const char* kVendorName = "MockVendor";
+    static constexpr const char* kModelName = "MockGimbal";
 
     MockLink *_mockLink = nullptr;
     const uint8_t _gimbalDeviceId = MAV_COMP_ID_GIMBAL;

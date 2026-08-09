@@ -21,6 +21,7 @@ private slots:
     void _testManagerInformationUnavailable();
     void _testStatusBeforeInformation();
     void _testStatusIntervalRetryFallback();
+    void _testDeviceInformationName();
 
 private:
     /// Starts a PX4 MockLink with gimbal, letting the caller tweak the config and the mock gimbal before
