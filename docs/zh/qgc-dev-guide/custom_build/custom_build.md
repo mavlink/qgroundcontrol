@@ -5,7 +5,7 @@
 一些自定义构建的可能性
 
 - 全面打造你构建版本的品牌形象
-- 定义单个飞行堆栈以避免携带不必要的代码
+- Define a single flight stack to simplify the user interface
 - 实现您自己的自动化和固件插件覆盖
 - 实现您自己的相机管理器和插件覆盖
 - 实现您自己的 QtQuick 界面模块
@@ -20,6 +20,15 @@ QGC 既为任何支持 Mavlink 的飞行器提供通用支持，又为 PX4 Pro �
 QGC 中有一个插件架构允许创建此自定义构建。 它们可以在 QGCCorePlugin.h, FirmwarePlugin.h 和 AutoPilotPlugin.h 关联的类中找到。 要创建一个自定义构建，您要创建标准插件的子类，覆盖适合您使用的一组方法。
 
 还有一个允许您覆盖资源的机制，以便您可以更改QGC 中较小的视觉元素。
+
+## Single Firmware Support
+
+A custom build can restrict the firmwares QGC exposes to the user by disabling the standard firmware plugin factories in its `CustomOverrides.cmake`:
+
+- `QGC_DISABLE_APM_PLUGIN_FACTORY` - Don't register the standard ArduPilot plugin factory
+- `QGC_DISABLE_PX4_PLUGIN_FACTORY` - Don't register the standard PX4 plugin factory
+
+All firmware plugin code is always compiled into the build. Disabling a factory only removes the firmware from the set returned by `FirmwarePluginManager::supportedFirmwareClasses()`, and the UI adapts at runtime: firmware-specific settings, pickers and pages are hidden for unsupported firmwares. From QML this is available as `QGroundControl.apmFirmwareSupported` and `QGroundControl.px4ProFirmwareSupported`, which you can use in your own custom UI as well. A custom build which implements its own `FirmwarePluginFactory` (see the custom example's PX4-based factory) determines the supported set through the firmware classes its factory reports from `FirmwarePluginFactory::supportedFirmwareClasses()`.
 
 “高级模式”的概念也是QGC的内部概念。 标准的 QGC 构建总是在高级模式下运行。 自定义构建总是以常规/非高级模式开始。 在构建版本中有一个更简便的开启高级模式的方法，即快速连续点击飞行视图按钮5次。 如果您在自定义构建中进行此操作，您将被警告进入高级模式。 这里的理念是将普通用户不应接触到的内容隐藏在高级模式之后。 例如，商业载具不需要进入面向DIY安装的大多数安装页面。 所以自定义构建可以隐藏它。 自定义示例代码显示了如何做到这一点。
 

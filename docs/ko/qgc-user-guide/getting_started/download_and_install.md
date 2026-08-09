@@ -23,7 +23,7 @@ Supported versions: Windows 10 (1809 or later), Windows 11:
 1. Download the installer:
    - [x86_64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-AMD64.exe)
    - [Arm64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-installer-ARM64.exe)
-2. 다운로드한 설치 파일을 더블 클릭하여 프로그램을 실행합니다.
+2. Double-click the executable to launch the installer.
 
 :::info
 윈도우용 설치 프로그램은 **QGroundControl**, **GPU 호환 모드** 및 **GPU 안전 모드**의 3가지 바로 가기를 생성합니다.
@@ -40,10 +40,11 @@ Supported versions: macOS 13 (Ventura) or later:
 <!-- usually based on Qt macOS dependency -->
 
 1. Download [QGroundControl.dmg](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl.dmg).
-2. 다운로드한 dmg 파일을 더블 클릭하여 마운트하여, _QGroundControl_ 애플리케이션을 _Application_ 폴더로 드래그합니다.
+2. Double-click the .dmg file to mount it. In the window that opens, drag the _QGroundControl_ icon onto the _Applications_ folder shortcut shown next to it.
 
 :::info
-QGroundControl continues to not be signed. You will not to allow permission for it to install based on your macOS version.
+The download is a universal binary that runs natively on both Apple Silicon and Intel Macs.
+Official builds are signed and notarized, so no Gatekeeper security overrides are needed to run the app.
 :::
 
 ## 우분투 리눅스 {#ubuntu}
