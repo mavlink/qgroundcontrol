@@ -1,16 +1,19 @@
 #include "GimbalController.h"
+
+#include <cmath>
+#include <cstring>
+
+#include "Gimbal.h"
 #include "GimbalControllerSettings.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterManager.h"
+#include "QGCCameraManager.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include <cmath>
-#include "Gimbal.h"
-#include "QGCCameraManager.h"
 
 QGC_LOGGING_CATEGORY(GimbalControllerLog, "Gimbal.GimbalController")
 
@@ -70,6 +73,9 @@ void GimbalController::_mavlinkMessageReceived(const mavlink_message_t &message)
         break;
     case MAVLINK_MSG_ID_GIMBAL_DEVICE_ATTITUDE_STATUS:
         _handleGimbalDeviceAttitudeStatus(message);
+        break;
+    case MAVLINK_MSG_ID_GIMBAL_DEVICE_INFORMATION:
+        _handleGimbalDeviceInformation(message);
         break;
     default:
         break;
@@ -291,6 +297,52 @@ void GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t
     _checkComplete(*gimbal, pairId);
 }
 
+void GimbalController::_handleGimbalDeviceInformation(const mavlink_message_t& message)
+{
+    mavlink_gimbal_device_information_t information{};
+    mavlink_msg_gimbal_device_information_decode(&message, &information);
+
+    // Build a human-readable name: prefer the user-set custom name, otherwise
+    // combine vendor and model. The char arrays are not guaranteed null-terminated.
+    const auto toString = [](const char* field, size_t size) {
+        return QString::fromLatin1(field, static_cast<int>(strnlen(field, size))).trimmed();
+    };
+    QString name = toString(information.custom_name, sizeof(information.custom_name));
+    if (name.isEmpty()) {
+        const QString vendor = toString(information.vendor_name, sizeof(information.vendor_name));
+        const QString model = toString(information.model_name, sizeof(information.model_name));
+        name = QStringLiteral("%1 %2").arg(vendor, model).trimmed();
+    }
+
+    if (name.isEmpty()) {
+        return;
+    }
+
+    // Match to the gimbal. If gimbal_device_id is 1-6 the manager and device
+    // share this component id, so the pair is {compid, gimbal_device_id}.
+    // Otherwise the device is its own component and its compid is the device id.
+    Gimbal* gimbal = nullptr;
+    if (information.gimbal_device_id != 0) {
+        const auto it = _potentialGimbals.find(GimbalPairId{message.compid, information.gimbal_device_id});
+        if (it != _potentialGimbals.constEnd()) {
+            gimbal = it.value();
+        }
+    } else {
+        for (Gimbal* const candidate : _potentialGimbals) {
+            if (candidate->deviceId()->rawValue().toUInt() == message.compid) {
+                gimbal = candidate;
+                break;
+            }
+        }
+    }
+
+    if (gimbal) {
+        gimbal->setDeviceName(name);
+        gimbal->_receivedGimbalDeviceInformation = true;
+        qCDebug(GimbalControllerLog) << "gimbal device name:" << name << "for compid:" << message.compid;
+    }
+}
+
 void GimbalController::_requestGimbalInformation(uint8_t compid)
 {
     qCDebug(GimbalControllerLog) << "_requestGimbalInformation(" << compid << ")";
@@ -324,6 +376,21 @@ void GimbalController::_requestMessageResultHandler(void* resultHandlerData, MAV
     // failures are retried from _checkComplete, so just log here.
     if (result != MAV_RESULT_ACCEPTED) {
         qCDebug(GimbalControllerLog) << "GIMBAL_MANAGER_INFORMATION request failed - result:" << result << "failureCode:" << failureCode;
+    }
+}
+
+void GimbalController::_requestDeviceInformationResultHandler(
+    void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
+    const mavlink_message_t& message)
+{
+    Q_UNUSED(resultHandlerData);
+    Q_UNUSED(message);
+
+    // Success is handled by the normal GIMBAL_DEVICE_INFORMATION message dispatch. The name is
+    // optional, so on failure we keep showing the IDs.
+    if (result != MAV_RESULT_ACCEPTED) {
+        qCDebug(GimbalControllerLog) << "GIMBAL_DEVICE_INFORMATION request failed - result:" << result
+                                     << "failureCode:" << failureCode;
     }
 }
 
@@ -379,6 +446,21 @@ void GimbalController::_checkComplete(Gimbal &gimbal, GimbalPairId pairId)
     }
 
     gimbal._isComplete = true;
+
+    // Now that discovery is done, make a best-effort request for the gimbal
+    // device information, which carries the vendor/model/custom name.
+    // If it's never answered (e.g. the SITL gimbal sends empty names),
+    // we simply fall back to showing the IDs.
+    if (pairId.deviceId != 0) {
+        uint8_t gimbalDeviceCompid = pairId.deviceId;
+        // If the device ID is 1-6, the device shares the manager's component id.
+        if (gimbalDeviceCompid <= 6) {
+            gimbalDeviceCompid = pairId.managerCompid;
+        }
+        // Use requestMessage so it serializes with other request-message users targeting this component.
+        _vehicle->requestMessage(_requestDeviceInformationResultHandler, nullptr, gimbalDeviceCompid,
+                                 MAVLINK_MSG_ID_GIMBAL_DEVICE_INFORMATION);
+    }
 
     // If there is no current active gimbal, set this one as active
     if (!_activeGimbal) {

@@ -73,6 +73,18 @@ MockLinkGimbal* GimbalControllerDiscoveryTest::mockGimbal() const
     return _mockLink ? _mockLink->mockLinkGimbal() : nullptr;
 }
 
+void GimbalControllerDiscoveryTest::_testDeviceInformationName()
+{
+    _startGimbalMockLink(nullptr, nullptr);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY_TRUE_WAIT(activeGimbal() != nullptr, TestTimeout::longMs());
+    // The name comes from GIMBAL_DEVICE_INFORMATION, which is requested once discovery completes
+    QVERIFY_TRUE_WAIT(activeGimbal()->deviceName() == QStringLiteral("MockVendor MockGimbal"), TestTimeout::longMs());
+}
+
 void GimbalControllerDiscoveryTest::_testAutopilotAttachedGimbal()
 {
     // Device ids 1-6 denote a gimbal without its own MAVLink component; all traffic comes from the manager

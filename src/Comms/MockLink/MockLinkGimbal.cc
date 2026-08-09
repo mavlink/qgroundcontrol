@@ -93,6 +93,11 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
         return false;
 
     case MAV_CMD_REQUEST_MESSAGE: {
+        if (static_cast<int>(request.param1) == MAVLINK_MSG_ID_GIMBAL_DEVICE_INFORMATION) {
+            _sendCommandAck(request.command, MAV_RESULT_ACCEPTED, request.target_component);
+            _handleRequestMessage(request);
+            return true;
+        }
         if (static_cast<int>(request.param1) != MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION) {
             return false;
         }
@@ -134,6 +139,33 @@ bool MockLinkGimbal::handleMavlinkMessage(const mavlink_message_t &msg)
     default:
         return false;
     }
+}
+
+void MockLinkGimbal::_sendGimbalDeviceInformation()
+{
+    qCDebug(MockLinkGimbalLog) << "Sending GIMBAL_DEVICE_INFORMATION - vendor:" << kVendorName << "model:" << kModelName
+                               << "deviceId:" << _attitudeDeviceIdField();
+
+    // Packer copies the full fixed-width fields, so short literals would read out of bounds
+    char vendorName[MAVLINK_MSG_GIMBAL_DEVICE_INFORMATION_FIELD_VENDOR_NAME_LEN + 1] = {};
+    char modelName[MAVLINK_MSG_GIMBAL_DEVICE_INFORMATION_FIELD_MODEL_NAME_LEN + 1] = {};
+    char customName[MAVLINK_MSG_GIMBAL_DEVICE_INFORMATION_FIELD_CUSTOM_NAME_LEN + 1] = {};
+    (void) strncpy(vendorName, kVendorName, MAVLINK_MSG_GIMBAL_DEVICE_INFORMATION_FIELD_VENDOR_NAME_LEN);
+    (void) strncpy(modelName, kModelName, MAVLINK_MSG_GIMBAL_DEVICE_INFORMATION_FIELD_MODEL_NAME_LEN);
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_gimbal_device_information_pack_chan(_mockLink->vehicleId(), _attitudeSourceCompid(),
+                                                           _mockLink->outgoingMavlinkChannel(), &msg,
+                                                           0,   // time_boot_ms
+                                                           vendorName, modelName, customName,
+                                                           0,   // firmware_version
+                                                           0,   // hardware_version
+                                                           0,   // uid
+                                                           0,   // cap_flags
+                                                           0,   // custom_cap_flags
+                                                           -45, 45, -45, 45, -180, 180, _attitudeDeviceIdField(),
+                                                           0);  // cap_flags2
+    _mockLink->respondWithMavlinkMessage(msg);
 }
 
 void MockLinkGimbal::_sendCommandAck(uint16_t command, uint8_t result, uint8_t sourceCompId)
@@ -208,6 +240,12 @@ bool MockLinkGimbal::_handleRequestMessage(const mavlink_command_long_t &request
     if (msgId == MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION) {
         qCDebug(MockLinkGimbalLog) << "REQUEST_MESSAGE -" << QString("%1(%2)").arg(msgName).arg(msgId);
         _sendGimbalManagerInformation();
+        return true;
+    }
+
+    if (msgId == MAVLINK_MSG_ID_GIMBAL_DEVICE_INFORMATION) {
+        qCDebug(MockLinkGimbalLog) << "REQUEST_MESSAGE -" << QString("%1(%2)").arg(msgName).arg(msgId);
+        _sendGimbalDeviceInformation();
         return true;
     }
 

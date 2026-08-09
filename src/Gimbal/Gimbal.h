@@ -15,6 +15,7 @@ class Gimbal : public FactGroup
     Q_PROPERTY(Fact     *deltaYaw               READ deltaYaw                   CONSTANT)
     Q_PROPERTY(Fact     *deviceId               READ deviceId                   CONSTANT)
     Q_PROPERTY(Fact     *managerCompid          READ managerCompid              CONSTANT)
+    Q_PROPERTY(QString deviceName READ deviceName NOTIFY deviceNameChanged)
     Q_PROPERTY(float    pitchRate               READ pitchRate                  NOTIFY pitchRateChanged)
     Q_PROPERTY(float    yawRate                 READ yawRate                    NOTIFY yawRateChanged)
     Q_PROPERTY(bool     yawLock                 READ yawLock                    NOTIFY yawLockChanged)
@@ -40,6 +41,8 @@ public:
     Fact *deviceId() { return &_deviceIdFact; }
     Fact *managerCompid() { return &_managerCompidFact; }
 
+    QString deviceName() const { return _deviceName; }
+
     float pitchRate() const { return _pitchRate; }
     float yawRate() const { return _yawRate; }
     bool yawLock() const { return _yawLock; }
@@ -54,6 +57,14 @@ public:
     void setDeltaYaw(float delta) { deltaYaw()->setRawValue(delta); }
     void setDeviceId(uint id) { deviceId()->setRawValue(id); }
     void setManagerCompid(uint id) { managerCompid()->setRawValue(id); }
+
+    void setDeviceName(const QString& name)
+    {
+        if (name != _deviceName) {
+            _deviceName = name;
+            emit deviceNameChanged();
+        }
+    }
 
     void setPitchRate(float pitchRate) { if (pitchRate != _pitchRate) { _pitchRate = pitchRate; emit pitchRateChanged(); } }
     void setYawRate(float yawRate) { if (yawRate != _yawRate) { _yawRate = yawRate; emit yawRateChanged(); } }
@@ -74,6 +85,7 @@ signals:
     void gimbalHaveControlChanged();
     void gimbalOthersHaveControlChanged();
     void capabilityFlagsChanged();
+    void deviceNameChanged();
 
 private:
     void _initFacts();
@@ -87,6 +99,7 @@ private:
     bool _receivedGimbalDeviceAttitudeStatus = false;
     bool _deltaYawValid = false;
     bool _yawFrameFlagsInvalid = false;
+    bool _receivedGimbalDeviceInformation = false;
     bool _isComplete = false;
     bool _neutral = false;
     uint32_t _capabilityFlags = 0; // GIMBAL_MANAGER_CAP_FLAGS
@@ -98,6 +111,8 @@ private:
     Fact _deltaYawFact = Fact(0, QStringLiteral("gimbalDeltaYaw"), FactMetaData::valueTypeFloat); ///< Gimbal's own vehicle-heading estimate, NaN when not supplied
     Fact _deviceIdFact = Fact(0, QStringLiteral("deviceId"), FactMetaData::valueTypeUint8); ///< Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
     Fact _managerCompidFact = Fact(0, QStringLiteral("managerCompid"), FactMetaData::valueTypeUint8);
+
+    QString _deviceName;
 
     float _pitchRate = 0.f;
     float _yawRate = 0.f;
