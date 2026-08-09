@@ -39,17 +39,22 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     message(STATUS "Using GCC coverage (gcov/lcov)")
-    # Scope coverage flags to the QGC target only. Global add_compile_options
+    # Scope coverage flags to first-party targets only. Global add_compile_options
     # would leak --coverage into CPM third-party static libraries, injecting
     # __gcov_* symbols that cause linker errors.
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE --coverage -O0 -g)
+    # Counter updates are deliberately non-atomic: atomic updates slow hot
+    # threaded paths enough to break timing-sensitive tests; the occasional
+    # racy negative count is tolerated by gcovr (see negative_hits below).
+    set(_QGC_COVERAGE_COMPILE_FLAGS --coverage -O0 -g)
     target_link_options(${CMAKE_PROJECT_NAME} PRIVATE --coverage)
     set(GCOVR_GCOV_EXECUTABLE gcov)
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    message(STATUS "Using Clang source-based coverage (llvm-cov)")
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -fprofile-instr-generate -fcoverage-mapping -O0 -g)
-    target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -fprofile-instr-generate)
+    message(STATUS "Using Clang gcov-style coverage (llvm-cov gcov)")
+    # gcov-style instrumentation (not -fprofile-instr-generate): gcovr can only
+    # read gcov-format data, which "llvm-cov gcov" converts.
+    set(_QGC_COVERAGE_COMPILE_FLAGS --coverage -O0 -g)
+    target_link_options(${CMAKE_PROJECT_NAME} PRIVATE --coverage)
 
     find_program(LLVM_COV_PATH llvm-cov)
     if(LLVM_COV_PATH)
@@ -64,6 +69,35 @@ else()
     message(WARNING "QGC: Code coverage not supported for compiler: ${CMAKE_CXX_COMPILER_ID}")
     return()
 endif()
+
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE ${_QGC_COVERAGE_COMPILE_FLAGS})
+
+# First-party code also lives in separate library targets under src/ (QML
+# modules such as PlanViewModule, Viewer3DModule, ...), which the main-target
+# flags above do not reach — without instrumentation their sources silently
+# report no coverage. Those targets do not exist yet when this module is
+# included, so apply the flags in a deferred call at the end of configuration.
+# Walking only src/ keeps the flags out of third-party libraries.
+function(_qgc_coverage_collect_targets out_var dir)
+    get_property(dir_targets DIRECTORY "${dir}" PROPERTY BUILDSYSTEM_TARGETS)
+    get_property(subdirs DIRECTORY "${dir}" PROPERTY SUBDIRECTORIES)
+    foreach(subdir IN LISTS subdirs)
+        _qgc_coverage_collect_targets(sub_targets "${subdir}")
+        list(APPEND dir_targets ${sub_targets})
+    endforeach()
+    set(${out_var} "${dir_targets}" PARENT_SCOPE)
+endfunction()
+
+function(_qgc_coverage_instrument_src_targets)
+    _qgc_coverage_collect_targets(src_targets "${CMAKE_SOURCE_DIR}/src")
+    foreach(target IN LISTS src_targets)
+        get_target_property(target_type ${target} TYPE)
+        if(target_type MATCHES "^(STATIC_LIBRARY|OBJECT_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|EXECUTABLE)$")
+            target_compile_options(${target} PRIVATE ${_QGC_COVERAGE_COMPILE_FLAGS})
+        endif()
+    endforeach()
+endfunction()
+cmake_language(DEFER DIRECTORY ${CMAKE_SOURCE_DIR} CALL _qgc_coverage_instrument_src_targets)
 
 find_program(GCOVR_EXECUTABLE gcovr)
 
@@ -83,6 +117,9 @@ if(GCOVR_EXECUTABLE)
         --exclude ".*_autogen.*"
         --exclude ".*/cpm_modules/.*"
         --exclude ".*/_deps/.*"
+        # Non-atomic profile counters race in threaded code and can go
+        # negative; warn instead of aborting the report
+        --gcov-ignore-parse-errors negative_hits.warn_once_per_file
         --print-summary
     )
 

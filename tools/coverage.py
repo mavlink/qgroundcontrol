@@ -149,7 +149,7 @@ def generate_report(
     log_info("Generating coverage report...")
     result = run_captured(
         ["cmake", "--build", str(build_dir), "--target", "coverage-report"],
-        check=True,
+        check=False,
     )
     if result.stdout:
         print(result.stdout, end="")
@@ -157,6 +157,8 @@ def generate_report(
         print(result.stderr, end="", file=sys.stderr)
     if log_file is not None:
         log_file.write_text((result.stdout or "") + (result.stderr or ""), encoding="utf-8")
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, result.args)
     print()
     log_ok("Coverage report generated")
     log_info(f"  XML:  {build_dir / 'coverage.xml'}")
