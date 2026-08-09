@@ -34,6 +34,7 @@ private slots:
     // Axis reading tests
     void _readAxisValuesTest();
     void _axisRangeTest();
+    void _axisUpdateDueTest();
 
     // Button reading tests
     void _readButtonStatesTest();
