@@ -156,7 +156,7 @@ repos:
         # install of the bare module fails and aborts the whole pre-commit run before any hook
         # fires.
         additional_dependencies:
-          - 'github.com/errata-ai/vale/v3/cmd/vale@v3.14.2'
+          - 'github.com/errata-ai/vale/v3/cmd/vale@v3.15.1'
         entry: vale sync
         files: ^(docs/|\.vale\.ini$)
         pass_filenames: false
