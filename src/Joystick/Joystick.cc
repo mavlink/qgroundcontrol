@@ -935,7 +935,7 @@ uint16_t Joystick::_adjustRangeToRcOverridePwm(int value, const AxisCalibration_
 void Joystick::_handleAxis()
 {
     const int axisDelay = static_cast<int>(1000.0 / _joystickSettings.axisFrequencyHz()->rawValue().toDouble());
-    if (_axisElapsedTimer.elapsed() <= axisDelay) {
+    if (!_axisUpdateDue(_axisElapsedTimer.elapsed(), axisDelay)) {
         return;
     }
 
