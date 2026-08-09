@@ -1,0 +1,255 @@
+#include "SurfaceModel.h"
+
+#include <QtCore/QSet>
+#include <QtCore/QVarLengthArray>
+#include <QtCore/QtMath>
+#include <cmath>
+#include <queue>
+#include <vector>
+
+#include "GeoViewCamera.h"
+#include "HeightSource.h"
+
+namespace {
+
+QRectF patchRect(const TileMath::TileKey& key)
+{
+    const double span = TileMath::tileSpanAtZoom(key.zoom);
+    const QPointF minCorner = TileMath::tileMinCorner(key);
+    return QRectF(minCorner.x(), minCorner.y(), span, span);
+}
+
+}  // namespace
+
+SurfaceModel::SurfaceModel(GeoViewCamera* camera, HeightSource* heightSource, QObject* parent)
+    : QObject(parent), _camera(camera), _heightSource(heightSource)
+{
+    qRegisterMetaType<TileMath::TileKey>();
+
+    connect(_heightSource, &HeightSource::patchHeightsReady, this, &SurfaceModel::_heightsReady);
+    connect(_heightSource, &HeightSource::patchHeightsFailed, this, &SurfaceModel::_heightsFailed);
+
+    connect(_camera, &GeoViewCamera::centerChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoViewCamera::headingChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoViewCamera::tiltChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoViewCamera::distanceChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoViewCamera::viewportSizeChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoViewCamera::fieldOfViewChanged, this, &SurfaceModel::update);
+}
+
+void SurfaceModel::update()
+{
+    if (_camera->viewportSize().isEmpty()) {
+        return;  // keep the last valid set; transient 0-size viewports occur during layout
+    }
+
+    const QRectF visible = _visibleGroundRect();
+    const QPointF cameraGround = _camera->cameraGroundPosition();
+    const double cameraHeight = _camera->distance() * std::cos(qDegreesToRadians(_camera->tilt()));
+
+    const QList<TileMath::TileKey> desired = _desiredPatches(visible, cameraGround, cameraHeight);
+
+    QSet<TileMath::TileKey> desiredSet(desired.cbegin(), desired.cend());
+
+    // Drop patches no longer desired, cancelling in-flight height requests.
+    // Only pending patches own a tracked request: _heightsReady untracks the
+    // id when a patch becomes ready (guard also protects against a future
+    // source reusing ids).
+    for (auto it = _patches.begin(); it != _patches.end();) {
+        if (desiredSet.contains(it.key())) {
+            ++it;
+            continue;
+        }
+        if (!it.value().ready) {
+            _heightSource->cancelRequest(it.value().requestId);
+            _requestKeys.remove(it.value().requestId);
+        }
+        const TileMath::TileKey removedKey = it.key();
+        it = _patches.erase(it);
+        emit patchRemoved(removedKey);
+    }
+
+    // Request heights for newly desired patches
+    for (const TileMath::TileKey& key : desired) {
+        if (_patches.contains(key)) {
+            continue;
+        }
+        PatchData data;
+        data.requestId = _heightSource->requestPatchHeights(key, kGridSize);
+        _requestKeys.insert(data.requestId, key);
+        _patches.insert(key, data);
+        emit patchAdded(key);
+    }
+}
+
+QList<SurfaceModel::Patch> SurfaceModel::patches() const
+{
+    QList<Patch> result;
+    result.reserve(_patches.count());
+    for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
+        result.append(Patch{it.key(), it.value().heights, it.value().ready});
+    }
+    return result;
+}
+
+std::optional<SurfaceModel::Patch> SurfaceModel::patch(const TileMath::TileKey& key) const
+{
+    const auto it = _patches.constFind(key);
+    if (it == _patches.constEnd()) {
+        return std::nullopt;
+    }
+    return Patch{key, it.value().heights, it.value().ready};
+}
+
+int SurfaceModel::pendingCount() const
+{
+    int pending = 0;
+    for (const PatchData& data : _patches) {
+        if (!data.ready) {
+            pending++;
+        }
+    }
+    return pending;
+}
+
+QRectF SurfaceModel::_visibleGroundRect() const
+{
+    const QSizeF viewport = _camera->viewportSize();
+    const double maxRange = _camera->distance() * kMaxRangeMultiplier;
+
+    // Sample a screen grid; horizon misses are capped at maxRange. Accumulate
+    // extremes manually (zero-size QRectFs are "null" and united() ignores them).
+    double minX = 0;
+    double minY = 0;
+    double maxX = 0;
+    double maxY = 0;
+    bool first = true;
+    for (int row = 0; row < kVisibleSampleGrid; row++) {
+        for (int col = 0; col < kVisibleSampleGrid; col++) {
+            const QPointF screenPos((viewport.width() * col) / (kVisibleSampleGrid - 1),
+                                    (viewport.height() * row) / (kVisibleSampleGrid - 1));
+            const auto ground = _camera->groundPointCapped(screenPos, maxRange);
+            if (!ground) {
+                continue;
+            }
+            if (first) {
+                minX = maxX = ground->x();
+                minY = maxY = ground->y();
+                first = false;
+            } else {
+                minX = std::min(minX, ground->x());
+                maxX = std::max(maxX, ground->x());
+                minY = std::min(minY, ground->y());
+                maxY = std::max(maxY, ground->y());
+            }
+        }
+    }
+    if (first) {
+        return QRectF();
+    }
+
+    const double half = TileMath::worldSize() / 2.0;
+    return QRectF(QPointF(minX, minY), QPointF(maxX, maxY))
+        .intersected(QRectF(-half, -half, TileMath::worldSize(), TileMath::worldSize()));
+}
+
+double SurfaceModel::_projectedPixels(const TileMath::TileKey& key, const QPointF& cameraGround,
+                                      double cameraHeight) const
+{
+    const QRectF rect = patchRect(key);
+    const double span = rect.width();
+
+    // Distance from the camera to the closest point of the patch (heights ignored for LOD)
+    const double dx = std::max({rect.left() - cameraGround.x(), cameraGround.x() - rect.right(), 0.0});
+    const double dy = std::max({rect.top() - cameraGround.y(), cameraGround.y() - rect.bottom(), 0.0});
+    const double distance = std::hypot(std::hypot(dx, dy), cameraHeight);
+
+    const double metersPerPixel =
+        (2.0 * distance * std::tan(qDegreesToRadians(_camera->fieldOfView()) / 2.0)) / _camera->viewportSize().height();
+    return span / metersPerPixel;
+}
+
+QList<TileMath::TileKey> SurfaceModel::_desiredPatches(const QRectF& visible, const QPointF& cameraGround,
+                                                       double cameraHeight) const
+{
+    // Coverage-preserving refinement: repeatedly split the visible patch with
+    // the largest projected size while the budget allows. A split only ever
+    // replaces a patch with its visible children, so hitting kMaxPatches leaves
+    // the coarsest acceptable coverage instead of punching holes in it.
+    struct Entry
+    {
+        double pixels;
+        TileMath::TileKey key;
+    };
+
+    const auto lessPixels = [](const Entry& a, const Entry& b) { return a.pixels < b.pixels; };
+    std::priority_queue<Entry, std::vector<Entry>, decltype(lessPixels)> queue(lessPixels);
+
+    QList<TileMath::TileKey> desired;
+
+    const TileMath::TileKey root{0, 0, 0};
+    if (visible.intersects(patchRect(root))) {
+        queue.push(Entry{_projectedPixels(root, cameraGround, cameraHeight), root});
+    }
+
+    while (!queue.empty()) {
+        const Entry entry = queue.top();
+        if (entry.pixels <= kRefinePixelThreshold) {
+            break;  // largest is small enough, so every remaining patch is too
+        }
+        if (entry.key.zoom >= TileMath::kMaxZoom) {
+            queue.pop();
+            desired.append(entry.key);  // cannot refine further; keep as-is
+            continue;
+        }
+
+        QVarLengthArray<Entry, 4> children;
+        for (int childY = 0; childY < 2; childY++) {
+            for (int childX = 0; childX < 2; childX++) {
+                const TileMath::TileKey childKey{(entry.key.x * 2) + childX, (entry.key.y * 2) + childY,
+                                                 entry.key.zoom + 1};
+                if (visible.intersects(patchRect(childKey))) {
+                    children.append(Entry{_projectedPixels(childKey, cameraGround, cameraHeight), childKey});
+                }
+            }
+        }
+        const int totalAfterSplit = static_cast<int>(queue.size()) + desired.count() - 1 + children.count();
+        if (totalAfterSplit > kMaxPatches) {
+            break;  // budget exhausted: keep remaining patches coarse
+        }
+        queue.pop();
+        for (const Entry& child : children) {
+            queue.push(child);
+        }
+    }
+
+    while (!queue.empty()) {
+        desired.append(queue.top().key);
+        queue.pop();
+    }
+    return desired;
+}
+
+void SurfaceModel::_heightsReady(int requestId, const QList<float>& heights)
+{
+    const auto it = _requestKeys.constFind(requestId);
+    if (it == _requestKeys.constEnd()) {
+        return;  // patch was dropped before delivery
+    }
+    const TileMath::TileKey key = it.value();
+    _requestKeys.erase(it);
+
+    const auto patchIt = _patches.find(key);
+    if (patchIt == _patches.end()) {
+        return;
+    }
+    patchIt.value().heights = heights;
+    patchIt.value().ready = true;
+    emit patchReady(key);
+}
+
+void SurfaceModel::_heightsFailed(int requestId)
+{
+    // Degrade to flat ground (empty heights); a later cull/re-add retries naturally
+    _heightsReady(requestId, QList<float>());
+}

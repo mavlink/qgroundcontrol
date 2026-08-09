@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         AppSettingsTest.h
         AutoConnectSettingsTest.cc
         AutoConnectSettingsTest.h
+        GeoViewSettingsTest.cc
+        GeoViewSettingsTest.h
         RemoteIDSettingsTest.cc
         RemoteIDSettingsTest.h
 )
@@ -17,4 +19,5 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 add_qgc_test(AppSettingsTest LABELS Unit)
 add_qgc_test(AutoConnectSettingsTest LABELS Unit)
+add_qgc_test(GeoViewSettingsTest LABELS Unit)
 add_qgc_test(RemoteIDSettingsTest LABELS Unit)

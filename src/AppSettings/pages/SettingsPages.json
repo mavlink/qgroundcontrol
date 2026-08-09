@@ -22,6 +22,13 @@
             "visible": "QGroundControl.settingsManager.viewer3DSettings.userVisible"
         },
         {
+            "name": "GeoView",
+            "qml": "GeoViewSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/globe.svg",
+            "pageDefinition": "GeoView.SettingsUI.json",
+            "visible": "QGroundControl.settingsManager.geoViewSettings.userVisible"
+        },
+        {
             "name": "Plan View",
             "qml": "PlanViewSettings.qml",
             "icon": "qrc:/qmlimages/Plan.svg",
