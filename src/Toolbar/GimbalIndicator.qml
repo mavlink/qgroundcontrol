@@ -147,7 +147,9 @@ Item {
                         let activeIndex = -1
                         for (var i = 0; i < gimbals.count; i++) {
                             var gimbal = gimbals.get(i)
-                            gimbalModel.push(qsTr("Gimbal %1").arg(control.gimbalName(gimbal)))
+                            gimbalModel.push(gimbal.deviceName ?
+                                                 qsTr("%1 (%2)").arg(gimbal.deviceName).arg(control.gimbalName(gimbal)) :
+                                                 qsTr("Gimbal %1").arg(control.gimbalName(gimbal)))
                             if (gimbal === activeGimbal) {
                                 activeIndex = i
                             }
@@ -160,6 +162,13 @@ Item {
                     Connections {
                         target: gimbals
                         function onCountChanged(count) { _updateComboModel() }
+                    }
+                    Instantiator {
+                        model: gimbals
+                        delegate: Connections {
+                            target: object
+                            function onDeviceNameChanged() { gimbalSelectorCombo._updateComboModel() }
+                        }
                     }
                 }
             }
