@@ -174,6 +174,10 @@ Item {
 
                         Texture {
                             id: patchTexture
+                            // Clamp: default Repeat wrap bleeds opposite-edge texels
+                            // at UV 0/1, drawing 1-px seams on every patch border
+                            tilingModeHorizontal: Texture.ClampToEdge
+                            tilingModeVertical: Texture.ClampToEdge
                             textureData: PatchTextureData {
                                 image: patchDelegate.tileImage
                             }
