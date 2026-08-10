@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtLocation
 import QtPositioning
 import QtQuick.Dialogs
-import Qt.labs.animation
 
 import QGroundControl
 import QGroundControl.Controls
