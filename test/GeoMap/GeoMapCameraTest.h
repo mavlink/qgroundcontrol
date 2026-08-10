@@ -2,7 +2,7 @@
 
 #include "UnitTest.h"
 
-class GeoViewCameraTest : public UnitTest
+class GeoMapCameraTest : public UnitTest
 {
     Q_OBJECT
 

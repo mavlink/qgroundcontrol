@@ -12,7 +12,7 @@
 #include <QtGui/QColor>
 #include <QtQuick3D/QQuick3DTextureData>
 
-/// Procedural checkerboard texture for GeoView debug rendering: deterministic
+/// Procedural checkerboard texture for GeoMap debug rendering: deterministic
 /// content for visually (and pixel-)verifying patch placement and UV mapping
 /// without tile imagery or network access.
 class CheckerboardTextureData : public QQuick3DTextureData

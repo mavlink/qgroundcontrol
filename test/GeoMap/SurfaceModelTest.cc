@@ -4,7 +4,7 @@
 #include <QtTest/QSignalSpy>
 #include <algorithm>
 
-#include "GeoViewCamera.h"
+#include "GeoMapCamera.h"
 #include "HeightSource.h"
 #include "SurfaceModel.h"
 #include "TileMath.h"
@@ -99,7 +99,7 @@ private:
 
 void SurfaceModelTest::_noViewportNoPatches()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
@@ -109,7 +109,7 @@ void SurfaceModelTest::_noViewportNoPatches()
 
 void SurfaceModelTest::_unpositionedCameraNoPatches()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
@@ -124,12 +124,12 @@ void SurfaceModelTest::_unpositionedCameraNoPatches()
 
 void SurfaceModelTest::_coarseWhenFar()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
     camera.setViewportSize(kViewport);
-    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
 
     QCOMPARE_GT(model.patchCount(), 0);
     // From max distance the whole world fits the view: only low zoom levels
@@ -138,12 +138,12 @@ void SurfaceModelTest::_coarseWhenFar()
 
 void SurfaceModelTest::_refinesWhenNear()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
     camera.setViewportSize(kViewport);
-    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
     const int farMaxZoom = maxZoomOf(model.patches());
 
     camera.lookAt(kCenter, 0, 0, 2000);
@@ -155,13 +155,13 @@ void SurfaceModelTest::_refinesWhenNear()
 
 void SurfaceModelTest::_patchCountBounded()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
     camera.setViewportSize(kViewport);
-    for (double distance : {50.0, 2000.0, 100000.0, GeoViewCamera::kMaxDistance}) {
-        for (double tilt : {0.0, 45.0, GeoViewCamera::kMaxTilt}) {
+    for (double distance : {50.0, 2000.0, 100000.0, GeoMapCamera::kMaxDistance}) {
+        for (double tilt : {0.0, 45.0, GeoMapCamera::kMaxTilt}) {
             camera.lookAt(kCenter, 30, tilt, distance);
             QCOMPARE_LE(model.patchCount(), SurfaceModel::kMaxPatches);
         }
@@ -170,7 +170,7 @@ void SurfaceModelTest::_patchCountBounded()
 
 void SurfaceModelTest::_budgetExhaustedKeepsCoverage()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
@@ -218,7 +218,7 @@ void SurfaceModelTest::_budgetExhaustedKeepsCoverage()
 
 void SurfaceModelTest::_heightsArrive()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
     QSignalSpy readySpy(&model, &SurfaceModel::patchReady);
@@ -239,7 +239,7 @@ void SurfaceModelTest::_heightsArrive()
 
 void SurfaceModelTest::_diffOnMove()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
@@ -263,7 +263,7 @@ void SurfaceModelTest::_diffOnMove()
 
 void SurfaceModelTest::_noChurnOnIdenticalUpdate()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
@@ -279,7 +279,7 @@ void SurfaceModelTest::_noChurnOnIdenticalUpdate()
 
 void SurfaceModelTest::_cullsInvisibleRegion()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
@@ -298,7 +298,7 @@ void SurfaceModelTest::_cullsInvisibleRegion()
 
 void SurfaceModelTest::_failedHeightsDegradeToFlat()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FailingHeightSource source;
     SurfaceModel model(&camera, &source);
     model.setHeightRetryDelayMs(10);
@@ -317,7 +317,7 @@ void SurfaceModelTest::_failedHeightsDegradeToFlat()
 
 void SurfaceModelTest::_failedHeightsRetryAndRecover()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     RecoveringHeightSource source(1);  // first request fails, retry succeeds
     SurfaceModel model(&camera, &source);
     model.setHeightRetryDelayMs(10);
@@ -335,13 +335,13 @@ void SurfaceModelTest::_failedHeightsRetryAndRecover()
 
 void SurfaceModelTest::_degradedPatchesKeepRetiringCover()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     RecoveringHeightSource source(0);  // healthy backend first
     SurfaceModel model(&camera, &source);
     model.setHeightRetryDelayMs(10);
 
     camera.setViewportSize(kViewport);
-    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
     const int coarseMaxZoom = maxZoomOf(model.patches());
 
@@ -361,12 +361,12 @@ void SurfaceModelTest::_degradedPatchesKeepRetiringCover()
 
 void SurfaceModelTest::_keepsReadyPatchesDuringLodChurn()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
     camera.setViewportSize(kViewport);
-    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
     const int coarseMaxZoom = maxZoomOf(model.patches());
 
@@ -390,7 +390,7 @@ void SurfaceModelTest::_keepsReadyPatchesDuringLodChurn()
 
 void SurfaceModelTest::_degradedRetiringPatchesSwept()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     RecoveringHeightSource source(-1);  // backend down for good
     SurfaceModel model(&camera, &source);
     model.setHeightRetryDelayMs(10);
@@ -417,12 +417,12 @@ void SurfaceModelTest::_degradedRetiringPatchesSwept()
 
 void SurfaceModelTest::_pendingPatchesCoveredDuringLodChurn()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
 
     camera.setViewportSize(kViewport);
-    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     // Refine: every pending replacement overlaps a retained ready patch, so it
@@ -455,7 +455,7 @@ void SurfaceModelTest::_tallTerrainKeepsCameraTileResident()
     // and just behind the bottom screen edge, leaving a hole where that tall
     // terrain should render. Once heights arrive the model must re-cull
     // terrain-aware without any camera movement.
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     TallHeightSource source(500.0f);
     SurfaceModel model(&camera, &source);
 
@@ -487,7 +487,7 @@ void SurfaceModelTest::_cameraGroundTileResidentOverFlatTerrain()
     // with flat water everywhere visible) could never be discovered. The
     // visible region must therefore include the camera ground point even
     // when every resident patch is flat.
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 55, 400);
     const QPointF cameraGround = camera.cameraGroundPosition();

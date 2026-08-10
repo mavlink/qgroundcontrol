@@ -15,7 +15,7 @@
 
 #include "TileMath.h"
 
-/// Async source of per-patch terrain height grids for the GeoView surface mesh.
+/// Async source of per-patch terrain height grids for the GeoMap surface mesh.
 ///
 /// A patch is addressed by its slippy TileKey. A request returns the heights (meters)
 /// of the (gridSize+1) x (gridSize+1) vertex grid covering the patch, row-major from

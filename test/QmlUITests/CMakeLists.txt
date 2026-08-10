@@ -32,8 +32,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/AppCloseWarningUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewProximityRadarUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewProximityRadarUITest.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/GeoViewUITest.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/GeoViewUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewGeoUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewGeoUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.cc
@@ -80,4 +80,4 @@ if(LINUX)
     )
 endif()
 add_qgc_test(Viewer3DUITest LABELS Integration NoSanitizer StockUI TIMEOUT 120 ${_viewer3d_env_mod})
-add_qgc_test(GeoViewUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})
+add_qgc_test(FlyViewGeoUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})

@@ -1,5 +1,5 @@
 # ============================================================================
-# GeoView Module
+# GeoMap Module
 # Experimental custom 2D/3D map engine (preview feature)
 # ============================================================================
 
@@ -21,10 +21,10 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-qt_add_library(GeoViewModule STATIC)
+qt_add_library(GeoMapModule STATIC)
 
-qt_add_qml_module(GeoViewModule
-    URI QGroundControl.GeoView
+qt_add_qml_module(GeoMapModule
+    URI QGroundControl.GeoMap
     VERSION 1.0
     RESOURCE_PREFIX /qml
     IMPORTS
@@ -35,8 +35,8 @@ qt_add_qml_module(GeoViewModule
         CheckerboardTextureData.h
         GeoScene.cc
         GeoScene.h
-        GeoViewCamera.cc
-        GeoViewCamera.h
+        GeoMapCamera.cc
+        GeoMapCamera.h
         PatchGeometry.cc
         PatchGeometry.h
         PatchTextureData.cc
@@ -44,10 +44,10 @@ qt_add_qml_module(GeoViewModule
         SurfacePatchModel.cc
         SurfacePatchModel.h
     QML_FILES
-        GeoView.qml
+        GeoMap.qml
 )
 
-target_link_libraries(GeoViewModule
+target_link_libraries(GeoMapModule
     PUBLIC
         Qt6::Core
         Qt6::Gui
@@ -56,4 +56,4 @@ target_link_libraries(GeoViewModule
         Qt6::Quick3D
 )
 
-target_include_directories(GeoViewModule PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(GeoMapModule PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

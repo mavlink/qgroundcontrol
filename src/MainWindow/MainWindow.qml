@@ -9,7 +9,6 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
-import QGroundControl.GeoView
 import QGroundControl.PlanView
 import QGroundControl.Toolbar
 
@@ -349,7 +348,7 @@ ApplicationWindow {
         visible:        false
     }
 
-    GeoView {
+    FlyViewGeo {
         id:             geoView
         objectName:     "mainView_geo"
         anchors.fill:   parent

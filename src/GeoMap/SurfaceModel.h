@@ -17,7 +17,7 @@
 
 #include "TileMath.h"
 
-class GeoViewCamera;
+class GeoMapCamera;
 class HeightSource;
 
 /// Maintains the active set of surface mesh patches for the current camera view.
@@ -39,7 +39,7 @@ class SurfaceModel : public QObject
     Q_OBJECT
 
 public:
-    SurfaceModel(GeoViewCamera* camera, HeightSource* heightSource, QObject* parent = nullptr);
+    SurfaceModel(GeoMapCamera* camera, HeightSource* heightSource, QObject* parent = nullptr);
 
     static constexpr int kGridSize = 16;  ///< mesh cells per patch edge
     /// Budget for the desired patch set; refinement stays coarser rather than exceed
@@ -116,7 +116,7 @@ private:
     bool _overlapsPendingPatch(const TileMath::TileKey& key) const;
     bool _isCovered(const TileMath::TileKey& key, const PatchData& data) const;
 
-    GeoViewCamera* const _camera;
+    GeoMapCamera* const _camera;
     HeightSource* const _heightSource;
     QHash<TileMath::TileKey, PatchData> _patches;
     QHash<int, TileMath::TileKey> _requestKeys;

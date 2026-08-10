@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "GeoMapCamera.h"
 #include "GeoScene.h"
-#include "GeoViewCamera.h"
 #include "HeightSource.h"
 #include "SurfaceAnalysis.h"
 #include "SurfaceModel.h"
@@ -42,7 +42,7 @@ void SurfacePatchModel::setScene(GeoScene* scene)
     _rebuildSurfaceModel();
 }
 
-GeoViewCamera* SurfacePatchModel::_camera() const
+GeoMapCamera* SurfacePatchModel::_camera() const
 {
     return _scene ? _scene->camera() : nullptr;
 }
@@ -109,6 +109,9 @@ void SurfacePatchModel::_resetImagery()
 
 void SurfacePatchModel::_requestTileImage(const TileMath::TileKey& key)
 {
+    if (!_tileSource) {
+        return;
+    }
     const int requestId = _tileSource->requestTileImage(key);
     _imageRequestKey.insert(requestId, key);
     _imageRequestByKey.insert(key, requestId);
@@ -177,7 +180,7 @@ void SurfacePatchModel::_rebuildSurfaceModel()
     delete _heightSource;
     _heightSource = nullptr;
 
-    GeoViewCamera* const camera = _camera();
+    GeoMapCamera* const camera = _camera();
     if (camera) {
         if (_debugHills) {
             _heightSource = new DebugHeightSource(this);
@@ -225,7 +228,7 @@ int SurfacePatchModel::maxZoomLevel() const
 
 void SurfacePatchModel::analyzeSurface() const
 {
-    GeoViewCamera* const camera = _camera();
+    GeoMapCamera* const camera = _camera();
     if (!_surfaceModel || !camera) {
         qDebug() << "Surface analysis: no surface model active";
         return;
@@ -379,11 +382,9 @@ QImage SurfacePatchModel::_fallbackImage(const TileMath::TileKey& key) const
 QHash<int, QByteArray> SurfacePatchModel::roleNames() const
 {
     return {
-        {CenterXRole, "centerX"},     {SpanRole, "span"},
-        {CenterYRole, "centerY"},     {ZoomRole, "zoomLevel"},
-        {HeightsRole, "heights"},     {ReadyRole, "ready"},
-        {CoveredRole, "covered"},     {TileImageRole, "tileImage"},
-        {HasTileImageRole, "hasTileImage"},
+        {CenterXRole, "centerX"}, {SpanRole, "span"},           {CenterYRole, "centerY"},
+        {ZoomRole, "zoomLevel"},  {HeightsRole, "heights"},     {ReadyRole, "ready"},
+        {CoveredRole, "covered"}, {TileImageRole, "tileImage"}, {HasTileImageRole, "hasTileImage"},
     };
 }
 

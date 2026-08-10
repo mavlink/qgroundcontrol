@@ -43,7 +43,7 @@ add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
 add_subdirectory(FlyView)
 add_subdirectory(FlightMap)
-add_subdirectory(GeoView)
+add_subdirectory(GeoMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Gimbal)
 add_subdirectory(GPS)
@@ -139,7 +139,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         FirstRunPromptDialogsModule
         FlyViewModule
         FlightMapModule
-        GeoViewModule
+        GeoMapModule
         PlanViewModule
         QGroundControlControlsModule
         QGroundControlModule

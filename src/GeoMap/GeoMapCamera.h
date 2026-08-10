@@ -18,7 +18,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <optional>
 
-/// Camera pose model for the GeoView map engine.
+/// Camera pose model for the GeoMap engine.
 ///
 /// Owns the pose as (center, heading, tilt, distance) where center is a geographic
 /// coordinate on the ground plane. Implements cursor-anchored pan, orbit, rotate,
@@ -29,7 +29,7 @@
 /// Camera position convention (matches the Viewer3D orbit camera):
 ///   cameraPosition = center + distance * (sin(tilt)sin(heading), -sin(tilt)cos(heading), cos(tilt))
 /// tilt 0 = top-down, tilt kMaxTilt = most oblique 3D view. Angles in degrees.
-class GeoViewCamera : public QObject
+class GeoMapCamera : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -47,7 +47,7 @@ class GeoViewCamera : public QObject
     Q_PROPERTY(QQuaternion sceneRotation READ sceneRotation NOTIFY scenePoseChanged)
 
 public:
-    explicit GeoViewCamera(QObject* parent = nullptr);
+    explicit GeoMapCamera(QObject* parent = nullptr);
 
     /// Map mode: 2D locks tilt against gestures (the map stays top-down until
     /// the user explicitly switches to 3D). setTilt itself is not gated so the

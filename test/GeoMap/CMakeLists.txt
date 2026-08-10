@@ -1,6 +1,6 @@
 # ============================================================================
-# GeoView Unit Tests
-# Tests for the experimental GeoView map engine backend
+# GeoMap Unit Tests
+# Tests for the experimental GeoMap engine backend
 # ============================================================================
 
 target_sources(${CMAKE_PROJECT_NAME}
@@ -9,8 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         CheckerboardTextureDataTest.h
         GeoSceneTest.cc
         GeoSceneTest.h
-        GeoViewCameraTest.cc
-        GeoViewCameraTest.h
+        GeoMapCameraTest.cc
+        GeoMapCameraTest.h
         HeightSourceTest.cc
         HeightSourceTest.h
         PatchGeometryTest.cc
@@ -37,7 +37,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 add_qgc_test(CheckerboardTextureDataTest LABELS Unit)
 add_qgc_test(GeoSceneTest LABELS Unit)
-add_qgc_test(GeoViewCameraTest LABELS Unit)
+add_qgc_test(GeoMapCameraTest LABELS Unit)
 add_qgc_test(HeightSourceTest LABELS Unit)
 add_qgc_test(PatchGeometryTest LABELS Unit)
 add_qgc_test(PatchTextureDataTest LABELS Unit)

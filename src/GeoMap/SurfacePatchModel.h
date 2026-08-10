@@ -19,7 +19,7 @@
 #include "TileMath.h"
 
 class GeoScene;
-class GeoViewCamera;
+class GeoMapCamera;
 class HeightSource;
 class SurfaceModel;
 class TileImageSource;
@@ -125,7 +125,7 @@ private:
     void _notifyCoveredMayHaveChanged();
     QImage _fallbackImage(const TileMath::TileKey& key) const;
     bool _fallbackAvailable(const TileMath::TileKey& key) const;
-    GeoViewCamera* _camera() const;
+    GeoMapCamera* _camera() const;
 
     static constexpr int kMaxRetiredImages = 128;         ///< tiles kept after patch removal (fallback source)
     static constexpr int kMaxAncestorFallbackLevels = 8;  ///< how far up the quadtree fallback looks

@@ -11,12 +11,12 @@
 
 #include <cmath>
 
-#include "GeoViewCamera.h"
+#include "GeoMapCamera.h"
 #include "TileMath.h"
 
 GeoScene::GeoScene(QObject* parent) : QObject(parent) {}
 
-void GeoScene::setCamera(GeoViewCamera* camera)
+void GeoScene::setCamera(GeoMapCamera* camera)
 {
     if (camera == _camera) {
         return;
@@ -28,7 +28,7 @@ void GeoScene::setCamera(GeoViewCamera* camera)
     _originSet = false;  // new camera anchors fresh; a stale origin breaks float precision silently
 
     if (_camera) {
-        connect(_camera, &GeoViewCamera::centerChanged, this, &GeoScene::_maybeReanchor);
+        connect(_camera, &GeoMapCamera::centerChanged, this, &GeoScene::_maybeReanchor);
         connect(_camera, &QObject::destroyed, this, [this] {
             _camera = nullptr;
             _originSet = false;
