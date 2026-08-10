@@ -68,6 +68,25 @@ void GeoViewUITest::_testViewSwitchWhenEnabled()
     QTRY_VERIFY_WITH_TIMEOUT(!viewport->findChildren<QObject*>(QStringLiteral("geoViewPatchDelegate")).isEmpty(), 5000);
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoViewDebugOverlay")), "Debug overlay not visible");
 
+    // Tile imagery flows end-to-end: the model is wired to the flight map
+    // provider setting and every patch receives an image (the test tile
+    // generator serves placeholders on cache miss, so no network is involved)
+    auto* const patchModel = viewport->parentItem()->findChild<SurfacePatchModel*>(QStringLiteral("geoViewPatchModel"));
+    QVERIFY2(patchModel, "SurfacePatchModel not found");
+    QVERIFY2(!patchModel->mapType().isEmpty(), "Patch model not wired to a map provider");
+    const auto allPatchesImaged = [patchModel] {
+        if (patchModel->rowCount() == 0) {
+            return false;
+        }
+        for (int row = 0; row < patchModel->rowCount(); row++) {
+            if (!patchModel->data(patchModel->index(row), SurfacePatchModel::HasTileImageRole).toBool()) {
+                return false;
+            }
+        }
+        return true;
+    };
+    QTRY_VERIFY_WITH_TIMEOUT(allPatchesImaged(), 5000);
+
     // Scene camera node tracks the GeoViewCamera debug pose (overhead at 1500m,
     // identity rotation, origin anchored at the camera center)
     QObject* const sceneCamera = viewport->findChild<QObject*>(QStringLiteral("geoViewSceneCamera"));
@@ -270,8 +289,12 @@ void GeoViewUITest::_testModeToggleAndCompass()
     stopUI();
 }
 
-// The Hills dev toggle switches the height source (on by default): toggling
-// off flattens, toggling back on re-delivers non-flat heights
+// The debugHills dev override (settable from QML/C++ during development, no UI
+// affordance) swaps the terrain height source for analytic sin-hills: toggling
+// on delivers non-flat heights, toggling off flattens again. The test scene
+// sits outside the synthetic terrain regions, so the terrain source itself
+// delivers all-zero heights here (see TerrainHeightSourceTest for real
+// elevations).
 void GeoViewUITest::_testDebugHillsToggle()
 {
     Fact* const enabled = SettingsManager::instance()->geoViewSettings()->enabled();
@@ -306,21 +329,22 @@ void GeoViewUITest::_testDebugHillsToggle()
         return false;
     };
 
-    // Hills are on by default: non-flat heights from the start
-    QVERIFY(patchModel->debugHills());
-    QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingCount(), 0, 5000);
-    QTRY_VERIFY_WITH_TIMEOUT(anyNonZeroHeight(), 5000);
-
-    // Toggle off: flat source
-    QVERIFY(clickButton(QStringLiteral("geoViewHillsButton")));
+    // Terrain is the default: flat zero heights outside the synthetic regions
     QVERIFY(!patchModel->debugHills());
+    QVERIFY(patchModel->terrain());
     QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingCount(), 0, 5000);
     QVERIFY(!anyNonZeroHeight());
 
-    // Toggle back on: hills re-deliver
-    QVERIFY(clickButton(QStringLiteral("geoViewHillsButton")));
+    // Toggle hills on: non-flat heights
+    patchModel->setDebugHills(true);
     QVERIFY(patchModel->debugHills());
     QTRY_VERIFY_WITH_TIMEOUT(anyNonZeroHeight(), 5000);
+
+    // Toggle back off: terrain source flattens again
+    patchModel->setDebugHills(false);
+    QVERIFY(!patchModel->debugHills());
+    QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingCount(), 0, 5000);
+    QVERIFY(!anyNonZeroHeight());
 
     stopUI();
 }

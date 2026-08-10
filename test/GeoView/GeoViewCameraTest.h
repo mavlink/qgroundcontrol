@@ -8,6 +8,7 @@ class GeoViewCameraTest : public UnitTest
 
 private slots:
     void _defaults();
+    void _positionedOnExplicitCenter();
     void _clamps();
     void _fieldOfView();
     void _reset();
@@ -16,6 +17,7 @@ private slots:
     void _screenToGroundHorizonMiss();
     void _screenToGroundNoViewport();
     void _groundPointCapped();
+    void _worldToScreen();
     void _sceneUnitsPerPixel();
     void _panAnchorInvariant_data();
     void _panAnchorInvariant();

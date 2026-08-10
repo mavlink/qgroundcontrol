@@ -70,6 +70,11 @@ public:
     QGeoCoordinate center() const;
     void setCenter(const QGeoCoordinate& center);
 
+    /// False until the camera is explicitly positioned (setCenter/lookAt). The
+    /// construction-default pose is null island; consumers must not treat it as
+    /// a real location (e.g. by fetching terrain there).
+    bool isPositioned() const { return _positioned; }
+
     qreal heading() const { return _heading; }
 
     void setHeading(qreal heading);
@@ -162,7 +167,7 @@ public:
     QPointF cameraGroundPosition() const;
 
     /// World-space reference origin for scene coordinates (set by the renderer,
-    /// normally bound to SurfacePatchModel::sceneOrigin)
+    /// normally bound to GeoScene::sceneOrigin)
     QPointF sceneOrigin() const { return _sceneOrigin; }
 
     void setSceneOrigin(const QPointF& origin);
@@ -186,6 +191,11 @@ public:
     /// only when the viewport is not set.
     std::optional<QPointF> groundPointCapped(const QPointF& screenPos, double maxRange) const;
 
+    /// Projects a world-space point (mercator meters, z in scene units) to screen
+    /// pixels. Double precision throughout. Returns std::nullopt when the point is
+    /// at or behind the camera plane or the viewport is not set.
+    std::optional<QPointF> worldToScreen(const QPointF& worldGround, double worldZ = 0.0) const;
+
 signals:
     void centerChanged();
     void headingChanged();
@@ -205,6 +215,7 @@ private:
     static qreal _normalizedHeading(qreal heading);
 
     QPointF _centerWorld;  // mercator meters
+    bool _positioned = false;
     QPointF _sceneOrigin;  // mercator meters
     Mode _mode = Mode::Mode2D;
     qreal _heading = 0.0;

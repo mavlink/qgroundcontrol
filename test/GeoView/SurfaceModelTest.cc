@@ -1,5 +1,6 @@
 #include "SurfaceModelTest.h"
 
+#include <QtCore/QSet>
 #include <QtTest/QSignalSpy>
 #include <algorithm>
 
@@ -32,6 +33,41 @@ public:
     void cancelRequest(int requestId) override { Q_UNUSED(requestId); }
 };
 
+/// Fails the first failCount requests, then delivers flat zeros: a terrain
+/// backend recovering from transient fetch errors. -1 fails forever.
+class RecoveringHeightSource : public HeightSource
+{
+public:
+    explicit RecoveringHeightSource(int failCount, QObject* parent = nullptr)
+        : HeightSource(parent), _failuresRemaining(failCount)
+    {}
+
+    void setFailuresRemaining(int n) { _failuresRemaining = n; }
+
+    int requestPatchHeights(const TileMath::TileKey& key, int gridSize) override
+    {
+        Q_UNUSED(key);
+        const int requestId = _nextRequestId();
+        if (_failuresRemaining != 0) {
+            if (_failuresRemaining > 0) {
+                _failuresRemaining--;
+            }
+            QMetaObject::invokeMethod(
+                this, [this, requestId] { emit patchHeightsFailed(requestId); }, Qt::QueuedConnection);
+        } else {
+            const QList<float> heights((gridSize + 1) * (gridSize + 1), 0.0f);
+            QMetaObject::invokeMethod(
+                this, [this, requestId, heights] { emit patchHeightsReady(requestId, heights); }, Qt::QueuedConnection);
+        }
+        return requestId;
+    }
+
+    void cancelRequest(int requestId) override { Q_UNUSED(requestId); }
+
+private:
+    int _failuresRemaining = 0;
+};
+
 int maxZoomOf(const QList<SurfaceModel::Patch>& patches)
 {
     int maxZoom = 0;
@@ -51,6 +87,21 @@ void SurfaceModelTest::_noViewportNoPatches()
 
     model.update();
     QCOMPARE(model.patchCount(), 0);
+}
+
+void SurfaceModelTest::_unpositionedCameraNoPatches()
+{
+    GeoViewCamera camera;
+    FlatHeightSource source;
+    SurfaceModel model(&camera, &source);
+
+    // A sized viewport alone must not build patches: the camera still holds
+    // the null-island default pose (doomed terrain fetches would follow)
+    camera.setViewportSize(kViewport);
+    QCOMPARE(model.patchCount(), 0);
+
+    camera.setCenter(kCenter);
+    QCOMPARE_GT(model.patchCount(), 0);
 }
 
 void SurfaceModelTest::_coarseWhenFar()
@@ -232,6 +283,26 @@ void SurfaceModelTest::_failedHeightsDegradeToFlat()
     GeoViewCamera camera;
     FailingHeightSource source;
     SurfaceModel model(&camera, &source);
+    model.setHeightRetryDelayMs(10);
+
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, 2000);
+
+    // Every patch burns through its retries before degrading to flat
+    QCOMPARE_GT(model.patchCount(), 0);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        QVERIFY(patch.ready);
+        QVERIFY(patch.heights.isEmpty());  // empty = flat fallback
+    }
+}
+
+void SurfaceModelTest::_failedHeightsRetryAndRecover()
+{
+    GeoViewCamera camera;
+    RecoveringHeightSource source(1);  // first request fails, retry succeeds
+    SurfaceModel model(&camera, &source);
+    model.setHeightRetryDelayMs(10);
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
@@ -240,7 +311,122 @@ void SurfaceModelTest::_failedHeightsDegradeToFlat()
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
     for (const SurfaceModel::Patch& patch : model.patches()) {
         QVERIFY(patch.ready);
-        QVERIFY(patch.heights.isEmpty());  // empty = flat fallback
+        QVERIFY(!patch.heights.isEmpty());  // delivered heights, not the empty flat fallback
+    }
+}
+
+void SurfaceModelTest::_degradedPatchesKeepRetiringCover()
+{
+    GeoViewCamera camera;
+    RecoveringHeightSource source(0);  // healthy backend first
+    SurfaceModel model(&camera, &source);
+    model.setHeightRetryDelayMs(10);
+
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+    const int coarseMaxZoom = maxZoomOf(model.patches());
+
+    // Backend dies, then a refine replaces the ready coarse set: the fine
+    // patches exhaust their retries and degrade to flat, but the coarse
+    // real-height patches must keep covering instead of being swept
+    source.setFailuresRemaining(-1);
+    camera.lookAt(kCenter, 0, 0, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+
+    bool hasReadyCoarse = false;
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        hasReadyCoarse |= (patch.ready && !patch.heights.isEmpty() && (patch.key.zoom <= coarseMaxZoom));
+    }
+    QVERIFY(hasReadyCoarse);
+}
+
+void SurfaceModelTest::_keepsReadyPatchesDuringLodChurn()
+{
+    GeoViewCamera camera;
+    FlatHeightSource source;
+    SurfaceModel model(&camera, &source);
+
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+    const int coarseMaxZoom = maxZoomOf(model.patches());
+
+    // Refine: the coarse ready patches must keep covering the view (retiring)
+    // until the fine replacements have heights - no holes during LOD churn
+    camera.lookAt(kCenter, 0, 0, 2000);
+    QCOMPARE_GT(model.pendingCount(), 0);
+    bool hasReadyCoarse = false;
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        hasReadyCoarse |= (patch.ready && (patch.key.zoom <= coarseMaxZoom));
+    }
+    QVERIFY(hasReadyCoarse);
+
+    // Once the fine set is ready the retired coarse patches are swept
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        QVERIFY(patch.ready);
+        QCOMPARE_GT(patch.key.zoom, coarseMaxZoom);
+    }
+}
+
+void SurfaceModelTest::_degradedRetiringPatchesSwept()
+{
+    GeoViewCamera camera;
+    RecoveringHeightSource source(-1);  // backend down for good
+    SurfaceModel model(&camera, &source);
+    model.setHeightRetryDelayMs(10);
+
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);  // all degraded to flat
+
+    QSet<TileMath::TileKey> oldKeys;
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        oldKeys.insert(patch.key);
+    }
+
+    // Pan far away: the degraded patches become undesired and must be swept
+    // (a degraded flat fallback is not worth retaining as cover), otherwise
+    // movement after terrain failures grows the model without bound
+    camera.lookAt(QGeoCoordinate(40.0, -105.0), 0, 0, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        QVERIFY2(!oldKeys.contains(patch.key), "degraded retiring patch was never swept");
+    }
+}
+
+void SurfaceModelTest::_pendingPatchesCoveredDuringLodChurn()
+{
+    GeoViewCamera camera;
+    FlatHeightSource source;
+    SurfaceModel model(&camera, &source);
+
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+
+    // Refine: every pending replacement overlaps a retained ready patch, so it
+    // reports covered - renderers suppress it instead of drawing a flat
+    // placeholder that z-fights the retiring cover
+    camera.lookAt(kCenter, 0, 0, 2000);
+    QCOMPARE_GT(model.pendingCount(), 0);
+    int pendingCovered = 0;
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        if (patch.ready) {
+            QVERIFY(!patch.covered);
+        } else {
+            QVERIFY(patch.covered);
+            pendingCovered++;
+        }
+    }
+    QCOMPARE_GT(pendingCovered, 0);
+
+    // Once ready nothing is covered
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        QVERIFY(!patch.covered);
     }
 }
 

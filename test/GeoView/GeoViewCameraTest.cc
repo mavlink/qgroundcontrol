@@ -41,6 +41,19 @@ void GeoViewCameraTest::_defaults()
     QCOMPARE(camera.fieldOfView(), GeoViewCamera::kDefaultFieldOfView);
     QVERIFY(camera.isTopDown());
     QCOMPARE(camera.mode(), GeoViewCamera::Mode::Mode2D);
+    QVERIFY(!camera.isPositioned());
+}
+
+void GeoViewCameraTest::_positionedOnExplicitCenter()
+{
+    GeoViewCamera camera;
+    QSignalSpy centerSpy(&camera, &GeoViewCamera::centerChanged);
+
+    // Setting the center to the default location still counts as positioning
+    // and must announce it, so consumers gated on isPositioned wake up
+    camera.setCenter(QGeoCoordinate(0, 0));
+    QVERIFY(camera.isPositioned());
+    QCOMPARE(centerSpy.count(), 1);
 }
 
 void GeoViewCameraTest::_clamps()
@@ -174,6 +187,41 @@ void GeoViewCameraTest::_screenToGroundNoViewport()
     camera.panTo(QPointF(50, 50));
     camera.zoomBy(0.5, QPointF(1, 1));
     QCOMPARE_LT(qAbs(camera.center().latitude() - before.latitude()), 1e-12);
+}
+
+void GeoViewCameraTest::_worldToScreen()
+{
+    // No viewport: the only unconditional failure mode
+    {
+        const GeoViewCamera camera;
+        QVERIFY(!camera.worldToScreen(QPointF(0, 0)).has_value());
+    }
+
+    GeoViewCamera camera;
+    setupCamera(camera);
+    const QPointF centerWorld = TileMath::geoToWorld(kCenter);
+    const QPointF screenCenter(kViewport.width() / 2.0, kViewport.height() / 2.0);
+
+    // Top-down: the look-at center projects to the viewport center
+    const auto projected = camera.worldToScreen(centerWorld);
+    QVERIFY(projected.has_value());
+    QCOMPARE_LT(groundDistance(*projected, screenCenter), 0.01);
+
+    // A point directly above the camera is behind the view plane
+    QVERIFY(!camera.worldToScreen(centerWorld, camera.distance() * 2).has_value());
+
+    // Inverse of screenToGround at arbitrary screen points and tilts
+    for (qreal tilt : {0.0, 30.0, 55.0}) {
+        camera.lookAt(kCenter, 42, tilt, 3000);
+        for (const QPointF& screenPos :
+             {QPointF(200, 150), QPointF(650, 480), QPointF(kViewport.width() / 2.0, kViewport.height() / 2.0)}) {
+            const auto ground = camera.screenToGround(screenPos);
+            QVERIFY(ground.has_value());
+            const auto roundTrip = camera.worldToScreen(*ground);
+            QVERIFY(roundTrip.has_value());
+            QCOMPARE_LT(groundDistance(*roundTrip, screenPos), 0.01);
+        }
+    }
 }
 
 void GeoViewCameraTest::_groundPointCapped()

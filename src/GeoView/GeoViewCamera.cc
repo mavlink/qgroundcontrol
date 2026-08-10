@@ -86,7 +86,9 @@ void GeoViewCamera::_setCenterWorld(const QPointF& world)
 {
     const double half = TileMath::worldSize() / 2.0;
     const QPointF clamped(std::clamp(world.x(), -half, half), std::clamp(world.y(), -half, half));
-    if (clamped == _centerWorld) {
+    const bool firstPosition = !_positioned;
+    _positioned = true;  // any explicit center counts, even one equal to the default
+    if ((clamped == _centerWorld) && !firstPosition) {
         return;
     }
     _centerWorld = clamped;
@@ -250,6 +252,35 @@ std::optional<QPointF> GeoViewCamera::groundPointCapped(const QPointF& screenPos
         return cameraGround;  // straight up
     }
     return cameraGround + (QPointF(ray.dir.x, ray.dir.y) * (maxRange / horizontal));
+}
+
+std::optional<QPointF> GeoViewCamera::worldToScreen(const QPointF& worldGround, double worldZ) const
+{
+    if (_viewportSize.isEmpty()) {
+        return std::nullopt;
+    }
+
+    const Vec3 offset = cameraOffset(_heading, _tilt, _distance);
+    const Vec3 d{worldGround.x() - (_centerWorld.x() + offset.x), worldGround.y() - (_centerWorld.y() + offset.y),
+                 worldZ - offset.z};
+
+    // World-to-camera: inverse of the pose rotation, R^T = Rx(-tilt) * Rz(-heading)
+    const double h = qDegreesToRadians(_heading);
+    const double t = qDegreesToRadians(_tilt);
+    const Vec3 a{(d.x * std::cos(h)) + (d.y * std::sin(h)), (-d.x * std::sin(h)) + (d.y * std::cos(h)), d.z};
+    const Vec3 c{a.x, (a.y * std::cos(t)) + (a.z * std::sin(t)), (-a.y * std::sin(t)) + (a.z * std::cos(t))};
+
+    // Camera looks along -z; the epsilon guards the projection divide (not a near plane)
+    const double depth = -c.z;
+    if (depth <= 1e-9) {
+        return std::nullopt;
+    }
+
+    const double aspect = _viewportSize.width() / _viewportSize.height();
+    const double tanHalfFov = std::tan(qDegreesToRadians(_fieldOfView) / 2.0);
+    const double ndcX = c.x / (depth * tanHalfFov * aspect);
+    const double ndcY = c.y / (depth * tanHalfFov);
+    return QPointF(((ndcX + 1.0) / 2.0) * _viewportSize.width(), ((1.0 - ndcY) / 2.0) * _viewportSize.height());
 }
 
 qreal GeoViewCamera::sceneUnitsPerPixel() const

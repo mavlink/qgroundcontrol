@@ -3,6 +3,7 @@
 #include <QtTest/QSignalSpy>
 #include <cmath>
 
+#include "GeoScene.h"
 #include "GeoViewCamera.h"
 #include "SurfaceModel.h"
 #include "SurfacePatchModel.h"
@@ -19,6 +20,12 @@ void setupCamera(GeoViewCamera& camera, const QGeoCoordinate& center = kCenter)
     camera.lookAt(center, 0, 0, 2000);
 }
 
+void attach(SurfacePatchModel& model, GeoScene& scene, GeoViewCamera& camera)
+{
+    scene.setCamera(&camera);
+    model.setScene(&scene);
+}
+
 }  // namespace
 
 void SurfacePatchModelTest::_emptyWithoutCamera()
@@ -32,9 +39,10 @@ void SurfacePatchModelTest::_emptyWithoutCamera()
 void SurfacePatchModelTest::_populatesFromCamera()
 {
     GeoViewCamera camera;
+    GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
-    model.setCamera(&camera);
+    attach(model, scene, camera);
 
     QCOMPARE_GT(model.rowCount(), 0);
     QCOMPARE(model.rowCount(), model.patchCount());
@@ -42,16 +50,17 @@ void SurfacePatchModelTest::_populatesFromCamera()
 
     // Scene origin anchors at the camera center
     const QPointF expectedOrigin = TileMath::geoToWorld(kCenter);
-    QCOMPARE_LT(std::hypot(model.sceneOrigin().x() - expectedOrigin.x(), model.sceneOrigin().y() - expectedOrigin.y()),
+    QCOMPARE_LT(std::hypot(scene.sceneOrigin().x() - expectedOrigin.x(), scene.sceneOrigin().y() - expectedOrigin.y()),
                 1.0);
 }
 
 void SurfacePatchModelTest::_rolesValid()
 {
     GeoViewCamera camera;
+    GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
-    model.setCamera(&camera);
+    attach(model, scene, camera);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     const int expectedHeights = (model.gridSize() + 1) * (model.gridSize() + 1);
@@ -82,9 +91,10 @@ void SurfacePatchModelTest::_rolesValid()
 void SurfacePatchModelTest::_incrementalUpdatesOnMove()
 {
     GeoViewCamera camera;
+    GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
-    model.setCamera(&camera);
+    attach(model, scene, camera);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
@@ -101,11 +111,12 @@ void SurfacePatchModelTest::_incrementalUpdatesOnMove()
 void SurfacePatchModelTest::_reanchorsOnLargeMove()
 {
     GeoViewCamera camera;
+    GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
-    model.setCamera(&camera);
+    attach(model, scene, camera);
 
-    QSignalSpy originSpy(&model, &SurfacePatchModel::sceneOriginChanged);
+    QSignalSpy originSpy(&scene, &GeoScene::sceneOriginChanged);
 
     // Move far beyond kReanchorDistance: origin follows the camera
     const QGeoCoordinate faraway(48.85, 2.35);  // Paris, ~490km from Zurich
@@ -113,7 +124,7 @@ void SurfacePatchModelTest::_reanchorsOnLargeMove()
     QCOMPARE_GT(originSpy.count(), 0);
 
     const QPointF expectedOrigin = TileMath::geoToWorld(faraway);
-    QCOMPARE_LT(std::hypot(model.sceneOrigin().x() - expectedOrigin.x(), model.sceneOrigin().y() - expectedOrigin.y()),
+    QCOMPARE_LT(std::hypot(scene.sceneOrigin().x() - expectedOrigin.x(), scene.sceneOrigin().y() - expectedOrigin.y()),
                 1.0);
 
     // Scene positions stay small after the re-anchor
@@ -124,36 +135,40 @@ void SurfacePatchModelTest::_reanchorsOnLargeMove()
         const double centerX = model.data(idx, SurfacePatchModel::CenterXRole).toDouble();
         const double centerY = model.data(idx, SurfacePatchModel::CenterYRole).toDouble();
         // Bounded by the visible region around the camera, not by world scale
-        QCOMPARE_LT(qAbs(centerX), SurfacePatchModel::kReanchorDistance + span);
-        QCOMPARE_LT(qAbs(centerY), SurfacePatchModel::kReanchorDistance + span);
+        QCOMPARE_LT(qAbs(centerX), GeoScene::kReanchorDistance + span);
+        QCOMPARE_LT(qAbs(centerY), GeoScene::kReanchorDistance + span);
     }
 }
 
 void SurfacePatchModelTest::_cameraSwapAnchorsFresh()
 {
     GeoViewCamera zurichCamera;
+    GeoScene scene;
     SurfacePatchModel model;
     setupCamera(zurichCamera);
-    model.setCamera(&zurichCamera);
+    attach(model, scene, zurichCamera);
 
     // Swap to a static camera on another continent: the origin must follow even
     // though the new camera's center never changes after the swap
     GeoViewCamera sydneyCamera;
     const QGeoCoordinate sydney(-33.8688, 151.2093);
     setupCamera(sydneyCamera, sydney);
-    model.setCamera(&sydneyCamera);
+    scene.setCamera(&sydneyCamera);
 
     const QPointF expectedOrigin = TileMath::geoToWorld(sydney);
-    QCOMPARE_LT(std::hypot(model.sceneOrigin().x() - expectedOrigin.x(), model.sceneOrigin().y() - expectedOrigin.y()),
+    QCOMPARE_LT(std::hypot(scene.sceneOrigin().x() - expectedOrigin.x(), scene.sceneOrigin().y() - expectedOrigin.y()),
                 1.0);
+    // The model rebuilt against the new camera
+    QCOMPARE_GT(model.rowCount(), 0);
 }
 
 void SurfacePatchModelTest::_debugHillsSwitchResets()
 {
     GeoViewCamera camera;
+    GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
-    model.setCamera(&camera);
+    attach(model, scene, camera);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
@@ -176,22 +191,36 @@ void SurfacePatchModelTest::_debugHillsSwitchResets()
     QVERIFY(nonZeroSeen);
 }
 
-void SurfacePatchModelTest::_verticalScaleTracksOrigin()
+void SurfacePatchModelTest::_pendingRowsCoveredDuringLodChurn()
 {
     GeoViewCamera camera;
+    GeoScene scene;
     SurfacePatchModel model;
-    setupCamera(camera);
-    model.setCamera(&camera);
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    attach(model, scene, camera);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
-    // Anchored at Zurich: 1/cos(47.3977...)
-    const double zurichScale = TileMath::mercatorScale(kCenter.latitude());
-    QCOMPARE_GT(zurichScale, 1.4);
-    QCOMPARE_LT(qAbs(model.verticalScale() - zurichScale), 1e-6);
+    // Refine: pending replacements report covered so the delegate hides their
+    // empty flat mesh instead of z-fighting the retained retiring cover
+    camera.lookAt(kCenter, 0, 0, 2000);
+    QCOMPARE_GT(model.pendingCount(), 0);
+    int coveredRows = 0;
+    for (int row = 0; row < model.rowCount(); row++) {
+        const QModelIndex idx = model.index(row);
+        const bool ready = model.data(idx, SurfacePatchModel::ReadyRole).toBool();
+        const bool covered = model.data(idx, SurfacePatchModel::CoveredRole).toBool();
+        QCOMPARE(covered, !ready);
+        if (covered) {
+            coveredRows++;
+        }
+    }
+    QCOMPARE_GT(coveredRows, 0);
 
-    // Re-anchoring updates the factor to the new origin latitude
-    const QGeoCoordinate reykjavik(64.15, -21.95);
-    camera.setCenter(reykjavik);
-    QCOMPARE_LT(qAbs(model.verticalScale() - TileMath::mercatorScale(reykjavik.latitude())), 1e-3);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+    for (int row = 0; row < model.rowCount(); row++) {
+        QVERIFY(!model.data(model.index(row), SurfacePatchModel::CoveredRole).toBool());
+    }
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(SurfacePatchModelTest, TestLabel::Unit)

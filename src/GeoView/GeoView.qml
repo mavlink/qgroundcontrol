@@ -76,19 +76,30 @@ Item {
                 id: geoCamera
                 objectName: "geoViewCamera"
                 viewportSize: Qt.size(sceneRoot.width, sceneRoot.height)
-                sceneOrigin: patchModel.sceneOrigin
-                Component.onCompleted: {
-                    // Startup pose: overhead view of the mercator origin at
-                    // default distance (home-position integration comes later)
-                    lookAt(QtPositioning.coordinate(0, 0), 0, 0, 1500)
-                }
+                sceneOrigin: geoScene.sceneOrigin
+                // Startup pose: overhead view of a land area with terrain relief so
+                // imagery and elevation are visually verifiable (home-position
+                // integration comes later). Until this center applies, the camera is
+                // unpositioned and SurfaceModel builds nothing (see
+                // GeoViewCamera::isPositioned), so the null-island default pose never
+                // triggers doomed terrain fetches at (0,0).
+                center: QtPositioning.coordinate(47.6329078, -122.0876875)
+            }
+
+            GeoScene {
+                id: geoScene
+                objectName: "geoViewScene"
+                camera: geoCamera
             }
 
             SurfacePatchModel {
                 id: patchModel
                 objectName: "geoViewPatchModel"
-                camera: geoCamera
-                debugHills: true
+                scene: geoScene
+                terrain: true
+                // Drape the map imagery the rest of QGC uses (empty disables imagery)
+                mapType: QGroundControl.settingsManager.flightMapSettings.mapProvider.rawValue
+                         + " " + QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
             }
 
             View3D {
@@ -99,6 +110,15 @@ Item {
                 environment: SceneEnvironment {
                     clearColor: "#1a2028"
                     backgroundMode: SceneEnvironment.Color
+                    // Distance haze toward the background color hides the far-field
+                    // LOD rings (terrain blend band and patch range edge)
+                    fog: Fog {
+                        enabled: true
+                        color: "#1a2028"
+                        depthEnabled: true
+                        depthNear: 10 * geoCamera.distance
+                        depthFar: (patchModel.maxRangeMultiplier + 1) * geoCamera.distance
+                    }
                 }
 
                 DirectionalLight {
@@ -121,7 +141,8 @@ Item {
                     clipFar: Math.max(100000, geoCamera.distance * (patchModel.maxRangeMultiplier + 1))
                 }
 
-                // One surface patch per active SurfaceModel entry, LOD-colored
+                // One surface patch per active SurfaceModel entry: draped tile
+                // imagery once delivered, LOD-colored fallback while loading
                 Repeater3D {
                     model: patchModel
                     delegate: Model {
@@ -132,24 +153,48 @@ Item {
                         required property real span
                         required property int zoomLevel
                         required property var heights
+                        required property bool covered
+                        required property var tileImage
+                        required property bool hasTileImage
 
+                        // A covered pending patch stays hidden: its empty flat grid
+                        // would z-fight the retained retiring cover
+                        visible: !covered
                         position: Qt.vector3d(centerX, centerY, 0)
                         // z-scale converts true-meter heights into mercator scene units
                         // (verticalScale) and animates terrain flat<->full during the
                         // 2D/3D mode transition (terrainScale) without geometry rebuilds.
                         // Never exactly 0: a singular scale breaks the normal matrix.
-                        scale: Qt.vector3d(1, 1, Math.max(0.0001, sceneRoot.terrainScale * patchModel.verticalScale))
+                        scale: Qt.vector3d(1, 1, Math.max(0.0001, sceneRoot.terrainScale * geoScene.verticalScale))
                         geometry: PatchGeometry {
                             gridSize: patchModel.gridSize
                             span: patchDelegate.span
                             heights: patchDelegate.heights
                         }
+
+                        Texture {
+                            id: patchTexture
+                            textureData: PatchTextureData {
+                                image: patchDelegate.tileImage
+                            }
+                        }
+
                         materials: [
                             DefaultMaterial {
                                 cullMode: Material.NoCulling
-                                // Hue by zoom level (LOD rings), lightness by tile checker
-                                // parity so same-zoom patch boundaries are visible
+                                // Unlit: tiles carry their own shading, and lighting
+                                // would show the per-patch normal seams
+                                lighting: DefaultMaterial.NoLighting
+                                diffuseMap: patchDelegate.hasTileImage ? patchTexture : null
+                                // Loading fallback: quiet neutral when imagery is on
+                                // (LOD flash on zoom); LOD checker colors in debug mode
                                 diffuseColor: {
+                                    if (patchDelegate.hasTileImage) {
+                                        return "white"
+                                    }
+                                    if (patchModel.mapType !== "") {
+                                        return "#3a4048"
+                                    }
                                     const parity = (Math.round(patchDelegate.centerX / patchDelegate.span)
                                                     + Math.round(patchDelegate.centerY / patchDelegate.span)) & 1
                                     return Qt.hsla((patchDelegate.zoomLevel * 0.13) % 1.0, 0.5,
@@ -303,17 +348,6 @@ Item {
                         headingAnimation.to = (geoCamera.heading > 180) ? 360 : 0
                         headingAnimation.start()
                     }
-                }
-
-                // Dev toggle: analytic sin-hill heights (on by default) to visually
-                // verify terrain displacement and LOD before real terrain data lands.
-                // One-way button -> model: this is the sole writer of debugHills
-                QGCButton {
-                    objectName: "geoViewHillsButton"
-                    text: qsTr("Hills")
-                    checkable: true
-                    checked: true
-                    onClicked: patchModel.debugHills = checked
                 }
             }
         }

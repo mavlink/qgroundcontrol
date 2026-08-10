@@ -22,8 +22,7 @@
 /// the north-west corner. Results are always delivered asynchronously (queued), even
 /// for sources that can answer immediately, so consumers see one consistent flow.
 ///
-/// Designed so a future TerrainHeightSource can adapt QGC's terrain query backend
-/// (TerrainQueryInterface::requestCoordinateHeights) behind the same interface.
+/// TerrainHeightSource adapts QGC's terrain query backend behind this interface.
 class HeightSource : public QObject
 {
     Q_OBJECT
