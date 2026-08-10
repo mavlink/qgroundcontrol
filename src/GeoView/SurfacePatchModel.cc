@@ -1,11 +1,15 @@
 #include "SurfacePatchModel.h"
 
+#include <QtCore/QDebug>
+#include <QtCore/QtMath>
 #include <QtGui/QPainter>
 #include <algorithm>
+#include <cmath>
 
 #include "GeoScene.h"
 #include "GeoViewCamera.h"
 #include "HeightSource.h"
+#include "SurfaceAnalysis.h"
 #include "SurfaceModel.h"
 #include "TerrainHeightSource.h"
 #include "TileImageSource.h"
@@ -217,6 +221,48 @@ int SurfacePatchModel::maxZoomLevel() const
         maxZoom = std::max(maxZoom, key.zoom);
     }
     return maxZoom;
+}
+
+void SurfacePatchModel::analyzeSurface() const
+{
+    GeoViewCamera* const camera = _camera();
+    if (!_surfaceModel || !camera) {
+        qDebug() << "Surface analysis: no surface model active";
+        return;
+    }
+
+    SurfaceAnalysis::ViewState view;
+
+    // Unproject a dense screen grid to ground points: coverage is checked
+    // where the screen actually looks, independent of the model's own
+    // visible-region estimate
+    const QSizeF viewport = camera->viewportSize();
+    const double maxRange = camera->distance() * SurfaceModel::kMaxRangeMultiplier;
+    constexpr int kScreenGrid = 24;
+    if (!viewport.isEmpty()) {
+        for (int row = 0; row < kScreenGrid; row++) {
+            for (int col = 0; col < kScreenGrid; col++) {
+                const QPointF screenPos(viewport.width() * (col + 0.5) / kScreenGrid,
+                                        viewport.height() * (row + 0.5) / kScreenGrid);
+                const std::optional<QPointF> ground = camera->groundPointCapped(screenPos, maxRange);
+                if (ground) {
+                    view.groundSamples.append(*ground);
+                }
+            }
+        }
+    }
+
+    // Camera-below-surface check only applies in 3D (in 2D the mesh renders
+    // flattened, so comparing against real heights would be wrong)
+    if (_scene && (camera->tilt() > 0.0)) {
+        view.cameraGround = camera->cameraGroundPosition();
+        view.cameraHeight = camera->distance() * std::cos(qDegreesToRadians(camera->tilt()));
+        view.heightScale = _scene->verticalScale();
+    }
+
+    const SurfaceAnalysis::Report report =
+        SurfaceAnalysis::analyze(_surfaceModel->patches(), SurfaceModel::kGridSize, view);
+    qDebug().noquote() << report.text();  // user-triggered diagnostic: always emitted
 }
 
 int SurfacePatchModel::rowCount(const QModelIndex& parent) const

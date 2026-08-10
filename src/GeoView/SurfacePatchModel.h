@@ -93,6 +93,11 @@ public:
     int pendingCount() const;
     int maxZoomLevel() const;
 
+    /// Diagnostic pass over the current patch set: reports coverage holes,
+    /// boundary height cliffs, and bad height data, with the reason each
+    /// exists (see SurfaceAnalysis). The report goes to the debug output.
+    Q_INVOKABLE void analyzeSurface() const;
+
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;

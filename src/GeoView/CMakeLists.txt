@@ -7,6 +7,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         HeightSource.cc
         HeightSource.h
+        SurfaceAnalysis.cc
+        SurfaceAnalysis.h
         SurfaceModel.cc
         SurfaceModel.h
         TerrainHeightSource.cc
