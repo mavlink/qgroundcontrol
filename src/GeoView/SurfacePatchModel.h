@@ -10,33 +10,35 @@
 #pragma once
 
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QHash>
 #include <QtCore/QList>
-#include <QtCore/QPointF>
+#include <QtCore/QString>
+#include <QtGui/QImage>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "TileMath.h"
 
+class GeoScene;
 class GeoViewCamera;
 class HeightSource;
 class SurfaceModel;
+class TileImageSource;
 
-Q_MOC_INCLUDE("GeoViewCamera.h")
+Q_MOC_INCLUDE("GeoScene.h")
 
 /// QML bridge between SurfaceModel and the Repeater3D that renders the surface:
 /// one row per active patch, updated incrementally (no model resets on pan/zoom).
 ///
-/// Patch positions are exposed in scene coordinates: world mercator meters
-/// relative to sceneOrigin. The origin re-anchors to the camera center whenever
-/// the camera strays more than kReanchorDistance from it, keeping scene
-/// coordinates small enough for the renderer's float precision.
+/// Patch positions are exposed in scene coordinates (see GeoScene): world
+/// mercator meters relative to the scene's re-anchorable origin.
 class SurfacePatchModel : public QAbstractListModel
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(GeoViewCamera* camera READ camera WRITE setCamera NOTIFY cameraChanged)
+    Q_PROPERTY(GeoScene* scene READ scene WRITE setScene NOTIFY sceneChanged)
+    Q_PROPERTY(bool terrain READ terrain WRITE setTerrain NOTIFY terrainChanged)
     Q_PROPERTY(bool debugHills READ debugHills WRITE setDebugHills NOTIFY debugHillsChanged)
-    Q_PROPERTY(QPointF sceneOrigin READ sceneOrigin NOTIFY sceneOriginChanged)
-    Q_PROPERTY(qreal verticalScale READ verticalScale NOTIFY sceneOriginChanged)
+    Q_PROPERTY(QString mapType READ mapType WRITE setMapType NOTIFY mapTypeChanged)
     Q_PROPERTY(int gridSize READ gridSize CONSTANT)
     Q_PROPERTY(double maxRangeMultiplier READ maxRangeMultiplier CONSTANT)
     Q_PROPERTY(int patchCount READ patchCount NOTIFY statsChanged)
@@ -47,8 +49,6 @@ public:
     explicit SurfacePatchModel(QObject* parent = nullptr);
     ~SurfacePatchModel() override;
 
-    static constexpr double kReanchorDistance = 50000.0;  ///< scene-origin re-anchor threshold (m)
-
     enum Roles
     {
         CenterXRole = Qt::UserRole + 1,  ///< patch center x in scene meters
@@ -57,23 +57,30 @@ public:
         ZoomRole,                        ///< quadtree zoom level
         HeightsRole,                     ///< vertex height grid (empty = flat)
         ReadyRole,
+        CoveredRole,                     ///< pending but overlapped by a ready patch: delegate suppresses rendering
+        TileImageRole,                   ///< drapable image: own tile, or ancestor/descendant fallback while loading
+        HasTileImageRole,                ///< QImage is opaque to QML; bool validity for bindings
     };
 
-    GeoViewCamera* camera() const { return _camera; }
+    GeoScene* scene() const { return _scene; }
 
-    void setCamera(GeoViewCamera* camera);
+    void setScene(GeoScene* scene);
+
+    bool terrain() const { return _terrain; }
+
+    /// Real terrain elevations from QGC's terrain pipeline (see TerrainHeightSource);
+    /// false gives a flat z=0 surface. debugHills overrides either.
+    void setTerrain(bool terrain);
 
     bool debugHills() const { return _debugHills; }
 
     void setDebugHills(bool debugHills);
 
-    QPointF sceneOrigin() const { return _sceneOrigin; }
+    QString mapType() const { return _mapType; }
 
-    /// Mercator scale factor at the scene origin: heights are delivered in true
-    /// meters, but scene x/y are mercator meters (stretched by 1/cos(lat)).
-    /// Rendering must scale z by this factor or terrain and altitudes appear
-    /// vertically squashed away from the equator.
-    qreal verticalScale() const;
+    /// Provider type string for tile imagery (see TileImageSource). Empty
+    /// disables imagery: TileImageRole stays a null QImage for every patch.
+    void setMapType(const QString& mapType);
 
     int gridSize() const;
 
@@ -91,25 +98,43 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
 signals:
-    void cameraChanged();
+    void sceneChanged();
+    void terrainChanged();
     void debugHillsChanged();
-    void sceneOriginChanged();
+    void mapTypeChanged();
     void statsChanged();
 
 private slots:
     void _patchAdded(const TileMath::TileKey& key);
     void _patchReady(const TileMath::TileKey& key);
     void _patchRemoved(const TileMath::TileKey& key);
-    void _maybeReanchor();
+    void _sceneOriginChanged();
+    void _tileImageReady(int requestId, const QImage& image);
+    void _tileImageFailed(int requestId);
 
 private:
     void _rebuildSurfaceModel();
+    void _resetImagery();
+    void _requestTileImage(const TileMath::TileKey& key);
+    void _notifyTileImageChanged(const TileMath::TileKey& key);
+    void _notifyCoveredMayHaveChanged();
+    QImage _fallbackImage(const TileMath::TileKey& key) const;
+    bool _fallbackAvailable(const TileMath::TileKey& key) const;
+    GeoViewCamera* _camera() const;
 
-    GeoViewCamera* _camera = nullptr;
+    static constexpr int kMaxRetiredImages = 128;         ///< tiles kept after patch removal (fallback source)
+    static constexpr int kMaxAncestorFallbackLevels = 8;  ///< how far up the quadtree fallback looks
+
+    GeoScene* _scene = nullptr;
     HeightSource* _heightSource = nullptr;
     SurfaceModel* _surfaceModel = nullptr;
+    bool _terrain = false;
     bool _debugHills = false;
-    QPointF _sceneOrigin;
-    bool _originSet = false;
-    QList<TileMath::TileKey> _keys;  ///< row order; data fetched from SurfaceModel by key
+    QString _mapType;
+    TileImageSource* _tileSource = nullptr;
+    QHash<TileMath::TileKey, QImage> _tileImages;      ///< delivered images: live patches + retired fallbacks
+    QList<TileMath::TileKey> _retiredOrder;            ///< retired keys oldest-first, for eviction
+    QHash<int, TileMath::TileKey> _imageRequestKey;    ///< in-flight image request id -> patch
+    QHash<TileMath::TileKey, int> _imageRequestByKey;  ///< reverse map for cancellation
+    QList<TileMath::TileKey> _keys;                    ///< row order; data fetched from SurfaceModel by key
 };

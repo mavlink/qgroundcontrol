@@ -8,6 +8,7 @@ class SurfaceModelTest : public UnitTest
 
 private slots:
     void _noViewportNoPatches();
+    void _unpositionedCameraNoPatches();
     void _coarseWhenFar();
     void _refinesWhenNear();
     void _patchCountBounded();
@@ -17,4 +18,9 @@ private slots:
     void _noChurnOnIdenticalUpdate();
     void _cullsInvisibleRegion();
     void _failedHeightsDegradeToFlat();
+    void _failedHeightsRetryAndRecover();
+    void _keepsReadyPatchesDuringLodChurn();
+    void _degradedPatchesKeepRetiringCover();
+    void _degradedRetiringPatchesSwept();
+    void _pendingPatchesCoveredDuringLodChurn();
 };

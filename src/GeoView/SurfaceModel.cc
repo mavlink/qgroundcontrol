@@ -1,6 +1,7 @@
 #include "SurfaceModel.h"
 
 #include <QtCore/QSet>
+#include <QtCore/QTimer>
 #include <QtCore/QVarLengthArray>
 #include <QtCore/QtMath>
 #include <cmath>
@@ -39,6 +40,9 @@ SurfaceModel::SurfaceModel(GeoViewCamera* camera, HeightSource* heightSource, QO
 
 void SurfaceModel::update()
 {
+    if (!_camera->isPositioned()) {
+        return;  // the default pose is null island; building patches there fires doomed terrain fetches
+    }
     if (_camera->viewportSize().isEmpty()) {
         return;  // keep the last valid set; transient 0-size viewports occur during layout
     }
@@ -51,19 +55,31 @@ void SurfaceModel::update()
 
     QSet<TileMath::TileKey> desiredSet(desired.cbegin(), desired.cend());
 
-    // Drop patches no longer desired, cancelling in-flight height requests.
-    // Only pending patches own a tracked request: _heightsReady untracks the
-    // id when a patch becomes ready (guard also protects against a future
-    // source reusing ids).
+    // Drop pending patches no longer desired, cancelling in-flight height
+    // requests. Ready patches being replaced retire instead: they keep
+    // rendering until their replacements have heights, so LOD churn and
+    // panning never open holes in the surface.
     for (auto it = _patches.begin(); it != _patches.end();) {
         if (desiredSet.contains(it.key())) {
+            it.value().retiring = false;  // re-desired while retiring: it is ready, keep as-is
             ++it;
             continue;
         }
-        if (!it.value().ready) {
-            _heightSource->cancelRequest(it.value().requestId);
-            _requestKeys.remove(it.value().requestId);
+        if (it.value().retiring) {
+            ++it;  // awaiting sweep
+            continue;
         }
+        if (it.value().ready) {
+            it.value().retiring = true;
+            ++it;
+            continue;
+        }
+        // Pending patches own a tracked request, except while awaiting a retry
+        // (requestId 0, never issued by a source): then both calls are no-ops.
+        // _heightsReady untracks the id when a patch becomes ready (guard also
+        // protects against a future source reusing ids).
+        _heightSource->cancelRequest(it.value().requestId);
+        _requestKeys.remove(it.value().requestId);
         const TileMath::TileKey removedKey = it.key();
         it = _patches.erase(it);
         emit patchRemoved(removedKey);
@@ -80,6 +96,8 @@ void SurfaceModel::update()
         _patches.insert(key, data);
         emit patchAdded(key);
     }
+
+    _sweepRetiring();
 }
 
 QList<SurfaceModel::Patch> SurfaceModel::patches() const
@@ -87,7 +105,7 @@ QList<SurfaceModel::Patch> SurfaceModel::patches() const
     QList<Patch> result;
     result.reserve(_patches.count());
     for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
-        result.append(Patch{it.key(), it.value().heights, it.value().ready});
+        result.append(Patch{it.key(), it.value().heights, it.value().ready, _isCovered(it.key(), it.value())});
     }
     return result;
 }
@@ -98,7 +116,25 @@ std::optional<SurfaceModel::Patch> SurfaceModel::patch(const TileMath::TileKey& 
     if (it == _patches.constEnd()) {
         return std::nullopt;
     }
-    return Patch{key, it.value().heights, it.value().ready};
+    return Patch{key, it.value().heights, it.value().ready, _isCovered(key, it.value())};
+}
+
+bool SurfaceModel::_isCovered(const TileMath::TileKey& key, const PatchData& data) const
+{
+    if (data.ready) {
+        return false;
+    }
+    // A pending patch overlapped by ready geometry (its retiring ancestor,
+    // descendants, or a degraded flat fallback) is covered: rendering its
+    // empty flat grid too would z-fight the cover and occlude terrain below
+    // sea level
+    const QRectF rect = patchRect(key);
+    for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
+        if (it.value().ready && (it.key() != key) && rect.intersects(patchRect(it.key()))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int SurfaceModel::pendingCount() const
@@ -246,10 +282,75 @@ void SurfaceModel::_heightsReady(int requestId, const QList<float>& heights)
     patchIt.value().heights = heights;
     patchIt.value().ready = true;
     emit patchReady(key);
+    _sweepRetiring();
+}
+
+void SurfaceModel::_sweepRetiring()
+{
+    // A retiring patch may go once every pending patch it covers for has its
+    // heights (or it covers for none, e.g. it was panned out of the view)
+    for (auto it = _patches.begin(); it != _patches.end();) {
+        if (!it.value().retiring || _overlapsPendingPatch(it.key())) {
+            ++it;
+            continue;
+        }
+        const TileMath::TileKey key = it.key();
+        it = _patches.erase(it);
+        emit patchRemoved(key);
+    }
+}
+
+bool SurfaceModel::_overlapsPendingPatch(const TileMath::TileKey& key) const
+{
+    const QRectF rect = patchRect(key);
+    for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
+        // Touching edges do not intersect, so only true overlaps (the
+        // quadtree ancestor/descendant replacements) count. Desired degraded
+        // patches still need cover: their flat fallback is worse than the
+        // cover. Retiring patches never do (they are on their way out) -
+        // otherwise a retiring degraded patch would retain itself forever.
+        if (it.value().retiring) {
+            continue;
+        }
+        if ((!it.value().ready || it.value().degraded) && rect.intersects(patchRect(it.key()))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void SurfaceModel::_heightsFailed(int requestId)
 {
-    // Degrade to flat ground (empty heights); a later cull/re-add retries naturally
+    const auto it = _requestKeys.constFind(requestId);
+    if (it == _requestKeys.constEnd()) {
+        return;  // patch was dropped before delivery
+    }
+    const auto patchIt = _patches.find(it.value());
+    if ((patchIt != _patches.end()) && !patchIt.value().ready && (patchIt.value().retriesLeft > 0)) {
+        // Transient failures (elevation tile fetch timeouts) self-heal: keep the
+        // patch pending and re-request after the backoff delay
+        patchIt.value().retriesLeft--;
+        patchIt.value().requestId = 0;
+        const TileMath::TileKey key = patchIt.key();
+        _requestKeys.erase(it);
+        QTimer::singleShot(_heightRetryDelayMs, this, [this, key] { _retryHeights(key); });
+        return;
+    }
+    // Retries exhausted: degrade to flat ground; a later cull/re-add starts
+    // fresh. Degraded patches keep any retiring cover (see _overlapsPendingPatch),
+    // so a real-height predecessor is not replaced by the flat fallback.
+    if (patchIt != _patches.end()) {
+        patchIt.value().degraded = true;
+    }
     _heightsReady(requestId, QList<float>());
+}
+
+void SurfaceModel::_retryHeights(const TileMath::TileKey& key)
+{
+    const auto it = _patches.find(key);
+    if ((it == _patches.end()) || it.value().ready || (it.value().requestId != 0)) {
+        return;  // dropped, delivered, or re-requested meanwhile
+    }
+    it.value().requestId = _heightSource->requestPatchHeights(key, kGridSize);
+    _requestKeys.insert(it.value().requestId, key);
 }

@@ -9,6 +9,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         HeightSource.h
         SurfaceModel.cc
         SurfaceModel.h
+        TerrainHeightSource.cc
+        TerrainHeightSource.h
+        TileImageSource.cc
+        TileImageSource.h
         TileMath.cc
         TileMath.h
 )
@@ -27,10 +31,14 @@ qt_add_qml_module(GeoViewModule
     SOURCES
         CheckerboardTextureData.cc
         CheckerboardTextureData.h
+        GeoScene.cc
+        GeoScene.h
         GeoViewCamera.cc
         GeoViewCamera.h
         PatchGeometry.cc
         PatchGeometry.h
+        PatchTextureData.cc
+        PatchTextureData.h
         SurfacePatchModel.cc
         SurfacePatchModel.h
     QML_FILES
