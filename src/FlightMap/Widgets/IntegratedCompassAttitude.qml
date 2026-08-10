@@ -33,7 +33,9 @@ Item {
 
     IntegratedAttitudeIndicator {
         x:                      -_totalAttitudeSize
-        attitudeAngleDegrees:   vehicle ? vehicle.pitch.rawValue : 0
+        // Negated: rotating the indicator 90° clockwise moves its zero tick to the right of the
+        // compass but leaves the sweep direction clockwise, which would draw nose up as downward.
+        attitudeAngleDegrees:   vehicle ? -vehicle.pitch.rawValue : 0
         compassRadius:          control.compassRadius
         attitudeSize:           control.attitudeSize
         attitudeSpacing:        control.attitudeSpacing
