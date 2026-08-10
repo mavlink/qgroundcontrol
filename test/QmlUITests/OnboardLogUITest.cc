@@ -346,8 +346,9 @@ void OnboardLogUITest::_ftpDownloadUITest()
 {
     runWithMockLink([] { return MockLink::startPX4MockLink(MockConfiguration::OptionFtpCapability); },
                     [&](QPointer<MockLink> mockLink, Vehicle* /*vehicle*/) {
+                        // log_1 has no modification time so its date is unknown
                         const QList<MockLinkFTP::LogFile> logFiles = {
-                            {QStringLiteral("log_1.ulg"), 5000, 1700000000},
+                            {QStringLiteral("log_1.ulg"), 5000, 0},
                             {QStringLiteral("log_2.ulg"), 12345, 1700086400},
                         };
                         mockLink->mockLinkFTP()->setLogFiles(logFiles);
@@ -355,6 +356,15 @@ void OnboardLogUITest::_ftpDownloadUITest()
                         _navigateToOnboardLogsPage();
                         if (QTest::currentTestFailed())
                             return;
+
+                        // Entries without a valid timestamp sort last and must show "Date Unknown", not a blank cell
+                        QQuickItem* const knownDateLabel = findVisibleItem(_rootItem, QStringLiteral("onboardLogDate_0"), 15000);
+                        QVERIFY(knownDateLabel);
+                        QTRY_VERIFY_WITH_TIMEOUT(!knownDateLabel->property("text").toString().isEmpty(), 5000);
+                        QVERIFY(knownDateLabel->property("text").toString() != QStringLiteral("Date Unknown"));
+                        QQuickItem* const unknownDateLabel = findVisibleItem(_rootItem, QStringLiteral("onboardLogDate_1"), 2000);
+                        QVERIFY(unknownDateLabel);
+                        QTRY_COMPARE_WITH_TIMEOUT(unknownDateLabel->property("text").toString(), QStringLiteral("Date Unknown"), 5000);
 
                         QTemporaryDir tempDir;
                         QVERIFY(tempDir.isValid());
