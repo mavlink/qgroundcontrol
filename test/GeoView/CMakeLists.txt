@@ -17,6 +17,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         PatchGeometryTest.h
         PatchTextureDataTest.cc
         PatchTextureDataTest.h
+        SurfaceAnalysisTest.cc
+        SurfaceAnalysisTest.h
         SurfaceModelTest.cc
         SurfaceModelTest.h
         SurfacePatchImageryTest.cc
@@ -39,6 +41,7 @@ add_qgc_test(GeoViewCameraTest LABELS Unit)
 add_qgc_test(HeightSourceTest LABELS Unit)
 add_qgc_test(PatchGeometryTest LABELS Unit)
 add_qgc_test(PatchTextureDataTest LABELS Unit)
+add_qgc_test(SurfaceAnalysisTest LABELS Unit)
 add_qgc_test(SurfaceModelTest LABELS Unit)
 add_qgc_test(SurfacePatchImageryTest LABELS Integration)
 add_qgc_test(SurfacePatchModelTest LABELS Unit)

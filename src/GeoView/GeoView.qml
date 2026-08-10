@@ -353,6 +353,14 @@ Item {
                         headingAnimation.start()
                     }
                 }
+
+                // Diagnostic: report holes, terrain cliffs, and bad height
+                // data to the debug output
+                QGCButton {
+                    objectName: "geoViewAnalyzeButton"
+                    text: qsTr("Analyze")
+                    onClicked: patchModel.analyzeSurface()
+                }
             }
         }
     }
