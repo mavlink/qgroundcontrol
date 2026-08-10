@@ -29,6 +29,9 @@ public:
 
     Q_INVOKABLE static QString urlToLocalFile(QUrl url);
 
+    /// Converts a local file path to a properly formed file:// url.
+    Q_INVOKABLE static QUrl localFileToUrl(const QString &localFile);
+
     /// Important: Should only be used in mobile builds where default save location cannot be changed.
     /// Returns the standard QGC location portion of a fully qualified folder path.
     /// Example: "/Users/Don/Document/QGroundControl/Missions" returns "QGroundControl/Missions"
