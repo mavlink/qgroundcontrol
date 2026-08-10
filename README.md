@@ -58,6 +58,6 @@ architecture patterns and the contribution workflow.
 QGC's interface is translated by the community — help translate it into your language on
 [Crowdin](https://crowdin.com/project/qgroundcontrol).
 
-## Star history
+## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mavlink/qgroundcontrol&type=Date)](https://star-history.com/#mavlink/qgroundcontrol&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=mavlink/qgroundcontrol&type=date&legend=top-left)](https://star-history.dera.page/#mavlink/qgroundcontrol&type=date&legend=top-left)
