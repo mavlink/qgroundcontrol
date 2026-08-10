@@ -498,9 +498,13 @@ void OnboardLogController::refresh()
     emit selectionChanged();
 
     if (_vehicle && !_ftpDisabled && _vehicle->capabilitiesKnown() && (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP)) {
+        qCDebug(OnboardLogControllerLog) << "refresh: using ftp transport";
         _setTransport(Transport::Ftp);
         _ftpStartListing();
     } else {
+        qCDebug(OnboardLogControllerLog) << "refresh: using message transport - ftpDisabled:" << _ftpDisabled
+            << "capabilitiesKnown:" << (_vehicle && _vehicle->capabilitiesKnown())
+            << "ftpCapable:" << bool(_vehicle && (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP));
         _setTransport(Transport::Messages);
         _requestLogList(0, 0xffff);
     }
