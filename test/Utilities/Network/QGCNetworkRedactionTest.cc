@@ -37,6 +37,8 @@ void QGCNetworkRedactionTest::_testRedactsQueryValues()
     QVERIFY(!result.contains(QStringLiteral("abc123")));
     QVERIFY(!result.contains(QStringLiteral("low-latency")));
     QVERIFY(!result.contains(QStringLiteral("session")));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("https://example.com/video?")),
+             QStringLiteral("https://example.com/video"));
 }
 
 void QGCNetworkRedactionTest::_testHandlesRelativeAndInvalidInput()
@@ -44,20 +46,26 @@ void QGCNetworkRedactionTest::_testHandlesRelativeAndInvalidInput()
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("5600")), QStringLiteral("5600"));
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("camera.local:5600")),
              QStringLiteral("camera.local:5600"));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("0.0.0.0:5600")), QStringLiteral("0.0.0.0:5600"));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("192.168.1.10:5600")),
+             QStringLiteral("192.168.1.10:5600"));
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QString()), QStringLiteral("<empty-url>"));
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("http://[invalid")),
-             QStringLiteral("<invalid-url>"));
+             QStringLiteral("<invalid-url length=15>"));
 }
 
 void QGCNetworkRedactionTest::_testQUrlOverload()
 {
     const QUrl sourceUrl(QStringLiteral("rtsp://pilot:secret@camera.example:8554/live?token=abc123"));
     const QString result = QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
+    const QUrl hostPortUrl(QStringLiteral("192.168.1.10:5600"));
 
     QCOMPARE(QUrl(result).path(), QStringLiteral("/live"));
     QVERIFY(!result.contains(QStringLiteral("pilot")));
     QVERIFY(!result.contains(QStringLiteral("secret")));
     QVERIFY(!result.contains(QStringLiteral("abc123")));
+    QVERIFY(!hostPortUrl.isValid());
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(hostPortUrl), QStringLiteral("192.168.1.10:5600"));
 }
 
 UT_REGISTER_TEST(QGCNetworkRedactionTest, TestLabel::Unit, TestLabel::Utilities)

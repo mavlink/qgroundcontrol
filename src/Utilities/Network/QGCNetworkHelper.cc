@@ -5,6 +5,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 #include <QtCore/QJsonDocument>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QUrlQuery>
 #include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QHttpPart>
@@ -342,12 +343,23 @@ QUrl urlWithoutQuery(const QUrl& url)
     return url.adjusted(QUrl::RemoveQuery | QUrl::RemoveFragment);
 }
 
+namespace {
+bool isHostPortForLogging(const QString& value)
+{
+    static const QRegularExpression pattern(QStringLiteral(R"(^[^/@?#\s]+:\d{1,5}$)"));
+    return pattern.match(value).hasMatch();
+}
+}  // namespace
+
 QString redactedUrlForLogging(const QUrl& url)
 {
     if (url.isEmpty()) {
         return QStringLiteral("<empty-url>");
     }
     if (!url.isValid()) {
+        if (url.scheme().isEmpty() && isHostPortForLogging(url.path())) {
+            return url.path();
+        }
         return QStringLiteral("<invalid-url>");
     }
 
@@ -359,7 +371,7 @@ QString redactedUrlForLogging(const QUrl& url)
             redactedQuery.addQueryItem(queryItem.first, QStringLiteral("REDACTED"));
         }
         if (queryItems.isEmpty()) {
-            redactedUrl.setQuery(QStringLiteral("REDACTED"));
+            redactedUrl.setQuery(QString());
         } else {
             redactedUrl.setQuery(redactedQuery);
         }
@@ -373,7 +385,14 @@ QString redactedUrlForLogging(const QUrl& url)
 
 QString redactedUrlForLogging(const QString& url)
 {
-    return redactedUrlForLogging(QUrl(url));
+    if (isHostPortForLogging(url)) {
+        return url;
+    }
+    const QUrl parsedUrl(url);
+    if (!url.isEmpty() && !parsedUrl.isValid()) {
+        return QStringLiteral("<invalid-url length=%1>").arg(url.size());
+    }
+    return redactedUrlForLogging(parsedUrl);
 }
 
 // ============================================================================

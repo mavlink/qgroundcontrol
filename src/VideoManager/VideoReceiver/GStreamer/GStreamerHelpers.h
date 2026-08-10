@@ -9,7 +9,7 @@
 #include "GStreamer.h"  // VideoDecoderOptions
 
 namespace GStreamer {
-/// Diagnostic graphs omit element properties because source properties can contain credentials.
+/// Automatic field-report graphs omit element properties because source properties can contain credentials.
 inline constexpr GstDebugGraphDetails kDiagnosticDotGraphDetails = static_cast<GstDebugGraphDetails>(
     GST_DEBUG_GRAPH_SHOW_MEDIA_TYPE | GST_DEBUG_GRAPH_SHOW_CAPS_DETAILS | GST_DEBUG_GRAPH_SHOW_STATES);
 
