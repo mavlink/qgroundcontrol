@@ -980,6 +980,11 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
         return;
     }
 
+    // Raw entries expose whether the server included the optional mtime field (date/time diagnosis)
+    qCDebug(OnboardLogControllerLog) << "ftp: raw entries for"
+        << ((_ftpListState == FtpListState::ListingRoot) ? _ftpLogRoot : (_ftpDirsToList.isEmpty() ? QString() : _ftpDirsToList.first()))
+        << dirList;
+
     if (_ftpListState == FtpListState::ListingRoot) {
         // The root listing may contain log files directly (flat layout, e.g. @MAV_LOG)
         // and/or date subdirectories to descend into (PX4 fallback /fs/microsd/log).
