@@ -77,6 +77,24 @@ int maxZoomOf(const QList<SurfaceModel::Patch>& patches)
     return maxZoom;
 }
 
+/// Constant tall terrain everywhere
+class TallHeightSource : public ProceduralHeightSource
+{
+public:
+    explicit TallHeightSource(float height, QObject* parent = nullptr) : ProceduralHeightSource(parent), _height(height)
+    {}
+
+protected:
+    float heightAtWorld(const QPointF& world) const override
+    {
+        Q_UNUSED(world);
+        return _height;
+    }
+
+private:
+    const float _height;
+};
+
 }  // namespace
 
 void SurfaceModelTest::_noViewportNoPatches()
@@ -428,6 +446,69 @@ void SurfaceModelTest::_pendingPatchesCoveredDuringLodChurn()
     for (const SurfaceModel::Patch& patch : model.patches()) {
         QVERIFY(!patch.covered);
     }
+}
+
+void SurfaceModelTest::_tallTerrainKeepsCameraTileResident()
+{
+    // Terrain (500 m) rises far above the camera eye (~229 up at tilt 55,
+    // distance 400). Ground-plane culling alone would drop the ground under
+    // and just behind the bottom screen edge, leaving a hole where that tall
+    // terrain should render. Once heights arrive the model must re-cull
+    // terrain-aware without any camera movement.
+    GeoViewCamera camera;
+    TallHeightSource source(500.0f);
+    SurfaceModel model(&camera, &source);
+
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 55, 400);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+
+    const QPointF cameraGround = camera.cameraGroundPosition();
+    QTRY_VERIFY_WITH_TIMEOUT(model.visibleGroundRect().contains(cameraGround), 5000);
+
+    // The re-cull spawns fresh height fetches; wait for those too
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+    bool renderedUnderCamera = false;
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        const double span = TileMath::tileSpanAtZoom(patch.key.zoom);
+        const QRectF rect(TileMath::tileMinCorner(patch.key), QSizeF(span, span));
+        if (!patch.covered && rect.contains(cameraGround)) {
+            renderedUnderCamera = true;
+            break;
+        }
+    }
+    QVERIFY2(renderedUnderCamera, "no rendered patch spans the camera ground position");
+}
+
+void SurfaceModelTest::_cameraGroundTileResidentOverFlatTerrain()
+{
+    // The terrain ceiling comes only from resident patches, so tall terrain
+    // living solely in never-requested tiles (e.g. a cliff under the camera
+    // with flat water everywhere visible) could never be discovered. The
+    // visible region must therefore include the camera ground point even
+    // when every resident patch is flat.
+    GeoViewCamera camera;
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 55, 400);
+    const QPointF cameraGround = camera.cameraGroundPosition();
+
+    FlatHeightSource source;
+    SurfaceModel model(&camera, &source);
+    model.update();
+
+    QVERIFY(model.visibleGroundRect().contains(cameraGround));
+
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
+    bool renderedUnderCamera = false;
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        const double span = TileMath::tileSpanAtZoom(patch.key.zoom);
+        const QRectF rect(TileMath::tileMinCorner(patch.key), QSizeF(span, span));
+        if (!patch.covered && rect.contains(cameraGround)) {
+            renderedUnderCamera = true;
+            break;
+        }
+    }
+    QVERIFY2(renderedUnderCamera, "no rendered patch spans the camera ground position");
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(SurfaceModelTest, TestLabel::Unit)

@@ -47,7 +47,10 @@ void SurfaceModel::update()
         return;  // keep the last valid set; transient 0-size viewports occur during layout
     }
 
-    const QRectF visible = _visibleGroundRect();
+    // Max terrain height scans every resident vertex: compute once per update
+    const double terrainZ = _maxTerrainZ();
+    const QRectF visible = _visibleGroundRect(terrainZ);
+    _culledTerrainZ = terrainZ;
     const QPointF cameraGround = _camera->cameraGroundPosition();
     const double cameraHeight = _camera->distance() * std::cos(qDegreesToRadians(_camera->tilt()));
 
@@ -148,10 +151,17 @@ int SurfaceModel::pendingCount() const
     return pending;
 }
 
-QRectF SurfaceModel::_visibleGroundRect() const
+QRectF SurfaceModel::_visibleGroundRect(double terrainZ) const
 {
     const QSizeF viewport = _camera->viewportSize();
     const double maxRange = _camera->distance() * kMaxRangeMultiplier;
+
+    // Terrain-aware near boundary: rays that hit the ground plane far ahead
+    // cross the terrain-top plane much closer to (or behind) the camera, so
+    // tall terrain there is visible even though its flat-ground point is not
+    const double eyeZ = _camera->distance() * std::cos(qDegreesToRadians(_camera->tilt()));
+    const QPointF cameraGround = _camera->cameraGroundPosition();
+    const double terrainT = ((terrainZ > 0.0) && (eyeZ > terrainZ)) ? (1.0 - (terrainZ / eyeZ)) : 0.0;
 
     // Sample a screen grid; horizon misses are capped at maxRange. Accumulate
     // extremes manually (zero-size QRectFs are "null" and united() ignores them).
@@ -160,6 +170,18 @@ QRectF SurfaceModel::_visibleGroundRect() const
     double maxX = 0;
     double maxY = 0;
     bool first = true;
+    const auto include = [&](const QPointF& point) {
+        if (first) {
+            minX = maxX = point.x();
+            minY = maxY = point.y();
+            first = false;
+        } else {
+            minX = std::min(minX, point.x());
+            maxX = std::max(maxX, point.x());
+            minY = std::min(minY, point.y());
+            maxY = std::max(maxY, point.y());
+        }
+    };
     for (int row = 0; row < kVisibleSampleGrid; row++) {
         for (int col = 0; col < kVisibleSampleGrid; col++) {
             const QPointF screenPos((viewport.width() * col) / (kVisibleSampleGrid - 1),
@@ -168,25 +190,41 @@ QRectF SurfaceModel::_visibleGroundRect() const
             if (!ground) {
                 continue;
             }
-            if (first) {
-                minX = maxX = ground->x();
-                minY = maxY = ground->y();
-                first = false;
-            } else {
-                minX = std::min(minX, ground->x());
-                maxX = std::max(maxX, ground->x());
-                minY = std::min(minY, ground->y());
-                maxY = std::max(maxY, ground->y());
+            include(*ground);
+            if (terrainT > 0.0) {
+                include(cameraGround + ((*ground - cameraGround) * terrainT));
             }
         }
     }
     if (first) {
         return QRectF();
     }
+    // Always keep the camera's tile in range: the terrain ceiling above only
+    // knows resident patches, so terrain living solely in never-requested
+    // tiles near the camera could otherwise never be discovered
+    include(cameraGround);
 
     const double half = TileMath::worldSize() / 2.0;
     return QRectF(QPointF(minX, minY), QPointF(maxX, maxY))
         .intersected(QRectF(-half, -half, TileMath::worldSize(), TileMath::worldSize()));
+}
+
+/// Tallest resident terrain in scene units (heights render scaled by the
+/// mercator vertical scale); 0 when nothing has heights yet
+double SurfaceModel::_maxTerrainZ() const
+{
+    float maxHeight = 0.0f;
+    for (const PatchData& data : _patches) {
+        for (const float height : data.heights) {
+            if (std::isfinite(height)) {
+                maxHeight = std::max(maxHeight, height);
+            }
+        }
+    }
+    if (maxHeight <= 0.0f) {
+        return 0.0;
+    }
+    return maxHeight * TileMath::mercatorScale(_camera->center().latitude());
 }
 
 double SurfaceModel::_projectedPixels(const TileMath::TileKey& key, const QPointF& cameraGround,
@@ -283,6 +321,12 @@ void SurfaceModel::_heightsReady(int requestId, const QList<float>& heights)
     patchIt.value().ready = true;
     emit patchReady(key);
     _sweepRetiring();
+
+    // Terrain taller than the last cull assumed may be visible below/behind
+    // the camera: re-cull terrain-aware
+    if (_maxTerrainZ() > (_culledTerrainZ + kRecullHeightMargin)) {
+        update();
+    }
 }
 
 void SurfaceModel::_sweepRetiring()
