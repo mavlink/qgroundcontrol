@@ -2,8 +2,8 @@
 
 #include <QtTest/QSignalSpy>
 
+#include "GeoMapCamera.h"
 #include "GeoScene.h"
-#include "GeoViewCamera.h"
 #include "QGCMapUrlEngine.h"
 #include "SurfacePatchModel.h"
 
@@ -24,7 +24,7 @@ QString mapType()
     return QString();
 }
 
-void attach(SurfacePatchModel& model, GeoScene& scene, GeoViewCamera& camera)
+void attach(SurfacePatchModel& model, GeoScene& scene, GeoMapCamera& camera)
 {
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
@@ -61,7 +61,7 @@ void SurfacePatchImageryTest::_imagesArriveForAllPatches()
     const QString type = mapType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     attach(model, scene, camera);
@@ -76,7 +76,7 @@ void SurfacePatchImageryTest::_emptyMapTypeDisablesImagery()
     const QString type = mapType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     attach(model, scene, camera);
@@ -106,7 +106,7 @@ void SurfacePatchImageryTest::_mapTypeSwitchRefetches()
     }
     QVERIFY2(types.count() == 2, "need two non-elevation map providers");
 
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     attach(model, scene, camera);
@@ -124,7 +124,7 @@ void SurfacePatchImageryTest::_fallbackCoversLodChanges()
     const QString type = mapType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     attach(model, scene, camera);

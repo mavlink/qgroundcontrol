@@ -1,4 +1,4 @@
-#include "GeoViewCamera.h"
+#include "GeoMapCamera.h"
 
 #include <QtCore/QtMath>
 #include <algorithm>
@@ -70,19 +70,19 @@ Ray pickRay(const QPointF& centerWorld, qreal heading, qreal tilt, qreal distanc
 
 }  // namespace
 
-GeoViewCamera::GeoViewCamera(QObject* parent) : QObject(parent) {}
+GeoMapCamera::GeoMapCamera(QObject* parent) : QObject(parent) {}
 
-QGeoCoordinate GeoViewCamera::center() const
+QGeoCoordinate GeoMapCamera::center() const
 {
     return TileMath::worldToGeo(_centerWorld);
 }
 
-void GeoViewCamera::setCenter(const QGeoCoordinate& center)
+void GeoMapCamera::setCenter(const QGeoCoordinate& center)
 {
     _setCenterWorld(TileMath::geoToWorld(center));
 }
 
-void GeoViewCamera::_setCenterWorld(const QPointF& world)
+void GeoMapCamera::_setCenterWorld(const QPointF& world)
 {
     const double half = TileMath::worldSize() / 2.0;
     const QPointF clamped(std::clamp(world.x(), -half, half), std::clamp(world.y(), -half, half));
@@ -96,7 +96,7 @@ void GeoViewCamera::_setCenterWorld(const QPointF& world)
     emit scenePoseChanged();
 }
 
-void GeoViewCamera::setHeading(qreal heading)
+void GeoMapCamera::setHeading(qreal heading)
 {
     const qreal normalized = _normalizedHeading(heading);
     if (qFuzzyCompare(normalized, _heading)) {
@@ -107,7 +107,7 @@ void GeoViewCamera::setHeading(qreal heading)
     emit scenePoseChanged();
 }
 
-void GeoViewCamera::setTilt(qreal tilt)
+void GeoMapCamera::setTilt(qreal tilt)
 {
     const qreal clamped = std::clamp(tilt, kMinTilt, kMaxTilt);
     if (qFuzzyCompare(clamped, _tilt)) {
@@ -118,7 +118,7 @@ void GeoViewCamera::setTilt(qreal tilt)
     emit scenePoseChanged();
 }
 
-void GeoViewCamera::setDistance(qreal distance)
+void GeoMapCamera::setDistance(qreal distance)
 {
     const qreal clamped = std::clamp(distance, kMinDistance, kMaxDistance);
     if (qFuzzyCompare(clamped, _distance)) {
@@ -129,7 +129,7 @@ void GeoViewCamera::setDistance(qreal distance)
     emit scenePoseChanged();
 }
 
-void GeoViewCamera::setViewportSize(const QSizeF& size)
+void GeoMapCamera::setViewportSize(const QSizeF& size)
 {
     if (size == _viewportSize) {
         return;
@@ -138,7 +138,7 @@ void GeoViewCamera::setViewportSize(const QSizeF& size)
     emit viewportSizeChanged();
 }
 
-void GeoViewCamera::setFieldOfView(qreal fov)
+void GeoMapCamera::setFieldOfView(qreal fov)
 {
     const qreal clamped = std::clamp(fov, 10.0, 120.0);
     if (qFuzzyCompare(clamped, _fieldOfView)) {
@@ -148,7 +148,7 @@ void GeoViewCamera::setFieldOfView(qreal fov)
     emit fieldOfViewChanged();
 }
 
-void GeoViewCamera::setMode(Mode mode)
+void GeoMapCamera::setMode(Mode mode)
 {
     if (mode == _mode) {
         return;
@@ -157,14 +157,14 @@ void GeoViewCamera::setMode(Mode mode)
     emit modeChanged();
 }
 
-void GeoViewCamera::reset()
+void GeoMapCamera::reset()
 {
     setHeading(0);
     setTilt(kMinTilt);
     setDistance(kDefaultDistance);
 }
 
-void GeoViewCamera::lookAt(const QGeoCoordinate& center, qreal heading, qreal tilt, qreal distance)
+void GeoMapCamera::lookAt(const QGeoCoordinate& center, qreal heading, qreal tilt, qreal distance)
 {
     setCenter(center);
     setHeading(heading);
@@ -172,20 +172,20 @@ void GeoViewCamera::lookAt(const QGeoCoordinate& center, qreal heading, qreal ti
     setDistance(distance);
 }
 
-QVector3D GeoViewCamera::cameraPosition() const
+QVector3D GeoMapCamera::cameraPosition() const
 {
     const Vec3 offset = cameraOffset(_heading, _tilt, _distance);
     return QVector3D(static_cast<float>(_centerWorld.x() + offset.x), static_cast<float>(_centerWorld.y() + offset.y),
                      static_cast<float>(offset.z));
 }
 
-QPointF GeoViewCamera::cameraGroundPosition() const
+QPointF GeoMapCamera::cameraGroundPosition() const
 {
     const Vec3 offset = cameraOffset(_heading, _tilt, _distance);
     return QPointF(_centerWorld.x() + offset.x, _centerWorld.y() + offset.y);
 }
 
-void GeoViewCamera::setSceneOrigin(const QPointF& origin)
+void GeoMapCamera::setSceneOrigin(const QPointF& origin)
 {
     if (origin == _sceneOrigin) {
         return;
@@ -194,7 +194,7 @@ void GeoViewCamera::setSceneOrigin(const QPointF& origin)
     emit scenePoseChanged();
 }
 
-QVector3D GeoViewCamera::scenePosition() const
+QVector3D GeoMapCamera::scenePosition() const
 {
     // World offset computed in doubles before the float cast
     const Vec3 offset = cameraOffset(_heading, _tilt, _distance);
@@ -203,7 +203,7 @@ QVector3D GeoViewCamera::scenePosition() const
                      static_cast<float>(offset.z));
 }
 
-QQuaternion GeoViewCamera::sceneRotation() const
+QQuaternion GeoMapCamera::sceneRotation() const
 {
     // R = Rz(heading) * Rx(tilt): identity is top-down (camera -z look direction
     // points down the scene z axis) with north (+y) up on screen
@@ -211,7 +211,7 @@ QQuaternion GeoViewCamera::sceneRotation() const
            QQuaternion::fromAxisAndAngle(1, 0, 0, static_cast<float>(_tilt));
 }
 
-std::optional<QPointF> GeoViewCamera::screenToGround(const QPointF& screenPos) const
+std::optional<QPointF> GeoMapCamera::screenToGround(const QPointF& screenPos) const
 {
     if (_viewportSize.isEmpty()) {
         return std::nullopt;
@@ -226,7 +226,7 @@ std::optional<QPointF> GeoViewCamera::screenToGround(const QPointF& screenPos) c
     return QPointF(ray.origin.x + (s * ray.dir.x), ray.origin.y + (s * ray.dir.y));
 }
 
-std::optional<QPointF> GeoViewCamera::groundPointCapped(const QPointF& screenPos, double maxRange) const
+std::optional<QPointF> GeoMapCamera::groundPointCapped(const QPointF& screenPos, double maxRange) const
 {
     if (_viewportSize.isEmpty()) {
         return std::nullopt;
@@ -254,7 +254,7 @@ std::optional<QPointF> GeoViewCamera::groundPointCapped(const QPointF& screenPos
     return cameraGround + (QPointF(ray.dir.x, ray.dir.y) * (maxRange / horizontal));
 }
 
-std::optional<QPointF> GeoViewCamera::worldToScreen(const QPointF& worldGround, double worldZ) const
+std::optional<QPointF> GeoMapCamera::worldToScreen(const QPointF& worldGround, double worldZ) const
 {
     if (_viewportSize.isEmpty()) {
         return std::nullopt;
@@ -283,7 +283,7 @@ std::optional<QPointF> GeoViewCamera::worldToScreen(const QPointF& worldGround, 
     return QPointF(((ndcX + 1.0) / 2.0) * _viewportSize.width(), ((1.0 - ndcY) / 2.0) * _viewportSize.height());
 }
 
-qreal GeoViewCamera::sceneUnitsPerPixel() const
+qreal GeoMapCamera::sceneUnitsPerPixel() const
 {
     if (_viewportSize.isEmpty()) {
         return 0;
@@ -298,12 +298,12 @@ qreal GeoViewCamera::sceneUnitsPerPixel() const
     return std::hypot(d.x(), d.y());
 }
 
-void GeoViewCamera::beginPan(const QPointF& screenPos)
+void GeoMapCamera::beginPan(const QPointF& screenPos)
 {
     _panAnchorWorld = screenToGround(screenPos);
 }
 
-void GeoViewCamera::panTo(const QPointF& screenPos)
+void GeoMapCamera::panTo(const QPointF& screenPos)
 {
     if (!_panAnchorWorld) {
         return;
@@ -311,7 +311,7 @@ void GeoViewCamera::panTo(const QPointF& screenPos)
     _anchorToScreen(*_panAnchorWorld, screenPos);
 }
 
-void GeoViewCamera::beginOrbit(const QPointF& screenPos)
+void GeoMapCamera::beginOrbit(const QPointF& screenPos)
 {
     _orbitAnchorWorld = screenToGround(screenPos);
     _orbitAnchorScreen = screenPos;
@@ -320,7 +320,7 @@ void GeoViewCamera::beginOrbit(const QPointF& screenPos)
     _orbitStartTilt = _tilt;
 }
 
-void GeoViewCamera::orbitTo(const QPointF& screenPos)
+void GeoMapCamera::orbitTo(const QPointF& screenPos)
 {
     if (!_orbitAnchorWorld || _viewportSize.isEmpty()) {
         return;
@@ -344,7 +344,7 @@ void GeoViewCamera::orbitTo(const QPointF& screenPos)
     _anchorToScreen(*_orbitAnchorWorld, _orbitAnchorScreen);
 }
 
-void GeoViewCamera::rotateBy(qreal degrees, const QPointF& screenPos)
+void GeoMapCamera::rotateBy(qreal degrees, const QPointF& screenPos)
 {
     const auto anchor = screenToGround(screenPos);
     if (!anchor) {
@@ -354,7 +354,7 @@ void GeoViewCamera::rotateBy(qreal degrees, const QPointF& screenPos)
     setHeading(_heading + degrees);
 }
 
-void GeoViewCamera::tiltBy(qreal degrees, const QPointF& screenPos)
+void GeoMapCamera::tiltBy(qreal degrees, const QPointF& screenPos)
 {
     if (_mode != Mode::Mode3D) {
         return;  // 2D locks tilt against gestures
@@ -366,13 +366,13 @@ void GeoViewCamera::tiltBy(qreal degrees, const QPointF& screenPos)
     }
 }
 
-void GeoViewCamera::zoom(qreal amount, const QPointF& screenPos)
+void GeoMapCamera::zoom(qreal amount, const QPointF& screenPos)
 {
     // 120 angleDelta units (one wheel notch) scales distance by ~0.8
     zoomBy(std::pow(0.8, amount / 120.0), screenPos);
 }
 
-void GeoViewCamera::zoomBy(qreal factor, const QPointF& screenPos)
+void GeoMapCamera::zoomBy(qreal factor, const QPointF& screenPos)
 {
     if (factor <= 0.0) {
         return;
@@ -384,7 +384,7 @@ void GeoViewCamera::zoomBy(qreal factor, const QPointF& screenPos)
     }
 }
 
-void GeoViewCamera::_anchorToScreen(const QPointF& anchorWorld, const QPointF& screenPos)
+void GeoMapCamera::_anchorToScreen(const QPointF& anchorWorld, const QPointF& screenPos)
 {
     const auto current = screenToGround(screenPos);
     if (!current) {
@@ -393,7 +393,7 @@ void GeoViewCamera::_anchorToScreen(const QPointF& anchorWorld, const QPointF& s
     _setCenterWorld(_centerWorld + (anchorWorld - *current));
 }
 
-qreal GeoViewCamera::_normalizedHeading(qreal heading)
+qreal GeoMapCamera::_normalizedHeading(qreal heading)
 {
     const qreal wrapped = std::fmod(heading, 360.0);
     return (wrapped < 0.0) ? (wrapped + 360.0) : wrapped;

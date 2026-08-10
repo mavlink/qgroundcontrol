@@ -3,8 +3,8 @@
 #include <QtTest/QSignalSpy>
 #include <cmath>
 
+#include "GeoMapCamera.h"
 #include "GeoScene.h"
-#include "GeoViewCamera.h"
 #include "SurfaceModel.h"
 #include "SurfacePatchModel.h"
 #include "TileMath.h"
@@ -14,13 +14,13 @@ namespace {
 const QGeoCoordinate kCenter(47.3977419, 8.5455938);
 constexpr QSizeF kViewport(800, 600);
 
-void setupCamera(GeoViewCamera& camera, const QGeoCoordinate& center = kCenter)
+void setupCamera(GeoMapCamera& camera, const QGeoCoordinate& center = kCenter)
 {
     camera.setViewportSize(kViewport);
     camera.lookAt(center, 0, 0, 2000);
 }
 
-void attach(SurfacePatchModel& model, GeoScene& scene, GeoViewCamera& camera)
+void attach(SurfacePatchModel& model, GeoScene& scene, GeoMapCamera& camera)
 {
     scene.setCamera(&camera);
     model.setScene(&scene);
@@ -38,7 +38,7 @@ void SurfacePatchModelTest::_emptyWithoutCamera()
 
 void SurfacePatchModelTest::_populatesFromCamera()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
@@ -56,7 +56,7 @@ void SurfacePatchModelTest::_populatesFromCamera()
 
 void SurfacePatchModelTest::_rolesValid()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
@@ -90,7 +90,7 @@ void SurfacePatchModelTest::_rolesValid()
 
 void SurfacePatchModelTest::_incrementalUpdatesOnMove()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
@@ -110,7 +110,7 @@ void SurfacePatchModelTest::_incrementalUpdatesOnMove()
 
 void SurfacePatchModelTest::_reanchorsOnLargeMove()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
@@ -142,7 +142,7 @@ void SurfacePatchModelTest::_reanchorsOnLargeMove()
 
 void SurfacePatchModelTest::_cameraSwapAnchorsFresh()
 {
-    GeoViewCamera zurichCamera;
+    GeoMapCamera zurichCamera;
     GeoScene scene;
     SurfacePatchModel model;
     setupCamera(zurichCamera);
@@ -150,7 +150,7 @@ void SurfacePatchModelTest::_cameraSwapAnchorsFresh()
 
     // Swap to a static camera on another continent: the origin must follow even
     // though the new camera's center never changes after the swap
-    GeoViewCamera sydneyCamera;
+    GeoMapCamera sydneyCamera;
     const QGeoCoordinate sydney(-33.8688, 151.2093);
     setupCamera(sydneyCamera, sydney);
     scene.setCamera(&sydneyCamera);
@@ -164,7 +164,7 @@ void SurfacePatchModelTest::_cameraSwapAnchorsFresh()
 
 void SurfacePatchModelTest::_debugHillsSwitchResets()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     setupCamera(camera);
@@ -193,11 +193,11 @@ void SurfacePatchModelTest::_debugHillsSwitchResets()
 
 void SurfacePatchModelTest::_pendingRowsCoveredDuringLodChurn()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     camera.setViewportSize(kViewport);
-    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kMaxDistance);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
     attach(model, scene, camera);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 

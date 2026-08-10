@@ -12,7 +12,7 @@
 #include <QtCore/QList>
 #include <QtQuick3D/QQuick3DGeometry>
 
-/// Grid mesh for one surface patch of the GeoView map engine.
+/// Grid mesh for one surface patch of the GeoMap engine.
 ///
 /// Local space: origin at the patch center, x east, y north, z up (meters).
 /// The grid has (gridSize+1)^2 vertices spanning [-span/2, +span/2] in x/y,

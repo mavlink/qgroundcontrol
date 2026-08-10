@@ -3,8 +3,8 @@
 #include <QtTest/QSignalSpy>
 #include <cmath>
 
+#include "GeoMapCamera.h"
 #include "GeoScene.h"
-#include "GeoViewCamera.h"
 #include "TileMath.h"
 
 namespace {
@@ -12,7 +12,7 @@ namespace {
 const QGeoCoordinate kCenter(47.3977419, 8.5455938);
 constexpr QSizeF kViewport(800, 600);
 
-void setupCamera(GeoViewCamera& camera, const QGeoCoordinate& center = kCenter)
+void setupCamera(GeoMapCamera& camera, const QGeoCoordinate& center = kCenter)
 {
     camera.setViewportSize(kViewport);
     camera.lookAt(center, 0, 0, 2000);
@@ -33,7 +33,7 @@ void GeoSceneTest::_originAnchorsOnCameraSet()
     QCOMPARE(scene.verticalScale(), 1.0);
     QCOMPARE_LT(scene.scenePositionFor(QGeoCoordinate(0, 0)).length(), 1.0f);
 
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
     scene.setCamera(&camera);
 
@@ -42,7 +42,7 @@ void GeoSceneTest::_originAnchorsOnCameraSet()
 
 void GeoSceneTest::_reanchorsEuclidean()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
     GeoScene scene;
     scene.setCamera(&camera);
@@ -64,14 +64,14 @@ void GeoSceneTest::_reanchorsEuclidean()
 
 void GeoSceneTest::_cameraSwapAnchorsFresh()
 {
-    GeoViewCamera zurichCamera;
+    GeoMapCamera zurichCamera;
     setupCamera(zurichCamera);
     GeoScene scene;
     scene.setCamera(&zurichCamera);
 
     // Swap to a static camera on another continent: the origin must follow even
     // though the new camera's center never changes after the swap
-    GeoViewCamera sydneyCamera;
+    GeoMapCamera sydneyCamera;
     const QGeoCoordinate sydney(-33.8688, 151.2093);
     setupCamera(sydneyCamera, sydney);
     scene.setCamera(&sydneyCamera);
@@ -81,7 +81,7 @@ void GeoSceneTest::_cameraSwapAnchorsFresh()
 
 void GeoSceneTest::_verticalScaleTracksOrigin()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
     GeoScene scene;
     scene.setCamera(&camera);
@@ -99,7 +99,7 @@ void GeoSceneTest::_verticalScaleTracksOrigin()
 
 void GeoSceneTest::_scenePositionFor()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
     GeoScene scene;
     scene.setCamera(&camera);
@@ -127,7 +127,7 @@ void GeoSceneTest::_screenPositionFor()
     // No camera: invalid
     QVERIFY(!scene.screenPositionFor(kCenter).isValid());
 
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
     scene.setCamera(&camera);
 

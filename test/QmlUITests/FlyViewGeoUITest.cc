@@ -1,4 +1,4 @@
-#include "GeoViewUITest.h"
+#include "FlyViewGeoUITest.h"
 
 #include <QtCore/QList>
 #include <QtCore/QScopeGuard>
@@ -10,16 +10,17 @@
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
+#include <optional>
 
 #include "Fact.h"
-#include "GeoViewCamera.h"
+#include "GeoMapCamera.h"
 #include "GeoViewSettings.h"
 #include "SettingsManager.h"
 #include "SurfacePatchModel.h"
 
-UT_REGISTER_TEST(GeoViewUITest, TestLabel::Integration)
+UT_REGISTER_TEST(FlyViewGeoUITest, TestLabel::Integration)
 
-void GeoViewUITest::_testHiddenWhenDisabled()
+void FlyViewGeoUITest::_testHiddenWhenDisabled()
 {
     startUI();
     if (QTest::currentTestFailed())
@@ -38,7 +39,7 @@ void GeoViewUITest::_testHiddenWhenDisabled()
     stopUI();
 }
 
-void GeoViewUITest::_testViewSwitchWhenEnabled()
+void FlyViewGeoUITest::_testViewSwitchWhenEnabled()
 {
     Fact* const enabled = SettingsManager::instance()->geoViewSettings()->enabled();
     const QVariant savedEnabled = enabled->rawValue();
@@ -63,15 +64,15 @@ void GeoViewUITest::_testViewSwitchWhenEnabled()
 
     // The 3D viewport instantiates and the patch repeater populates from the
     // SurfaceModel regardless of render backend
-    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoViewViewport"), 10000);
+    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), 10000);
     QVERIFY2(viewport, "GeoView 3D viewport not visible");
-    QTRY_VERIFY_WITH_TIMEOUT(!viewport->findChildren<QObject*>(QStringLiteral("geoViewPatchDelegate")).isEmpty(), 5000);
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoViewDebugOverlay")), "Debug overlay not visible");
+    QTRY_VERIFY_WITH_TIMEOUT(!viewport->findChildren<QObject*>(QStringLiteral("geoMapPatchDelegate")).isEmpty(), 5000);
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("flyViewGeoDebugOverlay")), "Debug overlay not visible");
 
     // Tile imagery flows end-to-end: the model is wired to the flight map
     // provider setting and every patch receives an image (the test tile
     // generator serves placeholders on cache miss, so no network is involved)
-    auto* const patchModel = viewport->parentItem()->findChild<SurfacePatchModel*>(QStringLiteral("geoViewPatchModel"));
+    auto* const patchModel = viewport->parentItem()->findChild<SurfacePatchModel*>(QStringLiteral("geoMapPatchModel"));
     QVERIFY2(patchModel, "SurfacePatchModel not found");
     QVERIFY2(!patchModel->mapType().isEmpty(), "Patch model not wired to a map provider");
     const auto allPatchesImaged = [patchModel] {
@@ -87,9 +88,9 @@ void GeoViewUITest::_testViewSwitchWhenEnabled()
     };
     QTRY_VERIFY_WITH_TIMEOUT(allPatchesImaged(), 5000);
 
-    // Scene camera node tracks the GeoViewCamera debug pose (overhead at 1500m,
+    // Scene camera node tracks the GeoMapCamera debug pose (overhead at 1500m,
     // identity rotation, origin anchored at the camera center)
-    QObject* const sceneCamera = viewport->findChild<QObject*>(QStringLiteral("geoViewSceneCamera"));
+    QObject* const sceneCamera = viewport->findChild<QObject*>(QStringLiteral("geoMapSceneCamera"));
     QVERIFY2(sceneCamera, "Scene camera node not found");
     const QVector3D camPos = sceneCamera->property("position").value<QVector3D>();
     QCOMPARE_LT(qAbs(camPos.x()), 1.0f);
@@ -109,7 +110,7 @@ void GeoViewUITest::_testViewSwitchWhenEnabled()
 // Exercises every camera gesture against the real view: left-drag pan,
 // right-drag orbit, wheel zoom, and synthesized multi-touch (pinch zoom,
 // two-finger twist).
-void GeoViewUITest::_testCameraGestures()
+void FlyViewGeoUITest::_testCameraGestures()
 {
     Fact* const enabled = SettingsManager::instance()->geoViewSettings()->enabled();
     const QVariant savedEnabled = enabled->rawValue();
@@ -124,13 +125,13 @@ void GeoViewUITest::_testCameraGestures()
     QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
 
     QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewGeo")));
-    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoViewViewport"), 10000);
+    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), 10000);
     QVERIFY2(viewport, "GeoView 3D viewport not visible");
 
     // Non-visual QObject sibling of the viewport: search from the scene root
     // item (the window-level QObject tree does not reach into the Loader item)
-    auto* const cam = viewport->parentItem()->findChild<GeoViewCamera*>(QStringLiteral("geoViewCamera"));
-    QVERIFY2(cam, "GeoViewCamera not found");
+    auto* const cam = viewport->parentItem()->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(cam, "GeoMapCamera not found");
 
     const qreal w = viewport->width();
     const qreal h = viewport->height();
@@ -142,8 +143,8 @@ void GeoViewUITest::_testCameraGestures()
 
     // Unlock tilt gestures once up front: the mode change starts the animated
     // 2D->3D transition, so wait for it to settle before posing the camera
-    cam->setMode(GeoViewCamera::Mode::Mode3D);
-    QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), GeoViewCamera::kDefault3DTilt, 5000);
+    cam->setMode(GeoMapCamera::Mode::Mode3D);
+    QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), GeoMapCamera::kDefault3DTilt, 5000);
 
     // Known pose before every gesture: mercator origin, heading 0, tilt 30,
     // distance 1500 (tilted so orbit/tilt deltas are observable both ways)
@@ -227,7 +228,7 @@ void GeoViewUITest::_testCameraGestures()
 // 2D/3D mode switch: the mode flips immediately and locks tilt gestures in 2D;
 // tilt and terrain displacement animate to the mode's target; the compass
 // control animates heading back to north-up
-void GeoViewUITest::_testModeToggleAndCompass()
+void FlyViewGeoUITest::_testModeToggleAndCompass()
 {
     Fact* const enabled = SettingsManager::instance()->geoViewSettings()->enabled();
     const QVariant savedEnabled = enabled->rawValue();
@@ -242,32 +243,32 @@ void GeoViewUITest::_testModeToggleAndCompass()
     QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
 
     QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewGeo")));
-    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoViewViewport"), 10000);
+    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), 10000);
     QVERIFY2(viewport, "GeoView 3D viewport not visible");
 
-    auto* const cam = viewport->parentItem()->findChild<GeoViewCamera*>(QStringLiteral("geoViewCamera"));
-    QVERIFY2(cam, "GeoViewCamera not found");
+    auto* const cam = viewport->parentItem()->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(cam, "GeoMapCamera not found");
     QQuickItem* const sceneRoot = viewport->parentItem();
 
     // Startup: 2D mode, flat terrain, toggle offers 3D
-    QCOMPARE(cam->mode(), GeoViewCamera::Mode::Mode2D);
+    QCOMPARE(cam->mode(), GeoMapCamera::Mode::Mode2D);
     QVERIFY(cam->isTopDown());
     QCOMPARE(sceneRoot->property("terrainScale").toDouble(), 0.0);
-    QQuickItem* const modeButton = findVisibleItem(_rootItem, QStringLiteral("geoViewModeButton"));
+    QQuickItem* const modeButton = findVisibleItem(_rootItem, QStringLiteral("flyViewGeoModeButton"));
     QVERIFY2(modeButton, "Mode toggle button not visible");
     QCOMPARE(modeButton->property("text").toString(), QStringLiteral("3D"));
 
     // Toggle to 3D: mode flips immediately, tilt and terrain animate up
-    QVERIFY(clickButton(QStringLiteral("geoViewModeButton")));
-    QCOMPARE(cam->mode(), GeoViewCamera::Mode::Mode3D);
+    QVERIFY(clickButton(QStringLiteral("flyViewGeoModeButton")));
+    QCOMPARE(cam->mode(), GeoMapCamera::Mode::Mode3D);
     QCOMPARE(modeButton->property("text").toString(), QStringLiteral("2D"));
-    QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), GeoViewCamera::kDefault3DTilt, 5000);
+    QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), GeoMapCamera::kDefault3DTilt, 5000);
     QTRY_COMPARE_WITH_TIMEOUT(sceneRoot->property("terrainScale").toDouble(), 1.0, 5000);
     QVERIFY(!cam->isTopDown());
 
     // Toggle back to 2D: tilt and terrain animate down
-    QVERIFY(clickButton(QStringLiteral("geoViewModeButton")));
-    QCOMPARE(cam->mode(), GeoViewCamera::Mode::Mode2D);
+    QVERIFY(clickButton(QStringLiteral("flyViewGeoModeButton")));
+    QCOMPARE(cam->mode(), GeoMapCamera::Mode::Mode2D);
     QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), 0.0, 5000);
     QTRY_COMPARE_WITH_TIMEOUT(sceneRoot->property("terrainScale").toDouble(), 0.0, 5000);
     QVERIFY(cam->isTopDown());
@@ -283,7 +284,7 @@ void GeoViewUITest::_testModeToggleAndCompass()
 
     // Compass reset from a heading past 180: wraps the short way back to north
     cam->setHeading(350);
-    QVERIFY(clickButton(QStringLiteral("geoViewCompassButton")));
+    QVERIFY(clickButton(QStringLiteral("flyViewGeoCompassButton")));
     QTRY_COMPARE_WITH_TIMEOUT(cam->heading(), 0.0, 5000);
 
     stopUI();
@@ -295,7 +296,7 @@ void GeoViewUITest::_testModeToggleAndCompass()
 // sits outside the synthetic terrain regions, so the terrain source itself
 // delivers all-zero heights here (see TerrainHeightSourceTest for real
 // elevations).
-void GeoViewUITest::_testDebugHillsToggle()
+void FlyViewGeoUITest::_testDebugHillsToggle()
 {
     Fact* const enabled = SettingsManager::instance()->geoViewSettings()->enabled();
     const QVariant savedEnabled = enabled->rawValue();
@@ -310,10 +311,10 @@ void GeoViewUITest::_testDebugHillsToggle()
     QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
 
     QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewGeo")));
-    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoViewViewport"), 10000);
+    QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), 10000);
     QVERIFY2(viewport, "GeoView 3D viewport not visible");
 
-    auto* const patchModel = viewport->parentItem()->findChild<SurfacePatchModel*>(QStringLiteral("geoViewPatchModel"));
+    auto* const patchModel = viewport->parentItem()->findChild<SurfacePatchModel*>(QStringLiteral("geoMapPatchModel"));
     QVERIFY2(patchModel, "SurfacePatchModel not found");
 
     const auto anyNonZeroHeight = [patchModel] {

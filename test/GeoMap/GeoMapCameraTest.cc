@@ -1,4 +1,4 @@
-#include "GeoViewCameraTest.h"
+#include "GeoMapCameraTest.h"
 
 #include <QtCore/QtMath>
 #include <QtGui/QQuaternion>
@@ -6,7 +6,7 @@
 #include <QtTest/QSignalSpy>
 #include <cmath>
 
-#include "GeoViewCamera.h"
+#include "GeoMapCamera.h"
 #include "TileMath.h"
 
 namespace {
@@ -17,12 +17,12 @@ const QGeoCoordinate kCenter(47.3977419, 8.5455938);
 // World-meter tolerance for anchor invariants (double-precision math throughout)
 constexpr double kWorldEpsilon = 1e-3;
 
-void setupCamera(GeoViewCamera& camera, qreal tilt = 0.0, qreal heading = 0.0)
+void setupCamera(GeoMapCamera& camera, qreal tilt = 0.0, qreal heading = 0.0)
 {
     camera.setViewportSize(kViewport);
     // Gesture tests exercise the full pose freedom, so run unlocked
-    camera.setMode(GeoViewCamera::Mode::Mode3D);
-    camera.lookAt(kCenter, heading, tilt, GeoViewCamera::kDefaultDistance);
+    camera.setMode(GeoMapCamera::Mode::Mode3D);
+    camera.lookAt(kCenter, heading, tilt, GeoMapCamera::kDefaultDistance);
 }
 
 double groundDistance(const QPointF& a, const QPointF& b)
@@ -32,22 +32,22 @@ double groundDistance(const QPointF& a, const QPointF& b)
 
 }  // namespace
 
-void GeoViewCameraTest::_defaults()
+void GeoMapCameraTest::_defaults()
 {
-    const GeoViewCamera camera;
+    const GeoMapCamera camera;
     QCOMPARE(camera.heading(), 0.0);
     QCOMPARE(camera.tilt(), 0.0);
-    QCOMPARE(camera.distance(), GeoViewCamera::kDefaultDistance);
-    QCOMPARE(camera.fieldOfView(), GeoViewCamera::kDefaultFieldOfView);
+    QCOMPARE(camera.distance(), GeoMapCamera::kDefaultDistance);
+    QCOMPARE(camera.fieldOfView(), GeoMapCamera::kDefaultFieldOfView);
     QVERIFY(camera.isTopDown());
-    QCOMPARE(camera.mode(), GeoViewCamera::Mode::Mode2D);
+    QCOMPARE(camera.mode(), GeoMapCamera::Mode::Mode2D);
     QVERIFY(!camera.isPositioned());
 }
 
-void GeoViewCameraTest::_positionedOnExplicitCenter()
+void GeoMapCameraTest::_positionedOnExplicitCenter()
 {
-    GeoViewCamera camera;
-    QSignalSpy centerSpy(&camera, &GeoViewCamera::centerChanged);
+    GeoMapCamera camera;
+    QSignalSpy centerSpy(&camera, &GeoMapCamera::centerChanged);
 
     // Setting the center to the default location still counts as positioning
     // and must announce it, so consumers gated on isPositioned wake up
@@ -56,19 +56,19 @@ void GeoViewCameraTest::_positionedOnExplicitCenter()
     QCOMPARE(centerSpy.count(), 1);
 }
 
-void GeoViewCameraTest::_clamps()
+void GeoMapCameraTest::_clamps()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
 
     camera.setTilt(-10);
-    QCOMPARE(camera.tilt(), GeoViewCamera::kMinTilt);
+    QCOMPARE(camera.tilt(), GeoMapCamera::kMinTilt);
     camera.setTilt(100);
-    QCOMPARE(camera.tilt(), GeoViewCamera::kMaxTilt);
+    QCOMPARE(camera.tilt(), GeoMapCamera::kMaxTilt);
 
     camera.setDistance(0);
-    QCOMPARE(camera.distance(), GeoViewCamera::kMinDistance);
+    QCOMPARE(camera.distance(), GeoMapCamera::kMinDistance);
     camera.setDistance(1e12);
-    QCOMPARE(camera.distance(), GeoViewCamera::kMaxDistance);
+    QCOMPARE(camera.distance(), GeoMapCamera::kMaxDistance);
 
     camera.setHeading(370);
     QCOMPARE(camera.heading(), 10.0);
@@ -79,10 +79,10 @@ void GeoViewCameraTest::_clamps()
     QCOMPARE(camera.heading(), 0.0);
 }
 
-void GeoViewCameraTest::_fieldOfView()
+void GeoMapCameraTest::_fieldOfView()
 {
-    GeoViewCamera camera;
-    QSignalSpy fovSpy(&camera, &GeoViewCamera::fieldOfViewChanged);
+    GeoMapCamera camera;
+    QSignalSpy fovSpy(&camera, &GeoMapCamera::fieldOfViewChanged);
 
     camera.setFieldOfView(90);
     QCOMPARE(camera.fieldOfView(), 90.0);
@@ -97,24 +97,24 @@ void GeoViewCameraTest::_fieldOfView()
     QCOMPARE(camera.fieldOfView(), 120.0);
 }
 
-void GeoViewCameraTest::_reset()
+void GeoMapCameraTest::_reset()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera, 40, 120);
     camera.setDistance(50000);
 
     camera.reset();
 
     QCOMPARE(camera.heading(), 0.0);
-    QCOMPARE(camera.tilt(), GeoViewCamera::kMinTilt);
-    QCOMPARE(camera.distance(), GeoViewCamera::kDefaultDistance);
+    QCOMPARE(camera.tilt(), GeoMapCamera::kMinTilt);
+    QCOMPARE(camera.distance(), GeoMapCamera::kDefaultDistance);
     // Reset restores the default pose but keeps the location
     QCOMPARE_LT(camera.center().distanceTo(kCenter), 1.0);
 }
 
-void GeoViewCameraTest::_cameraPositionConvention()
+void GeoMapCameraTest::_cameraPositionConvention()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     camera.setCenter(QGeoCoordinate(0, 0));
     camera.setDistance(1000);
 
@@ -147,9 +147,9 @@ void GeoViewCameraTest::_cameraPositionConvention()
     QCOMPARE_LT(qAbs(ground.y()), 1e-6);
 }
 
-void GeoViewCameraTest::_screenToGroundTopDown()
+void GeoMapCameraTest::_screenToGroundTopDown()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
 
     // Screen center hits the camera center on the ground
@@ -164,10 +164,10 @@ void GeoViewCameraTest::_screenToGroundTopDown()
     QCOMPARE_GT(upLeft->y(), center->y());
 }
 
-void GeoViewCameraTest::_screenToGroundHorizonMiss()
+void GeoMapCameraTest::_screenToGroundHorizonMiss()
 {
-    GeoViewCamera camera;
-    setupCamera(camera, GeoViewCamera::kMaxTilt);
+    GeoMapCamera camera;
+    setupCamera(camera, GeoMapCamera::kMaxTilt);
 
     // At max tilt the ray through the top of the screen points above the horizon
     QVERIFY(!camera.screenToGround(QPointF(kViewport.width() / 2, 0)).has_value());
@@ -175,9 +175,9 @@ void GeoViewCameraTest::_screenToGroundHorizonMiss()
     QVERIFY(camera.screenToGround(QPointF(kViewport.width() / 2, kViewport.height())).has_value());
 }
 
-void GeoViewCameraTest::_screenToGroundNoViewport()
+void GeoMapCameraTest::_screenToGroundNoViewport()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     QVERIFY(!camera.screenToGround(QPointF(100, 100)).has_value());
     QCOMPARE(camera.sceneUnitsPerPixel(), 0.0);
 
@@ -189,15 +189,15 @@ void GeoViewCameraTest::_screenToGroundNoViewport()
     QCOMPARE_LT(qAbs(camera.center().latitude() - before.latitude()), 1e-12);
 }
 
-void GeoViewCameraTest::_worldToScreen()
+void GeoMapCameraTest::_worldToScreen()
 {
     // No viewport: the only unconditional failure mode
     {
-        const GeoViewCamera camera;
+        const GeoMapCamera camera;
         QVERIFY(!camera.worldToScreen(QPointF(0, 0)).has_value());
     }
 
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
     const QPointF centerWorld = TileMath::geoToWorld(kCenter);
     const QPointF screenCenter(kViewport.width() / 2.0, kViewport.height() / 2.0);
@@ -224,16 +224,16 @@ void GeoViewCameraTest::_worldToScreen()
     }
 }
 
-void GeoViewCameraTest::_groundPointCapped()
+void GeoMapCameraTest::_groundPointCapped()
 {
     // No viewport: the only failure mode
     {
-        const GeoViewCamera camera;
+        const GeoMapCamera camera;
         QVERIFY(!camera.groundPointCapped(QPointF(100, 100), 1000.0).has_value());
     }
 
-    GeoViewCamera camera;
-    setupCamera(camera, GeoViewCamera::kMaxTilt);
+    GeoMapCamera camera;
+    setupCamera(camera, GeoMapCamera::kMaxTilt);
     // Double precision (cameraPosition() is float and loses meters at world scale)
     const QPointF cameraGround = camera.cameraGroundPosition();
     // At tilt 85 (fov 60, 600px viewport) the horizon is at y~254: the screen bottom
@@ -267,9 +267,9 @@ void GeoViewCameraTest::_groundPointCapped()
     QCOMPARE_LT(qAbs(missCapped->x() - cameraGround.x()), kWorldEpsilon);
 }
 
-void GeoViewCameraTest::_sceneUnitsPerPixel()
+void GeoMapCameraTest::_sceneUnitsPerPixel()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
 
     // Top-down: vertical fov spans 2*d*tan(fov/2) world meters over the viewport height
@@ -278,18 +278,18 @@ void GeoViewCameraTest::_sceneUnitsPerPixel()
     QCOMPARE_LT(qAbs(camera.sceneUnitsPerPixel() - expected), expected * 0.01);
 }
 
-void GeoViewCameraTest::_panAnchorInvariant_data()
+void GeoMapCameraTest::_panAnchorInvariant_data()
 {
     QTest::addColumn<double>("tilt");
     QTest::newRow("top-down") << 0.0;
     QTest::newRow("tilted 45") << 45.0;
 }
 
-void GeoViewCameraTest::_panAnchorInvariant()
+void GeoMapCameraTest::_panAnchorInvariant()
 {
     QFETCH(double, tilt);
 
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera, tilt);
 
     const QPointF pressPos(200, 400);
@@ -311,9 +311,9 @@ void GeoViewCameraTest::_panAnchorInvariant()
     QCOMPARE(camera.heading(), 0.0);
 }
 
-void GeoViewCameraTest::_zoomAnchorInvariant()
+void GeoMapCameraTest::_zoomAnchorInvariant()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera);
 
     const QPointF zoomPos(600, 150);
@@ -329,9 +329,9 @@ void GeoViewCameraTest::_zoomAnchorInvariant()
     QCOMPARE_LT(groundDistance(*current, *anchor), kWorldEpsilon);
 }
 
-void GeoViewCameraTest::_rotateAnchorInvariant()
+void GeoMapCameraTest::_rotateAnchorInvariant()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera, 30.0);
 
     const QPointF twistPos(500, 400);
@@ -346,9 +346,9 @@ void GeoViewCameraTest::_rotateAnchorInvariant()
     QCOMPARE_LT(groundDistance(*current, *anchor), kWorldEpsilon);
 }
 
-void GeoViewCameraTest::_tiltAnchorInvariant()
+void GeoMapCameraTest::_tiltAnchorInvariant()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera, 20.0);
 
     const QPointF swipePos(400, 350);
@@ -363,9 +363,9 @@ void GeoViewCameraTest::_tiltAnchorInvariant()
     QCOMPARE_LT(groundDistance(*current, *anchor), kWorldEpsilon);
 }
 
-void GeoViewCameraTest::_orbitDragRatios()
+void GeoMapCameraTest::_orbitDragRatios()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     setupCamera(camera, 30.0);
 
     const QPointF start(kViewport.width() / 2, kViewport.height() / 2);
@@ -387,29 +387,29 @@ void GeoViewCameraTest::_orbitDragRatios()
     QCOMPARE_LT(groundDistance(*anchorNow, expected), kWorldEpsilon);
 }
 
-void GeoViewCameraTest::_modeSwitch()
+void GeoMapCameraTest::_modeSwitch()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     camera.setViewportSize(kViewport);
-    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kDefaultDistance);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kDefaultDistance);
 
-    QCOMPARE(camera.mode(), GeoViewCamera::Mode::Mode2D);
+    QCOMPARE(camera.mode(), GeoMapCamera::Mode::Mode2D);
     QVERIFY(camera.isTopDown());
     camera.goTo3D();
-    QCOMPARE(camera.mode(), GeoViewCamera::Mode::Mode3D);
+    QCOMPARE(camera.mode(), GeoMapCamera::Mode::Mode3D);
     QVERIFY(!camera.isTopDown());
-    QCOMPARE(camera.tilt(), GeoViewCamera::kDefault3DTilt);
+    QCOMPARE(camera.tilt(), GeoMapCamera::kDefault3DTilt);
     camera.goTo2D();
-    QCOMPARE(camera.mode(), GeoViewCamera::Mode::Mode2D);
+    QCOMPARE(camera.mode(), GeoMapCamera::Mode::Mode2D);
     QVERIFY(camera.isTopDown());
 }
 
-void GeoViewCameraTest::_tiltLockedIn2D()
+void GeoMapCameraTest::_tiltLockedIn2D()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     camera.setViewportSize(kViewport);
-    camera.lookAt(kCenter, 0, 0, GeoViewCamera::kDefaultDistance);
-    QCOMPARE(camera.mode(), GeoViewCamera::Mode::Mode2D);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kDefaultDistance);
+    QCOMPARE(camera.mode(), GeoMapCamera::Mode::Mode2D);
 
     const QPointF center(kViewport.width() / 2, kViewport.height() / 2);
 
@@ -429,14 +429,14 @@ void GeoViewCameraTest::_tiltLockedIn2D()
 
     // Unlocked in 3D
     camera.setTilt(0);
-    camera.setMode(GeoViewCamera::Mode::Mode3D);
+    camera.setMode(GeoMapCamera::Mode::Mode3D);
     camera.tiltBy(25.0, center);
     QCOMPARE(camera.tilt(), 25.0);
 }
 
-void GeoViewCameraTest::_scenePose()
+void GeoMapCameraTest::_scenePose()
 {
-    GeoViewCamera camera;
+    GeoMapCamera camera;
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 1000);
     camera.setSceneOrigin(TileMath::geoToWorld(kCenter));
@@ -466,7 +466,7 @@ void GeoViewCameraTest::_scenePose()
     QCOMPARE_LT(qAbs(pos.z() - (1000.0f * expectedCos)), 1e-3f);
 
     // Shifting the origin shifts the scene position by the opposite amount
-    QSignalSpy poseSpy(&camera, &GeoViewCamera::scenePoseChanged);
+    QSignalSpy poseSpy(&camera, &GeoMapCamera::scenePoseChanged);
     camera.setSceneOrigin(camera.sceneOrigin() + QPointF(500, -250));
     QCOMPARE(poseSpy.count(), 1);
     const QVector3D shifted = camera.scenePosition();
@@ -480,4 +480,4 @@ void GeoViewCameraTest::_scenePose()
     QCOMPARE(poseSpy.count(), 4);
 }
 
-UT_REGISTER_TEST_LIGHTWEIGHT(GeoViewCameraTest, TestLabel::Unit)
+UT_REGISTER_TEST_LIGHTWEIGHT(GeoMapCameraTest, TestLabel::Unit)

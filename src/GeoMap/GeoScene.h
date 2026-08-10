@@ -16,11 +16,11 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-class GeoViewCamera;
+class GeoMapCamera;
 
-Q_MOC_INCLUDE("GeoViewCamera.h")
+Q_MOC_INCLUDE("GeoMapCamera.h")
 
-/// Owns the scene-space definition shared by everything GeoView renders.
+/// Owns the scene-space definition shared by everything GeoMap renders.
 ///
 /// Scene coordinates are world mercator meters relative to sceneOrigin. The
 /// origin re-anchors to the camera center whenever the camera strays more than
@@ -34,7 +34,7 @@ class GeoScene : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(GeoViewCamera* camera READ camera WRITE setCamera NOTIFY cameraChanged)
+    Q_PROPERTY(GeoMapCamera* camera READ camera WRITE setCamera NOTIFY cameraChanged)
     Q_PROPERTY(QPointF sceneOrigin READ sceneOrigin NOTIFY sceneOriginChanged)
     Q_PROPERTY(qreal verticalScale READ verticalScale NOTIFY sceneOriginChanged)
 
@@ -43,9 +43,9 @@ public:
 
     static constexpr double kReanchorDistance = 50000.0;  ///< scene-origin re-anchor threshold (m)
 
-    GeoViewCamera* camera() const { return _camera; }
+    GeoMapCamera* camera() const { return _camera; }
 
-    void setCamera(GeoViewCamera* camera);
+    void setCamera(GeoMapCamera* camera);
 
     /// Until a camera anchors the scene, the origin is the mercator origin
     /// (0, 0): results stay well-defined but are not precision-safe far from
@@ -77,7 +77,7 @@ private slots:
     void _maybeReanchor();
 
 private:
-    GeoViewCamera* _camera = nullptr;
+    GeoMapCamera* _camera = nullptr;
     QPointF _origin;
     bool _originSet = false;
 };

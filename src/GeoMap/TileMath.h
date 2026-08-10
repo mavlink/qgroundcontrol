@@ -14,7 +14,7 @@
 #include <QtCore/QPointF>
 #include <QtPositioning/QGeoCoordinate>
 
-/// Web Mercator (EPSG:3857) projection and slippy-tile math for the GeoView map engine.
+/// Web Mercator (EPSG:3857) projection and slippy-tile math for the GeoMap engine.
 ///
 /// World space: mercator meters, origin at (lon 0, equator), x east, y north, z up.
 /// Note mercator meters are true meters only at the equator (scale grows with 1/cos(lat));

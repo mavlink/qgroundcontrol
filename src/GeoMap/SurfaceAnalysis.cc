@@ -279,7 +279,7 @@ QString holeCauseDescription(HoleCause cause)
 QString Report::text() const
 {
     QString out;
-    out += QStringLiteral("GeoView surface analysis\n");
+    out += QStringLiteral("GeoMap surface analysis\n");
     out += QStringLiteral("Rendered patches: %1 (heights loading: %2, terrain fetch failed: %3)\n")
                .arg(rendered)
                .arg(pending)

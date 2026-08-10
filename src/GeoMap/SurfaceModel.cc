@@ -8,7 +8,7 @@
 #include <queue>
 #include <vector>
 
-#include "GeoViewCamera.h"
+#include "GeoMapCamera.h"
 #include "HeightSource.h"
 
 namespace {
@@ -22,7 +22,7 @@ QRectF patchRect(const TileMath::TileKey& key)
 
 }  // namespace
 
-SurfaceModel::SurfaceModel(GeoViewCamera* camera, HeightSource* heightSource, QObject* parent)
+SurfaceModel::SurfaceModel(GeoMapCamera* camera, HeightSource* heightSource, QObject* parent)
     : QObject(parent), _camera(camera), _heightSource(heightSource)
 {
     qRegisterMetaType<TileMath::TileKey>();
@@ -30,12 +30,12 @@ SurfaceModel::SurfaceModel(GeoViewCamera* camera, HeightSource* heightSource, QO
     connect(_heightSource, &HeightSource::patchHeightsReady, this, &SurfaceModel::_heightsReady);
     connect(_heightSource, &HeightSource::patchHeightsFailed, this, &SurfaceModel::_heightsFailed);
 
-    connect(_camera, &GeoViewCamera::centerChanged, this, &SurfaceModel::update);
-    connect(_camera, &GeoViewCamera::headingChanged, this, &SurfaceModel::update);
-    connect(_camera, &GeoViewCamera::tiltChanged, this, &SurfaceModel::update);
-    connect(_camera, &GeoViewCamera::distanceChanged, this, &SurfaceModel::update);
-    connect(_camera, &GeoViewCamera::viewportSizeChanged, this, &SurfaceModel::update);
-    connect(_camera, &GeoViewCamera::fieldOfViewChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoMapCamera::centerChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoMapCamera::headingChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoMapCamera::tiltChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoMapCamera::distanceChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoMapCamera::viewportSizeChanged, this, &SurfaceModel::update);
+    connect(_camera, &GeoMapCamera::fieldOfViewChanged, this, &SurfaceModel::update);
 }
 
 void SurfaceModel::update()
