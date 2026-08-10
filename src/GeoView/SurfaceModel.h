@@ -49,7 +49,10 @@ public:
     static constexpr double kRefinePixelThreshold = 384.0;  ///< subdivide above this projected size
     static constexpr double kMaxRangeMultiplier = 40.0;     ///< visible-range cap in camera distances
     static constexpr int kVisibleSampleGrid = 5;            ///< NxN screen samples for visible-region estimation
-    static constexpr int kMaxHeightRetries = 3;             ///< re-requests before a patch degrades to flat
+    /// Re-cull when resident terrain grows taller than the last cull assumed by
+    /// more than this (scene units); avoids update churn on every patch delivery
+    static constexpr double kRecullHeightMargin = 25.0;
+    static constexpr int kMaxHeightRetries = 3;  ///< re-requests before a patch degrades to flat
     /// Default retry delay: past TerrainTileManager's 5s failed-tile backoff so a
     /// retry refetches instead of short-circuiting on the cached failure
     static constexpr int kDefaultHeightRetryDelayMs = 6000;
@@ -70,6 +73,9 @@ public:
 
     /// Single-patch lookup; std::nullopt when the key is not resident
     std::optional<Patch> patch(const TileMath::TileKey& key) const;
+
+    /// Estimated visible ground region in world meters (see class comment)
+    QRectF visibleGroundRect() const { return _visibleGroundRect(_maxTerrainZ()); }
 
     int patchCount() const { return _patches.count(); }
 
@@ -100,10 +106,11 @@ private:
         int retriesLeft = kMaxHeightRetries;
     };
 
-    QRectF _visibleGroundRect() const;
     double _projectedPixels(const TileMath::TileKey& key, const QPointF& cameraGround, double cameraHeight) const;
     QList<TileMath::TileKey> _desiredPatches(const QRectF& visible, const QPointF& cameraGround,
                                              double cameraHeight) const;
+    QRectF _visibleGroundRect(double terrainZ) const;
+    double _maxTerrainZ() const;
     void _retryHeights(const TileMath::TileKey& key);
     void _sweepRetiring();
     bool _overlapsPendingPatch(const TileMath::TileKey& key) const;
@@ -113,5 +120,6 @@ private:
     HeightSource* const _heightSource;
     QHash<TileMath::TileKey, PatchData> _patches;
     QHash<int, TileMath::TileKey> _requestKeys;
+    double _culledTerrainZ = 0.0;  ///< terrain-top height assumed by the last cull (scene units)
     int _heightRetryDelayMs = kDefaultHeightRetryDelayMs;
 };

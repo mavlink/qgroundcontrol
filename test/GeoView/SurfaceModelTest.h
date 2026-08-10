@@ -23,4 +23,6 @@ private slots:
     void _degradedPatchesKeepRetiringCover();
     void _degradedRetiringPatchesSwept();
     void _pendingPatchesCoveredDuringLodChurn();
+    void _tallTerrainKeepsCameraTileResident();
+    void _cameraGroundTileResidentOverFlatTerrain();
 };
