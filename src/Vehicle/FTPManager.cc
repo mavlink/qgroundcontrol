@@ -163,6 +163,14 @@ bool FTPManager::listDirectory(uint8_t fromCompId, const QString& fromURI)
             ? MavlinkFTP::kCmdListDirectory
             : MavlinkFTP::kCmdListDirectoryWithTime;
 
+    // Re-report the cached capability on every listing so any log capture window shows it
+    const char* supportStr =
+            (_listDirWithTimeSupport == WithTimeSupport_t::Supported)   ? "vehicle supports it" :
+            (_listDirWithTimeSupport == WithTimeSupport_t::Unsupported) ? "vehicle Nak'ed it earlier this connection" :
+                                                                          "support unknown, probing";
+    qCDebug(FTPManagerLog) << "listDirectory using" << MavlinkFTP::opCodeToString(_listDirectoryState.opCode)
+                           << "-" << supportStr;
+
     if (!_parseURI(fromCompId, fromURI, _listDirectoryState.fullPathOnVehicle, _ftpCompId)) {
         qCWarning(FTPManagerLog) << "_parseURI failed";
         return false;
