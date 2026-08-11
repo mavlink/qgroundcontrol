@@ -226,7 +226,10 @@ Item {
             onActiveChanged: {
                 if (active) {
                     root.completeCameraAnimations()
-                    geoCamera.beginPan(centroid.pressPosition)
+                    // Anchor at the current position, not pressPosition: after a
+                    // two-finger pinch drops to one finger this handler re-activates
+                    // with a stale pressPosition, and anchoring there jumps the map.
+                    geoCamera.beginPan(centroid.position)
                 }
             }
             onCentroidChanged: {
@@ -236,10 +239,15 @@ Item {
             }
         }
 
-        // Right-drag orbits: full width = 360 deg heading, full height = 180 deg tilt
+        // Right-drag orbits: full width = 360 deg heading, full height = 180 deg tilt.
+        // Mouse/touchpad only: acceptedButtons doesn't filter touch points, so
+        // without acceptedDevices this handler steals single-finger drags from
+        // panHandler on touchscreens (touch orbits via PinchHandler twist instead).
+        // TouchPad keeps trackpad secondary-click drag working.
         DragHandler {
             id: orbitHandler
             target: null
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             acceptedButtons: Qt.RightButton
             onActiveChanged: {
                 if (active) {
