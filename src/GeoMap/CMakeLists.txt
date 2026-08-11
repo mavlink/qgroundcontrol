@@ -30,6 +30,7 @@ qt_add_qml_module(GeoMapModule
     IMPORTS
         QtQuick
         QtQuick3D
+        QtQuick3D.Helpers
     SOURCES
         CheckerboardTextureData.cc
         CheckerboardTextureData.h

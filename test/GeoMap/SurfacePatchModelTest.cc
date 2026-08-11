@@ -24,6 +24,7 @@ void attach(SurfacePatchModel& model, GeoScene& scene, GeoMapCamera& camera)
 {
     scene.setCamera(&camera);
     model.setScene(&scene);
+    model.drainUpdates();
 }
 
 }  // namespace
@@ -103,6 +104,7 @@ void SurfacePatchModelTest::_incrementalUpdatesOnMove()
 
     // Small pan within the re-anchor threshold: incremental row churn, no reset
     camera.setCenter(QGeoCoordinate(47.42, 8.58));
+    model.drainUpdates();
     QCOMPARE(resetSpy.count(), 0);
     QCOMPARE_GT(insertSpy.count() + removeSpy.count(), 0);
     QCOMPARE(model.rowCount(), model.patchCount());
@@ -121,6 +123,7 @@ void SurfacePatchModelTest::_reanchorsOnLargeMove()
     // Move far beyond kReanchorDistance: origin follows the camera
     const QGeoCoordinate faraway(48.85, 2.35);  // Paris, ~490km from Zurich
     camera.setCenter(faraway);
+    model.drainUpdates();
     QCOMPARE_GT(originSpy.count(), 0);
 
     const QPointF expectedOrigin = TileMath::geoToWorld(faraway);
@@ -154,6 +157,7 @@ void SurfacePatchModelTest::_cameraSwapAnchorsFresh()
     const QGeoCoordinate sydney(-33.8688, 151.2093);
     setupCamera(sydneyCamera, sydney);
     scene.setCamera(&sydneyCamera);
+    model.drainUpdates();
 
     const QPointF expectedOrigin = TileMath::geoToWorld(sydney);
     QCOMPARE_LT(std::hypot(scene.sceneOrigin().x() - expectedOrigin.x(), scene.sceneOrigin().y() - expectedOrigin.y()),
@@ -173,6 +177,7 @@ void SurfacePatchModelTest::_debugHillsSwitchResets()
 
     QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
     model.setDebugHills(true);
+    model.drainUpdates();
     QCOMPARE_GT(resetSpy.count(), 0);
     QCOMPARE_GT(model.rowCount(), 0);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
@@ -204,6 +209,7 @@ void SurfacePatchModelTest::_pendingRowsCoveredDuringLodChurn()
     // Refine: pending replacements report covered so the delegate hides their
     // empty flat mesh instead of z-fighting the retained retiring cover
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
     QCOMPARE_GT(model.pendingCount(), 0);
     int coveredRows = 0;
     for (int row = 0; row < model.rowCount(); row++) {

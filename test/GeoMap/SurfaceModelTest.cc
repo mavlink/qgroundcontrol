@@ -1,5 +1,7 @@
 #include "SurfaceModelTest.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QPair>
 #include <QtCore/QSet>
 #include <QtTest/QSignalSpy>
 #include <algorithm>
@@ -68,6 +70,44 @@ private:
     int _failuresRemaining = 0;
 };
 
+/// Holds every request until deliverAll(): pins pending patches the way a
+/// slow terrain backend does, so tests can accumulate retiring covers
+class HoldingHeightSource : public HeightSource
+{
+public:
+    using HeightSource::HeightSource;
+
+    int requestPatchHeights(const TileMath::TileKey& key, int gridSize) override
+    {
+        Q_UNUSED(key);
+        const int requestId = _nextRequestId();
+        _held.append(qMakePair(requestId, (gridSize + 1) * (gridSize + 1)));
+        return requestId;
+    }
+
+    void cancelRequest(int requestId) override
+    {
+        for (int i = 0; i < _held.count(); i++) {
+            if (_held.at(i).first == requestId) {
+                _held.removeAt(i);
+                return;
+            }
+        }
+    }
+
+    void deliverAll()
+    {
+        const auto held = _held;
+        _held.clear();
+        for (const auto& request : held) {
+            emit patchHeightsReady(request.first, QList<float>(request.second, 0.0f));
+        }
+    }
+
+private:
+    QList<QPair<int, int>> _held;
+};
+
 int maxZoomOf(const QList<SurfaceModel::Patch>& patches)
 {
     int maxZoom = 0;
@@ -116,9 +156,11 @@ void SurfaceModelTest::_unpositionedCameraNoPatches()
     // A sized viewport alone must not build patches: the camera still holds
     // the null-island default pose (doomed terrain fetches would follow)
     camera.setViewportSize(kViewport);
+    model.drainUpdates();
     QCOMPARE(model.patchCount(), 0);
 
     camera.setCenter(kCenter);
+    model.drainUpdates();
     QCOMPARE_GT(model.patchCount(), 0);
 }
 
@@ -130,6 +172,7 @@ void SurfaceModelTest::_coarseWhenFar()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
+    model.drainUpdates();
 
     QCOMPARE_GT(model.patchCount(), 0);
     // From max distance the whole world fits the view: only low zoom levels
@@ -144,9 +187,11 @@ void SurfaceModelTest::_refinesWhenNear()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
+    model.drainUpdates();
     const int farMaxZoom = maxZoomOf(model.patches());
 
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
     const int nearMaxZoom = maxZoomOf(model.patches());
 
     QCOMPARE_GT(nearMaxZoom, farMaxZoom);
@@ -163,6 +208,7 @@ void SurfaceModelTest::_patchCountBounded()
     for (double distance : {50.0, 2000.0, 100000.0, GeoMapCamera::kMaxDistance}) {
         for (double tilt : {0.0, 45.0, GeoMapCamera::kMaxTilt}) {
             camera.lookAt(kCenter, 30, tilt, distance);
+            model.drainUpdates();
             QCOMPARE_LE(model.patchCount(), SurfaceModel::kMaxPatches);
         }
     }
@@ -178,6 +224,7 @@ void SurfaceModelTest::_budgetExhaustedKeepsCoverage()
     // exceeds the patch budget
     camera.setViewportSize(QSizeF(8000, 6000));
     camera.lookAt(kCenter, 0, 45, 2000);
+    model.drainUpdates();
 
     QCOMPARE_LE(model.patchCount(), SurfaceModel::kMaxPatches);
     // A split replaces one patch with up to four children, so an exhausted
@@ -225,6 +272,7 @@ void SurfaceModelTest::_heightsArrive()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
 
     QCOMPARE_GT(model.patchCount(), 0);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
@@ -245,6 +293,7 @@ void SurfaceModelTest::_diffOnMove()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     QSignalSpy addedSpy(&model, &SurfaceModel::patchAdded);
@@ -252,6 +301,7 @@ void SurfaceModelTest::_diffOnMove()
 
     // Move to the other side of the planet: full set replacement
     camera.setCenter(QGeoCoordinate(-33.8688, 151.2093));
+    model.drainUpdates();
     QCOMPARE_GT(addedSpy.count(), 0);
     QCOMPARE_GT(removedSpy.count(), 0);
 
@@ -269,6 +319,7 @@ void SurfaceModelTest::_noChurnOnIdenticalUpdate()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
 
     QSignalSpy addedSpy(&model, &SurfaceModel::patchAdded);
     QSignalSpy removedSpy(&model, &SurfaceModel::patchRemoved);
@@ -285,6 +336,7 @@ void SurfaceModelTest::_cullsInvisibleRegion()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
 
     // At 2km altitude over Zurich the antipodean hemisphere must not be resident
     const QPointF sydney = TileMath::geoToWorld(QGeoCoordinate(-33.8688, 151.2093));
@@ -305,6 +357,7 @@ void SurfaceModelTest::_failedHeightsDegradeToFlat()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
 
     // Every patch burns through its retries before degrading to flat
     QCOMPARE_GT(model.patchCount(), 0);
@@ -324,6 +377,7 @@ void SurfaceModelTest::_failedHeightsRetryAndRecover()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
 
     QCOMPARE_GT(model.patchCount(), 0);
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
@@ -342,6 +396,7 @@ void SurfaceModelTest::_degradedPatchesKeepRetiringCover()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
+    model.drainUpdates();
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
     const int coarseMaxZoom = maxZoomOf(model.patches());
 
@@ -350,6 +405,7 @@ void SurfaceModelTest::_degradedPatchesKeepRetiringCover()
     // real-height patches must keep covering instead of being swept
     source.setFailuresRemaining(-1);
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     bool hasReadyCoarse = false;
@@ -367,12 +423,14 @@ void SurfaceModelTest::_keepsReadyPatchesDuringLodChurn()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
+    model.drainUpdates();
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
     const int coarseMaxZoom = maxZoomOf(model.patches());
 
     // Refine: the coarse ready patches must keep covering the view (retiring)
     // until the fine replacements have heights - no holes during LOD churn
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
     QCOMPARE_GT(model.pendingCount(), 0);
     bool hasReadyCoarse = false;
     for (const SurfaceModel::Patch& patch : model.patches()) {
@@ -397,6 +455,7 @@ void SurfaceModelTest::_degradedRetiringPatchesSwept()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);  // all degraded to flat
 
     QSet<TileMath::TileKey> oldKeys;
@@ -408,6 +467,7 @@ void SurfaceModelTest::_degradedRetiringPatchesSwept()
     // (a degraded flat fallback is not worth retaining as cover), otherwise
     // movement after terrain failures grows the model without bound
     camera.lookAt(QGeoCoordinate(40.0, -105.0), 0, 0, 2000);
+    model.drainUpdates();
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     for (const SurfaceModel::Patch& patch : model.patches()) {
@@ -423,12 +483,14 @@ void SurfaceModelTest::_pendingPatchesCoveredDuringLodChurn()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
+    model.drainUpdates();
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     // Refine: every pending replacement overlaps a retained ready patch, so it
     // reports covered - renderers suppress it instead of drawing a flat
     // placeholder that z-fights the retiring cover
     camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
     QCOMPARE_GT(model.pendingCount(), 0);
     int pendingCovered = 0;
     for (const SurfaceModel::Patch& patch : model.patches()) {
@@ -461,6 +523,7 @@ void SurfaceModelTest::_tallTerrainKeepsCameraTileResident()
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 55, 400);
+    model.drainUpdates();
     QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     const QPointF cameraGround = camera.cameraGroundPosition();
@@ -494,7 +557,7 @@ void SurfaceModelTest::_cameraGroundTileResidentOverFlatTerrain()
 
     FlatHeightSource source;
     SurfaceModel model(&camera, &source);
-    model.update();
+    model.drainUpdates();
 
     QVERIFY(model.visibleGroundRect().contains(cameraGround));
 
@@ -509,6 +572,68 @@ void SurfaceModelTest::_cameraGroundTileResidentOverFlatTerrain()
         }
     }
     QVERIFY2(renderedUnderCamera, "no rendered patch spans the camera ground position");
+}
+
+void SurfaceModelTest::_slowHeightsChurnSettlesWithoutHoles()
+{
+    // Stress: LOD churn with heights held pins retiring covers while adds
+    // stream. Once heights drain, refinement must resume, settle, and leave
+    // full ready coverage - no frozen holes and no unbounded resident growth.
+    GeoMapCamera camera;
+    HoldingHeightSource source;
+    SurfaceModel model(&camera, &source);
+
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kMaxDistance);
+    model.drainUpdates();
+    source.deliverAll();
+
+    // Churn through LOD levels with heights held: every refine retires the
+    // previous ready set while its replacements stay pinned pending
+    for (double distance : {100000.0, 20000.0, 4000.0, 800.0}) {
+        camera.lookAt(kCenter, 0, 55, distance);
+        model.drainUpdates();
+    }
+    QCOMPARE_GT(model.pendingCount(), 0);
+
+    // Drain deliveries and scheduled passes alternately until settled; the
+    // event loop must pump so queued update passes clear their pending flag
+    for (int i = 0; (i < 200) && !(model.updateSettled() && (model.pendingCount() == 0)); i++) {
+        source.deliverAll();
+        QCoreApplication::processEvents();
+    }
+
+    QCOMPARE(model.pendingCount(), 0);
+    QVERIFY(model.updateSettled());
+    // Settled resident set: desired patches plus swept-down remainder stays
+    // within ~2x the refinement budget (see kMaxPatches doc)
+    QCOMPARE_LE(model.patchCount(), 2 * SurfaceModel::kMaxPatches);
+
+    // No holes: every visible ground sample lies inside a resident ready patch
+    const QList<SurfaceModel::Patch> patches = model.patches();
+    const double maxRange = camera.distance() * SurfaceModel::kMaxRangeMultiplier;
+    const double half = TileMath::worldSize() / 2.0;
+    constexpr int sampleGrid = 9;
+    for (int row = 0; row < sampleGrid; row++) {
+        for (int col = 0; col < sampleGrid; col++) {
+            const QPointF screenPos((camera.viewportSize().width() * col) / (sampleGrid - 1),
+                                    (camera.viewportSize().height() * row) / (sampleGrid - 1));
+            const auto ground = camera.groundPointCapped(screenPos, maxRange);
+            if (!ground || (qAbs(ground->x()) > half) || (qAbs(ground->y()) > half)) {
+                continue;
+            }
+            bool covered = false;
+            for (const SurfaceModel::Patch& patch : patches) {
+                const double span = TileMath::tileSpanAtZoom(patch.key.zoom);
+                if (patch.ready && QRectF(TileMath::tileMinCorner(patch.key), QSizeF(span, span)).contains(*ground)) {
+                    covered = true;
+                    break;
+                }
+            }
+            QVERIFY2(covered,
+                     qPrintable(QStringLiteral("hole at screen (%1, %2)").arg(screenPos.x()).arg(screenPos.y())));
+        }
+    }
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(SurfaceModelTest, TestLabel::Unit)

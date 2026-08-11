@@ -30,6 +30,7 @@ void attach(SurfacePatchModel& model, GeoScene& scene, GeoMapCamera& camera)
     camera.lookAt(kCenter, 0, 0, 2000);
     scene.setCamera(&camera);
     model.setScene(&scene);
+    model.drainUpdates();
 }
 
 int rowsWithImage(const SurfacePatchModel& model)
@@ -89,6 +90,7 @@ void SurfacePatchImageryTest::_emptyMapTypeDisablesImagery()
 
     // Patch churn with imagery disabled stays image-free
     camera.setCenter(QGeoCoordinate(47.42, 8.58));
+    model.drainUpdates();
     QCOMPARE(rowsWithImage(model), 0);
 }
 
@@ -134,6 +136,7 @@ void SurfacePatchImageryTest::_fallbackCoversLodChanges()
     // Zoom in (LOD refines): every new patch lies inside previously imaged
     // ground and must immediately drape an ancestor fallback -- no flash
     camera.setDistance(500);
+    model.drainUpdates();
     QCOMPARE_GT(model.rowCount(), 0);
     QCOMPARE(rowsReportingImage(model), model.rowCount());
     QCOMPARE(rowsWithImage(model), model.rowCount());
@@ -141,6 +144,7 @@ void SurfacePatchImageryTest::_fallbackCoversLodChanges()
     // Zoom back out to the original LOD: the retired originals revive from
     // the cache without any new fetch
     camera.setDistance(2000);
+    model.drainUpdates();
     QCOMPARE_GT(model.rowCount(), 0);
     QCOMPARE(rowsReportingImage(model), model.rowCount());
 
@@ -148,6 +152,7 @@ void SurfacePatchImageryTest::_fallbackCoversLodChanges()
     // cached children. Edge patches cover never-seen ground and legitimately
     // have no fallback source, so only partial coverage is guaranteed.
     camera.setDistance(4000);
+    model.drainUpdates();
     QCOMPARE_GT(model.rowCount(), 0);
     QCOMPARE_GT(rowsReportingImage(model), 0);
     QCOMPARE(rowsWithImage(model), rowsReportingImage(model));

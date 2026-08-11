@@ -10,9 +10,11 @@
 #pragma once
 
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtGui/QImage>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -21,6 +23,7 @@
 class GeoScene;
 class GeoMapCamera;
 class HeightSource;
+class QTimer;
 class SurfaceModel;
 class TileImageSource;
 
@@ -44,6 +47,9 @@ class SurfacePatchModel : public QAbstractListModel
     Q_PROPERTY(int patchCount READ patchCount NOTIFY statsChanged)
     Q_PROPERTY(int pendingCount READ pendingCount NOTIFY statsChanged)
     Q_PROPERTY(int maxZoomLevel READ maxZoomLevel NOTIFY statsChanged)
+    Q_PROPERTY(bool statsEnabled READ statsEnabled WRITE setStatsEnabled NOTIFY statsEnabledChanged)
+    Q_PROPERTY(QString statsText READ statsText NOTIFY statsTextChanged)
+    Q_PROPERTY(bool capturing READ capturing NOTIFY capturingChanged)
 
 public:
     explicit SurfacePatchModel(QObject* parent = nullptr);
@@ -93,10 +99,32 @@ public:
     int pendingCount() const;
     int maxZoomLevel() const;
 
+    bool statsEnabled() const { return _statsEnabled; }
+
+    /// Enables the once-per-second perf counter sampling behind statsText:
+    /// model update rate/duration, patch churn, and fallback composites
+    void setStatsEnabled(bool enabled);
+
+    QString statsText() const { return _statsText; }
+
+    bool capturing() const { return _capturing; }
+
+    /// Starts recording the per-second perf samples (plus camera context)
+    Q_INVOKABLE void startCapture();
+
+    /// Stops recording and writes the samples as CSV; returns the file path
+    /// (empty on write failure)
+    Q_INVOKABLE QString stopCapture();
+
     /// Diagnostic pass over the current patch set: reports coverage holes,
     /// boundary height cliffs, and bad height data, with the reason each
     /// exists (see SurfaceAnalysis). The report goes to the debug output.
     Q_INVOKABLE void analyzeSurface() const;
+
+#ifdef QGC_UNITTEST_BUILD
+    /// Test hook: completes all capped SurfaceModel update passes synchronously
+    void drainUpdates();
+#endif
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -108,6 +136,9 @@ signals:
     void debugHillsChanged();
     void mapTypeChanged();
     void statsChanged();
+    void statsEnabledChanged();
+    void statsTextChanged();
+    void capturingChanged();
 
 private slots:
     void _patchAdded(const TileMath::TileKey& key);
@@ -116,13 +147,17 @@ private slots:
     void _sceneOriginChanged();
     void _tileImageReady(int requestId, const QImage& image);
     void _tileImageFailed(int requestId);
+    void _statsTick();
 
 private:
     void _rebuildSurfaceModel();
     void _resetImagery();
     void _requestTileImage(const TileMath::TileKey& key);
     void _notifyTileImageChanged(const TileMath::TileKey& key);
-    void _notifyCoveredMayHaveChanged();
+    void _invalidateFallbacks(const TileMath::TileKey& tile);
+    void _notifyCoveredMayHaveChanged(const TileMath::TileKey& changedKey);
+    void _scheduleStatsChanged();
+    void _startStatsSampling();
     QImage _fallbackImage(const TileMath::TileKey& key) const;
     bool _fallbackAvailable(const TileMath::TileKey& key) const;
     GeoMapCamera* _camera() const;
@@ -137,9 +172,29 @@ private:
     bool _debugHills = false;
     QString _mapType;
     TileImageSource* _tileSource = nullptr;
-    QHash<TileMath::TileKey, QImage> _tileImages;      ///< delivered images: live patches + retired fallbacks
+    QHash<TileMath::TileKey, QImage> _tileImages;  ///< delivered images: live patches + retired fallbacks
+    /// Built fallbacks (incl. null misses) keyed by patch; rebuilding on every
+    /// data() call cost ~1ms per new patch during zoom churn. Invalidated when
+    /// a source tile changes (see _invalidateFallbacks), dropped with the row.
+    mutable QHash<TileMath::TileKey, QImage> _fallbackCache;
     QList<TileMath::TileKey> _retiredOrder;            ///< retired keys oldest-first, for eviction
     QHash<int, TileMath::TileKey> _imageRequestKey;    ///< in-flight image request id -> patch
     QHash<TileMath::TileKey, int> _imageRequestByKey;  ///< reverse map for cancellation
     QList<TileMath::TileKey> _keys;                    ///< row order; data fetched from SurfaceModel by key
+
+    // Perf counters sampled by _statsTick (see setStatsEnabled)
+    QTimer* _statsTimer = nullptr;
+    bool _statsEnabled = false;
+    bool _statsNotifyPending = false;  ///< coalesces statsChanged to one emit per event-loop pass
+    QString _statsText;
+    int _statAdds = 0;
+    int _statRemoves = 0;
+    mutable int _statComposites = 0;  ///< fallback images built (data() is const)
+
+    // Capture recording (see startCapture)
+    bool _capturing = false;
+    QStringList _captureRows;
+    QElapsedTimer _captureClock;
+    double _captureWorstMaxMs = 0.0;  ///< session-worst single update, for the stop verdict
+    double _captureWorstAvgMs = 0.0;
 };
