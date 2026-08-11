@@ -13,6 +13,14 @@ This page highlights user-facing changes since the last stable release (V5.1).
 - **MAVLink Signing** — new indicator shows whether MAVLink 2 message signing is active on the current vehicle connection, with named key management in Application Settings and per-vehicle key auto-detection.
 - **Remote ID** — live status (status flags, GCS position) now lives solely in the indicator's expanded page, while the Remote ID page in Application Settings contains only settings.
 
+### Attitude Indicator
+
+::: warning
+The pitch display direction on the attitude/compass widget has been corrected: pitching nose-down now moves the pitch indicator down, matching the roll convention.
+V5.0 displayed pitch in the opposite (incorrect) direction, so the indicator will appear reversed compared to what you are used to.
+See [Attitude/Compass](../fly_view/hud.md) for details.
+:::
+
 ### Camera UI Rework
 
 The camera management code and UI have been significantly reworked.
