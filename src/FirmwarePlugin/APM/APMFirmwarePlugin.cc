@@ -775,7 +775,7 @@ out:
 bool APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
-        QGC::showAppMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        QGC::showAppMessage(tr("Unable to go to location, vehicle position not known."));
         return false;
     }
 
