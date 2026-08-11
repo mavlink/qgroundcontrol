@@ -10,6 +10,15 @@ The attitude indicator (artificial horizon) shows the vehicle's pitch and roll r
 - **Pitch ladder** — graduated marks above and below the horizon showing pitch angle in degrees
 - **Roll pointer** — arc along the top indicating the current roll angle
 
+::: warning
+The pitch display direction was corrected in V5.1: pitching nose-down now moves the pitch indicator down, matching the roll convention.
+V5.0 displayed pitch in the opposite (incorrect) direction.
+:::
+
+The image below shows the integrated compass/attitude display for a vehicle rolling right and pitching down:
+
+<img src="../../../assets/fly/attitude_roll_right_pitch_down.png" alt="Attitude indicator showing roll right and pitch down" style="height: 8.5em;" />
+
 ## Compass
 
 The compass ring surrounds the attitude indicator and shows the vehicle's heading:
