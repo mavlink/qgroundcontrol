@@ -60,17 +60,27 @@ Item {
 
             // Debug overlay: live SurfaceModel stats for manual verification;
             // second line adds the perf counters while Stats is on
-            QGCLabel {
-                objectName: "flyViewGeoDebugOverlay"
+            Rectangle {
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
-                anchors.margins: ScreenTools.defaultFontPixelWidth
-                font.family: ScreenTools.fixedFontFamily
-                text: qsTr("patches: %1  pending: %2  max zoom: %3")
-                          .arg(geoMap.patchCount)
-                          .arg(geoMap.pendingCount)
-                          .arg(geoMap.maxZoomLevel)
-                      + (geoMap.modelStats !== "" ? "\n" + geoMap.modelStats : "")
+                anchors.margins: ScreenTools.defaultFontPixelWidth / 2
+                width: debugOverlayLabel.implicitWidth + ScreenTools.defaultFontPixelWidth
+                height: debugOverlayLabel.implicitHeight + ScreenTools.defaultFontPixelWidth
+                radius: ScreenTools.defaultFontPixelWidth / 2
+                color: Qt.rgba(0, 0, 0, 0.5)
+
+                QGCLabel {
+                    id: debugOverlayLabel
+                    objectName: "flyViewGeoDebugOverlay"
+                    anchors.centerIn: parent
+                    font.family: ScreenTools.fixedFontFamily
+                    color: "white"
+                    text: qsTr("patches: %1  pending: %2  max zoom: %3")
+                              .arg(geoMap.patchCount)
+                              .arg(geoMap.pendingCount)
+                              .arg(geoMap.maxZoomLevel)
+                          + (geoMap.modelStats !== "" ? "\n" + geoMap.modelStats : "")
+                }
             }
 
             Column {
