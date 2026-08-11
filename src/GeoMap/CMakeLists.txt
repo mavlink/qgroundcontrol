@@ -11,8 +11,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         SurfaceAnalysis.h
         SurfaceModel.cc
         SurfaceModel.h
-        TerrainHeightSource.cc
-        TerrainHeightSource.h
+        TerrariumHeightSource.cc
+        TerrariumHeightSource.h
         TileImageSource.cc
         TileImageSource.h
         TileMath.cc

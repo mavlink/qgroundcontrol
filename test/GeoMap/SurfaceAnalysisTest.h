@@ -15,7 +15,6 @@ private slots:
     void _sameZoomMismatch();
     void _sameZoomSeamReportedOnce();
     void _lodTJunction();
-    void _blendBandScale();
     void _overlappingAncestorNotASeamNeighbor();
     void _noHolesWhenFullyCovered();
     void _holeNoPatch();

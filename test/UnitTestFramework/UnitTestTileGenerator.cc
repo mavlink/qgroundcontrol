@@ -1,25 +1,33 @@
 #include "UnitTestTileGenerator.h"
 
+#include <QtCore/QAtomicInt>
+#include <QtCore/QBuffer>
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QString>
 #include <QtCore/QTemporaryDir>
+#include <QtGui/QImage>
 #include <QtPositioning/QGeoCoordinate>
 #include <limits>
 
 #include "BaseClasses/TerrainTest.h"
+#include "ElevationMapProvider.h"
 #include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileCacheWorker.h"
 #include "TerrainTileCopernicus.h"
+#include "TileMath.h"
 
 QGC_LOGGING_CATEGORY(UnitTestTileGeneratorLog, "Test.UnitTestTileGenerator")
 
 namespace {
+
+// Set from the test thread, consumed on the cache worker thread
+QAtomicInt s_forcedMissCount;
 
 /// Resolves the provider type from a tile hash without tripping UrlFactory's
 /// "not found" warnings on garbage hashes.
@@ -98,12 +106,50 @@ QByteArray _syntheticTerrainTileData(int x, int y)
     return TerrainTileCopernicus::serializeFromData(QJsonDocument(root).toJson(QJsonDocument::Compact));
 }
 
+/// Builds a terrarium-encoded PNG for the given slippy tile, sampling
+/// UnitTestTerrainData heights at pixel centers (256x256, zooms as requested).
+QByteArray _syntheticTerrariumTileData(int x, int y, int zoom)
+{
+    constexpr int kSize = 256;
+    const QPointF minCorner = TileMath::tileMinCorner({x, y, zoom});
+    const double span = TileMath::tileSpanAtZoom(zoom);
+
+    QImage image(kSize, kSize, QImage::Format_RGB888);
+    for (int row = 0; row < kSize; row++) {
+        // Slippy row 0 is the tile's north edge; world y grows north
+        const double worldY = minCorner.y() + span * (1.0 - ((row + 0.5) / kSize));
+        uchar* line = image.scanLine(row);
+        for (int col = 0; col < kSize; col++) {
+            const double worldX = minCorner.x() + span * ((col + 0.5) / kSize);
+            const double height = UnitTestTerrainData::heightAt(TileMath::worldToGeo(QPointF(worldX, worldY)));
+            // Terrarium: height = (R*256 + G + B/256) - 32768, i.e. 1/256 m quanta,
+            // clamped to the 24-bit representable range
+            const qint64 q = qBound(Q_INT64_C(0), qRound64((height + 32768.0) * 256.0), Q_INT64_C(0xFFFFFF));
+            line[col * 3] = static_cast<uchar>((q >> 16) & 0xFF);
+            line[(col * 3) + 1] = static_cast<uchar>((q >> 8) & 0xFF);
+            line[(col * 3) + 2] = static_cast<uchar>(q & 0xFF);
+        }
+    }
+
+    QByteArray data;
+    QBuffer buffer(&data);
+    if (!buffer.open(QIODevice::WriteOnly) || !image.save(&buffer, "PNG")) {
+        qFatal("UnitTestTileGenerator: failed to encode synthetic terrarium tile PNG");
+    }
+    return data;
+}
+
 }  // namespace
 
 namespace UnitTestTileGenerator {
 
 QGCCacheTile* generateTile(const QString& hash)
 {
+    if (s_forcedMissCount.loadAcquire() > 0) {
+        s_forcedMissCount.deref();  // simulated cache miss: the fetch task takes its error path
+        return nullptr;
+    }
+
     const QString type = _providerTypeFromHash(hash);
     if (type.isEmpty()) {
         return nullptr;
@@ -114,11 +160,16 @@ QGCCacheTile* generateTile(const QString& hash)
         // mean corrupt hash construction upstream — warn so strict-mode tests fail.
         bool okX = false;
         bool okY = false;
+        bool okZoom = false;
         const int x = hash.mid(10, 8).toInt(&okX);
         const int y = hash.mid(18, 8).toInt(&okY);
-        if (!okX || !okY) {
-            qCWarning(UnitTestTileGeneratorLog) << "Internal error: unparsable x/y in tile hash" << hash;
+        const int zoom = hash.mid(26, 3).toInt(&okZoom);
+        if (!okX || !okY || !okZoom) {
+            qCWarning(UnitTestTileGeneratorLog) << "Internal error: unparsable x/y/zoom in tile hash" << hash;
             return nullptr;
+        }
+        if (type == QLatin1String(TerrariumElevationProvider::kProviderKey)) {
+            return new QGCCacheTile(hash, _syntheticTerrariumTileData(x, y, zoom), QStringLiteral("png"), type);
         }
         return new QGCCacheTile(hash, _syntheticTerrainTileData(x, y), QStringLiteral("bin"), type);
     }
@@ -126,12 +177,22 @@ QGCCacheTile* generateTile(const QString& hash)
     static const QByteArray placeholderImage = []() {
         QFile file(QStringLiteral(":/res/notile.png"));
         if (!file.open(QFile::ReadOnly)) {
-            qFatal("UnitTestTileGenerator: failed to open placeholder tile %s: %s",
-                   qPrintable(file.fileName()), qPrintable(file.errorString()));
+            qFatal("UnitTestTileGenerator: failed to open placeholder tile %s: %s", qPrintable(file.fileName()),
+                   qPrintable(file.errorString()));
         }
         return file.readAll();
     }();
     return new QGCCacheTile(hash, placeholderImage, QStringLiteral("png"), type);
+}
+
+void setForcedMissCount(int count)
+{
+    s_forcedMissCount.storeRelease(count);
+}
+
+QByteArray syntheticTerrariumTileData(int x, int y, int zoom)
+{
+    return _syntheticTerrariumTileData(x, y, zoom);
 }
 
 void install()

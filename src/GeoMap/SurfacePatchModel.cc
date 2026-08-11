@@ -17,7 +17,7 @@
 #include "HeightSource.h"
 #include "SurfaceAnalysis.h"
 #include "SurfaceModel.h"
-#include "TerrainHeightSource.h"
+#include "TerrariumHeightSource.h"
 #include "TileImageSource.h"
 
 SurfacePatchModel::SurfacePatchModel(QObject* parent) : QAbstractListModel(parent) {}
@@ -238,7 +238,7 @@ void SurfacePatchModel::_rebuildSurfaceModel()
         if (_debugHills) {
             _heightSource = new DebugHeightSource(this);
         } else if (_terrain) {
-            _heightSource = new TerrainHeightSource(this);
+            _heightSource = new TerrariumHeightSource(this);
         } else {
             _heightSource = new FlatHeightSource(this);
         }

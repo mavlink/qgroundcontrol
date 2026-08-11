@@ -25,8 +25,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         SurfacePatchImageryTest.h
         SurfacePatchModelTest.cc
         SurfacePatchModelTest.h
-        TerrainHeightSourceTest.cc
-        TerrainHeightSourceTest.h
+        TerrariumHeightSourceTest.cc
+        TerrariumHeightSourceTest.h
         TileImageSourceTest.cc
         TileImageSourceTest.h
         TileMathTest.cc
@@ -45,6 +45,6 @@ add_qgc_test(SurfaceAnalysisTest LABELS Unit)
 add_qgc_test(SurfaceModelTest LABELS Unit)
 add_qgc_test(SurfacePatchImageryTest LABELS Integration)
 add_qgc_test(SurfacePatchModelTest LABELS Unit)
-add_qgc_test(TerrainHeightSourceTest LABELS Integration Terrain)
+add_qgc_test(TerrariumHeightSourceTest LABELS Integration Terrain)
 add_qgc_test(TileImageSourceTest LABELS Integration)
 add_qgc_test(TileMathTest LABELS Unit)

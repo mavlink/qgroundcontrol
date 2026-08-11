@@ -51,3 +51,29 @@ private:
 
     const QString _mapUrl = QString(kProviderURL) + QStringLiteral("/api/v1/carpet?points=%1,%2,%3,%4");
 };
+
+/// \brief AWS Open Data Terrain Tiles (Mapzen/Tilezen terrarium encoding).
+/// Standard slippy z/x/y PNG tiles, zooms 0-15; height = (R*256 + G + B/256) - 32768 meters.
+/// GeoMap-only: not user selectable, so the shared terrain pipeline never sees it.
+/// Attribution (required when surfaced in UI): Terrain Tiles by Mapzen/Tilezen —
+/// SRTM (NASA), 3DEP (USGS), GMTED2010 (USGS), ETOPO1 (NOAA), and other sources.
+/// https://registry.opendata.aws/terrain-tiles/
+class TerrariumElevationProvider : public ElevationProvider
+{
+public:
+    TerrariumElevationProvider()
+        : ElevationProvider(kProviderKey, kProviderURL, QStringLiteral("png"), kAvgElevSize, MapProvider::TerrainMap)
+    {}
+
+    /// Tiles are stored as-is: the terrarium PNG is already the cache format
+    QByteArray serialize(const QByteArray& image) const final { return image; }
+
+    bool isUserSelectable() const final { return false; }
+
+    static constexpr const char* kProviderKey = "Terrarium";
+    static constexpr const char* kProviderURL = "https://s3.amazonaws.com/elevation-tiles-prod";
+    static constexpr quint32 kAvgElevSize = 45000;
+
+private:
+    QString _getURL(int x, int y, int zoom) const final;
+};

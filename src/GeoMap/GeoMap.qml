@@ -117,7 +117,7 @@ Item {
             clearColor: "#1a2028"
             backgroundMode: SceneEnvironment.Color
             // Distance haze toward the background color hides the far-field
-            // LOD rings (terrain blend band and patch range edge)
+            // LOD rings at the patch range edge
             fog: Fog {
                 enabled: true
                 color: "#1a2028"
