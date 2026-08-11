@@ -95,6 +95,7 @@ private:
     void _handleGimbalManagerInformation(const mavlink_message_t &message);
     void _handleGimbalManagerStatus(const mavlink_message_t &message);
     void _handleGimbalDeviceAttitudeStatus(const mavlink_message_t &message);
+    void _handleGimbalDeviceInformation(const mavlink_message_t &message);
     void _checkComplete(Gimbal &gimbal, GimbalPairId pairId);
     bool _tryGetGimbalControl();
     bool _yawInVehicleFrame(uint32_t flags);
