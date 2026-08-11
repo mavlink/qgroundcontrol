@@ -84,7 +84,7 @@
         {
             "name": "offlineEditingDescentSpeed",
             "shortDesc": "Offline editing descent speed",
-            "longDesc": "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.",
+            "longDesc": "This value defines the descent speed for multi-rotor vehicles for use in calculating mission duration.",
             "type": "double",
             "default": 1.0,
             "min": 0.1,
