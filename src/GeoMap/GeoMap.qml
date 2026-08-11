@@ -9,6 +9,7 @@
 
 import QtQuick
 import QtQuick3D
+import QtQuick3D.Helpers
 import QtPositioning
 
 import QGroundControl
@@ -26,8 +27,23 @@ Item {
     property alias patchCount: patchModel.patchCount
     property alias pendingCount: patchModel.pendingCount
     property alias maxZoomLevel: patchModel.maxZoomLevel
+    property alias modelStats: patchModel.statsText
+    property alias perfCapturing: patchModel.capturing
+
+    function startPerfCapture() {
+        patchModel.startCapture()
+    }
+
+    // Returns the CSV file path (empty on failure)
+    function stopPerfCapture() {
+        return patchModel.stopCapture()
+    }
 
     readonly property int cameraAnimationMs: 500
+
+    // Render-statistics overlay (FPS, frame timing, draw calls, texture/mesh
+    // memory) for perf work; owned here because it needs the internal View3D
+    property bool renderStats: false
 
     // Terrain displacement factor: 1 in 3D, 0 in 2D (map stays flat).
     // Startup mode is 2D, so terrain starts flattened.
@@ -44,6 +60,12 @@ Item {
         // final value back to 0
         headingAnimation.to = (geoCamera.heading > 180) ? 360 : 0
         headingAnimation.start()
+    }
+
+    // LOD checker colors for debug mode (imagery off)
+    function _lodColor(centerX, centerY, span, zoomLevel) {
+        const parity = (Math.round(centerX / span) + Math.round(centerY / span)) & 1
+        return Qt.hsla((zoomLevel * 0.13) % 1.0, 0.5, parity ? 0.45 : 0.6, 1.0)
     }
 
     // Gestures jump a running mode transition to its end state rather
@@ -80,6 +102,7 @@ Item {
         objectName: "geoMapPatchModel"
         scene: geoScene
         terrain: true
+        statsEnabled: root.renderStats
         // Drape the map imagery the rest of QGC uses (empty disables imagery)
         mapType: QGroundControl.settingsManager.flightMapSettings.mapProvider.rawValue
                  + " " + QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
@@ -125,70 +148,70 @@ Item {
         }
 
         // One surface patch per active SurfaceModel entry: draped tile
-        // imagery once delivered, LOD-colored fallback while loading
-        Repeater3D {
-            model: patchModel
-            delegate: Model {
-                id: patchDelegate
-                objectName: "geoMapPatchDelegate"
-                required property real centerX
-                required property real centerY
-                required property real span
-                required property int zoomLevel
-                required property var heights
-                required property bool covered
-                required property var tileImage
-                required property bool hasTileImage
+        // imagery once delivered, LOD-colored fallback while loading.
+        // The shared z-scale converts true-meter heights into mercator scene
+        // units (verticalScale) and animates terrain flat<->full during the
+        // 2D/3D mode transition (terrainScale) without geometry rebuilds:
+        // one binding here instead of one per delegate (delegate creation
+        // cost dominates patch churn, and transitions re-evaluated it N
+        // times per frame). Never exactly 0: a singular scale breaks the
+        // normal matrix.
+        Node {
+            scale: Qt.vector3d(1, 1, Math.max(0.0001, root.terrainScale * geoScene.verticalScale))
 
-                // A covered pending patch stays hidden: its empty flat grid
-                // would z-fight the retained retiring cover
-                visible: !covered
-                position: Qt.vector3d(centerX, centerY, 0)
-                // z-scale converts true-meter heights into mercator scene units
-                // (verticalScale) and animates terrain flat<->full during the
-                // 2D/3D mode transition (terrainScale) without geometry rebuilds.
-                // Never exactly 0: a singular scale breaks the normal matrix.
-                scale: Qt.vector3d(1, 1, Math.max(0.0001, root.terrainScale * geoScene.verticalScale))
-                geometry: PatchGeometry {
-                    gridSize: patchModel.gridSize
-                    span: patchDelegate.span
-                    heights: patchDelegate.heights
-                }
+            Repeater3D {
+                model: patchModel
+                delegate: Model {
+                    id: patchDelegate
+                    objectName: "geoMapPatchDelegate"
+                    required property real centerX
+                    required property real centerY
+                    required property real span
+                    required property int zoomLevel
+                    required property var heights
+                    required property bool covered
+                    required property var tileImage
+                    required property bool hasTileImage
 
-                Texture {
-                    id: patchTexture
-                    // Clamp: default Repeat wrap bleeds opposite-edge texels
-                    // at UV 0/1, drawing 1-px seams on every patch border
-                    tilingModeHorizontal: Texture.ClampToEdge
-                    tilingModeVertical: Texture.ClampToEdge
-                    textureData: PatchTextureData {
-                        image: patchDelegate.tileImage
+                    // A covered pending patch stays hidden: its empty flat grid
+                    // would z-fight the retained retiring cover
+                    visible: !covered
+                    position: Qt.vector3d(centerX, centerY, 0)
+                    geometry: PatchGeometry {
+                        gridSize: patchModel.gridSize
+                        span: patchDelegate.span
+                        heights: patchDelegate.heights
                     }
-                }
 
-                materials: [
-                    DefaultMaterial {
-                        cullMode: Material.NoCulling
-                        // Unlit: tiles carry their own shading, and lighting
-                        // would show the per-patch normal seams
-                        lighting: DefaultMaterial.NoLighting
-                        diffuseMap: patchDelegate.hasTileImage ? patchTexture : null
-                        // Loading fallback: quiet neutral when imagery is on
-                        // (LOD flash on zoom); LOD checker colors in debug mode
-                        diffuseColor: {
-                            if (patchDelegate.hasTileImage) {
-                                return "white"
-                            }
-                            if (patchModel.mapType !== "") {
-                                return "#3a4048"
-                            }
-                            const parity = (Math.round(patchDelegate.centerX / patchDelegate.span)
-                                            + Math.round(patchDelegate.centerY / patchDelegate.span)) & 1
-                            return Qt.hsla((patchDelegate.zoomLevel * 0.13) % 1.0, 0.5,
-                                           parity ? 0.45 : 0.6, 1.0)
+                    Texture {
+                        id: patchTexture
+                        // Clamp: default Repeat wrap bleeds opposite-edge texels
+                        // at UV 0/1, drawing 1-px seams on every patch border
+                        tilingModeHorizontal: Texture.ClampToEdge
+                        tilingModeVertical: Texture.ClampToEdge
+                        textureData: PatchTextureData {
+                            image: patchDelegate.tileImage
                         }
                     }
-                ]
+
+                    materials: [
+                        DefaultMaterial {
+                            cullMode: Material.NoCulling
+                            // Unlit: tiles carry their own shading, and lighting
+                            // would show the per-patch normal seams
+                            lighting: DefaultMaterial.NoLighting
+                            diffuseMap: patchDelegate.hasTileImage ? patchTexture : null
+                            // Loading fallback: quiet neutral when imagery is on
+                            // (LOD flash on zoom); LOD checker colors in debug mode
+                            diffuseColor: patchDelegate.hasTileImage
+                                          ? "white"
+                                          : (patchModel.mapType !== ""
+                                             ? "#3a4048"
+                                             : root._lodColor(patchDelegate.centerX, patchDelegate.centerY,
+                                                              patchDelegate.span, patchDelegate.zoomLevel))
+                        }
+                    ]
+                }
             }
         }
 
@@ -253,6 +276,15 @@ Item {
             onScaleChanged: (delta) => geoCamera.zoomBy(1 / delta, centroid.position)
             onRotationChanged: (delta) => geoCamera.rotateBy(delta, centroid.position)
         }
+    }
+
+    DebugView {
+        objectName: "geoMapRenderStats"
+        anchors.left: parent.left
+        anchors.top: parent.top
+        source: viewport
+        visible: root.renderStats
+        resourceDetailsVisible: true
     }
 
     NumberAnimation {

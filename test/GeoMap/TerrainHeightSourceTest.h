@@ -10,6 +10,7 @@ private slots:
     void _deliversFlatRegionHeights();
     void _deliversSlopeRegionHeights();
     void _interpolatesAcrossCellSteps();
+    void _sparseSamplingUpsamplesCoarsePatch();
     void _blendBandScalesHeights();
     void _coarseZoomDeliversFlatZeros();
     void _cancelPreventsDelivery();

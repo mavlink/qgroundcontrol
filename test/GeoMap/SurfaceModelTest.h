@@ -25,4 +25,5 @@ private slots:
     void _pendingPatchesCoveredDuringLodChurn();
     void _tallTerrainKeepsCameraTileResident();
     void _cameraGroundTileResidentOverFlatTerrain();
+    void _slowHeightsChurnSettlesWithoutHoles();
 };

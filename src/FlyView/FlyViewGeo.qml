@@ -58,7 +58,8 @@ Item {
                 anchors.fill: parent
             }
 
-            // Debug overlay: live SurfaceModel stats for manual verification
+            // Debug overlay: live SurfaceModel stats for manual verification;
+            // second line adds the perf counters while Stats is on
             QGCLabel {
                 objectName: "flyViewGeoDebugOverlay"
                 anchors.left: parent.left
@@ -69,6 +70,7 @@ Item {
                           .arg(geoMap.patchCount)
                           .arg(geoMap.pendingCount)
                           .arg(geoMap.maxZoomLevel)
+                      + (geoMap.modelStats !== "" ? "\n" + geoMap.modelStats : "")
             }
 
             Column {
@@ -100,6 +102,21 @@ Item {
                     objectName: "flyViewGeoAnalyzeButton"
                     text: qsTr("Analyze")
                     onClicked: geoMap.analyzeSurface()
+                }
+
+                // Render-statistics overlay toggle (perf diagnostics)
+                QGCButton {
+                    objectName: "flyViewGeoStatsButton"
+                    text: qsTr("Stats")
+                    onClicked: geoMap.renderStats = !geoMap.renderStats
+                }
+
+                // Perf capture: records per-second counters; the CSV path
+                // shows in the debug overlay when stopped
+                QGCButton {
+                    objectName: "flyViewGeoRecordButton"
+                    text: geoMap.perfCapturing ? qsTr("Stop") : qsTr("Record")
+                    onClicked: geoMap.perfCapturing ? geoMap.stopPerfCapture() : geoMap.startPerfCapture()
                 }
             }
         }

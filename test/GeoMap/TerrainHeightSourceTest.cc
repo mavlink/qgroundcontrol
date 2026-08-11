@@ -90,6 +90,47 @@ void TerrainHeightSourceTest::_interpolatesAcrossCellSteps()
     }
 }
 
+void TerrainHeightSourceTest::_sparseSamplingUpsamplesCoarsePatch()
+{
+    // Pins the sparse-sampling path deliberately: a zoom-13 patch spans
+    // ~0.044 degrees, past the 0.04-degree sparse threshold, so a 16-cell
+    // grid samples only 4x4 vertices and bilinearly upsamples to 17x17.
+    // If the sparse threshold constant changes, revisit the zoom here so
+    // this test keeps exercising the upsample.
+    TerrainHeightSource source;
+    QSignalSpy readySpy(&source, &HeightSource::patchHeightsReady);
+    QSignalSpy failedSpy(&source, &HeightSource::patchHeightsFailed);
+
+    constexpr int sparseZoom = TerrainHeightSource::kMinTerrainZoom + 1;  // zoom 13: patch fits inside the 11km region
+    constexpr int fineGrid = 16;
+    source.requestPatchHeights(keyOver(linearSlopeRegion().center(), sparseZoom), fineGrid);
+    // Sparse fetch actually occurred: 4 cell samples per vertex over 4x4 sampled
+    // vertices, not the 17x17 delivery grid (which would be 1156 coordinates)
+    QCOMPARE(source.lastQueryCoordinateCount(), 4 * 4 * 4);
+    QTRY_COMPARE_WITH_TIMEOUT(readySpy.count(), 1, TestTimeout::mediumMs());
+    QVERIFY(failedSpy.isEmpty());
+
+    // Full-size delivery despite the sparse fetch
+    const auto heights = readySpy.first().at(1).value<QList<float>>();
+    const int verticesPerEdge = fineGrid + 1;
+    QCOMPARE(heights.count(), verticesPerEdge * verticesPerEdge);
+
+    // The slope rises 100m/km west to east: every row must preserve a
+    // substantial monotonic rise through the upsample (a row/column
+    // transpose would flatten rows), with smooth interpolated steps
+    for (int row = 0; row < verticesPerEdge; row++) {
+        const float west = heights.at(row * verticesPerEdge);
+        const float east = heights.at((row * verticesPerEdge) + fineGrid);
+        QCOMPARE_GT(east - west, 100.0f);
+        for (int col = 0; col < fineGrid; col++) {
+            const float step =
+                heights.at((row * verticesPerEdge) + col + 1) - heights.at((row * verticesPerEdge) + col);
+            QCOMPARE_GE(step, -1.0f);  // monotonic modulo data noise
+            QCOMPARE_LT(step, 50.0f);  // no upsample discontinuities
+        }
+    }
+}
+
 void TerrainHeightSourceTest::_blendBandScalesHeights()
 {
     // Zooms in the blend band deliver fractionally scaled heights so the

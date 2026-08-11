@@ -34,6 +34,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewProximityRadarUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewGeoUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/FlyViewGeoUITest.h
+        # Manual perf benchmark: standalone-registered, deliberately NOT added
+        # via add_qgc_test so no ctest/CI sweep ever runs it
+        ${CMAKE_CURRENT_SOURCE_DIR}/GeoMapPerfUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/GeoMapPerfUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.cc

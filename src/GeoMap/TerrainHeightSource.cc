@@ -16,6 +16,41 @@
 #include "TerrainQueryInterface.h"
 #include "TerrainTileCopernicus.h"
 
+namespace {
+
+/// Max 0.01-degree elevation tiles a patch may touch per axis; patches spanning
+/// more sample sparsely and interpolate (the extra detail is sub-pixel there)
+constexpr int kMaxFetchTilesPerAxis = 4;
+
+/// Bilinear upsample of a square vertex grid (row-major from NW) to a finer one.
+/// Requires sparseGridSize >= 1 and fullGridSize > sparseGridSize (the caller's
+/// gridSize < 1 boundary check guarantees this).
+QList<float> upsampleGrid(const QList<float>& sparse, int sparseGridSize, int fullGridSize)
+{
+    const int sparseEdge = sparseGridSize + 1;
+    const int fullEdge = fullGridSize + 1;
+    QList<float> full;
+    full.reserve(qsizetype(fullEdge) * fullEdge);
+    for (int row = 0; row < fullEdge; row++) {
+        const double v = (static_cast<double>(row) * sparseGridSize) / fullGridSize;
+        const int v0 = qMin(static_cast<int>(v), sparseGridSize - 1);
+        const double fv = v - v0;
+        for (int col = 0; col < fullEdge; col++) {
+            const double u = (static_cast<double>(col) * sparseGridSize) / fullGridSize;
+            const int u0 = qMin(static_cast<int>(u), sparseGridSize - 1);
+            const double fu = u - u0;
+            const double north = (sparse.at((qsizetype(v0) * sparseEdge) + u0) * (1.0 - fu)) +
+                                 (sparse.at((qsizetype(v0) * sparseEdge) + u0 + 1) * fu);
+            const double south = (sparse.at((qsizetype(v0 + 1) * sparseEdge) + u0) * (1.0 - fu)) +
+                                 (sparse.at((qsizetype(v0 + 1) * sparseEdge) + u0 + 1) * fu);
+            full.append(static_cast<float>((north * (1.0 - fv)) + (south * fv)));
+        }
+    }
+    return full;
+}
+
+}  // namespace
+
 TerrainHeightSource::TerrainHeightSource(QObject* parent) : HeightSource(parent) {}
 
 double TerrainHeightSource::heightScaleForZoom(int zoom)
@@ -35,8 +70,7 @@ int TerrainHeightSource::requestPatchHeights(const TileMath::TileKey& key, int g
         return requestId;
     }
 
-    const int verticesPerEdge = gridSize + 1;
-    const int expectedCount = verticesPerEdge * verticesPerEdge;
+    const int expectedCount = (gridSize + 1) * (gridSize + 1);
 
     if (key.zoom < kMinTerrainZoom) {
         // Flat zeros for coarse patches: see class comment
@@ -47,13 +81,23 @@ int TerrainHeightSource::requestPatchHeights(const TileMath::TileKey& key, int g
 
     const QPointF minCorner = TileMath::tileMinCorner(key);
     const double span = TileMath::tileSpanAtZoom(key.zoom);
-    const double step = span / gridSize;
+
+    // Cap elevation tiles touched: patches spanning many fixed 0.01-degree tiles
+    // sample a sparse vertex grid instead (upsampled to the full grid on delivery)
+    const double lonSpanDeg = (span / TileMath::worldSize()) * 360.0;
+    int sampleGridSize = gridSize;
+    if (lonSpanDeg > (kMaxFetchTilesPerAxis * TerrainTileCopernicus::kTileSizeDegrees)) {
+        sampleGridSize = qMin(gridSize, kMaxFetchTilesPerAxis - 1);
+    }
+
+    const int verticesPerEdge = sampleGridSize + 1;
+    const double step = span / sampleGridSize;
     constexpr double cell = TerrainTileCopernicus::kTileValueSpacingDegrees;
 
     QList<QGeoCoordinate> coordinates;  // four surrounding grid-cell samples per vertex
     QList<QPointF> fractions;
-    coordinates.reserve(qsizetype(4) * expectedCount);
-    fractions.reserve(expectedCount);
+    coordinates.reserve(qsizetype(4) * verticesPerEdge * verticesPerEdge);
+    fractions.reserve(qsizetype(verticesPerEdge) * verticesPerEdge);
     // Row-major from the north-west corner, matching the HeightSource contract
     for (int row = 0; row < verticesPerEdge; row++) {
         const double y = minCorner.y() + span - (row * step);
@@ -74,13 +118,15 @@ int TerrainHeightSource::requestPatchHeights(const TileMath::TileKey& key, int g
     }
 
     TerrainOfflineQuery* const query = new TerrainOfflineQuery(this);
-    _queryPending.insert(requestId, PendingQuery{query, fractions, heightScaleForZoom(key.zoom)});
+    _queryPending.insert(requestId,
+                         PendingQuery{query, fractions, heightScaleForZoom(key.zoom), sampleGridSize, gridSize});
     // Queued: the terrain pipeline answers synchronously on cache hits, but the
     // HeightSource contract promises delivery only after this call returns
     connect(
         query, &TerrainQueryInterface::coordinateHeightsReceived, this,
         [this, requestId](bool success, const QList<double>& heights) { _queryFinished(requestId, success, heights); },
         Qt::QueuedConnection);
+    _lastQueryCoordinateCount = coordinates.count();
     query->requestCoordinateHeights(coordinates);
     return requestId;
 }
@@ -132,6 +178,9 @@ void TerrainHeightSource::_queryFinished(int requestId, bool success, const QLis
         const double south = (heights.at(base) * (1.0 - fLon)) + (heights.at(base + 1) * fLon);
         const double north = (heights.at(base + 2) * (1.0 - fLon)) + (heights.at(base + 3) * fLon);
         converted.append(static_cast<float>(((south * (1.0 - fLat)) + (north * fLat)) * pending.heightScale));
+    }
+    if (pending.sampleGridSize < pending.gridSize) {
+        converted = upsampleGrid(converted, pending.sampleGridSize, pending.gridSize);
     }
     emit patchHeightsReady(requestId, converted);
 }
