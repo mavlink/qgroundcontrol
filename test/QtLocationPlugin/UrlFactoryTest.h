@@ -38,6 +38,9 @@ private slots:
     void _testCopernicusLong2tileX();
     void _testCopernicusLat2tileY();
     void _testCopernicusTileCount();
+    void _testTerrariumRegistered();
+    void _testTerrariumTileURL();
+    void _testTerrariumNotUserSelectable();
     void _testGetTileCountValid();
     void _testGetTileCountInvalidType();
     void _testGetTileCountZoomClamped();

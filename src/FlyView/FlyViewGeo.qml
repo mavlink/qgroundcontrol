@@ -58,8 +58,9 @@ Item {
                 anchors.fill: parent
             }
 
-            // Debug overlay: live SurfaceModel stats for manual verification;
-            // second line adds the perf counters while Stats is on
+            // Bottom-left overlay: dataset attribution (required by the terrain
+            // tiles' terms) plus live SurfaceModel stats for manual verification;
+            // last line adds the perf counters while Stats is on
             Rectangle {
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
@@ -75,7 +76,8 @@ Item {
                     anchors.centerIn: parent
                     font.family: ScreenTools.fixedFontFamily
                     color: "white"
-                    text: qsTr("patches: %1  pending: %2  max zoom: %3")
+                    text: qsTr("Terrain: Mapzen/Tilezen Terrain Tiles — SRTM (NASA), 3DEP (USGS), GMTED2010, ETOPO1 (NOAA)")
+                          + "\n" + qsTr("patches: %1  pending: %2  max zoom: %3")
                               .arg(geoMap.patchCount)
                               .arg(geoMap.pendingCount)
                               .arg(geoMap.maxZoomLevel)

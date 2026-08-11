@@ -52,3 +52,8 @@ QByteArray CopernicusElevationProvider::serialize(const QByteArray &image) const
 {
     return TerrainTileCopernicus::serializeFromData(image);
 }
+
+QString TerrariumElevationProvider::_getURL(int x, int y, int zoom) const
+{
+    return QStringLiteral("%1/terrarium/%2/%3/%4.png").arg(kProviderURL).arg(zoom).arg(x).arg(y);
+}

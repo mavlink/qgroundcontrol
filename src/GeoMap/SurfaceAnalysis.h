@@ -14,17 +14,12 @@
 ///  - camera below the rendered surface (view clips into the mesh)
 ///  - seams: height discontinuities ("cliffs") along patch boundaries
 ///  - non-finite height data (NaN/inf vertices)
-///
-/// Seam cause classification assumes the TerrainHeightSource blend-band
-/// scaling (see TerrainHeightSource::heightScaleForZoom); with other height
-/// sources the scale-mismatch cause never triggers.
 namespace SurfaceAnalysis {
 
 enum class SeamCause
 {
     PendingFlat,       ///< a patch renders flat because its heights are still loading
     DegradedFlat,      ///< a patch renders flat because terrain fetches failed (retries exhausted)
-    BlendBandScale,    ///< neighbors use different blend-band height scales (by design)
     LodTJunction,      ///< fine edge vertices vs the coarse neighbor's interpolated edge
     SameZoomMismatch,  ///< same zoom, same scale: unexpected sampling inconsistency
 };

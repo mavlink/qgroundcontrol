@@ -294,7 +294,7 @@ void FlyViewGeoUITest::_testModeToggleAndCompass()
 // affordance) swaps the terrain height source for analytic sin-hills: toggling
 // on delivers non-flat heights, toggling off flattens again. The test scene
 // sits outside the synthetic terrain regions, so the terrain source itself
-// delivers all-zero heights here (see TerrainHeightSourceTest for real
+// delivers all-zero heights here (see TerrariumHeightSourceTest for real
 // elevations).
 void FlyViewGeoUITest::_testDebugHillsToggle()
 {

@@ -5,8 +5,6 @@
 #include <cmath>
 #include <optional>
 
-#include "TerrainHeightSource.h"
-
 namespace SurfaceAnalysis {
 
 namespace {
@@ -86,11 +84,6 @@ SeamCause classify(const SurfaceModel::Patch& patch, const SurfaceModel::Patch& 
     }
     if (isDegraded(patch) || isDegraded(neighbor)) {
         return SeamCause::DegradedFlat;
-    }
-    const double scaleP = TerrainHeightSource::heightScaleForZoom(patch.key.zoom);
-    const double scaleN = TerrainHeightSource::heightScaleForZoom(neighbor.key.zoom);
-    if (!qFuzzyCompare(scaleP, scaleN)) {
-        return SeamCause::BlendBandScale;
     }
     if (patch.key.zoom != neighbor.key.zoom) {
         return SeamCause::LodTJunction;
@@ -248,9 +241,6 @@ QString seamCauseDescription(SeamCause cause)
             return QStringLiteral("patch renders flat while its terrain heights are still loading");
         case SeamCause::DegradedFlat:
             return QStringLiteral("terrain height fetch failed; patch degraded to a flat fallback");
-        case SeamCause::BlendBandScale:
-            return QStringLiteral(
-                "neighbors use different blend-band height scales (coarse zoom heights are scaled down by design)");
         case SeamCause::LodTJunction:
             return QStringLiteral(
                 "LOD boundary T-junction: fine edge vertices vs the coarse neighbor's interpolated edge");

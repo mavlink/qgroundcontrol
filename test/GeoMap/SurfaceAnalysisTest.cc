@@ -172,21 +172,6 @@ void SurfaceAnalysisTest::_lodTJunction()
     QVERIFY(std::abs(seam.maxStep - 20.0) < 1e-6);
 }
 
-void SurfaceAnalysisTest::_blendBandScale()
-{
-    // Zoom 12 vs 13 neighbors sit in the blend band with different height
-    // scales: classified as the (by design) scale mismatch, not a T-junction
-    const TileMath::TileKey coarseKey{1, 1, 12};
-    const TileMath::TileKey fineKey{4, 2, 13};
-
-    const QList<SurfaceModel::Patch> patches{readyPatch(coarseKey, 10.0f), readyPatch(fineKey, 20.0f)};
-
-    const SurfaceAnalysis::Report report = SurfaceAnalysis::analyze(patches, kGridSize, kSeamsOnly);
-    QCOMPARE(report.seams.count(), 1);
-    QCOMPARE(report.seams.first().cause, SurfaceAnalysis::SeamCause::BlendBandScale);
-    QCOMPARE(report.seams.first().maxStep, 10.0);
-}
-
 void SurfaceAnalysisTest::_overlappingAncestorNotASeamNeighbor()
 {
     // (2,1,14) contains (4,2,15) entirely (a retiring cover): overlap, not a

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QByteArray>
+
 class QString;
 struct QGCCacheTile;
 
@@ -9,7 +11,8 @@ struct QGCCacheTile;
 /// every tile cache miss so production code never falls back to real network fetches:
 ///   - Map providers get a placeholder image tile.
 ///   - Elevation providers get a terrain tile synthesized from the UnitTestTerrainData
-///     regions (0 height outside them), built with the production Copernicus serializer.
+///     regions (0 height outside them): Copernicus via the production serializer,
+///     Terrarium as an RGB-encoded PNG.
 ///   - Hashes that resolve to no provider return nullptr, preserving the miss-error path.
 namespace UnitTestTileGenerator {
 /// Installs the generator hook on QGCCacheWorker.
@@ -27,4 +30,12 @@ void shutdownMapEngine();
 /// Generates a synthetic tile for the given tile hash. Returns nullptr if the hash
 /// does not resolve to a known provider. Caller takes ownership.
 QGCCacheTile* generateTile(const QString& hash);
+
+/// Forces the next \a count generator lookups to miss (return nullptr) so the cache
+/// task errors and production network fallback paths run. Reset to 0 after use.
+void setForcedMissCount(int count);
+
+/// The terrarium-encoded PNG the generator would serve for a slippy tile (for
+/// mock network replies in network-fallback tests).
+QByteArray syntheticTerrariumTileData(int x, int y, int zoom);
 }  // namespace UnitTestTileGenerator

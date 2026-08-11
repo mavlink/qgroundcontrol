@@ -8,6 +8,7 @@ static const QString kBingRoad = QStringLiteral("Bing Road");
 static const QString kBingSatellite = QStringLiteral("Bing Satellite");
 static const QString kBingHybrid = QStringLiteral("Bing Hybrid");
 static const QString kCopernicus = QStringLiteral("Copernicus");
+static const QString kTerrarium = QStringLiteral("Terrarium");
 
 // --- Provider registry ---
 
@@ -266,6 +267,43 @@ void UrlFactoryTest::_testCopernicusTileCount()
     // tileY: floor((0+90)/0.01)=9000 to floor((0.05+90)/0.01)=9005 → 6 tiles
     // total = 6*6 = 36
     QCOMPARE(set.tileCount, static_cast<quint64>(36));
+}
+
+// --- Terrarium elevation provider ---
+
+void UrlFactoryTest::_testTerrariumRegistered()
+{
+    QVERIFY(UrlFactory::getElevationProviderTypes().contains(kTerrarium));
+
+    auto provider = UrlFactory::getMapProviderFromProviderType(kTerrarium);
+    QVERIFY(provider != nullptr);
+    QVERIFY(provider->isElevationProvider());
+    // Unrecognized payload falls back to the provider's declared format
+    QCOMPARE(UrlFactory::getImageFormat(kTerrarium, QByteArrayView("xxx", 3)), QStringLiteral("png"));
+}
+
+void UrlFactoryTest::_testTerrariumTileURL()
+{
+    const QUrl url = UrlFactory::getTileURL(kTerrarium, 1308, 2865, 13);
+    QCOMPARE(url.toString(),
+             QStringLiteral("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/13/1308/2865.png"));
+
+    // Standard slippy tile math, unlike Copernicus's fixed 0.01° grid
+    QCOMPARE(UrlFactory::long2tileX(kTerrarium, 0.0, 1), 1);
+    QCOMPARE(UrlFactory::lat2tileY(kTerrarium, 0.0, 1), 1);
+}
+
+void UrlFactoryTest::_testTerrariumNotUserSelectable()
+{
+    // GeoMap-only provider: hidden from the elevation dropdown and the
+    // imagery provider list (which subtracts elevation types)
+    auto provider = UrlFactory::getMapProviderFromProviderType(kTerrarium);
+    QVERIFY(provider != nullptr);
+    QVERIFY(!provider->isUserSelectable());
+
+    auto copernicus = UrlFactory::getMapProviderFromProviderType(kCopernicus);
+    QVERIFY(copernicus != nullptr);
+    QVERIFY(copernicus->isUserSelectable());
 }
 
 // --- getTileCount ---

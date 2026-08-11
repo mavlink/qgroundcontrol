@@ -62,9 +62,9 @@ setup: deps submodules configure build
 # Quality
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Run unit tests (matches CI label filters; override with `LABELS=... EXCLUDE=... just test`)
+# Run unit tests (matches CI label filters; override with `LABELS=... EXCLUDE=... JOBS=N just test`)
 test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_default("EXCLUDE", "Flaky|Network"):
-    cd {{build_dir}} && ctest --output-on-failure -L "{{labels}}" -LE "{{exclude}}"
+    cd {{build_dir}} && ctest --output-on-failure --parallel {{jobs}} -L "{{labels}}" -LE "{{exclude}}"
 
 # Run pre-commit checks
 lint:
