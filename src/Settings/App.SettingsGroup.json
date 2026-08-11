@@ -121,17 +121,17 @@
         },
         {
             "name": "audioMuted",
-            "shortDesc": "Mute audio output",
-            "longDesc": "Mutes all audio output without changing the volume level.",
+            "shortDesc": "Mute voice notifications",
+            "longDesc": "Mutes voice notifications without changing the volume level.",
             "type": "bool",
             "default": false,
-            "label": "Mute Audio Output",
-            "keywords": "audio,mute,sound"
+            "label": "Mute Voice Notifications",
+            "keywords": "audio,mute,sound,voice,notifications"
         },
         {
             "name": "audioVolume",
-            "shortDesc": "Controls the volume level for audio alerts and notifications.",
-            "longDesc": "Sets the audio output volume percentage.",
+            "shortDesc": "Controls the volume level for voice notifications.",
+            "longDesc": "Sets the voice notification volume percentage.",
             "type": "double",
             "default": 100.0,
             "units": "%",
@@ -139,8 +139,8 @@
             "decimalPlaces": 1,
             "userMin": 0.0,
             "userMax": 100.0,
-            "label": "Audio Output Volume",
-            "keywords": "audio,volume,sound"
+            "label": "Voice Notification Volume",
+            "keywords": "audio,volume,sound,voice,notifications"
         },
         {
             "name": "virtualJoystick",
