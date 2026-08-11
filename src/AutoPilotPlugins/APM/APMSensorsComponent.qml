@@ -506,7 +506,7 @@ SetupPage {
                             }
 
                             QGCCheckBox {
-                                text: "Simple Accelerometer Calibration"
+                                text: qsTr("Simple Accelerometer Calibration")
                                 onClicked: _doSimpleAccelCal = this.checked
                             }
                         }
@@ -598,7 +598,7 @@ SetupPage {
                                 width:      parent.width
                                 visible:    useMapPositionCheckbox.checked
                                 wrapMode:   Text.WordWrap
-                                text:       qsTr(`Lat: ${_mapPosition.latitude.toFixed(4)} Lon: ${_mapPosition.longitude.toFixed(4)}`)
+                                text: qsTr("Lat: %1 Lon: %2").arg(_mapPosition.latitude.toFixed(4)).arg(_mapPosition.longitude.toFixed(4)) //: %1 is latitude, %2 is longitude
                             }
 
                             FactTextField {
