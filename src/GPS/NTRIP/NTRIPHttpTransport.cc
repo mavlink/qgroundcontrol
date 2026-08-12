@@ -28,7 +28,7 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObje
     _connectTimeoutTimer.setInterval(kConnectTimeout);
     _connectTimeoutTimer.callOnTimeout(this, [this]() {
         qCWarning(NTRIPHttpTransportLog) << "Connection timeout";
-        _fail(NTRIPError::ConnectionTimeout, QStringLiteral("Connection timeout"));
+        _fail(NTRIPError::ConnectionTimeout, tr("Connection timeout"));
     });
 
     _dataWatchdogTimer.setSingleShot(true);
@@ -193,7 +193,8 @@ void NTRIPHttpTransport::_connect()
         QString msg = _socket->errorString();
         if (code == QAbstractSocket::RemoteHostClosedError && !_httpHandshakeDone) {
             if (!_config.mountpoint.isEmpty()) {
-                msg += " (peer closed before HTTP response; check mountpoint and credentials)";
+                msg += QLatin1Char(' ');
+                msg += tr("(peer closed before HTTP response; check mountpoint and credentials)");
             }
         }
 
@@ -213,7 +214,7 @@ void NTRIPHttpTransport::_connect()
                 if (!trailing.isEmpty()) {
                     reason = QString::fromUtf8(trailing).trimmed();
                 } else {
-                    reason = QStringLiteral("Server disconnected");
+                    reason = tr("Server disconnected");
                 }
 
                 qCWarning(NTRIPHttpTransportLog)

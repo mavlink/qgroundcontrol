@@ -141,7 +141,7 @@ SetupPage {
                     }
                 }
 
-                title:          "Rate"
+                title:          qsTr("Rate")
                 tuningMode:     Vehicle.ModeDisabled
                 unit:           "deg/s"
                 axis:           [ roll, pitch, yaw ]
