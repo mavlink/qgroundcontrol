@@ -35,6 +35,9 @@ public:
     /// Removes any temp files cached for the previous log set.
     void setLogFiles(const QList<LogFile> &logFiles);
 
+    /// Returns the log files served from the @MAV_LOG virtual directory.
+    QList<LogFile> logFiles() const { return _logFiles; }
+
     /// Returns the deterministic contents served for the named @MAV_LOG log file.
     /// Empty if the name is unknown.
     QByteArray logFileContents(const QString &name) const;

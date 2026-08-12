@@ -5,6 +5,7 @@
 #include <QtCore/QTimeZone>
 #include <QtCore/QTimer>
 
+#include "FTPManager.h"
 #include "OnboardLogController.h"
 #include "OnboardLogEntry.h"
 #include "MAVLinkProtocol.h"
@@ -248,6 +249,103 @@ void OnboardLogFtpDownloadTest::_ftpListAndDownloadTest()
     QFile file(downloadFile);
     QVERIFY(file.open(QIODevice::ReadOnly));
     QCOMPARE(file.readAll(), _mockLink->mockLinkFTP()->logFileContents(QStringLiteral("log_1.ulg")));
+}
+
+void OnboardLogFtpDownloadTest::_ftpListNoTimeFallbackTest()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed()) return;
+
+    // Simulate firmware (PX4 <= 1.17) which doesn't implement kCmdListDirectoryWithTime:
+    // the FTP listing has no modification times so the controller must fall back to the
+    // message based transport where LOG_ENTRY reports the dates.
+    const QList<MockLinkFTP::LogFile> logFiles = {
+        { QStringLiteral("log_1.ulg"), 5000,  1700000000 },
+        { QStringLiteral("log_2.ulg"), 12345, 1700086400 },
+    };
+    _mockLink->mockLinkFTP()->setLogFiles(logFiles);
+    _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+
+    QCOMPARE(controller->transport(), QStringLiteral("messages"));
+
+    QmlObjectListModel* const model = controller->_getModel();
+    QVERIFY(model);
+    QCOMPARE(model->count(), 2);
+
+    QGCOnboardLogEntry *firstLog = nullptr;
+    QGCOnboardLogEntry *secondLog = nullptr;
+    for (int i = 0; i < model->count(); i++) {
+        QGCOnboardLogEntry *const entry = model->value<QGCOnboardLogEntry*>(i);
+        QVERIFY(entry);
+        QVERIFY(entry->received());
+        if (entry->size() == 5000) {
+            firstLog = entry;
+        } else if (entry->size() == 12345) {
+            secondLog = entry;
+        }
+    }
+    QVERIFY(firstLog);
+    QVERIFY(secondLog);
+
+    // Dates come from the LOG_ENTRY time_utc values
+    QCOMPARE(firstLog->time(),  QDateTime::fromSecsSinceEpoch(1700000000, QTimeZone::UTC));
+    QCOMPARE(secondLog->time(), QDateTime::fromSecsSinceEpoch(1700086400, QTimeZone::UTC));
+
+    // Message downloads of the advertised logs must serve the matching per-id contents
+    secondLog->setSelected(true);
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QVERIFY(downloadAndWaitForComplete(controller, multiSpy, tempDir.path()));
+    QCOMPARE(secondLog->status(), QStringLiteral("Downloaded"));
+
+    // Filename embeds the local-time formatted log date so locate it by directory scan
+    const QStringList downloadedFiles = QDir(tempDir.path()).entryList(QDir::Files);
+    QCOMPARE(downloadedFiles.count(), 1);
+    QFile file(QDir(tempDir.path()).filePath(downloadedFiles.first()));
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.readAll(), _mockLink->mockLinkFTP()->logFileContents(QStringLiteral("log_2.ulg")));
+}
+
+void OnboardLogFtpDownloadTest::_ftpCancelListNoFallbackTest()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed()) return;
+
+    _mockLink->mockLinkFTP()->setLogFiles({ { QStringLiteral("log_1.ulg"), 5000, 1700000000 } });
+    _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
+
+    // Prime FTPManager's cached NAK of kCmdListDirectoryWithTime with a listing which
+    // doesn't involve the controller
+    FTPManager* const ftpManager = _vehicle->ftpManager();
+    QSignalSpy listSpy(ftpManager, &FTPManager::listDirectoryComplete);
+    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@MAV_LOG")));
+    QVERIFY(listSpy.wait(FTPManager::kTestOperationMaxWaitMs));
+    QVERIFY(ftpManager->listDirectoryWithTimeUnsupported());
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+
+    // Canceling while the FTP listing is still in progress must stop the listing
+    // without triggering the message transport fallback
+    controller->refresh();
+    QVERIFY(controller->_getRequestingList());
+    controller->cancel();
+
+    QVERIFY(!controller->_getRequestingList());
+    QCOMPARE(controller->transport(), QStringLiteral("ftp"));
+
+    // The synchronous Abort completion must not spawn a replacement root listing:
+    // FTPManager must be idle immediately after cancel
+    QSignalSpy idleCheckSpy(ftpManager, &FTPManager::listDirectoryComplete);
+    QVERIFY(ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@MAV_LOG")));
+    QVERIFY(idleCheckSpy.wait(FTPManager::kTestOperationMaxWaitMs));
 }
 
 void OnboardLogFtpDownloadTest::_ftpListFallbackTest()
