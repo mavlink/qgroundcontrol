@@ -60,7 +60,7 @@
 },
 {
     "name":             "FixedOrientation",
-    "shortDesc": "Camera orientation ix fixed and cannot be changed.",
+    "shortDesc": "Camera orientation is fixed and cannot be changed.",
     "type":             "bool",
     "default":     0
 },

@@ -23,7 +23,7 @@
 },
 {
     "name":             "ScanBottomAlt",
-    "shortDesc": "Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.",
+    "shortDesc": "Altitude for the bottommost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.",
     "type":             "double",
     "units":            "vertical m",
     "decimalPlaces":    1,

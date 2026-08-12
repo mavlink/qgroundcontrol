@@ -70,7 +70,7 @@
 },
 {
     "name":         "UseLoiterToAlt",
-    "shortDesc":    "Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.",
+    "shortDesc":    "Use a loiter to altitude item for final approach. Otherwise use a regular waypoint.",
     "type":         "bool",
     "default":      true
 },

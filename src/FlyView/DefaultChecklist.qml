@@ -68,7 +68,7 @@ Item {
 
             PreFlightCheckButton {
                 name:           qsTr("Wind & weather")
-                manualText:     qsTr("OK for your platform? Lauching into the wind?")
+                manualText:     qsTr("OK for your platform? Launching into the wind?")
             }
 
             PreFlightCheckButton {

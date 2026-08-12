@@ -65,14 +65,14 @@
 },
 {
     "name":             "intakePress",
-    "shortDesc":        "Intake mainfold pressure",
+    "shortDesc":        "Intake manifold pressure",
     "type":             "float",
     "decimalPlaces":    1,
     "units":            "kPa"
 },
 {
     "name":             "intakeTemp",
-    "shortDesc":        "Intake mainfold temperature",
+    "shortDesc":        "Intake manifold temperature",
     "type":             "float",
     "decimalPlaces":    1,
     "units":            "°C"
