@@ -48,6 +48,9 @@ public:
     /// Signals listDirectoryComplete
     bool listDirectory(uint8_t fromCompId, const QString& fromURI);
 
+    /// true when the vehicle NAK'ed kCmdListDirectoryWithTime, i.e. directory listings carry no modification times.
+    bool listDirectoryWithTimeUnsupported() const { return _listDirWithTimeSupport == WithTimeSupport_t::Unsupported; }
+
     /// Deletes a file on the vehicle.
     ///     @param fromCompId Component id of the component to delete from. If fromCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param fromURI    File path to delete on the component. May include mftp:// scheme and optional component id selector.

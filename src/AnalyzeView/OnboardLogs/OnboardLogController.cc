@@ -532,9 +532,12 @@ void OnboardLogController::cancel()
     if (_transport == Transport::Ftp) {
         if (_vehicle) {
             if (_requestingLogEntries) {
-                _vehicle->ftpManager()->cancelListDirectory();
+                // Idle first: cancelListDirectory() completes synchronously and the abort
+                // completion must not start the fallback-root listing
+                _ftpListState = FtpListState::Idle;
                 _ftpDirsToList.clear();
-                _ftpFinishListing();
+                _vehicle->ftpManager()->cancelListDirectory();
+                _setListing(false);
             }
 
             if (_ftpDeleting) {
@@ -1111,6 +1114,14 @@ void OnboardLogController::_ftpListNextSubdir()
 void OnboardLogController::_ftpFinishListing()
 {
     _ftpListState = FtpListState::Idle;
+
+    // Firmware which NAKs kCmdListDirectoryWithTime (PX4 <= 1.17) reports no modification times
+    // over FTP. Fall back to the message based transport where LOG_ENTRY reports the dates (issue #14789).
+    if (_vehicle && _vehicle->ftpManager()->listDirectoryWithTimeUnsupported()) {
+        _ftpFallbackToMessages();
+        return;
+    }
+
     _setListing(false);
 }
 
