@@ -30,36 +30,49 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 message(STATUS "QGC: Building MAVLink")
 
-include(CPMPatchCache)
+set(QGC_MESSAGE_DEFINITIONS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/message-definitions")
+set(QGC_MESSAGE_DEFINITIONS_BINARY_DIR "${CMAKE_BINARY_DIR}/message-definitions")
+if(NOT EXISTS "${QGC_MESSAGE_DEFINITIONS_SOURCE_DIR}/CMakeLists.txt"
+   OR NOT EXISTS "${QGC_MESSAGE_DEFINITIONS_SOURCE_DIR}/mavlink/message_definitions/v1.0/all.xml")
+    message(FATAL_ERROR
+        "QGC: Recursive message-definitions submodules are missing. "
+        "Run 'git submodule update --init --recursive' or 'just submodules', then configure again."
+    )
+endif()
 
-set(_mavlink_patch "${CMAKE_CURRENT_LIST_DIR}/mavlink-deterministic-mavgen.patch")
-qgc_cpm_patch_cache_key(
-    _mavlink_cache_key
-    GIT_REPOSITORY "${QGC_MAVLINK_GIT_REPO}"
-    GIT_TAG "${QGC_MAVLINK_GIT_TAG}"
-    PATCHES "${_mavlink_patch}"
+set(DIGIVIEW_MAVLINK_WIRE_PROTOCOL "${QGC_MAVLINK_VERSION}" CACHE STRING
+    "MAVLink wire protocol version used for generated C headers" FORCE
+)
+add_subdirectory("${QGC_MESSAGE_DEFINITIONS_SOURCE_DIR}" "${QGC_MESSAGE_DEFINITIONS_BINARY_DIR}")
+
+if(NOT TARGET DigiView::MAVLinkHeaders)
+    message(FATAL_ERROR "QGC: message-definitions did not provide DigiView::MAVLinkHeaders")
+endif()
+
+get_target_property(QGC_MAVLINK_GENERATED_INCLUDE_ROOT DigiView::MAVLinkHeaders INTERFACE_INCLUDE_DIRECTORIES)
+list(LENGTH QGC_MAVLINK_GENERATED_INCLUDE_ROOT _qgc_mavlink_include_root_count)
+if(NOT _qgc_mavlink_include_root_count EQUAL 1)
+    message(FATAL_ERROR
+        "QGC: DigiView::MAVLinkHeaders must provide exactly one generated include root; "
+        "found ${_qgc_mavlink_include_root_count}"
+    )
+endif()
+unset(_qgc_mavlink_include_root_count)
+
+set(QGC_MAVLINK_GENERATED_DIR
+    "${QGC_MAVLINK_GENERATED_INCLUDE_ROOT}/mavlink/v${QGC_MAVLINK_VERSION}"
 )
 
-CPMAddPackage(
-    NAME mavlink
-    GIT_REPOSITORY ${QGC_MAVLINK_GIT_REPO}
-    GIT_TAG ${QGC_MAVLINK_GIT_TAG}
-    # CPM's default source-cache key does not hash PATCHES file contents.
-    CUSTOM_CACHE_KEY "${_mavlink_cache_key}"
-    OPTIONS
-        "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
-        "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
-    # Retry upstream's build-time pip install and make mavgen hashes deterministic.
-    PATCHES "${_mavlink_patch}"
+# Preserve the MAVLink target and include surface used by QGC while sourcing all
+# generated headers from DigiView::MAVLinkHeaders.
+add_library(mavlink INTERFACE)
+target_link_libraries(mavlink INTERFACE DigiView::MAVLinkHeaders)
+add_dependencies(mavlink DigiView::MAVLinkHeaders)
+target_include_directories(mavlink INTERFACE
+    "${QGC_MAVLINK_GENERATED_DIR}"
+    "${QGC_MAVLINK_GENERATED_DIR}/${QGC_MAVLINK_DIALECT}"
 )
-
-qgc_require_cpm_added(mavlink)
-
-add_dependencies(${CMAKE_PROJECT_NAME} mavlink)
-target_include_directories(${CMAKE_PROJECT_NAME}
-                           PRIVATE ${mavlink_BINARY_DIR}/include/mavlink
-                                   ${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}
-)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE mavlink)
 
 # Generate lightweight MAVLinkEnums.h (enum typedefs only, no message pack/unpack code)
 # plus MAVLinkEnumsQml.{h,cc} exposing every enum via Q_NAMESPACE/Q_ENUM_NS for QML.
@@ -69,7 +82,7 @@ set(MAVLINK_ENUMS_QML_CC "${CMAKE_BINARY_DIR}/MAVLinkEnumsQml.cc")
 set(MAVLINK_ENUMS_GENERATOR "${CMAKE_SOURCE_DIR}/tools/generators/mavlink_enums.py")
 add_custom_command(
     OUTPUT "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}"
-    COMMAND Python3::Interpreter "${MAVLINK_ENUMS_GENERATOR}" "${mavlink_BINARY_DIR}/include/mavlink"
+    COMMAND Python3::Interpreter "${MAVLINK_ENUMS_GENERATOR}" "${QGC_MAVLINK_GENERATED_DIR}"
             "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}"
     DEPENDS mavlink "${MAVLINK_ENUMS_GENERATOR}" "${CMAKE_SOURCE_DIR}/tools/common/io.py"
     COMMENT "Generating MAVLinkEnums.h + MAVLinkEnumsQml.{h,cc}"
@@ -92,7 +105,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${MAVLINK_ENUMS_QML_H}" "${MAVLINK
 # Generate MAVLinkInstanceFields.h (message ID → instance field name mapping)
 set(MAVLINK_INSTANCE_FIELDS_H "${CMAKE_BINARY_DIR}/MAVLinkInstanceFields.h")
 set(MAVLINK_INSTANCE_FIELDS_GENERATOR "${CMAKE_SOURCE_DIR}/tools/generators/mavlink_instance_fields.py")
-set(MAVLINK_XML_DIR "${mavlink_SOURCE_DIR}/message_definitions/v1.0")
+set(MAVLINK_XML_DIR "${QGC_MESSAGE_DEFINITIONS_BINARY_DIR}/mavlink/message_definitions/v1.0")
 add_custom_command(
     OUTPUT "${MAVLINK_INSTANCE_FIELDS_H}"
     COMMAND Python3::Interpreter "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
@@ -105,9 +118,8 @@ add_custom_command(
 add_custom_target(mavlink_instance_fields DEPENDS "${MAVLINK_INSTANCE_FIELDS_H}")
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink_instance_fields)
 
-# Bundle the upstream component_metadata JSON schemas (referenced from the CPM dir, never
-# vendored) so ComponentInformation validates metadata against the pinned QGC_MAVLINK_GIT_TAG.
-set(MAVLINK_COMPONENT_METADATA_DIR "${mavlink_SOURCE_DIR}/component_metadata")
+# Bundle the upstream component_metadata JSON schemas from the pinned MAVLink submodule.
+set(MAVLINK_COMPONENT_METADATA_DIR "${QGC_MESSAGE_DEFINITIONS_SOURCE_DIR}/mavlink/component_metadata")
 set(MAVLINK_SCHEMA_FILES
     "${MAVLINK_COMPONENT_METADATA_DIR}/parameter.schema.json"
     "${MAVLINK_COMPONENT_METADATA_DIR}/general.schema.json"

@@ -3,75 +3,95 @@
 A custom fork of QGroundControl by SynclairVision
 
 ## Requirements
-### Tested On:
+
+### Tested on
+
 - Ubuntu 24.04
 - Qt 6.11.1
 
+### You will need
 
-### You will need:
 - Git
 - CMake
 - Ninja
-- Qt 6.11.1
 - GCC/G++
 - Python 3
-- LibUSB development package
-
-
-### Install Dependencies:
-
-```bash
-sudo apt update
-sudo apt install \
-    build-essential \
-    cmake \
-    ninja-build \
-    python3 \
-    python3-pip \
-    git \
-    pkg-config \
-    libusb-1.0-0-dev
-```
-
-Alternatively, use the repository's dependency helper:
-
-```bash
-python3 ./tools/setup/install_dependencies --platform debian
-
-```
-
-
 
 ## Clone
 
-Clone the repository
+Clone the repository and initialize submodules:
 
 ```bash
 git clone git@github.com:SynclairVision/qgroundcontrol.git
 cd qgroundcontrol
+git submodule update --init --recursive
 ```
 
+Recursive submodules are required. This fork generates its custom MAVLink dialect headers from the
+pinned `message-definitions` submodule and its nested `mavlink` submodule.
+
+## Linux Setup (Debian/Ubuntu)
+
+Install the system dependencies using the repository helper:
+
+```bash
+python3 ./tools/setup/install_dependencies --platform debian
+```
+
+Install the Python tooling for Qt installation, activate the generated virtual environment, then
+install the exact Qt version and modules from `.github/build-config.json`:
+
+```bash
+python3 ./tools/setup/install_python.py qt
+source .venv/bin/activate
+
+QT_VERSION="$(python3 ./tools/setup/read_config.py --get qt.version)"
+QT_MODULES="$(python3 ./tools/setup/read_config.py --get qt.modules)"
+
+python3 ./tools/setup/install_qt.py install \
+    --version "$QT_VERSION" \
+    --host linux \
+    --target desktop \
+    --arch linux_gcc_64 \
+    --modules "$QT_MODULES" \
+    --outdir "$HOME/Qt"
+```
+
+Use this repository-configured Qt SDK. Do not substitute Debian/Ubuntu Qt packages, which do not
+provide the QGC Qt version and module set. `linux_gcc_64` is installed on disk as `gcc_64`.
+
+Set and verify the Qt root before configuring:
+
+```bash
+QT_ROOT="$HOME/Qt/$QT_VERSION/gcc_64"
+test -x "$QT_ROOT/bin/qt-cmake"
+"$QT_ROOT/bin/qt-cmake" --version
+```
 
 ## Build
 
-Configure the project:
+Configure a fresh Release build:
 
 ```bash
 python3 ./tools/configure.py \
     -B build \
     --release \
-    --qt-root "$HOME/Qt/6.11.1/gcc_64"
+    --qt-root "$HOME/Qt/$QT_VERSION/gcc_64" \
+    -- --fresh
 ```
-
-Build it:
+Build the configured project:
 
 ```bash
-cmake --build build --config Release --parallel
+cmake --build build --parallel
 ```
 
 ## Run
 
-Start SynclairQGC through the binary file 'SynclairQGC' in `./build/Release/`, ` ./SynclairQGC`
+Launch the configured Release build:
+
+```bash
+./build/Release/SynclairQGC
+```
 
 # Development
 
