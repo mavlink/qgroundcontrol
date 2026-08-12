@@ -65,7 +65,7 @@ SetupPage {
                         Layout.fillWidth:   true
                         font.pointSize:     ScreenTools.smallFontPointSize
                         wrapMode:           Text.WordWrap
-                        text:               "Channel can be between 0 and 125"
+                        text:               qsTr("Channel can be between 0 and 125")
                     }
 
                     QGCLabel {

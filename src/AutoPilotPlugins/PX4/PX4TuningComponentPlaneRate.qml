@@ -146,7 +146,7 @@ ColumnLayout {
                 }
             }
         }
-        title: "Rate"
+        title: qsTr("Rate")
         tuningMode: Vehicle.ModeRateAndAttitude
         unit: "deg/s"
         axis: [ roll, pitch, yaw ]

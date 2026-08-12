@@ -326,7 +326,7 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
 ///         machine to the appropriate error state.
 void FirmwareUpgradeController::_bootloaderSyncFailed(void)
 {
-    _errorCancel("Unable to sync with bootloader.");
+    _errorCancel(tr("Unable to sync with bootloader."));
 }
 
 QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardId(int boardId)
@@ -493,7 +493,7 @@ void FirmwareUpgradeController::_error(const QString& errorString)
     delete _image;
     _image = nullptr;
 
-    _errorCancel(QString("Error: %1").arg(errorString));
+    _errorCancel(tr("Error: %1").arg(errorString));
 }
 
 void FirmwareUpgradeController::_status(const QString& statusString)
