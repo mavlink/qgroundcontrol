@@ -66,7 +66,7 @@ Rectangle {
         QGCToolBarButton {
             id:                     currentButton
             Layout.preferredHeight: viewButtonRow.height
-            icon.source:            "/res/QGCLogoFull.svg"
+            icon.source:            "qrc:/Volador/Assets/Logos/volador_primary.png"
             logo:                   true
             onClicked:              mainWindow.showToolSelectDialog()
         }

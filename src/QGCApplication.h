@@ -26,6 +26,11 @@ class QPostEventList;
 class QMetaMethod;
 class QMetaObject;
 
+namespace Volador {
+    class VoladorCore;
+}
+
+
 #if defined(qApp)
 #undef qApp
 #endif
@@ -94,6 +99,10 @@ public:
 
     /// Although public, these methods are internal and should only be called by UnitTest code
     QQmlApplicationEngine *qmlAppEngine() const { return _qmlAppEngine; }
+
+    Volador::VoladorCore *voladorCore() const { return _voladorCore; }
+
+
 
 signals:
     void languageChanged(const QLocale locale);
@@ -183,4 +192,7 @@ private:
     const QString _deleteAllSettingsKey = QStringLiteral("DeleteAllSettingsNextBoot"); ///< If this settings key is set on boot, all settings will be deleted
 
     const QString _qgcImageProviderId = QStringLiteral("QGCImages");
+
+    Volador::VoladorCore *_voladorCore = nullptr;
 };
+

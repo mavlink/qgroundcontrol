@@ -7,6 +7,7 @@ import QGroundControl.ScreenTools
 
 QGCButton {
     id:             control     //This is a button rework from DonLakeFlyer's QGCButton that allows to contain a text and an Icon with a column look and the same capabilites
+    property real   heightFactor:   1.0
 
     background: Rectangle {
         id:             backRect

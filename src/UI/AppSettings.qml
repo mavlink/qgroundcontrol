@@ -1,12 +1,10 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2026 QGROUNDCONTROL & VOLADOR AEROSPACE PROJECT
  *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
+ * Volador Ground Control Station - Modern Application Settings
  *
  ****************************************************************************/
-
 
 import QtQuick
 import QtQuick.Controls
@@ -16,24 +14,22 @@ import QGroundControl
 import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
+import VoladorTheme 1.0
+import VoladorComponents 1.0
 
 Rectangle {
-    id:     settingsView
-    color:  qgcPal.window
-    z:      QGroundControl.zOrderTopMost
+    id: settingsView
+    color: ThemeController.background
+    z: QGroundControl.zOrderTopMost
 
-    readonly property real _defaultTextHeight:  ScreenTools.defaultFontPixelHeight
-    readonly property real _defaultTextWidth:   ScreenTools.defaultFontPixelWidth
-    readonly property real _horizontalMargin:   _defaultTextWidth / 2
-    readonly property real _verticalMargin:     _defaultTextHeight / 2
-    readonly property real _buttonHeight:       ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight * 2
+    readonly property real _defaultTextHeight: ScreenTools.defaultFontPixelHeight
+    readonly property real _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
 
     property bool _first: true
-
-    property bool _commingFromRIDSettings:  false
+    property bool _commingFromRIDSettings: false
 
     function showSettingsPage(settingsPage) {
-        for (var i=0; i<buttonRepeater.count; i++) {
+        for (var i = 0; i < buttonRepeater.count; i++) {
             var button = buttonRepeater.itemAt(i)
             if (button.text === settingsPage) {
                 button.clicked()
@@ -45,99 +41,118 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        //-- Default Settings
         if (globals.commingFromRIDIndicator) {
             rightPanel.source = "qrc:/qml/RemoteIDSettings.qml"
             globals.commingFromRIDIndicator = false
         } else {
-            rightPanel.source =  "/qml/GeneralSettings.qml"
+            rightPanel.source = "qrc:/qml/GeneralSettings.qml"
         }
     }
 
-
     SettingsPagesModel { id: settingsPagesModel }
 
-    QGCFlickable {
-        id:                 buttonList
-        width:              buttonColumn.width
-        anchors.topMargin:  _verticalMargin
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        anchors.leftMargin: _horizontalMargin
-        anchors.left:       parent.left
-        contentHeight:      buttonColumn.height + _verticalMargin
-        flickableDirection: Flickable.VerticalFlick
-        clip:               true
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
 
-        ColumnLayout {
-            id:         buttonColumn
-            spacing:    ScreenTools.defaultFontPixelHeight / 4
+        // LEFT CATEGORIES RAIL (Width 250)
+        Rectangle {
+            Layout.fillHeight: true
+            implicitWidth: 250
+            color: ThemeController.sidebar
+            border.color: ThemeController.border
+            border.width: 1
 
-            property real _maxButtonWidth: 0
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 12
 
-            Repeater {
-                id:     buttonRepeater
-                model:  settingsPagesModel
+                Text {
+                    text: "SETTINGS CATEGORIES"
+                    font.family: "Inter"
+                    font.pixelSize: 13
+                    font.weight: Font.Bold
+                    color: ThemeController.accent
+                }
 
-                SettingsButton {
-                    Layout.fillWidth:   true
-                    text:               name
-                    icon.source:        iconUrl
-                    visible:            pageVisible()
+                SearchField {
+                    Layout.fillWidth: true
+                    placeholderText: "Search preferences..."
+                }
 
-                    onClicked: {
-                        if (mainWindow.allowViewSwitch()) {
-                            if (rightPanel.source !== url) {
-                                rightPanel.source = url
-                            }
-                            checked = true
-                        }
-                    }
+                Rectangle { Layout.fillWidth: true; height: 1; color: ThemeController.border }
 
-                    Component.onCompleted: {
-                        if (globals.commingFromRIDIndicator) {
-                            _commingFromRIDSettings = true
-                        }
-                        if(_first) {
-                            _first = false
-                            checked = true
-                        }
-                        if (_commingFromRIDSettings) {
-                            checked = false
-                            _commingFromRIDSettings = false
-                            if (modelData.url == "/qml/RemoteIDSettings.qml") {
-                                checked = true
+                ScrollView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 4
+
+                        Repeater {
+                            id: buttonRepeater
+                            model: settingsPagesModel
+
+                            SettingsButton {
+                                Layout.fillWidth: true
+                                text: name
+                                icon.source: iconUrl
+                                visible: pageVisible()
+
+                                onClicked: {
+                                    if (mainWindow.allowViewSwitch()) {
+                                        if (rightPanel.source !== url) {
+                                            rightPanel.source = url
+                                        }
+                                        checked = true
+                                    }
+                                }
+
+                                Component.onCompleted: {
+                                    if (globals.commingFromRIDIndicator) {
+                                        _commingFromRIDSettings = true
+                                    }
+                                    if (_commingFromRIDSettings && text === "Remote ID") {
+                                        checked = true
+                                        _commingFromRIDSettings = false
+                                    } else if (_first && text === "General") {
+                                        checked = true
+                                        _first = false
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
-    Rectangle {
-        id:                     divider
-        anchors.topMargin:      _verticalMargin
-        anchors.bottomMargin:   _verticalMargin
-        anchors.leftMargin:     _horizontalMargin
-        anchors.left:           buttonList.right
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        width:                  1
-        color:                  qgcPal.windowShade
-    }
+        // RIGHT PREFERENCES CARD CONTAINER
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            color: ThemeController.background
 
-    //-- Panel Contents
-    Loader {
-        id:                     rightPanel
-        anchors.leftMargin:     _horizontalMargin
-        anchors.rightMargin:    _horizontalMargin
-        anchors.topMargin:      _verticalMargin
-        anchors.bottomMargin:   _verticalMargin
-        anchors.left:           divider.right
-        anchors.right:          parent.right
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 12
+
+                Card {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    glass: true
+
+                    Loader {
+                        id: rightPanel
+                        anchors.fill: parent
+                        anchors.margins: 16
+                    }
+                }
+            }
+        }
     }
 }
-

@@ -61,11 +61,13 @@ execute_process(
 )
 # cmake_print_variables(QGC_APP_DATE)
 
-string(FIND ${QGC_APP_VERSION} "v" QGC_APP_VERSION_VALID)
+# Volador Branding
+# Phase 1
 if(QGC_APP_VERSION_VALID GREATER -1)
     string(REPLACE "v" "" QGC_APP_VERSION ${QGC_APP_VERSION})
 else()
-    set(QGC_APP_VERSION "0.0.0")
+    set(QGC_APP_VERSION "2.0.0")
+    set(QGC_APP_VERSION_STR "2.0.0-alpha.1")
 endif()
 string(REGEX MATCH "([0-9]+)\\.([0-9]+)\\.([0-9]+)" QGC_APP_VERSION_MATCH ${QGC_APP_VERSION})
 set(QGC_APP_VERSION_MAJOR ${CMAKE_MATCH_1})

@@ -21,8 +21,8 @@ MapItemView {
         line.width: 3
         // Note: Special visuals for ROI are hacked out for now since they are not working correctly
         line.color: _terrainCollision ?
-                        "red" :
-                        (false/*showSpecialVisual*/ ? "green" : QGroundControl.globalPalette.mapMissionTrajectory)
+                        "#F44336" :
+                        (false/*showSpecialVisual*/ ? "#00C853" : "#FF6A00")
         z:          QGroundControl.zOrderWaypointLines
         path:       object && object.coordinate1.isValid && object.coordinate2.isValid ? [ object.coordinate1, object.coordinate2 ] : []
 

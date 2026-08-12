@@ -126,7 +126,7 @@ Rectangle {
                                 width:                  ScreenTools.defaultFontPixelWidth * 1.75
                                 height:                 width
                                 radius:                 width / 2
-                                color:                  modelData.setupComplete ? "#00d932" : "red"
+                                color:                  modelData.setupComplete ? "#2E7D32" : "#E53935"
                                 visible:                modelData.requiresSetup && modelData.setupSource !== ""
                             }
 

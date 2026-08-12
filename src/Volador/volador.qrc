@@ -1,0 +1,112 @@
+<RCC>
+    <qresource prefix="/Volador">
+        <!-- Volador Branding Phase 1 Theme Module -->
+        <file>Theme/VoladorTheme.qml</file>
+        <file>Theme/VoladorFontLoader.qml</file>
+        <file>Theme/Colors.qml</file>
+        <file>Theme/DarkTheme.qml</file>
+        <file>Theme/Icons.qml</file>
+        <file>Theme/LightTheme.qml</file>
+        <file>Theme/Metrics.qml</file>
+        <file>Theme/Shadows.qml</file>
+        <file>Theme/ThemeController.qml</file>
+        <file>Theme/Typography.qml</file>
+        <file>Theme/VGCSTheme.qml</file>
+        <file>Theme/qmldir</file>
+
+        <!-- Volador Branding Assets System Singletons -->
+        <file>Assets/VoladorIconSystem.qml</file>
+        <file>Assets/VoladorLogoSystem.qml</file>
+
+        <!-- Volador Branding Icons -->
+        <file>Assets/Icons/app_16x16.png</file>
+        <file>Assets/Icons/app_24x24.png</file>
+        <file>Assets/Icons/app_32x32.png</file>
+        <file>Assets/Icons/app_48x48.png</file>
+        <file>Assets/Icons/app_64x64.png</file>
+        <file>Assets/Icons/app_128x128.png</file>
+        <file>Assets/Icons/app_256x256.png</file>
+        <file>Assets/Icons/app_512x512.png</file>
+        <file>Assets/Icons/app_1024x1024.png</file>
+        <file>Assets/Icons/app_16.png</file>
+        <file>Assets/Icons/app_24.png</file>
+        <file>Assets/Icons/app_32.png</file>
+        <file>Assets/Icons/app_48.png</file>
+        <file>Assets/Icons/app_64.png</file>
+        <file>Assets/Icons/app_128.png</file>
+        <file>Assets/Icons/app_256.png</file>
+        <file>Assets/Icons/app_512.png</file>
+        <file>Assets/Icons/app_1024.png</file>
+        <file>Assets/Icons/app.png</file>
+        <file>Assets/Icons/app.ico</file>
+        <file>Assets/Icons/app.icns</file>
+        <file>Assets/Icons/app_icon.png</file>
+        <file>Assets/Icons/taskbar_icon.png</file>
+        <file>Assets/Icons/window_icon.png</file>
+        <file>Assets/Icons/installer_icon.ico</file>
+        <file>Assets/Icons/desktop_shortcut.ico</file>
+
+        <!-- Volador Branding Logos -->
+        <file>Assets/Logos/volador_primary.png</file>
+        <file>Assets/Logos/volador_compact.png</file>
+        <file>Assets/Logos/volador_emblem.png</file>
+        <file>Assets/Logos/volador_monochrome.png</file>
+        <file>Assets/Logos/volador_dark.png</file>
+        <file>Assets/Logos/volador_light.png</file>
+
+        <!-- Volador Branding UI Components -->
+        <file>Components/Card.qml</file>
+        <file>Components/ConfirmationDialog.qml</file>
+        <file>Components/DangerButton.qml</file>
+        <file>Components/DashboardCard.qml</file>
+        <file>Components/InfoCard.qml</file>
+        <file>Components/LoadingOverlay.qml</file>
+        <file>Components/PrimaryButton.qml</file>
+        <file>Components/SearchField.qml</file>
+        <file>Components/SecondaryButton.qml</file>
+        <file>Components/SidebarButton.qml</file>
+        <file>Components/StatusCard.qml</file>
+        <file>Components/StatusChip.qml</file>
+        <file>Components/TelemetryCard.qml</file>
+        <file>Components/ThemeSwitch.qml</file>
+        <file>Components/VoladorStartupAnimation.qml</file>
+        <file>Components/VoladorWindowFrame.qml</file>
+        <file>Components/VoladorTitleBar.qml</file>
+        <file>Components/VoladorSearchBar.qml</file>
+        <file>Components/VoladorNotificationButton.qml</file>
+        <file>Components/VoladorNotificationPanel.qml</file>
+        <file>Components/VoladorUserProfile.qml</file>
+        <file>Components/VoladorWindowButtons.qml</file>
+        <file>Components/VoladorToolbar.qml</file>
+        <file>Components/VoladorStartupOverlay.qml</file>
+        <file>Components/VGCSNavigationRail.qml</file>
+        <file>Components/VGCSNavigationItem.qml</file>
+        <file>Components/VGCSWorkspace.qml</file>
+        <file>Components/VGCSSectionHeader.qml</file>
+        <file>Components/VGCSStatusCard.qml</file>
+        <file>Components/VGCSTelemetryHUD.qml</file>
+        <file>Components/VGCSVehicleStatusPanel.qml</file>
+        <file>Components/VGCSFlightActionPanel.qml</file>
+        <file>Components/VGCSMissionWorkspace.qml</file>
+        <file>Components/VGCSMissionToolbar.qml</file>
+        <file>Components/VGCSMissionItemInspector.qml</file>
+        <file>Components/VGCSMissionWaypointList.qml</file>
+        <file>Components/VGCSMissionExecutionHUD.qml</file>
+        <file>Components/VGCSVehicleCard.qml</file>
+        <file>Components/VGCSVehicleWorkspace.qml</file>
+        <file>Components/VGCSVehicleDetailWorkspace.qml</file>
+        <file>Components/qmldir</file>
+
+        <!-- Volador Branding UI Views -->
+        <file>UI/HeaderBar.qml</file>
+        <file>UI/Sidebar.qml</file>
+        <file>UI/TopBar.qml</file>
+        <file>UI/VGCSMainView.qml</file>
+        <file>UI/VoladorAboutDialog.qml</file>
+        <file>UI/VoladorDashboardView.qml</file>
+        <file>UI/VoladorHeaderBar.qml</file>
+        <file>UI/VoladorLoginView.qml</file>
+        <file>UI/VoladorSplashScreen.qml</file>
+        <file>UI/VoladorTheme.qml</file>
+    </qresource>
+</RCC>

@@ -398,7 +398,7 @@ QString QGroundControlQmlGlobal::telemetryFileExtension() const
 
 QString QGroundControlQmlGlobal::appName()
 {
-    return qgcApp()->applicationName();
+    return qgcApp()->applicationDisplayName();
 }
 
 void QGroundControlQmlGlobal::deleteAllSettingsNextBoot()

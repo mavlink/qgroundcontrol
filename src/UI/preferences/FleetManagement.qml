@@ -108,14 +108,14 @@ Rectangle {
     QGCFlickable {
         anchors.margins:    _margins
         anchors.fill:       parent
-        contentWidth:       mainColumn.width
+        contentWidth:       mainColumn.implicitWidth
         contentHeight:      mainColumn.height
         clip:               true
 
         ColumnLayout {
             id:         mainColumn
             spacing:    _margins * 1.2
-            width:      Math.max(700, parent.width - (_margins * 2))
+            Layout.fillWidth: true
 
             // 1. Dashboard Header Summary Cards
             RowLayout {
@@ -144,7 +144,7 @@ Rectangle {
                     ColumnLayout {
                         anchors.centerIn: parent
                         QGCLabel { text: qsTr("ACTIVE / FLYING"); font.pointSize: ScreenTools.smallFontPointSize; color: qgcPal.text }
-                        QGCLabel { text: "2 Active"; font.pointSize: ScreenTools.largeFontPointSize; font.bold: true; color: "#00E04B" }
+                        QGCLabel { text: "2 Active"; font.pointSize: ScreenTools.largeFontPointSize; font.bold: true; color: "#2E7D32" }
                     }
                 }
 
@@ -157,7 +157,7 @@ Rectangle {
                     ColumnLayout {
                         anchors.centerIn: parent
                         QGCLabel { text: qsTr("MAINTENANCE DUE"); font.pointSize: ScreenTools.smallFontPointSize; color: qgcPal.text }
-                        QGCLabel { text: "1 Drone"; font.pointSize: ScreenTools.largeFontPointSize; font.bold: true; color: "#FF6A00" }
+                        QGCLabel { text: "1 Drone"; font.pointSize: ScreenTools.largeFontPointSize; font.bold: true; color: "#40464D" }
                     }
                 }
 
@@ -170,7 +170,7 @@ Rectangle {
                     ColumnLayout {
                         anchors.centerIn: parent
                         QGCLabel { text: qsTr("FLEET HEALTH"); font.pointSize: ScreenTools.smallFontPointSize; color: qgcPal.text }
-                        QGCLabel { text: "95% Good"; font.pointSize: ScreenTools.largeFontPointSize; font.bold: true; color: "#00E04B" }
+                        QGCLabel { text: "95% Good"; font.pointSize: ScreenTools.largeFontPointSize; font.bold: true; color: "#2E7D32" }
                     }
                 }
             }
@@ -268,10 +268,10 @@ Rectangle {
                                         height: 12
                                         radius: 6
                                         color: {
-                                            if (model.status === "Operational") return "#00E04B"
-                                            if (model.status === "In Mission") return "#FF6A00"
-                                            if (model.status === "Maintenance") return "#F32836"
-                                            return "#8B949E"
+                                            if (model.status === "Operational") return "#2E7D32"
+                                            if (model.status === "In Mission") return "#40464D"
+                                            if (model.status === "Maintenance") return "#E53935"
+                                            return "#6B7280"
                                         }
                                     }
 
@@ -352,7 +352,7 @@ Rectangle {
                             QGCLabel { text: parent.parent.currentDrone.propellerStatus }
 
                             QGCLabel { text: qsTr("Next Inspection:"); color: qgcPal.text }
-                            QGCLabel { text: parent.parent.currentDrone.nextInspection; font.bold: true; color: "#00E04B" }
+                            QGCLabel { text: parent.parent.currentDrone.nextInspection; font.bold: true; color: "#2E7D32" }
                         }
 
                         Rectangle {

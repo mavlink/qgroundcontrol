@@ -1,9 +1,8 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2026 QGROUNDCONTROL & VOLADOR AEROSPACE PROJECT
  *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
+ * Volador Ground Control Station - Modern Aerospace Fly View HUD
  *
  ****************************************************************************/
 
@@ -26,18 +25,15 @@ import QGroundControl.FlightMap
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
-
-// 3D Viewer modules
 import Viewer3D
+import VoladorTheme 1.0
+import VoladorComponents 1.0
 
 Item {
     id: _root
 
-    // These should only be used by MainRootWindow
     property var planController:    _planController
     property var guidedController:  _guidedController
-
-    // Properties of UTM adapter
     property bool utmspSendActTrigger: false
 
     PlanMasterController {
@@ -81,12 +77,13 @@ Item {
 
     FlyViewToolBar {
         id:         toolbar
-        visible:    !QGroundControl.videoManager.fullScreen
+        visible:    false
+        height:     0
     }
 
     Item {
         id:                 mapHolder
-        anchors.top:        toolbar.bottom
+        anchors.top:        parent.top
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
         anchors.right:      parent.right
@@ -129,7 +126,7 @@ Item {
             anchors.bottom:         parent.bottom
             anchors.left:           parent.left
             anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
-            z:                      _fullItemZorder + 2 // we need to add one extra layer for map 3d viewer (normally was 1)
+            z:                      _fullItemZorder + 2
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             visible:                !QGroundControl.videoManager.fullScreen
@@ -146,16 +143,43 @@ Item {
             visible:            !QGroundControl.videoManager.fullScreen
         }
 
-        // Development tool for visualizing the insets for a paticular layer, show if needed
-        FlyViewInsetViewer {
-            id:                     widgetLayerInsetViewer
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            anchors.left:           parent.left
-            anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
-            z:                      widgetLayer.z + 1
-            insetsToView:           widgetLayer.totalToolInsets
-            visible:                false
+        // ====================================================================
+        // VGCS AEROSPACE TELEMETRY HUD & ACTION CONTROL OVERLAYS
+        // ====================================================================
+
+        // 1. Vehicle Status Panel (Top-Right Dock)
+        VGCSVehicleStatusPanel {
+            id:                 vehicleStatusPanel
+            anchors.top:        parent.top
+            anchors.topMargin:  12
+            anchors.right:      parent.right
+            anchors.rightMargin: 12
+            z:                  _fullItemZorder + 10
+            activeVehicle:      _activeVehicle
+            visible:            !QGroundControl.videoManager.fullScreen
+        }
+
+        // 2. Telemetry HUD Bar (Bottom Center)
+        VGCSTelemetryHUD {
+            id:                         telemetryHud
+            anchors.bottom:             flightActionPanel.top
+            anchors.bottomMargin:       8
+            anchors.horizontalCenter:   parent.horizontalCenter
+            z:                          _fullItemZorder + 10
+            activeVehicle:              _activeVehicle
+            visible:                    !QGroundControl.videoManager.fullScreen
+        }
+
+        // 3. Flight Action Control Panel (Bottom Center Dock)
+        VGCSFlightActionPanel {
+            id:                         flightActionPanel
+            anchors.bottom:             parent.bottom
+            anchors.bottomMargin:       12
+            anchors.horizontalCenter:   parent.horizontalCenter
+            z:                          _fullItemZorder + 10
+            guidedController:           _guidedController
+            activeVehicle:              _activeVehicle
+            visible:                    !QGroundControl.videoManager.fullScreen
         }
 
         GuidedActionsController {
@@ -164,7 +188,6 @@ Item {
             guidedValueSlider:     _guidedValueSlider
         }
 
-        //-- Guided value slider (e.g. altitude)
         GuidedValueSlider {
             id:                 guidedValueSlider
             anchors.right:      parent.right

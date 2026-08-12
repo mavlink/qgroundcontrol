@@ -36,7 +36,7 @@ T.ComboBox {
 
     property real   _popupWidth:    width
     property bool   _onCompleted:   false
-    property bool   _showBorder:    qgcPal.globalTheme === QGCPalette.Light
+    property bool   _showBorder:    true
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -124,7 +124,7 @@ T.ComboBox {
         color:          qgcPal.button
         border.color:   qgcPal.buttonBorder
         border.width:   _showBorder ? 1 : 0
-        radius:         ScreenTools.buttonBorderRadius
+        radius:         6
     }
 
     popup: T.Popup {

@@ -1,15 +1,14 @@
-/****************************************************************************
- *
- * (c) 2009-2024 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
 #include "RunGuard.h"
 
 #include <QtCore/QCryptographicHash>
+#include <QtCore/QCoreApplication>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#else
+#include <sys/types.h>
+#include <signal.h>
+#endif
 
 namespace
 {
@@ -23,6 +22,23 @@ QString generateKeyHash( const QString& key, const QString& salt )
     data = QCryptographicHash::hash( data, QCryptographicHash::Sha1 ).toHex();
 
     return data;
+}
+
+bool isPidAlive( qint64 pid )
+{
+    if ( pid <= 0 ) return false;
+#ifdef Q_OS_WIN
+    HANDLE hProcess = OpenProcess( PROCESS_QUERY_LIMITED_INFORMATION, FALSE, static_cast<DWORD>( pid ) );
+    if ( hProcess == NULL ) {
+        return false;
+    }
+    DWORD exitCode = 0;
+    bool alive = GetExitCodeProcess( hProcess, &exitCode ) && ( exitCode == STILL_ACTIVE );
+    CloseHandle( hProcess );
+    return alive;
+#else
+    return ( kill( static_cast<pid_t>( pid ), 0 ) == 0 );
+#endif
 }
 
 }
@@ -53,9 +69,18 @@ bool RunGuard::isAnotherRunning()
         return false;
 
     memLock.acquire();
-    const bool isRunning = sharedMem.attach();
-    if ( isRunning )
+    bool isRunning = sharedMem.attach();
+    if ( isRunning ) {
+        qint64 runningPid = 0;
+        if ( sharedMem.lock() ) {
+            memcpy( &runningPid, sharedMem.constData(), sizeof( qint64 ) );
+            sharedMem.unlock();
+        }
+        if ( !isPidAlive( runningPid ) ) {
+            isRunning = false;
+        }
         sharedMem.detach();
+    }
     memLock.release();
 
     return isRunning;
@@ -64,14 +89,35 @@ bool RunGuard::isAnotherRunning()
 bool RunGuard::tryToRun()
 {
     memLock.acquire();
-    bool result = sharedMem.create( sizeof( quint64 ) );
+    bool result = sharedMem.create( sizeof( qint64 ) );
     if ( !result ) {
         // Cleanup stale shared memory segment from previous crashed/killed process
         if ( sharedMem.attach() ) {
-            sharedMem.detach();
-            result = sharedMem.create( sizeof( quint64 ) );
+            qint64 runningPid = 0;
+            if ( sharedMem.lock() ) {
+                memcpy( &runningPid, sharedMem.constData(), sizeof( qint64 ) );
+                sharedMem.unlock();
+            }
+
+            if ( !isPidAlive( runningPid ) ) {
+                sharedMem.detach();
+                result = sharedMem.create( sizeof( qint64 ) );
+            } else {
+                sharedMem.detach();
+                memLock.release();
+                return false;
+            }
         }
     }
+
+    if ( result ) {
+        qint64 currentPid = QCoreApplication::applicationPid();
+        if ( sharedMem.lock() ) {
+            memcpy( sharedMem.data(), &currentPid, sizeof( qint64 ) );
+            sharedMem.unlock();
+        }
+    }
+
     memLock.release();
     if ( !result )
     {

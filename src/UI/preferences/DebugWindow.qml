@@ -318,7 +318,7 @@ Item {
                 color:      colorValue
                 Text {
                     text:   colorValue
-                    color:  "#202020"
+                    color:  "#1B1F24"
                     font.pointSize:     _textMeasure.font.pointSize * 0.75
                     anchors.centerIn:   parent
                 }

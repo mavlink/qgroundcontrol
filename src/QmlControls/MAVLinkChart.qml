@@ -21,7 +21,7 @@ ChartView {
     margins.top:        chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
 
     property var chartController:   null
-    property var seriesColors:      ["#00E04B","#DE8500","#F32836","#BFBFBF","#536DFF","#EECC44"]
+    property var seriesColors:      ["#40464D","#7A7F86","#2E7D32","#E53935","#1B1F24","#9CA3AF"]
 
     function addDimension(field) {
         if(!chartController) {

@@ -10,7 +10,7 @@ Item {
     property int    axisValue:          0
     property int    deadbandValue:      0
     property bool   narrowIndicator:    false
-    property color  deadbandColor:      "#8c161a"
+    property color  deadbandColor:      "#E53935"
     property bool   mapped:             false
     property bool   reversed:           false
 

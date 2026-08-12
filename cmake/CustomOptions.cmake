@@ -8,12 +8,13 @@ include(CMakeDependentOption)
 # controllers workaround is not supported and will likely cause issues.
 option(QGC_ENABLE_HERELINK "Enable Herelink Support" OFF)
 
-# App
-set(QGC_APP_NAME "Volador Ground Control" CACHE STRING "App Name")
-set(QGC_APP_COPYRIGHT "Copyright (c) 2026 Volador Aerospace. All rights reserved." CACHE STRING "Copyright")
-set(QGC_APP_DESCRIPTION "Professional UAV Mission Control Platform developed by Volador Aerospace." CACHE STRING "Description")
-set(QGC_ORG_NAME "Volador Aerospace" CACHE STRING "Org Name")
-set(QGC_ORG_DOMAIN "volador.in" CACHE STRING "Domain")
+# Volador Branding
+# Phase 1
+set(QGC_APP_NAME "VoladorGroundControl" CACHE STRING "App Name" FORCE)
+set(QGC_APP_COPYRIGHT "© 2026 Volador Aerospace. All Rights Reserved." CACHE STRING "Copyright" FORCE)
+set(QGC_APP_DESCRIPTION "Enterprise Drone Mission Control Platform" CACHE STRING "Description" FORCE)
+set(QGC_ORG_NAME "Volador Aerospace" CACHE STRING "Org Name" FORCE)
+set(QGC_ORG_DOMAIN "volador.in" CACHE STRING "Domain" FORCE)
 set(QGC_PACKAGE_NAME "org.mavlink.qgroundcontrol" CACHE STRING "Package Name")
 set(QGC_SETTINGS_VERSION "9" CACHE STRING "Settings Version") # If you need to make an incompatible changes to stored settings, bump this version number up by 1. This will caused store settings to be cleared on next boot.
 

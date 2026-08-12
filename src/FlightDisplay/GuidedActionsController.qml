@@ -32,6 +32,9 @@ Item {
     property var fwdFlightGotoMapCircle
     property var orbitMapCircle
 
+    signal actionExecuted(int actionCode, var actionData)
+    signal actionCancelled(int actionCode)
+
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
     readonly property string armTitle:                      qsTr("Arm")
     readonly property string mvArmTitle:                    qsTr("Arm (MV)")
@@ -598,6 +601,7 @@ Item {
 
     // Executes the specified action
     function executeAction(actionCode, actionData, sliderOutputValue, optionChecked) {
+        actionExecuted(actionCode, actionData)
         var i;
         var selectedVehicles;
         switch (actionCode) {

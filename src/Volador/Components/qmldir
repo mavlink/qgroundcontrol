@@ -1,0 +1,43 @@
+module VoladorComponents
+PrimaryButton 1.0 PrimaryButton.qml
+SecondaryButton 1.0 SecondaryButton.qml
+DangerButton 1.0 DangerButton.qml
+Card 1.0 Card.qml
+DashboardCard 1.0 DashboardCard.qml
+StatusCard 1.0 StatusCard.qml
+TelemetryCard 1.0 TelemetryCard.qml
+InfoCard 1.0 InfoCard.qml
+SidebarButton 1.0 SidebarButton.qml
+SearchField 1.0 SearchField.qml
+ThemeSwitch 1.0 ThemeSwitch.qml
+StatusChip 1.0 StatusChip.qml
+ConfirmationDialog 1.0 ConfirmationDialog.qml
+LoadingOverlay 1.0 LoadingOverlay.qml
+VoladorWindowFrame 1.0 VoladorWindowFrame.qml
+VoladorTitleBar 1.0 VoladorTitleBar.qml
+VoladorSearchBar 1.0 VoladorSearchBar.qml
+VoladorNotificationButton 1.0 VoladorNotificationButton.qml
+VoladorNotificationPanel 1.0 VoladorNotificationPanel.qml
+VoladorUserProfile 1.0 VoladorUserProfile.qml
+VoladorWindowButtons 1.0 VoladorWindowButtons.qml
+VoladorToolbar 1.0 VoladorToolbar.qml
+VoladorStartupAnimation 1.0 VoladorStartupAnimation.qml
+VoladorStartupOverlay 1.0 VoladorStartupOverlay.qml
+VGCSNavigationRail 1.0 VGCSNavigationRail.qml
+VGCSNavigationItem 1.0 VGCSNavigationItem.qml
+VGCSWorkspace 1.0 VGCSWorkspace.qml
+VGCSSectionHeader 1.0 VGCSSectionHeader.qml
+VGCSStatusCard 1.0 VGCSStatusCard.qml
+VGCSTelemetryHUD 1.0 VGCSTelemetryHUD.qml
+VGCSVehicleStatusPanel 1.0 VGCSVehicleStatusPanel.qml
+VGCSFlightActionPanel 1.0 VGCSFlightActionPanel.qml
+VGCSMissionWorkspace 1.0 VGCSMissionWorkspace.qml
+VGCSMissionToolbar 1.0 VGCSMissionToolbar.qml
+VGCSMissionItemInspector 1.0 VGCSMissionItemInspector.qml
+VGCSMissionWaypointList 1.0 VGCSMissionWaypointList.qml
+VGCSMissionExecutionHUD 1.0 VGCSMissionExecutionHUD.qml
+VGCSVehicleCard 1.0 VGCSVehicleCard.qml
+VGCSVehicleWorkspace 1.0 VGCSVehicleWorkspace.qml
+VGCSVehicleDetailWorkspace 1.0 VGCSVehicleDetailWorkspace.qml
+
+

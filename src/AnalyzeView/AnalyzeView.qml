@@ -1,127 +1,147 @@
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2026 QGROUNDCONTROL & VOLADOR AEROSPACE PROJECT
  *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
+ * Volador Ground Control Station - Dark Engineering Console (Analyze View)
  *
  ****************************************************************************/
 
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Palette
 import QGroundControl.Controls
 import QGroundControl.Controllers
 import QGroundControl.ScreenTools
+import VoladorTheme 1.0
+import VoladorComponents 1.0
 
 Rectangle {
-    id:     _root
-    color:  qgcPal.window
-    z:      QGroundControl.zOrderTopMost
+    id: _root
+    color: ThemeController.isDark ? "#111111" : "#F5F7FA"
+    z: QGroundControl.zOrderTopMost
 
     signal popout()
 
-    readonly property real  _defaultTextHeight:     ScreenTools.defaultFontPixelHeight
-    readonly property real  _defaultTextWidth:      ScreenTools.defaultFontPixelWidth
-    readonly property real  _horizontalMargin:      _defaultTextWidth / 2
-    readonly property real  _verticalMargin:        _defaultTextHeight / 2
-    readonly property real  _buttonWidth:           _defaultTextWidth * 18
+    readonly property real  _defaultTextHeight: ScreenTools.defaultFontPixelHeight
+    readonly property real  _defaultTextWidth:  ScreenTools.defaultFontPixelWidth
 
     GeoTagController {
         id: geoController
     }
 
-    QGCFlickable {
-        id:                 buttonScroll
-        width:              buttonColumn.width
-        anchors.topMargin:  _defaultTextHeight / 2
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        anchors.leftMargin: _horizontalMargin
-        anchors.left:       parent.left
-        contentHeight:      buttonColumn.height
-        flickableDirection: Flickable.VerticalFlick
-        clip:               true
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
 
-        Column {
-            id:         buttonColumn
-            width:      _maxButtonWidth
-            spacing:    _defaultTextHeight / 2
+        // LEFT ENGINEERING NAV BAR (Width 240)
+        Rectangle {
+            Layout.fillHeight: true
+            implicitWidth: 240
+            color: ThemeController.sidebar
+            border.color: ThemeController.border
+            border.width: 1
 
-            property real _maxButtonWidth: 0
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 12
 
-            Component.onCompleted: reflowWidths()
-
-            // I don't know why this does not work
-            Connections {
-                target:         QGroundControl.settingsManager.appSettings.appFontPointSize
-                onValueChanged: buttonColumn.reflowWidths()
-            }
-
-            function reflowWidths() {
-                buttonColumn._maxButtonWidth = 0
-                for (var i = 0; i < children.length; i++) {
-                    buttonColumn._maxButtonWidth = Math.max(buttonColumn._maxButtonWidth, children[i].width)
+                Text {
+                    text: "ANALYZE & DIAGNOSTICS"
+                    font.family: "Inter"
+                    font.pixelSize: 13
+                    font.weight: Font.Bold
+                    color: ThemeController.accent
                 }
-                for (var j = 0; j < children.length; j++) {
-                    children[j].width = buttonColumn._maxButtonWidth
-                }
-            }
 
-            Repeater {
-                id:     buttonRepeater
-                model:  QGroundControl.corePlugin ? QGroundControl.corePlugin.analyzePages : []
+                Rectangle { Layout.fillWidth: true; height: 1; color: ThemeController.border }
 
-                Component.onCompleted:  itemAt(0).checked = true
+                ScrollView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
 
-                SubMenuButton {
-                    id:                 subMenu
-                    imageResource:      modelData.icon
-                    autoExclusive:      true
-                    text:               modelData.title
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 6
 
-                    onClicked: {
-                        panelLoader.source  = modelData.url
-                        panelLoader.title   = modelData.title
-                        checked             = true
+                        Repeater {
+                            id: buttonRepeater
+                            model: QGroundControl.corePlugin ? QGroundControl.corePlugin.analyzePages : []
+
+                            Component.onCompleted: {
+                                if (count > 0) itemAt(0).checked = true
+                            }
+
+                            SubMenuButton {
+                                id: subMenu
+                                Layout.fillWidth: true
+                                imageResource: modelData.icon
+                                autoExclusive: true
+                                text: modelData.title
+                                onClicked: {
+                                    panelLoader.source = modelData.url
+                                    panelTitleText.text = modelData.title
+                                    checked = true
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-    }
 
-    Rectangle {
-        id:                     divider
-        anchors.topMargin:      _verticalMargin
-        anchors.bottomMargin:   _verticalMargin
-        anchors.leftMargin:     _horizontalMargin
-        anchors.left:           buttonScroll.right
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        width:                  1
-        color:                  qgcPal.windowShade
-    }
+        // RIGHT ENGINEERING PANEL
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            color: ThemeController.background
 
-    Loader {
-        id:                     panelLoader
-        anchors.topMargin:      _verticalMargin
-        anchors.bottomMargin:   _verticalMargin
-        anchors.leftMargin:     _horizontalMargin
-        anchors.rightMargin:    _horizontalMargin
-        anchors.left:           divider.right
-        anchors.right:          parent.right
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        source:                 "LogDownloadPage.qml"
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 12
 
-        property string title
+                // Header Bar for Active Tool
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        id: panelTitleText
+                        text: "MAVLink Inspector"
+                        font.family: "Inter"
+                        font.pixelSize: 18
+                        font.weight: Font.Bold
+                        color: ThemeController.textPrimary
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: "MAVLink v2.0 Protocol Active"
+                        font.family: "JetBrains Mono"
+                        font.pixelSize: 12
+                        color: ThemeController.success
+                    }
+                }
 
-        Connections {
-            target:     panelLoader.item
-            onPopout:   mainWindow.createrWindowedAnalyzePage(panelLoader.title, panelLoader.source)
+                Rectangle { Layout.fillWidth: true; height: 1; color: ThemeController.border }
+
+                // Content Panel Container
+                Card {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    glass: true
+
+                    Loader {
+                        id: panelLoader
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        source: (QGroundControl.corePlugin && QGroundControl.corePlugin.analyzePages.length > 0) ? QGroundControl.corePlugin.analyzePages[0].url : ""
+                    }
+                }
+            }
         }
     }
 }

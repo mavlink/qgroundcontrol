@@ -57,7 +57,9 @@
 #include "PositionManager.h"
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
+#include "VoladorCore.h"
 #include "QGCFileDownload.h"
+
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGroundControlQmlGlobal.h"
@@ -145,12 +147,11 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
 #endif
     }
     setApplicationName(applicationName);
+    setApplicationDisplayName(QStringLiteral("VGCS"));
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
     setApplicationVersion(QString(QGC_APP_VERSION_STR));
-#ifdef Q_OS_LINUX
-    setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
-#endif
+    setWindowIcon(QIcon(":/Volador/Assets/Icons/app_256x256.png"));
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -260,8 +261,13 @@ void QGCApplication::setLanguage()
 
 QGCApplication::~QGCApplication()
 {
-
+    if (_voladorCore) {
+        _voladorCore->shutdown();
+        // QObject parent-child management automatically cleans up _voladorCore
+        _voladorCore = nullptr;
+    }
 }
+
 
 void QGCApplication::init()
 {
@@ -341,20 +347,112 @@ void QGCApplication::_initVideo()
 
 void QGCApplication::_initForNormalAppBoot()
 {
+    qInfo() << "[QGC] Initializing Video";
     _initVideo(); // GStreamer must be initialized before QmlEngine
+    qInfo() << "[QGC] Video initialized";
 
     QQuickStyle::setStyle("Basic");
+
+    qInfo() << "[QGC] Initializing QGCCorePlugin";
     QGCCorePlugin::instance()->init();
+    qInfo() << "[QGC] QGCCorePlugin initialized";
+
+    qInfo() << "[QGC] Initializing MAVLinkProtocol";
     MAVLinkProtocol::instance()->init();
+    qInfo() << "[QGC] MAVLinkProtocol initialized";
+
+    qInfo() << "[QGC] Initializing MultiVehicleManager";
     MultiVehicleManager::instance()->init();
+    qInfo() << "[QGC] MultiVehicleManager initialized";
+
+    qInfo() << "[QGC] Creating QML Engine";
     _qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
+    qInfo() << "[QGC] QML Engine created";
+    
+    qInfo() << "[QGC] Initializing VoladorCore";
+    _voladorCore = new Volador::VoladorCore(this);
+    if (_voladorCore->initialize()) {
+        qInfo() << "[QGC] VoladorCore initialized";
+        _voladorCore->registerQmlTypes(_qmlAppEngine);
+        qInfo() << "[QGC] VoladorCore QML types registered";
+    } else {
+        qCritical() << "[QGC] VoladorCore initialization FAILED!";
+    }
+
+    QObject::connect(_qmlAppEngine, &QQmlEngine::warnings, this, [](const QList<QQmlError> &warnings) {
+        for (const auto &w : warnings) {
+            qCritical() << "[QML WARNING/ERROR]" << w.toString();
+        }
+    });
+
+    QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreated, this, [](QObject *obj, const QUrl &url) {
+        if (!obj) {
+            qCritical() << "[QGC] Root object creation failed:" << url;
+        } else {
+            qInfo() << "[QGC] Root object created:" << url;
+        }
+    }, Qt::DirectConnection);
+
+    QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, [](const QUrl &url) {
+        qCritical() << "[QGC] CRITICAL ERROR: QML Engine failed to create root object for URL:" << url;
+    }, Qt::DirectConnection);
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
+
+    qInfo() << "[QGC] Loading MainRootWindow.qml";
     QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
 
+    qInfo() << "================================";
+    qInfo() << "Root Object Diagnostics";
+    qInfo() << "================================";
+
+    qInfo() << "Root object count:"
+            << _qmlAppEngine->rootObjects().count();
+
+    for (QObject* obj : _qmlAppEngine->rootObjects()) {
+        qInfo() << obj
+                << obj->metaObject()->className();
+    }
+
+    QQuickWindow* window = qobject_cast<QQuickWindow*>(_rootQmlObject());
+
+    if (window) {
+        qInfo() << "Window found";
+        qInfo() << "Visible =" << window->isVisible();
+        qInfo() << "Width =" << window->width();
+        qInfo() << "Height =" << window->height();
+        qInfo() << "Position =" << window->position();
+
+        QObject::connect(window, &QQuickWindow::visibleChanged, [](bool visible) {
+            qInfo() << "Window visible changed:" << visible;
+        });
+
+        window->setWidth(1600);
+        window->setHeight(900);
+        window->setX(200);
+        window->setY(100);
+
+        window->raise();
+        window->requestActivate();
+        window->show();
+
+        qInfo() << "show() called";
+    } else {
+        qCritical() << "NO ROOT WINDOW CREATED";
+    }
+
+    qInfo() << "[QGC] Initializing AudioOutput";
     AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioMuted());
+
+    qInfo() << "[QGC] Initializing FollowMe";
     FollowMe::instance()->init();
+
+    qInfo() << "[QGC] Initializing QGCPositionManager";
     QGCPositionManager::instance()->init();
+
+    qInfo() << "[QGC] Initializing LinkManager";
     LinkManager::instance()->init();
+
+    qInfo() << "[QGC] Initializing VideoManager";
     VideoManager::instance()->init(mainRootWindow());
 
     // Image provider for Optical Flow
@@ -362,6 +460,7 @@ void QGCApplication::_initForNormalAppBoot()
 
     // Safe to show popup error messages now that main window is created
     _showErrorsInToolbar = true;
+    qInfo() << "[QGC] _initForNormalAppBoot complete";
 
     #ifdef Q_OS_LINUX
     #ifndef Q_OS_ANDROID

@@ -21,20 +21,21 @@ Rectangle {
     anchors.fill:   parent
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
+    property string currentTab: "Overview"
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     QGCFlickable {
         anchors.margins:    _margins
         anchors.fill:       parent
-        contentWidth:       mainColumn.width
+        contentWidth:       mainColumn.implicitWidth
         contentHeight:      mainColumn.height
         clip:               true
 
         ColumnLayout {
             id:         mainColumn
             spacing:    _margins * 1.5
-            width:      Math.max(600, parent.width - (_margins * 2))
+            Layout.fillWidth: true
 
             // Header Banner
             Rectangle {
@@ -55,14 +56,16 @@ Rectangle {
                         spacing: ScreenTools.defaultFontPixelWidth * 2
 
                         Image {
-                            source:         "qrc:/res/QGCLogoFull.svg"
+                            source:         "qrc:/Volador/Assets/Logos/volador_primary.png"
                             sourceSize.height: ScreenTools.defaultFontPixelHeight * 2.5
                             fillMode:       Image.PreserveAspectFit
+                            antialiasing:   true
+                            mipmap:         true
                         }
 
                         ColumnLayout {
                             QGCLabel {
-                                text:           "VOLADOR AEROSPACE PLATFORM"
+                                text:           "VGCS PLATFORM"
                                 font.pointSize: ScreenTools.largeFontPointSize
                                 font.bold:      true
                                 color:          qgcPal.colorOrange
@@ -288,7 +291,7 @@ Rectangle {
                     spacing:            _margins / 2
 
                     QGCLabel {
-                        text:           qsTr("Release Notes - Volador Ground Control v5.0")
+                        text:           qsTr("Release Notes - VGCS v5.0")
                         font.pointSize: ScreenTools.mediumFontPointSize
                         font.bold:      true
                         color:          qgcPal.colorOrange

@@ -1,0 +1,10 @@
+module VoladorTheme
+singleton ThemeController 1.0 ThemeController.qml
+singleton Metrics 1.0 Metrics.qml
+singleton Typography 1.0 Typography.qml
+singleton VGCSTheme 1.0 VGCSTheme.qml
+singleton Colors 1.0 Colors.qml
+singleton Icons 1.0 Icons.qml
+singleton Shadows 1.0 Shadows.qml
+LightTheme 1.0 LightTheme.qml
+DarkTheme 1.0 DarkTheme.qml

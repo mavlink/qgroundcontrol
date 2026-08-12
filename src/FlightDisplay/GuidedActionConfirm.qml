@@ -68,6 +68,9 @@ Rectangle {
     }
 
     function confirmCancelled() {
+        if (guidedController && typeof guidedController.actionCancelled === "function") {
+            guidedController.actionCancelled(_root.action)
+        }
         guidedValueSlider.visible = false
         visible = false
         hideTrigger = false

@@ -346,7 +346,7 @@ if(WIN32)
             QT_TARGET_DESCRIPTION "${CMAKE_PROJECT_DESCRIPTION}"
             QT_TARGET_VERSION "${CMAKE_PROJECT_VERSION}"
             QT_TARGET_COPYRIGHT "${QGC_APP_COPYRIGHT}"
-            QT_TARGET_PRODUCT_NAME "VoladorGroundControl"
+            QT_TARGET_PRODUCT_NAME "Volador Ground Control Station"
             # QT_TARGET_COMMENTS: RC Comments
             # QT_TARGET_ORIGINAL_FILENAME: RC Original FileName
             # QT_TARGET_TRADEMARKS: RC LegalTrademarks

@@ -1,9 +1,11 @@
+// Volador Branding
+// Phase 1
+
 /****************************************************************************
  *
- * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2026 Volador Aerospace. All rights reserved.
  *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
+ * Volador Ground Control Station (VGCS) - Help & Preferences Information
  *
  ****************************************************************************/
 
@@ -14,9 +16,10 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
+import Volador.Theme 1.0
 
 Rectangle {
-    color:          qgcPal.window
+    color:          VoladorTheme.primaryBackground
     anchors.fill:   parent
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
@@ -26,19 +29,20 @@ Rectangle {
     QGCFlickable {
         anchors.margins:    _margins
         anchors.fill:       parent
-        contentWidth:       mainColumn.width
+        contentWidth:       mainColumn.implicitWidth
         contentHeight:      mainColumn.height
         clip:               true
 
         ColumnLayout {
             id:         mainColumn
             spacing:    _margins * 1.5
-            width:      Math.max(400, parent.width - (_margins * 2))
+            Layout.fillWidth: true
 
             Rectangle {
                 Layout.fillWidth:   true
                 implicitHeight:     aboutColumn.height + (_margins * 2)
-                color:              qgcPal.windowShade
+                color:              VoladorTheme.surface
+                border.color:       VoladorTheme.border
                 radius:             ScreenTools.defaultFontPixelWidth
 
                 ColumnLayout {
@@ -49,30 +53,51 @@ Rectangle {
                     anchors.margins:    _margins
                     spacing:            ScreenTools.defaultFontPixelHeight / 2
 
-                    QGCLabel {
-                        text:           "Volador Ground Control"
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        font.bold:      true
-                        color:          qgcPal.colorBlue
+                    RowLayout {
+                        spacing: ScreenTools.defaultFontPixelWidth * 2
+
+                        Image {
+                            source: "qrc:/Volador/Assets/Logos/volador_primary.png"
+                            sourceSize.height: ScreenTools.defaultFontPixelHeight * 2.5
+                            fillMode: Image.PreserveAspectFit
+                            antialiasing: true
+                            mipmap: true
+                        }
+
+                        ColumnLayout {
+                            QGCLabel {
+                                text:           VoladorTheme.shortName
+                                font.pointSize: ScreenTools.largeFontPointSize
+                                font.bold:      true
+                                color:          VoladorTheme.primaryAccent
+                            }
+
+                            QGCLabel {
+                                text:           VoladorTheme.productDescription
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                color:          VoladorTheme.secondaryText
+                            }
+                        }
                     }
 
                     QGCLabel {
-                        text:           qsTr("Developed by Volador Aerospace")
-                        font.pointSize: ScreenTools.smallFontPointSize
-                        color:          qgcPal.text
-                    }
-
-                    QGCLabel {
-                        text:           qsTr("Professional UAV Mission Control Platform developed by Volador Aerospace.")
+                        text:           qsTr("Enterprise Drone Mission Control Platform.")
                         font.pointSize: ScreenTools.defaultFontPointSize
                         wrapMode:       Text.WordWrap
+                        color:          VoladorTheme.primaryText
                         Layout.fillWidth: true
                     }
 
                     QGCLabel {
-                        text:           qsTr("Version %1").arg(QGroundControl.qgcVersion)
+                        text:           qsTr("Version %1 (MAVLink v2.0 Protocol)").arg(VoladorTheme.version)
                         font.pointSize: ScreenTools.smallFontPointSize
-                        color:          qgcPal.text
+                        color:          VoladorTheme.secondaryText
+                    }
+
+                    QGCLabel {
+                        text:           VoladorTheme.copyright
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        color:          VoladorTheme.secondaryText
                     }
                 }
             }
@@ -81,6 +106,7 @@ Rectangle {
                 text:           qsTr("Resources & Documentation")
                 font.pointSize: ScreenTools.mediumFontPointSize
                 font.bold:      true
+                color:          VoladorTheme.primaryText
             }
 
             GridLayout {
@@ -88,25 +114,24 @@ Rectangle {
                 columns:    2
                 Layout.fillWidth: true
 
-                QGCLabel { text: qsTr("Official Website") }
+                QGCLabel { text: qsTr("Official Website"); color: VoladorTheme.secondaryText }
                 QGCLabel {
-                    linkColor:          qgcPal.colorBlue
-                    text:               "<a href=\"https://volador.in\">https://volador.in</a>"
+                    linkColor:          VoladorTheme.primaryAccent
+                    text:               "<a href=\"" + VoladorTheme.website + "\">" + VoladorTheme.website + "</a>"
                     onLinkActivated:    (link) => Qt.openUrlExternally(link)
                 }
 
-                QGCLabel { text: qsTr("Technical Support") }
+                QGCLabel { text: qsTr("Technical Support"); color: VoladorTheme.secondaryText }
                 QGCLabel {
-                    linkColor:          qgcPal.colorBlue
+                    linkColor:          VoladorTheme.primaryAccent
                     text:               "<a href=\"mailto:tech@volador.in\">tech@volador.in</a>"
                     onLinkActivated:    (link) => Qt.openUrlExternally(link)
                 }
 
-                QGCLabel { text: qsTr("QGroundControl User Guide") }
+                QGCLabel { text: qsTr("Open Source Base & Licenses"); color: VoladorTheme.secondaryText }
                 QGCLabel {
-                    linkColor:          qgcPal.text
-                    text:               "<a href=\"https://docs.qgroundcontrol.com\">https://docs.qgroundcontrol.com</a>"
-                    onLinkActivated:    (link) => Qt.openUrlExternally(link)
+                    linkColor:          VoladorTheme.primaryText
+                    text:               "QGroundControl (GPLv3/Apache 2.0) • MAVLink Protocol"
                 }
             }
         }

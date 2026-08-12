@@ -48,61 +48,75 @@ void QGCPalette::_buildMap()
 {
     //                                      Light                 Dark
     //                                      Disabled   Enabled    Disabled   Enabled
-    DECLARE_QGC_COLOR(window,               "#ffffff", "#ffffff", "#101214", "#101214")
-    DECLARE_QGC_COLOR(windowShadeLight,     "#909090", "#828282", "#282d37", "#282d37")
-    DECLARE_QGC_COLOR(windowShade,          "#d9d9d9", "#d9d9d9", "#1f232b", "#1f232b")
-    DECLARE_QGC_COLOR(windowShadeDark,      "#bdbdbd", "#bdbdbd", "#181b20", "#181b20")
-    DECLARE_QGC_COLOR(text,                 "#9d9d9d", "#000000", "#4a505b", "#ffffff")
-    DECLARE_QGC_COLOR(warningText,          "#cc0808", "#cc0808", "#f85761", "#f85761")
-    DECLARE_QGC_COLOR(button,               "#ffffff", "#ffffff", "#181b20", "#1f232b")
-    DECLARE_QGC_COLOR(buttonBorder,         "#ffffff", "#d9d9d9", "#282d37", "#4a505b")
-    DECLARE_QGC_COLOR(buttonText,           "#9d9d9d", "#000000", "#8b949e", "#ffffff")
-    DECLARE_QGC_COLOR(buttonHighlight,      "#e4e4e4", "#FF6A00", "#282d37", "#FF6A00")
-    DECLARE_QGC_COLOR(buttonHighlightText,  "#2c2c2c", "#ffffff", "#e1e4e8", "#ffffff")
-    DECLARE_QGC_COLOR(primaryButton,        "#585858", "#FF6A00", "#282d37", "#FF6A00")
-    DECLARE_QGC_COLOR(primaryButtonText,    "#2c2c2c", "#ffffff", "#8b949e", "#ffffff")
-    DECLARE_QGC_COLOR(textField,            "#ffffff", "#ffffff", "#181b20", "#1f232b")
-    DECLARE_QGC_COLOR(textFieldText,        "#808080", "#000000", "#8b949e", "#ffffff")
-    DECLARE_QGC_COLOR(mapButton,            "#585858", "#000000", "#4a505b", "#1f232b")
-    DECLARE_QGC_COLOR(mapButtonHighlight,   "#585858", "#FF6A00", "#585858", "#FF6A00")
-    DECLARE_QGC_COLOR(mapIndicator,         "#585858", "#FF6A00", "#585858", "#FF6A00")
-    DECLARE_QGC_COLOR(mapIndicatorChild,    "#585858", "#FF8533", "#585858", "#FF8533")
-    DECLARE_QGC_COLOR(colorGreen,           "#008f2d", "#008f2d", "#00e04b", "#00e04b") 
-    DECLARE_QGC_COLOR(colorYellow,          "#a2a200", "#a2a200", "#ffff00", "#ffff00")  
-    DECLARE_QGC_COLOR(colorYellowGreen,     "#799f26", "#799f26", "#9dbe2f", "#9dbe2f")  
-    DECLARE_QGC_COLOR(colorOrange,          "#FF6A00", "#FF6A00", "#FF6A00", "#FF6A00")  
-    DECLARE_QGC_COLOR(colorRed,             "#b52b2b", "#b52b2b", "#f32836", "#f32836")
-    DECLARE_QGC_COLOR(colorGrey,            "#808080", "#808080", "#4a505b", "#8b949e")
-    DECLARE_QGC_COLOR(colorBlue,            "#FF6A00", "#FF6A00", "#FF6A00", "#FF6A00")
-    DECLARE_QGC_COLOR(alertBackground,      "#eecc44", "#eecc44", "#eecc44", "#eecc44")
-    DECLARE_QGC_COLOR(alertBorder,          "#808080", "#808080", "#808080", "#808080")
-    DECLARE_QGC_COLOR(alertText,            "#000000", "#000000", "#000000", "#000000")
-    DECLARE_QGC_COLOR(missionItemEditor,    "#585858", "#FF6A00", "#282d37", "#1f232b")
-    DECLARE_QGC_COLOR(toolStripHoverColor,  "#585858", "#9D9D9D", "#282d37", "#FF8533")
-    DECLARE_QGC_COLOR(statusFailedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
-    DECLARE_QGC_COLOR(statusPassedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
-    DECLARE_QGC_COLOR(statusPendingText,    "#9d9d9d", "#000000", "#707070", "#ffffff")
-    DECLARE_QGC_COLOR(toolbarBackground,    "#ffffff", "#ffffff", "#181b20", "#181b20")
-    DECLARE_QGC_COLOR(groupBorder,          "#bbbbbb", "#bbbbbb", "#282d37", "#4a505b")
+    DECLARE_QGC_COLOR(window,               "#F5F7FA", "#FFFFFF", "#111111", "#111111")
+    DECLARE_QGC_COLOR(windowShadeLight,     "#F8F9FA", "#FFFFFF", "#2B2F33", "#2B2F33")
+    DECLARE_QGC_COLOR(windowShade,          "#ECEFF1", "#F5F7FA", "#1B1F24", "#1B1F24")
+    DECLARE_QGC_COLOR(windowShadeDark,      "#D4D8DD", "#D4D8DD", "#000000", "#000000")
+
+    DECLARE_QGC_COLOR(text,                 "#7A7F86", "#111111", "#B8BEC5", "#FFFFFF")
+    DECLARE_QGC_COLOR(warningText,          "#E53935", "#E53935", "#E53935", "#E53935")
+
+    DECLARE_QGC_COLOR(button,               "#ECEFF1", "#FFFFFF", "#1B1F24", "#2B2F33")
+    DECLARE_QGC_COLOR(buttonBorder,         "#C7CDD4", "#C7CDD4", "#444A52", "#444A52")
+    DECLARE_QGC_COLOR(buttonText,           "#6B7280", "#111111", "#D1D5DB", "#FFFFFF")
+
+    DECLARE_QGC_COLOR(buttonHighlight,      "#40464D", "#40464D", "#5A626B", "#5A626B")
+    DECLARE_QGC_COLOR(buttonHighlightText,  "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF")
+
+    DECLARE_QGC_COLOR(primaryButton,        "#2B2F33", "#2B2F33", "#FFFFFF", "#FFFFFF")
+    DECLARE_QGC_COLOR(primaryButtonText,    "#FFFFFF", "#FFFFFF", "#111111", "#111111")
+
+    DECLARE_QGC_COLOR(textField,            "#ECEFF1", "#FFFFFF", "#1B1F24", "#2B2F33")
+    DECLARE_QGC_COLOR(textFieldText,        "#6B7280", "#111111", "#D1D5DB", "#FFFFFF")
+
+    DECLARE_QGC_COLOR(mapButton,            "#ECEFF1", "#FFFFFF", "#1B1F24", "#2B2F33")
+    DECLARE_QGC_COLOR(mapButtonHighlight,   "#40464D", "#40464D", "#5A626B", "#5A626B")
+
+    DECLARE_QGC_COLOR(mapIndicator,         "#40464D", "#40464D", "#FFFFFF", "#FFFFFF")
+    DECLARE_QGC_COLOR(mapIndicatorChild,    "#7A7F86", "#7A7F86", "#D1D5DB", "#D1D5DB")
+
+    DECLARE_QGC_COLOR(colorGreen,           "#2E7D32", "#2E7D32", "#2E7D32", "#2E7D32")
+    DECLARE_QGC_COLOR(colorYellow,          "#6B7280", "#6B7280", "#6B7280", "#6B7280")
+    DECLARE_QGC_COLOR(colorYellowGreen,     "#6B7280", "#6B7280", "#6B7280", "#6B7280")
+    DECLARE_QGC_COLOR(colorOrange,          "#6B7280", "#6B7280", "#6B7280", "#6B7280")
+
+    DECLARE_QGC_COLOR(colorRed,             "#E53935", "#E53935", "#E53935", "#E53935")
+
+    DECLARE_QGC_COLOR(colorGrey,            "#9CA3AF", "#6B7280", "#6B7280", "#D1D5DB")
+    DECLARE_QGC_COLOR(colorBlue,            "#40464D", "#40464D", "#40464D", "#40464D")
+
+    DECLARE_QGC_COLOR(alertBackground,      "#FFF5F5", "#FFF5F5", "#3A1111", "#3A1111")
+    DECLARE_QGC_COLOR(alertBorder,          "#E53935", "#E53935", "#E53935", "#E53935")
+    DECLARE_QGC_COLOR(alertText,            "#E53935", "#E53935", "#FFFFFF", "#FFFFFF")
+
+    DECLARE_QGC_COLOR(missionItemEditor,    "#ECEFF1", "#FFFFFF", "#1B1F24", "#2B2F33")
+    DECLARE_QGC_COLOR(toolStripHoverColor,  "#E5E7EB", "#E5E7EB", "#3A4047", "#3A4047")
+
+    DECLARE_QGC_COLOR(statusFailedText,     "#E53935", "#E53935", "#E53935", "#E53935")
+    DECLARE_QGC_COLOR(statusPassedText,     "#2E7D32", "#2E7D32", "#2E7D32", "#2E7D32")
+    DECLARE_QGC_COLOR(statusPendingText,    "#6B7280", "#6B7280", "#6B7280", "#6B7280")
+
+    DECLARE_QGC_COLOR(toolbarBackground,    "#FFFFFF", "#FFFFFF", "#111111", "#111111")
+    DECLARE_QGC_COLOR(groupBorder,          "#D4D8DD", "#D4D8DD", "#3A4047", "#3A4047")
 
     // Colors not affecting by theming
     //                                              Disabled    Enabled
-    DECLARE_QGC_NONTHEMED_COLOR(brandingPurple,     "#181b20", "#181b20")
-    DECLARE_QGC_NONTHEMED_COLOR(brandingBlue,       "#FF6A00", "#FF6A00")
-    DECLARE_QGC_NONTHEMED_COLOR(toolStripFGColor,   "#707070", "#ffffff")
+    DECLARE_QGC_NONTHEMED_COLOR(brandingPurple,     "#1B1F24", "#1B1F24")
+    DECLARE_QGC_NONTHEMED_COLOR(brandingBlue,       "#40464D", "#40464D")
+    DECLARE_QGC_NONTHEMED_COLOR(toolStripFGColor,   "#6B7280", "#FFFFFF")
 
     // Colors not affecting by theming or enable/disable
-    DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderLight,          "#ffffff")
+    DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderLight,          "#FFFFFF")
     DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderDark,           "#000000")
-    DECLARE_QGC_SINGLE_COLOR(mapMissionTrajectory,          "#FF6A00")
-    DECLARE_QGC_SINGLE_COLOR(surveyPolygonInterior,         "green")
-    DECLARE_QGC_SINGLE_COLOR(surveyPolygonTerrainCollision, "red")
+    DECLARE_QGC_SINGLE_COLOR(mapMissionTrajectory,          "#40464D")
+    DECLARE_QGC_SINGLE_COLOR(surveyPolygonInterior,         "#2E7D32")
+    DECLARE_QGC_SINGLE_COLOR(surveyPolygonTerrainCollision, "#E53935")
 
 // Colors for UTM Adapter
 #ifdef QGC_UTM_ADAPTER
-    DECLARE_QGC_COLOR(switchUTMSP,        "#b0e0e6", "#b0e0e6", "#b0e0e6", "#b0e0e6");
-    DECLARE_QGC_COLOR(sliderUTMSP,        "#9370db", "#9370db", "#9370db", "#9370db");
-    DECLARE_QGC_COLOR(successNotifyUTMSP, "#3cb371", "#3cb371", "#3cb371", "#3cb371");
+    DECLARE_QGC_COLOR(switchUTMSP,        "#E5E7EB", "#E5E7EB", "#3A4047", "#3A4047")
+    DECLARE_QGC_COLOR(sliderUTMSP,        "#40464D", "#40464D", "#5A626B", "#5A626B")
+    DECLARE_QGC_COLOR(successNotifyUTMSP, "#2E7D32", "#2E7D32", "#2E7D32", "#2E7D32")
 #endif
 }
 

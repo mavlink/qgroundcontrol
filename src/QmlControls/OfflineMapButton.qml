@@ -67,7 +67,7 @@ Button {
             width:   sizeLabel.height * 0.5
             height:  sizeLabel.height * 0.5
             radius:  width / 2
-            color:   complete ? "#31f55b" : "#fc5656"
+            color:   complete ? "#2E7D32" : "#E53935"
             opacity: sizeLabel.text.length > 0 ? 1 : 0
             anchors.verticalCenter: parent.verticalCenter
         }

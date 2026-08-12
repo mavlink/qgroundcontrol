@@ -23,14 +23,21 @@ import QGroundControl.FlightMap
 
 import QGroundControl.UTMSP
 
+import VoladorTheme 1.0
+import VoladorComponents 1.0
+
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
     id:             mainWindow
-    title:          QGroundControl.appName
+    title:          "VGCS"
     minimumWidth:   ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
     minimumHeight:  ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
     visible:        true
+
+    property alias flyView: flyView
+    property alias planView: planView
+    property var   viewer3DWindow: null
 
     property bool   _utmspSendActTrigger
     property bool   _utmspStartTelemetry
@@ -122,12 +129,16 @@ ApplicationWindow {
     }
 
     function showPlanView() {
+        workspace.setCurrentRoute("missions")
         flyView.visible = false
         planView.visible = true
-        viewer3DWindow.close()
+        if (typeof viewer3DWindow !== "undefined" && viewer3DWindow && typeof viewer3DWindow.close === "function") {
+            viewer3DWindow.close()
+        }
     }
 
     function showFlyView() {
+        workspace.setCurrentRoute("flight")
         flyView.visible = true
         planView.visible = false
     }
@@ -162,7 +173,7 @@ ApplicationWindow {
     }
 
     function showSettingsTool(settingsPage = "") {
-        showTool(qsTr("Application Settings"), "AppSettings.qml", "/res/QGCLogoWhite")
+        showTool(qsTr("Application Settings"), "AppSettings.qml", "qrc:/Volador/Assets/Logos/volador_compact.png")
         if (settingsPage !== "") {
             toolDrawerLoader.item.showSettingsPage(settingsPage)
         }
@@ -224,7 +235,7 @@ ApplicationWindow {
         return true
     }
 
-    property string closeDialogTitle: qsTr("Close %1").arg(QGroundControl.appName)
+    property string closeDialogTitle: qsTr("Close VGCS")
 
     function checkForUnsavedMission() {
         if (planView._planMasterController.dirty) {
@@ -275,17 +286,108 @@ ApplicationWindow {
         color:          QGroundControl.globalPalette.window
     }
 
+    // -------------------------------------------------------------------------
+    // VGCS INDUSTRIAL NAVIGATION RAIL
+    // -------------------------------------------------------------------------
+    VGCSNavigationRail {
+        id:             navRail
+        anchors.top:    parent.top
+        anchors.bottom: parent.bottom
+        anchors.left:   parent.left
+        z:              100
+        onNavigationTriggered: function(index, routeId) {
+            workspace.setCurrentRoute(routeId)
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // VGCS AEROSPACE WORKSPACE (FLIGHT / GENERAL)
+    // -------------------------------------------------------------------------
+    VGCSWorkspace {
+        id:             workspace
+        anchors.left:   navRail.right
+        anchors.right:  parent.right
+        anchors.top:    parent.top
+        anchors.bottom: parent.bottom
+        visible:        workspace.currentRoute !== "missions" && workspace.currentRoute !== "vehicles"
+    }
+
     FlyView { 
         id:                     flyView
-        anchors.fill:           parent
+        anchors.left:           navRail.right
+        anchors.right:          parent.right
+        anchors.top:            workspace.top
+        anchors.topMargin:      workspace.headerHeight
+        anchors.bottom:         parent.bottom
         utmspSendActTrigger:    _utmspSendActTrigger
+        visible:                workspace.currentRoute === "flight" || workspace.currentRoute === "map"
+    }
+
+    // -------------------------------------------------------------------------
+    // VGCS MISSION PLANNING WORKSPACE
+    // -------------------------------------------------------------------------
+    VGCSMissionWorkspace {
+        id:                     missionWorkspace
+        anchors.left:           navRail.right
+        anchors.right:          parent.right
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        z:                      50
+        visible:                workspace.currentRoute === "missions"
+        planMasterController:   planView ? planView._planMasterController : null
+        planView:               planView
     }
 
     PlanView {
-        id:             planView
-        anchors.fill:   parent
-        visible:        false
+        id:                     planView
+        anchors.left:           navRail.right
+        anchors.right:          parent.right
+        anchors.top:            missionWorkspace.top
+        anchors.topMargin:      missionWorkspace.headerHeight
+        anchors.bottom:         missionWorkspace.bottom
+        anchors.bottomMargin:   missionWorkspace.bottomBarHeight
+        z:                      1
+        visible:                workspace.currentRoute === "missions"
     }
+
+    // -------------------------------------------------------------------------
+    // VGCS VEHICLE MANAGEMENT WORKSPACE
+    // -------------------------------------------------------------------------
+    VGCSVehicleWorkspace {
+        id:                     vehicleWorkspace
+        anchors.left:           navRail.right
+        anchors.right:          parent.right
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        visible:                workspace.currentRoute === "vehicles"
+    }
+
+    Loader {
+        id:                     voladorLoginLoader
+        anchors.fill:           parent
+        z:                      99999
+        // DEVELOPMENT MODE: Authentication bypass enabled.
+        // Remove this bypass when production authentication is implemented.
+        visible:                false
+        source:                 ""
+    }
+
+    Connections {
+        target:                 (typeof voladorAuth !== "undefined") ? voladorAuth : null
+        ignoreUnknownSignals:   true
+        function onLoginSuccess() {
+            voladorLoginLoader.visible = false
+            mainWindow.showFlyView()
+        }
+        function onAuthenticationChanged() {
+            if (voladorAuth && voladorAuth.isAuthenticated) {
+                voladorLoginLoader.visible = false
+                mainWindow.showFlyView()
+            }
+        }
+    }
+
+
 
     footer: LogReplayStatusBar {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
@@ -352,7 +454,7 @@ ApplicationWindow {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
                             text:               qsTr("Volador Platform")
-                            imageResource:      "/res/QGCLogoArrow.svg"
+                            imageResource:      "qrc:/Volador/Assets/Logos/volador_compact.png"
                             onClicked: {
                                 if (mainWindow.allowViewSwitch()) {
                                     mainWindow.closeIndicatorDrawer()
@@ -421,7 +523,7 @@ ApplicationWindow {
                             height:             toolSelectDialog._toolButtonHeight
                             Layout.fillWidth:   true
                             text:               qsTr("Application Settings")
-                            imageResource:      "/res/QGCLogoFull.svg"
+                            imageResource:      "qrc:/Volador/Assets/Logos/volador_primary.png"
                             imageColor:         "transparent"
                             visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                             onClicked: {
@@ -502,7 +604,8 @@ ApplicationWindow {
 
     Drawer {
         id:             toolDrawer
-        width:          mainWindow.width
+        x:              navRail.width
+        width:          mainWindow.width - navRail.width
         height:         mainWindow.height
         edge:           Qt.LeftEdge
         dragMargin:     0
@@ -838,5 +941,14 @@ ApplicationWindow {
          activationApproval:         UTMSPStateStorage.showActivationTab && QGroundControl.utmspManager.utmspVehicle.vehicleActivation
          flightID:                   UTMSPStateStorage.flightID
          anchors.fill:               parent
+    }
+
+    // -------------------------------------------------------------------------
+    // CINEMATIC STARTUP OVERLAY
+    // -------------------------------------------------------------------------
+    VoladorStartupOverlay {
+        id: startupOverlay
+        anchors.fill: parent
+        z: 99999
     }
 }

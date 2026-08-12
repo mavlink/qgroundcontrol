@@ -141,7 +141,7 @@ Item {
                                 onPressed: (mouse) => {
                                     startX = mouseX
                                     direction = startX > width/2 ? 1 : -1
-                                    parent.item.deadbandColor = "#3C6315"
+                                    parent.item.deadbandColor = "#2E7D32"
                                 }
                                 onPositionChanged: {
                                     var mouseToDeadband = 32768/(width/2) // Factor to have deadband follow the mouse movement
@@ -151,7 +151,7 @@ Item {
                                 }
                                 onReleased: {
                                     controller.setDeadbandValue(modelData,parent.item.deadbandValue)
-                                    parent.item.deadbandColor = "#8c161a"
+                                    parent.item.deadbandColor = "#E53935"
                                 }
                             }
                         }

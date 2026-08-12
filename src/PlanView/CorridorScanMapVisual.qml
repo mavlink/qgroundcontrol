@@ -28,7 +28,7 @@ TransectStyleMapVisuals {
         mapPolyline:    object.corridorPolyline
         interactive:    _currentItem && parent.interactive
         lineWidth:      3
-        lineColor:      "#be781c"
+        lineColor:      "#40464D"
         visible:        _currentItem
         opacity:        parent.opacity
     }
