@@ -17,7 +17,7 @@ ColumnLayout {
         Layout.fillWidth:       true
         font.pointSize:         ScreenTools.smallFontPointSize
         wrapMode:               Text.WordWrap
-        text:                   qsTr("Note: For best perfomance, please disable AutoConnect to UDP devices on the General page.")
+        text:                   qsTr("Note: For best performance, please disable AutoConnect to UDP devices on the General page.")
     }
 
     RowLayout {
