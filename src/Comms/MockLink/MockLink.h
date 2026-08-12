@@ -336,6 +336,7 @@ private:
     /// Creates a file with random contents of the specified size.
     /// @return Fully qualified path to created file
     static QString _createRandomFile(uint32_t byteCount);
+    QString _createLogContentsFile(const QString &logName);
 
     QThread *_workerThread = nullptr;
     MockLinkWorker *_worker = nullptr;
@@ -426,6 +427,8 @@ private:
 
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
     bool _logsErased = false;                           ///< Set by LOG_ERASE, LOG_REQUEST_LIST reports no logs
+    uint16_t _logDownloadId = 0;                        ///< Log id being served, echoed in LOG_DATA
+    uint32_t _logDownloadSize = 0;                      ///< Size of the log being served
     uint32_t _logDownloadCurrentOffset = 0;             ///< Current offset we are sending from
     uint32_t _logDownloadBytesRemaining = 0;            ///< Number of bytes still to send, 0 = send inactive
     /// Protects log download state from race conditions between:
