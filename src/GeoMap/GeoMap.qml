@@ -170,6 +170,7 @@ Item {
                     required property int zoomLevel
                     required property var heights
                     required property bool covered
+                    required property var edgeLodDeltas
                     required property var tileImage
                     required property bool hasTileImage
 
@@ -181,6 +182,7 @@ Item {
                         gridSize: patchModel.gridSize
                         span: patchDelegate.span
                         heights: patchDelegate.heights
+                        edgeLodDeltas: patchDelegate.edgeLodDeltas
                     }
 
                     Texture {

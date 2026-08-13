@@ -11,4 +11,6 @@ private slots:
     void _emptyMapTypeDisablesImagery();
     void _mapTypeSwitchRefetches();
     void _fallbackCoversLodChanges();
+    void _imagesRecoverAfterGestureChurn();
+    void _imagesRecoverAfterTransientOutage();
 };

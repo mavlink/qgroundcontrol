@@ -13,6 +13,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
 #include <QtCore/QList>
+#include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtGui/QImage>
@@ -22,12 +23,15 @@
 
 class GeoScene;
 class GeoMapCamera;
+class HeightField;
 class HeightSource;
+class QNetworkAccessManager;
 class QTimer;
 class SurfaceModel;
 class TileImageSource;
 
 Q_MOC_INCLUDE("GeoScene.h")
+Q_MOC_INCLUDE("HeightField.h")
 
 /// QML bridge between SurfaceModel and the Repeater3D that renders the surface:
 /// one row per active patch, updated incrementally (no model resets on pan/zoom).
@@ -66,6 +70,9 @@ public:
         CoveredRole,                     ///< pending but overlapped by a ready patch: delegate suppresses rendering
         TileImageRole,                   ///< drapable image: own tile, or ancestor/descendant fallback while loading
         HasTileImageRole,                ///< QImage is opaque to QML; bool validity for bindings
+        EdgeLodDeltasRole,               ///< {N,S,W,E} coarser-neighbor LOD deltas for edge stitching
+        TileXRole,                       ///< slippy tile x of the patch key
+        TileYRole,                       ///< slippy tile y of the patch key
     };
 
     GeoScene* scene() const { return _scene; }
@@ -74,7 +81,7 @@ public:
 
     bool terrain() const { return _terrain; }
 
-    /// Real terrain elevations (see TerrariumHeightSource);
+    /// Real terrain elevations (see TerrariumTileFetcher);
     /// false gives a flat z=0 surface. debugHills overrides either.
     void setTerrain(bool terrain);
 
@@ -90,6 +97,10 @@ public:
 
     int gridSize() const;
 
+    /// The shared terrain field patches sample from. Owned here; replaced
+    /// whenever the surface model is rebuilt.
+    HeightField* heightField() const { return _heightField; }
+
     /// SurfaceModel::kMaxRangeMultiplier, exposed so the scene camera's far
     /// clip plane can cover the full retained patch range
     double maxRangeMultiplier() const;
@@ -98,6 +109,16 @@ public:
 
     int pendingCount() const;
     int maxZoomLevel() const;
+
+    /// Tile image requests awaiting delivery or failure
+    int pendingImageCount() const { return _imageRequestKey.count(); }
+
+    /// Network manager for tile imagery fetches, applied at the next
+    /// setMapType (test injection seam)
+    void setTileImageNetworkManager(QNetworkAccessManager* networkManager)
+    {
+        _tileImageNetworkManager = networkManager;
+    }
 
     bool statsEnabled() const { return _statsEnabled; }
 
@@ -143,6 +164,7 @@ signals:
 private slots:
     void _patchAdded(const TileMath::TileKey& key);
     void _patchReady(const TileMath::TileKey& key);
+    void _patchEdgeDeltasChanged(const TileMath::TileKey& key);
     void _patchRemoved(const TileMath::TileKey& key);
     void _sceneOriginChanged();
     void _tileImageReady(int requestId, const QImage& image);
@@ -153,6 +175,7 @@ private:
     void _rebuildSurfaceModel();
     void _resetImagery();
     void _requestTileImage(const TileMath::TileKey& key);
+    void _retryFailedImages();
     void _notifyTileImageChanged(const TileMath::TileKey& key);
     void _invalidateFallbacks(const TileMath::TileKey& tile);
     void _notifyCoveredMayHaveChanged(const TileMath::TileKey& changedKey);
@@ -164,15 +187,18 @@ private:
 
     static constexpr int kMaxRetiredImages = 128;         ///< tiles kept after patch removal (fallback source)
     static constexpr int kMaxAncestorFallbackLevels = 8;  ///< how far up the quadtree fallback looks
+    static constexpr int kImageRetryMs = 3000;            ///< pacing for re-requesting failed tile images
 
     GeoScene* _scene = nullptr;
     HeightSource* _heightSource = nullptr;
+    HeightField* _heightField = nullptr;
     SurfaceModel* _surfaceModel = nullptr;
     bool _terrain = false;
     bool _debugHills = false;
     QString _mapType;
     TileImageSource* _tileSource = nullptr;
-    QHash<TileMath::TileKey, QImage> _tileImages;  ///< delivered images: live patches + retired fallbacks
+    QNetworkAccessManager* _tileImageNetworkManager = nullptr;  ///< test injection seam
+    QHash<TileMath::TileKey, QImage> _tileImages;               ///< delivered images: live patches + retired fallbacks
     /// Built fallbacks (incl. null misses) keyed by patch; rebuilding on every
     /// data() call cost ~1ms per new patch during zoom churn. Invalidated when
     /// a source tile changes (see _invalidateFallbacks), dropped with the row.
@@ -180,6 +206,8 @@ private:
     QList<TileMath::TileKey> _retiredOrder;            ///< retired keys oldest-first, for eviction
     QHash<int, TileMath::TileKey> _imageRequestKey;    ///< in-flight image request id -> patch
     QHash<TileMath::TileKey, int> _imageRequestByKey;  ///< reverse map for cancellation
+    QSet<TileMath::TileKey> _failedImageKeys;          ///< resident patches awaiting an image retry
+    QTimer* _imageRetryTimer = nullptr;
     QList<TileMath::TileKey> _keys;                    ///< row order; data fetched from SurfaceModel by key
 
     // Perf counters sampled by _statsTick (see setStatsEnabled)

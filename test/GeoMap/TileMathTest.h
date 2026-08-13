@@ -17,4 +17,5 @@ private slots:
     void _tileEdgeClamp();
     void _zoomForMetersPerPixel();
     void _mercatorScale();
+    void _isValidKey();
 };

@@ -7,10 +7,14 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         CheckerboardTextureDataTest.cc
         CheckerboardTextureDataTest.h
+        ElevationTilePyramidTest.cc
+        ElevationTilePyramidTest.h
         GeoSceneTest.cc
         GeoSceneTest.h
         GeoMapCameraTest.cc
         GeoMapCameraTest.h
+        HeightFieldTest.cc
+        HeightFieldTest.h
         HeightSourceTest.cc
         HeightSourceTest.h
         PatchGeometryTest.cc
@@ -25,8 +29,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         SurfacePatchImageryTest.h
         SurfacePatchModelTest.cc
         SurfacePatchModelTest.h
-        TerrariumHeightSourceTest.cc
-        TerrariumHeightSourceTest.h
+        TerrariumTileFetcherTest.cc
+        TerrariumTileFetcherTest.h
         TileImageSourceTest.cc
         TileImageSourceTest.h
         TileMathTest.cc
@@ -36,8 +40,10 @@ target_sources(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(CheckerboardTextureDataTest LABELS Unit)
+add_qgc_test(ElevationTilePyramidTest LABELS Unit)
 add_qgc_test(GeoSceneTest LABELS Unit)
 add_qgc_test(GeoMapCameraTest LABELS Unit)
+add_qgc_test(HeightFieldTest LABELS Unit)
 add_qgc_test(HeightSourceTest LABELS Unit)
 add_qgc_test(PatchGeometryTest LABELS Unit)
 add_qgc_test(PatchTextureDataTest LABELS Unit)
@@ -45,6 +51,6 @@ add_qgc_test(SurfaceAnalysisTest LABELS Unit)
 add_qgc_test(SurfaceModelTest LABELS Unit)
 add_qgc_test(SurfacePatchImageryTest LABELS Integration)
 add_qgc_test(SurfacePatchModelTest LABELS Unit)
-add_qgc_test(TerrariumHeightSourceTest LABELS Integration Terrain)
+add_qgc_test(TerrariumTileFetcherTest LABELS Integration Terrain)
 add_qgc_test(TileImageSourceTest LABELS Integration)
 add_qgc_test(TileMathTest LABELS Unit)

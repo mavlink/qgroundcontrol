@@ -16,6 +16,7 @@
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
+
 #include <optional>
 
 /// Camera pose model for the GeoMap engine.

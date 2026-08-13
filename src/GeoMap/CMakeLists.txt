@@ -5,14 +5,18 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        ElevationTilePyramid.cc
+        ElevationTilePyramid.h
+        HeightField.cc
+        HeightField.h
         HeightSource.cc
         HeightSource.h
         SurfaceAnalysis.cc
         SurfaceAnalysis.h
         SurfaceModel.cc
         SurfaceModel.h
-        TerrariumHeightSource.cc
-        TerrariumHeightSource.h
+        TerrariumTileFetcher.cc
+        TerrariumTileFetcher.h
         TileImageSource.cc
         TileImageSource.h
         TileMath.cc
@@ -55,6 +59,8 @@ target_link_libraries(GeoMapModule
         Qt6::Positioning
         Qt6::Qml
         Qt6::Quick3D
+    PRIVATE
+        QGCLogging
 )
 
 target_include_directories(GeoMapModule PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

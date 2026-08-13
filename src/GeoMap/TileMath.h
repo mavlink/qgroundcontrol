@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <QtCore/QDebug>
 #include <QtCore/QHashFunctions>
 #include <QtCore/QMetaType>
 #include <QtCore/QPointF>
@@ -44,6 +45,9 @@ inline size_t qHash(const TileKey& key, size_t seed = 0)
     return ::qHashMulti(seed, key.x, key.y, key.zoom);
 }
 
+/// Streams as slippy "zoom/x/y" notation for logging
+QDebug operator<<(QDebug debug, const TileKey& key);
+
 }  // namespace TileMath
 
 Q_DECLARE_METATYPE(TileMath::TileKey)
@@ -52,6 +56,9 @@ namespace TileMath {
 
 /// Full mercator world extent (2*pi*R) in world meters
 double worldSize();
+
+/// True if zoom is within [kMinZoom, kMaxZoom] and x/y address a tile at that zoom
+bool isValidKey(const TileKey& key);
 
 /// Geo -> world meters. Latitude is clamped to +/-kMaxLatitude.
 QPointF geoToWorld(const QGeoCoordinate& coord);

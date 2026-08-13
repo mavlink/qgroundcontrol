@@ -1,6 +1,7 @@
 #include "CheckerboardTextureData.h"
 
 #include <QtCore/QSize>
+
 #include <algorithm>
 
 CheckerboardTextureData::CheckerboardTextureData(QQuick3DObject* parent) : QQuick3DTextureData(parent)

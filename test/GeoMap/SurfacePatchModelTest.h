@@ -14,5 +14,7 @@ private slots:
     void _reanchorsOnLargeMove();
     void _cameraSwapAnchorsFresh();
     void _debugHillsSwitchResets();
-    void _pendingRowsCoveredDuringLodChurn();
+    void _rowsAlwaysMeshedDuringLodChurn();
+    void _edgeLodDeltasRoleStitchesLodRings();
+    void _tileKeyAndHeightFieldExposedToDelegates();
 };

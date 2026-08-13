@@ -12,7 +12,10 @@
 #include <cmath>
 
 #include "GeoMapCamera.h"
+#include "QGCLoggingCategory.h"
 #include "TileMath.h"
+
+QGC_LOGGING_CATEGORY(GeoMapGeoSceneLog, "GeoMap.GeoScene")
 
 GeoScene::GeoScene(QObject* parent) : QObject(parent) {}
 
@@ -21,6 +24,7 @@ void GeoScene::setCamera(GeoMapCamera* camera)
     if (camera == _camera) {
         return;
     }
+    qCDebug(GeoMapGeoSceneLog) << "camera" << (camera ? "set" : "cleared");
     if (_camera) {
         disconnect(_camera, nullptr, this, nullptr);
     }
@@ -79,5 +83,6 @@ void GeoScene::_maybeReanchor()
     }
     _origin = cameraWorld;
     _originSet = true;
+    qCDebug(GeoMapGeoSceneLog) << "scene origin re-anchored to" << _origin;
     emit sceneOriginChanged();
 }

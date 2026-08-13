@@ -1,6 +1,7 @@
 #include "HeightSourceTest.h"
 
 #include <QtTest/QSignalSpy>
+
 #include <cmath>
 
 #include "HeightSource.h"

@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QSet>
@@ -39,7 +40,10 @@ public:
     /// mapType is a provider type string from UrlFactory::getProviderTypes()
     /// (e.g. "Google Satellite"). With an unknown type every request fails
     /// (asynchronously) without touching the cache or network.
-    explicit TileImageSource(const QString& mapType, QObject* parent = nullptr);
+    /// \a networkManager overrides the internally created one (test injection
+    /// seam); an injected manager is not owned and must outlive this object
+    explicit TileImageSource(const QString& mapType, QObject* parent = nullptr,
+                             QNetworkAccessManager* networkManager = nullptr);
 
     QString mapType() const { return _mapType; }
 
@@ -58,9 +62,12 @@ signals:
 private:
     void _fetchFromNetwork(int requestId, const TileMath::TileKey& key);
     void _failAsync(int requestId);
-    void _deliver(int requestId, const QByteArray& data);
+    void _deliver(int requestId, const TileMath::TileKey& key, const QByteArray& data);
     void _finishSucceeded(int requestId, const QImage& image);
     void _finishFailed(int requestId);
+    void _warnFailure(const TileMath::TileKey& key, const QString& reason);
+
+    static constexpr int kFailureWarnIntervalMs = 10000;  ///< throttle for fetch-failure warnings
 
     const QString _mapType;
     const int _mapId;
@@ -68,4 +75,5 @@ private:
     int _requestIdCounter = 0;
     QSet<int> _pending;                         ///< ids that have not finished or been cancelled
     QHash<int, QNetworkReply*> _activeReplies;  ///< in-flight network fetches by request id
+    QElapsedTimer _failureWarnTimer;            ///< restarted on each emitted failure warning
 };

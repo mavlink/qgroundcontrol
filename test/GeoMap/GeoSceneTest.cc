@@ -1,6 +1,7 @@
 #include "GeoSceneTest.h"
 
 #include <QtTest/QSignalSpy>
+
 #include <cmath>
 
 #include "GeoMapCamera.h"

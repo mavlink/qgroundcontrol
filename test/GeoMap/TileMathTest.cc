@@ -121,4 +121,18 @@ void TileMathTest::_mercatorScale()
     QCOMPARE(mercatorScale(89.0), mercatorScale(kMaxLatitude));
 }
 
+void TileMathTest::_isValidKey()
+{
+    QVERIFY(isValidKey(TileKey{0, 0, 0}));
+    QVERIFY(isValidKey(TileKey{7, 0, 3}));
+    QVERIFY(isValidKey(TileKey{(1 << kMaxZoom) - 1, (1 << kMaxZoom) - 1, kMaxZoom}));
+
+    QVERIFY(!isValidKey(TileKey{0, 0, -1}));
+    QVERIFY(!isValidKey(TileKey{0, 0, kMaxZoom + 1}));
+    QVERIFY(!isValidKey(TileKey{-1, 0, 3}));
+    QVERIFY(!isValidKey(TileKey{8, 0, 3}));
+    QVERIFY(!isValidKey(TileKey{0, -1, 3}));
+    QVERIFY(!isValidKey(TileKey{0, 8, 3}));
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(TileMathTest, TestLabel::Unit)
