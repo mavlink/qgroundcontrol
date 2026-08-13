@@ -4,6 +4,7 @@
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
 #include <QtTest/QSignalSpy>
+
 #include <cmath>
 
 #include "GeoMapCamera.h"

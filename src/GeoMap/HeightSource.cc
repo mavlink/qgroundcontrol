@@ -1,7 +1,11 @@
 #include "HeightSource.h"
 
 #include <QtCore/QTimer>
+
 #include <cmath>
+#include <utility>
+
+#include "HeightField.h"
 
 HeightSource::HeightSource(QObject* parent) : QObject(parent) {}
 
@@ -47,6 +51,41 @@ int ProceduralHeightSource::requestPatchHeights(const TileMath::TileKey& key, in
 void ProceduralHeightSource::cancelRequest(int requestId)
 {
     _pending.remove(requestId);
+}
+
+bool ProceduralHeightSource::requestTile(const TileMath::TileKey& key)
+{
+    if (!_heightField || !TileMath::isValidKey(key)) {
+        return false;
+    }
+    if (_heightField->hasTile(key)) {
+        return true;
+    }
+
+    // Sample-center convention matching the terrarium tile layout (see
+    // HeightField's bilinear sampling)
+    const QPointF minCorner = TileMath::tileMinCorner(key);
+    const double span = TileMath::tileSpanAtZoom(key.zoom);
+    ElevationTilePyramid::Grid grid;
+    grid.width = kSynthGridSize;
+    grid.height = kSynthGridSize;
+    grid.heights.reserve(qsizetype(kSynthGridSize) * kSynthGridSize);
+    for (int row = 0; row < kSynthGridSize; row++) {
+        const double y = minCorner.y() + span - (span * (row + 0.5) / kSynthGridSize);
+        for (int col = 0; col < kSynthGridSize; col++) {
+            const double x = minCorner.x() + (span * (col + 0.5) / kSynthGridSize);
+            grid.heights.append(heightAtWorld(QPointF(x, y)));
+        }
+    }
+
+    // Deliver through the event loop so consumers see the same async flow as
+    // a real tile fetch
+    QTimer::singleShot(0, this, [this, key, grid = std::move(grid)]() mutable {
+        if (_heightField && !_heightField->hasTile(key)) {
+            _heightField->insertTile(key, std::move(grid));
+        }
+    });
+    return true;
 }
 
 void ProceduralHeightSource::_deliver(int requestId)

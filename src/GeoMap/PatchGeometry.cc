@@ -1,12 +1,31 @@
 #include "PatchGeometry.h"
 
 #include <QtGui/QVector3D>
+
 #include <algorithm>
-#include <cmath>
+#include <bit>
+
+#include "HeightField.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(GeoMapPatchGeometryLog, "GeoMap.PatchGeometry")
 
 PatchGeometry::PatchGeometry(QQuick3DObject* parent) : QQuick3DGeometry(parent)
 {
     _rebuild();
+}
+
+void PatchGeometry::componentComplete()
+{
+    QQuick3DGeometry::componentComplete();
+    _rebuild();  // one build for the whole batch of initial property assignments
+}
+
+void PatchGeometry::_requestRebuild()
+{
+    if (isComponentComplete()) {
+        _rebuild();
+    }
 }
 
 void PatchGeometry::setGridSize(int gridSize)
@@ -16,8 +35,17 @@ void PatchGeometry::setGridSize(int gridSize)
         return;
     }
     _gridSize = clamped;
+    for (const int delta : _lodDelta) {
+        if ((delta > 0) && ((_gridSize % (1 << delta)) != 0)) {
+            qCWarning(GeoMapPatchGeometryLog) << "setGridSize reset edge LOD deltas: delta" << delta
+                                              << "has no coincident vertices at gridSize" << _gridSize;
+            _lodDelta.fill(0);
+            emit edgeLodDeltasChanged();
+            break;
+        }
+    }
     emit gridSizeChanged();
-    _rebuild();
+    _requestRebuild();
 }
 
 void PatchGeometry::setSpan(qreal span)
@@ -27,7 +55,7 @@ void PatchGeometry::setSpan(qreal span)
     }
     _span = span;
     emit spanChanged();
-    _rebuild();
+    _requestRebuild();
 }
 
 void PatchGeometry::setHeights(const QList<float>& heights)
@@ -37,18 +65,136 @@ void PatchGeometry::setHeights(const QList<float>& heights)
     }
     _heights = heights;
     emit heightsChanged();
-    _rebuild();
+    _requestRebuild();
 }
 
-float PatchGeometry::_heightAt(int row, int col) const
+bool PatchGeometry::sampleFromField(const TileMath::TileKey& key)
+{
+    if (!_heightField) {
+        qCWarning(GeoMapPatchGeometryLog) << "sampleFromField rejected: no height field set, key" << key;
+        return false;
+    }
+    const QList<float> sampled = _heightField->samplePatch(key, _gridSize);
+    if (sampled.isEmpty()) {
+        qCWarning(GeoMapPatchGeometryLog)
+            << "sampleFromField rejected: field returned no samples, key" << key << "gridSize" << _gridSize;
+        return false;
+    }
+    if (sampled != _heights) {
+        _heights = sampled;
+        emit heightsChanged();
+    }
+    _rebuild();
+    return true;
+}
+
+void PatchGeometry::setHeightField(HeightField* heightField)
+{
+    if (heightField == _heightField) {
+        return;
+    }
+    if (_heightField) {
+        disconnect(_heightField, nullptr, this, nullptr);
+    }
+    _heightField = heightField;
+    if (_heightField) {
+        // Match setHeightField(nullptr) semantics; null first, the dying
+        // object needs no disconnect
+        connect(_heightField, &QObject::destroyed, this, [this] {
+            _heightField = nullptr;
+            emit heightFieldChanged();
+        });
+    }
+    emit heightFieldChanged();
+}
+
+void PatchGeometry::setEdgeLodDeltas(int north, int south, int west, int east)
+{
+    // Bounding delta first keeps the shift below well-defined
+    static_assert(std::has_single_bit(static_cast<unsigned>(kMaxGridSize)), "kMaxLodDelta assumes a power of two");
+    constexpr int kMaxLodDelta = std::countr_zero(static_cast<unsigned>(kMaxGridSize));
+    for (const int delta : {north, south, west, east}) {
+        if ((delta < 0) || (delta > kMaxLodDelta) || ((delta > 0) && ((_gridSize % (1 << delta)) != 0))) {
+            qCWarning(GeoMapPatchGeometryLog)
+                << "setEdgeLodDeltas rejected: delta" << delta << "has no coincident vertices at gridSize" << _gridSize;
+            return;
+        }
+    }
+    if ((north == _lodDelta[kNorth]) && (south == _lodDelta[kSouth]) && (west == _lodDelta[kWest]) &&
+        (east == _lodDelta[kEast])) {
+        return;
+    }
+    _lodDelta[kNorth] = north;
+    _lodDelta[kSouth] = south;
+    _lodDelta[kWest] = west;
+    _lodDelta[kEast] = east;
+    emit edgeLodDeltasChanged();
+    _requestRebuild();
+}
+
+void PatchGeometry::setEdgeLodDeltas(const QList<int>& deltas)
+{
+    if (deltas.count() != kEdgeCount) {
+        qCWarning(GeoMapPatchGeometryLog)
+            << "setEdgeLodDeltas rejected: expected {N,S,W,E}, got" << deltas.count() << "deltas";
+        return;
+    }
+    setEdgeLodDeltas(deltas[0], deltas[1], deltas[2], deltas[3]);
+}
+
+float PatchGeometry::_rawHeightAt(int row, int col) const
 {
     const int verticesPerEdge = _gridSize + 1;
     if (_heights.count() != (verticesPerEdge * verticesPerEdge)) {
         return 0.0f;  // missing or mismatched grid renders flat
     }
-    const int clampedRow = std::clamp(row, 0, _gridSize);
-    const int clampedCol = std::clamp(col, 0, _gridSize);
-    return _heights.at((clampedRow * verticesPerEdge) + clampedCol);
+    return _heights.at((row * verticesPerEdge) + col);
+}
+
+float PatchGeometry::_heightAt(int row, int col) const
+{
+    const int r = std::clamp(row, 0, _gridSize);
+    const int c = std::clamp(col, 0, _gridSize);
+
+    // T-junction fix: on an edge with a coarser neighbor, non-coincident
+    // vertices are collapsed onto the segment between the coincident ones.
+    // The coincident vertices need no correction: HeightField::samplePatch's
+    // canonical boundary resolution makes them bit-identical to the coarse
+    // neighbor's rendered edge (plain setHeights callers must provide heights
+    // with the same property). A corner on two constrained edges takes the
+    // first match (N,S,W,E precedence); skirts hide the residual three-LOD
+    // corner mismatch.
+    Edge edge = kNorth;
+    bool matched = false;
+    bool alongCol = false;  // lerp runs along the edge direction
+    if ((r == 0) && (_lodDelta[kNorth] > 0)) {
+        edge = kNorth;
+        alongCol = true;
+        matched = true;
+    } else if ((r == _gridSize) && (_lodDelta[kSouth] > 0)) {
+        edge = kSouth;
+        alongCol = true;
+        matched = true;
+    } else if ((c == 0) && (_lodDelta[kWest] > 0)) {
+        edge = kWest;
+        matched = true;
+    } else if ((c == _gridSize) && (_lodDelta[kEast] > 0)) {
+        edge = kEast;
+        matched = true;
+    }
+    if (matched) {
+        const int step = 1 << _lodDelta[edge];
+        const int idx = alongCol ? c : r;
+        const int base = (idx / step) * step;
+        if (idx == base) {
+            return _rawHeightAt(r, c);
+        }
+        const float t = float(idx - base) / step;
+        const float a = alongCol ? _rawHeightAt(r, base) : _rawHeightAt(base, c);
+        const float b = alongCol ? _rawHeightAt(r, base + step) : _rawHeightAt(base + step, c);
+        return a + ((b - a) * t);
+    }
+    return _rawHeightAt(r, c);
 }
 
 void PatchGeometry::_rebuild()
@@ -61,7 +207,14 @@ void PatchGeometry::_rebuild()
     const float span = static_cast<float>(_span);
     const float half = span / 2.0f;
     const float step = span / _gridSize;
-    const float skirtDepth = span * static_cast<float>(kSkirtDepthFraction);
+    // Skirt hides the seam against the coarsest constraining neighbor; that
+    // seam doubles with each level the neighbor is coarser, so scale the base
+    // depth by 2^maxDelta (the coarser level's geometric error halves per
+    // level). maxDelta is in
+    // [0, kMaxLodDelta] (setEdgeLodDeltas validates), so the shift is in
+    // range; 0 = base depth.
+    const int maxDelta = *std::max_element(_lodDelta.cbegin(), _lodDelta.cend());
+    const float skirtDepth = span * static_cast<float>(kSkirtDepthFraction) * static_cast<float>(1 << maxDelta);
 
     // Interleaved layout: position (3f) + normal (3f) + uv (2f)
     constexpr int kFloatsPerVertex = 8;

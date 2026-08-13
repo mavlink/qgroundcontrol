@@ -1,11 +1,15 @@
 #include "SurfacePatchImageryTest.h"
 
+#include <QtCore/QRegularExpression>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
 
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
 #include "QGCMapUrlEngine.h"
 #include "SurfacePatchModel.h"
+#include "UnitTestTileGenerator.h"
 
 namespace {
 
@@ -54,6 +58,48 @@ int rowsReportingImage(const SurfacePatchModel& model)
     }
     return count;
 }
+
+/// Reply that fails asynchronously without touching the network
+class FailingReply : public QNetworkReply
+{
+public:
+    explicit FailingReply(const QNetworkRequest& request, QObject* parent) : QNetworkReply(parent)
+    {
+        setRequest(request);
+        setOperation(QNetworkAccessManager::GetOperation);
+        open(ReadOnly);
+        QMetaObject::invokeMethod(
+            this,
+            [this] {
+                setError(ContentNotFoundError, QStringLiteral("canned failure"));
+                emit errorOccurred(ContentNotFoundError);
+                setFinished(true);
+                emit finished();
+            },
+            Qt::QueuedConnection);
+    }
+
+    void abort() final {}
+
+protected:
+    qint64 readData(char*, qint64) final { return -1; }
+};
+
+/// Every network fetch fails: models a provider/connectivity outage
+class FailingNam : public QNetworkAccessManager
+{
+public:
+    using QNetworkAccessManager::QNetworkAccessManager;
+
+    int requestCount = 0;
+
+protected:
+    QNetworkReply* createRequest(Operation, const QNetworkRequest& request, QIODevice*) final
+    {
+        requestCount++;
+        return new FailingReply(request, this);
+    }
+};
 
 }  // namespace
 
@@ -156,6 +202,99 @@ void SurfacePatchImageryTest::_fallbackCoversLodChanges()
     QCOMPARE_GT(model.rowCount(), 0);
     QCOMPARE_GT(rowsReportingImage(model), 0);
     QCOMPARE(rowsWithImage(model), rowsReportingImage(model));
+}
+
+void SurfacePatchImageryTest::_imagesRecoverAfterGestureChurn()
+{
+    const QString type = mapType();
+    QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    attach(model, scene, camera);
+    model.setMapType(type);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 5000);
+
+    // Drag-like camera motion: per-frame poses with the event loop pumped
+    // between frames, so async image deliveries and cancellations interleave
+    // with patch churn mid-gesture (a settled-pose test never sees this).
+    // Path mirrors the field report: tilt down to max oblique, zoom out,
+    // rotate, pan, zoom back in.
+    struct Pose
+    {
+        QGeoCoordinate center;
+        qreal heading;
+        qreal tilt;
+        qreal distance;
+    };
+
+    const QGeoCoordinate kPanned(kCenter.latitude() + 0.05, kCenter.longitude() + 0.05);
+    const QList<Pose> waypoints = {
+        {kCenter, 0, 0, 2000},
+        {kCenter, 0, GeoMapCamera::kMaxTilt, 2000},
+        {kCenter, 0, GeoMapCamera::kMaxTilt, 200000},
+        {kPanned, 180, GeoMapCamera::kMaxTilt, 200000},
+        {kPanned, 180, 70, 500},
+    };
+    constexpr int kStepsPerSegment = 30;
+    for (int seg = 1; seg < waypoints.count(); seg++) {
+        const Pose& from = waypoints[seg - 1];
+        const Pose& to = waypoints[seg];
+        for (int step = 1; step <= kStepsPerSegment; step++) {
+            const qreal t = qreal(step) / kStepsPerSegment;
+            const QGeoCoordinate center(
+                from.center.latitude() + ((to.center.latitude() - from.center.latitude()) * t),
+                from.center.longitude() + ((to.center.longitude() - from.center.longitude()) * t));
+            camera.lookAt(center, from.heading + ((to.heading - from.heading) * t),
+                          from.tilt + ((to.tilt - from.tilt) * t),
+                          from.distance * std::pow(to.distance / from.distance, t));
+            QCoreApplication::processEvents();  // one frame: deliveries land mid-gesture
+        }
+        // Camera stops: every patch must end up imaged. A row whose
+        // hasTileImage never turns true renders the dark loading fallback
+        // forever - the visible "hole" from the field report.
+        model.drainUpdates();
+        QTRY_COMPARE_WITH_TIMEOUT(rowsReportingImage(model), model.rowCount(), 10000);
+        QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 10000);
+    }
+}
+
+void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
+{
+    const QString type = mapType();
+    QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    FailingNam nam;  // must outlive the model: its TileImageSource borrows the manager
+    SurfacePatchModel model;
+    model.setTileImageNetworkManager(&nam);
+    attach(model, scene, camera);
+    model.setMapType(type);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 5000);
+
+    // Transient imagery outage: cache lookups miss and the network fallback
+    // fails while a pan brings in new patches (the field scenario: gesture
+    // during flaky connectivity)
+    UnitTestTileGenerator::setForcedMissCount(10000);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    // Fetch failures must be visible without logging configuration; repeats
+    // within the throttle window stay at debug
+    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("failed")));
+    camera.setCenter(QGeoCoordinate(kCenter.latitude() + 0.02, kCenter.longitude() + 0.02));
+    model.drainUpdates();
+    QCOMPARE_GT(model.rowCount(), 0);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingImageCount(), 0, 10000);  // all outage-era requests resolved
+    QCOMPARE_GT(nam.requestCount, 0);
+    QCOMPARE_LT(rowsWithImage(model), model.rowCount());             // the outage left imageless patches
+    verifyExpectedLogMessage();
+    // Outage ends with the camera at rest: every resident patch must still
+    // end up imaged. A row stuck without image (or fallback) renders the dark
+    // loading fallback forever - the visible "hole" from the field report.
+    UnitTestTileGenerator::setForcedMissCount(0);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsReportingImage(model), model.rowCount(), 10000);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 10000);
 }
 
 UT_REGISTER_TEST(SurfacePatchImageryTest, TestLabel::Integration)

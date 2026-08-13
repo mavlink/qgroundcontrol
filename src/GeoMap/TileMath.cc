@@ -1,10 +1,19 @@
 #include "TileMath.h"
 
+#include <QtCore/QDebug>
 #include <QtCore/QtMath>
+
 #include <algorithm>
 #include <cmath>
 
 namespace TileMath {
+
+QDebug operator<<(QDebug debug, const TileKey& key)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace() << key.zoom << '/' << key.x << '/' << key.y;
+    return debug;
+}
 
 double worldSize()
 {
@@ -30,6 +39,15 @@ double mercatorScale(double latitude)
 {
     const double lat = std::clamp(latitude, -kMaxLatitude, kMaxLatitude);
     return 1.0 / std::cos(qDegreesToRadians(lat));
+}
+
+bool isValidKey(const TileKey& key)
+{
+    if ((key.zoom < kMinZoom) || (key.zoom > kMaxZoom)) {
+        return false;
+    }
+    const int tilesAtZoom = 1 << key.zoom;
+    return (key.x >= 0) && (key.x < tilesAtZoom) && (key.y >= 0) && (key.y < tilesAtZoom);
 }
 
 double tileSpanAtZoom(int zoom)
