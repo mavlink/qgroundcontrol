@@ -53,6 +53,7 @@ FirstRunPrompt {
         SettingsGroupLayout {
             Layout.fillWidth: true
             Layout.maximumWidth: _descriptionWidth
+            visible: QGroundControl.corePlugin.showInitialSetupVehiclePreferences
             heading: qsTr("Vehicle Preferences")
             headingDescription: qsTr("Select the firmware and vehicle type you typically use.")
 
@@ -76,6 +77,7 @@ FirstRunPrompt {
         SettingsGroupLayout {
             Layout.fillWidth: true
             Layout.maximumWidth: _descriptionWidth
+            visible: QGroundControl.corePlugin.showInitialSetupMeasurementUnits
             heading: qsTr("Measurement Units")
             headingDescription: qsTr("Choose the measurement units you want to use. You can also change it later in General Settings.")
 
