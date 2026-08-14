@@ -142,7 +142,7 @@ Rectangle {
         width:          _itemWidth + (_borderWidth * 2)
         height:         _itemHeight + (_borderWidth * 2)
         border.width:   _borderWidth
-        border.color:   qgcPal.brandingBlue
+        border.color:   qgcPal.brandAccent
         color:          "transparent"
 
         readonly property int _borderWidth: 3
