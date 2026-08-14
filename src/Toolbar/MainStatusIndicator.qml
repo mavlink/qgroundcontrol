@@ -102,7 +102,7 @@ RowLayout {
                     }
                 }
             } else {
-                _mainStatusBGColor = qgcPal.brandingPurple
+                _mainStatusBGColor = qgcPal.brandPrimary
                 return mainStatusLabel._disconnectedText
             }
         }
