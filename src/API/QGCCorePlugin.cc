@@ -10,6 +10,7 @@
 #endif
 #endif
 #include "FactMetaData.h"
+#include "FirmwarePluginManager.h"
 #include "QGCMAVLink.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
@@ -181,6 +182,18 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
               "Are you sure you want to enable Advanced Mode?");
 }
 
+bool QGCCorePlugin::showInitialSetupVehiclePreferences() const
+{
+    const QList<QGCMAVLink::FirmwareClass_t> supportedFirmwareClasses = FirmwarePluginManager::instance()->supportedFirmwareClasses();
+    return supportedFirmwareClasses.count() != 1 ||
+           FirmwarePluginManager::instance()->supportedVehicleClasses(supportedFirmwareClasses[0]).count() != 1;
+}
+
+bool QGCCorePlugin::showInitialSetupMeasurementUnits() const
+{
+    return true;
+}
+
 void QGCCorePlugin::factValueGridCreateDefaultSettings(FactValueGrid* factValueGrid)
 {
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
@@ -337,6 +350,15 @@ const QVariantList &QGCCorePlugin::toolBarIndicators()
     );
 
     return toolBarIndicatorList;
+}
+
+QList<int> QGCCorePlugin::firstRunPromptStdIds()
+{
+    if (showInitialSetupVehiclePreferences() || showInitialSetupMeasurementUnits()) {
+        return { kInitialSetupPromptId };
+    }
+
+    return {};
 }
 
 QVariantList QGCCorePlugin::firstRunPromptsToShow()
