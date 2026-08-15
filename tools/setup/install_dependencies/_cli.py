@@ -61,7 +61,7 @@ def list_packages(platform: str | None = None) -> None:
         print("=" * 40)
         for pkg in MACOS_PACKAGES:
             print(f"  - {pkg}")
-        print("\nGStreamer: Downloaded from gstreamer.freedesktop.org")
+        print("\nGStreamer: Downloaded from the QGroundControl S3 mirror")
 
 
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
