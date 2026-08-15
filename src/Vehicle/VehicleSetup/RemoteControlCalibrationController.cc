@@ -474,7 +474,7 @@ void RemoteControlCalibrationController::nextButtonClicked()
     if (_currentStep == -1) {
         // Need to have enough channels
         if (_chanCount < _chanMinimum) {
-            QGC::showAppMessage(QStringLiteral("Detected %1 channels. To operate vehicle, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
+            QGC::showAppMessage(tr("Detected %1 channels. To operate vehicle, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
             return;
         }
         _startCalibration();

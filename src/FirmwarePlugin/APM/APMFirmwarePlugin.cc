@@ -775,7 +775,7 @@ out:
 bool APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
-        QGC::showAppMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        QGC::showAppMessage(tr("Unable to go to location, vehicle position not known."));
         return false;
     }
 
@@ -1169,7 +1169,7 @@ void APMFirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GC
         static bool sentOnce = false;
         if (!sentOnce) {
             sentOnce = true;
-            QGC::showAppMessage(QStringLiteral("Follow failed: Home position not set."));
+            QGC::showAppMessage(tr("Follow failed: Home position not set."));
         }
         return;
     }
@@ -1179,7 +1179,7 @@ void APMFirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GC
         if (!sentOnce) {
             sentOnce = true;
             qCWarning(APMFirmwarePluginLog) << "estimateCapabilities" << estimationCapabilities;
-            QGC::showAppMessage(QStringLiteral("Follow failed: Ground station cannot provide required position information."));
+            QGC::showAppMessage(tr("Follow failed: Ground station cannot provide required position information."));
         }
         return;
     }

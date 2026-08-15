@@ -82,7 +82,7 @@ void CorridorScanComplexItem::loadPreset(const QString& presetName)
 
     QJsonObject presetObject = _loadPresetJson(presetName);
     if (!_loadWorker(presetObject, 0, errorString, true /* forPresets */)) {
-        QGC::showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
+        QGC::showAppMessage(tr("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
     }
     _rebuildTransects();
 }
