@@ -7,7 +7,6 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlUnitsConversion.h"
-#include "qgc_version.h"
 
 class ADSBVehicleManager;
 class FactGroup;
@@ -194,7 +193,7 @@ public:
     QString telemetryFileExtension  (void) const;
 
     static QString qgcVersion();
-    static QString qgcAppDate() { return QGC_APP_DATE; }
+    static QString qgcAppDate();
 #ifdef QGC_DAILY_BUILD
     static bool qgcDailyBuild() { return true; }
 #else
