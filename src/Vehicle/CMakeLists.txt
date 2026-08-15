@@ -11,6 +11,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FTPController.h
         FTPManager.cc
         FTPManager.h
+        GCSControlManager.cc
+        GCSControlManager.h
         InitialConnectStateMachine.cc
         InitialConnectStateMachine.h
         MavCommandQueue.cc
