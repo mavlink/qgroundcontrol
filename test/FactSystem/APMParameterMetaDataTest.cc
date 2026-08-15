@@ -425,4 +425,57 @@ void APMParameterMetaDataTest::_outOfRangeBitmaskIndexSkipped()
     QCOMPARE(fact->bitmaskStrings()[1], "Second");
 }
 
+void APMParameterMetaDataTest::_parseEnumSentinelOutsideRange()
+{
+    static const char *json = R"({
+        "TEST_": {
+            "TEST_SENTINEL": {
+                "DisplayName": "Sentinel enum",
+                "Description": "Enum with sentinel value outside operating range",
+                "Range": {"low": "0.5", "high": "10"},
+                "Values": {"0": "Disabled", "1": "Enabled"}
+            }
+        }
+    })";
+
+    QScopedPointer<APMParameterMetaData> meta(_loadFromJson(json, nullptr));
+    QVERIFY(meta);
+
+    FactMetaData *fact = meta->getMetaDataForFact("TEST_SENTINEL", FactMetaData::valueTypeFloat);
+    QVERIFY(fact);
+    QCOMPARE(fact->rawMin().toFloat(), 0.5f);
+    QCOMPARE(fact->rawMax().toFloat(), 10.0f);
+    QCOMPARE(fact->enumStrings(), QStringList({"Disabled", "Enabled"}));
+    QCOMPARE(fact->enumValues().size(), 2);
+    QCOMPARE(fact->enumValues()[0].toFloat(), 0.0f);
+    QCOMPARE(fact->enumValues()[1].toFloat(), 1.0f);
+}
+
+void APMParameterMetaDataTest::_parseEnumNegativeSentinelIntType()
+{
+    static const char *json = R"({
+        "TEST_": {
+            "TEST_SENTINEL_INT": {
+                "DisplayName": "Int sentinel enum",
+                "Description": "Negative sentinel below integer operating range",
+                "Range": {"low": "0", "high": "100"},
+                "Values": {"-1": "Disabled", "0": "First", "1": "Second"}
+            }
+        }
+    })";
+
+    QScopedPointer<APMParameterMetaData> meta(_loadFromJson(json, nullptr));
+    QVERIFY(meta);
+
+    FactMetaData *fact = meta->getMetaDataForFact("TEST_SENTINEL_INT", FactMetaData::valueTypeInt32);
+    QVERIFY(fact);
+    QCOMPARE(fact->rawMin().toInt(), 0);
+    QCOMPARE(fact->rawMax().toInt(), 100);
+    QCOMPARE(fact->enumStrings(), QStringList({"Disabled", "First", "Second"}));
+    QCOMPARE(fact->enumValues().size(), 3);
+    QCOMPARE(fact->enumValues()[0].toInt(), -1);
+    QCOMPARE(fact->enumValues()[1].toInt(), 0);
+    QCOMPARE(fact->enumValues()[2].toInt(), 1);
+}
+
 UT_REGISTER_TEST(APMParameterMetaDataTest, TestLabel::Unit)
