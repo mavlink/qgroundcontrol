@@ -41,6 +41,7 @@ instead.
 1. Open **Application Settings > App Log Viewer**.
 2. Click **Categories** and enable these categories:
    - `Vehicle.Actuators.PX4AutoPilotPlugin`
+   - `Vehicle.Actuators.Common`
    - `ComponentInformation.RequestMetaDataTypeStateMachine`
    - `Vehicle.FTPManager`
 3. Connect the vehicle. If it is already connected, disconnect and reconnect
@@ -60,7 +61,7 @@ vehicle.
 | --- | --- | --- |
 | `Vehicle.Actuators.PX4AutoPilotPlugin` | `Vehicle did not provide actuators metadata via component information` | No actuator metadata was received from the vehicle. |
 | `Vehicle.Actuators.PX4AutoPilotPlugin` | `Actuators initialization failed` | Metadata was received but could not be parsed or initialized. |
-| `Vehicle.Actuators.PX4AutoPilotPlugin` | `Condition 'show-ui-if' evaluated to false` | The metadata deliberately hides the page for the current vehicle configuration. |
+| `Vehicle.Actuators.PX4AutoPilotPlugin` | `Condition 'show-ui-if' evaluated to false` | The vehicle's metadata indicated the page should not be shown. This can be intentional for your configuration, or a firmware/metadata mismatch. Attach the saved log to a support request. |
 | `ComponentInformation.RequestMetaDataTypeStateMachine` | `primary failed, requesting metadata (fallback) from ...` | The primary metadata URI failed and QGroundControl is trying the fallback URI. |
 | `ComponentInformation.RequestMetaDataTypeStateMachine` | `FTP download failed` or `HTTP download failed` | The selected transport could not download the metadata. An HTTP status such as `404` identifies a missing or incorrect URL. |
 | `ComponentInformation.RequestMetaDataTypeStateMachine` | `failed to load metadata (primary and fallback)` | Both metadata URIs failed, so the Actuators page cannot be initialized. |
