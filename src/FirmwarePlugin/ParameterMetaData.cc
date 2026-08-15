@@ -167,10 +167,14 @@ void ParameterMetaData::setEnumFromPairs(FactMetaData *metaData, const QList<Val
     QStringList enumStrings;
     QVariantList enumValues;
 
+    // Validate against storage type only: firmware often declares sentinel enum
+    // values (e.g. 0 = Disabled) outside the operating min/max range.
+    FactMetaData typeMetaData(metaData->type());
+
     for (const auto &[code, description] : pairs) {
         QVariant enumValue;
         QString errorString;
-        if (metaData->convertAndValidateRaw(code, false, enumValue, errorString)) {
+        if (typeMetaData.convertAndValidateRaw(code, false, enumValue, errorString)) {
             enumValues << enumValue;
             enumStrings << description;
         } else {
