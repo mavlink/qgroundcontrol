@@ -30,6 +30,8 @@
 #include <QtGui/QClipboard>
 #include <QtGui/QGuiApplication>
 
+#include "qgc_version.h"
+
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsController")
@@ -288,6 +290,11 @@ QString QGroundControlQmlGlobal::qgcVersion(void)
         versionStr += QStringLiteral(" %1").arg(tr("64 bit"));
     }
     return versionStr;
+}
+
+QString QGroundControlQmlGlobal::qgcAppDate()
+{
+    return QGC_APP_DATE;
 }
 
 QString QGroundControlQmlGlobal::altitudeFrameExtraUnits(AltitudeFrame altFrame)
