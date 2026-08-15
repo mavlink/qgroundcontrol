@@ -245,13 +245,18 @@ endfunction()
 function(gstreamer_download_sdk PLATFORM VERSION FILENAME DESTINATION_DIR RESULT_VAR)
     cmake_parse_arguments(_DL "ALLOW_FAILURE" "" "" ${ARGN})
 
-    gstreamer_get_package_url("${PLATFORM}" "${VERSION}" _url)
+    # S3 mirror only (populated by mirror-gstreamer.yml) — upstream can change
+    # or vanish under a stable release. The .sha256sum sidecar is not mirrored,
+    # so the in-tree pinned checksum is the only integrity source.
     gstreamer_get_s3_mirror_url("${PLATFORM}" "${VERSION}" _s3_url)
-    gstreamer_fetch_checksum("${PLATFORM}" "${VERSION}" _hash)
+    if(NOT _s3_url)
+        message(FATAL_ERROR "gstreamer_download_sdk: No S3 mirror for platform '${PLATFORM}'")
+    endif()
+    set(_urls "${_s3_url}")
 
-    set(_urls "${_url}")
-    if(_s3_url)
-        list(APPEND _urls "${_s3_url}")
+    gstreamer_get_fallback_checksum("${PLATFORM}" "${VERSION}" _hash)
+    if(NOT _hash)
+        _gstreamer_fallback_or_warn("${PLATFORM}" "${VERSION}" _hash "No pinned checksum")
     endif()
 
     set(_args

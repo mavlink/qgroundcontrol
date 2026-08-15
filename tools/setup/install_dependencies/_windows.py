@@ -13,7 +13,6 @@ from . import _common as _c
 WINDOWS_GSTREAMER_BASE_URL = (
     "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows"
 )
-_WINDOWS_GSTREAMER_OFFICIAL_URL = "https://gstreamer.freedesktop.org/data/pkg/windows"
 WINDOWS_GSTREAMER_PREFIX = "C:\\gstreamer\\1.0\\msvc_x86_64"
 WINDOWS_VULKAN_INSTALL_DIR = "C:\\VulkanSDK\\latest"
 WINDOWS_VULKAN_URL = "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe"
@@ -124,16 +123,11 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
     print(f"\nInstalling GStreamer {version}...")
     with tempfile.TemporaryDirectory() as tmpdir:
         installer = Path(tmpdir) / installer_name
-        installer_urls = (
-            f"{WINDOWS_GSTREAMER_BASE_URL}/{installer_name}",
-            f"{_WINDOWS_GSTREAMER_OFFICIAL_URL}/{version}/msvc/{installer_name}",
-        )
         if not _c.download_file(
-            installer_urls[0],
+            f"{WINDOWS_GSTREAMER_BASE_URL}/{installer_name}",
             installer,
             dry_run,
-            warn_on_failure=True,
-        ) and not _c.download_file(installer_urls[1], installer, dry_run):
+        ):
             return False
         if not _c.run_command(
             [

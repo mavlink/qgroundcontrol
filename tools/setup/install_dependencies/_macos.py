@@ -13,11 +13,12 @@ from ._packages import get_macos_packages
 
 
 def get_gstreamer_macos_urls(version: str) -> tuple[str, str]:
-    """Get GStreamer download URLs for macOS."""
-    base_url = f"https://gstreamer.freedesktop.org/data/pkg/osx/{version}"
+    """Get GStreamer download URLs for macOS (QGC S3 mirror)."""
+    base_url = "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/macos"
     runtime = f"{base_url}/gstreamer-1.0-{version}-universal.pkg"
     devel = f"{base_url}/gstreamer-1.0-devel-{version}-universal.pkg"
     return runtime, devel
+
 
 def install_macos(dry_run: bool = False) -> bool:
     """Install macOS dependencies."""
@@ -99,5 +100,6 @@ def install_macos(dry_run: bool = False) -> bool:
 
     print("\nmacOS dependencies installed successfully!")
     return True
+
 
 __all__ = ["get_gstreamer_macos_urls", "install_macos"]
