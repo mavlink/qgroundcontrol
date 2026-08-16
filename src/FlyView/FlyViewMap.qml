@@ -577,7 +577,7 @@ FlightMap {
             coordinate:             roiLocationItem.coordinate
             onCoordinateChanged: {
                 roiLocationItem.coordinate = coordinate
-                _activeVehicle.guidedModeROI(coordinate)
+                _activeVehicle.guidedModeROI(coordinate, _activeVehicle.roiRelativeAltitudeMeters)
             }
         }
     }
@@ -658,12 +658,13 @@ FlightMap {
                     }
 
                     QGCButton {
+                        objectName:         "mapClickROI"
                         Layout.fillWidth:   true
                         text:               qsTr("ROI at location")
                         visible:            globals.guidedControllerFlyView.showROI
                         onClicked: {
                             mapClickDropPanel.close()
-                            globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionROI, mapClickCoord, 0, false)
+                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, mapClickCoord)
                         }
                     }
 

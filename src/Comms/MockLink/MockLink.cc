@@ -342,8 +342,8 @@ void MockLink::run1HzTasks()
         _sendRCChannels();
     }
 
-    if (_sendHomePositionDelayCount > 0) {
-        // We delay home position for better testing
+    if (_sendHomePositionDelayCount > 0 && !QGC::runningUnitTests()) {
+        // We delay home position to simulate a real vehicle, but not during unit tests to keep them fast
         _sendHomePositionDelayCount--;
     } else {
         _sendHomePosition();
@@ -2076,11 +2076,19 @@ void MockLink::_handleCommandInt(const mavlink_message_t &msg)
     mavlink_command_int_t request{};
     mavlink_msg_command_int_decode(&msg, &request);
 
-    // MockLink does not implement any COMMAND_INT commands yet, so it reports them as
-    // unsupported (mirroring the COMMAND_LONG default for unrecognized commands). This
-    // lets unit tests exercise "try command, fall back to legacy message" code paths
+    // Unrecognized commands are reported as unsupported (mirroring the COMMAND_LONG default).
+    // This lets unit tests exercise "try command, fall back to legacy message" code paths
     // such as Vehicle::setEstimatorOrigin.
-    const uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
+    uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
+
+    switch (request.command) {
+    case MAV_CMD_DO_SET_ROI_LOCATION:
+        // Unit test support: accept ROI commands so tests can verify Vehicle::guidedModeROI
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    default:
+        break;
+    }
 
     mavlink_message_t commandAck{};
     (void) mavlink_msg_command_ack_pack_chan(
@@ -2146,6 +2154,7 @@ void MockLink::_respondWithAutopilotVersion()
 
     const uint8_t customVersion[8]{};
     const uint64_t capabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MISSION_INT
+        | MAV_PROTOCOL_CAPABILITY_COMMAND_INT   // matches modern PX4/ArduPilot so tests exercise the preferred COMMAND_INT path
         | ((_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0)
         | (_ftpCapability ? MAV_PROTOCOL_CAPABILITY_FTP : 0);
 

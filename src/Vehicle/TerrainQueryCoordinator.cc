@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "AppMessages.h"
+#include "MAVLinkEnums.h"
 #include "QGCLoggingCategory.h"
 #include "TerrainQuery.h"
 #include "Vehicle.h"
@@ -82,84 +83,6 @@ void TerrainQueryCoordinator::_doSetHomeTerrainReceived(bool success, QList<doub
 
     _doSetHomeQuery = nullptr;
     _doSetHomeCoordinate = QGeoCoordinate(); // Invalidate for extra safety
-}
-
-void TerrainQueryCoordinator::roiWithTerrain(const QGeoCoordinate& coord)
-{
-    if (!coord.isValid()) {
-        return;
-    }
-
-    if (_roiQuery) {
-        disconnect(_roiQuery, &TerrainAtCoordinateQuery::terrainDataReceived,
-                   this, &TerrainQueryCoordinator::_roiTerrainReceived);
-        _roiQuery = nullptr;
-    }
-
-    _roiCoordinate = coord;
-
-    _roiQuery = new TerrainAtCoordinateQuery(true /* autoDelete */);
-    connect(_roiQuery, &TerrainAtCoordinateQuery::terrainDataReceived,
-            this, &TerrainQueryCoordinator::_roiTerrainReceived);
-
-    QList<QGeoCoordinate> rgCoord;
-    rgCoord.append(coord);
-    _roiQuery->requestData(rgCoord);
-}
-
-void TerrainQueryCoordinator::_roiTerrainReceived(bool success, QList<double> heights)
-{
-    _roiQuery = nullptr;
-
-    if (!_roiCoordinate.isValid()) {
-        return;
-    }
-
-    float roiAltitude;
-    if (success) {
-        roiAltitude = static_cast<float>(heights[0]);
-    } else {
-        qCDebug(TerrainQueryCoordinatorLog) << "_roiTerrainReceived: terrain query failed, falling back to home altitude";
-        roiAltitude = static_cast<float>(_vehicle->homePosition().altitude());
-    }
-
-    qCDebug(TerrainQueryCoordinatorLog) << "roiWithTerrain: lat" << _roiCoordinate.latitude()
-                                        << "lon" << _roiCoordinate.longitude()
-                                        << "terrainAltAMSL" << roiAltitude << "success" << success;
-
-    sendROICommand(_roiCoordinate, MAV_FRAME_GLOBAL, roiAltitude);
-
-    _roiCoordinate = QGeoCoordinate();
-}
-
-void TerrainQueryCoordinator::sendROICommand(const QGeoCoordinate& coord, MAV_FRAME frame, float altitude)
-{
-    if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
-        _vehicle->sendMavCommandInt(
-            _vehicle->defaultComponentId(),
-            MAV_CMD_DO_SET_ROI_LOCATION,
-            frame,
-            true,                           // show error if fails
-            static_cast<float>(qQNaN()),
-            static_cast<float>(qQNaN()),
-            static_cast<float>(qQNaN()),
-            static_cast<float>(qQNaN()),
-            coord.latitude(),
-            coord.longitude(),
-            altitude);
-    } else {
-        _vehicle->sendMavCommand(
-            _vehicle->defaultComponentId(),
-            MAV_CMD_DO_SET_ROI_LOCATION,
-            true,                           // show error if fails
-            static_cast<float>(qQNaN()),
-            static_cast<float>(qQNaN()),
-            static_cast<float>(qQNaN()),
-            static_cast<float>(qQNaN()),
-            static_cast<float>(coord.latitude()),
-            static_cast<float>(coord.longitude()),
-            altitude);
-    }
 }
 
 void TerrainQueryCoordinator::updateAltAboveTerrain()

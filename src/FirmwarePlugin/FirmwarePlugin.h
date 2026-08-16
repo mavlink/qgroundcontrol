@@ -200,6 +200,12 @@ public:
     /// Command vehicle to rotate towards specified location.
     virtual void guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord) const;
 
+    /// Command vehicle to set a Region Of Interest at the specified location.
+    ///     @param roiCenterCoord ROI location (altitude within the coordinate is ignored)
+    ///     @param relativeAltitudeMeters ROI altitude in meters above home
+    /// @return true: ROI command sent, false: unable to send
+    virtual bool guidedModeROI(Vehicle *vehicle, const QGeoCoordinate &roiCenterCoord, double relativeAltitudeMeters) const;
+
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     virtual double minimumTakeoffAltitudeMeters(Vehicle* /*vehicle*/) const { return 3.048; }
 
@@ -399,6 +405,9 @@ protected:
     /// Arms the vehicle with validation and retries
     ///     @return: true - vehicle armed, false - vehicle failed to arm
     bool _armVehicleAndValidate(Vehicle *vehicle) const;
+
+    /// Build + send MAV_CMD_DO_SET_ROI_LOCATION (COMMAND_INT when the vehicle supports it).
+    void _sendROICommand(Vehicle *vehicle, const QGeoCoordinate &coord, MAV_FRAME frame, float altitude) const;
 
     /// Sets the vehicle to the specified flight mode with validation and retries
     ///     @return: true - vehicle in specified flight mode, false - flight mode change failed
