@@ -2,6 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
+#include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -35,8 +36,8 @@ private:
     Vehicle*        _vehicle;
     QVariantList    _points;
     QGeoCoordinate  _lastPoint;
-    double          _lastAzimuth;
+    QVector3D       _lastDirection;     ///< Unit direction of the last segment in local east/north/up coordinates
 
-    static constexpr double _distanceTolerance = 2.0;
-    static constexpr double _azimuthTolerance = 1.5;
+    static constexpr double _distanceTolerance = 2.0;   ///< Meters (3D)
+    static constexpr double _directionTolerance = 1.5;  ///< Degrees
 };

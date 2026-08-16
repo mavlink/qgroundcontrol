@@ -1,5 +1,8 @@
 #include "GeoSceneTest.h"
 
+#include <QtCore/QPointF>
+#include <QtCore/QVariant>
+#include <QtCore/qnumeric.h>
 #include <QtTest/QSignalSpy>
 
 #include <cmath>
@@ -139,10 +142,69 @@ void GeoSceneTest::_screenPositionFor()
     QCOMPARE_LT(qAbs(centerPos.x() - (kViewport.width() / 2.0)), 0.5);
     QCOMPARE_LT(qAbs(centerPos.y() - (kViewport.height() / 2.0)), 0.5);
 
-    // A point above the camera is behind the view plane: invalid
+    // A point above the camera is behind the view plane: invalid. Altitude
+    // participates at the rendered height, so it only displaces in 3D
+    // (terrainScale 1); the startup value 0 flattens it to the ground plane.
     QGeoCoordinate aboveCamera = kCenter;
     aboveCamera.setAltitude(5000.0);  // camera sits at 2000 scene units top-down
+    QVERIFY(scene.screenPositionFor(aboveCamera).isValid());
+    scene.setTerrainScale(1.0);
     QVERIFY(!scene.screenPositionFor(aboveCamera).isValid());
+}
+
+void GeoSceneTest::_centerElevationInMeters()
+{
+    GeoMapCamera camera;
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 45, 2000);  // tilted so pivot elevation affects the solve
+    GeoScene scene;
+    scene.setCamera(&camera);
+    scene.setTerrainScale(1.0);
+
+    QGeoCoordinate target = kCenter.atDistanceAndAzimuth(300, 45);
+    target.setAltitude(150.0);
+    const QPointF screenPos(200, 150);
+    const double elevationMeters = 80.0;
+
+    // The scene API takes true meters and scales to rendered height
+    // internally: must match the camera-level solve fed scene units
+    const QGeoCoordinate sceneSolve = scene.centerForCoordinateAtScreenPoint(target, screenPos, elevationMeters);
+    const double renderedScale = scene.verticalScale() * scene.terrainScale();
+    const QGeoCoordinate cameraSolve = camera.centerForCoordinateAtScreenPoint(
+        target, screenPos, target.altitude() * renderedScale, elevationMeters * renderedScale);
+    QVERIFY(sceneSolve.isValid());
+    QCOMPARE_LT(sceneSolve.distanceTo(cameraSolve), 0.01);
+}
+
+void GeoSceneTest::_solveRoundTrip()
+{
+    GeoMapCamera camera;
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 30, 45, 2000);  // rotated and tilted: exercises all solve axes
+    GeoScene scene;
+    scene.setCamera(&camera);
+
+    QGeoCoordinate target = kCenter.atDistanceAndAzimuth(400, 60);
+    const QPointF screenPos(600, 200);
+
+    // centerForCoordinateAtScreenPoint must invert screenPositionFor for every
+    // altitude-handling branch: terrainScale 0 (2D, altitude flattened) vs 1
+    // (3D), and finite vs NaN altitude (treated as 0)
+    for (const qreal terrainScale : {0.0, 1.0}) {
+        scene.setTerrainScale(terrainScale);
+        for (const bool withAltitude : {true, false}) {
+            target.setAltitude(withAltitude ? 150.0 : qQNaN());
+
+            const QGeoCoordinate center = scene.centerForCoordinateAtScreenPoint(target, screenPos);
+            QVERIFY(center.isValid());
+            camera.setCenter(center);
+
+            const QVariant projected = scene.screenPositionFor(target);
+            QVERIFY(projected.isValid());
+            const QPointF pos = projected.toPointF();
+            QCOMPARE_LT(std::hypot(pos.x() - screenPos.x(), pos.y() - screenPos.y()), 0.5);
+        }
+    }
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(GeoSceneTest, TestLabel::Unit)

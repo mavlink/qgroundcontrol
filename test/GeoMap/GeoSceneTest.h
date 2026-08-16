@@ -13,4 +13,6 @@ private slots:
     void _verticalScaleTracksOrigin();
     void _scenePositionFor();
     void _screenPositionFor();
+    void _centerElevationInMeters();
+    void _solveRoundTrip();
 };

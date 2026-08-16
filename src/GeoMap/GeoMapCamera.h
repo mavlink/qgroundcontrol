@@ -12,6 +12,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QSizeF>
+#include <QtCore/qnumeric.h>
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
@@ -38,6 +39,7 @@ class GeoMapCamera : public QObject
     Q_PROPERTY(qreal heading READ heading WRITE setHeading NOTIFY headingChanged)
     Q_PROPERTY(qreal tilt READ tilt WRITE setTilt NOTIFY tiltChanged)
     Q_PROPERTY(qreal distance READ distance WRITE setDistance NOTIFY distanceChanged)
+    Q_PROPERTY(qreal centerElevation READ centerElevation WRITE setCenterElevation NOTIFY centerElevationChanged)
     Q_PROPERTY(QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
     Q_PROPERTY(qreal fieldOfView READ fieldOfView WRITE setFieldOfView NOTIFY fieldOfViewChanged)
     Q_PROPERTY(bool isTopDown READ isTopDown NOTIFY tiltChanged)
@@ -87,6 +89,15 @@ public:
     qreal distance() const { return _distance; }
 
     void setDistance(qreal distance);
+
+    /// World-z of the look-at point (scene units). The camera orbits distance
+    /// meters around the center at this height; normally driven from the
+    /// terrain height at the center so close-zoom 3D never dives under the
+    /// rendered surface. Ground-plane math (screenToGround, pan/zoom anchors)
+    /// still intersects z=0, with rays cast from the elevated camera.
+    qreal centerElevation() const { return _centerElevation; }
+
+    void setCenterElevation(qreal elevation);
 
     QSizeF viewportSize() const { return _viewportSize; }
 
@@ -158,6 +169,23 @@ public:
     /// Returns 0 when the viewport size is not set.
     Q_INVOKABLE qreal sceneUnitsPerPixel() const;
 
+    /// Camera distance that renders the scene at the scale of a slippy-map zoom
+    /// level (matches QtLocation map zoomLevel semantics when top-down). Clamped
+    /// to the distance limits; returns the default distance when the viewport is
+    /// not set.
+    Q_INVOKABLE qreal distanceForZoomLevel(qreal zoomLevel) const;
+
+    /// Center that places coordinate at screenPos with the current heading/tilt/
+    /// distance (rigid translation solve on the horizontal plane at worldZ, the
+    /// point's rendered height in world units — 0 for a ground point). Returns the
+    /// current center when screenPos misses the plane or the viewport is not set.
+    /// centerElevation overrides the pivot elevation for the solve — pass the
+    /// elevation the pivot will settle at when it follows terrain to the new
+    /// center; NaN uses the current centerElevation.
+    Q_INVOKABLE QGeoCoordinate centerForCoordinateAtScreenPoint(const QGeoCoordinate& coordinate,
+                                                                const QPointF& screenPos, double worldZ = 0.0,
+                                                                double centerElevation = qQNaN()) const;
+
     /// Derived camera position in world space (mercator meters, z up).
     /// Float precision — for rendering/debug display; internal math is double.
     QVector3D cameraPosition() const;
@@ -202,6 +230,7 @@ signals:
     void headingChanged();
     void tiltChanged();
     void distanceChanged();
+    void centerElevationChanged();
     void viewportSizeChanged();
     void fieldOfViewChanged();
     void modeChanged();
@@ -222,6 +251,7 @@ private:
     qreal _heading = 0.0;
     qreal _tilt = 0.0;
     qreal _distance = kDefaultDistance;
+    qreal _centerElevation = 0.0;
     QSizeF _viewportSize;
     qreal _fieldOfView = kDefaultFieldOfView;
 

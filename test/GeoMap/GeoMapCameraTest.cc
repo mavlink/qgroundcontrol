@@ -279,19 +279,119 @@ void GeoMapCameraTest::_sceneUnitsPerPixel()
     QCOMPARE_LT(qAbs(camera.sceneUnitsPerPixel() - expected), expected * 0.01);
 }
 
+void GeoMapCameraTest::_distanceForZoomLevel()
+{
+    GeoMapCamera camera;
+    setupCamera(camera);
+
+    // Applying the distance renders at the zoom level's slippy-map scale
+    const int zoom = 17;
+    camera.setDistance(camera.distanceForZoomLevel(zoom));
+    const double expected = TileMath::metersPerPixelAtZoom(zoom);
+    QCOMPARE_LT(qAbs(camera.sceneUnitsPerPixel() - expected), expected * 0.01);
+
+    // No viewport: sensible default
+    const GeoMapCamera bare;
+    QCOMPARE(bare.distanceForZoomLevel(zoom), GeoMapCamera::kDefaultDistance);
+
+    // Clamped at the extremes
+    QCOMPARE(camera.distanceForZoomLevel(30), GeoMapCamera::kMinDistance);
+    QCOMPARE(camera.distanceForZoomLevel(-10), GeoMapCamera::kMaxDistance);
+}
+
+void GeoMapCameraTest::_centerForCoordinateAtScreenPoint()
+{
+    GeoMapCamera camera;
+    setupCamera(camera, 45.0, 30.0);
+
+    // Applying the returned center puts the coordinate at the requested screen point
+    const QGeoCoordinate target(47.3990, 8.5470);
+    const QPointF screenPos(250, 450);
+    camera.setCenter(camera.centerForCoordinateAtScreenPoint(target, screenPos));
+    const auto projected = camera.worldToScreen(TileMath::geoToWorld(target));
+    QVERIFY(projected.has_value());
+    QCOMPARE_LT(std::hypot(projected->x() - screenPos.x(), projected->y() - screenPos.y()), 0.5);
+
+    // Elevated point under a tilted camera: solving at the point's height puts
+    // the point itself (not its ground footprint) at the requested screen point
+    const double worldZ = 150.0;
+    camera.setCenter(camera.centerForCoordinateAtScreenPoint(target, screenPos, worldZ));
+    const auto projectedElevated = camera.worldToScreen(TileMath::geoToWorld(target), worldZ);
+    QVERIFY(projectedElevated.has_value());
+    QCOMPARE_LT(std::hypot(projectedElevated->x() - screenPos.x(), projectedElevated->y() - screenPos.y()), 0.5);
+
+    // Terrain-following pivot: when the destination pivot elevation is known,
+    // solving with it (rather than the current one) puts the point at the
+    // requested screen position once the pivot settles there
+    const double destPivotElevation = 80.0;
+    const QGeoCoordinate destCenter =
+        camera.centerForCoordinateAtScreenPoint(target, screenPos, worldZ, destPivotElevation);
+    camera.setCenter(destCenter);
+    camera.setCenterElevation(destPivotElevation);
+    const auto projectedAtDest = camera.worldToScreen(TileMath::geoToWorld(target), worldZ);
+    QVERIFY(projectedAtDest.has_value());
+    QCOMPARE_LT(std::hypot(projectedAtDest->x() - screenPos.x(), projectedAtDest->y() - screenPos.y()), 0.5);
+    camera.setCenterElevation(0.0);
+
+    // Horizon miss: current center unchanged
+    GeoMapCamera obliqueCamera;
+    setupCamera(obliqueCamera, 75.0);  // top-of-screen ray points above the horizon
+    const QPointF horizonPos(kViewport.width() / 2.0, 0);
+    const QGeoCoordinate unchanged = obliqueCamera.centerForCoordinateAtScreenPoint(target, horizonPos);
+    QCOMPARE_LT(groundDistance(TileMath::geoToWorld(unchanged), TileMath::geoToWorld(obliqueCamera.center())),
+                kWorldEpsilon);
+
+    // Plane above the camera: current center unchanged
+    const QGeoCoordinate unchangedAbove =
+        camera.centerForCoordinateAtScreenPoint(target, screenPos, GeoMapCamera::kMaxDistance * 2.0);
+    QCOMPARE_LT(groundDistance(TileMath::geoToWorld(unchangedAbove), TileMath::geoToWorld(camera.center())),
+                kWorldEpsilon);
+}
+
+void GeoMapCameraTest::_centerElevation()
+{
+    GeoMapCamera camera;
+    setupCamera(camera, GeoMapCamera::kDefault3DTilt);
+
+    // The look-at point rides at the center elevation: the center displaced
+    // to that height stays at the viewport center
+    camera.setCenterElevation(700.0);
+    const auto screen = camera.worldToScreen(TileMath::geoToWorld(kCenter), 700.0);
+    QVERIFY(screen.has_value());
+    QCOMPARE_LT(std::hypot(screen->x() - (kViewport.width() / 2.0), screen->y() - (kViewport.height() / 2.0)), 0.5);
+
+    // The camera rises with the look-at point, staying above high terrain at
+    // close zoom (the reported 2D->3D disappearance)
+    const double expectedZ =
+        700.0 + (GeoMapCamera::kDefaultDistance * std::cos(qDegreesToRadians(GeoMapCamera::kDefault3DTilt)));
+    QCOMPARE_LT(qAbs(camera.cameraPosition().z() - expectedZ), 0.5);
+
+    // screenToGround and worldToScreen agree with the raised ray origin
+    const QPointF probe(250, 420);
+    const auto ground = camera.screenToGround(probe);
+    QVERIFY(ground.has_value());
+    const auto roundTrip = camera.worldToScreen(*ground);
+    QVERIFY(roundTrip.has_value());
+    QCOMPARE_LT(std::hypot(roundTrip->x() - probe.x(), roundTrip->y() - probe.y()), 0.5);
+}
+
 void GeoMapCameraTest::_panAnchorInvariant_data()
 {
     QTest::addColumn<double>("tilt");
-    QTest::newRow("top-down") << 0.0;
-    QTest::newRow("tilted 45") << 45.0;
+    QTest::addColumn<double>("centerElevation");
+    QTest::newRow("top-down") << 0.0 << 0.0;
+    QTest::newRow("tilted 45") << 45.0 << 0.0;
+    QTest::newRow("tilted 45 elevated") << 45.0 << 700.0;
 }
 
 void GeoMapCameraTest::_panAnchorInvariant()
 {
     QFETCH(double, tilt);
+    QFETCH(double, centerElevation);
 
     GeoMapCamera camera;
     setupCamera(camera, tilt);
+    camera.setCenterElevation(centerElevation);
 
     const QPointF pressPos(200, 400);
     const QPointF dragPos(450, 320);
@@ -312,10 +412,22 @@ void GeoMapCameraTest::_panAnchorInvariant()
     QCOMPARE(camera.heading(), 0.0);
 }
 
+void GeoMapCameraTest::_zoomAnchorInvariant_data()
+{
+    QTest::addColumn<double>("tilt");
+    QTest::addColumn<double>("centerElevation");
+    QTest::newRow("top-down") << 0.0 << 0.0;
+    QTest::newRow("tilted 45 elevated") << 45.0 << 700.0;
+}
+
 void GeoMapCameraTest::_zoomAnchorInvariant()
 {
+    QFETCH(double, tilt);
+    QFETCH(double, centerElevation);
+
     GeoMapCamera camera;
-    setupCamera(camera);
+    setupCamera(camera, tilt);
+    camera.setCenterElevation(centerElevation);
 
     const QPointF zoomPos(600, 150);
     const auto anchor = camera.screenToGround(zoomPos);

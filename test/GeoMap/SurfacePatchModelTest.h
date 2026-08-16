@@ -17,4 +17,5 @@ private slots:
     void _rowsAlwaysMeshedDuringLodChurn();
     void _edgeLodDeltasRoleStitchesLodRings();
     void _tileKeyAndHeightFieldExposedToDelegates();
+    void _terrainHeightAt();
 };

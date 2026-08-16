@@ -19,8 +19,12 @@ private slots:
     void _groundPointCapped();
     void _worldToScreen();
     void _sceneUnitsPerPixel();
+    void _distanceForZoomLevel();
+    void _centerForCoordinateAtScreenPoint();
+    void _centerElevation();
     void _panAnchorInvariant_data();
     void _panAnchorInvariant();
+    void _zoomAnchorInvariant_data();
     void _zoomAnchorInvariant();
     void _rotateAnchorInvariant();
     void _tiltAnchorInvariant();

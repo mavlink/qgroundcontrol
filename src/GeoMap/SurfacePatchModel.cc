@@ -293,6 +293,7 @@ void SurfacePatchModel::_rebuildSurfaceModel()
                                             << (_debugHills ? "debug hills" : (_terrain ? "terrain" : "flat"));
         _heightField = new HeightField(this);
         _heightSource->setHeightField(_heightField);
+        connect(_heightField, &HeightField::regionChanged, this, &SurfacePatchModel::terrainHeightsChanged);
         _surfaceModel = new SurfaceModel(camera, _heightSource, _heightField, this);
         connect(_surfaceModel, &SurfaceModel::patchAdded, this, &SurfacePatchModel::_patchAdded);
         connect(_surfaceModel, &SurfaceModel::patchMeshChanged, this, &SurfacePatchModel::_patchReady);
@@ -306,6 +307,17 @@ void SurfacePatchModel::_rebuildSurfaceModel()
         _surfaceModel->update();
     }
     emit statsChanged();
+    // Field replacement invalidates every previous height answer
+    emit terrainHeightsChanged();
+}
+
+double SurfacePatchModel::terrainHeightAt(const QGeoCoordinate& coordinate) const
+{
+    // Invalid coordinates carry NaN lat/lon, which the height lookup cannot digest
+    if (!_heightField || !coordinate.isValid()) {
+        return 0.0;
+    }
+    return _heightField->heightAt(TileMath::geoToWorld(coordinate));
 }
 
 int SurfacePatchModel::gridSize() const
@@ -504,7 +516,8 @@ void SurfacePatchModel::analyzeSurface() const
     // flattened, so comparing against real heights would be wrong)
     if (_scene && (camera->tilt() > 0.0)) {
         view.cameraGround = camera->cameraGroundPosition();
-        view.cameraHeight = camera->distance() * std::cos(qDegreesToRadians(camera->tilt()));
+        view.cameraHeight =
+            camera->centerElevation() + (camera->distance() * std::cos(qDegreesToRadians(camera->tilt())));
         view.heightScale = _scene->verticalScale();
     }
 
