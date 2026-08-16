@@ -101,6 +101,11 @@ public:
     /// whenever the surface model is rebuilt.
     HeightField* heightField() const { return _heightField; }
 
+    /// Best-estimate terrain height (true meters) at a coordinate: real data
+    /// where loaded, coarser estimate or 0 elsewhere (see HeightField). Emits
+    /// terrainHeightsChanged as estimates improve.
+    Q_INVOKABLE double terrainHeightAt(const QGeoCoordinate& coordinate) const;
+
     /// SurfaceModel::kMaxRangeMultiplier, exposed so the scene camera's far
     /// clip plane can cover the full retained patch range
     double maxRangeMultiplier() const;
@@ -160,6 +165,8 @@ signals:
     void statsEnabledChanged();
     void statsTextChanged();
     void capturingChanged();
+    /// terrainHeightAt answers changed somewhere: consumers re-query
+    void terrainHeightsChanged();
 
 private slots:
     void _patchAdded(const TileMath::TileKey& key);

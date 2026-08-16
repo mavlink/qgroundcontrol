@@ -58,8 +58,8 @@ Vec3 cameraOffset(qreal headingDeg, qreal tiltDeg, qreal distance)
                 distance * std::cos(tiltRad)};
 }
 
-Ray pickRay(const QPointF& centerWorld, qreal heading, qreal tilt, qreal distance, const QSizeF& viewport, qreal fov,
-            const QPointF& screenPos)
+Ray pickRay(const QPointF& centerWorld, qreal heading, qreal tilt, qreal distance, qreal centerElevation,
+            const QSizeF& viewport, qreal fov, const QPointF& screenPos)
 {
     const double aspect = viewport.width() / viewport.height();
     const double tanHalfFov = std::tan(qDegreesToRadians(fov) / 2.0);
@@ -69,7 +69,7 @@ Ray pickRay(const QPointF& centerWorld, qreal heading, qreal tilt, qreal distanc
     const Vec3 dir = rotateCameraToWorld(Vec3{ndcX * tanHalfFov * aspect, ndcY * tanHalfFov, -1.0}, heading, tilt);
 
     const Vec3 offset = cameraOffset(heading, tilt, distance);
-    return Ray{Vec3{centerWorld.x() + offset.x, centerWorld.y() + offset.y, offset.z}, dir};
+    return Ray{Vec3{centerWorld.x() + offset.x, centerWorld.y() + offset.y, centerElevation + offset.z}, dir};
 }
 
 }  // namespace
@@ -133,6 +133,18 @@ void GeoMapCamera::setDistance(qreal distance)
     emit scenePoseChanged();
 }
 
+void GeoMapCamera::setCenterElevation(qreal elevation)
+{
+    // Exact compare: values repeat from the same terrain lookup, and
+    // qFuzzyCompare misbehaves near zero
+    if (elevation == _centerElevation) {
+        return;
+    }
+    _centerElevation = elevation;
+    emit centerElevationChanged();
+    emit scenePoseChanged();
+}
+
 void GeoMapCamera::setViewportSize(const QSizeF& size)
 {
     if (size == _viewportSize) {
@@ -181,7 +193,7 @@ QVector3D GeoMapCamera::cameraPosition() const
 {
     const Vec3 offset = cameraOffset(_heading, _tilt, _distance);
     return QVector3D(static_cast<float>(_centerWorld.x() + offset.x), static_cast<float>(_centerWorld.y() + offset.y),
-                     static_cast<float>(offset.z));
+                     static_cast<float>(_centerElevation + offset.z));
 }
 
 QPointF GeoMapCamera::cameraGroundPosition() const
@@ -205,7 +217,7 @@ QVector3D GeoMapCamera::scenePosition() const
     const Vec3 offset = cameraOffset(_heading, _tilt, _distance);
     return QVector3D(static_cast<float>((_centerWorld.x() - _sceneOrigin.x()) + offset.x),
                      static_cast<float>((_centerWorld.y() - _sceneOrigin.y()) + offset.y),
-                     static_cast<float>(offset.z));
+                     static_cast<float>(_centerElevation + offset.z));
 }
 
 QQuaternion GeoMapCamera::sceneRotation() const
@@ -222,7 +234,8 @@ std::optional<QPointF> GeoMapCamera::screenToGround(const QPointF& screenPos) co
         return std::nullopt;
     }
 
-    const Ray ray = pickRay(_centerWorld, _heading, _tilt, _distance, _viewportSize, _fieldOfView, screenPos);
+    const Ray ray =
+        pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize, _fieldOfView, screenPos);
     if (ray.dir.z >= 0.0) {
         return std::nullopt;  // at or above the horizon
     }
@@ -237,7 +250,8 @@ std::optional<QPointF> GeoMapCamera::groundPointCapped(const QPointF& screenPos,
         return std::nullopt;
     }
 
-    const Ray ray = pickRay(_centerWorld, _heading, _tilt, _distance, _viewportSize, _fieldOfView, screenPos);
+    const Ray ray =
+        pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize, _fieldOfView, screenPos);
     const QPointF cameraGround(ray.origin.x, ray.origin.y);
 
     if (ray.dir.z < 0.0) {
@@ -267,7 +281,7 @@ std::optional<QPointF> GeoMapCamera::worldToScreen(const QPointF& worldGround, d
 
     const Vec3 offset = cameraOffset(_heading, _tilt, _distance);
     const Vec3 d{worldGround.x() - (_centerWorld.x() + offset.x), worldGround.y() - (_centerWorld.y() + offset.y),
-                 worldZ - offset.z};
+                 worldZ - (_centerElevation + offset.z)};
 
     // World-to-camera: inverse of the pose rotation, R^T = Rx(-tilt) * Rz(-heading)
     const double h = qDegreesToRadians(_heading);
@@ -301,6 +315,43 @@ qreal GeoMapCamera::sceneUnitsPerPixel() const
     }
     const QPointF d = *p1 - *p0;
     return std::hypot(d.x(), d.y());
+}
+
+qreal GeoMapCamera::distanceForZoomLevel(qreal zoomLevel) const
+{
+    if (_viewportSize.isEmpty()) {
+        return kDefaultDistance;
+    }
+    const double metersPerPixel = TileMath::worldSize() / (TileMath::kTilePixels * std::exp2(zoomLevel));
+    const double tanHalfFov = std::tan(qDegreesToRadians(_fieldOfView) / 2.0);
+    return std::clamp((metersPerPixel * _viewportSize.height()) / (2.0 * tanHalfFov), kMinDistance, kMaxDistance);
+}
+
+QGeoCoordinate GeoMapCamera::centerForCoordinateAtScreenPoint(const QGeoCoordinate& coordinate,
+                                                              const QPointF& screenPos, double worldZ,
+                                                              double centerElevation) const
+{
+    if (_viewportSize.isEmpty()) {
+        return center();
+    }
+
+    // Intersect the pick ray with the horizontal plane at worldZ: solving on the
+    // ground plane instead would center the coordinate's ground footprint, leaving
+    // an elevated point (e.g. a flying vehicle) high on screen under a tilted camera.
+    const double pivotElevation = std::isfinite(centerElevation) ? centerElevation : _centerElevation;
+    const Ray ray =
+        pickRay(_centerWorld, _heading, _tilt, _distance, pivotElevation, _viewportSize, _fieldOfView, screenPos);
+    if (ray.dir.z >= 0.0) {
+        return center();  // at or above the horizon
+    }
+    const double s = (worldZ - ray.origin.z) / ray.dir.z;
+    if (s <= 0.0) {
+        return center();  // plane is behind the camera
+    }
+
+    const QPointF hit(ray.origin.x + (s * ray.dir.x), ray.origin.y + (s * ray.dir.y));
+    const QPointF delta = TileMath::geoToWorld(coordinate) - hit;
+    return TileMath::worldToGeo(_centerWorld + delta);
 }
 
 void GeoMapCamera::beginPan(const QPointF& screenPos)

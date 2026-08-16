@@ -65,6 +65,7 @@ SurfaceModel::SurfaceModel(GeoMapCamera* camera, HeightSource* heightSource, Hei
     connect(_camera, &GeoMapCamera::headingChanged, this, &SurfaceModel::_scheduleUpdate);
     connect(_camera, &GeoMapCamera::tiltChanged, this, &SurfaceModel::_scheduleUpdate);
     connect(_camera, &GeoMapCamera::distanceChanged, this, &SurfaceModel::_scheduleUpdate);
+    connect(_camera, &GeoMapCamera::centerElevationChanged, this, &SurfaceModel::_scheduleUpdate);
     connect(_camera, &GeoMapCamera::viewportSizeChanged, this, &SurfaceModel::_scheduleUpdate);
     connect(_camera, &GeoMapCamera::fieldOfViewChanged, this, &SurfaceModel::_scheduleUpdate);
 }
@@ -290,7 +291,8 @@ QRectF SurfaceModel::_visibleGroundRect(double terrainZ) const
     // Terrain-aware near boundary: rays that hit the ground plane far ahead
     // cross the terrain-top plane much closer to (or behind) the camera, so
     // tall terrain there is visible even though its flat-ground point is not
-    const double eyeZ = _camera->distance() * std::cos(qDegreesToRadians(_camera->tilt()));
+    const double eyeZ =
+        _camera->centerElevation() + (_camera->distance() * std::cos(qDegreesToRadians(_camera->tilt())));
     const QPointF cameraGround = _camera->cameraGroundPosition();
     const double terrainT = ((terrainZ > 0.0) && (eyeZ > terrainZ)) ? (1.0 - (terrainZ / eyeZ)) : 0.0;
 

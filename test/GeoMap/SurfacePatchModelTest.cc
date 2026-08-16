@@ -310,4 +310,28 @@ void SurfacePatchModelTest::_tileKeyAndHeightFieldExposedToDelegates()
     QCOMPARE(model.heightField()->samplePatch(firstKey, model.gridSize()), heights);
 }
 
+void SurfacePatchModelTest::_terrainHeightAt()
+{
+    // No scene/camera: no field, well-defined zero
+    SurfacePatchModel model;
+    QCOMPARE(model.terrainHeightAt(kCenter), 0.0);
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    setupCamera(camera);
+    attach(model, scene, camera);
+    QCOMPARE(model.terrainHeightAt(kCenter), 0.0);
+
+    // Terrain data arriving changes the answer and notifies consumers
+    QSignalSpy heightsSpy(&model, &SurfacePatchModel::terrainHeightsChanged);
+    const TileMath::TileKey key = TileMath::tileForWorld(TileMath::geoToWorld(kCenter), 10);
+    ElevationTilePyramid::Grid grid;
+    grid.width = 4;
+    grid.height = 4;
+    grid.heights = QList<float>(16, 100.0f);
+    QVERIFY(model.heightField()->insertTile(key, grid));
+    QCOMPARE(model.terrainHeightAt(kCenter), 100.0);
+    QCOMPARE_GE(heightsSpy.count(), 1);
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(SurfacePatchModelTest, TestLabel::Unit)

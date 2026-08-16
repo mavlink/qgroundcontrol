@@ -13,6 +13,7 @@ import QtQuick3D.Helpers
 import QtPositioning
 
 import QGroundControl
+import QGroundControl.Controls
 import QGroundControl.GeoMap
 
 /// Experimental 2D/3D map control (preview feature): the GeoMap-engine
@@ -21,7 +22,18 @@ import QGroundControl.GeoMap
 Item {
     id: root
 
+    // Keep map item overlays (GeoMapItem) inside the viewport, matching
+    // QtLocation Map behavior
+    clip: true
+
     property alias camera: geoCamera
+
+    // Auto-centering (parity with FlightMap): one-shot GCS/vehicle centering
+    // plus vehicle following, all decided by the shared MapPositionTracker
+    property alias allowGCSLocationCenter: _positionTracker.allowGCSLocationCenter
+    property alias allowVehicleLocationCenter: _positionTracker.allowVehicleLocationCenter
+    property alias keepVehicleCentered: _positionTracker.keepVehicleCentered
+    property alias positionTracker: _positionTracker
 
     // Live SurfaceModel stats for debug overlays
     property alias patchCount: patchModel.patchCount
@@ -41,13 +53,40 @@ Item {
 
     readonly property int cameraAnimationMs: 500
 
+    readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    readonly property var _activeVehicleCoordinate: _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+    // Vehicle items render at coordinate.altitude + home terrain bias (see
+    // GeoMapVehicleItem): inset-follow must track that same rendered point or
+    // the recenter target is vertically off by the bias under a tilted camera
+    readonly property var _trackedVehicleCoordinate: QtPositioning.coordinate(_activeVehicleCoordinate.latitude,
+                                                                              _activeVehicleCoordinate.longitude,
+                                                                              _activeVehicleCoordinate.altitude + _homeTerrainBias)
+
+    // DEM height minus vehicle-reported AMSL, sampled at home (same math as
+    // GeoMapVehicleItem). terrainHeightAt is not a binding dependency, so
+    // re-sampled explicitly below as terrain tiles arrive and when home moves.
+    property real _homeTerrainBias: 0
+
+    function _updateHomeTerrainBias() {
+        if (_activeVehicle && _activeVehicle.homePosition.isValid && !isNaN(_activeVehicle.homePosition.altitude)) {
+            _homeTerrainBias = patchModel.terrainHeightAt(_activeVehicle.homePosition) - _activeVehicle.homePosition.altitude
+        } else {
+            _homeTerrainBias = 0
+        }
+    }
+
+    on_ActiveVehicleChanged: _updateHomeTerrainBias()
+
     // Render-statistics overlay (FPS, frame timing, draw calls, texture/mesh
     // memory) for perf work; owned here because it needs the internal View3D
     property bool renderStats: false
 
-    // Terrain displacement factor: 1 in 3D, 0 in 2D (map stays flat).
-    // Startup mode is 2D, so terrain starts flattened.
-    property real terrainScale: 0
+    // Terrain displacement factor (see GeoScene.terrainScale)
+    property alias terrainScale: geoScene.terrainScale
+
+    // Scene wiring for map items (GeoMapItem consumers)
+    readonly property GeoScene scene: geoScene
+    readonly property SurfacePatchModel surfaceModel: patchModel
 
     function analyzeSurface() {
         patchModel.analyzeSurface()
@@ -75,6 +114,16 @@ Item {
         tiltAnimation.complete()
         headingAnimation.complete()
         terrainAnimation.complete()
+        // A recenter jumped to its end would fight the starting gesture; drop it
+        recenterAnimation.stop()
+    }
+
+    // Keep the camera's look-at point riding the rendered surface: without
+    // this the orbit center stays at z=0 and a close-zoom 2D->3D switch over
+    // high terrain puts the camera under the mesh (blank view)
+    function _updateCenterElevation() {
+        geoCamera.centerElevation = patchModel.terrainHeightAt(geoCamera.center)
+                                    * geoScene.verticalScale * geoScene.terrainScale
     }
 
     GeoMapCamera {
@@ -95,6 +144,7 @@ Item {
         id: geoScene
         objectName: "geoMapScene"
         camera: geoCamera
+        content3D: mapContent3D
     }
 
     SurfacePatchModel {
@@ -106,6 +156,51 @@ Item {
         // Drape the map imagery the rest of QGC uses (empty disables imagery)
         mapType: QGroundControl.settingsManager.flightMapSettings.mapProvider.rawValue
                  + " " + QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
+    }
+
+    MapPositionTracker {
+        id: _positionTracker
+
+        gcsPosition: QGroundControl.qgcPositionManger.gcsPosition
+        vehicleCoordinate: root._activeVehicleCoordinate
+        centerGCSWhenVehicleValid: QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue
+        userInteracting: panHandler.active || orbitHandler.active || pinchHandler.active
+        animating: recenterAnimation.running
+
+        onCenterMap: (coordinate, firstPosition) => {
+            recenterAnimation.stop()
+            geoCamera.center = coordinate
+            if (firstPosition) {
+                geoCamera.distance = geoCamera.distanceForZoomLevel(QGroundControl.flightMapInitialZoom)
+            }
+        }
+
+        onRecenterVehicleTo: (screenPoint) => {
+            recenterAnimation.stop()
+            recenterAnimation.from = geoCamera.center
+            // The solve assumes the camera pivot elevation stays put, but the
+            // pivot rides the terrain (_updateCenterElevation): re-solve at
+            // the elevation the pivot will settle to at the destination
+            let target = geoScene.centerForCoordinateAtScreenPoint(root._trackedVehicleCoordinate, screenPoint)
+            target = geoScene.centerForCoordinateAtScreenPoint(root._trackedVehicleCoordinate, screenPoint,
+                                                               patchModel.terrainHeightAt(target))
+            recenterAnimation.to = target
+            recenterAnimation.start()
+        }
+    }
+
+    // Inset-follow evaluation: no view chrome here yet, so the unobstructed
+    // center rect is the full viewport and there are no corner rects
+    Timer {
+        interval: 500
+        running: root.visible
+        repeat: true
+        onTriggered: {
+            const screenPos = geoScene.screenPositionFor(root._trackedVehicleCoordinate)
+            // Unprojectable (behind camera) counts as off-screen: recenter
+            const vehiclePoint = (screenPos === undefined) ? Qt.point(-1, -1) : screenPos
+            _positionTracker.evaluateInsetFollow(vehiclePoint, Qt.rect(0, 0, root.width, root.height), [])
+        }
     }
 
     View3D {
@@ -157,7 +252,7 @@ Item {
         // times per frame). Never exactly 0: a singular scale breaks the
         // normal matrix.
         Node {
-            scale: Qt.vector3d(1, 1, Math.max(0.0001, root.terrainScale * geoScene.verticalScale))
+            scale: Qt.vector3d(1, 1, Math.max(0.0001, geoScene.terrainScale * geoScene.verticalScale))
 
             Repeater3D {
                 model: patchModel
@@ -215,6 +310,13 @@ Item {
                     ]
                 }
             }
+        }
+
+        // Map item 3D content (GeoMapItem delegate3D instances). Sibling of
+        // the terrain node: items pre-scale their own z, and the terrain
+        // z-scale would squash models during the 2D/3D transition.
+        Node {
+            id: mapContent3D
         }
 
         // Gestures (Viewer3D semantics): the ground point under the cursor
@@ -288,6 +390,38 @@ Item {
         }
     }
 
+    /// Ground station location (parity with the FlightMap marker)
+    GeoMapItem {
+        id: gcsIndicator
+
+        scene: geoScene
+        surfaceModel: patchModel
+        coordinate: gcsIndicator._gcsPosition
+        anchorPoint: Qt.point(gcsImage.width / 2, gcsImage.height / 2)
+        width: gcsImage.width
+        height: gcsImage.height
+        visible: gcsIndicator._gcsPosition.isValid
+
+        readonly property var _gcsPosition: QGroundControl.qgcPositionManger.gcsPosition
+        readonly property real _gcsHeading: QGroundControl.qgcPositionManger.gcsHeading
+
+        Image {
+            id: gcsImage
+            source: isNaN(gcsIndicator._gcsHeading) ? "/res/QGCLogoFull.svg" : "/res/QGCLogoArrow.svg"
+            mipmap: true
+            antialiasing: true
+            fillMode: Image.PreserveAspectFit
+            height: ScreenTools.defaultFontPixelHeight * (isNaN(gcsIndicator._gcsHeading) ? 1.75 : 2.5)
+            sourceSize.height: height
+            transform: Rotation {
+                origin.x: gcsImage.width / 2
+                origin.y: gcsImage.height / 2
+                // Camera heading rotates map north on screen; the arrow follows
+                angle: isNaN(gcsIndicator._gcsHeading) ? 0 : gcsIndicator._gcsHeading + geoCamera.heading
+            }
+        }
+    }
+
     DebugView {
         objectName: "geoMapRenderStats"
         anchors.left: parent.left
@@ -315,9 +449,17 @@ Item {
 
     NumberAnimation {
         id: terrainAnimation
-        target: root
+        target: geoScene
         property: "terrainScale"
         duration: root.cameraAnimationMs
+        easing.type: Easing.InOutQuad
+    }
+
+    CoordinateAnimation {
+        id: recenterAnimation
+        target: geoCamera
+        property: "center"
+        duration: 1000
         easing.type: Easing.InOutQuad
     }
 
@@ -334,6 +476,35 @@ Item {
             terrainAnimation.stop()
             terrainAnimation.to = to3D ? 1 : 0
             terrainAnimation.start()
+        }
+        function onCenterChanged() {
+            root._updateCenterElevation()
+        }
+    }
+
+    Connections {
+        target: patchModel
+        function onTerrainHeightsChanged() {
+            root._updateCenterElevation()
+            root._updateHomeTerrainBias()
+        }
+    }
+
+    Connections {
+        target: geoScene
+        function onTerrainScaleChanged() {
+            root._updateCenterElevation()
+        }
+        // verticalScale depends on the scene origin
+        function onSceneOriginChanged() {
+            root._updateCenterElevation()
+        }
+    }
+
+    Connections {
+        target: root._activeVehicle
+        function onHomePositionChanged() {
+            root._updateHomeTerrainBias()
         }
     }
 }
