@@ -89,6 +89,7 @@ Item {
         spacing:    ScreenTools.defaultFontPixelWidth
 
         QGCDelayButton {
+            objectName:         "guidedActionConfirmButton"
             text:               control.title
             enabled:            true
 

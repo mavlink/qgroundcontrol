@@ -1966,32 +1966,32 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
     }
 }
 
-void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
+bool Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord, double relativeAltitudeMeters)
 {
     if (!centerCoord.isValid()) {
-        return;
+        return false;
     }
     if (!_vehicleSupports->roiMode()) {
         QGC::showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
-        return;
+        return false;
     }
 
-    if (px4Firmware()) {
-        // PX4 ignores the coordinate frame in COMMAND_INT and treats the altitude as AMSL,
-        // so a terrain query is required before we can send the ROI command.
-        _terrainQueryCoordinator->roiWithTerrain(centerCoord);
-    } else {
-        // ArduPilot handles MAV_FRAME_GLOBAL_RELATIVE_ALT correctly, so altitude 0 relative to
-        // home is a reasonable default for a map click with no altitude info.
-        // Sanity check Ardupilot. Max altitude processed is 83000
-        if ((centerCoord.altitude() >= 83000) || (centerCoord.altitude() <= -83000)) {
-            return;
-        }
-        _terrainQueryCoordinator->sendROICommand(centerCoord, MAV_FRAME_GLOBAL_RELATIVE_ALT, static_cast<float>(centerCoord.altitude()));
+    if (!qIsFinite(relativeAltitudeMeters)) {
+        relativeAltitudeMeters = 0;
+    }
+
+    if (!_firmwarePlugin->guidedModeROI(this, centerCoord, relativeAltitudeMeters)) {
+        return false;
+    }
+
+    if (_roiRelativeAltitudeMeters != relativeAltitudeMeters) {
+        _roiRelativeAltitudeMeters = relativeAltitudeMeters;
+        emit roiRelativeAltitudeMetersChanged();
     }
 
     // This is picked by qml to display coordinate over map
     emit roiCoordChanged(centerCoord);
+    return true;
 }
 
 void Vehicle::stopGuidedModeROI()

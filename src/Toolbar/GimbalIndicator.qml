@@ -200,7 +200,7 @@ Item {
                     Layout.fillWidth:   true
                     text:               qsTr("Point Home")
                     onClicked: {
-                        activeVehicle.guidedModeROI(activeVehicle.homePosition)
+                        activeVehicle.guidedModeROI(activeVehicle.homePosition, 0)
                         mainWindow.closeIndicatorDrawer()
                     }
                 }

@@ -553,6 +553,20 @@ void PX4FirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoor
     );
 }
 
+bool PX4FirmwarePlugin::guidedModeROI(Vehicle* vehicle, const QGeoCoordinate& roiCenterCoord, double relativeAltitudeMeters) const
+{
+    // PX4 ignores the frame on MAV_CMD_DO_SET_ROI_LOCATION and treats the altitude as AMSL
+    // (PX4-Autopilot#28257), so convert above-home to AMSL before sending.
+    const QGeoCoordinate homePosition = vehicle->homePosition();
+    if (!homePosition.isValid() || qIsNaN(homePosition.altitude())) {
+        QGC::showAppMessage(tr("Unable to set ROI, home position altitude unknown."));
+        return false;
+    }
+
+    _sendROICommand(vehicle, roiCenterCoord, MAV_FRAME_GLOBAL, static_cast<float>(homePosition.altitude() + relativeAltitudeMeters));
+    return true;
+}
+
 void PX4FirmwarePlugin::startTakeoff(Vehicle* vehicle) const
 {
     if (_setFlightModeAndValidate(vehicle, takeOffFlightMode())) {
