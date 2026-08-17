@@ -47,6 +47,7 @@ CPMAddPackage(
         "EXPAT_BUILD_TOOLS OFF"
         "EXPAT_BUILD_DOCS OFF"
         "EXPAT_SHARED_LIBS OFF"
+        "EXPAT_ENABLE_INSTALL OFF"
 )
 
 # EXPAT_ADDED: CPM built the static lib (target expat). Otherwise FindEXPAT resolved

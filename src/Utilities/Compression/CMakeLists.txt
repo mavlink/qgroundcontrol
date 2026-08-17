@@ -137,6 +137,7 @@ CPMAddPackage(
     GITHUB_REPOSITORY facebook/zstd
     GIT_TAG v1.5.7
     SOURCE_SUBDIR build/cmake
+    EXCLUDE_FROM_ALL YES
     OPTIONS
         "ZSTD_BUILD_PROGRAMS OFF"
         "ZSTD_BUILD_TESTS OFF"

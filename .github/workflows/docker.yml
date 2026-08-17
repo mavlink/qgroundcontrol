@@ -161,6 +161,14 @@ jobs:
         env:
           MATRIX_PACKAGE_PATTERN: ${{ matrix.package_pattern }}
 
+      # .deb only: dpkg-deb isn't available for the RPM/Arch variants, and their
+      # CPM-vendored dev-file leakage is already prevented at the CMake level.
+      - name: Verify package contains no development files
+        if: matrix.package_pattern == '*.deb' && steps.package.outputs.found == 'true'
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_package_contents.py"
+          --package-path "${{ steps.package.outputs.path }}"
+
       - name: Upload native package
         if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
         uses: actions/upload-artifact@v7

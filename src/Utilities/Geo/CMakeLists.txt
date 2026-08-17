@@ -19,7 +19,7 @@ CPMAddPackage(
         "INCDIR OFF"
         "BINDIR OFF"
         "SBINDIR OFF"
-        "LIBDIR ${CMAKE_INSTALL_LIBDIR}"
+        "LIBDIR OFF"
         "DLLDIR ${CMAKE_INSTALL_BINDIR}"
         "MANDIR OFF"
         "CMAKEDIR OFF"

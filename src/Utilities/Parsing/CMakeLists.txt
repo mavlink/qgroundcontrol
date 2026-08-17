@@ -122,10 +122,10 @@ CPMAddPackage(
     # Pinned to 1.1.0: 1.1.1 calls std::from_chars(double) unguarded, which AppleClang's
     # libc++ (macos-15/ios CI, pre-LLVM 20) lacks — valijson#239, fixed in 1.1.2.
     GIT_TAG v1.1.0
+    EXCLUDE_FROM_ALL YES
     OPTIONS
         "valijson_BUILD_TESTS OFF"
         "valijson_BUILD_EXAMPLES OFF"
-        "valijson_INSTALL OFF"
     # QtJsonAdapter isInteger()/getInteger() use 32-bit toInt(), so integral values
     # > INT_MAX (e.g. PX4 uint32 fileCrc) fail "type": "integer" checks or truncate.
     PATCHES valijson-qtjson-int64.patch
