@@ -188,6 +188,20 @@ def _group_auto_vis(grp) -> str:
     return " || ".join(f"{ref}.userVisible" for ref in fact_refs)
 
 
+def _group_visibility_parts(grp) -> list[str]:
+    vis_parts: list[str] = []
+    if grp.showWhen:
+        vis_parts.append(f"({grp.showWhen})")
+    auto_vis = _group_auto_vis(grp)
+    if auto_vis:
+        vis_parts.append(f"({auto_vis})")
+    return vis_parts
+
+
+def _qml_translate(context: str, text: str) -> str:
+    return f"qsTranslate({json.dumps(context)}, {json.dumps(text)})"
+
+
 def generate_page_qml(
     page: PageDef, settings_dir: Path, json_context: str = "", page_name: str = ""
 ) -> str:
@@ -203,28 +217,11 @@ def generate_page_qml(
         for name, expr in page.bindings.items()
     ]
 
-    section_cases: list[dict] = []
-    for grp_idx, grp in enumerate(page.groups):
-        vis_parts: list[str] = []
-        if grp.showWhen:
-            vis_parts.append(f"({grp.showWhen})")
-        auto_vis = _group_auto_vis(grp)
-        if auto_vis:
-            vis_parts.append(f"({auto_vis})")
-        if vis_parts:
-            section_cases.append({"idx": grp_idx, "expr": " && ".join(vis_parts)})
-
     group_blocks: list[str] = []
     seen_object_names: dict[str, str] = {}  # objectName -> heading that produced it
     for grp_idx, grp in enumerate(page.groups):
         section_vis = f"(sectionFilter === -1 || sectionFilter === {grp_idx})"
-        vis_parts = [section_vis]
-        if grp.showWhen:
-            vis_parts.append(f"({grp.showWhen})")
-        auto_vis = _group_auto_vis(grp)
-        if auto_vis:
-            vis_parts.append(f"({auto_vis})")
-        visible_expr = " && ".join(vis_parts)
+        visible_expr = " && ".join([section_vis, *_group_visibility_parts(grp)])
 
         if grp.component:
             group_blocks.append(_env.get_template("group_component.qml.j2").render(
@@ -276,7 +273,6 @@ def generate_page_qml(
         object_name=page_object_name,
         has_string_fields=_needs_string_field_width(page, settings_dir),
         bindings=bindings,
-        section_cases=section_cases,
         groups=group_blocks,
     ) + "\n"
 
@@ -296,6 +292,7 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
 
     pages_dir = pages_json_path.parent
     entries: list[dict] = []
+    imports: list[str] = []
 
     for entry in require_list(data.get("pages", []), "'pages'", pages_json_path):
         reject_unknown_keys(entry, _ALLOWED_PAGE_ENTRY_KEYS, "page entry", pages_json_path)
@@ -310,32 +307,49 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
             pages_json_path,
         )
 
-        sections: list[str] = []
-        search_terms: list[dict] = []
-        translatable_terms: list[dict] = []
+        sections: list[dict] = []
+        section_bindings: list[dict] = []
+        section_state_name = ""
         page_def_name = entry.get("pageDefinition")
         if page_def_name:
             page_def_path = pages_dir / page_def_name
             if page_def_path.exists():
                 page_def = load_page_def(page_def_path)
+                if page_def.bindings or any(group.showWhen for group in page_def.groups):
+                    imports.extend(
+                        page_import for page_import in page_def.imports if page_import not in imports
+                    )
+                section_bindings = [
+                    {
+                        "type": _binding_qml_type(expr),
+                        "name": name,
+                        "expr": expr,
+                    }
+                    for name, expr in page_def.bindings.items()
+                ]
+                if section_bindings:
+                    section_state_name = f"_page{len(entries)}SectionState"
                 for grp_idx, grp in enumerate(page_def.groups):
                     section_name = grp.display_name
-                    sections.append(section_name)
+                    vis_parts = _group_visibility_parts(grp)
+                    visible = " && ".join(vis_parts) if vis_parts else "true"
 
                     terms_parts = [name.lower(), section_name.lower()]
                     terms_parts.extend(kw.lower() for kw in grp.keywords)
                     terms_parts.extend(c.label.lower() for c in grp.controls if c.label)
-                    search_terms.append({
-                        "section": grp_idx,
-                        "terms": " ".join(dict.fromkeys(terms_parts)),
-                    })
-
                     tr_parts: list[str] = [section_name, *grp.keywords]
                     tr_parts.extend(c.label for c in grp.controls if c.label)
-                    translatable_terms.append({
-                        "section": grp_idx,
-                        "context": page_def_name,
-                        "terms": list(dict.fromkeys(tr_parts)),
+                    search_terms = [json.dumps(" ".join(dict.fromkeys(terms_parts)))]
+                    search_terms.extend(
+                        f"{_qml_translate(page_def_name, term)}.toLowerCase()"
+                        for term in dict.fromkeys(tr_parts)
+                    )
+
+                    sections.append({
+                        "index": grp_idx,
+                        "name": _qml_translate(page_def_name, section_name),
+                        "search_terms": f'[{", ".join(search_terms)}]',
+                        "visible": visible,
                     })
 
         entries.append({
@@ -343,10 +357,13 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
             "name": name,
             "url": url,
             "icon": require_qml_safe_string(entry["icon"], "page icon", pages_json_path),
-            "sections_json": json.dumps(sections).replace("'", "\\'"),
-            "search_json": json.dumps(search_terms).replace("'", "\\'"),
-            "translatable_json": json.dumps(translatable_terms).replace("'", "\\'"),
+            "sections": sections,
+            "section_bindings": section_bindings,
+            "section_state_name": section_state_name,
             "visible": entry.get("visible", ""),
         })
 
-    return _env.get_template("pages_model.qml.j2").render(entries=entries) + "\n"
+    return _env.get_template("pages_model.qml.j2").render(
+        entries=entries,
+        imports=imports,
+    ) + "\n"
