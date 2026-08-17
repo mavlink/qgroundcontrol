@@ -167,7 +167,9 @@ jobs:
         if: matrix.package_pattern == '*.deb' && steps.package.outputs.found == 'true'
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_package_contents.py"
-          --package-path "${{ steps.package.outputs.path }}"
+          --package-path "${PACKAGE_PATH}"
+        env:
+          PACKAGE_PATH: ${{ steps.package.outputs.path }}
 
       - name: Upload native package
         if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'

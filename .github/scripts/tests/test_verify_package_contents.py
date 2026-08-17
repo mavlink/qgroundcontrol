@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from _helpers import completed
 from verify_package_contents import find_violations, list_deb_paths, main
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 _CLEAN_LISTING = """\
 drwxr-xr-x root/root         0 2026-01-01 00:00 ./
@@ -32,14 +29,14 @@ lrwxrwxrwx root/root         0 2026-01-01 00:00 ./usr/lib/libexpat.so -> libexpa
 
 def test_list_deb_paths_strips_leading_dot_slash(monkeypatch) -> None:
     monkeypatch.setattr(subprocess, "run", lambda *a, **kw: completed(_CLEAN_LISTING))
-    paths = list_deb_paths(__file__)  # path itself unused by the stub
+    paths = list_deb_paths(Path(__file__))  # path itself unused by the stub
     assert "usr/bin/QGroundControl" in paths
     assert all(not p.startswith("./") for p in paths)
 
 
 def test_list_deb_paths_resolves_symlink_target(monkeypatch) -> None:
     monkeypatch.setattr(subprocess, "run", lambda *a, **kw: completed(_DIRTY_LISTING))
-    paths = list_deb_paths(__file__)
+    paths = list_deb_paths(Path(__file__))
     assert "usr/lib/libexpat.so" in paths
     assert "usr/lib/libexpat.so -> libexpat.so.1" not in paths
 
