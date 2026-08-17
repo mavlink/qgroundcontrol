@@ -1,9 +1,26 @@
 import QtQml.Models
+import QtQml
 
 import QGroundControl
 import QGroundControl.Controls
+{% for imp in imports %}
+import {{ imp }}
+{% endfor %}
 
 ListModel {
+{% for entry in entries if not entry.divider and entry.section_bindings %}
+    property QtObject {{ entry.section_state_name }}: QtObject {
+{% for binding in entry.section_bindings %}
+        property {{ binding.type }} {{ binding.name }}: {{ binding.expr }}
+{% endfor %}
+        property var _sectionVisibility: [
+{% for section in entry.sections %}
+            {{ section.visible }}{{ "," if not loop.last else "" }}
+{% endfor %}
+        ]
+    }
+
+{% endfor %}
 {% for entry in entries %}
 
 {% if entry.divider %}
@@ -16,9 +33,22 @@ ListModel {
         nameKey: "{{ entry.name }}"
         url: "{{ entry.url }}"
         iconUrl: "{{ entry.icon }}"
-        sections: '{{ entry.sections_json }}'
-        searchTerms: '{{ entry.search_json }}'
-        translatableTerms: '{{ entry.translatable_json }}'
+        sections: function() {
+            return [
+{% for section in entry.sections %}
+                {
+                    index: {{ section.index }},
+                    name: {{ section.name }},
+                    searchTerms: {{ section.search_terms }},
+{% if entry.section_state_name %}
+                    visible: {{ entry.section_state_name }}._sectionVisibility[{{ loop.index0 }}]
+{% else %}
+                    visible: {{ section.visible }}
+{% endif %}
+                }{{ "," if not loop.last else "" }}
+{% endfor %}
+            ]
+        }
 {% if entry.visible %}
         pageVisible: function() { return {{ entry.visible }} }
 {% else %}

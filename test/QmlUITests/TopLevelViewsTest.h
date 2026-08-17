@@ -16,4 +16,5 @@ public:
 
 private slots:
     void _testNavigateViews();
+    void _testSettingsSectionVisibility();
 };
