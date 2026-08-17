@@ -1,6 +1,6 @@
 option(QGC_AUTO_PYTHON_VENV "Auto-create <repo>/.venv with generator deps if missing" ON)
 
-if(WIN32)
+if(CMAKE_HOST_WIN32)
     set(_qgc_venv_python "${CMAKE_SOURCE_DIR}/.venv/Scripts/python.exe")
 else()
     set(_qgc_venv_python "${CMAKE_SOURCE_DIR}/.venv/bin/python")
