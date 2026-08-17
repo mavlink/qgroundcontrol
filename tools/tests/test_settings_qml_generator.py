@@ -996,9 +996,24 @@ class TestGeneratePagesModelQml:
         # Page definition
         page_def = {
             "version": 1,
+            "imports": ["Test.Settings"],
+            "bindings": {
+                "pageVisible": "advancedMode && !unusedBinding",
+                "advancedMode": "QGroundControl.corePlugin.showAdvancedUI",
+                "unusedBinding": "QGroundControl.settingsManager.appSettings.y.userVisible",
+            },
             "groups": [
-                {"heading": "Section A", "controls": [{"setting": "appSettings.x"}]},
+                {
+                    "heading": "Section A",
+                    "showWhen": "pageVisible",
+                    "controls": [{"setting": "appSettings.x"}],
+                },
                 {"heading": "Section B", "controls": [{"setting": "appSettings.y"}]},
+                {
+                    "component": "TestComponent",
+                    "sectionName": "Section C",
+                    "showWhen": "advancedMode",
+                },
             ],
         }
         (pages_dir / "Test.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
@@ -1051,12 +1066,32 @@ class TestGeneratePagesModelQml:
 
     def test_sections_extracted(self, pages_setup: Path):
         qml = generate_pages_model_qml(pages_setup)
-        assert "Section A" in qml
-        assert "Section B" in qml
+        assert 'name: qsTranslate("Test.SettingsUI.json", "Section A")' in qml
+        assert 'name: qsTranslate("Test.SettingsUI.json", "Section B")' in qml
+
+    def test_section_visibility_generated(self, pages_setup: Path):
+        qml = generate_pages_model_qml(pages_setup)
+        assert "sections: function()" in qml
+        assert "property QtObject _page0SectionState: QtObject" in qml
+        assert "property var advancedMode: QGroundControl.corePlugin.showAdvancedUI" in qml
+        assert "property bool pageVisible: advancedMode && !unusedBinding" in qml
+        assert "property var unusedBinding: QGroundControl.settingsManager.appSettings.y.userVisible" in qml
+        assert "visible: _page0SectionState._sectionVisibility[0]" in qml
+        assert (
+            "(pageVisible) && "
+            "(QGroundControl.settingsManager.appSettings.x.userVisible)" in qml
+        )
+        assert "(QGroundControl.settingsManager.appSettings.y.userVisible)" in qml
+        assert "visible: _page0SectionState._sectionVisibility[2]" in qml
 
     def test_search_terms_present(self, pages_setup: Path):
         qml = generate_pages_model_qml(pages_setup)
-        assert "searchTerms" in qml
+        assert 'searchTerms: ["test page section a"' in qml
+        assert 'qsTranslate("Test.SettingsUI.json", "Section A")' in qml
+
+    def test_page_imports_propagated(self, pages_setup: Path):
+        qml = generate_pages_model_qml(pages_setup)
+        assert "import Test.Settings" in qml
 
     def test_page_visible_default(self, pages_setup: Path):
         qml = generate_pages_model_qml(pages_setup)
@@ -1242,37 +1277,6 @@ class TestQmlUnsafeStringRejection:
         }
         page = load_page_def(_make_page_json(tmp_path, data))
         assert page.groups[0].heading == "Fly View (What's Shown)"
-
-    def test_apostrophe_heading_escaped_in_pages_model(self, tmp_path: Path):
-        # sections is emitted inside a single-quoted QML literal, so apostrophes
-        # in headings must be escaped like the other JSON fields
-        page_def = {
-            "version": 1,
-            "groups": [
-                {
-                    "heading": "Fly View (What's Shown)",
-                    "controls": [{"setting": "appSettings.x"}],
-                }
-            ],
-        }
-        (tmp_path / "Test.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
-        pages_json = {
-            "version": 1,
-            "pages": [
-                {
-                    "name": "Test",
-                    "qml": "T.qml",
-                    "icon": "qrc:/i.svg",
-                    "pageDefinition": "Test.SettingsUI.json",
-                }
-            ],
-        }
-        p = tmp_path / "SettingsPages.json"
-        p.write_text(json.dumps(pages_json), encoding="utf-8")
-        qml = generate_pages_model_qml(p)
-        assert "What\\'s Shown" in qml
-        assert "What's Shown" not in qml
-
 
 class TestRealPageDefinitions:
     """Test against real QGC page definition files if available."""

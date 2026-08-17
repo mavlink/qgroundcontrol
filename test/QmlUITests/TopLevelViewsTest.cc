@@ -1,13 +1,35 @@
 #include "TopLevelViewsTest.h"
 
+#include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
+
+#include "Fact.h"
+#include "SettingsManager.h"
+#include "VideoSettings.h"
 
 UT_REGISTER_TEST(TopLevelViewsTest, TestLabel::Integration)
 
 // This test assumes Advanced UI mode is enabled (the default). All views including
 // Analyze are expected to be visible.
+
+static QQuickItem* findVisibleSectionButton(QQuickItem* root, int sectionIndex)
+{
+    if (!root || !root->isVisible()) {
+        return nullptr;
+    }
+    if (root->property("sectionIndex").isValid() && root->property("sectionIndex").toInt() == sectionIndex) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (auto* child : children) {
+        if (auto* found = findVisibleSectionButton(child, sectionIndex)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
 
 void TopLevelViewsTest::_testNavigateViews()
 {
@@ -79,4 +101,43 @@ void TopLevelViewsTest::_testNavigateViews()
     }
 
     stopUI();
+}
+
+void TopLevelViewsTest::_testSettingsSectionVisibility()
+{
+    startUI();
+    if (QTest::currentTestFailed()) return;
+
+    constexpr int videoSettingsSectionIndex = 2;
+
+    Fact* const videoSource = SettingsManager::instance()->videoSettings()->videoSource();
+    const QVariant savedVideoSource = videoSource->rawValue();
+    const auto restoreVideoSource = qScopeGuard([videoSource, savedVideoSource] {
+        videoSource->setRawValue(savedVideoSource);
+    });
+    videoSource->setRawValue(QString::fromLatin1(VideoSettings::videoSourceRTSP));
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+
+    QQuickItem* const videoButton = findVisibleItem(_rootItem, QStringLiteral("settingsButton_Video"));
+    QVERIFY(videoButton);
+    QVERIFY(scrollIntoView(videoButton, QStringLiteral("settings_buttonList")));
+    const QPointF videoCenter = videoButton->mapToScene(QPointF(videoButton->width() / 2, videoButton->height() / 2));
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, videoCenter.toPoint());
+
+    QQuickItem* const videoPage = findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video"));
+    QVERIFY(videoPage);
+    QQuickItem* videoSection = nullptr;
+    QTRY_VERIFY((videoSection = findVisibleSectionButton(videoButton->parentItem(), videoSettingsSectionIndex)));
+    const QPointF sectionCenter = videoSection->mapToScene(QPointF(videoSection->width() / 2, videoSection->height() / 2));
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, sectionCenter.toPoint());
+
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsGroup_Settings")));
+
+    videoSource->setRawValue(QString::fromLatin1(VideoSettings::videoDisabled));
+
+    QTRY_VERIFY(!findVisibleSectionButton(videoButton->parentItem(), videoSettingsSectionIndex));
+    QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsGroup_Settings"), 0));
+    QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoSource")));
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video")));
 }
