@@ -13,6 +13,10 @@
 #include <cmath>
 #include <utility>
 
+#ifdef Q_OS_ANDROID
+#include <android/log.h>
+#endif
+
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
 #include "HeightField.h"
@@ -387,6 +391,8 @@ void SurfacePatchModel::_statsTick()
         _surfaceModel ? _surfaceModel->takeUpdateStats() : SurfaceModel::UpdateStats{};
     const double avgMs = stats.updates ? (stats.totalUs / 1000.0) / stats.updates : 0.0;
     const double maxMs = stats.maxUs / 1000.0;
+    const double addAvgMs = stats.updates ? (stats.addTotalUs / 1000.0) / stats.updates : 0.0;
+    const double addMaxMs = stats.addMaxUs / 1000.0;
     _statsText = QStringLiteral("upd/s %1  avg %2 ms  max %3 ms  |  patch +%4 -%5 /s  comp/s %6")
                      .arg(stats.updates)
                      .arg(avgMs, 0, 'f', 2)
@@ -398,11 +404,13 @@ void SurfacePatchModel::_statsTick()
         _captureWorstMaxMs = std::max(_captureWorstMaxMs, maxMs);
         _captureWorstAvgMs = std::max(_captureWorstAvgMs, avgMs);
         GeoMapCamera* const camera = _camera();
-        _captureRows.append(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12")
+        _captureRows.append(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14")
                                 .arg(_captureClock.elapsed() / 1000.0, 0, 'f', 1)
                                 .arg(stats.updates)
                                 .arg(avgMs, 0, 'f', 3)
                                 .arg(maxMs, 0, 'f', 3)
+                                .arg(addAvgMs, 0, 'f', 3)
+                                .arg(addMaxMs, 0, 'f', 3)
                                 .arg(_statAdds)
                                 .arg(_statRemoves)
                                 .arg(_statComposites)
@@ -430,8 +438,8 @@ void SurfacePatchModel::startCapture()
     _captureWorstMaxMs = 0.0;
     _captureWorstAvgMs = 0.0;
     _captureRows.append(
-        QStringLiteral("time_s,updates,avg_ms,max_ms,patch_adds,patch_removes,composites,patches,pending,max_zoom,cam_"
-                       "dist_m,cam_tilt_deg"));
+        QStringLiteral("time_s,updates,avg_ms,max_ms,add_avg_ms,add_max_ms,patch_adds,patch_removes,composites,"
+                       "patches,pending,max_zoom,cam_dist_m,cam_tilt_deg"));
     _captureClock.start();
     // Run the sampler directly rather than via statsEnabled: that property is
     // QML-bound to the overlay toggle, and writing it here would fight the
@@ -471,6 +479,16 @@ QString SurfacePatchModel::stopCapture()
         emit statsTextChanged();
         return QString();
     }
+
+#ifdef Q_OS_ANDROID
+    // Non-debuggable release builds hide the app cache from adb; dump the CSV
+    // to logcat so it can be pulled with: adb logcat -d -s GeoMapCapture
+    for (const QByteArray& line : data.split('\n')) {
+        if (!line.isEmpty()) {
+            __android_log_print(ANDROID_LOG_WARN, "GeoMapCapture", "%s", line.constData());
+        }
+    }
+#endif
 
     // No log output on success: the overlay shows the path, and UI tests run
     // with strict log checking. The worst-case summary makes the overlay a

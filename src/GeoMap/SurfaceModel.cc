@@ -118,6 +118,8 @@ void SurfaceModel::update()
     QVarLengthArray<QRectF, 8> churnRects;  // added/removed extents: neighbors there re-stitch
     int adds = 0;
     _addsDeferred = false;
+    QElapsedTimer addTimer;
+    addTimer.start();
     for (const TileMath::TileKey& key : desired) {
         if (_patches.contains(key)) {
             continue;
@@ -135,6 +137,7 @@ void SurfaceModel::update()
         emit patchAdded(key);
         adds++;
     }
+    const qint64 addUs = addTimer.nsecsElapsed() / 1000;
 
     // Rects of desired patches still not resident after the capped adds: a
     // no-longer-desired patch overlapping one may not be removed yet, or the
@@ -219,10 +222,12 @@ void SurfaceModel::update()
     qCDebug(GeoMapSurfaceModelVerboseLog)
         << "update pass: desired" << desired.count() << "resident" << _patches.count() << "adds" << adds << "removals"
         << _removalsThisPass << "deferred adds" << _addsDeferred << "deferred removals" << _removalsDeferred
-        << "elapsedUs" << elapsedUs;
+        << "elapsedUs" << elapsedUs << "addUs" << addUs;
     _updateStats.updates++;
     _updateStats.totalUs += elapsedUs;
     _updateStats.maxUs = std::max(_updateStats.maxUs, elapsedUs);
+    _updateStats.addTotalUs += addUs;
+    _updateStats.addMaxUs = std::max(_updateStats.addMaxUs, addUs);
 }
 
 SurfaceModel::UpdateStats SurfaceModel::takeUpdateStats()

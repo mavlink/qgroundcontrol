@@ -105,6 +105,8 @@ public:
         int updates = 0;
         qint64 totalUs = 0;
         qint64 maxUs = 0;
+        qint64 addTotalUs = 0;  ///< time inside the patch-add loop (delegate creation share)
+        qint64 addMaxUs = 0;
     };
 
     /// Returns the counters accumulated since the previous call and resets them
