@@ -1,8 +1,12 @@
 #include "MAVLinkBandwidthControllerTest.h"
 
+#include <QtCore/QFile>
+#include <QtCore/QPointer>
 #include <QtTest/QSignalSpy>
 
 #include "MAVLinkBandwidthController.h"
+#include "MockLinkFTP.h"
+#include "MultiVehicleManager.h"
 
 void MAVLinkBandwidthControllerTest::_firmwareModeAvailabilityTest()
 {
@@ -15,6 +19,33 @@ void MAVLinkBandwidthControllerTest::_firmwareModeAvailabilityTest()
     _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
     QVERIFY_TRUE_WAIT(controller.streamingSupported(), TestTimeout::longMs());
     QCOMPARE(controller.testMode(), MAVLinkBandwidthController::TestMode::Streaming);
+}
+
+void MAVLinkBandwidthControllerTest::_scriptInstallAndRebootTest()
+{
+    _disconnectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MAVLinkBandwidthController controller;
+    QSignalSpy deploymentSpy(&controller, &MAVLinkBandwidthController::scriptDeploymentFinished);
+    QVERIFY(deploymentSpy.isValid());
+
+    QPointer<MockLink> testMockLink = mockLink();
+    controller.installScriptAndReboot();
+    QVERIFY_SIGNAL_WAIT(deploymentSpy, TestTimeout::longMs());
+    QCOMPARE(deploymentSpy.count(), 1);
+    QVERIFY2(deploymentSpy.first().at(0).toBool(), qPrintable(deploymentSpy.first().at(1).toString()));
+    QCOMPARE(controller.scriptDeploymentProgress(), 1.F);
+
+    QFile embeddedScript(QStringLiteral(":/mavlink-bandwidth/mavlink_bandwidth.lua"));
+    QVERIFY(embeddedScript.open(QIODevice::ReadOnly));
+    const QByteArray expectedContents = embeddedScript.readAll();
+    QVERIFY(!expectedContents.isEmpty());
+    QVERIFY(testMockLink);
+    QCOMPARE(testMockLink->mockLinkFTP()->uploadedFileContents(QStringLiteral("/APM/scripts/mavlink_bandwidth.lua")),
+             expectedContents);
+
+    QVERIFY_TRUE_WAIT(MultiVehicleManager::instance()->activeVehicle() == nullptr, TestTimeout::longMs());
 }
 
 void MAVLinkBandwidthControllerTest::_mavftpRoundTripTest()

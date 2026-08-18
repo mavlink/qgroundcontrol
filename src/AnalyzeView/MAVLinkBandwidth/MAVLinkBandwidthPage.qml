@@ -93,17 +93,39 @@ AnalyzePage {
 
                 RowLayout {
                     Layout.fillWidth: true
-                    visible: root._streamingMode
+                    visible: controller.streamingSupported
                     spacing: ScreenTools.defaultFontPixelWidth
 
                     QGCButton {
                         text: qsTr("Probe Endpoint")
                         visible: root._streamingMode
-                        enabled: controller.streamingAvailable && !controller.running
+                        enabled: controller.streamingAvailable && !controller.running && !controller.scriptDeploying
                         onClicked: controller.probeEndpoint()
                     }
 
+                    QGCButton {
+                        objectName: "mavlinkBandwidth_installScriptButton"
+                        text: controller.scriptDeploying ? qsTr("Uploading Lua Script...")
+                                                         : qsTr("Install Lua Script and Reboot")
+                        enabled: controller.streamingAvailable && !controller.running && !controller.scriptDeploying
+                        onClicked: QGroundControl.showMessageDialog(
+                            root,
+                            qsTr("Install Lua Script and Reboot"),
+                            qsTr("Upload the embedded MAVLink bandwidth script to the connected ArduPilot vehicle and reboot it? ArduPilot scripting must already be enabled."),
+                            Dialog.Ok | Dialog.Cancel,
+                            function() { controller.installScriptAndReboot() }
+                        )
+                    }
+
                     Item { Layout.fillWidth: true }
+                }
+
+                ProgressBar {
+                    Layout.fillWidth: true
+                    visible: controller.scriptDeploying
+                    from: 0
+                    to: 1
+                    value: controller.scriptDeploymentProgress
                 }
 
                 GridLayout {
@@ -117,7 +139,7 @@ AnalyzePage {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 26
                         model: root._testModes
                         currentIndex: controller.streamingSupported ? (root._streamingMode ? 0 : 1) : 0
-                        enabled: !controller.running
+                        enabled: !controller.running && !controller.scriptDeploying
                         onActivated: (index) => {
                             controller.testMode = controller.streamingSupported && index === 0
                                 ? MAVLinkBandwidthController.Streaming
@@ -134,7 +156,7 @@ AnalyzePage {
                         visible: root._streamingMode
                         model: [qsTr("QGC to vehicle"), qsTr("Vehicle to QGC")]
                         currentIndex: controller.direction === MAVLinkBandwidthController.QgcToVehicle ? 0 : 1
-                        enabled: !controller.running
+                        enabled: !controller.running && !controller.scriptDeploying
                         onActivated: (index) => {
                             controller.direction = index === 0 ? MAVLinkBandwidthController.QgcToVehicle
                                                                : MAVLinkBandwidthController.VehicleToQgc
@@ -149,7 +171,7 @@ AnalyzePage {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 16
                         visible: root._streamingMode
                         text: controller.targetRateKbps.toString()
-                        enabled: !controller.running
+                        enabled: !controller.running && !controller.scriptDeploying
                         inputMethodHints: Qt.ImhDigitsOnly
                         validator: IntValidator { bottom: 1; top: 2000 }
                         onEditingFinished: {
@@ -175,7 +197,7 @@ AnalyzePage {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 16
                         visible: root._streamingMode
                         text: controller.durationSeconds.toString()
-                        enabled: !controller.running
+                        enabled: !controller.running && !controller.scriptDeploying
                         inputMethodHints: Qt.ImhDigitsOnly
                         validator: IntValidator { bottom: 1; top: 60 }
                         onEditingFinished: {
@@ -201,7 +223,7 @@ AnalyzePage {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 16
                         visible: !root._streamingMode
                         text: controller.ftpFileSizeKiB.toString()
-                        enabled: !controller.running
+                        enabled: !controller.running && !controller.scriptDeploying
                         inputMethodHints: Qt.ImhDigitsOnly
                         validator: IntValidator { bottom: 64; top: 10240 }
                         onEditingFinished: {

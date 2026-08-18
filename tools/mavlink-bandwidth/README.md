@@ -27,9 +27,9 @@ named with a random token to avoid replacing existing data.
 ## ArduPilot streaming mode
 
 1. Enable ArduPilot scripting for a supported board.
-2. Upload `APM/scripts/mavlink_bandwidth.lua` to the vehicle's `APM/scripts` directory.
-3. Restart scripting or reboot the vehicle while disarmed.
-4. Open **Analyze > MAVLink Bandwidth** and select **Probe Endpoint**.
+2. In **Analyze > MAVLink Bandwidth**, select **Install Lua Script and Reboot** to upload QGC's embedded copy to
+   `APM/scripts/mavlink_bandwidth.lua` and reboot the vehicle while disarmed.
+3. After the vehicle reconnects, select **Probe Endpoint**.
 
 Streaming tests are capped at 2 Mbit/s of test payload for at most 60 seconds.
 

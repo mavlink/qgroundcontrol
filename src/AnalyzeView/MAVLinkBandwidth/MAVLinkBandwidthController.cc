@@ -1,10 +1,13 @@
 #include "MAVLinkBandwidthController.h"
 
 #include <QtCore/QDateTime>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRandomGenerator>
 
 #include <algorithm>
 
+#include "FTPManager.h"
+#include "MAVLinkFTP.h"
 #include "MAVLinkFtpBandwidthTest.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
@@ -36,6 +39,9 @@ MAVLinkBandwidthController::MAVLinkBandwidthController(QObject* parent) : QObjec
 
 MAVLinkBandwidthController::~MAVLinkBandwidthController()
 {
+    if (_scriptDeploying) {
+        _cancelScriptDeployment(tr("Lua script deployment stopped."));
+    }
     if (_ftpTest) {
         (void) disconnect(_ftpTest, nullptr, this, nullptr);
         _ftpTest->cancel();
@@ -66,7 +72,7 @@ bool MAVLinkBandwidthController::streamingSupported() const
 
 bool MAVLinkBandwidthController::canStart() const
 {
-    if (!vehicleAvailable() || _running) {
+    if (!vehicleAvailable() || _running || _scriptDeploying) {
         return false;
     }
 
@@ -80,7 +86,7 @@ QString MAVLinkBandwidthController::linkName() const
 
 void MAVLinkBandwidthController::setTestMode(TestMode testMode)
 {
-    if (_running || (_testMode == testMode)) {
+    if (_running || _scriptDeploying || (_testMode == testMode)) {
         return;
     }
 
@@ -93,7 +99,7 @@ void MAVLinkBandwidthController::setTestMode(TestMode testMode)
 
 void MAVLinkBandwidthController::setDirection(Direction direction)
 {
-    if (_running || (_direction == direction)) {
+    if (_running || _scriptDeploying || (_direction == direction)) {
         return;
     }
 
@@ -104,7 +110,7 @@ void MAVLinkBandwidthController::setDirection(Direction direction)
 void MAVLinkBandwidthController::setTargetRateKbps(int targetRateKbps)
 {
     const int boundedRate = std::clamp(targetRateKbps, 1, 2000);
-    if (_running || (_targetRateKbps == boundedRate)) {
+    if (_running || _scriptDeploying || (_targetRateKbps == boundedRate)) {
         return;
     }
 
@@ -115,7 +121,7 @@ void MAVLinkBandwidthController::setTargetRateKbps(int targetRateKbps)
 void MAVLinkBandwidthController::setDurationSeconds(int durationSeconds)
 {
     const int boundedDuration = std::clamp(durationSeconds, 1, 60);
-    if (_running || (_durationSeconds == boundedDuration)) {
+    if (_running || _scriptDeploying || (_durationSeconds == boundedDuration)) {
         return;
     }
 
@@ -126,7 +132,7 @@ void MAVLinkBandwidthController::setDurationSeconds(int durationSeconds)
 void MAVLinkBandwidthController::setFtpFileSizeKiB(int ftpFileSizeKiB)
 {
     const int boundedSize = std::clamp(ftpFileSizeKiB, 64, 10 * 1024);
-    if (_running || (_ftpFileSizeKiB == boundedSize)) {
+    if (_running || _scriptDeploying || (_ftpFileSizeKiB == boundedSize)) {
         return;
     }
 
@@ -136,7 +142,7 @@ void MAVLinkBandwidthController::setFtpFileSizeKiB(int ftpFileSizeKiB)
 
 void MAVLinkBandwidthController::probeEndpoint()
 {
-    if (!streamingAvailable() || (_testMode != TestMode::Streaming) || _running) {
+    if (!streamingAvailable() || (_testMode != TestMode::Streaming) || _running || _scriptDeploying) {
         _updateAvailabilityStatus();
         return;
     }
@@ -157,6 +163,44 @@ void MAVLinkBandwidthController::probeEndpoint()
 
     _setStatusText(tr("Waiting for the ArduPilot Lua endpoint..."));
     _probeTimer.start(kProbeTimeoutMs);
+}
+
+void MAVLinkBandwidthController::installScriptAndReboot()
+{
+    if (!streamingAvailable() || _running || _scriptDeploying) {
+        _updateAvailabilityStatus();
+        return;
+    }
+
+    const QString embeddedScriptPath = QString::fromLatin1(kEmbeddedScriptPath);
+    const QFileInfo scriptInfo(embeddedScriptPath);
+    if (!scriptInfo.exists() || !scriptInfo.isFile()) {
+        _setStatusText(tr("The embedded MAVLink bandwidth Lua script is unavailable."));
+        return;
+    }
+
+    _scriptFtpManager = _vehicle->ftpManager();
+    if (!_scriptFtpManager) {
+        _setStatusText(tr("The vehicle does not provide MAVFTP."));
+        return;
+    }
+
+    _scriptDeleteCompleteConnection = connect(_scriptFtpManager, &FTPManager::deleteComplete, this,
+                                              &MAVLinkBandwidthController::_scriptDeleteComplete);
+    _scriptUploadCompleteConnection = connect(_scriptFtpManager, &FTPManager::uploadComplete, this,
+                                              &MAVLinkBandwidthController::_scriptUploadComplete);
+    _scriptUploadProgressConnection = connect(_scriptFtpManager, &FTPManager::commandProgress, this,
+                                              &MAVLinkBandwidthController::_scriptUploadProgress);
+
+    _scriptDeploymentProgress = 0.F;
+    emit scriptDeploymentProgressChanged();
+    _scriptDeploymentPhase = ScriptDeploymentPhase::Deleting;
+    _setScriptDeploying(true);
+    _setStatusText(tr("Preparing the MAVLink bandwidth Lua script upload..."));
+
+    if (!_scriptFtpManager->deleteFile(MAV_COMP_ID_AUTOPILOT1, QString::fromLatin1(kRemoteScriptPath))) {
+        _finishScriptDeployment(false, tr("Unable to prepare the Lua script destination."));
+    }
 }
 
 void MAVLinkBandwidthController::startTest()
@@ -252,6 +296,9 @@ void MAVLinkBandwidthController::stopTest()
 
 void MAVLinkBandwidthController::_setActiveVehicle(Vehicle* vehicle)
 {
+    if (_scriptDeploying) {
+        _cancelScriptDeployment(tr("Lua script deployment stopped because the active vehicle changed."));
+    }
     if (_running) {
         _abortActiveTest(tr("Test aborted because the active vehicle changed."));
     }
@@ -280,6 +327,9 @@ void MAVLinkBandwidthController::_setActiveVehicle(Vehicle* vehicle)
 
 void MAVLinkBandwidthController::_updatePrimaryLink()
 {
+    if (_scriptDeploying) {
+        _cancelScriptDeployment(tr("Lua script deployment stopped because the primary link changed."));
+    }
     if (_running) {
         _abortActiveTest(tr("Test aborted because the primary link changed."));
     }
@@ -528,6 +578,11 @@ void MAVLinkBandwidthController::_armedChanged(bool armed)
     emit availabilityChanged();
     emit canStartChanged();
 
+    if (armed && _scriptDeploying) {
+        _cancelScriptDeployment(tr("Lua script deployment stopped because the vehicle armed."));
+        return;
+    }
+
     if (armed && _running) {
         if (_ftpTest) {
             _ftpTest->cancel(tr("Test aborted because the vehicle armed."));
@@ -599,6 +654,114 @@ void MAVLinkBandwidthController::_ftpFinished(bool success, const QString& statu
         _ftpTest = nullptr;
     }
     _finishTest(statusText, success);
+}
+
+void MAVLinkBandwidthController::_scriptDeleteComplete(const QString& remotePath, const QString& errorMessage)
+{
+    if (!_scriptDeploying || (_scriptDeploymentPhase != ScriptDeploymentPhase::Deleting)) {
+        return;
+    }
+
+    const bool remoteFileAlreadyAbsent =
+        errorMessage.endsWith(MavlinkFTP::errorCodeToString(MavlinkFTP::kErrFailFileNotFound));
+    if ((!errorMessage.isEmpty() && !remoteFileAlreadyAbsent) ||
+        (!remotePath.isEmpty() && (remotePath != QLatin1String(kRemoteScriptPath)))) {
+        _finishScriptDeployment(false, tr("Unable to prepare the Lua script destination: %1").arg(errorMessage));
+        return;
+    }
+
+    _scriptDeploymentPhase = ScriptDeploymentPhase::Uploading;
+    _setStatusText(tr("Uploading the MAVLink bandwidth Lua script..."));
+    if (!_scriptFtpManager || !_scriptFtpManager->upload(MAV_COMP_ID_AUTOPILOT1, QString::fromLatin1(kRemoteScriptPath),
+                                                         QString::fromLatin1(kEmbeddedScriptPath))) {
+        _finishScriptDeployment(false, tr("Unable to start the Lua script upload."));
+    }
+}
+
+void MAVLinkBandwidthController::_scriptUploadComplete(const QString& remotePath, const QString& errorMessage)
+{
+    if (!_scriptDeploying || (_scriptDeploymentPhase != ScriptDeploymentPhase::Uploading)) {
+        return;
+    }
+
+    if (!errorMessage.isEmpty()) {
+        _finishScriptDeployment(false, tr("Lua script upload failed: %1").arg(errorMessage));
+        return;
+    }
+    if (remotePath != QLatin1String(kRemoteScriptPath)) {
+        _finishScriptDeployment(false, tr("Lua script upload returned an unexpected destination."));
+        return;
+    }
+    if (!_vehicle || !_vehicle->apmFirmware() || _vehicle->armed()) {
+        _finishScriptDeployment(false, tr("Lua script uploaded, but the vehicle can no longer be rebooted safely."));
+        return;
+    }
+
+    QPointer<Vehicle> vehicle = _vehicle;
+    _scriptDeploymentProgress = 1.F;
+    emit scriptDeploymentProgressChanged();
+    _finishScriptDeployment(true, tr("Lua script uploaded. Reboot requested."));
+    if (vehicle) {
+        vehicle->rebootVehicle();
+    }
+}
+
+void MAVLinkBandwidthController::_scriptUploadProgress(float progress)
+{
+    if (!_scriptDeploying || (_scriptDeploymentPhase != ScriptDeploymentPhase::Uploading)) {
+        return;
+    }
+
+    const float boundedProgress = std::clamp(progress, 0.F, 1.F);
+    if (qFuzzyCompare(_scriptDeploymentProgress, boundedProgress)) {
+        return;
+    }
+    _scriptDeploymentProgress = boundedProgress;
+    emit scriptDeploymentProgressChanged();
+}
+
+void MAVLinkBandwidthController::_cancelScriptDeployment(const QString& statusText)
+{
+    if (!_scriptDeploying) {
+        return;
+    }
+
+    QPointer<FTPManager> ftpManager = _scriptFtpManager;
+    const ScriptDeploymentPhase deploymentPhase = _scriptDeploymentPhase;
+    _finishScriptDeployment(false, statusText);
+    if (ftpManager) {
+        if (deploymentPhase == ScriptDeploymentPhase::Deleting) {
+            ftpManager->cancelDelete();
+        } else if (deploymentPhase == ScriptDeploymentPhase::Uploading) {
+            ftpManager->cancelUpload();
+        }
+    }
+}
+
+void MAVLinkBandwidthController::_finishScriptDeployment(bool success, const QString& statusText)
+{
+    (void) disconnect(_scriptDeleteCompleteConnection);
+    (void) disconnect(_scriptUploadCompleteConnection);
+    (void) disconnect(_scriptUploadProgressConnection);
+    _scriptDeleteCompleteConnection = {};
+    _scriptUploadCompleteConnection = {};
+    _scriptUploadProgressConnection = {};
+    _scriptFtpManager = nullptr;
+    _scriptDeploymentPhase = ScriptDeploymentPhase::Idle;
+    _setScriptDeploying(false);
+    _setStatusText(statusText);
+    emit scriptDeploymentFinished(success, statusText);
+}
+
+void MAVLinkBandwidthController::_setScriptDeploying(bool deploying)
+{
+    if (_scriptDeploying == deploying) {
+        return;
+    }
+
+    _scriptDeploying = deploying;
+    emit scriptDeploymentChanged();
+    emit canStartChanged();
 }
 
 void MAVLinkBandwidthController::_abortActiveTest(const QString& statusText)

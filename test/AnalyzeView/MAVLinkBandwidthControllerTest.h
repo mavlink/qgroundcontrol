@@ -8,6 +8,7 @@ class MAVLinkBandwidthControllerTest : public VehicleTest
 
 private slots:
     void _firmwareModeAvailabilityTest();
+    void _scriptInstallAndRebootTest();
     void _mavftpRoundTripTest();
     void _mavftpCancelRestartTest();
 };
