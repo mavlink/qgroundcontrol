@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         MAVLinkChartControllerTest.cc
         MAVLinkChartControllerTest.h
+        MAVLinkBandwidthControllerTest.cc
+        MAVLinkBandwidthControllerTest.h
         MAVLinkBandwidthProtocolTest.cc
         MAVLinkBandwidthProtocolTest.h
         MAVLinkConsoleControllerTest.cc
@@ -34,6 +36,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(MAVLinkChartControllerTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkBandwidthControllerTest LABELS Integration AnalyzeView Vehicle)
 add_qgc_test(MAVLinkBandwidthProtocolTest LABELS Unit AnalyzeView)
 add_qgc_test(MAVLinkConsoleControllerTest LABELS Unit AnalyzeView)
 add_qgc_test(MAVLinkInspectorControllerTest LABELS Unit AnalyzeView)

@@ -13,6 +13,7 @@
 #include "MAVLinkMessageType.h"
 
 class Vehicle;
+class MAVLinkFtpBandwidthTest;
 
 class MAVLinkBandwidthController : public QObject
 {
@@ -25,9 +26,12 @@ class MAVLinkBandwidthController : public QObject
     Q_PROPERTY(bool canStart READ canStart NOTIFY canStartChanged)
     Q_PROPERTY(QString linkName READ linkName NOTIFY linkNameChanged)
     Q_PROPERTY(QString statusText READ statusText NOTIFY statusTextChanged)
+    Q_PROPERTY(TestMode testMode READ testMode WRITE setTestMode NOTIFY configurationChanged)
     Q_PROPERTY(Direction direction READ direction WRITE setDirection NOTIFY configurationChanged)
     Q_PROPERTY(int targetRateKbps READ targetRateKbps WRITE setTargetRateKbps NOTIFY configurationChanged)
     Q_PROPERTY(int durationSeconds READ durationSeconds WRITE setDurationSeconds NOTIFY configurationChanged)
+    Q_PROPERTY(int ftpFileSizeKiB READ ftpFileSizeKiB WRITE setFtpFileSizeKiB NOTIFY configurationChanged)
+    Q_PROPERTY(bool streamingAvailable READ streamingAvailable NOTIFY availabilityChanged)
     Q_PROPERTY(double progress READ progress NOTIFY statisticsChanged)
     Q_PROPERTY(double transmitRateKbps READ transmitRateKbps NOTIFY statisticsChanged)
     Q_PROPERTY(double receiveRateKbps READ receiveRateKbps NOTIFY statisticsChanged)
@@ -42,6 +46,13 @@ class MAVLinkBandwidthController : public QObject
     Q_PROPERTY(quint64 sendFailures READ sendFailures NOTIFY statisticsChanged)
 
 public:
+    enum class TestMode
+    {
+        Streaming,
+        MavFtp,
+    };
+    Q_ENUM(TestMode)
+
     enum class Direction
     {
         QgcToVehicle = 1,
@@ -58,17 +69,23 @@ public:
 
     bool running() const { return _running; }
 
-    bool canStart() const { return vehicleAvailable() && _endpointAvailable && !_running; }
+    bool canStart() const;
 
     QString linkName() const;
 
     QString statusText() const { return _statusText; }
+
+    TestMode testMode() const { return _testMode; }
 
     Direction direction() const { return _direction; }
 
     int targetRateKbps() const { return _targetRateKbps; }
 
     int durationSeconds() const { return _durationSeconds; }
+
+    int ftpFileSizeKiB() const { return _ftpFileSizeKiB; }
+
+    bool streamingAvailable() const;
 
     double progress() const { return _progress; }
 
@@ -94,9 +111,11 @@ public:
 
     quint64 sendFailures() const { return _sendFailures; }
 
+    void setTestMode(TestMode testMode);
     void setDirection(Direction direction);
     void setTargetRateKbps(int targetRateKbps);
     void setDurationSeconds(int durationSeconds);
+    void setFtpFileSizeKiB(int ftpFileSizeKiB);
 
     Q_INVOKABLE void probeEndpoint();
     Q_INVOKABLE void startTest();
@@ -123,8 +142,17 @@ private slots:
     void _bytesReceived(LinkInterface* link, const QByteArray& data);
     void _bytesSent(LinkInterface* link, const QByteArray& data);
     void _armedChanged(bool armed);
+    void _ftpPhaseChanged(const QString& phaseText);
+    void _ftpPreparationProgress(float progress);
+    void _ftpMeasurementStarted();
+    void _ftpMeasurementProgress(float progress);
+    void _ftpMeasurementComplete(qint64 elapsedMs, quint64 payloadBytes);
+    void _ftpFinished(bool success, const QString& statusText);
 
 private:
+    void _startStreamingTest();
+    void _startFtpTest();
+    void _abortActiveTest(const QString& statusText);
     void _resetStatistics();
     void _finishTest(const QString& statusText, bool completed);
     void _setEndpointAvailable(bool available);
@@ -143,10 +171,13 @@ private:
     QTimer _testTimer;
     QTimer _probeTimer;
     QElapsedTimer _elapsedTimer;
+    MAVLinkFtpBandwidthTest* _ftpTest = nullptr;
+    TestMode _testMode = TestMode::Streaming;
     Direction _direction = Direction::QgcToVehicle;
     QString _statusText;
     int _targetRateKbps = 100;
     int _durationSeconds = 5;
+    int _ftpFileSizeKiB = 1024;
     uint32_t _sessionId = 0;
     uint32_t _probeSessionId = 0;
     uint32_t _nextTransmitSequence = 0;
@@ -154,6 +185,8 @@ private:
     bool _haveReceiveSequence = false;
     bool _endpointAvailable = false;
     bool _running = false;
+    bool _ftpMeasuring = false;
+    qint64 _ftpMeasurementElapsedMs = 0;
     double _progress = 0.;
     double _transmitRateKbps = 0.;
     double _receiveRateKbps = 0.;

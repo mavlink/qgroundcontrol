@@ -5,6 +5,7 @@
 
 #include <algorithm>
 
+#include "MAVLinkFtpBandwidthTest.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
@@ -35,7 +36,10 @@ MAVLinkBandwidthController::MAVLinkBandwidthController(QObject* parent) : QObjec
 
 MAVLinkBandwidthController::~MAVLinkBandwidthController()
 {
-    if (_running) {
+    if (_ftpTest) {
+        (void) disconnect(_ftpTest, nullptr, this, nullptr);
+        _ftpTest->cancel();
+    } else if (_running) {
         MAVLinkBandwidth::Packet packet;
         packet.opCode = MAVLinkBandwidth::OpCode::Stop;
         packet.direction = static_cast<MAVLinkBandwidth::Direction>(_direction);
@@ -46,12 +50,40 @@ MAVLinkBandwidthController::~MAVLinkBandwidthController()
 
 bool MAVLinkBandwidthController::vehicleAvailable() const
 {
-    return _vehicle && _vehicle->apmFirmware() && !_vehicle->armed() && _link && _link->isConnected();
+    return _vehicle && (_vehicle->apmFirmware() || _vehicle->px4Firmware()) && !_vehicle->armed() && _link &&
+           _link->isConnected();
+}
+
+bool MAVLinkBandwidthController::streamingAvailable() const
+{
+    return vehicleAvailable() && _vehicle->apmFirmware();
+}
+
+bool MAVLinkBandwidthController::canStart() const
+{
+    if (!vehicleAvailable() || _running) {
+        return false;
+    }
+
+    return (_testMode == TestMode::MavFtp) || (streamingAvailable() && _endpointAvailable);
 }
 
 QString MAVLinkBandwidthController::linkName() const
 {
     return _link ? _link->linkConfiguration()->name() : QString();
+}
+
+void MAVLinkBandwidthController::setTestMode(TestMode testMode)
+{
+    if (_running || (_testMode == testMode)) {
+        return;
+    }
+
+    _testMode = testMode;
+    _resetStatistics();
+    emit configurationChanged();
+    emit canStartChanged();
+    _updateAvailabilityStatus();
 }
 
 void MAVLinkBandwidthController::setDirection(Direction direction)
@@ -86,9 +118,20 @@ void MAVLinkBandwidthController::setDurationSeconds(int durationSeconds)
     emit configurationChanged();
 }
 
+void MAVLinkBandwidthController::setFtpFileSizeKiB(int ftpFileSizeKiB)
+{
+    const int boundedSize = std::clamp(ftpFileSizeKiB, 64, 10 * 1024);
+    if (_running || (_ftpFileSizeKiB == boundedSize)) {
+        return;
+    }
+
+    _ftpFileSizeKiB = boundedSize;
+    emit configurationChanged();
+}
+
 void MAVLinkBandwidthController::probeEndpoint()
 {
-    if (!vehicleAvailable() || _running) {
+    if (!streamingAvailable() || (_testMode != TestMode::Streaming) || _running) {
         _updateAvailabilityStatus();
         return;
     }
@@ -118,6 +161,15 @@ void MAVLinkBandwidthController::startTest()
         return;
     }
 
+    if (_testMode == TestMode::MavFtp) {
+        _startFtpTest();
+    } else {
+        _startStreamingTest();
+    }
+}
+
+void MAVLinkBandwidthController::_startStreamingTest()
+{
     _resetStatistics();
     _sessionId = _newSessionId();
     _nextTransmitSequence = 0;
@@ -146,9 +198,47 @@ void MAVLinkBandwidthController::startTest()
     }
 }
 
+void MAVLinkBandwidthController::_startFtpTest()
+{
+    _resetStatistics();
+    _ftpMeasurementElapsedMs = 0;
+    _ftpMeasuring = false;
+
+    if (_ftpTest) {
+        _ftpTest->deleteLater();
+    }
+    _ftpTest = new MAVLinkFtpBandwidthTest(_vehicle, this);
+    (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::phaseChanged, this,
+                   &MAVLinkBandwidthController::_ftpPhaseChanged);
+    (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::preparationProgress, this,
+                   &MAVLinkBandwidthController::_ftpPreparationProgress);
+    (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::measurementStarted, this,
+                   &MAVLinkBandwidthController::_ftpMeasurementStarted);
+    (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::measurementProgress, this,
+                   &MAVLinkBandwidthController::_ftpMeasurementProgress);
+    (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::measurementComplete, this,
+                   &MAVLinkBandwidthController::_ftpMeasurementComplete);
+    (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::finished, this, &MAVLinkBandwidthController::_ftpFinished);
+
+    const auto direction = _direction == Direction::QgcToVehicle ? MAVLinkFtpBandwidthTest::Direction::QgcToVehicle
+                                                                 : MAVLinkFtpBandwidthTest::Direction::VehicleToQgc;
+    _setRunning(true);
+    _testTimer.start(10 * 60 * 1000);
+    if (!_ftpTest->start(direction, _ftpFileSizeKiB)) {
+        _ftpTest->deleteLater();
+        _ftpTest = nullptr;
+        _finishTest(tr("Unable to start the MAVFTP test."), false);
+    }
+}
+
 void MAVLinkBandwidthController::stopTest()
 {
     if (!_running) {
+        return;
+    }
+
+    if (_ftpTest) {
+        _ftpTest->cancel();
         return;
     }
 
@@ -163,7 +253,7 @@ void MAVLinkBandwidthController::stopTest()
 void MAVLinkBandwidthController::_setActiveVehicle(Vehicle* vehicle)
 {
     if (_running) {
-        _finishTest(tr("Test aborted because the active vehicle changed."), false);
+        _abortActiveTest(tr("Test aborted because the active vehicle changed."));
     }
 
     for (const QMetaObject::Connection& connection : _vehicleConnections) {
@@ -173,6 +263,11 @@ void MAVLinkBandwidthController::_setActiveVehicle(Vehicle* vehicle)
     _vehicle = vehicle;
 
     if (_vehicle) {
+        const TestMode preferredMode = _vehicle->px4Firmware() ? TestMode::MavFtp : TestMode::Streaming;
+        if (_testMode != preferredMode) {
+            _testMode = preferredMode;
+            emit configurationChanged();
+        }
         _vehicleConnections << connect(_vehicle, &Vehicle::armedChanged, this,
                                        &MAVLinkBandwidthController::_armedChanged);
         _vehicleConnections << connect(_vehicle->vehicleLinkManager(), &VehicleLinkManager::primaryLinkChanged, this,
@@ -185,7 +280,7 @@ void MAVLinkBandwidthController::_setActiveVehicle(Vehicle* vehicle)
 void MAVLinkBandwidthController::_updatePrimaryLink()
 {
     if (_running) {
-        _finishTest(tr("Test aborted because the primary link changed."), false);
+        _abortActiveTest(tr("Test aborted because the primary link changed."));
     }
 
     for (const QMetaObject::Connection& connection : _linkConnections) {
@@ -217,8 +312,8 @@ void MAVLinkBandwidthController::_updatePrimaryLink()
 
 void MAVLinkBandwidthController::_receiveMessage(LinkInterface* link, const mavlink_message_t& message)
 {
-    if (!_vehicle || !_link || (link != _link.get()) || (message.sysid != static_cast<uint8_t>(_vehicle->id())) ||
-        (message.msgid != MAVLINK_MSG_ID_TUNNEL)) {
+    if ((_testMode != TestMode::Streaming) || !_vehicle || !_link || (link != _link.get()) ||
+        (message.sysid != static_cast<uint8_t>(_vehicle->id())) || (message.msgid != MAVLINK_MSG_ID_TUNNEL)) {
         return;
     }
 
@@ -340,23 +435,31 @@ void MAVLinkBandwidthController::_sendTick()
 
 void MAVLinkBandwidthController::_statisticsTick()
 {
-    if (!_elapsedTimer.isValid()) {
+    if (!_elapsedTimer.isValid() && (_ftpMeasurementElapsedMs == 0)) {
         return;
     }
 
-    const qint64 elapsedMs = std::max<qint64>(_elapsedTimer.elapsed(), 1);
+    const qint64 elapsedMs =
+        _ftpMeasurementElapsedMs > 0 ? _ftpMeasurementElapsedMs : std::max<qint64>(_elapsedTimer.elapsed(), 1);
     const double elapsedSeconds = static_cast<double>(elapsedMs) / 1000.;
     _transmitRateKbps = (static_cast<double>(_transmittedPayloadBytes) * 8.) / elapsedSeconds / 1000.;
     _receiveRateKbps = (static_cast<double>(_receivedPayloadBytes) * 8.) / elapsedSeconds / 1000.;
     _wireTransmitRateKbps = (static_cast<double>(_wireTransmitBytes) * 8.) / elapsedSeconds / 1000.;
     _wireReceiveRateKbps = (static_cast<double>(_wireReceiveBytes) * 8.) / elapsedSeconds / 1000.;
-    _progress = std::clamp(elapsedSeconds / static_cast<double>(_durationSeconds), 0., 1.);
+    if (_testMode == TestMode::Streaming) {
+        _progress = std::clamp(elapsedSeconds / static_cast<double>(_durationSeconds), 0., 1.);
+    }
     emit statisticsChanged();
 }
 
 void MAVLinkBandwidthController::_testTimeout()
 {
     if (!_running) {
+        return;
+    }
+
+    if (_ftpTest) {
+        _ftpTest->cancel(tr("MAVFTP test timed out."));
         return;
     }
 
@@ -376,14 +479,14 @@ void MAVLinkBandwidthController::_probeTimeout()
 
 void MAVLinkBandwidthController::_bytesReceived(LinkInterface* link, const QByteArray& data)
 {
-    if (_running && _link && (link == _link.get())) {
+    if (_running && ((_testMode == TestMode::Streaming) || _ftpMeasuring) && _link && (link == _link.get())) {
         _wireReceiveBytes += static_cast<quint64>(data.size());
     }
 }
 
 void MAVLinkBandwidthController::_bytesSent(LinkInterface* link, const QByteArray& data)
 {
-    if (_running && _link && (link == _link.get())) {
+    if (_running && ((_testMode == TestMode::Streaming) || _ftpMeasuring) && _link && (link == _link.get())) {
         _wireTransmitBytes += static_cast<quint64>(data.size());
     }
 }
@@ -394,6 +497,11 @@ void MAVLinkBandwidthController::_armedChanged(bool armed)
     emit canStartChanged();
 
     if (armed && _running) {
+        if (_ftpTest) {
+            _ftpTest->cancel(tr("Test aborted because the vehicle armed."));
+            return;
+        }
+
         MAVLinkBandwidth::Packet packet;
         packet.opCode = MAVLinkBandwidth::OpCode::Abort;
         packet.direction = static_cast<MAVLinkBandwidth::Direction>(_direction);
@@ -403,6 +511,73 @@ void MAVLinkBandwidthController::_armedChanged(bool armed)
     } else if (!_running) {
         _updateAvailabilityStatus();
     }
+}
+
+void MAVLinkBandwidthController::_ftpPhaseChanged(const QString& phaseText)
+{
+    _setStatusText(phaseText);
+}
+
+void MAVLinkBandwidthController::_ftpPreparationProgress(float progress)
+{
+    if (_ftpMeasurementElapsedMs > 0) {
+        return;
+    }
+    _progress = std::clamp(static_cast<double>(progress), 0., 1.);
+    emit statisticsChanged();
+}
+
+void MAVLinkBandwidthController::_ftpMeasurementStarted()
+{
+    _resetStatistics();
+    _ftpMeasurementElapsedMs = 0;
+    _ftpMeasuring = true;
+    _elapsedTimer.start();
+    _statisticsTimer.start();
+}
+
+void MAVLinkBandwidthController::_ftpMeasurementProgress(float progress)
+{
+    _progress = std::clamp(static_cast<double>(progress), 0., 1.);
+    const quint64 completedBytes = static_cast<quint64>(_progress * (_ftpFileSizeKiB * 1024.));
+    if (_direction == Direction::QgcToVehicle) {
+        _transmittedPayloadBytes = completedBytes;
+    } else {
+        _receivedPayloadBytes = completedBytes;
+    }
+    _statisticsTick();
+}
+
+void MAVLinkBandwidthController::_ftpMeasurementComplete(qint64 elapsedMs, quint64 payloadBytes)
+{
+    _ftpMeasuring = false;
+    _ftpMeasurementElapsedMs = std::max<qint64>(elapsedMs, 1);
+    _transmittedPayloadBytes = payloadBytes;
+    _receivedPayloadBytes = payloadBytes;
+    _progress = 1.;
+    _statisticsTimer.stop();
+    _statisticsTick();
+}
+
+void MAVLinkBandwidthController::_ftpFinished(bool success, const QString& statusText)
+{
+    if (_ftpTest) {
+        _ftpTest->deleteLater();
+        _ftpTest = nullptr;
+    }
+    _finishTest(statusText, success);
+}
+
+void MAVLinkBandwidthController::_abortActiveTest(const QString& statusText)
+{
+    if (_ftpTest) {
+        (void) disconnect(_ftpTest, nullptr, this, nullptr);
+        _ftpTest->cancel(statusText);
+        _ftpTest->deleteLater();
+        _ftpTest = nullptr;
+    }
+    _ftpMeasuring = false;
+    _finishTest(statusText, false);
 }
 
 void MAVLinkBandwidthController::_resetStatistics()
@@ -422,6 +597,8 @@ void MAVLinkBandwidthController::_resetStatistics()
     _wireTransmitBytes = 0;
     _wireReceiveBytes = 0;
     _haveReceiveSequence = false;
+    _ftpMeasurementElapsedMs = 0;
+    _elapsedTimer.invalidate();
     emit statisticsChanged();
 }
 
@@ -431,6 +608,7 @@ void MAVLinkBandwidthController::_finishTest(const QString& statusText, bool com
     _statisticsTimer.stop();
     _testTimer.stop();
     _statisticsTick();
+    _ftpMeasuring = false;
     if (completed) {
         _progress = 1.;
         emit statisticsChanged();
@@ -501,13 +679,18 @@ uint32_t MAVLinkBandwidthController::_newSessionId() const
 void MAVLinkBandwidthController::_updateAvailabilityStatus()
 {
     if (!_vehicle) {
-        _setStatusText(tr("Connect an ArduPilot vehicle to begin."));
-    } else if (!_vehicle->apmFirmware()) {
-        _setStatusText(tr("The initial Lua endpoint supports ArduPilot vehicles only."));
+        _setStatusText(tr("Connect a PX4 or ArduPilot vehicle to begin."));
+    } else if (!_vehicle->apmFirmware() && !_vehicle->px4Firmware()) {
+        _setStatusText(tr("MAVLink bandwidth testing supports PX4 and ArduPilot vehicles."));
     } else if (_vehicle->armed()) {
         _setStatusText(tr("Disarm the vehicle before running a bandwidth test."));
     } else if (!_link || !_link->isConnected()) {
         _setStatusText(tr("The vehicle has no active primary link."));
+    } else if (_testMode == TestMode::MavFtp) {
+        _setStatusText(tr("MAVFTP benchmark ready on %1. Temporary files are verified and removed automatically.")
+                           .arg(linkName()));
+    } else if (!_vehicle->apmFirmware()) {
+        _setStatusText(tr("Streaming requires the ArduPilot Lua endpoint. Select MAVFTP for stock PX4."));
     } else if (_endpointAvailable) {
         _setStatusText(tr("ArduPilot Lua endpoint ready on %1.").arg(linkName()));
     } else {

@@ -11,8 +11,10 @@ AnalyzePage {
     id: root
 
     pageComponent: pageComponent
-    pageDescription: qsTr("Measures end-to-end MAVLink payload goodput between QGroundControl and an ArduPilot Lua endpoint.")
+    pageDescription: qsTr("Measures end-to-end MAVLink payload goodput using an ArduPilot streaming endpoint or stock MAVFTP.")
     allowPopout: true
+
+    readonly property bool _streamingMode: controller.testMode === MAVLinkBandwidthController.Streaming
 
     MAVLinkBandwidthController {
         id: controller
@@ -59,9 +61,13 @@ AnalyzePage {
                         text: controller.linkName.length > 0 ? controller.linkName : qsTr("Unavailable")
                     }
 
-                    QGCLabel { text: qsTr("Lua endpoint") }
+                    QGCLabel {
+                        visible: root._streamingMode
+                        text: qsTr("Lua endpoint")
+                    }
                     QGCLabel {
                         Layout.fillWidth: true
+                        visible: root._streamingMode
                         text: controller.endpointAvailable ? qsTr("Ready") : qsTr("Not detected")
                     }
                 }
@@ -84,11 +90,13 @@ AnalyzePage {
 
                 RowLayout {
                     Layout.fillWidth: true
+                    visible: root._streamingMode
                     spacing: ScreenTools.defaultFontPixelWidth
 
                     QGCButton {
                         text: qsTr("Probe Endpoint")
-                        enabled: controller.vehicleAvailable && !controller.running
+                        visible: root._streamingMode
+                        enabled: controller.streamingAvailable && !controller.running
                         onClicked: controller.probeEndpoint()
                     }
 
@@ -100,6 +108,18 @@ AnalyzePage {
                     columns: 2
                     columnSpacing: ScreenTools.defaultFontPixelWidth * 2
                     rowSpacing: ScreenTools.defaultFontPixelHeight * 0.5
+
+                    QGCLabel { text: qsTr("Test mode") }
+                    QGCComboBox {
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 26
+                        model: [qsTr("Streaming (ArduPilot Lua)"), qsTr("MAVFTP (PX4 or ArduPilot)")]
+                        currentIndex: root._streamingMode ? 0 : 1
+                        enabled: !controller.running
+                        onActivated: (index) => {
+                            controller.testMode = index === 0 ? MAVLinkBandwidthController.Streaming
+                                                              : MAVLinkBandwidthController.MavFtp
+                        }
+                    }
 
                     QGCLabel { text: qsTr("Direction") }
                     QGCComboBox {
@@ -113,9 +133,13 @@ AnalyzePage {
                         }
                     }
 
-                    QGCLabel { text: qsTr("Target payload rate") }
+                    QGCLabel {
+                        visible: root._streamingMode
+                        text: qsTr("Target payload rate")
+                    }
                     QGCTextField {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 16
+                        visible: root._streamingMode
                         text: controller.targetRateKbps.toString()
                         enabled: !controller.running
                         inputMethodHints: Qt.ImhDigitsOnly
@@ -126,12 +150,22 @@ AnalyzePage {
                         }
                     }
 
-                    QGCLabel { text: qsTr("Rate units") }
-                    QGCLabel { text: qsTr("kbit/s of test payload") }
+                    QGCLabel {
+                        visible: root._streamingMode
+                        text: qsTr("Rate units")
+                    }
+                    QGCLabel {
+                        visible: root._streamingMode
+                        text: qsTr("kbit/s of test payload")
+                    }
 
-                    QGCLabel { text: qsTr("Duration") }
+                    QGCLabel {
+                        visible: root._streamingMode
+                        text: qsTr("Duration")
+                    }
                     QGCTextField {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 16
+                        visible: root._streamingMode
                         text: controller.durationSeconds.toString()
                         enabled: !controller.running
                         inputMethodHints: Qt.ImhDigitsOnly
@@ -142,8 +176,40 @@ AnalyzePage {
                         }
                     }
 
-                    QGCLabel { text: qsTr("Duration units") }
-                    QGCLabel { text: qsTr("seconds") }
+                    QGCLabel {
+                        visible: root._streamingMode
+                        text: qsTr("Duration units")
+                    }
+                    QGCLabel {
+                        visible: root._streamingMode
+                        text: qsTr("seconds")
+                    }
+
+                    QGCLabel {
+                        visible: !root._streamingMode
+                        text: qsTr("Test file size")
+                    }
+                    QGCTextField {
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 16
+                        visible: !root._streamingMode
+                        text: controller.ftpFileSizeKiB.toString()
+                        enabled: !controller.running
+                        inputMethodHints: Qt.ImhDigitsOnly
+                        validator: IntValidator { bottom: 64; top: 10240 }
+                        onEditingFinished: {
+                            controller.ftpFileSizeKiB = Number(text)
+                            text = controller.ftpFileSizeKiB.toString()
+                        }
+                    }
+
+                    QGCLabel {
+                        visible: !root._streamingMode
+                        text: qsTr("Size units")
+                    }
+                    QGCLabel {
+                        visible: !root._streamingMode
+                        text: qsTr("KiB")
+                    }
                 }
 
                 RowLayout {
@@ -195,6 +261,14 @@ AnalyzePage {
 
                     QGCLabel { text: qsTr("Payload bytes received") }
                     QGCLabel { text: root.formatBytes(controller.receivedPayloadBytes) }
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    visible: root._streamingMode
+                    columns: 2
+                    columnSpacing: ScreenTools.defaultFontPixelWidth * 2
+                    rowSpacing: ScreenTools.defaultFontPixelHeight * 0.35
 
                     QGCLabel { text: qsTr("Packets sent") }
                     QGCLabel { text: root.formatBytes(controller.transmittedPackets) }

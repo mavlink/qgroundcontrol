@@ -1,0 +1,12 @@
+#pragma once
+
+#include "BaseClasses/VehicleTest.h"
+
+class MAVLinkBandwidthControllerTest : public VehicleTest
+{
+    Q_OBJECT
+
+private slots:
+    void _mavftpRoundTripTest_data();
+    void _mavftpRoundTripTest();
+};
