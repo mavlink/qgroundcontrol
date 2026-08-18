@@ -7,7 +7,13 @@ QGroundControl's **Analyze > MAVLink Bandwidth** tool has two test modes:
 - **Streaming** uses the included ArduPilot Lua endpoint for controlled packet-rate and loss measurements. It uses
   the standard MAVLink `TUNNEL` message with a magic/versioned inner protocol.
 
-![QGC MAVLink bandwidth test](mav-iperf.png)
+Streaming mode:
+
+![QGC MAVLink streaming bandwidth test](mav-iperf.png)
+
+MAVFTP mode:
+
+![QGC MAVFTP bandwidth test](mavftp.png)
 
 ## MAVFTP mode
 
