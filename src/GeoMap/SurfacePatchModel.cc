@@ -348,6 +348,7 @@ int SurfacePatchModel::maxZoomLevel() const
     return maxZoom;
 }
 
+// GCOVR_EXCL_START — perf-stats/capture/diagnostics instrumentation, not shipping behavior
 void SurfacePatchModel::_startStatsSampling()
 {
     if (!_statsTimer) {
@@ -544,6 +545,8 @@ void SurfacePatchModel::analyzeSurface() const
     qDebug().noquote() << report.text();  // user-triggered diagnostic: always emitted
 }
 
+// GCOVR_EXCL_STOP
+
 int SurfacePatchModel::rowCount(const QModelIndex& parent) const
 {
     return parent.isValid() ? 0 : _keys.count();
@@ -626,6 +629,16 @@ bool SurfacePatchModel::_fallbackAvailable(const TileMath::TileKey& key) const
 QImage SurfacePatchModel::_fallbackImage(const TileMath::TileKey& key) const
 {
     // Sharper first: composite direct children (LOD coarsening keeps their detail)
+    QImage image = _compositeFromChildren(key);
+    if (image.isNull()) {
+        // Blurrier: crop the covering region out of the nearest available ancestor
+        image = _cropFromAncestor(key);
+    }
+    return image;
+}
+
+QImage SurfacePatchModel::_compositeFromChildren(const TileMath::TileKey& key) const
+{
     bool anyChild = false;
     for (int childY = 0; (childY < 2) && !anyChild; childY++) {
         for (int childX = 0; (childX < 2) && !anyChild; childX++) {
@@ -633,27 +646,30 @@ QImage SurfacePatchModel::_fallbackImage(const TileMath::TileKey& key) const
                 _tileImages.contains(TileMath::TileKey{(key.x * 2) + childX, (key.y * 2) + childY, key.zoom + 1});
         }
     }
-    if (anyChild) {
-        constexpr int kCanvas = 256;
-        _statComposites++;
-        QImage canvas(kCanvas, kCanvas, QImage::Format_RGBA8888);
-        canvas.fill(QColor(0x3a, 0x40, 0x48));  // missing quadrants stay neutral
-        QPainter painter(&canvas);
-        for (int childY = 0; childY < 2; childY++) {
-            for (int childX = 0; childX < 2; childX++) {
-                const QImage child =
-                    _tileImages.value(TileMath::TileKey{(key.x * 2) + childX, (key.y * 2) + childY, key.zoom + 1});
-                if (!child.isNull()) {
-                    // Tile y grows south and image row 0 is north, so child y maps to top half directly
-                    painter.drawImage(QRect((childX * kCanvas) / 2, (childY * kCanvas) / 2, kCanvas / 2, kCanvas / 2),
-                                      child);
-                }
+    if (!anyChild) {
+        return {};
+    }
+    constexpr int kCanvas = 256;
+    _statComposites++;
+    QImage canvas(kCanvas, kCanvas, QImage::Format_RGBA8888);
+    canvas.fill(QColor(0x3a, 0x40, 0x48));  // missing quadrants stay neutral
+    QPainter painter(&canvas);
+    for (int childY = 0; childY < 2; childY++) {
+        for (int childX = 0; childX < 2; childX++) {
+            const QImage child =
+                _tileImages.value(TileMath::TileKey{(key.x * 2) + childX, (key.y * 2) + childY, key.zoom + 1});
+            if (!child.isNull()) {
+                // Tile y grows south and image row 0 is north, so child y maps to top half directly
+                painter.drawImage(QRect((childX * kCanvas) / 2, (childY * kCanvas) / 2, kCanvas / 2, kCanvas / 2),
+                                  child);
             }
         }
-        return canvas;
     }
+    return canvas;
+}
 
-    // Blurrier: crop the covering region out of the nearest available ancestor
+QImage SurfacePatchModel::_cropFromAncestor(const TileMath::TileKey& key) const
+{
     for (int up = 1; (up <= kMaxAncestorFallbackLevels) && ((key.zoom - up) >= 0); up++) {
         const TileMath::TileKey ancestor{key.x >> up, key.y >> up, key.zoom - up};
         const QImage image = _tileImages.value(ancestor);

@@ -13,6 +13,8 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QRectF>
+#include <QtCore/QSet>
+#include <QtCore/QVarLengthArray>
 
 #include <optional>
 
@@ -160,6 +162,19 @@ private:
     int _edgeDelta(const TileMath::TileKey& key, int dx, int dy) const;
     void _scheduleUpdate();
 
+    // update() phases (see update() for the pass structure)
+    struct AddResult
+    {
+        int adds = 0;
+        qint64 addUs = 0;
+    };
+
+    AddResult _addDesiredPatches(const QList<TileMath::TileKey>& desired, QVarLengthArray<QRectF, 8>& churnRects);
+    int _removeStalePatches(const QList<TileMath::TileKey>& desired, const QSet<TileMath::TileKey>& desiredSet,
+                            QVarLengthArray<QRectF, 8>& churnRects);
+    void _notifyEdgeChurn(const QVarLengthArray<QRectF, 8>& churnRects);
+    void _repinAncestors();
+
     GeoMapCamera* const _camera;
     HeightSource* const _heightSource;
     HeightField* const _field;
@@ -168,6 +183,5 @@ private:
     bool _updatePending = false;     ///< a coalesced update pass is queued on the event loop
     bool _addsDeferred = false;      ///< the last pass hit the add cap; a follow-up pass is queued
     bool _removalsDeferred = false;  ///< the last pass hit the removal cap; a follow-up pass is queued
-    int _removalsThisPass = 0;       ///< removal budget for the cull loop
     double _culledTerrainZ = 0.0;    ///< terrain-top height assumed by the last cull (scene units)
 };

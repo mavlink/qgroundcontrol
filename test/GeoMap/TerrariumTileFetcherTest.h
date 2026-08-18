@@ -9,6 +9,7 @@ class TerrariumTileFetcherTest : public TerrainTest
 private slots:
     void _deliversFlatRegionHeights();
     void _deliversSlopeRegionHeights();
+    void _patchSamplingMatchesFieldSampling();
     void _coarseZoomDeliversRealTerrain();
     void _deepZoomSamplesAncestorTile();
     void _cancelPreventsDelivery();

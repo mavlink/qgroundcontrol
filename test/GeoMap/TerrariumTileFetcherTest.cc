@@ -166,6 +166,31 @@ void TerrariumTileFetcherTest::_deliversSlopeRegionHeights()
     }
 }
 
+void TerrariumTileFetcherTest::_patchSamplingMatchesFieldSampling()
+{
+    // Cross-source vertex identity: heights sampled from the tile image (patch
+    // delivery) and from the decoded field grid must be bit-identical, or
+    // patches meshed from different sources crack at shared edges
+    HeightField field;
+    TerrariumTileFetcher source;
+    source.setHeightField(&field);
+    QSignalSpy readySpy(&source, &HeightSource::patchHeightsReady);
+    QSignalSpy regionSpy(&field, &HeightField::regionChanged);
+
+    const TileMath::TileKey key = keyOver(linearSlopeRegion().center(), kFineZoom);
+    const int requestId = source.requestPatchHeights(key, kGridSize);
+    QVERIFY(source.requestTile(key));
+
+    QTRY_COMPARE_WITH_TIMEOUT(readySpy.count(), 1, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(regionSpy.count(), 1, TestTimeout::mediumMs());
+    QCOMPARE(readySpy.first().at(0).toInt(), requestId);
+
+    const auto imageHeights = readySpy.first().at(1).value<QList<float>>();
+    const QList<float> fieldHeights = field.samplePatch(key, kGridSize);
+    QCOMPARE(imageHeights.count(), kExpectedCount);
+    QCOMPARE(fieldHeights, imageHeights);
+}
+
 void TerrariumTileFetcherTest::_coarseZoomDeliversRealTerrain()
 {
     // Terrarium serves one tile per patch at any zoom, so coarse patches get real
