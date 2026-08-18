@@ -17,8 +17,11 @@ import pytest
 from ._helpers import TOOLS_DIR
 
 CI_CRITICAL_SUBMODULES = [
+    "artifact_metadata",
+    "aws",
     "gh_actions",
     "build_config",
+    "cobertura",
     "git",
     "proc",
     "github_runs",
@@ -26,6 +29,7 @@ CI_CRITICAL_SUBMODULES = [
     "format",
     "io",
     "tool_version",
+    "xml",
 ]
 
 

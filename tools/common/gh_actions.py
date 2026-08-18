@@ -63,6 +63,15 @@ def parse_csv_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def require_repository() -> str:
+    """Return the configured owner/repo or terminate with a CI annotation."""
+    repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
+    if not repo:
+        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
+        raise SystemExit(1)
+    return repo
+
+
 def is_fork_pr() -> bool:
     """Check if the current event is a PR from a fork repository."""
     event = os.environ.get("EVENT_NAME", os.environ.get("GITHUB_EVENT_NAME", ""))
@@ -96,11 +105,11 @@ def write_github_output(outputs: dict[str, str]) -> None:
     """
     import hashlib
 
-    github_output = os.environ.get('GITHUB_OUTPUT')
+    github_output = os.environ.get("GITHUB_OUTPUT")
     if not github_output:
         return
 
-    with open(github_output, 'a', encoding="utf-8") as f:
+    with open(github_output, "a", encoding="utf-8") as f:
         for key, value in outputs.items():
             if "\n" in value:
                 value_hash = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
