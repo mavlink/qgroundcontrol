@@ -33,6 +33,7 @@ public:
     explicit HeightSource(QObject* parent = nullptr);
 
     /// Request the vertex height grid for a patch. Returns a request id (> 0).
+    /// gridSize must be a power of two (see HeightField::samplePatch).
     virtual int requestPatchHeights(const TileMath::TileKey& key, int gridSize) = 0;
 
     /// Cancel a pending request. No signal is emitted for a cancelled request.

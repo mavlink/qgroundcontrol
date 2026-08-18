@@ -125,7 +125,7 @@ public:
         _tileImageNetworkManager = networkManager;
     }
 
-    bool statsEnabled() const { return _statsEnabled; }
+    bool statsEnabled() const { return _statsEnabled; }  // GCOVR_EXCL_LINE
 
     /// Enables the once-per-second perf counter sampling behind statsText:
     /// model update rate/duration, patch churn, and fallback composites
@@ -189,6 +189,8 @@ private:
     void _scheduleStatsChanged();
     void _startStatsSampling();
     QImage _fallbackImage(const TileMath::TileKey& key) const;
+    QImage _compositeFromChildren(const TileMath::TileKey& key) const;
+    QImage _cropFromAncestor(const TileMath::TileKey& key) const;
     bool _fallbackAvailable(const TileMath::TileKey& key) const;
     GeoMapCamera* _camera() const;
 

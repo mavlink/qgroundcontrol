@@ -5,12 +5,15 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        BilinearUV.h
         ElevationTilePyramid.cc
         ElevationTilePyramid.h
         HeightField.cc
         HeightField.h
         HeightSource.cc
         HeightSource.h
+        PatchSampler.cc
+        PatchSampler.h
         SurfaceAnalysis.cc
         SurfaceAnalysis.h
         SurfaceModel.cc

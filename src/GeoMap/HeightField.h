@@ -59,6 +59,8 @@ public:
 
     /// The (gridSize+1)^2 vertex heights of a patch, row-major from the NW
     /// corner. Empty for invalid keys or gridSize outside [1, kMaxGridSize].
+    /// gridSize must be a power of two: vertex UVs are then exact dyadic
+    /// doubles, which the bit-identity guarantee below relies on.
     /// Boundary vertices resolve by canonical world position rather than the
     /// patch's own backing view, so coincident vertices of neighboring
     /// patches sample bit-identical heights even across different backing

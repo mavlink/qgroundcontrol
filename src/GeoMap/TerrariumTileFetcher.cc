@@ -13,9 +13,9 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 
-#include <cmath>
 #include <memory>
 
+#include "BilinearUV.h"
 #include "ElevationMapProvider.h"
 #include "HeightField.h"
 #include "PatchGeometry.h"
@@ -48,25 +48,11 @@ double heightAtPixel(const QImage& image, int px, int py)
 }
 
 /// Bilinear height at a unit-UV position (origin NW corner), pixel-center
-/// convention, clamped at tile edges.
-/// Must stay numerically identical to HeightField.cc's heightAtUV:
-/// cross-source vertex identity depends on both samplers agreeing
+/// convention, clamped at tile edges; terrarium decode per pixel
 double heightAtUV(const QImage& image, double u, double v)
 {
-    const int w = image.width();
-    const int h = image.height();
-    const double px = (u * w) - 0.5;
-    const double py = (v * h) - 0.5;
-    const int x0 = qBound(0, static_cast<int>(std::floor(px)), w - 1);
-    const int y0 = qBound(0, static_cast<int>(std::floor(py)), h - 1);
-    const int x1 = qMin(x0 + 1, w - 1);
-    const int y1 = qMin(y0 + 1, h - 1);
-    const double fx = qBound(0.0, px - x0, 1.0);
-    const double fy = qBound(0.0, py - y0, 1.0);
-
-    const double north = (heightAtPixel(image, x0, y0) * (1.0 - fx)) + (heightAtPixel(image, x1, y0) * fx);
-    const double south = (heightAtPixel(image, x0, y1) * (1.0 - fx)) + (heightAtPixel(image, x1, y1) * fx);
-    return (north * (1.0 - fy)) + (south * fy);
+    const auto at = [&image](int x, int y) { return heightAtPixel(image, x, y); };
+    return bilinearAtUV(image.width(), image.height(), u, v, at);
 }
 
 /// Samples the (gridSize+1)^2 vertex grid, row-major from the NW corner, from the

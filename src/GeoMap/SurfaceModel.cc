@@ -110,13 +110,40 @@ void SurfaceModel::update()
 
     QSet<TileMath::TileKey> desiredSet(desired.cbegin(), desired.cend());
 
-    // Add newly desired patches, capped per pass: each add synchronously
-    // builds a render delegate downstream, and uncapped bursts (300+ adds/s
-    // while zooming) blow the frame budget. A new patch meshes immediately
-    // from the field's best estimate; tile coverage is requested so the
-    // estimate refines when data arrives.
     QVarLengthArray<QRectF, 8> churnRects;  // added/removed extents: neighbors there re-stitch
-    int adds = 0;
+    const AddResult added = _addDesiredPatches(desired, churnRects);
+    const int removals = _removeStalePatches(desired, desiredSet, churnRects);
+    _notifyEdgeChurn(churnRects);
+
+    if ((added.adds > 0) || (removals > 0)) {
+        _repinAncestors();
+    }
+
+    // The caps guarantee every deferred pass makes progress, so follow-ups
+    // always converge
+    if (_addsDeferred || _removalsDeferred) {
+        _scheduleUpdate();
+    }
+
+    const qint64 elapsedUs = updateTimer.nsecsElapsed() / 1000;
+    qCDebug(GeoMapSurfaceModelVerboseLog)
+        << "update pass: desired" << desired.count() << "resident" << _patches.count() << "adds" << added.adds
+        << "removals" << removals << "deferred adds" << _addsDeferred << "deferred removals" << _removalsDeferred
+        << "elapsedUs" << elapsedUs << "addUs" << added.addUs;
+    _updateStats.updates++;
+    _updateStats.totalUs += elapsedUs;
+    _updateStats.maxUs = std::max(_updateStats.maxUs, elapsedUs);
+}
+
+/// Add newly desired patches, capped per pass: each add synchronously builds
+/// a render delegate downstream, and uncapped bursts (300+ adds/s while
+/// zooming) blow the frame budget. A new patch meshes immediately from the
+/// field's best estimate; tile coverage is requested so the estimate refines
+/// when data arrives.
+SurfaceModel::AddResult SurfaceModel::_addDesiredPatches(const QList<TileMath::TileKey>& desired,
+                                                         QVarLengthArray<QRectF, 8>& churnRects)
+{
+    AddResult result;
     _addsDeferred = false;
     QElapsedTimer addTimer;
     addTimer.start();
@@ -124,7 +151,7 @@ void SurfaceModel::update()
         if (_patches.contains(key)) {
             continue;
         }
-        if (adds >= kMaxPatchAddsPerUpdate) {
+        if (result.adds >= kMaxPatchAddsPerUpdate) {
             _addsDeferred = true;
             continue;
         }
@@ -135,10 +162,21 @@ void SurfaceModel::update()
         churnRects.append(patchRect(key));
         _heightSource->requestTile(key);
         emit patchAdded(key);
-        adds++;
+        result.adds++;
     }
-    const qint64 addUs = addTimer.nsecsElapsed() / 1000;
+    result.addUs = addTimer.nsecsElapsed() / 1000;
+    _updateStats.addTotalUs += result.addUs;
+    _updateStats.addMaxUs = std::max(_updateStats.addMaxUs, result.addUs);
+    return result;
+}
 
+/// Drop patches no longer desired. Removals are capped like adds: each erase
+/// synchronously destroys a render delegate, and pose jumps (high-tilt
+/// orbits) can invalidate hundreds of patches at once. Patches whose
+/// replacements are not resident yet stay for a follow-up pass.
+int SurfaceModel::_removeStalePatches(const QList<TileMath::TileKey>& desired,
+                                      const QSet<TileMath::TileKey>& desiredSet, QVarLengthArray<QRectF, 8>& churnRects)
+{
     // Rects of desired patches still not resident after the capped adds: a
     // no-longer-desired patch overlapping one may not be removed yet, or the
     // surface would show a hole until the adds catch up. Computed after the
@@ -160,18 +198,14 @@ void SurfaceModel::update()
         return false;
     };
 
-    // Drop patches no longer desired. Removals are capped like adds: each
-    // erase synchronously destroys a render delegate, and pose jumps
-    // (high-tilt orbits) can invalidate hundreds of patches at once. Patches
-    // whose replacements are not resident yet stay for a follow-up pass.
-    _removalsThisPass = 0;
+    int removals = 0;
     _removalsDeferred = false;
     for (auto it = _patches.begin(); it != _patches.end();) {
         if (desiredSet.contains(it.key())) {
             ++it;
             continue;
         }
-        if ((_removalsThisPass >= kMaxPatchRemovalsPerUpdate) || overlapsMissing(it.key())) {
+        if ((removals >= kMaxPatchRemovalsPerUpdate) || overlapsMissing(it.key())) {
             _removalsDeferred = true;  // stays resident one more pass; follow-up finishes the cull
             ++it;
             continue;
@@ -180,11 +214,15 @@ void SurfaceModel::update()
         it = _patches.erase(it);
         churnRects.append(patchRect(removedKey));
         emit patchRemoved(removedKey);
-        _removalsThisPass++;
+        removals++;
     }
+    return removals;
+}
 
-    // Added/removed patches change their neighbors' edge LOD deltas: notify
-    // every resident patch touching a churned extent so it re-stitches
+/// Added/removed patches change their neighbors' edge LOD deltas: notify
+/// every resident patch touching a churned extent so it re-stitches
+void SurfaceModel::_notifyEdgeChurn(const QVarLengthArray<QRectF, 8>& churnRects)
+{
     for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
         for (const QRectF& rect : churnRects) {
             if (patchTouchesRegion(it.key(), rect)) {
@@ -193,49 +231,36 @@ void SurfaceModel::update()
             }
         }
     }
-
-    // Pin every resident patch's key and its full ancestor chain: whatever
-    // tile the field resolves a patch sample to is in that chain, and an
-    // eviction there would silently coarsen a rendered mesh
-    if ((adds > 0) || (_removalsThisPass > 0)) {
-        QSet<TileMath::TileKey> pinned;
-        for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
-            TileMath::TileKey key = it.key();
-            while (true) {
-                pinned.insert(key);
-                if (key.zoom == TileMath::kMinZoom) {
-                    break;
-                }
-                key = TileMath::TileKey{key.x >> 1, key.y >> 1, key.zoom - 1};
-            }
-        }
-        _field->setPinnedKeys(std::move(pinned));
-    }
-
-    // The caps guarantee every deferred pass makes progress, so follow-ups
-    // always converge
-    if (_addsDeferred || _removalsDeferred) {
-        _scheduleUpdate();
-    }
-
-    const qint64 elapsedUs = updateTimer.nsecsElapsed() / 1000;
-    qCDebug(GeoMapSurfaceModelVerboseLog)
-        << "update pass: desired" << desired.count() << "resident" << _patches.count() << "adds" << adds << "removals"
-        << _removalsThisPass << "deferred adds" << _addsDeferred << "deferred removals" << _removalsDeferred
-        << "elapsedUs" << elapsedUs << "addUs" << addUs;
-    _updateStats.updates++;
-    _updateStats.totalUs += elapsedUs;
-    _updateStats.maxUs = std::max(_updateStats.maxUs, elapsedUs);
-    _updateStats.addTotalUs += addUs;
-    _updateStats.addMaxUs = std::max(_updateStats.addMaxUs, addUs);
 }
 
+/// Pin every resident patch's key and its full ancestor chain: whatever tile
+/// the field resolves a patch sample to is in that chain, and an eviction
+/// there would silently coarsen a rendered mesh
+void SurfaceModel::_repinAncestors()
+{
+    QSet<TileMath::TileKey> pinned;
+    for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
+        TileMath::TileKey key = it.key();
+        while (true) {
+            pinned.insert(key);
+            if (key.zoom == TileMath::kMinZoom) {
+                break;
+            }
+            key = TileMath::TileKey{key.x >> 1, key.y >> 1, key.zoom - 1};
+        }
+    }
+    _field->setPinnedKeys(std::move(pinned));
+}
+
+// GCOVR_EXCL_START — perf-stats instrumentation for the debug overlay/capture
 SurfaceModel::UpdateStats SurfaceModel::takeUpdateStats()
 {
     const UpdateStats stats = _updateStats;
     _updateStats = UpdateStats{};
     return stats;
 }
+
+// GCOVR_EXCL_STOP
 
 QList<SurfaceModel::Patch> SurfaceModel::patches() const
 {
