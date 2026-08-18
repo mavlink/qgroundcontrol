@@ -44,6 +44,9 @@ if TYPE_CHECKING:
         check_dependencies as check_dependencies,
     )
     from .deps import (
+        pip_install as pip_install,
+    )
+    from .deps import (
         require_tool as require_tool,
     )
     from .env import (
@@ -223,6 +226,7 @@ _LAZY_SYMBOLS: dict[str, str] = {
     "check_dependencies": "deps",
     "require_tool": "deps",
     "check_and_report": "deps",
+    "pip_install": "deps",
     "get_default_branch_ref": "git",
     "run_captured": "proc",
     "run_text": "proc",
@@ -253,7 +257,7 @@ _LAZY_SYMBOLS: dict[str, str] = {
     "md_table": "markdown",
 }
 
-__all__ = [*_LAZY_SYMBOLS.keys(), "pip_install"]
+__all__ = list(_LAZY_SYMBOLS)
 
 
 def __getattr__(name: str):
@@ -264,30 +268,3 @@ def __getattr__(name: str):
     value = getattr(mod, name)
     globals()[name] = value
     return value
-
-
-def pip_install(packages: list[str], quiet: bool = True) -> None:
-    """Install packages using uv (preferred) or pip.
-
-    Targets the project .venv (on PATH in CI) rather than --system: the system
-    interpreter may be externally managed (PEP 668) when no writable runner
-    Python is provisioned. Falls back to --system when no .venv exists.
-    """
-    import shutil
-    import subprocess
-    import sys
-
-    if shutil.which("uv"):
-        from .file_traversal import find_repo_root
-
-        rel = "Scripts/python.exe" if sys.platform == "win32" else "bin/python"
-        venv_python = find_repo_root() / ".venv" / rel
-        if venv_python.exists():
-            cmd = ["uv", "pip", "install", "--python", str(venv_python), *packages]
-        else:
-            cmd = ["uv", "pip", "install", "--system", *packages]
-    else:
-        cmd = [sys.executable, "-m", "pip", "install", *packages]
-        if quiet:
-            cmd.append("--quiet")
-    subprocess.run(cmd, check=True)

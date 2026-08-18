@@ -4,9 +4,10 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 
 import pytest
-from common.proc import run_captured, run_text
+from common.proc import run_captured, run_tee, run_text
 
 
 def test_run_captured_returns_completed_process() -> None:
@@ -41,3 +42,9 @@ def test_run_text_default_on_missing_binary() -> None:
 
 def test_run_text_default_on_nonzero_exit() -> None:
     assert run_text(["false"], default="fb") == "fb"
+
+
+def test_run_tee_streams_output_and_returns_exit_code(tmp_path) -> None:
+    output = tmp_path / "command.log"
+    assert run_tee([sys.executable, "-c", "print('streamed')"], output) == 0
+    assert output.read_text(encoding="utf-8").strip() == "streamed"
