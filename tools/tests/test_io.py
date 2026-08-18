@@ -94,6 +94,9 @@ def test_write_text_if_changed_and_sha256_file(tmp_path: Path) -> None:
     assert sha256_file(payload, chunk_size=1) == (
         "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     )
+    for invalid_size in (0, -1):
+        with pytest.raises(ValueError, match="chunk_size must be a positive integer"):
+            sha256_file(payload, chunk_size=invalid_size)
 
 
 def test_extract_tar_data_rejects_traversal(tmp_path: Path) -> None:

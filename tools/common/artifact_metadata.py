@@ -67,7 +67,7 @@ def read_run_artifact_metadata(path: Path) -> dict[int, list[dict[str, Any]]]:
         if not isinstance(run_id_text, str) or not run_id_text.isdecimal():
             raise ArtifactMetadataError("workflow run IDs must be positive decimal strings")
         run_id = int(run_id_text)
-        if run_id <= 0:
+        if run_id <= 0 or str(run_id) != run_id_text:
             raise ArtifactMetadataError("workflow run IDs must be positive decimal strings")
         if not isinstance(artifacts, list):
             raise ArtifactMetadataError(f"artifacts for workflow run {run_id} must be a list")

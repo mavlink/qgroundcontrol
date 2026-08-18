@@ -42,6 +42,7 @@ def test_run_artifact_metadata_round_trip(tmp_path: Path) -> None:
         {},
         {"runs": []},
         {"runs": {"0": []}},
+        {"runs": {"042": []}},
         {"runs": {"run": []}},
         {"runs": {"42": {}}},
         {"runs": {"42": ["artifact"]}},

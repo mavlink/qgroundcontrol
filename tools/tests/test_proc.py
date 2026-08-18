@@ -59,3 +59,17 @@ def test_run_tee_falls_back_without_bash(tmp_path: Path, monkeypatch: pytest.Mon
     monkeypatch.setattr("common.proc.shutil.which", lambda _name: None)
     assert run_tee([sys.executable, "-c", "print('fallback')"], output) == 0
     assert output.read_text(encoding="utf-8").strip() == "fallback"
+
+
+def test_run_tee_resolves_relative_output_before_changing_cwd(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    invocation_dir = tmp_path / "invocation"
+    working_dir = tmp_path / "working"
+    invocation_dir.mkdir()
+    working_dir.mkdir()
+    monkeypatch.chdir(invocation_dir)
+
+    assert run_tee([sys.executable, "-c", "print('relative')"], "command.log", cwd=working_dir) == 0
+    assert (invocation_dir / "command.log").read_text(encoding="utf-8").strip() == "relative"
+    assert not (working_dir / "command.log").exists()

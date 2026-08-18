@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -32,7 +33,10 @@ def _optional_percent(element: Element, attribute: str) -> float | None:
     value = element.get(attribute)
     if value is None or value == "":
         return None
-    return float(value) * 100.0
+    rate = float(value)
+    if not math.isfinite(rate) or not 0.0 <= rate <= 1.0:
+        raise CoberturaError(f"{attribute} must be a finite value from 0 through 1")
+    return rate * 100.0
 
 
 def _integer(element: Element, attribute: str) -> int:

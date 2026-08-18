@@ -36,3 +36,15 @@ def test_rejects_invalid_unsafe_or_metric_free_reports(tmp_path) -> None:
         report.write_text(content, encoding="utf-8")
         with pytest.raises(CoberturaError):
             read_cobertura(report)
+
+
+@pytest.mark.parametrize("rate", ["nan", "inf", "-0.01", "1.01"])
+def test_rejects_invalid_coverage_rates(tmp_path, rate: str) -> None:
+    report = tmp_path / "coverage.xml"
+    report.write_text(f'<coverage line-rate="{rate}"/>', encoding="utf-8")
+    with pytest.raises(CoberturaError, match="line-rate"):
+        read_cobertura(report)
+
+    report.write_text(f'<coverage line-rate="0.5" branch-rate="{rate}"/>', encoding="utf-8")
+    with pytest.raises(CoberturaError, match="branch-rate"):
+        read_cobertura(report)

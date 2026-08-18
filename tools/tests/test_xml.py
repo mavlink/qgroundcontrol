@@ -15,6 +15,8 @@ def test_parser_returns_trees_for_plain_and_doctype_xml(tmp_path: Path) -> None:
     for name, content, tag in (
         ("plain.xml", "<root><child/></root>", "root"),
         ("doctype.xml", "<!DOCTYPE foo [<!ELEMENT foo ANY>]><foo/>", "foo"),
+        ("comment.xml", "<root><!-- harmless <!ENTITY text> --></root>", "root"),
+        ("cdata.xml", "<root><![CDATA[harmless <!ENTITY text>]]></root>", "root"),
     ):
         path = tmp_path / name
         path.write_text(content, encoding="utf-8")

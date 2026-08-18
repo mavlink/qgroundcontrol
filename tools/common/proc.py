@@ -13,11 +13,11 @@ import shlex
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
-    from pathlib import Path
 
 __all__ = ["run_bytes", "run_captured", "run_tee", "run_text"]
 
@@ -86,17 +86,17 @@ def run_tee(
     Windows runners. The direct streaming fallback supports hosts without Bash.
     """
     command = list(cmd)
-    log_path = str(output_file)
+    log_path = Path(output_file).resolve()
     process_env = dict(env) if env is not None else None
     bash = shutil.which("bash")
     if bash:
         quoted_cmd = " ".join(shlex.quote(part) for part in command)
-        script = f"set -o pipefail; {quoted_cmd} 2>&1 | tee {shlex.quote(log_path)}"
+        script = f"set -o pipefail; {quoted_cmd} 2>&1 | tee {shlex.quote(str(log_path))}"
         return subprocess.run(
             [bash, "-c", script], cwd=cwd, env=process_env, check=False
         ).returncode
 
-    with open(output_file, "w", encoding="utf-8") as log:
+    with log_path.open("w", encoding="utf-8") as log:
         process = subprocess.Popen(
             command,
             cwd=cwd,
