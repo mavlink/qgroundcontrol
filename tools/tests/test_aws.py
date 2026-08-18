@@ -43,6 +43,13 @@ def test_s3_object_exists_uses_validated_bucket_and_key(monkeypatch: pytest.Monk
         ]
     ]
 
+    monkeypatch.setattr(
+        aws,
+        "run_captured",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 1, "", "missing"),
+    )
+    assert aws.s3_object_exists("qgroundcontrol", "builds/main/missing.bin") is False
+
 
 def test_upload_public_file_builds_command_and_surfaces_failure(
     tmp_path, monkeypatch: pytest.MonkeyPatch
@@ -76,3 +83,6 @@ def test_upload_public_file_builds_command_and_surfaces_failure(
     )
     with pytest.raises(RuntimeError, match="denied"):
         aws.upload_public_file(source, "qgroundcontrol", "latest/qgc.bin")
+
+    with pytest.raises(ValueError, match="Artifact not found"):
+        aws.upload_public_file(tmp_path / "missing.bin", "qgroundcontrol", "latest/missing.bin")

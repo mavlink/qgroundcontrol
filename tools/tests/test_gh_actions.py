@@ -69,6 +69,12 @@ def test_require_repository_prefers_override_and_requires_value(capsys) -> None:
         assert mod.require_repository() == "override/repo"
     with patch.dict(os.environ, {"GITHUB_REPOSITORY": "event/repo"}, clear=True):
         assert mod.require_repository() == "event/repo"
+    with patch.dict(
+        os.environ,
+        {"GH_REPO": "  ", "GITHUB_REPOSITORY": " fallback/repo "},
+        clear=True,
+    ):
+        assert mod.require_repository() == "fallback/repo"
     with patch.dict(os.environ, {}, clear=True), pytest.raises(SystemExit):
         mod.require_repository()
     assert capsys.readouterr().out == "::error::GH_REPO or GITHUB_REPOSITORY must be set\n"

@@ -65,11 +65,11 @@ def parse_csv_list(value: str) -> list[str]:
 
 def require_repository() -> str:
     """Return the configured owner/repo or terminate with a CI annotation."""
-    repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
-    if not repo:
-        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
-        raise SystemExit(1)
-    return repo
+    for variable in ("GH_REPO", "GITHUB_REPOSITORY"):
+        if repo := os.environ.get(variable, "").strip():
+            return repo
+    gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
+    raise SystemExit(1)
 
 
 def is_fork_pr() -> bool:

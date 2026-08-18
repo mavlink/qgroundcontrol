@@ -64,3 +64,11 @@ def test_read_wraps_invalid_json(tmp_path: Path) -> None:
 
     with pytest.raises(ArtifactMetadataError, match="invalid artifact metadata file"):
         read_run_artifact_metadata(path)
+
+
+def test_write_rejects_invalid_run_ids_and_artifacts(tmp_path: Path) -> None:
+    path = tmp_path / "artifacts.json"
+    with pytest.raises(ArtifactMetadataError, match="run IDs"):
+        write_run_artifact_metadata(path, {0: []})
+    with pytest.raises(ArtifactMetadataError, match="artifact name"):
+        write_run_artifact_metadata(path, {42: [{"name": "", "size_in_bytes": 1}]})

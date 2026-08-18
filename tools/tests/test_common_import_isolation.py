@@ -21,6 +21,7 @@ CI_CRITICAL_SUBMODULES = [
     "aws",
     "gh_actions",
     "build_config",
+    "cmake",
     "cobertura",
     "git",
     "proc",

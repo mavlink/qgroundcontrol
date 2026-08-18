@@ -87,3 +87,9 @@ def test_pip_install_falls_back_to_current_interpreter(monkeypatch: pytest.Monke
     monkeypatch.setattr(deps.subprocess, "run", lambda command, **_kwargs: calls.append(command))
     pip_install(["gcovr"], quiet=False)
     assert calls == [[sys.executable, "-m", "pip", "install", "gcovr"]]
+
+
+def test_pip_install_remains_available_through_lazy_facade() -> None:
+    from common import pip_install as facade_pip_install
+
+    assert facade_pip_install is pip_install
