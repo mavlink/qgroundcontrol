@@ -24,17 +24,9 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, gh_error, gh_warning, write_github_output
+from common.gh_actions import gh, gh_error, gh_warning, require_repository, write_github_output
 
 SIZE_PREFIX = "size/"
-
-
-def _repo() -> str:
-    repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
-    if not repo:
-        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
-        sys.exit(1)
-    return repo
 
 
 def _pr_number(arg: str | None) -> str:
@@ -81,7 +73,7 @@ def remove_label(repo: str, pr: str, label: str) -> bool:
 
 def cmd_current(args: argparse.Namespace) -> int:
     """Emit the first size/* label (or empty string) to $GITHUB_OUTPUT."""
-    labels = list_size_labels(_repo(), _pr_number(args.pr_number))
+    labels = list_size_labels(require_repository(), _pr_number(args.pr_number))
     write_github_output({"label": labels[0] if labels else ""})
     print(f"label={labels[0] if labels else ''}")
     return 0
@@ -89,7 +81,7 @@ def cmd_current(args: argparse.Namespace) -> int:
 
 def cmd_prune(args: argparse.Namespace) -> int:
     """Remove stale size/* labels when more than one is present."""
-    repo = _repo()
+    repo = require_repository()
     pr = _pr_number(args.pr_number)
     labels = list_size_labels(repo, pr)
 

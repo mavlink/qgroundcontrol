@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -26,9 +25,14 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.artifact_metadata import write_run_artifact_metadata
 from common.gh_actions import gh, list_run_artifacts, list_workflow_runs_for_sha
-from common.github_runs import group_runs_by_name, select_latest_runs_by_name
-from common.io import read_json, write_json
+from common.github_runs import (
+    add_workflow_run_query_args,
+    group_runs_by_name,
+    resolve_workflow_runs,
+    select_latest_runs_by_name,
+)
 
 ARTIFACT_EXTENSIONS = (
     ".apk",
@@ -134,37 +138,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument(
-        "--repo",
-        required=True,
-        help="GitHub repository in owner/repo format",
-    )
-    parser.add_argument(
-        "--head-sha",
-        required=True,
-        help="Commit SHA to find workflow runs for",
+    add_workflow_run_query_args(
+        parser,
+        default_event="",
+        workflows_option="--workflows",
+        workflows_dest="workflows",
+        runs_option="--runs-file",
+        restrict_event=True,
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("artifacts"),
         help="Directory to download artifacts into (default: artifacts)",
-    )
-    parser.add_argument(
-        "--workflows",
-        default="Linux,Windows,MacOS,Android",
-        help="Comma-separated workflow names to download from (default: Linux,Windows,MacOS,Android)",
-    )
-    parser.add_argument(
-        "--event",
-        default="",
-        choices=["", "push", "pull_request", "workflow_dispatch", "schedule"],
-        help="Optional workflow event name to filter runs by",
-    )
-    parser.add_argument(
-        "--runs-file",
-        default="",
-        help="Path to cached workflow runs JSON (skips API call if provided)",
     )
     parser.add_argument(
         "--artifact-prefixes",
@@ -199,21 +185,9 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Finding completed workflow runs for commit {head_sha}...")
 
-    if args.runs_file:
-        try:
-            loaded_runs = read_json(Path(args.runs_file))
-        except (json.JSONDecodeError, OSError) as e:
-            print(f"Error: failed to read runs file {args.runs_file}: {e}", file=sys.stderr)
-            return 1
-        if not isinstance(loaded_runs, list):
-            print(
-                f"Error: runs file {args.runs_file} must contain a JSON list of workflow runs",
-                file=sys.stderr,
-            )
-            return 1
-        all_runs = loaded_runs
-    else:
-        all_runs = list_workflow_runs_for_sha(repo, head_sha)
+    all_runs = resolve_workflow_runs(repo, head_sha, args.runs_file, list_workflow_runs_for_sha)
+    if all_runs is None:
+        return 1
     preloaded_artifacts: dict[int, list[dict[str, Any]]] = {}
     had_successful_runs = bool(select_latest_successful_runs(all_runs, workflows, event=event))
     if artifact_prefixes:
@@ -261,7 +235,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Pre-resolve artifact names and/or metadata (requires API calls) before parallel downloads.
     run_artifact_map: dict[int, list[str] | None] = {}
-    run_artifact_metadata: dict[str, list[dict[str, Any]]] = {}
+    run_artifact_metadata: dict[int, list[dict[str, Any]]] = {}
     for run in runs:
         run_id = int(run["id"])
         if artifact_prefixes or artifact_metadata_out is not None:
@@ -275,19 +249,12 @@ def main(argv: list[str] | None = None) -> int:
                 run_artifact_map[run_id] = None
 
             if artifact_metadata_out is not None:
-                run_artifact_metadata[str(run_id)] = [
-                    {
-                        "name": str(artifact.get("name", "")),
-                        "size_in_bytes": int(artifact.get("size_in_bytes", 0)),
-                    }
-                    for artifact in artifacts
-                ]
+                run_artifact_metadata[run_id] = artifacts
         else:
             run_artifact_map[run_id] = None
 
     if artifact_metadata_out is not None:
-        artifact_metadata_out.parent.mkdir(parents=True, exist_ok=True)
-        write_json(artifact_metadata_out, {"runs": run_artifact_metadata})
+        write_run_artifact_metadata(artifact_metadata_out, run_artifact_metadata)
         print(
             f"Wrote artifact metadata for {len(run_artifact_metadata)} run(s) to {artifact_metadata_out}"
         )

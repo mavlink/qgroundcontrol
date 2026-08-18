@@ -21,10 +21,10 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import find_repo_root, run_captured
-from common.cli import add_dry_run
+from common.file_traversal import find_repo_root
 from common.io import chdir
 from common.logging import log_info, log_ok, log_warn
+from common.proc import run_captured
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -50,7 +50,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "-a", "--all", action="store_true", help="Clean build + caches + generated files"
     )
     parser.add_argument("-c", "--cache", action="store_true", help="Clean only caches")
-    add_dry_run(parser, help="Show what would be removed; do not delete")
+    parser.add_argument(
+        "-n",
+        "--dry-run",
+        action="store_true",
+        help="Show what would be removed; do not delete",
+    )
     return parser.parse_args(argv)
 
 

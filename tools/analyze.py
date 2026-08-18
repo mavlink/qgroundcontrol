@@ -25,11 +25,12 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from common import find_repo_root, get_default_branch_ref, log_error, log_ok, log_warn
+from common.file_traversal import find_repo_root
+from common.git import get_default_branch_ref, run_git
+from common.logging import log_error, log_ok, log_warn
 
 if TYPE_CHECKING:
     from common.analyzer import AnalyzerBase
-from common.git import run_git
 
 
 class FileCollector:

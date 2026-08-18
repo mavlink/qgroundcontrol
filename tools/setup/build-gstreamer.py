@@ -48,6 +48,7 @@ from _bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.build_config import get_build_config_value
+from common.deps import pip_install
 from common.gh_actions import write_github_output
 from common.logging import log_error, log_info, log_ok, log_warn
 from common.tool_version import uv_lock_version
@@ -253,8 +254,6 @@ class MesonBuilder:
             packages.append(f"ninja=={NINJA_VERSION}")
 
         log_info(f"Installing pinned build tools: {', '.join(packages)}")
-        from common import pip_install
-
         pip_install(packages)
 
         user_scripts = Path(site.getuserbase()) / ("Scripts" if os.name == "nt" else "bin")

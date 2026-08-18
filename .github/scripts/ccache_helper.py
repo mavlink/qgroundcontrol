@@ -16,16 +16,13 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
-import platform
 import re
 import shutil
 import sys
 import tarfile
 import tempfile
-import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
@@ -43,24 +40,18 @@ from common.gh_actions import (
     write_github_output,
     write_step_summary,
 )
-from common.io import require_tar_data_filter
+from common.io import extract_tar_data, extract_zip_safe, sha256_file
 from common.markdown import md_table
 from common.net import download_with_retry
+from common.platform import host_arch, is_linux
 from common.proc import run_captured
-from common.tool_version import probe_version
+from common.tool_version import probe_version, version_prefix_matches
 
 _CCACHE_RELEASE_URL = "https://github.com/ccache/ccache/releases/download"
 
 
-def _extract_zip(archive: Path, dest: Path) -> None:
-    with zipfile.ZipFile(archive) as zf:
-        zf.extractall(dest)
-
-
 def _extract_tar_gz(archive: Path, dest: Path) -> None:
-    require_tar_data_filter()
-    with tarfile.open(archive, "r:gz") as tar:
-        tar.extractall(dest, filter="data")
+    extract_tar_data(archive, dest, mode="r:gz")
 
 
 def _install_release_binary(
@@ -76,7 +67,7 @@ def _install_release_binary(
         temp_path = Path(temp_dir)
         archive_path = temp_path / archive_name
         download_with_retry(url, archive_path)
-        actual = hashlib.sha256(archive_path.read_bytes()).hexdigest()
+        actual = sha256_file(archive_path)
         if actual != sha256:
             raise RuntimeError(f"SHA256 mismatch: {actual} != {sha256}")
         extract(archive_path, temp_path)
@@ -177,14 +168,7 @@ class CcacheInstaller:
     @staticmethod
     def detect_arch() -> str:
         """Auto-detect CPU architecture, normalizing to ccache naming."""
-        machine = platform.machine().lower()
-        arch_map = {
-            "x86_64": "x86_64",
-            "amd64": "x86_64",
-            "aarch64": "aarch64",
-            "arm64": "aarch64",
-        }
-        return arch_map.get(machine, "x86_64")
+        return host_arch()
 
     def read_max_size(self, config_path: Path) -> str:
         """Extract max_size value from ccache.conf file."""
@@ -253,7 +237,7 @@ class CcacheInstaller:
         if not self.download_with_retry(minisign_url, minisign_path):
             return None
 
-        actual_hash = hashlib.sha256(minisign_path.read_bytes()).hexdigest()
+        actual_hash = sha256_file(minisign_path)
         if actual_hash != self.MINISIGN_ARCHIVE_SHA256:
             print(
                 f"Error: minisign archive hash mismatch: {actual_hash} != {self.MINISIGN_ARCHIVE_SHA256}",
@@ -262,9 +246,7 @@ class CcacheInstaller:
             return None
 
         try:
-            require_tar_data_filter()
-            with tarfile.open(minisign_path, "r:gz") as tar:
-                tar.extractall(temp_dir, filter="data")
+            extract_tar_data(minisign_path, temp_dir, mode="r:gz")
         except tarfile.TarError as e:
             print(f"Error extracting minisign: {e}", file=sys.stderr)
             return None
@@ -306,9 +288,7 @@ class CcacheInstaller:
         extract_dir = temp_dir / f"ccache-{self.version}-linux-{self.arch}-glibc"
 
         try:
-            require_tar_data_filter()
-            with tarfile.open(archive, "r:xz") as tar:
-                tar.extractall(temp_dir, filter="data")
+            extract_tar_data(archive, temp_dir, mode="r:xz")
         except tarfile.TarError as e:
             print(f"Error extracting ccache: {e}", file=sys.stderr)
             return False
@@ -343,10 +323,7 @@ class CcacheInstaller:
         installed = probe_version("ccache")
         if installed is None:
             return False
-        expected = tuple(int(n) for n in self.version.split("."))
-        # probe_version drops a missing patch component; compare on the shorter prefix.
-        compare_len = min(len(installed), len(expected))
-        return installed[:compare_len] == expected[:compare_len]
+        return version_prefix_matches(installed, self.version)
 
     def get_config(self) -> CcacheConfig:
         """Return current configuration as named tuple."""
@@ -358,7 +335,7 @@ class CcacheInstaller:
 
     def run_install(self) -> bool:
         """Execute full installation workflow."""
-        if platform.system() != "Linux":
+        if not is_linux():
             print("Warning: Binary installation only supported on Linux", file=sys.stderr)
             return False
 
@@ -569,7 +546,7 @@ def install_windows_binary(version: str, arch: str, sha256: str, runner_temp: Pa
         f"{_CCACHE_RELEASE_URL}/v{version}/ccache-{version}-windows-{arch}.zip",
         sha256,
         "ccache.zip",
-        _extract_zip,
+        extract_zip_safe,
         lambda root: root / f"ccache-{version}-windows-{arch}" / "ccache.exe",
         install_dir / "ccache.exe",
     )

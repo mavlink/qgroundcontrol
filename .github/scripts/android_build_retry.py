@@ -15,13 +15,14 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-import cmake_helper
 from common.gh_actions import gh_error, gh_warning
+from common.proc import run_tee
 
 _TRUNCATION_RE = re.compile(
     r"Invalid json file: .*android-QGroundControl-deployment-settings\.json\. "
     r"Reason: unterminated object"
 )
+
 
 def detect_truncation(log_path: Path) -> bool:
     """Return True if the build log shows the deployment-settings truncation."""
@@ -30,6 +31,7 @@ def detect_truncation(log_path: Path) -> bool:
             if _TRUNCATION_RE.search(line):
                 return True
     return False
+
 
 def clean_settings_json(path: Path) -> None:
     """Best-effort: validate JSON for logging, then remove the file."""
@@ -42,15 +44,22 @@ def clean_settings_json(path: Path) -> None:
         pass
     path.unlink(missing_ok=True)
 
+
 def retry_build(build_dir: Path, build_type: str, retry_log: Path) -> int:
     """Re-run cmake --build with --parallel 1, tee output to retry_log."""
     cmd = [
-        "cmake", "--build", str(build_dir),
-        "--target", "all",
-        "--config", build_type,
-        "--parallel", "1",
+        "cmake",
+        "--build",
+        str(build_dir),
+        "--target",
+        "all",
+        "--config",
+        build_type,
+        "--parallel",
+        "1",
     ]
-    return cmake_helper._run_with_tee(cmd, str(retry_log))
+    return run_tee(cmd, retry_log)
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -84,11 +93,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     gh_warning(
-        "Detected truncated android deployment settings JSON. "
-        "Retrying build with --parallel 1."
+        "Detected truncated android deployment settings JSON. Retrying build with --parallel 1."
     )
     clean_settings_json(settings_path)
     return retry_build(args.build_dir, args.build_type, retry_log)
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

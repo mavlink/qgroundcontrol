@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from typing import TYPE_CHECKING
 
 import pytest
 from common.github_runs import (
     WorkflowRunsFileError,
+    add_workflow_run_query_args,
     load_workflow_runs,
     resolve_workflow_runs,
 )
@@ -55,3 +57,38 @@ def test_resolve_workflow_runs_uses_cache_or_fetcher(tmp_path: Path, capsys) -> 
     path.write_text("{invalid", encoding="utf-8")
     assert resolve_workflow_runs("owner/repo", "abc", str(path), fetcher) is None
     assert "failed to read runs file" in capsys.readouterr().err
+
+
+def test_add_workflow_run_query_args_supports_shared_variants() -> None:
+    parser = argparse.ArgumentParser()
+    add_workflow_run_query_args(
+        parser,
+        default_event="pull_request",
+        workflows_option="--workflows",
+        workflows_dest="workflows",
+        runs_option="--runs-file",
+        include_runs_cache=True,
+        restrict_event=True,
+    )
+    args = parser.parse_args(
+        [
+            "--repo",
+            "owner/repo",
+            "--head-sha",
+            "abc",
+            "--event",
+            "push",
+            "--workflows",
+            "Linux,Windows",
+            "--runs-file",
+            "runs.json",
+            "--runs-cache",
+            "cache.json",
+        ]
+    )
+    assert args.repo == "owner/repo"
+    assert args.head_sha == "abc"
+    assert args.event == "push"
+    assert args.workflows == "Linux,Windows"
+    assert args.runs_file == "runs.json"
+    assert args.runs_cache == "cache.json"

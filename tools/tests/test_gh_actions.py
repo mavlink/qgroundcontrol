@@ -7,8 +7,8 @@ import json
 import os
 from unittest.mock import patch
 
+import common.gh_actions as mod
 import pytest
-from common import gh_actions as mod
 
 from ._helpers import completed
 

@@ -13,10 +13,7 @@ Example:
 from __future__ import annotations
 
 import argparse
-import hashlib
-import platform
 import sys
-import tarfile
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,10 +22,11 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.io import require_tar_data_filter
+from common.io import extract_tar_data, sha256_file
 from common.net import download_with_retry
+from common.platform import host_arch, is_linux
 from common.proc import run_captured
-from common.tool_version import probe_version
+from common.tool_version import probe_version, version_prefix_matches
 
 _MOLD_RELEASE_URL = "https://github.com/rui314/mold/releases/download"
 
@@ -49,12 +47,10 @@ PINNED_RELEASE = MoldRelease(
     },
 )
 
-ARCH_MAP = {"x86_64": "x86_64", "amd64": "x86_64", "aarch64": "aarch64", "arm64": "aarch64"}
-
 
 def detect_arch() -> str:
     """Auto-detect CPU architecture, normalizing to mold's release naming."""
-    return ARCH_MAP.get(platform.machine().lower(), "x86_64")
+    return host_arch()
 
 
 def install(version: str, arch: str, prefix: Path) -> Path:
@@ -73,12 +69,10 @@ def install(version: str, arch: str, prefix: Path) -> Path:
         tmp_path = Path(tmp)
         archive = tmp_path / archive_name
         download_with_retry(url, archive)
-        actual = hashlib.sha256(archive.read_bytes()).hexdigest()
+        actual = sha256_file(archive)
         if actual != sha256:
             raise RuntimeError(f"SHA256 mismatch for {archive_name}: {actual} != {sha256}")
-        require_tar_data_filter()
-        with tarfile.open(archive, "r:gz") as tar:
-            tar.extractall(tmp_path, filter="data")
+        extract_tar_data(archive, tmp_path, mode="r:gz")
         src = tmp_path / stem / "bin" / "mold"
         if not src.exists():
             raise FileNotFoundError(f"mold binary not found in archive: {src}")
@@ -98,9 +92,7 @@ def is_installed(version: str) -> bool:
     installed = probe_version("mold")
     if installed is None:
         return False
-    expected = tuple(int(n) for n in version.split("."))
-    compare_len = min(len(installed), len(expected))
-    return installed[:compare_len] == expected[:compare_len]
+    return version_prefix_matches(installed, version)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -114,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "install":
-        if platform.system() != "Linux":
+        if not is_linux():
             print("Warning: mold binary install only supported on Linux", file=sys.stderr)
             return 0
         arch = args.arch or detect_arch()

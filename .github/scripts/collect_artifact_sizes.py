@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -14,10 +13,15 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.artifact_metadata import ArtifactMetadataError, read_run_artifact_metadata
 from common.format import format_bytes
 from common.gh_actions import list_run_artifacts, list_workflow_runs_for_sha, parse_csv_list
-from common.github_runs import select_latest_runs_by_name
-from common.io import read_json, write_json
+from common.github_runs import (
+    add_workflow_run_query_args,
+    resolve_workflow_runs,
+    select_latest_runs_by_name,
+)
+from common.io import write_json
 
 _DISTRIBUTABLE_PREFIXES = (
     "QGroundControl",
@@ -121,28 +125,16 @@ def collect_artifacts(
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect artifact sizes for build-results.")
-    parser.add_argument("--repo", required=True, help="Repository in owner/repo format")
-    parser.add_argument("--head-sha", required=True, help="Commit SHA to inspect")
-    parser.add_argument(
-        "--platform-workflows",
-        default="Linux,Windows,MacOS,Android",
-        help="Comma-separated platform workflow names",
-    )
-    parser.add_argument(
-        "--event",
-        default="",
-        choices=["", "push", "pull_request", "workflow_dispatch", "schedule"],
-        help="Optional workflow event name to filter runs by",
+    add_workflow_run_query_args(
+        parser,
+        default_event="",
+        runs_option="--runs-file",
+        restrict_event=True,
     )
     parser.add_argument(
         "--output-file",
         default="artifact-sizes.json",
         help="Output JSON file path",
-    )
-    parser.add_argument(
-        "--runs-file",
-        default="",
-        help="Path to cached workflow runs JSON (skips API call if provided)",
     )
     parser.add_argument(
         "--artifacts-file",
@@ -157,40 +149,19 @@ def main(argv: list[str] | None = None) -> int:
     platforms = parse_csv_list(args.platform_workflows)
     event = str(args.event).strip()
 
-    if args.runs_file:
-        try:
-            loaded_runs = read_json(Path(args.runs_file))
-        except (json.JSONDecodeError, OSError) as e:
-            print(f"Error: failed to read runs file {args.runs_file}: {e}", file=sys.stderr)
-            return 1
-        if not isinstance(loaded_runs, list):
-            print(
-                f"Error: runs file {args.runs_file} must contain a JSON list of workflow runs",
-                file=sys.stderr,
-            )
-            return 1
-        runs = loaded_runs
-    else:
-        runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
+    runs = resolve_workflow_runs(
+        args.repo, args.head_sha, args.runs_file, list_workflow_runs_for_sha
+    )
+    if runs is None:
+        return 1
     artifacts_by_run_id: dict[int, list[dict[str, Any]]] = {}
     if args.artifacts_file:
         artifacts_path = Path(args.artifacts_file)
         if artifacts_path.exists():
             try:
-                data = read_json(artifacts_path)
-            except (json.JSONDecodeError, OSError):
-                data = {}
-            runs_data = data.get("runs", {})
-            if isinstance(runs_data, dict):
-                for run_id_str, run_artifacts in runs_data.items():
-                    try:
-                        run_id = int(run_id_str)
-                    except (TypeError, ValueError):
-                        continue
-                    if isinstance(run_artifacts, list):
-                        artifacts_by_run_id[run_id] = [
-                            artifact for artifact in run_artifacts if isinstance(artifact, dict)
-                        ]
+                artifacts_by_run_id = read_run_artifact_metadata(artifacts_path)
+            except ArtifactMetadataError as exc:
+                print(f"Warning: ignoring invalid artifact metadata: {exc}", file=sys.stderr)
 
     latest = select_latest_runs_by_name(
         runs, set(platforms), event=event, status="completed", conclusion="success"

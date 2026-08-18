@@ -6,7 +6,7 @@ import json
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
-from cmake_helper import read_cache_dict
+from common.cmake import read_cache_dict
 from generate_cpm_sbom import (
     generate_sbom,
     make_purl,

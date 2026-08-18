@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-from cmake_helper import detect_jobs, main, read_cache_var
+from cmake_helper import detect_jobs, main
+from common.cmake import read_cache_var
 
 if TYPE_CHECKING:
     from pathlib import Path

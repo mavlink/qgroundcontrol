@@ -15,11 +15,13 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import find_repo_root, get_default_branch_ref, run_captured
+from common.file_traversal import find_repo_root
 from common.gh_actions import write_github_output as _write_github_output
 from common.gh_actions import write_step_summary as _write_step_summary
+from common.git import get_default_branch_ref
 from common.io import chdir
 from common.logging import log_error, log_info, log_ok, log_warn
+from common.proc import run_captured
 
 HOOK_RESULT_RE = re.compile(r"\b(Passed|Failed|Skipped)\b")
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
@@ -123,7 +125,7 @@ def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, o
 
 def handle_install() -> int:
     log_info("Installing pre-commit and hooks...")
-    from common import pip_install
+    from common.deps import pip_install
 
     pip_install(["pre-commit"])
     subprocess.run(["pre-commit", "install"], check=True)
