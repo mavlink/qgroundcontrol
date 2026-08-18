@@ -9,4 +9,5 @@ class MAVLinkBandwidthControllerTest : public VehicleTest
 private slots:
     void _mavftpRoundTripTest_data();
     void _mavftpRoundTripTest();
+    void _mavftpCancelRestartTest();
 };

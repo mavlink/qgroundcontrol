@@ -22,7 +22,7 @@ FTPManager::FTPManager(Vehicle* vehicle)
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
 
     // Make sure we don't have bad structure packing
-    Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
+    static_assert(sizeof(MavlinkFTP::RequestHeader) == 12);
 
     _uploadState.reset();
 }
@@ -268,7 +268,15 @@ void FTPManager::cancelUpload()
         _uploadState.retryCount = 0;
         _startStateMachine();
     } else {
-        _uploadComplete(tr("Aborted"));
+        static const StateFunctions_t rgResetStateMachine[] = {
+            { &FTPManager::_resetSessionsBegin, &FTPManager::_resetSessionsAckOrNak, &FTPManager::_resetSessionsTimeout },
+            { &FTPManager::_uploadFinalize,      nullptr,                            nullptr },
+        };
+        for (size_t i = 0; i < sizeof(rgResetStateMachine) / sizeof(rgResetStateMachine[0]); i++) {
+            _rgStateMachine.append(rgResetStateMachine[i]);
+        }
+        _uploadState.retryCount = 0;
+        _startStateMachine();
     }
 }
 
@@ -1181,14 +1189,14 @@ void FTPManager::_resetSessionsAckOrNak(const MavlinkFTP::Request* ackOrNak)
         _advanceStateMachine();
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
         qCDebug(FTPManagerLog) << "_resetSessionsAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
-        _downloadComplete(QString());
+        _advanceStateMachine();
     }
 }
 
 void FTPManager::_resetSessionsTimeout(void)
 {
     qCDebug(FTPManagerLog) << "_resetSessionsTimeout";
-    _downloadComplete(QString());
+    _advanceStateMachine();
 }
 
 void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)

@@ -10,6 +10,7 @@
 
 #include "FTPManager.h"
 #include "MAVLinkEnums.h"
+#include "MAVLinkFTP.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
@@ -177,7 +178,9 @@ void MAVLinkFtpBandwidthTest::_deleteComplete(const QString& remotePath, const Q
         return;
     }
 
-    if (errorMessage.isEmpty()) {
+    const bool remoteFileAlreadyAbsent =
+        errorMessage.endsWith(MavlinkFTP::errorCodeToString(MavlinkFTP::kErrFailFileNotFound));
+    if (errorMessage.isEmpty() || remoteFileAlreadyAbsent) {
         _finish(_pendingSuccess, _pendingStatusText);
     } else {
         _finish(false, tr("%1 Remote cleanup failed: %2").arg(_pendingStatusText, errorMessage));
