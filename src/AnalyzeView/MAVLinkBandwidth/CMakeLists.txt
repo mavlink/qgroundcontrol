@@ -15,7 +15,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(_mavlink_bandwidth_script "${CMAKE_SOURCE_DIR}/tools/mavlink-bandwidth/APM/scripts/mavlink_bandwidth.lua")
+set(_mavlink_bandwidth_script "${CMAKE_CURRENT_SOURCE_DIR}/mavlink_bandwidth.lua")
 set_source_files_properties("${_mavlink_bandwidth_script}" PROPERTIES QT_RESOURCE_ALIAS "mavlink_bandwidth.lua")
 qt_add_resources(${CMAKE_PROJECT_NAME} mavlink_bandwidth_script
     PREFIX "/mavlink-bandwidth"
