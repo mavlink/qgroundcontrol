@@ -26,6 +26,7 @@ CPMAddPackage(
     GITHUB_REPOSITORY mavlink/libevents
     GIT_TAG 840a88ea226d4eb0fd4c391ce860317422756435
     SOURCE_SUBDIR libs/cpp
+    EXCLUDE_FROM_ALL YES
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libevents)
