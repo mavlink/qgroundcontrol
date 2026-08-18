@@ -25,7 +25,7 @@ local OUTER_FORMAT = "<I2BBBc128"
 local UPDATE_INTERVAL_MS = 10
 local REPORT_INTERVAL_MS = 500
 local MAX_RX_PER_UPDATE = 25
-local MAX_TX_PER_UPDATE = 12
+local MAX_TX_PER_UPDATE = 32
 local MAX_RATE_BYTES_PER_SECOND = 250000
 local MAX_DURATION_MS = 60000
 
@@ -186,6 +186,8 @@ local function receive_data(packet)
         local delta = (packet.sequence - expected) & 0xFFFFFFFF
         if delta > 0 and delta < 0x80000000 then
             state.lost_packets = state.lost_packets + delta
+        elseif delta >= 0x80000000 then
+            return
         end
     end
 
@@ -195,17 +197,37 @@ local function receive_data(packet)
 end
 
 local function handle_packet(packet)
-    state.channel = packet.channel
-    state.target_system = packet.source_system
-    state.target_component = packet.source_component
-
     if packet.opcode == OP_HELLO then
+        local active_channel = state.channel
+        local active_target_system = state.target_system
+        local active_target_component = state.target_component
+        state.channel = packet.channel
+        state.target_system = packet.source_system
+        state.target_component = packet.source_component
         send_inner(OP_HELLO_ACK, packet.direction, packet.session_id, 0, PROTOCOL_VERSION, 0, 0, 0, 0,
             0, PADDING_PATTERN)
+        if state.active then
+            state.channel = active_channel
+            state.target_system = active_target_system
+            state.target_component = active_target_component
+        end
         return
     end
 
     if packet.opcode == OP_START then
+        if state.active and (packet.channel ~= state.channel or packet.source_system ~= state.target_system or
+            packet.source_component ~= state.target_component) then
+            return
+        end
+        if state.active then
+            if packet.session_id == state.session_id then
+                send_report()
+            end
+            return
+        end
+        state.channel = packet.channel
+        state.target_system = packet.source_system
+        state.target_component = packet.source_component
         if arming:is_armed() or packet.value2 == 0 or packet.value3 ~= DATA_BYTES then
             state.session_id = packet.session_id
             state.direction = packet.direction
@@ -214,6 +236,9 @@ local function handle_packet(packet)
         end
         reset_test(packet)
         send_report()
+    elseif packet.channel ~= state.channel or packet.source_system ~= state.target_system or
+        packet.source_component ~= state.target_component then
+        return
     elseif packet.opcode == OP_DATA then
         receive_data(packet)
     elseif packet.opcode == OP_STOP and packet.session_id == state.session_id then

@@ -1,13 +1,17 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include <chrono>
 
 #include "LinkInterface.h"
 #include "MAVLinkBandwidthProtocol.h"
@@ -20,12 +24,15 @@ class FTPManager;
 class MAVLinkBandwidthController : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(MAVLinkBandwidthController)
     QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
     Q_PROPERTY(bool vehicleAvailable READ vehicleAvailable NOTIFY availabilityChanged)
     Q_PROPERTY(bool endpointAvailable READ endpointAvailable NOTIFY endpointAvailableChanged)
     Q_PROPERTY(bool running READ running NOTIFY runningChanged)
+    Q_PROPERTY(bool stopping READ stopping NOTIFY stoppingChanged)
     Q_PROPERTY(bool canStart READ canStart NOTIFY canStartChanged)
+    Q_PROPERTY(int activeVehicleId READ activeVehicleId NOTIFY availabilityChanged)
     Q_PROPERTY(QString linkName READ linkName NOTIFY linkNameChanged)
     Q_PROPERTY(QString statusText READ statusText NOTIFY statusTextChanged)
     Q_PROPERTY(TestMode testMode READ testMode WRITE setTestMode NOTIFY configurationChanged)
@@ -74,7 +81,11 @@ public:
 
     bool running() const { return _running; }
 
+    bool stopping() const { return _stopping; }
+
     bool canStart() const;
+
+    int activeVehicleId() const;
 
     QString linkName() const;
 
@@ -129,7 +140,7 @@ public:
     void setFtpFileSizeKiB(int ftpFileSizeKiB);
 
     Q_INVOKABLE void probeEndpoint();
-    Q_INVOKABLE void installScriptAndReboot();
+    Q_INVOKABLE void installScriptAndReboot(int expectedVehicleId);
     Q_INVOKABLE void startTest();
     Q_INVOKABLE void stopTest();
 
@@ -137,6 +148,7 @@ signals:
     void availabilityChanged();
     void endpointAvailableChanged();
     void runningChanged();
+    void stoppingChanged();
     void canStartChanged();
     void linkNameChanged();
     void statusTextChanged();
@@ -161,8 +173,11 @@ private slots:
     void _ftpMeasurementStarted(MAVLinkFtpBandwidthTest::Direction direction);
     void _ftpMeasurementProgress(MAVLinkFtpBandwidthTest::Direction direction, float progress);
     void _ftpMeasurementComplete(MAVLinkFtpBandwidthTest::Direction direction, qint64 elapsedMs, quint64 payloadBytes);
+    void _ftpCleanupStarted();
     void _ftpFinished(bool success, const QString& statusText);
     void _scriptDeleteComplete(const QString& remotePath, const QString& errorMessage);
+    void _scriptDownloadComplete(const QString& localPath, const QString& errorMessage);
+    void _scriptReplaceComplete(const QString& fromPath, const QString& toPath, const QString& errorMessage);
     void _scriptUploadComplete(const QString& remotePath, const QString& errorMessage);
     void _scriptUploadProgress(float progress);
 
@@ -170,13 +185,17 @@ private:
     enum class ScriptDeploymentPhase
     {
         Idle,
-        Deleting,
-        Uploading,
+        DeletingStaging,
+        UploadingStaging,
+        VerifyingStaging,
+        Replacing,
     };
 
     void _startStreamingTest();
     void _startFtpTest();
     void _abortActiveTest(const QString& statusText);
+    void _detachFtpTestForCleanup(const QString& statusText);
+    void _cancelProbe();
     void _cancelScriptDeployment(const QString& statusText);
     void _finishScriptDeployment(bool success, const QString& statusText);
     void _setScriptDeploying(bool deploying);
@@ -184,6 +203,7 @@ private:
     void _finishTest(const QString& statusText, bool completed);
     void _setEndpointAvailable(bool available);
     void _setRunning(bool running);
+    void _setStopping(bool stopping);
     void _setStatusText(const QString& statusText);
     bool _sendPacket(const MAVLinkBandwidth::Packet& packet);
     uint32_t _newSessionId() const;
@@ -201,6 +221,8 @@ private:
     MAVLinkFtpBandwidthTest* _ftpTest = nullptr;
     QPointer<FTPManager> _scriptFtpManager;
     QMetaObject::Connection _scriptDeleteCompleteConnection;
+    QMetaObject::Connection _scriptDownloadCompleteConnection;
+    QMetaObject::Connection _scriptReplaceCompleteConnection;
     QMetaObject::Connection _scriptUploadCompleteConnection;
     QMetaObject::Connection _scriptUploadProgressConnection;
     TestMode _testMode = TestMode::Streaming;
@@ -216,13 +238,20 @@ private:
     bool _haveReceiveSequence = false;
     bool _endpointAvailable = false;
     bool _running = false;
+    bool _stopping = false;
     bool _ftpMeasuring = false;
     bool _scriptDeploying = false;
     ScriptDeploymentPhase _scriptDeploymentPhase = ScriptDeploymentPhase::Idle;
     float _scriptDeploymentProgress = 0.F;
+    QTemporaryDir _scriptTemporaryDirectory;
+    QByteArray _scriptExpectedHash;
     MAVLinkFtpBandwidthTest::Direction _ftpMeasurementDirection = MAVLinkFtpBandwidthTest::Direction::QgcToVehicle;
     qint64 _ftpUploadElapsedMs = 0;
     qint64 _ftpDownloadElapsedMs = 0;
+    qint64 _streamingElapsedMs = 0;
+    qint64 _lastEndpointElapsedMs = 0;
+    bool _awaitingTerminalReport = false;
+    bool _probeActive = false;
     double _progress = 0.;
     double _transmitRateKbps = 0.;
     double _receiveRateKbps = 0.;
@@ -238,10 +267,13 @@ private:
     quint64 _wireTransmitBytes = 0;
     quint64 _wireReceiveBytes = 0;
 
-    static constexpr int kSendIntervalMs = 10;
-    static constexpr int kStatisticsIntervalMs = 200;
-    static constexpr int kProbeTimeoutMs = 2000;
-    static constexpr int kMaximumPacketsPerTick = 16;
+    static constexpr std::chrono::milliseconds kSendInterval{10};
+    static constexpr std::chrono::milliseconds kStatisticsInterval{200};
+    static constexpr std::chrono::milliseconds kProbeTimeout{2000};
+    static constexpr std::chrono::milliseconds kFinalReportTimeout{1500};
+    static constexpr std::chrono::seconds kFtpInactivityTimeout{15};
+    static constexpr int kMaximumPacketsPerTick = 32;
     static constexpr const char* kEmbeddedScriptPath = ":/mavlink-bandwidth/mavlink_bandwidth.lua";
     static constexpr const char* kRemoteScriptPath = "/APM/scripts/mavlink_bandwidth.lua";
+    static constexpr const char* kStagingScriptPath = "/APM/scripts/.mavlink_bandwidth.lua.qgc-upload";
 };

@@ -20,6 +20,7 @@ MockLinkFTP::MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, Mock
 
 MockLinkFTP::~MockLinkFTP()
 {
+    _currentFile.close();
     if (!_paramPckTempFile.isEmpty()) {
         QFile::remove(_paramPckTempFile);
     }
@@ -327,6 +328,44 @@ void MockLinkFTP::_removeFileCommand(uint8_t senderSystemId, uint8_t senderCompo
     _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFailFileNotFound, outgoingSeqNumber, MavlinkFTP::kCmdRemoveFile);
 }
 
+void MockLinkFTP::_renameCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+{
+    const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
+    if (request->hdr.size > sizeof(request->data)) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidDataSize, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+        return;
+    }
+    const QByteArray paths(reinterpret_cast<const char*>(request->data), request->hdr.size);
+    const qsizetype separator = paths.indexOf('\0');
+    if ((separator <= 0) || (separator >= (paths.size() - 1))) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidDataSize, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+        return;
+    }
+    const QString fromPath = QString::fromUtf8(paths.first(separator));
+    const QByteArray toPathBytes = paths.sliced(separator + 1);
+    const qsizetype toPathEnd = toPathBytes.indexOf('\0');
+    if (toPathEnd <= 0) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidDataSize, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+        return;
+    }
+    const QString toPath = QString::fromUtf8(toPathBytes.first(toPathEnd));
+    if (!_uploadedFiles.contains(fromPath)) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFailFileNotFound, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+        return;
+    }
+    const QString fromTempPath = _uploadedFileTempPaths.take(fromPath);
+    if (!fromTempPath.isEmpty()) {
+        QFile::remove(fromTempPath);
+    }
+    const QString toTempPath = _uploadedFileTempPaths.take(toPath);
+    if (!toTempPath.isEmpty()) {
+        QFile::remove(toTempPath);
+    }
+    _uploadedFiles.remove(toPath);
+    _uploadedFiles.insert(toPath, _uploadedFiles.take(fromPath));
+    _sendAck(senderSystemId, senderComponentId, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+}
+
 void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
 {
     if (_burstReadDelayMs > 0) {
@@ -467,6 +506,10 @@ void MockLinkFTP::_finalizeActiveUpload()
     }
 
     if (!_uploadSession.remotePath.isEmpty()) {
+        const QString tempPath = _uploadedFileTempPaths.take(_uploadSession.remotePath);
+        if (!tempPath.isEmpty()) {
+            QFile::remove(tempPath);
+        }
         _uploadedFiles.insert(_uploadSession.remotePath, _uploadSession.buffer);
     }
 
@@ -552,6 +595,9 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
         break;
     case MavlinkFTP::kCmdRemoveFile:
         _removeFileCommand(message.sysid, message.compid, request, incomingSeqNumber);
+        break;
+    case MavlinkFTP::kCmdRename:
+        _renameCommand(message.sysid, message.compid, request, incomingSeqNumber);
         break;
     case MavlinkFTP::kCmdWriteFile:
         _writeCommand(message.sysid, message.compid, request, incomingSeqNumber);
@@ -690,12 +736,12 @@ QString MockLinkFTP::_uploadedFileTempPath(const QString &path)
     }
 
     QTemporaryFile tempFile(QDir::tempPath() + QStringLiteral("/MockLinkFTPUploadXXXXXX"));
-    tempFile.setAutoRemove(false);
     const QByteArray contents = _uploadedFiles.value(path);
     if (!tempFile.open() || (tempFile.write(contents) != contents.size())) {
         return QString();
     }
     tempFile.close();
+    tempFile.setAutoRemove(false);
     _uploadedFileTempPaths.insert(path, tempFile.fileName());
     return tempFile.fileName();
 }

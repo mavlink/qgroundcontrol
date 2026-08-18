@@ -93,7 +93,8 @@ void MAVLinkFtpBandwidthTest::cancel(const QString& statusText)
             _ftpManager->cancelDownload();
             break;
         case Phase::Cleaning:
-            _ftpManager->cancelDelete();
+            _pendingSuccess = false;
+            _pendingStatusText = _cancelStatusText;
             break;
         case Phase::Idle:
             break;
@@ -107,9 +108,12 @@ bool MAVLinkFtpBandwidthTest::active() const
 
 void MAVLinkFtpBandwidthTest::_uploadComplete(const QString& remotePath, const QString& errorMessage)
 {
-    Q_UNUSED(remotePath)
-
     if (_phase != Phase::MeasuringUpload) {
+        return;
+    }
+
+    if (remotePath != _remoteFilePath) {
+        _beginCleanup(false, tr("MAVFTP upload returned an unexpected destination."));
         return;
     }
 
@@ -151,9 +155,12 @@ void MAVLinkFtpBandwidthTest::_downloadComplete(const QString& localPath, const 
 
 void MAVLinkFtpBandwidthTest::_deleteComplete(const QString& remotePath, const QString& errorMessage)
 {
-    Q_UNUSED(remotePath)
-
     if (_phase != Phase::Cleaning) {
+        return;
+    }
+
+    if (!remotePath.isEmpty() && (remotePath != _remoteFilePath)) {
+        _finish(false, tr("MAVFTP cleanup returned an unexpected destination."));
         return;
     }
 
@@ -252,6 +259,7 @@ void MAVLinkFtpBandwidthTest::_beginCleanup(bool success, const QString& statusT
     _pendingSuccess = success;
     _pendingStatusText = statusText;
     _phase = Phase::Cleaning;
+    emit cleanupStarted();
     emit phaseChanged(tr("Removing the remote MAVFTP test file..."));
 
     if (!_ftpManager->deleteFile(MAV_COMP_ID_AUTOPILOT1, _remoteFilePath)) {

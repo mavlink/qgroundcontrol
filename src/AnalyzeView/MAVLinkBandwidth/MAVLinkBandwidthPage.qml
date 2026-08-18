@@ -12,12 +12,9 @@ AnalyzePage {
 
     pageComponent: pageComponent
     pageDescription: qsTr("Measures end-to-end MAVLink payload goodput using an ArduPilot streaming endpoint or stock MAVFTP.")
-    allowPopout: true
+    allowPopout: false
 
     readonly property bool _streamingMode: controller.testMode === MAVLinkBandwidthController.Streaming
-    readonly property var _testModes: controller.streamingSupported
-        ? [qsTr("Streaming (ArduPilot Lua)"), qsTr("MAVFTP (PX4 or ArduPilot)")]
-        : [qsTr("MAVFTP (PX4 or ArduPilot)")]
 
     MAVLinkBandwidthController {
         id: controller
@@ -91,8 +88,9 @@ AnalyzePage {
                     }
                 }
 
-                RowLayout {
+                Flow {
                     Layout.fillWidth: true
+                    Layout.minimumHeight: implicitHeight
                     visible: controller.streamingSupported
                     spacing: ScreenTools.defaultFontPixelWidth
 
@@ -108,16 +106,17 @@ AnalyzePage {
                         text: controller.scriptDeploying ? qsTr("Uploading Lua Script...")
                                                          : qsTr("Install Lua Script and Reboot")
                         enabled: controller.streamingAvailable && !controller.running && !controller.scriptDeploying
-                        onClicked: QGroundControl.showMessageDialog(
-                            root,
-                            qsTr("Install Lua Script and Reboot"),
-                            qsTr("Upload the embedded MAVLink bandwidth script to the connected ArduPilot vehicle and reboot it? ArduPilot scripting must already be enabled."),
-                            Dialog.Ok | Dialog.Cancel,
-                            function() { controller.installScriptAndReboot() }
-                        )
+                        onClicked: {
+                            const approvedVehicleId = controller.activeVehicleId
+                            QGroundControl.showMessageDialog(
+                                root,
+                                qsTr("Install Lua Script and Reboot"),
+                                qsTr("Upload the embedded MAVLink bandwidth script to the connected ArduPilot vehicle and reboot it? ArduPilot scripting must already be enabled."),
+                                Dialog.Ok | Dialog.Cancel,
+                                function() { controller.installScriptAndReboot(approvedVehicleId) }
+                            )
+                        }
                     }
-
-                    Item { Layout.fillWidth: true }
                 }
 
                 ProgressBar {
@@ -137,14 +136,21 @@ AnalyzePage {
                     QGCLabel { text: qsTr("Test mode") }
                     QGCComboBox {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 26
-                        model: root._testModes
-                        currentIndex: controller.streamingSupported ? (root._streamingMode ? 0 : 1) : 0
+                        visible: controller.streamingSupported
+                        model: [qsTr("Streaming (ArduPilot Lua)"), qsTr("MAVFTP (PX4 or ArduPilot)")]
+                        currentIndex: root._streamingMode ? 0 : 1
                         enabled: !controller.running && !controller.scriptDeploying
                         onActivated: (index) => {
-                            controller.testMode = controller.streamingSupported && index === 0
+                            controller.testMode = index === 0
                                 ? MAVLinkBandwidthController.Streaming
                                 : MAVLinkBandwidthController.MavFtp
                         }
+                    }
+                    QGCComboBox {
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 26
+                        visible: !controller.streamingSupported
+                        model: [qsTr("MAVFTP (PX4 or ArduPilot)")]
+                        enabled: false
                     }
 
                     QGCLabel {
@@ -176,7 +182,6 @@ AnalyzePage {
                         validator: IntValidator { bottom: 1; top: 2000 }
                         onEditingFinished: {
                             controller.targetRateKbps = Number(text)
-                            text = controller.targetRateKbps.toString()
                         }
                     }
 
@@ -202,7 +207,6 @@ AnalyzePage {
                         validator: IntValidator { bottom: 1; top: 60 }
                         onEditingFinished: {
                             controller.durationSeconds = Number(text)
-                            text = controller.durationSeconds.toString()
                         }
                     }
 
@@ -228,7 +232,6 @@ AnalyzePage {
                         validator: IntValidator { bottom: 64; top: 10240 }
                         onEditingFinished: {
                             controller.ftpFileSizeKiB = Number(text)
-                            text = controller.ftpFileSizeKiB.toString()
                         }
                     }
 
@@ -254,7 +257,7 @@ AnalyzePage {
 
                     QGCButton {
                         text: qsTr("Stop")
-                        enabled: controller.running
+                        enabled: controller.running && !controller.stopping
                         onClicked: controller.stopTest()
                     }
 

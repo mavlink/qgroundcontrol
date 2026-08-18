@@ -13,6 +13,7 @@ class Vehicle;
 class MAVLinkFtpBandwidthTest : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(MAVLinkFtpBandwidthTest)
 
 public:
     enum class Direction
@@ -34,6 +35,7 @@ signals:
     void measurementStarted(Direction direction);
     void measurementProgress(Direction direction, float progress);
     void measurementComplete(Direction direction, qint64 elapsedMs, quint64 payloadBytes);
+    void cleanupStarted();
     void finished(bool success, const QString& statusText);
 
 private slots:

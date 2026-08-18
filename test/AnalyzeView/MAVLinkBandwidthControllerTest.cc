@@ -2,11 +2,14 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
+#include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
 
+#include "FTPManager.h"
 #include "MAVLinkBandwidthController.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
+#include "Vehicle.h"
 
 void MAVLinkBandwidthControllerTest::_firmwareModeAvailabilityTest()
 {
@@ -19,6 +22,9 @@ void MAVLinkBandwidthControllerTest::_firmwareModeAvailabilityTest()
     _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
     QVERIFY_TRUE_WAIT(controller.streamingSupported(), TestTimeout::longMs());
     QCOMPARE(controller.testMode(), MAVLinkBandwidthController::TestMode::Streaming);
+    controller.installScriptAndReboot(controller.activeVehicleId() + 1);
+    QVERIFY(!controller.scriptDeploying());
+    QVERIFY(controller.statusText().contains(QStringLiteral("active vehicle changed")));
 }
 
 void MAVLinkBandwidthControllerTest::_scriptInstallAndRebootTest()
@@ -26,12 +32,22 @@ void MAVLinkBandwidthControllerTest::_scriptInstallAndRebootTest()
     _disconnectMockLink();
     _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 
+    QTemporaryFile existingScript;
+    QVERIFY(existingScript.open());
+    QCOMPARE(existingScript.write("return function() end\n"), 22);
+    existingScript.close();
+    QSignalSpy existingUploadSpy(vehicle()->ftpManager(), &FTPManager::uploadComplete);
+    QVERIFY(vehicle()->ftpManager()->upload(
+        MAV_COMP_ID_AUTOPILOT1, QStringLiteral("/APM/scripts/mavlink_bandwidth.lua"), existingScript.fileName()));
+    QVERIFY_SIGNAL_WAIT(existingUploadSpy, TestTimeout::longMs());
+    QVERIFY(existingUploadSpy.first().at(1).toString().isEmpty());
+
     MAVLinkBandwidthController controller;
     QSignalSpy deploymentSpy(&controller, &MAVLinkBandwidthController::scriptDeploymentFinished);
     QVERIFY(deploymentSpy.isValid());
 
     QPointer<MockLink> testMockLink = mockLink();
-    controller.installScriptAndReboot();
+    controller.installScriptAndReboot(controller.activeVehicleId());
     QVERIFY_SIGNAL_WAIT(deploymentSpy, TestTimeout::longMs());
     QCOMPARE(deploymentSpy.count(), 1);
     QVERIFY2(deploymentSpy.first().at(0).toBool(), qPrintable(deploymentSpy.first().at(1).toString()));
@@ -73,6 +89,10 @@ void MAVLinkBandwidthControllerTest::_mavftpRoundTripTest()
     QVERIFY(controller.transmitRateKbps() > 0.);
     QVERIFY(controller.receiveRateKbps() > 0.);
     QVERIFY(runningSpy.count() >= 2);
+
+    _disconnectMockLink();
+    QCOMPARE(controller.transmittedPayloadBytes(), 0U);
+    QCOMPARE(controller.receivedPayloadBytes(), 0U);
 }
 
 void MAVLinkBandwidthControllerTest::_mavftpCancelRestartTest()
@@ -83,6 +103,7 @@ void MAVLinkBandwidthControllerTest::_mavftpCancelRestartTest()
 
     controller.startTest();
     QVERIFY(controller.running());
+    controller.stopTest();
     controller.stopTest();
     QVERIFY_TRUE_WAIT(!controller.running(), TestTimeout::longMs());
     QCOMPARE(controller.statusText(), QStringLiteral("MAVFTP test stopped."));
@@ -95,6 +116,19 @@ void MAVLinkBandwidthControllerTest::_mavftpCancelRestartTest()
              qPrintable(controller.statusText()));
     QCOMPARE(controller.transmittedPayloadBytes(), 64U * 1024U);
     QCOMPARE(controller.receivedPayloadBytes(), 64U * 1024U);
+}
+
+void MAVLinkBandwidthControllerTest::_mavftpControllerDestructionCleanupTest()
+{
+    mockLink()->mockLinkFTP()->setBurstReadDelayMs(20);
+    auto* controller = new MAVLinkBandwidthController;
+    controller->setTestMode(MAVLinkBandwidthController::TestMode::MavFtp);
+    controller->setFtpFileSizeKiB(64);
+    controller->startTest();
+    QVERIFY_TRUE_WAIT(controller->progress() >= 0.5, TestTimeout::longMs());
+
+    delete controller;
+    QVERIFY_TRUE_WAIT(mockLink()->mockLinkFTP()->uploadedFiles().isEmpty(), TestTimeout::longMs());
 }
 
 UT_REGISTER_TEST(MAVLinkBandwidthControllerTest, TestLabel::Integration, TestLabel::Vehicle, TestLabel::AnalyzeView)

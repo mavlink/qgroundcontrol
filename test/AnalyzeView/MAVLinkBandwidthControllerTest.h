@@ -11,4 +11,5 @@ private slots:
     void _scriptInstallAndRebootTest();
     void _mavftpRoundTripTest();
     void _mavftpCancelRestartTest();
+    void _mavftpControllerDestructionCleanupTest();
 };
