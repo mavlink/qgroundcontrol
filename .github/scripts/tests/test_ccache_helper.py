@@ -39,22 +39,34 @@ class TestCcacheInstaller:
 
     def test_detect_arch_x86_64(self):
         """Test x86_64 architecture detection."""
-        with patch("platform.machine", return_value="x86_64"):
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("platform.machine", return_value="x86_64"),
+        ):
             assert CcacheInstaller.detect_arch() == "x86_64"
 
     def test_detect_arch_amd64(self):
         """Test amd64 (alias) architecture detection."""
-        with patch("platform.machine", return_value="amd64"):
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("platform.machine", return_value="amd64"),
+        ):
             assert CcacheInstaller.detect_arch() == "x86_64"
 
     def test_detect_arch_arm64(self):
         """Test arm64 architecture detection."""
-        with patch("platform.machine", return_value="arm64"):
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("platform.machine", return_value="arm64"),
+        ):
             assert CcacheInstaller.detect_arch() == "aarch64"
 
     def test_detect_arch_aarch64(self):
         """Test aarch64 architecture detection."""
-        with patch("platform.machine", return_value="aarch64"):
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("platform.machine", return_value="aarch64"),
+        ):
             assert CcacheInstaller.detect_arch() == "aarch64"
 
     def test_default_prefix_from_env(self):

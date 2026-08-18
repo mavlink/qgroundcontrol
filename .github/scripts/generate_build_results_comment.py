@@ -21,9 +21,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.cobertura import CoberturaError, read_cobertura
 from common.format import format_bytes, format_delta_bytes
-from xml_utils import XMLParseError
-from xml_utils import xml_parse as _xml_parse
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +37,11 @@ def _parse_coverage_percent(path: Path) -> float | None:
     if not path.exists():
         return None
     try:
-        root = _xml_parse(path).getroot()
-        if root is None:
+        metrics = read_cobertura(path)
+        if metrics.lines_valid == 0:
             return None
-        if int(root.get("lines-valid", 0)) == 0:
-            return None
-        return float(root.get("line-rate", 0.0)) * 100.0
-    except (XMLParseError, OSError, ValueError):
+        return metrics.line_percent
+    except CoberturaError:
         logger.warning("Failed to parse coverage from %s", path, exc_info=True)
         return None
 

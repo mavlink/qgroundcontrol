@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import subprocess
 
+import common.aws as aws
 import pytest
-from common import aws
 
 
 def test_public_s3_uri_rejects_unapproved_or_unsafe_destinations() -> None:

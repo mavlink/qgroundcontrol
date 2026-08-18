@@ -14,7 +14,7 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import find_repo_root
+from common.file_traversal import find_repo_root
 from common.gh_actions import write_step_summary
 from common.logging import log_error, log_info, log_ok
 from common.opener import open_in_default_app

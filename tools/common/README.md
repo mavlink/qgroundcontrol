@@ -1,8 +1,8 @@
 # QGC Shared Tooling
 
 `tools/common/` contains small, dependency-light helpers shared by QGC developer and CI scripts.
-New code should import from the module that defines a helper. `common/__init__.py` retains lazy
-compatibility exports for existing scripts without eagerly importing optional dependencies.
+Import from the module that defines a helper; `common/__init__.py` intentionally does not re-export
+symbols. Explicit imports keep runtime and sparse-checkout dependencies visible.
 
 ```python
 from common.file_traversal import find_repo_root
@@ -17,7 +17,6 @@ from common.proc import run_captured
 | `artifact_metadata.py` | Validated GitHub Actions artifact name and size interchange |
 | `aws.py` | Allowlisted public S3 object checks and uploads |
 | `build_config.py` | `.github/build-config.json` lookup, validation, and CI export |
-| `cli.py` | Shared command-line arguments for developer tools |
 | `cmake.py` | CMake cache variable parsing |
 | `cobertura.py` | Cobertura line and branch coverage metrics |
 | `deps.py` | External-tool checks and project-aware Python package installation |

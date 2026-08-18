@@ -13,16 +13,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import sys
 from dataclasses import dataclass
 
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, gh_error, write_github_output, write_step_summary
+from common.gh_actions import gh, require_repository, write_github_output, write_step_summary
 from common.markdown import md_table
 
 # Build caches are the expensive-to-rebuild data the GC must never evict; the
@@ -44,14 +42,6 @@ class CacheUsage:
     ref: str
     size_bytes: int
     last_accessed: str
-
-
-def _repo() -> str:
-    repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
-    if not repo:
-        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
-        sys.exit(1)
-    return repo
 
 
 def _branch_args(branch: str) -> list[str]:
@@ -263,7 +253,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    repo = _repo()
+    repo = require_repository()
 
     if args.prune:
         write_github_output(run_prune(repo, args))

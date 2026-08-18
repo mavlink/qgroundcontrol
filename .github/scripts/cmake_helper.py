@@ -14,7 +14,6 @@ from __future__ import annotations
 import argparse
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -24,27 +23,9 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.cmake import read_cache_var
 from common.gh_actions import append_github_env, gh_error, gh_notice, write_github_output
-
-
-def _run_with_tee(cmd: list[str], output_file: str) -> int:
-    # Use `bash | tee` so children keep a real stdout — Popen+PIPE deadlocks
-    # Gradle/javac on Windows when grandchildren block-buffer 8KB+ output.
-    bash = shutil.which("bash")
-    if bash:
-        quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
-        quoted_log = shlex.quote(output_file)
-        script = f"set -o pipefail; {quoted_cmd} 2>&1 | tee {quoted_log}"
-        return subprocess.run([bash, "-c", script], check=False).returncode
-
-    with open(output_file, "w", encoding="utf-8") as log:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        assert proc.stdout is not None
-        for line in proc.stdout:
-            sys.stdout.write(line)
-            log.write(line)
-        proc.wait()
-        return proc.returncode
+from common.proc import run_tee
 
 
 def detect_jobs(requested: str = "auto") -> int:
@@ -74,9 +55,7 @@ def cmd_build(args: argparse.Namespace) -> None:
     if args.parallel:
         if args.parallel_jobs:
             if not re.match(r"^[1-9]\d*$", args.parallel_jobs):
-                gh_error(
-                    f"parallel-jobs must be a positive integer, got '{args.parallel_jobs}'"
-                )
+                gh_error(f"parallel-jobs must be a positive integer, got '{args.parallel_jobs}'")
                 sys.exit(1)
             cmd += ["--parallel", args.parallel_jobs]
         else:
@@ -93,7 +72,7 @@ def cmd_build(args: argparse.Namespace) -> None:
     start = time.monotonic()
 
     if output_file:
-        exit_code = _run_with_tee(cmd, output_file)
+        exit_code = run_tee(cmd, output_file)
     else:
         result = subprocess.run(cmd, check=False)
         exit_code = result.returncode
@@ -178,32 +157,10 @@ def cmd_ctest(args: argparse.Namespace) -> None:
         cmd += ["-I", f"{start_idx},0,{args.shard_count}"]
 
     start = time.monotonic()
-    exit_code = _run_with_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
+    exit_code = run_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
     duration = int(time.monotonic() - start)
     gh_notice(f"Tests completed in {duration}s")
     sys.exit(exit_code)
-
-
-_CACHE_LINE_RE = re.compile(r"^([A-Za-z0-9_.\-]+):[^=]+=(.*)$")
-
-
-def read_cache_var(cache_path: str, name: str) -> str | None:
-    """Return the value of a CMake cache variable, or None if not set."""
-    return read_cache_dict(cache_path).get(name)
-
-
-def read_cache_dict(cache_path: str) -> dict[str, str]:
-    """Return all typed entries from CMakeCache.txt as a flat name->value dict."""
-    entries: dict[str, str] = {}
-    try:
-        with open(cache_path, encoding="utf-8") as fh:
-            for line in fh:
-                match = _CACHE_LINE_RE.match(line.rstrip("\n"))
-                if match:
-                    entries[match.group(1)] = match.group(2)
-    except FileNotFoundError:
-        pass
-    return entries
 
 
 def cmd_cache_var(args: argparse.Namespace) -> None:
