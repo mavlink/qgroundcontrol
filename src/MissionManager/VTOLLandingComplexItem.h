@@ -21,6 +21,7 @@ public:
     QString patternName         (void) const final;
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     QString mapVisualQML        (void) const final { return QStringLiteral("VTOLLandingPatternMapVisual.qml"); }
+    QString geoMapVisualQML     (void) const final { return QStringLiteral("GeoMapVTOLLandingPatternVisual.qml"); }
 
     // Overrides from VisualMissionItem
     void                save                        (QJsonArray&  missionItems) final;

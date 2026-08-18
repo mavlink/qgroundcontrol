@@ -150,8 +150,13 @@ void GeoMapCamera::setViewportSize(const QSizeF& size)
     if (size == _viewportSize) {
         return;
     }
+    const qreal previousVerticalFov = verticalFieldOfView();
     _viewportSize = size;
     emit viewportSizeChanged();
+    if (!qFuzzyCompare(verticalFieldOfView(), previousVerticalFov)) {
+        emit verticalFieldOfViewChanged();
+    }
+    emit unitsPerPixelAtUnitDistanceChanged();
 }
 
 void GeoMapCamera::setFieldOfView(qreal fov)
@@ -162,6 +167,25 @@ void GeoMapCamera::setFieldOfView(qreal fov)
     }
     _fieldOfView = clamped;
     emit fieldOfViewChanged();
+    emit verticalFieldOfViewChanged();
+    emit unitsPerPixelAtUnitDistanceChanged();
+}
+
+qreal GeoMapCamera::verticalFieldOfView() const
+{
+    if (_viewportSize.isEmpty() || _viewportSize.width() <= _viewportSize.height()) {
+        return _fieldOfView;
+    }
+    const double aspect = _viewportSize.width() / _viewportSize.height();
+    return qRadiansToDegrees(2.0 * std::atan(std::tan(qDegreesToRadians(_fieldOfView) / 2.0) / aspect));
+}
+
+qreal GeoMapCamera::unitsPerPixelAtUnitDistance() const
+{
+    if (_viewportSize.height() <= 0) {
+        return 0.0;
+    }
+    return 2.0 * std::tan(qDegreesToRadians(verticalFieldOfView()) / 2.0) / _viewportSize.height();
 }
 
 void GeoMapCamera::setMode(Mode mode)
@@ -235,7 +259,7 @@ std::optional<QPointF> GeoMapCamera::screenToGround(const QPointF& screenPos) co
     }
 
     const Ray ray =
-        pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize, _fieldOfView, screenPos);
+        pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize, verticalFieldOfView(), screenPos);
     if (ray.dir.z >= 0.0) {
         return std::nullopt;  // at or above the horizon
     }
@@ -251,7 +275,7 @@ std::optional<QPointF> GeoMapCamera::groundPointCapped(const QPointF& screenPos,
     }
 
     const Ray ray =
-        pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize, _fieldOfView, screenPos);
+        pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize, verticalFieldOfView(), screenPos);
     const QPointF cameraGround(ray.origin.x, ray.origin.y);
 
     if (ray.dir.z < 0.0) {
@@ -296,7 +320,7 @@ std::optional<QPointF> GeoMapCamera::worldToScreen(const QPointF& worldGround, d
     }
 
     const double aspect = _viewportSize.width() / _viewportSize.height();
-    const double tanHalfFov = std::tan(qDegreesToRadians(_fieldOfView) / 2.0);
+    const double tanHalfFov = std::tan(qDegreesToRadians(verticalFieldOfView()) / 2.0);
     const double ndcX = c.x / (depth * tanHalfFov * aspect);
     const double ndcY = c.y / (depth * tanHalfFov);
     return QPointF(((ndcX + 1.0) / 2.0) * _viewportSize.width(), ((1.0 - ndcY) / 2.0) * _viewportSize.height());
@@ -323,7 +347,7 @@ qreal GeoMapCamera::distanceForZoomLevel(qreal zoomLevel) const
         return kDefaultDistance;
     }
     const double metersPerPixel = TileMath::worldSize() / (TileMath::kTilePixels * std::exp2(zoomLevel));
-    const double tanHalfFov = std::tan(qDegreesToRadians(_fieldOfView) / 2.0);
+    const double tanHalfFov = std::tan(qDegreesToRadians(verticalFieldOfView()) / 2.0);
     return std::clamp((metersPerPixel * _viewportSize.height()) / (2.0 * tanHalfFov), kMinDistance, kMaxDistance);
 }
 
@@ -340,7 +364,7 @@ QGeoCoordinate GeoMapCamera::centerForCoordinateAtScreenPoint(const QGeoCoordina
     // an elevated point (e.g. a flying vehicle) high on screen under a tilted camera.
     const double pivotElevation = std::isfinite(centerElevation) ? centerElevation : _centerElevation;
     const Ray ray =
-        pickRay(_centerWorld, _heading, _tilt, _distance, pivotElevation, _viewportSize, _fieldOfView, screenPos);
+        pickRay(_centerWorld, _heading, _tilt, _distance, pivotElevation, _viewportSize, verticalFieldOfView(), screenPos);
     if (ray.dir.z >= 0.0) {
         return center();  // at or above the horizon
     }

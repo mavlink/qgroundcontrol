@@ -191,6 +191,10 @@ QString coverageHole(const SurfaceModel& model, const GeoMapCamera& camera)
             if (!ground) {
                 continue;  // sky
             }
+            const double half = TileMath::worldSize() / 2.0;
+            if ((std::abs(ground->x()) > half) || (std::abs(ground->y()) > half)) {
+                continue;  // off-world: no tile exists beyond the mercator square
+            }
             const double range = std::hypot(ground->x() - cameraGround.x(), ground->y() - cameraGround.y());
             if (range > demandRange) {
                 continue;  // beyond the coverage contract

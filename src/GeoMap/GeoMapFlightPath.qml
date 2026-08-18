@@ -48,9 +48,7 @@ GeoMapItem {
 
     // Pixel-to-scene-unit factor at unit distance; the shader scales it by
     // each vertex's own camera distance
-    readonly property real _screenFactor: _camera && _camera.viewportSize.height > 0
-        ? 2 * Math.tan(_camera.fieldOfView * Math.PI / 360) / _camera.viewportSize.height
-        : 0
+    readonly property real _screenFactor: _camera ? _camera.unitsPerPixelAtUnitDistance : 0
 
     // DEM height minus vehicle-reported AMSL, sampled at home (same
     // correction as GeoMapVehicleItem so trail and marker stay aligned)
