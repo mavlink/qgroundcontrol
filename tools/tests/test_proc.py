@@ -4,9 +4,14 @@
 from __future__ import annotations
 
 import subprocess
+import sys
+from typing import TYPE_CHECKING
 
 import pytest
-from common.proc import run_captured, run_text
+from common.proc import run_captured, run_tee, run_text
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_run_captured_returns_completed_process() -> None:
@@ -41,3 +46,30 @@ def test_run_text_default_on_missing_binary() -> None:
 
 def test_run_text_default_on_nonzero_exit() -> None:
     assert run_text(["false"], default="fb") == "fb"
+
+
+def test_run_tee_streams_output_and_returns_exit_code(tmp_path: Path) -> None:
+    output = tmp_path / "command.log"
+    assert run_tee([sys.executable, "-c", "print('streamed')"], output) == 0
+    assert output.read_text(encoding="utf-8").strip() == "streamed"
+
+
+def test_run_tee_falls_back_without_bash(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    output = tmp_path / "fallback.log"
+    monkeypatch.setattr("common.proc.shutil.which", lambda _name: None)
+    assert run_tee([sys.executable, "-c", "print('fallback')"], output) == 0
+    assert output.read_text(encoding="utf-8").strip() == "fallback"
+
+
+def test_run_tee_resolves_relative_output_before_changing_cwd(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    invocation_dir = tmp_path / "invocation"
+    working_dir = tmp_path / "working"
+    invocation_dir.mkdir()
+    working_dir.mkdir()
+    monkeypatch.chdir(invocation_dir)
+
+    assert run_tee([sys.executable, "-c", "print('relative')"], "command.log", cwd=working_dir) == 0
+    assert (invocation_dir / "command.log").read_text(encoding="utf-8").strip() == "relative"
+    assert not (working_dir / "command.log").exists()

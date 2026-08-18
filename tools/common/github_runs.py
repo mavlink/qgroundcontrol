@@ -2,8 +2,49 @@
 
 from __future__ import annotations
 
+import json
+import sys
 from datetime import datetime
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+from .io import read_json
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+
+class WorkflowRunsFileError(ValueError):
+    """Raised when cached workflow-run JSON cannot be used."""
+
+
+def load_workflow_runs(path: Path) -> list[dict[str, Any]]:
+    """Load and validate a cached JSON list of GitHub workflow-run objects."""
+    try:
+        data = read_json(path)
+    except (json.JSONDecodeError, OSError) as exc:
+        raise WorkflowRunsFileError(f"failed to read runs file {path}: {exc}") from exc
+    if not isinstance(data, list):
+        raise WorkflowRunsFileError(f"runs file {path} must contain a JSON list of workflow runs")
+    if not all(isinstance(run, dict) for run in data):
+        raise WorkflowRunsFileError(f"runs file {path} must contain only workflow-run objects")
+    return data
+
+
+def resolve_workflow_runs(
+    repo: str,
+    head_sha: str,
+    runs_file: str,
+    fetcher: Callable[[str, str], list[dict[str, Any]]],
+) -> list[dict[str, Any]] | None:
+    """Load cached runs or call *fetcher*, reporting cached-file errors consistently."""
+    if not runs_file:
+        return fetcher(repo, head_sha)
+    try:
+        return load_workflow_runs(Path(runs_file))
+    except WorkflowRunsFileError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return None
 
 
 def parse_created_at(created_at: Any) -> datetime | None:
