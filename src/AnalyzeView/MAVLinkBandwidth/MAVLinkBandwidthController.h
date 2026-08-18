@@ -10,10 +10,10 @@
 
 #include "LinkInterface.h"
 #include "MAVLinkBandwidthProtocol.h"
+#include "MAVLinkFtpBandwidthTest.h"
 #include "MAVLinkMessageType.h"
 
 class Vehicle;
-class MAVLinkFtpBandwidthTest;
 
 class MAVLinkBandwidthController : public QObject
 {
@@ -143,10 +143,9 @@ private slots:
     void _bytesSent(LinkInterface* link, const QByteArray& data);
     void _armedChanged(bool armed);
     void _ftpPhaseChanged(const QString& phaseText);
-    void _ftpPreparationProgress(float progress);
-    void _ftpMeasurementStarted();
-    void _ftpMeasurementProgress(float progress);
-    void _ftpMeasurementComplete(qint64 elapsedMs, quint64 payloadBytes);
+    void _ftpMeasurementStarted(MAVLinkFtpBandwidthTest::Direction direction);
+    void _ftpMeasurementProgress(MAVLinkFtpBandwidthTest::Direction direction, float progress);
+    void _ftpMeasurementComplete(MAVLinkFtpBandwidthTest::Direction direction, qint64 elapsedMs, quint64 payloadBytes);
     void _ftpFinished(bool success, const QString& statusText);
 
 private:
@@ -186,7 +185,9 @@ private:
     bool _endpointAvailable = false;
     bool _running = false;
     bool _ftpMeasuring = false;
-    qint64 _ftpMeasurementElapsedMs = 0;
+    MAVLinkFtpBandwidthTest::Direction _ftpMeasurementDirection = MAVLinkFtpBandwidthTest::Direction::QgcToVehicle;
+    qint64 _ftpUploadElapsedMs = 0;
+    qint64 _ftpDownloadElapsedMs = 0;
     double _progress = 0.;
     double _transmitRateKbps = 0.;
     double _receiveRateKbps = 0.;

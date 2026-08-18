@@ -20,20 +20,20 @@ public:
         QgcToVehicle,
         VehicleToQgc,
     };
+    Q_ENUM(Direction)
 
     explicit MAVLinkFtpBandwidthTest(Vehicle* vehicle, QObject* parent = nullptr);
     ~MAVLinkFtpBandwidthTest() override;
 
-    [[nodiscard]] bool start(Direction direction, int fileSizeKiB);
+    [[nodiscard]] bool start(int fileSizeKiB);
     void cancel(const QString& statusText = QString());
     bool active() const;
 
 signals:
     void phaseChanged(const QString& phaseText);
-    void preparationProgress(float progress);
-    void measurementStarted();
-    void measurementProgress(float progress);
-    void measurementComplete(qint64 elapsedMs, quint64 payloadBytes);
+    void measurementStarted(Direction direction);
+    void measurementProgress(Direction direction, float progress);
+    void measurementComplete(Direction direction, qint64 elapsedMs, quint64 payloadBytes);
     void finished(bool success, const QString& statusText);
 
 private slots:
@@ -46,9 +46,7 @@ private:
     enum class Phase
     {
         Idle,
-        PreparingDownload,
         MeasuringUpload,
-        VerifyingUpload,
         MeasuringDownload,
         Cleaning,
     };
@@ -57,7 +55,7 @@ private:
     [[nodiscard]] QByteArray _fileHash(const QString& filePath) const;
     [[nodiscard]] bool _startUpload();
     [[nodiscard]] bool _startDownload(const QString& fileName);
-    void _completeMeasurement();
+    void _completeMeasurement(Direction direction);
     void _beginCleanup(bool success, const QString& statusText);
     void _finish(bool success, const QString& statusText);
 
@@ -65,7 +63,6 @@ private:
     QPointer<FTPManager> _ftpManager;
     QTemporaryDir _temporaryDirectory;
     QElapsedTimer _measurementTimer;
-    Direction _direction = Direction::QgcToVehicle;
     Phase _phase = Phase::Idle;
     QString _sourceFilePath;
     QString _downloadFileName;

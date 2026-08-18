@@ -4,21 +4,10 @@
 
 #include "MAVLinkBandwidthController.h"
 
-void MAVLinkBandwidthControllerTest::_mavftpRoundTripTest_data()
-{
-    QTest::addColumn<int>("direction");
-
-    QTest::newRow("upload") << static_cast<int>(MAVLinkBandwidthController::Direction::QgcToVehicle);
-    QTest::newRow("download") << static_cast<int>(MAVLinkBandwidthController::Direction::VehicleToQgc);
-}
-
 void MAVLinkBandwidthControllerTest::_mavftpRoundTripTest()
 {
-    QFETCH(int, direction);
-
     MAVLinkBandwidthController controller;
     controller.setTestMode(MAVLinkBandwidthController::TestMode::MavFtp);
-    controller.setDirection(static_cast<MAVLinkBandwidthController::Direction>(direction));
     controller.setFtpFileSizeKiB(64);
 
     QCOMPARE(controller.testMode(), MAVLinkBandwidthController::TestMode::MavFtp);
@@ -46,7 +35,6 @@ void MAVLinkBandwidthControllerTest::_mavftpCancelRestartTest()
 {
     MAVLinkBandwidthController controller;
     controller.setTestMode(MAVLinkBandwidthController::TestMode::MavFtp);
-    controller.setDirection(MAVLinkBandwidthController::Direction::QgcToVehicle);
     controller.setFtpFileSizeKiB(64);
 
     controller.startTest();

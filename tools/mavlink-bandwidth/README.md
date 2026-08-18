@@ -2,8 +2,8 @@
 
 QGroundControl's **Analyze > MAVLink Bandwidth** tool has two test modes:
 
-- **MAVFTP** works with stock PX4 and ArduPilot. QGC generates a temporary file, times the selected transfer
-  direction, verifies the data using SHA-256, and removes the remote file.
+- **MAVFTP** works with stock PX4 and ArduPilot. QGC generates a temporary file, measures upload followed by
+  download, verifies the data using SHA-256, and removes the remote file.
 - **Streaming** uses the included ArduPilot Lua endpoint for controlled packet-rate and loss measurements. It uses
   the standard MAVLink `TUNNEL` message with a magic/versioned inner protocol.
 
@@ -17,8 +17,9 @@ MAVFTP mode:
 
 ## MAVFTP mode
 
-MAVFTP mode requires no vehicle-side installation. Select the file size and transfer direction, then start the test.
-Preparatory and verification transfers are excluded from measured goodput and selected-link byte counts.
+MAVFTP mode requires no vehicle-side installation. Select the file size, then start the test. QGC measures the upload
+and then downloads the same file, reporting separate goodput and selected-link rates for each direction. The download
+also verifies the uploaded data before cleanup.
 
 PX4 test files use `/fs/microsd`; ArduPilot test files use `/APM`. Tests are disarmed-only, and remote files are
 named with a random token to avoid replacing existing data.

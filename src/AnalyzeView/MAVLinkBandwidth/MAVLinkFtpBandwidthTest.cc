@@ -38,13 +38,12 @@ MAVLinkFtpBandwidthTest::~MAVLinkFtpBandwidthTest()
     }
 }
 
-bool MAVLinkFtpBandwidthTest::start(Direction direction, int fileSizeKiB)
+bool MAVLinkFtpBandwidthTest::start(int fileSizeKiB)
 {
     if (active() || !_vehicle || !_ftpManager || !_temporaryDirectory.isValid()) {
         return false;
     }
 
-    _direction = direction;
     _cancelled = false;
     _cancelStatusText.clear();
     _pendingSuccess = false;
@@ -58,15 +57,10 @@ bool MAVLinkFtpBandwidthTest::start(Direction direction, int fileSizeKiB)
     _remoteFilePath = _vehicle->px4Firmware() ? QStringLiteral("/fs/microsd/.qgc-bandwidth-%1.bin").arg(token)
                                               : QStringLiteral("/APM/.qgc-bandwidth-%1.bin").arg(token);
 
-    if (_direction == Direction::QgcToVehicle) {
-        _phase = Phase::MeasuringUpload;
-        emit phaseChanged(tr("Uploading the MAVFTP test file..."));
-        emit measurementStarted();
-        _measurementTimer.start();
-    } else {
-        _phase = Phase::PreparingDownload;
-        emit phaseChanged(tr("Preparing the remote MAVFTP test file..."));
-    }
+    _phase = Phase::MeasuringUpload;
+    emit phaseChanged(tr("Measuring MAVFTP upload..."));
+    emit measurementStarted(Direction::QgcToVehicle);
+    _measurementTimer.start();
 
     if (!_startUpload()) {
         _phase = Phase::Idle;
@@ -92,11 +86,9 @@ void MAVLinkFtpBandwidthTest::cancel(const QString& statusText)
     }
 
     switch (_phase) {
-        case Phase::PreparingDownload:
         case Phase::MeasuringUpload:
             _ftpManager->cancelUpload();
             break;
-        case Phase::VerifyingUpload:
         case Phase::MeasuringDownload:
             _ftpManager->cancelDownload();
             break;
@@ -117,7 +109,7 @@ void MAVLinkFtpBandwidthTest::_uploadComplete(const QString& remotePath, const Q
 {
     Q_UNUSED(remotePath)
 
-    if ((_phase != Phase::PreparingDownload) && (_phase != Phase::MeasuringUpload)) {
+    if (_phase != Phase::MeasuringUpload) {
         return;
     }
 
@@ -126,28 +118,19 @@ void MAVLinkFtpBandwidthTest::_uploadComplete(const QString& remotePath, const Q
         return;
     }
 
-    if (_phase == Phase::PreparingDownload) {
-        _phase = Phase::MeasuringDownload;
-        emit phaseChanged(tr("Downloading the MAVFTP test file..."));
-        emit measurementStarted();
-        _measurementTimer.start();
-        if (!_startDownload(QStringLiteral("download.bin"))) {
-            _beginCleanup(false, tr("Unable to start the MAVFTP download."));
-        }
-        return;
-    }
-
-    _completeMeasurement();
-    _phase = Phase::VerifyingUpload;
-    emit phaseChanged(tr("Verifying the uploaded MAVFTP test file..."));
-    if (!_startDownload(QStringLiteral("verify.bin"))) {
-        _beginCleanup(false, tr("Unable to verify the MAVFTP upload."));
+    _completeMeasurement(Direction::QgcToVehicle);
+    _phase = Phase::MeasuringDownload;
+    emit phaseChanged(tr("Measuring MAVFTP download..."));
+    emit measurementStarted(Direction::VehicleToQgc);
+    _measurementTimer.start();
+    if (!_startDownload(QStringLiteral("download.bin"))) {
+        _beginCleanup(false, tr("Unable to start the MAVFTP download."));
     }
 }
 
 void MAVLinkFtpBandwidthTest::_downloadComplete(const QString& localPath, const QString& errorMessage)
 {
-    if ((_phase != Phase::VerifyingUpload) && (_phase != Phase::MeasuringDownload)) {
+    if (_phase != Phase::MeasuringDownload) {
         return;
     }
 
@@ -156,18 +139,14 @@ void MAVLinkFtpBandwidthTest::_downloadComplete(const QString& localPath, const 
         return;
     }
 
-    const bool measuringDownload = _phase == Phase::MeasuringDownload;
-    if (measuringDownload) {
-        _completeMeasurement();
-    }
+    _completeMeasurement(Direction::VehicleToQgc);
 
     if (_fileHash(localPath) != _expectedHash) {
         _beginCleanup(false, tr("MAVFTP verification failed: downloaded data does not match."));
         return;
     }
 
-    _beginCleanup(true, measuringDownload ? tr("MAVFTP download complete and verified.")
-                                          : tr("MAVFTP upload complete and verified."));
+    _beginCleanup(true, tr("MAVFTP upload and download complete and verified."));
 }
 
 void MAVLinkFtpBandwidthTest::_deleteComplete(const QString& remotePath, const QString& errorMessage)
@@ -190,13 +169,11 @@ void MAVLinkFtpBandwidthTest::_deleteComplete(const QString& remotePath, const Q
 void MAVLinkFtpBandwidthTest::_commandProgress(float progress)
 {
     switch (_phase) {
-        case Phase::PreparingDownload:
-        case Phase::VerifyingUpload:
-            emit preparationProgress(progress);
-            break;
         case Phase::MeasuringUpload:
+            emit measurementProgress(Direction::QgcToVehicle, progress);
+            break;
         case Phase::MeasuringDownload:
-            emit measurementProgress(progress);
+            emit measurementProgress(Direction::VehicleToQgc, progress);
             break;
         default:
             break;
@@ -264,10 +241,10 @@ bool MAVLinkFtpBandwidthTest::_startDownload(const QString& fileName)
                                  _downloadFileName);
 }
 
-void MAVLinkFtpBandwidthTest::_completeMeasurement()
+void MAVLinkFtpBandwidthTest::_completeMeasurement(Direction direction)
 {
-    emit measurementProgress(1.F);
-    emit measurementComplete(std::max<qint64>(_measurementTimer.elapsed(), 1), _payloadBytes);
+    emit measurementProgress(direction, 1.F);
+    emit measurementComplete(direction, std::max<qint64>(_measurementTimer.elapsed(), 1), _payloadBytes);
 }
 
 void MAVLinkFtpBandwidthTest::_beginCleanup(bool success, const QString& statusText)

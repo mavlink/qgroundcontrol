@@ -201,7 +201,6 @@ void MAVLinkBandwidthController::_startStreamingTest()
 void MAVLinkBandwidthController::_startFtpTest()
 {
     _resetStatistics();
-    _ftpMeasurementElapsedMs = 0;
     _ftpMeasuring = false;
 
     if (_ftpTest) {
@@ -210,8 +209,6 @@ void MAVLinkBandwidthController::_startFtpTest()
     _ftpTest = new MAVLinkFtpBandwidthTest(_vehicle, this);
     (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::phaseChanged, this,
                    &MAVLinkBandwidthController::_ftpPhaseChanged);
-    (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::preparationProgress, this,
-                   &MAVLinkBandwidthController::_ftpPreparationProgress);
     (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::measurementStarted, this,
                    &MAVLinkBandwidthController::_ftpMeasurementStarted);
     (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::measurementProgress, this,
@@ -220,11 +217,9 @@ void MAVLinkBandwidthController::_startFtpTest()
                    &MAVLinkBandwidthController::_ftpMeasurementComplete);
     (void) connect(_ftpTest, &MAVLinkFtpBandwidthTest::finished, this, &MAVLinkBandwidthController::_ftpFinished);
 
-    const auto direction = _direction == Direction::QgcToVehicle ? MAVLinkFtpBandwidthTest::Direction::QgcToVehicle
-                                                                 : MAVLinkFtpBandwidthTest::Direction::VehicleToQgc;
     _setRunning(true);
     _testTimer.start(10 * 60 * 1000);
-    if (!_ftpTest->start(direction, _ftpFileSizeKiB)) {
+    if (!_ftpTest->start(_ftpFileSizeKiB)) {
         _ftpTest->deleteLater();
         _ftpTest = nullptr;
         _finishTest(tr("Unable to start the MAVFTP test."), false);
@@ -435,19 +430,40 @@ void MAVLinkBandwidthController::_sendTick()
 
 void MAVLinkBandwidthController::_statisticsTick()
 {
-    if (!_elapsedTimer.isValid() && (_ftpMeasurementElapsedMs == 0)) {
-        return;
-    }
-
-    const qint64 elapsedMs =
-        _ftpMeasurementElapsedMs > 0 ? _ftpMeasurementElapsedMs : std::max<qint64>(_elapsedTimer.elapsed(), 1);
-    const double elapsedSeconds = static_cast<double>(elapsedMs) / 1000.;
-    _transmitRateKbps = (static_cast<double>(_transmittedPayloadBytes) * 8.) / elapsedSeconds / 1000.;
-    _receiveRateKbps = (static_cast<double>(_receivedPayloadBytes) * 8.) / elapsedSeconds / 1000.;
-    _wireTransmitRateKbps = (static_cast<double>(_wireTransmitBytes) * 8.) / elapsedSeconds / 1000.;
-    _wireReceiveRateKbps = (static_cast<double>(_wireReceiveBytes) * 8.) / elapsedSeconds / 1000.;
     if (_testMode == TestMode::Streaming) {
+        if (!_elapsedTimer.isValid()) {
+            return;
+        }
+
+        const double elapsedSeconds = static_cast<double>(std::max<qint64>(_elapsedTimer.elapsed(), 1)) / 1000.;
+        _transmitRateKbps = (static_cast<double>(_transmittedPayloadBytes) * 8.) / elapsedSeconds / 1000.;
+        _receiveRateKbps = (static_cast<double>(_receivedPayloadBytes) * 8.) / elapsedSeconds / 1000.;
+        _wireTransmitRateKbps = (static_cast<double>(_wireTransmitBytes) * 8.) / elapsedSeconds / 1000.;
+        _wireReceiveRateKbps = (static_cast<double>(_wireReceiveBytes) * 8.) / elapsedSeconds / 1000.;
         _progress = std::clamp(elapsedSeconds / static_cast<double>(_durationSeconds), 0., 1.);
+    } else {
+        qint64 uploadElapsedMs = _ftpUploadElapsedMs;
+        qint64 downloadElapsedMs = _ftpDownloadElapsedMs;
+        if (_ftpMeasuring && _elapsedTimer.isValid()) {
+            if (_ftpMeasurementDirection == MAVLinkFtpBandwidthTest::Direction::QgcToVehicle) {
+                uploadElapsedMs = std::max<qint64>(_elapsedTimer.elapsed(), 1);
+            } else {
+                downloadElapsedMs = std::max<qint64>(_elapsedTimer.elapsed(), 1);
+            }
+        }
+        if ((uploadElapsedMs == 0) && (downloadElapsedMs == 0)) {
+            return;
+        }
+        if (uploadElapsedMs > 0) {
+            const double uploadSeconds = static_cast<double>(uploadElapsedMs) / 1000.;
+            _transmitRateKbps = (static_cast<double>(_transmittedPayloadBytes) * 8.) / uploadSeconds / 1000.;
+            _wireTransmitRateKbps = (static_cast<double>(_wireTransmitBytes) * 8.) / uploadSeconds / 1000.;
+        }
+        if (downloadElapsedMs > 0) {
+            const double downloadSeconds = static_cast<double>(downloadElapsedMs) / 1000.;
+            _receiveRateKbps = (static_cast<double>(_receivedPayloadBytes) * 8.) / downloadSeconds / 1000.;
+            _wireReceiveRateKbps = (static_cast<double>(_wireReceiveBytes) * 8.) / downloadSeconds / 1000.;
+        }
     }
     emit statisticsChanged();
 }
@@ -479,14 +495,24 @@ void MAVLinkBandwidthController::_probeTimeout()
 
 void MAVLinkBandwidthController::_bytesReceived(LinkInterface* link, const QByteArray& data)
 {
-    if (_running && ((_testMode == TestMode::Streaming) || _ftpMeasuring) && _link && (link == _link.get())) {
+    if (!_running || !_link || (link != _link.get())) {
+        return;
+    }
+
+    if ((_testMode == TestMode::Streaming) ||
+        (_ftpMeasuring && (_ftpMeasurementDirection == MAVLinkFtpBandwidthTest::Direction::VehicleToQgc))) {
         _wireReceiveBytes += static_cast<quint64>(data.size());
     }
 }
 
 void MAVLinkBandwidthController::_bytesSent(LinkInterface* link, const QByteArray& data)
 {
-    if (_running && ((_testMode == TestMode::Streaming) || _ftpMeasuring) && _link && (link == _link.get())) {
+    if (!_running || !_link || (link != _link.get())) {
+        return;
+    }
+
+    if ((_testMode == TestMode::Streaming) ||
+        (_ftpMeasuring && (_ftpMeasurementDirection == MAVLinkFtpBandwidthTest::Direction::QgcToVehicle))) {
         _wireTransmitBytes += static_cast<quint64>(data.size());
     }
 }
@@ -518,43 +544,44 @@ void MAVLinkBandwidthController::_ftpPhaseChanged(const QString& phaseText)
     _setStatusText(phaseText);
 }
 
-void MAVLinkBandwidthController::_ftpPreparationProgress(float progress)
+void MAVLinkBandwidthController::_ftpMeasurementStarted(MAVLinkFtpBandwidthTest::Direction direction)
 {
-    if (_ftpMeasurementElapsedMs > 0) {
-        return;
+    if (direction == MAVLinkFtpBandwidthTest::Direction::QgcToVehicle) {
+        _resetStatistics();
     }
-    _progress = std::clamp(static_cast<double>(progress), 0., 1.);
-    emit statisticsChanged();
-}
-
-void MAVLinkBandwidthController::_ftpMeasurementStarted()
-{
-    _resetStatistics();
-    _ftpMeasurementElapsedMs = 0;
+    _ftpMeasurementDirection = direction;
     _ftpMeasuring = true;
     _elapsedTimer.start();
     _statisticsTimer.start();
 }
 
-void MAVLinkBandwidthController::_ftpMeasurementProgress(float progress)
+void MAVLinkBandwidthController::_ftpMeasurementProgress(MAVLinkFtpBandwidthTest::Direction direction, float progress)
 {
-    _progress = std::clamp(static_cast<double>(progress), 0., 1.);
-    const quint64 completedBytes = static_cast<quint64>(_progress * (_ftpFileSizeKiB * 1024.));
-    if (_direction == Direction::QgcToVehicle) {
+    const double phaseProgress = std::clamp(static_cast<double>(progress), 0., 1.);
+    const quint64 completedBytes = static_cast<quint64>(phaseProgress * (_ftpFileSizeKiB * 1024.));
+    if (direction == MAVLinkFtpBandwidthTest::Direction::QgcToVehicle) {
+        _progress = phaseProgress * 0.5;
         _transmittedPayloadBytes = completedBytes;
     } else {
+        _progress = 0.5 + (phaseProgress * 0.5);
         _receivedPayloadBytes = completedBytes;
     }
     _statisticsTick();
 }
 
-void MAVLinkBandwidthController::_ftpMeasurementComplete(qint64 elapsedMs, quint64 payloadBytes)
+void MAVLinkBandwidthController::_ftpMeasurementComplete(MAVLinkFtpBandwidthTest::Direction direction, qint64 elapsedMs,
+                                                         quint64 payloadBytes)
 {
     _ftpMeasuring = false;
-    _ftpMeasurementElapsedMs = std::max<qint64>(elapsedMs, 1);
-    _transmittedPayloadBytes = payloadBytes;
-    _receivedPayloadBytes = payloadBytes;
-    _progress = 1.;
+    if (direction == MAVLinkFtpBandwidthTest::Direction::QgcToVehicle) {
+        _ftpUploadElapsedMs = std::max<qint64>(elapsedMs, 1);
+        _transmittedPayloadBytes = payloadBytes;
+        _progress = 0.5;
+    } else {
+        _ftpDownloadElapsedMs = std::max<qint64>(elapsedMs, 1);
+        _receivedPayloadBytes = payloadBytes;
+        _progress = 1.;
+    }
     _statisticsTimer.stop();
     _statisticsTick();
 }
@@ -597,7 +624,8 @@ void MAVLinkBandwidthController::_resetStatistics()
     _wireTransmitBytes = 0;
     _wireReceiveBytes = 0;
     _haveReceiveSequence = false;
-    _ftpMeasurementElapsedMs = 0;
+    _ftpUploadElapsedMs = 0;
+    _ftpDownloadElapsedMs = 0;
     _elapsedTimer.invalidate();
     emit statisticsChanged();
 }

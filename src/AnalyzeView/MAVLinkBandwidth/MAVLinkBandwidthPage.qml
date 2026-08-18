@@ -121,9 +121,13 @@ AnalyzePage {
                         }
                     }
 
-                    QGCLabel { text: qsTr("Direction") }
+                    QGCLabel {
+                        visible: root._streamingMode
+                        text: qsTr("Direction")
+                    }
                     QGCComboBox {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 26
+                        visible: root._streamingMode
                         model: [qsTr("QGC to vehicle"), qsTr("Vehicle to QGC")]
                         currentIndex: controller.direction === MAVLinkBandwidthController.QgcToVehicle ? 0 : 1
                         enabled: !controller.running
@@ -244,22 +248,34 @@ AnalyzePage {
                     columnSpacing: ScreenTools.defaultFontPixelWidth * 2
                     rowSpacing: ScreenTools.defaultFontPixelHeight * 0.35
 
-                    QGCLabel { text: qsTr("Payload transmit rate") }
+                    QGCLabel {
+                        text: root._streamingMode ? qsTr("Payload transmit rate") : qsTr("Upload payload rate")
+                    }
                     QGCLabel { text: root.formatRate(controller.transmitRateKbps) }
 
-                    QGCLabel { text: qsTr("Payload receive rate") }
+                    QGCLabel {
+                        text: root._streamingMode ? qsTr("Payload receive rate") : qsTr("Download payload rate")
+                    }
                     QGCLabel { text: root.formatRate(controller.receiveRateKbps) }
 
-                    QGCLabel { text: qsTr("Total link transmit rate") }
+                    QGCLabel {
+                        text: root._streamingMode ? qsTr("Total link transmit rate") : qsTr("Upload total-link rate")
+                    }
                     QGCLabel { text: root.formatRate(controller.wireTransmitRateKbps) }
 
-                    QGCLabel { text: qsTr("Total link receive rate") }
+                    QGCLabel {
+                        text: root._streamingMode ? qsTr("Total link receive rate") : qsTr("Download total-link rate")
+                    }
                     QGCLabel { text: root.formatRate(controller.wireReceiveRateKbps) }
 
-                    QGCLabel { text: qsTr("Payload bytes sent") }
+                    QGCLabel {
+                        text: root._streamingMode ? qsTr("Payload bytes sent") : qsTr("Upload payload bytes")
+                    }
                     QGCLabel { text: root.formatBytes(controller.transmittedPayloadBytes) }
 
-                    QGCLabel { text: qsTr("Payload bytes received") }
+                    QGCLabel {
+                        text: root._streamingMode ? qsTr("Payload bytes received") : qsTr("Download payload bytes")
+                    }
                     QGCLabel { text: root.formatBytes(controller.receivedPayloadBytes) }
                 }
 
