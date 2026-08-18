@@ -56,7 +56,12 @@ bool MAVLinkBandwidthController::vehicleAvailable() const
 
 bool MAVLinkBandwidthController::streamingAvailable() const
 {
-    return vehicleAvailable() && _vehicle->apmFirmware();
+    return vehicleAvailable() && streamingSupported();
+}
+
+bool MAVLinkBandwidthController::streamingSupported() const
+{
+    return _vehicle && _vehicle->apmFirmware();
 }
 
 bool MAVLinkBandwidthController::canStart() const
@@ -257,12 +262,13 @@ void MAVLinkBandwidthController::_setActiveVehicle(Vehicle* vehicle)
     _vehicleConnections.clear();
     _vehicle = vehicle;
 
+    const TestMode preferredMode = streamingSupported() ? TestMode::Streaming : TestMode::MavFtp;
+    if (_testMode != preferredMode) {
+        _testMode = preferredMode;
+        emit configurationChanged();
+    }
+
     if (_vehicle) {
-        const TestMode preferredMode = _vehicle->px4Firmware() ? TestMode::MavFtp : TestMode::Streaming;
-        if (_testMode != preferredMode) {
-            _testMode = preferredMode;
-            emit configurationChanged();
-        }
         _vehicleConnections << connect(_vehicle, &Vehicle::armedChanged, this,
                                        &MAVLinkBandwidthController::_armedChanged);
         _vehicleConnections << connect(_vehicle->vehicleLinkManager(), &VehicleLinkManager::primaryLinkChanged, this,

@@ -4,6 +4,19 @@
 
 #include "MAVLinkBandwidthController.h"
 
+void MAVLinkBandwidthControllerTest::_firmwareModeAvailabilityTest()
+{
+    MAVLinkBandwidthController controller;
+
+    QVERIFY(!controller.streamingSupported());
+    QCOMPARE(controller.testMode(), MAVLinkBandwidthController::TestMode::MavFtp);
+
+    _disconnectMockLink();
+    _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    QVERIFY_TRUE_WAIT(controller.streamingSupported(), TestTimeout::longMs());
+    QCOMPARE(controller.testMode(), MAVLinkBandwidthController::TestMode::Streaming);
+}
+
 void MAVLinkBandwidthControllerTest::_mavftpRoundTripTest()
 {
     MAVLinkBandwidthController controller;

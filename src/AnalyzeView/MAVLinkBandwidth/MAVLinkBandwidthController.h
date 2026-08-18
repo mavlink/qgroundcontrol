@@ -31,6 +31,7 @@ class MAVLinkBandwidthController : public QObject
     Q_PROPERTY(int targetRateKbps READ targetRateKbps WRITE setTargetRateKbps NOTIFY configurationChanged)
     Q_PROPERTY(int durationSeconds READ durationSeconds WRITE setDurationSeconds NOTIFY configurationChanged)
     Q_PROPERTY(int ftpFileSizeKiB READ ftpFileSizeKiB WRITE setFtpFileSizeKiB NOTIFY configurationChanged)
+    Q_PROPERTY(bool streamingSupported READ streamingSupported NOTIFY availabilityChanged)
     Q_PROPERTY(bool streamingAvailable READ streamingAvailable NOTIFY availabilityChanged)
     Q_PROPERTY(double progress READ progress NOTIFY statisticsChanged)
     Q_PROPERTY(double transmitRateKbps READ transmitRateKbps NOTIFY statisticsChanged)
@@ -84,6 +85,8 @@ public:
     int durationSeconds() const { return _durationSeconds; }
 
     int ftpFileSizeKiB() const { return _ftpFileSizeKiB; }
+
+    bool streamingSupported() const;
 
     bool streamingAvailable() const;
 

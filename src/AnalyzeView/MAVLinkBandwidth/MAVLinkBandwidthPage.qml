@@ -15,6 +15,9 @@ AnalyzePage {
     allowPopout: true
 
     readonly property bool _streamingMode: controller.testMode === MAVLinkBandwidthController.Streaming
+    readonly property var _testModes: controller.streamingSupported
+        ? [qsTr("Streaming (ArduPilot Lua)"), qsTr("MAVFTP (PX4 or ArduPilot)")]
+        : [qsTr("MAVFTP (PX4 or ArduPilot)")]
 
     MAVLinkBandwidthController {
         id: controller
@@ -112,12 +115,13 @@ AnalyzePage {
                     QGCLabel { text: qsTr("Test mode") }
                     QGCComboBox {
                         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 26
-                        model: [qsTr("Streaming (ArduPilot Lua)"), qsTr("MAVFTP (PX4 or ArduPilot)")]
-                        currentIndex: root._streamingMode ? 0 : 1
+                        model: root._testModes
+                        currentIndex: controller.streamingSupported ? (root._streamingMode ? 0 : 1) : 0
                         enabled: !controller.running
                         onActivated: (index) => {
-                            controller.testMode = index === 0 ? MAVLinkBandwidthController.Streaming
-                                                              : MAVLinkBandwidthController.MavFtp
+                            controller.testMode = controller.streamingSupported && index === 0
+                                ? MAVLinkBandwidthController.Streaming
+                                : MAVLinkBandwidthController.MavFtp
                         }
                     }
 
