@@ -60,6 +60,11 @@ public:
         return QStringLiteral("FWLandingPatternMapVisual.qml");
     }
 
+    QString geoMapVisualQML() const final
+    {
+        return QStringLiteral("GeoMapFWLandingPatternVisual.qml");
+    }
+
     // Overrides from VisualMissionItem
     void save(QJsonArray& /*missionItems*/) override {};
 

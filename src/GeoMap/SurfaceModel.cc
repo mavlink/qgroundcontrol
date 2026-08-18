@@ -368,7 +368,7 @@ double SurfaceModel::_projectedPixels(const TileMath::TileKey& key, const QPoint
     const double distance = std::hypot(std::hypot(dx, dy), cameraHeight);
 
     const double metersPerPixel =
-        (2.0 * distance * std::tan(qDegreesToRadians(_camera->fieldOfView()) / 2.0)) / _camera->viewportSize().height();
+        (2.0 * distance * std::tan(qDegreesToRadians(_camera->verticalFieldOfView()) / 2.0)) / _camera->viewportSize().height();
     return span / metersPerPixel;
 }
 

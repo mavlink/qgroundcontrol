@@ -96,6 +96,20 @@ void GeoMapCameraTest::_fieldOfView()
     QCOMPARE(camera.fieldOfView(), 10.0);
     camera.setFieldOfView(200);
     QCOMPARE(camera.fieldOfView(), 120.0);
+
+    // verticalFieldOfView: without a viewport it follows fieldOfView unchanged
+    camera.setFieldOfView(45);
+    QCOMPARE(camera.verticalFieldOfView(), 45.0);
+
+    // Landscape viewport: fov applies to the wider axis, the vertical fov narrows
+    camera.setViewportSize(QSizeF(800, 600));
+    const double expectedVfov =
+        qRadiansToDegrees(2.0 * std::atan(std::tan(qDegreesToRadians(45.0) / 2.0) / (800.0 / 600.0)));
+    QCOMPARE_LT(qAbs(camera.verticalFieldOfView() - expectedVfov), 1e-9);
+
+    // Portrait viewport: the vertical axis is the larger one, fov applies directly
+    camera.setViewportSize(QSizeF(600, 800));
+    QCOMPARE(camera.verticalFieldOfView(), 45.0);
 }
 
 void GeoMapCameraTest::_reset()
@@ -237,8 +251,9 @@ void GeoMapCameraTest::_groundPointCapped()
     setupCamera(camera, GeoMapCamera::kMaxTilt);
     // Double precision (cameraPosition() is float and loses meters at world scale)
     const QPointF cameraGround = camera.cameraGroundPosition();
-    // At tilt 85 (fov 60, 600px viewport) the horizon is at y~254: the screen bottom
-    // hits at ~190m, y=280 hits at ~2.7km. maxRange=2km separates the cases robustly.
+    // At tilt 85 (fov 45 -> vfov ~34.5 on the 800x600 viewport) the horizon is at
+    // y~215: the screen bottom hits at ~320m, y=260 hits at ~2.8km. maxRange=2km
+    // separates the cases robustly.
     const double maxRange = 2000.0;
 
     // Hit within range: agrees exactly with screenToGround
@@ -250,7 +265,7 @@ void GeoMapCameraTest::_groundPointCapped()
     QCOMPARE_LT(groundDistance(*capped, *hit), kWorldEpsilon);
 
     // Near-horizon hit beyond maxRange: pulled back to exactly maxRange from the camera ground position
-    const QPointF nearHorizon(kViewport.width() / 2, 280);
+    const QPointF nearHorizon(kViewport.width() / 2, 260);
     const auto farHit = camera.screenToGround(nearHorizon);
     QVERIFY(farHit.has_value());
     QCOMPARE_GT(groundDistance(*farHit, cameraGround), maxRange);
@@ -273,9 +288,10 @@ void GeoMapCameraTest::_sceneUnitsPerPixel()
     GeoMapCamera camera;
     setupCamera(camera);
 
-    // Top-down: vertical fov spans 2*d*tan(fov/2) world meters over the viewport height
+    // Top-down: the vertical fov (fov narrowed to the smaller axis on this
+    // landscape viewport) spans 2*d*tan(vfov/2) world meters over the viewport height
     const double expected =
-        (2.0 * camera.distance() * std::tan(qDegreesToRadians(camera.fieldOfView()) / 2.0)) / kViewport.height();
+        (2.0 * camera.distance() * std::tan(qDegreesToRadians(camera.verticalFieldOfView()) / 2.0)) / kViewport.height();
     QCOMPARE_LT(qAbs(camera.sceneUnitsPerPixel() - expected), expected * 0.01);
 }
 

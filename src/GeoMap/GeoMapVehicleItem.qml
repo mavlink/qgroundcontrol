@@ -64,13 +64,9 @@ GeoMapItem {
 
     // Constant apparent size: scene units per screen pixel at the camera's
     // look-at distance. Built-in QtQuick3D meshes are 100 units across.
-    readonly property real _modelScale: {
-        if (!_camera || _camera.viewportSize.height <= 0) {
-            return 1
-        }
-        const unitsPerPixel = 2 * _camera.distance * Math.tan(_camera.fieldOfView * Math.PI / 360) / _camera.viewportSize.height
-        return root.size * unitsPerPixel / 100
-    }
+    readonly property real _modelScale: _camera
+        ? root.size * _camera.distance * _camera.unitsPerPixelAtUnitDistance / 100
+        : 1
 
     Image {
         id: vehicleIcon

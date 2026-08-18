@@ -35,6 +35,7 @@ qt_add_qml_module(GeoMapModule
         QtQuick
         QtQuick3D
         QtQuick3D.Helpers
+        QtQuick.Shapes
     SOURCES
         CheckerboardTextureData.cc
         CheckerboardTextureData.h
@@ -46,6 +47,8 @@ qt_add_qml_module(GeoMapModule
         GeoMapCamera.h
         GeoMapItem.cc
         GeoMapItem.h
+        GeoMapProjectedPath.cc
+        GeoMapProjectedPath.h
         PaperPlaneGeometry.cc
         PaperPlaneGeometry.h
         PatchGeometry.cc
@@ -57,8 +60,19 @@ qt_add_qml_module(GeoMapModule
     QML_FILES
         GeoMap.qml
         GeoMapFlightPath.qml
+        GeoMapFWLandingPatternVisual.qml
+        GeoMapLandingPatternVisuals.qml
+        GeoMapMissionArrow.qml
+        GeoMapMissionDirectionArrows.qml
+        GeoMapMissionHeightBadge.qml
+        GeoMapMissionItems.qml
+        GeoMapMissionLabel.qml
+        GeoMapMissionPath.qml
         GeoMapPin.qml
+        GeoMapSegmentArrow.qml
         GeoMapVehicleItem.qml
+        GeoMapVTOLLandingPatternVisual.qml
+        GeoMapWaypointItem.qml
     RESOURCES
         shaders/flightpath.frag
         shaders/flightpath.vert

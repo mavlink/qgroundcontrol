@@ -235,7 +235,7 @@ Item {
             objectName: "geoMapSceneCamera"
             position: geoCamera.scenePosition
             rotation: geoCamera.sceneRotation
-            fieldOfView: geoCamera.fieldOfView
+            fieldOfView: geoCamera.verticalFieldOfView
             clipNear: Math.max(1, geoCamera.distance / 1000)
             // Ray length to the farthest retained ground point is at most
             // maxRange + camera height <= (maxRangeMultiplier + 1) * distance

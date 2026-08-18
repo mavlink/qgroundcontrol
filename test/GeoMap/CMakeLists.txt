@@ -17,6 +17,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         GeoMapCameraTest.h
         GeoMapItemTest.cc
         GeoMapItemTest.h
+        GeoMapProjectedPathTest.cc
+        GeoMapProjectedPathTest.h
         HeightFieldTest.cc
         HeightFieldTest.h
         HeightSourceTest.cc
@@ -51,6 +53,7 @@ add_qgc_test(FlightPathGeometryTest LABELS Unit)
 add_qgc_test(GeoSceneTest LABELS Unit)
 add_qgc_test(GeoMapCameraTest LABELS Unit)
 add_qgc_test(GeoMapItemTest LABELS Unit)
+add_qgc_test(GeoMapProjectedPathTest LABELS Unit)
 add_qgc_test(HeightFieldTest LABELS Unit)
 add_qgc_test(HeightSourceTest LABELS Unit)
 add_qgc_test(PaperPlaneGeometryTest LABELS Unit)

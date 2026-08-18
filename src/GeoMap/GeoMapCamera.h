@@ -42,6 +42,8 @@ class GeoMapCamera : public QObject
     Q_PROPERTY(qreal centerElevation READ centerElevation WRITE setCenterElevation NOTIFY centerElevationChanged)
     Q_PROPERTY(QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
     Q_PROPERTY(qreal fieldOfView READ fieldOfView WRITE setFieldOfView NOTIFY fieldOfViewChanged)
+    Q_PROPERTY(qreal verticalFieldOfView READ verticalFieldOfView NOTIFY verticalFieldOfViewChanged)
+    Q_PROPERTY(qreal unitsPerPixelAtUnitDistance READ unitsPerPixelAtUnitDistance NOTIFY unitsPerPixelAtUnitDistanceChanged)
     Q_PROPERTY(bool isTopDown READ isTopDown NOTIFY tiltChanged)
     Q_PROPERTY(Mode mode READ mode WRITE setMode NOTIFY modeChanged)
     Q_PROPERTY(qreal default3DTilt READ default3DTilt CONSTANT)
@@ -67,7 +69,10 @@ public:
     static constexpr qreal kMinTilt = 0.0;
     static constexpr qreal kMaxTilt = 85.0;
     static constexpr qreal kDefaultDistance = 1500.0;
-    static constexpr qreal kDefaultFieldOfView = 60.0;
+    // Applied to the larger viewport axis (see verticalFieldOfView). Moderate
+    // angle: wide-angle values skew level circles into tilted ellipses at the
+    // screen edges (off-axis rectilinear distortion)
+    static constexpr qreal kDefaultFieldOfView = 45.0;
     static constexpr qreal kDefault3DTilt = 55.0;
 
     QGeoCoordinate center() const;
@@ -106,6 +111,16 @@ public:
     qreal fieldOfView() const { return _fieldOfView; }
 
     void setFieldOfView(qreal fov);
+
+    /// fieldOfView applied to the larger viewport axis (Cesium-style): on wide
+    /// viewports the vertical FOV narrows instead of the horizontal FOV
+    /// exploding into fisheye distortion. All projection math uses this.
+    qreal verticalFieldOfView() const;
+
+    /// Scene units spanned by one pixel per unit of camera distance; multiply
+    /// by a point's camera distance for its units-per-pixel (constant apparent
+    /// size scaling). Returns 0 when the viewport size is not set.
+    qreal unitsPerPixelAtUnitDistance() const;
 
     /// Pose predicate: the camera currently looks straight down (tilt ~0).
     /// Distinct from mode(): Mode2D can be mid-transition with tilt > 0, and a
@@ -233,6 +248,8 @@ signals:
     void centerElevationChanged();
     void viewportSizeChanged();
     void fieldOfViewChanged();
+    void verticalFieldOfViewChanged();
+    void unitsPerPixelAtUnitDistanceChanged();
     void modeChanged();
     /// Emitted whenever scenePosition/sceneRotation may have changed (any pose
     /// component or the scene origin)

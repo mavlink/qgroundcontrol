@@ -123,6 +123,7 @@ public:
     double          specifiedGimbalPitch        (void) override;
     double          specifiedVehicleYaw         (void) override;
     QString         mapVisualQML                (void) const override { return QStringLiteral("SimpleItemMapVisual.qml"); }
+    QString         geoMapVisualQML             (void) const override { return QStringLiteral("GeoMapWaypointItem.qml"); }
     void            appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude            (double newAltitude) final;
     void            setMissionFlightStatus      (MissionFlightStatus_t& missionFlightStatus) final;
