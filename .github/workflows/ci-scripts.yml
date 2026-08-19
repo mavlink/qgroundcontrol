@@ -110,6 +110,7 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .github/actions/setup-python
+            .github/actions/cmake-build
             .github/actions/cmake-configure
             .github/actions/build-prerequisites
             .github/actions/cache
@@ -188,7 +189,7 @@ jobs:
           sparse-checkout: |
             .github/actions/setup-python
             tools/_bootstrap.py
-            tools/common
+            tools/common/__init__.py
             tools/moccache.py
             tools/pyproject.toml
             tools/setup
