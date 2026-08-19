@@ -5,6 +5,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
 from _helpers import REPO_ROOT
@@ -48,12 +49,11 @@ class TestEnsureToolsDir:
         ensure_tools_dir(str(deep))
         assert sys.path.count(tools_str) == 1
 
-    def test_raises_when_tools_not_found(self, tmp_path):
-        deep = tmp_path / "a" / "b" / "x.py"
-        deep.parent.mkdir(parents=True)
-        deep.touch()
+    def test_raises_when_tools_not_found(self, monkeypatch):
+        monkeypatch.setattr(Path, "is_dir", lambda _path: False)
         with pytest.raises(RuntimeError, match="Could not locate tools"):
-            ensure_tools_dir(str(deep))
+            ensure_tools_dir("/isolated/a/b/x.py")
+
 
 def _spawn_bootstrap(env: dict[str, str], body: str) -> subprocess.CompletedProcess:
     """Run a snippet in a subprocess with tools/ on sys.path so _bootstrap imports."""
@@ -68,6 +68,7 @@ def _spawn_bootstrap(env: dict[str, str], body: str) -> subprocess.CompletedProc
         timeout=15,
         check=False,
     )
+
 
 class TestDebugConfigure:
     """`_configure_debug()` runs at import time when QGC_CI_DEBUG is set."""

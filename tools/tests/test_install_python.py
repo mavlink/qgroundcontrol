@@ -62,6 +62,32 @@ def test_sync_groups_with_uv_uses_locked_active_env(tmp_path: Path) -> None:
     assert args.count("--extra") == 2
 
 
+def test_list_packages_uses_uv_for_synced_environment(tmp_path: Path) -> None:
+    venv = tmp_path / ".venv"
+    with (
+        patch.object(install_python, "has_uv", return_value=True),
+        patch.object(install_python.subprocess, "run") as mock_run,
+    ):
+        install_python.list_packages(venv)
+
+    mock_run.assert_called_once_with(
+        ["uv", "pip", "list", "--python", str(install_python.get_python_executable(venv))],
+        check=False,
+    )
+
+
+def test_list_packages_uses_pip_without_uv(tmp_path: Path) -> None:
+    venv = tmp_path / ".venv"
+    python = install_python.get_python_executable(venv)
+    with (
+        patch.object(install_python, "has_uv", return_value=False),
+        patch.object(install_python.subprocess, "run") as mock_run,
+    ):
+        install_python.list_packages(venv)
+
+    mock_run.assert_called_once_with([str(python), "-m", "pip", "list"], check=False)
+
+
 def test_create_venv_removes_partial_environment_before_retry(tmp_path: Path) -> None:
     venv = tmp_path / ".venv"
     command = ["uv", "venv", "--seed", str(venv)]

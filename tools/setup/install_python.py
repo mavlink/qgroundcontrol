@@ -173,7 +173,11 @@ def sync_groups_with_uv(venv_path: Path, group_spec: str) -> None:
 def list_packages(venv_path: Path) -> None:
     """List installed packages."""
     python = get_python_executable(venv_path)
-    subprocess.run([str(python), "-m", "pip", "list"])
+    if has_uv():
+        command = ["uv", "pip", "list", "--python", str(python)]
+    else:
+        command = [str(python), "-m", "pip", "list"]
+    subprocess.run(command, check=False)
 
 
 def check_installed(packages: list[str]) -> int:

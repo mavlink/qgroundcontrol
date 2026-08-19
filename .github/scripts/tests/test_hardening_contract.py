@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+from itertools import pairwise
 
 import pytest
 from _helpers import REPO_ROOT
@@ -44,3 +45,36 @@ def test_architecture_hardening_requires_every_output_architecture(
     )
 
     subprocess.run(["cmake", "-P", str(script)], check=True, capture_output=True, text=True)
+
+
+def test_universal_apple_hardening_scopes_architecture_flags(tmp_path) -> None:
+    script = tmp_path / "universal-hardening-contract.cmake"
+    flags_path = tmp_path / "hardening-flags.txt"
+    script.write_text(
+        "set(APPLE TRUE)\n"
+        "set(MSVC FALSE)\n"
+        'set(CMAKE_CXX_COMPILER_ID "AppleClang")\n'
+        'set(CMAKE_OSX_ARCHITECTURES "x86_64h;arm64")\n'
+        f'include("{REPO_ROOT}/cmake/modules/Hardening.cmake")\n'
+        "set(QGC_ENABLE_HARDENING ON)\n"
+        "set(QGC_REPRODUCIBLE_BUILD OFF)\n"
+        "function(check_compiler_flag language flag out_var)\n"
+        "  set(${out_var} TRUE PARENT_SCOPE)\n"
+        "endfunction()\n"
+        "function(check_linker_flag language flag out_var)\n"
+        "  set(${out_var} TRUE PARENT_SCOPE)\n"
+        "endfunction()\n"
+        "function(add_compile_options)\n"
+        "endfunction()\n"
+        "function(add_link_options)\n"
+        "endfunction()\n"
+        "qgc_apply_global_hardening()\n"
+        f'file(WRITE "{flags_path}" "${{QGC_HARDENING_CXX_FLAGS}}")\n',
+        encoding="utf-8",
+    )
+
+    subprocess.run(["cmake", "-P", str(script)], check=True, capture_output=True, text=True)
+    flags = flags_path.read_text(encoding="utf-8").split(";")
+    pairs = set(pairwise(flags))
+    assert ("-Xarch_x86_64h", "-fcf-protection=full") in pairs
+    assert ("-Xarch_arm64", "-mbranch-protection=standard") in pairs
