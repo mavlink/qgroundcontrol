@@ -3,34 +3,49 @@
   "include": ["common.json"],
   "configurePresets": [
     {
-      "name": "iOS",
-      "displayName": "iOS",
-      "generator": "Ninja Multi-Config",
+      "name": "ios-base",
+      "hidden": true,
+      "generator": "Ninja",
       "inherits": ["ccache"],
-      "binaryDir": "${sourceParentDir}/build/iOS",
       "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
       "cacheVariables": {
-        "CMAKE_CONFIGURATION_TYPES": "Release;Debug",
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "CMAKE_OSX_DEPLOYMENT_TARGET": "17.0",
-        "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
+        "QGC_CPACK_GENERATOR": "",
+        "QT_HOST_PATH": "$penv{QT_HOST_PATH}",
+        "Qt6LinguistTools_DIR": "$penv{QT_HOST_PATH}/lib/cmake/Qt6LinguistTools"
       }
+    },
+    {
+      "name": "iOS",
+      "displayName": "iOS Release",
+      "inherits": ["release", "ios-base"],
+      "binaryDir": "${sourceDir}/build/iOS"
+    },
+    {
+      "name": "iOS-debug",
+      "displayName": "iOS Debug",
+      "inherits": ["debug-no-tests", "ios-base"],
+      "binaryDir": "${sourceDir}/build/iOS-debug"
     }
   ],
   "buildPresets": [
-    { "name": "iOS", "configurePreset": "iOS", "configuration": "Release", "inherits": ["default"] },
-    { "name": "iOS-debug", "configurePreset": "iOS", "configuration": "Debug", "inherits": ["default"] }
-  ],
-  "packagePresets": [
-    { "name": "iOS", "configurePreset": "iOS", "configurations": ["Release"] }
+    { "name": "iOS", "configurePreset": "iOS", "configuration": "Release", "inherits": ["build-defaults"] },
+    { "name": "iOS-debug", "configurePreset": "iOS-debug", "configuration": "Debug", "inherits": ["build-defaults"] }
   ],
   "workflowPresets": [
     {
       "name": "iOS",
       "steps": [
         { "type": "configure", "name": "iOS" },
-        { "type": "build", "name": "iOS" },
-        { "type": "package", "name": "iOS" }
+        { "type": "build", "name": "iOS" }
+      ]
+    },
+    {
+      "name": "iOS-debug",
+      "steps": [
+        { "type": "configure", "name": "iOS-debug" },
+        { "type": "build", "name": "iOS-debug" }
       ]
     }
   ]

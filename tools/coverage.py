@@ -19,6 +19,7 @@ from common.gh_actions import write_step_summary
 from common.logging import log_error, log_info, log_ok
 from common.opener import open_in_default_app
 from common.proc import run_captured
+from configure import CMakeConfig, configure
 
 LINE_COVERAGE_RE = re.compile(r"lines:\s*(.+)")
 BRANCH_COVERAGE_RE = re.compile(r"branches:\s*(.+)")
@@ -80,22 +81,17 @@ def configure_build(repo_root: Path, build_dir: Path) -> None:
             return
 
     log_info("Configuring build with coverage...")
-    subprocess.run(
-        [
-            "cmake",
-            "-B",
-            str(build_dir),
-            "-S",
-            str(repo_root),
-            "-DCMAKE_BUILD_TYPE=Debug",
-            "-DQGC_ENABLE_COVERAGE=ON",
-            "-DQGC_BUILD_TESTING=ON",
-            "-G",
-            "Ninja",
-        ],
-        check=True,
-        text=True,
+    return_code = configure(
+        CMakeConfig(
+            source_dir=repo_root,
+            build_dir=build_dir,
+            build_type="Debug",
+            coverage=True,
+            preset="Linux-coverage",
+        )
     )
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, ["cmake", "--preset", "Linux-coverage"])
     log_ok("Build configured")
 
 

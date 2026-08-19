@@ -14,6 +14,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 _tools_dir = Path(__file__).resolve().parents[2]
@@ -179,15 +180,38 @@ def run_pacman_install_with_retry(
     return False
 
 
-def run_pipx_install(dry_run: bool = False) -> bool:
-    """Install the shared pipx-managed Python tools (gcovr, etc.)."""
+def run_pipx_install(
+    dry_run: bool = False,
+    max_attempts: int = 3,
+    retry_backoff_seconds: float = 5.0,
+) -> bool:
+    """Install shared pipx tools with bounded retries for package-index outages."""
     # Late import to avoid a circular dep at module load time.
     from ._packages import PIPX_PACKAGES
+
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be positive")
+    if retry_backoff_seconds < 0:
+        raise ValueError("retry_backoff_seconds must be non-negative")
 
     print("\nInstalling pipx packages...")
     run_command(["pipx", "ensurepath"], dry_run)
     for pkg in PIPX_PACKAGES:
-        if not run_command(["pipx", "install", pkg], dry_run):
+        installed = False
+        for attempt in range(1, max_attempts + 1):
+            if run_command(["pipx", "install", pkg], dry_run):
+                installed = True
+                break
+            if attempt >= max_attempts:
+                break
+            delay = retry_backoff_seconds * attempt
+            log_warn(
+                f"pipx install {pkg} failed (attempt {attempt}/{max_attempts}); "
+                f"retrying in {delay:g}s..."
+            )
+            if delay > 0 and not dry_run:
+                time.sleep(delay)
+        if not installed:
             log_error(f"Failed to install pipx package: {pkg}")
             return False
     return True

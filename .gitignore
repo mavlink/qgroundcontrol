@@ -176,6 +176,7 @@ Qt*-linux*.tar.*
 # Python tooling caches
 .ruff_cache/
 .pytest_cache/
+pytest-of-*/
 .import_linter_cache/
 .venv/
 

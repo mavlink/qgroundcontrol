@@ -5,12 +5,9 @@
     {
       "name": "windows-base",
       "hidden": true,
-      "generator": "Ninja Multi-Config",
-      "inherits": ["sccache"],
+      "generator": "Ninja",
+      "inherits": ["ccache"],
       "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
-      "cacheVariables": {
-        "CMAKE_CONFIGURATION_TYPES": "Release;Debug"
-      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -19,30 +16,43 @@
     },
     {
       "name": "Windows",
-      "displayName": "Windows x64",
-      "inherits": ["windows-base"],
-      "binaryDir": "${sourceParentDir}/build/Windows"
+      "displayName": "Windows x64 Release",
+      "inherits": ["release", "windows-base"],
+      "binaryDir": "${sourceDir}/build/Windows"
+    },
+    {
+      "name": "Windows-debug",
+      "displayName": "Windows x64 Debug",
+      "inherits": ["debug", "windows-base"],
+      "binaryDir": "${sourceDir}/build/Windows-debug"
     },
     {
       "name": "Windows-arm64",
-      "displayName": "Windows ARM64",
-      "inherits": ["windows-base"],
-      "binaryDir": "${sourceParentDir}/build/Windows-arm64",
+      "displayName": "Windows ARM64 Release",
+      "inherits": ["release", "windows-base"],
+      "binaryDir": "${sourceDir}/build/Windows-arm64",
       "cacheVariables": {
-        "CMAKE_CONFIGURATION_TYPES": "Release;Debug",
+        "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
+      }
+    },
+    {
+      "name": "Windows-arm64-debug",
+      "displayName": "Windows ARM64 Debug",
+      "inherits": ["debug-no-tests", "windows-base"],
+      "binaryDir": "${sourceDir}/build/Windows-arm64-debug",
+      "cacheVariables": {
         "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
       }
     }
   ],
   "buildPresets": [
-    { "name": "Windows", "configurePreset": "Windows", "configuration": "Release", "inherits": ["default"] },
-    { "name": "Windows-debug", "configurePreset": "Windows", "configuration": "Debug", "inherits": ["default"] },
-    { "name": "Windows-arm64", "configurePreset": "Windows-arm64", "configuration": "Release", "inherits": ["default"] },
-    { "name": "Windows-arm64-debug", "configurePreset": "Windows-arm64", "configuration": "Debug", "inherits": ["default"] }
+    { "name": "Windows", "configurePreset": "Windows", "configuration": "Release", "inherits": ["build-defaults"] },
+    { "name": "Windows-debug", "configurePreset": "Windows-debug", "configuration": "Debug", "inherits": ["build-defaults"] },
+    { "name": "Windows-arm64", "configurePreset": "Windows-arm64", "configuration": "Release", "inherits": ["build-defaults"] },
+    { "name": "Windows-arm64-debug", "configurePreset": "Windows-arm64-debug", "configuration": "Debug", "inherits": ["build-defaults"] }
   ],
   "testPresets": [
-    { "name": "Windows", "configurePreset": "Windows", "configuration": "Release", "inherits": ["default"] },
-    { "name": "Windows-debug", "configurePreset": "Windows", "configuration": "Debug", "inherits": ["default"] }
+    { "name": "Windows-debug", "configurePreset": "Windows-debug", "configuration": "Debug", "inherits": ["test-defaults"] }
   ],
   "packagePresets": [
     { "name": "Windows", "configurePreset": "Windows", "configurations": ["Release"] },
@@ -54,8 +64,30 @@
       "steps": [
         { "type": "configure", "name": "Windows" },
         { "type": "build", "name": "Windows" },
-        { "type": "test", "name": "Windows" },
         { "type": "package", "name": "Windows" }
+      ]
+    },
+    {
+      "name": "Windows-debug",
+      "steps": [
+        { "type": "configure", "name": "Windows-debug" },
+        { "type": "build", "name": "Windows-debug" },
+        { "type": "test", "name": "Windows-debug" }
+      ]
+    },
+    {
+      "name": "Windows-arm64",
+      "steps": [
+        { "type": "configure", "name": "Windows-arm64" },
+        { "type": "build", "name": "Windows-arm64" },
+        { "type": "package", "name": "Windows-arm64" }
+      ]
+    },
+    {
+      "name": "Windows-arm64-debug",
+      "steps": [
+        { "type": "configure", "name": "Windows-arm64-debug" },
+        { "type": "build", "name": "Windows-arm64-debug" }
       ]
     }
   ]

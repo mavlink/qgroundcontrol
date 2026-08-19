@@ -96,12 +96,13 @@ with no arguments to print this list from the tool itself.
 | ----------------- | ----------------------------------------------------------------- |
 | `just deps`       | Install system build dependencies (Debian/Ubuntu, via `sudo apt`) |
 | `just submodules` | Initialize/update git submodules                                  |
+| `just vscode`     | Install missing VS Code workspace files from tracked templates    |
 
 ### Build
 
 | Recipe              | Description                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------------ |
-| `just configure`    | Configure CMake build (Debug by default; pulls submodules first)                                 |
+| `just configure`    | Configure through the matching `default*` CMake preset (Debug by default)                        |
 | `just build`        | Build the project (uses all cores by default; override with `JOBS=N`)                            |
 | `just release`      | Configure and build in Release mode (testing disabled)                                           |
 | `just clean [ARGS]` | Clean the build directory; forwards `ARGS` to `tools/clean.py` (`--cache`, `--all`, `--dry-run`) |
@@ -138,16 +139,21 @@ just test "Slow" "Network"             # override via positional args (labels, e
 
 ### Utilities
 
-| Recipe            | Description                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------ |
-| `just info`       | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...) |
-| `just check-deps` | Check dependency and submodule versions (`tools/check_deps.py`)                      |
-| `just distclean`  | Clean build, caches, generated files, and `node_modules/`                            |
+| Recipe                 | Description                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `just info`            | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...) |
+| `just check-deps`      | Check dependency and submodule versions (`tools/check_deps.py`)                      |
+| `just check-gstreamer` | Check the latest GStreamer patch common to all SDK platforms                         |
+| `just distclean`       | Clean build, caches, generated files, and `node_modules/`                            |
 
 ## Direct Script Usage
 
 Prefer `just` recipes for common tasks; call the underlying scripts directly for flags a recipe
 doesn't expose — see [Development Scripts](#development-scripts) for the per-script flag reference.
+
+Repository configure/build/test/workflow presets are rooted at [`../CMakePresets.json`](../CMakePresets.json).
+Use `CMakeUserPresets.json` for machine-local paths or derived presets; it is ignored by Git and
+preserved by `just clean`.
 
 ```bash
 # Run tools/ Python tests
@@ -254,6 +260,8 @@ Check for outdated dependencies and submodules. Underlies `just check-deps`.
 python3 ./tools/check_deps.py              # Check all dependencies
 python3 ./tools/check_deps.py --submodules # Check git submodules only
 python3 ./tools/check_deps.py --qt         # Check Qt version
+python3 ./tools/check_deps.py --gstreamer  # Find latest patch common to all SDK platforms
+python3 ./tools/check_deps.py --gstreamer --fail-if-outdated  # CI/automation guard
 python3 ./tools/check_deps.py --update     # Update submodules to latest
 ```
 
@@ -285,6 +293,7 @@ Scripts in `setup/` help configure development environments. They read configura
 | `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                       |
 | `install_python.py`                       | All                   | Install Python tools via uv or pip (see groups below)                         |
 | `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI) |
+| `setup_vscode.py`                         | All                   | Install missing VS Code workspace files from tracked templates               |
 | `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                        |
 | `build_android_openssl.py`                | Android               | Cross-compile OpenSSL as Qt-style Android libraries (optional)                |
 | `download_artifacts.py`                   | All                   | Download build artifacts (in `.github/scripts/`)                              |

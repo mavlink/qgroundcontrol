@@ -1,9 +1,11 @@
 """Tests for the settings QML page generator."""
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
+from generators.settings_qml import generate_pages as settings_generator
 from generators.settings_qml.page_generator import (
     ControlDef,
     GroupDef,
@@ -125,7 +127,7 @@ class TestLoadPageDef:
     def test_missing_setting_rejected(self, tmp_path: Path):
         # A fact-backed control without a setting would crash emit with a bare IndexError
         data = {"version": 1, "groups": [{"heading": "G", "controls": [{"label": "Oops"}]}]}
-        with pytest.raises(ValueError, match="settingsGroupAccessor.factName"):
+        with pytest.raises(ValueError, match=r"settingsGroupAccessor\.factName"):
             load_page_def(_make_page_json(tmp_path, data))
 
     def test_dotless_setting_rejected(self, tmp_path: Path):
@@ -144,7 +146,7 @@ class TestLoadPageDef:
             "version": 1,
             "groups": [{"heading": "G", "controls": [{"setting": bad_setting}]}],
         }
-        with pytest.raises(ValueError, match="settingsGroupAccessor.factName"):
+        with pytest.raises(ValueError, match=r"settingsGroupAccessor\.factName"):
             load_page_def(_make_page_json(tmp_path, data))
 
     @pytest.mark.parametrize("key", ["enableCheckbox", "button"])
@@ -1134,3 +1136,48 @@ class TestRealPageDefinitions:
         qml = generate_pages_model_qml(pages_path)
         assert "ListModel {" in qml
         assert "General" in qml
+
+
+def test_cli_preserves_unchanged_output_timestamps(tmp_path: Path, monkeypatch) -> None:
+    output_dir = tmp_path / "generated"
+    pages_dir = tmp_path / "pages"
+    pages_dir.mkdir()
+    page_definition = {
+        "version": 1,
+        "groups": [{"heading": "General", "controls": [{"setting": "appSettings.x"}]}],
+    }
+    _make_page_json(pages_dir, page_definition)
+    (pages_dir / "SettingsPages.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "pages": [
+                    {
+                        "name": "Test Page",
+                        "qml": "TestPage.qml",
+                        "icon": "qrc:/test.svg",
+                        "pageDefinition": "Test.SettingsUI.json",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    settings_dir = _make_settings_dir(
+        tmp_path,
+        {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]},
+    )
+    monkeypatch.setattr(settings_generator, "PAGES_DIR", pages_dir)
+    monkeypatch.setattr(settings_generator, "SETTINGS_DIR", settings_dir)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["generate_pages", "--output-dir", str(output_dir)],
+    )
+
+    assert settings_generator.main() == 0
+    timestamps = {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}
+    assert settings_generator.main() == 0
+
+    assert timestamps
+    assert timestamps == {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}

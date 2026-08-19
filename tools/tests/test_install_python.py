@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 from pathlib import Path  # noqa: TC003
+from subprocess import CalledProcessError
 from unittest.mock import patch
 
 import pytest
+from common import proc
+from setup import install_python
 from setup.install_python import get_packages_for_groups, sync_groups_with_uv
 
 
@@ -47,11 +50,59 @@ def test_sync_groups_with_uv_uses_locked_active_env(tmp_path: Path) -> None:
     (tmp_path / "tools").mkdir()
     lockfile = tmp_path / "tools" / "uv.lock"
     lockfile.write_text("", encoding="utf-8")
-    with patch("setup.install_python.find_repo_root", return_value=tmp_path), \
-         patch("setup.install_python.subprocess.run") as mock_run:
+    with (
+        patch("setup.install_python.find_repo_root", return_value=tmp_path),
+        patch("setup.install_python.run_checked_with_retry") as mock_run,
+    ):
         sync_groups_with_uv(venv, "scripts,test")
 
     args = mock_run.call_args.args[0]
     assert args[:5] == ["uv", "sync", "--project", str(tmp_path / "tools"), "--active"]
     assert "--frozen" in args
     assert args.count("--extra") == 2
+
+
+def test_create_venv_removes_partial_environment_before_retry(tmp_path: Path) -> None:
+    venv = tmp_path / ".venv"
+    command = ["uv", "venv", "--seed", str(venv)]
+    attempts = 0
+
+    def create_partial_then_succeed(*_args: object, **_kwargs: object) -> None:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            venv.mkdir()
+            (venv / "partial").touch()
+            raise CalledProcessError(1, command)
+        assert not venv.exists()
+        venv.mkdir()
+
+    with (
+        patch.object(install_python, "has_uv", return_value=True),
+        patch.object(proc.subprocess, "run", side_effect=create_partial_then_succeed),
+        patch.object(proc.time, "sleep"),
+    ):
+        install_python.create_venv(venv)
+
+    assert attempts == 2
+    assert venv.is_dir()
+    assert not (venv / "partial").exists()
+
+
+def test_create_venv_removes_partial_environment_after_final_failure(tmp_path: Path) -> None:
+    venv = tmp_path / ".venv"
+    command = ["uv", "venv", "--seed", str(venv)]
+
+    def always_fail(*_args: object, **_kwargs: object) -> None:
+        venv.mkdir(exist_ok=True)
+        raise CalledProcessError(1, command)
+
+    with (
+        patch.object(install_python, "has_uv", return_value=True),
+        patch.object(proc.subprocess, "run", side_effect=always_fail),
+        patch.object(proc.time, "sleep"),
+        pytest.raises(CalledProcessError),
+    ):
+        install_python.create_venv(venv)
+
+    assert not venv.exists()

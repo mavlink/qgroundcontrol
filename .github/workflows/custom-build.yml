@@ -69,6 +69,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
+          preset: Linux
           extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build
@@ -144,6 +145,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
+          preset: Linux-debug
           testing: 'true'
           extra-args: -DQGC_CUSTOM_DIR=custom-example
 

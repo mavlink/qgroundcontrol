@@ -21,9 +21,8 @@
     "--function-arg-placeholders=false"
   ],
   "cmake.buildDirectory": "${workspaceFolder}/build",
-  "cmake.configureOnOpen": true,
-  "cmake.generator": "Ninja",
-  "cmake.parallelJobs": 0,
+  "cmake.configureOnOpen": false,
+  "cmake.useCMakePresets": "always",
   "editor.formatOnSave": false,
   "editor.insertSpaces": true,
   "editor.rulers": [

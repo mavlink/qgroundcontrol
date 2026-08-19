@@ -7,6 +7,10 @@ on:
       - '.github/actions/**'
       - '.github/workflows/**'
       - '.github/build-config.json'
+      - '.vscode/*.default.json'
+      - 'CMakePresets.json'
+      - 'cmake/presets/**'
+      - 'justfile'
       - 'tools/setup/**'
       - 'tools/*.py'
       - 'tools/uv.lock'
@@ -26,6 +30,10 @@ on:
       - '.github/actions/**'
       - '.github/workflows/**'
       - '.github/build-config.json'
+      - '.vscode/*.default.json'
+      - 'CMakePresets.json'
+      - 'cmake/presets/**'
+      - 'justfile'
       - 'tools/setup/**'
       - 'tools/*.py'
       - 'tools/uv.lock'
@@ -103,6 +111,20 @@ jobs:
             .github/build-config.json
             .github/scripts
             .github/workflows/build-results.yml
+            .github/workflows/ci-scripts.yml
+            .github/workflows/analysis.yml
+            .github/workflows/android.yml
+            .github/workflows/build-profile.yml
+            .github/workflows/custom-build.yml
+            .github/workflows/ios.yml
+            .github/workflows/linux.yml
+            .github/workflows/macos.yml
+            .github/workflows/windows.yml
+            .vscode
+            CMakePresets.json
+            cmake/modules/Hardening.cmake
+            cmake/presets
+            justfile
             tools/pyproject.toml
             tools/uv.lock
             tools/*.py

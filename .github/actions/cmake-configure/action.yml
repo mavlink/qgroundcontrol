@@ -18,6 +18,10 @@ inputs:
     description: 'CMake generator (Ninja, Unix Makefiles, etc.)'
     required: false
     default: 'Ninja'
+  preset:
+    description: 'CMake configure preset'
+    required: false
+    default: ''
   testing:
     description: 'Enable testing (QGC_BUILD_TESTING)'
     required: false
@@ -70,6 +74,7 @@ runs:
           --generator "${INPUTS_GENERATOR}"
           --build-type "${INPUTS_BUILD_TYPE}"
         )
+        [[ -n "${INPUTS_PRESET}" ]] && ARGS+=(--preset "${INPUTS_PRESET}")
         [[ "${INPUTS_TESTING}" == "true" ]] && ARGS+=(--testing)
         [[ "${INPUTS_COVERAGE}" == "true" ]] && ARGS+=(--coverage)
         [[ "${INPUTS_STABLE}" == "true" ]] && ARGS+=(--stable)
@@ -81,6 +86,7 @@ runs:
         INPUTS_SOURCE_DIR: ${{ inputs.source-dir }}
         INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
         INPUTS_GENERATOR: ${{ inputs.generator }}
+        INPUTS_PRESET: ${{ inputs.preset }}
         INPUTS_BUILD_TYPE: ${{ inputs.build-type }}
         INPUTS_TESTING: ${{ inputs.testing }}
         INPUTS_COVERAGE: ${{ inputs.coverage }}

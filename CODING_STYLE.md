@@ -37,6 +37,8 @@ For complete worked examples, see the reference files:
 - **Line endings**: LF (Unix-style)
 - **File encoding**: UTF-8
 - **Max line length**: 120 columns (enforced by `.clang-format`, `ColumnLimit: 120`)
+- **Avoid overengineering**: Prefer the smallest focused solution that satisfies current requirements.
+  Do not add abstractions, extensibility, or speculative handling without a concrete need.
 
 ## Comments
 

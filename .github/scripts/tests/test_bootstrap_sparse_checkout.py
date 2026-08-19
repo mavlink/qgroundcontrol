@@ -208,6 +208,7 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
         "tools/common/io.py",
         "tools/common/markdown.py",
         "tools/common/platform.py",
+        "tools/common/proc.py",
         "tools/common/xml.py",
         "tools/pyproject.toml",
         "tools/uv.lock",

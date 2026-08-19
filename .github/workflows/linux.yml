@@ -115,6 +115,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
+          preset: ${{ matrix.arch == 'linux_gcc_arm64' && 'Linux-arm64' || 'Linux' }}
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -255,16 +256,14 @@ jobs:
 
       - name: Ensure coverage tools are available
         if: matrix.mode == 'coverage'
-        run: |
-          if ! command -v gcovr >/dev/null 2>&1; then
-            pipx install gcovr
-          fi
+        run: python3 tools/setup/install_python.py scripts,coverage
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
+          preset: ${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-debug' }}
           testing: 'true'
           coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
           extra-args: ${{ matrix.configure_extra }}

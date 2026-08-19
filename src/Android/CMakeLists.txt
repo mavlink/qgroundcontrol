@@ -69,6 +69,7 @@ add_library(qtandroidextensions_lockers STATIC
     ${_qlocks_moc}
 )
 set_target_properties(qtandroidextensions_lockers PROPERTIES AUTOMOC OFF)
+qgc_disable_dependency_warnings(qtandroidextensions_lockers)
 
 target_include_directories(qtandroidextensions_lockers
     PUBLIC

@@ -13,13 +13,57 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
-__all__ = ["run_bytes", "run_captured", "run_tee", "run_text"]
+__all__ = ["run_bytes", "run_captured", "run_checked_with_retry", "run_tee", "run_text"]
+
+
+def run_checked_with_retry(
+    cmd: Sequence[str],
+    *,
+    cwd: Path | str | None = None,
+    env: Mapping[str, str] | None = None,
+    max_attempts: int = 3,
+    retry_backoff_seconds: float = 5.0,
+    before_retry: Callable[[], None] | None = None,
+) -> subprocess.CompletedProcess[bytes]:
+    """Run a checked command with bounded linear backoff."""
+    command = list(cmd)
+    if not command:
+        raise ValueError("cmd must not be empty")
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be positive")
+    if retry_backoff_seconds < 0:
+        raise ValueError("retry_backoff_seconds must be non-negative")
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return subprocess.run(
+                command,
+                cwd=cwd,
+                env=dict(env) if env is not None else None,
+                check=True,
+            )
+        except subprocess.CalledProcessError:
+            if attempt >= max_attempts:
+                raise
+            if before_retry is not None:
+                before_retry()
+            delay = retry_backoff_seconds * attempt
+            print(
+                f"Command failed (attempt {attempt}/{max_attempts}); retrying in {delay:g}s: "
+                f"{Path(command[0]).name}",
+                file=sys.stderr,
+            )
+            if delay > 0:
+                time.sleep(delay)
+
+    raise RuntimeError("unreachable")
 
 
 def run_bytes(

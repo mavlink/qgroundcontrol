@@ -198,10 +198,10 @@ function(gstreamer_resilient_download)
     if(NOT ARG_RESULT_VAR)
         message(FATAL_ERROR "gstreamer_resilient_download: RESULT_VAR is required")
     endif()
-    if(NOT ARG_TIMEOUT AND DEFINED QGC_GST_DOWNLOAD_TIMEOUT)
+    if(NOT DEFINED ARG_TIMEOUT AND DEFINED QGC_GST_DOWNLOAD_TIMEOUT)
         set(ARG_TIMEOUT ${QGC_GST_DOWNLOAD_TIMEOUT})
     endif()
-    if(NOT ARG_INACTIVITY_TIMEOUT AND DEFINED QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT)
+    if(NOT DEFINED ARG_INACTIVITY_TIMEOUT AND DEFINED QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT)
         set(ARG_INACTIVITY_TIMEOUT ${QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT})
     endif()
 
@@ -210,10 +210,10 @@ function(gstreamer_resilient_download)
     # generous cap and let INACTIVITY_TIMEOUT (60 s) catch genuine stalls instead.
     # Note: this 1200 s default overrides the project-level QGC_DOWNLOAD_TIMEOUT for
     # GStreamer downloads — use QGC_GST_DOWNLOAD_TIMEOUT to tune the GStreamer cap.
-    if(NOT ARG_TIMEOUT)
+    if(NOT DEFINED ARG_TIMEOUT)
         set(ARG_TIMEOUT 1200)
     endif()
-    if(NOT ARG_INACTIVITY_TIMEOUT)
+    if(NOT DEFINED ARG_INACTIVITY_TIMEOUT)
         set(ARG_INACTIVITY_TIMEOUT 60)
     endif()
 
@@ -225,10 +225,10 @@ function(gstreamer_resilient_download)
         LOG_TAG          "GStreamer"
         FAILURE_HINT     "Install manually from https://gstreamer.freedesktop.org/download/ or set GStreamer_ROOT_DIR."
     )
-    if(ARG_TIMEOUT)
+    if(DEFINED ARG_TIMEOUT)
         list(APPEND _fwd TIMEOUT ${ARG_TIMEOUT})
     endif()
-    if(ARG_INACTIVITY_TIMEOUT)
+    if(DEFINED ARG_INACTIVITY_TIMEOUT)
         list(APPEND _fwd INACTIVITY_TIMEOUT ${ARG_INACTIVITY_TIMEOUT})
     endif()
     if(ARG_EXPECTED_HASH)

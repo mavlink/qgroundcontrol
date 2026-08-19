@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import common.deps as deps
 import pytest
 from common.deps import check_dependencies, pip_install, require_tool
 from common.errors import ToolNotFoundError
@@ -84,6 +83,6 @@ def test_pip_install_prefers_project_venv_with_uv(
 def test_pip_install_falls_back_to_current_interpreter(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[list[str]] = []
     monkeypatch.setattr(shutil, "which", lambda _name: None)
-    monkeypatch.setattr(deps.subprocess, "run", lambda command, **_kwargs: calls.append(command))
+    monkeypatch.setattr(subprocess, "run", lambda command, **_kwargs: calls.append(command))
     pip_install(["gcovr"], quiet=False)
     assert calls == [[sys.executable, "-m", "pip", "install", "gcovr"]]

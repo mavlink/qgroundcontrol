@@ -79,6 +79,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ inputs.build_type }}
+          preset: ${{ inputs.build_type == 'Debug' && 'Linux-debug' || inputs.build_type == 'RelWithDebInfo' && 'Linux-relwithdebinfo' || 'Linux' }}
           extra-args: -DQGC_TIME_TRACE=ON -DQGC_USE_CACHE=OFF
 
       - name: Start ClangBuildAnalyzer capture

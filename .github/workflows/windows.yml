@@ -63,6 +63,7 @@ jobs:
             runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
+            preset: Windows
             package: QGroundControl-installer-AMD64
             gstreamer: true
 
@@ -70,6 +71,7 @@ jobs:
             runs_on: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
+            preset: Windows-arm64
             package: QGroundControl-installer-ARM64
             gstreamer: true
 
@@ -77,6 +79,7 @@ jobs:
             runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
+            preset: Windows-arm64
             package: QGroundControl-installer-AMD64-ARM64
             gstreamer: false
 
@@ -126,6 +129,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+          preset: ${{ matrix.build_type == 'Debug' && format('{0}-debug', matrix.preset) || matrix.preset }}
           extra-args: >-
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }}
             ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}

@@ -1,9 +1,11 @@
 """Tests for the vehicle config QML page generator's JSON schema validation."""
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
+from generators.config_qml.generate_pages import main as generate_config_pages
 from generators.config_qml.model import load_page_def
 
 from ._helpers import REPO_ROOT
@@ -120,3 +122,28 @@ class TestRealPageDefinitions:
     def test_real_page_loads(self, json_path: Path):
         page = load_page_def(json_path)
         assert page.sections
+
+
+def test_cli_preserves_unchanged_output_timestamps(tmp_path: Path, monkeypatch) -> None:
+    output_dir = tmp_path / "generated"
+    pages_dir = tmp_path / "pages"
+    pages_dir.mkdir()
+    _make_page_json(pages_dir, _minimal_page())
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "generate_pages",
+            "--pages-dir",
+            str(pages_dir),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    generate_config_pages()
+    timestamps = {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}
+    generate_config_pages()
+
+    assert timestamps
+    assert timestamps == {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}

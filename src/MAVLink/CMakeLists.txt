@@ -37,9 +37,7 @@ CPMAddPackage(
     OPTIONS
         "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
         "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
-    # mavgen embeds Python's salted hash() in MAVLINK_*_XML_HASH, making the
-    # generated headers differ on every run; pin PYTHONHASHSEED for
-    # deterministic output (keeps moccache/ccache effective).
+    # Retry upstream's build-time pip install and make mavgen hashes deterministic.
     PATCHES mavlink-deterministic-mavgen.patch
 )
 

@@ -102,6 +102,8 @@ def cmd_configure(args: argparse.Namespace) -> None:
         "-t",
         args.build_type,
     ]
+    if args.preset:
+        cmd += ["--preset", args.preset]
     if args.testing:
         cmd.append("--testing")
     if args.coverage:
@@ -202,6 +204,7 @@ def main() -> None:
     p_conf.add_argument("--build-dir", required=True)
     p_conf.add_argument("--generator", default="Ninja")
     p_conf.add_argument("--build-type", default="Release")
+    p_conf.add_argument("--preset", default="")
     p_conf.add_argument("--testing", action="store_true", default=False)
     p_conf.add_argument("--coverage", action="store_true", default=False)
     p_conf.add_argument("--stable", action="store_true", default=False)
