@@ -189,7 +189,7 @@ jobs:
           sparse-checkout: |
             .github/actions/setup-python
             tools/_bootstrap.py
-            tools/common/__init__.py
+            tools/common
             tools/moccache.py
             tools/pyproject.toml
             tools/setup

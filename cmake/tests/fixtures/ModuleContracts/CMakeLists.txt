@@ -242,6 +242,15 @@ if(TEST_CASE MATCHES "^helpers-")
         if(NOT "${_automoc_launcher}" STREQUAL "${_moccache_launcher}")
             message(FATAL_ERROR "AUTOMOC target did not receive moccache: ${_automoc_launcher}")
         endif()
+        if(CMAKE_HOST_WIN32 AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.29)
+            get_target_property(_automoc_command_line_limit AutomocTarget AUTOGEN_COMMAND_LINE_LENGTH_MAX)
+            if(NOT "${_automoc_command_line_limit}" STREQUAL "7000")
+                message(
+                    FATAL_ERROR
+                        "AUTOMOC target did not receive Windows response-file limit: ${_automoc_command_line_limit}"
+                )
+            endif()
+        endif()
         if(NOT "${_custom_launcher}" STREQUAL "${_custom_moc}")
             message(FATAL_ERROR "Existing AUTOMOC executable was replaced: ${_custom_launcher}")
         endif()

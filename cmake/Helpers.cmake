@@ -119,6 +119,11 @@ function(qgc_config_moccache)
         return()
     endif()
 
+    if(CMAKE_HOST_WIN32 AND CMAKE_VERSION VERSION_LESS 3.29)
+        message(STATUS "QGC: CMake 3.29 or newer is required for moccache on Windows")
+        return()
+    endif()
+
     set(_moccache_py "${CMAKE_SOURCE_DIR}/tools/moccache.py")
     if(NOT EXISTS "${_moccache_py}" OR NOT TARGET Qt6::moc)
         return()
@@ -200,6 +205,10 @@ function(_qgc_apply_moccache_to_directory directory)
         )
         if(_automoc AND NOT _automoc_executable_set)
             set_property(TARGET ${_target} PROPERTY AUTOMOC_EXECUTABLE "${_moccache_wrapper}")
+            if(CMAKE_HOST_WIN32)
+                # Leave room for the Python launcher below cmd.exe's 8191-character limit.
+                set_property(TARGET ${_target} PROPERTY AUTOGEN_COMMAND_LINE_LENGTH_MAX 7000)
+            endif()
         endif()
     endforeach()
 

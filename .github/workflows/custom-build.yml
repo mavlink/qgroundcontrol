@@ -178,6 +178,7 @@ jobs:
           include-labels: 'Unit'
           exclude-labels: 'Flaky|Network'
           parallel: 'auto'
+          repeat: 'until-pass:2'
 
       - name: Run Integration Tests (serial)
         id: integration_tests

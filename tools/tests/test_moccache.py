@@ -25,8 +25,19 @@ import os
 import sys
 
 
+def expand_response_files(argv):
+    expanded = []
+    for arg in argv:
+        if arg.startswith("@") and os.path.isfile(arg[1:]):
+            with open(arg[1:], encoding="utf-8") as response_file:
+                expanded.extend(response_file.read().splitlines())
+        else:
+            expanded.append(arg)
+    return expanded
+
+
 def main() -> int:
-    argv = sys.argv[1:]
+    argv = expand_response_files(sys.argv[1:])
     if argv == ["--version"]:
         print("fake-moc " + os.environ.get("FAKEMOC_VERSION", "1.0"))
         return 0
@@ -222,6 +233,35 @@ class TestBasicCaching:
         harness.run(tree)
         log = (harness.cache / "stats.log").read_text()
         assert str(harness.input) in log
+
+    def test_cmake_response_file_misses_then_hits(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        response_dir = harness.root / "response files"
+        response_dir.mkdir()
+        response_file = response_dir / "moc.rsp"
+
+        def write_response(output: Path) -> None:
+            response_file.write_text(
+                "\n".join(
+                    [
+                        "--include",
+                        str(tree.predefs),
+                        "-I" + str(harness.src),
+                        "--output-dep-file",
+                        "-o",
+                        str(output),
+                        str(harness.input),
+                    ]
+                )
+                + "\n"
+            )
+
+        write_response(tree.out_path("a.cpp"))
+        assert harness.run(tree, argv_override=[f"@{response_file}"]) == 0
+        write_response(tree.out_path("b.cpp"))
+        assert harness.run(tree, argv_override=[f"@{response_file}"]) == 0
+        assert harness.stats() == ["miss", "hit"]
+        assert harness.moc_runs() == 1
 
 
 # ---------------------------------------------------------------------------
