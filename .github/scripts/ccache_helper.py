@@ -588,7 +588,7 @@ def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Pa
     return install_dir
 
 
-def configure_ccache_environment(workspace: Path) -> Path:
+def configure_ccache_environment(workspace: Path, max_size: str = "2G") -> Path:
     """Configure standard ccache environment variables for GitHub Actions."""
     workspace_path = Path(str(workspace).replace("\\", "/"))
     ccache_dir = workspace_path / ".ccache"
@@ -598,7 +598,7 @@ def configure_ccache_environment(workspace: Path) -> Path:
             "CCACHE_DIR": ccache_dir.as_posix(),
             "CCACHE_BASEDIR": workspace_path.as_posix(),
             "CCACHE_CONFIGPATH": (workspace_path / "tools" / "configs" / "ccache.conf").as_posix(),
-            "CCACHE_MAXSIZE": "2G",
+            "CCACHE_MAXSIZE": max_size,
             "CCACHE_NOFILECLONE": "1",
         }
     )
@@ -718,6 +718,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     env_cfg = sub.add_parser("configure-env", help="Configure ccache GitHub environment variables")
     env_cfg.add_argument("--workspace", type=Path, required=True)
+    env_cfg.add_argument("--max-size", default="2G", help="Maximum ccache size (default: 2G)")
 
     return parser.parse_args(argv)
 
@@ -805,7 +806,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "configure-env":
-        ccache_dir = configure_ccache_environment(args.workspace)
+        ccache_dir = configure_ccache_environment(args.workspace, args.max_size)
         print(ccache_dir)
         return 0
 

@@ -21,7 +21,7 @@ on:
         type: boolean
         default: false
       prune:
-        description: 'GC mode: keep build caches (ccache/cpm), evict the rest when the pool nears the cap'
+        description: 'GC mode: keep newest ccache/CPM generations and evict stale caches near the cap'
         required: false
         type: boolean
         default: false
@@ -32,13 +32,17 @@ on:
         default: 30
 
 permissions:
-  actions: write
+  contents: read
 
 jobs:
   cleanup:
     name: Cleanup Caches
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.timeout-minutes }}
+    permissions:
+      contents: read
+      # Required to delete cache entries.
+      actions: write
     steps:
       - uses: actions/checkout@v7
         with:

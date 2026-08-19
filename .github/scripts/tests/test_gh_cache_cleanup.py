@@ -100,6 +100,19 @@ def test_main_dry_run_writes_count_and_zero_deleted(monkeypatch, gh_output: Path
     assert "deleted=0" in contents
 
 
+def test_main_default_limit_covers_rolling_generations(monkeypatch, gh_output: Path) -> None:
+    monkeypatch.setenv("GH_REPO", "owner/repo")
+    seen: list[int] = []
+    monkeypatch.setattr(
+        mod,
+        "list_caches",
+        lambda _repo, _branch, limit: seen.append(limit) or [],
+    )
+
+    assert mod.main([]) == 0
+    assert seen == [500]
+
+
 def test_main_delete_invokes_delete(monkeypatch, gh_output: Path) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
     monkeypatch.setattr(
@@ -193,6 +206,53 @@ def test_select_prune_victims_floor_above_keep_when_protected_dominates() -> Non
     )
     assert [v.key for v in victims] == ["avd-Linux"]
     assert projected == 9500 * 1024 * 1024
+
+
+def test_select_prune_victims_keeps_newest_rolling_generation() -> None:
+    caches = [
+        _usage("ccache-linux-shared-hash-100-1", 3000, accessed="2026-01-01"),
+        _usage("ccache-linux-shared-hash-101-1", 3000, accessed="2026-01-02"),
+        _usage("avd-Linux", 4000),
+    ]
+    victims, _total, _projected = mod.select_prune_victims(
+        caches, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+    )
+    assert [v.key for v in victims] == ["avd-Linux"]
+
+
+def test_select_prune_victims_can_evict_older_rolling_generation() -> None:
+    caches = [
+        _usage("ccache-linux-shared-hash-100-1", 3000, accessed="2026-01-01"),
+        _usage("ccache-linux-shared-hash-101-1", 3000, accessed="2026-01-02"),
+        _usage("avd-Linux", 4000),
+    ]
+    victims, _total, projected = mod.select_prune_victims(
+        caches, keep_mb=3000, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+    )
+    assert [v.key for v in victims] == ["avd-Linux", "ccache-linux-shared-hash-100-1"]
+    assert projected == 3000 * 1024 * 1024
+
+
+@pytest.mark.parametrize("prefix", ["ccache", "cpm-modules"])
+def test_select_prune_victims_replaces_legacy_static_entry(prefix: str) -> None:
+    caches = [
+        _usage(f"{prefix}-linux-shared-hash", 4000, accessed="2026-01-01"),
+        _usage(f"{prefix}-linux-shared-hash-101-1", 4000, accessed="2026-01-02"),
+        _usage("avd-Linux", 2000),
+    ]
+    victims, _total, _projected = mod.select_prune_victims(
+        caches, keep_mb=4000, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+    )
+    assert [v.key for v in victims] == [f"{prefix}-linux-shared-hash", "avd-Linux"]
+
+
+def test_select_prune_victims_keeps_lone_legacy_static_entry() -> None:
+    caches = [_usage("ccache-linux-shared-hash", 9000), _usage("avd-Linux", 2000)]
+    victims, _total, projected = mod.select_prune_victims(
+        caches, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+    )
+    assert [v.key for v in victims] == ["avd-Linux"]
+    assert projected == 9000 * 1024 * 1024
 
 
 def test_list_caches_usage_parses_json(monkeypatch) -> None:

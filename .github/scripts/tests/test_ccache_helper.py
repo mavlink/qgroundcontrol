@@ -291,3 +291,18 @@ class TestEnvironmentConfig:
         content = github_env.read_text()
         assert "CCACHE_DIR=" in content
         assert "CCACHE_CONFIGPATH=" in content
+        assert "CCACHE_MAXSIZE=2G" in content
+
+    def test_configure_ccache_environment_accepts_max_size(self, tmp_path):
+        github_env = tmp_path / "env.txt"
+        workspace = tmp_path / "workspace"
+        with patch.dict(os.environ, {"GITHUB_ENV": str(github_env)}):
+            configure_ccache_environment(workspace, "5G")
+        assert "CCACHE_MAXSIZE=5G" in github_env.read_text()
+
+    def test_configure_env_cli_accepts_max_size(self, tmp_path):
+        github_env = tmp_path / "env.txt"
+        workspace = tmp_path / "workspace"
+        with patch.dict(os.environ, {"GITHUB_ENV": str(github_env)}):
+            assert main(["configure-env", "--workspace", str(workspace), "--max-size", "5G"]) == 0
+        assert "CCACHE_MAXSIZE=5G" in github_env.read_text()

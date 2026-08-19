@@ -289,6 +289,13 @@ def test_developer_build_entrypoints_use_presets() -> None:
     if multipass.exists():
         assert '"${QT_ROOT}/bin/qt-cmake"' in multipass.read_text(encoding="utf-8")
 
+    vagrant = REPO_ROOT / "deploy" / "vagrant" / "Vagrantfile"
+    if vagrant.exists():
+        vagrant_text = vagrant.read_text(encoding="utf-8")
+        assert "qt-cmake" in vagrant_text
+        assert "--preset Linux" in vagrant_text
+        assert "-DQGC_BUILD_TESTING=ON" not in vagrant_text
+
 
 def test_host_tools_use_host_platform_predicates() -> None:
     python_venv = REPO_ROOT / "cmake" / "modules" / "PythonVenv.cmake"

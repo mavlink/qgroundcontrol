@@ -109,6 +109,10 @@ jobs:
           sparse-checkout: |
             .github/actions/setup-python
             .github/actions/cmake-configure
+            .github/actions/build-prerequisites
+            .github/actions/cache
+            .github/actions/qt-android
+            .github/actions/qt-install
             .github/build-config.json
             .github/scripts
             .github/workflows/build-results.yml
@@ -118,6 +122,7 @@ jobs:
             .github/workflows/build-profile.yml
             .github/workflows/build-gstreamer.yml
             .github/workflows/custom-build.yml
+            .github/workflows/cache-cleanup.yml
             .github/workflows/ios.yml
             .github/workflows/linux.yml
             .github/workflows/macos.yml
@@ -131,6 +136,9 @@ jobs:
             cmake/Toolchain.cmake
             cmake/presets
             justfile
+            src/AppSettings/pages
+            src/Settings
+            src/Vehicle/FactGroups/VehicleGPSFactGroup.h
             tools/pyproject.toml
             tools/uv.lock
             tools/*.py
@@ -143,6 +151,7 @@ jobs:
             tools/translations
             deploy/docker
             deploy/multipass/build-in-vm.sh
+            deploy/vagrant/Vagrantfile
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

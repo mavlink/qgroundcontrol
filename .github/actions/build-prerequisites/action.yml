@@ -93,8 +93,8 @@ runs:
 
     - uses: lukka/get-cmake@v4.3.2
       with:
-        useCloudCache: false
-        useLocalCache: true
+        useCloudCache: true
+        useLocalCache: false
 
     - uses: ./.github/actions/setup-python
       with:

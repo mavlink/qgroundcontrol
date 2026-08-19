@@ -15,7 +15,7 @@ inputs:
     required: false
     default: 'false'
   prune:
-    description: 'GC mode: keep build caches, evict the rest when the pool nears the 10 GiB cap'
+    description: 'GC mode: keep newest ccache/CPM generations and evict stale caches near the cap'
     required: false
     default: 'false'
   high-water-mb:

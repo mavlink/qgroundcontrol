@@ -58,14 +58,13 @@ runs:
         QT_ARCHIVES: ${{ inputs.archives }}
       run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" cache-key --arch "${QT_ARCH}" --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}"
 
-    # Cache is keyed on host+target+arch+version+modules-digest. PRs save too (GHA evicts LRU under the 10 GB repo cap) so amend+force-push iterations don't re-download Qt every time. Forks can't write to the parent's cache.
-    # Transient cache-service blips have surfaced as silent step exit on Windows runners; degrade to a cache miss instead of failing the build.
+    # Cache-service failures should degrade to a Qt reinstall.
     - name: Restore Qt cache
       id: qt-cache
       uses: actions/cache/restore@v5
       continue-on-error: true
       with:
-        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
+        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
         # `runner.os` is implied by `inputs.host` (linux/mac/windows...) so it's omitted.
         key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ steps.qt-meta.outputs.digest }}
 
@@ -95,20 +94,26 @@ runs:
 
     - name: Re-check Qt cache before save
       id: qt-presave
-      if: steps.qt-cache.outputs.cache-hit != 'true' && inputs.target != 'ios' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      if: >-
+        steps.qt-cache.outputs.cache-hit != 'true' &&
+        inputs.target != 'ios' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
       uses: actions/cache/restore@v5
       continue-on-error: true
       with:
-        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
+        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
         key: ${{ steps.qt-cache.outputs.cache-primary-key }}
         lookup-only: true
 
-    # Forks can't write to the parent repo's cache (token is read-only), so skip the save attempt there to avoid noisy warnings. Same-repo PRs save normally.
     - name: Save Qt cache
-      if: steps.qt-cache.outputs.cache-hit != 'true' && steps.qt-presave.outputs.cache-hit != 'true' && inputs.target != 'ios' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      if: >-
+        steps.qt-cache.outputs.cache-hit != 'true' &&
+        steps.qt-presave.outputs.cache-hit != 'true' &&
+        inputs.target != 'ios' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
       uses: actions/cache/save@v5
       with:
-        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
+        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
         key: ${{ steps.qt-cache.outputs.cache-primary-key }}
 
     - name: Resolve Qt paths (cache hit)
@@ -128,8 +133,9 @@ runs:
     - name: Set Qt environment
       if: ${{ inputs.export-env == 'true' }}
       shell: bash
+      env:
+        QT_ROOT: ${{ steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}
       run: | # zizmor: ignore[github-env] writes trusted aqt install path (step output) to env; not attacker-controllable
-        qt_root="${{ steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}"
-        echo "QT_ROOT_DIR=${qt_root}" >> "$GITHUB_ENV"
-        echo "${qt_root}/bin" >> "$GITHUB_PATH"
-        echo "Qt installed at ${qt_root}"
+        echo "QT_ROOT_DIR=${QT_ROOT}" >> "$GITHUB_ENV"
+        echo "${QT_ROOT}/bin" >> "$GITHUB_PATH"
+        echo "Qt installed at ${QT_ROOT}"

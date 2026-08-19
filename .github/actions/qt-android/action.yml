@@ -51,7 +51,7 @@ inputs:
     required: false
     default: 'auto'
   cache-key-suffix:
-    description: Forwarded to the cache action's key-suffix (per-matrix-leg moccache save-key discriminator).
+    description: Forwarded to the cache action's per-matrix-leg build-cache discriminator.
     required: false
     default: ''
   aqt-source:
@@ -61,7 +61,6 @@ inputs:
 runs:
   using: composite
   steps:
-    # Gradle caching is handled by gradle/actions/setup-gradle inside build-setup (mode=android branch).
     - name: Setup Java Environment
       uses: actions/setup-java@v5
       with:
@@ -102,7 +101,6 @@ runs:
         host: ${{ inputs.host }}
         target: desktop
         arch: ${{ inputs.arch }}
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         aqt-source: ${{ inputs.aqt-source }}
 
@@ -115,7 +113,6 @@ runs:
         host: ${{ inputs.host }}
         target: android
         arch: android_arm64_v8a
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         export-env: 'false'
         aqt-source: ${{ inputs.aqt-source }}
@@ -129,7 +126,6 @@ runs:
         host: ${{ inputs.host }}
         target: android
         arch: android_armv7
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         export-env: 'false'
         aqt-source: ${{ inputs.aqt-source }}
@@ -143,7 +139,6 @@ runs:
         host: ${{ inputs.host }}
         target: android
         arch: android_x86_64
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         export-env: 'false'
         aqt-source: ${{ inputs.aqt-source }}
@@ -157,7 +152,6 @@ runs:
         host: ${{ inputs.host }}
         target: android
         arch: android_x86
-        dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         export-env: 'false'
         aqt-source: ${{ inputs.aqt-source }}

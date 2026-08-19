@@ -27,7 +27,13 @@ jobs:
     name: Custom Plugin Build
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) || 'ubuntu-24.04' }}
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) ||
+        'ubuntu-24.04'
+      }}
     timeout-minutes: 60
 
     defaults:
@@ -36,7 +42,7 @@ jobs:
 
     steps:
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
@@ -97,7 +103,13 @@ jobs:
     name: Custom Plugin Test Debug
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-tester', github.run_id) || 'ubuntu-24.04' }}
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
+        'ubuntu-24.04'
+      }}
     timeout-minutes: 90
 
     # checks: write scoped here: only this job reports test results (dorny/test-reporter).
@@ -111,7 +123,7 @@ jobs:
 
     steps:
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
