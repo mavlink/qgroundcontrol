@@ -1,5 +1,9 @@
 #pragma once
 
+// Mirror of PX4's src/modules/commander/px4_custom_mode.h (source of truth),
+// except PX4CustomMode at the bottom which is QGC-specific.
+// Values are transmitted over MAVLink: never renumber or insert, only append.
+
 #include <stdint.h>
 
 enum PX4_CUSTOM_MAIN_MODE {
@@ -27,7 +31,15 @@ enum PX4_CUSTOM_SUB_MODE_AUTO {
 	PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET = 8,
 	PX4_CUSTOM_SUB_MODE_AUTO_PRECLAND = 9,
 	PX4_CUSTOM_SUB_MODE_AUTO_VTOL_TAKEOFF = 10,
-	PX4_CUSTOM_SUB_MODE_GUIDED_COURSE = 11,
+	PX4_CUSTOM_SUB_MODE_EXTERNAL1 = 11,
+	PX4_CUSTOM_SUB_MODE_EXTERNAL2 = 12,
+	PX4_CUSTOM_SUB_MODE_EXTERNAL3 = 13,
+	PX4_CUSTOM_SUB_MODE_EXTERNAL4 = 14,
+	PX4_CUSTOM_SUB_MODE_EXTERNAL5 = 15,
+	PX4_CUSTOM_SUB_MODE_EXTERNAL6 = 16,
+	PX4_CUSTOM_SUB_MODE_EXTERNAL7 = 17,
+	PX4_CUSTOM_SUB_MODE_EXTERNAL8 = 18,
+	PX4_CUSTOM_SUB_MODE_GUIDED_COURSE = 19,
 };
 
 enum PX4_CUSTOM_SUB_MODE_POSCTL {
