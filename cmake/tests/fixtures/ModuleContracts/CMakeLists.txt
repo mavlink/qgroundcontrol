@@ -219,6 +219,36 @@ if(TEST_CASE MATCHES "^helpers-")
     if(TEST_CASE STREQUAL "helpers-cpm-added")
         set(Example_ADDED TRUE)
         qgc_require_cpm_added(Example)
+    elseif(TEST_CASE STREQUAL "helpers-moccache-targets")
+        set(_moccache_launcher "${CMAKE_CURRENT_BINARY_DIR}/moccache-launcher")
+        set(_custom_moc "${CMAKE_CURRENT_BINARY_DIR}/custom-moc")
+        set_property(GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE "${_moccache_launcher}")
+        add_library(AutomocTarget STATIC main.cpp)
+        add_library(CustomMocTarget STATIC main.cpp)
+        add_library(PlainTarget STATIC main.cpp)
+        set_target_properties(AutomocTarget CustomMocTarget PROPERTIES AUTOMOC ON)
+        set_property(TARGET CustomMocTarget PROPERTY AUTOMOC_EXECUTABLE "${_custom_moc}")
+
+        qgc_apply_moccache()
+
+        get_target_property(_automoc_launcher AutomocTarget AUTOMOC_EXECUTABLE)
+        get_target_property(_custom_launcher CustomMocTarget AUTOMOC_EXECUTABLE)
+        get_property(
+            _plain_launcher_set
+            TARGET PlainTarget
+            PROPERTY AUTOMOC_EXECUTABLE
+            SET
+        )
+        if(NOT "${_automoc_launcher}" STREQUAL "${_moccache_launcher}")
+            message(FATAL_ERROR "AUTOMOC target did not receive moccache: ${_automoc_launcher}")
+        endif()
+        if(NOT "${_custom_launcher}" STREQUAL "${_custom_moc}")
+            message(FATAL_ERROR "Existing AUTOMOC executable was replaced: ${_custom_launcher}")
+        endif()
+        if(_plain_launcher_set)
+            message(FATAL_ERROR "Non-AUTOMOC target received moccache")
+        endif()
+        set_target_properties(AutomocTarget CustomMocTarget PROPERTIES AUTOMOC OFF)
     elseif(TEST_CASE STREQUAL "helpers-cpm-missing")
         qgc_require_cpm_added(Example)
     elseif(TEST_CASE STREQUAL "helpers-cpm-invalid-name")

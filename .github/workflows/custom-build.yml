@@ -34,7 +34,7 @@ jobs:
         format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) ||
         'ubuntu-24.04'
       }}
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     defaults:
       run:
@@ -110,7 +110,7 @@ jobs:
         format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
         'ubuntu-24.04'
       }}
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     # checks: write scoped here: only this job reports test results (dorny/test-reporter).
     permissions:

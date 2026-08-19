@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 def test_build_matrix_includes_coverage_and_sanitizers() -> None:
     assert build_matrix() == [COVERAGE_JOB, SANITIZER_JOB]
+    assert COVERAGE_JOB["timeout_minutes"] == 120
 
 
 def test_main_writes_github_output(

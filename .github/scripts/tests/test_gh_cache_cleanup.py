@@ -221,16 +221,48 @@ def test_select_prune_victims_keeps_newest_rolling_generation() -> None:
 
 
 def test_select_prune_victims_can_evict_older_rolling_generation() -> None:
+    old_digest = "a" * 64
+    new_digest = "b" * 64
     caches = [
-        _usage("ccache-linux-shared-hash-100-1", 3000, accessed="2026-01-01"),
-        _usage("ccache-linux-shared-hash-101-1", 3000, accessed="2026-01-02"),
+        _usage(f"ccache-linux-shared-{old_digest}-100-1", 3000, accessed="2026-01-01"),
+        _usage(f"ccache-linux-shared-{new_digest}-101-1", 3000, accessed="2026-01-02"),
         _usage("avd-Linux", 4000),
     ]
     victims, _total, projected = mod.select_prune_victims(
         caches, keep_mb=3000, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
     )
-    assert [v.key for v in victims] == ["avd-Linux", "ccache-linux-shared-hash-100-1"]
+    assert [v.key for v in victims] == [
+        "avd-Linux",
+        f"ccache-linux-shared-{old_digest}-100-1",
+    ]
     assert projected == 3000 * 1024 * 1024
+
+
+def test_select_prune_victims_can_evict_previous_apt_month() -> None:
+    digest = "a" * 64
+    caches = [
+        _usage(f"apt-debs-ubuntu-24.04-X64-2026-07-{digest}", 3000, accessed="2026-07-01"),
+        _usage(f"apt-debs-ubuntu-24.04-X64-2026-08-{digest}", 3000, accessed="2026-08-01"),
+        _usage("avd-Linux", 4000),
+    ]
+    victims, _total, projected = mod.select_prune_victims(
+        caches, keep_mb=3000, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+    )
+    assert [v.key for v in victims] == [
+        "avd-Linux",
+        f"apt-debs-ubuntu-24.04-X64-2026-07-{digest}",
+    ]
+    assert projected == 3000 * 1024 * 1024
+
+
+@pytest.mark.parametrize("prefix", ["moccache", "qt"])
+def test_select_prune_victims_protects_dependency_cache(prefix: str) -> None:
+    caches = [_usage(f"{prefix}-linux", 7000), _usage("avd-Linux", 3000)]
+    victims, _total, projected = mod.select_prune_victims(
+        caches, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+    )
+    assert [v.key for v in victims] == ["avd-Linux"]
+    assert projected == 7000 * 1024 * 1024
 
 
 @pytest.mark.parametrize("prefix", ["ccache", "cpm-modules"])

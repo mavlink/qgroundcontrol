@@ -25,9 +25,23 @@ def test_build_caches_use_rolling_platform_keys() -> None:
 def test_ccache_size_uses_runs_on_capacity() -> None:
     action = _read(".github/actions/cache/action.yml")
 
-    assert "max_size=2G" in action
+    assert "max_size=1G" in action
     assert "RUNS_ON_S3_BUCKET_CACHE" in action
     assert 'max_size="${CONFIGURED_MAX_SIZE}"' in action
+
+
+def test_moccache_is_cross_platform_and_content_versioned() -> None:
+    action = _read(".github/actions/cache/action.yml")
+    build = _read(".github/actions/cmake-build/action.yml")
+
+    assert "runner.os != 'Windows'" not in action
+    assert "runner.os != 'Windows'" not in build
+    assert (
+        "hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache.py')"
+        in action
+    )
+    assert 'moccache_base="moccache-${HOST}-${TARGET}-${SCOPE}"' in action
+    assert "moccache_shared=moccache-${HOST}-${TARGET}-shared-" in action
 
 
 def test_qt_cache_stores_only_architecture_tree() -> None:
@@ -56,5 +70,20 @@ def test_runs_on_jobs_reject_fork_pull_requests() -> None:
     assert _read(".github/workflows/custom-build.yml").count(guard) >= 4
 
 
-def test_cache_cleanup_runs_hourly() -> None:
-    assert "cron: '17 * * * *'" in _read(".github/workflows/cache-cleanup.yml")
+def test_cache_cleanup_runs_every_six_hours() -> None:
+    assert "cron: '17 */6 * * *'" in _read(".github/workflows/cache-cleanup.yml")
+
+
+def test_disk_cleanup_avoids_bulk_package_removal() -> None:
+    action = _read(".github/actions/free-disk-space/action.yml")
+
+    assert "remove_packages:" not in action
+    assert "remove_packages_one_command:" not in action
+
+
+def test_fork_prs_can_restore_public_docker_cache() -> None:
+    action = _read(".github/actions/docker/action.yml")
+
+    assert "cache-from: ${{ format('type=registry" in action
+    assert "event.pull_request.head.repo.fork != true && format('type=registry" not in action
+    assert "github.event_name != 'pull_request'" in action

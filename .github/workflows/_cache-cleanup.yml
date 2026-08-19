@@ -21,7 +21,7 @@ on:
         type: boolean
         default: false
       prune:
-        description: 'GC mode: keep newest ccache/CPM generations and evict stale caches near the cap'
+        description: 'GC mode: keep newest build/dependency cache generations and evict stale caches near the cap'
         required: false
         type: boolean
         default: false

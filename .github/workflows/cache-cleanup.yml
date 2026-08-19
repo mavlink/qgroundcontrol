@@ -3,7 +3,7 @@ name: Cache Cleanup
 on:
   # Periodic GC leaves room for fresh rolling build caches.
   schedule:
-    - cron: '17 * * * *'
+    - cron: '17 */6 * * *'
   workflow_dispatch:
     inputs:
       branch:
@@ -16,7 +16,7 @@ on:
         type: boolean
         default: true
       mode:
-        description: 'prune = keep newest ccache/CPM generations; wipe = delete all listed caches'
+        description: 'prune = keep newest build/dependency cache generations; wipe = delete all listed caches'
         required: false
         type: choice
         options:

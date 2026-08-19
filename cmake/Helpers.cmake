@@ -112,12 +112,10 @@ endfunction()
 # ----------------------------------------------------------------------------
 # qgc_config_moccache
 # Routes AUTOMOC through tools/moccache.py so moc output is cached across
-# clean builds. Must be called after find_package(Qt6) and before any
-# AUTOMOC targets are created. No-op on Windows hosts, including Android
-# cross-builds (the wrapper is a shell script).
+# clean builds. Must be called after find_package(Qt6).
 # ----------------------------------------------------------------------------
 function(qgc_config_moccache)
-    if(CMAKE_HOST_WIN32 OR CMAKE_AUTOMOC_EXECUTABLE)
+    if(DEFINED CMAKE_AUTOMOC_EXECUTABLE AND NOT CMAKE_AUTOMOC_EXECUTABLE STREQUAL "")
         return()
     endif()
 
@@ -141,20 +139,86 @@ function(qgc_config_moccache)
         return()
     endif()
 
-    # Launcher in the build dir baking in the real moc path. Cache dir lives
-    # in the source tree (like .ccache) so it survives build dir deletion;
-    # override with MOCCACHE_DIR at build time.
-    set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher")
-    set(_wrapper "#!/bin/sh\n")
-    string(APPEND _wrapper "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
-    string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
-    string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-256M}\"\n")
-    string(APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n")
-    file(WRITE "${_moccache_wrapper}" "${_wrapper}")
-    file(CHMOD "${_moccache_wrapper}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    if(CMAKE_HOST_WIN32)
+        set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher.cmd")
+        set(_wrapper "@echo off\r\nsetlocal\r\n")
+        string(APPEND _wrapper
+               "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${CMAKE_SOURCE_DIR}/.cache/moccache\"\r\n"
+        )
+        string(APPEND _wrapper
+               "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n"
+        )
+        string(APPEND _wrapper "if not defined MOCCACHE_MAX_SIZE set \"MOCCACHE_MAX_SIZE=256M\"\r\n")
+        string(APPEND _wrapper
+               "\"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" %*\r\n"
+        )
+        string(APPEND _wrapper "exit /b %ERRORLEVEL%\r\n")
+        file(WRITE "${_moccache_wrapper}" "${_wrapper}")
+    else()
+        set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher")
+        set(_wrapper "#!/bin/sh\n")
+        string(APPEND _wrapper "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
+        string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
+        string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-256M}\"\n")
+        string(APPEND _wrapper
+               "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
+        )
+        file(WRITE "${_moccache_wrapper}" "${_wrapper}")
+        file(
+            CHMOD
+            "${_moccache_wrapper}"
+            PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            OWNER_EXECUTE
+            GROUP_READ
+            GROUP_EXECUTE
+            WORLD_READ
+            WORLD_EXECUTE
+        )
+    endif()
 
-    set(CMAKE_AUTOMOC_EXECUTABLE "${_moccache_wrapper}" PARENT_SCOPE)
+    set_property(GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE "${_moccache_wrapper}")
     message(STATUS "QGC: Using moccache for AUTOMOC (${_real_moc})")
+endfunction()
+
+# Apply moccache to targets after all AUTOMOC properties have been configured.
+function(_qgc_apply_moccache_to_directory directory)
+    get_property(_moccache_wrapper GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE)
+    get_property(
+        _targets
+        DIRECTORY "${directory}"
+        PROPERTY BUILDSYSTEM_TARGETS
+    )
+    foreach(_target IN LISTS _targets)
+        get_target_property(_automoc ${_target} AUTOMOC)
+        get_property(
+            _automoc_executable_set
+            TARGET ${_target}
+            PROPERTY AUTOMOC_EXECUTABLE
+            SET
+        )
+        if(_automoc AND NOT _automoc_executable_set)
+            set_property(TARGET ${_target} PROPERTY AUTOMOC_EXECUTABLE "${_moccache_wrapper}")
+        endif()
+    endforeach()
+
+    get_property(
+        _subdirectories
+        DIRECTORY "${directory}"
+        PROPERTY SUBDIRECTORIES
+    )
+    foreach(_subdirectory IN LISTS _subdirectories)
+        _qgc_apply_moccache_to_directory("${_subdirectory}")
+    endforeach()
+endfunction()
+
+# Apply the configured moccache launcher to every AUTOMOC target.
+function(qgc_apply_moccache)
+    get_property(_moccache_wrapper GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE)
+    if(_moccache_wrapper)
+        _qgc_apply_moccache_to_directory("${CMAKE_SOURCE_DIR}")
+    endif()
 endfunction()
 
 # ----------------------------------------------------------------------------

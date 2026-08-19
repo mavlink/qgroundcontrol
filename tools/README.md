@@ -212,8 +212,8 @@ the report — it scans the build dir for Clang `-ftime-trace` JSON and highligh
 
 ### moccache.py
 
-Content-addressed cache for Qt's moc, wired in automatically as the `CMAKE_AUTOMOC_EXECUTABLE`
-(controlled by the `QGC_USE_MOCCACHE` CMake option, ON by default, non-Windows). Clean builds,
+Content-addressed cache for Qt's moc, wired in automatically through the `AUTOMOC_EXECUTABLE`
+target property (controlled by the `QGC_USE_MOCCACHE` CMake option, ON by default). Clean builds,
 branch switches, and sibling build trees reuse previous moc runs. Misses fall through to the
 real moc and never fail the build. See the
 [dev guide Build Caching section](../docs/en/qgc-dev-guide/getting_started/index.md#build-caching)

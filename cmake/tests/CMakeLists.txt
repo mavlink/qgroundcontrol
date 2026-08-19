@@ -33,6 +33,7 @@ qgc_add_cmake_contract_test(CoverageCleanWithoutGcovr coverage-clean-without-gco
 qgc_add_cmake_contract_test(SanitizerProjectTargets sanitizer-project-targets)
 qgc_add_cmake_contract_test(CoverageClean coverage-clean)
 qgc_add_cmake_contract_test(HelpersCpmAdded helpers-cpm-added)
+qgc_add_cmake_contract_test(HelpersMoccacheTargets helpers-moccache-targets)
 qgc_add_cmake_contract_test(PythonVenvStaleCache python-venv-stale-cache)
 qgc_add_cmake_contract_test(QmlCodegenValid qml-codegen-valid)
 qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid)

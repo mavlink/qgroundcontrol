@@ -19,11 +19,6 @@ from pathlib import Path
 import moccache
 import pytest
 
-# The harness relies on POSIX semantics (shebang execution of the fake moc,
-# chmod-based permission tests), matching CI, which only enables moccache on
-# non-Windows runners.
-pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="moccache is POSIX-only")
-
 FAKE_MOC = """#!/usr/bin/env python3
 import hashlib
 import os
@@ -127,9 +122,16 @@ class Harness:
         self.dep_header = self.src / "Dep.h"
         self.dep_header.write_text("// dep v1\n")
         (self.src / "Foo.h.deps").write_text(f"{self.dep_header}\n")
-        self.fake_moc = root / "fake-moc"
-        self.fake_moc.write_text(FAKE_MOC)
-        self.fake_moc.chmod(0o755)
+        fake_moc_script = root / "fake-moc.py"
+        fake_moc_script.write_text(FAKE_MOC)
+        if sys.platform == "win32":
+            self.fake_moc = root / "fake-moc.cmd"
+            self.fake_moc.write_text(
+                f'@echo off\n"{sys.executable}" "{fake_moc_script}" %*\n', encoding="utf-8"
+            )
+        else:
+            self.fake_moc = fake_moc_script
+            self.fake_moc.chmod(0o755)
         self.moc_log = root / "moc-invocations.log"
         for var in ("MOCCACHE_DISABLE", "MOCCACHE_MOC", "MOCCACHE_BASEDIR"):
             monkeypatch.delenv(var, raising=False)
@@ -395,6 +397,7 @@ class TestFailureModes:
         assert harness.run(tree, out=out_b) == 0
         assert out_b.is_file()
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="Windows does not use POSIX mode bits")
     def test_readonly_cache_does_not_fail_build(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
         harness.cache.mkdir(parents=True, exist_ok=True)
@@ -521,6 +524,13 @@ class TestBasedirNormalization:
         monkeypatch.setenv("MOCCACHE_BASEDIR", "/a/bld/")
         normalized = moccache._normalize_basedir("/a/bld/x.h", moccache._basedir_prefixes())
         assert normalized == "<<MOCCACHE_BASEDIR>>/x.h"
+
+    def test_trailing_backslash_stripped(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("MOCCACHE_BASEDIR", "C:\\repo\\build\\")
+        normalized = moccache._normalize_basedir(
+            "C:\\repo\\build\\x.h", moccache._basedir_prefixes()
+        )
+        assert normalized == "<<MOCCACHE_BASEDIR>>\\x.h"
 
     def test_sibling_dir_with_prefix_name_not_rewritten(self) -> None:
         # /a/bld2 is a different directory that merely starts with /a/bld.

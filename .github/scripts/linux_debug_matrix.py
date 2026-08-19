@@ -21,7 +21,7 @@ from common.gh_actions import write_github_output
 COVERAGE_JOB: dict[str, str | int] = {
     "job_name": "Test + Coverage linux_gcc_64 Debug",
     "mode": "coverage",
-    "timeout_minutes": 60,
+    "timeout_minutes": 120,
     "configure_extra": "",
     "exclude_labels": "Flaky|Network",
 }

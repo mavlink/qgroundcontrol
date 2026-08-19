@@ -22,8 +22,10 @@ ensure_tools_dir(__file__)
 from common.gh_actions import gh, require_repository, write_github_output, write_step_summary
 from common.markdown import md_table
 
-DEFAULT_PROTECT = r"^(ccache|cpm-modules)-"
+DEFAULT_PROTECT = r"^(apt-debs|ccache|cpm-modules|moccache|qt)-"
 _ROLLING_SUFFIX_RE = re.compile(r"-\d+-\d+$")
+_DIGEST_RE = re.compile(r"(?<=-)[0-9a-f]{64}(?=-|$)")
+_APT_GENERATION_RE = re.compile(r"^(apt-debs-.+)-\d{4}-\d{2}-<digest>$")
 _MIB = 1024 * 1024
 
 
@@ -153,24 +155,21 @@ def select_prune_victims(
 def _protected_cache_entries(
     caches: list[CacheUsage], protect_re: re.Pattern[str]
 ) -> set[CacheUsage]:
-    rolling: dict[tuple[str, str], list[CacheUsage]] = {}
-    protected = [cache for cache in caches if protect_re.search(cache.key)]
-    for cache in protected:
-        family = _ROLLING_SUFFIX_RE.sub("", cache.key)
-        if family != cache.key:
-            rolling.setdefault((cache.ref, family), []).append(cache)
+    families: dict[tuple[str, str], list[CacheUsage]] = {}
+    for cache in caches:
+        if protect_re.search(cache.key):
+            families.setdefault((cache.ref, _cache_family(cache.key)), []).append(cache)
 
-    keep = {
-        max(group, key=lambda cache: (cache.last_accessed, cache.key)) for group in rolling.values()
+    return {
+        max(group, key=lambda cache: (cache.last_accessed, cache.key))
+        for group in families.values()
     }
-    rolling_families = set(rolling)
-    keep.update(
-        cache
-        for cache in protected
-        if (cache.ref, cache.key) not in rolling_families
-        and _ROLLING_SUFFIX_RE.sub("", cache.key) == cache.key
-    )
-    return keep
+
+
+def _cache_family(key: str) -> str:
+    family = _ROLLING_SUFFIX_RE.sub("", key)
+    family = _DIGEST_RE.sub("<digest>", family)
+    return _APT_GENERATION_RE.sub(r"\1-<generation>", family)
 
 
 def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, deleted: bool) -> str:
@@ -270,7 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--protect",
         default=DEFAULT_PROTECT,
-        help="Regex of rolling cache families whose newest entry is retained",
+        help="Regex of cache families whose newest entry is retained",
     )
     args = parser.parse_args(argv)
 

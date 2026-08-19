@@ -9,6 +9,7 @@ on:
       - '.github/build-config.json'
       - '.vscode/*.default.json'
       - 'CMakePresets.json'
+      - 'cmake/Helpers.cmake'
       - 'cmake/presets/**'
       - 'justfile'
       - 'tools/setup/**'
@@ -32,6 +33,7 @@ on:
       - '.github/build-config.json'
       - '.vscode/*.default.json'
       - 'CMakePresets.json'
+      - 'cmake/Helpers.cmake'
       - 'cmake/presets/**'
       - 'justfile'
       - 'tools/setup/**'
@@ -111,6 +113,8 @@ jobs:
             .github/actions/cmake-configure
             .github/actions/build-prerequisites
             .github/actions/cache
+            .github/actions/docker
+            .github/actions/free-disk-space
             .github/actions/qt-android
             .github/actions/qt-install
             .github/build-config.json
@@ -166,3 +170,38 @@ jobs:
 
       - name: Run CI script tests
         run: pytest -q tools/tests .github/scripts/tests
+
+  test-moccache-windows:
+    name: Test moccache (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/actions/setup-python
+            tools/_bootstrap.py
+            tools/common
+            tools/moccache.py
+            tools/pyproject.toml
+            tools/setup
+            tools/tests/test_moccache.py
+            tools/uv.lock
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: test
+          python-version: '3.12'
+
+      - name: Run moccache tests
+        run: pytest -q tools/tests/test_moccache.py

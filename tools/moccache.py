@@ -226,7 +226,7 @@ _BASEDIR_TOKEN = "<<MOCCACHE_BASEDIR>>"
 
 def _basedir_prefixes() -> list[str]:
     """Build-dir spellings to rewrite (raw and resolved), longest first."""
-    raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/")
+    raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/\\")
     if not raw:
         return []
     prefixes = {raw}
@@ -255,7 +255,7 @@ def _normalize_basedir(s: str, prefixes: list[str]) -> str:
 
 
 def _denormalize_basedir(s: str) -> str:
-    raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/")
+    raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/\\")
     return s.replace(_BASEDIR_TOKEN, raw) if raw else s
 
 

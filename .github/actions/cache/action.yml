@@ -133,7 +133,7 @@ runs:
       env:
         CONFIGURED_MAX_SIZE: ${{ steps.ccache-config.outputs.max_size }}
       run: |
-        max_size=2G
+        max_size=1G
         if [[ -n "${RUNS_ON_S3_BUCKET_CACHE:-}" ]]; then
           max_size="${CONFIGURED_MAX_SIZE}"
         fi
@@ -166,13 +166,13 @@ runs:
         KEY_SUFFIX: ${{ inputs.key-suffix }}
         SCOPE: ${{ steps.cache-scope.outputs.scope }}
         CCACHE_HASH: ${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
-        MOCCACHE_HASH: ${{ hashFiles('.github/build-config.json') }}
+        MOCCACHE_HASH: ${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache.py') }}
         CPM_FINGERPRINT: ${{ steps.cpm-key.outputs.fingerprint }}
       run: |
         variant_suffix="${VARIANT:+-${VARIANT}}"
         key_suffix="${KEY_SUFFIX:+-${KEY_SUFFIX}}"
         ccache_base="ccache-${HOST}-${TARGET}-${BUILD_TYPE}${variant_suffix}"
-        moccache_base="moccache-${HOST}-${TARGET}-${BUILD_TYPE}-${SCOPE}"
+        moccache_base="moccache-${HOST}-${TARGET}-${SCOPE}"
         cpm_base="cpm-modules-${HOST}-${TARGET}${key_suffix}"
         {
           echo "ccache_key=${ccache_base}${key_suffix}-${SCOPE}-${CCACHE_HASH}"
@@ -183,7 +183,7 @@ runs:
           echo "moccache_key=${moccache_base}-${MOCCACHE_HASH}${key_suffix}"
           echo "moccache_hash=${moccache_base}-${MOCCACHE_HASH}-"
           echo "moccache_scope=${moccache_base}-"
-          echo "moccache_shared=moccache-${HOST}-${TARGET}-${BUILD_TYPE}-shared-"
+          echo "moccache_shared=moccache-${HOST}-${TARGET}-shared-"
           echo "cpm_key=${cpm_base}-${SCOPE}-${CPM_FINGERPRINT}"
           echo "cpm_scope=${cpm_base}-${SCOPE}-"
           echo "cpm_shared=${cpm_base}-shared-"
@@ -221,7 +221,7 @@ runs:
 
     # moccache entries are content-addressed and basedir-normalized, so they
     # are safe to share across build types and branches; keys exist only for
-    # scoping and eviction. Windows is skipped (moccache no-ops there).
+    # platform scoping, implementation versioning, and eviction.
     #
     # The saved key ends in key-suffix + run id + attempt so every saving job
     # (including matrix legs sharing host/target and re-run attempts) writes a
@@ -231,7 +231,7 @@ runs:
     # includes the restored entries, so caches converge over successive runs.
     # MOCCACHE_MAX_SIZE (set by the launcher) bounds growth via LRU trim.
     - name: Cache moc output (moccache, save)
-      if: runner.os != 'Windows' && steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
+      if: steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
       uses: actions/cache@v5
       with:
         path: ${{ github.workspace }}/.cache/moccache
@@ -242,7 +242,7 @@ runs:
           ${{ steps.cache-keys.outputs.moccache_shared }}
 
     - name: Cache moc output (moccache, read-only)
-      if: runner.os != 'Windows' && (steps.cache-policy.outputs.save != 'true' || inputs.variant == 'coverage')
+      if: steps.cache-policy.outputs.save != 'true' || inputs.variant == 'coverage'
       uses: actions/cache/restore@v5
       with:
         path: ${{ github.workspace }}/.cache/moccache
@@ -255,7 +255,6 @@ runs:
     # Record per-run moc hit/miss stats; a restored cache may carry the
     # previous run's stats.log, so reset it for accurate numbers.
     - name: Enable moccache stats
-      if: runner.os != 'Windows'
       shell: bash
       env:
         MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
