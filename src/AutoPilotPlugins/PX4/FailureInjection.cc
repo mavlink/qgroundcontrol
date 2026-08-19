@@ -57,6 +57,7 @@ FailureInjection::FailureInjection(QObject* parent) : QObject(parent)
 {
     _units = _buildCatalog("FAILURE_UNIT",
                            {QStringLiteral("FAILURE_UNIT_SENSOR_"), QStringLiteral("FAILURE_UNIT_SYSTEM_"),
+                            QStringLiteral("FAILURE_UNIT_DATALINK_"), QStringLiteral("FAILURE_UNIT_BUS_"),
                             QStringLiteral("FAILURE_UNIT_")},
                            _makeUnit);
     _types = _buildCatalog("FAILURE_TYPE", {QStringLiteral("FAILURE_TYPE_")}, _makeType);
