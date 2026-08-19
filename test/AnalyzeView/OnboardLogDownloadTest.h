@@ -14,6 +14,7 @@ private slots:
     void _downloadTest();
     void _selectAllTest();
     void _cancelDownloadTest();
+    void _refreshDuringDownloadTest();
     void _vehicleDisconnectDuringDownloadTest();
     void _eraseAllTest();
 };
@@ -33,6 +34,7 @@ private slots:
     void _ftpDownloadErrorDisablesFtpTest();
     void _ftpSortOrderTest();
     void _ftpCancelDownloadTest();
+    void _ftpRefreshDuringDownloadTest();
     void _ftpEraseSelectedTest();
     void _ftpCancelEraseSelectedTest();
 };

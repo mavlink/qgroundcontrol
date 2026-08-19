@@ -494,6 +494,13 @@ bool OnboardLogController::_prepareLogDownload()
 
 void OnboardLogController::refresh()
 {
+    if (_downloadingLogs || _requestingLogEntries || _ftpDeleting) {
+        // Re-entering the page while a transfer is active must not clear the model:
+        // the transfer holds pointers into it (issue #14881)
+        qCDebug(OnboardLogControllerLog) << "refresh: ignored - transfer in progress";
+        return;
+    }
+
     _logEntriesModel->clearAndDeleteContents();
     emit selectionChanged();
 

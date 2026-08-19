@@ -93,7 +93,6 @@ Rectangle {
 
                 Component.onCompleted: {
                     if (count > 0) {
-                        itemAt(0).checked = true
                         _currentPage = QGroundControl.corePlugin.analyzePages[0]
                         panelContainer.title = _currentPage.title
                         _updatePanelSource()
@@ -103,14 +102,16 @@ Rectangle {
                 SubMenuButton {
                     objectName:         "analyzeButton_" + modelData.title
                     imageResource:      modelData.icon
-                    autoExclusive:      true
                     text:               modelData.title
                     width:              buttonColumn._maxButtonWidth
+                    checked:            _currentPage === modelData
 
                     onClicked: {
+                        if (!mainWindow.allowViewSwitch()) {
+                            return
+                        }
                         _currentPage        = modelData
                         panelContainer.title = modelData.title
-                        checked             = true
                         _updatePanelSource()
                     }
                 }
