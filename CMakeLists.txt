@@ -85,14 +85,21 @@ endif()
 # ----------------------------------------------------------------------------
 # Apple-Specific Pre-Project Settings
 # ----------------------------------------------------------------------------
-# CMAKE_SYSTEM_NAME is empty before project(), so it cannot be used to detect
-# macOS here. Gate on the caller not having chosen architectures instead: iOS
-# builds (preset and CI) pass arm64-only CMAKE_OSX_ARCHITECTURES explicitly,
-# which must not be clobbered with x86_64h;arm64.
-if(APPLE AND NOT CMAKE_OSX_ARCHITECTURES)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "${QGC_CONFIG_MACOS_DEPLOYMENT_TARGET}" CACHE STRING "macOS minimum deployment target")
-    if(QGC_MACOS_UNIVERSAL_BUILD)
-        set(CMAKE_OSX_ARCHITECTURES "x86_64h;arm64")
+# The iOS preset sets CMAKE_SYSTEM_NAME before project(); otherwise this is macOS.
+if(APPLE)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(CMAKE_OSX_DEPLOYMENT_TARGET
+            "${QGC_CONFIG_IOS_DEPLOYMENT_TARGET}"
+            CACHE STRING "iOS minimum deployment target"
+        )
+    else()
+        set(CMAKE_OSX_DEPLOYMENT_TARGET
+            "${QGC_CONFIG_MACOS_DEPLOYMENT_TARGET}"
+            CACHE STRING "macOS minimum deployment target"
+        )
+        if(QGC_MACOS_UNIVERSAL_BUILD)
+            set(CMAKE_OSX_ARCHITECTURES "x86_64h;arm64")
+        endif()
     endif()
 endif()
 

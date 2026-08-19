@@ -22,6 +22,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from glob import glob
 from pathlib import Path
 
 from _bootstrap import ensure_tools_dir
@@ -30,7 +31,7 @@ ensure_tools_dir(__file__)
 
 from common.file_traversal import find_repo_root
 from common.gh_actions import write_github_output
-from common.platform import is_windows
+from common.platform import host_arch, is_macos, is_windows
 
 
 @dataclass
@@ -79,7 +80,7 @@ def select_preset(config: CMakeConfig) -> str | None:
 def parse_version(path: Path) -> tuple[int, ...]:
     """Extract version tuple from Qt path for sorting."""
     # Match patterns like 6.8.0, 6.10.1, etc.
-    match = re.search(r"/(\d+)\.(\d+)\.(\d+)/", str(path))
+    match = re.search(r"[\\/](\d+)\.(\d+)\.(\d+)[\\/]", str(path))
     if match:
         return tuple(int(x) for x in match.groups())
     return (0, 0, 0)
@@ -111,36 +112,34 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
             if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
                 return qt_cmake
 
-    # Common Qt installation patterns
-    patterns = [
-        Path.home() / "Qt" / "*" / "gcc_64" / "bin" / "qt-cmake",
-        Path.home() / "Qt" / "*" / "clang_64" / "bin" / "qt-cmake",
-        Path.home() / "Qt" / "*" / "macos" / "bin" / "qt-cmake",
-        Path("/opt/Qt") / "*" / "gcc_64" / "bin" / "qt-cmake",
-        Path("/usr/lib/qt6/bin/qt-cmake"),
-    ]
-
-    # Windows patterns
+    patterns: list[Path]
     if is_windows():
-        patterns.extend(
-            [
-                Path("C:/Qt") / "*" / "msvc2022_64" / "bin" / "qt-cmake.bat",
-                Path("C:/Qt") / "*" / "msvc2019_64" / "bin" / "qt-cmake.bat",
-            ]
-        )
+        msvc_kit = "msvc*_arm64" if host_arch() == "aarch64" else "msvc*_64"
+        patterns = [
+            base / "*" / msvc_kit / "bin" / "qt-cmake.bat"
+            for base in (Path("C:/Qt"), Path.home() / "Qt")
+        ]
+    elif is_macos():
+        patterns = [
+            base / "*" / kit / "bin" / "qt-cmake"
+            for base in (Path.home() / "Qt", Path("/Applications/Qt"))
+            for kit in ("macos", "clang_64")
+        ]
+    else:
+        gcc_kit = "gcc_arm64" if host_arch() == "aarch64" else "gcc_64"
+        patterns = [
+            Path.home() / "Qt" / "*" / gcc_kit / "bin" / "qt-cmake",
+            Path("/opt/Qt") / "*" / gcc_kit / "bin" / "qt-cmake",
+            Path("/usr/lib/qt6/bin/qt-cmake"),
+        ]
 
     for pattern in patterns:
-        # Handle glob patterns
         if "*" in str(pattern):
-            parent = pattern.parent.parent.parent  # Go up to Qt root
-            if parent.exists():
-                matches = list(parent.glob(str(pattern.relative_to(parent))))
-                if matches:
-                    # Sort by version (newest first)
-                    matches.sort(key=parse_version, reverse=True)
-                    for match in matches:
-                        if match.exists() and os.access(match, os.X_OK):
-                            return match
+            matches = [Path(match) for match in glob(str(pattern))]
+            matches.sort(key=parse_version, reverse=True)
+            for match in matches:
+                if match.exists() and os.access(match, os.X_OK):
+                    return match
         else:
             if pattern.exists() and os.access(pattern, os.X_OK):
                 return pattern
@@ -159,8 +158,8 @@ def configure(config: CMakeConfig) -> int:
             cmake_cmd = str(qt_cmake)
             print(f"Using: {cmake_cmd}")
         else:
-            print("Warning: qt-cmake not found, using cmake", file=sys.stderr)
-            cmake_cmd = "cmake"
+            print("Error: qt-cmake not found; pass --no-qt-cmake to use cmake", file=sys.stderr)
+            return 1
     else:
         cmake_cmd = "cmake"
 

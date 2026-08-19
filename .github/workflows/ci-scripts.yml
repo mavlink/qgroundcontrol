@@ -108,6 +108,7 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .github/actions/setup-python
+            .github/actions/cmake-configure
             .github/build-config.json
             .github/scripts
             .github/workflows/build-results.yml
@@ -115,14 +116,19 @@ jobs:
             .github/workflows/analysis.yml
             .github/workflows/android.yml
             .github/workflows/build-profile.yml
+            .github/workflows/build-gstreamer.yml
             .github/workflows/custom-build.yml
             .github/workflows/ios.yml
             .github/workflows/linux.yml
             .github/workflows/macos.yml
             .github/workflows/windows.yml
             .vscode
+            CMakeLists.txt
             CMakePresets.json
             cmake/modules/Hardening.cmake
+            cmake/modules/PythonVenv.cmake
+            cmake/Helpers.cmake
+            cmake/Toolchain.cmake
             cmake/presets
             justfile
             tools/pyproject.toml
@@ -136,6 +142,7 @@ jobs:
             tools/simulation
             tools/translations
             deploy/docker
+            deploy/multipass/build-in-vm.sh
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

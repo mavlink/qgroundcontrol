@@ -61,7 +61,7 @@ function(qgc_config_caching)
 
         if(_cache_tool STREQUAL "ccache")
             set(_ccache_conf "${CMAKE_SOURCE_DIR}/tools/configs/ccache.conf")
-            if(WIN32)
+            if(CMAKE_HOST_WIN32)
                 # Windows: set env vars at configure time (inherited by Ninja).
                 # Only set defaults so external cache setups (CI/IDE) are not clobbered.
                 if(EXISTS "${_ccache_conf}" AND (NOT DEFINED ENV{CCACHE_CONFIGPATH} OR "$ENV{CCACHE_CONFIGPATH}" STREQUAL ""))

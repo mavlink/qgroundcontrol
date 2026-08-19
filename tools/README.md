@@ -31,6 +31,9 @@ Common commands are wrapped in a `justfile` (requires `just` >=1.30 for `home_di
 # One-time: install `just` (pulls rust-just into .venv via uv)
 python3 tools/setup/install_python.py dev
 
+# Windows PowerShell/cmd
+python tools/setup/install_python.py dev
+
 # or: brew install just / cargo install just / pipx install rust-just
 ```
 
@@ -94,7 +97,7 @@ with no arguments to print this list from the tool itself.
 
 | Recipe            | Description                                                       |
 | ----------------- | ----------------------------------------------------------------- |
-| `just deps`       | Install system build dependencies (Debian/Ubuntu, via `sudo apt`) |
+| `just deps`       | Auto-detect and install system build dependencies                 |
 | `just submodules` | Initialize/update git submodules                                  |
 | `just vscode`     | Install missing VS Code workspace files from tracked templates    |
 
@@ -144,6 +147,7 @@ just test "Slow" "Network"             # override via positional args (labels, e
 | `just info`            | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...) |
 | `just check-deps`      | Check dependency and submodule versions (`tools/check_deps.py`)                      |
 | `just check-gstreamer` | Check the latest GStreamer patch common to all SDK platforms                         |
+| `just translations`    | Update translation sources with the host Python interpreter                          |
 | `just distclean`       | Clean build, caches, generated files, and `node_modules/`                            |
 
 ## Direct Script Usage
@@ -154,6 +158,10 @@ doesn't expose — see [Development Scripts](#development-scripts) for the per-s
 Repository configure/build/test/workflow presets are rooted at [`../CMakePresets.json`](../CMakePresets.json).
 Use `CMakeUserPresets.json` for machine-local paths or derived presets; it is ignored by Git and
 preserved by `just clean`.
+The `just` recipes select `python3` on Unix and `python` on Windows. Qt's CMake wrapper is
+auto-detected by host architecture and Qt version; set `QT_DIR` or `QT_ROOT_DIR` to override it.
+`tools/configure.py` requires that kit's `qt-cmake` by default; use `--no-qt-cmake` only when
+supplying an explicit target toolchain, as Android CI does.
 
 ```bash
 # Run tools/ Python tests
@@ -293,7 +301,7 @@ Scripts in `setup/` help configure development environments. They read configura
 | `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                       |
 | `install_python.py`                       | All                   | Install Python tools via uv or pip (see groups below)                         |
 | `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI) |
-| `setup_vscode.py`                         | All                   | Install missing VS Code workspace files from tracked templates               |
+| `setup_vscode.py`                         | All                   | Install missing VS Code workspace files from tracked templates                |
 | `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                        |
 | `build_android_openssl.py`                | Android               | Cross-compile OpenSSL as Qt-style Android libraries (optional)                |
 | `download_artifacts.py`                   | All                   | Download build artifacts (in `.github/scripts/`)                              |
@@ -461,11 +469,11 @@ Version numbers and build settings are centralized in `.github/build-config.json
 
 ```json
 {
-  "qt": { "version": "6.11.1", "modules": "qtgraphs qtlocation ..." },
-  "gstreamer": { "version": { "default": "1.28.4", ... }, ... },
-  "android": { "platform": "36", "ndk_full_version": "27.2.12479018", "java_version": "21", ... },
-  "apple": { "xcode_version": "16.x", "macos_deployment_target": "13.0", ... },
-  "build": { "cmake_minimum_version": "3.25", "platform_workflows": "Linux,Windows,MacOS,Android" }
+  "qt": { "version": "...", "modules": "..." },
+  "gstreamer": { "version": { "default": "..." }, "plugins": { "common": [] } },
+  "android": { "platform": "...", "ndk_full_version": "...", "java_version": "..." },
+  "apple": { "xcode_version": "...", "macos_deployment_target": "..." },
+  "build": { "cmake_minimum_version": "...", "platform_workflows": "..." }
 }
 ```
 

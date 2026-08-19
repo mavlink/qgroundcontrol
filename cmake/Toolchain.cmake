@@ -43,7 +43,10 @@ include(CompilerWarnings)
 # set(CMAKE_EXPORT_BUILD_DATABASE ON)
 
 # In-source builds make link and target the same path, which CREATE_LINK rejects.
-if(CMAKE_EXPORT_COMPILE_COMMANDS AND NOT WIN32 AND NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+if(CMAKE_EXPORT_COMPILE_COMMANDS
+   AND NOT CMAKE_HOST_WIN32
+   AND NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}"
+)
     file(CREATE_LINK
         "${CMAKE_BINARY_DIR}/compile_commands.json"
         "${CMAKE_SOURCE_DIR}/compile_commands.json"

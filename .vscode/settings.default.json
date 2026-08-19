@@ -42,7 +42,7 @@
     "**/build/**": true
   },
   "git.ignoreLimitWarning": true,
-  "python.defaultInterpreterPath": "python3",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
   "qml.format.enabled": true,
   "qt-qml.qmlls.useQmllsFromEnvironment": true,
   "qt-qml.qmlls.customArgs": [

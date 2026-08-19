@@ -40,7 +40,7 @@ inputs:
     required: false
     default: ''
   use-qt-cmake:
-    description: 'Use qt-cmake instead of cmake'
+    description: 'Require qt-cmake instead of cmake; disable only when an explicit target toolchain is supplied'
     required: false
     default: 'true'
 

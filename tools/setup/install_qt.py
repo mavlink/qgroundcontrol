@@ -34,12 +34,6 @@ ensure_tools_dir(__file__)
 from common.deps import pip_install
 from common.gh_actions import gh_error, gh_warning, write_github_output
 
-# aqtinstall creates directories that differ from the arch parameter.
-# This mapping resolves the actual on-disk directory name.
-_ARCH_DIR_MAP: dict[str, str] = {
-    "win64_msvc2022_arm64_cross_compiled": "msvc2022_arm64",
-}
-
 _ARCH_DIR_PREFIXES = [
     ("linux_", ""),
     ("win64_", ""),
@@ -66,14 +60,21 @@ def validate_aqt_source(spec: str) -> str:
 
 def resolve_arch_dir(arch: str) -> str:
     """Map a Qt arch identifier to the on-disk directory name aqtinstall creates."""
-    if arch in _ARCH_DIR_MAP:
-        return _ARCH_DIR_MAP[arch]
+    arch = arch.removesuffix("_cross_compiled")
     for prefix, replacement in _ARCH_DIR_PREFIXES:
         if arch.startswith(prefix):
             return replacement + arch[len(prefix) :]
     if arch == "clang_64":
         return "macos"
     return arch
+
+
+def resolve_windows_host_arch(arch: str) -> str:
+    """Return the native x64 Qt arch paired with a Windows ARM64 cross arch."""
+    suffix = "_arm64_cross_compiled"
+    if not arch.startswith("win64_msvc") or not arch.endswith(suffix):
+        raise ValueError(f"Not a Windows ARM64 cross-compiled Qt architecture: {arch}")
+    return f"{arch.removesuffix(suffix)}_64"
 
 
 def compute_cache_digest(modules: str, archives: str) -> str:
@@ -218,6 +219,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     resolve_p = sub.add_parser("resolve-arch", help="Print resolved arch directory name")
     resolve_p.add_argument("--arch", required=True)
 
+    host_arch_p = sub.add_parser(
+        "resolve-windows-host-arch", help="Resolve host Qt arch for Windows ARM64 cross builds"
+    )
+    host_arch_p.add_argument("--arch", required=True)
+
     paths_p = sub.add_parser(
         "resolve-paths", help="Output qt_root_dir/qt_bin_dir for an installed Qt"
     )
@@ -242,6 +248,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "resolve-arch":
         print(resolve_arch_dir(args.arch))
+        return 0
+
+    if args.command == "resolve-windows-host-arch":
+        try:
+            host_arch = resolve_windows_host_arch(args.arch)
+        except ValueError as error:
+            gh_error(str(error))
+            return 1
+        write_github_output({"arch": host_arch})
+        print(host_arch)
         return 0
 
     if args.command == "resolve-paths":

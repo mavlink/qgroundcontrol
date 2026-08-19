@@ -10,7 +10,7 @@
       "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "arm64",
-        "CMAKE_OSX_DEPLOYMENT_TARGET": "17.0",
+        "CMAKE_SYSTEM_NAME": "iOS",
         "QGC_CPACK_GENERATOR": "",
         "QT_HOST_PATH": "$penv{QT_HOST_PATH}",
         "Qt6LinguistTools_DIR": "$penv{QT_HOST_PATH}/lib/cmake/Qt6LinguistTools"

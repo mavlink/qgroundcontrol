@@ -164,6 +164,11 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 
 ## CI Conventions
 
+- **CMake entrypoint**: Platform workflows configure through `cmake-configure`, which requires
+  `qt-cmake` by default. Android is the explicit exception and supplies its target Qt toolchain and
+  prefix to plain CMake.
+- **Windows Qt architecture**: aqt architecture names are explicit package identifiers; CI tests
+  require every workflow matrix to use the same MSVC generation when that identifier changes.
 - **Dependencies**: CI Python scripts use `httpx` for GitHub API access and `jinja2` for
   templating. Deps managed in `tools/pyproject.toml` under `[project.optional-dependencies] scripts`.
 - **Shared helpers**: `gh_actions.py` provides GitHub API pagination (httpx) with `gh` CLI

@@ -17,6 +17,7 @@ def test_parse_qt_version_from_install_path() -> None:
     cases = {
         "/home/user/Qt/6.8.0/gcc_64/bin/qt-cmake": (6, 8, 0),
         "/home/user/Qt/6.10.1/gcc_64/bin/qt-cmake": (6, 10, 1),
+        r"C:\Qt\6.11.1\msvc2022_64\bin\qt-cmake.bat": (6, 11, 1),
         "/usr/bin/qt-cmake": (0, 0, 0),
     }
     for path, expected in cases.items():
@@ -34,6 +35,58 @@ def test_find_qt_cmake_prefers_explicit_executable_and_handles_absence(
     monkeypatch.setattr("configure.Path.home", lambda: tmp_path / "empty-home")
     monkeypatch.delenv("QT_ROOT_DIR", raising=False)
     assert find_qt_cmake(tmp_path / "missing") is None
+
+
+def test_find_qt_cmake_discovers_newest_standard_install(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    installs = []
+    for version in ("6.8.3", "6.11.1"):
+        qt_cmake = tmp_path / "Qt" / version / "gcc_64" / "bin" / "qt-cmake"
+        qt_cmake.parent.mkdir(parents=True)
+        qt_cmake.touch(mode=0o755)
+        installs.append(qt_cmake)
+
+    monkeypatch.setattr("configure.Path.home", lambda: tmp_path)
+    monkeypatch.delenv("QT_ROOT_DIR", raising=False)
+    assert find_qt_cmake() == installs[-1]
+
+
+def test_find_qt_cmake_accepts_future_msvc_toolsets(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("configure.Path.home", lambda: tmp_path / "empty-home")
+    monkeypatch.setattr("configure.is_windows", lambda: True)
+    monkeypatch.delenv("QT_ROOT_DIR", raising=False)
+
+    for architecture, kit in (("x86_64", "msvc2025_64"), ("aarch64", "msvc2025_arm64")):
+        qt_cmake = tmp_path / "Qt" / "6.12.0" / kit / "bin" / "qt-cmake.bat"
+        qt_cmake.parent.mkdir(parents=True)
+        qt_cmake.touch(mode=0o755)
+
+        monkeypatch.setattr("configure.host_arch", lambda architecture=architecture: architecture)
+        monkeypatch.setattr(
+            "configure.glob",
+            lambda pattern, kit=kit, qt_cmake=qt_cmake: (
+                [str(qt_cmake)] if f"msvc*_{kit.rsplit('_', 1)[-1]}" in pattern else []
+            ),
+        )
+
+        assert find_qt_cmake() == qt_cmake
+
+
+def test_find_qt_cmake_uses_native_linux_arm64_kit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    qt_cmake = tmp_path / "Qt" / "6.12.0" / "gcc_arm64" / "bin" / "qt-cmake"
+    qt_cmake.parent.mkdir(parents=True)
+    qt_cmake.touch(mode=0o755)
+
+    monkeypatch.setattr("configure.Path.home", lambda: tmp_path)
+    monkeypatch.setattr("configure.host_arch", lambda: "aarch64")
+    monkeypatch.delenv("QT_ROOT_DIR", raising=False)
+
+    assert find_qt_cmake() == qt_cmake
 
 
 def test_select_preset_covers_local_build_types_and_linux_coverage(
@@ -139,6 +192,18 @@ def test_configure_exports_root_of_selected_qt_cmake(
 
     assert configure(CMakeConfig(qt_root=requested_qt_root)) == 0
     assert invocation["env"]["QT_ROOT_DIR"] == str(selected_qt_root.resolve())
+
+
+def test_configure_requires_qt_cmake_by_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def unexpected_run(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("cmake should not run when qt-cmake is unavailable")
+
+    monkeypatch.setattr("configure.find_qt_cmake", lambda _root: None)
+    monkeypatch.setattr("configure.subprocess.run", unexpected_run)
+
+    assert configure(CMakeConfig(source_dir=tmp_path, build_dir=tmp_path / "build")) == 1
 
 
 def test_explicit_noncoverage_preset_can_enable_coverage(

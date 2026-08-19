@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 from typing import TYPE_CHECKING, Any
 
+import pytest
 import yaml
 from _helpers import REPO_ROOT
 
@@ -32,6 +34,8 @@ CI_PLATFORM_WORKFLOWS = (
     "macos.yml",
     "windows.yml",
 )
+CMAKE_CONFIGURE_ACTION = REPO_ROOT / ".github" / "actions" / "cmake-configure" / "action.yml"
+BUILD_CONFIG = json.loads((REPO_ROOT / ".github/build-config.json").read_text(encoding="utf-8"))
 
 
 def _load_preset_graph() -> dict[str, dict[str, dict[str, Any]]]:
@@ -103,8 +107,14 @@ def test_preset_metadata_is_owned_by_the_root_and_builds_stay_in_the_checkout() 
     common_document = json.loads(
         (REPO_ROOT / "cmake/presets/common.json").read_text(encoding="utf-8")
     )
-    assert root_document["cmakeMinimumRequired"] == {"major": 3, "minor": 25, "patch": 0}
+    major, minor = (int(part) for part in BUILD_CONFIG["build"]["cmake_minimum_version"].split("."))
+    assert root_document["cmakeMinimumRequired"] == {"major": major, "minor": minor, "patch": 0}
     assert "cmakeMinimumRequired" not in common_document
+
+    cmake_lists = (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    match = re.search(r"cmake_minimum_required\(VERSION ([0-9]+\.[0-9]+)\)", cmake_lists)
+    assert match is not None
+    assert match.group(1) == BUILD_CONFIG["build"]["cmake_minimum_version"]
 
     for preset in _load_preset_graph()["configure"].values():
         if not preset.get("hidden", False):
@@ -189,6 +199,8 @@ def test_platform_bases_define_the_required_qt_paths() -> None:
     ios_cache = configure_presets["ios-base"]["cacheVariables"]
     assert ios_cache["QT_HOST_PATH"] == "$penv{QT_HOST_PATH}"
     assert ios_cache["Qt6LinguistTools_DIR"] == "$penv{QT_HOST_PATH}/lib/cmake/Qt6LinguistTools"
+    assert ios_cache["CMAKE_SYSTEM_NAME"] == "iOS"
+    assert "CMAKE_OSX_DEPLOYMENT_TARGET" not in ios_cache
 
 
 def test_android_preset_resolves_minimum_sdk_before_loading_toolchain(tmp_path: Path) -> None:
@@ -254,16 +266,54 @@ def test_developer_build_entrypoints_use_presets() -> None:
     justfile = (REPO_ROOT / "justfile").read_text(encoding="utf-8")
     configure_tool = (REPO_ROOT / "tools/configure.py").read_text(encoding="utf-8")
     vscode_tasks = (REPO_ROOT / ".vscode/tasks.default.json").read_text(encoding="utf-8")
+    vscode_settings = (REPO_ROOT / ".vscode/settings.default.json").read_text(encoding="utf-8")
     ci_scripts = (REPO_ROOT / ".github/workflows/ci-scripts.yml").read_text(encoding="utf-8")
 
-    assert "cmake --build --preset {{build_preset}}" in justfile
+    assert "cmake --build --preset {{ build_preset }}" in justfile
     assert "ctest --preset default" in justfile
-    assert "--parallel {{jobs}} --no-tests=error" in justfile
+    assert "--parallel {{ jobs }} --no-tests=error" in justfile
+    assert "host_os := os()" in justfile
+    assert 'python := if host_os == "windows"' in justfile
+    assert "msvc2022" not in justfile
+    assert 'qt_root_arg := if qt_dir == ""' in justfile
+    assert 'app_path := if host_os == "windows"' in justfile
     assert '"--preset",' in configure_tool
     assert "preset = select_preset(config)" in configure_tool
+    assert "qt-cmake not found; pass --no-qt-cmake" in configure_tool
     assert '"--preset"' in vscode_tasks
+    assert '"python.defaultInterpreterPath": "${workspaceFolder}/.venv"' in vscode_settings
     for path in ("CMakePresets.json", "cmake/presets", "justfile", ".vscode"):
         assert path in ci_scripts
+
+    multipass = REPO_ROOT / "deploy" / "multipass" / "build-in-vm.sh"
+    if multipass.exists():
+        assert '"${QT_ROOT}/bin/qt-cmake"' in multipass.read_text(encoding="utf-8")
+
+
+def test_host_tools_use_host_platform_predicates() -> None:
+    python_venv = REPO_ROOT / "cmake" / "modules" / "PythonVenv.cmake"
+    toolchain = REPO_ROOT / "cmake" / "Toolchain.cmake"
+    helpers = REPO_ROOT / "cmake" / "Helpers.cmake"
+    if not all(path.exists() for path in (python_venv, toolchain, helpers)):
+        pytest.skip("host-platform CMake modules not in checkout")
+
+    assert "if(CMAKE_HOST_WIN32)" in python_venv.read_text(encoding="utf-8")
+    assert "NOT CMAKE_HOST_WIN32" in toolchain.read_text(encoding="utf-8")
+    assert "if(CMAKE_HOST_WIN32)" in helpers.read_text(encoding="utf-8")
+
+
+def test_windows_qt_architectures_use_one_msvc_generation() -> None:
+    sources = (
+        REPO_ROOT / ".github/scripts/android_matrix.py",
+        REPO_ROOT / ".github/workflows/build-gstreamer.yml",
+        REPO_ROOT / ".github/workflows/windows.yml",
+    )
+    generations = {
+        generation
+        for source in sources
+        for generation in re.findall(r"win64_msvc([0-9]+)", source.read_text(encoding="utf-8"))
+    }
+    assert len(generations) == 1, f"Windows Qt MSVC generations differ: {sorted(generations)}"
 
 
 def test_ci_configure_steps_select_platform_presets() -> None:
@@ -271,6 +321,14 @@ def test_ci_configure_steps_select_platform_presets() -> None:
         if isinstance(value, dict):
             if value.get("uses") == "./.github/actions/cmake-configure":
                 assert value.get("with", {}).get("preset"), f"{workflow} omits configure preset"
+                use_qt_cmake = value.get("with", {}).get("use-qt-cmake", "true")
+                if workflow == "android.yml":
+                    assert use_qt_cmake == "false"
+                    extra_args = value.get("with", {}).get("extra-args", "")
+                    assert "-DCMAKE_TOOLCHAIN_FILE=" in extra_args
+                    assert "-DCMAKE_PREFIX_PATH=" in extra_args
+                else:
+                    assert use_qt_cmake != "false", f"{workflow} disables qt-cmake"
             for child in value.values():
                 visit(child, workflow)
         elif isinstance(value, list):
@@ -282,3 +340,6 @@ def test_ci_configure_steps_select_platform_presets() -> None:
             (REPO_ROOT / ".github" / "workflows" / workflow).read_text(encoding="utf-8")
         )
         visit(document, workflow)
+
+    action = yaml.safe_load(CMAKE_CONFIGURE_ACTION.read_text(encoding="utf-8"))
+    assert action["inputs"]["use-qt-cmake"]["default"] == "true"

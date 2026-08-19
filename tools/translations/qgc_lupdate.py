@@ -14,6 +14,7 @@ import os
 import shutil
 import subprocess
 import sys
+from glob import glob
 from pathlib import Path
 
 _TOOLS_DIR = Path(__file__).resolve().parents[1]
@@ -21,10 +22,9 @@ if str(_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(_TOOLS_DIR))
 
 from common.build_config import get_build_config_value  # noqa: E402
+from common.platform import host_arch, is_macos, is_windows  # noqa: E402
 
 REPO_ROOT = _TOOLS_DIR.parent
-QT_INSTALL_BASES = (Path.home() / "Qt", Path("/opt/Qt"))
-QT_ARCH_CANDIDATES = ("gcc_64", "clang_64", "linux_gcc_64")
 
 _TR_NO_CONTEXT_MARKER = "tr() cannot be called without context"
 _NO_QOBJECT_MARKER = "lacks Q_OBJECT macro"
@@ -32,16 +32,35 @@ _NO_QOBJECT_MARKER = "lacks Q_OBJECT macro"
 
 def resolve_lupdate() -> Path:
     """Return path to lupdate, preferring $QT_ROOT_DIR then standard Qt installs."""
+    executable = "lupdate.exe" if is_windows() else "lupdate"
     if qt_root := os.environ.get("QT_ROOT_DIR"):
-        candidate = Path(qt_root) / "bin" / "lupdate"
+        candidate = Path(qt_root) / "bin" / executable
         if candidate.is_file():
             return candidate
 
     qt_version = get_build_config_value("qt.version")
     if qt_version:
-        for base in QT_INSTALL_BASES:
-            for arch in QT_ARCH_CANDIDATES:
-                candidate = base / qt_version / arch / "bin" / "lupdate"
+        if is_windows():
+            kit = "msvc*_arm64" if host_arch() == "aarch64" else "msvc*_64"
+            patterns = [
+                base / qt_version / kit / "bin" / executable
+                for base in (Path("C:/Qt"), Path.home() / "Qt")
+            ]
+        elif is_macos():
+            patterns = [
+                base / qt_version / kit / "bin" / executable
+                for base in (Path.home() / "Qt", Path("/Applications/Qt"))
+                for kit in ("macos", "clang_64")
+            ]
+        else:
+            kit = "gcc_arm64" if host_arch() == "aarch64" else "gcc_64"
+            patterns = [
+                base / qt_version / kit / "bin" / executable
+                for base in (Path.home() / "Qt", Path("/opt/Qt"))
+            ]
+        for pattern in patterns:
+            for match in glob(str(pattern)):
+                candidate = Path(match)
                 if candidate.is_file():
                     return candidate
 
@@ -59,8 +78,8 @@ def collect_lupdate_errors(output: str) -> list[str]:
         errors.append(
             "tr() called without a translation context:\n"
             + "\n".join(no_context)
-            + "\n  Fix: Replace QT_TR_NOOP(\"...\") with QT_TRANSLATE_NOOP(\"ClassName\", \"...\")\n"
-            "       Replace tr(\"...\") with QCoreApplication::translate(\"ClassName\", \"...\")"
+            + '\n  Fix: Replace QT_TR_NOOP("...") with QT_TRANSLATE_NOOP("ClassName", "...")\n'
+            '       Replace tr("...") with QCoreApplication::translate("ClassName", "...")'
         )
     no_qobject = [line for line in output.splitlines() if _NO_QOBJECT_MARKER in line]
     if no_qobject:
@@ -68,7 +87,7 @@ def collect_lupdate_errors(output: str) -> list[str]:
             "Class uses tr() but is missing Q_OBJECT macro:\n"
             + "\n".join(no_qobject)
             + "\n  Fix: Add Q_OBJECT to the class declaration in the .h file,"
-            "\n       or replace tr(\"...\") with QCoreApplication::translate(\"ClassName\", \"...\")"
+            '\n       or replace tr("...") with QCoreApplication::translate("ClassName", "...")'
         )
     return errors
 
@@ -121,6 +140,7 @@ def main() -> int:
 
     print("Extracting JSON strings...")
     import qgc_lupdate_json  # sibling module: tools/translations/ is on sys.path
+
     qgc_lupdate_json.main()
 
     print("Generating pseudo-localization files...")
