@@ -1,5 +1,6 @@
 #include "FailureInjectionTest.h"
 
+#include <QtCore/QHash>
 #include <QtTest/QSignalSpy>
 
 #include "FailureInjection.h"
@@ -16,15 +17,33 @@ void FailureInjectionTest::_catalogPopulatedFromMavlinkEnums()
     QVERIFY2(!units.isEmpty(), "FAILURE_UNIT catalog failed to build from the MAVLink dialect");
     QVERIFY2(!types.isEmpty(), "FAILURE_TYPE catalog failed to build from the MAVLink dialect");
 
-    bool foundGps = false;
+    // One entry per prefix group, so a missing prefix in the strip list shows up as a failure here.
+    struct ExpectedUnit
+    {
+        int unit;
+        const char* name;
+    };
+
+    static const ExpectedUnit expectedUnits[] = {
+        {FAILURE_UNIT_SENSOR_GPS, "GPS"},
+        {FAILURE_UNIT_SYSTEM_BATTERY, "BATTERY"},
+        {FAILURE_UNIT_DATALINK_LTE, "LTE"},
+        {FAILURE_UNIT_DATALINK_WIFI, "WIFI"},
+        {FAILURE_UNIT_DATALINK_TELEM_RADIO, "TELEM_RADIO"},
+        {FAILURE_UNIT_BUS_CAN, "CAN"},
+        {FAILURE_UNIT_BUS_I2C, "I2C"},
+    };
+
+    QHash<int, QString> catalog;
     for (const QVariant& entry : units) {
         const QVariantMap map = entry.toMap();
-        if (map.value(QStringLiteral("unit")).toInt() == static_cast<int>(FAILURE_UNIT_SENSOR_GPS)) {
-            QCOMPARE(map.value(QStringLiteral("name")).toString(), QStringLiteral("GPS"));
-            foundGps = true;
-        }
+        catalog.insert(map.value(QStringLiteral("unit")).toInt(), map.value(QStringLiteral("name")).toString());
     }
-    QVERIFY2(foundGps, "FAILURE_UNIT_SENSOR_GPS missing from the units catalog, or its prefix was not stripped");
+    for (const ExpectedUnit& expected : expectedUnits) {
+        QVERIFY2(catalog.contains(expected.unit),
+                 qPrintable(QStringLiteral("FAILURE_UNIT %1 missing from the units catalog").arg(expected.unit)));
+        QCOMPARE(catalog.value(expected.unit), QString::fromLatin1(expected.name));
+    }
 
     bool foundOk = false;
     for (const QVariant& entry : types) {
