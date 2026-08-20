@@ -41,6 +41,7 @@ const Gimbal &Gimbal::operator=(const Gimbal &other)
     _absolutePitchFact = other._absolutePitchFact;
     _bodyYawFact = other._bodyYawFact;
     _absoluteYawFact = other._absoluteYawFact;
+    _deltaYawFact = other._deltaYawFact;
     _deviceIdFact = other._deviceIdFact;
     _yawLock = other._yawLock;
     _haveControl = other._haveControl;
@@ -55,6 +56,7 @@ void Gimbal::_initFacts()
     _addFact(&_absolutePitchFact);
     _addFact(&_bodyYawFact);
     _addFact(&_absoluteYawFact);
+    _addFact(&_deltaYawFact);
     _addFact(&_deviceIdFact);
     _addFact(&_managerCompidFact);
 
@@ -62,6 +64,7 @@ void Gimbal::_initFacts()
     _absolutePitchFact.setRawValue(0.0f);
     _bodyYawFact.setRawValue(0.0f);
     _absoluteYawFact.setRawValue(0.0f);
+    _deltaYawFact.setRawValue(qQNaN());
     _deviceIdFact.setRawValue(0);
     _managerCompidFact.setRawValue(0);
 }

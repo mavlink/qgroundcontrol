@@ -25,6 +25,13 @@
     "units":            "deg"
 },
 {
+    "name":             "gimbalDeltaYaw",
+    "shortDesc":        "Gimbal Delta Yaw",
+    "type":             "float",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
     "name":             "gimbalAzimuth",
     "shortDesc":        "Azimuth",
     "type":             "float",
