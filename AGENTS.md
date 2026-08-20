@@ -96,6 +96,10 @@ Commit messages follow **Conventional Commits** — the type drives release auto
 (`.releaserc.json` → semantic-release). Use: `feat`, `fix`, `perf`, `revert` (release-triggering);
 `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` (no release). Example: `fix(Vehicle): guard null activeVehicle in telemetry handler`.
 
+Keep pull request history intentional and easy to review. Organize related work into coherent commits and
+combine fixups or closely related incremental changes before publication. Avoid a trail of tiny work-in-progress,
+cleanup, or review-fix commits. Each commit should represent a clear, reviewable change without mixing unrelated work.
+
 Your output will be reviewed by another AI agent before being accepted. Keep changes focused and
 minimal, use clear naming, and leave explanatory commit messages. Avoid unrelated changes,
 commented-out code, or ambiguous TODOs.

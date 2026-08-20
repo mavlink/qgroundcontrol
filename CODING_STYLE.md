@@ -328,6 +328,11 @@ Formatting and static analysis are enforced via [.pre-commit-config.yaml](.pre-c
 - `.qmllint.ini` - QML linting
 - `.editorconfig` - Editor settings
 
+Do not run a formatter over an entire existing file as part of an otherwise focused change. Format only
+the lines or regions you modify and preserve the surrounding style; whole-file formatting creates unrelated
+diffs that make contributions harder to review. Put intentional broad formatting changes in a dedicated
+commit or pull request. Whole-file formatting is appropriate for new files.
+
 Run them with `just lint` (fast gate) or `pre-commit run --all-files` (full sweep); see
 [tools/README.md](tools/README.md) for all commands.
 
