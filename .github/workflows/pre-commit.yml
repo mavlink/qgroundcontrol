@@ -88,10 +88,22 @@ jobs:
           path: pre-commit-results
           retention-days: 7
 
-      # Hook failures are surfaced via the PR comment; only fail the job when
-      # the runner script itself didn't complete (no exit_code output written).
-      - name: Fail job on pre-commit script crash
-        if: always() && steps.pre-commit.outcome == 'failure' && steps.pre-commit.outputs.exit_code == ''
+      # Hook failures are surfaced via the PR comment; the job itself fails only when the runner
+      # never produced hook verdicts. That is three shapes: the script died before writing results
+      # (no exit_code output), pre-commit aborted before running hooks (exit codes other than
+      # 0/1, e.g. a hook environment that fails to install), or pre-commit exited 1 with zero
+      # verdicts recorded — counts of 0 or missing count outputs (e.g. a fatal config error).
+      # Treating any of those as a passing check leaves every hook silently skipped.
+      - name: Fail job when pre-commit produced no hook verdicts
+        if: >-
+          always() && steps.pre-commit.outcome == 'failure' &&
+          (steps.pre-commit.outputs.exit_code != '1' ||
+           ((steps.pre-commit.outputs.passed == '0' || steps.pre-commit.outputs.passed == '') &&
+            (steps.pre-commit.outputs.failed == '0' || steps.pre-commit.outputs.failed == '')))
+        env:
+          EXIT_CODE: ${{ steps.pre-commit.outputs.exit_code }}
+          PASSED: ${{ steps.pre-commit.outputs.passed }}
+          FAILED: ${{ steps.pre-commit.outputs.failed }}
         run: |
-          echo "::error::pre-commit runner crashed before writing results"
+          echo "::error::pre-commit produced no hook verdicts (exit_code='${EXIT_CODE}' passed='${PASSED}' failed='${FAILED}')"
           exit 1
