@@ -167,6 +167,8 @@ Qt*-linux*.tar.*
 # Local Development Tools
 # ------------------------------------------------------------------------------
 
+/profiler/
+
 # AI Assistants
 .claude/
 .gemini/
