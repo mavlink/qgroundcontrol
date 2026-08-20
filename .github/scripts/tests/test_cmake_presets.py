@@ -203,6 +203,51 @@ def test_platform_bases_define_the_required_qt_paths() -> None:
     assert "CMAKE_OSX_DEPLOYMENT_TARGET" not in ios_cache
 
 
+def test_macos_local_builds_default_to_host_architecture(tmp_path: Path) -> None:
+    configure_presets = _load_preset_graph()["configure"]
+    source_dir = tmp_path / "source"
+    (source_dir / ".github").mkdir(parents=True)
+    shutil.copyfile(
+        REPO_ROOT / ".github/build-config.json", source_dir / ".github/build-config.json"
+    )
+    (source_dir / "CMakeLists.txt").write_text(
+        "cmake_minimum_required(VERSION 3.25)\n"
+        f'list(APPEND CMAKE_MODULE_PATH "{(REPO_ROOT / "cmake").as_posix()}" '
+        f'"{(REPO_ROOT / "cmake/modules").as_posix()}")\n'
+        "include(CustomOptions)\n"
+        "if(QGC_MACOS_UNIVERSAL_BUILD)\n"
+        '  message(FATAL_ERROR "Local macOS builds must default to the host architecture")\n'
+        "endif()\n"
+        "project(MacOSNativeDefault NONE)\n",
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["cmake", "-S", str(source_dir), "-B", str(tmp_path / "build")],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    for name in ("macOS", "macOS-debug"):
+        assert (
+            _effective_configure_cache_value(configure_presets, name, "QGC_MACOS_UNIVERSAL_BUILD")
+            == "OFF"
+        )
+
+    for name in (
+        "default",
+        "default-release",
+        "default-relwithdebinfo",
+        "default-minsizerel",
+        "macOS",
+        "macOS-debug",
+    ):
+        assert (
+            _effective_configure_cache_value(configure_presets, name, "CMAKE_OSX_ARCHITECTURES")
+            is None
+        )
+
+
 def test_android_preset_resolves_minimum_sdk_before_loading_toolchain(tmp_path: Path) -> None:
     source_dir = tmp_path / "source"
     preset_dir = source_dir / "cmake/presets"
@@ -336,6 +381,9 @@ def test_ci_configure_steps_select_platform_presets() -> None:
                     assert "-DCMAKE_PREFIX_PATH=" in extra_args
                 else:
                     assert use_qt_cmake != "false", f"{workflow} disables qt-cmake"
+                if workflow == "macos.yml":
+                    extra_args = value.get("with", {}).get("extra-args", "")
+                    assert "-DQGC_MACOS_UNIVERSAL_BUILD=ON" in extra_args
             for child in value.values():
                 visit(child, workflow)
         elif isinstance(value, list):

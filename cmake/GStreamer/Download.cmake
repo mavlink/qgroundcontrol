@@ -1,5 +1,7 @@
 # GStreamer SDK download / URL / checksum helpers.
 
+include_guard(GLOBAL)
+
 # Absolute path disambiguates from this file (also named Download.cmake): when
 # test_download.cmake adds cmake/GStreamer/ to MODULE_PATH, a bare `include(Download)`
 # would resolve to this file and self-recurse.
@@ -192,10 +194,18 @@ endfunction()
 # QGC_GST_DOWNLOAD_TIMEOUT / QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT cache vars
 # (CI flake-fixer knobs that predate the project-level QGC_DOWNLOAD_* vars).
 function(gstreamer_resilient_download)
-    cmake_parse_arguments(ARG "ALLOW_FAILURE"
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "ALLOW_FAILURE"
         "FILENAME;DESTINATION_DIR;RESULT_VAR;TIMEOUT;INACTIVITY_TIMEOUT;EXPECTED_HASH"
-        "URLS" ${ARGN})
-    if(NOT ARG_RESULT_VAR)
+        "URLS")
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR
+            "gstreamer_resilient_download: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_resilient_download: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if("${ARG_RESULT_VAR}" STREQUAL "")
         message(FATAL_ERROR "gstreamer_resilient_download: RESULT_VAR is required")
     endif()
     if(NOT DEFINED ARG_TIMEOUT AND DEFINED QGC_GST_DOWNLOAD_TIMEOUT)
@@ -243,7 +253,15 @@ function(gstreamer_resilient_download)
 endfunction()
 
 function(gstreamer_download_sdk PLATFORM VERSION FILENAME DESTINATION_DIR RESULT_VAR)
-    cmake_parse_arguments(_DL "ALLOW_FAILURE" "" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 5 _DL "ALLOW_FAILURE" "" "")
+    if(_DL_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "gstreamer_download_sdk: unknown arguments: ${_DL_UNPARSED_ARGUMENTS}")
+    endif()
+    foreach(_required IN ITEMS PLATFORM VERSION FILENAME DESTINATION_DIR RESULT_VAR)
+        if("${${_required}}" STREQUAL "")
+            message(FATAL_ERROR "gstreamer_download_sdk: ${_required} is required")
+        endif()
+    endforeach()
 
     gstreamer_get_package_url("${PLATFORM}" "${VERSION}" _url)
     gstreamer_get_s3_mirror_url("${PLATFORM}" "${VERSION}" _s3_url)
@@ -272,10 +290,8 @@ function(gstreamer_download_sdk PLATFORM VERSION FILENAME DESTINATION_DIR RESULT
 endfunction()
 
 # gstreamer_resolve_or_download_sdk
-# Shared prologue for Windows/macOS/iOS: selects cache dir from CPM_SOURCE_CACHE
-# or CMAKE_BINARY_DIR, downloads the SDK package(s) if not already cached, then
-# calls VALIDATE_FN (a macro/function name with no args) to expand and validate
-# the archive. The callee sets GStreamer_ROOT_DIR and GStreamer_AUTO_DOWNLOADED.
+# Shared prologue for Windows/macOS/iOS: selects the cache directory and downloads
+# the SDK package(s). Callers remain responsible for extraction and validation.
 #
 # OUT parameters (all set in PARENT_SCOPE if provided):
 #   CACHE_DIR_OUT  — resolved cache directory
@@ -285,16 +301,31 @@ endfunction()
 # This is a function so scratch variables don't leak; callers must pass OUT vars
 # and read them back to propagate GStreamer_ROOT_DIR / GStreamer_AUTO_DOWNLOADED.
 function(gstreamer_resolve_or_download_sdk)
-    cmake_parse_arguments(ARG "" "PLATFORM;CACHE_SUBDIR;FILENAME_PRIMARY;FILENAME_SECONDARY;CACHE_DIR_OUT;ARCHIVE_OUT;ARCHIVE2_OUT" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG ""
+        "PLATFORM;CACHE_SUBDIR;FILENAME_PRIMARY;FILENAME_SECONDARY;CACHE_DIR_OUT;ARCHIVE_OUT;ARCHIVE2_OUT"
+        "")
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR
+            "gstreamer_resolve_or_download_sdk: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_resolve_or_download_sdk: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     if(NOT GStreamer_FIND_VERSION)
         message(FATAL_ERROR "gstreamer_resolve_or_download_sdk: GStreamer_FIND_VERSION not set")
     endif()
 
     foreach(_req IN ITEMS PLATFORM CACHE_SUBDIR FILENAME_PRIMARY CACHE_DIR_OUT ARCHIVE_OUT)
-        if(NOT ARG_${_req})
+        if("${ARG_${_req}}" STREQUAL "")
             message(FATAL_ERROR "gstreamer_resolve_or_download_sdk: ${_req} is required")
         endif()
     endforeach()
+    if((ARG_FILENAME_SECONDARY AND NOT ARG_ARCHIVE2_OUT)
+            OR (ARG_ARCHIVE2_OUT AND NOT ARG_FILENAME_SECONDARY))
+        message(FATAL_ERROR
+            "gstreamer_resolve_or_download_sdk: FILENAME_SECONDARY and ARCHIVE2_OUT must be provided together")
+    endif()
 
     if(CPM_SOURCE_CACHE)
         set(_cache_dir "${CPM_SOURCE_CACHE}/${ARG_CACHE_SUBDIR}")

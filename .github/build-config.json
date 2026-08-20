@@ -90,6 +90,7 @@
         "ios": "d82c51bd81eafa77fd322c39ce7e6d663a5b860359ace6ed98060c87092e4845"
       }
     },
+    "ca_bundle_url": "https://curl.se/ca/cacert-2026-08-13.pem",
     "ca_bundle_sha256": "f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9"
   }
 }

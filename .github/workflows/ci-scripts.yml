@@ -135,7 +135,10 @@ jobs:
             .vscode
             CMakeLists.txt
             CMakePresets.json
+            cmake/BuildConfig.cmake
+            cmake/CustomOptions.cmake
             cmake/modules/Hardening.cmake
+            cmake/modules/LinuxDistro.cmake
             cmake/modules/PythonVenv.cmake
             cmake/Helpers.cmake
             cmake/Toolchain.cmake

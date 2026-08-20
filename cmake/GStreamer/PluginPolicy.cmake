@@ -5,6 +5,10 @@
 
 include_guard(GLOBAL)
 
+if(POLICY CMP0174)
+    cmake_policy(SET CMP0174 NEW)
+endif()
+
 # Plugin alternate groups — within each group, only one member typically ships
 # per SDK (e.g. videoconvertscale is the 1.22 fusion of videoconvert+videoscale).
 # Format: each entry is a "|"-separated alternate set; member sub-groups are
@@ -59,7 +63,15 @@ _gstreamer_assert_policy_consistent()
 # build-config.json (gstreamer.plugins.common + gstreamer.plugins.<key>).
 # Requires QGC_BUILD_CONFIG_CONTENT to be set by BuildConfig.cmake.
 function(gstreamer_plugins_for)
-    cmake_parse_arguments(ARG "" "PLATFORM;OUT_VAR" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLATFORM;OUT_VAR" "")
+    set(_missing_values ${ARG_KEYWORDS_MISSING_VALUES})
+    list(REMOVE_ITEM _missing_values PLATFORM)
+    if(_missing_values)
+        message(FATAL_ERROR "gstreamer_plugins_for: missing values for: ${_missing_values}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "gstreamer_plugins_for: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     if(NOT ARG_OUT_VAR)
         message(FATAL_ERROR "gstreamer_plugins_for: OUT_VAR is required")
     endif()
@@ -98,7 +110,17 @@ endfunction()
 # alternate set ships in the SDK. Modifies the variable named by IN_OUT_PLUGINS
 # in the caller's scope.
 function(gstreamer_filter_alternates)
-    cmake_parse_arguments(ARG "" "IN_OUT_PLUGINS" "AVAILABLE" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "IN_OUT_PLUGINS" "AVAILABLE")
+    set(_missing_values ${ARG_KEYWORDS_MISSING_VALUES})
+    list(REMOVE_ITEM _missing_values AVAILABLE)
+    if(_missing_values)
+        message(FATAL_ERROR
+            "gstreamer_filter_alternates: missing values for: ${_missing_values}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_filter_alternates: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     if(NOT ARG_IN_OUT_PLUGINS)
         message(FATAL_ERROR "gstreamer_filter_alternates: IN_OUT_PLUGINS is required")
     endif()
@@ -149,7 +171,15 @@ endfunction()
 # "<name>". Lets the install verifier accept videoconvert+videoscale (1.20) in
 # place of the fused videoconvertscale (1.22+) instead of failing the build.
 function(gstreamer_plugin_satisfy_sets)
-    cmake_parse_arguments(ARG "" "PLUGIN;OUT_VAR" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "PLUGIN;OUT_VAR" "")
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR
+            "gstreamer_plugin_satisfy_sets: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "gstreamer_plugin_satisfy_sets: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
     if(NOT ARG_PLUGIN)
         message(FATAL_ERROR "gstreamer_plugin_satisfy_sets: PLUGIN is required")
     endif()
