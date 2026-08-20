@@ -538,8 +538,7 @@ GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
 GstElement* buildWebSocketJpegSource(const QUrl& sourceUrl)
 {
     if (!sourceUrl.isValid() || sourceUrl.isRelative() || sourceUrl.host().isEmpty() || (sourceUrl.port() == 0)) {
-        qCWarning(GstSourceFactoryLog) << "Invalid WebSocket JPEG URL:"
-                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
+        qCWarning(GstSourceFactoryLog) << "Invalid WebSocket JPEG URL";
         return nullptr;
     }
     if (!sourceUrl.userInfo().isEmpty()) {

@@ -167,11 +167,11 @@ public:
             _webSocket->setSslConfiguration(QGCNetworkHelper::createSslConfig());
         }
 
-        (void) connect(_webSocket, &QWebSocket::connected, this, [this]() {
-            qCDebug(QGCWebSocketVideoSourceLog) << "Connected" << QGCNetworkHelper::redactedUrlForLogging(_url);
+        (void) connect(_webSocket, &QWebSocket::connected, this, []() {
+            qCDebug(QGCWebSocketVideoSourceLog) << "Connected to WebSocket video source";
         });
         (void) connect(_webSocket, &QWebSocket::disconnected, this, [this]() {
-            qCDebug(QGCWebSocketVideoSourceLog) << "Disconnected" << QGCNetworkHelper::redactedUrlForLogging(_url);
+            qCDebug(QGCWebSocketVideoSourceLog) << "Disconnected from WebSocket video source";
             _failStream(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_READ, "WebSocket video connection closed",
                         QStringLiteral("Connection closed unexpectedly"));
         });
@@ -203,7 +203,7 @@ public:
 
         _running = true;
         _terminalError = false;
-        qCDebug(QGCWebSocketVideoSourceLog) << "Opening" << QGCNetworkHelper::redactedUrlForLogging(_url);
+        qCDebug(QGCWebSocketVideoSourceLog) << "Opening WebSocket video source";
         _webSocket->open(request);
     }
 
