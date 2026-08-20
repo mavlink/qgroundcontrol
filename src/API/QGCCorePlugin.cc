@@ -1,8 +1,5 @@
 #include "QGCCorePlugin.h"
 #include "AppSettings.h"
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-#include "MavlinkSettings.h"
-#endif
 #ifdef Q_OS_ANDROID
 #include "Viewer3DSettings.h"
 #ifndef QGC_NO_SERIAL_LINK
@@ -150,12 +147,6 @@ void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMeta
             metaData.setRawDefaultValue(outdoorPalette);
             return;
         }
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-        else if (metaData.name() == MavlinkSettings::telemetrySaveName) {
-            metaData.setRawDefaultValue(false);
-            return;
-        }
-#endif
 #ifndef Q_OS_ANDROID
         else if (metaData.name() == AppSettings::androidDontSaveToSDCardName) {
             userVisible = false;
