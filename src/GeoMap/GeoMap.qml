@@ -18,7 +18,8 @@ import QGroundControl.GeoMap
 
 /// Experimental 2D/3D map control (preview feature): the GeoMap-engine
 /// counterpart of FlightMap. Renders the LOD surface patch quadtree with full
-/// camera gestures (pan, orbit, zoom, twist) and no view chrome.
+/// Google Earth-style camera gestures (pan, orbit, zoom, twist, first-person
+/// look) and no view chrome.
 Item {
     id: root
 
@@ -126,6 +127,21 @@ Item {
                                     * geoScene.verticalScale * geoScene.terrainScale
     }
 
+    // Scene-space z of the rendered surface under a screen point, so gestures
+    // anchor to the terrain the user actually clicked instead of the z=0
+    // plane far beneath it. Sample at the ground-plane hit, then refine once
+    // at that elevation (same two-step solve as onRecenterVehicleTo).
+    function _surfaceZAt(screenPos) {
+        const coord = geoCamera.coordinateAtScreenPoint(screenPos)
+        if (!coord.isValid) {
+            return 0
+        }
+        const zScale = geoScene.verticalScale * geoScene.terrainScale
+        const z = patchModel.terrainHeightAt(coord) * zScale
+        const refined = geoCamera.coordinateAtScreenPoint(screenPos, z)
+        return refined.isValid ? (patchModel.terrainHeightAt(refined) * zScale) : z
+    }
+
     GeoMapCamera {
         id: geoCamera
         objectName: "geoMapCamera"
@@ -164,7 +180,8 @@ Item {
         gcsPosition: QGroundControl.qgcPositionManger.gcsPosition
         vehicleCoordinate: root._activeVehicleCoordinate
         centerGCSWhenVehicleValid: QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue
-        userInteracting: panHandler.active || orbitHandler.active || pinchHandler.active
+        userInteracting: panHandler.active || orbitHandler.active || shiftOrbitHandler.active
+                         || lookHandler.active || metaLookHandler.active || pinchHandler.active
         animating: recenterAnimation.running
 
         onCenterMap: (coordinate, firstPosition) => {
@@ -319,7 +336,7 @@ Item {
             id: mapContent3D
         }
 
-        // Gestures (Viewer3D semantics): the ground point under the cursor
+        // Gestures (Google Earth semantics): the ground point under the cursor
         // at gesture start stays under the cursor throughout. Any gesture
         // completes a running mode/compass animation to its end state so
         // the two never fight over the same pose properties.
@@ -327,13 +344,15 @@ Item {
             id: panHandler
             target: null
             acceptedButtons: Qt.LeftButton
+            // Plain drag only: Shift/Ctrl+left-drag are the orbit/look gestures below
+            acceptedModifiers: Qt.NoModifier
             onActiveChanged: {
                 if (active) {
                     root.completeCameraAnimations()
                     // Anchor at the current position, not pressPosition: after a
                     // two-finger pinch drops to one finger this handler re-activates
                     // with a stale pressPosition, and anchoring there jumps the map.
-                    geoCamera.beginPan(centroid.position)
+                    geoCamera.beginPan(centroid.position, root._surfaceZAt(centroid.position))
                 }
             }
             onCentroidChanged: {
@@ -343,7 +362,8 @@ Item {
             }
         }
 
-        // Right-drag orbits: full width = 360 deg heading, full height = 180 deg tilt.
+        // Right/middle-drag orbits about the pressed ground point: full width =
+        // 360 deg heading, full height = 180 deg tilt.
         // Mouse/touchpad only: acceptedButtons doesn't filter touch points, so
         // without acceptedDevices this handler steals single-finger drags from
         // panHandler on touchscreens (touch orbits via PinchHandler twist instead).
@@ -352,11 +372,17 @@ Item {
             id: orbitHandler
             target: null
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            acceptedButtons: Qt.RightButton
+            acceptedButtons: Qt.RightButton | Qt.MiddleButton
+            // Unmodified only: macOS synthesizes Ctrl+left-click as a right-click
+            // (carrying MetaModifier), which must fall through to metaLookHandler
+            acceptedModifiers: Qt.NoModifier
             onActiveChanged: {
                 if (active) {
                     root.completeCameraAnimations()
-                    geoCamera.beginOrbit(centroid.pressPosition)
+                    geoCamera.beginOrbit(centroid.pressPosition, root._surfaceZAt(centroid.pressPosition))
+                    // Apply motion accumulated before activation: a short drag
+                    // can activate and release with no further centroid change
+                    geoCamera.orbitTo(centroid.position)
                 }
             }
             onCentroidChanged: {
@@ -368,9 +394,87 @@ Item {
 
         WheelHandler {
             target: null
+            // Default acceptedDevices=Mouse drops trackpad scroll (and mouse
+            // wheel on Wayland/xcb, which misreport as TouchPad) — see the
+            // FlightMap WheelHandler comment for the full platform rundown
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: (event) => {
                 root.completeCameraAnimations()
                 geoCamera.zoom(event.angleDelta.y, point.position)
+            }
+        }
+
+        // Shift+left-drag orbits about the pressed ground point, same as
+        // right/middle-drag (keyboard-modifier alternative for one-button mice)
+        DragHandler {
+            id: shiftOrbitHandler
+            target: null
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            acceptedButtons: Qt.LeftButton
+            acceptedModifiers: Qt.ShiftModifier
+            onActiveChanged: {
+                if (active) {
+                    root.completeCameraAnimations()
+                    geoCamera.beginOrbit(centroid.pressPosition, root._surfaceZAt(centroid.pressPosition))
+                    // Apply motion accumulated before activation (see orbitHandler)
+                    geoCamera.orbitTo(centroid.position)
+                }
+            }
+            onCentroidChanged: {
+                if (active) {
+                    geoCamera.orbitTo(centroid.position)
+                }
+            }
+        }
+
+        // Ctrl+left-drag is first-person look: the camera stays put and the
+        // view rotates, like turning your head (Google Earth Ctrl+drag).
+        // Drag toward where you want to look.
+        DragHandler {
+            id: lookHandler
+            target: null
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            acceptedButtons: Qt.LeftButton
+            acceptedModifiers: Qt.ControlModifier
+            onActiveChanged: {
+                if (active) {
+                    root.completeCameraAnimations()
+                    geoCamera.beginLook(centroid.pressPosition)
+                    // Apply motion accumulated before activation (see orbitHandler)
+                    geoCamera.lookTo(centroid.position)
+                }
+            }
+            onCentroidChanged: {
+                if (active) {
+                    geoCamera.lookTo(centroid.position)
+                }
+            }
+        }
+
+        // macOS delivers the physical Ctrl key as Qt.MetaModifier (Qt swaps
+        // Ctrl/Cmd), so accept it too: Ctrl+drag looks on every platform
+        // (and Cmd+drag still works via lookHandler, matching Google Earth).
+        // RightButton included because macOS synthesizes Ctrl+left-click as a
+        // right-click, so that's the button this drag actually arrives on.
+        DragHandler {
+            id: metaLookHandler
+            target: null
+            enabled: Qt.platform.os === "osx"
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            acceptedModifiers: Qt.MetaModifier
+            onActiveChanged: {
+                if (active) {
+                    root.completeCameraAnimations()
+                    geoCamera.beginLook(centroid.pressPosition)
+                    // Apply motion accumulated before activation (see orbitHandler)
+                    geoCamera.lookTo(centroid.position)
+                }
+            }
+            onCentroidChanged: {
+                if (active) {
+                    geoCamera.lookTo(centroid.position)
+                }
             }
         }
 
@@ -387,6 +491,45 @@ Item {
             }
             onScaleChanged: (delta) => geoCamera.zoomBy(1 / delta, centroid.position)
             onRotationChanged: (delta) => geoCamera.rotateBy(delta, centroid.position)
+        }
+    }
+
+    // Pivot ring (Google Earth-style): marks the ground point an orbit drag
+    // rotates about, visible only while the drag is active. The pivot stays
+    // pinned to its press position on screen, so the ring never moves.
+    Rectangle {
+        id: orbitPivotIndicator
+        objectName: "geoMapOrbitPivotIndicator"
+
+        readonly property point _pivot: orbitHandler.active ? orbitHandler.centroid.pressPosition
+                                                            : shiftOrbitHandler.centroid.pressPosition
+
+        visible: orbitHandler.active || shiftOrbitHandler.active
+        x: _pivot.x - (width / 2)
+        y: _pivot.y - (height / 2)
+        width: ScreenTools.defaultFontPixelHeight * 1.5
+        height: width
+        radius: width / 2
+        color: "transparent"
+        // Dark halo keeps the white ring visible over light imagery
+        border.color: Qt.rgba(0, 0, 0, 0.4)
+        border.width: (ScreenTools.defaultFontPixelHeight / 8) + 2
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1
+            radius: width / 2
+            color: "transparent"
+            border.color: "white"
+            border.width: ScreenTools.defaultFontPixelHeight / 8
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: ScreenTools.defaultFontPixelHeight / 4
+            height: width
+            radius: width / 2
+            color: "white"
         }
     }
 

@@ -153,16 +153,28 @@ public:
         setTilt(kDefault3DTilt);
     }
 
-    /// Start a pan gesture at the given screen position (pixels)
-    Q_INVOKABLE void beginPan(const QPointF& screenPos);
-    /// Continue a pan gesture: the ground point picked at beginPan stays under the cursor
+    /// Start a pan gesture at the given screen position (pixels). anchorZ is the
+    /// world-z (scene units) of the grabbed surface point: gestures must anchor to
+    /// the rendered terrain surface, not the z=0 ground plane, or the map slides
+    /// off the cursor over elevated terrain.
+    Q_INVOKABLE void beginPan(const QPointF& screenPos, double anchorZ = 0.0);
+    /// Continue a pan gesture: the surface point picked at beginPan stays under the cursor
     Q_INVOKABLE void panTo(const QPointF& screenPos);
 
-    /// Start an orbit gesture at the given screen position (pixels)
-    Q_INVOKABLE void beginOrbit(const QPointF& screenPos);
-    /// Continue an orbit gesture: rotate rigidly about the ground point picked at beginOrbit.
+    /// Start an orbit gesture at the given screen position (pixels); anchorZ as in beginPan
+    Q_INVOKABLE void beginOrbit(const QPointF& screenPos, double anchorZ = 0.0);
+    /// Continue an orbit gesture: rotate rigidly about the surface point picked at beginOrbit,
+    /// which stays pinned to its on-screen position from gesture start.
     /// Full viewport width of drag = 360 deg heading, full height = 180 deg tilt.
     Q_INVOKABLE void orbitTo(const QPointF& screenPos);
+
+    /// Start a first-person look gesture at the given screen position (pixels)
+    Q_INVOKABLE void beginLook(const QPointF& screenPos);
+    /// Continue a look gesture: rotate the view about the camera position picked at
+    /// beginLook, which stays fixed while heading/tilt (and thus center and distance)
+    /// change (Google Earth Ctrl+drag first-person perspective). Same drag ratios as
+    /// orbitTo. 2D mode locks tilt, leaving a rotation about the camera's vertical axis.
+    Q_INVOKABLE void lookTo(const QPointF& screenPos);
 
     /// Rotate the camera rigidly by degrees about the ground point under screenPos
     /// (positive = counterclockwise heading change). Used for two-finger twist gestures.
@@ -224,10 +236,16 @@ public:
     /// north up (matches the pose convention R = Rz(heading) * Rx(tilt))
     QQuaternion sceneRotation() const;
 
-    /// Intersect the pick ray through screenPos (pixels) with the ground plane z=0.
-    /// Returns the ground point in world meters, or std::nullopt when the ray misses
-    /// (at/above the horizon) or the viewport is not set.
-    std::optional<QPointF> screenToGround(const QPointF& screenPos) const;
+    /// Intersect the pick ray through screenPos (pixels) with the horizontal plane
+    /// at planeZ (scene units, default the ground plane z=0). Returns the hit point
+    /// in world meters, or std::nullopt when the ray misses (at/above the horizon or
+    /// the plane is behind the camera) or the viewport is not set.
+    std::optional<QPointF> screenToGround(const QPointF& screenPos, double planeZ = 0.0) const;
+
+    /// QML-facing screenToGround: geographic coordinate of the pick-ray hit on the
+    /// horizontal plane at worldZ (scene units, same as screenToGround's planeZ).
+    /// Invalid coordinate when the ray misses.
+    Q_INVOKABLE QGeoCoordinate coordinateAtScreenPoint(const QPointF& screenPos, double worldZ = 0.0) const;
 
     /// Like screenToGround, but never fails for horizon misses: the result is capped
     /// at maxRange ground meters from the camera's ground position, along the ray's
@@ -257,8 +275,8 @@ signals:
 
 private:
     void _setCenterWorld(const QPointF& world);
-    /// Shift the center so the ground point anchorWorld appears under screenPos
-    void _anchorToScreen(const QPointF& anchorWorld, const QPointF& screenPos);
+    /// Shift the center so the point anchorWorld (at height anchorZ) appears under screenPos
+    void _anchorToScreen(const QPointF& anchorWorld, const QPointF& screenPos, double anchorZ = 0.0);
     static qreal _normalizedHeading(qreal heading);
 
     QPointF _centerWorld;  // mercator meters
@@ -274,9 +292,16 @@ private:
 
     // Gesture state
     std::optional<QPointF> _panAnchorWorld;
+    double _panAnchorZ = 0.0;
     std::optional<QPointF> _orbitAnchorWorld;
+    double _orbitAnchorZ = 0.0;
     QPointF _orbitAnchorScreen;
     QPointF _orbitStartScreen;
     qreal _orbitStartHeading = 0.0;
     qreal _orbitStartTilt = 0.0;
+    std::optional<QPointF> _lookCameraGround;  // fixed camera ground position (world meters)
+    qreal _lookCameraZ = 0.0;
+    QPointF _lookStartScreen;
+    qreal _lookStartHeading = 0.0;
+    qreal _lookStartTilt = 0.0;
 };

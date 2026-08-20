@@ -102,8 +102,10 @@ renderable positions itself through `GeoScene`, so a re-anchor shifts the whole
 scene consistently.
 
 `GeoMapCamera` is the camera pose model: center coordinate, heading, tilt, and
-distance, with 2D/3D modes. All gestures (pan, orbit, zoom) are cursor-anchored —
-the ground point under the cursor stays under it — and zoom levels match
+distance, with 2D/3D modes. Gestures mirror Google Earth: pan, orbit (right,
+middle, or Shift+left drag), and zoom are cursor-anchored — the ground point
+under the cursor at gesture start stays pinned — plus first-person look about a
+fixed camera position (Ctrl+drag). Zoom levels match
 QtLocation's for familiar behavior. Its outputs drive the `View3D`'s
 `PerspectiveCamera`, and its projection math (`screenToGround`, `worldToScreen`)
 underpins visibility estimation and overlay placement.

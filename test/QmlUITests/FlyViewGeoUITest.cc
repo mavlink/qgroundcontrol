@@ -3,6 +3,8 @@
 #include <QtCore/QList>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QtMath>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QMouseEvent>
 #include <QtGui/QPointingDevice>
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
@@ -11,6 +13,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
+#include <cmath>
 #include <optional>
 
 #include "Fact.h"
@@ -109,7 +112,8 @@ void FlyViewGeoUITest::_testViewSwitchWhenEnabled()
 }
 
 // Exercises every camera gesture against the real view: left-drag pan,
-// right-drag orbit, wheel zoom, and synthesized multi-touch (pinch zoom,
+// right-drag orbit, Shift+left-drag orbit (with pivot ring), Ctrl+left-drag
+// first-person look, wheel zoom, and synthesized multi-touch (pinch zoom,
 // two-finger twist).
 void FlyViewGeoUITest::_testCameraGestures()
 {
@@ -180,6 +184,82 @@ void FlyViewGeoUITest::_testCameraGestures()
     resetPose();
     mouseDrag(Qt::RightButton, center, QPoint(0, qRound(-h / 4)));
     QTRY_VERIFY_WITH_TIMEOUT(qAbs(cam->tilt() - 75.0) < 0.5, 5000);
+
+    // Shift+left drag: same orbit — pivot ring visible at the press point
+    // while dragging, pressed ground point pinned to its screen position,
+    // ring gone on release
+    resetPose();
+    {
+        const QPointF pressLocal(w / 2, h * 0.6);
+        const QPoint pressPos = toWin(pressLocal.x(), pressLocal.y());
+        const auto anchorBefore = cam->screenToGround(pressLocal);
+        QVERIFY(anchorBefore.has_value());
+
+        QTest::mousePress(_window, Qt::LeftButton, Qt::ShiftModifier, pressPos);
+        const QPoint delta(qRound(w / 4), qRound(-h / 8));
+        for (int i = 1; i <= 10; i++) {
+            // QTest::mouseMove drops keyboard modifiers, which would deactivate
+            // the modifier-gated handler: send the move with Shift held
+            const QPoint pos = pressPos + ((delta * i) / 10);
+            QMouseEvent move(QEvent::MouseMove, pos, _window->mapToGlobal(pos), Qt::NoButton, Qt::LeftButton,
+                             Qt::ShiftModifier);
+            QGuiApplication::sendEvent(_window, &move);
+        }
+
+        QQuickItem* const pivotRing = findVisibleItem(_rootItem, QStringLiteral("geoMapOrbitPivotIndicator"));
+        QVERIFY2(pivotRing, "Pivot ring not visible during Shift+left drag");
+        const QPointF ringCenter = pivotRing->mapToScene(QPointF(pivotRing->width() / 2, pivotRing->height() / 2));
+        QCOMPARE_LT((ringCenter - QPointF(pressPos)).manhattanLength(), 3.0);
+
+        QTest::mouseRelease(_window, Qt::LeftButton, Qt::ShiftModifier, pressPos + delta);
+        QTRY_VERIFY_WITH_TIMEOUT(qAbs(cam->heading() - 90.0) < 0.5, 5000);
+        QVERIFY(qAbs(cam->tilt() - 52.5) < 0.5);
+        QCOMPARE(cam->distance(), 1500.0);
+
+        // The clicked ground point never left its press screen position
+        const auto anchorAfter = cam->screenToGround(pressLocal);
+        QVERIFY(anchorAfter.has_value());
+        QCOMPARE_LT((*anchorAfter - *anchorBefore).manhattanLength(), 2.0);
+
+        QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("geoMapOrbitPivotIndicator"), 0),
+                 "Pivot ring still visible after release");
+    }
+
+    // Ctrl+left drag: first-person look — the camera stays fixed while
+    // heading/tilt follow the drag (center and distance re-solve). QTest
+    // synthesizes Qt modifiers directly (no macOS native Ctrl-click
+    // right-button swap), so this exercises lookHandler on every platform.
+    resetPose();
+    {
+        const QPointF camGroundBefore = cam->cameraGroundPosition();
+        const float camZBefore = cam->cameraPosition().z();
+
+        QTest::mousePress(_window, Qt::LeftButton, Qt::ControlModifier, center);
+        const QPoint delta(qRound(w / 4), qRound(h / 8));
+        for (int i = 1; i <= 10; i++) {
+            // QTest::mouseMove drops keyboard modifiers (see Shift+left drag above)
+            const QPoint pos = center + ((delta * i) / 10);
+            QMouseEvent move(QEvent::MouseMove, pos, _window->mapToGlobal(pos), Qt::NoButton, Qt::LeftButton,
+                             Qt::ControlModifier);
+            QGuiApplication::sendEvent(_window, &move);
+        }
+
+        // Look has no ground pivot: the orbit ring must not appear
+        QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("geoMapOrbitPivotIndicator"), 0),
+                 "Pivot ring visible during Ctrl+left look drag");
+
+        QTest::mouseRelease(_window, Qt::LeftButton, Qt::ControlModifier, center + delta);
+
+        // Quarter width = 90 deg heading; drag down an eighth = look down 22.5 deg
+        QTRY_VERIFY_WITH_TIMEOUT(qAbs(cam->heading() - 90.0) < 0.5, 5000);
+        QVERIFY(qAbs(cam->tilt() - 7.5) < 0.5);
+
+        // Camera position unchanged; distance re-solved along the new view axis
+        QCOMPARE_LT((cam->cameraGroundPosition() - camGroundBefore).manhattanLength(), 1.0);
+        QCOMPARE_LT(qAbs(cam->cameraPosition().z() - camZBefore), 1.0f);
+        const qreal expectedDistance = (1500.0 * std::cos(qDegreesToRadians(30.0))) / std::cos(qDegreesToRadians(7.5));
+        QVERIFY(qAbs(cam->distance() - expectedDistance) < 1.0);
+    }
 
     // Wheel up: zoom in; wheel down: zoom out
     resetPose();
