@@ -5,8 +5,8 @@
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 #include <QtCore/QJsonDocument>
-#include <QtCore/QRegularExpression>
 #include <QtCore/QUrlQuery>
+#include <QtNetwork/QHostAddress>
 #include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QHttpPart>
 #include <QtNetwork/QNetworkAccessManager>
@@ -344,10 +344,79 @@ QUrl urlWithoutQuery(const QUrl& url)
 }
 
 namespace {
-bool isHostPortForLogging(const QString& value)
+enum class HostPortClassification
 {
-    static const QRegularExpression pattern(QStringLiteral(R"(^[^/@?#\s]+:\d{1,5}$)"));
-    return pattern.match(value).hasMatch();
+    NotHostPort,
+    Valid,
+    Invalid,
+};
+
+bool isAsciiAlphaNumeric(char character)
+{
+    return ((character >= 'a') && (character <= 'z')) || ((character >= 'A') && (character <= 'Z')) ||
+           ((character >= '0') && (character <= '9'));
+}
+
+bool isValidHostname(QString hostname)
+{
+    if (hostname.endsWith(QLatin1Char('.'))) {
+        hostname.chop(1);
+    }
+
+    const QByteArray aceHostname = QUrl::toAce(hostname);
+    if (aceHostname.isEmpty() || (aceHostname.size() > 253)) {
+        return false;
+    }
+
+    const QList<QByteArray> labels = aceHostname.split('.');
+    for (const QByteArray& label : labels) {
+        if (label.isEmpty() || (label.size() > 63) || !isAsciiAlphaNumeric(label.front()) ||
+            !isAsciiAlphaNumeric(label.back())) {
+            return false;
+        }
+        for (const char character : label) {
+            if (!isAsciiAlphaNumeric(character) && (character != '-')) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+HostPortClassification classifyHostPort(const QString& value)
+{
+    if (value.contains(QStringLiteral("://"))) {
+        return HostPortClassification::NotHostPort;
+    }
+
+    const qsizetype separator = value.lastIndexOf(QLatin1Char(':'));
+    if ((separator <= 0) || (separator == (value.size() - 1))) {
+        return HostPortClassification::NotHostPort;
+    }
+
+    const QString portText = value.sliced(separator + 1);
+    for (const QChar character : portText) {
+        if (!character.isDigit()) {
+            return HostPortClassification::NotHostPort;
+        }
+    }
+
+    bool portOk = false;
+    const int port = portText.toInt(&portOk);
+    if (!portOk || (port < 1) || (port > 65535)) {
+        return HostPortClassification::Invalid;
+    }
+
+    const QUrl authority(QStringLiteral("qgc://") + value, QUrl::StrictMode);
+    if (!authority.isValid() || authority.host().isEmpty() || !authority.userInfo().isEmpty() ||
+        !authority.path().isEmpty() || authority.hasQuery() || authority.hasFragment() ||
+        (authority.port(-1) != port)) {
+        return HostPortClassification::Invalid;
+    }
+
+    QHostAddress address;
+    const bool validHost = address.setAddress(authority.host()) || isValidHostname(authority.host());
+    return validHost ? HostPortClassification::Valid : HostPortClassification::Invalid;
 }
 }  // namespace
 
@@ -356,10 +425,16 @@ QString redactedUrlForLogging(const QUrl& url)
     if (url.isEmpty()) {
         return QStringLiteral("<empty-url>");
     }
+
+    const QString sourceText = url.isValid() ? url.toString(QUrl::FullyEncoded) : url.path();
+    const HostPortClassification hostPort = classifyHostPort(sourceText);
+    if (hostPort == HostPortClassification::Valid) {
+        return sourceText;
+    }
+    if (hostPort == HostPortClassification::Invalid) {
+        return QStringLiteral("<invalid-url length=%1>").arg(sourceText.size());
+    }
     if (!url.isValid()) {
-        if (url.scheme().isEmpty() && isHostPortForLogging(url.path())) {
-            return url.path();
-        }
         return QStringLiteral("<invalid-url>");
     }
 
@@ -385,8 +460,12 @@ QString redactedUrlForLogging(const QUrl& url)
 
 QString redactedUrlForLogging(const QString& url)
 {
-    if (isHostPortForLogging(url)) {
+    const HostPortClassification hostPort = classifyHostPort(url);
+    if (hostPort == HostPortClassification::Valid) {
         return url;
+    }
+    if (hostPort == HostPortClassification::Invalid) {
+        return QStringLiteral("<invalid-url length=%1>").arg(url.size());
     }
     const QUrl parsedUrl(url);
     if (!url.isEmpty() && !parsedUrl.isValid()) {

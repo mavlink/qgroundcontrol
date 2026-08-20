@@ -49,6 +49,17 @@ void QGCNetworkRedactionTest::_testHandlesRelativeAndInvalidInput()
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("0.0.0.0:5600")), QStringLiteral("0.0.0.0:5600"));
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("192.168.1.10:5600")),
              QStringLiteral("192.168.1.10:5600"));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("[2001:db8::1]:5600")),
+             QStringLiteral("[2001:db8::1]:5600"));
+
+    const QString malformedCredential = QStringLiteral("token=supersecret:5600");
+    const QString malformedResult = QGCNetworkHelper::redactedUrlForLogging(malformedCredential);
+    QCOMPARE(malformedResult, QStringLiteral("<invalid-url length=%1>").arg(malformedCredential.size()));
+    QVERIFY(!malformedResult.contains(QStringLiteral("supersecret")));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("camera.local:0")),
+             QStringLiteral("<invalid-url length=14>"));
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("camera.local:65536")),
+             QStringLiteral("<invalid-url length=18>"));
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QString()), QStringLiteral("<empty-url>"));
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(QStringLiteral("http://[invalid")),
              QStringLiteral("<invalid-url length=15>"));
@@ -59,6 +70,7 @@ void QGCNetworkRedactionTest::_testQUrlOverload()
     const QUrl sourceUrl(QStringLiteral("rtsp://pilot:secret@camera.example:8554/live?token=abc123"));
     const QString result = QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
     const QUrl hostPortUrl(QStringLiteral("192.168.1.10:5600"));
+    const QUrl ipv6HostPortUrl(QStringLiteral("[2001:db8::1]:5600"));
 
     QCOMPARE(QUrl(result).path(), QStringLiteral("/live"));
     QVERIFY(!result.contains(QStringLiteral("pilot")));
@@ -66,6 +78,8 @@ void QGCNetworkRedactionTest::_testQUrlOverload()
     QVERIFY(!result.contains(QStringLiteral("abc123")));
     QVERIFY(!hostPortUrl.isValid());
     QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(hostPortUrl), QStringLiteral("192.168.1.10:5600"));
+    QVERIFY(!ipv6HostPortUrl.isValid());
+    QCOMPARE(QGCNetworkHelper::redactedUrlForLogging(ipv6HostPortUrl), QStringLiteral("[2001:db8::1]:5600"));
 }
 
 UT_REGISTER_TEST(QGCNetworkRedactionTest, TestLabel::Unit, TestLabel::Utilities)
