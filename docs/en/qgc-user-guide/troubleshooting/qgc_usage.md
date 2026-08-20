@@ -6,6 +6,8 @@ This section covers a number of common problems related to **using** _QGroundCon
 - [Parameter Download failures](../troubleshooting/parameter_download.md)
 - [Plan Upload/Download failures](../troubleshooting/plan_upload_download.md)
 - [Resume Mission failures](../troubleshooting/resume_mission.md)
+- [Standard Modes / External Flight Mode failures](../troubleshooting/standard_modes.md)
+- [Missing Actuators Page (PX4)](../troubleshooting/actuators.md)
 
 ::: tip
 Problems with **installing/running** _QGroundControl_ on the host computer are covered in [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md).
