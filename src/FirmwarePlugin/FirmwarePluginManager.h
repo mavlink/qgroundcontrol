@@ -31,6 +31,12 @@ public:
     /// Returns true if the specified firmware class is supported by the system
     bool firmwareClassSupported(QGCMAVLink::FirmwareClass_t firmwareClass);
 
+    /// Returns true if the system supports only a single firmware class
+    bool singleFirmwareSupport();
+
+    /// Returns true if the system supports only a single firmware class with a single vehicle type
+    bool singleVehicleSupport();
+
     /// Returns the list of supported vehicle types for the specified firmware
     QList<QGCMAVLink::VehicleClass_t> supportedVehicleClasses(QGCMAVLink::FirmwareClass_t firmwareClass);
 

@@ -184,9 +184,7 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
 
 bool QGCCorePlugin::showInitialSetupVehiclePreferences() const
 {
-    const QList<QGCMAVLink::FirmwareClass_t> supportedFirmwareClasses = FirmwarePluginManager::instance()->supportedFirmwareClasses();
-    return supportedFirmwareClasses.count() != 1 ||
-           FirmwarePluginManager::instance()->supportedVehicleClasses(supportedFirmwareClasses[0]).count() != 1;
+    return !FirmwarePluginManager::instance()->singleVehicleSupport();
 }
 
 bool QGCCorePlugin::showInitialSetupMeasurementUnits() const
