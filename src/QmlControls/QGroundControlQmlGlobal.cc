@@ -231,16 +231,12 @@ void QGroundControlQmlGlobal::stopOneMockLink(void)
 
 bool QGroundControlQmlGlobal::singleFirmwareSupport(void)
 {
-    return FirmwarePluginManager::instance()->supportedFirmwareClasses().count() == 1;
+    return FirmwarePluginManager::instance()->singleFirmwareSupport();
 }
 
 bool QGroundControlQmlGlobal::singleVehicleSupport(void)
 {
-    if (singleFirmwareSupport()) {
-        return FirmwarePluginManager::instance()->supportedVehicleClasses(FirmwarePluginManager::instance()->supportedFirmwareClasses()[0]).count() == 1;
-    }
-
-    return false;
+    return FirmwarePluginManager::instance()->singleVehicleSupport();
 }
 
 bool QGroundControlQmlGlobal::px4ProFirmwareSupported()
@@ -381,5 +377,3 @@ QString QGroundControlQmlGlobal::appName()
 {
     return QCoreApplication::applicationName();
 }
-
-
