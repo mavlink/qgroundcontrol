@@ -5,6 +5,8 @@
 #include "CameraSection.h"
 #include "SpeedSection.h"
 
+#include <QtCore/QPointer>
+
 class PlanMasterController;
 class MissionItem;
 class Vehicle;
@@ -15,6 +17,7 @@ class MissionSettingsItem : public ComplexMissionItem
 
 public:
     MissionSettingsItem(PlanMasterController* masterController, bool flyView);
+    ~MissionSettingsItem();
 
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
     Q_PROPERTY(QObject* cameraSection               READ cameraSection                                          CONSTANT)
@@ -93,7 +96,9 @@ private:
     QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude
     Fact            _plannedHomePositionAltitudeFact;
     Fact            _waypointRadiusFact;
-    bool            _vehicleWaypointRadiusConnected =   false;
+    QPointer<Vehicle>               _connectedVehicle;
+    QList<QMetaObject::Connection>  _paramConnections;
+    bool                            _vehicleWaypointRadiusConnected = false;
     int             _sequenceNumber =                   0;
     CameraSection   _cameraSection;
     SpeedSection    _speedSection;

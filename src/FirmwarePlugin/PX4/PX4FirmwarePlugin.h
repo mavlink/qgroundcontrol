@@ -60,6 +60,7 @@ public:
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
     QString             offlineEditingParamFile         (Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/PX4/PX4.OfflineEditing.params"); }
     QString             autoDisarmParameter             (Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
+    QString             waypointRadiusParameter         (Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("NAV_ACC_RAD"); }
     uint32_t            highLatencyCustomModeTo32Bits   (uint16_t hlCustomMode) const override;
     bool                supportsNegativeThrust          (Vehicle* vehicle) const override;
     QString             getHobbsMeter                   (Vehicle* vehicle) const override;

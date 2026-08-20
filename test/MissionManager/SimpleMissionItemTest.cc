@@ -27,7 +27,7 @@ void SimpleMissionItemTest::init()
                             true,        // autoContinue
                             false);      // isCurrentItem
     MissionSettingsItem* settingsItem = new MissionSettingsItem(planController(), false /* flyView */);
-    planController()->missionController()->visualItems()->append(settingsItem);
+    planController()->missionController()->visualItems()->insert(0, settingsItem);
     _simpleItem = new SimpleMissionItem(planController(), false /* flyView */, missionItem);
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be.
@@ -331,7 +331,7 @@ void SimpleMissionItemTest::_testAltitudePropogation()
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL);
 }
 
-void SimpleMissionItemTest::_testWaypointRadiusPropogation()
+void SimpleMissionItemTest::_testWaypointRadiusPropagation()
 {
     Fact* fact = _simpleItem->waypointRadius();
     QVERIFY(fact != nullptr);

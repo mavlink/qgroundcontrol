@@ -1,6 +1,7 @@
 #include "PlanMasterController.h"
 #include "MissionSettingsItem.h"
 #include "ParameterManager.h"
+#include "FirmwarePlugin.h"
 #include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "MultiVehicleManager.h"
@@ -325,18 +326,11 @@ void PlanMasterController::sendToVehicle(void)
     } else {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start mission sendToVehicle";
 
-        if (_missionController.visualItems() && _missionController.visualItems()->count() > 0) {
-            MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(_missionController.visualItems()->get(0));
-            if (settingsItem && settingsItem->waypointRadius()) {
-                Fact* paramFact = nullptr;
-                if (_managerVehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("WP_RADIUS"))) {
-                    paramFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("WP_RADIUS"));
-                } else if (_managerVehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("WPNAV_RADIUS"))) {
-                    paramFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("WPNAV_RADIUS"));
-                } else if (_managerVehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("NAV_ACC_RAD"))) {
-                    paramFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("NAV_ACC_RAD"));
-                }
-
+        MissionSettingsItem* settingsItem = _missionController.settingsItem();
+        if (settingsItem && settingsItem->waypointRadius() && _managerVehicle && _managerVehicle->parameterManager() && _managerVehicle->firmwarePlugin()) {
+            const QString paramName = _managerVehicle->firmwarePlugin()->waypointRadiusParameter(_managerVehicle);
+            if (!paramName.isEmpty() && _managerVehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
+                Fact* paramFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
                 if (paramFact) {
                     paramFact->setRawValue(settingsItem->waypointRadius()->rawValue());
                 }

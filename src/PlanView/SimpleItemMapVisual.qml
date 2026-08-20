@@ -172,20 +172,24 @@ MissionItemMapVisualBase {
 
         MapQuickItem {
             id:                               waypointRadiusMapQuickItem
-            coordinate:                       _root._missionItem.coordinate
-            visible:                          _root.interactive && _missionItem.isSimpleItem && _missionItem.showWaypointRadius
+            coordinate:                       _root._missionItem ? _root._missionItem.coordinate : QtPositioning.coordinate()
+            visible:                          _root.interactive && _missionItem && _missionItem.isSimpleItem && _missionItem.showWaypointRadius
 
             property alias blockSignals:      waypointRadiusMapCircleVisuals.blockSignals
             property alias radius:            _mapCircle.radius
 
             function handleWaypointRadiusChange() {
-                blockSignals = true
-                radius.rawValue = _missionItem.waypointRadius.rawValue
-                blockSignals = false
+                if (_missionItem && _missionItem.waypointRadius) {
+                    blockSignals = true
+                    radius.rawValue = _missionItem.waypointRadius.rawValue
+                    blockSignals = false
+                }
             }
 
             function handleCoordinateChange() {
-                coordinate = _missionItem.coordinate
+                if (_missionItem) {
+                    coordinate = _missionItem.coordinate
+                }
             }
 
             onCoordinateChanged:              _mapCircle.center = coordinate
@@ -195,18 +199,20 @@ MissionItemMapVisualBase {
                 mapControl:              _root.map
                 mapCircle:               _mapCircle
                 centerDragHandleVisible: false
-                borderColor:             _missionItem.terrainCollision ? "red" : QGroundControl.globalPalette.mapMissionTrajectory
+                borderColor:             (_missionItem && _missionItem.terrainCollision) ? "red" : QGroundControl.globalPalette.mapMissionTrajectory
 
                 property bool blockSignals: false
 
                 function updateMissionItem() {
-                    _missionItem.waypointRadius.rawValue = _mapCircle.radius.rawValue
+                    if (_missionItem && _missionItem.waypointRadius) {
+                        _missionItem.waypointRadius.rawValue = _mapCircle.radius.rawValue
+                    }
                 }
 
                 QGCMapCircle {
                     id:                         _mapCircle
                     center:                     waypointRadiusMapQuickItem.coordinate
-                    interactive:                _root.interactive && _missionItem.isCurrentItem && map.planView
+                    interactive:                _root.interactive && _missionItem && _missionItem.isCurrentItem && map.planView
                     showRotation:               false
                 }
 

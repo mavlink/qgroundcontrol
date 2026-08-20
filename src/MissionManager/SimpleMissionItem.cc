@@ -873,6 +873,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
 void SimpleMissionItem::_sendCommandChanged(void)
 {
     emit commandChanged(command());
+    emit showWaypointRadiusChanged();
 }
 
 void SimpleMissionItem::_sendFriendlyEditAllowedChanged(void)

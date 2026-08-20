@@ -264,6 +264,7 @@ public:
     bool                homePositionSet             (void) const;
     VisualMissionItem*  currentPlanViewItem         (void) const { return _currentPlanViewItem; }
     TakeoffMissionItem* takeoffMissionItem          (void) const { return _takeoffMissionItem; }
+    MissionSettingsItem* settingsItem               (void) const { return _settingsItem; }
     double              progressPct                 (void) const { return _progressPct; }
     bool                isInsertTakeoffValid        (void) const;
     bool                multipleLandPatternsAllowed (void) const;

@@ -3,6 +3,7 @@
 #include "MissionItem.h"
 #include "QGCMath.h"
 #include "Vehicle.h"
+#include "FirmwarePlugin.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 
@@ -67,6 +68,14 @@ MissionSettingsItem::MissionSettingsItem(PlanMasterController* masterController,
 
     connect(_managerVehicle, &Vehicle::homePositionChanged, this, &MissionSettingsItem::_updateFlyViewHomePosition);
     _updateFlyViewHomePosition(_managerVehicle->homePosition());
+}
+
+MissionSettingsItem::~MissionSettingsItem()
+{
+    for (const auto& conn : _paramConnections) {
+        disconnect(conn);
+    }
+    _paramConnections.clear();
 }
 
 int MissionSettingsItem::lastSequenceNumber(void) const
@@ -267,29 +276,34 @@ Fact* MissionSettingsItem::waypointRadius(void)
 void MissionSettingsItem::_syncWaypointRadiusWithVehicle(void)
 {
     Vehicle* vehicle = masterController()->controllerVehicle();
-    if (!vehicle || !vehicle->parameterManager()) {
+
+    if (_connectedVehicle != vehicle) {
+        for (const auto& conn : _paramConnections) {
+            disconnect(conn);
+        }
+        _paramConnections.clear();
+
+        _connectedVehicle = vehicle;
+        _vehicleWaypointRadiusConnected = false;
+
+        if (_connectedVehicle && _connectedVehicle->parameterManager()) {
+            _paramConnections.append(connect(_connectedVehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle));
+            _paramConnections.append(connect(_connectedVehicle->parameterManager(), &ParameterManager::factAdded, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle));
+        }
+    }
+
+    if (!vehicle || !vehicle->parameterManager() || !vehicle->firmwarePlugin()) {
         return;
     }
 
-    static Vehicle* lastVehicle = nullptr;
-    if (lastVehicle != vehicle) {
-        if (lastVehicle && lastVehicle->parameterManager()) {
-            disconnect(lastVehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
-            disconnect(lastVehicle->parameterManager(), &ParameterManager::factAdded, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
-        }
-        lastVehicle = vehicle;
-        _vehicleWaypointRadiusConnected = false;
-        connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
-        connect(vehicle->parameterManager(), &ParameterManager::factAdded, this, &MissionSettingsItem::_syncWaypointRadiusWithVehicle);
+    const QString paramName = vehicle->firmwarePlugin()->waypointRadiusParameter(vehicle);
+    if (paramName.isEmpty()) {
+        return;
     }
 
     Fact* paramFact = nullptr;
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("WP_RADIUS"))) {
-        paramFact = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("WP_RADIUS"));
-    } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("WPNAV_RADIUS"))) {
-        paramFact = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("WPNAV_RADIUS"));
-    } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("NAV_ACC_RAD"))) {
-        paramFact = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("NAV_ACC_RAD"));
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
+        paramFact = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
     }
 
     if (paramFact && !_vehicleWaypointRadiusConnected) {
@@ -300,15 +314,16 @@ void MissionSettingsItem::_syncWaypointRadiusWithVehicle(void)
             _waypointRadiusFact.setRawValue(paramFact->rawValue());
         }
 
-        connect(&_waypointRadiusFact, &Fact::valueChanged, this, [paramFact](QVariant value){
-            if (paramFact->rawValue() != value) {
-                paramFact->setRawValue(value);
+        QPointer<Fact> safeParamFact = paramFact;
+        _paramConnections.append(connect(&_waypointRadiusFact, &Fact::valueChanged, this, [safeParamFact](QVariant value){
+            if (safeParamFact && safeParamFact->rawValue() != value) {
+                safeParamFact->setRawValue(value);
             }
-        });
-        connect(paramFact, &Fact::valueChanged, this, [this](QVariant value){
+        }));
+        _paramConnections.append(connect(paramFact, &Fact::valueChanged, this, [this](QVariant value){
             if (_waypointRadiusFact.rawValue() != value) {
                 _waypointRadiusFact.setRawValue(value);
             }
-        });
+        }));
     }
 }
