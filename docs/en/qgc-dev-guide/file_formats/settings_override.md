@@ -114,7 +114,7 @@ The following file forces the video decoder setting to a specific value and hide
 
 ## Debugging
 
-Enable the `SettingsManagerLog` logging category ([Console Logging](../../qgc-user-guide/settings_view/console_logging.md)) to see which override files are loaded and which overrides are applied at startup.
+Enable the `Utilities.SettingsManager` logging category ([Console Logging](../../qgc-user-guide/troubleshooting/console_logging.md)) to see which override files are loaded and which overrides are applied at startup.
 
 ## Related Mechanisms
 
