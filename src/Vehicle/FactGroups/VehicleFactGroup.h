@@ -85,9 +85,7 @@ protected:
     void _handleVfrHud(const mavlink_message_t &message);
     void _handleRawImuTemp(const mavlink_message_t &message);
     void _handleNavControllerOutput(const mavlink_message_t &message);
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     void _handleRangefinder(const mavlink_message_t &message);
-#endif
 
     Fact _rollFact = Fact(0, QStringLiteral("roll"), FactMetaData::valueTypeDouble);
     Fact _pitchFact = Fact(0, QStringLiteral("pitch"), FactMetaData::valueTypeDouble);

@@ -14,6 +14,7 @@ from setup.install_qt import (
     resolve_android_qt_root,
     resolve_arch_dir,
     resolve_qt_root,
+    resolve_windows_host_arch,
     validate_aqt_source,
 )
 
@@ -33,6 +34,11 @@ class TestResolveArchDir:
 
     def test_win64_msvc2022_arm64_cross_compiled(self) -> None:
         assert resolve_arch_dir("win64_msvc2022_arm64_cross_compiled") == "msvc2022_arm64"
+
+    def test_future_windows_cross_compile_arch(self) -> None:
+        arch = "win64_msvc2025_arm64_cross_compiled"
+        assert resolve_arch_dir(arch) == "msvc2025_arm64"
+        assert resolve_windows_host_arch(arch) == "win64_msvc2025_64"
 
     def test_clang_64_maps_to_macos(self) -> None:
         assert resolve_arch_dir("clang_64") == "macos"

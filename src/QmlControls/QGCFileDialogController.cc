@@ -163,6 +163,12 @@ QString QGCFileDialogController::urlToLocalFile(QUrl url)
     return result;
 }
 
+QUrl QGCFileDialogController::localFileToUrl(const QString &localFile)
+{
+    // Empty in, empty out - QUrl::fromLocalFile("") would return the degenerate "file:" url
+    return localFile.isEmpty() ? QUrl() : QUrl::fromLocalFile(localFile);
+}
+
 void QGCFileDialogController::importFromNativePicker()
 {
 #ifdef Q_OS_ANDROID

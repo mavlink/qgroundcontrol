@@ -38,11 +38,6 @@ public:
     /// immediately after addByte() returned true, before the next reset().
     QByteArray currentFrame() const;
 
-    /// Feed a buffer through the parser, carrying state across calls, and return
-    /// the concatenation of every complete CRC-valid frame found. Whitelist
-    /// filtering is NOT applied. Optionally reports frame counts for caller logging.
-    QByteArray extractValidFrames(const QByteArray& in, int* framesFound = nullptr, int* framesDropped = nullptr);
-
 private:
     enum class State
     {

@@ -1,91 +1,61 @@
 {
   "inputs": [
     {
-      "description": "Test class name (e.g., FactSystemTest)",
+      "description": "CTest test name or regular expression (e.g., FactSystemTest)",
       "id": "testClass",
       "type": "promptString"
     }
   ],
   "tasks": [
     {
-      "args": [
-        "-B",
-        "build",
-        "-G",
-        "Ninja",
-        "-DCMAKE_BUILD_TYPE=Debug",
-        "-DQGC_BUILD_TESTING=ON"
-      ],
-      "command": "qt-cmake",
+      "args": ["configure"],
+      "command": "just",
       "group": "build",
       "label": "CMake: Configure (Debug)",
+      "options": { "env": { "BUILD_TYPE": "Debug" } },
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": [
-        "-B",
-        "build",
-        "-G",
-        "Ninja",
-        "-DCMAKE_BUILD_TYPE=Release",
-        "-DQGC_BUILD_TESTING=OFF"
-      ],
-      "command": "qt-cmake",
+      "args": ["configure"],
+      "command": "just",
       "group": "build",
       "label": "CMake: Configure (Release)",
+      "options": { "env": { "BUILD_TYPE": "Release" } },
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": [
-        "--build",
-        "build",
-        "--parallel"
-      ],
-      "command": "cmake",
-      "group": {
-        "isDefault": true,
-        "kind": "build"
-      },
+      "args": ["build"],
+      "command": "just",
+      "group": { "isDefault": true, "kind": "build" },
       "label": "CMake: Build",
       "problemMatcher": "$gcc",
       "type": "shell"
     },
     {
-      "args": [
-        "--build",
-        "build",
-        "--target",
-        "clean"
-      ],
-      "command": "cmake",
+      "args": ["clean"],
+      "command": "just",
       "group": "build",
       "label": "CMake: Clean",
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": [
-        "--test-dir",
-        "build",
-        "--output-on-failure"
-      ],
-      "command": "ctest",
+      "args": ["test"],
+      "command": "just",
       "dependsOn": "CMake: Build",
-      "group": {
-        "isDefault": true,
-        "kind": "test"
-      },
-      "label": "Run Unit Tests",
+      "group": { "isDefault": true, "kind": "test" },
+      "label": "Run Tests",
       "problemMatcher": [],
       "type": "shell"
     },
     {
       "args": [
-        "--test-dir",
-        "build",
-        "--output-on-failure",
+        "--preset",
+        "default",
+        "--build-config",
+        "Debug",
         "-R",
         "${input:testClass}"
       ],
@@ -97,56 +67,40 @@
       "type": "shell"
     },
     {
-      "args": [
-        "./tools/analyze.py",
-        "--tool",
-        "clang-format"
-      ],
-      "command": "python3",
+      "args": ["format"],
+      "command": "just",
       "group": "none",
       "label": "Format: Check Changed Files",
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": [
-        "./tools/analyze.py",
-        "--tool",
-        "clang-format",
-        "--fix"
-      ],
-      "command": "python3",
+      "args": ["format-fix"],
+      "command": "just",
       "group": "none",
       "label": "Format: Fix Changed Files",
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": [
-        "./tools/analyze.py"
-      ],
-      "command": "python3",
+      "args": ["analyze"],
+      "command": "just",
       "group": "none",
       "label": "Static Analysis",
       "problemMatcher": "$gcc",
       "type": "shell"
     },
     {
-      "args": [
-        "run",
-        "--all-files"
-      ],
-      "command": "pre-commit",
+      "args": ["lint"],
+      "command": "just",
       "group": "none",
       "label": "Pre-commit: Run All",
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": [
-        "${workspaceFolder}/tools/translations/qgc_lupdate.py"
-      ],
-      "command": "python3",
+      "args": ["translations"],
+      "command": "just",
       "group": "none",
       "label": "Update Translations",
       "problemMatcher": [],

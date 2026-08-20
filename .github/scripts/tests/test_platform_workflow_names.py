@@ -42,8 +42,10 @@ def _workflow_name(path: Path) -> str:
 
 
 def _platform_workflows() -> list[str]:
-    raw = json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8")).get("build", {}).get(
-        "platform_workflows", ""
+    raw = (
+        json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8"))
+        .get("build", {})
+        .get("platform_workflows", "")
     )
     assert raw, "platform_workflows missing from build-config.json"
     return [n.strip() for n in raw.split(",") if n.strip()]
@@ -97,6 +99,15 @@ def test_build_results_trigger_matches_build_config() -> None:
         )
     if msg_parts:
         pytest.fail(" / ".join(msg_parts))
+
+
+def test_build_results_pr_number_uses_plain_string_output() -> None:
+    if not BUILD_RESULTS_YML.exists():
+        pytest.skip("build-results.yml not in checkout")
+    doc = yaml.safe_load(BUILD_RESULTS_YML.read_text(encoding="utf-8"))
+    steps = doc["jobs"]["post-pr-comment"]["steps"]
+    get_pr = next(step for step in steps if step.get("name") == "Get PR number")
+    assert get_pr["with"]["result-encoding"] == "string"
 
 
 def test_release_wait_for_builds_lists_match_platforms() -> None:

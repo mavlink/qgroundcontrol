@@ -18,47 +18,12 @@
 
 UT_REGISTER_TEST(Viewer3DUITest, TestLabel::Integration)
 
-// Qt Quick 3D requires an RHI-based scene graph backend. On Linux CI
-// (xvfb + llvmpipe) CMake gives this test a real RHI OpenGL backend so View3D
-// genuinely renders. Where the harness still forces the software backend
-// (e.g. macOS offscreen), View3D cannot render — the scene graph objects
-// still instantiate, which is all the assertions rely on — and Qt emits two
-// known warnings per View3D initialization. Assert those warnings actually
-// occur (rather than silently ignoring them) so a Qt behavior change is
-// caught; ignore only nondeterministic repeats from subsequent render passes.
-// Detection must use the live window's renderer interface:
-// QQuickWindow::graphicsApi() does not reflect the QT_QUICK_BACKEND=software
-// adaptation. Returns true when the backend is RHI-based; when it returns
-// false the caller must call verifyExpectedLogMessage() twice after the 3D
-// view has been shown. Returns nullopt when the backend cannot be
-// determined; the caller must fail the test in that case.
-std::optional<bool> Viewer3DUITest::_expectSoftwareBackendWarnings()
-{
-    const QSGRendererInterface* const rif = _window->rendererInterface();
-    if (!rif) {
-        return std::nullopt;
-    }
-    const bool rhiBased = QSGRendererInterface::isApiRhiBased(rif->graphicsApi());
-    if (!rhiBased) {
-        // expect asserts each warning occurs at least once (verified at the
-        // end of the test); each verify consumes only ONE captured message,
-        // and Qt repeats the pair a nondeterministic number of times (once
-        // per View3D init/render pass), so ignore absorbs the surplus repeats
-        // that would otherwise fail strict mode.
-        expectLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("isApiRhiBased")));
-        expectLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("Qt Quick 3D is not functional")));
-        ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("isApiRhiBased")));
-        ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("Qt Quick 3D is not functional")));
-    }
-    return rhiBased;
-}
-
 void Viewer3DUITest::_test3DViewShowsVehicle()
 {
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(); },
         [this](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
-            const std::optional<bool> rhiBased = _expectSoftwareBackendWarnings();
+            const std::optional<bool> rhiBased = expectSoftwareBackendWarnings();
             QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
 
             SettingsManager::instance()->viewer3DSettings()->enabled()->setRawValue(true);
@@ -132,7 +97,7 @@ void Viewer3DUITest::_test3DViewCameraGestures()
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(); },
         [this](QPointer<MockLink> /*mockLink*/, Vehicle* /*vehicle*/) {
-            const std::optional<bool> rhiBased = _expectSoftwareBackendWarnings();
+            const std::optional<bool> rhiBased = expectSoftwareBackendWarnings();
             QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
 
             SettingsManager::instance()->viewer3DSettings()->enabled()->setRawValue(true);
@@ -297,9 +262,9 @@ void Viewer3DUITest::_test3DViewCameraGestures()
                 }
                 touch.release(0, center + QPoint(-50, 40)).release(1, center + QPoint(50, 40)).commit();
             }
-            QTRY_VERIFY2_WITH_TIMEOUT(qAbs(cam->tilt() - (60.0 + swipeTiltDegrees)) < 2.0,
-                                      qPrintable(QStringLiteral("tilt %1 expected %2").arg(cam->tilt()).arg(60.0 + swipeTiltDegrees)),
-                                      5000);
+            QTRY_VERIFY2_WITH_TIMEOUT(
+                qAbs(cam->tilt() - (60.0 + swipeTiltDegrees)) < 2.0,
+                qPrintable(QStringLiteral("tilt %1 expected %2").arg(cam->tilt()).arg(60.0 + swipeTiltDegrees)), 5000);
             QVERIFY(qAbs(cam->heading()) < 2.0);
             QVERIFY(qAbs(cam->distance() - 1000.0) < 10.0);
 
@@ -315,9 +280,9 @@ void Viewer3DUITest::_test3DViewCameraGestures()
                 }
                 touch.release(0, center + QPoint(-50, -40)).release(1, center + QPoint(50, -40)).commit();
             }
-            QTRY_VERIFY2_WITH_TIMEOUT(qAbs(cam->tilt() - (60.0 - swipeTiltDegrees)) < 2.0,
-                                      qPrintable(QStringLiteral("tilt %1 expected %2").arg(cam->tilt()).arg(60.0 - swipeTiltDegrees)),
-                                      5000);
+            QTRY_VERIFY2_WITH_TIMEOUT(
+                qAbs(cam->tilt() - (60.0 - swipeTiltDegrees)) < 2.0,
+                qPrintable(QStringLiteral("tilt %1 expected %2").arg(cam->tilt()).arg(60.0 - swipeTiltDegrees)), 5000);
 
             if (!*rhiBased) {
                 verifyExpectedLogMessage();

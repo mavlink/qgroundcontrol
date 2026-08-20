@@ -13,13 +13,20 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common import find_repo_root
 from common.build_config import get_build_config_value
+from common.file_traversal import find_repo_root
 from common.git import run_git
 from common.logging import log_error, log_info, log_ok, log_warn
 from common.proc import run_captured
 
 QT_RELEASES_URL = "https://download.qt.io/official_releases/qt/"
+GSTREAMER_PACKAGE_INDEX_URLS = {
+    "android": "https://gstreamer.freedesktop.org/data/pkg/android/",
+    "ios": "https://gstreamer.freedesktop.org/data/pkg/ios/",
+    "macos": "https://gstreamer.freedesktop.org/data/pkg/macos/",
+    "windows": "https://gstreamer.freedesktop.org/data/pkg/windows/",
+}
+GSTREAMER_VERSION_PATTERN = re.compile(r'href=["\'](\d+)\.(\d+)\.(\d+)/["\']')
 REQ_FILES = [
     Path("requirements.txt"),
     Path("docs/requirements.txt"),
@@ -136,7 +143,90 @@ def check_qt_version() -> None:
             return
 
 
-def check_gstreamer_version() -> None:
+def parse_gstreamer_package_versions(index_html: str) -> set[tuple[int, int, int]]:
+    """Extract semantic versions from an official GStreamer package index."""
+    return {
+        (int(major), int(minor), int(patch))
+        for major, minor, patch in GSTREAMER_VERSION_PATTERN.findall(index_html)
+    }
+
+
+def latest_common_gstreamer_patch(
+    configured_version: str,
+    platform_versions: dict[str, set[tuple[int, int, int]]],
+) -> str | None:
+    """Return the latest patch in the configured minor line available on every platform."""
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", configured_version)
+    required_platforms = set(GSTREAMER_PACKAGE_INDEX_URLS)
+    if not match or not required_platforms.issubset(platform_versions):
+        return None
+
+    major, minor, _patch = (int(part) for part in match.groups())
+    matching_sets = [
+        {version for version in versions if version[:2] == (major, minor)}
+        for platform, versions in platform_versions.items()
+        if platform in required_platforms
+    ]
+    if any(not versions for versions in matching_sets):
+        return None
+
+    common_versions = set.intersection(*matching_sets)
+    if not common_versions:
+        return None
+    latest = max(common_versions)
+    return ".".join(str(part) for part in latest)
+
+
+def fetch_gstreamer_package_index(url: str) -> str | None:
+    """Fetch an SDK index, falling back to curl when Python networking is constrained."""
+    try:
+        import httpx
+    except ImportError:
+        httpx = None  # type: ignore[assignment]
+
+    if httpx is not None:
+        try:
+            response = httpx.get(url, timeout=15, follow_redirects=True)
+            response.raise_for_status()
+            return response.text
+        except (httpx.HTTPError, OSError):
+            pass
+
+    try:
+        result = run_captured(
+            [
+                "curl",
+                "--fail",
+                "--location",
+                "--silent",
+                "--show-error",
+                "--max-time",
+                "15",
+                "--retry",
+                "2",
+                "--retry-all-errors",
+                url,
+            ]
+        )
+    except FileNotFoundError:
+        return None
+    return result.stdout if result.returncode == 0 else None
+
+
+def fetch_latest_common_gstreamer_patch(configured_version: str) -> str | None:
+    """Query official SDK indexes for the latest common patch release."""
+    platform_versions: dict[str, set[tuple[int, int, int]]] = {}
+    for platform, url in GSTREAMER_PACKAGE_INDEX_URLS.items():
+        index_html = fetch_gstreamer_package_index(url)
+        if index_html is None:
+            log_warn(f"Could not fetch the official GStreamer {platform} SDK index")
+            return None
+        platform_versions[platform] = parse_gstreamer_package_versions(index_html)
+
+    return latest_common_gstreamer_patch(configured_version, platform_versions)
+
+
+def check_gstreamer_version() -> bool | None:
     """Check configured and installed GStreamer versions."""
     log_info("Checking GStreamer version...")
     current_version = get_build_config_value(
@@ -146,12 +236,33 @@ def check_gstreamer_version() -> None:
     )
     print(f"  Configured: GStreamer {current_version}")
 
-    result = run_captured(["gst-launch-1.0", "--version"])
-    if result.returncode != 0:
-        return
-    match = re.search(r"\d+\.\d+\.\d+", result.stdout)
-    if match:
-        print(f"  Installed: GStreamer {match.group(0)}")
+    latest_patch = fetch_latest_common_gstreamer_patch(str(current_version))
+    is_current: bool | None = None
+    if latest_patch:
+        print(f"  Latest common patch: GStreamer {latest_patch}")
+        current_parts = tuple(int(part) for part in str(current_version).split("."))
+        latest_parts = tuple(int(part) for part in latest_patch.split("."))
+        is_current = current_parts == latest_parts
+        if current_parts < latest_parts:
+            log_warn(f"Newer GStreamer patch available in the same minor line: {latest_patch}")
+        elif current_parts == latest_parts:
+            log_ok("Using latest GStreamer patch available on every SDK platform")
+        else:
+            log_warn(
+                "Configured GStreamer is newer than the latest patch common to every SDK platform"
+            )
+    else:
+        log_warn("Could not resolve a common GStreamer patch from the official SDK indexes")
+
+    try:
+        result = run_captured(["gst-launch-1.0", "--version"])
+    except FileNotFoundError:
+        return is_current
+    if result.returncode == 0:
+        match = re.search(r"\d+\.\d+\.\d+", result.stdout)
+        if match:
+            print(f"  Installed: GStreamer {match.group(0)}")
+    return is_current
 
 
 def find_python_manifests(repo_root: Path) -> list[Path]:
@@ -213,6 +324,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check dependency versions and tool availability.")
     parser.add_argument("--submodules", action="store_true", help="Check only git submodules")
     parser.add_argument("--qt", action="store_true", help="Check only Qt version")
+    parser.add_argument("--gstreamer", action="store_true", help="Check only GStreamer version")
+    parser.add_argument(
+        "--fail-if-outdated",
+        action="store_true",
+        help="Fail unless --gstreamer resolves the configured version as the latest common patch",
+    )
     parser.add_argument(
         "--update", action="store_true", help="Update submodules to latest upstream"
     )
@@ -223,21 +340,31 @@ def main(argv: list[str] | None = None) -> int:
     """Run the requested dependency checks."""
     args = parse_args(argv)
     repo_root = find_repo_root(Path(__file__))
+    if args.fail_if_outdated and not args.gstreamer:
+        log_error("--fail-if-outdated requires --gstreamer")
+        return 2
 
-    check_all = not args.submodules and not args.qt
+    check_all = not args.submodules and not args.qt and not args.gstreamer
+    gstreamer_is_current: bool | None = None
     if check_all or args.submodules:
         check_submodules(repo_root, update=args.update)
     if check_all:
         print()
         check_qt_version()
         print()
-        check_gstreamer_version()
+        gstreamer_is_current = check_gstreamer_version()
         print()
         check_python_deps(repo_root)
         print()
         check_build_tools()
     elif args.qt:
         check_qt_version()
+    elif args.gstreamer:
+        gstreamer_is_current = check_gstreamer_version()
+
+    if args.fail_if_outdated and gstreamer_is_current is not True:
+        log_error("Configured GStreamer is not the latest patch available on every SDK platform")
+        return 1
 
     print()
     log_ok("Dependency check complete")

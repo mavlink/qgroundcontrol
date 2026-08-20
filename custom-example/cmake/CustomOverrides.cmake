@@ -37,9 +37,9 @@ endif()
 # Feature Set Customization
 # ----------------------------------------------------------------------------
 
-# Build a single flight stack by disabling APM support
-set(QGC_DISABLE_APM_MAVLINK ON CACHE BOOL "Disable APM Dialect" FORCE)
-set(QGC_DISABLE_APM_PLUGIN ON CACHE BOOL "Disable APM Plugin" FORCE)
+# Single flight stack UI: only register the custom PX4-based plugin factory.
+# All firmware plugin code is always compiled; UI adapts at runtime via
+# FirmwarePluginManager::supportedFirmwareClasses().
 set(QGC_DISABLE_APM_PLUGIN_FACTORY ON CACHE BOOL "Disable APM Plugin Factory" FORCE)
 
 # Implement custom PX4 plugin factory

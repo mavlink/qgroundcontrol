@@ -171,6 +171,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ env.BUILD_TYPE }}
+          preset: ${{ env.BUILD_TYPE == 'Debug' && 'Android-debug' || 'Android' }}
           use-qt-cmake: 'false'
           extra-args: >-
             -DCMAKE_WARN_DEPRECATED=FALSE

@@ -36,9 +36,8 @@ inputs:
     default: ""
   cache-key-suffix:
     description: >-
-      Per-matrix-leg moccache save-key discriminator, forwarded to the cache
-      action. Set when multiple legs share the same host/target/build-type
-      (e.g. android.yml linux vs linux-emulator).
+      Per-matrix-leg build-cache discriminator. Set when multiple legs share
+      the same host/target/build-type.
     required: false
     default: ""
   cpm-modules:
@@ -170,27 +169,37 @@ runs:
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         aqt-source: ${{ inputs.aqt-source }}
 
+    - name: Resolve host Qt architecture (Windows ARM64 cross-compile)
+      if: inputs.mode == 'desktop' && endsWith(inputs.qt-arch, '_arm64_cross_compiled')
+      id: qt-desktop-host-meta
+      shell: bash
+      env:
+        QT_ARCH: ${{ inputs.qt-arch }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" resolve-windows-host-arch --arch "${QT_ARCH}"
+
     # ARM64 cross-compile needs an x64 host Qt for moc/qmlcachegen/etc. that run on the build machine. export-env=false so QT_ROOT_DIR keeps pointing at the target Qt.
     - name: Install host Qt (Windows ARM64 cross-compile)
-      if: inputs.mode == 'desktop' && inputs.qt-arch == 'win64_msvc2022_arm64_cross_compiled'
+      if: inputs.mode == 'desktop' && endsWith(inputs.qt-arch, '_arm64_cross_compiled')
       id: qt-desktop-host
       uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
         host: windows
-        arch: win64_msvc2022_64
+        arch: ${{ steps.qt-desktop-host-meta.outputs.arch }}
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         export-env: 'false'
         aqt-source: ${{ inputs.aqt-source }}
 
-    # Required only when compiling C++ with MSVC (desktop Windows builds). Android-on-Windows uses NDK clang and skips this.
+    # Android-on-Windows uses NDK clang and skips MSVC setup.
     - name: Setup MSVC environment (Windows desktop)
       if: inputs.mode == 'desktop' && runner.os == 'Windows'
       uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
-        arch: ${{ (inputs.qt-arch == 'win64_msvc2022_64' && 'x64') || (inputs.qt-arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
+        arch: >-
+          ${{ (endsWith(inputs.qt-arch, '_64') && 'x64') ||
+              (endsWith(inputs.qt-arch, '_arm64') && 'arm64') || 'amd64_arm64' }}
 
-    # windows-11-arm's PATH puts Git for Windows' /usr/bin/link.exe (GNU coreutils hardlink tool) ahead of MSVC's link.exe, breaking Rust crates that shell out to `link.exe` for MSVC targets. windows-2022 doesn't have this ordering issue. See rust-lang/rust#42825.
+    # Git for Windows shadows MSVC's link.exe on Windows ARM64. See rust-lang/rust#42825.
     - name: Fix Rust linker resolution (Windows ARM64 native)
       if: inputs.mode == 'desktop' && runner.os == 'Windows' && runner.arch == 'ARM64'
       shell: bash

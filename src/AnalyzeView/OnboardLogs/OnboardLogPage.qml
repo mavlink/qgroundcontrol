@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.qmlmodels
 
 import QGroundControl
 import QGroundControl.Controls
@@ -10,6 +9,22 @@ AnalyzePage {
     id: onboardLogPage
     pageComponent: pageComponent
     pageDescription: qsTr("Onboard Logs allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.")
+
+    function _updateNavigationBlocked() {
+        if (OnboardLogController.downloadingLogs) {
+            globals.navigationBlockedReason = qsTr("Wait for the log download to complete or cancel it first")
+        } else {
+            globals.navigationBlockedReason = ""
+        }
+    }
+
+    Connections {
+        target: OnboardLogController
+        function onDownloadingLogsChanged() { onboardLogPage._updateNavigationBlocked() }
+    }
+
+    Component.onCompleted: _updateNavigationBlocked()
+    Component.onDestruction: globals.navigationBlockedReason = ""
 
     Component {
         id: pageComponent
@@ -71,7 +86,9 @@ AnalyzePage {
                                     return ""
                                 }
 
-                                if (object.time.getUTCFullYear() < 2010) {
+                                // getUTCFullYear() is NaN for an invalid date
+                                const year = object.time.getUTCFullYear()
+                                if (Number.isNaN(year) || year < 2010) {
                                     return qsTr("Date Unknown")
                                 }
 

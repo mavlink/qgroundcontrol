@@ -33,6 +33,7 @@ ensure_tools_dir(__file__)
 from common.file_traversal import find_repo_root
 from common.io import read_toml
 from common.platform import is_windows
+from common.proc import run_checked_with_retry
 
 
 @functools.lru_cache(maxsize=1)
@@ -98,7 +99,19 @@ def create_venv(venv_path: Path) -> None:
     print(f"Creating virtual environment: {venv_path}")
 
     if has_uv():
-        subprocess.run(["uv", "venv", "--seed", str(venv_path)], check=True)
+
+        def remove_partial_venv() -> None:
+            if venv_path.exists():
+                shutil.rmtree(venv_path)
+
+        try:
+            run_checked_with_retry(
+                ["uv", "venv", "--seed", str(venv_path)],
+                before_retry=remove_partial_venv,
+            )
+        except subprocess.CalledProcessError:
+            remove_partial_venv()
+            raise
     else:
         subprocess.run([sys.executable, "-m", "venv", str(venv_path)], check=True)
 
@@ -119,13 +132,12 @@ def install_packages(venv_path: Path, packages: list[str]) -> None:
             "Using pip (install uv for faster installs: curl -LsSf https://astral.sh/uv/install.sh | sh)"
         )
         # Upgrade pip first
-        subprocess.run(
+        run_checked_with_retry(
             [str(python), "-m", "pip", "install", "--quiet", "--upgrade", "pip"],
-            check=True,
         )
         cmd = [str(python), "-m", "pip", "install", *packages]
 
-    subprocess.run(cmd, check=True)
+    run_checked_with_retry(cmd)
 
 
 def sync_groups_with_uv(venv_path: Path, group_spec: str) -> None:
@@ -155,13 +167,17 @@ def sync_groups_with_uv(venv_path: Path, group_spec: str) -> None:
     env["VIRTUAL_ENV"] = str(venv_path)
     scripts_dir = venv_path / ("Scripts" if is_windows() else "bin")
     env["PATH"] = f"{scripts_dir}{os.pathsep}{env.get('PATH', '')}"
-    subprocess.run(cmd, check=True, env=env)
+    run_checked_with_retry(cmd, env=env)
 
 
 def list_packages(venv_path: Path) -> None:
     """List installed packages."""
     python = get_python_executable(venv_path)
-    subprocess.run([str(python), "-m", "pip", "list"])
+    if has_uv():
+        command = ["uv", "pip", "list", "--python", str(python)]
+    else:
+        command = [str(python), "-m", "pip", "list"]
+    subprocess.run(command, check=False)
 
 
 def check_installed(packages: list[str]) -> int:

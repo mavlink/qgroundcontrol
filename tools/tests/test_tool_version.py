@@ -6,7 +6,7 @@ from __future__ import annotations
 import re
 from unittest.mock import patch
 
-from common.tool_version import probe_version
+from common.tool_version import probe_version, version_prefix_matches
 
 from ._helpers import completed
 
@@ -78,3 +78,13 @@ def test_probe_version_custom_args() -> None:
         probe_version("git", args=("version",))
         run.assert_called_once()
         assert run.call_args[0][0] == ["git", "version"]
+
+
+def test_version_prefix_matches_shared_components() -> None:
+    for actual, expected, matches in (
+        ((4, 13), "4.13.6", True),
+        ((4, 13, 6), "4.13", True),
+        ((4, 12, 6), "4.13.6", False),
+        ((4, 13, 6), "latest", False),
+    ):
+        assert version_prefix_matches(actual, expected) is matches

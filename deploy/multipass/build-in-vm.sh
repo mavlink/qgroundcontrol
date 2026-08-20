@@ -37,7 +37,7 @@ python tools/setup/install_qt.py install \
 # linux_gcc_64 -> on-disk dir gcc_64 (resolve_arch_dir strips the linux_ prefix).
 QT_ROOT="${QT_OUT}/${QT_VERSION}/gcc_64"
 
-cmake -S "${REPO}" -B "${BUILD_DIR}" -G Ninja \
+"${QT_ROOT}/bin/qt-cmake" -S "${REPO}" -B "${BUILD_DIR}" -G Ninja \
     -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     -DQGC_BUILD_TESTING=OFF \
     -DQGC_STABLE_BUILD=OFF \

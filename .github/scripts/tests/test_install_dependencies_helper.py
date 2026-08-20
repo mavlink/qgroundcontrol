@@ -49,3 +49,23 @@ class TestLdconfigHasBlas:
         fake_result.returncode = 0
         with patch.object(install_dependencies_helper, "run_captured", return_value=fake_result):
             assert install_dependencies_helper._ldconfig_has_blas() is False
+
+
+class TestEnableUniverse:
+    """Tests for enable_universe function."""
+
+    def test_existing_repository_skips_apt(self):
+        """Does not refresh package lists when universe is already enabled."""
+        with (
+            patch.object(install_dependencies_helper.Path, "exists", return_value=True),
+            patch.object(install_dependencies_helper.Path, "is_file", return_value=True),
+            patch.object(
+                install_dependencies_helper.Path,
+                "read_text",
+                return_value="Components: main universe restricted\n",
+            ),
+            patch.object(install_dependencies_helper, "_sudo") as mock_sudo,
+        ):
+            install_dependencies_helper.enable_universe()
+
+        mock_sudo.assert_not_called()

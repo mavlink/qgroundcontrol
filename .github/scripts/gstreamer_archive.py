@@ -25,8 +25,10 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.aws import upload_public_file, validate_public_bucket
 from common.gh_actions import write_github_output, write_step_summary
 from common.markdown import md_table
+from common.platform import host_arch
 from common.proc import run_captured
 
 
@@ -73,7 +75,6 @@ def run_command(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
 
 class GStreamerArchiver:
     VALID_PLATFORMS: ClassVar[set[str]] = {"linux", "macos", "windows", "android", "ios"}
-    ALLOWED_BUCKETS: ClassVar[set[str]] = {"qgroundcontrol"}
 
     def __init__(
         self,
@@ -178,8 +179,7 @@ class GStreamerArchiver:
         secret: str | None = None,
         region: str | None = None,
     ) -> bool:
-        if bucket not in self.ALLOWED_BUCKETS:
-            raise ValueError(f"Bucket '{bucket}' not in allowlist: {self.ALLOWED_BUCKETS}")
+        validate_public_bucket(bucket)
         key_id = key_id or os.environ.get("AWS_ACCESS_KEY_ID")
         secret = secret or os.environ.get("AWS_SECRET_ACCESS_KEY")
         region = region or os.environ.get("AWS_DEFAULT_REGION")
@@ -204,21 +204,12 @@ class GStreamerArchiver:
         if region:
             env["AWS_DEFAULT_REGION"] = region
 
-        # Intentional: public-read ACL for distributing pre-built GStreamer
-        # dependencies that downstream CI jobs and contributors download.
-        cmd = [
-            "aws",
-            "s3",
-            "cp",
-            str(self._archive_result.path),
-            f"{s3_path}/{full_name}",
-            "--acl",
-            "public-read",
-        ]
-        result = run_captured(cmd, env=env)
-        if result.returncode != 0:
-            print(f"S3 upload failed: {result.stderr}", file=sys.stderr)
-            raise subprocess.CalledProcessError(result.returncode, cmd)
+        upload_public_file(
+            self._archive_result.path,
+            bucket,
+            f"dependencies/gstreamer/{self.platform}/{self.version}/{full_name}",
+            env=env,
+        )
         print(f"Uploaded to: {s3_path}/{full_name}")
         return True
 
@@ -263,18 +254,12 @@ class GStreamerArchiver:
     @staticmethod
     def _detect_linux_aws_cli_arch() -> str:
         """Return AWS CLI Linux installer architecture slug."""
-        runner_arch = os.environ.get("RUNNER_ARCH", "").strip().upper()
-        if runner_arch == "X64":
-            return "x86_64"
-        if runner_arch == "ARM64":
-            return "aarch64"
-
-        machine = os.uname().machine.lower()
-        if machine in {"x86_64", "amd64"}:
-            return "x86_64"
-        if machine in {"aarch64", "arm64"}:
-            return "aarch64"
-        raise RuntimeError(f"Unsupported Linux architecture for AWS CLI install: {machine}")
+        try:
+            return host_arch()
+        except ValueError as exc:
+            raise RuntimeError(
+                f"Unsupported Linux architecture for AWS CLI install: {exc}"
+            ) from exc
 
     def _install_aws_cli_macos(self) -> None:
         """Install AWS CLI on macOS via pkg installer."""

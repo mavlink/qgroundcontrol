@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "enabled",
+            "shortDesc": "Enable the experimental GeoView 2D/3D map display (preview feature).",
+            "type": "bool",
+            "default": false,
+            "label": "Enable GeoView (preview)",
+            "keywords": "geoview,3d map,map engine,preview,experimental"
+        }
+    ]
+}

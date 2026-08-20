@@ -22,6 +22,9 @@ class APMSensorsCalibrationUITest : public VehicleConfigUITestBase
 public:
     APMSensorsCalibrationUITest() = default;
 
+protected slots:
+    void init() override;
+
 private slots:
     void _testCompassCalibration();
     void _testCompassCalibrationCancel();

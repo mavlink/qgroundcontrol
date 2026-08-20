@@ -14,6 +14,7 @@ private slots:
     void _downloadTest();
     void _selectAllTest();
     void _cancelDownloadTest();
+    void _refreshDuringDownloadTest();
     void _vehicleDisconnectDuringDownloadTest();
     void _eraseAllTest();
 };
@@ -26,11 +27,14 @@ class OnboardLogFtpDownloadTest : public VehicleTestManualConnect
 
 private slots:
     void _ftpListAndDownloadTest();
+    void _ftpListNoTimeFallbackTest();
+    void _ftpCancelListNoFallbackTest();
     void _ftpListFallbackTest();
     void _ftpMultiDownloadAndDedupTest();
     void _ftpDownloadErrorDisablesFtpTest();
     void _ftpSortOrderTest();
     void _ftpCancelDownloadTest();
+    void _ftpRefreshDuringDownloadTest();
     void _ftpEraseSelectedTest();
     void _ftpCancelEraseSelectedTest();
 };

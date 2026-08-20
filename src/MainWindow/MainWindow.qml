@@ -136,17 +136,26 @@ ApplicationWindow {
     function showPlanView() {
         flyView.visible = false
         planView.visible = true
+        geoView.visible = false
         toolDrawer.visible = false
     }
 
     function showFlyView() {
         flyView.visible = true
         planView.visible = false
+        geoView.visible = false
+        toolDrawer.visible = false
+    }
+
+    function showGeoView() {
+        flyView.visible = false
+        planView.visible = false
+        geoView.visible = true
         toolDrawer.visible = false
     }
 
     function showTool(toolTitle, toolSource, toolIcon) {
-        toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
+        toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : (geoView.visible ? "/InstrumentValueIcons/globe.svg" : "/qmlimages/Plan.svg")
         toolDrawer.toolTitle    = toolTitle
         toolDrawer.toolSource   = toolSource
         toolDrawer.toolIcon     = toolIcon
@@ -335,6 +344,13 @@ ApplicationWindow {
     PlanView {
         id:             planView
         objectName:     "mainView_plan"
+        anchors.fill:   parent
+        visible:        false
+    }
+
+    FlyViewGeo {
+        id:             geoView
+        objectName:     "mainView_geo"
         anchors.fill:   parent
         visible:        false
     }

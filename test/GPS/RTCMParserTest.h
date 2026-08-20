@@ -35,9 +35,4 @@ private slots:
     void _testParserPreambleInPayload();
     void _testParserTruncatedMidFrame();
     void _testParserWhitelistEdgeCases();
-
-    // extractValidFrames
-    void _testExtractValidFramesMultiple();
-    void _testExtractValidFramesDropsBadCrc();
-    void _testExtractValidFramesCrossCallState();
 };

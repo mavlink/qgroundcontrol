@@ -63,6 +63,7 @@ jobs:
             runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
+            preset: Windows
             package: QGroundControl-installer-AMD64
             gstreamer: true
 
@@ -70,6 +71,7 @@ jobs:
             runs_on: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
+            preset: Windows-arm64
             package: QGroundControl-installer-ARM64
             gstreamer: true
 
@@ -77,6 +79,7 @@ jobs:
             runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
+            preset: Windows-arm64
             package: QGroundControl-installer-AMD64-ARM64
             gstreamer: false
 
@@ -126,9 +129,10 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+          preset: ${{ matrix.build_type == 'Debug' && format('{0}-debug', matrix.preset) || matrix.preset }}
           extra-args: >-
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }}
-            ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
+            ${{ matrix.variant == 'arm64-cross' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
 
       - name: Resolve GStreamer root
         id: gst-root
@@ -155,7 +159,7 @@ jobs:
           build-type: ${{ matrix.build_type }}
 
       - name: Verify Executable
-        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
         uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.exe
@@ -169,7 +173,7 @@ jobs:
           build-type: ${{ matrix.build_type }}
 
       - name: Install and verify installer
-        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
         shell: pwsh
         run: |
           $buildDir = "${{ runner.temp }}\build"
@@ -214,7 +218,7 @@ jobs:
           "QGC_VERIFY_INSTALLED_PATH=$sanitizedPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Verify installed executable
-        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
         uses: ./.github/actions/verify-executable
         env:
           PATH: ${{ env.QGC_VERIFY_INSTALLED_PATH || env.PATH }}
@@ -232,4 +236,4 @@ jobs:
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          upload-aws: ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && 'false' || 'true' }}
+          upload-aws: ${{ matrix.variant == 'arm64-cross' && 'false' || 'true' }}

@@ -16,10 +16,8 @@ inputs:
     default: ''
   key-suffix:
     description: >-
-      Optional per-job discriminator appended to the moccache save key. Required
-      when multiple matrix legs share the same host/target/build-type (e.g.
-      android.yml linux vs linux-emulator); without it those legs race to save
-      the same exact key and the loser's new entries are dropped.
+      Optional per-job discriminator for build caches. Required when multiple
+      matrix legs share the same host/target/build-type.
     required: false
     default: ''
   cpm-modules:
@@ -132,7 +130,16 @@ runs:
 
     - name: Configure ccache environment
       shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" configure-env --workspace "${GITHUB_WORKSPACE//\\//}"
+      env:
+        CONFIGURED_MAX_SIZE: ${{ steps.ccache-config.outputs.max_size }}
+      run: |
+        max_size=1G
+        if [[ -n "${RUNS_ON_S3_BUCKET_CACHE:-}" ]]; then
+          max_size="${CONFIGURED_MAX_SIZE}"
+        fi
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" configure-env \
+          --workspace "${GITHUB_WORKSPACE//\\//}" \
+          --max-size "${max_size}"
 
     - name: Configure CPM source cache
       if: inputs.cpm-modules != ''
@@ -148,27 +155,65 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" fingerprint --root "${GITHUB_WORKSPACE}"
 
+    - name: Build cache key prefixes
+      id: cache-keys
+      shell: bash
+      env:
+        HOST: ${{ inputs.host }}
+        TARGET: ${{ inputs.target }}
+        BUILD_TYPE: ${{ inputs.build-type }}
+        VARIANT: ${{ inputs.variant }}
+        KEY_SUFFIX: ${{ inputs.key-suffix }}
+        SCOPE: ${{ steps.cache-scope.outputs.scope }}
+        CCACHE_HASH: ${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        MOCCACHE_HASH: ${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache.py') }}
+        CPM_FINGERPRINT: ${{ steps.cpm-key.outputs.fingerprint }}
+      run: |
+        variant_suffix="${VARIANT:+-${VARIANT}}"
+        key_suffix="${KEY_SUFFIX:+-${KEY_SUFFIX}}"
+        ccache_base="ccache-${HOST}-${TARGET}-${BUILD_TYPE}${variant_suffix}"
+        moccache_base="moccache-${HOST}-${TARGET}-${SCOPE}"
+        cpm_base="cpm-modules-${HOST}-${TARGET}${key_suffix}"
+        {
+          echo "ccache_key=${ccache_base}${key_suffix}-${SCOPE}-${CCACHE_HASH}"
+          echo "ccache_scope=${ccache_base}${key_suffix}-${SCOPE}-"
+          echo "ccache_legacy_scope=${ccache_base}-${SCOPE}-"
+          echo "ccache_shared=${ccache_base}-shared-"
+          echo "ccache_unvaried_shared=${VARIANT:+ccache-${HOST}-${TARGET}-${BUILD_TYPE}-shared-}"
+          echo "moccache_key=${moccache_base}-${MOCCACHE_HASH}${key_suffix}"
+          echo "moccache_hash=${moccache_base}-${MOCCACHE_HASH}-"
+          echo "moccache_scope=${moccache_base}-"
+          echo "moccache_shared=moccache-${HOST}-${TARGET}-shared-"
+          echo "cpm_key=${cpm_base}-${SCOPE}-${CPM_FINGERPRINT}"
+          echo "cpm_scope=${cpm_base}-${SCOPE}-"
+          echo "cpm_shared=${cpm_base}-shared-"
+        } >> "$GITHUB_OUTPUT"
+
     - name: Restore Build Cache (ccache, save)
       if: steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
       uses: actions/cache@v5
       with:
         path: ${{ github.workspace }}/.ccache
-        key: ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        key: ${{ steps.cache-keys.outputs.ccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-
-          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-shared-
-          ${{ inputs.variant && format('ccache-{0}-{1}-{2}-shared-', inputs.host, inputs.target, inputs.build-type) || '' }}
+          ${{ steps.cache-keys.outputs.ccache_key }}-
+          ${{ steps.cache-keys.outputs.ccache_scope }}
+          ${{ steps.cache-keys.outputs.ccache_legacy_scope }}
+          ${{ steps.cache-keys.outputs.ccache_shared }}
+          ${{ steps.cache-keys.outputs.ccache_unvaried_shared }}
 
     - name: Restore Build Cache (ccache, read-only)
       if: steps.cache-policy.outputs.save != 'true' && inputs.variant != 'coverage'
       uses: actions/cache/restore@v5
       with:
         path: ${{ github.workspace }}/.ccache
-        key: ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        key: ${{ steps.cache-keys.outputs.ccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-
-          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-shared-
-          ${{ inputs.variant && format('ccache-{0}-{1}-{2}-shared-', inputs.host, inputs.target, inputs.build-type) || '' }}
+          ${{ steps.cache-keys.outputs.ccache_key }}-
+          ${{ steps.cache-keys.outputs.ccache_scope }}
+          ${{ steps.cache-keys.outputs.ccache_legacy_scope }}
+          ${{ steps.cache-keys.outputs.ccache_shared }}
+          ${{ steps.cache-keys.outputs.ccache_unvaried_shared }}
 
     - name: Initialize ccache stats
       shell: bash
@@ -176,7 +221,7 @@ runs:
 
     # moccache entries are content-addressed and basedir-normalized, so they
     # are safe to share across build types and branches; keys exist only for
-    # scoping and eviction. Windows is skipped (moccache no-ops there).
+    # platform scoping, implementation versioning, and eviction.
     #
     # The saved key ends in key-suffix + run id + attempt so every saving job
     # (including matrix legs sharing host/target and re-run attempts) writes a
@@ -186,31 +231,30 @@ runs:
     # includes the restored entries, so caches converge over successive runs.
     # MOCCACHE_MAX_SIZE (set by the launcher) bounds growth via LRU trim.
     - name: Cache moc output (moccache, save)
-      if: runner.os != 'Windows' && steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
+      if: steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
       uses: actions/cache@v5
       with:
         path: ${{ github.workspace }}/.cache/moccache
-        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}${{ inputs.key-suffix && format('-{0}', inputs.key-suffix) || '' }}-${{ github.run_id }}-${{ github.run_attempt }}
+        key: ${{ steps.cache-keys.outputs.moccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}-
-          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
-          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+          ${{ steps.cache-keys.outputs.moccache_hash }}
+          ${{ steps.cache-keys.outputs.moccache_scope }}
+          ${{ steps.cache-keys.outputs.moccache_shared }}
 
     - name: Cache moc output (moccache, read-only)
-      if: runner.os != 'Windows' && (steps.cache-policy.outputs.save != 'true' || inputs.variant == 'coverage')
+      if: steps.cache-policy.outputs.save != 'true' || inputs.variant == 'coverage'
       uses: actions/cache/restore@v5
       with:
         path: ${{ github.workspace }}/.cache/moccache
-        key: moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}${{ inputs.key-suffix && format('-{0}', inputs.key-suffix) || '' }}-${{ github.run_id }}-${{ github.run_attempt }}
+        key: ${{ steps.cache-keys.outputs.moccache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
-          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json') }}-
-          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-${{ steps.cache-scope.outputs.scope }}-
-          moccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+          ${{ steps.cache-keys.outputs.moccache_hash }}
+          ${{ steps.cache-keys.outputs.moccache_scope }}
+          ${{ steps.cache-keys.outputs.moccache_shared }}
 
     # Record per-run moc hit/miss stats; a restored cache may carry the
     # previous run's stats.log, so reset it for accurate numbers.
     - name: Enable moccache stats
-      if: runner.os != 'Windows'
       shell: bash
       env:
         MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
@@ -226,8 +270,11 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ steps.cpm-cache.outputs.path }}
-        key: cpm-modules-${{ steps.cache-scope.outputs.scope }}-${{ steps.cpm-key.outputs.fingerprint }}
+        key: ${{ steps.cache-keys.outputs.cpm_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
+          ${{ steps.cache-keys.outputs.cpm_key }}-
+          ${{ steps.cache-keys.outputs.cpm_scope }}
+          ${{ steps.cache-keys.outputs.cpm_shared }}
           cpm-modules-${{ steps.cache-scope.outputs.scope }}-
           cpm-modules-shared-
 
@@ -236,7 +283,10 @@ runs:
       uses: actions/cache/restore@v5
       with:
         path: ${{ steps.cpm-cache.outputs.path }}
-        key: cpm-modules-${{ steps.cache-scope.outputs.scope }}-${{ steps.cpm-key.outputs.fingerprint }}
+        key: ${{ steps.cache-keys.outputs.cpm_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
+          ${{ steps.cache-keys.outputs.cpm_key }}-
+          ${{ steps.cache-keys.outputs.cpm_scope }}
+          ${{ steps.cache-keys.outputs.cpm_shared }}
           cpm-modules-${{ steps.cache-scope.outputs.scope }}-
           cpm-modules-shared-

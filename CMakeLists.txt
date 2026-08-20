@@ -39,6 +39,15 @@ set(CMAKE_POLICY_VERSION_MINIMUM ${CMAKE_MINIMUM_REQUIRED_VERSION})
 # Load default options and allow custom builds to override
 include(CustomOptions)
 
+if(NOT QGC_CUSTOM_DIR
+   OR IS_ABSOLUTE "${QGC_CUSTOM_DIR}"
+   OR QGC_CUSTOM_DIR MATCHES "(^|[/\\\\])[.][.]([/\\\\]|$)"
+)
+    message(FATAL_ERROR
+        "QGC_CUSTOM_DIR must be a non-empty path relative to the source root without '..': "
+        "'${QGC_CUSTOM_DIR}'")
+endif()
+
 option(QGC_VERBOSE_CONFIGURE "Prefix configure messages with module context labels" OFF)
 set(CMAKE_MESSAGE_CONTEXT_SHOW ${QGC_VERBOSE_CONFIGURE})
 list(APPEND CMAKE_MESSAGE_CONTEXT qgc)
@@ -50,9 +59,18 @@ endif()
 
 if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}")
     message(STATUS "QGC: Custom build directory detected: ${QGC_CUSTOM_DIR}")
+    set(_qgc_custom_overrides
+        "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/cmake/CustomOverrides.cmake")
+    if(NOT EXISTS "${_qgc_custom_overrides}"
+       OR NOT EXISTS "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/CMakeLists.txt"
+    )
+        message(FATAL_ERROR
+            "QGC custom overlay '${QGC_CUSTOM_DIR}' must contain CMakeLists.txt and "
+            "cmake/CustomOverrides.cmake")
+    endif()
     set(QGC_CUSTOM_BUILD ON)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/cmake")
-    include(CustomOverrides)
+    include("${_qgc_custom_overrides}")
 endif()
 
 # Disable testing if not explicitly enabled
@@ -67,12 +85,21 @@ endif()
 # ----------------------------------------------------------------------------
 # Apple-Specific Pre-Project Settings
 # ----------------------------------------------------------------------------
-# APPLE is true on iOS too; gate on CMAKE_SYSTEM_NAME or the iOS toolchain's
-# arm64-only CMAKE_OSX_ARCHITECTURES gets clobbered with x86_64h;arm64.
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "${QGC_CONFIG_MACOS_DEPLOYMENT_TARGET}" CACHE STRING "macOS minimum deployment target")
-    if(QGC_MACOS_UNIVERSAL_BUILD)
-        set(CMAKE_OSX_ARCHITECTURES "x86_64h;arm64")
+# The iOS preset sets CMAKE_SYSTEM_NAME before project(); otherwise this is macOS.
+if(APPLE)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(CMAKE_OSX_DEPLOYMENT_TARGET
+            "${QGC_CONFIG_IOS_DEPLOYMENT_TARGET}"
+            CACHE STRING "iOS minimum deployment target"
+        )
+    else()
+        set(CMAKE_OSX_DEPLOYMENT_TARGET
+            "${QGC_CONFIG_MACOS_DEPLOYMENT_TARGET}"
+            CACHE STRING "macOS minimum deployment target"
+        )
+        if(QGC_MACOS_UNIVERSAL_BUILD)
+            set(CMAKE_OSX_ARCHITECTURES "x86_64h;arm64")
+        endif()
     endif()
 endif()
 
@@ -271,22 +298,49 @@ if(QT_QML_NO_CACHEGEN)
 endif()
 
 # ============================================================================
-# Custom Build Subdirectory
-# ============================================================================
-
-if(QGC_CUSTOM_BUILD)
-    add_subdirectory("${QGC_CUSTOM_DIR}")
-endif()
-
-# ============================================================================
 # QGroundControl Resources
 # ============================================================================
 
 # Resources go on the executable (not a library) to avoid Q_INIT_RESOURCE().
-# Don't route the big .qrcs through qt_add_big_resources — its pass2 object-file
-# output fails on MSVC ("No data signature found") when large data sections are elided.
-list(APPEND QGC_RESOURCES
-    "${CMAKE_SOURCE_DIR}/qgcresources.qrc"
+
+set(QGC_APP_RESOURCES
+    "${CMAKE_SOURCE_DIR}/resources/BingNoTileBytes.dat"
+    "${CMAKE_SOURCE_DIR}/resources/CameraGimbal.png"
+    "${CMAKE_SOURCE_DIR}/resources/chevron-double-right.svg"
+    "${CMAKE_SOURCE_DIR}/resources/GeoFence.svg"
+    "${CMAKE_SOURCE_DIR}/resources/QGCLogoFull.svg"
+    "${CMAKE_SOURCE_DIR}/resources/QGCLogoWhite.svg"
+    "${CMAKE_SOURCE_DIR}/resources/QGCLogoArrow.svg"
+    "${CMAKE_SOURCE_DIR}/resources/rtl.svg"
+    "${CMAKE_SOURCE_DIR}/resources/SplashScreen.png"
+    "${CMAKE_SOURCE_DIR}/resources/takeoff.svg"
+    "${CMAKE_SOURCE_DIR}/resources/TrashCan.svg"
+    "${CMAKE_SOURCE_DIR}/resources/TrashDelete.svg"
+    "${CMAKE_SOURCE_DIR}/resources/XDelete.svg"
+    "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.ico"
+)
+qgc_set_qt_resource_alias(${QGC_APP_RESOURCES})
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/SplashScreen.png"
+    PROPERTIES QT_RESOURCE_ALIAS "SplashScreen"
+)
+
+set(QGC_FONT_RESOURCES
+    "${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf"
+    "${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Semibold.ttf"
+    "${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Regular.ttf"
+    "${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bold.ttf"
+)
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf"
+    PROPERTIES QT_RESOURCE_ALIAS "opensans"
+)
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Semibold.ttf"
+    PROPERTIES QT_RESOURCE_ALIAS "opensans-demibold"
+)
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Regular.ttf"
+    PROPERTIES QT_RESOURCE_ALIAS "NanumGothic-Regular"
+)
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bold.ttf"
+    PROPERTIES QT_RESOURCE_ALIAS "NanumGothic-Bold"
 )
 
 # ============================================================================
@@ -299,7 +353,18 @@ qgc_apply_global_hardening()
 qt_add_executable(${CMAKE_PROJECT_NAME}
     WIN32          # Windows GUI application
     MACOSX_BUNDLE  # macOS application bundle
-    ${QGC_RESOURCES}
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} qgc_fonts
+    PREFIX "/fonts"
+    BASE "${CMAKE_SOURCE_DIR}/resources/fonts"
+    FILES ${QGC_FONT_RESOURCES}
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} qgc_app_resources
+    PREFIX "/res"
+    BASE "${CMAKE_SOURCE_DIR}/resources"
+    FILES ${QGC_APP_RESOURCES}
 )
 
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
@@ -311,6 +376,15 @@ include(Sanitizers)
 include(Coverage)
 
 qgc_apply_warning_flags()
+
+# ============================================================================
+# Custom Build Subdirectory
+# ============================================================================
+
+# Custom Android package overlays must exist before platform deployment setup.
+if(QGC_CUSTOM_BUILD)
+    add_subdirectory("${QGC_CUSTOM_DIR}")
+endif()
 
 # ----------------------------------------------------------------------------
 # Platform-Specific Configuration
@@ -357,8 +431,17 @@ if(QGC_BUILD_TESTING)
     add_subdirectory(test)
     # Exclude test directory from translation scanning
     set_property(DIRECTORY test PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
-    # Pure-CMake unit tests for cmake/GStreamer helpers (no project build needed).
     add_subdirectory(cmake/GStreamer/tests)
+    add_subdirectory(cmake/tests)
+endif()
+
+# Apply compile policy after all project targets exist.
+qgc_configure_directory_targets("${CMAKE_SOURCE_DIR}/src")
+if(QGC_CUSTOM_BUILD)
+    qgc_configure_directory_targets("${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}")
+endif()
+if(QGC_BUILD_TESTING)
+    qgc_configure_directory_targets("${CMAKE_SOURCE_DIR}/test")
 endif()
 
 # ----------------------------------------------------------------------------
@@ -414,6 +497,8 @@ if(LINUX)
             Qt6::QEglFSIntegrationPlugin        # Embedded GL support
     )
 endif()
+
+qgc_apply_moccache()
 
 # ============================================================================
 # Installation & Packaging

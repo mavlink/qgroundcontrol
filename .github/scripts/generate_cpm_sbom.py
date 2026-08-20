@@ -25,7 +25,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from cmake_helper import read_cache_dict
+from common.cmake import read_cache_dict
 from common.git import run_git
 
 

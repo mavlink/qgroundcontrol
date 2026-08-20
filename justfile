@@ -4,15 +4,20 @@
 #   brew install just / cargo install just / pipx install rust-just
 # `apt install just` on Ubuntu ships 1.21 which is too old.
 
-# Configuration from build-config.json
-qt_version := `python3 ./tools/setup/read_config.py --get qt.version 2>/dev/null || echo "6.11.1"`
-cmake_min_version := `python3 ./tools/setup/read_config.py --get build.cmake_minimum_version 2>/dev/null || echo "3.25"`
-gstreamer_version := `python3 ./tools/setup/read_config.py --get gstreamer.version.default 2>/dev/null || echo "1.28.4"`
-qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
+host_os := os()
+python := if host_os == "windows" { "python" } else { "python3" }
+qt_version := shell(python + " ./tools/setup/read_config.py --get qt.version")
+cmake_min_version := shell(python + " ./tools/setup/read_config.py --get build.cmake_minimum_version")
+gstreamer_version := shell(python + " ./tools/setup/read_config.py --get gstreamer.version.default")
+qt_dir := env_var_or_default("QT_DIR", "")
+qt_root_arg := if qt_dir == "" { "" } else { "--qt-root \"" + qt_dir + "\"" }
+qt_dir_display := if qt_dir == "" { env_var_or_default("QT_ROOT_DIR", "auto-detected") } else { qt_dir }
 build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
+build_preset := if build_type == "Debug" { "default" } else if build_type == "Release" { "default-release" } else if build_type == "RelWithDebInfo" { "default-relwithdebinfo" } else { "default-minsizerel" }
 # Use all cores by default; override with JOBS=N.
-jobs := env_var_or_default("JOBS", `python3 -c "import os; print(os.cpu_count() or 4)" 2>/dev/null || echo 4`)
+jobs := env_var_or_default("JOBS", num_cpus())
+app_path := if host_os == "windows" { build_dir / build_type / "QGroundControl.exe" } else if host_os == "macos" { build_dir / build_type / "QGroundControl.app" / "Contents" / "MacOS" / "QGroundControl" } else { build_dir / build_type / "QGroundControl" }
 
 # Default: show available commands
 default:
@@ -22,14 +27,18 @@ default:
 # Setup
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Install system dependencies (Debian/Ubuntu)
+# Install system dependencies for the current host
 deps:
     @echo "Installing dependencies (requires sudo)..."
-    python3 ./tools/setup/install_dependencies --platform debian
+    {{ python }} ./tools/setup/install_dependencies
 
 # Initialize git submodules
 submodules:
     git submodule update --init --recursive
+
+# Install VS Code workspace defaults without overwriting local settings
+vscode:
+    {{ python }} ./tools/setup/setup_vscode.py
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Build
@@ -37,20 +46,20 @@ submodules:
 
 # Configure CMake build
 configure: submodules
-    python3 ./tools/configure.py -B {{build_dir}} -t {{build_type}} --testing --qt-root {{qt_dir}}
+    {{ python }} ./tools/configure.py --preset {{ build_preset }} -B {{ build_dir }} -t {{ build_type }} {{ qt_root_arg }}
 
 # Build the project
 build:
-    cmake --build {{build_dir}} --config {{build_type}} --parallel {{jobs}}
+    cmake --build --preset {{ build_preset }} --parallel {{ jobs }}
 
 # Configure and build Release
 release:
-    python3 ./tools/configure.py -B {{build_dir}} --release --qt-root {{qt_dir}}
-    cmake --build {{build_dir}} --config Release --parallel {{jobs}}
+    {{ python }} ./tools/configure.py --preset default-release -B {{ build_dir }} --release {{ qt_root_arg }}
+    cmake --build --preset default-release --parallel {{ jobs }}
 
 # Clean build directory (forwards to tools/clean.py; pass --cache, --all, --dry-run)
 clean *ARGS:
-    ./tools/clean.py {{ARGS}}
+    {{ python }} ./tools/clean.py {{ ARGS }}
 
 # Clean, configure, and build
 rebuild: clean configure build
@@ -62,9 +71,9 @@ setup: deps submodules configure build
 # Quality
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Run unit tests (matches CI label filters; override with `LABELS=... EXCLUDE=... just test`)
+# Run application tests (matches CI label filters; override with `LABELS=... EXCLUDE=... JOBS=N just test`)
 test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_default("EXCLUDE", "Flaky|Network"):
-    cd {{build_dir}} && ctest --output-on-failure -L "{{labels}}" -LE "{{exclude}}"
+    ctest --preset default --build-config {{ build_type }} --parallel {{ jobs }} --no-tests=error -L "{{ labels }}" -LE "{{ exclude }}"
 
 # Run pre-commit checks
 lint:
@@ -72,19 +81,19 @@ lint:
 
 # Check code formatting (no changes)
 format:
-    python3 ./tools/analyze.py --tool clang-format
+    {{ python }} ./tools/analyze.py --tool clang-format
 
 # Format code (apply fixes)
 format-fix:
-    python3 ./tools/analyze.py --tool clang-format --fix
+    {{ python }} ./tools/analyze.py --tool clang-format --fix
 
 # Run static analysis
 analyze:
-    python3 ./tools/analyze.py
+    {{ python }} ./tools/analyze.py
 
 # Generate coverage report
 coverage:
-    python3 ./tools/coverage.py
+    {{ python }} ./tools/coverage.py
 
 # Run lint + test
 check: lint test
@@ -95,7 +104,7 @@ check: lint test
 
 # Launch QGroundControl
 run:
-    ./{{build_dir}}/{{build_type}}/QGroundControl
+    "{{ app_path }}"
 
 # Build documentation
 docs:
@@ -111,19 +120,27 @@ docker:
 
 # Show build configuration
 info:
-    @echo "Qt version:  {{qt_version}}"
-    @echo "Qt dir:      {{qt_dir}}"
-    @echo "CMake min:   {{cmake_min_version}}"
-    @echo "GStreamer:   {{gstreamer_version}}"
-    @echo "Build type:  {{build_type}}"
-    @echo "Build dir:   {{build_dir}}"
-    @echo "Jobs:        {{jobs}}"
+    @echo "Qt version:  {{ qt_version }}"
+    @echo "Qt dir:      {{ qt_dir_display }}"
+    @echo "CMake min:   {{ cmake_min_version }}"
+    @echo "GStreamer:   {{ gstreamer_version }}"
+    @echo "Build type:  {{ build_type }}"
+    @echo "Build dir:   {{ build_dir }}"
+    @echo "Jobs:        {{ jobs }}"
 
 # Check dependency versions
 check-deps:
-    python3 ./tools/check_deps.py
+    {{ python }} ./tools/check_deps.py
+
+# Check the configured GStreamer minor line for a newer common SDK patch
+check-gstreamer:
+    {{ python }} ./tools/check_deps.py --gstreamer
+
+# Update translation sources
+translations:
+    {{ python }} ./tools/translations/qgc_lupdate.py
 
 # Clean build, caches, and generated files
 distclean:
-    ./tools/clean.py --all
-    rm -rf node_modules
+    {{ python }} ./tools/clean.py --all
+    {{ python }} -c "import shutil; shutil.rmtree('node_modules', ignore_errors=True)"

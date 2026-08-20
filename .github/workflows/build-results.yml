@@ -90,6 +90,7 @@ jobs:
         id: pr
         uses: actions/github-script@v9
         with:
+          result-encoding: string
           script: |
             const run = context.payload.workflow_run;
             if (run.pull_requests && run.pull_requests.length > 0) {
@@ -163,7 +164,8 @@ jobs:
           comment-tag: build-results
           message: |
             <!-- thollander/actions-comment-pull-request "build-results" -->
-            ⚠️ **Build results unavailable** — artifact download from one or more platform workflows failed (likely artifact retention expiry or transient API error). The combined report cannot be generated for this run.
+            ⚠️ **Build results unavailable** — artifact download from one or more platform workflows failed
+            (likely artifact retention expiry or transient API error). The combined report cannot be generated for this run.
 
             See the [Build Results workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
 
@@ -185,7 +187,10 @@ jobs:
           artifacts-file: workflow-artifacts.json
 
       - name: Download pre-commit results artifact
-        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true' && steps.builds.outputs.precommit_run_id != ''
+        if: >-
+          steps.pr.outputs.result != '' &&
+          steps.builds.outputs.all_complete == 'true' &&
+          steps.builds.outputs.precommit_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:

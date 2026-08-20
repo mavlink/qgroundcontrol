@@ -32,6 +32,12 @@ Item {
 
     property var _gimbalControllerSettings: QGroundControl.settingsManager.gimbalControllerSettings
 
+    /// Names a gimbal as "<manager compid>-<device id>", e.g. "154-1", so that gimbals
+    /// belonging to different managers can be told apart.
+    function gimbalName(gimbal) {
+        return gimbal ? (gimbal.managerCompid.valueString + "-" + gimbal.deviceId.valueString) : ""
+    }
+
     QGCPalette { id: qgcPal }
 
     Row {
@@ -61,7 +67,7 @@ Item {
                 id:                     gimbalIdLabel
                 anchors.horizontalCenter: parent.horizontalCenter
                 font.pointSize:         ScreenTools.smallFontPointSize
-                text:                   activeGimbal ? activeGimbal.deviceId.rawValue : ""
+                text:                   control.gimbalName(activeGimbal)
                 color:                  qgcPal.text
                 visible:                multiGimbalSetup
             }
@@ -141,7 +147,7 @@ Item {
                         let activeIndex = -1
                         for (var i = 0; i < gimbals.count; i++) {
                             var gimbal = gimbals.get(i)
-                            gimbalModel.push(qsTr("Gimbal %1").arg(gimbal.deviceId.valueString))
+                            gimbalModel.push(qsTr("Gimbal %1").arg(control.gimbalName(gimbal)))
                             if (gimbal === activeGimbal) {
                                 activeIndex = i
                             }
@@ -194,7 +200,7 @@ Item {
                     Layout.fillWidth:   true
                     text:               qsTr("Point Home")
                     onClicked: {
-                        activeVehicle.guidedModeROI(activeVehicle.homePosition)
+                        activeVehicle.guidedModeROI(activeVehicle.homePosition, 0)
                         mainWindow.closeIndicatorDrawer()
                     }
                 }

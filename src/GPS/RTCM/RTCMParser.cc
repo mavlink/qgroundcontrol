@@ -106,31 +106,3 @@ QByteArray RTCMParser::currentFrame() const
     frame.append(reinterpret_cast<const char*>(_crcBytes), kCrcSize);
     return frame;
 }
-
-QByteArray RTCMParser::extractValidFrames(const QByteArray& in, int* framesFound, int* framesDropped)
-{
-    QByteArray out;
-    int found = 0;
-    int dropped = 0;
-
-    for (char ch : in) {
-        if (!addByte(static_cast<uint8_t>(ch))) {
-            continue;
-        }
-        if (validateCrc()) {
-            out.append(currentFrame());
-            ++found;
-        } else {
-            ++dropped;
-        }
-        reset();
-    }
-
-    if (framesFound) {
-        *framesFound = found;
-    }
-    if (framesDropped) {
-        *framesDropped = dropped;
-    }
-    return out;
-}

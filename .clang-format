@@ -56,11 +56,12 @@ SpacesInSquareBrackets: false
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<[a-z].*>'  # System/STL headers
-    Priority: 1
   - Regex: '^<Q.*>'      # Qt headers
+    Priority: 1
+  - Regex: '^<[a-z].*>'  # System/STL headers
+    CaseSensitive: true
     Priority: 2
-  - Regex: '.*'           # Project headers
+  - Regex: '.*'          # Project headers
     Priority: 3
 
 # Alignment

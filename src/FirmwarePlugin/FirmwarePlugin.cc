@@ -176,6 +176,46 @@ void FirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordin
     QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
+bool FirmwarePlugin::guidedModeROI(Vehicle *vehicle, const QGeoCoordinate &roiCenterCoord, double relativeAltitudeMeters) const
+{
+    // MAVLink spec path: firmware honors the frame in the command
+    _sendROICommand(vehicle, roiCenterCoord, MAV_FRAME_GLOBAL_RELATIVE_ALT, static_cast<float>(relativeAltitudeMeters));
+    return true;
+}
+
+void FirmwarePlugin::_sendROICommand(Vehicle *vehicle, const QGeoCoordinate &coord, MAV_FRAME frame, float altitude) const
+{
+    qCDebug(FirmwarePluginLog) << "_sendROICommand: lat" << coord.latitude() << "lon" << coord.longitude()
+                               << "frame" << frame << "altitude" << altitude;
+
+    if (vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+        vehicle->sendMavCommandInt(
+            vehicle->defaultComponentId(),
+            MAV_CMD_DO_SET_ROI_LOCATION,
+            frame,
+            true,                           // show error if fails
+            static_cast<float>(qQNaN()),
+            static_cast<float>(qQNaN()),
+            static_cast<float>(qQNaN()),
+            static_cast<float>(qQNaN()),
+            coord.latitude(),
+            coord.longitude(),
+            altitude);
+    } else {
+        vehicle->sendMavCommand(
+            vehicle->defaultComponentId(),
+            MAV_CMD_DO_SET_ROI_LOCATION,
+            true,                           // show error if fails
+            static_cast<float>(qQNaN()),
+            static_cast<float>(qQNaN()),
+            static_cast<float>(qQNaN()),
+            static_cast<float>(qQNaN()),
+            static_cast<float>(coord.latitude()),
+            static_cast<float>(coord.longitude()),
+            altitude);
+    }
+}
+
 void FirmwarePlugin::startTakeoff(Vehicle*) const
 {
     // Not supported by generic vehicle

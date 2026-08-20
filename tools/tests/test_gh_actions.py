@@ -7,7 +7,8 @@ import json
 import os
 from unittest.mock import patch
 
-from common import gh_actions as mod
+import common.gh_actions as mod
+import pytest
 
 from ._helpers import completed
 
@@ -57,6 +58,26 @@ def test_list_run_artifacts_rejects_invalid_run_id() -> None:
         assert "run_id must be an integer" in str(exc)
     else:
         raise AssertionError("Expected ValueError for invalid run_id")
+
+
+def test_require_repository_prefers_override_and_requires_value(capsys) -> None:
+    with patch.dict(
+        os.environ,
+        {"GH_REPO": "override/repo", "GITHUB_REPOSITORY": "event/repo"},
+        clear=True,
+    ):
+        assert mod.require_repository() == "override/repo"
+    with patch.dict(os.environ, {"GITHUB_REPOSITORY": "event/repo"}, clear=True):
+        assert mod.require_repository() == "event/repo"
+    with patch.dict(
+        os.environ,
+        {"GH_REPO": "  ", "GITHUB_REPOSITORY": " fallback/repo "},
+        clear=True,
+    ):
+        assert mod.require_repository() == "fallback/repo"
+    with patch.dict(os.environ, {}, clear=True), pytest.raises(SystemExit):
+        mod.require_repository()
+    assert capsys.readouterr().out == "::error::GH_REPO or GITHUB_REPOSITORY must be set\n"
 
 
 class TestIsForkPr:

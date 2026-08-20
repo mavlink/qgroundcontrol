@@ -23,6 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FlightModeSettings.h
         FlyViewSettings.cc
         FlyViewSettings.h
+        GeoViewSettings.cc
+        GeoViewSettings.h
         GimbalControllerSettings.cc
         GimbalControllerSettings.h
         JoystickManagerSettings.cc
@@ -62,13 +64,11 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 # APM-Specific Settings
 # ----------------------------------------------------------------------------
-if(NOT QGC_DISABLE_APM_MAVLINK)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            APMMavlinkStreamRateSettings.cc
-            APMMavlinkStreamRateSettings.h
-    )
-endif()
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        APMMavlinkStreamRateSettings.cc
+        APMMavlinkStreamRateSettings.h
+)
 
 # ----------------------------------------------------------------------------
 # Settings Definition Resources

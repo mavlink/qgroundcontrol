@@ -1,9 +1,11 @@
 """Tests for the settings QML page generator."""
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
+from generators.settings_qml import generate_pages as settings_generator
 from generators.settings_qml.page_generator import (
     ControlDef,
     GroupDef,
@@ -125,7 +127,7 @@ class TestLoadPageDef:
     def test_missing_setting_rejected(self, tmp_path: Path):
         # A fact-backed control without a setting would crash emit with a bare IndexError
         data = {"version": 1, "groups": [{"heading": "G", "controls": [{"label": "Oops"}]}]}
-        with pytest.raises(ValueError, match="settingsGroupAccessor.factName"):
+        with pytest.raises(ValueError, match=r"settingsGroupAccessor\.factName"):
             load_page_def(_make_page_json(tmp_path, data))
 
     def test_dotless_setting_rejected(self, tmp_path: Path):
@@ -137,14 +139,16 @@ class TestLoadPageDef:
         with pytest.raises(ValueError, match="operatorIDEU"):
             load_page_def(_make_page_json(tmp_path, data))
 
-    @pytest.mark.parametrize("bad_setting", ["appSettings..x", "appSettings.x.", ".x", "appSettings.höhe"])
+    @pytest.mark.parametrize(
+        "bad_setting", ["appSettings..x", "appSettings.x.", ".x", "appSettings.höhe"]
+    )
     def test_malformed_setting_segments_rejected(self, tmp_path: Path, bad_setting: str):
         # Empty path segments or non-ASCII would emit broken fact refs / objectNames
         data = {
             "version": 1,
             "groups": [{"heading": "G", "controls": [{"setting": bad_setting}]}],
         }
-        with pytest.raises(ValueError, match="settingsGroupAccessor.factName"):
+        with pytest.raises(ValueError, match=r"settingsGroupAccessor\.factName"):
             load_page_def(_make_page_json(tmp_path, data))
 
     @pytest.mark.parametrize("key", ["enableCheckbox", "button"])
@@ -162,7 +166,12 @@ class TestLoadPageDef:
         # Falsy wrong-shaped values must not be silently treated as "absent"
         data = {
             "version": 1,
-            "groups": [{"heading": "G", "controls": [{"setting": "appSettings.x", "enableCheckbox": bad_value}]}],
+            "groups": [
+                {
+                    "heading": "G",
+                    "controls": [{"setting": "appSettings.x", "enableCheckbox": bad_value}],
+                }
+            ],
         }
         with pytest.raises(ValueError, match="enableCheckbox"):
             load_page_def(_make_page_json(tmp_path, data))
@@ -170,7 +179,9 @@ class TestLoadPageDef:
     def test_unknown_group_key_rejected(self, tmp_path: Path):
         data = {
             "version": 1,
-            "groups": [{"heading": "G", "showWen": "typo", "controls": [{"setting": "appSettings.x"}]}],
+            "groups": [
+                {"heading": "G", "showWen": "typo", "controls": [{"setting": "appSettings.x"}]}
+            ],
         }
         with pytest.raises(ValueError, match="showWen"):
             load_page_def(_make_page_json(tmp_path, data))
@@ -178,7 +189,9 @@ class TestLoadPageDef:
     def test_unknown_control_key_rejected(self, tmp_path: Path):
         data = {
             "version": 1,
-            "groups": [{"heading": "G", "controls": [{"setting": "appSettings.x", "enabelWhen": "typo"}]}],
+            "groups": [
+                {"heading": "G", "controls": [{"setting": "appSettings.x", "enabelWhen": "typo"}]}
+            ],
         }
         with pytest.raises(ValueError, match="enabelWhen"):
             load_page_def(_make_page_json(tmp_path, data))
@@ -399,7 +412,9 @@ class TestGeneratePageQml:
     def test_group_has_object_name(self, settings_dir: Path):
         page = PageDef(
             groups=[
-                GroupDef(heading="EU Vehicle Info", controls=[ControlDef(setting="appSettings.savePath")]),
+                GroupDef(
+                    heading="EU Vehicle Info", controls=[ControlDef(setting="appSettings.savePath")]
+                ),
             ]
         )
         qml = generate_page_qml(page, settings_dir)
@@ -424,8 +439,13 @@ class TestGeneratePageQml:
         # which would make UI test lookups silently match the wrong group. Fail loudly.
         page = PageDef(
             groups=[
-                GroupDef(heading="EU Vehicle Info", controls=[ControlDef(setting="appSettings.savePath")]),
-                GroupDef(heading="EU-Vehicle Info", controls=[ControlDef(setting="appSettings.enableFeature")]),
+                GroupDef(
+                    heading="EU Vehicle Info", controls=[ControlDef(setting="appSettings.savePath")]
+                ),
+                GroupDef(
+                    heading="EU-Vehicle Info",
+                    controls=[ControlDef(setting="appSettings.enableFeature")],
+                ),
             ]
         )
         with pytest.raises(ValueError, match="settingsGroup_EUVehicleInfo"):
@@ -670,7 +690,10 @@ class TestGeneratePageQml:
                         ControlDef(
                             setting="appSettings.savePath",
                             control="browse",
-                            properties={"selectFolder": "false", "nameFilters": '[ qsTr("OSM (*.osm)") ]'},
+                            properties={
+                                "selectFolder": "false",
+                                "nameFilters": '[ qsTr("OSM (*.osm)") ]',
+                            },
                         )
                     ]
                 ),
@@ -687,7 +710,11 @@ class TestGeneratePageQml:
                 {
                     "heading": "G",
                     "controls": [
-                        {"setting": "appSettings.x", "control": "textfield", "properties": {"a": "b"}}
+                        {
+                            "setting": "appSettings.x",
+                            "control": "textfield",
+                            "properties": {"a": "b"},
+                        }
                     ],
                 }
             ],
@@ -1055,30 +1082,49 @@ class TestGeneratePagesModelQml:
 
     def test_unknown_root_key_rejected(self, tmp_path: Path):
         pages_path = tmp_path / "SettingsPages.json"
-        pages_path.write_text(json.dumps({
-            "version": 1,
-            "bogusRootKey": True,
-            "pages": [{"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg"}],
-        }), encoding="utf-8")
+        pages_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "bogusRootKey": True,
+                    "pages": [{"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg"}],
+                }
+            ),
+            encoding="utf-8",
+        )
         with pytest.raises(ValueError, match="bogusRootKey"):
             generate_pages_model_qml(pages_path)
 
     def test_unknown_page_entry_key_rejected(self, tmp_path: Path):
         pages_path = tmp_path / "SettingsPages.json"
-        pages_path.write_text(json.dumps({
-            "version": 1,
-            "pages": [{"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg", "vissible": "typo"}],
-        }), encoding="utf-8")
+        pages_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "pages": [
+                        {"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg", "vissible": "typo"}
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
         with pytest.raises(ValueError, match="vissible"):
             generate_pages_model_qml(pages_path)
 
     def test_comment_keys_accepted(self, tmp_path: Path):
         pages_path = tmp_path / "SettingsPages.json"
-        pages_path.write_text(json.dumps({
-            "version": 1,
-            "comment": "root note",
-            "pages": [{"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg", "comment": "entry note"}],
-        }), encoding="utf-8")
+        pages_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "comment": "root note",
+                    "pages": [
+                        {"name": "P", "qml": "P.qml", "icon": "qrc:/p.svg", "comment": "entry note"}
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
         qml = generate_pages_model_qml(pages_path)
         assert 'nameKey: "P"' in qml
 
@@ -1134,3 +1180,48 @@ class TestRealPageDefinitions:
         qml = generate_pages_model_qml(pages_path)
         assert "ListModel {" in qml
         assert "General" in qml
+
+
+def test_cli_preserves_unchanged_output_timestamps(tmp_path: Path, monkeypatch) -> None:
+    output_dir = tmp_path / "generated"
+    pages_dir = tmp_path / "pages"
+    pages_dir.mkdir()
+    page_definition = {
+        "version": 1,
+        "groups": [{"heading": "General", "controls": [{"setting": "appSettings.x"}]}],
+    }
+    _make_page_json(pages_dir, page_definition)
+    (pages_dir / "SettingsPages.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "pages": [
+                    {
+                        "name": "Test Page",
+                        "qml": "TestPage.qml",
+                        "icon": "qrc:/test.svg",
+                        "pageDefinition": "Test.SettingsUI.json",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    settings_dir = _make_settings_dir(
+        tmp_path,
+        {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]},
+    )
+    monkeypatch.setattr(settings_generator, "PAGES_DIR", pages_dir)
+    monkeypatch.setattr(settings_generator, "SETTINGS_DIR", settings_dir)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["generate_pages", "--output-dir", str(output_dir)],
+    )
+
+    assert settings_generator.main() == 0
+    timestamps = {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}
+    assert settings_generator.main() == 0
+
+    assert timestamps
+    assert timestamps == {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}

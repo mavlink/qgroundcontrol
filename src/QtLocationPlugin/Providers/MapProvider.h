@@ -56,6 +56,9 @@ public:
     virtual bool isElevationProvider() const { return false; }
     virtual bool isBingProvider() const { return false; }
 
+    /// False hides the provider from user-facing provider selection lists
+    virtual bool isUserSelectable() const { return true; }
+
     virtual QGCTileSet getTileCount(int zoom, double topleftLon,
                                     double topleftLat, double bottomRightLon,
                                     double bottomRightLat) const;

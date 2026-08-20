@@ -48,6 +48,7 @@ from _bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.build_config import get_build_config_value
+from common.deps import pip_install
 from common.gh_actions import write_github_output
 from common.logging import log_error, log_info, log_ok, log_warn
 from common.tool_version import uv_lock_version
@@ -253,8 +254,6 @@ class MesonBuilder:
             packages.append(f"ninja=={NINJA_VERSION}")
 
         log_info(f"Installing pinned build tools: {', '.join(packages)}")
-        from common import pip_install
-
         pip_install(packages)
 
         user_scripts = Path(site.getuserbase()) / ("Scripts" if os.name == "nt" else "bin")
@@ -696,7 +695,12 @@ def main() -> int:
     args = parse_args()
 
     # Resolve defaults
-    version = args.version or get_build_config_value("gstreamer.version.default", "1.24.13")
+    version = args.version or get_build_config_value(
+        "gstreamer.version.default", start=Path(__file__).resolve()
+    )
+    if not version:
+        log_error("GStreamer version is required; pass --version or provide build-config.json")
+        return 1
     arch = args.arch or get_default_arch(args.platform)
     prefix = Path(args.prefix) if args.prefix else None
     work_dir = Path(args.work_dir)

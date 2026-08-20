@@ -12,7 +12,7 @@
 # connections; `timeout` under sudo runs as root and can reliably kill apt.
 #
 # Usage: apt_install_retry.sh [options] PACKAGE...
-#   --update                  run apt-get update before each install attempt
+#   --update                  run apt-get update before installing packages
 #   --no-install-recommends   pass --no-install-recommends to apt-get install
 #   --autoclean               prune superseded .debs from the cache dir afterwards
 #   --install-timeout SECS    per-attempt install timeout (default: 1200)
@@ -66,17 +66,34 @@ APT_OPTS=(
   -o APT::Keep-Downloaded-Packages=true
 )
 
-ok=false
-for attempt in $(seq 1 "${MAX_ATTEMPTS}"); do
-  if { [[ "${run_update}" != "true" ]] ||
-       sudo timeout -k "${KILL_GRACE}" "${UPDATE_TIMEOUT}" apt-get "${APT_OPTS[@]}" update -qq; } &&
-     sudo timeout -k "${KILL_GRACE}" "${INSTALL_TIMEOUT}" apt-get "${APT_OPTS[@]}" install -y "${install_args[@]}" "${packages[@]}"; then
-    ok=true
-    break
-  fi
-  echo "::warning::${label} install attempt ${attempt} failed (stall/timeout or error); retrying"
-  sleep $((attempt * 15))
-done
+update_ok=true
+if [[ "${run_update}" == "true" ]]; then
+  update_ok=false
+  for attempt in $(seq 1 "${MAX_ATTEMPTS}"); do
+    if sudo timeout -k "${KILL_GRACE}" "${UPDATE_TIMEOUT}" apt-get "${APT_OPTS[@]}" update -qq; then
+      update_ok=true
+      break
+    fi
+    if ((attempt < MAX_ATTEMPTS)); then
+      echo "::warning::apt update attempt ${attempt} failed (stall/timeout or error); retrying"
+      sleep $((attempt * 15))
+    fi
+  done
+fi
+
+install_ok=false
+if [[ "${update_ok}" == "true" ]]; then
+  for attempt in $(seq 1 "${MAX_ATTEMPTS}"); do
+    if sudo timeout -k "${KILL_GRACE}" "${INSTALL_TIMEOUT}" apt-get "${APT_OPTS[@]}" install -y "${install_args[@]}" "${packages[@]}"; then
+      install_ok=true
+      break
+    fi
+    if ((attempt < MAX_ATTEMPTS)); then
+      echo "::warning::${label} install attempt ${attempt} failed (stall/timeout or error); retrying"
+      sleep $((attempt * 15))
+    fi
+  done
+fi
 
 if [[ "${autoclean}" == "true" ]]; then
   # Prune superseded .deb versions so the cached directory doesn't grow unboundedly.
@@ -89,7 +106,11 @@ fi
 sudo rm -rf "${APT_CACHE_DIR}/partial"
 sudo chown -R "$(id -u):$(id -g)" "${APT_CACHE_DIR}"
 
-if [[ "${ok}" != "true" ]]; then
+if [[ "${update_ok}" != "true" ]]; then
+  echo "::error::apt update failed after ${MAX_ATTEMPTS} attempts"
+  exit 1
+fi
+if [[ "${install_ok}" != "true" ]]; then
   echo "::error::${label} installation failed after ${MAX_ATTEMPTS} attempts"
   exit 1
 fi

@@ -58,7 +58,7 @@ def test_remove_path_missing_is_noop(tmp_path: Path) -> None:
     remove_path(tmp_path / "missing", "missing", dry_run=False)
 
 
-def test_clean_build_removes_targets(tmp_path: Path) -> None:
+def test_clean_build_preserves_user_presets(tmp_path: Path) -> None:
     (tmp_path / "build").mkdir()
     (tmp_path / "build" / "f").write_text("x", encoding="utf-8")
     (tmp_path / "CMakeUserPresets.json").write_text("{}", encoding="utf-8")
@@ -67,7 +67,7 @@ def test_clean_build_removes_targets(tmp_path: Path) -> None:
     clean_build(tmp_path, dry_run=False)
 
     assert not (tmp_path / "build").exists()
-    assert not (tmp_path / "CMakeUserPresets.json").exists()
+    assert (tmp_path / "CMakeUserPresets.json").exists()
     assert not (tmp_path / "qtcreator.user").exists()
 
 
@@ -93,7 +93,9 @@ def test_clean_generated_removes_pycache(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("flag", ["--dry-run", "--all --dry-run", "--cache --dry-run"])
-def test_main_dry_run_exits_zero(flag: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_dry_run_exits_zero(
+    flag: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # repo_root() is hardcoded to tools/..; redirect by chdir-ing into a fake tree.
     fake_tools = tmp_path / "tools"
     fake_tools.mkdir()

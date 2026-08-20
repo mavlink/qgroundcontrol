@@ -1,5 +1,7 @@
 # QGroundControl Build Configuration Summary
 
+include_guard(GLOBAL)
+
 string(TIMESTAMP QGC_CONFIGURE_TIME "%Y-%m-%d %H:%M:%S %Z")
 
 function(_qgc_kv _label _value)
@@ -106,7 +108,9 @@ message(STATUS "")
 message(STATUS "Qt & Python:")
 _qgc_kv("Qt version:         " "${Qt6_VERSION}")
 _qgc_kv("Qt location:        " "${Qt6_DIR}")
-_qgc_kv("Qt host path:       " "${QT_HOST_PATH}")
+if(DEFINED QT_HOST_PATH)
+    _qgc_kv("Qt host path:       " "${QT_HOST_PATH}")
+endif()
 _qgc_kv("Python:             " "${Python3_EXECUTABLE}")
 _qgc_kv("Python version:     " "${Python3_VERSION}")
 
@@ -133,9 +137,8 @@ OptionOutput("Enable QML linting                    " QT_QML_GENERATE_QMLLINT)
 OptionOutput("Disable serial links                  " QGC_NO_SERIAL_LINK)
 OptionOutput("Enable GStreamer video                " QGC_ENABLE_GST_VIDEOSTREAMING)
 OptionOutput("  GStreamer auto-downloaded           " GStreamer_AUTO_DOWNLOADED)
-OptionOutput("Disable APM MAVLink dialect           " QGC_DISABLE_APM_MAVLINK)
-OptionOutput("Disable APM plugin                    " QGC_DISABLE_APM_PLUGIN)
-OptionOutput("Disable PX4 plugin                    " QGC_DISABLE_PX4_PLUGIN)
+OptionOutput("Disable APM plugin factory            " QGC_DISABLE_APM_PLUGIN_FACTORY)
+OptionOutput("Disable PX4 plugin factory            " QGC_DISABLE_PX4_PLUGIN_FACTORY)
 OptionOutput("Enable code coverage                  " QGC_ENABLE_COVERAGE)
 OptionOutput("Enable AddressSanitizer               " QGC_ENABLE_ASAN)
 OptionOutput("Enable UndefinedBehaviorSanitizer     " QGC_ENABLE_UBSAN)

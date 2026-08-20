@@ -1,10 +1,5 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 25,
-    "patch": 0
-  },
   "configurePresets": [
     {
       "name": "default",
@@ -19,6 +14,20 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
       "inherits": ["release"]
+    },
+    {
+      "name": "default-relwithdebinfo",
+      "displayName": "Default (RelWithDebInfo)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": ["relwithdebinfo"]
+    },
+    {
+      "name": "default-minsizerel",
+      "displayName": "Default (MinSizeRel)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": ["minsizerel"]
     },
     {
       "name": "ccache",
@@ -46,10 +55,37 @@
       }
     },
     {
+      "name": "debug-no-tests",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "QGC_BUILD_TESTING": "OFF",
+        "QGC_DEBUG_QML": "ON"
+      }
+    },
+    {
       "name": "release",
       "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "QGC_BUILD_TESTING": "OFF",
+        "QGC_DEBUG_QML": "OFF"
+      }
+    },
+    {
+      "name": "relwithdebinfo",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "QGC_BUILD_TESTING": "OFF",
+        "QGC_DEBUG_QML": "OFF"
+      }
+    },
+    {
+      "name": "minsizerel",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "MinSizeRel",
         "QGC_BUILD_TESTING": "OFF",
         "QGC_DEBUG_QML": "OFF"
       }
@@ -66,16 +102,64 @@
   ],
   "buildPresets": [
     {
-      "name": "default",
+      "name": "build-defaults",
       "hidden": true,
       "jobs": 0
+    },
+    { "name": "default", "configurePreset": "default", "inherits": ["build-defaults"] },
+    {
+      "name": "default-release",
+      "configurePreset": "default-release",
+      "inherits": ["build-defaults"]
+    },
+    {
+      "name": "default-relwithdebinfo",
+      "configurePreset": "default-relwithdebinfo",
+      "inherits": ["build-defaults"]
+    },
+    {
+      "name": "default-minsizerel",
+      "configurePreset": "default-minsizerel",
+      "inherits": ["build-defaults"]
     }
   ],
   "testPresets": [
     {
-      "name": "default",
+      "name": "test-defaults",
       "hidden": true,
       "output": { "outputOnFailure": true }
+    },
+    { "name": "default", "configurePreset": "default", "inherits": ["test-defaults"] }
+  ],
+  "workflowPresets": [
+    {
+      "name": "default",
+      "steps": [
+        { "type": "configure", "name": "default" },
+        { "type": "build", "name": "default" },
+        { "type": "test", "name": "default" }
+      ]
+    },
+    {
+      "name": "default-release",
+      "steps": [
+        { "type": "configure", "name": "default-release" },
+        { "type": "build", "name": "default-release" }
+      ]
+    },
+    {
+      "name": "default-relwithdebinfo",
+      "steps": [
+        { "type": "configure", "name": "default-relwithdebinfo" },
+        { "type": "build", "name": "default-relwithdebinfo" }
+      ]
+    },
+    {
+      "name": "default-minsizerel",
+      "steps": [
+        { "type": "configure", "name": "default-minsizerel" },
+        { "type": "build", "name": "default-minsizerel" }
+      ]
     }
   ]
 }

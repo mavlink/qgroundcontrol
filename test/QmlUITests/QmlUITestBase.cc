@@ -3,14 +3,15 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
-#include <QtCore/QtMath>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QVariant>
+#include <QtCore/QtMath>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlIncubationController>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGRendererInterface>
 #include <QtQuickControls2/QQuickStyle>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -32,7 +33,7 @@
 // self-pumps), so we drain events for a fixed, minimal interval instead.
 static constexpr int kSettleDrainMs = 100;
 
-static QQuickItem *findVisibleItemImmediate(QQuickItem *root, const QString &objectName)
+static QQuickItem* findVisibleItemImmediate(QQuickItem* root, const QString& objectName)
 {
     if (!root || !root->isVisible()) {
         return nullptr;
@@ -41,20 +42,20 @@ static QQuickItem *findVisibleItemImmediate(QQuickItem *root, const QString &obj
         return root;
     }
     const auto children = root->childItems();
-    for (auto *child : children) {
-        if (auto *found = findVisibleItemImmediate(child, objectName)) {
+    for (auto* child : children) {
+        if (auto* found = findVisibleItemImmediate(child, objectName)) {
             return found;
         }
     }
     return nullptr;
 }
 
-QQuickItem *QmlUITestBase::findVisibleItem(QQuickItem *root, const QString &objectName, int timeoutMs)
+QQuickItem* QmlUITestBase::findVisibleItem(QQuickItem* root, const QString& objectName, int timeoutMs)
 {
     constexpr int pollIntervalMs = 50;
     int elapsed = 0;
     while (elapsed <= timeoutMs) {
-        if (auto *item = findVisibleItemImmediate(root, objectName)) {
+        if (auto* item = findVisibleItemImmediate(root, objectName)) {
             return item;
         }
         if (elapsed >= timeoutMs) {
@@ -82,12 +83,15 @@ void QmlUITestBase::startUI()
     MultiVehicleManager::instance()->init();
 
     // Suppress first-run prompts so they don't block the UI
-    AppSettings *appSettings = SettingsManager::instance()->appSettings();
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
     const QList<int> promptIds = QGCCorePlugin::instance()->firstRunPromptStdIds();
     for (int id : promptIds) {
         appSettings->firstRunPromptIdsMarkIdAsShown(id);
     }
 
+    QVERIFY2(QGCCorePlugin::instance(), "Core plugin not available");
+    // Custom builds may default advanced UI off; these tests exercise the full UI.
+    QGCCorePlugin::instance()->setProperty("showAdvancedUI", true);
     QVERIFY2(QGCCorePlugin::instance()->showAdvancedUI(), "Test requires Advanced UI mode");
 
     // Ignore benign Qt platform warnings that cannot be avoided in offscreen mode
@@ -95,8 +99,7 @@ void QmlUITestBase::startUI()
                      QRegularExpression(QStringLiteral("This plugin does not support propagateSizeHints")));
     ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Populating font family aliases")));
-    ignoreLogMessage("default", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("QRhiGles2")));
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("QRhiGles2")));
     // Async QML incubation rides QQuickWindow's render-loop controller, which never pumps in
     // offscreen mode, so a component still incubating at engine teardown logs this.
     ignoreLogMessage("default", QtInfoMsg,
@@ -115,14 +118,13 @@ void QmlUITestBase::startUI()
 #ifdef QT_DEBUG
     // Debug builds on macOS are ad-hoc signed with an unbound Info.plist, so
     // macOS never shows the camera permission dialog and silently denies access.
-    ignoreLogMessage("default", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Access to camera not granted")));
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("Access to camera not granted")));
 #endif
 
     _engine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
     QVERIFY(_engine);
 
-    _engine->addImageProvider(QStringLiteral("QGCImages"),               new QGCImageProvider());
+    _engine->addImageProvider(QStringLiteral("QGCImages"), new QGCImageProvider());
     _engine->addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
 
     _engine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow.qml")));
@@ -132,7 +134,7 @@ void QmlUITestBase::startUI()
     // and app message dialogs are shown for real during UI tests.
     qgcApp()->setQmlAppEngine(_engine);
 
-    _window = qobject_cast<QQuickWindow *>(_engine->rootObjects().first());
+    _window = qobject_cast<QQuickWindow*>(_engine->rootObjects().first());
     QVERIFY(_window);
 
     QVERIFY(QTest::qWaitForWindowExposed(_window));
@@ -166,7 +168,7 @@ void QmlUITestBase::destroyUIEngine()
         // pumps in offscreen mode, so pending incubators stall mid-creation and the
         // engine warns "items still being created at engine destruction". Pump the
         // controller directly until it drains so teardown is clean.
-        if (QQmlIncubationController *controller = _engine->incubationController()) {
+        if (QQmlIncubationController* controller = _engine->incubationController()) {
             QElapsedTimer drainTimer;
             drainTimer.start();
             while ((controller->incubatingObjectCount() > 0) && (drainTimer.elapsed() < 2000)) {
@@ -202,7 +204,7 @@ void QmlUITestBase::destroyUIEngine()
         QCoreApplication::processEvents();
     }
     qgcApp()->setQmlAppEngine(nullptr);
-    delete _engine;
+    QGCCorePlugin::instance()->destroyQmlApplicationEngine(_engine);
     _engine   = nullptr;
     _window   = nullptr;
     _rootItem = nullptr;
@@ -223,16 +225,16 @@ void QmlUITestBase::_verifyFileDialogTestHookConsumed()
     }
 }
 
-bool QmlUITestBase::clickButton(const QString &objectName)
+bool QmlUITestBase::clickButton(const QString& objectName)
 {
-    QQuickItem *btn = findVisibleItem(_rootItem, objectName);
+    QQuickItem* btn = findVisibleItem(_rootItem, objectName);
     if (!btn) {
         return false;
     }
     return _clickItemAt(btn, 0.5, 0.5, objectName);
 }
 
-bool QmlUITestBase::_clickItemAt(QQuickItem *item, qreal fractionX, qreal fractionY, const QString &objectName)
+bool QmlUITestBase::_clickItemAt(QQuickItem* item, qreal fractionX, qreal fractionY, const QString& objectName)
 {
     const QPointer<QQuickItem> guarded(item);
 
@@ -244,7 +246,7 @@ bool QmlUITestBase::_clickItemAt(QQuickItem *item, qreal fractionX, qreal fracti
     // position to be identical across two consecutive event-loop passes so
     // animated reflows have finished too.
     const auto scenePoint = [&]() -> QPointF {
-        for (QQuickItem *ancestor = guarded; ancestor; ancestor = ancestor->parentItem()) {
+        for (QQuickItem* ancestor = guarded; ancestor; ancestor = ancestor->parentItem()) {
             ancestor->ensurePolished();
         }
         return guarded->mapToScene(QPointF(guarded->width() * fractionX, guarded->height() * fractionY));
@@ -260,15 +262,14 @@ bool QmlUITestBase::_clickItemAt(QQuickItem *item, qreal fractionX, qreal fracti
             lastPos = pos;
             return stable;
         },
-        TestTimeout::shortMs(),
-        QStringLiteral("%1 position settled").arg(objectName));
+        TestTimeout::shortMs(), QStringLiteral("%1 position settled").arg(objectName));
     if (!guarded) {
-        QTest::qFail(qPrintable(QStringLiteral("%1 destroyed while waiting to click it").arg(objectName)),
-                     __FILE__, __LINE__);
+        QTest::qFail(qPrintable(QStringLiteral("%1 destroyed while waiting to click it").arg(objectName)), __FILE__,
+                     __LINE__);
         return false;
     }
     if (!settled) {
-        return false; // waitForCondition already logged the timeout
+        return false;  // waitForCondition already logged the timeout
     }
 
     // QTest::mouseClick warns and drops clicks outside the window (valid range is
@@ -278,11 +279,13 @@ bool QmlUITestBase::_clickItemAt(QQuickItem *item, qreal fractionX, qreal fracti
     // floating-point space and convert by truncation: rounding could push an
     // in-window position like x=799.6 in an 800px window to the invalid x=800.
     const QPointF scenePos = scenePoint();
-    if (scenePos.x() < 0 || scenePos.x() >= _window->width()
-        || scenePos.y() < 0 || scenePos.y() >= _window->height()) {
+    if (scenePos.x() < 0 || scenePos.x() >= _window->width() || scenePos.y() < 0 || scenePos.y() >= _window->height()) {
         QTest::qFail(qPrintable(QStringLiteral("%1 click point (%2, %3) is outside the window (%4x%5)")
-                                    .arg(objectName).arg(scenePos.x()).arg(scenePos.y())
-                                    .arg(_window->width()).arg(_window->height())),
+                                    .arg(objectName)
+                                    .arg(scenePos.x())
+                                    .arg(scenePos.y())
+                                    .arg(_window->width())
+                                    .arg(_window->height())),
                      __FILE__, __LINE__);
         return false;
     }
@@ -292,33 +295,34 @@ bool QmlUITestBase::_clickItemAt(QQuickItem *item, qreal fractionX, qreal fracti
     return true;
 }
 
-bool QmlUITestBase::clickItemFraction(const QString &objectName, qreal fractionX, qreal fractionY)
+bool QmlUITestBase::clickItemFraction(const QString& objectName, qreal fractionX, qreal fractionY)
 {
     // Fail loudly on nonsense fractions rather than silently clicking outside
     // the item (which would surface as an unrelated failure later in the test)
-    if (!qIsFinite(fractionX) || !qIsFinite(fractionY)
-        || (fractionX < 0) || (fractionX > 1) || (fractionY < 0) || (fractionY > 1)) {
-        QTest::qFail(qPrintable(QStringLiteral("clickItemFraction: fractions out of [0,1]: (%1, %2)")
-                                    .arg(fractionX).arg(fractionY)),
-                     __FILE__, __LINE__);
+    if (!qIsFinite(fractionX) || !qIsFinite(fractionY) || (fractionX < 0) || (fractionX > 1) || (fractionY < 0) ||
+        (fractionY > 1)) {
+        QTest::qFail(
+            qPrintable(
+                QStringLiteral("clickItemFraction: fractions out of [0,1]: (%1, %2)").arg(fractionX).arg(fractionY)),
+            __FILE__, __LINE__);
         return false;
     }
-    QQuickItem *item = findVisibleItem(_rootItem, objectName);
+    QQuickItem* item = findVisibleItem(_rootItem, objectName);
     if (!item) {
         return false;
     }
     return _clickItemAt(item, fractionX, fractionY, objectName);
 }
 
-QQuickItem *QmlUITestBase::findVisibleItemScrolled(const QString &objectName, const QString &flickableObjectName)
+QQuickItem* QmlUITestBase::findVisibleItemScrolled(const QString& objectName, const QString& flickableObjectName)
 {
     // Fast path: delegate already instantiated somewhere in the visual tree
-    QQuickItem *item = findVisibleItem(_rootItem, objectName, 500);
+    QQuickItem* item = findVisibleItem(_rootItem, objectName, 500);
     if (item) {
         return scrollIntoView(item, flickableObjectName) ? item : nullptr;
     }
 
-    QQuickItem *flickable = findVisibleItem(_rootItem, flickableObjectName);
+    QQuickItem* flickable = findVisibleItem(_rootItem, flickableObjectName);
     if (!flickable) {
         return nullptr;
     }
@@ -327,14 +331,13 @@ QQuickItem *QmlUITestBase::findVisibleItemScrolled(const QString &objectName, co
     // flickable through its content range to force the target row to instantiate.
     const double viewportHeight = flickable->height();
     if (viewportHeight <= 0) {
-        return nullptr; // not laid out yet: stepping cannot advance
+        return nullptr;  // not laid out yet: stepping cannot advance
     }
     // Iteration cap guards against content that grows as delegates instantiate
     constexpr int kMaxScrollSteps = 100;
     double y = 0;
     for (int step = 0; step < kMaxScrollSteps; step++, y += viewportHeight) {
-        const double maxContentY =
-            qMax(0.0, flickable->property("contentHeight").toDouble() - viewportHeight);
+        const double maxContentY = qMax(0.0, flickable->property("contentHeight").toDouble() - viewportHeight);
         const double clampedY = qMin(y, maxContentY);
         flickable->setProperty("contentY", clampedY);
         item = findVisibleItem(_rootItem, objectName, 100);
@@ -348,7 +351,7 @@ QQuickItem *QmlUITestBase::findVisibleItemScrolled(const QString &objectName, co
     return nullptr;
 }
 
-bool QmlUITestBase::clickButtonScrolled(const QString &objectName, const QString &flickableObjectName)
+bool QmlUITestBase::clickButtonScrolled(const QString& objectName, const QString& flickableObjectName)
 {
     if (!findVisibleItemScrolled(objectName, flickableObjectName)) {
         return false;
@@ -356,7 +359,7 @@ bool QmlUITestBase::clickButtonScrolled(const QString &objectName, const QString
     return clickButton(objectName);
 }
 
-bool QmlUITestBase::clickToolSelectDropdownButton(const QString &viewObjectName, int timeoutMs)
+bool QmlUITestBase::clickToolSelectDropdownButton(const QString& viewObjectName, int timeoutMs)
 {
     if (!clickButton(QStringLiteral("toolbar_qgcLogo"))) {
         QTest::qFail("Failed to click Q logo button", __FILE__, __LINE__);
@@ -378,7 +381,7 @@ bool QmlUITestBase::clickToolSelectDropdownButton(const QString &viewObjectName,
 // Recursively search the visible item tree for an item with the given
 // objectName whose "text" property contains the given substring. Used to
 // locate a specific dialog by its title label.
-static QQuickItem *_findVisibleItemWithText(QQuickItem *root, const QString &objectName, const QString &textSubstring)
+static QQuickItem* _findVisibleItemWithText(QQuickItem* root, const QString& objectName, const QString& textSubstring)
 {
     if (!root || !root->isVisible()) {
         return nullptr;
@@ -390,23 +393,23 @@ static QQuickItem *_findVisibleItemWithText(QQuickItem *root, const QString &obj
         }
     }
     const auto children = root->childItems();
-    for (auto *child : children) {
-        if (auto *found = _findVisibleItemWithText(child, objectName, textSubstring)) {
+    for (auto* child : children) {
+        if (auto* found = _findVisibleItemWithText(child, objectName, textSubstring)) {
             return found;
         }
     }
     return nullptr;
 }
 
-bool QmlUITestBase::dialogVisible(const QString &titleSubstring)
+bool QmlUITestBase::dialogVisible(const QString& titleSubstring)
 {
     return _findVisibleItemWithText(_rootItem, QStringLiteral("popupDialog_title"), titleSubstring) != nullptr;
 }
 
-bool QmlUITestBase::waitForDialog(const QString &titleSubstring, int timeoutMs)
+bool QmlUITestBase::waitForDialog(const QString& titleSubstring, int timeoutMs)
 {
-    return waitForCondition([this, &titleSubstring] { return dialogVisible(titleSubstring); },
-                            timeoutMs, QStringLiteral("dialog '%1'").arg(titleSubstring));
+    return waitForCondition([this, &titleSubstring] { return dialogVisible(titleSubstring); }, timeoutMs,
+                            QStringLiteral("dialog '%1'").arg(titleSubstring));
 }
 
 bool QmlUITestBase::acceptDialog(int timeoutMs)
@@ -427,7 +430,7 @@ bool QmlUITestBase::rejectDialog(int timeoutMs)
 
 // Format a property value for failure messages: quote strings, otherwise use
 // QVariant's string form ("true"/"false" for bools).
-static QString _displayValue(const QVariant &value)
+static QString _displayValue(const QVariant& value)
 {
     if (value.typeId() == QMetaType::QString) {
         return QStringLiteral("'%1'").arg(value.toString());
@@ -435,25 +438,25 @@ static QString _displayValue(const QVariant &value)
     return value.toString();
 }
 
-bool QmlUITestBase::_verifyItemProperty(const QString &objectName, const char *propertyName,
-                                        const QVariant &expectedValue, const QString &context)
+bool QmlUITestBase::_verifyItemProperty(const QString& objectName, const char* propertyName,
+                                        const QVariant& expectedValue, const QString& context)
 {
     // Item discovery is as asynchronous as state propagation (view transitions,
     // Loaders); poll for the item with the same ceiling as the state check.
     // findVisibleItem returns immediately once the item exists.
-    QQuickItem *item = findVisibleItem(_rootItem, objectName, 2000);
+    QQuickItem* item = findVisibleItem(_rootItem, objectName, 2000);
     if (!item) {
-        QTest::qFail(qPrintable(QStringLiteral("%1: item not found: %2").arg(context, objectName)),
-                     __FILE__, __LINE__);
+        QTest::qFail(qPrintable(QStringLiteral("%1: item not found: %2").arg(context, objectName)), __FILE__, __LINE__);
         return false;
     }
 
     // An invalid QVariant silently converts to false/"", which would make a
     // false/empty expected value pass vacuously on an item without the property.
     if (!item->property(propertyName).isValid()) {
-        QTest::qFail(qPrintable(QStringLiteral("%1: %2 has no '%3' property")
-                                    .arg(context, objectName, QLatin1String(propertyName))),
-                     __FILE__, __LINE__);
+        QTest::qFail(
+            qPrintable(
+                QStringLiteral("%1: %2 has no '%3' property").arg(context, objectName, QLatin1String(propertyName))),
+            __FILE__, __LINE__);
         return false;
     }
 
@@ -465,12 +468,10 @@ bool QmlUITestBase::_verifyItemProperty(const QString &objectName, const char *p
         [guardedItem, propertyName, expectedValue] {
             return guardedItem && (guardedItem->property(propertyName) == expectedValue);
         },
-        2000,
-        QStringLiteral("%1 %2 == %3").arg(objectName, QLatin1String(propertyName), _displayValue(expectedValue)));
+        2000, QStringLiteral("%1 %2 == %3").arg(objectName, QLatin1String(propertyName), _displayValue(expectedValue)));
     if (!matched) {
         QTest::qFail(qPrintable(QStringLiteral("%1: %2 expected %3=%4 but was %5")
-                                    .arg(context, objectName, QLatin1String(propertyName),
-                                         _displayValue(expectedValue),
+                                    .arg(context, objectName, QLatin1String(propertyName), _displayValue(expectedValue),
                                          guardedItem ? _displayValue(guardedItem->property(propertyName))
                                                      : QStringLiteral("<item destroyed>"))),
                      __FILE__, __LINE__);
@@ -479,25 +480,26 @@ bool QmlUITestBase::_verifyItemProperty(const QString &objectName, const char *p
     return true;
 }
 
-bool QmlUITestBase::verifyEnabled(const QString &objectName, bool expectedEnabled, const QString &context)
+bool QmlUITestBase::verifyEnabled(const QString& objectName, bool expectedEnabled, const QString& context)
 {
     return _verifyItemProperty(objectName, "enabled", expectedEnabled, context);
 }
 
-bool QmlUITestBase::verifyProperty(const QString &objectName, const char *propertyName,
-                                   const QVariant &expectedValue, const QString &context)
+bool QmlUITestBase::verifyProperty(const QString& objectName, const char* propertyName, const QVariant& expectedValue,
+                                   const QString& context)
 {
     return _verifyItemProperty(objectName, propertyName, expectedValue, context);
 }
 
-bool QmlUITestBase::verifyVisibility(const QString &objectName, bool expectedVisible, const QString &context)
+bool QmlUITestBase::verifyVisibility(const QString& objectName, bool expectedVisible, const QString& context)
 {
     const bool result = waitForCondition(
         [this, objectName, expectedVisible] {
             return (findVisibleItem(_rootItem, objectName, 0) != nullptr) == expectedVisible;
         },
         2000,
-        QStringLiteral("%1 %2").arg(objectName, expectedVisible ? QStringLiteral("visible") : QStringLiteral("absent")));
+        QStringLiteral("%1 %2").arg(objectName,
+                                    expectedVisible ? QStringLiteral("visible") : QStringLiteral("absent")));
     if (!result) {
         QTest::qFail(qPrintable(QStringLiteral("%1: %2 expected %3")
                                     .arg(context, objectName,
@@ -507,28 +509,65 @@ bool QmlUITestBase::verifyVisibility(const QString &objectName, bool expectedVis
     return result;
 }
 
-bool QmlUITestBase::verifyPrimary(const QString &objectName, bool expectedPrimary, const QString &context)
+bool QmlUITestBase::verifyPrimary(const QString& objectName, bool expectedPrimary, const QString& context)
 {
     return _verifyItemProperty(objectName, "primary", expectedPrimary, context);
 }
 
-bool QmlUITestBase::verifyChecked(const QString &objectName, bool expectedChecked, const QString &context)
+// On Linux CI (xvfb + llvmpipe) CMake gives View3D tests a real RHI OpenGL
+// backend so View3D genuinely renders. Where the harness still forces the
+// software backend (e.g. macOS offscreen), View3D cannot render — the scene
+// graph objects still instantiate — and Qt emits two known warnings when a
+// frame renders a View3D. In strict mode, assert those warnings actually
+// occur (rather than silently ignoring them) so a Qt behavior change is
+// caught; ignore absorbs nondeterministic repeats from subsequent render
+// passes. Detection must use the live window's renderer interface:
+// QQuickWindow::graphicsApi() does not reflect the QT_QUICK_BACKEND=software
+// adaptation.
+std::optional<bool> QmlUITestBase::expectSoftwareBackendWarnings(bool strict)
+{
+    if (!_window) {
+        return std::nullopt;  // called outside the startUI()/stopUI() window
+    }
+    const QSGRendererInterface* const rif = _window->rendererInterface();
+    if (!rif) {
+        return std::nullopt;
+    }
+    const bool rhiBased = QSGRendererInterface::isApiRhiBased(rif->graphicsApi());
+    if (!rhiBased) {
+        if (strict) {
+            // expect asserts each warning occurs at least once (verified at the
+            // end of the test); each verify consumes only ONE captured message,
+            // and Qt repeats the pair a nondeterministic number of times (once
+            // per View3D init/render pass), so ignore absorbs the surplus repeats
+            // that would otherwise fail strict mode.
+            expectLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("isApiRhiBased")));
+            expectLogMessage("default", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("Qt Quick 3D is not functional")));
+        }
+        ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("isApiRhiBased")));
+        ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("Qt Quick 3D is not functional")));
+    }
+    return rhiBased;
+}
+
+bool QmlUITestBase::verifyChecked(const QString& objectName, bool expectedChecked, const QString& context)
 {
     return _verifyItemProperty(objectName, "checked", expectedChecked, context);
 }
 
-bool QmlUITestBase::verifyText(const QString &objectName, const QString &expectedText, const QString &context)
+bool QmlUITestBase::verifyText(const QString& objectName, const QString& expectedText, const QString& context)
 {
     return _verifyItemProperty(objectName, "text", expectedText, context);
 }
 
-bool QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObjectName)
+bool QmlUITestBase::scrollIntoView(QQuickItem* item, const QString& flickableObjectName)
 {
     if (!item || !_rootItem || !_window) {
         return false;
     }
 
-    QQuickItem *flickable = findVisibleItem(_rootItem, flickableObjectName);
+    QQuickItem* flickable = findVisibleItem(_rootItem, flickableObjectName);
     if (!flickable) {
         return false;
     }
@@ -553,7 +592,7 @@ bool QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObj
             if (!guardedItem || !guardedFlickable) {
                 return false;
             }
-            for (QQuickItem *ancestor = guardedItem; ancestor; ancestor = ancestor->parentItem()) {
+            for (QQuickItem* ancestor = guardedItem; ancestor; ancestor = ancestor->parentItem()) {
                 ancestor->ensurePolished();
             }
             const QPointF sceneCenter =
@@ -581,30 +620,31 @@ bool QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObj
             guardedFlickable->setProperty("contentY", qBound(0.0, targetY, qMax(0.0, maxContentY)));
             return false;
         },
-        TestTimeout::shortMs(),
-        QStringLiteral("scrollIntoView settled"));
+        TestTimeout::shortMs(), QStringLiteral("scrollIntoView settled"));
     if (!settled) {
         // Record a test failure (as the pre-refactor QTRY_VERIFY_WITH_TIMEOUT did)
         // rather than letting a click on a still-clipped item surface as a
         // harder-to-diagnose failure later in the test.
-        QTest::qFail(qPrintable(QStringLiteral("scrollIntoView: item never settled inside flickable %1")
-                                    .arg(flickableObjectName)),
-                     __FILE__, __LINE__);
+        QTest::qFail(
+            qPrintable(
+                QStringLiteral("scrollIntoView: item never settled inside flickable %1").arg(flickableObjectName)),
+            __FILE__, __LINE__);
         return false;
     }
     return true;
 }
 
-void QmlUITestBase::runWithMockLink(
-    const std::function<MockLink *()> &factory,
-    const std::function<void(QPointer<MockLink>, Vehicle *)> &body)
+void QmlUITestBase::runWithMockLink(const std::function<MockLink*()>& factory,
+                                    const std::function<void(QPointer<MockLink>, Vehicle*)>& body)
 {
     startUI();
-    if (QTest::currentTestFailed()) return;
+    if (QTest::currentTestFailed())
+        return;
 
-    Vehicle *vehicle = nullptr;
+    Vehicle* vehicle = nullptr;
     QPointer<MockLink> mockLink = connectMockLinkAndWaitReady(factory, vehicle);
-    if (!mockLink) return;
+    if (!mockLink)
+        return;
 
     const auto cleanup = qScopeGuard([&] {
         disconnectMockLink(mockLink);
@@ -617,19 +657,18 @@ void QmlUITestBase::runWithMockLink(
 
 void QmlUITestBase::disconnectMockLink(QPointer<MockLink> mockLink)
 {
-    if (!mockLink) return;
+    if (!mockLink)
+        return;
 
-    QSignalSpy spyDisconnect(MultiVehicleManager::instance(),
-                             &MultiVehicleManager::activeVehicleChanged);
+    QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
     mockLink->disconnect();
     if (spyDisconnect.isValid()) {
-        (void)waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
+        (void) waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
     }
 }
 
-QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(
-    const std::function<MockLink *()> &factory,
-    Vehicle *&vehicleOut)
+QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(const std::function<MockLink*()>& factory,
+                                                              Vehicle*& vehicleOut)
 {
     vehicleOut = nullptr;
 
@@ -647,7 +686,7 @@ QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(
 
     // Helper: disconnect the MockLink and return {} so callers never receive a
     // live link they cannot clean up (the caller's qScopeGuard is not yet active).
-    const auto failAndDisconnect = [&](const char *msg) -> QPointer<MockLink> {
+    const auto failAndDisconnect = [&](const char* msg) -> QPointer<MockLink> {
         QTest::qFail(msg, __FILE__, __LINE__);
         mockLink->disconnect();
         return {};
@@ -657,7 +696,7 @@ QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(
         return failAndDisconnect("Timeout waiting for vehicle connection");
     }
 
-    Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();
+    Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
     if (!vehicle) {
         return failAndDisconnect("No active vehicle after MockLink connection");
     }
@@ -678,8 +717,7 @@ QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(
         return failAndDisconnect("Failed to create spy for parameterReadyVehicleAvailableChanged");
     }
     if (!MultiVehicleManager::instance()->parameterReadyVehicleAvailable()) {
-        if (!waitForSignal(spyParamsReady, 15000,
-                           QStringLiteral("parameterReadyVehicleAvailableChanged"))) {
+        if (!waitForSignal(spyParamsReady, 15000, QStringLiteral("parameterReadyVehicleAvailableChanged"))) {
             return failAndDisconnect("Timeout waiting for parameters to be ready");
         }
     }

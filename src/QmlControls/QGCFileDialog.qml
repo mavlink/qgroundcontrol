@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
-import Qt.labs.platform as Labs
 
 import QGroundControl
 import QGroundControl.Controls
@@ -124,7 +123,7 @@ Item {
 
     FileDialog {
         id:             fullFileDialog
-        currentFolder:  "file:///" + _root.folder
+        currentFolder:  QGCFileDialogController.localFileToUrl(_root.folder)
         nameFilters:    _root.nameFilters ? _root.nameFilters : []
         title:          _root.title
         defaultSuffix:  _root.defaultSuffix
@@ -140,12 +139,12 @@ Item {
         onRejected: _root.rejected()
     }
 
-    Labs.FolderDialog {
+    FolderDialog {
         id:             fullFolderDialog
-        currentFolder:  "file:///" + _root.folder
+        currentFolder:  QGCFileDialogController.localFileToUrl(_root.folder)
         title:          _root.title
 
-        onAccepted: _root.acceptedForLoad(QGCFileDialogController.urlToLocalFile(folder))
+        onAccepted: _root.acceptedForLoad(QGCFileDialogController.urlToLocalFile(selectedFolder))
         onRejected: _root.rejected()
     }
 

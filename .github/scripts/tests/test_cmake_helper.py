@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import subprocess
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-from cmake_helper import detect_jobs, main, read_cache_var
+from cmake_helper import detect_jobs, main
+from common.cmake import read_cache_var
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -39,6 +41,35 @@ class TestDetectJobs:
     def test_negative_exits(self) -> None:
         with pytest.raises(SystemExit):
             detect_jobs("-1")
+
+
+def test_configure_forwards_explicit_preset(monkeypatch: pytest.MonkeyPatch) -> None:
+    invocation: list[str] = []
+
+    def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[list[str]]:
+        invocation.extend(command)
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr("cmake_helper.subprocess.run", fake_run)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "cmake_helper.py",
+            "configure",
+            "--source-dir",
+            ".",
+            "--build-dir",
+            "build",
+            "--preset",
+            "Linux-debug",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert exc.value.code == 0
+    assert invocation[-2:] == ["--preset", "Linux-debug"]
 
 
 _SAMPLE_CACHE = """\

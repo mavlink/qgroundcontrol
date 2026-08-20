@@ -91,7 +91,7 @@ runs:
         fi
 
     - name: Moc Cache Stats
-      if: always() && runner.os != 'Windows'
+      if: always()
       shell: bash
       env:
         MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache

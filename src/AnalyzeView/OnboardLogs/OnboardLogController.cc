@@ -494,13 +494,24 @@ bool OnboardLogController::_prepareLogDownload()
 
 void OnboardLogController::refresh()
 {
+    if (_downloadingLogs || _requestingLogEntries || _ftpDeleting) {
+        // Re-entering the page while a transfer is active must not clear the model:
+        // the transfer holds pointers into it (issue #14881)
+        qCDebug(OnboardLogControllerLog) << "refresh: ignored - transfer in progress";
+        return;
+    }
+
     _logEntriesModel->clearAndDeleteContents();
     emit selectionChanged();
 
     if (_vehicle && !_ftpDisabled && _vehicle->capabilitiesKnown() && (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP)) {
+        qCDebug(OnboardLogControllerLog) << "refresh: using ftp transport";
         _setTransport(Transport::Ftp);
         _ftpStartListing();
     } else {
+        qCDebug(OnboardLogControllerLog) << "refresh: using message transport - ftpDisabled:" << _ftpDisabled
+            << "capabilitiesKnown:" << (_vehicle && _vehicle->capabilitiesKnown())
+            << "ftpCapable:" << bool(_vehicle && (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP));
         _setTransport(Transport::Messages);
         _requestLogList(0, 0xffff);
     }
@@ -528,9 +539,12 @@ void OnboardLogController::cancel()
     if (_transport == Transport::Ftp) {
         if (_vehicle) {
             if (_requestingLogEntries) {
-                _vehicle->ftpManager()->cancelListDirectory();
+                // Idle first: cancelListDirectory() completes synchronously and the abort
+                // completion must not start the fallback-root listing
+                _ftpListState = FtpListState::Idle;
                 _ftpDirsToList.clear();
-                _ftpFinishListing();
+                _vehicle->ftpManager()->cancelListDirectory();
+                _setListing(false);
             }
 
             if (_ftpDeleting) {
@@ -976,6 +990,11 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
         return;
     }
 
+    // Raw entries expose whether the server included the optional mtime field (date/time diagnosis)
+    qCDebug(OnboardLogControllerLog) << "ftp: raw entries for"
+        << ((_ftpListState == FtpListState::ListingRoot) ? _ftpLogRoot : (_ftpDirsToList.isEmpty() ? QString() : _ftpDirsToList.first()))
+        << dirList;
+
     if (_ftpListState == FtpListState::ListingRoot) {
         // The root listing may contain log files directly (flat layout, e.g. @MAV_LOG)
         // and/or date subdirectories to descend into (PX4 fallback /fs/microsd/log).
@@ -1102,6 +1121,14 @@ void OnboardLogController::_ftpListNextSubdir()
 void OnboardLogController::_ftpFinishListing()
 {
     _ftpListState = FtpListState::Idle;
+
+    // Firmware which NAKs kCmdListDirectoryWithTime (PX4 <= 1.17) reports no modification times
+    // over FTP. Fall back to the message based transport where LOG_ENTRY reports the dates (issue #14789).
+    if (_vehicle && _vehicle->ftpManager()->listDirectoryWithTimeUnsupported()) {
+        _ftpFallbackToMessages();
+        return;
+    }
+
     _setListing(false);
 }
 

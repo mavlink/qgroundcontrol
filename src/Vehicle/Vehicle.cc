@@ -712,11 +712,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
 
         // Following are ArduPilot dialect messages
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
         break;
-#endif
     case MAVLINK_MSG_ID_LOG_ENTRY:
     {
         mavlink_log_entry_t log{};
@@ -753,7 +751,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     emit mavlinkMessageReceived(message);
 }
 
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
 void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
 {
     // If CAMERA_IMAGE_CAPTURED is supported, then CAMERA_FEEDBACK is redundant and should be ignored
@@ -770,7 +767,6 @@ void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.img_idx;
     _cameraTriggerPoints->append(new QGCQGeoCoordinate(imageCoordinate, this));
 }
-#endif
 
 void Vehicle::_handleOrbitExecutionStatus(const mavlink_message_t& message)
 {
@@ -1970,32 +1966,32 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
     }
 }
 
-void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
+bool Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord, double relativeAltitudeMeters)
 {
     if (!centerCoord.isValid()) {
-        return;
+        return false;
     }
     if (!_vehicleSupports->roiMode()) {
         QGC::showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
-        return;
+        return false;
     }
 
-    if (px4Firmware()) {
-        // PX4 ignores the coordinate frame in COMMAND_INT and treats the altitude as AMSL,
-        // so a terrain query is required before we can send the ROI command.
-        _terrainQueryCoordinator->roiWithTerrain(centerCoord);
-    } else {
-        // ArduPilot handles MAV_FRAME_GLOBAL_RELATIVE_ALT correctly, so altitude 0 relative to
-        // home is a reasonable default for a map click with no altitude info.
-        // Sanity check Ardupilot. Max altitude processed is 83000
-        if ((centerCoord.altitude() >= 83000) || (centerCoord.altitude() <= -83000)) {
-            return;
-        }
-        _terrainQueryCoordinator->sendROICommand(centerCoord, MAV_FRAME_GLOBAL_RELATIVE_ALT, static_cast<float>(centerCoord.altitude()));
+    if (!qIsFinite(relativeAltitudeMeters)) {
+        relativeAltitudeMeters = 0;
+    }
+
+    if (!_firmwarePlugin->guidedModeROI(this, centerCoord, relativeAltitudeMeters)) {
+        return false;
+    }
+
+    if (_roiRelativeAltitudeMeters != relativeAltitudeMeters) {
+        _roiRelativeAltitudeMeters = relativeAltitudeMeters;
+        emit roiRelativeAltitudeMetersChanged();
     }
 
     // This is picked by qml to display coordinate over map
     emit roiCoordChanged(centerCoord);
+    return true;
 }
 
 void Vehicle::stopGuidedModeROI()
@@ -2237,11 +2233,9 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     if (ack.command == MAV_CMD_PREFLIGHT_STORAGE) {
         emit sensorsParametersResetAck(ack.result == MAV_RESULT_ACCEPTED);
     }
-#if !defined(QGC_NO_ARDUPILOT_DIALECT)
     if (ack.command == MAV_CMD_FLASH_BOOTLOADER && ack.result == MAV_RESULT_ACCEPTED) {
         QGC::showAppMessage(tr("Bootloader flash succeeded"));
     }
-#endif
 
     // Delegate queue-matching + user callbacks to MavCommandQueue.
     _mavCmdQueue->handleCommandAck(message, ack);
@@ -2364,7 +2358,7 @@ void Vehicle::startCalibration(QGCMAVLink::CalibrationType calType)
         param7 = 1;
         break;
     case QGCMAVLink::CalibrationPX4Airspeed:
-        param6 = 1;
+        param6 = 2;  // 1 is deprecated by PX4, still accepted but 2 is the standard value
         break;
     case QGCMAVLink::CalibrationPX4Pressure:
         param3 = 1;

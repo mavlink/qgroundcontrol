@@ -2,9 +2,7 @@
 #include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "ADSBVehicleManagerSettings.h"
-#ifndef QGC_NO_ARDUPILOT_DIALECT
 #include "APMMavlinkStreamRateSettings.h"
-#endif
 #include "AppSettings.h"
 #include "AutoConnectSettings.h"
 #include "BatteryIndicatorSettings.h"
@@ -13,6 +11,7 @@
 #include "FlightMapSettings.h"
 #include "FlightModeSettings.h"
 #include "FlyViewSettings.h"
+#include "GeoViewSettings.h"
 #include "GimbalControllerSettings.h"
 #include "MapsSettings.h"
 #include "OfflineMapsSettings.h"
@@ -66,6 +65,7 @@ void SettingsManager::init()
     _flightMapSettings = new FlightMapSettings(this);
     _flightModeSettings = new FlightModeSettings(this);
     _flyViewSettings = new FlyViewSettings(this);
+    _geoViewSettings = new GeoViewSettings(this);
     _gimbalControllerSettings = new GimbalControllerSettings(this);
     _mapsSettings = new MapsSettings(this);
     _offlineMapsSettings = new OfflineMapsSettings(this);
@@ -80,15 +80,11 @@ void SettingsManager::init()
     _logViewerSettings = new LogViewerSettings(this);
     _viewer3DSettings = new Viewer3DSettings(this);
     _adsbVehicleManagerSettings = new ADSBVehicleManagerSettings(this);
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
-#endif
 }
 
 ADSBVehicleManagerSettings *SettingsManager::adsbVehicleManagerSettings() const { return _adsbVehicleManagerSettings; }
-#ifndef QGC_NO_ARDUPILOT_DIALECT
 APMMavlinkStreamRateSettings *SettingsManager::apmMavlinkStreamRateSettings() const { return _apmMavlinkStreamRateSettings; }
-#endif
 AppSettings *SettingsManager::appSettings() const { return _appSettings; }
 AutoConnectSettings *SettingsManager::autoConnectSettings() const { return _autoConnectSettings; }
 BatteryIndicatorSettings *SettingsManager::batteryIndicatorSettings() const { return _batteryIndicatorSettings; }
@@ -97,6 +93,7 @@ FirmwareUpgradeSettings *SettingsManager::firmwareUpgradeSettings() const { retu
 FlightMapSettings *SettingsManager::flightMapSettings() const { return _flightMapSettings; }
 FlightModeSettings *SettingsManager::flightModeSettings() const { return _flightModeSettings; }
 FlyViewSettings *SettingsManager::flyViewSettings() const { return _flyViewSettings; }
+GeoViewSettings *SettingsManager::geoViewSettings() const { return _geoViewSettings; }
 GimbalControllerSettings *SettingsManager::gimbalControllerSettings() const { return _gimbalControllerSettings; }
 MapsSettings *SettingsManager::mapsSettings() const { return _mapsSettings; }
 OfflineMapsSettings *SettingsManager::offlineMapsSettings() const { return _offlineMapsSettings; }

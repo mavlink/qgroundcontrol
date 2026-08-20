@@ -18,25 +18,31 @@
       "name": "Linux",
       "displayName": "Linux Release",
       "inherits": ["release", "linux-base"],
-      "binaryDir": "${sourceParentDir}/build/Linux"
+      "binaryDir": "${sourceDir}/build/Linux"
     },
     {
       "name": "Linux-debug",
       "displayName": "Linux Debug",
       "inherits": ["debug", "linux-base"],
-      "binaryDir": "${sourceParentDir}/build/Linux-debug"
+      "binaryDir": "${sourceDir}/build/Linux-debug"
+    },
+    {
+      "name": "Linux-relwithdebinfo",
+      "displayName": "Linux RelWithDebInfo",
+      "inherits": ["relwithdebinfo", "linux-base"],
+      "binaryDir": "${sourceDir}/build/Linux-relwithdebinfo"
     },
     {
       "name": "Linux-coverage",
       "displayName": "Linux Coverage",
       "inherits": ["coverage", "linux-base"],
-      "binaryDir": "${sourceParentDir}/build/Linux-coverage"
+      "binaryDir": "${sourceDir}/build/Linux-coverage"
     },
     {
       "name": "Linux-arm64",
       "displayName": "Linux ARM64 Release",
       "inherits": ["release", "linux-base"],
-      "binaryDir": "${sourceParentDir}/build/Linux-arm64",
+      "binaryDir": "${sourceDir}/build/Linux-arm64",
       "cacheVariables": {
         "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
       }
@@ -44,8 +50,8 @@
     {
       "name": "Linux-arm64-debug",
       "displayName": "Linux ARM64 Debug",
-      "inherits": ["debug", "linux-base"],
-      "binaryDir": "${sourceParentDir}/build/Linux-arm64-debug",
+      "inherits": ["debug-no-tests", "linux-base"],
+      "binaryDir": "${sourceDir}/build/Linux-arm64-debug",
       "cacheVariables": {
         "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
       }
@@ -54,7 +60,7 @@
       "name": "Linux-deb",
       "displayName": "Linux Release (.deb package)",
       "inherits": ["release", "linux-base"],
-      "binaryDir": "${sourceParentDir}/build/Linux-deb",
+      "binaryDir": "${sourceDir}/build/Linux-deb",
       "cacheVariables": {
         "QGC_CPACK_GENERATOR": "DEB"
       }
@@ -63,40 +69,65 @@
       "name": "Linux-rpm",
       "displayName": "Linux Release (.rpm package)",
       "inherits": ["release", "linux-base"],
-      "binaryDir": "${sourceParentDir}/build/Linux-rpm",
+      "binaryDir": "${sourceDir}/build/Linux-rpm",
       "cacheVariables": {
         "QGC_CPACK_GENERATOR": "RPM"
       }
     }
   ],
   "buildPresets": [
-    { "name": "Linux", "configurePreset": "Linux", "inherits": ["default"] },
-    { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["default"] },
-    { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["default"] },
-    { "name": "Linux-arm64", "configurePreset": "Linux-arm64", "inherits": ["default"] },
-    { "name": "Linux-arm64-debug", "configurePreset": "Linux-arm64-debug", "inherits": ["default"] },
-    { "name": "Linux-deb", "configurePreset": "Linux-deb", "inherits": ["default"] },
-    { "name": "Linux-rpm", "configurePreset": "Linux-rpm", "inherits": ["default"] }
+    { "name": "Linux", "configurePreset": "Linux", "inherits": ["build-defaults"] },
+    { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["build-defaults"] },
+    { "name": "Linux-relwithdebinfo", "configurePreset": "Linux-relwithdebinfo", "inherits": ["build-defaults"] },
+    { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["build-defaults"] },
+    { "name": "Linux-arm64", "configurePreset": "Linux-arm64", "inherits": ["build-defaults"] },
+    { "name": "Linux-arm64-debug", "configurePreset": "Linux-arm64-debug", "inherits": ["build-defaults"] },
+    { "name": "Linux-deb", "configurePreset": "Linux-deb", "inherits": ["build-defaults"] },
+    { "name": "Linux-rpm", "configurePreset": "Linux-rpm", "inherits": ["build-defaults"] }
   ],
   "testPresets": [
-    { "name": "Linux", "configurePreset": "Linux", "inherits": ["default"] },
-    { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["default"] },
-    { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["default"] }
+    { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["test-defaults"] },
+    { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["test-defaults"] }
   ],
   "packagePresets": [
-    { "name": "Linux", "configurePreset": "Linux" },
-    { "name": "Linux-arm64", "configurePreset": "Linux-arm64" },
-    { "name": "Linux-deb", "configurePreset": "Linux-deb", "generators": ["DEB"] },
-    { "name": "Linux-rpm", "configurePreset": "Linux-rpm", "generators": ["RPM"] }
+    { "name": "Linux-deb", "configurePreset": "Linux-deb", "generators": ["DEB"], "configurations": ["Release"] },
+    { "name": "Linux-rpm", "configurePreset": "Linux-rpm", "generators": ["RPM"], "configurations": ["Release"] }
   ],
   "workflowPresets": [
     {
       "name": "Linux",
       "steps": [
         { "type": "configure", "name": "Linux" },
-        { "type": "build", "name": "Linux" },
-        { "type": "test", "name": "Linux" },
-        { "type": "package", "name": "Linux" }
+        { "type": "build", "name": "Linux" }
+      ]
+    },
+    {
+      "name": "Linux-relwithdebinfo",
+      "steps": [
+        { "type": "configure", "name": "Linux-relwithdebinfo" },
+        { "type": "build", "name": "Linux-relwithdebinfo" }
+      ]
+    },
+    {
+      "name": "Linux-coverage",
+      "steps": [
+        { "type": "configure", "name": "Linux-coverage" },
+        { "type": "build", "name": "Linux-coverage" },
+        { "type": "test", "name": "Linux-coverage" }
+      ]
+    },
+    {
+      "name": "Linux-arm64",
+      "steps": [
+        { "type": "configure", "name": "Linux-arm64" },
+        { "type": "build", "name": "Linux-arm64" }
+      ]
+    },
+    {
+      "name": "Linux-arm64-debug",
+      "steps": [
+        { "type": "configure", "name": "Linux-arm64-debug" },
+        { "type": "build", "name": "Linux-arm64-debug" }
       ]
     },
     {

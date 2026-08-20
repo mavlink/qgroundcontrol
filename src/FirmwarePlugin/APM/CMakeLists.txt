@@ -6,24 +6,22 @@ if(NOT QGC_DISABLE_APM_PLUGIN_FACTORY)
     )
 endif()
 
-if(NOT QGC_DISABLE_APM_PLUGIN)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            APM.h
-            APMFirmwarePlugin.cc
-            APMFirmwarePlugin.h
-            APMParameterMetaData.cc
-            APMParameterMetaData.h
-            ArduCopterFirmwarePlugin.cc
-            ArduCopterFirmwarePlugin.h
-            ArduPlaneFirmwarePlugin.cc
-            ArduPlaneFirmwarePlugin.h
-            ArduRoverFirmwarePlugin.cc
-            ArduRoverFirmwarePlugin.h
-            ArduSubFirmwarePlugin.cc
-            ArduSubFirmwarePlugin.h
-    )
-endif()
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        APM.h
+        APMFirmwarePlugin.cc
+        APMFirmwarePlugin.h
+        APMParameterMetaData.cc
+        APMParameterMetaData.h
+        ArduCopterFirmwarePlugin.cc
+        ArduCopterFirmwarePlugin.h
+        ArduPlaneFirmwarePlugin.cc
+        ArduPlaneFirmwarePlugin.h
+        ArduRoverFirmwarePlugin.cc
+        ArduRoverFirmwarePlugin.h
+        ArduSubFirmwarePlugin.cc
+        ArduSubFirmwarePlugin.h
+)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

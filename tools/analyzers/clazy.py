@@ -42,7 +42,7 @@ class ClazyAnalyzer(AnalyzerBase):
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         if not self.compile_commands.exists():
             log_warn("compile_commands.json not found - skipping clazy")
-            log_info("Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
+            log_info("Run: just configure")
             return AnalysisResult(tool=self.name, passed=True, output="Skipped")
 
         if shutil.which("clazy-standalone") is None:

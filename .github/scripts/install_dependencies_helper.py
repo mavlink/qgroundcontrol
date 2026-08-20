@@ -41,7 +41,7 @@ def _get_multiarch() -> str:
 
 
 def enable_universe() -> None:
-    """Enable the Ubuntu universe repository if not already present."""
+    """Enable universe; the following bounded install step refreshes package lists."""
     sources_dirs = [Path("/etc/apt/sources.list"), Path("/etc/apt/sources.list.d")]
     universe_found = False
 
@@ -67,8 +67,6 @@ def enable_universe() -> None:
     if not universe_found:
         _sudo(["apt-get", *APT_OPTS, "install", "-y", "-qq", "software-properties-common"])
         _sudo(["add-apt-repository", "-y", "universe"])
-
-    _sudo(["apt-get", *APT_OPTS, "update", "-y", "-qq"])
 
 
 def fix_apt_alternatives() -> None:

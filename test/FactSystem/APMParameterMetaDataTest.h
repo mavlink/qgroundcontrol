@@ -28,4 +28,6 @@ private slots:
     void _invalidEnumKeySkipped();
     void _invalidBitmaskIndexSkipped();
     void _outOfRangeBitmaskIndexSkipped();
+    void _parseEnumSentinelOutsideRange();
+    void _parseEnumNegativeSentinelIntType();
 };

@@ -167,6 +167,8 @@ Qt*-linux*.tar.*
 # Local Development Tools
 # ------------------------------------------------------------------------------
 
+/profiler/
+
 # AI Assistants
 .claude/
 .gemini/
@@ -176,6 +178,7 @@ Qt*-linux*.tar.*
 # Python tooling caches
 .ruff_cache/
 .pytest_cache/
+pytest-of-*/
 .import_linter_cache/
 .venv/
 

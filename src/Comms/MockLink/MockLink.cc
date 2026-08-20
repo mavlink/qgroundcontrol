@@ -342,8 +342,8 @@ void MockLink::run1HzTasks()
         _sendRCChannels();
     }
 
-    if (_sendHomePositionDelayCount > 0) {
-        // We delay home position for better testing
+    if (_sendHomePositionDelayCount > 0 && !QGC::runningUnitTests()) {
+        // We delay home position to simulate a real vehicle, but not during unit tests to keep them fast
         _sendHomePositionDelayCount--;
     } else {
         _sendHomePosition();
@@ -2076,11 +2076,19 @@ void MockLink::_handleCommandInt(const mavlink_message_t &msg)
     mavlink_command_int_t request{};
     mavlink_msg_command_int_decode(&msg, &request);
 
-    // MockLink does not implement any COMMAND_INT commands yet, so it reports them as
-    // unsupported (mirroring the COMMAND_LONG default for unrecognized commands). This
-    // lets unit tests exercise "try command, fall back to legacy message" code paths
+    // Unrecognized commands are reported as unsupported (mirroring the COMMAND_LONG default).
+    // This lets unit tests exercise "try command, fall back to legacy message" code paths
     // such as Vehicle::setEstimatorOrigin.
-    const uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
+    uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
+
+    switch (request.command) {
+    case MAV_CMD_DO_SET_ROI_LOCATION:
+        // Unit test support: accept ROI commands so tests can verify Vehicle::guidedModeROI
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    default:
+        break;
+    }
 
     mavlink_message_t commandAck{};
     (void) mavlink_msg_command_ack_pack_chan(
@@ -2132,24 +2140,21 @@ void MockLink::_respondWithAutopilotVersion()
     };
     FlightVersion flightVersion;
 
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         flightVersion.parts.major = 4;
         flightVersion.parts.minor = 7;
         flightVersion.parts.patch = 0;
         flightVersion.parts.type = FIRMWARE_VERSION_TYPE_OFFICIAL;
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
-#endif
         flightVersion.parts.major = 1;
         flightVersion.parts.minor = 17;
         flightVersion.parts.patch = 0;
         flightVersion.parts.type = FIRMWARE_VERSION_TYPE_OFFICIAL;
-#ifndef QGC_NO_ARDUPILOT_DIALECT
     }
-#endif
 
     const uint8_t customVersion[8]{};
     const uint64_t capabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MISSION_INT
+        | MAV_PROTOCOL_CAPABILITY_COMMAND_INT   // matches modern PX4/ArduPilot so tests exercise the preferred COMMAND_INT path
         | ((_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0)
         | (_ftpCapability ? MAV_PROTOCOL_CAPABILITY_FTP : 0);
 
@@ -2660,6 +2665,29 @@ void MockLink::_handleLogRequestList(const mavlink_message_t &msg)
         return;
     }
 
+    // When simulated FTP log files are set, LOG_ENTRY responses describe the same logs so
+    // both transports report a consistent log list (matching PX4 behavior).
+    const QList<MockLinkFTP::LogFile> logFiles = _mockLinkFTP->logFiles();
+    if (!_logsErased && !logFiles.isEmpty()) {
+        const uint16_t numLogs = static_cast<uint16_t>(logFiles.count());
+        for (uint16_t id = 0; id < numLogs; id++) {
+            mavlink_message_t responseMsg{};
+            (void) mavlink_msg_log_entry_pack_chan(
+                _vehicleSystemId,
+                _vehicleComponentId,
+                _outgoingMavlinkChannel,
+                &responseMsg,
+                id,                                             // log id
+                numLogs,                                        // num_logs
+                numLogs - 1,                                    // last_log_num
+                logFiles[id].mtime,                             // time_utc
+                static_cast<uint32_t>(logFiles[id].size)        // size
+            );
+            respondWithMavlinkMessage(responseMsg);
+        }
+        return;
+    }
+
     const uint16_t numLogs = _logsErased ? 0 : 1;
     const uint16_t logId   = _logsErased ? 0 : _logDownloadLogId;
     const uint32_t logSize = _logsErased ? 0 : _logDownloadFileSize;
@@ -2709,34 +2737,62 @@ QString MockLink::_createRandomFile(uint32_t byteCount)
     return tempFile.fileName();
 }
 
+QString MockLink::_createLogContentsFile(const QString &logName)
+{
+    QTemporaryFile tempFile;
+    tempFile.setAutoRemove(false);
+    if (!tempFile.open()) {
+        qCWarning(MockLinkLog) << "_createLogContentsFile open failed" << tempFile.errorString();
+        return QString();
+    }
+    (void) tempFile.write(_mockLinkFTP->logFileContents(logName));
+    tempFile.close();
+    return tempFile.fileName();
+}
+
 void MockLink::_handleLogRequestData(const mavlink_message_t &msg)
 {
     mavlink_log_request_data_t request{};
     mavlink_msg_log_request_data_decode(&msg, &request);
 
+    // Serialize with _logDownloadWorker which reads this state every 2ms on the worker thread
+    QMutexLocker locker(&_logDownloadMutex);
+
+    const QList<MockLinkFTP::LogFile> logFiles = _logsErased ? QList<MockLinkFTP::LogFile>() : _mockLinkFTP->logFiles();
+    if (!logFiles.isEmpty()) {
+        // Serve the simulated FTP log files so LOG_ENTRY/LOG_REQUEST_DATA stay consistent with the FTP transport
+        if (request.id >= logFiles.count()) {
+            qCWarning(MockLinkLog) << "_handleLogRequestData id out of range:" << request.id;
+            return;
+        }
+        if (_logDownloadFilename.isEmpty() || (_logDownloadId != request.id)) {
+            _logDownloadFilename = _createLogContentsFile(logFiles[request.id].name);
+            _logDownloadId = request.id;
+            _logDownloadSize = static_cast<uint32_t>(logFiles[request.id].size);
+        }
+    } else {
 #ifdef QGC_UNITTEST_BUILD
-    if (_logDownloadFilename.isEmpty()) {
-        _logDownloadFilename = _createRandomFile(_logDownloadFileSize);
-    }
+        if (_logDownloadFilename.isEmpty()) {
+            _logDownloadFilename = _createRandomFile(_logDownloadFileSize);
+        }
 #endif
-
-    if (request.id != 0) {
-        qCWarning(MockLinkLog) << "_handleLogRequestData id must be 0";
-        return;
+        if (request.id != _logDownloadLogId) {
+            qCWarning(MockLinkLog) << "_handleLogRequestData id must be" << _logDownloadLogId;
+            return;
+        }
+        _logDownloadId = _logDownloadLogId;
+        _logDownloadSize = _logDownloadFileSize;
     }
 
-    if (request.ofs > (_logDownloadFileSize - 1)) {
-        qCWarning(MockLinkLog) << "_handleLogRequestData offset past end of file request.ofs:size" << request.ofs << _logDownloadFileSize;
+    if (request.ofs > (_logDownloadSize - 1)) {
+        qCWarning(MockLinkLog) << "_handleLogRequestData offset past end of file request.ofs:size" << request.ofs << _logDownloadSize;
         return;
     }
 
     // This will trigger _logDownloadWorker to send data
-    // Thread-safe access: Main thread writes, worker thread reads every 2ms. Serialize to avoid
-    // worker reading inconsistent offset/count or using stale values while downloading.
-    QMutexLocker locker(&_logDownloadMutex);
     _logDownloadCurrentOffset = request.ofs;
-    if (request.ofs + request.count > _logDownloadFileSize) {
-        request.count = _logDownloadFileSize - request.ofs;
+    if (request.ofs + request.count > _logDownloadSize) {
+        request.count = _logDownloadSize - request.ofs;
     }
     _logDownloadBytesRemaining = request.count;
 }
@@ -2779,7 +2835,7 @@ void MockLink::_logDownloadWorker()
         _vehicleComponentId,
         _outgoingMavlinkChannel,
         &responseMsg,
-        _logDownloadLogId,
+        _logDownloadId,
         _logDownloadCurrentOffset,
         bytesToRead,
         &buffer[0]

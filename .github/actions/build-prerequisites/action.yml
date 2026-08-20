@@ -62,6 +62,14 @@ runs:
       id: config
       uses: ./.github/actions/build-config
 
+    - name: Export preset environment
+      if: inputs.mode == 'android'
+      shell: bash
+      env:
+        ANDROID_MIN_SDK_VALUE: ${{ steps.config.outputs.android_min_sdk }}
+      run: | # zizmor: ignore[github-env] value comes from checked-in build config
+        echo "ANDROID_MIN_SDK=${ANDROID_MIN_SDK_VALUE}" >> "$GITHUB_ENV"
+
     - name: Free disk space (Linux)
       if: runner.os == 'Linux'
       uses: ./.github/actions/free-disk-space
@@ -85,8 +93,8 @@ runs:
 
     - uses: lukka/get-cmake@v4.3.2
       with:
-        useCloudCache: false
-        useLocalCache: true
+        useCloudCache: true
+        useLocalCache: false
 
     - uses: ./.github/actions/setup-python
       with:
