@@ -1,5 +1,7 @@
 # macOS GStreamer SDK discovery — invoked by Orchestrator.cmake.
 
+include_guard(GLOBAL)
+
 macro(_qgc_discover_macos_sdk)
     if(NOT DEFINED GStreamer_ROOT_DIR)
         if(EXISTS "/Library/Frameworks/GStreamer.framework")
@@ -137,8 +139,6 @@ endmacro()
 # Apple framework overlay — when GStreamer.framework is in use, link the framework
 # directly and add its Headers to the include path. Called from the pkg-config
 # branch only (iOS uses xcframework which bypasses this entirely).
-# Converted from macro to function in PR5: only mutates GLOBAL imported targets
-# and the layout target, so PARENT_SCOPE leakage isn't needed.
 function(_qgc_apply_macos_framework_overlay)
     if(NOT GSTREAMER_FRAMEWORK_PATH)
         message(FATAL_ERROR

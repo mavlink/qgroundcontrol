@@ -1,9 +1,6 @@
 # Android GStreamer SDK discovery — invoked by Orchestrator.cmake.
 
-if(_qgc_gstreamer_android_included)
-    return()
-endif()
-set(_qgc_gstreamer_android_included TRUE)
+include_guard(GLOBAL)
 
 # Single source of truth for Android ABI → cerbero dir + textrel/bsymbolic flags.
 # Sets, in PARENT_SCOPE: <PFX>_DIR, <PFX>_NEEDS_TEXTREL_ERROR, <PFX>_NEEDS_BSYMBOLIC_FIX.
@@ -368,6 +365,7 @@ if(GSTREAMER_IS_MOBILE AND TARGET GStreamerMobile)
                     "${_gst_java_dest_dir}/org/freedesktop/gstreamer/${_java_subdir}/"
                 BYPRODUCTS
                     "${_gst_java_dest_dir}/org/freedesktop/gstreamer/${_java_subdir}/${_java_filename}"
+                VERBATIM
             )
             add_dependencies(copyjavasource_${CMAKE_ANDROID_ARCH_ABI} ${COPYJAVASOURCE_TGT})
         endforeach()
@@ -465,6 +463,7 @@ if(fonts IN_LIST GStreamerMobile_FIND_COMPONENTS)
             BYPRODUCTS
                 "${_gst_assets_dest_dir}/fontconfig/fonts/truetype/Ubuntu-R.ttf"
                 "${_gst_assets_dest_dir}/fontconfig/fonts.conf"
+            VERBATIM
         )
         # INTERFACE GStreamer::mobile can't carry build deps; attach asset copy to the app.
         if(TARGET ${CMAKE_PROJECT_NAME})
@@ -490,6 +489,7 @@ if(ca_certificates IN_LIST GStreamerMobile_FIND_COMPONENTS)
                 "${GStreamer_CA_BUNDLE}"
                 "${_gst_assets_dest_dir}/ssl/certs/"
             BYPRODUCTS "${_gst_assets_dest_dir}/ssl/certs/ca-certificates.crt"
+            VERBATIM
         )
         if(TARGET ${CMAKE_PROJECT_NAME})
             add_dependencies(${CMAKE_PROJECT_NAME} copycacertificatesres_${CMAKE_ANDROID_ARCH_ABI})

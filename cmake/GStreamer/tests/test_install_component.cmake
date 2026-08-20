@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.25)
+
+if(NOT DEFINED INSTALL_SCRIPT OR INSTALL_SCRIPT STREQUAL "")
+    message(FATAL_ERROR "INSTALL_SCRIPT is required")
+endif()
+if(NOT EXISTS "${INSTALL_SCRIPT}")
+    message(FATAL_ERROR "GStreamer install script does not exist: ${INSTALL_SCRIPT}")
+endif()
+
+file(READ "${INSTALL_SCRIPT}" _install_script)
+if(_install_script MATCHES [[CMAKE_INSTALL_COMPONENT STREQUAL "Runtime"]])
+    message(FATAL_ERROR "GStreamer install rules use the Runtime component excluded by CPack")
+endif()
+if(NOT _install_script MATCHES [[CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified"]])
+    message(FATAL_ERROR "GStreamer install rules are missing from CPack's Unspecified component")
+endif()

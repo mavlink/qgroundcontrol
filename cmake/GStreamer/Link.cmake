@@ -175,7 +175,11 @@ endmacro()
 #   HIDE         - Use -hidden-l (Apple) or --exclude-libs (Unix) to hide symbols
 #   WARN_MISSING - Warn and skip missing libraries instead of failing
 function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _grll_HINTS)
-    cmake_parse_arguments(_grll "HIDE;WARN_MISSING" "" "" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 4 _grll "HIDE;WARN_MISSING" "" "")
+    if(_grll_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "_gst_resolve_and_link_libraries: unknown arguments: ${_grll_UNPARSED_ARGUMENTS}")
+    endif()
     _gst_coalesce_existing_paths(_grll_HINTS)
 
     if(_grll_HIDE AND APPLE)

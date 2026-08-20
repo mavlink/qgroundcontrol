@@ -41,6 +41,13 @@ gstreamer_apply_pkgconfig_env(
 qgc_test_assert_streq("SYSTEM_AUGMENT prepends"
     "/usr/lib/x86_64-linux-gnu/pkgconfig${_sep}/system/lib/pkgconfig"
     "$ENV{PKG_CONFIG_PATH}")
+gstreamer_apply_pkgconfig_env(
+    MODE SYSTEM_AUGMENT
+    LIBDIR "/usr/lib/x86_64-linux-gnu/pkgconfig"
+)
+qgc_test_assert_streq("SYSTEM_AUGMENT is idempotent"
+    "/usr/lib/x86_64-linux-gnu/pkgconfig${_sep}/system/lib/pkgconfig"
+    "$ENV{PKG_CONFIG_PATH}")
 qgc_test_pass("SYSTEM_AUGMENT prepend")
 
 set(ENV{PKG_CONFIG_PATH} "")

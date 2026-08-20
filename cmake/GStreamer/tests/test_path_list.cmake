@@ -5,6 +5,7 @@ include(Link)
 
 set(_sandbox "${CMAKE_CURRENT_BINARY_DIR}/path list sandbox")
 set(_include_dir "${_sandbox}/sdk root/include/gstreamer-1.0")
+file(REMOVE_RECURSE "${_sandbox}")
 file(MAKE_DIRECTORY "${_include_dir}")
 
 set(_paths
@@ -49,4 +50,5 @@ qgc_test_assert_not_in_list("removes split include suffix from options" "Files/g
 qgc_test_assert_in_list("recovers split library dir" "${_windows_sdk}/lib" _pc_LIBRARY_DIRS)
 qgc_test_assert_in_list("keeps real link option" "-Wl,keep-me" _pc_LDFLAGS_OTHER)
 qgc_test_assert_not_in_list("removes split library suffix from options" "Files/gstreamer/1.0/msvc_x86_64/lib" _pc_LDFLAGS_OTHER)
+file(REMOVE_RECURSE "${_sandbox}")
 qgc_test_pass("coalesce_existing_paths")

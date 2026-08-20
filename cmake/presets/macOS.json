@@ -9,7 +9,7 @@
       "inherits": ["ccache"],
       "toolchainFile": "$penv{QT_ROOT_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
       "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "x86_64h;arm64"
+        "QGC_MACOS_UNIVERSAL_BUILD": "OFF"
       },
       "condition": {
         "type": "equals",

@@ -1,5 +1,9 @@
 # Linux GStreamer SDK discovery — invoked by Orchestrator.cmake.
 
+include_guard(GLOBAL)
+
+include(CMakePushCheckState)
+
 macro(_qgc_discover_linux_sdk)
     if(NOT DEFINED GStreamer_ROOT_DIR)
         if(CMAKE_SYSROOT)
@@ -65,13 +69,13 @@ endmacro()
 macro(_qgc_detect_dmabuf)
     include(CheckCXXSourceCompiles)
     if(TARGET GStreamer::GStreamer)
-        set(_gst_dmabuf_req_libs_backup "${CMAKE_REQUIRED_LIBRARIES}")
+        cmake_push_check_state(RESET)
         set(CMAKE_REQUIRED_LIBRARIES GStreamer::GStreamer)
         check_cxx_source_compiles("
             #include <gst/allocators/gstdmabuf.h>
             int main() { (void)gst_is_dmabuf_memory; return 0; }
         " QGC_GST_HAS_DMABUF)
-        set(CMAKE_REQUIRED_LIBRARIES "${_gst_dmabuf_req_libs_backup}")
+        cmake_pop_check_state()
     else()
         message(STATUS "GStreamer: DMABuf probe skipped — GStreamer::GStreamer target not defined")
     endif()

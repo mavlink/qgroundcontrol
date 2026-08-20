@@ -33,6 +33,8 @@
 #                  gstreamer_install_{linux,windows,macos}_sdk +
 #                  gstreamer_install_platform_sdk dispatcher
 
+include_guard(GLOBAL)
+
 # Order matters: Install depends on Components (gstreamer_platform_plugin_attrs).
 include("${CMAKE_CURRENT_LIST_DIR}/Json.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Components.cmake")
