@@ -12,4 +12,4 @@ Even a loss rate in the high single digits can lead to intermittent failures of 
 Higher loss rates could lead to 100% failure.
 
 There is also the more remote possibility of either firmware or QGC bugs.
-To see the details of the back and forth message traffic of the protocol you can turn on [Console Logging](../settings_view/console_logging.md) for the Parameter Protocol.
+To see the details of the back and forth message traffic of the protocol you can turn on the `FactSystem.ParameterManager` [console logging](../troubleshooting/console_logging.md) category.

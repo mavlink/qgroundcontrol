@@ -16,7 +16,7 @@ In order for the _QGroundControl_ development team to debug these issues the fol
 The following steps are required for debugging both types of problems:
 
 1. Restart QGC
-1. Turn on [console logging](../settings_view/console_logging.md) with the log option: `GuidedActionsControllerLog`.
+1. Turn on [console logging](../troubleshooting/console_logging.md) with the logging category: `QMLControls.GuidedActionsController`.
 1. Enable [telemetry logging](../settings_view/general.md#miscellaneous) (**Settings > General**).
 1. Start the mission.
 1. Fly till you need a battery swap.
@@ -35,19 +35,19 @@ The following steps are required for debugging both types of problems:
 
 For _Resume Mission Dialog_ problems follow the [common steps above](#common_steps), and then:
 
-7. Save the _Console Log_ to a file.
-1. Place the _Console Log_, _Telemetry Log_ and _Plan File_ someplace which you can link to in the issue.
+1. Save the _App Log_ to a file.
+1. Place the _App Log_, _Telemetry Log_ and _Plan File_ someplace which you can link to in the issue.
 1. Create the issue with details and links to all three files.
 
 ## Resume Mission Generation Problems
 
 For _Resume Mission Generation_ problems follow the [common steps above](#common_steps), and then:
 
-7. Click **Resume Mission**.
+1. Click **Resume Mission**.
 1. The new mission should be generated.
 1. Go to [Plan View](../plan_view/plan_view.md).
 1. Select **Download** from the _File/Sync_ menu.
 1. Save the _Modified Plan_ to a file.
-1. Save the _Console Log_ to a file.
-1. Place the _Console Log_, _Telemetry Log_, _Original Plan_ file and _Modified Plan_ file someplace which you can link to in the issue.
+1. Save the _App Log_ to a file.
+1. Place the _App Log_, _Telemetry Log_, _Original Plan_ file and _Modified Plan_ file someplace which you can link to in the issue.
 1. Create the issue with details and links to all four files.
