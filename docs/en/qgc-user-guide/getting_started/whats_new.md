@@ -1,6 +1,6 @@
 # What's New
 
-This page highlights user-facing changes since the last stable release (V5.1).
+This page highlights user-facing changes since the last stable release (V5.0).
 
 ## Fly View
 
@@ -38,6 +38,24 @@ Multi-vehicle support improvements: configurable telemetry display and better su
 
 The 3D View free-fly camera has been replaced with Gazebo-style cursor-anchored controls — the ground point you grab stays under the cursor while you pan, orbit, and zoom.
 Full mouse and touch gesture support is included, along with a scale bar showing ground distance.
+
+## Video Streaming
+
+The GStreamer video backend has been overhauled across all platforms:
+
+- **Updated GStreamer** — all platforms now ship with a newer GStreamer runtime, bringing improved codec support and stability.
+- **New rendering path** — video is now rendered through a common pipeline on every platform (including a Metal-based path on macOS), fixing platform-specific display issues.
+- **Faster startup** — GStreamer now initializes asynchronously, so video no longer delays application startup.
+- **Improved reliability** — fixes for crashes when stopping video or rebooting the vehicle, more robust video startup sequencing, and automatic pipeline restart on stream errors.
+- **USB (UVC) cameras** — multiple fixes, including the selected UVC device now persisting across restarts.
+- **Recording** — the default recording format has changed to **mp4**, and recording file splitting now works correctly.
+
+New video settings in Application Settings:
+
+- **Force video decoder** — override automatic decoder selection (software, hardware, NVIDIA, VA-API, Direct3D 11, VideoToolbox, Intel, Vulkan).
+- **RTP jitter buffer latency** — tune the playout latency of the stream.
+- **RTSP auto-reconnect** — automatically restart the pipeline on timeout or error.
+- Advanced troubleshooting options to force the CPU frame path and override the color-conversion element.
 
 ## Plan View
 
