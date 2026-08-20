@@ -32,8 +32,8 @@ Before you begin, please:
 
 ### Development Environment
 
-- **Language**: C++20 with Qt 6.10+ framework
-- **Build System**: CMake 3.25+
+- **Language**: C++20 with the Qt version defined in [`build-config.json`](build-config.json)
+- **Build System**: CMake (minimum version defined in [`build-config.json`](build-config.json))
 - **Platforms**: Windows, macOS, Linux, Android, iOS
 - **IDE**: Qt Creator (recommended), VS Code, or your preferred IDE
 - **Build/test/lint commands**: see [tools/README.md](../tools/README.md) for the `just configure` /

@@ -1,7 +1,8 @@
-# ----------------------------------------------------------------------------
 # QGroundControl Toolchain Configuration
 # Sets compiler, linker, and build tool settings
 # ----------------------------------------------------------------------------
+
+include_guard(GLOBAL)
 
 # ----------------------------------------------------------------------------
 # Platform Detection Helpers
@@ -42,7 +43,10 @@ include(CompilerWarnings)
 # set(CMAKE_EXPORT_BUILD_DATABASE ON)
 
 # In-source builds make link and target the same path, which CREATE_LINK rejects.
-if(CMAKE_EXPORT_COMPILE_COMMANDS AND NOT WIN32 AND NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+if(CMAKE_EXPORT_COMPILE_COMMANDS
+   AND NOT CMAKE_HOST_WIN32
+   AND NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}"
+)
     file(CREATE_LINK
         "${CMAKE_BINARY_DIR}/compile_commands.json"
         "${CMAKE_SOURCE_DIR}/compile_commands.json"
@@ -115,6 +119,10 @@ endif()
 # ----------------------------------------------------------------------------
 # Link Job Pool (Ninja only)
 # ----------------------------------------------------------------------------
+if(NOT QGC_LINK_PARALLEL_LEVEL MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR
+        "QGC_LINK_PARALLEL_LEVEL must be a positive integer, got '${QGC_LINK_PARALLEL_LEVEL}'")
+endif()
 if(CMAKE_GENERATOR MATCHES "Ninja")
     set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_pool=${QGC_LINK_PARALLEL_LEVEL})
     set(CMAKE_JOB_POOL_LINK link_pool)

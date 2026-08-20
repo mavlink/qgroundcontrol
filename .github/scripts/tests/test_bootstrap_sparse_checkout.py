@@ -111,6 +111,24 @@ def _scripts_in_block(entries: frozenset[str]) -> list[Path]:
     ]
 
 
+def _missing_paths(required: set[str], entries: frozenset[str]) -> list[str]:
+    """Return required files not covered by an exact file or parent-directory entry."""
+    return sorted(
+        path
+        for path in required
+        if not any(path == entry or path.startswith(f"{entry.rstrip('/')}/") for entry in entries)
+    )
+
+
+def test_missing_paths_accepts_parent_directory_entries() -> None:
+    required = {"tools/common/__init__.py", "tools/common/file_traversal.py"}
+
+    assert _missing_paths(required, frozenset({"tools/common"})) == []
+    assert _missing_paths(required, frozenset({"tools/common/__init__.py"})) == [
+        "tools/common/file_traversal.py"
+    ]
+
+
 def _iter_checkout_steps(doc: dict, source: str) -> Iterator[tuple[str, frozenset[str]]]:
     """Yield (step-context, paths) for each actions/checkout step with a sparse-checkout list."""
     if "jobs" in doc:
@@ -170,7 +188,7 @@ def test_bootstrap_sparse_checkout_matches_canonical() -> None:
             required.add(CI_BOOTSTRAP)
         for script in scripts:
             required |= _required_common_paths(script)
-        missing = sorted(required - entries)
+        missing = _missing_paths(required, entries)
         if missing:
             drift.append(f"{context} missing: {missing}")
 
@@ -208,6 +226,7 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
         "tools/common/io.py",
         "tools/common/markdown.py",
         "tools/common/platform.py",
+        "tools/common/proc.py",
         "tools/common/xml.py",
         "tools/pyproject.toml",
         "tools/uv.lock",

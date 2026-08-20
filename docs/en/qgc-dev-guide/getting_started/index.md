@@ -181,7 +181,7 @@ tree so they survive build directory deletion:
 - **moccache** caches Qt moc output (`.cache/moccache/`). QGC has a large number of moc-processed
   headers, so on clean builds, branch switches, and rebuilds after deleting the build directory a
   warm moccache skips the entire moc phase. Controlled by the `QGC_USE_MOCCACHE` CMake option
-  (ON by default; not supported on Windows).
+  (ON by default).
 
 Neither cache requires any setup. To bypass moccache for a single build set `MOCCACHE_DISABLE=1`,
 or configure with `-DQGC_USE_MOCCACHE=OFF` to turn it off entirely.
@@ -189,7 +189,7 @@ or configure with `-DQGC_USE_MOCCACHE=OFF` to turn it off entirely.
 #### moccache Details
 
 moccache (`tools/moccache.py`) is a content-addressed cache wired in automatically as the
-`CMAKE_AUTOMOC_EXECUTABLE` via a launcher script generated at configure time. Cached moc output
+`AUTOMOC_EXECUTABLE` via a launcher script generated at configure time. Cached moc output
 is keyed on moc version + arguments + input content + transitive include contents + the input's
 path relative to the output directory (moc embeds that relative path as an `#include` in its
 output, so build trees laid out at a different depth intentionally don't share entries). Entries

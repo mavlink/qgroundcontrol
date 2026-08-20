@@ -34,6 +34,7 @@ from setup.install_dependencies import (
     run_apt_install_with_retry,
     validate_extra_packages,
 )
+from setup.install_dependencies import _common as install_common
 
 from ._helpers import REPO_ROOT, completed
 
@@ -348,6 +349,46 @@ def test_run_apt_install_with_retry_refreshes_index_then_retries() -> None:
     )
 
 
+def test_run_pipx_install_retries_with_backoff() -> None:
+    with (
+        patch("setup.install_dependencies._packages.PIPX_PACKAGES", ["cmake"]),
+        patch.object(
+            install_common,
+            "run_command",
+            side_effect=[True, False, False, True],
+        ) as mock_run,
+        patch.object(install_common.time, "sleep") as mock_sleep,
+    ):
+        result = install_common.run_pipx_install(
+            max_attempts=3,
+            retry_backoff_seconds=2,
+        )
+
+    assert result is True
+    assert mock_run.call_args_list == [
+        call(["pipx", "ensurepath"], False),
+        call(["pipx", "install", "cmake"], False),
+        call(["pipx", "install", "cmake"], False),
+        call(["pipx", "install", "cmake"], False),
+    ]
+    assert mock_sleep.call_args_list == [call(2), call(4)]
+
+
+def test_run_pipx_install_fails_after_retry_limit() -> None:
+    with (
+        patch("setup.install_dependencies._packages.PIPX_PACKAGES", ["cmake"]),
+        patch.object(install_common, "run_command", side_effect=[True, False, False]),
+        patch.object(install_common.time, "sleep") as mock_sleep,
+    ):
+        result = install_common.run_pipx_install(
+            max_attempts=2,
+            retry_backoff_seconds=0,
+        )
+
+    assert result is False
+    mock_sleep.assert_not_called()
+
+
 def test_get_brew_install_command_filters_already_installed() -> None:
     with patch(
         "setup.install_dependencies._common.subprocess.run",
@@ -473,10 +514,7 @@ def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
     installer = dl.call_args_list[0].args[1]
     assert installer.name == "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
     assert [call.args[0] for call in dl.call_args_list] == [
-        (
-            f"{_windows.WINDOWS_GSTREAMER_BASE_URL}/"
-            "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
-        ),
+        (f"{_windows.WINDOWS_GSTREAMER_BASE_URL}/gstreamer-1.0-msvc-x86_64-1.28.4.exe"),
         (
             "https://gstreamer.freedesktop.org/data/pkg/windows/1.28.4/msvc/"
             "gstreamer-1.0-msvc-x86_64-1.28.4.exe"

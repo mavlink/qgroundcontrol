@@ -50,6 +50,27 @@ def test_resolve_lupdate_prefers_qt_root_dir(tmp_path: Path) -> None:
         assert qgc_lupdate.resolve_lupdate() == lupdate
 
 
+def test_resolve_lupdate_accepts_future_msvc_toolsets(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    lupdate = tmp_path / "Qt" / "6.12.0" / "msvc2025_64" / "bin" / "lupdate.exe"
+    lupdate.parent.mkdir(parents=True)
+    lupdate.touch()
+
+    monkeypatch.delenv("QT_ROOT_DIR", raising=False)
+    monkeypatch.setattr(qgc_lupdate, "is_windows", lambda: True)
+    monkeypatch.setattr(qgc_lupdate, "host_arch", lambda: "x86_64")
+    with (
+        patch.object(qgc_lupdate, "get_build_config_value", return_value="6.12.0"),
+        patch.object(
+            qgc_lupdate,
+            "glob",
+            side_effect=lambda pattern: [str(lupdate)] if "msvc*_64" in pattern else [],
+        ),
+    ):
+        assert qgc_lupdate.resolve_lupdate() == lupdate
+
+
 def test_resolve_lupdate_falls_back_to_path(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("QT_ROOT_DIR", raising=False)
     with (

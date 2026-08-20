@@ -6,9 +6,11 @@ from __future__ import annotations
 import subprocess
 import sys
 from typing import TYPE_CHECKING
+from unittest.mock import call, patch
 
 import pytest
-from common.proc import run_captured, run_tee, run_text
+from common import proc
+from common.proc import run_captured, run_checked_with_retry, run_tee, run_text
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,6 +36,44 @@ def test_run_captured_failing_command_does_not_raise_by_default() -> None:
 def test_run_captured_input() -> None:
     result = run_captured(["cat"], input_text="payload\n")
     assert result.stdout == "payload\n"
+
+
+def test_run_checked_with_retry_uses_linear_backoff() -> None:
+    command = ["uv", "sync"]
+    with (
+        patch.object(
+            proc.subprocess,
+            "run",
+            side_effect=[
+                subprocess.CalledProcessError(1, command),
+                subprocess.CalledProcessError(1, command),
+                subprocess.CompletedProcess(command, 0),
+            ],
+        ) as mock_run,
+        patch.object(proc.time, "sleep") as mock_sleep,
+    ):
+        result = run_checked_with_retry(command, retry_backoff_seconds=2)
+
+    assert result.returncode == 0
+    assert mock_run.call_count == 3
+    assert mock_sleep.call_args_list == [call(2), call(4)]
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"max_attempts": 0}, "max_attempts must be positive"),
+        ({"retry_backoff_seconds": -1}, "retry_backoff_seconds must be non-negative"),
+    ],
+)
+def test_run_checked_with_retry_rejects_invalid_limits(kwargs: dict, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        run_checked_with_retry(["true"], **kwargs)
+
+
+def test_run_checked_with_retry_rejects_empty_command() -> None:
+    with pytest.raises(ValueError, match="cmd must not be empty"):
+        run_checked_with_retry([])
 
 
 def test_run_text_returns_stdout() -> None:

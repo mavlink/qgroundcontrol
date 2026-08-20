@@ -29,7 +29,6 @@ Leg = dict[str, str | bool]
 LINUX_JOB: Leg = {
     "host": "linux",
     "arch": "linux_gcc_64",
-    "qt_host_path": "gcc_64",
     "shell": "bash",
     "primary": True,
     "emulator": False,
@@ -40,7 +39,6 @@ LINUX_JOB: Leg = {
 MAC_JOB: Leg = {
     "host": "mac",
     "arch": "clang_64",
-    "qt_host_path": "macos",
     "shell": "bash",
     "primary": False,
     "emulator": False,
@@ -51,7 +49,6 @@ MAC_JOB: Leg = {
 WINDOWS_JOB: Leg = {
     "host": "windows",
     "arch": "win64_msvc2022_64",
-    "qt_host_path": "msvc2022_64",
     "shell": "pwsh",
     "primary": False,
     "emulator": False,
@@ -64,7 +61,6 @@ LINUX_EMULATOR_JOB: Leg = {
     "host": "linux-emulator",
     "qt_host": "linux",
     "arch": "linux_gcc_64",
-    "qt_host_path": "gcc_64",
     "shell": "bash",
     "primary": False,
     "emulator": True,

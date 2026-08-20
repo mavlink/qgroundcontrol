@@ -61,7 +61,7 @@ function(qgc_config_caching)
 
         if(_cache_tool STREQUAL "ccache")
             set(_ccache_conf "${CMAKE_SOURCE_DIR}/tools/configs/ccache.conf")
-            if(WIN32)
+            if(CMAKE_HOST_WIN32)
                 # Windows: set env vars at configure time (inherited by Ninja).
                 # Only set defaults so external cache setups (CI/IDE) are not clobbered.
                 if(EXISTS "${_ccache_conf}" AND (NOT DEFINED ENV{CCACHE_CONFIGPATH} OR "$ENV{CCACHE_CONFIGPATH}" STREQUAL ""))
@@ -112,12 +112,15 @@ endfunction()
 # ----------------------------------------------------------------------------
 # qgc_config_moccache
 # Routes AUTOMOC through tools/moccache.py so moc output is cached across
-# clean builds. Must be called after find_package(Qt6) and before any
-# AUTOMOC targets are created. No-op on Windows hosts, including Android
-# cross-builds (the wrapper is a shell script).
+# clean builds. Must be called after find_package(Qt6).
 # ----------------------------------------------------------------------------
 function(qgc_config_moccache)
-    if(CMAKE_HOST_WIN32 OR CMAKE_AUTOMOC_EXECUTABLE)
+    if(DEFINED CMAKE_AUTOMOC_EXECUTABLE AND NOT CMAKE_AUTOMOC_EXECUTABLE STREQUAL "")
+        return()
+    endif()
+
+    if(CMAKE_HOST_WIN32 AND CMAKE_VERSION VERSION_LESS 3.29)
+        message(STATUS "QGC: CMake 3.29 or newer is required for moccache on Windows")
         return()
     endif()
 
@@ -141,20 +144,90 @@ function(qgc_config_moccache)
         return()
     endif()
 
-    # Launcher in the build dir baking in the real moc path. Cache dir lives
-    # in the source tree (like .ccache) so it survives build dir deletion;
-    # override with MOCCACHE_DIR at build time.
-    set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher")
-    set(_wrapper "#!/bin/sh\n")
-    string(APPEND _wrapper "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
-    string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
-    string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-256M}\"\n")
-    string(APPEND _wrapper "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n")
-    file(WRITE "${_moccache_wrapper}" "${_wrapper}")
-    file(CHMOD "${_moccache_wrapper}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    if(CMAKE_HOST_WIN32)
+        set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher.cmd")
+        set(_wrapper "@echo off\r\nsetlocal\r\n")
+        string(APPEND _wrapper
+               "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${CMAKE_SOURCE_DIR}/.cache/moccache\"\r\n"
+        )
+        string(APPEND _wrapper
+               "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n"
+        )
+        string(APPEND _wrapper "if not defined MOCCACHE_MAX_SIZE set \"MOCCACHE_MAX_SIZE=256M\"\r\n")
+        string(APPEND _wrapper
+               "\"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" %*\r\n"
+        )
+        string(APPEND _wrapper "exit /b %ERRORLEVEL%\r\n")
+        file(WRITE "${_moccache_wrapper}" "${_wrapper}")
+    else()
+        set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher")
+        set(_wrapper "#!/bin/sh\n")
+        string(APPEND _wrapper "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
+        string(APPEND _wrapper "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
+        string(APPEND _wrapper "export MOCCACHE_MAX_SIZE=\"\${MOCCACHE_MAX_SIZE:-256M}\"\n")
+        string(APPEND _wrapper
+               "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
+        )
+        file(WRITE "${_moccache_wrapper}" "${_wrapper}")
+        file(
+            CHMOD
+            "${_moccache_wrapper}"
+            PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            OWNER_EXECUTE
+            GROUP_READ
+            GROUP_EXECUTE
+            WORLD_READ
+            WORLD_EXECUTE
+        )
+    endif()
 
-    set(CMAKE_AUTOMOC_EXECUTABLE "${_moccache_wrapper}" PARENT_SCOPE)
+    set_property(GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE "${_moccache_wrapper}")
     message(STATUS "QGC: Using moccache for AUTOMOC (${_real_moc})")
+endfunction()
+
+# Apply moccache to targets after all AUTOMOC properties have been configured.
+function(_qgc_apply_moccache_to_directory directory)
+    get_property(_moccache_wrapper GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE)
+    get_property(
+        _targets
+        DIRECTORY "${directory}"
+        PROPERTY BUILDSYSTEM_TARGETS
+    )
+    foreach(_target IN LISTS _targets)
+        get_target_property(_automoc ${_target} AUTOMOC)
+        get_property(
+            _automoc_executable_set
+            TARGET ${_target}
+            PROPERTY AUTOMOC_EXECUTABLE
+            SET
+        )
+        if(_automoc AND NOT _automoc_executable_set)
+            set_property(TARGET ${_target} PROPERTY AUTOMOC_EXECUTABLE "${_moccache_wrapper}")
+            if(CMAKE_HOST_WIN32)
+                # Leave room for the Python launcher below cmd.exe's 8191-character limit.
+                set_property(TARGET ${_target} PROPERTY AUTOGEN_COMMAND_LINE_LENGTH_MAX 7000)
+            endif()
+        endif()
+    endforeach()
+
+    get_property(
+        _subdirectories
+        DIRECTORY "${directory}"
+        PROPERTY SUBDIRECTORIES
+    )
+    foreach(_subdirectory IN LISTS _subdirectories)
+        _qgc_apply_moccache_to_directory("${_subdirectory}")
+    endforeach()
+endfunction()
+
+# Apply the configured moccache launcher to every AUTOMOC target.
+function(qgc_apply_moccache)
+    get_property(_moccache_wrapper GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE)
+    if(_moccache_wrapper)
+        _qgc_apply_moccache_to_directory("${CMAKE_SOURCE_DIR}")
+    endif()
 endfunction()
 
 # ----------------------------------------------------------------------------
@@ -204,7 +277,7 @@ function(qgc_enable_pie)
     include(CheckPIESupported)
     check_pie_supported(OUTPUT_VARIABLE _output LANGUAGES C CXX)
 
-    if(CMAKE_C_LINK_PIE_SUPPORTED)
+    if(CMAKE_C_LINK_PIE_SUPPORTED AND CMAKE_CXX_LINK_PIE_SUPPORTED)
         set(CMAKE_POSITION_INDEPENDENT_CODE ON PARENT_SCOPE)
         message(STATUS "QGC: PIE enabled")
     else()
@@ -289,7 +362,12 @@ endfunction()
 # Args: package_name - the CPMAddPackage NAME (checks <package_name>_ADDED)
 # ----------------------------------------------------------------------------
 function(qgc_require_cpm_added package_name)
-    if(NOT ${package_name}_ADDED)
+    if(NOT ARGC EQUAL 1 OR NOT package_name MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
+        message(FATAL_ERROR "qgc_require_cpm_added: exactly one valid CPM package name is required")
+    endif()
+
+    set(_added_variable "${package_name}_ADDED")
+    if(NOT DEFINED ${_added_variable} OR NOT "${${_added_variable}}")
         message(FATAL_ERROR
             "QGC: ${package_name} (required dependency) was not added by CPM. "
             "This package must be vendored from source; if QGC_USE_SYSTEM_LIBS or "
@@ -299,11 +377,30 @@ endfunction()
 
 function(qgc_add_json_resources name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "NO_RECURSE" "PREFIX;PATTERN" "")
+    if(NOT name OR NOT name MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
+        message(FATAL_ERROR "qgc_add_json_resources: a valid resource name is required")
+    endif()
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if(NOT TARGET ${CMAKE_PROJECT_NAME})
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): project target '${CMAKE_PROJECT_NAME}' does not exist")
+    endif()
     if(NOT ARG_PREFIX)
         set(ARG_PREFIX "/json")
     endif()
     if(NOT ARG_PATTERN)
         set(ARG_PATTERN "*.json")
+    endif()
+    if(IS_ABSOLUTE "${ARG_PATTERN}" OR ARG_PATTERN MATCHES "(^|[/\\\\])[.][.]([/\\\\]|$)")
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): PATTERN must remain under the current source directory")
     endif()
     set(_glob GLOB_RECURSE)
     if(ARG_NO_RECURSE)
@@ -311,5 +408,9 @@ function(qgc_add_json_resources name)
     endif()
     file(${_glob} _json CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
          "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_PATTERN}")
+    if(NOT _json)
+        message(FATAL_ERROR
+            "qgc_add_json_resources(${name}): no files matched '${ARG_PATTERN}' in ${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
     qt_add_resources(${CMAKE_PROJECT_NAME} ${name} PREFIX "${ARG_PREFIX}" FILES ${_json})
 endfunction()

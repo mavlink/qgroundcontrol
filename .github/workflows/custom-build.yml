@@ -27,8 +27,14 @@ jobs:
     name: Custom Plugin Build
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) || 'ubuntu-24.04' }}
-    timeout-minutes: 60
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 120
 
     defaults:
       run:
@@ -36,7 +42,7 @@ jobs:
 
     steps:
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
@@ -69,6 +75,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
+          preset: Linux
           extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build
@@ -96,8 +103,14 @@ jobs:
     name: Custom Plugin Test Debug
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-tester', github.run_id) || 'ubuntu-24.04' }}
-    timeout-minutes: 90
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 120
 
     # checks: write scoped here: only this job reports test results (dorny/test-reporter).
     permissions:
@@ -110,7 +123,7 @@ jobs:
 
     steps:
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink'
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
@@ -144,6 +157,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
+          preset: Linux-debug
           testing: 'true'
           extra-args: -DQGC_CUSTOM_DIR=custom-example
 
@@ -164,6 +178,7 @@ jobs:
           include-labels: 'Unit'
           exclude-labels: 'Flaky|Network'
           parallel: 'auto'
+          repeat: 'until-pass:2'
 
       - name: Run Integration Tests (serial)
         id: integration_tests

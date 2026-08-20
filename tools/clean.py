@@ -29,10 +29,7 @@ from common.proc import run_captured
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-BUILD_TARGETS: tuple[tuple[str, str], ...] = (
-    ("build", "build directory"),
-    ("CMakeUserPresets.json", "CMake user presets"),
-)
+BUILD_TARGETS: tuple[tuple[str, str], ...] = (("build", "build directory"),)
 
 CACHE_TARGETS: tuple[tuple[str, str], ...] = (
     (".cache", "local cache directory"),

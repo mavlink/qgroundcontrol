@@ -76,6 +76,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+          preset: ${{ matrix.build_type == 'Debug' && 'iOS-debug' || 'iOS' }}
           # Qt6LinguistTools cmake config ships with the desktop qtbase install (host),
           # not iOS qtbase; point CMake at the host copy directly.
           # CMAKE_OSX_ARCHITECTURES matches the iOS preset and opts out of the

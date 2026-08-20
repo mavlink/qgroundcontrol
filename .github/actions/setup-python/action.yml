@@ -14,13 +14,22 @@ inputs:
 runs:
   using: composite
   steps:
-    # uv provisions the interpreter itself (standalone CPython), avoiding the
-    # actions/setup-python installer that dumps the whole Python tree on a
-    # tool-cache miss (every run on the bare RunsOn images).
+    - name: Resolve dependency cache backend
+      id: cache-policy
+      shell: bash
+      run: |
+        enabled=false
+        if [[ -n "${RUNS_ON_S3_BUCKET_CACHE:-}" ]]; then
+          enabled=true
+        fi
+        echo "enabled=${enabled}" >> "$GITHUB_OUTPUT"
+
     - name: Setup uv and Python ${{ inputs.python-version }}
       uses: astral-sh/setup-uv@v8.1.0
       with:
-        enable-cache: false
+        enable-cache: ${{ steps.cache-policy.outputs.enabled }}
+        cache-python: ${{ steps.cache-policy.outputs.enabled }}
+        cache-dependency-glob: tools/uv.lock
         python-version: ${{ inputs.python-version }}
 
     - name: Install dependencies

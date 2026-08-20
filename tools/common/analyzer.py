@@ -56,7 +56,7 @@ class AnalyzerBase(ABC):
     def require_compile_commands(self) -> bool:
         if not self.compile_commands.exists():
             log_error(f"compile_commands.json not found at {self.compile_commands}")
-            log_info("Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
+            log_info("Run: just configure")
             return False
         return True
 

@@ -22,6 +22,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from glob import glob
 from pathlib import Path
 
 from _bootstrap import ensure_tools_dir
@@ -30,7 +31,7 @@ ensure_tools_dir(__file__)
 
 from common.file_traversal import find_repo_root
 from common.gh_actions import write_github_output
-from common.platform import is_windows
+from common.platform import host_arch, is_macos, is_windows
 
 
 @dataclass
@@ -43,6 +44,8 @@ class CMakeConfig:
     generator: str = "Ninja"
     testing: bool = False
     coverage: bool = False
+    preset: str | None = None
+    use_preset: bool = True
     stable: bool = False
     unity_build: bool = False
     unity_batch_size: int = 16
@@ -51,10 +54,33 @@ class CMakeConfig:
     extra_args: list[str] = field(default_factory=list)
 
 
+LOCAL_PRESETS = {
+    "Debug": "default",
+    "Release": "default-release",
+    "RelWithDebInfo": "default-relwithdebinfo",
+    "MinSizeRel": "default-minsizerel",
+}
+
+
+def select_preset(config: CMakeConfig) -> str | None:
+    """Select the canonical local preset for a configuration."""
+    if not config.use_preset:
+        return None
+    if config.preset:
+        return config.preset
+    if config.generator != "Ninja":
+        return None
+    if config.coverage:
+        if not sys.platform.startswith("linux"):
+            raise ValueError("Coverage builds require Linux; use --no-preset for a custom setup")
+        return "Linux-coverage"
+    return LOCAL_PRESETS[config.build_type]
+
+
 def parse_version(path: Path) -> tuple[int, ...]:
     """Extract version tuple from Qt path for sorting."""
     # Match patterns like 6.8.0, 6.10.1, etc.
-    match = re.search(r"/(\d+)\.(\d+)\.(\d+)/", str(path))
+    match = re.search(r"[\\/](\d+)\.(\d+)\.(\d+)[\\/]", str(path))
     if match:
         return tuple(int(x) for x in match.groups())
     return (0, 0, 0)
@@ -86,36 +112,34 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
             if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
                 return qt_cmake
 
-    # Common Qt installation patterns
-    patterns = [
-        Path.home() / "Qt" / "*" / "gcc_64" / "bin" / "qt-cmake",
-        Path.home() / "Qt" / "*" / "clang_64" / "bin" / "qt-cmake",
-        Path.home() / "Qt" / "*" / "macos" / "bin" / "qt-cmake",
-        Path("/opt/Qt") / "*" / "gcc_64" / "bin" / "qt-cmake",
-        Path("/usr/lib/qt6/bin/qt-cmake"),
-    ]
-
-    # Windows patterns
+    patterns: list[Path]
     if is_windows():
-        patterns.extend(
-            [
-                Path("C:/Qt") / "*" / "msvc2022_64" / "bin" / "qt-cmake.bat",
-                Path("C:/Qt") / "*" / "msvc2019_64" / "bin" / "qt-cmake.bat",
-            ]
-        )
+        msvc_kit = "msvc*_arm64" if host_arch() == "aarch64" else "msvc*_64"
+        patterns = [
+            base / "*" / msvc_kit / "bin" / "qt-cmake.bat"
+            for base in (Path("C:/Qt"), Path.home() / "Qt")
+        ]
+    elif is_macos():
+        patterns = [
+            base / "*" / kit / "bin" / "qt-cmake"
+            for base in (Path.home() / "Qt", Path("/Applications/Qt"))
+            for kit in ("macos", "clang_64")
+        ]
+    else:
+        gcc_kit = "gcc_arm64" if host_arch() == "aarch64" else "gcc_64"
+        patterns = [
+            Path.home() / "Qt" / "*" / gcc_kit / "bin" / "qt-cmake",
+            Path("/opt/Qt") / "*" / gcc_kit / "bin" / "qt-cmake",
+            Path("/usr/lib/qt6/bin/qt-cmake"),
+        ]
 
     for pattern in patterns:
-        # Handle glob patterns
         if "*" in str(pattern):
-            parent = pattern.parent.parent.parent  # Go up to Qt root
-            if parent.exists():
-                matches = list(parent.glob(str(pattern.relative_to(parent))))
-                if matches:
-                    # Sort by version (newest first)
-                    matches.sort(key=parse_version, reverse=True)
-                    for match in matches:
-                        if match.exists() and os.access(match, os.X_OK):
-                            return match
+            matches = [Path(match) for match in glob(str(pattern))]
+            matches.sort(key=parse_version, reverse=True)
+            for match in matches:
+                if match.exists() and os.access(match, os.X_OK):
+                    return match
         else:
             if pattern.exists() and os.access(pattern, os.X_OK):
                 return pattern
@@ -125,6 +149,8 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
 
 def configure(config: CMakeConfig) -> int:
     """Run CMake configuration."""
+    preset = select_preset(config)
+
     # Determine cmake command
     if config.use_qt_cmake:
         qt_cmake = find_qt_cmake(config.qt_root)
@@ -132,30 +158,40 @@ def configure(config: CMakeConfig) -> int:
             cmake_cmd = str(qt_cmake)
             print(f"Using: {cmake_cmd}")
         else:
-            print("Warning: qt-cmake not found, using cmake", file=sys.stderr)
-            cmake_cmd = "cmake"
+            print("Error: qt-cmake not found; pass --no-qt-cmake to use cmake", file=sys.stderr)
+            return 1
     else:
         cmake_cmd = "cmake"
 
-    # Build CMake arguments
-    args = [
-        cmake_cmd,
-        "-S",
-        str(config.source_dir),
-        "-B",
-        str(config.build_dir),
-        "-G",
-        config.generator,
-        f"-DCMAKE_BUILD_TYPE={config.build_type}",
-    ]
+    if preset:
+        args = [
+            cmake_cmd,
+            "--preset",
+            preset,
+            "-S",
+            str(config.source_dir),
+            "-B",
+            str(config.build_dir),
+        ]
+    else:
+        args = [
+            cmake_cmd,
+            "-S",
+            str(config.source_dir),
+            "-B",
+            str(config.build_dir),
+            "-G",
+            config.generator,
+            f"-DCMAKE_BUILD_TYPE={config.build_type}",
+        ]
 
     # Feature flags
     if config.testing:
         args.append("-DQGC_BUILD_TESTING=ON")
-    else:
+    elif not preset:
         args.append("-DQGC_BUILD_TESTING=OFF")
 
-    if config.coverage:
+    if config.coverage and preset != "Linux-coverage":
         args.append("-DQGC_ENABLE_COVERAGE=ON")
 
     if config.stable:
@@ -168,11 +204,19 @@ def configure(config: CMakeConfig) -> int:
     # Extra arguments
     args.extend(config.extra_args)
 
-    print(f"Build type: {config.build_type}")
+    if preset:
+        print(f"Preset: {preset}")
+    else:
+        print(f"Build type: {config.build_type}")
     print(f"Build dir: {config.build_dir}")
 
     # Run cmake
-    result = subprocess.run(args)
+    env = os.environ.copy()
+    if config.use_qt_cmake and qt_cmake:
+        env["QT_ROOT_DIR"] = str(qt_cmake.parent.parent.resolve())
+    elif config.qt_root:
+        env["QT_ROOT_DIR"] = str(config.qt_root.resolve())
+    result = subprocess.run(args, env=env)
 
     if result.returncode != 0:
         return result.returncode
@@ -196,6 +240,7 @@ Environment:
 Examples:
   %(prog)s --release --testing
   %(prog)s -B build-debug --debug
+  %(prog)s --preset Linux-debug
   %(prog)s --qt-root ~/Qt/6.8.0/gcc_64 --release
 """,
     )
@@ -251,6 +296,16 @@ Examples:
         action="store_true",
         help="Enable code coverage (QGC_ENABLE_COVERAGE=ON)",
     )
+    preset_group = parser.add_mutually_exclusive_group()
+    preset_group.add_argument(
+        "--preset",
+        help="CMake configure preset (default: matching default* preset)",
+    )
+    preset_group.add_argument(
+        "--no-preset",
+        action="store_true",
+        help="Use legacy command-line configuration for an unsupported custom setup",
+    )
     parser.add_argument(
         "--stable",
         action="store_true",
@@ -303,6 +358,8 @@ def main() -> int:
         generator=args.generator,
         testing=args.testing,
         coverage=args.coverage,
+        preset=args.preset,
+        use_preset=not args.no_preset,
         stable=args.stable,
         unity_build=args.unity,
         unity_batch_size=args.unity_batch,

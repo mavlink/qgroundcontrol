@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """List and optionally delete GitHub Actions caches via gh-actions-cache.
 
 Writes count (and deleted, when --delete) to GITHUB_OUTPUT. With --summary,
@@ -23,9 +22,10 @@ ensure_tools_dir(__file__)
 from common.gh_actions import gh, require_repository, write_github_output, write_step_summary
 from common.markdown import md_table
 
-# Build caches are the expensive-to-rebuild data the GC must never evict; the
-# 10 GiB/repo pool is reclaimed from everything else first.
-DEFAULT_PROTECT = r"^(ccache|cpm-modules)-"
+DEFAULT_PROTECT = r"^(apt-debs|ccache|cpm-modules|moccache|qt)-"
+_ROLLING_SUFFIX_RE = re.compile(r"-\d+-\d+$")
+_DIGEST_RE = re.compile(r"(?<=-)[0-9a-f]{64}(?=-|$)")
+_APT_GENERATION_RE = re.compile(r"^(apt-debs-.+)-\d{4}-\d{2}-<digest>$")
 _MIB = 1024 * 1024
 
 
@@ -128,9 +128,8 @@ def select_prune_victims(
 ) -> tuple[list[CacheUsage], int, int]:
     """Pick evictable caches to delete; return (victims, total_bytes, projected_bytes).
 
-    No-op below high_water_mb. Above it, evicts non-protected caches largest-first
-    (cold-first on ties) until the pool would drop to keep_mb. Protected build
-    caches are never selected, so the floor can exceed keep_mb.
+    No-op below high_water_mb. Above it, keeps the newest rolling generation for
+    each protected cache family and evicts other entries largest-first.
     """
     protect_re = re.compile(protect)
     total = sum(cache.size_bytes for cache in caches)
@@ -138,8 +137,9 @@ def select_prune_victims(
         return [], total, total
 
     keep = keep_mb * _MIB
+    protected = _protected_cache_entries(caches, protect_re)
     evictable = sorted(
-        (cache for cache in caches if not protect_re.search(cache.key)),
+        (cache for cache in caches if cache not in protected),
         key=lambda cache: (-cache.size_bytes, cache.last_accessed),
     )
     victims: list[CacheUsage] = []
@@ -150,6 +150,26 @@ def select_prune_victims(
         victims.append(cache)
         projected -= cache.size_bytes
     return victims, total, projected
+
+
+def _protected_cache_entries(
+    caches: list[CacheUsage], protect_re: re.Pattern[str]
+) -> set[CacheUsage]:
+    families: dict[tuple[str, str], list[CacheUsage]] = {}
+    for cache in caches:
+        if protect_re.search(cache.key):
+            families.setdefault((cache.ref, _cache_family(cache.key)), []).append(cache)
+
+    return {
+        max(group, key=lambda cache: (cache.last_accessed, cache.key))
+        for group in families.values()
+    }
+
+
+def _cache_family(key: str) -> str:
+    family = _ROLLING_SUFFIX_RE.sub("", key)
+    family = _DIGEST_RE.sub("<digest>", family)
+    return _APT_GENERATION_RE.sub(r"\1-<generation>", family)
 
 
 def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, deleted: bool) -> str:
@@ -171,7 +191,7 @@ def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, del
 
 
 def run_prune(repo: str, args: argparse.Namespace) -> dict[str, str]:
-    """Evict non-protected caches when the pool exceeds the high-water mark."""
+    """Evict stale cache generations when the pool exceeds the high-water mark."""
     caches = list_caches_usage(repo, args.limit)
     victims, total, projected = select_prune_victims(
         caches, keep_mb=args.keep_mb, high_water_mb=args.high_water_mb, protect=args.protect
@@ -228,11 +248,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Append markdown summary to $GITHUB_STEP_SUMMARY",
     )
-    parser.add_argument("--limit", type=int, default=100)
+    parser.add_argument("--limit", type=int, default=500, help="Maximum cache entries to inspect")
     parser.add_argument(
         "--prune",
         action="store_true",
-        help="GC mode: evict non-protected caches when the pool exceeds --high-water-mb",
+        help="GC mode: evict stale and non-protected caches above --high-water-mb",
     )
     parser.add_argument(
         "--high-water-mb",
@@ -249,7 +269,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--protect",
         default=DEFAULT_PROTECT,
-        help="Regex of cache keys never evicted in --prune mode",
+        help="Regex of cache families whose newest entry is retained",
     )
     args = parser.parse_args(argv)
 

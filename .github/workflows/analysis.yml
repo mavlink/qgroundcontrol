@@ -104,6 +104,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
+          preset: Linux-debug
           extra-args: >-
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
             ${{ inputs.tool == 'iwyu' && '-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++' || '' }}
@@ -114,6 +115,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
+          preset: Linux-debug
           testing: 'true'
           extra-args: >-
             -DQGC_ENABLE_COVERAGE=OFF

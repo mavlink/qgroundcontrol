@@ -13,12 +13,12 @@ Usage:
 from __future__ import annotations
 
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .errors import ToolNotFoundError
+from .proc import run_checked_with_retry
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -74,4 +74,4 @@ def pip_install(packages: Sequence[str], quiet: bool = True) -> None:
         command = [sys.executable, "-m", "pip", "install", *packages]
         if quiet:
             command.append("--quiet")
-    subprocess.run(command, check=True)
+    run_checked_with_retry(command)

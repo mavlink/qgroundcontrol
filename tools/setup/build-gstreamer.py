@@ -695,7 +695,12 @@ def main() -> int:
     args = parse_args()
 
     # Resolve defaults
-    version = args.version or get_build_config_value("gstreamer.version.default", "1.24.13")
+    version = args.version or get_build_config_value(
+        "gstreamer.version.default", start=Path(__file__).resolve()
+    )
+    if not version:
+        log_error("GStreamer version is required; pass --version or provide build-config.json")
+        return 1
     arch = args.arch or get_default_arch(args.platform)
     prefix = Path(args.prefix) if args.prefix else None
     work_dir = Path(args.work_dir)

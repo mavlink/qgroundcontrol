@@ -37,6 +37,8 @@ For complete worked examples, see the reference files:
 - **Line endings**: LF (Unix-style)
 - **File encoding**: UTF-8
 - **Max line length**: 120 columns (enforced by `.clang-format`, `ColumnLimit: 120`)
+- **Avoid overengineering**: Prefer the smallest focused solution that satisfies current requirements.
+  Do not add abstractions, extensibility, or speculative handling without a concrete need.
 
 ## Comments
 
@@ -325,6 +327,11 @@ Formatting and static analysis are enforced via [.pre-commit-config.yaml](.pre-c
 - `.qmlformat.ini` - QML formatting
 - `.qmllint.ini` - QML linting
 - `.editorconfig` - Editor settings
+
+Do not run a formatter over an entire existing file as part of an otherwise focused change. Format only
+the lines or regions you modify and preserve the surrounding style; whole-file formatting creates unrelated
+diffs that make contributions harder to review. Put intentional broad formatting changes in a dedicated
+commit or pull request. Whole-file formatting is appropriate for new files.
 
 Run them with `just lint` (fast gate) or `pre-commit run --all-files` (full sweep); see
 [tools/README.md](tools/README.md) for all commands.

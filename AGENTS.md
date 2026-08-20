@@ -11,6 +11,15 @@ Instructions for AI coding agents (Codex, Claude Code, etc.) working on QGroundC
 - [.github/ci-overview.md](.github/ci-overview.md) — CI workflow/action/script layout and conventions
 - [.pre-commit-config.yaml](.pre-commit-config.yaml) — All enforced linters (clang-format, clang-tidy, ruff, pyright, shellcheck, actionlint, zizmor, qmllint, clazy, vehicle-null-check, check-no-qassert, check-no-qtest-ignore-message)
 
+## Required Preflight
+
+Before modifying any repository file:
+
+1. Read [CODING_STYLE.md](CODING_STYLE.md) completely.
+2. Read the task-specific references listed in this file.
+3. Do not begin editing until those reads are complete.
+4. Before the first edit, state in a progress update which instruction files were read.
+
 ## Golden Rules (enforced — violations fail CI)
 
 These are the non-negotiables. The first four are QGC's core architecture patterns; the rest are
@@ -25,6 +34,7 @@ enforced by pre-commit hooks, so ignoring them wastes a build cycle. Full list w
 - **No `Q_ASSERT` in production code** — use defensive checks with early returns (`check-no-qassert`).
 - **No `QTest::ignoreMessage`** in tests — use `expectLogMessage`/`ignoreLogMessage` (`check-no-qtest-ignore-message`).
 - **No fixed-delay `QTest::qWait(<n>)`** — use `QTRY_*_WITH_TIMEOUT` or `QSignalSpy::wait` (`check-no-fixed-qwait`).
+- **Comments** — prefer self-documenting code; comment only non-obvious intent, constraints, or workarounds.
 
 ## Critical Files (Read First!)
 
@@ -85,6 +95,10 @@ Before considering a change complete:
 Commit messages follow **Conventional Commits** — the type drives release automation
 (`.releaserc.json` → semantic-release). Use: `feat`, `fix`, `perf`, `revert` (release-triggering);
 `docs`, `style`, `chore`, `refactor`, `test`, `build`, `ci` (no release). Example: `fix(Vehicle): guard null activeVehicle in telemetry handler`.
+
+Keep pull request history intentional and easy to review. Organize related work into coherent commits and
+combine fixups or closely related incremental changes before publication. Avoid a trail of tiny work-in-progress,
+cleanup, or review-fix commits. Each commit should represent a clear, reviewable change without mixing unrelated work.
 
 Your output will be reviewed by another AI agent before being accepted. Keep changes focused and
 minimal, use clear naming, and leave explanatory commit messages. Avoid unrelated changes,

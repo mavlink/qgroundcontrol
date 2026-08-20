@@ -103,7 +103,7 @@ runs:
         # Avoid the OCI attestation manifest that renders as unknown/unknown on Docker Hub.
         provenance: false
         sbom: false
-        cache-from: ${{ github.event.pull_request.head.repo.fork != true && format('type=registry,ref={0}:{1}', steps.ghcr.outputs.ref, inputs.variant) || '' }}
+        cache-from: ${{ format('type=registry,ref={0}:{1}', steps.ghcr.outputs.ref, inputs.variant) }}
         cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}:{1},mode=max', steps.ghcr.outputs.ref, inputs.variant) || '' }}
 
     - name: Re-tag pushed image for local run

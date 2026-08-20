@@ -1,8 +1,7 @@
 name: Cache Cleanup
 
 on:
-  # Periodic GC keeps the repo under GitHub's 10 GiB cache cap so a fresh ccache
-  # save never triggers LRU eviction of the build caches we want to keep.
+  # Periodic GC leaves room for fresh rolling build caches.
   schedule:
     - cron: '17 */6 * * *'
   workflow_dispatch:
@@ -17,7 +16,7 @@ on:
         type: boolean
         default: true
       mode:
-        description: 'prune = keep ccache/cpm and evict the rest; wipe = delete all listed caches'
+        description: 'prune = keep newest build/dependency cache generations; wipe = delete all listed caches'
         required: false
         type: choice
         options:
@@ -32,6 +31,8 @@ jobs:
   scheduled-gc:
     if: github.event_name == 'schedule'
     permissions:
+      contents: read
+      # Required by the reusable cache cleanup job.
       actions: write
     uses: ./.github/workflows/_cache-cleanup.yml
     with:
@@ -42,6 +43,8 @@ jobs:
   manual:
     if: github.event_name == 'workflow_dispatch'
     permissions:
+      contents: read
+      # Required by the reusable cache cleanup job.
       actions: write
     uses: ./.github/workflows/_cache-cleanup.yml
     with:

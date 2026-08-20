@@ -22,7 +22,14 @@ import json
 import sys
 from pathlib import Path
 
-from .page_generator import generate_page_qml, generate_pages_model_qml, load_page_def
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from _bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.io import write_text_if_changed  # noqa: E402
+
+from .page_generator import generate_page_qml, generate_pages_model_qml, load_page_def  # noqa: E402
 
 PAGES_DIR = Path("src/AppSettings/pages")
 SETTINGS_DIR = Path("src/Settings")
@@ -84,7 +91,7 @@ def main() -> int:
             page_output_dir = Path(entry["outputDir"]) if "outputDir" in entry else output_dir
             output_path = page_output_dir / qml_name
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(qml, encoding="utf-8")
+            write_text_if_changed(output_path, qml)
             print(f"Generated: {output_path}")
 
         generated += 1
@@ -96,7 +103,7 @@ def main() -> int:
         print(model_qml)
     else:
         model_path = output_dir / "SettingsPagesModel.qml"
-        model_path.write_text(model_qml, encoding="utf-8")
+        write_text_if_changed(model_path, model_qml)
         print(f"Generated: {model_path}")
 
     generated += 1

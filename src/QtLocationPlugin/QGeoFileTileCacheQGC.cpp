@@ -35,7 +35,7 @@ QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap &parameters, QObjec
     setExtraTextureUsage(_getDefaultExtraTexture() - minTextureUsage());
 
     static std::once_flag cacheInit;
-    std::call_once(cacheInit, [this]() {
+    std::call_once(cacheInit, [] {
         _initCache();
     });
 

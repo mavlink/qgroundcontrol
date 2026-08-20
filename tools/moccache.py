@@ -63,6 +63,20 @@ _VALUE_OPTS = {
 }
 
 
+def _expand_response_files(argv: list[str]) -> list[str]:
+    """Expand CMake AUTOMOC response files for cache-key parsing."""
+    expanded: list[str] = []
+    for arg in argv:
+        if not arg.startswith("@") or len(arg) == 1:
+            expanded.append(arg)
+            continue
+        try:
+            expanded.extend(Path(arg[1:]).read_text(encoding="utf-8").splitlines())
+        except (OSError, UnicodeError):
+            expanded.append(arg)
+    return expanded
+
+
 def _sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -226,7 +240,7 @@ _BASEDIR_TOKEN = "<<MOCCACHE_BASEDIR>>"
 
 def _basedir_prefixes() -> list[str]:
     """Build-dir spellings to rewrite (raw and resolved), longest first."""
-    raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/")
+    raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/\\")
     if not raw:
         return []
     prefixes = {raw}
@@ -255,7 +269,7 @@ def _normalize_basedir(s: str, prefixes: list[str]) -> str:
 
 
 def _denormalize_basedir(s: str) -> str:
-    raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/")
+    raw = os.environ.get("MOCCACHE_BASEDIR", "").rstrip("/\\")
     return s.replace(_BASEDIR_TOKEN, raw) if raw else s
 
 
@@ -466,7 +480,7 @@ def main() -> int:
         return passthrough()
 
     output, input_file, dep_file_path, wants_dep_file, wants_json, hashable, include_files = (
-        _parse_args(argv)
+        _parse_args(_expand_response_files(argv))
     )
     if not output or not input_file or not Path(input_file).is_file():
         return passthrough()
