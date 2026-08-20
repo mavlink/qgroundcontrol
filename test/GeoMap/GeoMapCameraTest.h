@@ -29,6 +29,10 @@ private slots:
     void _rotateAnchorInvariant();
     void _tiltAnchorInvariant();
     void _orbitDragRatios();
+    void _orbitSurfaceAnchorInvariant_data();
+    void _orbitSurfaceAnchorInvariant();
+    void _lookKeepsCameraFixed();
+    void _lookHeadingOnlyIn2D();
     void _modeSwitch();
     void _tiltLockedIn2D();
     void _scenePose();

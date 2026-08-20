@@ -395,15 +395,18 @@ void GeoMapCameraTest::_panAnchorInvariant_data()
 {
     QTest::addColumn<double>("tilt");
     QTest::addColumn<double>("centerElevation");
-    QTest::newRow("top-down") << 0.0 << 0.0;
-    QTest::newRow("tilted 45") << 45.0 << 0.0;
-    QTest::newRow("tilted 45 elevated") << 45.0 << 700.0;
+    QTest::addColumn<double>("anchorZ");
+    QTest::newRow("top-down") << 0.0 << 0.0 << 0.0;
+    QTest::newRow("tilted 45") << 45.0 << 0.0 << 0.0;
+    QTest::newRow("tilted 45 elevated") << 45.0 << 700.0 << 0.0;
+    QTest::newRow("tilted 45 elevated surface") << 45.0 << 700.0 << 500.0;
 }
 
 void GeoMapCameraTest::_panAnchorInvariant()
 {
     QFETCH(double, tilt);
     QFETCH(double, centerElevation);
+    QFETCH(double, anchorZ);
 
     GeoMapCamera camera;
     setupCamera(camera, tilt);
@@ -412,14 +415,14 @@ void GeoMapCameraTest::_panAnchorInvariant()
     const QPointF pressPos(200, 400);
     const QPointF dragPos(450, 320);
 
-    const auto anchor = camera.screenToGround(pressPos);
+    const auto anchor = camera.screenToGround(pressPos, anchorZ);
     QVERIFY(anchor.has_value());
 
-    camera.beginPan(pressPos);
+    camera.beginPan(pressPos, anchorZ);
     camera.panTo(dragPos);
 
-    // The ground point picked at press is now under the drag position
-    const auto current = camera.screenToGround(dragPos);
+    // The surface point picked at press is now under the drag position
+    const auto current = camera.screenToGround(dragPos, anchorZ);
     QVERIFY(current.has_value());
     QCOMPARE_LT(groundDistance(*current, *anchor), kWorldEpsilon);
 
@@ -514,6 +517,93 @@ void GeoMapCameraTest::_orbitDragRatios()
     QVERIFY(anchorNow.has_value());
     const auto expected = TileMath::geoToWorld(kCenter);
     QCOMPARE_LT(groundDistance(*anchorNow, expected), kWorldEpsilon);
+}
+
+void GeoMapCameraTest::_orbitSurfaceAnchorInvariant_data()
+{
+    QTest::addColumn<double>("tilt");
+    QTest::addColumn<double>("anchorZ");
+    QTest::addColumn<double>("centerElevation");
+    QTest::addColumn<QPointF>("dragDelta");
+    QTest::newRow("tilt up, flat") << 40.0 << 0.0 << 0.0 << QPointF(0, -120);
+    QTest::newRow("tilt down, flat") << 40.0 << 0.0 << 0.0 << QPointF(0, 90);
+    QTest::newRow("tilt up, elevated surface") << 40.0 << 220.0 << 150.0 << QPointF(0, -120);
+    QTest::newRow("tilt down, elevated surface") << 55.0 << 220.0 << 150.0 << QPointF(0, 90);
+    QTest::newRow("rotate, elevated surface") << 40.0 << 220.0 << 150.0 << QPointF(200, 0);
+    QTest::newRow("combined, elevated surface") << 40.0 << 220.0 << 150.0 << QPointF(200, -120);
+}
+
+// The fundamental orbit-gesture contract: the surface point picked at press
+// (at its rendered elevation, not the z=0 plane below it) stays at the press
+// screen position for the entire tilt/rotate drag
+void GeoMapCameraTest::_orbitSurfaceAnchorInvariant()
+{
+    QFETCH(double, tilt);
+    QFETCH(double, anchorZ);
+    QFETCH(double, centerElevation);
+    QFETCH(QPointF, dragDelta);
+
+    GeoMapCamera camera;
+    setupCamera(camera, tilt);
+    camera.setCenterElevation(centerElevation);
+
+    const QPointF pressPos(300, 420);
+    const auto anchor = camera.screenToGround(pressPos, anchorZ);
+    QVERIFY(anchor.has_value());
+
+    camera.beginOrbit(pressPos, anchorZ);
+    constexpr int steps = 6;
+    for (int i = 1; i <= steps; i++) {
+        camera.orbitTo(pressPos + ((dragDelta * i) / steps));
+        const auto onScreen = camera.worldToScreen(*anchor, anchorZ);
+        QVERIFY(onScreen.has_value());
+        QCOMPARE_LT(std::hypot(onScreen->x() - pressPos.x(), onScreen->y() - pressPos.y()), 0.01);
+    }
+}
+
+void GeoMapCameraTest::_lookKeepsCameraFixed()
+{
+    GeoMapCamera camera;
+    setupCamera(camera, 40.0, 10.0);
+    camera.setCenterElevation(300.0);
+
+    const QPointF startCamGround = camera.cameraGroundPosition();
+    const float startCamZ = camera.cameraPosition().z();
+
+    const QPointF pressPos(400, 300);
+    camera.beginLook(pressPos);
+    camera.lookTo(pressPos + QPointF(kViewport.width() / 8, kViewport.height() / 8));
+
+    // Eighth of the width = 45 deg heading; drag down = look down 22.5 deg
+    QCOMPARE_LT(qAbs(camera.heading() - 55.0), 1e-9);
+    QCOMPARE_LT(qAbs(camera.tilt() - 17.5), 1e-9);
+
+    // Camera position unchanged; center/distance re-solved along the new view axis
+    QCOMPARE_LT(groundDistance(camera.cameraGroundPosition(), startCamGround), kWorldEpsilon);
+    QCOMPARE_LT(qAbs(camera.cameraPosition().z() - startCamZ), 0.5);
+    const qreal expectedDistance =
+        (GeoMapCamera::kDefaultDistance * std::cos(qDegreesToRadians(40.0))) / std::cos(qDegreesToRadians(17.5));
+    QCOMPARE_LT(qAbs(camera.distance() - expectedDistance), 1e-6);
+}
+
+void GeoMapCameraTest::_lookHeadingOnlyIn2D()
+{
+    GeoMapCamera camera;
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, GeoMapCamera::kDefaultDistance);
+    QCOMPARE(camera.mode(), GeoMapCamera::Mode::Mode2D);
+
+    const QPointF startCamGround = camera.cameraGroundPosition();
+
+    const QPointF pressPos(400, 300);
+    camera.beginLook(pressPos);
+    camera.lookTo(pressPos + QPointF(kViewport.width() / 4, kViewport.height() / 4));
+
+    // Tilt locked: heading-only rotation about the camera's vertical axis
+    QCOMPARE_LT(qAbs(camera.heading() - 90.0), 1e-9);
+    QCOMPARE(camera.tilt(), 0.0);
+    QCOMPARE(camera.distance(), GeoMapCamera::kDefaultDistance);
+    QCOMPARE_LT(groundDistance(camera.cameraGroundPosition(), startCamGround), kWorldEpsilon);
 }
 
 void GeoMapCameraTest::_modeSwitch()
