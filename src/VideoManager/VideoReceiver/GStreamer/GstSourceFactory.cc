@@ -8,6 +8,7 @@
 
 #include "GStreamerHelpers.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(GstSourceFactoryLog, "Video.GStreamer.GstSourceFactory")
 
@@ -459,8 +460,7 @@ void linkMultipartJpegPad(GstElement* element, GstPad* pad, gpointer data)
 GstElement* buildHttpMjpegSource(const QUrl& sourceUrl, const Config& config)
 {
     if (!sourceUrl.isValid() || sourceUrl.isRelative() || sourceUrl.host().isEmpty() || (sourceUrl.port() == 0)) {
-        qCWarning(GstSourceFactoryLog) << "Invalid HTTP MJPEG URL:"
-                                       << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
+        qCWarning(GstSourceFactoryLog) << "Invalid HTTP MJPEG URL";
         return nullptr;
     }
     if (!sourceUrl.userInfo().isEmpty()) {
