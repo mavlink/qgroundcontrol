@@ -256,6 +256,15 @@ Toolbar indicators show a compact view immediately, and Vehicle Configuration of
 
 ## General
 
+### Telemetry Log Saving on Mobile
+
+Saving telemetry logs after each flight now defaults to **on** for Android and iOS (previously it was off on mobile devices).
+
+::: warning
+On devices with limited storage, keep an eye on the telemetry logs directory — saved logs can accumulate and fill up your disk space.
+The **Save log after each flight** setting can be turned off in Application Settings > Telemetry.
+:::
+
 ### Android Improvements
 
 - On Android 11+, application data (logs, plans, settings) is now saved to the root of a removable SD card when one is present, using the "All files access" permission.
