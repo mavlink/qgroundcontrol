@@ -55,6 +55,7 @@ reads shared version/config from `.github/build-config.json` (Qt/CMake/GStreamer
 ```text
 tools/
 ├── analyze.py               # Static analysis and formatting (clang-format, clang-tidy, cppcheck, clazy)
+├── android_mem_capture.py   # Sample Android app memory over adb (soak testing)
 ├── build_profile.py         # Summarize Ninja and Clang time-trace build hotspots
 ├── check_deps.py            # Check for outdated dependencies
 ├── clean.py                 # Clean build artifacts and caches
@@ -209,6 +210,22 @@ python3 ./tools/build_profile.py -B build --json          # Machine-readable out
 
 For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`, rebuild, then rerun
 the report — it scans the build dir for Clang `-ftime-trace` JSON and highlights the slowest events.
+
+### android_mem_capture.py
+
+Sample an Android app's memory (`dumpsys meminfo` PSS breakdown plus system `MemAvailable`) over
+adb at a fixed interval and write a CSV, for soak testing and before/after comparisons. Handles
+process restarts/LMK kills; press Enter during capture to drop a phase marker (POSIX terminals
+only). Defaults to the QGC package.
+
+```bash
+python3 tools/android_mem_capture.py --label geomap --interval 10   # Capture until Ctrl+C
+python3 tools/android_mem_capture.py --label soak --duration 30m    # Timed capture
+python3 tools/android_mem_capture.py --compare run-a.csv run-b.csv  # Summarize/compare runs
+```
+
+The compare summary reports start/peak/end and a second-half trend (kB/min) for total PSS,
+graphics, native heap, and system available memory.
 
 ### moccache.py
 
