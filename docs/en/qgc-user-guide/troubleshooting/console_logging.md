@@ -24,34 +24,39 @@ The most commonly used logging categories are listed below.
 
 An alternate mechanism for logging is using the `--logging` command line option. This is handy if you are trying to get logs from a situation where _QGroundControl_ crashes.
 
+Two options work together:
+
+- `--logging:full` (or `--logging:<comma-separated categories>`) enables the logging categories.
+- `--log-output` writes the log messages to stderr (the terminal on macOS/Linux). Without it, messages are only visible in the _App Log Viewer_ and the **AppLog.log** file in the application log directory.
+
 How you do this and where the traces are output vary by OS:
 
 - Windows
 
-  - You must open a command prompt, change directory to the **qgroundcontrol.exe** location, and run it from there:
+  - Open a command prompt and run _QGroundControl_ from its install location (the installer default is shown below). Because _QGroundControl_ is a GUI application it has no console window, so stderr isn't displayed — redirect it to a file to capture it:
 
     ```sh
-    cd "\Program Files (x86)\qgroundcontrol"
-    qgroundcontrol --logging:full
+    cd "%ProgramFiles%\QGroundControl\bin"
+    QGroundControl --logging:full --log-output > "%USERPROFILE%\qgc_log.txt" 2>&1
     ```
 
-  - When _QGroundControl_ starts you should see a separate console window open which will have the log output
+- macOS
 
-- OSX
-
-  - You must run _QGroundControl_ from Terminal. The Terminal app is located in Applications/Utilities. Once Terminal is open paste the following into it:
+  - You must run _QGroundControl_ from Terminal. The Terminal app is located in **Applications/Utilities**. Once Terminal is open paste the following into it:
 
     ```sh
-    cd /Applications/qgroundcontrol.app/Contents/MacOS/
-    ./qgroundcontrol --logging:full
+    cd /Applications/QGroundControl.app/Contents/MacOS
+    ./QGroundControl --logging:full --log-output
     ```
 
   - Log traces will output to the Terminal window.
 
 - Linux
 
-  ```sh
-  ./qgroundcontrol-start.sh --logging:full
-  ```
+  - Run the AppImage from a terminal:
+
+    ```sh
+    ./QGroundControl-<arch>.AppImage --logging:full --log-output
+    ```
 
   - Log traces will output to the shell you are running from.
