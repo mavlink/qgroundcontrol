@@ -28,8 +28,9 @@ Item {
 
     // Strip qrc: scheme and ensure leading '/' so the provider URL stays well-formed.
     readonly property string _path: {
-        const s = source.toString()
+        let s = source.toString()
         if (s.length === 0)        return ""
+        s = Qt.resolvedUrl(s).toString()
         if (s.startsWith("qrc:/")) return s.substring(4)
         if (s.startsWith("/"))     return s
         return "/" + s
