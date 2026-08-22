@@ -1,4 +1,7 @@
 #include "PlanMasterController.h"
+#include "MissionSettingsItem.h"
+#include "ParameterManager.h"
+#include "FirmwarePlugin.h"
 #include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "MultiVehicleManager.h"
@@ -322,6 +325,18 @@ void PlanMasterController::sendToVehicle(void)
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start mission sendToVehicle";
+
+        MissionSettingsItem* settingsItem = _missionController.settingsItem();
+        if (settingsItem && settingsItem->waypointRadius() && _managerVehicle && _managerVehicle->parameterManager() && _managerVehicle->firmwarePlugin()) {
+            const QString paramName = _managerVehicle->firmwarePlugin()->waypointRadiusParameter(_managerVehicle);
+            if (!paramName.isEmpty() && _managerVehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
+                Fact* paramFact = _managerVehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
+                if (paramFact) {
+                    paramFact->setRawValue(settingsItem->waypointRadius()->rawValue());
+                }
+            }
+        }
+
         _sendGeoFence = true;
         _missionController.sendToVehicle();
     }

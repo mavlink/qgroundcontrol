@@ -643,6 +643,9 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     }
     MissionSettingsItem* settingsItem = new MissionSettingsItem(_masterController, _flyView);
     settingsItem->setCoordinate(homeCoordinate);
+    if (json.contains(QStringLiteral("waypointRadius"))) {
+        settingsItem->waypointRadius()->setRawValue(json[QStringLiteral("waypointRadius")].toDouble());
+    }
     visualItems->insert(0, settingsItem);
     qCDebug(MissionControllerLog) << "plannedHomePosition" << homeCoordinate;
 
@@ -884,6 +887,7 @@ void MissionController::save(QJsonObject& json)
     json[_jsonCruiseSpeedKey]               = _controllerVehicle->defaultCruiseSpeed();
     json[_jsonHoverSpeedKey]                = _controllerVehicle->defaultHoverSpeed();
     json[_jsonGlobalPlanAltitudeModeKey]    = _globalAltFrame;
+    json[QStringLiteral("waypointRadius")]  = settingsItem->waypointRadius()->rawValue().toDouble();
 
     // Save the visual items
 

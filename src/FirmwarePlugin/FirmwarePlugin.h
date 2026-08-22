@@ -360,6 +360,9 @@ public:
     // Returns the parameter which control auto-disarm. Assume == 0 means no auto disarm
     virtual QString autoDisarmParameter(Vehicle* /*vehicle*/) const { return QString(); }
 
+    /// Returns the parameter name that controls waypoint acceptance radius for the vehicle.
+    virtual QString waypointRadiusParameter(Vehicle* /*vehicle*/) const { return QString(); }
+
     /// Used to determine whether a vehicle has a gimbal.
     ///     @param[out] rollSupported Gimbal supports roll
     ///     @param[out] pitchSupported Gimbal supports pitch
