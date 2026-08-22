@@ -190,4 +190,24 @@ void FirmwareUpgradeControllerTest::_px4ReleasesCompleteOnlyStableKeepsBetaEmpty
     QVERIFY(controller._px4BetaVersion.isEmpty());
 }
 
+void FirmwareUpgradeControllerTest::_flycoreBoardIdMapsToPX4Firmware()
+{
+    FirmwareUpgradeController controller;
+    const QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* firmwareUrls =
+        controller._firmwareHashForBoardId(1218);
+
+    QCOMPARE(firmwareUrls->size(), 3);
+    QCOMPARE(
+        firmwareUrls->value({FirmwareUpgradeController::AutoPilotStackPX4, FirmwareUpgradeController::StableFirmware,
+                             FirmwareUpgradeController::DefaultVehicleFirmware}),
+        QStringLiteral("http://px4-travis.s3.amazonaws.com/Firmware/stable/amovlab_flycore_default.px4"));
+    QCOMPARE(firmwareUrls->value({FirmwareUpgradeController::AutoPilotStackPX4, FirmwareUpgradeController::BetaFirmware,
+                                  FirmwareUpgradeController::DefaultVehicleFirmware}),
+             QStringLiteral("http://px4-travis.s3.amazonaws.com/Firmware/beta/amovlab_flycore_default.px4"));
+    QCOMPARE(
+        firmwareUrls->value({FirmwareUpgradeController::AutoPilotStackPX4, FirmwareUpgradeController::DeveloperFirmware,
+                             FirmwareUpgradeController::DefaultVehicleFirmware}),
+        QStringLiteral("http://px4-travis.s3.amazonaws.com/Firmware/master/amovlab_flycore_default.px4"));
+}
+
 UT_REGISTER_TEST(FirmwareUpgradeControllerTest, TestLabel::Unit, TestLabel::Vehicle)

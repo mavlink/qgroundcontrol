@@ -324,10 +324,12 @@ bool QGCSerialPortInfo::canFlash() const
         return false;
     }
 
-    static const QList<BoardType_t> flashable = {
-        BoardTypePixhawk,
-        BoardTypeSiKRadio
-    };
+    return _isBoardTypeFlashable(boardType);
+}
+
+bool QGCSerialPortInfo::_isBoardTypeFlashable(BoardType_t boardType)
+{
+    static const QList<BoardType_t> flashable = {BoardTypePixhawk, BoardTypeSiKRadio};
 
     return flashable.contains(boardType);
 }

@@ -57,6 +57,7 @@ private:
     static bool _loadJsonData();
     static BoardType_t _boardClassStringToType(const QString &boardClass);
     static QString _boardTypeToString(BoardType_t boardType);
+    static bool _isBoardTypeFlashable(BoardType_t boardType);
 
     static bool _jsonLoaded;
     static bool _jsonDataValid;

@@ -38,6 +38,8 @@
         { "vendorID": 12677, "productID": 61,       "boardClass": "Pixhawk",    "name": "ARK FMU V6S" },
         { "vendorID": 12677, "productID": 62,       "boardClass": "Pixhawk",    "name": "ARK FMU V6XRT" },
 
+        { "vendorID": 7504, "productID": 24992,     "boardClass": "Pixhawk",    "name": "AMOVLAB Flycore" },
+
         { "vendorID": 1155, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
         { "vendorID": 4617, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
         { "vendorID": 4617, "productID": 22337,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
