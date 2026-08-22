@@ -22,6 +22,7 @@ private slots:
     void _testVerifyRequiredPlugins();
     void _testEnvironmentSetup();
     void _testWritePipelineDotReturnsEmptyOnWriteFailure();
+    void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
     void _testCreateVideoReceiver();
     void _testBindDebugLevelFactRejectsNullContext();
