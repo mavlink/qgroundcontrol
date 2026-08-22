@@ -11,7 +11,7 @@ class FlyViewROIUITestBase : public QmlUITestBase
     Q_OBJECT
 
 protected:
-    void _runROIFromMapClick(bool apmFirmware);
+    void _runROIFromMapClick(bool apmFirmware, bool geoMapEngine = false);
 };
 
 /// PX4: altitude converted to AMSL (home + relative) and sent in MAV_FRAME_GLOBAL
@@ -30,5 +30,16 @@ class FlyViewROIAPMUITest : public FlyViewROIUITestBase
 
 private slots:
     void init() override;
+    void _testROIFromMapClick();
+};
+
+/// Same click-to-ROI flow with the experimental GeoMap fly view engine enabled:
+/// the click resolves through the GeoMap camera inverse projection instead of
+/// QtLocation (PX4 firmware, 2D camera mode).
+class FlyViewGeoROIUITest : public FlyViewROIUITestBase
+{
+    Q_OBJECT
+
+private slots:
     void _testROIFromMapClick();
 };

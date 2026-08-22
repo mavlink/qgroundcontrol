@@ -363,6 +363,19 @@ qreal GeoMapCamera::distanceForZoomLevel(qreal zoomLevel) const
     return std::clamp((metersPerPixel * _viewportSize.height()) / (2.0 * tanHalfFov), kMinDistance, kMaxDistance);
 }
 
+qreal GeoMapCamera::zoomLevelForDistance(qreal distance) const
+{
+    if (_viewportSize.isEmpty()) {
+        return 0;
+    }
+    // Mirror distanceForZoomLevel's contract: inputs outside the camera's
+    // distance limits map to the corresponding zoom bound
+    const double clamped = std::clamp(distance, kMinDistance, kMaxDistance);
+    const double tanHalfFov = std::tan(qDegreesToRadians(verticalFieldOfView()) / 2.0);
+    const double metersPerPixel = (clamped * 2.0 * tanHalfFov) / _viewportSize.height();
+    return std::log2(TileMath::worldSize() / (TileMath::kTilePixels * metersPerPixel));
+}
+
 QGeoCoordinate GeoMapCamera::centerForCoordinateAtScreenPoint(const QGeoCoordinate& coordinate,
                                                               const QPointF& screenPos, double worldZ,
                                                               double centerElevation) const

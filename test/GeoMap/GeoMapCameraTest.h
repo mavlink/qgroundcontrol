@@ -20,6 +20,7 @@ private slots:
     void _worldToScreen();
     void _sceneUnitsPerPixel();
     void _distanceForZoomLevel();
+    void _zoomLevelForDistance();
     void _centerForCoordinateAtScreenPoint();
     void _centerElevation();
     void _panAnchorInvariant_data();

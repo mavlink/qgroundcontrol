@@ -30,6 +30,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 qt_add_library(GeoMapModule STATIC)
 
+# Debug-only test harness (matches the ScreenTools.isDebug loader in MainWindow)
+set(GEOMAP_DEBUG_QML_FILES "")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND GEOMAP_DEBUG_QML_FILES GeoMapTestView.qml)
+endif()
+
 qt_add_qml_module(GeoMapModule
     URI QGroundControl.GeoMap
     VERSION 1.0
@@ -42,6 +48,8 @@ qt_add_qml_module(GeoMapModule
     SOURCES
         CheckerboardTextureData.cc
         CheckerboardTextureData.h
+        FenceWallGeometry.cc
+        FenceWallGeometry.h
         FlightPathGeometry.cc
         FlightPathGeometry.h
         GeoScene.cc
@@ -52,6 +60,8 @@ qt_add_qml_module(GeoMapModule
         GeoMapItem.h
         GeoMapProjectedPath.cc
         GeoMapProjectedPath.h
+        GeoMapSpriteLayer.cc
+        GeoMapSpriteLayer.h
         PaperPlaneGeometry.cc
         PaperPlaneGeometry.h
         PatchGeometry.cc
@@ -62,8 +72,12 @@ qt_add_qml_module(GeoMapModule
         SurfacePatchModel.h
     QML_FILES
         GeoMap.qml
+        GeoMapADSBVehicleItem.qml
+        GeoMapCircle.qml
+        GeoMapFenceWall.qml
         GeoMapFlightPath.qml
         GeoMapFWLandingPatternVisual.qml
+        GeoMapGeoFenceVisuals.qml
         GeoMapLandingPatternVisuals.qml
         GeoMapMissionArrow.qml
         GeoMapMissionDirectionArrows.qml
@@ -72,10 +86,12 @@ qt_add_qml_module(GeoMapModule
         GeoMapMissionLabel.qml
         GeoMapMissionPath.qml
         GeoMapPin.qml
+        GeoMapPolygon.qml
         GeoMapSegmentArrow.qml
         GeoMapVehicleItem.qml
         GeoMapVTOLLandingPatternVisual.qml
         GeoMapWaypointItem.qml
+        ${GEOMAP_DEBUG_QML_FILES}
     RESOURCES
         shaders/flightpath.frag
         shaders/flightpath.vert

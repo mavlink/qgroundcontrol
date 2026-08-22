@@ -59,7 +59,8 @@ GeoMapItem {
 
     QGCLabel {
         anchors.centerIn: parent
-        text: root.index >= 0 ? root.index : ""
+        // MissionItemIndexLabel convention: single-char label lives inside the dot
+        text: root.index >= 0 ? root.index : (root.label.length === 1 ? root.label : "")
         color: "white"
         font.bold: true
     }
@@ -72,7 +73,7 @@ GeoMapItem {
         height: sideLabel.height
         radius: height / 2
         color: root._markerColor
-        visible: root.label.length > 0
+        visible: root.label.length > 1
 
         QGCLabel {
             id: sideLabel

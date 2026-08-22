@@ -2,11 +2,11 @@
 
 #include "UnitTest.h"
 
-class GeoViewSettingsTest : public UnitTest
+class FlyViewSettingsTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
     void _defaults();
-    void _enabledToggle();
+    void _useGeoMapEngineToggle();
 };

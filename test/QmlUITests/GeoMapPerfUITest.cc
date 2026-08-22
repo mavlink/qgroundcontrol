@@ -2,6 +2,7 @@
 
 #include <QtCore/QEventLoop>
 #include <QtCore/QPoint>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTextStream>
 #include <QtCore/QTimer>
@@ -9,11 +10,12 @@
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
+
 #include <optional>
 
 #include "Fact.h"
+#include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
-#include "GeoViewSettings.h"
 #include "SettingsManager.h"
 #include "SurfacePatchModel.h"
 
@@ -27,9 +29,11 @@ const QGeoCoordinate kBenchCenter(47.6329078, -122.0876875);
 
 void GeoMapPerfUITest::_benchmark()
 {
-    Fact* const enabled = SettingsManager::instance()->geoViewSettings()->enabled();
+    Fact* const enabled = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
     const QVariant savedEnabled = enabled->rawValue();
     const auto guard = qScopeGuard([enabled, savedEnabled] { enabled->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
     enabled->setRawValue(true);
 
     startUI();
@@ -39,7 +43,6 @@ void GeoMapPerfUITest::_benchmark()
     const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
     QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
 
-    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewGeo")));
     QQuickItem* const viewport = findVisibleItem(_rootItem, QStringLiteral("geoMapViewport"), 10000);
     QVERIFY2(viewport, "GeoMap 3D viewport not visible");
 

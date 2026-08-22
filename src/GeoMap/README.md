@@ -4,7 +4,7 @@ A custom 2D/3D map engine built on Qt Quick 3D, currently an experimental previe
 alternative to QtLocation's `Map`. The ground is a mesh shaped by real elevation
 data and draped with standard map tile imagery, viewed through a gesture-driven
 camera that smoothly transitions between a classic top-down 2D map and a tilted 3D
-view. Used by the FlyView (`FlyViewGeo.qml` / `FlyViewGeoMap.qml`).
+view. Used by the FlyView (`FlyViewGeoMapAdapter.qml` / `FlyViewGeoMap.qml`).
 
 ## The big picture
 

@@ -1,21 +1,21 @@
-# GeoView (Tech Preview)
+# GeoMap Engine (Tech Preview)
 
 :::warning
-GeoView is an experimental technology preview and is under active development. Expect missing features and rough edges.
+The GeoMap engine is an experimental technology preview and is under active development. Expect missing features and rough edges.
 It is too early to report issues against this feature — there is still too much work left to do.
 :::
 
-GeoView is a new map engine for QGroundControl that renders a single, seamless 2D/3D map: satellite/street imagery draped over real terrain elevation, with Google Earth-style camera controls. It displays your vehicles, the planned mission (with waypoint markers, connecting path, and drop lines showing each waypoint's height above the terrain), the flown flight path, the launch location, and the ground station position — all in true 3D.
+The GeoMap engine is a new map engine for QGroundControl that renders a single, seamless 2D/3D map: satellite/street imagery draped over real terrain elevation, with Google Earth-style camera controls. When enabled it replaces the map in the [Fly View](fly_view.md), displaying your vehicles, the planned mission (with waypoint markers, connecting path, and drop lines showing each waypoint's height above the terrain), the flown flight path, the launch location, and the ground station position — all in true 3D.
 
 :::info
-GeoView is currently a display-only view. You must still use the regular [Fly View](fly_view.md) to control the vehicle (arm, takeoff, guided actions, mission control, and so on).
+Map interaction (click-to-goto, orbit, ROI, and other map click actions) is available in 2D mode only; 3D mode is currently view-only. All other Fly View controls (arm, takeoff, guided actions, instruments, and so on) work as usual.
 :::
 
-The long-term goal is for the GeoView engine to eventually replace all map usage throughout QGroundControl, including the Fly and Plan views, providing one consistent 2D/3D map experience everywhere.
+The long-term goal is for the GeoMap engine to eventually replace all map usage throughout QGroundControl, including the Plan view, providing one consistent 2D/3D map experience everywhere.
 
-## Enabling GeoView
+## Enabling the GeoMap Engine
 
-GeoView is disabled by default. To enable it, go to **Application Settings > GeoView** and turn on **Enable GeoView (preview)**. It then appears in the view selector dropdown in the main toolbar.
+The GeoMap engine is disabled by default. To enable it, go to **Application Settings > Fly View** and turn on **Use GeoMap engine (preview)**, then restart QGroundControl. After the restart the Fly View map is rendered by the GeoMap engine.
 
 ## View Controls
 
@@ -44,4 +44,16 @@ Keyboard modifiers provide alternatives to the multi-button mouse gestures (usef
 
 ## Imagery and Terrain
 
-GeoView drapes the same map imagery you have selected in **Application Settings > Maps** over its terrain surface. Terrain elevation comes from the Mapzen/Tilezen terrain tiles dataset (SRTM, 3DEP, GMTED2010, ETOPO1); attribution is shown in the lower-left overlay.
+The GeoMap engine drapes the same map imagery you have selected in **Application Settings > Maps** over its terrain surface. Terrain elevation comes from the [Mapzen/Tilezen Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) dataset, which combines the following sources:
+
+- ArcticDEM terrain data DEM(s) were created from DigitalGlobe, Inc., imagery and funded under National Science Foundation awards 1043681, 1559691, and 1542736
+- Australia terrain data © Commonwealth of Australia (Geoscience Australia) 2017
+- Austria terrain data © offene Daten Österreichs – Digitales Geländemodell (DGM) Österreich
+- Canada terrain data contains information licensed under the Open Government Licence – Canada
+- Europe terrain data produced using Copernicus data and information funded by the European Union – EU-DEM layers
+- Global ETOPO1 terrain data U.S. National Oceanic and Atmospheric Administration
+- Mexico terrain data source: INEGI, Continental relief, 2016
+- New Zealand terrain data Copyright 2011 Crown copyright (c) Land Information New Zealand and the New Zealand Government (All rights reserved)
+- Norway terrain data © Kartverket
+- United Kingdom terrain data © Environment Agency copyright and/or database right 2015. All rights reserved
+- United States 3DEP (formerly NED) and global GMTED2010 and SRTM terrain data courtesy of the U.S. Geological Survey

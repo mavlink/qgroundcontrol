@@ -4,7 +4,8 @@
     "groups": [
         {
             "heading": "General",
-            "keywords": ["3d view", "3d map", "enable 3d", "map provider"],
+            "headingDescription": "qsTr(\"The 3D View is deprecated and will be removed in a future release in favor of the GeoMap engine.\")",
+            "keywords": ["3d view", "3d map", "enable 3d", "map provider", "deprecated"],
             "controls": [
                 {
                     "setting": "viewer3DSettings.enabled"

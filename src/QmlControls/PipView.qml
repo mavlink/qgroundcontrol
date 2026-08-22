@@ -32,6 +32,8 @@ Item {
         _componentComplete = true
     }
 
+    // item1 can swap at runtime (fly view map engine Loader), not just item2
+    onItem1Changed: _initForItems()
     onItem2Changed: _initForItems()
 
     function showWindow() {
@@ -41,6 +43,12 @@ Item {
     }
 
     function _initForItems() {
+        if (!item1) {
+            // Engine swap in flight: wait for the new item1
+            _fullItem = null
+            _pipOrWindowItem = null
+            return
+        }
         var item1IsFull = QGroundControl.loadBoolGlobalSetting(item1IsFullSettingsKey, true)
         if (item1 && item2) {
             item1.pipState.state = item1IsFull ? item1.pipState.fullState : item1.pipState.pipState
@@ -56,6 +64,10 @@ Item {
     }
 
     function _swapPip() {
+        if (!item1 || !item2) {
+            // Engine swap in flight (see _initForItems)
+            return
+        }
         var item1IsFull = false
         if (item1.pipState.state === item1.pipState.fullState) {
             item1.pipState.state = item1.pipState.pipState
@@ -184,7 +196,11 @@ Item {
 
         MouseArea {
             anchors.fill:   parent
-            onClicked:      _pipOrWindowItem.pipState.state = _pipOrWindowItem.pipState.windowState
+            onClicked: {
+                if (_pipOrWindowItem) {
+                    _pipOrWindowItem.pipState.state = _pipOrWindowItem.pipState.windowState
+                }
+            }
         }
     }
 

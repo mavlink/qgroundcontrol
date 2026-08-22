@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <utility>
 
 #include "ElevationTilePyramid.h"
@@ -99,9 +100,12 @@ constexpr int kFloatsPerVertex = 8;  // position 3, normal 3, uv 2
 double meshZ(const QByteArray& vertexData, int row, int col)
 {
     const int vpe = SurfaceModel::kGridSize + 1;
-    const float* vertex =
-        reinterpret_cast<const float*>(vertexData.constData()) + (qsizetype((row * vpe) + col) * kFloatsPerVertex);
-    return double(vertex[2]);
+    float z = 0.0f;
+    std::memcpy(&z,
+                vertexData.constData() +
+                    ((qsizetype((row * vpe) + col) * kFloatsPerVertex + 2) * static_cast<qsizetype>(sizeof(float))),
+                sizeof(z));
+    return double(z);
 }
 
 /// Rendered height along a mesh edge at fractional grid coordinate t: the

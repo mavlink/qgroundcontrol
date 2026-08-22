@@ -29,6 +29,14 @@ Item {
 
     property alias camera: geoCamera
 
+    // Same contract as FlightMap: block pinch-to-zoom while virtual joystick
+    // thumbs are down (issue #13450)
+    property bool pinchZoomDisabledByVirtualJoysticks: false
+
+    // Same contract as FlightMap: plain left-click/tap (no drag, no modifier)
+    // in viewport coordinates; consumers convert via camera.coordinateAtScreenPoint
+    signal mapClicked(var position)
+
     // Auto-centering (parity with FlightMap): one-shot GCS/vehicle centering
     // plus vehicle following, all decided by the shared MapPositionTracker
     property alias allowGCSLocationCenter: _positionTracker.allowGCSLocationCenter
@@ -484,6 +492,7 @@ Item {
         PinchHandler {
             id: pinchHandler
             target: null
+            enabled: !root.pinchZoomDisabledByVirtualJoysticks
             onActiveChanged: {
                 if (active) {
                     root.completeCameraAnimations()
@@ -491,6 +500,14 @@ Item {
             }
             onScaleChanged: (delta) => geoCamera.zoomBy(1 / delta, centroid.position)
             onRotationChanged: (delta) => geoCamera.rotateBy(delta, centroid.position)
+        }
+
+        // Plain click/tap: the default DragThreshold gesture policy means any
+        // pan drag cancels the tap, so this never fires during camera gestures
+        TapHandler {
+            acceptedButtons: Qt.LeftButton
+            acceptedModifiers: Qt.NoModifier
+            onTapped: (eventPoint, button) => root.mapClicked(eventPoint.position)
         }
     }
 

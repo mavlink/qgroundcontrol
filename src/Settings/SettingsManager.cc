@@ -11,7 +11,6 @@
 #include "FlightMapSettings.h"
 #include "FlightModeSettings.h"
 #include "FlyViewSettings.h"
-#include "GeoViewSettings.h"
 #include "GimbalControllerSettings.h"
 #include "MapsSettings.h"
 #include "OfflineMapsSettings.h"
@@ -65,7 +64,6 @@ void SettingsManager::init()
     _flightMapSettings = new FlightMapSettings(this);
     _flightModeSettings = new FlightModeSettings(this);
     _flyViewSettings = new FlyViewSettings(this);
-    _geoViewSettings = new GeoViewSettings(this);
     _gimbalControllerSettings = new GimbalControllerSettings(this);
     _mapsSettings = new MapsSettings(this);
     _offlineMapsSettings = new OfflineMapsSettings(this);
@@ -93,7 +91,6 @@ FirmwareUpgradeSettings *SettingsManager::firmwareUpgradeSettings() const { retu
 FlightMapSettings *SettingsManager::flightMapSettings() const { return _flightMapSettings; }
 FlightModeSettings *SettingsManager::flightModeSettings() const { return _flightModeSettings; }
 FlyViewSettings *SettingsManager::flyViewSettings() const { return _flyViewSettings; }
-GeoViewSettings *SettingsManager::geoViewSettings() const { return _geoViewSettings; }
 GimbalControllerSettings *SettingsManager::gimbalControllerSettings() const { return _gimbalControllerSettings; }
 MapsSettings *SettingsManager::mapsSettings() const { return _mapsSettings; }
 OfflineMapsSettings *SettingsManager::offlineMapsSettings() const { return _offlineMapsSettings; }

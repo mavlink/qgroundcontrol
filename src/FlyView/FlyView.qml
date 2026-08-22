@@ -31,8 +31,8 @@ Item {
         Component.onCompleted:  start()
     }
 
-    property bool   _mainWindowIsMap:       mapControl.pipState.state === mapControl.pipState.fullState
-    property bool   _isFullWindowItemDark:  _mainWindowIsMap ? mapControl.isSatelliteMap : true
+    property bool   _mainWindowIsMap:       _mapControl ? _mapControl.pipState.state === _mapControl.pipState.fullState : true
+    property bool   _isFullWindowItemDark:  _mainWindowIsMap ? (_mapControl ? _mapControl.isSatelliteMap : true) : true
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _missionController:     _planController.missionController
     property var    _geoFenceController:    _planController.geoFenceController
@@ -44,7 +44,7 @@ Item {
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
-    property var    _mapControl:            mapControl
+    property var    _mapControl:            mapEngineLoader.item
     property real   _widgetMargin:          ScreenTools.defaultFontPixelWidth * 0.75
 
     property real   _fullItemZorder:    0
@@ -72,17 +72,48 @@ Item {
         id:                 mapHolder
         anchors.fill:       parent
 
-        FlyViewMap {
-            id:                     mapControl
-            objectName:             "flyViewMap"
-            planMasterController:   _planController
-            rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
-            pipView:                _pipView
-            pipMode:                !_mainWindowIsMap
-            toolInsets:             customOverlay.totalToolInsets
-            mapName:                "FlightDisplayView"
-            enabled:                !_is3DMode
-            visible:                !_is3DMode
+        // Map engine switch (issue #14901): QtLocation FlyViewMap or the
+        // experimental GeoMap engine, only one instantiated at a time. The
+        // loaded item is positioned/reparented by its PipState, not the Loader.
+        // Engine choice is snapshotted at startup (setting is
+        // qgcRebootRequired): a live swap would leave stale cross-map state
+        // (guided controller registrations, ROI coordinate).
+        Loader {
+            id: mapEngineLoader
+            Component.onCompleted: sourceComponent = QGroundControl.settingsManager.flyViewSettings.useGeoMapEngine.rawValue ? geoMapEngineComponent : qtLocationEngineComponent
+        }
+
+        Component {
+            id: qtLocationEngineComponent
+
+            FlyViewMap {
+                objectName:             "flyViewMap"
+                planMasterController:   _planController
+                rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
+                pipView:                _pipView
+                pipMode:                !_mainWindowIsMap
+                toolInsets:             customOverlay.totalToolInsets
+                mapName:                "FlightDisplayView"
+                enabled:                !_is3DMode
+                visible:                !_is3DMode
+            }
+        }
+
+        Component {
+            id: geoMapEngineComponent
+
+            FlyViewGeoMapAdapter {
+                objectName:             "flyViewGeoMapAdapter"
+                planMasterController:   _planController
+                rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
+                pipView:                _pipView
+                pipMode:                !_mainWindowIsMap
+                toolInsets:             customOverlay.totalToolInsets
+                toolInsetsTopOffset:    toolbar.height + _widgetMargin
+                mapName:                "FlightDisplayView"
+                enabled:                !_is3DMode
+                visible:                !_is3DMode
+            }
         }
 
         FlyViewVideo {
@@ -96,10 +127,11 @@ Item {
             anchors.bottom:         parent.bottom
             anchors.margins:        _toolsMargin
             item1IsFullSettingsKey: "MainFlyWindowIsMap"
-            item1:                  mapControl
+            item1:                  _mapControl
             item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
             show:                   QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen &&
-                                        (videoControl.pipState.state === videoControl.pipState.pipState || mapControl.pipState.state === mapControl.pipState.pipState)
+                                        (videoControl.pipState.state === videoControl.pipState.pipState ||
+                                         (_mapControl && _mapControl.pipState.state === _mapControl.pipState.pipState))
             z:                      QGroundControl.zOrderWidgets
 
             property real leftEdgeBottomInset: visible ? width + anchors.margins : 0

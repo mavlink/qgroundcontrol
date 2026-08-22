@@ -187,6 +187,7 @@ FlightMap {
 
     ObstacleDistanceOverlayMap {
         id: obstacleDistance
+        mapControl: _root
         showText: !pipMode
     }
 
@@ -617,94 +618,9 @@ FlightMap {
     Component {
         id: mapClickDropPanelComponent
 
-        DropPanel {
-            id: mapClickDropPanel
-
-            property var mapClickCoord
-
-            sourceComponent: Component {
-                ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelWidth / 2
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Go to location")
-                        visible:            globals.guidedControllerFlyView.showGotoLocation
-                        onClicked: {
-                            mapClickDropPanel.close()
-                            gotoLocationItem.show(mapClickCoord)
-
-                            if ((_activeVehicle.flightMode == _activeVehicle.gotoFlightMode) && !_flyViewSettings.goToLocationRequiresConfirmInGuided.value) {
-                                if (globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord)) {
-                                    gotoLocationItem.actionConfirmed() // Still need to call this to commit the new coordinate and radius
-                                } else {
-                                    gotoLocationItem.actionCancelled()
-                                }
-                            } else {
-                                globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionGoto, mapClickCoord, gotoLocationItem)
-                            }
-                        }
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Orbit at location")
-                        visible:            globals.guidedControllerFlyView.showOrbit
-                        onClicked: {
-                            mapClickDropPanel.close()
-                            orbitMapCircle.show(mapClickCoord)
-                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionOrbit, mapClickCoord, orbitMapCircle)
-                        }
-                    }
-
-                    QGCButton {
-                        objectName:         "mapClickROI"
-                        Layout.fillWidth:   true
-                        text:               qsTr("ROI at location")
-                        visible:            globals.guidedControllerFlyView.showROI
-                        onClicked: {
-                            mapClickDropPanel.close()
-                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionROI, mapClickCoord)
-                        }
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Set home here")
-                        visible:            globals.guidedControllerFlyView.showSetHome
-                        onClicked: {
-                            mapClickDropPanel.close()
-                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetHome, mapClickCoord)
-                        }
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Set Estimator Origin")
-                        visible:            globals.guidedControllerFlyView.showSetEstimatorOrigin
-                        onClicked: {
-                            mapClickDropPanel.close()
-                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionSetEstimatorOrigin, mapClickCoord)
-                        }
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Set Heading")
-                        visible:            globals.guidedControllerFlyView.showChangeHeading
-                        onClicked: {
-                            mapClickDropPanel.close()
-                            globals.guidedControllerFlyView.confirmAction(globals.guidedControllerFlyView.actionChangeHeading, mapClickCoord)
-                        }
-                    }
-
-                    ColumnLayout {
-                        spacing: 0
-                        QGCLabel { text: qsTr("Lat: %1").arg(mapClickCoord.latitude.toFixed(6)) }
-                        QGCLabel { text: qsTr("Lon: %1").arg(mapClickCoord.longitude.toFixed(6)) }
-                    }
-                }
-            }
+        FlyViewMapClickDropPanel {
+            gotoIndicator:  gotoLocationItem
+            orbitIndicator: orbitMapCircle
         }
     }
 

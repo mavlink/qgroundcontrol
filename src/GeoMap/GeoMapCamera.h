@@ -202,6 +202,11 @@ public:
     /// not set.
     Q_INVOKABLE qreal distanceForZoomLevel(qreal zoomLevel) const;
 
+    /// Slippy-map zoom level rendered at the given camera distance — the inverse
+    /// of distanceForZoomLevel. distance is clamped to the distance limits.
+    /// Returns 0 when the viewport is not set.
+    Q_INVOKABLE qreal zoomLevelForDistance(qreal distance) const;
+
     /// Center that places coordinate at screenPos with the current heading/tilt/
     /// distance (rigid translation solve on the horizontal plane at worldZ, the
     /// point's rendered height in world units — 0 for a ground point). Returns the
