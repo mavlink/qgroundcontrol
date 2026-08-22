@@ -2,6 +2,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -54,7 +55,7 @@ void FTPManagerTest::_sizeTestCaseWorker(int fileSize)
 void FTPManagerTest::_performSizeBasedTestCases_data()
 {
     QTest::addColumn<int>("fileSize");
-    const int dataSize = sizeof(((MavlinkFTP::Request*)nullptr)->data);
+    const int dataSize = sizeof(((MavlinkFTP::Request*) nullptr)->data);
     QTest::addRow("single_packet_partial") << (dataSize - 1);
     QTest::addRow("single_packet_full") << dataSize;
     QTest::addRow("single_packet_plus_one") << (dataSize + 1);
@@ -118,7 +119,7 @@ void FTPManagerTest::_verifyFileSizeAndDelete(const QString& filename, int expec
     QVERIFY(file.open(QFile::ReadOnly));
     for (int i = 0; i < expectedSize; i++) {
         QByteArray bytes = file.read(1);
-        QCOMPARE(bytes[0], (char)(i % 255));
+        QCOMPARE(bytes[0], (char) (i % 255));
     }
     file.close();
     file.remove();
@@ -179,7 +180,7 @@ void FTPManagerTest::_testListDirectoryWithTimeFallback()
     QVERIFY(arguments[1].toString().isEmpty());
 
     // After falling back to kCmdListDirectory the entries carry no modification-time field.
-    for (const QString &entry : entries) {
+    for (const QString& entry : entries) {
         QCOMPARE(entry.mid(1).count(QLatin1Char('\t')), 1);
     }
     _disconnectMockLink();
@@ -302,7 +303,7 @@ void FTPManagerTest::_testUpload()
     _mockLink->mockLinkFTP()->clearUploadedFiles();
     FTPManager* ftpManager = _vehicle->ftpManager();
     const QString remotePath(QStringLiteral("/mock/upload/test.bin"));
-    const int chunkSize = sizeof(((MavlinkFTP::Request*)nullptr)->data);
+    const int chunkSize = sizeof(((MavlinkFTP::Request*) nullptr)->data);
     const int payloadSize = (chunkSize * 2) + 7;
     QByteArray payload(payloadSize, 0);
     for (int i = 0; i < payloadSize; ++i) {
@@ -322,6 +323,32 @@ void FTPManagerTest::_testUpload()
     QVERIFY(_mockLink->mockLinkFTP()->uploadedFiles().contains(remotePath));
     const QByteArray uploadedPayload = _mockLink->mockLinkFTP()->uploadedFileContents(remotePath);
     QCOMPARE(uploadedPayload, payload);
+
+    QTemporaryDir downloadDirectory;
+    QVERIFY(downloadDirectory.isValid());
+    QSignalSpy downloadSpy(ftpManager, &FTPManager::downloadComplete);
+    QVERIFY(
+        ftpManager->download(MAV_COMP_ID_AUTOPILOT1, remotePath, downloadDirectory.path(), QStringLiteral("test.bin")));
+    QVERIFY_SIGNAL_WAIT(downloadSpy, TestTimeout::longMs());
+    QVERIFY(downloadSpy.first().at(1).toString().isEmpty());
+
+    QByteArray replacementPayload(payloadSize, '\x6B');
+    QTemporaryFile replacementFile;
+    QVERIFY(replacementFile.open());
+    QCOMPARE(replacementFile.write(replacementPayload), static_cast<qint64>(replacementPayload.size()));
+    replacementFile.close();
+    QVERIFY(ftpManager->upload(MAV_COMP_ID_AUTOPILOT1, remotePath, replacementFile.fileName()));
+    QVERIFY_SIGNAL_WAIT(spyUploadComplete, TestTimeout::longMs());
+    QVERIFY(spyUploadComplete.takeFirst().at(1).toString().isEmpty());
+
+    (void) QFile::remove(downloadDirectory.filePath(QStringLiteral("test.bin")));
+    downloadSpy.clear();
+    QVERIFY(
+        ftpManager->download(MAV_COMP_ID_AUTOPILOT1, remotePath, downloadDirectory.path(), QStringLiteral("test.bin")));
+    QVERIFY_SIGNAL_WAIT(downloadSpy, TestTimeout::longMs());
+    QFile replacementDownload(downloadSpy.first().at(0).toString());
+    QVERIFY(replacementDownload.open(QIODevice::ReadOnly));
+    QCOMPARE(replacementDownload.readAll(), replacementPayload);
     _mockLink->mockLinkFTP()->clearUploadedFiles();
     _disconnectMockLink();
 }

@@ -58,7 +58,7 @@ public:
     QByteArray uploadedFileContents(const QString& remotePath) const { return _uploadedFiles.value(remotePath); }
 
     /// Clears the stored uploaded file contents.
-    void clearUploadedFiles() { _uploadedFiles.clear(); }
+    void clearUploadedFiles();
 
     /// By calling setErrorMode with one of these modes you can cause the server to simulate an error.
     enum ErrorMode_t {
@@ -121,6 +121,7 @@ private:
     void _readCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _removeFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _renameCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
     void _writeCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
@@ -131,6 +132,7 @@ private:
     static QString _createTestTempFile(int size);
     QString _generateParamPck(bool withDefaults);
     QString _logFileTempPath(const QString &name);
+    QString _uploadedFileTempPath(const QString &path);
     static QByteArray _generateLogFileContents(const QString &name, int size);
 
     /// if request is a string, this ensures it's null-terminated
@@ -161,6 +163,7 @@ private:
     };
     UploadSession _uploadSession;
     QHash<QString, QByteArray> _uploadedFiles;
+    QHash<QString, QString> _uploadedFileTempPaths;
     QStringList _fileList;                      ///< List of files returned by List command
     QList<LogFile> _logFiles;                   ///< Log files served from the @MAV_LOG virtual directory
     QHash<QString, QString> _logFileTempPaths;  ///< Temp files backing @MAV_LOG downloads

@@ -58,6 +58,9 @@ public:
     /// Signals deleteComplete
     bool deleteFile(uint8_t fromCompId, const QString& fromURI);
 
+    /// Replaces a destination file with a staged file. Once started, the rename is attempted even if the caller disconnects.
+    bool replaceFile(uint8_t fromCompId, const QString& fromURI, const QString& toURI);
+
     /// Cancel the download operation
     /// This will emit downloadComplete() when done, and if there's currently a download in progress
     void cancelDownload();
@@ -81,6 +84,7 @@ signals:
     void uploadComplete         (const QString& file, const QString& errorMsg);
     void listDirectoryComplete  (const QStringList& dirList, const QString& errorMsg);
     void deleteComplete         (const QString& file, const QString& errorMsg);
+    void replaceComplete        (const QString& fromFile, const QString& toFile, const QString& errorMsg);
 
     /// Signalled during a lengthy command to show progress
     ///     @param value Amount of progress: 0.0 = none, 1.0 = complete
@@ -195,6 +199,18 @@ private:
         }
     };
 
+    struct ReplaceFileState_t {
+        QString fromPath;
+        QString toPath;
+        int retryCount = 0;
+
+        void reset() {
+            fromPath.clear();
+            toPath.clear();
+            retryCount = 0;
+        }
+    };
+
     void    _mavlinkMessageReceived     (const mavlink_message_t& message);
     void    _startStateMachine          (void);
     void    _advanceStateMachine        (void);
@@ -229,6 +245,14 @@ private:
     void    _deleteFileTimeout          (void);
     void    _deleteCompleteNoError      (void) { _deleteComplete(QString()); }
     void    _deleteComplete             (const QString& errorMsg);
+    void    _replaceDeleteBegin         (void);
+    void    _replaceDeleteAckOrNak      (const MavlinkFTP::Request* ackOrNak);
+    void    _replaceDeleteTimeout       (void);
+    void    _replaceRenameBegin         (void);
+    void    _replaceRenameAckOrNak      (const MavlinkFTP::Request* ackOrNak);
+    void    _replaceRenameTimeout       (void);
+    void    _replaceCompleteNoError     (void) { _replaceComplete(QString()); }
+    void    _replaceComplete            (const QString& errorMsg);
 
     void    _createFileBegin            (void);
     void    _createFileAckOrNak         (const MavlinkFTP::Request* ackOrNak);
@@ -254,6 +278,7 @@ private:
     DownloadState_t         _downloadState;
     ListDirectoryState_t    _listDirectoryState;
     DeleteFileState_t       _deleteState;
+    ReplaceFileState_t      _replaceState;
     UploadState_t           _uploadState;
     QTimer                  _ackOrNakTimeoutTimer;
     int                     _currentStateMachineIndex   = -1;

@@ -22,7 +22,7 @@ FTPManager::FTPManager(Vehicle* vehicle)
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
 
     // Make sure we don't have bad structure packing
-    Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
+    static_assert(sizeof(MavlinkFTP::RequestHeader) == 12);
 
     _uploadState.reset();
 }
@@ -215,6 +215,37 @@ bool FTPManager::deleteFile(uint8_t fromCompId, const QString& fromURI)
     return true;
 }
 
+bool FTPManager::replaceFile(uint8_t fromCompId, const QString& fromURI, const QString& toURI)
+{
+    if (!_rgStateMachine.isEmpty()) {
+        return false;
+    }
+    _replaceState.reset();
+    uint8_t fromFtpCompId = MAV_COMP_ID_AUTOPILOT1;
+    uint8_t toFtpCompId = MAV_COMP_ID_AUTOPILOT1;
+    if (!_parseURI(fromCompId, fromURI, _replaceState.fromPath, fromFtpCompId) ||
+        !_parseURI(fromCompId, toURI, _replaceState.toPath, toFtpCompId) || (fromFtpCompId != toFtpCompId)) {
+        _replaceState.reset();
+        return false;
+    }
+    const qsizetype payloadSize = _replaceState.fromPath.toUtf8().size() + _replaceState.toPath.toUtf8().size() + 2;
+    if (payloadSize > static_cast<qsizetype>(sizeof(((MavlinkFTP::Request*)nullptr)->data))) {
+        _replaceState.reset();
+        return false;
+    }
+    _ftpCompId = fromFtpCompId;
+    static const StateFunctions_t rgStateMachine[] = {
+        { &FTPManager::_replaceDeleteBegin,    &FTPManager::_replaceDeleteAckOrNak, &FTPManager::_replaceDeleteTimeout },
+        { &FTPManager::_replaceRenameBegin,    &FTPManager::_replaceRenameAckOrNak, &FTPManager::_replaceRenameTimeout },
+        { &FTPManager::_replaceCompleteNoError, nullptr,                            nullptr },
+    };
+    for (const StateFunctions_t& state : rgStateMachine) {
+        _rgStateMachine.append(state);
+    }
+    _startStateMachine();
+    return true;
+}
+
 void FTPManager::cancelDownload()
 {
     if (!_downloadState.inProgress()) {
@@ -268,7 +299,15 @@ void FTPManager::cancelUpload()
         _uploadState.retryCount = 0;
         _startStateMachine();
     } else {
-        _uploadComplete(tr("Aborted"));
+        static const StateFunctions_t rgResetStateMachine[] = {
+            { &FTPManager::_resetSessionsBegin, &FTPManager::_resetSessionsAckOrNak, &FTPManager::_resetSessionsTimeout },
+            { &FTPManager::_uploadFinalize,      nullptr,                            nullptr },
+        };
+        for (size_t i = 0; i < sizeof(rgResetStateMachine) / sizeof(rgResetStateMachine[0]); i++) {
+            _rgStateMachine.append(rgResetStateMachine[i]);
+        }
+        _uploadState.retryCount = 0;
+        _startStateMachine();
     }
 }
 
@@ -424,6 +463,89 @@ void FTPManager::_deleteComplete(const QString& errorMsg)
     _deleteState.reset();
 
     emit deleteComplete(deletedPath, errorMsg);
+}
+
+void FTPManager::_replaceDeleteBegin(void)
+{
+    MavlinkFTP::Request request{};
+    request.hdr.opcode = MavlinkFTP::kCmdRemoveFile;
+    _fillRequestDataWithString(&request, _replaceState.toPath);
+    _sendRequestExpectAck(&request);
+}
+
+void FTPManager::_replaceDeleteAckOrNak(const MavlinkFTP::Request* ackOrNak)
+{
+    if ((ackOrNak->hdr.req_opcode != MavlinkFTP::kCmdRemoveFile) ||
+        (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber)) {
+        return;
+    }
+    _ackOrNakTimeoutTimer.stop();
+    if ((ackOrNak->hdr.opcode == MavlinkFTP::kRspAck) ||
+        ((ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) &&
+         (ackOrNak->data[0] == MavlinkFTP::kErrFailFileNotFound))) {
+        _replaceState.retryCount = 0;
+        _advanceStateMachine();
+    } else {
+        _replaceComplete(tr("Replace failed while removing destination: %1").arg(_errorMsgFromNak(ackOrNak)));
+    }
+}
+
+void FTPManager::_replaceDeleteTimeout(void)
+{
+    if (++_replaceState.retryCount > _maxRetry) {
+        _replaceComplete(tr("Replace failed while removing destination"));
+    } else {
+        _replaceDeleteBegin();
+    }
+}
+
+void FTPManager::_replaceRenameBegin(void)
+{
+    MavlinkFTP::Request request{};
+    request.hdr.opcode = MavlinkFTP::kCmdRename;
+    const QByteArray fromPath = _replaceState.fromPath.toUtf8();
+    const QByteArray toPath = _replaceState.toPath.toUtf8();
+    char* data = reinterpret_cast<char*>(request.data);
+    (void) memcpy(data, fromPath.constData(), fromPath.size());
+    data[fromPath.size()] = '\0';
+    (void) memcpy(data + fromPath.size() + 1, toPath.constData(), toPath.size());
+    data[fromPath.size() + 1 + toPath.size()] = '\0';
+    request.hdr.size = static_cast<uint8_t>(fromPath.size() + toPath.size() + 2);
+    _sendRequestExpectAck(&request);
+}
+
+void FTPManager::_replaceRenameAckOrNak(const MavlinkFTP::Request* ackOrNak)
+{
+    if ((ackOrNak->hdr.req_opcode != MavlinkFTP::kCmdRename) ||
+        (ackOrNak->hdr.seqNumber != _expectedIncomingSeqNumber)) {
+        return;
+    }
+    _ackOrNakTimeoutTimer.stop();
+    if (ackOrNak->hdr.opcode == MavlinkFTP::kRspAck) {
+        _advanceStateMachine();
+    } else {
+        _replaceComplete(tr("Replace failed while installing staged file: %1").arg(_errorMsgFromNak(ackOrNak)));
+    }
+}
+
+void FTPManager::_replaceRenameTimeout(void)
+{
+    if (++_replaceState.retryCount > _maxRetry) {
+        _replaceComplete(tr("Replace failed while installing staged file"));
+    } else {
+        _replaceRenameBegin();
+    }
+}
+
+void FTPManager::_replaceComplete(const QString& errorMsg)
+{
+    const QString fromPath = _replaceState.fromPath;
+    const QString toPath = _replaceState.toPath;
+    _ackOrNakTimeoutTimer.stop();
+    _rgStateMachine.clear();
+    _currentStateMachineIndex = -1;
+    _replaceState.reset();
+    emit replaceComplete(fromPath, toPath, errorMsg);
 }
 
 void FTPManager::_createFileBegin(void)
@@ -1181,14 +1303,14 @@ void FTPManager::_resetSessionsAckOrNak(const MavlinkFTP::Request* ackOrNak)
         _advanceStateMachine();
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
         qCDebug(FTPManagerLog) << "_resetSessionsAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
-        _downloadComplete(QString());
+        _advanceStateMachine();
     }
 }
 
 void FTPManager::_resetSessionsTimeout(void)
 {
     qCDebug(FTPManagerLog) << "_resetSessionsTimeout";
-    _downloadComplete(QString());
+    _advanceStateMachine();
 }
 
 void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
