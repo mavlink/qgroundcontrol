@@ -77,6 +77,31 @@ GstVideoReceiver::~GstVideoReceiver()
     qCDebug(GstVideoReceiverLog) << this;
 }
 
+void GstVideoReceiver::_removeTeeProbe()
+{
+    if (_teeProbeId == 0) {
+        return;
+    }
+
+    if (_tee) {
+        GstPad* sinkpad = gst_element_get_static_pad(_tee, "sink");
+        if (sinkpad) {
+            gst_pad_remove_probe(sinkpad, _teeProbeId);
+            gst_clear_object(&sinkpad);
+        }
+    }
+    _teeProbeId = 0;
+}
+
+void GstVideoReceiver::_clearPipelineAliases()
+{
+    _recorderValve = nullptr;
+    _decoderValve = nullptr;
+    _tee = nullptr;
+    _source = nullptr;
+    _teeProbeId = 0;
+}
+
 void GstVideoReceiver::start(uint32_t timeout)
 {
     if (_needDispatch()) {
@@ -201,6 +226,7 @@ void GstVideoReceiver::start(uint32_t timeout)
                 ? GStreamer::SourceFactory::JitterBuffer::DropOnLatency
                 : GStreamer::SourceFactory::JitterBuffer::Buffered);
         sourceConfig.latencyMs = _rtpJitterLatencyMs;
+        sourceConfig.timeoutS = timeout;
         // do-retransmission needs ≥40 ms latency headroom over the default 20 ms rtx-delay;
         // forcibly disable for sub-frame latency configurations to avoid retransmit storms.
         sourceConfig.doRetransmission = (_rtpJitterLatencyMs >= 40) && (sourceConfig.jitterBuffer != GStreamer::SourceFactory::JitterBuffer::None);
@@ -246,15 +272,32 @@ void GstVideoReceiver::start(uint32_t timeout)
         }
 
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-initial");
-        running = (gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+        if (gst_element_set_state(_pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
+            break;
+        }
+
+        // External source controllers report terminal failures through this pipeline's bus.
+        // Leave NULL first so early connection and TLS errors are not discarded while it is flushing.
+        if (!GStreamer::SourceFactory::activate(_source)) {
+            qCCritical(GstVideoReceiverLog) << "SourceFactory::activate() failed";
+            break;
+        }
+
+        running = true;
     } while(0);
 
     if (!running) {
         qCCritical(GstVideoReceiverLog) << "Failed";
 
+        _removeTeeProbe();
+        if (pipelineUp) {
+            GStreamer::SourceFactory::deactivate(_source);
+        }
+
         if (_pipeline) {
             (void) gst_element_set_state(_pipeline, GST_STATE_NULL);
             (void) gst_element_get_state(_pipeline, nullptr, nullptr, GST_CLOCK_TIME_NONE);
+            QMutexLocker lock(&_pipelineMutex);
             gst_clear_object(&_pipeline);
         }
 
@@ -266,6 +309,7 @@ void GstVideoReceiver::start(uint32_t timeout)
             gst_clear_object(&_tee);
             gst_clear_object(&_source);
         }
+        _clearPipelineAliases();
 
         emit onStartComplete(STATUS_FAIL);
     } else {
@@ -299,16 +343,7 @@ void GstVideoReceiver::stop()
     // Only _watchdogTimer.stop() must run on the GUI thread (the timer lives on `this`).
     QMetaObject::invokeMethod(this, [this]() { _watchdogTimer.stop(); }, Qt::QueuedConnection);
 
-    if (_teeProbeId != 0) {
-        if (_tee) {
-            GstPad *sinkpad = gst_element_get_static_pad(_tee, "sink");
-            if (sinkpad) {
-                gst_pad_remove_probe(sinkpad, _teeProbeId);
-                gst_clear_object(&sinkpad);
-            }
-        }
-        _teeProbeId = 0;
-    }
+    _removeTeeProbe();
 
     if (_pipeline) {
         GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
@@ -375,6 +410,7 @@ void GstVideoReceiver::stop()
             qCCritical(GstVideoReceiverLog) << "gst_pipeline_get_bus() failed";
         }
 
+        GStreamer::SourceFactory::deactivate(_source);
         (void) gst_element_set_state(_pipeline, GST_STATE_NULL);
         (void) gst_element_get_state(_pipeline, nullptr, nullptr, GST_CLOCK_TIME_NONE);
 
@@ -397,10 +433,7 @@ void GstVideoReceiver::stop()
             _pipeline = nullptr;
         }
 
-        _recorderValve = nullptr;
-        _decoderValve = nullptr;
-        _tee = nullptr;
-        _source = nullptr;
+        _clearPipelineAliases();
 
         _lastSourceFrameTime = 0;
 

@@ -23,12 +23,20 @@
         },
         {
             "heading": "Connection",
-            "keywords": ["rtsp", "tcp", "udp", "mpegts", "video url", "stream url"],
+            "keywords": ["rtsp", "http", "https", "mjpeg", "websocket", "ws", "wss", "jpeg", "tcp", "udp", "mpegts", "video url", "stream url"],
             "showWhen": "!sourceDisabled && !autoStreamConfig",
             "controls": [
                 {
                     "setting": "videoSettings.rtspUrl",
                     "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource"
+                },
+                {
+                    "setting": "videoSettings.httpMjpegUrl",
+                    "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.httpMjpegVideoSource"
+                },
+                {
+                    "setting": "videoSettings.webSocketJpegUrl",
+                    "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.webSocketJpegVideoSource"
                 },
                 {
                     "setting": "videoSettings.tcpUrl",
@@ -60,6 +68,10 @@
                 {
                     "setting": "videoSettings.rtpJitterLatencyMs",
                     "showWhen": "!autoStreamConfig && isStreamSource && rtpLatencyVisible && QGroundControl.settingsManager.videoSettings.rtpJitterLatencyMs.userVisible"
+                },
+                {
+                    "setting": "videoSettings.rtspTimeout",
+                    "showWhen": "!autoStreamConfig && (videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource || videoSource === QGroundControl.settingsManager.videoSettings.httpMjpegVideoSource || videoSource === QGroundControl.settingsManager.videoSettings.webSocketJpegVideoSource)"
                 },
                 {
                     "setting": "videoSettings.rtspAutoReconnect",
