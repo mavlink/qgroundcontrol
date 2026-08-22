@@ -136,16 +136,16 @@
         {
             "name": "disableWhenDisarmed",
             "shortDesc": "Disables the video stream when the vehicle is disarmed to save bandwidth.",
-            "longDesc": "Disable Video Stream when disarmed.",
+            "longDesc": "Disables the video stream when the vehicle is disarmed.",
             "type": "bool",
             "default": false,
-            "label": "Stop recording when disarmed",
+            "label": "Disable Video Stream When Disarmed",
             "keywords": "disable when disarmed"
         },
         {
             "name": "lowLatencyMode",
             "shortDesc": "Reduce video latency by approximately 200ms using optimized streaming settings.",
-            "longDesc": "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
+            "longDesc": "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to asynchronous mode, reducing the latency by about 200 ms.",
             "type": "bool",
             "default": false,
             "label": "Low Latency Mode",

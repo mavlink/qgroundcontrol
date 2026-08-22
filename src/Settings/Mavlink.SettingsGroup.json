@@ -14,7 +14,7 @@
         {
             "name": "telemetrySaveNotArmed",
             "shortDesc": "Also save telemetry logs from sessions where the vehicle was never armed.",
-            "longDesc": "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
+            "longDesc": "If this option is enabled a telemetry log will be saved even if vehicle was never armed.",
             "type": "bool",
             "default": false,
             "label": "Save logs even if vehicle was not armed",
