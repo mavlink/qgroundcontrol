@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         CheckerboardTextureDataTest.h
         ElevationTilePyramidTest.cc
         ElevationTilePyramidTest.h
+        FenceWallGeometryTest.cc
+        FenceWallGeometryTest.h
         FlightPathGeometryTest.cc
         FlightPathGeometryTest.h
         GeoSceneTest.cc
@@ -49,6 +51,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 add_qgc_test(CheckerboardTextureDataTest LABELS Unit)
 add_qgc_test(ElevationTilePyramidTest LABELS Unit)
+add_qgc_test(FenceWallGeometryTest LABELS Unit)
 add_qgc_test(FlightPathGeometryTest LABELS Unit)
 add_qgc_test(GeoSceneTest LABELS Unit)
 add_qgc_test(GeoMapCameraTest LABELS Unit)

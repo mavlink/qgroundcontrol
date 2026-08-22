@@ -2,7 +2,9 @@
 
 #include <QtGui/QVector3D>
 
+#include <array>
 #include <cmath>
+#include <cstring>
 
 #include "PaperPlaneGeometry.h"
 
@@ -13,9 +15,11 @@ constexpr int kNormalOffset = 3;
 constexpr int kColorOffset = 6;
 constexpr int kAlphaOffset = 9;
 
-const float* vertexAt(const QByteArray& data, int index)
+std::array<float, PaperPlaneGeometry::kFloatsPerVertex> vertexAt(const QByteArray& data, int index)
 {
-    return reinterpret_cast<const float*>(data.constData()) + (index * PaperPlaneGeometry::kFloatsPerVertex);
+    std::array<float, PaperPlaneGeometry::kFloatsPerVertex> vertex{};
+    std::memcpy(vertex.data(), data.constData() + (static_cast<qsizetype>(index) * sizeof(vertex)), sizeof(vertex));
+    return vertex;
 }
 
 }  // namespace
@@ -59,9 +63,9 @@ void PaperPlaneGeometryTest::_normalsAndColors()
     const QByteArray data = geometry.vertexData();
 
     for (int triangle = 0; triangle < PaperPlaneGeometry::kTriangleCount; triangle++) {
-        const float* const first = vertexAt(data, triangle * 3);
+        const auto first = vertexAt(data, triangle * 3);
         for (int corner = 0; corner < 3; corner++) {
-            const float* const vertex = vertexAt(data, (triangle * 3) + corner);
+            const auto vertex = vertexAt(data, (triangle * 3) + corner);
             const QVector3D normal(vertex[kNormalOffset], vertex[kNormalOffset + 1], vertex[kNormalOffset + 2]);
             QCOMPARE_LT(std::abs(normal.length() - 1.0f), 1e-5f);
             // Flat shading and per-face color: all corners identical
@@ -75,7 +79,7 @@ void PaperPlaneGeometryTest::_normalsAndColors()
     // Wings face up, keel faces sideways
     QCOMPARE_GT(vertexAt(data, 0)[kNormalOffset + 2], 0.0f);
     QCOMPARE_GT(vertexAt(data, 3)[kNormalOffset + 2], 0.0f);
-    const float* const keel = vertexAt(data, 2 * 3);
+    const auto keel = vertexAt(data, 2 * 3);
     QCOMPARE(keel[kNormalOffset + 2], 0.0f);
     QCOMPARE_GT(std::abs(keel[kNormalOffset]), 0.9f);
 

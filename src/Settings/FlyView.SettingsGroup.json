@@ -3,6 +3,23 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "useGeoMapEngine",
+            "shortDesc": "Use the experimental GeoMap 2D/3D engine for the Fly View map (preview feature).",
+            "type": "bool",
+            "default": false,
+            "label": "Use GeoMap engine (preview)",
+            "keywords": "geomap,3d map,map engine,preview,experimental",
+            "qgcRebootRequired": true
+        },
+        {
+            "name": "geoMapDebugUI",
+            "shortDesc": "Show the GeoMap engine debug controls and terrain stats overlay.",
+            "type": "bool",
+            "default": false,
+            "label": "Show GeoMap engine debug UI",
+            "keywords": "geomap,debug,stats,diagnostics"
+        },
+        {
             "name": "guidedMinimumAltitude",
             "shortDesc": "Minimum altitude allowed for guided mode actions like takeoff and altitude changes.",
             "type": "double",

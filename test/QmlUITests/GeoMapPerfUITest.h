@@ -4,7 +4,7 @@
 
 /// Manual GeoMap performance benchmark (not registered with CTest, never runs
 /// in CI or standard test sweeps). Drives a fixed, repeatable gesture script
-/// against the live FlyViewGeo view while the SurfacePatchModel perf capture
+/// against the GeoMap-engine Fly View while the SurfacePatchModel perf capture
 /// records per-second counters, then prints the CSV path for offline analysis.
 ///
 /// Run explicitly (--onscreen: offscreen/software rendering makes the timings meaningless):

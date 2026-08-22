@@ -1,14 +1,22 @@
 #include "FlyViewROIUITest.h"
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
+#include <optional>
+
+#include "Fact.h"
 #include "FactMetaData.h"
+#include "FlyViewSettings.h"
 #include "MockLink.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 
 UT_REGISTER_TEST(FlyViewROIUITest, TestLabel::Integration)
 UT_REGISTER_TEST(FlyViewROIAPMUITest, TestLabel::Integration)
+UT_REGISTER_TEST(FlyViewGeoROIUITest, TestLabel::Integration)
 
 namespace {
 constexpr double kSliderValue = 15.0;  // in app display units
@@ -32,11 +40,29 @@ void FlyViewROIAPMUITest::_testROIFromMapClick()
     _runROIFromMapClick(true /* apmFirmware */);
 }
 
-void FlyViewROIUITestBase::_runROIFromMapClick(bool apmFirmware)
+void FlyViewGeoROIUITest::_testROIFromMapClick()
+{
+    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
+    const QVariant savedEnabled = geoEngineFact->rawValue();
+    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    geoEngineFact->setRawValue(true);
+
+    _runROIFromMapClick(false /* apmFirmware */, true /* geoMapEngine */);
+}
+
+void FlyViewROIUITestBase::_runROIFromMapClick(bool apmFirmware, bool geoMapEngine)
 {
     runWithMockLink(
         [apmFirmware] { return apmFirmware ? MockLink::startAPMArduCopterMockLink() : MockLink::startPX4MockLink(); },
-        [this, apmFirmware](QPointer<MockLink> mockLink, Vehicle* vehicle) {
+        [this, apmFirmware, geoMapEngine](QPointer<MockLink> mockLink, Vehicle* vehicle) {
+            if (geoMapEngine) {
+                // Non-strict: warnings only fire if a frame renders on the software backend
+                const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+                QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+            }
+
             // Home position arrives on MockLink's first 1Hz tick and is required for the PX4 AMSL conversion
             QVERIFY_TRUE_WAIT(vehicle->homePosition().isValid() && !qIsNaN(vehicle->homePosition().altitude()),
                               TestTimeout::shortMs());
@@ -54,7 +80,9 @@ void FlyViewROIUITestBase::_runROIFromMapClick(bool apmFirmware)
 
             // Click the map to open the click-action drop panel, then choose ROI.
             // Off-center so the click can't land on the vehicle icon (map is centered on the vehicle)
-            QVERIFY(clickItemFraction(QStringLiteral("flyViewMap"), 0.35, 0.65));
+            const QString mapObjectName =
+                geoMapEngine ? QStringLiteral("flyViewGeoMapAdapter") : QStringLiteral("flyViewMap");
+            QVERIFY(clickItemFraction(mapObjectName, 0.35, 0.65));
             QVERIFY(clickButton(QStringLiteral("mapClickROI")));
 
             // The relative altitude slider must appear

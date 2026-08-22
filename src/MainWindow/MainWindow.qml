@@ -136,26 +136,29 @@ ApplicationWindow {
     function showPlanView() {
         flyView.visible = false
         planView.visible = true
-        geoView.visible = false
+        geoTestView.visible = false
         toolDrawer.visible = false
     }
 
     function showFlyView() {
         flyView.visible = true
         planView.visible = false
-        geoView.visible = false
+        geoTestView.visible = false
         toolDrawer.visible = false
     }
 
-    function showGeoView() {
+    function showGeoTestView() {
+        if (!ScreenTools.isDebug) {
+            return
+        }
         flyView.visible = false
         planView.visible = false
-        geoView.visible = true
+        geoTestView.visible = true
         toolDrawer.visible = false
     }
 
     function showTool(toolTitle, toolSource, toolIcon) {
-        toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : (geoView.visible ? "/InstrumentValueIcons/globe.svg" : "/qmlimages/Plan.svg")
+        toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
         toolDrawer.toolTitle    = toolTitle
         toolDrawer.toolSource   = toolSource
         toolDrawer.toolIcon     = toolIcon
@@ -348,11 +351,15 @@ ApplicationWindow {
         visible:        false
     }
 
-    FlyViewGeo {
-        id:             geoView
-        objectName:     "mainView_geo"
+    // Debug-only test harness: not instantiated in release builds, and only
+    // loaded while actually shown
+    Loader {
+        id:             geoTestView
+        objectName:     "mainView_geoTest"
         anchors.fill:   parent
         visible:        false
+        active:         ScreenTools.isDebug && visible
+        source:         "qrc:/qml/QGroundControl/GeoMap/GeoMapTestView.qml"
     }
 
     footer: LogReplayStatusBar {

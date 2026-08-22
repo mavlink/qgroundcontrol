@@ -508,11 +508,18 @@ private:
 
     static std::atomic<int> _nextVehicleSystemId;
 
+#ifdef QGC_MOCKLINK_TERRAIN_TEST_HOME
+    // Alternate vehicle location which is a good spot for testing varying terrain
+    static constexpr double _defaultVehicleLatitude = 47.6305111;
+    static constexpr double _defaultVehicleLongitude = -122.0863806;
+    static constexpr double _defaultVehicleHomeAltitude = 9.26;
+#else
     // Vehicle position is set close to default Gazebo vehicle location. This allows for multi-vehicle
     // testing of a gazebo vehicle and a mocklink vehicle
     static constexpr double _defaultVehicleLatitude = 47.397;
     static constexpr double _defaultVehicleLongitude = 8.5455;
     static constexpr double _defaultVehicleHomeAltitude = 488.056;
+#endif
 
     static constexpr const char *_failParam = "COM_FLTMODE6";
 

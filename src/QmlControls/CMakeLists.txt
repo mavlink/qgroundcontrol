@@ -96,6 +96,7 @@ qt_add_qml_module(QGroundControlControlsModule
         APMSubMotorDisplay.qml
         AutotuneUI.qml
         AxisMonitor.qml
+        CameraTriggerIcon.qml
         ClickableColor.qml
         ConfigButton.qml
         ConfigSection.qml

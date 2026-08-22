@@ -23,8 +23,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         FlightModeSettings.h
         FlyViewSettings.cc
         FlyViewSettings.h
-        GeoViewSettings.cc
-        GeoViewSettings.h
         GimbalControllerSettings.cc
         GimbalControllerSettings.h
         JoystickManagerSettings.cc

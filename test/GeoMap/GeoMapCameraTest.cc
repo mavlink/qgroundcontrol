@@ -291,7 +291,8 @@ void GeoMapCameraTest::_sceneUnitsPerPixel()
     // Top-down: the vertical fov (fov narrowed to the smaller axis on this
     // landscape viewport) spans 2*d*tan(vfov/2) world meters over the viewport height
     const double expected =
-        (2.0 * camera.distance() * std::tan(qDegreesToRadians(camera.verticalFieldOfView()) / 2.0)) / kViewport.height();
+        (2.0 * camera.distance() * std::tan(qDegreesToRadians(camera.verticalFieldOfView()) / 2.0)) /
+        kViewport.height();
     QCOMPARE_LT(qAbs(camera.sceneUnitsPerPixel() - expected), expected * 0.01);
 }
 
@@ -313,6 +314,25 @@ void GeoMapCameraTest::_distanceForZoomLevel()
     // Clamped at the extremes
     QCOMPARE(camera.distanceForZoomLevel(30), GeoMapCamera::kMinDistance);
     QCOMPARE(camera.distanceForZoomLevel(-10), GeoMapCamera::kMaxDistance);
+}
+
+void GeoMapCameraTest::_zoomLevelForDistance()
+{
+    GeoMapCamera camera;
+    setupCamera(camera);
+
+    // Inverse of distanceForZoomLevel across the in-range zoom span
+    for (const double zoom : {5.0, 10.0, 15.0, 20.0}) {
+        QCOMPARE_LT(qAbs(camera.zoomLevelForDistance(camera.distanceForZoomLevel(zoom)) - zoom), 1e-9);
+    }
+
+    // Out-of-range distances map to the corresponding zoom bound
+    QCOMPARE(camera.zoomLevelForDistance(0), camera.zoomLevelForDistance(GeoMapCamera::kMinDistance));
+    QCOMPARE(camera.zoomLevelForDistance(1e12), camera.zoomLevelForDistance(GeoMapCamera::kMaxDistance));
+
+    // No viewport: sensible default
+    const GeoMapCamera bare;
+    QCOMPARE(bare.zoomLevelForDistance(1000), 0.0);
 }
 
 void GeoMapCameraTest::_centerForCoordinateAtScreenPoint()

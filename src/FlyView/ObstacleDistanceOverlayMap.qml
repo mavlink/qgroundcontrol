@@ -1,23 +1,32 @@
 import QtQuick
+import QtPositioning
 
 import QGroundControl
 
 Item {
     id: root
     anchors.fill: parent
+    required property var mapControl            ///< Map engine contract: fromCoordinate/toCoordinate
     property var showText: obstacleDistance._showText
 
+    readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    readonly property var _activeVehicleCoordinate: _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+
     function paintObstacleOverlay(ctx) {
-        const vehiclePoint = _root.fromCoordinate(_activeVehicleCoordinate, false)
+        const vehiclePoint = root.mapControl.fromCoordinate(_activeVehicleCoordinate, false)
         const centerX = vehiclePoint.x
         const centerY = vehiclePoint.y
         const maxRadiusPixels = 0.9 * root.height / 2 // Max pixels to center
         const minRadiusPixels = maxRadiusPixels * 0.2
         const metersPerPixelInCycle = (maxRadiusPixels - minRadiusPixels) / obstacleDistance._maxRadiusMeters
 
-        const leftCoord  = mapControl.toCoordinate(Qt.point(0, root.y), false)
-        const rightCoord = mapControl.toCoordinate(Qt.point(100, root.y), false)
+        const leftCoord  = root.mapControl.toCoordinate(Qt.point(0, root.y), false)
+        const rightCoord = root.mapControl.toCoordinate(Qt.point(100, root.y), false)
         const metersIn100Pixels = leftCoord.distanceTo(rightCoord)
+        // Tilted 3D camera rays can miss the ground, leaving no usable scale
+        if (!leftCoord.isValid || !rightCoord.isValid || !isFinite(metersIn100Pixels) || metersIn100Pixels <= 0) {
+            return
+        }
         const metersPerPixel = 100.0 / metersIn100Pixels
 
         var minGradPixels = minRadiusPixels

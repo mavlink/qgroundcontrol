@@ -15,20 +15,6 @@
             "pageDefinition": "FlyView.SettingsUI.json"
         },
         {
-            "name": "3D View",
-            "qml": "Viewer3DSettings.qml",
-            "icon": "qrc:/qml/QGroundControl/Viewer3D/City3DMapIcon.svg",
-            "pageDefinition": "Viewer3D.SettingsUI.json",
-            "visible": "QGroundControl.settingsManager.viewer3DSettings.userVisible"
-        },
-        {
-            "name": "GeoView",
-            "qml": "GeoViewSettings.qml",
-            "icon": "qrc:/InstrumentValueIcons/globe.svg",
-            "pageDefinition": "GeoView.SettingsUI.json",
-            "visible": "QGroundControl.settingsManager.geoViewSettings.userVisible"
-        },
-        {
             "name": "Plan View",
             "qml": "PlanViewSettings.qml",
             "icon": "qrc:/qmlimages/Plan.svg",
@@ -98,6 +84,14 @@
             "icon": "qrc:/InstrumentValueIcons/camera.svg",
             "pageDefinition": "Video.SettingsUI.json",
             "visible": "QGroundControl.settingsManager.videoSettings.userVisible"
+        },
+        {
+            "comment": "Deprecated: kept at the bottom pending removal in favor of the GeoMap engine",
+            "name": "3D View",
+            "qml": "Viewer3DSettings.qml",
+            "icon": "qrc:/qml/QGroundControl/Viewer3D/City3DMapIcon.svg",
+            "pageDefinition": "Viewer3D.SettingsUI.json",
+            "visible": "QGroundControl.settingsManager.viewer3DSettings.userVisible"
         },
         {
             "divider": true

@@ -45,16 +45,16 @@ ToolIndicatorPage {
             }
 
             SubMenuButton {
-                objectName: "toolbar_viewGeo"
+                objectName: "toolbar_viewGeoTest"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
-                text: qsTr("GeoView")
+                text: "GeoMap Test"   // debug-only developer tool: not translated
                 imageResource: "/InstrumentValueIcons/globe.svg"
-                visible: QGroundControl.settingsManager.geoViewSettings.enabled.rawValue
+                visible: ScreenTools.isDebug
                 onClicked: {
                     if (mainWindow.allowViewSwitch()) {
                         mainWindow.closeIndicatorDrawer()
-                        mainWindow.showGeoView()
+                        mainWindow.showGeoTestView()
                     }
                 }
             }

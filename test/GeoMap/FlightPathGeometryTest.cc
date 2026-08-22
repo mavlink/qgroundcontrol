@@ -6,7 +6,9 @@
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
 
+#include <array>
 #include <cmath>
+#include <cstring>
 
 #include "FlightPathGeometry.h"
 #include "GeoScene.h"
@@ -22,9 +24,11 @@ constexpr int kSideOffset = 6;
 // offsets equal altitude differences exactly
 const QGeoCoordinate kStart(0.001, 0.001, 100.0);
 
-const float* vertexAt(const QByteArray& data, int index)
+std::array<float, FlightPathGeometry::kFloatsPerVertex> vertexAt(const QByteArray& data, int index)
 {
-    return reinterpret_cast<const float*>(data.constData()) + (index * FlightPathGeometry::kFloatsPerVertex);
+    std::array<float, FlightPathGeometry::kFloatsPerVertex> vertex{};
+    std::memcpy(vertex.data(), data.constData() + (static_cast<qsizetype>(index) * sizeof(vertex)), sizeof(vertex));
+    return vertex;
 }
 
 QVariantList makePath(const QList<QGeoCoordinate>& coordinates)
@@ -107,8 +111,8 @@ void FlightPathGeometryTest::_ribbonLayout()
 
     // Both vertices of a pair share the centerline position
     for (int point = 0; point < 3; point++) {
-        const float* const left = vertexAt(data, point * 2);
-        const float* const right = vertexAt(data, (point * 2) + 1);
+        const auto left = vertexAt(data, point * 2);
+        const auto right = vertexAt(data, (point * 2) + 1);
         for (int component = 0; component < kSideOffset; component++) {
             QCOMPARE(left[component], right[component]);
         }
@@ -138,7 +142,7 @@ void FlightPathGeometryTest::_directionsAndSides()
     const QByteArray data = geometry.vertexData();
 
     for (int point = 0; point < 3; point++) {
-        const float* const vertex = vertexAt(data, point * 2);
+        const auto vertex = vertexAt(data, point * 2);
         const QVector3D tangent(vertex[kTangentOffset], vertex[kTangentOffset + 1], vertex[kTangentOffset + 2]);
         QCOMPARE_LT(std::abs(tangent.length() - 1.0f), 1e-5f);
 
@@ -150,12 +154,12 @@ void FlightPathGeometryTest::_directionsAndSides()
     // Endpoint tangents follow their single adjacent segment; the corner
     // blends both
     const auto segmentDirection = [&data](int fromPoint, int toPoint) {
-        const float* const from = vertexAt(data, fromPoint * 2);
-        const float* const to = vertexAt(data, toPoint * 2);
+        const auto from = vertexAt(data, fromPoint * 2);
+        const auto to = vertexAt(data, toPoint * 2);
         return QVector3D(to[0] - from[0], to[1] - from[1], to[2] - from[2]).normalized();
     };
     const auto tangentAt = [&data](int point) {
-        const float* const vertex = vertexAt(data, point * 2);
+        const auto vertex = vertexAt(data, point * 2);
         return QVector3D(vertex[kTangentOffset], vertex[kTangentOffset + 1], vertex[kTangentOffset + 2]);
     };
     QCOMPARE_LT((tangentAt(0) - segmentDirection(0, 1)).length(), 1e-5f);
@@ -169,7 +173,7 @@ void FlightPathGeometryTest::_directionsAndSides()
     above.setAltitude(kStart.altitude() + 50.0);
     geometry.setPath(makePath({kStart, above}));
     const QByteArray vertical = geometry.vertexData();
-    const float* const climb = vertexAt(vertical, 0);
+    const auto climb = vertexAt(vertical, 0);
     QCOMPARE(climb[kTangentOffset], 0.0f);
     QCOMPARE(climb[kTangentOffset + 1], 0.0f);
     QCOMPARE(climb[kTangentOffset + 2], 1.0f);

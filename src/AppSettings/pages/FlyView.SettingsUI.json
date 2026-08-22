@@ -9,7 +9,7 @@
     "groups": [
         {
             "heading": "General",
-            "keywords": ["checklist", "preflight", "multi vehicle", "center map", "log replay", "camera control", "home position", "mission popup"],
+            "keywords": ["checklist", "preflight", "multi vehicle", "center map", "log replay", "camera control", "home position", "mission popup", "geomap", "3d map", "map engine", "debug"],
             "controls": [
                 {
                     "setting": "appSettings.useChecklist",
@@ -37,6 +37,13 @@
                 },
                 {
                     "setting": "flyViewSettings.enableAutomaticMissionPopups"
+                },
+                {
+                    "setting": "flyViewSettings.useGeoMapEngine"
+                },
+                {
+                    "setting": "flyViewSettings.geoMapDebugUI",
+                    "showWhen": "QGroundControl.settingsManager.flyViewSettings.useGeoMapEngine.rawValue"
                 }
             ]
         },

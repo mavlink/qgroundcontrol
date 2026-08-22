@@ -3,6 +3,8 @@
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
+#include <array>
+#include <cstring>
 #include <memory>
 
 #include "HeightField.h"
@@ -24,9 +26,11 @@ int skirtVertexCount(int gridSize)
     return 4 * (gridSize + 1);
 }
 
-const float* vertexAt(const QByteArray& data, int index)
+std::array<float, kFloatsPerVertex> vertexAt(const QByteArray& data, int index)
 {
-    return reinterpret_cast<const float*>(data.constData()) + (index * kFloatsPerVertex);
+    std::array<float, kFloatsPerVertex> vertex{};
+    std::memcpy(vertex.data(), data.constData() + (static_cast<qsizetype>(index) * sizeof(vertex)), sizeof(vertex));
+    return vertex;
 }
 
 QList<float> rampHeights(int gridSize)
@@ -127,7 +131,7 @@ void PatchGeometryTest::_cornerPositionsAndUVs()
     const QByteArray data = geometry.vertexData();
 
     // Vertex 0 is the north-west corner: (-span/2, +span/2), uv (0,0)
-    const float* nw = vertexAt(data, 0);
+    const auto nw = vertexAt(data, 0);
     QCOMPARE(nw[0], -kSpan / 2);
     QCOMPARE(nw[1], kSpan / 2);
     QCOMPARE(nw[2], 0.0f);
@@ -135,7 +139,7 @@ void PatchGeometryTest::_cornerPositionsAndUVs()
     QCOMPARE(nw[7], 0.0f);
 
     // Last grid vertex is the south-east corner: (+span/2, -span/2), uv (1,1)
-    const float* se = vertexAt(data, gridVertexCount(kGrid) - 1);
+    const auto se = vertexAt(data, gridVertexCount(kGrid) - 1);
     QCOMPARE(se[0], kSpan / 2);
     QCOMPARE(se[1], -kSpan / 2);
     QCOMPARE(se[6], 1.0f);
@@ -153,7 +157,7 @@ void PatchGeometryTest::_heightDisplacement()
     // Row-major from NW: vertex (row, col) has z = 10 * row
     for (int row = 0; row <= kGrid; row++) {
         for (int col = 0; col <= kGrid; col++) {
-            const float* vertex = vertexAt(data, (row * (kGrid + 1)) + col);
+            const auto vertex = vertexAt(data, (row * (kGrid + 1)) + col);
             QCOMPARE(vertex[2], 10.0f * row);
         }
     }
@@ -181,8 +185,8 @@ void PatchGeometryTest::_skirtVerticesBelowSurface()
 
     const float skirtDepth = kSpan * static_cast<float>(PatchGeometry::kSkirtDepthFraction);
     // First skirt vertex duplicates the NW corner, dropped by skirtDepth
-    const float* nwSkirt = vertexAt(data, gridVertexCount(kGrid));
-    const float* nw = vertexAt(data, 0);
+    const auto nwSkirt = vertexAt(data, gridVertexCount(kGrid));
+    const auto nw = vertexAt(data, 0);
     QCOMPARE(nwSkirt[0], nw[0]);
     QCOMPARE(nwSkirt[1], nw[1]);
     QCOMPARE(nwSkirt[2], nw[2] - skirtDepth);
@@ -199,7 +203,7 @@ void PatchGeometryTest::_flatNormalsPointUp()
     const QByteArray data = geometry.vertexData();
 
     for (int i = 0; i < gridVertexCount(kGrid); i++) {
-        const float* vertex = vertexAt(data, i);
+        const auto vertex = vertexAt(data, i);
         QCOMPARE(vertex[3], 0.0f);
         QCOMPARE(vertex[4], 0.0f);
         QCOMPARE(vertex[5], 1.0f);
