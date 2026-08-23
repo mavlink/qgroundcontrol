@@ -63,7 +63,8 @@ ToolIndicatorPage {
                     buttonText: qsTr("Configure")
 
                     onClicked: {
-                        mainWindow.showSettingsTool(qsTr("Comm Links"))
+                        // Untranslated page key from SettingsPages.json — do not qsTr()
+                        mainWindow.showSettingsTool("Comm Links")
                         mainWindow.closeIndicatorDrawer()
                     }
                 }
