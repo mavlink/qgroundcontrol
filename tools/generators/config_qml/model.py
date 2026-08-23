@@ -21,7 +21,12 @@ from ..common.controls import (
     parse_radio_options,
     parse_toggle_checkbox,
 )
-from ..common.validation import reject_unknown_keys, require_dict, require_list
+from ..common.validation import (
+    reject_unknown_keys,
+    require_dict,
+    require_list,
+    require_qml_safe_string,
+)
 
 
 @dataclass
@@ -220,7 +225,9 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
                 ControlDef(
                     param=ctrl_data.get("param", ""),
                     setting=ctrl_data.get("setting", ""),
-                    label=ctrl_data.get("label", ""),
+                    label=require_qml_safe_string(
+                        ctrl_data.get("label", ""), "control label", json_filename
+                    ),
                     control=ctrl_data.get("control", ""),
                     showWhen=ctrl_data.get("showWhen", ""),
                     enableWhen=ctrl_data.get("enableWhen", ""),
@@ -258,6 +265,7 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
             )
         repeat_data = sec_data.get("repeat")
         repeat_def = None
+        title = require_qml_safe_string(sec_data.get("title", ""), "section title", json_filename)
         if repeat_data:
             reject_unknown_keys(repeat_data, _ALLOWED_REPEAT_KEYS, "repeat", json_filename)
             ds_data = repeat_data.get("disabledSection")
@@ -265,7 +273,9 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
             if ds_data:
                 reject_unknown_keys(ds_data, _ALLOWED_DISABLED_SECTION_KEYS, "disabledSection", json_filename)
                 ds_def = DisabledSectionDef(
-                    heading=ds_data.get("heading", ""),
+                    heading=require_qml_safe_string(
+                        ds_data.get("heading", ""), "disabledSection heading", json_filename
+                    ),
                     enabledParamValue=str(ds_data.get("enabledParamValue", "")),
                 )
             repeat_def = RepeatDef(
@@ -280,18 +290,28 @@ def _build_page_def(data: dict, json_filename: str) -> PageDef:
             )
             if repeat_def.enableParam and not repeat_def.disabledParamValue:
                 raise ValueError(
-                    f"Section '{sec_data.get('title', '')}': enableParam requires "
+                    f"Section '{title}': enableParam requires "
                     f"disabledParamValue to be specified"
+                )
+            # C++ VehicleComponent::sectionIds() cannot expand {index}, so it
+            # would produce section IDs that never match the generated QML
+            if "{index}" in title:
+                raise ValueError(
+                    f"{json_filename}: repeat section title must not contain "
+                    f"{{index}}: '{title}'"
                 )
         sections.append(
             SectionDef(
-                title=sec_data.get("title", ""),
+                title=title,
                 image=sec_data.get("image", ""),
                 controls=controls,
                 component=sec_data.get("component", ""),
                 showWhen=sec_data.get("showWhen", ""),
                 repeat=repeat_def,
-                keywords=sec_data.get("keywords", []),
+                keywords=[
+                    require_qml_safe_string(kw, "section keyword", json_filename)
+                    for kw in sec_data.get("keywords", [])
+                ],
             )
         )
     return PageDef(
@@ -324,7 +344,7 @@ def _propagate_optional(page: PageDef) -> None:
 
 
 def _build_search_terms(page: PageDef) -> dict[str, list[str]]:
-    """Build a mapping of section title → list of lowercase search terms.
+    """Build a mapping of section ID (untranslated title) → list of lowercase search terms.
 
     Search terms are derived from: section title words, control labels,
     referenced param names, and explicit keywords from JSON.
@@ -353,7 +373,7 @@ def _build_search_terms(page: PageDef) -> dict[str, list[str]]:
 
 
 def _build_translatable_terms(page: PageDef) -> dict[str, list[str]]:
-    """Build a mapping of section title → list of original-case translatable strings.
+    """Build a mapping of section ID (untranslated title) → list of original-case translatable strings.
 
     These are passed through qsTranslate() at runtime so the search works in
     the user's language.  Param names are excluded (not translatable).
