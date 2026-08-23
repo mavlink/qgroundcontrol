@@ -8,7 +8,12 @@ set(SETTINGS_METADATA_DIR      "${CMAKE_SOURCE_DIR}/src/Settings")
 set(SETTINGS_QML_GEN_DIR       "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 # Generator source files (changes here should trigger regeneration)
-file(GLOB _generator_sources CONFIGURE_DEPENDS "${SETTINGS_QML_GENERATOR_DIR}/*.py")
+file(GLOB _generator_sources CONFIGURE_DEPENDS
+    "${SETTINGS_QML_GENERATOR_DIR}/*.py"
+    "${SETTINGS_QML_GENERATOR_DIR}/templates/*.j2"
+    "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
+    "${CMAKE_SOURCE_DIR}/tools/generators/*.py"
+)
 
 # JSON inputs: page definitions + settings metadata
 file(GLOB _page_definitions  CONFIGURE_DEPENDS "${SETTINGS_PAGES_DIR}/*.json")

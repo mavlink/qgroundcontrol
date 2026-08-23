@@ -60,7 +60,9 @@ set(CONFIG_QML_GEN_DIR       "${CMAKE_CURRENT_BINARY_DIR}/generated")
 # Generator source files (changes here trigger regeneration)
 file(GLOB _config_generator_sources CONFIGURE_DEPENDS
     "${CONFIG_QML_GENERATOR_DIR}/*.py"
+    "${CONFIG_QML_GENERATOR_DIR}/templates/*.j2"
     "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
+    "${CMAKE_SOURCE_DIR}/tools/generators/*.py"
 )
 
 # JSON inputs
