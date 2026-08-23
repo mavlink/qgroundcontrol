@@ -7,7 +7,7 @@ QGroundControl \*, bir aracı RC Verici yerine bir joystick veya gamepad kullana
 :::
 
 :::info
-\*\* Note \*\* Joystick ve Gamepad desteği, çapraz platform [ SDL2 ](http://www.libsdl.org/index.php) kitaplığı kullanılarak etkinleştirilir.
+Joystick and Gamepad support is enabled using the cross-platform [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) library.
 Belirli bir kontrolcüyle uyumluluk, SDL'ye bağlıdır (bu API tarafından gösterilen tüm düğmeler, _ QGroundControl _ arayüzü aracılığıyla görüntülenir).
 [Çok sayıda yaygın oyun çubuğu ve oyun kolunun ](#supported-joysticks) çalıştığı bilinmektedir.
 :::

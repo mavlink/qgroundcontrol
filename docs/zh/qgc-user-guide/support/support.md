@@ -10,7 +10,7 @@
 
 These forums are completely self-help from other QGC users.
 
-### 开发者交流 {#developer_chat}
+## 开发者交流 {#developer_chat}
 
 _QGroundControl_ 开发者（以及许多正规/深度参与的用户）可以在 [Discord上的 #QGroundControl 频道](https://discord.gg/dronecode) 上找到。
 
@@ -26,11 +26,11 @@ Issues 用于追踪在 _QGroundControl_ 中的 bug 以及以后版本的新特�
 
 如果您被引导来创建一个问题，请使用“错误报告”模板并提供模板中指定的所有信息。
 
-##### 报告来自 Windows Builds 的故障
+#### 报告来自 Windows Builds 的故障
 
 当QGC 崩溃时，将在用户本地应用数据目录中放置崩溃转储文件。 要导航到该目录，请使用启动/运行命令。 你可以通过按下 Win 键 + R 调出此窗口。 在其中输入%localappdata%，点击 “打开”，然后点击 “确定” 。 崩溃转储将出现在该目录的 `QGCCrashDumps` 文件夹中。 您应该在那里找到一个新的 **.dmp** 文件。 在报告问题时在 GitHub Issue 中添加一个链接到该文件。
 
-##### 报告 Windows 版本中的程序挂起问题
+#### 报告 Windows 版本中的程序挂起问题
 
 如果Windows告诉您_QGroundControl_ 程序不响应，则使用以下步骤报告挂起问题：
 
@@ -46,12 +46,12 @@ Issues 用于追踪在 _QGroundControl_ 中的 bug 以及以后版本的新特�
 
 ## 故障处理
 
-故障排查信息可从[此链接](../troubleshooting/index.md)获取。
+Troubleshooting information is available in the [Troubleshooting section](../troubleshooting/index.md).
 
 ### 控制台日志
 
-_控制台日志_ 可以帮助诊断_QGroundControl_ 问题。 更多信息请查看：[控制台日志记录](../settings_view/console_logging.md)。
+_控制台日志_ 可以帮助诊断_QGroundControl_ 问题。 For more information see: [Console Logging](../troubleshooting/console_logging.md).
 
-## 帮助改善这些文档！
+## Help Improve these Docs
 
 就像 _QGroundControl_ 本身一样，本用户指南也是开源的，由用户创建并维护，基于 GitBook 平台。 我们欢迎[Pull Requests](https://github.com/mavlink/qgc-user-guide/pulls)以进行修正 和/或 更新。

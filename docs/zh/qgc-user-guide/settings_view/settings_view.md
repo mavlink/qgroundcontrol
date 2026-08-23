@@ -22,7 +22,7 @@ Use the **search bar** at the top of the settings sidebar to find any setting by
 
 **[Comm Links](comm_links.md)** <br>Manually create communication links and configure auto-connect options.
 
-**[Logging](console_logging.md)** <br>Capture application logs for help with diagnosing problems.
+**[Logging](../troubleshooting/console_logging.md)** <br>Capture application logs for help with diagnosing problems.
 
 **[Maps](maps.md)** <br>Map provider selection, offline tile management, API tokens, custom tile servers, and cache settings.
 

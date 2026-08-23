@@ -16,6 +16,7 @@
     - [Video](qgc-user-guide/fly_view/video.md)
     - [Video Overlay](qgc-user-guide/fly_view/video_overlay.md)
   - [3D View](qgc-user-guide/viewer_3d/viewer_3d.md)
+  - [GeoMap Engine (Tech Preview)](qgc-user-guide/fly_view/geoview.md)
 
 - [Plan](qgc-user-guide/plan_view/plan_view.md)
   - [GeoFence](qgc-user-guide/plan_view/plan_geofence.md)
@@ -69,7 +70,6 @@
   - [Plan View](qgc-user-guide/settings_view/plan_view.md)
   - [ADSB Server](qgc-user-guide/settings_view/adsb_server.md)
   - [Comm Links](qgc-user-guide/settings_view/comm_links.md)
-  - [Logging](qgc-user-guide/settings_view/console_logging.md)
   - [Maps](qgc-user-guide/settings_view/maps.md)
   - [NTRIP / RTK](qgc-user-guide/settings_view/ntrip_rtk.md)
   - [PX4 Log Transfer](qgc-user-guide/settings_view/px4_log_transfer.md)
@@ -88,12 +88,15 @@
 
 - [Reference](qgc-user-guide/reference/index.md)
   - [Troubleshooting](qgc-user-guide/troubleshooting/index.md)
+    - [Console Logging](qgc-user-guide/troubleshooting/console_logging.md)
     - [Setup Problems](qgc-user-guide/troubleshooting/qgc_setup.md)
     - [Usage Problems](qgc-user-guide/troubleshooting/qgc_usage.md)
       - [Connection problems](qgc-user-guide/troubleshooting/vehicle_connection.md)
       - [Parameter Download failures](qgc-user-guide/troubleshooting/parameter_download.md)
       - [Plan Upload/Download failures](qgc-user-guide/troubleshooting/plan_upload_download.md)
       - [Resume Mission failures](qgc-user-guide/troubleshooting/resume_mission.md)
+      - [Standard Modes / External Flight Mode failures](qgc-user-guide/troubleshooting/standard_modes.md)
+      - [Missing Actuators Page (PX4)](qgc-user-guide/troubleshooting/actuators.md)
   - [Privacy Policy](qgc-user-guide/reference/privacy_policy.md)
 
 - [Developer's Guide](qgc-dev-guide/index.md)

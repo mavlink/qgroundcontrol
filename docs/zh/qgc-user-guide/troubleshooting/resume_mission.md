@@ -17,7 +17,7 @@ The following steps are required for debugging both types of problems:
 
 1. Restart QGC
 
-2. Turn on [console logging](../settings_view/console_logging.md) with the log option: `GuidedActionsControllerLog`.
+2. Turn on [console logging](../troubleshooting/console_logging.md) with the logging category: `QMLControls.GuidedActionsController`.
 
 3. Enable [telemetry logging](../settings_view/general.md#miscellaneous) (**Settings > General**).
 
@@ -39,19 +39,19 @@ The following steps are required for debugging both types of problems:
 
 For _Resume Mission Dialog_ problems follow the [common steps above](#common_steps), and then:
 
-7. Save the _Console Log_ to a file.
-8. Place the _Console Log_, _Telemetry Log_ and _Plan File_ someplace which you can link to in the issue.
-9. Create the issue with details and links to all three files.
+1. Save the _App Log_ to a file.
+2. Place the _App Log_, _Telemetry Log_ and _Plan File_ someplace which you can link to in the issue.
+3. Create the issue with details and links to all three files.
 
 ## Resume Mission Generation Problems
 
 For _Resume Mission Generation_ problems follow the [common steps above](#common_steps), and then:
 
-7. Click **Resume Mission**.
-8. The new mission should be generated.
-9. Go to [Plan View](../plan_view/plan_view.md).
-10. Select **Download** from the _File/Sync_ menu.
-11. Save the _Modified Plan_ to a file.
-12. Save the _Console Log_ to a file.
-13. Place the _Console Log_, _Telemetry Log_, _Original Plan_ file and _Modified Plan_ file someplace which you can link to in the issue.
-14. Create the issue with details and links to all four files.
+1. Click **Resume Mission**.
+2. The new mission should be generated.
+3. Go to [Plan View](../plan_view/plan_view.md).
+4. Select **Download** from the _File/Sync_ menu.
+5. Save the _Modified Plan_ to a file.
+6. Save the _App Log_ to a file.
+7. Place the _App Log_, _Telemetry Log_, _Original Plan_ file and _Modified Plan_ file someplace which you can link to in the issue.
+8. Create the issue with details and links to all four files.

@@ -3,21 +3,21 @@
 ## UI에 기체가 표시되지 않음
 
 QGroundControl은 네트워크이 접속된 기체를 자동으로 연결됩니다(USB 또는 WiFi 등 사용).
-QGroundControl UI에 네트워크에 접속한 기체가 표시되지 않는 경우 [콘솔 로깅](../settings_view/console_logging.md)을 사용하여 문제를 디버깅할 수 있습니다.
+If you establish that link and you don't see your vehicle show up in the QGC UI you can use [console logging](../troubleshooting/console_logging.md) to help debug the problem.
 
 문제를 디버그하려면 다음 절차를 따라 해결하십시오.
 
 - Start with the hardware vehicle link not connected.
   예를 들어, USB 연결을 연결하거나 OS에서 WiFi 링크를 설정하지 마십시오.
 
-- QGroundControl에서 `LinkManagerLog` [콘솔 로깅](../settings_view/console_logging.md)을 켭니다.
+- Turn on `Comms.LinkManager` [console logging](../troubleshooting/console_logging.md) in QGC.
   이것은 QGroundControl에서 연결하는 링크에 대한 출력을 기록합니다.
 
 - Establish the hardware vehicle communication link.
 
 - 콘솔 로그 출력은 다음과 같이 표시되어야 합니다.
 
-  ```
+  ```text
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:563 - "Waiting for bootloader to finish "/dev/cu.usbmodem01""
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:563 - "Waiting for bootloader to finish "/dev/cu.usbmodem01""
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:563 - "Waiting for bootloader to finish "/dev/cu.usbmodem01""
@@ -33,12 +33,17 @@ QGroundControl UI에 네트워크에 접속한 기체가 표시되지 않는 경
 
 - Start with the hardware vehicle link not connected.
   예를 들어, USB 연결을 연결하거나 OS에서 WiFi 링크를 설정하지 마십시오.
-- QGroundControl에서 `LinkManagerVerboseLog` [콘솔 로깅](../settings_view/console_logging.md)을 켭니다.
+
+- Turn on `Comms.LinkManager:verbose` [console logging](../troubleshooting/console_logging.md) in QGC.
   이것은 QGroundControl에서 인식하는 모든 직렬 하드웨어 연결에 대한 출력을 기록합니다.
+
 - 장치에서 직렬 포트의 지속적인 출력을 볼 수 있습니다.
+
 - USB 통신 장치를 연결합니다.
+
 - 콘솔 출력에 새 장치가 표시되어야 합니다. 예:
-  ```
+
+  ```text
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:520 - "-----------------------------------------------------"
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:521 - "portName:           "cu.usbmodem4201""
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:522 - "systemLocation:     "/dev/cu.usbmodem4201""
@@ -48,6 +53,7 @@ QGroundControl UI에 네트워크에 접속한 기체가 표시되지 않는 경
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:526 - "vendorIdentifier:   1155"
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:527 - "productIdentifier:  22336"
   ```
+
 - 그 후 첫 번째 예와 같이 해당 장치에 대한 연결을 계속 기록하여야 합니다.
 
 연결했을 때 콘솔 출력에 새 직렬 포트가 표시되지 않으면 OS 수준에서 하드웨어에 문제가 있을 수 있습니다.

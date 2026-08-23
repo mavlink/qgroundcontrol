@@ -4,42 +4,42 @@
 
 ## 使用选项启动QGroundControl
 
-您需要打开命令提示符或终端，将目录更改为存储qgroundcontrol.exe的位置，然后运行它。 每个平台如下所示（使用--logging：full选项）： This is shown below for each platform (using the `--logging:full` option):
+You will need to open a command prompt or terminal, change directory to where the _QGroundControl_ executable is stored, and then run it. This is shown below for each platform (using the `--logging:full --log-output` options):
 
-Windows命令提示符：
+Windows Command Prompt (_QGroundControl_ is a GUI application with no console window, so redirect stderr to a file to capture the output):
 
 ```sh
-cd "\Program Files (x86)\qgroundcontrol"
-qgroundcontrol --logging:full
+cd "%ProgramFiles%\QGroundControl\bin"
+QGroundControl --logging:full --log-output > "%USERPROFILE%\qgc_log.txt" 2>&1
 ```
 
-OSX终端应用程序（应用程序/实用程序）：
+macOS Terminal app (**Applications/Utilities**):
 
 ```sh
-cd /Applications/qgroundcontrol.app/Contents/MacOS/
-./qgroundcontrol --logging:full
+cd /Applications/QGroundControl.app/Contents/MacOS
+./QGroundControl --logging:full --log-output
 ```
 
 Linux终端：
 
 ```sh
-./qgroundcontrol-start.sh --logging:full
+./QGroundControl-<arch>.AppImage --logging:full --log-output
 ```
 
 ## 选项
 
 选项/命令行参数列在下表中。
 
-| 选项                                                        | 描述                                                                                                                                                              |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                 |
-| `--logging:full`                                          | Turns on full logging. See [Console Logging](../qgc-user-guide/settings_view/console_logging.md#logging-from-the-command-line). |
-| `--logging:full,LinkManagerVerboseLog,ParameterLoaderLog` | Turns on full logging and turns off the following listed comma-separated logging options.                                                       |
-| `--logging:LinkManagerLog,ParameterLoaderLog`             | Turns on the specified comma separated logging options                                                                                                          |
-| `--unittest:name`                                         | （仅限调试版本）连续运行指定的单元测试次。 Leave off `:name` to run all tests.                                                                                       |
-| `--unittest-stress:name`                                  | （仅限调试版本）连续运行指定的单元测试20次。 Leave off :name to run all tests.                                                                       |
-| `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                           |
-| `--test-high-dpi`                                         | Simulates running _QGroundControl_ on a high DPI device.                                                                                        |
+| 选项                                                        | 描述                                                                                                                                                                |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                   |
+| `--logging:full`                                          | Turns on full logging. See [Console Logging](../qgc-user-guide/troubleshooting/console_logging.md#logging-from-the-command-line). |
+| `--logging:Comms.LinkManager,FactSystem.ParameterManager` | Turns on the specified comma separated logging categories.                                                                                        |
+| `--log-output`                                            | Writes log messages to stderr (the terminal on macOS/Linux).                                                                   |
+| `--unittest:name`                                         | （仅限调试版本）连续运行指定的单元测试次。 Leave off `:name` to run all tests.                                                                                         |
+| `--unittest-stress:name`                                  | （仅限调试版本）连续运行指定的单元测试20次。 Leave off :name to run all tests.                                                                         |
+| `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                             |
+| `--test-high-dpi`                                         | Simulates running _QGroundControl_ on a high DPI device.                                                                                          |
 
 笔记：
 

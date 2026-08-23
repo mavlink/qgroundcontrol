@@ -4,26 +4,26 @@ You can start _QGroundControl_ with command line options. These are used to enab
 
 ## Starting QGroundControl with Options
 
-You will need to open a command prompt or terminal, change directory to where **qgroundcontrol.exe** is stored, and then run it. This is shown below for each platform (using the `--logging:full` option):
+You will need to open a command prompt or terminal, change directory to where the _QGroundControl_ executable is stored, and then run it. This is shown below for each platform (using the `--logging:full --log-output` options):
 
-Windows Command Prompt:
+Windows Command Prompt (_QGroundControl_ is a GUI application with no console window, so redirect stderr to a file to capture the output):
 
 ```sh
-cd "\Program Files (x86)\qgroundcontrol"
-qgroundcontrol --logging:full
+cd "%ProgramFiles%\QGroundControl\bin"
+QGroundControl --logging:full --log-output > "%USERPROFILE%\qgc_log.txt" 2>&1
 ```
 
-OSX Terminal app (**Applications/Utilities**):
+macOS Terminal app (**Applications/Utilities**):
 
 ```sh
-cd /Applications/qgroundcontrol.app/Contents/MacOS/
-./qgroundcontrol --logging:full
+cd /Applications/QGroundControl.app/Contents/MacOS
+./QGroundControl --logging:full --log-output
 ```
 
 Linux Terminal:
 
 ```sh
-./qgroundcontrol-start.sh --logging:full
+./QGroundControl-<arch>.AppImage --logging:full --log-output
 ```
 
 ## Options
@@ -33,9 +33,9 @@ The options/command line arguments are listed in the table below.
 | Option                                                    | Description                                                                                                                                                              |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                          |
-| `--logging:full`                                          | Turns on full logging. See [Console Logging](../qgc-user-guide/settings_view/console_logging.md#logging-from-the-command-line).          |
-| `--logging:full,LinkManagerVerboseLog,ParameterLoaderLog` | Turns on full logging and turns off the following listed comma-separated logging options.                                                                |
-| `--logging:LinkManagerLog,ParameterLoaderLog`             | Turns on the specified comma separated logging options                                                                                                                   |
+| `--logging:full`                                          | Turns on full logging. See [Console Logging](../qgc-user-guide/troubleshooting/console_logging.md#logging-from-the-command-line).        |
+| `--logging:Comms.LinkManager,FactSystem.ParameterManager` | Turns on the specified comma separated logging categories.                                                                                               |
+| `--log-output`                                            | Writes log messages to stderr (the terminal on macOS/Linux).                                                                          |
 | `--unittest:name`                                         | (Debug builds only) Runs the specified unit test. Leave off `:name` to run all tests.                                 |
 | `--unittest-stress:name`                                  | (Debug builds only) Runs the specified unit test 20 times in a row. Leave off :name to run all tests. |
 | `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                                    |

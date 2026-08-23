@@ -5,10 +5,10 @@
 가장 문제가 되는 두 가지 주요 문제는 다음과 같습니다.
 
 - _임무 재개_ 대화상자가 표시되지 않고 임무 시작 슬라이더만 남습니다.
-- _임무 재개_에서 생성된 새 임무는 웨이포인트 재생성과 카메라 명령과 관련하여 정확하지 않습니다.
+- _임무 재&#xAC1C;_&#xC5D0;서 생성된 새 임무는 웨이포인트 재생성과 카메라 명령과 관련하여 정확하지 않습니다.
 
 :::warning
-_QGroundControl_ 개발 팀이 이러한 문제를 디버그하려면 _임무 재개_에 입력된 모든 github 문제에 다음 정보가 **제공되어야 합니다**.
+_QGroundControl_ 개발 팀이 이러한 문제를 디버그하려면 _임무 재&#xAC1C;_&#xC5D0; 입력된 모든 github 문제에 다음 정보가 **제공되어야 합니다**.
 :::
 
 ## 임무 재개 대화창 또는 생성을 위한 일반적인 단계 {#common_steps}
@@ -17,7 +17,7 @@ _QGroundControl_ 개발 팀이 이러한 문제를 디버그하려면 _임무 �
 
 1. QGroundControl 다시 시작
 
-2. `GuidedActionsControllerLog` 로그 옵션으로 [콘솔 로깅](../settings_view/console_logging.md)을 켭니다.
+2. Turn on [console logging](../troubleshooting/console_logging.md) with the logging category: `QMLControls.GuidedActionsController`.
 
 3. [원격 분석 로깅](../settings_view/general.md#miscellaneous)을 활성화합니다(**설정 > 일반**).
 
@@ -38,19 +38,19 @@ _QGroundControl_ 개발 팀이 이러한 문제를 디버그하려면 _임무 �
 
 _임무 재개 대화창_ 문제의 경우 [위의 일반적인 단계](#common_steps)를 따른 후 다음을 수행하십시오.
 
-7. _콘솔 로그_를 파일에 저장합니다.
-8. _콘솔 로그_, _원격 분석 로그_ 및 _계획 파일_을 문제에서 연결할 수 있는 위치에 배치합니다.
-9. 세 파일 모두에 대한 세부 정보와 네트워크를 사용하여 문제를 만듭니다.
+1. Save the _App Log_ to a file.
+2. Place the _App Log_, _Telemetry Log_ and _Plan File_ someplace which you can link to in the issue.
+3. 세 파일 모두에 대한 세부 정보와 네트워크를 사용하여 문제를 만듭니다.
 
 ## 임무 재개 생성 문제
 
 _임무 재개 생성_ 문제의 경우 [위의 일반적인 단계](#common_steps)를 따른 후 다음을 수행하십시오.
 
-7. **임무 재개**를 클릭합니다.
-8. 새로운 미션이 생성되어야 합니다.
-9. [계획 화면](../plan_view/plan_view.md)으로 이동합니다.
-10. _파일/동기화_ 메뉴에서 **다운로드**를 선택합니다.
-11. _수정된 계획_을 파일에 저장합니다.
-12. _콘솔 로그_를 파일에 저장합니다.
-13. _Console Log_, _Telemetry Log_, _Original Plan_ 파일 배치 및 _수정된 계획_ 파일을 문제에서 연결할 수 있는 위치에 두십시오.
-14. 4개의 모든 파일에 대한 세부 정보와 링크를 사용하여 이슈를 생성합니다.
+1. **임무 재개**를 클릭합니다.
+2. 새로운 미션이 생성되어야 합니다.
+3. [계획 화면](../plan_view/plan_view.md)으로 이동합니다.
+4. _파일/동기화_ 메뉴에서 **다운로드**를 선택합니다.
+5. _수정된 계&#xD68D;_&#xC744; 파일에 저장합니다.
+6. Save the _App Log_ to a file.
+7. Place the _App Log_, _Telemetry Log_, _Original Plan_ file and _Modified Plan_ file someplace which you can link to in the issue.
+8. 4개의 모든 파일에 대한 세부 정보와 링크를 사용하여 이슈를 생성합니다.

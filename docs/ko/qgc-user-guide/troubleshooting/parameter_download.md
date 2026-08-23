@@ -12,4 +12,4 @@ You can see the loss rate for your link from the [App Settings > Telemetry](../s
 Higher loss rates could lead to 100% failure.
 
 더 많은 펌웨어나 QGroundControl 버그가 존재할 수 있습니다.
-프로토콜의 앞뒤 메시지 트래픽에 대한 세부정보를 보려면 매개변수 프로토콜에 대해 [콘솔 로깅](../settings_view/console_logging.md)을 켤 수 있습니다.
+To see the details of the back and forth message traffic of the protocol you can turn on the `FactSystem.ParameterManager` [console logging](../troubleshooting/console_logging.md) category.
