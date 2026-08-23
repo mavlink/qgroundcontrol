@@ -79,7 +79,7 @@
         },
         {
             "name": "forwardFlightGoToLocationLoiterRad",
-            "shortDesc": "Loiter radius when circling a go-to destination during fixed-wing flight.",
+            "shortDesc": "Loiter radius when circling a go-to destination during fixed-wing flight. (ArduPilot only)",
             "type": "double",
             "units": "m",
             "default": 80,

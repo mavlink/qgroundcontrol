@@ -625,7 +625,7 @@ Item {
             if (!_activeVehicle.guidedModeGotoLocation(
                 actionData,
                 _vehicleInFwdFlight /* forwardFlightLoiterRadius */
-                    ? _flyViewSettings.forwardFlightGoToLocationLoiterRad.value
+                    ? _flyViewSettings.forwardFlightGoToLocationLoiterRad.rawValue
                     : 0
             )) {
                 return false
