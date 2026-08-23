@@ -757,10 +757,20 @@ QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle) const
 
 bool PX4FirmwarePlugin::hasGripper(const Vehicle* vehicle) const
 {
-    if(vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("PD_GRIPPER_EN"))) {
-        bool _hasGripper = (vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("PD_GRIPPER_EN"))->rawValue().toInt()) != 0 ? true : false;
-        return _hasGripper;
+    ParameterManager* paramMgr = vehicle->parameterManager();
+
+    // PX4 versions prior to v1.17 use the PD_GRIPPER_EN boolean
+    const QString gripperEnableParam = QStringLiteral("PD_GRIPPER_EN");
+    if (paramMgr->parameterExists(ParameterManager::defaultComponentId, gripperEnableParam)) {
+        return paramMgr->getParameter(ParameterManager::defaultComponentId, gripperEnableParam)->rawValue().toInt() != 0;
     }
+
+    // PX4 v1.17+ removed PD_GRIPPER_EN; PD_GRIPPER_TYPE >= 0 means enabled (-1 = Undefined)
+    const QString gripperTypeParam = QStringLiteral("PD_GRIPPER_TYPE");
+    if (paramMgr->parameterExists(ParameterManager::defaultComponentId, gripperTypeParam)) {
+        return paramMgr->getParameter(ParameterManager::defaultComponentId, gripperTypeParam)->rawValue().toInt() >= 0;
+    }
+
     return false;
 }
 
