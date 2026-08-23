@@ -1,16 +1,48 @@
 #include "VehicleConfigUITestBase.h"
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLocale>
 #include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
+#include "AppSettings.h"
 #include "AutoPilotPlugin.h"
 #include "Fact.h"
 #include "ParameterManager.h"
+#include "QGCApplication.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
+
+namespace {
+
+/// Returns true if the item tree (including \a item itself) contains at least
+/// one visible text, control or image item with a non-zero size. Layout
+/// containers report a size even when all their children are hidden, so only
+/// leaf content items count.
+bool hasVisibleContent(QQuickItem *item)
+{
+    if (!item->isVisible()) {
+        return false;
+    }
+    if ((item->width() > 0) && (item->height() > 0) &&
+        (item->inherits("QQuickText") || item->inherits("QQuickControl") || item->inherits("QQuickImageBase"))) {
+        return true;
+    }
+    const QList<QQuickItem *> children = item->childItems();
+    for (QQuickItem *child : children) {
+        if (hasVisibleContent(child)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace
 
 void VehicleConfigUITestBase::navigateToConfigureView()
 {
@@ -111,6 +143,130 @@ void VehicleConfigUITestBase::clickThroughAllComponents(Vehicle *vehicle, const 
         QVERIFY2(loader->property("item").value<QQuickItem *>() != nullptr,
                  qPrintable(QStringLiteral("%1Panel loader has no item after clicking %2")
                                 .arg(prefix, comp->name())));
+
+        verifyPanelContentVisible(prefix + comp->name());
+        if (QTest::currentTestFailed()) return;
+
+        // Click each section button in the expanded tree and verify the page
+        // shows content for that section
+        const QStringList sectionIds = comp->sectionIds();
+        for (const QString &sectionId : sectionIds) {
+            // Matches objectName in VehicleConfigView.qml: "vehicleConfig_section_" + id without spaces
+            const QString sectionButtonName =
+                QStringLiteral("vehicleConfig_section_") + QString(sectionId).remove(QLatin1Char(' '));
+            if (!findVisibleItem(_rootItem, sectionButtonName, 250)) {
+                // Section hidden by sectionVisible() filtering – skip silently
+                continue;
+            }
+            clickSidebarButton(sectionButtonName);
+            if (QTest::currentTestFailed()) return;
+            verifyPanelContentVisible(prefix + comp->name() + QStringLiteral(" / ") + sectionId);
+            if (QTest::currentTestFailed()) return;
+        }
+    }
+}
+
+void VehicleConfigUITestBase::verifyPanelContentVisible(const QString &context)
+{
+    QQuickItem *loader = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_panelLoader"), 2000);
+    QVERIFY2(loader, qPrintable(context + QStringLiteral(": vehicleConfig_panelLoader not found")));
+
+    QQuickItem *panel = loader->property("item").value<QQuickItem *>();
+    QVERIFY2(panel, qPrintable(context + QStringLiteral(": panel loader has no item")));
+
+    // For SetupPage-based panels check the page content, not the SetupPage
+    // chrome (title/description) which renders even when the content is blank
+    QQuickItem *target = panel;
+    if (QQuickItem *contentLoader = panel->findChild<QQuickItem *>(QStringLiteral("setupPage_contentLoader"))) {
+        QQuickItem *contentItem = contentLoader->property("item").value<QQuickItem *>();
+        QVERIFY2(contentItem, qPrintable(context + QStringLiteral(": setup page content loader has no item")));
+        target = contentItem;
+    }
+
+    QVERIFY2(QTest::qWaitFor([&] { return hasVisibleContent(target); }, 3000),
+             qPrintable(context + QStringLiteral(": page loaded but renders no visible content (blank page)")));
+}
+
+void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle *vehicle, const QString &vehicleName)
+{
+    Fact *languageFact = SettingsManager::instance()->appSettings()->qLocaleLanguage();
+    const QVariant savedLanguage = languageFact->rawValue();
+
+    // A mid-test failure must not leak the language setting into later tests
+    auto restoreLanguage = qScopeGuard([this, languageFact, savedLanguage] {
+        if (languageFact->rawValue() == savedLanguage) {
+            return;
+        }
+        qgcApp()->resetRebootMessageDebounce();
+        languageFact->setRawValue(savedLanguage);
+        (void) acceptDialog(5000);
+    });
+
+    // Translations may not exist for the machine's system locale (e.g. "C" on CI)
+    ignoreLogMessage("API.QGCApplication", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Qt lib localization for .* is not present")));
+    ignoreLogMessage("API.QGCApplication", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Error loading source localization for .*")));
+    ignoreLogMessage("API.QGCApplication", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Error loading json localization for .*")));
+
+    // The stored locale is machine-dependent: force English so the first pass and
+    // the anchor text capture are actually English.
+    // Language is a reboot-required setting: each change announces a restart via
+    // an app message dialog which must be dismissed before clicking the UI.
+    if (languageFact->rawValue().toInt() != QLocale::English) {
+        expectAppMessage(QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+        languageFact->setRawValue(QLocale::English);
+        QVERIFY2(acceptDialog(5000), "Restart-required dialog never shown after switching language to English");
+        verifyExpectedLogMessage();
+        if (QTest::currentTestFailed()) return;
+    }
+
+    clickThroughAllComponents(vehicle, vehicleName);
+    if (QTest::currentTestFailed()) return;
+
+    // Language anchor: capture live English text so the switch can be verified
+    // to actually retranslate the UI (not just flip the setting)
+    clickSidebarButton(QStringLiteral("vehicleConfig_comp_Sensors"));
+    if (QTest::currentTestFailed()) return;
+    QPointer<QQuickItem> anchor = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_calibrateCompass"), 3000);
+    QVERIFY2(anchor, "Calibrate Compass language anchor not found");
+    const QString englishAnchorText = anchor->property("text").toString();
+
+    qgcApp()->resetRebootMessageDebounce();
+    expectAppMessage(QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    languageFact->setRawValue(QLocale::Chinese);
+    QVERIFY2(acceptDialog(5000), "Restart-required dialog never shown after switching language to Chinese");
+    verifyExpectedLogMessage();
+    if (QTest::currentTestFailed()) return;
+
+    QVERIFY2(anchor, "Language anchor destroyed during language switch");
+    QVERIFY2(QTest::qWaitFor([&] { return anchor && (anchor->property("text").toString() != englishAnchorText); }, 3000),
+             qPrintable(QStringLiteral("UI text did not change after switching to Chinese (still '%1')")
+                            .arg(englishAnchorText)));
+
+    const QString zhPrefix = vehicleName.isEmpty() ? QStringLiteral("zh_CN") : vehicleName + QStringLiteral(" zh_CN");
+    clickThroughAllComponents(vehicle, zhPrefix);
+    if (QTest::currentTestFailed()) return;
+
+    // No restore needed when the saved language was already Chinese (no change, no dialog)
+    if (languageFact->rawValue() != savedLanguage) {
+        // showRebootAppMessage() debounces repeats: reset so the restore change shows its own dialog
+        qgcApp()->resetRebootMessageDebounce();
+        expectAppMessage(QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+        languageFact->setRawValue(savedLanguage);
+        QVERIFY2(acceptDialog(5000), "Restart-required dialog never shown after restoring language");
+        verifyExpectedLogMessage();
+    }
+
+    // The saved language may itself be non-English, so only verify retranslation
+    // back to the English anchor when it renders English
+    if (savedLanguage.toInt() == QLocale::English) {
+        QPointer<QQuickItem> restoredAnchor = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_calibrateCompass"), 3000);
+        if (restoredAnchor) {
+            QVERIFY2(QTest::qWaitFor([&] { return restoredAnchor && (restoredAnchor->property("text").toString() == englishAnchorText); }, 3000),
+                     "UI text did not return to English after restoring language");
+        }
     }
 }
 
