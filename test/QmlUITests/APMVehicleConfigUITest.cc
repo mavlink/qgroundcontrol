@@ -41,9 +41,9 @@ void APMVehicleConfigUITest::_runNavigateVehicleConfig(
     QTest::qWait(_viewDelay);
 
     // -------------------------------------------------------------------------
-    // Click through each vehicle component
+    // Click through each vehicle component, in English and Chinese
     // -------------------------------------------------------------------------
-    clickThroughAllComponents(vehicle, vehicleName);
+    clickThroughAllComponentsAllLocales(vehicle, vehicleName);
 
     });
 }
