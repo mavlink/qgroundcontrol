@@ -6,9 +6,14 @@
 #include "QGCLoggingCategory.h"
 #include "SigningController.h"
 
+#include <QtCore/QThread>
 #include <QtQml/QQmlEngine>
 
 QGC_LOGGING_CATEGORY(LinkInterfaceLog, "Comms.LinkInterface")
+
+namespace {
+    constexpr int WORKER_SHUTDOWN_TIMEOUT_MS = 3000;
+}
 
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr &config, QObject *parent)
     : QObject(parent)
@@ -24,6 +29,52 @@ LinkInterface::~LinkInterface()
     }
 
     _config.reset();
+}
+
+void LinkInterface::_shutdownWorkerThread(QThread *thread, const QLoggingCategory &category, bool allowTerminate)
+{
+    if (!thread) {
+        return;
+    }
+
+    // Self-shutdown: wait() would fail and terminate() would kill the calling thread mid-destructor
+    if (thread->isCurrentThread()) {
+        qCCritical(category) << "Shutdown called from worker thread itself, orphaning";
+        thread->quit();
+        _orphanWorkerThread(thread);
+        return;
+    }
+
+    thread->quit();
+    if (thread->wait(WORKER_SHUTDOWN_TIMEOUT_MS)) {
+        return;
+    }
+
+    if (allowTerminate) {
+        qCWarning(category) << "Worker thread did not stop within timeout, terminating";
+        thread->terminate();
+        if (thread->wait(WORKER_SHUTDOWN_TIMEOUT_MS)) {
+            return;
+        }
+    }
+
+    // Orphan the running thread — leaking it beats the ~QThread abort in deleteChildren()
+    qCCritical(category) << "Worker thread could not be stopped, leaking it to avoid abort";
+    _orphanWorkerThread(thread);
+}
+
+void LinkInterface::_orphanWorkerThread(QThread *thread)
+{
+    thread->setParent(nullptr);
+
+    // Workers hold raw pointers into the configuration: keep it alive until the thread
+    // finishes so a stalled worker that resumes can't dereference a destroyed config.
+    (void) QObject::connect(thread, &QThread::finished, thread, [config = _config]() { Q_UNUSED(config); });
+
+    // Self-heal if the thread eventually exits: deleting the thread destroys the
+    // connection above, releasing the config. At app exit there is no main loop to
+    // deliver this, so both leak — the intended last-resort behavior.
+    (void) QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
 }
 
 uint8_t LinkInterface::mavlinkChannel() const
