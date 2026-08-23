@@ -6,21 +6,6 @@ This topic lists troubleshooting information related to _QGroundControl_ setup a
 Problems when **using** _QGroundControl_ to interact with a vehicle are covered in: [QGC Vehicle Interaction Problems](../troubleshooting/qgc_usage.md).
 :::
 
-## 64-bit Windows: Audio in Unexpected Language
-
-On Windows 64-bit machines _QGroundControl_ may sometimes play audio/messages in a language that does not match the _Text-to-speech_ setting in **Control Panel > Speech** (e.g. audio spoken in German on an English machine).
-
-This can occur because 64-bit Windows only displays 64-bit voices, while _QGroundControl_ is a 32-bit application (on Windows) and hence can only run 32-bit voices.
-
-The solution is to set the desired _32-bit voice_ for your system:
-
-1. Run the control panel application: **C:\Windows\SysWOW64\Speech\SpeechUX\sapi.cpl**.
-2. Make your desired _Voice selection_ and then click **OK** at the bottom of the dialog.
-
-:::info
-Additional information about the Windows speech APIs can be found [here](https://www.webbie.org.uk/blog/microsoft-speech/).
-:::
-
 ## Windows: UI Rendering/Video Driver Issues {#opengl_troubleshooting}
 
 If you experience UI rendering issues or video driver crashes on Windows, this may be caused by "flaky" OpenGL drivers. _QGroundControl_ provides 3 shortcuts that you can use to start _QGroundControl_ in "safer" video modes (try these in order):
@@ -63,7 +48,7 @@ The [download/install instructions for Ubuntu](../getting_started/download_and_i
 
 ## Ubuntu 18.04: Video Streaming Fails on Dual Video Adapter Systems {#dual_vga}
 
-The version of GSteamer in Ubuntu 18.04 has a bug that prevents video displaying when using a VA API based decoder (i.e. vaapih264dec etc.) on systems that have both Intel and NVidia video display adapters.
+The version of GStreamer in Ubuntu 18.04 has a bug that prevents video displaying when using a VA API based decoder (i.e. vaapih264dec etc.) on systems that have both Intel and NVidia video display adapters.
 
 :::info
 More generally, while the problem is known to occur on Ubuntu 18.04 with Intel and NVidia VGAs, it might occur on any linux system and other types of (dual) VGAs.
@@ -71,8 +56,8 @@ More generally, while the problem is known to occur on Ubuntu 18.04 with Intel a
 
 The easiest way to get _QGroundControl_ to work in this case is to start it using the following command line:
 
-```
-LIBVA_DRIVER_NAME=fakedriver ./QGroundControl)  will this make the
+```sh
+LIBVA_DRIVER_NAME=fakedriver ./QGroundControl
 ```
 
 Other alternatives are to disable one of the VGAs, uninstall VA API components, or upgrade to GStreamer 1.16 (there is no easy way to do this on Ubuntu 18.04 - please contribute a recipe if you find one!)

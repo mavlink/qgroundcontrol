@@ -7,7 +7,7 @@ Flying with a Joystick (or [virtual thumb-sticks](../settings_view/virtual_joyst
 :::
 
 :::info
-Joystick and Gamepad support is enabled using the cross-platform [SDL2](http://www.libsdl.org/index.php) library.
+Joystick and Gamepad support is enabled using the cross-platform [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) library.
 Compatibility with a particular controller depends on SDL (all buttons that are exposed by that API are displayed through the _QGroundControl_ UI).
 A [number of common joysticks and gamepads](#supported-joysticks) are known to work.
 :::

@@ -5,4 +5,6 @@
 - [QGC Setup](../troubleshooting/qgc_setup.md) - _QGroundContro_ 安装与设置故障排查。
 - [QGC Usage](../troubleshooting/qgc_usage.md) - 当**使用** _QGroundControl_ 与载具交互时出现故障。
 
+[Console Logging](../troubleshooting/console_logging.md) explains how to capture _QGroundControl_ application logs, which many of the troubleshooting procedures rely on.
+
 如果您的问题仍未解决，请检查 [支持](../support/support.md)页面获取更多关于获得帮助的信息。

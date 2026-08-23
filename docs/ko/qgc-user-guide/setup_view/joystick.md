@@ -1,25 +1,25 @@
 # 조이스틱 설정
 
-_QGroundControl_은 RC 송신기 대신 조이스틱이나 게임패드로 기체를 조종할 수 있습니다.
+_QGroundContro&#x6C;_&#xC740; RC 송신기 대신 조이스틱이나 게임패드로 기체를 조종할 수 있습니다.
 
 :::info
 조이스틱(또는 [가상 썸스틱](../settings_view/virtual_joystick.md))으로 비행하려면 조이스틱 정보가 MAVLink로 전송되기 때문에 기체가 조이스틱에 반응하기 위하여 안정적인 고대역폭 원격 측정 채널이 필요합니다.
 :::
 
 :::info
-조이스틱과 게임패드 지원은 이기종 플랫폼 [SDL2](http://www.libsdl.org/index.php) 라이브러리를 사용하여 활성화됩니다.
+Joystick and Gamepad support is enabled using the cross-platform [SDL2](https://github.com/libsdl-org/SDL/tree/SDL2) library.
 특정 컨트롤러와의 호환성은 SDL에 따라 다릅니다(해당 API에 의해 노출되는 모든 버튼은 _QGroundControl_ UI를 통하여 표시됨).
 [일반적인 조이스틱과 게임패드](#supported-joysticks)들은 호환됩니다.
 :::
 
 :::info
-조이스틱은 보정 프로세스의 마지막 단계로 _활성화_됩니다.
+조이스틱은 보정 프로세스의 마지막 단계로 _활성&#xD654;_&#xB429;니다.
 :::
 
 ## PX4 조이스틱 활성화
 
 To enable Joystick support in PX4 you need to set the parameter [`COM_RC_IN_MODE`](https://docs.px4.io/en/main/advanced_config/parameter_reference.html#COM_RC_IN_MODE) to `1` - _Joystick_.
-이 매개변수가 `0`이면 _조이스틱_이 설정 옵션으로 제공되지 않습니다.
+이 매개변수가 `0`이면 _조이스&#xD2F1;_&#xC774; 설정 옵션으로 제공되지 않습니다.
 
 This is enabled by default for PX4 SITL builds (see the [Parameters](../setup_view/parameters.md) topic for information on how to find and set a particular parameter).
 
@@ -42,7 +42,7 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
 
 5. **교정** 탭으로 이동하여 **시작** 버튼을 클릭하여 다음 화면의 지시에 따라 스틱을 교정하고 이동합니다.
 
-   조이스틱은 보정 프로세스의 마지막 단계에서 _활성화_됩니다.
+   조이스틱은 보정 프로세스의 마지막 단계에서 _활성&#xD654;_&#xB429;니다.
 
    ::: warning
    On some controllers the calibration process does not work because of incorrect channel mappings. You can follow [supported joysticks section](#supported-joysticks) for more information.
@@ -132,7 +132,7 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
 
 과정은 다음과 같습니다:
 
-1. _QGroundControl_을 실행후, 기체를 연결합니다.
+1. _QGroundContro&#x6C;_&#xC744; 실행후, 기체를 연결합니다.
    ```
    _jstest-gtk_ 설치: `sudo apt install jstest-gtk`
    ```
@@ -145,7 +145,7 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
    엑스포
    ```
 4. 컨트롤러 LED가 빠르게 깜박이기 시작할 때까지 **공유** 버튼을 누른 다음 **PS** 버튼을 길게 누릅니다.
-   그다음에는 _ds4drv_가 새 기기를 감지하여야 합니다.
+   그다음에는 _ds4dr&#x76;_&#xAC00; 새 기기를 감지하여야 합니다.
 5. 마지막으로 _jstest-gtk_ 유틸리티를 실행하여 컨트롤러 설정을 확인합니다.
 
 ### FrSky 타라니스 XD9 플러스
@@ -195,7 +195,7 @@ Logitech Gamepad F310은 MacOS "Sierra"에서 USB를 통해 테스트되었습�
 #### Mac OS Leopard / Lion 설정
 
 F710은 Leopard / Lion에서 감지되지만, 자동으로 설정되지 않습니다.
-작동하는 구성을 얻으려면 F710이 _Rumblepad2_로 인식되어야 합니다.
+작동하는 구성을 얻으려면 F710이 _Rumblepad&#x32;_&#xB85C; 인식되어야 합니다.
 
 먼저 **Apple > 이 Mac에 관하여 > 추가 정보 > 시스템 보고서 > USB**에서 인식 방법을 확인합니다.
 "Logitech Cordless RumblePad 2"로 감지되면 더 이상 수행할 필요는 없습니다.

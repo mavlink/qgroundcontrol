@@ -3,21 +3,21 @@
 ## Vehicle does not show up in UI
 
 QGC will automatically connect to a vehicle as soon as a communication link is created (using USB, or WiFi, etc.)
-If you establish that link and you don't see your vehicle show up in the QGC UI you can use [console logging](../settings_view/console_logging.md) to help debug the problem.
+If you establish that link and you don't see your vehicle show up in the QGC UI you can use [console logging](../troubleshooting/console_logging.md) to help debug the problem.
 
 Use the following steps to debug the issue:
 
 - Start with the hardware vehicle link not connected.
   Don't plug in the USB connection and/or establish the WiFi link in your OS for example.
 
-- Turn on `LinkManagerLog` [console logging](../settings_view/console_logging.md) in QGC.
+- Turn on `Comms.LinkManager` [console logging](../troubleshooting/console_logging.md) in QGC.
   This will log output about the link which QGC sees and connects to.
 
 - Establish the hardware vehicle communication link.
 
 - The console log output should display something like this:
 
-  ```
+  ```text
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:563 - "Waiting for bootloader to finish "/dev/cu.usbmodem01""
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:563 - "Waiting for bootloader to finish "/dev/cu.usbmodem01""
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:563 - "Waiting for bootloader to finish "/dev/cu.usbmodem01""
@@ -33,12 +33,17 @@ To see if your hardware is being recognized at the OS level do this:
 
 - Start with the hardware vehicle link not connected.
   Don't plug in the USB connection and/or establish the WiFi link in your OS for example.
-- Turn on `LinkManagerVerboseLog` [console logging](../settings_view/console_logging.md) in QGC.
+
+- Turn on `Comms.LinkManager:verbose` [console logging](../troubleshooting/console_logging.md) in QGC.
   This will log output for all serial hardware connections that QGC recognizes.
+
 - You will see continuous output of the serial ports on your device.
+
 - Plug in your USB comm device.
+
 - You should see a new device show in in the console output. Example:
-  ```
+
+  ```text
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:520 - "-----------------------------------------------------"
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:521 - "portName:           "cu.usbmodem4201""
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:522 - "systemLocation:     "/dev/cu.usbmodem4201""
@@ -48,6 +53,7 @@ To see if your hardware is being recognized at the OS level do this:
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:526 - "vendorIdentifier:   1155"
   [D] at /Users/travis/build/mavlink/qgroundcontrol/src/comm/LinkManager.cc:527 - "productIdentifier:  22336"
   ```
+
 - After that it should continue to log a connection to that device as shown in the first example.
 
 If you don't see a new serial port should up in the console output when you plug it in then something is likely wrong with your hardware at the OS level.

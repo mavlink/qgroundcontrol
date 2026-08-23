@@ -10,7 +10,7 @@ _Questions_ about how to use _QGroundControl_ should be raised in the discussion
 
 These forums are completely self-help from other QGC users.
 
-### Developer Chat {#developer_chat}
+## Developer Chat {#developer_chat}
 
 _QGroundControl_ developers (and many regular/deeply-involved users) can be found on the [#QGroundControl Slack channel](https://px4.slack.com/).
 
@@ -26,11 +26,11 @@ Please contact our developers using the support forums **before** creating GitHu
 
 If you are directed to create an issue, please use the "Bug report" template and provide all information specified in the template.
 
-##### Reporting Crashes from Windows Builds
+#### Reporting Crashes from Windows Builds
 
 When QGC crashes a crash dump file will be place in the Users LocalAppData directory. To navigate to that directory use the Start/Run command. You can bring this up window WinKey+R. Type into that `%localappdata%` for Open and click Ok. Crash dumps will be in a `QGCCrashDumps` folder in that directory. You should find a new **.dmp** file there. Add a link to that file in a GitHub Issue when reporting you problem.
 
-##### Reporting Hangs from Windows Builds
+#### Reporting Hangs from Windows Builds
 
 If Windows is telling you the _QGroundControl program is unresponsive_ use the following steps to report the hang:
 
@@ -46,12 +46,12 @@ If you are directed to create a feature request after discussion on support foru
 
 ## Troubleshooting
 
-Troubleshooting information is linked from [here](../troubleshooting/index.md).
+Troubleshooting information is available in the [Troubleshooting section](../troubleshooting/index.md).
 
 ### Console Logging
 
-_Console Logs_ can be helpful when diagnosing _QGroundControl_ problems. For more information see: [Console Logging](../settings_view/console_logging.md).
+_Console Logs_ can be helpful when diagnosing _QGroundControl_ problems. For more information see: [Console Logging](../troubleshooting/console_logging.md).
 
-## Help Improve these Docs!
+## Help Improve these Docs
 
 Just like _QGroundControl_ itself, the user guide is an open source, user created and supported GitBook. We welcome [Pull Requests](https://github.com/mavlink/qgc-user-guide/pulls) against the guide for fixes and/or updates.

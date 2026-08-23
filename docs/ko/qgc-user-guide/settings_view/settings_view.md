@@ -1,6 +1,6 @@
 # 어플리케이션 설정 화면
 
-_설정 화면_은 일반 기체들의 _QGroundControl_ 애플리케이션을 설정합니다. 이 값을 변경하기 위하여 기체를 연결할 필요는 없습니다.
+_설정 화&#xBA74;_&#xC740; 일반 기체들의 _QGroundControl_ 애플리케이션을 설정합니다. 이 값을 변경하기 위하여 기체를 연결할 필요는 없습니다.
 
 You can switch between the various settings pages by clicking the buttons in the left-sidebar.
 
@@ -22,7 +22,7 @@ Use the **search bar** at the top of the settings sidebar to find any setting by
 
 **[Comm Links](comm_links.md)** <br>Manually create communication links and configure auto-connect options.
 
-**[Logging](console_logging.md)** <br>Capture application logs for help with diagnosing problems.
+**[Logging](../troubleshooting/console_logging.md)** <br>Capture application logs for help with diagnosing problems.
 
 **[Maps](maps.md)** <br>Map provider selection, offline tile management, API tokens, custom tile servers, and cache settings.
 
