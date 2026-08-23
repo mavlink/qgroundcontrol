@@ -912,6 +912,17 @@ void MissionController::save(QJsonObject& json)
     json[_jsonItemsKey] = rgJsonMissionItems;
 }
 
+static FlightPathSegment::SegmentType segmentTypeForPair(const VisualItemPair& pair, bool mavlinkTerrainFrame)
+{
+    if (pair.second->isTakeoffItem()) {
+        return FlightPathSegment::SegmentTypeTakeoff;
+    }
+    if (pair.second->isLandCommand()) {
+        return FlightPathSegment::SegmentTypeLand;
+    }
+    return mavlinkTerrainFrame ? FlightPathSegment::SegmentTypeTerrainFrame : FlightPathSegment::SegmentTypeGeneric;
+}
+
 FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemPair& pair, bool mavlinkTerrainFrame)
 {
     // The takeoff goes straight up from ground to alt and then over to specified position at same alt. Which means
@@ -923,14 +934,9 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     double              coord2AMSLAlt       = pair.second->amslEntryAlt();
     double              coord1AMSLAlt       = takeoffStraightUp ? coord2AMSLAlt : pair.first->amslExitAlt();
 
-    FlightPathSegment::SegmentType segmentType = mavlinkTerrainFrame ? FlightPathSegment::SegmentTypeTerrainFrame : FlightPathSegment::SegmentTypeGeneric;
-    if (pair.second->isTakeoffItem()) {
-        segmentType = FlightPathSegment::SegmentTypeTakeoff;
-    } else if (pair.second->isLandCommand()) {
-        segmentType = FlightPathSegment::SegmentTypeLand;
-    }
-
-    FlightPathSegment* segment = new FlightPathSegment(segmentType, coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, !_flyView /* queryTerrainData */,  this);
+    FlightPathSegment* segment =
+        new FlightPathSegment(segmentTypeForPair(pair, mavlinkTerrainFrame), coord1, coord1AMSLAlt, coord2,
+                              coord2AMSLAlt, !_flyView /* queryTerrainData */, this);
 
     if (takeoffStraightUp) {
         connect(pair.second, &VisualMissionItem::amslEntryAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
@@ -957,7 +963,8 @@ FlightPathSegment* MissionController::_addFlightPathSegment(FlightPathSegmentHas
 {
     FlightPathSegment* segment = nullptr;
 
-    if (prevItemPairHashTable.contains(pair) && (prevItemPairHashTable[pair]->segmentType() == FlightPathSegment::SegmentTypeTerrainFrame) != mavlinkTerrainFrame) {
+    if (prevItemPairHashTable.contains(pair) &&
+        prevItemPairHashTable[pair]->segmentType() == segmentTypeForPair(pair, mavlinkTerrainFrame)) {
         // Pair already exists and connected, just re-use
         _flightPathSegmentHashTable[pair] = segment = prevItemPairHashTable.take(pair);
     } else {
