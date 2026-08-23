@@ -45,44 +45,61 @@ SetupPage {
 {{ rc }}
 
 {% endfor %}
-            property string sectionNameFilter: ""
+            property string sectionIdFilter: ""
 
+            // Keyed by untranslated section ID (must match VehicleComponent::sectionIds())
             readonly property var _searchTerms: ({
 {% for st in search_terms %}
-                "{{ st.title }}": [{{ st.terms }}]{{ st.comma }}
+                "{{ st.section_id }}": [{{ st.terms }}]{{ st.comma }}
 {% endfor %}
             })
 
             readonly property var _translatableSearchTerms: ({
 {% for tt in tr_terms %}
-                "{{ tt.title }}": [{{ tt.terms }}]{{ tt.comma }}
+                "{{ tt.section_id }}": [{{ tt.terms }}]{{ tt.comma }}
 {% endfor %}
             })
 
-            function sectionMatchesFilter(sectionTitle) {
-                if (sectionNameFilter === "") return true
-                if (sectionNameFilter === sectionTitle) return true
-                var filter = sectionNameFilter.toLowerCase()
-                var terms = _searchTerms[sectionTitle]
+            // sectionId must be untranslated; repeat sections pass their base ID as searchKey
+            function sectionMatchesFilter(sectionId, searchKey) {
+                if (sectionIdFilter === "") {
+                    return true
+                }
+                if (sectionIdFilter === sectionId) {
+                    return true
+                }
+                if (searchKey === undefined) {
+                    searchKey = sectionId
+                }
+                let filter = sectionIdFilter.toLowerCase()
+                let terms = _searchTerms[searchKey]
                 if (terms) {
-                    for (var i = 0; i < terms.length; i++) {
-                        if (terms[i].indexOf(filter) >= 0) return true
+                    for (let i = 0; i < terms.length; i++) {
+                        if (terms[i].indexOf(filter) >= 0) {
+                            return true
+                        }
                     }
                 }
-                var trTerms = _translatableSearchTerms[sectionTitle]
+                let trTerms = _translatableSearchTerms[searchKey]
                 if (trTerms) {
-                    for (var j = 0; j < trTerms.length; j++) {
-                        if (qsTranslate("{{ tr_ctx }}", trTerms[j]).toLowerCase().indexOf(filter) >= 0) return true
+                    for (let j = 0; j < trTerms.length; j++) {
+                        if (qsTranslate("{{ tr_ctx }}", trTerms[j]).toLowerCase().indexOf(filter) >= 0) {
+                            return true
+                        }
                     }
                 }
                 return false
             }
 
-            function sectionVisible(name) {
+            function sectionVisible(sectionId) {
+                switch (sectionId) {
 {% for vc in visible_conditions %}
-                if (name === "{{ vc.name }}") return {{ vc.expr }}
+                case "{{ vc.name }}":
+                    return {{ vc.expr }}
 {% endfor %}
-                return true
+                default:
+                    return true
+                }
             }
 
             property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20

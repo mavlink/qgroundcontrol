@@ -16,7 +16,7 @@ SetupPage {
             width:  availableWidth
             height: availableHeight
 
-            property string sectionNameFilter: ""
+            property string sectionIdFilter: ""
 
             property real _margins:         ScreenTools.defaultFontPixelHeight / 2
             property var  _switchNameList:  [ "RC_MAP_ARM_SW", "RC_MAP_GEAR_SW", "RC_MAP_KILL_SW", "RC_MAP_LOITER_SW", "RC_MAP_OFFB_SW", "RC_MAP_RETURN_SW" ]
@@ -57,7 +57,7 @@ SetupPage {
                         Column {
                             id:      flightModeSettingsColumn
                             spacing: _margins
-                            visible: sectionNameFilter === "" || sectionNameFilter === qsTr("Flight Modes")
+                            visible: sectionIdFilter === "" || sectionIdFilter === "Flight Modes"
 
                             QGCLabel {
                                 id:             flightModeLabel
@@ -120,7 +120,7 @@ SetupPage {
                         Column {
                             id:         column2
                             spacing:    _margins
-                            visible:    sectionNameFilter === "" || sectionNameFilter === qsTr("Switch Settings")
+                            visible:    sectionIdFilter === "" || sectionIdFilter === "Switch Settings"
 
                             QGCLabel {
                                 text:           qsTr("Switch Settings")

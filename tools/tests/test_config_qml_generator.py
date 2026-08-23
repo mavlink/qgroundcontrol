@@ -111,6 +111,64 @@ class TestUnknownKeyRejection:
             load_page_def(_make_page_json(tmp_path, data))
 
 
+class TestQmlUnsafeStringRejection:
+    """Strings embedded in generated QML literals must not contain quote/backslash/newline."""
+
+    @pytest.mark.parametrize("bad_char", ['"', "\\", "\n"])
+    def test_unsafe_section_title_rejected(self, tmp_path: Path, bad_char: str):
+        data = _minimal_page()
+        data["sections"][0]["title"] = f"Bad{bad_char}Title"
+        with pytest.raises(ValueError, match="section title"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_non_string_repeat_title_rejected(self, tmp_path: Path):
+        # Must raise the validator's ValueError, not a TypeError from the {index} check
+        data = _minimal_page()
+        data["sections"][0]["title"] = 42
+        data["sections"][0]["repeat"] = {"paramPrefix": "BATT", "probePostfix": "_MONITOR"}
+        with pytest.raises(ValueError, match="section title"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_unsafe_disabled_heading_rejected(self, tmp_path: Path):
+        data = _minimal_page()
+        data["sections"][0]["repeat"] = {
+            "paramPrefix": "BATT",
+            "probePostfix": "_MONITOR",
+            "enableParam": "MONITOR",
+            "disabledParamValue": "0",
+            "disabledSection": {"heading": 'Disabled "Batteries"'},
+        }
+        with pytest.raises(ValueError, match="disabledSection heading"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_unsafe_control_label_rejected(self, tmp_path: Path):
+        data = _minimal_page()
+        data["sections"][0]["controls"][0]["label"] = 'A "label"'
+        with pytest.raises(ValueError, match="control label"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_unsafe_keyword_rejected(self, tmp_path: Path):
+        data = _minimal_page()
+        data["sections"][0]["keywords"] = ["esc\\motor"]
+        with pytest.raises(ValueError, match="section keyword"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_index_placeholder_in_repeat_title_rejected(self, tmp_path: Path):
+        # C++ VehicleComponent::sectionIds() cannot expand {index}, so repeat
+        # titles using it would generate mismatched section IDs
+        data = _minimal_page()
+        data["sections"][0]["title"] = "Battery {index}"
+        data["sections"][0]["repeat"] = {"paramPrefix": "BATT", "probePostfix": "_MONITOR"}
+        with pytest.raises(ValueError, match="index"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_safe_strings_accepted(self, tmp_path: Path):
+        data = _minimal_page()
+        data["sections"][0]["title"] = "ESC's & Motors (12-inch)"
+        page = load_page_def(_make_page_json(tmp_path, data))
+        assert page.sections[0].title == "ESC's & Motors (12-inch)"
+
+
 class TestRealPageDefinitions:
     """Audit: every VehicleConfig.json in the repo must load under strict validation."""
 
