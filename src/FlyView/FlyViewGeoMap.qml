@@ -238,7 +238,9 @@ GeoMap {
         radiusMeters: _fwdFlightGotoCircleModel.radius.rawValue
         // Loiter happens at the goto altitude (carried in the center coordinate)
         altitudeMode: (center && !isNaN(center.altitude)) ? GeoMapItem.Absolute : GeoMapItem.ClampToGround
+        // PX4 ignores the commanded loiter radius (flies NAV_LOITER_RAD), so the circle size is unknown
         visible: gotoLocationItem.visible && root._activeVehicle &&
+                 !root._activeVehicle.px4Firmware &&
                  root._activeVehicle.inFwdFlight &&
                  !root._activeVehicle.orbitActive
 
@@ -276,7 +278,7 @@ GeoMap {
             showRotation: true
             clockwiseRotation: true
 
-            property real _defaultLoiterRadius: root._flyViewSettings.forwardFlightGoToLocationLoiterRad.value
+            property real _defaultLoiterRadius: root._flyViewSettings.forwardFlightGoToLocationLoiterRad.rawValue
             property real _committedRadius
 
             onCenterChanged: {
