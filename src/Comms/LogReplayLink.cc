@@ -451,14 +451,14 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPtr &config, QObject *parent
 LogReplayLink::~LogReplayLink()
 {
     if (isConnected()) {
-        (void) QMetaObject::invokeMethod(_worker, "disconnectFromLog", Qt::BlockingQueuedConnection);
+        // Queued, not blocking: keeps a wedged worker from hanging the destructor before
+        // _shutdownWorkerThread can bound the wait. If quit() beats the queued call,
+        // ~LogReplayWorker still disconnects on thread finish.
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromLog", Qt::QueuedConnection);
         _onDisconnected();
     }
 
-    _workerThread->quit();
-    if (!_workerThread->wait()) {
-        qCWarning(LogReplayLinkLog) << "Failed to wait for LogReplay Thread to close";
-    }
+    _shutdownWorkerThread(_workerThread, LogReplayLinkLog());
 
     qCDebug(LogReplayLinkLog) << this;
 }

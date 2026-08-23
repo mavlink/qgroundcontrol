@@ -9,6 +9,8 @@
 #include "MAVLinkMessageType.h"
 
 class LinkManager;
+class QLoggingCategory;
+class QThread;
 class SigningController;
 
 /// \brief The link interface defines the interface for all links used to communicate with the ground station application.
@@ -76,6 +78,15 @@ protected:
 
     void _connectionRemoved();
 
+    /// Stops a link's worker thread, bounding the wait so destruction can always proceed.
+    /// Guarantees the thread is never left as a QObject child while running (which would abort
+    /// in ~QThread when child cleanup deletes it) — NOT that execution has stopped on return:
+    /// on quit timeout the thread is terminated, and as a last resort it is orphaned and leaked,
+    /// still running, with the link configuration kept alive so a resumed worker can't
+    /// dereference a destroyed config. Pass allowTerminate = false when the worker holds locks
+    /// that termination could leave locked.
+    void _shutdownWorkerThread(QThread *thread, const QLoggingCategory &category, bool allowTerminate = true);
+
     SharedLinkConfigurationPtr _config;
 
 private slots:
@@ -85,6 +96,8 @@ private slots:
 private:
     /// connect is private since all links should be created through LinkManager::createConnectedLink calls
     virtual bool _connect() = 0;
+
+    void _orphanWorkerThread(QThread *thread);
 
     uint8_t _mavlinkChannel = std::numeric_limits<uint8_t>::max();
     bool _decodedFirstMavlinkPacket = false;
