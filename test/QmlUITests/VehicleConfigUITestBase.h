@@ -45,6 +45,16 @@ protected:
     /// prepended to failure messages.
     void clickThroughAllComponents(Vehicle *vehicle, const QString &vehicleName = QString());
 
+    /// Run clickThroughAllComponents() in English and then again with the
+    /// Chinese translations loaded. Guards against section filtering that
+    /// compares translated strings rendering blank pages (issue #14929).
+    void clickThroughAllComponentsAllLocales(Vehicle *vehicle, const QString &vehicleName = QString());
+
+    /// Verify the currently loaded config panel actually renders visible
+    /// content (at least one visible text/control/image item), not just that
+    /// the loader has an item. Catches blank-page regressions.
+    void verifyPanelContentVisible(const QString &context);
+
     /// Wait for _refreshParams() traffic to settle so link teardown doesn't cut
     /// off in-flight PARAM_REQUEST_READs (which can log warnings that fail
     /// strict mode). Fails the test if traffic is still active after 10s;

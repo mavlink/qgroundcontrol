@@ -26,9 +26,9 @@ void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
     QTest::qWait(_viewDelay);
 
     // -------------------------------------------------------------------------
-    // Click through each vehicle component
+    // Click through each vehicle component, in English and Chinese
     // -------------------------------------------------------------------------
-    clickThroughAllComponents(vehicle);
+    clickThroughAllComponentsAllLocales(vehicle);
 
     });
 }
