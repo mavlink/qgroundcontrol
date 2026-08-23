@@ -11,7 +11,6 @@ QGC_LOGGING_CATEGORY(TCPLinkLog, "Comms.TCPLink")
 
 namespace {
     constexpr int CONNECT_TIMEOUT_MS = 3000;
-    constexpr int DISCONNECT_TIMEOUT_MS = 3000;
     constexpr int TYPE_OF_SERVICE = 32; // Set ToS to priority for low delay
 }
 
@@ -272,14 +271,14 @@ TCPLink::TCPLink(SharedLinkConfigurationPtr &config, QObject *parent)
 TCPLink::~TCPLink()
 {
     if (isConnected()) {
-        (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::BlockingQueuedConnection);
+        // Queued, not blocking: keeps a wedged worker from hanging the destructor before
+        // _shutdownWorkerThread can bound the wait. If quit() beats the queued call,
+        // ~TCPWorker still disconnects on thread finish.
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromHost", Qt::QueuedConnection);
         _onDisconnected();
     }
 
-    _workerThread->quit();
-    if (!_workerThread->wait(DISCONNECT_TIMEOUT_MS)) {
-        qCWarning(TCPLinkLog) << "Failed to wait for TCP Thread to close";
-    }
+    _shutdownWorkerThread(_workerThread, TCPLinkLog());
 
     qCDebug(TCPLinkLog) << this;
 }
