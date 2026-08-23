@@ -105,10 +105,11 @@ Rectangle {
         }
     }
 
+    // settingsPage is the untranslated page name from SettingsPages.json
     function showSettingsPage(settingsPage) {
         for (var i = 0; i < settingsPagesModel.count; i++) {
             var entry = settingsPagesModel.get(i)
-            if (entry && entry.name === settingsPage) {
+            if (entry && entry.nameKey === settingsPage) {
                 _navigateTo(i, -1)
                 break
             }
