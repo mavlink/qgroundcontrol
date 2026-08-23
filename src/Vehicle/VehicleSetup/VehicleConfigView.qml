@@ -50,20 +50,25 @@ Rectangle {
         return !!_expandedComponents[compIndex]
     }
 
-    /// Translate a section name using the component's JSON filename as context.
-    /// Falls back to the raw name when no vehicleConfigJson is set.
-    function _translateSection(component, name) {
-        var context = _translationContext(component)
-        if (!context) return name
-        return qsTranslate(context, name)
+    /// Translated display name for a section ID. JSON-driven components translate via the JSON
+    /// filename context; hand-coded components provide sectionDisplayName().
+    function _sectionDisplayName(component, sectionId) {
+        let context = _translationContext(component)
+        if (context) {
+            return qsTranslate(context, sectionId)
+        }
+        if (component && typeof component.sectionDisplayName === "function") {
+            return component.sectionDisplayName(sectionId)
+        }
+        return sectionId
     }
 
-    /// Get the section name for a sidebar entry.
-    function _sectionName(compIndex, sectionIndex) {
+    /// Get the section ID for a sidebar entry.
+    function _sectionId(compIndex, sectionIndex) {
         if (sectionIndex < 0 || !_fullParameterVehicleAvailable) return ""
         var components = _activeVehicle.autopilotPlugin.vehicleComponents
         if (compIndex < 0 || compIndex >= components.length) return ""
-        var secs = components[compIndex].sections
+        var secs = components[compIndex].sectionIds
         if (sectionIndex < secs.length) return secs[sectionIndex]
         return ""
     }
@@ -81,11 +86,14 @@ Rectangle {
         var query = _searchQuery.toLowerCase().trim()
         if (component.name.toLowerCase().indexOf(query) !== -1) return true
         var context = _translationContext(component)
-        var secs = component.sections
+        var secs = component.sectionIds
         if (secs) {
             for (var i = 0; i < secs.length; i++) {
                 if (secs[i].toLowerCase().indexOf(query) !== -1) return true
-                if (context && qsTranslate(context, secs[i]).toLowerCase().indexOf(query) !== -1) return true
+                let displayName = _sectionDisplayName(component, secs[i])
+                if (displayName !== secs[i] && displayName.toLowerCase().indexOf(query) !== -1) {
+                    return true
+                }
             }
         }
         var keywords = component.sectionKeywords
@@ -101,15 +109,18 @@ Rectangle {
         return false
     }
 
-    function _sectionMatchesSearch(component, sectionName) {
+    function _sectionMatchesSearch(component, sectionId) {
         if (_searchQuery.trim() === "") return true
         var query = _searchQuery.toLowerCase().trim()
-        if (sectionName.toLowerCase().indexOf(query) !== -1) return true
+        if (sectionId.toLowerCase().indexOf(query) !== -1) return true
         var context = _translationContext(component)
-        if (context && qsTranslate(context, sectionName).toLowerCase().indexOf(query) !== -1) return true
+        let displayName = _sectionDisplayName(component, sectionId)
+        if (displayName !== sectionId && displayName.toLowerCase().indexOf(query) !== -1) {
+            return true
+        }
         var keywords = component.sectionKeywords
-        if (keywords && keywords[sectionName]) {
-            var terms = keywords[sectionName]
+        if (keywords && keywords[sectionId]) {
+            var terms = keywords[sectionId]
             for (var i = 0; i < terms.length; i++) {
                 if (terms[i].toLowerCase().indexOf(query) !== -1) return true
                 if (context && qsTranslate(context, terms[i]).toLowerCase().indexOf(query) !== -1) return true
@@ -161,7 +172,7 @@ Rectangle {
         _selectedSpecial = ""
 
         // If component opts in and root was clicked, auto-select first section
-        if (sectionIndex < 0 && vehicleComponent.showFirstSectionOnRootClick && vehicleComponent.sections.length > 0) {
+        if (sectionIndex < 0 && vehicleComponent.showFirstSectionOnRootClick && vehicleComponent.sectionIds.length > 0) {
             sectionIndex = 0
         }
         _selectedSectionIndex = sectionIndex
@@ -185,8 +196,8 @@ Rectangle {
         }
 
         // Apply section filter
-        if (panelLoader.item && typeof panelLoader.item.sectionNameFilter !== "undefined") {
-            panelLoader.item.sectionNameFilter = _sectionName(compIndex, sectionIndex)
+        if (panelLoader.item && typeof panelLoader.item.sectionIdFilter !== "undefined") {
+            panelLoader.item.sectionIdFilter = _sectionId(compIndex, sectionIndex)
         }
     }
 
@@ -230,8 +241,8 @@ Rectangle {
     Connections {
         target: panelLoader
         function onLoaded() {
-            if (panelLoader.item && typeof panelLoader.item.sectionNameFilter !== "undefined") {
-                panelLoader.item.sectionNameFilter = _sectionName(_selectedComponentIndex, _selectedSectionIndex)
+            if (panelLoader.item && typeof panelLoader.item.sectionIdFilter !== "undefined") {
+                panelLoader.item.sectionIdFilter = _sectionId(_selectedComponentIndex, _selectedSectionIndex)
             }
         }
     }
@@ -389,9 +400,9 @@ Rectangle {
 
                         property var    comp:           modelData
                         property string compName:       comp ? comp.name : ""
-                        property var    compSections:   comp ? comp.sections : []
+                        property var    compSectionIds: comp ? comp.sectionIds : []
                         property bool   isSelected:     vehicleConfigView._selectedComponentIndex === index && vehicleConfigView._selectedSpecial === ""
-                        property bool   hasSections:    compSections.length > 1
+                        property bool   hasSections:    compSectionIds.length > 1
                         property bool   isSearching:    vehicleConfigView._searchQuery.trim() !== ""
                         property bool   matchesSearch:  comp ? vehicleConfigView._componentMatchesSearch(comp) : false
                         property bool   isExpanded:     hasSections && (isSearching ? matchesSearch : vehicleConfigView._isExpanded(index))
@@ -436,7 +447,7 @@ Rectangle {
 
                         // Section sub-items
                         Repeater {
-                            model: compColumn.isExpanded ? compColumn.compSections : []
+                            model: compColumn.isExpanded ? compColumn.compSectionIds : []
 
                             Button {
                                 id:             sectionBtn
@@ -491,7 +502,7 @@ Rectangle {
                                     }
 
                                     QGCLabel {
-                                        text:  vehicleConfigView._translateSection(compColumn.comp, modelData)
+                                        text:  vehicleConfigView._sectionDisplayName(compColumn.comp, modelData)
                                         color: sectionBtn.textColor
                                         font.pointSize: ScreenTools.defaultFontPointSize * 0.9
                                         horizontalAlignment: Text.AlignLeft

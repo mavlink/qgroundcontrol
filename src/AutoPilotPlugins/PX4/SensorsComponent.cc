@@ -89,7 +89,7 @@ QUrl SensorsComponent::setupSource(void) const
     return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/SensorsComponent.qml");
 }
 
-QStringList SensorsComponent::sections() const
+QStringList SensorsComponent::sectionIds() const
 {
     QStringList sectionList;
 
@@ -99,20 +99,43 @@ QStringList SensorsComponent::sections() const
         allMagsDisabled = !_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, _magEnabledParam)->rawValue().toBool();
     }
     if (!allMagsDisabled) {
-        sectionList << tr("Compass");
+        sectionList << QStringLiteral("Compass");
     }
 
-    sectionList << tr("Gyroscope");
-    sectionList << tr("Accelerometer");
-    sectionList << tr("Level Horizon");
+    sectionList << QStringLiteral("Gyroscope");
+    sectionList << QStringLiteral("Accelerometer");
+    sectionList << QStringLiteral("Level Horizon");
 
     if (_airspeedCalSupported()) {
-        sectionList << tr("Airspeed");
+        sectionList << QStringLiteral("Airspeed");
     }
 
-    sectionList << tr("Orientations");
+    sectionList << QStringLiteral("Orientations");
 
     return sectionList;
+}
+
+QString SensorsComponent::sectionDisplayName(const QString& sectionId) const
+{
+    if (sectionId == QStringLiteral("Compass")) {
+        return tr("Compass");
+    }
+    if (sectionId == QStringLiteral("Gyroscope")) {
+        return tr("Gyroscope");
+    }
+    if (sectionId == QStringLiteral("Accelerometer")) {
+        return tr("Accelerometer");
+    }
+    if (sectionId == QStringLiteral("Level Horizon")) {
+        return tr("Level Horizon");
+    }
+    if (sectionId == QStringLiteral("Airspeed")) {
+        return tr("Airspeed");
+    }
+    if (sectionId == QStringLiteral("Orientations")) {
+        return tr("Orientations");
+    }
+    return sectionId;
 }
 
 QUrl SensorsComponent::summaryQmlSource(void) const
@@ -151,11 +174,11 @@ QUrl SensorsComponent::summaryQmlSource(void) const
     return _airspeedCalSupported() && _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "SENS_DPRES_OFF")->rawValue().toFloat() == 0.0f;
  }
 
-bool SensorsComponent::sectionSetupComplete(const QString &sectionName) const
+bool SensorsComponent::sectionSetupComplete(const QString &sectionId) const
 {
     auto *pm = _vehicle->parameterManager();
 
-    if (sectionName == tr("Compass")) {
+    if (sectionId == QStringLiteral("Compass")) {
         bool magEnabled = true;
         if (pm->parameterExists(ParameterManager::defaultComponentId, _magEnabledParam)) {
             magEnabled = pm->getParameter(ParameterManager::defaultComponentId, _magEnabledParam)->rawValue().toBool();
@@ -163,18 +186,18 @@ bool SensorsComponent::sectionSetupComplete(const QString &sectionName) const
         if (!magEnabled) return true;
         return pm->getParameter(ParameterManager::defaultComponentId, _magCalParam)->rawValue().toFloat() != 0.0f;
     }
-    if (sectionName == tr("Gyroscope")) {
+    if (sectionId == QStringLiteral("Gyroscope")) {
         return pm->getParameter(ParameterManager::defaultComponentId, "CAL_GYRO0_ID")->rawValue().toFloat() != 0.0f;
     }
-    if (sectionName == tr("Accelerometer")) {
+    if (sectionId == QStringLiteral("Accelerometer")) {
         return pm->getParameter(ParameterManager::defaultComponentId, "CAL_ACC0_ID")->rawValue().toFloat() != 0.0f;
     }
-    if (sectionName == tr("Level Horizon")) {
+    if (sectionId == QStringLiteral("Level Horizon")) {
         // Level cal doesn't have a distinct completion indicator — consider complete if accel+gyro are done
         return pm->getParameter(ParameterManager::defaultComponentId, "CAL_ACC0_ID")->rawValue().toFloat() != 0.0f
             && pm->getParameter(ParameterManager::defaultComponentId, "CAL_GYRO0_ID")->rawValue().toFloat() != 0.0f;
     }
-    if (sectionName == tr("Airspeed")) {
+    if (sectionId == QStringLiteral("Airspeed")) {
         return !_airspeedCalRequired();
     }
 

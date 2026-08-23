@@ -23,9 +23,10 @@ public:
     virtual bool setupComplete(void) const override;
     virtual QUrl setupSource(void) const override;
     virtual QUrl summaryQmlSource(void) const override;
-    QStringList sections() const override;
+    QStringList sectionIds() const override;
+    QString sectionDisplayName(const QString& sectionId) const override;
     bool showFirstSectionOnRootClick() const override { return true; }
-    bool sectionSetupComplete(const QString &sectionName) const override;
+    bool sectionSetupComplete(const QString &sectionId) const override;
 
 private:
     bool _airspeedCalSupported  (void) const;

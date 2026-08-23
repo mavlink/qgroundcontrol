@@ -31,27 +31,27 @@ VehicleComponent::~VehicleComponent()
     // qCDebug(VehicleComponentLog) << Q_FUNC_INFO << this;
 }
 
-QStringList VehicleComponent::sections() const
+QStringList VehicleComponent::sectionIds() const
 {
     _ensureSectionsCached();
 
     if (_repeatFilters.isEmpty()) {
-        return _expandedSections;
+        return _expandedSectionIds;
     }
 
     auto *pm = _vehicle ? _vehicle->parameterManager() : nullptr;
     if (!pm) {
-        return _expandedSections;
+        return _expandedSectionIds;
     }
 
-    QStringList result = _expandedSections;
+    QStringList result = _expandedSectionIds;
     for (const auto &filter : _repeatFilters) {
         bool hasDisabled = false;
-        for (int i = 0; i < filter.sectionNames.size(); i++) {
+        for (int i = 0; i < filter.sectionIds.size(); i++) {
             if (!pm->parameterExists(ParameterManager::defaultComponentId, filter.paramNames[i]))
                 continue;
             if (pm->getParameter(ParameterManager::defaultComponentId, filter.paramNames[i])->rawValue().toInt() == filter.disabledValue) {
-                result.removeAll(filter.sectionNames[i]);
+                result.removeAll(filter.sectionIds[i]);
                 hasDisabled = true;
             }
         }
@@ -171,19 +171,19 @@ void VehicleComponent::_ensureSectionsCached() const
                     count++;
                 }
                 if (count <= 1) {
-                    _expandedSections.append(name);
+                    _expandedSectionIds.append(name);
                     _sectionKeywords.insert(name, terms);
                     if (hasFilter) {
-                        filter.sectionNames.append(name);
+                        filter.sectionIds.append(name);
                         filter.paramNames.append(battPrefix(0) + enableParam);
                     }
                 } else {
                     for (int i = 0; i < count; i++) {
-                        const QString sectionName = name + QStringLiteral(" ") + battLabel(i);
-                        _expandedSections.append(sectionName);
-                        _sectionKeywords.insert(sectionName, terms);
+                        const QString sectionId = name + QStringLiteral(" ") + battLabel(i);
+                        _expandedSectionIds.append(sectionId);
+                        _sectionKeywords.insert(sectionId, terms);
                         if (hasFilter) {
-                            filter.sectionNames.append(sectionName);
+                            filter.sectionIds.append(sectionId);
                             filter.paramNames.append(battPrefix(i) + enableParam);
                         }
                     }
@@ -198,21 +198,21 @@ void VehicleComponent::_ensureSectionsCached() const
                 }
 
                 if (count <= 1) {
-                    _expandedSections.append(name);
+                    _expandedSectionIds.append(name);
                     _sectionKeywords.insert(name, terms);
                     if (hasFilter) {
                         const QString idx = (firstOmits) ? QString() : QString::number(startIndex);
-                        filter.sectionNames.append(name);
+                        filter.sectionIds.append(name);
                         filter.paramNames.append(paramPrefix + idx + enableParam);
                     }
                 } else {
                     for (int i = 0; i < count; i++) {
                         const QString idx = (firstOmits && i == 0) ? QString() : QString::number(startIndex + i);
-                        const QString sectionName = name + QStringLiteral(" ") + QString::number(startIndex + i);
-                        _expandedSections.append(sectionName);
-                        _sectionKeywords.insert(sectionName, terms);
+                        const QString sectionId = name + QStringLiteral(" ") + QString::number(startIndex + i);
+                        _expandedSectionIds.append(sectionId);
+                        _sectionKeywords.insert(sectionId, terms);
                         if (hasFilter) {
-                            filter.sectionNames.append(sectionName);
+                            filter.sectionIds.append(sectionId);
                             filter.paramNames.append(paramPrefix + idx + enableParam);
                         }
                     }
@@ -223,8 +223,8 @@ void VehicleComponent::_ensureSectionsCached() const
                 _repeatFilters.append(filter);
             }
         } else {
-            if (!_expandedSections.contains(name)) {
-                _expandedSections.append(name);
+            if (!_expandedSectionIds.contains(name)) {
+                _expandedSectionIds.append(name);
             }
             _sectionKeywords.insert(name, terms);
         }
@@ -270,7 +270,7 @@ void VehicleComponent::setupTriggerSignals()
         for (const QString &paramName : filter.paramNames) {
             if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
                 Fact *const fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
-                (void) connect(fact, &Fact::valueChanged, this, &VehicleComponent::sectionsChanged);
+                (void) connect(fact, &Fact::valueChanged, this, &VehicleComponent::sectionIdsChanged);
             }
         }
     }
