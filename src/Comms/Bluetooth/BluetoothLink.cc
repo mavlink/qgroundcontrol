@@ -53,12 +53,7 @@ BluetoothLink::~BluetoothLink()
             (void) QMetaObject::invokeMethod(_worker, "disconnectLink", Qt::QueuedConnection);
         }
 
-        _workerThread->quit();
-        if (!_workerThread->wait(5000)) {
-            qCWarning(BluetoothLinkLog) << "Worker thread did not stop within timeout, terminating";
-            _workerThread->terminate();
-            (void) _workerThread->wait(1000);
-        }
+        _shutdownWorkerThread(_workerThread, BluetoothLinkLog());
     }
 
     qCDebug(BluetoothLinkLog) << this;

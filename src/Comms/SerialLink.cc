@@ -9,7 +9,6 @@ QGC_LOGGING_CATEGORY(SerialLinkLog, "Comms.SerialLink")
 
 namespace {
     constexpr int CONNECT_TIMEOUT_MS = 1000;
-    constexpr int DISCONNECT_TIMEOUT_MS = 3000;
 }
 
 /*===========================================================================*/
@@ -446,14 +445,14 @@ SerialLink::SerialLink(SharedLinkConfigurationPtr &config, QObject *parent)
 SerialLink::~SerialLink()
 {
     if (isConnected()) {
-        (void) QMetaObject::invokeMethod(_worker, "disconnectFromPort", Qt::BlockingQueuedConnection);
+        // Queued, not blocking: a wedged worker (e.g. QSerialPort::close() hung in a driver)
+        // would block here forever, before _shutdownWorkerThread can bound the wait.
+        // If quit() beats the queued call, ~SerialWorker still disconnects on thread finish.
+        (void) QMetaObject::invokeMethod(_worker, "disconnectFromPort", Qt::QueuedConnection);
         _onDisconnected();
     }
 
-    _workerThread->quit();
-    if (!_workerThread->wait(DISCONNECT_TIMEOUT_MS)) {
-        qCWarning(SerialLinkLog) << "Failed to wait for Serial Thread to close";
-    }
+    _shutdownWorkerThread(_workerThread, SerialLinkLog());
 
     qCDebug(SerialLinkLog) << this;
 }
