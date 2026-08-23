@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 
 import pytest
+from generators.common.validation import require_qml_safe_string
+from generators.settings_qml import generate_pages as settings_generator
 from generators.settings_qml.page_generator import (
     ControlDef,
     GroupDef,
@@ -1088,6 +1090,143 @@ class TestGeneratePagesModelQml:
         pages_path.write_text(json.dumps({"version": 1, "pages": "oops"}), encoding="utf-8")
         with pytest.raises(ValueError, match="must be a JSON array"):
             generate_pages_model_qml(pages_path)
+
+
+class TestQmlUnsafeStringRejection:
+    """Strings embedded in generated QML literals must not contain quote/backslash/newline."""
+
+    @pytest.mark.parametrize("bad_value", [["safe"], 123, None, {"a": 1}])
+    def test_non_string_rejected(self, bad_value: object):
+        with pytest.raises(ValueError, match="must be a string"):
+            require_qml_safe_string(bad_value, "test field", "test.json")
+
+    def test_unsafe_section_name_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "sectionName": 'Bad "Section"',
+                    "controls": [{"setting": "appSettings.x"}],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="group sectionName"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_unsafe_group_keyword_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "keywords": ["map\\layers"],
+                    "controls": [{"setting": "appSettings.x"}],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="group keyword"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    @pytest.mark.parametrize("bad_char", ['"', "\\", "\n"])
+    def test_unsafe_group_heading_rejected(self, tmp_path: Path, bad_char: str):
+        data = {
+            "version": 1,
+            "groups": [{"heading": f"Bad{bad_char}Heading", "controls": [{"setting": "appSettings.x"}]}],
+        }
+        with pytest.raises(ValueError, match="group heading"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_heading_description_expression_accepted(self, tmp_path: Path):
+        # headingDescription is a QML expression field, emitted raw — quotes allowed
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "headingDescription": 'qsTr("Has \\"quotes\\"")',
+                    "controls": [{"setting": "appSettings.x"}],
+                }
+            ],
+        }
+        page = load_page_def(_make_page_json(tmp_path, data))
+        assert page.groups[0].headingDescription
+
+    def test_unsafe_control_label_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [
+                {"heading": "G", "controls": [{"setting": "appSettings.x", "label": 'A "label"'}]}
+            ],
+        }
+        with pytest.raises(ValueError, match="control label"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    def test_unsafe_placeholder_rejected(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "G",
+                    "controls": [{"setting": "appSettings.x", "placeholder": "a\\b"}],
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="placeholder"):
+            load_page_def(_make_page_json(tmp_path, data))
+
+    @pytest.mark.parametrize("field", ["name", "url", "icon"])
+    def test_unsafe_pages_model_entry_rejected(self, tmp_path: Path, field: str):
+        entry = {"name": "Page", "qml": "P.qml", "icon": "qrc:/i.svg"}
+        entry[field] = f'bad"{field}'
+        pages_json = {"version": 1, "pages": [entry]}
+        p = tmp_path / "SettingsPages.json"
+        p.write_text(json.dumps(pages_json), encoding="utf-8")
+        with pytest.raises(ValueError, match=f"page {field}"):
+            generate_pages_model_qml(p)
+
+    def test_safe_strings_accepted(self, tmp_path: Path):
+        data = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "Fly View (What's Shown)",
+                    "controls": [{"setting": "appSettings.x", "label": "UI Scale (%)"}],
+                }
+            ],
+        }
+        page = load_page_def(_make_page_json(tmp_path, data))
+        assert page.groups[0].heading == "Fly View (What's Shown)"
+
+    def test_apostrophe_heading_escaped_in_pages_model(self, tmp_path: Path):
+        # sections is emitted inside a single-quoted QML literal, so apostrophes
+        # in headings must be escaped like the other JSON fields
+        page_def = {
+            "version": 1,
+            "groups": [
+                {
+                    "heading": "Fly View (What's Shown)",
+                    "controls": [{"setting": "appSettings.x"}],
+                }
+            ],
+        }
+        (tmp_path / "Test.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
+        pages_json = {
+            "version": 1,
+            "pages": [
+                {
+                    "name": "Test",
+                    "qml": "T.qml",
+                    "icon": "qrc:/i.svg",
+                    "pageDefinition": "Test.SettingsUI.json",
+                }
+            ],
+        }
+        p = tmp_path / "SettingsPages.json"
+        p.write_text(json.dumps(pages_json), encoding="utf-8")
+        qml = generate_pages_model_qml(p)
+        assert "What\\'s Shown" in qml
+        assert "What's Shown" not in qml
 
 
 class TestRealPageDefinitions:
