@@ -93,9 +93,13 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_powerComponent)));
 
-            _escComponent = new APMESCComponent(_vehicle, this);
-            _escComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_escComponent)));
+            // ESC page is blank without the motor PWM params (e.g. fixed-wing Plane)
+            if (_vehicle->parameterManager()->parameterExists(-1, QStringLiteral("MOT_PWM_TYPE")) ||
+                _vehicle->parameterManager()->parameterExists(-1, QStringLiteral("Q_M_PWM_TYPE"))) {
+                _escComponent = new APMESCComponent(_vehicle, this);
+                _escComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_escComponent)));
+            }
 
             if (!_vehicle->sub() || (_vehicle->versionCompare(3, 5, 3) >= 0)) {
                 _motorComponent = new APMMotorComponent(_vehicle, this);
