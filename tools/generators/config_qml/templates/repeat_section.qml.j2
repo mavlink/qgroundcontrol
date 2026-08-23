@@ -13,11 +13,16 @@
 {{ ind }}        property int _rawIndex: index
 {{ ind }}        property string _prefix: _battPrefixForIndex(_rawIndex)
 {{ ind }}        property string _displayIndex: _battLabelForIndex(_rawIndex)
-{{ ind }}        function _fullParamName(postfix) { return _prefix + postfix }
 {% else %}
 {{ ind }}        property int _rawIndex: index + {{ start_index }}
 {{ ind }}        property string _indexStr: {{ index_str_expr }}
 {{ ind }}        property string _displayIndex: String(_rawIndex)
+{% endif %}
+{{ ind }}        // Untranslated section ID; must match VehicleComponent::sectionIds() expansion
+{{ ind }}        property string _sectionId: _{{ safe }}Count > 1 ? "{{ raw_title }} " + _displayIndex : "{{ raw_title }}"
+{% if apm_battery %}
+{{ ind }}        function _fullParamName(postfix) { return _prefix + postfix }
+{% else %}
 {{ ind }}        function _fullParamName(postfix) { return "{{ param_prefix }}" + _indexStr + postfix }
 {% endif %}
 {% for ctrl_qml in controls %}

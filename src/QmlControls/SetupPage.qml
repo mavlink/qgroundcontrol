@@ -19,18 +19,18 @@ Item {
     property real   availableHeight:        height - pageLoader.y
     property bool   showAdvanced:           false
     property alias  advanced:               advancedCheckBox.checked
-    property string sectionNameFilter:       ""
+    property string sectionIdFilter:        ""
 
-    function sectionVisible(name) {
+    function sectionVisible(sectionId) {
         if (pageLoader.item && typeof pageLoader.item.sectionVisible === "function") {
-            return pageLoader.item.sectionVisible(name)
+            return pageLoader.item.sectionVisible(sectionId)
         }
         return true
     }
 
-    onSectionNameFilterChanged: {
-        if (pageLoader.item && typeof pageLoader.item.sectionNameFilter !== "undefined") {
-            pageLoader.item.sectionNameFilter = sectionNameFilter
+    onSectionIdFilterChanged: {
+        if (pageLoader.item && typeof pageLoader.item.sectionIdFilter !== "undefined") {
+            pageLoader.item.sectionIdFilter = sectionIdFilter
         }
     }
 
@@ -47,8 +47,8 @@ Item {
         if(pageLoader.item && pageLoader.item.setupPageCompleted) {
             pageLoader.item.setupPageCompleted()
         }
-        if (pageLoader.item && typeof pageLoader.item.sectionNameFilter !== "undefined") {
-            pageLoader.item.sectionNameFilter = sectionNameFilter
+        if (pageLoader.item && typeof pageLoader.item.sectionIdFilter !== "undefined") {
+            pageLoader.item.sectionIdFilter = sectionIdFilter
         }
     }
 
@@ -94,6 +94,7 @@ Item {
 
         Loader {
             id:                 pageLoader
+            objectName:         "setupPage_contentLoader"
             anchors.topMargin:  _margins
             anchors.top:        headingRow.bottom
         }

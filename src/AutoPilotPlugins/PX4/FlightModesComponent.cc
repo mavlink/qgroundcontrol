@@ -38,7 +38,18 @@ QUrl FlightModesComponent::summaryQmlSource(void) const
     return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml");
 }
 
-QStringList FlightModesComponent::sections() const
+QStringList FlightModesComponent::sectionIds() const
 {
-    return { tr("Flight Modes"), tr("Switch Settings") };
+    return { QStringLiteral("Flight Modes"), QStringLiteral("Switch Settings") };
+}
+
+QString FlightModesComponent::sectionDisplayName(const QString& sectionId) const
+{
+    if (sectionId == QStringLiteral("Flight Modes")) {
+        return tr("Flight Modes");
+    }
+    if (sectionId == QStringLiteral("Switch Settings")) {
+        return tr("Switch Settings");
+    }
+    return sectionId;
 }

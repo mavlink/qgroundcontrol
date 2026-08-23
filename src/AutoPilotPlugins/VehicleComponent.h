@@ -31,8 +31,8 @@ class VehicleComponent : public QObject
     Q_PROPERTY(bool     allowSetupWhileArmed                                READ allowSetupWhileArmed   CONSTANT)
     Q_PROPERTY(bool     allowSetupWhileFlying                               READ allowSetupWhileFlying  CONSTANT)
     Q_PROPERTY(AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent READ KnownVehicleComponent  CONSTANT)
-    Q_PROPERTY(QStringList sections                                         READ sections               NOTIFY sectionsChanged)
-    Q_PROPERTY(QVariantMap sectionKeywords                                   READ sectionKeywords        NOTIFY sectionsChanged)
+    Q_PROPERTY(QStringList sectionIds                                       READ sectionIds             NOTIFY sectionIdsChanged)
+    Q_PROPERTY(QVariantMap sectionKeywords                                  READ sectionKeywords        NOTIFY sectionIdsChanged)
     Q_PROPERTY(QString  vehicleConfigJson                                   READ vehicleConfigJson      CONSTANT)
     Q_PROPERTY(bool     showFirstSectionOnRootClick                         READ showFirstSectionOnRootClick CONSTANT)
 
@@ -51,18 +51,23 @@ public:
     /// Resource path to a VehicleConfig.json page definition, or empty if none.
     virtual QString vehicleConfigJson() const { return QString(); }
 
-    /// Section names for sidebar navigation. Auto-populated from vehicleConfigJson() JSON.
-    /// Repeat sections are expanded by probing vehicle parameters.
-    virtual QStringList sections() const;
+    /// Untranslated section IDs for sidebar navigation. Auto-populated from vehicleConfigJson() JSON.
+    /// Repeat sections are expanded by probing vehicle parameters. IDs are stable across locales and
+    /// are used for section filtering; display uses sectionDisplayName() or the JSON translation context.
+    virtual QStringList sectionIds() const;
 
-    /// Search keywords per section, keyed by section title. Values are original-case translatable terms.
+    /// Translated display name for a section ID. Default returns the ID unchanged (JSON-driven
+    /// components are translated by the view using the JSON filename context).
+    Q_INVOKABLE virtual QString sectionDisplayName(const QString& sectionId) const { return sectionId; }
+
+    /// Search keywords per section, keyed by section ID. Values are original-case translatable terms.
     QVariantMap sectionKeywords() const;
 
     /// When true, clicking the root component in the tree selects the first section instead of showing all.
     virtual bool showFirstSectionOnRootClick() const { return false; }
 
-    /// Returns setup-complete status for a named section. Default returns true (no per-section tracking).
-    Q_INVOKABLE virtual bool sectionSetupComplete(const QString &sectionName) const { Q_UNUSED(sectionName); return true; }
+    /// Returns setup-complete status for a section ID. Default returns true (no per-section tracking).
+    Q_INVOKABLE virtual bool sectionSetupComplete(const QString &sectionId) const { Q_UNUSED(sectionId); return true; }
 
     // @return true: Setup panel can be shown while vehicle is armed
     virtual bool allowSetupWhileArmed() const { return false; }
@@ -85,7 +90,7 @@ public:
 signals:
     void setupCompleteChanged();
     void setupSourceChanged();
-    void sectionsChanged();
+    void sectionIdsChanged();
 
 protected slots:
     void _triggerUpdated(QVariant /*value*/) { emit setupCompleteChanged(); }
@@ -96,19 +101,19 @@ protected:
     AutoPilotPlugin::KnownVehicleComponent _KnownVehicleComponent;
 
 private:
-    /// Lazily parse the vehicleConfigJson() file to populate _expandedSections and _repeatFilters.
+    /// Lazily parse the vehicleConfigJson() file to populate _expandedSectionIds and _repeatFilters.
     void _ensureSectionsCached() const;
 
     /// Metadata for a repeat group that has enableParam/disabledParamValue filtering.
     struct RepeatFilter {
-        QStringList sectionNames;   ///< Expanded section names in this repeat group
+        QStringList sectionIds;     ///< Expanded section IDs in this repeat group
         QStringList paramNames;     ///< Corresponding full enableParam names (e.g., BATT_MONITOR)
         int         disabledValue = 0;
         QString     disabledHeading; ///< From disabledSection.heading (empty if no disabledSection)
     };
 
-    mutable QStringList            _expandedSections;  ///< All sections before enable/disable filtering
+    mutable QStringList            _expandedSectionIds;  ///< All section IDs before enable/disable filtering
     mutable QVector<RepeatFilter>  _repeatFilters;     ///< Filter metadata for repeat groups with enableParam
-    mutable QMap<QString, QStringList> _sectionKeywords;  ///< section title -> original-case translatable search terms
+    mutable QMap<QString, QStringList> _sectionKeywords;  ///< section ID -> original-case translatable search terms
     mutable bool                   _sectionsCached = false;
 };
