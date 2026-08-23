@@ -12,7 +12,13 @@ from ..common.controls import (
     parse_button,
     parse_enable_checkbox,
 )
-from ..common.validation import clamped_repr, reject_unknown_keys, require_dict, require_list
+from ..common.validation import (
+    clamped_repr,
+    reject_unknown_keys,
+    require_dict,
+    require_list,
+    require_qml_safe_string,
+)
 
 # Matches C++ FactMetaData::splitTranslatedList: [,，、] (ASCII / fullwidth / enumeration commas).
 _TRANSLATED_LIST_RE = re.compile("[,，、]")
@@ -133,24 +139,36 @@ def load_page_def(json_path: Path) -> PageDef:
     for grp_data in require_list(data.get("groups", []), "'groups'", json_path):
         reject_unknown_keys(grp_data, _ALLOWED_GROUP_KEYS, "group", json_path)
         grp = GroupDef(
-            heading=grp_data.get("heading", ""),
+            heading=require_qml_safe_string(
+                grp_data.get("heading", ""), "group heading", json_path
+            ),
             showWhen=grp_data.get("showWhen", ""),
             enableWhen=grp_data.get("enableWhen", ""),
+            # headingDescription is a QML expression (e.g. qsTr(...)), emitted raw
             headingDescription=grp_data.get("headingDescription", ""),
             component=grp_data.get("component", ""),
-            sectionName=grp_data.get("sectionName", ""),
-            keywords=parse_keywords(grp_data.get("keywords", [])),
+            sectionName=require_qml_safe_string(
+                grp_data.get("sectionName", ""), "group sectionName", json_path
+            ),
+            keywords=[
+                require_qml_safe_string(kw, "group keyword", json_path)
+                for kw in parse_keywords(grp_data.get("keywords", []))
+            ],
             missing=require_list(grp_data.get("missing", []), "group 'missing'", json_path),
         )
         for ctrl_data in require_list(grp_data.get("controls", []), "group 'controls'", json_path):
             reject_unknown_keys(ctrl_data, _ALLOWED_CONTROL_KEYS, "control", json_path)
             ctrl = ControlDef(
                 setting=ctrl_data.get("setting", ""),
-                label=ctrl_data.get("label", ""),
+                label=require_qml_safe_string(
+                    ctrl_data.get("label", ""), "control label", json_path
+                ),
                 control=ctrl_data.get("control", ""),
                 showWhen=ctrl_data.get("showWhen", ""),
                 enableWhen=ctrl_data.get("enableWhen", ""),
-                placeholder=ctrl_data.get("placeholder", ""),
+                placeholder=require_qml_safe_string(
+                    ctrl_data.get("placeholder", ""), "control placeholder", json_path
+                ),
                 value=ctrl_data.get("value", ""),
                 component=ctrl_data.get("component", ""),
                 properties=require_dict(ctrl_data.get("properties", {}), "control 'properties'", json_path),

@@ -14,7 +14,7 @@ from ..common.controls import (
     render_slider,
     render_textfield,
 )
-from ..common.validation import reject_unknown_keys, require_list
+from ..common.validation import reject_unknown_keys, require_list, require_qml_safe_string
 from .metadata import get_fact_type, has_enum_strings
 from .model import ControlDef, PageDef, load_page_def
 
@@ -303,8 +303,12 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
             entries.append({"divider": True})
             continue
 
-        name = entry["name"]
-        url = entry.get("url") or f"qrc:/qml/QGroundControl/AppSettings/{entry['qml']}"
+        name = require_qml_safe_string(entry["name"], "page name", pages_json_path)
+        url = require_qml_safe_string(
+            entry.get("url") or f"qrc:/qml/QGroundControl/AppSettings/{entry['qml']}",
+            "page url",
+            pages_json_path,
+        )
 
         sections: list[str] = []
         search_terms: list[dict] = []
@@ -338,8 +342,8 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
             "divider": False,
             "name": name,
             "url": url,
-            "icon": entry["icon"],
-            "sections_json": json.dumps(sections),
+            "icon": require_qml_safe_string(entry["icon"], "page icon", pages_json_path),
+            "sections_json": json.dumps(sections).replace("'", "\\'"),
             "search_json": json.dumps(search_terms).replace("'", "\\'"),
             "translatable_json": json.dumps(translatable_terms).replace("'", "\\'"),
             "visible": entry.get("visible", ""),
