@@ -552,7 +552,35 @@ Item {
                 return
             }
         }
+        // With more than one vehicle connected, name the target(s) in the confirmation title so the
+        // operator can verify which aircraft the command applies to before committing.
+        if (QGroundControl.multiVehicleManager.vehicles.count > 1) {
+            var targetText = confirmationTargetText(actionCode)
+            if (targetText !== "") {
+                confirmDialog.title = confirmDialog.title + " — " + targetText
+            }
+        }
         confirmDialog.show(showImmediate)
+    }
+
+    /// Names the vehicle(s) a guided action will apply to: the selected-vehicle set for
+    /// multi-vehicle actions, the active vehicle for everything else.
+    function confirmationTargetText(actionCode) {
+        if (actionCode === actionMVArm || actionCode === actionMVDisarm || actionCode === actionMVPause || actionCode === actionMVStartMission) {
+            var selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            var vehicleIds = []
+            for (var i = 0; i < selectedVehicles.count; i++) {
+                vehicleIds.push(selectedVehicles.get(i).id)
+            }
+            if (vehicleIds.length === 0) {
+                return qsTr("no vehicles selected")
+            }
+            if (vehicleIds.length <= 4) {
+                return qsTr("Vehicles %1").arg(vehicleIds.join(", "))
+            }
+            return qsTr("%1 vehicles").arg(vehicleIds.length)
+        }
+        return _activeVehicle ? qsTr("Vehicle %1").arg(_activeVehicle.id) : ""
     }
 
     // Executes the specified action
