@@ -16,6 +16,7 @@
     - [Video Overlay](qgc-user-guide/fly_view/video_overlay.md)
   - [3D View](qgc-user-guide/viewer_3d/viewer_3d.md)
   - [GeoMap Engine (Tech Preview)](qgc-user-guide/fly_view/geoview.md)
+  - [Multiple Vehicles](qgc-user-guide/fly_view/multi_vehicle.md)
 - [Plan](qgc-user-guide/plan_view/plan_view.md)
   - [GeoFence](qgc-user-guide/plan_view/plan_geofence.md)
   - [Rally Points](qgc-user-guide/plan_view/plan_rally_points.md)
