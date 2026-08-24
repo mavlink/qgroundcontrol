@@ -22,9 +22,14 @@ TextArea {
     property var _fact: null
 
     function formatMessage(message) {
-        message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
-        message = message.replace(new RegExp("<#I>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
-        message = message.replace(new RegExp("<#N>", "g"), "color: " + qgcPal.text + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        // Distinct look per severity class: errors red+bold, warnings orange, notices
+        // emphasized, info normal, debug dimmed. Tags come from StatusTextHandler.
+        var messageFont = "font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;"
+        message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.colorRed + "; " + messageFont + " font-weight: bold;");
+        message = message.replace(new RegExp("<#W>", "g"), "color: " + qgcPal.warningText + "; " + messageFont);
+        message = message.replace(new RegExp("<#I>", "g"), "color: " + qgcPal.text + "; " + messageFont + " font-weight: bold;");
+        message = message.replace(new RegExp("<#N>", "g"), "color: " + qgcPal.text + "; " + messageFont);
+        message = message.replace(new RegExp("<#D>", "g"), "color: " + qgcPal.colorGrey + "; " + messageFont);
         return message;
     }
 

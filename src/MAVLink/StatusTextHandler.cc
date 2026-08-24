@@ -154,10 +154,9 @@ void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_S
 
     MessageType messageType = MessageType::MessageNone;
 
-    // Color the output depending on the message severity. We have 3 distinct cases:
-    // 1: If we have an ERROR or worse, make it bigger, bolder, and highlight it red.
-    // 2: If we have a warning or notice, just make it bold and color it orange.
-    // 3: Otherwise color it the standard color, white.
+    // Style the output by severity. Each placeholder is resolved to concrete CSS by the
+    // renderer (VehicleMessageList.qml). Distinct tags keep ERROR-class, WARNING, NOTICE,
+    // INFO and DEBUG visually distinguishable instead of collapsing to three looks.
     QString style;
     switch (severity) {
         case MAV_SEVERITY_EMERGENCY:
@@ -168,10 +167,19 @@ void StatusTextHandler::handleHTMLEscapedTextMessage(MAV_COMPONENT compId, MAV_S
             messageType = MessageType::MessageError;
             break;
 
-        case MAV_SEVERITY_NOTICE:
         case MAV_SEVERITY_WARNING:
+            style = QStringLiteral("<#W>");
+            messageType = MessageType::MessageWarning;
+            break;
+
+        case MAV_SEVERITY_NOTICE:
             style = QStringLiteral("<#I>");
             messageType = MessageType::MessageWarning;
+            break;
+
+        case MAV_SEVERITY_DEBUG:
+            style = QStringLiteral("<#D>");
+            messageType = MessageType::MessageNormal;
             break;
 
         default:

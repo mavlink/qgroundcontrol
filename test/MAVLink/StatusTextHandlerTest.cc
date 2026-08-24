@@ -102,6 +102,38 @@ void StatusTextHandlerTest::_testHandleErrorMessageAndMultiComponentPrefix()
     QVERIFY(formatted.contains(QStringLiteral("Error")));
 }
 
+void StatusTextHandlerTest::_testSeverityStyleTag_data()
+{
+    QTest::addColumn<int>("severity");
+    QTest::addColumn<QString>("styleTag");
+
+    QTest::newRow("emergency") << static_cast<int>(MAV_SEVERITY_EMERGENCY) << QStringLiteral("<#E>");
+    QTest::newRow("alert")     << static_cast<int>(MAV_SEVERITY_ALERT)     << QStringLiteral("<#E>");
+    QTest::newRow("critical")  << static_cast<int>(MAV_SEVERITY_CRITICAL)  << QStringLiteral("<#E>");
+    QTest::newRow("error")     << static_cast<int>(MAV_SEVERITY_ERROR)     << QStringLiteral("<#E>");
+    QTest::newRow("warning")   << static_cast<int>(MAV_SEVERITY_WARNING)   << QStringLiteral("<#W>");
+    QTest::newRow("notice")    << static_cast<int>(MAV_SEVERITY_NOTICE)    << QStringLiteral("<#I>");
+    QTest::newRow("info")      << static_cast<int>(MAV_SEVERITY_INFO)      << QStringLiteral("<#N>");
+    QTest::newRow("debug")     << static_cast<int>(MAV_SEVERITY_DEBUG)     << QStringLiteral("<#D>");
+}
+
+void StatusTextHandlerTest::_testSeverityStyleTag()
+{
+    QFETCH(int, severity);
+    QFETCH(QString, styleTag);
+
+    StatusTextHandler statusTextHandler;
+    QSignalSpy formattedSpy(&statusTextHandler, &StatusTextHandler::newFormattedMessage);
+    QVERIFY(formattedSpy.isValid());
+
+    statusTextHandler.handleHTMLEscapedTextMessage(MAV_COMP_ID_USER1, static_cast<MAV_SEVERITY>(severity), "StyleTagMessage", "");
+
+    QCOMPARE(formattedSpy.count(), 1);
+    const QString formatted = formattedSpy.at(0).at(0).toString();
+    QVERIFY2(formatted.contains(styleTag),
+             qPrintable(QStringLiteral("expected tag %1 in: %2").arg(styleTag, formatted)));
+}
+
 void StatusTextHandlerTest::_testResetErrorLevelMessages()
 {
     StatusTextHandler statusTextHandler;

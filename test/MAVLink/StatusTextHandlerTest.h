@@ -11,6 +11,8 @@ private slots:
     void _testHandleTextMessage();
     void _testHandleErrorMessageAndMultiComponentPrefix();
     void _testResetErrorLevelMessages();
+    void _testSeverityStyleTag_data();
+    void _testSeverityStyleTag();
     void _testChunkedStatusTextMissingChunk();
     void _testChunkedStatusTextTimeoutAddsEllipsis();
     void _testChunkedStatusTextResetsWhenChunkIdChanges();
