@@ -14,7 +14,8 @@ private slots:
     void _sensorOrdering_test();
     void _sensorInfoChangedSignal_test();
     void _noSignalOnSameState_test();
-    void _sensorRemoval_test();
+    void _sensorLostAndRecovery_test();
+    void _lostOrdersFirst_test();
     void _multipleSensors_test();
     void _updateExistingSensorFlipsHealth_test();
     void _updateExistingSensorDisables_test();

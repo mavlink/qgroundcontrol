@@ -1,4 +1,5 @@
 #include "SysStatusSensorInfoTest.h"
+#include <QtCore/QDateTime>
 #include <QtTest/QSignalSpy>
 
 
@@ -114,21 +115,61 @@ void SysStatusSensorInfoTest::_noSignalOnSameState_test()
     QCOMPARE(spy.count(), 0);
 }
 
-void SysStatusSensorInfoTest::_sensorRemoval_test()
+void SysStatusSensorInfoTest::_sensorLostAndRecovery_test()
 {
     SysStatusSensorInfo info;
 
     const uint32_t gyro = MAV_SYS_STATUS_SENSOR_3D_GYRO;
+    QVERIFY(!info.sensorLastUpdated(gyro).isValid());
+
     info.update(_makeSysStatus(gyro, gyro, gyro));
     QCOMPARE(info.sensorNames().count(), 1);
+    const QDateTime lastSeen = info.sensorLastUpdated(gyro);
+    QVERIFY(lastSeen.isValid());
 
     QSignalSpy spy(&info, &SysStatusSensorInfo::sensorInfoChanged);
+    QVERIFY(spy.isValid());
 
-    // Sensor no longer present
+    // A sensor that stops being reported must be retained and flagged Lost, not deleted:
+    // a silently shrinking list makes the failure invisible by construction.
     info.update(_makeSysStatus(0, 0, 0));
     QCOMPARE(spy.count(), 1);
-    QVERIFY(info.sensorNames().isEmpty());
-    QVERIFY(info.sensorStatus().isEmpty());
+    QCOMPARE(info.sensorNames().count(), 1);
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Lost")}));
+    QCOMPARE(info.sensorLastUpdated(gyro), lastSeen);
+
+    // Staying lost is not a change
+    info.update(_makeSysStatus(0, 0, 0));
+    QCOMPARE(spy.count(), 1);
+
+    // Reappearance recovers the previous state
+    info.update(_makeSysStatus(gyro, gyro, gyro));
+    QCOMPARE(spy.count(), 2);
+    QCOMPARE(info.sensorStatus(), QStringList({QStringLiteral("Normal")}));
+    QVERIFY(info.sensorLastUpdated(gyro) >= lastSeen);
+}
+
+void SysStatusSensorInfoTest::_lostOrdersFirst_test()
+{
+    SysStatusSensorInfo info;
+
+    // Gyro healthy, accel unhealthy, mag disabled, baro present - then baro drops out
+    const uint32_t gyro = MAV_SYS_STATUS_SENSOR_3D_GYRO;
+    const uint32_t accel = MAV_SYS_STATUS_SENSOR_3D_ACCEL;
+    const uint32_t mag = MAV_SYS_STATUS_SENSOR_3D_MAG;
+    const uint32_t baro = MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE;
+
+    info.update(_makeSysStatus(gyro | accel | mag | baro, gyro | accel | baro, gyro | baro));
+    info.update(_makeSysStatus(gyro | accel | mag, gyro | accel, gyro));
+
+    const QStringList expectedStatus = {
+        QStringLiteral("Lost"),
+        QStringLiteral("Error"),
+        QStringLiteral("Normal"),
+        QStringLiteral("Disabled"),
+    };
+    QCOMPARE(info.sensorStatus(), expectedStatus);
+    QCOMPARE(info.sensorNames().at(0), QGCMAVLink::mavSysStatusSensorToString(static_cast<MAV_SYS_STATUS_SENSOR>(baro)));
 }
 
 void SysStatusSensorInfoTest::_multipleSensors_test()

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QDateTime>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 
@@ -21,6 +22,10 @@ public:
     QStringList sensorNames() const;
     QStringList sensorStatus() const;
 
+    /// Time the sensor's state was last reported in SYS_STATUS.
+    /// Invalid QDateTime if the sensor has never been reported.
+    Q_INVOKABLE QDateTime sensorLastUpdated(int sensorBitMask) const;
+
 signals:
     void sensorInfoChanged();
 
@@ -28,6 +33,8 @@ private:
     struct SensorInfo {
         bool enabled = false;
         bool healthy = false;
+        bool present = true;    ///< false: sensor dropped out of onboard_control_sensors_present mid-session
+        QDateTime lastUpdated;  ///< last time this sensor was reported present
     };
 
     QMap<MAV_SYS_STATUS_SENSOR, SensorInfo> _sensorInfoMap;
