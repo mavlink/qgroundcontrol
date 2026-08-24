@@ -9,7 +9,7 @@ By default, QGC auto-detects and connects to common devices:
 - **Pixhawk** — auto-connect Pixhawk flight controllers via USB
 - **SiK Radio** — auto-connect SiK telemetry radios
 - **LibrePilot** — auto-connect LibrePilot controllers
-- **UDP** — auto-connect via UDP broadcast
+- **UDP** — auto-connect when MAVLink traffic arrives on UDP port 14550 (QGC listens; the vehicle or SITL must send to it)
 - **RTK GPS** — auto-connect RTK GPS base stations
 
 ## NMEA GPS

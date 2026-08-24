@@ -32,16 +32,16 @@ These are indicators which are associated with information about the vehicle. Th
 
 ### Modifying the toolbar UI itself
 
-This is accomplished by using resource overrides on the qml files associated with the toolbar. This provides a high level of customization but also a higher level of complexity. The primary ui for the toolbar is in `MainToolBar.qml`. The main window code in `MainWindow.qml` interacts with the toolbar to show different indicator sections based on current view as well as whether the mode indicators show or not also based on current view.
+This is accomplished by using resource overrides on the qml files associated with the toolbar. This provides a high level of customization but also a higher level of complexity. The primary ui for the toolbar is in `FlyViewToolBar.qml`. The main window code in `MainWindow.qml` interacts with the toolbar to show different indicator sections based on current view as well as whether the mode indicators show or not also based on current view.
 
-If you want full control over the toolbar then you can override `MainToolBar.qml` and make your own completely different version. You will need to pay special attention to the interactions of the main toolbar with `MainWindow.qml` since you are going to need to replicated those interactions in your own custom version.
+If you want full control over the toolbar then you can override `FlyViewToolBar.qml` and make your own completely different version. You will need to pay special attention to the interactions of the main toolbar with `MainWindow.qml` since you are going to need to replicated those interactions in your own custom version.
 
 There are two standard indicator ui sections of the toolbar:
 
-#### `MainToolBarIndicators.qml`
+#### `FlyViewToolBarIndicators.qml`
 
 This is used for all views except Plan. It display all the indicators in a row. Although you can override this file, in reality it doesn't do much other than layout for indicators.
 
-#### `PlanToolBarIndicators.qml`
+#### `PlanViewToolBar.qml`
 
-This is used by the Plan view to show the status values. If you want to change that ui you can override this file and provide your own custom version.
+This is the Plan view's own toolbar, including its status values. If you want to change that ui you can override this file and provide your own custom version.
