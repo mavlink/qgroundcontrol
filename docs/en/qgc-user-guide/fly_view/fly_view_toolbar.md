@@ -113,6 +113,10 @@ Expanding the indicator provides full key management: you can enable a key on th
 
 The Multi-Vehicle selector appears when more than one vehicle is connected. It allows you to quickly switch the active vehicle from the toolbar.
 
+::: warning
+Each vehicle connected to QGC must have a unique id, otherwise QGC will think the vehicles are actually the same vehicle. The symptom of this is the Plan view jerking around as it tries to position itself to one vehicle and then the next. For PX4 firmwares the id is the `MAV_SYS_ID` parameter; for ArduPilot firmwares it is the `SYSID_THISMAV` parameter.
+:::
+
 ### APM Support Forwarding <img src="../../../assets/fly/toolbar/apm_support_indicator.png" alt="APM Support Forwarding indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
 On ArduPilot, an APM Support Forwarding indicator appears when MAVLink traffic forwarding to a support server is enabled.
