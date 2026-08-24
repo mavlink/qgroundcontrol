@@ -241,6 +241,24 @@ public:
     /// north up (matches the pose convention R = Rz(heading) * Rx(tilt))
     QQuaternion sceneRotation() const;
 
+    /// World-space pick ray in double precision (QVector3D floats lose meters
+    /// at mercator world scale). Origin is the camera position (world meters,
+    /// z in scene units); dir points into the scene, un-normalized.
+    struct PickRay
+    {
+        double originX = 0.0;
+        double originY = 0.0;
+        double originZ = 0.0;
+        double dirX = 0.0;
+        double dirY = 0.0;
+        double dirZ = 0.0;
+    };
+
+    /// Pick ray through screenPos (pixels), for consumers that intersect it with
+    /// something other than a horizontal plane (e.g. the terrain surface).
+    /// std::nullopt when the viewport is not set.
+    std::optional<PickRay> pickRayAt(const QPointF& screenPos) const;
+
     /// Intersect the pick ray through screenPos (pixels) with the horizontal plane
     /// at planeZ (scene units, default the ground plane z=0). Returns the hit point
     /// in world meters, or std::nullopt when the ray misses (at/above the horizon or

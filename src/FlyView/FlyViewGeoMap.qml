@@ -152,6 +152,10 @@ GeoMap {
         surfaceModel: root.surfaceModel
         missionController: root._missionController
         homeTerrainBias: root._activeVehicleHomeTerrainBias
+        // Same action as PlanMapItems in the QtLocation fly view: clicking a
+        // marker adjusts the vehicle's current mission item (after confirm)
+        onItemClicked: (item) => globals.guidedControllerFlyView.confirmAction(
+            globals.guidedControllerFlyView.actionSetWaypoint, Math.max(item.sequenceNumber, 1))
     }
 
     GeoMapMissionDirectionArrows {
@@ -428,10 +432,31 @@ GeoMap {
         checked: true
         label: qsTr("ROI here", "Make this a Region Of Interest")
 
+        // The vehicle reports the ROI center as lat/lon only; the commanded
+        // height lives in roiRelativeAltitudeMeters (relative to home).
+        // Render at that height, DEM bias-corrected like the mission markers.
+        property var _roiCenter: QtPositioning.coordinate()
+
+        // Picked coordinates carry altitude 0 (worldToGeo), so isNaN(altitude)
+        // cannot detect the missing-composition case; ground-clamp on this
+        readonly property bool _haveComposedAltitude: _roiCenter.isValid && root._activeVehicle
+                                                      && root._activeVehicle.homePosition.isValid
+                                                      && !isNaN(root._activeVehicle.homePosition.altitude)
+
+        // Re-check the vehicle here: _haveComposedAltitude can be stale-true
+        // during binding re-evaluation when the active vehicle goes null
+        coordinate: (_haveComposedAltitude && root._activeVehicle)
+                    ? QtPositioning.coordinate(_roiCenter.latitude, _roiCenter.longitude,
+                                               root._activeVehicle.homePosition.altitude
+                                               + root._activeVehicle.roiRelativeAltitudeMeters
+                                               + root._activeVehicleHomeTerrainBias)
+                    : _roiCenter
+        altitudeMode: _haveComposedAltitude ? GeoMapItem.Absolute : GeoMapItem.ClampToGround
+
         Connections {
             target: root._activeVehicle
             function onRoiCoordChanged(centerCoord) {
-                roiLocationItem.coordinate = centerCoord
+                roiLocationItem._roiCenter = centerCoord
             }
         }
 
@@ -478,18 +503,30 @@ GeoMap {
         id: roiEditPositionDialogComponent
 
         EditPositionDialog {
+            // Edit the raw reported center, not the composed display coordinate:
+            // that binding recomputes on home/terrain-bias updates, which would
+            // fire onCoordinateChanged and re-command the ROI while editing
             title: qsTr("Edit ROI Position")
-            coordinate: roiLocationItem.coordinate
+            coordinate: roiLocationItem._roiCenter
 
             readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+            property var _openedForVehicle: null
+
+            Component.onCompleted: _openedForVehicle = _activeVehicle
 
             // The ROI belongs to the vehicle the dialog was opened for; close
             // if that vehicle goes away or the active vehicle changes
             on_ActiveVehicleChanged: close()
 
             onCoordinateChanged: {
-                roiLocationItem.coordinate = coordinate
-                _activeVehicle.guidedModeROI(coordinate, _activeVehicle.roiRelativeAltitudeMeters)
+                // Guards the init-time change and the vehicle-switch race, where
+                // the rebound coordinate could command the new vehicle with the
+                // old vehicle's ROI before the close() handler runs
+                if (!_openedForVehicle || (_activeVehicle !== _openedForVehicle)) {
+                    return
+                }
+                roiLocationItem._roiCenter = coordinate
+                _openedForVehicle.guidedModeROI(coordinate, _openedForVehicle.roiRelativeAltitudeMeters)
             }
         }
     }

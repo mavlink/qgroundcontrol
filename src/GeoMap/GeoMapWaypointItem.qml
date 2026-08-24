@@ -32,6 +32,8 @@ GeoMapItem {
     property real homeTerrainBias: 0
     property real size: ScreenTools.defaultFontPixelHeight * 1.5
 
+    signal clicked()
+
     width: size
     height: size
     anchorPoint: Qt.point(width / 2, height / 2)
@@ -68,43 +70,6 @@ GeoMapItem {
         ? root._indicatorSize * _camera.distance * _camera.unitsPerPixelAtUnitDistance / 100
         : 1
 
-    // Rendered-terrain height (true meters) under the marker, for the drop
-    // line; terrainHeightAt is not a binding dependency, so re-sampled
-    // explicitly as terrain tiles arrive and when the item moves
-    property real _groundHeight: 0
-
-    function _updateGroundHeight() {
-        _groundHeight = (root.surfaceModel && root.item) ? root.surfaceModel.terrainHeightAt(root.item.coordinate) : 0
-    }
-
-    Component.onCompleted: _updateGroundHeight()
-    onSurfaceModelChanged: _updateGroundHeight()
-
-    Connections {
-        target: root.surfaceModel
-        function onTerrainHeightsChanged() { root._updateGroundHeight() }
-    }
-
-    Connections {
-        target: root.item
-        function onCoordinateChanged() { root._updateGroundHeight() }
-    }
-
-    // Scene-space length of the drop line from marker to the rendered terrain
-    // (tracks terrainScale, so it flattens in lockstep with the anchor z)
-    readonly property real _dropLength: {
-        if (!scene || !item) {
-            return 0
-        }
-        const drop = (item.amslEntryAlt + homeTerrainBias - _groundHeight) * scene.verticalScale * scene.terrainScale
-        return isFinite(drop) ? Math.max(0, drop) : 0
-    }
-
-    // Drop line diameter: constant apparent width, like the marker
-    readonly property real _dropLineScale: _camera
-        ? (ScreenTools.defaultFontPixelHeight / 8) * _camera.distance * _camera.unitsPerPixelAtUnitDistance / 100
-        : 0
-
     Rectangle {
         anchors.centerIn: parent
         width: root._indicatorSize
@@ -134,6 +99,19 @@ GeoMapItem {
         font.bold: true
     }
 
+    // The item itself tracks the projected marker position at any tilt, so
+    // this hit target follows the 3D sphere through the 2D<->3D crossfade
+    MouseArea {
+        anchors.fill: parent
+        onClicked: root.clicked()
+    }
+
+    GeoMapDropShadow {
+        id: dropShadow
+        geoItem: root
+        indicatorSize: root._indicatorSize
+    }
+
     delegate3D: Component {
         Node {
             Node {
@@ -148,35 +126,10 @@ GeoMapItem {
                 }
             }
 
-            // Drop line to the terrain below (Google Earth-style "extrude"):
-            // anchors the floating marker visually so its altitude is readable
-            Model {
-                source: "#Cylinder"   // built-in: 100x100 units, height along +Y
-                visible: root._dropLength > 0
-                opacity: 0.75
-                eulerRotation.x: 90   // stand the height axis up along scene z
-                position: Qt.vector3d(0, 0, -root._dropLength / 2)
-                scale: Qt.vector3d(root._dropLineScale, root._dropLength / 100, root._dropLineScale)
-
-                materials: PrincipledMaterial {
-                    lighting: PrincipledMaterial.NoLighting
-                    baseColor: root._markerColor
-                }
-            }
-
-            // Ground footprint: half-buried flattened sphere reads as a disc
-            // without z-fighting the terrain mesh
-            Model {
-                source: "#Sphere"
-                visible: root._dropLength > 0
-                opacity: 0.75
-                position: Qt.vector3d(0, 0, -root._dropLength)
-                scale: Qt.vector3d(root._modelScale, root._modelScale, root._modelScale * 0.15)
-
-                materials: PrincipledMaterial {
-                    lighting: PrincipledMaterial.NoLighting
-                    baseColor: root._markerColor
-                }
+            GeoMapDropLine {
+                dropLength: dropShadow.dropLength
+                lineScale: dropShadow.dropLineScale
+                lineColor: root._markerColor
             }
         }
     }

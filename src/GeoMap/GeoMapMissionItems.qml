@@ -28,6 +28,10 @@ Item {
     property var surfaceModel
     property real homeTerrainBias: 0   ///< See GeoMapWaypointItem.homeTerrainBias
 
+    /// A marker was clicked; item is its VisualMissionItem (mirrors
+    /// MissionItemMapVisual.clicked as consumed by PlanMapItems)
+    signal itemClicked(var item)
+
     Repeater {
         model: root.missionController ? root.missionController.visualItems : 0
 
@@ -50,6 +54,9 @@ Item {
                 // visuals; wire it up without hardcoding filenames here
                 if (item.hasOwnProperty("homeTerrainBias")) {
                     item.homeTerrainBias = Qt.binding(() => root.homeTerrainBias)
+                }
+                if (item.clicked !== undefined) {
+                    item.clicked.connect(() => root.itemClicked(object))
                 }
             }
         }

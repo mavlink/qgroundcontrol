@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <utility>
 
 #ifdef Q_OS_ANDROID
@@ -322,6 +323,99 @@ double SurfacePatchModel::terrainHeightAt(const QGeoCoordinate& coordinate) cons
         return 0.0;
     }
     return _heightField->heightAt(TileMath::geoToWorld(coordinate));
+}
+
+QGeoCoordinate SurfacePatchModel::surfaceCoordinateAtScreenPoint(const GeoMapCamera* camera, const QPointF& screenPos,
+                                                                 double zScale) const
+{
+    // Negative zScale would invert the terrain band math below
+    if (!camera || !_heightField || (zScale < 0.0)) {
+        return QGeoCoordinate();
+    }
+    const auto rayOpt = camera->pickRayAt(screenPos);
+    if (!rayOpt) {
+        return QGeoCoordinate();
+    }
+    const GeoMapCamera::PickRay& ray = *rayOpt;
+
+    // Signed height of the ray above the rendered surface at parameter t
+    const auto surfaceOffset = [&](double t) {
+        const QPointF ground(ray.originX + (t * ray.dirX), ray.originY + (t * ray.dirY));
+        return (ray.originZ + (t * ray.dirZ)) - (_heightField->heightAt(ground) * zScale);
+    };
+
+    // Earth terrain bounds (Terrarium tiles encode bathymetry, so the floor is
+    // the ocean trenches, not sea level). The ray can only cross the surface
+    // while its z is inside [minZ, maxZ]: march that band only.
+    constexpr double kMinTerrainMeters = -11000.0;
+    constexpr double kMaxTerrainMeters = 9000.0;
+    const double minZ = kMinTerrainMeters * zScale;
+    const double maxZ = kMaxTerrainMeters * zScale;
+
+    double tStart = 0.0;
+    double tEnd = 0.0;
+    if (ray.dirZ < 0.0) {
+        tStart = std::max(0.0, (maxZ - ray.originZ) / ray.dirZ);
+        tEnd = (minZ - ray.originZ) / ray.dirZ;
+    } else if (ray.originZ < maxZ) {
+        // Ascending ray below the terrain ceiling (screen edge above the camera
+        // horizon) can still hit terrain rising in front of the camera
+        tEnd = (ray.dirZ > 0.0) ? ((maxZ - ray.originZ) / ray.dirZ) : std::numeric_limits<double>::infinity();
+    } else {
+        return QGeoCoordinate();
+    }
+
+    // Nothing renders beyond the retained patch range, so a hit past it would
+    // be a hit on invisible terrain; this also bounds the coarse step length
+    const double horizontal = std::hypot(ray.dirX, ray.dirY);
+    if (horizontal > 1e-12) {
+        tEnd = std::min(tEnd, (SurfaceModel::kMaxRangeMultiplier * camera->distance()) / horizontal);
+    }
+    if (!std::isfinite(tEnd) || (tEnd < tStart)) {
+        return QGeoCoordinate();
+    }
+
+    const auto coordinateAt = [&](double t) {
+        return TileMath::worldToGeo(QPointF(ray.originX + (t * ray.dirX), ray.originY + (t * ray.dirY)));
+    };
+
+    if (surfaceOffset(tStart) <= 0.0) {
+        // Already at/below the surface at the band entry (includes the zScale=0
+        // degenerate case, where the band collapses to the z=0 plane hit)
+        return coordinateAt(tStart);
+    }
+
+    // Coarse march to the first above->below crossing (the visible surface),
+    // then bisect the bracket down to sub-meter precision. The step length
+    // scales with camera distance like the rendered LOD does, so a visible
+    // ridge cannot fall between samples; only features narrower than
+    // ~distance/64 can be stepped over. With the range capped at
+    // kMaxRangeMultiplier distances this bounds the march at a few thousand
+    // heightAt lookups, fine for a one-shot click.
+    constexpr double kStepsPerCameraDistance = 64.0;
+    constexpr int kBisectSteps = 24;
+    const double stepMeters = std::max(camera->distance() / kStepsPerCameraDistance, 1.0);
+    const double groundRange = (tEnd - tStart) * horizontal;
+    const int coarseSteps = std::max(1, static_cast<int>(std::ceil(groundRange / stepMeters)));
+    double prevT = tStart;
+    for (int i = 1; i <= coarseSteps; i++) {
+        const double t = tStart + (((tEnd - tStart) * i) / coarseSteps);
+        if (surfaceOffset(t) <= 0.0) {
+            double lo = prevT;
+            double hi = t;
+            for (int j = 0; j < kBisectSteps; j++) {
+                const double mid = (lo + hi) / 2.0;
+                if (surfaceOffset(mid) <= 0.0) {
+                    hi = mid;
+                } else {
+                    lo = mid;
+                }
+            }
+            return coordinateAt(hi);
+        }
+        prevT = t;
+    }
+    return QGeoCoordinate();  // sky: no crossing within the rendered range
 }
 
 int SurfacePatchModel::gridSize() const

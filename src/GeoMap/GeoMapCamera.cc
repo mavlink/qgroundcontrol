@@ -252,6 +252,17 @@ QQuaternion GeoMapCamera::sceneRotation() const
            QQuaternion::fromAxisAndAngle(1, 0, 0, static_cast<float>(_tilt));
 }
 
+std::optional<GeoMapCamera::PickRay> GeoMapCamera::pickRayAt(const QPointF& screenPos) const
+{
+    if (_viewportSize.isEmpty()) {
+        return std::nullopt;
+    }
+
+    const Ray ray = pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize,
+                            verticalFieldOfView(), screenPos);
+    return PickRay{ray.origin.x, ray.origin.y, ray.origin.z, ray.dir.x, ray.dir.y, ray.dir.z};
+}
+
 std::optional<QPointF> GeoMapCamera::screenToGround(const QPointF& screenPos, double planeZ) const
 {
     if (_viewportSize.isEmpty()) {

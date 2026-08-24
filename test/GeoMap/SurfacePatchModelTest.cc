@@ -30,6 +30,20 @@ void attach(SurfacePatchModel& model, GeoScene& scene, GeoMapCamera& camera)
     model.drainUpdates();
 }
 
+ElevationTilePyramid::Grid uniformGrid(float height)
+{
+    ElevationTilePyramid::Grid grid;
+    grid.width = 4;
+    grid.height = 4;
+    grid.heights = QList<float>(16, height);
+    return grid;
+}
+
+double groundDistance(const QPointF& a, const QPointF& b)
+{
+    return std::hypot(a.x() - b.x(), a.y() - b.y());
+}
+
 }  // namespace
 
 void SurfacePatchModelTest::_emptyWithoutCamera()
@@ -332,6 +346,142 @@ void SurfacePatchModelTest::_terrainHeightAt()
     QVERIFY(model.heightField()->insertTile(key, grid));
     QCOMPARE(model.terrainHeightAt(kCenter), 100.0);
     QCOMPARE_GE(heightsSpy.count(), 1);
+}
+
+// The surface-pick tests below never spin the event loop after attach: the
+// flat height source delivers its all-zero tiles through queued singleShots,
+// so the field holds exactly the tiles each test inserts.
+
+void SurfacePatchModelTest::_surfacePickFlatMatchesPlanePick()
+{
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    setupCamera(camera);
+    camera.setTilt(60);
+    camera.setHeading(30);
+    attach(model, scene, camera);
+
+    QVERIFY(!model.surfaceCoordinateAtScreenPoint(nullptr, QPointF(400, 300), 1.0).isValid());
+
+    // With no height data the surface is the z=0 plane: the march must agree
+    // with the analytic plane pick everywhere on screen
+    const QList<QPointF> points{QPointF(400, 300), QPointF(200, 150), QPointF(600, 450)};
+    for (const QPointF& p : points) {
+        const QGeoCoordinate surface = model.surfaceCoordinateAtScreenPoint(&camera, p, 1.0);
+        const QGeoCoordinate plane = camera.coordinateAtScreenPoint(p);
+        QVERIFY(surface.isValid());
+        QVERIFY(plane.isValid());
+        QCOMPARE_LT(groundDistance(TileMath::geoToWorld(surface), TileMath::geoToWorld(plane)), 0.01);
+    }
+}
+
+void SurfacePatchModelTest::_surfacePickLandsOnPlateau()
+{
+    // Camera centered on a zoom-12 tile raised to a 500 m plateau
+    const TileMath::TileKey key = TileMath::tileForWorld(TileMath::geoToWorld(kCenter), 12);
+    const double span = TileMath::tileSpanAtZoom(12);
+    const QPointF tileCenter = TileMath::tileMinCorner(key) + QPointF(span / 2.0, span / 2.0);
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    setupCamera(camera, TileMath::worldToGeo(tileCenter));
+    camera.setTilt(60);
+    camera.setDistance(4000);  // camera z stays above the scaled plateau top
+    attach(model, scene, camera);
+    QVERIFY(model.heightField()->insertTile(key, uniformGrid(500.0f)));
+
+    const QPointF screenPos(400, 300);
+    const double zScale = 2.0;  // exercise scale independence (mercator vertical stretch)
+    const QGeoCoordinate pick = model.surfaceCoordinateAtScreenPoint(&camera, screenPos, zScale);
+    QVERIFY(pick.isValid());
+    QCOMPARE_LE(std::abs(model.terrainHeightAt(pick) - 500.0), 1e-6);
+
+    // The invariant of a correct pick: the returned surface point projects
+    // back to the clicked pixel
+    const auto roundTrip = camera.worldToScreen(TileMath::geoToWorld(pick), 500.0 * zScale);
+    QVERIFY(roundTrip.has_value());
+    QCOMPARE_LT(std::hypot(roundTrip->x() - screenPos.x(), roundTrip->y() - screenPos.y()), 0.5);
+
+    // And it lands nearer the camera than the ground-plane pick would
+    const QGeoCoordinate plane = camera.coordinateAtScreenPoint(screenPos);
+    QCOMPARE_LT(groundDistance(camera.cameraGroundPosition(), TileMath::geoToWorld(pick)),
+                groundDistance(camera.cameraGroundPosition(), TileMath::geoToWorld(plane)));
+}
+
+void SurfacePatchModelTest::_surfacePickOccludesGroundBehindRidge()
+{
+    const TileMath::TileKey key = TileMath::tileForWorld(TileMath::geoToWorld(kCenter), 12);
+    const double span = TileMath::tileSpanAtZoom(12);
+    const QPointF tileCenter = TileMath::tileMinCorner(key) + QPointF(span / 2.0, span / 2.0);
+    const double tileMaxY = TileMath::tileMinCorner(key).y() + span;
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    setupCamera(camera, TileMath::worldToGeo(tileCenter));
+    camera.setTilt(70);
+    camera.setDistance(3000);
+    attach(model, scene, camera);
+    QVERIFY(model.heightField()->insertTile(key, uniformGrid(500.0f)));
+
+    // A ground point north of (behind) the plateau, on screen when terrain is
+    // ignored: the ray to it passes below the plateau top on the way there
+    const QPointF behind(tileCenter.x(), tileMaxY + 1000.0);
+    const auto screenPos = camera.worldToScreen(behind, 0.0);
+    QVERIFY(screenPos.has_value());
+
+    const QGeoCoordinate pick = model.surfaceCoordinateAtScreenPoint(&camera, *screenPos, 1.0);
+    QVERIFY(pick.isValid());
+    const QPointF pickWorld = TileMath::geoToWorld(pick);
+
+    // The pick lands on the plateau top, not on the occluded ground behind it
+    QCOMPARE_LE(std::abs(model.terrainHeightAt(pick) - 500.0), 1e-6);
+    QCOMPARE_LT(pickWorld.y(), tileMaxY);
+    QCOMPARE_LT(groundDistance(camera.cameraGroundPosition(), pickWorld),
+                groundDistance(camera.cameraGroundPosition(), behind));
+}
+
+void SurfacePatchModelTest::_surfacePickSkyInvalid()
+{
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    setupCamera(camera);
+    camera.setTilt(85);
+    attach(model, scene, camera);
+
+    // Top-of-screen ray points above the horizon at max tilt: nothing to hit
+    QVERIFY(!model.surfaceCoordinateAtScreenPoint(&camera, QPointF(400, 10), 1.0).isValid());
+
+    // A camera without a viewport cannot form a pick ray
+    GeoMapCamera bare;
+    QVERIFY(!model.surfaceCoordinateAtScreenPoint(&bare, QPointF(400, 300), 1.0).isValid());
+}
+
+void SurfacePatchModelTest::_surfacePickZeroZScaleMatchesPlanePick()
+{
+    // terrainScale animates to 0 in 2D: even with height data loaded the pick
+    // must collapse to the analytic z=0 plane pick
+    const TileMath::TileKey key = TileMath::tileForWorld(TileMath::geoToWorld(kCenter), 12);
+    const double span = TileMath::tileSpanAtZoom(12);
+    const QPointF tileCenter = TileMath::tileMinCorner(key) + QPointF(span / 2.0, span / 2.0);
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    setupCamera(camera, TileMath::worldToGeo(tileCenter));
+    camera.setTilt(45);
+    attach(model, scene, camera);
+    QVERIFY(model.heightField()->insertTile(key, uniformGrid(500.0f)));
+
+    const QPointF screenPos(400, 300);
+    const QGeoCoordinate pick = model.surfaceCoordinateAtScreenPoint(&camera, screenPos, 0.0);
+    const QGeoCoordinate plane = camera.coordinateAtScreenPoint(screenPos);
+    QVERIFY(pick.isValid());
+    QVERIFY(plane.isValid());
+    QCOMPARE_LT(groundDistance(TileMath::geoToWorld(pick), TileMath::geoToWorld(plane)), 0.01);
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(SurfacePatchModelTest, TestLabel::Unit)
