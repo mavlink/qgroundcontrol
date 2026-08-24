@@ -578,6 +578,13 @@ FlightMap {
         EditPositionDialog {
             title:                  qsTr("Edit ROI Position")
             coordinate:             roiLocationItem.coordinate
+
+            readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+            // The ROI belongs to the vehicle the dialog was opened for; close
+            // if that vehicle goes away or the active vehicle changes
+            on_ActiveVehicleChanged: close()
+
             onCoordinateChanged: {
                 roiLocationItem.coordinate = coordinate
                 _activeVehicle.guidedModeROI(coordinate, _activeVehicle.roiRelativeAltitudeMeters)
@@ -590,6 +597,15 @@ FlightMap {
 
         DropPanel {
             id: roiEditDropPanel
+
+            readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+            // The ROI belongs to the vehicle the panel was opened for; close
+            // if that vehicle goes away or the active vehicle changes
+            on_ActiveVehicleChanged: close()
+
+            // Created dynamically per ROI click; close() alone would leak the panel
+            onClosed: destroy()
 
             sourceComponent: Component {
                 ColumnLayout {

@@ -16,8 +16,8 @@ import QGroundControl.GeoMap
 /// read-only GeoMap-native port of the common elements in
 /// src/PlanView/FWLandingPatternMapVisual.qml / VTOLLandingPatternMapVisual.qml
 /// (flight path, loiter ring, final-approach/landing markers). No
-/// mouse-area/drag-to-place code ports over — FlyView missions are already
-/// loaded and immutable.
+/// drag-to-place code ports over — FlyView missions are already loaded and
+/// immutable; the markers are clickable only to change the current item.
 Item {
     id: root
 
@@ -27,6 +27,8 @@ Item {
     // DEM-vs-home-AMSL bias, wired by GeoMapMissionItems (see GeoMapWaypointItem)
     property real homeTerrainBias: 0
     property string landingLabel: ""   ///< Label for the landing-point marker (VTOL overrides to "Land")
+
+    signal clicked()
 
     readonly property bool _useLoiterToAlt: item.useLoiterToAlt.rawValue
     // Approach leg descends from the final-approach altitude to the landing
@@ -98,6 +100,11 @@ Item {
         label: root._useLoiterToAlt ? qsTr("Loiter") : qsTr("Approach")
         checked: root.item.isCurrentItem
         visible: root.item.landingCoordSet
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.clicked()
+        }
     }
 
     // Landing point
@@ -112,5 +119,10 @@ Item {
         label: root.landingLabel
         checked: root.item.isCurrentItem
         visible: root.item.landingCoordSet
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.clicked()
+        }
     }
 }

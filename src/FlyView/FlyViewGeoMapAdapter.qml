@@ -83,11 +83,11 @@ Item {
         geoMapControl.camera.center = center
     }
 
-    // Screen point -> ground coordinate through the camera pick ray
+    // Screen point -> coordinate of the rendered terrain surface under it
     // (clipToViewPort accepted for signature parity, screen points are
     // always inside the viewport for the fly view use cases)
     function toCoordinate(point, clipToViewPort) {
-        return geoMapControl.camera.coordinateAtScreenPoint(point)
+        return geoMapControl.surfaceCoordinateAt(point)
     }
 
     // Geographic coordinate -> screen point; invalid/behind-camera projects
@@ -105,11 +105,10 @@ Item {
         keepVehicleCentered: root.pipMode || QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue
 
         // Guided-action popup on click (FlyViewMap.onMapClicked parity).
-        // 2D-only: interactive map editing is view-only in 3D (issue #14901),
-        // and a tilted-camera pick can land kilometers from the visual target.
-        // isTopDown: the mode flips to 2D before the tilt animation finishes.
+        // Allowed at any tilt: toCoordinate picks the rendered terrain
+        // surface, so the click lands where the user sees it even in 3D.
         onMapClicked: (position) => {
-            if (root.pipMode || geoMapControl.camera.mode !== GeoMapCamera.Mode2D || !geoMapControl.camera.isTopDown) {
+            if (root.pipMode) {
                 return
             }
             if (!globals.guidedControllerFlyView.guidedUIVisible &&

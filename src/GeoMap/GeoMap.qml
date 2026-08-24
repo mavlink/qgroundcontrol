@@ -34,8 +34,18 @@ Item {
     property bool pinchZoomDisabledByVirtualJoysticks: false
 
     // Same contract as FlightMap: plain left-click/tap (no drag, no modifier)
-    // in viewport coordinates; consumers convert via camera.coordinateAtScreenPoint
+    // in viewport coordinates; consumers convert via surfaceCoordinateAt
     signal mapClicked(var position)
+
+    // Geographic coordinate of the rendered terrain surface under a screen
+    // point (viewport pixels): the pick lands on the visible front surface,
+    // so ridges occlude the ground behind them. Works at any tilt, unlike a
+    // ground-plane pick which can land kilometers past elevated terrain.
+    // Invalid coordinate on a sky pick.
+    function surfaceCoordinateAt(screenPos) {
+        return patchModel.surfaceCoordinateAtScreenPoint(geoCamera, screenPos,
+                                                         geoScene.verticalScale * geoScene.terrainScale)
+    }
 
     // Auto-centering (parity with FlightMap): one-shot GCS/vehicle centering
     // plus vehicle following, all decided by the shared MapPositionTracker

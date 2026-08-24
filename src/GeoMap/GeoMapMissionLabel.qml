@@ -65,6 +65,12 @@ GeoMapItem {
         font.bold: true
     }
 
+    GeoMapDropShadow {
+        id: dropShadow
+        geoItem: root
+        indicatorSize: root._indicatorSize
+    }
+
     Rectangle {
         anchors.left: parent.right
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
@@ -85,14 +91,22 @@ GeoMapItem {
 
     delegate3D: Component {
         Node {
-            scale: Qt.vector3d(root._modelScale, root._modelScale, root._modelScale)
+            Node {
+                scale: Qt.vector3d(root._modelScale, root._modelScale, root._modelScale)
 
-            Model {
-                source: "#Sphere"
+                Model {
+                    source: "#Sphere"
 
-                materials: PrincipledMaterial {
-                    baseColor: root._markerColor
+                    materials: PrincipledMaterial {
+                        baseColor: root._markerColor
+                    }
                 }
+            }
+
+            GeoMapDropLine {
+                dropLength: dropShadow.dropLength
+                lineScale: dropShadow.dropLineScale
+                lineColor: root._markerColor
             }
         }
     }

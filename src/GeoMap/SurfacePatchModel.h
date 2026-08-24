@@ -30,6 +30,7 @@ class QTimer;
 class SurfaceModel;
 class TileImageSource;
 
+Q_MOC_INCLUDE("GeoMapCamera.h")
 Q_MOC_INCLUDE("GeoScene.h")
 Q_MOC_INCLUDE("HeightField.h")
 
@@ -105,6 +106,16 @@ public:
     /// where loaded, coarser estimate or 0 elsewhere (see HeightField). Emits
     /// terrainHeightsChanged as estimates improve.
     Q_INVOKABLE double terrainHeightAt(const QGeoCoordinate& coordinate) const;
+
+    /// Coordinate of the rendered surface under screenPos: marches the camera's
+    /// pick ray to its first crossing of z = heightAt(x, y) * zScale, so the pick
+    /// lands on the visible front surface and ridges occlude the ground behind
+    /// them. zScale is the height-to-scene-z factor (verticalScale * terrainScale,
+    /// never negative); 0 reduces to a flat z=0 plane pick. The march is capped at
+    /// the rendered range (maxRangeMultiplier * camera distance). Invalid coordinate
+    /// when nothing is hit (sky pick) or camera is null.
+    Q_INVOKABLE QGeoCoordinate surfaceCoordinateAtScreenPoint(const GeoMapCamera* camera, const QPointF& screenPos,
+                                                              double zScale) const;
 
     /// SurfaceModel::kMaxRangeMultiplier, exposed so the scene camera's far
     /// clip plane can cover the full retained patch range
