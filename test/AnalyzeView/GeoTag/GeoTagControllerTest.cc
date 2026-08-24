@@ -16,6 +16,17 @@
 
 namespace {
 
+// Windows filesystems are case-insensitive and different path sources disagree on
+// drive-letter case (e.g. "c:/" from QTemporaryDir vs "C:/"), so compare case-insensitively there.
+QString comparablePath(const QString& path)
+{
+#ifdef Q_OS_WIN
+    return QDir::cleanPath(path).toLower();
+#else
+    return QDir::cleanPath(path);
+#endif
+}
+
 QString generateTestULogFile(const QString& directoryPath, int numEvents = 20)
 {
     const QString ulogPath = QDir(directoryPath).filePath(QStringLiteral("test.ulg"));
@@ -82,9 +93,9 @@ void GeoTagControllerTest::_propertyAccessorsTest()
     QVERIFY(!controller->imageDirectory().isEmpty());
     QVERIFY(!controller->saveDirectory().isEmpty());
 
-    QCOMPARE(QDir::cleanPath(controller->logFile()), QDir::cleanPath(ulogPath));
-    QCOMPARE(QDir::cleanPath(controller->imageDirectory()), QDir::cleanPath(imageDirPath));
-    QCOMPARE(QDir::cleanPath(controller->saveDirectory()), QDir::cleanPath(taggedDirPath));
+    QCOMPARE(comparablePath(controller->logFile()), comparablePath(ulogPath));
+    QCOMPARE(comparablePath(controller->imageDirectory()), comparablePath(imageDirPath));
+    QCOMPARE(comparablePath(controller->saveDirectory()), comparablePath(taggedDirPath));
     QCOMPARE(controller->progress(), 0.0);
     QVERIFY(!controller->inProgress());
 
@@ -113,7 +124,7 @@ void GeoTagControllerTest::_urlPathConversionTest()
     testFile.close();
 
     controller->setLogFile(QUrl::fromLocalFile(testPath).toString());
-    QCOMPARE(QDir::cleanPath(controller->logFile()), QDir::cleanPath(testPath));
+    QCOMPARE(comparablePath(controller->logFile()), comparablePath(testPath));
 
     testFile.remove();
 }
