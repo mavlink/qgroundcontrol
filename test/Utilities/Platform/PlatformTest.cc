@@ -47,10 +47,16 @@ void PlatformTest::_testInitializeSetsUnitTestEnvironment()
     TestFixtures::EnvVarFixture restoreConsole("QT_ASSUME_STDERR_HAS_CONSOLE");
     TestFixtures::EnvVarFixture restoreLogging("QT_FORCE_STDERR_LOGGING");
     TestFixtures::EnvVarFixture restoreQpa("QT_QPA_PLATFORM");
+#ifdef Q_OS_WIN
+    TestFixtures::EnvVarFixture restoreWinConsole("QT_WIN_DEBUG_CONSOLE");
+#endif
 
     (void) qunsetenv("QT_ASSUME_STDERR_HAS_CONSOLE");
     (void) qunsetenv("QT_FORCE_STDERR_LOGGING");
     (void) qunsetenv("QT_QPA_PLATFORM");
+#ifdef Q_OS_WIN
+    (void) qunsetenv("QT_WIN_DEBUG_CONSOLE");
+#endif
 
     QGCCommandLineParser::CommandLineParseResult args;
     args.runningUnitTests = true;
@@ -61,8 +67,14 @@ void PlatformTest::_testInitializeSetsUnitTestEnvironment()
     const std::optional<int> initResult = Platform::initialize(1, argv, args);
 
     QVERIFY(!initResult.has_value());
+#if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
+    // The stderr logging setup is guarded by the same condition in Platform::initialize()
     QCOMPARE(qgetenv("QT_ASSUME_STDERR_HAS_CONSOLE"), QByteArray("1"));
     QCOMPARE(qgetenv("QT_FORCE_STDERR_LOGGING"), QByteArray("1"));
+#endif
+#ifdef Q_OS_WIN
+    QCOMPARE(qgetenv("QT_WIN_DEBUG_CONSOLE"), QByteArray("attach"));
+#endif
     QCOMPARE(qgetenv("QT_QPA_PLATFORM"), QByteArray("offscreen"));
 }
 #endif
