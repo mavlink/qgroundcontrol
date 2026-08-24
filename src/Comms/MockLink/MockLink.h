@@ -47,6 +47,28 @@ public:
     Q_INVOKABLE void setCommLost(bool commLost) { _commLost = commLost; }
     Q_INVOKABLE void simulateConnectionRemoved();
 
+    // Readiness failure injection. Runtime-toggleable so tests can drive healthy -> failed -> recovered
+    // transitions. Q_INVOKABLE so debug QML can drive it without further C++ changes.
+
+    /// Overrides the SYS_STATUS onboard_control_sensors_present/enabled/health fields.
+    /// Defaults match the previous hard-coded values (present=GPS, enabled=0, health=0).
+    Q_INVOKABLE void setSysStatusSensorBits(quint32 present, quint32 enabled, quint32 health);
+
+    /// true: GPS_RAW_INT reports GPS_FIX_TYPE_NO_FIX, zero satellites and unknown hdop/vdop
+    Q_INVOKABLE void setGpsFixLost(bool lost) { _gpsFixLost = lost; }
+    bool gpsFixLost() const { return _gpsFixLost; }
+
+    /// true: battery 1 reports 5% remaining with MAV_BATTERY_CHARGE_STATE_EMERGENCY.
+    /// SYS_STATUS battery_remaining follows since it reports the same value.
+    Q_INVOKABLE void setBatteryCritical(bool critical) { _batteryCritical = critical; }
+    bool batteryCritical() const { return _batteryCritical; }
+
+    /// true: arm requests are rejected with MAV_RESULT_TEMPORARILY_REJECTED and a
+    /// "PreArm: <reason>" critical STATUSTEXT, mirroring autopilot pre-arm behavior.
+    /// Disarm requests are always accepted.
+    Q_INVOKABLE void setPreArmDenied(bool denied, const QString &reason = QString());
+    bool preArmDenied() const { return _preArmDenied; }
+
     int vehicleId() const { return _vehicleSystemId; }
     MAV_AUTOPILOT getFirmwareType() const { return _firmwareType; }
 
@@ -447,6 +469,18 @@ private:
     int _hashCheckRequestCount = 0;
     bool _paramRequestListHashCheckSent = false;
     bool _resetSysAutostartOnParamReset = false;
+
+    // Readiness failure injection state. Setters run on the caller's (test/main) thread while the
+    // send loops read on the worker thread: plain values are atomics, the reason string is guarded
+    // by _preArmDeniedReasonMutex.
+    std::atomic<uint32_t> _sysStatusSensorsPresent = MAV_SYS_STATUS_SENSOR_GPS;
+    std::atomic<uint32_t> _sysStatusSensorsEnabled = 0;
+    std::atomic<uint32_t> _sysStatusSensorsHealth = 0;
+    std::atomic<bool> _gpsFixLost = false;
+    std::atomic<bool> _batteryCritical = false;
+    std::atomic<bool> _preArmDenied = false;
+    QMutex _preArmDeniedReasonMutex;
+    QString _preArmDeniedReason;
 
     // Periodic OPEN_DRONE_ID_ARM_STATUS content (overridable via setRemoteIDArmStatus).
     // Written by the test (main) thread, read by the 1Hz worker: guarded by _remoteIDArmStatusMutex.

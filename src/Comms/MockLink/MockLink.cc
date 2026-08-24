@@ -754,6 +754,20 @@ void MockLink::_sendHighLatency2()
     respondWithMavlinkMessage(msg);
 }
 
+void MockLink::setSysStatusSensorBits(quint32 present, quint32 enabled, quint32 health)
+{
+    _sysStatusSensorsPresent = present;
+    _sysStatusSensorsEnabled = enabled;
+    _sysStatusSensorsHealth = health;
+}
+
+void MockLink::setPreArmDenied(bool denied, const QString &reason)
+{
+    QMutexLocker locker(&_preArmDeniedReasonMutex);
+    _preArmDenied = denied;
+    _preArmDeniedReason = reason.isEmpty() ? QStringLiteral("Mock readiness check failed") : reason;
+}
+
 void MockLink::_sendSysStatus()
 {
     mavlink_message_t msg{};
@@ -762,9 +776,9 @@ void MockLink::_sendSysStatus()
         _vehicleComponentId,
         _outgoingMavlinkChannel,
         &msg,
-        MAV_SYS_STATUS_SENSOR_GPS,  // onboard_control_sensors_present
-        0,                          // onboard_control_sensors_enabled
-        0,                          // onboard_control_sensors_health
+        _sysStatusSensorsPresent,   // onboard_control_sensors_present
+        _sysStatusSensorsEnabled,   // onboard_control_sensors_enabled
+        _sysStatusSensorsHealth,    // onboard_control_sensors_health
         250,                        // load
         4200 * 4,                   // voltage_battery
         8000,                       // current_battery
@@ -776,7 +790,11 @@ void MockLink::_sendSysStatus()
 
 void MockLink::_sendBatteryStatus()
 {
-    if (_battery1PctRemaining > 1) {
+    if (_batteryCritical) {
+        _battery1PctRemaining = 5;
+        _battery1TimeRemaining = _batteryMaxTimeRemaining * 5 / 100;
+        _battery1ChargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
+    } else if (_battery1PctRemaining > 1) {
         _battery1PctRemaining = static_cast<int8_t>(100 - (_runningTime.elapsed() / 1000));
         _battery1TimeRemaining = static_cast<double>(_batteryMaxTimeRemaining) * (static_cast<double>(_battery1PctRemaining) / 100.0);
         if (_battery1PctRemaining > 50) {
@@ -1926,10 +1944,19 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
     case MAV_CMD_COMPONENT_ARM_DISARM:
         if (request.param1 == 0.0f) {
             _mavBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+            commandResult = MAV_RESULT_ACCEPTED;
+        } else if (_preArmDenied) {
+            QString reason;
+            {
+                QMutexLocker locker(&_preArmDeniedReasonMutex);
+                reason = _preArmDeniedReason;
+            }
+            sendStatusTextMessage(MAV_SEVERITY_CRITICAL, QStringLiteral("PreArm: %1").arg(reason));
+            commandResult = MAV_RESULT_TEMPORARILY_REJECTED;
         } else {
             _mavBaseMode |= MAV_MODE_FLAG_SAFETY_ARMED;
+            commandResult = MAV_RESULT_ACCEPTED;
         }
-        commandResult = MAV_RESULT_ACCEPTED;
         break;
     case MAV_CMD_PREFLIGHT_CALIBRATION:
         _handlePreFlightCalibration(request);
@@ -2205,6 +2232,8 @@ void MockLink::_sendGpsRawInt()
 {
     static uint64_t timeTick = 0;
 
+    const bool fixLost = _gpsFixLost;
+
     mavlink_message_t msg{};
     (void) mavlink_msg_gps_raw_int_pack_chan(
         _vehicleSystemId,
@@ -2212,15 +2241,15 @@ void MockLink::_sendGpsRawInt()
         _outgoingMavlinkChannel,
         &msg,
         timeTick++,                             // time since boot
-        GPS_FIX_TYPE_3D_FIX,
+        fixLost ? GPS_FIX_TYPE_NO_FIX : GPS_FIX_TYPE_3D_FIX,
         static_cast<int32_t>(_vehicleLatitude * 1E7),
         static_cast<int32_t>(_vehicleLongitude * 1E7),
         static_cast<int32_t>(_vehicleAltitudeAMSL * 1000),
-        3 * 100,                                // hdop
-        3 * 100,                                // vdop
+        fixLost ? UINT16_MAX : 3 * 100,         // hdop
+        fixLost ? UINT16_MAX : 3 * 100,         // vdop
         UINT16_MAX,                             // velocity not known
         UINT16_MAX,                             // course over ground not known
-        8,                                      // satellites visible
+        fixLost ? 0 : 8,                        // satellites visible
         //-- Extension
         0,                                      // Altitude (above WGS84, EGM96 ellipsoid), in meters * 1000 (positive for up).
         0,                                      // Position uncertainty in meters * 1000 (positive for up).
