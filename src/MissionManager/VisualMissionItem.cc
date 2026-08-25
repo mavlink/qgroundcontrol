@@ -170,7 +170,7 @@ void VisualMissionItem::_updateTerrainAltitude(void)
         emit terrainQueryFailedChanged(_terrainQueryFailed);
     }
 
-    if (!_flyView && specifiesCoordinate() && coordinate().isValid()) {
+    if ((!_flyView || terrainAltitudeRequiredInFlyView()) && specifiesCoordinate() && coordinate().isValid()) {
         // We use a timer so that any additional requests before the timer fires result in only a single request
         _updateTerrainTimer.start();
     }

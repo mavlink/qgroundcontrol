@@ -124,6 +124,7 @@ public:
     double          specifiedVehicleYaw         (void) override;
     QString         mapVisualQML                (void) const override { return QStringLiteral("SimpleItemMapVisual.qml"); }
     QString         geoMapVisualQML             (void) const override { return QStringLiteral("GeoMapWaypointItem.qml"); }
+    bool            terrainAltitudeRequiredInFlyView(void) const final { return _altitudeFrame == QGroundControlQmlGlobal::AltitudeFrameTerrain; }
     void            appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude            (double newAltitude) final;
     void            setMissionFlightStatus      (MissionFlightStatus_t& missionFlightStatus) final;

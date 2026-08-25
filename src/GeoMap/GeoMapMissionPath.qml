@@ -19,10 +19,12 @@ import QGroundControl.GeoMap
 /// sequence order (simple items at their coordinate; complex items via their
 /// generic entryCoordinate/exitCoordinate, so the ribbon routes straight
 /// through a complex item's own footprint rather than skipping it), at true
-/// (AMSL) altitude. Stays visible in 2D mode (crossfade3D off), same as
-/// GeoMapFlightPath. Rebuilt wholesale on any mission change (missions are
-/// edited, not streamed, so the flight path's incremental append API is not
-/// needed here).
+/// (AMSL) altitude. A leg is flown in its destination item's frame (ArduPilot
+/// AC_WPNav): legs arriving at a terrain-frame item are draped over the DEM
+/// with a linear AGL ramp, all other legs are straight lines. Stays visible
+/// in 2D mode (crossfade3D off), same as GeoMapFlightPath. Rebuilt wholesale
+/// on any mission change (missions are edited, not streamed, so the flight
+/// path's incremental append API is not needed here).
 GeoMapItem {
     id: root
 
@@ -57,7 +59,7 @@ GeoMapItem {
     // each vertex's own camera distance
     readonly property real _screenFactor: _camera ? _camera.unitsPerPixelAtUnitDistance : 0
 
-    // Ordered coordinates (with AMSL altitude) of every item the vehicle
+    // Ordered route points ({coordinate, terrainLeg}) of every item the vehicle
     // actually routes through, mirroring MissionController::_recalcFlightPathSegments:
     // items must specifiesCoordinate && !isStandaloneCoordinate to get a
     // segment (excludes RTL, which has no mission-encoded coordinate, and
@@ -73,72 +75,91 @@ GeoMapItem {
     // after a landing item either. The walk starts at item 1 (item 0 is the
     // MissionSettingsItem, i.e. home); home is prepended only when the mission
     // starts from the ground — rover, or a takeoff command before the first
-    // coordinate item — mirroring linkStartToHome. Recomputes automatically on
-    // any structural or per-item change since the loop below reads every
+    // coordinate item — mirroring linkStartToHome. terrainLeg marks the leg
+    // ARRIVING at a point as terrain-frame (destination item is
+    // MAV_FRAME_GLOBAL_TERRAIN_ALT), except takeoff/land destinations, which
+    // the 2D view also draws as takeoff/land rather than terrain
+    // (segmentTypeForPair's takeoff/land override). Recomputes automatically on any
+    // structural or per-item change since the loop below reads every
     // NOTIFY-backed property it depends on.
-    readonly property var _pathCoordinates: {
-        const coordinates = []
+    readonly property var _routePoints: {
+        const points = []
         if (root.missionController) {
             const items = root.missionController.visualItems
             let linkStartToHome = root.vehicle ? root.vehicle.rover : false
             for (let i = 1; i < items.count; ++i) {
                 const visualItem = items.get(i)
                 if (visualItem.isSimpleItem && visualItem.command === MAVLinkEnums.MAV_CMD_NAV_RETURN_TO_LAUNCH) {
-                    if (coordinates.length > 0 && root.vehicle && root.vehicle.homePosition.isValid) {
-                        coordinates.push(root.vehicle.homePosition)
+                    if (points.length > 0 && root.vehicle && root.vehicle.homePosition.isValid) {
+                        points.push({ coordinate: root.vehicle.homePosition, terrainLeg: false })
                     }
                     break
                 }
-                if (coordinates.length === 0 && visualItem.isTakeoffItem) {
+                if (points.length === 0 && visualItem.isTakeoffItem) {
                     linkStartToHome = true
                 }
                 if (visualItem.specifiesCoordinate && !visualItem.isStandaloneCoordinate) {
-                    coordinates.push(QtPositioning.coordinate(visualItem.entryCoordinate.latitude,
-                                                               visualItem.entryCoordinate.longitude,
-                                                               visualItem.amslEntryAlt))
+                    points.push({
+                        coordinate: QtPositioning.coordinate(visualItem.entryCoordinate.latitude,
+                                                             visualItem.entryCoordinate.longitude,
+                                                             visualItem.amslEntryAlt),
+                        terrainLeg: visualItem.isSimpleItem && visualItem.altitudeFrame === QGroundControl.AltitudeFrameTerrain
+                                    && !visualItem.isTakeoffItem && !visualItem.isLandCommand
+                    })
                     if (visualItem.isLandCommand) {
                         break
                     }
                     if (!visualItem.exitCoordinateSameAsEntry) {
-                        coordinates.push(QtPositioning.coordinate(visualItem.exitCoordinate.latitude,
-                                                                   visualItem.exitCoordinate.longitude,
-                                                                   visualItem.amslExitAlt))
+                        points.push({
+                            coordinate: QtPositioning.coordinate(visualItem.exitCoordinate.latitude,
+                                                                 visualItem.exitCoordinate.longitude,
+                                                                 visualItem.amslExitAlt),
+                            terrainLeg: false
+                        })
                     }
                 }
             }
-            if (linkStartToHome && coordinates.length > 0 && items.count > 0) {
+            if (linkStartToHome && points.length > 0 && items.count > 0) {
                 const home = items.get(0)
                 if (home.coordinate.isValid) {
-                    coordinates.unshift(QtPositioning.coordinate(home.coordinate.latitude,
-                                                                  home.coordinate.longitude,
-                                                                  home.amslEntryAlt))
+                    points.unshift({
+                        coordinate: QtPositioning.coordinate(home.coordinate.latitude,
+                                                             home.coordinate.longitude,
+                                                             home.amslEntryAlt),
+                        terrainLeg: false
+                    })
                 }
             }
         }
-        return root._subdivided(coordinates)
+        return points
     }
 
-    // Legs longer than this are subdivided along the great circle (matching
-    // MissionLineView.qml): the geometry joins points linearly in Web
-    // Mercator, which diverges materially from the actual route over long
+    // Straight legs longer than this are subdivided along the great circle
+    // (matching MissionLineView.qml): the geometry joins points linearly in
+    // Web Mercator, which diverges materially from the actual route over long
     // distances
     readonly property real _maxSegmentLengthM: 50000
 
-    function _subdivided(coordinates) {
+    // Terrain-frame legs sample the DEM at this spacing (same idea as
+    // FenceWallGeometry), capped so a degenerate long leg can't explode the
+    // vertex count
+    readonly property real _terrainSampleSpacingM: 50
+    readonly property int _maxTerrainSamplesPerLeg: 200
+
+    // Terrain sampling can't live in the _routePoints binding: terrainHeightAt
+    // is not NOTIFY-reactive, so draping is re-run explicitly here on route
+    // changes and on terrainHeightsChanged as DEM patches stream in
+    function _expandedPath() {
+        const points = root._routePoints
         const result = []
-        for (let i = 0; i < coordinates.length; ++i) {
-            const coord = coordinates[i]
+        for (let i = 0; i < points.length; ++i) {
+            const coord = points[i].coordinate
             if (i > 0) {
-                const prev = coordinates[i - 1]
-                const distance = prev.distanceTo(coord)
-                if (distance > root._maxSegmentLengthM) {
-                    const segments = Math.ceil(distance / root._maxSegmentLengthM)
-                    const azimuth = prev.azimuthTo(coord)
-                    for (let j = 1; j < segments; ++j) {
-                        const point = prev.atDistanceAndAzimuth((j * distance) / segments, azimuth)
-                        result.push(QtPositioning.coordinate(point.latitude, point.longitude,
-                                                             prev.altitude + ((coord.altitude - prev.altitude) * j) / segments))
-                    }
+                const prev = points[i - 1].coordinate
+                if (points[i].terrainLeg && root.surfaceModel) {
+                    root._appendTerrainLeg(result, prev, coord)
+                } else {
+                    root._appendLongLegSubdivision(result, prev, coord)
                 }
             }
             result.push(coord)
@@ -146,13 +167,72 @@ GeoMapItem {
         return result
     }
 
-    function _reloadPath() {
-        if (_geometry) {
-            _geometry.setPath(root._pathCoordinates)
+    function _appendLongLegSubdivision(result, prev, coord) {
+        const distance = prev.distanceTo(coord)
+        if (distance <= root._maxSegmentLengthM) {
+            return
+        }
+        const segments = Math.ceil(distance / root._maxSegmentLengthM)
+        const azimuth = prev.azimuthTo(coord)
+        for (let j = 1; j < segments; ++j) {
+            const point = prev.atDistanceAndAzimuth((j * distance) / segments, azimuth)
+            result.push(QtPositioning.coordinate(point.latitude, point.longitude,
+                                                 prev.altitude + ((coord.altitude - prev.altitude) * j) / segments))
         }
     }
 
-    on_PathCoordinatesChanged: _reloadPath()
+    // ArduPilot flies a terrain-frame leg at a height above terrain that
+    // ramps from the origin's AGL to the destination's while riding the
+    // terrain profile (AC_WPNav terrain offset); approximate that by draping
+    // the leg over the DEM with a linear AGL ramp. AGLs are computed against
+    // the same DEM the surface renders from, so the ribbon meets both
+    // endpoint markers exactly (the DEM-vs-home AMSL bias cancels between
+    // the endpoint and sample terms).
+    function _appendTerrainLeg(result, prev, coord) {
+        const distance = prev.distanceTo(coord)
+        const steps = Math.min(Math.ceil(distance / root._terrainSampleSpacingM), root._maxTerrainSamplesPerLeg)
+        if (steps < 2) {
+            return
+        }
+        const azimuth = prev.azimuthTo(coord)
+        const prevAgl = prev.altitude - root.surfaceModel.terrainHeightAt(prev)
+        const destAgl = coord.altitude - root.surfaceModel.terrainHeightAt(coord)
+        for (let j = 1; j < steps; ++j) {
+            const s = j / steps
+            const point = prev.atDistanceAndAzimuth(distance * s, azimuth)
+            result.push(QtPositioning.coordinate(point.latitude, point.longitude,
+                                                 root.surfaceModel.terrainHeightAt(point) + prevAgl + ((destAgl - prevAgl) * s)))
+        }
+    }
+
+    function _reloadPath() {
+        if (_geometry) {
+            _geometry.setPath(root._expandedPath())
+        }
+    }
+
+    // Qt.callLater coalesces rebuild bursts (per-patch terrainHeightsChanged
+    // during tile streaming, route + terrain changes in one pass) into one
+    // re-drape, same idea as FenceWallGeometry::_scheduleRebuild
+    function _scheduleReloadPath() {
+        Qt.callLater(root._reloadPath)
+    }
+
+    on_RoutePointsChanged: _scheduleReloadPath()
+
+    // Only draped legs depend on the DEM; skip terrain-driven rebuilds for
+    // missions with straight legs only
+    readonly property bool _hasTerrainLeg: _routePoints.some(p => p.terrainLeg)
+
+    Connections {
+        target: root.surfaceModel
+
+        function onTerrainHeightsChanged() {
+            if (root._hasTerrainLeg) {
+                root._scheduleReloadPath()
+            }
+        }
+    }
 
     delegate3D: Component {
         // z offsets are relative altitudes; flatten them with the terrain
