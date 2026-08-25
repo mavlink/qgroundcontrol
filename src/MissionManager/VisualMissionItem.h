@@ -185,6 +185,10 @@ public:
     /// GeoMap, or an empty string if this item type has none (the default).
     virtual QString geoMapVisualQML(void) const { return QString(); }
 
+    /// FlyView items normally skip terrain queries to save resources. Override to return true
+    /// when the item's AMSL altitude cannot be computed without the terrain height (e.g. terrain frame).
+    virtual bool terrainAltitudeRequiredInFlyView(void) const { return false; }
+
     /// Returns the mission items associated with the complex item. Caller is responsible for freeing.
     ///     @param items List to append to
     ///     @param missionItemParent Parent object for newly created MissionItems

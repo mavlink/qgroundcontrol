@@ -5,6 +5,7 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include "AppSettings.h"
+#include "BaseClasses/TerrainTest.h"
 #include "CameraSection.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
@@ -370,6 +371,40 @@ void SimpleMissionItemTest::_testCalcAboveTerrainSaveLoad()
     QCOMPARE(loadedItem.amslAltAboveTerrain()->rawValue().toDouble(), amslAlt);
     QCOMPARE(loadedItem.missionItem().frame(), MAV_FRAME_GLOBAL);
     QCOMPARE(loadedItem.missionItem().param7(), amslAlt);
+}
+
+void SimpleMissionItemTest::_testFlyViewTerrainQuery()
+{
+    // Regression test for VisualMissionItem::terrainAltitudeRequiredInFlyView: FlyView items
+    // normally skip terrain queries, but terrain-frame items need terrain altitude to compute
+    // their AMSL altitude (used by the 3D view and altitude displays).
+
+    const QGeoCoordinate terrainCoord = UnitTestTerrainData::flat10Region.center();
+    const double aboveTerrainAlt = 40.0;
+
+    // Items are constructed at (0,0); the terrain query is triggered by the coordinate change
+    // below, mirroring the FlyView mission download flow. The relative item is nudged first so
+    // that a wrongly issued query for it would have resolved by the time the terrain item's does.
+    MissionItem relativeMissionItem(1, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, 0, 0,
+                                    aboveTerrainAlt,
+                                    true,    // autoContinue
+                                    false);  // isCurrentItem
+    SimpleMissionItem* relativeItem = new SimpleMissionItem(planController(), true /* flyView */, relativeMissionItem);
+    relativeItem->setCoordinate(terrainCoord);
+
+    MissionItem terrainMissionItem(2, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_TERRAIN_ALT, 0, 0, 0, 0, 0, 0,
+                                   aboveTerrainAlt,
+                                   true,    // autoContinue
+                                   false);  // isCurrentItem
+    SimpleMissionItem* terrainItem = new SimpleMissionItem(planController(), true /* flyView */, terrainMissionItem);
+    terrainItem->setCoordinate(terrainCoord);
+
+    QTRY_COMPARE_WITH_TIMEOUT(terrainItem->terrainAltitude(), UnitTestTerrainData::Flat10Region::amslElevation,
+                              TestTimeout::mediumMs());
+    QCOMPARE(terrainItem->amslEntryAlt(), UnitTestTerrainData::Flat10Region::amslElevation + aboveTerrainAlt);
+
+    // Non-terrain FlyView items must not have queried
+    QVERIFY(qIsNaN(relativeItem->terrainAltitude()));
 }
 
 UT_REGISTER_TEST(SimpleMissionItemTest, TestLabel::Unit, TestLabel::MissionManager)

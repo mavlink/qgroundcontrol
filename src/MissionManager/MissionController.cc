@@ -1094,8 +1094,8 @@ void MissionController::_recalcFlightPathSegments(void)
                     }
 
                     lastSegmentVisualItemPair =  VisualItemPair(lastFlyThroughVI, visualItem);
-                    SimpleMissionItem* lastSimpleItem = qobject_cast<SimpleMissionItem*>(lastFlyThroughVI);
-                    bool mavlinkTerrainFrame = lastSimpleItem ? lastSimpleItem->missionItem().frame() == MAV_FRAME_GLOBAL_TERRAIN_ALT : false;
+                    // A leg is flown in its destination item's frame (ArduPilot AC_WPNav)
+                    bool mavlinkTerrainFrame = simpleItem ? simpleItem->missionItem().frame() == MAV_FRAME_GLOBAL_TERRAIN_ALT : false;
                     FlightPathSegment* segment = _addFlightPathSegment(oldSegmentTable, lastSegmentVisualItemPair, mavlinkTerrainFrame);
                     segment->setSpecialVisual(roiActive);
                     if (addDirectionArrow) {
@@ -1573,6 +1573,9 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
         if (simpleItem) {
             connect(&simpleItem->missionItem()._commandFact, &Fact::valueChanged, this, &MissionController::_itemCommandChanged);
+            // The altitude frame drives segmentTypeForPair, and segment type is immutable once created
+            connect(simpleItem, &SimpleMissionItem::altitudeFrameChanged, this,
+                    &MissionController::_recalcFlightPathSegmentsSignal, Qt::QueuedConnection);
         } else {
             qWarning() << "isSimpleItem == true, yet not SimpleMissionItem";
         }

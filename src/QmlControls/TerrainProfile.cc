@@ -245,7 +245,11 @@ void TerrainProfile::_addFlightPoints(FlightPathSegment* segment, double current
 
     if (segment->segmentType() == FlightPathSegment::SegmentTypeTerrainFrame) {
         double terrainDistance = 0;
-        double distanceToSurface = segment->coord1AMSLAlt() - segment->amslTerrainHeights().first().value<double>();
+        const double totalDistance = segment->totalDistance();
+        const double beginDistanceToSurface =
+            segment->coord1AMSLAlt() - segment->amslTerrainHeights().first().value<double>();
+        const double endDistanceToSurface =
+            segment->coord2AMSLAlt() - segment->amslTerrainHeights().last().value<double>();
         for (int heightIndex=0; heightIndex<segment->amslTerrainHeights().count(); heightIndex++) {
             if (heightIndex == 0) {
                 // First point
@@ -255,6 +259,14 @@ void TerrainProfile::_addFlightPoints(FlightPathSegment* segment, double current
                 terrainDistance += segment->distanceBetween();
             }
 
+            // Terrain clearance ramps linearly from origin AGL to destination AGL (ArduPilot AC_WPNav terrain offset).
+            // The last sample is pinned to the destination clearance: accumulated sample distance can drift from
+            // totalDistance, and a zero-length leg would otherwise never reach it.
+            const bool lastSample = heightIndex == segment->amslTerrainHeights().count() - 1;
+            const double fraction =
+                lastSample ? 1.0 : (totalDistance > 0 ? qMin(terrainDistance / totalDistance, 1.0) : 0.0);
+            const double distanceToSurface =
+                beginDistanceToSurface + ((endDistanceToSurface - beginDistanceToSurface) * fraction);
             const double amslTerrainHeight = (segment->amslTerrainHeights()[heightIndex].value<double>() + distanceToSurface) * _verticalScale;
             points.append(QPointF((currentDistance + terrainDistance) * _horizontalScale, amslTerrainHeight));
         }

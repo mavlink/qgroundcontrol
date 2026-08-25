@@ -492,12 +492,9 @@ void MissionControllerTest::_testFlightPathSegmentCacheReuse()
     QCOMPARE(settingsItem->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeTakeoff);
     QCOMPARE(spacerItem->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeGeneric);
 
-    // Change frames/command underneath the cached segments. Segment type is CONSTANT, so the
-    // next recalc must recreate these segments rather than reuse the stale-typed ones.
-    wp3->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameTerrain);
-    wp4->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameTerrain);
-    landWp->setCommand(MAV_CMD_NAV_LAND);
-
+    // Change frames/command underneath the cached segments. Segment type is CONSTANT, so these
+    // changes schedule a recalc that must recreate the affected segments rather than reuse the
+    // stale-typed ones, without needing any structural edit.
     FlightPathSegment* staleWp3Wp4 = wp3->simpleFlightPathSegment();
     FlightPathSegment* staleWp4Land = wp4->simpleFlightPathSegment();
     QVERIFY(staleWp3Wp4);
@@ -510,7 +507,28 @@ void MissionControllerTest::_testFlightPathSegmentCacheReuse()
     const quintptr staleWp3Wp4Ptr = quintptr(staleWp3Wp4);
     const quintptr staleWp4LandPtr = quintptr(staleWp4Land);
 
-    // Removing the spacer triggers a recalc: pairs whose computed type changed must be
+    wp3->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameTerrain);
+    wp4->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameTerrain);
+    landWp->setCommand(MAV_CMD_NAV_LAND);
+
+    QTRY_VERIFY_WITH_TIMEOUT(quintptr(wp3->simpleFlightPathSegment()) != staleWp3Wp4Ptr, TestTimeout::mediumMs());
+    QVERIFY(wp3->simpleFlightPathSegment());
+    QVERIFY(wp4->simpleFlightPathSegment());
+    QCOMPARE(wp3->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeTerrainFrame);
+    // Land item as pair.second overrides the terrain frame of wp4
+    QVERIFY(quintptr(wp4->simpleFlightPathSegment()) != staleWp4LandPtr);
+    QCOMPARE(wp4->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeLand);
+    // Terrain frame comes from the pair's destination item: wp3 is Terrain, so the spacer->wp3 leg is TerrainFrame
+    QVERIFY(spacerItem->simpleFlightPathSegment());
+    QCOMPARE(spacerItem->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeTerrainFrame);
+    // Untouched pairs are reused as-is
+    QCOMPARE(quintptr(settingsItem->simpleFlightPathSegment()), preRecalcHomeTakeoffPtr);
+    QCOMPARE(settingsItem->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeTakeoff);
+
+    const quintptr postFrameChangeWp3Ptr = quintptr(wp3->simpleFlightPathSegment());
+    const quintptr postFrameChangeWp4Ptr = quintptr(wp4->simpleFlightPathSegment());
+
+    // Removing the spacer triggers a structural recalc: pairs whose computed type changed must be
     // recreated with the new type, pairs whose type is unchanged must be reused.
     _missionController->removeVisualItem(2);
     QCOMPARE_TRUE_WAIT(segments->count(), 4, TestTimeout::mediumMs());
@@ -521,12 +539,11 @@ void MissionControllerTest::_testFlightPathSegmentCacheReuse()
     QVERIFY(wp4->simpleFlightPathSegment());
     QCOMPARE(quintptr(settingsItem->simpleFlightPathSegment()), preRecalcHomeTakeoffPtr);
     QCOMPARE(settingsItem->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeTakeoff);
-    // Terrain frame comes from the pair's first item: takeoff item is Relative, so still Generic
-    QCOMPARE(takeoffItem->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeGeneric);
-    QVERIFY(quintptr(wp3->simpleFlightPathSegment()) != staleWp3Wp4Ptr);
+    // The new takeoff->wp3 leg arrives at a terrain-frame item
+    QCOMPARE(takeoffItem->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeTerrainFrame);
+    QCOMPARE(quintptr(wp3->simpleFlightPathSegment()), postFrameChangeWp3Ptr);
     QCOMPARE(wp3->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeTerrainFrame);
-    // Land item as pair.second overrides the terrain frame of wp4
-    QVERIFY(quintptr(wp4->simpleFlightPathSegment()) != staleWp4LandPtr);
+    QCOMPARE(quintptr(wp4->simpleFlightPathSegment()), postFrameChangeWp4Ptr);
     QCOMPARE(wp4->simpleFlightPathSegment()->segmentType(), FlightPathSegment::SegmentTypeLand);
 
     const quintptr segHomeTakeoffPtr = quintptr(settingsItem->simpleFlightPathSegment());
