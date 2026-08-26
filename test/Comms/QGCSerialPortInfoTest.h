@@ -15,4 +15,5 @@ private slots:
     void _testBoardTypeStringRoundTrip();
     void _testBoardInfoListEntriesAreWellFormed();
     void _testFallbackRegexesCompile();
+    void _testDroneerX6BoardInfo();
 };

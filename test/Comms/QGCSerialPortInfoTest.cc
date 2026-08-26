@@ -2,6 +2,8 @@
 
 #include "QGCSerialPortInfo.h"
 
+#include <algorithm>
+
 void QGCSerialPortInfoTest::_testLoadJsonData()
 {
     QVERIFY(!QGCSerialPortInfo::_jsonLoaded);
@@ -119,6 +121,35 @@ void QGCSerialPortInfoTest::_testFallbackRegexesCompile()
                  qPrintable(QStringLiteral("invalid manufacturer regex: %1")
                                 .arg(entry.regExp.pattern())));
     }
+}
+
+void QGCSerialPortInfoTest::_testDroneerX6BoardInfo()
+{
+    QVERIFY(QGCSerialPortInfo::_loadJsonData());
+
+    const auto boardIt = std::find_if(
+        QGCSerialPortInfo::_boardInfoList.cbegin(),
+        QGCSerialPortInfo::_boardInfoList.cend(),
+        [](const QGCSerialPortInfo::BoardInfo_t &entry) {
+            return entry.vendorId == 0x1209 && entry.productId == 0x2057;
+        });
+
+    QVERIFY(boardIt != QGCSerialPortInfo::_boardInfoList.cend());
+    QCOMPARE(boardIt->boardType, QGCSerialPortInfo::BoardTypePixhawk);
+    QCOMPARE(boardIt->name, QStringLiteral("Droneer X6"));
+
+    const auto descriptionMatches = [](const QString &description) {
+        return std::any_of(
+            QGCSerialPortInfo::_boardDescriptionFallbackList.cbegin(),
+            QGCSerialPortInfo::_boardDescriptionFallbackList.cend(),
+            [&description](const QGCSerialPortInfo::BoardRegExpFallback_t &entry) {
+                return entry.boardType == QGCSerialPortInfo::BoardTypePixhawk
+                    && entry.regExp.match(description).hasMatch();
+            });
+    };
+
+    QVERIFY(descriptionMatches(QStringLiteral("Droneer X6.x")));
+    QVERIFY(descriptionMatches(QStringLiteral("Droneer BL X6.x")));
 }
 
 UT_REGISTER_TEST(QGCSerialPortInfoTest, TestLabel::Unit, TestLabel::Comms)
