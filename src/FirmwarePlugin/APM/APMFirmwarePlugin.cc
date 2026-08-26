@@ -1066,8 +1066,8 @@ void APMFirmwarePlugin::startTakeoff(Vehicle *vehicle) const
 
 void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
 {
-    if (vehicle->flying()) {
-        // Vehicle already in the air, we just need to switch to auto
+    if (vehicle->flying() || vehicle->armed()) {
+        // Vehicle already in the air or armed, we just need to switch to auto
         if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
             QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
         }
