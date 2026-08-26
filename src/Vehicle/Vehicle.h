@@ -548,9 +548,6 @@ public:
     void startCalibration   (QGCMAVLink::CalibrationType calType);
     void stopCalibration    (bool showError);
 
-    void startUAVCANBusConfig(void);
-    void stopUAVCANBusConfig(void);
-
     FactGroup* vehicleFactGroup             () { return _vehicleFactGroup; }
     FactGroup* gpsFactGroup                 ();
     FactGroup* gps2FactGroup                ();

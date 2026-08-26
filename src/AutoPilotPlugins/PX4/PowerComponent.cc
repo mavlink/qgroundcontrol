@@ -15,7 +15,7 @@ QString PowerComponent::name(void) const
 
 QString PowerComponent::description(void) const
 {
-    return tr("Configure battery parameters, ESC calibration, and UAVCAN bus settings.");
+    return tr("Configure battery parameters and ESC calibration.");
 }
 
 QString PowerComponent::iconResource(void) const
