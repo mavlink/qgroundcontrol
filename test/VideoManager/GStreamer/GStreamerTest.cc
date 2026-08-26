@@ -460,6 +460,69 @@ void GStreamerTest::_testCreateVideoReceiver()
     QVERIFY(qobject_cast<GstVideoReceiver*>(receiver.get()));
 }
 
+void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()
+{
+    QTest::addColumn<QString>("capsString");
+    QTest::addColumn<int>("format");
+
+    constexpr const char* h264Caps = "video/x-h264,stream-format=byte-stream,alignment=au";
+    constexpr const char* h265Caps = "video/x-h265,stream-format=byte-stream,alignment=au";
+
+    QTest::newRow("h264-mkv") << QString::fromLatin1(h264Caps) << int(VideoReceiver::FILE_FORMAT_MKV);
+    QTest::newRow("h264-mov") << QString::fromLatin1(h264Caps) << int(VideoReceiver::FILE_FORMAT_MOV);
+    QTest::newRow("h264-mp4") << QString::fromLatin1(h264Caps) << int(VideoReceiver::FILE_FORMAT_MP4);
+    QTest::newRow("h265-mkv") << QString::fromLatin1(h265Caps) << int(VideoReceiver::FILE_FORMAT_MKV);
+    QTest::newRow("h265-mov") << QString::fromLatin1(h265Caps) << int(VideoReceiver::FILE_FORMAT_MOV);
+    QTest::newRow("h265-mp4") << QString::fromLatin1(h265Caps) << int(VideoReceiver::FILE_FORMAT_MP4);
+}
+
+void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
+{
+    QFETCH(QString, capsString);
+    QFETCH(int, format);
+
+    const auto fileFormat = static_cast<VideoReceiver::FILE_FORMAT>(format);
+    const char* parserFactory = capsString.startsWith(QLatin1String("video/x-h265")) ? "h265parse" : "h264parse";
+    const char* muxerFactory = (fileFormat == VideoReceiver::FILE_FORMAT_MKV)
+                                   ? "matroskamux"
+                                   : ((fileFormat == VideoReceiver::FILE_FORMAT_MOV) ? "qtmux" : "mp4mux");
+
+    for (const char* factoryName : {"capsfilter", parserFactory, "splitmuxsink", muxerFactory}) {
+        GstElementFactory* factory = gst_element_factory_find(factoryName);
+        if (!factory) {
+            QSKIP(qPrintable(
+                QStringLiteral("Required GStreamer factory is unavailable: %1").arg(QString::fromLatin1(factoryName))));
+        }
+        gst_object_unref(factory);
+    }
+
+    const QByteArray capsUtf8 = capsString.toUtf8();
+    GstCaps* inputCaps = gst_caps_from_string(capsUtf8.constData());
+    QVERIFY(inputCaps);
+
+    GstElement* source = nullptr;
+    GstElement* sink = nullptr;
+    bool linked = false;
+    const auto cleanup = qScopeGuard([&]() {
+        if (linked) {
+            gst_element_unlink(source, sink);
+        }
+        gst_clear_object(&sink);
+        gst_clear_object(&source);
+        gst_clear_caps(&inputCaps);
+    });
+
+    source = gst_element_factory_make("capsfilter", nullptr);
+    QVERIFY(source);
+    g_object_set(source, "caps", inputCaps, nullptr);
+
+    sink = GstVideoReceiver::_makeFileSink(QStringLiteral("recording-test"), fileFormat, inputCaps);
+    QVERIFY(sink);
+
+    linked = gst_element_link(source, sink);
+    QVERIFY2(linked, qPrintable(QStringLiteral("Recording sink rejected %1").arg(capsString)));
+}
+
 void GStreamerTest::_testBindDebugLevelFactRejectsNullContext()
 {
     Fact fact;
@@ -519,6 +582,15 @@ QGC_GST_SKIP_TEST(_testEnvironmentSetup)
 QGC_GST_SKIP_TEST(_testWritePipelineDotReturnsEmptyOnWriteFailure)
 QGC_GST_SKIP_TEST(_testCompleteInit)
 QGC_GST_SKIP_TEST(_testCreateVideoReceiver)
+
+void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()
+{
+    QTest::addColumn<QString>("capsString");
+    QTest::addColumn<int>("format");
+    QTest::newRow("gstreamer-disabled") << QString() << 0;
+}
+
+QGC_GST_SKIP_TEST(_testRecordingSinkAcceptsElementaryStreams)
 QGC_GST_SKIP_TEST(_testBindDebugLevelFactRejectsNullContext)
 QGC_GST_SKIP_TEST(_testRuntimeVersionCheck)
 QGC_GST_SKIP_TEST(_testAppsinkFrameDelivery)
