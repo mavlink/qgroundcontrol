@@ -13,27 +13,9 @@ void PowerComponentController::calibrateEsc(void)
     _vehicle->startCalibration(QGCMAVLink::CalibrationEsc);
 }
 
-void PowerComponentController::startBusConfigureActuators(void)
-{
-    _warningMessages.clear();
-    connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
-    _vehicle->startUAVCANBusConfig();
-}
-
-void PowerComponentController::stopBusConfigureActuators(void)
-{
-    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
-    _vehicle->stopUAVCANBusConfig();
-}
-
 void PowerComponentController::_stopCalibration(void)
 {
     disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
-}
-
-void PowerComponentController::_stopBusConfig(void)
-{
-    _stopCalibration();
 }
 
 void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text, const QString &description)
@@ -111,25 +93,6 @@ void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* c
 
     QString warningPrefix("config warning: ");
     if (text.startsWith(warningPrefix)) {
-        _warningMessages << text.right(text.length() - warningPrefix.length());
-    }
-
-    QString busFailedPrefix("bus conf fail:");
-    if (text.startsWith(busFailedPrefix)) {
-
-        _stopBusConfig();
-        emit calibrationFailed(text.right(text.length() - failedPrefix.length()));
-        return;
-    }
-
-    if (text.startsWith(calCompletePrefix)) {
-        _stopBusConfig();
-        emit calibrationSuccess(_warningMessages);
-        return;
-    }
-
-    QString busWarningPrefix("bus conf warn: ");
-    if (text.startsWith(busWarningPrefix)) {
         _warningMessages << text.right(text.length() - warningPrefix.length());
     }
 }

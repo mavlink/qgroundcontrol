@@ -2413,22 +2413,6 @@ void Vehicle::stopCalibration(bool showError)
                    0);                                // unused
 }
 
-void Vehicle::startUAVCANBusConfig(void)
-{
-    sendMavCommand(defaultComponentId(),        // target component
-                   MAV_CMD_PREFLIGHT_UAVCAN,    // command id
-                   true,                        // showError
-                   1);                          // start config
-}
-
-void Vehicle::stopUAVCANBusConfig(void)
-{
-    sendMavCommand(defaultComponentId(),        // target component
-                   MAV_CMD_PREFLIGHT_UAVCAN,    // command id
-                   true,                        // showError
-                   0);                          // stop config
-}
-
 void Vehicle::setSoloFirmware(bool soloFirmware)
 {
     if (soloFirmware != _soloFirmware) {

@@ -5,13 +5,6 @@
         "QGroundControl.AutoPilotPlugins.PX4"
     ],
     "controllerType": "PowerComponentController",
-    "params": {
-        "_uavcanEnable": "UAVCAN_ENABLE",
-        "_uavcanAvailable": {
-            "name": "UAVCAN_ENABLE",
-            "existsOnly": true
-        }
-    },
     "sections": [
         {
             "title": "Battery",
@@ -120,52 +113,6 @@
                     "dialogButton": {
                         "text": "Calibrate",
                         "dialogComponent": "ESCCalibrationDialog"
-                    }
-                }
-            ]
-        },
-        {
-            "title": "UAVCAN Bus Configuration",
-            "keywords": [
-                "uavcan",
-                "can bus",
-                "dronecan",
-                "esc",
-                "node"
-            ],
-            "image": "/qmlimages/Gears.svg",
-            "showWhen": "_uavcanAvailable && _uavcanEnable.rawValue !== 0",
-            "controls": [
-                {
-                    "param": "UAVCAN_ENABLE",
-                    "label": "UAVCAN",
-                    "control": "combobox"
-                },
-                {
-                    "control": "label",
-                    "label": "WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.",
-                    "warning": true
-                },
-                {
-                    "control": "label",
-                    "label": "ESC parameters will only be accessible in the editor after assignment."
-                },
-                {
-                    "control": "label",
-                    "label": "Start the process, then turn each motor into its turn direction, in the order of their motor indices."
-                },
-                {
-                    "control": "actionButton",
-                    "actionButton": {
-                        "text": "Start Assignment",
-                        "onClicked": "controller.startBusConfigureActuators()"
-                    }
-                },
-                {
-                    "control": "actionButton",
-                    "actionButton": {
-                        "text": "Stop Assignment",
-                        "onClicked": "controller.stopBusConfigureActuators()"
                     }
                 }
             ]
