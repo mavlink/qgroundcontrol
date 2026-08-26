@@ -24,6 +24,8 @@ private slots:
     void _testWritePipelineDotReturnsEmptyOnWriteFailure();
     void _testCompleteInit();
     void _testCreateVideoReceiver();
+    void _testRecordingSinkAcceptsElementaryStreams_data();
+    void _testRecordingSinkAcceptsElementaryStreams();
     void _testBindDebugLevelFactRejectsNullContext();
     void _testRuntimeVersionCheck();
     void _testAppsinkFrameDelivery();
