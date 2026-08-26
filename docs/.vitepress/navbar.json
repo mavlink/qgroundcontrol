@@ -1,0 +1,99 @@
+{
+  "nav": [
+    {
+      "text": "QGroundControl",
+      "items": [
+        {
+          "text": "Website",
+          "link": "http://qgroundcontrol.com/",
+          "ariaLabel": "QGC website link"
+        },
+        {
+          "text": "Download QGC (stable)",
+          "link": "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/getting_started/download_and_install.html",
+          "ariaLabel": "Download stable QGC"
+        },
+        {
+          "text": "Download QGC (daily build)",
+          "link": "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.html",
+          "ariaLabel": "Download stable QGC"
+        },
+        {
+          "text": "Source Code",
+          "link": "https://github.com/mavlink/qgroundcontrol"
+        },
+        {
+          "text": "Docs Source Code",
+          "link": "https://github.com/mavlink/qgroundcontrol/tree/master/docs"
+        }
+      ]
+    },
+    {
+      "text": "Flight Stacks",
+      "items": [
+        {
+          "text": "PX4",
+          "link": "https://docs.px4.io/en/",
+          "ariaLabel": "PX4 docs link"
+        },
+        {
+          "text": "ArduPilot",
+          "link": "http://ardupilot.org",
+          "ariaLabel": "ArduPilot site link"
+        }
+      ]
+    },
+    {
+      "text": "Dronecode",
+      "items": [
+        {
+          "text": "PX4",
+          "link": "https://px4.io/",
+          "ariaLabel": "PX4 website link"
+        },
+        {
+          "text": "QGroundControl",
+          "link": "http://qgroundcontrol.com/"
+        },
+        {
+          "text": "MAVSDK",
+          "link": "https://mavsdk.mavlink.io/"
+        },
+        {
+          "text": "MAVLINK",
+          "link": "https://mavlink.io/en/"
+        },
+        {
+          "text": "Dronecode Camera Manager",
+          "link": "https://camera-manager.dronecode.org/en/"
+        }
+      ]
+    },
+    {
+      "text": "Support",
+      "link": "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/support/support.html"
+    },
+    {
+      "text": "Version",
+      "preservePath": true,
+      "items": [
+        {
+          "text": "master",
+          "link": "https://docs.qgroundcontrol.com/master/en/"
+        },
+        {
+          "text": "v5.1",
+          "link": "https://docs.qgroundcontrol.com/Stable_V5.1/en/"
+        },
+        {
+          "text": "v5.0",
+          "link": "https://docs.qgroundcontrol.com/Stable_V5.0/en/"
+        },
+        {
+          "text": "v4.4",
+          "link": "https://docs.qgroundcontrol.com/Stable_V4.4/en/"
+        }
+      ]
+    }
+  ]
+}
