@@ -9,7 +9,8 @@
         "start": "yarn docs:dev"
     },
     "dependencies": {
-        "vitepress": "^1.6.3"
+        "vitepress": "^1.6.4",
+        "vp-dynamic-nav": "^0.2.0"
     },
     "license": "CC-BY-4.0",
     "repository": {

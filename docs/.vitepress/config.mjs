@@ -1,13 +1,22 @@
 const getSidebar = require("./get_sidebar.js");
 import { defineConfig } from "vitepress";
+import navbarData from "./navbar.json";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "QGC Guide (v5.0)",
+  title: process.env.BRANCH_NAME
+    ? `QGC Guide (${process.env.BRANCH_NAME})`
+    : "QGC Guide",
   description:
     "How to use and develop QGroundControl for PX4 or ArduPilot powered vehicles.",
   ignoreDeadLinks: true, // Do this for stable, where we don't yet have all translations
   base: process.env.BRANCH_NAME ? "/" + process.env.BRANCH_NAME + "/" : "",
+
+  vite: {
+    ssr: {
+      noExternal: ["vp-dynamic-nav"],
+    },
+  },
 
   head: [
     [
@@ -77,102 +86,9 @@ export default defineConfig({
       provider: "local",
     },
 
-    nav: [
-      {
-        text: "QGroundControl",
-        items: [
-          {
-            text: "Website",
-            link: "http://qgroundcontrol.com/",
-            ariaLabel: "QGC website link",
-          },
-          {
-            text: "Download QGC (stable)",
-            link: "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/getting_started/download_and_install.html",
-            ariaLabel: "Download stable QGC",
-          },
-          {
-            text: "Download QGC (daily build)",
-            link: "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/releases/daily_builds.html",
-            ariaLabel: "Download stable QGC",
-          },
-          {
-            text: "Source Code",
-            link: "https://github.com/mavlink/qgroundcontrol",
-          },
-          {
-            text: "Docs Source Code",
-            link: "https://github.com/mavlink/qgroundcontrol/tree/master/docs",
-          },
-        ],
-      },
-      {
-        text: "Flight Stacks",
-        items: [
-          {
-            text: "PX4",
-            link: "https://docs.px4.io/en/",
-            ariaLabel: "PX4 docs link",
-          },
-          {
-            text: "ArduPilot",
-            link: "http://ardupilot.org",
-            ariaLabel: "ArduPilot site link",
-          },
-        ],
-      },
-      {
-        text: "Dronecode",
-        items: [
-          {
-            text: "PX4",
-            link: "https://px4.io/",
-            ariaLabel: "PX4 website link",
-          },
-          {
-            text: "QGroundControl",
-            link: "http://qgroundcontrol.com/",
-          },
-          {
-            text: "MAVSDK",
-            link: "https://mavsdk.mavlink.io/",
-          },
-          {
-            text: "MAVLINK",
-            link: "https://mavlink.io/en/",
-          },
-          {
-            text: "Dronecode Camera Manager",
-            link: "https://camera-manager.dronecode.org/en/",
-          },
-        ],
-      },
-      {
-        text: "Support",
-        link: "https://docs.qgroundcontrol.com/master/en/qgc-user-guide/support/support.html",
-      },
-      {
-        text: "Version",
-        items: [
-          {
-            text: "master",
-            link: "https://docs.qgroundcontrol.com/master/en/",
-          },
-          {
-            text: "v5.1",
-            link: "https://docs.qgroundcontrol.com/Stable_V5.1/en/",
-          },
-          {
-            text: "v5.0",
-            link: "https://docs.qgroundcontrol.com/Stable_V5.0/en/",
-          },
-          {
-            text: "v4.4",
-            link: "https://docs.qgroundcontrol.com/Stable_V4.4/en/",
-          },
-        ],
-      },
-    ],
+    dynamicNavUrl:
+      "https://raw.githubusercontent.com/mavlink/qgroundcontrol/master/docs/.vitepress/navbar.json",
+    dynamicNavInitial: navbarData.nav,
 
     socialLinks: [
       { icon: "github", link: "https://github.com/mavlink/qgroundcontrol" },
