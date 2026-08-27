@@ -180,6 +180,7 @@ Rectangle {
 
         ColumnLayout {
             id:         buttonColumn
+            width:      buttonList.width
             spacing:    0
 
             Repeater {
