@@ -59,6 +59,103 @@ QList<MockLink::FlightMode_t> MockLink::_availableFlightModes = {
     { "MockLink Mode (delayed)",0,                          PX4CustomMode::AUTO_FOLLOW_TARGET,  true,       false},
 };
 
+// The ArduPilot lists below mirror the availableFlightModes lists in the corresponding
+// firmware plugins (names and custom mode values must match) so that StandardModes streaming
+// results in the same mode names the plugins use.
+QList<MockLink::FlightMode_t> MockLink::_apmCopterAvailableFlightModes = {
+    // Mode Name          Standard Mode   Custom Mode     CanBeSet    adv
+    { "Stabilize",        0,              0,              true,       true },
+    { "Acro",             0,              1,              true,       true },
+    { "Altitude Hold",    0,              2,              true,       true },
+    { "Auto",             0,              3,              true,       true },
+    { "Guided",           0,              4,              true,       true },
+    { "Loiter",           0,              5,              true,       true },
+    { "RTL",              0,              6,              true,       true },
+    { "Circle",           0,              7,              true,       true },
+    { "Land",             0,              9,              true,       true },
+    { "Drift",            0,              11,             true,       true },
+    { "Sport",            0,              13,             true,       true },
+    { "Flip",             0,              14,             true,       true },
+    { "Autotune",         0,              15,             true,       true },
+    { "Position Hold",    0,              16,             true,       true },
+    { "Brake",            0,              17,             true,       true },
+    { "Throw",            0,              18,             true,       true },
+    { "Avoid ADSB",       0,              19,             true,       true },
+    { "Guided No GPS",    0,              20,             true,       true },
+    { "Smart RTL",        0,              21,             true,       true },
+    { "Flow Hold",        0,              22,             true,       true },
+    { "Follow",           0,              23,             true,       true },
+    { "ZigZag",           0,              24,             true,       true },
+    { "SystemID",         0,              25,             true,       true },
+    { "AutoRotate",       0,              26,             true,       true },
+    { "AutoRTL",          0,              27,             true,       true },
+    { "Turtle",           0,              28,             true,       true },
+};
+
+QList<MockLink::FlightMode_t> MockLink::_apmPlaneAvailableFlightModes = {
+    // Mode Name              Standard Mode   Custom Mode     CanBeSet    adv
+    { "Manual",               0,              0,              true,       true },
+    { "Circle",               0,              1,              true,       true },
+    { "Stabilize",            0,              2,              true,       true },
+    { "Training",             0,              3,              true,       true },
+    { "Acro",                 0,              4,              true,       true },
+    { "FBW A",                0,              5,              true,       true },
+    { "FBW B",                0,              6,              true,       true },
+    { "Cruise",               0,              7,              true,       true },
+    { "Autotune",             0,              8,              true,       true },
+    { "Auto",                 0,              10,             true,       true },
+    { "RTL",                  0,              11,             true,       true },
+    { "Loiter",               0,              12,             true,       true },
+    { "Takeoff",              0,              13,             true,       true },
+    { "Avoid ADSB",           0,              14,             true,       true },
+    { "Guided",               0,              15,             true,       true },
+    { "Initializing",         0,              16,             false,      true },
+    { "QuadPlane Stabilize",  0,              17,             true,       true },
+    { "QuadPlane Hover",      0,              18,             true,       true },
+    { "QuadPlane Loiter",     0,              19,             true,       true },
+    { "QuadPlane Land",       0,              20,             true,       true },
+    { "QuadPlane RTL",        0,              21,             true,       true },
+    { "QuadPlane AutoTune",   0,              22,             true,       true },
+    { "QuadPlane Acro",       0,              23,             true,       true },
+    { "Thermal",              0,              24,             true,       true },
+    { "Loiter to QLand",      0,              25,             true,       true },
+    { "Autoland",             0,              26,             true,       true },
+};
+
+QList<MockLink::FlightMode_t> MockLink::_apmRoverAvailableFlightModes = {
+    // Mode Name          Standard Mode   Custom Mode     CanBeSet    adv
+    { "Manual",           0,              0,              true,       true },
+    { "Acro",             0,              1,              true,       true },
+    { "Learning",         0,              2,              false,      true },
+    { "Steering",         0,              3,              true,       true },
+    { "Hold",             0,              4,              true,       true },
+    { "Loiter",           0,              5,              true,       true },
+    { "Follow",           0,              6,              true,       true },
+    { "Simple",           0,              7,              true,       true },
+    { "Dock",             0,              8,              true,       true },
+    { "Circle",           0,              9,              true,       true },
+    { "Auto",             0,              10,             true,       true },
+    { "RTL",              0,              11,             true,       true },
+    { "Smart RTL",        0,              12,             true,       true },
+    { "Guided",           0,              15,             true,       true },
+    { "Initializing",     0,              16,             false,      true },
+};
+
+QList<MockLink::FlightMode_t> MockLink::_apmSubAvailableFlightModes = {
+    // Mode Name          Standard Mode   Custom Mode     CanBeSet    adv
+    { "Manual",           0,              19,             true,       true },
+    { "Stabilize",        0,              0,              true,       true },
+    { "Acro",             0,              1,              true,       true },
+    { "Depth Hold",       0,              2,              true,       true },
+    { "Auto",             0,              3,              true,       true },
+    { "Guided",           0,              4,              true,       true },
+    { "Circle",           0,              7,              true,       true },
+    { "Surface",          0,              9,              true,       true },
+    { "Position Hold",    0,              16,             true,       true },
+    { "Motor Detection",  0,              20,             false,      true },
+    { "Surftrak",         0,              21,             true,       true },
+};
+
 MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     : LinkInterface(config, parent)
     , _mockConfig(qobject_cast<const MockConfiguration*>(_config.get()))
@@ -697,6 +794,10 @@ void MockLink::_applyAPMFreshFlashState()
 
 void MockLink::_sendHeartBeat()
 {
+    // Like real firmware: ACTIVE while airborne, STANDBY on the ground (same condition as
+    // EXTENDED_SYS_STATE landed state, and what ArduPilot's flying detection in QGC keys off)
+    const uint8_t mavState = (_vehicleAltitudeAMSL > _defaultVehicleHomeAltitude) ? MAV_STATE_ACTIVE : MAV_STATE_STANDBY;
+
     mavlink_message_t msg{};
     (void) mavlink_msg_heartbeat_pack_chan(
         _vehicleSystemId,
@@ -707,7 +808,7 @@ void MockLink::_sendHeartBeat()
         _firmwareType,      // MAV_AUTOPILOT
         _mavBaseMode,       // MAV_MODE
         _mavCustomMode,     // custom mode
-        _mavState           // MAV_STATE
+        mavState            // MAV_STATE
     );
     respondWithMavlinkMessage(msg);
 }
@@ -1931,6 +2032,15 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         }
         commandResult = MAV_RESULT_ACCEPTED;
         break;
+    case MAV_CMD_DO_SET_MODE:
+        // Preserve the armed flag like real firmware does
+        _mavBaseMode = (_mavBaseMode & MAV_MODE_FLAG_SAFETY_ARMED) | static_cast<uint8_t>(request.param1);
+        _mavCustomMode = static_cast<uint32_t>(request.param2);
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MAV_CMD_MISSION_START:
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
     case MAV_CMD_PREFLIGHT_CALIBRATION:
         _handlePreFlightCalibration(request);
         commandResult = MAV_RESULT_ACCEPTED;
@@ -2084,6 +2194,15 @@ void MockLink::_handleCommandInt(const mavlink_message_t &msg)
     switch (request.command) {
     case MAV_CMD_DO_SET_ROI_LOCATION:
         // Unit test support: accept ROI commands so tests can verify Vehicle::guidedModeROI
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MAV_CMD_DO_SET_MODE:
+        // Preserve the armed flag like real firmware does
+        _mavBaseMode = (_mavBaseMode & MAV_MODE_FLAG_SAFETY_ARMED) | static_cast<uint8_t>(request.param1);
+        _mavCustomMode = static_cast<uint32_t>(request.param2);
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MAV_CMD_MISSION_START:
         commandResult = MAV_RESULT_ACCEPTED;
         break;
     default:
@@ -2967,8 +3086,8 @@ void MockLink::_handleRequestMessageAvailableModes(const mavlink_command_long_t 
         _availableModesWorkerNextModeIndex = 1; // Start with the first mode in sequence (1-based index)
     } else {
         // Request for specific mode
-        if (request.param2 > _availableFlightModes.count()) {
-            qCWarning(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: requested mode index out of range" << request.param2 << _availableFlightModes.count();
+        if (request.param2 < 1 || request.param2 > _flightModeList().count()) {
+            qCWarning(MockLinkLog) << "MAVLINK_MSG_ID_AVAILABLE_MODES: requested mode index out of range" << request.param2 << _flightModeList().count();
             accepted = false;
             return;
         }
@@ -3143,14 +3262,14 @@ MockLinkFTP *MockLink::mockLinkFTP() const
 
 void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
 {
-    if (modeIndexOneBased > _availableModesCount()) {
+    if (modeIndexOneBased < 1 || modeIndexOneBased > _availableModesCount()) {
         qCWarning(MockLinkLog) << "modeIndexOneBased out of range" << modeIndexOneBased << _availableModesCount();
         return;
     }
 
     qCDebug(MockLinkLog) << "_sendAvailableMode modeIndexOneBased:" << modeIndexOneBased;
 
-    const FlightMode_t &availableMode = _availableFlightModes[modeIndexOneBased - 1];
+    const FlightMode_t &availableMode = _flightModeList()[modeIndexOneBased - 1];
     char modeName[MAVLINK_MSG_AVAILABLE_MODES_FIELD_MODE_NAME_LEN] = {};
     std::strncpy(modeName, availableMode.name, sizeof(modeName) - 1);
 
@@ -3207,7 +3326,28 @@ void MockLink::_sendAvailableModesMonitor()
 
 int MockLink::_availableModesCount() const
 {
-    return _availableFlightModes.count() - (_availableModesMonitorSeqNumber == 0 ? 1 : 0); // Exclude the delayed mode
+    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        return _flightModeList().count();
+    }
+    return _flightModeList().count() - (_availableModesMonitorSeqNumber == 0 ? 1 : 0); // Exclude the delayed mode
+}
+
+const QList<MockLink::FlightMode_t> &MockLink::_flightModeList() const
+{
+    if (_firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        return _availableFlightModes;
+    }
+
+    switch (_vehicleType) {
+    case MAV_TYPE_FIXED_WING:
+        return _apmPlaneAvailableFlightModes;
+    case MAV_TYPE_GROUND_ROVER:
+        return _apmRoverAvailableFlightModes;
+    case MAV_TYPE_SUBMARINE:
+        return _apmSubAvailableFlightModes;
+    default:
+        return _apmCopterAvailableFlightModes;
+    }
 }
 
 // ---------------------------------------------------------------------------

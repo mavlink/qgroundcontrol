@@ -387,7 +387,6 @@ private:
 
     uint8_t _mavBaseMode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     uint32_t _mavCustomMode = PX4CustomMode::MANUAL;
-    uint8_t _mavState = MAV_STATE_STANDBY;
 
     QElapsedTimer _runningTime;
     static constexpr int kTestParamRequestListBatch = 25;
@@ -541,6 +540,13 @@ private:
     };
 
     static QList<FlightMode_t> _availableFlightModes;
+    static QList<FlightMode_t> _apmCopterAvailableFlightModes;
+    static QList<FlightMode_t> _apmPlaneAvailableFlightModes;
+    static QList<FlightMode_t> _apmRoverAvailableFlightModes;
+    static QList<FlightMode_t> _apmSubAvailableFlightModes;
+
+    /// Returns the flight mode list appropriate for the simulated firmware/vehicle type
+    const QList<FlightMode_t> &_flightModeList() const;
 
     std::atomic<bool> _disconnectedEmitted{false};
 };
