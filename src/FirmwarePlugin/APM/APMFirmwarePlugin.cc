@@ -1074,30 +1074,34 @@ void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
         return;
     }
 
-    if (!vehicle->armed()) {
-        // First switch to flight mode we can arm from
-        // In Ardupilot for vtols and airplanes we need to set the mode to auto and then arm, otherwise if arming in guided
-        // If the vehicle has tilt rotors, it will arm them in forward flight position, being dangerous.
-        if (vehicle->fixedWing()) {
-            if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
-                QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
-                return;
-            }
-        } else {
+    // If we get here vehicle is assumed to be on the ground (it may or may not be already armed)
+
+    if (vehicle->fixedWing() || vehicle->vtol()) {
+        // Plane/VTOL starts the mission from Auto mode. Set the mode before arming, since arming in Guided
+        // with tilt rotors would arm them in forward flight position, being dangerous.
+        if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
+            QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
+            return;
+        }
+
+        if (!vehicle->armed() && !_armVehicleAndValidate(vehicle)) {
+            QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to arm."));
+            return;
+        }
+    } else {
+        // All other vehicle types arm in Guided and start the mission with MAV_CMD_MISSION_START
+        if (!vehicle->armed()) {
             if (!_setFlightModeAndValidate(vehicle, guidedFlightMode())) {
                 QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to change to Guided mode."));
                 return;
             }
+
+            if (!_armVehicleAndValidate(vehicle)) {
+                QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to arm."));
+                return;
+            }
         }
 
-        if (!_armVehicleAndValidate(vehicle)) {
-            QGC::showAppMessage(tr("Unable to start mission: Vehicle failed to arm."));
-            return;
-        }
-    }
-
-    // For non aircraft vehicles, we would be in guided mode, so we need to send the mission start command
-    if (!vehicle->fixedWing()) {
         vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
     }
 }
