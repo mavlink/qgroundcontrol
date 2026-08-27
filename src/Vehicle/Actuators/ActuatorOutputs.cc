@@ -76,6 +76,64 @@ void ActuatorOutput::addSubgroup(ActuatorOutputSubgroup *subgroup)
     emit subgroupsChanged();
 }
 
+void ActuatorOutput::rebuildChannelRows()
+{
+    _channelRows->clearAndDeleteContents();
+    const bool shared = hasSharedTimerGroups();
+    int timerIndex = 0;
+    int gridRow = 1;
+    for (int sgIdx = 0; sgIdx < _subgroups->count(); sgIdx++) {
+        ActuatorOutputSubgroup *subgroup = qobject_cast<ActuatorOutputSubgroup*>(_subgroups->get(sgIdx));
+        if (!subgroup || subgroup->channels()->count() == 0) {
+            continue;
+        }
+        ++timerIndex;
+        const int headerGridRow = shared ? gridRow++ : 0;
+        for (int chIdx = 0; chIdx < subgroup->channels()->count(); chIdx++) {
+            ActuatorOutputChannel *channel = qobject_cast<ActuatorOutputChannel*>(subgroup->channels()->get(chIdx));
+            if (!channel) {
+                continue;
+            }
+            _channelRows->append(new ActuatorChannelRow(this, channel, subgroup->primaryParam(),
+                    chIdx == 0, timerIndex, gridRow, headerGridRow, shared && chIdx == 0));
+            ++gridRow;
+        }
+    }
+    _tableRowCount = gridRow;
+    emit subgroupsChanged();
+}
+
+bool ActuatorOutput::hasPrimaryProtocol() const
+{
+    for (int sgIdx = 0; sgIdx < _subgroups->count(); sgIdx++) {
+        ActuatorOutputSubgroup *subgroup = qobject_cast<ActuatorOutputSubgroup*>(_subgroups->get(sgIdx));
+        if (subgroup && subgroup->primaryParam() && subgroup->primaryParam()->fact()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ActuatorOutput::hasSharedTimerGroups() const
+{
+    for (int sgIdx = 0; sgIdx < _subgroups->count(); sgIdx++) {
+        ActuatorOutputSubgroup *subgroup = qobject_cast<ActuatorOutputSubgroup*>(_subgroups->get(sgIdx));
+        if (subgroup && subgroup->channels()->count() > 1) {
+            return true;
+        }
+    }
+    return false;
+}
+
+QmlObjectListModel* ActuatorOutput::tableChannelConfigs()
+{
+    if (_subgroups->count() == 0) {
+        return nullptr;
+    }
+    ActuatorOutputSubgroup *subgroup = qobject_cast<ActuatorOutputSubgroup*>(_subgroups->get(0));
+    return subgroup ? subgroup->channelConfigs() : nullptr;
+}
+
 void ActuatorOutput::addConfigParam(ConfigParameter *param)
 {
     if (param->function() == ConfigParameter::Function::Enable) {

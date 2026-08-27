@@ -527,6 +527,8 @@ bool Actuators::parseJson(const QJsonDocument &json)
                                 _vehicle->parameterManager(), [this](Fact* fact) { subscribeFact(fact); }));
             }
         }
+
+        currentActuatorOutput->rebuildChannelRows();
     }
 
     _showUi = makeConditionFromValue(QJsonValue(obj), "show-ui-if");

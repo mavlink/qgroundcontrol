@@ -133,6 +133,53 @@ private:
     QmlObjectListModel* _configInstances = new QmlObjectListModel(this); ///< list of ChannelConfigInstance*
 };
 
+/**
+ * One channel in a flattened output table. Channels in the same timer subgroup
+ * share primaryParam so their protocol dropdowns stay in sync.
+ */
+class ActuatorChannelRow : public QObject
+{
+    Q_OBJECT
+public:
+    ActuatorChannelRow(QObject* parent, ActuatorOutputChannel* channel, ConfigParameter* primaryParam,
+            bool firstInGroup, int timerIndex, int gridRow, int headerGridRow, bool showTimerHeader)
+        : QObject(parent)
+        , _channel(channel)
+        , _primaryParam(primaryParam)
+        , _firstInGroup(firstInGroup)
+        , _timerIndex(timerIndex)
+        , _gridRow(gridRow)
+        , _headerGridRow(headerGridRow)
+        , _showTimerHeader(showTimerHeader) {}
+
+    Q_PROPERTY(QString label                    READ label            CONSTANT)
+    Q_PROPERTY(ActuatorOutputChannel* channel   READ channel          CONSTANT)
+    Q_PROPERTY(ConfigParameter* primaryParam    READ primaryParam     CONSTANT)
+    Q_PROPERTY(bool firstInGroup                READ firstInGroup     CONSTANT)
+    Q_PROPERTY(int timerIndex                   READ timerIndex       CONSTANT)
+    Q_PROPERTY(int gridRow                      READ gridRow          CONSTANT)
+    Q_PROPERTY(int headerGridRow                READ headerGridRow    CONSTANT)
+    Q_PROPERTY(bool showTimerHeader             READ showTimerHeader  CONSTANT)
+
+    const QString& label() const { return _channel->label(); }
+    ActuatorOutputChannel* channel() const { return _channel; }
+    ConfigParameter* primaryParam() const { return _primaryParam; }
+    bool firstInGroup() const { return _firstInGroup; }
+    int timerIndex() const { return _timerIndex; }
+    int gridRow() const { return _gridRow; }
+    int headerGridRow() const { return _headerGridRow; }
+    bool showTimerHeader() const { return _showTimerHeader; }
+
+private:
+    ActuatorOutputChannel* _channel{nullptr};
+    ConfigParameter* _primaryParam{nullptr};
+    const bool _firstInGroup;
+    const int _timerIndex{0};
+    const int _gridRow{0};
+    const int _headerGridRow{0};
+    const bool _showTimerHeader{false};
+};
+
 class ActuatorOutputSubgroup : public QObject
 {
     Q_OBJECT
@@ -184,21 +231,32 @@ class ActuatorOutput : public QObject
 public:
     ActuatorOutput(QObject* parent, const QString& label, const Condition& groupVisibilityCondition);
 
-    Q_PROPERTY(QString label                     READ label              CONSTANT)
-    Q_PROPERTY(bool groupsVisible                READ groupsVisible      NOTIFY groupsVisibleChanged)
-    Q_PROPERTY(QmlObjectListModel* subgroups     READ subgroups          NOTIFY subgroupsChanged)
-    Q_PROPERTY(ConfigParameter* enableParam      READ enableParam        CONSTANT)
-    Q_PROPERTY(QmlObjectListModel* configParams  READ configParams       CONSTANT)
-    Q_PROPERTY(QStringList notes                 READ notes              NOTIFY notesChanged)
+    Q_PROPERTY(QString label                            READ label                   CONSTANT)
+    Q_PROPERTY(bool groupsVisible                       READ groupsVisible           NOTIFY groupsVisibleChanged)
+    Q_PROPERTY(QmlObjectListModel* subgroups            READ subgroups               NOTIFY subgroupsChanged)
+    Q_PROPERTY(QmlObjectListModel* channelRows          READ channelRows             CONSTANT)
+    Q_PROPERTY(QmlObjectListModel* tableChannelConfigs  READ tableChannelConfigs     NOTIFY subgroupsChanged)
+    Q_PROPERTY(bool hasPrimaryProtocol                  READ hasPrimaryProtocol      NOTIFY subgroupsChanged)
+    Q_PROPERTY(bool hasSharedTimerGroups                READ hasSharedTimerGroups    NOTIFY subgroupsChanged)
+    Q_PROPERTY(int tableRowCount                        READ tableRowCount           NOTIFY subgroupsChanged)
+    Q_PROPERTY(ConfigParameter* enableParam             READ enableParam             CONSTANT)
+    Q_PROPERTY(QmlObjectListModel* configParams         READ configParams            CONSTANT)
+    Q_PROPERTY(QStringList notes                        READ notes                   NOTIFY notesChanged)
 
     const QString& label() const { return _label; }
 
     QmlObjectListModel* subgroups() { return _subgroups; }
+    QmlObjectListModel* channelRows() { return _channelRows; }
+    QmlObjectListModel* tableChannelConfigs();
+    bool hasPrimaryProtocol() const;
+    bool hasSharedTimerGroups() const;
+    int tableRowCount() const { return _tableRowCount; }
     bool groupsVisible() const { return _groupVisibilityCondition.evaluate(); }
     ConfigParameter* enableParam() const { return _enableParam; }
     QmlObjectListModel* configParams() { return _params; }
 
     void addSubgroup(ActuatorOutputSubgroup* subgroup);
+    void rebuildChannelRows();
 
     void addConfigParam(ConfigParameter* param);
 
@@ -221,6 +279,8 @@ private:
     const QString _label;
     const Condition _groupVisibilityCondition;
     QmlObjectListModel* _subgroups = new QmlObjectListModel(this); ///< list of ActuatorOutputSubgroup*
+    QmlObjectListModel* _channelRows = new QmlObjectListModel(this); ///< list of ActuatorChannelRow*
+    int _tableRowCount{1};
 
     ConfigParameter* _enableParam{nullptr};
     QmlObjectListModel* _params  = new QmlObjectListModel(this); ///< list of ConfigParameter*

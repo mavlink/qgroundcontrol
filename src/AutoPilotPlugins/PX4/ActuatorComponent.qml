@@ -436,12 +436,101 @@ SetupPage {
                             }
 
 
+                            // PWM/timer outputs: one row per channel, protocol as a column.
+                            // Channels that share a timer bind the same primary Fact, so changing
+                            // any protocol dropdown in the group updates the rest.
+                            GridLayout {
+                                id: protocolGrid
+                                visible: selActuatorOutput.actuatorOutput.hasPrimaryProtocol && selActuatorOutput.actuatorOutput.groupsVisible
+                                property var output:            selActuatorOutput.actuatorOutput
+                                property var channelConfigs:    output.tableChannelConfigs
+                                property real groupGap:         ScreenTools.defaultFontPixelHeight / 2
+
+                                rows:       output.tableRowCount
+                                columns:    2 + (channelConfigs ? channelConfigs.count : 0)
+                                columnSpacing: ScreenTools.defaultFontPixelWidth
+                                rowSpacing:    ScreenTools.defaultFontPixelHeight / 6
+
+                                QGCLabel {
+                                    text:           ""
+                                    Layout.row:     0
+                                    Layout.column:  0
+                                }
+                                QGCLabel {
+                                    text:           qsTr("Protocol")
+                                    Layout.row:     0
+                                    Layout.column:  1
+                                }
+                                Repeater {
+                                    model: protocolGrid.channelConfigs
+                                    QGCLabel {
+                                        text:           object.label
+                                        visible:        _showAdvanced || !object.advanced
+                                        Layout.row:     0
+                                        Layout.column:  2 + index
+                                    }
+                                }
+
+                                Repeater {
+                                    model: protocolGrid.output.channelRows
+                                    QGCLabel {
+                                        visible:            object.showTimerHeader
+                                        text:               qsTr("Timer %1").arg(object.timerIndex)
+                                        font.bold:          true
+                                        Layout.row:         object.headerGridRow
+                                        Layout.column:      0
+                                        Layout.columnSpan:  protocolGrid.columns
+                                        Layout.topMargin:   object.timerIndex > 1 ? protocolGrid.groupGap : 0
+                                    }
+                                }
+                                Repeater {
+                                    model: protocolGrid.output.channelRows
+                                    QGCLabel {
+                                        text:               object.label + ":"
+                                        Layout.row:         object.gridRow
+                                        Layout.column:      0
+                                        Layout.alignment:   Qt.AlignVCenter
+                                    }
+                                }
+                                Repeater {
+                                    model: protocolGrid.output.channelRows
+                                    ActuatorFact {
+                                        fact:               object.primaryParam ? object.primaryParam.fact : null
+                                        visible:            object.primaryParam != null
+                                        Layout.row:         object.gridRow
+                                        Layout.column:      1
+                                        Layout.alignment:   Qt.AlignVCenter
+                                    }
+                                }
+                                Repeater {
+                                    model: protocolGrid.output.channelRows
+                                    Repeater {
+                                        property var rowObj:    object
+                                        model:                  object.channel.configInstances
+                                        Item {
+                                            visible:            _showAdvanced || !object.config.advanced
+                                            implicitWidth:      cellFact.visible ? cellFact.implicitWidth : 0
+                                            implicitHeight:     cellFact.visible ? cellFact.implicitHeight : ScreenTools.defaultFontPixelHeight
+                                            Layout.row:         rowObj.gridRow
+                                            Layout.column:      2 + index
+                                            Layout.alignment:   Qt.AlignVCenter
+                                            ActuatorFact {
+                                                id:         cellFact
+                                                fact:       object.fact
+                                                visible:    object.config.visible
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Non-timer outputs (UAVCAN, etc.): keep labeled subgroups.
                             Repeater {
                                 model: selActuatorOutput.actuatorOutput.subgroups
 
                                 ColumnLayout {
                                     property var subgroup: object
-                                    visible:               selActuatorOutput.actuatorOutput.groupsVisible
+                                    visible:               !selActuatorOutput.actuatorOutput.hasPrimaryProtocol && selActuatorOutput.actuatorOutput.groupsVisible
 
                                     RowLayout {
                                         visible: subgroup.label != ""
@@ -465,7 +554,6 @@ SetupPage {
                                             text: ""
                                         }
 
-                                        // param config labels
                                         Repeater {
                                             model: subgroup.channelConfigs
                                             QGCLabel {
@@ -475,7 +563,6 @@ SetupPage {
                                                 Layout.column:  1 + index
                                             }
                                         }
-                                        // param instances
                                         Repeater {
                                             model: subgroup.channels
                                             QGCLabel {
@@ -500,7 +587,6 @@ SetupPage {
                                         }
                                     }
 
-                                    // extra subgroup config params
                                     Repeater {
                                         model: subgroup.configParams
 
@@ -516,6 +602,22 @@ SetupPage {
 
                                 }
                             } // subgroup Repeater
+
+                            Repeater {
+                                model: selActuatorOutput.actuatorOutput.subgroups
+                                visible: selActuatorOutput.actuatorOutput.hasPrimaryProtocol
+                                Repeater {
+                                    model: object.configParams
+                                    RowLayout {
+                                        QGCLabel {
+                                            text: object.label + ":"
+                                        }
+                                        ActuatorFact {
+                                            fact: object.fact
+                                        }
+                                    }
+                                }
+                            }
 
                             // extra actuator config params
                             Repeater {
