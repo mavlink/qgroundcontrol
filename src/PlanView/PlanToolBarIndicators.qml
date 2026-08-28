@@ -46,9 +46,20 @@ RowLayout {
     }
 
     function _openButtonClicked() {
-        if (_saveDirty || _uploadDirty) {
+        // Unsent changes don't matter when offline or when the plan is safely saved to a file
+        let planSafeOnDisk = !_saveDirty && _planMasterController.currentPlanFile !== ""
+        let unsentChanges = _uploadDirty && !_controllerOffline && !planSafeOnDisk
+        if (_saveDirty || unsentChanges) {
+            let msg
+            if (_saveDirty && unsentChanges) {
+                msg = qsTr("You have unsaved/unsent changes. Loading a new Plan will lose these changes. Are you sure?")
+            } else if (_saveDirty) {
+                msg = qsTr("You have unsaved changes. Loading a new Plan will lose these changes. Are you sure?")
+            } else {
+                msg = qsTr("You have unsent changes. Loading a new Plan will lose these changes. Are you sure?")
+            }
             QGroundControl.showMessageDialog(root, qsTr("Open Plan"),
-                                        qsTr("You have unsaved/unsent changes. Loading a new Plan will lose these changes. Are you sure?"),
+                                        msg,
                                         Dialog.Yes | Dialog.Cancel,
                                         function() { _planMasterController.loadFromSelectedFile() } )
         } else {
@@ -57,26 +68,8 @@ RowLayout {
     }
 
     function _saveButtonClicked() {
-        if (_planMasterController.currentPlanFileName === "") {
-            if (_planMasterController.currentPlanFile === "") {
-                // No file and no name typed — open the file dialog
-                _planMasterController.saveToSelectedFile()
-            } else {
-                // Have a file but name was cleared — save to the existing file
-                _planMasterController.saveToCurrent()
-            }
-            return
-        }
-
-        if (_planMasterController.currentPlanFile === "" || _planMasterController.planFileRenamed) {
-            // First save with a typed name, or name was changed since last save
-            let fullName = _planMasterController.currentPlanFileName + "." + _planMasterController.fileExtension
-            let msg = _planMasterController.resolvedPlanFileExists()
-                ? qsTr("'%1' already exists. Overwrite?").arg(fullName)
-                : qsTr("Save as '%1'?").arg(fullName)
-            QGroundControl.showMessageDialog(root, qsTr("Save"), msg,
-                Dialog.Yes | Dialog.No,
-                function() { _planMasterController.saveWithCurrentName() })
+        if (_planMasterController.currentPlanFile === "") {
+            _planMasterController.saveToSelectedFile()
         } else {
             _planMasterController.saveToCurrent()
         }
@@ -152,6 +145,7 @@ RowLayout {
     }
 
     QGCButton {
+        objectName: "planToolbar_hamburgerButton"
         iconSource: "qrc:/qmlimages/Hamburger.svg"
 
         onClicked: {
@@ -178,6 +172,18 @@ RowLayout {
             sourceComponent: Component {
                 ColumnLayout {
                     spacing: ScreenTools.defaultFontPixelHeight / 2
+
+                    QGCButton {
+                        objectName: "planToolbar_saveAsButton"
+                        Layout.fillWidth: true
+                        text: qsTr("Save as...")
+                        enabled: !_syncInProgress && _hasPlanItems
+
+                        onClicked: {
+                            dropPanel.close()
+                            _planMasterController.saveToSelectedFile()
+                        }
+                    }
 
                     QGCButton {
                         Layout.fillWidth: true
