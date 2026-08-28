@@ -538,6 +538,7 @@ void ParameterManager::_ftpDownloadComplete(const QString &fileName, const QStri
     bool continueWithDefaultParameterdownload = true;
     bool immediateRetry = false;
 
+    _ftpDownloadInProgress = false;
     (void) disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
     (void) disconnect(_vehicle->ftpManager(), &FTPManager::commandProgress, this, &ParameterManager::_ftpDownloadProgress);
 
@@ -658,6 +659,11 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
             : componentId;
         _requestHashCheck(hashCheckCompId);
     } else if (_tryftp && ((componentId == MAV_COMP_ID_ALL) || (componentId == MAV_COMP_ID_AUTOPILOT1))) {
+        if (_ftpDownloadInProgress) {
+            // A retry while the file is still transferring would disconnect the completion handler below
+            qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Parameter file download already in progress";
+            return;
+        }
         if (!_initialLoadComplete) {
             _paramRequestListTimer.start();
         }
@@ -669,6 +675,7 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
                                  QStandardPaths::writableLocation(QStandardPaths::TempLocation),
                                  QStringLiteral("param.pck"),
                                  false /* No filesize check */)) {
+            _ftpDownloadInProgress = true;
             (void) connect(ftpManager, &FTPManager::commandProgress, this, &ParameterManager::_ftpDownloadProgress);
         } else {
             qCWarning(ParameterManagerLog) << "ParameterManager::_startParameterDownload FTPManager::download returned failure";
