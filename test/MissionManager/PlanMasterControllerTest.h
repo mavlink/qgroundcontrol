@@ -19,15 +19,16 @@ private slots:
     void _testDirtyFlagsMatrix();
 
     // File name property tests
-    void _testFileNamesSetOnLoad();
-    void _testCurrentPlanFileNameWritable();
-    void _testPlanFileRenamed();
-    void _testSaveWithCurrentName();
-    void _testSaveWithCurrentNameNoFile();
-    void _testResolvedPlanFileExists();
-    void _testFileNamesClearedOnRemoveAll();
-    void _testFileNamesClearedOnRemoveAllFromVehicle();
-    void _testSaveUpdatesOriginalFileName();
+    void _testFileAssociationSetOnLoad();
+    void _testFileAssociationClearedOnRemoveAll();
+    void _testFileAssociationClearedOnRemoveAllFromVehicle();
+    void _testSaveUpdatesFileName();
+    void _testFailedLoadClearsFileAssociation();
+    void _testDownloadClearsFileAssociation();
+    void _testBackgroundSyncPreservesFileAssociation();
+    void _testUnrequestedSendCompletePreservesDirtyForUpload();
+    void _testStaleInitialPlanLoadRallyCompletePreservesPlan();
+    void _testShowPlanFromVehicleClearsFileAssociation();
 
     // showCreateFromTemplate tests — template selection mode
     void _testTemplateModeHidesTemplatesOnPlanCreatorSelection();
