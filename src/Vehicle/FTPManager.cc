@@ -8,6 +8,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QDir>
+#include <cerrno>
 #include <limits>
 
 QGC_LOGGING_CATEGORY(FTPManagerLog, "Vehicle.FTPManager")
@@ -731,7 +732,10 @@ QString FTPManager::_errorMsgFromNak(const MavlinkFTP::Request* nak)
     if ((errorCode == MavlinkFTP::kErrFailErrno && nak->hdr.size != 2) || ((errorCode != MavlinkFTP::kErrFailErrno) && nak->hdr.size != 1)) {
         errorMsg = tr("Invalid Nak format");
     } else if (errorCode == MavlinkFTP::kErrFailErrno) {
-        errorMsg = tr("errno %1").arg(nak->data[1]);
+        // PX4 reports a missing file as errno rather than kErrFailFileNotFound. The value is the
+        // vehicle's, but ENOENT is 2 on every platform PX4 runs on.
+        errorMsg = (nak->data[1] == ENOENT) ? MavlinkFTP::errorCodeToString(MavlinkFTP::kErrFailFileNotFound)
+                                            : tr("errno %1").arg(nak->data[1]);
     } else {
         errorMsg = MavlinkFTP::errorCodeToString(errorCode);
     }

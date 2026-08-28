@@ -46,6 +46,9 @@ public:
     /// MockLink worker thread so it paces transfers without blocking the main thread.
     void setBurstReadDelayMs(int delayMs) { _burstReadDelayMs = delayMs; }
 
+    /// When false, OpenFileRO of @PARAM/param.pck NAKs errno ENOENT, as PX4 without the virtual file does.
+    void setParamPckEnabled(bool enabled) { _paramPckEnabled = enabled; }
+
     /// Called to handle an FTP message
     void mavlinkMessageReceived(const mavlink_message_t &message);
 
@@ -145,6 +148,7 @@ private:
     int _burstReadDelayMs = 0;                  ///< Per-burst delay to simulate a slow link
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
+    bool _paramPckEnabled = true;               ///< Serve @PARAM/param.pck; false NAKs errno ENOENT
     mavlink_message_t _lastReply{};
     QFile _currentFile;
     QString _paramPckTempFile;
