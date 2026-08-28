@@ -227,13 +227,13 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix()
 
     switch (scenario) {
     case UploadPreservesSaveDirtyFalse: {
-        const bool invoked = QMetaObject::invokeMethod(_masterController, "_sendRallyPointsComplete", Qt::DirectConnection);
-        QVERIFY(invoked);
+        _masterController->_sendSequence = PlanMasterController::SyncSequence::RallyPoints;
+        _masterController->_sendRallyPointsComplete();
         break;
     }
     case UploadPreservesSaveDirtyTrue: {
-        const bool invoked = QMetaObject::invokeMethod(_masterController, "_sendRallyPointsComplete", Qt::DirectConnection);
-        QVERIFY(invoked);
+        _masterController->_sendSequence = PlanMasterController::SyncSequence::RallyPoints;
+        _masterController->_sendRallyPointsComplete();
         break;
     }
     case UploadFalseOnPlanClear:
@@ -268,14 +268,14 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix()
         break;
     case DownloadWithItemsNotDirtyForSave: {
         QVERIFY(_masterController->containsItems());
-        const bool invoked = QMetaObject::invokeMethod(_masterController, "_loadRallyPointsComplete", Qt::DirectConnection);
-        QVERIFY(invoked);
+        _masterController->_loadSequence = PlanMasterController::SyncSequence::RallyPoints;
+        _masterController->_loadRallyPointsComplete();
         break;
     }
     case DownloadEmptyNotDirtyForSave: {
         QVERIFY(!_masterController->containsItems());
-        const bool invoked = QMetaObject::invokeMethod(_masterController, "_loadRallyPointsComplete", Qt::DirectConnection);
-        QVERIFY(invoked);
+        _masterController->_loadSequence = PlanMasterController::SyncSequence::RallyPoints;
+        _masterController->_loadRallyPointsComplete();
         break;
     }
     }
@@ -316,189 +316,176 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix()
     }
 }
 
-void PlanMasterControllerTest::_testFileNamesSetOnLoad()
+void PlanMasterControllerTest::_testFileAssociationSetOnLoad()
 {
-    QSignalSpy currentNameSpy(_masterController, &PlanMasterController::currentPlanFileNameChanged);
-    QSignalSpy originalNameSpy(_masterController, &PlanMasterController::originalPlanFileNameChanged);
+    QSignalSpy currentFileSpy(_masterController, &PlanMasterController::currentPlanFileChanged);
 
-    // Before load, names should be empty
+    // Before load, file association should be empty
+    QVERIFY(_masterController->currentPlanFile().isEmpty());
     QVERIFY(_masterController->currentPlanFileName().isEmpty());
-    QVERIFY(_masterController->originalPlanFileName().isEmpty());
 
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
 
-    // After successful load, both names should be set to the base name
+    // After successful load, the file association should be set
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
     QCOMPARE(_masterController->currentPlanFileName(), QStringLiteral("MissionPlanner"));
-    QCOMPARE(_masterController->originalPlanFileName(), QStringLiteral("MissionPlanner"));
-
-    // Signals should have fired
-    QVERIFY(currentNameSpy.count() >= 1);
-    QVERIFY(originalNameSpy.count() >= 1);
+    QVERIFY(currentFileSpy.count() >= 1);
 }
 
-void PlanMasterControllerTest::_testCurrentPlanFileNameWritable()
+void PlanMasterControllerTest::_testFailedLoadClearsFileAssociation()
+{
+    struct MalformedFileCase {
+        const char* fileName;
+        const char* contents;
+    };
+    const QList<MalformedFileCase> malformedCases = {
+        { "Malformed.waypoints", "not a mission file" }, // Text parse failure
+        { "Malformed.plan",      "{ not valid json" },   // JSON validation failure
+    };
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+
+    for (const MalformedFileCase& malformedCase : malformedCases) {
+        const QString context = QString::fromLatin1(malformedCase.fileName);
+
+        _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+        QVERIFY2(!_masterController->currentPlanFile().isEmpty(), qPrintable(context));
+
+        const QString malformedPath = tempDir.filePath(context);
+        QFile malformedFile(malformedPath);
+        QVERIFY2(malformedFile.open(QIODevice::WriteOnly), qPrintable(context));
+        QVERIFY2(malformedFile.write(malformedCase.contents) != -1, qPrintable(context));
+        malformedFile.close();
+
+        // A failed load clears the file association
+        expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                         QRegularExpression("Error loading Plan file"));
+        _masterController->loadFromFile(malformedPath);
+        verifyExpectedLogMessage();
+
+        QVERIFY2(_masterController->currentPlanFile().isEmpty(), qPrintable(context));
+        QVERIFY2(_masterController->currentPlanFileName().isEmpty(), qPrintable(context));
+    }
+}
+
+void PlanMasterControllerTest::_testDownloadClearsFileAssociation()
 {
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
 
-    QSignalSpy currentNameSpy(_masterController, &PlanMasterController::currentPlanFileNameChanged);
-    QSignalSpy originalNameSpy(_masterController, &PlanMasterController::originalPlanFileNameChanged);
+    // Download completion replaces editor contents with the vehicle's plan, so the
+    // previous file association no longer describes what is in the editor
+    _masterController->_loadSequence = PlanMasterController::SyncSequence::RallyPoints;
+    _masterController->_loadRallyPointsComplete();
 
-    // Rename via the writable property
-    _masterController->setCurrentPlanFileName(QStringLiteral("RenamedPlan"));
-
-    QCOMPARE(_masterController->currentPlanFileName(), QStringLiteral("RenamedPlan"));
-    // Original should remain unchanged
-    QCOMPARE(_masterController->originalPlanFileName(), QStringLiteral("MissionPlanner"));
-
-    QCOMPARE(currentNameSpy.count(), 1);
-    QCOMPARE(originalNameSpy.count(), 0);
-
-    // Setting to the same value should not emit again
-    _masterController->setCurrentPlanFileName(QStringLiteral("RenamedPlan"));
-    QCOMPARE(currentNameSpy.count(), 1);
+    QVERIFY(_masterController->currentPlanFile().isEmpty());
+    QVERIFY(_masterController->currentPlanFileName().isEmpty());
+    QVERIFY(!_masterController->dirtyForSave());
+    QVERIFY(!_masterController->dirtyForUpload());
 }
 
-void PlanMasterControllerTest::_testPlanFileRenamed()
-{
-    // Before load, planFileRenamed should be false (both names empty)
-    QVERIFY(!_masterController->planFileRenamed());
-
-    _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
-
-    // After load, current == original → not renamed
-    QVERIFY(!_masterController->planFileRenamed());
-
-    // Rename
-    _masterController->setCurrentPlanFileName(QStringLiteral("NewName"));
-    QVERIFY(_masterController->planFileRenamed());
-
-    // Rename back to original
-    _masterController->setCurrentPlanFileName(QStringLiteral("MissionPlanner"));
-    QVERIFY(!_masterController->planFileRenamed());
-}
-
-void PlanMasterControllerTest::_testSaveWithCurrentName()
+void PlanMasterControllerTest::_testBackgroundSyncPreservesFileAssociation()
 {
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
+    _masterController->_setDirtyForSaveUnitTest(true);
 
-    // First save to a real (writable) directory so _currentPlanFile points somewhere valid
-    QTemporaryDir tmpDir;
-    QVERIFY(tmpDir.isValid());
-    const QString initialPath = QStringLiteral("%1/MissionPlanner.%2").arg(tmpDir.path(), _masterController->fileExtension());
-    QVERIFY(_masterController->saveToFile(initialPath));
+    // Manager loadComplete also fires for the automatic download at vehicle connect. When no
+    // download was requested the editor contents are preserved, so the file association and
+    // dirty state must survive.
+    _masterController->_loadRallyPointsComplete();
 
-    // Rename
-    _masterController->setCurrentPlanFileName(QStringLiteral("TestSaveRenamed"));
-
-    // Save with the renamed name
-    QVERIFY(_masterController->saveWithCurrentName());
-
-    // After save, original should now match the renamed name
-    QCOMPARE(_masterController->originalPlanFileName(), QStringLiteral("TestSaveRenamed"));
-    QCOMPARE(_masterController->currentPlanFileName(), QStringLiteral("TestSaveRenamed"));
-    QVERIFY(!_masterController->planFileRenamed());
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
+    QCOMPARE(_masterController->currentPlanFileName(), QStringLiteral("MissionPlanner"));
+    QVERIFY(_masterController->dirtyForSave());
 }
 
-void PlanMasterControllerTest::_testSaveWithCurrentNameNoFile()
-{
-    // No file loaded — saveWithCurrentName with empty name should fail
-    QVERIFY(!_masterController->saveWithCurrentName());
-
-    // Set a name without loading a file first (simulates typing a name in the UI)
-    _masterController->setCurrentPlanFileName(QStringLiteral("BrandNewPlan"));
-
-    // Should save to the default mission save directory
-    QVERIFY(_masterController->saveWithCurrentName());
-
-    const QString expectedDir = SettingsManager::instance()->appSettings()->missionSavePath();
-    const QString expectedPath = QStringLiteral("%1/BrandNewPlan.%2").arg(expectedDir, _masterController->fileExtension());
-    QCOMPARE(_masterController->currentPlanFile(), expectedPath);
-    QCOMPARE(_masterController->originalPlanFileName(), QStringLiteral("BrandNewPlan"));
-
-    // Clean up
-    QFile::remove(expectedPath);
-}
-
-void PlanMasterControllerTest::_testResolvedPlanFileExists()
-{
-    // Empty name → should return false
-    QVERIFY(!_masterController->resolvedPlanFileExists());
-
-    // Save a file so it exists on disk
-    QTemporaryDir tmpDir;
-    QVERIFY(tmpDir.isValid());
-    const QString savePath = QStringLiteral("%1/ExistingPlan.%2").arg(tmpDir.path(), _masterController->fileExtension());
-    QVERIFY(_masterController->saveToFile(savePath));
-
-    // Now rename to the same base name — file exists at resolved path
-    _masterController->setCurrentPlanFileName(QStringLiteral("ExistingPlan"));
-    QVERIFY(_masterController->resolvedPlanFileExists());
-
-    // Rename to something non-existent
-    _masterController->setCurrentPlanFileName(QStringLiteral("DoesNotExist"));
-    QVERIFY(!_masterController->resolvedPlanFileExists());
-}
-
-void PlanMasterControllerTest::_testFileNamesClearedOnRemoveAll()
+void PlanMasterControllerTest::_testUnrequestedSendCompletePreservesDirtyForUpload()
 {
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+    QVERIFY(_masterController->dirtyForUpload());
 
-    // Verify names are set
-    QVERIFY(!_masterController->currentPlanFileName().isEmpty());
-    QVERIFY(!_masterController->originalPlanFileName().isEmpty());
+    // Manager sendComplete can fire for sends this controller did not request (Fly view and
+    // Plan view controllers share the same vehicle managers), so dirtyForUpload must survive.
+    _masterController->_sendRallyPointsComplete();
 
-    QSignalSpy currentNameSpy(_masterController, &PlanMasterController::currentPlanFileNameChanged);
-    QSignalSpy originalNameSpy(_masterController, &PlanMasterController::originalPlanFileNameChanged);
+    QVERIFY(_masterController->dirtyForUpload());
+}
+
+void PlanMasterControllerTest::_testStaleInitialPlanLoadRallyCompletePreservesPlan()
+{
+    // A rally-unsupported vehicle never emits rally loadComplete during initial connect, so the
+    // sequence can still be InitialPlanLoad long after the download. A later unrelated rally
+    // completion must not clear a newly opened plan.
+    _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
+
+    _masterController->_loadSequence = PlanMasterController::SyncSequence::InitialPlanLoad;
+    _masterController->_loadRallyPointsComplete();
+
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
+    QCOMPARE(_masterController->currentPlanFileName(), QStringLiteral("MissionPlanner"));
+}
+
+void PlanMasterControllerTest::_testShowPlanFromVehicleClearsFileAssociation()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4);
+    QTRY_VERIFY_WITH_TIMEOUT(_masterController->managerVehicle()->initialPlanRequestComplete(), 10000);
+
+    _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
+
+    // Showing the vehicle's plan replaces the editor contents, so the previous file
+    // association no longer describes them
+    _masterController->showPlanFromManagerVehicle();
+
+    QVERIFY(_masterController->currentPlanFile().isEmpty());
+    QVERIFY(!_masterController->dirtyForSave());
+}
+
+void PlanMasterControllerTest::_testFileAssociationClearedOnRemoveAll()
+{
+    _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
+
+    QSignalSpy currentFileSpy(_masterController, &PlanMasterController::currentPlanFileChanged);
 
     _masterController->removeAll();
 
-    // Names should be cleared
-    QVERIFY(_masterController->currentPlanFileName().isEmpty());
-    QVERIFY(_masterController->originalPlanFileName().isEmpty());
     QVERIFY(_masterController->currentPlanFile().isEmpty());
-
-    QVERIFY(currentNameSpy.count() >= 1);
-    QVERIFY(originalNameSpy.count() >= 1);
+    QVERIFY(_masterController->currentPlanFileName().isEmpty());
+    QVERIFY(currentFileSpy.count() >= 1);
 }
 
-void PlanMasterControllerTest::_testFileNamesClearedOnRemoveAllFromVehicle()
+void PlanMasterControllerTest::_testFileAssociationClearedOnRemoveAllFromVehicle()
 {
     _connectMockLink(MAV_AUTOPILOT_PX4);
 
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
+    QVERIFY(!_masterController->currentPlanFile().isEmpty());
 
-    // Verify names are set
-    QVERIFY(!_masterController->currentPlanFileName().isEmpty());
-    QVERIFY(!_masterController->originalPlanFileName().isEmpty());
-
-    QSignalSpy currentNameSpy(_masterController, &PlanMasterController::currentPlanFileNameChanged);
-    QSignalSpy originalNameSpy(_masterController, &PlanMasterController::originalPlanFileNameChanged);
+    QSignalSpy currentFileSpy(_masterController, &PlanMasterController::currentPlanFileChanged);
 
     _masterController->removeAllFromVehicle();
 
-    // Names should be cleared
-    QVERIFY(_masterController->currentPlanFileName().isEmpty());
-    QVERIFY(_masterController->originalPlanFileName().isEmpty());
     QVERIFY(_masterController->currentPlanFile().isEmpty());
-
-    QVERIFY(currentNameSpy.count() >= 1);
-    QVERIFY(originalNameSpy.count() >= 1);
+    QVERIFY(_masterController->currentPlanFileName().isEmpty());
+    QVERIFY(currentFileSpy.count() >= 1);
 }
 
-void PlanMasterControllerTest::_testSaveUpdatesOriginalFileName()
+void PlanMasterControllerTest::_testSaveUpdatesFileName()
 {
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
-    QCOMPARE(_masterController->originalPlanFileName(), QStringLiteral("MissionPlanner"));
+    QCOMPARE(_masterController->currentPlanFileName(), QStringLiteral("MissionPlanner"));
 
     // Save to a completely different path
     const QString saveFile = QDir::temp().filePath(
         QStringLiteral("qgc_planmaster_rename_%1.plan").arg(QDateTime::currentMSecsSinceEpoch()));
     QVERIFY(_masterController->saveToFile(saveFile));
 
-    // Both names should now reflect the new file base name
-    const QString expectedBase = QFileInfo(saveFile).completeBaseName();
-    QCOMPARE(_masterController->currentPlanFileName(), expectedBase);
-    QCOMPARE(_masterController->originalPlanFileName(), expectedBase);
+    // Name should now reflect the new file base name
+    QCOMPARE(_masterController->currentPlanFileName(), QFileInfo(saveFile).completeBaseName());
 
     // Clean up
     QFile::remove(saveFile);

@@ -564,3 +564,88 @@ void PlanViewUITest::_testPlanViewStates()
 
     stopUI();
 }
+
+// Save as... lives in the hamburger drop panel.
+void PlanViewUITest::_testSaveAsMenu()
+{
+    startUI();
+    if (QTest::currentTestFailed()) return;
+
+    _navigateToPlanAndCenterMap();
+    if (QTest::currentTestFailed()) return;
+
+    const QString hamburgerBtn = QStringLiteral("planToolbar_hamburgerButton");
+    const QString saveAsBtn    = QStringLiteral("planToolbar_saveAsButton");
+
+    // ------------------------------------------------------------------
+    // 2.1 Empty plan: Save as... visible but disabled
+    // ------------------------------------------------------------------
+    QVERIFY2(clickButton(hamburgerBtn), "Failed to click hamburger button");
+    QVERIFY2(findVisibleItem(_rootItem, saveAsBtn, 2000), "2.1: Save as... did not appear in drop panel");
+    verifyEnabled(saveAsBtn, false, QStringLiteral("2.1 save as on empty plan"));
+    if (QTest::currentTestFailed()) return;
+
+    // Dismiss the drop panel (CloseOnPressOutside)
+    _clickMap(0.5, 0.5);
+    if (QTest::currentTestFailed()) return;
+    QVERIFY2(waitForCondition([&] { return findVisibleItem(_rootItem, saveAsBtn, 0) == nullptr; }, 2000,
+                              QStringLiteral("drop panel closed")),
+             "2.1: drop panel did not close");
+
+    // ------------------------------------------------------------------
+    // 2.2 Build a savable plan: home position + takeoff item
+    // ------------------------------------------------------------------
+    if (!_plannedHomePosition().isValid()) {
+        // The dismiss press may have been consumed by the popup overlay
+        _clickMap(0.5, 0.5);
+        if (QTest::currentTestFailed()) return;
+    }
+    QVERIFY2(waitForCondition([&] { return _plannedHomePosition().isValid(); }, 2000,
+                              QStringLiteral("home position set")),
+             "2.2: map click did not set home position");
+
+    QVERIFY2(clickButton(QStringLiteral("planToolStrip_takeoffButton")), "Failed to click Takeoff button");
+    QVERIFY2(waitForCondition([&] { return _missionItemCount() == 2; }, 2000,
+                              QStringLiteral("takeoff item inserted")),
+             "2.2: takeoff item was not inserted");
+
+    // ------------------------------------------------------------------
+    // 2.3 Cancelled Save as...: nothing written, plan stays dirty
+    // ------------------------------------------------------------------
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString planFile = tempDir.filePath(QStringLiteral("PlanViewUITestSaveAs.plan"));
+
+    QVERIFY2(clickButton(hamburgerBtn), "Failed to click hamburger button (cancelled save as)");
+    QVERIFY2(findVisibleItem(_rootItem, saveAsBtn, 2000), "2.3: Save as... did not appear in drop panel");
+    verifyEnabled(saveAsBtn, true, QStringLiteral("2.3 save as with plan items"));
+    if (QTest::currentTestFailed()) return;
+
+    QGCFileDialogController::setTestRejectNext();
+    QVERIFY2(clickButton(saveAsBtn), "Failed to click Save as... button (cancelled save as)");
+
+    QVERIFY2(waitForCondition([] { return !QGCFileDialogController::testHookArmed(); }, 5000,
+                              QStringLiteral("file dialog shim consumed")),
+             "2.3 cancelled save as: file dialog shim was not consumed");
+    QVERIFY2(!QFile::exists(planFile), "2.3 cancelled save as: plan file was unexpectedly written");
+    verifyPrimary(QStringLiteral("planToolbar_saveButton"), true, QStringLiteral("2.3 cancelled save as"));
+    if (QTest::currentTestFailed()) return;
+
+    // ------------------------------------------------------------------
+    // 2.4 Accepted Save as...: file written, dirty-for-save cleared
+    // ------------------------------------------------------------------
+    QVERIFY2(clickButton(hamburgerBtn), "Failed to click hamburger button (save as)");
+    QVERIFY2(findVisibleItem(_rootItem, saveAsBtn, 2000), "2.4: Save as... did not appear in drop panel");
+
+    QGCFileDialogController::setTestNextFileForAccept(planFile);
+    QVERIFY2(clickButton(saveAsBtn), "Failed to click Save as... button");
+
+    QVERIFY2(waitForCondition([&] { return QFile::exists(planFile); }, 5000,
+                              QStringLiteral("plan file written")),
+             "2.4 save as: plan file was not written");
+    QVERIFY2(!QGCFileDialogController::testHookArmed(), "2.4 save as: file dialog shim was not consumed");
+    verifyPrimary(QStringLiteral("planToolbar_saveButton"), false, QStringLiteral("2.4 save as"));
+    if (QTest::currentTestFailed()) return;
+
+    stopUI();
+}

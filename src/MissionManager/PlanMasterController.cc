@@ -13,15 +13,10 @@
 #include "QmlObjectListModel.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
-#include "QGCCompression.h"
-#include "QGCCompressionJob.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QDir>
-#include <QtCore/QDirIterator>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
-#include <QtCore/QRegularExpression>
 
 QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanManager.PlanMasterController")
 
@@ -110,9 +105,14 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
     if (_managerVehicle) {
         // Disconnect old vehicle. Be careful of wildcarding disconnect too much since _managerVehicle may equal _controllerVehicle
+        disconnect(_managerVehicle,                         &Vehicle::initialPlanRequestCompleteChanged, this, nullptr);
         disconnect(_managerVehicle->missionManager(),       nullptr, this, nullptr);
         disconnect(_managerVehicle->geoFenceManager(),      nullptr, this, nullptr);
         disconnect(_managerVehicle->rallyPointManager(),    nullptr, this, nullptr);
+
+        // Any in-flight transfer chain can never complete against the new vehicle's managers
+        _loadSequence = SyncSequence::Idle;
+        _sendSequence = SyncSequence::Idle;
     }
 
     bool newOffline = false;
@@ -130,6 +130,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::vehicleClass(_managerVehicle->vehicleType()));
 
         // We use these signals to sequence upload and download to the multiple controller/managers
+        connect(_managerVehicle,                        &Vehicle::initialPlanRequestCompleteChanged, this, &PlanMasterController::_initialPlanRequestCompleteChanged);
         connect(_managerVehicle->missionManager(),      &MissionManager::newMissionItemsAvailable,  this, &PlanMasterController::_loadMissionComplete);
         connect(_managerVehicle->geoFenceManager(),     &GeoFenceManager::loadComplete,             this, &PlanMasterController::_loadGeoFenceComplete);
         connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::loadComplete,           this, &PlanMasterController::_loadRallyPointsComplete);
@@ -219,7 +220,7 @@ void PlanMasterController::loadFromVehicle(void)
     } else if (syncInProgress()) {
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle called while syncInProgress";
     } else {
-        _loadGeoFence = true;
+        _loadSequence = SyncSequence::Mission;
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle calling _missionController.loadFromVehicle";
         _missionController.loadFromVehicle();
     }
@@ -228,74 +229,86 @@ void PlanMasterController::loadFromVehicle(void)
 
 void PlanMasterController::_loadMissionComplete(void)
 {
-    if (!_flyView && _loadGeoFence) {
-        _loadGeoFence = false;
-        _loadRallyPoints = true;
-        if (_geoFenceController.supported()) {
-            qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadMissionComplete calling _geoFenceController.loadFromVehicle";
-            _geoFenceController.loadFromVehicle();
-        } else {
-            qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadMissionComplete GeoFence not supported skipping";
-            _geoFenceController.removeAll();
-            _loadGeoFenceComplete();
-        }
+    if (_loadSequence != SyncSequence::Mission) {
+        return;
+    }
+    _loadSequence = SyncSequence::GeoFence;
+    if (_geoFenceController.supported()) {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadMissionComplete calling _geoFenceController.loadFromVehicle";
+        _geoFenceController.loadFromVehicle();
+    } else {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadMissionComplete GeoFence not supported skipping";
+        _geoFenceController.removeAll();
+        _loadGeoFenceComplete();
     }
 }
 
 void PlanMasterController::_loadGeoFenceComplete(void)
 {
-    if (!_flyView && _loadRallyPoints) {
-        _loadRallyPoints = false;
-        if (_rallyPointController.supported()) {
-            qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadGeoFenceComplete calling _rallyPointController.loadFromVehicle";
-            _rallyPointController.loadFromVehicle();
-        } else {
-            qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadMissionComplete Rally Points not supported skipping";
-            _rallyPointController.removeAll();
-            _loadRallyPointsComplete();
-        }
+    if (_loadSequence != SyncSequence::GeoFence) {
+        return;
+    }
+    _loadSequence = SyncSequence::RallyPoints;
+    if (_rallyPointController.supported()) {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadGeoFenceComplete calling _rallyPointController.loadFromVehicle";
+        _rallyPointController.loadFromVehicle();
+    } else {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadGeoFenceComplete Rally Points not supported skipping";
+        _rallyPointController.removeAll();
+        _loadRallyPointsComplete();
     }
 }
 
 void PlanMasterController::_loadRallyPointsComplete(void)
 {
+    if (_loadSequence != SyncSequence::RallyPoints) {
+        return;
+    }
+    _loadSequence = SyncSequence::Idle;
     qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadRallyPointsComplete";
     // A plan just downloaded from the vehicle reflects exactly what is on the vehicle.
-    // The user has made no edits, so it must not be dirty for save or upload.
+    // The user has made no edits, so it must not be dirty for save or upload. Any previous
+    // file association no longer describes the editor contents.
+    _clearCurrentPlanFile();
     _setDirtyStates(false /* dirtyForSave */, false /* dirtyForUpload */);
 }
 
 void PlanMasterController::_sendMissionComplete(void)
 {
-    if (_sendGeoFence) {
-        _sendGeoFence = false;
-        _sendRallyPoints = true;
-        if (_geoFenceController.supported()) {
-            qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start GeoFence sendToVehicle";
-            _geoFenceController.sendToVehicle();
-        } else {
-            qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle GeoFence not supported skipping";
-            _sendGeoFenceComplete();
-        }
+    if (_sendSequence != SyncSequence::Mission) {
+        return;
+    }
+    _sendSequence = SyncSequence::GeoFence;
+    if (_geoFenceController.supported()) {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start GeoFence sendToVehicle";
+        _geoFenceController.sendToVehicle();
+    } else {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle GeoFence not supported skipping";
+        _sendGeoFenceComplete();
     }
 }
 
 void PlanMasterController::_sendGeoFenceComplete(void)
 {
-    if (_sendRallyPoints) {
-        _sendRallyPoints = false;
-        if (_rallyPointController.supported()) {
-            qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start rally sendToVehicle";
-            _rallyPointController.sendToVehicle();
-        } else {
-            qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle Rally Points not support skipping";
-            _sendRallyPointsComplete();
-        }
+    if (_sendSequence != SyncSequence::GeoFence) {
+        return;
+    }
+    _sendSequence = SyncSequence::RallyPoints;
+    if (_rallyPointController.supported()) {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start rally sendToVehicle";
+        _rallyPointController.sendToVehicle();
+    } else {
+        qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle Rally Points not support skipping";
+        _sendRallyPointsComplete();
     }
 }
 
 void PlanMasterController::_sendRallyPointsComplete(void)
 {
+    if (_sendSequence != SyncSequence::RallyPoints) {
+        return;
+    }
+    _sendSequence = SyncSequence::Idle;
     qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle Rally Point send complete";
     _setDirtyForUpload(false);
     if (_deleteWhenSendCompleted) {
@@ -322,7 +335,7 @@ void PlanMasterController::sendToVehicle(void)
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::sendToVehicle start mission sendToVehicle";
-        _sendGeoFence = true;
+        _sendSequence = SyncSequence::Mission;
         _missionController.sendToVehicle();
     }
 }
@@ -347,90 +360,57 @@ void PlanMasterController::loadFromFile(const QString& filename)
 
     bool success = false;
     if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
-        if (!_missionController.loadTextFile(file, errorString)) {
-            QGC::showAppMessage(errorMessage.arg(errorString));
-        } else {
-            success = true;
-        }
+        success = _missionController.loadTextFile(file, errorString);
     } else {
-        QJsonDocument   jsonDoc;
-        QByteArray      bytes = file.readAll();
-
-        if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
-            QGC::showAppMessage(errorMessage.arg(errorString));
-            return;
-        }
-
-        QJsonObject json = jsonDoc.object();
-        //-- Allow plugins to pre process the load
-        QGCCorePlugin::instance()->preLoadFromJson(this, json);
-
-        int version;
-        if (!JsonParsing::validateExternalQGCJsonFile(json, kPlanFileType, kPlanFileVersion, kPlanFileVersion, version, errorString)) {
-            QGC::showAppMessage(errorMessage.arg(errorString));
-            return;
-        }
-
-        QList<JsonParsing::KeyValidateInfo> rgKeyInfo = {
-            { kJsonMissionObjectKey,        QJsonValue::Object, true },
-            { kJsonGeoFenceObjectKey,       QJsonValue::Object, true },
-            { kJsonRallyPointsObjectKey,    QJsonValue::Object, true },
-        };
-        if (!JsonParsing::validateKeys(json, rgKeyInfo, errorString)) {
-            QGC::showAppMessage(errorMessage.arg(errorString));
-            return;
-        }
-
-        if (!_missionController.load(json[kJsonMissionObjectKey].toObject(), errorString) ||
-                !_geoFenceController.load(json[kJsonGeoFenceObjectKey].toObject(), errorString) ||
-                !_rallyPointController.load(json[kJsonRallyPointsObjectKey].toObject(), errorString)) {
-            QGC::showAppMessage(errorMessage.arg(errorString));
-        } else {
-            //-- Allow plugins to post process the load
-            QGCCorePlugin::instance()->postLoadFromJson(this, json);
-            success = true;
-        }
+        success = _loadPlanJson(file.readAll(), errorString);
+    }
+    if (!success) {
+        QGC::showAppMessage(errorMessage.arg(errorString));
     }
 
     if (success){
-        const bool oldRenamed = planFileRenamed();
         _currentPlanFile = QString::asprintf("%s/%s.%s", fileInfo.path().toLocal8Bit().data(), fileInfo.completeBaseName().toLocal8Bit().data(), AppSettings::planFileExtension);
-        const bool currentNameChanged = (_currentPlanFileName != fileInfo.completeBaseName());
-        const bool originalNameChanged = (_originalPlanFileName != fileInfo.completeBaseName());
-        _currentPlanFileName = fileInfo.completeBaseName();
-        _originalPlanFileName = _currentPlanFileName;
-        _setDirtyStates(false /* dirtyForSave */, true /* dirtyForUpload */);
         emit currentPlanFileChanged();
-        if (currentNameChanged) {
-            emit currentPlanFileNameChanged();
-        }
-        if (originalNameChanged) {
-            emit originalPlanFileNameChanged();
-        }
-        if (oldRenamed != planFileRenamed()) {
-            emit planFileRenamedChanged();
-        }
+        _setDirtyStates(false /* dirtyForSave */, true /* dirtyForUpload */);
     } else {
-        const bool hadFile = !_currentPlanFile.isEmpty();
-        const bool hadCurrentName = !_currentPlanFileName.isEmpty();
-        const bool hadOriginalName = !_originalPlanFileName.isEmpty();
-        const bool wasRenamed = planFileRenamed();
-        _currentPlanFile.clear();
-        _currentPlanFileName.clear();
-        _originalPlanFileName.clear();
-        if (hadFile) {
-            emit currentPlanFileChanged();
-        }
-        if (hadCurrentName) {
-            emit currentPlanFileNameChanged();
-        }
-        if (hadOriginalName) {
-            emit originalPlanFileNameChanged();
-        }
-        if (wasRenamed != planFileRenamed()) {
-            emit planFileRenamedChanged();
-        }
+        _clearCurrentPlanFile();
     }
+}
+
+bool PlanMasterController::_loadPlanJson(const QByteArray& bytes, QString& errorString)
+{
+    QJsonDocument jsonDoc;
+    if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
+        return false;
+    }
+
+    QJsonObject json = jsonDoc.object();
+    //-- Allow plugins to pre process the load
+    QGCCorePlugin::instance()->preLoadFromJson(this, json);
+
+    int version;
+    if (!JsonParsing::validateExternalQGCJsonFile(json, kPlanFileType, kPlanFileVersion, kPlanFileVersion, version, errorString)) {
+        return false;
+    }
+
+    const QList<JsonParsing::KeyValidateInfo> rgKeyInfo = {
+        { kJsonMissionObjectKey,        QJsonValue::Object, true },
+        { kJsonGeoFenceObjectKey,       QJsonValue::Object, true },
+        { kJsonRallyPointsObjectKey,    QJsonValue::Object, true },
+    };
+    if (!JsonParsing::validateKeys(json, rgKeyInfo, errorString)) {
+        return false;
+    }
+
+    if (!_missionController.load(json[kJsonMissionObjectKey].toObject(), errorString) ||
+            !_geoFenceController.load(json[kJsonGeoFenceObjectKey].toObject(), errorString) ||
+            !_rallyPointController.load(json[kJsonRallyPointsObjectKey].toObject(), errorString)) {
+        return false;
+    }
+
+    //-- Allow plugins to post process the load
+    QGCCorePlugin::instance()->postLoadFromJson(this, json);
+    return true;
 }
 
 QJsonDocument PlanMasterController::saveToJson()
@@ -493,19 +473,6 @@ bool PlanMasterController::saveToFile(const QString& filename)
             _currentPlanFile = planFilename;
             emit currentPlanFileChanged();
         }
-        const bool wasRenamed = planFileRenamed();
-        const QString savedBaseName = QFileInfo(planFilename).completeBaseName();
-        if (_currentPlanFileName != savedBaseName) {
-            _currentPlanFileName = savedBaseName;
-            emit currentPlanFileNameChanged();
-        }
-        if (_originalPlanFileName != savedBaseName) {
-            _originalPlanFileName = savedBaseName;
-            emit originalPlanFileNameChanged();
-        }
-        if (wasRenamed != planFileRenamed()) {
-            emit planFileRenamedChanged();
-        }
         _setDirtyForSave(false);
     }
 
@@ -549,7 +516,7 @@ void PlanMasterController::removeAll(void)
 
     _setDirtyStates(false, false);
     if (_offline) {
-        _clearFileNames();
+        _clearCurrentPlanFile();
     }
     setUserSelectedManualCreation(false);
 }
@@ -565,7 +532,7 @@ void PlanMasterController::removeAllFromVehicle(void)
             _rallyPointController.removeAllFromVehicle();
         }
         _setDirtyForUpload(false);
-        _clearFileNames();
+        _clearCurrentPlanFile();
     } else {
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::removeAllFromVehicle called while offline";
     }
@@ -597,75 +564,16 @@ QString PlanMasterController::fileExtension(void) const
     return AppSettings::planFileExtension;
 }
 
-void PlanMasterController::setCurrentPlanFileName(const QString& name)
+QString PlanMasterController::currentPlanFileName(void) const
 {
-    // Normalize to a base name: trim whitespace, strip known extension, remove illegal characters
-    QString sanitized = name.trimmed();
-    const QString ext = QStringLiteral(".") + fileExtension();
-    if (sanitized.endsWith(ext, Qt::CaseInsensitive)) {
-        sanitized.chop(ext.length());
-        sanitized = sanitized.trimmed();
-    }
-    sanitized.remove(QRegularExpression(QStringLiteral("[/\\\\:*?\"<>|]")));
-    if (_currentPlanFileName != sanitized) {
-        const bool wasRenamed = planFileRenamed();
-        _currentPlanFileName = sanitized;
-        emit currentPlanFileNameChanged();
-        if (wasRenamed != planFileRenamed()) {
-            emit planFileRenamedChanged();
-        }
-    }
+    return _currentPlanFile.isEmpty() ? QString() : QFileInfo(_currentPlanFile).completeBaseName();
 }
 
-bool PlanMasterController::saveWithCurrentName()
+void PlanMasterController::_clearCurrentPlanFile()
 {
-    if (_currentPlanFileName.isEmpty()) {
-        return false;
-    }
-    return saveToFile(_resolvedPlanFilePath());
-}
-
-bool PlanMasterController::planFileRenamed() const
-{
-    return !_originalPlanFileName.isEmpty() && _currentPlanFileName != _originalPlanFileName;
-}
-
-bool PlanMasterController::resolvedPlanFileExists() const
-{
-    if (_currentPlanFileName.isEmpty()) {
-        return false;
-    }
-    return QFile::exists(_resolvedPlanFilePath());
-}
-
-QString PlanMasterController::_resolvedPlanFilePath() const
-{
-    const QString dir = _currentPlanFile.isEmpty()
-        ? SettingsManager::instance()->appSettings()->missionSavePath()
-        : QFileInfo(_currentPlanFile).path();
-    return QStringLiteral("%1/%2.%3").arg(dir, _currentPlanFileName, fileExtension());
-}
-
-void PlanMasterController::_clearFileNames()
-{
-    const bool hadFile = !_currentPlanFile.isEmpty();
-    const bool hadCurrentName = !_currentPlanFileName.isEmpty();
-    const bool hadOriginalName = !_originalPlanFileName.isEmpty();
-    const bool wasRenamed = planFileRenamed();
-    _currentPlanFile.clear();
-    _currentPlanFileName.clear();
-    _originalPlanFileName.clear();
-    if (hadFile) {
+    if (!_currentPlanFile.isEmpty()) {
+        _currentPlanFile.clear();
         emit currentPlanFileChanged();
-    }
-    if (hadCurrentName) {
-        emit currentPlanFileNameChanged();
-    }
-    if (hadOriginalName) {
-        emit originalPlanFileNameChanged();
-    }
-    if (wasRenamed != planFileRenamed()) {
-        emit planFileRenamedChanged();
     }
 }
 
@@ -704,7 +612,8 @@ void PlanMasterController::sendPlanToVehicle(Vehicle* vehicle, const QString& fi
 void PlanMasterController::_showPlanFromManagerVehicle(void)
 {
     if (!_managerVehicle->initialPlanRequestComplete()) {
-        // We need to wait until initial load is complete before we show anything.
+        // The sub-controllers pick up the editor contents as the initial download arrives
+        _loadSequence = SyncSequence::InitialPlanLoad;
         return;
     }
 
@@ -715,11 +624,25 @@ void PlanMasterController::_showPlanFromManagerVehicle(void)
         }
     }
 
-    // Showing the vehicle plan should leave both dirty states clean.
+    // The editor now shows the vehicle's plan: not dirty, and any previous file
+    // association no longer describes the contents
     _missionController.setDirty(false);
     _geoFenceController.setDirty(false);
     _rallyPointController.setDirty(false);
+    _clearCurrentPlanFile();
     _setDirtyStates(false, false);
+}
+
+void PlanMasterController::_initialPlanRequestCompleteChanged(bool initialPlanRequestComplete)
+{
+    if (!initialPlanRequestComplete || _loadSequence != SyncSequence::InitialPlanLoad) {
+        return;
+    }
+    _loadSequence = SyncSequence::Idle;
+    qCDebug(PlanMasterControllerLog) << "_initialPlanRequestCompleteChanged: initial download complete";
+    // Import the manager data into the editor (non-empty sub-controllers reject the automatic
+    // manager updates during download) and scrub dirty/file association.
+    _showPlanFromManagerVehicle();
 }
 
 bool PlanMasterController::syncInProgress(void) const
@@ -846,68 +769,4 @@ void PlanMasterController::setUserSelectedManualCreation(bool userSelectedManual
             emit showCreateFromTemplateChanged();
         }
     }
-}
-
-void PlanMasterController::loadFromArchive(const QString& archivePath)
-{
-    if (archivePath.isEmpty()) {
-        return;
-    }
-
-    if (!QFile::exists(archivePath)) {
-        QGC::showAppMessage(tr("Archive file not found: %1").arg(archivePath));
-        return;
-    }
-
-    if (!QGCCompression::isArchiveFile(archivePath)) {
-        QGC::showAppMessage(tr("Not a supported archive format: %1").arg(archivePath));
-        return;
-    }
-
-    const QString tempPath = QDir::temp().filePath(QStringLiteral("qgc_plan_") + QString::number(QDateTime::currentMSecsSinceEpoch()));
-    if (!QDir().mkpath(tempPath)) {
-        QGC::showAppMessage(tr("Could not create temporary directory"));
-        return;
-    }
-
-    _extractionOutputDir = tempPath;
-
-    if (_extractionJob == nullptr) {
-        _extractionJob = new QGCCompressionJob(this);
-        connect(_extractionJob, &QGCCompressionJob::finished,
-                this, &PlanMasterController::_handleExtractionFinished);
-    }
-
-    _extractionJob->extractArchive(archivePath, tempPath);
-}
-
-void PlanMasterController::_handleExtractionFinished(bool success)
-{
-    if (!success) {
-        const QString error = _extractionJob != nullptr ? _extractionJob->errorString() : tr("Extraction failed");
-        QGC::showAppMessage(tr("Failed to extract plan archive: %1").arg(error));
-        QDir(_extractionOutputDir).removeRecursively();
-        _extractionOutputDir.clear();
-        return;
-    }
-
-    QString planPath;
-    const QString planExt = QStringLiteral("*.") + AppSettings::planFileExtension;
-    QDirIterator it(_extractionOutputDir, {planExt}, QDir::Files, QDirIterator::Subdirectories);
-    if (it.hasNext()) {
-        planPath = it.next();
-    }
-
-    if (planPath.isEmpty()) {
-        QGC::showAppMessage(tr("No plan file found in archive"));
-        QDir(_extractionOutputDir).removeRecursively();
-        _extractionOutputDir.clear();
-        return;
-    }
-
-    qCDebug(PlanMasterControllerLog) << "Found plan file in archive:" << planPath;
-    loadFromFile(planPath);
-
-    QDir(_extractionOutputDir).removeRecursively();
-    _extractionOutputDir.clear();
 }
