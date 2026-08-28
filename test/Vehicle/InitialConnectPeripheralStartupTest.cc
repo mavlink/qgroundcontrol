@@ -29,12 +29,10 @@ void InitialConnectPeripheralStartupTest::_noCameraOrGimbalRequestsBeforeInitial
     _vehicle = MultiVehicleManager::instance()->activeVehicle();
     QVERIFY(_vehicle);
 
-    // Test pre-complete behavior only while initial connect is still in progress.
-    QVERIFY2(!_vehicle->isInitialConnectComplete(), "Initial connect completed too quickly for pre-complete assertions");
-
     // Received-message counts are monotonic, so counts that are still zero when initialConnectComplete
     // fires prove no peripheral request was sent before completion. They are sampled inside the signal
     // handler because the managers send their first request on the next peripheral message after it.
+    // Subscribe before the too-quick check so a completion that lands in that window is still captured.
     int gimbalInfoRequestsAtComplete = -1;
     int cameraInfoRequestsAtComplete = -1;
     int cameraInfoCommandsAtComplete = -1;
@@ -43,6 +41,9 @@ void InitialConnectPeripheralStartupTest::_noCameraOrGimbalRequestsBeforeInitial
         cameraInfoRequestsAtComplete = _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_CAMERA_INFORMATION);
         cameraInfoCommandsAtComplete = _mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_CAMERA_INFORMATION);
     });
+
+    QVERIFY2(!_vehicle->isInitialConnectComplete() || (gimbalInfoRequestsAtComplete >= 0),
+             "Initial connect completed too quickly for pre-complete assertions");
     QVERIFY_TRUE_WAIT(_vehicle->isInitialConnectComplete(), TestTimeout::longMs());
     QCOMPARE(gimbalInfoRequestsAtComplete, 0);
     QCOMPARE(cameraInfoRequestsAtComplete, 0);
