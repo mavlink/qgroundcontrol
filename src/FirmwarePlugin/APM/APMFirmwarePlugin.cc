@@ -628,6 +628,14 @@ bool APMFirmwarePlugin::hasGripper(const Vehicle *vehicle) const
     return false;
 }
 
+QString APMFirmwarePlugin::waypointRadiusParameter(Vehicle *vehicle) const
+{
+    if (vehicle && vehicle->multiRotor()) {
+        return QStringLiteral("WPNAV_RADIUS");
+    }
+    return QStringLiteral("WP_RADIUS");
+}
+
 const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
 {
     if (_toolIndicatorList.isEmpty()) {

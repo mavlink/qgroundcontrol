@@ -57,6 +57,7 @@ public:
     MAV_AUTOPILOT _autopilotType() const override { return MAV_AUTOPILOT_ARDUPILOTMEGA; }
     ParameterMetaData *_createParameterMetaData() override;
     QString getHobbsMeter(Vehicle *vehicle) const override;
+    QString waypointRadiusParameter(Vehicle *vehicle) const override;
     bool hasGripper(const Vehicle *vehicle) const override;
     const QVariantList &toolIndicators(const Vehicle *vehicle) override;
     double maximumEquivalentAirspeed(Vehicle *vehicle) const override;

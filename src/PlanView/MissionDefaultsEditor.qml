@@ -91,6 +91,13 @@ Rectangle {
 
         FactTextFieldSlider {
             Layout.fillWidth: true
+            label: qsTr("Waypoint Radius")
+            fact: _root._settingsItem ? _root._settingsItem.waypointRadius : null
+            visible: fact !== null
+        }
+
+        FactTextFieldSlider {
+            Layout.fillWidth: true
             label: qsTr("Flight Speed")
             fact: _root._settingsItem ? _root._settingsItem.speedSection.flightSpeed : null
             showEnableCheckbox: true

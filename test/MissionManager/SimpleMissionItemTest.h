@@ -28,6 +28,7 @@ private slots:
     void _testCameraSection();
     void _testSpeedSection();
     void _testAltitudePropogation();
+    void _testWaypointRadiusPropagation();
     void _testCalcAboveTerrainSaveLoad();
     void _testFlyViewTerrainQuery();
 
