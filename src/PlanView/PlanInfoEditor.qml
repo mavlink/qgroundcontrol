@@ -45,23 +45,12 @@ Rectangle {
                 text: qsTr("Plan File")
             }
 
-            QGCTextField {
-                id: planNameField
-                placeholderText: qsTr("Untitled")
+            QGCLabel {
                 Layout.fillWidth: true
-
-                Component.onCompleted: text = _root.planMasterController.currentPlanFileName
-
-                Connections {
-                    target: _root.planMasterController
-                    function onCurrentPlanFileNameChanged() {
-                        if (!planNameField.activeFocus) {
-                            planNameField.text = _root.planMasterController.currentPlanFileName
-                        }
-                    }
-                }
-
-                onEditingFinished: _root.planMasterController.currentPlanFileName = text
+                elide: Text.ElideMiddle
+                textFormat: Text.PlainText
+                enabled: _root.planMasterController.currentPlanFileName !== ""
+                text: _root.planMasterController.currentPlanFileName === "" ? qsTr("<Untitled>") : _root.planMasterController.currentPlanFileName
             }
         }
 

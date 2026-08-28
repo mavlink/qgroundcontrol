@@ -8,7 +8,6 @@
 #include "RallyPointController.h"
 #include "QGCMAVLinkTypes.h"
 
-class QGCCompressionJob;
 class QmlObjectListModel;
 class MultiVehicleManager;
 class Vehicle;
@@ -53,9 +52,7 @@ public:
     Q_PROPERTY(QString                  fileExtension           READ fileExtension                          CONSTANT)                               ///< File extension for missions
     Q_PROPERTY(QString                  kmlFileExtension        READ kmlFileExtension                       CONSTANT)
     Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)          ///< Fully qualified path, empty if not yet saved
-    Q_PROPERTY(QString                  currentPlanFileName     READ currentPlanFileName WRITE setCurrentPlanFileName NOTIFY currentPlanFileNameChanged)  ///< Editable base name, no path or extension
-    Q_PROPERTY(QString                  originalPlanFileName    READ originalPlanFileName                   NOTIFY originalPlanFileNameChanged)     ///< On-disk name when last loaded/saved
-    Q_PROPERTY(bool                     planFileRenamed         READ planFileRenamed                        NOTIFY planFileRenamedChanged)          ///< true if currentPlanFileName differs from originalPlanFileName
+    Q_PROPERTY(QString                  currentPlanFileName     READ currentPlanFileName                    NOTIFY currentPlanFileChanged)          ///< Base name of currentPlanFile, no path or extension
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                               ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                               ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            READ planCreators                           NOTIFY planCreatorsChanged)
@@ -84,18 +81,10 @@ public:
     Q_INVOKABLE void loadFromVehicle(void);
     Q_INVOKABLE void sendToVehicle(void);
     Q_INVOKABLE void loadFromFile(const QString& filename);
-
-    /// Load a plan from an archive file (.zip, .tar.gz, etc.)
-    /// Extracts the archive and loads the first .plan file found.
-    /// @param archivePath Path to the archive file
-    Q_INVOKABLE void loadFromArchive(const QString& archivePath);
-
     Q_INVOKABLE bool saveToCurrent();
     Q_INVOKABLE bool saveToFile(const QString& filename);
     Q_INVOKABLE void saveToKml(const QString& filename);
 
-    Q_INVOKABLE bool saveWithCurrentName(); ///< Save using the (possibly renamed) currentPlanFileName
-    Q_INVOKABLE bool resolvedPlanFileExists() const; ///< true if a file at the renamed path already exists on disk
     Q_INVOKABLE void removeAll(void); ///< Removes all from controller only, sync required to remove from vehicle
     Q_INVOKABLE void removeAllFromVehicle(void); ///< Removes all from vehicle and controller
 
@@ -112,10 +101,7 @@ public:
     QString fileExtension(void) const;
     QString kmlFileExtension(void) const;
     QString currentPlanFile(void) const { return _currentPlanFile; }
-    QString currentPlanFileName(void) const { return _currentPlanFileName; }
-    void setCurrentPlanFileName(const QString& name);
-    QString originalPlanFileName(void) const { return _originalPlanFileName; }
-    bool planFileRenamed(void) const;
+    QString currentPlanFileName(void) const;
     QStringList loadNameFilters(void) const;
     QStringList saveNameFilters(void) const;
     bool isEmpty(void) const;
@@ -144,9 +130,6 @@ signals:
     void dirtyForUploadChanged(bool dirtyForUpload);
     void offlineChanged(bool offlineEditing);
     void currentPlanFileChanged(void);
-    void currentPlanFileNameChanged(void);
-    void originalPlanFileNameChanged(void);
-    void planFileRenamedChanged(void);
     void planCreatorsChanged(QmlObjectListModel* planCreators);
     void managerVehicleChanged(Vehicle* managerVehicle);
     void promptForPlanUsageOnVehicleChange(void);
@@ -163,16 +146,29 @@ private slots:
     void _updateOverallDirty(void);
     void _updateShowCreateFromTemplate(void);
     void _updatePlanCreatorsList(void);
-    void _handleExtractionFinished(bool success);
 
 private:
+    /// Sequences the explicit loadFromVehicle/sendToVehicle chains: Mission -> GeoFence -> RallyPoints.
+    /// Idle means no transfer was requested, so manager loadComplete/sendComplete signals (e.g. a send
+    /// from another controller) must be ignored. InitialPlanLoad marks the automatic download at vehicle
+    /// connect and completes on Vehicle::initialPlanRequestCompleteChanged (unsupported sections never
+    /// emit loadComplete).
+    enum class SyncSequence {
+        Idle,
+        Mission,
+        GeoFence,
+        RallyPoints,
+        InitialPlanLoad,
+    };
+
     void _commonInit(void);
     void _showPlanFromManagerVehicle(void);
+    void _initialPlanRequestCompleteChanged(bool initialPlanRequestComplete);
     void _setDirtyForSave(bool dirtyForSave);
     void _setDirtyForUpload(bool dirtyForUpload);
     void _setDirtyStates(bool dirtyForSave, bool dirtyForUpload);
-    QString _resolvedPlanFilePath() const;
-    void _clearFileNames();
+    void _clearCurrentPlanFile();
+    bool _loadPlanJson(const QByteArray& bytes, QString& errorString);
 
 #ifdef QGC_UNITTEST_BUILD
     // Used by unit tests to set dirty flags for initial state
@@ -188,18 +184,9 @@ private:
     MissionController _missionController;
     GeoFenceController _geoFenceController;
     RallyPointController _rallyPointController;
-    bool _loadGeoFence = false;
-    bool _loadRallyPoints = false;
-    bool _sendGeoFence = false;
-    bool _sendRallyPoints = false;
+    SyncSequence _loadSequence = SyncSequence::Idle;
+    SyncSequence _sendSequence = SyncSequence::Idle;
     QString _currentPlanFile;
-
-    // NOTE: _currentPlanFileName and _originalPlanFileName must be kept in sync
-    // with _currentPlanFile across all code paths that modify any of them:
-    // loadFromFile, saveToFile, removeAll, removeAllFromVehicle, _clearFileNames.
-    QString _currentPlanFileName;
-    QString _originalPlanFileName;
-
     bool _deleteWhenSendCompleted = false;
     bool _dirtyForSave = false;
     bool _dirtyForUpload = false;
@@ -208,6 +195,4 @@ private:
     QmlObjectListModel* _planCreators = nullptr;
     QGCMAVLinkTypes::VehicleClass_t _planCreatorsVehicleClass = -1;
     bool _userSelectedManualCreation = false;
-    QGCCompressionJob* _extractionJob = nullptr;
-    QString _extractionOutputDir;
 };

@@ -392,6 +392,7 @@ TreeView {
                         Layout.fillWidth: true
                         text: root._groupSubtitle(delegateRoot.nodeType)
                         elide: Text.ElideRight
+                        textFormat: Text.PlainText
                         font.pointSize: ScreenTools.smallFontPointSize
                         color: qgcPal.colorGrey
                     }
