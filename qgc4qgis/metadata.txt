@@ -1,0 +1,28 @@
+[general]
+name=QGC4QGIS
+qgisMinimumVersion=3.34
+qgisMaximumVersion=4.99
+description=QGIS integration plugin for QGroundControl.
+about=Integration of QGroundControl with QGIS for UAV/drone mission planning and management.
+version=0.7.0
+author=Diego Camargo
+email=diegocamargo.bft@gmail.com
+homepage=https://github.com/d-camargo/qgroundcontrol-4QGIS
+tracker=https://github.com/d-camargo/qgroundcontrol-4QGIS/issues
+repository=https://github.com/d-camargo/qgroundcontrol-4QGIS
+icon=resources/icon.svg
+tags=uav, drone, mavlink, qgroundcontrol, mission planning
+category=Plugins
+experimental=False
+supportsQt6=True
+hasProcessingProvider=yes
+changelog=0.7.0: Source strings in English with a Brazilian Portuguese translation (i18n/qgc4qgis_pt_BR.qm) — the interface stays in Portuguese for pt-BR locales. The custom camera entry is now "Custom camera (manual)": a saved camera setting with the old name falls back to the first camera in the list.
+    0.6.3: Export, survey grid generation, and DEM download failures are now logged to the QGIS log instead of being silenced; XML generation (.kml/.kmz) without the standard library XML parser. No change to the exported files.
+    0.6.2: DEM writing no longer loads the GDAL NumPy bindings (osgeo.gdal_array) — eliminates the "module compiled using NumPy 1.x" warning in the log during DEM download.
+    0.6.1: Plugin loading no longer imports the GDAL bindings (lazy import at DEM writing time) — installation is immune to environments with NumPy 2.x where gdal_array was compiled against NumPy 1.x; NumPy install dialog diagnosis added to the README.
+    0.6.0: Declared compatibility with QGIS 4.x (qgisMaximumVersion=4.99); DEM download no longer depends on NumPy — fixes the "module compiled using NumPy 1.x" error in QGIS 4 environments with NumPy 2.x.
+    0.5.0: Automatic download of the Copernicus DEM (the same elevation source used by QGroundControl) for the area of interest, already loaded and selected in the project.
+    0.4.0: .kml export for the classic Litchi Mission Hub (flylitchi.com/hub), compatible with the "Add take photo action" option; the .csv exporter now warns when the trigger mode does not generate a per-waypoint photo action.
+    0.3.0: WPML (.kmz) export in terrain mode, converted to altitude relative to the takeoff point; complete template.kml with a waypoint Folder and takeoff point; the same .kmz is imported by Litchi Hub 2.
+    0.2.1: The planning panel now scrolls vertically — all content is accessible on smaller screens.
+    0.2.0: Version updated to 0.2.0 and full metadata added for the official QGIS repository.

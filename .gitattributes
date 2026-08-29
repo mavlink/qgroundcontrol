@@ -98,6 +98,12 @@
 docs/**         export-ignore
 tests/**        export-ignore
 .github/**      export-ignore
+dist export-ignore
+test_*.py export-ignore
+*_test.py export-ignore
+conftest.py export-ignore
+test/ export-ignore
+tests/ export-ignore
 
 # ──────────────────────────────────────────────────────────────
 # 6. GitHub Linguist overrides

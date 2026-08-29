@@ -50,13 +50,15 @@ repos:
         types_or: [c++, c]
         exclude: ^(build/|libs/)
 
-  # Python formatting (report-only)
+  # Python formatting: ruff-format is scoped to plugin code because tools/ and .github/scripts/ match upstream/master
+  # and reformatting them would cause merge conflicts on upstream merge. ruff (lint) remains unscoped covering the repo.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.20
     hooks:
       - id: ruff
       - id: ruff-format
         args: [--check]
+        files: ^(qgc4qgis|tests)/.*\.py$
 
   # Python type checking
   - repo: https://github.com/RobertCraigie/pyright-python

@@ -191,3 +191,5 @@ pytest-of-*/
 .tool-versions
 .python-version
 !tools/.python-version
+
+!qgc4qgis/i18n/*.qm

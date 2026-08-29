@@ -36,10 +36,11 @@ ignore = [
 ]
 
 [lint.isort]
-known-first-party = ["qgc"]
+known-first-party = ["qgc", "qgc4qgis"]
 
 [lint.per-file-ignores]
 "test/**/*.py" = ["B011"]  # Allow assert in tests
+"tests/**/*.py" = ["B011"]  # Allow assert in tests
 # Bootstrap scripts manipulate sys.path before importing project modules.
 "tools/check_deps.py" = ["E402"]
 "tools/clean.py" = ["E402"]

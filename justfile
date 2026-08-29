@@ -18,6 +18,9 @@ build_preset := if build_type == "Debug" { "default" } else if build_type == "Re
 # Use all cores by default; override with JOBS=N.
 jobs := env_var_or_default("JOBS", num_cpus())
 app_path := if host_os == "windows" { build_dir / build_type / "QGroundControl.exe" } else if host_os == "macos" { build_dir / build_type / "QGroundControl.app" / "Contents" / "MacOS" / "QGroundControl" } else { build_dir / build_type / "QGroundControl" }
+qgis_plugin_dir := env_var_or_default("QGIS_PLUGIN_DIR", home_directory() / ".local/share/QGIS/QGIS3/profiles/default/python/plugins")
+qgis_target_dir := qgis_plugin_dir / "qgc4qgis"
+
 
 # Default: show available commands
 default:
@@ -113,6 +116,25 @@ docs:
 # Build using Docker (Ubuntu)
 docker:
     ./deploy/docker/run-docker.sh ubuntu
+
+# ─────────────────────────────────────────────────────────────────────────────
+# QGIS Plugin
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Install QGIS plugin (symlink qgc4qgis to QGIS default profile)
+qgis-install:
+    mkdir -p "{{ qgis_plugin_dir }}"
+    rm -rf "{{ qgis_target_dir }}"
+    ln -s "{{ justfile_directory() / "qgc4qgis" }}" "{{ qgis_target_dir }}"
+
+# Uninstall QGIS plugin
+qgis-uninstall:
+    rm -rf "{{ qgis_target_dir }}"
+
+# Run QGIS plugin tests
+qgis-test:
+    pytest -q
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utilities
