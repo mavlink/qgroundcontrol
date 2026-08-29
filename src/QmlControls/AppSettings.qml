@@ -34,6 +34,33 @@ Rectangle {
         return !!_expandedPages[pageIndex]
     }
 
+    function _pageVisible(entry) {
+        return entry && entry.name !== "Divider" &&
+               (typeof entry.pageVisible !== "function" || entry.pageVisible())
+    }
+
+    function _dividerVisible(pageIndex) {
+        if (_searchQuery.trim() !== "") return false
+
+        var previousPageIndex = -1
+        for (var i = pageIndex - 1; i >= 0; i--) {
+            if (_pageVisible(settingsPagesModel.get(i))) {
+                previousPageIndex = i
+                break
+            }
+        }
+        if (previousPageIndex < 0) return false
+
+        for (var j = previousPageIndex + 1; j < pageIndex; j++) {
+            if (settingsPagesModel.get(j).name === "Divider") return false
+        }
+
+        for (var k = pageIndex + 1; k < settingsPagesModel.count; k++) {
+            if (_pageVisible(settingsPagesModel.get(k))) return true
+        }
+        return false
+    }
+
     // Search: returns array of matching section indices for a page, or empty if no match
     function _matchingSections(pageIndex) {
         var query = _searchQuery.toLowerCase().trim()
@@ -224,7 +251,7 @@ Rectangle {
                     property bool isExpanded: hasMultipleSections && (isSearching ? matchesSearch : settingsView._isExpanded(index))
 
                     visible: {
-                        if (pageName === "Divider") return !isSearching
+                        if (pageName === "Divider") return settingsView._dividerVisible(index)
                         if (!pageVisible()) return false
                         if (isSearching) return matchesSearch
                         return true
@@ -235,6 +262,14 @@ Rectangle {
                         Layout.fillWidth: true
                         height: ScreenTools.defaultFontPixelHeight / 2
                         visible: pageName === "Divider"
+
+                        Rectangle {
+                            anchors.left:           parent.left
+                            anchors.right:          parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            height:                 1
+                            color:                  qgcPal.windowShade
+                        }
                     }
 
                     // Page button
