@@ -7,23 +7,124 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #ifdef QGC_GST_STREAMING
 
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
+
+#include <atomic>
+#include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 #include <memory>
 #include <vector>
 
-#include "Fixtures/RAIIFixtures.h"
 #include "Fact.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "GstVideoReceiver.h"
 #include "LogManager.h"
 #include "VideoBackend.h"
+
+namespace {
+
+constexpr GstClockTime kRecordingTestTimeout = 5 * GST_SECOND;
+
+GstPadProbeReturn countBufferProbe([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer userData)
+{
+    if (GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER) {
+        static_cast<std::atomic<int>*>(userData)->fetch_add(1, std::memory_order_relaxed);
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+struct DemuxPadContext
+{
+    GstElement* parser = nullptr;
+    std::atomic<bool> linked{false};
+};
+
+void linkH265DemuxPad([[maybe_unused]] GstElement* demux, GstPad* pad, gpointer userData)
+{
+    auto* context = static_cast<DemuxPadContext*>(userData);
+    GstCaps* caps = gst_pad_get_current_caps(pad);
+    if (!caps) {
+        caps = gst_pad_query_caps(pad, nullptr);
+    }
+    if (!caps || gst_caps_is_any(caps) || gst_caps_is_empty(caps)) {
+        gst_clear_caps(&caps);
+        return;
+    }
+
+    bool isH265 = false;
+    for (guint i = 0; i < gst_caps_get_size(caps); ++i) {
+        if (gst_structure_has_name(gst_caps_get_structure(caps, i), "video/x-h265")) {
+            isH265 = true;
+            break;
+        }
+    }
+    gst_clear_caps(&caps);
+    if (!isH265) {
+        return;
+    }
+
+    GstPad* sinkPad = gst_element_get_static_pad(context->parser, "sink");
+    if (sinkPad) {
+        context->linked.store(gst_pad_link(pad, sinkPad) == GST_PAD_LINK_OK, std::memory_order_relaxed);
+        gst_clear_object(&sinkPad);
+    }
+}
+
+bool waitForPipelineEos(GstElement* pipeline, QString& failure)
+{
+    GstBus* bus = gst_element_get_bus(pipeline);
+    if (!bus) {
+        failure = QStringLiteral("Pipeline has no bus");
+        return false;
+    }
+
+    GstMessage* message = gst_bus_timed_pop_filtered(bus, kRecordingTestTimeout,
+                                                     static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+    gst_clear_object(&bus);
+    if (!message) {
+        failure = QStringLiteral("Timed out waiting for EOS");
+        return false;
+    }
+
+    const auto cleanup = qScopeGuard([&] { gst_message_unref(message); });
+    if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {
+        return true;
+    }
+
+    GError* error = nullptr;
+    gchar* debug = nullptr;
+    gst_message_parse_error(message, &error, &debug);
+    failure = QStringLiteral("%1 (%2)").arg(
+        error ? QString::fromUtf8(error->message) : QStringLiteral("unknown GStreamer error"),
+        debug ? QString::fromUtf8(debug) : QString());
+    g_clear_error(&error);
+    g_clear_pointer(&debug, g_free);
+    return false;
+}
+
+GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClockTime timestamp)
+{
+    GstBuffer* buffer = gst_buffer_new_allocate(nullptr, static_cast<gsize>(bytes.size()), nullptr);
+    if (!buffer) {
+        return GST_FLOW_ERROR;
+    }
+    (void) gst_buffer_fill(buffer, 0, bytes.constData(), static_cast<gsize>(bytes.size()));
+    GST_BUFFER_PTS(buffer) = timestamp;
+    GST_BUFFER_DTS(buffer) = timestamp;
+    GST_BUFFER_DURATION(buffer) = GST_SECOND / 4;
+    return gst_app_src_push_buffer(GST_APP_SRC(appsrc), buffer);
+}
+
+}  // namespace
 
 void GStreamerTest::init()
 {
@@ -340,6 +441,10 @@ void GStreamerTest::_testVerifyRequiredPlugins()
     QVERIFY2(corePlugin, "Required plugin not found: coreelements");
     gst_clear_object(&corePlugin);
 
+    GstPlugin* parserPlugin = gst_registry_find_plugin(registry, "videoparsersbad");
+    QVERIFY2(parserPlugin, "Required plugin not found: videoparsersbad");
+    gst_clear_object(&parserPlugin);
+
     GList* plugins = gst_registry_get_plugin_list(registry);
     const int pluginCount = g_list_length(plugins);
     gst_plugin_list_free(plugins);
@@ -523,6 +628,160 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
     QVERIFY2(linked, qPrintable(QStringLiteral("Recording sink rejected %1").arg(capsString)));
 }
 
+void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
+{
+    for (const char* factoryName : {"appsrc", "h265parse", "tee", "queue", "fakesink", "valve", "splitmuxsink",
+                                    "mp4mux", "filesrc", "qtdemux", "avdec_h265"}) {
+        GstElementFactory* factory = gst_element_factory_find(factoryName);
+        if (!factory) {
+            QSKIP(qPrintable(
+                QStringLiteral("Required GStreamer factory is unavailable: %1").arg(QString::fromLatin1(factoryName))));
+        }
+        gst_object_unref(factory);
+    }
+
+    // Synthetic 32x32 Annex-B H.265 access units. Only the first AU contains VPS/SPS/PPS; the
+    // later IDRs intentionally contain just a slice. This reproduces a camera that sends codec
+    // configuration once at session startup, before the user begins recording.
+    const QByteArray initialAu = QByteArray::fromBase64(QByteArrayLiteral(
+        "AAAAAUABDAH//wQIAAADAJgoAAADAAAeugJAAAAAAUIBAQQIAAADAJgoAAADAAAekAhBCKUt0lJhf/gACAALUGBgYEAAAAMAQ"
+        "AAAAwECAAAAAUQBwHAwYBEgAAAAASgBrC2AE6/7X1g="));
+    const QByteArray secondAu = QByteArray::fromBase64(QByteArrayLiteral("AAAAASgBrC2AE6/7X1g="));
+    const QByteArray thirdAu = QByteArray::fromBase64(QByteArrayLiteral("AAAAASgBrCyAE6/7X1g="));
+    QVERIFY(!initialAu.isEmpty());
+    QVERIFY(!secondAu.isEmpty());
+    QVERIFY(!thirdAu.isEmpty());
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("mid-stream.mp4"));
+
+    GstElement* pipeline = gst_pipeline_new("mid-stream-recording-test");
+    QVERIFY(pipeline);
+    const auto pipelineCleanup = qScopeGuard([&] {
+        (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+        gst_object_unref(pipeline);
+    });
+
+    GstElement* source = gst_element_factory_make("appsrc", nullptr);
+    GstElement* upstreamParser = gst_element_factory_make("h265parse", nullptr);
+    GstElement* tee = gst_element_factory_make("tee", nullptr);
+    GstElement* displayQueue = gst_element_factory_make("queue", nullptr);
+    GstElement* displaySink = gst_element_factory_make("fakesink", nullptr);
+    GstElement* recorderQueue = gst_element_factory_make("queue", nullptr);
+    GstElement* recorderValve = gst_element_factory_make("valve", nullptr);
+    QVERIFY(source);
+    QVERIFY(upstreamParser);
+    QVERIFY(tee);
+    QVERIFY(displayQueue);
+    QVERIFY(displaySink);
+    QVERIFY(recorderQueue);
+    QVERIFY(recorderValve);
+
+    GstCaps* sourceCaps =
+        gst_caps_from_string("video/x-h265,stream-format=byte-stream,alignment=au,width=32,height=32,framerate=4/1");
+    QVERIFY(sourceCaps);
+    g_object_set(source, "caps", sourceCaps, "format", GST_FORMAT_TIME, nullptr);
+    gst_clear_caps(&sourceCaps);
+    g_object_set(upstreamParser, "config-interval", -1, nullptr);
+    g_object_set(displaySink, "sync", FALSE, "async", FALSE, nullptr);
+    g_object_set(recorderValve, "drop", TRUE, nullptr);
+    gst_util_set_object_arg(G_OBJECT(recorderValve), "drop-mode", "forward-sticky-events");
+
+    gst_bin_add_many(GST_BIN(pipeline), source, upstreamParser, tee, displayQueue, displaySink, recorderQueue,
+                     recorderValve, nullptr);
+    QVERIFY(gst_element_link_many(source, upstreamParser, tee, nullptr));
+    QVERIFY(gst_element_link_many(tee, displayQueue, displaySink, nullptr));
+    QVERIFY(gst_element_link_many(tee, recorderQueue, recorderValve, nullptr));
+
+    std::atomic<int> displayedBuffers{0};
+    GstPad* displayPad = gst_element_get_static_pad(displaySink, "sink");
+    QVERIFY(displayPad);
+    const gulong displayProbe =
+        gst_pad_add_probe(displayPad, GST_PAD_PROBE_TYPE_BUFFER, countBufferProbe, &displayedBuffers, nullptr);
+    QVERIFY(displayProbe != 0);
+    const auto displayProbeCleanup = qScopeGuard([&] {
+        gst_pad_remove_probe(displayPad, displayProbe);
+        gst_clear_object(&displayPad);
+    });
+
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(pushAccessUnit(source, initialAu, 0) == GST_FLOW_OK);
+    QTRY_VERIFY_WITH_TIMEOUT(displayedBuffers.load(std::memory_order_relaxed) >= 1, 2000);
+
+    GstPad* valveSrcPad = gst_element_get_static_pad(recorderValve, "src");
+    QVERIFY(valveSrcPad);
+    GstCaps* recordingCaps = gst_pad_get_current_caps(valveSrcPad);
+    QVERIFY2(recordingCaps, "Closed recording valve did not preserve negotiated caps");
+
+    GstElement* fileSink = GstVideoReceiver::_makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps);
+    gst_clear_caps(&recordingCaps);
+    QVERIFY(fileSink);
+    QVERIFY(gst_bin_add(GST_BIN(pipeline), fileSink));
+    QVERIFY(gst_element_link(recorderValve, fileSink));
+    QVERIFY(gst_element_sync_state_with_parent(fileSink));
+    g_object_set(recorderValve, "drop", FALSE, nullptr);
+    gst_clear_object(&valveSrcPad);
+
+    QVERIFY(pushAccessUnit(source, secondAu, GST_SECOND / 4) == GST_FLOW_OK);
+    QVERIFY(pushAccessUnit(source, thirdAu, GST_SECOND / 2) == GST_FLOW_OK);
+    QVERIFY(gst_app_src_end_of_stream(GST_APP_SRC(source)) == GST_FLOW_OK);
+
+    QString failure;
+    QVERIFY2(waitForPipelineEos(pipeline, failure), qPrintable(failure));
+    (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+    QVERIFY2(QFileInfo(outputPath).size() > 0, "Recording did not produce an MP4 file");
+
+    GstElement* verifyPipeline = gst_pipeline_new("verify-mid-stream-recording");
+    QVERIFY(verifyPipeline);
+    const auto verifyCleanup = qScopeGuard([&] {
+        (void) gst_element_set_state(verifyPipeline, GST_STATE_NULL);
+        gst_object_unref(verifyPipeline);
+    });
+
+    GstElement* fileSource = gst_element_factory_make("filesrc", nullptr);
+    GstElement* demux = gst_element_factory_make("qtdemux", nullptr);
+    GstElement* verifyParser = gst_element_factory_make("h265parse", nullptr);
+    GstElement* verifyDecoder = gst_element_factory_make("avdec_h265", nullptr);
+    GstElement* verifySink = gst_element_factory_make("fakesink", nullptr);
+    QVERIFY(fileSource);
+    QVERIFY(demux);
+    QVERIFY(verifyParser);
+    QVERIFY(verifyDecoder);
+    QVERIFY(verifySink);
+
+    const QByteArray outputPathBytes = QFile::encodeName(outputPath);
+    g_object_set(fileSource, "location", outputPathBytes.constData(), nullptr);
+    g_object_set(verifySink, "sync", FALSE, "async", FALSE, nullptr);
+    gst_bin_add_many(GST_BIN(verifyPipeline), fileSource, demux, verifyParser, verifyDecoder, verifySink, nullptr);
+    QVERIFY(gst_element_link(fileSource, demux));
+    QVERIFY(gst_element_link_many(verifyParser, verifyDecoder, verifySink, nullptr));
+
+    DemuxPadContext demuxContext{verifyParser};
+    const gulong padAddedHandler =
+        g_signal_connect(demux, "pad-added", G_CALLBACK(linkH265DemuxPad), &demuxContext);
+    QVERIFY(padAddedHandler != 0);
+    const auto padAddedCleanup = qScopeGuard([&] { g_signal_handler_disconnect(demux, padAddedHandler); });
+
+    std::atomic<int> verifiedBuffers{0};
+    GstPad* verifyPad = gst_element_get_static_pad(verifySink, "sink");
+    QVERIFY(verifyPad);
+    const gulong verifyProbe =
+        gst_pad_add_probe(verifyPad, GST_PAD_PROBE_TYPE_BUFFER, countBufferProbe, &verifiedBuffers, nullptr);
+    QVERIFY(verifyProbe != 0);
+    const auto verifyProbeCleanup = qScopeGuard([&] {
+        gst_pad_remove_probe(verifyPad, verifyProbe);
+        gst_clear_object(&verifyPad);
+    });
+
+    QVERIFY(gst_element_set_state(verifyPipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    failure.clear();
+    QVERIFY2(waitForPipelineEos(verifyPipeline, failure), qPrintable(failure));
+    QVERIFY2(demuxContext.linked.load(std::memory_order_relaxed), "MP4 has no H.265 video track");
+    QVERIFY2(verifiedBuffers.load(std::memory_order_relaxed) >= 2,
+             "Finalized MP4 did not decode the two mid-stream H.265 access units");
+}
+
 void GStreamerTest::_testBindDebugLevelFactRejectsNullContext()
 {
     Fact fact;
@@ -591,6 +850,7 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()
 }
 
 QGC_GST_SKIP_TEST(_testRecordingSinkAcceptsElementaryStreams)
+QGC_GST_SKIP_TEST(_testRecordingSinkFinalizesMidStreamH265Mp4)
 QGC_GST_SKIP_TEST(_testBindDebugLevelFactRejectsNullContext)
 QGC_GST_SKIP_TEST(_testRuntimeVersionCheck)
 QGC_GST_SKIP_TEST(_testAppsinkFrameDelivery)

@@ -16,6 +16,28 @@ constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
 constexpr int kRtspRetry = 3;
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
 
+void configureH26xParser(GstElement* element)
+{
+    GstElementFactory* factory = gst_element_get_factory(element);
+    if (!factory) {
+        return;
+    }
+
+    const char* factoryName = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
+    if ((g_strcmp0(factoryName, "h264parse") == 0) || (g_strcmp0(factoryName, "h265parse") == 0)) {
+        // Recording can begin long after RTSP setup. Repeat codec parameter sets at every IDR so
+        // the late-opened recording branch can construct MP4/MOV codec_data without relying on
+        // the camera to resend its startup-only VPS/SPS/PPS or SPS/PPS.
+        g_object_set(element, "config-interval", -1, nullptr);
+    }
+}
+
+void configureAutopluggedParser([[maybe_unused]] GstBin* bin, [[maybe_unused]] GstBin* subBin, GstElement* element,
+                                [[maybe_unused]] gpointer data)
+{
+    configureH26xParser(element);
+}
+
 // Older Linux/system GStreamer needs an autoplug-query caps filter to keep parsebin on byte-stream output.
 #if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
 gboolean filterParserCaps([[maybe_unused]] GstElement* bin, [[maybe_unused]] GstPad* pad,
@@ -552,7 +574,11 @@ GstElement* create(const QString& uri, const Config& config)
                 qCCritical(GstSourceFactoryLog) << "gst_element_factory_make('rtph265depay') failed";
                 break;
             }
-            g_object_set(parser, "config-interval", -1, nullptr);
+            configureH26xParser(parser);
+        } else {
+            // parsebin creates the codec parser only after it sees the stream caps. Configure that
+            // parser as soon as it is autoplugged, before the pipeline reaches PLAYING.
+            (void) g_signal_connect(parser, "deep-element-added", G_CALLBACK(configureAutopluggedParser), nullptr);
         }
 
         // Older Linux/system GStreamer misnegotiates parser->decoder caps; force avc/hvc1 there only.
