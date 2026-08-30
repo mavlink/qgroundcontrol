@@ -21,6 +21,7 @@ private slots:
     void _testSettingsSectionCollapseToSingle();
     void _testSettingsPageUnavailableFallback();
     void _testSettingsSearchExcludesHiddenSections();
+    void _testDiscoveredCameraReceiverSettingsVisible();
 
 private:
     QQuickItem* _clickSettingsButton(const QString& pageName);

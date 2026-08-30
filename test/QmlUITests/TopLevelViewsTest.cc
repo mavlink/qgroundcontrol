@@ -289,3 +289,49 @@ void TopLevelViewsTest::_testSettingsSearchExcludesHiddenSections()
     searchField->setProperty("text", QString());
     QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsButton_Video"), 0));
 }
+
+void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
+{
+#ifndef QGC_GST_STREAMING
+    QSKIP("GStreamer receiver settings are unavailable in this build");
+#else
+    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoSourceRTSP);
+
+    Fact* const lowLatencyMode = SettingsManager::instance()->videoSettings()->lowLatencyMode();
+    const QVariant savedLowLatencyMode = lowLatencyMode->rawValue();
+    const auto restoreLowLatencyMode =
+        qScopeGuard([lowLatencyMode, savedLowLatencyMode] { lowLatencyMode->setRawValue(savedLowLatencyMode); });
+    lowLatencyMode->setRawValue(false);
+
+    startUI();
+    if (QTest::currentTestFailed())
+        return;
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+    if (!_clickSettingsButton(QStringLiteral("Video"))) {
+        return;
+    }
+
+    QQuickItem* const videoPage = findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video"));
+    QVERIFY(videoPage);
+    QVERIFY(videoPage->property("isStreamSource").toBool());
+
+    // autoStreamConfig mirrors the read-only VideoManager property. Override the
+    // page binding to isolate these UI visibility rules from camera transport.
+    QVERIFY(videoPage->setProperty("autoStreamConfig", true));
+    QTRY_VERIFY(videoPage->property("autoStreamConfig").toBool());
+
+    QQuickItem* const sourceGroup = findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoSource"));
+    QVERIFY(sourceGroup);
+    QTRY_VERIFY(!sourceGroup->isEnabled());
+    QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsGroup_Connection"), 0));
+    QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsTextField_aspectRatio"), 0));
+
+    QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_disableWhenDisarmed"), 0));
+    QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_lowLatencyMode"), 0));
+    QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsTextField_rtpJitterLatencyMs"), 0));
+    QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_rtspAutoReconnect"), 0));
+
+    stopUI();
+#endif
+}
