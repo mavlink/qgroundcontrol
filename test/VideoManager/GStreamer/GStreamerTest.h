@@ -26,6 +26,7 @@ private slots:
     void _testCreateVideoReceiver();
     void _testRecordingSinkAcceptsElementaryStreams_data();
     void _testRecordingSinkAcceptsElementaryStreams();
+    void _testRecordingSinkFinalizesMidStreamH265Mp4();
     void _testBindDebugLevelFactRejectsNullContext();
     void _testRuntimeVersionCheck();
     void _testAppsinkFrameDelivery();
