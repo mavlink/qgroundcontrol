@@ -144,8 +144,8 @@
         },
         {
             "name": "lowLatencyMode",
-            "shortDesc": "Reduce video latency by approximately 200ms using optimized streaming settings.",
-            "longDesc": "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
+            "shortDesc": "Minimize video latency by disabling RTP playout buffering and retransmission recovery.",
+            "longDesc": "Sets RTP playout latency to zero and disables retransmission recovery. This reduces delay but may increase dropped or corrupted frames on lossy or reordered networks.",
             "type": "bool",
             "default": false,
             "label": "Low Latency Mode",

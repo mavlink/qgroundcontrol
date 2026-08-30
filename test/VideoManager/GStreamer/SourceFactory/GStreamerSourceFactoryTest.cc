@@ -115,18 +115,50 @@ void GStreamerTest::_testSourceFactoryNoRetransmission()
     QCOMPARE(dropOnLatency, FALSE);
 }
 
-void GStreamerTest::_testSourceFactoryRtspExcludesStaticJitterBuffer()
+void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy_data()
+{
+    QTest::addColumn<int>("jitterBufferPolicy");
+    QTest::addColumn<guint>("expectedLatencyMs");
+    QTest::addColumn<bool>("expectedRetransmission");
+    QTest::addColumn<bool>("expectedDropOnLatency");
+
+    using JitterBuffer = GStreamer::SourceFactory::JitterBuffer;
+    QTest::newRow("low-latency") << static_cast<int>(JitterBuffer::None) << 0u << false << true;
+    QTest::newRow("drop-on-latency") << static_cast<int>(JitterBuffer::DropOnLatency) << 80u << true << true;
+    QTest::newRow("buffered") << static_cast<int>(JitterBuffer::Buffered) << 80u << true << false;
+}
+
+void GStreamerTest::_testSourceFactoryRtspJitterBufferPolicy()
 {
     if (!gst_element_factory_find("rtspsrc")) {
         QSKIP("rtspsrc plugin unavailable");
     }
 
+    QFETCH(int, jitterBufferPolicy);
+    QFETCH(guint, expectedLatencyMs);
+    QFETCH(bool, expectedRetransmission);
+    QFETCH(bool, expectedDropOnLatency);
+
     GStreamer::SourceFactory::Config config;
-    config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
+    config.jitterBuffer = static_cast<GStreamer::SourceFactory::JitterBuffer>(jitterBufferPolicy);
+    config.latencyMs = 80;
+    config.doRetransmission = true;
 
     GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
     const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
+
+    GstElement* source = findChildByFactoryName(bin, "rtspsrc");
+    QVERIFY(source);
+
+    guint latencyMs = 0;
+    gboolean doRetransmission = FALSE;
+    gboolean dropOnLatency = FALSE;
+    g_object_get(source, "latency", &latencyMs, "do-retransmission", &doRetransmission, "drop-on-latency",
+                 &dropOnLatency, nullptr);
+    QCOMPARE(latencyMs, expectedLatencyMs);
+    QCOMPARE(doRetransmission, expectedRetransmission ? TRUE : FALSE);
+    QCOMPARE(dropOnLatency, expectedDropOnLatency ? TRUE : FALSE);
 
     QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"),
              "rtspsrc owns its internal jitterbuffer; the factory must not add a second one");

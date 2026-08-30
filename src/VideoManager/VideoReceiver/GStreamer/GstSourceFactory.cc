@@ -314,13 +314,14 @@ GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Con
     constexpr GstRTSPLowerTrans kRtspProtocols =
         static_cast<GstRTSPLowerTrans>(GST_RTSP_LOWER_TRANS_UDP | GST_RTSP_LOWER_TRANS_TCP);
 
-    // do-retransmission forwards to rtspsrc's internal rtpjitterbuffer (added 1.6);
-    // drop-on-latency=TRUE unless jitterBuffer==Buffered (opt out of bounded playout).
+    // rtspsrc always owns an internal jitterbuffer, so None maps to zero playout latency and no retransmission.
+    const guint rtspLatencyMs = (config.jitterBuffer == JitterBuffer::None) ? 0u : latencyMs;
+    const gboolean doRetransmission =
+        ((config.jitterBuffer != JitterBuffer::None) && config.doRetransmission) ? TRUE : FALSE;
     const gboolean dropOnLatency = (config.jitterBuffer == JitterBuffer::Buffered) ? FALSE : TRUE;
-    g_object_set(source, "location", cleanLocation.constData(), "latency", latencyMs, "do-rtcp", TRUE,
-                 "do-retransmission", config.doRetransmission ? TRUE : FALSE, "tcp-timeout", kRtspTcpTimeoutUs,
-                 "udp-reconnect", TRUE, "drop-on-latency", dropOnLatency, "retry", kRtspRetry, "protocols",
-                 kRtspProtocols, nullptr);
+    g_object_set(source, "location", cleanLocation.constData(), "latency", rtspLatencyMs, "do-rtcp", TRUE,
+                 "do-retransmission", doRetransmission, "tcp-timeout", kRtspTcpTimeoutUs, "udp-reconnect", TRUE,
+                 "drop-on-latency", dropOnLatency, "retry", kRtspRetry, "protocols", kRtspProtocols, nullptr);
 
     const QString rtspUser = sourceUrl.userName(QUrl::FullyDecoded);
     const QString rtspPassword = sourceUrl.password(QUrl::FullyDecoded);
