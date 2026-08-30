@@ -1,6 +1,6 @@
 # Güç Kurulumu
 
-_Power Setup_ ekranı batarya parametrelerini düzenlemek için kullanılır ve ayrıca pervaneler hakkında gelişmiş ayarlar sunar.
+The _Power Setup_ screen is used to configure battery parameters and calibrate ESCs.
 
 ## Batarya Voltaj/Akım Kalibrasyonu
 
@@ -45,7 +45,3 @@ Never attempt ESC calibration with props on.
 ESC kalibrasyonu sırasında motorlar dönmemelidir.
 Bununla birlikte, bir ESC kalibrasyon sırasını doğru şekilde desteklemez/tespit etmezse, motoru maksimum hızda çalıştırarak PWM girişine yanıt verecektir.
 :::
-
-## Diğer Ayarlar
-
-UAVCAN Veriyolu Yapılandırması ve motor indeksi ve yön ataması için ek ayarlara erişmek için **Show UAVCAN Settings** onay kutusunu seçin.
