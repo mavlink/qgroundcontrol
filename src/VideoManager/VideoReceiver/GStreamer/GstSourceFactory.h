@@ -9,7 +9,7 @@ namespace GStreamer::SourceFactory {
 /// Ignored for non-RTP sources (e.g. raw MPEG-TS over TCP).
 enum class JitterBuffer
 {
-    None,           ///< No `rtpjitterbuffer` element; lowest latency, no reordering.
+    None,           ///< No playout buffering; omits an explicit buffer or sets `rtspsrc` latency to zero.
     DropOnLatency,  ///< `rtpjitterbuffer` with `drop-on-latency=TRUE`.
     Buffered,       ///< `rtpjitterbuffer` with `drop-on-latency=FALSE`.
 };
