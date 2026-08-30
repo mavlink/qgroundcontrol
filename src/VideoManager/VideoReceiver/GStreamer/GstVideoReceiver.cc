@@ -202,6 +202,9 @@ void GstVideoReceiver::start(uint32_t timeout)
         g_object_set(_recorderValve,
                      "drop", TRUE,
                      nullptr);
+        // Preserve stream-start/caps/segment events while buffers are dropped. When recording
+        // starts later, the newly linked parser receives the negotiated codec configuration.
+        gst_util_set_object_arg(G_OBJECT(_recorderValve), "drop-mode", "forward-sticky-events");
 
         _pipeline = gst_pipeline_new("receiver");
         if (!_pipeline) {
@@ -581,6 +584,9 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
         gst_clear_object(&probepad);
         if (_fileSink) {
             (void) gst_element_set_state(_fileSink, GST_STATE_NULL);
+            // Safe before and after a successful link. Removing a still-linked bin leaves the
+            // valve's src pad attached to a finalized peer and breaks every later retry.
+            gst_element_unlink(_recorderValve, _fileSink);
             GstObject* parent = gst_element_get_parent(_fileSink);
             if (parent) {
                 (void) gst_bin_remove(GST_BIN(parent), _fileSink);
@@ -591,9 +597,12 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
         emit onStartRecordingComplete(STATUS_FAIL);
     };
 
-    // A closed valve has no current caps, but its caps query is proxied upstream and identifies
-    // the elementary stream. The recording bin uses this to insert the matching codec parser.
-    GstCaps* inputCaps = gst_pad_query_caps(probepad, nullptr);
+    // forward-sticky-events preserves the exact negotiated caps while the valve is closed. Fall
+    // back to a proxied caps query during the narrow startup window before negotiation completes.
+    GstCaps* inputCaps = gst_pad_get_current_caps(probepad);
+    if (!inputCaps) {
+        inputCaps = gst_pad_query_caps(probepad, nullptr);
+    }
     _fileSink = _makeFileSink(videoFile, format, inputCaps);
     gst_clear_caps(&inputCaps);
     if (!_fileSink) {
@@ -862,6 +871,7 @@ GstElement* GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMA
                 qCCritical(GstVideoReceiverLog) << "gst_element_factory_make() failed for" << parserFactory;
                 break;
             }
+            g_object_set(parser, "config-interval", -1, nullptr);
         }
 
         // splitmuxsink owns its own muxer + filesink internally, handles request-pad
