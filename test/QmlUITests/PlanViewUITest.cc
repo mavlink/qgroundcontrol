@@ -132,6 +132,10 @@ void PlanViewUITest::_testRoverWaypointOnEmptyPlan()
     SettingsManager::instance()->appSettings()->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::VehicleClassRoverBoat);
 
     _verifyWaypointToolAddsWaypointOnEmptyPlan(false /* expectTakeoffButtonVisible */);
+    if (QTest::currentTestFailed()) return;
+
+    // Rover Land tool inserts RTL, so the label must read Return (issue #14957)
+    verifyText(QStringLiteral("planToolStrip_landButton"), QStringLiteral("Return"), QStringLiteral("rover land tool"));
 }
 
 void PlanViewUITest::_testTakeoffNotRequiredWaypointOnEmptyPlan()

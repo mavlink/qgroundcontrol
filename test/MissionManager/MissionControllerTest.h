@@ -33,6 +33,8 @@ private slots:
     void _testInsertNonSurveyComplexItemMixedModeNoCrash();
     void _testInsertComplexItemFromKML();
     void _testInsertValidityHomePositionGating();
+    void _testLandToolInsertsSingleRtl_data();
+    void _testLandToolInsertsSingleRtl();
 
     // Parameterized tests - runs once per autopilot type
     UT_PARAMETERIZED_TEST(_testEmptyVehicle);
