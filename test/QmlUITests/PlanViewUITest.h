@@ -23,6 +23,8 @@ private slots:
     void _testSaveAsMenu();
     void _testRoverWaypointOnEmptyPlan();
     void _testTakeoffNotRequiredWaypointOnEmptyPlan();
+    void _testVTOLTakeoffChoices_data();
+    void _testVTOLTakeoffChoices();
 
 private:
     /// Complete expected state of all Plan view UI under test
@@ -63,6 +65,9 @@ private:
 
     /// Current MissionController visualItems count, or -1 if unavailable.
     int _missionItemCount();
+
+    /// MAVLink command for a visual mission item, or -1 if unavailable.
+    int _missionItemCommand(int index);
 
     /// Current MissionController plannedHomePosition, or invalid if unavailable.
     QGeoCoordinate _plannedHomePosition();

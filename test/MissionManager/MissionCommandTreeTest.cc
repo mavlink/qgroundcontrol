@@ -176,6 +176,16 @@ void MissionCommandTreeTest::testOverride()
     delete vehicle;
 }
 
+void MissionCommandTreeTest::testPX4VTOLTakeoffOverride()
+{
+    MissionCommandList commandList(QStringLiteral(":/json/PX4-MavCmdInfoVTOL.json"), false /* baseCommandList */);
+    const MissionCommandUIInfo* const takeoffInfo = commandList.getUIInfo(MAV_CMD_NAV_TAKEOFF);
+
+    QVERIFY(takeoffInfo);
+    QCOMPARE(takeoffInfo->description(),
+             QStringLiteral("Take off vertically and continue the mission in multicopter mode."));
+}
+
 void MissionCommandTreeTest::testAllTrees()
 {
     ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg, QRegularExpression("Skipping invalid enum value"));
