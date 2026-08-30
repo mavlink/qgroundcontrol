@@ -90,6 +90,7 @@ File operations are located in the **Plan Toolbar** at the top of the view:
 - **Upload** — Upload the plan to the vehicle. Highlighted when the plan has un-uploaded changes.
 - **Clear** — Remove all mission items, geofence, and rally points. If connected to a vehicle, also clears them from the vehicle.
 - **Hamburger menu** (☰) — Additional options:
+  - _Save as..._ — Save the plan to a new file.
   - _Save as KML_ — Export the plan as a KML file.
   - _Download_ — Download the current plan from the vehicle (only available when connected).
 
@@ -115,7 +116,7 @@ Selecting a layer also expands the corresponding section in the [Plan Editor Pan
 
 The Plan Info section contains general plan-level settings:
 
-- **Plan File** — An editable name for the plan file.
+- **Plan File** — The name of the currently loaded plan file (`<Untitled>` if the plan has not been saved yet).
 - **Vehicle Info** — Firmware and vehicle type selectors. When connected to a vehicle these are determined automatically; when planning offline you must set them before adding any mission items so that the correct mission commands are available.
 - **Expected Home Position** — The altitude (AMSL) for the planned home position is determined automatically from terrain data. A **Move To Map Center** button repositions the home marker to the center of the map. This is only the _planned_ home position for estimating mission times and drawing waypoint lines — the actual home position is set by the vehicle when it arms.
 
