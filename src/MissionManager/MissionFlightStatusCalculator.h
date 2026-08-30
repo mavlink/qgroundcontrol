@@ -20,7 +20,7 @@ class MissionFlightStatusCalculator
 {
 public:
     /// Resets the flight status fields to defaults based on vehicle properties.
-    void reset(Vehicle* controllerVehicle, Vehicle* managerVehicle, bool missionContainsVTOLTakeoff);
+    void reset(Vehicle* controllerVehicle, Vehicle* managerVehicle, bool missionStartsInVTOLMulticopterMode);
 
     /// Runs the full recalculation over all visual items, updating per-item
     /// display properties and computing aggregate flight statistics.
@@ -30,7 +30,7 @@ public:
                 Vehicle* managerVehicle,
                 AppSettings* appSettings,
                 PlanViewSettings* planViewSettings,
-                bool missionContainsVTOLTakeoff);
+                bool missionStartsInVTOLMulticopterMode);
 
     const MissionFlightStatus_t& status() const { return _status; }
     double minAMSLAltitude() const { return _minAMSLAltitude; }

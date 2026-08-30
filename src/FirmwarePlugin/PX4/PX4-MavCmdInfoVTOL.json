@@ -4,5 +4,10 @@
     "fileType":  "MavCmdInfo",
 
     "mavCmdInfo": [
+        {
+            "id":           22,
+            "comment":      "MAV_CMD_NAV_TAKEOFF",
+            "description":  "Take off vertically and continue the mission in multicopter mode."
+        }
     ]
 }

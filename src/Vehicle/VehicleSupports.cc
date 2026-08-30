@@ -86,3 +86,8 @@ bool VehicleSupports::changeHeading() const
 {
     return _vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::ChangeHeadingCapability);
 }
+
+bool VehicleSupports::vtolMulticopterTakeoff() const
+{
+    return _vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability);
+}
