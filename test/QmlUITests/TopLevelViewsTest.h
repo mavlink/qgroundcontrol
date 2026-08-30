@@ -23,6 +23,7 @@ private slots:
     void _testSettingsSearchExcludesHiddenSections();
     void _testSettingsDividerVisibility();
     void _testVehicleConfigDividersNoVehicle();
+    void _testDiscoveredCameraReceiverSettingsVisible();
 
 private:
     QQuickItem* _clickSettingsButton(const QString& pageName);
