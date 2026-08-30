@@ -178,6 +178,7 @@ Rectangle {
 
         QGCTextField {
             id:                 searchField
+            objectName:         "settings_searchField"
             Layout.fillWidth:   true
             placeholderText:    qsTr("Search settings...")
 
@@ -229,8 +230,11 @@ Rectangle {
                     property bool isExpanded: hasMultipleSections && (isSearching ? matchesSearch : settingsView._isExpanded(index))
 
                     onPageSectionsChanged: {
-                        if (isSelected && pageAvailable &&
-                                !settingsView._sectionAvailable(pageSections, settingsView._selectedSectionIndex)) {
+                        let sections = pageSections ?? []
+                        let visibleCount = sections.filter(function(section) { return section.visible }).length
+                        if (isSelected && pageAvailable && settingsView._selectedSectionIndex !== -1 &&
+                                (visibleCount <= 1 ||
+                                 !settingsView._sectionAvailable(sections, settingsView._selectedSectionIndex))) {
                             settingsView._navigateTo(index, -1)
                         }
                     }
