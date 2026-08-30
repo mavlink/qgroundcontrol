@@ -3,6 +3,9 @@
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QHash>
+#include <QtCore/QSet>
+
 QGC_LOGGING_CATEGORY(ActuatorOutputsLog, "Vehicle.Actuators.ActuatorOutputs")
 
 using namespace ActuatorOutputs;
@@ -23,7 +26,7 @@ ActuatorOutputChannel::ActuatorOutputChannel(QObject *parent, const QString &lab
         param.replace("${i}", sparamIndex);
 
         Fact* fact = nullptr;
-        if (parameterManager->parameterExists(ParameterManager::defaultComponentId, param)) {
+        if (parameterManager && parameterManager->parameterExists(ParameterManager::defaultComponentId, param)) {
             fact = parameterManager->getParameter(ParameterManager::defaultComponentId, param);
             if (channelConfig->displayOption() == Parameter::DisplayOption::Bitset) {
                 fact = new FactBitset(channelConfig, fact, paramIndex + channelConfig->indexOffset());
@@ -76,9 +79,85 @@ void ActuatorOutput::addSubgroup(ActuatorOutputSubgroup *subgroup)
     emit subgroupsChanged();
 }
 
+ActuatorChannelCell::ActuatorChannelCell(QObject *parent, ChannelConfigInstance *instance)
+    : QObject(parent)
+    , _instance(instance)
+{
+    if (_instance && _instance->channelConfig()) {
+        connect(_instance->channelConfig(), &ChannelConfig::visibleChanged, this, &ActuatorChannelCell::visibleChanged);
+    }
+}
+
+Fact* ActuatorChannelCell::fact()
+{
+    return _instance ? _instance->fact() : nullptr;
+}
+
+bool ActuatorChannelCell::visible() const
+{
+    return _instance && _instance->channelConfig() && _instance->channelConfig()->visible();
+}
+
+bool ActuatorChannelCell::advanced() const
+{
+    return _instance && _instance->channelConfig() && _instance->channelConfig()->advanced();
+}
+
+ActuatorChannelRow::ActuatorChannelRow(QObject *parent, ActuatorOutputChannel *channel, ConfigParameter *primaryParam,
+        bool firstInGroup, int timerIndex, int gridRow, int headerGridRow, bool showTimerHeader,
+        const QStringList &tableKeys)
+    : QObject(parent)
+    , _channel(channel)
+    , _primaryParam(primaryParam)
+    , _firstInGroup(firstInGroup)
+    , _timerIndex(timerIndex)
+    , _gridRow(gridRow)
+    , _headerGridRow(headerGridRow)
+    , _showTimerHeader(showTimerHeader)
+{
+    QHash<QString, ChannelConfigInstance*> byParam;
+    if (_channel) {
+        QmlObjectListModel *instances = _channel->configInstances();
+        for (int i = 0; i < instances->count(); i++) {
+            auto instance = qobject_cast<ChannelConfigInstance*>(instances->get(i));
+            if (instance && instance->channelConfig()) {
+                byParam.insert(instance->channelConfig()->parameter(), instance);
+            }
+        }
+    }
+    for (const QString &key : tableKeys) {
+        _configInstances->append(new ActuatorChannelCell(this, byParam.value(key, nullptr)));
+    }
+}
+
 void ActuatorOutput::rebuildChannelRows()
 {
     _channelRows->clearAndDeleteContents();
+    _tableChannelConfigs->clear();
+
+    // Union by parameter name so subgroups with extra per-channel params still get a header.
+    QStringList tableKeys;
+    QSet<QString> seenKeys;
+    for (int sgIdx = 0; sgIdx < _subgroups->count(); sgIdx++) {
+        ActuatorOutputSubgroup *subgroup = qobject_cast<ActuatorOutputSubgroup*>(_subgroups->get(sgIdx));
+        if (!subgroup) {
+            continue;
+        }
+        for (int cfgIdx = 0; cfgIdx < subgroup->channelConfigs()->count(); cfgIdx++) {
+            ChannelConfig *config = qobject_cast<ChannelConfig*>(subgroup->channelConfigs()->get(cfgIdx));
+            if (!config) {
+                continue;
+            }
+            const QString key = config->parameter();
+            if (seenKeys.contains(key)) {
+                continue;
+            }
+            seenKeys.insert(key);
+            tableKeys.append(key);
+            _tableChannelConfigs->append(config);
+        }
+    }
+
     const bool shared = hasSharedTimerGroups();
     int timerIndex = 0;
     int gridRow = 1;
@@ -95,7 +174,7 @@ void ActuatorOutput::rebuildChannelRows()
                 continue;
             }
             _channelRows->append(new ActuatorChannelRow(this, channel, subgroup->primaryParam(),
-                    chIdx == 0, timerIndex, gridRow, headerGridRow, shared && chIdx == 0));
+                    chIdx == 0, timerIndex, gridRow, headerGridRow, shared && chIdx == 0, tableKeys));
             ++gridRow;
         }
     }
@@ -123,15 +202,6 @@ bool ActuatorOutput::hasSharedTimerGroups() const
         }
     }
     return false;
-}
-
-QmlObjectListModel* ActuatorOutput::tableChannelConfigs()
-{
-    if (_subgroups->count() == 0) {
-        return nullptr;
-    }
-    ActuatorOutputSubgroup *subgroup = qobject_cast<ActuatorOutputSubgroup*>(_subgroups->get(0));
-    return subgroup ? subgroup->channelConfigs() : nullptr;
 }
 
 void ActuatorOutput::addConfigParam(ConfigParameter *param)

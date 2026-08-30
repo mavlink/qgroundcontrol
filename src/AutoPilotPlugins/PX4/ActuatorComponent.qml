@@ -506,9 +506,9 @@ SetupPage {
                                     model: protocolGrid.output.channelRows
                                     Repeater {
                                         property var rowObj:    object
-                                        model:                  object.channel.configInstances
+                                        model:                  object.configInstances
                                         Item {
-                                            visible:            _showAdvanced || !object.config.advanced
+                                            visible:            object.hasConfig && (_showAdvanced || !object.advanced)
                                             implicitWidth:      cellFact.visible ? cellFact.implicitWidth : 0
                                             implicitHeight:     cellFact.visible ? cellFact.implicitHeight : ScreenTools.defaultFontPixelHeight
                                             Layout.row:         rowObj.gridRow
@@ -517,7 +517,7 @@ SetupPage {
                                             ActuatorFact {
                                                 id:         cellFact
                                                 fact:       object.fact
-                                                visible:    object.config.visible
+                                                visible:    object.visible
                                             }
                                         }
                                     }
