@@ -199,6 +199,17 @@ Item {
         _missionController.insertLandItem(mapCenter(), nextIndex, true /* makeCurrentItem */)
     }
 
+    function _landButtonText() {
+        // Must mirror MissionController::insertLandItem: only fixed-wing/VTOL get landing patterns
+        if (!_planMasterController.controllerVehicle.fixedWing && !_planMasterController.controllerVehicle.vtol) {
+            return qsTr("Return")
+        }
+        if (_missionController.isInsertLandValid && _missionController.hasLandItem) {
+            return qsTr("Alt Land")
+        }
+        return qsTr("Land")
+    }
+
     QGCFileDialog {
         id: fileDialog
         folder: _appSettings ? _appSettings.missionSavePath : ""
@@ -496,11 +507,7 @@ Item {
                     },
                     ToolStripAction {
                         objectName: "planToolStrip_landButton"
-                        text: _planMasterController.controllerVehicle.multiRotor
-                                    ? qsTr("Return")
-                                    : _missionController.isInsertLandValid && _missionController.hasLandItem
-                                      ? qsTr("Alt Land")
-                                      : qsTr("Land")
+                        text: _landButtonText()
                         iconSource: "/res/rtl.svg"
                         enabled: _missionController.isInsertLandValid
                         visible: toolStrip._isMissionLayer

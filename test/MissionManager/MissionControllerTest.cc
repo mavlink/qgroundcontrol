@@ -18,6 +18,7 @@
 #include "MultiSignalSpy.h"
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 using namespace TestFixtures;
 
@@ -132,6 +133,54 @@ void MissionControllerTest::_testInsertValidityHomePositionGating()
     QCOMPARE(boolProperty("isInsertLandValid"), true);
     QCOMPARE(boolProperty("isInsertROIValid"), true);
     QCOMPARE(boolProperty("flyThroughCommandsAllowed"), true);
+}
+
+void MissionControllerTest::_testLandToolInsertsSingleRtl_data()
+{
+    QTest::addColumn<int>("vehicleClass");
+
+    QTest::newRow("RoverBoat") << static_cast<int>(QGCMAVLink::VehicleClassRoverBoat);
+    QTest::newRow("MultiRotor") << static_cast<int>(QGCMAVLink::VehicleClassMultiRotor);
+}
+
+void MissionControllerTest::_testLandToolInsertsSingleRtl()
+{
+    // Multiple landing patterns are a fixed-wing/VTOL concept. For other vehicle types the
+    // Land tool inserts RTL and must not offer a second insert once the plan has one.
+    // Offline planning (no connected vehicle) matches the report in issue #14957.
+    QFETCH(int, vehicleClass);
+
+    AppSettings* appSettings = SettingsManager::instance()->appSettings();
+    appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(MAV_AUTOPILOT_ARDUPILOTMEGA));
+    appSettings->offlineEditingVehicleClass()->setRawValue(vehicleClass);
+    Fact* const allowMultipleLandingPatterns = SettingsManager::instance()->planViewSettings()->allowMultipleLandingPatterns();
+    const QVariant savedAllowMultiple = allowMultipleLandingPatterns->rawValue();
+    const auto restoreGuard = qScopeGuard([allowMultipleLandingPatterns, savedAllowMultiple] { allowMultipleLandingPatterns->setRawValue(savedAllowMultiple); });
+    allowMultipleLandingPatterns->setRawValue(true);
+
+    _masterController = std::make_unique<PlanMasterController>();
+    _masterController->setFlyView(false);
+    _missionController = _masterController->missionController();
+    MultiSignalSpy missionControllerSpy;
+    QVERIFY(missionControllerSpy.init(_missionController));
+    _masterController->start();
+    QVERIFY(missionControllerSpy.waitForSignal("visualItemsReset", TestTimeout::mediumMs()));
+
+    _missionController->setHomePosition(Coord::zurich());
+
+    // Vehicles which support a takeoff command only allow takeoff insert on an empty plan
+    if (!_missionController->property("isInsertLandValid").toBool()) {
+        QVERIFY(_missionController->insertTakeoffItem(Coord::zurich(), 1, true /* makeCurrentItem */));
+    }
+    QCOMPARE(_missionController->property("isInsertLandValid").toBool(), true);
+
+    VisualMissionItem* landItem = _missionController->insertLandItem(Coord::zurich(), -1, true /* makeCurrentItem */);
+    SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(landItem);
+    QVERIFY(simpleItem);
+    QCOMPARE(simpleItem->mavCommand(), MAV_CMD_NAV_RETURN_TO_LAUNCH);
+
+    QCOMPARE(_missionController->property("hasLandItem").toBool(), true);
+    QCOMPARE(_missionController->property("isInsertLandValid").toBool(), false);
 }
 
 void MissionControllerTest::_testGimbalRecalc()
