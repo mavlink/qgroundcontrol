@@ -51,23 +51,22 @@
                 },
                 {
                     "setting": "videoSettings.disableWhenDisarmed",
-                    "showWhen": "!autoStreamConfig && isStreamSource"
+                    "showWhen": "isStreamSource"
                 },
                 {
                     "setting": "videoSettings.lowLatencyMode",
-                    "showWhen": "!autoStreamConfig && isStreamSource && QGroundControl.settingsManager.videoSettings.lowLatencyMode.userVisible"
+                    "showWhen": "isStreamSource"
                 },
                 {
                     "setting": "videoSettings.rtpJitterLatencyMs",
-                    "showWhen": "!autoStreamConfig && isStreamSource && rtpLatencyVisible && QGroundControl.settingsManager.videoSettings.rtpJitterLatencyMs.userVisible"
+                    "showWhen": "isStreamSource && rtpLatencyVisible"
                 },
                 {
                     "setting": "videoSettings.rtspAutoReconnect",
-                    "showWhen": "!autoStreamConfig && isStreamSource"
+                    "showWhen": "isStreamSource"
                 },
                 {
-                    "setting": "videoSettings.forceCpuVideoPath",
-                    "showWhen": "QGroundControl.settingsManager.videoSettings.forceCpuVideoPath.userVisible"
+                    "setting": "videoSettings.forceCpuVideoPath"
                 },
                 {
                     "setting": "videoSettings.forceVideoDecoder"
