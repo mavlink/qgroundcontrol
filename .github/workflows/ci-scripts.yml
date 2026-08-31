@@ -11,6 +11,8 @@ on:
       - 'CMakePresets.json'
       - 'cmake/Helpers.cmake'
       - 'cmake/modules/CPMPatchCache.cmake'
+      - 'cmake/install/FinalizeNativePackage.cmake'
+      - 'cmake/install/ValidatePackageVersion.cmake'
       - 'cmake/presets/**'
       - 'justfile'
       - 'tools/setup/**'
@@ -36,6 +38,8 @@ on:
       - 'CMakePresets.json'
       - 'cmake/Helpers.cmake'
       - 'cmake/modules/CPMPatchCache.cmake'
+      - 'cmake/install/FinalizeNativePackage.cmake'
+      - 'cmake/install/ValidatePackageVersion.cmake'
       - 'cmake/presets/**'
       - 'justfile'
       - 'tools/setup/**'
@@ -139,6 +143,8 @@ jobs:
             CMakePresets.json
             cmake/BuildConfig.cmake
             cmake/CustomOptions.cmake
+            cmake/install/FinalizeNativePackage.cmake
+            cmake/install/ValidatePackageVersion.cmake
             cmake/modules/Hardening.cmake
             cmake/modules/LinuxDistro.cmake
             cmake/modules/CPMPatchCache.cmake
