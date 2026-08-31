@@ -218,13 +218,12 @@ void DigiviewManager::sendSystemStatusParameters(uint8_t status, uint8_t error, 
     _sendMessage(msg);
 }
 
-void DigiviewManager::sendAIParameters(uint8_t run_ai, QString track_model_name, QString scan_model_name)
+void DigiviewManager::sendAIParameters(uint8_t run_ai, QString scan_model_name)
 {
     mavlink_message_t msg;
     mavlink_ai_parameters_t payload {};
 
     payload.run_ai = run_ai;
-    copyStringToCharBuf(track_model_name, payload.track_model_name, 16);
     copyStringToCharBuf(scan_model_name, payload.scan_model_name, 16);
 
     _encodeMessage(msg, payload, mavlink_msg_ai_parameters_encode);
@@ -707,7 +706,7 @@ void DigiviewManager::_rememberCamTargeting(const mavlink_cam_targeting_paramete
 }
 
 void DigiviewManager::sendCamOpticsAndControlParameters(
-    QString stream_name, uint8_t cam_id, int8_t zoom, float fov, uint8_t crop_mode)
+    QString stream_name, uint8_t cam_id, int8_t zoom, float fov)
 {
     mavlink_message_t msg;
     mavlink_cam_optics_and_control_parameters_t payload {};
@@ -716,7 +715,6 @@ void DigiviewManager::sendCamOpticsAndControlParameters(
     payload.cam_id = cam_id;
     payload.zoom = zoom;
     payload.fov = fov;
-    payload.crop_mode = crop_mode;
 
     _encodeMessage(msg, payload, mavlink_msg_cam_optics_and_control_parameters_encode);
     _sendMessage(msg);
@@ -1171,7 +1169,6 @@ void DigiviewManager::changeZoom(int camId, float zoom)
         _streamName,
         camId,
         zoom,
-        0,
         0
     );
 }
@@ -1274,9 +1271,7 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
     case MAVLINK_MSG_ID_AI_PARAMETERS: {
         mavlink_ai_parameters_t payload;
         mavlink_msg_ai_parameters_decode(&message, &payload);
-        emit aiParametersReceived(payload.run_ai,
-                                  stringFromCharBuf(payload.track_model_name, 16),
-                                  stringFromCharBuf(payload.scan_model_name, 16));
+        emit aiParametersReceived(payload.run_ai, stringFromCharBuf(payload.scan_model_name, 16));
         break;
     }
     case MAVLINK_MSG_ID_MODEL_PARAMETERS: {
@@ -1669,8 +1664,7 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             stringFromCharBuf(payload.stream_name, 16),
             payload.cam_id,
             payload.zoom,
-            payload.fov,
-            payload.crop_mode);
+            payload.fov);
         break;
     }
     case MAVLINK_MSG_ID_CAM_OFFSET_PARAMETERS: {

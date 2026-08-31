@@ -42,6 +42,7 @@ QtObject {
         ],
         networkSelectedProfileIndex: 0,
         networkAutoconnectOnStart: false,
+        networkForceRtspVideoOverTcp: false,
         calibrationCommand: "test",
         calibrationActive: false,
         controlPanel: true,
@@ -122,6 +123,7 @@ QtObject {
         property alias networkProfiles: root.networkProfiles
         property alias networkSelectedProfileIndex: root.networkSelectedProfileIndex
         property alias networkAutoconnectOnStart: root.networkAutoconnectOnStart
+        property alias networkForceRtspVideoOverTcp: root.networkForceRtspVideoOverTcp
         property alias calibrationCommand: root.calibrationCommand
         property alias calibrationActive: root.calibrationActive
 
@@ -233,6 +235,7 @@ QtObject {
         ]
         property int networkSelectedProfileIndex: 0
         property bool networkAutoconnectOnStart: false
+        property bool networkForceRtspVideoOverTcp: false
 
         function networkProfileText(value) {
             if (value === undefined || value === null) {

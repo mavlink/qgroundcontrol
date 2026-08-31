@@ -190,6 +190,14 @@ function getNetworkSections() {
                     label: 'Auto-connect on Start',
                     description: 'Automatically connect with previous profile on program start',
                     checked: false
+                },
+                {
+                    id: 'network_force_rtsp_video_over_tcp',
+                    property: 'networkForceRtspVideoOverTcp',
+                    type: 'checkbox',
+                    label: 'Force RTSP Video Over TCP',
+                    description: 'Use TCP only for RTSP video streams. Changes take effect when the video stream reconnects.',
+                    checked: false
                 }
             ]
         }

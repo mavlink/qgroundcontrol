@@ -147,7 +147,7 @@ public:
     Q_INVOKABLE void disconnectFromHost(bool preventAutomaticReconnect);
 
     Q_INVOKABLE void sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp);
-    Q_INVOKABLE void sendAIParameters(uint8_t run_ai, QString track_model_name, QString scan_model_name);
+    Q_INVOKABLE void sendAIParameters(uint8_t run_ai, QString scan_model_name);
     Q_INVOKABLE void sendModelParameters(QString model_name);
     Q_INVOKABLE void sendSetVideoOutput(
         QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
@@ -188,7 +188,7 @@ public:
         float target_latitude, float target_longitude, float target_altitude,
         uint16_t track_id, int16_t view_id, uint8_t lock_target);
     Q_INVOKABLE void sendCamOpticsAndControlParameters(
-        QString stream_name, uint8_t cam_id, int8_t zoom, float fov, uint8_t crop_mode);
+        QString stream_name, uint8_t cam_id, int8_t zoom, float fov);
     Q_INVOKABLE void sendCamOffsetParameters(
         QString stream_name, uint8_t cam_id,
         float x, float y,
@@ -280,7 +280,7 @@ signals:
     void detectionParametersChanged();
     void messageDecoded(quint32 messageId);
     void systemStatusParametersReceived(uint8_t status, uint8_t error, float jetson_temp);
-    void aiParametersReceived(uint8_t run_ai, const QString& track_model_name, const QString& scan_model_name);
+    void aiParametersReceived(uint8_t run_ai, const QString& scan_model_name);
     void modelParametersReceived(const QString& model_name);
     void videoOutputParametersReceived(
         const QString& stream_name, uint16_t width, uint16_t height, uint8_t fps,
@@ -313,7 +313,7 @@ signals:
         float target_latitude, float target_longitude, float target_altitude,
         uint16_t track_id, int16_t view_id, uint8_t lock_target);
     void camOpticsAndControlParametersReceived(
-        const QString& stream_name, uint8_t cam_id, int8_t zoom, float fov, uint8_t crop_mode);
+        const QString& stream_name, uint8_t cam_id, int8_t zoom, float fov);
     void camOffsetParametersReceived(
         const QString& stream_name, uint8_t cam_id,
         float x, float y,

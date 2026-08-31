@@ -1,6 +1,7 @@
 #include "GstSourceFactory.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QSettings>
 #include <QtCore/QUrl>
 #include <gst/gst.h>
 #include <gst/rtsp/gstrtsptransport.h>
@@ -16,6 +17,8 @@ namespace {
 constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
 constexpr int kRtspRetry = 3;
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
+constexpr char kSynclairSettingsGroup[] = "SynclairVisionSettings";
+constexpr char kForceRtspVideoOverTcpKey[] = "networkForceRtspVideoOverTcp";
 
 void configureH26xParser(GstElement* element)
 {
@@ -310,10 +313,15 @@ GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Con
     cleanUrl.setUserInfo(QString());
     const QByteArray cleanLocation = cleanUrl.toEncoded();
 
-    // protocols mask enables TCP-interleaved fallback when UDP is blocked; without it
+    // The default protocol mask enables TCP-interleaved fallback when UDP is blocked; without it
     // firewalled networks hang until tcp-timeout instead of negotiating TCP.
-    constexpr GstRTSPLowerTrans kRtspProtocols =
+    constexpr GstRTSPLowerTrans kDefaultRtspProtocols =
         static_cast<GstRTSPLowerTrans>(GST_RTSP_LOWER_TRANS_UDP | GST_RTSP_LOWER_TRANS_TCP);
+    QSettings settings;
+    settings.beginGroup(QLatin1String(kSynclairSettingsGroup));
+    const GstRTSPLowerTrans rtspProtocols = settings.value(QLatin1String(kForceRtspVideoOverTcpKey), false).toBool()
+        ? GST_RTSP_LOWER_TRANS_TCP
+        : kDefaultRtspProtocols;
 
     // rtspsrc always owns an internal jitterbuffer, so None maps to zero playout latency and no retransmission.
     const guint rtspLatencyMs = (config.jitterBuffer == JitterBuffer::None) ? 0u : latencyMs;
@@ -322,7 +330,7 @@ GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Con
     const gboolean dropOnLatency = (config.jitterBuffer == JitterBuffer::Buffered) ? FALSE : TRUE;
     g_object_set(source, "location", cleanLocation.constData(), "latency", rtspLatencyMs, "do-rtcp", TRUE,
                  "do-retransmission", doRetransmission, "tcp-timeout", kRtspTcpTimeoutUs, "udp-reconnect", TRUE,
-                 "drop-on-latency", dropOnLatency, "retry", kRtspRetry, "protocols", kRtspProtocols, nullptr);
+                 "drop-on-latency", dropOnLatency, "retry", kRtspRetry, "protocols", rtspProtocols, nullptr);
 
     const QString rtspUser = sourceUrl.userName(QUrl::FullyDecoded);
     const QString rtspPassword = sourceUrl.password(QUrl::FullyDecoded);
