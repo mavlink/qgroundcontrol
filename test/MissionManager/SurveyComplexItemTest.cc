@@ -412,7 +412,44 @@ void SurveyComplexItemTest::_testSplitConcavePolygon()
     _surveyItem->flyAlternateTransects()->setRawValue(false);
     ignoreLogMessage("Plan.SurveyComplexItem", QtWarningMsg, QRegularExpression("Transect spacing.*raised"));
     _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(0.001);
-    QVERIFY(_surveyItem->_transectCount() <= TransectStyleComplexItem::maxTransectCount);
+    const int cappedTransectCount = _surveyItem->_transectCount();
+    QVERIFY(cappedTransectCount > 0);
+    QVERIFY(cappedTransectCount <= TransectStyleComplexItem::maxTransectCount);
+
+    constexpr int combToothCount = TransectStyleComplexItem::maxTransectCount + 1;
+    constexpr double combHeight = 3.0;
+    constexpr double combNotchDepth = 1.0;
+    const double combWidth = (2.0 * combToothCount) - 1.0;
+    QPolygonF combPolygon = {{0.0, 0.0}, {combWidth, 0.0}, {combWidth, combHeight}};
+    for (int toothIndex = combToothCount - 1; toothIndex >= 0; --toothIndex) {
+        const double toothLeft = 2.0 * toothIndex;
+        combPolygon.append(QPointF(toothLeft, combHeight));
+        if (toothIndex > 0) {
+            combPolygon.append(QPointF(toothLeft, combNotchDepth));
+            combPolygon.append(QPointF(toothLeft - 1.0, combNotchDepth));
+            combPolygon.append(QPointF(toothLeft - 1.0, combHeight));
+        }
+    }
+    combPolygon.append(QPointF(0.0, 0.0));
+
+    QList<QGeoCoordinate> combCoordinates;
+    combCoordinates.reserve(combPolygon.size() - 1);
+    for (qsizetype index = 0; index + 1 < combPolygon.size(); ++index) {
+        QGeoCoordinate coordinate;
+        QGCGeo::convertNedToGeo(combPolygon[index].y(), combPolygon[index].x(), 0.0, tangentOrigin, coordinate);
+        combCoordinates.append(coordinate);
+    }
+
+    _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(1e9);
+    ignoreLogMessage("Plan.SurveyComplexItem", QtWarningMsg,
+                     QRegularExpression("Unable to limit split transect count.*joining fragments"));
+    _mapPolygon->beginReset();
+    _mapPolygon->clear();
+    _mapPolygon->appendVertices(combCoordinates);
+    _mapPolygon->endReset();
+    const int fallbackTransectCount = _surveyItem->_transectCount();
+    QVERIFY(fallbackTransectCount > 0);
+    QVERIFY(fallbackTransectCount <= TransectStyleComplexItem::maxTransectCount);
 }
 
 UT_REGISTER_TEST(SurveyComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)

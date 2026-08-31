@@ -80,6 +80,15 @@ qsizetype transectCount(const QList<QList<QLineF>>& lineGroups)
     return count;
 }
 
+void joinLineFragments(QList<QList<QLineF>>& lineGroups)
+{
+    for (QList<QLineF>& group : lineGroups) {
+        if (group.size() > 1) {
+            group = {QLineF(group.first().p1(), group.last().p2())};
+        }
+    }
+}
+
 }  // namespace
 
 SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
@@ -645,8 +654,13 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
     }
 
     if (transectCount(intersectLineGroups) > maxTransectCount) {
-        qCWarning(SurveyComplexItemLog) << "Unable to limit split transect count to" << maxTransectCount;
-        return;
+        qCWarning(SurveyComplexItemLog) << "Unable to limit split transect count to" << maxTransectCount
+                                        << "joining fragments instead";
+        joinLineFragments(intersectLineGroups);
+        if (transectCount(intersectLineGroups) > maxTransectCount) {
+            qCWarning(SurveyComplexItemLog) << "Unable to limit joined transect count to" << maxTransectCount;
+            return;
+        }
     }
 
     // Convert from NED to Geo

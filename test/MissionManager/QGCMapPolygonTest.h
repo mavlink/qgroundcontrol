@@ -28,6 +28,7 @@ private slots:
     void _testCenterRectangle();
     void _testCenterExtraVertex();
     void _testCenterDegenerate();
+    void _testOffset();
 
 private:
     std::unique_ptr<MultiSignalSpy> _multiSpyPolygon;

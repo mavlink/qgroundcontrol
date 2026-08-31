@@ -11,4 +11,8 @@ private slots:
     void _batchLineIntersection_test();
     void _concaveLineIntersection_test();
     void _largeCoordinateLineIntersection_test();
+    void _polygonOffset_test();
+    void _polylineOffset_test();
+    void _polylineBuffer_test();
+    void _closedPolylineBuffer_test();
 };

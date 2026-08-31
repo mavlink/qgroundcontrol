@@ -313,6 +313,22 @@ void QGCMapPolygonTest::_testCenterDegenerate()
     QCOMPARE_COORDS(center, expectedCenter);
 }
 
+void QGCMapPolygonTest::_testOffset()
+{
+    _mapPolygon->appendVertices(_polyPoints);
+    _mapPolygon->verifyClockwiseWinding();
+    const QList<QGeoCoordinate> originalCoordinates = _mapPolygon->coordinateList();
+    const double originalArea = _mapPolygon->area();
+
+    _mapPolygon->offset(10.0);
+
+    QCOMPARE(_mapPolygon->count(), originalCoordinates.size());
+    QVERIFY(_mapPolygon->area() > originalArea);
+    for (const QGeoCoordinate& coordinate : originalCoordinates) {
+        QVERIFY(_mapPolygon->containsCoordinate(coordinate));
+    }
+}
+
 #include "UnitTest.h"
 
 UT_REGISTER_TEST(QGCMapPolygonTest, TestLabel::Unit, TestLabel::MissionManager)
