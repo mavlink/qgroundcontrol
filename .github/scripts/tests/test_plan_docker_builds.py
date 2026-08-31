@@ -50,7 +50,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "variant": "linux",
             "build_args": "",
             "fuse": True,
-            "artifact_pattern": "*.AppImage",
+            "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
         },
         {
@@ -59,7 +59,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "variant": "linux-2204",
             "build_args": _LINUX_2204_BUILD_ARGS,
             "fuse": True,
-            "artifact_pattern": "*.AppImage",
+            "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
         },
         {
@@ -68,7 +68,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "variant": "linux-2604",
             "build_args": _LINUX_2604_BUILD_ARGS,
             "fuse": True,
-            "artifact_pattern": "*.AppImage",
+            "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
         },
         {
@@ -77,7 +77,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "variant": "linux-debian",
             "build_args": _LINUX_DEBIAN_BUILD_ARGS,
             "fuse": True,
-            "artifact_pattern": "*.AppImage",
+            "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.deb",
         },
         {
@@ -85,8 +85,8 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux",
             "variant": "linux-fedora",
             "build_args": _LINUX_FEDORA_BUILD_ARGS,
-            "fuse": True,
-            "artifact_pattern": "*.AppImage",
+            "fuse": False,
+            "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.rpm",
         },
         {
@@ -94,8 +94,8 @@ def test_plan_builds_pull_request_filters_by_changes():
             "target": "linux",
             "variant": "linux-arch",
             "build_args": _LINUX_ARCH_BUILD_ARGS,
-            "fuse": True,
-            "artifact_pattern": "*.AppImage",
+            "fuse": False,
+            "artifact_pattern": "QGroundControl-*.AppImage",
             "package_pattern": "*.pkg.tar.zst",
         },
         {
@@ -104,7 +104,7 @@ def test_plan_builds_pull_request_filters_by_changes():
             "variant": "linux-aarch64",
             "build_args": "",
             "fuse": False,
-            "artifact_pattern": "QGroundControl",
+            "artifact_pattern": "Release/QGroundControl",
             "package_pattern": "",
         },
     ]
@@ -121,6 +121,23 @@ def test_native_package_patterns_per_distro():
     assert pkg["Linux-Arch"] == "*.pkg.tar.zst"
     assert pkg["Linux-aarch64"] == ""
     assert pkg["Android"] == ""
+
+
+def test_artifact_patterns_exclude_packaging_tools_and_staging_copies():
+    include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
+    artifact = {entry["platform"]: entry["artifact_pattern"] for entry in include}
+
+    native_linux = {
+        "Linux-Ubuntu-24.04",
+        "Linux-Ubuntu-22.04",
+        "Linux-Ubuntu-26.04",
+        "Linux-Debian",
+        "Linux-Fedora",
+        "Linux-Arch",
+    }
+    assert all(artifact[platform] == "QGroundControl-*.AppImage" for platform in native_linux)
+    assert artifact["Linux-aarch64"] == "Release/QGroundControl"
+    assert artifact["Android"] == "android-build/QGroundControl.apk"
 
 
 def test_2204_reuses_linux_target_with_distinct_cache_variant():
@@ -198,7 +215,7 @@ def test_variant_info_helper_matches_json():
     ).stdout
     assert "target=linux" in out
     assert "default_image=qgc-fedora-docker" in out
-    assert "fuse=1" in out
+    assert "fuse=0" in out
     assert "SETUP_BASE=setup-base-dnf.sh" in out
 
 

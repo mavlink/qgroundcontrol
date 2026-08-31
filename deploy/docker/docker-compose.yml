@@ -103,9 +103,6 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-    cap_add: [SYS_ADMIN]
-    devices: ["/dev/fuse"]
-    security_opt: ["apparmor:unconfined"]
   arch:
     build:
       context: ../..
@@ -124,9 +121,6 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-    cap_add: [SYS_ADMIN]
-    devices: ["/dev/fuse"]
-    security_opt: ["apparmor:unconfined"]
   aarch64:
     build:
       context: ../..

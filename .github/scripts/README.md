@@ -43,6 +43,7 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `resolve_gstreamer_config.py` | GStreamer | Select the platform-specific GStreamer version |
 | `size_analysis.py` | Reporting | Analyze and report binary-size changes |
 | `test_duration_report.py` | Reporting | Report slow tests and duration regressions from JUnit XML |
+| `validate_native_package.py` | Packaging | Validate native package identity, version, contents, and installed layout |
 | `verify_coverage_thresholds.py` | Reporting | Enforce line and branch coverage thresholds |
 | `verify_executable.py` | Build | Boot-test a built QGroundControl executable |
 

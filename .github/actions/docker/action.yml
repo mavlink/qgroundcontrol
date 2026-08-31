@@ -19,7 +19,7 @@ inputs:
     required: false
     default: 'Release'
   fuse:
-    description: Enable FUSE support (required for AppImage builds)
+    description: Enable FUSE support for AppImageLint target mounting
     required: false
     default: 'false'
   docker-username:
