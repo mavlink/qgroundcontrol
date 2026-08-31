@@ -8,18 +8,18 @@ include(CreateCPackCommon)
 # ----------------------------------------------------------------------------
 # RPM Generator Configuration
 # ----------------------------------------------------------------------------
-list(APPEND CPACK_GENERATOR "RPM")
+set(CPACK_GENERATOR "RPM")
 set(CPACK_BINARY_RPM ON)
-
-set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/linux")
 
 # ----------------------------------------------------------------------------
 # Package Metadata
 # ----------------------------------------------------------------------------
 set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/QGroundControl")
+list(APPEND CPACK_PRE_BUILD_SCRIPTS "${CMAKE_SOURCE_DIR}/cmake/install/FinalizeNativePackage.cmake")
 # CPACK_RPM_PACKAGE_SUMMARY
-# CPACK_RPM_PACKAGE_NAME
-# set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+set(CPACK_RPM_PACKAGE_NAME "qgroundcontrol")
+set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
 # CPACK_RPM_MAIN_COMPONENT
 # CPACK_RPM_PACKAGE_EPOCH
 # CPACK_RPM_PACKAGE_VERSION
@@ -32,8 +32,8 @@ set(CPACK_RPM_PACKAGE_LICENSE "Apache-2.0 OR GPL-3.0-only")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
 # CPACK_RPM_PACKAGE_VENDOR
 set(CPACK_RPM_PACKAGE_URL "${PROJECT_HOMEPAGE_URL}")
-set(CPACK_RPM_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION})
-set(CPACK_RPM_COMPRESSION_TYPE xz)
+set(CPACK_RPM_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}")
+set(CPACK_RPM_COMPRESSION_TYPE "xz")
 
 # ----------------------------------------------------------------------------
 # RPM Dependencies and Requirements

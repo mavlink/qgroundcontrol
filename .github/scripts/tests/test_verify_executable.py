@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import os
+import subprocess
 
-from verify_executable import _setup_gstreamer_env
+import pytest
+from verify_executable import _setup_gstreamer_env, _verify_appimage_update_information
 
 
 class TestSetupGstreamerEnv:
@@ -38,3 +40,46 @@ class TestSetupGstreamerEnv:
 
         assert os.environ["GST_PLUGIN_PATH"] == str(plugin_dir)
         assert os.environ["GST_PLUGIN_SYSTEM_PATH"] == str(plugin_dir)
+
+
+def test_verify_appimage_update_information(tmp_path, monkeypatch):
+    appimage = tmp_path / "QGroundControl-x86_64.AppImage"
+    update_information = (
+        "gh-releases-zsync|mavlink|qgroundcontrol|latest|QGroundControl-x86_64.AppImage.zsync"
+    )
+    (tmp_path / f"{appimage.name}.zsync").write_text("zsync metadata")
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            args[0], 0, stdout=f"{update_information}\n", stderr=""
+        ),
+    )
+
+    _verify_appimage_update_information(appimage, update_information)
+
+
+def test_verify_appimage_update_information_rejects_mismatch_or_missing_sidecar(
+    tmp_path, monkeypatch
+):
+    appimage = tmp_path / "QGroundControl-x86_64.AppImage"
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            args[0], 0, stdout="unexpected\n", stderr=""
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="Unexpected AppImage update information"):
+        _verify_appimage_update_information(appimage, "expected")
+
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            args[0], 0, stdout="expected\n", stderr=""
+        ),
+    )
+    with pytest.raises(RuntimeError, match="zsync sidecar is missing or empty"):
+        _verify_appimage_update_information(appimage, "expected")

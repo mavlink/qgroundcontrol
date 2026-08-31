@@ -38,6 +38,9 @@ jobs:
     if: needs.changes.outputs.should_build == 'true'
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
+    env:
+      QGC_APPIMAGE_UPDATE_INFORMATION: >-
+        ${{ github.repository == 'mavlink/qgroundcontrol' && format('gh-releases-zsync|mavlink|qgroundcontrol|latest|{0}.AppImage.zsync', matrix.package) || '' }}
 
     # security-events: write is scoped here (CodeQL runs only in this job),
     # not at workflow level — the debug/changes jobs cannot upload SARIF.
@@ -128,6 +131,7 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
           preset: ${{ matrix.arch == 'linux_gcc_arm64' && 'Linux-arm64' || 'Linux' }}
+          extra-args: -DQGC_APPIMAGE_UPDATE_INFORMATION=${{ env.QGC_APPIMAGE_UPDATE_INFORMATION }}
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -181,12 +185,16 @@ jobs:
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
           type: appimage
+          expected-appimage-update-information: ${{ env.QGC_APPIMAGE_UPDATE_INFORMATION }}
 
       - name: Attest and Upload
         uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ matrix.package }}.AppImage
           package-name: ${{ matrix.package }}
+          additional-artifact-paths: |
+            ${{ env.QGC_APPIMAGE_UPDATE_INFORMATION != '' && format('{0}/build/{1}.AppImage.zsync', runner.temp, matrix.package) || '' }}
+            ${{ matrix.arch == 'linux_gcc_64' && format('{0}/build/appimagelint-report.json', runner.temp) || '' }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -51,6 +51,10 @@ inputs:
       generators (e.g. iOS Ninja Multi-Config writes to build/Release/<bundle>).
     required: false
     default: ''
+  additional-artifact-paths:
+    description: 'Optional newline-separated paths to include in the GitHub artifact'
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -77,7 +81,9 @@ runs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.package-name }}
-        path: ${{ steps.src.outputs.path }}
+        path: |
+          ${{ steps.src.outputs.path }}
+          ${{ inputs.additional-artifact-paths }}
         retention-days: ${{ inputs.retention-days != '' && inputs.retention-days || (github.event_name == 'pull_request' && '7' || '30') }}
         compression-level: ${{ inputs.compression-level }}
 

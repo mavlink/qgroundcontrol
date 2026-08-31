@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write       # @semantic-release/git pushes CHANGELOG.md
+      contents: write       # @semantic-release/github creates the tag and release
       issues: write         # @semantic-release/github comments on closed issues
       pull-requests: write  # @semantic-release/github comments on closed PRs
     outputs:
@@ -215,11 +215,13 @@ jobs:
         continue-on-error: true
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v3
+        # Multi-glob asset upload and release create/update semantics are intentional here.
+        uses: softprops/action-gh-release@v3  # zizmor: ignore[superfluous-actions]
         with:
           tag_name: v${{ needs.semantic-release.outputs.version }}
           files: |
             artifacts/**/*.AppImage
+            artifacts/**/*.AppImage.zsync
             artifacts/**/*.dmg
             artifacts/**/*.exe
             artifacts/**/*.apk

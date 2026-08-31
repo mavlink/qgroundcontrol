@@ -3,20 +3,24 @@
 # Common CPack configuration shared across all package generators
 # ============================================================================
 
+include_guard(GLOBAL)
+
 # ----------------------------------------------------------------------------
 # Basic Package Information
 # ----------------------------------------------------------------------------
-set(CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
-set(CPACK_PACKAGE_VENDOR ${QGC_ORG_NAME})
-set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR})
-set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-set(CPACK_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
+set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
+set(CPACK_PACKAGE_VENDOR "${QGC_ORG_NAME}")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION
+    "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}"
+)
+set(CPACK_PACKAGE_DESCRIPTION "${PROJECT_DESCRIPTION}")
 # set(CPACK_PACKAGE_DESCRIPTION_FILE "")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
-set(CPACK_PACKAGE_HOMEPAGE_URL ${PROJECT_HOMEPAGE_URL})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
+set(CPACK_PACKAGE_HOMEPAGE_URL "${PROJECT_HOMEPAGE_URL}")
 # Generic maintainer contact; DEB/RPM generators inherit this when their own
 # maintainer field is unset (CPackDeb warns without it).
 set(CPACK_PACKAGE_CONTACT "Dronecode <dev@dronecode.org>")
@@ -24,8 +28,11 @@ set(CPACK_PACKAGE_CONTACT "Dronecode <dev@dronecode.org>")
 # ----------------------------------------------------------------------------
 # Package Files and Directories
 # ----------------------------------------------------------------------------
+if(NOT DEFINED CPACK_SYSTEM_NAME OR CPACK_SYSTEM_NAME STREQUAL "")
+    set(CPACK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+endif()
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME}")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY ${CMAKE_PROJECT_NAME})
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}")
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png")
 if(APPLE)
     set(QGC_APP_ICON "${CMAKE_SOURCE_DIR}/deploy/macos/qgroundcontrol.icns")
@@ -50,15 +57,18 @@ set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
 # set(CPACK_MONOLITHIC_INSTALL
 # set(CPACK_GENERATOR
 # set(CPACK_OUTPUT_CONFIG_FILE
-set(CPACK_PACKAGE_EXECUTABLES ${CMAKE_PROJECT_NAME})
+set(CPACK_PACKAGE_EXECUTABLES "${CMAKE_PROJECT_NAME};${CMAKE_PROJECT_NAME}")
 # set(CPACK_STRIP_FILES
 set(CPACK_VERBATIM_VARIABLES ON)
 set(CPACK_THREADS 0)
 
-# Excludes the "appimage" component so CreateAppImage.cmake doesn't re-run during
-# .deb/.rpm staging; ALL_COMPONENTS_IN_ONE collapses the rest into one package.
-set(CPACK_COMPONENTS_ALL "Unspecified")
+# Exclude dependency development files and the separate AppImage component.
+set(CPACK_COMPONENTS_ALL Runtime)
 set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
+
+# Package presets call CPack directly instead of the qgc-package target, so the
+# release-derived version must also be validated inside the CPack lifecycle.
+set(CPACK_PRE_BUILD_SCRIPTS "${CMAKE_SOURCE_DIR}/cmake/install/ValidatePackageVersion.cmake")
 
 # ----------------------------------------------------------------------------
 # Source Package Configuration

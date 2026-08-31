@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Verify QGroundControl executable with a boot test.
 
 Resolves paths, sets permissions, and delegates to run_tests.py --verify-only.
@@ -93,6 +92,33 @@ def _verify_archs(binary_path: Path, expected: str) -> None:
     print(f"Verified architectures: {' '.join(sorted(actual))}")
 
 
+def _verify_appimage_update_information(binary_path: Path, expected: str) -> None:
+    """Verify embedded AppImage update metadata and its zsync sidecar."""
+    result = subprocess.run(
+        [str(binary_path), "--appimage-updateinformation"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Failed to read AppImage update information from {binary_path}: "
+            f"{result.stderr.strip()}"
+        )
+
+    actual = result.stdout.strip()
+    if actual != expected:
+        raise RuntimeError(
+            f"Unexpected AppImage update information: {actual!r} (expected {expected!r})"
+        )
+
+    zsync_path = Path(f"{binary_path}.zsync")
+    if not zsync_path.is_file() or zsync_path.stat().st_size == 0:
+        raise RuntimeError(f"AppImage zsync sidecar is missing or empty: {zsync_path}")
+
+    print(f"Verified AppImage update information: {actual}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary-path", required=True)
@@ -101,6 +127,7 @@ def main() -> None:
     parser.add_argument("--type", default="binary", dest="exe_type")
     parser.add_argument("--timeout", default="60")
     parser.add_argument("--expect-archs", default="")
+    parser.add_argument("--expected-appimage-update-information", default="")
     args = parser.parse_args()
 
     binary_path = Path(args.binary_path)
@@ -129,6 +156,15 @@ def main() -> None:
         with contextlib.suppress(OSError):
             exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
         run_binary = str(exe.resolve())
+
+    if args.expected_appimage_update_information:
+        try:
+            _verify_appimage_update_information(
+                Path(run_binary), args.expected_appimage_update_information
+            )
+        except RuntimeError as error:
+            gh_error(str(error))
+            sys.exit(1)
 
     workspace = os.environ.get("GITHUB_WORKSPACE", ".")
     cmd = [

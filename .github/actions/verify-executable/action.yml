@@ -25,6 +25,10 @@ inputs:
     description: "Space-separated Mach-O architectures the binary must contain exactly (macOS only)"
     required: false
     default: ""
+  expected-appimage-update-information:
+    description: "Expected embedded AppImage update information; empty skips the check"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -38,7 +42,8 @@ runs:
           --working-dir "${INPUTS_WORKING_DIR}" \
           --build-dir "${INPUTS_BUILD_DIR}" \
           --timeout "${INPUTS_TIMEOUT}" \
-          --expect-archs "${INPUTS_EXPECT_ARCHS}"
+          --expect-archs "${INPUTS_EXPECT_ARCHS}" \
+          --expected-appimage-update-information "${INPUTS_EXPECTED_APPIMAGE_UPDATE_INFORMATION}"
       env:
         INPUTS_BINARY_PATH: ${{ inputs.binary-path }}
         INPUTS_TYPE: ${{ inputs.type }}
@@ -46,3 +51,4 @@ runs:
         INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
         INPUTS_TIMEOUT: ${{ inputs.timeout }}
         INPUTS_EXPECT_ARCHS: ${{ inputs.expect-archs }}
+        INPUTS_EXPECTED_APPIMAGE_UPDATE_INFORMATION: ${{ inputs.expected-appimage-update-information }}

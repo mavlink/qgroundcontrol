@@ -33,9 +33,11 @@ foreach(qgc_root IN LISTS _qgc_package_roots)
         message(FATAL_ERROR "QGC: incomplete private runtime at ${_qgc_private_root}")
     endif()
 
-    file(GLOB _qgc_qt_core "${_qgc_private_root}/lib/libQt6Core.so*")
+    file(GLOB _qgc_qt_core "${_qgc_private_root}/lib/libQt6Core.so*" "${_qgc_private_root}/lib64/libQt6Core.so*")
     if(NOT _qgc_qt_core)
-        message(FATAL_ERROR "QGC: bundled Qt Core is missing under ${_qgc_private_root}/lib")
+        message(
+            FATAL_ERROR "QGC: bundled Qt Core is missing under ${_qgc_private_root}/lib or ${_qgc_private_root}/lib64"
+        )
     endif()
 
     set(_qgc_launcher "${qgc_root}/usr/bin/QGroundControl")

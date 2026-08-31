@@ -66,7 +66,13 @@ jobs:
 
   build:
     name: Docker ${{ matrix.platform }}
-    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-builder', github.run_id) || 'ubuntu-latest' }}
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner=linux-x64-builder', github.run_id) ||
+        'ubuntu-latest'
+      }}
     needs: [changes, plan-builds]
     if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120
@@ -99,7 +105,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          # Native package versions come from git describe and require reachable tags.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Free Disk Space
@@ -134,6 +141,7 @@ jobs:
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
           --build-dir "${{ github.workspace }}/build"
+          --required
           --pattern "${MATRIX_ARTIFACT_PATTERN}"
         env:
           MATRIX_ARTIFACT_PATTERN: ${{ matrix.artifact_pattern }}
@@ -145,7 +153,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: qgroundcontrol-${{ matrix.variant }}
-          path: ${{ steps.artifact.outputs.path }}
+          path: |
+            ${{ steps.artifact.outputs.path }}
+            ${{ github.workspace }}/build/appimagelint-report.json
           if-no-files-found: error
           retention-days: 14
 
@@ -157,16 +167,60 @@ jobs:
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
           --build-dir "${{ github.workspace }}/build"
+          --top-level
+          --required
           --pattern "${MATRIX_PACKAGE_PATTERN}"
         env:
           MATRIX_PACKAGE_PATTERN: ${{ matrix.package_pattern }}
+
+      - name: Validate native package lifecycle
+        if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
+        shell: bash
+        env:
+          IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
+          PACKAGE_PATH: ${{ steps.package.outputs.path }}
+        run: |
+          package_dir=$(dirname "${PACKAGE_PATH}")
+          package_name=$(basename "${PACKAGE_PATH}")
+          docker run --rm --entrypoint /bin/bash \
+            -v "${GITHUB_WORKSPACE}:/project/source:ro" \
+            -v "${package_dir}:/packages:ro" \
+            "${IMAGE}" \
+            /project/source/deploy/docker/validate-native-package.sh "/packages/${package_name}"
+
+      - name: Verify native package checksum
+        id: package-checksum
+        if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
+        shell: bash
+        env:
+          PACKAGE_PATH: ${{ steps.package.outputs.path }}
+        run: |
+          set -euo pipefail
+          package_dir=$(dirname "${PACKAGE_PATH}")
+          package_name=$(basename "${PACKAGE_PATH}")
+          checksum_path="${PACKAGE_PATH}.sha256"
+          checksum_name="${package_name}.sha256"
+
+          # CPack must emit DEB/RPM checksums. Arch's makepkg has no equivalent,
+          # so produce the same sidecar before verifying and publishing it.
+          if [[ ! -f "${checksum_path}" ]]; then
+            if [[ "${package_name}" != *.pkg.tar.zst ]]; then
+              echo "::error::Native package checksum is missing: ${checksum_path}"
+              exit 1
+            fi
+            (cd "${package_dir}" && sha256sum "${package_name}" > "${checksum_name}")
+          fi
+          (cd "${package_dir}" && sha256sum --check "${checksum_name}")
+          echo "path=${checksum_path}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload native package
         if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: qgroundcontrol-${{ matrix.variant }}-package
-          path: ${{ steps.package.outputs.path }}
+          path: |
+            ${{ steps.package.outputs.path }}
+            ${{ steps.package-checksum.outputs.path }}
           if-no-files-found: error
           retention-days: 14
 

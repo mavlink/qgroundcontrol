@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 
 PRIVATE_ROOT = "opt/QGroundControl"
+PRIVATE_LIBRARY_DIRS = ("lib", "lib64")
 REQUIRED_PATHS = {
     f"{PRIVATE_ROOT}/bin/QGroundControl",
     "usr/bin/QGroundControl",
@@ -49,8 +50,14 @@ def validate_paths(paths: set[str]) -> list[str]:
     """Return actionable errors for an invalid native package file list."""
     errors = [f"missing required path: /{path}" for path in sorted(REQUIRED_PATHS - paths)]
 
-    if not any(path.startswith(f"{PRIVATE_ROOT}/lib/libQt6Core.so") for path in paths):
-        errors.append(f"missing bundled Qt runtime under /{PRIVATE_ROOT}/lib")
+    if not any(
+        path.startswith(f"{PRIVATE_ROOT}/{library_dir}/libQt6Core.so")
+        for path in paths
+        for library_dir in PRIVATE_LIBRARY_DIRS
+    ):
+        errors.append(
+            f"missing bundled Qt runtime under /{PRIVATE_ROOT}/lib or /{PRIVATE_ROOT}/lib64"
+        )
 
     for path in sorted(paths):
         if path.startswith(("usr/include/", f"{PRIVATE_ROOT}/include/")):
