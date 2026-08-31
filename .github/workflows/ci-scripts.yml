@@ -10,6 +10,7 @@ on:
       - '.vscode/*.default.json'
       - 'CMakePresets.json'
       - 'cmake/Helpers.cmake'
+      - 'cmake/modules/CPMPatchCache.cmake'
       - 'cmake/presets/**'
       - 'justfile'
       - 'tools/setup/**'
@@ -34,6 +35,7 @@ on:
       - '.vscode/*.default.json'
       - 'CMakePresets.json'
       - 'cmake/Helpers.cmake'
+      - 'cmake/modules/CPMPatchCache.cmake'
       - 'cmake/presets/**'
       - 'justfile'
       - 'tools/setup/**'
@@ -139,6 +141,7 @@ jobs:
             cmake/CustomOptions.cmake
             cmake/modules/Hardening.cmake
             cmake/modules/LinuxDistro.cmake
+            cmake/modules/CPMPatchCache.cmake
             cmake/modules/PythonVenv.cmake
             cmake/Helpers.cmake
             cmake/Toolchain.cmake
