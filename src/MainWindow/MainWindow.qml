@@ -473,7 +473,7 @@ ApplicationWindow {
                     id: qgcButton
                     objectName: "toolbar_qgcLogo"
                     height: parent.height
-                    icon.source: "/res/QGCLogoFull.svg"
+                    icon.source: "/res/godwitLogoWhite.svg"
                     logo: true
                     onClicked: mainWindow.showToolSelectDialog()
                 }

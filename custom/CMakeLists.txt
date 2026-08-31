@@ -96,14 +96,14 @@ qt_add_resources(${CMAKE_PROJECT_NAME} custom_qml_overrides
 )
 
 set(CUSTOM_BRAND_RESOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/res/Images/QGCLogoFull.svg"
-    "${CMAKE_CURRENT_SOURCE_DIR}/res/icons/custom_qgroundcontrol.ico"
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/Images/godwitLogoWhite.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/icons/godwitLogoWhite.svg"
 )
-set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/res/Images/QGCLogoFull.svg"
-    PROPERTIES QT_RESOURCE_ALIAS "QGCLogoFull.svg"
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/res/Images/godwitLogoWhite.svg"
+    PROPERTIES QT_RESOURCE_ALIAS "godwitLogoWhite.svg"
 )
-set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/res/icons/custom_qgroundcontrol.ico"
-    PROPERTIES QT_RESOURCE_ALIAS "qgroundcontrol.ico"
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/res/icons/godwitLogoWhite.svg"
+    PROPERTIES QT_RESOURCE_ALIAS "godwitLogoWhite.svg"
 )
 qt_add_resources(${CMAKE_PROJECT_NAME} custom_brand
     PREFIX "/Custom/res"

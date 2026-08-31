@@ -308,8 +308,8 @@ set(QGC_APP_RESOURCES
     "${CMAKE_SOURCE_DIR}/resources/CameraGimbal.png"
     "${CMAKE_SOURCE_DIR}/resources/chevron-double-right.svg"
     "${CMAKE_SOURCE_DIR}/resources/GeoFence.svg"
-    "${CMAKE_SOURCE_DIR}/resources/QGCLogoFull.svg"
-    "${CMAKE_SOURCE_DIR}/resources/QGCLogoWhite.svg"
+    "${CMAKE_SOURCE_DIR}/resources/godwitLogoWhite.svg"
+    "${CMAKE_SOURCE_DIR}/resources/godwitLogoWhite.svg"
     "${CMAKE_SOURCE_DIR}/resources/QGCLogoArrow.svg"
     "${CMAKE_SOURCE_DIR}/resources/rtl.svg"
     "${CMAKE_SOURCE_DIR}/resources/SplashScreen.png"
@@ -317,7 +317,7 @@ set(QGC_APP_RESOURCES
     "${CMAKE_SOURCE_DIR}/resources/TrashCan.svg"
     "${CMAKE_SOURCE_DIR}/resources/TrashDelete.svg"
     "${CMAKE_SOURCE_DIR}/resources/XDelete.svg"
-    "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.ico"
+    "${CMAKE_SOURCE_DIR}/resources/icons/godwitLogoWhite.svg"
 )
 qgc_set_qt_resource_alias(${QGC_APP_RESOURCES})
 set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/SplashScreen.png"
