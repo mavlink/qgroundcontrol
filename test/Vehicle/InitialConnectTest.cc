@@ -11,6 +11,7 @@
 #include "MultiVehicleManager.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
+#include "MockLinkFTP.h"
 #include "MockLinkMissionItemHandler.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
@@ -357,6 +358,10 @@ void InitialConnectTest::_stateTimeoutFallsThrough()
         _mockLink->setRequestMessageNoResponse(messageId);
     }
 
+    if (configFailureMode == static_cast<int>(MockConfiguration::FailParamNoResponseToRequestList)) {
+        _mockLink->mockLinkFTP()->setParamPckEnabled(false);
+    }
+
     if (blockMissionProtocolImmediately) {
         _mockLink->setMissionItemFailureMode(
             MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
@@ -488,7 +493,6 @@ void InitialConnectTest::_stateRunMatrix()
         _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION);
     const int availableModesReqCount =
         _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AVAILABLE_MODES);
-    const int paramRequestListCount = _mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST);
 
     // AutopilotVersion expectation is matrix-driven.
     QCOMPARE(autopilotVersionReqCount > 0, expectAutopilotVersionRequest);
@@ -500,12 +504,10 @@ void InitialConnectTest::_stateRunMatrix()
     QCOMPARE(_vehicle->parameterManager()->parameterDownloadSkipped(), expectParameterDownloadSkipped);
 
     // Parameters: skipped when flying (with setting enabled) or on HL/LR links.
-    // PX4 flying: cache-only hash check attempted, no full download.
+    // PX4 starts every download with _HASH_CHECK; flying only tries the cache.
     if (expectParamRequest) {
-        QVERIFY2(paramRequestListCount > 0, "Expected PARAM_REQUEST_LIST");
+        QVERIFY2(_mockLink->hashCheckRequestCount() > 0, "Expected _HASH_CHECK request");
     } else if (expectHashCheckOnly) {
-        // PX4 flying: hash check was attempted but no full download
-        QCOMPARE(paramRequestListCount, 0);
         QVERIFY2(_mockLink->hashCheckRequestCount() > 0, "Expected _HASH_CHECK request in cache-only mode");
         // No cache file in test env → cache miss → params not ready
         QVERIFY(!_vehicle->parameterManager()->parametersReady());

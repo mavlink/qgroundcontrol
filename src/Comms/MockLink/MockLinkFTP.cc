@@ -2,6 +2,8 @@
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 
+#include <cerrno>
+
 #include <QtCore/QDataStream>
 #include <QtCore/QDir>
 #include <QtCore/QTemporaryFile>
@@ -153,6 +155,10 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
     } else if (path == "/parameter.json.xz") {
         tmpFilename = QStringLiteral(":MockLink/Parameter.MetaData.json.xz");
     } else if (path == "@PARAM/param.pck" || path.startsWith("@PARAM/param.pck?")) {
+        if (!_paramPckEnabled) {
+            _sendNakErrno(senderSystemId, senderComponentId, ENOENT, outgoingSeqNumber, MavlinkFTP::kCmdOpenFileRO);
+            return;
+        }
         const bool withDefaults = path.contains(QStringLiteral("withdefaults=1"));
         tmpFilename = _generateParamPck(withDefaults);
     } else if (path.startsWith(QStringLiteral("@MAV_LOG/"))) {

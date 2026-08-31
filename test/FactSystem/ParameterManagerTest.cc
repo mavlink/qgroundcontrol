@@ -78,6 +78,7 @@ void ParameterManagerTest::_requestListNoResponse()
 {
     QVERIFY2(!_mockLink, "MockLink already connected");
     _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailParamNoResponseToRequestList);
+    _mockLink->mockLinkFTP()->setParamPckEnabled(false);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
     // Wait for the Vehicle to get created
@@ -100,11 +101,12 @@ void ParameterManagerTest::_requestListNoResponse()
 }
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
-// param_read requests.
+// param_read requests. The packed file is disabled so the stream path is exercised.
 void ParameterManagerTest::_requestListMissingParamFail()
 {
     QVERIFY2(!_mockLink, "MockLink already connected");
     _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailMissingParamOnAllRequests);
+    _mockLink->mockLinkFTP()->setParamPckEnabled(false);
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
     // Wait for the Vehicle to get created

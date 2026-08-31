@@ -237,4 +237,5 @@ private:
     Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 
     bool _tryftp = false;
+    bool _ftpDownloadInProgress = false;        ///< true: @PARAM/param.pck transfer in flight
 };
