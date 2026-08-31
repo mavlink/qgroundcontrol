@@ -1,6 +1,8 @@
 qt_add_library(QGCGeoMath STATIC
     QGCGeo.cc
     QGCGeo.h
+    QGCPolygonClipper.cc
+    QGCPolygonClipper.h
 )
 
 CPMAddPackage(
@@ -49,6 +51,7 @@ target_link_libraries(QGCGeoMath
     PRIVATE
         GeographicLib::GeographicLib
         QGCLogging
+        Qt6::PositioningPrivate
 )
 
 target_include_directories(QGCGeoMath PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

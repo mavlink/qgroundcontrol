@@ -1,6 +1,7 @@
 #include "SurveyComplexItem.h"
 #include "JsonParsing.h"
 #include "QGCGeo.h"
+#include "QGCPolygonClipper.h"
 #include "QGCQGeoCoordinate.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
@@ -15,7 +16,71 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QLineF>
 
+#include <algorithm>
+
 QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
+
+namespace {
+
+using GeoTransect = QList<QGeoCoordinate>;
+using GeoTransectGroup = QList<GeoTransect>;
+using GeoTransectGroups = QList<GeoTransectGroup>;
+
+void reverseGroupDirection(GeoTransectGroup& group)
+{
+    std::reverse(group.begin(), group.end());
+    for (GeoTransect& transect : group) {
+        std::reverse(transect.begin(), transect.end());
+    }
+}
+
+void reverseAllGroupDirections(GeoTransectGroups& groups)
+{
+    for (GeoTransectGroup& group : groups) {
+        reverseGroupDirection(group);
+    }
+}
+
+void optimizeGroupsForShortestDistance(const QGeoCoordinate& distanceCoordinate, GeoTransectGroups& groups)
+{
+    if (groups.isEmpty()) {
+        return;
+    }
+
+    const GeoTransectGroup& firstGroup = groups.first();
+    const GeoTransectGroup& lastGroup = groups.last();
+    const double groupDistances[] = {
+        firstGroup.first().first().distanceTo(distanceCoordinate),
+        firstGroup.last().last().distanceTo(distanceCoordinate),
+        lastGroup.first().first().distanceTo(distanceCoordinate),
+        lastGroup.last().last().distanceTo(distanceCoordinate),
+    };
+
+    int shortestIndex = 0;
+    for (int index = 1; index < 4; ++index) {
+        if (groupDistances[index] < groupDistances[shortestIndex]) {
+            shortestIndex = index;
+        }
+    }
+
+    if (shortestIndex > 1) {
+        std::reverse(groups.begin(), groups.end());
+    }
+    if (shortestIndex & 1) {
+        reverseAllGroupDirections(groups);
+    }
+}
+
+qsizetype transectCount(const QList<QList<QLineF>>& lineGroups)
+{
+    qsizetype count = 0;
+    for (const QList<QLineF>& group : lineGroups) {
+        count += group.size();
+    }
+    return count;
+}
+
+}  // namespace
 
 SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
@@ -342,60 +407,6 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     return true;
 }
 
-/// Reverse the order of the transects. First transect becomes last and so forth.
-void SurveyComplexItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects)
-{
-    QList<QList<QGeoCoordinate>> rgReversedTransects;
-    for (int i=transects.count() - 1; i>=0; i--) {
-        rgReversedTransects.append(transects[i]);
-    }
-    transects = rgReversedTransects;
-}
-
-/// Reverse the order of all points within each transect, First point becomes last and so forth.
-void SurveyComplexItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects)
-{
-    for (int i=0; i<transects.count(); i++) {
-        QList<QGeoCoordinate> rgReversedCoords;
-        QList<QGeoCoordinate>& rgOriginalCoords = transects[i];
-        for (int j=rgOriginalCoords.count()-1; j>=0; j--) {
-            rgReversedCoords.append(rgOriginalCoords[j]);
-        }
-        transects[i] = rgReversedCoords;
-    }
-}
-
-/// Reorders the transects such that the first transect is the shortest distance to the specified coordinate
-/// and the first point within that transect is the shortest distance to the specified coordinate.
-///     @param distanceCoord Coordinate to measure distance against
-///     @param transects Transects to test and reorder
-void SurveyComplexItem::_optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects)
-{
-    double rgTransectDistance[4];
-    rgTransectDistance[0] = transects.first().first().distanceTo(distanceCoord);
-    rgTransectDistance[1] = transects.first().last().distanceTo(distanceCoord);
-    rgTransectDistance[2] = transects.last().first().distanceTo(distanceCoord);
-    rgTransectDistance[3] = transects.last().last().distanceTo(distanceCoord);
-
-    int shortestIndex = 0;
-    double shortestDistance = rgTransectDistance[0];
-    for (int i=1; i<3; i++) {
-        if (rgTransectDistance[i] < shortestDistance) {
-            shortestIndex = i;
-            shortestDistance = rgTransectDistance[i];
-        }
-    }
-
-    if (shortestIndex > 1) {
-        // We need to reverse the order of segments
-        _reverseTransectOrder(transects);
-    }
-    if (shortestIndex & 1) {
-        // We need to reverse the points within each segment
-        _reverseInternalTransectPoints(transects);
-    }
-}
-
 qreal SurveyComplexItem::_ccw(QPointF pt1, QPointF pt2, QPointF pt3)
 {
     return (pt2.x()-pt1.x())*(pt3.y()-pt1.y()) - (pt2.y()-pt1.y())*(pt3.x()-pt1.x());
@@ -421,34 +432,6 @@ bool SurveyComplexItem::_gridAngleIsNorthSouthTransects()
     return gridAngle < 45.0 || (gridAngle > 360.0 - 45.0) || (gridAngle > 90.0 + 45.0 && gridAngle < 270.0 - 45.0);
 }
 
-void SurveyComplexItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects)
-{
-    if (transects.count() == 0) {
-        return;
-    }
-
-    bool reversePoints = false;
-    bool reverseTransects = false;
-
-    if (_entryPoint == EntryLocationBottomLeft || _entryPoint == EntryLocationBottomRight) {
-        reversePoints = true;
-    }
-    if (_entryPoint == EntryLocationTopRight || _entryPoint == EntryLocationBottomRight) {
-        reverseTransects = true;
-    }
-
-    if (reversePoints) {
-        qCDebug(SurveyComplexItemLog) << "_adjustTransectsToEntryPointLocation Reverse Points";
-        _reverseInternalTransectPoints(transects);
-    }
-    if (reverseTransects) {
-        qCDebug(SurveyComplexItemLog) << "_adjustTransectsToEntryPointLocation Reverse Transects";
-        _reverseTransectOrder(transects);
-    }
-
-    qCDebug(SurveyComplexItemLog) << "_adjustTransectsToEntryPointLocation Modified entry point:entryLocation" << transects.first().first() << _entryPoint;
-}
-
 QPointF SurveyComplexItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)
 {
     QPointF rotated;
@@ -460,132 +443,23 @@ QPointF SurveyComplexItem::_rotatePoint(const QPointF& point, const QPointF& ori
     return rotated;
 }
 
-void SurveyComplexItem::_intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines)
+void SurveyComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon,
+                                                   QList<QList<QLineF>>& resultLineGroups)
 {
-    QLineF topLine      (boundRect.topLeft(),       boundRect.topRight());
-    QLineF bottomLine   (boundRect.bottomLeft(),    boundRect.bottomRight());
-    QLineF leftLine     (boundRect.topLeft(),       boundRect.bottomLeft());
-    QLineF rightLine    (boundRect.topRight(),      boundRect.bottomRight());
+    resultLineGroups.clear();
 
-    for (int i=0; i<lineList.count(); i++) {
-        QPointF intersectPoint;
-        QLineF intersectLine;
-        const QLineF& line = lineList[i];
-
-        auto isLineBoundedIntersect = [&line, &intersectPoint](const QLineF& linePosition) {
-            return line.intersects(linePosition, &intersectPoint) == QLineF::BoundedIntersection;
-        };
-
-        int foundCount = 0;
-        if (isLineBoundedIntersect(topLine)) {
-            intersectLine.setP1(intersectPoint);
-            foundCount++;
-        }
-        if (isLineBoundedIntersect(rightLine)) {
-            if (foundCount == 0) {
-                intersectLine.setP1(intersectPoint);
-            } else {
-                if (foundCount != 1) {
-                    qWarning() << "Found more than two intersecting points";
-                }
-                intersectLine.setP2(intersectPoint);
-            }
-            foundCount++;
-        }
-        if (isLineBoundedIntersect(bottomLine)) {
-            if (foundCount == 0) {
-                intersectLine.setP1(intersectPoint);
-            } else {
-                if (foundCount != 1) {
-                    qWarning() << "Found more than two intersecting points";
-                }
-                intersectLine.setP2(intersectPoint);
-            }
-            foundCount++;
-        }
-        if (isLineBoundedIntersect(leftLine)) {
-            if (foundCount == 0) {
-                intersectLine.setP1(intersectPoint);
-            } else {
-                if (foundCount != 1) {
-                    qWarning() << "Found more than two intersecting points";
-                }
-                intersectLine.setP2(intersectPoint);
-            }
-            foundCount++;
+    const QList<QList<QLineF>> clippedLineGroups = QGCPolygonClipper::intersectLines(lineList, polygon);
+    const bool splitConcavePolygons = _splitConcavePolygonsFact.rawValue().toBool();
+    for (const QList<QLineF>& clippedLines : clippedLineGroups) {
+        if (clippedLines.isEmpty()) {
+            continue;
         }
 
-        if (foundCount == 2) {
-            resultLines += intersectLine;
-        }
-    }
-}
-
-void SurveyComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines)
-{
-    resultLines.clear();
-
-    for (int i=0; i<lineList.count(); i++) {
-        const QLineF& line = lineList[i];
-        QList<QPointF> intersections;
-
-        // Intersect the line with all the polygon edges
-        for (int j=0; j<polygon.count()-1; j++) {
-            QPointF intersectPoint;
-            QLineF polygonLine = QLineF(polygon[j], polygon[j+1]);
-
-            auto intersect = line.intersects(polygonLine, &intersectPoint);
-            if (intersect == QLineF::BoundedIntersection) {
-                if (!intersections.contains(intersectPoint)) {
-                    intersections.append(intersectPoint);
-                }
-            }
-        }
-
-        // We now have one or more intersection points all along the same line. Find the two
-        // which are furthest away from each other to form the transect.
-        if (intersections.count() > 1) {
-            QPointF firstPoint;
-            QPointF secondPoint;
-            double currentMaxDistance = 0;
-
-            for (int intersectionIndex=0; intersectionIndex<intersections.count(); intersectionIndex++) {
-                for (int compareIndex=0; compareIndex<intersections.count(); compareIndex++) {
-                    QLineF lineTest(intersections[intersectionIndex], intersections[compareIndex]);
-                    double newMaxDistance = lineTest.length();
-                    if (newMaxDistance > currentMaxDistance) {
-                        firstPoint = intersections[intersectionIndex];
-                        secondPoint = intersections[compareIndex];
-                        currentMaxDistance = newMaxDistance;
-                    }
-                }
-            }
-
-            resultLines += QLineF(firstPoint, secondPoint);
-        }
-    }
-}
-
-/// Adjust the line segments such that they are all going the same direction with respect to going from P1->P2
-void SurveyComplexItem::_adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines)
-{
-    qreal firstAngle = 0;
-    for (int i=0; i<lineList.count(); i++) {
-        const QLineF& line = lineList[i];
-        QLineF adjustedLine;
-
-        if (i == 0) {
-            firstAngle = line.angle();
-        }
-
-        if (qAbs(line.angle() - firstAngle) > 1.0) {
-            adjustedLine.setP1(line.p2());
-            adjustedLine.setP2(line.p1());
+        if (splitConcavePolygons) {
+            resultLineGroups.append(clippedLines);
         } else {
-            adjustedLine = line;
+            resultLineGroups.append({QLineF(clippedLines.first().p1(), clippedLines.last().p2())});
         }
-
-        resultLines += adjustedLine;
     }
 }
 
@@ -691,127 +565,153 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
     // Create set of rotated parallel lines within the expanded bounding rect. Make the lines larger than the
     // bounding box to guarantee intersection.
 
-    QList<QLineF> lineList;
-
     // Sweep lines must extend beyond the polygon boundary regardless of grid angle.
     // The worst case is when the polygon is rotated 45° relative to the sweep direction,
     // where the required reach equals half the diagonal of the bounding rect.
     // We use diagonal * 1.5 to provide a 50% safety margin beyond that worst case.
     // Note: the old fixed +2000m was insufficient for polygons larger than ~10km.
-    const double diagonal = qSqrt(boundingRect.width() * boundingRect.width() + boundingRect.height() * boundingRect.height());
+    const double diagonal =
+        qSqrt(boundingRect.width() * boundingRect.width() + boundingRect.height() * boundingRect.height());
     double maxWidth = diagonal * 1.5;
     if (maxWidth <= 0.0) {
-        qCWarning(SurveyComplexItemLog) << "Degenerate polygon bounding rect (all vertices coincident or collinear), aborting transect rebuild";
+        qCWarning(SurveyComplexItemLog)
+            << "Degenerate polygon bounding rect (all vertices coincident or collinear), aborting transect rebuild";
         return;
     }
 
+    const auto generateSweepLines = [this, boundingCenter, gridAngle, maxWidth](double spacing) {
+        QList<QLineF> lines;
+        const double halfWidth = maxWidth / 2.0;
+        const double transectXMax = boundingCenter.x() + halfWidth;
+        for (double transectX = boundingCenter.x() - halfWidth; transectX < transectXMax; transectX += spacing) {
+            const double transectYTop = boundingCenter.y() - halfWidth;
+            const double transectYBottom = boundingCenter.y() + halfWidth;
+            lines.append(QLineF(_rotatePoint(QPointF(transectX, transectYTop), boundingCenter, gridAngle),
+                                _rotatePoint(QPointF(transectX, transectYBottom), boundingCenter, gridAngle)));
+        }
+        return lines;
+    };
+
+    QList<QLineF> lineList;
     if (gridSpacing <= 0) {
         // Invalid spacing: seed one center line so the < 2 fallback produces a single center transect.
-        qCWarning(SurveyComplexItemLog) << "Grid spacing" << gridSpacing << "is invalid, falling back to single center transect";
+        qCWarning(SurveyComplexItemLog) << "Grid spacing" << gridSpacing
+                                        << "is invalid, falling back to single center transect";
         const double halfW = maxWidth / 2.0;
-        lineList += QLineF(
-            _rotatePoint(QPointF(boundingCenter.x(), boundingCenter.y() - halfW), boundingCenter, gridAngle),
-            _rotatePoint(QPointF(boundingCenter.x(), boundingCenter.y() + halfW), boundingCenter, gridAngle));
+        lineList +=
+            QLineF(_rotatePoint(QPointF(boundingCenter.x(), boundingCenter.y() - halfW), boundingCenter, gridAngle),
+                   _rotatePoint(QPointF(boundingCenter.x(), boundingCenter.y() + halfW), boundingCenter, gridAngle));
     } else {
         // Cap spacing so the sweep never generates more than maxTransectCount transects.
         // Uses diagonal (not maxWidth) so the count reflects actual polygon-crossing transects.
         if (gridSpacing < diagonal / maxTransectCount) {
-            qCWarning(SurveyComplexItemLog) << "Transect spacing" << gridSpacing << "raised to" << diagonal / maxTransectCount << "to limit transect count to" << maxTransectCount;
+            qCWarning(SurveyComplexItemLog)
+                << "Transect spacing" << gridSpacing << "raised to" << diagonal / maxTransectCount
+                << "to limit transect count to" << maxTransectCount;
             gridSpacing = diagonal / maxTransectCount;
         }
-
-        double halfWidth = maxWidth / 2.0;
-        double transectX = boundingCenter.x() - halfWidth;
-        double transectXMax = transectX + maxWidth;
-        while (transectX < transectXMax) {
-            double transectYTop = boundingCenter.y() - halfWidth;
-            double transectYBottom = boundingCenter.y() + halfWidth;
-
-            lineList += QLineF(_rotatePoint(QPointF(transectX, transectYTop), boundingCenter, gridAngle), _rotatePoint(QPointF(transectX, transectYBottom), boundingCenter, gridAngle));
-            transectX += gridSpacing;
-        }
+        lineList = generateSweepLines(gridSpacing);
     }
 
-    // Now intersect the lines with the polygon
-    QList<QLineF> intersectLines;
-#if 1
-    _intersectLinesWithPolygon(lineList, polygon, intersectLines);
-#else
-    // This is handy for debugging grid problems, not for release
-    intersectLines = lineList;
-#endif
+    // Keep fragments from the same sweep line grouped so route ordering can reverse a complete
+    // sweep without joining separate fragments across a concave gap.
+    QList<QList<QLineF>> intersectLineGroups;
+    _intersectLinesWithPolygon(lineList, polygon, intersectLineGroups);
+
+    if (_splitConcavePolygonsFact.rawValue().toBool() && (gridSpacing > 0.0) &&
+        (transectCount(intersectLineGroups) > maxTransectCount)) {
+        const double originalGridSpacing = gridSpacing;
+        for (int attempt = 0; (attempt < 8) && (transectCount(intersectLineGroups) > maxTransectCount); ++attempt) {
+            const double scale = static_cast<double>(transectCount(intersectLineGroups)) / maxTransectCount;
+            gridSpacing *= (std::max) (scale * 1.01, 1.01);
+            lineList = generateSweepLines(gridSpacing);
+            _intersectLinesWithPolygon(lineList, polygon, intersectLineGroups);
+        }
+        qCWarning(SurveyComplexItemLog) << "Transect spacing" << originalGridSpacing << "raised to" << gridSpacing
+                                        << "to limit split transect count to" << maxTransectCount;
+    }
 
     // Less than two transects intersected with the polygon:
     //      Create a single transect which goes through the center of the polygon
     //      Intersect it with the polygon
-    if (intersectLines.count() < 2) {
-        _surveyAreaPolygon.center();
+    if (transectCount(intersectLineGroups) < 2) {
         QLineF firstLine = lineList.first();
         QPointF lineCenter = firstLine.pointAt(0.5);
         QPointF centerOffset = boundingCenter - lineCenter;
         firstLine.translate(centerOffset);
         lineList.clear();
         lineList.append(firstLine);
-        intersectLines = lineList;
-        _intersectLinesWithPolygon(lineList, polygon, intersectLines);
+        _intersectLinesWithPolygon(lineList, polygon, intersectLineGroups);
     }
 
-    // Make sure all lines are going the same direction. Polygon intersection leads to lines which
-    // can be in varied directions depending on the order of the intesecting sides.
-    QList<QLineF> resultLines;
-    _adjustLineDirection(intersectLines, resultLines);
+    if (transectCount(intersectLineGroups) > maxTransectCount) {
+        qCWarning(SurveyComplexItemLog) << "Unable to limit split transect count to" << maxTransectCount;
+        return;
+    }
 
     // Convert from NED to Geo
-    QList<QList<QGeoCoordinate>> transects;
-    for (const QLineF& line : resultLines) {
-        QGeoCoordinate          coord;
-        QList<QGeoCoordinate>   transect;
+    GeoTransectGroups transectGroups;
+    transectGroups.reserve(intersectLineGroups.size());
+    for (const QList<QLineF>& lineGroup : intersectLineGroups) {
+        GeoTransectGroup transectGroup;
+        transectGroup.reserve(lineGroup.size());
+        for (const QLineF& line : lineGroup) {
+            QGeoCoordinate coord;
+            GeoTransect transect;
 
-        QGCGeo::convertNedToGeo(line.p1().y(), line.p1().x(), 0, tangentOrigin, coord);
-        transect.append(coord);
-        QGCGeo::convertNedToGeo(line.p2().y(), line.p2().x(), 0, tangentOrigin, coord);
-        transect.append(coord);
-
-        transects.append(transect);
+            QGCGeo::convertNedToGeo(line.p1().y(), line.p1().x(), 0, tangentOrigin, coord);
+            transect.append(coord);
+            QGCGeo::convertNedToGeo(line.p2().y(), line.p2().x(), 0, tangentOrigin, coord);
+            transect.append(coord);
+            transectGroup.append(transect);
+        }
+        transectGroups.append(transectGroup);
     }
 
-    _adjustTransectsToEntryPointLocation(transects);
+    if (transectGroups.isEmpty()) {
+        return;
+    }
+
+    if (_entryPoint == EntryLocationBottomLeft || _entryPoint == EntryLocationBottomRight) {
+        reverseAllGroupDirections(transectGroups);
+    }
+    if (_entryPoint == EntryLocationTopRight || _entryPoint == EntryLocationBottomRight) {
+        std::reverse(transectGroups.begin(), transectGroups.end());
+    }
 
     if (refly) {
-        _optimizeTransectsForShortestDistance(_transects.last().last().coord, transects);
+        if (_transects.isEmpty()) {
+            return;
+        }
+        optimizeGroupsForShortestDistance(_transects.last().last().coord, transectGroups);
     }
 
     if (_flyAlternateTransectsFact.rawValue().toBool()) {
-        QList<QList<QGeoCoordinate>> alternatingTransects;
-        for (int i=0; i<transects.count(); i++) {
+        GeoTransectGroups alternatingGroups;
+        alternatingGroups.reserve(transectGroups.size());
+        for (int i = 0; i < transectGroups.size(); ++i) {
             if (!(i & 1)) {
-                alternatingTransects.append(transects[i]);
+                alternatingGroups.append(transectGroups[i]);
             }
         }
-        for (int i=transects.count()-1; i>0; i--) {
+        for (int i = transectGroups.size() - 1; i > 0; --i) {
             if (i & 1) {
-                alternatingTransects.append(transects[i]);
+                alternatingGroups.append(transectGroups[i]);
             }
         }
-        transects = alternatingTransects;
+        transectGroups = alternatingGroups;
     }
 
-    // Adjust to lawnmower pattern
-    bool reverseVertices = false;
-    for (int i=0; i<transects.count(); i++) {
-        // We must reverse the vertices for every other transect in order to make a lawnmower pattern
-        QList<QGeoCoordinate> transectVertices = transects[i];
-        if (reverseVertices) {
-            reverseVertices = false;
-            QList<QGeoCoordinate> reversedVertices;
-            for (int j=transectVertices.count()-1; j>=0; j--) {
-                reversedVertices.append(transectVertices[j]);
-            }
-            transectVertices = reversedVertices;
-        } else {
-            reverseVertices = true;
+    for (qsizetype index = 1; index < transectGroups.size(); index += 2) {
+        reverseGroupDirection(transectGroups[index]);
+    }
+
+    QList<GeoTransect> transects;
+    transects.reserve(transectCount(intersectLineGroups));
+    for (const GeoTransectGroup& group : transectGroups) {
+        for (const GeoTransect& transect : group) {
+            transects.append(transect);
         }
-        transects[i] = transectVertices;
     }
 
     // Convert to CoordInfo transects and append to _transects

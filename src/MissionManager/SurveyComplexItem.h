@@ -90,18 +90,13 @@ private:
     };
 
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
-    void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
-    void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
-    void _adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines);
+    void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon,
+                                    QList<QList<QLineF>>& resultLineGroups);
     bool _nextTransectCoord(const QList<QGeoCoordinate>& transectPoints, int pointIndex, QGeoCoordinate& coord);
     bool _appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly);
-    void _optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects);
     qreal _ccw(QPointF pt1, QPointF pt2, QPointF pt3);
     qreal _dp(QPointF pt1, QPointF pt2);
     void _swapPoints(QList<QPointF>& points, int index1, int index2);
-    void _reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects);
-    void _reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects);
-    void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects);
     bool _gridAngleIsNorthSouthTransects();
     double _clampGridAngle90(double gridAngle);
     bool _imagesEverywhere(void) const;
