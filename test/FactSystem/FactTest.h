@@ -13,6 +13,7 @@ private slots:
     void _setRawValueString_test();
     void _setCookedValueWithTranslator_test();
     void _rawToCooked_test();
+    void _appSettingsUnitsChanged_test();
     void _validateValid_test();
     void _validateInvalid_test();
     void _validateConvertOnly_test();
