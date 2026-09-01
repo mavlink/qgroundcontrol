@@ -179,10 +179,8 @@ void ComponentInformationManager::requestAllComponentInformation(RequestAllCompl
     _requestAllCompleteFn       = requestAllCompletFn;
     _requestAllCompleteFnData   = requestAllCompleteFnData;
 
-    // Guard against double-start: when InitialConnectStateMachine's CompInfo
-    // state times out, the retry callback re-invokes this method while the CIM
-    // state machine is still running. Only start if not already in progress;
-    // the updated callback pointers above are sufficient for the retry path.
+    // Guard against double-start: a request while already running just updates the
+    // callback pointers; the running machine still emits requestAllComplete at the end.
     if (!isRunning()) {
         start();
     }
@@ -242,6 +240,7 @@ void ComponentInformationManager::_signalComplete()
         _requestAllCompleteFn      = nullptr;
         _requestAllCompleteFnData  = nullptr;
     }
+    emit requestAllComplete();
 }
 
 bool ComponentInformationManager::_isCompTypeSupported(COMP_METADATA_TYPE type) const

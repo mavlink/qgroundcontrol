@@ -222,6 +222,7 @@ void QGCStateMachineTest::_testTimeoutTransitionBuilder()
 
 void QGCStateMachineTest::_testRetryTransitionBuilder()
 {
+    ignoreTimeoutWarnings();
     QGCStateMachine machine(QStringLiteral("RetryBuilderTest"), nullptr);
     int retryCount = 0;
 

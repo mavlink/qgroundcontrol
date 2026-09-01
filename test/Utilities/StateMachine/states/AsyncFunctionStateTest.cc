@@ -32,6 +32,7 @@ void AsyncFunctionStateTest::_testAsyncFunctionState()
 
 void AsyncFunctionStateTest::_testAsyncFunctionStateTimeout()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     bool timeoutReached = false;
     const int timeoutMs = 100;

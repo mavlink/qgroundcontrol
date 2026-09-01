@@ -449,6 +449,12 @@ void Vehicle::_deleteGimbalController()
     if (_gimbalController) {
         // Disconnect all signals to prevent any callbacks during or after deletion
         _gimbalController->disconnect();
+        // The gimbal controller registers itself as the callback context for its GIMBAL_MANAGER_INFORMATION
+        // requestMessage calls. Cancel any still-outstanding request so the coordinator never calls back
+        // into the freed controller.
+        if (_reqMsgCoord) {
+            _reqMsgCoord->cancelRequests(_gimbalController);
+        }
         delete _gimbalController;
         _gimbalController = nullptr;
     }

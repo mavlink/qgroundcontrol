@@ -33,6 +33,35 @@ void RequestMessageCoordinator::stop()
     _queueMap.clear();
 }
 
+void RequestMessageCoordinator::_noOpResultHandler(void*, MAV_RESULT, RequestMessageResultHandlerFailureCode_t, const mavlink_message_t&)
+{
+}
+
+void RequestMessageCoordinator::cancelRequests(void* resultHandlerData)
+{
+    // Repoint outstanding requests (active or queued) owned by resultHandlerData to the no-op
+    // handler rather than deleting them: an active request may still have a pending command in
+    // MavCommandQueue that references its RequestMessageInfo_t, so the info must stay alive and
+    // be cleaned up through the normal ack/timeout path — just without calling back into the
+    // now-dead context.
+    const auto repoint = [resultHandlerData](RequestMessageInfo_t* info) {
+        if (info->resultHandlerData == resultHandlerData) {
+            info->resultHandler     = &_noOpResultHandler;
+            info->resultHandlerData = nullptr;
+        }
+    };
+    for (auto& msgMap : _infoMap) {
+        for (RequestMessageInfo_t* info : msgMap) {
+            repoint(info);
+        }
+    }
+    for (auto& requestQueue : _queueMap) {
+        for (RequestMessageInfo_t* info : requestQueue) {
+            repoint(info);
+        }
+    }
+}
+
 bool RequestMessageCoordinator::_duplicate(int compId, int msgId) const
 {
     const mavlink_message_info_t* info = mavlink_get_message_info_by_id(msgId);
@@ -185,8 +214,7 @@ void RequestMessageCoordinator::handleReceivedMessage(const mavlink_message_t& m
     void*                       timedOutHandlerData   = nullptr;
     for (auto& compIdEntry : _infoMap) {
         for (auto info : compIdEntry) {
-            // Unit-test environments can have enough scheduling jitter that a 50ms
-            // response deadline causes false request-message timeouts.
+            // Shorter timeout during unit tests keeps failure-path tests fast.
             const int messageWaitTimeoutMs = QGC::runningUnitTests() ? 500 : 1000;
             if (info->messageWaitElapsedTimer.isValid() && info->messageWaitElapsedTimer.elapsed() > messageWaitTimeoutMs) {
                 const mavlink_message_info_t* msgInfo = mavlink_get_message_info_by_id(info->msgId);
