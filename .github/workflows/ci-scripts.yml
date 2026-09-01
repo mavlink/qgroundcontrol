@@ -124,6 +124,7 @@ jobs:
             .github/actions/docker
             .github/actions/free-disk-space
             .github/actions/qt-android
+            .github/actions/qt-ios
             .github/actions/qt-install
             .github/actions/verify-executable
             .github/build-config.json
@@ -148,12 +149,14 @@ jobs:
             cmake/BuildConfig.cmake
             cmake/CustomOptions.cmake
             cmake/install
+            cmake/modules/AppleXCFramework.cmake
             cmake/modules/Hardening.cmake
             cmake/modules/LinuxDistro.cmake
             cmake/modules/CPMPatchCache.cmake
             cmake/modules/PythonVenv.cmake
             cmake/Helpers.cmake
             cmake/Toolchain.cmake
+            cmake/platform/Apple.cmake
             cmake/presets
             justfile
             src/AppSettings/pages
@@ -170,6 +173,7 @@ jobs:
             tools/simulation
             tools/translations
             deploy/docker
+            deploy/ios
             deploy/linux/PKGBUILD.in
             deploy/multipass/build-in-vm.sh
             deploy/vagrant/Vagrantfile
