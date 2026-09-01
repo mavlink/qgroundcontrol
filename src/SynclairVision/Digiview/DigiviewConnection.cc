@@ -1,19 +1,60 @@
 #include "DigiviewConnection.h"
 
+#include "DigiviewLegacyTcpTransport.h"
 #include "QGCLoggingCategory.h"
+#include "sv_mavlink_dialect/sv_mavlink_dialect.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QSettings>
+#include <QtCore/QTimer>
 #include <QtNetwork/QHostInfo>
 
 #include <array>
 
 QGC_LOGGING_CATEGORY(DigiviewConnectionLog, "Digiview.Connection")
 
+namespace {
+
+constexpr char kSynclairSettingsGroup[] = "SynclairVisionSettings";
+constexpr char kLegacyTcpControlSetting[] = "networkForceRtspVideoOverTcp";
+constexpr uint8_t kLegacyTcpSystemId = 1;
+constexpr uint8_t kLegacyTcpComponentId = MAV_COMP_ID_ONBOARD_COMPUTER;
+
+bool legacyTcpControlEnabled()
+{
+    QSettings settings;
+    settings.beginGroup(QLatin1String(kSynclairSettingsGroup));
+    return settings.value(QLatin1String(kLegacyTcpControlSetting), false).toBool();
+}
+
+} // namespace
+
 DigiviewConnection::DigiviewConnection(QObject* parent)
     : QObject(parent)
+    , _legacyTcpTransport(new DigiviewLegacyTcpTransport(this))
 {
     connect(&_socket, &QUdpSocket::readyRead, this, &DigiviewConnection::_readPendingDatagrams);
     connect(&_socket, &QUdpSocket::errorOccurred, this, &DigiviewConnection::_socketErrorOccurred);
+    connect(_legacyTcpTransport, &DigiviewLegacyTcpTransport::connectedToEndpoint, this, [this] {
+        _setLastError(QString());
+        _setConnected(true);
+        QTimer::singleShot(0, this, &DigiviewConnection::_emitLegacyTcpHeartbeat);
+    });
+    connect(_legacyTcpTransport, &DigiviewLegacyTcpTransport::disconnectedFromEndpoint, this, [this] {
+        if (_legacyTcpActive) {
+            _setConnected(false);
+        }
+    });
+    connect(_legacyTcpTransport, &DigiviewLegacyTcpTransport::messageReceived,
+            this, &DigiviewConnection::messageReceived);
+    connect(_legacyTcpTransport, &DigiviewLegacyTcpTransport::errorOccurred, this, [this](const QString& error) {
+        if (_legacyTcpActive) {
+            _setLastError(error);
+            if (!_legacyTcpTransport->connected()) {
+                _setConnected(false);
+            }
+        }
+    });
 }
 
 void DigiviewConnection::setHost(const QString& host)
@@ -55,19 +96,49 @@ void DigiviewConnection::setListenPort(quint16 listenPort)
     }
 }
 
+void DigiviewConnection::setLegacyTcpControlPort(quint16 port)
+{
+    if (port == _legacyTcpControlPort) {
+        return;
+    }
+
+    _legacyTcpControlPort = port;
+    emit legacyTcpControlPortChanged();
+
+    if (_legacyTcpActive && (_connected || _legacyTcpTransport->connecting())) {
+        (void) connectToEndpoint();
+    }
+}
+
 bool DigiviewConnection::connectToEndpoint()
 {
     _automaticReconnectAllowed = true;
+
+    if (legacyTcpControlEnabled()) {
+        _socket.close();
+        _legacyTcpTransport->disconnectFromEndpoint();
+        _setConnected(false);
+        _legacyTcpActive = true;
+        _setLastError(QString());
+        return _legacyTcpTransport->connectToEndpoint(_host, _legacyTcpControlPort);
+    }
 
     QHostAddress remoteAddress;
     if (!_resolveRemoteAddress(remoteAddress)) {
         return false;
     }
 
+    if (_legacyTcpActive) {
+        _legacyTcpActive = false;
+        _legacyTcpTransport->disconnectFromEndpoint();
+        _setConnected(false);
+    }
+
     _socket.close();
 
     if (!_socket.bind(QHostAddress::AnyIPv4, _listenPort, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint)) {
-        _setLastError(tr("Failed to bind Digiview UDP socket to port %1: %2").arg(_listenPort).arg(_socket.errorString()));
+        _setLastError(
+            tr("Failed to bind Digiview UDP socket to port %1: %2").arg(_listenPort).arg(_socket.errorString()));
         _setConnected(false);
         return false;
     }
@@ -89,6 +160,7 @@ void DigiviewConnection::disconnectFromEndpoint(bool preventAutomaticReconnect)
     if (_socket.isOpen()) {
         _socket.close();
     }
+    _legacyTcpTransport->disconnectFromEndpoint();
 
     _setConnected(false);
 }
@@ -99,6 +171,18 @@ bool DigiviewConnection::sendMessage(const mavlink_message_t& message)
         if (!_automaticReconnectAllowed || !connectToEndpoint()) {
             return false;
         }
+        if (!_connected) {
+            _setLastError(tr("DigiView legacy TCP control connection is in progress"));
+            return false;
+        }
+    }
+
+    if (_legacyTcpActive) {
+        const bool sent = _legacyTcpTransport->sendMessage(message);
+        if (sent) {
+            _setLastError(QString());
+        }
+        return sent;
     }
 
     QHostAddress remoteAddress;
@@ -169,6 +253,18 @@ void DigiviewConnection::_socketErrorOccurred(QAbstractSocket::SocketError socke
     Q_UNUSED(socketError);
 
     _setLastError(_socket.errorString());
+}
+
+void DigiviewConnection::_emitLegacyTcpHeartbeat()
+{
+    if (!_legacyTcpActive || !_legacyTcpTransport->connected()) {
+        return;
+    }
+
+    mavlink_message_t heartbeat {};
+    mavlink_msg_heartbeat_pack(kLegacyTcpSystemId, kLegacyTcpComponentId, &heartbeat, MAV_TYPE_ONBOARD_CONTROLLER,
+                               MAV_AUTOPILOT_INVALID, 0, 0, MAV_STATE_ACTIVE);
+    emit messageReceived(heartbeat);
 }
 
 void DigiviewConnection::_setConnected(bool connected)

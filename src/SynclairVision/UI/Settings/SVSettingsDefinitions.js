@@ -195,8 +195,13 @@ function getNetworkSections() {
                     id: 'network_force_rtsp_video_over_tcp',
                     property: 'networkForceRtspVideoOverTcp',
                     type: 'checkbox',
-                    label: 'Force RTSP Video Over TCP',
-                    description: 'Use TCP only for RTSP video streams. Changes take effect when the video stream reconnects.',
+                    label: 'Use TCP for Video and DigiView Control',
+                    description: 'Force RTSP video over TCP and use the limited legacy DigiView control fallback '
+                        + 'at the selected network profile host and legacy TCP control port. Supported control groups: '
+                        + 'system status, '
+                        + 'video output, capture, detection, camera targeting/optics, sensor, and single-target tracking. '
+                        + 'AI/model, tracked-detection, calibration, navigation, depth, and camera-offset features are '
+                        + 'not available in this mode. Changes take effect when video and DigiView reconnect.',
                     checked: false
                 }
             ]

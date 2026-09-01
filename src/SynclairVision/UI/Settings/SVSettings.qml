@@ -27,6 +27,7 @@ QtObject {
                 name: "Digiview 60",
                 host: "192.168.4.60",
                 port: 14770,
+                legacyTcpControlPort: defaultNetworkProfileLegacyTcpControlPort,
                 videoPort: 8556,
                 listenPort: 14571,
                 streamName: defaultNetworkProfileStreamName
@@ -35,6 +36,7 @@ QtObject {
                 name: "Digiview 126",
                 host: "192.168.4.126",
                 port: 14770,
+                legacyTcpControlPort: defaultNetworkProfileLegacyTcpControlPort,
                 videoPort: 8556,
                 listenPort: 14571,
                 streamName: defaultNetworkProfileStreamName
@@ -214,12 +216,14 @@ QtObject {
 
     //Network
         readonly property string defaultNetworkProfileStreamName: "stream"
+        readonly property int defaultNetworkProfileLegacyTcpControlPort: 8555
         property string networkIPAdress: "192.168.4.60"
         property var networkProfiles: [
             {
                 name: "Digiview 60",
                 host: "192.168.4.60",
                 port: 14770,
+                legacyTcpControlPort: defaultNetworkProfileLegacyTcpControlPort,
                 videoPort: 8556,
                 listenPort: 14571,
                 streamName: defaultNetworkProfileStreamName
@@ -228,6 +232,7 @@ QtObject {
                 name: "Digiview 126",
                 host: "192.168.4.126",
                 port: 14770,
+                legacyTcpControlPort: defaultNetworkProfileLegacyTcpControlPort,
                 videoPort: 8556,
                 listenPort: 14571,
                 streamName: defaultNetworkProfileStreamName
@@ -295,6 +300,7 @@ QtObject {
                     name: profile.name,
                     host: profile.host,
                     port: profile.port,
+                    legacyTcpControlPort: profile.legacyTcpControlPort,
                     videoPort: profile.videoPort,
                     listenPort: profile.listenPort,
                     streamName: profile.streamName
@@ -336,6 +342,9 @@ QtObject {
                 name: networkProfileText(profileData && profileData.name) || fallbackName,
                 host: networkProfileText(profileData && profileData.host) || fallbackHost,
                 port: networkProfilePort(profileData && profileData.port, defaultProfile.port !== undefined ? defaultProfile.port : 14770),
+                legacyTcpControlPort: networkProfilePort(profileData && profileData.legacyTcpControlPort,
+                    defaultProfile.legacyTcpControlPort !== undefined
+                        ? defaultProfile.legacyTcpControlPort : defaultNetworkProfileLegacyTcpControlPort),
                 videoPort: networkProfilePort(profileData && profileData.videoPort, defaultProfile.videoPort !== undefined ? defaultProfile.videoPort : 5600),
                 listenPort: networkProfilePort(profileData && profileData.listenPort, defaultProfile.listenPort !== undefined ? defaultProfile.listenPort : 14571),
                 streamName: networkProfileStreamName(profileData && profileData.streamName, defaultProfile.streamName)
@@ -446,6 +455,11 @@ QtObject {
 
             if (profile.listenPort !== undefined) {
                 digiview.listenPort = networkProfilePort(profile.listenPort, digiview.listenPort)
+            }
+
+            if (profile.legacyTcpControlPort !== undefined) {
+                digiview.legacyTcpControlPort = networkProfilePort(
+                    profile.legacyTcpControlPort, digiview.legacyTcpControlPort)
             }
 
             digiview.streamName = networkProfileStreamName(profile.streamName)

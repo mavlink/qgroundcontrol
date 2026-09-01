@@ -74,6 +74,8 @@ DigiviewManager::DigiviewManager(QObject* parent)
     connect(_connection, &DigiviewConnection::hostChanged, this, &DigiviewManager::hostChanged);
     connect(_connection, &DigiviewConnection::portChanged, this, &DigiviewManager::portChanged);
     connect(_connection, &DigiviewConnection::listenPortChanged, this, &DigiviewManager::listenPortChanged);
+    connect(_connection, &DigiviewConnection::legacyTcpControlPortChanged,
+            this, &DigiviewManager::legacyTcpControlPortChanged);
     connect(_connection, &DigiviewConnection::connectedChanged, this, &DigiviewManager::connectedChanged);
     connect(_connection, &DigiviewConnection::lastErrorChanged, this, &DigiviewManager::lastErrorChanged);
     connect(_connection, &DigiviewConnection::messageReceived, this, &DigiviewManager::_handleMessage);
@@ -102,6 +104,11 @@ quint16 DigiviewManager::port() const
 quint16 DigiviewManager::listenPort() const
 {
     return _connection->listenPort();
+}
+
+quint16 DigiviewManager::legacyTcpControlPort() const
+{
+    return _connection->legacyTcpControlPort();
 }
 
 bool DigiviewManager::connected() const
@@ -139,6 +146,15 @@ void DigiviewManager::setListenPort(quint16 listenPort)
     }
 
     _connection->setListenPort(listenPort);
+}
+
+void DigiviewManager::setLegacyTcpControlPort(quint16 port)
+{
+    if (port != _connection->legacyTcpControlPort()) {
+        _resetRemoteSession();
+    }
+
+    _connection->setLegacyTcpControlPort(port);
 }
 
 void DigiviewManager::setStreamName(const QString& streamName)

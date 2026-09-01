@@ -33,6 +33,8 @@ class DigiviewManager : public QObject
     Q_PROPERTY(QString host READ host WRITE setHost NOTIFY hostChanged)
     Q_PROPERTY(quint16 port READ port WRITE setPort NOTIFY portChanged)
     Q_PROPERTY(quint16 listenPort READ listenPort WRITE setListenPort NOTIFY listenPortChanged)
+    Q_PROPERTY(quint16 legacyTcpControlPort READ legacyTcpControlPort WRITE setLegacyTcpControlPort NOTIFY
+               legacyTcpControlPortChanged)
     Q_PROPERTY(QString streamName READ streamName WRITE setStreamName NOTIFY streamNameChanged)
     Q_PROPERTY(int senderSystemId READ senderSystemId WRITE setSenderSystemId NOTIFY senderIdentityChanged)
     Q_PROPERTY(int senderComponentId READ senderComponentId WRITE setSenderComponentId NOTIFY senderIdentityChanged)
@@ -99,6 +101,7 @@ public:
     QString host() const;
     quint16 port() const;
     quint16 listenPort() const;
+    quint16 legacyTcpControlPort() const;
     QString streamName() const { return _streamName; }
     int senderSystemId() const { return _senderSystemId; }
     int senderComponentId() const { return _senderComponentId; }
@@ -138,6 +141,7 @@ public:
     void setHost(const QString& host);
     void setPort(quint16 port);
     void setListenPort(quint16 listenPort);
+    void setLegacyTcpControlPort(quint16 port);
     void setStreamName(const QString& streamName);
     void setSenderSystemId(int senderSystemId);
     void setSenderComponentId(int senderComponentId);
@@ -242,6 +246,7 @@ signals:
     void hostChanged();
     void portChanged();
     void listenPortChanged();
+    void legacyTcpControlPortChanged();
     void streamNameChanged();
     void senderIdentityChanged();
     void connectedChanged();

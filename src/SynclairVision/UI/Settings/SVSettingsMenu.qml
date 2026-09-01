@@ -224,6 +224,7 @@ Item {
             name: normalizedProfile.name,
             host: normalizedProfile.host,
             port: normalizedProfile.port,
+            legacyTcpControlPort: normalizedProfile.legacyTcpControlPort,
             videoPort: normalizedProfile.videoPort,
             listenPort: normalizedProfile.listenPort,
             streamName: normalizedProfile.streamName
@@ -244,6 +245,7 @@ Item {
                 && normalizedProfile.name === profileSnapshot.name
                 && normalizedProfile.host === profileSnapshot.host
                 && normalizedProfile.port === profileSnapshot.port
+                && normalizedProfile.legacyTcpControlPort === profileSnapshot.legacyTcpControlPort
                 && normalizedProfile.videoPort === profileSnapshot.videoPort
                 && normalizedProfile.listenPort === profileSnapshot.listenPort
                 && normalizedProfile.streamName === profileSnapshot.streamName) {
@@ -843,6 +845,7 @@ Item {
             property string streamName: ''
             property string ipAddress: ''
             property string port: ''
+            property string legacyTcpControlPort: ''
             property string videoPort: ''
             property string listenPort: ''
 
@@ -852,6 +855,7 @@ Item {
                     streamName = ''
                     ipAddress = ''
                     port = ''
+                    legacyTcpControlPort = SVSettings.defaultNetworkProfileLegacyTcpControlPort.toString()
                     videoPort = ''
                     listenPort = ''
                     return
@@ -861,6 +865,9 @@ Item {
                 streamName = editingProfile ? SVSettings.networkProfileStreamName(editingProfile.streamName) : SVSettings.defaultNetworkProfileStreamName
                 ipAddress = editingProfile && editingProfile.host ? editingProfile.host : ''
                 port = editingProfile && editingProfile.port !== undefined ? editingProfile.port.toString() : ''
+                legacyTcpControlPort = editingProfile && editingProfile.legacyTcpControlPort !== undefined
+                    ? editingProfile.legacyTcpControlPort.toString()
+                    : SVSettings.defaultNetworkProfileLegacyTcpControlPort.toString()
                 videoPort = editingProfile && editingProfile.videoPort !== undefined ? editingProfile.videoPort.toString() : ''
                 listenPort = editingProfile && editingProfile.listenPort !== undefined ? editingProfile.listenPort.toString() : ''
             }
@@ -939,7 +946,7 @@ Item {
 
                         QGCLabel {
                             Layout.preferredWidth: root.labelColumnWidth
-                            text: qsTr('Port')
+                            text: qsTr('MAVLink UDP port')
                             wrapMode: Text.WordWrap
                         }
 
@@ -947,9 +954,24 @@ Item {
                             Layout.fillWidth: true
                             Layout.minimumWidth: root.controlColumnWidth
                             text: editProfileDialog.port
-                            placeholderText: qsTr('Enter port')
+                            placeholderText: qsTr('Enter MAVLink UDP port')
 
                             onTextChanged: editProfileDialog.port = text
+                        }
+
+                        QGCLabel {
+                            Layout.preferredWidth: root.labelColumnWidth
+                            text: qsTr('Legacy TCP control port')
+                            wrapMode: Text.WordWrap
+                        }
+
+                        QGCTextField {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: root.controlColumnWidth
+                            text: editProfileDialog.legacyTcpControlPort
+                            placeholderText: qsTr('Enter legacy TCP control port')
+
+                            onTextChanged: editProfileDialog.legacyTcpControlPort = text
                         }
 
                         QGCLabel {
@@ -1023,6 +1045,7 @@ Item {
                                 streamName: editProfileDialog.streamName,
                                 host: editProfileDialog.ipAddress,
                                 port: editProfileDialog.port,
+                                legacyTcpControlPort: editProfileDialog.legacyTcpControlPort,
                                 videoPort: editProfileDialog.videoPort,
                                 listenPort: editProfileDialog.listenPort
                             }
