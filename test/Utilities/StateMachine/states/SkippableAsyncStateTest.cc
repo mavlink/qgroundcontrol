@@ -87,6 +87,7 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateSkip()
 
 void SkippableAsyncStateTest::_testSkippableAsyncStateTimeout()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     bool timeoutReached = false;
     const int timeoutMs = 100;

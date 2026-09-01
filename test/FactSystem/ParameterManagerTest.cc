@@ -14,6 +14,13 @@
 #include "QGCMath.h"
 #include "Vehicle.h"
 
+// Call from tests that deliberately let PARAM_SET / PARAM_REQUEST_READ waits time out.
+void ParameterManagerTest::_ignoreParamResponseTimeouts()
+{
+    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression("Timeout \".*WaitForParamResponseState\""));
+}
+
 void ParameterManagerTest::cleanup()
 {
     // Some tests create MockLink directly (not via _connectMockLink), so we need special handling.
@@ -104,6 +111,7 @@ void ParameterManagerTest::_requestListNoResponse()
 // param_read requests. The packed file is disabled so the stream path is exercised.
 void ParameterManagerTest::_requestListMissingParamFail()
 {
+    _ignoreParamResponseTimeouts();
     QVERIFY2(!_mockLink, "MockLink already connected");
     _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailMissingParamOnAllRequests);
     _mockLink->mockLinkFTP()->setParamPckEnabled(false);
@@ -134,6 +142,7 @@ void ParameterManagerTest::_requestListMissingParamFail()
 
 void ParameterManagerTest::_paramWriteNoAckRetry()
 {
+    _ignoreParamResponseTimeouts();
     // BAT1_V_CHARGED requires a vehicle reboot, so writing it pops the reboot
     // app message (debounce is reset per-test by the framework)
     expectAppMessage(QRegularExpression("Reboot vehicle for changes to take effect"));
@@ -144,6 +153,7 @@ void ParameterManagerTest::_paramWriteNoAckRetry()
 
 void ParameterManagerTest::_paramWriteNoAckPermanent()
 {
+    _ignoreParamResponseTimeouts();
     // Expectations verify in FIFO order: reboot message first (fires at local
     // setRawValue), then the write-failed message (fires after retries exhaust)
     expectAppMessage(QRegularExpression("Reboot vehicle for changes to take effect"));
@@ -168,6 +178,7 @@ void ParameterManagerTest::_paramWriteUInt16()
 
 void ParameterManagerTest::_paramReadFirstAttemptNoResponseRetry()
 {
+    _ignoreParamResponseTimeouts();
     QVERIFY2(!_mockLink, "MockLink already connected");
     _connectMockLink();
     QVERIFY(_mockLink);
@@ -192,6 +203,7 @@ void ParameterManagerTest::_paramReadFirstAttemptNoResponseRetry()
 
 void ParameterManagerTest::_paramReadNoResponse()
 {
+    _ignoreParamResponseTimeouts();
     QVERIFY2(!_mockLink, "MockLink already connected");
     _connectMockLink();
     QVERIFY(_mockLink);
@@ -560,6 +572,7 @@ void ParameterManagerTest::_bulkRefreshUnknownNameSkipped()
 // Round 0 fails (no response from MockLink), round 1 succeeds after failure mode is cleared.
 void ParameterManagerTest::_bulkRefreshRetrySucceeds()
 {
+    _ignoreParamResponseTimeouts();
     _connectMockLink();
     QVERIFY(_mockLink);
     QVERIFY(_vehicle);
@@ -593,6 +606,7 @@ void ParameterManagerTest::_bulkRefreshRetrySucceeds()
 // All kMaxRetryRounds+1 rounds fail — BulkRefreshJob gives up without a success signal.
 void ParameterManagerTest::_bulkRefreshAllRetriesExhausted()
 {
+    _ignoreParamResponseTimeouts();
     _connectMockLink();
     QVERIFY(_mockLink);
     QVERIFY(_vehicle);

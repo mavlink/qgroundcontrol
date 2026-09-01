@@ -26,6 +26,7 @@ protected:
 
 void WaitStateBaseTest::_testTimeoutEmission()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     const int timeoutMs = 50;
 

@@ -46,7 +46,7 @@ void WaitStateBase::_onTimeout()
         return;
     }
 
-    qCDebug(QGCStateMachineLog) << "Timeout" << stateName();
+    qCWarning(QGCStateMachineLog) << "Timeout" << stateName() << "after" << _timeoutTimer.interval() << "ms";
 
     // Record timeout for statistics
     if (machine()) {

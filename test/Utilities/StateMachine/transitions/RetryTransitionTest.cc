@@ -18,6 +18,7 @@ protected:
 
 void RetryTransitionTest::_testRetryActionCalled()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     int retryCount = 0;
     bool targetReached = false;
@@ -58,6 +59,7 @@ void RetryTransitionTest::_testRetryActionCalled()
 
 void RetryTransitionTest::_testTransitionAfterMaxRetries()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     int retryCount = 0;
     bool targetReached = false;
@@ -104,6 +106,7 @@ void RetryTransitionTest::_testTransitionAfterMaxRetries()
 
 void RetryTransitionTest::_testRetryCountResets()
 {
+    ignoreTimeoutWarnings();
     // Test that retry count resets after transition is taken
     QStateMachine machine;
     int retryCount = 0;
@@ -138,6 +141,7 @@ void RetryTransitionTest::_testRetryCountResets()
 
 void RetryTransitionTest::_testMultipleRetries()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     int retryCount = 0;
     bool targetReached = false;
@@ -174,6 +178,7 @@ void RetryTransitionTest::_testMultipleRetries()
 
 void RetryTransitionTest::_testZeroRetries()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     int retryCount = 0;
     bool targetReached = false;
@@ -210,6 +215,7 @@ void RetryTransitionTest::_testZeroRetries()
 
 void RetryTransitionTest::_testWaitRearmedBeforeRetryAction()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     bool waitWasRearmedBeforeRetryAction = false;
 

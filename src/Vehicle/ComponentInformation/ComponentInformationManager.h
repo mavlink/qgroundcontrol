@@ -39,6 +39,7 @@ public:
 
 signals:
     void progressUpdate(float progress);
+    void requestAllComplete();
 
 private:
     void _createStates();

@@ -38,6 +38,11 @@ public:
     /// Clear pending state without firing callbacks (used during vehicle shutdown).
     void stop();
 
+    /// Neutralizes any outstanding requests owned by @a resultHandlerData so their result
+    /// callback is never invoked. Call this when the callback's context is being destroyed
+    /// while the vehicle (and this coordinator) keep running.
+    void cancelRequests(void* resultHandlerData);
+
     static QString failureCodeToString(RequestMessageResultHandlerFailureCode_t failureCode);
 
 private:
@@ -65,6 +70,10 @@ private:
     void _sendNextFromQueue(int compId);
 
     static void _cmdResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
+
+    /// Result handler that outstanding requests are repointed to once their owning context is
+    /// destroyed. Intentionally does nothing.
+    static void _noOpResultHandler(void* resultHandlerData, MAV_RESULT commandResult, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
 
     Vehicle*                                                _vehicle     = nullptr;
     MavCommandQueue*                                        _commandQueue = nullptr;
