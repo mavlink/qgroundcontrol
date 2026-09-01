@@ -271,11 +271,35 @@ void GimbalController::_requestGimbalInformation(uint8_t compid)
 {
     qCDebug(GimbalControllerLog) << "_requestGimbalInformation(" << compid << ")";
 
-    if (_vehicle) {
-        _vehicle->sendMavCommand(compid,
-                                 MAV_CMD_REQUEST_MESSAGE,
-                                 false /* no error */,
-                                 MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION);
+    if (!_vehicle) {
+        return;
+    }
+    if (_pendingInformationRequestCompId != -1) {
+        qCDebug(GimbalControllerLog) << "_requestGimbalInformation: request already in flight for compid" << _pendingInformationRequestCompId;
+        return;
+    }
+
+    // Must go through requestMessage rather than sending MAV_CMD_REQUEST_MESSAGE directly so
+    // that it serializes with other request-message users targeting the same component
+    // (a raw send collides with theirs in the command queue's duplicate-command check).
+    _pendingInformationRequestCompId = compid;
+    _vehicle->requestMessage(_requestMessageResultHandler,
+                             this,
+                             compid,
+                             MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION);
+}
+
+void GimbalController::_requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message)
+{
+    Q_UNUSED(message);
+
+    auto* controller = static_cast<GimbalController*>(resultHandlerData);
+    controller->_pendingInformationRequestCompId = -1;
+
+    // Success is handled by the normal GIMBAL_MANAGER_INFORMATION message dispatch and
+    // failures are retried from _checkComplete, so just log here.
+    if (result != MAV_RESULT_ACCEPTED) {
+        qCDebug(GimbalControllerLog) << "GIMBAL_MANAGER_INFORMATION request failed - result:" << result << "failureCode:" << failureCode;
     }
 }
 

@@ -5,6 +5,7 @@
 
 #include "Gimbal.h"
 #include "MAVLinkMessageType.h"
+#include "VehicleTypes.h"
 
 class QmlObjectListModel;
 class Vehicle;
@@ -91,6 +92,7 @@ private:
     };
 
     void _requestGimbalInformation(uint8_t compid);
+    static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
     void _handleHeartbeat(const mavlink_message_t &message);
     void _handleGimbalManagerInformation(const mavlink_message_t &message);
     void _handleGimbalManagerStatus(const mavlink_message_t &message);
@@ -104,6 +106,7 @@ private:
     QTimer _rateSenderTimer;
     Vehicle *_vehicle = nullptr;
     Gimbal *_activeGimbal = nullptr;
+    int _pendingInformationRequestCompId = -1; ///< compid of in-flight GIMBAL_MANAGER_INFORMATION request, -1 if none
 
     struct PotentialGimbalManager {
         unsigned requestGimbalManagerInformationRetries = 6;

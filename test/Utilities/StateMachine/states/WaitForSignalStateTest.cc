@@ -36,6 +36,7 @@ void WaitForSignalStateTest::_testWaitForSignalState()
 
 void WaitForSignalStateTest::_testWaitForSignalStateTimeout()
 {
+    ignoreTimeoutWarnings();
     QStateMachine machine;
     QObject signalSource;
     bool timeoutReached = false;
@@ -108,6 +109,7 @@ void WaitForSignalStateTest::_testCompletedSignal()
 
 void WaitForSignalStateTest::_testTimedOutSignal()
 {
+    ignoreTimeoutWarnings();
     // Test that timedOut() is emitted alongside timeout() for wait states
     QStateMachine machine;
     QObject signalSource;

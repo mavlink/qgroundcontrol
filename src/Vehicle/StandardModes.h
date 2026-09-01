@@ -3,6 +3,7 @@
 #include "FirmwarePlugin.h"
 #include "MAVLinkEnums.h"
 #include "MAVLinkMessageType.h"
+#include "VehicleTypes.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -27,7 +28,7 @@ public:
 
     void availableModesMonitorReceived(uint8_t seq);
 
-    void gotMessage(MAV_RESULT result, const mavlink_message_t &message);
+    void gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t &message);
 
 signals:
     void modesUpdated();
