@@ -44,6 +44,11 @@ jobs:
       # Required to delete cache entries.
       actions: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@v7
         with:
           sparse-checkout: |

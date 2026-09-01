@@ -129,20 +129,7 @@ jobs:
             .github/actions/verify-executable
             .github/build-config.json
             .github/scripts
-            .github/workflows/build-results.yml
-            .github/workflows/ci-scripts.yml
-            .github/workflows/docker.yml
-            .github/workflows/analysis.yml
-            .github/workflows/android.yml
-            .github/workflows/build-profile.yml
-            .github/workflows/build-gstreamer.yml
-            .github/workflows/custom-build.yml
-            .github/workflows/cache-cleanup.yml
-            .github/workflows/ios.yml
-            .github/workflows/linux.yml
-            .github/workflows/macos.yml
-            .github/workflows/release.yml
-            .github/workflows/windows.yml
+            .github/workflows
             .vscode
             CMakeLists.txt
             CMakePresets.json

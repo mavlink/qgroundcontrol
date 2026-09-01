@@ -78,6 +78,11 @@ jobs:
       actions: read  # wait-for-workflows-action polls workflow runs
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Wait for builds to complete
         uses: int128/wait-for-workflows-action@v1
         with:

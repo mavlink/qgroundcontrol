@@ -94,17 +94,17 @@ jobs:
         shell: cmd
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
           show_costs: summary
-
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
 
       - name: Checkout repo
         uses: actions/checkout@v7
