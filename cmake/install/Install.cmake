@@ -218,31 +218,6 @@ elseif(LINUX)
     # shared qgc-package dispatch at the end of this file.
 
     # ----------------------------------------------------------------------------
-    # Windows Installation & Installer Creation
-    # ----------------------------------------------------------------------------
-elseif(WIN32)
-    # Pass variables to Windows installer creation script
-    if(CMAKE_CROSSCOMPILING)
-        string(CONCAT _win_installer_out "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-installer-"
-                      "${CMAKE_HOST_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_PROCESSOR}.exe"
-        )
-    else()
-        set(_win_installer_out "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-installer-${CMAKE_SYSTEM_PROCESSOR}.exe")
-    endif()
-    install(
-        CODE "
-        set(CMAKE_PROJECT_NAME \"${CMAKE_PROJECT_NAME}\")
-        set(CMAKE_PROJECT_VERSION \"${CMAKE_PROJECT_VERSION}\")
-        set(QGC_ORG_NAME \"${QGC_ORG_NAME}\")
-        set(QGC_WINDOWS_ICON_PATH \"${QGC_WINDOWS_ICON_PATH}\")
-        set(QGC_WINDOWS_INSTALL_HEADER_PATH \"${QGC_WINDOWS_INSTALL_HEADER_PATH}\")
-        set(QGC_WINDOWS_OUT \"${_win_installer_out}\")
-        set(QGC_WINDOWS_INSTALLER_SCRIPT \"${CMAKE_SOURCE_DIR}/deploy/windows/nullsoft_installer.nsi\")
-    "
-    )
-    install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateWinInstaller.cmake")
-
-    # ----------------------------------------------------------------------------
     # macOS Installation, Code Signing & DMG Creation
     # ----------------------------------------------------------------------------
 elseif(MACOS)
@@ -295,7 +270,8 @@ endif()
 
 # ============================================================================
 # Native package — `qgc-package` target, selected via QGC_CPACK_GENERATOR.
-# Linux retains the AppImage as its separate default artifact.
+# This is the production Windows installer. Linux retains the AppImage and
+# macOS retains the DMG as separate default artifacts.
 # Must follow all install() rules above: each CreateCPack*.cmake ends in
 # include(CPack), which snapshots the install layout.
 # ============================================================================
@@ -306,6 +282,10 @@ if(NOT QGC_BUILD_INSTALLER
     # Disable the effective generator without changing the cached selection, so
     # a later desktop configure can re-enable the user's chosen package type.
     set(QGC_CPACK_GENERATOR "")
+elseif(WIN32 AND QGC_CPACK_GENERATOR STREQUAL "")
+    # Windows has no separate installer wrapper; CPack NSIS is the production
+    # installer. Keep this directory-scoped instead of changing the cache.
+    set(QGC_CPACK_GENERATOR "NSIS")
 endif()
 
 if(LINUX)

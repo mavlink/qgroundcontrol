@@ -55,6 +55,14 @@ inputs:
     description: 'Optional newline-separated paths to include in the GitHub artifact'
     required: false
     default: ''
+  additional-aws-artifact-name:
+    description: 'Optional filename for a second artifact uploaded to AWS'
+    required: false
+    default: ''
+  additional-aws-artifact-path:
+    description: 'Optional path for a second artifact uploaded to AWS'
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -97,6 +105,22 @@ runs:
       with:
         artifact-name: ${{ inputs.artifact-name }}
         artifact-path: ${{ steps.src.outputs.path }}
+        aws-role-arn: ${{ inputs.aws-role-arn }}
+        aws-key-id: ${{ inputs.aws-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-distribution-id: ${{ inputs.aws-distribution-id }}
+
+    - name: Upload additional artifact to AWS
+      if: >-
+        fromJSON(inputs.upload-aws) &&
+        github.event_name == 'push' &&
+        github.repository_owner == 'mavlink' &&
+        (inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != '')) &&
+        (inputs.additional-aws-artifact-name != '' || inputs.additional-aws-artifact-path != '')
+      uses: ./.github/actions/aws-upload
+      with:
+        artifact-name: ${{ inputs.additional-aws-artifact-name }}
+        artifact-path: ${{ inputs.additional-aws-artifact-path }}
         aws-role-arn: ${{ inputs.aws-role-arn }}
         aws-key-id: ${{ inputs.aws-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
