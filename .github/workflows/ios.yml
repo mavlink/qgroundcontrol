@@ -197,7 +197,8 @@ jobs:
         with:
           artifact-name: ${{ env.PACKAGE }}.ipa
           artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.ipa
-          package-name: ${{ env.PACKAGE }}
+          package-name: ${{ env.PACKAGE }}-ios
+          subject-name: ${{ env.PACKAGE }}-ios
           upload-aws: 'false'
 
       - name: Upload to TestFlight

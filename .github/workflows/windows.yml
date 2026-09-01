@@ -406,10 +406,8 @@ jobs:
         with:
           artifact-name: ${{ matrix.package }}.exe
           package-name: ${{ matrix.package }}
+          subject-name: ${{ matrix.package }}-windows
           artifact-source-path: ${{ steps.installer.outputs.path }}
-          additional-artifact-paths: ${{ steps.installer.outputs.checksum_path }}
-          additional-aws-artifact-name: ${{ matrix.package }}.exe.sha256
-          additional-aws-artifact-path: ${{ steps.installer.outputs.checksum_path }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

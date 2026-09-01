@@ -146,3 +146,26 @@ class TestAttestHelper:
                 ]
             )
         assert excinfo.value.code == 1
+
+    def test_checksum_creates_sidecar(self, tmp_path):
+        artifact = tmp_path / "QGroundControl.AppImage"
+        artifact.write_bytes(b"artifact")
+
+        outputs = self._run_main(["checksum", "--source-path", str(artifact)])
+
+        checksum = tmp_path / "QGroundControl.AppImage.sha256"
+        assert outputs == {"path": str(checksum)}
+        assert checksum.read_text(encoding="utf-8").endswith("  QGroundControl.AppImage\n")
+
+    def test_checksum_rejects_mismatch(self, tmp_path):
+        import pytest
+
+        artifact = tmp_path / "QGroundControl.dmg"
+        artifact.write_bytes(b"artifact")
+        checksum = tmp_path / "QGroundControl.dmg.sha256"
+        checksum.write_text(f"{'0' * 64}  QGroundControl.dmg\n", encoding="utf-8")
+
+        with pytest.raises(SystemExit) as excinfo:
+            self._run_main(["checksum", "--source-path", str(artifact)])
+
+        assert excinfo.value.code == 1

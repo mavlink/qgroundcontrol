@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Attestation helpers: gate SBOM signing and resolve artifact paths."""
 
 from __future__ import annotations
@@ -13,6 +12,7 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import gh_error, gh_warning, write_github_output
+from common.io import ensure_sha256_sidecar
 
 
 def cmd_check(args: argparse.Namespace) -> None:
@@ -60,6 +60,15 @@ def cmd_resolve_path(args: argparse.Namespace) -> None:
     write_github_output({"path": str(path)})
 
 
+def cmd_checksum(args: argparse.Namespace) -> None:
+    try:
+        checksum = ensure_sha256_sidecar(Path(args.source_path))
+    except (OSError, ValueError) as exc:
+        gh_error(f"attest-and-upload: {exc}")
+        sys.exit(1)
+    write_github_output({"path": str(checksum)})
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -77,8 +86,13 @@ def main() -> None:
     p_resolve.add_argument("--override", default="")
     p_resolve.add_argument("--default", required=True)
 
+    p_checksum = sub.add_parser("checksum", help="Verify or create the artifact's SHA-256 sidecar")
+    p_checksum.add_argument("--source-path", required=True)
+
     args = parser.parse_args()
-    {"check": cmd_check, "resolve-path": cmd_resolve_path}[args.command](args)
+    {"check": cmd_check, "checksum": cmd_checksum, "resolve-path": cmd_resolve_path}[args.command](
+        args
+    )
 
 
 if __name__ == "__main__":

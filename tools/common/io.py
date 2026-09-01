@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import hmac
 import json
 import os
+import re
 import tempfile
 from typing import TYPE_CHECKING, Any
 
@@ -20,15 +22,19 @@ if TYPE_CHECKING:
 __all__ = [
     "atomic_write",
     "chdir",
+    "ensure_sha256_sidecar",
     "extract_tar_data",
     "extract_zip_safe",
     "read_json",
     "read_toml",
     "require_tar_data_filter",
     "sha256_file",
+    "verify_sha256_sidecar",
     "write_json",
     "write_text_if_changed",
 ]
+
+_SHA256_SIDECAR_LINE = re.compile(r"([0-9a-fA-F]{64}) [ *](.+)")
 
 
 @contextlib.contextmanager
@@ -94,6 +100,47 @@ def sha256_file(path: Path, *, chunk_size: int = 1024 * 1024) -> str:
         while chunk := file.read(chunk_size):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def verify_sha256_sidecar(source: Path, checksum: Path | None = None) -> str:
+    """Validate a sha256sum-compatible sidecar and return the actual digest."""
+    if not source.is_file():
+        raise FileNotFoundError(f"Artifact is not a file: {source}")
+
+    checksum = checksum or source.with_name(f"{source.name}.sha256")
+    lines = [
+        line.strip()
+        for line in checksum.read_text(encoding="utf-8-sig").splitlines()
+        if line.strip()
+    ]
+    if len(lines) != 1:
+        raise ValueError(f"Expected exactly one checksum entry in {checksum}")
+
+    match = _SHA256_SIDECAR_LINE.fullmatch(lines[0])
+    if match is None:
+        raise ValueError(f"Malformed SHA-256 checksum entry in {checksum}")
+
+    expected_digest, listed_name = match.groups()
+    if listed_name.casefold() != source.name.casefold():
+        raise ValueError(
+            f"Checksum filename {listed_name!r} does not match artifact {source.name!r}"
+        )
+
+    actual_digest = sha256_file(source)
+    if not hmac.compare_digest(expected_digest.casefold(), actual_digest):
+        raise ValueError(f"SHA-256 checksum mismatch for {source}")
+    return actual_digest
+
+
+def ensure_sha256_sidecar(source: Path, checksum: Path | None = None) -> Path:
+    """Verify or create a canonical sha256sum-compatible checksum sidecar."""
+    if not source.is_file():
+        raise FileNotFoundError(f"Artifact is not a file: {source}")
+
+    checksum = checksum or source.with_name(f"{source.name}.sha256")
+    digest = verify_sha256_sidecar(source, checksum) if checksum.exists() else sha256_file(source)
+    write_text_if_changed(checksum, f"{digest}  {source.name}\n")
+    return checksum
 
 
 def read_json(path: Path) -> Any:

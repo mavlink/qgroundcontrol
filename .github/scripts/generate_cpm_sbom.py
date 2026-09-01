@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
 """Generate a CycloneDX SBOM from a CMake build directory's CPM package metadata.
 
 Parses CMakeCache.txt for CPM_PACKAGES and per-package VERSION/SOURCE_DIR,
 then reads git metadata (remote URL, commit hash) from each source directory.
 
 Usage:
-    generate_cpm_sbom.py --build-dir DIR [--output FILE]
+    generate_cpm_sbom.py --build-dir DIR [--output FILE] [--require-components]
 
 Outputs CycloneDX 1.6 JSON to stdout or the specified file.
 """
@@ -159,9 +158,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path, required=True, help="CMake build directory")
     parser.add_argument("--output", "-o", type=Path, help="Output file (default: stdout)")
+    parser.add_argument(
+        "--require-components",
+        action="store_true",
+        help="Fail when the CMake cache contains no CPM dependencies",
+    )
     args = parser.parse_args()
 
     sbom = generate_sbom(args.build_dir)
+    if args.require_components and not sbom["components"]:
+        print("Error: CPM dependency SBOM contains no components", file=sys.stderr)
+        return 1
+
     output = json.dumps(sbom, indent=2)
 
     if args.output:

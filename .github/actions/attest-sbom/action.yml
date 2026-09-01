@@ -20,7 +20,7 @@ inputs:
 outputs:
   sbom-path:
     description: "Path to generated SBOM file"
-    value: ${{ steps.sbom.outputs.sbom-path }}
+    value: ${{ steps.check.outputs.sbom-path }}
 
 runs:
   using: composite

@@ -159,3 +159,51 @@ def test_main_file_output(tmp_path: Path, monkeypatch) -> None:
     assert ret == 0
     sbom = json.loads(out_file.read_text())
     assert len(sbom["components"]) == 3
+
+
+def test_main_requires_components(tmp_path: Path, monkeypatch) -> None:
+    cache = tmp_path / "CMakeCache.txt"
+    cache.write_text(SAMPLE_CACHE)
+    out_file = tmp_path / "sbom.json"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "prog",
+            "--build-dir",
+            str(tmp_path),
+            "--output",
+            str(out_file),
+            "--require-components",
+        ],
+    )
+
+    with patch("generate_cpm_sbom.git_info", side_effect=_mock_git_info):
+        from generate_cpm_sbom import main
+
+        ret = main()
+
+    assert ret == 0
+    assert len(json.loads(out_file.read_text())["components"]) == 3
+
+
+def test_main_rejects_empty_required_components(tmp_path: Path, monkeypatch, capsys) -> None:
+    cache = tmp_path / "CMakeCache.txt"
+    cache.write_text("CMAKE_BUILD_TYPE:STRING=Release\n")
+    out_file = tmp_path / "sbom.json"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "prog",
+            "--build-dir",
+            str(tmp_path),
+            "--output",
+            str(out_file),
+            "--require-components",
+        ],
+    )
+
+    from generate_cpm_sbom import main
+
+    assert main() == 1
+    assert "contains no components" in capsys.readouterr().err
+    assert not out_file.exists()

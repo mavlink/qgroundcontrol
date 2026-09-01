@@ -110,12 +110,11 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     assert "$checksumFields = @($checksumLine -split '\\s+', 2)" in workflow
     assert "$checksumInstallerName -cne $installerName" in workflow
     assert "Checksum filename mismatch" in workflow
-    assert "additional-artifact-paths: ${{ steps.installer.outputs.checksum_path }}" in workflow
-    assert "additional-aws-artifact-name: ${{ matrix.package }}.exe.sha256" in workflow
-    assert "additional-aws-artifact-path: ${{ steps.installer.outputs.checksum_path }}" in workflow
-    assert "Upload additional artifact to AWS" in upload_action
-    assert "artifact-name: ${{ inputs.additional-aws-artifact-name }}" in upload_action
-    assert "artifact-path: ${{ inputs.additional-aws-artifact-path }}" in upload_action
+    assert "subject-name: ${{ matrix.package }}-windows" in workflow
+    assert "Verify or create SHA-256 checksum" in upload_action
+    assert "Upload checksum to AWS" in upload_action
+    assert "artifact-name: ${{ inputs.artifact-name }}.sha256" in upload_action
+    assert "artifact-path: ${{ steps.checksum.outputs.path }}" in upload_action
     assert "InstallLocation mismatch" in workflow
     assert "Windows Error Reporting registry key not found" in workflow
     assert "QGroundControl (GPU Safe Mode).lnk" in workflow
