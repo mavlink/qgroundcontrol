@@ -55,11 +55,11 @@
                 },
                 {
                     "setting": "videoSettings.lowLatencyMode",
-                    "showWhen": "isStreamSource && QGroundControl.settingsManager.videoSettings.lowLatencyMode.userVisible"
+                    "showWhen": "isStreamSource"
                 },
                 {
                     "setting": "videoSettings.rtpJitterLatencyMs",
-                    "showWhen": "isStreamSource && rtpLatencyVisible && QGroundControl.settingsManager.videoSettings.rtpJitterLatencyMs.userVisible"
+                    "showWhen": "isStreamSource && rtpLatencyVisible"
                 },
                 {
                     "setting": "videoSettings.rtspAutoReconnect",

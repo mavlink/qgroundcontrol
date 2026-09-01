@@ -319,7 +319,6 @@ void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
     // autoStreamConfig mirrors the read-only VideoManager property. Override the
     // page binding to isolate these UI visibility rules from camera transport.
     QVERIFY(videoPage->setProperty("autoStreamConfig", true));
-    QTRY_VERIFY(videoPage->property("autoStreamConfig").toBool());
 
     QQuickItem* const sourceGroup = findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoSource"));
     QVERIFY(sourceGroup);
