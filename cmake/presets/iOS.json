@@ -23,6 +23,13 @@
       "binaryDir": "${sourceDir}/build/iOS"
     },
     {
+      "name": "iOS-appstore",
+      "displayName": "iOS App Store Release",
+      "generator": "Xcode",
+      "inherits": ["release", "ios-base"],
+      "binaryDir": "${sourceDir}/build/iOS-appstore"
+    },
+    {
       "name": "iOS-debug",
       "displayName": "iOS Debug",
       "inherits": ["debug-no-tests", "ios-base"],
@@ -31,6 +38,12 @@
   ],
   "buildPresets": [
     { "name": "iOS", "configurePreset": "iOS", "configuration": "Release", "inherits": ["build-defaults"] },
+    {
+      "name": "iOS-appstore",
+      "configurePreset": "iOS-appstore",
+      "configuration": "Release",
+      "inherits": ["build-defaults"]
+    },
     { "name": "iOS-debug", "configurePreset": "iOS-debug", "configuration": "Debug", "inherits": ["build-defaults"] }
   ],
   "workflowPresets": [
@@ -46,6 +59,13 @@
       "steps": [
         { "type": "configure", "name": "iOS-debug" },
         { "type": "build", "name": "iOS-debug" }
+      ]
+    },
+    {
+      "name": "iOS-appstore",
+      "steps": [
+        { "type": "configure", "name": "iOS-appstore" },
+        { "type": "build", "name": "iOS-appstore" }
       ]
     }
   ]

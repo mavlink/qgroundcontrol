@@ -1,5 +1,12 @@
 name: iOS Qt
 description: Install Qt for iOS (host macOS + iOS target)
+outputs:
+  host_qt_root_dir:
+    description: Desktop Qt root used for host tools
+    value: ${{ steps.qt-host.outputs.qt_root_dir }}
+  target_qt_root_dir:
+    description: iOS Qt root used for target packages
+    value: ${{ steps.qt-target.outputs.qt_root_dir }}
 
 inputs:
   version:
@@ -45,6 +52,7 @@ runs:
         save-cache: ${{ inputs.save-cache }}
 
     - name: Install Qt (Host macOS)
+      id: qt-host
       uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}
@@ -54,6 +62,7 @@ runs:
         modules: ${{ inputs.modules }}
 
     - name: Install Qt for iOS
+      id: qt-target
       uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.version }}

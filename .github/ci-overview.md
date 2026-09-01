@@ -63,6 +63,27 @@ via composite actions and reusable workflows. Python helpers in `scripts/` are i
 | `vm-builds.yml` | VM-based builds |
 | `welcome.yml` | New contributor welcome |
 
+### TestFlight releases
+
+`ios.yml` builds a Release device bundle and a Debug x86_64 simulator bundle. Pull-request and
+branch builds remain unsigned. A `v*` tag selects the Xcode App Store preset, imports an Apple
+Distribution certificate and provisioning profile, verifies the signed bundle, packages an IPA,
+and uploads it to TestFlight.
+
+Configure these repository variables before publishing a tag:
+
+- `APPSTORE_BUNDLE_ID` (defaults to `org.mavlink.qgroundcontrol`)
+- `APPSTORE_TEAM_ID`
+- `APPSTORE_ISSUER_ID`
+- `APPSTORE_API_KEY_ID`
+- `APPSTORE_PROVISIONING_PROFILE_NAME`
+
+Configure these repository secrets:
+
+- `APPSTORE_API_PRIVATE_KEY` — App Store Connect API private key in PKCS#8 `.p8` format
+- `APPSTORE_CERTIFICATES_FILE_BASE64` — base64-encoded Apple Distribution `.p12`
+- `APPSTORE_CERTIFICATES_PASSWORD` — password for the distribution `.p12`
+
 ## Composite Actions
 
 | Action | Purpose |
