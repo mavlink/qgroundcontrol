@@ -143,7 +143,9 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
     // Create request with configuration
     QNetworkRequest request = QGCNetworkHelper::createRequest(url, config);
 
-    qCDebug(QGCFileDownloadLog) << "Starting download:" << url.toString() << "to" << _localPath;
+    qCDebug(QGCFileDownloadLog) << "Starting download:"
+                                << url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment)
+                                << "to" << _localPath;
 
     // Start download
     _currentReply = _networkManager->get(request);
@@ -346,7 +348,8 @@ void QGCFileDownload::_onDownloadError(QNetworkReply::NetworkError code)
         break;
     }
 
-    qCWarning(QGCFileDownloadLog) << "Download error:" << errorMsg;
+    qCWarning(QGCFileDownloadLog) << "Download error:" << errorMsg << "url:"
+                                  << _url.toDisplayString(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment);
     _setErrorString(errorMsg);
 }
 

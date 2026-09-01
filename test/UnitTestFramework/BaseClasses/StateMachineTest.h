@@ -50,6 +50,9 @@ public:
     }
 
 protected:
+    /// Call from tests that deliberately drive a wait state to timeout/retry.
+    void ignoreTimeoutWarnings();
+
     /// Run a single state to completion using the default advance() signal.
     /// Creates a QFinalState, wires state's advance→final, sets initial state, starts, waits.
     /// @param state The state to run (must already be parented to @a machine)

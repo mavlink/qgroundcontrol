@@ -67,6 +67,9 @@ void VehicleLinkManagerTest::_simpleCommLossTest()
     // Comm loss with pending vehicle commands causes MavCommandQueue to give up.
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                      QRegularExpression("Giving up sending command after max retries:"));
+    // Losing comms while the AVAILABLE_MODES enumeration is still in flight fails the request.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg,
+                     QRegularExpression("Failed to retrieve available modes"));
     SharedLinkConfigurationPtr mockConfig;
     SharedLinkInterfacePtr mockLink;
     _startMockLink(1, false /*highLatency*/, true /*incrementVehicleId*/, mockConfig, mockLink);
@@ -107,6 +110,9 @@ void VehicleLinkManagerTest::_simpleCommLossTest()
 
 void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
 {
+    // Losing comms while the AVAILABLE_MODES enumeration is still in flight fails the request.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg,
+                     QRegularExpression("Failed to retrieve available modes"));
     SharedLinkConfigurationPtr mockConfig1;
     SharedLinkInterfacePtr mockLink1;
     SharedLinkConfigurationPtr mockConfig2;
@@ -216,6 +222,9 @@ void VehicleLinkManagerTest::_multiLinkTotalCommLossRecoveryTest()
     // Primary link switchover produces a showAppMessage debug log.
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression("Switching communication to"));
+    // Losing comms while the AVAILABLE_MODES enumeration is still in flight fails the request.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg,
+                     QRegularExpression("Failed to retrieve available modes"));
 
     SharedLinkConfigurationPtr mockConfig1;
     SharedLinkInterfacePtr mockLink1;
@@ -301,6 +310,10 @@ void VehicleLinkManagerTest::_highLatencyLinkTest()
     // Giving up on the COMPONENT_METADATA request leaves the metadata load unable to complete.
     ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
                      QRegularExpression("failed to load metadata \\(primary and fallback\\)"));
+    // The slow high-latency link can still have the AVAILABLE_MODES request in flight when the
+    // test forces comm loss, which fails the request.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg,
+                     QRegularExpression("Failed to retrieve available modes"));
     SharedLinkConfigurationPtr mockConfig1;
     SharedLinkInterfacePtr mockLink1;
     SharedLinkConfigurationPtr mockConfig2;

@@ -20,7 +20,7 @@ bool RetryTransition::eventTest(QEvent* event)
 
     if (_retryCount < _maxRetries) {
         _retryCount++;
-        qCDebug(RetryTransitionLog) << stateName << "timeout, retry" << _retryCount << "of" << _maxRetries;
+        qCWarning(RetryTransitionLog) << stateName << "timeout, retry" << _retryCount << "of" << _maxRetries;
 
         if (auto* waitState = qobject_cast<WaitStateBase*>(sourceState())) {
             waitState->restartWait();

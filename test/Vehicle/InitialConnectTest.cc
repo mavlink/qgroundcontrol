@@ -5,7 +5,6 @@
 #include <QtTest/QSignalSpy>
 
 #include "GeoFenceManager.h"
-#include "InitialConnectStateMachine.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
@@ -26,24 +25,6 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/qscopeguard.h>
 #include <QtTest/QTest>
-
-void InitialConnectTest::init()
-{
-    VehicleTestManualConnect::init();
-    // Many initial-connect tests exercise failure or timeout paths that produce these expected warnings.
-    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
-                     QRegularExpression("failed to load metadata"));
-    ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
-                     QRegularExpression("Max retries exhausted"));
-    ignoreLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
-                     QRegularExpression("timeout after .* retries, advancing"));
-    // Timeout tests for Mission/GeoFence/Rally states cause transfer-failed showAppMessage logs.
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression("transfer failed"));
-    // StandardModes timeout exhausts MAV_CMD_REQUEST_MESSAGE retries in MavCommandQueue.
-    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
-                     QRegularExpression("Giving up sending command after max retries:"));
-}
 
 void InitialConnectTest::_performTestCases_data()
 {
@@ -75,6 +56,11 @@ void InitialConnectTest::_performTestCases()
     QFETCH(int, failureMode);
     QFETCH(QString, failureModeStr);
     TEST_DEBUG(QStringLiteral("Testing case failure mode: %1").arg(failureModeStr));
+    if (failureMode != static_cast<int>(MockConfiguration::FailNone)) {
+        // AUTOPILOT_VERSION failure rows exhaust request-message retries.
+        ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
+                         QRegularExpression("Max retries exhausted"));
+    }
     _connectMockLink(MAV_AUTOPILOT_PX4, static_cast<MockConfiguration::FailureMode_t>(failureMode));
     _disconnectMockLink();
 }
@@ -149,6 +135,9 @@ void InitialConnectTest::_progressTracking()
 
 void InitialConnectTest::_highLatencySkipsPlanRequests()
 {
+    // High-latency links cannot fetch component metadata.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
     LinkManager::instance()->setConnectionsAllowed();
 
     auto* mvm = MultiVehicleManager::instance();
@@ -183,6 +172,11 @@ void InitialConnectTest::_highLatencySkipsPlanRequests()
 
 void InitialConnectTest::_genericAutopilotVersionFailureSkipsUnsupportedPlanTypes()
 {
+    // AUTOPILOT_VERSION failure exhausts request-message retries; generic firmware has no metadata source.
+    ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
+                     QRegularExpression("Max retries exhausted"));
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
     _connectMockLink(MAV_AUTOPILOT_GENERIC, MockConfiguration::FailInitialConnectRequestMessageAutopilotVersionFailure);
 
     QVERIFY(_vehicle);
@@ -216,8 +210,11 @@ void InitialConnectTest::_multipleReconnects()
     }
 }
 
-void InitialConnectTest::_rallyTimeoutPathDoesNotLeakCompletionHandler()
+void InitialConnectTest::_rallyFailurePathDoesNotLeakCompletionHandler()
 {
+    // Injected rally read failure pops a transfer-failed app message.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("Rally Point transfer failed"));
     LinkManager::instance()->setConnectionsAllowed();
 
     auto* mvm = MultiVehicleManager::instance();
@@ -239,102 +236,113 @@ void InitialConnectTest::_rallyTimeoutPathDoesNotLeakCompletionHandler()
 
     auto* geoFenceManager = _vehicle->findChild<GeoFenceManager*>();
     auto* rallyPointManager = _vehicle->findChild<RallyPointManager*>();
-    auto* initialConnectStateMachine = _vehicle->findChild<InitialConnectStateMachine*>();
     QVERIFY(geoFenceManager);
     QVERIFY(rallyPointManager);
-    QVERIFY(initialConnectStateMachine);
 
-    connect(geoFenceManager, &GeoFenceManager::loadComplete, this, [this, initialConnectStateMachine]() {
+    connect(geoFenceManager, &GeoFenceManager::loadComplete, this, [this]() {
         _mockLink->setMissionItemFailureMode(
             MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
-        initialConnectStateMachine->setTimeoutOverride(QStringLiteral("RequestRallyPoints"), 100);
     });
 
+    // Rally read fails internally (PlanManager exhausts retries) but still signals
+    // loadComplete, so initial connect completes with the plan request marked complete.
     QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
     QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()) || _vehicle->isInitialConnectComplete());
-    QVERIFY(!_vehicle->initialPlanRequestComplete());
+    QVERIFY(_vehicle->initialPlanRequestComplete());
 
     _mockLink->setMissionItemFailureMode(MockLinkMissionItemHandler::FailNone, MAV_MISSION_ACCEPTED);
 
+    // A leaked initial-connect completion handler would re-fire on this manual reload.
     QSignalSpy planCompleteSpy{_vehicle, &Vehicle::initialPlanRequestCompleteChanged};
     QSignalSpy rallyLoadCompleteSpy{rallyPointManager, &RallyPointManager::loadComplete};
 
     rallyPointManager->loadFromVehicle();
     QVERIFY(rallyLoadCompleteSpy.wait(TestTimeout::longMs()));
-    QCOMPARE(planCompleteSpy.count(), 1);
+    QCOMPARE(planCompleteSpy.count(), 0);
 
     _disconnectMockLink();
 }
 
-void InitialConnectTest::_stateTimeoutFallsThrough_data()
+void InitialConnectTest::_subsystemFailureFallsThrough_data()
 {
     QTest::addColumn<QList<uint32_t>>("blockedMessageIds");
     QTest::addColumn<int>("configFailureMode");
     QTest::addColumn<bool>("blockMissionProtocolImmediately");
     QTest::addColumn<bool>("blockMissionProtocolAfterMissionLoad");
-    QTest::addColumn<QStringList>("timeoutOverrideStates");
     QTest::addColumn<bool>("expectParametersReady");
-    QTest::addColumn<bool>("expectPlanRequestComplete");
 
-    // Timeout matrix:
-    // +----------------+-------------------+------------------+---------+--------+
-    // | State          | Failure Injection | Timeout States   | Params? | Plans? |
-    // +----------------+-------------------+------------------+---------+--------+
-    // | StandardModes  | Block AVAIL_MODES | StdModes         | Yes     | Yes    |
-    // | CompInfo       | Block COMP_META   | CompInfo         | Yes     | Yes    |
-    // | Parameters     | No param response | Parameters       | No      | Yes    |
-    // | Mission        | Block mission req | Msn+Fence+Rally  | Yes     | No     |
-    // | GeoFence       | Block after msn   | Fence+Rally      | Yes     | No     |
-    // +----------------+-------------------+------------------+---------+--------+
+    // Each state's underlying subsystem must handle its own timeouts/retries and
+    // always signal completion, so initial connect finishes without outer timeouts.
+    // +----------------+-------------------+---------+
+    // | State          | Failure Injection | Params? |
+    // +----------------+-------------------+---------+
+    // | StandardModes  | Block AVAIL_MODES | Yes     |
+    // | CompInfo       | Block COMP_META   | Yes     |
+    // | Parameters     | No param response | No      |
+    // | Mission        | Block mission req | Yes     |
+    // | GeoFence       | Block after msn   | Yes     |
+    // +----------------+-------------------+---------+
 
     QTest::addRow("StandardModes")
         << QList<uint32_t>{MAVLINK_MSG_ID_AVAILABLE_MODES}
         << static_cast<int>(MockConfiguration::FailNone)
         << false << false
-        << QStringList{QStringLiteral("RequestStandardModes")}
-        << true << true;
+        << true;
 
     QTest::addRow("CompInfo")
         << QList<uint32_t>{MAVLINK_MSG_ID_COMPONENT_METADATA}
         << static_cast<int>(MockConfiguration::FailNone)
         << false << false
-        << QStringList{QStringLiteral("RequestCompInfo")}
-        << true << true;
+        << true;
 
     QTest::addRow("Parameters")
         << QList<uint32_t>{}
         << static_cast<int>(MockConfiguration::FailParamNoResponseToRequestList)
         << false << false
-        << QStringList{QStringLiteral("RequestParameters")}
-        << false << true;
+        << false;
 
     QTest::addRow("Mission")
         << QList<uint32_t>{}
         << static_cast<int>(MockConfiguration::FailNone)
         << true << false
-        << QStringList{QStringLiteral("RequestMission"),
-                       QStringLiteral("RequestGeoFence"),
-                       QStringLiteral("RequestRallyPoints")}
-        << true << false;
+        << true;
 
     QTest::addRow("GeoFence")
         << QList<uint32_t>{}
         << static_cast<int>(MockConfiguration::FailNone)
         << false << true
-        << QStringList{QStringLiteral("RequestGeoFence"),
-                       QStringLiteral("RequestRallyPoints")}
-        << true << false;
+        << true;
 }
 
-void InitialConnectTest::_stateTimeoutFallsThrough()
+void InitialConnectTest::_subsystemFailureFallsThrough()
 {
     QFETCH(QList<uint32_t>, blockedMessageIds);
     QFETCH(int, configFailureMode);
     QFETCH(bool, blockMissionProtocolImmediately);
     QFETCH(bool, blockMissionProtocolAfterMissionLoad);
-    QFETCH(QStringList, timeoutOverrideStates);
     QFETCH(bool, expectParametersReady);
-    QFETCH(bool, expectPlanRequestComplete);
+
+    // Per-row expected noise from the injected subsystem failure.
+    if (blockedMessageIds.contains(MAVLINK_MSG_ID_AVAILABLE_MODES) || blockedMessageIds.contains(MAVLINK_MSG_ID_COMPONENT_METADATA)) {
+        ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                         QRegularExpression("Giving up sending command after max retries:"));
+    }
+    if (blockedMessageIds.contains(MAVLINK_MSG_ID_AVAILABLE_MODES)) {
+        ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg,
+                         QRegularExpression("Failed to retrieve available modes"));
+    }
+    if (blockedMessageIds.contains(MAVLINK_MSG_ID_COMPONENT_METADATA)) {
+        ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                         QRegularExpression("failed to load metadata"));
+    }
+    if (configFailureMode == static_cast<int>(MockConfiguration::FailParamNoResponseToRequestList)) {
+        ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                         QRegularExpression("did not respond to request for parameters"));
+    }
+    if (blockMissionProtocolImmediately || blockMissionProtocolAfterMissionLoad) {
+        ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                         QRegularExpression("transfer failed"));
+    }
 
     LinkManager::instance()->setConnectionsAllowed();
 
@@ -371,13 +379,6 @@ void InitialConnectTest::_stateTimeoutFallsThrough()
     _vehicle = mvm->activeVehicle();
     QVERIFY(_vehicle);
 
-    auto* initialConnectStateMachine = _vehicle->findChild<InitialConnectStateMachine*>();
-    QVERIFY(initialConnectStateMachine);
-
-    for (const QString& stateName : timeoutOverrideStates) {
-        initialConnectStateMachine->setTimeoutOverride(stateName, 100);
-    }
-
     if (blockMissionProtocolAfterMissionLoad) {
         auto* missionManager = _vehicle->findChild<MissionManager*>();
         QVERIFY(missionManager);
@@ -392,7 +393,7 @@ void InitialConnectTest::_stateTimeoutFallsThrough()
         QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()));
     }
     QCOMPARE(_vehicle->parameterManager()->parametersReady(), expectParametersReady);
-    QCOMPARE(_vehicle->initialPlanRequestComplete(), expectPlanRequestComplete);
+    QVERIFY(_vehicle->initialPlanRequestComplete());
 
     _disconnectMockLink();
 }
@@ -452,6 +453,12 @@ void InitialConnectTest::_stateRunMatrix()
 
     // Effective skip path in InitialConnectStateMachine is (isHighLatency || isLogReplay)
     const bool skipForLinkType = highLatency || logReplay;
+
+    if (skipForLinkType) {
+        // High-latency/log-replay links cannot fetch component metadata.
+        ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                         QRegularExpression("failed to load metadata"));
+    }
 
     // Enable noInitialDownloadWhenFlying setting for flying rows
     auto* noInitialDownloadWhenFlying = SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenFlying();

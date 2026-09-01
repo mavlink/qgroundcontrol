@@ -118,6 +118,10 @@ public:
     }
     int receivedMissionRequestListCount(MAV_MISSION_TYPE type) const { return _missionItemHandler->requestListCount(type); }
 
+    /// Unit test support: bumps the AVAILABLE_MODES_MONITOR sequence number, which unlocks the
+    /// delayed flight mode and causes QGC to re-query standard modes.
+    void bumpAvailableModesMonitorSequence() { ++_availableModesMonitorSeqNumber; }
+
     enum RequestMessageFailureMode_t {
         FailRequestMessageNone,
         FailRequestMessageCommandAcceptedMsgNotSent,
@@ -422,7 +426,9 @@ private:
     ///   - Main thread: _handleRequestMessageAvailableModes() checking/starting/stopping worker
     ///   - Worker thread: _availableModesWorker() incrementing index every 2ms (500Hz)
     QMutex _availableModesWorkerMutex;
-    uint8_t _availableModesMonitorSeqNumber = 0;        ///< Sequence number for the next available mode message to send
+    /// Sequence number sent in AVAILABLE_MODES_MONITOR. Written from the test (main) thread via
+    /// bumpAvailableModesMonitorSequence, read from the worker thread at 1Hz/500Hz.
+    std::atomic<uint8_t> _availableModesMonitorSeqNumber = 0;
 
     QString _logDownloadFilename;                       ///< Filename for log download which is in progress
     bool _logsErased = false;                           ///< Set by LOG_ERASE, LOG_REQUEST_LIST reports no logs

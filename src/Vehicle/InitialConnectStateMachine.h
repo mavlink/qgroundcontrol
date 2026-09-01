@@ -36,7 +36,6 @@ private:
     void _createStates();
     void _wireTransitions();
     void _wireProgressTracking();
-    void _wireTimeoutHandling();
 
     // State callbacks
     void _handleAutopilotVersionSuccess(const mavlink_message_t& message);
@@ -70,15 +69,5 @@ private:
     RetryState* _stateComplete = nullptr;
     QGCFinalState* _stateFinal = nullptr;
 
-    // Timeout handling with retry
-    static constexpr int _maxRetries = 1;
-
-    // Timeout values (ms)
-    static constexpr int _timeoutAutopilotVersion = 5000;
-    static constexpr int _timeoutStandardModes = 5000;
-    static constexpr int _timeoutCompInfo = 30000;
-    static constexpr int _timeoutParameters = 60000;
-    static constexpr int _timeoutMission = 30000;
-    static constexpr int _timeoutGeoFence = 15000;
-    static constexpr int _timeoutRallyPoints = 15000;
+    static constexpr int _autopilotVersionMaxRetries = 1;
 };

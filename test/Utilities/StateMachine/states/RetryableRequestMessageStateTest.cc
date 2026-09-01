@@ -52,6 +52,8 @@ void RetryableRequestMessageStateTest::_testRetryOnFailure()
     // FailRequestMessageCommandAcceptedMsgNotSent triggers duplicate-request warnings and retries exhausted.
     ignoreLogMessage("Vehicle.RequestMessageCoordinator", QtWarningMsg,
                      QRegularExpression("failing exact duplicate compId:msgId"));
+    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
     ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
                      QRegularExpression("Max retries exhausted"));
     _connectMockLinkNoInitialConnectSequence();
@@ -103,6 +105,8 @@ void RetryableRequestMessageStateTest::_testMaxRetriesExhausted()
     // FailRequestMessageCommandNoResponse triggers duplicate-request warnings and retries exhausted.
     ignoreLogMessage("Vehicle.RequestMessageCoordinator", QtWarningMsg,
                      QRegularExpression("failing exact duplicate compId:msgId"));
+    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
     ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
                      QRegularExpression("Max retries exhausted"));
     _connectMockLinkNoInitialConnectSequence();
@@ -149,6 +153,8 @@ void RetryableRequestMessageStateTest::_testFailOnMaxRetries()
     // Timeout + no-response mode causes MavCommandQueue and state machine to emit expected warnings.
     ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
                      QRegularExpression("Max retries exhausted"));
+    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression("^Timeout \"TestMachine:RequestDebug\""));
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                      QRegularExpression("Giving up sending command after max retries:"));
     _connectMockLinkNoInitialConnectSequence();

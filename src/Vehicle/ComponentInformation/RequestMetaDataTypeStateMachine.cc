@@ -387,7 +387,7 @@ void RequestMetaDataTypeStateMachine::_requestTranslate()
                                                        typeToString())) {
         disconnect(_compMgr->translation(), &ComponentInformationTranslation::downloadComplete,
                    this, &RequestMetaDataTypeStateMachine::_downloadAndTranslationComplete);
-        qCDebug(RequestMetaDataTypeStateMachineLog) << "downloadAndTranslate() failed";
+        qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": translation skipped (English locale, locale unavailable, or download failure), using untranslated metadata";
         _stateRequestTranslate->complete();
     }
 }
@@ -499,7 +499,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
         qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": not found in cache, downloading";
     }
 
-    qCDebug(RequestMetaDataTypeStateMachineLog) << "Downloading json" << uri;
+    qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": downloading json" << uri;
 
     if (_uriIsMAVLinkFTP(uri)) {
         if (trackMetadataSource) {
