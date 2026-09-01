@@ -114,6 +114,8 @@ CMD ["Release"]
 # ---------- android: Android APK build (SDK/NDK + Qt android target) ----------
 FROM base AS android
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
+# The Java version is centralized in build-config and package revisions vary by base image.
+# hadolint ignore=DL3008
 RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
     python3 /tmp/tools/setup/read_config.py --export bash > /etc/profile.d/qgc.sh && \
     . /etc/profile.d/qgc.sh && \
@@ -123,6 +125,8 @@ RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT
+# sdkmanager closes the license-input pipe; pipefail would treat yes's SIGPIPE as a failure.
+# hadolint ignore=DL4006
 RUN . /etc/profile.d/qgc.sh && \
     mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
     wget "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
