@@ -75,30 +75,50 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     permissions:
-      actions: read  # wait-for-workflows-action polls workflow runs
+      actions: write  # dispatch platform workflows, then poll their runs
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      # Tags created with GITHUB_TOKEN do not trigger tag-push workflows, so
+      # release builds are explicitly dispatched at the new release tag.
+      - name: Dispatch platform release builds
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ needs.semantic-release.outputs.version }}
+        run: |
+          set -euo pipefail
+          for workflow in linux.yml windows.yml macos.yml android.yml ios.yml; do
+            gh workflow run "$workflow" --ref "$RELEASE_TAG"
+          done
+
       - name: Wait for builds to complete
         uses: int128/wait-for-workflows-action@v1
         with:
-          workflow-names: |
+          filter-workflow-names: |
             Linux
             Windows
             MacOS
             Android
-          timeout-minutes: 170
-          poll-interval-minutes: 5
+            iOS
+          filter-workflow-events: workflow_dispatch
+          sha: ${{ github.sha }}
+          initial-delay-seconds: 30
+          period-seconds: 300
 
   upload-artifacts:
     name: Upload Release Artifacts
     needs: [semantic-release, wait-for-builds]
     if: needs.semantic-release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
+      actions: read
       contents: write
-      id-token: write
-      attestations: write
 
     steps:
       - name: Harden Runner
@@ -112,26 +132,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: artifacts
-          merge-multiple: true
-
-      - name: List artifacts
-        run: find artifacts -type f | head -50 || echo "No artifacts found"
-
-      - name: Resolve artifact paths
-        id: paths
-        shell: bash
-        run: |
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py" \
-            --build-dir artifacts \
-            --match "appimage=QGroundControl*.AppImage" \
-            --match "apk=*.apk" \
-            --match "dmg=*.dmg" \
-            --match "exe=QGroundControl*.exe"
-
       # Source-tree SBOM is kept as a release artifact for source traceability,
       # but it is NOT used as the attestation evidence (per-platform SBOMs are).
       - name: Generate source SBOM (SPDX)
@@ -139,7 +139,7 @@ jobs:
         with:
           path: .
           format: spdx-json
-          output-file: sbom-source.spdx.json
+          output-file: ${{ runner.temp }}/sbom-source.spdx.json
           artifact-name: sbom-source-spdx
 
       - name: Generate source SBOM (CycloneDX)
@@ -147,88 +147,32 @@ jobs:
         with:
           path: .
           format: cyclonedx-json
-          output-file: sbom-source.cdx.json
+          output-file: ${{ runner.temp }}/sbom-source.cdx.json
           artifact-name: sbom-source-cyclonedx
 
-      - name: Extract AppImage contents
-        if: steps.paths.outputs.appimage != ''
-        shell: bash
+      - name: Download artifacts
+        uses: ./.github/actions/download-all-artifacts
+        with:
+          head-sha: ${{ github.sha }}
+          workflows: Linux,Windows,MacOS,Android,iOS
+          event: workflow_dispatch
+          output-dir: artifacts
+          artifact-prefixes: QGroundControl,sbom-
+
+      - name: Validate release assets
         run: |
-          set -euo pipefail
-          mkdir -p extracted/linux
-          cp "${STEPS_PATHS_OUTPUTS_APPIMAGE}" extracted/linux/qgc.AppImage
-          chmod +x extracted/linux/qgc.AppImage
-          (cd extracted/linux && ./qgc.AppImage --appimage-extract >/dev/null)
-          rm extracted/linux/qgc.AppImage
-        env:
-          STEPS_PATHS_OUTPUTS_APPIMAGE: ${{ steps.paths.outputs.appimage }}
-
-      - name: Attest Linux AppImage
-        id: attest-linux
-        if: steps.paths.outputs.appimage != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.appimage }}
-          subject-name: linux-appimage
-          scan-path: extracted/linux/squashfs-root
-        continue-on-error: true
-
-      - name: Extract APK contents
-        if: steps.paths.outputs.apk != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p extracted/android
-          unzip -q -o "${STEPS_PATHS_OUTPUTS_APK}" -d extracted/android
-        env:
-          STEPS_PATHS_OUTPUTS_APK: ${{ steps.paths.outputs.apk }}
-
-      - name: Attest Android APK
-        id: attest-android
-        if: steps.paths.outputs.apk != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.apk }}
-          subject-name: android-apk
-          scan-path: extracted/android
-        continue-on-error: true
-
-      # DMG/EXE: Linux runner can't deeply extract these; Syft scans the file
-      # best-effort. For full coverage, mac/Windows builds should emit their
-      # own SBOM as an artifact (followup).
-      - name: Attest macOS DMG
-        id: attest-macos
-        if: steps.paths.outputs.dmg != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.dmg }}
-          subject-name: macos-dmg
-        continue-on-error: true
-
-      - name: Attest Windows EXE
-        id: attest-windows
-        if: steps.paths.outputs.exe != ''
-        uses: ./.github/actions/attest-sbom
-        with:
-          subject-path: ${{ steps.paths.outputs.exe }}
-          subject-name: windows-exe
-        continue-on-error: true
+          python3 .github/scripts/release_assets.py \
+            --artifacts-dir artifacts \
+            --source-sbom "${RUNNER_TEMP}/sbom-source.spdx.json" \
+            --source-sbom "${RUNNER_TEMP}/sbom-source.cdx.json" \
+            --output release-assets.txt
 
       - name: Upload to Release
-        # Multi-glob asset upload and release create/update semantics are intentional here.
-        uses: softprops/action-gh-release@v3  # zizmor: ignore[superfluous-actions]
-        with:
-          tag_name: v${{ needs.semantic-release.outputs.version }}
-          files: |
-            artifacts/**/*.AppImage
-            artifacts/**/*.AppImage.zsync
-            artifacts/**/*.dmg
-            artifacts/**/*.exe
-            artifacts/**/*.apk
-            sbom-source.spdx.json
-            sbom-source.cdx.json
-            ${{ steps.attest-linux.outputs.sbom-path }}
-            ${{ steps.attest-android.outputs.sbom-path }}
-            ${{ steps.attest-macos.outputs.sbom-path }}
-            ${{ steps.attest-windows.outputs.sbom-path }}
-          fail_on_unmatched_files: false
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ needs.semantic-release.outputs.version }}
+        run: |
+          set -euo pipefail
+          mapfile -t release_assets < release-assets.txt
+          gh release upload "$RELEASE_TAG" "${release_assets[@]}" --clobber

@@ -144,6 +144,7 @@ jobs:
         with:
           artifact-name: QGroundControl.dmg
           package-name: QGroundControl
+          subject-name: QGroundControl-macos
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

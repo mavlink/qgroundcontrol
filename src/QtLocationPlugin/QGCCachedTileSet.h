@@ -173,5 +173,5 @@ private:
     QGCMapEngineManager *_manager = nullptr;
     QNetworkAccessManager *_networkManager = nullptr;
 
-    static constexpr uint32_t kTileBatchSize = 256;
+    static constexpr int kTileBatchSize = 256;
 };

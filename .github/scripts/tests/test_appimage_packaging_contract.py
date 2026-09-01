@@ -36,7 +36,7 @@ def test_official_appimages_publish_delta_update_metadata() -> None:
     install = (REPO_ROOT / "cmake/install/Install.cmake").read_text()
     create_appimage = (REPO_ROOT / "cmake/install/CreateAppImage.cmake").read_text()
     linux_workflow = (REPO_ROOT / ".github/workflows/linux.yml").read_text()
-    release_workflow = (REPO_ROOT / ".github/workflows/release.yml").read_text()
+    release_assets = (REPO_ROOT / ".github/scripts/release_assets.py").read_text()
     verify_action = (REPO_ROOT / ".github/actions/verify-executable/action.yml").read_text()
     verify_script = (REPO_ROOT / ".github/scripts/verify_executable.py").read_text()
 
@@ -56,4 +56,5 @@ def test_official_appimages_publish_delta_update_metadata() -> None:
     assert "expected-appimage-update-information:" in verify_action
     assert "--appimage-updateinformation" in verify_script
     assert "{1}.AppImage.zsync" in linux_workflow
-    assert "artifacts/**/*.AppImage.zsync" in release_workflow
+    assert 'package.suffix == ".AppImage"' in release_assets
+    assert "AppImage update metadata is missing" in release_assets

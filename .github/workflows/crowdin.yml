@@ -23,6 +23,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   sync:
     name: Crowdin Sync
@@ -33,6 +36,11 @@ jobs:
       contents: read
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Determine action
         id: action
         env:
@@ -46,12 +54,6 @@ jobs:
           else
             echo "mode=skip" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Harden Runner
-        if: steps.action.outputs.mode != 'skip'
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
 
       - name: Checkout
         if: steps.action.outputs.mode != 'skip'

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/common/io.py."""
 
 from __future__ import annotations
@@ -11,11 +10,13 @@ from typing import TYPE_CHECKING
 import pytest
 from common.io import (
     atomic_write,
+    ensure_sha256_sidecar,
     extract_tar_data,
     extract_zip_safe,
     read_json,
     read_toml,
     sha256_file,
+    verify_sha256_sidecar,
     write_json,
     write_text_if_changed,
 )
@@ -97,6 +98,47 @@ def test_write_text_if_changed_and_sha256_file(tmp_path: Path) -> None:
     for invalid_size in (0, -1):
         with pytest.raises(ValueError, match="chunk_size must be a positive integer"):
             sha256_file(payload, chunk_size=invalid_size)
+
+
+def test_ensure_sha256_sidecar_creates_canonical_checksum(tmp_path: Path) -> None:
+    artifact = tmp_path / "QGroundControl.AppImage"
+    artifact.write_bytes(b"release artifact")
+
+    checksum = ensure_sha256_sidecar(artifact)
+
+    digest = sha256_file(artifact)
+    assert checksum == tmp_path / "QGroundControl.AppImage.sha256"
+    assert checksum.read_text(encoding="utf-8") == f"{digest}  {artifact.name}\n"
+    assert verify_sha256_sidecar(artifact) == digest
+
+
+def test_ensure_sha256_sidecar_normalizes_valid_windows_checksum(tmp_path: Path) -> None:
+    artifact = tmp_path / "QGroundControl-installer-AMD64.exe"
+    artifact.write_bytes(b"installer")
+    digest = sha256_file(artifact)
+    checksum = artifact.with_name(f"{artifact.name}.sha256")
+    checksum.write_text(f"\ufeff{digest.upper()} *{artifact.name.upper()}\r\n", encoding="utf-8")
+
+    ensure_sha256_sidecar(artifact)
+
+    assert checksum.read_text(encoding="utf-8") == f"{digest}  {artifact.name}\n"
+
+
+def test_verify_sha256_sidecar_rejects_invalid_content(tmp_path: Path) -> None:
+    artifact = tmp_path / "QGroundControl.dmg"
+    artifact.write_bytes(b"disk image")
+    checksum = artifact.with_name(f"{artifact.name}.sha256")
+
+    invalid_entries = (
+        f"{'0' * 64}  {artifact.name}\n",
+        f"{sha256_file(artifact)}  another.dmg\n",
+        "not a checksum\n",
+        f"{sha256_file(artifact)}  {artifact.name}\nextra\n",
+    )
+    for content in invalid_entries:
+        checksum.write_text(content, encoding="utf-8")
+        with pytest.raises(ValueError):
+            verify_sha256_sidecar(artifact, checksum)
 
 
 def test_extract_tar_data_rejects_traversal(tmp_path: Path) -> None:

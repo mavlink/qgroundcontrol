@@ -93,6 +93,8 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     )
     assert "CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS" in nsis
     assert "-LEAVE_DATA=1" in nsis
+    assert "DisableX64FSRedirection" in nsis
+    assert "EnableX64FSRedirection" in nsis
     assert "QGCCrashDumps" in nsis
     assert "GPU Safe Mode" in nsis
     assert "set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL OFF)" in nsis
@@ -110,12 +112,11 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     assert "$checksumFields = @($checksumLine -split '\\s+', 2)" in workflow
     assert "$checksumInstallerName -cne $installerName" in workflow
     assert "Checksum filename mismatch" in workflow
-    assert "additional-artifact-paths: ${{ steps.installer.outputs.checksum_path }}" in workflow
-    assert "additional-aws-artifact-name: ${{ matrix.package }}.exe.sha256" in workflow
-    assert "additional-aws-artifact-path: ${{ steps.installer.outputs.checksum_path }}" in workflow
-    assert "Upload additional artifact to AWS" in upload_action
-    assert "artifact-name: ${{ inputs.additional-aws-artifact-name }}" in upload_action
-    assert "artifact-path: ${{ inputs.additional-aws-artifact-path }}" in upload_action
+    assert "subject-name: ${{ matrix.package }}-windows" in workflow
+    assert "Verify or create SHA-256 checksum" in upload_action
+    assert "Upload checksum to AWS" in upload_action
+    assert "artifact-name: ${{ inputs.artifact-name }}.sha256" in upload_action
+    assert "artifact-path: ${{ steps.checksum.outputs.path }}" in upload_action
     assert "InstallLocation mismatch" in workflow
     assert "Windows Error Reporting registry key not found" in workflow
     assert "QGroundControl (GPU Safe Mode).lnk" in workflow
@@ -165,6 +166,8 @@ include(CreateCPackNSIS)
         assert 'set(CPACK_GENERATOR "NSIS")' in config
         assert f'set(CPACK_PACKAGE_FILE_NAME "QGroundControl-installer-{package_arch}")' in config
         assert "-LEAVE_DATA=1" in config
+        assert "DisableX64FSRedirection" in config
+        assert "EnableX64FSRedirection" in config
         assert "QGCCrashDumps" in config
         assert "GPU Safe Mode" in config
 

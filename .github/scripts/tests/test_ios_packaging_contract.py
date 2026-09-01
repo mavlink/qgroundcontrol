@@ -184,6 +184,9 @@ def test_ios_workflow_builds_device_and_simulator_targets() -> None:
         assert "startsWith(github.ref_name, 'v')" in condition
 
     assert '[[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" == v* ]]' in package
+    attest = steps["Attest and Upload"]["with"]
+    assert attest["package-name"] == "${{ env.PACKAGE }}-ios"
+    assert attest["subject-name"] == "${{ env.PACKAGE }}-ios"
 
 
 def test_ios_qt_action_exports_cross_compile_roots() -> None:

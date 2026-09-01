@@ -40,6 +40,7 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `mold_helper.py` | Build | Install a pinned and checksum-verified mold linker |
 | `plan_docker_builds.py` | Planning | Generate Docker build matrices from changed files |
 | `precommit_results.py` | Reporting | Normalize pre-commit output into CI artifacts |
+| `release_assets.py` | Release | Validate checksums and enumerate release packages and SBOMs |
 | `resolve_gstreamer_config.py` | GStreamer | Select the platform-specific GStreamer version |
 | `size_analysis.py` | Reporting | Analyze and report binary-size changes |
 | `test_duration_report.py` | Reporting | Report slow tests and duration regressions from JUnit XML |

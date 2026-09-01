@@ -116,7 +116,7 @@ class TestAttestHelper:
                 str(artifact),
             ]
         )
-        assert outputs == {"path": str(artifact)}
+        assert outputs == {"parent": str(artifact.parent), "path": str(artifact)}
 
     def test_resolve_path_prefers_override(self, tmp_path):
         override = tmp_path / "override.zip"
@@ -132,7 +132,7 @@ class TestAttestHelper:
                 str(default),
             ]
         )
-        assert outputs == {"path": str(override)}
+        assert outputs == {"parent": str(override.parent), "path": str(override)}
 
     def test_resolve_path_missing_artifact_exits(self, tmp_path):
         import pytest
@@ -145,4 +145,27 @@ class TestAttestHelper:
                     str(tmp_path / "missing.zip"),
                 ]
             )
+        assert excinfo.value.code == 1
+
+    def test_checksum_creates_sidecar(self, tmp_path):
+        artifact = tmp_path / "QGroundControl.AppImage"
+        artifact.write_bytes(b"artifact")
+
+        outputs = self._run_main(["checksum", "--source-path", str(artifact)])
+
+        checksum = tmp_path / "QGroundControl.AppImage.sha256"
+        assert outputs == {"path": str(checksum)}
+        assert checksum.read_text(encoding="utf-8").endswith("  QGroundControl.AppImage\n")
+
+    def test_checksum_rejects_mismatch(self, tmp_path):
+        import pytest
+
+        artifact = tmp_path / "QGroundControl.dmg"
+        artifact.write_bytes(b"artifact")
+        checksum = tmp_path / "QGroundControl.dmg.sha256"
+        checksum.write_text(f"{'0' * 64}  QGroundControl.dmg\n", encoding="utf-8")
+
+        with pytest.raises(SystemExit) as excinfo:
+            self._run_main(["checksum", "--source-path", str(artifact)])
+
         assert excinfo.value.code == 1
