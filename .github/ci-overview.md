@@ -30,7 +30,7 @@ via composite actions and reusable workflows. Python helpers in `scripts/` are i
 ├── build-config.json          # Centralized version numbers and build settings
 ├── build-config.schema.json   # JSON Schema for build-config.json
 ├── dependabot.yml             # Dependabot config (GitHub Actions only)
-└── renovate.json              # Renovate config (npm, python, pre-commit)
+└── renovate.json              # Renovate config (code, tooling, and dev-environment dependencies)
 ```
 
 ## Workflows
@@ -181,10 +181,11 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 
 Dependency updates are split between two bots to avoid overlapping PRs:
 
-- **Dependabot** (`.github/dependabot.yml`) owns `github-actions` updates only, grouped weekly.
-  Merge with `@dependabot merge`.
-- **Renovate** (`.github/renovate.json`) owns `npm`, `python` (pep621/uv), and `pre-commit`
-  updates, grouped into a single weekly PR. GitHub Actions paths are excluded via `ignorePaths`.
+- **Dependabot** (`.github/dependabot.yml`) owns action references in `.github/workflows`, grouped
+  weekly. Merge with `@dependabot merge`.
+- **Renovate** (`.github/renovate.json`) owns `npm`, Python (pep621/uv), pre-commit, devcontainer,
+  Dockerfile, Gradle Wrapper, and composite-action dependencies. Workflow paths are excluded so
+  the bots do not open overlapping action updates.
 
 ## CI Conventions
 
@@ -209,11 +210,11 @@ linting) and a pytest job covering both `tools/tests` and `.github/scripts/tests
 Run the CI script tests locally:
 
 ```bash
-pytest -q .github/scripts/tests/
+uv run --project tools --extra scripts --extra test pytest -q .github/scripts/tests
 ```
 
-Run the full set the same way CI does (also covers `tools/`):
+Run the full set locally with the same locked dependency groups CI installs (also covers `tools/`):
 
 ```bash
-pytest -q tools/tests .github/scripts/tests
+uv run --project tools --extra scripts --extra test pytest -q tools/tests .github/scripts/tests
 ```

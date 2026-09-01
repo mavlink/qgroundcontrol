@@ -35,7 +35,7 @@ repos:
 
   # Secret detection
   - repo: https://github.com/trufflesecurity/trufflehog
-    rev: v3.95.7
+    rev: v3.97.1
     hooks:
       - id: trufflehog
         args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
@@ -43,7 +43,7 @@ repos:
   # C++ formatting (check-only, use 'clang-format -i' to fix)
   # Note: Install matching clang-format version locally to avoid formatting differences
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v22.1.5
+    rev: v23.1.0
     hooks:
       - id: clang-format
         args: ['--dry-run', '--Werror']
@@ -52,7 +52,7 @@ repos:
 
   # Python formatting (report-only)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+    rev: v0.16.5
     hooks:
       - id: ruff
       - id: ruff-format
@@ -77,7 +77,7 @@ repos:
 
   # uv lockfile sync (keeps tools/uv.lock current with tools/pyproject.toml)
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.26
+    rev: 0.12.8
     hooks:
       - id: uv-lock
         files: ^tools/(pyproject\.toml|uv\.lock)$
@@ -85,17 +85,18 @@ repos:
 
   # Shell scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: v0.11.0.1-1
     hooks:
       - id: shellcheck
         args: ['-e', 'SC1091']  # Don't warn about not following sourced files
 
   # Dockerfile linting
   - repo: https://github.com/AleksaC/hadolint-py
-    rev: v2.14.0
+    rev: v2.15.1
     hooks:
       - id: hadolint
-        files: ^deploy/docker/Dockerfile-.*$
+        args: ['--failure-threshold', 'warning']
+        files: (^|/)Dockerfile([.-].*)?$
         types: [file]
 
   # GitHub Actions linting
@@ -123,23 +124,53 @@ repos:
 
   # JSON Schema validation for build-config.json
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.4
+    rev: 0.38.0
     hooks:
       - id: check-jsonschema
         name: Validate .github/build-config.json
         files: ^\.github/build-config\.json$
         args: ['--schemafile', '.github/build-config.schema.json']
 
+      - id: check-jsonschema
+        alias: validate-dependabot-config
+        name: Validate Dependabot config
+        files: ^\.github/dependabot\.ya?ml$
+        args: ['--builtin-schema', 'vendor.dependabot']
+
+      - id: check-jsonschema
+        alias: validate-codecov-config
+        name: Validate Codecov config
+        files: ^\.github/codecov\.ya?ml$
+        args: ['--builtin-schema', 'vendor.codecov']
+
+      - id: check-jsonschema
+        alias: validate-issue-template-config
+        name: Validate GitHub issue template config
+        files: ^\.github/ISSUE_TEMPLATE/config\.ya?ml$
+        args: ['--builtin-schema', 'vendor.github-issue-config']
+
+      - id: check-jsonschema
+        alias: validate-issue-forms
+        name: Validate GitHub issue forms
+        files: ^\.github/ISSUE_TEMPLATE/(?!config\.ya?ml$).*\.ya?ml$
+        args: ['--builtin-schema', 'vendor.github-issue-forms']
+
+      - id: check-jsonschema
+        alias: validate-compose-config
+        name: Validate Docker Compose config
+        files: ^deploy/docker/(?:docker-)?compose\.ya?ml$
+        args: ['--builtin-schema', 'vendor.compose-spec']
+
   # Renovate config validation (schema-checks the active renovate.json)
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.249.6
+    rev: 44.56.1
     hooks:
       - id: renovate-config-validator
         files: ^\.github/renovate\.json$
 
   # Markdown linting (report-only, doesn't auto-fix)
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.49.0
+    rev: v0.49.1
     hooks:
       - id: markdownlint
         exclude: ^(translations/|tools/skills/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
@@ -156,12 +187,12 @@ repos:
         # install of the bare module fails and aborts the whole pre-commit run before any hook
         # fires.
         additional_dependencies:
-          - 'github.com/errata-ai/vale/v3/cmd/vale@v3.15.1'
+          - 'github.com/errata-ai/vale/v3/cmd/vale@v3.19.0'
         entry: vale sync
         files: ^(docs/|\.vale\.ini$)
         pass_filenames: false
   - repo: https://github.com/errata-ai/vale
-    rev: v3.15.1
+    rev: v3.19.0
     hooks:
       - id: vale
         files: ^docs/
@@ -169,7 +200,7 @@ repos:
 
   # Spell checking (report-only, doesn't auto-fix)
   - repo: https://github.com/crate-ci/typos
-    rev: v1.48.0
+    rev: v1.50.1
     hooks:
       - id: typos
         args: []  # Empty args disables auto-fix mode
@@ -199,7 +230,7 @@ repos:
         language: python
         additional_dependencies: ['cmakelang==0.6.13', 'pyyaml==6.0.3']
         files: (CMakeLists\.txt|\.cmake)$
-        exclude: ^(build/|libs/)
+        exclude: ^(build/|libs/|cmake/modules/CPM\.cmake$)
 
       - id: cmake-lint
         name: cmake-lint
@@ -207,7 +238,7 @@ repos:
         language: python
         additional_dependencies: ['cmakelang==0.6.13', 'pyyaml==6.0.3']
         files: (CMakeLists\.txt|\.cmake)$
-        exclude: ^(build/|libs/)
+        exclude: ^(build/|libs/|cmake/modules/CPM\.cmake$)
 
       - id: clazy
         name: Qt static analysis (clazy)
