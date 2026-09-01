@@ -93,6 +93,8 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     )
     assert "CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS" in nsis
     assert "-LEAVE_DATA=1" in nsis
+    assert "DisableX64FSRedirection" in nsis
+    assert "EnableX64FSRedirection" in nsis
     assert "QGCCrashDumps" in nsis
     assert "GPU Safe Mode" in nsis
     assert "set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL OFF)" in nsis
@@ -164,6 +166,8 @@ include(CreateCPackNSIS)
         assert 'set(CPACK_GENERATOR "NSIS")' in config
         assert f'set(CPACK_PACKAGE_FILE_NAME "QGroundControl-installer-{package_arch}")' in config
         assert "-LEAVE_DATA=1" in config
+        assert "DisableX64FSRedirection" in config
+        assert "EnableX64FSRedirection" in config
         assert "QGCCrashDumps" in config
         assert "GPU Safe Mode" in config
 

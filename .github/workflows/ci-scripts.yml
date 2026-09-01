@@ -120,6 +120,7 @@ jobs:
             .github/actions/cmake-configure
             .github/actions/build-prerequisites
             .github/actions/attest-and-upload
+            .github/actions/attest-sbom
             .github/actions/cache
             .github/actions/docker
             .github/actions/free-disk-space

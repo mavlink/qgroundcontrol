@@ -23,7 +23,7 @@ via composite actions and reusable workflows. Python helpers in `scripts/` are i
 ```text
 .github/
 ├── workflows/                 # Platform builds, reusable workflows, and repo automation
-├── actions/                   # Composite actions shared across workflows
+├── actions/                   # Composite actions and external-action policy (see actions/README.md)
 ├── scripts/                   # Python helpers invoked by workflows and actions
 │   ├── templates/             # Jinja2 templates (build_results.md.j2)
 │   └── tests/                 # pytest suite for scripts/ (see #tests)
@@ -122,6 +122,9 @@ Configure these repository secrets:
 | `test-duration-report` | Analyze JUnit test durations and summarize slow tests |
 | `test-report` | Publish and upload test results |
 | `verify-executable` | Post-build executable boot-test verification |
+
+See [`actions/README.md`](actions/README.md) for the repository's external-action reference policy,
+including how to handle automated warnings about major-version tags.
 
 ## Scripts
 

@@ -133,6 +133,7 @@ string(CONFIGURE "${_qgc_nsis_extra_install}" CPACK_NSIS_EXTRA_INSTALL_COMMANDS 
 set(_qgc_nsis_extra_uninstall
     [=[
     !include "FileFunc.nsh"
+    !include "x64.nsh"
     SetRegView 64
     ; The CPack template reads these before this block runs, in the 32-bit
     ; view; re-read them under the 64-bit view the installer wrote them in.
@@ -150,7 +151,9 @@ set(_qgc_nsis_extra_uninstall
     ${GetOptions} $R0 "-LEAVE_DATA=" $R1
     StrCmp $R1 "1" qgc_keep_app_data
     SetShellVarContext current
+    ${DisableX64FSRedirection}
     RMDir /r /REBOOTOK "$APPDATA\@QGC_ORG_NAME@"
+    ${EnableX64FSRedirection}
     SetShellVarContext all
 
 qgc_keep_app_data:

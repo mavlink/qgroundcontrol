@@ -149,6 +149,13 @@ def test_release_uses_platform_sboms_without_reattesting() -> None:
 
 
 def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None:
+    ci_workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/ci-scripts.yml").read_text())
+    ci_steps = ci_workflow["jobs"]["test-ci-scripts"]["steps"]
+    checkout = next(step for step in ci_steps if step["name"] == "Checkout")
+    sparse_checkout = set(checkout["with"]["sparse-checkout"].splitlines())
+    assert ".github/actions/attest-and-upload" in sparse_checkout
+    assert ".github/actions/attest-sbom" in sparse_checkout
+
     upload_action = yaml.safe_load(
         (REPO_ROOT / ".github/actions/attest-and-upload/action.yml").read_text()
     )
@@ -162,6 +169,10 @@ def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None
     assert 'attest_helper.py" checksum' in checksum["run"]
     assert 'generate_cpm_sbom.py"' in dependency_sbom["run"]
     assert "--require-components" in dependency_sbom["run"]
+    assert dependency_sbom["env"]["SBOM_PATH"] == (
+        "${{ format('{0}/{1}.dependencies.cdx.json', steps.src.outputs.parent, "
+        "inputs.subject-name || inputs.package-name) }}"
+    )
     assert dependency_attestation["uses"] == "actions/attest@v4"
     assert dependency_attestation["with"] == {
         "subject-path": "${{ steps.src.outputs.path }}",

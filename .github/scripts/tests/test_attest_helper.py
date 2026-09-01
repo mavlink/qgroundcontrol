@@ -116,7 +116,7 @@ class TestAttestHelper:
                 str(artifact),
             ]
         )
-        assert outputs == {"path": str(artifact)}
+        assert outputs == {"parent": str(artifact.parent), "path": str(artifact)}
 
     def test_resolve_path_prefers_override(self, tmp_path):
         override = tmp_path / "override.zip"
@@ -132,7 +132,7 @@ class TestAttestHelper:
                 str(default),
             ]
         )
-        assert outputs == {"path": str(override)}
+        assert outputs == {"parent": str(override.parent), "path": str(override)}
 
     def test_resolve_path_missing_artifact_exits(self, tmp_path):
         import pytest

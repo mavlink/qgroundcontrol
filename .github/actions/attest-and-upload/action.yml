@@ -88,7 +88,7 @@ runs:
       shell: bash
       env:
         BUILD_DIR: ${{ inputs.build-dir || format('{0}/build', runner.temp) }}
-        SBOM_PATH: ${{ runner.temp }}/${{ inputs.subject-name || inputs.package-name }}.dependencies.cdx.json
+        SBOM_PATH: ${{ format('{0}/{1}.dependencies.cdx.json', steps.src.outputs.parent, inputs.subject-name || inputs.package-name) }}
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_cpm_sbom.py" \
           --build-dir "${BUILD_DIR}" \

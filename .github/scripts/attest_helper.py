@@ -57,7 +57,7 @@ def cmd_resolve_path(args: argparse.Namespace) -> None:
         else:
             print("(parent dir missing)")
         sys.exit(1)
-    write_github_output({"path": str(path)})
+    write_github_output({"parent": str(p.parent), "path": str(path)})
 
 
 def cmd_checksum(args: argparse.Namespace) -> None:
