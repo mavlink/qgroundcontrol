@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/scripts/**'
       - '.github/actions/**'
+      - '.github/runner-images/**'
+      - '.github/runs-on.yml'
       - '.github/workflows/**'
       - '.github/build-config.json'
       - '.vscode/*.default.json'
@@ -32,6 +34,8 @@ on:
     paths:
       - '.github/scripts/**'
       - '.github/actions/**'
+      - '.github/runner-images/**'
+      - '.github/runs-on.yml'
       - '.github/workflows/**'
       - '.github/build-config.json'
       - '.vscode/*.default.json'
@@ -96,6 +100,42 @@ jobs:
           fail_level: error
           level: warning
 
+  validate-runner-images:
+    name: Validate Runner Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          sparse-checkout: .github/runner-images
+          persist-credentials: false
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: '1.16.0'
+
+      - name: Validate Packer template
+        working-directory: .github/runner-images
+        env:
+          PKR_VAR_aws_region: us-west-2
+          PKR_VAR_subnet_id: subnet-00000000000000000
+          PKR_VAR_source_repository: https://github.com/mavlink/qgroundcontrol.git
+          PKR_VAR_source_ref: '0000000000000000000000000000000000000000'
+          PKR_VAR_qt_version: 0.0.0
+          PKR_VAR_qt_modules: ''
+        run: |
+          packer fmt -check qgc-ubuntu24-x64.pkr.hcl
+          packer init qgc-ubuntu24-x64.pkr.hcl
+          packer validate qgc-ubuntu24-x64.pkr.hcl
+
   test-ci-scripts:
     name: Test CI Scripts (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -129,6 +169,8 @@ jobs:
             .github/actions/qt-install
             .github/actions/verify-executable
             .github/build-config.json
+            .github/runner-images
+            .github/runs-on.yml
             .github/scripts
             .github/workflows
             .vscode

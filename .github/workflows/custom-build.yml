@@ -31,7 +31,8 @@ jobs:
       ${{
         github.repository_owner == 'mavlink' &&
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-        format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) ||
+        format('runs-on={0}/runner={1}', github.run_id,
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb') ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120
