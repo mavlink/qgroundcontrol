@@ -63,6 +63,38 @@ A page entry must have exactly one of `pageDefinition` (generated) or `url` (han
 
 ---
 
+## Custom build overlay
+
+A custom build (`QGC_CUSTOM_DIR`) can pass `--custom-pages-dir <dir>` and
+`--custom-settings-dir <dir>` (CMake does this automatically when
+`<custom>/src/AppSettings/pages` / `<custom>/src/Settings` exist):
+
+- `<custom pages dir>/SettingsPages.json` is merged into the stock page list.
+  Overlay entries support three extra keys:
+
+  | Key | Type | Description |
+  | --- | --- | --- |
+  | `insertAfter` | string | Insert the new page after the named stock page |
+  | `insertBefore` | string | Insert the new page before the named stock page |
+  | `remove` | string | Remove the named stock page (no other keys allowed) |
+
+  An overlay entry whose `name` matches an existing page replaces it in place
+  (positioning keys are not allowed on a replace).
+- `*.SettingsUI.json` files in the custom pages dir are found first, so a file
+  with the same name as a stock definition shadows it.
+- `*.SettingsGroup.json` files in the custom settings dir provide fact metadata
+  for custom groups registered at runtime via
+  `SettingsManager::registerCustomSettingsGroup` (accessor = camelCase JSON
+  stem plus `Settings`, e.g. `Custom.SettingsGroup.json` → `customSettings`).
+  A custom stem that maps to a stock `SettingsManager` accessor is rejected.
+
+`--list-outputs` prints the QML file names that would be generated (used by
+CMake to compute the output list when an overlay is active).
+
+See the `custom-example` build for a working reference.
+
+---
+
 ## `*.SettingsUI.json`
 
 Defines the layout of a single settings page.

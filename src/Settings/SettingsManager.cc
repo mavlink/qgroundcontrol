@@ -27,15 +27,17 @@
 #include "Viewer3DSettings.h"
 #include "JsonParsing.h"
 #include "QGCCorePlugin.h"
+#include "SettingsGroup.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QRegularExpression>
 
 QGC_LOGGING_CATEGORY(SettingsManagerLog, "Utilities.SettingsManager")
 
 Q_APPLICATION_STATIC(SettingsManager, _settingsManagerInstance);
 
 SettingsManager::SettingsManager(QObject *parent)
-    : QObject(parent)
+    : QQmlPropertyMap(this, parent)
 {
     qCDebug(SettingsManagerLog) << this;
 }
@@ -79,6 +81,36 @@ void SettingsManager::init()
     _viewer3DSettings = new Viewer3DSettings(this);
     _adsbVehicleManagerSettings = new ADSBVehicleManagerSettings(this);
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
+
+    QGCCorePlugin::instance()->registerCustomSettings(this);
+}
+
+void SettingsManager::registerCustomSettingsGroup(const QString &accessorName, SettingsGroup *group)
+{
+    // Must be a valid QML identifier or generated pages can't resolve the group via dot notation
+    static const QRegularExpression validAccessorRe(QStringLiteral("^[a-z_][A-Za-z0-9_]*$"));
+    if (!validAccessorRe.match(accessorName).hasMatch() || !group) {
+        qCWarning(SettingsManagerLog) << "registerCustomSettingsGroup: invalid accessor name or null group" << accessorName;
+        delete group;
+        return;
+    }
+    if (contains(accessorName)) {
+        qCWarning(SettingsManagerLog) << "registerCustomSettingsGroup: accessor already registered" << accessorName;
+        // Re-registering the stored group itself must not destroy it
+        if (group != value(accessorName).value<QObject*>()) {
+            delete group;
+        }
+        return;
+    }
+    if (staticMetaObject.indexOfProperty(accessorName.toUtf8().constData()) != -1) {
+        qCWarning(SettingsManagerLog) << "registerCustomSettingsGroup: accessor collides with a built-in settings group" << accessorName;
+        delete group;
+        return;
+    }
+
+    group->setParent(this);
+    insert(accessorName, QVariant::fromValue<QObject*>(group));
+    qCDebug(SettingsManagerLog) << "Registered custom settings group" << accessorName;
 }
 
 ADSBVehicleManagerSettings *SettingsManager::adsbVehicleManagerSettings() const { return _adsbVehicleManagerSettings; }

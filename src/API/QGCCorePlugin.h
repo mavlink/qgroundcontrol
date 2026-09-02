@@ -17,6 +17,7 @@ class QGeoPositionInfoSource;
 class QmlObjectListModel;
 class QQmlApplicationEngine;
 class QQuickItem;
+class SettingsManager;
 class Vehicle;
 class VideoReceiver;
 class VideoSink;
@@ -83,6 +84,11 @@ public:
     ///     @param userVisible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
     /// If not overridden, metaData and userVisible are left unchanged.
     virtual void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible);
+
+    /// Called at the end of SettingsManager::init. Override to register custom build
+    /// settings groups via SettingsManager::registerCustomSettingsGroup so generated
+    /// settings pages can reference them as QGroundControl.settingsManager.<accessor>.
+    virtual void registerCustomSettings(SettingsManager *settingsManager) { Q_UNUSED(settingsManager); }
 
     /// @return The message to show to the user when they are prompted to confirm turning on advanced ui.
     virtual QString showAdvancedUIMessage() const;
