@@ -105,6 +105,11 @@ const QVariantList &QGCCorePlugin::analyzePages()
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")),
             nullptr, true /* requiresVehicle */)),
         QVariant::fromValue(new QmlComponentInfo(
+            tr("MAVLink Bandwidth"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkBandwidth/MAVLinkBandwidthPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")),
+            nullptr, true /* requiresVehicle */)),
+        QVariant::fromValue(new QmlComponentInfo(
             tr("Vibration"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/Vibration/VibrationPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")),
