@@ -3,6 +3,8 @@
 #include "MAVLinkLib.h"
 
 #include <QtCore/QMutex>
+#include <QtCore/QVariant>
+#include <QtCore/QVector>
 
 class MockLink;
 
@@ -31,6 +33,10 @@ class MockLink;
 ///   MAV_CMD_CAMERA_TRACK_POINT / TRACK_RECTANGLE / STOP_TRACKING
 ///
 /// Simulated storage: 16 GiB total, 8 GiB free, SD card.
+///
+/// Camera 1 additionally serves a small set of extended parameters (PARAM_EXT_REQUEST_LIST /
+/// PARAM_EXT_REQUEST_READ / PARAM_EXT_SET). Camera 2 serves none, so tests can check that
+/// components which don't implement the protocol are simply left out.
 ///
 class MockLinkCamera
 {
@@ -94,7 +100,43 @@ public:
     /// @return true if the message was handled by the camera
     bool handleMavlinkMessage(const mavlink_message_t &msg);
 
+    /// Extended parameter served by camera 1
+    struct ExtParam {
+        QString  name;
+        uint8_t  type;      ///< MAV_PARAM_EXT_TYPE
+        QVariant value;
+    };
+
+    /// @return The extended parameters served by camera 1
+    static QVector<ExtParam> defaultExtParams();
+
+    enum ExtParamSetFailureMode_t {
+        FailExtParamSetNone,        ///< Normal behavior
+        FailExtParamSetNoAck,       ///< Do not send PARAM_EXT_ACK
+        FailExtParamSetRejected,    ///< Reject with PARAM_ACK_VALUE_UNSUPPORTED, keep the stored value
+        FailExtParamSetInProgress,  ///< Answer PARAM_ACK_IN_PROGRESS once, then accept on the next attempt
+    };
+
+    /// Sets a PARAM_EXT_SET failure mode for unit testing
+    void setExtParamSetFailureMode(ExtParamSetFailureMode_t mode) {
+        _extParamSetFailureMode = mode;
+        _extParamSetInProgressPending = (mode == FailExtParamSetInProgress);
+    }
+
+    /// Test API: drops this index from the PARAM_EXT_REQUEST_LIST stream so the indexed
+    /// re-request path can be exercised. Negative disables dropping. Only affects the
+    /// list stream - an explicit PARAM_EXT_REQUEST_READ for the index is always answered.
+    void setExtParamListDropIndex(int index) { _extParamListDropIndex = index; }
+
+    /// @return Current value of an ext parameter, an invalid QVariant if unknown
+    QVariant extParamValue(const QString &name) const;
+
 private:
+    bool _handleParamExtRequestList(const mavlink_message_t &msg);
+    bool _handleParamExtRequestRead(const mavlink_message_t &msg);
+    bool _handleParamExtSet(const mavlink_message_t &msg);
+    void _sendParamExtValue(int index);
+
     /// Handle a COMMAND_LONG that targets a camera component.
     /// @return true if the command was handled (ack already sent)
     bool _handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId);
@@ -121,7 +163,13 @@ private:
     static constexpr uint32_t kStorageTotalMiB   = 16384; ///< 16 GiB simulated SD card
     static constexpr uint32_t kStorageFreeMiB    = 8192;  ///< 8 GiB free
 
+    static constexpr uint8_t kExtParamCompId = MAV_COMP_ID_CAMERA; ///< Only camera 1 serves ext params
+
     MockLink   *_mockLink = nullptr;
+    QVector<ExtParam> _extParams;                ///< Ext parameters served by kExtParamCompId
+    ExtParamSetFailureMode_t _extParamSetFailureMode = FailExtParamSetNone;
+    bool _extParamSetInProgressPending = false;
+    int _extParamListDropIndex = -1;
     CameraState _cameras[kNumCameras];           ///< Simulated cameras
     /// Protects _cameras array from race conditions between:
     ///   - Main thread: _handleCameraCommand() modifying camera state on MAVLink commands

@@ -3,6 +3,7 @@
 #include "MockLink.h"
 #include "MissionManager/MissionCommandTree.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 
 #include <QtCore/QDateTime>
 #include <QtCore/QLoggingCategory>
@@ -48,6 +49,17 @@ MockLinkCamera::MockLinkCamera(MockLink *mockLink,
     _cameras[1].compId   = MAV_COMP_ID_CAMERA2;
     _cameras[1].capFlags = CAMERA_CAP_FLAGS_CAPTURE_IMAGE;
     _cameras[1].cameraMode = CAMERA_MODE_IMAGE;
+
+    _extParams = defaultExtParams();
+}
+
+QVector<MockLinkCamera::ExtParam> MockLinkCamera::defaultExtParams()
+{
+    return {
+        { QStringLiteral("CAM_EXPMODE"), MAV_PARAM_EXT_TYPE_INT32,  QVariant(1) },
+        { QStringLiteral("CAM_EV"),      MAV_PARAM_EXT_TYPE_REAL32, QVariant(0.0f) },
+        { QStringLiteral("CAM_MODEL"),   MAV_PARAM_EXT_TYPE_CUSTOM, QVariant(QStringLiteral("MockCam")) },
+    };
 }
 
 MockLinkCamera::CameraState *MockLinkCamera::_findCamera(uint8_t compId)
@@ -142,7 +154,16 @@ void MockLinkCamera::run10HzTasks()
 
 bool MockLinkCamera::handleMavlinkMessage(const mavlink_message_t &msg)
 {
-    if (msg.msgid != MAVLINK_MSG_ID_COMMAND_LONG) {
+    switch (msg.msgid) {
+    case MAVLINK_MSG_ID_PARAM_EXT_REQUEST_LIST:
+        return _handleParamExtRequestList(msg);
+    case MAVLINK_MSG_ID_PARAM_EXT_REQUEST_READ:
+        return _handleParamExtRequestRead(msg);
+    case MAVLINK_MSG_ID_PARAM_EXT_SET:
+        return _handleParamExtSet(msg);
+    case MAVLINK_MSG_ID_COMMAND_LONG:
+        break;
+    default:
         return false;
     }
 
@@ -860,4 +881,155 @@ void MockLinkCamera::_sendCommandAck(uint8_t compId, uint16_t command, uint8_t r
     }
 
     qCDebug(MockLinkCameraLog) << logMsg;
+}
+
+bool MockLinkCamera::_handleParamExtRequestList(const mavlink_message_t &msg)
+{
+    mavlink_param_ext_request_list_t request{};
+    mavlink_msg_param_ext_request_list_decode(&msg, &request);
+
+    if ((request.target_component != kExtParamCompId) && (request.target_component != MAV_COMP_ID_ALL)) {
+        return false;
+    }
+
+    qCDebug(MockLinkCameraLog) << "Streaming" << _extParams.count() << "ext params for compId:" << kExtParamCompId;
+    for (int index = 0; index < _extParams.count(); index++) {
+        if (index == _extParamListDropIndex) {
+            qCDebug(MockLinkCameraLog) << "Dropping ext param index from list stream:" << index;
+            continue;
+        }
+        _sendParamExtValue(index);
+    }
+
+    return true;
+}
+
+QVariant MockLinkCamera::extParamValue(const QString &name) const
+{
+    for (const ExtParam &extParam: _extParams) {
+        if (extParam.name == name) {
+            return extParam.value;
+        }
+    }
+
+    return QVariant();
+}
+
+bool MockLinkCamera::_handleParamExtRequestRead(const mavlink_message_t &msg)
+{
+    mavlink_param_ext_request_read_t request{};
+    mavlink_msg_param_ext_request_read_decode(&msg, &request);
+
+    if (request.target_component != kExtParamCompId) {
+        return false;
+    }
+
+    int index = request.param_index;
+    if (index < 0) {
+        char paramIdWithNull[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1] = {};
+        (void) strncpy(paramIdWithNull, request.param_id, MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
+        const QString paramName(paramIdWithNull);
+        for (int i = 0; i < _extParams.count(); i++) {
+            if (_extParams[i].name == paramName) {
+                index = i;
+                break;
+            }
+        }
+    }
+
+    if ((index < 0) || (index >= _extParams.count())) {
+        qCDebug(MockLinkCameraLog) << "PARAM_EXT_REQUEST_READ for unknown param, ignoring";
+        return true;
+    }
+
+    _sendParamExtValue(index);
+
+    return true;
+}
+
+bool MockLinkCamera::_handleParamExtSet(const mavlink_message_t &msg)
+{
+    mavlink_param_ext_set_t request{};
+    mavlink_msg_param_ext_set_decode(&msg, &request);
+
+    if (request.target_component != kExtParamCompId) {
+        return false;
+    }
+
+    char paramIdWithNull[MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN + 1] = {};
+    (void) strncpy(paramIdWithNull, request.param_id, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN);
+    const QString paramName(paramIdWithNull);
+
+    if (_extParamSetFailureMode == FailExtParamSetNoAck) {
+        qCDebug(MockLinkCameraLog) << "Not acking PARAM_EXT_SET for" << paramName;
+        return true;
+    }
+
+    mavlink_param_ext_ack_t ack{};
+    ack.param_result = PARAM_ACK_FAILED;
+    (void) memcpy(ack.param_id, request.param_id, MAVLINK_MSG_PARAM_EXT_ACK_FIELD_PARAM_ID_LEN);
+    ack.param_type = request.param_type;
+    (void) memcpy(ack.param_value, request.param_value, MAVLINK_MSG_PARAM_EXT_ACK_FIELD_PARAM_VALUE_LEN);
+
+    if (_extParamSetInProgressPending) {
+        // Report the write as still running, the next attempt is accepted normally
+        _extParamSetInProgressPending = false;
+        ack.param_result = PARAM_ACK_IN_PROGRESS;
+        qCDebug(MockLinkCameraLog) << "PARAM_EXT_SET in progress for" << paramName;
+    } else {
+        for (ExtParam &extParam: _extParams) {
+            if (extParam.name != paramName) {
+                continue;
+            }
+            if (_extParamSetFailureMode == FailExtParamSetRejected) {
+                // Echo back the unchanged stored value, as a camera clamping an out of range write would
+                ack.param_result = PARAM_ACK_VALUE_UNSUPPORTED;
+                (void) QGCMAVLink::variantToParamExtValue(extParam.value, extParam.type, &ack.param_value[0]);
+                qCDebug(MockLinkCameraLog) << "PARAM_EXT_SET rejected for" << paramName;
+                break;
+            }
+            if (extParam.type != request.param_type) {
+                qCDebug(MockLinkCameraLog) << "PARAM_EXT_SET type mismatch for" << paramName;
+                break;
+            }
+            extParam.value = QGCMAVLink::paramExtValueToVariant(request.param_value, request.param_type);
+            ack.param_result = PARAM_ACK_ACCEPTED;
+            qCDebug(MockLinkCameraLog) << "PARAM_EXT_SET" << paramName << "=" << extParam.value;
+            break;
+        }
+    }
+
+    mavlink_message_t ackMsg{};
+    (void) mavlink_msg_param_ext_ack_encode_chan(
+        _mockLink->vehicleId(),
+        kExtParamCompId,
+        _mockLink->outgoingMavlinkChannel(),
+        &ackMsg,
+        &ack);
+    _mockLink->respondWithMavlinkMessage(ackMsg);
+
+    return true;
+}
+
+void MockLinkCamera::_sendParamExtValue(int index)
+{
+    const ExtParam &extParam = _extParams[index];
+
+    mavlink_param_ext_value_t paramExtValue{};
+    char paramId[MAVLINK_MSG_PARAM_EXT_VALUE_FIELD_PARAM_ID_LEN + 1] = {};
+    (void) strncpy(paramId, extParam.name.toLocal8Bit().constData(), MAVLINK_MSG_PARAM_EXT_VALUE_FIELD_PARAM_ID_LEN);
+    (void) memcpy(paramExtValue.param_id, paramId, MAVLINK_MSG_PARAM_EXT_VALUE_FIELD_PARAM_ID_LEN);
+    paramExtValue.param_type = extParam.type;
+    paramExtValue.param_count = static_cast<uint16_t>(_extParams.count());
+    paramExtValue.param_index = static_cast<uint16_t>(index);
+    (void) QGCMAVLink::variantToParamExtValue(extParam.value, extParam.type, &paramExtValue.param_value[0]);
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_param_ext_value_encode_chan(
+        _mockLink->vehicleId(),
+        kExtParamCompId,
+        _mockLink->outgoingMavlinkChannel(),
+        &msg,
+        &paramExtValue);
+    _mockLink->respondWithMavlinkMessage(msg);
 }

@@ -68,6 +68,9 @@ public:
 
     MockLinkFTP *mockLinkFTP() const;
 
+    /// @return The simulated cameras, nullptr when the camera option is not enabled
+    MockLinkCamera *mockLinkCamera() const;
+
     /// Set the armed state of the simulated vehicle
     void setArmed(bool armed) { if (armed) _mavBaseMode |= MAV_MODE_FLAG_SAFETY_ARMED; else _mavBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED; }
     bool armed() const { return (_mavBaseMode & MAV_MODE_FLAG_SAFETY_ARMED) != 0; }
