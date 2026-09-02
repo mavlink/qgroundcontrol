@@ -4,6 +4,9 @@
 
 #include <QtCore/QCoreApplication>
 
+#include <algorithm>
+#include <cstring>
+
 QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "MAVLink.QGCMAVLink")
 
 const QHash<int, QString> QGCMAVLink::mavlinkCompIdHash {
@@ -550,4 +553,99 @@ QString QGCMAVLink::compIdToString(uint8_t compId)
     }
 
     return QStringLiteral("%1 (%2)").arg(compIdStr).arg(static_cast<int>(compId));
+}
+
+QVariant QGCMAVLink::paramExtValueToVariant(const char *value, uint8_t paramExtType)
+{
+    param_ext_union_t unionValue{};
+    (void) memcpy(unionValue.bytes, value, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN);
+
+    switch (paramExtType) {
+    case MAV_PARAM_EXT_TYPE_UINT8:
+        return QVariant(unionValue.param_uint8);
+    case MAV_PARAM_EXT_TYPE_INT8:
+        return QVariant(unionValue.param_int8);
+    case MAV_PARAM_EXT_TYPE_UINT16:
+        return QVariant(unionValue.param_uint16);
+    case MAV_PARAM_EXT_TYPE_INT16:
+        return QVariant(unionValue.param_int16);
+    case MAV_PARAM_EXT_TYPE_UINT32:
+        return QVariant(unionValue.param_uint32);
+    case MAV_PARAM_EXT_TYPE_INT32:
+        return QVariant(unionValue.param_int32);
+    case MAV_PARAM_EXT_TYPE_UINT64:
+        return QVariant(static_cast<quint64>(unionValue.param_uint64));
+    case MAV_PARAM_EXT_TYPE_INT64:
+        return QVariant(static_cast<qint64>(unionValue.param_int64));
+    case MAV_PARAM_EXT_TYPE_REAL32:
+        return QVariant(unionValue.param_float);
+    case MAV_PARAM_EXT_TYPE_REAL64:
+        return QVariant(unionValue.param_double);
+    case MAV_PARAM_EXT_TYPE_CUSTOM: {
+        char strValueWithNull[MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN + 1] = {};
+        (void) strncpy(strValueWithNull, value, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN);
+        return QVariant(QString(strValueWithNull));
+    }
+    default:
+        // Comes off the wire, so a component sending a type we don't know is not a coding error
+        qCWarning(QGCMAVLinkLog) << "Unsupported MAV_PARAM_EXT_TYPE received:" << paramExtType;
+        return QVariant();
+    }
+}
+
+bool QGCMAVLink::variantToParamExtValue(const QVariant &value, uint8_t paramExtType, char *outValue)
+{
+    param_ext_union_t unionValue{};
+    bool ok = true;
+
+    switch (paramExtType) {
+    case MAV_PARAM_EXT_TYPE_UINT8:
+        unionValue.param_uint8 = static_cast<uint8_t>(value.toUInt(&ok));
+        break;
+    case MAV_PARAM_EXT_TYPE_INT8:
+        unionValue.param_int8 = static_cast<int8_t>(value.toInt(&ok));
+        break;
+    case MAV_PARAM_EXT_TYPE_UINT16:
+        unionValue.param_uint16 = static_cast<uint16_t>(value.toUInt(&ok));
+        break;
+    case MAV_PARAM_EXT_TYPE_INT16:
+        unionValue.param_int16 = static_cast<int16_t>(value.toInt(&ok));
+        break;
+    case MAV_PARAM_EXT_TYPE_UINT32:
+        unionValue.param_uint32 = value.toUInt(&ok);
+        break;
+    case MAV_PARAM_EXT_TYPE_INT32:
+        unionValue.param_int32 = value.toInt(&ok);
+        break;
+    case MAV_PARAM_EXT_TYPE_UINT64:
+        unionValue.param_uint64 = value.toULongLong(&ok);
+        break;
+    case MAV_PARAM_EXT_TYPE_INT64:
+        unionValue.param_int64 = value.toLongLong(&ok);
+        break;
+    case MAV_PARAM_EXT_TYPE_REAL32:
+        unionValue.param_float = value.toFloat(&ok);
+        break;
+    case MAV_PARAM_EXT_TYPE_REAL64:
+        unionValue.param_double = value.toDouble(&ok);
+        break;
+    case MAV_PARAM_EXT_TYPE_CUSTOM: {
+        const QByteArray custom = (value.typeId() == QMetaType::QByteArray) ? value.toByteArray() : value.toString().toUtf8();
+        const qsizetype copyLength = std::min(custom.size(), static_cast<qsizetype>(MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN));
+        (void) memcpy(unionValue.bytes, custom.constData(), static_cast<size_t>(copyLength));
+        break;
+    }
+    default:
+        qCCritical(QGCMAVLinkLog) << "Internal Error: Unsupported MAV_PARAM_EXT_TYPE" << paramExtType;
+        return false;
+    }
+
+    if (!ok) {
+        qCWarning(QGCMAVLinkLog) << "Failed to convert value to MAV_PARAM_EXT_TYPE" << paramExtType << "value:" << value;
+        return false;
+    }
+
+    (void) memcpy(outValue, unionValue.bytes, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN);
+
+    return true;
 }
