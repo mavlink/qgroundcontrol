@@ -6,6 +6,8 @@
 #include <QtCore/QSet>
 #include <QtCore/QTextStream>
 
+#include <memory>
+
 #include "AutoPilotPlugin.h"
 #include "CompInfoParam.h"
 #include "ComponentInformationManager.h"
@@ -66,6 +68,10 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
         (void) connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
     }
 
+    _extParamTimeoutTimer.setSingleShot(true);
+    _extParamTimeoutTimer.setInterval(QGC::runningUnitTests() ? 500 : kExtParamTimeoutMs);
+    (void) connect(&_extParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_extParamTimeout);
+
     // Ensure the cache directory exists
     (void) QDir().mkpath(parameterCacheDir().absolutePath());
 }
@@ -124,6 +130,31 @@ void ParameterManager::mavlinkMessageReceived(const mavlink_message_t &message)
         }
 
         _handleParamValue(message.compid, parameterName, param_value.param_count, param_value.param_index, static_cast<MAV_PARAM_TYPE>(param_value.param_type), parameterValue);
+        return;
+    }
+
+    if (message.msgid == MAVLINK_MSG_ID_PARAM_EXT_VALUE) {
+        mavlink_param_ext_value_t paramExtValue{};
+        mavlink_msg_param_ext_value_decode(&message, &paramExtValue);
+        _handleParamExtValue(message.compid, paramExtValue);
+        return;
+    }
+
+    if (message.msgid == MAVLINK_MSG_ID_PARAM_EXT_ACK) {
+        mavlink_param_ext_ack_t paramExtAck{};
+        mavlink_msg_param_ext_ack_decode(&message, &paramExtAck);
+        _handleParamExtAck(message.compid, paramExtAck);
+        return;
+    }
+
+    if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+        // Extended parameters live on peripherals such as cameras and gimbals, never on the autopilot
+        if (message.compid != MAV_COMP_ID_AUTOPILOT1) {
+            (void) _seenComponentIds.insert(message.compid);
+            if (_initialLoadComplete) {
+                _startExtParameterDownload(message.compid);
+            }
+        }
     }
 }
 
@@ -530,7 +561,299 @@ void ParameterManager::_factRawValueUpdated(const QVariant &rawValue)
         return;
     }
 
+    if (_extFact(fact->componentId(), fact->name()) == fact) {
+        _mavlinkParamExtSet(fact->componentId(), fact->name(), factTypeToMavExtType(fact->type()), rawValue);
+        return;
+    }
+
     _mavlinkParamSet(fact->componentId(), fact->name(), fact->type(), rawValue);
+}
+
+Fact *ParameterManager::_extFact(int componentId, const QString &paramName) const
+{
+    return _mapCompId2ExtFactMap.value(componentId).value(paramName, nullptr);
+}
+
+void ParameterManager::_startExtParameterDownload(int componentId)
+{
+    if (_extParamRequestedCompIds.contains(componentId)) {
+        return;
+    }
+
+    const SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        return;
+    }
+    if (sharedLink->linkConfiguration()->isHighLatency() || _logReplay) {
+        return;
+    }
+
+    (void) _extParamRequestedCompIds.insert(componentId);
+
+    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Requesting extended parameter list";
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_param_ext_request_list_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                        MAVLinkProtocol::getComponentId(),
+                                                        sharedLink->mavlinkChannel(),
+                                                        &msg,
+                                                        _vehicle->id(),
+                                                        static_cast<uint8_t>(componentId));
+    (void) _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+}
+
+void ParameterManager::_handleParamExtValue(int componentId, const mavlink_param_ext_value_t &paramExtValue)
+{
+    // This will null terminate the name string
+    char parameterNameWithNull[MAVLINK_MSG_PARAM_EXT_VALUE_FIELD_PARAM_ID_LEN + 1] = {};
+    (void) strncpy(parameterNameWithNull, paramExtValue.param_id, MAVLINK_MSG_PARAM_EXT_VALUE_FIELD_PARAM_ID_LEN);
+    const QString parameterName(parameterNameWithNull);
+
+    const auto mavParamExtType = static_cast<MAV_PARAM_EXT_TYPE>(paramExtValue.param_type);
+    const QVariant parameterValue = QGCMAVLink::paramExtValueToVariant(paramExtValue.param_value, mavParamExtType);
+    if (!parameterValue.isValid()) {
+        return;
+    }
+
+    qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) <<
+                                            "_handleParamExtValue" <<
+                                            "name:" << parameterName <<
+                                            "count:" << paramExtValue.param_count <<
+                                            "index:" << paramExtValue.param_index <<
+                                            "mavExtType:" << mavParamExtType <<
+                                            "value:" << parameterValue;
+
+    if (_mapCompId2FactMap.value(componentId).contains(parameterName)) {
+        // The classic protocol already owns this name for this component, don't shadow it with a second fact
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Ignoring ext param which also exists as a classic param" << parameterName;
+        return;
+    }
+
+    if (!_extWaitingReadParamIndexMap.contains(componentId)) {
+        for (int waitingIndex = 0; waitingIndex < paramExtValue.param_count; waitingIndex++) {
+            _extWaitingReadParamIndexMap[componentId][waitingIndex] = 0;
+        }
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Seeing ext params for first time - paramcount:" << paramExtValue.param_count;
+    }
+    (void) _extWaitingReadParamIndexMap[componentId].remove(paramExtValue.param_index);
+
+    Fact *fact = _extFact(componentId, parameterName);
+    if (!fact) {
+        fact = new Fact(componentId, parameterName, mavExtTypeToFactType(mavParamExtType), this);
+        FactMetaData *const factMetaData = _vehicle->compInfoManager()->compInfoParam(componentId)->factMetaDataForName(parameterName, fact->type());
+        fact->setMetaData(factMetaData);
+
+        _mapCompId2ExtFactMap[componentId][parameterName] = fact;
+
+        (void) connect(fact, &Fact::containerRawValueChanged, this, &ParameterManager::_factRawValueUpdated);
+
+        emit factAdded(componentId, fact);
+    }
+
+    fact->containerSetRawValue(parameterValue);
+
+    _extParamTimeoutTimer.start();
+}
+
+void ParameterManager::_handleParamExtAck(int componentId, const mavlink_param_ext_ack_t &paramExtAck)
+{
+    if (paramExtAck.param_result != PARAM_ACK_ACCEPTED) {
+        return;
+    }
+
+    // This will null terminate the name string
+    char parameterNameWithNull[MAVLINK_MSG_PARAM_EXT_ACK_FIELD_PARAM_ID_LEN + 1] = {};
+    (void) strncpy(parameterNameWithNull, paramExtAck.param_id, MAVLINK_MSG_PARAM_EXT_ACK_FIELD_PARAM_ID_LEN);
+
+    Fact *const fact = _extFact(componentId, QString(parameterNameWithNull));
+    if (!fact) {
+        return;
+    }
+
+    // Acks are broadcast, so this also picks up writes made from the camera settings UI
+    const QVariant value = QGCMAVLink::paramExtValueToVariant(paramExtAck.param_value, paramExtAck.param_type);
+    if (value.isValid()) {
+        fact->containerSetRawValue(value);
+    }
+}
+
+void ParameterManager::_extParamTimeout()
+{
+    bool stillWaiting = false;
+
+    for (const int componentId: _extWaitingReadParamIndexMap.keys()) {
+        QMap<int, int> &waitingIndices = _extWaitingReadParamIndexMap[componentId];
+        for (const int paramIndex: waitingIndices.keys()) {
+            if (waitingIndices[paramIndex]++ >= kExtParamReadRetryCount) {
+                qCWarning(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Ext param never received - index:" << paramIndex;
+                (void) waitingIndices.remove(paramIndex);
+                continue;
+            }
+            stillWaiting = true;
+            _mavlinkParamExtRequestRead(componentId, QString(), paramIndex);
+        }
+    }
+
+    if (stillWaiting) {
+        _extParamTimeoutTimer.start();
+    }
+}
+
+void ParameterManager::_mavlinkParamExtRequestRead(int componentId, const QString &paramName, int paramIndex)
+{
+    const SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        return;
+    }
+
+    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Requesting ext param - name:" << paramName << "index:" << paramIndex;
+
+    char paramId[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1] = {};
+    (void) strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_param_ext_request_read_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                        MAVLinkProtocol::getComponentId(),
+                                                        sharedLink->mavlinkChannel(),
+                                                        &msg,
+                                                        _vehicle->id(),
+                                                        static_cast<uint8_t>(componentId),
+                                                        paramId,
+                                                        paramIndex);
+    (void) _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+}
+
+void ParameterManager::_mavlinkParamExtSet(int componentId, const QString &paramName, MAV_PARAM_EXT_TYPE paramExtType, const QVariant &rawValue)
+{
+    // Shared between the ack predicate and the states which classify the ack
+    struct ExtAckResult {
+        uint8_t result = PARAM_ACK_FAILED;
+        QVariant value;
+    };
+    auto ackResult = std::make_shared<ExtAckResult>();
+
+    auto paramExtSetEncoder = [this, componentId, paramName, paramExtType, rawValue](uint8_t /*systemId*/, uint8_t channel, mavlink_message_t *message) -> void {
+        mavlink_param_ext_set_t paramExtSet{};
+
+        paramExtSet.target_system = static_cast<uint8_t>(_vehicle->id());
+        paramExtSet.target_component = static_cast<uint8_t>(componentId);
+        paramExtSet.param_type = paramExtType;
+
+        // param_id is exactly MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN long and not null
+        // terminated when the name fills it, so stage through a buffer with room for the null
+        char paramId[MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN + 1] = {};
+        (void) strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN);
+        (void) memcpy(paramExtSet.param_id, paramId, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN);
+        if (!QGCMAVLink::variantToParamExtValue(rawValue, paramExtType, &paramExtSet.param_value[0])) {
+            return;
+        }
+
+        (void) mavlink_msg_param_ext_set_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                     MAVLinkProtocol::getComponentId(),
+                                                     channel,
+                                                     message,
+                                                     &paramExtSet);
+    };
+
+    auto checkForParamExtAck = [componentId, paramName, ackResult](const mavlink_message_t &message) -> bool {
+        if (message.compid != componentId) {
+            return false;
+        }
+
+        mavlink_param_ext_ack_t paramExtAck{};
+        mavlink_msg_param_ext_ack_decode(&message, &paramExtAck);
+
+        char parameterNameWithNull[MAVLINK_MSG_PARAM_EXT_ACK_FIELD_PARAM_ID_LEN + 1] = {};
+        (void) strncpy(parameterNameWithNull, paramExtAck.param_id, MAVLINK_MSG_PARAM_EXT_ACK_FIELD_PARAM_ID_LEN);
+        if (QString(parameterNameWithNull) != paramName) {
+            return false;
+        }
+
+        ackResult->result = paramExtAck.param_result;
+        ackResult->value = QGCMAVLink::paramExtValueToVariant(paramExtAck.param_value, paramExtAck.param_type);
+
+        return true;
+    };
+
+    // State Machine:
+    //  Send PARAM_EXT_SET - retries after initial attempt
+    //  Wait for PARAM_EXT_ACK
+    //      PARAM_ACK_IN_PROGRESS:  keep waiting
+    //      PARAM_ACK_ACCEPTED:     take the acked value, done
+    //      anything else:          notify user and restore the vehicle value
+
+    auto stateMachine = new QGCStateMachine(QStringLiteral("ParameterManager PARAM_EXT_SET"), vehicle(), this);
+    auto sendParamExtSetState = new SendMavlinkMessageState(stateMachine, paramExtSetEncoder, kParamSetRetryCount);
+    auto incPendingWriteCountState = new FunctionState(QStringLiteral("ParameterManager increment pending write count"), stateMachine, [this]() {
+        _incrementPendingWriteCount();
+    });
+    auto waitAckState = new WaitForMavlinkMessageState(stateMachine, MAVLINK_MSG_ID_PARAM_EXT_ACK, _waitForParamValueAckMs, checkForParamExtAck);
+    auto inProgressState = new ConditionalState(QStringLiteral("ParameterManager ext param in progress"), stateMachine, [ackResult]() {
+        return ackResult->result == PARAM_ACK_IN_PROGRESS;
+    });
+    auto acceptedState = new ConditionalState(QStringLiteral("ParameterManager ext param accepted"), stateMachine, [ackResult]() {
+        return ackResult->result == PARAM_ACK_ACCEPTED;
+    }, [this, componentId, paramName, ackResult]() {
+        // The component may have clamped the value, take what it acked
+        if (Fact *const fact = _extFact(componentId, paramName); fact && ackResult->value.isValid()) {
+            fact->containerSetRawValue(ackResult->value);
+        }
+    });
+    auto decPendingWriteCountState = new FunctionState(QStringLiteral("ParameterManager decrement pending write count"), stateMachine, [this]() {
+        _decrementPendingWriteCount();
+    });
+    auto retryDecPendingWriteCountState = new FunctionState(QStringLiteral("ParameterManager retry decrement pending write count"), stateMachine, [this]() {
+        _decrementPendingWriteCount();
+    });
+    auto errorDecPendingWriteCountState = new FunctionState(QStringLiteral("ParameterManager error decrement pending write count"), stateMachine, [this]() {
+        _decrementPendingWriteCount();
+    });
+    auto logSuccessState = new FunctionState(QStringLiteral("ParameterManager log success"), stateMachine, [this, componentId, paramName]() {
+        qCDebug(ParameterManagerLog) << "Ext parameter write succeeded: param:" << paramName << _vehicleAndComponentString(componentId);
+        emit _paramSetSuccess(componentId, paramName);
+    });
+    auto logFailureState = new FunctionState(QStringLiteral("ParameterManager log failure"), stateMachine, [this, componentId, paramName]() {
+        qCDebug(ParameterManagerLog) << "Ext parameter write failed: param:" << paramName << _vehicleAndComponentString(componentId);
+        emit _paramSetFailure(componentId, paramName);
+    });
+    auto userNotifyState = new FunctionState(QStringLiteral("ParameterManager user notify"), stateMachine, [this, componentId, paramName]() {
+        QGC::showAppMessage(QStringLiteral("Parameter write failed: param: %1 %2").arg(paramName, _vehicleAndComponentString(componentId)));
+    });
+    auto paramRefreshState = new FunctionState(QStringLiteral("ParameterManager ext param refresh"), stateMachine, [this, componentId, paramName]() {
+        refreshParameter(componentId, paramName);
+    });
+    auto finalState = new QGCFinalState(stateMachine);
+
+    stateMachine->setInitialState(sendParamExtSetState);
+    sendParamExtSetState->addThisTransition     (&QGCState::advance, incPendingWriteCountState);
+    incPendingWriteCountState->addThisTransition(&QGCState::advance, waitAckState);
+    waitAckState->addThisTransition             (&QGCState::advance, inProgressState);
+
+    // PARAM_ACK_IN_PROGRESS means the component is still working on it, go back to waiting
+    inProgressState->addThisTransition(&QGCState::advance, waitAckState);
+    inProgressState->addTransition(inProgressState, &ConditionalState::skipped, acceptedState);
+
+    acceptedState->addThisTransition            (&QGCState::advance, decPendingWriteCountState);
+    decPendingWriteCountState->addThisTransition(&QGCState::advance, logSuccessState);
+    logSuccessState->addThisTransition          (&QGCState::advance, finalState);
+
+    // Rejected by the component
+    acceptedState->addTransition(acceptedState, &ConditionalState::skipped, errorDecPendingWriteCountState);
+    errorDecPendingWriteCountState->addThisTransition(&QGCState::advance, logFailureState);
+
+    // No ack at all, retry the send
+    waitAckState->addTransition(waitAckState, &WaitStateBase::timeout, retryDecPendingWriteCountState);
+    retryDecPendingWriteCountState->addThisTransition(&QGCState::advance, sendParamExtSetState);
+
+    // Retries exhausted
+    sendParamExtSetState->addThisTransition(&QGCState::error, logFailureState);
+
+    logFailureState->addThisTransition  (&QGCState::advance, userNotifyState);
+    userNotifyState->addThisTransition  (&QGCState::advance, paramRefreshState);
+    paramRefreshState->addThisTransition(&QGCState::advance, finalState);
+
+    qCDebug(ParameterManagerLog) << "Starting state machine for PARAM_EXT_SET on:" << paramName << _vehicleAndComponentString(componentId);
+    stateMachine->start();
 }
 
 void ParameterManager::_ftpDownloadComplete(const QString &fileName, const QString &errorMsg)
@@ -602,6 +925,14 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
     _resetHashCheck();
     setParameterDownloadSkipped(false);
     _startParameterDownload(componentId);
+
+    for (const int seenComponentId: _seenComponentIds) {
+        if ((componentId == MAV_COMP_ID_ALL) || (componentId == seenComponentId)) {
+            (void) _extParamRequestedCompIds.remove(seenComponentId);
+            (void) _extWaitingReadParamIndexMap.remove(seenComponentId);
+            _startExtParameterDownload(seenComponentId);
+        }
+    }
 }
 
 void ParameterManager::tryHashCheckCacheLoad()
@@ -730,6 +1061,11 @@ void ParameterManager::refreshParameter(int componentId, const QString &paramNam
 
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParameter - name:" << paramName << ")";
 
+    if (_extFact(componentId, paramName)) {
+        _mavlinkParamExtRequestRead(componentId, paramName, -1);
+        return;
+    }
+
     _mavlinkParamRequestRead(componentId, paramName, -1, true /* notifyFailure */);
 }
 
@@ -803,7 +1139,12 @@ bool ParameterManager::parameterExists(int componentId, const QString &paramName
         ret = _mapCompId2FactMap[componentId].contains(_remapParamNameToVersion(paramName));
     }
 
-    return ret;
+    return ret || extParameterExists(componentId, paramName);
+}
+
+bool ParameterManager::extParameterExists(int componentId, const QString &paramName) const
+{
+    return _mapCompId2ExtFactMap.value(_actualComponentId(componentId)).contains(paramName);
 }
 
 Fact *ParameterManager::getParameter(int componentId, const QString &paramName)
@@ -812,6 +1153,9 @@ Fact *ParameterManager::getParameter(int componentId, const QString &paramName)
 
     const QString mappedParamName = _remapParamNameToVersion(paramName);
     if (!_mapCompId2FactMap.contains(componentId) || !_mapCompId2FactMap[componentId].contains(mappedParamName)) {
+        if (Fact *const extFact = _extFact(componentId, paramName)) {
+            return extFact;
+        }
         qgcApp()->reportMissingParameter(componentId, mappedParamName);
         return &_defaultFact;
     }
@@ -826,6 +1170,9 @@ QStringList ParameterManager::parameterNames(int componentId) const
     const int compId = _actualComponentId(componentId);
     const QMap<QString, Fact*> &factMap = _mapCompId2FactMap[compId];
     for (const QString &paramName: factMap.keys()) {
+        names << paramName;
+    }
+    for (const QString &paramName: _mapCompId2ExtFactMap.value(compId).keys()) {
         names << paramName;
     }
 
@@ -1307,6 +1654,70 @@ FactMetaData::ValueType_t ParameterManager::mavTypeToFactType(MAV_PARAM_TYPE mav
     }
 }
 
+MAV_PARAM_EXT_TYPE ParameterManager::factTypeToMavExtType(FactMetaData::ValueType_t factType)
+{
+    switch (factType) {
+    case FactMetaData::valueTypeUint8:
+    case FactMetaData::valueTypeBool:
+        return MAV_PARAM_EXT_TYPE_UINT8;
+    case FactMetaData::valueTypeInt8:
+        return MAV_PARAM_EXT_TYPE_INT8;
+    case FactMetaData::valueTypeUint16:
+        return MAV_PARAM_EXT_TYPE_UINT16;
+    case FactMetaData::valueTypeInt16:
+        return MAV_PARAM_EXT_TYPE_INT16;
+    case FactMetaData::valueTypeUint32:
+        return MAV_PARAM_EXT_TYPE_UINT32;
+    case FactMetaData::valueTypeInt32:
+        return MAV_PARAM_EXT_TYPE_INT32;
+    case FactMetaData::valueTypeUint64:
+        return MAV_PARAM_EXT_TYPE_UINT64;
+    case FactMetaData::valueTypeInt64:
+        return MAV_PARAM_EXT_TYPE_INT64;
+    case FactMetaData::valueTypeFloat:
+        return MAV_PARAM_EXT_TYPE_REAL32;
+    case FactMetaData::valueTypeDouble:
+        return MAV_PARAM_EXT_TYPE_REAL64;
+    case FactMetaData::valueTypeString:
+    case FactMetaData::valueTypeCustom:
+        return MAV_PARAM_EXT_TYPE_CUSTOM;
+    default:
+        qCCritical(ParameterManagerLog) << "Internal Error: Unsupported fact value type" << factType;
+        return MAV_PARAM_EXT_TYPE_INT32;
+    }
+}
+
+FactMetaData::ValueType_t ParameterManager::mavExtTypeToFactType(MAV_PARAM_EXT_TYPE mavExtType)
+{
+    switch (mavExtType) {
+    case MAV_PARAM_EXT_TYPE_UINT8:
+        return FactMetaData::valueTypeUint8;
+    case MAV_PARAM_EXT_TYPE_INT8:
+        return FactMetaData::valueTypeInt8;
+    case MAV_PARAM_EXT_TYPE_UINT16:
+        return FactMetaData::valueTypeUint16;
+    case MAV_PARAM_EXT_TYPE_INT16:
+        return FactMetaData::valueTypeInt16;
+    case MAV_PARAM_EXT_TYPE_UINT32:
+        return FactMetaData::valueTypeUint32;
+    case MAV_PARAM_EXT_TYPE_INT32:
+        return FactMetaData::valueTypeInt32;
+    case MAV_PARAM_EXT_TYPE_UINT64:
+        return FactMetaData::valueTypeUint64;
+    case MAV_PARAM_EXT_TYPE_INT64:
+        return FactMetaData::valueTypeInt64;
+    case MAV_PARAM_EXT_TYPE_REAL32:
+        return FactMetaData::valueTypeFloat;
+    case MAV_PARAM_EXT_TYPE_REAL64:
+        return FactMetaData::valueTypeDouble;
+    case MAV_PARAM_EXT_TYPE_CUSTOM:
+        return FactMetaData::valueTypeString;
+    default:
+        qCCritical(ParameterManagerLog) << "Internal Error: Unsupported MAV_PARAM_EXT_TYPE" << mavExtType;
+        return FactMetaData::valueTypeInt32;
+    }
+}
+
 void ParameterManager::_checkInitialLoadComplete()
 {
     if (_initialLoadComplete) {
@@ -1341,6 +1752,11 @@ void ParameterManager::_checkInitialLoadComplete()
     _debugCacheCRC.clear();
 
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Initial load complete";
+
+    // Held back until now so the ext queries don't compete with the classic parameter download
+    for (const int componentId: _seenComponentIds) {
+        _startExtParameterDownload(componentId);
+    }
 
     // Check for index based load failures
     QString indexList;
@@ -1572,7 +1988,15 @@ void ParameterManager::setParameterDownloadSkipped(bool skipped)
 
 QList<int> ParameterManager::componentIds() const
 {
-    return _paramCountMap.keys();
+    QList<int> ids = _paramCountMap.keys();
+
+    for (const int componentId: _mapCompId2ExtFactMap.keys()) {
+        if (!ids.contains(componentId)) {
+            ids.append(componentId);
+        }
+    }
+
+    return ids;
 }
 
 bool ParameterManager::pendingWrites() const

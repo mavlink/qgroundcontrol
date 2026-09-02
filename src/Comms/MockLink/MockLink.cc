@@ -3282,6 +3282,11 @@ void MockLink::clearVehicleAttitudeOverride()
     _attitudeOverride.enabled = false;
 }
 
+MockLinkCamera *MockLink::mockLinkCamera() const
+{
+    return _mockLinkCamera;
+}
+
 void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
 {
     if (modeIndexOneBased < 1 || modeIndexOneBased > _availableModesCount()) {
