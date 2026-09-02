@@ -18,7 +18,9 @@ from .model import (
     GroupDef,
     PageDef,
     load_page_def,
+    load_pages_data,
     parse_keywords,
+    resolve_page_def_path,
     split_translated_list,
 )
 
@@ -31,8 +33,10 @@ __all__ = [
     "get_fact_type",
     "has_enum_strings",
     "load_page_def",
+    "load_pages_data",
     "load_settings_metadata",
     "parse_keywords",
+    "resolve_page_def_path",
     "split_translated_list",
     "stem_to_accessor",
     "valid_accessors",

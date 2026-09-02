@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtQmlIntegration/QtQmlIntegration>
 #include <QtCore/QJsonObject>
 #include <QtCore/QMap>
+#include <QtQml/QQmlPropertyMap>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class ADSBVehicleManagerSettings;
 class APMMavlinkStreamRateSettings;
@@ -30,10 +30,11 @@ class FactMetaData;
 class JoystickManagerSettings;
 class LogManagerSettings;
 class LogViewerSettings;
+class SettingsGroup;
 
 /// \brief Provides access to all app settings
 ///
-class SettingsManager : public QObject
+class SettingsManager : public QQmlPropertyMap
 {
     Q_OBJECT
     QML_ELEMENT
@@ -99,6 +100,14 @@ public:
     ///     @param metaData - MetaData for setting fact
     ///     @param userVisible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
     static void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible);
+
+    /// Registers a custom build settings group so QML can access it as
+    /// QGroundControl.settingsManager.<accessorName>. Called from a
+    /// QGCCorePlugin::registerCustomSettings override. The accessor name must be the
+    /// camelCase form of the group's SettingsGroup.json stem plus "Settings"
+    /// (e.g. Custom.SettingsGroup.json -> "customSettings") so the generated settings
+    /// pages resolve to the same name. Takes ownership of the group; a rejected group is deleted.
+    void registerCustomSettingsGroup(const QString &accessorName, SettingsGroup *group);
 
     ADSBVehicleManagerSettings *adsbVehicleManagerSettings() const;
     APMMavlinkStreamRateSettings *apmMavlinkStreamRateSettings() const;

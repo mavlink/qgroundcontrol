@@ -124,6 +124,15 @@ qt_add_resources(${CMAKE_PROJECT_NAME} custom_json
     FILES "${CUSTOM_JSON_RESOURCE}"
 )
 
+# CustomSettings group metadata: SettingsGroup loads it from :/json at runtime and
+# the settings QML generator reads it from src/Settings at configure time.
+set(CUSTOM_SETTINGS_JSON_RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/Settings/Custom.SettingsGroup.json")
+qgc_set_qt_resource_alias("${CUSTOM_SETTINGS_JSON_RESOURCE}")
+qt_add_resources(${CMAKE_PROJECT_NAME} custom_settings_json
+    PREFIX "/json"
+    FILES "${CUSTOM_SETTINGS_JSON_RESOURCE}"
+)
+
 list(APPEND QML_IMPORT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res")
 set(QML_IMPORT_PATH "${QML_IMPORT_PATH}" CACHE STRING "Extra QML import paths" FORCE)
 
@@ -200,6 +209,8 @@ set(CUSTOM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanComplexItem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanPlanCreator.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanPlanCreator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Settings/CustomSettings.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Settings/CustomSettings.h
     PARENT_SCOPE
 )
 
@@ -218,6 +229,7 @@ set(CUSTOM_INCLUDE_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Settings
     PARENT_SCOPE
 )
 

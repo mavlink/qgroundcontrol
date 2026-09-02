@@ -1,6 +1,7 @@
 """Tests for the settings QML page generator."""
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -13,7 +14,9 @@ from generators.settings_qml.page_generator import (
     PageDef,
     generate_page_qml,
     generate_pages_model_qml,
+    get_fact_type,
     load_page_def,
+    load_settings_metadata,
 )
 
 from ._helpers import REPO_ROOT
@@ -1367,3 +1370,440 @@ def test_cli_preserves_unchanged_output_timestamps(tmp_path: Path, monkeypatch) 
 
     assert timestamps
     assert timestamps == {path.name: path.stat().st_mtime_ns for path in output_dir.glob("*.qml")}
+
+
+class TestCustomOverlay:
+    """Custom-build overlay merging into the stock pages model."""
+
+    @pytest.fixture
+    def stock_setup(self, tmp_path: Path) -> tuple[Path, Path]:
+        """Stock pages dir with Alpha/Beta pages plus an empty custom overlay dir."""
+        pages_dir = tmp_path / "pages"
+        pages_dir.mkdir()
+        page_def = {
+            "version": 1,
+            "groups": [{"heading": "Stock Section", "controls": [{"setting": "appSettings.x"}]}],
+        }
+        (pages_dir / "Alpha.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
+        (pages_dir / "Beta.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
+        pages_json = {
+            "version": 1,
+            "pages": [
+                {
+                    "name": "Alpha",
+                    "qml": "Alpha.qml",
+                    "icon": "qrc:/alpha.svg",
+                    "pageDefinition": "Alpha.SettingsUI.json",
+                },
+                {"divider": True},
+                {
+                    "name": "Beta",
+                    "qml": "Beta.qml",
+                    "icon": "qrc:/beta.svg",
+                    "pageDefinition": "Beta.SettingsUI.json",
+                },
+            ],
+        }
+        pages_path = pages_dir / "SettingsPages.json"
+        pages_path.write_text(json.dumps(pages_json), encoding="utf-8")
+        custom_dir = tmp_path / "custom_pages"
+        custom_dir.mkdir()
+        return pages_path, custom_dir
+
+    def _write_overlay(self, custom_dir: Path, pages: list[dict]) -> None:
+        overlay = {"version": 1, "pages": pages}
+        (custom_dir / "SettingsPages.json").write_text(json.dumps(overlay), encoding="utf-8")
+
+    def _gamma_entry(self, custom_dir: Path, **extra) -> dict:
+        page_def = {
+            "version": 1,
+            "groups": [{"heading": "Custom Section", "controls": [{"setting": "appSettings.x"}]}],
+        }
+        (custom_dir / "Gamma.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
+        return {
+            "name": "Gamma",
+            "qml": "Gamma.qml",
+            "icon": "qrc:/gamma.svg",
+            "pageDefinition": "Gamma.SettingsUI.json",
+            **extra,
+        }
+
+    def test_no_overlay_file_keeps_stock_pages(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        qml = generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+        assert 'nameKey: "Alpha"' in qml
+        assert 'nameKey: "Beta"' in qml
+
+    def test_append_page(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir)])
+        qml = generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+        assert 'nameKey: "Gamma"' in qml
+        assert 'qsTranslate("Gamma.SettingsUI.json", "Custom Section")' in qml
+        assert qml.index('nameKey: "Beta"') < qml.index('nameKey: "Gamma"')
+
+    def test_insert_after(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, insertAfter="Alpha")])
+        qml = generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+        assert qml.index('nameKey: "Alpha"') < qml.index('nameKey: "Gamma"')
+        assert qml.index('nameKey: "Gamma"') < qml.index('nameKey: "Beta"')
+
+    def test_insert_before(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, insertBefore="Alpha")])
+        qml = generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+        assert qml.index('nameKey: "Gamma"') < qml.index('nameKey: "Alpha"')
+
+    def test_multiple_insert_after_same_anchor_preserves_order(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        gamma = self._gamma_entry(custom_dir, insertAfter="Alpha")
+        delta = {
+            "name": "Delta",
+            "qml": "Delta.qml",
+            "icon": "qrc:/delta.svg",
+            "pageDefinition": "Gamma.SettingsUI.json",
+            "insertAfter": "Alpha",
+        }
+        self._write_overlay(custom_dir, [gamma, delta])
+        qml = generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+        assert (
+            qml.index('nameKey: "Alpha"')
+            < qml.index('nameKey: "Gamma"')
+            < qml.index('nameKey: "Delta"')
+            < qml.index('nameKey: "Beta"')
+        )
+
+    def test_non_string_qml_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, qml=0)])
+        with pytest.raises(ValueError, match="'qml'"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_non_string_page_definition_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, pageDefinition=[])])
+        with pytest.raises(ValueError, match="'pageDefinition'"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_backslash_qml_path_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, qml="sub\\Gamma.qml")])
+        with pytest.raises(ValueError, match="bare file name"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_remove_page(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [{"remove": "Beta"}])
+        qml = generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+        assert 'nameKey: "Alpha"' in qml
+        assert 'nameKey: "Beta"' not in qml
+
+    def test_replace_page_keeps_position(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        page_def = {
+            "version": 1,
+            "groups": [{"heading": "Replaced Section", "controls": [{"setting": "appSettings.x"}]}],
+        }
+        (custom_dir / "AlphaCustom.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
+        self._write_overlay(custom_dir, [{
+            "name": "Alpha",
+            "qml": "Alpha.qml",
+            "icon": "qrc:/alpha-custom.svg",
+            "pageDefinition": "AlphaCustom.SettingsUI.json",
+        }])
+        qml = generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+        assert qml.count('nameKey: "Alpha"') == 1
+        assert "qrc:/alpha-custom.svg" in qml
+        assert "Replaced Section" in qml
+        assert qml.index('nameKey: "Alpha"') < qml.index('nameKey: "Beta"')
+
+    def test_custom_page_def_shadows_stock(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        page_def = {
+            "version": 1,
+            "groups": [{"heading": "Shadowed Section", "controls": [{"setting": "appSettings.x"}]}],
+        }
+        (custom_dir / "Alpha.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
+        qml = generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+        assert "Shadowed Section" in qml
+        assert "Stock Section" not in qml.split('nameKey: "Beta"')[0]
+
+    def test_remove_unknown_page_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [{"remove": "Nonexistent"}])
+        with pytest.raises(ValueError, match="Nonexistent"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_insert_after_unknown_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, insertAfter="Nonexistent")])
+        with pytest.raises(ValueError, match="Nonexistent"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_both_position_keys_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(
+            custom_dir, [self._gamma_entry(custom_dir, insertAfter="Alpha", insertBefore="Beta")]
+        )
+        with pytest.raises(ValueError, match="insertAfter"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_replace_with_position_key_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [{
+            "name": "Alpha",
+            "qml": "Alpha.qml",
+            "icon": "qrc:/alpha.svg",
+            "pageDefinition": "Alpha.SettingsUI.json",
+            "insertAfter": "Beta",
+        }])
+        with pytest.raises(ValueError, match="replace"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_remove_with_extra_keys_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [{"remove": "Beta", "icon": "qrc:/x.svg"}])
+        with pytest.raises(ValueError, match="remove"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_missing_name_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        entry = self._gamma_entry(custom_dir)
+        del entry["name"]
+        self._write_overlay(custom_dir, [entry])
+        with pytest.raises(ValueError, match="'name'"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_empty_position_key_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, insertAfter="")])
+        with pytest.raises(ValueError, match="insertAfter"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_non_string_position_key_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, insertBefore=1)])
+        with pytest.raises(ValueError, match="insertBefore"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_qml_with_path_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, qml="./Gamma.qml")])
+        with pytest.raises(ValueError, match="bare file name"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_case_insensitive_duplicate_qml_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, qml="alpha.qml")])
+        with pytest.raises(ValueError, match=re.escape("alpha.qml")):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_pages_model_qml_name_reserved(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, qml="settingsPagesModel.qml")])
+        with pytest.raises(ValueError, match=re.escape("SettingsPagesModel.qml")):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_duplicate_qml_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, qml="Alpha.qml")])
+        with pytest.raises(ValueError, match=re.escape("Alpha.qml")):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_duplicate_qml_error_names_overlay_file(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, qml="Alpha.qml")])
+        with pytest.raises(ValueError, match=re.escape(str(custom_dir / "SettingsPages.json"))):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_overlay_unknown_key_rejected(self, stock_setup: tuple[Path, Path]):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir, bogusKey=True)])
+        with pytest.raises(ValueError, match="bogusKey"):
+            generate_pages_model_qml(pages_path, custom_pages_dir=custom_dir)
+
+    def test_overlay_keys_rejected_in_stock_file(self, stock_setup: tuple[Path, Path]):
+        pages_path, _ = stock_setup
+        data = json.loads(pages_path.read_text(encoding="utf-8"))
+        data["pages"][0]["insertAfter"] = "Beta"
+        pages_path.write_text(json.dumps(data), encoding="utf-8")
+        with pytest.raises(ValueError, match="insertAfter"):
+            generate_pages_model_qml(pages_path)
+
+    def test_cli_list_outputs(self, stock_setup: tuple[Path, Path], tmp_path: Path, monkeypatch, capsys):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir), {"remove": "Beta"}])
+        settings_dir = _make_settings_dir(
+            tmp_path,
+            {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]},
+        )
+        monkeypatch.setattr(settings_generator, "PAGES_DIR", pages_path.parent)
+        monkeypatch.setattr(settings_generator, "SETTINGS_DIR", settings_dir)
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["generate_pages", "--list-outputs", "--custom-pages-dir", str(custom_dir)],
+        )
+        assert settings_generator.main() == 0
+        lines = capsys.readouterr().out.strip().splitlines()
+        assert lines == ["Alpha.qml", "Gamma.qml", "SettingsPagesModel.qml"]
+
+    def test_cli_missing_page_definition_fatal(
+        self, stock_setup: tuple[Path, Path], monkeypatch, capsys
+    ):
+        pages_path, custom_dir = stock_setup
+        entry = self._gamma_entry(custom_dir)
+        (custom_dir / "Gamma.SettingsUI.json").unlink()
+        self._write_overlay(custom_dir, [entry])
+        monkeypatch.setattr(settings_generator, "PAGES_DIR", pages_path.parent)
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["generate_pages", "--list-outputs", "--custom-pages-dir", str(custom_dir)],
+        )
+        assert settings_generator.main() != 0
+        assert "Gamma.SettingsUI.json" in capsys.readouterr().err
+
+    def test_cli_collision_rejected_without_generated_pages(
+        self, stock_setup: tuple[Path, Path], tmp_path: Path, monkeypatch
+    ):
+        """Accessor collisions must fail configure even when no generated page needs metadata."""
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [{"remove": "Alpha"}, {"remove": "Beta"}])
+        settings_dir = _make_settings_dir(
+            tmp_path, {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]}
+        )
+        (settings_dir / "SettingsManager.h").write_text(
+            "Q_PROPERTY(QObject *appSettings READ appSettings CONSTANT)\n", encoding="utf-8"
+        )
+        custom_settings_root = tmp_path / "custom_settings"
+        custom_settings_root.mkdir()
+        custom_settings_dir = _make_settings_dir(
+            custom_settings_root,
+            {"App": [{"name": "z", "type": "bool", "shortDesc": "Z", "label": "Z"}]},
+        )
+        monkeypatch.setattr(settings_generator, "PAGES_DIR", pages_path.parent)
+        monkeypatch.setattr(settings_generator, "SETTINGS_DIR", settings_dir)
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "generate_pages",
+                "--list-outputs",
+                "--custom-pages-dir", str(custom_dir),
+                "--custom-settings-dir", str(custom_settings_dir),
+            ],
+        )
+        with pytest.raises(ValueError, match="appSettings"):
+            settings_generator.main()
+
+    def test_cli_generates_custom_page(self, stock_setup: tuple[Path, Path], tmp_path: Path, monkeypatch):
+        pages_path, custom_dir = stock_setup
+        self._write_overlay(custom_dir, [self._gamma_entry(custom_dir)])
+        settings_dir = _make_settings_dir(
+            tmp_path,
+            {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]},
+        )
+        output_dir = tmp_path / "generated"
+        monkeypatch.setattr(settings_generator, "PAGES_DIR", pages_path.parent)
+        monkeypatch.setattr(settings_generator, "SETTINGS_DIR", settings_dir)
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "generate_pages",
+                "--output-dir", str(output_dir),
+                "--custom-pages-dir", str(custom_dir),
+            ],
+        )
+        assert settings_generator.main() == 0
+        generated = sorted(p.name for p in output_dir.glob("*.qml"))
+        assert generated == ["Alpha.qml", "Beta.qml", "Gamma.qml", "SettingsPagesModel.qml"]
+        assert "Custom Section" in (output_dir / "Gamma.qml").read_text(encoding="utf-8")
+
+
+class TestCustomSettingsMetadata:
+    """Custom-build SettingsGroup.json metadata directories."""
+
+    def test_custom_accessor_fact_type(self, tmp_path: Path):
+        stock_dir = _make_settings_dir(
+            tmp_path, {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]}
+        )
+        custom_root = tmp_path / "custom"
+        custom_root.mkdir()
+        custom_dir = _make_settings_dir(
+            custom_root, {"Custom": [{"name": "z", "type": "bool", "shortDesc": "Z", "label": "Z"}]}
+        )
+        assert get_fact_type("customSettings.z", (stock_dir, custom_dir)) == "bool"
+        assert get_fact_type("appSettings.x", (stock_dir, custom_dir)) == "bool"
+
+    def test_page_generation_with_custom_accessor(self, tmp_path: Path):
+        stock_dir = _make_settings_dir(
+            tmp_path, {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]}
+        )
+        custom_root = tmp_path / "custom"
+        custom_root.mkdir()
+        custom_dir = _make_settings_dir(
+            custom_root, {"Custom": [{"name": "z", "type": "bool", "shortDesc": "Z", "label": "Z"}]}
+        )
+        page = PageDef(groups=[
+            GroupDef(heading="G", controls=[ControlDef(setting="customSettings.z")]),
+        ])
+        qml = generate_page_qml(page, (stock_dir, custom_dir))
+        assert "FactCheckBoxSlider" in qml
+        assert "QGroundControl.settingsManager.customSettings.z" in qml
+
+    def test_missing_accessor_header_warns_for_custom_dir(self, tmp_path: Path, capsys):
+        stock_dir = _make_settings_dir(
+            tmp_path, {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]}
+        )
+        custom_root = tmp_path / "custom"
+        custom_root.mkdir()
+        custom_dir = _make_settings_dir(
+            custom_root, {"Custom": [{"name": "z", "type": "bool", "shortDesc": "Z", "label": "Z"}]}
+        )
+        load_settings_metadata((stock_dir, custom_dir))
+        assert "collision checking is disabled" in capsys.readouterr().err
+
+    def test_custom_accessor_invalid_qml_identifier_rejected(self, tmp_path: Path):
+        stock_dir = _make_settings_dir(
+            tmp_path, {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]}
+        )
+        custom_root = tmp_path / "custom"
+        custom_root.mkdir()
+        custom_dir = _make_settings_dir(
+            custom_root, {"3D": [{"name": "z", "type": "bool", "shortDesc": "Z", "label": "Z"}]}
+        )
+        with pytest.raises(ValueError, match="3DSettings"):
+            load_settings_metadata((stock_dir, custom_dir))
+
+    def test_custom_accessor_collision_rejected(self, tmp_path: Path):
+        stock_dir = _make_settings_dir(
+            tmp_path, {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]}
+        )
+        (stock_dir / "SettingsManager.h").write_text(
+            "Q_PROPERTY(QObject *appSettings READ appSettings CONSTANT)\n", encoding="utf-8"
+        )
+        custom_root = tmp_path / "custom"
+        custom_root.mkdir()
+        custom_dir = _make_settings_dir(
+            custom_root, {"App": [{"name": "z", "type": "bool", "shortDesc": "Z", "label": "Z"}]}
+        )
+        with pytest.raises(ValueError, match="appSettings"):
+            load_settings_metadata((stock_dir, custom_dir))
+
+    def test_duplicate_derived_custom_accessor_rejected(self, tmp_path: Path):
+        stock_dir = _make_settings_dir(
+            tmp_path, {"App": [{"name": "x", "type": "bool", "shortDesc": "X", "label": "X"}]}
+        )
+        # Two dirs: ABC/Abc as sibling files would collide on case-insensitive filesystems
+        dirs = []
+        for sub, stem in (("custom1", "ABC"), ("custom2", "Abc")):
+            root = tmp_path / sub
+            root.mkdir()
+            dirs.append(_make_settings_dir(
+                root, {stem: [{"name": "z", "type": "bool", "shortDesc": "Z", "label": "Z"}]}
+            ))
+        with pytest.raises(ValueError, match="abcSettings"):
+            load_settings_metadata((stock_dir, *dirs))

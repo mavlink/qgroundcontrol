@@ -81,6 +81,24 @@ Search terms are derived from:
    - Add your new QML filename to `_generated_qml_names`.
 4. Build QGC to generate and include the new page.
 
+## Custom Build Settings Pages
+
+Custom builds (`QGC_CUSTOM_DIR`) can add, replace, reposition, or remove generated settings pages without overriding the stock generated QML:
+
+1. **Page list overlay** — create `<custom>/src/AppSettings/pages/SettingsPages.json`. Its entries are merged into the stock page list at configure time:
+   - An entry whose `name` matches a stock page **replaces** it in place.
+   - New entries support `insertAfter`/`insertBefore` (referencing a stock page `name`); otherwise they append.
+   - `{ "remove": "<name>" }` removes a stock page.
+2. **Page definitions** — put `*.SettingsUI.json` files in the same custom pages dir. A file with the same name as a stock definition shadows it.
+3. **Custom settings groups** — to reference facts that don't exist in stock QGC:
+   - Add `<custom>/src/Settings/<Name>.SettingsGroup.json` fact metadata (also compile it into the app under the `:/json` resource prefix).
+   - Create a `SettingsGroup` subclass for it.
+   - Override `QGCCorePlugin::registerCustomSettings` and call `SettingsManager::registerCustomSettingsGroup("<accessor>", new MySettings())` (the manager takes ownership). The accessor must be the camelCase JSON stem plus `Settings` (e.g. `Custom.SettingsGroup.json` → `customSettings`) so generated pages resolve `QGroundControl.settingsManager.<accessor>.<fact>`.
+
+CMake wires this automatically when the custom directories exist; the generated output list is computed by the generator's `--list-outputs` mode.
+
+The `custom-example` build in the repo includes a complete working example of all of the above: a page list overlay adding a custom settings page, its page definition, the custom settings group (fact metadata and `SettingsGroup` subclass), and the plugin registration override.
+
 ## Important Notes
 
 - If a page in `SettingsPages.json` has no `pageDefinition`, it is treated as hand-written QML/URL content and not generated.

@@ -1,0 +1,29 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "showAttitudeWidget",
+            "shortDesc": "Show the custom attitude widget in the fly view.",
+            "type": "bool",
+            "default": true,
+            "label": "Show attitude widget"
+        },
+        {
+            "name": "updateInterval",
+            "shortDesc": "How often the custom widgets refresh their values.",
+            "type": "uint32",
+            "enumStrings": "Slow,Normal,Fast",
+            "enumValues": "0,1,2",
+            "default": 1,
+            "label": "Widget update rate"
+        },
+        {
+            "name": "operatorName",
+            "shortDesc": "Operator name shown in the custom fly view overlay.",
+            "type": "string",
+            "default": "",
+            "label": "Operator name"
+        }
+    ]
+}
