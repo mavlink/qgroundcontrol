@@ -57,6 +57,7 @@ via composite actions and reusable workflows. Python helpers in `scripts/` are i
 | `crowdin.yml`, `lupdate.yml` | Translation workflows |
 | `dependency-review.yml` | Dependency security review |
 | `scorecard.yml` | OpenSSF Scorecard |
+| `stale.yml` | Nightly stale-issue labeling and closing (feature requests get their own close message) |
 | `flatpak.yml` | Flatpak builds |
 | `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket |
 | `px4-metadata.yml` | PX4 metadata sync |
