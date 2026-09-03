@@ -2,6 +2,7 @@
 #include "ParameterManager.h"
 #include "QGCCorePlugin.h"
 #include "Vehicle.h"
+#include "VehicleComponent.h"
 
 CustomAutoPilotPlugin::CustomAutoPilotPlugin(Vehicle *vehicle, QObject *parent)
     : PX4AutoPilotPlugin(vehicle, parent)
@@ -22,51 +23,47 @@ const QVariantList &CustomAutoPilotPlugin::vehicleComponents()
         return _components;
     }
 
-    if (!_vehicle) {
-        qWarning() << "Internal error";
-        return _components;
-    }
+    const QVariantList &baseComponents =
+        PX4AutoPilotPlugin::vehicleComponents();
 
-    const bool showAdvanced = QGCCorePlugin::instance()->showAdvancedUI();
-    if (!_vehicle->parameterManager()->parametersReady()) {
-        qWarning() << "Call to vehicleCompenents prior to parametersReady";
-        return _components;
-    }
+    const bool showAdvanced =
+        QGCCorePlugin::instance()->showAdvancedUI();
 
-    if (showAdvanced) {
-        _airframeComponent = new AirframeComponent(_vehicle, this);
-        _airframeComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_airframeComponent)));
+    for (const QVariant &componentVariant : baseComponents) {
+        VehicleComponent *component =
+            componentVariant.value<VehicleComponent *>();
 
-        _sensorsComponent = new SensorsComponent(_vehicle, this);
-        _sensorsComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_sensorsComponent)));
+        if (!component) {
+            continue;
+        }
 
-        _radioComponent = new PX4RadioComponent(_vehicle, this);
-        _radioComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_radioComponent)));
+        const QString name = component->name();
 
-        _flightModesComponent = new FlightModesComponent(_vehicle, this);
-        _flightModesComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_flightModesComponent)));
+        if (component->KnownVehicleComponent()
+            == AutoPilotPlugin::KnownSafetyVehicleComponent) {
+            _components.append(componentVariant);
+            continue;
+        }
 
-        _powerComponent = new PowerComponent(_vehicle, this);
-        _powerComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_powerComponent)));
+        if (name == QStringLiteral("Actuators")) {
+            _components.append(componentVariant);
+            continue;
+        }
 
-        _motorComponent = new MotorComponent(_vehicle, this);
-        _motorComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_motorComponent)));
-    }
+        if (showAdvanced) {
+            switch (component->KnownVehicleComponent()) {
+            case AutoPilotPlugin::KnownRadioVehicleComponent:
+            case AutoPilotPlugin::KnownFlightModesVehicleComponent:
+            case AutoPilotPlugin::KnownSensorsVehicleComponent:
+            case AutoPilotPlugin::KnownPowerVehicleComponent:
+            case AutoPilotPlugin::KnownJoystickVehicleComponent:
+                _components.append(componentVariant);
+                break;
 
-    _safetyComponent = new SafetyComponent(_vehicle, this);
-    _safetyComponent->setupTriggerSignals();
-    _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_safetyComponent)));
-
-    if (showAdvanced) {
-        _tuningComponent = new PX4TuningComponent(_vehicle, this);
-        _tuningComponent->setupTriggerSignals();
-        _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_tuningComponent)));
+            default:
+                break;
+            }
+        }
     }
 
     return _components;
