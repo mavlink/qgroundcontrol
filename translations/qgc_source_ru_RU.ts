@@ -10001,200 +10001,200 @@ VTOL</translation>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="27"/>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="49"/>
       <source>Joystick</source>
-      <translation type="unfinished">Joystick</translation>
+      <translation>Джойстик</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="37"/>
       <source>No Vehicle</source>
-      <translation type="unfinished">No Vehicle</translation>
+      <translation>Нет борта</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="38"/>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="190"/>
       <source>Yes</source>
-      <translation type="unfinished">Yes</translation>
+      <translation>Да</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="38"/>
       <source>No</source>
-      <translation type="unfinished">No</translation>
+      <translation>Нет</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="47"/>
       <source>Type:</source>
-      <translation type="unfinished">Type:</translation>
+      <translation>Тип:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="49"/>
       <source>Gamepad</source>
-      <translation type="unfinished">Gamepad</translation>
+      <translation>Геймпад</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="53"/>
       <source>Connection:</source>
-      <translation type="unfinished">Connection:</translation>
+      <translation>Подключение:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="61"/>
       <source>Inputs:</source>
-      <translation type="unfinished">Inputs:</translation>
+      <translation>Входы:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="65"/>
       <source>%1 axes</source>
-      <translation type="unfinished">%1 axes</translation>
+      <translation>Осей: %1</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="65"/>
       <source>%1 buttons</source>
-      <translation type="unfinished">%1 buttons</translation>
+      <translation>Кнопок: %1</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="66"/>
       <source>%1 balls</source>
-      <translation type="unfinished">%1 balls</translation>
+      <translation>Шаров: %1</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="67"/>
       <source>%1 touchpads</source>
-      <translation type="unfinished">%1 touchpads</translation>
+      <translation>Тачпадов: %1</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="73"/>
       <source>Battery:</source>
-      <translation type="unfinished">Battery:</translation>
+      <translation>Аккумулятор:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="79"/>
       <source>%1%</source>
-      <translation type="unfinished">%1%</translation>
+      <translation>%1%</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="88"/>
       <source>Features:</source>
-      <translation type="unfinished">Features:</translation>
+      <translation>Функции:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="95"/>
       <source>Rumble</source>
-      <translation type="unfinished">Rumble</translation>
+      <translation>Вибрация</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="96"/>
       <source>Trigger Rumble</source>
-      <translation type="unfinished">Trigger Rumble</translation>
+      <translation>Вибрация триггеров</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="97"/>
       <source>LED</source>
-      <translation type="unfinished">LED</translation>
+      <translation>LED</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="98"/>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="231"/>
       <source>Gyro</source>
-      <translation type="unfinished">Gyro</translation>
+      <translation>Гироскоп</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="99"/>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="235"/>
       <source>Accel</source>
-      <translation type="unfinished">Accel</translation>
+      <translation>Акселерометр</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="108"/>
       <source>Player:</source>
-      <translation type="unfinished">Player:</translation>
+      <translation>Игрок:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="119"/>
       <source>Device Details</source>
-      <translation type="unfinished">Device Details</translation>
+      <translation>Сведения об устройстве</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="126"/>
       <source>Device Type:</source>
-      <translation type="unfinished">Device Type:</translation>
+      <translation>Тип устройства:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="135"/>
       <source>Vendor/Product:</source>
-      <translation type="unfinished">Vendor/Product:</translation>
+      <translation>Производитель/устройство:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="144"/>
       <source>Serial:</source>
-      <translation type="unfinished">Serial:</translation>
+      <translation>Серийный номер:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="153"/>
       <source>Firmware:</source>
-      <translation type="unfinished">Firmware:</translation>
+      <translation>Прошивка:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="162"/>
       <source>Path:</source>
-      <translation type="unfinished">Path:</translation>
+      <translation>Путь:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="173"/>
       <source>GUID:</source>
-      <translation type="unfinished">GUID:</translation>
+      <translation>GUID:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="186"/>
       <source>Virtual:</source>
-      <translation type="unfinished">Virtual:</translation>
+      <translation>Виртуальное:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="195"/>
       <source>LED Types:</source>
-      <translation type="unfinished">LED Types:</translation>
+      <translation>Типы LED:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="202"/>
       <source>Mono</source>
-      <translation type="unfinished">Mono</translation>
+      <translation>Одноцветная</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="203"/>
       <source>RGB</source>
-      <translation type="unfinished">RGB</translation>
+      <translation>RGB</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="204"/>
       <source>Player</source>
-      <translation type="unfinished">Player</translation>
+      <translation>Игрок</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="213"/>
       <source>Haptic:</source>
-      <translation type="unfinished">Haptic:</translation>
+      <translation>Тактильная отдача:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="217"/>
       <source>%1 effects</source>
-      <translation type="unfinished">%1 effects</translation>
+      <translation>Эффектов: %1</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="222"/>
       <source>Motion Sensors:</source>
-      <translation type="unfinished">Motion Sensors:</translation>
+      <translation>Датчики движения:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="231"/>
       <source>Gyro (%1 Hz)</source>
-      <translation type="unfinished">Gyro (%1 Hz)</translation>
+      <translation>Гироскоп (%1 Гц)</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="235"/>
       <source>Accel (%1 Hz)</source>
-      <translation type="unfinished">Accel (%1 Hz)</translation>
+      <translation>Акселерометр (%1 Гц)</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="33"/>
       <source>Enabled:</source>
-      <translation type="unfinished">Enabled:</translation>
+      <translation>Включён:</translation>
     </message>
   </context>
   <context>
