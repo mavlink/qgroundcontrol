@@ -17,8 +17,8 @@ namespace {
 
 constexpr char kSynclairSettingsGroup[] = "SynclairVisionSettings";
 constexpr char kLegacyTcpControlSetting[] = "networkForceRtspVideoOverTcp";
-constexpr uint8_t kLegacyTcpSystemId = 1;
-constexpr uint8_t kLegacyTcpComponentId = MAV_COMP_ID_ONBOARD_COMPUTER;
+constexpr uint8_t kDigiviewSystemId = 252;
+constexpr uint8_t kDigiviewComponentId = 66;
 
 bool legacyTcpControlEnabled()
 {
@@ -114,6 +114,9 @@ bool DigiviewConnection::connectToEndpoint()
 {
     _automaticReconnectAllowed = true;
 
+    _mavlinkStatus = {};
+    _mavlinkMessageBuffer = {};
+
     if (legacyTcpControlEnabled()) {
         _socket.close();
         _legacyTcpTransport->disconnectFromEndpoint();
@@ -156,6 +159,9 @@ bool DigiviewConnection::connectToEndpoint()
 void DigiviewConnection::disconnectFromEndpoint(bool preventAutomaticReconnect)
 {
     _automaticReconnectAllowed = !preventAutomaticReconnect;
+
+    _mavlinkStatus = {};
+    _mavlinkMessageBuffer = {};
 
     if (_socket.isOpen()) {
         _socket.close();
@@ -239,9 +245,14 @@ void DigiviewConnection::_readPendingDatagrams()
         // sender port here would be more fragile than helpful.
         Q_UNUSED(senderPort);
 
-        mavlink_message_t message;
+        mavlink_message_t message {};
         for (int i = 0; i < bytesRead; ++i) {
-            if (mavlink_parse_char(MAVLINK_COMM_0, static_cast<uint8_t>(datagram.at(i)), &message, &_mavlinkStatus)) {
+            if (mavlink_frame_char_buffer(
+                    &_mavlinkMessageBuffer,
+                    &_mavlinkStatus,
+                    static_cast<uint8_t>(datagram.at(i)),
+                    &message,
+                    &_mavlinkStatus) == MAVLINK_FRAMING_OK) {
                 emit messageReceived(message);
             }
         }
@@ -262,7 +273,7 @@ void DigiviewConnection::_emitLegacyTcpHeartbeat()
     }
 
     mavlink_message_t heartbeat {};
-    mavlink_msg_heartbeat_pack(kLegacyTcpSystemId, kLegacyTcpComponentId, &heartbeat, MAV_TYPE_ONBOARD_CONTROLLER,
+    mavlink_msg_heartbeat_pack(kDigiviewSystemId, kDigiviewComponentId, &heartbeat, MAV_TYPE_ONBOARD_CONTROLLER,
                                MAV_AUTOPILOT_INVALID, 0, 0, MAV_STATE_ACTIVE);
     emit messageReceived(heartbeat);
 }

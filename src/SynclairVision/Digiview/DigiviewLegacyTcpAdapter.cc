@@ -18,8 +18,8 @@ QGC_LOGGING_CATEGORY(DigiviewLegacyTcpAdapterLog, "Digiview.LegacyTcp.Adapter")
 
 namespace {
 
-constexpr uint8_t kSyntheticSystemId = 1;
-constexpr uint8_t kSyntheticComponentId = MAV_COMP_ID_ONBOARD_COMPUTER;
+constexpr uint8_t kSyntheticSystemId = 252;
+constexpr uint8_t kSyntheticComponentId = 66;
 constexpr float kOneShotIntervalUs = -1000.0F;
 constexpr char kSupportedParameterGroups[] =
     "SYSTEM_STATUS, MODEL (GET only), VIDEO_OUTPUT, CAPTURE, DETECTION, TRACKED_DETECTION (GET only), "

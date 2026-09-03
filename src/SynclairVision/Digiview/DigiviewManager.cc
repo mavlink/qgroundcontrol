@@ -22,6 +22,9 @@ constexpr uint8_t kCamTargetingLockFlagsUnchanged = 0xFF;
 constexpr uint8_t kCamTargetingLockFlagsAll = 0x07;
 constexpr float kOneShotIntervalUs = -1000.0F;
 constexpr float kVideoOutputParametersSubscriptionIntervalUs = 100000.0F;
+constexpr int kVideoOutputTransactionTimeoutMs = 2000;
+constexpr uint8_t kDigiviewSystemId = 252;
+constexpr uint8_t kDigiviewComponentId = 66;
 
 void copyStringToCharBuf(const QString& src, char* dest, int size)
 {
@@ -82,6 +85,9 @@ DigiviewManager::DigiviewManager(QObject* parent)
     });
     connect(_connection, &DigiviewConnection::lastErrorChanged, this, &DigiviewManager::lastErrorChanged);
     connect(_connection, &DigiviewConnection::messageReceived, this, &DigiviewManager::_handleMessage);
+    connect(&_videoOutputTransactionTimer, &QTimer::timeout,
+            this, &DigiviewManager::_videoOutputTransactionTimedOut);
+    _videoOutputTransactionTimer.setSingleShot(true);
 
     if (qApp) {
         connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { disconnectFromHost(); }, Qt::QueuedConnection);
@@ -279,7 +285,7 @@ bool DigiviewManager::setDetectionOverlayMode(int detectionOverlayMode)
 bool DigiviewManager::_sendVideoOutputUpdate(
     std::optional<uint8_t> layoutMode, std::optional<uint8_t> detectionOverlayMode)
 {
-    if (_pendingVideoOutputParameters) {
+    if (_videoOutputTransaction) {
         emit commandRejected(tr("DigiView is still processing a prior video-output update. Wait for it to finish."));
         return false;
     }
@@ -300,9 +306,19 @@ bool DigiviewManager::_sendVideoOutputUpdate(
     }
     payload.num_user_views = userViewCountForLayout(payload.layout_mode);
 
-    _pendingVideoOutputParameters = payload;
+    ++_nextVideoOutputTransactionGeneration;
+    _videoOutputTransaction = VideoOutputTransaction {
+        _nextVideoOutputTransactionGeneration,
+        {payload.layout_mode, payload.detection_overlay_mode, payload.num_user_views},
+        QDeadlineTimer(kVideoOutputTransactionTimeoutMs),
+        false,
+        false,
+    };
+    _videoOutputTransactionTimerGeneration = _videoOutputTransaction->generation;
+    _videoOutputTransactionTimer.start(kVideoOutputTransactionTimeoutMs);
     if (!_sendVideoOutputParameters(payload)) {
-        _pendingVideoOutputParameters.reset();
+        _videoOutputTransactionTimer.stop();
+        _videoOutputTransaction.reset();
         return false;
     }
 
@@ -1223,20 +1239,18 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
     }
 
     if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-        if (!_remoteIdentityValid) {
-            if ((message.sysid == 0) || (message.compid == MAV_COMP_ID_ALL)) {
-                qCWarning(DigiviewManagerLog) << "Ignoring Digiview HEARTBEAT with invalid target identity"
+        if ((message.sysid != kDigiviewSystemId) || (message.compid != kDigiviewComponentId)) {
+            if (!_unexpectedHeartbeatWarningTimer.isValid()
+                || _unexpectedHeartbeatWarningTimer.hasExpired(5000)) {
+                _unexpectedHeartbeatWarningTimer.start();
+                qCWarning(DigiviewManagerLog) << "Ignoring Digiview HEARTBEAT from unexpected MAVLink identity"
                                               << "senderSystem" << message.sysid
-                                              << "senderComponent" << message.compid;
-            } else {
-                _establishRemoteSession(message.sysid, message.compid);
+                                              << "senderComponent" << message.compid
+                                              << "expectedSystem" << kDigiviewSystemId
+                                              << "expectedComponent" << kDigiviewComponentId;
             }
-        } else if ((message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
-            qCWarning(DigiviewManagerLog) << "Ignoring Digiview HEARTBEAT from different MAVLink identity"
-                                          << "senderSystem" << message.sysid
-                                          << "senderComponent" << message.compid;
         } else {
-            _establishRemoteSession(message.sysid, message.compid);
+            _establishRemoteSession(kDigiviewSystemId, kDigiviewComponentId);
         }
     }
 
@@ -1257,37 +1271,29 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
 
         const bool expectedSender = _remoteIdentityValid
             && (message.sysid == _remoteSystemId) && (message.compid == _remoteComponentId);
+        const bool expectedTarget = ((ack.target_system == 0U) || (ack.target_system == _senderSystemId))
+            && ((ack.target_component == 0U) || (ack.target_component == _senderComponentId));
         if (expectedSender && (ack.command == MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS)
-            && _pendingVideoOutputParameters && (ack.result != MAV_RESULT_IN_PROGRESS)) {
-            const mavlink_video_output_parameters_t sentPayload = *_pendingVideoOutputParameters;
-            _pendingVideoOutputParameters.reset();
-
+            && expectedTarget && _videoOutputTransaction && (ack.result != MAV_RESULT_IN_PROGRESS)) {
             if (ack.result == MAV_RESULT_ACCEPTED) {
-                const bool videoOutputLayoutModeChangedValue = _videoOutputLayoutMode != sentPayload.layout_mode;
-                const bool videoOutputDetectionOverlayModeChangedValue =
-                    _videoOutputDetectionOverlayMode != sentPayload.detection_overlay_mode;
-                const bool videoOutputNumUserViewsChangedValue = _videoOutputNumUserViews != sentPayload.num_user_views;
-
-                _videoOutputParameters = sentPayload;
-                _videoOutputLayoutMode = sentPayload.layout_mode;
-                _videoOutputDetectionOverlayMode = sentPayload.detection_overlay_mode;
-                _videoOutputNumUserViews = sentPayload.num_user_views;
-
-                if (videoOutputLayoutModeChangedValue) {
-                    emit videoOutputLayoutModeChanged();
-                }
-                if (videoOutputDetectionOverlayModeChangedValue) {
-                    emit videoOutputDetectionOverlayModeChanged();
-                }
-                if (videoOutputNumUserViewsChangedValue) {
-                    emit videoOutputNumUserViewsChanged();
+                // COMMAND_ACK has no transaction generation. An old accepted ACK may request a GET, but only
+                // matching authoritative state can complete the current transaction.
+                auto& transaction = *_videoOutputTransaction;
+                transaction.awaitingAuthoritativeState = true;
+                if (!transaction.stateGetIssued) {
+                    transaction.stateGetIssued = true;
+                    (void) _requestParameters(MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS);
                 }
             } else if (ack.result == MAV_RESULT_DENIED) {
                 emit commandRejected(
                     tr("DigiView rejected the video-output update because the selected pipeline is locked."));
+                _videoOutputTransactionTimer.stop();
+                _videoOutputTransaction.reset();
             } else {
                 emit commandRejected(tr("DigiView rejected the video-output update: %1.")
                                          .arg(QGCMAVLink::mavResultToString(ack.result)));
+                _videoOutputTransactionTimer.stop();
+                _videoOutputTransaction.reset();
             }
         }
         break;
@@ -1332,36 +1338,17 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             break;
         }
 
-        if (!_remoteIdentityValid) {
-            if ((message.sysid == 0) || (message.compid == MAV_COMP_ID_ALL)) {
-                qCWarning(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS with invalid target identity"
-                                              << "senderSystem" << message.sysid
-                                              << "senderComponent" << message.compid;
-                break;
-            }
-
-            _establishRemoteSession(message.sysid, message.compid);
-        } else if (message.sysid != _remoteSystemId) {
-            qCWarning(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS from different MAVLink system"
+        if ((message.sysid != kDigiviewSystemId) || (message.compid != kDigiviewComponentId)) {
+            qCWarning(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS from unexpected DigiView identity"
                                           << "senderSystem" << message.sysid
-                                          << "expectedSystem" << _remoteSystemId;
+                                          << "senderComponent" << message.compid;
             break;
-        } else if (message.compid != _remoteComponentId) {
-            if (_remoteComponentPinnedByVideoOutputParameters) {
-                qCWarning(DigiviewManagerLog) << "Ignoring VIDEO_OUTPUT_PARAMETERS from different MAVLink component"
-                                              << "senderSystem" << message.sysid
-                                              << "senderComponent" << message.compid
-                                              << "expectedComponent" << _remoteComponentId;
-                break;
-            }
-
-            qCDebug(DigiviewManagerLog) << "Pinning Digiview VIDEO_OUTPUT_PARAMETERS producer"
-                                        << "senderSystem" << message.sysid
-                                        << "senderComponent" << message.compid;
-            _establishRemoteSession(message.sysid, message.compid);
         }
-
-        _remoteComponentPinnedByVideoOutputParameters = true;
+        if (!_remoteIdentityValid) {
+            _establishRemoteSession(kDigiviewSystemId, kDigiviewComponentId);
+        } else if ((message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
+            break;
+        }
 
         qCDebug(DigiviewManagerLog) << "Received VIDEO_OUTPUT_PARAMETERS:"
                                     << "stream" << streamName
@@ -1421,6 +1408,10 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         const int detectionOverlayMode = payload.detection_overlay_mode;
         const int numUserViews = payload.num_user_views;
         const int singleDetectionSize = payload.single_detection_size;
+        const bool completesVideoOutputTransaction = _videoOutputTransaction
+            && _videoOutputTransaction->awaitingAuthoritativeState
+            && (_videoOutputTransaction->requested
+                == VideoOutputLayoutSnapshot {payload.layout_mode, payload.detection_overlay_mode, payload.num_user_views});
 
         const bool hasVideoOutputParametersChangedValue = !_hasVideoOutputParameters;
         const bool videoOutputStreamNameChangedValue = _videoOutputStreamName != streamName;
@@ -1500,6 +1491,10 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.detection_overlay_w,
             payload.detection_overlay_h,
             payload.single_detection_size);
+        if (completesVideoOutputTransaction) {
+            _videoOutputTransactionTimer.stop();
+            _videoOutputTransaction.reset();
+        }
         break;
     }
     case MAVLINK_MSG_ID_CAPTURE_PARAMETERS: {
@@ -1960,9 +1955,29 @@ bool DigiviewManager::_rejectUnsupportedSet(const QString& parameterName)
     return false;
 }
 
+void DigiviewManager::_videoOutputTransactionTimedOut()
+{
+    if (!_videoOutputTransaction
+        || (_videoOutputTransaction->generation != _videoOutputTransactionTimerGeneration)) {
+        return;
+    }
+
+    if (!_videoOutputTransaction->deadline.hasExpired()) {
+        _videoOutputTransactionTimer.start(static_cast<int>(_videoOutputTransaction->deadline.remainingTime()));
+        return;
+    }
+
+    qCWarning(DigiviewManagerLog) << "Timed out waiting for authoritative VIDEO_OUTPUT_PARAMETERS state"
+                                  << "generation" << _videoOutputTransaction->generation;
+    _videoOutputTransaction.reset();
+}
+
 void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componentId)
 {
     if (!_logicalSessionActive || !_connection->connected()) {
+        return;
+    }
+    if ((systemId != kDigiviewSystemId) || (componentId != kDigiviewComponentId)) {
         return;
     }
 
@@ -2048,12 +2063,12 @@ void DigiviewManager::_resetRemoteSession()
     _remoteSystemId = 0;
     _remoteComponentId = 0;
     _remoteIdentityValid = false;
-    _remoteComponentPinnedByVideoOutputParameters = false;
     _pendingVideoOutputParametersRequest = false;
     _pendingSensorParametersRequest = true;
     _pendingDetectionParametersRequest = true;
     _pendingSingleTargetTrackingParametersRequest = true;
-    _pendingVideoOutputParameters.reset();
+    _videoOutputTransactionTimer.stop();
+    _videoOutputTransaction.reset();
 
     _cameraStates.fill(CameraTrackingState{});
     _activeTargets.fill(ActiveTarget{});

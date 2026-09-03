@@ -6,6 +6,9 @@
 #include "sv_mavlink_dialect/sv_mavlink_dialect.h"
 
 #include <QtCore/QObject>
+#include <QtCore/QDeadlineTimer>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QTimer>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
 #include <QtCore/QVariantMap>
@@ -376,6 +379,23 @@ private:
     void _establishRemoteSession(uint8_t systemId, uint8_t componentId);
     void _resetRemoteSession();
     void _resetRemoteSessionForSenderIdentityChange();
+    void _videoOutputTransactionTimedOut();
+
+    struct VideoOutputLayoutSnapshot {
+        uint8_t layoutMode = 0;
+        uint8_t detectionOverlayMode = 0;
+        uint8_t numUserViews = 0;
+
+        bool operator==(const VideoOutputLayoutSnapshot&) const = default;
+    };
+
+    struct VideoOutputTransaction {
+        quint64 generation = 0;
+        VideoOutputLayoutSnapshot requested;
+        QDeadlineTimer deadline;
+        bool awaitingAuthoritativeState = false;
+        bool stateGetIssued = false;
+    };
 
     struct ActiveTarget {
         enum class Type : uint8_t {
@@ -398,12 +418,15 @@ private:
     uint8_t _remoteComponentId = 0;
     bool _logicalSessionActive = false;
     bool _remoteIdentityValid = false;
-    bool _remoteComponentPinnedByVideoOutputParameters = false;
     bool _pendingVideoOutputParametersRequest = false;
     bool _pendingSensorParametersRequest = true;
     bool _pendingDetectionParametersRequest = true;
     bool _pendingSingleTargetTrackingParametersRequest = true;
-    std::optional<mavlink_video_output_parameters_t> _pendingVideoOutputParameters;
+    std::optional<VideoOutputTransaction> _videoOutputTransaction;
+    QTimer _videoOutputTransactionTimer;
+    quint64 _nextVideoOutputTransactionGeneration = 0;
+    quint64 _videoOutputTransactionTimerGeneration = 0;
+    QElapsedTimer _unexpectedHeartbeatWarningTimer;
     QString _streamName = QStringLiteral("stream");
     quint32 _lastReceivedMessageId = 0;
     bool _hasVideoOutputParameters = false;

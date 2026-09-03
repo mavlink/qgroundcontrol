@@ -76,4 +76,5 @@ private:
     bool _legacyTcpActive = false;
     QString _lastError;
     mavlink_status_t _mavlinkStatus {};
+    mavlink_message_t _mavlinkMessageBuffer {};
 };
