@@ -30,8 +30,6 @@ jobs:
       - name: Mark and close stale issues
         uses: actions/stale@v11
         with:
-          # Remove debug-only once the dry-run output has been reviewed.
-          debug-only: true
           days-before-issue-stale: 90
           days-before-issue-close: 30
           days-before-pr-stale: -1
@@ -40,11 +38,11 @@ jobs:
           stale-issue-label: stale
           exempt-issue-labels: 'Priority: Critical,Feature Request'
           exempt-all-issue-milestones: true
+          exempt-issue-assignees: 'DonLakeFlyer,HTRamsey'
           remove-issue-stale-when-updated: true
           ascending: true
-          # Dry run: state is not persisted in debug mode, so the cap must cover the whole backlog.
-          # Lower to 400 when going live: two jobs share the 1000 req/hr GITHUB_TOKEN budget.
-          operations-per-run: 1500
+          # ~3 API ops per issue; covers the full backlog in one run, well under the 15000 req/hr limit.
+          operations-per-run: 2500
           # Empty message labels silently to avoid a notification flood on the initial backlog sweep.
           stale-issue-message: ''
           close-issue-message: >
@@ -71,8 +69,6 @@ jobs:
       - name: Mark and close stale feature requests
         uses: actions/stale@v11
         with:
-          # Remove debug-only once the dry-run output has been reviewed.
-          debug-only: true
           days-before-issue-stale: 90
           days-before-issue-close: 30
           days-before-pr-stale: -1
@@ -82,10 +78,10 @@ jobs:
           any-of-issue-labels: 'Feature Request'
           exempt-issue-labels: 'Priority: Critical'
           exempt-all-issue-milestones: true
+          exempt-issue-assignees: 'DonLakeFlyer,HTRamsey'
           remove-issue-stale-when-updated: true
           ascending: true
-          # Lower to 400 when going live (see stale-issues).
-          operations-per-run: 1500
+          operations-per-run: 2500
           # Empty message labels silently to avoid a notification flood on the initial backlog sweep.
           stale-issue-message: ''
           close-issue-message: >
