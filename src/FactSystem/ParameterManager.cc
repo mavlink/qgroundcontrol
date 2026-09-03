@@ -611,9 +611,6 @@ void ParameterManager::_handleParamExtValue(int componentId, const mavlink_param
 
     const auto mavParamExtType = static_cast<MAV_PARAM_EXT_TYPE>(paramExtValue.param_type);
     const QVariant parameterValue = QGCMAVLink::paramExtValueToVariant(paramExtValue.param_value, mavParamExtType);
-    if (!parameterValue.isValid()) {
-        return;
-    }
 
     qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) <<
                                             "_handleParamExtValue" <<
@@ -623,12 +620,9 @@ void ParameterManager::_handleParamExtValue(int componentId, const mavlink_param
                                             "mavExtType:" << mavParamExtType <<
                                             "value:" << parameterValue;
 
-    if (_mapCompId2FactMap.value(componentId).contains(parameterName)) {
-        // The classic protocol already owns this name for this component, don't shadow it with a second fact
-        qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Ignoring ext param which also exists as a classic param" << parameterName;
-        return;
-    }
-
+    // The index has been answered whatever we end up doing with the value, so book keep it before
+    // any early return below. Otherwise it stays marked missing, is re-requested until the retries
+    // run out and is then reported as never received.
     if (!_extWaitingReadParamIndexMap.contains(componentId)) {
         for (int waitingIndex = 0; waitingIndex < paramExtValue.param_count; waitingIndex++) {
             _extWaitingReadParamIndexMap[componentId][waitingIndex] = 0;
@@ -636,6 +630,17 @@ void ParameterManager::_handleParamExtValue(int componentId, const mavlink_param
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Seeing ext params for first time - paramcount:" << paramExtValue.param_count;
     }
     (void) _extWaitingReadParamIndexMap[componentId].remove(paramExtValue.param_index);
+    _extParamTimeoutTimer.start();
+
+    if (!parameterValue.isValid()) {
+        return;
+    }
+
+    if (_mapCompId2FactMap.value(componentId).contains(parameterName)) {
+        // The classic protocol already owns this name for this component, don't shadow it with a second fact
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Ignoring ext param which also exists as a classic param" << parameterName;
+        return;
+    }
 
     Fact *fact = _extFact(componentId, parameterName);
     if (!fact) {
@@ -651,8 +656,6 @@ void ParameterManager::_handleParamExtValue(int componentId, const mavlink_param
     }
 
     fact->containerSetRawValue(parameterValue);
-
-    _extParamTimeoutTimer.start();
 }
 
 void ParameterManager::_handleParamExtAck(int componentId, const mavlink_param_ext_ack_t &paramExtAck)
