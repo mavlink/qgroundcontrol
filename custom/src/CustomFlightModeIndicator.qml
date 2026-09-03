@@ -145,8 +145,9 @@ Item {
                 }
             }
 
-          
-            // Your custom buttons
+            
+
+            // cusotm buttons 
             QGCDelayButton {
                 Layout.fillWidth: true
                 text: "Manual"
@@ -173,6 +174,9 @@ Item {
                     mainWindow.closeIndicatorDrawer()
                 }
             }
+            
+
+        
 
             Repeater {
                 id:     modeRepeater
