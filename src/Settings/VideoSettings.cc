@@ -20,6 +20,10 @@ DECLARE_SETTINGGROUP(Video, "Video")
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
     videoSourceList.append(videoSourceRTSP);
+    if (kGstEnabled) {
+        videoSourceList.append(videoSourceHTTPMJPEG);
+        videoSourceList.append(videoSourceWebSocketJPEG);
+    }
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
     videoSourceList.append(videoSourceTCP);
@@ -220,6 +224,24 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
     return _rtspUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpMjpegUrl)
+{
+    if (!_httpMjpegUrlFact) {
+        _httpMjpegUrlFact = _createSettingsFact(httpMjpegUrlName);
+        connect(_httpMjpegUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _httpMjpegUrlFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, webSocketJpegUrl)
+{
+    if (!_webSocketJpegUrlFact) {
+        _webSocketJpegUrlFact = _createSettingsFact(webSocketJpegUrlName);
+        connect(_webSocketJpegUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _webSocketJpegUrlFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 {
     if (!_tcpUrlFact) {
@@ -250,6 +272,17 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceRTSP) {
         qCDebug(VideoSettingsLog) << "Testing configuration for RTSP Stream:" << rtspUrl()->rawValue().toString();
         return !rtspUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If HTTP MJPEG, check for URL
+    if (vSource == videoSourceHTTPMJPEG) {
+        qCDebug(VideoSettingsLog) << "Testing configuration for HTTP MJPEG Stream";
+        return !httpMjpegUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If WebSocket JPEG, check for URL
+    if (vSource == videoSourceWebSocketJPEG) {
+        qCDebug(VideoSettingsLog) << "Testing configuration for WebSocket JPEG Stream:"
+                                  << QGCNetworkHelper::redactedUrlForLogging(webSocketJpegUrl()->rawValue().toString());
+        return !webSocketJpegUrl()->rawValue().toString().isEmpty();
     }
     //-- If TCP, check for URL
     if(vSource == videoSourceTCP) {
