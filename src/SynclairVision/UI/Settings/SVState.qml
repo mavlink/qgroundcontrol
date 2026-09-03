@@ -119,6 +119,29 @@ QtObject {
         return true
     }
 
+    function submitImmediatePointTracking(trackingId, cameraSlot, normalizedX, normalizedY) {
+        if (!cameraSelectionEnabled || lockControls
+                || (trackingId !== 'singleTarget' && trackingId !== 'cursorTrack')
+                || cameraSlot < 0 || cameraSlot >= cameraTrackingIds.length
+                || !Number.isFinite(normalizedX) || !Number.isFinite(normalizedY)
+                || normalizedX < -1.0 || normalizedX > 1.0
+                || normalizedY < -1.0 || normalizedY > 1.0 || !digiview) {
+            return false
+        }
+
+        const submitted = trackingId === 'singleTarget'
+            ? digiview.setSingleTargetTrackingTarget(cameraSlot, normalizedX, normalizedY)
+            : digiview.setCameraCursorTarget(cameraSlot, normalizedX, normalizedY)
+        if (!submitted) {
+            return false
+        }
+
+        cursorTargetRequest = { cameraSlot: cameraSlot, normalizedX: normalizedX, normalizedY: normalizedY }
+        setCameraTrackingId(cameraSlot, trackingId, true)
+        cursorTargetRequested(cameraSlot, normalizedX, normalizedY)
+        return true
+    }
+
     function _padRecordTimeSegment(value) {
         return value < 10 ? "0" + value : value.toString()
     }

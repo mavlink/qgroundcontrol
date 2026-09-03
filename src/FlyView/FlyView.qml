@@ -317,6 +317,7 @@ Item {
 
     SVShortcutHandler {
         anchors.fill: parent
+        flyView: synclairVisionLayer
         toolbarVisible: toolbar.visible
         z: 999
     }

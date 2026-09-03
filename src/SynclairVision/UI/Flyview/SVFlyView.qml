@@ -104,6 +104,69 @@ Item {
         }
     }
 
+    function submitImmediatePointTracking(trackingId) {
+        let rejectionMessage = ""
+        if (!root.visible) {
+            rejectionMessage = qsTr("Immediate tracking is unavailable while the fly view is hidden.")
+        } else if (root.previewMode) {
+            rejectionMessage = qsTr("Immediate tracking is unavailable in preview mode.")
+        } else if (!QGroundControl.videoManager.decoding || !videoContentArea.visible) {
+            rejectionMessage = qsTr("Immediate tracking is unavailable because video content is not visible or decoding.")
+        } else if (!root.digiviewOutputGeometryAvailable) {
+            rejectionMessage = qsTr("Immediate tracking is unavailable because video geometry is missing.")
+        } else if (!Number.isFinite(root.digiviewScaleX) || !Number.isFinite(root.digiviewScaleY)
+                   || root.digiviewScaleX <= 0 || root.digiviewScaleY <= 0) {
+            rejectionMessage = qsTr("Immediate tracking is unavailable because the video scale is invalid.")
+        }
+
+        let point
+        if (!rejectionMessage) {
+            const window = root.Window.window
+            if (!window) {
+                rejectionMessage = qsTr("Immediate tracking is unavailable because the fly view window is missing.")
+            } else if (!window.contentItem) {
+                rejectionMessage = qsTr("Immediate tracking is unavailable because the window content is missing.")
+            } else {
+                const contentPoint = window.contentItem.mapFromItem(
+                    null, ScreenTools.mouseX() - window.x, ScreenTools.mouseY() - window.y)
+                point = root.mapFromItem(window.contentItem, contentPoint.x, contentPoint.y)
+                if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
+                        || point.x < videoContentArea.x || point.x >= videoContentArea.x + videoContentArea.width
+                        || point.y < videoContentArea.y || point.y >= videoContentArea.y + videoContentArea.height) {
+                    rejectionMessage = qsTr("The selected point is outside the video content.")
+                }
+            }
+        }
+
+        if (!rejectionMessage) {
+            const outputX = (point.x - videoContentArea.x) / root.digiviewScaleX
+            const outputY = (point.y - videoContentArea.y) / root.digiviewScaleY
+            for (let index = 0; index < root.digiviewCameraViews.length; ++index) {
+                const view = root.digiviewCameraViews[index]
+                if (outputX >= view.x && outputX < view.x + view.width
+                        && outputY >= view.y && outputY < view.y + view.height) {
+                    const normalizedX = (outputX - view.x) / view.width * 2.0 - 1.0
+                    const normalizedY = 1.0 - (outputY - view.y) / view.height * 2.0
+                    const submitted = SVState.submitImmediatePointTracking(
+                        trackingId, view.slot, normalizedX, normalizedY)
+                    if (submitted) {
+                        return true
+                    }
+
+                    rejectionMessage = qsTr("Immediate tracking was rejected because no camera is selected, controls are locked, or the camera state changed.")
+                    break
+                }
+            }
+            if (!rejectionMessage) {
+                rejectionMessage = qsTr("The selected point does not match a DigiView camera view.")
+            }
+        }
+
+        SVNotificationManager.add(
+            qsTr("Immediate Tracking Rejected"), rejectionMessage, "warning", "network_error")
+        return false
+    }
+
     function autoconnectDigiview() {
         if (!SVSettings.networkAutoconnectOnStart || !digiview || digiview.connected) {
             return
@@ -239,6 +302,7 @@ Item {
             visible: root.digiviewOutputGeometryAvailable
                 && root.digiview.videoOutputDetectionOverlayRect.width > 0
                 && root.digiview.videoOutputDetectionOverlayRect.height > 0
+            immediateSttHandler: () => root.submitImmediatePointTracking('singleTarget')
         }
 
         

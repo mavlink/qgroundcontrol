@@ -11,6 +11,7 @@ Item {
     property int widthAmount:  root.height > 0 ? Math.floor(root.width / root.height) : 0
     property int heightAmount: root.width  > 0 ? Math.floor(root.height / root.width) : 0
     property bool legitValues: width > 0 && height > 0
+    property var immediateSttHandler
 
     QGCPalette { id: qgcPalette }
 
@@ -34,7 +35,8 @@ Item {
             SVFlyViewDetectionButton {
                 anchors.fill: parent
                 detectionViewId: index
-                visible: SVState.cameraSelected >= 0 && SVState.hud
+                immediateSttHandler: root.immediateSttHandler
+                visible: SVState.hud
             }
 
             Rectangle {

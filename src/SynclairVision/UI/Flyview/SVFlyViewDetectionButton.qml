@@ -7,6 +7,7 @@ Item {
     id: root
 
     property int detectionViewId
+    property var immediateSttHandler
 
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property bool detectionEnabled: !!digiview
@@ -22,16 +23,6 @@ Item {
         }
 
         digiview.setDetectionTracking(cameraSlot, root.detectionViewId, false)
-    }
-
-    function clearDetectionTracking() {
-        const cameraSlot = SVState.cameraSelected
-
-        if (!detectionEnabled || cameraSlot < 0 || !digiview) {
-            return
-        }
-
-        digiview.clearDetectionTracking(cameraSlot)
     }
 
     z: mouseArea.containsMouse ? 100 : 0
@@ -67,8 +58,9 @@ Item {
 
         onClicked: (mouse) => {
             if (mouse.button === Qt.RightButton) {
-                root.clearDetectionTracking()
-                SVState.activateSttTracking()
+                if (root.immediateSttHandler) {
+                    root.immediateSttHandler()
+                }
 
             } else if (mouse.button === Qt.LeftButton) {
                 root.setDetectionTracking()

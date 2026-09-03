@@ -30,6 +30,7 @@ Item {
     readonly property int actionManualTracking: 21
     readonly property int actionDeselectTracking: 22
     property bool toolbarVisible: false
+    property var flyView
 
     // --- MODE-INSTÄLLNINGAR FÖR SHORTCUTS ---
     // 0 = Click (Endast vid nedtryckning)
@@ -400,10 +401,14 @@ Item {
             SVState.toggleCrosshair()
             break
         case root.actionSTT:
-            SVState.activateSttTracking()
+            if (root.flyView) {
+                root.flyView.submitImmediatePointTracking('singleTarget')
+            }
             break
         case root.actionCursorTracking:
-            SVState.activateCursorTracking()
+            if (root.flyView) {
+                root.flyView.submitImmediatePointTracking('cursorTrack')
+            }
             break
         case root.actionManualTracking:
             SVState.activateManualTracking()

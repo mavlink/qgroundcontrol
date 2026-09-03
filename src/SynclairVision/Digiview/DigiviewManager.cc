@@ -928,13 +928,19 @@ void DigiviewManager::_rememberInboundSingleTargetTracking(
 bool DigiviewManager::setSingleTargetTrackingTarget(int camId, float xOffset, float yOffset)
 {
     if ((camId < 0) || (camId > std::numeric_limits<uint8_t>::max())
+        || (static_cast<size_t>(camId) >= _activeTargets.size())
         || !std::isfinite(xOffset) || !std::isfinite(yOffset)
         || (xOffset < -1.0f) || (xOffset > 1.0f)
         || (yOffset < -1.0f) || (yOffset > 1.0f)) {
         return false;
     }
 
-    return sendSingleTargetTrackingParameters(
+    if (_activeTargets[camId].type != ActiveTarget::Type::None
+        && !clearCurrentTarget(camId)) {
+        return false;
+    }
+
+    const bool sttTargetSent = sendSingleTargetTrackingParameters(
         CMD_SET_TARGET_VECTOR,
         _streamName,
         static_cast<uint8_t>(camId),
@@ -951,14 +957,28 @@ bool DigiviewManager::setSingleTargetTrackingTarget(int camId, float xOffset, fl
         0,
         0,
         0);
+    if (!sttTargetSent) {
+        return false;
+    }
+
+    return sendCamTargetingParameters(
+        _streamName, static_cast<uint8_t>(camId), View::SINGLE_TARGET_TRACKING,
+        0, 0.0f, 0.0f, 0.0f, kCamTargetingLockFlagsUnchanged,
+        xOffset, yOffset, 0.0f, 0.0f, 0.0f, 0, -1, 0);
 }
 
 bool DigiviewManager::setCameraCursorTarget(int camId, float xOffset, float yOffset)
 {
     if ((camId < 0) || (camId > std::numeric_limits<uint8_t>::max())
+        || (static_cast<size_t>(camId) >= _activeTargets.size())
         || !std::isfinite(xOffset) || !std::isfinite(yOffset)
         || (xOffset < -1.0f) || (xOffset > 1.0f)
         || (yOffset < -1.0f) || (yOffset > 1.0f)) {
+        return false;
+    }
+
+    if (_activeTargets[camId].type != ActiveTarget::Type::None
+        && !clearCurrentTarget(camId)) {
         return false;
     }
 
@@ -984,6 +1004,7 @@ bool DigiviewManager::setCameraCursorTarget(int camId, float xOffset, float yOff
 bool DigiviewManager::setCameraManualTarget(int camId, float latitude, float longitude, float altitude)
 {
     if ((camId < 0) || (camId > std::numeric_limits<uint8_t>::max())
+        || (static_cast<size_t>(camId) >= _activeTargets.size())
         || !std::isfinite(latitude) || !std::isfinite(longitude) || !std::isfinite(altitude)
         || (latitude < -90.0f) || (latitude > 90.0f)
         || (longitude < -180.0f) || (longitude > 180.0f)) {
