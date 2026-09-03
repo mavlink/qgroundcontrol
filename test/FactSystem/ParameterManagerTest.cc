@@ -18,6 +18,7 @@
 namespace {
     /// Int typed ext param served by MockLinkCamera on MAV_COMP_ID_CAMERA
     const QString kExtIntParam = QStringLiteral("CAM_EXPMODE");
+    const QString kExtCustomParam = QStringLiteral("CAM_MODEL");
 }
 
 // Call from tests that deliberately let PARAM_SET / PARAM_REQUEST_READ waits time out.
@@ -662,11 +663,18 @@ void ParameterManagerTest::_extParamsDownloaded()
 
     const QVector<MockLinkCamera::ExtParam> expectedParams = MockLinkCamera::defaultExtParams();
     for (const MockLinkCamera::ExtParam& expectedParam: expectedParams) {
+        if (expectedParam.type == MAV_PARAM_EXT_TYPE_CUSTOM) {
+            // Opaque bytes, deliberately not turned into a Fact. The mock serves one so the whole
+            // download still has to cope with it, including not re-requesting its index.
+            continue;
+        }
         QVERIFY_TRUE_WAIT(paramManager->extParameterExists(MAV_COMP_ID_CAMERA, expectedParam.name), TestTimeout::mediumMs());
         Fact* const fact = paramManager->getParameter(MAV_COMP_ID_CAMERA, expectedParam.name);
         QVERIFY(fact);
         QCOMPARE(fact->rawValue().toString(), expectedParam.value.toString());
     }
+
+    QVERIFY(!paramManager->extParameterExists(MAV_COMP_ID_CAMERA, kExtCustomParam));
 
     // Ext params must not shadow or disturb the autopilot parameters
     QVERIFY(paramManager->parametersReady());
