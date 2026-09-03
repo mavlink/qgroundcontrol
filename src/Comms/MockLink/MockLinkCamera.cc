@@ -925,7 +925,9 @@ bool MockLinkCamera::_handleParamExtRequestRead(const mavlink_message_t &msg)
     }
 
     int index = request.param_index;
-    if (index < 0) {
+    if (index >= 0) {
+        _extParamIndexedReadCount++;
+    } else {
         char paramIdWithNull[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1] = {};
         (void) strncpy(paramIdWithNull, request.param_id, MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
         const QString paramName(paramIdWithNull);

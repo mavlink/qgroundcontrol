@@ -126,10 +126,17 @@ public:
     /// Test API: drops this index from the PARAM_EXT_REQUEST_LIST stream so the indexed
     /// re-request path can be exercised. Negative disables dropping. Only affects the
     /// list stream - an explicit PARAM_EXT_REQUEST_READ for the index is always answered.
+    /// Set from MockConfiguration::dropFirstExtParam, since the list is already streamed
+    /// by the time a test body runs.
     void setExtParamListDropIndex(int index) { _extParamListDropIndex = index; }
 
     /// @return Current value of an ext parameter, an invalid QVariant if unknown
     QVariant extParamValue(const QString &name) const;
+
+    /// @return Number of PARAM_EXT_REQUEST_READ by index served so far. Nothing but the recovery
+    ///         of a dropped list entry asks for a parameter this way, so a non-zero count is proof
+    ///         the indexed re-request ran.
+    int extParamIndexedReadCount() const { return _extParamIndexedReadCount; }
 
 private:
     bool _handleParamExtRequestList(const mavlink_message_t &msg);
@@ -170,6 +177,7 @@ private:
     ExtParamSetFailureMode_t _extParamSetFailureMode = FailExtParamSetNone;
     bool _extParamSetInProgressPending = false;
     int _extParamListDropIndex = -1;
+    int _extParamIndexedReadCount = 0;
     CameraState _cameras[kNumCameras];           ///< Simulated cameras
     /// Protects _cameras array from race conditions between:
     ///   - Main thread: _handleCameraCommand() modifying camera state on MAVLink commands

@@ -809,17 +809,23 @@ void ParameterManagerTest::_extParamWriteInProgress()
 // otherwise a dropped packet silently hides a parameter from the editor.
 void ParameterManagerTest::_extParamMissingIndexRetry()
 {
-    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionEnableCamera);
+    // The drop has to be configured before the link starts. The list is streamed during initial
+    // connect, which _connectMockLink waits for, so a drop set from the test body would come too
+    // late and the parameter would already be present.
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone,
+                     MockConfiguration::OptionEnableCamera | MockConfiguration::OptionDropFirstExtParam);
     QVERIFY(_vehicle);
     ParameterManager* const paramManager = _vehicle->parameterManager();
     QVERIFY(paramManager);
     QVERIFY(_mockLink->mockLinkCamera());
 
-    // Index 0 is dropped from the stream, so it can only arrive via the indexed re-request
-    _mockLink->mockLinkCamera()->setExtParamListDropIndex(0);
     QCOMPARE(MockLinkCamera::defaultExtParams().at(0).name, kExtIntParam);
 
     QVERIFY_TRUE_WAIT(paramManager->extParameterExists(MAV_COMP_ID_CAMERA, kExtIntParam), TestTimeout::longMs());
+
+    // Asserting the parameter was absent first would race the retry timer. The indexed read count
+    // proves the same thing without a timing window: the value can only have arrived that way.
+    QVERIFY(_mockLink->mockLinkCamera()->extParamIndexedReadCount() > 0);
 
     _disconnectMockLink();
 }
