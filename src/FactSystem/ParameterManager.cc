@@ -636,6 +636,14 @@ void ParameterManager::_handleParamExtValue(int componentId, const mavlink_param
         return;
     }
 
+    if (mavParamExtType == MAV_PARAM_EXT_TYPE_CUSTOM) {
+        // Custom is an opaque blob of bytes. The Fact system has nothing that can hold it, and
+        // decoding it as text mangles anything that isn't printable UTF-8, so leave it to whoever
+        // knows the component rather than showing a value we can neither trust nor write back.
+        qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Ignoring custom type ext param" << parameterName;
+        return;
+    }
+
     if (_mapCompId2FactMap.value(componentId).contains(parameterName)) {
         // The classic protocol already owns this name for this component, don't shadow it with a second fact
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Ignoring ext param which also exists as a classic param" << parameterName;
@@ -1585,6 +1593,10 @@ void ParameterManager::writeParametersToStream(QTextStream &stream) const
     stream << "#\n";
     stream << "# Vehicle-Id Component-Id Name Value Type\n";
 
+    // Extended parameters are deliberately left out. Nothing in the format distinguishes them from
+    // classic ones, so loading such a file before the component has answered PARAM_EXT_REQUEST_LIST
+    // would send a plain PARAM_SET for a parameter that only accepts PARAM_EXT_SET. Loading does
+    // write them once they are known, since the editor's diff resolves names against both maps.
     for (const int componentId: _mapCompId2FactMap.keys()) {
         for (const QString &paramName: _mapCompId2FactMap[componentId].keys()) {
             const Fact *const fact = _mapCompId2FactMap[componentId][paramName];
