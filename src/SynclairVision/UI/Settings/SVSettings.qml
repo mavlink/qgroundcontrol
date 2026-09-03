@@ -26,7 +26,7 @@ QtObject {
             {
                 name: "Digiview 60",
                 host: "192.168.4.60",
-                port: 14770,
+                port: defaultNetworkProfileRouterPort,
                 legacyTcpControlPort: defaultNetworkProfileLegacyTcpControlPort,
                 videoPort: 8556,
                 listenPort: 14571,
@@ -35,7 +35,7 @@ QtObject {
             {
                 name: "Digiview 126",
                 host: "192.168.4.126",
-                port: 14770,
+                port: defaultNetworkProfileRouterPort,
                 legacyTcpControlPort: defaultNetworkProfileLegacyTcpControlPort,
                 videoPort: 8556,
                 listenPort: 14571,
@@ -216,13 +216,15 @@ QtObject {
 
     //Network
         readonly property string defaultNetworkProfileStreamName: "stream"
+        readonly property int defaultNetworkProfileRouterPort: 14570
+        readonly property int formerDefaultNetworkProfileRouterPort: 14770
         readonly property int defaultNetworkProfileLegacyTcpControlPort: 8555
         property string networkIPAdress: "192.168.4.60"
         property var networkProfiles: [
             {
                 name: "Digiview 60",
                 host: "192.168.4.60",
-                port: 14770,
+                port: defaultNetworkProfileRouterPort,
                 legacyTcpControlPort: defaultNetworkProfileLegacyTcpControlPort,
                 videoPort: 8556,
                 listenPort: 14571,
@@ -231,7 +233,7 @@ QtObject {
             {
                 name: "Digiview 126",
                 host: "192.168.4.126",
-                port: 14770,
+                port: defaultNetworkProfileRouterPort,
                 legacyTcpControlPort: defaultNetworkProfileLegacyTcpControlPort,
                 videoPort: 8556,
                 listenPort: 14571,
@@ -310,6 +312,34 @@ QtObject {
             return defaultProfiles
         }
 
+        function isFormerDefaultNetworkProfile(profileData) {
+            const name = networkProfileText(profileData && profileData.name)
+            const host = networkProfileText(profileData && profileData.host)
+            const port = networkProfilePort(profileData && profileData.port, -1)
+            const legacyTcpControlPort = networkProfilePort(profileData && profileData.legacyTcpControlPort, -1)
+            const videoPort = networkProfilePort(profileData && profileData.videoPort, -1)
+            const listenPort = networkProfilePort(profileData && profileData.listenPort, -1)
+            const streamName = networkProfileText(profileData && profileData.streamName)
+            const defaultProfiles = resetDefaults.networkProfiles
+
+            // Migrate only an unmodified former shipped default; custom endpoints retain their port.
+            for (let index = 0; index < defaultProfiles.length; index++) {
+                const defaultProfile = defaultProfiles[index]
+
+                if (name === networkProfileText(defaultProfile.name)
+                        && host === networkProfileText(defaultProfile.host)
+                        && port === formerDefaultNetworkProfileRouterPort
+                        && legacyTcpControlPort === networkProfilePort(defaultProfile.legacyTcpControlPort, -1)
+                        && videoPort === networkProfilePort(defaultProfile.videoPort, -1)
+                        && listenPort === networkProfilePort(defaultProfile.listenPort, -1)
+                        && streamName === networkProfileText(defaultProfile.streamName)) {
+                    return true
+                }
+            }
+
+            return false
+        }
+
         function resetSettings() {
             const defaults = resetDefaults
             const settingNames = Object.keys(defaults)
@@ -337,11 +367,17 @@ QtObject {
             const fallbackHost = networkProfileText(defaultProfile.host) !== ''
                 ? networkProfileText(defaultProfile.host)
                 : networkIPAdress
+            let port = networkProfilePort(profileData && profileData.port,
+                defaultProfile.port !== undefined ? defaultProfile.port : defaultNetworkProfileRouterPort)
+
+            if (isFormerDefaultNetworkProfile(profileData)) {
+                port = defaultNetworkProfileRouterPort
+            }
 
             return {
                 name: networkProfileText(profileData && profileData.name) || fallbackName,
                 host: networkProfileText(profileData && profileData.host) || fallbackHost,
-                port: networkProfilePort(profileData && profileData.port, defaultProfile.port !== undefined ? defaultProfile.port : 14770),
+                port: port,
                 legacyTcpControlPort: networkProfilePort(profileData && profileData.legacyTcpControlPort,
                     defaultProfile.legacyTcpControlPort !== undefined
                         ? defaultProfile.legacyTcpControlPort : defaultNetworkProfileLegacyTcpControlPort),

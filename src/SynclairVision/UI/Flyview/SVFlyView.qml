@@ -96,18 +96,6 @@ Item {
 
     QGCPalette { id: qgcPalette}
 
-    function triggerPhotoBorder() {
-        photoBorder.trigger()
-    }
-
-    function takePhoto() {
-        if (digiview) {
-            digiview.sendCaptureParameters(digiview.streamName, 1, 0, 0, 0)
-        }
-
-        triggerPhotoBorder()
-    }
-
     function beginPointTrackingSelection(trackingId) {
         if (!root.visible || root.previewMode || root.width <= 0 || root.height <= 0
                 || !SVState.beginPointTrackingSelection(
@@ -147,10 +135,6 @@ Item {
 
     Connections {
         target: SVState
-
-        function onTakePhotoRequested() {
-            root.takePhoto()
-        }
 
         function onPointTrackingSelectionRequested(trackingId) {
             root.beginPointTrackingSelection(trackingId)

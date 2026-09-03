@@ -155,13 +155,22 @@ There are few standards worth noting when developing for SynclairQGC.
 - Max-min values for Joystick and Zoom are unbalanced.
 - Different sensitivity for Joystick and Zoom between clicking and using shortcuts.
 - Welcome menu buttons/links not implemented.
-- Checksum is wrong for videoOutput like layout and AI detection. Doesn't effect functions but appears as errors in Digiview.
 - Possible to interact with some shortcuts outside of their intended area (example Joystick and Zoom in map view in Flyview-view).
 
 ## To-do:
 - Tracking (STT, Cursor and Manual). Make it interact correctly with SynclairQGC UI.
-- Checksum is wrong for 
 - When AI detection is active for different camera-views the DetectionFlag should get marked with with an identifier for what detection button it is following. 
+
+### DigiView protocol follow-up
+
+- Reconcile the schema/common revisions for the AI `track_model_name` and CAM_OPTICS `crop_mode` fields.
+- Implement still-image capture in DigiView before enabling it in QGC.
+- Fix DigiView's duplicate GET response defect for MODEL, VIDEO_OUTPUT, and CAPTURE.
+- Add AI and CAM_OPTICS GET requests after their schemas are aligned.
+- Define the required stream, camera, and offset context for CAM_OFFSET requests.
+- Keep DEPTH and NAVIGATION disabled until DigiView supports those operations.
+- Expose the remaining calibration progress extensions and UI workflow.
+- Define legacy TCP protocol versioning and serialization.
 
 
 

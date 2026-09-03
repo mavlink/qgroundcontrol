@@ -12,7 +12,7 @@ Item {
     readonly property bool detectionEnabled: !!digiview
         && digiview.hasVideoOutputParameters
         && digiview.videoOutputStreamName === digiview.streamName
-        && digiview.videoOutputDetectionOverlayMode !== 0
+        && digiview.videoOutputDetectionOverlayMode !== DigiviewProtocol.DetectionOverlayNone
 
     function setDetectionTracking() {
         const cameraSlot = SVState.cameraSelected

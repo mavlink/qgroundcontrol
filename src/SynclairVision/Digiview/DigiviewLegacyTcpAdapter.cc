@@ -22,8 +22,8 @@ constexpr uint8_t kSyntheticSystemId = 1;
 constexpr uint8_t kSyntheticComponentId = MAV_COMP_ID_ONBOARD_COMPUTER;
 constexpr float kOneShotIntervalUs = -1000.0F;
 constexpr char kSupportedParameterGroups[] =
-    "SYSTEM_STATUS, VIDEO_OUTPUT, CAPTURE, DETECTION, CAM_TARGETING, CAM_OPTICS_AND_CONTROL, SENSOR, and "
-    "SINGLE_TARGET_TRACKING";
+    "SYSTEM_STATUS, MODEL (GET only), VIDEO_OUTPUT, CAPTURE, DETECTION, TRACKED_DETECTION (GET only), "
+    "CAM_TARGETING, CAM_OPTICS_AND_CONTROL, SENSOR, SINGLE_TARGET_TRACKING, and CALIBRATION (GET only)";
 
 const char* deliberatelyUnsupportedParameterGroup(uint32_t messageId)
 {
@@ -98,6 +98,9 @@ bool intervalRequest(const mavlink_command_long_t& command, message& nativeMessa
     case MAVLINK_MSG_ID_SYSTEM_STATUS_PARAMETERS:
         parameterType = SYSTEM_STATUS;
         break;
+    case MAVLINK_MSG_ID_MODEL_PARAMETERS:
+        parameterType = MODEL;
+        break;
     case MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS:
         parameterType = VIDEO_OUTPUT;
         break;
@@ -116,8 +119,23 @@ bool intervalRequest(const mavlink_command_long_t& command, message& nativeMessa
     case MAVLINK_MSG_ID_DETECTION_PARAMETERS:
         parameterType = DETECTION;
         break;
+    case MAVLINK_MSG_ID_TRACKED_DETECTION_PARAMETERS:
+        if (command.param3 != static_cast<float>(std::numeric_limits<uint8_t>::max())) {
+            error = QStringLiteral("DigiView TRACKED_DETECTION GET requires index 255");
+            return false;
+        }
+        parameterType = TRACKED_DETECTION;
+        break;
     case MAVLINK_MSG_ID_CAM_OPTICS_AND_CONTROL_PARAMETERS:
         parameterType = CAM_OPTICS_AND_CONTROL;
+        break;
+    case MAVLINK_MSG_ID_CALIBRATION_PARAMETERS:
+        if (!std::isfinite(command.param3) || (command.param3 < 0.0F)
+            || (command.param3 > static_cast<float>(std::numeric_limits<uint8_t>::max()))) {
+            error = QStringLiteral("Invalid DigiView CALIBRATION camera id %1").arg(command.param3);
+            return false;
+        }
+        parameterType = CALIBRATION;
         break;
     default:
         error = unsupportedParameterGroupError(requestedMessageId, "subscription");
@@ -125,6 +143,14 @@ bool intervalRequest(const mavlink_command_long_t& command, message& nativeMessa
     }
 
     pack_get_parameters(nativeMessage, parameterType);
+    if (parameterType == TRACKED_DETECTION) {
+        pack_tracked_detection_parameters(
+            nativeMessage, 0, std::numeric_limits<uint8_t>::max(), 0, -2, 0.0F, 0.0F,
+            static_cast<uint8_t>(command.param4), 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+    } else if (parameterType == CALIBRATION) {
+        pack_calibration_parameters(nativeMessage, static_cast<uint8_t>(command.param3), CALIBRATION_CMD_NONE,
+                                    CALIBRATION_STATUS_NOT_STARTED, 0, 0);
+    }
     if ((command.param2 == kOneShotIntervalUs) || (command.param2 == 0.0F)) {
         nativeMessage.interval_ms = 0;
     } else if (command.param2 < 0.0F) {
@@ -318,6 +344,38 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
     }
 
     if (nativeMessage.message_type != CURRENT_PARAMETERS) {
+        if (nativeMessage.param_type == VIDEO_OUTPUT) {
+            MAV_RESULT result = MAV_RESULT_FAILED;
+            bool isVideoOutputSetResponse = true;
+            switch (nativeMessage.message_type) {
+            case ACKNOWLEDGEMENT:
+                result = MAV_RESULT_ACCEPTED;
+                break;
+            case CHECKSUM_ERROR:
+                error = QStringLiteral("DigiView rejected a TCP record checksum");
+                break;
+            case DATA_ERROR:
+                error = QStringLiteral("DigiView rejected TCP record data");
+                break;
+            case FORBIDDEN:
+                result = MAV_RESULT_DENIED;
+                error = QStringLiteral("DigiView forbade a TCP control request");
+                break;
+            case UNKNOWN:
+                error = QStringLiteral("DigiView did not recognize a TCP control request");
+                break;
+            default:
+                isVideoOutputSetResponse = false;
+                break;
+            }
+
+            if (isVideoOutputSetResponse) {
+                mavlink_msg_command_ack_pack(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage,
+                                             MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS, result, 0, 0, 0, 0);
+                return DecodeResult::Message;
+            }
+        }
+
         switch (nativeMessage.message_type) {
         case ACKNOWLEDGEMENT:
             return DecodeResult::Ignored;
@@ -348,7 +406,15 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         parameters.error = nativeParameters.error;
         parameters.jetson_temp = nativeParameters.jetson_temp;
         mavlink_msg_system_status_parameters_encode(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage,
-                                                    &parameters);
+                                                     &parameters);
+        break;
+    }
+    case MODEL: {
+        model_parameters nativeParameters {};
+        unpack_model_parameters(nativeMessage, nativeParameters);
+        mavlink_model_parameters_t parameters {};
+        std::memcpy(parameters.model_name, nativeParameters.model_name, sizeof(parameters.model_name));
+        mavlink_msg_model_parameters_encode(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage, &parameters);
         break;
     }
     case VIDEO_OUTPUT: {
@@ -408,7 +474,33 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         parameters.missed_detection_penalty = nativeParameters.missed_detection_penalty;
         parameters.missed_redetection_penalty = nativeParameters.missed_redetection_penalty;
         mavlink_msg_detection_parameters_encode(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage,
-                                                &parameters);
+                                                 &parameters);
+        break;
+    }
+    case TRACKED_DETECTION: {
+        tracked_detection_parameters nativeParameters {};
+        unpack_tracked_detection_parameters(nativeMessage, nativeParameters);
+        mavlink_tracked_detection_parameters_t parameters {};
+        parameters.index = nativeParameters.index;
+        parameters.score = nativeParameters.score;
+        parameters.total_detections = nativeParameters.total_detections;
+        parameters.type = nativeParameters.type;
+        parameters.yaw_global = nativeParameters.yaw_global;
+        parameters.pitch_global = nativeParameters.pitch_global;
+        parameters.rel_frame_of_reference = nativeParameters.rel_frame_of_reference;
+        parameters.yaw_rel = nativeParameters.yaw_rel;
+        parameters.pitch_rel = nativeParameters.pitch_rel;
+        parameters.latitude = nativeParameters.latitude;
+        parameters.longitude = nativeParameters.longitude;
+        parameters.altitude = nativeParameters.altitude;
+        parameters.distance = nativeParameters.distance;
+        parameters.width = nativeParameters.width;
+        parameters.height = nativeParameters.height;
+        parameters.track_id = nativeParameters.track_id;
+        parameters.publish_timestamp_us = nativeParameters.publish_timestamp_us;
+        parameters.view_id = nativeParameters.view_id;
+        mavlink_msg_tracked_detection_parameters_encode(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage,
+                                                        &parameters);
         break;
     }
     case CAM_TARGETING: {
@@ -481,7 +573,18 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         parameters.status = enum_to_u8(nativeParameters.status);
         parameters.lock_target = nativeParameters.lock_target ? 1U : 0U;
         mavlink_msg_single_target_tracking_parameters_encode(kSyntheticSystemId, kSyntheticComponentId,
-                                                             &mavlinkMessage, &parameters);
+                                                              &mavlinkMessage, &parameters);
+        break;
+    }
+    case CALIBRATION: {
+        calibration_parameters nativeParameters {};
+        unpack_calibration_parameters(nativeMessage, nativeParameters);
+        mavlink_calibration_parameters_t parameters {};
+        parameters.cam_id = nativeParameters.cam_id;
+        parameters.calib_command = enum_to_u8(nativeParameters.calib_command);
+        parameters.calib_status = enum_to_u8(nativeParameters.calib_status);
+        mavlink_msg_calibration_parameters_encode(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage,
+                                                  &parameters);
         break;
     }
     default:

@@ -946,7 +946,7 @@ Item {
 
                         QGCLabel {
                             Layout.preferredWidth: root.labelColumnWidth
-                            text: qsTr('MAVLink UDP port')
+                            text: qsTr('MAVLink router UDP port')
                             wrapMode: Text.WordWrap
                         }
 
@@ -954,7 +954,7 @@ Item {
                             Layout.fillWidth: true
                             Layout.minimumWidth: root.controlColumnWidth
                             text: editProfileDialog.port
-                            placeholderText: qsTr('Enter MAVLink UDP port')
+                            placeholderText: qsTr('Enter MAVLink router UDP port')
 
                             onTextChanged: editProfileDialog.port = text
                         }

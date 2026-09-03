@@ -33,7 +33,7 @@ Item {
             return
         }
 
-        var layoutModel = SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled)
+        var layoutModel = SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled, DigiviewProtocol)
         var layoutMode = -1
         var i
 
@@ -48,14 +48,7 @@ Item {
             return
         }
 
-        digiview.sendSetVideoOutput(
-            digiview.streamName,
-            0,
-            0,
-            0,
-            layoutMode,
-            0xFF
-        )
+        digiview.setVideoOutputLayout(layoutMode)
     }
 
     function activateTrackingMode(trackingId) {
@@ -291,7 +284,7 @@ Item {
             }
 
             const layoutMode = root.digiview.videoOutputLayoutMode
-            const layoutModel = SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled)
+            const layoutModel = SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled, DigiviewProtocol)
             for (let i = 0; i < layoutModel.length; ++i) {
                 if (layoutModel[i].value === layoutMode) {
                     return layoutModel[i].id
@@ -301,7 +294,7 @@ Item {
             return ""
         }
 
-        model: SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled)
+        model: SVFlyViewMenusList.getLayoutModel(root.uiInteractionEnabled, DigiviewProtocol)
 
         onItemSelected: (id) => {
             if (!root.uiInteractionEnabled) {

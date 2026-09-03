@@ -2,6 +2,7 @@
 
 #include "DigiviewConnection.h"
 #include "MAVLinkEnums.h"
+#include "digiview_commons/public_enums.hpp"
 #include "sv_mavlink_dialect/sv_mavlink_dialect.h"
 
 #include <QtCore/QObject>
@@ -12,16 +13,17 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 #include <QtCore/QVector>
 
 struct CameraTrackingState {
-    uint8_t sttStatus = 0;       // SV_STT_STATUS_OFF, RUNNING, etc.
+    uint8_t sttStatus = static_cast<uint8_t>(single_target_tracking_status::OFF);
     float confidence = 0.0f;
     uint16_t trackId = 0;
     int16_t viewId = -1;
     bool lockTarget = false;
-    uint8_t targetingMode = 0;
+    uint8_t targetingMode = View::DIRECTIONAL;
     bool hasActiveTarget = false;
     bool hasTargetState = false;
 };
@@ -152,23 +154,20 @@ public:
 
     Q_INVOKABLE void sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp);
     Q_INVOKABLE void sendAIParameters(uint8_t run_ai, QString scan_model_name);
-    Q_INVOKABLE void sendModelParameters(QString model_name);
-    Q_INVOKABLE void sendSetVideoOutput(
-        QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
-        uint8_t layout, uint8_t detection_overlay_mode);
+    Q_INVOKABLE bool sendModelParameters(QString model_name);
+    Q_INVOKABLE bool setVideoOutputLayout(int layoutMode);
+    Q_INVOKABLE bool setDetectionOverlayMode(int detectionOverlayMode);
     Q_INVOKABLE bool setDetectionTracking(int cam, int view_id, bool lock_target);
     Q_INVOKABLE bool clearDetectionTracking(int cam);
-    Q_INVOKABLE void requestVideoOutputParameters();
-    Q_INVOKABLE void requestSensorParameters();
-    Q_INVOKABLE void requestDetectionParameters();
-    Q_INVOKABLE void sendVideoOutputParameters(
-        QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
-        uint8_t layout_mode, uint8_t detection_overlay_mode, uint8_t num_user_views,
-        QVector<int> views_x, QVector<int> views_y, QVector<int> views_w, QVector<int> views_h,
-        uint16_t detection_overlay_x, uint16_t detection_overlay_y,
-        uint16_t detection_overlay_w, uint16_t detection_overlay_h,
-        uint16_t single_detection_size);
-    Q_INVOKABLE void sendCaptureParameters(
+    Q_INVOKABLE bool requestSystemStatusParameters();
+    Q_INVOKABLE bool requestModelParameters();
+    Q_INVOKABLE bool requestVideoOutputParameters();
+    Q_INVOKABLE bool requestCaptureParameters();
+    Q_INVOKABLE bool requestSensorParameters();
+    Q_INVOKABLE bool requestDetectionParameters();
+    Q_INVOKABLE bool requestTrackedDetectionParameters();
+    Q_INVOKABLE bool requestCalibrationParameters(int cameraId);
+    Q_INVOKABLE bool sendCaptureParameters(
         QString stream_name, uint8_t cap_single_image, uint8_t record_video,
         uint16_t images_captured, uint16_t videos_captured);
     Q_INVOKABLE void sendDetectionParameters(
@@ -178,7 +177,7 @@ public:
         uint8_t creation_score_scale, uint8_t bonus_detection_scale,
         uint8_t bonus_redetection_scale, uint8_t missed_detection_penalty,
         uint8_t missed_redetection_penalty);
-    Q_INVOKABLE void sendTrackedDetectionParameters(
+    Q_INVOKABLE bool sendTrackedDetectionParameters(
         uint8_t index, uint8_t score, uint8_t total_detections, int16_t type,
         float yaw_global, float pitch_global, uint8_t rel_frame_of_reference,
         float yaw_rel, float pitch_rel,
@@ -193,7 +192,7 @@ public:
         uint16_t track_id, int16_t view_id, uint8_t lock_target);
     Q_INVOKABLE void sendCamOpticsAndControlParameters(
         QString stream_name, uint8_t cam_id, int8_t zoom, float fov);
-    Q_INVOKABLE void sendCamOffsetParameters(
+    Q_INVOKABLE bool sendCamOffsetParameters(
         QString stream_name, uint8_t cam_id,
         float x, float y,
         float yaw_global, float pitch_global, float yaw_rel, float pitch_rel);
@@ -201,7 +200,7 @@ public:
         uint32_t min_exposure, uint32_t max_exposure,
         uint32_t min_gain, uint32_t max_gain,
         float target_brightness);
-    Q_INVOKABLE void sendCamDepthEstimationParameters(
+    Q_INVOKABLE bool sendCamDepthEstimationParameters(
         QString stream_name, uint8_t cam_id, uint8_t depth_estimation_mode, float depth);
     Q_INVOKABLE bool sendSingleTargetTrackingParameters(
         uint8_t command, QString stream_name, uint8_t cam_id,
@@ -216,9 +215,8 @@ public:
     Q_INVOKABLE bool stopSingleTargetTracking(int cam_id);
     Q_INVOKABLE bool lockCurrentTarget(int cameraSlot);
     Q_INVOKABLE bool clearCurrentTarget(int cameraSlot);
-    Q_INVOKABLE void sendCalibrationParameters(
-        uint8_t cam_id, uint8_t calib_command, uint8_t calib_status);
-    Q_INVOKABLE void sendNavigationParameters(
+    Q_INVOKABLE bool sendCalibrationParameters(int cameraId, int calibrationCommand);
+    Q_INVOKABLE bool sendNavigationParameters(
         float altitude, float visual_lat, float visual_lon,
         float next_waypoint_target_yaw, float next_waypoint_target_pitch, float next_waypoint_target_roll,
         float visual_vel_x, float visual_vel_y, float visual_vel_z);
@@ -229,7 +227,7 @@ public:
     float sttConfidence() const { return _sttConfidence; }
     bool sttLockTarget() const { return _sttLockTarget != 0; }
 
-    Q_INVOKABLE void requestSingleTargetTrackingParameters();
+    Q_INVOKABLE bool requestSingleTargetTrackingParameters();
 
 
     //////////////////////////////////////////////////////////
@@ -240,7 +238,7 @@ public:
     Q_INVOKABLE void changeZoom(int camId, float zoom);
     Q_INVOKABLE void startRecording();
     Q_INVOKABLE void stopRecording();
-    Q_INVOKABLE void takePhoto();
+    Q_INVOKABLE bool takePhoto();
 
 signals:
     void hostChanged();
@@ -347,8 +345,13 @@ signals:
     void sttConfidenceChanged();
     void sttLockTargetChanged();
     void cameraStatesChanged();
+    void commandRejected(const QString& reason);
 
 private:
+#ifdef QGC_UNITTEST_BUILD
+    friend class DigiviewManagerTest;
+#endif
+
     template<typename Payload>
     void _encodeMessage(
         mavlink_message_t& message,
@@ -360,6 +363,10 @@ private:
 
     void _handleMessage(const mavlink_message_t& message);
     bool _sendMessage(const mavlink_message_t& message);
+    bool _requestParameters(uint32_t messageId, float parameter3 = 0.0F, bool* pendingRequest = nullptr);
+    bool _sendVideoOutputUpdate(std::optional<uint8_t> layoutMode, std::optional<uint8_t> detectionOverlayMode);
+    bool _sendVideoOutputParameters(const mavlink_video_output_parameters_t& payload);
+    bool _rejectUnsupportedSet(const QString& parameterName);
     bool _sendCamTargetingParameters(const mavlink_cam_targeting_parameters_t& payload);
     bool _sendSingleTargetTrackingParameters(const mavlink_single_target_tracking_parameters_t& payload);
     void _rememberCamTargeting(const mavlink_cam_targeting_parameters_t& payload);
@@ -396,6 +403,7 @@ private:
     bool _pendingSensorParametersRequest = true;
     bool _pendingDetectionParametersRequest = true;
     bool _pendingSingleTargetTrackingParametersRequest = true;
+    std::optional<mavlink_video_output_parameters_t> _pendingVideoOutputParameters;
     QString _streamName = QStringLiteral("stream");
     quint32 _lastReceivedMessageId = 0;
     bool _hasVideoOutputParameters = false;
@@ -403,12 +411,13 @@ private:
     int _videoOutputWidth = 0;
     int _videoOutputHeight = 0;
     int _videoOutputFps = 0;
-    int _videoOutputLayoutMode = 0;
-    int _videoOutputDetectionOverlayMode = 0;
+    int _videoOutputLayoutMode = Layout::LAYOUT_1;
+    int _videoOutputDetectionOverlayMode = Layout::DET_OVERLAY_NONE;
     int _videoOutputNumUserViews = 0;
     QVariantList _videoOutputViews;
     QVariantMap _videoOutputDetectionOverlayRect;
     int _videoOutputSingleDetectionSize = 0;
+    mavlink_video_output_parameters_t _videoOutputParameters {};
 
     bool _hasSensorParameters = false;
     quint32 _sensorMinExposure = 0;
@@ -431,7 +440,7 @@ private:
     uint8_t _detectionMissedRedetectionPenalty = 0;
 
     bool _hasSttParameters = false;
-    uint8_t _sttStatus = 0; // 0=OFF, 1=INIT, 2=RUNNING, 3=DROPPED
+    uint8_t _sttStatus = static_cast<uint8_t>(single_target_tracking_status::OFF);
     uint8_t _sttCamId = 0;
     float _sttConfidence = 0.0f;
     uint8_t _sttLockTarget = 0;

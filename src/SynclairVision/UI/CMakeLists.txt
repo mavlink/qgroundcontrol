@@ -15,6 +15,8 @@ qt_add_qml_module(SynclairVisionUIModule
     URI QGroundControl.SynclairVisionUI
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    SOURCES
+        ../Digiview/DigiviewProtocolEnums.h
     QML_FILES
         Flyview/SVFlyView.qml
         Flyview/SVFlyViewMenus.qml
@@ -130,3 +132,8 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_include_directories(SynclairVisionUIModule PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Digiview
+    ${CMAKE_SOURCE_DIR}/message-definitions
+)

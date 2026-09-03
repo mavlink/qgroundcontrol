@@ -42,7 +42,6 @@ QtObject {
     readonly property bool uiInteractionEnabled: digiviewActive && QGroundControl.videoManager.decoding
     readonly property bool cameraSelectionEnabled: uiInteractionEnabled
 
-    signal takePhotoRequested()
     signal cursorTargetRequested(int cameraSlot, real normalizedX, real normalizedY)
     signal cursorTrackingSelectionCancelled()
     signal pointTrackingSelectionRequested(string trackingId)
@@ -164,31 +163,31 @@ QtObject {
     function aiDetectionOverlayModeForPosition(positionId) {
         switch (positionId) {
         case 'Single':
-            return 1
+            return DigiviewProtocol.DetectionOverlaySingleTopRight
         case 'ColumnRight':
-            return 2
+            return DigiviewProtocol.DetectionOverlayColumnRight
         case 'ColumnLeft':
-            return 3
+            return DigiviewProtocol.DetectionOverlayColumnLeft
         case 'RowTop':
-            return 4
+            return DigiviewProtocol.DetectionOverlayRowTop
         case 'RowBottom':
-            return 5
+            return DigiviewProtocol.DetectionOverlayRowBottom
         default:
-            return 0
+            return DigiviewProtocol.DetectionOverlayNone
         }
     }
 
     function aiDetectionOverlayPositionForMode(mode) {
         switch (mode) {
-        case 1:
+        case DigiviewProtocol.DetectionOverlaySingleTopRight:
             return 'Single'
-        case 2:
+        case DigiviewProtocol.DetectionOverlayColumnRight:
             return 'ColumnRight'
-        case 3:
+        case DigiviewProtocol.DetectionOverlayColumnLeft:
             return 'ColumnLeft'
-        case 4:
+        case DigiviewProtocol.DetectionOverlayRowTop:
             return 'RowTop'
-        case 5:
+        case DigiviewProtocol.DetectionOverlayRowBottom:
             return 'RowBottom'
         default:
             return ''
@@ -200,26 +199,20 @@ QtObject {
             return
         }
 
-        digiview.sendSetVideoOutput(
-            digiview.streamName,
-            0,
-            0,
-            0,
-            0xFF,
-            mode)
+        digiview.setDetectionOverlayMode(mode)
     }
 
     function setAiDetectionOverlayPosition(positionId) {
         const mode = aiDetectionOverlayModeForPosition(positionId)
 
-        if (mode !== 0) {
+        if (mode !== DigiviewProtocol.DetectionOverlayNone) {
             sendAiDetectionOverlayMode(mode)
         }
     }
 
     function toggleAiOverlay() {
         if (aiOverlay) {
-            sendAiDetectionOverlayMode(0)
+            sendAiDetectionOverlayMode(DigiviewProtocol.DetectionOverlayNone)
             return
         }
 
@@ -322,14 +315,18 @@ QtObject {
         setCameraTrackingId(cameraSelected, trackingId, awaitingConfirmation)
     }
 
-    // TODO: layoutCount and nextLayout() are placeholders. Wire layoutIndex up to
-    // whatever actually drives the video grid layout elsewhere in the app (not present
-    // in the files reviewed here), and set layoutCount to the real number of layouts.
-    property int layoutIndex: 0
-    readonly property int layoutCount: 3
+    property int layoutIndex: DigiviewProtocol.LayoutSingleCamera
+    readonly property int layoutCount: DigiviewProtocol.LayoutMaximum + 1
 
     function nextLayout() {
-        layoutIndex = (layoutIndex + 1) % layoutCount
+        if (!digiview || !digiviewActive) {
+            return
+        }
+
+        const nextLayoutIndex = (layoutIndex + 1) % layoutCount
+        if (digiview.setVideoOutputLayout(nextLayoutIndex)) {
+            layoutIndex = nextLayoutIndex
+        }
     }
 
     function activateSttTracking() {
@@ -575,7 +572,9 @@ QtObject {
         }
 
         lastPhotoRequestTimeMs = now
-        digiview.takePhoto()
+        if (digiview) {
+            digiview.takePhoto()
+        }
     }
 
 //---------------------------------
@@ -614,7 +613,8 @@ QtObject {
             }
         }
 
-        return aiDetectionOverlayModeForPosition(SVSettings.aiDetectionOverlayPosition) !== 0
+        return aiDetectionOverlayModeForPosition(SVSettings.aiDetectionOverlayPosition)
+                !== DigiviewProtocol.DetectionOverlayNone
             ? SVSettings.aiDetectionOverlayPosition
             : 'Single'
     }
@@ -634,7 +634,9 @@ QtObject {
                                              ? digiview.cameraStates[cameraSelected]
                                              : null
 
-    readonly property bool isCurrentCamTracking: activeCameraState ? (activeCameraState.sttStatus === 2) : false // 2 = SV_STT_STATUS_RUNNING                                         
+    readonly property bool isCurrentCamTracking: activeCameraState
+        ? activeCameraState.sttStatus === DigiviewProtocol.SttStatusRunning
+        : false
     
     
     readonly property int activeCameraTrackId: activeCameraState ? activeCameraState.trackId : 0
@@ -646,11 +648,11 @@ QtObject {
             return cameraTrackingIds[cameraSelected]
         }
 
-        if (activeCameraState && activeCameraState.targetingMode === 2) {
+        if (activeCameraState && activeCameraState.targetingMode === DigiviewProtocol.TargetingDetection) {
             return 'detection'
         }
 
-        if (activeCameraState && activeCameraState.sttStatus === 2) {
+        if (activeCameraState && activeCameraState.sttStatus === DigiviewProtocol.SttStatusRunning) {
             return 'singleTarget'
         }
 
@@ -669,6 +671,23 @@ QtObject {
 
         function onCameraStatesChanged() {
             root.synchronizeCameraTrackingStates()
+        }
+
+        function onVideoOutputLayoutModeChanged() {
+            const layoutMode = digiview.videoOutputLayoutMode
+            if (layoutMode >= DigiviewProtocol.LayoutSingleCamera
+                    && layoutMode <= DigiviewProtocol.LayoutMaximum) {
+                root.layoutIndex = layoutMode
+            }
+        }
+
+        function onCommandRejected(reason) {
+            SVNotificationManager.add(
+                qsTr("DigiView Command Rejected"),
+                reason,
+                "warning",
+                "network_error"
+            )
         }
     }
 

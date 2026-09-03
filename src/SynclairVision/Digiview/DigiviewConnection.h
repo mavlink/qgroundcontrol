@@ -23,7 +23,7 @@ class DigiviewConnection : public QObject
 
 public:
     static constexpr const char* kDefaultHost = "192.168.4.60";
-    static constexpr quint16 kDefaultPort = 14770;
+    static constexpr quint16 kDefaultPort = 14570;
     static constexpr quint16 kDefaultListenPort = 14571;
     static constexpr quint16 kDefaultLegacyTcpControlPort = 8555;
 

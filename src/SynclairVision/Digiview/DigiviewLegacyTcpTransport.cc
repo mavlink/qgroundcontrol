@@ -104,6 +104,10 @@ void DigiviewLegacyTcpTransport::_readAvailableRecords()
         const auto result = _adapter.decode(record, mavlinkMessage, error);
         if (result == DigiviewLegacyTcpAdapter::DecodeResult::Message) {
             emit messageReceived(mavlinkMessage);
+            if (!error.isEmpty()) {
+                qCWarning(DigiviewLegacyTcpTransportLog) << error;
+                emit errorOccurred(error);
+            }
         } else if (result == DigiviewLegacyTcpAdapter::DecodeResult::Error) {
             qCWarning(DigiviewLegacyTcpTransportLog) << error;
             emit errorOccurred(error);

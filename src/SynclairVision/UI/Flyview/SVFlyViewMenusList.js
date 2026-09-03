@@ -108,60 +108,60 @@ function getTrackingModel(uiInteractionEnabled) {
     ]
 }
 
-function getLayoutModel(uiInteractionEnabled) {
+function getLayoutModel(uiInteractionEnabled, protocol) {
     return [
         { 
             id: 'single', 
-            value: 0,
+            value: protocol.LayoutSingleCamera,
             description: "Single Camera",
             checkable: true, 
             iconSource: '/qmlimages/layout_single.svg',
             enabled: uiInteractionEnabled
         },
         { 
-            id: 'two_stacked_square', 
-            value: 1,
-            description: "Two Stacked Cameras",
+            id: 'two_columns',
+            value: protocol.LayoutTwoColumns,
+            description: "Two Columns",
             checkable: true, 
             iconSource: '/qmlimages/layout_double.svg',
             enabled: uiInteractionEnabled
         },
         { 
-            id: 'four_square', 
-            value: 4,
-            description: "Four Cameras",
-            checkable: true, 
-            iconSource: '/qmlimages/layout_quadruple.svg',
-            enabled: uiInteractionEnabled
-        },
-        { 
-            id: 'two_stacked_panorama', 
-            value: 2,
-            description: "Two Stacked Panorama Cameras",
+            id: 'two_rows',
+            value: protocol.LayoutTwoRows,
+            description: "Two Rows",
             checkable: true, 
             iconSource: '/qmlimages/layout_double_panorama.svg',
             enabled: uiInteractionEnabled
         },
         { 
-            id: 'two_square_one_panorama', 
-            value: 3,
-            description: "Two Square and One Panorama Cameras",
+            id: 'top_2_bottom_1',
+            value: protocol.LayoutTop2Bottom1,
+            description: "Top 2 / Bottom 1",
             checkable: true, 
             iconSource: '/qmlimages/layout_double+panorama.svg',
             enabled: uiInteractionEnabled
         },
         { 
-            id: 'three_square_one_panorama', 
-            value: 5,
-            description: "Three Square and One Panorama Cameras",
+            id: 'top_2_bottom_2',
+            value: protocol.LayoutTop2Bottom2,
+            description: "Top 2 / Bottom 2",
+            checkable: true, 
+            iconSource: '/qmlimages/layout_quadruple.svg',
+            enabled: uiInteractionEnabled
+        },
+        { 
+            id: 'top_3_bottom_1',
+            value: protocol.LayoutTop3Bottom1,
+            description: "Top 3 / Bottom 1",
             checkable: true, 
             iconSource: '/qmlimages/layout_triple+panorama.svg',
             enabled: uiInteractionEnabled
         },
         { 
-            id: 'entire_picture', 
-            value: 6,
-            description: "Full 360 View",
+            id: 'source_frame',
+            value: protocol.LayoutSourceFrame,
+            description: "Source Frame",
             checkable: true, 
             iconSource: '/qmlimages/layout_single_panorama.svg',
             enabled: uiInteractionEnabled

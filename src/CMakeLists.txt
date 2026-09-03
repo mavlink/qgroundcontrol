@@ -145,7 +145,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         QGroundControlModule
         ToolbarModule
         VehicleSetupModule
-        SynclairVisionUIModule
+        $<LINK_LIBRARY:WHOLE_ARCHIVE,SynclairVisionUIModule>
 )
 
 # ----------------------------------------------------------------------------
