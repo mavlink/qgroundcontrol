@@ -12,7 +12,8 @@
 
 #include <QtMath>
 
-void MissionFlightStatusCalculator::reset(Vehicle* controllerVehicle, Vehicle* managerVehicle, bool missionContainsVTOLTakeoff)
+void MissionFlightStatusCalculator::reset(
+    Vehicle* controllerVehicle, Vehicle* managerVehicle, bool missionStartsInVTOLMulticopterMode)
 {
     _status.totalDistance =        0.0;
     _status.plannedDistance =      0.0;
@@ -36,7 +37,9 @@ void MissionFlightStatusCalculator::reset(Vehicle* controllerVehicle, Vehicle* m
     _status.cruiseAmpsTotal =      0;
     _status.batteryChangePoint =   -1;
     _status.batteriesRequired =    -1;
-    _status.vtolMode =             missionContainsVTOLTakeoff ? QGCMAVLink::VehicleClassMultiRotor : QGCMAVLink::VehicleClassFixedWing;
+    _status.vtolMode = missionStartsInVTOLMulticopterMode
+        ? QGCMAVLink::VehicleClassMultiRotor
+        : QGCMAVLink::VehicleClassFixedWing;
 
     controllerVehicle->firmwarePlugin()->batteryConsumptionData(controllerVehicle, _status.mAhBattery, _status.hoverAmps, _status.cruiseAmps);
     if (_status.mAhBattery != 0) {
@@ -51,7 +54,7 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
                                             Vehicle* managerVehicle,
                                             AppSettings* appSettings,
                                             PlanViewSettings* planViewSettings,
-                                            bool missionContainsVTOLTakeoff)
+                                            bool missionStartsInVTOLMulticopterMode)
 {
     bool                firstCoordinateItem =           true;
     VisualMissionItem*  lastFlyThroughVI =   qobject_cast<VisualMissionItem*>(visualItems->get(0));
@@ -70,7 +73,7 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
 
     _minAMSLAltitude = _maxAMSLAltitude = qQNaN();
 
-    reset(controllerVehicle, managerVehicle, missionContainsVTOLTakeoff);
+    reset(controllerVehicle, managerVehicle, missionStartsInVTOLMulticopterMode);
 
     bool   linkStartToHome =            false;
     bool   foundRTL =                   false;
@@ -242,7 +245,12 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
         // Update VTOL state
         if (simpleItem && controllerVehicle->vtol()) {
             switch (simpleItem->command()) {
-            case MAV_CMD_NAV_TAKEOFF:       // This will do a fixed wing style takeoff
+            case MAV_CMD_NAV_TAKEOFF:
+                if (!controllerVehicle->firmwarePlugin()->isCapable(
+                        controllerVehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability)) {
+                    _status.vtolMode = QGCMAVLink::VehicleClassFixedWing;
+                }
+                break;
             case MAV_CMD_NAV_VTOL_TAKEOFF:  // Vehicle goes straight up and then transitions to FW
             case MAV_CMD_NAV_LAND:
                 _status.vtolMode = QGCMAVLink::VehicleClassFixedWing;

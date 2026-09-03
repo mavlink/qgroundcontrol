@@ -194,6 +194,11 @@ Item {
         _missionController.insertTakeoffItem(mapCenter(), nextIndex, true /* makeCurrentItem */)
     }
 
+    function insertVTOLMulticopterTakeoffItemAfterCurrent() {
+        var nextIndex = _missionController.currentPlanViewVIIndex + 1
+        _missionController.insertVTOLMulticopterTakeoffItem(mapCenter(), nextIndex, true /* makeCurrentItem */)
+    }
+
     function insertLandItemAfterCurrent() {
         var nextIndex = _missionController.currentPlanViewVIIndex + 1
         _missionController.insertLandItem(mapCenter(), nextIndex, true /* makeCurrentItem */)
@@ -454,6 +459,9 @@ Item {
                         iconSource: "/res/takeoff.svg"
                         enabled: _missionController.isInsertTakeoffValid
                         visible: toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover
+                        dropPanelComponent: _planMasterController.controllerVehicle.supports.vtolMulticopterTakeoff
+                                            ? vtolTakeoffDropPanel
+                                            : null
                         onTriggered: {
                             insertTakeoffItemAfterCurrent()
                         }
@@ -806,6 +814,39 @@ Item {
                 }
             }
         } // Column
+    }
+
+    Component {
+        id: vtolTakeoffDropPanel
+
+        ColumnLayout {
+            spacing: ScreenTools.defaultFontPixelWidth * 0.5
+
+            QGCLabel { text: qsTr("Choose takeoff mode:") }
+
+            QGCButton {
+                objectName: "planTakeoff_vtolButton"
+                text: qsTr("VTOL takeoff")
+                Layout.fillWidth: true
+                primary: true
+
+                onClicked: {
+                    insertTakeoffItemAfterCurrent()
+                    dropPanel.hide()
+                }
+            }
+
+            QGCButton {
+                objectName: "planTakeoff_mcButton"
+                text: qsTr("Multicopter takeoff")
+                Layout.fillWidth: true
+
+                onClicked: {
+                    insertVTOLMulticopterTakeoffItemAfterCurrent()
+                    dropPanel.hide()
+                }
+            }
+        }
     }
 
     QGCPopupDialogFactory {

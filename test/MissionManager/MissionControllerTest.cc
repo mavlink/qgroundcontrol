@@ -14,8 +14,11 @@
 #include "PlanViewSettings.h"
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
+#include "TakeoffMissionItem.h"
 #include "TestFixtures.h"
 #include "MultiSignalSpy.h"
+#include "Vehicle.h"
+#include "VehicleSupports.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -45,6 +48,17 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(
         QGCMAVLink::firmwareClass(firmwareType));
     _masterController = std::make_unique<PlanMasterController>();
+    _startMasterController();
+}
+
+void MissionControllerTest::_initForVehicleType(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
+{
+    _masterController = std::make_unique<PlanMasterController>(firmwareType, vehicleType);
+    _startMasterController();
+}
+
+void MissionControllerTest::_startMasterController()
+{
     _masterController->setFlyView(false);
     _missionController = _masterController->missionController();
     MultiSignalSpy missionControllerSpy;
@@ -67,6 +81,151 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     QmlObjectListModel* simpleFlightPathSegments = _missionController->simpleFlightPathSegments();
     QVERIFY(simpleFlightPathSegments);
     QCOMPARE(simpleFlightPathSegments->count(), 0);
+}
+
+void MissionControllerTest::_testVTOLTakeoffModes_data()
+{
+    QTest::addColumn<int>("firmwareType");
+    QTest::addColumn<int>("vehicleType");
+    QTest::addColumn<bool>("useMulticopterTakeoff");
+    QTest::addColumn<bool>("supportsMulticopterTakeoff");
+    QTest::addColumn<int>("expectedCommand");
+    QTest::addColumn<bool>("expectedSameLocation");
+    QTest::addColumn<int>("expectedWaypointVTOLMode");
+
+    QTest::newRow("PX4 VTOL default")
+        << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_VTOL_TAILSITTER_QUADROTOR)
+        << false << true << int(MAV_CMD_NAV_VTOL_TAKEOFF) << false << int(QGCMAVLink::VehicleClassFixedWing);
+    QTest::newRow("PX4 VTOL multicopter")
+        << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_VTOL_TAILSITTER_QUADROTOR)
+        << true << true << int(MAV_CMD_NAV_TAKEOFF) << true << int(QGCMAVLink::VehicleClassMultiRotor);
+    QTest::newRow("PX4 multicopter unchanged")
+        << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_QUADROTOR)
+        << false << false << int(MAV_CMD_NAV_TAKEOFF) << true << int(QGCMAVLink::VehicleClassGeneric);
+    QTest::newRow("PX4 fixed wing unchanged")
+        << int(MAV_AUTOPILOT_PX4) << int(MAV_TYPE_FIXED_WING)
+        << false << false << int(MAV_CMD_NAV_TAKEOFF) << false << int(QGCMAVLink::VehicleClassGeneric);
+}
+
+void MissionControllerTest::_testVTOLTakeoffModes()
+{
+    QFETCH(int, firmwareType);
+    QFETCH(int, vehicleType);
+    QFETCH(bool, useMulticopterTakeoff);
+    QFETCH(bool, supportsMulticopterTakeoff);
+    QFETCH(int, expectedCommand);
+    QFETCH(bool, expectedSameLocation);
+    QFETCH(int, expectedWaypointVTOLMode);
+
+    _initForVehicleType(static_cast<MAV_AUTOPILOT>(firmwareType), static_cast<MAV_TYPE>(vehicleType));
+
+    Vehicle* controllerVehicle = _masterController->controllerVehicle();
+    QVERIFY(controllerVehicle);
+    QCOMPARE(controllerVehicle->supports()->vtolMulticopterTakeoff(), supportsMulticopterTakeoff);
+
+    const QGeoCoordinate home = Coord::zurich();
+    _missionController->setHomePosition(home);
+    VisualMissionItem* visualTakeoff = useMulticopterTakeoff
+        ? _missionController->insertVTOLMulticopterTakeoffItem(home, 1)
+        : _missionController->insertTakeoffItem(home, 1);
+    QVERIFY(visualTakeoff);
+
+    TakeoffMissionItem* takeoffItem = qobject_cast<TakeoffMissionItem*>(visualTakeoff);
+    QVERIFY(takeoffItem);
+    QCOMPARE(takeoffItem->mavCommand(), static_cast<MAV_CMD>(expectedCommand));
+    QCOMPARE(takeoffItem->launchTakeoffAtSameLocation(), expectedSameLocation);
+
+    SimpleMissionItem* waypoint = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100.0, 0.0), 2));
+    QVERIFY(waypoint);
+
+    if (controllerVehicle->vtol()) {
+        QCOMPARE_TRUE_WAIT(waypoint->property("previousVTOLMode").toInt(), expectedWaypointVTOLMode, TestTimeout::mediumMs());
+    }
+}
+
+void MissionControllerTest::_testArduPilotVTOLOrdinaryTakeoffCompatibility()
+{
+    _initForVehicleType(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_VTOL_TAILSITTER_QUADROTOR);
+
+    Vehicle* controllerVehicle = _masterController->controllerVehicle();
+    QVERIFY(controllerVehicle);
+    QCOMPARE(controllerVehicle->supports()->vtolMulticopterTakeoff(), false);
+
+    const QGeoCoordinate home = Coord::zurich();
+    _missionController->setHomePosition(home);
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+
+    TakeoffMissionItem* defaultTakeoffItem = qobject_cast<TakeoffMissionItem*>(
+        _missionController->insertTakeoffItem(home, 1));
+    QVERIFY(defaultTakeoffItem);
+    QCOMPARE(defaultTakeoffItem->mavCommand(), MAV_CMD_NAV_VTOL_TAKEOFF);
+
+    SimpleMissionItem* waypoint = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100.0, 0.0), 2));
+    QVERIFY(waypoint);
+    QCOMPARE_TRUE_WAIT(
+        waypoint->property("previousVTOLMode").toInt(),
+        int(QGCMAVLink::VehicleClassFixedWing),
+        TestTimeout::mediumMs());
+
+    TakeoffMissionItem ordinaryTakeoffItem(
+        MAV_CMD_NAV_TAKEOFF, _masterController.get(), false /* flyView */, settingsItem, false /* forLoad */);
+    QCOMPARE(ordinaryTakeoffItem.launchTakeoffAtSameLocation(), !ordinaryTakeoffItem.specifiesCoordinate());
+}
+
+void MissionControllerTest::_testUnsupportedVTOLMulticopterTakeoff()
+{
+    _initForVehicleType(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    _missionController->setHomePosition(Coord::zurich());
+    const int initialCount = _missionController->visualItems()->count();
+
+    expectAppMessage(QRegularExpression(QStringLiteral("Multicopter takeoff is not supported")));
+    QVERIFY(!_missionController->insertVTOLMulticopterTakeoffItem(Coord::zurich(), 1));
+    verifyExpectedLogMessage();
+    QCOMPARE(_missionController->visualItems()->count(), initialCount);
+}
+
+void MissionControllerTest::_testVTOLTakeoffJsonRoundTrip_data()
+{
+    QTest::addColumn<bool>("useMulticopterTakeoff");
+    QTest::addColumn<int>("expectedCommand");
+
+    QTest::newRow("VTOL takeoff") << false << int(MAV_CMD_NAV_VTOL_TAKEOFF);
+    QTest::newRow("multicopter takeoff") << true << int(MAV_CMD_NAV_TAKEOFF);
+}
+
+void MissionControllerTest::_testVTOLTakeoffJsonRoundTrip()
+{
+    QFETCH(bool, useMulticopterTakeoff);
+    QFETCH(int, expectedCommand);
+
+    _initForVehicleType(MAV_AUTOPILOT_PX4, MAV_TYPE_VTOL_TAILSITTER_QUADROTOR);
+
+    const QGeoCoordinate home = Coord::zurich();
+    _missionController->setHomePosition(home);
+    VisualMissionItem* visualTakeoff = useMulticopterTakeoff
+        ? _missionController->insertVTOLMulticopterTakeoffItem(home, 1)
+        : _missionController->insertTakeoffItem(home, 1);
+    TakeoffMissionItem* takeoffItem = qobject_cast<TakeoffMissionItem*>(visualTakeoff);
+    QVERIFY(takeoffItem);
+    takeoffItem->setCoordinate(home.atDistanceAndAzimuth(50.0, 0.0));
+    QVERIFY(_missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100.0, 0.0), 2));
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString filename = tempDir.filePath(QStringLiteral("VTOLTakeoff.plan"));
+    QVERIFY(_masterController->saveToFile(filename));
+
+    _masterController->removeAll();
+    _masterController->loadFromFile(filename);
+
+    QmlObjectListModel* visualItems = _missionController->visualItems();
+    QCOMPARE(visualItems->count(), 3);
+    TakeoffMissionItem* loadedTakeoff = visualItems->value<TakeoffMissionItem*>(1);
+    QVERIFY(loadedTakeoff);
+    QCOMPARE(loadedTakeoff->mavCommand(), static_cast<MAV_CMD>(expectedCommand));
 }
 
 void MissionControllerTest::_testEmptyVehicle_data()
