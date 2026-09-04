@@ -320,7 +320,8 @@ void MockLinkGimbal::_sendGimbalDeviceAttitudeStatus()
         q,
         0.0f, 0.0f, 0.0f,   // angular_velocity_x, y, z
         0,                  // failure flags
-        _pitch, _yaw,       // delta_pitch, delta_yaw (Euler angles in degrees)
+        yawRad,             // delta_yaw (rad)
+        0.0f,               // delta_yaw_velocity (rad/s)
         0);                 // gimbal_device_id = 0 means the device id is the same as the message component ID
     _mockLink->respondWithMavlinkMessage(msg);
 }

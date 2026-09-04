@@ -240,23 +240,28 @@ void GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t
     gimbal->setAbsoluteRoll(qRadiansToDegrees(roll));
     gimbal->setAbsolutePitch(qRadiansToDegrees(pitch));
 
+    const float deltaYawDeg = qRadiansToDegrees(attitude_status.delta_yaw);
+    // Extension field: unsent decodes as 0.0, so ignore 0 until a value proves support.
+    if (gimbal->hasDeltaYaw() || attitude_status.delta_yaw != 0.0f) {
+        gimbal->setDeltaYaw(deltaYawDeg);
+    }
+
+    // Prefer the gimbal's own heading estimate; fall back to vehicle heading.
+    const float headingDeg = (gimbal->hasDeltaYaw() && !qIsNaN(deltaYawDeg))
+        ? deltaYawDeg
+        : _vehicle->heading()->rawValue().toFloat();
+
     const bool yaw_in_vehicle_frame = _yawInVehicleFrame(attitude_status.flags);
     if (yaw_in_vehicle_frame) {
         const float bodyYaw = qRadiansToDegrees(yaw);
-        float absoluteYaw = bodyYaw + _vehicle->heading()->rawValue().toFloat();
-        if (absoluteYaw > 180.0f) {
-            absoluteYaw -= 360.0f;
-        }
+        const float absoluteYaw = std::remainder(bodyYaw + headingDeg, 360.0f);
 
         gimbal->setBodyYaw(bodyYaw);
         gimbal->setAbsoluteYaw(absoluteYaw);
 
     } else {
         const float absoluteYaw = qRadiansToDegrees(yaw);
-        float bodyYaw = absoluteYaw - _vehicle->heading()->rawValue().toFloat();
-        if (bodyYaw < -180.0f) {
-            bodyYaw += 360.0f;
-        }
+        const float bodyYaw = std::remainder(absoluteYaw - headingDeg, 360.0f);
 
         gimbal->setBodyYaw(bodyYaw);
         gimbal->setAbsoluteYaw(absoluteYaw);
@@ -474,7 +479,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
         const float tiltDesired = tiltIncDesired + _activeGimbal->absolutePitch()->rawValue().toFloat();
 
         if (_activeGimbal->yawLock()) {
-            sendPitchAbsoluteYaw(tiltDesired, panDesired + _vehicle->heading()->rawValue().toFloat(), false);
+            sendPitchAbsoluteYaw(tiltDesired, std::remainder(panIncDesired + _activeGimbal->absoluteYaw()->rawValue().toFloat(), 360.0f), false);
         } else {
             sendPitchBodyYaw(tiltDesired, panDesired, false);
         }
@@ -491,7 +496,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
         const float tiltDesired = tiltIncDesired + _activeGimbal->absolutePitch()->rawValue().toFloat();
 
         if (_activeGimbal->yawLock()) {
-            sendPitchAbsoluteYaw(tiltDesired, panDesired + _vehicle->heading()->rawValue().toFloat(), false);
+            sendPitchAbsoluteYaw(tiltDesired, std::remainder(panIncDesired + _activeGimbal->absoluteYaw()->rawValue().toFloat(), 360.0f), false);
         } else {
             sendPitchBodyYaw(tiltDesired, panDesired, false);
         }
