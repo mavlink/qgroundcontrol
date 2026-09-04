@@ -3,6 +3,7 @@
 #include "CoordFixtures.h"
 #include "MultiSignalSpy.h"
 #include "PlanViewSettings.h"
+#include "QGCGeo.h"
 #include "SurveyComplexItem.h"
 #include "TransectStyleComplexItem.h"
 
@@ -68,7 +69,7 @@ void SurveyComplexItemTest::_testDirty()
     _multiSpy->clearAllSignals();
     // These facts should set dirty when changed
     QList<Fact*> rgFacts;
-    rgFacts << _surveyItem->gridAngle() << _surveyItem->flyAlternateTransects();
+    rgFacts << _surveyItem->gridAngle() << _surveyItem->flyAlternateTransects() << _surveyItem->splitConcavePolygons();
     for (Fact* fact : rgFacts) {
         qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_surveyItem->dirty());
@@ -334,6 +335,121 @@ void SurveyComplexItemTest::_testMaxTransectCount()
         QCOMPARE(rebuildSpy.count(), 1);
         QCOMPARE(_surveyItem->_transectCount(), 1);
     }
+}
+
+void SurveyComplexItemTest::_testSplitConcavePolygon()
+{
+    const QGeoCoordinate tangentOrigin = TestFixtures::Coord::missionTestOrigin();
+    const QPolygonF localPolygon = {
+        {0.0, 0.0},   {100.0, 0.0},  {100.0, 100.0}, {60.0, 100.0}, {60.0, 40.0},
+        {40.0, 40.0}, {40.0, 100.0}, {0.0, 100.0},   {0.0, 0.0},
+    };
+
+    QList<QGeoCoordinate> polygonCoordinates;
+    polygonCoordinates.reserve(localPolygon.size() - 1);
+    for (qsizetype index = 0; index + 1 < localPolygon.size(); ++index) {
+        QGeoCoordinate coordinate;
+        QGCGeo::convertNedToGeo(localPolygon[index].y(), localPolygon[index].x(), 0.0, tangentOrigin, coordinate);
+        polygonCoordinates.append(coordinate);
+    }
+
+    _mapPolygon->beginReset();
+    _mapPolygon->clear();
+    _mapPolygon->appendVertices(polygonCoordinates);
+    _mapPolygon->endReset();
+    _surveyItem->turnAroundDistance()->setRawValue(0.0);
+    _surveyItem->hoverAndCapture()->setRawValue(false);
+    _surveyItem->gridAngle()->setRawValue(90.0);
+    _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(20.0);
+
+    const auto allTransectMidpointsInside = [&localPolygon, &tangentOrigin](const QVariantList& points) {
+        if ((points.size() % 2) != 0) {
+            return false;
+        }
+
+        for (qsizetype index = 0; index < points.size(); index += 2) {
+            double firstNorth = 0.0;
+            double firstEast = 0.0;
+            double firstDown = 0.0;
+            double secondNorth = 0.0;
+            double secondEast = 0.0;
+            double secondDown = 0.0;
+            QGCGeo::convertGeoToNed(points[index].value<QGeoCoordinate>(), tangentOrigin, firstNorth, firstEast,
+                                    firstDown);
+            QGCGeo::convertGeoToNed(points[index + 1].value<QGeoCoordinate>(), tangentOrigin, secondNorth, secondEast,
+                                    secondDown);
+            const QPointF midpoint((firstEast + secondEast) / 2.0, (firstNorth + secondNorth) / 2.0);
+            if (!localPolygon.containsPoint(midpoint, Qt::OddEvenFill)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    _surveyItem->splitConcavePolygons()->setRawValue(false);
+    const int joinedTransectCount = _surveyItem->_transectCount();
+    QVERIFY(!allTransectMidpointsInside(_surveyItem->visualTransectPoints()));
+
+    _surveyItem->splitConcavePolygons()->setRawValue(true);
+    const int splitTransectCount = _surveyItem->_transectCount();
+    QVERIFY(splitTransectCount > joinedTransectCount);
+
+    for (int refly = 0; refly < 2; ++refly) {
+        _surveyItem->refly90Degrees()->setRawValue(refly != 0);
+        const int expectedTransectCount = _surveyItem->_transectCount();
+        QVERIFY(expectedTransectCount >= splitTransectCount);
+        for (int alternate = 0; alternate < 2; ++alternate) {
+            _surveyItem->flyAlternateTransects()->setRawValue(alternate != 0);
+            for (int entryLocation = 0; entryLocation < 4; ++entryLocation) {
+                QCOMPARE(_surveyItem->_transectCount(), expectedTransectCount);
+                QVERIFY(allTransectMidpointsInside(_surveyItem->visualTransectPoints()));
+                _surveyItem->rotateEntryPoint();
+            }
+        }
+    }
+
+    _surveyItem->refly90Degrees()->setRawValue(false);
+    _surveyItem->flyAlternateTransects()->setRawValue(false);
+    ignoreLogMessage("Plan.SurveyComplexItem", QtWarningMsg, QRegularExpression("Transect spacing.*raised"));
+    _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(0.001);
+    const int cappedTransectCount = _surveyItem->_transectCount();
+    QVERIFY(cappedTransectCount > 0);
+    QVERIFY(cappedTransectCount <= TransectStyleComplexItem::maxTransectCount);
+
+    constexpr int combToothCount = TransectStyleComplexItem::maxTransectCount + 1;
+    constexpr double combHeight = 3.0;
+    constexpr double combNotchDepth = 1.0;
+    const double combWidth = (2.0 * combToothCount) - 1.0;
+    QPolygonF combPolygon = {{0.0, 0.0}, {combWidth, 0.0}, {combWidth, combHeight}};
+    for (int toothIndex = combToothCount - 1; toothIndex >= 0; --toothIndex) {
+        const double toothLeft = 2.0 * toothIndex;
+        combPolygon.append(QPointF(toothLeft, combHeight));
+        if (toothIndex > 0) {
+            combPolygon.append(QPointF(toothLeft, combNotchDepth));
+            combPolygon.append(QPointF(toothLeft - 1.0, combNotchDepth));
+            combPolygon.append(QPointF(toothLeft - 1.0, combHeight));
+        }
+    }
+    combPolygon.append(QPointF(0.0, 0.0));
+
+    QList<QGeoCoordinate> combCoordinates;
+    combCoordinates.reserve(combPolygon.size() - 1);
+    for (qsizetype index = 0; index + 1 < combPolygon.size(); ++index) {
+        QGeoCoordinate coordinate;
+        QGCGeo::convertNedToGeo(combPolygon[index].y(), combPolygon[index].x(), 0.0, tangentOrigin, coordinate);
+        combCoordinates.append(coordinate);
+    }
+
+    _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(1e9);
+    ignoreLogMessage("Plan.SurveyComplexItem", QtWarningMsg,
+                     QRegularExpression("Unable to limit split transect count.*joining fragments"));
+    _mapPolygon->beginReset();
+    _mapPolygon->clear();
+    _mapPolygon->appendVertices(combCoordinates);
+    _mapPolygon->endReset();
+    const int fallbackTransectCount = _surveyItem->_transectCount();
+    QVERIFY(fallbackTransectCount > 0);
+    QVERIFY(fallbackTransectCount <= TransectStyleComplexItem::maxTransectCount);
 }
 
 UT_REGISTER_TEST(SurveyComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)

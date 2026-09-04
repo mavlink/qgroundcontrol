@@ -4,13 +4,15 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
+
+#include <cmath>
 
 #include "MultiSignalSpy.h"
-#include "UnitTestCoords.h"
 #include "QGCMapPolyline.h"
 #include "QGCQGeoCoordinate.h"
 #include "QmlObjectListModel.h"
-#include <QtCore/QTemporaryDir>
+#include "UnitTestCoords.h"
 
 void QGCMapPolylineTest::init()
 {
@@ -197,6 +199,23 @@ void QGCMapPolylineTest::_testSelectVertex()
     _mapPolyline->selectVertex(_linePoints.count() - 1);
     _mapPolyline->removeVertex(0);
     QVERIFY(_mapPolyline->selectedVertex() == (_mapPolyline->count() - 1));
+}
+
+void QGCMapPolylineTest::_testOffset()
+{
+    const QGeoCoordinate start = TestFixtures::Coord::missionTestOrigin();
+    const QGeoCoordinate end = start.atDistanceAndAzimuth(100.0, 90.0);
+    _mapPolyline->appendVertices({start, end});
+
+    const QList<QGeoCoordinate> leftOffset = _mapPolyline->offsetPolyline(10.0);
+    QCOMPARE(leftOffset.size(), 2);
+    QVERIFY(std::abs(start.distanceTo(leftOffset.first()) - 10.0) < 0.01);
+    QVERIFY(std::abs(std::remainder(start.azimuthTo(leftOffset.first()), 360.0)) < 0.01);
+
+    const QList<QGeoCoordinate> rightOffset = _mapPolyline->offsetPolyline(-10.0);
+    QCOMPARE(rightOffset.size(), 2);
+    QVERIFY(std::abs(start.distanceTo(rightOffset.first()) - 10.0) < 0.01);
+    QVERIFY(std::abs(std::remainder(start.azimuthTo(rightOffset.first()) - 180.0, 360.0)) < 0.01);
 }
 
 UT_REGISTER_TEST(QGCMapPolylineTest, TestLabel::Unit, TestLabel::MissionManager)
