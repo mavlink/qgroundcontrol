@@ -1367,7 +1367,7 @@ Item {
                                                                  text: settingData.label ? settingData.label : ''
                                                                  wrapMode: Text.WordWrap
                                                              }
-                                                         }
+                                                            }
 
                                                          QGCButton {
                                                              id: shortcutButton
@@ -1651,10 +1651,102 @@ Item {
                                                                 }
                                                             }
 
-                                                            QGCLabel {
+                                                            QGCTextField {
+                                                                id: sliderValueField
                                                                 Layout.alignment: Qt.AlignTop
-                                                                text: root.formatValue(root.sliderDisplayValue(settingData, sliderControl.value))
-                                                                color: qgcPalette.text
+                                                                Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
+                                                                 numericValuesOnly: true
+                                                                 property bool commitHandled: false
+                                                                 property bool editSessionActive: false
+                                                                 property bool editDirty: false
+                                                                 property bool updatingText: false
+                                                                property real effectiveValue: root.sliderDisplayValue(settingData, sliderControl.value)
+                                                                property string idleValueText: root.formatValue(effectiveValue)
+
+                                                                Component.onCompleted: text = idleValueText
+
+                                                                onIdleValueTextChanged: {
+                                                                    if (!activeFocus) {
+                                                                        updatingText = true
+                                                                        text = idleValueText
+                                                                        updatingText = false
+                                                                    }
+                                                                }
+
+                                                                 onTextChanged: {
+                                                                     if (activeFocus && !updatingText) {
+                                                                         commitHandled = false
+                                                                         editDirty = true
+                                                                     }
+                                                                 }
+
+                                                                onAccepted: commitTypedValue()
+
+                                                                onActiveFocusChanged: {
+                                                                     if (activeFocus) {
+                                                                         editSessionActive = true
+                                                                         commitHandled = false
+                                                                         editDirty = false
+                                                                     } else if (editSessionActive) {
+                                                                         if (editDirty) {
+                                                                             commitTypedValue()
+                                                                         } else {
+                                                                             restoreIdleValue()
+                                                                         }
+                                                                         editSessionActive = false
+                                                                     }
+                                                                }
+
+                                                                function restoreIdleValue() {
+                                                                    updatingText = true
+                                                                    text = idleValueText
+                                                                    updatingText = false
+                                                                }
+
+                                                                 function commitTypedValue() {
+                                                                     if (!editDirty || commitHandled) {
+                                                                         return
+                                                                     }
+
+                                                                    commitHandled = true
+
+                                                                    const minimum = settingData.min !== undefined ? Number(settingData.min) : 0
+                                                                    const maximum = settingData.max !== undefined ? Number(settingData.max) : 100
+                                                                    const step = settingData.step !== undefined ? Number(settingData.step) : 1
+                                                                    const enteredText = text.trim()
+                                                                    const enteredValue = Number(enteredText)
+
+                                                                     if (enteredText.length === 0
+                                                                            || !isFinite(enteredValue)
+                                                                            || !isFinite(minimum)
+                                                                            || !isFinite(maximum)
+                                                                            || !isFinite(step)
+                                                                            || step <= 0
+                                                                            || enteredValue < minimum
+                                                                             || enteredValue > maximum) {
+                                                                         restoreIdleValue()
+                                                                         editDirty = false
+                                                                         return
+                                                                     }
+
+                                                                    const tolerance = Math.max(1e-9, Math.abs(step) * 1e-6)
+                                                                    const normalizedValue = minimum + Math.round((enteredValue - minimum) / step) * step
+
+                                                                     if (normalizedValue < minimum - tolerance
+                                                                            || normalizedValue > maximum + tolerance
+                                                                             || Math.abs(enteredValue - normalizedValue) > tolerance) {
+                                                                         restoreIdleValue()
+                                                                         editDirty = false
+                                                                         return
+                                                                     }
+
+                                                                    const committedValue = Math.min(maximum, Math.max(minimum, normalizedValue))
+                                                                     root.commitSettingValue(settingData, committedValue)
+                                                                     updatingText = true
+                                                                     text = root.formatValue(committedValue)
+                                                                     updatingText = false
+                                                                     editDirty = false
+                                                                 }
                                                             }
                                                         }
 
