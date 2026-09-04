@@ -7685,134 +7685,134 @@
       <extracomment>.QGC.MetaData.Facts[maxGoToLocationDistance].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Maximum allowed distance for go-to-location commands from the vehicle.</source>
-      <translation type="unfinished">Maximum allowed distance for go-to-location commands from the vehicle.</translation>
+      <translation>Максимально допустимое расстояние для команд перехода к точке от борта.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[maxGoToLocationDistance].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Go To Location Max Distance</source>
-      <translation type="unfinished">Go To Location Max Distance</translation>
+      <translation>Макс. расстояние перехода к точке</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[maxGoToLocationDistance].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>goto,go to</source>
-      <translation type="unfinished">goto,go to</translation>
+      <translation>goto,перейти к точке</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forwardFlightGoToLocationLoiterRad].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Loiter radius when circling a go-to destination during fixed-wing flight.</source>
-      <translation type="unfinished">Loiter radius when circling a go-to destination during fixed-wing flight.</translation>
+      <translation>Радиус облёта при кружении вокруг точки назначения в самолётном режиме полёта.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forwardFlightGoToLocationLoiterRad].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Loiter Radius in Forward Flight Guided Mode</source>
-      <translation type="unfinished">Loiter Radius in Forward Flight Guided Mode</translation>
+      <translation>Радиус облёта в режиме Guided (полёт вперёд)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[forwardFlightGoToLocationLoiterRad].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>loiter radius,guided</source>
-      <translation type="unfinished">loiter radius,guided</translation>
+      <translation>радиус облёта,guided</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goToLocationRequiresConfirmInGuided].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Require explicit confirmation for go-to-location commands while in Guided mode.</source>
-      <translation type="unfinished">Require explicit confirmation for go-to-location commands while in Guided mode.</translation>
+      <translation>Требовать явного подтверждения команд перехода к точке в режиме Guided.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goToLocationRequiresConfirmInGuided].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Require Confirmation for Go To Location in Guided Mode</source>
-      <translation type="unfinished">Require Confirmation for Go To Location in Guided Mode</translation>
+      <translation>Подтверждение перехода к точке в режиме Guided</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goToLocationRequiresConfirmInGuided].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>goto,go to,guided</source>
-      <translation type="unfinished">goto,go to,guided</translation>
+      <translation>goto,перейти к точке,guided</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[updateHomePosition].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Automatically update the vehicle return-to-home position from the GCS GPS location.</source>
-      <translation type="unfinished">Automatically update the vehicle return-to-home position from the GCS GPS location.</translation>
+      <translation>Автоматически обновлять точку возврата борта по GPS-местоположению наземной станции.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[updateHomePosition].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Update return to home position based on device location</source>
-      <translation type="unfinished">Update return to home position based on device location</translation>
+      <translation>Обновлять точку возврата по местоположению устройства</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[updateHomePosition].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>home position</source>
-      <translation type="unfinished">home position</translation>
+      <translation>точка возврата</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[instrumentQmlFile2].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Select the instrument panel display style for the Fly view.</source>
-      <translation type="unfinished">Select the instrument panel display style for the Fly view.</translation>
+      <translation>Выбор стиля отображения приборной панели для экрана «Полёт».</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[instrumentQmlFile2].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Integrated Compass &amp; Attitude,Horizontal Compass &amp; Attitude,Large Vertical</source>
-      <translation type="unfinished">Integrated Compass &amp; Attitude,Horizontal Compass &amp; Attitude,Large Vertical</translation>
+      <translation>Встроенный компас и ориентация, Горизонтальный компас и ориентация, Большой вертикальный</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[instrumentQmlFile2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Qml file for instrument panel</source>
-      <translation type="unfinished">Qml file for instrument panel</translation>
+      <translation>QML-файл для панели приборов</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[instrumentQmlFile2].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>instrument,hud</source>
-      <translation type="unfinished">instrument,hud</translation>
+      <translation>прибор,hud</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[requestControlAllowTakeover].shortDesc, .QGC.MetaData.Facts[requestControlAllowTakeover].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>When requesting vehicle control, allow other GCS to override control automatically, or require this GCS to accept the request first.</source>
-      <translation type="unfinished">When requesting vehicle control, allow other GCS to override control automatically, or require this GCS to accept the request first.</translation>
+      <translation>При запросе управления аппаратом разрешить другим наземным станциям автоматически перехватывать управление или требовать, чтобы эта станция сначала приняла запрос</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[requestControlTimeout].shortDesc, .QGC.MetaData.Facts[requestControlTimeout].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.</source>
-      <translation type="unfinished">Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.</translation>
+      <translation>Время ожидания в секундах, после которого запрос к наземной станции на передачу управления считается отклонённым. Используется для графического отображения времени ожидания на запрашивающей станции и на станции, контролирующей аппарат</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableAutomaticMissionPopups].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Automatically show mission start and resume confirmation dialogs.</source>
-      <translation type="unfinished">Automatically show mission start and resume confirmation dialogs.</translation>
+      <translation>Автоматически показывать диалоги подтверждения начала и возобновления полётного задания.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableAutomaticMissionPopups].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>Enable automatic mission start/resume popups</source>
-      <translation type="unfinished">Enable automatic mission start/resume popups</translation>
+      <translation>Автоматические всплывающие окна начала/возобновления полётного задания</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableAutomaticMissionPopups].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/FlyView.SettingsGroup.json"/>
       <source>mission popup</source>
-      <translation type="unfinished">mission popup</translation>
+      <translation>всплывающее окно полётного задания</translation>
     </message>
   </context>
   <context>
