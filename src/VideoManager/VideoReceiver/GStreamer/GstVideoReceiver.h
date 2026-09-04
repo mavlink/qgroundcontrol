@@ -89,6 +89,7 @@ private slots:
 private:
     friend class GStreamerTest;
 
+    QString _redactedUri() const;
     GstElement *_makeDecoder();
     static GstElement* _makeFileSink(const QString& videoFile, FILE_FORMAT format, const GstCaps* inputCaps);
 
