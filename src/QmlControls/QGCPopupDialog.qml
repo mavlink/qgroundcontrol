@@ -45,6 +45,8 @@ Popup {
 
     property string title
     property var    buttons:                Dialog.Ok
+    property string acceptButtonText
+    property string rejectButtonText
     property alias  acceptButtonEnabled:    acceptButton.enabled
     property alias  rejectButtonEnabled:    rejectButton.enabled
     property var    dialogProperties
@@ -185,6 +187,15 @@ Popup {
             rejectButton.visible = true
         } else if (buttons & Dialog.Abort) {
             rejectButton.text = qsTr("Abort")
+            rejectButton.visible = true
+        }
+
+        if (acceptButtonText) {
+            acceptButton.text = acceptButtonText
+            acceptButton.visible = true
+        }
+        if (rejectButtonText) {
+            rejectButton.text = rejectButtonText
             rejectButton.visible = true
         }
 

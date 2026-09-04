@@ -206,17 +206,22 @@ ApplicationWindow {
         _showMessageDialogWorker(mainWindow, dialogTitle, dialogText)
     }
 
-    // This variant is only meant to be called by QGCApplication. Ok reboots the active vehicle.
+    // This variant is only meant to be called by QGCApplication. Reboot reboots the active vehicle; Continue dismisses.
     function _showRebootVehicleDialog(dialogTitle, dialogText) {
-        _showMessageDialogWorker(mainWindow, dialogTitle,
-                                 dialogText + " " + qsTr("Click Ok to reboot the vehicle now."),
-                                 Dialog.Ok | Dialog.Cancel,
-                                 function() {
-                                     const activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
-                                     if (activeVehicle) {
-                                         activeVehicle.rebootVehicle()
-                                     }
-                                 })
+        let dialog = simpleMessageDialogComponent.createObject(mainWindow, {
+            title: dialogTitle,
+            text: dialogText + " " + qsTr("Click Reboot to reboot the vehicle now."),
+            buttons: Dialog.Ok | Dialog.Cancel,
+            acceptButtonText: qsTr("Reboot"),
+            rejectButtonText: qsTr("Continue"),
+            acceptFunction: function() {
+                const activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
+                if (activeVehicle) {
+                    activeVehicle.rebootVehicle()
+                }
+            }
+        })
+        dialog.open()
     }
 
     Connections {
