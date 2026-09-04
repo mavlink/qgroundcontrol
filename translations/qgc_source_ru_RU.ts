@@ -4746,38 +4746,38 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="359"/>
       <source>Bluetooth Link Settings</source>
-      <translation type="unfinished">Bluetooth Link Settings</translation>
+      <translation>Настройки соединения Bluetooth</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="359"/>
       <source>Bluetooth Low Energy Link Settings</source>
-      <translation type="unfinished">Bluetooth Low Energy Link Settings</translation>
+      <translation>Настройки соединения Bluetooth Low Energy</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="361"/>
       <source>Bluetooth Not Available</source>
-      <translation type="unfinished">Bluetooth Not Available</translation>
+      <translation>Bluetooth недоступен</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="400"/>
       <source>Invalid service UUID format: %1</source>
-      <translation type="unfinished">Invalid service UUID format: %1</translation>
+      <translation>Неверный формат UUID сервиса: %1</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="413"/>
       <source>Invalid read characteristic UUID format: %1</source>
-      <translation type="unfinished">Invalid read characteristic UUID format: %1</translation>
+      <translation>Неверный формат UUID характеристики чтения: %1</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="426"/>
       <source>Invalid write characteristic UUID format: %1</source>
-      <translation type="unfinished">Invalid write characteristic UUID format: %1</translation>
+      <translation>Неверный формат UUID характеристики записи: %1</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="452"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="457"/>
       <source>Bluetooth Permission Denied</source>
-      <translation type="unfinished">Bluetooth Permission Denied</translation>
+      <translation>В доступе к Bluetooth отказано</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="563"/>
@@ -4787,166 +4787,166 @@ Click Ok to start the auto-tuning process.
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1066"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1085"/>
       <source>Bluetooth adapter not available</source>
-      <translation type="unfinished">Bluetooth adapter not available</translation>
+      <translation>Адаптер Bluetooth недоступен</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="685"/>
       <source>Discovery error: %1</source>
-      <translation type="unfinished">Discovery error: %1</translation>
+      <translation>Ошибка обнаружения: %1</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="699"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1183"/>
       <source>Powered Off</source>
-      <translation type="unfinished">Powered Off</translation>
+      <translation>Выключен</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="702"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1185"/>
       <source>Connectable</source>
-      <translation type="unfinished">Connectable</translation>
+      <translation>Доступен для подключения</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="705"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1187"/>
       <source>Discoverable</source>
-      <translation type="unfinished">Discoverable</translation>
+      <translation>Обнаруживаемый</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="708"/>
       <source>Discoverable (Limited Inquiry)</source>
-      <translation type="unfinished">Discoverable (Limited Inquiry)</translation>
+      <translation>Обнаруживаемый (ограниченный поиск)</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="727"/>
       <source>Bluetooth adapter powered off</source>
-      <translation type="unfinished">Bluetooth adapter powered off</translation>
+      <translation>Адаптер Bluetooth выключен</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="758"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="876"/>
       <source>Unpaired</source>
-      <translation type="unfinished">Unpaired</translation>
+      <translation>Не сопряжено</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="761"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="878"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="961"/>
       <source>Paired</source>
-      <translation type="unfinished">Paired</translation>
+      <translation>Сопряжено</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="764"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="880"/>
       <source>Authorized Paired</source>
-      <translation type="unfinished">Authorized Paired</translation>
+      <translation>Сопряжено и авторизовано</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="780"/>
       <source>Device %1 unpaired</source>
-      <translation type="unfinished">Device %1 unpaired</translation>
+      <translation>Устройство %1 отключено от сопряжения</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="781"/>
       <source>Device %1 (%2) unpaired</source>
-      <translation type="unfinished">Device %1 (%2) unpaired</translation>
+      <translation>Устройство %1 (%2) отключено от сопряжения</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="785"/>
       <source>Device %1 paired successfully</source>
-      <translation type="unfinished">Device %1 paired successfully</translation>
+      <translation>Устройство %1 успешно сопряжено</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="786"/>
       <source>Device %1 (%2) paired successfully</source>
-      <translation type="unfinished">Device %1 (%2) paired successfully</translation>
+      <translation>Устройство %1 (%2) успешно сопряжено</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="799"/>
       <source>Pairing Error</source>
-      <translation type="unfinished">Pairing Error</translation>
+      <translation>Ошибка сопряжения</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="802"/>
       <source>Missing Bluetooth Permissions</source>
-      <translation type="unfinished">Missing Bluetooth Permissions</translation>
+      <translation>Отсутствуют разрешения Bluetooth</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="806"/>
       <source>Unknown Bluetooth Adapter Error</source>
-      <translation type="unfinished">Unknown Bluetooth Adapter Error</translation>
+      <translation>Неизвестная ошибка адаптера Bluetooth</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="822"/>
       <source>Pairing is only supported for Classic Bluetooth</source>
-      <translation type="unfinished">Pairing is only supported for Classic Bluetooth</translation>
+      <translation>Сопряжение поддерживается только для классического Bluetooth</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="828"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="850"/>
       <source>Invalid Bluetooth address</source>
-      <translation type="unfinished">Invalid Bluetooth address</translation>
+      <translation>Неверный адрес Bluetooth</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="844"/>
       <source>Unpairing is only supported for Classic Bluetooth</source>
-      <translation type="unfinished">Unpairing is only supported for Classic Bluetooth</translation>
+      <translation>Отмена сопряжения поддерживается только для классического Bluetooth</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="861"/>
       <source>Adapter unavailable</source>
-      <translation type="unfinished">Adapter unavailable</translation>
+      <translation>Адаптер недоступен</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="865"/>
       <source>N/A (BLE mode)</source>
-      <translation type="unfinished">N/A (BLE mode)</translation>
+      <translation>Н/Д (режим BLE)</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="870"/>
       <source>Invalid address</source>
-      <translation type="unfinished">Invalid address</translation>
+      <translation>Неверный адрес</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="882"/>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1191"/>
       <source>Unknown</source>
-      <translation type="unfinished">Unknown</translation>
+      <translation>Неизвестно</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="959"/>
       <source>Authorized</source>
-      <translation type="unfinished">Authorized</translation>
+      <translation>Авторизовано</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1003"/>
       <source>Unknown Device</source>
-      <translation type="unfinished">Unknown Device</translation>
+      <translation>Неизвестное устройство</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1116"/>
       <source>Invalid adapter address</source>
-      <translation type="unfinished">Invalid adapter address</translation>
+      <translation>Неверный адрес адаптера</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1130"/>
       <source>Adapter not found</source>
-      <translation type="unfinished">Adapter not found</translation>
+      <translation>Адаптер не найден</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1141"/>
       <source>Failed to initialize adapter</source>
-      <translation type="unfinished">Failed to initialize adapter</translation>
+      <translation>Не удалось инициализировать адаптер</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1178"/>
       <source>Unavailable</source>
-      <translation type="unfinished">Unavailable</translation>
+      <translation>Недоступен</translation>
     </message>
     <message>
       <location filename="../src/Comms/Bluetooth/BluetoothConfiguration.cc" line="1189"/>
       <source>Discoverable (Limited)</source>
-      <translation type="unfinished">Discoverable (Limited)</translation>
+      <translation>Обнаруживаемый (ограниченно)</translation>
     </message>
   </context>
   <context>
