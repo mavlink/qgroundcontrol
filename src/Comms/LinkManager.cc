@@ -1026,7 +1026,9 @@ bool LinkManager::_isSerialPortConnected()
 
     for (const SharedLinkInterfacePtr &link: _rgLinks) {
         if (qobject_cast<const SerialLink*>(link.get())) {
-            return true;
+            if (link->isConnected()) {
+                return true;
+            }
         }
     }
 
