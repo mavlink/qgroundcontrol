@@ -103,6 +103,33 @@ void QGCSerialPortInfoTest::_testBoardInfoListEntriesAreWellFormed()
     }
 }
 
+void QGCSerialPortInfoTest::_testFlycoreBoardInfo()
+{
+    QVERIFY(QGCSerialPortInfo::_loadJsonData());
+
+    static constexpr int flycoreVendorId = 0x1d50;
+    static constexpr int flycoreProductId = 0x61a0;
+
+    const QGCSerialPortInfo::BoardInfo_t* flycoreInfo = nullptr;
+    int matchCount = 0;
+    for (const QGCSerialPortInfo::BoardInfo_t& entry : QGCSerialPortInfo::_boardInfoList) {
+        if ((entry.vendorId == flycoreVendorId) && (entry.productId == flycoreProductId)) {
+            flycoreInfo = &entry;
+            matchCount++;
+        }
+    }
+
+    QCOMPARE(matchCount, 1);
+    QVERIFY(flycoreInfo);
+    QCOMPARE(flycoreInfo->boardType, QGCSerialPortInfo::BoardTypePixhawk);
+    QCOMPARE(flycoreInfo->name, QStringLiteral("AMOVLAB Flycore"));
+    QVERIFY(QGCSerialPortInfo::_isBoardTypeFlashable(flycoreInfo->boardType));
+
+    for (const QGCSerialPortInfo::BoardRegExpFallback_t& entry : QGCSerialPortInfo::_boardManufacturerFallbackList) {
+        QVERIFY(!entry.regExp.match(QStringLiteral("Amovlab")).hasMatch());
+    }
+}
+
 void QGCSerialPortInfoTest::_testFallbackRegexesCompile()
 {
     QVERIFY(QGCSerialPortInfo::_loadJsonData());
