@@ -5,6 +5,8 @@
 
 #include "Fact.h"
 #include "FactMetaData.h"
+#include "SettingsManager.h"
+#include "UnitsSettings.h"
 
 void FactTest::_constructWithTypeAndName_test()
 {
@@ -107,6 +109,38 @@ void FactTest::_rawToCooked_test()
     // Default identity translator - value passes through unchanged
     Fact plainFact(0, "PlainParam", FactMetaData::valueTypeDouble);
     QCOMPARE(plainFact.rawToCooked(QVariant(42.0)).toDouble(), 42.0);
+}
+
+void FactTest::_appSettingsUnitsChanged_test()
+{
+    Fact *const verticalUnitsFact = SettingsManager::instance()->unitsSettings()->verticalDistanceUnits();
+    const QVariant savedUnits = verticalUnitsFact->rawValue();
+    const auto restoreUnits = qScopeGuard([verticalUnitsFact, savedUnits] {
+        verticalUnitsFact->setRawValue(savedUnits);
+    });
+
+    Fact fact(0, "Altitude", FactMetaData::valueTypeDouble);
+    fact.metaData()->setRawUnits("vertical m");
+    fact.setRawValue(50.0);
+
+    QSignalSpy cookedValuesSpy(&fact, &Fact::cookedValuesChanged);
+    QSignalSpy valueSpy(&fact, &Fact::valueChanged);
+    QSignalSpy rawValueSpy(&fact, &Fact::rawValueChanged);
+    QVERIFY(cookedValuesSpy.isValid());
+    QVERIFY(valueSpy.isValid());
+    QVERIFY(rawValueSpy.isValid());
+
+    const bool useFeet = verticalUnitsFact->rawValue().toUInt() != UnitsSettings::VerticalDistanceUnitsFeet;
+    verticalUnitsFact->setRawValue(useFeet
+                                       ? UnitsSettings::VerticalDistanceUnitsFeet
+                                       : UnitsSettings::VerticalDistanceUnitsMeters);
+
+    QCOMPARE(fact.cookedUnits(), useFeet ? QStringLiteral("ft") : QStringLiteral("m"));
+    QCOMPARE_FUZZY(fact.cookedValue().toDouble(), useFeet ? 164.042 : 50.0, 1e-3);
+    QCOMPARE(fact.rawValue().toDouble(), 50.0);
+    QCOMPARE(cookedValuesSpy.count(), 1);
+    QCOMPARE(valueSpy.count(), 1);
+    QCOMPARE(rawValueSpy.count(), 0);
 }
 
 void FactTest::_validateValid_test()
