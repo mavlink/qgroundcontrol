@@ -389,7 +389,9 @@ void RemoteControlCalibrationController::_setupCurrentState()
 
     _saveCurrentRawValues();
 
-    _nextButton->setEnabled(state.nextButtonFn != nullptr);
+    _nextButton->setEnabled(state.nextButtonFn != nullptr ||
+                        state.channelInputFn == &RemoteControlCalibrationController::_inputStickDetect ||
+                        state.channelInputFn == &RemoteControlCalibrationController::_inputStickMin);
     emit oneSidedButtonVisibleChanged(oneSidedButtonVisible());
 }
 
@@ -482,6 +484,70 @@ void RemoteControlCalibrationController::nextButtonClicked()
         auto state = _getStateMachineEntry(_currentStep);
         if (state.nextButtonFn) {
             (this->*state.nextButtonFn)();
+        } else if (state.channelInputFn == &RemoteControlCalibrationController::_inputStickDetect) {
+            // Manual override for detecting which stick was moved (useful for 0-to-MAX axes like triggers)
+            int maxDelta = -1;
+            int detectedChannel = -1;
+            
+            // Find the channel that moved the most from its initial saved position
+            for (int i = 0; i < _chanCount; i++) {
+                // Skip channels that are already mapped to a function
+                if (_rgChannelInfo[i].stickFunction != stickFunctionMax) {
+                    continue;
+                }
+                int delta = abs(_channelRawValue[i] - _channelValueSave[i]);
+                if (delta > maxDelta) {
+                    maxDelta = delta;
+                    detectedChannel = i;
+                }
+            }
+
+            if (detectedChannel != -1) {
+                ChannelInfo *const info = &_rgChannelInfo[detectedChannel];
+                int value = _channelRawValue[detectedChannel];
+
+                _rgFunctionChannelMapping[state.stickFunction] = detectedChannel;
+                info->stickFunction = state.stickFunction;
+                
+                // If current value is less than saved center/start value, it's reversed
+                info->channelReversed = value < _channelValueSave[detectedChannel];
+
+                if (info->channelReversed) {
+                    info->channelMin = value;
+                } else {
+                    info->channelMax = value;
+                }
+
+                qCDebug(RemoteControlCalibrationControllerLog) <<
+                    QStringLiteral("Stick detected (forced) - function:channel:reversed:trim:%1").arg(info->channelReversed ? "min" : "max") <<
+                    _stickFunctionToString(state.stickFunction) << detectedChannel << info->channelReversed << info->channelTrim <<
+                    (info->channelReversed ? info->channelMin : info->channelMax);
+
+                _signalAllAttitudeValueChanges();
+            }
+            _advanceState();
+            
+        } else if (state.channelInputFn == &RemoteControlCalibrationController::_inputStickMin) {
+            // Manual override for capturing the minimum/opposite extent of the stick
+            int channel = _rgFunctionChannelMapping[state.stickFunction];
+            if (channel != _chanMax) {
+                ChannelInfo *const info = &_rgChannelInfo[channel];
+                int value = _channelRawValue[channel];
+
+                if (info->channelReversed) {
+                    info->channelMax = value;
+                } else {
+                    info->channelMin = value;
+                }
+
+                // Check if this is throttle and set trim accordingly (only for pure RC mode)
+                if (!_joystickMode && state.stickFunction == stickFunctionThrottle) {
+                    info->channelTrim = value;
+                }
+
+                qCDebug(RemoteControlCalibrationControllerLog) << "Settle complete (forced) - function:channel:min:max:trim" << _stickFunctionToString(state.stickFunction) << channel << info->channelMin << info->channelMax << info->channelTrim;
+            }
+            _advanceState();
         }
     }
 }
@@ -579,9 +645,11 @@ void RemoteControlCalibrationController::_inputStickDetect(StickFunction stickFu
         // this function is called for ALL channels, and some (like triggers) may rest at
         // extreme positions. Requiring movement ensures we detect the correct channel.
 
-        if (abs(_channelValueSave[channel] - value) > _calMoveDelta) {
+        // Lower the required movement delta for Joysticks so half-axis triggers can auto-detect
+        int requiredDelta = _joystickMode ? 8000 : _calMoveDelta;
+        
+        if (abs(_channelValueSave[channel] - value) > requiredDelta) {
             // Stick has moved far enough to consider it as being selected for the function
-
             qCDebug(RemoteControlCalibrationControllerLog) << "Starting settle wait - function:channel" << _stickFunctionToString(stickFunction) << channel;
 
             // Setup up to detect stick being pegged to min or max value
@@ -626,14 +694,20 @@ void RemoteControlCalibrationController::_inputStickMin(StickFunction stickFunct
     qCDebug(RemoteControlCalibrationControllerVerboseLog) << "_inputStickMin function:channel:value" << _stickFunctionToString(stickFunction) << channel << value;
 
     if (_stickDetectChannel == _chanMax) {
+        // Lower the required movement delta for joysticks
+        int requiredDelta = _joystickMode ? 8000 : _calMoveDelta;
+        
+        // For joysticks, check movement relative to where they held it during "Center Sticks"
+        int centerValue = _joystickMode ? _channelValueSave[channel] : _calCenterPoint;
+
         if (_rgChannelInfo[channel].channelReversed) {
-            if (value > _calCenterPoint + _calMoveDelta) {
+            if (value > centerValue + requiredDelta) {
                 qCDebug(RemoteControlCalibrationControllerLog) << "Movement detected, starting settle wait";
                 _stickDetectChannel = channel;
                 _stickDetectValue = value;
             }
         } else {
-            if (value < _calCenterPoint - _calMoveDelta) {
+            if (value < centerValue - requiredDelta) {
                 qCDebug(RemoteControlCalibrationControllerLog) << "Movement detected, starting settle wait";
                 _stickDetectChannel = channel;
                 _stickDetectValue = value;
@@ -787,9 +861,12 @@ void RemoteControlCalibrationController::_validateAndAdjustCalibrationValues()
                                                (channelInfo.channelMin <= _calValidMinValue);
             const bool oneSidedExtension = positiveOnlyExtension || negativeOnlyExtension;
 
-            // Validate Min/Max values. Although the channel appears as available we still may
-            // not have good min/max/trim values for it. Set to defaults if needed.
-            if (!oneSidedExtension && (channelInfo.channelMin > _calValidMinValue || channelInfo.channelMax < _calValidMaxValue)) {
+            // A valid span implies the user actually moved the stick, even if it's shifted (like a 0-to-MAX trigger)
+            bool validSpan = (channelInfo.channelMax - channelInfo.channelMin) > 10000;
+
+            // Validate Min/Max values. Only reset to defaults if it's not a one-sided extension 
+            // AND the span is invalid OR it completely fails basic sanity bounds.
+            if (!oneSidedExtension && !validSpan && (channelInfo.channelMin > _calValidMinValue || channelInfo.channelMax < _calValidMaxValue)) {
                 qCDebug(RemoteControlCalibrationControllerLog) << "resetting channel invalid min/max - chan:channelMin:calValidMinValue:channelMax:calValidMaxValue"
                     << chan << channelInfo.channelMin << _calValidMinValue << channelInfo.channelMax << _calValidMaxValue;
                 channelInfo.channelMin = _calDefaultMinValue;
@@ -805,8 +882,16 @@ void RemoteControlCalibrationController::_validateAndAdjustCalibrationValues()
                 case stickFunctionYaw:
                 case stickFunctionRoll:
                 case stickFunctionPitch:
-                    // Make sure trim is within min/max
-                    channelInfo.channelTrim = std::clamp(channelInfo.channelTrim, channelInfo.channelMin, channelInfo.channelMax);
+                    // Primary attitude controls MUST be two-sided (-MAX to +MAX) internally.
+                    // If a trigger (0 to MAX) was calibrated, the center point captured during the
+                    // "Center Sticks" phase will be near 0. We must force it to the true midpoint.
+                    if (channelInfo.channelTrim <= channelInfo.channelMin + 2000 || 
+                        channelInfo.channelTrim >= channelInfo.channelMax - 2000) {
+                        channelInfo.channelTrim = channelInfo.channelMin + ((channelInfo.channelMax - channelInfo.channelMin) / 2);
+                    } else {
+                        // Make sure trim is within min/max
+                        channelInfo.channelTrim = std::clamp(channelInfo.channelTrim, channelInfo.channelMin, channelInfo.channelMax);
+                    }
                     break;
                 default:
                     // Non-attitude control channels have calculated trim
@@ -918,12 +1003,20 @@ void RemoteControlCalibrationController::_saveCurrentRawValues()
 /// Adjust raw channel value for reversal if needed
 int RemoteControlCalibrationController::_adjustChannelRawValue(const ChannelInfo& info, int rawValue) const
 {
-    if (!info.channelReversed) {
-        return rawValue;
+    int value = rawValue;
+    if (info.channelReversed) {
+        const int invertedValue = info.channelMin + info.channelMax - rawValue;
+        value = std::clamp(invertedValue, info.channelMin, info.channelMax);
+    }
+    
+    // For Joystick mode, the UI preview expects values scaled to the standard -32768 to 32767 range.
+    // If the physical axis is 0 to 32767 (like a trigger), this stretches it to fill the UI box.
+    if (_joystickMode && info.stickFunction != stickFunctionMax && info.channelMax > info.channelMin) {
+        float normalized = static_cast<float>(value - info.channelMin) / (info.channelMax - info.channelMin);
+        value = -32768 + static_cast<int>(normalized * 65535.0f);
     }
 
-    const int invertedValue = info.channelMin + info.channelMax - rawValue;
-    return std::clamp(invertedValue, info.channelMin, info.channelMax);
+    return value;
 }
 
 void RemoteControlCalibrationController::_loadCalibrationUISettings()
