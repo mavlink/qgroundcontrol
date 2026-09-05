@@ -220,6 +220,8 @@ private:
     void    _fillRequestDataWithString(MavlinkFTP::Request* request, const QString& str);
     void    _fillMissingBlocksWorker    (bool firstRequest);
     void    _burstReadFileWorker        (bool firstRequest);
+    /// Records anything not yet received as missing so the non-burst read can fetch it.
+    void    _recordMissingTail          (void);
     void    _listDirectoryWorker        (bool firstRequest);
     bool    _parseURI                   (uint8_t fromCompId, const QString& uri, QString& parsedURI, uint8_t& compId);
     void    _listDirectoryCompleteNoError(void) { _listDirectoryComplete(QString()); }
