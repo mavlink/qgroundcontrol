@@ -10,14 +10,26 @@ from __future__ import annotations
 
 import concurrent.futures
 import os
+import re
 import shutil
 import stat
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import moccache
 import pytest
+
+# Realistic epoch base so build-start plausibility checks behave as in production.
+_T0 = 1_700_000_000.0
+
+
+@pytest.fixture(autouse=True)
+def _unix_ninja_log_mtimes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests write Unix-ns .ninja_log mtimes regardless of the host platform."""
+    monkeypatch.setattr(moccache, "_NINJA_LOG_MTIME_IS_FILETIME", False)
+
 
 FAKE_MOC = """#!/usr/bin/env python3
 import hashlib
@@ -185,10 +197,19 @@ class Harness:
         return moccache.main()
 
     def stats(self) -> list[str]:
+        """Event kinds in log order, with miss reasons collapsed to "miss"."""
+        return ["miss" if k.startswith("miss-") else k for k, _ in self.stats_detailed()]
+
+    def stats_detailed(self) -> list[tuple[str, str]]:
+        """(kind, detail) pairs in log order; detail is "" when absent."""
         log = self.cache / "stats.log"
         if not log.is_file():
             return []
-        return [line.split("\t")[0] for line in log.read_text().splitlines()]
+        out = []
+        for line in log.read_text(encoding="utf-8").splitlines():
+            fields = line.split("\t")
+            out.append((fields[0], fields[4] if len(fields) > 4 else ""))
+        return out
 
     def moc_runs(self) -> int:
         if not self.moc_log.is_file():
@@ -199,6 +220,25 @@ class Harness:
 @pytest.fixture
 def harness(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Harness:
     return Harness(tmp_path, monkeypatch)
+
+
+def write_ninja_log(build_dir: Path, *edges: tuple[int, int, int]) -> None:
+    """Write a .ninja_log with (start_ms, end_ms, mtime_ns) edges."""
+    build_dir.mkdir(parents=True, exist_ok=True)
+    body = "# ninja log v7\n" + "".join(
+        f"{s}\t{e}\t{m}\tout{i}\t{i:016x}\n" for i, (s, e, m) in enumerate(edges)
+    )
+    (build_dir / ".ninja_log").write_text(body, encoding="utf-8")
+
+
+def show_stats(harness: Harness, *extra: str) -> int:
+    """Run --show-stats against a build that began an hour ago (before every log entry)."""
+    build_dir = harness.root / "bld"
+    write_ninja_log(build_dir, (0, 1000, int((time.time() - 3600) * 1e9)))
+    harness.monkeypatch.setattr(
+        sys, "argv", ["moccache.py", "--show-stats", "--build-dir", str(build_dir), *extra]
+    )
+    return moccache.main()
 
 
 # ---------------------------------------------------------------------------
@@ -230,9 +270,29 @@ class TestBasicCaching:
 
     def test_stats_log_records_input(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
+        harness.monkeypatch.setattr(moccache.time, "time", lambda: 1700000000.1234567)
         harness.run(tree)
-        log = (harness.cache / "stats.log").read_text()
-        assert str(harness.input) in log
+        line = (harness.cache / "stats.log").read_text(encoding="utf-8").splitlines()[0]
+        what, input_file, when, basedir, detail = line.split("\t")
+        assert what == "miss-first-seen"
+        assert input_file == str(harness.input)
+        assert when == "1700000000.123"
+        assert basedir == str(tree.build)
+        assert detail == ""
+
+    def test_stats_log_fields_cannot_break_the_tab_format(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("MOCCACHE_STATS", "1")
+        monkeypatch.setenv("MOCCACHE_BASEDIR", "/b\tdir")
+        moccache._log_stat(tmp_path, "miss-args-changed", "/src/we\tird.h", "-DX=a\tb -> -DX=c\nd")
+        line = (tmp_path / "stats.log").read_text(encoding="utf-8")
+        assert line.count("\n") == 1
+        fields = line.rstrip("\n").split("\t")
+        assert len(fields) == 5
+        assert fields[1] == "/src/we ird.h"
+        assert fields[3] == "/b dir"
+        assert fields[4] == "-DX=a b -> -DX=c d"
 
     def test_cmake_response_file_misses_then_hits(self, harness: Harness) -> None:
         tree = harness.make_tree("build")
@@ -762,15 +822,253 @@ class TestTrim:
 
 
 # ---------------------------------------------------------------------------
+# Miss reasons: every miss says what invalidated it so cache-design problems
+# (evictions, arg churn, relpath) can be told apart from legitimate misses.
+# ---------------------------------------------------------------------------
+
+
+class TestKeyIndex:
+    def test_read_returns_newest_distinct_keys_oldest_first(self, tmp_path: Path) -> None:
+        index = tmp_path / "idx"
+        for key in ("k1", "k2", "k1", "k3"):
+            moccache._index_add(index, key)
+        assert moccache._index_read(index) == ["k2", "k1", "k3"]
+
+    def test_read_caps_at_max_keys(self, tmp_path: Path) -> None:
+        index = tmp_path / "idx"
+        for i in range(moccache._INDEX_MAX_KEYS + 3):
+            moccache._index_add(index, f"k{i}")
+        keys = moccache._index_read(index)
+        assert len(keys) == moccache._INDEX_MAX_KEYS
+        assert keys[-1] == f"k{moccache._INDEX_MAX_KEYS + 2}"
+
+    def test_add_appends_without_rewriting(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Concurrent writers must never clobber each other, so a normal add
+        # may only append; rewriting is reserved for compaction.
+        def no_rewrite(*args: object, **kwargs: object) -> None:
+            raise AssertionError("index add must not rewrite the file")
+
+        monkeypatch.setattr(moccache, "_atomic_write", no_rewrite)
+        index = tmp_path / "idx"
+        moccache._index_add(index, "a")
+        moccache._index_add(index, "b")
+        assert index.read_text().split() == ["a", "b"]
+
+    def test_add_is_a_single_append_syscall(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # One write(2) on an O_APPEND fd is what makes concurrent appends safe;
+        # buffered text I/O gives no such guarantee.
+        writes: list[bytes] = []
+        real_write = os.write
+
+        def counting_write(fd: int, data: bytes) -> int:
+            writes.append(bytes(data))
+            return real_write(fd, data)
+
+        monkeypatch.setattr(moccache.os, "write", counting_write)
+        moccache._index_add(tmp_path / "idx", "a" * 64)
+        assert writes == [b"a" * 64 + b"\n"]
+
+    def test_add_compacts_oversized_file(self, tmp_path: Path) -> None:
+        index = tmp_path / "idx"
+        for i in range(moccache._INDEX_COMPACT_LINES + 1):
+            moccache._index_add(index, f"{i:064x}")
+        assert len(index.read_text().split()) <= moccache._INDEX_MAX_KEYS
+        assert moccache._index_read(index)[-1] == f"{moccache._INDEX_COMPACT_LINES:064x}"
+
+    def test_read_missing_file_is_empty(self, tmp_path: Path) -> None:
+        assert moccache._index_read(tmp_path / "nope") == []
+
+
+class TestMissReasons:
+    def test_first_ever_input_is_miss_new(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        assert harness.stats_detailed() == [("miss-first-seen", "")]
+
+    def test_changed_input_is_miss_input(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        harness.input.write_text("class Foo { int v2; };\n")
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats_detailed()[-1] == ("miss-header-changed", "")
+
+    def test_changed_dependency_is_miss_dep_with_path(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        harness.dep_header.write_text("// dep v2\n")
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats_detailed()[-1] == ("miss-include-changed", str(harness.dep_header))
+
+    def test_changed_args_is_miss_args_with_diff(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        harness.run(tree, out=tree.out_path("b.cpp"), extra_args=("-DEXTRA=1",))
+        kind, detail = harness.stats_detailed()[-1]
+        assert kind == "miss-args-changed"
+        assert "-DEXTRA=1" in detail
+
+    def test_changed_predefs_is_miss_predefs(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        tree.predefs.write_text(tree.predefs.read_text() + "#define __NEW__ 1\n")
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats_detailed()[-1] == ("miss-predefs-changed", "")
+
+    def test_changed_moc_is_miss_moc(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        harness.monkeypatch.setenv("FAKEMOC_VERSION", "2.0")
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats_detailed()[-1][0] == "miss-moc-version-changed"
+
+    def test_different_output_depth_is_miss_relpath(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        deeper = tree.build / "a" / "b" / "c" / "d" / "e"
+        deeper.mkdir(parents=True)
+        harness.run(tree, out=deeper / "moc_Foo.cpp")
+        assert harness.stats_detailed()[-1][0] == "miss-output-depth-differs"
+
+    def test_evicted_entry_is_miss_evicted(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        for shard in harness.cache.glob("??"):
+            shutil.rmtree(shard)
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert harness.stats_detailed()[-1] == ("miss-cache-evicted", "")
+
+    def test_unreadable_cached_output_is_not_reported_as_evicted(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        (cached_out,) = harness.cache.glob("??/*/output.cpp")
+        real_copyfile = shutil.copyfile
+
+        def failing_copyfile(src: object, dst: object, *args: object, **kwargs: object) -> object:
+            if Path(str(src)) == cached_out:
+                raise OSError("cached output unreadable")
+            return real_copyfile(src, dst, *args, **kwargs)  # type: ignore[arg-type]
+
+        harness.monkeypatch.setattr(moccache.shutil, "copyfile", failing_copyfile)
+        assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
+        kind, detail = harness.stats_detailed()[-1]
+        assert kind == "miss-cache-unreadable"
+        assert detail == ""
+
+    def test_incomplete_cache_entry_is_not_reported_as_evicted(self, harness: Harness) -> None:
+        # A crash between writing output.cpp and the manifest leaves the entry
+        # dir behind; that is not an eviction and must not point at MAX_SIZE.
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        (cached_out,) = harness.cache.glob("??/*/output.cpp")
+        cached_out.unlink()
+        assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
+        assert harness.stats_detailed()[-1] == ("miss-cache-unreadable", "entry incomplete")
+
+    def test_corrupt_manifest_is_cache_unreadable_not_include_changed(
+        self, harness: Harness
+    ) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        (manifest,) = harness.cache.glob("??/*/manifest")
+        manifest.write_bytes(b"\xff\xfe not utf-8")
+        assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
+        assert harness.stats_detailed()[-1] == ("miss-cache-unreadable", "manifest unreadable")
+
+    def test_malformed_manifest_line_is_cache_unreadable(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        (manifest,) = harness.cache.glob("??/*/manifest")
+        manifest.write_text(f"{harness.dep_header}\n", encoding="utf-8")  # no tab / hash
+        assert harness.run(tree, out=tree.out_path("b.cpp")) == 0
+        assert harness.stats_detailed()[-1] == ("miss-cache-unreadable", "manifest malformed")
+
+    def test_corrupt_index_degrades_to_miss(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        (index,) = harness.cache.glob("index/??/*")
+        index.write_bytes(b"\xff\xfe not utf-8")
+        assert harness.run(tree, out=tree.out_path("b.cpp"), extra_args=("-DEXTRA=1",)) == 0
+        assert harness.stats()[-1] == "miss"
+
+    def test_uncacheable_miss_is_logged_on_fresh_cache(self, harness: Harness) -> None:
+        # Nothing else has created MOCCACHE_DIR yet when moc yields no dep file.
+        real_run = moccache.subprocess.run
+
+        def run_and_drop_dep_file(cmd: list[str], *args: object, **kwargs: object) -> object:
+            result = real_run(cmd, *args, **kwargs)  # type: ignore[arg-type]
+            if "--dep-file-path" in cmd:
+                Path(cmd[cmd.index("--dep-file-path") + 1]).unlink()
+            return result
+
+        harness.monkeypatch.setattr(moccache.subprocess, "run", run_and_drop_dep_file)
+        tree = harness.make_tree("build")
+        assert not harness.cache.exists()
+        assert harness.run(tree) == 0
+        assert harness.stats_detailed() == [("miss-uncacheable", "")]
+
+    def test_miss_reason_not_computed_when_stats_disabled(self, harness: Harness) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        harness.monkeypatch.delenv("MOCCACHE_STATS")
+
+        def explode(*args: object) -> tuple[str, str]:
+            raise AssertionError("_explain_key_miss must not run with stats off")
+
+        harness.monkeypatch.setattr(moccache, "_explain_key_miss", explode)
+        harness.run(tree, out=tree.out_path("b.cpp"), extra_args=("-DEXTRA=1",))
+        # The index still learns the new key so a later stats-on run can diff against it.
+        (index,) = harness.cache.glob("index/??/*")
+        assert len(index.read_text(encoding="utf-8").splitlines()) == 2
+
+    def test_auto_trim_logs_eviction_count(
+        self, harness: Harness, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _fake_entry(harness.cache, "ee" + "0" * 6, 100_000, age=99_999)
+        monkeypatch.setenv("MOCCACHE_MAX_SIZE", "1K")
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        trims = [d for k, d in harness.stats_detailed() if k == "cache-trimmed"]
+        assert trims and int(trims[0]) >= 1
+
+    def test_show_stats_breaks_misses_down_by_reason(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        harness.dep_header.write_text("// dep v2\n")
+        harness.run(tree, out=tree.out_path("c.cpp"))
+        assert show_stats(harness) == 0
+        out = capsys.readouterr().out
+        assert "hits     1" in out
+        assert "misses   2" in out
+        assert "hit rate 33.3%" in out
+        assert re.search(r"miss-first-seen\s+1  \(first time this header was moc'd\)", out)
+        assert re.search(r"miss-include-changed\s+1  \(a header it includes changed\)", out)
+
+    def test_show_stats_verbose_lists_miss_details(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        tree = harness.make_tree("build")
+        harness.run(tree)
+        harness.dep_header.write_text("// dep v2\n")
+        harness.run(tree, out=tree.out_path("b.cpp"))
+        assert show_stats(harness, "--verbose") == 0
+        out = capsys.readouterr().out
+        assert f"miss-include-changed  {harness.input}  {harness.dep_header}" in out
+        assert f"miss-first-seen  {harness.input}" in out
+
+
+# ---------------------------------------------------------------------------
 # Stats CLI (--show-stats / --zero-stats)
 # ---------------------------------------------------------------------------
 
 
 class TestStatsCli:
-    def _show(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(sys, "argv", ["moccache.py", "--show-stats"])
-        assert moccache.main() == 0
-
     def test_show_stats_counts_hits_and_misses(
         self, harness: Harness, capsys: pytest.CaptureFixture[str]
     ) -> None:
@@ -778,7 +1076,7 @@ class TestStatsCli:
         harness.run(tree, out=tree.out_path("a.cpp"))
         harness.run(tree, out=tree.out_path("b.cpp"))
         harness.run(tree, out=tree.out_path("c.cpp"))
-        self._show(harness.monkeypatch)
+        assert show_stats(harness) == 0
         out = capsys.readouterr().out
         assert "hits     2" in out
         assert "misses   1" in out
@@ -787,7 +1085,7 @@ class TestStatsCli:
     def test_show_stats_without_log_reports_zero(
         self, harness: Harness, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        self._show(harness.monkeypatch)
+        assert show_stats(harness) == 0
         out = capsys.readouterr().out
         assert "no stats recorded" in out
 
@@ -811,20 +1109,210 @@ class TestStatsCli:
     ) -> None:
         monkeypatch.setattr(sys, "argv", ["moccache.py", flag, "--frobnicate"])
         assert moccache.main() == 2
-        assert f"{flag} takes no arguments: --frobnicate" in capsys.readouterr().err
+        assert f"{flag}: unknown argument: --frobnicate" in capsys.readouterr().err
+
+    def test_show_stats_requires_build_dir(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["moccache.py", "--show-stats"])
+        assert moccache.main() == 2
+        assert "--show-stats requires --build-dir" in capsys.readouterr().err
+
+    def test_show_stats_build_dir_requires_value(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        monkeypatch.setattr(sys, "argv", ["moccache.py", "--show-stats", "--build-dir"])
+        assert moccache.main() == 2
+        assert "--build-dir requires a path" in capsys.readouterr().err
+
+    # Mixed log: two builds of /b1 (old at T0+100, current at T0+200), a concurrent
+    # build of /b2, and a legacy line without time/basedir fields.
+    _MIXED_LOG = (
+        f"hit\ta.h\t{_T0 + 100:.1f}\t/b1\n"
+        f"miss\tb.h\t{_T0 + 100:.1f}\t/b1\n"
+        f"hit\tc.h\t{_T0 + 200:.1f}\t/b1\n"
+        f"hit\td.h\t{_T0 + 200:.1f}\t/b1\n"
+        f"miss\te.h\t{_T0 + 200:.1f}\t/b2\n"
+        "hit\tf.h\n"
+    )
+
+    def _write_mixed_log(self, harness: Harness) -> None:
+        harness.cache.mkdir(parents=True, exist_ok=True)
+        (harness.cache / "stats.log").write_text(self._MIXED_LOG, encoding="utf-8")
+
+    def _show_current_build(self, harness: Harness) -> int:
+        """--show-stats at T0+300 for a /b1 build that began at T0+150 (+slack)."""
+        build_dir = harness.root / "bld"
+        start_ns = int((_T0 + 150.0 + moccache._BUILD_START_SLACK_SECONDS + 5.0) * 1e9)
+        write_ninja_log(build_dir, (0, 5000, start_ns))
+        harness.monkeypatch.setattr(moccache.time, "time", lambda: _T0 + 300.0)
+        harness.monkeypatch.setenv("MOCCACHE_BASEDIR", "/b1")
+        harness.monkeypatch.setattr(
+            sys, "argv", ["moccache.py", "--show-stats", "--build-dir", str(build_dir)]
+        )
+        return moccache.main()
+
+    @staticmethod
+    def _expected_start(started_at: float) -> float:
+        return started_at - moccache._BUILD_START_SLACK_SECONDS
+
+    def test_build_start_derived_from_last_ninja_log_edge(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Last edge finished 5 s into the build at absolute T0+155 -> build began at T0+150.
+        monkeypatch.setattr(moccache.time, "time", lambda: _T0 + 300.0)
+        write_ninja_log(
+            tmp_path, (0, 1000, int((_T0 + 100) * 1e9)), (2000, 5000, int((_T0 + 155) * 1e9))
+        )
+        assert moccache._build_start(tmp_path) == pytest.approx(self._expected_start(_T0 + 150))
+
+    def test_build_start_skips_edges_without_output_mtime(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(moccache.time, "time", lambda: _T0 + 300.0)
+        write_ninja_log(tmp_path, (2000, 5000, int((_T0 + 155) * 1e9)), (5000, 6000, 0))
+        assert moccache._build_start(tmp_path) == pytest.approx(self._expected_start(_T0 + 150))
+
+    def test_build_start_ignores_restat_edge_with_stale_output_mtime(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # A restat custom command that left its output untouched logs the old
+        # mtime, which would place the build start far in the past on its own.
+        monkeypatch.setattr(moccache.time, "time", lambda: _T0 + 300.0)
+        write_ninja_log(
+            tmp_path,
+            (0, 5000, int((_T0 + 155) * 1e9)),
+            (5000, 6000, int((_T0 - 5000) * 1e9)),
+        )
+        assert moccache._build_start(tmp_path) == pytest.approx(self._expected_start(_T0 + 150))
+
+    def test_build_start_decodes_windows_filetime_mtimes(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # ninja on Windows logs FILETIME ticks (100 ns since 1601-01-01) minus
+        # its own 12622770400 s rebase constant (src/disk_interface.cc).
+        monkeypatch.setattr(moccache, "_NINJA_LOG_MTIME_IS_FILETIME", True)
+        monkeypatch.setattr(moccache.time, "time", lambda: _T0 + 300.0)
+        filetime_ticks = int((_T0 + 155 + 11_644_473_600) * 10**7)
+        ninja_mtime = filetime_ticks - 12_622_770_400 * 10**7
+        write_ninja_log(tmp_path, (0, 5000, ninja_mtime))
+        assert moccache._build_start(tmp_path) == pytest.approx(self._expected_start(_T0 + 150))
+
+    @pytest.mark.parametrize("started_at", [_T0 + 400.0, _T0 - 2 * 86400.0])
+    def test_build_start_none_when_implausible(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, started_at: float
+    ) -> None:
+        # In the future or days old means the log is not from this build (or
+        # its units are not what we assume): fall back rather than misreport.
+        monkeypatch.setattr(moccache.time, "time", lambda: _T0 + 300.0)
+        write_ninja_log(tmp_path, (0, 5000, int((started_at + 5) * 1e9)))
+        assert moccache._build_start(tmp_path) is None
+
+    def test_build_start_none_without_ninja_log(self, tmp_path: Path) -> None:
+        assert moccache._build_start(tmp_path) is None
+        write_ninja_log(tmp_path)
+        assert moccache._build_start(tmp_path) is None
+
+    def test_show_stats_reports_only_current_build(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        self._write_mixed_log(harness)
+        assert self._show_current_build(harness) == 0
+        out = capsys.readouterr().out
+        assert "this build" in out
+        assert "hits     2" in out
+        assert "misses   0" in out
+
+    def test_show_stats_prunes_entries_older_than_this_build(self, harness: Harness) -> None:
+        # Older lines are dead weight; the concurrent /b2 build's line is kept
+        # because its own post-build report still needs it.
+        self._write_mixed_log(harness)
+        assert self._show_current_build(harness) == 0
+        remaining = (harness.cache / "stats.log").read_text(encoding="utf-8").splitlines()
+        assert remaining == [
+            f"hit\tc.h\t{_T0 + 200:.1f}\t/b1",
+            f"hit\td.h\t{_T0 + 200:.1f}\t/b1",
+            f"miss\te.h\t{_T0 + 200:.1f}\t/b2",
+        ]
+
+    def test_show_stats_keeps_older_entries_of_other_build_dirs(self, harness: Harness) -> None:
+        # /b2 began before this /b1 build and may still be running; only its
+        # own report may prune its records.
+        harness.cache.mkdir(parents=True, exist_ok=True)
+        (harness.cache / "stats.log").write_text(
+            f"hit\ta.h\t{_T0 + 100:.1f}\t/b2\n"
+            f"hit\tb.h\t{_T0 + 100:.1f}\t/b1\n"
+            f"hit\tc.h\t{_T0 + 200:.1f}\t/b1\n",
+            encoding="utf-8",
+        )
+        assert self._show_current_build(harness) == 0
+        remaining = (harness.cache / "stats.log").read_text(encoding="utf-8").splitlines()
+        assert remaining == [
+            f"hit\ta.h\t{_T0 + 100:.1f}\t/b2",
+            f"hit\tc.h\t{_T0 + 200:.1f}\t/b1",
+        ]
+
+    def test_show_stats_prunes_to_empty_when_build_logged_nothing(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        # A no-op build still clears the previous build's entries.
+        harness.cache.mkdir(parents=True, exist_ok=True)
+        (harness.cache / "stats.log").write_text(
+            f"hit\ta.h\t{_T0 + 100:.1f}\t/b1\n", encoding="utf-8"
+        )
+        assert self._show_current_build(harness) == 0
+        assert "no stats recorded" in capsys.readouterr().out
+        assert (harness.cache / "stats.log").read_text(encoding="utf-8") == ""
+
+    def test_show_stats_without_ninja_log_falls_back_and_keeps_log(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        self._write_mixed_log(harness)
+        build_dir = harness.root / "bld"
+        build_dir.mkdir()
+        harness.monkeypatch.setenv("MOCCACHE_BASEDIR", "/b1")
+        harness.monkeypatch.setattr(
+            sys, "argv", ["moccache.py", "--show-stats", "--build-dir", str(build_dir)]
+        )
+        assert moccache.main() == 0
+        out = capsys.readouterr().out
+        assert "build start unknown" in out
+        assert "hits     4" in out
+        assert "misses   2" in out
+        assert (harness.cache / "stats.log").read_text(encoding="utf-8") == self._MIXED_LOG
+
+    def test_show_stats_without_ninja_log_caps_log_growth(
+        self, harness: Harness, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        # With no build boundary to prune at, the log must still be bounded.
+        harness.monkeypatch.setattr(moccache, "_STATS_LOG_MAX_LINES", 3)
+        harness.cache.mkdir(parents=True, exist_ok=True)
+        lines = [f"hit\t{i}.h\t{_T0 + i}\t/b1" for i in range(5)]
+        (harness.cache / "stats.log").write_text("".join(f"{s}\n" for s in lines), encoding="utf-8")
+        build_dir = harness.root / "bld"
+        build_dir.mkdir()
+        harness.monkeypatch.setattr(
+            sys, "argv", ["moccache.py", "--show-stats", "--build-dir", str(build_dir)]
+        )
+        assert moccache.main() == 0
+        assert "hits     5" in capsys.readouterr().out
+        remaining = (harness.cache / "stats.log").read_text(encoding="utf-8").splitlines()
+        assert remaining == lines[-3:]
 
     def test_show_stats_with_only_other_events_still_prints_counts(
         self, harness: Harness, capsys: pytest.CaptureFixture[str]
     ) -> None:
         harness.cache.mkdir(parents=True, exist_ok=True)
-        (harness.cache / "stats.log").write_text("bad-max-size\tx\n")
-        self._show(harness.monkeypatch)
+        (harness.cache / "stats.log").write_text(
+            f"bad-max-size\t\t{time.time():.3f}\t\tx\n", encoding="utf-8"
+        )
+        assert show_stats(harness) == 0
         out = capsys.readouterr().out
         assert "no stats recorded" not in out
         assert "hits     0" in out
         assert "misses   0" in out
         assert "hit rate" not in out
-        assert "bad-max-size  1" in out
+        assert re.search(r"bad-max-size\s+1  \(MOCCACHE_MAX_SIZE is not a valid size", out)
 
     def test_zero_then_show_reports_zero(
         self, harness: Harness, capsys: pytest.CaptureFixture[str]
@@ -833,7 +1321,7 @@ class TestStatsCli:
         harness.run(tree)
         harness.monkeypatch.setattr(sys, "argv", ["moccache.py", "--zero-stats"])
         assert moccache.main() == 0
-        self._show(harness.monkeypatch)
+        assert show_stats(harness) == 0
         assert "no stats recorded" in capsys.readouterr().out
 
     def test_auto_trim_on_miss_when_max_size_set(
@@ -843,7 +1331,7 @@ class TestStatsCli:
         monkeypatch.setenv("MOCCACHE_MAX_SIZE", "1K")
         tree = harness.make_tree("build")
         harness.run(tree)
-        assert harness.stats() == ["miss"]
+        assert harness.stats() == ["miss", "cache-trimmed"]
         assert not (harness.cache / "ee" / ("ee" + "0" * 6)).is_dir()
 
     def test_auto_trim_respects_stamp_interval(
@@ -874,7 +1362,10 @@ class TestStatsCli:
         big = _fake_entry(tmp_path, "ee" + "0" * 6, 100_000, age=99_999)
         moccache._maybe_auto_trim(tmp_path)
         assert big.is_dir()  # no trim, but also no crash
-        assert "bad-max-size\tbogus" in (tmp_path / "stats.log").read_text()
+        line = (tmp_path / "stats.log").read_text(encoding="utf-8").splitlines()[0].split("\t")
+        assert line[0] == "bad-max-size"
+        assert line[1] == ""  # not a moc input
+        assert line[4] == "bogus"
 
     def test_stamp_vanishing_mid_check_still_trims(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
