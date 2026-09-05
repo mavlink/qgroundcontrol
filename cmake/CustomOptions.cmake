@@ -47,6 +47,19 @@ option(QGC_BUILD_TESTING "Enable unit tests" ${_QGC_DEBUG_BUILD})
 option(QGC_DEBUG_QML "Enable QML debugging/profiling" ${_QGC_DEBUG_BUILD})
 option(QT_QML_NO_CACHEGEN "Skip qmlcachegen (faster Debug builds, slower QML startup)" ${_QGC_DEBUG_BUILD})
 option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
+
+# Every vehicle-level test links MockLink, which is only built for Debug (see
+# Comms/MockLink/CMakeLists.txt) because its app-side entry points are guarded by
+# #ifdef QT_DEBUG. Catch the mismatch here: otherwise the build runs for thousands of
+# files before dying on a bare "MockLink.h: No such file or directory".
+# Multi-config generators pick the configuration at build time, so CMAKE_BUILD_TYPE
+# carries no answer here and they are left to the build-time failure.
+if(QGC_BUILD_TESTING AND NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(FATAL_ERROR
+        "QGC_BUILD_TESTING requires CMAKE_BUILD_TYPE=Debug, MockLink is not built for "
+        "'${CMAKE_BUILD_TYPE}'. Either configure a Debug build or pass -DQGC_BUILD_TESTING=OFF.")
+endif()
+
 unset(_QGC_DEBUG_BUILD)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
 option(QGC_TIME_TRACE "Emit per-TU Clang -ftime-trace JSON for build profiling (Clang only)" OFF)
