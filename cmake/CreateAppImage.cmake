@@ -1,9 +1,9 @@
 message(STATUS "Creating AppImage")
 # TODO: https://github.com/AppImageCommunity/AppImageUpdate
 
-set(APPDIR_PATH "${CMAKE_BINARY_DIR}/AppDir")
-set(APPIMAGETOOL_PATH "${CMAKE_BINARY_DIR}/appimagetool-x86_64.AppImage")
-set(LD_PATH "${CMAKE_BINARY_DIR}/linuxdeploy-x86_64.AppImage")
+set(APPDIR_PATH "${QGC_BUILD_DIR}/AppDir")
+set(APPIMAGETOOL_PATH "${QGC_BUILD_DIR}/appimagetool-x86_64.AppImage")
+set(LD_PATH "${QGC_BUILD_DIR}/linuxdeploy-x86_64.AppImage")
 # set(LD_APPIMAGEPLUGIN_PATH "${CMAKE_BINARY_DIR}/linuxdeploy-plugin-appimage-x86_64.AppImage")
 # set(LD_QTPLUGIN_PATH "${CMAKE_BINARY_DIR}/linuxdeploy-plugin-qt-x86_64.AppImage")
 # set(LD_GSTPLUGIN_PATH "${CMAKE_BINARY_DIR}/linuxdeploy-plugin-gstreamer.sh")
@@ -39,7 +39,7 @@ execute_process(COMMAND ${LD_PATH}
     --appdir ${APPDIR_PATH}
     --executable ${APPDIR_PATH}/usr/bin/QGroundControl
     --desktop-file ${APPDIR_PATH}/usr/share/applications/org.mavlink.qgroundcontrol.desktop
-    --custom-apprun ${CMAKE_BINARY_DIR}/AppRun)
+    --custom-apprun ${QGC_BUILD_DIR}/AppRun)
 # --exclude-library "libgst*"
 # --plugin qt --plugin gtk --plugin gstreamer
 

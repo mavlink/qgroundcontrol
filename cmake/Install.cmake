@@ -63,6 +63,7 @@ elseif(LINUX)
         FILES ${CMAKE_SOURCE_DIR}/deploy/linux/AppRun
         DESTINATION ${CMAKE_BINARY_DIR}
     )
+    install(CODE "set(QGC_BUILD_DIR \"${CMAKE_BINARY_DIR}\")")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CreateAppImage.cmake")
 elseif(WIN32)
     install(CODE "set(CMAKE_PROJECT_NAME ${CMAKE_PROJECT_NAME})")
