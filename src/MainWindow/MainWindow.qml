@@ -136,24 +136,12 @@ ApplicationWindow {
     function showPlanView() {
         flyView.visible = false
         planView.visible = true
-        geoTestView.visible = false
         toolDrawer.visible = false
     }
 
     function showFlyView() {
         flyView.visible = true
         planView.visible = false
-        geoTestView.visible = false
-        toolDrawer.visible = false
-    }
-
-    function showGeoTestView() {
-        if (!ScreenTools.isDebug) {
-            return
-        }
-        flyView.visible = false
-        planView.visible = false
-        geoTestView.visible = true
         toolDrawer.visible = false
     }
 
@@ -349,17 +337,6 @@ ApplicationWindow {
         objectName:     "mainView_plan"
         anchors.fill:   parent
         visible:        false
-    }
-
-    // Debug-only test harness: not instantiated in release builds, and only
-    // loaded while actually shown
-    Loader {
-        id:             geoTestView
-        objectName:     "mainView_geoTest"
-        anchors.fill:   parent
-        visible:        false
-        active:         ScreenTools.isDebug && visible
-        source:         "qrc:/qml/QGroundControl/GeoMap/GeoMapTestView.qml"
     }
 
     footer: LogReplayStatusBar {
