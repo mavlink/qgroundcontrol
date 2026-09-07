@@ -932,16 +932,12 @@ void FTPManager::_burstReadFileTimeout(void)
         // only the first few packets of every burst, so retrying the burst makes the same small
         // amount of progress each time and then gives up. Fall back to the non-burst read used to
         // repair holes instead: it fetches one chunk per request and never has more than a single
-        // message in flight.
+        // message in flight. Nothing is recorded as missing when every byte already arrived and
+        // only the terminating EOF Nak was lost; the fill state completes such a download rather
+        // than failing it.
         _recordMissingTail();
-        if (!_downloadState.rgMissingData.isEmpty()) {
-            qCDebug(FTPManagerLog) << "_burstReadFileTimeout: retries exceeded, falling back to non-burst read";
-            _advanceStateMachine();
-            return;
-        }
-
-        qCDebug(FTPManagerLog) << QString("_burstReadFileTimeout retries exceeded");
-        _downloadComplete(tr("Download failed"));
+        qCDebug(FTPManagerLog) << "_burstReadFileTimeout: retries exceeded, falling back to non-burst read";
+        _advanceStateMachine();
     } else {
         // Try again
         qCDebug(FTPManagerLog) << QString("_burstReadFileTimeout: retrying - retryCount(%1) offset(%2)").arg(_downloadState.retryCount).arg(_downloadState.expectedOffset);
