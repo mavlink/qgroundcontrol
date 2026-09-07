@@ -45,21 +45,6 @@ ToolIndicatorPage {
             }
 
             SubMenuButton {
-                objectName: "toolbar_viewGeoTest"
-                implicitHeight: root._toolButtonHeight
-                Layout.fillWidth: true
-                text: "GeoMap Test"   // debug-only developer tool: not translated
-                imageResource: "/InstrumentValueIcons/globe.svg"
-                visible: ScreenTools.isDebug
-                onClicked: {
-                    if (mainWindow.allowViewSwitch()) {
-                        mainWindow.closeIndicatorDrawer()
-                        mainWindow.showGeoTestView()
-                    }
-                }
-            }
-
-            SubMenuButton {
                 objectName: "toolbar_viewAnalyze"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true

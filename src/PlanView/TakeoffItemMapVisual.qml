@@ -14,6 +14,7 @@ Item {
     property var map        ///< Map control to place item in
     property var vehicle    ///< Vehicle associated with this item
     property bool interactive: true
+    property MissionItemIndicatorGroup indicatorGroup
 
     property var    _missionItem:           object
     property var    _takeoffIndicatorItem
@@ -98,7 +99,8 @@ Item {
 
         MissionItemIndicator {
             coordinate:     _missionItem.specifiesCoordinate ? _missionItem.coordinate : _missionItem.launchCoordinate
-            z:              QGroundControl.zOrderMapItems
+            indicatorGroup: _root.indicatorGroup
+            interactive:    _root.interactive
             missionItem:    _missionItem
             sequenceNumber: _missionItem.sequenceNumber
             onClicked:      _root.clicked(_missionItem.sequenceNumber)

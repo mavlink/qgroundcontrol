@@ -136,18 +136,9 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        // Find and select the default page
-        var targetUrl = globals.commingFromRIDIndicator
-            ? "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml"
-            : "qrc:/qml/QGroundControl/AppSettings/GeneralSettings.qml"
-        globals.commingFromRIDIndicator = false
-
-        for (var i = 0; i < settingsPagesModel.count; i++) {
-            var entry = settingsPagesModel.get(i)
-            if (entry && entry.url === targetUrl) {
-                _navigateTo(i, -1)
-                break
-            }
+        if (globals.commingFromRIDIndicator) {
+            globals.commingFromRIDIndicator = false
+            showSettingsPage("Remote ID")
         }
 
         if (_selectedPageIndex === -1) {
