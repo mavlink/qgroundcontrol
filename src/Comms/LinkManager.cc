@@ -975,6 +975,10 @@ bool LinkManager::_portAlreadyConnected(const QString &portName)
 
     const QString searchPort = portName.trimmed();
     for (const SharedLinkInterfacePtr &linkInterface : _rgLinks) {
+        if (!linkInterface->isConnected()) {
+            continue;
+        }
+
         const SharedLinkConfigurationPtr linkConfig = linkInterface->linkConfiguration();
         const SerialConfiguration* const serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
         if (serialConfig && (serialConfig->portName() == searchPort)) {

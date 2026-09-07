@@ -459,7 +459,7 @@ SerialLink::~SerialLink()
 
 bool SerialLink::isConnected() const
 {
-    return _worker && _worker->isConnected();
+    return _connectedCache.load();
 }
 
 bool SerialLink::_connect()
@@ -476,12 +476,14 @@ void SerialLink::disconnect()
 
 void SerialLink::_onConnected()
 {
+    _connectedCache = true;
     _disconnectedEmitted = false;
     emit connected();
 }
 
 void SerialLink::_onDisconnected()
 {
+    _connectedCache = false;
     if (!_disconnectedEmitted.exchange(true)) {
         emit disconnected();
     }

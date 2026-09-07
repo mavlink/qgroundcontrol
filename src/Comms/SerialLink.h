@@ -168,5 +168,6 @@ private:
     const SerialConfiguration *_serialConfig = nullptr;
     SerialWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
+    std::atomic<bool> _connectedCache{false};
     std::atomic<bool> _disconnectedEmitted{false};
 };
