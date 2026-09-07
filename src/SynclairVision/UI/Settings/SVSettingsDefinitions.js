@@ -8,14 +8,16 @@ function getGeneralSections(isRecording) {
             items: [
                 {
                     id: 'resolution',
+                    property: 'videoResolution',
                     type: 'dropdown',
                     label: 'Resolution',
                     description: 'Resolution from Digiview Output',
                     currentIndex: 0,
-                    enabled: false,
                     options: [
-                        { label: '1920x1080', value: '1080p' },
-                        { label: '1280x720', value: '720p' },
+                        { label: '640x480', value: { width: 640, height: 480 } },
+                        { label: '960x720', value: { width: 960, height: 720 } },
+                        { label: '1280x720', value: { width: 1280, height: 720 } },
+                        { label: '1600x960', value: { width: 1600, height: 960 } },
                     ]
                 },
                 {
@@ -637,6 +639,13 @@ function getShortcutsSections() {
                     type: 'shortcut',
                     label: 'STT',
                     description: 'Shortcut to start single-target tracking on the active view'
+                },
+                {
+                    id: 'shortcut_lock_target',
+                    property: 'shortcutLockTarget',
+                    type: 'shortcut',
+                    label: 'Lock Target',
+                    description: 'Shortcut to lock the current detection target'
                 },
                 {
                     id: 'shortcut_cursor_tracking',

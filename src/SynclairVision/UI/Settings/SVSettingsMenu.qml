@@ -340,7 +340,7 @@ Item {
 
         networkConnectTimer.stop()
         root.networkConnectionPending = false
-        root.digiview.disconnectFromHost(true)
+        root.digiview.disconnectFromHost()
     }
 
     function handleButtonClick(settingData) {
@@ -358,7 +358,7 @@ Item {
                 SVState.userInitiatedDisconnect = true
                 networkConnectTimer.stop()
                 root.networkConnectionPending = false
-                root.digiview.disconnectFromHost(true)
+                root.digiview.disconnectFromHost()
                 return
             }
 
@@ -416,6 +416,16 @@ Item {
         root.settingsResetToken
         const options = settingOptions(settingData)
 
+        if (settingData.id === 'resolution') {
+            for (let index = 0; index < options.length; index++) {
+                if (options[index].value.width === SVSettings.videoResolutionWidth
+                        && options[index].value.height === SVSettings.videoResolutionHeight) {
+                    return index
+                }
+            }
+            return 0
+        }
+
         if (useSettingsBridge(settingData)) {
             const currentValue = displayedSettingValue(settingData.property, settingData.digiviewParameterGroup)
 
@@ -437,6 +447,12 @@ Item {
         }
 
         const value = options[currentIndex].value
+
+        if (settingData.id === 'resolution') {
+            SVSettings.videoResolutionWidth = value.width
+            SVSettings.videoResolutionHeight = value.height
+            return
+        }
 
         if (settingData.property === 'aiDetectionOverlayPosition') {
             setSettingValue(settingData, value)
@@ -937,7 +953,9 @@ Item {
 
         QGCSimpleMessageDialog {
             title: qsTr('Restart DigiView?')
-            text: qsTr('Apply staged settings?\n\nEnable AI: %1\nScan Model: %2\nAI Detection Overlay: %3\n\nVideo and control will briefly disconnect while DigiView restarts.')
+            text: qsTr('Apply staged settings?\n\nResolution: %1x%2\nEnable AI: %3\nScan Model: %4\nAI Detection Overlay: %5\n\nVideo and control will briefly disconnect while DigiView restarts.')
+                .arg(SVSettings.videoResolutionWidth)
+                .arg(SVSettings.videoResolutionHeight)
                 .arg(SVSettings.aiEnabledDraft ? qsTr('Enabled') : qsTr('Disabled'))
                 .arg(SVSettings.aiScanModelDraft)
                 .arg(SVSettings.aiDetectionOverlayPosition)
@@ -947,7 +965,8 @@ Item {
                 if (root.digiview.applyAndRestart({
                     layoutMode: root.digiview.videoOutputLayoutMode,
                     detectionOverlayMode: SVState.aiDetectionOverlayModeForPosition(SVSettings.aiDetectionOverlayPosition)
-                }, SVSettings.aiEnabledDraft, SVSettings.aiScanModelDraft)) {
+                }, SVSettings.videoResolutionWidth, SVSettings.videoResolutionHeight,
+                SVSettings.aiEnabledDraft, SVSettings.aiScanModelDraft)) {
                     SVNotificationManager.add(qsTr('DigiView restart'), qsTr('Applying staged settings...'),
                         'info', 'network_connecting')
                 }

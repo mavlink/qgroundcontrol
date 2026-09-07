@@ -85,11 +85,6 @@ class DigiviewManager : public QObject
                detectionMissedDetectionPenaltyChanged)
     Q_PROPERTY(int detectionMissedRedetectionPenalty READ detectionMissedRedetectionPenalty NOTIFY
                detectionMissedRedetectionPenaltyChanged)
-    Q_PROPERTY(bool hasSttParameters READ hasSttParameters NOTIFY hasSttParametersChanged)
-    Q_PROPERTY(int sttStatus READ sttStatus NOTIFY sttStatusChanged)
-    Q_PROPERTY(int sttCamId READ sttCamId NOTIFY sttCamIdChanged)
-    Q_PROPERTY(float sttConfidence READ sttConfidence NOTIFY sttConfidenceChanged)
-    Q_PROPERTY(bool sttLockTarget READ sttLockTarget NOTIFY sttLockTargetChanged)
     Q_PROPERTY(QVariantList cameraStates READ cameraStates NOTIFY cameraStatesChanged)
     Q_PROPERTY(bool hasAIParameters READ hasAIParameters NOTIFY hasAIParametersChanged)
     Q_PROPERTY(bool aiEnabled READ aiEnabled NOTIFY aiEnabledChanged)
@@ -176,7 +171,6 @@ public:
 
     Q_INVOKABLE bool connectToHost();
     Q_INVOKABLE void disconnectFromHost();
-    Q_INVOKABLE void disconnectFromHost(bool preventAutomaticReconnect);
 
     Q_INVOKABLE void sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp);
     Q_INVOKABLE bool sendAIParameters(uint8_t run_ai, QString scan_model_name);
@@ -247,14 +241,9 @@ public:
         float next_waypoint_target_yaw, float next_waypoint_target_pitch, float next_waypoint_target_roll,
         float visual_vel_x, float visual_vel_y, float visual_vel_z);
 
-    bool hasSttParameters() const { return _hasSttParameters; }
-    int sttStatus() const { return _sttStatus; }
-    int sttCamId() const { return _sttCamId; }
-    float sttConfidence() const { return _sttConfidence; }
-    bool sttLockTarget() const { return _sttLockTarget != 0; }
-
     Q_INVOKABLE bool requestSingleTargetTrackingParameters();
-    Q_INVOKABLE bool applyAndRestart(const QVariantMap& videoOutputOverlay, bool aiEnabled, const QString& model);
+    Q_INVOKABLE bool applyAndRestart(
+        const QVariantMap& videoOutputOverlay, int width, int height, bool aiEnabled, const QString& model);
 
 
     //////////////////////////////////////////////////////////
@@ -367,11 +356,6 @@ signals:
         float altitude, float visual_lat, float visual_lon,
         float next_waypoint_target_yaw, float next_waypoint_target_pitch, float next_waypoint_target_roll,
         float visual_vel_x, float visual_vel_y, float visual_vel_z);
-    void hasSttParametersChanged();
-    void sttStatusChanged();
-    void sttCamIdChanged();
-    void sttConfidenceChanged();
-    void sttLockTargetChanged();
     void cameraStatesChanged();
     void hasAIParametersChanged();
     void aiEnabledChanged();
@@ -431,6 +415,8 @@ private:
     void _reapplyEndpointIfSessionActive();
 
     struct VideoOutputLayoutSnapshot {
+        std::optional<uint16_t> width;
+        std::optional<uint16_t> height;
         uint8_t layoutMode = 0;
         uint8_t detectionOverlayMode = 0;
         uint8_t numUserViews = 0;
@@ -552,11 +538,6 @@ private:
     uint8_t _detectionMissedDetectionPenalty = 0;
     uint8_t _detectionMissedRedetectionPenalty = 0;
 
-    bool _hasSttParameters = false;
-    uint8_t _sttStatus = static_cast<uint8_t>(single_target_tracking_status::OFF);
-    uint8_t _sttCamId = 0;
-    float _sttConfidence = 0.0f;
-    uint8_t _sttLockTarget = 0;
     std::array<CameraTrackingState, kMaxCameras> _cameraStates{};
     std::array<ActiveTarget, kMaxCameras> _activeTargets{};
 };

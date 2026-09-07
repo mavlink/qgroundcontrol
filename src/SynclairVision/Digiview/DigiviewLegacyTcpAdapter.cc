@@ -170,9 +170,8 @@ bool intervalRequest(const mavlink_command_long_t& command, message& nativeMessa
 
 } // namespace
 
-QByteArray DigiviewLegacyTcpAdapter::encodeRestartQuit(QString& error) const
+QByteArray DigiviewLegacyTcpAdapter::encodeRestartQuit() const
 {
-    Q_UNUSED(error);
     message nativeMessage {};
     nativeMessage.version = VERSION;
     nativeMessage.message_type = QUIT;

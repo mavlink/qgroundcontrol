@@ -22,7 +22,9 @@ Item {
             return
         }
 
-        digiview.setDetectionTracking(cameraSlot, root.detectionViewId, false)
+        if (digiview.setDetectionTracking(cameraSlot, root.detectionViewId, false)) {
+            SVState.setCameraTrackingId(cameraSlot, "detection", true)
+        }
     }
 
     z: mouseArea.containsMouse ? 100 : 0

@@ -29,6 +29,7 @@ Item {
     readonly property int actionCursorTracking: 20
     readonly property int actionManualTracking: 21
     readonly property int actionDeselectTracking: 22
+    readonly property int actionLockTarget: 23
     property bool toolbarVisible: false
     property var flyView
 
@@ -162,12 +163,13 @@ Item {
         SVSettings.shortcutSTT,
         SVSettings.shortcutCursorTracking,
         SVSettings.shortcutManualTracking,
-        SVSettings.shortcutDeselectTracking)
+        SVSettings.shortcutDeselectTracking,
+        SVSettings.shortcutLockTarget)
 
     function buildShortcutRegistry(hud, toolbar, synclair, camera1, camera2, camera3, camera4, camera5,
                                    nextCamera, previousCamera, deselectCamera, record, photo, lockControls,
                                    aiDetection, nextLayout, grid, crosshair,
-                                   stt, cursorTracking, manualTracking, deselectTracking) {
+                                   stt, cursorTracking, manualTracking, deselectTracking, lockTarget) {
         const registry = {}
         const bindings = [
             [hud, root.actionHUD],
@@ -191,7 +193,8 @@ Item {
             [stt, root.actionSTT],
             [cursorTracking, root.actionCursorTracking],
             [manualTracking, root.actionManualTracking],
-            [deselectTracking, root.actionDeselectTracking]
+            [deselectTracking, root.actionDeselectTracking],
+            [lockTarget, root.actionLockTarget]
         ]
 
         for (let index = 0; index < bindings.length; ++index) {
@@ -415,6 +418,9 @@ Item {
             break
         case root.actionDeselectTracking:
             SVState.deselectTracking()
+            break
+        case root.actionLockTarget:
+            SVState.lockCurrentTarget()
             break
         default:
             break

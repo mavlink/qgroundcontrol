@@ -19,7 +19,7 @@ public:
     [[nodiscard]] static qsizetype recordSize();
 
     [[nodiscard]] QByteArray encode(const mavlink_message_t& mavlinkMessage, QString& error);
-    [[nodiscard]] QByteArray encodeRestartQuit(QString& error) const;
+    [[nodiscard]] QByteArray encodeRestartQuit() const;
     [[nodiscard]] DecodeResult decode(QByteArrayView record, mavlink_message_t& mavlinkMessage, QString& error);
 
 private:

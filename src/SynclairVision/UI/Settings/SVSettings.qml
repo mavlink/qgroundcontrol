@@ -72,6 +72,7 @@ QtObject {
         shortcutZoomOut: Qt.Key_E,
         shortcutSmallMovement: Qt.Key_Shift,
         shortcutLockControls: 0,
+        shortcutLockTarget: Qt.Key_J,
         shortcutSynclair: Qt.Key_O,
         shortcutHUD: Qt.Key_H,
         shortcutToolbar: Qt.Key_B,
@@ -156,6 +157,7 @@ QtObject {
         property alias shortcutZoomOut: root.shortcutZoomOut
         property alias shortcutSmallMovement: root.shortcutSmallMovement
         property alias shortcutLockControls: root.shortcutLockControls
+        property alias shortcutLockTarget: root.shortcutLockTarget
         property alias shortcutSynclair: root.shortcutSynclair
         property alias shortcutHUD: root.shortcutHUD
         property alias shortcutToolbar: root.shortcutToolbar
@@ -556,6 +558,7 @@ QtObject {
         property int shortcutZoomOut: Qt.Key_E
         property int shortcutSmallMovement: Qt.Key_Shift
         property int shortcutLockControls: 0
+        property int shortcutLockTarget: Qt.Key_J
 
         //Camera Views
         property int shortcutCamera1: Qt.Key_1
@@ -587,7 +590,7 @@ QtObject {
         property int shortcutRecord: Qt.Key_R
 
         property int shortcutSchemaVersion: 0
-        readonly property int currentShortcutSchemaVersion: 1
+        readonly property int currentShortcutSchemaVersion: 2
 
         function migrateShortcutsIfNeeded() {
             if (shortcutSchemaVersion >= currentShortcutSchemaVersion) {
@@ -601,6 +604,7 @@ QtObject {
             shortcutZoomIn = Qt.Key_Q
             shortcutZoomOut = Qt.Key_E
             shortcutLockControls = 0
+            shortcutLockTarget = Qt.Key_J
             shortcutSynclair = Qt.Key_O
             shortcutToolbar = Qt.Key_B
             shortcutNextCamera = Qt.Key_V

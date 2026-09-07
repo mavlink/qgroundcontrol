@@ -151,14 +151,7 @@ void DigiviewLegacyTcpTransport::_restartSocketConnected()
     if (!_restartInProgress || _restartQuitSent) return;
     _restartConnectingAttempt = false;
     _restartTimer.stop();
-    QString error;
-    const QByteArray record = _adapter.encodeRestartQuit(error);
-    if (record.isEmpty()) {
-        _restartInProgress = false;
-        emit restartFailed(_restartGeneration, error);
-        _restartSocket.abort();
-        return;
-    }
+    const QByteArray record = _adapter.encodeRestartQuit();
     _restartRecord = record;
     _restartWriteOffset = 0;
     _restartSocketBytesWritten(0);

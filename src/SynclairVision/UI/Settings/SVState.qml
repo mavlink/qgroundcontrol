@@ -418,6 +418,19 @@ QtObject {
         return true
     }
 
+    function lockCurrentTarget() {
+        if (!digiview || cameraSelected < 0 || cameraSelected >= cameraTrackingIds.length) {
+            return false
+        }
+
+        const trackingId = cameraTrackingIds[cameraSelected]
+        if (trackingId !== 'detection' && trackingId !== 'singleTarget' && trackingId !== 'cursorTrack') {
+            return false
+        }
+
+        return digiview.lockCurrentTarget(cameraSelected)
+    }
+
     function synchronizeCameraTrackingStates() {
         if (!digiview || !digiview.cameraStates) {
             return

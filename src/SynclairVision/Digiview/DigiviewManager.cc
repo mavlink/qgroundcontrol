@@ -324,7 +324,8 @@ bool DigiviewManager::connectToHost()
     return _logicalSessionActive;
 }
 
-bool DigiviewManager::applyAndRestart(const QVariantMap& overlay, bool aiEnabled, const QString& model)
+bool DigiviewManager::applyAndRestart(
+    const QVariantMap& overlay, int width, int height, bool aiEnabled, const QString& model)
 {
     if (_restartBusy) {
         emit commandRejected(tr("DigiView is already applying a restart."));
@@ -335,7 +336,14 @@ bool DigiviewManager::applyAndRestart(const QVariantMap& overlay, bool aiEnabled
         _finishRestart(false, tr("Authoritative DigiView video, AI, and model discovery is not ready."));
         return false;
     }
+    if (width <= 0 || width > std::numeric_limits<uint16_t>::max()
+        || height <= 0 || height > std::numeric_limits<uint16_t>::max()) {
+        _finishRestart(false, tr("The staged DigiView video resolution is invalid."));
+        return false;
+    }
     mavlink_video_output_parameters_t payload = _videoOutputParameters;
+    payload.width = static_cast<uint16_t>(width);
+    payload.height = static_cast<uint16_t>(height);
     const auto applyByte = [&overlay](const char* key, uint8_t& value, int minimum, int maximum) {
         if (!overlay.contains(QLatin1String(key))) return true;
         bool ok = false;
@@ -364,7 +372,7 @@ bool DigiviewManager::applyAndRestart(const QVariantMap& overlay, bool aiEnabled
     ++_nextVideoOutputTransactionGeneration;
     _videoOutputTransaction = VideoOutputTransaction {
         _nextVideoOutputTransactionGeneration,
-        {payload.layout_mode, payload.detection_overlay_mode, payload.num_user_views},
+        {std::nullopt, std::nullopt, payload.layout_mode, payload.detection_overlay_mode, payload.num_user_views},
         QDeadlineTimer(kVideoOutputTransactionTimeoutMs), false, false};
     _videoOutputTransactionTimerGeneration = _videoOutputTransaction->generation;
     _videoOutputTransactionTimer.start(kVideoOutputTransactionTimeoutMs);
@@ -377,12 +385,6 @@ bool DigiviewManager::applyAndRestart(const QVariantMap& overlay, bool aiEnabled
 
 void DigiviewManager::disconnectFromHost()
 {
-    disconnectFromHost(true);
-}
-
-void DigiviewManager::disconnectFromHost(bool preventAutomaticReconnect)
-{
-    Q_UNUSED(preventAutomaticReconnect);
     _automaticReconnectAllowed = false;
     if (_restartBusy) _finishRestart(false, tr("DigiView restart was cancelled."));
     ++_restartGeneration;
@@ -513,7 +515,7 @@ bool DigiviewManager::_sendVideoOutputUpdate(
     ++_nextVideoOutputTransactionGeneration;
     _videoOutputTransaction = VideoOutputTransaction {
         _nextVideoOutputTransactionGeneration,
-        {payload.layout_mode, payload.detection_overlay_mode, payload.num_user_views},
+        {payload.width, payload.height, payload.layout_mode, payload.detection_overlay_mode, payload.num_user_views},
         QDeadlineTimer(kVideoOutputTransactionTimeoutMs),
         false,
         false,
@@ -534,6 +536,7 @@ bool DigiviewManager::setDetectionTracking(
     )
 
 {
+    Q_UNUSED(lock_target);
     const bool validCameraSlot = (cam >= 0) && (cam <= std::numeric_limits<uint8_t>::max())
         && (static_cast<size_t>(cam) < _activeTargets.size());
     const bool validViewId = (view_id >= std::numeric_limits<int16_t>::min())
@@ -542,8 +545,6 @@ bool DigiviewManager::setDetectionTracking(
     if (!validCameraSlot || !validViewId) {
         return false;
     }
-
-    const ActiveTarget previousTarget = _activeTargets[cam];
 
     const bool camTargetSent = sendCamTargetingParameters(
         _streamName,
@@ -561,36 +562,11 @@ bool DigiviewManager::setDetectionTracking(
         0.0f,
         0,
         static_cast<int16_t>(view_id),
-        lock_target
+        0
     );
+    if (!camTargetSent) return false;
 
-    // SINGLE_TARGET_TRACKING_PARAMETERS controls the STT state exposed to the UI.
-    const bool sttTargetSent = sendSingleTargetTrackingParameters(
-        CMD_SET_TARGET_VECTOR,
-        _streamName,
-        static_cast<uint8_t>(cam),
-        0.0f, 0.0f,
-        // TODO: Verify with middleware that view_id is a valid detection_id.
-        static_cast<uint8_t>(view_id),
-        0,
-        0.0f, 0.0f, 0.0f,
-        0, 0.0f, 0.0f,
-        0,
-        0,
-        lock_target ? 1 : 0
-    );
-
-    if (!(camTargetSent && sttTargetSent)) {
-        if (!camTargetSent && !sttTargetSent) {
-            _activeTargets[cam] = previousTarget;
-        }
-        return false;
-    }
-
-    ActiveTarget& activeTarget = _activeTargets[cam];
-    activeTarget.type = ActiveTarget::Type::Detection;
-    activeTarget.camTargeting.lock_target = lock_target ? 1 : 0;
-    activeTarget.singleTargetTracking.lock_target = lock_target ? 1 : 0;
+    _activeTargets[cam].type = ActiveTarget::Type::Detection;
     return true;
 }
 
@@ -1284,11 +1260,8 @@ bool DigiviewManager::lockCurrentTarget(int cameraSlot)
     }
     case ActiveTarget::Type::Detection: {
         auto camTargeting = activeTarget.camTargeting;
-        auto singleTargetTracking = activeTarget.singleTargetTracking;
         camTargeting.lock_target = 1;
-        singleTargetTracking.lock_target = 1;
-        return _sendCamTargetingParameters(camTargeting)
-            && _sendSingleTargetTrackingParameters(singleTargetTracking);
+        return _sendCamTargetingParameters(camTargeting);
     }
     case ActiveTarget::Type::None:
         return false;
@@ -1719,10 +1692,22 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         const int detectionOverlayMode = payload.detection_overlay_mode;
         const int numUserViews = payload.num_user_views;
         const int singleDetectionSize = payload.single_detection_size;
-        const bool completesVideoOutputTransaction = _videoOutputTransaction
-            && _videoOutputTransaction->awaitingAuthoritativeState
-            && (_videoOutputTransaction->requested
-                == VideoOutputLayoutSnapshot {payload.layout_mode, payload.detection_overlay_mode, payload.num_user_views});
+        const bool completesVideoOutputTransaction = [&] {
+            if (!_videoOutputTransaction || !_videoOutputTransaction->awaitingAuthoritativeState) return false;
+
+            const auto& requested = _videoOutputTransaction->requested;
+            if (!requested.width && !requested.height) {
+                return requested.layoutMode == payload.layout_mode
+                    && requested.detectionOverlayMode == payload.detection_overlay_mode
+                    && requested.numUserViews == payload.num_user_views;
+            }
+
+            return requested.width == payload.width
+                && requested.height == payload.height
+                && requested.layoutMode == payload.layout_mode
+                && requested.detectionOverlayMode == payload.detection_overlay_mode
+                && requested.numUserViews == payload.num_user_views;
+        }();
 
         const bool hasVideoOutputParametersChangedValue = !_hasVideoOutputParameters;
         const bool videoOutputStreamNameChangedValue = _videoOutputStreamName != streamName;
@@ -1995,13 +1980,18 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
 
         if (payload.cam_id < kMaxCameras) {
             auto& state = _cameraStates[payload.cam_id];
+            const CameraTrackingState previousState = state;
             state.targetingMode = payload.targeting_mode;
             state.trackId = payload.track_id;
             state.viewId = payload.view_id;
             state.hasActiveTarget = _activeTargets[payload.cam_id].type != ActiveTarget::Type::None;
             state.hasTargetState = true;
 
-            emit cameraStatesChanged();
+            if (state.targetingMode != previousState.targetingMode || state.trackId != previousState.trackId
+                || state.viewId != previousState.viewId || state.hasActiveTarget != previousState.hasActiveTarget
+                || state.hasTargetState != previousState.hasTargetState) {
+                emit cameraStatesChanged();
+            }
         }
         break;
     }
@@ -2178,40 +2168,18 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
 
             if (payload.cam_id < kMaxCameras) {
                 auto& state = _cameraStates[payload.cam_id];
+                const CameraTrackingState previousState = state;
                 state.sttStatus = payload.status;
                 state.confidence = payload.confidence;
                 state.lockTarget = (payload.lock_target != 0);
                 state.hasActiveTarget = _activeTargets[payload.cam_id].type != ActiveTarget::Type::None;
                 state.hasTargetState = true;
 
-                emit cameraStatesChanged();
-            }
-        }
-
-        if (!_hasSttParameters) {
-            _hasSttParameters = true;
-            emit hasSttParametersChanged();
-        }
-
-        if (_sttStatus != payload.status) {
-            _sttStatus = payload.status;
-            emit sttStatusChanged();
-        }
-
-        if (!globalStatusResponse) {
-            if (_sttCamId != payload.cam_id) {
-                _sttCamId = payload.cam_id;
-                emit sttCamIdChanged();
-            }
-
-            if (!qFuzzyCompare(_sttConfidence, payload.confidence)) {
-                _sttConfidence = payload.confidence;
-                emit sttConfidenceChanged();
-            }
-
-            if (_sttLockTarget != payload.lock_target) {
-                _sttLockTarget = payload.lock_target;
-                emit sttLockTargetChanged();
+                if (state.sttStatus != previousState.sttStatus || state.confidence != previousState.confidence
+                    || state.lockTarget != previousState.lockTarget || state.hasActiveTarget != previousState.hasActiveTarget
+                    || state.hasTargetState != previousState.hasTargetState) {
+                    emit cameraStatesChanged();
+                }
             }
         }
         break;
@@ -2434,7 +2402,8 @@ void DigiviewManager::_restartCheckRefreshedState()
 {
     if (!_restartBusy || !_restartDownObserved || !_connection->connected()) return;
     if (!_hasVideoOutputParameters || !_hasAIParameters || !_aiModelDiscoveryReady) return;
-    if ((_videoOutputLayoutMode != _stagedVideoOutput.layout_mode)
+    if ((_videoOutputWidth != _stagedVideoOutput.width) || (_videoOutputHeight != _stagedVideoOutput.height)
+        || (_videoOutputLayoutMode != _stagedVideoOutput.layout_mode)
         || (_videoOutputDetectionOverlayMode != _stagedVideoOutput.detection_overlay_mode)
         || (_aiEnabled != _stagedAiEnabled) || (_selectedScanModel != _stagedModel)) {
         _finishRestart(false, tr("DigiView returned values different from the staged restart inputs."));
@@ -2622,17 +2591,6 @@ void DigiviewManager::_resetRemoteSession()
 
     _cameraStates.fill(CameraTrackingState{});
     _activeTargets.fill(ActiveTarget{});
-    _hasSttParameters = false;
-    _sttStatus = static_cast<uint8_t>(single_target_tracking_status::OFF);
-    _sttCamId = 0;
-    _sttConfidence = 0.0f;
-    _sttLockTarget = 0;
-
-    emit hasSttParametersChanged();
-    emit sttStatusChanged();
-    emit sttCamIdChanged();
-    emit sttConfidenceChanged();
-    emit sttLockTargetChanged();
     emit cameraStatesChanged();
 
     const bool hasVideoOutputParametersChangedValue = _hasVideoOutputParameters;
