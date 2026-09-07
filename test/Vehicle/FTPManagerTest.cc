@@ -109,6 +109,44 @@ void FTPManagerTest::_testLostPackets()
     _disconnectMockLink();
 }
 
+void FTPManagerTest::_testBurstFallback_data()
+{
+    QTest::addColumn<int>("burstPacketLimit");
+    QTest::addColumn<bool>("burstEofEnabled");
+    QTest::addColumn<int>("fileSize");
+
+    // Server truncates every burst, so the burst can never reach the end of the file no matter how
+    // often it is retried. The tail must be fetched with non-burst reads instead.
+    QTest::addRow("truncated_bursts") << 2 << true << (4 * 1024);
+    // All data arrives in a single burst but the Nak which terminates it is lost. Nothing is
+    // missing, so the download must still complete.
+    QTest::addRow("lost_burst_eof") << 0 << false << 1024;
+}
+
+void FTPManagerTest::_testBurstFallback()
+{
+    QFETCH(int, burstPacketLimit);
+    QFETCH(bool, burstEofEnabled);
+    QFETCH(int, fileSize);
+
+    _connectMockLinkNoInitialConnectSequence();
+    _mockLink->mockLinkFTP()->setBurstPacketLimit(burstPacketLimit);
+    _mockLink->mockLinkFTP()->setBurstEofEnabled(burstEofEnabled);
+
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
+    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
+    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
+                         QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+    QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
+    QCOMPARE(spyDownloadComplete.count(), 1);
+    // void downloadComplete   (const QString& file, const QString& errorMsg);
+    QList<QVariant> arguments = spyDownloadComplete.takeFirst();
+    QVERIFY2(arguments[1].toString().isEmpty(), qPrintable(arguments[1].toString()));
+    _verifyFileSizeAndDelete(arguments[0].toString(), fileSize);
+    _disconnectMockLink();
+}
+
 void FTPManagerTest::_verifyFileSizeAndDelete(const QString& filename, int expectedSize)
 {
     QFileInfo fileInfo(filename);
