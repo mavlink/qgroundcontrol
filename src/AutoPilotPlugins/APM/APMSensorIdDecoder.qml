@@ -45,7 +45,8 @@ QGCLabel {
         0x15: 'AK09915',
         0x16: 'QMC5883P',
         0x17: 'BMM350',
-        0x18: 'IIS2MDC'
+        0x18: 'IIS2MDC',
+        0x1A: 'AF9838'
     }
 
     property var imuTypes: {
