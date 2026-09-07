@@ -23,6 +23,15 @@ constexpr uint8_t kCamTargetingLockFlagsAll = 0x07;
 constexpr float kOneShotIntervalUs = -1000.0F;
 constexpr float kVideoOutputParametersSubscriptionIntervalUs = 100000.0F;
 constexpr int kVideoOutputTransactionTimeoutMs = 2000;
+constexpr int kAiTransactionTimeoutMs = 2000;
+constexpr int kAiVerificationGetCooldownMs = 50;
+constexpr int kAiModelDiscoverySettleMs = 200;
+constexpr int kAiModelDiscoveryDeadlineMs = 3000;
+constexpr qsizetype kMaxAiDiscoveredModels = 32;
+constexpr int kRestartDownObservationTimeoutMs = 5000;
+constexpr int kRestartUpTimeoutMs = 10000;
+constexpr int kRestartReconnectInitialDelayMs = 250;
+constexpr int kRestartReconnectMaximumDelayMs = 2000;
 constexpr uint8_t kDigiviewSystemId = 252;
 constexpr uint8_t kDigiviewComponentId = 66;
 
@@ -37,6 +46,28 @@ void copyStringToCharBuf(const QString& src, char* dest, int size)
 QString stringFromCharBuf(const char* src, int size)
 {
     return QString::fromLatin1(src, static_cast<qsizetype>(strnlen(src, static_cast<size_t>(size))));
+}
+
+bool isWireSafeModelName(const QByteArray& encodedModel)
+{
+    if (encodedModel.isEmpty() || encodedModel.size() > 15 || encodedModel.contains('\0')) {
+        return false;
+    }
+
+    const QString modelName = QString::fromUtf8(encodedModel);
+    return !modelName.isEmpty() && (modelName.toUtf8() == encodedModel);
+}
+
+std::optional<QString> decodeWireSafeModelName(const char* src, int size)
+{
+    const char* const terminator = static_cast<const char*>(std::memchr(src, '\0', static_cast<size_t>(size)));
+    const qsizetype modelLength = terminator ? terminator - src : size;
+    const QByteArray encodedModel(src, modelLength);
+    if (!isWireSafeModelName(encodedModel)) {
+        return std::nullopt;
+    }
+
+    return QString::fromUtf8(encodedModel);
 }
 
 uint8_t userViewCountForLayout(uint8_t layout)
@@ -77,17 +108,77 @@ DigiviewManager::DigiviewManager(QObject* parent)
     connect(_connection, &DigiviewConnection::listenPortChanged, this, &DigiviewManager::listenPortChanged);
     connect(_connection, &DigiviewConnection::legacyTcpControlPortChanged,
             this, &DigiviewManager::legacyTcpControlPortChanged);
-    connect(_connection, &DigiviewConnection::connectedChanged, this, &DigiviewManager::connectedChanged);
     connect(_connection, &DigiviewConnection::connectedChanged, this, [this] {
+        emit connectedChanged();
+        if (_restartBusy && _expectedRestartArmed && _restartQuitSent && _connection->connected()) {
+            _restartReconnectTimer.stop();
+        }
         if (!_connection->connected() && _logicalSessionActive && _remoteIdentityValid) {
             _resetRemoteSession();
         }
+    });
+    connect(_connection, &DigiviewConnection::restartTransportDownObserved, this, [this](quint64 generation) {
+        if (!_restartBusy || !_expectedRestartArmed || !_restartQuitSent || generation != _restartGeneration
+            || _restartDownObserved) {
+            return;
+        }
+        _restartDownObserved = true;
+        _restartObservationTimer.stop();
+        _setRestartProgress(5);
+        _restartObservationTimer.start(kRestartUpTimeoutMs);
+        if (_connection->usingLegacyTcpControl()) {
+            ++_restartReconnectAttempts;
+            _logicalSessionActive = _connection->connectToEndpoint();
+            if (!_connection->connected()) _restartReconnectTimer.start(kRestartReconnectInitialDelayMs);
+        }
+    });
+    connect(_connection, &DigiviewConnection::restartReturnObserved, this, [this](quint64 generation) {
+        if (!_restartBusy || !_expectedRestartArmed || !_restartQuitSent || generation != _restartGeneration) {
+            return;
+        }
+        _restartObservationTimer.stop();
+        _restartReconnectTimer.stop();
+        _setRestartProgress(6);
     });
     connect(_connection, &DigiviewConnection::lastErrorChanged, this, &DigiviewManager::lastErrorChanged);
     connect(_connection, &DigiviewConnection::messageReceived, this, &DigiviewManager::_handleMessage);
     connect(&_videoOutputTransactionTimer, &QTimer::timeout,
             this, &DigiviewManager::_videoOutputTransactionTimedOut);
     _videoOutputTransactionTimer.setSingleShot(true);
+    connect(&_aiTransactionTimer, &QTimer::timeout, this, &DigiviewManager::_aiTransactionTimedOut);
+    _aiTransactionTimer.setSingleShot(true);
+    connect(&_aiVerificationGetTimer, &QTimer::timeout, this, [this] {
+        if (_aiVerificationGetPending) {
+            _aiVerificationGetPending = false;
+            _requestAiAuthoritativeState();
+        }
+    });
+    _aiVerificationGetTimer.setSingleShot(true);
+    connect(&_aiModelDiscoverySettleTimer, &QTimer::timeout,
+            this, &DigiviewManager::_finishAiModelDiscovery);
+    _aiModelDiscoverySettleTimer.setSingleShot(true);
+    connect(&_aiModelDiscoveryDeadlineTimer, &QTimer::timeout,
+            this, &DigiviewManager::_aiModelDiscoveryTimedOut);
+    _aiModelDiscoveryDeadlineTimer.setSingleShot(true);
+    connect(_connection, &DigiviewConnection::restartQuitSent, this, [this](quint64 generation) {
+        if (!_restartBusy || generation != _restartGeneration) return;
+        _restartQuitSent = true;
+        _expectedRestartArmed = true;
+        _restartReconnectGeneration = generation;
+        _restartReconnectAttempts = 0;
+        _setRestartProgress(4);
+        _connection->armRestartReturnObservation(generation);
+        // QUIT has been flushed, but the restart is not down until the transport
+        // actually disconnects or the UDP heartbeat is lost.
+        _restartObservationTimer.start(kRestartDownObservationTimeoutMs);
+    });
+    connect(_connection, &DigiviewConnection::restartFailed, this, [this](quint64 generation, const QString& error) {
+        if (_restartBusy && generation == _restartGeneration && !_restartQuitSent) _finishRestart(false, error);
+    });
+    connect(&_restartObservationTimer, &QTimer::timeout, this, &DigiviewManager::_restartObservationTimedOut);
+    _restartObservationTimer.setSingleShot(true);
+    connect(&_restartReconnectTimer, &QTimer::timeout, this, &DigiviewManager::_restartReconnect);
+    _restartReconnectTimer.setSingleShot(true);
 
     if (qApp) {
         connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { disconnectFromHost(); }, Qt::QueuedConnection);
@@ -122,7 +213,7 @@ quint16 DigiviewManager::legacyTcpControlPort() const
 
 bool DigiviewManager::connected() const
 {
-    return _connection->connected();
+    return _trafficEligible();
 }
 
 QString DigiviewManager::lastError() const
@@ -132,42 +223,51 @@ QString DigiviewManager::lastError() const
 
 void DigiviewManager::setHost(const QString& host)
 {
+    _cancelRestartForSessionChange();
     if (host.trimmed() != _connection->host()) {
         _resetRemoteSession();
     }
 
     _connection->setHost(host);
+    _reapplyEndpointIfSessionActive();
 }
 
 void DigiviewManager::setPort(quint16 port)
 {
+    _cancelRestartForSessionChange();
     if (port != _connection->port()) {
         _resetRemoteSession();
     }
 
     _connection->setPort(port);
+    _reapplyEndpointIfSessionActive();
 }
 
 void DigiviewManager::setListenPort(quint16 listenPort)
 {
+    _cancelRestartForSessionChange();
     if (listenPort != _connection->listenPort()) {
         _resetRemoteSession();
     }
 
     _connection->setListenPort(listenPort);
+    _reapplyEndpointIfSessionActive();
 }
 
 void DigiviewManager::setLegacyTcpControlPort(quint16 port)
 {
+    _cancelRestartForSessionChange();
     if (port != _connection->legacyTcpControlPort()) {
         _resetRemoteSession();
     }
 
     _connection->setLegacyTcpControlPort(port);
+    _reapplyEndpointIfSessionActive();
 }
 
 void DigiviewManager::setStreamName(const QString& streamName)
 {
+    _cancelRestartForSessionChange();
     const QString trimmedStreamName = streamName.trimmed();
     if (trimmedStreamName == _streamName) {
         return;
@@ -180,6 +280,7 @@ void DigiviewManager::setStreamName(const QString& streamName)
 
 void DigiviewManager::setSenderSystemId(int senderSystemId)
 {
+    _cancelRestartForSessionChange();
     if ((senderSystemId < 0) || (senderSystemId > std::numeric_limits<uint8_t>::max())) {
         return;
     }
@@ -196,6 +297,7 @@ void DigiviewManager::setSenderSystemId(int senderSystemId)
 
 void DigiviewManager::setSenderComponentId(int senderComponentId)
 {
+    _cancelRestartForSessionChange();
     if ((senderComponentId < 0) || (senderComponentId > std::numeric_limits<uint8_t>::max())) {
         return;
     }
@@ -212,22 +314,92 @@ void DigiviewManager::setSenderComponentId(int senderComponentId)
 
 bool DigiviewManager::connectToHost()
 {
-    _logicalSessionActive = false;
+    const bool wasConnected = connected();
+    const bool wasActive = _logicalSessionActive;
+    _automaticReconnectAllowed = true;
     _resetRemoteSession();
     _logicalSessionActive = _connection->connectToEndpoint();
+    if (_logicalSessionActive != wasActive) emit sessionActiveChanged();
+    if (connected() != wasConnected) emit connectedChanged();
     return _logicalSessionActive;
+}
+
+bool DigiviewManager::applyAndRestart(const QVariantMap& overlay, bool aiEnabled, const QString& model)
+{
+    if (_restartBusy) {
+        emit commandRejected(tr("DigiView is already applying a restart."));
+        return false;
+    }
+    if (!connected() || !_hasVideoOutputParameters || !_hasAIParameters
+        || !_aiModelDiscoveryReady || model.trimmed().isEmpty() || !_availableScanModels.contains(model)) {
+        _finishRestart(false, tr("Authoritative DigiView video, AI, and model discovery is not ready."));
+        return false;
+    }
+    mavlink_video_output_parameters_t payload = _videoOutputParameters;
+    const auto applyByte = [&overlay](const char* key, uint8_t& value, int minimum, int maximum) {
+        if (!overlay.contains(QLatin1String(key))) return true;
+        bool ok = false;
+        const int candidate = overlay.value(QLatin1String(key)).toInt(&ok);
+        if (!ok || candidate < minimum || candidate > maximum) return false;
+        value = static_cast<uint8_t>(candidate);
+        return true;
+    };
+    if (!applyByte("layoutMode", payload.layout_mode, Layout::LAYOUT_1, Layout::LAYOUT_MAX)
+        || !applyByte("detectionOverlayMode", payload.detection_overlay_mode,
+                      Layout::DET_OVERLAY_NONE, Layout::DET_OVERLAY_MAX)) {
+        _finishRestart(false, tr("The staged DigiView video overlay is invalid."));
+        return false;
+    }
+    payload.num_user_views = userViewCountForLayout(payload.layout_mode);
+    _stagedVideoOutput = payload;
+    _stagedAiEnabled = aiEnabled;
+    _stagedModel = model;
+    _restartBusy = true;
+    emit restartBusyChanged();
+    ++_restartGeneration;
+    emit restartGenerationChanged();
+    _restartFailure.clear();
+    emit restartFailureChanged();
+    _setRestartProgress(1);
+    ++_nextVideoOutputTransactionGeneration;
+    _videoOutputTransaction = VideoOutputTransaction {
+        _nextVideoOutputTransactionGeneration,
+        {payload.layout_mode, payload.detection_overlay_mode, payload.num_user_views},
+        QDeadlineTimer(kVideoOutputTransactionTimeoutMs), false, false};
+    _videoOutputTransactionTimerGeneration = _videoOutputTransaction->generation;
+    _videoOutputTransactionTimer.start(kVideoOutputTransactionTimeoutMs);
+    if (!_sendVideoOutputParameters(payload)) {
+        _finishRestart(false, tr("DigiView VIDEO_OUTPUT_PARAMETERS could not be sent."));
+        return false;
+    }
+    return true;
 }
 
 void DigiviewManager::disconnectFromHost()
 {
-    disconnectFromHost(false);
+    disconnectFromHost(true);
 }
 
 void DigiviewManager::disconnectFromHost(bool preventAutomaticReconnect)
 {
+    Q_UNUSED(preventAutomaticReconnect);
+    _automaticReconnectAllowed = false;
+    if (_restartBusy) _finishRestart(false, tr("DigiView restart was cancelled."));
+    ++_restartGeneration;
+    emit restartGenerationChanged();
+    const bool wasConnected = connected();
     _logicalSessionActive = false;
+    emit sessionActiveChanged();
     _resetRemoteSession();
-    _connection->disconnectFromEndpoint(preventAutomaticReconnect);
+    _connection->disconnectFromEndpoint();
+    if (connected() != wasConnected) emit connectedChanged();
+}
+
+void DigiviewManager::_reapplyEndpointIfSessionActive()
+{
+    if (_logicalSessionActive && _automaticReconnectAllowed) {
+        (void) _connection->connectToEndpoint();
+    }
 }
 
 void DigiviewManager::sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp)
@@ -243,8 +415,23 @@ void DigiviewManager::sendSystemStatusParameters(uint8_t status, uint8_t error, 
     _sendMessage(msg);
 }
 
-void DigiviewManager::sendAIParameters(uint8_t run_ai, QString scan_model_name)
+bool DigiviewManager::sendAIParameters(uint8_t run_ai, QString scan_model_name)
 {
+    if (run_ai > 1U) {
+        emit commandRejected(tr("The requested AI enabled value is invalid and was not sent."));
+        return false;
+    }
+
+    const QByteArray encodedModel = scan_model_name.toUtf8();
+    if (!isWireSafeModelName(encodedModel) || !_availableScanModels.contains(scan_model_name)) {
+        emit commandRejected(tr("The requested AI scan model is invalid or unavailable and was not sent."));
+        return false;
+    }
+    if (_aiTransaction) {
+        emit commandRejected(tr("DigiView is still processing a prior AI update."));
+        return false;
+    }
+
     mavlink_message_t msg;
     mavlink_ai_parameters_t payload {};
 
@@ -252,7 +439,24 @@ void DigiviewManager::sendAIParameters(uint8_t run_ai, QString scan_model_name)
     copyStringToCharBuf(scan_model_name, payload.scan_model_name, 16);
 
     _encodeMessage(msg, payload, mavlink_msg_ai_parameters_encode);
-    _sendMessage(msg);
+    ++_nextAiTransactionGeneration;
+    _aiTransaction = AiTransaction {
+        _nextAiTransactionGeneration,
+        _remoteSessionGeneration,
+        run_ai != 0U,
+        scan_model_name,
+        QDeadlineTimer(kAiTransactionTimeoutMs),
+        false,
+        false,
+    };
+    _aiTransactionTimerGeneration = _aiTransaction->generation;
+    _aiTransactionTimer.start(kAiTransactionTimeoutMs);
+    if (!_sendMessage(msg)) {
+        _aiTransactionTimer.stop();
+        _aiTransaction.reset();
+        return false;
+    }
+    return true;
 }
 
 bool DigiviewManager::sendModelParameters(QString model_name)
@@ -1239,7 +1443,7 @@ bool DigiviewManager::takePhoto()
 
 void DigiviewManager::_handleMessage(const mavlink_message_t& message)
 {
-    if (!_logicalSessionActive || !_connection->connected()) {
+    if (!_trafficEligible()) {
         return;
     }
 
@@ -1275,6 +1479,12 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         }
     }
 
+    // UDP registration only primes the router. No DigiView traffic is accepted or
+    // sent until the expected remote heartbeat has established the session.
+    if (!_remoteIdentityValid) {
+        return;
+    }
+
     switch (message.msgid) {
     case MAVLINK_MSG_ID_COMMAND_ACK: {
         mavlink_command_ack_t ack;
@@ -1294,27 +1504,51 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             && (message.sysid == _remoteSystemId) && (message.compid == _remoteComponentId);
         const bool expectedTarget = ((ack.target_system == 0U) || (ack.target_system == _senderSystemId))
             && ((ack.target_component == 0U) || (ack.target_component == _senderComponentId));
-        if (expectedSender && (ack.command == MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS)
-            && expectedTarget && _videoOutputTransaction && (ack.result != MAV_RESULT_IN_PROGRESS)) {
-            if (ack.result == MAV_RESULT_ACCEPTED) {
-                // COMMAND_ACK has no transaction generation. An old accepted ACK may request a GET, but only
-                // matching authoritative state can complete the current transaction.
-                auto& transaction = *_videoOutputTransaction;
-                transaction.awaitingAuthoritativeState = true;
-                if (!transaction.stateGetIssued) {
-                    transaction.stateGetIssued = true;
-                    (void) _requestParameters(MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS);
+        if (expectedSender && expectedTarget && (ack.result != MAV_RESULT_IN_PROGRESS)) {
+            if ((ack.command == MAVLINK_MSG_ID_AI_PARAMETERS) && _aiTransaction) {
+                if (ack.result == MAV_RESULT_ACCEPTED) {
+                    auto& transaction = *_aiTransaction;
+                    transaction.awaitingAuthoritativeState = true;
+                    if (!_aiVerificationGetTimer.isActive()) {
+                        _requestAiAuthoritativeState();
+                    } else {
+                        _aiVerificationGetPending = true;
+                        _aiVerificationGetTimer.start(kAiVerificationGetCooldownMs);
+                    }
+                } else {
+                    emit commandRejected(tr("DigiView rejected the AI update: %1.")
+                                             .arg(QGCMAVLink::mavResultToString(ack.result)));
+                    _aiTransactionTimer.stop();
+                    _aiVerificationGetTimer.stop();
+                    _aiVerificationGetPending = false;
+                    _aiTransaction.reset();
+                    if (_restartBusy) _finishRestart(false, tr("DigiView rejected the staged AI update."));
                 }
-            } else if (ack.result == MAV_RESULT_DENIED) {
-                emit commandRejected(
-                    tr("DigiView rejected the video-output update because the selected pipeline is locked."));
-                _videoOutputTransactionTimer.stop();
-                _videoOutputTransaction.reset();
-            } else {
-                emit commandRejected(tr("DigiView rejected the video-output update: %1.")
-                                         .arg(QGCMAVLink::mavResultToString(ack.result)));
-                _videoOutputTransactionTimer.stop();
-                _videoOutputTransaction.reset();
+            }
+            if ((ack.command == MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS)
+                && _videoOutputTransaction) {
+                if (ack.result == MAV_RESULT_ACCEPTED) {
+                    // COMMAND_ACK has no transaction generation. An old accepted ACK may request a GET, but only
+                    // matching authoritative state can complete the current transaction.
+                    auto& transaction = *_videoOutputTransaction;
+                    transaction.awaitingAuthoritativeState = true;
+                    if (!transaction.stateGetIssued) {
+                        transaction.stateGetIssued = true;
+                        (void) _requestParameters(MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS);
+                    }
+                } else if (ack.result == MAV_RESULT_DENIED) {
+                    emit commandRejected(
+                        tr("DigiView rejected the video-output update because the selected pipeline is locked."));
+                    _videoOutputTransactionTimer.stop();
+                    _videoOutputTransaction.reset();
+                    if (_restartBusy) _finishRestart(false, tr("DigiView rejected the staged video-output update."));
+                } else {
+                    emit commandRejected(tr("DigiView rejected the video-output update: %1.")
+                                             .arg(QGCMAVLink::mavResultToString(ack.result)));
+                    _videoOutputTransactionTimer.stop();
+                    _videoOutputTransaction.reset();
+                    if (_restartBusy) _finishRestart(false, tr("DigiView rejected the staged video-output update."));
+                }
             }
         }
         break;
@@ -1328,13 +1562,69 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
     case MAVLINK_MSG_ID_AI_PARAMETERS: {
         mavlink_ai_parameters_t payload;
         mavlink_msg_ai_parameters_decode(&message, &payload);
-        emit aiParametersReceived(payload.run_ai, stringFromCharBuf(payload.scan_model_name, 16));
+        if (!_remoteIdentityValid || (message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
+            break;
+        }
+        if (payload.run_ai > 1U) {
+            qCWarning(DigiviewManagerLog) << "Ignoring invalid AI_PARAMETERS run_ai value" << payload.run_ai;
+            break;
+        }
+        const bool enabled = payload.run_ai != 0U;
+        const auto selectedModelValue = decodeWireSafeModelName(payload.scan_model_name, 16);
+        if (!selectedModelValue) {
+            qCWarning(DigiviewManagerLog) << "Ignoring AI_PARAMETERS with invalid or empty scan model name";
+            break;
+        }
+        const QString& selectedModel = *selectedModelValue;
+        const bool hasAIParametersChangedValue = !_hasAIParameters;
+        const bool aiEnabledChangedValue = !_hasAIParameters || (_aiEnabled != enabled);
+        const bool selectedScanModelChangedValue = !_hasAIParameters || (_selectedScanModel != selectedModel);
+        const bool completesAiTransaction = _aiTransaction && _aiTransaction->awaitingAuthoritativeState
+            && (_aiTransaction->sessionGeneration == _remoteSessionGeneration)
+            && (_aiTransaction->enabled == enabled) && (_aiTransaction->model == selectedModel);
+        _hasAIParameters = true;
+        _aiEnabled = enabled;
+        _selectedScanModel = selectedModel;
+        if (hasAIParametersChangedValue) emit hasAIParametersChanged();
+        if (aiEnabledChangedValue) emit aiEnabledChanged();
+        if (selectedScanModelChangedValue) emit selectedScanModelChanged();
+        if (hasAIParametersChangedValue || aiEnabledChangedValue || selectedScanModelChangedValue) {
+            emit aiParametersReceived(payload.run_ai, selectedModel);
+        }
+        if (completesAiTransaction) {
+            _aiTransactionTimer.stop();
+            _aiVerificationGetTimer.stop();
+            _aiVerificationGetPending = false;
+            _aiTransaction.reset();
+            _restartAiConfirmed();
+        }
         break;
     }
     case MAVLINK_MSG_ID_MODEL_PARAMETERS: {
         mavlink_model_parameters_t payload;
         mavlink_msg_model_parameters_decode(&message, &payload);
-        emit modelParametersReceived(stringFromCharBuf(payload.model_name, 16));
+        if (!_remoteIdentityValid || (message.sysid != _remoteSystemId) || (message.compid != _remoteComponentId)) {
+            break;
+        }
+        const auto modelName = decodeWireSafeModelName(payload.model_name, 16);
+        const bool validModelName = modelName.has_value();
+        const QString modelNameValue = modelName.value_or(QString{});
+        if (_aiModelDiscoveryLoading) {
+            if (validModelName && !_availableScanModels.contains(modelNameValue)) {
+                if (_availableScanModels.size() >= kMaxAiDiscoveredModels) {
+                    qCWarning(DigiviewManagerLog) << "AI model discovery reached its limit of"
+                                                  << kMaxAiDiscoveredModels << "models";
+                    _finishAiModelDiscovery();
+                } else {
+                    _availableScanModels.append(modelNameValue);
+                    emit availableScanModelsChanged();
+                }
+            }
+            if (validModelName && _aiModelDiscoveryLoading) {
+                _aiModelDiscoverySettleTimer.start(kAiModelDiscoverySettleMs);
+            }
+        }
+        emit modelParametersReceived(modelNameValue);
         break;
     }
     case MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS: {
@@ -1515,6 +1805,7 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         if (completesVideoOutputTransaction) {
             _videoOutputTransactionTimer.stop();
             _videoOutputTransaction.reset();
+            _restartVideoConfirmed();
         }
         break;
     }
@@ -1957,11 +2248,15 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         break;
     }
 
+    _restartCheckRefreshedState();
     emit messageDecoded(message.msgid);
 }
 
 bool DigiviewManager::_sendMessage(const mavlink_message_t& message)
 {
+    if (!_trafficEligible()) {
+        return false;
+    }
     const bool sent = _connection->sendMessage(message);
     if (!sent) {
         qCWarning(DigiviewManagerLog) << "Failed to send Digiview MAVLink message" << message.msgid << _connection->lastError();
@@ -1991,11 +2286,207 @@ void DigiviewManager::_videoOutputTransactionTimedOut()
     qCWarning(DigiviewManagerLog) << "Timed out waiting for authoritative VIDEO_OUTPUT_PARAMETERS state"
                                   << "generation" << _videoOutputTransaction->generation;
     _videoOutputTransaction.reset();
+    if (_restartBusy) _finishRestart(false, tr("DigiView did not confirm VIDEO_OUTPUT_PARAMETERS."));
+}
+
+void DigiviewManager::_aiTransactionTimedOut()
+{
+    if (!_aiTransaction || (_aiTransaction->generation != _aiTransactionTimerGeneration)
+        || (_aiTransaction->sessionGeneration != _remoteSessionGeneration)) {
+        return;
+    }
+    if (!_aiTransaction->deadline.hasExpired()) {
+        _aiTransactionTimer.start(static_cast<int>(_aiTransaction->deadline.remainingTime()));
+        return;
+    }
+
+    qCWarning(DigiviewManagerLog) << "Timed out waiting for authoritative AI_PARAMETERS state"
+                                  << "generation" << _aiTransaction->generation;
+    _aiVerificationGetTimer.stop();
+    _aiVerificationGetPending = false;
+    _aiTransaction.reset();
+    if (_restartBusy) _finishRestart(false, tr("DigiView did not confirm AI_PARAMETERS."));
+}
+
+void DigiviewManager::_requestAiAuthoritativeState()
+{
+    if (!_aiTransaction || (_aiTransaction->sessionGeneration != _remoteSessionGeneration)) {
+        return;
+    }
+
+    _aiTransaction->stateGetIssued = true;
+    if (!_requestParameters(MAVLINK_MSG_ID_AI_PARAMETERS)) {
+        emit commandRejected(tr("DigiView AI update could not request authoritative state."));
+        _aiTransactionTimer.stop();
+        _aiVerificationGetTimer.stop();
+        _aiVerificationGetPending = false;
+        _aiTransaction.reset();
+        if (_restartBusy) _finishRestart(false, tr("DigiView AI authoritative verification could not be requested."));
+        return;
+    }
+    _aiVerificationGetTimer.start(kAiVerificationGetCooldownMs);
+}
+
+void DigiviewManager::_finishAiModelDiscovery()
+{
+    if (!_aiModelDiscoveryLoading) {
+        return;
+    }
+
+    _aiModelDiscoveryDeadlineTimer.stop();
+    _aiModelDiscoverySettleTimer.stop();
+    _aiModelDiscoveryLoading = false;
+    _aiModelDiscoveryReady = !_availableScanModels.isEmpty();
+    emit aiModelDiscoveryLoadingChanged();
+    emit aiModelDiscoveryReadyChanged();
+    if (_restartBusy) _restartCheckRefreshedState();
+}
+
+void DigiviewManager::_aiModelDiscoveryTimedOut()
+{
+    if (!_aiModelDiscoveryLoading) return;
+    qCWarning(DigiviewManagerLog) << "AI model discovery deadline reached with"
+                                  << _availableScanModels.size() << "valid models";
+    _finishAiModelDiscovery();
+    if (_restartBusy && !_aiModelDiscoveryReady) {
+        _finishRestart(false, tr("DigiView model discovery timed out without a valid model."));
+    }
+}
+
+void DigiviewManager::_setRestartProgress(int progress)
+{
+    if (_restartProgress == progress) return;
+    _restartProgress = progress;
+    emit restartProgressChanged();
+}
+
+void DigiviewManager::_restartVideoConfirmed()
+{
+    if (!_restartBusy) return;
+    _setRestartProgress(2);
+    if (!sendAIParameters(_stagedAiEnabled ? 1U : 0U, _stagedModel)) {
+        _finishRestart(false, tr("DigiView AI_PARAMETERS could not be sent."));
+    }
+}
+
+void DigiviewManager::_restartAiConfirmed()
+{
+    if (!_restartBusy) return;
+    _hasVideoOutputParameters = false;
+    _hasAIParameters = false;
+    _aiEnabled = false;
+    _selectedScanModel.clear();
+    _availableScanModels.clear();
+    _aiModelDiscoveryReady = false;
+    _aiModelDiscoveryLoading = true;
+    _aiModelDiscoverySettleTimer.stop();
+    _aiModelDiscoveryDeadlineTimer.start(kAiModelDiscoveryDeadlineMs);
+    emit hasVideoOutputParametersChanged();
+    emit hasAIParametersChanged();
+    emit aiEnabledChanged();
+    emit selectedScanModelChanged();
+    emit availableScanModelsChanged();
+    emit aiModelDiscoveryReadyChanged();
+    emit aiModelDiscoveryLoadingChanged();
+    _setRestartProgress(3);
+    if (!_connection->restartDigiView(_restartGeneration)) {
+        _finishRestart(false, tr("DigiView restart side channel could not be started."));
+    }
+}
+
+void DigiviewManager::_restartObservationTimedOut()
+{
+    if (!_restartBusy || !_restartQuitSent) return;
+    if (!_restartDownObserved) {
+        _finishRestart(false, tr("DigiView restart was not observed; transport state is unknown."));
+        return;
+    }
+    _finishRestart(false, tr("DigiView did not return after restart; state is unknown."));
+}
+
+void DigiviewManager::_restartReconnect()
+{
+    if (!_restartBusy || !_expectedRestartArmed || !_restartQuitSent || !_restartDownObserved
+        || !_connection->usingLegacyTcpControl()
+        || (_restartReconnectGeneration != _restartGeneration) || !_restartObservationTimer.isActive()) {
+        _restartReconnectTimer.stop();
+        return;
+    }
+    if (_connection->connected()) {
+        _restartReconnectTimer.stop();
+        return;
+    }
+
+    ++_restartReconnectAttempts;
+    _logicalSessionActive = _connection->connectToEndpoint();
+    if (_connection->connected()) {
+        _restartReconnectTimer.stop();
+        return;
+    }
+
+    const int delay = std::min(
+        kRestartReconnectMaximumDelayMs,
+        kRestartReconnectInitialDelayMs * (1 << std::min(_restartReconnectAttempts - 1, 3)));
+    _restartReconnectTimer.start(delay);
+}
+
+void DigiviewManager::_restartCheckRefreshedState()
+{
+    if (!_restartBusy || !_restartDownObserved || !_connection->connected()) return;
+    if (!_hasVideoOutputParameters || !_hasAIParameters || !_aiModelDiscoveryReady) return;
+    if ((_videoOutputLayoutMode != _stagedVideoOutput.layout_mode)
+        || (_videoOutputDetectionOverlayMode != _stagedVideoOutput.detection_overlay_mode)
+        || (_aiEnabled != _stagedAiEnabled) || (_selectedScanModel != _stagedModel)) {
+        _finishRestart(false, tr("DigiView returned values different from the staged restart inputs."));
+        return;
+    }
+    _finishRestart(true);
+}
+
+void DigiviewManager::_finishRestart(bool success, const QString& failure)
+{
+    if (!success && !failure.isEmpty()) {
+        _restartFailure = failure;
+        emit restartFailureChanged();
+    }
+    _restartObservationTimer.stop();
+    _restartReconnectTimer.stop();
+    _videoOutputTransactionTimer.stop();
+    _videoOutputTransaction.reset();
+    _aiTransactionTimer.stop();
+    _aiVerificationGetTimer.stop();
+    _aiVerificationGetPending = false;
+    _aiTransaction.reset();
+    _connection->disarmRestartReturnObservation();
+    _expectedRestartArmed = false;
+    _restartDownObserved = false;
+    _restartQuitSent = false;
+    if (_restartBusy) {
+        _restartBusy = false;
+        emit restartBusyChanged();
+    }
+    if (success) _setRestartProgress(7);
+    else _setRestartProgress(0);
+    _stagedVideoOutput = {};
+    _stagedAiEnabled = false;
+    _stagedModel.clear();
+}
+
+void DigiviewManager::_cancelRestartForSessionChange()
+{
+    if (!_restartBusy) return;
+
+    // A flushed QUIT belongs to the old endpoint.  Do not let its later heartbeat
+    // or refreshed state complete a restart against a new endpoint or identity.
+    _connection->cancelRestartDigiView();
+    ++_restartGeneration;
+    emit restartGenerationChanged();
+    _finishRestart(false, tr("DigiView restart was cancelled because the connection settings changed; state is unknown."));
 }
 
 void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componentId)
 {
-    if (!_logicalSessionActive || !_connection->connected()) {
+    if (!_trafficEligible()) {
         return;
     }
     if ((systemId != kDigiviewSystemId) || (componentId != kDigiviewComponentId)) {
@@ -2006,6 +2497,13 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
     _remoteSystemId = systemId;
     _remoteComponentId = componentId;
     _remoteIdentityValid = true;
+
+    if (_restartBusy && _expectedRestartArmed && _restartQuitSent && _restartDownObserved) {
+        _setRestartProgress(6);
+        (void) requestVideoOutputParameters();
+        (void) _requestParameters(MAVLINK_MSG_ID_AI_PARAMETERS);
+        (void) requestModelParameters();
+    }
 
     mavlink_message_t msg;
     mavlink_command_long_t command {};
@@ -2037,6 +2535,17 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
                                      << "targetComponent" << command.target_component;
     }
     _sendMessage(msg);
+
+    if (initialSubscription) {
+        _aiModelDiscoveryLoading = true;
+        _aiModelDiscoveryReady = false;
+        _aiModelDiscoverySettleTimer.stop();
+        _aiModelDiscoveryDeadlineTimer.start(kAiModelDiscoveryDeadlineMs);
+        emit aiModelDiscoveryLoadingChanged();
+        emit aiModelDiscoveryReadyChanged();
+        (void) _requestParameters(MAVLINK_MSG_ID_AI_PARAMETERS);
+        (void) _requestParameters(MAVLINK_MSG_ID_MODEL_PARAMETERS);
+    }
 
     command.param1 = static_cast<float>(MAVLINK_MSG_ID_CAM_TARGETING_PARAMETERS);
 
@@ -2081,6 +2590,7 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
 
 void DigiviewManager::_resetRemoteSession()
 {
+    ++_remoteSessionGeneration;
     _remoteSystemId = 0;
     _remoteComponentId = 0;
     _remoteIdentityValid = false;
@@ -2090,6 +2600,25 @@ void DigiviewManager::_resetRemoteSession()
     _pendingSingleTargetTrackingParametersRequest = true;
     _videoOutputTransactionTimer.stop();
     _videoOutputTransaction.reset();
+    _aiTransactionTimer.stop();
+    _aiVerificationGetTimer.stop();
+    _aiVerificationGetPending = false;
+    _aiTransaction.reset();
+
+    _hasAIParameters = false;
+    _aiEnabled = false;
+    _selectedScanModel.clear();
+    _availableScanModels.clear();
+    _aiModelDiscoveryLoading = false;
+    _aiModelDiscoveryReady = false;
+    _aiModelDiscoverySettleTimer.stop();
+    _aiModelDiscoveryDeadlineTimer.stop();
+    emit hasAIParametersChanged();
+    emit aiEnabledChanged();
+    emit selectedScanModelChanged();
+    emit availableScanModelsChanged();
+    emit aiModelDiscoveryLoadingChanged();
+    emit aiModelDiscoveryReadyChanged();
 
     _cameraStates.fill(CameraTrackingState{});
     _activeTargets.fill(ActiveTarget{});

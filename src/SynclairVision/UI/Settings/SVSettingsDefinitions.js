@@ -19,21 +19,6 @@ function getGeneralSections(isRecording) {
                     ]
                 },
                 {
-                    id: 'aiDetectionOverlay',
-                    property: 'aiDetectionOverlayPosition',
-                    type: 'dropdown',
-                    label: 'AI Detection Overlay',
-                    description: 'Pick the position of the AI detection overlay',
-                    currentIndex: 0,
-                    options: [
-                        { label: 'Single Box', value: 'Single' },
-                        { label: 'Column Right', value: 'ColumnRight' },
-                        { label: 'Column Left', value: 'ColumnLeft' },
-                        { label: 'Row Top', value: 'RowTop' },
-                        { label: 'Row Bottom', value: 'RowBottom' },
-                    ]
-                },
-                {
                     id: 'target_brightness',
                     property: 'videoTargetBrightness',
                     type: 'slider',
@@ -82,6 +67,50 @@ function getGeneralSections(isRecording) {
             ]
         },
         {
+            id: 'ai',
+            title: 'AI',
+            items: [
+                {
+                    id: 'aiEnabled',
+                    property: 'aiEnabledDraft',
+                    type: 'checkbox',
+                    label: 'Enable AI',
+                    description: 'Stage AI enablement for the next DigiView restart.',
+                    stagedAI: true
+                },
+                {
+                    id: 'aiScanModel',
+                    property: 'aiScanModelDraft',
+                    type: 'dropdown',
+                    label: 'Scan Model',
+                    description: 'Select the discovered scan model for the next DigiView restart.',
+                    optionsSource: 'aiModels',
+                    stagedAI: true
+                },
+                {
+                    id: 'aiDetectionOverlay',
+                    property: 'aiDetectionOverlayPosition',
+                    type: 'dropdown',
+                    label: 'AI Detection Overlay',
+                    description: 'Stage the AI detection overlay position for the next DigiView restart.',
+                    currentIndex: 0,
+                    stagedAI: true,
+                    options: [
+                        { label: 'Single Box', value: 'Single' },
+                        { label: 'Column Right', value: 'ColumnRight' },
+                        { label: 'Column Left', value: 'ColumnLeft' },
+                        { label: 'Row Top', value: 'RowTop' },
+                        { label: 'Row Bottom', value: 'RowBottom' },
+                    ]
+                },
+                {
+                    id: 'aiRestartNote',
+                    type: 'note',
+                    description: 'AI changes take effect after restarting DigiView.'
+                }
+            ]
+        },
+        {
             id: 'record',
             title: "Record",
             items: [
@@ -112,6 +141,15 @@ function getGeneralSections(isRecording) {
             id: 'other',
             title: 'Other',
             items: [
+                {
+                    id: 'restart_digiview',
+                    type: 'button',
+                    label: 'Restart DigiView',
+                    description: 'Apply staged AI and overlay settings, then restart DigiView.',
+                    text: 'Restart',
+                    buttonRole: 'restartDigiview',
+                    stagedAI: true
+                },
                 {
                     id: 'reset_settings',
                     type: 'button',
@@ -665,18 +703,6 @@ function getDevSections() {
                     value: 0
                 },
                 {
-                    id: 'cropConfidenceThreshold',
-                    property: 'aiCropConfidenceTreshold',
-                    type: 'slider',
-                    label: 'Crop Confidence Threshold',
-                    description: 'Crop Confidence Threshold',
-                    digiviewParameterGroup: 'detection',
-                    min: 0.0,
-                    max: 1.0,
-                    step: 0.01,
-                    value: 0.8
-                },
-                {
                     id: 'scanConfidenceThreshold',
                     property: 'aiScanConfidenceTreshold',
                     type: 'slider',
@@ -749,23 +775,11 @@ function getDevSections() {
                     value: 50
                 },
                 {
-                    id: 'cropBoxOverlap',
-                    property: 'aiCropBoxOverlay',
-                    type: 'slider',
-                    label: 'Crop Box Overlap',
-                    description: 'Crop Box Overlap',
-                    digiviewParameterGroup: 'detection',
-                    min: 0,
-                    max: 1,
-                    step: 0.01,
-                    value: 0.5
-                },
-                {
                     id: 'varBoxOverlap',
                     property: 'aiVarBoxOverlap',
                     type: 'slider',
-                    label: 'Variation Box Overlap',
-                    description: 'Variation Box Overlap',
+                    label: 'Scan Box Overlap',
+                    description: 'Scan Box Overlap',
                     digiviewParameterGroup: 'detection',
                     min: 0,
                     max: 1,

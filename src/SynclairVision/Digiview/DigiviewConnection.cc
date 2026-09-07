@@ -1,6 +1,7 @@
 #include "DigiviewConnection.h"
 
 #include "DigiviewLegacyTcpTransport.h"
+#include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 #include "sv_mavlink_dialect/sv_mavlink_dialect.h"
 
@@ -19,6 +20,8 @@ constexpr char kSynclairSettingsGroup[] = "SynclairVisionSettings";
 constexpr char kLegacyTcpControlSetting[] = "networkForceRtspVideoOverTcp";
 constexpr uint8_t kDigiviewSystemId = 252;
 constexpr uint8_t kDigiviewComponentId = 66;
+constexpr quint16 kDigiviewRouterPort = 14570;
+constexpr int kRestartHeartbeatLossTimeoutMs = 1500;
 
 bool legacyTcpControlEnabled()
 {
@@ -43,6 +46,9 @@ DigiviewConnection::DigiviewConnection(QObject* parent)
     connect(_legacyTcpTransport, &DigiviewLegacyTcpTransport::disconnectedFromEndpoint, this, [this] {
         if (_legacyTcpActive) {
             _setConnected(false);
+            if (_restartObservationGeneration) {
+                emit restartTransportDownObserved(*_restartObservationGeneration);
+            }
         }
     });
     connect(_legacyTcpTransport, &DigiviewLegacyTcpTransport::messageReceived,
@@ -55,6 +61,15 @@ DigiviewConnection::DigiviewConnection(QObject* parent)
             }
         }
     });
+    connect(_legacyTcpTransport, &DigiviewLegacyTcpTransport::restartQuitSent,
+            this, [this](quint64 generation) {
+                emit restartQuitSent(generation);
+            });
+    connect(_legacyTcpTransport, &DigiviewLegacyTcpTransport::restartFailed,
+            this, &DigiviewConnection::restartFailed);
+    connect(&_restartHeartbeatLossTimer, &QTimer::timeout,
+            this, &DigiviewConnection::_restartHeartbeatLossTimeout);
+    _restartHeartbeatLossTimer.setSingleShot(true);
 }
 
 void DigiviewConnection::setHost(const QString& host)
@@ -64,12 +79,11 @@ void DigiviewConnection::setHost(const QString& host)
         return;
     }
 
+    if (_legacyTcpActive) {
+        _legacyTcpTransport->disconnectFromEndpoint();
+    }
     _host = trimmedHost;
     emit hostChanged();
-
-    if (_connected) {
-        (void) connectToEndpoint();
-    }
 }
 
 void DigiviewConnection::setPort(quint16 port)
@@ -78,6 +92,9 @@ void DigiviewConnection::setPort(quint16 port)
         return;
     }
 
+    if (_legacyTcpActive) {
+        _legacyTcpTransport->disconnectFromEndpoint();
+    }
     _port = port;
     emit portChanged();
 }
@@ -88,12 +105,11 @@ void DigiviewConnection::setListenPort(quint16 listenPort)
         return;
     }
 
+    if (_legacyTcpActive) {
+        _legacyTcpTransport->disconnectFromEndpoint();
+    }
     _listenPort = listenPort;
     emit listenPortChanged();
-
-    if (_connected) {
-        (void) connectToEndpoint();
-    }
 }
 
 void DigiviewConnection::setLegacyTcpControlPort(quint16 port)
@@ -102,28 +118,30 @@ void DigiviewConnection::setLegacyTcpControlPort(quint16 port)
         return;
     }
 
+    if (_legacyTcpActive) {
+        _legacyTcpTransport->disconnectFromEndpoint();
+    }
     _legacyTcpControlPort = port;
     emit legacyTcpControlPortChanged();
-
-    if (_legacyTcpActive && (_connected || _legacyTcpTransport->connecting())) {
-        (void) connectToEndpoint();
-    }
 }
 
 bool DigiviewConnection::connectToEndpoint()
 {
-    _automaticReconnectAllowed = true;
-
-    _mavlinkStatus = {};
+    _mavlinkParserStatus = {};
     _mavlinkMessageBuffer = {};
 
     if (legacyTcpControlEnabled()) {
         _socket.close();
-        _legacyTcpTransport->disconnectFromEndpoint();
-        _setConnected(false);
-        _legacyTcpActive = true;
+        if (!_legacyTcpActive) {
+            _setConnected(false);
+            _legacyTcpActive = true;
+        }
         _setLastError(QString());
-        return _legacyTcpTransport->connectToEndpoint(_host, _legacyTcpControlPort);
+        const bool connected = _legacyTcpTransport->connectToEndpoint(_host, _legacyTcpControlPort);
+        if (connected && _legacyTcpTransport->connected()) {
+            _setConnected(true);
+        }
+        return connected;
     }
 
     QHostAddress remoteAddress;
@@ -149,6 +167,12 @@ bool DigiviewConnection::connectToEndpoint()
     _setLastError(QString());
     _setConnected(true);
 
+    if (!_sendUdpRegistration(remoteAddress)) {
+        _setConnected(false);
+        _socket.close();
+        return false;
+    }
+
     qCDebug(DigiviewConnectionLog)
         << "Digiview UDP bound on" << _listenPort
         << "sending to" << remoteAddress.toString() << _port;
@@ -156,17 +180,23 @@ bool DigiviewConnection::connectToEndpoint()
     return true;
 }
 
-void DigiviewConnection::disconnectFromEndpoint(bool preventAutomaticReconnect)
+void DigiviewConnection::disconnectFromEndpoint()
 {
-    _automaticReconnectAllowed = !preventAutomaticReconnect;
-
-    _mavlinkStatus = {};
+    _legacyTcpTransport->cancelRestartDigiView();
+    _mavlinkParserStatus = {};
     _mavlinkMessageBuffer = {};
+    _restartObservationGeneration.reset();
+    _restartHeartbeatLossTimer.stop();
+    _restartHeartbeatObserved = false;
 
     if (_socket.isOpen()) {
         _socket.close();
     }
-    _legacyTcpTransport->disconnectFromEndpoint();
+    if (_legacyTcpActive) {
+        _legacyTcpTransport->parkConnection();
+    } else {
+        _legacyTcpTransport->disconnectFromEndpoint();
+    }
 
     _setConnected(false);
 }
@@ -174,13 +204,7 @@ void DigiviewConnection::disconnectFromEndpoint(bool preventAutomaticReconnect)
 bool DigiviewConnection::sendMessage(const mavlink_message_t& message)
 {
     if (!_connected) {
-        if (!_automaticReconnectAllowed || !connectToEndpoint()) {
-            return false;
-        }
-        if (!_connected) {
-            _setLastError(tr("DigiView legacy TCP control connection is in progress"));
-            return false;
-        }
+        return false;
     }
 
     if (_legacyTcpActive) {
@@ -217,6 +241,16 @@ bool DigiviewConnection::sendMessage(const mavlink_message_t& message)
     return true;
 }
 
+bool DigiviewConnection::restartDigiView(quint64 generation)
+{
+    return _legacyTcpTransport->restartDigiView(_host, _legacyTcpControlPort, generation);
+}
+
+void DigiviewConnection::cancelRestartDigiView()
+{
+    _legacyTcpTransport->cancelRestartDigiView();
+}
+
 void DigiviewConnection::_readPendingDatagrams()
 {
     QHostAddress remoteAddress;
@@ -249,14 +283,53 @@ void DigiviewConnection::_readPendingDatagrams()
         for (int i = 0; i < bytesRead; ++i) {
             if (mavlink_frame_char_buffer(
                     &_mavlinkMessageBuffer,
-                    &_mavlinkStatus,
+                     &_mavlinkParserStatus,
                     static_cast<uint8_t>(datagram.at(i)),
                     &message,
-                    &_mavlinkStatus) == MAVLINK_FRAMING_OK) {
+                     &_mavlinkParserStatus) == MAVLINK_FRAMING_OK) {
+                if ((message.msgid == MAVLINK_MSG_ID_HEARTBEAT)
+                    && (message.sysid == kDigiviewSystemId) && (message.compid == kDigiviewComponentId)) {
+                    if (_restartObservationGeneration) {
+                        _restartHeartbeatObserved = true;
+                        _restartHeartbeatLossTimer.start(kRestartHeartbeatLossTimeoutMs);
+                        emit restartReturnObserved(*_restartObservationGeneration);
+                    }
+                    _validHeartbeatSeen = true;
+                }
                 emit messageReceived(message);
             }
         }
     }
+}
+
+bool DigiviewConnection::_sendUdpRegistration(const QHostAddress& remoteAddress)
+{
+    mavlink_message_t heartbeat {};
+    mavlink_msg_heartbeat_pack(
+        MAVLinkProtocol::instance()->getSystemId(),
+        MAVLinkProtocol::instance()->getComponentId(),
+        &heartbeat,
+        MAV_TYPE_GCS,
+        MAV_AUTOPILOT_INVALID,
+        MAV_MODE_MANUAL_ARMED,
+        0,
+        MAV_STATE_ACTIVE);
+
+    std::array<uint8_t, MAVLINK_MAX_PACKET_LEN> buffer {};
+    const uint16_t messageLength = mavlink_msg_to_send_buffer(buffer.data(), &heartbeat);
+    const qint64 bytesWritten = _socket.writeDatagram(
+        reinterpret_cast<const char*>(buffer.data()), messageLength, remoteAddress, kDigiviewRouterPort);
+    if (bytesWritten != messageLength) {
+        _setLastError(tr("Failed to register QGC with Digiview router %1:%2: %3")
+                          .arg(remoteAddress.toString())
+                          .arg(kDigiviewRouterPort)
+                          .arg(_socket.errorString()));
+        return false;
+    }
+
+    qCDebug(DigiviewConnectionLog) << "Sent QGC UDP registration heartbeat to"
+                                   << remoteAddress.toString() << kDigiviewRouterPort;
+    return true;
 }
 
 void DigiviewConnection::_socketErrorOccurred(QAbstractSocket::SocketError socketError)
@@ -275,7 +348,35 @@ void DigiviewConnection::_emitLegacyTcpHeartbeat()
     mavlink_message_t heartbeat {};
     mavlink_msg_heartbeat_pack(kDigiviewSystemId, kDigiviewComponentId, &heartbeat, MAV_TYPE_ONBOARD_CONTROLLER,
                                MAV_AUTOPILOT_INVALID, 0, 0, MAV_STATE_ACTIVE);
+    if (_restartObservationGeneration) {
+        emit restartReturnObserved(*_restartObservationGeneration);
+    }
     emit messageReceived(heartbeat);
+}
+
+void DigiviewConnection::armRestartReturnObservation(quint64 generation)
+{
+    _restartObservationGeneration = generation;
+    _restartHeartbeatObserved = false;
+    _restartHeartbeatLossTimer.stop();
+    if (!_legacyTcpActive && _connected && _validHeartbeatSeen) {
+        _restartHeartbeatObserved = true;
+        _restartHeartbeatLossTimer.start(kRestartHeartbeatLossTimeoutMs);
+    }
+}
+
+void DigiviewConnection::disarmRestartReturnObservation()
+{
+    _restartObservationGeneration.reset();
+    _restartHeartbeatLossTimer.stop();
+    _restartHeartbeatObserved = false;
+}
+
+void DigiviewConnection::_restartHeartbeatLossTimeout()
+{
+    if (_restartObservationGeneration && !_legacyTcpActive && _restartHeartbeatObserved) {
+        emit restartTransportDownObserved(*_restartObservationGeneration);
+    }
 }
 
 void DigiviewConnection::_setConnected(bool connected)

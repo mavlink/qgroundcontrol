@@ -18,6 +18,8 @@ QtObject {
         recordDestination: 'digiview',
         recordInformationBox: true,
         aiDetectionOverlayPosition: "Single",
+        aiEnabledDraft: false,
+        aiScanModelDraft: "",
         simplifiedUserInterface: false,
         alignHud: true,
         compassType: "horizontal",
@@ -93,14 +95,12 @@ QtObject {
         shortcutDeselectTracking: Qt.Key_I,
         aiDetectionOverlay: "right",
         aiSortingMode: 0,
-        aiCropConfidenceTreshold: 0.8,
         aiScanConfidenceTreshold: 0.8,
         aiCreationScoreScale: 50,
         aiBonusDetectionScale: 50,
         aiBonusRedetectionScale: 50,
         aiMissedDetectionPenaltyScale: 50,
         aiMissedRedetectionPenaltyScale: 50,
-        aiCropBoxOverlay: 0.5,
         aiVarBoxOverlap: 0.5,
         cameraMinimalExposure: 1000,
         cameraMaximalExposure: 20000,
@@ -181,15 +181,15 @@ QtObject {
 
         property alias aiDetectionOverlay: root.aiDetectionOverlay
         property alias aiDetectionOverlayPosition: root.aiDetectionOverlayPosition
+        property alias aiEnabledDraft: root.aiEnabledDraft
+        property alias aiScanModelDraft: root.aiScanModelDraft
         property alias aiSortingMode: root.aiSortingMode
-        property alias aiCropConfidenceTreshold: root.aiCropConfidenceTreshold
         property alias aiScanConfidenceTreshold: root.aiScanConfidenceTreshold
         property alias aiCreationScoreScale: root.aiCreationScoreScale
         property alias aiBonusDetectionScale: root.aiBonusDetectionScale
         property alias aiBonusRedetectionScale: root.aiBonusRedetectionScale
         property alias aiMissedDetectionPenaltyScale: root.aiMissedDetectionPenaltyScale
         property alias aiMissedRedetectionPenaltyScale: root.aiMissedRedetectionPenaltyScale
-        property alias aiCropBoxOverlay: root.aiCropBoxOverlay
         property alias aiVarBoxOverlap: root.aiVarBoxOverlap
         property alias cameraMinimalExposure: root.cameraMinimalExposure
         property alias cameraMaximalExposure: root.cameraMaximalExposure
@@ -213,6 +213,8 @@ QtObject {
         property string recordDestination: "digiview"
         property bool recordInformationBox: true
         property string aiDetectionOverlayPosition: 'Single'
+        property bool aiEnabledDraft: false
+        property string aiScanModelDraft: ''
 
     //Network
         readonly property string defaultNetworkProfileStreamName: "stream"
@@ -614,14 +616,12 @@ QtObject {
     //AI
         property string aiDetectionOverlay: "right"
         property int aiSortingMode: 0
-        property real aiCropConfidenceTreshold: 0.8
         property real aiScanConfidenceTreshold: 0.8
         property int aiCreationScoreScale: 50
         property int aiBonusDetectionScale: 50
         property int aiBonusRedetectionScale: 50
         property int aiMissedDetectionPenaltyScale: 50
         property int aiMissedRedetectionPenaltyScale: 50
-        property real aiCropBoxOverlay: 0.5
         property real aiVarBoxOverlap: 0.5
 
     //UI

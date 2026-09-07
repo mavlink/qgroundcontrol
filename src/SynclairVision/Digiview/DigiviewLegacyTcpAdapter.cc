@@ -22,14 +22,12 @@ constexpr uint8_t kSyntheticSystemId = 252;
 constexpr uint8_t kSyntheticComponentId = 66;
 constexpr float kOneShotIntervalUs = -1000.0F;
 constexpr char kSupportedParameterGroups[] =
-    "SYSTEM_STATUS, MODEL (GET only), VIDEO_OUTPUT, CAPTURE, DETECTION, TRACKED_DETECTION (GET only), "
+    "SYSTEM_STATUS, AI, MODEL (GET only), VIDEO_OUTPUT, CAPTURE, DETECTION, TRACKED_DETECTION (GET only), "
     "CAM_TARGETING, CAM_OPTICS_AND_CONTROL, SENSOR, SINGLE_TARGET_TRACKING, and CALIBRATION (GET only)";
 
 const char* deliberatelyUnsupportedParameterGroup(uint32_t messageId)
 {
     switch (messageId) {
-    case MAVLINK_MSG_ID_AI_PARAMETERS:
-        return "AI";
     case MAVLINK_MSG_ID_MODEL_PARAMETERS:
         return "MODEL";
     case MAVLINK_MSG_ID_TRACKED_DETECTION_PARAMETERS:
@@ -97,6 +95,9 @@ bool intervalRequest(const mavlink_command_long_t& command, message& nativeMessa
     switch (requestedMessageId) {
     case MAVLINK_MSG_ID_SYSTEM_STATUS_PARAMETERS:
         parameterType = SYSTEM_STATUS;
+        break;
+    case MAVLINK_MSG_ID_AI_PARAMETERS:
+        parameterType = AI;
         break;
     case MAVLINK_MSG_ID_MODEL_PARAMETERS:
         parameterType = MODEL;
@@ -169,6 +170,15 @@ bool intervalRequest(const mavlink_command_long_t& command, message& nativeMessa
 
 } // namespace
 
+QByteArray DigiviewLegacyTcpAdapter::encodeRestartQuit(QString& error) const
+{
+    Q_UNUSED(error);
+    message nativeMessage {};
+    nativeMessage.version = VERSION;
+    nativeMessage.message_type = QUIT;
+    return nativeRecord(nativeMessage);
+}
+
 qsizetype DigiviewLegacyTcpAdapter::recordSize()
 {
     static_assert(std::is_standard_layout_v<message> && std::is_trivially_copyable_v<message>);
@@ -187,6 +197,18 @@ QByteArray DigiviewLegacyTcpAdapter::encode(const mavlink_message_t& mavlinkMess
         if (!intervalRequest(parameters, nativeMessage, error)) {
             return {};
         }
+        break;
+    }
+    case MAVLINK_MSG_ID_AI_PARAMETERS: {
+        mavlink_ai_parameters_t parameters {};
+        mavlink_msg_ai_parameters_decode(&mavlinkMessage, &parameters);
+        if ((parameters.run_ai > 1U) || (std::memchr(parameters.scan_model_name, '\0', 16) == nullptr)) {
+            error = QStringLiteral("Invalid DigiView TCP AI parameters");
+            return {};
+        }
+        nativeMessage.version = VERSION;
+        nativeMessage.message_type = SET_PARAMETERS;
+        pack_set_ai_parameters(nativeMessage, parameters.run_ai != 0U, parameters.scan_model_name);
         break;
     }
     case MAVLINK_MSG_ID_SYSTEM_STATUS_PARAMETERS: {
@@ -338,15 +360,25 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         error = QStringLiteral("Rejected DigiView TCP record with invalid checksum");
         return DecodeResult::Error;
     }
-    if (nativeMessage.version != VERSION) {
+    const bool allowLegacyCurrentParametersVersion =
+        (nativeMessage.message_type == CURRENT_PARAMETERS)
+        && ((nativeMessage.param_type == MODEL) || (nativeMessage.param_type == VIDEO_OUTPUT));
+    if ((nativeMessage.version != VERSION) && !allowLegacyCurrentParametersVersion) {
         error = QStringLiteral("Unsupported DigiView TCP protocol version %1").arg(nativeMessage.version);
         return DecodeResult::Error;
     }
+    if ((nativeMessage.version != VERSION)
+        && (!_legacyVersionWarningTimer.isValid() || _legacyVersionWarningTimer.hasExpired(5000))) {
+        _legacyVersionWarningTimer.start();
+        qCWarning(DigiviewLegacyTcpAdapterLog)
+            << "Accepting nonzero DigiView TCP native version for legacy CURRENT_PARAMETERS"
+            << "MODEL/VIDEO_OUTPUT compatibility" << nativeMessage.version;
+    }
 
     if (nativeMessage.message_type != CURRENT_PARAMETERS) {
-        if (nativeMessage.param_type == VIDEO_OUTPUT) {
+        if ((nativeMessage.param_type == VIDEO_OUTPUT) || (nativeMessage.param_type == AI)) {
             MAV_RESULT result = MAV_RESULT_FAILED;
-            bool isVideoOutputSetResponse = true;
+            bool isSetResponse = true;
             switch (nativeMessage.message_type) {
             case ACKNOWLEDGEMENT:
                 result = MAV_RESULT_ACCEPTED;
@@ -365,13 +397,15 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
                 error = QStringLiteral("DigiView did not recognize a TCP control request");
                 break;
             default:
-                isVideoOutputSetResponse = false;
+                isSetResponse = false;
                 break;
             }
 
-            if (isVideoOutputSetResponse) {
+            if (isSetResponse) {
                 mavlink_msg_command_ack_pack(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage,
-                                             MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS, result, 0, 0, 0, 0);
+                                             nativeMessage.param_type == AI ? MAVLINK_MSG_ID_AI_PARAMETERS
+                                                                            : MAVLINK_MSG_ID_VIDEO_OUTPUT_PARAMETERS,
+                                             result, 0, 0, 0, 0);
                 return DecodeResult::Message;
             }
         }
@@ -415,6 +449,16 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         mavlink_model_parameters_t parameters {};
         std::memcpy(parameters.model_name, nativeParameters.model_name, sizeof(parameters.model_name));
         mavlink_msg_model_parameters_encode(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage, &parameters);
+        break;
+    }
+    case AI: {
+        ai_parameters nativeParameters {};
+        unpack_ai_parameters(nativeMessage, nativeParameters);
+        mavlink_ai_parameters_t parameters {};
+        parameters.run_ai = nativeParameters.run_ai ? 1U : 0U;
+        std::memcpy(parameters.scan_model_name, nativeParameters.scan_model_name,
+                    sizeof(parameters.scan_model_name));
+        mavlink_msg_ai_parameters_encode(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage, &parameters);
         break;
     }
     case VIDEO_OUTPUT: {

@@ -10,6 +10,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTimer>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QVariantList>
 #include <QtCore/QVariantMap>
 
@@ -44,6 +45,7 @@ class DigiviewManager : public QObject
     Q_PROPERTY(int senderSystemId READ senderSystemId WRITE setSenderSystemId NOTIFY senderIdentityChanged)
     Q_PROPERTY(int senderComponentId READ senderComponentId WRITE setSenderComponentId NOTIFY senderIdentityChanged)
     Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
+    Q_PROPERTY(bool sessionActive READ sessionActive NOTIFY sessionActiveChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(quint32 lastReceivedMessageId READ lastReceivedMessageId NOTIFY lastReceivedMessageIdChanged)
     Q_PROPERTY(bool hasVideoOutputParameters READ hasVideoOutputParameters NOTIFY hasVideoOutputParametersChanged)
@@ -89,6 +91,16 @@ class DigiviewManager : public QObject
     Q_PROPERTY(float sttConfidence READ sttConfidence NOTIFY sttConfidenceChanged)
     Q_PROPERTY(bool sttLockTarget READ sttLockTarget NOTIFY sttLockTargetChanged)
     Q_PROPERTY(QVariantList cameraStates READ cameraStates NOTIFY cameraStatesChanged)
+    Q_PROPERTY(bool hasAIParameters READ hasAIParameters NOTIFY hasAIParametersChanged)
+    Q_PROPERTY(bool aiEnabled READ aiEnabled NOTIFY aiEnabledChanged)
+    Q_PROPERTY(QString selectedScanModel READ selectedScanModel NOTIFY selectedScanModelChanged)
+    Q_PROPERTY(QStringList availableScanModels READ availableScanModels NOTIFY availableScanModelsChanged)
+    Q_PROPERTY(bool aiModelDiscoveryLoading READ aiModelDiscoveryLoading NOTIFY aiModelDiscoveryLoadingChanged)
+    Q_PROPERTY(bool aiModelDiscoveryReady READ aiModelDiscoveryReady NOTIFY aiModelDiscoveryReadyChanged)
+    Q_PROPERTY(bool restartBusy READ restartBusy NOTIFY restartBusyChanged)
+    Q_PROPERTY(int restartProgress READ restartProgress NOTIFY restartProgressChanged)
+    Q_PROPERTY(QString restartFailure READ restartFailure NOTIFY restartFailureChanged)
+    Q_PROPERTY(quint64 restartGeneration READ restartGeneration NOTIFY restartGenerationChanged)
 
 public:
     static constexpr uint8_t kDefaultSenderSystemId = 255;
@@ -110,7 +122,18 @@ public:
     QString streamName() const { return _streamName; }
     int senderSystemId() const { return _senderSystemId; }
     int senderComponentId() const { return _senderComponentId; }
+    bool hasAIParameters() const { return _hasAIParameters; }
+    bool aiEnabled() const { return _aiEnabled; }
+    QString selectedScanModel() const { return _selectedScanModel; }
+    QStringList availableScanModels() const { return _availableScanModels; }
+    bool aiModelDiscoveryLoading() const { return _aiModelDiscoveryLoading; }
+    bool aiModelDiscoveryReady() const { return _aiModelDiscoveryReady; }
+    bool restartBusy() const { return _restartBusy; }
+    int restartProgress() const { return _restartProgress; }
+    QString restartFailure() const { return _restartFailure; }
+    quint64 restartGeneration() const { return _restartGeneration; }
     bool connected() const;
+    bool sessionActive() const { return _logicalSessionActive; }
     QString lastError() const;
     quint32 lastReceivedMessageId() const { return _lastReceivedMessageId; }
     bool hasVideoOutputParameters() const { return _hasVideoOutputParameters; }
@@ -156,7 +179,7 @@ public:
     Q_INVOKABLE void disconnectFromHost(bool preventAutomaticReconnect);
 
     Q_INVOKABLE void sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp);
-    Q_INVOKABLE void sendAIParameters(uint8_t run_ai, QString scan_model_name);
+    Q_INVOKABLE bool sendAIParameters(uint8_t run_ai, QString scan_model_name);
     Q_INVOKABLE bool sendModelParameters(QString model_name);
     Q_INVOKABLE bool setVideoOutputLayout(int layoutMode);
     Q_INVOKABLE bool setDetectionOverlayMode(int detectionOverlayMode);
@@ -231,6 +254,7 @@ public:
     bool sttLockTarget() const { return _sttLockTarget != 0; }
 
     Q_INVOKABLE bool requestSingleTargetTrackingParameters();
+    Q_INVOKABLE bool applyAndRestart(const QVariantMap& videoOutputOverlay, bool aiEnabled, const QString& model);
 
 
     //////////////////////////////////////////////////////////
@@ -251,6 +275,7 @@ signals:
     void streamNameChanged();
     void senderIdentityChanged();
     void connectedChanged();
+    void sessionActiveChanged();
     void lastErrorChanged();
     void lastReceivedMessageIdChanged();
     void hasVideoOutputParametersChanged();
@@ -348,7 +373,17 @@ signals:
     void sttConfidenceChanged();
     void sttLockTargetChanged();
     void cameraStatesChanged();
+    void hasAIParametersChanged();
+    void aiEnabledChanged();
+    void selectedScanModelChanged();
+    void availableScanModelsChanged();
+    void aiModelDiscoveryLoadingChanged();
+    void aiModelDiscoveryReadyChanged();
     void commandRejected(const QString& reason);
+    void restartBusyChanged();
+    void restartProgressChanged();
+    void restartFailureChanged();
+    void restartGenerationChanged();
 
 private:
 #ifdef QGC_UNITTEST_BUILD
@@ -380,6 +415,20 @@ private:
     void _resetRemoteSession();
     void _resetRemoteSessionForSenderIdentityChange();
     void _videoOutputTransactionTimedOut();
+    void _aiTransactionTimedOut();
+    void _requestAiAuthoritativeState();
+    void _finishAiModelDiscovery();
+    void _aiModelDiscoveryTimedOut();
+    void _restartVideoConfirmed();
+    void _restartAiConfirmed();
+    void _restartObservationTimedOut();
+    void _restartReconnect();
+    void _restartCheckRefreshedState();
+    void _setRestartProgress(int progress);
+    void _finishRestart(bool success, const QString& failure = {});
+    void _cancelRestartForSessionChange();
+    bool _trafficEligible() const { return _logicalSessionActive && _connection->connected(); }
+    void _reapplyEndpointIfSessionActive();
 
     struct VideoOutputLayoutSnapshot {
         uint8_t layoutMode = 0;
@@ -392,6 +441,16 @@ private:
     struct VideoOutputTransaction {
         quint64 generation = 0;
         VideoOutputLayoutSnapshot requested;
+        QDeadlineTimer deadline;
+        bool awaitingAuthoritativeState = false;
+        bool stateGetIssued = false;
+    };
+
+    struct AiTransaction {
+        quint64 generation = 0;
+        quint64 sessionGeneration = 0;
+        bool enabled = false;
+        QString model;
         QDeadlineTimer deadline;
         bool awaitingAuthoritativeState = false;
         bool stateGetIssued = false;
@@ -417,6 +476,7 @@ private:
     uint8_t _remoteSystemId = 0;
     uint8_t _remoteComponentId = 0;
     bool _logicalSessionActive = false;
+    bool _automaticReconnectAllowed = true;
     bool _remoteIdentityValid = false;
     bool _pendingVideoOutputParametersRequest = false;
     bool _pendingSensorParametersRequest = true;
@@ -426,6 +486,29 @@ private:
     QTimer _videoOutputTransactionTimer;
     quint64 _nextVideoOutputTransactionGeneration = 0;
     quint64 _videoOutputTransactionTimerGeneration = 0;
+    std::optional<AiTransaction> _aiTransaction;
+    QTimer _aiTransactionTimer;
+    QTimer _aiVerificationGetTimer;
+    QTimer _aiModelDiscoverySettleTimer;
+    QTimer _aiModelDiscoveryDeadlineTimer;
+    bool _aiVerificationGetPending = false;
+    quint64 _nextAiTransactionGeneration = 0;
+    quint64 _aiTransactionTimerGeneration = 0;
+    quint64 _remoteSessionGeneration = 0;
+    QTimer _restartObservationTimer;
+    quint64 _restartGeneration = 0;
+    bool _restartBusy = false;
+    int _restartProgress = 0;
+    QString _restartFailure;
+    bool _expectedRestartArmed = false;
+    bool _restartDownObserved = false;
+    bool _restartQuitSent = false;
+    QTimer _restartReconnectTimer;
+    quint64 _restartReconnectGeneration = 0;
+    int _restartReconnectAttempts = 0;
+    mavlink_video_output_parameters_t _stagedVideoOutput {};
+    bool _stagedAiEnabled = false;
+    QString _stagedModel;
     QElapsedTimer _unexpectedHeartbeatWarningTimer;
     QString _streamName = QStringLiteral("stream");
     quint32 _lastReceivedMessageId = 0;
@@ -441,6 +524,13 @@ private:
     QVariantMap _videoOutputDetectionOverlayRect;
     int _videoOutputSingleDetectionSize = 0;
     mavlink_video_output_parameters_t _videoOutputParameters {};
+
+    bool _hasAIParameters = false;
+    bool _aiEnabled = false;
+    QString _selectedScanModel;
+    QStringList _availableScanModels;
+    bool _aiModelDiscoveryLoading = false;
+    bool _aiModelDiscoveryReady = false;
 
     bool _hasSensorParameters = false;
     quint32 _sensorMinExposure = 0;

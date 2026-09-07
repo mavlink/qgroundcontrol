@@ -2,6 +2,7 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QByteArrayView>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QString>
 
 #include "mavlink_types.h"
@@ -18,9 +19,11 @@ public:
     [[nodiscard]] static qsizetype recordSize();
 
     [[nodiscard]] QByteArray encode(const mavlink_message_t& mavlinkMessage, QString& error);
+    [[nodiscard]] QByteArray encodeRestartQuit(QString& error) const;
     [[nodiscard]] DecodeResult decode(QByteArrayView record, mavlink_message_t& mavlinkMessage, QString& error);
 
 private:
     bool _recordingActive = false;
     bool _recordingStateKnown = false;
+    QElapsedTimer _legacyVersionWarningTimer;
 };

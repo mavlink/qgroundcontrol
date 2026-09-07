@@ -9,6 +9,7 @@ QtObject {
 
     readonly property var digiview: QGroundControl.digiviewManager
     readonly property bool digiviewActive: !!(digiview && digiview.connected)
+    readonly property bool digiviewSessionActive: !!(digiview && digiview.sessionActive)
     property bool userInitiatedDisconnect: false
     // True once the current connection attempt has actually reached the "connected" (decoding) state.
     // Reset every time a new connection attempt starts, so we can tell "was connected, then dropped"

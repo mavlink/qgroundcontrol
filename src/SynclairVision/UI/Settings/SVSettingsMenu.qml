@@ -19,6 +19,15 @@ Item {
     readonly property bool networkConnectionActive: SVState.digiviewActive
     property var sensorParameterValues: ({})
     property var detectionParameterValues: ({})
+    readonly property bool aiAuthoritativeReady: !!root.digiview && root.digiview.connected
+        && root.digiview.hasAIParameters && root.digiview.aiModelDiscoveryReady
+        && root.digiview.availableScanModels.length > 0
+    readonly property bool aiAuthoritativeModelValid: aiAuthoritativeReady
+        && root.digiview.selectedScanModel !== ''
+        && root.digiview.availableScanModels.indexOf(root.digiview.selectedScanModel) >= 0
+    readonly property bool aiRestartReady: aiAuthoritativeModelValid && root.digiview.hasVideoOutputParameters
+        && !root.digiview.restartBusy
+        && root.digiview.availableScanModels.indexOf(SVSettings.aiScanModelDraft) >= 0
 
     readonly property real panelMargin: ScreenTools.defaultFontPixelHeight / 2
     readonly property real sectionSpacing: ScreenTools.defaultFontPixelHeight / 2
@@ -108,8 +117,16 @@ Item {
     }
 
     function displayedSettingValue(propertyName, parameterGroup) {
+        if (propertyName === 'aiEnabledDraft') {
+            return SVSettings.aiEnabledDraft
+        }
+
+        if (propertyName === 'aiScanModelDraft') {
+            return SVSettings.aiScanModelDraft
+        }
+
         if (propertyName === 'aiDetectionOverlayPosition') {
-            return SVState.effectiveAiDetectionOverlayPosition
+            return SVSettings.aiDetectionOverlayPosition
         }
 
         const parameterValues = remoteParameterValues(parameterGroup)
@@ -140,6 +157,16 @@ Item {
 
     }
 
+    function rebaseAiDraftFromAuthoritative() {
+        if (!root.digiview || root.digiview.restartBusy || !root.digiview.hasAIParameters) return
+        SVSettings.aiEnabledDraft = root.digiview.aiEnabled
+        SVSettings.aiScanModelDraft = root.digiview.selectedScanModel
+        const remoteOverlay = SVState.aiDetectionOverlayPositionForMode(root.digiview.videoOutputDetectionOverlayMode)
+        if (root.digiview.hasVideoOutputParameters && remoteOverlay !== '') {
+            SVSettings.aiDetectionOverlayPosition = remoteOverlay
+        }
+    }
+
     function settingOptions(settingData) {
         root.settingsResetToken
 
@@ -154,6 +181,16 @@ Item {
                 options.push({ label: profileName, value: index })
             }
 
+            return options
+        }
+
+        if (settingData.optionsSource === 'aiModels') {
+            const models = root.digiview && root.digiview.availableScanModels
+                ? root.digiview.availableScanModels : []
+            const options = []
+            for (let index = 0; index < models.length; index++) {
+                options.push({ label: models[index], value: models[index] })
+            }
             return options
         }
 
@@ -177,6 +214,38 @@ Item {
         }
 
         return settingData.label ? settingData.label : ''
+    }
+
+    function settingDescription(settingData) {
+        if (settingData.id === 'aiEnabled' || settingData.id === 'aiScanModel'
+                || settingData.id === 'aiDetectionOverlay' || settingData.id === 'restart_digiview') {
+            if (!root.digiview || !root.digiview.connected) return qsTr('Unavailable until DigiView is connected.')
+            if (!root.digiview.hasAIParameters) return qsTr('Waiting for authoritative AI settings from DigiView.')
+            if (root.digiview.restartBusy) {
+                return qsTr('DigiView restart: %1').arg(restartPhaseText(root.digiview.restartProgress))
+            }
+            if (root.digiview.aiModelDiscoveryLoading) return qsTr('Loading scan models from DigiView...')
+            if (!root.digiview.aiModelDiscoveryReady || root.digiview.availableScanModels.length === 0) {
+                return qsTr('No scan models are available from DigiView.')
+            }
+            if (root.digiview.selectedScanModel === ''
+                    || root.digiview.availableScanModels.indexOf(root.digiview.selectedScanModel) < 0) {
+                return qsTr('DigiView reported no authoritative scan model. Select a discovered model.')
+            }
+        }
+        return settingData.description ? qsTr(settingData.description) : ''
+    }
+
+    function restartPhaseText(phase) {
+        switch (phase) {
+        case 1: return qsTr('applying video output')
+        case 2: return qsTr('applying AI settings')
+        case 3: return qsTr('sending restart request')
+        case 4: return qsTr('waiting for DigiView to stop')
+        case 5: return qsTr('waiting for DigiView to return')
+        case 6: return qsTr('refreshing authoritative settings')
+        default: return qsTr('processing')
+        }
     }
 
     function buttonText(settingData) {
@@ -335,6 +404,11 @@ Item {
             return
         }
 
+        if (settingData.buttonRole === 'restartDigiview') {
+            if (aiRestartReady) restartDigiviewDialogFactory.open()
+            return
+        }
+
         
     }
 
@@ -366,7 +440,6 @@ Item {
 
         if (settingData.property === 'aiDetectionOverlayPosition') {
             setSettingValue(settingData, value)
-            SVState.setAiDetectionOverlayPosition(value)
             return
         }
 
@@ -394,9 +467,9 @@ Item {
         root.digiview.sendDetectionParameters(
             root.digiview.detectionMode,
             displayedSettingValue('aiSortingMode', 'detection'),
-            displayedSettingValue('aiCropConfidenceTreshold', 'detection'),
+            root.digiview.detectionTrackConfidenceThreshold,
             displayedSettingValue('aiScanConfidenceTreshold', 'detection'),
-            displayedSettingValue('aiCropBoxOverlay', 'detection'),
+            root.digiview.detectionTrackBoxOverlap,
             displayedSettingValue('aiVarBoxOverlap', 'detection'),
             displayedSettingValue('aiCreationScoreScale', 'detection'),
             displayedSettingValue('aiBonusDetectionScale', 'detection'),
@@ -456,9 +529,7 @@ Item {
 
         root.detectionParameterValues = {
             aiSortingMode: root.digiview.detectionSortingMode,
-            aiCropConfidenceTreshold: root.digiview.detectionTrackConfidenceThreshold,
             aiScanConfidenceTreshold: root.digiview.detectionScanConfidenceThreshold,
-            aiCropBoxOverlay: root.digiview.detectionTrackBoxOverlap,
             aiVarBoxOverlap: root.digiview.detectionScanBoxOverlap,
             aiCreationScoreScale: root.digiview.detectionCreationScoreScale,
             aiBonusDetectionScale: root.digiview.detectionBonusDetectionScale,
@@ -493,6 +564,7 @@ Item {
     Component.onCompleted: {
         syncSensorSettingsFromDigiview()
         syncDetectionSettingsFromDigiview()
+        rebaseAiDraftFromAuthoritative()
     }
 
     onNetworkConnectionActiveChanged: {
@@ -509,6 +581,26 @@ Item {
                 root.networkConnectionPending = false
                 root.sensorParameterValues = ({})
                 root.detectionParameterValues = ({})
+            } else {
+                root.rebaseAiDraftFromAuthoritative()
+            }
+        }
+
+        function onHasAIParametersChanged() { root.rebaseAiDraftFromAuthoritative() }
+        function onAiEnabledChanged() { root.rebaseAiDraftFromAuthoritative() }
+        function onSelectedScanModelChanged() { root.rebaseAiDraftFromAuthoritative() }
+        function onVideoOutputDetectionOverlayModeChanged() { root.rebaseAiDraftFromAuthoritative() }
+        function onRestartFailureChanged() {
+            if (root.digiview.restartFailure !== '') {
+                SVNotificationManager.add(qsTr('DigiView restart failed'), root.digiview.restartFailure,
+                    'error', 'network_error')
+            }
+        }
+        function onRestartProgressChanged() {
+            if (!root.digiview.restartBusy && root.digiview.restartProgress === 7) {
+                root.rebaseAiDraftFromAuthoritative()
+                SVNotificationManager.add(qsTr('DigiView restarted'), qsTr('Staged settings were applied.'),
+                    'info', 'network_connecting')
             }
         }
 
@@ -588,6 +680,10 @@ Item {
     function isSettingEnabled(settingData) {
         if (settingData && settingData.enabled === false) {
             return false
+        }
+
+        if (settingData && settingData.stagedAI) {
+            return settingData.id === 'restart_digiview' ? aiRestartReady : aiAuthoritativeReady
         }
 
         return matchesCondition(settingData ? settingData.enabledWhen : undefined)
@@ -796,6 +892,12 @@ Item {
         dialogComponent: resetSettingsDialogComponent
     }
 
+    QGCPopupDialogFactory {
+        id: restartDigiviewDialogFactory
+
+        dialogComponent: restartDigiviewDialogComponent
+    }
+
     Component {
         id: deleteNetworkProfileDialogComponent
 
@@ -827,6 +929,29 @@ Item {
             buttons: Dialog.Yes | Dialog.No
 
             onAccepted: root.resetSettingsAndDisconnectIfNeeded()
+        }
+    }
+
+    Component {
+        id: restartDigiviewDialogComponent
+
+        QGCSimpleMessageDialog {
+            title: qsTr('Restart DigiView?')
+            text: qsTr('Apply staged settings?\n\nEnable AI: %1\nScan Model: %2\nAI Detection Overlay: %3\n\nVideo and control will briefly disconnect while DigiView restarts.')
+                .arg(SVSettings.aiEnabledDraft ? qsTr('Enabled') : qsTr('Disabled'))
+                .arg(SVSettings.aiScanModelDraft)
+                .arg(SVSettings.aiDetectionOverlayPosition)
+            buttons: Dialog.Yes | Dialog.No
+
+            onAccepted: {
+                if (root.digiview.applyAndRestart({
+                    layoutMode: root.digiview.videoOutputLayoutMode,
+                    detectionOverlayMode: SVState.aiDetectionOverlayModeForPosition(SVSettings.aiDetectionOverlayPosition)
+                }, SVSettings.aiEnabledDraft, SVSettings.aiScanModelDraft)) {
+                    SVNotificationManager.add(qsTr('DigiView restart'), qsTr('Applying staged settings...'),
+                        'info', 'network_connecting')
+                }
+            }
         }
     }
 
@@ -1319,7 +1444,11 @@ Item {
                                                             return buttonComponent
                                                         }
 
-                                                        if (settingData.type === 'textarea') {
+                                                         if (settingData.type === 'note') {
+                                                             return noteComponent
+                                                         }
+
+                                                         if (settingData.type === 'textarea') {
                                                             return textareaComponent
                                                         }
 
@@ -1333,8 +1462,8 @@ Item {
                                                     Layout.fillWidth: true
                                                     Layout.bottomMargin: visible ? root.settingRowVerticalPadding : 0
                                                     Layout.topMargin: 5
-                                                    text: settingData.description ? settingData.description : ''
-                                                    visible: text !== ''
+                                                     text: root.settingDescription(settingData)
+                                                     visible: settingData.type !== 'note' && text !== ''
                                                     wrapMode: Text.WordWrap
                                                     font.pointSize: ScreenTools.smallFontPointSize
                                                     color: qgcPalette.buttonText
@@ -1350,8 +1479,20 @@ Item {
                                                     visible: root.hasVisibleSettingAfter(sectionData.items, index)
                                                 }
 
-                                                Component {
-                                                    id: shortcutComponent
+                                                 Component {
+                                                     id: noteComponent
+
+                                                     QGCLabel {
+                                                         width: settingControlLoader.width
+                                                         wrapMode: Text.WordWrap
+                                                         font.pointSize: ScreenTools.smallFontPointSize
+                                                         color: qgcPalette.buttonText
+                                                         text: root.settingDescription(settingData)
+                                                     }
+                                                 }
+
+                                                 Component {
+                                                     id: shortcutComponent
 
                                                     RowLayout {
                                                         width: settingControlLoader.width
