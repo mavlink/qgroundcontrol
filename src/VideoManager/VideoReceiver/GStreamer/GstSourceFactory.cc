@@ -14,7 +14,7 @@ QGC_LOGGING_CATEGORY(GstSourceFactoryLog, "Video.GStreamer.GstSourceFactory")
 
 namespace {
 
-constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
+constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(1000000);
 constexpr int kRtspRetry = 3;
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
 constexpr char kSynclairSettingsGroup[] = "SynclairVisionSettings";
