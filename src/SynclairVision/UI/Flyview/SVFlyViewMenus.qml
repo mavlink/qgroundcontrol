@@ -222,6 +222,44 @@ Item {
     }
 
     SVMenuStrip {
+        id: lockTarget
+        headerless: true
+        anchors.bottom: tracking.top
+        anchors.left: tracking.left
+        enabled: root.uiInteractionEnabled
+        visible: tracking.visible && tracking.open
+        direction: horizontal
+        isLeft: true
+        isTop: false
+
+        exclusiveSelection: false
+        autoUpdateActiveId: false
+        activeIds: SVState.activeCameraState && SVState.activeCameraState.lockTarget ? ["lockTarget"] : []
+
+        model: [
+            {
+                id: "lockTarget",
+                text: "Lock Target",
+                description: "Lock Current Target",
+                checkable: true,
+                iconSource: "/qmlimages/controls_lock.svg",
+                alternateIconSource: "/qmlimages/controls_lock_closed.svg",
+                iconActive: SVState.activeCameraState && SVState.activeCameraState.lockTarget,
+                enabled: SVState.hasActiveCamera
+                    && (SVState.cameraTrackingIds[SVState.cameraSelected] === "detection"
+                        || SVState.cameraTrackingIds[SVState.cameraSelected] === "singleTarget"
+                        || SVState.cameraTrackingIds[SVState.cameraSelected] === "cursorTrack")
+            }
+        ]
+
+        onItemSelected: (id) => {
+            if (id === "lockTarget") {
+                SVState.lockCurrentTarget()
+            }
+        }
+    }
+
+    SVMenuStrip {
         id: tracking
         anchors.bottom: parent.bottom
         anchors.left: parent.left
