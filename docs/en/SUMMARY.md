@@ -88,6 +88,7 @@
     - [Plan Upload/Download failures](qgc-user-guide/troubleshooting/plan_upload_download.md)
     - [Resume Mission failures](qgc-user-guide/troubleshooting/resume_mission.md)
     - [Standard Modes / External Flight Mode failures](qgc-user-guide/troubleshooting/standard_modes.md)
+    - [Joystick Calibration failures](qgc-user-guide/troubleshooting/joystick_calibration.md)
     - [Missing Actuators Page (PX4)](qgc-user-guide/troubleshooting/actuators.md)
     - [Installation, Display and Video problems](qgc-user-guide/troubleshooting/qgc_setup.md)
   - [Privacy Policy](qgc-user-guide/reference/privacy_policy.md)

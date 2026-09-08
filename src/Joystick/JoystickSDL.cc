@@ -33,11 +33,11 @@ static bool sdlEventWatcher(void *userdata, SDL_Event *event)
 
     switch (event->type) {
     case SDL_EVENT_JOYSTICK_ADDED:
-        qCInfo(JoystickSDLLog) << "SDL event: Joystick added, instance ID:" << event->jdevice.which;
+        qCDebug(JoystickSDLLog) << "SDL event: Joystick added, instance ID:" << event->jdevice.which;
         QMetaObject::invokeMethod(manager, "_checkForAddedOrRemovedJoysticks", Qt::QueuedConnection);
         break;
     case SDL_EVENT_JOYSTICK_REMOVED:
-        qCInfo(JoystickSDLLog) << "SDL event: Joystick removed, instance ID:" << event->jdevice.which;
+        qCDebug(JoystickSDLLog) << "SDL event: Joystick removed, instance ID:" << event->jdevice.which;
         QMetaObject::invokeMethod(manager, "_checkForAddedOrRemovedJoysticks", Qt::QueuedConnection);
         break;
     // Gamepad events ignored - SDL fires both joystick and gamepad events for gamepads
@@ -200,8 +200,16 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         const QString joystickName = SDLJoystick::getNameForInstanceId(ids[n]);
         qCDebug(JoystickSDLLog) << "  [" << n << "] ID:" << ids[n]
                                 << "Name:" << joystickName
-                                << "IsGamepad:" << SDL_IsGamepad(ids[n]);
+                                << "IsGamepad:" << SDL_IsGamepad(ids[n])
+                                << "GUID:" << SDLJoystick::getGUIDForInstanceId(ids[n])
+                                << "Vendor:" << QStringLiteral("0x%1").arg(SDLJoystick::getVendorForInstanceId(ids[n]), 4, 16, QLatin1Char('0'))
+                                << "Product:" << QStringLiteral("0x%1").arg(SDLJoystick::getProductForInstanceId(ids[n]), 4, 16, QLatin1Char('0'))
+                                << "Type:" << SDLJoystick::getTypeForInstanceId(ids[n]);
     }
+    // A user-supplied mapping is the usual fix when SDL's built-in mapping binds a stick to a trigger
+    qCDebug(JoystickSDLLog) << "User gamepad mapping file (create to override built-in mappings):" << SDLJoystick::userMappingsFilePath()
+                            << "SDL_GAMECONTROLLERCONFIG set:" << qEnvironmentVariableIsSet("SDL_GAMECONTROLLERCONFIG")
+                            << "SDL_GAMECONTROLLERCONFIG_FILE set:" << qEnvironmentVariableIsSet("SDL_GAMECONTROLLERCONFIG_FILE");
 
     for (int n = 0; n < count; ++n) {
         const SDL_JoystickID jid = ids[n];
@@ -259,6 +267,13 @@ QMap<QString, Joystick*> JoystickSDL::discover()
                 continue;
             }
 
+            if (char *mapping = SDL_GetGamepadMapping(tmpGamepad)) {
+                qCDebug(JoystickSDLLog) << "Gamepad mapping for" << name << ":" << mapping;
+                SDL_free(mapping);
+            } else {
+                qCDebug(JoystickSDLLog) << "No gamepad mapping string available for" << name << SDL_GetError();
+            }
+
             // Determine if this gamepad axis is one we should show to the user
             for (int i = 0; i < SDL_GAMEPAD_AXIS_COUNT; i++) {
                 if (SDL_GamepadHasAxis(tmpGamepad, static_cast<SDL_GamepadAxis>(i))) {
@@ -276,6 +291,15 @@ QMap<QString, Joystick*> JoystickSDL::discover()
                     SDL_GamepadBinding *binding = bindings[i];
                     if (binding && binding->input_type == SDL_GAMEPAD_BINDTYPE_AXIS && binding->output_type == SDL_GAMEPAD_BINDTYPE_AXIS) {
                         joyAxesMappedToGamepad.insert(binding->input.axis.axis);
+
+                        const SDL_GamepadAxis outAxis = binding->output.axis.axis;
+                        const bool isTrigger = outAxis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER || outAxis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER;
+                        // Trigger outputs are reported 0..32767, so a stick bound here only shows half its travel
+                        qCDebug(JoystickSDLLog) << "  Axis binding raw axis" << binding->input.axis.axis
+                                                << "[" << binding->input.axis.axis_min << ".." << binding->input.axis.axis_max << "]"
+                                                << "->" << SDL_GetGamepadStringForAxis(outAxis)
+                                                << "[" << binding->output.axis.axis_min << ".." << binding->output.axis.axis_max << "]"
+                                                << (isTrigger ? "(trigger: half-range output)" : "");
                     }
                 }
                 SDL_free(bindings);
@@ -304,7 +328,14 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         const int hatCount = SDL_GetNumJoystickHats(tmpJoy);
         SDL_CloseJoystick(tmpJoy);
 
-        qCDebug(JoystickSDLLog) << "Creating JoystickSDL for" << name << "jid:" << jid;
+        QStringList gamepadAxisNames;
+        for (int gamepadAxis : gamepadAxes) {
+            gamepadAxisNames.append(QString::fromUtf8(SDL_GetGamepadStringForAxis(static_cast<SDL_GamepadAxis>(gamepadAxis))));
+        }
+        qCDebug(JoystickSDLLog) << "Creating JoystickSDL for" << name << "jid:" << jid
+                                << "rawAxisCount:" << axisCount
+                                << "gamepadAxes (QGC axis 0..):" << gamepadAxisNames
+                                << "nonGamepadAxes (raw, appended after):" << nonGamepadAxes;
 
         current[name] = new JoystickSDL(name,
                                         gamepadAxes,
@@ -352,7 +383,17 @@ bool JoystickSDL::_open()
         return false;
     }
 
-    qCDebug(JoystickSDLLog) << "Opened" << SDL_GetJoystickName(_sdlJoystick) << "joystick at" << _sdlJoystick;
+    qCDebug(JoystickSDLLog) << "Opened" << SDL_GetJoystickName(_sdlJoystick) << "joystick at" << _sdlJoystick
+                            << "via" << (_sdlGamepad ? "gamepad API" : "joystick API");
+
+    // Rest values expose half-range trigger bindings: a centered stick bound to a trigger rests near 16384, not 0
+    SDL_UpdateJoysticks();
+    QList<int> restValues;
+    const int totalAxes = _gamepadAxes.length() + _nonGamepadAxes.length();
+    for (int axis = 0; axis < totalAxes; axis++) {
+        restValues.append(_getAxisValue(axis));
+    }
+    qCDebug(JoystickSDLLog) << "Initial axis values:" << restValues;
 
     return true;
 }

@@ -10,6 +10,7 @@ Common problems:
 - [Plan Upload/Download failures](../troubleshooting/plan_upload_download.md)
 - [Resume Mission failures](../troubleshooting/resume_mission.md)
 - [Standard Modes / External Flight Mode failures](../troubleshooting/standard_modes.md)
+- [Joystick Calibration failures](../troubleshooting/joystick_calibration.md)
 - [Missing Actuators Page (PX4)](../troubleshooting/actuators.md)
 - [Installation, Display and Video problems](../troubleshooting/qgc_setup.md) - _QGroundControl_ fails to start, render, or show video on the host computer.
 
