@@ -21,3 +21,5 @@ qt_add_resources(
     PREFIX "/json/Vehicle"
     FILES GPSRTKFact.json
 )
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKConnectionConfig.cc RTKConnectionConfig.h)

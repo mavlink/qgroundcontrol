@@ -98,7 +98,7 @@ void GPSRtkTest::_failedOpenNeverConnects()
     QSignalSpy connected(facts->connected(), &Fact::rawValueChanged);
     expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
-    receiver.connectReceiver(GPSType::u_blox, {});
+    receiver.connectReceiver(GPSType::u_blox, {}, {});
     QVERIFY(!receiver.connected());
     QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
     QVERIFY(!receiver.connected());
@@ -119,7 +119,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
         firstGate->release.release();
         secondGate->release.release();
     });
-    receiver.connectReceiver(GPSType::u_blox, blockedFactory(firstGate));
+    receiver.connectReceiver(GPSType::u_blox, blockedFactory(firstGate), {});
     QTRY_VERIFY_WITH_TIMEOUT(firstGate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> first = receiver._gpsProvider;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
@@ -164,7 +164,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->satelliteInfoUpdate(satellites);
     emit first->receiverReady();
     emit first->connectionError(GPSConnectionError::DeviceError);
-    receiver.connectReceiver(GPSType::u_blox, blockedFactory(secondGate));
+    receiver.connectReceiver(GPSType::u_blox, blockedFactory(secondGate), {});
     QVERIFY(receiver.stopping());
     QVERIFY(!receiver.connected());
     QVERIFY(!facts->valid()->rawValue().toBool());
@@ -205,7 +205,7 @@ void GPSRtkTest::_workerCanOutliveManager()
     auto gate = std::make_shared<BlockedOpen>();
     auto receiver = std::make_unique<GPSRtk>();
     const auto releaseWorker = qScopeGuard([&]() { gate->release.release(); });
-    receiver->connectReceiver(GPSType::u_blox, blockedFactory(gate));
+    receiver->connectReceiver(GPSType::u_blox, blockedFactory(gate), {});
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver->_gpsProvider;
     receiver.reset();

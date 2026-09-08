@@ -48,9 +48,10 @@ public:
         connect(this, &QTcpServer::newConnection, this, [this]() {
             peer = nextPendingConnection();
             ++connections;
-            connect(peer, &QTcpSocket::readyRead, peer, [socket = peer]() {
+            connect(peer, &QTcpSocket::readyRead, peer, [this, socket = peer]() {
                 while (socket->canReadLine()) {
                     const QByteArray command = socket->readLine().trimmed();
+                    commands.append(command);
                     const QByteArray reply = '<' + command.split(' ').first() + " OK" + char(0);
                     socket->write(reply);
                 }
@@ -60,6 +61,7 @@ public:
 
     QTcpSocket* peer = nullptr;
     int connections = 0;
+    QList<QByteArray> commands;
 };
 
 class UdpReceiverServer : public QUdpSocket
@@ -142,9 +144,17 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
     QVERIFY(server.listen(QHostAddress::LocalHost));
     const quint16 port = server.serverPort();
     server.close();
+    expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
     TestFixtures::SettingsFixture saved;
     saveNetworkSettings(saved, QStringLiteral(" 127.0.0.1 "), port, 3);
     SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS()->setRawValue(true);
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->useFixedBasePosition(), 1);
+    saved.setFactValue(settings->fixedBasePositionLatitude(), 10.0);
+    saved.setFactValue(settings->fixedBasePositionLongitude(), 20.0);
+    saved.setFactValue(settings->fixedBasePositionAltitude(), 30.0);
+    saved.setFactValue(settings->fixedBasePositionAccuracy(), 0.0);
     GPSManager manager;
     QSignalSpy active(&manager, &GPSManager::networkRtkActiveChanged);
     auto* receiver = manager.gpsRtk();
@@ -171,6 +181,12 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
                              })(),
                              TestTimeout::mediumMs());
     QCOMPARE(server.connections, 1);
+    const QByteArray originalPosition("FIX POSITION 10.00000000 20.00000000 30.00000");
+    QCOMPARE(server.commands.count(originalPosition), 1);
+    ReceiverServer replacement;
+    QVERIFY(replacement.listen(QHostAddress::LocalHost));
+    settings->networkBasePort()->setRawValue(replacement.serverPort());
+    settings->fixedBasePositionLatitude()->setRawValue(11.0);
     QCOMPARE(facts->lastError()->rawValue().toInt(), static_cast<int>(GPSConnectionError::None));
 
     expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
@@ -185,6 +201,8 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
                              })(),
                              TestTimeout::mediumMs());
     QCOMPARE(server.connections, 2);
+    QCOMPARE(server.commands.count(originalPosition), 2);
+    QCOMPARE(replacement.connections, 0);
 
     manager.disconnectNetworkRtk();
     QTRY_VERIFY_WITH_TIMEOUT(!manager.gpsRtk()->stopping(), TestTimeout::mediumMs());
@@ -196,6 +214,14 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
     QVERIFY(!receiver->hasReceiver());
     QTRY_VERIFY_WITH_TIMEOUT(!receiver->stopping(), TestTimeout::mediumMs());
     QCOMPARE(active.size(), 2);
+
+    QVERIFY(manager.connectNetworkRtk());
+    QTRY_VERIFY_WITH_TIMEOUT(receiver->connected(), TestTimeout::mediumMs());
+    QCOMPARE(replacement.connections, 1);
+    QVERIFY(replacement.commands.contains("FIX POSITION 11.00000000 20.00000000 30.00000"));
+    manager.disconnectNetworkRtk();
+    QTRY_VERIFY_WITH_TIMEOUT(!receiver->stopping(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
 }
 
 void GPSManagerTest::_udpRecoveryAndSelection()

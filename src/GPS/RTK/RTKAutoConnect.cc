@@ -94,6 +94,9 @@ bool RTKAutoConnect::connectSelected()
         return false;
     }
     stop();
+    if (!_captureConfig()) {
+        return false;
+    }
     _connection.requestConnect();
     emit stateChanged();
     update();
@@ -115,59 +118,52 @@ bool RTKAutoConnect::connectNetwork()
     if (!_rtkSettings) {
         return false;
     }
-    auto* settings = _rtkSettings;
-    const QString host = settings->networkBaseHost()->rawValue().toString().trimmed();
-    const int port = settings->networkBasePort()->rawValue().toInt();
-    const int type = settings->networkReceiverType()->rawValue().toInt();
-    const int connection = settings->connectionType()->rawValue().toInt();
-    const int localPort = settings->udpLocalPort()->rawValue().toInt();
-    const bool udp = connection == RTKSettings::Udp;
-    QUrl endpoint;
-    endpoint.setScheme(udp ? QStringLiteral("udp") : QStringLiteral("tcp"));
-    endpoint.setHost(host);
-    if (host.isEmpty() || !endpoint.isValid() || endpoint.host().isEmpty() || port < 1 || port > 65535 || type < 0 ||
-        type > 3 || connection < RTKSettings::Serial || connection > RTKSettings::Udp ||
-        (udp && (localPort < 0 || localPort > 65535))) {
+    const auto config = RTKConnectionConfig::fromSettings(*_rtkSettings);
+    if (config.transport == RTKConnectionConfig::Serial || !config.validationError().isEmpty()) {
         return false;
     }
-
-    GPSType receiverType = GPSType::u_blox;
-    switch (type) {
-        case 0:
-            receiverType = GPSType::u_blox;
-            break;
-        case 1:
-            receiverType = GPSType::trimble;
-            break;
-        case 2:
-            receiverType = GPSType::septentrio;
-            break;
-        case 3:
-            receiverType = GPSType::femto;
-            break;
-    }
-    return connectNetwork(
-        receiverType,
-        [host = endpoint.host(), port, udp, localPort](const std::atomic_bool& stop) -> std::unique_ptr<GPSTransport> {
-            if (udp) {
-                return std::make_unique<UdpGPSTransport>(host, static_cast<quint16>(port), stop,
-                                                         static_cast<quint16>(localPort));
+    QUrl endpoint;
+    endpoint.setScheme(config.transport == RTKConnectionConfig::Udp ? QStringLiteral("udp") : QStringLiteral("tcp"));
+    endpoint.setHost(config.host);
+    return _connectNetwork(
+        config, [config, host = endpoint.host()](const std::atomic_bool& stop) -> std::unique_ptr<GPSTransport> {
+            if (config.transport == RTKConnectionConfig::Udp) {
+                return std::make_unique<UdpGPSTransport>(host, static_cast<quint16>(config.port), stop,
+                                                         static_cast<quint16>(config.localPort));
             }
-            return std::make_unique<TcpGPSTransport>(host, static_cast<quint16>(port), stop);
+            return std::make_unique<TcpGPSTransport>(host, static_cast<quint16>(config.port), stop);
         });
 }
 
 bool RTKAutoConnect::connectNetwork(GPSType type, GPSProvider::TransportFactory factory)
 {
-    if (!_receiver || !factory || networkActive()) {
+    auto config = _rtkSettings ? RTKConnectionConfig::fromSettings(*_rtkSettings) : RTKConnectionConfig{};
+    config.receiverType = type;
+    return _connectNetwork(config, std::move(factory));
+}
+
+bool RTKAutoConnect::_connectNetwork(const RTKConnectionConfig& config, GPSProvider::TransportFactory factory)
+{
+    if (!_receiver || !factory || networkActive() || !config.validationError().isEmpty()) {
         return false;
     }
     stop();
+    _sessionConfig = config;
     _connection.requestConnect();
-    _networkType = type;
     _networkFactory = std::move(factory);
     _startNetwork();
     emit networkActiveChanged();
+    return true;
+}
+
+bool RTKAutoConnect::_captureConfig()
+{
+    const auto config = _rtkSettings ? RTKConnectionConfig::fromSettings(*_rtkSettings) : RTKConnectionConfig{};
+    if (const QString error = config.validationError(); !error.isEmpty()) {
+        qCDebug(RTKAutoConnectLog) << error;
+        return false;
+    }
+    _sessionConfig = config;
     return true;
 }
 
@@ -209,6 +205,7 @@ void RTKAutoConnect::stop()
     _connection.stop();
     bool hadSession = wasNetworkActive;
     _networkFactory = {};
+    _sessionConfig.reset();
 #ifndef QGC_NO_SERIAL_LINK
     hadSession = hadSession || !_autoConnectedPort.isEmpty();
     _autoConnectedPort.clear();
@@ -231,8 +228,9 @@ void RTKAutoConnect::stop()
 
 void RTKAutoConnect::_startNetwork()
 {
-    if (!_receiver->hasReceiver() && !_receiver->stopping() && _connection.beginAttempt()) {
-        _receiver->connectReceiver(_networkType, _networkFactory);
+    if (_sessionConfig && !_receiver->hasReceiver() && !_receiver->stopping() && _connection.beginAttempt() &&
+        _sessionConfig && _networkFactory) {
+        _receiver->connectReceiver(_sessionConfig->receiverType, _networkFactory, _sessionConfig->receiver);
     }
 }
 

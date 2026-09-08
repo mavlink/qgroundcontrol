@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "GPSConnectionState.h"
+#include "NMEAConnectionConfig.h"
 #include "GPSSourceHealth.h"
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -84,6 +85,7 @@ private:
     void _clearSatelliteInfo();
 
     AutoConnectSettings* _settings;
+    NMEAConnectionConfig _config;
     QPointer<QGCPositionManager> _positionManager;
     std::unique_ptr<UdpIODevice> _udp;
     std::unique_ptr<QTcpSocket> _tcp;

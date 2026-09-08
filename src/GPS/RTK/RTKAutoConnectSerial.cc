@@ -5,7 +5,6 @@
 #include "AutoConnectSettings.h"
 #include "GPSRtk.h"
 #include "RTKAutoConnect.h"
-#include "RTKSettings.h"
 #include "SerialPortManager.h"
 
 RTKAutoConnect::RTKAutoConnect(AutoConnectSettings* settings, GPSRtk* receiver, SerialPortManager* serialPorts,
@@ -29,11 +28,14 @@ void RTKAutoConnect::_updateSerial()
         stop();
         return;
     }
+    if (!_sessionConfig && !_captureConfig()) {
+        return;
+    }
     _updateReceiverState();
     if (_receiver->stopping()) {
         return;
     }
-    const QString selectedDevice = _rtkSettings ? _rtkSettings->serialDevice()->rawValue().toString() : QString();
+    const QString selectedDevice = _sessionConfig->device;
     const auto ports = _serialPorts->availablePorts();
     const auto eligible = [this, &selectedDevice](const SerialPortManager::Port& port) {
         return port.autoConnectAllowed && !port.bootloader && _serialPorts->canAutoConnectPort(port.systemLocation) &&
@@ -41,11 +43,10 @@ void RTKAutoConnect::_updateSerial()
                                          : port.systemLocation == selectedDevice);
     };
     const auto request = [this, &selectedDevice](const SerialPortManager::Port& port) {
-        const QString type = selectedDevice.isEmpty() || !_rtkSettings
-                                 ? port.boardName
-                                 : _rtkSettings->networkReceiverType()->enumStringValue();
+        const QString type = selectedDevice.isEmpty() || !_rtkSettings ? port.boardName : _sessionConfig->receiverName;
+        const auto config = _sessionConfig->receiver;
         if (_connection.beginAttempt()) {
-            emit connectRequested(port.systemLocation, type);
+            emit connectRequested(port.systemLocation, type, config);
         }
     };
     QSet<QString> present;
@@ -55,7 +56,9 @@ void RTKAutoConnect::_updateSerial()
     if (!_autoConnectedPort.isEmpty() &&
         (!present.contains(_autoConnectedPort) || _serialPorts->isAutoConnectExcluded(_autoConnectedPort))) {
         // Preserve a manual connection request while the device is temporarily unavailable.
+        const auto config = _sessionConfig;
         stop();
+        _sessionConfig = config;
         _connection.requestConnect();
         emit stateChanged();
     }

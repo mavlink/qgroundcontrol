@@ -27,6 +27,8 @@ struct GPSReceiverConfig
     float headingOffsetDeg = 5.0f;  // dual-antenna heading offset; consumed only by the Septentrio (SBF) driver
 };
 
+Q_DECLARE_METATYPE(GPSReceiverConfig)
+
 /// Survey-in progress, translated from the px4 SurveyInStatus.
 struct GPSSurveyInStatus
 {

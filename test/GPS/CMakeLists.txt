@@ -17,6 +17,9 @@ add_qgc_test(GPSSourceHealthTest LABELS Unit)
 add_qgc_test(GPSCorrectionManagerTest LABELS Unit RESOURCE_LOCK Settings)
 add_qgc_test(UdpForwarderTest LABELS Unit)
 
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSConnectionConfigTest.cc GPSConnectionConfigTest.h)
+add_qgc_test(GPSConnectionConfigTest LABELS Unit RESOURCE_LOCK Settings)
+
 add_subdirectory(NMEA)
 add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)

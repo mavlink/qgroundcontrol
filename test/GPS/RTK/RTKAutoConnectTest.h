@@ -11,6 +11,7 @@ private slots:
     void _disconnectDoesNotBlockAndReconnectWaits();
 #ifndef QGC_NO_SERIAL_LINK
     void _manualSerialSelectionAndPause();
+    void _serialRetriesKeepConfiguration();
     void _discoveryUnplugAndDisable();
     void _excludedPorts_data();
     void _excludedPorts();

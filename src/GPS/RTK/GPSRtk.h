@@ -24,9 +24,9 @@ public:
     ~GPSRtk();
 
 #ifndef QGC_NO_SERIAL_LINK
-    void connectGPS(const QString& device, QStringView gps_type);
+    void connectGPS(const QString& device, QStringView gps_type, GPSReceiverConfig config);
 #endif
-    void connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory);
+    void connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, GPSReceiverConfig config);
     void disconnectGPS();
     bool connected() const;
 
@@ -49,6 +49,7 @@ public:
     static SatelliteCounts countSatellites(const satellite_info_s& msg);
 
 signals:
+    void receiverTypeChanged(GPSType type);
     void rtcmDataReceived(const QByteArray& data);
     void connectedChanged();
     void receiverStateChanged();

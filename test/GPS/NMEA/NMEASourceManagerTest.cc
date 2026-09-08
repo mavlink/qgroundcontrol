@@ -83,6 +83,40 @@ void NMEASourceManagerTest::_udpSwitchAndDisable()
     QVERIFY(!source._udp);
 }
 
+void NMEASourceManagerTest::_inactiveSettingsKeepConnection()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceTcp);
+    saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->nmeaTcpPort(), server.serverPort());
+    saved.setFactValue(settings->nmeaAutoConnect(), false);
+    QGCPositionManager position;
+    NMEASourceManager source(settings, &position);
+    QVERIFY(source.connectSource());
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    const auto peer = std::unique_ptr<QTcpSocket>(server.nextPendingConnection());
+    QTRY_COMPARE_WITH_TIMEOUT(source.connectionState(), GPSConnectionState::Ready, TestTimeout::mediumMs());
+    QPointer<QGeoPositionInfoSource> decoder = source.positionSource();
+    QVERIFY(decoder);
+
+    saved.setFactValue(settings->nmeaUdpPort(), 3200);
+    saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/unused"));
+    source.update();
+    QCOMPARE(source.positionSource(), decoder.data());
+    QCOMPARE(source.connectionState(), GPSConnectionState::Ready);
+    QCOMPARE(peer->write(kFix), kFix.size());
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+
+    settings->nmeaTcpHost()->setRawValue(QString());
+    QVERIFY(!source.connectSource());
+    QVERIFY(!decoder);
+    QVERIFY(!source.positionSource());
+    QVERIFY(source.status().contains(QStringLiteral("valid TCP")));
+}
+
 void NMEASourceManagerTest::_udpActivityStatus()
 {
     TestFixtures::SettingsFixture saved;
@@ -516,6 +550,8 @@ void NMEASourceManagerTest::_disconnectDuringPositionUpdate()
     QVERIFY(source.connectSource());
     QPointer<QGeoPositionInfoSource> decoder = source.positionSource();
     QVERIFY(decoder);
+    source.update();
+    QCOMPARE(source.positionSource(), decoder.data());
     connect(&position, &QGCPositionManager::positionInfoUpdated, this, [&](const QGeoPositionInfo& update) {
         if (update.isValid()) {
             source.disconnectSource();

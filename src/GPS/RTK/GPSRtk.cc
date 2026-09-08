@@ -5,8 +5,6 @@
 #include "GPSType.h"
 #include "QGCLoggingCategory.h"
 #include "RTKPositionSource.h"
-#include "RTKSettings.h"
-#include "SettingsManager.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -19,21 +17,22 @@
 
 QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.RTK.GPSRtk")
 
+#ifndef QGC_NO_SERIAL_LINK
 namespace {
 struct GPSTypeEntry
 {
     QLatin1StringView key;
     GPSType type;
-    int manufacturerId;  // RTKSettings::baseReceiverManufacturers enum value
 };
 
 constexpr GPSTypeEntry kGPSTypeTable[] = {
-    {QLatin1StringView("trimble"), GPSType::trimble, 1},
-    {QLatin1StringView("septentrio"), GPSType::septentrio, 2},
-    {QLatin1StringView("femtomes"), GPSType::femto, 3},
-    {QLatin1StringView("blox"), GPSType::u_blox, 4},
+    {QLatin1StringView("trimble"), GPSType::trimble},
+    {QLatin1StringView("septentrio"), GPSType::septentrio},
+    {QLatin1StringView("femtomes"), GPSType::femto},
+    {QLatin1StringView("blox"), GPSType::u_blox},
 };
 }  // namespace
+#endif
 
 GPSRtk::GPSRtk(QObject* parent)
     : QObject(parent)
@@ -125,7 +124,7 @@ void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
 }
 
 #ifndef QGC_NO_SERIAL_LINK
-void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
+void GPSRtk::connectGPS(const QString& device, QStringView gps_type, GPSReceiverConfig config)
 {
     auto reservation = SerialPortManager::instance()->reservePort(device);
     if (!reservation) {
@@ -139,38 +138,20 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
             break;
         }
     }
-    connectReceiver(type, [device, reservation](const std::atomic_bool& requestStop) {
-        return std::make_unique<SerialGPSTransport>(device, requestStop);
-    });
+    connectReceiver(
+        type,
+        [device, reservation](const std::atomic_bool& requestStop) {
+            return std::make_unique<SerialGPSTransport>(device, requestStop);
+        },
+        config);
 }
 #endif
 
-void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory)
+void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, GPSReceiverConfig config)
 {
-    RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
-    for (const GPSTypeEntry& entry : kGPSTypeTable) {
-        if (entry.type == type) {
-            rtkSettings->baseReceiverManufacturers()->setRawValue(entry.manufacturerId);
-            break;
-        }
-    }
-
     disconnectGPS();
-
     _gpsRtkFactGroup->lastError()->setRawValue(static_cast<int>(GPSConnectionError::None));
-    const bool useFixedBase =
-        static_cast<BaseModeDefinition::Mode>(rtkSettings->useFixedBasePosition()->rawValue().toInt()) ==
-        BaseModeDefinition::Mode::BaseFixed;
-    const GPSReceiverConfig rtkConfig = {
-        .useFixedBase = useFixedBase,
-        .surveyInAccMeters = rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
-        .surveyInDurationSecs = rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
-        .fixedBaseLatitude = rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
-        .fixedBaseLongitude = rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
-        .fixedBaseAltitudeMeters = rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
-        .fixedBaseAccuracyMeters = rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
-    };
-    _gpsProvider = new GPSProvider(std::move(transportFactory), type, rtkConfig, this);
+    _gpsProvider = new GPSProvider(std::move(transportFactory), type, config, this);
     const QPointer<GPSProvider> provider = _gpsProvider;
     // Always queue worker callbacks and reject retired sessions, including already queued events.
     (void) connect(
@@ -242,6 +223,7 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
         },
         Qt::QueuedConnection);
     (void) connect(provider, &QThread::finished, provider, &QObject::deleteLater);
+    emit receiverTypeChanged(type);
     provider->start();
     emit receiverStateChanged();
 }

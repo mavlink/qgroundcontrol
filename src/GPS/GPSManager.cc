@@ -30,6 +30,10 @@ GPSManager::GPSManager(QObject* parent)
 
     auto* settings = SettingsManager::instance();
     connect(_gpsRtk, &GPSRtk::rtcmDataReceived, &_corrections, &GPSCorrectionManager::forwardCorrections);
+    connect(_gpsRtk, &GPSRtk::receiverTypeChanged, this, [settings](GPSType type) {
+        const int manufacturer = type == GPSType::u_blox ? 4 : static_cast<int>(type);
+        settings->rtkSettings()->baseReceiverManufacturers()->setRawValue(manufacturer);
+    });
     _nmeaSources = new NMEASourceManager(settings->autoConnectSettings(), _positionManager, this);
     _rtkAutoConnect = new RTKAutoConnect(_gpsRtk, settings->autoConnectSettings(), settings->rtkSettings(), this);
     connect(settings->rtkSettings()->useReceiverPosition(), &Fact::rawValueChanged, this,
@@ -61,7 +65,9 @@ void GPSManager::init()
 #ifndef QGC_NO_SERIAL_LINK
     _rtkAutoConnect->setSerialDiscovery(SerialPortManager::instance());
     connect(_rtkAutoConnect, &RTKAutoConnect::connectRequested, this,
-            [this](const QString& device, const QString& name) { _gpsRtk->connectGPS(device, name); });
+            [this](const QString& device, const QString& name, const GPSReceiverConfig& config) {
+                _gpsRtk->connectGPS(device, name, config);
+            });
 #endif
     _connectionTimer = new QTimer(this);
     _connectionTimer->setInterval(1000);

@@ -9,6 +9,7 @@ class NMEASourceManagerTest : public UnitTest
 private slots:
     void init();
     void _udpSwitchAndDisable();
+    void _inactiveSettingsKeepConnection();
     void _udpActivityStatus();
     void _bindFailureAndTeardown();
     void _configuredSerialRoutingSurvivesReconnect();

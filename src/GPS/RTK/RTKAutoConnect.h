@@ -9,6 +9,9 @@
 #include "GPSConnectionState.h"
 #include "GPSProvider.h"
 #include "GPSSourceHealth.h"
+#include "RTKConnectionConfig.h"
+
+#include <optional>
 
 class AutoConnectSettings;
 class GPSRtk;
@@ -60,11 +63,13 @@ signals:
     void stateChanged();
     void networkActiveChanged();
     void networkAutoConnectPausedChanged();
-    void connectRequested(const QString& device, const QString& name);
+    void connectRequested(const QString& device, const QString& name, const GPSReceiverConfig& config);
     void disconnectRequested();
 
 private:
     bool _serialSelected() const;
+    bool _captureConfig();
+    bool _connectNetwork(const RTKConnectionConfig& config, GPSProvider::TransportFactory factory);
     bool _retryReady();
     void _startNetwork();
     void _updateReceiverState();
@@ -74,7 +79,7 @@ private:
     RTKSettings* _rtkSettings;
     GPSConnectionState _connection;
     GPSProvider::TransportFactory _networkFactory;
-    GPSType _networkType = GPSType::u_blox;
+    std::optional<RTKConnectionConfig> _sessionConfig;
 #ifndef QGC_NO_SERIAL_LINK
     void _updateSerial();
     SerialPortManager* _serialPorts = nullptr;

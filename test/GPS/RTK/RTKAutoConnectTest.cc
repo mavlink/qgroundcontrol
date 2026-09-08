@@ -16,6 +16,55 @@
 #endif
 
 #ifndef QGC_NO_SERIAL_LINK
+void RTKAutoConnectTest::_serialRetriesKeepConfiguration()
+{
+    expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    auto* rtk = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), false);
+    saved.setFactValue(rtk->connectionType(), RTKSettings::Serial);
+    saved.setFactValue(rtk->serialDevice(), QStringLiteral("/test/rtk"));
+    saved.setFactValue(rtk->useFixedBasePosition(), 0);
+    saved.setFactValue(rtk->surveyInAccuracyLimit(), 1.0);
+    saved.setFactValue(rtk->surveyInMinObservationDuration(), 120);
+    SerialPortManager ports(nullptr, []() {
+        return QList<SerialPortManager::Port>{{QStringLiteral("/test/rtk"), QStringLiteral("rtk"),
+                                               QGCSerialPortInfo::BoardTypeRTKGPS, QStringLiteral("u-blox")}};
+    });
+    GPSRtk receiver;
+    RTKAutoConnect controller(&receiver, settings, rtk);
+    controller.setSerialDiscovery(&ports);
+    controller._connectDelayMs = 0;
+    QSignalSpy attempts(&controller, &RTKAutoConnect::connectRequested);
+    QVERIFY(controller.connectSelected());
+    controller.update();
+    QCOMPARE(attempts.size(), 1);
+    const auto first = qvariant_cast<GPSReceiverConfig>(attempts.at(0).at(2));
+    QCOMPARE(first.surveyInAccMeters, 1.0);
+    QCOMPARE(first.surveyInDurationSecs, 120);
+
+    rtk->surveyInAccuracyLimit()->setRawValue(3.0);
+    rtk->surveyInMinObservationDuration()->setRawValue(240);
+    controller.update();
+    controller._connection._retryDeadline.setRemainingTime(0);
+    controller.update();
+    QCOMPARE(attempts.size(), 2);
+    const auto retry = qvariant_cast<GPSReceiverConfig>(attempts.at(1).at(2));
+    QCOMPARE(retry.surveyInAccMeters, 1.0);
+    QCOMPARE(retry.surveyInDurationSecs, 120);
+
+    controller.disconnectSelected();
+    QVERIFY(controller.connectSelected());
+    controller.update();
+    QCOMPARE(attempts.size(), 3);
+    const auto replacement = qvariant_cast<GPSReceiverConfig>(attempts.at(2).at(2));
+    QCOMPARE(replacement.surveyInAccMeters, 3.0);
+    QCOMPARE(replacement.surveyInDurationSecs, 240);
+    verifyExpectedLogMessage();
+}
+
 void RTKAutoConnectTest::_manualSerialSelectionAndPause()
 {
     TestFixtures::SettingsFixture saved;
@@ -239,7 +288,7 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     discovery._connectDelayMs = 0;
     QSignalSpy attempts(&discovery, &RTKAutoConnect::connectRequested);
     connect(&discovery, &RTKAutoConnect::connectRequested, &receiver,
-            [&]() { receiver.connectReceiver(GPSType::u_blox, {}); });
+            [&]() { receiver.connectReceiver(GPSType::u_blox, {}, {}); });
     expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     discovery.update();

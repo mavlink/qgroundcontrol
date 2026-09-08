@@ -57,11 +57,13 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
         }
     });
     if (_settings) {
+        _config = NMEAConnectionConfig::fromSettings(*_settings);
         for (Fact* fact : {_settings->nmeaSource(), _settings->autoConnectNmeaPort(), _settings->autoConnectNmeaBaud(),
                            _settings->nmeaUdpPort(), _settings->nmeaTcpHost(), _settings->nmeaTcpPort()}) {
             connect(fact, &Fact::rawValueChanged, this, &NMEASourceManager::_settingsChanged);
         }
         connect(_settings->nmeaAutoConnect(), &Fact::rawValueChanged, this, [this]() {
+            _closeDevice();
             _connection.resetIntent();
             _settingsChanged();
         });
@@ -77,24 +79,26 @@ QGeoPositionInfoSource* NMEASourceManager::positionSource() const
 bool NMEASourceManager::_shouldConnect() const
 {
     return _settings && _connection.shouldConnect(_settings->nmeaAutoConnect()->rawValue().toBool()) &&
-           _settings->nmeaSource()->rawValue().toInt() != AutoConnectSettings::NmeaSourceDisabled;
+           _config.source != NMEAConnectionConfig::Disabled;
 }
 
 void NMEASourceManager::_updateSerialRouting()
 {
 #ifndef QGC_NO_SERIAL_LINK
     const QString port =
-        _shouldConnect() && _settings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceSerial
-            ? _settings->autoConnectNmeaPort()->rawValue().toString().trimmed()
-            : QString();
+        _shouldConnect() && _config.source == NMEAConnectionConfig::Serial ? _config.device : QString();
     _autoConnectExclusion = SerialPortManager::instance()->excludeFromAutoConnect(port);
 #endif
 }
 
 void NMEASourceManager::_settingsChanged()
 {
-    _closeDevice();
-    _connection.resetRetry();
+    const auto config = NMEAConnectionConfig::fromSettings(*_settings);
+    if (config != _config) {
+        _config = config;
+        _closeDevice();
+        _connection.resetRetry();
+    }
     _updateSerialRouting();
     if (!_shouldConnect()) {
         stop();
@@ -103,8 +107,7 @@ void NMEASourceManager::_settingsChanged()
 
 bool NMEASourceManager::connectSource()
 {
-    if (!_settings || !_positionManager ||
-        _settings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceDisabled) {
+    if (!_settings || !_positionManager || _config.source == NMEAConnectionConfig::Disabled) {
         return false;
     }
     _connection.requestConnect();
@@ -256,19 +259,24 @@ void NMEASourceManager::update()
         stop();
         return;
     }
+    if (const QString error = _config.validationError(); !error.isEmpty()) {
+        disconnectSource();
+        _setStatus(error);
+        return;
+    }
     _connection.updateIntent(_settings->nmeaAutoConnect()->rawValue().toBool());
-    const int source = _settings->nmeaSource()->rawValue().toInt();
+    const int source = _config.source;
     if (_source != source) {
         _closeDevice();
         _source = source;
     }
-    if (source == AutoConnectSettings::NmeaSourceTcp) {
+    if (source == NMEAConnectionConfig::Tcp) {
         _updateTcp();
         return;
     }
-    if (source == AutoConnectSettings::NmeaSourceUdp) {
-        const quint16 port = _settings->nmeaUdpPort()->rawValue().toUInt();
-        if (_udp && _udp->state() == QAbstractSocket::BoundState && _udp->localPort() == port) {
+    if (source == NMEAConnectionConfig::Udp) {
+        const quint16 port = _config.port;
+        if (_udp && _udp->state() == QAbstractSocket::BoundState) {
             return;
         }
         if (_udp) {
@@ -297,9 +305,9 @@ void NMEASourceManager::update()
         _setStatus(tr("Listening on UDP port %1").arg(port));
     }
 #ifndef QGC_NO_SERIAL_LINK
-    if (source == AutoConnectSettings::NmeaSourceSerial) {
-        const QString device = _settings->autoConnectNmeaPort()->rawValue().toString().trimmed();
-        const qint32 baud = _settings->autoConnectNmeaBaud()->rawValue().toInt();
+    if (source == NMEAConnectionConfig::Serial) {
+        const QString device = _config.device;
+        const qint32 baud = _config.baud;
         auto* ports = SerialPortManager::instance();
         bool present = false;
         for (const auto& port : ports->availablePorts()) {
@@ -348,7 +356,7 @@ void NMEASourceManager::update()
                 if (current && _serial.get() == current && error != QSerialPort::NoError &&
                     error != QSerialPort::TimeoutError) {
                     _closeDevice();
-                    _source = AutoConnectSettings::NmeaSourceSerial;
+                    _source = NMEAConnectionConfig::Serial;
                     _connection.failed();
                     _setStatus(tr("Serial connection lost; reconnecting"));
                 }
@@ -362,7 +370,7 @@ void NMEASourceManager::update()
         _setStatus(tr("Connected"));
     }
 #else
-    if (source == AutoConnectSettings::NmeaSourceSerial) {
+    if (source == NMEAConnectionConfig::Serial) {
         _setStatus(tr("Serial connections are unavailable in this build"));
     }
 #endif
@@ -379,16 +387,10 @@ void NMEASourceManager::_updateTcp()
     if (!_connection.canAttempt()) {
         return;
     }
-    const QString host = _settings->nmeaTcpHost()->rawValue().toString().trimmed();
-    const int port = _settings->nmeaTcpPort()->rawValue().toInt();
     QUrl endpoint;
     endpoint.setScheme(QStringLiteral("tcp"));
-    endpoint.setHost(host);
-    if (host.isEmpty() || !endpoint.isValid() || endpoint.host().isEmpty() || port < 1 || port > 65535) {
-        disconnectSource();
-        _setStatus(tr("Enter a valid TCP host and port"));
-        return;
-    }
+    endpoint.setHost(_config.host);
+    const int port = _config.port;
     if (!_connection.beginAttempt()) {
         return;
     }
@@ -431,7 +433,7 @@ void NMEASourceManager::_updateTcp()
 void NMEASourceManager::_tcpFailed(const QString& error)
 {
     _closeDevice();
-    _source = AutoConnectSettings::NmeaSourceTcp;
+    _source = NMEAConnectionConfig::Tcp;
     _connection.failed();
     _setStatus(tr("%1 — reconnecting").arg(error));
 }
