@@ -2974,27 +2974,27 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="547"/>
       <source>Fast compass calibration given vehicle position and yaw. This </source>
-      <translation type="unfinished">Fast compass calibration given vehicle position and yaw. This </translation>
+      <translation>Быстрая калибровка компаса по местоположению и курсу борта. В результате </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="548"/>
       <source>results in zero diagonal and off-diagonal elements, so is only </source>
-      <translation type="unfinished">results in zero diagonal and off-diagonal elements, so is only </translation>
+      <translation>все недиагональные элементы обнуляются, поэтому метод подходит только </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="549"/>
       <source>suitable for vehicles where the field is close to spherical. It is </source>
-      <translation type="unfinished">suitable for vehicles where the field is close to spherical. It is </translation>
+      <translation>для бортов с полем, близким к сферическому. Он </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="550"/>
       <source>useful for large vehicles where moving the vehicle to calibrate it </source>
-      <translation type="unfinished">useful for large vehicles where moving the vehicle to calibrate it </translation>
+      <translation>полезен для крупных бортов, которые сложно перемещать вручную для калибровки. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="551"/>
       <source>is difficult. Point the vehicle North before using it.</source>
-      <translation type="unfinished">is difficult. Point the vehicle North before using it.</translation>
+      <translation>Перед использованием направьте борт на север.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="564"/>
@@ -3243,7 +3243,7 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="182"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="471"/>
       <source>Failed</source>
-      <translation type="unfinished">Failed</translation>
+      <translation>Не удалось</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="237"/>
