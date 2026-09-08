@@ -133,6 +133,7 @@ jobs:
           --ref "${REF}"
 
       - name: Build with Docker
+        id: docker-build
         uses: ./.github/actions/docker
         with:
           target: ${{ matrix.target }}
@@ -255,3 +256,117 @@ jobs:
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
           category: 'grype-${{ matrix.platform }}'
+
+      - name: Generate published image SBOM
+        if: steps.push-target.outputs.ref != ''
+        uses: anchore/sbom-action@v0
+        with:
+          image: dronecode/qgroundcontrol:${{ matrix.variant }}
+          format: cyclonedx-json
+          output-file: image-sbom.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Scan published image
+        if: steps.push-target.outputs.ref != ''
+        id: grype-image
+        uses: anchore/scan-action@v7
+        with:
+          sbom: image-sbom.cdx.json
+          fail-build: false
+          severity-cutoff: high
+          only-fixed: true
+          output-format: sarif
+
+      - name: Upload image scan to GitHub Security
+        if: steps.push-target.outputs.ref != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.grype-image.outputs.sarif }}
+          category: grype-image-${{ matrix.variant }}
+
+      - name: Save published image digest
+        if: steps.push-target.outputs.ref != ''
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ steps.docker-build.outputs.image-digest }}
+        run: |
+          [[ "${IMAGE_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]
+          printf '%s\n' "${IMAGE_DIGEST}" > image-digest.txt
+
+      - name: Upload image security evidence
+        if: steps.push-target.outputs.ref != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: qgc-builder-security-${{ matrix.variant }}
+          path: |
+            image-digest.txt
+            image-sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 7
+
+  attest-images:
+    name: Attest ${{ matrix.platform }} Image
+    needs: [plan-builds, build]
+    if: github.repository == 'mavlink/qgroundcontrol' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan-builds.outputs.matrix) }}
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Download image security evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: qgc-builder-security-${{ matrix.variant }}
+
+      - name: Read image digest
+        id: image
+        shell: bash
+        run: |
+          digest=$(< image-digest.txt)
+          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]
+          printf 'digest=%s\n' "${digest}" >> "${GITHUB_OUTPUT}"
+
+      - name: Login to GHCR
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Login to Docker Hub
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Attest image provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ${{ startsWith(github.ref, 'refs/tags/v') && 'dronecode/qgroundcontrol' || 'ghcr.io/mavlink/qgroundcontrol' }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attest image SBOM
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ startsWith(github.ref, 'refs/tags/v') && 'dronecode/qgroundcontrol' || 'ghcr.io/mavlink/qgroundcontrol' }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          sbom-path: image-sbom.cdx.json
+          push-to-registry: true
