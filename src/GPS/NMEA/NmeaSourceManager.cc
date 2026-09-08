@@ -28,6 +28,13 @@ NmeaSourceManager::NmeaSourceManager(AutoConnectSettings* settings, QGCPositionM
 {
     qCDebug(NmeaSourceManagerLog) << this;
     _status = tr("Disconnected");
+    _udpActivityTimer.setSingleShot(true);
+    _udpActivityTimer.setInterval(5000);
+    connect(&_udpActivityTimer, &QTimer::timeout, this, [this]() {
+        if (_udp) {
+            _setStatus(tr("Listening on UDP port %1").arg(_udp->localPort()));
+        }
+    });
     if (_settings) {
         for (Fact* fact : {_settings->nmeaSource(), _settings->autoConnectNmeaPort(), _settings->autoConnectNmeaBaud(),
                            _settings->nmeaUdpPort(), _settings->nmeaTcpHost(), _settings->nmeaTcpPort()}) {
@@ -96,6 +103,7 @@ void NmeaSourceManager::_setStatus(const QString& status)
 {
     if (_status != status) {
         _status = status;
+        qCDebug(NmeaSourceManagerLog) << "Connection status:" << _status;
         emit stateChanged();
     }
 }
@@ -123,6 +131,7 @@ void NmeaSourceManager::stop()
 
 void NmeaSourceManager::_closeDevice()
 {
+    _udpActivityTimer.stop();
     // Detach the decoder before destroying the device it reads from.
     if (_sourceInstalled && _positionManager) {
         _positionManager->resetNmeaSourceDevice();
@@ -175,6 +184,10 @@ void NmeaSourceManager::update()
             return;
         }
         _udp = std::move(socket);
+        connect(_udp.get(), &QIODevice::readyRead, this, [this]() {
+            _udpActivityTimer.start();
+            _setStatus(tr("Receiving UDP data on port %1").arg(_udp->localPort()));
+        });
         _positionManager->setNmeaSourceDevice(_udp.get());
         _sourceInstalled = true;
         _setStatus(tr("Listening on UDP port %1").arg(port));

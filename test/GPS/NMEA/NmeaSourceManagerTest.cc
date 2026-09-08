@@ -74,6 +74,54 @@ void NmeaSourceManagerTest::_udpSwitchAndDisable()
     QVERIFY(!source._udp);
 }
 
+void NmeaSourceManagerTest::_udpActivityStatus()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    saved.setFactValue(settings->nmeaAutoConnect(), false);
+    QUdpSocket spare;
+    QVERIFY(spare.bind(QHostAddress::LocalHost, 0));
+    const quint16 port = spare.localPort();
+    spare.close();
+    saved.setFactValue(settings->nmeaUdpPort(), port);
+    QGCPositionManager position;
+    NmeaSourceManager source(settings, &position);
+    QVERIFY(source.connectSource());
+    const QString listening = QStringLiteral("Listening on UDP port %1").arg(port);
+    const QString receiving = QStringLiteral("Receiving UDP data on port %1").arg(port);
+    QCOMPARE(source.status(), listening);
+
+    QSignalSpy stateSpy(&source, &NmeaSourceManager::stateChanged);
+    QUdpSocket sender;
+    const QByteArray invalidData("Not a GPS fix\r\n");
+    QCOMPARE(sender.writeDatagram(invalidData, QHostAddress::LocalHost, port), invalidData.size());
+    QTRY_COMPARE_WITH_TIMEOUT(source.status(), receiving, TestTimeout::mediumMs());
+    QVERIFY(!stateSpy.isEmpty());
+    QVERIFY(!position.gcsPosition().isValid());
+
+    source._udpActivityTimer.start(1);
+    QTRY_COMPARE_WITH_TIMEOUT(source.status(), listening, TestTimeout::mediumMs());
+    QVERIFY(source.active());
+    source._udpActivityTimer.setInterval(5000);
+    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, port), kFix.size());
+    QTRY_COMPARE_WITH_TIMEOUT(source.status(), receiving, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    source.update();
+    QCOMPARE(source.status(), receiving);
+
+    source.disconnectSource();
+    QCOMPARE(source.status(), QStringLiteral("Disconnected"));
+    QVERIFY(!source._udpActivityTimer.isActive());
+    QVERIFY(source.connectSource());
+    QCOMPARE(source.status(), listening);
+    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, port), kFix.size());
+    QTRY_COMPARE_WITH_TIMEOUT(source.status(), receiving, TestTimeout::mediumMs());
+    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
+    QCOMPARE(source.status(), QStringLiteral("Disconnected"));
+    QVERIFY(!source._udpActivityTimer.isActive());
+}
+
 void NmeaSourceManagerTest::_bindFailureAndTeardown()
 {
     TestFixtures::SettingsFixture saved;

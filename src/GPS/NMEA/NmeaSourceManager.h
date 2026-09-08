@@ -3,6 +3,7 @@
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <memory>
@@ -55,6 +56,7 @@ private:
     QPointer<QGCPositionManager> _positionManager;
     std::unique_ptr<UdpIODevice> _udp;
     std::unique_ptr<QTcpSocket> _tcp;
+    QTimer _udpActivityTimer;
     QDeadlineTimer _connectDeadline = QDeadlineTimer::Forever;
     QDeadlineTimer _retryDeadline = QDeadlineTimer::Forever;
     int _retryDelayMs = 1000;
