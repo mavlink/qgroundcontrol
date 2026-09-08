@@ -5,7 +5,7 @@ These are **daily build** download links with the latest features. If you are lo
 :::
 
 ::: tip
-See [Troubleshooting QGC Setup](../troubleshooting/qgc_setup.md) if _QGroundControl_ doesn't start and run properly after installation!
+See [Installation, Display and Video problems](../troubleshooting/qgc_setup.md) if _QGroundControl_ doesn't start and run properly after installation!
 :::
 
 ## System Requirements
@@ -28,7 +28,7 @@ Supported versions: Windows 10 (1809 or later), Windows 11:
 ::: info
 The Windows installer creates 3 shortcuts: **QGroundControl**, **GPU Compatibility Mode**, **GPU Safe Mode**.
 Use the first shortcut unless you experience startup or video rendering issues.
-For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
+For more information see [Installation, Display and Video problems > Windows: UI Rendering/Video Driver Issues](../troubleshooting/qgc_setup.md#opengl_troubleshooting).
 :::
 
 ## Mac OS {#macOS}
