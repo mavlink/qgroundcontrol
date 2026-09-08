@@ -17,6 +17,7 @@ For complete worked examples, see the reference files:
 - [C++ Style](#c-style)
   - [Headers](#headers)
   - [Class Declaration Order](#class-declaration-order)
+  - [Constructor Initializer Lists](#constructor-initializer-lists)
   - [Modern C++ (C++20)](#modern-c-c20)
   - [Defensive Coding](#defensive-coding)
   - [Logging](#logging)
@@ -114,6 +115,24 @@ private:
     // Private methods (prefixed with _)
     // Private members (prefixed with _)
 };
+```
+
+### Constructor Initializer Lists
+
+When a constructor has multiple initializers, put each initializer on its own line, even if the
+list would fit on one line. Start the first line with `:` and each subsequent line with `,`,
+indented four spaces. Keep the opening brace on a separate line.
+
+```cpp
+GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+                         QObject* parent)
+    : QThread(parent)
+    , _transportFactory(std::move(transportFactory))
+    , _type(type)
+    , _config(config)
+{
+    qCDebug(GPSProviderLog) << this;
+}
 ```
 
 ### Modern C++ (C++20)

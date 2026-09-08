@@ -5,6 +5,7 @@
 #include "AutoConnectSettings.h"
 #include "GPSRtk.h"
 #include "RTKAutoConnect.h"
+#include "RTKSettings.h"
 #include "SerialPortManager.h"
 
 RTKAutoConnect::RTKAutoConnect(AutoConnectSettings* settings, GPSRtk* receiver, SerialPortManager* serialPorts,
@@ -24,20 +25,37 @@ void RTKAutoConnect::_updateSerial()
     if (!_settings || !_receiver || !_serialPorts) {
         return;
     }
-    if (!_settings->autoConnectRTKGPS()->rawValue().toBool()) {
+    if (_serialPaused || (!_serialRequested && !_settings->autoConnectRTKGPS()->rawValue().toBool())) {
         stop();
         return;
     }
+    if (!_serialRequested) {
+        _serialRequested = true;
+        emit stateChanged();
+    }
+    const QString selectedDevice = _rtkSettings ? _rtkSettings->serialDevice()->rawValue().toString() : QString();
     const auto ports = _serialPorts->availablePorts();
+    const auto eligible = [this, &selectedDevice](const SerialPortManager::Port& port) {
+        return port.autoConnectAllowed && !port.bootloader && _serialPorts->canAutoConnectPort(port.systemLocation) &&
+               (selectedDevice.isEmpty() ? port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS
+                                         : port.systemLocation == selectedDevice);
+    };
+    const auto request = [this, &selectedDevice](const SerialPortManager::Port& port) {
+        const QString type = selectedDevice.isEmpty() || !_rtkSettings
+                                 ? port.boardName
+                                 : _rtkSettings->networkReceiverType()->enumStringValue();
+        emit connectRequested(port.systemLocation, type);
+    };
     QSet<QString> present;
     for (const auto& port : ports) {
         present.insert(port.systemLocation);
     }
-    const QString nmeaPort = _settings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceSerial
-                                 ? _settings->autoConnectNmeaPort()->rawValue().toString().trimmed()
-                                 : QString();
-    if (!_autoConnectedPort.isEmpty() && (!present.contains(_autoConnectedPort) || _autoConnectedPort == nmeaPort)) {
+    if (!_autoConnectedPort.isEmpty() &&
+        (!present.contains(_autoConnectedPort) || _serialPorts->isAutoConnectExcluded(_autoConnectedPort))) {
+        // Preserve a manual connection request while the device is temporarily unavailable.
         stop();
+        _serialRequested = true;
+        emit stateChanged();
     }
     for (auto it = _waitingPorts.begin(); it != _waitingPorts.end();) {
         it = !present.contains(it.key()) ? _waitingPorts.erase(it) : std::next(it);
@@ -47,19 +65,17 @@ void RTKAutoConnect::_updateSerial()
             return;
         }
         for (const auto& port : ports) {
-            if (port.systemLocation == _autoConnectedPort && port.autoConnectAllowed && !port.bootloader &&
-                port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS &&
+            if (port.systemLocation == _autoConnectedPort && eligible(port) &&
                 _serialPorts->canReservePort(port.systemLocation)) {
                 _retryStarted();
-                emit connectRequested(port.systemLocation, port.boardName);
+                request(port);
                 break;
             }
         }
         return;
     }
     for (const auto& port : ports) {
-        if (!port.autoConnectAllowed || port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader ||
-            port.systemLocation == nmeaPort || !_serialPorts->canReservePort(port.systemLocation)) {
+        if (!eligible(port) || !_serialPorts->canReservePort(port.systemLocation)) {
             _waitingPorts.remove(port.systemLocation);
             continue;
         }
@@ -69,7 +85,7 @@ void RTKAutoConnect::_updateSerial()
         } else if (it->elapsed() >= _connectDelayMs) {
             _autoConnectedPort = port.systemLocation;
             _waitingPorts.clear();
-            emit connectRequested(port.systemLocation, port.boardName);
+            request(port);
             return;
         }
     }

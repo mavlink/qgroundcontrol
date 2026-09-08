@@ -132,7 +132,7 @@ void GPSDriverTest::_testFixedTransportBaudrate()
     transport.fixedRate = 115200;
     transport.writeOk = false;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+    expectLogMessage("GPS.RTK.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Driver configuration failed for type")));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();

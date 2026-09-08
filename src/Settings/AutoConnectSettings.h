@@ -20,6 +20,7 @@ public:
         NmeaSourceDisabled = 0,
         NmeaSourceUdp,
         NmeaSourceSerial,
+        NmeaSourceTcp,
     };
     Q_ENUM(NmeaSource)
 
@@ -32,6 +33,9 @@ public:
     DEFINE_SETTINGFACT(autoConnectNetworkRTKGPS)
     DEFINE_SETTINGFACT(autoConnectLibrePilot)
     DEFINE_SETTINGFACT(nmeaSource)
+    DEFINE_SETTINGFACT(nmeaAutoConnect)
+    DEFINE_SETTINGFACT(nmeaTcpHost)
+    DEFINE_SETTINGFACT(nmeaTcpPort)
     DEFINE_SETTINGFACT(autoConnectNmeaPort)
     DEFINE_SETTINGFACT(autoConnectNmeaBaud)
     DEFINE_SETTINGFACT(udpListenPort)

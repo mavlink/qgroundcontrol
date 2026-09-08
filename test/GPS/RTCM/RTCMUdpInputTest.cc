@@ -74,7 +74,7 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
     corrupted[corrupted.size() - 1] = static_cast<char>(corrupted[corrupted.size() - 1] ^ 0xFF);
     const QByteArray frame2 = GpsTestHelpers::buildRtcmFrame(1087, 2);
 
-    expectLogMessage("GPS.RTCMUdpInput", QtWarningMsg, QRegularExpression(QStringLiteral("Dropped 1 RTCM frame")));
+    expectLogMessage("GPS.RTCM.RTCMUdpInput", QtWarningMsg, QRegularExpression(QStringLiteral("Dropped 1 RTCM frame")));
     QVERIFY(sendDatagram(input.port(), frame1 + corrupted + frame2));
 
     QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, 2000);

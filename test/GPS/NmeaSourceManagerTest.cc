@@ -1,6 +1,8 @@
 #include "NmeaSourceManagerTest.h"
 
 #include <QtCore/QRegularExpression>
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
@@ -22,7 +24,7 @@ const QByteArray kFix =
 void NmeaSourceManagerTest::init()
 {
     UnitTest::init();
-    ignoreLogMessage("PositionManager.QGCPositionManager", QtWarningMsg,
+    ignoreLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("UpdateTimeoutError")));
 }
 
@@ -133,18 +135,8 @@ void NmeaSourceManagerTest::_configuredSerialRoutingSurvivesReconnect()
 #endif
 }
 
-void NmeaSourceManagerTest::_settingsUseSharedSerialInventory_data()
-{
-    QTest::addColumn<QString>("qmlFile");
-    QTest::addColumn<bool>("customBaudSupported");
-    QTest::newRow("nmea-settings") << QStringLiteral("NmeaGpsSettings.qml") << true;
-    QTest::newRow("remote-id-settings") << QStringLiteral("RemoteIDGpsLocation.qml") << false;
-}
-
 void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
 {
-    QFETCH(QString, qmlFile);
-    QFETCH(bool, customBaudSupported);
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
@@ -152,7 +144,7 @@ void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
     saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/saved-nmea"));
     QQmlEngine engine;
     engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/") + qmlFile));
+    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NmeaGpsSettings.qml")));
     QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
     QVERIFY2(component.isReady(), qPrintable(component.errorString()));
     std::unique_ptr<QObject> root(component.create());
@@ -161,14 +153,10 @@ void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
     QVERIFY(portCombo);
     auto* baudCombo = root->findChild<QObject*>(QStringLiteral("nmeaBaudCombo"));
     QVERIFY(baudCombo);
-    if (customBaudSupported) {
-        auto* customBaud = root->findChild<QObject*>(QStringLiteral("customNmeaBaudField"));
-        QVERIFY(customBaud);
-        QVERIFY(baudCombo->property("isCustomBaud").toBool());
-        QCOMPARE(customBaud->property("text").toString(), QStringLiteral("123457"));
-    } else {
-        QCOMPARE(baudCombo->property("currentIndex").toInt(), -1);
-    }
+    auto* customBaud = root->findChild<QObject*>(QStringLiteral("customNmeaBaudField"));
+    QVERIFY(customBaud);
+    QVERIFY(baudCombo->property("isCustomBaud").toBool());
+    QCOMPARE(customBaud->property("text").toString(), QStringLiteral("123457"));
     QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 123457);
     QCOMPARE(settings->autoConnectNmeaPort()->rawValue().toString(), QStringLiteral("/test/saved-nmea"));
 
@@ -183,12 +171,133 @@ void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
 #else
     QVERIFY(!manager);
 #endif
-    if (!customBaudSupported) {
-        settings->autoConnectNmeaBaud()->setRawValue(115200);
-        QQmlExpression baudIndex(qmlContext(root.get()), root.get(),
-                                 QStringLiteral("_serialBaudRates.indexOf('115200')"));
-        const int expectedIndex = baudIndex.evaluate().toInt();
-        QVERIFY(!baudIndex.hasError());
-        QCOMPARE(baudCombo->property("currentIndex").toInt(), expectedIndex);
-    }
+}
+
+void NmeaSourceManagerTest::_tcpRecoveryAndSourceSwitch()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    saved.setFactValue(settings->nmeaAutoConnect(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceTcp);
+    saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->nmeaTcpPort(), server.serverPort());
+    QGCPositionManager position;
+    NmeaSourceManager source(settings, &position);
+    source.update();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    peer->write(kFix.first(20));
+    QVERIFY(peer->waitForBytesWritten());
+    QVERIFY(!position.gcsPosition().isValid());
+    peer->write(kFix.mid(20));
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QVERIFY(qAbs(position.gcsPosition().latitude() - 53.361337) < 0.0001);
+    peer->disconnectFromHost();
+    QTRY_VERIFY_WITH_TIMEOUT(!source._tcp, TestTimeout::mediumMs());
+    QVERIFY(!position.gcsPosition().isValid());
+    QVERIFY(source.active());
+    source.update();
+    QVERIFY(!source._tcp);
+    source._retryDeadline.setRemainingTime(0);
+    source.update();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    peer.reset(server.nextPendingConnection());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    peer->write(kFix);
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QUdpSocket spare;
+    QVERIFY(spare.bind(QHostAddress::LocalHost, 0));
+    const quint16 port = spare.localPort();
+    spare.close();
+    saved.setFactValue(settings->nmeaUdpPort(), port);
+    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceUdp);
+    source.update();
+    QVERIFY(!source._tcp);
+    QVERIFY(!position.gcsPosition().isValid());
+    QUdpSocket sender;
+    sender.writeDatagram(kFix, QHostAddress::LocalHost, port);
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    source.disconnectSource();
+    QVERIFY(!position.gcsPosition().isValid());
+    source.update();
+    QVERIFY(!source.active());
+    QVERIFY(!source._udp);
+    QVERIFY(settings->nmeaAutoConnect()->rawValue().toBool());
+}
+
+void NmeaSourceManagerTest::_tcpManualAndAutoConnect()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    saved.setFactValue(settings->nmeaAutoConnect(), false);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceTcp);
+    saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("tcp://invalid"));
+    saved.setFactValue(settings->nmeaTcpPort(), server.serverPort());
+    QGCPositionManager position;
+    NmeaSourceManager source(settings, &position);
+    source.update();
+    QVERIFY(!source.active());
+    QVERIFY(!source.connectSource());
+    QVERIFY(!source._tcp);
+    settings->nmeaTcpHost()->setRawValue(QStringLiteral("localhost"));
+    QVERIFY(source.connectSource());
+    source.disconnectSource();
+    source.update();
+    QVERIFY(!source._tcp);
+    QVERIFY(!source.active());
+    settings->nmeaAutoConnect()->setRawValue(true);
+    source.update();
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QVERIFY(source.active());
+    source.disconnectSource();
+    source.update();
+    QVERIFY(!source.active());
+    QVERIFY(source.connectSource());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    settings->nmeaAutoConnect()->setRawValue(false);
+    QVERIFY(!source.active());
+    QVERIFY(!source._tcp);
+    source.update();
+    QVERIFY(!source.active());
+    QVERIFY(source.connectSource());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QVERIFY(!settings->nmeaAutoConnect()->rawValue().toBool());
+    source.update();
+    QVERIFY(source.active());
+}
+
+void NmeaSourceManagerTest::_tcpRefusalBackoff()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    const quint16 port = server.serverPort();
+    server.close();
+    saved.setFactValue(settings->nmeaAutoConnect(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceTcp);
+    saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->nmeaTcpPort(), port);
+    QGCPositionManager position;
+    NmeaSourceManager source(settings, &position);
+    source.update();
+    QTRY_VERIFY_WITH_TIMEOUT(!source._tcp, TestTimeout::mediumMs());
+    QVERIFY(!source._retryDeadline.isForever());
+    QCOMPARE(source._retryDelayMs, 2000);
+    source.update();
+    QVERIFY(!source._tcp);
+    source._retryDeadline.setRemainingTime(0);
+    source.update();
+    QTRY_VERIFY_WITH_TIMEOUT(!source._tcp, TestTimeout::mediumMs());
+    QCOMPARE(source._retryDelayMs, 4000);
+    QVERIFY(server.listen(QHostAddress::LocalHost, port));
+    source._retryDeadline.setRemainingTime(0);
+    source.update();
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QCOMPARE(source._retryDelayMs, 1000);
 }

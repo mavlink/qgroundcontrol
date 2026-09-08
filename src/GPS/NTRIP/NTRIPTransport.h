@@ -10,7 +10,8 @@ class NTRIPTransport : public QObject
     Q_OBJECT
 
 public:
-    using QObject::QObject;
+    explicit NTRIPTransport(QObject* parent = nullptr);
+    ~NTRIPTransport() override;
 
     virtual void start() = 0;
     virtual void stop() = 0;

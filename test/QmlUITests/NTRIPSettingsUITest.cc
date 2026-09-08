@@ -27,9 +27,9 @@ bool NTRIPSettingsUITest::_navigateToNtripPage()
         return false;
     }
 
-    QQuickItem *btn = findVisibleItem(_rootItem, QStringLiteral("settingsButton_NTRIP/RTK"));
+    QQuickItem* btn = findVisibleItem(_rootItem, QStringLiteral("settingsButton_NTRIP"));
     if (!btn) {
-        QTest::qFail("Settings page button not found: settingsButton_NTRIP/RTK", __FILE__, __LINE__);
+        QTest::qFail("Settings page button not found: settingsButton_NTRIP", __FILE__, __LINE__);
         return false;
     }
 
@@ -39,9 +39,8 @@ bool NTRIPSettingsUITest::_navigateToNtripPage()
     QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
     QTest::qWait(_pageDelay);
 
-    // Page root objectNames are sanitized to [A-Za-z0-9_], so "NTRIP/RTK" becomes "NTRIPRTK"
-    if (!findVisibleItem(_rootItem, QStringLiteral("settingsPage_NTRIPRTK"))) {
-        QTest::qFail("NTRIP settings page wrapper not found: settingsPage_NTRIPRTK", __FILE__, __LINE__);
+    if (!findVisibleItem(_rootItem, QStringLiteral("settingsPage_NTRIP"))) {
+        QTest::qFail("NTRIP settings page wrapper not found: settingsPage_NTRIP", __FILE__, __LINE__);
         return false;
     }
     return true;
@@ -56,6 +55,9 @@ void NTRIPSettingsUITest::_testPageRenders()
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("ntripConnectButton")), "Connect button not found on NTRIP page");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("ntripHostField")), "Host field not found on NTRIP page");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("ntripBrowseButton")), "Browse button not found on NTRIP page");
+    QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("nmeaGpsSettings"), 0));
+    QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("networkRtkConnectButton"), 0));
+    QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_rtcmUdpInputEnabled"), 0));
 
     stopUI();
 }

@@ -1,12 +1,12 @@
 #include "GPSRTKFactGroup.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSRTKFactGroupLog, "GPS.GPSRTKFactGroup")
+QGC_LOGGING_CATEGORY(GPSRTKFactGroupLog, "GPS.RTK.GPSRTKFactGroup")
 
 GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSRTKFact.json"), parent)
 {
-    // qCDebug(GPSRTKFactGroupLog) << Q_FUNC_INFO << this;
+    qCDebug(GPSRTKFactGroupLog) << this;
 
     _addFact(&_connectedFact);
     _addFact(&_currentDurationFact);
@@ -23,5 +23,5 @@ GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
 
 GPSRTKFactGroup::~GPSRTKFactGroup()
 {
-    // qCDebug(GPSRTKFactGroupLog) << Q_FUNC_INFO << this;
+    qCDebug(GPSRTKFactGroupLog) << this;
 }

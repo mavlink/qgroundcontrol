@@ -228,8 +228,8 @@ void NTRIPHttpTransportTest::testTlsFatalErrorEmitsSingleError()
     cfg.allowSelfSignedCerts = false;
     cfg.mountpoint = QStringLiteral("TEST");
 
-    ignoreLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("TLS error:")));
-    ignoreLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
+    ignoreLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("TLS error:")));
+    ignoreLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Rejecting self-signed certificate")));
 
     NTRIPHttpTransport transport(cfg);
@@ -510,7 +510,8 @@ void NTRIPHttpTransportTest::_testFilterRejectsBadCrc()
 
     QByteArray good = GpsTestHelpers::buildRtcmFrame(1077, 2);
 
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("RTCM CRC mismatch")));
+    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("RTCM CRC mismatch")));
     t._parseRtcm(bad + good);
     verifyExpectedLogMessage();
 
@@ -634,7 +635,8 @@ void NTRIPHttpTransportTest::testHandshakeTimeoutClosesSocket()
     QVERIFY(peer);
     QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
     QVERIFY(connected.isEmpty());
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Connection timeout")));
+    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Connection timeout")));
     transport._connectTimeoutTimer.setInterval(std::chrono::milliseconds(50));
     transport._connectTimeoutTimer.start();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
@@ -659,7 +661,8 @@ void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
     QVERIFY(peer);
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Socket error code:")));
+    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Socket error code:")));
     peer->disconnectFromHost();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
     QCOMPARE(transport._socket->state(), QAbstractSocket::UnconnectedState);

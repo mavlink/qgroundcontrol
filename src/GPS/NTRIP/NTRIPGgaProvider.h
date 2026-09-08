@@ -46,6 +46,7 @@ public:
     using PositionProvider = std::function<PositionResult()>;
 
     explicit NTRIPGgaProvider(QObject* parent = nullptr);
+    ~NTRIPGgaProvider() override;
 
     /// Post-construction wiring. Observes the NTRIP position-source / interval
     /// settings and caches them for the GGA hot path. Must be called after

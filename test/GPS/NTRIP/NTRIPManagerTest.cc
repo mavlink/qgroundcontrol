@@ -47,7 +47,7 @@ void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
     NTRIPManager mgr;
     QSignalSpy warningSpy(&mgr, &NTRIPManager::securityWarningChanged);
 
-    ignoreLogMessage("GPS.NTRIPManager", QtWarningMsg,
+    ignoreLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Credentials sent without TLS encryption")));
 
     QVERIFY(mgr.securityWarning().isEmpty());
@@ -179,7 +179,7 @@ void NTRIPManagerTest::testDuplicateTransportErrorsScheduleOneRetry()
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("NTRIP error:.*first failure")));
     transport->simulateError(NTRIPError::SocketError, QStringLiteral("first failure"));
     transport->simulateError(NTRIPError::ServerDisconnected, QStringLiteral("duplicate failure"));
@@ -228,7 +228,7 @@ void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
     mgr._settings = settings;
     auto* transport = new MockNTRIPTransport(&mgr);
     mgr.setTransportForTest(transport);
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
     mgr.startNTRIP();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QCOMPARE(transport->startCount, 0);

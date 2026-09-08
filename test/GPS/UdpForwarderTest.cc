@@ -27,13 +27,13 @@ void UdpForwarderTest::testConfigureInvalid()
 {
     UdpForwarder fwd;
 
-    expectLogMessage("GPS.UdpForwarder", QtWarningMsg,
+    expectLogMessage("Utilities.UdpForwarder", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid UDP forward config")));
     QVERIFY(!fwd.configure(QString(), 9000));
     verifyExpectedLogMessage();
     QVERIFY(!fwd.isEnabled());
 
-    expectLogMessage("GPS.UdpForwarder", QtWarningMsg,
+    expectLogMessage("Utilities.UdpForwarder", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid UDP forward config")));
     QVERIFY(!fwd.configure(QStringLiteral("127.0.0.1"), 0));
     verifyExpectedLogMessage();

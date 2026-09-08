@@ -8,13 +8,20 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(TcpGPSTransportLog, "GPS.TcpGPSTransport")
+QGC_LOGGING_CATEGORY(TcpGPSTransportLog, "GPS.RTK.TcpGPSTransport")
 
 TcpGPSTransport::TcpGPSTransport(QString host, quint16 port, const std::atomic_bool& requestStop)
-    : _host(std::move(host)), _port(port), _requestStop(requestStop)
-{}
+    : _host(std::move(host))
+    , _port(port)
+    , _requestStop(requestStop)
+{
+    qCDebug(TcpGPSTransportLog) << this;
+}
 
-TcpGPSTransport::~TcpGPSTransport() = default;
+TcpGPSTransport::~TcpGPSTransport()
+{
+    qCDebug(TcpGPSTransportLog) << this;
+}
 
 bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs)
 {

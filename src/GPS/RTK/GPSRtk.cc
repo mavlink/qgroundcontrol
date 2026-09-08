@@ -18,7 +18,7 @@
 
 #include <utility>
 
-QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.GPSRtk")
+QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.RTK.GPSRtk")
 
 namespace {
 struct GPSTypeEntry
@@ -36,7 +36,9 @@ constexpr GPSTypeEntry kGPSTypeTable[] = {
 };
 }  // namespace
 
-GPSRtk::GPSRtk(QObject* parent) : QObject(parent), _gpsRtkFactGroup(new GPSRTKFactGroup(this))
+GPSRtk::GPSRtk(QObject* parent)
+    : QObject(parent)
+    , _gpsRtkFactGroup(new GPSRTKFactGroup(this))
 {
     qCDebug(GPSRtkLog) << this;
 
@@ -48,9 +50,9 @@ GPSRtk::GPSRtk(QObject* parent) : QObject(parent), _gpsRtkFactGroup(new GPSRTKFa
 
 GPSRtk::~GPSRtk()
 {
-    disconnectGPS();
-
     qCDebug(GPSRtkLog) << this;
+
+    disconnectGPS();
 }
 
 void GPSRtk::_onGPSConnect()

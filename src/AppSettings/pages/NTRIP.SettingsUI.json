@@ -73,23 +73,6 @@
                     "enableWhen": "QGroundControl.settingsManager.ntripSettings.ntripUdpForwardEnabled.rawValue"
                 }
             ]
-        },
-        {
-            "heading": "UDP RTCM Input",
-            "keywords": ["udp rtcm"],
-            "controls": [
-                {
-                    "setting": "ntripSettings.rtcmUdpInputEnabled"
-                },
-                {
-                    "setting": "ntripSettings.rtcmUdpInputPort",
-                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.rtcmUdpInputEnabled.rawValue"
-                },
-                {
-                    "setting": "ntripSettings.rtcmUdpValidate",
-                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.rtcmUdpInputEnabled.rawValue"
-                }
-            ]
         }
     ]
 }

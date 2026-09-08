@@ -28,6 +28,7 @@ class NTRIPConnectionStats : public QObject
 
 public:
     explicit NTRIPConnectionStats(QObject* parent = nullptr);
+    ~NTRIPConnectionStats() override;
 
     void start();
     void stop();

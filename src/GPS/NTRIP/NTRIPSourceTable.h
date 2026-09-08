@@ -72,6 +72,7 @@ public:
     };
 
     explicit NTRIPSourceTableModel(QObject* parent = nullptr);
+    ~NTRIPSourceTableModel() override;
 
     int count() const { return static_cast<int>(_mountpoints.size()); }
 

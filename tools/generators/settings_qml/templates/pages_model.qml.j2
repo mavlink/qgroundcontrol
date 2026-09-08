@@ -39,6 +39,7 @@ ListModel {
                 {
                     index: {{ section.index }},
                     name: {{ section.name }},
+                    nameKey: {{ section.name_key }},
                     searchTerms: {{ section.search_terms }},
 {% if entry.section_state_name %}
                     visible: {{ entry.section_state_name }}._sectionVisibility[{{ loop.index0 }}]

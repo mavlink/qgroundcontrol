@@ -94,7 +94,7 @@ void GPSRtkTest::_failedOpenNeverConnects()
     GPSRtk receiver;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
     QSignalSpy connected(facts->connected(), &Fact::rawValueChanged);
-    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     receiver.connectReceiver(GPSType::u_blox, {});
     QVERIFY(!receiver.connected());
@@ -157,7 +157,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->receiverReady();
     emit first->connectionError(GPSConnectionError::DeviceError);
     expectLogMessage(
-        "GPS.GPSRtk", QtWarningMsg,
+        "GPS.RTK.GPSRtk", QtWarningMsg,
         QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     receiver.connectReceiver(GPSType::u_blox, blockedFactory(secondGate));
     verifyExpectedLogMessage();
@@ -203,7 +203,7 @@ void GPSRtkTest::_workerCanOutliveManager()
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver->_gpsProvider;
     expectLogMessage(
-        "GPS.GPSRtk", QtWarningMsg,
+        "GPS.RTK.GPSRtk", QtWarningMsg,
         QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     receiver.reset();
     verifyExpectedLogMessage();

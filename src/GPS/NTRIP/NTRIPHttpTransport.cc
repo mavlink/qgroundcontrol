@@ -12,11 +12,15 @@
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
 
-QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
+QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIP.NTRIPHttpTransport")
 
 NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent)
-    : NTRIPTransport(parent), _config(config), _connectTimeoutTimer(this), _dataWatchdogTimer(this)
+    : NTRIPTransport(parent)
+    , _config(config)
+    , _connectTimeoutTimer(this)
+    , _dataWatchdogTimer(this)
 {
+    qCDebug(NTRIPHttpTransportLog) << this;
     const QVector<int> whitelist = NTRIPTransportConfig::parseWhitelist(_config.whitelist);
     _rtcmParser.setWhitelist(whitelist);
     qCDebug(NTRIPHttpTransportLog) << "RTCM message filter:" << whitelist;
@@ -42,6 +46,7 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObje
 
 NTRIPHttpTransport::~NTRIPHttpTransport()
 {
+    qCDebug(NTRIPHttpTransportLog) << this;
     stop();
 }
 

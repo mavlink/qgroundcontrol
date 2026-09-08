@@ -12,6 +12,7 @@ public:
     static constexpr uint8_t kPreamble = 0xD3;
 
     RTCMParser();
+    ~RTCMParser();
     void reset();
 
     void setWhitelist(const QVector<int>& ids) { _whitelist = QSet<int>(ids.begin(), ids.end()); }

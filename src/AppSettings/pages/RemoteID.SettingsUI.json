@@ -89,10 +89,14 @@
         },
         {
             "heading": "GroundStation Location",
-            "keywords": ["ground station", "gcs location", "latitude", "longitude", "altitude", "fixed position", "gnss"],
+            "keywords": ["ground station", "gcs location", "latitude", "longitude", "altitude", "fixed position", "gnss", "gps", "nmea"],
             "controls": [
                 {
                     "setting": "remoteIDSettings.locationType"
+                },
+                {
+                    "control": "component",
+                    "component": "RemoteIDGpsSourceButton"
                 },
                 {
                     "setting": "remoteIDSettings.latitudeFixed",
@@ -116,16 +120,6 @@
                 "longitude",
                 "hdop",
                 "gcs position"
-            ]
-        },
-        {
-            "component": "RemoteIDGpsLocation",
-            "sectionName": "GPS Location",
-            "keywords": [
-                "gps",
-                "nmea",
-                "hdop",
-                "position"
             ]
         },
         {

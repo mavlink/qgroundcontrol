@@ -11,7 +11,10 @@
 #include "NTRIPSettings.h"
 #include "NTRIPTransport.h"
 #include "PositionManager.h"
+#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+
+QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIP.NTRIPGgaProvider")
 
 namespace {
 
@@ -116,8 +119,14 @@ PositionResult getGCSPosition()
 
 NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
 {
+    qCDebug(NTRIPGgaProviderLog) << this;
     _timer.setInterval(_normalInterval);
     connect(&_timer, &QChronoTimer::timeout, this, &NTRIPGgaProvider::_sendGGA);
+}
+
+NTRIPGgaProvider::~NTRIPGgaProvider()
+{
+    qCDebug(NTRIPGgaProviderLog) << this;
 }
 
 void NTRIPGgaProvider::init(NTRIPSettings* settings)

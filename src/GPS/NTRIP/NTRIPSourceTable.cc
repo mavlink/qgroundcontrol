@@ -5,7 +5,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIPSourceTable")
+QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIP.NTRIPSourceTable")
 
 bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& out)
 {
@@ -59,7 +59,15 @@ void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
 // NTRIPSourceTableModel
 // ---------------------------------------------------------------------------
 
-NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent) : QAbstractListModel(parent) {}
+NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent) : QAbstractListModel(parent)
+{
+    qCDebug(NTRIPSourceTableLog) << this;
+}
+
+NTRIPSourceTableModel::~NTRIPSourceTableModel()
+{
+    qCDebug(NTRIPSourceTableLog) << this;
+}
 
 int NTRIPSourceTableModel::rowCount(const QModelIndex& parent) const
 {

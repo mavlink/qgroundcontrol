@@ -9,19 +9,22 @@
 #include <QtCore/QPermissions>
 #include <QtPositioning/QNmeaPositionInfoSource>
 
-QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "PositionManager.QGCPositionManager")
+QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "GPS.PositionManager.QGCPositionManager")
 
 Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 
-QGCPositionManager::QGCPositionManager(QObject* parent) : QObject(parent), _nmeaStaleTimer(this)
+QGCPositionManager::QGCPositionManager(QObject* parent)
+    : QObject(parent)
+    , _nmeaStaleTimer(this)
 {
+    qCDebug(QGCPositionManagerLog) << this;
+
     _nmeaStaleTimer.setSingleShot(true);
     _nmeaStaleTimer.setInterval(std::chrono::seconds(5));
     connect(&_nmeaStaleTimer, &QTimer::timeout, this, [this]() {
         _positionError(QGeoPositionInfoSource::UpdateTimeoutError);
         _clearPosition();
     });
-    qCDebug(QGCPositionManagerLog) << this;
 }
 
 QGCPositionManager::~QGCPositionManager()

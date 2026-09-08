@@ -7,18 +7,22 @@ import QGroundControl.FactControls
 
 SettingsGroupLayout {
     id: root
+    objectName: "nmeaGpsSettings"
     heading: qsTr("NMEA GPS")
     visible: root._autoConnectSettings.nmeaSource.userVisible && root._autoConnectSettings.autoConnectNmeaBaud.userVisible
 
+    readonly property var _connection: QGroundControl.gpsManager.nmeaConnection
     readonly property var  _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property var _serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
     readonly property var _serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
     readonly property bool _serialSource: root._autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceSerial
 
-    LabelledFactComboBox {
-        label: qsTr("Source")
+    GpsConnectionType {
+        objectName: "nmeaConnectionType"
+        Layout.fillWidth: true
         fact: root._autoConnectSettings.nmeaSource
+        excludedValues: root._serialPortManager ? [] : [AutoConnectSettings.NmeaSourceSerial]
     }
 
     LabelledComboBox {
@@ -30,7 +34,7 @@ SettingsGroupLayout {
         model: root._serialPorts.length > 0 ? root._serialPorts : [qsTr("<none available>")]
         currentIndex: root._serialPorts.length > 0
                       ? root._serialPorts.indexOf(root._autoConnectSettings.autoConnectNmeaPort.valueString) : 0
-        enabled: root._serialPorts.length > 0
+        enabled: !root._connection.active && root._serialPorts.length > 0
 
         onActivated: (index) => {
             if (index >= 0 && index < root._serialPorts.length) {
@@ -44,6 +48,7 @@ SettingsGroupLayout {
         objectName: "nmeaBaudCombo"
         visible: root._serialSource
         label: qsTr("Baudrate")
+        enabled: !root._connection.active
 
         readonly property string _customLabel:  qsTr("Custom")
         readonly property bool   isCustomBaud:  currentText === _customLabel
@@ -72,6 +77,7 @@ SettingsGroupLayout {
 
     RowLayout {
         visible: nmeaBaudCombo.visible && nmeaBaudCombo.isCustomBaud
+        enabled: !root._connection.active
         spacing: ScreenTools.defaultFontPixelWidth
 
         QGCLabel {
@@ -97,5 +103,38 @@ SettingsGroupLayout {
         visible: root._autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceUdp
         label: qsTr("NMEA stream UDP port")
         fact: root._autoConnectSettings.nmeaUdpPort
+        enabled: !root._connection.active
+    }
+
+    LabelledFactTextField {
+        objectName: "nmeaTcpHost"
+        Layout.fillWidth: true
+        textFieldPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+        visible: root._autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceTcp
+        label: qsTr("Host")
+        fact: root._autoConnectSettings.nmeaTcpHost
+        enabled: !root._connection.active
+    }
+
+    LabelledFactTextField {
+        objectName: "nmeaTcpPort"
+        Layout.fillWidth: true
+        visible: root._autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceTcp
+        label: qsTr("Port")
+        fact: root._autoConnectSettings.nmeaTcpPort
+        enabled: !root._connection.active
+    }
+
+    GpsConnectionControls {
+        autoConnectFact: root._autoConnectSettings.nmeaAutoConnect
+        autoConnectObjectName: "nmeaAutoConnect"
+        connectButtonObjectName: "nmeaConnectButton"
+        statusObjectName: "nmeaConnectionStatus"
+        active: root._connection.active
+        statusText: root._connection.status
+        available: root._autoConnectSettings.nmeaSource.rawValue !== AutoConnectSettings.NmeaSourceDisabled
+                   && (!root._serialSource || root._serialPortManager !== null)
+        onConnectRequested: QGroundControl.gpsManager.connectNmea()
+        onDisconnectRequested: QGroundControl.gpsManager.disconnectNmea()
     }
 }

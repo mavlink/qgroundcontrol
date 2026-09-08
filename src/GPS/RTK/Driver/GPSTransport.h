@@ -8,7 +8,8 @@
 class GPSTransport
 {
 public:
-    virtual ~GPSTransport() = default;
+    GPSTransport();
+    virtual ~GPSTransport();
 
     virtual bool open() = 0;
     virtual bool fatalError() const = 0;

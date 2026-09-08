@@ -22,18 +22,21 @@ GPSManager::GPSManager(QObject *parent)
     : QObject(parent)
     , _gpsRtk(new GPSRtk(this))
 {
+    qCDebug(GPSManagerLog) << this;
+
     auto* settings = SettingsManager::instance();
+    _nmeaSources = new NmeaSourceManager(settings->autoConnectSettings(), QGCPositionManager::instance(), this);
     _rtkAutoConnect = new RTKAutoConnect(_gpsRtk, settings->autoConnectSettings(), settings->rtkSettings(), this);
     connect(_rtkAutoConnect, &RTKAutoConnect::networkActiveChanged, this, &GPSManager::networkRtkActiveChanged);
     connect(_rtkAutoConnect, &RTKAutoConnect::networkAutoConnectPausedChanged, this,
             &GPSManager::networkRtkAutoConnectPausedChanged);
-    qCDebug(GPSManagerLog) << this;
 }
 
 GPSManager::~GPSManager()
 {
-    shutdown();
     qCDebug(GPSManagerLog) << this;
+
+    shutdown();
 }
 
 GPSManager *GPSManager::instance()
@@ -46,8 +49,6 @@ void GPSManager::init()
     if (_connectionTimer) {
         return;
     }
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
-    _nmeaSources = new NmeaSourceManager(settings, QGCPositionManager::instance(), this);
 #ifndef QGC_NO_SERIAL_LINK
     _rtkAutoConnect->setSerialDiscovery(SerialPortManager::instance());
     connect(_rtkAutoConnect, &RTKAutoConnect::connectRequested, this,
@@ -68,6 +69,26 @@ void GPSManager::_updateConnections()
     }
     _nmeaSources->update();
     _rtkAutoConnect->update();
+}
+
+bool GPSManager::connectNmea()
+{
+    return !LinkManager::instance()->connectionsSuspended() && _nmeaSources->connectSource();
+}
+
+void GPSManager::disconnectNmea()
+{
+    _nmeaSources->disconnectSource();
+}
+
+bool GPSManager::connectRtk()
+{
+    return !LinkManager::instance()->connectionsSuspended() && _rtkAutoConnect->connectSelected();
+}
+
+void GPSManager::disconnectRtk()
+{
+    _rtkAutoConnect->disconnectSelected();
 }
 
 bool GPSManager::networkRtkActive() const

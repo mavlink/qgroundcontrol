@@ -36,6 +36,8 @@ public:
     GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                 QObject* parent = nullptr);
 
+    ~GPSProvider() override;
+
     void stop() { _requestStop = true; }
 
 signals:

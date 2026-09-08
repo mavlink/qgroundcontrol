@@ -8,6 +8,7 @@ qt_add_library(
     STATIC
     GPSDriver.cc
     GPSDriver.h
+    GPSTransport.cc
     GPSTransport.h
     GPSType.h
     definitions.h

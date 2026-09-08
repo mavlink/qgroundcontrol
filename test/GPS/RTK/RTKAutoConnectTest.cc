@@ -14,6 +14,69 @@
 #endif
 
 #ifndef QGC_NO_SERIAL_LINK
+void RTKAutoConnectTest::_manualSerialSelectionAndPause()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    auto* rtkSettings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), false);
+    saved.setFactValue(settings->autoConnectNetworkRTKGPS(), false);
+    saved.setFactValue(rtkSettings->connectionType(), RTKSettings::Serial);
+    saved.setFactValue(rtkSettings->serialDevice(), QStringLiteral("/test/chosen"));
+    saved.setFactValue(rtkSettings->networkReceiverType(), 3);
+    QList<SerialPortManager::Port> inventory{
+        {QStringLiteral("/test/other"), QStringLiteral("other"), QGCSerialPortInfo::BoardTypeRTKGPS,
+         QStringLiteral("u-blox")},
+        {QStringLiteral("/test/chosen"), QStringLiteral("chosen"), QGCSerialPortInfo::BoardTypeUnknown, QString()}};
+    SerialPortManager ports(nullptr, [&]() { return inventory; });
+    GPSRtk receiver;
+    RTKAutoConnect controller(&receiver, settings, rtkSettings);
+    controller.setSerialDiscovery(&ports);
+    controller._connectDelayMs = 0;
+    QSignalSpy connects(&controller, &RTKAutoConnect::connectRequested);
+    QSignalSpy disconnects(&controller, &RTKAutoConnect::disconnectRequested);
+    controller.update();
+    QVERIFY(!controller.active());
+    QVERIFY(controller.connectSelected());
+    controller.update();
+    QCOMPARE(connects.size(), 1);
+    QCOMPARE(connects.first().first().toString(), QStringLiteral("/test/chosen"));
+    QCOMPARE(connects.first().at(1).toString(), QStringLiteral("Femtomes"));
+    auto ownReservation = ports.reservePort(QStringLiteral("/test/chosen"));
+    QVERIFY(ownReservation);
+    controller.update();
+    QCOMPARE(disconnects.size(), 0);
+    ownReservation.reset();
+    auto nmeaExclusion = ports.excludeFromAutoConnect(QStringLiteral("/test/chosen"));
+    controller.update();
+    QCOMPARE(disconnects.size(), 1);
+    QCOMPARE(connects.size(), 1);
+    QVERIFY(controller.active());
+    nmeaExclusion.reset();
+    controller.update();
+    controller.update();
+    QCOMPARE(connects.size(), 2);
+    controller.disconnectSelected();
+    QVERIFY(!controller.active());
+    controller.update();
+    QCOMPARE(connects.size(), 2);
+    settings->autoConnectRTKGPS()->setRawValue(true);
+    controller.update();
+    controller.update();
+    QCOMPARE(connects.size(), 3);
+    controller.disconnectSelected();
+    QVERIFY(controller.autoConnectPaused());
+    controller.update();
+    QCOMPARE(connects.size(), 3);
+    QVERIFY(controller.connectSelected());
+    controller.update();
+    QCOMPARE(connects.size(), 4);
+    rtkSettings->connectionType()->setRawValue(RTKSettings::Tcp);
+    controller.update();
+    QVERIFY(!controller.active());
+    QCOMPARE(connects.size(), 4);
+}
+
 void RTKAutoConnectTest::_discoveryUnplugAndDisable()
 {
     TestFixtures::SettingsFixture saved;
@@ -83,6 +146,8 @@ void RTKAutoConnectTest::_excludedPorts()
     SerialPortManager ports(nullptr, [&]() { return QList<SerialPortManager::Port>{port}; });
     (void) ports.availablePorts();
     SerialPortManager::ReservationPtr reservation;
+    const auto exclusion = reason == QStringLiteral("nmea") ? ports.excludeFromAutoConnect(port.systemLocation)
+                                                            : SerialPortManager::ReservationPtr();
     if (reason == QStringLiteral("busy")) {
         reservation = ports.reservePort(port.systemLocation);
     } else if (reason == QStringLiteral("single-port")) {
@@ -169,7 +234,7 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     QSignalSpy attempts(&discovery, &RTKAutoConnect::connectRequested);
     connect(&discovery, &RTKAutoConnect::connectRequested, &receiver,
             [&]() { receiver.connectReceiver(GPSType::u_blox, {}); });
-    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     discovery.update();
     discovery.update();
@@ -182,7 +247,7 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     discovery.update();
     QCOMPARE(attempts.size(), 1);
     discovery._retryDeadline.setRemainingTime(0);
-    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     discovery.update();
     QCOMPARE(attempts.size(), 2);
@@ -191,6 +256,7 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     QCOMPARE(discovery._retryDelayMs, 2000);
     saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceSerial);
     saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/rtk"));
+    const auto nmeaExclusion = ports.excludeFromAutoConnect(QStringLiteral("/test/rtk"));
     discovery._retryDeadline.setRemainingTime(0);
     discovery.update();
     QCOMPARE(attempts.size(), 2);
@@ -215,7 +281,7 @@ void RTKAutoConnectTest::_networkRetriesAndStops()
         return std::unique_ptr<GPSTransport>();
     };
     const auto expectFailure = [this]() {
-        expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+        expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     };
     expectFailure();

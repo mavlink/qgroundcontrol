@@ -6,13 +6,13 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(SimulatedPositionLog, "PositionManager.SimulatedPosition")
+QGC_LOGGING_CATEGORY(SimulatedPositionLog, "GPS.PositionManager.SimulatedPosition")
 
 SimulatedPosition::SimulatedPosition(QObject* parent)
     : QGeoPositionInfoSource(parent)
     , _updateTimer(new QTimer(this))
 {
-    // qCDebug(SimulatedPositionLog) << Q_FUNC_INFO << this;
+    qCDebug(SimulatedPositionLog) << this;
 
     _lastPosition.setTimestamp(QDateTime::currentDateTime());
     _lastPosition.setCoordinate(QGeoCoordinate(47.3977420, 8.5455941, 488.));
@@ -28,7 +28,7 @@ SimulatedPosition::SimulatedPosition(QObject* parent)
 
 SimulatedPosition::~SimulatedPosition()
 {
-    // qCDebug(SimulatedPositionLog) << Q_FUNC_INFO << this;
+    qCDebug(SimulatedPositionLog) << this;
 }
 
 void SimulatedPosition::startUpdates()

@@ -14,8 +14,9 @@
 #include <cstring>
 #include <utility>
 
-QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.GPSDriver")
-QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Drivers") // backs the px4 GPS_INFO/WARN/ERR macros in definitions.h
+QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.RTK.Driver.GPSDriver")
+QGC_LOGGING_CATEGORY(GPSDriversLog,
+                     "GPS.RTK.Driver.Drivers")  // backs the px4 GPS_INFO/WARN/ERR macros in definitions.h
 
 namespace {
 int callbackTrampoline(GPSCallbackType type, void *data1, int data2, void *user)
@@ -30,9 +31,13 @@ GPSDriver::GPSDriver(GPSType type, GPSTransport &transport, const GPSReceiverCon
     , _config(config)
     , _sinks(std::move(sinks))
 {
+    qCDebug(GPSDriverLog) << this;
 }
 
-GPSDriver::~GPSDriver() = default;
+GPSDriver::~GPSDriver()
+{
+    qCDebug(GPSDriverLog) << this;
+}
 
 bool GPSDriver::configure()
 {

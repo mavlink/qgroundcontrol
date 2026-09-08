@@ -13,5 +13,7 @@ private slots:
     void _networkStartupAndPause();
     void _suspendedConnections();
     void _serialDiscoveryPausesForNetwork();
+    void _rtkConnectionSelectionMigration();
+    void _nmeaAndRtkIndependent();
     void _networkSettingsPanel();
 };

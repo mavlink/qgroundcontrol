@@ -59,7 +59,7 @@ void PositionManagerTest::init()
     UnitTest::init();
     // Headless CI has no real position source, so the internal GPS fallback
     // times out waiting for updates. Expected and benign in this fixture.
-    ignoreLogMessage("PositionManager.QGCPositionManager", QtWarningMsg,
+    ignoreLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("UpdateTimeoutError")));
 }
 

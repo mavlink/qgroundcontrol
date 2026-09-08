@@ -10,7 +10,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
 
-QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIPSourceTableController")
+QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIP.NTRIPSourceTableController")
 
 namespace {
 bool isSelfSignedOnly(const QList<QSslError>& errors)
@@ -39,13 +39,16 @@ bool isSelfSignedOnly(const QList<QSslError>& errors)
 }  // namespace
 
 NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent)
-    : QObject(parent),
-      _model(new NTRIPSourceTableModel(this)),
-      _networkManager(QGCNetworkHelper::createNetworkManager(this))
-{}
+    : QObject(parent)
+    , _model(new NTRIPSourceTableModel(this))
+    , _networkManager(QGCNetworkHelper::createNetworkManager(this))
+{
+    qCDebug(NTRIPSourceTableControllerLog) << this;
+}
 
 NTRIPSourceTableController::~NTRIPSourceTableController()
 {
+    qCDebug(NTRIPSourceTableControllerLog) << this;
     // Abort any in-flight reply before the shared QNAM is destroyed by ~QObject's
     // child cleanup, otherwise the reply outlives its manager.
     _abortReply();

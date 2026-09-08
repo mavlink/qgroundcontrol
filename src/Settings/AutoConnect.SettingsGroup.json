@@ -61,10 +61,33 @@
             "shortDesc": "NMEA GPS source for GCS position",
             "longDesc": "NMEA GPS source for GCS position",
             "type": "uint32",
-            "enumStrings": "Disabled,UDP Port,Serial Port",
-            "enumValues": "0,1,2",
+            "enumStrings": "Disabled,UDP,Serial,TCP",
+            "enumValues": "0,1,2,3",
             "default": 0,
             "label": "NMEA GPS source for GCS position"
+        },
+        {
+            "name": "nmeaAutoConnect",
+            "shortDesc": "Connect to the selected NMEA source at startup and reconnect when needed.",
+            "type": "bool",
+            "default": true,
+            "label": "Connect automatically"
+        },
+        {
+            "name": "nmeaTcpHost",
+            "shortDesc": "NMEA TCP server host",
+            "type": "string",
+            "default": "",
+            "label": "Host"
+        },
+        {
+            "name": "nmeaTcpPort",
+            "shortDesc": "NMEA TCP server port",
+            "type": "uint16",
+            "default": 10110,
+            "min": 1,
+            "max": 65535,
+            "label": "Port"
         },
         {
             "name": "autoConnectNmeaPort",

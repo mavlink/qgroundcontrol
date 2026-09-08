@@ -4,7 +4,7 @@
 
 class QQuickItem;
 
-/// UI tests for the NTRIP/RTK settings page.
+/// UI tests for the NTRIP settings page.
 ///
 /// Navigates to the page through the real settings left-nav and verifies the
 /// enable/disable gating of the hand-written NTRIP controls: the Browse button

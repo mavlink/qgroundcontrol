@@ -7,17 +7,44 @@
 
 #include "AutoConnectSettings.h"
 #include "GPSRtk.h"
+#include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
 #include "TcpGPSTransport.h"
 
+QGC_LOGGING_CATEGORY(RTKAutoConnectLog, "GPS.RTK.RTKAutoConnect")
+
 RTKAutoConnect::RTKAutoConnect(GPSRtk* receiver, AutoConnectSettings* settings, RTKSettings* rtkSettings,
                                QObject* parent)
-    : QObject(parent), _receiver(receiver), _settings(settings), _rtkSettings(rtkSettings)
+    : QObject(parent)
+    , _receiver(receiver)
+    , _settings(settings)
+    , _rtkSettings(rtkSettings)
 {
+    qCDebug(RTKAutoConnectLog) << this;
     if (_receiver) {
         connect(this, &RTKAutoConnect::disconnectRequested, _receiver, &GPSRtk::disconnectGPS);
     }
+    connect(this, &RTKAutoConnect::networkActiveChanged, this, &RTKAutoConnect::stateChanged);
+    connect(this, &RTKAutoConnect::networkAutoConnectPausedChanged, this, &RTKAutoConnect::stateChanged);
+    if (_rtkSettings) {
+        for (Fact* fact :
+             {_rtkSettings->connectionType(), _rtkSettings->serialDevice(), _rtkSettings->networkReceiverType()}) {
+            connect(fact, &Fact::rawValueChanged, this, [this]() {
+                stop();
+                _serialPaused = false;
+                _setNetworkAutoConnectPaused(false);
+                emit stateChanged();
+            });
+        }
+    }
     if (_settings) {
+        connect(_settings->autoConnectRTKGPS(), &Fact::rawValueChanged, this, [this](const QVariant& enabled) {
+            _serialPaused = false;
+            if (!enabled.toBool() && !networkActive()) {
+                stop();
+            }
+            emit stateChanged();
+        });
         connect(_settings->autoConnectNetworkRTKGPS(), &Fact::rawValueChanged, this, [this](const QVariant& enabled) {
             _setNetworkAutoConnectPaused(false);
             if (!enabled.toBool() && networkActive()) {
@@ -25,6 +52,53 @@ RTKAutoConnect::RTKAutoConnect(GPSRtk* receiver, AutoConnectSettings* settings, 
             }
         });
     }
+}
+
+RTKAutoConnect::~RTKAutoConnect()
+{
+    qCDebug(RTKAutoConnectLog) << this;
+}
+
+bool RTKAutoConnect::_serialSelected() const
+{
+    return !_rtkSettings || _rtkSettings->connectionType()->rawValue().toInt() == RTKSettings::Serial;
+}
+
+bool RTKAutoConnect::autoConnectPaused() const
+{
+    if (!_settings) {
+        return false;
+    }
+    return _serialSelected() ? _serialPaused && _settings->autoConnectRTKGPS()->rawValue().toBool()
+                             : _networkAutoConnectPaused && _settings->autoConnectNetworkRTKGPS()->rawValue().toBool();
+}
+
+bool RTKAutoConnect::connectSelected()
+{
+    if (!_serialSelected()) {
+        return connectNetwork();
+    }
+#ifndef QGC_NO_SERIAL_LINK
+    if (!_serialPorts || !_receiver) {
+        return false;
+    }
+    stop();
+    _serialPaused = false;
+    _serialRequested = true;
+    emit stateChanged();
+    update();
+    return true;
+#else
+    return false;
+#endif
+}
+
+void RTKAutoConnect::disconnectSelected()
+{
+    _serialPaused = true;
+    _setNetworkAutoConnectPaused(true);
+    stop();
+    emit stateChanged();
 }
 
 bool RTKAutoConnect::connectNetwork()
@@ -96,7 +170,9 @@ void RTKAutoConnect::_setNetworkAutoConnectPaused(bool paused)
 
 void RTKAutoConnect::stop()
 {
+    const bool wasActive = active();
     const bool wasNetworkActive = networkActive();
+    _serialRequested = false;
     bool hadSession = wasNetworkActive;
     _networkFactory = {};
 #ifndef QGC_NO_SERIAL_LINK
@@ -111,6 +187,8 @@ void RTKAutoConnect::stop()
     }
     if (wasNetworkActive) {
         emit networkActiveChanged();
+    } else if (wasActive) {
+        emit stateChanged();
     }
 }
 
@@ -145,7 +223,7 @@ void RTKAutoConnect::update()
     if (!_receiver) {
         return;
     }
-    if (!networkActive() && !_networkAutoConnectPaused && _settings &&
+    if (!_serialSelected() && !networkActive() && !_networkAutoConnectPaused && _settings &&
         _settings->autoConnectNetworkRTKGPS()->rawValue().toBool()) {
         connectNetwork();
     }
@@ -157,6 +235,8 @@ void RTKAutoConnect::update()
         return;
     }
 #ifndef QGC_NO_SERIAL_LINK
-    _updateSerial();
+    if (_serialSelected()) {
+        _updateSerial();
+    }
 #endif
 }

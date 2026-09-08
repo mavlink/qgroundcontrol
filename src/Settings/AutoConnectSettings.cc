@@ -55,6 +55,9 @@ DECLARE_SETTINGSFACT(AutoConnectSettings, udpListenPort)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostIP)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostPort)
 DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaUdpPort)
+DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaAutoConnect)
+DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaTcpHost)
+DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaTcpPort)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectPixhawk)
 {

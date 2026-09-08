@@ -117,12 +117,24 @@ Rectangle {
         rightPanel.source = ""
     }
 
-    // settingsPage is the untranslated page name from SettingsPages.json
-    function showSettingsPage(settingsPage) {
+    // Use untranslated page and section names from the settings definitions.
+    function showSettingsPage(settingsPage, settingsSection = "") {
         for (var i = 0; i < settingsPagesModel.count; i++) {
             var entry = settingsPagesModel.get(i)
             if (entry && entry.nameKey === settingsPage) {
-                _navigateTo(i, -1)
+                var sectionIndex = -1
+                if (settingsSection !== "") {
+                    var sections = _pageSections(entry)
+                    for (var j = 0; j < sections.length; j++) {
+                        if (sections[j].nameKey === settingsSection && sections[j].visible) {
+                            sectionIndex = sections[j].index
+                            break
+                        }
+                    }
+                    searchField.text = ""
+                    _setExpanded(i, true)
+                }
+                _navigateTo(i, sectionIndex)
                 break
             }
         }

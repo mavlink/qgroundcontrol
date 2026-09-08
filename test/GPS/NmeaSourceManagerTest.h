@@ -11,6 +11,8 @@ private slots:
     void _udpSwitchAndDisable();
     void _bindFailureAndTeardown();
     void _configuredSerialRoutingSurvivesReconnect();
-    void _settingsUseSharedSerialInventory_data();
+    void _tcpRecoveryAndSourceSwitch();
+    void _tcpManualAndAutoConnect();
+    void _tcpRefusalBackoff();
     void _settingsUseSharedSerialInventory();
 };

@@ -1,8 +1,18 @@
 #include "RTCMParser.h"
 
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(RTCMParserLog, "GPS.RTCM.RTCMParser")
+
 RTCMParser::RTCMParser()
 {
+    qCDebug(RTCMParserLog) << this;
     reset();
+}
+
+RTCMParser::~RTCMParser()
+{
+    qCDebug(RTCMParserLog) << this;
 }
 
 void RTCMParser::reset()

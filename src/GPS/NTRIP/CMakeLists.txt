@@ -8,6 +8,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         NMEAUtils.cc
         NMEAUtils.h
         NTRIPError.h
+        NTRIPTransport.cc
         NTRIPTransport.h
         NTRIPConnectionStats.cc
         NTRIPConnectionStats.h

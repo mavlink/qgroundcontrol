@@ -17,7 +17,7 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIPManager")
+QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIP.NTRIPManager")
 
 Q_APPLICATION_STATIC(NTRIPManager, _ntripManagerInstance);
 
@@ -98,7 +98,7 @@ bool isRetryable(NTRIPError error)
 
 NTRIPManager::NTRIPManager(QObject* parent) : QObject(parent)
 {
-    qCDebug(NTRIPManagerLog) << "NTRIPManager created";
+    qCDebug(NTRIPManagerLog) << this;
 
     _settingsDebounceTimer.setSingleShot(true);
     _settingsDebounceTimer.setInterval(kSettingsDebounceMs);
@@ -122,7 +122,7 @@ NTRIPManager::NTRIPManager(QObject* parent) : QObject(parent)
 
 NTRIPManager::~NTRIPManager()
 {
-    qCDebug(NTRIPManagerLog) << "NTRIPManager destroyed";
+    qCDebug(NTRIPManagerLog) << this;
     stopNTRIP();
 }
 

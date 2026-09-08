@@ -16,22 +16,6 @@
             ]
         },
         {
-            "component": "NmeaGpsSettings",
-            "sectionName": "NMEA GPS",
-            "keywords": [
-                "nmea",
-                "gps",
-                "serial",
-                "baud rate",
-                "external gps"
-            ]
-        },
-        {
-            "component": "NetworkRtkSettings",
-            "sectionName": "Network RTK Receiver",
-            "keywords": ["gps", "rtk", "tcp", "receiver", "base", "network"]
-        },
-        {
             "heading": "Android Serial",
             "keywords": ["serial", "posix", "uart", "tty", "android"],
             "controls": [
@@ -42,7 +26,7 @@
         },
         {
             "heading": "AutoConnect",
-            "keywords": ["auto connect", "pixhawk", "sik radio", "librepilot", "udp", "rtk gps", "usb"],
+            "keywords": ["auto connect", "pixhawk", "sik radio", "librepilot", "udp", "usb"],
             "showWhen": "QGroundControl.settingsManager.autoConnectSettings.userVisible",
             "controls": [
                 {
@@ -56,9 +40,6 @@
                 },
                 {
                     "setting": "autoConnectSettings.autoConnectUDP"
-                },
-                {
-                    "setting": "autoConnectSettings.autoConnectRTKGPS"
                 }
             ]
         }

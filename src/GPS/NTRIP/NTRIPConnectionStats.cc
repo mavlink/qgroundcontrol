@@ -2,8 +2,15 @@
 
 #include <algorithm>
 
-NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _rateTimer(this)
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(NTRIPConnectionStatsLog, "GPS.NTRIP.NTRIPConnectionStats")
+
+NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent)
+    : QObject(parent)
+    , _rateTimer(this)
 {
+    qCDebug(NTRIPConnectionStatsLog) << this;
     _rateTimer.setInterval(std::chrono::seconds{1});
     _rateTimer.callOnTimeout(this, [this]() {
         const quint64 totalBytes = _rateTracker.totalBytes();
@@ -33,6 +40,11 @@ NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _
             emit messageCountsByIdChanged();
         }
     });
+}
+
+NTRIPConnectionStats::~NTRIPConnectionStats()
+{
+    qCDebug(NTRIPConnectionStatsLog) << this;
 }
 
 void NTRIPConnectionStats::start()

@@ -5,12 +5,18 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.RTCMUdpInput")
+QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.RTCM.RTCMUdpInput")
 
-RTCMUdpInput::RTCMUdpInput(quint16 port, QObject* parent) : QObject(parent), _port(port) {}
+RTCMUdpInput::RTCMUdpInput(quint16 port, QObject* parent)
+    : QObject(parent)
+    , _port(port)
+{
+    qCDebug(RTCMUdpInputLog) << this;
+}
 
 RTCMUdpInput::~RTCMUdpInput()
 {
+    qCDebug(RTCMUdpInputLog) << this;
     stop();
 }
 

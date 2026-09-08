@@ -3,6 +3,22 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "connectionType",
+            "shortDesc": "RTK receiver connection",
+            "type": "uint8",
+            "enumStrings": "Serial,TCP",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Connection"
+        },
+        {
+            "name": "serialDevice",
+            "shortDesc": "Serial device; empty selects automatic RTK receiver discovery.",
+            "type": "string",
+            "default": "",
+            "label": "Device"
+        },
+        {
             "name": "networkBaseHost",
             "shortDesc": "TCP receiver host",
             "type": "string",

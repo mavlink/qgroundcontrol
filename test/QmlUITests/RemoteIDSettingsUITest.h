@@ -24,6 +24,7 @@ public:
 private slots:
     void init() override;
     void cleanup() override;
+    void _testConfigureGpsSource();
     void _testInvalidOperatorIDShowsError();
     void _testValidOperatorIDClearsErrorAndSanitizes();
     void _testMaximumLengthEnforced();

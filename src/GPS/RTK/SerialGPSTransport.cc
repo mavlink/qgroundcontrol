@@ -12,15 +12,19 @@
 
 #include <utility>
 
-QGC_LOGGING_CATEGORY(SerialGPSTransportLog, "GPS.SerialGPSTransport")
+QGC_LOGGING_CATEGORY(SerialGPSTransportLog, "GPS.RTK.SerialGPSTransport")
 
 SerialGPSTransport::SerialGPSTransport(QString device, const std::atomic_bool &requestStop)
     : _device(std::move(device))
     , _requestStop(requestStop)
 {
+    qCDebug(SerialGPSTransportLog) << this;
 }
 
-SerialGPSTransport::~SerialGPSTransport() = default;
+SerialGPSTransport::~SerialGPSTransport()
+{
+    qCDebug(SerialGPSTransportLog) << this;
+}
 
 bool SerialGPSTransport::open()
 {

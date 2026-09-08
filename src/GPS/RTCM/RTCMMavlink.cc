@@ -14,7 +14,7 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
-QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "GPS.RTCMMavlink")
+QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "GPS.RTCM.RTCMMavlink")
 
 // Compile-time check that our constants match the MAVLink message definition.
 static_assert(RTCMMavlink::kFragmentLen == MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN);

@@ -28,6 +28,13 @@ class RTKSettings : public SettingsGroup
     QML_UNCREATABLE("")
 public:
     RTKSettings(QObject* parent = nullptr);
+
+    enum ConnectionType
+    {
+        Serial = 0,
+        Tcp
+    };
+    Q_ENUM(ConnectionType)
     DEFINE_SETTING_NAME_GROUP()
     DEFINE_SETTINGFACT(baseReceiverManufacturers)
     DEFINE_SETTINGFACT(surveyInAccuracyLimit)
@@ -37,6 +44,8 @@ public:
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
     DEFINE_SETTINGFACT(fixedBasePositionAltitude)
     DEFINE_SETTINGFACT(fixedBasePositionAccuracy)
+    DEFINE_SETTINGFACT(connectionType)
+    DEFINE_SETTINGFACT(serialDevice)
     DEFINE_SETTINGFACT(networkBaseHost)
     DEFINE_SETTINGFACT(networkBasePort)
     DEFINE_SETTINGFACT(networkReceiverType)

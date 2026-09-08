@@ -7,13 +7,22 @@
 #include "QGCLoggingCategory.h"
 #include "RTCMMavlink.h"
 
-QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
+QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.RTK.GPSProvider")
 
 GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                          QObject* parent)
-    : QThread(parent), _transportFactory(std::move(transportFactory)), _type(type), _config(config)
+    : QThread(parent)
+    , _transportFactory(std::move(transportFactory))
+    , _type(type)
+    , _config(config)
 {
+    qCDebug(GPSProviderLog) << this;
     qCDebug(GPSProviderLog) << QStringLiteral("Survey in accuracy: %1 | duration: %2").arg(_config.surveyInAccMeters).arg(_config.surveyInDurationSecs);
+}
+
+GPSProvider::~GPSProvider()
+{
+    qCDebug(GPSProviderLog) << this;
 }
 
 void GPSProvider::run()

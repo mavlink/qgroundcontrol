@@ -4,7 +4,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(UdpForwarderLog, "GPS.UdpForwarder")
+QGC_LOGGING_CATEGORY(UdpForwarderLog, "Utilities.UdpForwarder")
 
 UdpForwarder::UdpForwarder(QObject* parent) : QObject(parent) {}
 

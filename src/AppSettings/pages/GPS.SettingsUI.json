@@ -1,0 +1,39 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "component": "NmeaGpsSettings",
+            "sectionName": "NMEA GPS",
+            "keywords": [
+                "nmea",
+                "gps",
+                "serial",
+                "baud rate",
+                "external gps"
+            ]
+        },
+        {
+            "component": "LocalRtkSettings",
+            "sectionName": "Local RTK Receiver",
+            "keywords": ["gps", "rtk", "receiver", "base", "usb", "serial", "tcp", "network", "auto connect"]
+        },
+        {
+            "heading": "UDP RTCM Input",
+            "keywords": ["udp rtcm"],
+            "controls": [
+                {
+                    "setting": "ntripSettings.rtcmUdpInputEnabled"
+                },
+                {
+                    "setting": "ntripSettings.rtcmUdpInputPort",
+                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.rtcmUdpInputEnabled.rawValue"
+                },
+                {
+                    "setting": "ntripSettings.rtcmUdpValidate",
+                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.rtcmUdpInputEnabled.rawValue"
+                }
+            ]
+        }
+    ]
+}
