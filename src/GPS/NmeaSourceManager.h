@@ -33,8 +33,10 @@ private:
     int _source = -1;
     bool _sourceInstalled = false;
 #ifndef QGC_NO_SERIAL_LINK
+    void _updateSerialRouting();
     std::unique_ptr<QSerialPort> _serial;
     SerialPortManager::ReservationPtr _reservation;
+    SerialPortManager::ReservationPtr _autoConnectExclusion;
     QString _serialDevice;
     qint32 _serialBaud = 0;
 #endif

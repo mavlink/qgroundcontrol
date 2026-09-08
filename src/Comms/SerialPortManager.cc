@@ -104,6 +104,28 @@ bool SerialPortManager::canReservePort(const QString& systemLocation) const
            !(_singlePortOnly && anyPortReserved());
 }
 
+SerialPortManager::ReservationPtr SerialPortManager::excludeFromAutoConnect(const QString& systemLocation)
+{
+    const QString port = systemLocation.trimmed();
+    if (port.isEmpty()) {
+        return {};
+    }
+    for (auto it = _autoConnectExclusions.begin(); it != _autoConnectExclusions.end();) {
+        it = it.value().expired() ? _autoConnectExclusions.erase(it) : std::next(it);
+    }
+    if (auto existing = _autoConnectExclusions.value(port).lock()) {
+        return existing;
+    }
+    auto exclusion = std::make_shared<const Reservation>(Reservation{port});
+    _autoConnectExclusions.insert(port, exclusion);
+    return exclusion;
+}
+
+bool SerialPortManager::canAutoConnectPort(const QString& systemLocation) const
+{
+    return _autoConnectExclusions.value(systemLocation.trimmed()).expired() && canReservePort(systemLocation);
+}
+
 QStringList SerialPortManager::supportedBaudRates()
 {
     static const QSet<qint32> kDefaultSupportedBaudRates = {

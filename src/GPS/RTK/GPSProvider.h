@@ -30,7 +30,7 @@ class GPSProvider : public QThread
     Q_OBJECT
 
 public:
-    /// Invoked by run(), so transport construction, I/O and destruction share the worker thread.
+    /// Consumed by run(), so transport construction, I/O and destruction share the worker thread.
     using TransportFactory = std::function<std::unique_ptr<GPSTransport>(const std::atomic_bool&)>;
 
     GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,

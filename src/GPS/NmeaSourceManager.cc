@@ -18,7 +18,26 @@ QGC_LOGGING_CATEGORY(NmeaSourceManagerLog, "GPS.NmeaSourceManager")
 NmeaSourceManager::NmeaSourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager,
                                      QObject* parent)
     : QObject(parent), _settings(settings), _positionManager(positionManager)
-{}
+{
+#ifndef QGC_NO_SERIAL_LINK
+    if (_settings) {
+        connect(_settings->nmeaSource(), &Fact::rawValueChanged, this, &NmeaSourceManager::_updateSerialRouting);
+        connect(_settings->autoConnectNmeaPort(), &Fact::rawValueChanged, this,
+                &NmeaSourceManager::_updateSerialRouting);
+        _updateSerialRouting();
+    }
+#endif
+}
+
+#ifndef QGC_NO_SERIAL_LINK
+void NmeaSourceManager::_updateSerialRouting()
+{
+    const QString port = _settings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceSerial
+                             ? _settings->autoConnectNmeaPort()->rawValue().toString().trimmed()
+                             : QString();
+    _autoConnectExclusion = SerialPortManager::instance()->excludeFromAutoConnect(port);
+}
+#endif
 
 NmeaSourceManager::~NmeaSourceManager()
 {

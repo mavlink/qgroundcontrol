@@ -22,6 +22,8 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
 
 void GPSProvider::run()
 {
+    // Keep factory captures alive until the transport is destroyed, including on early returns.
+    auto transportFactory = std::exchange(_transportFactory, {});
     if (_requestStop) {
         return;
     }
@@ -31,7 +33,7 @@ void GPSProvider::run()
     return;
 #endif
 
-    auto transport = _transportFactory ? _transportFactory(_requestStop) : nullptr;
+    auto transport = transportFactory ? transportFactory(_requestStop) : nullptr;
     if (!transport || !transport->open()) {
         if (!_requestStop) {
             emit connectionError(GPSConnectionError::OpenFailed);

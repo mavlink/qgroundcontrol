@@ -100,8 +100,51 @@ void NmeaSourceManagerTest::_bindFailureAndTeardown()
 
 UT_REGISTER_TEST(NmeaSourceManagerTest, TestLabel::Unit)
 
+void NmeaSourceManagerTest::_configuredSerialRoutingSurvivesReconnect()
+{
+#ifndef QGC_NO_SERIAL_LINK
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    auto* ports = SerialPortManager::instance();
+    const QString first = QStringLiteral("/test/nmea-first");
+    const QString second = QStringLiteral("/test/nmea-second");
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceSerial);
+    saved.setFactValue(settings->autoConnectNmeaPort(), first);
+    QGCPositionManager position;
+    {
+        NmeaSourceManager source(settings, &position);
+        QVERIFY(!ports->canAutoConnectPort(first));
+        QVERIFY(!ports->isPortReserved(first));
+        source.update();
+        QVERIFY(!source._sourceInstalled);
+        source.stop();
+        QVERIFY(!ports->canAutoConnectPort(first));
+        settings->autoConnectNmeaPort()->setRawValue(second);
+        QVERIFY(ports->canAutoConnectPort(first));
+        QVERIFY(!ports->canAutoConnectPort(second));
+        settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
+        QVERIFY(ports->canAutoConnectPort(second));
+        settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
+        QVERIFY(!ports->canAutoConnectPort(second));
+    }
+    QVERIFY(ports->canAutoConnectPort(second));
+#else
+    QSKIP("Serial routing is unavailable in this build");
+#endif
+}
+
+void NmeaSourceManagerTest::_settingsUseSharedSerialInventory_data()
+{
+    QTest::addColumn<QString>("qmlFile");
+    QTest::addColumn<bool>("customBaudSupported");
+    QTest::newRow("nmea-settings") << QStringLiteral("NmeaGpsSettings.qml") << true;
+    QTest::newRow("remote-id-settings") << QStringLiteral("RemoteIDGpsLocation.qml") << false;
+}
+
 void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
 {
+    QFETCH(QString, qmlFile);
+    QFETCH(bool, customBaudSupported);
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
@@ -109,7 +152,7 @@ void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
     saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/saved-nmea"));
     QQmlEngine engine;
     engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NmeaGpsSettings.qml")));
+    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/") + qmlFile));
     QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
     QVERIFY2(component.isReady(), qPrintable(component.errorString()));
     std::unique_ptr<QObject> root(component.create());
@@ -117,11 +160,15 @@ void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
     auto* portCombo = root->findChild<QObject*>(QStringLiteral("nmeaPortCombo"));
     QVERIFY(portCombo);
     auto* baudCombo = root->findChild<QObject*>(QStringLiteral("nmeaBaudCombo"));
-    auto* customBaud = root->findChild<QObject*>(QStringLiteral("customNmeaBaudField"));
     QVERIFY(baudCombo);
-    QVERIFY(customBaud);
-    QVERIFY(baudCombo->property("isCustomBaud").toBool());
-    QCOMPARE(customBaud->property("text").toString(), QStringLiteral("123457"));
+    if (customBaudSupported) {
+        auto* customBaud = root->findChild<QObject*>(QStringLiteral("customNmeaBaudField"));
+        QVERIFY(customBaud);
+        QVERIFY(baudCombo->property("isCustomBaud").toBool());
+        QCOMPARE(customBaud->property("text").toString(), QStringLiteral("123457"));
+    } else {
+        QCOMPARE(baudCombo->property("currentIndex").toInt(), -1);
+    }
     QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 123457);
     QCOMPARE(settings->autoConnectNmeaPort()->rawValue().toString(), QStringLiteral("/test/saved-nmea"));
 
@@ -136,4 +183,12 @@ void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
 #else
     QVERIFY(!manager);
 #endif
+    if (!customBaudSupported) {
+        settings->autoConnectNmeaBaud()->setRawValue(115200);
+        QQmlExpression baudIndex(qmlContext(root.get()), root.get(),
+                                 QStringLiteral("_serialBaudRates.indexOf('115200')"));
+        const int expectedIndex = baudIndex.evaluate().toInt();
+        QVERIFY(!baudIndex.hasError());
+        QCOMPARE(baudCombo->property("currentIndex").toInt(), expectedIndex);
+    }
 }

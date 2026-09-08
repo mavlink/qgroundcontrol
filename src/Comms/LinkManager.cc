@@ -782,7 +782,7 @@ void LinkManager::_addSerialAutoConnectLink()
     const auto ports = serialPorts->availablePorts();
     for (const SerialPortManager::Port& port : ports) {
         if (!port.autoConnectAllowed || !_allowAutoConnectToBoard(port.boardType) || port.bootloader ||
-            !serialPorts->canReservePort(port.systemLocation)) {
+            !serialPorts->canAutoConnectPort(port.systemLocation)) {
             continue;
         }
         if (!_autoconnectPortWaitList.contains(port.systemLocation)) {

@@ -53,6 +53,10 @@ public:
     bool isPortReserved(const QString& systemLocation) const;
     bool anyPortReserved() const;
 
+    /// Routing exclusions survive reconnects without marking the hardware occupied.
+    ReservationPtr excludeFromAutoConnect(const QString& systemLocation);
+    bool canAutoConnectPort(const QString& systemLocation) const;
+
     void setSinglePortOnly(bool enabled) { _singlePortOnly = enabled; }
 
 signals:
@@ -65,5 +69,6 @@ private:
     QStringList _serialPorts;
     QElapsedTimer _scanTimer;
     QHash<QString, std::weak_ptr<const Reservation>> _reservations;
+    QHash<QString, std::weak_ptr<const Reservation>> _autoConnectExclusions;
     bool _singlePortOnly = false;
 };

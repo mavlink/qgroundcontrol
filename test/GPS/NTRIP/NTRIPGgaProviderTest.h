@@ -28,4 +28,5 @@ private slots:
 
     // Lifecycle
     void testSourceClearedOnStopAndFreshStart();
+    void testDefaultRTKBaseProvider();
 };

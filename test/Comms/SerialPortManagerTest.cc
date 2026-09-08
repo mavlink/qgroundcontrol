@@ -2,6 +2,8 @@
 
 #include <QtTest/QSignalSpy>
 
+#include "GPSProvider.h"
+#include "GPSTransport.h"
 #include "SerialLink.h"
 #include "SerialPortManager.h"
 
@@ -74,4 +76,56 @@ void SerialPortManagerTest::_inventoryNotificationsAndBaudRates()
     for (qsizetype index = 1; index < rates.size(); ++index) {
         QVERIFY(rates[index - 1].toInt() < rates[index].toInt());
     }
+}
+
+void SerialPortManagerTest::_finishedReceiverReleasesReservation_data()
+{
+    QTest::addColumn<bool>("cancelled");
+    QTest::newRow("open-failed") << false;
+    QTest::newRow("cancelled-before-start") << true;
+}
+
+void SerialPortManagerTest::_finishedReceiverReleasesReservation()
+{
+    QFETCH(bool, cancelled);
+    QList<SerialPortManager::Port> inventory{
+        {QStringLiteral("/test/gps"), QStringLiteral("gps"), QGCSerialPortInfo::BoardTypeRTKGPS, QString()}};
+    SerialPortManager ports(nullptr, [&]() { return inventory; });
+    ports.setSinglePortOnly(true);
+    QCOMPARE(ports.availablePorts().size(), 1);
+    auto reservation = ports.reservePort(QStringLiteral("/test/gps"));
+    QVERIFY(reservation);
+    std::atomic_bool stop = cancelled;
+    GPSProvider provider(
+        [reservation = std::move(reservation)](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; },
+        GPSType::u_blox, GPSReceiverConfig{}, stop);
+    QVERIFY(!ports.canReservePort(QStringLiteral("/test/mavlink")));
+    inventory.clear();
+    provider.start();
+    QVERIFY(provider.wait(TestTimeout::shortMs()));
+    QVERIFY(!ports.anyPortReserved());
+    QVERIFY(ports.reservePort(QStringLiteral("/test/mavlink")));
+    QTRY_VERIFY_WITH_TIMEOUT(ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
+}
+
+void SerialPortManagerTest::_routingExclusionsDoNotOccupyPorts()
+{
+    SerialPortManager ports;
+    ports.setSinglePortOnly(true);
+    const QString port = QStringLiteral("/test/nmea");
+    auto exclusion = ports.excludeFromAutoConnect(port);
+    QVERIFY(exclusion);
+    QVERIFY(!ports.canAutoConnectPort(port));
+    QVERIFY(ports.canReservePort(port));
+    QVERIFY(!ports.anyPortReserved());
+    QVERIFY(ports.canAutoConnectPort(QStringLiteral("/test/mavlink")));
+    auto secondOwner = ports.excludeFromAutoConnect(port);
+    exclusion.reset();
+    QVERIFY(!ports.canAutoConnectPort(port));
+    auto active = ports.reservePort(port);
+    QVERIFY(active);
+    active.reset();
+    QVERIFY(!ports.canAutoConnectPort(port));
+    secondOwner.reset();
+    QVERIFY(ports.canAutoConnectPort(port));
 }
