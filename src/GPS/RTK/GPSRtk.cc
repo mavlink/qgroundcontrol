@@ -6,6 +6,7 @@
 #include "NTRIPManager.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMMavlink.h"
+#include "RTKPositionSource.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
@@ -38,6 +39,7 @@ constexpr GPSTypeEntry kGPSTypeTable[] = {
 
 GPSRtk::GPSRtk(QObject* parent)
     : QObject(parent)
+    , _positionSource(new RTKPositionSource(this))
     , _gpsRtkFactGroup(new GPSRTKFactGroup(this))
 {
     qCDebug(GPSRtkLog) << this;
@@ -58,12 +60,21 @@ GPSRtk::~GPSRtk()
 void GPSRtk::_onGPSConnect()
 {
     _gpsRtkFactGroup->lastError()->setRawValue(static_cast<int>(GPSConnectionError::None));
+    const bool wasConnected = connected();
     _gpsRtkFactGroup->connected()->setRawValue(true);
+    if (!wasConnected) {
+        emit connectedChanged();
+    }
 }
 
 void GPSRtk::_onGPSDisconnect()
 {
+    const bool wasConnected = connected();
     _gpsRtkFactGroup->connected()->setRawValue(false);
+    if (wasConnected) {
+        emit connectedChanged();
+    }
+    _positionSource->reset();
     _gpsRtkFactGroup->valid()->setRawValue(false);
     _gpsRtkFactGroup->active()->setRawValue(false);
     _gpsRtkFactGroup->currentDuration()->setRawValue(0);
@@ -265,9 +276,7 @@ void GPSRtk::_satelliteInfoUpdate(const satellite_info_s& msg)
 
 void GPSRtk::_sensorGpsUpdate(const sensor_gps_s& msg)
 {
-    qCDebug(GPSRtkLog) << Q_FUNC_INFO
-                       << QStringLiteral("alt=%1, long=%2, lat=%3")
-                              .arg(msg.altitude_msl_m)
-                              .arg(msg.longitude_deg)
-                              .arg(msg.latitude_deg);
+    if (connected()) {
+        _positionSource->updatePosition(msg);
+    }
 }

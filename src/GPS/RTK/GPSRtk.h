@@ -8,6 +8,7 @@
 #include "sensor_gps.h"
 
 class GPSRTKFactGroup;
+class RTKPositionSource;
 class FactGroup;
 
 class GPSRtk : public QObject
@@ -27,6 +28,8 @@ public:
     void disconnectGPS();
     bool connected() const;
 
+    RTKPositionSource* positionSource() const { return _positionSource; }
+
     bool hasReceiver() const { return _gpsProvider != nullptr; }
     FactGroup* gpsRtkFactGroup();
 
@@ -39,6 +42,9 @@ public:
     /// Clamp count to the array bound and tally used-in-solution satellites.
     static SatelliteCounts countSatellites(const satellite_info_s& msg);
 
+signals:
+    void connectedChanged();
+
 private slots:
     void _satelliteInfoUpdate(const satellite_info_s& msg);
     void _sensorGpsUpdate(const sensor_gps_s& msg);
@@ -48,6 +54,7 @@ private slots:
     void _onGPSSurveyInStatus(const GPSSurveyInStatus& status);
 
 private:
+    RTKPositionSource* _positionSource = nullptr;
     GPSProvider* _gpsProvider = nullptr;
     GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
 

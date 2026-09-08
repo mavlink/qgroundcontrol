@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -8,6 +9,7 @@
 #include "RTKAutoConnect.h"
 
 class GPSRtk;
+class QGCPositionManager;
 class QTimer;
 
 class GPSManager : public QObject
@@ -55,6 +57,9 @@ signals:
 
 private:
     void _updateConnections();
+    void _updatePositionSource();
+    bool _positionSourceInstalled = false;
+    QPointer<QGCPositionManager> _positionManager;
     QTimer* _connectionTimer = nullptr;
     NmeaSourceManager* _nmeaSources = nullptr;
     RTKAutoConnect* _rtkAutoConnect = nullptr;

@@ -15,6 +15,9 @@ private slots:
     void _nmeaSourceProducesGcsPosition();
     void _resetNmeaSourceTearsDownAndClearsState();
     void _nmeaUpdatesStayHealthyUntilStale();
+    void _receiverPriorityAndFallback();
+    void _receiverInvalidAndStaleFixes();
+    void _receiverDestructionRestoresDefault();
 
 private:
     QIODevice *_nmeaDevice = nullptr;

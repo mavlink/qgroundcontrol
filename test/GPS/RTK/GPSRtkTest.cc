@@ -7,12 +7,15 @@
 #include <QtTest/QSignalSpy>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSManager.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
 #include "GPSTransport.h"
 #include "NTRIPManager.h"
+#include "PositionManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTCMMavlink.h"
+#include "RTKPositionSource.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
@@ -124,7 +127,15 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QPointer<GPSProvider> first = receiver._gpsProvider;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
     QVERIFY(!receiver.connected());
+    receiver.positionSource()->startUpdates();
+    QSignalSpy positionUpdates(receiver.positionSource(), &QGeoPositionInfoSource::positionUpdated);
+    sensor_gps_s fix{};
+    fix.fix_type = sensor_gps_s::FIX_TYPE_3D;
+    fix.latitude_deg = 47;
+    fix.longitude_deg = 8;
+    fix.eph = 1;
     emit first->receiverReady();
+    emit first->sensorGpsUpdate(fix);
     GPSSurveyInStatus survey{};
     survey.valid = true;
     survey.active = true;
@@ -140,6 +151,8 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->satelliteInfoUpdate(satellites);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
+    QCOMPARE(positionUpdates.size(), 1);
+    positionUpdates.clear();
     QVERIFY(facts->valid()->rawValue().toBool());
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), 2);
 
@@ -151,6 +164,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     auto* rtcm = &forwarder;
     const auto bytesBefore = rtcm->totalBytesSent();
     // These callbacks are queued before retirement, then delivered during the replacement session.
+    emit first->sensorGpsUpdate(fix);
     emit first->RTCMDataUpdate(QByteArrayLiteral("stale corrections"));
     emit first->surveyInStatus(survey);
     emit first->satelliteInfoUpdate(satellites);
@@ -173,6 +187,8 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QVERIFY(!receiver.connected());
     QCOMPARE(facts->lastError()->rawValue().toInt(), static_cast<int>(GPSConnectionError::None));
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore);
+    QVERIFY(positionUpdates.isEmpty());
+    QVERIFY(!receiver.positionSource()->lastKnownPosition().isValid());
     emit receiver._gpsProvider->receiverReady();
     emit receiver._gpsProvider->RTCMDataUpdate(QByteArrayLiteral("new"));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
@@ -212,4 +228,46 @@ void GPSRtkTest::_workerCanOutliveManager()
     gate->release.release();
     QTRY_VERIFY_WITH_TIMEOUT(provider.isNull(), TestTimeout::mediumMs());
     QVERIFY(gate->sawCancellation);
+}
+
+void GPSRtkTest::_positionSourceSelection()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* enabled = SettingsManager::instance()->rtkSettings()->useReceiverPosition();
+    saved.setFactValue(enabled, false);
+    GPSManager manager;
+    auto* receiver = manager.gpsRtk();
+    auto* position = QGCPositionManager::instance();
+    const auto cleanup = qScopeGuard([&]() { manager.shutdown(); });
+    receiver->_onGPSConnect();
+    QSignalSpy updates(receiver->positionSource(), &QGeoPositionInfoSource::positionUpdated);
+    sensor_gps_s fix{};
+    fix.fix_type = sensor_gps_s::FIX_TYPE_RTK_FIXED;
+    fix.latitude_deg = 47;
+    fix.longitude_deg = 8;
+    fix.altitude_msl_m = 500;
+    fix.eph = 0.1f;
+    fix.epv = 0.2f;
+    receiver->_sensorGpsUpdate(fix);
+    QVERIFY(updates.isEmpty());
+    enabled->setRawValue(true);
+    QVERIFY(!position->gcsPosition().isValid());
+    receiver->_sensorGpsUpdate(fix);
+    QCOMPARE(updates.size(), 1);
+    QCOMPARE(position->gcsPosition(), QGeoCoordinate(47, 8, 500));
+    QVERIFY(receiver->connected());
+    enabled->setRawValue(false);
+    QVERIFY(receiver->connected());
+    QVERIFY(!position->gcsPosition().isValid());
+    receiver->_sensorGpsUpdate(fix);
+    QCOMPARE(updates.size(), 1);
+    enabled->setRawValue(true);
+    QVERIFY(!position->gcsPosition().isValid());
+    receiver->_sensorGpsUpdate(fix);
+    QVERIFY(position->gcsPosition().isValid());
+    receiver->disconnectGPS();
+    QVERIFY(!position->gcsPosition().isValid());
+    QVERIFY(!receiver->positionSource()->lastKnownPosition().isValid());
+    receiver->_sensorGpsUpdate(fix);
+    QVERIFY(!position->gcsPosition().isValid());
 }

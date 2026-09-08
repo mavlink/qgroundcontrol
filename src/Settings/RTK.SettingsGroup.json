@@ -3,6 +3,14 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "useReceiverPosition",
+            "shortDesc": "Use receiver for ground-station position",
+            "label": "Use receiver for ground-station position",
+            "longDesc": "Use live fixes from the connected RTK receiver. On disconnect, return to the configured NMEA or device position source.",
+            "type": "bool",
+            "default": false
+        },
+        {
             "name": "connectionType",
             "shortDesc": "RTK receiver connection",
             "type": "uint8",

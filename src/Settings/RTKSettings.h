@@ -45,6 +45,7 @@ public:
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
     DEFINE_SETTINGFACT(fixedBasePositionAltitude)
     DEFINE_SETTINGFACT(fixedBasePositionAccuracy)
+    DEFINE_SETTINGFACT(useReceiverPosition)
     DEFINE_SETTINGFACT(connectionType)
     DEFINE_SETTINGFACT(serialDevice)
     DEFINE_SETTINGFACT(networkBaseHost)

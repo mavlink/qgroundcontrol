@@ -94,6 +94,21 @@ SettingsGroupLayout {
         enabled: !root._active
     }
 
+    FactCheckBox {
+        objectName: "rtkUseReceiverPosition"
+        Layout.fillWidth: true
+        text: qsTr("Use receiver for ground-station position")
+        fact: root._settings.useReceiverPosition
+    }
+
+    QGCLabel {
+        Layout.fillWidth: true
+        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
+        visible: root._settings.useReceiverPosition.rawValue
+        wrapMode: Text.WordWrap
+        text: qsTr("Place the receiver with the ground station. This uses live position fixes available in the receiver's current mode. When disconnected, the configured NMEA or device position source is used.")
+    }
+
     GpsConnectionControls {
         autoConnectFact: root._serial ? root._autoConnectSettings.autoConnectRTKGPS
                                      : root._autoConnectSettings.autoConnectNetworkRTKGPS

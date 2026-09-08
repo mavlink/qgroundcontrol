@@ -7,6 +7,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE UdpGPSTransportTest.cc UdpGPSTransp
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKPositionSourceTest.cc RTKPositionSourceTest.h)
+add_qgc_test(RTKPositionSourceTest LABELS Unit)
+
 add_qgc_test(GPSProviderTest LABELS Unit)
 add_qgc_test(TcpGPSTransportTest LABELS Unit)
 add_qgc_test(UdpGPSTransportTest LABELS Unit)

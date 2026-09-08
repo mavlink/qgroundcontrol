@@ -2,6 +2,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPositionInfo>
@@ -47,9 +48,11 @@ public:
 
     int updateInterval() const { return _updateInterval; }
 
+    /// Select a borrowed, connected receiver source ahead of NMEA and platform positioning.
+    void setReceiverPositionSource(QGeoPositionInfoSource* source);
+    void clearReceiverPositionSource(QGeoPositionInfoSource* source);
     void setNmeaSourceDevice(QIODevice *device);
-    /// Tears down any active NMEA source and falls back to the platform's default
-    /// position source (e.g. the integrated Android GPS).
+    /// Remove NMEA input while preserving a selected receiver; otherwise use the platform source.
     void resetNmeaSourceDevice();
 
 signals:
@@ -72,6 +75,8 @@ private:
     };
 
     void _setPositionSource(QGCPositionSource source);
+    void _selectPositionSource();
+    bool _isExternalSource() const;
     void _setupPositionSources();
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
     void _checkPermission();
@@ -81,7 +86,7 @@ private:
 
     bool _usingPluginSource = false;
     int _updateInterval = 0;
-    QTimer _nmeaStaleTimer;
+    QTimer _externalStaleTimer;
 
     QGeoPositionInfo _geoPositionInfo;
     QGeoPositionInfoSource::Error  _gcsPositioningError = QGeoPositionInfoSource::NoError;
@@ -94,6 +99,10 @@ private:
     qreal _gcsPositionAccuracy = std::numeric_limits<qreal>::infinity();
     qreal _gcsDirectionAccuracy = std::numeric_limits<qreal>::infinity();
 
+    QPointer<QGeoPositionInfoSource> _receiverSource;
+    QMetaObject::Connection _receiverDestroyedConnection;
+    quint64 _sourceGeneration = 0;
+    bool _nmeaNeedsRestart = false;
     QGeoPositionInfoSource *_currentSource = nullptr;
     QGeoPositionInfoSource *_defaultSource = nullptr;
     QNmeaPositionInfoSource *_nmeaSource = nullptr;

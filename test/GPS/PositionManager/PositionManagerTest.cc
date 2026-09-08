@@ -9,6 +9,7 @@
 
 #include "NMEAUtils.h"
 #include "PositionManager.h"
+#include "RTKPositionSource.h"
 
 namespace {
 
@@ -124,7 +125,7 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
 {
     NmeaTestDevice device;
     QGCPositionManager pm;
-    pm._nmeaStaleTimer.setInterval(300);
+    pm._externalStaleTimer.setInterval(300);
     pm.setNmeaSourceDevice(&device);
     QSignalSpy errors(pm._nmeaSource, &QGeoPositionInfoSource::errorOccurred);
     QSignalSpy updates(&pm, &QGCPositionManager::positionInfoUpdated);
@@ -153,14 +154,123 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
     QVERIFY(!pm.geoPositionInfo().isValid());
     QVERIFY(!pm.gcsPositionTimestamp().isValid());
     QVERIFY(qIsInf(pm.gcsPositionHorizontalAccuracy()));
-    QVERIFY(!pm._nmeaStaleTimer.isActive());
+    QVERIFY(!pm._externalStaleTimer.isActive());
 
     feed();
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
-    QVERIFY(pm._nmeaStaleTimer.isActive());
+    QVERIFY(pm._externalStaleTimer.isActive());
     pm.resetNmeaSourceDevice();
-    QVERIFY(!pm._nmeaStaleTimer.isActive());
+    QVERIFY(!pm._externalStaleTimer.isActive());
 }
 
 UT_REGISTER_TEST(PositionManagerTest, TestLabel::Unit)
+
+namespace {
+sensor_gps_s receiverFix()
+{
+    sensor_gps_s fix{};
+    fix.fix_type = sensor_gps_s::FIX_TYPE_RTK_FIXED;
+    fix.latitude_deg = 47;
+    fix.longitude_deg = 8;
+    fix.altitude_msl_m = 500;
+    fix.eph = 0.1f;
+    fix.epv = 0.2f;
+    fix.vel_ned_valid = true;
+    fix.cog_rad = 1;
+    fix.c_variance_rad = 0.01f;
+    return fix;
+}
+}  // namespace
+
+void PositionManagerTest::_receiverPriorityAndFallback()
+{
+    NmeaTestDevice device;
+    RTKPositionSource receiver;
+    QGCPositionManager pm;
+    pm.setNmeaSourceDevice(&device);
+    device.feed(kNmeaSentences);
+    QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    pm.setReceiverPositionSource(&receiver);
+    QVERIFY(!pm.gcsPosition().isValid());
+    receiver.updatePosition(receiverFix());
+    QCOMPARE(pm.gcsPosition(), QGeoCoordinate(47, 8, 500));
+    QCOMPARE(pm._currentSource, &receiver);
+    // Changing a standby NMEA connection must not interrupt receiver fixes.
+    pm.resetNmeaSourceDevice();
+    pm.setNmeaSourceDevice(&device);
+    QCOMPARE(pm.gcsPosition(), QGeoCoordinate(47, 8, 500));
+    pm._selectPositionSource();
+    QCOMPARE(pm._currentSource, &receiver);
+    device.feed(kNmeaSentences);
+    pm.clearReceiverPositionSource(&receiver);
+    QVERIFY(!pm.gcsPosition().isValid());
+    QSignalSpy resumedUpdates(&pm, &QGCPositionManager::positionInfoUpdated);
+    QVERIFY(!resumedUpdates.wait(TestTimeout::shortMs()));
+    receiver.updatePosition(receiverFix());
+    QVERIFY(!pm.gcsPosition().isValid());
+    device.feed(kNmeaSentences);
+    QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QVERIFY(qAbs(pm.gcsPosition().latitude() - kExpectedLat) < kCoordEpsilon);
+    pm.resetNmeaSourceDevice();
+}
+
+void PositionManagerTest::_receiverInvalidAndStaleFixes()
+{
+    RTKPositionSource receiver;
+    QGCPositionManager pm;
+    pm._externalStaleTimer.setInterval(50);
+    pm.setReceiverPositionSource(&receiver);
+    auto fix = receiverFix();
+    receiver.updatePosition(fix);
+    QVERIFY(pm.geoPositionInfo().isValid());
+    QVERIFY(qIsFinite(pm.gcsHeading()));
+    fix.fix_type = sensor_gps_s::FIX_TYPE_NONE;
+    receiver.updatePosition(fix);
+    QVERIFY(!pm.geoPositionInfo().isValid());
+    QVERIFY(!pm.gcsPosition().isValid());
+    QVERIFY(!pm.gcsPositionTimestamp().isValid());
+    QVERIFY(qIsNaN(pm.gcsHeading()));
+    fix = receiverFix();
+    receiver.updatePosition(fix);
+    QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
+    fix.eph = 101;
+    receiver.updatePosition(fix);
+    QVERIFY(!pm.gcsPosition().isValid());
+    QVERIFY(!pm.geoPositionInfo().isValid());
+    fix = receiverFix();
+    fix.fix_type = sensor_gps_s::FIX_TYPE_2D;
+    fix.vel_ned_valid = false;
+    fix.latitude_deg = 0;
+    fix.longitude_deg = 0;
+    receiver.updatePosition(fix);
+    QCOMPARE(pm.gcsPosition(), QGeoCoordinate(0, 0));
+    QVERIFY(qIsNaN(pm.gcsHeading()));
+    QVERIFY(qIsInf(pm._gcsPositionVerticalAccuracy));
+    QTRY_VERIFY_WITH_TIMEOUT(!pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::UpdateTimeoutError);
+    QVERIFY(!pm.geoPositionInfo().isValid());
+    QVERIFY(!pm.gcsPositionTimestamp().isValid());
+    receiver.updatePosition(receiverFix());
+    QCOMPARE(pm.gcsPosition(), QGeoCoordinate(47, 8, 500));
+    QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
+    pm.clearReceiverPositionSource(&receiver);
+    QVERIFY(!pm._externalStaleTimer.isActive());
+}
+
+void PositionManagerTest::_receiverDestructionRestoresDefault()
+{
+    RTKPositionSource platform;
+    QGCPositionManager pm;
+    pm._defaultSource = &platform;
+    auto receiver = std::make_unique<RTKPositionSource>();
+    pm.setReceiverPositionSource(receiver.get());
+    receiver->updatePosition(receiverFix());
+    QVERIFY(pm.gcsPosition().isValid());
+    receiver.reset();
+    QCOMPARE(pm._currentSource, &platform);
+    QVERIFY(!pm.gcsPosition().isValid());
+    QVERIFY(!pm.geoPositionInfo().isValid());
+    platform.updatePosition(receiverFix());
+    QVERIFY(pm.gcsPosition().isValid());
+}

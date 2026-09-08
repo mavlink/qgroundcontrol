@@ -8,6 +8,7 @@ class GPSRtkTest : public UnitTest
 
 private slots:
     void _testCoreAvailableWithoutReceiver();
+    void _positionSourceSelection();
     void _failedOpenNeverConnects();
     void _retiredWorkerCannotUpdateReplacement();
     void _workerCanOutliveManager();

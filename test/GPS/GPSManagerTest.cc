@@ -426,6 +426,10 @@ void GPSManagerTest::_networkSettingsPanel()
     QVERIFY2(root, qPrintable(component.errorString()));
     auto* button = root->findChild<QObject*>(QStringLiteral("networkRtkConnectButton"));
     auto* host = root->findChild<QObject*>(QStringLiteral("networkRtkHost"));
+    auto* usePosition = root->findChild<QObject*>(QStringLiteral("rtkUseReceiverPosition"));
+    QVERIFY(usePosition);
+    QCOMPARE(usePosition->property("fact").value<Fact*>(),
+             SettingsManager::instance()->rtkSettings()->useReceiverPosition());
     auto* localPort = root->findChild<QObject*>(QStringLiteral("networkRtkLocalPort"));
     QVERIFY(button);
     QVERIFY(host);

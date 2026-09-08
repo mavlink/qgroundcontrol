@@ -22,5 +22,6 @@ DECLARE_SETTINGSFACT(RTKSettings, networkBasePort)
 DECLARE_SETTINGSFACT(RTKSettings, udpLocalPort)
 DECLARE_SETTINGSFACT(RTKSettings, networkReceiverType)
 
+DECLARE_SETTINGSFACT(RTKSettings, useReceiverPosition)
 DECLARE_SETTINGSFACT(RTKSettings, connectionType)
 DECLARE_SETTINGSFACT(RTKSettings, serialDevice)
