@@ -4,8 +4,6 @@
 #include <QtNetwork/QTcpSocket>
 #include <QtPositioning/QNmeaSatelliteInfoSource>
 
-#include <algorithm>
-
 #include "AutoConnectSettings.h"
 #include "NMEAPositionSource.h"
 #include "NMEAStreamSplitter.h"
@@ -30,8 +28,10 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
     , _positionManager(positionManager)
     , _satellitePollTimer(this)
     , _satelliteStaleTimer(this)
+    , _connection(this)
 {
     qCDebug(NMEASourceManagerLog) << this;
+    connect(&_connection, &GPSConnectionState::changed, this, &NMEASourceManager::stateChanged);
     _satellitePollTimer.setInterval(1000);
     connect(&_satellitePollTimer, &QTimer::timeout, this, [this]() {
         if (_satelliteSource) {
@@ -56,8 +56,7 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
             connect(fact, &Fact::rawValueChanged, this, &NMEASourceManager::_settingsChanged);
         }
         connect(_settings->nmeaAutoConnect(), &Fact::rawValueChanged, this, [this]() {
-            _paused = false;
-            _manualRequested = false;
+            _connection.resetIntent();
             _settingsChanged();
         });
         _updateSerialRouting();
@@ -71,7 +70,7 @@ QGeoPositionInfoSource* NMEASourceManager::positionSource() const
 
 bool NMEASourceManager::_shouldConnect() const
 {
-    return _settings && !_paused && (_manualRequested || _settings->nmeaAutoConnect()->rawValue().toBool()) &&
+    return _settings && _connection.shouldConnect(_settings->nmeaAutoConnect()->rawValue().toBool()) &&
            _settings->nmeaSource()->rawValue().toInt() != AutoConnectSettings::NmeaSourceDisabled;
 }
 
@@ -89,8 +88,7 @@ void NMEASourceManager::_updateSerialRouting()
 void NMEASourceManager::_settingsChanged()
 {
     _closeDevice();
-    _retryDeadline = QDeadlineTimer::Forever;
-    _retryDelayMs = 1000;
+    _connection.resetRetry();
     _updateSerialRouting();
     if (!_shouldConnect()) {
         stop();
@@ -103,18 +101,15 @@ bool NMEASourceManager::connectSource()
         _settings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceDisabled) {
         return false;
     }
-    _paused = false;
-    _manualRequested = true;
-    _retryDeadline = QDeadlineTimer::Forever;
-    _retryDelayMs = 1000;
+    _connection.requestConnect();
     _updateSerialRouting();
     update();
-    return _active;
+    return active();
 }
 
 void NMEASourceManager::disconnectSource()
 {
-    _paused = true;
+    _connection.pause();
     stop();
     _updateSerialRouting();
 }
@@ -136,21 +131,19 @@ NMEASourceManager::~NMEASourceManager()
 
 void NMEASourceManager::stop()
 {
-    _manualRequested = false;
+    _connection.stop();
     _closeDevice();
-    _retryDeadline = QDeadlineTimer::Forever;
-    _retryDelayMs = 1000;
-    if (_active) {
-        _active = false;
-        emit stateChanged();
-    }
-    _setStatus(_paused && _settings && _settings->nmeaAutoConnect()->rawValue().toBool()
+    _connection.resetRetry();
+    _setStatus(_connection.paused() && _settings && _settings->nmeaAutoConnect()->rawValue().toBool()
                    ? tr("Automatic connection paused")
                    : tr("Disconnected"));
 }
 
 void NMEASourceManager::_closeDevice()
 {
+    if (_sourceInstalled || _tcp) {
+        _connection.stopping();
+    }
     _udpActivityTimer.stop();
     _satellitePollTimer.stop();
     // Detach the decoder before destroying the device it reads from.
@@ -175,6 +168,7 @@ void NMEASourceManager::_closeDevice()
     _serialBaud = 0;
 #endif
     _source = -1;
+    _connection.stopped();
 }
 
 bool NMEASourceManager::_installSource(QIODevice* device)
@@ -254,10 +248,7 @@ void NMEASourceManager::update()
         stop();
         return;
     }
-    if (!_active) {
-        _active = true;
-        emit stateChanged();
-    }
+    _connection.updateIntent(_settings->nmeaAutoConnect()->rawValue().toBool());
     const int source = _settings->nmeaSource()->rawValue().toInt();
     if (_source != source) {
         _closeDevice();
@@ -272,10 +263,16 @@ void NMEASourceManager::update()
         if (_udp && _udp->state() == QAbstractSocket::BoundState && _udp->localPort() == port) {
             return;
         }
-        _closeDevice();
+        if (_udp) {
+            _closeDevice();
+        }
         _source = source;
+        if (!_connection.beginAttempt()) {
+            return;
+        }
         auto socket = std::make_unique<UdpIODevice>();
         if (!socket->bind(QHostAddress::AnyIPv4, port)) {
+            _connection.failed();
             _setStatus(tr("Cannot listen on UDP port %1: %2").arg(port).arg(socket->errorString()));
             return;
         }
@@ -288,6 +285,7 @@ void NMEASourceManager::update()
             _closeDevice();
             return;
         }
+        _connection.ready();
         _setStatus(tr("Listening on UDP port %1").arg(port));
     }
 #ifndef QGC_NO_SERIAL_LINK
@@ -302,15 +300,19 @@ void NMEASourceManager::update()
                 break;
             }
         }
-        if (!present || device != _serialDevice || baud != _serialBaud) {
+        if (!present || (_serial && (device != _serialDevice || baud != _serialBaud))) {
             _closeDevice();
             _source = source;
         }
         if (!present) {
+            _connection.resetRetry();
             _setStatus(tr("Waiting for serial device"));
             return;
         }
         if (_serial) {
+            return;
+        }
+        if (!_connection.canAttempt()) {
             return;
         }
         auto reservation = ports->reservePort(device);
@@ -318,9 +320,13 @@ void NMEASourceManager::update()
             _setStatus(tr("Serial device is in use"));
             return;
         }
+        if (!_connection.beginAttempt()) {
+            return;
+        }
         auto serial = std::make_unique<QSerialPort>();
         serial->setPortName(device);
         if (!serial->setBaudRate(baud) || !serial->open(QIODevice::ReadOnly)) {
+            _connection.failed();
             _setStatus(tr("Cannot open serial device: %1").arg(serial->errorString()));
             return;
         }
@@ -334,6 +340,8 @@ void NMEASourceManager::update()
                 if (current && _serial.get() == current && error != QSerialPort::NoError &&
                     error != QSerialPort::TimeoutError) {
                     _closeDevice();
+                    _source = AutoConnectSettings::NmeaSourceSerial;
+                    _connection.failed();
                     _setStatus(tr("Serial connection lost; reconnecting"));
                 }
             },
@@ -342,6 +350,7 @@ void NMEASourceManager::update()
             _closeDevice();
             return;
         }
+        _connection.ready();
         _setStatus(tr("Connected"));
     }
 #else
@@ -359,7 +368,7 @@ void NMEASourceManager::_updateTcp()
         }
         return;
     }
-    if (!_retryDeadline.isForever() && !_retryDeadline.hasExpired()) {
+    if (!_connection.canAttempt()) {
         return;
     }
     const QString host = _settings->nmeaTcpHost()->rawValue().toString().trimmed();
@@ -372,6 +381,9 @@ void NMEASourceManager::_updateTcp()
         _setStatus(tr("Enter a valid TCP host and port"));
         return;
     }
+    if (!_connection.beginAttempt()) {
+        return;
+    }
     _tcp = std::make_unique<QTcpSocket>();
     _tcp->setReadBufferSize(64 * 1024);
     const QPointer<QTcpSocket> socket = _tcp.get();
@@ -379,12 +391,12 @@ void NMEASourceManager::_updateTcp()
         if (!socket || _tcp.get() != socket || !_shouldConnect() || !_positionManager) {
             return;
         }
-        _retryDelayMs = 1000;
-        _retryDeadline = QDeadlineTimer::Forever;
+
         if (!_installSource(socket)) {
             _closeDevice();
             return;
         }
+        _connection.ready();
         _setStatus(tr("Connected"));
     });
     connect(
@@ -412,7 +424,6 @@ void NMEASourceManager::_tcpFailed(const QString& error)
 {
     _closeDevice();
     _source = AutoConnectSettings::NmeaSourceTcp;
-    _retryDeadline.setRemainingTime(_retryDelayMs);
-    _retryDelayMs = (std::min) (_retryDelayMs * 2, 30000);
+    _connection.failed();
     _setStatus(tr("%1 — reconnecting").arg(error));
 }

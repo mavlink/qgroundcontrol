@@ -116,11 +116,9 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     auto firstGate = std::make_shared<BlockedOpen>();
     auto secondGate = std::make_shared<BlockedOpen>();
     GPSRtk receiver;
-    receiver._disconnectTimeoutMs = 0;
     const auto releaseWorkers = qScopeGuard([&]() {
         firstGate->release.release();
         secondGate->release.release();
-        receiver._disconnectTimeoutMs = TestTimeout::mediumMs();
     });
     receiver.connectReceiver(GPSType::u_blox, blockedFactory(firstGate));
     QTRY_VERIFY_WITH_TIMEOUT(firstGate->entered.available() > 0, TestTimeout::mediumMs());
@@ -170,11 +168,8 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->satelliteInfoUpdate(satellites);
     emit first->receiverReady();
     emit first->connectionError(GPSConnectionError::DeviceError);
-    expectLogMessage(
-        "GPS.RTK.GPSRtk", QtWarningMsg,
-        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     receiver.connectReceiver(GPSType::u_blox, blockedFactory(secondGate));
-    verifyExpectedLogMessage();
+    QVERIFY(receiver.stopping());
     QVERIFY(!receiver.connected());
     QVERIFY(!facts->valid()->rawValue().toBool());
     QVERIFY(!facts->active()->rawValue().toBool());
@@ -213,16 +208,11 @@ void GPSRtkTest::_workerCanOutliveManager()
     saved.setFactValue(manufacturer, manufacturer->rawValue());
     auto gate = std::make_shared<BlockedOpen>();
     auto receiver = std::make_unique<GPSRtk>();
-    receiver->_disconnectTimeoutMs = 0;
     const auto releaseWorker = qScopeGuard([&]() { gate->release.release(); });
     receiver->connectReceiver(GPSType::u_blox, blockedFactory(gate));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver->_gpsProvider;
-    expectLogMessage(
-        "GPS.RTK.GPSRtk", QtWarningMsg,
-        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     receiver.reset();
-    verifyExpectedLogMessage();
     QVERIFY(provider);
     QVERIFY(!provider->parent());
     gate->release.release();

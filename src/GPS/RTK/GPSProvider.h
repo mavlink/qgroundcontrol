@@ -47,6 +47,7 @@ signals:
     void surveyInStatus(const GPSSurveyInStatus &status);
     void connectionError(GPSConnectionError error);
     void receiverReady();
+    void transportOpened();
 
 private:
     void run() final;

@@ -8,6 +8,7 @@ class RTKAutoConnectTest : public UnitTest
 
 private slots:
     void _networkRetriesAndStops();
+    void _disconnectDoesNotBlockAndReconnectWaits();
 #ifndef QGC_NO_SERIAL_LINK
     void _manualSerialSelectionAndPause();
     void _discoveryUnplugAndDisable();

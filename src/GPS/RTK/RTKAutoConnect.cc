@@ -2,7 +2,6 @@
 
 #include <QtCore/QUrl>
 
-#include <algorithm>
 #include <utility>
 
 #include "AutoConnectSettings.h"
@@ -20,34 +19,45 @@ RTKAutoConnect::RTKAutoConnect(GPSRtk* receiver, AutoConnectSettings* settings, 
     , _receiver(receiver)
     , _settings(settings)
     , _rtkSettings(rtkSettings)
+    , _connection(this)
 {
     qCDebug(RTKAutoConnectLog) << this;
     if (_receiver) {
         connect(this, &RTKAutoConnect::disconnectRequested, _receiver, &GPSRtk::disconnectGPS);
+        connect(_receiver, &GPSRtk::receiverStateChanged, this, &RTKAutoConnect::_updateReceiverState);
+        connect(_receiver, &GPSRtk::connectedChanged, this, &RTKAutoConnect::_updateReceiverState);
+        connect(_receiver, &GPSRtk::configurationStarted, &_connection, &GPSConnectionState::configuring);
+        connect(_receiver, &GPSRtk::connectionFailed, &_connection, &GPSConnectionState::failed);
     }
+    connect(&_connection, &GPSConnectionState::changed, this, &RTKAutoConnect::stateChanged);
+    connect(&_connection, &GPSConnectionState::changed, this, &RTKAutoConnect::networkAutoConnectPausedChanged);
     connect(this, &RTKAutoConnect::networkActiveChanged, this, &RTKAutoConnect::stateChanged);
-    connect(this, &RTKAutoConnect::networkAutoConnectPausedChanged, this, &RTKAutoConnect::stateChanged);
     if (_rtkSettings) {
         for (Fact* fact :
              {_rtkSettings->connectionType(), _rtkSettings->serialDevice(), _rtkSettings->networkReceiverType()}) {
             connect(fact, &Fact::rawValueChanged, this, [this]() {
                 stop();
-                _serialPaused = false;
-                _setNetworkAutoConnectPaused(false);
+                _connection.resetIntent();
                 emit stateChanged();
             });
         }
     }
     if (_settings) {
         connect(_settings->autoConnectRTKGPS(), &Fact::rawValueChanged, this, [this](const QVariant& enabled) {
-            _serialPaused = false;
+            if (_serialSelected()) {
+                _connection.resetIntent();
+                _connection.updateIntent(enabled.toBool());
+            }
             if (!enabled.toBool() && !networkActive()) {
                 stop();
             }
             emit stateChanged();
         });
         connect(_settings->autoConnectNetworkRTKGPS(), &Fact::rawValueChanged, this, [this](const QVariant& enabled) {
-            _setNetworkAutoConnectPaused(false);
+            if (!_serialSelected()) {
+                _connection.resetIntent();
+                _connection.updateIntent(enabled.toBool());
+            }
             if (!enabled.toBool() && networkActive()) {
                 stop();
             }
@@ -70,8 +80,8 @@ bool RTKAutoConnect::autoConnectPaused() const
     if (!_settings) {
         return false;
     }
-    return _serialSelected() ? _serialPaused && _settings->autoConnectRTKGPS()->rawValue().toBool()
-                             : _networkAutoConnectPaused && _settings->autoConnectNetworkRTKGPS()->rawValue().toBool();
+    return _connection.paused() && (_serialSelected() ? _settings->autoConnectRTKGPS()->rawValue().toBool()
+                                                      : _settings->autoConnectNetworkRTKGPS()->rawValue().toBool());
 }
 
 bool RTKAutoConnect::connectSelected()
@@ -84,8 +94,7 @@ bool RTKAutoConnect::connectSelected()
         return false;
     }
     stop();
-    _serialPaused = false;
-    _serialRequested = true;
+    _connection.requestConnect();
     emit stateChanged();
     update();
     return true;
@@ -96,8 +105,7 @@ bool RTKAutoConnect::connectSelected()
 
 void RTKAutoConnect::disconnectSelected()
 {
-    _serialPaused = true;
-    _setNetworkAutoConnectPaused(true);
+    _connection.pause();
     stop();
     emit stateChanged();
 }
@@ -155,7 +163,7 @@ bool RTKAutoConnect::connectNetwork(GPSType type, GPSProvider::TransportFactory 
         return false;
     }
     stop();
-    _setNetworkAutoConnectPaused(false);
+    _connection.requestConnect();
     _networkType = type;
     _networkFactory = std::move(factory);
     _startNetwork();
@@ -165,17 +173,32 @@ bool RTKAutoConnect::connectNetwork(GPSType type, GPSProvider::TransportFactory 
 
 void RTKAutoConnect::disconnectNetwork()
 {
-    _setNetworkAutoConnectPaused(true);
+    if (!networkActive() && _serialSelected()) {
+        return;
+    }
+    _connection.pause();
     if (networkActive()) {
         stop();
     }
 }
 
-void RTKAutoConnect::_setNetworkAutoConnectPaused(bool paused)
+void RTKAutoConnect::_updateReceiverState()
 {
-    if (_networkAutoConnectPaused != paused) {
-        _networkAutoConnectPaused = paused;
-        emit networkAutoConnectPausedChanged();
+    if (!_receiver) {
+        return;
+    }
+    if (_receiver->stopping() && !_receiver->hasReceiver()) {
+        _connection.stopping();
+    } else if (_connection.state() == GPSConnectionState::Stopping) {
+        _connection.stopped();
+    }
+    if (_receiver->connected()) {
+        _connection.ready();
+    } else if (!_receiver->hasReceiver() && !_receiver->stopping() &&
+               (_connection.state() == GPSConnectionState::Connecting ||
+                _connection.state() == GPSConnectionState::Configuring ||
+                _connection.state() == GPSConnectionState::Ready)) {
+        _connection.failed();
     }
 }
 
@@ -183,7 +206,7 @@ void RTKAutoConnect::stop()
 {
     const bool wasActive = active();
     const bool wasNetworkActive = networkActive();
-    _serialRequested = false;
+    _connection.stop();
     bool hadSession = wasNetworkActive;
     _networkFactory = {};
 #ifndef QGC_NO_SERIAL_LINK
@@ -191,10 +214,13 @@ void RTKAutoConnect::stop()
     _autoConnectedPort.clear();
     _waitingPorts.clear();
 #endif
-    _retryDeadline = QDeadlineTimer::Forever;
-    _retryDelayMs = 1000;
+
     if (hadSession) {
         emit disconnectRequested();
+    }
+    _updateReceiverState();
+    if (!_receiver || (!_receiver->hasReceiver() && !_receiver->stopping())) {
+        _connection.stopped();
     }
     if (wasNetworkActive) {
         emit networkActiveChanged();
@@ -205,28 +231,22 @@ void RTKAutoConnect::stop()
 
 void RTKAutoConnect::_startNetwork()
 {
-    _receiver->connectReceiver(_networkType, _networkFactory);
+    if (!_receiver->hasReceiver() && !_receiver->stopping() && _connection.beginAttempt()) {
+        _receiver->connectReceiver(_networkType, _networkFactory);
+    }
 }
 
 bool RTKAutoConnect::_retryReady()
 {
-    if (_receiver->hasReceiver()) {
-        _retryDeadline = QDeadlineTimer::Forever;
-        if (_receiver->connected()) {
-            _retryDelayMs = 1000;
-        }
+    _updateReceiverState();
+    if (_receiver->hasReceiver() || _receiver->stopping()) {
         return false;
     }
-    if (_retryDeadline.isForever()) {
-        _retryDeadline.setRemainingTime(_retryDelayMs);
+    if (_connection.state() == GPSConnectionState::Connecting ||
+        _connection.state() == GPSConnectionState::Configuring || _connection.state() == GPSConnectionState::Ready) {
+        _connection.failed();
     }
-    return _retryDeadline.hasExpired();
-}
-
-void RTKAutoConnect::_retryStarted()
-{
-    _retryDeadline = QDeadlineTimer::Forever;
-    _retryDelayMs = (std::min) (_retryDelayMs * 2, kMaxRetryDelayMs);
+    return _connection.canAttempt();
 }
 
 void RTKAutoConnect::update()
@@ -234,13 +254,16 @@ void RTKAutoConnect::update()
     if (!_receiver) {
         return;
     }
-    if (!_serialSelected() && !networkActive() && !_networkAutoConnectPaused && _settings &&
+    if (!_serialSelected() && !networkActive() && !_connection.paused() && _settings &&
         _settings->autoConnectNetworkRTKGPS()->rawValue().toBool()) {
         connectNetwork();
     }
     if (networkActive()) {
+        if (!_connection.updateIntent(_settings && _settings->autoConnectNetworkRTKGPS()->rawValue().toBool())) {
+            stop();
+            return;
+        }
         if (_retryReady()) {
-            _retryStarted();
             _startNetwork();
         }
         return;

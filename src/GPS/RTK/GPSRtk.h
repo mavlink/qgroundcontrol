@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QSet>
 #include <QtCore/QString>
 
 #include "GPSProvider.h"
@@ -31,6 +32,8 @@ public:
     RTKPositionSource* positionSource() const { return _positionSource; }
 
     bool hasReceiver() const { return _gpsProvider != nullptr; }
+
+    bool stopping() const { return !_retiringProviders.isEmpty(); }
     FactGroup* gpsRtkFactGroup();
 
     struct SatelliteCounts
@@ -44,6 +47,9 @@ public:
 
 signals:
     void connectedChanged();
+    void receiverStateChanged();
+    void configurationStarted();
+    void connectionFailed();
 
 private slots:
     void _satelliteInfoUpdate(const satellite_info_s& msg);
@@ -58,5 +64,6 @@ private:
     GPSProvider* _gpsProvider = nullptr;
     GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
 
-    unsigned long _disconnectTimeoutMs = 2000;
+    // Retired workers delete themselves on finished(); this set only gates reconnection.
+    QSet<GPSProvider*> _retiringProviders;
 };

@@ -52,6 +52,7 @@ void GPSProvider::run()
         return;
     }
 
+    emit transportOpened();
     bool gotData = false;
     GPSDriverSinks sinks;
     sinks.onPosition = [this](const sensor_gps_s &message) { emit sensorGpsUpdate(message); };

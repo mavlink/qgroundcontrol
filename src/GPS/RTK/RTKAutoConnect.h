@@ -6,6 +6,7 @@
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "GPSConnectionState.h"
 #include "GPSProvider.h"
 
 class AutoConnectSettings;
@@ -19,6 +20,7 @@ class RTKAutoConnect : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_PROPERTY(GPSConnectionState::State connectionState READ connectionState NOTIFY stateChanged)
     Q_PROPERTY(bool active READ active NOTIFY stateChanged)
     Q_PROPERTY(bool autoConnectPaused READ autoConnectPaused NOTIFY stateChanged)
     friend class RTKAutoConnectTest;
@@ -35,7 +37,9 @@ public:
     bool connectSelected();
     void disconnectSelected();
 
-    bool active() const { return networkActive() || _serialRequested; }
+    bool active() const { return _connection.active(); }
+
+    GPSConnectionState::State connectionState() const { return _connection.state(); }
 
     bool autoConnectPaused() const;
     bool connectNetwork();
@@ -44,7 +48,7 @@ public:
 
     bool networkActive() const { return static_cast<bool>(_networkFactory); }
 
-    bool networkAutoConnectPaused() const { return _networkAutoConnectPaused; }
+    bool networkAutoConnectPaused() const { return _connection.paused(); }
     void update();
     void stop();
 
@@ -58,21 +62,15 @@ signals:
 private:
     bool _serialSelected() const;
     bool _retryReady();
-    void _retryStarted();
     void _startNetwork();
-    void _setNetworkAutoConnectPaused(bool paused);
+    void _updateReceiverState();
 
     GPSRtk* _receiver;
     AutoConnectSettings* _settings;
     RTKSettings* _rtkSettings;
-    bool _networkAutoConnectPaused = false;
-    bool _serialRequested = false;
-    bool _serialPaused = false;
+    GPSConnectionState _connection;
     GPSProvider::TransportFactory _networkFactory;
     GPSType _networkType = GPSType::u_blox;
-    QDeadlineTimer _retryDeadline = QDeadlineTimer::Forever;
-    int _retryDelayMs = 1000;
-    static constexpr int kMaxRetryDelayMs = 30000;
 #ifndef QGC_NO_SERIAL_LINK
     void _updateSerial();
     SerialPortManager* _serialPorts = nullptr;

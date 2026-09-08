@@ -146,9 +146,14 @@ void NMEASourceManagerTest::_bindFailureAndTeardown()
         source.update();
         QVERIFY(!source._sourceInstalled);
         QVERIFY(!source._udp);
+        QCOMPARE(source.connectionState(), GPSConnectionState::Retrying);
         occupied.close();
-        source.update();
-        QVERIFY(source._sourceInstalled);
+        QTRY_VERIFY_WITH_TIMEOUT(([&]() {
+                                     source.update();
+                                     return source._sourceInstalled;
+                                 })(),
+                                 TestTimeout::mediumMs());
+        QCOMPARE(source.connectionState(), GPSConnectionState::Ready);
         QUdpSocket sender;
         QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, port), kFix.size());
         QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
@@ -249,6 +254,7 @@ void NMEASourceManagerTest::_satellitesShareTcpConnection()
     QGCPositionManager position;
     NMEASourceManager source(settings, &position);
     QVERIFY(source.connectSource());
+    QCOMPARE(source.connectionState(), GPSConnectionState::Connecting);
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
     QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
@@ -394,7 +400,7 @@ void NMEASourceManagerTest::_tcpRecoveryAndSourceSwitch()
     QVERIFY(source.active());
     source.update();
     QVERIFY(!source._tcp);
-    source._retryDeadline.setRemainingTime(0);
+    source._connection._retryDeadline.setRemainingTime(0);
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     peer.reset(server.nextPendingConnection());
@@ -480,19 +486,19 @@ void NMEASourceManagerTest::_tcpRefusalBackoff()
     NMEASourceManager source(settings, &position);
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(!source._tcp, TestTimeout::mediumMs());
-    QVERIFY(!source._retryDeadline.isForever());
-    QCOMPARE(source._retryDelayMs, 2000);
+    QVERIFY(!source._connection._retryDeadline.isForever());
+    QCOMPARE(source._connection._retryDelayMs, 1000);
     source.update();
     QVERIFY(!source._tcp);
-    source._retryDeadline.setRemainingTime(0);
+    source._connection._retryDeadline.setRemainingTime(0);
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(!source._tcp, TestTimeout::mediumMs());
-    QCOMPARE(source._retryDelayMs, 4000);
+    QCOMPARE(source._connection._retryDelayMs, 2000);
     QVERIFY(server.listen(QHostAddress::LocalHost, port));
-    source._retryDeadline.setRemainingTime(0);
+    source._connection._retryDeadline.setRemainingTime(0);
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
-    QCOMPARE(source._retryDelayMs, 1000);
+    QCOMPARE(source._connection._retryDelayMs, 1000);
 }
 
 void NMEASourceManagerTest::_disconnectDuringPositionUpdate()

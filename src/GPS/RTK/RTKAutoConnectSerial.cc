@@ -25,13 +25,13 @@ void RTKAutoConnect::_updateSerial()
     if (!_settings || !_receiver || !_serialPorts) {
         return;
     }
-    if (_serialPaused || (!_serialRequested && !_settings->autoConnectRTKGPS()->rawValue().toBool())) {
+    if (!_connection.updateIntent(_settings->autoConnectRTKGPS()->rawValue().toBool())) {
         stop();
         return;
     }
-    if (!_serialRequested) {
-        _serialRequested = true;
-        emit stateChanged();
+    _updateReceiverState();
+    if (_receiver->stopping()) {
+        return;
     }
     const QString selectedDevice = _rtkSettings ? _rtkSettings->serialDevice()->rawValue().toString() : QString();
     const auto ports = _serialPorts->availablePorts();
@@ -44,7 +44,9 @@ void RTKAutoConnect::_updateSerial()
         const QString type = selectedDevice.isEmpty() || !_rtkSettings
                                  ? port.boardName
                                  : _rtkSettings->networkReceiverType()->enumStringValue();
-        emit connectRequested(port.systemLocation, type);
+        if (_connection.beginAttempt()) {
+            emit connectRequested(port.systemLocation, type);
+        }
     };
     QSet<QString> present;
     for (const auto& port : ports) {
@@ -54,7 +56,7 @@ void RTKAutoConnect::_updateSerial()
         (!present.contains(_autoConnectedPort) || _serialPorts->isAutoConnectExcluded(_autoConnectedPort))) {
         // Preserve a manual connection request while the device is temporarily unavailable.
         stop();
-        _serialRequested = true;
+        _connection.requestConnect();
         emit stateChanged();
     }
     for (auto it = _waitingPorts.begin(); it != _waitingPorts.end();) {
@@ -67,7 +69,6 @@ void RTKAutoConnect::_updateSerial()
         for (const auto& port : ports) {
             if (port.systemLocation == _autoConnectedPort && eligible(port) &&
                 _serialPorts->canReservePort(port.systemLocation)) {
-                _retryStarted();
                 request(port);
                 break;
             }

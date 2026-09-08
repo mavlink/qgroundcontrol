@@ -103,6 +103,9 @@ void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
     }
 
     _gpsRtkFactGroup->lastError()->setRawValue(static_cast<int>(error));
+    if (error != GPSConnectionError::None) {
+        emit connectionFailed();
+    }
 }
 
 void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
@@ -209,6 +212,14 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
         },
         Qt::QueuedConnection);
     (void) connect(
+        provider, &GPSProvider::transportOpened, this,
+        [this, provider]() {
+            if (provider && _gpsProvider == provider) {
+                emit configurationStarted();
+            }
+        },
+        Qt::QueuedConnection);
+    (void) connect(
         provider, &GPSProvider::receiverReady, this,
         [this, provider]() {
             if (provider && _gpsProvider == provider) {
@@ -218,29 +229,32 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
         Qt::QueuedConnection);
     (void) connect(
         provider, &QThread::finished, this,
-        [this, provider]() {
+        [this, provider, retiredKey = _gpsProvider]() {
+            _retiringProviders.remove(retiredKey);
             if (provider && _gpsProvider == provider) {
                 _gpsProvider = nullptr;
                 _onGPSDisconnect();
             }
+            emit receiverStateChanged();
         },
         Qt::QueuedConnection);
     (void) connect(provider, &QThread::finished, provider, &QObject::deleteLater);
     provider->start();
+    emit receiverStateChanged();
 }
 
 void GPSRtk::disconnectGPS()
 {
-    // Invalidate the session before waiting: queued output may still be in the GUI event queue.
     auto* provider = std::exchange(_gpsProvider, nullptr);
+    if (provider) {
+        _retiringProviders.insert(provider);
+        // The worker owns its cancellation flag and releases the transport before finished().
+        provider->setParent(nullptr);
+        provider->stop();
+    }
     _onGPSDisconnect();
     if (provider) {
-        provider->stop();
-        if (!provider->wait(_disconnectTimeoutMs)) {
-            qCWarning(GPSRtkLog) << "GPS thread did not exit in time; deferring cleanup to finished()";
-            // The worker owns its stop flag and must survive destruction of this manager.
-            provider->setParent(nullptr);
-        }
+        emit receiverStateChanged();
     }
 }
 

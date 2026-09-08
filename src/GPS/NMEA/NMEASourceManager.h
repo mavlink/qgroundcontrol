@@ -9,6 +9,8 @@
 
 #include <memory>
 
+#include "GPSConnectionState.h"
+
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 class QSerialPort;
@@ -30,6 +32,7 @@ class NMEASourceManager : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_PROPERTY(GPSConnectionState::State connectionState READ connectionState NOTIFY stateChanged)
     Q_PROPERTY(bool active READ active NOTIFY stateChanged)
     Q_PROPERTY(QString status READ status NOTIFY stateChanged)
     Q_PROPERTY(int satellitesInViewCount READ satellitesInViewCount NOTIFY satellitesChanged)
@@ -46,7 +49,9 @@ public:
 
     QGeoPositionInfoSource* positionSource() const;
 
-    bool active() const { return _active; }
+    bool active() const { return _connection.active(); }
+
+    GPSConnectionState::State connectionState() const { return _connection.state(); }
 
     QString status() const { return _status; }
 
@@ -89,13 +94,9 @@ private:
     int _satellitesInUseCount = -1;
     QTimer _udpActivityTimer;
     QDeadlineTimer _connectDeadline = QDeadlineTimer::Forever;
-    QDeadlineTimer _retryDeadline = QDeadlineTimer::Forever;
-    int _retryDelayMs = 1000;
+    GPSConnectionState _connection;
     int _source = -1;
     bool _sourceInstalled = false;
-    bool _active = false;
-    bool _manualRequested = false;
-    bool _paused = false;
     QString _status;
 #ifndef QGC_NO_SERIAL_LINK
     std::unique_ptr<QSerialPort> _serial;

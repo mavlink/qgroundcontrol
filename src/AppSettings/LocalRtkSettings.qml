@@ -116,13 +116,18 @@ SettingsGroupLayout {
         connectButtonObjectName: "networkRtkConnectButton"
         statusObjectName: "networkRtkStatus"
         active: root._active
+        stopping: root._connection.connectionState === GPSConnectionState.Stopping
         available: root._serial ? root._serialPortManager !== null
                                : root._settings.networkBaseHost.valueString.trim().length > 0
         statusText: {
             if (root._invalidConnection) return qsTr("Unable to connect. Check the connection settings.")
+            if (root._connection.connectionState === GPSConnectionState.Stopping) return qsTr("Stopping")
             if (!root._active) return root._connection.autoConnectPaused ? qsTr("Automatic connection paused") : qsTr("Disconnected")
-            if (root._facts.connected.value) return qsTr("Connected")
-            if (root._facts.lastError.value) return qsTr("%1 — reconnecting").arg(root._facts.lastError.enumStringValue)
+            if (root._connection.connectionState === GPSConnectionState.Ready) return qsTr("Connected")
+            if (root._connection.connectionState === GPSConnectionState.Configuring) return qsTr("Configuring receiver")
+            if (root._connection.connectionState === GPSConnectionState.Retrying) {
+                return root._facts.lastError.value ? qsTr("%1 — reconnecting").arg(root._facts.lastError.enumStringValue) : qsTr("Reconnecting")
+            }
             return root._serial ? qsTr("Waiting for receiver") : qsTr("Connecting")
         }
         onConnectRequested: root._invalidConnection = !root._manager.connectRtk()

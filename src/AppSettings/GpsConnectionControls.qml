@@ -14,6 +14,7 @@ ColumnLayout {
     required property bool active
     required property string statusText
     property bool available: true
+    property bool stopping: false
     property string autoConnectObjectName: ""
     property string connectButtonObjectName: ""
     property string statusObjectName: ""
@@ -50,7 +51,7 @@ ColumnLayout {
     QGCButton {
         objectName: root.connectButtonObjectName
         text: root.active ? qsTr("Disconnect") : qsTr("Connect")
-        enabled: root.active || root.available
+        enabled: !root.stopping && (root.active || root.available)
         onClicked: {
             root.forceActiveFocus()
             if (root.active) {
