@@ -1,0 +1,113 @@
+Use timezone-independent UTC conversion. Mirrors the fix prepared in PX4-GPSDrivers.
+
+diff --git a/src/gps_helper.cpp b/src/gps_helper.cpp
+index 25ca6d2..914e469 100644
+--- a/src/gps_helper.cpp
++++ b/src/gps_helper.cpp
+@@ -32,6 +32,7 @@
+  ****************************************************************************/
+
+ #include "gps_helper.h"
++#include "gps_time.h"
+ #include <math.h>
+ #include <stdlib.h>
+ #include <time.h>
+@@ -152,7 +153,7 @@ double GPSHelper::nmeaToDegrees(double ddmm)
+ uint64_t GPSHelper::timeFromUtc(tm &utc, int32_t nsec, bool set_clock)
+ {
+ #ifndef NO_MKTIME
+-	const time_t epoch = mktime(&utc);
++	const time_t epoch = gpsTimeToEpoch(utc);
+
+ 	if (epoch > GPS_EPOCH_SECS) {
+ 		if (set_clock) {
+diff --git a/src/gps_helper.h b/src/gps_helper.h
+index 1d979a7..49b2c3b 100644
+--- a/src/gps_helper.h
++++ b/src/gps_helper.h
+@@ -328,10 +328,10 @@ protected:
+ 	/**
+ 	 * Convert a broken-down UTC time to microseconds since the Unix epoch, and set the system clock
+ 	 * from it when requested. Both only happen if the date is after the GPS epoch.
+-	 * @param utc broken-down UTC time (modified by mktime)
++	 * @param utc broken-down UTC time (normalized in place)
+ 	 * @param nsec sub-second part [ns], may be negative
+ 	 * @param set_clock also set the system clock
+-	 * @return microseconds since the Unix epoch, 0 if the date is implausible or mktime is unavailable
++	 * @return microseconds since the Unix epoch, 0 if the date is implausible or NO_MKTIME is defined
+ 	 */
+ 	uint64_t timeFromUtc(tm &utc, int32_t nsec, bool set_clock = true);
+
+diff --git a/src/sbf.cpp b/src/sbf.cpp
+index 87885be..31c5675 100755
+--- a/src/sbf.cpp
++++ b/src/sbf.cpp
+@@ -42,6 +42,7 @@
+ */
+
+ #include "sbf.h"
++#include "gps_time.h"
+ #include "rtcm.h"
+
+ #include <string.h>
+@@ -602,7 +603,7 @@ int GPSDriverSBF::payloadRxDone()
+ 		timeinfo.tm_min = 0;
+ 		timeinfo.tm_sec = _buf.TOW / 1000;
+
+-		epoch = mktime(&timeinfo);
++		epoch = gpsTimeToEpoch(timeinfo);
+
+ 		if (epoch > GPS_EPOCH_SECS) {
+ 			// FMUv2+ boards have a hardware RTC, but GPS helps us to configure it
+--- /dev/null
++++ b/src/gps_time.h
+@@ -0,0 +1,49 @@
++/****************************************************************************
++ *
++ *   Copyright (c) 2012-2018 PX4 Development Team. All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ *
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in
++ *    the documentation and/or other materials provided with the
++ *    distribution.
++ * 3. Neither the name PX4 nor the names of its contributors may be
++ *    used to endorse or promote products derived from this software
++ *    without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
++ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
++ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
++ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
++ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
++ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
++ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
++ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
++ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ *
++ ****************************************************************************/
++
++#pragma once
++
++#include <time.h>
++
++#ifndef NO_MKTIME
++// Receiver calendar fields are UTC, irrespective of the host timezone. Normalize
++// overflowing fields too: SBF encodes GPS weeks as offsets from January 1980.
++static inline time_t gpsTimeToEpoch(tm &utc)
++{
++#ifdef _WIN32
++	return _mkgmtime(&utc);
++#else
++	return timegm(&utc);
++#endif
++}
++#endif

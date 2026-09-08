@@ -15,8 +15,7 @@
 #include <utility>
 
 QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.RTK.Driver.GPSDriver")
-QGC_LOGGING_CATEGORY(GPSDriversLog,
-                     "GPS.RTK.Driver.Drivers")  // backs the px4 GPS_INFO/WARN/ERR macros in definitions.h
+QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.RTK.Driver.Drivers")
 
 namespace {
 int callbackTrampoline(GPSCallbackType type, void *data1, int data2, void *user)
@@ -58,6 +57,7 @@ bool GPSDriver::configure()
             .min_elev = 0,
             .output_rate = 0,
             .heading_offset = 0.0f,
+            .uart1_baudrate = 0,
             .uart2_baudrate = 57600,
             .ppk_output = false,
             .jam_det_sensitivity_hi = false,

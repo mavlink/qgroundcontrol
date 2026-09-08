@@ -1,4 +1,4 @@
-/* https://github.com/PX4/Firmware/blob/master/msg/SensorGps.msg */
+/* https://github.com/PX4/PX4-Autopilot/blob/main/msg/SensorGps.msg */
 
 #pragma once
 
@@ -41,16 +41,23 @@ struct sensor_gps_s
 
 	static constexpr uint8_t JAMMING_STATE_UNKNOWN = 0;
 	static constexpr uint8_t JAMMING_STATE_OK = 1;
-	static constexpr uint8_t JAMMING_STATE_WARNING = 2;
-	static constexpr uint8_t JAMMING_STATE_CRITICAL = 3;
+	static constexpr uint8_t JAMMING_STATE_MITIGATED = 2;
+	static constexpr uint8_t JAMMING_STATE_DETECTED = 3;
 	uint8_t jamming_state;
 	int32_t jamming_indicator;
 
 	static constexpr uint8_t SPOOFING_STATE_UNKNOWN = 0;
-	static constexpr uint8_t SPOOFING_STATE_NONE = 1;
-	static constexpr uint8_t SPOOFING_STATE_INDICATED = 2;
-	static constexpr uint8_t SPOOFING_STATE_MULTIPLE = 3;
+	static constexpr uint8_t SPOOFING_STATE_OK = 1;
+	static constexpr uint8_t SPOOFING_STATE_MITIGATED = 2;
+	static constexpr uint8_t SPOOFING_STATE_DETECTED = 3;
 	uint8_t spoofing_state;
+
+	static constexpr uint8_t AUTHENTICATION_STATE_UNKNOWN = 0;
+	static constexpr uint8_t AUTHENTICATION_STATE_INITIALIZING = 1;
+	static constexpr uint8_t AUTHENTICATION_STATE_ERROR = 2;
+	static constexpr uint8_t AUTHENTICATION_STATE_OK = 3;
+	static constexpr uint8_t AUTHENTICATION_STATE_DISABLED = 4;
+	uint8_t authentication_state;
 
 	float vel_m_s;
 	float vel_n_m_s;
@@ -64,6 +71,16 @@ struct sensor_gps_s
 
 	uint8_t satellites_used;
 
+	static constexpr uint32_t SYSTEM_ERROR_OK = 0;
+	static constexpr uint32_t SYSTEM_ERROR_INCOMING_CORRECTIONS = 1;
+	static constexpr uint32_t SYSTEM_ERROR_CONFIGURATION = 2;
+	static constexpr uint32_t SYSTEM_ERROR_SOFTWARE = 4;
+	static constexpr uint32_t SYSTEM_ERROR_ANTENNA = 8;
+	static constexpr uint32_t SYSTEM_ERROR_EVENT_CONGESTION = 16;
+	static constexpr uint32_t SYSTEM_ERROR_CPU_OVERLOAD = 32;
+	static constexpr uint32_t SYSTEM_ERROR_OUTPUT_CONGESTION = 64;
+	uint32_t system_error;
+
 	float heading;
 	float heading_offset;
 	float heading_accuracy;
@@ -71,11 +88,23 @@ struct sensor_gps_s
 	float rtcm_injection_rate;
 	uint8_t selected_rtcm_instance;
 
-	bool rtcm_crc_failed;
+	static constexpr uint8_t CORRECTIONS_PROTOCOL_UNKNOWN = 0;
+	static constexpr uint8_t CORRECTIONS_PROTOCOL_RTCM3 = 1;
+	static constexpr uint8_t CORRECTIONS_PROTOCOL_SPARTN = 2;
+	static constexpr uint8_t CORRECTIONS_PROTOCOL_HAS = 3;
+	static constexpr uint8_t CORRECTIONS_PROTOCOL_PMP = 4;
+	static constexpr uint8_t CORRECTIONS_PROTOCOL_QZSS_L6 = 5;
+	uint8_t corrections_protocol;
 
-	static constexpr uint8_t RTCM_MSG_USED_UNKNOWN = 0;
-	static constexpr uint8_t RTCM_MSG_USED_NOT_USED = 1;
-	static constexpr uint8_t RTCM_MSG_USED_USED = 2;
-	uint8_t rtcm_msg_used;
+	bool corrections_crc_failed;
+
+	static constexpr uint8_t CORRECTIONS_MSG_USED_UNKNOWN = 0;
+	static constexpr uint8_t CORRECTIONS_MSG_USED_NOT_USED = 1;
+	static constexpr uint8_t CORRECTIONS_MSG_USED_USED = 2;
+	uint8_t corrections_msg_used;
+
+	float antenna_offset_x;
+	float antenna_offset_y;
+	float antenna_offset_z;
 };
 Q_DECLARE_METATYPE(sensor_gps_s);

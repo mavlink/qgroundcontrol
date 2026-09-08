@@ -1,4 +1,4 @@
-/* https://github.com/PX4/Firmware/blob/master/msg/SatelliteInfo.msg */
+/* https://github.com/PX4/PX4-Autopilot/blob/main/msg/SatelliteInfo.msg */
 
 #pragma once
 
@@ -9,7 +9,7 @@
 struct satellite_info_s
 {
 	uint64_t timestamp;
-	static constexpr uint8_t SAT_INFO_MAX_SATELLITES = 20;
+	static constexpr uint8_t SAT_INFO_MAX_SATELLITES = 40;
 
 	uint8_t count;
 	uint8_t svid[SAT_INFO_MAX_SATELLITES];

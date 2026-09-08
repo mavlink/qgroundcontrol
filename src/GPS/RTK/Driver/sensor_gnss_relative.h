@@ -1,4 +1,4 @@
-/* https://github.com/PX4/Firmware/blob/master/msg/SensorGnssRelative.msg */
+/* https://github.com/PX4/PX4-Autopilot/blob/main/msg/SensorGnssRelative.msg */
 
 #pragma once
 
