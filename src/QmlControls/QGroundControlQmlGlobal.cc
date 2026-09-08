@@ -40,6 +40,11 @@ QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsContr
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
 
+GPSManager* QGroundControlQmlGlobal::gpsManager() const
+{
+    return GPSManager::instance();
+}
+
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     : QObject(parent)
     , _mapEngineManager(QGCMapEngineManager::instance())

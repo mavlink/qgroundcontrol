@@ -5,6 +5,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSProvider.cc GPSProvider.h GPSRtk.cc GPSRtk.h GPSRTKFactGroup.cc
                                              GPSRTKFactGroup.h
 )
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE TcpGPSTransport.cc TcpGPSTransport.h)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Network)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

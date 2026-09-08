@@ -36,7 +36,7 @@ GPSDriver::~GPSDriver() = default;
 
 bool GPSDriver::configure()
 {
-    unsigned baudrate = 0;
+    unsigned baudrate = _transport.fixedBaudrate();
     switch (_type) {
     case GPSType::trimble:
         _driver.reset(new GPSDriverAshtech(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo));

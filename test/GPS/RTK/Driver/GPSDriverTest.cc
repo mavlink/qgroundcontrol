@@ -1,14 +1,14 @@
 #include "GPSDriverTest.h"
 
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
+
+#include <cstring>
+#include <gps_helper.h>  // px4: GPSCallbackType, SurveyInStatus — this is a driver-bridge test
+
 #include "GPSDriver.h"
 #include "GPSTransport.h"
 #include "GPSType.h"
-
-#include <gps_helper.h> // px4: GPSCallbackType, SurveyInStatus — this is a driver-bridge test
-
-#include <QtCore/QByteArray>
-
-#include <cstring>
 
 namespace {
 
@@ -18,6 +18,8 @@ public:
     bool open() override { return true; }
 
     bool fatalError() const override { return false; }
+
+    unsigned fixedBaudrate() const override { return fixedRate; }
     int read(uint8_t *buffer, int length, int timeoutMs) override
     {
         lastReadLength = length;
@@ -36,6 +38,7 @@ public:
     bool setBaudrate(unsigned baudrate) override
     {
         lastBaudrate = baudrate;
+        requestedBaudrates.append(baudrate);
         return baudrateOk;
     }
 
@@ -44,6 +47,8 @@ public:
     int lastReadTimeoutMs = -1;
     QByteArray lastWrite;
     unsigned lastBaudrate = 0;
+    unsigned fixedRate = 0;
+    QList<unsigned> requestedBaudrates;
     bool baudrateOk = true;
     bool writeOk = true;
 };
@@ -119,6 +124,20 @@ void GPSDriverTest::_testSetBaudrateRoutesToTransport()
 
     transport.baudrateOk = false;
     QCOMPARE(callback(driver, GPSCallbackType::setBaudrate, nullptr, 9600), -1);
+}
+
+void GPSDriverTest::_testFixedTransportBaudrate()
+{
+    FakeGPSTransport transport;
+    transport.fixedRate = 115200;
+    transport.writeOk = false;
+    GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Driver configuration failed for type")));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    // Even a failed attempt must not probe other rates and reconfigure a bridged UART.
+    QCOMPARE(transport.requestedBaudrates, QList<unsigned>{115200});
 }
 
 void GPSDriverTest::_testRtcmMessageForwardedToSink()

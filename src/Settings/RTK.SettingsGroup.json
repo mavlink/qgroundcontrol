@@ -3,6 +3,31 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "networkBaseHost",
+            "shortDesc": "TCP receiver host",
+            "type": "string",
+            "default": "",
+            "label": "Host"
+        },
+        {
+            "name": "networkBasePort",
+            "shortDesc": "TCP receiver port",
+            "type": "uint16",
+            "default": 2101,
+            "min": 1,
+            "max": 65535,
+            "label": "Port"
+        },
+        {
+            "name": "networkReceiverType",
+            "shortDesc": "TCP receiver protocol",
+            "type": "uint8",
+            "enumStrings": "U-blox,Trimble,Septentrio,Femtomes",
+            "enumValues": "0,1,2,3",
+            "default": 0,
+            "label": "Receiver"
+        },
+        {
             "name": "baseReceiverManufacturers",
             "shortDesc": "GPS manufacturers for settings",
             "type": "uint8",

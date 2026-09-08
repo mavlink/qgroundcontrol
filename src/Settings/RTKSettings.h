@@ -37,4 +37,7 @@ public:
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
     DEFINE_SETTINGFACT(fixedBasePositionAltitude)
     DEFINE_SETTINGFACT(fixedBasePositionAccuracy)
+    DEFINE_SETTINGFACT(networkBaseHost)
+    DEFINE_SETTINGFACT(networkBasePort)
+    DEFINE_SETTINGFACT(networkReceiverType)
 };

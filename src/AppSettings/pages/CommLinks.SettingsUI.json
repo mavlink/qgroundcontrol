@@ -27,6 +27,11 @@
             ]
         },
         {
+            "component": "NetworkRtkSettings",
+            "sectionName": "Network RTK Receiver",
+            "keywords": ["gps", "rtk", "tcp", "receiver", "base", "network"]
+        },
+        {
             "heading": "Android Serial",
             "keywords": ["serial", "posix", "uart", "tty", "android"],
             "controls": [

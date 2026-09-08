@@ -13,6 +13,9 @@ public:
     virtual bool open() = 0;
     virtual bool fatalError() const = 0;
 
+    /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
+    virtual unsigned fixedBaudrate() const { return 0; }
+
     /// Read up to length bytes into buffer, waiting up to timeoutMs.
     /// Returns bytes read, 0 on timeout, <0 on error.
     virtual int read(uint8_t *buffer, int length, int timeoutMs) = 0;

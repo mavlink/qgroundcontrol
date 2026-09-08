@@ -12,6 +12,7 @@ private slots:
     void _testWriteDeviceDataRoutesToTransport();
     void _testWriteDeviceDataErrorPropagates();
     void _testSetBaudrateRoutesToTransport();
+    void _testFixedTransportBaudrate();
     void _testRtcmMessageForwardedToSink();
     void _testSurveyInStatusTranslatedAndFlagsDecoded();
     void _testSurveyInStatusPreservesLargeValues();
