@@ -20,7 +20,6 @@ public:
 
     bool open() override;
     bool fatalError() const override;
-    bool isCancelled() const override { return _requestStop.load(); }
 
     unsigned fixedBaudrate() const override { return 115200; }
 
@@ -33,7 +32,6 @@ private:
 
     QString _host;
     quint16 _port;
-    const std::atomic_bool& _requestStop;
     std::unique_ptr<QTcpSocket> _socket;
 
     static constexpr int kConnectTimeoutMs = 5000;

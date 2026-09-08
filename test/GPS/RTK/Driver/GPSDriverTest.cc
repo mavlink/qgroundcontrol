@@ -15,11 +15,15 @@ namespace {
 class FakeGPSTransport : public GPSTransport
 {
 public:
+    explicit FakeGPSTransport(std::atomic_bool& requestStop)
+        : GPSTransport(requestStop)
+        , cancelled(requestStop)
+    {
+    }
+
     bool open() override { return true; }
 
     bool fatalError() const override { return false; }
-
-    bool isCancelled() const override { return cancelled; }
 
     unsigned fixedBaudrate() const override { return fixedRate; }
     int read(uint8_t *buffer, int length, int timeoutMs) override
@@ -57,7 +61,7 @@ public:
     QList<unsigned> requestedBaudrates;
     bool baudrateOk = true;
     bool writeOk = true;
-    bool cancelled = false;
+    std::atomic_bool& cancelled;
     bool cancelDuringRead = false;
     int readError = 0;
 };
@@ -88,14 +92,16 @@ int callback(GPSDriver &driver, GPSCallbackType type, void *data1, int data2)
 
 void GPSDriverTest::_testReceiveUnconfiguredReturnsError()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
     QCOMPARE(driver.receive(10), -1);
 }
 
 void GPSDriverTest::_testReadDeviceDataRoutesToTransport()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     transport.scriptedRead = QByteArray::fromHex("b5620102");
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
@@ -123,7 +129,8 @@ void GPSDriverTest::_testReadCancellation()
 {
     QFETCH(bool, beforeRead);
     QFETCH(bool, duringRead);
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     transport.cancelled = beforeRead;
     transport.cancelDuringRead = duringRead;
     transport.readError = -1;
@@ -136,7 +143,8 @@ void GPSDriverTest::_testReadCancellation()
 
 void GPSDriverTest::_testCancelledConfigurationDoesNotWarn()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     transport.cancelled = true;
     transport.fixedRate = 115200;
     transport.writeOk = false;
@@ -146,7 +154,8 @@ void GPSDriverTest::_testCancelledConfigurationDoesNotWarn()
 
 void GPSDriverTest::_testWriteDeviceDataRoutesToTransport()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     const QByteArray payload = QByteArray::fromHex("deadbeef");
@@ -159,7 +168,8 @@ void GPSDriverTest::_testWriteDeviceDataRoutesToTransport()
 
 void GPSDriverTest::_testSetBaudrateRoutesToTransport()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     QCOMPARE(callback(driver, GPSCallbackType::setBaudrate, nullptr, 115200), 0);
@@ -171,7 +181,8 @@ void GPSDriverTest::_testSetBaudrateRoutesToTransport()
 
 void GPSDriverTest::_testFixedTransportBaudrate()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     transport.fixedRate = 115200;
     transport.writeOk = false;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
@@ -185,7 +196,8 @@ void GPSDriverTest::_testFixedTransportBaudrate()
 
 void GPSDriverTest::_testRtcmMessageForwardedToSink()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     SinkCapture capture;
     GPSDriver driver(GPSType::septentrio, transport, GPSReceiverConfig{}, capture.sinks());
 
@@ -199,7 +211,8 @@ void GPSDriverTest::_testRtcmMessageForwardedToSink()
 
 void GPSDriverTest::_testSurveyInStatusTranslatedAndFlagsDecoded()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     SinkCapture capture;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, capture.sinks());
 
@@ -236,7 +249,8 @@ void GPSDriverTest::_testSurveyInStatusTranslatedAndFlagsDecoded()
 
 void GPSDriverTest::_testWriteDeviceDataErrorPropagates()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     transport.writeOk = false;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
@@ -249,7 +263,8 @@ void GPSDriverTest::_testWriteDeviceDataErrorPropagates()
 
 void GPSDriverTest::_testSurveyInStatusPreservesLargeValues()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     SinkCapture capture;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, capture.sinks());
 
@@ -266,7 +281,8 @@ void GPSDriverTest::_testSurveyInStatusPreservesLargeValues()
 
 void GPSDriverTest::_testSurveyInStatusNullDataIgnored()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     SinkCapture capture;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, capture.sinks());
 
@@ -276,7 +292,8 @@ void GPSDriverTest::_testSurveyInStatusNullDataIgnored()
 
 void GPSDriverTest::_testCallbacksWithoutSinksAreSafe()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     const QByteArray rtcm = QByteArray::fromHex("d3aabbcc");
@@ -295,7 +312,8 @@ void GPSDriverTest::_testDefaultConfigHeadingOffsetMatchesSeptentrioPreset()
 
 void GPSDriverTest::_testUnknownCallbackIgnored()
 {
-    FakeGPSTransport transport;
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
     SinkCapture capture;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, capture.sinks());
 

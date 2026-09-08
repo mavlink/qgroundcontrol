@@ -11,9 +11,9 @@
 QGC_LOGGING_CATEGORY(TcpGPSTransportLog, "GPS.RTK.TcpGPSTransport")
 
 TcpGPSTransport::TcpGPSTransport(QString host, quint16 port, const std::atomic_bool& requestStop)
-    : _host(std::move(host))
+    : GPSTransport(requestStop)
+    , _host(std::move(host))
     , _port(port)
-    , _requestStop(requestStop)
 {
     qCDebug(TcpGPSTransportLog) << this;
 }
@@ -25,7 +25,7 @@ TcpGPSTransport::~TcpGPSTransport()
 
 bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs)
 {
-    if (_requestStop || !_socket) {
+    if (isCancelled() || !_socket) {
         return false;
     }
     if (ready()) {
@@ -41,7 +41,7 @@ bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     QTimer cancellation;
     QTimer deadline;
     const auto check = [&]() {
-        if (_requestStop || ready() || _socket->state() == QAbstractSocket::UnconnectedState) {
+        if (isCancelled() || ready() || _socket->state() == QAbstractSocket::UnconnectedState) {
             loop.quit();
         }
     };
@@ -54,12 +54,12 @@ bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     cancellation.start(kCancellationPollMs);
     deadline.start(timeoutMs);
     loop.exec();
-    return !_requestStop && ready();
+    return !isCancelled() && ready();
 }
 
 bool TcpGPSTransport::open()
 {
-    if (_requestStop) {
+    if (isCancelled()) {
         return false;
     }
     _socket = std::make_unique<QTcpSocket>();
@@ -67,7 +67,7 @@ bool TcpGPSTransport::open()
     if (_waitFor([this]() { return _socket->state() == QAbstractSocket::ConnectedState; }, kConnectTimeoutMs)) {
         return true;
     }
-    if (!_requestStop) {
+    if (!isCancelled()) {
         qCWarning(TcpGPSTransportLog) << "Failed to connect to GPS receiver" << _host << _port
                                       << _socket->errorString();
     }
@@ -82,21 +82,21 @@ bool TcpGPSTransport::fatalError() const
 
 int TcpGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
 {
-    if (_requestStop || !_socket || !buffer || length < 0) {
+    if (isCancelled() || !_socket || !buffer || length < 0) {
         return -1;
     }
     if (length == 0) {
         return 0;
     }
     if (!_waitFor([this]() { return _socket->bytesAvailable() > 0; }, timeoutMs)) {
-        return (_requestStop || fatalError()) ? -1 : 0;
+        return (isCancelled() || fatalError()) ? -1 : 0;
     }
     return static_cast<int>(_socket->read(reinterpret_cast<char*>(buffer), length));
 }
 
 int TcpGPSTransport::write(const uint8_t* buffer, int length)
 {
-    if (_requestStop || fatalError() || !buffer || length < 0) {
+    if (isCancelled() || fatalError() || !buffer || length < 0) {
         return -1;
     }
     if (length == 0) {

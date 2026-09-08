@@ -25,7 +25,7 @@ target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 CPMAddPackage(
     NAME px4-gpsdrivers
     GITHUB_REPOSITORY PX4/PX4-GPSDrivers
-    GIT_TAG ab090ca9dfe8038ae84eb795a0bed0d314896d85
+    GIT_TAG 2a5e78abfb34c91e1340d8136822397462f088d9
     SOURCE_SUBDIR src
 )
 

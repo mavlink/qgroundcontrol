@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 
 /// Byte link the GPS driver reads and writes through (serial, TCP, ...).
@@ -8,12 +9,14 @@
 class GPSTransport
 {
 public:
-    GPSTransport();
+    /// The caller owns requestStop and must keep it alive until this transport is destroyed.
+    explicit GPSTransport(const std::atomic_bool& requestStop);
     virtual ~GPSTransport();
 
     virtual bool open() = 0;
     virtual bool fatalError() const = 0;
-    virtual bool isCancelled() const { return false; }
+
+    bool isCancelled() const { return _requestStop.load(); }
 
     /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
     virtual unsigned fixedBaudrate() const { return 0; }
@@ -27,4 +30,7 @@ public:
 
     /// Set the link baud rate. Returns true on success.
     virtual bool setBaudrate(unsigned baudrate) = 0;
+
+private:
+    const std::atomic_bool& _requestStop;
 };

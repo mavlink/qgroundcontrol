@@ -15,9 +15,9 @@
 QGC_LOGGING_CATEGORY(UdpGPSTransportLog, "GPS.RTK.UdpGPSTransport")
 
 UdpGPSTransport::UdpGPSTransport(QString host, quint16 port, const std::atomic_bool& requestStop, quint16 localPort)
-    : _host(std::move(host))
+    : GPSTransport(requestStop)
+    , _host(std::move(host))
     , _port(port)
-    , _requestStop(requestStop)
     , _localPort(localPort)
 {
     qCDebug(UdpGPSTransportLog) << this;
@@ -30,7 +30,7 @@ UdpGPSTransport::~UdpGPSTransport()
 
 bool UdpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs)
 {
-    if (_requestStop || fatalError()) {
+    if (isCancelled() || fatalError()) {
         return false;
     }
     if (ready()) {
@@ -44,7 +44,7 @@ bool UdpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     QTimer cancellation;
     QTimer deadline;
     const auto check = [&]() {
-        if (_requestStop || fatalError() || ready()) {
+        if (isCancelled() || fatalError() || ready()) {
             loop.quit();
         }
     };
@@ -57,12 +57,12 @@ bool UdpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     cancellation.start(kCancellationPollMs);
     deadline.start(timeoutMs);
     loop.exec();
-    return !_requestStop && !fatalError() && ready();
+    return !isCancelled() && !fatalError() && ready();
 }
 
 bool UdpGPSTransport::open()
 {
-    if (_requestStop) {
+    if (isCancelled()) {
         return false;
     }
     _pending.clear();
@@ -77,7 +77,7 @@ bool UdpGPSTransport::open()
             return true;
         }
     }
-    if (!_requestStop) {
+    if (!isCancelled()) {
         qCWarning(UdpGPSTransportLog) << "Failed to open UDP GPS receiver" << _host << _port << _socket->errorString();
     }
     _socket->abort();
@@ -91,7 +91,7 @@ bool UdpGPSTransport::fatalError() const
 
 int UdpGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
 {
-    if (_requestStop || fatalError() || !buffer || length < 0) {
+    if (isCancelled() || fatalError() || !buffer || length < 0) {
         return -1;
     }
     if (length == 0) {
@@ -102,7 +102,7 @@ int UdpGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
     while (_pending.isEmpty()) {
         if (!_waitFor([this]() { return _socket->hasPendingDatagrams(); },
                       static_cast<int>(deadline.remainingTime()))) {
-            return (_requestStop || fatalError()) ? -1 : 0;
+            return (isCancelled() || fatalError()) ? -1 : 0;
         }
         const QNetworkDatagram datagram = _socket->receiveDatagram();
         if (!datagram.isValid()) {
@@ -129,7 +129,7 @@ int UdpGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
 
 int UdpGPSTransport::write(const uint8_t* buffer, int length)
 {
-    if (_requestStop || fatalError() || !buffer || length < 0) {
+    if (isCancelled() || fatalError() || !buffer || length < 0) {
         return -1;
     }
     if (length == 0) {

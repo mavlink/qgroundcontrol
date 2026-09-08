@@ -24,7 +24,6 @@ public:
 
     /// True once the port hits an error the receive loop should stop retrying past.
     bool fatalError() const override;
-    bool isCancelled() const override { return _requestStop.load(); }
 
     int read(uint8_t *buffer, int length, int timeoutMs) override;
     int write(const uint8_t *buffer, int length) override;
@@ -34,6 +33,5 @@ private:
     static constexpr int kWriteTimeoutMs = 500;
 
     QString _device;
-    const std::atomic_bool &_requestStop;
     std::unique_ptr<QSerialPort> _serial;
 };

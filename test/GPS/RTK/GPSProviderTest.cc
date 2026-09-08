@@ -20,8 +20,13 @@ struct TransportTrace
 class TestTransport : public GPSTransport
 {
 public:
-    TestTransport(TransportTrace& trace, std::function<void()> stop, bool openResult, bool cancelInOpen)
-        : _trace(trace), _stop(stop), _openResult(openResult), _cancelInOpen(cancelInOpen)
+    TestTransport(const std::atomic_bool& requestStop, TransportTrace& trace, std::function<void()> stop,
+                  bool openResult, bool cancelInOpen)
+        : GPSTransport(requestStop)
+        , _trace(trace)
+        , _stop(stop)
+        , _openResult(openResult)
+        , _cancelInOpen(cancelInOpen)
     {
         _trace.constructedOn = QThread::currentThread();
     }
@@ -75,8 +80,9 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
     auto lifetime = std::make_shared<int>(0);
     trace.factoryLifetime = lifetime;
     GPSProvider provider(
-        [&, lifetime = std::move(lifetime)](const std::atomic_bool&) {
-            return std::make_unique<TestTransport>(trace, [&provider]() { provider.stop(); }, openResult, cancelInOpen);
+        [&, lifetime = std::move(lifetime)](const std::atomic_bool& requestStop) {
+            return std::make_unique<TestTransport>(
+                requestStop, trace, [&provider]() { provider.stop(); }, openResult, cancelInOpen);
         },
         GPSType::u_blox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
@@ -138,6 +144,8 @@ namespace {
 class FemtoAckTransport : public GPSTransport
 {
 public:
+    using GPSTransport::GPSTransport;
+
     bool open() override { return true; }
 
     bool fatalError() const override { return false; }
@@ -170,8 +178,9 @@ private:
 
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 {
-    GPSProvider provider([](const std::atomic_bool&) { return std::make_unique<FemtoAckTransport>(); }, GPSType::femto,
-                         GPSReceiverConfig{});
+    GPSProvider provider(
+        [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
+        GPSType::femto, GPSReceiverConfig{});
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
@@ -185,9 +194,9 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
 {
     TransportTrace trace;
     GPSProvider provider(
-        [&](const std::atomic_bool&) {
+        [&](const std::atomic_bool& requestStop) {
             provider.stop();
-            return std::make_unique<TestTransport>(trace, []() {}, true, false);
+            return std::make_unique<TestTransport>(requestStop, trace, []() {}, true, false);
         },
         GPSType::u_blox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);

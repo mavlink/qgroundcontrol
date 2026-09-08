@@ -15,8 +15,8 @@
 QGC_LOGGING_CATEGORY(SerialGPSTransportLog, "GPS.RTK.SerialGPSTransport")
 
 SerialGPSTransport::SerialGPSTransport(QString device, const std::atomic_bool &requestStop)
-    : _device(std::move(device))
-    , _requestStop(requestStop)
+    : GPSTransport(requestStop)
+    , _device(std::move(device))
 {
     qCDebug(SerialGPSTransportLog) << this;
 }
@@ -33,7 +33,7 @@ bool SerialGPSTransport::open()
     if (!_serial->open(QIODevice::ReadWrite)) {
         // Device can take 10-20s to become accessible after startup.
         uint32_t retries = 60;
-        while ((retries-- > 0) && !_requestStop && (_serial->error() == QSerialPort::PermissionError)) {
+        while ((retries-- > 0) && !isCancelled() && (_serial->error() == QSerialPort::PermissionError)) {
             qCDebug(SerialGPSTransportLog) << "Cannot open device... retrying";
             QThread::msleep(500);
             if (_serial->open(QIODevice::ReadWrite)) {
@@ -66,7 +66,7 @@ bool SerialGPSTransport::fatalError() const
 
 int SerialGPSTransport::read(uint8_t *buffer, int length, int timeoutMs)
 {
-    if (_requestStop) {
+    if (isCancelled()) {
         return -1; // abort an in-flight configure/receive so disconnect joins promptly
     }
     if (_serial->bytesAvailable() == 0) {
@@ -79,7 +79,7 @@ int SerialGPSTransport::read(uint8_t *buffer, int length, int timeoutMs)
 
 int SerialGPSTransport::write(const uint8_t *buffer, int length)
 {
-    if (_requestStop) {
+    if (isCancelled()) {
         return -1;
     }
     int written = 0;
