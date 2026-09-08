@@ -11,6 +11,12 @@ Set the repository variable `CODECOV_TEST_ANALYTICS=true` to opt into JUnit uplo
 and custom-build test jobs. Uploads use Codecov OIDC authentication and remain informational;
 JUnit artifacts and existing test reporters remain available with the variable unset.
 
+Docker publishes builder-image CycloneDX SBOMs and vulnerability scans alongside its existing CPM
+reports. Trusted upstream push jobs attach provenance and SBOM attestations to the published image
+digest; pull requests cannot run those publishing jobs. Master pushes also submit the Ubuntu
+builder's CPM SPDX snapshot to the dependency graph. CPM metadata is read inside the builder so
+container-local dependency paths resolve to the correct repositories.
+
 ## Contents
 
 - [Layout](#layout)

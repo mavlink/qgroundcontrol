@@ -234,10 +234,36 @@ jobs:
 
       - name: Generate CPM dependency SBOM
         if: steps.artifact.outputs.found == 'true'
+        env:
+          IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
         run: >-
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_cpm_sbom.py"
-          --build-dir "${{ github.workspace }}/build"
-          -o cpm-sbom.cdx.json
+          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp
+          --entrypoint /opt/qgc-venv/bin/python
+          -v "${GITHUB_WORKSPACE}:/project/source:ro"
+          -v "${GITHUB_WORKSPACE}/build:/project/build:ro"
+          "${IMAGE}" /project/source/.github/scripts/generate_cpm_sbom.py
+          --build-dir /project/build --require-components > cpm-sbom.cdx.json
+
+      - name: Generate CPM dependency snapshot
+        if: matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
+        env:
+          IMAGE: dronecode/qgroundcontrol:${{ matrix.variant }}
+        run: >-
+          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp
+          --entrypoint /opt/qgc-venv/bin/python
+          -v "${GITHUB_WORKSPACE}:/project/source:ro"
+          -v "${GITHUB_WORKSPACE}/build:/project/build:ro"
+          "${IMAGE}" /project/source/.github/scripts/generate_cpm_sbom.py
+          --build-dir /project/build --format spdx --require-components > cpm-sbom.spdx.json
+
+      - name: Upload CPM dependency snapshot
+        if: matrix.variant == 'linux' && steps.artifact.outputs.found == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: cpm-dependency-snapshot
+          path: cpm-sbom.spdx.json
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Scan SBOM with Grype
         if: steps.artifact.outputs.found == 'true'
@@ -370,3 +396,35 @@ jobs:
           subject-digest: ${{ steps.image.outputs.digest }}
           sbom-path: image-sbom.cdx.json
           push-to-registry: true
+
+  submit-cpm-dependencies:
+    name: Submit CPM Dependencies
+    needs: [plan-builds, build]
+    if: >-
+      github.repository == 'mavlink/qgroundcontrol' &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/master' &&
+      contains(needs.plan-builds.outputs.matrix, '"variant":"linux"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Download CPM dependency snapshot
+        uses: actions/download-artifact@v8
+        with:
+          name: cpm-dependency-snapshot
+
+      - name: Submit CPM dependency snapshot
+        uses: advanced-security/spdx-dependency-submission-action@v0.2.0
+        with:
+          filePath: .
+          filePattern: cpm-sbom.spdx.json
+          correlator: qgroundcontrol-cpm
