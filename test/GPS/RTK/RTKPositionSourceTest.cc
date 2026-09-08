@@ -131,6 +131,7 @@ void RTKPositionSourceTest::_requestsAndReset()
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
     QCOMPARE(source.error(), QGeoPositionInfoSource::UpdateTimeoutError);
     source.requestUpdate();
+    QCOMPARE(source.error(), QGeoPositionInfoSource::NoError);
     source.updatePosition(positionFix());
     QCOMPARE(updates.size(), 1);
     QCOMPARE(source.error(), QGeoPositionInfoSource::NoError);
@@ -143,6 +144,181 @@ void RTKPositionSourceTest::_requestsAndReset()
     QCOMPARE(updates.size(), 1);
     source.updatePosition(positionFix());
     QCOMPARE(updates.size(), 2);
+}
+
+void RTKPositionSourceTest::_pendingRequestKeepsDeadline()
+{
+    RTKPositionSource source;
+    QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
+    source.requestUpdate(50);
+    source.requestUpdate(5000);
+    source.requestUpdate(-1);
+    QVERIFY(errors.isEmpty());
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, 1000);
+    QCOMPARE(source.error(), QGeoPositionInfoSource::UpdateTimeoutError);
+    source.requestUpdate(-1);
+    QCOMPARE(errors.size(), 2);
+    source.requestUpdate(5000);
+    QCOMPARE(source.error(), QGeoPositionInfoSource::NoError);
+    source.reset();
+    QCOMPARE(source.error(), QGeoPositionInfoSource::ClosedError);
+    source.requestUpdate();
+    QCOMPARE(source.error(), QGeoPositionInfoSource::NoError);
+}
+
+void RTKPositionSourceTest::_reportsLossOnceUntilRecovery()
+{
+    RTKPositionSource source;
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
+    source.startUpdates();
+    auto invalid = positionFix();
+    invalid.fix_type = sensor_gps_s::FIX_TYPE_NONE;
+    source.updatePosition(invalid);
+    source.updatePosition(invalid);
+    source.updatePosition(invalid);
+    QCOMPARE(errors.size(), 1);
+    source.startUpdates();
+    QCOMPARE(source.error(), QGeoPositionInfoSource::UpdateTimeoutError);
+    source.updatePosition(invalid);
+    QCOMPARE(errors.size(), 1);
+    source.updatePosition(positionFix());
+    QCOMPARE(updates.size(), 1);
+    QCOMPARE(source.error(), QGeoPositionInfoSource::NoError);
+    source.updatePosition(invalid);
+    source.updatePosition(invalid);
+    QCOMPARE(errors.size(), 2);
+}
+
+void RTKPositionSourceTest::_intervalCoalescesLatestFix()
+{
+    RTKPositionSource source;
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    source.setUpdateInterval(50);
+    source.startUpdates();
+    auto fix = positionFix();
+    fix.time_utc_usec = 0;
+    source.updatePosition(fix);
+    fix.longitude_deg = 8.6;
+    source.updatePosition(fix);
+    fix.longitude_deg = 8.7;
+    source.updatePosition(fix);
+    QVERIFY(updates.isEmpty());
+    QCOMPARE(source.lastKnownPosition().coordinate().longitude(), 8.7);
+    QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::mediumMs());
+    QCOMPARE(updates.first().first().value<QGeoPositionInfo>().coordinate().longitude(), 8.7);
+    QCOMPARE(updates.first().first().value<QGeoPositionInfo>().timestamp(), source.lastKnownPosition().timestamp());
+    source.stopUpdates();
+    QVERIFY(!updates.wait(100));
+}
+
+void RTKPositionSourceTest::_intervalChangesWhileStarted()
+{
+    RTKPositionSource source;
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    source.setUpdateInterval(10000);
+    source.startUpdates();
+    source.updatePosition(positionFix());
+    QVERIFY(updates.isEmpty());
+    source.setUpdateInterval(-1);
+    QCOMPARE(source.updateInterval(), 0);
+    QCOMPARE(updates.size(), 1);
+    source.updatePosition(positionFix());
+    QCOMPARE(updates.size(), 2);
+    source.setUpdateInterval(50);
+    source.updatePosition(positionFix());
+    source.setUpdateInterval(50);
+    QCOMPARE(updates.size(), 2);
+    QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 3, TestTimeout::mediumMs());
+}
+
+void RTKPositionSourceTest::_requestBypassesInterval()
+{
+    RTKPositionSource source;
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
+    source.setUpdateInterval(10000);
+    source.startUpdates();
+    source.updatePosition(positionFix());
+    source.requestUpdate(5000);
+    auto fix = positionFix();
+    fix.longitude_deg = 9;
+    source.updatePosition(fix);
+    QCOMPARE(updates.size(), 1);
+    QCOMPARE(updates.first().first().value<QGeoPositionInfo>().coordinate().longitude(), 9);
+    // The fulfilled request must not leave an older fix queued for periodic delivery.
+    source.setUpdateInterval(20);
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
+    QCOMPARE(updates.size(), 1);
+}
+
+void RTKPositionSourceTest::_stopPreservesRequest()
+{
+    RTKPositionSource source;
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    source.setUpdateInterval(20);
+    source.startUpdates();
+    source.updatePosition(positionFix());
+    source.requestUpdate(5000);
+    source.stopUpdates();
+    QVERIFY(!updates.wait(100));
+    source.updatePosition(positionFix());
+    QCOMPARE(updates.size(), 1);
+    source.updatePosition(positionFix());
+    QCOMPARE(updates.size(), 1);
+}
+
+void RTKPositionSourceTest::_resetDiscardsPendingUpdate()
+{
+    RTKPositionSource source;
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
+    source.setUpdateInterval(20);
+    source.startUpdates();
+    source.updatePosition(positionFix());
+    source.requestUpdate(50);
+    source.reset();
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(source.error(), QGeoPositionInfoSource::ClosedError);
+    QVERIFY(!updates.wait(100));
+    QCOMPARE(errors.size(), 1);
+    QVERIFY(!source.lastKnownPosition().isValid());
+    source.updatePosition(positionFix());
+    QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::mediumMs());
+    QCOMPARE(source.error(), QGeoPositionInfoSource::NoError);
+}
+
+void RTKPositionSourceTest::_intervalRejectsStaleFix()
+{
+    RTKPositionSource source;
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
+    source.setUpdateInterval(750);
+    source.startUpdates();
+    auto fix = positionFix();
+    const auto now =
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch())
+            .count();
+    fix.timestamp = static_cast<uint64_t>(now) - 4500000;
+    source.updatePosition(fix);
+    QVERIFY(source.lastKnownPosition().isValid());
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
+    QVERIFY(updates.isEmpty());
+}
+
+void RTKPositionSourceTest::_silentIntervalsReportLossOnce()
+{
+    RTKPositionSource source;
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
+    source.setUpdateInterval(20);
+    source.startUpdates();
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
+    QVERIFY(!errors.wait(100));
+    source.updatePosition(positionFix());
+    QCOMPARE(updates.size(), 1);
+    QCOMPARE(source.error(), QGeoPositionInfoSource::NoError);
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 2, TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(RTKPositionSourceTest, TestLabel::Unit)

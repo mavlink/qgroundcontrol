@@ -6,14 +6,25 @@
 
 #include <chrono>
 #include <cmath>
+#include <utility>
 
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(RTKPositionSourceLog, "GPS.RTK.RTKPositionSource")
 
+namespace {
+uint64_t monotonicTimeUs()
+{
+    return static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch())
+            .count());
+}
+}  // namespace
+
 RTKPositionSource::RTKPositionSource(QObject* parent)
     : QGeoPositionInfoSource(parent)
     , _requestTimer(this)
+    , _updateTimer(this)
 {
     qCDebug(RTKPositionSourceLog) << this;
 
@@ -21,6 +32,17 @@ RTKPositionSource::RTKPositionSource(QObject* parent)
     connect(&_requestTimer, &QTimer::timeout, this, [this]() {
         _error = UpdateTimeoutError;
         emit errorOccurred(_error);
+    });
+    connect(&_updateTimer, &QTimer::timeout, this, [this]() {
+        if (_pendingFix) {
+            _emitPendingUpdate();
+        } else {
+            const bool missedPreviousInterval = _noUpdateLastInterval;
+            _noUpdateLastInterval = true;
+            if (missedPreviousInterval) {
+                _reportUpdateTimeout();
+            }
+        }
     });
 }
 
@@ -36,17 +58,49 @@ QGeoPositionInfo RTKPositionSource::lastKnownPosition(bool /*fromSatellitePositi
 
 void RTKPositionSource::startUpdates()
 {
-    _started = true;
+    if (_started) {
+        return;
+    }
     _error = NoError;
+    _started = true;
+    _updateTimeoutSent = false;
+    _noUpdateLastInterval = false;
+    if (updateInterval() > 0) {
+        _updateTimer.start(updateInterval());
+    }
 }
 
 void RTKPositionSource::stopUpdates()
 {
     _started = false;
+    _updateTimer.stop();
+    _pendingFix.reset();
+}
+
+void RTKPositionSource::setUpdateInterval(int msec)
+{
+    const int interval = qMax(0, msec);
+    if (interval == updateInterval()) {
+        return;
+    }
+    QGeoPositionInfoSource::setUpdateInterval(interval);
+    _updateTimer.stop();
+    _noUpdateLastInterval = false;
+    if (_started) {
+        if (interval > 0 && _error != ClosedError) {
+            _updateTimer.start(interval);
+        } else if (interval == 0) {
+            _emitPendingUpdate();
+        }
+    }
 }
 
 void RTKPositionSource::requestUpdate(int timeout)
 {
+    if (_requestTimer.isActive()) {
+        return;
+    }
+    _error = NoError;
     if (timeout < 0) {
         _error = UpdateTimeoutError;
         emit errorOccurred(_error);
@@ -58,6 +112,10 @@ void RTKPositionSource::requestUpdate(int timeout)
 void RTKPositionSource::reset()
 {
     _lastPosition = {};
+    _pendingFix.reset();
+    _updateTimer.stop();
+    _noUpdateLastInterval = false;
+    _updateTimeoutSent = false;
     const bool requested = _requestTimer.isActive();
     _requestTimer.stop();
     _error = ClosedError;
@@ -81,12 +139,55 @@ void RTKPositionSource::updatePosition(const sensor_gps_s& fix)
                                       << "timestamp:" << _lastPosition.timestamp()
                                       << "forwarding:" << (_started || requested);
         if (_started || requested) {
-            emit positionUpdated(_lastPosition);
+            _pendingFix = fix;
+            if (_pendingFix->timestamp == 0) {
+                _pendingFix->timestamp = monotonicTimeUs();
+            }
+            if (_pendingFix->time_utc_usec == 0) {
+                _pendingFix->time_utc_usec =
+                    static_cast<uint64_t>(_lastPosition.timestamp().toMSecsSinceEpoch()) * 1000;
+            }
+            if (_started && updateInterval() > 0 && !_updateTimer.isActive()) {
+                _updateTimer.start(updateInterval());
+            }
+            if (requested || !_updateTimer.isActive() || _noUpdateLastInterval || _updateTimeoutSent) {
+                _emitPendingUpdate();
+            }
         }
-    } else if (_started) {
-        _error = UpdateTimeoutError;
-        emit errorOccurred(_error);
+    } else {
+        _pendingFix.reset();
+        if (_started) {
+            _reportUpdateTimeout();
+        }
     }
+}
+
+void RTKPositionSource::_emitPendingUpdate()
+{
+    const auto pending = std::exchange(_pendingFix, std::nullopt);
+    if (!pending) {
+        return;
+    }
+    // Recheck age after interval throttling; a queued fix must not become a fresh live position.
+    const QGeoPositionInfo position = _positionInfo(*pending);
+    if (!position.isValid()) {
+        _reportUpdateTimeout();
+        return;
+    }
+    _updateTimeoutSent = false;
+    _noUpdateLastInterval = false;
+    _error = NoError;
+    emit positionUpdated(position);
+}
+
+void RTKPositionSource::_reportUpdateTimeout()
+{
+    if (_updateTimeoutSent) {
+        return;
+    }
+    _updateTimeoutSent = true;
+    _error = UpdateTimeoutError;
+    emit errorOccurred(_error);
 }
 
 QGeoPositionInfo RTKPositionSource::_positionInfo(const sensor_gps_s& fix)
@@ -103,18 +204,16 @@ QGeoPositionInfo RTKPositionSource::_positionInfo(const sensor_gps_s& fix)
     }
     // The PX4 adapter stamps fixes with steady_clock; queued GUI delivery must not revive old data.
     if (fix.timestamp != 0) {
-        const auto now =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch())
-                .count();
-        if (fix.timestamp > static_cast<uint64_t>(now)) {
+        const uint64_t now = monotonicTimeUs();
+        if (fix.timestamp > now) {
             qCDebug(RTKPositionSourceLog) << "Rejected receiver fix: future monotonic timestamp"
                                           << "fixTimestampUs:" << fix.timestamp
                                           << "nowUs:" << now;
             return {};
         }
-        if (static_cast<uint64_t>(now) - fix.timestamp > 5000000) {
+        if (now - fix.timestamp > 5000000) {
             qCDebug(RTKPositionSourceLog) << "Rejected receiver fix: stale before delivery"
-                                          << "ageUs:" << (static_cast<uint64_t>(now) - fix.timestamp);
+                                          << "ageUs:" << (now - fix.timestamp);
             return {};
         }
     }
