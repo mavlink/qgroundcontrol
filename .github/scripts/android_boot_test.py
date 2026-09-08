@@ -294,7 +294,7 @@ def run_boot_attempt(
 
     print(f"Waiting for boot test to complete (timeout: {timeout}s)...")
     app_launched = False
-    app_launched_at = 0
+    process_running_since: float | None = None
     app_seen_running_once = False
     consecutive_not_running = 0
 
@@ -309,13 +309,16 @@ def run_boot_attempt(
         process_table = get_process_table()
         is_running = app_running_from_process_table(package_name, process_table)
         if is_running:
+            if process_running_since is None:
+                process_running_since = time.monotonic()
             app_seen_running_once = True
             consecutive_not_running = 0
+        else:
+            process_running_since = None
 
         launch_detected_in_log = bool(app_launch_pattern.search(logcat_delta))
         if not app_launched and (launch_detected_in_log or is_running or saw_app_logs):
             app_launched = True
-            app_launched_at = second
             if launch_detected_in_log:
                 launch_source = "logcat marker"
             elif is_running:
@@ -365,7 +368,10 @@ def run_boot_attempt(
                     crash_log_pattern,
                 )
 
-            if second - app_launched_at >= stability_window:
+            if (
+                process_running_since is not None
+                and time.monotonic() - process_running_since >= stability_window
+            ):
                 print(
                     f"Boot test passed: app remained running for {stability_window}s after launch."
                 )
