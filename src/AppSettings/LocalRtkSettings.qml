@@ -18,6 +18,7 @@ SettingsGroupLayout {
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property var _serialPorts: root._serialPortManager ? root._serialPortManager.serialPorts : []
     readonly property bool _serial: root._settings.connectionType.rawValue === RTKSettings.Serial
+    readonly property bool _udp: root._settings.connectionType.rawValue === RTKSettings.Udp
     readonly property bool _active: root._connection.active
     property bool _invalidConnection: false
 
@@ -34,7 +35,9 @@ SettingsGroupLayout {
         wrapMode: Text.WordWrap
         text: root._serial
               ? qsTr("Choose a serial device or discover a supported USB RTK receiver automatically. The receiver baud rate is detected automatically.")
-              : qsTr("Connect to an RTK receiver over TCP using the host, port, and receiver type below.")
+              : root._udp
+                ? qsTr("Connect to an RTK receiver or bidirectional serial bridge over UDP. The receiver must accept configuration commands and return data from the configured host and port. Serial bridges must use 115200 baud.")
+                : qsTr("Connect to an RTK receiver over TCP using the host, port, and receiver type below.")
     }
 
     LabelledComboBox {
@@ -70,6 +73,15 @@ SettingsGroupLayout {
         visible: !root._serial
         label: qsTr("Port")
         fact: root._settings.networkBasePort
+        enabled: !root._active
+    }
+
+    LabelledFactTextField {
+        objectName: "networkRtkLocalPort"
+        Layout.fillWidth: true
+        visible: root._udp
+        label: qsTr("Local port (0 = automatic)")
+        fact: root._settings.udpLocalPort
         enabled: !root._active
     }
 

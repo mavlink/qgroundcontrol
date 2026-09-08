@@ -4,6 +4,8 @@
 #include <QtCore/QSettings>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
+#include <QtNetwork/QNetworkDatagram>
+#include <QtNetwork/QUdpSocket>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtTest/QSignalSpy>
@@ -14,7 +16,10 @@
 #include "GPSManager.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
+#include "GpsTestHelpers.h"
 #include "LinkManager.h"
+#include "NTRIPManager.h"
+#include "RTCMMavlink.h"
 #include "RTKAutoConnect.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
@@ -30,6 +35,7 @@ void saveNetworkSettings(TestFixtures::SettingsFixture& saved, const QString& ho
     saved.setFactValue(settings->connectionType(), RTKSettings::Tcp);
     saved.setFactValue(settings->networkBaseHost(), host);
     saved.setFactValue(settings->networkBasePort(), port);
+    saved.setFactValue(settings->udpLocalPort(), 0);
     saved.setFactValue(settings->networkReceiverType(), type);
     saved.setFactValue(settings->baseReceiverManufacturers(), settings->baseReceiverManufacturers()->rawValue());
 }
@@ -55,6 +61,46 @@ public:
 
     QTcpSocket* peer = nullptr;
     int connections = 0;
+};
+
+class UdpReceiverServer : public QUdpSocket
+{
+public:
+    UdpReceiverServer()
+    {
+        connect(this, &QUdpSocket::readyRead, this, [this]() {
+            while (hasPendingDatagrams()) {
+                const QNetworkDatagram datagram = receiveDatagram();
+                if (!respond) {
+                    continue;
+                }
+                if (_peerPort != datagram.senderPort()) {
+                    _commands.clear();
+                    _peerPort = datagram.senderPort();
+                }
+                _peerAddress = datagram.senderAddress();
+                _commands += datagram.data();
+                while (_commands.contains('\n')) {
+                    const qsizetype end = _commands.indexOf('\n');
+                    const QByteArray command = _commands.left(end).trimmed();
+                    _commands.remove(0, end + 1);
+                    const QByteArray reply = '<' + command.split(' ').first() + " OK" + char(0);
+                    writeDatagram(reply, datagram.senderAddress(), datagram.senderPort());
+                    ++acknowledgedCommands;
+                }
+            }
+        });
+    }
+
+    bool respond = true;
+    int acknowledgedCommands = 0;
+
+    qint64 send(const QByteArray& data) { return writeDatagram(data, _peerAddress, _peerPort); }
+
+private:
+    QByteArray _commands;
+    QHostAddress _peerAddress;
+    quint16 _peerPort = 0;
 };
 }  // namespace
 
@@ -146,6 +192,74 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
     manager._rtkAutoConnect->update();
     QVERIFY(!receiver->hasReceiver());
     QCOMPARE(active.size(), 2);
+}
+
+void GPSManagerTest::_udpRecoveryAndSelection()
+{
+    UdpReceiverServer server;
+    QVERIFY(server.bind(QHostAddress::LocalHost, 0));
+    TestFixtures::SettingsFixture saved;
+    saveNetworkSettings(saved, QStringLiteral("127.0.0.1"), server.localPort(), 3);
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    auto* automatic = SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS();
+    settings->connectionType()->setRawValue(RTKSettings::Udp);
+    automatic->setRawValue(true);
+    RTCMMavlink forwarder;
+    auto* ntrip = NTRIPManager::instance();
+    auto* previousForwarder = ntrip->rtcmMavlink();
+    ntrip->setRtcmMavlink(&forwarder);
+    const auto restoreForwarder = qScopeGuard([&]() { ntrip->setRtcmMavlink(previousForwarder); });
+    GPSManager manager;
+    auto* receiver = manager.gpsRtk();
+
+    manager._rtkAutoConnect->update();
+    QVERIFY(manager.rtkConnection()->active());
+    QVERIFY(!receiver->connected());
+    QTRY_VERIFY_WITH_TIMEOUT(receiver->connected(), TestTimeout::mediumMs());
+    const int initialCommands = server.acknowledgedCommands;
+    QVERIFY(initialCommands > 0);
+
+    const QByteArray corrections = GpsTestHelpers::buildRtcmFrame(1077, 500);
+    QCOMPARE(server.send(corrections.left(4)), 4);
+    QCOMPARE(server.send(corrections.mid(4)), corrections.size() - 4);
+    QTRY_COMPARE_WITH_TIMEOUT(forwarder.totalBytesSent(), quint64(corrections.size()), TestTimeout::shortMs());
+
+    // A silent UDP peer has no disconnect event; the driver's idle deadline must retire the session.
+    server.respond = false;
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("GPS device error, connection lost")));
+    QTRY_VERIFY_WITH_TIMEOUT(!receiver->hasReceiver(), TestTimeout::longMs());
+    verifyExpectedLogMessage();
+    QVERIFY(!receiver->connected());
+    QVERIFY(manager.rtkConnection()->active());
+    server.respond = true;
+    QTRY_VERIFY_WITH_TIMEOUT(([&]() {
+                                 manager._rtkAutoConnect->update();
+                                 return receiver->connected();
+                             })(),
+                             TestTimeout::mediumMs());
+    QVERIFY(server.acknowledgedCommands > initialCommands);
+
+    manager.disconnectRtk();
+    QVERIFY(manager.rtkConnection()->autoConnectPaused());
+    manager._rtkAutoConnect->update();
+    QVERIFY(!receiver->hasReceiver());
+    automatic->setRawValue(false);
+    QVERIFY(manager.connectRtk());
+    QTRY_VERIFY_WITH_TIMEOUT(receiver->connected(), TestTimeout::mediumMs());
+
+    ReceiverServer tcp;
+    QVERIFY(tcp.listen(QHostAddress::LocalHost));
+    settings->connectionType()->setRawValue(RTKSettings::Tcp);
+    QVERIFY(!manager.rtkConnection()->active());
+    QVERIFY(!receiver->hasReceiver());
+    settings->networkBasePort()->setRawValue(tcp.serverPort());
+    automatic->setRawValue(true);
+    manager._rtkAutoConnect->update();
+    QTRY_VERIFY_WITH_TIMEOUT(receiver->connected(), TestTimeout::mediumMs());
+    QCOMPARE(tcp.connections, 1);
+    automatic->setRawValue(false);
+    QVERIFY(!receiver->hasReceiver());
 }
 
 void GPSManagerTest::_networkStartupAndPause()
@@ -289,10 +403,19 @@ void GPSManagerTest::_serialDiscoveryPausesForNetwork()
 #endif
 }
 
+void GPSManagerTest::_networkSettingsPanel_data()
+{
+    QTest::addColumn<int>("connection");
+    QTest::newRow("tcp") << int(RTKSettings::Tcp);
+    QTest::newRow("udp") << int(RTKSettings::Udp);
+}
+
 void GPSManagerTest::_networkSettingsPanel()
 {
+    QFETCH(int, connection);
     TestFixtures::SettingsFixture saved;
     saveNetworkSettings(saved, QString(), 2101, 0);
+    SettingsManager::instance()->rtkSettings()->connectionType()->setRawValue(connection);
     QQmlEngine engine;
     engine.addImageProvider(QStringLiteral("coloredsvg"), new ColoredSvgImageProvider);
     engine.addImportPath(QStringLiteral("qrc:/qml"));
@@ -303,8 +426,11 @@ void GPSManagerTest::_networkSettingsPanel()
     QVERIFY2(root, qPrintable(component.errorString()));
     auto* button = root->findChild<QObject*>(QStringLiteral("networkRtkConnectButton"));
     auto* host = root->findChild<QObject*>(QStringLiteral("networkRtkHost"));
+    auto* localPort = root->findChild<QObject*>(QStringLiteral("networkRtkLocalPort"));
     QVERIFY(button);
     QVERIFY(host);
+    QVERIFY(localPort);
+    QCOMPARE(localPort->property("visible").toBool(), connection == RTKSettings::Udp);
     QVERIFY(!button->property("enabled").toBool());
     SettingsManager::instance()->rtkSettings()->networkBaseHost()->setRawValue(QStringLiteral("localhost"));
     QTRY_VERIFY_WITH_TIMEOUT(button->property("enabled").toBool(), TestTimeout::shortMs());
@@ -317,9 +443,12 @@ void GPSManagerTest::_networkSettingsPanel()
 
     ReceiverServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
+    UdpReceiverServer udpServer;
+    QVERIFY(udpServer.bind(QHostAddress::LocalHost, 0));
     auto* settings = SettingsManager::instance()->rtkSettings();
-    settings->networkBaseHost()->setRawValue(QStringLiteral("localhost"));
-    settings->networkBasePort()->setRawValue(server.serverPort());
+    settings->networkBaseHost()->setRawValue(QStringLiteral("127.0.0.1"));
+    settings->networkBasePort()->setRawValue(connection == RTKSettings::Udp ? udpServer.localPort()
+                                                                            : server.serverPort());
     settings->networkReceiverType()->setRawValue(3);
     const auto disconnect = qScopeGuard([]() { GPSManager::instance()->disconnectNetworkRtk(); });
     QVERIFY(QMetaObject::invokeMethod(button, "clicked"));

@@ -40,12 +40,12 @@
         },
         {
             "name": "autoConnectNetworkRTKGPS",
-            "shortDesc": "Automatically connect to the configured TCP RTK receiver.",
+            "shortDesc": "Automatically connect to the configured TCP or UDP RTK receiver.",
             "longDesc": "Connect at startup and retry when the receiver is unavailable. Disconnect pauses automatic connection until Connect is clicked, this option is re-enabled, or the application restarts. Turning this option off disconnects the network receiver.",
             "type": "bool",
             "default": false,
-            "label": "Automatically connect to the TCP RTK receiver",
-            "keywords": "auto connect,rtk gps,tcp,network"
+            "label": "Automatically connect to the network RTK receiver",
+            "keywords": "auto connect,rtk gps,tcp,udp,network"
         },
         {
             "name": "autoConnectLibrePilot",

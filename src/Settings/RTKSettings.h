@@ -32,7 +32,8 @@ public:
     enum ConnectionType
     {
         Serial = 0,
-        Tcp
+        Tcp,
+        Udp
     };
     Q_ENUM(ConnectionType)
     DEFINE_SETTING_NAME_GROUP()
@@ -48,5 +49,6 @@ public:
     DEFINE_SETTINGFACT(serialDevice)
     DEFINE_SETTINGFACT(networkBaseHost)
     DEFINE_SETTINGFACT(networkBasePort)
+    DEFINE_SETTINGFACT(udpLocalPort)
     DEFINE_SETTINGFACT(networkReceiverType)
 };

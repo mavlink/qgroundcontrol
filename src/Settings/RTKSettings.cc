@@ -19,6 +19,7 @@ DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionAltitude)
 DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionAccuracy)
 DECLARE_SETTINGSFACT(RTKSettings, networkBaseHost)
 DECLARE_SETTINGSFACT(RTKSettings, networkBasePort)
+DECLARE_SETTINGSFACT(RTKSettings, udpLocalPort)
 DECLARE_SETTINGSFACT(RTKSettings, networkReceiverType)
 
 DECLARE_SETTINGSFACT(RTKSettings, connectionType)

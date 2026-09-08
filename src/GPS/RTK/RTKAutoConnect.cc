@@ -10,6 +10,7 @@
 #include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
 #include "TcpGPSTransport.h"
+#include "UdpGPSTransport.h"
 
 QGC_LOGGING_CATEGORY(RTKAutoConnectLog, "GPS.RTK.RTKAutoConnect")
 
@@ -110,11 +111,15 @@ bool RTKAutoConnect::connectNetwork()
     const QString host = settings->networkBaseHost()->rawValue().toString().trimmed();
     const int port = settings->networkBasePort()->rawValue().toInt();
     const int type = settings->networkReceiverType()->rawValue().toInt();
+    const int connection = settings->connectionType()->rawValue().toInt();
+    const int localPort = settings->udpLocalPort()->rawValue().toInt();
+    const bool udp = connection == RTKSettings::Udp;
     QUrl endpoint;
-    endpoint.setScheme(QStringLiteral("tcp"));
+    endpoint.setScheme(udp ? QStringLiteral("udp") : QStringLiteral("tcp"));
     endpoint.setHost(host);
     if (host.isEmpty() || !endpoint.isValid() || endpoint.host().isEmpty() || port < 1 || port > 65535 || type < 0 ||
-        type > 3) {
+        type > 3 || connection < RTKSettings::Serial || connection > RTKSettings::Udp ||
+        (udp && (localPort < 0 || localPort > 65535))) {
         return false;
     }
 
@@ -133,9 +138,15 @@ bool RTKAutoConnect::connectNetwork()
             receiverType = GPSType::femto;
             break;
     }
-    return connectNetwork(receiverType, [host = endpoint.host(), port](const std::atomic_bool& stop) {
-        return std::make_unique<TcpGPSTransport>(host, static_cast<quint16>(port), stop);
-    });
+    return connectNetwork(
+        receiverType,
+        [host = endpoint.host(), port, udp, localPort](const std::atomic_bool& stop) -> std::unique_ptr<GPSTransport> {
+            if (udp) {
+                return std::make_unique<UdpGPSTransport>(host, static_cast<quint16>(port), stop,
+                                                         static_cast<quint16>(localPort));
+            }
+            return std::make_unique<TcpGPSTransport>(host, static_cast<quint16>(port), stop);
+        });
 }
 
 bool RTKAutoConnect::connectNetwork(GPSType type, GPSProvider::TransportFactory factory)

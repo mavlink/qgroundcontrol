@@ -16,7 +16,7 @@
         {
             "component": "LocalRtkSettings",
             "sectionName": "Local RTK Receiver",
-            "keywords": ["gps", "rtk", "receiver", "base", "usb", "serial", "tcp", "network", "auto connect"]
+            "keywords": ["gps", "rtk", "receiver", "base", "usb", "serial", "tcp", "udp", "network", "auto connect"]
         },
         {
             "heading": "UDP RTCM Input",

@@ -6,8 +6,8 @@
             "name": "connectionType",
             "shortDesc": "RTK receiver connection",
             "type": "uint8",
-            "enumStrings": "Serial,TCP",
-            "enumValues": "0,1",
+            "enumStrings": "Serial,TCP,UDP",
+            "enumValues": "0,1,2",
             "default": 0,
             "label": "Connection"
         },
@@ -20,14 +20,14 @@
         },
         {
             "name": "networkBaseHost",
-            "shortDesc": "TCP receiver host",
+            "shortDesc": "Network receiver host",
             "type": "string",
             "default": "",
             "label": "Host"
         },
         {
             "name": "networkBasePort",
-            "shortDesc": "TCP receiver port",
+            "shortDesc": "Network receiver port",
             "type": "uint16",
             "default": 2101,
             "min": 1,
@@ -35,8 +35,17 @@
             "label": "Port"
         },
         {
+            "name": "udpLocalPort",
+            "shortDesc": "Local UDP port; 0 selects an available port automatically.",
+            "type": "uint16",
+            "default": 0,
+            "min": 0,
+            "max": 65535,
+            "label": "Local port"
+        },
+        {
             "name": "networkReceiverType",
-            "shortDesc": "TCP receiver protocol",
+            "shortDesc": "Receiver protocol",
             "type": "uint8",
             "enumStrings": "U-blox,Trimble,Septentrio,Femtomes",
             "enumValues": "0,1,2,3",
