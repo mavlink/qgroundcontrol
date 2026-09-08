@@ -11,35 +11,6 @@ add_subdirectory(RTCM)
 add_subdirectory(NTRIP)
 
 add_subdirectory(Driver)
+add_subdirectory(RTK)
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        NmeaSourceManager.cc
-        NmeaSourceManager.h
-        GPSManager.cc
-        GPSManager.h
-        GPSProvider.cc
-        GPSProvider.h
-        GPSRtk.cc
-        GPSRtk.h
-        GPSRTKFactGroup.cc
-        GPSRTKFactGroup.h
-)
-
-if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            RTKAutoConnect.cc
-            RTKAutoConnect.h
-            SerialGPSTransport.cc
-            SerialGPSTransport.h
-    )
-endif()
-
-# ----------------------------------------------------------------------------
-# GPS/RTK Configuration Resources
-# ----------------------------------------------------------------------------
-qt_add_resources(${CMAKE_PROJECT_NAME} json_gps_drivers
-    PREFIX "/json/Vehicle"
-    FILES GPSRTKFact.json
-)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE NmeaSourceManager.cc NmeaSourceManager.h GPSManager.cc GPSManager.h)
