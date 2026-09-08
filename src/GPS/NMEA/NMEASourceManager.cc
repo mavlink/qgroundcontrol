@@ -27,7 +27,7 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
     , _settings(settings)
     , _positionManager(positionManager)
     , _satellitePollTimer(this)
-    , _satelliteStaleTimer(this)
+    , _health(this)
     , _connection(this)
 {
     qCDebug(NMEASourceManagerLog) << this;
@@ -39,9 +39,15 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
             _satelliteSource->requestUpdate(5000);
         }
     });
-    _satelliteStaleTimer.setSingleShot(true);
-    _satelliteStaleTimer.setInterval(5000);
-    connect(&_satelliteStaleTimer, &QTimer::timeout, this, &NMEASourceManager::_clearSatelliteInfo);
+    connect(&_health, &GPSSourceHealth::satellitesChanged, this, [this]() {
+        if (_health.satellitesInViewCount() < 0) {
+            _satellitesInView.clear();
+        }
+        if (_health.satellitesInUseCount() < 0) {
+            _satellitesInUse.clear();
+        }
+        emit satellitesChanged();
+    });
     _status = tr("Disconnected");
     _udpActivityTimer.setSingleShot(true);
     _udpActivityTimer.setInterval(5000);
@@ -154,7 +160,7 @@ void NMEASourceManager::_closeDevice()
     _positionSource.reset();
     _satelliteSource.reset();
     _stream.reset();
-    _clearSatelliteInfo();
+    _health.reset();
     _udp.reset();
     if (_tcp) {
         _tcp->disconnect(this);
@@ -183,36 +189,36 @@ bool NMEASourceManager::_installSource(QIODevice* device)
     _satelliteSource = std::make_unique<QNmeaSatelliteInfoSource>(QNmeaSatelliteInfoSource::UpdateMode::RealTimeMode);
     _satelliteSource->setDevice(_stream->satelliteDevice());
     const QPointer<QNmeaSatelliteInfoSource> current = _satelliteSource.get();
-    connect(
-        _satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInViewUpdated, this,
-        [this, current](const QList<QGeoSatelliteInfo>& satellites) {
-            if (!current || _satelliteSource.get() != current) {
-                return;
-            }
-            _satelliteStaleTimer.start();
-            if (_satellitesInViewCount >= 0 && _satellitesInView == satellites) {
-                return;
-            }
-            _satellitesInView = satellites;
-            _satellitesInViewCount = satellites.size();
-            emit satellitesChanged();
-        },
-        Qt::QueuedConnection);
-    connect(
-        _satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInUseUpdated, this,
-        [this, current](const QList<QGeoSatelliteInfo>& satellites) {
-            if (!current || _satelliteSource.get() != current) {
-                return;
-            }
-            _satelliteStaleTimer.start();
-            if (_satellitesInUseCount >= 0 && _satellitesInUse == satellites) {
-                return;
-            }
-            _satellitesInUse = satellites;
-            _satellitesInUseCount = satellites.size();
-            emit satellitesChanged();
-        },
-        Qt::QueuedConnection);
+    connect(_satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInViewUpdated, this,
+            [this, current](const QList<QGeoSatelliteInfo>& satellites) {
+                QElapsedTimer received;
+                received.start();
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, current, satellites, received]() {
+                        if (!current || _satelliteSource.get() != current) {
+                            return;
+                        }
+                        _satellitesInView = satellites;
+                        _health.updateSatellitesInView(satellites.size(), received.elapsed());
+                    },
+                    Qt::QueuedConnection);
+            });
+    connect(_satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInUseUpdated, this,
+            [this, current](const QList<QGeoSatelliteInfo>& satellites) {
+                QElapsedTimer received;
+                received.start();
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, current, satellites, received]() {
+                        if (!current || _satelliteSource.get() != current) {
+                            return;
+                        }
+                        _satellitesInUse = satellites;
+                        _health.updateSatellitesInUse(satellites.size(), received.elapsed());
+                    },
+                    Qt::QueuedConnection);
+            });
     connect(
         _satelliteSource.get(), &QGeoSatelliteInfoSource::errorOccurred, this,
         [this, current](QGeoSatelliteInfoSource::Error error) {
@@ -224,22 +230,24 @@ bool NMEASourceManager::_installSource(QIODevice* device)
     _satelliteSource->requestUpdate(5000);
     _satellitePollTimer.start();
     _positionSource = std::make_unique<NMEAPositionSource>(_stream->positionDevice());
-    _positionManager->setNmeaPositionSource(_positionSource.get());
+    connect(_positionSource.get(), &QGeoPositionInfoSource::positionUpdated, &_health,
+            [this](const QGeoPositionInfo& position) {
+                _health.updatePosition(position, _positionSource->lastUpdateAgeMs());
+            });
+    connect(_positionSource.get(), &QGeoPositionInfoSource::errorOccurred, &_health,
+            [this](QGeoPositionInfoSource::Error error) {
+                if (error != QGeoPositionInfoSource::NoError) {
+                    _health.invalidatePosition();
+                }
+            });
+    _positionManager->setNmeaPositionSource(_positionSource.get(), &_health);
     _sourceInstalled = true;
     return true;
 }
 
 void NMEASourceManager::_clearSatelliteInfo()
 {
-    _satelliteStaleTimer.stop();
-    if (_satellitesInViewCount < 0 && _satellitesInUseCount < 0) {
-        return;
-    }
-    _satellitesInView.clear();
-    _satellitesInUse.clear();
-    _satellitesInViewCount = -1;
-    _satellitesInUseCount = -1;
-    emit satellitesChanged();
+    _health.clearSatellites();
 }
 
 void NMEASourceManager::update()

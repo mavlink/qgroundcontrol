@@ -88,7 +88,7 @@ void GPSManager::_updatePositionSource()
                            << "enabled:" << useReceiver
                            << "connected:" << _gpsRtk->connected();
     if (useReceiver && _gpsRtk->connected()) {
-        _positionManager->setReceiverPositionSource(_gpsRtk->positionSource());
+        _positionManager->setReceiverPositionSource(_gpsRtk->positionSource(), _gpsRtk->health());
         _positionSourceInstalled = true;
     } else if (_positionSourceInstalled) {
         _positionManager->clearReceiverPositionSource(_gpsRtk->positionSource());

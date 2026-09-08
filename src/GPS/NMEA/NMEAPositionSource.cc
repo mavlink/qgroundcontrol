@@ -35,11 +35,14 @@ void NMEAPositionSource::_resetDecoder()
             [this, generation](const QGeoPositionInfo& update) {
                 const bool requested = !_requestDeadline.isForever();
                 _requestDeadline = QDeadlineTimer::Forever;
+                QElapsedTimer received;
+                received.start();
                 // Leave Qt's parser stack before a consumer can tear down the session.
                 QMetaObject::invokeMethod(
                     this,
-                    [this, generation, update, requested]() {
+                    [this, generation, update, requested, received]() {
                         if (generation == _generation && (_started || requested)) {
+                            _lastUpdateReceived = received;
                             emit positionUpdated(update);
                         }
                     },

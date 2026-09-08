@@ -8,6 +8,7 @@
 
 #include "GPSConnectionState.h"
 #include "GPSProvider.h"
+#include "GPSSourceHealth.h"
 
 class AutoConnectSettings;
 class GPSRtk;
@@ -21,6 +22,7 @@ class RTKAutoConnect : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_PROPERTY(GPSConnectionState::State connectionState READ connectionState NOTIFY stateChanged)
+    Q_PROPERTY(GPSSourceHealth* health READ health CONSTANT)
     Q_PROPERTY(bool active READ active NOTIFY stateChanged)
     Q_PROPERTY(bool autoConnectPaused READ autoConnectPaused NOTIFY stateChanged)
     friend class RTKAutoConnectTest;
@@ -36,6 +38,8 @@ public:
 #endif
     bool connectSelected();
     void disconnectSelected();
+
+    GPSSourceHealth* health() const;
 
     bool active() const { return _connection.active(); }
 

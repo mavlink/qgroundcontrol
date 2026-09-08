@@ -117,6 +117,7 @@ qt_add_qml_module(AppSettingsModule
         GcsPositionStatus.qml
         GpsConnectionControls.qml
         GpsConnectionType.qml
+        GpsSourceStatus.qml
         HelpSettings.qml
         LinkConfigurationManager.qml
         LogReplaySettings.qml

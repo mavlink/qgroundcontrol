@@ -23,5 +23,7 @@ private slots:
     void _receiverInvalidAndStaleFixes();
     void _receiverDestructionRestoresDefault();
     void _borrowedNmeaSourceLifetime();
-
+    void _sharedHealthControlsPosition_data();
+    void _sharedHealthControlsPosition();
+    void _healthLifetimeAndSelection();
 };

@@ -261,3 +261,42 @@ void GPSRtkTest::_positionSourceSelection()
     receiver->_sensorGpsUpdate(fix);
     QVERIFY(!position->gcsPosition().isValid());
 }
+
+void GPSRtkTest::_sourceHealthIndependentOfSurvey()
+{
+    GPSRtk receiver;
+    auto* facts = static_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
+    receiver._onGPSConnect();
+    QVERIFY(receiver.connected());
+    QCOMPARE(receiver.health()->state(), GPSSourceHealth::NoData);
+    GPSSurveyInStatus survey{};
+    survey.valid = true;
+    receiver._onGPSSurveyInStatus(survey);
+    QVERIFY(facts->valid()->rawValue().toBool());
+    QVERIFY(!receiver.health()->usable());
+    sensor_gps_s fix{};
+    fix.fix_type = sensor_gps_s::FIX_TYPE_3D;
+    fix.latitude_deg = 47;
+    fix.longitude_deg = 8;
+    fix.eph = 1;
+    receiver._sensorGpsUpdate(fix);
+    QVERIFY(receiver.health()->usable());
+    fix.fix_type = sensor_gps_s::FIX_TYPE_NONE;
+    receiver._sensorGpsUpdate(fix);
+    QCOMPARE(receiver.health()->state(), GPSSourceHealth::Invalid);
+    QVERIFY(receiver.connected());
+    QVERIFY(facts->valid()->rawValue().toBool());
+    satellite_info_s satellites{};
+    satellites.count = 2;
+    satellites.used[0] = 1;
+    receiver._satelliteInfoUpdate(satellites);
+    QCOMPARE(receiver.health()->satellitesInViewCount(), 2);
+    QCOMPARE(receiver.health()->satellitesInUseCount(), 1);
+    satellites.timestamp = 1;
+    receiver._satelliteInfoUpdate(satellites);
+    QCOMPARE(receiver.health()->satellitesInViewCount(), -1);
+    QCOMPARE(receiver.health()->satellitesInUseCount(), -1);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), 0);
+    receiver.disconnectGPS();
+    QCOMPARE(receiver.health()->state(), GPSSourceHealth::NoData);
+}

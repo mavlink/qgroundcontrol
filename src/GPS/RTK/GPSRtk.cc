@@ -39,10 +39,16 @@ constexpr GPSTypeEntry kGPSTypeTable[] = {
 
 GPSRtk::GPSRtk(QObject* parent)
     : QObject(parent)
+    , _health(this)
     , _positionSource(new RTKPositionSource(this))
     , _gpsRtkFactGroup(new GPSRTKFactGroup(this))
 {
     qCDebug(GPSRtkLog) << this;
+
+    connect(&_health, &GPSSourceHealth::satellitesChanged, this, [this]() {
+        _gpsRtkFactGroup->numSatellites()->setRawValue(qMax(0, _health.satellitesInViewCount()));
+        _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(qMax(0, _health.satellitesInUseCount()));
+    });
 
     (void) qRegisterMetaType<satellite_info_s>("satellite_info_s");
     (void) qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
@@ -75,6 +81,7 @@ void GPSRtk::_onGPSDisconnect()
         emit connectedChanged();
     }
     _positionSource->reset();
+    _health.reset();
     _gpsRtkFactGroup->valid()->setRawValue(false);
     _gpsRtkFactGroup->active()->setRawValue(false);
     _gpsRtkFactGroup->currentDuration()->setRawValue(0);
@@ -284,13 +291,18 @@ void GPSRtk::_satelliteInfoUpdate(const satellite_info_s& msg)
 {
     const SatelliteCounts counts = countSatellites(msg);
     qCDebug(GPSRtkLog) << Q_FUNC_INFO << QStringLiteral("%1 in view, %2 used").arg(counts.inView).arg(counts.used);
-    _gpsRtkFactGroup->numSatellites()->setRawValue(counts.inView);
-    _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(counts.used);
+    const qint64 age = GPSSourceHealth::ageMilliseconds(msg.timestamp);
+    _health.updateSatelliteCounts(counts.inView, counts.used, age);
 }
 
 void GPSRtk::_sensorGpsUpdate(const sensor_gps_s& msg)
 {
     if (connected()) {
+        const GPSProvider* provider = _gpsProvider;
         _positionSource->updatePosition(msg);
+        if (connected() && provider == _gpsProvider) {
+            _health.updatePosition(_positionSource->lastKnownPosition(),
+                                   GPSSourceHealth::ageMilliseconds(msg.timestamp));
+        }
     }
 }

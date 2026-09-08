@@ -5,6 +5,7 @@
 #include <QtCore/QString>
 
 #include "GPSProvider.h"
+#include "GPSSourceHealth.h"
 #include "satellite_info.h"
 #include "sensor_gps.h"
 
@@ -28,6 +29,8 @@ public:
     void connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory);
     void disconnectGPS();
     bool connected() const;
+
+    GPSSourceHealth* health() { return &_health; }
 
     RTKPositionSource* positionSource() const { return _positionSource; }
 
@@ -60,6 +63,7 @@ private slots:
     void _onGPSSurveyInStatus(const GPSSurveyInStatus& status);
 
 private:
+    GPSSourceHealth _health;
     RTKPositionSource* _positionSource = nullptr;
     GPSProvider* _gpsProvider = nullptr;
     GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;

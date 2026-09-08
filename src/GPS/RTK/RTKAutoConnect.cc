@@ -274,3 +274,8 @@ void RTKAutoConnect::update()
     }
 #endif
 }
+
+GPSSourceHealth* RTKAutoConnect::health() const
+{
+    return _receiver ? _receiver->health() : nullptr;
+}

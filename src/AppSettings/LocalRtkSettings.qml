@@ -136,4 +136,12 @@ SettingsGroupLayout {
             root._manager.disconnectRtk()
         }
     }
+
+    GpsSourceStatus {
+        Layout.fillWidth: true
+        visible: root._active
+        health: root._connection.health
+        satelliteStatusObjectName: "rtkSatelliteStatus"
+        fixStatusObjectName: "rtkFixStatus"
+    }
 }

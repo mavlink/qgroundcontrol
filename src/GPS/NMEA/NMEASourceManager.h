@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "GPSConnectionState.h"
+#include "GPSSourceHealth.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
@@ -33,6 +34,7 @@ class NMEASourceManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_PROPERTY(GPSConnectionState::State connectionState READ connectionState NOTIFY stateChanged)
+    Q_PROPERTY(GPSSourceHealth* health READ health CONSTANT)
     Q_PROPERTY(bool active READ active NOTIFY stateChanged)
     Q_PROPERTY(QString status READ status NOTIFY stateChanged)
     Q_PROPERTY(int satellitesInViewCount READ satellitesInViewCount NOTIFY satellitesChanged)
@@ -49,6 +51,8 @@ public:
 
     QGeoPositionInfoSource* positionSource() const;
 
+    GPSSourceHealth* health() { return &_health; }
+
     bool active() const { return _connection.active(); }
 
     GPSConnectionState::State connectionState() const { return _connection.state(); }
@@ -56,9 +60,9 @@ public:
     QString status() const { return _status; }
 
     /// Counts are -1 until fresh satellite information is available.
-    int satellitesInViewCount() const { return _satellitesInViewCount; }
+    int satellitesInViewCount() const { return _health.satellitesInViewCount(); }
 
-    int satellitesInUseCount() const { return _satellitesInUseCount; }
+    int satellitesInUseCount() const { return _health.satellitesInUseCount(); }
 
     QList<QGeoSatelliteInfo> satellitesInView() const { return _satellitesInView; }
 
@@ -87,11 +91,9 @@ private:
     std::unique_ptr<NMEAPositionSource> _positionSource;
     std::unique_ptr<QNmeaSatelliteInfoSource> _satelliteSource;
     QTimer _satellitePollTimer;
-    QTimer _satelliteStaleTimer;
+    GPSSourceHealth _health;
     QList<QGeoSatelliteInfo> _satellitesInView;
     QList<QGeoSatelliteInfo> _satellitesInUse;
-    int _satellitesInViewCount = -1;
-    int _satellitesInUseCount = -1;
     QTimer _udpActivityTimer;
     QDeadlineTimer _connectDeadline = QDeadlineTimer::Forever;
     GPSConnectionState _connection;

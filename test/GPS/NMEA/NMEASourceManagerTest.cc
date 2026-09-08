@@ -181,7 +181,7 @@ void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
     QCOMPARE(source.satellitesInViewCount(), -1);
     QCOMPARE(source.satellitesInUseCount(), -1);
     source._satellitePollTimer.setInterval(50);
-    source._satelliteStaleTimer.setInterval(200);
+    source._health._freshnessTimeoutMs = 200;
     QUdpSocket sender;
     const auto send = [&](const QByteArray& data) {
         QCOMPARE(sender.writeDatagram(data, QHostAddress::LocalHost, port), data.size());
@@ -206,11 +206,15 @@ void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
     timer.start(40);
     QTRY_VERIFY_WITH_TIMEOUT(responses.size() >= 6, TestTimeout::mediumMs());
     QCOMPARE(source.satellitesInViewCount(), 2);
+    QCOMPARE(position.sourceHealth(), source.health());
+    QTRY_COMPARE_WITH_TIMEOUT(source.health()->state(), GPSSourceHealth::Stale, TestTimeout::mediumMs());
+    QVERIFY(!position.gcsPosition().isValid());
+    QCOMPARE(source.connectionState(), GPSConnectionState::Ready);
     timer.stop();
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), -1, TestTimeout::mediumMs());
     QCOMPARE(source.satellitesInUseCount(), -1);
     QVERIFY(source.satellitesInView().isEmpty());
-    source._satelliteStaleTimer.setInterval(5000);
+    source._health._freshnessTimeoutMs = 5000;
     send(kFix);
     QVERIFY(source.satellitesInView().isEmpty());
     send(satelliteSentences());
@@ -230,7 +234,7 @@ void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
     QCOMPARE(source.satellitesInViewCount(), -1);
     QCOMPARE(source.satellitesInUseCount(), -1);
     QVERIFY(!source._satellitePollTimer.isActive());
-    QVERIFY(!source._satelliteStaleTimer.isActive());
+    QVERIFY(!source._health._satellitesInViewTimer.isActive());
     QVERIFY(!source._satelliteSource);
     QVERIFY(!source._stream);
     QVERIFY(source.connectSource());

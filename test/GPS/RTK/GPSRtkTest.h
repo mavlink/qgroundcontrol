@@ -12,6 +12,7 @@ private slots:
     void _failedOpenNeverConnects();
     void _retiredWorkerCannotUpdateReplacement();
     void _workerCanOutliveManager();
+    void _sourceHealthIndependentOfSurvey();
     void _testCountSatellitesClampsToMax();
     void _testCountSatellitesCountsUsed();
     void _testCountSatellitesIgnoresUsedBeyondCount();

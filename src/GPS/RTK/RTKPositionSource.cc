@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "QGCLoggingCategory.h"
+#include "GPSSourceHealth.h"
 
 QGC_LOGGING_CATEGORY(RTKPositionSourceLog, "GPS.RTK.RTKPositionSource")
 
@@ -211,7 +212,7 @@ QGeoPositionInfo RTKPositionSource::_positionInfo(const sensor_gps_s& fix)
                                           << "nowUs:" << now;
             return {};
         }
-        if (now - fix.timestamp > 5000000) {
+        if (now - fix.timestamp >= GPSSourceHealth::FRESHNESS_TIMEOUT_MS * 1000ULL) {
             qCDebug(RTKPositionSourceLog) << "Rejected receiver fix: stale before delivery"
                                           << "ageUs:" << (now - fix.timestamp);
             return {};

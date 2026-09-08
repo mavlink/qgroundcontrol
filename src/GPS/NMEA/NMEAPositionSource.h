@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QDeadlineTimer>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoPositionInfoSource>
 
@@ -26,6 +27,8 @@ public:
     int minimumUpdateInterval() const override;
     Error error() const override;
 
+    qint64 lastUpdateAgeMs() const { return _lastUpdateReceived.isValid() ? _lastUpdateReceived.elapsed() : 0; }
+
 public slots:
     void startUpdates() override;
     void stopUpdates() override;
@@ -34,6 +37,7 @@ public slots:
 private:
     void _resetDecoder();
 
+    QElapsedTimer _lastUpdateReceived;
     QPointer<QIODevice> _device;
     std::unique_ptr<QNmeaPositionInfoSource> _decoder;
     QDeadlineTimer _requestDeadline = QDeadlineTimer::Forever;

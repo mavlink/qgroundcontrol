@@ -9,6 +9,8 @@
 #include <QtPositioning/QGeoPositionInfoSource>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "GPSSourceHealth.h"
+
 class QGCCompass;
 
 class QGCPositionManager : public QObject
@@ -17,6 +19,7 @@ class QGCPositionManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
 
+    Q_PROPERTY(GPSSourceHealth* sourceHealth READ sourceHealth NOTIFY sourceHealthChanged)
     Q_PROPERTY(QGeoCoordinate gcsPosition                   READ gcsPosition                    NOTIFY gcsPositionChanged)
     Q_PROPERTY(qreal          gcsHeading                    READ gcsHeading                     NOTIFY gcsHeadingChanged)
     Q_PROPERTY(qreal          gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy  NOTIFY gcsPositionHorizontalAccuracyChanged)
@@ -32,6 +35,8 @@ public:
     static QGCPositionManager *instance();
 
     void init();
+
+    GPSSourceHealth* sourceHealth() const { return _currentHealth; }
     QGeoCoordinate gcsPosition() const { return _gcsPosition; }
     qreal gcsHeading() const { return _gcsHeading; }
     qreal gcsPositionHorizontalAccuracy() const { return _gcsPositionHorizontalAccuracy; }
@@ -48,13 +53,14 @@ public:
     int updateInterval() const { return _updateInterval; }
 
     /// Select a borrowed, connected receiver source ahead of NMEA and platform positioning.
-    void setReceiverPositionSource(QGeoPositionInfoSource* source);
+    void setReceiverPositionSource(QGeoPositionInfoSource* source, GPSSourceHealth* health = nullptr);
     void clearReceiverPositionSource(QGeoPositionInfoSource* source);
     /// Borrow an NMEA position source; its owner manages the decoder and input device.
-    void setNmeaPositionSource(QGeoPositionInfoSource* source);
+    void setNmeaPositionSource(QGeoPositionInfoSource* source, GPSSourceHealth* health = nullptr);
     void clearNmeaPositionSource(QGeoPositionInfoSource* source);
 
 signals:
+    void sourceHealthChanged();
     void gcsPositionChanged(QGeoCoordinate gcsPosition);
     void gcsHeadingChanged(qreal gcsHeading);
     void positionInfoUpdated(QGeoPositionInfo update);
@@ -82,10 +88,16 @@ private:
     void _setGCSHeading(qreal newGCSHeading);
     void _setGCSPosition(const QGeoCoordinate &newGCSPosition);
     void _clearPosition();
+    void _externalPositionChanged();
 
     bool _usingPluginSource = false;
     int _updateInterval = 0;
-    QTimer _externalStaleTimer;
+    GPSSourceHealth _externalHealth;
+    QPointer<GPSSourceHealth> _receiverHealth;
+    QPointer<GPSSourceHealth> _nmeaHealth;
+    QPointer<GPSSourceHealth> _currentHealth;
+    QMetaObject::Connection _healthConnection;
+    QMetaObject::Connection _healthDestroyedConnection;
 
     QGeoPositionInfo _geoPositionInfo;
     QGeoPositionInfoSource::Error  _gcsPositioningError = QGeoPositionInfoSource::NoError;
@@ -114,5 +126,4 @@ private:
     static constexpr qreal kMinHorizonalAccuracyMeters = 100.;
     static constexpr qreal kMinVerticalAccuracyMeters = 10.;
     static constexpr qreal kMinDirectionAccuracyDegrees = 30.;
-    static constexpr qreal kMinNmeaCourseSpeedMps = 0.5;
 };
