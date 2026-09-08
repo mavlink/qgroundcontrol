@@ -2,6 +2,7 @@
 
 #include <QtCore/QIODevice>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTimeZone>
 #include <QtPositioning/QNmeaPositionInfoSource>
 #include <QtTest/QSignalSpy>
 
@@ -90,6 +91,163 @@ void PositionManagerTest::_nmeaSourceProducesGcsPosition()
     QVERIFY(qAbs(pm->gcsPosition().latitude() - kExpectedLat) < kCoordEpsilon);
     QVERIFY(qAbs(pm->gcsPosition().longitude() - kExpectedLon) < kCoordEpsilon);
     QVERIFY(pm->gcsPositionHorizontalAccuracy() < 100.);
+}
+
+void PositionManagerTest::_nmeaCourseFromRmc()
+{
+    NmeaTestDevice device;
+    QGCPositionManager pm;
+    pm.setNmeaSourceDevice(&device);
+    const auto feed = [&](const QByteArray& time, const QByteArray& knots) {
+        QByteArray sentences;
+        for (QByteArray line : QByteArray(kNmeaSentences).split('\n')) {
+            if (!line.trimmed().isEmpty()) {
+                line.replace("092750.000", time);
+                line.replace("5321.6802", "0000.0000");
+                line.replace("00630.3372", "00000.0000");
+                line.replace(",0.02,31.66,", ',' + knots + ",31.66,");
+                sentences += NMEAUtils::repairChecksum(line);
+            }
+        }
+        device.feed(sentences);
+    };
+    feed("092750.000", "2.0");
+    QTRY_VERIFY_WITH_TIMEOUT(qIsFinite(pm.gcsHeading()), TestTimeout::mediumMs());
+    QCOMPARE(pm.gcsPosition().latitude(), 0);
+    QCOMPARE(pm.gcsPosition().longitude(), 0);
+    QCOMPARE(pm.gcsHeading(), 31.66);
+    QVERIFY(!pm.geoPositionInfo().hasAttribute(QGeoPositionInfo::DirectionAccuracy));
+    feed("092751.000", "0.0");
+    QTRY_VERIFY_WITH_TIMEOUT(qIsNaN(pm.gcsHeading()), TestTimeout::mediumMs());
+    QVERIFY(pm.gcsPosition().isValid());
+    feed("092752.000", "2.0");
+    QTRY_COMPARE_WITH_TIMEOUT(pm.gcsHeading(), 31.66, TestTimeout::mediumMs());
+}
+
+void PositionManagerTest::_positionValidation_data()
+{
+    QTest::addColumn<QGeoPositionInfo>("update");
+    QTest::addColumn<bool>("accepted");
+    QGeoPositionInfo update(QGeoCoordinate(47.5, 8.5), QDateTime::currentDateTimeUtc());
+    update.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 5);
+    QTest::newRow("ordinary-fix") << update << true;
+    const auto coordinateRow = [&](const char* name, const QGeoCoordinate& coordinate, bool accepted) {
+        auto sample = update;
+        sample.setCoordinate(coordinate);
+        QTest::newRow(name) << sample << accepted;
+    };
+    coordinateRow("equator", QGeoCoordinate(0, 8), true);
+    coordinateRow("prime-meridian", QGeoCoordinate(47, 0), true);
+    coordinateRow("origin", QGeoCoordinate(0, 0), true);
+    coordinateRow("near-equator", QGeoCoordinate(-0.0005, 8), true);
+    coordinateRow("near-prime-meridian", QGeoCoordinate(47, 0.0005), true);
+    coordinateRow("north-pole", QGeoCoordinate(90, 180), true);
+    coordinateRow("south-pole", QGeoCoordinate(-90, -180), true);
+    coordinateRow("bad-latitude", QGeoCoordinate(91, 8), false);
+    coordinateRow("bad-longitude", QGeoCoordinate(47, 181), false);
+    coordinateRow("nan-coordinate", QGeoCoordinate(qQNaN(), 8), false);
+    auto sample = update;
+    sample.setTimestamp(QDateTime());
+    QTest::newRow("missing-time") << sample << false;
+    sample = update;
+    sample.removeAttribute(QGeoPositionInfo::HorizontalAccuracy);
+    QTest::newRow("missing-accuracy") << sample << false;
+    const auto accuracyRow = [&](const char* name, double accuracy, bool accepted) {
+        auto fix = update;
+        fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, accuracy);
+        QTest::newRow(name) << fix << accepted;
+    };
+    accuracyRow("zero-accuracy", 0, false);
+    accuracyRow("negative-accuracy", -1, false);
+    accuracyRow("infinite-accuracy", qInf(), false);
+    accuracyRow("nan-accuracy", qQNaN(), false);
+    accuracyRow("accuracy-at-limit", 100, true);
+    accuracyRow("accuracy-over-limit", 101, false);
+}
+
+void PositionManagerTest::_positionValidation()
+{
+    QFETCH(QGeoPositionInfo, update);
+    QFETCH(bool, accepted);
+    NmeaTestDevice device;
+    QGCPositionManager pm;
+    pm.setNmeaSourceDevice(&device);
+    QGeoPositionInfo initial(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());
+    initial.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 5);
+    pm._positionUpdated(initial);
+    const auto oldTimestamp = QDateTime::fromMSecsSinceEpoch(1000, QTimeZone::UTC);
+    pm._gcsPositionTimestamp = oldTimestamp;
+    pm._positionUpdated(update);
+    if (accepted) {
+        QCOMPARE(pm.gcsPosition(), update.coordinate());
+        QVERIFY(pm.gcsPositionTimestamp() > oldTimestamp);
+    } else {
+        QCOMPARE(pm.gcsPosition(), initial.coordinate());
+        QCOMPARE(pm.gcsPositionTimestamp(), oldTimestamp);
+    }
+}
+
+void PositionManagerTest::_nmeaCourseValidation_data()
+{
+    QTest::addColumn<QGeoPositionInfo>("update");
+    QTest::addColumn<double>("heading");
+    QGeoPositionInfo update(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());
+    update.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 5);
+    update.setAttribute(QGeoPositionInfo::Direction, 45);
+    update.setAttribute(QGeoPositionInfo::GroundSpeed, 1);
+    QTest::newRow("moving-without-direction-accuracy") << update << 45.;
+    const auto attributeRow = [&](const char* name, QGeoPositionInfo::Attribute attribute, double value,
+                                  double heading = qQNaN()) {
+        auto fix = update;
+        fix.setAttribute(attribute, value);
+        QTest::newRow(name) << fix << heading;
+    };
+    attributeRow("north", QGeoPositionInfo::Direction, 0, 0);
+    attributeRow("north-360", QGeoPositionInfo::Direction, 360, 0);
+    attributeRow("negative-course", QGeoPositionInfo::Direction, -1);
+    attributeRow("course-over-range", QGeoPositionInfo::Direction, 361);
+    attributeRow("nan-course", QGeoPositionInfo::Direction, qQNaN());
+    attributeRow("infinite-course", QGeoPositionInfo::Direction, qInf());
+    attributeRow("stationary", QGeoPositionInfo::GroundSpeed, 0);
+    attributeRow("nearly-stationary", QGeoPositionInfo::GroundSpeed, 0.49);
+    attributeRow("speed-at-limit", QGeoPositionInfo::GroundSpeed, 0.5, 45);
+    attributeRow("negative-speed", QGeoPositionInfo::GroundSpeed, -1);
+    attributeRow("nan-speed", QGeoPositionInfo::GroundSpeed, qQNaN());
+    attributeRow("infinite-speed", QGeoPositionInfo::GroundSpeed, qInf());
+    attributeRow("poor-position", QGeoPositionInfo::HorizontalAccuracy, 101);
+    attributeRow("good-direction-accuracy", QGeoPositionInfo::DirectionAccuracy, 5, 45);
+    attributeRow("poor-direction-accuracy", QGeoPositionInfo::DirectionAccuracy, 31);
+    attributeRow("negative-direction-accuracy", QGeoPositionInfo::DirectionAccuracy, -1);
+    attributeRow("nan-direction-accuracy", QGeoPositionInfo::DirectionAccuracy, qQNaN());
+    auto sample = update;
+    sample.removeAttribute(QGeoPositionInfo::Direction);
+    QTest::newRow("missing-course") << sample << qQNaN();
+    sample = update;
+    sample.removeAttribute(QGeoPositionInfo::GroundSpeed);
+    QTest::newRow("missing-speed") << sample << qQNaN();
+    sample = update;
+    sample.setCoordinate(QGeoCoordinate());
+    QTest::newRow("invalid-position") << sample << qQNaN();
+}
+
+void PositionManagerTest::_nmeaCourseValidation()
+{
+    QFETCH(QGeoPositionInfo, update);
+    QFETCH(double, heading);
+    NmeaTestDevice device;
+    QGCPositionManager pm;
+    pm.setNmeaSourceDevice(&device);
+    pm._setGCSHeading(90);
+    QSignalSpy changes(&pm, &QGCPositionManager::gcsHeadingChanged);
+    pm._positionUpdated(update);
+    if (qIsNaN(heading)) {
+        QVERIFY(qIsNaN(pm.gcsHeading()));
+    } else {
+        QCOMPARE(pm.gcsHeading(), heading);
+    }
+    QCOMPARE(changes.size(), 1);
+    pm._positionUpdated(update);
+    QCOMPARE(changes.size(), 1);
 }
 
 void PositionManagerTest::_resetNmeaSourceTearsDownAndClearsState()

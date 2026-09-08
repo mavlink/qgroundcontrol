@@ -13,6 +13,11 @@ private slots:
     void cleanup() override;
 
     void _nmeaSourceProducesGcsPosition();
+    void _nmeaCourseFromRmc();
+    void _positionValidation_data();
+    void _positionValidation();
+    void _nmeaCourseValidation_data();
+    void _nmeaCourseValidation();
     void _resetNmeaSourceTearsDownAndClearsState();
     void _nmeaUpdatesStayHealthyUntilStale();
     void _idleNmeaWaitsForFirstFix();

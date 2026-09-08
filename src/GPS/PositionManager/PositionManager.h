@@ -113,4 +113,5 @@ private:
     static constexpr qreal kMinHorizonalAccuracyMeters = 100.;
     static constexpr qreal kMinVerticalAccuracyMeters = 10.;
     static constexpr qreal kMinDirectionAccuracyDegrees = 30.;
+    static constexpr qreal kMinNmeaCourseSpeedMps = 0.5;
 };

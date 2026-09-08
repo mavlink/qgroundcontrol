@@ -182,6 +182,7 @@ void QGCPositionManager::resetNmeaSourceDevice()
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
     const bool receiver = _receiverSource && _currentSource == _receiverSource;
+    const bool nmea = _nmeaSource && _currentSource == _nmeaSource;
     if (receiver) {
         const double accuracy = update.attribute(QGeoPositionInfo::HorizontalAccuracy);
         if (!update.isValid() || !update.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) || !qIsFinite(accuracy) ||
@@ -208,25 +209,25 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
     }
 
     QGeoCoordinate newGCSPosition(receiver ? QGeoCoordinate() : _gcsPosition);
+    bool positionAccepted = false;
 
-    if (update.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
-        if (receiver ||
-            ((qAbs(update.coordinate().latitude()) > 0.001) && (qAbs(update.coordinate().longitude()) > 0.001))) {
-            _gcsPositionHorizontalAccuracy = update.attribute(QGeoPositionInfo::HorizontalAccuracy);
-            if (_gcsPositionHorizontalAccuracy <= kMinHorizonalAccuracyMeters) {
-                newGCSPosition.setLatitude(update.coordinate().latitude());
-                newGCSPosition.setLongitude(update.coordinate().longitude());
-                // Stamp the local arrival time so consumers can tell how fresh gcsPosition is.
-                // Updates rejected by the accuracy gate leave the stamp alone, since they leave
-                // the previous coordinate in place as well.
-                _gcsPositionTimestamp = QDateTime::currentDateTimeUtc();
-                _gcsPositioningError = QGeoPositionInfoSource::NoError;
-                if (_isExternalSource()) {
-                    _externalStaleTimer.start();
-                }
+    if (update.isValid() && update.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
+        _gcsPositionHorizontalAccuracy = update.attribute(QGeoPositionInfo::HorizontalAccuracy);
+        if (qIsFinite(_gcsPositionHorizontalAccuracy) && _gcsPositionHorizontalAccuracy > 0 &&
+            _gcsPositionHorizontalAccuracy <= kMinHorizonalAccuracyMeters) {
+            newGCSPosition.setLatitude(update.coordinate().latitude());
+            newGCSPosition.setLongitude(update.coordinate().longitude());
+            positionAccepted = true;
+            // Stamp the local arrival time so consumers can tell how fresh gcsPosition is.
+            // Updates rejected by the accuracy gate leave the stamp alone, since they leave
+            // the previous coordinate in place as well.
+            _gcsPositionTimestamp = QDateTime::currentDateTimeUtc();
+            _gcsPositioningError = QGeoPositionInfoSource::NoError;
+            if (_isExternalSource()) {
+                _externalStaleTimer.start();
             }
-            emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
         }
+        emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
     }
 
     if (update.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
@@ -240,7 +241,22 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 
     _setGCSPosition(newGCSPosition);
 
-    if (update.hasAttribute(QGeoPositionInfo::DirectionAccuracy)) {
+    if (nmea) {
+        const double direction = update.attribute(QGeoPositionInfo::Direction);
+        const double speed = update.attribute(QGeoPositionInfo::GroundSpeed);
+        const bool hasDirectionAccuracy = update.hasAttribute(QGeoPositionInfo::DirectionAccuracy);
+        _gcsDirectionAccuracy = hasDirectionAccuracy ? update.attribute(QGeoPositionInfo::DirectionAccuracy)
+                                                     : std::numeric_limits<qreal>::infinity();
+        const bool accuracyAcceptable =
+            !hasDirectionAccuracy || (qIsFinite(_gcsDirectionAccuracy) && _gcsDirectionAccuracy >= 0 &&
+                                      _gcsDirectionAccuracy <= kMinDirectionAccuracyDegrees);
+        // NMEA reports course over ground, which is unreliable when nearly stationary.
+        const bool courseValid = positionAccepted && update.hasAttribute(QGeoPositionInfo::Direction) &&
+                                 qIsFinite(direction) && direction >= 0 && direction <= 360 &&
+                                 update.hasAttribute(QGeoPositionInfo::GroundSpeed) && qIsFinite(speed) &&
+                                 speed >= kMinNmeaCourseSpeedMps && accuracyAcceptable;
+        _setGCSHeading(courseValid ? (direction == 360 ? 0 : direction) : qQNaN());
+    } else if (update.hasAttribute(QGeoPositionInfo::DirectionAccuracy)) {
         _gcsDirectionAccuracy = update.attribute(QGeoPositionInfo::DirectionAccuracy);
         if (_gcsDirectionAccuracy <= kMinDirectionAccuracyDegrees) {
             _setGCSHeading(update.attribute(QGeoPositionInfo::Direction));
@@ -273,7 +289,7 @@ void QGCPositionManager::_positionError(QGeoPositionInfoSource::Error gcsPositio
 
 void QGCPositionManager::_setGCSHeading(qreal newGCSHeading)
 {
-    if (newGCSHeading != _gcsHeading) {
+    if (newGCSHeading != _gcsHeading && !(qIsNaN(newGCSHeading) && qIsNaN(_gcsHeading))) {
         _gcsHeading = newGCSHeading;
         emit gcsHeadingChanged(_gcsHeading);
     }
