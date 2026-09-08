@@ -54,6 +54,7 @@ jobs:
             .github/scripts/plan_docker_builds.py
             .github/scripts/ci_bootstrap.py
             deploy/docker/variants.json
+            deploy/docker/_variants.py
             tools/_bootstrap.py
             tools/common/__init__.py
             tools/common/file_traversal.py
