@@ -19,11 +19,17 @@ public:
 
     bool fatalError() const override { return false; }
 
+    bool isCancelled() const override { return cancelled; }
+
     unsigned fixedBaudrate() const override { return fixedRate; }
     int read(uint8_t *buffer, int length, int timeoutMs) override
     {
         lastReadLength = length;
         lastReadTimeoutMs = timeoutMs;
+        cancelled = cancelDuringRead;
+        if (readError) {
+            return readError;
+        }
         const int n = qMin(static_cast<int>(scriptedRead.size()), length);
         (void) memcpy(buffer, scriptedRead.constData(), static_cast<size_t>(n));
         return n;
@@ -51,6 +57,9 @@ public:
     QList<unsigned> requestedBaudrates;
     bool baudrateOk = true;
     bool writeOk = true;
+    bool cancelled = false;
+    bool cancelDuringRead = false;
+    int readError = 0;
 };
 
 class SinkCapture
@@ -99,6 +108,40 @@ void GPSDriverTest::_testReadDeviceDataRoutesToTransport()
     QCOMPARE(transport.lastReadTimeoutMs, 250);
     QCOMPARE(transport.lastReadLength, static_cast<int>(sizeof(buffer)));
     QCOMPARE(QByteArray(reinterpret_cast<const char *>(buffer), ret), transport.scriptedRead);
+}
+
+void GPSDriverTest::_testReadCancellation_data()
+{
+    QTest::addColumn<bool>("beforeRead");
+    QTest::addColumn<bool>("duringRead");
+    QTest::newRow("ordinary-error") << false << false;
+    QTest::newRow("cancel-before-read") << true << false;
+    QTest::newRow("cancel-during-read") << false << true;
+}
+
+void GPSDriverTest::_testReadCancellation()
+{
+    QFETCH(bool, beforeRead);
+    QFETCH(bool, duringRead);
+    FakeGPSTransport transport;
+    transport.cancelled = beforeRead;
+    transport.cancelDuringRead = duringRead;
+    transport.readError = -1;
+    GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
+    uint8_t buffer[16]{};
+    const int result = callback(driver, GPSCallbackType::readDeviceData, buffer, sizeof(buffer));
+    QCOMPARE(result, beforeRead || duringRead ? GPSHelper::ReadCancelled : -1);
+    QCOMPARE(transport.lastReadLength, beforeRead ? -1 : static_cast<int>(sizeof(buffer)));
+}
+
+void GPSDriverTest::_testCancelledConfigurationDoesNotWarn()
+{
+    FakeGPSTransport transport;
+    transport.cancelled = true;
+    transport.fixedRate = 115200;
+    transport.writeOk = false;
+    GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
+    QVERIFY(!driver.configure());
 }
 
 void GPSDriverTest::_testWriteDeviceDataRoutesToTransport()

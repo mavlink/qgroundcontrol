@@ -20,6 +20,7 @@ public:
 
     bool open() override;
     bool fatalError() const override;
+    bool isCancelled() const override { return _requestStop.load(); }
 
     unsigned fixedBaudrate() const override { return 115200; }
 

@@ -12,6 +12,7 @@ void SerialGPSTransportTest::_testReadAbortsWhenStopRequested()
 
     uint8_t buffer[16] = {};
     QCOMPARE(transport.read(buffer, static_cast<int>(sizeof(buffer)), 100), -1);
+    QVERIFY(transport.isCancelled());
 }
 
 void SerialGPSTransportTest::_testWriteAbortsWhenStopRequested()

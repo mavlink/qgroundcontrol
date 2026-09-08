@@ -88,7 +88,9 @@ bool GPSDriver::configure()
     gpsConfig.output_mode = GPSHelper::OutputMode::RTCM;
 
     if (_driver->configure(baudrate, gpsConfig) != 0) {
-        qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type);
+        if (!_transport.isCancelled()) {
+            qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type);
+        }
         _driver.reset();
         return false;
     }
@@ -121,9 +123,13 @@ int GPSDriver::handleCallback(int type, void *data1, int data2)
 {
     switch (static_cast<GPSCallbackType>(type)) {
     case GPSCallbackType::readDeviceData: {
+        if (_transport.isCancelled()) {
+            return GPSHelper::ReadCancelled;
+        }
         int timeoutMs = 0;
         memcpy(&timeoutMs, data1, sizeof(timeoutMs)); // px4 packs the timeout into data1's first bytes (unaligned)
-        return _transport.read(static_cast<uint8_t *>(data1), data2, timeoutMs);
+        const int result = _transport.read(static_cast<uint8_t*>(data1), data2, timeoutMs);
+        return _transport.isCancelled() ? GPSHelper::ReadCancelled : result;
     }
     case GPSCallbackType::writeDeviceData:
         return _transport.write(static_cast<const uint8_t *>(data1), data2);

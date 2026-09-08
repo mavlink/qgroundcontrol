@@ -9,6 +9,9 @@ class GPSDriverTest : public UnitTest
 private slots:
     void _testReceiveUnconfiguredReturnsError();
     void _testReadDeviceDataRoutesToTransport();
+    void _testReadCancellation_data();
+    void _testReadCancellation();
+    void _testCancelledConfigurationDoesNotWarn();
     void _testWriteDeviceDataRoutesToTransport();
     void _testWriteDeviceDataErrorPropagates();
     void _testSetBaudrateRoutesToTransport();

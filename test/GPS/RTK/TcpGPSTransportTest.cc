@@ -84,6 +84,7 @@ void TcpGPSTransportTest::_cancelWait()
         QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
     }
     QVERIFY(stop);
+    QVERIFY(transport.isCancelled());
     uint8_t byte{};
     QCOMPARE(transport.read(&byte, 1, TestTimeout::shortMs()), -1);
     QCOMPARE(transport.write(&byte, 1), -1);

@@ -10,6 +10,7 @@
 #include "NMEAUtils.h"
 #include "PositionManager.h"
 #include "RTKPositionSource.h"
+#include "UdpIODevice.h"
 
 namespace {
 
@@ -121,6 +122,25 @@ void PositionManagerTest::_resetNmeaSourceTearsDownAndClearsState()
     pm->resetNmeaSourceDevice();
 }
 
+void PositionManagerTest::_idleNmeaWaitsForFirstFix()
+{
+    NmeaTestDevice device;
+    QGCPositionManager pm;
+    pm._externalStaleTimer.setInterval(50);
+    pm.setNmeaSourceDevice(&device);
+    QSignalSpy updates(&pm, &QGCPositionManager::positionInfoUpdated);
+
+    QVERIFY(!updates.wait(100));
+    QVERIFY(!pm.gcsPosition().isValid());
+    QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
+    QVERIFY(!pm._externalStaleTimer.isActive());
+
+    device.feed(kNmeaSentences);
+    QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QVERIFY(pm._externalStaleTimer.isActive());
+    pm.resetNmeaSourceDevice();
+}
+
 void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
 {
     NmeaTestDevice device;
@@ -210,6 +230,36 @@ void PositionManagerTest::_receiverPriorityAndFallback()
     receiver.updatePosition(receiverFix());
     QVERIFY(!pm.gcsPosition().isValid());
     device.feed(kNmeaSentences);
+    QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QVERIFY(qAbs(pm.gcsPosition().latitude() - kExpectedLat) < kCoordEpsilon);
+    pm.resetNmeaSourceDevice();
+}
+
+void PositionManagerTest::_receiverFallbackOpensStandbyUdpSource()
+{
+    UdpIODevice device;
+    QVERIFY(device.bind(QHostAddress::LocalHost, 0));
+    RTKPositionSource receiver;
+    QGCPositionManager pm;
+    pm.setReceiverPositionSource(&receiver);
+    receiver.updatePosition(receiverFix());
+    pm.setNmeaSourceDevice(&device);
+    QVERIFY(!device.isOpen());
+    QCOMPARE(pm._currentSource, &receiver);
+
+    QUdpSocket sender;
+    const QByteArray sentences(kNmeaSentences);
+    QSignalSpy datagrams(&device, &QIODevice::readyRead);
+    QCOMPARE(sender.writeDatagram(sentences, QHostAddress::LocalHost, device.localPort()), sentences.size());
+    QTRY_VERIFY_WITH_TIMEOUT(!datagrams.isEmpty(), TestTimeout::mediumMs());
+
+    pm.clearReceiverPositionSource(&receiver);
+    QVERIFY(device.isReadable());
+    QCOMPARE(pm._currentSource, pm._nmeaSource);
+    QVERIFY(!pm.gcsPosition().isValid());
+    QSignalSpy updates(&pm, &QGCPositionManager::positionInfoUpdated);
+    QVERIFY(!updates.wait(100));
+    QCOMPARE(sender.writeDatagram(sentences, QHostAddress::LocalHost, device.localPort()), sentences.size());
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
     QVERIFY(qAbs(pm.gcsPosition().latitude() - kExpectedLat) < kCoordEpsilon);
     pm.resetNmeaSourceDevice();

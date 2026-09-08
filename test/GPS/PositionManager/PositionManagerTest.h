@@ -15,7 +15,9 @@ private slots:
     void _nmeaSourceProducesGcsPosition();
     void _resetNmeaSourceTearsDownAndClearsState();
     void _nmeaUpdatesStayHealthyUntilStale();
+    void _idleNmeaWaitsForFirstFix();
     void _receiverPriorityAndFallback();
+    void _receiverFallbackOpensStandbyUdpSource();
     void _receiverInvalidAndStaleFixes();
     void _receiverDestructionRestoresDefault();
 

@@ -78,6 +78,7 @@ void UdpGPSTransportTest::_cancelRead()
     uint8_t buffer[8]{};
     QCOMPARE(transport.read(buffer, sizeof(buffer), TestTimeout::longMs()), -1);
     QVERIFY(stop);
+    QVERIFY(transport.isCancelled());
     QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
 }
 

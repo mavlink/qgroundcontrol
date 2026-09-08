@@ -13,6 +13,7 @@ public:
 
     virtual bool open() = 0;
     virtual bool fatalError() const = 0;
+    virtual bool isCancelled() const { return false; }
 
     /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
     virtual unsigned fixedBaudrate() const { return 0; }

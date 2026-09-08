@@ -1,0 +1,88 @@
+--- a/src/gps_helper.h
++++ b/src/gps_helper.h
+@@ -40,6 +40,7 @@
+ #pragma once
+ 
+ #include <cstdint>
++#include <cerrno>
+ #include <cstring>
+ 
+ #ifndef GPS_DEFINITIONS_HEADER
+@@ -64,6 +65,7 @@
+ 	 * data2: buffer length in bytes. Less bytes than this can be read.
+ 	 * return: num read bytes, 0 on timeout (the method can actually also return 0 before
+ 	 *         the timeout happens).
++	 *         GPSHelper::ReadCancelled on intentional shutdown, other negative values on error.
+ 	 */
+ 	readDeviceData = 0,
+ 
+@@ -165,6 +167,8 @@
+ class GPSHelper
+ {
+ public:
++	static constexpr int ReadCancelled = -ECANCELED;
++
+ 	enum class OutputMode : uint8_t {
+ 		GPS = 0,    ///< normal GPS output
+ 		GPSAndRTCM, ///< normal GPS+RTCM output
+--- a/src/ubx.cpp
++++ b/src/ubx.cpp
+@@ -1747,7 +1747,9 @@
+ 
+ 		if (ret < 0) {
+ 			/* something went wrong when polling or reading */
+-			UBX_WARN("ubx poll_or_read err");
++			if (ret != ReadCancelled) {
++				UBX_WARN("ubx poll_or_read err");
++			}
+ 			return -1;
+ 
+ 		} else if (ret > 0) {
+--- a/src/sbf.cpp
++++ b/src/sbf.cpp
+@@ -115,7 +115,9 @@
+ 
+ 		if (ret < 0) {
+ 			// something went wrong when reading
+-			SBF_WARN("sbf read err");
++			if (ret != ReadCancelled) {
++				SBF_WARN("sbf read err");
++			}
+ 			return ret;
+ 		}
+ 
+@@ -295,7 +297,9 @@
+ 
+ 		if (ret < 0) {
+ 			// something went wrong when reading
+-			SBF_WARN("sbf read err");
++			if (ret != ReadCancelled) {
++				SBF_WARN("sbf read err");
++			}
+ 			return false;
+ 		}
+ 
+@@ -344,7 +348,9 @@
+ 
+ 		if (ret < 0) {
+ 			// something went wrong when reading
+-			SBF_WARN("sbf read err");
++			if (ret != ReadCancelled) {
++				SBF_WARN("sbf read err");
++			}
+ 			return -1;
+ 
+ 		} else {
+--- a/src/nmea.cpp
++++ b/src/nmea.cpp
+@@ -887,7 +887,9 @@
+ 
+ 		if (ret < 0) {
+ 			/* something went wrong when polling or reading */
+-			NMEA_WARN("poll_or_read err");
++			if (ret != ReadCancelled) {
++				NMEA_WARN("poll_or_read err");
++			}
+ 			return -1;
+ 
+ 		} else if (ret != 0) {

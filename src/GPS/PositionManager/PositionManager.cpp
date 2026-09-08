@@ -132,7 +132,13 @@ void QGCPositionManager::_selectPositionSource()
         // Discard input and parser state accumulated while the receiver had priority.
         auto* device = _nmeaSource->device();
         if (device) {
-            device->readAll();
+            // A standby decoder has not opened its device yet.
+            if (!device->isOpen()) {
+                (void) device->open(QIODevice::ReadOnly);
+            }
+            if (device->isReadable()) {
+                device->readAll();
+            }
             setNmeaSourceDevice(device);
             return;
         }
@@ -339,7 +345,6 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
         if (_isExternalSource()) {
             // Qt's NMEA minimum is 2 ms, which reports timeouts between normal receiver fixes.
             _currentSource->setUpdateInterval(0);
-            _externalStaleTimer.start();
         }
 #if !defined(Q_OS_DARWIN) && !defined(Q_OS_IOS)
         _currentSource->setUpdateInterval(_updateInterval);

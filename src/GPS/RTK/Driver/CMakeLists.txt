@@ -25,7 +25,10 @@ target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 include(CPMPatchCache)
 
 set(_gpsdrivers_revision 056cfb18e826a688141a8fe5354982273d43215f)
-set(_gpsdrivers_patch "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-utc.patch")
+set(_gpsdrivers_patches
+    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-utc.patch" "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-survey-in.patch"
+    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-cancellation.patch"
+)
 qgc_cpm_patch_cache_key(
     _gpsdrivers_cache_key
     GIT_REPOSITORY
@@ -33,7 +36,7 @@ qgc_cpm_patch_cache_key(
     GIT_TAG
     "${_gpsdrivers_revision}"
     PATCHES
-    "${_gpsdrivers_patch}"
+    ${_gpsdrivers_patches}
 )
 
 CPMAddPackage(
@@ -41,17 +44,14 @@ CPMAddPackage(
     GITHUB_REPOSITORY PX4/PX4-GPSDrivers
     GIT_TAG ${_gpsdrivers_revision}
     CUSTOM_CACHE_KEY "${_gpsdrivers_cache_key}"
-    PATCHES "${_gpsdrivers_patch}"
+    PATCHES ${_gpsdrivers_patches}
     SOURCE_SUBDIR src
 )
 
 # NOTE: Using file(GLOB) for external dependency sources
 # CONFIGURE_DEPENDS ensures CMake re-runs if files are added/removed
-file(GLOB GPS_DRIVERS_SOURCES
-    CONFIGURE_DEPENDS
-    "${px4-gpsdrivers_SOURCE_DIR}/src/*.c"
-    "${px4-gpsdrivers_SOURCE_DIR}/src/*.cpp"
-    "${px4-gpsdrivers_SOURCE_DIR}/src/*.h"
+file(GLOB GPS_DRIVERS_SOURCES CONFIGURE_DEPENDS "${px4-gpsdrivers_SOURCE_DIR}/src/*.c"
+     "${px4-gpsdrivers_SOURCE_DIR}/src/*.cpp" "${px4-gpsdrivers_SOURCE_DIR}/src/*.h"
 )
 
 add_library(px4-gpsdrivers OBJECT ${GPS_DRIVERS_SOURCES})
