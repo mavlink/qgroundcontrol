@@ -7,6 +7,7 @@ import subprocess
 from unittest.mock import patch
 
 import android_boot_test as mod
+import pytest
 
 
 def _cp(stdout: bytes, returncode: int = 0) -> subprocess.CompletedProcess[bytes]:
@@ -105,6 +106,36 @@ class TestWaitForAdbReady:
 
 
 class TestRunBootAttempt:
+    @pytest.mark.parametrize(
+        ("processes", "passed"),
+        [
+            ([False, False, False], False),
+            ([False, True, True], False),
+            ([True, True, False], False),
+            ([True, True, True], True),
+        ],
+    )
+    def test_stability_requires_continuously_observed_process(self, processes, passed) -> None:
+        clock = [0.0]
+
+        def sleep(seconds):
+            clock[0] += seconds
+
+        with (
+            patch.object(mod, "run_command", return_value=_cp(b"")),
+            patch.object(
+                mod.LogcatPoller,
+                "poll",
+                return_value=("QGroundControl launch", "QGroundControl launch"),
+            ),
+            patch.object(mod, "get_process_table", return_value=""),
+            patch.object(mod, "app_running_from_process_table", side_effect=processes),
+            patch.object(mod.time, "monotonic", side_effect=lambda: clock[0]),
+            patch.object(mod.time, "sleep", side_effect=sleep),
+        ):
+            ok, _, _, _, _ = mod.run_boot_attempt(**self._kwargs())
+        assert ok is passed
+
     def _kwargs(self):
         return {
             "package_name": "org.mavlink.qgroundcontrol",

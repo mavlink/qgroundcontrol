@@ -80,6 +80,26 @@ COPY deploy/docker/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
 
+# ---------- devcontainer: interactive, non-root desktop development ----------
+FROM linux AS devcontainer
+ARG DEV_USER=vscode
+ARG USER_UID=1000
+ARG USER_GID=1000
+SHELL ["/bin/bash", "-o", "pipefail", "-lc"]
+# Ubuntu 24.04 already owns UID 1000; reuse that account instead of deleting it.
+RUN if getent passwd "${USER_UID}" >/dev/null; then \
+        existing_user=$(getent passwd "${USER_UID}" | cut -d: -f1); \
+        usermod --login "${DEV_USER}" --home "/home/${DEV_USER}" --move-home "${existing_user}"; \
+    else \
+        getent group "${USER_GID}" >/dev/null || groupadd --gid "${USER_GID}" "${DEV_USER}"; \
+        useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${DEV_USER}"; \
+    fi
+ENV SHELL=/bin/bash
+WORKDIR /workspaces/qgroundcontrol
+USER ${DEV_USER}
+ENTRYPOINT []
+CMD ["/bin/bash"]
+
 # ---------- linux-cross: aarch64 cross-compile (host tools + :arm64 sysroot) ----------
 # Why this exists (CI already builds arm64 natively on ubuntu-24.04-arm):
 #   - Local developer cross-builds without a target board / QEMU.

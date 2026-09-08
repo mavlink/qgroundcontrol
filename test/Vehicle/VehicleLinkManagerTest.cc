@@ -276,6 +276,8 @@ void VehicleLinkManagerTest::_connectionRemovedTest()
     // Connection removal makes MavCommandQueue give up pending commands, same as the comm-loss tests.
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                      QRegularExpression("Giving up sending command after max retries:"));
+    // AVAILABLE_MODES may still be pending when the connection is removed.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
 
     SharedLinkConfigurationPtr mockConfig;
     SharedLinkInterfacePtr mockLink;

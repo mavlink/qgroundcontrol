@@ -3,11 +3,45 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from typing import TYPE_CHECKING
 
+import pytest
 from _helpers import REPO_ROOT
 from plan_docker_builds import build_args_str, load_variants, plan_builds
 
 _DOCKER_DIR = REPO_ROOT / "deploy" / "docker"
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"fuse": "false"},
+        {"build_args": {"BASE_REF": 1}},
+        {"selector": "unknown"},
+        {"target": None},
+        {"ci_variant": ""},
+    ],
+)
+def test_variant_loader_rejects_invalid_fields(tmp_path: Path, change: dict) -> None:
+    variant = dict(load_variants()[0]) | change
+    manifest = tmp_path / "variants.json"
+    manifest.write_text(json.dumps({"variants": [variant]}))
+    with pytest.raises(ValueError):
+        load_variants(manifest)
+
+
+@pytest.mark.parametrize("field", ["id", "ci_variant"])
+def test_variant_loader_rejects_duplicate_identity(tmp_path: Path, field: str) -> None:
+    variants = load_variants()[:2]
+    variants[1][field] = variants[0][field]
+    manifest = tmp_path / "variants.json"
+    manifest.write_text(json.dumps({"variants": variants}))
+    with pytest.raises(ValueError, match="duplicates"):
+        load_variants(manifest)
+
 
 # Build-arg strings pinned independently of variants.json so a bad edit to the
 # JSON is caught here, not silently propagated into the CI matrix.

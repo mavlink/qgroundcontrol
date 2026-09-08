@@ -31,7 +31,8 @@ jobs:
       ${{
         github.repository_owner == 'mavlink' &&
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-        format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) ||
+        format('runs-on={0}/runner={1}', github.run_id,
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb') ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120
@@ -116,6 +117,7 @@ jobs:
     permissions:
       contents: read
       checks: write
+      id-token: write
 
     defaults:
       run:
@@ -198,6 +200,8 @@ jobs:
         uses: ./.github/actions/test-report
         with:
           name: Custom Unit Tests
+          upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
+          codecov-flags: custom-unit
           build-dir: ${{ runner.temp }}/build
           junit-file: junit-results-custom-unit.xml
           output-file: test-output-custom-unit.txt
@@ -209,6 +213,8 @@ jobs:
         uses: ./.github/actions/test-report
         with:
           name: Custom Integration Tests
+          upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
+          codecov-flags: custom-integration
           build-dir: ${{ runner.temp }}/build
           junit-file: junit-results-custom-integration.xml
           output-file: test-output-custom-integration.txt

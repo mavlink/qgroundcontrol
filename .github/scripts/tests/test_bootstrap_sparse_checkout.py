@@ -199,6 +199,29 @@ def test_bootstrap_sparse_checkout_matches_canonical() -> None:
         )
 
 
+def test_ci_scripts_checkout_includes_packaging_and_action_fixtures() -> None:
+    workflow = yaml.safe_load((WORKFLOWS_DIR / "ci-scripts.yml").read_text(encoding="utf-8"))
+    job = workflow["jobs"]["test-ci-scripts"]
+    ((_, entries),) = _iter_checkout_steps({"jobs": {"test-ci-scripts": job}}, "ci-scripts.yml")
+    required = {
+        ".github/COPYING.md",
+        ".github/actions/replace-cache-entry/action.yml",
+        ".github/actions/test-report/action.yml",
+        "deploy/installer/packages/org.mavlink.qgroundcontrol/meta/installscript.js",
+        "deploy/macos/MacOSXBundleInfo.plist.in",
+        "deploy/multipass/run-multipass.sh",
+    }
+    assert not _missing_paths(required, entries)
+    for event in ("pull_request", "push"):
+        paths = frozenset(workflow[True][event]["paths"])
+        assert {
+            ".github/COPYING.md",
+            "deploy/installer/**",
+            "deploy/macos/**",
+            "deploy/multipass/**",
+        } <= paths
+
+
 BOOTSTRAP_ACTION_YML = ACTIONS_DIR / "build-results-bootstrap" / "action.yml"
 
 EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
