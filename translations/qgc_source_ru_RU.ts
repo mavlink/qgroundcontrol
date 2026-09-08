@@ -2767,142 +2767,142 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="25"/>
       <source>Before calibrating make sure rotation settings are correct. </source>
-      <translation type="unfinished">Before calibrating make sure rotation settings are correct. </translation>
+      <translation>Перед калибровкой убедитесь, что настройки ориентации верные. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="26"/>
       <source>If the compass or GPS module is mounted in flight direction, leave the default value (None)</source>
-      <translation type="unfinished">If the compass or GPS module is mounted in flight direction, leave the default value (None)</translation>
+      <translation>Если компас или модуль GPS установлен в направлении полета, оставьте значение по умолчанию (None)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="28"/>
       <source>For Compass calibration you will need to rotate your vehicle through a number of positions.</source>
-      <translation type="unfinished">For Compass calibration you will need to rotate your vehicle through a number of positions.</translation>
+      <translation>Для калибровки компаса вам понадобится повернуть борт в несколько позиций.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="29"/>
       <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</source>
-      <translation type="unfinished">For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</translation>
+      <translation>Для калибровки гироскопа вам понадобится установить борт на поверхность и оставить неподвижным.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="30"/>
       <source>For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</source>
-      <translation type="unfinished">For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</translation>
+      <translation>Для калибровки акселерометра вам понадобится устанавливать борт на каждую из 6 сторон на идеально горизонтальной поверхности и держать его неподвижно в каждом положении несколько секунд.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="31"/>
       <source>To level the horizon you need to place the vehicle in its level flight position and press OK.</source>
-      <translation type="unfinished">To level the horizon you need to place the vehicle in its level flight position and press OK.</translation>
+      <translation>Для выставления горизонта установите борт в его горизонтальное положение и нажмите OK.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="33"/>
       <source>Start the individual calibration steps by clicking one of the buttons to the left.</source>
-      <translation type="unfinished">Start the individual calibration steps by clicking one of the buttons to the left.</translation>
+      <translation>Начните пошаговую калибровку, нажав одну из кнопок слева.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="41"/>
       <source>The calibration for Compass %1 appears to be poor. </source>
-      <translation type="unfinished">The calibration for Compass %1 appears to be poor. </translation>
+      <translation>Калибровка компаса %1 неудовлетворительна. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="42"/>
       <source>Check the compass position within your vehicle and re-do the calibration.</source>
-      <translation type="unfinished">Check the compass position within your vehicle and re-do the calibration.</translation>
+      <translation>Проверьте расположение компаса на вашем борту и повторите калибровку.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="83"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="709"/>
       <source>Calibrate Compass</source>
-      <translation type="unfinished">Calibrate Compass</translation>
+      <translation>Калибровка компаса</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="89"/>
       <source>Calibrate Accelerometer</source>
-      <translation type="unfinished">Calibrate Accelerometer</translation>
+      <translation>Калибровка акселерометра</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="95"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="766"/>
       <source>Sensor Settings</source>
-      <translation type="unfinished">Sensor Settings</translation>
+      <translation>Настройки датчиков</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="196"/>
       <source>Calibration Cancel</source>
-      <translation type="unfinished">Calibration Cancel</translation>
+      <translation>Отмена калибровки</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="286"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="325"/>
       <source>Calibration complete</source>
-      <translation type="unfinished">Calibration complete</translation>
+      <translation>Калибровка завершена</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="197"/>
       <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
-      <translation type="unfinished">Waiting for Vehicle to response to Cancel. This may take a few seconds.</translation>
+      <translation>Ожидание ответа борта на отмену. Это может занять несколько секунд.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="119"/>
       <source>(primary</source>
-      <translation type="unfinished">(primary</translation>
+      <translation>(основной</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="119"/>
       <source>(secondary</source>
-      <translation type="unfinished">(secondary</translation>
+      <translation>(дополнительный</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="374"/>
       <source>Use Compass</source>
-      <translation type="unfinished">Use Compass</translation>
+      <translation>Использовать компас</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="302"/>
       <source>Shown in the indicator bars is the quality of the calibration for each compass.
 
 </source>
-      <translation type="unfinished">Shown in the indicator bars is the quality of the calibration for each compass.
+      <translation>На индикаторных полосках отображается качество калибровки для каждого компаса.
 
 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="115"/>
       <source>Compass %1 </source>
-      <translation type="unfinished">Compass %1 </translation>
+      <translation>Компас %1 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="128"/>
       <source>, </source>
-      <translation type="unfinished">, </translation>
+      <translation>, </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="130"/>
       <source>external</source>
-      <translation type="unfinished">external</translation>
+      <translation>внешний</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="130"/>
       <source>internal</source>
-      <translation type="unfinished">internal</translation>
+      <translation>внутренний</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="175"/>
       <source>Complete or cancel the current calibration first</source>
-      <translation type="unfinished">Complete or cancel the current calibration first</translation>
+      <translation>Сначала завершите или отмените текущую калибровку.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="303"/>
       <source>- Green indicates a well functioning compass.
 </source>
-      <translation type="unfinished">- Green indicates a well functioning compass.
+      <translation>- Зелёный означает исправно работающий компас.
 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="304"/>
       <source>- Yellow indicates a questionable compass or calibration.
 </source>
-      <translation type="unfinished">- Yellow indicates a questionable compass or calibration.
+      <translation>- Жёлтый означает сомнительные показания компаса или калибровки.
 </translation>
     </message>
     <message>
@@ -2910,7 +2910,7 @@
       <source>- Red indicates a compass which should not be used.
 
 </source>
-      <translation type="unfinished">- Red indicates a compass which should not be used.
+      <translation>- Красный означает, что компас использовать нельзя.
 
 </translation>
     </message>
@@ -2918,58 +2918,58 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="306"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="335"/>
       <source>YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.</source>
-      <translation type="unfinished">YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.</translation>
+      <translation>НЕОБХОДИМО ПЕРЕЗАГРУЗИТЬ БОРТ ПОСЛЕ КАЖДОЙ КАЛИБРОВКИ.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="310"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="339"/>
       <source>Reboot Vehicle</source>
-      <translation type="unfinished">Reboot Vehicle</translation>
+      <translation>Перезагрузить борт</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="380"/>
       <source>Priority 1</source>
-      <translation type="unfinished">Priority 1</translation>
+      <translation>Приоритет 1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="380"/>
       <source>Priority 2</source>
-      <translation type="unfinished">Priority 2</translation>
+      <translation>Приоритет 2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="380"/>
       <source>Priority 3</source>
-      <translation type="unfinished">Priority 3</translation>
+      <translation>Приоритет 3</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="380"/>
       <source>Not Set</source>
-      <translation type="unfinished">Not Set</translation>
+      <translation>Не задано</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="412"/>
       <source>Orientation:</source>
-      <translation type="unfinished">Orientation:</translation>
+      <translation>Ориентация:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="478"/>
       <source>Autopilot Rotation:</source>
-      <translation type="unfinished">Autopilot Rotation:</translation>
+      <translation>Ориентация полетного контроллера:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="495"/>
       <source>Simple accelerometer calibration is less precise but allows calibrating without rotating the vehicle. Check this if you have a large/heavy vehicle.</source>
-      <translation type="unfinished">Simple accelerometer calibration is less precise but allows calibrating without rotating the vehicle. Check this if you have a large/heavy vehicle.</translation>
+      <translation>Простая калибровка акселерометра менее точна, но позволяет выполнять калибровку без поворота борта. Отметьте этот пункт, если ваш борт крупный или тяжёлый.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="513"/>
       <source>Magnetic Declination</source>
-      <translation type="unfinished">Magnetic Declination</translation>
+      <translation>Магнитное склонение</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="525"/>
       <source>Manual Magnetic Declination</source>
-      <translation type="unfinished">Manual Magnetic Declination</translation>
+      <translation>Магнитное склонение вручную</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="547"/>
@@ -2999,161 +2999,161 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="564"/>
       <source>Fast Calibration</source>
-      <translation type="unfinished">Fast Calibration</translation>
+      <translation>Быстрая калибровка</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="572"/>
       <source>Vehicle has no Valid positon, please provide it</source>
-      <translation type="unfinished">Vehicle has no Valid positon, please provide it</translation>
+      <translation>У борта нет действительного местоположения, пожалуйста, укажите его.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="578"/>
       <source>Use GCS position instead</source>
-      <translation type="unfinished">Use GCS position instead</translation>
+      <translation>Использовать позицию наземной станции</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="584"/>
       <source>Use current map position instead</source>
-      <translation type="unfinished">Use current map position instead</translation>
+      <translation>Использовать текущую позицию на карте</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="624"/>
       <source>Compass Motor Interference Calibration</source>
-      <translation type="unfinished">Compass Motor Interference Calibration</translation>
+      <translation>Калибровка помех компаса от моторов</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="637"/>
       <source>This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. </source>
-      <translation type="unfinished">This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. </translation>
+      <translation>Рекомендуется для бортов, имеющих только внутренний компас, или бортов, где на компас значительно влияют помехи от моторов, силовых кабелей и т. д.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="638"/>
       <source>CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. </source>
-      <translation type="unfinished">CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. </translation>
+      <translation>CompassMot работает только если есть датчик тока, т. к. интерференция магнитного поля линейно зависит от потребляемого тока. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="639"/>
       <source>It is technically possible to set-up CompassMot using throttle but this is not recommended.</source>
-      <translation type="unfinished">It is technically possible to set-up CompassMot using throttle but this is not recommended.</translation>
+      <translation>Настройка CompassMot технически возможна с использованием газа, но это не рекомендуется к использованию.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="646"/>
       <source>Disconnect your props, flip them over and rotate them one position around the frame. </source>
-      <translation type="unfinished">Disconnect your props, flip them over and rotate them one position around the frame. </translation>
+      <translation>Снимите пропеллеры, переверните их и проверните их на одну позицию вокруг рамы.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="647"/>
       <source>In this configuration they should push the copter down into the ground when the throttle is raised.</source>
-      <translation type="unfinished">In this configuration they should push the copter down into the ground when the throttle is raised.</translation>
+      <translation>В этой конфигурации пропеллеры должны толкать коптер вниз при увеличении газа.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="654"/>
       <source>Secure the copter (perhaps with tape) so that it does not move.</source>
-      <translation type="unfinished">Secure the copter (perhaps with tape) so that it does not move.</translation>
+      <translation>Закрепите коптер (например, изолентой), чтобы он не двигался.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="661"/>
       <source>Turn on your transmitter and keep throttle at zero.</source>
-      <translation type="unfinished">Turn on your transmitter and keep throttle at zero.</translation>
+      <translation>Включите пульт управления и удерживайте ручку газа на минимуме.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="668"/>
       <source>Click Ok to start CompassMot calibration.</source>
-      <translation type="unfinished">Click Ok to start CompassMot calibration.</translation>
+      <translation>Нажмите OK, чтобы начать калибровку CompassMot.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="727"/>
       <source>To level the horizon you need to place the vehicle in its level flight position and press Ok.</source>
-      <translation type="unfinished">To level the horizon you need to place the vehicle in its level flight position and press Ok.</translation>
+      <translation>Чтобы выровнять горизонт, вам необходимо установить борт в горизонтальное положение и нажать "Ок".</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="752"/>
       <source>depth</source>
-      <translation type="unfinished">depth</translation>
+      <translation>глубина</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="752"/>
       <source>altitude</source>
-      <translation type="unfinished">altitude</translation>
+      <translation>высота</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="748"/>
       <source>Pressure calibration will set the %1 to zero at the current pressure reading. %2</source>
-      <translation type="unfinished">Pressure calibration will set the %1 to zero at the current pressure reading. %2</translation>
+      <translation>Калибровка давления установит %1 на ноль при показании текущего давления. %2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="753"/>
       <source>To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.</source>
-      <translation type="unfinished">To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.</translation>
+      <translation>Для калибровки датчика воздушной скорости необходимо защитить его от ветра. Не прикасайтесь к датчику и не закрывайте отверстия во время калибровки.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="739"/>
       <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.
 
 Click Ok to start calibration.</source>
-      <translation type="unfinished">For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.
+      <translation>Для калибровки гироскопа вам нужно поместить борт на поверхность и не трогать его.
 
-Click Ok to start calibration.</translation>
+Нажмите OK, чтобы начать калибровку.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="692"/>
       <source>Accelerometer</source>
-      <translation type="unfinished">Accelerometer</translation>
+      <translation>Акселерометр</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="704"/>
       <source>Compass</source>
-      <translation type="unfinished">Compass</translation>
+      <translation>Компас</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="709"/>
       <source>Accelerometer must be calibrated prior to Compass.</source>
-      <translation type="unfinished">Accelerometer must be calibrated prior to Compass.</translation>
+      <translation>Перед калибровкой компаса необходимо откалибровать акселерометр.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="720"/>
       <source>Level Horizon</source>
-      <translation type="unfinished">Level Horizon</translation>
+      <translation>Выставление горизонта</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="724"/>
       <source>Accelerometer must be calibrated prior to Level Horizon.</source>
-      <translation type="unfinished">Accelerometer must be calibrated prior to Level Horizon.</translation>
+      <translation>Перед калибровкой акселерометра необходимо выставить горизонт.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="736"/>
       <source>Gyro</source>
-      <translation type="unfinished">Gyro</translation>
+      <translation>Гироскоп</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="738"/>
       <source>Calibrate Gyro</source>
-      <translation type="unfinished">Calibrate Gyro</translation>
+      <translation>Калибровка гироскопа</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="754"/>
       <source>Baro/Airspeed</source>
-      <translation type="unfinished">Baro/Airspeed</translation>
+      <translation>Барометр/Воздушная скорость</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="754"/>
       <source>Pressure</source>
-      <translation type="unfinished">Pressure</translation>
+      <translation>Давление</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="759"/>
       <source>CompassMot</source>
-      <translation type="unfinished">CompassMot</translation>
+      <translation>Калибровка CompassMot</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="782"/>
       <source>Next</source>
-      <translation type="unfinished">Next</translation>
+      <translation>Далее</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="791"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>Отмена</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="862"/>
@@ -3163,7 +3163,7 @@ Click Ok to start calibration.</translation>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="898"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="907"/>
       <source>Rotate</source>
-      <translation type="unfinished">Rotate</translation>
+      <translation>Повернуть</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="862"/>
@@ -3173,17 +3173,17 @@ Click Ok to start calibration.</translation>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="898"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="907"/>
       <source>Hold Still</source>
-      <translation type="unfinished">Hold Still</translation>
+      <translation>Удерживайте неподвижно</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.h" line="18"/>
       <source>Configure and calibrate compass, accelerometer, and other onboard sensors.</source>
-      <translation type="unfinished">Configure and calibrate compass, accelerometer, and other onboard sensors.</translation>
+      <translation>Настройка и калибровка компаса, акселерометра и других бортовых датчиков.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.h" line="26"/>
       <source>Sensors</source>
-      <translation type="unfinished">Sensors</translation>
+      <translation>Датчики</translation>
     </message>
   </context>
   <context>
@@ -3191,53 +3191,53 @@ Click Ok to start calibration.</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="139"/>
       <source>Calibration complete</source>
-      <translation type="unfinished">Calibration complete</translation>
+      <translation>Калибровка завершена!</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="153"/>
       <source>Calibration failed. Calibration log will be displayed.</source>
-      <translation type="unfinished">Calibration failed. Calibration log will be displayed.</translation>
+      <translation>Калибровка не удалась. Будет показан журнал калибровки.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="316"/>
       <source>Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds.</source>
-      <translation type="unfinished">Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds.</translation>
+      <translation>Медленно увеличивайте газ до 50% ~ 75% (пропеллеры будут вращаться!) на протяжении 5 ~ 10 секунд.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="317"/>
       <source>Quickly bring the throttle back down to zero</source>
-      <translation type="unfinished">Quickly bring the throttle back down to zero</translation>
+      <translation>Быстро уберите газ до нуля</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="318"/>
       <source>Press the Next button to complete the calibration</source>
-      <translation type="unfinished">Press the Next button to complete the calibration</translation>
+      <translation>Нажмите кнопку Далее, чтобы завершить калибровку</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="327"/>
       <source>Hold the vehicle in its level flight position.</source>
-      <translation type="unfinished">Hold the vehicle in its level flight position.</translation>
+      <translation>Держите борт в его горизонтальном положении.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="336"/>
       <source>Requesting pressure calibration...</source>
-      <translation type="unfinished">Requesting pressure calibration...</translation>
+      <translation>Запрос калибровки давления...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="345"/>
       <source>Requesting gyro calibration...</source>
-      <translation type="unfinished">Requesting gyro calibration...</translation>
+      <translation>Запрос калибровки гироскопа...</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="179"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="467"/>
       <source>Successfully completed</source>
-      <translation type="unfinished">Successfully completed</translation>
+      <translation>Успешное завершение</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="173"/>
       <source>Failed to start compass calibration</source>
-      <translation type="unfinished">Failed to start compass calibration</translation>
+      <translation>Не удалось начать калибровку компаса</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="182"/>
@@ -3248,52 +3248,52 @@ Click Ok to start calibration.</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="237"/>
       <source>Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right.</source>
-      <translation type="unfinished">Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right.</translation>
+      <translation>Вращайте борт произвольно вокруг всех осей, пока индикатор прогресса не заполнится полностью.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="271"/>
       <source>Hold still in the current orientation and press Next when ready</source>
-      <translation type="unfinished">Hold still in the current orientation and press Next when ready</translation>
+      <translation>Замрите в текущем положении и нажмите «Далее», когда будете готовы.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="464"/>
       <source>In progress</source>
-      <translation type="unfinished">In progress</translation>
+      <translation>В процессе</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="526"/>
       <source>Compass %1 calibration complete</source>
-      <translation type="unfinished">Compass %1 calibration complete</translation>
+      <translation>Калибровка компаса %1 завершена</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="528"/>
       <source>Compass %1 calibration below quality threshold</source>
-      <translation type="unfinished">Compass %1 calibration below quality threshold</translation>
+      <translation>Калибровка компаса %1 ниже порога качества</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="547"/>
       <source>All compasses calibrated successfully</source>
-      <translation type="unfinished">All compasses calibrated successfully</translation>
+      <translation>Все компасы откалиброваны успешно</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="548"/>
       <source>YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT</source>
-      <translation type="unfinished">YOU MUST REBOOT YOUR VEHICLE NOW FOR NEW SETTINGS TO TAKE AFFECT</translation>
+      <translation>НЕОБХОДИМО ПЕРЕЗАГРУЗИТЬ БОРТ, ЧТОБЫ НАСТРОЙКИ ВСТУПИЛИ В СИЛУ</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="551"/>
       <source>Compass calibration failed</source>
-      <translation type="unfinished">Compass calibration failed</translation>
+      <translation>Не удалось откалибровать компас</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="552"/>
       <source>YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT</source>
-      <translation type="unfinished">YOU MUST REBOOT YOUR VEHICLE NOW AND RETRY COMPASS CALIBRATION PRIOR TO FLIGHT</translation>
+      <translation>ПЕРЕД ПОЛЁТАМИ НЕОБХОДИМО ПЕРЕЗАГРУЗИТЬ БОРТ И ПОВТОРИТЬ КАЛИБРОВКУ КОМПАСА</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="556"/>
       <source>Continue rotating...</source>
-      <translation type="unfinished">Continue rotating...</translation>
+      <translation>Продолжайте вращение...</translation>
     </message>
   </context>
   <context>
@@ -3301,38 +3301,38 @@ Click Ok to start calibration.</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="30"/>
       <source>Compasses:</source>
-      <translation type="unfinished">Compasses:</translation>
+      <translation>Компасы:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="48"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="76"/>
       <source>Setup required</source>
-      <translation type="unfinished">Setup required</translation>
+      <translation>Требуется настройка</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="49"/>
       <source>Not installed</source>
-      <translation type="unfinished">Not installed</translation>
+      <translation>Не установлено</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="75"/>
       <source>Accelerometer(s):</source>
-      <translation type="unfinished">Accelerometer(s):</translation>
+      <translation>Акселерометр(ы):</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="88"/>
       <source>Barometer(s):</source>
-      <translation type="unfinished">Barometer(s):</translation>
+      <translation>Барометр(ы):</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="89"/>
       <source>Not Supported(Over APM 4.1)</source>
-      <translation type="unfinished">Not Supported(Over APM 4.1)</translation>
+      <translation>Не поддерживается (с APM 4.1)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="76"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>Готово</translation>
     </message>
   </context>
   <context>
@@ -15982,87 +15982,87 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="447"/>
       <source>Photo Interval (seconds)</source>
-      <translation type="unfinished">Photo Interval (seconds)</translation>
+      <translation>Интервал фото (в секундах)</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="453"/>
       <source>Video Grid Lines</source>
-      <translation type="unfinished">Video Grid Lines</translation>
+      <translation>Линии сетки видео</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="459"/>
       <source>Video Screen Fit</source>
-      <translation type="unfinished">Video Screen Fit</translation>
+      <translation>Подогнать видео</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="465"/>
       <source>Reset Camera Defaults</source>
-      <translation type="unfinished">Reset Camera Defaults</translation>
+      <translation>Сбросить настройки камеры</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="470"/>
       <source>Storage</source>
-      <translation type="unfinished">Storage</translation>
+      <translation>Хранилище</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="497"/>
       <source>Off</source>
-      <translation type="unfinished">Off</translation>
+      <translation>Выкл.</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="497"/>
       <source>Blend</source>
-      <translation type="unfinished">Blend</translation>
+      <translation>Смешивание</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="497"/>
       <source>Full</source>
-      <translation type="unfinished">Full</translation>
+      <translation>Полный</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="497"/>
       <source>Picture In Picture</source>
-      <translation type="unfinished">Picture In Picture</translation>
+      <translation>Картинка в картинке</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="576"/>
       <source>Single</source>
-      <translation type="unfinished">Single</translation>
+      <translation>Одиночный снимок</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="576"/>
       <source>Time Lapse</source>
-      <translation type="unfinished">Time Lapse</translation>
+      <translation>Таймлапс</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="610"/>
       <source>Reset</source>
-      <translation type="unfinished">Reset</translation>
+      <translation>Сбросить</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="614"/>
       <source>Reset Camera to Factory Settings</source>
-      <translation type="unfinished">Reset Camera to Factory Settings</translation>
+      <translation>Восстановить заводские настройки камеры</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="615"/>
       <source>Confirm resetting all settings?</source>
-      <translation type="unfinished">Confirm resetting all settings?</translation>
+      <translation>Подтвердить сброс всех настроек?</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="634"/>
       <source>Format</source>
-      <translation type="unfinished">Format</translation>
+      <translation>Форматировать</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="639"/>
       <source>Format Camera Storage</source>
-      <translation type="unfinished">Format Camera Storage</translation>
+      <translation>Форматировать хранилище камеры</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="640"/>
       <source>Confirm erasing all files?</source>
-      <translation type="unfinished">Confirm erasing all files?</translation>
+      <translation>Вы действительно хотите удалить все файлы?</translation>
     </message>
   </context>
   <context>
@@ -19199,102 +19199,102 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="28"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="29"/>
       <source>If the orientation is in the direction of flight, select ROTATION_NONE.</source>
-      <translation type="unfinished">If the orientation is in the direction of flight, select ROTATION_NONE.</translation>
+      <translation>Если ориентация находится в направлении полета, выберите ROTATION_NONE.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="35"/>
       <source>For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor. Do not touch the sensor or obstruct any holes during the calibration.</source>
-      <translation type="unfinished">For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor. Do not touch the sensor or obstruct any holes during the calibration.</translation>
+      <translation>Для калибровки воздушной скорости вам нужно будет держать датчик воздушной скорости подальше от любого ветра, а затем подуть на датчик. Не прикасайтесь к датчику и не загораживайте какие-либо отверстия во время калибровки.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="37"/>
       <source>Start the individual calibration steps by clicking one of the buttons to the left.</source>
-      <translation type="unfinished">Start the individual calibration steps by clicking one of the buttons to the left.</translation>
+      <translation>Начните пошаговую калибровку, нажав одну из кнопок слева.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="127"/>
       <source>Compass Calibration Complete</source>
-      <translation type="unfinished">Compass Calibration Complete</translation>
+      <translation>Калибровка компаса завершена</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="157"/>
       <source>Calibration Cancel</source>
-      <translation type="unfinished">Calibration Cancel</translation>
+      <translation>Отмена калибровки</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="158"/>
       <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
-      <translation type="unfinished">Waiting for Vehicle to response to Cancel. This may take a few seconds.</translation>
+      <translation>Ожидание ответа борта на отмену. Это может занять несколько секунд.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="217"/>
       <source>Set autopilot orientation before calibrating.</source>
-      <translation type="unfinished">Set autopilot orientation before calibrating.</translation>
+      <translation>Установите ориентацию автопилота перед калибровкой.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="269"/>
       <source>Reboot Vehicle</source>
-      <translation type="unfinished">Reboot Vehicle</translation>
+      <translation>Перезагрузить борт</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="31"/>
       <source>For Compass calibration you will need to rotate your vehicle through a number of positions.</source>
-      <translation type="unfinished">For Compass calibration you will need to rotate your vehicle through a number of positions.</translation>
+      <translation>Для калибровки компаса вам понадобится повернуть борт в несколько позиций.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="32"/>
       <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</source>
-      <translation type="unfinished">For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</translation>
+      <translation>Для калибровки гироскопа вам понадобится установить борт на поверхность и оставить неподвижным.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="33"/>
       <source>For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</source>
-      <translation type="unfinished">For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</translation>
+      <translation>Для калибровки акселерометра вам понадобится устанавливать борт на каждую из 6 сторон на идеально горизонтальной поверхности и держать его неподвижно в каждом положении несколько секунд.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="34"/>
       <source>To level the horizon you need to place the vehicle in its level flight position and leave still.</source>
-      <translation type="unfinished">To level the horizon you need to place the vehicle in its level flight position and leave still.</translation>
+      <translation>Чтобы выровнять горизонт, установите борт в положение горизонтального полёта и оставьте неподвижным.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="138"/>
       <source>Complete or cancel the current calibration first</source>
-      <translation type="unfinished">Complete or cancel the current calibration first</translation>
+      <translation>Сначала завершите или отмените текущую калибровку.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="222"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="283"/>
       <source>Autopilot Orientation</source>
-      <translation type="unfinished">Autopilot Orientation</translation>
+      <translation>Ориентация автопилота</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="231"/>
       <source>ROTATION_NONE indicates component points in direction of flight.</source>
-      <translation type="unfinished">ROTATION_NONE indicates component points in direction of flight.</translation>
+      <translation>ROTATION_NONE означает, что компонент направлен в сторону полёта.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="237"/>
       <source>Click Ok to start calibration.</source>
-      <translation type="unfinished">Click Ok to start calibration.</translation>
+      <translation>Нажмите OK, чтобы начать калибровку.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="264"/>
       <source>Reboot the vehicle prior to flight.</source>
-      <translation type="unfinished">Reboot the vehicle prior to flight.</translation>
+      <translation>Перезагрузите борт перед полётом.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="275"/>
       <source>Adjust orientations as needed.
 
 ROTATION_NONE indicates component points in direction of flight.</source>
-      <translation type="unfinished">Adjust orientations as needed.
+      <translation>Настройте ориентацию по мере необходимости.
 
-ROTATION_NONE indicates component points in direction of flight.</translation>
+ROTATION_NONE означает, что компонент направлен в сторону полёта.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="303"/>
       <source>Mag %1 Orientation</source>
-      <translation type="unfinished">Mag %1 Orientation</translation>
+      <translation>Ориентация Mag %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="324"/>
@@ -19302,13 +19302,13 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="348"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="370"/>
       <source>Compass</source>
-      <translation type="unfinished">Compass</translation>
+      <translation>Компас</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="369"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="371"/>
       <source>Calibrate Compass</source>
-      <translation type="unfinished">Calibrate Compass</translation>
+      <translation>Калибровка компаса</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="325"/>
@@ -19316,12 +19316,12 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="351"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="377"/>
       <source>Gyroscope</source>
-      <translation type="unfinished">Gyroscope</translation>
+      <translation>Гироскоп</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="378"/>
       <source>Calibrate Gyro</source>
-      <translation type="unfinished">Calibrate Gyro</translation>
+      <translation>Калибровка гироскопа</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="326"/>
@@ -19329,13 +19329,13 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="348"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="385"/>
       <source>Accelerometer</source>
-      <translation type="unfinished">Accelerometer</translation>
+      <translation>Акселерометр</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="384"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="386"/>
       <source>Calibrate Accelerometer</source>
-      <translation type="unfinished">Calibrate Accelerometer</translation>
+      <translation>Калибровка акселерометра</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="327"/>
@@ -19344,53 +19344,53 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="393"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="394"/>
       <source>Level Horizon</source>
-      <translation type="unfinished">Level Horizon</translation>
+      <translation>Выставление горизонта</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="328"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="354"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="400"/>
       <source>Airspeed</source>
-      <translation type="unfinished">Airspeed</translation>
+      <translation>Воздушная скорость</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="399"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="401"/>
       <source>Calibrate Airspeed</source>
-      <translation type="unfinished">Calibrate Airspeed</translation>
+      <translation>Калибровка воздушной скорости</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="443"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>Отмена</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="423"/>
       <source>Next</source>
-      <translation type="unfinished">Next</translation>
+      <translation>Далее</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="329"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="407"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="417"/>
       <source>Orientations</source>
-      <translation type="unfinished">Orientations</translation>
+      <translation>Ориентации</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="376"/>
       <source>Calibrate Gyroscope</source>
-      <translation type="unfinished">Calibrate Gyroscope</translation>
+      <translation>Калибровка гироскопа</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="406"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="410"/>
       <source>Set Orientations</source>
-      <translation type="unfinished">Set Orientations</translation>
+      <translation>Установка ориентаций</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="416"/>
       <source>Factory Reset</source>
-      <translation type="unfinished">Factory Reset</translation>
+      <translation>Сброс к заводским настройкам</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="497"/>
@@ -19400,7 +19400,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="533"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="542"/>
       <source>Rotate</source>
-      <translation type="unfinished">Rotate</translation>
+      <translation>Повернуть</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="497"/>
@@ -19410,7 +19410,7 @@ ROTATION_NONE indicates component points in direction of flight.</translation>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="533"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="542"/>
       <source>Hold Still</source>
-      <translation type="unfinished">Hold Still</translation>
+      <translation>Удерживайте неподвижно</translation>
     </message>
   </context>
   <context>
