@@ -22,32 +22,10 @@ target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # ----------------------------------------------------------------------------
 # PX4 GPS Drivers Integration
 # ----------------------------------------------------------------------------
-include(CPMPatchCache)
-
-set(_gpsdrivers_revision 056cfb18e826a688141a8fe5354982273d43215f)
-set(_gpsdrivers_patches
-    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-utc.patch"
-    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-survey-in.patch"
-    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-cancellation.patch"
-    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-survey-read-error.patch"
-    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-comms-diagnostics.patch"
-)
-qgc_cpm_patch_cache_key(
-    _gpsdrivers_cache_key
-    GIT_REPOSITORY
-    "https://github.com/PX4/PX4-GPSDrivers.git"
-    GIT_TAG
-    "${_gpsdrivers_revision}"
-    PATCHES
-    ${_gpsdrivers_patches}
-)
-
 CPMAddPackage(
     NAME px4-gpsdrivers
     GITHUB_REPOSITORY PX4/PX4-GPSDrivers
-    GIT_TAG ${_gpsdrivers_revision}
-    CUSTOM_CACHE_KEY "${_gpsdrivers_cache_key}"
-    PATCHES ${_gpsdrivers_patches}
+    GIT_TAG ab090ca9dfe8038ae84eb795a0bed0d314896d85
     SOURCE_SUBDIR src
 )
 
