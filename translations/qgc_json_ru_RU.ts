@@ -4574,95 +4574,95 @@
       <extracomment>.QGC.MetaData.Facts[displayPresetsTabFirst].shortDesc, .QGC.MetaData.Facts[displayPresetsTabFirst].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Display the presets tab at start</source>
-      <translation type="unfinished">Display the presets tab at start</translation>
+      <translation>Отображать вкладку пресетов при запуске</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showMissionItemStatus].shortDesc, .QGC.MetaData.Facts[showMissionItemStatus].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Show/Hide the mission item status display</source>
-      <translation type="unfinished">Show/Hide the mission item status display</translation>
+      <translation>Показать/Скрыть отображение статуса элементов миссии</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[takeoffItemNotRequired].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Allow missions to begin without a dedicated takeoff waypoint.</source>
-      <translation type="unfinished">Allow missions to begin without a dedicated takeoff waypoint.</translation>
+      <translation>Разрешить начинать полётные задания без выделенной точки Takeoff.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[takeoffItemNotRequired].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Missions do not require takeoff item</source>
-      <translation type="unfinished">Missions do not require takeoff item</translation>
+      <translation>Полётные задания не требуют точки Takeoff</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[takeoffItemNotRequired].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>takeoff</source>
-      <translation type="unfinished">takeoff</translation>
+      <translation>takeoff</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[allowMultipleLandingPatterns].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Enable creating multiple landing sequences for Return-to-Launch contingency selection.</source>
-      <translation type="unfinished">Enable creating multiple landing sequences for Return-to-Launch contingency selection.</translation>
+      <translation>Разрешить создание нескольких схем посадки для выбора в случае возврата на точку старта (Return-to-Launch).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[allowMultipleLandingPatterns].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Allow configuring multiple landing sequences</source>
-      <translation type="unfinished">Allow configuring multiple landing sequences</translation>
+      <translation>Разрешить настройку нескольких схем посадки</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[allowMultipleLandingPatterns].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>landing pattern</source>
-      <translation type="unfinished">landing pattern</translation>
+      <translation>схема посадки</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useConditionGate].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Use MAV_CMD_CONDITION_GATE for mission pattern transitions instead of standard waypoints.</source>
-      <translation type="unfinished">Use MAV_CMD_CONDITION_GATE for mission pattern transitions instead of standard waypoints.</translation>
+      <translation>Использовать MAV_CMD_CONDITION_GATE для переходов в шаблоне полётного задания вместо стандартных путевых точек.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useConditionGate].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Use MAV_CMD_CONDITION_GATE for pattern generation</source>
-      <translation type="unfinished">Use MAV_CMD_CONDITION_GATE for pattern generation</translation>
+      <translation>Использовать MAV_CMD_CONDITION_GATE для генерации шаблонов</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useConditionGate].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>condition gate</source>
-      <translation type="unfinished">condition gate</translation>
+      <translation>условный рубеж</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showGimbalOnlyWhenSet].shortDesc, .QGC.MetaData.Facts[showGimbalOnlyWhenSet].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Show gimbal yaw visual only when set explicitly for the waypoint</source>
-      <translation type="unfinished">Show gimbal yaw visual only when set explicitly for the waypoint</translation>
+      <translation>Отображать ориентацию подвеса только если она явно задана для точки маршрута</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Distance required for VTOL vehicles to complete altitude and speed transitions.</source>
-      <translation type="unfinished">Distance required for VTOL vehicles to complete altitude and speed transitions.</translation>
+      <translation>Расстояние, необходимое аппаратам VTOL для завершения перехода по высоте и скорости.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>VTOL Transition Distance</source>
-      <translation type="unfinished">VTOL Transition Distance</translation>
+      <translation>Расстояние перехода VTOL</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>vtol transition</source>
-      <translation type="unfinished">vtol transition</translation>
+      <translation>переход vtol</translation>
     </message>
   </context>
   <context>
@@ -11332,37 +11332,37 @@
       <extracomment>.groups[General].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>default altitude</source>
-      <translation type="unfinished">default altitude</translation>
+      <translation>высота по умолчанию</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>vtol transition</source>
-      <translation type="unfinished">vtol transition</translation>
+      <translation>переход vtol</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>condition gate</source>
-      <translation type="unfinished">condition gate</translation>
+      <translation>условные ворота</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>takeoff</source>
-      <translation type="unfinished">takeoff</translation>
+      <translation>takeoff</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>landing pattern</source>
-      <translation type="unfinished">landing pattern</translation>
+      <translation>схема посадки</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>waypoint</source>
-      <translation type="unfinished">waypoint</translation>
+      <translation>путевая точка</translation>
     </message>
   </context>
 </TS>
