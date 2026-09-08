@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QPointer>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
@@ -13,6 +14,8 @@ class QSslError;
 class QGeoTiledMapReplyQGC : public QGeoTiledMapReply
 {
     Q_OBJECT
+
+    friend class QGeoMapReplyQGCTest;
 
 public:
     explicit QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent = nullptr);
@@ -31,7 +34,8 @@ private slots:
 private:
     static void _initDataFromResources();
 
-    QNetworkAccessManager *_networkManager = nullptr;
+    QPointer<QNetworkAccessManager> _networkManager;
+    QPointer<QNetworkReply> _networkReply;
     QNetworkRequest _request;
     bool m_initialized = false;
 
