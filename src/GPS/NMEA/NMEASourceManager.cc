@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "AutoConnectSettings.h"
+#include "NMEAPositionSource.h"
 #include "NMEAStreamSplitter.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
@@ -61,6 +62,11 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
         });
         _updateSerialRouting();
     }
+}
+
+QGeoPositionInfoSource* NMEASourceManager::positionSource() const
+{
+    return _positionSource.get();
 }
 
 bool NMEASourceManager::_shouldConnect() const
@@ -149,9 +155,10 @@ void NMEASourceManager::_closeDevice()
     _satellitePollTimer.stop();
     // Detach the decoder before destroying the device it reads from.
     if (_sourceInstalled && _positionManager) {
-        _positionManager->resetNmeaSourceDevice();
+        _positionManager->clearNmeaPositionSource(_positionSource.get());
     }
     _sourceInstalled = false;
+    _positionSource.reset();
     _satelliteSource.reset();
     _stream.reset();
     _clearSatelliteInfo();
@@ -222,7 +229,8 @@ bool NMEASourceManager::_installSource(QIODevice* device)
         Qt::QueuedConnection);
     _satelliteSource->requestUpdate(5000);
     _satellitePollTimer.start();
-    _positionManager->setNmeaSourceDevice(_stream->positionDevice());
+    _positionSource = std::make_unique<NMEAPositionSource>(_stream->positionDevice());
+    _positionManager->setNmeaPositionSource(_positionSource.get());
     _sourceInstalled = true;
     return true;
 }

@@ -7,7 +7,6 @@
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QPermissions>
-#include <QtPositioning/QNmeaPositionInfoSource>
 
 QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "GPS.PositionManager.QGCPositionManager")
 
@@ -125,58 +124,34 @@ bool QGCPositionManager::_isExternalSource() const
 
 void QGCPositionManager::_selectPositionSource()
 {
-    if (_receiverSource && _nmeaSource) {
-        _nmeaNeedsRestart = true;
-    } else if (_nmeaNeedsRestart && _nmeaSource) {
-        _nmeaNeedsRestart = false;
-        // Discard input and parser state accumulated while the receiver had priority.
-        auto* device = _nmeaSource->device();
-        if (device) {
-            // A standby decoder has not opened its device yet.
-            if (!device->isOpen()) {
-                (void) device->open(QIODevice::ReadOnly);
-            }
-            if (device->isReadable()) {
-                device->readAll();
-            }
-            setNmeaSourceDevice(device);
-            return;
-        }
-    }
     _setPositionSource(_receiverSource ? ExternalGPS : (_nmeaSource ? NmeaGPS : InternalGPS));
 }
 
-void QGCPositionManager::setNmeaSourceDevice(QIODevice *device)
+void QGCPositionManager::setNmeaPositionSource(QGeoPositionInfoSource* source)
 {
-    if (_nmeaSource) {
-        _nmeaSource->stopUpdates();
-        (void) _nmeaSource->disconnect(this);
-
-        if (_currentSource == _nmeaSource) {
-            _currentSource = nullptr;
-        }
-
-        delete _nmeaSource;
-        _nmeaSource = nullptr;
+    if (_nmeaSource == source) {
+        return;
     }
-
-    _nmeaSource = new QNmeaPositionInfoSource(QNmeaPositionInfoSource::RealTimeMode, this);
-    _nmeaSource->setDevice(device);
-    _nmeaSource->setUserEquivalentRangeError(5.1);
+    QObject::disconnect(_nmeaDestroyedConnection);
+    _nmeaSource = source;
+    if (source) {
+        _nmeaDestroyedConnection = connect(source, &QObject::destroyed, this, [this, source]() {
+            if (_currentSource == source) {
+                _currentSource = nullptr;
+                _clearPosition();
+            }
+            _nmeaSource = nullptr;
+            _selectPositionSource();
+        });
+    }
     _selectPositionSource();
 }
 
-void QGCPositionManager::resetNmeaSourceDevice()
+void QGCPositionManager::clearNmeaPositionSource(QGeoPositionInfoSource* source)
 {
-    if (!_nmeaSource) {
-        return;
+    if (_nmeaSource == source) {
+        setNmeaPositionSource(nullptr);
     }
-
-    auto* retiredSource = _nmeaSource;
-    _nmeaSource = nullptr;
-    _nmeaNeedsRestart = false;
-    _selectPositionSource();
-    delete retiredSource;
 }
 
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
@@ -346,9 +321,10 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
                                    << "previous:" << _currentSource
                                    << "selected:" << nextSource;
     _externalStaleTimer.stop();
+    QObject::disconnect(_positionUpdateConnection);
+    QObject::disconnect(_positionErrorConnection);
     if (_currentSource) {
         _currentSource->stopUpdates();
-        (void) _currentSource->disconnect(this);
     }
     ++_sourceGeneration;
     _currentSource = nextSource;
@@ -368,22 +344,24 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
 
         const QPointer<QGeoPositionInfoSource> selectedSource = _currentSource;
         const quint64 generation = _sourceGeneration;
-        connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this,
-                [this, selectedSource, generation](const QGeoPositionInfo& update) {
-                    if (selectedSource && _currentSource == selectedSource && generation == _sourceGeneration) {
-                        _positionUpdated(update);
-                    }
-                });
-        connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this,
-                [this, selectedSource, generation](QGeoPositionInfoSource::Error error) {
-                    if (selectedSource && _currentSource == selectedSource && generation == _sourceGeneration) {
-                        _positionError(error);
-                        if (_receiverSource && _currentSource == _receiverSource &&
-                            error != QGeoPositionInfoSource::NoError) {
-                            _clearPosition();
+        _positionUpdateConnection =
+            connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this,
+                    [this, selectedSource, generation](const QGeoPositionInfo& update) {
+                        if (selectedSource && _currentSource == selectedSource && generation == _sourceGeneration) {
+                            _positionUpdated(update);
                         }
-                    }
-                });
+                    });
+        _positionErrorConnection =
+            connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this,
+                    [this, selectedSource, generation](QGeoPositionInfoSource::Error error) {
+                        if (selectedSource && _currentSource == selectedSource && generation == _sourceGeneration) {
+                            _positionError(error);
+                            if (_receiverSource && _currentSource == _receiverSource &&
+                                error != QGeoPositionInfoSource::NoError) {
+                                _clearPosition();
+                            }
+                        }
+                    });
 
         // (void) connect(QGCCompass::instance(), &QGCCompass::positionUpdated, this, &QGCPositionManager::_positionUpdated);
 

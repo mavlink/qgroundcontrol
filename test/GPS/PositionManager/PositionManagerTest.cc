@@ -3,12 +3,12 @@
 #include <QtCore/QIODevice>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTimeZone>
-#include <QtPositioning/QNmeaPositionInfoSource>
 #include <QtTest/QSignalSpy>
 
 #include <cstring>
 
 #include "NMEAUtils.h"
+#include "NMEAPositionSource.h"
 #include "PositionManager.h"
 #include "RTKPositionSource.h"
 #include "UdpIODevice.h"
@@ -66,25 +66,15 @@ void PositionManagerTest::init()
                      QRegularExpression(QStringLiteral("UpdateTimeoutError")));
 }
 
-void PositionManagerTest::cleanup()
-{
-    // QGCPositionManager is an application-static singleton — always tear down the NMEA source
-    // so a failed test can't leak state into the next one. The device must be deleted after the
-    // source, since QNmeaPositionInfoSource holds a raw pointer to it.
-    QGCPositionManager::instance()->resetNmeaSourceDevice();
-    delete _nmeaDevice;
-    _nmeaDevice = nullptr;
-
-    UnitTest::cleanup();
-}
-
 void PositionManagerTest::_nmeaSourceProducesGcsPosition()
 {
-    QGCPositionManager *pm = QGCPositionManager::instance();
-    auto *device = new NmeaTestDevice();
-    _nmeaDevice = device;
+    QGCPositionManager manager;
+    auto* pm = &manager;
+    NmeaTestDevice input;
+    auto* device = &input;
+    NMEAPositionSource source(device);
 
-    pm->setNmeaSourceDevice(device);
+    pm->setNmeaPositionSource(&source);
     device->feed(kNmeaSentences);
 
     QTRY_VERIFY_WITH_TIMEOUT(pm->gcsPosition().isValid(), TestTimeout::mediumMs());
@@ -96,8 +86,9 @@ void PositionManagerTest::_nmeaSourceProducesGcsPosition()
 void PositionManagerTest::_nmeaCourseFromRmc()
 {
     NmeaTestDevice device;
+    NMEAPositionSource source(&device);
     QGCPositionManager pm;
-    pm.setNmeaSourceDevice(&device);
+    pm.setNmeaPositionSource(&source);
     const auto feed = [&](const QByteArray& time, const QByteArray& knots) {
         QByteArray sentences;
         for (QByteArray line : QByteArray(kNmeaSentences).split('\n')) {
@@ -170,8 +161,9 @@ void PositionManagerTest::_positionValidation()
     QFETCH(QGeoPositionInfo, update);
     QFETCH(bool, accepted);
     NmeaTestDevice device;
+    NMEAPositionSource source(&device);
     QGCPositionManager pm;
-    pm.setNmeaSourceDevice(&device);
+    pm.setNmeaPositionSource(&source);
     QGeoPositionInfo initial(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());
     initial.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 5);
     pm._positionUpdated(initial);
@@ -235,8 +227,9 @@ void PositionManagerTest::_nmeaCourseValidation()
     QFETCH(QGeoPositionInfo, update);
     QFETCH(double, heading);
     NmeaTestDevice device;
+    NMEAPositionSource source(&device);
     QGCPositionManager pm;
-    pm.setNmeaSourceDevice(&device);
+    pm.setNmeaPositionSource(&source);
     pm._setGCSHeading(90);
     QSignalSpy changes(&pm, &QGCPositionManager::gcsHeadingChanged);
     pm._positionUpdated(update);
@@ -250,42 +243,45 @@ void PositionManagerTest::_nmeaCourseValidation()
     QCOMPARE(changes.size(), 1);
 }
 
-void PositionManagerTest::_resetNmeaSourceTearsDownAndClearsState()
+void PositionManagerTest::_clearNmeaSourceDetachesAndClearsState()
 {
-    QGCPositionManager *pm = QGCPositionManager::instance();
-    auto *device = new NmeaTestDevice();
-    _nmeaDevice = device;
+    QGCPositionManager manager;
+    auto* pm = &manager;
+    NmeaTestDevice input;
+    auto* device = &input;
+    NMEAPositionSource source(device);
 
-    pm->setNmeaSourceDevice(device);
+    pm->setNmeaPositionSource(&source);
     device->feed(kNmeaSentences);
     QTRY_VERIFY_WITH_TIMEOUT(pm->gcsPosition().isValid(), TestTimeout::mediumMs());
 
     QSignalSpy positionInfoSpy(pm, &QGCPositionManager::positionInfoUpdated);
     QVERIFY(positionInfoSpy.isValid());
 
-    pm->resetNmeaSourceDevice();
+    pm->clearNmeaPositionSource(&source);
 
     // Stale GCS state must be cleared on teardown
     QVERIFY(!pm->gcsPosition().isValid());
     QVERIFY(qIsInf(pm->gcsPositionHorizontalAccuracy()));
     QVERIFY(!positionInfoSpy.isEmpty());
 
-    // The NMEA source is gone: further data must not resurrect the position
+    // The borrowed source survives removal but cannot update the manager.
     positionInfoSpy.clear();
     device->feed(kNmeaSentences);
     QVERIFY(!positionInfoSpy.wait(TestTimeout::shortMs()));
     QVERIFY(!pm->gcsPosition().isValid());
 
     // Second reset with no NMEA source is a no-op
-    pm->resetNmeaSourceDevice();
+    pm->clearNmeaPositionSource(&source);
 }
 
 void PositionManagerTest::_idleNmeaWaitsForFirstFix()
 {
     NmeaTestDevice device;
+    NMEAPositionSource source(&device);
     QGCPositionManager pm;
     pm._externalStaleTimer.setInterval(50);
-    pm.setNmeaSourceDevice(&device);
+    pm.setNmeaPositionSource(&source);
     QSignalSpy updates(&pm, &QGCPositionManager::positionInfoUpdated);
 
     QVERIFY(!updates.wait(100));
@@ -296,16 +292,17 @@ void PositionManagerTest::_idleNmeaWaitsForFirstFix()
     device.feed(kNmeaSentences);
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
     QVERIFY(pm._externalStaleTimer.isActive());
-    pm.resetNmeaSourceDevice();
+    pm.clearNmeaPositionSource(&source);
 }
 
 void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
 {
     NmeaTestDevice device;
+    NMEAPositionSource source(&device);
     QGCPositionManager pm;
     pm._externalStaleTimer.setInterval(300);
-    pm.setNmeaSourceDevice(&device);
-    QSignalSpy errors(pm._nmeaSource, &QGeoPositionInfoSource::errorOccurred);
+    pm.setNmeaPositionSource(&source);
+    QSignalSpy errors(pm._nmeaSource.data(), &QGeoPositionInfoSource::errorOccurred);
     QSignalSpy updates(&pm, &QGCPositionManager::positionInfoUpdated);
     const auto feed = [&]() {
         const QByteArray time = QDateTime::currentDateTimeUtc().toString(QStringLiteral("hhmmss.zzz")).toLatin1();
@@ -338,7 +335,7 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
     QVERIFY(pm._externalStaleTimer.isActive());
-    pm.resetNmeaSourceDevice();
+    pm.clearNmeaPositionSource(&source);
     QVERIFY(!pm._externalStaleTimer.isActive());
 }
 
@@ -364,9 +361,10 @@ sensor_gps_s receiverFix()
 void PositionManagerTest::_receiverPriorityAndFallback()
 {
     NmeaTestDevice device;
+    NMEAPositionSource source(&device);
     RTKPositionSource receiver;
     QGCPositionManager pm;
-    pm.setNmeaSourceDevice(&device);
+    pm.setNmeaPositionSource(&source);
     device.feed(kNmeaSentences);
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
     pm.setReceiverPositionSource(&receiver);
@@ -375,8 +373,8 @@ void PositionManagerTest::_receiverPriorityAndFallback()
     QCOMPARE(pm.gcsPosition(), QGeoCoordinate(47, 8, 500));
     QCOMPARE(pm._currentSource, &receiver);
     // Changing a standby NMEA connection must not interrupt receiver fixes.
-    pm.resetNmeaSourceDevice();
-    pm.setNmeaSourceDevice(&device);
+    pm.clearNmeaPositionSource(&source);
+    pm.setNmeaPositionSource(&source);
     QCOMPARE(pm.gcsPosition(), QGeoCoordinate(47, 8, 500));
     pm._selectPositionSource();
     QCOMPARE(pm._currentSource, &receiver);
@@ -390,18 +388,19 @@ void PositionManagerTest::_receiverPriorityAndFallback()
     device.feed(kNmeaSentences);
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
     QVERIFY(qAbs(pm.gcsPosition().latitude() - kExpectedLat) < kCoordEpsilon);
-    pm.resetNmeaSourceDevice();
+    pm.clearNmeaPositionSource(&source);
 }
 
 void PositionManagerTest::_receiverFallbackOpensStandbyUdpSource()
 {
     UdpIODevice device;
+    NMEAPositionSource source(&device);
     QVERIFY(device.bind(QHostAddress::LocalHost, 0));
     RTKPositionSource receiver;
     QGCPositionManager pm;
     pm.setReceiverPositionSource(&receiver);
     receiver.updatePosition(receiverFix());
-    pm.setNmeaSourceDevice(&device);
+    pm.setNmeaPositionSource(&source);
     QVERIFY(!device.isOpen());
     QCOMPARE(pm._currentSource, &receiver);
 
@@ -420,7 +419,7 @@ void PositionManagerTest::_receiverFallbackOpensStandbyUdpSource()
     QCOMPARE(sender.writeDatagram(sentences, QHostAddress::LocalHost, device.localPort()), sentences.size());
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
     QVERIFY(qAbs(pm.gcsPosition().latitude() - kExpectedLat) < kCoordEpsilon);
-    pm.resetNmeaSourceDevice();
+    pm.clearNmeaPositionSource(&source);
 }
 
 void PositionManagerTest::_receiverInvalidAndStaleFixes()
@@ -479,6 +478,34 @@ void PositionManagerTest::_receiverDestructionRestoresDefault()
     QCOMPARE(pm._currentSource, &platform);
     QVERIFY(!pm.gcsPosition().isValid());
     QVERIFY(!pm.geoPositionInfo().isValid());
+    platform.updatePosition(receiverFix());
+    QVERIFY(pm.gcsPosition().isValid());
+}
+
+void PositionManagerTest::_borrowedNmeaSourceLifetime()
+{
+    RTKPositionSource platform;
+    QGCPositionManager pm;
+    pm._defaultSource = &platform;
+    auto source = std::make_unique<RTKPositionSource>();
+    pm.setNmeaPositionSource(source.get());
+    source->updatePosition(receiverFix());
+    QVERIFY(pm.gcsPosition().isValid());
+    auto replacement = std::make_unique<RTKPositionSource>();
+    pm.setNmeaPositionSource(replacement.get());
+    replacement->updatePosition(receiverFix());
+    pm.clearNmeaPositionSource(source.get());
+    source.reset();
+    QCOMPARE(pm._currentSource, replacement.get());
+    QVERIFY(pm.gcsPosition().isValid());
+    RTKPositionSource receiver;
+    pm.setReceiverPositionSource(&receiver);
+    pm.clearReceiverPositionSource(&receiver);
+    QCOMPARE(pm._currentSource, replacement.get());
+    replacement.reset();
+    QCOMPARE(pm._currentSource, &platform);
+    QVERIFY(!pm.gcsPosition().isValid());
+    QVERIFY(!pm.gcsPositionTimestamp().isValid());
     platform.updatePosition(receiverFix());
     QVERIFY(pm.gcsPosition().isValid());
 }

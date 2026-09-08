@@ -19,4 +19,5 @@ private slots:
     void _satellitesShareUdpAndStayFresh();
     void _satellitesShareTcpConnection();
     void _disconnectDuringSatelliteUpdate();
+    void _disconnectDuringPositionUpdate();
 };

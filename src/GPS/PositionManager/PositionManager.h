@@ -9,7 +9,6 @@
 #include <QtPositioning/QGeoPositionInfoSource>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-class QNmeaPositionInfoSource;
 class QGCCompass;
 
 class QGCPositionManager : public QObject
@@ -51,9 +50,9 @@ public:
     /// Select a borrowed, connected receiver source ahead of NMEA and platform positioning.
     void setReceiverPositionSource(QGeoPositionInfoSource* source);
     void clearReceiverPositionSource(QGeoPositionInfoSource* source);
-    void setNmeaSourceDevice(QIODevice *device);
-    /// Remove NMEA input while preserving a selected receiver; otherwise use the platform source.
-    void resetNmeaSourceDevice();
+    /// Borrow an NMEA position source; its owner manages the decoder and input device.
+    void setNmeaPositionSource(QGeoPositionInfoSource* source);
+    void clearNmeaPositionSource(QGeoPositionInfoSource* source);
 
 signals:
     void gcsPositionChanged(QGeoCoordinate gcsPosition);
@@ -102,10 +101,12 @@ private:
     QPointer<QGeoPositionInfoSource> _receiverSource;
     QMetaObject::Connection _receiverDestroyedConnection;
     quint64 _sourceGeneration = 0;
-    bool _nmeaNeedsRestart = false;
+    QMetaObject::Connection _nmeaDestroyedConnection;
+    QMetaObject::Connection _positionUpdateConnection;
+    QMetaObject::Connection _positionErrorConnection;
     QGeoPositionInfoSource *_currentSource = nullptr;
     QGeoPositionInfoSource *_defaultSource = nullptr;
-    QNmeaPositionInfoSource *_nmeaSource = nullptr;
+    QPointer<QGeoPositionInfoSource> _nmeaSource;
     QGeoPositionInfoSource *_simulatedSource = nullptr;
 
     QGCCompass *_compass = nullptr;

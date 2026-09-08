@@ -19,10 +19,12 @@ class QGCPositionManager;
 class QTcpSocket;
 class UdpIODevice;
 class NMEAStreamSplitter;
+class NMEAPositionSource;
+class QGeoPositionInfoSource;
 class QIODevice;
 class QNmeaSatelliteInfoSource;
 
-/// Owns one NMEA connection and satellite decoding; PositionManager owns GCS fix state.
+/// Owns one NMEA connection and both decoders; PositionManager borrows the position source.
 class NMEASourceManager : public QObject
 {
     Q_OBJECT
@@ -41,6 +43,8 @@ public:
     void stop();
     bool connectSource();
     void disconnectSource();
+
+    QGeoPositionInfoSource* positionSource() const;
 
     bool active() const { return _active; }
 
@@ -75,6 +79,7 @@ private:
     std::unique_ptr<UdpIODevice> _udp;
     std::unique_ptr<QTcpSocket> _tcp;
     std::unique_ptr<NMEAStreamSplitter> _stream;
+    std::unique_ptr<NMEAPositionSource> _positionSource;
     std::unique_ptr<QNmeaSatelliteInfoSource> _satelliteSource;
     QTimer _satellitePollTimer;
     QTimer _satelliteStaleTimer;

@@ -494,3 +494,28 @@ void NMEASourceManagerTest::_tcpRefusalBackoff()
     QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
     QCOMPARE(source._retryDelayMs, 1000);
 }
+
+void NMEASourceManagerTest::_disconnectDuringPositionUpdate()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    saved.setFactValue(settings->nmeaUdpPort(), 0);
+    QGCPositionManager position;
+    NMEASourceManager source(settings, &position);
+    QVERIFY(source.connectSource());
+    QPointer<QGeoPositionInfoSource> decoder = source.positionSource();
+    QVERIFY(decoder);
+    connect(&position, &QGCPositionManager::positionInfoUpdated, this, [&](const QGeoPositionInfo& update) {
+        if (update.isValid()) {
+            source.disconnectSource();
+        }
+    });
+    QUdpSocket sender;
+    sender.writeDatagram(kFix + kFix, QHostAddress::LocalHost, source._udp->localPort());
+    QTRY_VERIFY_WITH_TIMEOUT(!source.active(), TestTimeout::mediumMs());
+    QVERIFY(!decoder);
+    QVERIFY(!source.positionSource());
+    QVERIFY(!position.gcsPosition().isValid());
+    QVERIFY(!position.gcsPositionTimestamp().isValid());
+}
