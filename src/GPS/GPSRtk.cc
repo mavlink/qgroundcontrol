@@ -11,6 +11,7 @@
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
+#include "SerialPortManager.h"
 #endif
 
 #include <utility>
@@ -93,6 +94,11 @@ void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
 #ifndef QGC_NO_SERIAL_LINK
 void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
 {
+    auto reservation = SerialPortManager::instance()->reservePort(device);
+    if (!reservation) {
+        qCDebug(GPSRtkLog) << "Serial port is already reserved:" << device;
+        return;
+    }
     GPSType type = GPSType::u_blox;
     for (const GPSTypeEntry& entry : kGPSTypeTable) {
         if (gps_type.contains(entry.key, Qt::CaseInsensitive)) {
@@ -100,7 +106,7 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
             break;
         }
     }
-    connectReceiver(type, [device](const std::atomic_bool& requestStop) {
+    connectReceiver(type, [device, reservation](const std::atomic_bool& requestStop) {
         return std::make_unique<SerialGPSTransport>(device, requestStop);
     });
 }

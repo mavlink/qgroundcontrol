@@ -14,6 +14,8 @@ add_subdirectory(Driver)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        NmeaSourceManager.cc
+        NmeaSourceManager.h
         GPSManager.cc
         GPSManager.h
         GPSProvider.cc
@@ -25,7 +27,13 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE SerialGPSTransport.cc SerialGPSTransport.h)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            RTKAutoConnect.cc
+            RTKAutoConnect.h
+            SerialGPSTransport.cc
+            SerialGPSTransport.h
+    )
 endif()
 
 # ----------------------------------------------------------------------------

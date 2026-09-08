@@ -1,0 +1,98 @@
+#include "NmeaSourceManagerTest.h"
+
+#include <QtCore/QRegularExpression>
+#include <QtNetwork/QUdpSocket>
+
+#include "AutoConnectSettings.h"
+#include "Fixtures/RAIIFixtures.h"
+#include "NmeaSourceManager.h"
+#include "PositionManager.h"
+#include "SettingsManager.h"
+#include "UdpIODevice.h"
+
+namespace {
+const QByteArray kFix =
+    "$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A*43\r\n"
+    "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,*76\r\n";
+}
+
+void NmeaSourceManagerTest::init()
+{
+    UnitTest::init();
+    ignoreLogMessage("PositionManager.QGCPositionManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("UpdateTimeoutError")));
+}
+
+void NmeaSourceManagerTest::_udpSwitchAndDisable()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    QUdpSocket spare;
+    QVERIFY(spare.bind(QHostAddress::LocalHost, 0));
+    const quint16 firstPort = spare.localPort();
+    spare.close();
+    saved.setFactValue(settings->nmeaUdpPort(), firstPort);
+    QGCPositionManager position;
+    NmeaSourceManager source(settings, &position);
+    source.update();
+    QVERIFY(source._sourceInstalled);
+    QUdpSocket sender;
+    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, firstPort), kFix.size());
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QVERIFY(qAbs(position.gcsPosition().latitude() - 53.361337) < 0.0001);
+    QVERIFY(spare.bind(QHostAddress::LocalHost, 0));
+    const quint16 secondPort = spare.localPort();
+    spare.close();
+    settings->nmeaUdpPort()->setRawValue(secondPort);
+    source.update();
+    QVERIFY(!position.gcsPosition().isValid());
+    QVERIFY(source._sourceInstalled);
+    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, firstPort), kFix.size());
+    QVERIFY(spare.bind(QHostAddress::LocalHost, firstPort, QUdpSocket::DontShareAddress));
+    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, secondPort), kFix.size());
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/missing-nmea"));
+    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
+    source.update();
+    QVERIFY(!position.gcsPosition().isValid());
+    QVERIFY(!source._sourceInstalled);
+    QVERIFY(!source._udp);
+    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceUdp);
+    source.update();
+    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, secondPort), kFix.size());
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
+    source.update();
+    QVERIFY(!position.gcsPosition().isValid());
+    QVERIFY(!source._sourceInstalled);
+    QVERIFY(!source._udp);
+}
+
+void NmeaSourceManagerTest::_bindFailureAndTeardown()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    QUdpSocket occupied;
+    QVERIFY(occupied.bind(QHostAddress::AnyIPv4, 0, QUdpSocket::DontShareAddress));
+    const quint16 port = occupied.localPort();
+    saved.setFactValue(settings->nmeaUdpPort(), port);
+    QGCPositionManager position;
+    {
+        NmeaSourceManager source(settings, &position);
+        source.update();
+        QVERIFY(!source._sourceInstalled);
+        QVERIFY(!source._udp);
+        occupied.close();
+        source.update();
+        QVERIFY(source._sourceInstalled);
+        QUdpSocket sender;
+        QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, port), kFix.size());
+        QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    }
+    QVERIFY(!position.gcsPosition().isValid());
+    QVERIFY(occupied.bind(QHostAddress::AnyIPv4, port, QUdpSocket::DontShareAddress));
+}
+
+UT_REGISTER_TEST(NmeaSourceManagerTest, TestLabel::Unit)
