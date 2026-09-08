@@ -3,7 +3,7 @@
 #include "AppMessages.h"
 #include "GPSRtk.h"
 #include "LinkManager.h"
-#include "NmeaSourceManager.h"
+#include "NMEASourceManager.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "RTKAutoConnect.h"
@@ -28,7 +28,7 @@ GPSManager::GPSManager(QObject* parent)
     qCDebug(GPSManagerLog) << this;
 
     auto* settings = SettingsManager::instance();
-    _nmeaSources = new NmeaSourceManager(settings->autoConnectSettings(), _positionManager, this);
+    _nmeaSources = new NMEASourceManager(settings->autoConnectSettings(), _positionManager, this);
     _rtkAutoConnect = new RTKAutoConnect(_gpsRtk, settings->autoConnectSettings(), settings->rtkSettings(), this);
     connect(settings->rtkSettings()->useReceiverPosition(), &Fact::rawValueChanged, this,
             &GPSManager::_updatePositionSource);

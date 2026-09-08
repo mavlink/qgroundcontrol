@@ -2,7 +2,7 @@
 
 #include "UnitTest.h"
 
-class NmeaSourceManagerTest : public UnitTest
+class NMEASourceManagerTest : public UnitTest
 {
     Q_OBJECT
 
@@ -16,4 +16,7 @@ private slots:
     void _tcpManualAndAutoConnect();
     void _tcpRefusalBackoff();
     void _settingsUseSharedSerialInventory();
+    void _satellitesShareUdpAndStayFresh();
+    void _satellitesShareTcpConnection();
+    void _disconnectDuringSatelliteUpdate();
 };

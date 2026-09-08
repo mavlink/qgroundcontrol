@@ -137,4 +137,14 @@ SettingsGroupLayout {
         onConnectRequested: QGroundControl.gpsManager.connectNmea()
         onDisconnectRequested: QGroundControl.gpsManager.disconnectNmea()
     }
+
+    QGCLabel {
+        objectName: "nmeaSatelliteStatus"
+        Layout.fillWidth: true
+        visible: root._connection.active
+        wrapMode: Text.WordWrap
+        text: qsTr("Satellites: %1 in use / %2 in view")
+            .arg(root._connection.satellitesInUseCount >= 0 ? root._connection.satellitesInUseCount : qsTr("Unknown"))
+            .arg(root._connection.satellitesInViewCount >= 0 ? root._connection.satellitesInViewCount : qsTr("Unknown"))
+    }
 }

@@ -5,7 +5,7 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "NmeaSourceManager.h"
+#include "NMEASourceManager.h"
 #include "RTKAutoConnect.h"
 
 class GPSRtk;
@@ -17,7 +17,7 @@ class GPSManager : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
-    Q_PROPERTY(NmeaSourceManager* nmeaConnection READ nmeaConnection CONSTANT)
+    Q_PROPERTY(NMEASourceManager* nmeaConnection READ nmeaConnection CONSTANT)
     Q_PROPERTY(RTKAutoConnect* rtkConnection READ rtkConnection CONSTANT)
     Q_PROPERTY(bool networkRtkActive READ networkRtkActive NOTIFY networkRtkActiveChanged)
     Q_PROPERTY(
@@ -36,7 +36,7 @@ public:
 
     GPSRtk *gpsRtk() { return _gpsRtk; }
 
-    NmeaSourceManager* nmeaConnection() const { return _nmeaSources; }
+    NMEASourceManager* nmeaConnection() const { return _nmeaSources; }
 
     RTKAutoConnect* rtkConnection() const { return _rtkAutoConnect; }
 
@@ -61,7 +61,7 @@ private:
     bool _positionSourceInstalled = false;
     QPointer<QGCPositionManager> _positionManager;
     QTimer* _connectionTimer = nullptr;
-    NmeaSourceManager* _nmeaSources = nullptr;
+    NMEASourceManager* _nmeaSources = nullptr;
     RTKAutoConnect* _rtkAutoConnect = nullptr;
     GPSRtk *_gpsRtk = nullptr;
 };

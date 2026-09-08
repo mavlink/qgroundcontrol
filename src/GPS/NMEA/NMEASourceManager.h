@@ -4,6 +4,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
+#include <QtPositioning/QGeoSatelliteInfo>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <memory>
@@ -17,20 +18,25 @@ class AutoConnectSettings;
 class QGCPositionManager;
 class QTcpSocket;
 class UdpIODevice;
+class NMEAStreamSplitter;
+class QIODevice;
+class QNmeaSatelliteInfoSource;
 
-/// Owns NMEA connections; PositionManager owns decoding and GCS fix state.
-class NmeaSourceManager : public QObject
+/// Owns one NMEA connection and satellite decoding; PositionManager owns GCS fix state.
+class NMEASourceManager : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_PROPERTY(bool active READ active NOTIFY stateChanged)
     Q_PROPERTY(QString status READ status NOTIFY stateChanged)
-    friend class NmeaSourceManagerTest;
+    Q_PROPERTY(int satellitesInViewCount READ satellitesInViewCount NOTIFY satellitesChanged)
+    Q_PROPERTY(int satellitesInUseCount READ satellitesInUseCount NOTIFY satellitesChanged)
+    friend class NMEASourceManagerTest;
 
 public:
-    NmeaSourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager, QObject* parent = nullptr);
-    ~NmeaSourceManager() override;
+    NMEASourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager, QObject* parent = nullptr);
+    ~NMEASourceManager() override;
     void update();
     void stop();
     bool connectSource();
@@ -40,8 +46,18 @@ public:
 
     QString status() const { return _status; }
 
+    /// Counts are -1 until fresh satellite information is available.
+    int satellitesInViewCount() const { return _satellitesInViewCount; }
+
+    int satellitesInUseCount() const { return _satellitesInUseCount; }
+
+    QList<QGeoSatelliteInfo> satellitesInView() const { return _satellitesInView; }
+
+    QList<QGeoSatelliteInfo> satellitesInUse() const { return _satellitesInUse; }
+
 signals:
     void stateChanged();
+    void satellitesChanged();
 
 private:
     bool _shouldConnect() const;
@@ -51,11 +67,21 @@ private:
     void _tcpFailed(const QString& error);
     void _settingsChanged();
     void _updateSerialRouting();
+    bool _installSource(QIODevice* device);
+    void _clearSatelliteInfo();
 
     AutoConnectSettings* _settings;
     QPointer<QGCPositionManager> _positionManager;
     std::unique_ptr<UdpIODevice> _udp;
     std::unique_ptr<QTcpSocket> _tcp;
+    std::unique_ptr<NMEAStreamSplitter> _stream;
+    std::unique_ptr<QNmeaSatelliteInfoSource> _satelliteSource;
+    QTimer _satellitePollTimer;
+    QTimer _satelliteStaleTimer;
+    QList<QGeoSatelliteInfo> _satellitesInView;
+    QList<QGeoSatelliteInfo> _satellitesInUse;
+    int _satellitesInViewCount = -1;
+    int _satellitesInUseCount = -1;
     QTimer _udpActivityTimer;
     QDeadlineTimer _connectDeadline = QDeadlineTimer::Forever;
     QDeadlineTimer _retryDeadline = QDeadlineTimer::Forever;

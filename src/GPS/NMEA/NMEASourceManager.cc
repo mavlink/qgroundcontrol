@@ -1,11 +1,13 @@
-#include "NmeaSourceManager.h"
+#include "NMEASourceManager.h"
 
 #include <QtCore/QUrl>
 #include <QtNetwork/QTcpSocket>
+#include <QtPositioning/QNmeaSatelliteInfoSource>
 
 #include <algorithm>
 
 #include "AutoConnectSettings.h"
+#include "NMEAStreamSplitter.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "UdpIODevice.h"
@@ -18,15 +20,27 @@
 #endif
 #endif
 
-QGC_LOGGING_CATEGORY(NmeaSourceManagerLog, "GPS.NMEA.NmeaSourceManager")
+QGC_LOGGING_CATEGORY(NMEASourceManagerLog, "GPS.NMEA.NMEASourceManager")
 
-NmeaSourceManager::NmeaSourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager,
+NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager,
                                      QObject* parent)
     : QObject(parent)
     , _settings(settings)
     , _positionManager(positionManager)
+    , _satellitePollTimer(this)
+    , _satelliteStaleTimer(this)
 {
-    qCDebug(NmeaSourceManagerLog) << this;
+    qCDebug(NMEASourceManagerLog) << this;
+    _satellitePollTimer.setInterval(1000);
+    connect(&_satellitePollTimer, &QTimer::timeout, this, [this]() {
+        if (_satelliteSource) {
+            // One-shot requests also report unchanged lists, unlike continuous Qt satellite updates.
+            _satelliteSource->requestUpdate(5000);
+        }
+    });
+    _satelliteStaleTimer.setSingleShot(true);
+    _satelliteStaleTimer.setInterval(5000);
+    connect(&_satelliteStaleTimer, &QTimer::timeout, this, &NMEASourceManager::_clearSatelliteInfo);
     _status = tr("Disconnected");
     _udpActivityTimer.setSingleShot(true);
     _udpActivityTimer.setInterval(5000);
@@ -38,7 +52,7 @@ NmeaSourceManager::NmeaSourceManager(AutoConnectSettings* settings, QGCPositionM
     if (_settings) {
         for (Fact* fact : {_settings->nmeaSource(), _settings->autoConnectNmeaPort(), _settings->autoConnectNmeaBaud(),
                            _settings->nmeaUdpPort(), _settings->nmeaTcpHost(), _settings->nmeaTcpPort()}) {
-            connect(fact, &Fact::rawValueChanged, this, &NmeaSourceManager::_settingsChanged);
+            connect(fact, &Fact::rawValueChanged, this, &NMEASourceManager::_settingsChanged);
         }
         connect(_settings->nmeaAutoConnect(), &Fact::rawValueChanged, this, [this]() {
             _paused = false;
@@ -49,13 +63,13 @@ NmeaSourceManager::NmeaSourceManager(AutoConnectSettings* settings, QGCPositionM
     }
 }
 
-bool NmeaSourceManager::_shouldConnect() const
+bool NMEASourceManager::_shouldConnect() const
 {
     return _settings && !_paused && (_manualRequested || _settings->nmeaAutoConnect()->rawValue().toBool()) &&
            _settings->nmeaSource()->rawValue().toInt() != AutoConnectSettings::NmeaSourceDisabled;
 }
 
-void NmeaSourceManager::_updateSerialRouting()
+void NMEASourceManager::_updateSerialRouting()
 {
 #ifndef QGC_NO_SERIAL_LINK
     const QString port =
@@ -66,7 +80,7 @@ void NmeaSourceManager::_updateSerialRouting()
 #endif
 }
 
-void NmeaSourceManager::_settingsChanged()
+void NMEASourceManager::_settingsChanged()
 {
     _closeDevice();
     _retryDeadline = QDeadlineTimer::Forever;
@@ -77,7 +91,7 @@ void NmeaSourceManager::_settingsChanged()
     }
 }
 
-bool NmeaSourceManager::connectSource()
+bool NMEASourceManager::connectSource()
 {
     if (!_settings || !_positionManager ||
         _settings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceDisabled) {
@@ -92,29 +106,29 @@ bool NmeaSourceManager::connectSource()
     return _active;
 }
 
-void NmeaSourceManager::disconnectSource()
+void NMEASourceManager::disconnectSource()
 {
     _paused = true;
     stop();
     _updateSerialRouting();
 }
 
-void NmeaSourceManager::_setStatus(const QString& status)
+void NMEASourceManager::_setStatus(const QString& status)
 {
     if (_status != status) {
         _status = status;
-        qCDebug(NmeaSourceManagerLog) << "Connection status:" << _status;
+        qCDebug(NMEASourceManagerLog) << "Connection status:" << _status;
         emit stateChanged();
     }
 }
 
-NmeaSourceManager::~NmeaSourceManager()
+NMEASourceManager::~NMEASourceManager()
 {
-    qCDebug(NmeaSourceManagerLog) << this;
+    qCDebug(NMEASourceManagerLog) << this;
     stop();
 }
 
-void NmeaSourceManager::stop()
+void NMEASourceManager::stop()
 {
     _manualRequested = false;
     _closeDevice();
@@ -129,14 +143,18 @@ void NmeaSourceManager::stop()
                    : tr("Disconnected"));
 }
 
-void NmeaSourceManager::_closeDevice()
+void NMEASourceManager::_closeDevice()
 {
     _udpActivityTimer.stop();
+    _satellitePollTimer.stop();
     // Detach the decoder before destroying the device it reads from.
     if (_sourceInstalled && _positionManager) {
         _positionManager->resetNmeaSourceDevice();
     }
     _sourceInstalled = false;
+    _satelliteSource.reset();
+    _stream.reset();
+    _clearSatelliteInfo();
     _udp.reset();
     if (_tcp) {
         _tcp->disconnect(this);
@@ -152,7 +170,77 @@ void NmeaSourceManager::_closeDevice()
     _source = -1;
 }
 
-void NmeaSourceManager::update()
+bool NMEASourceManager::_installSource(QIODevice* device)
+{
+    if (!_positionManager || !device || (!device->isOpen() && !device->open(QIODevice::ReadOnly)) ||
+        !device->isReadable()) {
+        _setStatus(tr("Cannot read NMEA source"));
+        return false;
+    }
+    device->readAll();
+    _stream = std::make_unique<NMEAStreamSplitter>(device);
+    _satelliteSource = std::make_unique<QNmeaSatelliteInfoSource>(QNmeaSatelliteInfoSource::UpdateMode::RealTimeMode);
+    _satelliteSource->setDevice(_stream->satelliteDevice());
+    const QPointer<QNmeaSatelliteInfoSource> current = _satelliteSource.get();
+    connect(
+        _satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInViewUpdated, this,
+        [this, current](const QList<QGeoSatelliteInfo>& satellites) {
+            if (!current || _satelliteSource.get() != current) {
+                return;
+            }
+            _satelliteStaleTimer.start();
+            if (_satellitesInViewCount >= 0 && _satellitesInView == satellites) {
+                return;
+            }
+            _satellitesInView = satellites;
+            _satellitesInViewCount = satellites.size();
+            emit satellitesChanged();
+        },
+        Qt::QueuedConnection);
+    connect(
+        _satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInUseUpdated, this,
+        [this, current](const QList<QGeoSatelliteInfo>& satellites) {
+            if (!current || _satelliteSource.get() != current) {
+                return;
+            }
+            _satelliteStaleTimer.start();
+            if (_satellitesInUseCount >= 0 && _satellitesInUse == satellites) {
+                return;
+            }
+            _satellitesInUse = satellites;
+            _satellitesInUseCount = satellites.size();
+            emit satellitesChanged();
+        },
+        Qt::QueuedConnection);
+    connect(
+        _satelliteSource.get(), &QGeoSatelliteInfoSource::errorOccurred, this,
+        [this, current](QGeoSatelliteInfoSource::Error error) {
+            if (current && _satelliteSource.get() == current && error != QGeoSatelliteInfoSource::NoError) {
+                _clearSatelliteInfo();
+            }
+        },
+        Qt::QueuedConnection);
+    _satelliteSource->requestUpdate(5000);
+    _satellitePollTimer.start();
+    _positionManager->setNmeaSourceDevice(_stream->positionDevice());
+    _sourceInstalled = true;
+    return true;
+}
+
+void NMEASourceManager::_clearSatelliteInfo()
+{
+    _satelliteStaleTimer.stop();
+    if (_satellitesInViewCount < 0 && _satellitesInUseCount < 0) {
+        return;
+    }
+    _satellitesInView.clear();
+    _satellitesInUse.clear();
+    _satellitesInViewCount = -1;
+    _satellitesInUseCount = -1;
+    emit satellitesChanged();
+}
+
+void NMEASourceManager::update()
 {
     if (!_settings || !_positionManager || !_shouldConnect()) {
         stop();
@@ -188,8 +276,10 @@ void NmeaSourceManager::update()
             _udpActivityTimer.start();
             _setStatus(tr("Receiving UDP data on port %1").arg(_udp->localPort()));
         });
-        _positionManager->setNmeaSourceDevice(_udp.get());
-        _sourceInstalled = true;
+        if (!_installSource(_udp.get())) {
+            _closeDevice();
+            return;
+        }
         _setStatus(tr("Listening on UDP port %1").arg(port));
     }
 #ifndef QGC_NO_SERIAL_LINK
@@ -240,8 +330,10 @@ void NmeaSourceManager::update()
                 }
             },
             Qt::QueuedConnection);
-        _positionManager->setNmeaSourceDevice(_serial.get());
-        _sourceInstalled = true;
+        if (!_installSource(_serial.get())) {
+            _closeDevice();
+            return;
+        }
         _setStatus(tr("Connected"));
     }
 #else
@@ -251,7 +343,7 @@ void NmeaSourceManager::update()
 #endif
 }
 
-void NmeaSourceManager::_updateTcp()
+void NMEASourceManager::_updateTcp()
 {
     if (_tcp) {
         if (_tcp->state() != QAbstractSocket::ConnectedState && _connectDeadline.hasExpired()) {
@@ -281,8 +373,10 @@ void NmeaSourceManager::_updateTcp()
         }
         _retryDelayMs = 1000;
         _retryDeadline = QDeadlineTimer::Forever;
-        _positionManager->setNmeaSourceDevice(socket);
-        _sourceInstalled = true;
+        if (!_installSource(socket)) {
+            _closeDevice();
+            return;
+        }
         _setStatus(tr("Connected"));
     });
     connect(
@@ -306,7 +400,7 @@ void NmeaSourceManager::_updateTcp()
     _tcp->connectToHost(endpoint.host(), static_cast<quint16>(port));
 }
 
-void NmeaSourceManager::_tcpFailed(const QString& error)
+void NMEASourceManager::_tcpFailed(const QString& error)
 {
     _closeDevice();
     _source = AutoConnectSettings::NmeaSourceTcp;
