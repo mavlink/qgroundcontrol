@@ -35,10 +35,14 @@ public:
     {
         auto& receiver = *static_cast<UBXReceiver*>(user);
         if (type == GPSCallbackType::readDeviceData) {
+            if (receiver.surveyPolls > 0 && receiver.surveyReadError) {
+                ++receiver.failedReads;
+                return receiver.surveyReadError;
+            }
             if (receiver.readError) {
                 return receiver.readError;
             }
-            const int count = qMin(length, static_cast<int>(receiver._responses.size()));
+            const int count = qMin(qMin(length, receiver.readChunk), static_cast<int>(receiver._responses.size()));
             memcpy(data, receiver._responses.constData(), count);
             receiver._responses.remove(0, count);
             return count;
@@ -51,6 +55,12 @@ public:
         return 0;
     }
 
+    void queue(const QByteArray& message) { _responses += message; }
+
+    int readChunk = 7;
+    int surveyReadError = 0;
+    int failedReads = 0;
+    int commsPolls = 0;
     bool rejectDisable = false;
     int readError = 0;
     bool neverStops = false;
@@ -69,6 +79,10 @@ private:
             }
             const QByteArray request = _requests.first(messageLength);
             _requests.remove(0, messageLength);
+            if (request[2] == 0x0a && request[3] == 0x36) {
+                ++commsPolls;
+                continue;
+            }
             if (request[2] == 0x01 && request[3] == 0x3b) {
                 ++surveyPolls;
                 QByteArray status(40, '\0');
@@ -109,6 +123,24 @@ private:
     QByteArray _requests;
     QByteArray _responses;
 };
+
+QByteArray commsPayload()
+{
+    QByteArray payload(88, '\0');
+    payload[1] = 2;
+    payload[2] = 2;
+    qToLittleEndian<quint16>(0x0300, payload.data() + 8);
+    qToLittleEndian<quint16>(11800, payload.data() + 10);
+    payload[16] = 100;
+    payload[17] = 101;
+    qToLittleEndian<quint16>(12, payload.data() + 18);
+    payload[24] = 3;
+    qToLittleEndian<quint16>(4, payload.data() + 26);
+    qToLittleEndian<quint32>(123456, payload.data() + 44);
+    qToLittleEndian<quint16>(0x0201, payload.data() + 48);
+    payload[57] = 108;
+    return payload;
+}
 
 }  // namespace
 
@@ -178,6 +210,125 @@ void GPSDriverUBXTest::_readFailure()
     if (!cancelled) {
         verifyExpectedLogMessage();
     }
+}
+
+void GPSDriverUBXTest::_surveyReadFailure_data()
+{
+    QTest::addColumn<int>("error");
+    QTest::newRow("device-error") << -1;
+    QTest::newRow("errno") << -EIO;
+    QTest::newRow("cancelled") << GPSHelper::ReadCancelled;
+}
+
+void GPSDriverUBXTest::_surveyReadFailure()
+{
+    QFETCH(int, error);
+    UBXReceiver receiver;
+    receiver.surveyReadError = error;
+    sensor_gps_s position{};
+    GPSDriverUBX driver(GPSHelper::Interface::UART, &UBXReceiver::callback, &receiver, &position, nullptr, {});
+    driver.setSurveyInSpecs(20000, 180);
+    GPSHelper::GPSConfig config{};
+    config.output_mode = GPSHelper::OutputMode::RTCM;
+    unsigned baudrate = 115200;
+    if (error != GPSHelper::ReadCancelled) {
+        expectLogMessage("GPS.RTK.Driver.Drivers", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("ubx poll_or_read err")));
+    }
+    QVERIFY(driver.configure(baudrate, config) < 0);
+    if (error != GPSHelper::ReadCancelled) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(receiver.failedReads, 1);
+    QCOMPARE(receiver.surveyPolls, 1);
+    QCOMPARE(receiver.timeModes, QList<int>({0}));
+    QVERIFY(!driver.receiverReady());
+}
+
+void GPSDriverUBXTest::_commsDiagnostics()
+{
+    UBXReceiver receiver;
+    sensor_gps_s position{};
+    GPSDriverUBX driver(GPSHelper::Interface::UART, &UBXReceiver::callback, &receiver, &position, nullptr, {});
+    const QByteArray response = ubxMessage(0x0a, 0x36, commsPayload());
+    // Unsolicited snapshots must stay quiet, even when they report congestion.
+    receiver.queue(response);
+    driver.receive(10);
+    QCOMPARE(receiver.commsPolls, 0);
+
+    expectLogMessage("GPS.RTK.Driver.Drivers", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^ubx msg: txbuf alloc$")));
+    receiver.queue(ubxMessage(0x04, 0x00, "txbuf alloc"));
+    driver.receive(10);
+    verifyExpectedLogMessage();
+    QCOMPARE(receiver.commsPolls, 1);
+
+    expectLogMessage("GPS.RTK.Driver.Drivers", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^MON-COMMS after txbuf: txErrors=0x02 ports=2")));
+    expectLogMessage(
+        "GPS.RTK.Driver.Drivers", QtWarningMsg,
+        QRegularExpression(QStringLiteral("^MON-COMMS USB port=0x0300 txPending=11800 txUsage=100% "
+                                          "txPeakUsage=101% rxPending=12 rxUsage=3% overrunErrs=4 skipped=123456$")));
+    expectLogMessage(
+        "GPS.RTK.Driver.Drivers", QtWarningMsg,
+        QRegularExpression(QStringLiteral("^MON-COMMS UART2 port=0x0201 txPending=0 txUsage=0% "
+                                          "txPeakUsage=108% rxPending=0 rxUsage=0% overrunErrs=0 skipped=0$")));
+    receiver.queue(response);
+    driver.receive(10);
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    // Consume only one reply, and throttle repeated warnings without hiding them.
+    receiver.queue(response);
+    driver.receive(10);
+    expectLogMessage("GPS.RTK.Driver.Drivers", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^ubx msg: txbuf alloc$")));
+    receiver.queue(ubxMessage(0x04, 0x01, "txbuf alloc"));
+    driver.receive(10);
+    verifyExpectedLogMessage();
+    QCOMPARE(receiver.commsPolls, 1);
+}
+
+void GPSDriverUBXTest::_invalidCommsDiagnostics_data()
+{
+    QTest::addColumn<QByteArray>("response");
+    QByteArray payload = commsPayload();
+    QByteArray corrupt = ubxMessage(0x0a, 0x36, payload);
+    corrupt.back() ^= 0xff;
+    QTest::newRow("checksum") << corrupt;
+    QTest::newRow("short-header") << ubxMessage(0x0a, 0x36, payload.first(7));
+    QTest::newRow("partial-port") << ubxMessage(0x0a, 0x36, payload.first(87));
+    QTest::newRow("oversized") << ubxMessage(0x0a, 0x36, QByteArray(368, '\0'));
+    payload[0] = 1;
+    QTest::newRow("unknown-version") << ubxMessage(0x0a, 0x36, payload);
+    payload[0] = 0;
+    payload[1] = 3;
+    QTest::newRow("count-mismatch") << ubxMessage(0x0a, 0x36, payload);
+    payload[1] = static_cast<char>(255);
+    QTest::newRow("count-overflow") << ubxMessage(0x0a, 0x36, payload);
+}
+
+void GPSDriverUBXTest::_invalidCommsDiagnostics()
+{
+    QFETCH(QByteArray, response);
+    UBXReceiver receiver;
+    sensor_gps_s position{};
+    GPSDriverUBX driver(GPSHelper::Interface::UART, &UBXReceiver::callback, &receiver, &position, nullptr, {});
+    expectLogMessage("GPS.RTK.Driver.Drivers", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^ubx msg: txbuf alloc$")));
+    receiver.queue(ubxMessage(0x04, 0x00, "txbuf alloc"));
+    driver.receive(10);
+    verifyExpectedLogMessage();
+    QCOMPARE(receiver.commsPolls, 1);
+    receiver.queue(response);
+    driver.receive(10);
+    // A valid response after malformed input proves that the parser recovered.
+    QByteArray emptyStatus(8, '\0');
+    expectLogMessage("GPS.RTK.Driver.Drivers", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^MON-COMMS after txbuf: txErrors=0x00 ports=0")));
+    receiver.queue(ubxMessage(0x0a, 0x36, emptyStatus));
+    driver.receive(10);
+    verifyExpectedLogMessage();
 }
 
 UT_REGISTER_TEST(GPSDriverUBXTest, TestLabel::Unit)

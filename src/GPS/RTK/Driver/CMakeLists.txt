@@ -26,8 +26,11 @@ include(CPMPatchCache)
 
 set(_gpsdrivers_revision 056cfb18e826a688141a8fe5354982273d43215f)
 set(_gpsdrivers_patches
-    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-utc.patch" "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-survey-in.patch"
+    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-utc.patch"
+    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-survey-in.patch"
     "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-cancellation.patch"
+    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-survey-read-error.patch"
+    "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-comms-diagnostics.patch"
 )
 qgc_cpm_patch_cache_key(
     _gpsdrivers_cache_key

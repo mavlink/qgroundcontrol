@@ -1,0 +1,172 @@
+--- a/src/ubx.cpp
++++ b/src/ubx.cpp
+@@ -1954,6 +1954,14 @@
+ 	_rx_state = UBX_RXMSG_HANDLE;	// handle by default
+
+ 	switch (_rx_msg) {
++	case UBX_MSG_MON_COMMS:
++		if (_rx_payload_length < 8 || _rx_payload_length > sizeof(ubx_payload_rx_mon_comms_t)
++		    || (_rx_payload_length - 8) % sizeof(ubx_payload_rx_mon_comms_port_t) != 0) {
++			_rx_state = UBX_RXMSG_ERROR_LENGTH;
++		}
++
++		break;
++
+ 	case UBX_MSG_NAV_PVT:
+ 		if ((_rx_payload_length != UBX_PAYLOAD_RX_NAV_PVT_SIZE_UBX7)		/* u-blox 7 msg format */
+ 		    && (_rx_payload_length != UBX_PAYLOAD_RX_NAV_PVT_SIZE_UBX8)) {	/* u-blox 8+ msg format */
+@@ -2696,7 +2704,15 @@
+ 			uint8_t *p_buf = (uint8_t *)&_buf;
+ 			p_buf[_rx_payload_length] = 0;
+ 			UBX_WARN("ubx msg: %s", p_buf);
+-		}
++
++			if (strncmp(reinterpret_cast<const char *>(p_buf), "txbuf", 5) == 0) {
++				requestCommsDiagnostics();
++			}
++		}
++		break;
++
++	case UBX_MSG_MON_COMMS:
++		logCommsDiagnostics();
+ 		break;
+
+ 	case UBX_MSG_NAV_POSLLH:
+@@ -3162,6 +3178,57 @@
+ 	return ret;
+ }
+
++void GPSDriverUBX::requestCommsDiagnostics()
++{
++	const gps_abstime now = gps_absolute_time();
++
++	if (now < _next_comms_poll) {
++		return;
++	}
++
++	// A congested receiver must not be flooded with diagnostic requests.
++	_next_comms_poll = now + 5000000;
++	_comms_poll_deadline = sendMessage(UBX_MSG_MON_COMMS, nullptr, 0) ? now + 2000000 : 0;
++}
++
++void GPSDriverUBX::logCommsDiagnostics()
++{
++	if (_comms_poll_deadline == 0 || gps_absolute_time() > _comms_poll_deadline) {
++		return;
++	}
++
++	const auto &status = _buf.payload_rx_mon_comms;
++
++	if (status.version != 0 || status.nPorts > UBX_MON_COMMS_MAX_PORTS
++	    || _rx_payload_length != 8 + status.nPorts * sizeof(ubx_payload_rx_mon_comms_port_t)) {
++		return;
++	}
++
++	_comms_poll_deadline = 0;
++	UBX_WARN("MON-COMMS after txbuf: txErrors=0x%02x ports=%u (snapshot after warning)",
++		 (unsigned)status.txErrors, (unsigned)status.nPorts);
++
++	for (unsigned i = 0; i < status.nPorts; ++i) {
++		const auto &port = status.ports[i];
++		[[maybe_unused]] const char *name = "unknown";
++
++		switch (port.portId) {
++		case 0x0000: name = "I2C"; break;
++		case 0x0100: name = "UART1"; break;
++		case 0x0201: name = "UART2"; break;
++		case 0x0300: name = "USB"; break;
++		case 0x0400: name = "SPI"; break;
++		default: break;
++		}
++
++		UBX_WARN("MON-COMMS %s port=0x%04x txPending=%u txUsage=%u%% txPeakUsage=%u%% "
++			 "rxPending=%u rxUsage=%u%% overrunErrs=%u skipped=%lu",
++			 name, (unsigned)port.portId, (unsigned)port.txPending, (unsigned)port.txUsage,
++			 (unsigned)port.txPeakUsage, (unsigned)port.rxPending, (unsigned)port.rxUsage,
++			 (unsigned)port.overrunErrs, (unsigned long)port.skipped);
++	}
++}
++
+ int
+ GPSDriverUBX::activateRTCMOutput(bool reduce_update_rate)
+ {
+--- a/src/ubx.h
++++ b/src/ubx.h
+@@ -116,6 +116,7 @@
+ #define UBX_ID_CFG_VALSET     0x8A
+ #define UBX_ID_CFG_VALGET     0x8B
+ #define UBX_ID_CFG_VALDEL     0x8C
++#define UBX_ID_MON_COMMS      0x36
+ #define UBX_ID_MON_VER        0x04
+ #define UBX_ID_MON_HW         0x09 // deprecated in protocol version >= 27 -> use MON_RF
+ #define UBX_ID_MON_RF         0x38
+@@ -174,6 +175,7 @@
+ #define UBX_MSG_CFG_VALGET    ((UBX_CLASS_CFG) | UBX_ID_CFG_VALGET << 8)
+ #define UBX_MSG_CFG_VALSET    ((UBX_CLASS_CFG) | UBX_ID_CFG_VALSET << 8)
+ #define UBX_MSG_CFG_VALDEL    ((UBX_CLASS_CFG) | UBX_ID_CFG_VALDEL << 8)
++#define UBX_MSG_MON_COMMS     ((UBX_CLASS_MON) | UBX_ID_MON_COMMS << 8)
+ #define UBX_MSG_MON_HW        ((UBX_CLASS_MON) | UBX_ID_MON_HW << 8)
+ #define UBX_MSG_MON_VER       ((UBX_CLASS_MON) | UBX_ID_MON_VER << 8)
+ #define UBX_MSG_MON_RF        ((UBX_CLASS_MON) | UBX_ID_MON_RF << 8)
+@@ -984,6 +986,34 @@
+ 	uint32_t    vAcc;            /**<  [0.1 mm] Vertical Accuracy Estimate */
+ } ubx_payload_rx_nav_hpposllh_t;
+
++// Bound diagnostic storage independently of the receiver's reported port count.
++static constexpr uint8_t UBX_MON_COMMS_MAX_PORTS = 8;
++
++typedef struct {
++	uint16_t portId;
++	uint16_t txPending;
++	uint32_t txBytes;
++	uint8_t txUsage;
++	uint8_t txPeakUsage;
++	uint16_t rxPending;
++	uint32_t rxBytes;
++	uint8_t rxUsage;
++	uint8_t rxPeakUsage;
++	uint16_t overrunErrs;
++	uint16_t msgs[4];
++	uint8_t reserved[8];
++	uint32_t skipped;
++} ubx_payload_rx_mon_comms_port_t;
++
++typedef struct {
++	uint8_t version;
++	uint8_t nPorts;
++	uint8_t txErrors;
++	uint8_t reserved;
++	uint8_t protIds[4];
++	ubx_payload_rx_mon_comms_port_t ports[UBX_MON_COMMS_MAX_PORTS];
++} ubx_payload_rx_mon_comms_t;
++
+ /* General message and payload buffer union */
+ typedef union {
+ 	ubx_payload_rx_nav_pvt_t          payload_rx_nav_pvt;
+@@ -1003,6 +1033,7 @@
+ 	ubx_payload_rx_mon_hw_ubx7_t      payload_rx_mon_hw_ubx7;
+ 	ubx_payload_rx_mon_hw_deprecated_t ubx_payload_rx_mon_hw_deprecated;
+ 	ubx_payload_rx_mon_rf_t           payload_rx_mon_rf;
++	ubx_payload_rx_mon_comms_t        payload_rx_mon_comms;
+ 	ubx_payload_rx_sec_sig_t          payload_rx_sec_sig;
+ 	ubx_payload_rx_mon_ver_part1_t    payload_rx_mon_ver_part1;
+ 	ubx_payload_rx_mon_ver_part2_t    payload_rx_mon_ver_part2;
+@@ -1137,6 +1168,9 @@
+ 	/** Like receive(), but reports a negative device read separately from a timeout. */
+ 	int receiveInternal(unsigned timeout, bool &read_error);
+
++	void requestCommsDiagnostics();
++	void logCommsDiagnostics();
++
+ 	int activateRTCMOutput(bool reduce_update_rate);
+
+ 	/**
+@@ -1341,6 +1375,8 @@
+ 	const Interface _interface{};
+
+ 	gps_abstime             _disable_cmd_last{0};
++	gps_abstime             _next_comms_poll{0};
++	gps_abstime             _comms_poll_deadline{0};
+ 	sensor_gps_s           *_gps_position {nullptr};
+ 	satellite_info_s       *_satellite_info {nullptr};
+ 	ubx_ack_state_t         _ack_state{UBX_ACK_IDLE};

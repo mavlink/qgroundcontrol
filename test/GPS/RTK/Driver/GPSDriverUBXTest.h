@@ -11,4 +11,9 @@ private slots:
     void _surveyRestart();
     void _readFailure_data();
     void _readFailure();
+    void _surveyReadFailure_data();
+    void _surveyReadFailure();
+    void _commsDiagnostics();
+    void _invalidCommsDiagnostics_data();
+    void _invalidCommsDiagnostics();
 };
