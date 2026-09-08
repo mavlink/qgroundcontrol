@@ -1,11 +1,13 @@
 #include "PositionManagerTest.h"
 
-#include <cstring>
-
 #include <QtCore/QIODevice>
 #include <QtCore/QRegularExpression>
+#include <QtPositioning/QNmeaPositionInfoSource>
 #include <QtTest/QSignalSpy>
 
+#include <cstring>
+
+#include "NMEAUtils.h"
 #include "PositionManager.h"
 
 namespace {
@@ -116,6 +118,49 @@ void PositionManagerTest::_resetNmeaSourceTearsDownAndClearsState()
 
     // Second reset with no NMEA source is a no-op
     pm->resetNmeaSourceDevice();
+}
+
+void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
+{
+    NmeaTestDevice device;
+    QGCPositionManager pm;
+    pm._nmeaStaleTimer.setInterval(300);
+    pm.setNmeaSourceDevice(&device);
+    QSignalSpy errors(pm._nmeaSource, &QGeoPositionInfoSource::errorOccurred);
+    QSignalSpy updates(&pm, &QGCPositionManager::positionInfoUpdated);
+    const auto feed = [&]() {
+        const QByteArray time = QDateTime::currentDateTimeUtc().toString(QStringLiteral("hhmmss.zzz")).toLatin1();
+        QByteArray sentences;
+        for (QByteArray line : QByteArray(kNmeaSentences).split('\n')) {
+            if (!line.trimmed().isEmpty()) {
+                line.replace("092750.000", time);
+                sentences += NMEAUtils::repairChecksum(line);
+            }
+        }
+        device.feed(sentences);
+    };
+    QTimer sender;
+    connect(&sender, &QTimer::timeout, this, feed);
+    sender.start(50);
+    QTRY_VERIFY_WITH_TIMEOUT(updates.size() >= 6, TestTimeout::mediumMs());
+    QVERIFY(pm.gcsPosition().isValid());
+    QVERIFY(errors.isEmpty());
+    QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
+
+    sender.stop();
+    QTRY_VERIFY_WITH_TIMEOUT(!pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::UpdateTimeoutError);
+    QVERIFY(!pm.geoPositionInfo().isValid());
+    QVERIFY(!pm.gcsPositionTimestamp().isValid());
+    QVERIFY(qIsInf(pm.gcsPositionHorizontalAccuracy()));
+    QVERIFY(!pm._nmeaStaleTimer.isActive());
+
+    feed();
+    QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
+    QVERIFY(pm._nmeaStaleTimer.isActive());
+    pm.resetNmeaSourceDevice();
+    QVERIFY(!pm._nmeaStaleTimer.isActive());
 }
 
 UT_REGISTER_TEST(PositionManagerTest, TestLabel::Unit)

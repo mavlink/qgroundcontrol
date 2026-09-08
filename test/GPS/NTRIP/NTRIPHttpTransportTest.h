@@ -39,6 +39,10 @@ private slots:
 
     // Live TLS error path
     void testTlsFatalErrorEmitsSingleError();
+    void testStreamingRequiresMountpoint();
+    void testConnectionWaitsForHttpResponse();
+    void testHandshakeTimeoutClosesSocket();
+    void testRemoteCloseEmitsSingleError();
 
     // HTTP request building
     void _testBuildRequestPlaintextCredentialsWarns();

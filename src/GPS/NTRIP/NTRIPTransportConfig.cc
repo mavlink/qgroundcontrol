@@ -32,6 +32,17 @@ QString NTRIPTransportConfig::validationError() const
     return QString();
 }
 
+QString NTRIPTransportConfig::streamValidationError() const
+{
+    if (const QString error = validationError(); !error.isEmpty()) {
+        return error;
+    }
+    if (mountpoint.trimmed().isEmpty()) {
+        return QCoreApplication::translate("NTRIPTransportConfig", "Select a mountpoint before connecting");
+    }
+    return {};
+}
+
 NTRIPTransportConfig NTRIPTransportConfig::fromSettings(NTRIPSettings& settings)
 {
     const auto read = [](Fact* fact, const QVariant& fallback) { return fact ? fact->rawValue() : fallback; };

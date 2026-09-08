@@ -5,7 +5,11 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "Fixtures/RAIIFixtures.h"
+#include "MockNTRIPTransport.h"
 #include "NTRIPManager.h"
+#include "NTRIPSettings.h"
+#include "SettingsManager.h"
 
 void NTRIPManagerTest::cleanup()
 {
@@ -160,3 +164,75 @@ void NTRIPManagerTest::testReconnectSignalFires()
 }
 
 UT_REGISTER_TEST(NTRIPManagerTest, TestLabel::Unit)
+
+void NTRIPManagerTest::testDuplicateTransportErrorsScheduleOneRetry()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    saved.setFactValue(settings->ntripServerConnectEnabled(), true);
+    NTRIPManager mgr;
+    mgr._settings = settings;
+    auto* transport = new MockNTRIPTransport(&mgr);
+    transport->autoConnect = false;
+    mgr.setTransportForTest(transport);
+    mgr.startNTRIP();
+    QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*first failure")));
+    transport->simulateError(NTRIPError::SocketError, QStringLiteral("first failure"));
+    transport->simulateError(NTRIPError::ServerDisconnected, QStringLiteral("duplicate failure"));
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    QCOMPARE(mgr._reconnectAttempts, 1);
+    QCOMPARE(mgr._reconnectTimer.interval(), std::chrono::milliseconds(1000));
+    QVERIFY(mgr.statusMessage().contains(QStringLiteral("first failure")));
+    QVERIFY(!mgr.statusMessage().contains(QStringLiteral("duplicate failure")));
+    verifyExpectedLogMessage();
+}
+
+void NTRIPManagerTest::testRetiredTransportErrorCannotAffectNewSession()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    saved.setFactValue(settings->ntripServerConnectEnabled(), true);
+    NTRIPManager mgr;
+    mgr._settings = settings;
+    auto* first = new MockNTRIPTransport(&mgr);
+    first->autoConnect = false;
+    mgr.setTransportForTest(first);
+    mgr.startNTRIP();
+    first->simulateError(NTRIPError::SocketError, QStringLiteral("retired failure"));
+    mgr.stopNTRIP();
+    auto* second = new MockNTRIPTransport(&mgr);
+    second->autoConnect = false;
+    mgr.setTransportForTest(second);
+    mgr.startNTRIP();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
+    QCOMPARE(mgr._transport.data(), second);
+    QCOMPARE(mgr._reconnectAttempts, 0);
+    QVERIFY(!mgr._reconnectTimer.isActive());
+}
+
+void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripMountpoint(), QString());
+    NTRIPManager mgr;
+    mgr._settings = settings;
+    auto* transport = new MockNTRIPTransport(&mgr);
+    mgr.setTransportForTest(transport);
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
+    mgr.startNTRIP();
+    QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QCOMPARE(transport->startCount, 0);
+    QVERIFY(!mgr._transport);
+    QVERIFY(mgr.statusMessage().contains(QStringLiteral("mountpoint")));
+    verifyExpectedLogMessage();
+}

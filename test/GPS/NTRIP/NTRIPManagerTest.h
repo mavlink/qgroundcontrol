@@ -29,4 +29,7 @@ private slots:
     void testReconnectCancelStopsTimer();
     void testReconnectResetAttempts();
     void testReconnectSignalFires();
+    void testDuplicateTransportErrorsScheduleOneRetry();
+    void testRetiredTransportErrorCannotAffectNewSession();
+    void testMissingMountpointDoesNotStartTransport();
 };

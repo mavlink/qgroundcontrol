@@ -2,6 +2,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QObject>
+#include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtPositioning/QGeoPositionInfoSource>
@@ -19,6 +20,8 @@ class QGCPositionManager : public QObject
     Q_PROPERTY(QGeoCoordinate gcsPosition                   READ gcsPosition                    NOTIFY gcsPositionChanged)
     Q_PROPERTY(qreal          gcsHeading                    READ gcsHeading                     NOTIFY gcsHeadingChanged)
     Q_PROPERTY(qreal          gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy  NOTIFY gcsPositionHorizontalAccuracyChanged)
+
+    friend class PositionManagerTest;
 
 public:
     explicit QGCPositionManager(QObject *parent = nullptr);
@@ -74,9 +77,11 @@ private:
     void _checkPermission();
     void _setGCSHeading(qreal newGCSHeading);
     void _setGCSPosition(const QGeoCoordinate &newGCSPosition);
+    void _clearPosition();
 
     bool _usingPluginSource = false;
     int _updateInterval = 0;
+    QTimer _nmeaStaleTimer;
 
     QGeoPositionInfo _geoPositionInfo;
     QGeoPositionInfoSource::Error  _gcsPositioningError = QGeoPositionInfoSource::NoError;

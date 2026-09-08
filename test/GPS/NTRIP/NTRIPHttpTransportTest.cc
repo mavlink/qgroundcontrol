@@ -7,6 +7,7 @@
 #include <QtNetwork/QSslKey>
 #include <QtNetwork/QSslServer>
 #include <QtNetwork/QSslSocket>
+#include <QtNetwork/QTcpServer>
 #include <QtTest/QSignalSpy>
 
 #include "GpsTestHelpers.h"
@@ -225,6 +226,7 @@ void NTRIPHttpTransportTest::testTlsFatalErrorEmitsSingleError()
     cfg.port = server.serverPort();
     cfg.useTls = true;
     cfg.allowSelfSignedCerts = false;
+    cfg.mountpoint = QStringLiteral("TEST");
 
     ignoreLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("TLS error:")));
     ignoreLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
@@ -237,8 +239,8 @@ void NTRIPHttpTransportTest::testTlsFatalErrorEmitsSingleError()
     QVERIFY_SIGNAL_WAIT(errorSpy, TestTimeout::mediumMs());
     QCOMPARE(errorSpy.count(), 1);
 
-    // abort() inside _failFatal must not re-enter the error/disconnect handlers.
-    QTest::qWait(200);
+    // Drain queued callbacks after abort; a second error must not escape teardown.
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(errorSpy.count(), 1);
 }
 
@@ -566,3 +568,103 @@ void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
 }
 
 UT_REGISTER_TEST(NTRIPHttpTransportTest, TestLabel::Unit)
+
+void NTRIPHttpTransportTest::testStreamingRequiresMountpoint()
+{
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    QVERIFY(config.validationError().isEmpty());
+    for (const QString& mountpoint : {QString(), QStringLiteral("   ")}) {
+        config.mountpoint = mountpoint;
+        QVERIFY(!config.streamValidationError().isEmpty());
+        NTRIPHttpTransport transport(config);
+        QSignalSpy errors(&transport, &NTRIPTransport::error);
+        QSignalSpy connected(&transport, &NTRIPTransport::connected);
+        transport.start();
+        QCOMPARE(errors.size(), 1);
+        QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::InvalidConfig);
+        QVERIFY(connected.isEmpty());
+        QVERIFY(!transport._socket);
+    }
+}
+
+void NTRIPHttpTransportTest::testConnectionWaitsForHttpResponse()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    config.port = server.serverPort();
+    config.mountpoint = QStringLiteral("TEST");
+    NTRIPHttpTransport transport(config);
+    QSignalSpy connected(&transport, &NTRIPTransport::connected);
+    QSignalSpy frames(&transport, &NTRIPTransport::RTCMDataUpdate);
+    transport.start();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QVERIFY(peer);
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+    QVERIFY(peer->readAll().startsWith("GET /TEST HTTP/1.1\r\n"));
+    QVERIFY(connected.isEmpty());
+    QVERIFY(transport._connectTimeoutTimer.isActive());
+    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 4);
+    const QByteArray response = "HTTP/1.1 200 OK\r\nContent-Type: gnss/data\r\n\r\n" + frame;
+    QCOMPARE(peer->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(connected.size(), 1, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, TestTimeout::mediumMs());
+    QVERIFY(!transport._connectTimeoutTimer.isActive());
+    QVERIFY(transport._dataWatchdogTimer.isActive());
+    transport.stop();
+}
+
+void NTRIPHttpTransportTest::testHandshakeTimeoutClosesSocket()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    config.port = server.serverPort();
+    config.mountpoint = QStringLiteral("TEST");
+    NTRIPHttpTransport transport(config);
+    QSignalSpy connected(&transport, &NTRIPTransport::connected);
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    transport.start();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QVERIFY(peer);
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+    QVERIFY(connected.isEmpty());
+    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Connection timeout")));
+    transport._connectTimeoutTimer.setInterval(std::chrono::milliseconds(50));
+    transport._connectTimeoutTimer.start();
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
+    QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::ConnectionTimeout);
+    QCOMPARE(transport._socket->state(), QAbstractSocket::UnconnectedState);
+    QVERIFY(!transport._dataWatchdogTimer.isActive());
+    QVERIFY(connected.isEmpty());
+    verifyExpectedLogMessage();
+}
+
+void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    config.port = server.serverPort();
+    config.mountpoint = QStringLiteral("TEST");
+    NTRIPHttpTransport transport(config);
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    transport.start();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QVERIFY(peer);
+    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Socket error code:")));
+    peer->disconnectFromHost();
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
+    QCOMPARE(transport._socket->state(), QAbstractSocket::UnconnectedState);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(errors.size(), 1);
+    QVERIFY(!transport._connectTimeoutTimer.isActive());
+    verifyExpectedLogMessage();
+}

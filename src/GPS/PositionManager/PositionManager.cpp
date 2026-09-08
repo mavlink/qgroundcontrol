@@ -13,9 +13,14 @@ QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "PositionManager.QGCPositionManager"
 
 Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 
-QGCPositionManager::QGCPositionManager(QObject *parent)
-    : QObject(parent)
+QGCPositionManager::QGCPositionManager(QObject* parent) : QObject(parent), _nmeaStaleTimer(this)
 {
+    _nmeaStaleTimer.setSingleShot(true);
+    _nmeaStaleTimer.setInterval(std::chrono::seconds(5));
+    connect(&_nmeaStaleTimer, &QTimer::timeout, this, [this]() {
+        _positionError(QGeoPositionInfoSource::UpdateTimeoutError);
+        _clearPosition();
+    });
     qCDebug(QGCPositionManagerLog) << this;
 }
 
@@ -124,7 +129,9 @@ void QGCPositionManager::resetNmeaSourceDevice()
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
     _geoPositionInfo = update;
-    _gcsPositioningError = QGeoPositionInfoSource::NoError;
+    if (_currentSource != _nmeaSource) {
+        _gcsPositioningError = QGeoPositionInfoSource::NoError;
+    }
 
     QGeoCoordinate newGCSPosition(_gcsPosition);
 
@@ -138,6 +145,10 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
                 // Updates rejected by the accuracy gate leave the stamp alone, since they leave
                 // the previous coordinate in place as well.
                 _gcsPositionTimestamp = QDateTime::currentDateTimeUtc();
+                _gcsPositioningError = QGeoPositionInfoSource::NoError;
+                if (_currentSource == _nmeaSource) {
+                    _nmeaStaleTimer.start();
+                }
             }
             emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
         }
@@ -168,8 +179,13 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 
 void QGCPositionManager::_positionError(QGeoPositionInfoSource::Error gcsPositioningError)
 {
-    qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << "Positioning error:" << gcsPositioningError;
+    if (_gcsPositioningError == gcsPositioningError) {
+        return;
+    }
     _gcsPositioningError = gcsPositioningError;
+    if (gcsPositioningError != QGeoPositionInfoSource::NoError) {
+        qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << "Positioning error:" << gcsPositioningError;
+    }
 }
 
 void QGCPositionManager::_setGCSHeading(qreal newGCSHeading)
@@ -188,26 +204,32 @@ void QGCPositionManager::_setGCSPosition(const QGeoCoordinate& newGCSPosition)
     }
 }
 
+void QGCPositionManager::_clearPosition()
+{
+    _geoPositionInfo = QGeoPositionInfo();
+    _gcsPositionTimestamp = QDateTime();
+    _setGCSPosition(QGeoCoordinate());
+    _setGCSHeading(qQNaN());
+    _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
+    _gcsPositionVerticalAccuracy = std::numeric_limits<qreal>::infinity();
+    _gcsPositionAccuracy = std::numeric_limits<qreal>::infinity();
+    _gcsDirectionAccuracy = std::numeric_limits<qreal>::infinity();
+    emit positionInfoUpdated(_geoPositionInfo);
+    emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
+}
+
 void QGCPositionManager::_setPositionSource(QGCPositionSource source)
 {
+    _nmeaStaleTimer.stop();
     if (_currentSource != nullptr) {
         _currentSource->stopUpdates();
         // Note the receiver-side overload: disconnect(_currentSource) would drop our own signals
         // to the source (of which there are none), leaving source->this connected and duplicating
         // it every time a source is re-selected.
         (void) _currentSource->disconnect(this);
-
-        _geoPositionInfo = QGeoPositionInfo();
-        emit positionInfoUpdated(_geoPositionInfo);
-
-        _setGCSPosition(QGeoCoordinate());
-        _gcsPositionTimestamp = QDateTime();
-
-        _setGCSHeading(qQNaN());
-
-        _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
-        emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
     }
+    _clearPosition();
+    _gcsPositioningError = QGeoPositionInfoSource::NoError;
 
     switch (source) {
     case QGCPositionManager::Log:
@@ -230,10 +252,15 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
 
     if (_currentSource != nullptr) {
         _currentSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
-        _updateInterval = _currentSource->minimumUpdateInterval();
-        #if !defined(Q_OS_DARWIN) && !defined(Q_OS_IOS)
-            _currentSource->setUpdateInterval(_updateInterval);
-        #endif
+        _updateInterval = source == QGCPositionManager::NmeaGPS ? 0 : _currentSource->minimumUpdateInterval();
+        if (source == QGCPositionManager::NmeaGPS) {
+            // Qt's NMEA minimum is 2 ms, which reports timeouts between normal receiver fixes.
+            _currentSource->setUpdateInterval(0);
+            _nmeaStaleTimer.start();
+        }
+#if !defined(Q_OS_DARWIN) && !defined(Q_OS_IOS)
+        _currentSource->setUpdateInterval(_updateInterval);
+#endif
 
         (void) connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this, &QGCPositionManager::_positionUpdated);
         (void) connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this, &QGCPositionManager::_positionError);
