@@ -15,6 +15,9 @@ namespace {
 class FakeGPSTransport : public GPSTransport
 {
 public:
+    bool open() override { return true; }
+
+    bool fatalError() const override { return false; }
     int read(uint8_t *buffer, int length, int timeoutMs) override
     {
         lastReadLength = length;

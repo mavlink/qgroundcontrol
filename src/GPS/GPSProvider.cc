@@ -1,34 +1,38 @@
 #include "GPSProvider.h"
 
+#include <utility>
+
 #include "GPSDriver.h"
+#include "GPSTransport.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMMavlink.h"
-#include "SerialGPSTransport.h"
-
-#include <utility>
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
 
-GPSProvider::GPSProvider(const QString &device, GPSType type, const GPSReceiverConfig &config, const std::atomic_bool &requestStop, QObject *parent)
-    : QThread(parent)
-    , _device(device)
-    , _type(type)
-    , _requestStop(requestStop)
-    , _config(config)
+GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+                         const std::atomic_bool& requestStop, QObject* parent)
+    : QThread(parent),
+      _transportFactory(std::move(transportFactory)),
+      _type(type),
+      _requestStop(requestStop),
+      _config(config)
 {
     qCDebug(GPSProviderLog) << QStringLiteral("Survey in accuracy: %1 | duration: %2").arg(_config.surveyInAccMeters).arg(_config.surveyInDurationSecs);
 }
 
 void GPSProvider::run()
 {
+    if (_requestStop) {
+        return;
+    }
 #ifdef SIMULATE_RTCM_OUTPUT
     RTCMMavlink rtcm;
     rtcm.sendSimulatedData(_requestStop);
     return;
 #endif
 
-    SerialGPSTransport transport(_device, _requestStop);
-    if (!transport.open()) {
+    auto transport = _transportFactory ? _transportFactory(_requestStop) : nullptr;
+    if (!transport || !transport->open()) {
         if (!_requestStop) {
             emit connectionError(GPSConnectionError::OpenFailed);
         }
@@ -50,7 +54,7 @@ void GPSProvider::run()
         emit surveyInStatus(status);
     };
 
-    GPSDriver driver(_type, transport, _config, std::move(sinks));
+    GPSDriver driver(_type, *transport, _config, std::move(sinks));
 
     bool configErrorReported = false;
     while (!_requestStop) {
@@ -75,7 +79,7 @@ void GPSProvider::run()
             idleCycles = progress ? 0 : (idleCycles + 1);
         }
 
-        if (transport.fatalError()) {
+        if (transport->fatalError()) {
             emit connectionError(GPSConnectionError::DeviceError);
             break;
         }

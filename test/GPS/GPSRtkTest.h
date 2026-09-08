@@ -7,6 +7,7 @@ class GPSRtkTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _testCoreAvailableWithoutReceiver();
     void _testCountSatellitesClampsToMax();
     void _testCountSatellitesCountsUsed();
     void _testCountSatellitesIgnoresUsedBeyondCount();

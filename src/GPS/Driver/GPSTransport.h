@@ -10,6 +10,9 @@ class GPSTransport
 public:
     virtual ~GPSTransport() = default;
 
+    virtual bool open() = 0;
+    virtual bool fatalError() const = 0;
+
     /// Read up to length bytes into buffer, waiting up to timeoutMs.
     /// Returns bytes read, 0 on timeout, <0 on error.
     virtual int read(uint8_t *buffer, int length, int timeoutMs) = 0;

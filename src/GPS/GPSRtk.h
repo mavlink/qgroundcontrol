@@ -18,7 +18,10 @@ public:
     explicit GPSRtk(QObject* parent = nullptr);
     ~GPSRtk();
 
+#ifndef QGC_NO_SERIAL_LINK
     void connectGPS(const QString& device, QStringView gps_type);
+#endif
+    void connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory);
     void disconnectGPS();
     bool connected() const;
     FactGroup* gpsRtkFactGroup();

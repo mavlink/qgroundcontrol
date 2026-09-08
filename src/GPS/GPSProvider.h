@@ -1,8 +1,5 @@
 #pragma once
 
-#include "GPSDriver.h"  // facade; also publishes GPSReceiverConfig + the GNSS data structs relayed below
-#include "GPSType.h"
-
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
 #include <QtCore/QObject>
@@ -11,13 +8,20 @@
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
+#include <memory>
+
+#include "GPSDriver.h"  // facade; also publishes GPSReceiverConfig + the GNSS data structs relayed below
+#include "GPSType.h"
+
+class GPSTransport;
 
 enum class GPSConnectionError
 {
     None,
-    OpenFailed,   ///< serial device could not be opened
+    OpenFailed,   ///< receiver transport could not be opened
     ConfigFailed, ///< receiver did not accept configuration
-    DeviceError,  ///< fatal serial error after a working connection
+    DeviceError,  ///< fatal transport error after a working connection
 };
 Q_DECLARE_METATYPE(GPSConnectionError)
 
@@ -26,7 +30,11 @@ class GPSProvider : public QThread
     Q_OBJECT
 
 public:
-    GPSProvider(const QString &device, GPSType type, const GPSReceiverConfig &config, const std::atomic_bool &requestStop, QObject *parent = nullptr);
+    /// Invoked by run(), so transport construction, I/O and destruction share the worker thread.
+    using TransportFactory = std::function<std::unique_ptr<GPSTransport>(const std::atomic_bool&)>;
+
+    GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+                const std::atomic_bool& requestStop, QObject* parent = nullptr);
 
 signals:
     void satelliteInfoUpdate(const satellite_info_s &message);
@@ -38,7 +46,7 @@ signals:
 private:
     void run() final;
 
-    QString _device;
+    TransportFactory _transportFactory;
     GPSType _type;
     const std::atomic_bool &_requestStop;
     GPSReceiverConfig _config{};

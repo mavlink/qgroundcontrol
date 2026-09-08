@@ -9,6 +9,12 @@
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
+#ifndef QGC_NO_SERIAL_LINK
+#include "SerialGPSTransport.h"
+#endif
+
+#include <utility>
+
 QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.GPSRtk")
 
 namespace {
@@ -58,7 +64,7 @@ void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
 {
     switch (error) {
         case GPSConnectionError::OpenFailed:
-            qCWarning(GPSRtkLog) << "Failed to open GPS serial device";
+            qCWarning(GPSRtkLog) << "Failed to open GPS receiver transport";
             break;
         case GPSConnectionError::ConfigFailed:
             qCWarning(GPSRtkLog) << "GPS receiver did not accept configuration";
@@ -84,21 +90,31 @@ void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
     _gpsRtkFactGroup->active()->setRawValue(status.active);
 }
 
+#ifndef QGC_NO_SERIAL_LINK
 void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
 {
-    RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
-
     GPSType type = GPSType::u_blox;
-    int manufacturerId = 4;  // u-blox by default
     for (const GPSTypeEntry& entry : kGPSTypeTable) {
         if (gps_type.contains(entry.key, Qt::CaseInsensitive)) {
             type = entry.type;
-            manufacturerId = entry.manufacturerId;
             break;
         }
     }
-    rtkSettings->baseReceiverManufacturers()->setRawValue(manufacturerId);
-    qCDebug(GPSRtkLog) << "Connecting GPS device" << gps_type << "manufacturer id" << manufacturerId;
+    connectReceiver(type, [device](const std::atomic_bool& requestStop) {
+        return std::make_unique<SerialGPSTransport>(device, requestStop);
+    });
+}
+#endif
+
+void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory)
+{
+    RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
+    for (const GPSTypeEntry& entry : kGPSTypeTable) {
+        if (entry.type == type) {
+            rtkSettings->baseReceiverManufacturers()->setRawValue(entry.manufacturerId);
+            break;
+        }
+    }
 
     disconnectGPS();
 
@@ -116,14 +132,13 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
         .fixedBaseAltitudeMeters = rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
         .fixedBaseAccuracyMeters = rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
     };
-    _gpsProvider = new GPSProvider(device, type, rtkConfig, _requestGpsStop, this);
-    // Forward serial-RTK corrections through NTRIPManager's shared RTCMMavlink so
-    // serial and NTRIP sources share one GPS_RTCM_DATA sequence-id domain.
+    _gpsProvider = new GPSProvider(std::move(transportFactory), type, rtkConfig, _requestGpsStop, this);
+    // All receiver transports share NTRIPManager's GPS_RTCM_DATA sequence-id domain.
     RTCMMavlink* const rtcmMavlink = NTRIPManager::instance()->rtcmMavlink();
     if (rtcmMavlink) {
         (void) connect(_gpsProvider, &GPSProvider::RTCMDataUpdate, rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
     } else {
-        qCWarning(GPSRtkLog) << "Shared RTCMMavlink unavailable; serial RTK corrections will not be forwarded";
+        qCWarning(GPSRtkLog) << "Shared RTCMMavlink unavailable; receiver RTK corrections will not be forwarded";
     }
     (void) connect(_gpsProvider, &GPSProvider::satelliteInfoUpdate, this, &GPSRtk::_satelliteInfoUpdate);
     (void) connect(_gpsProvider, &GPSProvider::sensorGpsUpdate, this, &GPSRtk::_sensorGpsUpdate);

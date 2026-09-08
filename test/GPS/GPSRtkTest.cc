@@ -1,6 +1,10 @@
 #include "GPSRtkTest.h"
 
+#include <QtCore/QFile>
+
+#include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
+#include "QGroundControlQmlGlobal.h"
 
 void GPSRtkTest::_testCountSatellitesClampsToMax()
 {
@@ -41,3 +45,14 @@ void GPSRtkTest::_testCountSatellitesIgnoresUsedBeyondCount()
 }
 
 UT_REGISTER_TEST(GPSRtkTest, TestLabel::Unit)
+
+void GPSRtkTest::_testCoreAvailableWithoutReceiver()
+{
+    GPSRtk rtk;
+    QVERIFY(!rtk.connected());
+    auto* facts = qobject_cast<GPSRTKFactGroup*>(rtk.gpsRtkFactGroup());
+    QVERIFY(facts);
+    QVERIFY(!facts->connected()->rawValue().toBool());
+    QVERIFY(QFile::exists(QStringLiteral(":/json/Vehicle/GPSRTKFact.json")));
+    QVERIFY(QGroundControlQmlGlobal::staticMetaObject.indexOfProperty("gpsRtk") >= 0);
+}

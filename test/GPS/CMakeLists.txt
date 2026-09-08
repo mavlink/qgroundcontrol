@@ -42,18 +42,20 @@ add_qgc_test(NTRIPGgaProviderTest LABELS Unit)
 add_qgc_test(NTRIPSourceTableControllerTest LABELS Unit)
 add_qgc_test(UdpForwarderTest LABELS Unit)
 
-# GPSDriver facade test exercises the px4 bridge — only built when the Driver layer is.
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        GPSDriverTest.cc
+        GPSDriverTest.h
+        GPSProviderTest.cc
+        GPSProviderTest.h
+        GPSRtkTest.cc
+        GPSRtkTest.h
+)
+add_qgc_test(GPSDriverTest LABELS Unit)
+add_qgc_test(GPSProviderTest LABELS Unit)
+add_qgc_test(GPSRtkTest LABELS Unit)
+
 if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            GPSDriverTest.cc
-            GPSDriverTest.h
-            GPSRtkTest.cc
-            GPSRtkTest.h
-            SerialGPSTransportTest.cc
-            SerialGPSTransportTest.h
-    )
-    add_qgc_test(GPSDriverTest LABELS Unit)
-    add_qgc_test(GPSRtkTest LABELS Unit)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE SerialGPSTransportTest.cc SerialGPSTransportTest.h)
     add_qgc_test(SerialGPSTransportTest LABELS Unit)
 endif()
