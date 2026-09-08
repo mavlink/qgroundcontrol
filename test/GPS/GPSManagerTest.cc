@@ -1,6 +1,7 @@
 #include "GPSManagerTest.h"
 
 #include <QtCore/QScopeGuard>
+#include <QtCore/QSettings>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
 #include <QtQml/QQmlComponent>
@@ -14,16 +15,17 @@
 #include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
 #include "LinkManager.h"
+#include "RTKAutoConnect.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 #ifndef QGC_NO_SERIAL_LINK
-#include "RTKAutoConnect.h"
 #include "SerialPortManager.h"
 #endif
 
 namespace {
 void saveNetworkSettings(TestFixtures::SettingsFixture& saved, const QString& host, int port, int type)
 {
+    saved.setFactValue(SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS(), false);
     auto* settings = SettingsManager::instance()->rtkSettings();
     saved.setFactValue(settings->networkBaseHost(), host);
     saved.setFactValue(settings->networkBasePort(), port);
@@ -80,6 +82,10 @@ void GPSManagerTest::_invalidEndpoint()
     QVERIFY(!manager.networkRtkActive());
     QVERIFY(!manager.gpsRtk()->hasReceiver());
     QVERIFY(active.isEmpty());
+    SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS()->setRawValue(true);
+    manager._rtkAutoConnect->update();
+    QVERIFY(!manager.networkRtkActive());
+    QVERIFY(!manager.gpsRtk()->hasReceiver());
 }
 
 void GPSManagerTest::_networkRecoveryAndDisconnect()
@@ -90,6 +96,7 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
     server.close();
     TestFixtures::SettingsFixture saved;
     saveNetworkSettings(saved, QStringLiteral(" 127.0.0.1 "), port, 3);
+    SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS()->setRawValue(true);
     GPSManager manager;
     QSignalSpy active(&manager, &GPSManager::networkRtkActiveChanged);
     auto* receiver = manager.gpsRtk();
@@ -100,7 +107,7 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
                      QRegularExpression(QStringLiteral("Failed to connect to GPS receiver")));
     expectLogMessage("GPS.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
-    QVERIFY(manager.connectNetworkRtk());
+    manager._rtkAutoConnect->update();
     QVERIFY(manager.networkRtkActive());
     QVERIFY(!receiver->connected());
     QVERIFY(!manager.connectNetworkRtk());
@@ -111,7 +118,7 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
 
     QVERIFY(server.listen(QHostAddress::LocalHost, port));
     QTRY_VERIFY_WITH_TIMEOUT(([&]() {
-                                 manager._updateNetworkRtk();
+                                 manager._rtkAutoConnect->update();
                                  return receiver->connected();
                              })(),
                              TestTimeout::mediumMs());
@@ -125,7 +132,7 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
     verifyExpectedLogMessage();
     QVERIFY(!receiver->connected());
     QTRY_VERIFY_WITH_TIMEOUT(([&]() {
-                                 manager._updateNetworkRtk();
+                                 manager._rtkAutoConnect->update();
                                  return receiver->connected();
                              })(),
                              TestTimeout::mediumMs());
@@ -135,23 +142,97 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
     QVERIFY(!manager.networkRtkActive());
     QVERIFY(!receiver->hasReceiver());
     QVERIFY(!receiver->connected());
-    manager._updateNetworkRtk();
+    manager._rtkAutoConnect->update();
     QVERIFY(!receiver->hasReceiver());
     QCOMPARE(active.size(), 2);
+}
+
+void GPSManagerTest::_networkStartupAndPause()
+{
+    ReceiverServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    TestFixtures::SettingsFixture saved;
+    saveNetworkSettings(saved, QStringLiteral("localhost"), server.serverPort(), 3);
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), false);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    settings->autoConnectNetworkRTKGPS()->setRawValue(true);
+    // SettingsFact ignores saved values during unit tests; verify the stored preference directly.
+    QVERIFY(QSettings().value(QStringLiteral("AutoConnect/autoConnectNetworkRTKGPS")).toBool());
+
+    GPSManager manager;
+    manager.init();
+    QVERIFY(!manager.networkRtkActive());
+    manager._updateConnections();
+    QVERIFY(manager.networkRtkActive());
+    QTRY_VERIFY_WITH_TIMEOUT(manager.gpsRtk()->connected(), TestTimeout::mediumMs());
+    QCOMPARE(server.connections, 1);
+
+    manager.disconnectNetworkRtk();
+    QVERIFY(manager.networkRtkAutoConnectPaused());
+    QVERIFY(settings->autoConnectNetworkRTKGPS()->rawValue().toBool());
+    manager._updateConnections();
+    manager._updateConnections();
+    QVERIFY(!manager.networkRtkActive());
+    QVERIFY(!manager.gpsRtk()->hasReceiver());
+    QCOMPARE(server.connections, 1);
+
+    // A fresh manager reads the saved option without requiring a setting-change signal.
+    {
+        GPSManager restarted;
+        restarted.init();
+        QVERIFY(!restarted.networkRtkAutoConnectPaused());
+        restarted._updateConnections();
+        QTRY_VERIFY_WITH_TIMEOUT(restarted.gpsRtk()->connected(), TestTimeout::mediumMs());
+        QCOMPARE(server.connections, 2);
+    }
+    QVERIFY(manager.networkRtkAutoConnectPaused());
+    QVERIFY(manager.connectNetworkRtk());
+    QVERIFY(!manager.networkRtkAutoConnectPaused());
+    QTRY_VERIFY_WITH_TIMEOUT(manager.gpsRtk()->connected(), TestTimeout::mediumMs());
+    QCOMPARE(server.connections, 3);
+    settings->autoConnectNetworkRTKGPS()->setRawValue(false);
+    QVERIFY(!manager.networkRtkActive());
+    QVERIFY(!manager.gpsRtk()->hasReceiver());
+    manager._updateConnections();
+    QVERIFY(!manager.networkRtkActive());
+
+    settings->autoConnectNetworkRTKGPS()->setRawValue(true);
+    manager._updateConnections();
+    QTRY_VERIFY_WITH_TIMEOUT(manager.gpsRtk()->connected(), TestTimeout::mediumMs());
+    manager.disconnectNetworkRtk();
+    QVERIFY(manager.networkRtkAutoConnectPaused());
+    settings->autoConnectNetworkRTKGPS()->setRawValue(false);
+    settings->autoConnectNetworkRTKGPS()->setRawValue(true);
+    QVERIFY(!manager.networkRtkAutoConnectPaused());
+    manager._updateConnections();
+    QTRY_VERIFY_WITH_TIMEOUT(manager.gpsRtk()->connected(), TestTimeout::mediumMs());
+    QCOMPARE(server.connections, 5);
 }
 
 void GPSManagerTest::_suspendedConnections()
 {
     TestFixtures::SettingsFixture saved;
-    saveNetworkSettings(saved, QStringLiteral("localhost"), 2101, 0);
+    ReceiverServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    saveNetworkSettings(saved, QStringLiteral("localhost"), server.serverPort(), 3);
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), false);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    settings->autoConnectNetworkRTKGPS()->setRawValue(true);
     auto* links = LinkManager::instance();
     QVERIFY(!links->connectionsSuspended());
     const auto restore = qScopeGuard([links]() { links->setConnectionsAllowed(); });
     links->setConnectionsSuspended(QStringLiteral("test"));
     GPSManager manager;
+    manager.init();
     QVERIFY(!manager.connectNetworkRtk());
+    manager._updateConnections();
     QVERIFY(!manager.networkRtkActive());
     QVERIFY(!manager.gpsRtk()->hasReceiver());
+    links->setConnectionsAllowed();
+    manager._updateConnections();
+    QTRY_VERIFY_WITH_TIMEOUT(manager.gpsRtk()->connected(), TestTimeout::mediumMs());
 }
 
 void GPSManagerTest::_serialDiscoveryPausesForNetwork()
@@ -171,7 +252,9 @@ void GPSManagerTest::_serialDiscoveryPausesForNetwork()
     GPSManager manager;
     manager.init();
     delete manager._rtkAutoConnect;
-    manager._rtkAutoConnect = new RTKAutoConnect(settings, manager.gpsRtk(), &ports, &manager);
+    manager._rtkAutoConnect =
+        new RTKAutoConnect(manager.gpsRtk(), settings, SettingsManager::instance()->rtkSettings(), &manager);
+    manager._rtkAutoConnect->setSerialDiscovery(&ports);
     // Observe discovery requests without opening the synthetic serial device.
     QSignalSpy serialConnects(manager._rtkAutoConnect, &RTKAutoConnect::connectRequested);
     QSignalSpy serialDisconnects(manager._rtkAutoConnect, &RTKAutoConnect::disconnectRequested);
@@ -180,7 +263,9 @@ void GPSManagerTest::_serialDiscoveryPausesForNetwork()
                                  return serialConnects.size() == 1;
                              })(),
                              TestTimeout::longMs());
-    QVERIFY(manager.connectNetworkRtk());
+    settings->autoConnectNetworkRTKGPS()->setRawValue(true);
+    manager._updateConnections();
+    QVERIFY(manager.networkRtkActive());
     QCOMPARE(serialDisconnects.size(), 1);
     QTRY_VERIFY_WITH_TIMEOUT(manager.gpsRtk()->connected(), TestTimeout::mediumMs());
     manager._updateConnections();
@@ -244,6 +329,23 @@ void GPSManagerTest::_networkSettingsPanel()
     QVERIFY(!GPSManager::instance()->networkRtkActive());
     QVERIFY(host->property("enabled").toBool());
     QCOMPARE(button->property("text").toString(), QStringLiteral("Connect"));
+    auto* automatic = root->findChild<QObject*>(QStringLiteral("networkRtkAutoConnect"));
+    QVERIFY(automatic);
+    QVERIFY(!automatic->property("checked").toBool());
+    automatic->setProperty("checked", true);
+    QVERIFY(QMetaObject::invokeMethod(automatic, "clicked"));
+    QVERIFY(SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS()->rawValue().toBool());
+    auto* manager = GPSManager::instance();
+    manager->_rtkAutoConnect->update();
+    QTRY_VERIFY_WITH_TIMEOUT(manager->gpsRtk()->connected(), TestTimeout::mediumMs());
+    QVERIFY(QMetaObject::invokeMethod(button, "clicked"));
+    manager->_rtkAutoConnect->update();
+    QVERIFY(!manager->networkRtkActive());
+    QTRY_COMPARE_WITH_TIMEOUT(status->property("text").toString(), QStringLiteral("Automatic connection paused"),
+                              TestTimeout::mediumMs());
+    automatic->setProperty("checked", false);
+    QVERIFY(QMetaObject::invokeMethod(automatic, "clicked"));
+    QVERIFY(!SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS()->rawValue().toBool());
 }
 
 UT_REGISTER_TEST(GPSManagerTest, TestLabel::Unit)

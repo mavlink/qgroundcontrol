@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QtCore/QDeadlineTimer>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-#include "GPSType.h"
 
 class GPSRtk;
 class NmeaSourceManager;
@@ -18,6 +15,8 @@ class GPSManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_PROPERTY(bool networkRtkActive READ networkRtkActive NOTIFY networkRtkActiveChanged)
+    Q_PROPERTY(
+        bool networkRtkAutoConnectPaused READ networkRtkAutoConnectPaused NOTIFY networkRtkAutoConnectPausedChanged)
 
     friend class GPSManagerTest;
 
@@ -32,29 +31,20 @@ public:
 
     GPSRtk *gpsRtk() { return _gpsRtk; }
 
-    bool networkRtkActive() const { return _networkRtkActive; }
+    bool networkRtkActive() const;
+    bool networkRtkAutoConnectPaused() const;
 
     Q_INVOKABLE bool connectNetworkRtk();
     Q_INVOKABLE void disconnectNetworkRtk();
 
 signals:
     void networkRtkActiveChanged();
+    void networkRtkAutoConnectPausedChanged();
 
 private:
     void _updateConnections();
-    void _updateNetworkRtk();
-    void _startNetworkRtk();
     QTimer* _connectionTimer = nullptr;
     NmeaSourceManager* _nmeaSources = nullptr;
-#ifndef QGC_NO_SERIAL_LINK
     RTKAutoConnect* _rtkAutoConnect = nullptr;
-#endif
     GPSRtk *_gpsRtk = nullptr;
-    bool _networkRtkActive = false;
-    QString _networkHost;
-    quint16 _networkPort = 0;
-    GPSType _networkType = GPSType::u_blox;
-    QDeadlineTimer _networkRetryDeadline = QDeadlineTimer::Forever;
-    int _networkRetryDelayMs = 1000;
-    static constexpr int kMaxNetworkRetryDelayMs = 30000;
 };

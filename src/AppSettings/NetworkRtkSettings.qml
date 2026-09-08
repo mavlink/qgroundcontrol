@@ -12,6 +12,7 @@ SettingsGroupLayout {
              && root._settings.networkReceiverType.userVisible
 
     readonly property var _settings: QGroundControl.settingsManager.rtkSettings
+    readonly property var _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
     readonly property var _manager: QGroundControl.gpsManager
     readonly property var _facts: QGroundControl.gpsRtk
     readonly property bool _active: root._manager.networkRtkActive
@@ -21,6 +22,25 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         text: qsTr("Connect to a receiver command port over TCP. USB RTK autoconnect pauses until you disconnect. For a serial bridge, configure both the bridge and receiver to 115200 baud first.")
+    }
+
+    FactCheckBox {
+        objectName: "networkRtkAutoConnect"
+        Layout.fillWidth: true
+        text: qsTr("Automatically connect to this receiver")
+        fact: root._autoConnectSettings.autoConnectNetworkRTKGPS
+        visible: fact.userVisible
+        onClicked: {
+            root.forceActiveFocus()
+            root._invalidConnection = false
+        }
+    }
+
+    QGCLabel {
+        Layout.fillWidth: true
+        visible: root._autoConnectSettings.autoConnectNetworkRTKGPS.value
+        wrapMode: Text.WordWrap
+        text: qsTr("Connects at startup. Disconnect pauses automatic connection until you click Connect, turn this option off and on, or restart the application. Turning this option off disconnects the receiver.")
     }
 
     LabelledFactTextField {
@@ -53,9 +73,13 @@ SettingsGroupLayout {
         wrapMode: Text.WordWrap
         text: {
             if (!root._active) {
-                return root._invalidConnection
-                    ? qsTr("Unable to connect. Check the host, port, receiver type, and whether connections are allowed.")
-                    : qsTr("Disconnected")
+                if (root._invalidConnection) return qsTr("Unable to connect. Check the host, port, receiver type, and whether connections are allowed.")
+                if (root._autoConnectSettings.autoConnectNetworkRTKGPS.value) {
+                    return root._manager.networkRtkAutoConnectPaused
+                        ? qsTr("Automatic connection paused")
+                        : qsTr("Waiting to connect automatically. Check the host, port, receiver type, and whether connections are allowed.")
+                }
+                return qsTr("Disconnected")
             }
             if (root._facts.connected.value) return qsTr("Connected")
             if (root._facts.lastError.value) return qsTr("%1 — retrying automatically").arg(root._facts.lastError.enumStringValue)

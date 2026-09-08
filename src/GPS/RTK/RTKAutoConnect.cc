@@ -1,92 +1,162 @@
 #include "RTKAutoConnect.h"
 
-#include <QtCore/QSet>
+#include <QtCore/QUrl>
 
 #include <algorithm>
-#include <iterator>
+#include <utility>
 
 #include "AutoConnectSettings.h"
 #include "GPSRtk.h"
+#include "RTKSettings.h"
+#include "TcpGPSTransport.h"
 
-RTKAutoConnect::RTKAutoConnect(AutoConnectSettings* settings, GPSRtk* receiver, SerialPortManager* serialPorts,
+RTKAutoConnect::RTKAutoConnect(GPSRtk* receiver, AutoConnectSettings* settings, RTKSettings* rtkSettings,
                                QObject* parent)
-    : QObject(parent), _settings(settings), _receiver(receiver), _serialPorts(serialPorts)
-{}
-
-void RTKAutoConnect::stop()
+    : QObject(parent), _receiver(receiver), _settings(settings), _rtkSettings(rtkSettings)
 {
-    _waitingPorts.clear();
-    _retryDeadline = QDeadlineTimer::Forever;
-    _retryDelayMs = 1000;
-    if (!_autoConnectedPort.isEmpty()) {
-        _autoConnectedPort.clear();
-        emit disconnectRequested();
+    if (_receiver) {
+        connect(this, &RTKAutoConnect::disconnectRequested, _receiver, &GPSRtk::disconnectGPS);
+    }
+    if (_settings) {
+        connect(_settings->autoConnectNetworkRTKGPS(), &Fact::rawValueChanged, this, [this](const QVariant& enabled) {
+            _setNetworkAutoConnectPaused(false);
+            if (!enabled.toBool() && networkActive()) {
+                stop();
+            }
+        });
     }
 }
 
-void RTKAutoConnect::update()
+bool RTKAutoConnect::connectNetwork()
 {
-    if (!_settings || !_receiver || !_serialPorts) {
-        return;
+    if (!_rtkSettings) {
+        return false;
     }
-    if (!_settings->autoConnectRTKGPS()->rawValue().toBool()) {
+    auto* settings = _rtkSettings;
+    const QString host = settings->networkBaseHost()->rawValue().toString().trimmed();
+    const int port = settings->networkBasePort()->rawValue().toInt();
+    const int type = settings->networkReceiverType()->rawValue().toInt();
+    QUrl endpoint;
+    endpoint.setScheme(QStringLiteral("tcp"));
+    endpoint.setHost(host);
+    if (host.isEmpty() || !endpoint.isValid() || endpoint.host().isEmpty() || port < 1 || port > 65535 || type < 0 ||
+        type > 3) {
+        return false;
+    }
+
+    GPSType receiverType = GPSType::u_blox;
+    switch (type) {
+        case 0:
+            receiverType = GPSType::u_blox;
+            break;
+        case 1:
+            receiverType = GPSType::trimble;
+            break;
+        case 2:
+            receiverType = GPSType::septentrio;
+            break;
+        case 3:
+            receiverType = GPSType::femto;
+            break;
+    }
+    return connectNetwork(receiverType, [host = endpoint.host(), port](const std::atomic_bool& stop) {
+        return std::make_unique<TcpGPSTransport>(host, static_cast<quint16>(port), stop);
+    });
+}
+
+bool RTKAutoConnect::connectNetwork(GPSType type, GPSProvider::TransportFactory factory)
+{
+    if (!_receiver || !factory || networkActive()) {
+        return false;
+    }
+    stop();
+    _setNetworkAutoConnectPaused(false);
+    _networkType = type;
+    _networkFactory = std::move(factory);
+    _startNetwork();
+    emit networkActiveChanged();
+    return true;
+}
+
+void RTKAutoConnect::disconnectNetwork()
+{
+    _setNetworkAutoConnectPaused(true);
+    if (networkActive()) {
         stop();
-        return;
     }
-    const auto ports = _serialPorts->availablePorts();
-    QSet<QString> present;
-    for (const auto& port : ports) {
-        present.insert(port.systemLocation);
+}
+
+void RTKAutoConnect::_setNetworkAutoConnectPaused(bool paused)
+{
+    if (_networkAutoConnectPaused != paused) {
+        _networkAutoConnectPaused = paused;
+        emit networkAutoConnectPausedChanged();
     }
-    const QString nmeaPort = _settings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceSerial
-                                 ? _settings->autoConnectNmeaPort()->rawValue().toString().trimmed()
-                                 : QString();
-    if (!_autoConnectedPort.isEmpty() && (!present.contains(_autoConnectedPort) || _autoConnectedPort == nmeaPort)) {
-        stop();
+}
+
+void RTKAutoConnect::stop()
+{
+    const bool wasNetworkActive = networkActive();
+    bool hadSession = wasNetworkActive;
+    _networkFactory = {};
+#ifndef QGC_NO_SERIAL_LINK
+    hadSession = hadSession || !_autoConnectedPort.isEmpty();
+    _autoConnectedPort.clear();
+    _waitingPorts.clear();
+#endif
+    _retryDeadline = QDeadlineTimer::Forever;
+    _retryDelayMs = 1000;
+    if (hadSession) {
+        emit disconnectRequested();
     }
-    for (auto it = _waitingPorts.begin(); it != _waitingPorts.end();) {
-        it = !present.contains(it.key()) ? _waitingPorts.erase(it) : std::next(it);
+    if (wasNetworkActive) {
+        emit networkActiveChanged();
     }
+}
+
+void RTKAutoConnect::_startNetwork()
+{
+    _receiver->connectReceiver(_networkType, _networkFactory);
+}
+
+bool RTKAutoConnect::_retryReady()
+{
     if (_receiver->hasReceiver()) {
         _retryDeadline = QDeadlineTimer::Forever;
         if (_receiver->connected()) {
             _retryDelayMs = 1000;
         }
+        return false;
+    }
+    if (_retryDeadline.isForever()) {
+        _retryDeadline.setRemainingTime(_retryDelayMs);
+    }
+    return _retryDeadline.hasExpired();
+}
+
+void RTKAutoConnect::_retryStarted()
+{
+    _retryDeadline = QDeadlineTimer::Forever;
+    _retryDelayMs = (std::min) (_retryDelayMs * 2, kMaxRetryDelayMs);
+}
+
+void RTKAutoConnect::update()
+{
+    if (!_receiver) {
         return;
     }
-    if (!_autoConnectedPort.isEmpty()) {
-        if (_retryDeadline.isForever()) {
-            _retryDeadline.setRemainingTime(_retryDelayMs);
-        }
-        if (!_retryDeadline.hasExpired()) {
-            return;
-        }
-        for (const auto& port : ports) {
-            if (port.systemLocation == _autoConnectedPort && port.autoConnectAllowed && !port.bootloader &&
-                port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS &&
-                _serialPorts->canReservePort(port.systemLocation)) {
-                _retryDeadline = QDeadlineTimer::Forever;
-                _retryDelayMs = std::min(_retryDelayMs * 2, kMaxRetryDelayMs);
-                emit connectRequested(port.systemLocation, port.boardName);
-                break;
-            }
+    if (!networkActive() && !_networkAutoConnectPaused && _settings &&
+        _settings->autoConnectNetworkRTKGPS()->rawValue().toBool()) {
+        connectNetwork();
+    }
+    if (networkActive()) {
+        if (_retryReady()) {
+            _retryStarted();
+            _startNetwork();
         }
         return;
     }
-    for (const auto& port : ports) {
-        if (!port.autoConnectAllowed || port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader ||
-            port.systemLocation == nmeaPort || !_serialPorts->canReservePort(port.systemLocation)) {
-            _waitingPorts.remove(port.systemLocation);
-            continue;
-        }
-        auto it = _waitingPorts.find(port.systemLocation);
-        if (it == _waitingPorts.end()) {
-            _waitingPorts[port.systemLocation].start();
-        } else if (it->elapsed() >= _connectDelayMs) {
-            _autoConnectedPort = port.systemLocation;
-            _waitingPorts.clear();
-            emit connectRequested(port.systemLocation, port.boardName);
-            return;
-        }
-    }
+#ifndef QGC_NO_SERIAL_LINK
+    _updateSerial();
+#endif
 }

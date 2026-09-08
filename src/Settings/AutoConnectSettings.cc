@@ -50,6 +50,7 @@ DECLARE_SETTINGGROUP(AutoConnect, "AutoConnect")
 }
 
 DECLARE_SETTINGSFACT(AutoConnectSettings, autoConnectUDP)
+DECLARE_SETTINGSFACT(AutoConnectSettings, autoConnectNetworkRTKGPS)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpListenPort)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostIP)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostPort)
@@ -131,5 +132,3 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaBaud)
     }
     return _autoConnectNmeaBaudFact;
 }
-
-

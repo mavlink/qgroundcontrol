@@ -5,10 +5,15 @@
 #include "AutoConnectSettings.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSRtk.h"
+#include "GPSTransport.h"
 #include "RTKAutoConnect.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
+#ifndef QGC_NO_SERIAL_LINK
+#include "SerialPortManager.h"
+#endif
 
+#ifndef QGC_NO_SERIAL_LINK
 void RTKAutoConnectTest::_discoveryUnplugAndDisable()
 {
     TestFixtures::SettingsFixture saved;
@@ -93,7 +98,6 @@ void RTKAutoConnectTest::_excludedPorts()
     QCOMPARE(connects.count(), 0);
 }
 
-UT_REGISTER_TEST(RTKAutoConnectTest, TestLabel::Unit)
 
 void RTKAutoConnectTest::_failedAttemptsBackOffAndRespectReservations()
 {
@@ -192,3 +196,61 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     QCOMPARE(attempts.size(), 2);
     QVERIFY(discovery._autoConnectedPort.isEmpty());
 }
+#endif
+
+void RTKAutoConnectTest::_networkRetriesAndStops()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* manufacturer = SettingsManager::instance()->rtkSettings()->baseReceiverManufacturers();
+    saved.setFactValue(manufacturer, manufacturer->rawValue());
+    GPSRtk receiver;
+    RTKAutoConnect controller(&receiver, nullptr, nullptr);
+    QSignalSpy active(&controller, &RTKAutoConnect::networkActiveChanged);
+    QSignalSpy disconnects(&controller, &RTKAutoConnect::disconnectRequested);
+    QVERIFY(!controller.connectNetwork(GPSType::u_blox, {}));
+    QVERIFY(!controller.networkActive());
+    std::atomic_int attempts = 0;
+    const GPSProvider::TransportFactory factory = [&](const std::atomic_bool&) {
+        ++attempts;
+        return std::unique_ptr<GPSTransport>();
+    };
+    const auto expectFailure = [this]() {
+        expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
+    };
+    expectFailure();
+    QVERIFY(controller.connectNetwork(GPSType::u_blox, factory));
+    QVERIFY(controller.networkActive());
+    QVERIFY(!controller.connectNetwork(GPSType::u_blox, factory));
+    QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(attempts.load(), 1);
+    controller.update();
+    QCOMPARE(attempts.load(), 1);
+    QCOMPARE(controller._retryDelayMs, 1000);
+    QVERIFY(!controller._retryDeadline.isForever());
+
+    for (const int delay : {2000, 4000, 8000, 16000, 30000, 30000}) {
+        controller._retryDeadline.setRemainingTime(0);
+        const int previousAttempts = attempts.load();
+        expectFailure();
+        controller.update();
+        QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
+        verifyExpectedLogMessage();
+        QCOMPARE(attempts.load(), previousAttempts + 1);
+        QCOMPARE(controller._retryDelayMs, delay);
+    }
+    controller.disconnectNetwork();
+    QVERIFY(!controller.networkActive());
+    QCOMPARE(active.size(), 2);
+    QCOMPARE(disconnects.size(), 1);
+    QCOMPARE(controller._retryDelayMs, 1000);
+    QVERIFY(controller._retryDeadline.isForever());
+    const int attemptsBeforeStop = attempts.load();
+    controller.update();
+    controller.stop();
+    QCOMPARE(attempts.load(), attemptsBeforeStop);
+    QCOMPARE(disconnects.size(), 1);
+}
+
+UT_REGISTER_TEST(RTKAutoConnectTest, TestLabel::Unit)

@@ -29,6 +29,7 @@ public:
     DEFINE_SETTINGFACT(autoConnectPixhawk)
     DEFINE_SETTINGFACT(autoConnectSiKRadio)
     DEFINE_SETTINGFACT(autoConnectRTKGPS)
+    DEFINE_SETTINGFACT(autoConnectNetworkRTKGPS)
     DEFINE_SETTINGFACT(autoConnectLibrePilot)
     DEFINE_SETTINGFACT(nmeaSource)
     DEFINE_SETTINGFACT(autoConnectNmeaPort)

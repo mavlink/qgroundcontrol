@@ -10,6 +10,7 @@ private slots:
     void _invalidEndpoint_data();
     void _invalidEndpoint();
     void _networkRecoveryAndDisconnect();
+    void _networkStartupAndPause();
     void _suspendedConnections();
     void _serialDiscoveryPausesForNetwork();
     void _networkSettingsPanel();
