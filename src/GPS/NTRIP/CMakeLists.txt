@@ -5,8 +5,6 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        NMEAUtils.cc
-        NMEAUtils.h
         NTRIPError.h
         NTRIPTransport.cc
         NTRIPTransport.h

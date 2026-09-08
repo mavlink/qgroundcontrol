@@ -18,7 +18,7 @@
 #endif
 #endif
 
-QGC_LOGGING_CATEGORY(NmeaSourceManagerLog, "GPS.NmeaSourceManager")
+QGC_LOGGING_CATEGORY(NmeaSourceManagerLog, "GPS.NMEA.NmeaSourceManager")
 
 NmeaSourceManager::NmeaSourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager,
                                      QObject* parent)
