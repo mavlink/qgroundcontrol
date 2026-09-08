@@ -14,6 +14,8 @@ class GPSRtk : public QObject
 {
     Q_OBJECT
 
+    friend class GPSRtkTest;
+
 public:
     explicit GPSRtk(QObject* parent = nullptr);
     ~GPSRtk();
@@ -24,6 +26,8 @@ public:
     void connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory);
     void disconnectGPS();
     bool connected() const;
+
+    bool hasReceiver() const { return _gpsProvider != nullptr; }
     FactGroup* gpsRtkFactGroup();
 
     struct SatelliteCounts
@@ -47,7 +51,5 @@ private:
     GPSProvider* _gpsProvider = nullptr;
     GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
 
-    std::atomic_bool _requestGpsStop = false;
-
-    static constexpr uint32_t kGPSThreadDisconnectTimeout = 2000;
+    unsigned long _disconnectTimeoutMs = 2000;
 };

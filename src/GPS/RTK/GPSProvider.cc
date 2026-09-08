@@ -10,12 +10,8 @@
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
 
 GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
-                         const std::atomic_bool& requestStop, QObject* parent)
-    : QThread(parent),
-      _transportFactory(std::move(transportFactory)),
-      _type(type),
-      _requestStop(requestStop),
-      _config(config)
+                         QObject* parent)
+    : QThread(parent), _transportFactory(std::move(transportFactory)), _type(type), _config(config)
 {
     qCDebug(GPSProviderLog) << QStringLiteral("Survey in accuracy: %1 | duration: %2").arg(_config.surveyInAccMeters).arg(_config.surveyInDurationSecs);
 }
@@ -34,10 +30,16 @@ void GPSProvider::run()
 #endif
 
     auto transport = transportFactory ? transportFactory(_requestStop) : nullptr;
+    if (_requestStop) {
+        return;
+    }
     if (!transport || !transport->open()) {
         if (!_requestStop) {
             emit connectionError(GPSConnectionError::OpenFailed);
         }
+        return;
+    }
+    if (_requestStop) {
         return;
     }
 
@@ -58,33 +60,26 @@ void GPSProvider::run()
 
     GPSDriver driver(_type, *transport, _config, std::move(sinks));
 
-    bool configErrorReported = false;
-    while (!_requestStop) {
-        if (!driver.configure()) {
-            if (_requestStop) {
-                break; // disconnect aborted configure mid-flight; not a real failure
-            }
-            if (!configErrorReported) {
-                emit connectionError(GPSConnectionError::ConfigFailed);
-                configErrorReported = true;
-            }
-            msleep(kConfigRetryDelayMs);
-            continue;
+    if (!driver.configure()) {
+        if (!_requestStop) {
+            emit connectionError(GPSConnectionError::ConfigFailed);
         }
-        configErrorReported = false;
+        return;
+    }
+    if (_requestStop) {
+        return;
+    }
+    emit receiverReady();
 
-        uint8_t idleCycles = 0;
-        while (!_requestStop && (idleCycles < kMaxIdleReceiveCycles)) {
-            gotData = false;
-            const int ret = driver.receive(kGPSReceiveTimeout);
-            const bool progress = (ret > 0) || gotData; // position/sat (ret) or RTCM/survey-in (sinks)
-            idleCycles = progress ? 0 : (idleCycles + 1);
-        }
-
-        if (transport->fatalError()) {
-            emit connectionError(GPSConnectionError::DeviceError);
-            break;
-        }
+    uint8_t idleCycles = 0;
+    while (!_requestStop && !transport->fatalError() && idleCycles < kMaxIdleReceiveCycles) {
+        gotData = false;
+        const int ret = driver.receive(kGPSReceiveTimeout);
+        const bool progress = (ret > 0) || gotData;
+        idleCycles = progress ? 0 : (idleCycles + 1);
+    }
+    if (!_requestStop) {
+        emit connectionError(GPSConnectionError::DeviceError);
     }
 
     qCDebug(GPSProviderLog) << "Exiting GPS thread";

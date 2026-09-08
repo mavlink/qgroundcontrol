@@ -2,6 +2,8 @@
 
 #include <QtTest/QSignalSpy>
 
+#include <cstring>
+
 #include "GPSProvider.h"
 #include "GPSTransport.h"
 
@@ -18,7 +20,7 @@ struct TransportTrace
 class TestTransport : public GPSTransport
 {
 public:
-    TestTransport(TransportTrace& trace, std::atomic_bool& stop, bool openResult, bool cancelInOpen)
+    TestTransport(TransportTrace& trace, std::function<void()> stop, bool openResult, bool cancelInOpen)
         : _trace(trace), _stop(stop), _openResult(openResult), _cancelInOpen(cancelInOpen)
     {
         _trace.constructedOn = QThread::currentThread();
@@ -34,7 +36,9 @@ public:
     {
         _trace.openedOn = QThread::currentThread();
         // Stop before receiver configuration; this test exercises transport ownership only.
-        _stop = _cancelInOpen;
+        if (_cancelInOpen) {
+            _stop();
+        }
         return _openResult;
     }
 
@@ -48,7 +52,7 @@ public:
 
 private:
     TransportTrace& _trace;
-    std::atomic_bool& _stop;
+    std::function<void()> _stop;
     bool _openResult;
     bool _cancelInOpen;
 };
@@ -70,12 +74,11 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
     TransportTrace trace;
     auto lifetime = std::make_shared<int>(0);
     trace.factoryLifetime = lifetime;
-    std::atomic_bool stop = false;
     GPSProvider provider(
         [&, lifetime = std::move(lifetime)](const std::atomic_bool&) {
-            return std::make_unique<TestTransport>(trace, stop, openResult, cancelInOpen);
+            return std::make_unique<TestTransport>(trace, [&provider]() { provider.stop(); }, openResult, cancelInOpen);
         },
-        GPSType::u_blox, GPSReceiverConfig{}, stop);
+        GPSType::u_blox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
@@ -100,12 +103,11 @@ void GPSProviderTest::_missingTransportReportsOpenFailure_data()
 void GPSProviderTest::_missingTransportReportsOpenFailure()
 {
     QFETCH(bool, hasFactory);
-    std::atomic_bool stop = false;
     GPSProvider::TransportFactory factory;
     if (hasFactory) {
         factory = [](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; };
     }
-    GPSProvider provider(std::move(factory), GPSType::u_blox, GPSReceiverConfig{}, stop);
+    GPSProvider provider(std::move(factory), GPSType::u_blox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
@@ -115,15 +117,15 @@ void GPSProviderTest::_missingTransportReportsOpenFailure()
 
 void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
 {
-    std::atomic_bool stop = true;
     bool created = false;
     GPSProvider provider(
         [&](const std::atomic_bool&) {
             created = true;
             return std::unique_ptr<GPSTransport>{};
         },
-        GPSType::u_blox, GPSReceiverConfig{}, stop);
+        GPSType::u_blox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    provider.stop();
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
     QVERIFY(!created);
@@ -131,3 +133,68 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
 }
 
 UT_REGISTER_TEST(GPSProviderTest, TestLabel::Unit)
+
+namespace {
+class FemtoAckTransport : public GPSTransport
+{
+public:
+    bool open() override { return true; }
+
+    bool fatalError() const override { return false; }
+
+    bool setBaudrate(unsigned) override { return true; }
+
+    int write(const uint8_t* bytes, int size) override
+    {
+        const QByteArray command(reinterpret_cast<const char*>(bytes), size);
+        _reply = '<' + command.split(' ').first().trimmed() + " OK";
+        _reply.append(char(0));
+        return size;
+    }
+
+    int read(uint8_t* bytes, int size, int) override
+    {
+        if (_reply.isEmpty()) {
+            return -1;
+        }
+        const auto count = qMin(size, static_cast<int>(_reply.size()));
+        std::memcpy(bytes, _reply.constData(), count);
+        _reply.remove(0, count);
+        return count;
+    }
+
+private:
+    QByteArray _reply;
+};
+}  // namespace
+
+void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
+{
+    GPSProvider provider([](const std::atomic_bool&) { return std::make_unique<FemtoAckTransport>(); }, GPSType::femto,
+                         GPSReceiverConfig{});
+    QSignalSpy ready(&provider, &GPSProvider::receiverReady);
+    QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    provider.start();
+    QVERIFY(provider.wait(TestTimeout::mediumMs()));
+    QCOMPARE(ready.size(), 1);
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+}
+
+void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
+{
+    TransportTrace trace;
+    GPSProvider provider(
+        [&](const std::atomic_bool&) {
+            provider.stop();
+            return std::make_unique<TestTransport>(trace, []() {}, true, false);
+        },
+        GPSType::u_blox, GPSReceiverConfig{});
+    QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    provider.start();
+    QVERIFY(provider.wait(TestTimeout::shortMs()));
+    QCOMPARE(trace.constructedOn, &provider);
+    QVERIFY(!trace.openedOn);
+    QCOMPARE(trace.destroyedOn, &provider);
+    QVERIFY(errors.isEmpty());
+}

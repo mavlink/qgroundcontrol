@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
@@ -31,6 +32,9 @@ private:
     SerialPortManager* _serialPorts;
     QString _autoConnectedPort;
     QMap<QString, QElapsedTimer> _waitingPorts;
+    QDeadlineTimer _retryDeadline = QDeadlineTimer::Forever;
+    int _retryDelayMs = 1000;
+    static constexpr int kMaxRetryDelayMs = 30000;
 #ifdef Q_OS_WIN
     int _connectDelayMs = 6000;
 #else

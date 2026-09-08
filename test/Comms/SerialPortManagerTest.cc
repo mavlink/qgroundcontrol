@@ -95,10 +95,12 @@ void SerialPortManagerTest::_finishedReceiverReleasesReservation()
     QCOMPARE(ports.availablePorts().size(), 1);
     auto reservation = ports.reservePort(QStringLiteral("/test/gps"));
     QVERIFY(reservation);
-    std::atomic_bool stop = cancelled;
     GPSProvider provider(
         [reservation = std::move(reservation)](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; },
-        GPSType::u_blox, GPSReceiverConfig{}, stop);
+        GPSType::u_blox, GPSReceiverConfig{});
+    if (cancelled) {
+        provider.stop();
+    }
     QVERIFY(!ports.canReservePort(QStringLiteral("/test/mavlink")));
     inventory.clear();
     provider.start();

@@ -34,7 +34,9 @@ public:
     using TransportFactory = std::function<std::unique_ptr<GPSTransport>(const std::atomic_bool&)>;
 
     GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
-                const std::atomic_bool& requestStop, QObject* parent = nullptr);
+                QObject* parent = nullptr);
+
+    void stop() { _requestStop = true; }
 
 signals:
     void satelliteInfoUpdate(const satellite_info_s &message);
@@ -42,16 +44,16 @@ signals:
     void RTCMDataUpdate(const QByteArray &message);
     void surveyInStatus(const GPSSurveyInStatus &status);
     void connectionError(GPSConnectionError error);
+    void receiverReady();
 
 private:
     void run() final;
 
     TransportFactory _transportFactory;
     GPSType _type;
-    const std::atomic_bool &_requestStop;
+    std::atomic_bool _requestStop = false;
     GPSReceiverConfig _config{};
 
     static constexpr uint32_t kGPSReceiveTimeout = 1200;
-    static constexpr uint32_t kConfigRetryDelayMs = 500;
     static constexpr uint8_t kMaxIdleReceiveCycles = 3;
 };

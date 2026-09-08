@@ -6,6 +6,7 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSRtk.h"
 #include "RTKAutoConnect.h"
+#include "RTKSettings.h"
 #include "SettingsManager.h"
 
 void RTKAutoConnectTest::_discoveryUnplugAndDisable()
@@ -93,3 +94,101 @@ void RTKAutoConnectTest::_excludedPorts()
 }
 
 UT_REGISTER_TEST(RTKAutoConnectTest, TestLabel::Unit)
+
+void RTKAutoConnectTest::_failedAttemptsBackOffAndRespectReservations()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    QList<SerialPortManager::Port> inventory{{QStringLiteral("/test/rtk"), QStringLiteral("rtk"),
+                                              QGCSerialPortInfo::BoardTypeRTKGPS, QStringLiteral("u-blox")}};
+    SerialPortManager ports(nullptr, [&]() { return inventory; });
+    GPSRtk receiver;
+    RTKAutoConnect discovery(settings, &receiver, &ports);
+    discovery._connectDelayMs = 0;
+    QSignalSpy connects(&discovery, &RTKAutoConnect::connectRequested);
+    discovery.update();
+    discovery.update();
+    QCOMPARE(connects.size(), 1);
+    discovery.update();
+    QCOMPARE(connects.size(), 1);
+    QCOMPARE(discovery._retryDelayMs, 1000);
+    QVERIFY(!discovery._retryDeadline.isForever());
+    QTRY_VERIFY_WITH_TIMEOUT(([&]() {
+                                 discovery.update();
+                                 return connects.size() == 2;
+                             })(),
+                             TestTimeout::mediumMs());
+    QCOMPARE(discovery._retryDelayMs, 2000);
+    discovery.update();
+    QCOMPARE(connects.size(), 2);
+
+    auto claim = ports.reservePort(QStringLiteral("/test/rtk"));
+    QVERIFY(claim);
+    discovery._retryDeadline.setRemainingTime(0);
+    discovery.update();
+    QCOMPARE(connects.size(), 2);
+    claim.reset();
+    discovery.update();
+    QCOMPARE(connects.size(), 3);
+    for (const int delay : {8000, 16000, 30000, 30000}) {
+        discovery._retryDeadline.setRemainingTime(0);
+        const auto attempts = connects.size();
+        discovery.update();
+        QCOMPARE(connects.size(), attempts + 1);
+        QCOMPARE(discovery._retryDelayMs, delay);
+    }
+    const auto attemptsBeforeDisable = connects.size();
+    settings->autoConnectRTKGPS()->setRawValue(false);
+    discovery.update();
+    QCOMPARE(discovery._retryDelayMs, 1000);
+    QVERIFY(discovery._retryDeadline.isForever());
+    QVERIFY(discovery._autoConnectedPort.isEmpty());
+    QCOMPARE(connects.size(), attemptsBeforeDisable);
+}
+
+void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    auto* manufacturer = SettingsManager::instance()->rtkSettings()->baseReceiverManufacturers();
+    saved.setFactValue(manufacturer, manufacturer->rawValue());
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    QList<SerialPortManager::Port> inventory{{QStringLiteral("/test/rtk"), QStringLiteral("rtk"),
+                                              QGCSerialPortInfo::BoardTypeRTKGPS, QStringLiteral("u-blox")}};
+    SerialPortManager ports(nullptr, [&]() { return inventory; });
+    GPSRtk receiver;
+    RTKAutoConnect discovery(settings, &receiver, &ports);
+    discovery._connectDelayMs = 0;
+    QSignalSpy attempts(&discovery, &RTKAutoConnect::connectRequested);
+    connect(&discovery, &RTKAutoConnect::connectRequested, &receiver,
+            [&]() { receiver.connectReceiver(GPSType::u_blox, {}); });
+    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
+    discovery.update();
+    discovery.update();
+    QCOMPARE(attempts.size(), 1);
+    QVERIFY(receiver.hasReceiver());
+    discovery.update();
+    QCOMPARE(attempts.size(), 1);
+    QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    discovery.update();
+    QCOMPARE(attempts.size(), 1);
+    discovery._retryDeadline.setRemainingTime(0);
+    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
+    discovery.update();
+    QCOMPARE(attempts.size(), 2);
+    QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(discovery._retryDelayMs, 2000);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceSerial);
+    saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/rtk"));
+    discovery._retryDeadline.setRemainingTime(0);
+    discovery.update();
+    QCOMPARE(attempts.size(), 2);
+    QVERIFY(discovery._autoConnectedPort.isEmpty());
+}
