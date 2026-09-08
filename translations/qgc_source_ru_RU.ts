@@ -15922,62 +15922,62 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="356"/>
       <source>Camera Tracking</source>
-      <translation type="unfinished">Camera Tracking</translation>
+      <translation>Трекинг цели</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="47"/>
       <source>Zoom</source>
-      <translation type="unfinished">Zoom</translation>
+      <translation>Зум</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="188"/>
       <source>Video</source>
-      <translation type="unfinished">Video</translation>
+      <translation>Видео</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="271"/>
       <source>Photo</source>
-      <translation type="unfinished">Photo</translation>
+      <translation>Фото</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="305"/>
       <source>Free: </source>
-      <translation type="unfinished">Free: </translation>
+      <translation>Свободно: </translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="313"/>
       <source>Battery: </source>
-      <translation type="unfinished">Battery: </translation>
+      <translation>Аккумулятор:</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="388"/>
       <source>Settings</source>
-      <translation type="unfinished">Settings</translation>
+      <translation>Настройки</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="408"/>
       <source>Camera</source>
-      <translation type="unfinished">Camera</translation>
+      <translation>Камера</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="414"/>
       <source>Video Stream</source>
-      <translation type="unfinished">Video Stream</translation>
+      <translation>Видеопоток</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="420"/>
       <source>Thermal View Mode</source>
-      <translation type="unfinished">Thermal View Mode</translation>
+      <translation>Режим тепловизора</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="426"/>
       <source>Blend Opacity</source>
-      <translation type="unfinished">Blend Opacity</translation>
+      <translation>Непрозрачность наложения</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="441"/>
       <source>Photo Mode</source>
-      <translation type="unfinished">Photo Mode</translation>
+      <translation>Режим фото</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/Widgets/PhotoVideoControl.qml" line="447"/>
@@ -16118,82 +16118,82 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="175"/>
       <source>Internal error occurred during Mission Item communication: _ackTimeOut:_expectedAck == AckNone</source>
-      <translation type="unfinished">Internal error occurred during Mission Item communication: _ackTimeOut:_expectedAck == AckNone</translation>
+      <translation>Внутренняя ошибка при обмене данными элемента полётного задания: _ackTimeOut:_expectedAck == AckNone</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="180"/>
       <source>Mission request list failed, maximum retries exceeded.</source>
-      <translation type="unfinished">Mission request list failed, maximum retries exceeded.</translation>
+      <translation>Не удалось запросить список элементов полётного задания — превышено количество попыток.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="184"/>
       <source>Retrying %1 REQUEST_LIST retry Count</source>
-      <translation type="unfinished">Retrying %1 REQUEST_LIST retry Count</translation>
+      <translation>Повторная попытка REQUEST_LIST: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="191"/>
       <source>Mission read failed, maximum retries exceeded.</source>
-      <translation type="unfinished">Mission read failed, maximum retries exceeded.</translation>
+      <translation>Не удалось прочитать полётное задание — превышено максимальное количество попыток.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="195"/>
       <source>Retrying %1 MISSION_REQUEST retry Count</source>
-      <translation type="unfinished">Retrying %1 MISSION_REQUEST retry Count</translation>
+      <translation>Повторная попытка MISSION_REQUEST: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="203"/>
       <source>Mission write failed, vehicle failed to send final ack.</source>
-      <translation type="unfinished">Mission write failed, vehicle failed to send final ack.</translation>
+      <translation>Не удалось записать полётное задание — борт не отправил финальное подтверждение.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="208"/>
       <source>Mission write mission count failed, maximum retries exceeded.</source>
-      <translation type="unfinished">Mission write mission count failed, maximum retries exceeded.</translation>
+      <translation>Не удалось отправить количество элементов полётного задания — превышено максимальное количество попыток.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="217"/>
       <source>Vehicle did not request all items from ground station: %1</source>
-      <translation type="unfinished">Vehicle did not request all items from ground station: %1</translation>
+      <translation>Борт запросил не все элементы у наземной станции: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="225"/>
       <source>Mission remove all, maximum retries exceeded.</source>
-      <translation type="unfinished">Mission remove all, maximum retries exceeded.</translation>
+      <translation>Не удалось удалить все элементы полётного задания — превышено максимальное количество попыток.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="229"/>
       <source>Retrying %1 MISSION_CLEAR_ALL retry Count</source>
-      <translation type="unfinished">Retrying %1 MISSION_CLEAR_ALL retry Count</translation>
+      <translation>Повторная попытка MISSION_CLEAR_ALL: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="236"/>
       <source>Vehicle did not respond to mission item communication: %1</source>
-      <translation type="unfinished">Vehicle did not respond to mission item communication: %1</translation>
+      <translation>Борт не ответил на обмен данными элемента полётного задания: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="353"/>
       <source>Internal Error: Call to Vehicle _requestNextMissionItem with no more indices to read</source>
-      <translation type="unfinished">Internal Error: Call to Vehicle _requestNextMissionItem with no more indices to read</translation>
+      <translation>Внутренняя ошибка: вызов Vehicle::_requestNextMissionItem без оставшихся индексов для чтения</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="511"/>
       <source>Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.</source>
-      <translation type="unfinished">Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.</translation>
+      <translation>Борт запросил элемент за пределами диапазона (всего:запрошено — %1:%2). Отправка борту не удалась.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="625"/>
       <source>Vehicle remove all failed. Error: %1</source>
-      <translation type="unfinished">Vehicle remove all failed. Error: %1</translation>
+      <translation>Не удалось удалить все элементы полётного задания на борту. Ошибка: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="700"/>
       <source>Item #%1 Command: %2</source>
-      <translation type="unfinished">Item #%1 Command: %2</translation>
+      <translation>Пункт #%1 команда: %2</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="704"/>
       <source>Frame: %1</source>
-      <translation type="unfinished">Frame: %1</translation>
+      <translation>Система координат: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="710"/>
@@ -16204,92 +16204,92 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
       <location filename="../src/MissionManager/PlanManager.cc" line="725"/>
       <location filename="../src/MissionManager/PlanManager.cc" line="728"/>
       <source>Value: %1</source>
-      <translation type="unfinished">Value: %1</translation>
+      <translation>Значение: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="747"/>
       <source>Mission accepted.</source>
-      <translation type="unfinished">Mission accepted.</translation>
+      <translation>Полётное задание принято.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="750"/>
       <source>Unspecified error.</source>
-      <translation type="unfinished">Unspecified error.</translation>
+      <translation>Неопределённая ошибка.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="753"/>
       <source>Coordinate frame is not supported.</source>
-      <translation type="unfinished">Coordinate frame is not supported.</translation>
+      <translation>Система координат не поддерживается.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="756"/>
       <source>Command is not supported.</source>
-      <translation type="unfinished">Command is not supported.</translation>
+      <translation>Команда не поддерживается.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="759"/>
       <source>Mission item exceeds storage space.</source>
-      <translation type="unfinished">Mission item exceeds storage space.</translation>
+      <translation>Элемент полётного задания превышает доступное место в хранилище.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="762"/>
       <source>One of the parameters has an invalid value.</source>
-      <translation type="unfinished">One of the parameters has an invalid value.</translation>
+      <translation>Один из параметров имеет неверное значение.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="765"/>
       <source>Param 1 invalid value.</source>
-      <translation type="unfinished">Param 1 invalid value.</translation>
+      <translation>Недопустимое значение параметра 1.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="768"/>
       <source>Param 2 invalid value.</source>
-      <translation type="unfinished">Param 2 invalid value.</translation>
+      <translation>Недопустимое значение параметра 2.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="771"/>
       <source>Param 3 invalid value.</source>
-      <translation type="unfinished">Param 3 invalid value.</translation>
+      <translation>Недопустимое значение параметра 3.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="774"/>
       <source>Param 4 invalid value.</source>
-      <translation type="unfinished">Param 4 invalid value.</translation>
+      <translation>Недопустимое значение параметра 4.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="777"/>
       <source>Param 5 invalid value.</source>
-      <translation type="unfinished">Param 5 invalid value.</translation>
+      <translation>Недопустимое значение параметра 5.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="780"/>
       <source>Param 6 invalid value.</source>
-      <translation type="unfinished">Param 6 invalid value.</translation>
+      <translation>Недопустимое значение параметра 6.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="783"/>
       <source>Param 7 invalid value.</source>
-      <translation type="unfinished">Param 7 invalid value.</translation>
+      <translation>Недопустимое значение параметра 7.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="786"/>
       <source>Received mission item out of sequence.</source>
-      <translation type="unfinished">Received mission item out of sequence.</translation>
+      <translation>Получен элемент полётного задания вне последовательности.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="789"/>
       <source>Not accepting any mission commands.</source>
-      <translation type="unfinished">Not accepting any mission commands.</translation>
+      <translation>Не принимаются команды полётного задания.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="793"/>
       <source>Unknown error: %1.</source>
-      <translation type="unfinished">Unknown error: %1.</translation>
+      <translation>Неизвестная ошибка: %1.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="636"/>
       <source>Vehicle returned error: %1. %2Vehicle did not accept guided item.</source>
-      <translation type="unfinished">Vehicle returned error: %1. %2Vehicle did not accept guided item.</translation>
+      <translation>Борт вернул ошибку: %1. %2Борт не принял элемент Guided.</translation>
     </message>
   </context>
   <context>
