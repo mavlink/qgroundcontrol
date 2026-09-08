@@ -14,13 +14,9 @@
 
 #include "BluetoothLink.h"
 
-#include "PositionManager.h"
-#include "UdpIODevice.h"
-
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialLink.h"
-#include "GPSManager.h"
-#include "GPSRtk.h"
+#include "SerialPortManager.h"
 #ifdef Q_OS_ANDROID
 #include "AndroidSerial.h"
 #include "AppSettings.h"
@@ -43,7 +39,6 @@ LinkManager::LinkManager(QObject *parent)
     : QObject(parent)
     , _portListTimer(new QTimer(this))
     , _qmlConfigurations(new QmlObjectListModel(this))
-    , _nmeaSocket(new UdpIODevice(this))
 {
     qCDebug(LinkManagerLog) << this;
 
@@ -72,6 +67,7 @@ void LinkManager::init()
     // The serial backend is fixed at startup. Changing the setting requires an app restart.
     AndroidSerial::setUsePosixSerial(
         SettingsManager::instance()->appSettings()->androidUsePosixSerial()->rawValue().toBool());
+    SerialPortManager::instance()->setSinglePortOnly(!AndroidSerial::usePosixSerial());
 #endif
 
     if (!QGC::runningUnitTests()) {
@@ -137,9 +133,21 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
 
     switch(config->type()) {
 #ifndef QGC_NO_SERIAL_LINK
-    case LinkConfiguration::TypeSerial:
-        link = std::make_shared<SerialLink>(config);
-        break;
+        case LinkConfiguration::TypeSerial: {
+            const auto* serialConfig = qobject_cast<const SerialConfiguration*>(config.get());
+            if (!serialConfig) {
+                return false;
+            }
+            auto reservation = SerialPortManager::instance()->reservePort(serialConfig->portName());
+            if (!reservation) {
+                qCDebug(LinkManagerLog) << "Serial port is already reserved:" << serialConfig->portName();
+                return false;
+            }
+            link = std::make_shared<SerialLink>(config);
+            // Keep the claim until SerialLink has shut down its worker and is destroyed.
+            connect(link.get(), &QObject::destroyed, this, [reservation]() {});
+            break;
+        }
 #endif
     case LinkConfiguration::TypeUdp:
         link = std::make_shared<UDPLink>(config);
@@ -518,33 +526,7 @@ void LinkManager::_updateAutoConnectLinks()
     _addMAVLinkForwardingLink();
     _reconnectAutoConnectLinks();
 
-    const int nmeaSource = _autoConnectSettings->nmeaSource()->rawValue().toInt();
-    if (nmeaSource == AutoConnectSettings::NmeaSourceUdp) {
-        if ((_nmeaSocket->localPort() != _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt()) || (_nmeaSocket->state() != UdpIODevice::BoundState)) {
-            qCDebug(LinkManagerLog) << "Changing port for UDP NMEA stream";
-            _nmeaSocket->close();
-            _nmeaSocket->bind(QHostAddress::AnyIPv4, _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt());
-            QGCPositionManager::instance()->setNmeaSourceDevice(_nmeaSocket);
-        }
-    } else {
-        _nmeaSocket->close();
-
-        if (nmeaSource == AutoConnectSettings::NmeaSourceDisabled) {
-            // Revert QGCPositionManager to the integrated GPS if it was using an NMEA source.
-            // Reset before deleting the port so the NMEA source never holds a dangling device.
-            QGCPositionManager::instance()->resetNmeaSourceDevice();
-        }
-    }
-
 #ifndef QGC_NO_SERIAL_LINK
-    // Serial NMEA ports are set up by _addSerialAutoConnectLink() below
-    if ((nmeaSource != AutoConnectSettings::NmeaSourceSerial) && _nmeaPort) {
-        _nmeaPort->close();
-        delete _nmeaPort;
-        _nmeaPort = nullptr;
-        _nmeaDeviceName = "";
-    }
-
     _addSerialAutoConnectLink();
 #endif
 }
@@ -794,147 +776,32 @@ bool LinkManager::isLinkUSBDirect([[maybe_unused]] const LinkInterface *link)
 
 #ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
 
-void LinkManager::_filterCompositePorts(QList<QGCSerialPortInfo> &portList)
-{
-    typedef QPair<quint16, quint16> VidPidPair_t;
-
-    QMap<VidPidPair_t, QStringList> seenSerialNumbers;
-
-    for (auto it = portList.begin(); it != portList.end();) {
-        const QGCSerialPortInfo &portInfo = *it;
-        if (portInfo.hasVendorIdentifier() && portInfo.hasProductIdentifier() && !portInfo.serialNumber().isEmpty() && portInfo.serialNumber() != "0") {
-            VidPidPair_t vidPid(portInfo.vendorIdentifier(), portInfo.productIdentifier());
-            if (seenSerialNumbers.contains(vidPid) && seenSerialNumbers[vidPid].contains(portInfo.serialNumber())) {
-                // Some boards are a composite USB device, with the first port being mavlink and the second something else. We only expose to first mavlink port.
-                // However internal NMEA devices can present like this, so dont skip anything with NMEA in description
-                if(!portInfo.description().contains("NMEA")) {
-                    qCDebug(LinkManagerVerboseLog) << QStringLiteral("Removing secondary port on same device - port:%1 vid:%2 pid%3 sn:%4").arg(portInfo.portName()).arg(portInfo.vendorIdentifier()).arg(portInfo.productIdentifier()).arg(portInfo.serialNumber());
-                    it = portList.erase(it);
-                    continue;
-                }
-            }
-            seenSerialNumbers[vidPid].append(portInfo.serialNumber());
-        }
-        it++;
-    }
-}
-
 void LinkManager::_addSerialAutoConnectLink()
 {
-    QList<QGCSerialPortInfo> portList;
-#ifdef Q_OS_ANDROID
-    // With the Java USB serial backend only a single serial connection is supported. Repeatedly calling
-    // availablePorts after that one serial port is connected leaks file handles due to a bug somewhere in the
-    // android serial code. In order to work around that bug after we connect the first serial port we stop
-    // probing for additional ports. The POSIX backend does not have this problem.
-    if (AndroidSerial::usePosixSerial() || !_isSerialPortConnected()) {
-        portList = QGCSerialPortInfo::availablePorts();
-    }
-#else
-    portList = QGCSerialPortInfo::availablePorts();
-#endif
-
-    _filterCompositePorts(portList);
-
-    QStringList currentPorts;
-    for (const QGCSerialPortInfo &portInfo: portList) {
-        qCDebug(LinkManagerVerboseLog) << "-----------------------------------------------------";
-        qCDebug(LinkManagerVerboseLog) << "portName:          " << portInfo.portName();
-        qCDebug(LinkManagerVerboseLog) << "systemLocation:    " << portInfo.systemLocation();
-        qCDebug(LinkManagerVerboseLog) << "description:       " << portInfo.description();
-        qCDebug(LinkManagerVerboseLog) << "manufacturer:      " << portInfo.manufacturer();
-        qCDebug(LinkManagerVerboseLog) << "serialNumber:      " << portInfo.serialNumber();
-        qCDebug(LinkManagerVerboseLog) << "vendorIdentifier:  " << portInfo.vendorIdentifier();
-        qCDebug(LinkManagerVerboseLog) << "productIdentifier: " << portInfo.productIdentifier();
-
-        currentPorts << portInfo.systemLocation();
-
-        QGCSerialPortInfo::BoardType_t boardType;
-        QString boardName;
-
-        // check to see if nmea gps is configured for current Serial port, if so, set it up to connect
-        if ((_autoConnectSettings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceSerial) &&
-                (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString())) {
-            if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
-                _nmeaDeviceName = portInfo.systemLocation().trimmed();
-                qCDebug(LinkManagerLog) << "Configuring nmea port" << _nmeaDeviceName;
-                QSerialPort* newPort = new QSerialPort(portInfo, this);
-                _nmeaBaud = _autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt();
-                newPort->setBaudRate(static_cast<qint32>(_nmeaBaud));
-                qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
-                // This will stop polling old device if previously set
-                QGCPositionManager::instance()->setNmeaSourceDevice(newPort);
-                if (_nmeaPort) {
-                    delete _nmeaPort;
-                }
-                _nmeaPort = newPort;
-            } else if (_autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt() != _nmeaBaud) {
-                _nmeaBaud = _autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt();
-                _nmeaPort->setBaudRate(static_cast<qint32>(_nmeaBaud));
-                qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
-            }
-        } else if (portInfo.getBoardInfo(boardType, boardName)) {
-            // Should we be auto-connecting to this board type?
-            if (!_allowAutoConnectToBoard(boardType)) {
-                continue;
-            }
-
-            if (portInfo.isBootloader()) {
-                // Don't connect to bootloader
-                qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
-                continue;
-            }
-            if (_portAlreadyConnected(portInfo.systemLocation()) || (_autoConnectRTKPort == portInfo.systemLocation())) {
-                qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
-            } else if (!_autoconnectPortWaitList.contains(portInfo.systemLocation())) {
-                // We don't connect to the port the first time we see it. The ability to correctly detect whether we
-                // are in the bootloader is flaky from a cross-platform standpoint. So by putting it on a wait list
-                // and only connect on the second pass we leave enough time for the board to boot up.
-                qCDebug(LinkManagerLog) << "Waiting for next autoconnect pass" << portInfo.systemLocation() << boardName;
-                _autoconnectPortWaitList[portInfo.systemLocation()] = 1;
-            } else if ((++_autoconnectPortWaitList[portInfo.systemLocation()] * _autoconnectUpdateTimerMSecs) > _autoconnectConnectDelayMSecs) {
-                SerialConfiguration* pSerialConfig = nullptr;
-                _autoconnectPortWaitList.remove(portInfo.systemLocation());
-                switch (boardType) {
-                case QGCSerialPortInfo::BoardTypePixhawk:
-                    pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName, portInfo.portName().trimmed()));
-                    pSerialConfig->setUsbDirect(true);
-                    break;
-                case QGCSerialPortInfo::BoardTypeSiKRadio:
-                    pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName, portInfo.portName().trimmed()));
-                    break;
-                case QGCSerialPortInfo::BoardTypeOpenPilot:
-                    pSerialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(boardName, portInfo.portName().trimmed()));
-                    break;
-                case QGCSerialPortInfo::BoardTypeRTKGPS:
-                    qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
-                    _autoConnectRTKPort = portInfo.systemLocation();
-                    GPSManager::instance()->gpsRtk()->connectGPS(portInfo.systemLocation(), boardName);
-                    break;
-                default:
-                    qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
-                    continue;
-                }
-
-                if (pSerialConfig) {
-                    qCDebug(LinkManagerLog) << "New auto-connect port added: " << pSerialConfig->name() << portInfo.systemLocation();
-                    pSerialConfig->setBaud((boardType == QGCSerialPortInfo::BoardTypeSiKRadio) ? 57600 : 115200);
-                    pSerialConfig->setDynamic(true);
-                    pSerialConfig->setPortName(portInfo.systemLocation());
-                    pSerialConfig->setAutoConnect(true);
-
-                    SharedLinkConfigurationPtr sharedConfig(pSerialConfig);
-                    createConnectedLink(sharedConfig);
-                }
-            }
+    SerialPortManager* const serialPorts = SerialPortManager::instance();
+    const auto ports = serialPorts->availablePorts();
+    for (const SerialPortManager::Port& port : ports) {
+        if (!port.autoConnectAllowed || !_allowAutoConnectToBoard(port.boardType) || port.bootloader ||
+            !serialPorts->canAutoConnectPort(port.systemLocation)) {
+            continue;
         }
-    }
-
-    // Check for RTK GPS connection gone
-    if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
-        qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
-        GPSManager::instance()->gpsRtk()->disconnectGPS();
-        _autoConnectRTKPort.clear();
+        if (!_autoconnectPortWaitList.contains(port.systemLocation)) {
+            _autoconnectPortWaitList[port.systemLocation] = 1;
+            continue;
+        }
+        if ((++_autoconnectPortWaitList[port.systemLocation] * _autoconnectUpdateTimerMSecs) <=
+            _autoconnectConnectDelayMSecs) {
+            continue;
+        }
+        _autoconnectPortWaitList.remove(port.systemLocation);
+        auto* serialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(port.boardName, port.portName));
+        serialConfig->setUsbDirect(port.boardType == QGCSerialPortInfo::BoardTypePixhawk);
+        serialConfig->setBaud(port.boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
+        serialConfig->setDynamic(true);
+        serialConfig->setPortName(port.systemLocation);
+        serialConfig->setAutoConnect(true);
+        SharedLinkConfigurationPtr config(serialConfig);
+        createConnectedLink(config);
     }
 }
 
@@ -956,30 +823,8 @@ bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardT
             return true;
         }
         break;
-    case QGCSerialPortInfo::BoardTypeRTKGPS:
-        if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !GPSManager::instance()->gpsRtk()->connected()) {
-            return true;
-        }
-        break;
     default:
-        qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
         return false;
-    }
-
-    return false;
-}
-
-bool LinkManager::_portAlreadyConnected(const QString &portName)
-{
-    QMutexLocker locker(&_linksMutex);
-
-    const QString searchPort = portName.trimmed();
-    for (const SharedLinkInterfacePtr &linkInterface : _rgLinks) {
-        const SharedLinkConfigurationPtr linkConfig = linkInterface->linkConfiguration();
-        const SerialConfiguration* const serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
-        if (serialConfig && (serialConfig->portName() == searchPort)) {
-            return true;
-        }
     }
 
     return false;
@@ -989,9 +834,9 @@ void LinkManager::_updateSerialPorts()
 {
     _commPortList.clear();
     _commPortDisplayList.clear();
-    const QList<QGCSerialPortInfo> portList = QGCSerialPortInfo::availablePorts();
-    for (const QGCSerialPortInfo &info: portList) {
-        const QString port = info.systemLocation().trimmed();
+    const auto portList = SerialPortManager::instance()->availablePorts();
+    for (const SerialPortManager::Port& info : portList) {
+        const QString port = info.systemLocation;
         _commPortList += port;
         _commPortDisplayList += SerialConfiguration::cleanPortDisplayName(port);
     }
@@ -1018,19 +863,6 @@ QStringList LinkManager::serialPorts()
 QStringList LinkManager::serialBaudRates()
 {
     return SerialConfiguration::supportedBaudRates();
-}
-
-bool LinkManager::_isSerialPortConnected()
-{
-    QMutexLocker locker(&_linksMutex);
-
-    for (const SharedLinkInterfacePtr &link: _rgLinks) {
-        if (qobject_cast<const SerialLink*>(link.get())) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 #endif // QGC_NO_SERIAL_LINK

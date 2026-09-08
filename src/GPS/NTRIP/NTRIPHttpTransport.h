@@ -59,7 +59,7 @@ protected:
 
 private:
     void _connect();
-    void _failFatal(NTRIPError code, const QString& msg, QAbstractSocket* socket);
+    void _fail(NTRIPError code, const QString& msg);
     void _sendHttpRequest();
     void _readBytes();
     void _handleHttpResponse();
