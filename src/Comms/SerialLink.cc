@@ -201,10 +201,15 @@ void SerialWorker::connectToPort()
 
     qCDebug(SerialLinkLog) << "Attempting to open port" << _port->portName();
     if (!_port->open(QIODevice::ReadWrite)) {
-        qCWarning(SerialLinkLog) << "Opening port" << _port->portName() << "failed:" << _port->errorString();
+        const bool busyAutoConnect = _serialConfig->isAutoConnect() && _port->error() == QSerialPort::PermissionError;
+        if (busyAutoConnect) {
+            qCDebug(SerialLinkLog) << "Auto-connect port unavailable:" << _port->portName() << _port->errorString();
+        } else {
+            qCWarning(SerialLinkLog) << "Opening port" << _port->portName() << "failed:" << _port->errorString();
+        }
 
         // If auto-connect is enabled, we don't want to emit an error for PermissionError from devices already in use
-        if (!_errorEmitted && (!_serialConfig->isAutoConnect() || _port->error() != QSerialPort::PermissionError)) {
+        if (!_errorEmitted && !busyAutoConnect) {
             emit errorOccurred(tr("Could not open port: %1").arg(_port->errorString()));
             _errorEmitted = true;
         }

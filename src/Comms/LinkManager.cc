@@ -1,4 +1,5 @@
 #include "LinkManager.h"
+
 #include "LogReplayLink.h"
 #include "QGCNetworkHelper.h"
 #include "MAVLinkProtocol.h"
@@ -29,6 +30,8 @@
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
+
+#include <algorithm>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "Comms.LinkManager")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
@@ -778,11 +781,30 @@ bool LinkManager::isLinkUSBDirect([[maybe_unused]] const LinkInterface *link)
 
 void LinkManager::_addSerialAutoConnectLink()
 {
+    _addSerialAutoConnectLink(SerialPortManager::instance()->availablePorts());
+}
+
+void LinkManager::_addSerialAutoConnectLink(const QList<SerialPortManager::Port>& ports)
+{
+    const auto isAbsent = [&ports](const auto& entry) {
+        return std::none_of(ports.cbegin(), ports.cend(),
+                            [&entry](const auto& port) { return port.systemLocation == entry.key(); });
+    };
+    _autoconnectSerialConfigs.removeIf(isAbsent);
+    _autoconnectPortWaitList.removeIf(isAbsent);
+
     SerialPortManager* const serialPorts = SerialPortManager::instance();
-    const auto ports = serialPorts->availablePorts();
     for (const SerialPortManager::Port& port : ports) {
         if (!port.autoConnectAllowed || !_allowAutoConnectToBoard(port.boardType) || port.bootloader ||
             !serialPorts->canAutoConnectPort(port.systemLocation)) {
+            continue;
+        }
+        auto config = _autoconnectSerialConfigs.value(port.systemLocation);
+        if (config) {
+            if (!config->link() && !config->suppressAutoReconnect() && config->reconnectReady()) {
+                config->noteReconnectAttempt();
+                createConnectedLink(config);
+            }
             continue;
         }
         if (!_autoconnectPortWaitList.contains(port.systemLocation)) {
@@ -800,7 +822,9 @@ void LinkManager::_addSerialAutoConnectLink()
         serialConfig->setDynamic(true);
         serialConfig->setPortName(port.systemLocation);
         serialConfig->setAutoConnect(true);
-        SharedLinkConfigurationPtr config(serialConfig);
+        config.reset(serialConfig);
+        _autoconnectSerialConfigs.insert(port.systemLocation, config);
+        config->noteReconnectAttempt();
         createConnectedLink(config);
     }
 }

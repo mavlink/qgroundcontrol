@@ -11,7 +11,7 @@
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #ifndef QGC_NO_SERIAL_LINK
-    #include "QGCSerialPortInfo.h"
+    #include "SerialPortManager.h"
 #endif
 
 class AutoConnectSettings;
@@ -180,8 +180,10 @@ private:
     void _updateSerialPorts();
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
+    void _addSerialAutoConnectLink(const QList<SerialPortManager::Port>& ports);
 
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
+    QMap<QString, SharedLinkConfigurationPtr> _autoconnectSerialConfigs;
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
     QStringList _commPortList;
     QStringList _commPortDisplayList;
