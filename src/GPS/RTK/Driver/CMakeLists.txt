@@ -3,19 +3,20 @@
 # PX4 GPS driver integration + GNSS message structs
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        GPSDriver.cc
-        GPSDriver.h
-        GPSTransport.h
-        GPSType.h
-        definitions.h
-        satellite_info.h
-        sensor_gnss_relative.h
-        sensor_gps.h
+qt_add_library(
+    QGCGPSDriver
+    STATIC
+    GPSDriver.cc
+    GPSDriver.h
+    GPSTransport.h
+    GPSType.h
+    definitions.h
+    satellite_info.h
+    sensor_gnss_relative.h
+    sensor_gps.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
 # PX4 GPS Drivers Integration
@@ -42,10 +43,10 @@ target_compile_definitions(px4-gpsdrivers PRIVATE GPS_DEFINITIONS_HEADER=<${CMAK
 target_link_libraries(px4-gpsdrivers PRIVATE Qt6::Core)
 qgc_disable_dependency_warnings(px4-gpsdrivers)
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        $<TARGET_OBJECTS:px4-gpsdrivers>
+target_link_libraries(
+    QGCGPSDriver
+    PUBLIC Qt6::Core
+    PRIVATE QGCLogging px4-gpsdrivers
 )
-
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
-target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)
+target_compile_definitions(QGCGPSDriver PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
+target_include_directories(QGCGPSDriver SYSTEM PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)

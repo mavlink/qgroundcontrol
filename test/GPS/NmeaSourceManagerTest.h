@@ -10,4 +10,5 @@ private slots:
     void init();
     void _udpSwitchAndDisable();
     void _bindFailureAndTeardown();
+    void _settingsUseSharedSerialInventory();
 };

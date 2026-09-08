@@ -9,8 +9,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 add_subdirectory(RTCM)
 add_subdirectory(NTRIP)
+add_subdirectory(PositionManager)
 
-add_subdirectory(Driver)
 add_subdirectory(RTK)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE NmeaSourceManager.cc NmeaSourceManager.h GPSManager.cc GPSManager.h)

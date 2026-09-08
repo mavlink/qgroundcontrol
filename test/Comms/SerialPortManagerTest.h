@@ -9,4 +9,5 @@ class SerialPortManagerTest : public UnitTest
 private slots:
     void _exclusiveReservations();
     void _singlePortInventory();
+    void _inventoryNotificationsAndBaudRates();
 };

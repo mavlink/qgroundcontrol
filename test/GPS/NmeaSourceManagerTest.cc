@@ -2,6 +2,9 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QUdpSocket>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlEngine>
+#include <QtQml/QQmlExpression>
 
 #include "AutoConnectSettings.h"
 #include "Fixtures/RAIIFixtures.h"
@@ -96,3 +99,41 @@ void NmeaSourceManagerTest::_bindFailureAndTeardown()
 }
 
 UT_REGISTER_TEST(NmeaSourceManagerTest, TestLabel::Unit)
+
+void NmeaSourceManagerTest::_settingsUseSharedSerialInventory()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    saved.setFactValue(settings->autoConnectNmeaBaud(), 123457);
+    saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/saved-nmea"));
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NmeaGpsSettings.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    std::unique_ptr<QObject> root(component.create());
+    QVERIFY2(root, qPrintable(component.errorString()));
+    auto* portCombo = root->findChild<QObject*>(QStringLiteral("nmeaPortCombo"));
+    QVERIFY(portCombo);
+    auto* baudCombo = root->findChild<QObject*>(QStringLiteral("nmeaBaudCombo"));
+    auto* customBaud = root->findChild<QObject*>(QStringLiteral("customNmeaBaudField"));
+    QVERIFY(baudCombo);
+    QVERIFY(customBaud);
+    QVERIFY(baudCombo->property("isCustomBaud").toBool());
+    QCOMPARE(customBaud->property("text").toString(), QStringLiteral("123457"));
+    QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 123457);
+    QCOMPARE(settings->autoConnectNmeaPort()->rawValue().toString(), QStringLiteral("/test/saved-nmea"));
+
+    QQmlExpression portCount(qmlContext(root.get()), root.get(), QStringLiteral("_serialPorts.length"));
+    const int count = portCount.evaluate().toInt();
+    QVERIFY(!portCount.hasError());
+    QCOMPARE(portCombo->property("enabled").toBool(), count > 0);
+    auto* manager = root->property("_serialPortManager").value<QObject*>();
+#ifndef QGC_NO_SERIAL_LINK
+    QCOMPARE(manager, SerialPortManager::instance());
+    QCOMPARE(count, SerialPortManager::instance()->serialPorts().size());
+#else
+    QVERIFY(!manager);
+#endif
+}

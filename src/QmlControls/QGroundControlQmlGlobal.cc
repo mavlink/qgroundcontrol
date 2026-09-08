@@ -19,6 +19,9 @@
 #include "LoggingCategoryModel.h"
 #include "GPSManager.h"
 #include "GPSRtk.h"
+#ifndef QGC_NO_SERIAL_LINK
+#include "SerialPortManager.h"
+#endif
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -379,4 +382,15 @@ QString QGroundControlQmlGlobal::telemetryFileExtension() const
 QString QGroundControlQmlGlobal::appName()
 {
     return QCoreApplication::applicationName();
+}
+
+QObject* QGroundControlQmlGlobal::serialPortManager() const
+{
+#ifndef QGC_NO_SERIAL_LINK
+    auto* manager = SerialPortManager::instance();
+    (void) manager->availablePorts();
+    return manager;
+#else
+    return nullptr;
+#endif
 }

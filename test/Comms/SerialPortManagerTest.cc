@@ -1,5 +1,8 @@
 #include "SerialPortManagerTest.h"
 
+#include <QtTest/QSignalSpy>
+
+#include "SerialLink.h"
 #include "SerialPortManager.h"
 
 void SerialPortManagerTest::_exclusiveReservations()
@@ -46,3 +49,29 @@ void SerialPortManagerTest::_singlePortInventory()
 }
 
 UT_REGISTER_TEST(SerialPortManagerTest, TestLabel::Unit)
+
+void SerialPortManagerTest::_inventoryNotificationsAndBaudRates()
+{
+    QList<SerialPortManager::Port> inventory{
+        {QStringLiteral("/test/gps"), QStringLiteral("gps"), QGCSerialPortInfo::BoardTypeUnknown, QString()}};
+    SerialPortManager ports(nullptr, [&]() { return inventory; });
+    QSignalSpy changed(&ports, &SerialPortManager::serialPortsChanged);
+    (void) ports.availablePorts();
+    QCOMPARE(ports.serialPorts(), QStringList{QStringLiteral("/test/gps")});
+    QCOMPARE(changed.count(), 1);
+    (void) ports.availablePorts();
+    QCOMPARE(changed.count(), 1);
+    inventory.clear();
+    QTRY_VERIFY_WITH_TIMEOUT(ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(ports.serialPorts().isEmpty());
+    QCOMPARE(changed.count(), 2);
+
+    const QStringList rates = SerialPortManager::supportedBaudRates();
+    QCOMPARE(rates, SerialConfiguration::supportedBaudRates());
+    QVERIFY(rates.contains(QStringLiteral("9600")));
+    QVERIFY(rates.contains(QStringLiteral("115200")));
+    QVERIFY(rates.contains(QStringLiteral("921600")));
+    for (qsizetype index = 1; index < rates.size(); ++index) {
+        QVERIFY(rates[index - 1].toInt() < rates[index].toInt());
+    }
+}

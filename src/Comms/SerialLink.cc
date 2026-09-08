@@ -1,9 +1,12 @@
 #include "SerialLink.h"
-#include "QGCLoggingCategory.h"
-#include "QGCSerialPortInfo.h"
+
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
+
+#include "QGCLoggingCategory.h"
+#include "QGCSerialPortInfo.h"
+#include "SerialPortManager.h"
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "Comms.SerialLink")
 
@@ -105,66 +108,7 @@ void SerialConfiguration::saveSettings(QSettings &settings, const QString &root)
 
 QStringList SerialConfiguration::supportedBaudRates()
 {
-    static const QSet<qint32> kDefaultSupportedBaudRates = {
-#ifdef Q_OS_UNIX
-        50,
-        75,
-#endif
-        110,
-#ifdef Q_OS_UNIX
-        150,
-        200,
-        134,
-#endif
-        300,
-        600,
-        1200,
-#ifdef Q_OS_UNIX
-        1800,
-#endif
-        2400,
-        4800,
-        9600,
-#ifdef Q_OS_WIN
-        14400,
-#endif
-        19200,
-        38400,
-#ifdef Q_OS_WIN
-        56000,
-#endif
-        57600,
-        115200,
-#ifdef Q_OS_WIN
-        128000,
-#endif
-        230400,
-#ifdef Q_OS_WIN
-        256000,
-#endif
-        460800,
-        500000,
-#ifdef Q_OS_LINUX
-        576000,
-#endif
-        921600,
-    };
-
-    const QList<qint32> activeSupportedBaudRates = QSerialPortInfo::standardBaudRates();
-
-    QSet<qint32> mergedBaudRateSet(kDefaultSupportedBaudRates.constBegin(), kDefaultSupportedBaudRates.constEnd());
-    (void) mergedBaudRateSet.unite(QSet<qint32>(activeSupportedBaudRates.constBegin(), activeSupportedBaudRates.constEnd()));
-
-    QList<qint32> mergedBaudRateList = mergedBaudRateSet.values();
-    std::sort(mergedBaudRateList.begin(), mergedBaudRateList.end());
-
-    QStringList supportBaudRateStrings{};
-    supportBaudRateStrings.reserve(mergedBaudRateList.size());
-    for (const qint32 rate : std::as_const(mergedBaudRateList)) {
-        supportBaudRateStrings.append(QString::number(rate));
-    }
-
-    return supportBaudRateStrings;
+    return SerialPortManager::supportedBaudRates();
 }
 
 QString SerialConfiguration::cleanPortDisplayName(const QString &name)

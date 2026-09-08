@@ -3,6 +3,7 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QSet>
 
+#include <algorithm>
 #include <iterator>
 #include <utility>
 
@@ -56,6 +57,15 @@ QList<SerialPortManager::Port> SerialPortManager::availablePorts()
     }
     _ports = _enumerator();
     _scanTimer.restart();
+    QStringList serialPorts;
+    serialPorts.reserve(_ports.size());
+    for (const Port& port : std::as_const(_ports)) {
+        serialPorts.append(port.systemLocation);
+    }
+    if (_serialPorts != serialPorts) {
+        _serialPorts = std::move(serialPorts);
+        emit serialPortsChanged();
+    }
     return _ports;
 }
 
@@ -92,4 +102,59 @@ bool SerialPortManager::canReservePort(const QString& systemLocation) const
 {
     return !systemLocation.trimmed().isEmpty() && !isPortReserved(systemLocation) &&
            !(_singlePortOnly && anyPortReserved());
+}
+
+QStringList SerialPortManager::supportedBaudRates()
+{
+    static const QSet<qint32> kDefaultSupportedBaudRates = {
+#ifdef Q_OS_UNIX
+        50,     75,
+#endif
+        110,
+#ifdef Q_OS_UNIX
+        150,    200,    134,
+#endif
+        300,    600,    1200,
+#ifdef Q_OS_UNIX
+        1800,
+#endif
+        2400,   4800,   9600,
+#ifdef Q_OS_WIN
+        14400,
+#endif
+        19200,  38400,
+#ifdef Q_OS_WIN
+        56000,
+#endif
+        57600,  115200,
+#ifdef Q_OS_WIN
+        128000,
+#endif
+        230400,
+#ifdef Q_OS_WIN
+        256000,
+#endif
+        460800, 500000,
+#ifdef Q_OS_LINUX
+        576000,
+#endif
+        921600,
+    };
+
+    const QList<qint32> activeSupportedBaudRates = QSerialPortInfo::standardBaudRates();
+
+    QSet<qint32> mergedBaudRateSet(kDefaultSupportedBaudRates.constBegin(), kDefaultSupportedBaudRates.constEnd());
+    (void) mergedBaudRateSet.unite(
+        QSet<qint32>(activeSupportedBaudRates.constBegin(), activeSupportedBaudRates.constEnd()));
+
+    QList<qint32> mergedBaudRateList = mergedBaudRateSet.values();
+    std::sort(mergedBaudRateList.begin(), mergedBaudRateList.end());
+
+    QStringList supportBaudRateStrings{};
+    supportBaudRateStrings.reserve(mergedBaudRateList.size());
+    for (const qint32 rate : std::as_const(mergedBaudRateList)) {
+        supportBaudRateStrings.append(QString::number(rate));
+    }
+
+    return supportBaudRateStrings;
 }

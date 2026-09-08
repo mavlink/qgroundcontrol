@@ -1,4 +1,7 @@
 # Local RTK receiver, worker, Facts, and connection policy.
+add_subdirectory(Driver)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver)
+
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSProvider.cc GPSProvider.h GPSRtk.cc GPSRtk.h GPSRTKFactGroup.cc
                                              GPSRTKFactGroup.h
 )
