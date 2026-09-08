@@ -7,6 +7,10 @@
 Platform workflows (`linux.yml`, `macos.yml`, `windows.yml`, `android.yml`, `ios.yml`) share logic
 via composite actions and reusable workflows. Python helpers in `scripts/` are invoked by both.
 
+Set the repository variable `CODECOV_TEST_ANALYTICS=true` to opt into JUnit uploads from Linux
+and custom-build test jobs. Uploads use Codecov OIDC authentication and remain informational;
+JUnit artifacts and existing test reporters remain available with the variable unset.
+
 ## Contents
 
 - [Layout](#layout)
