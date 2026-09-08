@@ -28,6 +28,6 @@ SettingsGroupLayout {
 
     NTRIPConnectionStatus {
         Layout.fillWidth: true
-        rtcmMavlink:      root._ntripMgr ? root._ntripMgr.rtcmMavlink : null
+        rtcmMavlink:      QGroundControl.gpsManager.corrections.rtcmMavlink
     }
 }

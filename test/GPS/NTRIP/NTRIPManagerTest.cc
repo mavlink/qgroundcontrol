@@ -6,6 +6,7 @@
 #include <QtTest/QTest>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSCorrectionManager.h"
 #include "MockNTRIPTransport.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
@@ -235,4 +236,63 @@ void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
     QVERIFY(!mgr._transport);
     QVERIFY(mgr.statusMessage().contains(QStringLiteral("mountpoint")));
     verifyExpectedLogMessage();
+}
+
+void NTRIPManagerTest::testCorrectionsAreIndependentOfSink_data()
+{
+    QTest::addColumn<bool>("withSink");
+    QTest::newRow("no-sink") << false;
+    QTest::newRow("shared-forwarder") << true;
+}
+
+void NTRIPManagerTest::testCorrectionsAreIndependentOfSink()
+{
+    QFETCH(bool, withSink);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    NTRIPManager mgr;
+    mgr._settings = settings;
+    GPSCorrectionManager corrections;
+    if (withSink) {
+        connect(&mgr, &NTRIPManager::rtcmDataReceived, &corrections, &GPSCorrectionManager::forwardCorrections);
+    }
+    QSignalSpy received(&mgr, &NTRIPManager::rtcmDataReceived);
+    auto* transport = new MockNTRIPTransport(&mgr);
+    transport->autoConnect = false;
+    mgr.setTransportForTest(transport);
+    mgr.startNTRIP();
+    QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
+    const QByteArray payload = QByteArrayLiteral("correction");
+    transport->simulateRtcmData(payload, 1005);
+    QCOMPARE(received.size(), 1);
+    QCOMPARE(received.first().first().toByteArray(), payload);
+    QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
+    QCOMPARE(mgr.connectionStats()->bytesReceived(), quint64(payload.size()));
+    QCOMPARE(mgr.connectionStats()->messagesReceived(), quint32(1));
+    QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), withSink ? quint64(payload.size()) : quint64(0));
+    mgr.stopNTRIP();
+    transport->simulateRtcmData(payload, 1005);
+    QCOMPARE(received.size(), 1);
+}
+
+void NTRIPManagerTest::testCorrectionObserverCanStopSession()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    NTRIPManager mgr;
+    mgr._settings = settings;
+    auto* transport = new MockNTRIPTransport(&mgr);
+    transport->autoConnect = false;
+    mgr.setTransportForTest(transport);
+    mgr.startNTRIP();
+    connect(&mgr, &NTRIPManager::rtcmDataReceived, &mgr, &NTRIPManager::stopNTRIP);
+    transport->simulateRtcmData(QByteArrayLiteral("correction"), 1005);
+    QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+    QVERIFY(!mgr._transport);
+    QVERIFY(!mgr._reconnectTimer.isActive());
+    QVERIFY(!mgr._udpForwarder.isEnabled());
 }

@@ -10,10 +10,7 @@
 #include "NTRIPError.h"
 #include "NTRIPHttpTransport.h"
 #include "NTRIPSettings.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
-#include "RTCMMavlink.h"
-#include "RTCMUdpInput.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
@@ -126,16 +123,6 @@ NTRIPManager::~NTRIPManager()
     stopNTRIP();
 }
 
-RTCMMavlink* NTRIPManager::rtcmMavlink() const
-{
-    return _rtcmMavlink;
-}
-
-void NTRIPManager::setRtcmMavlink(RTCMMavlink* mavlink)
-{
-    _rtcmMavlink = mavlink;
-}
-
 void NTRIPManager::init()
 {
     if (_initialized) {
@@ -171,45 +158,9 @@ void NTRIPManager::init()
 
     _ggaProvider.init(_settings);
 
-    // RTCMMavlink may be injected for tests; otherwise own one so RTCM corrections
-    // reach connected vehicles. Mirrors the legacy self-wiring behavior.
-    if (!_rtcmMavlink) {
-        QObject* parentObj = qgcApp() ? static_cast<QObject*>(qgcApp()) : static_cast<QObject*>(this);
-        _rtcmMavlink = new RTCMMavlink(parentObj);
-        _rtcmMavlink->setObjectName(QStringLiteral("RTCMMavlink"));
-    }
-
-    _setupRtcmUdpInput();
-
     if (_settings) {
         _onSettingChanged();
     }
-}
-
-void NTRIPManager::_setupRtcmUdpInput()
-{
-    if (!_settings || !_settings->rtcmUdpInputPort()) {
-        return;
-    }
-
-    const quint16 port = static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt());
-    _rtcmUdpInput = new RTCMUdpInput(port, this);
-    connect(_rtcmUdpInput, &RTCMUdpInput::rtcmDataReceived, _rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
-
-    auto applyUdpInputSettings = [this]() {
-        const quint16 inPort = static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt());
-        _rtcmUdpInput->setPort(inPort);
-        _rtcmUdpInput->setValidation(_settings->rtcmUdpValidate()->rawValue().toBool());
-        if (_settings->rtcmUdpInputEnabled()->rawValue().toBool()) {
-            _rtcmUdpInput->start();
-        } else {
-            _rtcmUdpInput->stop();
-        }
-    };
-    connect(_settings->rtcmUdpInputEnabled(), &Fact::rawValueChanged, this, applyUdpInputSettings);
-    connect(_settings->rtcmUdpInputPort(), &Fact::rawValueChanged, this, applyUdpInputSettings);
-    connect(_settings->rtcmUdpValidate(), &Fact::rawValueChanged, this, applyUdpInputSettings);
-    applyUdpInputSettings();
 }
 
 // -----------------------------------------------------------------------------
@@ -504,25 +455,25 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
 
 void NTRIPManager::_rtcmDataReceived(const QByteArray& data, int messageId)
 {
-    _stats.recordMessage(data.size(), messageId);
-
-    qCDebug(NTRIPManagerLog) << "NTRIP forwarding RTCM:" << data.size() << "bytes";
-
-    RTCMMavlink* mavlink = _rtcmMavlink;
-    if (mavlink) {
-        mavlink->RTCMDataUpdate(data);
-
-        if (_connectionStatus != ConnectionStatus::Connected) {
-            // RTCM arrived before we processed the connected() signal — normalize
-            // through the state machine so this stays the single source of truth.
-            // No-op (logged) from any state without a matching transition row.
-            _dispatch(Event::RTCMBeforeConnected);
-        }
-    } else {
-        qCWarning(NTRIPManagerLog) << "RTCMMavlink not ready; dropping" << data.size() << "bytes";
+    const QPointer<NTRIPTransport> transport = _transport;
+    const QByteArray correction = data;
+    _stats.recordMessage(correction.size(), messageId);
+    if (!transport || _transport != transport) {
+        return;
     }
 
-    _udpForwarder.forward(data);
+    qCDebug(NTRIPManagerLog) << "NTRIP received RTCM:" << correction.size() << "bytes";
+    emit rtcmDataReceived(correction);
+    if (!transport || _transport != transport) {
+        return;
+    }
+    if (_connectionStatus != ConnectionStatus::Connected) {
+        // A decoded correction proves reception even if connected() has not arrived yet.
+        _dispatch(Event::RTCMBeforeConnected);
+    }
+    if (transport && _transport == transport) {
+        _udpForwarder.forward(correction);
+    }
 }
 
 bool NTRIPManager::_isEnabled() const

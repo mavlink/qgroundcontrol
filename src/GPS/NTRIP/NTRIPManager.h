@@ -17,8 +17,6 @@
 Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 
 class NTRIPSettings;
-class RTCMMavlink;
-class RTCMUdpInput;
 
 /// Manages the NTRIP caster connection lifecycle as an explicit event-driven
 /// state machine. All connection state changes flow through `_dispatch()` and
@@ -33,7 +31,6 @@ class NTRIPManager : public QObject
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("NTRIPConnectionStats.h")
     Q_MOC_INCLUDE("NTRIPSourceTableController.h")
-    Q_MOC_INCLUDE("RTCMMavlink.h")
     Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
@@ -41,9 +38,6 @@ class NTRIPManager : public QObject
     Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged)
     Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT)
     Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT)
-    // CONSTANT is safe: rtcmMavlink is established once in init() (or injected for
-    // tests) before any QML binds, and is never reassigned thereafter.
-    Q_PROPERTY(RTCMMavlink* rtcmMavlink READ rtcmMavlink CONSTANT)
 
 public:
     /// Public connection status. Numeric values are stable — QML binds against them.
@@ -107,10 +101,6 @@ public:
 
     NTRIPConnectionStats* connectionStats() { return &_stats; }
 
-    /// Shared RTCM→MAVLink forwarder (created in init()). GPSRtk routes its serial-RTK
-    /// corrections through this same instance for one GPS_RTCM_DATA sequence-id domain.
-    RTCMMavlink* rtcmMavlink() const;
-
     Q_INVOKABLE void fetchMountpoints();
 
     Q_INVOKABLE void selectMountpoint(const QString& mountpoint)
@@ -122,12 +112,11 @@ public:
     /// next Connecting entry. Production always constructs NTRIPHttpTransport.
     void setTransportForTest(NTRIPTransport* transport) { _injectedTransport = transport; }
 
-    void setRtcmMavlink(RTCMMavlink* mavlink);
-
     void startNTRIP();
     void stopNTRIP();
 
 signals:
+    void rtcmDataReceived(const QByteArray& data);
     void connectionStatusChanged();
     void statusMessageChanged();
     void securityWarningChanged();
@@ -181,10 +170,6 @@ private:
     void _onSettingChanged();
     bool _isEnabled() const;
 
-    /// Wire RTCMUdpInput (inbound RTCM over UDP → RTCMMavlink). Complementary to
-    /// UdpForwarder, which sends outbound. Driven by rtcmUdpInput* settings.
-    void _setupRtcmUdpInput();
-
     NTRIPGgaProvider _ggaProvider{this};
     NTRIPConnectionStats _stats{this};
     UdpForwarder _udpForwarder{this};
@@ -196,9 +181,6 @@ private:
 
     QPointer<NTRIPTransport> _injectedTransport;
     QPointer<NTRIPTransport> _transport;
-
-    QPointer<RTCMMavlink> _rtcmMavlink;
-    RTCMUdpInput* _rtcmUdpInput = nullptr;
 
     NTRIPTransportConfig _runningConfig;
     NTRIPSettings* _settings = nullptr;

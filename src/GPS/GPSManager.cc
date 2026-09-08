@@ -23,11 +23,13 @@ Q_APPLICATION_STATIC(GPSManager, _gpsManager);
 GPSManager::GPSManager(QObject* parent)
     : QObject(parent)
     , _positionManager(QGCPositionManager::instance())
+    , _corrections(this)
     , _gpsRtk(new GPSRtk(this))
 {
     qCDebug(GPSManagerLog) << this;
 
     auto* settings = SettingsManager::instance();
+    connect(_gpsRtk, &GPSRtk::rtcmDataReceived, &_corrections, &GPSCorrectionManager::forwardCorrections);
     _nmeaSources = new NMEASourceManager(settings->autoConnectSettings(), _positionManager, this);
     _rtkAutoConnect = new RTKAutoConnect(_gpsRtk, settings->autoConnectSettings(), settings->rtkSettings(), this);
     connect(settings->rtkSettings()->useReceiverPosition(), &Fact::rawValueChanged, this,
@@ -55,6 +57,7 @@ void GPSManager::init()
     if (_connectionTimer) {
         return;
     }
+    _corrections.init(SettingsManager::instance()->ntripSettings());
 #ifndef QGC_NO_SERIAL_LINK
     _rtkAutoConnect->setSerialDiscovery(SerialPortManager::instance());
     connect(_rtkAutoConnect, &RTKAutoConnect::connectRequested, this,
@@ -149,4 +152,5 @@ void GPSManager::shutdown()
     }
     _rtkAutoConnect->stop();
     _gpsRtk->disconnectGPS();
+    _corrections.shutdown();
 }

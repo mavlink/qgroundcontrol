@@ -49,6 +49,7 @@ public:
     static SatelliteCounts countSatellites(const satellite_info_s& msg);
 
 signals:
+    void rtcmDataReceived(const QByteArray& data);
     void connectedChanged();
     void receiverStateChanged();
     void configurationStarted();

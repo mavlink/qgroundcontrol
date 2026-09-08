@@ -7,6 +7,7 @@
 
 #include "NMEASourceManager.h"
 #include "RTKAutoConnect.h"
+#include "GPSCorrectionManager.h"
 
 class GPSRtk;
 class QGCPositionManager;
@@ -19,6 +20,7 @@ class GPSManager : public QObject
     QML_UNCREATABLE("")
     Q_PROPERTY(NMEASourceManager* nmeaConnection READ nmeaConnection CONSTANT)
     Q_PROPERTY(RTKAutoConnect* rtkConnection READ rtkConnection CONSTANT)
+    Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT)
     Q_PROPERTY(bool networkRtkActive READ networkRtkActive NOTIFY networkRtkActiveChanged)
     Q_PROPERTY(
         bool networkRtkAutoConnectPaused READ networkRtkAutoConnectPaused NOTIFY networkRtkAutoConnectPausedChanged)
@@ -40,6 +42,8 @@ public:
 
     RTKAutoConnect* rtkConnection() const { return _rtkAutoConnect; }
 
+    GPSCorrectionManager* corrections() { return &_corrections; }
+
     Q_INVOKABLE bool connectNmea();
     Q_INVOKABLE void disconnectNmea();
     Q_INVOKABLE bool connectRtk();
@@ -60,6 +64,7 @@ private:
     void _updatePositionSource();
     bool _positionSourceInstalled = false;
     QPointer<QGCPositionManager> _positionManager;
+    GPSCorrectionManager _corrections;
     QTimer* _connectionTimer = nullptr;
     NMEASourceManager* _nmeaSources = nullptr;
     RTKAutoConnect* _rtkAutoConnect = nullptr;

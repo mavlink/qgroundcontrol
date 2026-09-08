@@ -305,9 +305,11 @@ void QGCApplication::_initForNormalAppBoot()
                                   SettingsManager::instance()->appSettings()->audioMuted());
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
-    NTRIPManager::instance()->init();
     LinkManager::instance()->init();
     GPSManager::instance()->init();
+    connect(NTRIPManager::instance(), &NTRIPManager::rtcmDataReceived, GPSManager::instance()->corrections(),
+            &GPSCorrectionManager::forwardCorrections);
+    NTRIPManager::instance()->init();
     VideoManager::instance()->init(mainRootWindow());
 
     // Set the window icon now that custom plugin has a chance to override it
@@ -763,6 +765,7 @@ QGCImageProvider* QGCApplication::qgcImageProvider()
 
 void QGCApplication::shutdown()
 {
+    NTRIPManager::instance()->stopNTRIP();
     GPSManager::instance()->shutdown();
     qCDebug(QGCApplicationLog) << "Exit";
 

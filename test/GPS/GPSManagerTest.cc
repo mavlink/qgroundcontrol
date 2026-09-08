@@ -18,7 +18,6 @@
 #include "GPSRtk.h"
 #include "GpsTestHelpers.h"
 #include "LinkManager.h"
-#include "NTRIPManager.h"
 #include "RTCMMavlink.h"
 #include "RTKAutoConnect.h"
 #include "RTKSettings.h"
@@ -209,12 +208,8 @@ void GPSManagerTest::_udpRecoveryAndSelection()
     auto* automatic = SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS();
     settings->connectionType()->setRawValue(RTKSettings::Udp);
     automatic->setRawValue(true);
-    RTCMMavlink forwarder;
-    auto* ntrip = NTRIPManager::instance();
-    auto* previousForwarder = ntrip->rtcmMavlink();
-    ntrip->setRtcmMavlink(&forwarder);
-    const auto restoreForwarder = qScopeGuard([&]() { ntrip->setRtcmMavlink(previousForwarder); });
     GPSManager manager;
+    auto* forwarder = manager.corrections()->rtcmMavlink();
     auto* receiver = manager.gpsRtk();
 
     manager._rtkAutoConnect->update();
@@ -227,7 +222,7 @@ void GPSManagerTest::_udpRecoveryAndSelection()
     const QByteArray corrections = GpsTestHelpers::buildRtcmFrame(1077, 500);
     QCOMPARE(server.send(corrections.left(4)), 4);
     QCOMPARE(server.send(corrections.mid(4)), corrections.size() - 4);
-    QTRY_COMPARE_WITH_TIMEOUT(forwarder.totalBytesSent(), quint64(corrections.size()), TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(forwarder->totalBytesSent(), quint64(corrections.size()), TestTimeout::shortMs());
 
     // A silent UDP peer has no disconnect event; the driver's idle deadline must retire the session.
     server.respond = false;

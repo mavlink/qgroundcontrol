@@ -32,4 +32,7 @@ private slots:
     void testDuplicateTransportErrorsScheduleOneRetry();
     void testRetiredTransportErrorCannotAffectNewSession();
     void testMissingMountpointDoesNotStartTransport();
+    void testCorrectionsAreIndependentOfSink_data();
+    void testCorrectionsAreIndependentOfSink();
+    void testCorrectionObserverCanStopSession();
 };

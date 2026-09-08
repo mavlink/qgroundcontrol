@@ -11,7 +11,6 @@
 #include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
 #include "GPSTransport.h"
-#include "NTRIPManager.h"
 #include "PositionManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTCMMavlink.h"
@@ -155,10 +154,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), 2);
 
     RTCMMavlink forwarder;
-    auto* manager = NTRIPManager::instance();
-    auto* previousForwarder = manager->rtcmMavlink();
-    manager->setRtcmMavlink(&forwarder);
-    const auto restoreForwarder = qScopeGuard([&]() { manager->setRtcmMavlink(previousForwarder); });
+    connect(&receiver, &GPSRtk::rtcmDataReceived, &forwarder, &RTCMMavlink::RTCMDataUpdate);
     auto* rtcm = &forwarder;
     const auto bytesBefore = rtcm->totalBytesSent();
     // These callbacks are queued before retirement, then delivered during the replacement session.

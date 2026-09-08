@@ -3,9 +3,7 @@
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSType.h"
-#include "NTRIPManager.h"
 #include "QGCLoggingCategory.h"
-#include "RTCMMavlink.h"
 #include "RTKPositionSource.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
@@ -179,9 +177,7 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
         provider, &GPSProvider::RTCMDataUpdate, this,
         [this, provider](const QByteArray& data) {
             if (provider && _gpsProvider == provider) {
-                if (auto* rtcm = NTRIPManager::instance()->rtcmMavlink()) {
-                    rtcm->RTCMDataUpdate(data);
-                }
+                emit rtcmDataReceived(data);
             }
         },
         Qt::QueuedConnection);

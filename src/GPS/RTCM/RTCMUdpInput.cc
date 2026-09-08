@@ -1,5 +1,6 @@
 #include "RTCMUdpInput.h"
 
+#include <QtCore/QPointer>
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QUdpSocket>
 
@@ -80,8 +81,9 @@ void RTCMUdpInput::_readDatagrams()
     if (!_socket) {
         return;
     }
-    while (_socket->hasPendingDatagrams()) {
-        const QNetworkDatagram datagram = _socket->receiveDatagram();
+    const QPointer<QUdpSocket> socket = _socket;
+    while (socket && socket == _socket && socket->hasPendingDatagrams()) {
+        const QNetworkDatagram datagram = socket->receiveDatagram();
         const QByteArray data = datagram.data();
         if (data.isEmpty()) {
             continue;
@@ -104,7 +106,12 @@ void RTCMUdpInput::_readDatagrams()
             if (_rtcmParser.validateCrc()) {
                 ++framesFound;
                 ++_validFrames;
-                emit rtcmDataReceived(_rtcmParser.currentFrame());
+                const QByteArray frame = _rtcmParser.currentFrame();
+                _rtcmParser.reset();
+                emit rtcmDataReceived(frame);
+                if (!socket || socket != _socket) {
+                    return;
+                }
             } else {
                 ++framesDropped;
                 ++_invalidFrames;

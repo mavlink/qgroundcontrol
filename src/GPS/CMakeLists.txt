@@ -18,3 +18,4 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSConnectionState.cc GPSConnectionState.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSSourceHealth.cc GPSSourceHealth.h)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionManager.cc GPSCorrectionManager.h)
