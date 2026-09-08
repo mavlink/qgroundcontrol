@@ -12,11 +12,15 @@ on:
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
       - '.github/workflows/vm-builds.yml'
+      - 'CMakePresets.json'
+      - 'cmake/presets/**'
   pull_request:
     paths:
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
       - '.github/workflows/vm-builds.yml'
+      - 'CMakePresets.json'
+      - 'cmake/presets/**'
   workflow_dispatch:
 
 concurrency:
