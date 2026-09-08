@@ -47,12 +47,27 @@ jobs:
 
       - name: Run fuzzers
         uses: google/clusterfuzzlite/actions/run_fuzzers@v1
+        timeout-minutes: 10
+        env:
+          # Use the bundled seed corpus; scanning all repository artifacts can exhaust the job timeout.
+          NO_CLUSTERFUZZ_DEPLOYMENT: 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fuzz-seconds: 300
           mode: code-change
           sanitizer: address
           output-sarif: true
+
+      - name: Upload fuzzing diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: mavlink-fuzzing-diagnostics
+          path: |
+            out/artifacts
+            cifuzz-sarif/results.sarif
+          if-no-files-found: warn
+          retention-days: 7
 
   continuous-build:
     name: Continuous Fuzzer Build

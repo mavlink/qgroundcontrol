@@ -35,8 +35,21 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Check Codecov test results
+      id: codecov-results
+      if: ${{ !cancelled() && inputs.upload-codecov == 'true' }}
+      shell: bash
+      env:
+        JUNIT_PATH: ${{ inputs.build-dir }}/${{ inputs.junit-file }}
+      run: |
+        if [[ -f "$JUNIT_PATH" ]]; then
+          echo "available=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "available=false" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Upload Codecov test analytics
-      if: ${{ !cancelled() && inputs.upload-codecov == 'true' && hashFiles(format('{0}/{1}', inputs.build-dir, inputs.junit-file)) != '' }}
+      if: ${{ !cancelled() && inputs.upload-codecov == 'true' && steps.codecov-results.outputs.available == 'true' }}
       uses: codecov/codecov-action@v7
       with:
         files: ${{ inputs.build-dir }}/${{ inputs.junit-file }}

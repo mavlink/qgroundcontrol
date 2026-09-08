@@ -17,6 +17,11 @@ digest; pull requests cannot run those publishing jobs. Master pushes also submi
 builder's CPM SPDX snapshot to the dependency graph. CPM metadata is read inside the builder so
 container-local dependency paths resolve to the correct repositories.
 
+ClusterFuzzLite PR runs use the bundled seed corpus without querying historical GitHub artifacts
+(`NO_CLUSTERFUZZ_DEPLOYMENT=true`). This also disables previous-build crash comparison: reproducible
+crashes fail the PR regardless of whether they predate it. Crash files and SARIF diagnostics are
+uploaded separately. The master-only continuous build still publishes fuzzer binaries.
+
 ## Contents
 
 - [Layout](#layout)

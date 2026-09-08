@@ -352,7 +352,7 @@ void MavCommandQueue::_sendFromList(int index)
         if (commandEntry.command == MAV_CMD_REQUEST_MESSAGE || commandEntry.command == MAV_CMD_SET_MESSAGE_INTERVAL) {
             int requestedMsgId = static_cast<int>(commandEntry.rgParam1);
             const mavlink_message_info_t *info = mavlink_get_message_info_by_id(requestedMsgId);
-            logMsg += QStringLiteral(" requesting: %1").arg(info ? info->name : QString::number(requestedMsgId));
+            logMsg += QStringLiteral(" message: %1").arg(info ? info->name : QString::number(requestedMsgId));
         }
 
         qCWarning(MavCommandQueueLog) << logMsg;
