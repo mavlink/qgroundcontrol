@@ -1,4 +1,4 @@
-#include "RTKConnectionConfig.h"
+#include "GPSConnectionConfig.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QUrl>
@@ -7,35 +7,10 @@
 #include <limits>
 
 #include "GPSReceiverCapabilities.h"
-#include "RTKSettings.h"
 
-RTKConnectionConfig RTKConnectionConfig::fromSettings(RTKSettings& settings)
+QString GPSConnectionConfig::validationError() const
 {
-    RTKConnectionConfig config;
-    config.transport = static_cast<Transport>(settings.connectionType()->rawValue().toInt());
-    config.device = settings.serialDevice()->rawValue().toString().trimmed();
-    config.receiverType = static_cast<GPSType>(settings.networkReceiverType()->rawValue().toInt());
-    config.receiverName = settings.networkReceiverType()->enumStringValue();
-    config.host = settings.networkBaseHost()->rawValue().toString().trimmed();
-    config.port = settings.networkBasePort()->rawValue().toInt();
-    config.localPort = settings.udpLocalPort()->rawValue().toInt();
-    config.receiver.role = static_cast<GPSReceiverConfig::Role>(settings.receiverRole()->rawValue().toInt());
-    config.baseMode = settings.useFixedBasePosition()->rawValue().toInt();
-    config.receiver.base = {
-        .useFixedBase = config.baseMode == static_cast<int>(BaseModeDefinition::Mode::BaseFixed),
-        .surveyInAccMeters = settings.surveyInAccuracyLimit()->rawValue().toDouble(),
-        .surveyInDurationSecs = settings.surveyInMinObservationDuration()->rawValue().toInt(),
-        .fixedBaseLatitude = settings.fixedBasePositionLatitude()->rawValue().toDouble(),
-        .fixedBaseLongitude = settings.fixedBasePositionLongitude()->rawValue().toDouble(),
-        .fixedBaseAltitudeMeters = settings.fixedBasePositionAltitude()->rawValue().toFloat(),
-        .fixedBaseAccuracyMeters = settings.fixedBasePositionAccuracy()->rawValue().toFloat(),
-    };
-    return config;
-}
-
-QString RTKConnectionConfig::validationError() const
-{
-    const auto tr = [](const char* text) { return QCoreApplication::translate("RTKConnectionConfig", text); };
+    const auto tr = [](const char* text) { return QCoreApplication::translate("GPSConnectionConfig", text); };
     if (transport < Serial || transport > Udp) {
         return tr("Select a valid receiver and connection type");
     }

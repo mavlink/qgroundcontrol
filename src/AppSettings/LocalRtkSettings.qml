@@ -14,7 +14,7 @@ SettingsGroupLayout {
     readonly property var _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
     readonly property var _manager: QGroundControl.gpsManager
     readonly property var _connection: root._manager.rtkConnection
-    readonly property var _facts: QGroundControl.gpsRtk
+    readonly property var _facts: QGroundControl.gpsReceiver
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property var _serialPorts: root._serialPortManager ? root._serialPortManager.serialPorts : []
     readonly property bool _serial: root._settings.connectionType.rawValue === RTKSettings.Serial

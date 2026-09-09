@@ -13,7 +13,7 @@ Item {
     anchors.bottom: parent.bottom
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _rtkConnected:  QGroundControl.gpsRtk.connected.value
+    property bool   _rtkConnected:  QGroundControl.gpsReceiver.connected.value
 
     QGCPalette { id: qgcPal }
 

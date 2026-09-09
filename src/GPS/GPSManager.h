@@ -5,11 +5,12 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "NMEASourceManager.h"
-#include "RTKAutoConnect.h"
 #include "GPSCorrectionManager.h"
+#include "GPSReceiverAutoConnect.h"
+#include "NMEASourceManager.h"
 
-class GPSRtk;
+class GPSReceiver;
+class GPSRtkState;
 class QGCPositionManager;
 class QTimer;
 
@@ -19,7 +20,7 @@ class GPSManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_PROPERTY(NMEASourceManager* nmeaConnection READ nmeaConnection CONSTANT)
-    Q_PROPERTY(RTKAutoConnect* rtkConnection READ rtkConnection CONSTANT)
+    Q_PROPERTY(GPSReceiverAutoConnect* rtkConnection READ rtkConnection CONSTANT)
     Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT)
     Q_PROPERTY(bool networkRtkActive READ networkRtkActive NOTIFY networkRtkActiveChanged)
     Q_PROPERTY(
@@ -36,11 +37,15 @@ public:
     void init();
     void shutdown();
 
-    GPSRtk *gpsRtk() { return _gpsRtk; }
+    GPSReceiver* receiver() const { return _receiver; }
+
+    GPSRtkState* rtkState() const { return _rtkState; }
+
+    GPSReceiverSession* receiverSession() { return &_receiverSession; }
 
     NMEASourceManager* nmeaConnection() const { return _nmeaSources; }
 
-    RTKAutoConnect* rtkConnection() const { return _rtkAutoConnect; }
+    GPSReceiverAutoConnect* rtkConnection() const { return _receiverAutoConnect; }
 
     GPSCorrectionManager* corrections() { return &_corrections; }
 
@@ -61,12 +66,15 @@ signals:
 
 private:
     void _updateConnections();
+    void _updateReceiverSettings(bool restart = false);
     void _updatePositionSource();
     bool _positionSourceInstalled = false;
     QPointer<QGCPositionManager> _positionManager;
     GPSCorrectionManager _corrections;
+    GPSReceiverSession _receiverSession;
     QTimer* _connectionTimer = nullptr;
     NMEASourceManager* _nmeaSources = nullptr;
-    RTKAutoConnect* _rtkAutoConnect = nullptr;
-    GPSRtk *_gpsRtk = nullptr;
+    GPSReceiverAutoConnect* _receiverAutoConnect = nullptr;
+    GPSReceiver* _receiver = nullptr;
+    GPSRtkState* _rtkState = nullptr;
 };

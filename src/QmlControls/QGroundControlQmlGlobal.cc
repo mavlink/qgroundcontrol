@@ -1,24 +1,27 @@
 #include "QGroundControlQmlGlobal.h"
 
-#include "QGCCorePlugin.h"
-#include "LinkManager.h"
-#include "MAVLinkProtocol.h"
-#include "FirmwarePluginManager.h"
-#include "AppSettings.h"
-#include "FlightMapSettings.h"
-#include "SettingsManager.h"
-#include "PositionManager.h"
-#include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
+#include "AppSettings.h"
 #include "AudioOutput.h"
-#include "NTRIPManager.h"
+#include "FirmwarePluginManager.h"
+#include "FlightMapSettings.h"
+#include "GPSManager.h"
+#include "GPSRTKFactGroup.h"
+#include "GPSReceiver.h"
+#include "GPSReceiverFactGroup.h"
+#include "GPSRtkState.h"
+#include "LinkManager.h"
+#include "LoggingCategoryModel.h"
+#include "MAVLinkProtocol.h"
 #include "MAVLinkSigningKeys.h"
 #include "MissionCommandTree.h"
-#include "VideoManager.h"
 #include "MultiVehicleManager.h"
-#include "LoggingCategoryModel.h"
-#include "GPSManager.h"
-#include "GPSRtk.h"
+#include "NTRIPManager.h"
+#include "PositionManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCMapEngineManager.h"
+#include "SettingsManager.h"
+#include "VideoManager.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
@@ -45,7 +48,7 @@ GPSManager* QGroundControlQmlGlobal::gpsManager() const
     return GPSManager::instance();
 }
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     : QObject(parent)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
@@ -59,7 +62,8 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
-    , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
+    , _gpsRtkFactGroup(GPSManager::instance()->rtkState()->facts())
+    , _gpsReceiverFactGroup(GPSManager::instance()->receiver()->facts())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);

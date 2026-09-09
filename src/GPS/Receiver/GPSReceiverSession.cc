@@ -29,6 +29,7 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
     if (!lifetime || _shutdown || _provider) {
         return;
     }
+    _config = config;
     const quint64 generation = ++_generation;
     _errorDetail.clear();
     _capabilities = GPSReceiverCapabilities::forType(type);

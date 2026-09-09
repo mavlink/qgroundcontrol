@@ -588,24 +588,43 @@ void NMEASourceManagerTest::_managedReceiverFailureAndCancellation()
     saved.setFactValue(settings->nmeaReceiverMode(), AutoConnectSettings::NmeaReceiverUblox);
     QGCPositionManager position;
     NMEASourceManager source(settings, &position);
-    source._connection.requestConnect();
-    QVERIFY(source._connection.beginAttempt());
-    source._startReceiver([](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
+    auto lease = std::make_shared<int>(1);
+    const std::weak_ptr<int> weakLease = lease;
+    auto attempts = std::make_shared<std::atomic_int>(0);
+    source._startReceiver([lease, attempts](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> {
+        ++*attempts;
+        return {};
+    });
+    lease.reset();
     QCOMPARE(source.connectionState(), GPSConnectionState::Connecting);
     QTRY_COMPARE_WITH_TIMEOUT(source.connectionState(), GPSConnectionState::Retrying, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!source._receiver.hasReceiver(), TestTimeout::mediumMs());
     QCOMPARE(source.status(),
              QStringLiteral("Cannot configure receiver for NMEA: Cannot open the receiver connection"));
     QVERIFY(!source.positionSource());
+    QCOMPARE(attempts->load(), 1);
+    QCOMPARE(source._connection._retryDelayMs, 1000);
+    QVERIFY(!weakLease.expired());
 
-    source._connection.requestConnect();
-    QVERIFY(source._connection.beginAttempt());
-    source._startReceiver([](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
+    source._receiverAutoConnect.update();
+    QCOMPARE(attempts->load(), 1);
+    source._connection._retryDeadline.setRemainingTime(0);
+    source._receiverAutoConnect.update();
+    QTRY_COMPARE_WITH_TIMEOUT(attempts->load(), 2, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(source.connectionState(), GPSConnectionState::Retrying, TestTimeout::mediumMs());
+    QCOMPARE(source._connection._retryDelayMs, 2000);
+    QVERIFY(!weakLease.expired());
+
     source.disconnectSource();
     QTRY_VERIFY_WITH_TIMEOUT(!source._receiver.hasReceiver() && !source._receiver.stopping(), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(weakLease.expired(), TestTimeout::mediumMs());
     QCOMPARE(source.connectionState(), GPSConnectionState::Disconnected);
     QCOMPARE(source.status(), QStringLiteral("Disconnected"));
     QVERIFY(!source.active());
     QVERIFY(!source.positionSource());
+    QVERIFY(!source._managedReceiver);
+    source._receiverAutoConnect.update();
+    QCOMPARE(attempts->load(), 2);
 }
 
 void NMEASourceManagerTest::_managedReceiverSettingsPreservePassiveBaud()
@@ -627,4 +646,31 @@ void NMEASourceManagerTest::_managedReceiverSettingsPreservePassiveBaud()
     NMEASourceManager restarted(settings, &position);
     QCOMPARE(restarted._config.receiverMode, NMEAConnectionConfig::Ublox);
     QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 4800);
+}
+
+void NMEASourceManagerTest::_managedModeChangeCancelsRetry()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceSerial);
+    saved.setFactValue(settings->nmeaAutoConnect(), true);
+    saved.setFactValue(settings->nmeaReceiverMode(), AutoConnectSettings::NmeaReceiverUblox);
+    saved.setFactValue(settings->autoConnectNmeaBaud(), 4800);
+    QGCPositionManager position;
+    NMEASourceManager source(settings, &position);
+    auto lease = std::make_shared<int>(1);
+    const std::weak_ptr<int> weakLease = lease;
+    source._startReceiver([lease](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
+    lease.reset();
+    QTRY_COMPARE_WITH_TIMEOUT(source.connectionState(), GPSConnectionState::Retrying, TestTimeout::mediumMs());
+    settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverPassive);
+    QTRY_VERIFY_WITH_TIMEOUT(weakLease.expired(), TestTimeout::mediumMs());
+    QVERIFY(!source._managedReceiver);
+    QVERIFY(source._shouldConnect());
+    QCOMPARE(source._config.baud, 4800);
+    source.disconnectSource();
+    settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverUblox);
+    QVERIFY(!source._shouldConnect());
+    QVERIFY(!source._managedReceiver);
+    QCOMPARE(source.status(), QStringLiteral("Automatic connection paused"));
 }

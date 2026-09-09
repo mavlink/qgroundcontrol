@@ -5,7 +5,8 @@
 #include "Fact.h"
 #include "FactGroup.h"
 #include "GPSManager.h"
-#include "GPSRtk.h"
+#include "GPSRTKFactGroup.h"
+#include "GPSRtkState.h"
 #include "MultiVehicleManager.h"
 #include "NMEAUtils.h"
 #include "NTRIPSettings.h"
@@ -117,27 +118,17 @@ PositionResult getRTKBasePosition()
     GPSManager* gpsManager = GPSManager::instance();
     if (!gpsManager)
         return {};
-    GPSRtk* rtk = gpsManager->gpsRtk();
+    GPSRtkState* rtk = gpsManager->rtkState();
     if (!rtk)
         return {};
 
-    FactGroup* rtkGroup = rtk->gpsRtkFactGroup();
-    if (!rtkGroup)
+    GPSRTKFactGroup* rtkGroup = rtk->facts();
+    if (!rtkGroup->valid()->rawValue().toBool())
         return {};
 
-    Fact* validF = rtkGroup->getFact(QStringLiteral("valid"));
-    if (!validF || !validF->rawValue().toBool())
-        return {};
-
-    Fact* latF = rtkGroup->getFact(QStringLiteral("currentLatitude"));
-    Fact* lonF = rtkGroup->getFact(QStringLiteral("currentLongitude"));
-    if (!latF || !lonF)
-        return {};
-
-    Fact* altF = rtkGroup->getFact(QStringLiteral("currentAltitude"));
-    const double lat = latF->rawValue().toDouble();
-    const double lon = lonF->rawValue().toDouble();
-    const double alt = altF ? altF->rawValue().toDouble() : qQNaN();
+    const double lat = rtkGroup->currentLatitude()->rawValue().toDouble();
+    const double lon = rtkGroup->currentLongitude()->rawValue().toDouble();
+    const double alt = rtkGroup->currentAltitude()->rawValue().toDouble();
 
     if (isSaneCoord(lat, lon)) {
         GPSObservation observation;

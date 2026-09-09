@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "GPSConnectionState.h"
+#include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverSession.h"
 #include "NMEAConnectionConfig.h"
 #include "NMEADecoderSession.h"
@@ -86,11 +87,11 @@ private:
     void _updateSerialRouting();
     bool _installSource(QIODevice* device);
     void _startReceiver(GPSProvider::TransportFactory factory);
-    void _receiverStateChanged();
+    void _uninstallSource();
 
     AutoConnectSettings* _settings;
     GPSReceiverSession _receiver;
-    bool _receiverFailed = false;
+    bool _managedReceiver = false;
     NMEAConnectionConfig _config;
     QPointer<QGCPositionManager> _positionManager;
     std::unique_ptr<UdpIODevice> _udp;
@@ -99,6 +100,7 @@ private:
     QTimer _udpActivityTimer;
     QDeadlineTimer _connectDeadline = QDeadlineTimer::Forever;
     GPSConnectionState _connection;
+    GPSReceiverAutoConnect _receiverAutoConnect;
     int _source = -1;
     bool _sourceInstalled = false;
     QString _status;

@@ -2,37 +2,38 @@
 
 #include <iterator>
 
-#include "AutoConnectSettings.h"
-#include "GPSRtk.h"
-#include "RTKAutoConnect.h"
+#include "GPSReceiverAutoConnect.h"
+#include "GPSReceiverCapabilities.h"
+#include "SerialGPSTransport.h"
 #include "SerialPortManager.h"
 
-RTKAutoConnect::RTKAutoConnect(AutoConnectSettings* settings, GPSRtk* receiver, SerialPortManager* serialPorts,
-                               QObject* parent)
-    : RTKAutoConnect(receiver, settings, nullptr, parent)
-{
-    setSerialDiscovery(serialPorts);
-}
-
-void RTKAutoConnect::setSerialDiscovery(SerialPortManager* serialPorts)
+void GPSReceiverAutoConnect::setSerialDiscovery(SerialPortManager* serialPorts)
 {
     _serialPorts = serialPorts;
+    if (!_serialFactory) {
+        _serialFactory = [this](const QString& device) -> GPSProvider::TransportFactory {
+            auto reservation = _serialPorts->reservePort(device);
+            if (!reservation) {
+                return {};
+            }
+            return [device, reservation](const std::atomic_bool& stop) {
+                return std::make_unique<SerialGPSTransport>(device, stop);
+            };
+        };
+    }
 }
 
-void RTKAutoConnect::_updateSerial()
+void GPSReceiverAutoConnect::_updateSerial()
 {
-    if (!_settings || !_receiver || !_serialPorts) {
+    if (!_receiver || !_serialPorts) {
         return;
     }
-    if (!_connection.updateIntent(_settings->autoConnectRTKGPS()->rawValue().toBool())) {
-        stop();
-        return;
-    }
+    const QPointer<GPSReceiverAutoConnect> guard(this);
     if (!_sessionConfig && !_captureConfig()) {
         return;
     }
     _updateReceiverState();
-    if (_receiver->stopping()) {
+    if (!guard || !_receiver || _receiver->stopping() || !_sessionConfig) {
         return;
     }
     const QString selectedDevice = _sessionConfig->device;
@@ -43,10 +44,19 @@ void RTKAutoConnect::_updateSerial()
                                          : port.systemLocation == selectedDevice);
     };
     const auto request = [this, &selectedDevice](const SerialPortManager::Port& port) {
-        const QString type = selectedDevice.isEmpty() || !_rtkSettings ? port.boardName : _sessionConfig->receiverName;
+        const QString name = selectedDevice.isEmpty() ? port.boardName : _sessionConfig->receiverName;
+        const GPSType type = selectedDevice.isEmpty()
+                                 ? GPSReceiverCapabilities::typeForName(name).value_or(GPSType::u_blox)
+                                 : _sessionConfig->receiverType;
         const auto config = _sessionConfig->receiver;
-        if (_connection.beginAttempt()) {
-            emit connectRequested(port.systemLocation, type, config);
+        auto factory = _serialFactory ? _serialFactory(port.systemLocation) : GPSProvider::TransportFactory{};
+        const QPointer<GPSReceiverAutoConnect> lifetime(this);
+        if (factory && _connection.beginAttempt() && lifetime) {
+            emit connectRequested(port.systemLocation, name, config);
+            if (lifetime && _receiver && _connection.state() == GPSConnectionState::Connecting &&
+                _connection.active()) {
+                _receiver->start(type, std::move(factory), config);
+            }
         }
     };
     QSet<QString> present;
@@ -56,12 +66,14 @@ void RTKAutoConnect::_updateSerial()
     if (!_autoConnectedPort.isEmpty() &&
         (!present.contains(_autoConnectedPort) ||
          (!_receiver->hasReceiver() && _serialPorts->isAutoConnectExcluded(_autoConnectedPort)))) {
-        // Preserve a manual connection request while the device is temporarily unavailable.
+        // Removal retires the attempt without creating a new manual connection request.
         const auto config = _sessionConfig;
-        stop();
+        stopAttempt();
+        if (!guard || !_connection.active() || _connection.paused()) {
+            return;
+        }
         _sessionConfig = config;
-        _connection.requestConnect();
-        emit stateChanged();
+        _connection.resetRetry();
     }
     for (auto it = _waitingPorts.begin(); it != _waitingPorts.end();) {
         it = !present.contains(it.key()) ? _waitingPorts.erase(it) : std::next(it);
@@ -94,4 +106,9 @@ void RTKAutoConnect::_updateSerial()
             return;
         }
     }
+}
+
+void GPSReceiverAutoConnect::setSerialTransportFactory(SerialTransportFactory factory)
+{
+    _serialFactory = std::move(factory);
 }

@@ -27,15 +27,13 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
     , _positionManager(positionManager)
     , _decoder(this)
     , _connection(this)
+    , _receiverAutoConnect(&_receiver, _decoder.health(), this, &_connection)
 {
     qCDebug(NMEASourceManagerLog) << this;
     connect(&_connection, &GPSConnectionState::changed, this, &NMEASourceManager::stateChanged);
     connect(&_decoder, &NMEADecoderSession::satellitesChanged, this, &NMEASourceManager::satellitesChanged);
-    connect(&_receiver, &GPSReceiverSession::stateChanged, this, &NMEASourceManager::_receiverStateChanged);
     connect(&_receiver, &GPSReceiverSession::configurationStarted, this, [this]() {
-        const QPointer<NMEASourceManager> guard(this);
-        _connection.configuring();
-        if (guard && _shouldConnect()) {
+        if (_shouldConnect()) {
             _setStatus(tr("Configuring receiver for NMEA"));
         }
     });
@@ -47,25 +45,19 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
             _closeDevice();
             return;
         }
-        const QPointer<NMEASourceManager> guard(this);
-        _connection.ready();
-        if (guard && _shouldConnect()) {
+        if (_shouldConnect()) {
             _setStatus(tr("Connected"));
         }
     });
     connect(&_receiver, &GPSReceiverSession::connectionError, this, [this](GPSConnectionError error) {
         const QPointer<NMEASourceManager> guard(this);
-        _closeDevice();
+        _uninstallSource();
         if (!guard) {
             return;
         }
-        _receiverFailed = true;
         const QString summary = error == GPSConnectionError::DeviceError ? tr("Serial connection lost; reconnecting")
                                                                          : tr("Cannot configure receiver for NMEA");
         _setStatus(_receiver.errorDetail().isEmpty() ? summary : tr("%1: %2").arg(summary, _receiver.errorDetail()));
-        if (guard) {
-            _receiverStateChanged();
-        }
     });
     _status = tr("Disconnected");
     _udpActivityTimer.setSingleShot(true);
@@ -145,25 +137,14 @@ void NMEASourceManager::disconnectSource()
 
 void NMEASourceManager::_startReceiver(GPSProvider::TransportFactory factory)
 {
-    _receiverFailed = false;
-    GPSReceiverConfig config;
-    config.role = GPSReceiverConfig::Role::Position;
-    config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
-    _receiver.start(GPSType::u_blox, std::move(factory), config);
-}
-
-void NMEASourceManager::_receiverStateChanged()
-{
-    if (_receiver.hasReceiver() || _receiver.stopping()) {
-        return;
-    }
-    const QPointer<NMEASourceManager> guard(this);
-    if (_connection.state() == GPSConnectionState::Stopping) {
-        _connection.stopped();
-    }
-    if (guard && _receiverFailed && _shouldConnect()) {
-        _connection.failed();
-    }
+    GPSConnectionConfig config;
+    config.transport = GPSConnectionConfig::Serial;
+    config.device = _config.device;
+    config.receiverType = GPSType::u_blox;
+    config.receiver.role = GPSReceiverConfig::Role::Position;
+    config.receiver.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
+    _managedReceiver = true;
+    _receiverAutoConnect.connectReceiver(config, std::move(factory));
 }
 
 void NMEASourceManager::_setStatus(const QString& status)
@@ -184,12 +165,12 @@ NMEASourceManager::~NMEASourceManager()
 void NMEASourceManager::shutdown()
 {
     stop();
+    _receiverAutoConnect.stop();
     _receiver.shutdown();
 }
 
 void NMEASourceManager::stop()
 {
-    _receiverFailed = false;
     _connection.stop();
     _closeDevice();
     _connection.resetRetry();
@@ -204,13 +185,11 @@ void NMEASourceManager::_closeDevice()
         _connection.stopping();
     }
     _udpActivityTimer.stop();
-    // Detach the decoder before destroying the device it reads from.
-    if (_sourceInstalled && _positionManager) {
-        _positionManager->clearNmeaPositionSource(_decoder.positionSource());
+    _uninstallSource();
+    if (_managedReceiver) {
+        _managedReceiver = false;
+        _receiverAutoConnect.stopAttempt();
     }
-    _sourceInstalled = false;
-    _decoder.stop();
-    _receiver.stop();
     _udp.reset();
     if (_tcp) {
         _tcp->disconnect(this);
@@ -227,6 +206,16 @@ void NMEASourceManager::_closeDevice()
     if (!_receiver.stopping()) {
         _connection.stopped();
     }
+}
+
+void NMEASourceManager::_uninstallSource()
+{
+    // Detach the decoder before destroying the device it reads from.
+    if (_sourceInstalled && _positionManager) {
+        _positionManager->clearNmeaPositionSource(_decoder.positionSource());
+    }
+    _sourceInstalled = false;
+    _decoder.stop();
 }
 
 bool NMEASourceManager::_installSource(QIODevice* device)
@@ -317,6 +306,10 @@ void NMEASourceManager::update()
             _setStatus(tr("Waiting for serial device"));
             return;
         }
+        if (_managedReceiver) {
+            _receiverAutoConnect.update();
+            return;
+        }
         if (_serial || _receiver.hasReceiver() || _receiver.stopping()) {
             return;
         }
@@ -328,13 +321,13 @@ void NMEASourceManager::update()
             _setStatus(tr("Serial device is in use"));
             return;
         }
-        if (!_connection.beginAttempt()) {
-            return;
-        }
         if (_config.receiverMode == NMEAConnectionConfig::Ublox) {
             _startReceiver([device, reservation = std::move(reservation)](const std::atomic_bool& stop) {
                 return std::make_unique<SerialGPSTransport>(device, stop);
             });
+            return;
+        }
+        if (!_connection.beginAttempt()) {
             return;
         }
         auto serial = std::make_unique<QSerialPort>();

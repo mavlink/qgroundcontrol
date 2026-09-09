@@ -127,7 +127,7 @@ ToolIndicatorPage {
 
             SettingsGroupLayout {
                 heading:    root._baseStation ? qsTr("RTK Base Status") : qsTr("GNSS Receiver Status")
-                visible:    QGroundControl.gpsRtk.connected.value
+                visible:    QGroundControl.gpsReceiver.connected.value
 
                 QGCLabel {
                     text: root._baseStation
@@ -137,7 +137,7 @@ ToolIndicatorPage {
 
                 LabelledLabel {
                     label:      qsTr("Satellites")
-                    labelText:  root._baseStation ? QGroundControl.gpsRtk.numSatellites.value : root._receiverHealth.satellitesInUseCount
+                    labelText:  root._baseStation ? QGroundControl.gpsReceiver.numSatellites.value : root._receiverHealth.satellitesInUseCount
                 }
 
                 LabelledLabel {

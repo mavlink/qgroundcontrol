@@ -10,6 +10,7 @@ private slots:
     void _managedReceiverSettingsPreservePassiveBaud();
     void init();
     void _managedReceiverFailureAndCancellation();
+    void _managedModeChangeCancelsRetry();
     void _udpSwitchAndDisable();
     void _inactiveSettingsKeepConnection();
     void _udpActivityStatus();

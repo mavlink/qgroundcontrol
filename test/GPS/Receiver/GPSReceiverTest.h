@@ -2,7 +2,7 @@
 
 #include "UnitTest.h"
 
-class GPSRtkTest : public UnitTest
+class GPSReceiverTest : public UnitTest
 {
     Q_OBJECT
 
@@ -11,7 +11,7 @@ private slots:
     void _positionSourceSelection();
     void _failedOpenNeverConnects();
     void _retiredWorkerCannotUpdateReplacement();
-    void _workerCanOutliveManager();
+    void _facadeDestructionDoesNotStopSession();
     void _shutdownWithoutEventLoop_data();
     void _shutdownWithoutEventLoop();
     void _sourceHealthIndependentOfSurvey();

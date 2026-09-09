@@ -17,7 +17,9 @@ add_subdirectory(Driver)
 add_subdirectory(Receiver)
 add_subdirectory(RTK)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTypes.h)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTypes.h GPSConnectionSettings.cc
+                                             GPSConnectionSettings.h
+)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionManager.cc GPSCorrectionManager.h)
 

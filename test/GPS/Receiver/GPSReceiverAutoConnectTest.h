@@ -2,7 +2,7 @@
 
 #include "UnitTest.h"
 
-class RTKAutoConnectTest : public UnitTest
+class GPSReceiverAutoConnectTest : public UnitTest
 {
     Q_OBJECT
 
@@ -14,6 +14,8 @@ private slots:
     void _manualSerialSelectionAndPause();
     void _serialRetriesKeepConfiguration();
     void _discoveryUnplugAndDisable();
+    void _unplugNotificationPreservesChangedIntent_data();
+    void _unplugNotificationPreservesChangedIntent();
     void _excludedPorts_data();
     void _excludedPorts();
     void _failedAttemptsBackOffAndRespectReservations();

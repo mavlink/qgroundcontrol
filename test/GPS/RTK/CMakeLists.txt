@@ -1,10 +1,7 @@
 # RTK tests.
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSRtkTest.cc GPSRtkTest.h)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSRtkStateTest.cc GPSRtkStateTest.h)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_qgc_test(GPSRtkTest LABELS Unit RESOURCE_LOCK Settings)
-
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKAutoConnectTest.cc RTKAutoConnectTest.h)
-add_qgc_test(RTKAutoConnectTest LABELS Unit RESOURCE_LOCK Settings)
+add_qgc_test(GPSRtkStateTest LABELS Unit RESOURCE_LOCK Settings)

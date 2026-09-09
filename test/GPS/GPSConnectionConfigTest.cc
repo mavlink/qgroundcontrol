@@ -4,8 +4,9 @@
 
 #include "AutoConnectSettings.h"
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSConnectionConfig.h"
+#include "GPSConnectionSettings.h"
 #include "NMEAConnectionConfig.h"
-#include "RTKConnectionConfig.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
@@ -79,8 +80,8 @@ void GPSConnectionConfigTest::_rtkValidation()
     QFETCH(double, value);
     QFETCH(bool, fixed);
     QFETCH(bool, valid);
-    RTKConnectionConfig config;
-    config.transport = RTKConnectionConfig::Udp;
+    GPSConnectionConfig config;
+    config.transport = GPSConnectionConfig::Udp;
     config.host = QStringLiteral("localhost");
     config.port = 2101;
     config.baseMode = fixed ? 1 : 0;
@@ -104,7 +105,7 @@ void GPSConnectionConfigTest::_rtkValidation()
     else if (field == "receiver")
         config.receiverType = static_cast<GPSType>(static_cast<int>(value));
     else if (field == "transport")
-        config.transport = static_cast<RTKConnectionConfig::Transport>(static_cast<int>(value));
+        config.transport = static_cast<GPSConnectionConfig::Transport>(static_cast<int>(value));
     else if (field == "mode")
         config.baseMode = static_cast<int>(value);
     QCOMPARE(config.validationError().isEmpty(), valid);
@@ -133,17 +134,17 @@ void GPSConnectionConfigTest::_settingsSnapshots()
     saved.setFactValue(rtk->networkReceiverType(), 3);
     saved.setFactValue(rtk->networkBaseHost(), QStringLiteral("  localhost  "));
     saved.setFactValue(rtk->surveyInAccuracyLimit(), 1.5);
-    const auto rtkConfig = RTKConnectionConfig::fromSettings(*rtk);
-    QCOMPARE(rtkConfig.transport, RTKConnectionConfig::Udp);
+    const auto rtkConfig = GPSConnectionSettings::fromSettings(*rtk);
+    QCOMPARE(rtkConfig.transport, GPSConnectionConfig::Udp);
     QCOMPARE(rtkConfig.receiverType, GPSType::femto);
     QCOMPARE(rtkConfig.host, QStringLiteral("localhost"));
     rtk->surveyInAccuracyLimit()->setRawValue(2.5);
     QCOMPARE(rtkConfig.receiver.base.surveyInAccMeters, 1.5);
-    QCOMPARE(RTKConnectionConfig::fromSettings(*rtk).receiver.base.surveyInAccMeters, 2.5);
+    QCOMPARE(GPSConnectionSettings::fromSettings(*rtk).receiver.base.surveyInAccMeters, 2.5);
     QCOMPARE(rtkConfig.receiver.role, GPSReceiverConfig::Role::RTKBase);
     rtk->receiverRole()->setRawValue(RTKSettings::Position);
     QCOMPARE(rtkConfig.receiver.role, GPSReceiverConfig::Role::RTKBase);
-    QCOMPARE(RTKConnectionConfig::fromSettings(*rtk).receiver.role, GPSReceiverConfig::Role::Position);
+    QCOMPARE(GPSConnectionSettings::fromSettings(*rtk).receiver.role, GPSReceiverConfig::Role::Position);
     verifyExpectedLogMessage();
 }
 
@@ -151,7 +152,7 @@ UT_REGISTER_TEST(GPSConnectionConfigTest, TestLabel::Unit)
 
 void GPSConnectionConfigTest::_positionRoleValidation()
 {
-    RTKConnectionConfig config;
+    GPSConnectionConfig config;
     QCOMPARE(config.receiver.role, GPSReceiverConfig::Role::RTKBase);
     config.receiver.role = GPSReceiverConfig::Role::Position;
     config.baseMode = -1;
@@ -160,7 +161,7 @@ void GPSConnectionConfigTest::_positionRoleValidation()
     QVERIFY(config.validationError().isEmpty());
     config.receiver.base.useFixedBase = true;
     QVERIFY(config.validationError().isEmpty());
-    config.transport = RTKConnectionConfig::Tcp;
+    config.transport = GPSConnectionConfig::Tcp;
     QVERIFY(!config.validationError().isEmpty());
     config.host = QStringLiteral("localhost");
     config.port = 2101;

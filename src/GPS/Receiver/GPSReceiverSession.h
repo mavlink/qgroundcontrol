@@ -13,7 +13,8 @@ class GPSReceiverSession : public QObject
     Q_OBJECT
 
     friend class GPSReceiverSessionTest;
-    friend class GPSRtkTest;
+    friend class GPSReceiverTest;
+    friend class GPSRtkStateTest;
 
 public:
     explicit GPSReceiverSession(QObject* parent = nullptr);
@@ -31,6 +32,8 @@ public:
     bool stopping() const { return !_retiring.isEmpty(); }
 
     quint64 sessionId() const { return _generation; }
+
+    const GPSReceiverConfig& config() const { return _config; }
 
     QIODevice* nmeaDevice() const { return _nmeaStream.get(); }
 
@@ -63,6 +66,7 @@ private:
     quint64 _generation = 0;
     bool _ready = false;
     bool _shutdown = false;
+    GPSReceiverConfig _config;
     GPSReceiverCapabilities _capabilities;
     QString _errorDetail;
 };

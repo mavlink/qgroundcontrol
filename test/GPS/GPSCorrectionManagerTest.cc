@@ -10,7 +10,10 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSCorrectionManager.h"
 #include "GPSManager.h"
-#include "GPSRtk.h"
+#include "GPSReceiver.h"
+#include "GPSReceiverFactGroup.h"
+#include "GPSReceiverSession.h"
+#include "GPSRtkState.h"
 #include "GpsTestHelpers.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
@@ -51,7 +54,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1077, 500);
     quint64 expected = 0;
     // Local RTK and UDP work before any NTRIP initialization or caster connection.
-    emit gps.gpsRtk()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
+    emit gps.receiverSession()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
     expected += frame.size();
     QCOMPARE(forwarder->totalBytesSent(), expected);
     QUdpSocket sender;
@@ -63,7 +66,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     QCOMPARE(forwarder->totalBytesSent(), expected);
     ntrip.stopNTRIP();
     QVERIFY(corrections->_udpInput.isRunning());
-    emit gps.gpsRtk()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
+    emit gps.receiverSession()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
     expected += frame.size();
     QCOMPARE(sender.writeDatagram(frame, QHostAddress::LocalHost, port), frame.size());
     expected += frame.size();
@@ -72,7 +75,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     gps.shutdown();
     QVERIFY(!corrections->_udpInput.isRunning());
     emit ntrip.rtcmDataReceived(frame);
-    emit gps.gpsRtk()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
+    emit gps.receiverSession()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
     QCOMPARE(forwarder->totalBytesSent(), expected);
 }
 
@@ -169,6 +172,8 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
         import QGroundControl
         QtObject {
             readonly property var forwarder: QGroundControl.gpsManager.corrections.rtcmMavlink
+            readonly property var receiverFacts: QGroundControl.gpsReceiver
+            readonly property var baseFacts: QGroundControl.gpsRtk
         }
     )",
                       QUrl());
@@ -177,6 +182,15 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
     std::unique_ptr<QObject> root(component.create());
     QVERIFY2(root, qPrintable(component.errorString()));
     QCOMPARE(root->property("forwarder").value<RTCMMavlink*>(), GPSManager::instance()->corrections()->rtcmMavlink());
+    auto* receiverFacts = root->property("receiverFacts").value<GPSReceiverFactGroup*>();
+    auto* baseFacts = root->property("baseFacts").value<GPSRTKFactGroup*>();
+    QCOMPARE(receiverFacts, GPSManager::instance()->receiver()->facts());
+    QCOMPARE(baseFacts, GPSManager::instance()->rtkState()->facts());
+    QVERIFY(receiverFacts->metaObject()->indexOfProperty("connected") >= 0);
+    QVERIFY(receiverFacts->metaObject()->indexOfProperty("lastError") >= 0);
+    QCOMPARE(baseFacts->metaObject()->indexOfProperty("connected"), -1);
+    QCOMPARE(baseFacts->metaObject()->indexOfProperty("lastError"), -1);
+    QVERIFY(baseFacts->metaObject()->indexOfProperty("currentLatitude") >= 0);
 }
 
 void GPSCorrectionManagerTest::_sourceSelectionAndSessions()

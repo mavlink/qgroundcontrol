@@ -8,7 +8,6 @@ GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
 {
     qCDebug(GPSRTKFactGroupLog) << this;
 
-    _addFact(&_connectedFact);
     _addFact(&_currentDurationFact);
     _addFact(&_currentAccuracyFact);
     _addFact(&_currentLatitudeFact);
@@ -16,9 +15,6 @@ GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
     _addFact(&_currentAltitudeFact);
     _addFact(&_validFact);
     _addFact(&_activeFact);
-    _addFact(&_numSatellitesFact);
-    _addFact(&_numSatellitesUsedFact);
-    _addFact(&_lastErrorFact);
 }
 
 GPSRTKFactGroup::~GPSRTKFactGroup()

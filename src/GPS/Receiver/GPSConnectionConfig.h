@@ -4,10 +4,8 @@
 
 #include "GPSDriver.h"
 
-class RTKSettings;
-
 /// Endpoint and receiver settings retained together across a session's retries.
-struct RTKConnectionConfig
+struct GPSConnectionConfig
 {
     enum Transport : int
     {
@@ -27,5 +25,4 @@ struct RTKConnectionConfig
     GPSReceiverConfig receiver{.base = {.surveyInAccMeters = 2.0, .surveyInDurationSecs = 180}};
 
     QString validationError() const;
-    static RTKConnectionConfig fromSettings(RTKSettings& settings);
 };

@@ -10,7 +10,7 @@ class GPSConnectionState : public QObject
 
     friend class GPSConnectionStateTest;
     friend class NMEASourceManagerTest;
-    friend class RTKAutoConnectTest;
+    friend class GPSReceiverAutoConnectTest;
 
 public:
     enum State
