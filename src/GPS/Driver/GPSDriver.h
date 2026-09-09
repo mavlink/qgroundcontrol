@@ -35,7 +35,14 @@ struct GPSReceiverConfig
         Position = 1
     };
 
+    enum class OutputProtocol
+    {
+        Native,
+        NMEA
+    };
+
     Role role = Role::RTKBase;
+    OutputProtocol outputProtocol = OutputProtocol::Native;
     GPSBaseStationConfig base;
     float headingOffsetDeg = 5.0f;  // dual-antenna heading offset; consumed only by the Septentrio (SBF) driver
 };
@@ -85,9 +92,7 @@ public:
     /// or <0 if not configured.
     int receive(unsigned timeoutMs);
 
-    /// Configure a u-blox receiver for navigation and enable NMEA on its driver ports.
-    /// Returns the configured baud rate, or zero on failure/cancellation.
-    unsigned prepareNmeaOutput();
+    unsigned baudrate() const { return _baudrate; }
 
     /// Trampoline target for the px4 callback; `type` is a GPSCallbackType value.
     /// Public only so the file-local C callback can reach it — not for callers.

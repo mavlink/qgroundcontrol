@@ -56,6 +56,7 @@ DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostIP)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostPort)
 DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaUdpPort)
 DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaAutoConnect)
+DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaReceiverMode)
 DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaTcpHost)
 DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaTcpPort)
 

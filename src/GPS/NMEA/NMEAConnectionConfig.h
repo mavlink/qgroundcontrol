@@ -15,11 +15,18 @@ struct NMEAConnectionConfig
         Tcp
     };
 
+    enum ReceiverMode : int
+    {
+        Passive,
+        Ublox
+    };
+
     Source source = Disabled;
     QString host;
     int port = 0;
     QString device;
     int baud = 0;
+    ReceiverMode receiverMode = Passive;
 
     bool operator==(const NMEAConnectionConfig&) const = default;
     QString validationError() const;

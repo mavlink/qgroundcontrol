@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/analyze.py."""
 
 from __future__ import annotations
@@ -54,6 +53,20 @@ class TestFileCollector:
         assert "bar.h" in names
         assert "readme.txt" not in names
 
+    def test_vendored_gps_sources_are_excluded(self, tmp_path: Path) -> None:
+        owned = tmp_path / "src/GPS/Driver/GPSDriver.cc"
+        vendor = tmp_path / "src/GPS/Driver/PX4/ubx.cpp"
+        plugin = tmp_path / "src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc"
+        for path in (owned, vendor, plugin):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.touch()
+        collector = FileCollector(tmp_path)
+        expected = sorted([owned, plugin])
+        assert collector.get_cpp_files(analyze_all=True) == expected
+        changed = "\n".join(str(path.relative_to(tmp_path)) for path in (owned, vendor, plugin))
+        with patch("analyze.run_git", return_value=MagicMock(returncode=0, stdout=changed)):
+            assert collector._get_changed_files(collector.CPP_EXTENSIONS, "master") == expected
+
 
 class TestValidatePath:
     def test_valid_relative_path(self, tmp_path: Path) -> None:
@@ -63,11 +76,13 @@ class TestValidatePath:
 
     def test_rejects_parent_traversal(self, tmp_path: Path) -> None:
         import pytest
+
         with pytest.raises(ValueError, match="must not contain"):
             validate_path("../etc/passwd", tmp_path)
 
     def test_rejects_absolute_path(self, tmp_path: Path) -> None:
         import pytest
+
         with pytest.raises(ValueError, match="must be relative"):
             validate_path("/etc/passwd", tmp_path)
 
@@ -89,5 +104,6 @@ class TestGetAnalyzer:
 
     def test_unknown_tool_raises(self, tmp_path: Path) -> None:
         import pytest
+
         with pytest.raises(ValueError, match="Unknown tool"):
             get_analyzer("nonexistent", tmp_path, tmp_path / "build")

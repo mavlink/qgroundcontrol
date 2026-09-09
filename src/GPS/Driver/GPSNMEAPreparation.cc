@@ -35,6 +35,9 @@ void GPSNMEAPreparation::run()
     }
     GPSReceiverConfig config;
     config.role = GPSReceiverConfig::Role::Position;
+    config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
     GPSDriver driver(_type, *transport, config, {});
-    _baudrate = driver.prepareNmeaOutput();
+    if (driver.configure() && !_requestStop) {
+        _baudrate = driver.baudrate();
+    }
 }

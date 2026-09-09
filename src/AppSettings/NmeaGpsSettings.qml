@@ -18,6 +18,8 @@ SettingsGroupLayout {
     readonly property var _serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
     readonly property bool _serialSource: root._autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceSerial
 
+    readonly property bool _configureReceiver: root._autoConnectSettings.nmeaReceiverMode.rawValue === AutoConnectSettings.NmeaReceiverUblox
+
     GpsConnectionType {
         objectName: "nmeaConnectionType"
         Layout.fillWidth: true
@@ -43,10 +45,26 @@ SettingsGroupLayout {
         }
     }
 
+    LabelledFactComboBox {
+        objectName: "nmeaReceiverMode"
+        visible: root._serialSource
+        label: qsTr("Receiver configuration")
+        fact: root._autoConnectSettings.nmeaReceiverMode
+        indexModel: false
+        enabled: !root._connection.active
+    }
+
+    QGCLabel {
+        Layout.fillWidth: true
+        visible: root._serialSource && root._configureReceiver
+        text: qsTr("Configures the u-blox receiver for positioning and NMEA output on each connection. Baud rate is detected automatically.")
+        wrapMode: Text.WordWrap
+    }
+
     LabelledComboBox {
         id: nmeaBaudCombo
         objectName: "nmeaBaudCombo"
-        visible: root._serialSource
+        visible: root._serialSource && !root._configureReceiver
         label: qsTr("Baudrate")
         enabled: !root._connection.active
 

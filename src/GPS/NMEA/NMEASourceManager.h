@@ -2,7 +2,6 @@
 
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QObject>
-#include <QtCore/QMap>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoSatelliteInfo>
@@ -13,7 +12,6 @@
 #include "GPSConnectionState.h"
 #include "NMEAConnectionConfig.h"
 #include "GPSSourceHealth.h"
-#include "GPSType.h"
 #include "GPSNMEAPreparation.h"
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -53,7 +51,6 @@ public:
     void stop();
     bool connectSource();
     void disconnectSource();
-    void rememberReceiver(const QString& device, GPSType type);
 
     QGeoPositionInfoSource* positionSource() const;
 
@@ -88,10 +85,10 @@ private:
     void _updateSerialRouting();
     bool _installSource(QIODevice* device);
     void _clearSatelliteInfo();
-    void _prepareReceiver(const QString& device, GPSNMEAPreparation::TransportFactory factory);
+    void _prepareReceiver(GPSNMEAPreparation::TransportFactory factory);
 
     AutoConnectSettings* _settings;
-    QMap<QString, GPSType> _receiverTypes;
+    unsigned _preparedBaud = 0;
     std::unique_ptr<GPSNMEAPreparation> _preparation;
     quint64 _preparationGeneration = 0;
     NMEAConnectionConfig _config;

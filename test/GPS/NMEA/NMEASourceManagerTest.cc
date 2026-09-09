@@ -393,6 +393,18 @@ void NMEASourceManagerTest::_settingsUseSharedSerialInventory()
     QVERIFY(baudCombo);
     auto* customBaud = root->findChild<QObject*>(QStringLiteral("customNmeaBaudField"));
     QVERIFY(customBaud);
+    auto* receiverMode = root->findChild<QObject*>(QStringLiteral("nmeaReceiverMode"));
+    QVERIFY(receiverMode);
+    QVERIFY(!receiverMode->property("visible").toBool());
+    saved.setFactValue(settings->nmeaReceiverMode(), AutoConnectSettings::NmeaReceiverPassive);
+    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
+    QVERIFY(receiverMode->property("visible").toBool());
+    QVERIFY(baudCombo->property("visible").toBool());
+    settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverUblox);
+    QVERIFY(!baudCombo->property("visible").toBool());
+    settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverPassive);
+    QVERIFY(baudCombo->property("visible").toBool());
+
     QVERIFY(baudCombo->property("isCustomBaud").toBool());
     QCOMPARE(customBaud->property("text").toString(), QStringLiteral("123457"));
     QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 123457);
@@ -573,26 +585,65 @@ void NMEASourceManagerTest::_receiverPreparationFailureAndCancellation()
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceSerial);
     saved.setFactValue(settings->nmeaAutoConnect(), false);
+    saved.setFactValue(settings->nmeaReceiverMode(), AutoConnectSettings::NmeaReceiverUblox);
     QGCPositionManager position;
     NMEASourceManager source(settings, &position);
-    const QString device = QStringLiteral("/test/previous-rtk");
-    source.rememberReceiver(device, GPSType::u_blox);
+    QCOMPARE(source._preparedBaud, 0u);
     source._connection.requestConnect();
     QVERIFY(source._connection.beginAttempt());
-    source._prepareReceiver(device, [](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
+    source._prepareReceiver([](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
     QCOMPARE(source.connectionState(), GPSConnectionState::Configuring);
     QTRY_COMPARE_WITH_TIMEOUT(source.connectionState(), GPSConnectionState::Retrying, TestTimeout::mediumMs());
     QCOMPARE(source.status(), QStringLiteral("Cannot configure receiver for NMEA"));
     QVERIFY(!source.positionSource());
-    QVERIFY(source._receiverTypes.contains(device));
+    QCOMPARE(source._preparedBaud, 0u);
 
     source._connection.requestConnect();
     QVERIFY(source._connection.beginAttempt());
-    source._prepareReceiver(device, [](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
+    source._prepareReceiver([](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
     source.disconnectSource();
     QTRY_VERIFY_WITH_TIMEOUT(!source._preparation, TestTimeout::mediumMs());
     QCOMPARE(source.connectionState(), GPSConnectionState::Disconnected);
     QCOMPARE(source.status(), QStringLiteral("Disconnected"));
     QVERIFY(!source.active());
     QVERIFY(!source.positionSource());
+
+    source._connection.requestConnect();
+    QVERIFY(source._connection.beginAttempt());
+    connect(&source, &NMEASourceManager::stateChanged, &source, [&source]() {
+        if (source.connectionState() == GPSConnectionState::Configuring) {
+            source.disconnectSource();
+        }
+    });
+    source._prepareReceiver([](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
+    QVERIFY(!source._preparation);
+    QCOMPARE(source.connectionState(), GPSConnectionState::Disconnected);
+    QCOMPARE(source.status(), QStringLiteral("Disconnected"));
+}
+
+void NMEASourceManagerTest::_receiverPreparationStateIsPerConnection()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceSerial);
+    saved.setFactValue(settings->nmeaReceiverMode(), AutoConnectSettings::NmeaReceiverUblox);
+    saved.setFactValue(settings->autoConnectNmeaBaud(), 4800);
+    QGCPositionManager position;
+    {
+        NMEASourceManager source(settings, &position);
+        QCOMPARE(source._config.receiverMode, NMEAConnectionConfig::Ublox);
+        QCOMPARE(source._preparedBaud, 0u);
+        source._preparedBaud = 115200;
+        source.disconnectSource();
+        QCOMPARE(source._preparedBaud, 0u);
+        source._preparedBaud = 115200;
+        settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverPassive);
+        QCOMPARE(source._preparedBaud, 0u);
+        QCOMPARE(source._config.baud, 4800);
+    }
+    settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverUblox);
+    NMEASourceManager restarted(settings, &position);
+    QCOMPARE(restarted._config.receiverMode, NMEAConnectionConfig::Ublox);
+    QCOMPARE(restarted._preparedBaud, 0u);
+    QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 4800);
 }

@@ -19,7 +19,10 @@ NMEAConnectionConfig NMEAConnectionConfig::fromSettings(AutoConnectSettings& set
             break;
         case Serial:
             config.device = settings.autoConnectNmeaPort()->rawValue().toString().trimmed();
-            config.baud = settings.autoConnectNmeaBaud()->rawValue().toInt();
+            config.receiverMode = static_cast<ReceiverMode>(settings.nmeaReceiverMode()->rawValue().toInt());
+            if (config.receiverMode == Passive) {
+                config.baud = settings.autoConnectNmeaBaud()->rawValue().toInt();
+            }
             break;
         case Disabled:
             break;
@@ -44,7 +47,13 @@ QString NMEAConnectionConfig::validationError() const
                        : tr("Enter a valid TCP host and port");
         }
         case Serial:
-            return !device.isEmpty() && baud > 0 ? QString() : tr("Select a serial device and baud rate");
+            if (receiverMode != Passive && receiverMode != Ublox) {
+                return tr("Select a valid receiver configuration");
+            }
+            if (device.isEmpty()) {
+                return tr("Select a serial device");
+            }
+            return receiverMode == Ublox || baud > 0 ? QString() : tr("Select a valid baud rate");
     }
     return tr("Select a valid NMEA source");
 }

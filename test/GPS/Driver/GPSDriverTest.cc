@@ -424,3 +424,21 @@ void GPSDriverTest::_receiverRoleCommands()
         QCOMPARE(commands.contains("FIX POSITION 10.00000000 20.00000000"), !position);
     }
 }
+
+void GPSDriverTest::_unsupportedOutputProtocol()
+{
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
+    for (const auto type : {GPSType::u_blox, GPSType::septentrio, GPSType::trimble, GPSType::femto}) {
+        GPSReceiverConfig config;
+        config.role = type == GPSType::u_blox ? GPSReceiverConfig::Role::RTKBase : GPSReceiverConfig::Role::Position;
+        config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
+        GPSDriver driver(type, transport, config, {});
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Unsupported receiver output protocol")));
+        QVERIFY(!driver.configure());
+        verifyExpectedLogMessage();
+        QVERIFY(transport.lastWrite.isEmpty());
+        QCOMPARE(driver.baudrate(), 0u);
+    }
+}

@@ -62,7 +62,8 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
     if (_settings) {
         _config = NMEAConnectionConfig::fromSettings(*_settings);
         for (Fact* fact : {_settings->nmeaSource(), _settings->autoConnectNmeaPort(), _settings->autoConnectNmeaBaud(),
-                           _settings->nmeaUdpPort(), _settings->nmeaTcpHost(), _settings->nmeaTcpPort()}) {
+                           _settings->nmeaUdpPort(), _settings->nmeaTcpHost(), _settings->nmeaTcpPort(),
+                           _settings->nmeaReceiverMode()}) {
             connect(fact, &Fact::rawValueChanged, this, &NMEASourceManager::_settingsChanged);
         }
         connect(_settings->nmeaAutoConnect(), &Fact::rawValueChanged, this, [this]() {
@@ -126,18 +127,12 @@ void NMEASourceManager::disconnectSource()
     _updateSerialRouting();
 }
 
-void NMEASourceManager::rememberReceiver(const QString& device, GPSType type)
-{
-    if (!device.isEmpty() && type == GPSType::u_blox) {
-        _receiverTypes[device] = type;
-    }
-}
-
-void NMEASourceManager::_prepareReceiver(const QString& device, GPSNMEAPreparation::TransportFactory factory)
+void NMEASourceManager::_prepareReceiver(GPSNMEAPreparation::TransportFactory factory)
 {
     const quint64 generation = _preparationGeneration;
-    _preparation = std::make_unique<GPSNMEAPreparation>(std::move(factory), _receiverTypes.value(device));
-    connect(_preparation.get(), &QThread::finished, this, [this, generation, device]() {
+    _preparation = std::make_unique<GPSNMEAPreparation>(std::move(factory), GPSType::u_blox);
+    connect(_preparation.get(), &QThread::finished, this, [this, generation]() {
+        const QPointer<NMEASourceManager> guard(this);
         const unsigned baud = _preparation->baudrate();
         _preparation.reset();
         if (generation != _preparationGeneration || !_shouldConnect()) {
@@ -145,24 +140,35 @@ void NMEASourceManager::_prepareReceiver(const QString& device, GPSNMEAPreparati
         }
         if (baud == 0) {
             _connection.failed();
-            _setStatus(tr("Cannot configure receiver for NMEA"));
+            if (guard) {
+                _setStatus(tr("Cannot configure receiver for NMEA"));
+            }
             return;
         }
-        _receiverTypes.remove(device);
-        // The driver may change a UART's baud rate while leaving base mode.
-        _settings->autoConnectNmeaBaud()->setRawValue(static_cast<int>(baud));
+        _preparedBaud = baud;
         _connection.stopped();
-        update();
+        if (guard) {
+            update();
+        }
     });
     const QPointer<NMEASourceManager> guard(this);
     _connection.configuring();
     if (!guard) {
         return;
     }
-    _setStatus(tr("Configuring receiver for NMEA"));
-    if (guard && _preparation) {
-        _preparation->start();
+    if (generation != _preparationGeneration || !_shouldConnect()) {
+        _preparation.reset();
+        return;
     }
+    _setStatus(tr("Configuring receiver for NMEA"));
+    if (!guard) {
+        return;
+    }
+    if (generation != _preparationGeneration || !_shouldConnect()) {
+        _preparation.reset();
+        return;
+    }
+    _preparation->start();
 }
 
 void NMEASourceManager::_setStatus(const QString& status)
@@ -193,6 +199,7 @@ void NMEASourceManager::stop()
 void NMEASourceManager::_closeDevice()
 {
     ++_preparationGeneration;
+    _preparedBaud = 0;
     if (_preparation) {
         _preparation->stop();
     }
@@ -355,7 +362,8 @@ void NMEASourceManager::update()
 #ifndef QGC_NO_SERIAL_LINK
     if (source == NMEAConnectionConfig::Serial) {
         const QString device = _config.device;
-        const qint32 baud = _config.baud;
+        const qint32 baud =
+            _config.receiverMode == NMEAConnectionConfig::Ublox ? static_cast<qint32>(_preparedBaud) : _config.baud;
         auto* ports = SerialPortManager::instance();
         bool present = false;
         for (const auto& port : ports->availablePorts()) {
@@ -387,8 +395,8 @@ void NMEASourceManager::update()
         if (!_connection.beginAttempt()) {
             return;
         }
-        if (_receiverTypes.contains(device)) {
-            _prepareReceiver(device, [device, reservation = std::move(reservation)](const std::atomic_bool& stop) {
+        if (_config.receiverMode == NMEAConnectionConfig::Ublox && _preparedBaud == 0) {
+            _prepareReceiver([device, reservation = std::move(reservation)](const std::atomic_bool& stop) {
                 return std::make_unique<SerialGPSTransport>(device, stop);
             });
             return;
@@ -396,6 +404,7 @@ void NMEASourceManager::update()
         auto serial = std::make_unique<QSerialPort>();
         serial->setPortName(device);
         if (!serial->setBaudRate(baud) || !serial->open(QIODevice::ReadOnly)) {
+            _preparedBaud = 0;
             _connection.failed();
             _setStatus(tr("Cannot open serial device: %1").arg(serial->errorString()));
             return;

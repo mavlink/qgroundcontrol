@@ -7,6 +7,7 @@ class GPSDriverTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _unsupportedOutputProtocol();
     void _testReceiveUnconfiguredReturnsError();
     void _testReadDeviceDataRoutesToTransport();
     void _testReadCancellation_data();

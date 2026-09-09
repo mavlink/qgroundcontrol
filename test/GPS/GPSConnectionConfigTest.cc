@@ -168,3 +168,32 @@ void GPSConnectionConfigTest::_positionRoleValidation()
     config.receiver.role = static_cast<GPSReceiverConfig::Role>(2);
     QVERIFY(!config.validationError().isEmpty());
 }
+
+void GPSConnectionConfigTest::_nmeaReceiverConfiguration()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceSerial);
+    saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/nmea"));
+    saved.setFactValue(settings->autoConnectNmeaBaud(), 4800);
+    saved.setFactValue(settings->nmeaReceiverMode(), AutoConnectSettings::NmeaReceiverPassive);
+    const auto passive = NMEAConnectionConfig::fromSettings(*settings);
+    QCOMPARE(passive.receiverMode, NMEAConnectionConfig::Passive);
+    QCOMPARE(passive.baud, 4800);
+    settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverUblox);
+    const auto managed = NMEAConnectionConfig::fromSettings(*settings);
+    QCOMPARE(managed.receiverMode, NMEAConnectionConfig::Ublox);
+    QCOMPARE(managed.baud, 0);
+    QVERIFY(managed.validationError().isEmpty());
+    QVERIFY(managed != passive);
+    settings->autoConnectNmeaBaud()->setRawValue(9600);
+    QCOMPARE(NMEAConnectionConfig::fromSettings(*settings), managed);
+    auto invalid = managed;
+    invalid.receiverMode = static_cast<NMEAConnectionConfig::ReceiverMode>(99);
+    QVERIFY(!invalid.validationError().isEmpty());
+    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceUdp);
+    const auto udp = NMEAConnectionConfig::fromSettings(*settings);
+    QCOMPARE(udp.receiverMode, NMEAConnectionConfig::Passive);
+    settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverPassive);
+    QCOMPARE(NMEAConnectionConfig::fromSettings(*settings), udp);
+}

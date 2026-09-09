@@ -24,6 +24,13 @@ public:
     };
     Q_ENUM(NmeaSource)
 
+    enum NmeaReceiverMode
+    {
+        NmeaReceiverPassive = 0,
+        NmeaReceiverUblox,
+    };
+    Q_ENUM(NmeaReceiverMode)
+
     DEFINE_SETTING_NAME_GROUP()
 
     DEFINE_SETTINGFACT(autoConnectUDP)
@@ -34,6 +41,7 @@ public:
     DEFINE_SETTINGFACT(autoConnectLibrePilot)
     DEFINE_SETTINGFACT(nmeaSource)
     DEFINE_SETTINGFACT(nmeaAutoConnect)
+    DEFINE_SETTINGFACT(nmeaReceiverMode)
     DEFINE_SETTINGFACT(nmeaTcpHost)
     DEFINE_SETTINGFACT(nmeaTcpPort)
     DEFINE_SETTINGFACT(autoConnectNmeaPort)

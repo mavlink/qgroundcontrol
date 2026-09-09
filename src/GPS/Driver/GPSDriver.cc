@@ -41,8 +41,15 @@ GPSDriver::~GPSDriver()
 
 bool GPSDriver::configure()
 {
+    _baudrate = 0;
     if (_config.role != GPSReceiverConfig::Role::RTKBase && _config.role != GPSReceiverConfig::Role::Position) {
         qCWarning(GPSDriverLog) << "Unsupported receiver role:" << static_cast<int>(_config.role);
+        return false;
+    }
+    if (_config.outputProtocol != GPSReceiverConfig::OutputProtocol::Native &&
+        (_config.outputProtocol != GPSReceiverConfig::OutputProtocol::NMEA || _type != GPSType::u_blox ||
+         _config.role != GPSReceiverConfig::Role::Position)) {
+        qCWarning(GPSDriverLog) << "Unsupported receiver output protocol";
         return false;
     }
     const bool baseStation = _config.role == GPSReceiverConfig::Role::RTKBase;
@@ -96,8 +103,17 @@ bool GPSDriver::configure()
 
     GPSHelper::GPSConfig gpsConfig{};
     gpsConfig.output_mode = baseStation ? GPSHelper::OutputMode::RTCM : GPSHelper::OutputMode::GPS;
+    int result;
+    if (_type == GPSType::u_blox) {
+        const auto protocol = _config.outputProtocol == GPSReceiverConfig::OutputProtocol::NMEA
+                                  ? GPSDriverUBX::OutputProtocol::NMEA
+                                  : GPSDriverUBX::OutputProtocol::Native;
+        result = static_cast<GPSDriverUBX*>(_driver.get())->configure(baudrate, gpsConfig, protocol);
+    } else {
+        result = _driver->configure(baudrate, gpsConfig);
+    }
 
-    if (_driver->configure(baudrate, gpsConfig) != 0) {
+    if (result != 0) {
         if (!_transport.isCancelled()) {
             qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type);
         }
@@ -108,15 +124,6 @@ bool GPSDriver::configure()
     _baudrate = baudrate;
     (void) memset(&_sensorGps, 0, sizeof(_sensorGps));
     return true;
-}
-
-unsigned GPSDriver::prepareNmeaOutput()
-{
-    if (_type != GPSType::u_blox || _config.role != GPSReceiverConfig::Role::Position || !configure()) {
-        return 0;
-    }
-    auto* ubx = static_cast<GPSDriverUBX*>(_driver.get());
-    return ubx->enableNmeaOutput(_baudrate) == 0 && !_transport.isCancelled() ? _baudrate : 0;
 }
 
 int GPSDriver::receive(unsigned timeoutMs)

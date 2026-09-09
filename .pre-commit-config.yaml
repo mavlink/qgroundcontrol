@@ -305,4 +305,5 @@ repos:
         exclude: ^(build/|libs/|test/)
         pass_filenames: true
 
-exclude: ^build/
+# Vendored PX4 sources retain upstream formatting and conventions.
+exclude: ^(build/|src/GPS/Driver/PX4/)

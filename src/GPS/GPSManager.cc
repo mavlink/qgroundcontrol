@@ -35,8 +35,6 @@ GPSManager::GPSManager(QObject* parent)
         settings->rtkSettings()->baseReceiverManufacturers()->setRawValue(manufacturer);
     });
     _nmeaSources = new NMEASourceManager(settings->autoConnectSettings(), _positionManager, this);
-    connect(_gpsRtk, &GPSRtk::serialReceiverConfigurationStarted, _nmeaSources,
-            &NMEASourceManager::rememberReceiver);
     _rtkAutoConnect = new RTKAutoConnect(_gpsRtk, settings->autoConnectSettings(), settings->rtkSettings(), this);
     connect(settings->rtkSettings()->useReceiverPosition(), &Fact::rawValueChanged, this,
             &GPSManager::_updatePositionSource);
