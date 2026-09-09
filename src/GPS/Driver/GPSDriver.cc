@@ -105,8 +105,18 @@ bool GPSDriver::configure()
         return false;
     }
 
+    _baudrate = baudrate;
     (void) memset(&_sensorGps, 0, sizeof(_sensorGps));
     return true;
+}
+
+unsigned GPSDriver::prepareNmeaOutput()
+{
+    if (_type != GPSType::u_blox || _config.role != GPSReceiverConfig::Role::Position || !configure()) {
+        return 0;
+    }
+    auto* ubx = static_cast<GPSDriverUBX*>(_driver.get());
+    return ubx->enableNmeaOutput(_baudrate) == 0 && !_transport.isCancelled() ? _baudrate : 0;
 }
 
 int GPSDriver::receive(unsigned timeoutMs)

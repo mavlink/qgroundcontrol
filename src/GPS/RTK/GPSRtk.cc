@@ -138,6 +138,7 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type, GPSReceiver
             break;
         }
     }
+    emit serialReceiverConfigurationStarted(device, type);
     connectReceiver(
         type,
         [device, reservation](const std::atomic_bool& requestStop) {

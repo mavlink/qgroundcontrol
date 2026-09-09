@@ -5,7 +5,9 @@
 
 #include <algorithm>
 
+#include "NMEAPositionSource.h"
 #include "NMEAStreamSplitter.h"
+#include "NMEAUtils.h"
 
 namespace {
 class StreamInput : public QIODevice
@@ -46,22 +48,23 @@ void NMEAStreamSplitterTest::_independentReads()
         NMEAStreamSplitter stream(&input);
         auto* position = stream.positionDevice();
         auto* satellite = stream.satelliteDevice();
-        input.feed("par");
-        QCOMPARE(position->bytesAvailable(), 3);
-        QCOMPARE(position->read(2), QByteArray("pa"));
-        QCOMPARE(satellite->bytesAvailable(), 3);
+        const QByteArray first = NMEAUtils::repairChecksum("$GNTXT,first");
+        const QByteArray next = NMEAUtils::repairChecksum("$GNTXT,next");
+        input.feed(first.first(5));
+        QCOMPARE(position->bytesAvailable(), 0);
         QVERIFY(!satellite->canReadLine());
-        input.feed("tial\nnext\n");
-        QCOMPARE(position->readAll(), QByteArray("rtial\nnext\n"));
-        QCOMPARE(satellite->peek(8), QByteArray("partial\n"));
+        input.feed(first.mid(5) + next);
+        QCOMPARE(position->read(2), first.first(2));
+        QCOMPARE(position->readAll(), first.mid(2) + next);
+        QCOMPARE(satellite->peek(first.size()), first);
         QVERIFY(satellite->canReadLine());
-        QCOMPARE(satellite->readLine(), QByteArray("partial\n"));
-        QCOMPARE(satellite->readAll(), QByteArray("next\n"));
-        input.feed("buffered\n");
+        QCOMPARE(satellite->readLine(), first);
+        QCOMPARE(satellite->readAll(), next);
+        input.feed(first);
         position->close();
         QVERIFY(position->open(QIODevice::ReadOnly));
         QVERIFY(position->readAll().isEmpty());
-        QCOMPARE(satellite->readAll(), QByteArray("buffered\n"));
+        QCOMPARE(satellite->readAll(), first);
     }
     QVERIFY(input.isOpen());
 }
@@ -73,23 +76,26 @@ void NMEAStreamSplitterTest::_slowConsumerIsBounded()
     QByteArray received;
     connect(stream.positionDevice(), &QIODevice::readyRead, this,
             [&]() { received += stream.positionDevice()->readAll(); });
-    const QByteArray oldLines = QByteArray("old\n").repeated(12 * 1024);
-    const QByteArray newLines = QByteArray("new\n").repeated(12 * 1024);
-    input.feed(oldLines + newLines);
-    QCOMPARE(received, oldLines + newLines);
-    QCOMPARE(stream.satelliteDevice()->bytesAvailable(), 64 * 1024);
-    QCOMPARE(stream.satelliteDevice()->readAll(), oldLines.last(16 * 1024) + newLines);
-    input.feed(QByteArray(80 * 1024, 'x'));
+    const QByteArray line = NMEAUtils::repairChecksum("$GNTXT,buffer");
+    const QByteArray lines = line.repeated(8000);
+    input.feed(lines);
+    QCOMPARE(received, lines);
+    QVERIFY(stream.satelliteDevice()->bytesAvailable() <= 64 * 1024);
+    const QByteArray buffered = stream.satelliteDevice()->readAll();
+    QVERIFY(!buffered.isEmpty());
+    QVERIFY(lines.endsWith(buffered));
+    QVERIFY(buffered.startsWith(line));
+    input.feed("$" + QByteArray(80 * 1024, 'x'));
     QVERIFY(stream.satelliteDevice()->readAll().isEmpty());
-    input.feed("rest\nvalid\n");
-    QCOMPARE(stream.satelliteDevice()->readAll(), QByteArray("valid\n"));
+    input.feed("rest\n" + line);
+    QCOMPARE(stream.satelliteDevice()->readAll(), line);
 }
 
 void NMEAStreamSplitterTest::_sourceDestructionClosesOutputs()
 {
     auto input = std::make_unique<StreamInput>();
     NMEAStreamSplitter stream(input.get());
-    input->feed("pending\n");
+    input->feed(NMEAUtils::repairChecksum("$GNTXT,pending"));
     input.reset();
     QVERIFY(!stream.positionDevice()->isOpen());
     QVERIFY(!stream.satelliteDevice()->isOpen());
@@ -103,10 +109,28 @@ void NMEAStreamSplitterTest::_destructionDuringDelivery()
     auto stream = std::make_unique<NMEAStreamSplitter>(&input);
     const QPointer<QIODevice> satellite(stream->satelliteDevice());
     connect(stream->positionDevice(), &QIODevice::readyRead, this, [&]() { stream.reset(); });
-    input.feed("one\ntwo\n");
+    input.feed(NMEAUtils::repairChecksum("$GNTXT,one") + NMEAUtils::repairChecksum("$GNTXT,two"));
     QVERIFY(!stream);
     QVERIFY(!satellite);
     QVERIFY(input.isOpen());
+}
+
+void NMEAStreamSplitterTest::_mixedBinaryAndFragmentedSentences()
+{
+    StreamInput input;
+    NMEAStreamSplitter stream(&input);
+    NMEAPositionSource position(stream.positionDevice());
+    QSignalSpy fixes(&position, &QGeoPositionInfoSource::positionUpdated);
+    position.startUpdates();
+    const QByteArray rmc = NMEAUtils::repairChecksum("$GNRMC,120000.00,A,3724.000,N,07918.000,W,0.0,0.0,090926,,,A");
+    const QByteArray gga = NMEAUtils::repairChecksum("$GNGGA,120000.00,3724.000,N,07918.000,W,1,12,0.8,100,M,0,M,,");
+    const QByteArray garbage = QByteArray("$GNRMC,broken*00\r\n") + QByteArray::fromHex("b56201070c000001242aff00");
+    for (const char byte : garbage + rmc + gga) {
+        input.feed(QByteArray(1, byte));
+    }
+    QCOMPARE(stream.satelliteDevice()->readAll(), rmc + gga);
+    QTRY_VERIFY_WITH_TIMEOUT(!fixes.isEmpty(), TestTimeout::shortMs());
+    QVERIFY(fixes.first().first().value<QGeoPositionInfo>().isValid());
 }
 
 UT_REGISTER_TEST(NMEAStreamSplitterTest, TestLabel::Unit)

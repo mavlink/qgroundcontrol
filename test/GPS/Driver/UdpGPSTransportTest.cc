@@ -88,7 +88,7 @@ void UdpGPSTransportTest::_bindFailure()
     QVERIFY(occupied.bind(QHostAddress::Any, 0, QAbstractSocket::DontShareAddress));
     std::atomic_bool stop = false;
     UdpGPSTransport transport(QStringLiteral("127.0.0.1"), 2101, stop, occupied.localPort());
-    expectLogMessage("GPS.RTK.UdpGPSTransport", QtWarningMsg,
+    expectLogMessage("GPS.Driver.UdpGPSTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open UDP GPS receiver")));
     QVERIFY(!transport.open());
     verifyExpectedLogMessage();

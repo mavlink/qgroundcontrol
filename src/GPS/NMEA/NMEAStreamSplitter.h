@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 
@@ -26,6 +27,7 @@ private:
     void _closeOutputs();
 
     QPointer<QIODevice> _source;
+    QByteArray _sentence;
     std::unique_ptr<NMEAStreamDevice> _positionDevice;
     std::unique_ptr<NMEAStreamDevice> _satelliteDevice;
 };

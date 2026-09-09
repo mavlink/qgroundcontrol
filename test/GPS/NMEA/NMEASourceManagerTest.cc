@@ -10,6 +10,7 @@
 #include <QtQml/QQmlExpression>
 
 #include "AutoConnectSettings.h"
+#include "GPSTransport.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "NMEASourceManager.h"
 #include "NMEAUtils.h"
@@ -564,4 +565,34 @@ void NMEASourceManagerTest::_disconnectDuringPositionUpdate()
     QVERIFY(!source.positionSource());
     QVERIFY(!position.gcsPosition().isValid());
     QVERIFY(!position.gcsPositionTimestamp().isValid());
+}
+
+void NMEASourceManagerTest::_receiverPreparationFailureAndCancellation()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceSerial);
+    saved.setFactValue(settings->nmeaAutoConnect(), false);
+    QGCPositionManager position;
+    NMEASourceManager source(settings, &position);
+    const QString device = QStringLiteral("/test/previous-rtk");
+    source.rememberReceiver(device, GPSType::u_blox);
+    source._connection.requestConnect();
+    QVERIFY(source._connection.beginAttempt());
+    source._prepareReceiver(device, [](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
+    QCOMPARE(source.connectionState(), GPSConnectionState::Configuring);
+    QTRY_COMPARE_WITH_TIMEOUT(source.connectionState(), GPSConnectionState::Retrying, TestTimeout::mediumMs());
+    QCOMPARE(source.status(), QStringLiteral("Cannot configure receiver for NMEA"));
+    QVERIFY(!source.positionSource());
+    QVERIFY(source._receiverTypes.contains(device));
+
+    source._connection.requestConnect();
+    QVERIFY(source._connection.beginAttempt());
+    source._prepareReceiver(device, [](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; });
+    source.disconnectSource();
+    QTRY_VERIFY_WITH_TIMEOUT(!source._preparation, TestTimeout::mediumMs());
+    QCOMPARE(source.connectionState(), GPSConnectionState::Disconnected);
+    QCOMPARE(source.status(), QStringLiteral("Disconnected"));
+    QVERIFY(!source.active());
+    QVERIFY(!source.positionSource());
 }

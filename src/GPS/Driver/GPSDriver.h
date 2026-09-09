@@ -85,6 +85,10 @@ public:
     /// or <0 if not configured.
     int receive(unsigned timeoutMs);
 
+    /// Configure a u-blox receiver for navigation and enable NMEA on its driver ports.
+    /// Returns the configured baud rate, or zero on failure/cancellation.
+    unsigned prepareNmeaOutput();
+
     /// Trampoline target for the px4 callback; `type` is a GPSCallbackType value.
     /// Public only so the file-local C callback can reach it — not for callers.
     int handleCallback(int type, void *data1, int data2);
@@ -94,6 +98,7 @@ private:
     GPSTransport &_transport;
     GPSReceiverConfig _config;
     GPSDriverSinks _sinks;
+    unsigned _baudrate = 0;
 
     std::unique_ptr<GPSBaseStationSupport> _driver;
     sensor_gps_s _sensorGps{};

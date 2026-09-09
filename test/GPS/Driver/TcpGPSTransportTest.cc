@@ -98,7 +98,7 @@ void TcpGPSTransportTest::_refusedConnection()
     server.close();
     std::atomic_bool stop = false;
     TcpGPSTransport transport(QStringLiteral("127.0.0.1"), port, stop);
-    expectLogMessage("GPS.RTK.TcpGPSTransport", QtWarningMsg,
+    expectLogMessage("GPS.Driver.TcpGPSTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to connect to GPS receiver")));
     QVERIFY(!transport.open());
     verifyExpectedLogMessage();

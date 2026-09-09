@@ -2,6 +2,7 @@
 
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QObject>
+#include <QtCore/QMap>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoSatelliteInfo>
@@ -12,6 +13,8 @@
 #include "GPSConnectionState.h"
 #include "NMEAConnectionConfig.h"
 #include "GPSSourceHealth.h"
+#include "GPSType.h"
+#include "GPSNMEAPreparation.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
@@ -24,6 +27,7 @@ class QTcpSocket;
 class UdpIODevice;
 class NMEAStreamSplitter;
 class NMEAPositionSource;
+class NMEASatelliteAdapter;
 class QGeoPositionInfoSource;
 class QIODevice;
 class QNmeaSatelliteInfoSource;
@@ -49,6 +53,7 @@ public:
     void stop();
     bool connectSource();
     void disconnectSource();
+    void rememberReceiver(const QString& device, GPSType type);
 
     QGeoPositionInfoSource* positionSource() const;
 
@@ -83,14 +88,19 @@ private:
     void _updateSerialRouting();
     bool _installSource(QIODevice* device);
     void _clearSatelliteInfo();
+    void _prepareReceiver(const QString& device, GPSNMEAPreparation::TransportFactory factory);
 
     AutoConnectSettings* _settings;
+    QMap<QString, GPSType> _receiverTypes;
+    std::unique_ptr<GPSNMEAPreparation> _preparation;
+    quint64 _preparationGeneration = 0;
     NMEAConnectionConfig _config;
     QPointer<QGCPositionManager> _positionManager;
     std::unique_ptr<UdpIODevice> _udp;
     std::unique_ptr<QTcpSocket> _tcp;
     std::unique_ptr<NMEAStreamSplitter> _stream;
     std::unique_ptr<NMEAPositionSource> _positionSource;
+    std::unique_ptr<NMEASatelliteAdapter> _satelliteAdapter;
     std::unique_ptr<QNmeaSatelliteInfoSource> _satelliteSource;
     QTimer _satellitePollTimer;
     GPSSourceHealth _health;

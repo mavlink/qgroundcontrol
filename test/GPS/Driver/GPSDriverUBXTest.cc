@@ -3,11 +3,13 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QtEndian>
+#include <QtTest/QSignalSpy>
 
 #include <cstring>
 #include <ubx.h>
 
 #include "GPSDriver.h"
+#include "GPSNMEAPreparation.h"
 #include "GPSTransport.h"
 
 namespace {
@@ -69,6 +71,7 @@ public:
     int failedReads = 0;
     int commsPolls = 0;
     bool rejectDisable = false;
+    bool nmeaEnabled = false;
     int readError = 0;
     bool neverStops = false;
     bool enabledBeforeStop = false;
@@ -112,6 +115,9 @@ private:
                     const quint32 key = qFromLittleEndian<quint32>(request.constData() + offset);
                     const int sizeCode = (key >> 28) & 7;
                     const int valueSize = sizeCode <= 2 ? 1 : 1 << (sizeCode - 2);
+                    if (key == UBX_CFG_KEY_CFG_USBOUTPROT_NMEA) {
+                        nmeaEnabled = request[offset + 4] != 0;
+                    }
                     if (key == UBX_CFG_KEY_NAVSPG_DYNMODEL) {
                         dynamicModels.append(static_cast<quint8>(request[offset + 4]));
                     }
@@ -144,6 +150,38 @@ private:
     QByteArray _requests;
     QByteArray _responses;
 };
+
+class ReceiverTransport : public GPSTransport
+{
+public:
+    ReceiverTransport(const std::atomic_bool& stop, UBXReceiver& receiver)
+        : GPSTransport(stop)
+        , _receiver(receiver)
+    {}
+
+    bool open() override { return true; }
+
+    bool fatalError() const override { return false; }
+
+    unsigned fixedBaudrate() const override { return 115200; }
+
+    bool setBaudrate(unsigned) override { return true; }
+
+    int read(uint8_t* data, int size, int) override
+    {
+        return UBXReceiver::callback(GPSCallbackType::readDeviceData, data, size, &_receiver);
+    }
+
+    int write(const uint8_t* data, int size) override
+    {
+        return UBXReceiver::callback(GPSCallbackType::writeDeviceData, const_cast<uint8_t*>(data), size,
+                                     &_receiver);
+    }
+
+private:
+    UBXReceiver& _receiver;
+};
+
 
 QByteArray commsPayload()
 {
@@ -375,36 +413,7 @@ void GPSDriverUBXTest::_positionMode()
     receiver.rejectDisable = rejectDisable;
     std::atomic_bool stop{false};
 
-    class Transport : public GPSTransport
-    {
-    public:
-        Transport(const std::atomic_bool& stop, UBXReceiver& receiver)
-            : GPSTransport(stop)
-            , _receiver(receiver)
-        {}
-
-        bool open() override { return true; }
-
-        bool fatalError() const override { return false; }
-
-        unsigned fixedBaudrate() const override { return 115200; }
-
-        bool setBaudrate(unsigned) override { return true; }
-
-        int read(uint8_t* data, int size, int) override
-        {
-            return UBXReceiver::callback(GPSCallbackType::readDeviceData, data, size, &_receiver);
-        }
-
-        int write(const uint8_t* data, int size) override
-        {
-            return UBXReceiver::callback(GPSCallbackType::writeDeviceData, const_cast<uint8_t*>(data), size,
-                                         &_receiver);
-        }
-
-    private:
-        UBXReceiver& _receiver;
-    } transport(stop, receiver);
+    ReceiverTransport transport(stop, receiver);
 
     GPSReceiverConfig config;
     config.role = GPSReceiverConfig::Role::Position;
@@ -449,4 +458,24 @@ void GPSDriverUBXTest::_positionMode()
         QCOMPARE(position.longitude_deg, 10.0);
         QCOMPARE(position.satellites_used, 12);
     }
+}
+
+void GPSDriverUBXTest::_nmeaPreparationReleasesTransport()
+{
+    UBXReceiver receiver;
+    auto lease = std::make_shared<int>(1);
+    const std::weak_ptr<int> weakLease = lease;
+    GPSNMEAPreparation preparation(
+        [&receiver, lease](const std::atomic_bool& stop) {
+            return std::make_unique<ReceiverTransport>(stop, receiver);
+        }, GPSType::u_blox);
+    lease.reset();
+    QSignalSpy finished(&preparation, &QThread::finished);
+    preparation.start();
+    QTRY_VERIFY_WITH_TIMEOUT(!finished.isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(preparation.wait(TestTimeout::mediumMs()));
+    QCOMPARE(preparation.baudrate(), 115200u);
+    QVERIFY(receiver.nmeaEnabled);
+    QCOMPARE(receiver.timeModes, QList<int>{0});
+    QVERIFY(weakLease.expired());
 }

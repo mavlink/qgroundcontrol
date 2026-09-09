@@ -7,3 +7,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 add_qgc_test(NMEASourceManagerTest LABELS Unit RESOURCE_LOCK Settings)
 add_qgc_test(NMEAStreamSplitterTest LABELS Unit)
 add_qgc_test(NMEAPositionSourceTest LABELS Unit)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE NMEASatelliteAdapterTest.cc NMEASatelliteAdapterTest.h)
+add_qgc_test(NMEASatelliteAdapterTest LABELS Unit)

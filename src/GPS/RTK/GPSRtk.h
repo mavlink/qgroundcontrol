@@ -52,6 +52,7 @@ public:
 
 signals:
     void receiverTypeChanged(GPSType type);
+    void serialReceiverConfigurationStarted(const QString& device, GPSType type);
     void rtcmDataReceived(const QByteArray& data);
     void connectedChanged();
     void receiverStateChanged();

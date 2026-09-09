@@ -12,7 +12,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(UdpGPSTransportLog, "GPS.RTK.UdpGPSTransport")
+QGC_LOGGING_CATEGORY(UdpGPSTransportLog, "GPS.Driver.UdpGPSTransport")
 
 UdpGPSTransport::UdpGPSTransport(QString host, quint16 port, const std::atomic_bool& requestStop, quint16 localPort)
     : GPSTransport(requestStop)

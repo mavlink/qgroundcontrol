@@ -5,13 +5,16 @@
 #include <QtPositioning/QNmeaSatelliteInfoSource>
 
 #include "AutoConnectSettings.h"
+#include "GPSNMEAPreparation.h"
 #include "NMEAPositionSource.h"
+#include "NMEASatelliteAdapter.h"
 #include "NMEAStreamSplitter.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "UdpIODevice.h"
 
 #ifndef QGC_NO_SERIAL_LINK
+#include "SerialGPSTransport.h"
 #ifdef Q_OS_ANDROID
 #include "qserialport.h"
 #else
@@ -123,6 +126,45 @@ void NMEASourceManager::disconnectSource()
     _updateSerialRouting();
 }
 
+void NMEASourceManager::rememberReceiver(const QString& device, GPSType type)
+{
+    if (!device.isEmpty() && type == GPSType::u_blox) {
+        _receiverTypes[device] = type;
+    }
+}
+
+void NMEASourceManager::_prepareReceiver(const QString& device, GPSNMEAPreparation::TransportFactory factory)
+{
+    const quint64 generation = _preparationGeneration;
+    _preparation = std::make_unique<GPSNMEAPreparation>(std::move(factory), _receiverTypes.value(device));
+    connect(_preparation.get(), &QThread::finished, this, [this, generation, device]() {
+        const unsigned baud = _preparation->baudrate();
+        _preparation.reset();
+        if (generation != _preparationGeneration || !_shouldConnect()) {
+            return;
+        }
+        if (baud == 0) {
+            _connection.failed();
+            _setStatus(tr("Cannot configure receiver for NMEA"));
+            return;
+        }
+        _receiverTypes.remove(device);
+        // The driver may change a UART's baud rate while leaving base mode.
+        _settings->autoConnectNmeaBaud()->setRawValue(static_cast<int>(baud));
+        _connection.stopped();
+        update();
+    });
+    const QPointer<NMEASourceManager> guard(this);
+    _connection.configuring();
+    if (!guard) {
+        return;
+    }
+    _setStatus(tr("Configuring receiver for NMEA"));
+    if (guard && _preparation) {
+        _preparation->start();
+    }
+}
+
 void NMEASourceManager::_setStatus(const QString& status)
 {
     if (_status != status) {
@@ -150,6 +192,10 @@ void NMEASourceManager::stop()
 
 void NMEASourceManager::_closeDevice()
 {
+    ++_preparationGeneration;
+    if (_preparation) {
+        _preparation->stop();
+    }
     if (_sourceInstalled || _tcp) {
         _connection.stopping();
     }
@@ -162,6 +208,7 @@ void NMEASourceManager::_closeDevice()
     _sourceInstalled = false;
     _positionSource.reset();
     _satelliteSource.reset();
+    _satelliteAdapter.reset();
     _stream.reset();
     _health.reset();
     _udp.reset();
@@ -190,7 +237,8 @@ bool NMEASourceManager::_installSource(QIODevice* device)
     device->readAll();
     _stream = std::make_unique<NMEAStreamSplitter>(device);
     _satelliteSource = std::make_unique<QNmeaSatelliteInfoSource>(QNmeaSatelliteInfoSource::UpdateMode::RealTimeMode);
-    _satelliteSource->setDevice(_stream->satelliteDevice());
+    _satelliteAdapter = std::make_unique<NMEASatelliteAdapter>(_stream->satelliteDevice());
+    _satelliteSource->setDevice(_satelliteAdapter.get());
     const QPointer<QNmeaSatelliteInfoSource> current = _satelliteSource.get();
     connect(_satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInViewUpdated, this,
             [this, current](const QList<QGeoSatelliteInfo>& satellites) {
@@ -325,7 +373,7 @@ void NMEASourceManager::update()
             _setStatus(tr("Waiting for serial device"));
             return;
         }
-        if (_serial) {
+        if (_serial || _preparation) {
             return;
         }
         if (!_connection.canAttempt()) {
@@ -337,6 +385,12 @@ void NMEASourceManager::update()
             return;
         }
         if (!_connection.beginAttempt()) {
+            return;
+        }
+        if (_receiverTypes.contains(device)) {
+            _prepareReceiver(device, [device, reservation = std::move(reservation)](const std::atomic_bool& stop) {
+                return std::make_unique<SerialGPSTransport>(device, stop);
+            });
             return;
         }
         auto serial = std::make_unique<QSerialPort>();

@@ -4,6 +4,7 @@
 
 #include <algorithm>
 
+#include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NMEAStreamSplitterLog, "GPS.NMEA.NMEAStreamSplitter")
@@ -126,15 +127,32 @@ void NMEAStreamSplitter::_readAvailableData()
 {
     const QPointer<NMEAStreamSplitter> guard(this);
     while (_source && _source->isReadable() && _source->bytesAvailable() > 0) {
-        const QByteArray data = _source->read(kMaxBufferedBytes);
+        const QByteArray data = _source->read(kMaxBufferedBytes / 2);
         if (data.isEmpty()) {
             return;
         }
-        _positionDevice->append(data);
+        QByteArray sentences;
+        for (const char byte : data) {
+            if (byte == '$') {
+                _sentence = "$";
+            } else if (!_sentence.isEmpty()) {
+                _sentence.append(byte);
+                if (byte == '\n') {
+                    const QByteArray line = _sentence.trimmed();
+                    if (line.indexOf('*') == line.size() - 3 && NMEAUtils::verifyChecksum(line)) {
+                        sentences.append(line).append("\r\n");
+                    }
+                    _sentence.clear();
+                } else if (_sentence.size() > 1024 || (byte != '\r' && (byte < ' ' || byte > '~'))) {
+                    _sentence.clear();
+                }
+            }
+        }
+        _positionDevice->append(sentences);
         if (!guard) {
             return;
         }
-        _satelliteDevice->append(data);
+        _satelliteDevice->append(sentences);
         if (!guard) {
             return;
         }
@@ -144,6 +162,7 @@ void NMEAStreamSplitter::_readAvailableData()
 void NMEAStreamSplitter::_closeOutputs()
 {
     const QPointer<NMEAStreamSplitter> guard(this);
+    _sentence.clear();
     _positionDevice->close();
     if (guard) {
         _satelliteDevice->close();

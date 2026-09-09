@@ -12,7 +12,7 @@
 
 #include <utility>
 
-QGC_LOGGING_CATEGORY(SerialGPSTransportLog, "GPS.RTK.SerialGPSTransport")
+QGC_LOGGING_CATEGORY(SerialGPSTransportLog, "GPS.Driver.SerialGPSTransport")
 
 SerialGPSTransport::SerialGPSTransport(QString device, const std::atomic_bool &requestStop)
     : GPSTransport(requestStop)

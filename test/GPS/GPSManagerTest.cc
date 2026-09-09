@@ -162,7 +162,7 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver->gpsRtkFactGroup());
     QVERIFY(facts);
 
-    expectLogMessage("GPS.RTK.TcpGPSTransport", QtWarningMsg,
+    expectLogMessage("GPS.Driver.TcpGPSTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to connect to GPS receiver")));
     expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));

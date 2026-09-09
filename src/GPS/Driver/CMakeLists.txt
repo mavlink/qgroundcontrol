@@ -8,8 +8,14 @@ qt_add_library(
     STATIC
     GPSDriver.cc
     GPSDriver.h
+    GPSNMEAPreparation.cc
+    GPSNMEAPreparation.h
     GPSTransport.cc
     GPSTransport.h
+    TcpGPSTransport.cc
+    TcpGPSTransport.h
+    UdpGPSTransport.cc
+    UdpGPSTransport.h
     GPSType.h
     definitions.h
     satellite_info.h
@@ -22,25 +28,11 @@ target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # ----------------------------------------------------------------------------
 # PX4 GPS Drivers Integration
 # ----------------------------------------------------------------------------
-include(CPMPatchCache)
-set(_gps_driver_patch "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-position-mode.patch")
-set(_gps_driver_revision 2a5e78abfb34c91e1340d8136822397462f088d9)
-qgc_cpm_patch_cache_key(
-    _gps_driver_cache_key
-    GIT_REPOSITORY
-    "https://github.com/PX4/PX4-GPSDrivers.git"
-    GIT_TAG
-    "${_gps_driver_revision}"
-    PATCHES
-    "${_gps_driver_patch}"
-)
-
+# Pin PX4/PX4-GPSDrivers PR #238 until its receiver-mode fixes are merged.
 CPMAddPackage(
     NAME px4-gpsdrivers
-    GITHUB_REPOSITORY PX4/PX4-GPSDrivers
-    GIT_TAG ${_gps_driver_revision}
-    CUSTOM_CACHE_KEY "${_gps_driver_cache_key}"
-    PATCHES "${_gps_driver_patch}"
+    GITHUB_REPOSITORY HTRamsey/PX4-GPSDrivers
+    GIT_TAG b5a128be2b278122ea91dd884e1df0f460915926
     SOURCE_SUBDIR src
 )
 
@@ -59,7 +51,16 @@ qgc_disable_dependency_warnings(px4-gpsdrivers)
 target_link_libraries(
     QGCGPSDriver
     PUBLIC Qt6::Core
-    PRIVATE QGCLogging px4-gpsdrivers
+    PRIVATE Qt6::Network QGCLogging px4-gpsdrivers
 )
 target_compile_definitions(QGCGPSDriver PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
 target_include_directories(QGCGPSDriver SYSTEM PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)
+
+if(NOT QGC_NO_SERIAL_LINK)
+    target_sources(QGCGPSDriver PRIVATE SerialGPSTransport.cc SerialGPSTransport.h)
+    if(ANDROID)
+        target_link_libraries(QGCGPSDriver PRIVATE QGCAndroidSerialPort)
+    else()
+        target_link_libraries(QGCGPSDriver PRIVATE Qt6::SerialPort)
+    endif()
+endif()

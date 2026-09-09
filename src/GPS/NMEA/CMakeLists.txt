@@ -6,3 +6,5 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE NMEAPositionSource.cc NMEAPositionS
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE NMEAConnectionConfig.cc NMEAConnectionConfig.h)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE NMEASatelliteAdapter.cc NMEASatelliteAdapter.h)

@@ -8,7 +8,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(TcpGPSTransportLog, "GPS.RTK.TcpGPSTransport")
+QGC_LOGGING_CATEGORY(TcpGPSTransportLog, "GPS.Driver.TcpGPSTransport")
 
 TcpGPSTransport::TcpGPSTransport(QString host, quint16 port, const std::atomic_bool& requestStop)
     : GPSTransport(requestStop)
