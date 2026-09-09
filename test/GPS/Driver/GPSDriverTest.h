@@ -7,6 +7,10 @@ class GPSDriverTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _observationMetadata();
+    void _satelliteAzimuthEncoding_data();
+    void _satelliteAzimuthEncoding();
+    void _relativePositionCallback();
     void _unsupportedOutputProtocol();
     void _testReceiveUnconfiguredReturnsError();
     void _testReadDeviceDataRoutesToTransport();

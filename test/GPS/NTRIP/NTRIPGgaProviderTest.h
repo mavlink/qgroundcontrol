@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "VehicleTestManualConnect.h"
 
-class NTRIPGgaProviderTest : public UnitTest
+class NTRIPGgaProviderTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 
@@ -25,6 +25,10 @@ private slots:
 
     // Coordinate precision (DDMM.mmmm)
     void testMakeGGA_dmmPrecision();
+
+    void testObservationMetadata();
+    void testPositionFreshness();
+    void testVehicleMessageFreshness();
 
     // Lifecycle
     void testSourceClearedOnStopAndFreshStart();

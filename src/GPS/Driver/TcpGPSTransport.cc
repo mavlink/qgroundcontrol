@@ -4,6 +4,7 @@
 #include <QtCore/QTimer>
 #include <QtNetwork/QTcpSocket>
 
+#include <algorithm>
 #include <utility>
 
 #include "QGCLoggingCategory.h"
@@ -23,7 +24,7 @@ TcpGPSTransport::~TcpGPSTransport()
     qCDebug(TcpGPSTransportLog) << this;
 }
 
-bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs)
+bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, QDeadlineTimer deadline)
 {
     if (isCancelled() || !_socket) {
         return false;
@@ -31,7 +32,7 @@ bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     if (ready()) {
         return true;
     }
-    if (timeoutMs <= 0 || _socket->state() == QAbstractSocket::UnconnectedState) {
+    if (deadline.hasExpired() || _socket->state() == QAbstractSocket::UnconnectedState) {
         return false;
     }
 
@@ -39,7 +40,7 @@ bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     // cannot provide cancellable DNS/connection progress. Run the worker's events instead.
     QEventLoop loop;
     QTimer cancellation;
-    QTimer deadline;
+    QTimer timeout;
     const auto check = [&]() {
         if (isCancelled() || ready() || _socket->state() == QAbstractSocket::UnconnectedState) {
             loop.quit();
@@ -49,10 +50,10 @@ bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     QObject::connect(_socket.get(), &QTcpSocket::readyRead, &loop, check);
     QObject::connect(_socket.get(), &QTcpSocket::bytesWritten, &loop, check);
     QObject::connect(&cancellation, &QTimer::timeout, &loop, check);
-    QObject::connect(&deadline, &QTimer::timeout, &loop, &QEventLoop::quit);
-    deadline.setSingleShot(true);
+    QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timeout.setSingleShot(true);
     cancellation.start(kCancellationPollMs);
-    deadline.start(timeoutMs);
+    timeout.start(static_cast<int>(deadline.remainingTime()));
     loop.exec();
     return !isCancelled() && ready();
 }
@@ -64,7 +65,8 @@ bool TcpGPSTransport::open()
     }
     _socket = std::make_unique<QTcpSocket>();
     _socket->connectToHost(_host, _port);
-    if (_waitFor([this]() { return _socket->state() == QAbstractSocket::ConnectedState; }, kConnectTimeoutMs)) {
+    if (_waitFor([this]() { return _socket->state() == QAbstractSocket::ConnectedState; },
+                 QDeadlineTimer(kConnectTimeoutMs))) {
         return true;
     }
     if (!isCancelled()) {
@@ -88,7 +90,7 @@ int TcpGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
     if (length == 0) {
         return 0;
     }
-    if (!_waitFor([this]() { return _socket->bytesAvailable() > 0; }, timeoutMs)) {
+    if (!_waitFor([this]() { return _socket->bytesAvailable() > 0; }, QDeadlineTimer((std::max) (timeoutMs, 0)))) {
         return (isCancelled() || fatalError()) ? -1 : 0;
     }
     return static_cast<int>(_socket->read(reinterpret_cast<char*>(buffer), length));
@@ -102,8 +104,9 @@ int TcpGPSTransport::write(const uint8_t* buffer, int length)
     if (length == 0) {
         return 0;
     }
+    const QDeadlineTimer deadline(kWriteTimeoutMs);
     const qint64 written = _socket->write(reinterpret_cast<const char*>(buffer), length);
-    if (written != length || !_waitFor([this]() { return _socket->bytesToWrite() == 0; }, kWriteTimeoutMs)) {
+    if (written != length || !_waitFor([this]() { return _socket->bytesToWrite() == 0; }, deadline)) {
         return -1;
     }
     return fatalError() ? -1 : length;

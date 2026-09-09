@@ -9,4 +9,7 @@ class SerialGPSTransportTest : public UnitTest
 private slots:
     void _testReadAbortsWhenStopRequested();
     void _testWriteAbortsWhenStopRequested();
+    void _testCancelPendingOperation_data();
+    void _testCancelPendingOperation();
+    void _testPendingWriteDeadline();
 };

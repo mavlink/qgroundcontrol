@@ -25,6 +25,8 @@ signals:
     void connected();
     void error(NTRIPError code, const QString& detail);
     void RTCMDataUpdate(const QByteArray& message, int messageId);
+    void rtcmFrameValidated(const QByteArray& message, int messageId, bool filtered);
+    void bytesReceived(qint64 bytes);
     void finished();
 
     /// Emitted when the transport sent authentication credentials over a cleartext

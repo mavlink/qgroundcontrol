@@ -1,10 +1,10 @@
 #include "GPSRtk.h"
 
-#include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
+#include "GPSReceiverCapabilities.h"
+#include "GPSReceiverPositionSource.h"
 #include "GPSType.h"
 #include "QGCLoggingCategory.h"
-#include "RTKPositionSource.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -17,27 +17,11 @@
 
 QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.RTK.GPSRtk")
 
-#ifndef QGC_NO_SERIAL_LINK
-namespace {
-struct GPSTypeEntry
-{
-    QLatin1StringView key;
-    GPSType type;
-};
-
-constexpr GPSTypeEntry kGPSTypeTable[] = {
-    {QLatin1StringView("trimble"), GPSType::trimble},
-    {QLatin1StringView("septentrio"), GPSType::septentrio},
-    {QLatin1StringView("femtomes"), GPSType::femto},
-    {QLatin1StringView("blox"), GPSType::u_blox},
-};
-}  // namespace
-#endif
-
 GPSRtk::GPSRtk(QObject* parent)
     : QObject(parent)
+    , _session(this)
     , _health(this)
-    , _positionSource(new RTKPositionSource(this))
+    , _positionSource(new GPSReceiverPositionSource(this))
     , _gpsRtkFactGroup(new GPSRTKFactGroup(this))
 {
     qCDebug(GPSRtkLog) << this;
@@ -47,10 +31,21 @@ GPSRtk::GPSRtk(QObject* parent)
         _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(qMax(0, _health.satellitesInUseCount()));
     });
 
-    (void) qRegisterMetaType<satellite_info_s>("satellite_info_s");
-    (void) qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
-    (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
-    (void) qRegisterMetaType<GPSSurveyInStatus>("GPSSurveyInStatus");
+    connect(&_session, &GPSReceiverSession::receiverTypeChanged, this, &GPSRtk::receiverTypeChanged);
+    connect(&_session, &GPSReceiverSession::capabilitiesUpdated, this, &GPSRtk::diagnosticsChanged);
+    connect(&_session, &GPSReceiverSession::connectionErrorDetail, this, &GPSRtk::diagnosticsChanged);
+    connect(&_session, &GPSReceiverSession::stateChanged, this, &GPSRtk::diagnosticsChanged);
+    connect(&_session, &GPSReceiverSession::configurationStarted, this, &GPSRtk::configurationStarted);
+    connect(&_session, &GPSReceiverSession::receiverReady, this, &GPSRtk::_onGPSConnect);
+    connect(&_session, &GPSReceiverSession::disconnected, this, &GPSRtk::_onGPSDisconnect);
+    connect(&_session, &GPSReceiverSession::connectionError, this, &GPSRtk::_onGPSConnectionError);
+    connect(&_session, &GPSReceiverSession::stateChanged, this, &GPSRtk::receiverStateChanged);
+    connect(&_session, &GPSReceiverSession::positionReceived, this, &GPSRtk::_sensorGpsUpdate);
+    connect(&_session, &GPSReceiverSession::satellitesReceived, this, &GPSRtk::_satelliteInfoUpdate);
+    connect(&_session, &GPSReceiverSession::relativePositionReceived, this, &GPSRtk::relativePositionReceived);
+    connect(&_session, &GPSReceiverSession::rtcmReceived, this, &GPSRtk::rtcmDataReceived);
+    connect(&_session, &GPSReceiverSession::rtcmFrameReceived, this, &GPSRtk::rtcmFrameReceived);
+    connect(&_session, &GPSReceiverSession::surveyInReceived, this, &GPSRtk::_onGPSSurveyInStatus);
 }
 
 GPSRtk::~GPSRtk()
@@ -58,6 +53,7 @@ GPSRtk::~GPSRtk()
     qCDebug(GPSRtkLog) << this;
 
     disconnectGPS();
+    _session.disconnect(this);
 }
 
 void GPSRtk::_onGPSConnect()
@@ -131,13 +127,7 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type, GPSReceiver
         qCDebug(GPSRtkLog) << "Serial port is already reserved:" << device;
         return;
     }
-    GPSType type = GPSType::u_blox;
-    for (const GPSTypeEntry& entry : kGPSTypeTable) {
-        if (gps_type.contains(entry.key, Qt::CaseInsensitive)) {
-            type = entry.type;
-            break;
-        }
-    }
+    const GPSType type = GPSReceiverCapabilities::typeForName(gps_type).value_or(GPSType::u_blox);
     connectReceiver(
         type,
         [device, reservation](const std::atomic_bool& requestStop) {
@@ -149,137 +139,18 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type, GPSReceiver
 
 void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, GPSReceiverConfig config)
 {
-    if (_shutdown) {
-        return;
-    }
-    disconnectGPS();
     _gpsRtkFactGroup->lastError()->setRawValue(static_cast<int>(GPSConnectionError::None));
-    if (_shutdown) {
-        return;
-    }
-    _gpsProvider = new GPSProvider(std::move(transportFactory), type, config, this);
-    const QPointer<GPSProvider> provider = _gpsProvider;
-    _providers.insert(provider);
-    connect(provider, &QObject::destroyed, this, [this, key = _gpsProvider]() {
-        _providers.remove(key);
-        if (_retiringProviders.remove(key)) {
-            emit receiverStateChanged();
-        }
-    });
-    // Always queue worker callbacks and reject retired sessions, including already queued events.
-    (void) connect(
-        provider, &GPSProvider::RTCMDataUpdate, this,
-        [this, provider](const QByteArray& data) {
-            if (provider && _gpsProvider == provider) {
-                emit rtcmDataReceived(data);
-            }
-        },
-        Qt::QueuedConnection);
-    (void) connect(
-        provider, &GPSProvider::satelliteInfoUpdate, this,
-        [this, provider](const satellite_info_s& data) {
-            if (provider && _gpsProvider == provider) {
-                _satelliteInfoUpdate(data);
-            }
-        },
-        Qt::QueuedConnection);
-    (void) connect(
-        provider, &GPSProvider::sensorGpsUpdate, this,
-        [this, provider](const sensor_gps_s& data) {
-            if (provider && _gpsProvider == provider) {
-                _sensorGpsUpdate(data);
-            }
-        },
-        Qt::QueuedConnection);
-    (void) connect(
-        provider, &GPSProvider::surveyInStatus, this,
-        [this, provider](const GPSSurveyInStatus& status) {
-            if (provider && _gpsProvider == provider) {
-                _onGPSSurveyInStatus(status);
-            }
-        },
-        Qt::QueuedConnection);
-    (void) connect(
-        provider, &GPSProvider::connectionError, this,
-        [this, provider](GPSConnectionError error) {
-            if (provider && _gpsProvider == provider) {
-                _onGPSDisconnect();
-                _onGPSConnectionError(error);
-            }
-        },
-        Qt::QueuedConnection);
-    (void) connect(
-        provider, &GPSProvider::transportOpened, this,
-        [this, provider]() {
-            if (provider && _gpsProvider == provider) {
-                emit configurationStarted();
-            }
-        },
-        Qt::QueuedConnection);
-    (void) connect(
-        provider, &GPSProvider::receiverReady, this,
-        [this, provider]() {
-            if (provider && _gpsProvider == provider) {
-                _onGPSConnect();
-            }
-        },
-        Qt::QueuedConnection);
-    (void) connect(
-        provider, &QThread::finished, this,
-        [this, provider, retiredKey = _gpsProvider]() {
-            _retiringProviders.remove(retiredKey);
-            if (provider && _gpsProvider == provider) {
-                _gpsProvider = nullptr;
-                _onGPSDisconnect();
-            }
-            emit receiverStateChanged();
-        },
-        Qt::QueuedConnection);
-    (void) connect(provider, &QThread::finished, provider, &QObject::deleteLater);
-    emit receiverTypeChanged(type);
-    if (!provider || _gpsProvider != provider || _shutdown) {
-        return;
-    }
-    provider->start();
-    emit receiverStateChanged();
+    _session.start(type, std::move(transportFactory), config);
 }
 
 void GPSRtk::disconnectGPS()
 {
-    auto* provider = std::exchange(_gpsProvider, nullptr);
-    if (provider) {
-        _retiringProviders.insert(provider);
-        // The worker owns its cancellation flag and releases the transport before finished().
-        provider->setParent(nullptr);
-        provider->stop();
-    }
-    _onGPSDisconnect();
-    if (provider) {
-        emit receiverStateChanged();
-    }
+    _session.stop();
 }
 
 void GPSRtk::shutdown()
 {
-    if (_shutdown) {
-        return;
-    }
-    _shutdown = true;
-    disconnectGPS();
-
-    const auto providers = _providers;
-    for (GPSProvider* provider : providers) {
-        provider->stop();
-    }
-    for (GPSProvider* provider : providers) {
-        // Transports observe cancellation without main-thread callbacks. Joining also
-        // waits for native thread cleanup, which can continue after finished().
-        if (provider->wait()) {
-            delete provider;
-        } else {
-            qCWarning(GPSRtkLog) << "Cannot join GPS worker during shutdown";
-        }
-    }
+    _session.shutdown();
 }
 
 bool GPSRtk::connected() const
@@ -292,34 +163,29 @@ FactGroup* GPSRtk::gpsRtkFactGroup()
     return _gpsRtkFactGroup;
 }
 
-GPSRtk::SatelliteCounts GPSRtk::countSatellites(const satellite_info_s& msg)
+GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteObservation& msg)
 {
     SatelliteCounts counts;
-    counts.inView = qMin(msg.count, satellite_info_s::SAT_INFO_MAX_SATELLITES);
-    for (uint8_t i = 0; i < counts.inView; ++i) {
-        if (msg.used[i]) {
-            ++counts.used;
-        }
-    }
+    counts.inView = static_cast<uint8_t>(msg.satellites.size());
+    counts.used = msg.usedCount();
     return counts;
 }
 
-void GPSRtk::_satelliteInfoUpdate(const satellite_info_s& msg)
+void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteObservation& msg)
 {
     const SatelliteCounts counts = countSatellites(msg);
     qCDebug(GPSRtkLog) << Q_FUNC_INFO << QStringLiteral("%1 in view, %2 used").arg(counts.inView).arg(counts.used);
-    const qint64 age = GPSSourceHealth::ageMilliseconds(msg.timestamp);
+    const qint64 age = GPSSourceHealth::ageMilliseconds(msg.monotonicTimestampUs);
     _health.updateSatelliteCounts(counts.inView, counts.used, age);
 }
 
-void GPSRtk::_sensorGpsUpdate(const sensor_gps_s& msg)
+void GPSRtk::_sensorGpsUpdate(const GPSObservation& msg)
 {
     if (connected()) {
-        const GPSProvider* provider = _gpsProvider;
+        const quint64 sessionId = _session.sessionId();
         _positionSource->updatePosition(msg);
-        if (connected() && provider == _gpsProvider) {
-            _health.updatePosition(_positionSource->lastKnownPosition(),
-                                   GPSSourceHealth::ageMilliseconds(msg.timestamp));
+        if (connected() && sessionId == _session.sessionId()) {
+            _health.updateObservation(msg);
         }
     }
 }

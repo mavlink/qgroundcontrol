@@ -28,6 +28,7 @@ class RTKAutoConnect : public QObject
     Q_PROPERTY(GPSSourceHealth* health READ health CONSTANT)
     Q_PROPERTY(bool active READ active NOTIFY stateChanged)
     Q_PROPERTY(bool autoConnectPaused READ autoConnectPaused NOTIFY stateChanged)
+    Q_PROPERTY(QString errorDetail READ errorDetail NOTIFY stateChanged)
     friend class RTKAutoConnectTest;
 
 public:
@@ -43,6 +44,7 @@ public:
     void disconnectSelected();
 
     GPSSourceHealth* health() const;
+    QString errorDetail() const;
 
     bool active() const { return _connection.active(); }
 

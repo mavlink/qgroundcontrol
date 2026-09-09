@@ -7,6 +7,8 @@ class NMEASatelliteAdapterTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _preservesReceiptAgeAcrossReports();
+    void _decoderRejectsDelayedSatelliteBatch();
     void _modernConstellationsAndSignals();
     void _incompleteReportIsDiscarded();
     void _idleBatchAndSourceClose();

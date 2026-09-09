@@ -28,7 +28,7 @@ UdpGPSTransport::~UdpGPSTransport()
     qCDebug(UdpGPSTransportLog) << this;
 }
 
-bool UdpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs)
+bool UdpGPSTransport::_waitFor(const std::function<bool()>& ready, QDeadlineTimer deadline)
 {
     if (isCancelled() || fatalError()) {
         return false;
@@ -36,13 +36,13 @@ bool UdpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     if (ready()) {
         return true;
     }
-    if (timeoutMs <= 0) {
+    if (deadline.hasExpired()) {
         return false;
     }
 
     QEventLoop loop;
     QTimer cancellation;
-    QTimer deadline;
+    QTimer timeout;
     const auto check = [&]() {
         if (isCancelled() || fatalError() || ready()) {
             loop.quit();
@@ -52,10 +52,10 @@ bool UdpGPSTransport::_waitFor(const std::function<bool()>& ready, int timeoutMs
     QObject::connect(_socket.get(), &QUdpSocket::errorOccurred, &loop, check);
     QObject::connect(_socket.get(), &QUdpSocket::readyRead, &loop, check);
     QObject::connect(&cancellation, &QTimer::timeout, &loop, check);
-    QObject::connect(&deadline, &QTimer::timeout, &loop, &QEventLoop::quit);
-    deadline.setSingleShot(true);
+    QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timeout.setSingleShot(true);
     cancellation.start(kCancellationPollMs);
-    deadline.start(timeoutMs);
+    timeout.start(static_cast<int>(deadline.remainingTime()));
     loop.exec();
     return !isCancelled() && !fatalError() && ready();
 }
@@ -72,7 +72,8 @@ bool UdpGPSTransport::open()
     QObject::connect(_socket.get(), &QUdpSocket::errorOccurred, _socket.get(), [this]() { _failed = true; });
     if (_socket->bind(QHostAddress::Any, _localPort, QAbstractSocket::DontShareAddress)) {
         _socket->connectToHost(_host, _port);
-        if (_waitFor([this]() { return _socket->state() == QAbstractSocket::ConnectedState; }, kConnectTimeoutMs)) {
+        if (_waitFor([this]() { return _socket->state() == QAbstractSocket::ConnectedState; },
+                     QDeadlineTimer(kConnectTimeoutMs))) {
             // UDP has no handshake; GPSProvider reports connected only after driver configuration succeeds.
             return true;
         }
@@ -100,8 +101,7 @@ int UdpGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
 
     QDeadlineTimer deadline((std::max) (timeoutMs, 0));
     while (_pending.isEmpty()) {
-        if (!_waitFor([this]() { return _socket->hasPendingDatagrams(); },
-                      static_cast<int>(deadline.remainingTime()))) {
+        if (!_waitFor([this]() { return _socket->hasPendingDatagrams(); }, deadline)) {
             return (isCancelled() || fatalError()) ? -1 : 0;
         }
         const QNetworkDatagram datagram = _socket->receiveDatagram();

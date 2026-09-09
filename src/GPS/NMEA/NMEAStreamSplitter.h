@@ -28,6 +28,7 @@ private:
 
     QPointer<QIODevice> _source;
     QByteArray _sentence;
+    quint64 _sentenceTimestampUs = 0;
     std::unique_ptr<NMEAStreamDevice> _positionDevice;
     std::unique_ptr<NMEAStreamDevice> _satelliteDevice;
 };

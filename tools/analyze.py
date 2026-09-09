@@ -83,7 +83,9 @@ class FileCollector:
         return self._find_files(self.repo_root / "src", extensions)
 
     def _is_vendored(self, path: Path) -> bool:
-        return path.is_relative_to(self.repo_root / "src/GPS/Driver/PX4")
+        return path.is_relative_to(self.repo_root / "src/GPS/Driver/PX4") or path.is_relative_to(
+            self.repo_root / "test/GPS/Driver/PX4"
+        )
 
     def _find_files(self, search_path: Path, extensions: tuple[str, ...]) -> list[Path]:
         """Find all files with given extensions under search_path."""

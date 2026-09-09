@@ -29,8 +29,10 @@ NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent)
             emit correctionAgeChanged();
         }
 
-        const bool stale = _lastMessageTime.isValid() && _lastMessageTime.elapsed() >= kStaleThreshold.count() &&
-                           _messagesReceived > 0;
+        const qint64 age = _lastMessageTime.isValid() ? _lastMessageTime.elapsed()
+                           : _streamStarted.isValid() ? _streamStarted.elapsed()
+                                                      : 0;
+        const bool stale = age >= kStaleThreshold.count();
         if (stale != _dataStale) {
             _dataStale = stale;
             emit dataStaleChanged();
@@ -49,6 +51,7 @@ NTRIPConnectionStats::~NTRIPConnectionStats()
 
 void NTRIPConnectionStats::start()
 {
+    _streamStarted.start();
     _rateTimer.start();
 }
 
@@ -90,6 +93,10 @@ void NTRIPConnectionStats::reset()
     _prevBytesReceived = 0;
     _messagesReceived = 0;
     _lastMessageTime.invalidate();
+    _streamStarted.invalidate();
+    _networkBytesReceived = 0;
+    _validatedFrames = 0;
+    _filteredFrames = 0;
     _messageCountsById.clear();
     _messageCountsDirty = false;
     if (_dataStale) {
@@ -101,6 +108,7 @@ void NTRIPConnectionStats::reset()
     emit dataRateChanged();
     emit correctionAgeChanged();
     emit messageCountsByIdChanged();
+    emit validationChanged();
 }
 
 QVariantList NTRIPConnectionStats::messageCountsById() const
@@ -114,4 +122,26 @@ QVariantList NTRIPConnectionStats::messageCountsById() const
         out.append(QVariant(QVariantList{id, _messageCountsById.value(id)}));
     }
     return out;
+}
+
+void NTRIPConnectionStats::recordNetworkBytes(qint64 bytes)
+{
+    if (bytes > 0) {
+        _networkBytesReceived += bytes;
+        emit validationChanged();
+    }
+}
+
+void NTRIPConnectionStats::recordValidatedFrame(bool filtered)
+{
+    ++_validatedFrames;
+    if (filtered) {
+        ++_filteredFrames;
+    }
+    _lastMessageTime.restart();
+    if (_dataStale) {
+        _dataStale = false;
+        emit dataStaleChanged();
+    }
+    emit validationChanged();
 }

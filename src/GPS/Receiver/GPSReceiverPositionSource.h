@@ -5,16 +5,16 @@
 
 #include <optional>
 
-#include "sensor_gps.h"
+#include "GPSObservation.h"
 
 /// Adapts decoded receiver fixes without opening or configuring another connection.
-class RTKPositionSource : public QGeoPositionInfoSource
+class GPSReceiverPositionSource : public QGeoPositionInfoSource
 {
     Q_OBJECT
 
 public:
-    explicit RTKPositionSource(QObject* parent = nullptr);
-    ~RTKPositionSource() override;
+    explicit GPSReceiverPositionSource(QObject* parent = nullptr);
+    ~GPSReceiverPositionSource() override;
 
     QGeoPositionInfo lastKnownPosition(bool fromSatellitePositioningMethodsOnly = false) const override;
 
@@ -25,7 +25,7 @@ public:
     Error error() const override { return _error; }
 
     void setUpdateInterval(int msec) override;
-    void updatePosition(const sensor_gps_s& fix);
+    void updatePosition(const GPSObservation& fix);
     void reset();
 
 public slots:
@@ -34,12 +34,12 @@ public slots:
     void requestUpdate(int timeout = 0) override;
 
 private:
-    static QGeoPositionInfo _positionInfo(const sensor_gps_s& fix);
+    static QGeoPositionInfo _positionInfo(const GPSObservation& fix);
     void _emitPendingUpdate();
     void _reportUpdateTimeout();
 
     QGeoPositionInfo _lastPosition;
-    std::optional<sensor_gps_s> _pendingFix;
+    std::optional<GPSObservation> _pendingFix;
     QTimer _requestTimer;
     QTimer _updateTimer;
     Error _error = NoError;

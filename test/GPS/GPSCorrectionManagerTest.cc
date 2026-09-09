@@ -41,6 +41,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     configureUdp(saved, settings, port);
     GPSManager gps;
     auto* corrections = gps.corrections();
+    corrections->beginSourceSession(GPSCorrectionSource::LocalReceiver);
     corrections->init(settings);
     auto* forwarder = corrections->rtcmMavlink();
     QCOMPARE(forwarder->parent(), corrections);
@@ -50,7 +51,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1077, 500);
     quint64 expected = 0;
     // Local RTK and UDP work before any NTRIP initialization or caster connection.
-    emit gps.gpsRtk()->rtcmDataReceived(frame);
+    emit gps.gpsRtk()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
     expected += frame.size();
     QCOMPARE(forwarder->totalBytesSent(), expected);
     QUdpSocket sender;
@@ -62,7 +63,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     QCOMPARE(forwarder->totalBytesSent(), expected);
     ntrip.stopNTRIP();
     QVERIFY(corrections->_udpInput.isRunning());
-    emit gps.gpsRtk()->rtcmDataReceived(frame);
+    emit gps.gpsRtk()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
     expected += frame.size();
     QCOMPARE(sender.writeDatagram(frame, QHostAddress::LocalHost, port), frame.size());
     expected += frame.size();
@@ -71,7 +72,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     gps.shutdown();
     QVERIFY(!corrections->_udpInput.isRunning());
     emit ntrip.rtcmDataReceived(frame);
-    emit gps.gpsRtk()->rtcmDataReceived(frame);
+    emit gps.gpsRtk()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
     QCOMPARE(forwarder->totalBytesSent(), expected);
 }
 
@@ -176,6 +177,78 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
     std::unique_ptr<QObject> root(component.create());
     QVERIFY2(root, qPrintable(component.errorString()));
     QCOMPARE(root->property("forwarder").value<RTCMMavlink*>(), GPSManager::instance()->corrections()->rtcmMavlink());
+}
+
+void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
+{
+    GPSCorrectionManager corrections;
+    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    const QByteArray data = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const auto initial = corrections.sources().at(static_cast<int>(GPSCorrectionSource::LocalReceiver)).toMap();
+    QVERIFY(!initial.value(QStringLiteral("active")).toBool());
+    corrections.forwardCorrectionsFrom(GPSCorrectionSource::LocalReceiver, data, true, 1005);
+    QVERIFY(routed.isEmpty());
+    corrections.beginSourceSession(GPSCorrectionSource::LocalReceiver);
+    const quint64 oldSession = corrections.beginSourceSession(GPSCorrectionSource::Ntrip);
+    GPSCorrectionFrame frame{
+        GPSCorrectionSource::Ntrip, oldSession, GPSCorrectionFrame::monotonicNowMs(), data, 0, true, false};
+    corrections.acceptFrame(frame);
+    QCOMPARE(routed.size(), 1);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(routed.first().first()).messageId, 1005);
+    QCOMPARE(corrections.rtcmMavlink()->totalBytesSubmitted(), quint64(0));
+    corrections.setSelectedSource(GPSCorrectionSource::LocalReceiver);
+    corrections.acceptFrame(frame);
+    QCOMPARE(routed.size(), 1);
+    corrections.forwardCorrectionsFrom(GPSCorrectionSource::LocalReceiver, data, true, 1005);
+    QCOMPARE(routed.size(), 2);
+    corrections.setSelectedSource(GPSCorrectionSource::Unknown);
+    corrections.endSourceSession(GPSCorrectionSource::Ntrip);
+    corrections.acceptFrame(frame);
+    QCOMPARE(routed.size(), 2);
+    const quint64 newSession = corrections.beginSourceSession(GPSCorrectionSource::Ntrip);
+    QVERIFY(newSession != oldSession);
+    corrections.acceptFrame(frame);
+    QCOMPARE(routed.size(), 2);
+    frame.session = newSession;
+    corrections.acceptFrame(frame);
+    QCOMPARE(routed.size(), 3);
+    const auto stats = corrections.sources().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
+    QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), quint64(1));
+    QCOMPARE(stats.value(QStringLiteral("routedFrames")).toULongLong(), quint64(1));
+    QVERIFY(stats.value(QStringLiteral("usable")).toBool());
+}
+
+void GPSCorrectionManagerTest::_filteredAndExpiredFrames()
+{
+    GPSCorrectionManager corrections;
+    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    const quint64 session = corrections.beginSourceSession(GPSCorrectionSource::Ntrip);
+    GPSCorrectionFrame frame{GPSCorrectionSource::Ntrip,
+                             session,
+                             GPSCorrectionFrame::monotonicNowMs(),
+                             GpsTestHelpers::buildRtcmFrame(1005, 20),
+                             1005,
+                             true,
+                             true};
+    corrections.acceptFrame(frame);
+    auto stats = corrections.sources().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
+    QVERIFY(stats.value(QStringLiteral("usable")).toBool());
+    QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), quint64(1));
+    QVERIFY(routed.isEmpty());
+    frame.filtered = false;
+    frame.receivedAtMs -= 6000;
+    corrections.acceptFrame(frame);
+    stats = corrections.sources().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
+    // Late delivery of an old frame must not make a newer valid observation stale.
+    QVERIFY(stats.value(QStringLiteral("usable")).toBool());
+    QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), quint64(2));
+    QVERIFY(routed.isEmpty());
+    frame.receivedAtMs = GPSCorrectionFrame::monotonicNowMs() + 60000;
+    corrections.acceptFrame(frame);
+    stats = corrections.sources().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
+    QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), quint64(3));
+    QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), quint64(2));
+    QVERIFY(routed.isEmpty());
 }
 
 UT_REGISTER_TEST(GPSCorrectionManagerTest, TestLabel::Unit)

@@ -4,25 +4,13 @@
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoPositionInfo>
-#include <QtQmlIntegration/QtQmlIntegration>
 
-/// A decoded observation and its local reception time, independent of receiver UTC.
-struct GPSObservation
-{
-    QGeoPositionInfo position;
-    QDateTime receivedAt;
-
-    bool usable() const;
-    QGeoCoordinate coordinate() const;
-    double heading() const;
-};
+#include "GPSObservation.h"
 
 /// Session health is independent of transport readiness and RTK survey-in validity.
 class GPSSourceHealth : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
     Q_PROPERTY(State state READ state NOTIFY positionChanged)
     Q_PROPERTY(bool usable READ usable NOTIFY positionChanged)
     Q_PROPERTY(QGeoCoordinate coordinate READ coordinate NOTIFY positionChanged)
@@ -67,6 +55,7 @@ public:
 
     int satellitesInUseCount() const { return _satellitesInUseCount; }
 
+    void updateObservation(const GPSObservation& observation);
     void updatePosition(const QGeoPositionInfo& position, qint64 ageMs = 0);
     void invalidatePosition();
     void reset();

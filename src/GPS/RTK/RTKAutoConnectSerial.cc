@@ -54,7 +54,8 @@ void RTKAutoConnect::_updateSerial()
         present.insert(port.systemLocation);
     }
     if (!_autoConnectedPort.isEmpty() &&
-        (!present.contains(_autoConnectedPort) || _serialPorts->isAutoConnectExcluded(_autoConnectedPort))) {
+        (!present.contains(_autoConnectedPort) ||
+         (!_receiver->hasReceiver() && _serialPorts->isAutoConnectExcluded(_autoConnectedPort)))) {
         // Preserve a manual connection request while the device is temporarily unavailable.
         const auto config = _sessionConfig;
         stop();

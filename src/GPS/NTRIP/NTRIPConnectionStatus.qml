@@ -35,7 +35,7 @@ ColumnLayout {
     QGCPalette { id: qgcPal }
 
     QGCLabel {
-        text:             qsTr("Connected but no data received recently")
+        text:             qsTr("Connected but no valid corrections received recently")
         color:            qgcPal.colorOrange
         wrapMode:         Text.WordWrap
         font.pointSize:   ScreenTools.smallFontPointSize
@@ -121,11 +121,15 @@ ColumnLayout {
     }
 
     LabelledLabel {
-        label:     qsTr("To Vehicle")
-        labelText: root.rtcmMavlink ? (root._formatDataSize(root.rtcmMavlink.totalBytesSent) + " ("
-                   + root.rtcmMavlink.bandwidthKBps.toFixed(1) + " KB/s)") : root._valueNA
-        visible:   root._connected
-                   && root.rtcmMavlink && root.rtcmMavlink.totalBytesSent > 0
+        label:     qsTr("All corrections queued to vehicle links")
+        labelText: root.rtcmMavlink ? root._formatDataSize(root.rtcmMavlink.totalBytesSubmitted) : root._valueNA
+        visible:   root._connected && root.rtcmMavlink
+    }
+
+    LabelledLabel {
+        label:     qsTr("Valid / filtered corrections")
+        labelText: root._stats ? qsTr("%1 / %2").arg(root._stats.validatedFrames).arg(root._stats.filteredFrames) : root._valueNA
+        visible:   root._connected && root._stats
     }
 
     LabelledLabel {

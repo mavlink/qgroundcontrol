@@ -7,6 +7,7 @@ class RTKAutoConnectTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _receiverErrorDetailReachesStatus();
     void _networkRetriesAndStops();
     void _disconnectDoesNotBlockAndReconnectWaits();
 #ifndef QGC_NO_SERIAL_LINK
@@ -17,5 +18,6 @@ private slots:
     void _excludedPorts();
     void _failedAttemptsBackOffAndRespectReservations();
     void _failedOpenRetriesWithoutUnplug();
+    void _nmeaDiscoveryExclusionDoesNotRevokeReceiver();
 #endif
 };

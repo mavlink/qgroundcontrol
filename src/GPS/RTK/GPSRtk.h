@@ -1,16 +1,13 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QSet>
 #include <QtCore/QString>
 
-#include "GPSProvider.h"
+#include "GPSReceiverSession.h"
 #include "GPSSourceHealth.h"
-#include "satellite_info.h"
-#include "sensor_gps.h"
 
 class GPSRTKFactGroup;
-class RTKPositionSource;
+class GPSReceiverPositionSource;
 class FactGroup;
 
 class GPSRtk : public QObject
@@ -34,11 +31,15 @@ public:
 
     GPSSourceHealth* health() { return &_health; }
 
-    RTKPositionSource* positionSource() const { return _positionSource; }
+    GPSReceiverPositionSource* positionSource() const { return _positionSource; }
 
-    bool hasReceiver() const { return _gpsProvider != nullptr; }
+    bool hasReceiver() const { return _session.hasReceiver(); }
 
-    bool stopping() const { return !_retiringProviders.isEmpty(); }
+    bool stopping() const { return _session.stopping(); }
+
+    const GPSReceiverCapabilities& capabilities() const { return _session.capabilities(); }
+
+    QString errorDetail() const { return _session.errorDetail(); }
     FactGroup* gpsRtkFactGroup();
 
     struct SatelliteCounts
@@ -48,33 +49,30 @@ public:
     };
 
     /// Clamp count to the array bound and tally used-in-solution satellites.
-    static SatelliteCounts countSatellites(const satellite_info_s& msg);
+    static SatelliteCounts countSatellites(const GPSSatelliteObservation& msg);
 
 signals:
+    void diagnosticsChanged();
     void receiverTypeChanged(GPSType type);
+    void relativePositionReceived(const GPSRelativeObservation& observation);
     void rtcmDataReceived(const QByteArray& data);
+    void rtcmFrameReceived(const QByteArray& data, qint64 receivedAtMs);
     void connectedChanged();
     void receiverStateChanged();
     void configurationStarted();
     void connectionFailed();
 
 private slots:
-    void _satelliteInfoUpdate(const satellite_info_s& msg);
-    void _sensorGpsUpdate(const sensor_gps_s& msg);
+    void _satelliteInfoUpdate(const GPSSatelliteObservation& msg);
+    void _sensorGpsUpdate(const GPSObservation& msg);
     void _onGPSConnect();
     void _onGPSDisconnect();
     void _onGPSConnectionError(GPSConnectionError error);
     void _onGPSSurveyInStatus(const GPSSurveyInStatus& status);
 
 private:
+    GPSReceiverSession _session;
     GPSSourceHealth _health;
-    RTKPositionSource* _positionSource = nullptr;
-    GPSProvider* _gpsProvider = nullptr;
+    GPSReceiverPositionSource* _positionSource = nullptr;
     GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
-
-    bool _shutdown = false;
-    // Includes finished workers whose deferred deletion has not run yet.
-    QSet<GPSProvider*> _providers;
-    // Retired workers delete themselves on finished(); this set only gates reconnection.
-    QSet<GPSProvider*> _retiringProviders;
 };

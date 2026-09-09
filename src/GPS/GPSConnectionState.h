@@ -2,14 +2,11 @@
 
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QObject>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 /// Shared connection intent, lifecycle, and retry policy; transports own their I/O.
 class GPSConnectionState : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
 
     friend class GPSConnectionStateTest;
     friend class NMEASourceManagerTest;

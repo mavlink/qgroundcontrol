@@ -117,6 +117,9 @@ public:
 
 signals:
     void rtcmDataReceived(const QByteArray& data);
+    void correctionReceived(const QByteArray& data, int messageId, bool filtered);
+    void correctionSessionStarted();
+    void correctionSessionEnded();
     void connectionStatusChanged();
     void statusMessageChanged();
     void securityWarningChanged();

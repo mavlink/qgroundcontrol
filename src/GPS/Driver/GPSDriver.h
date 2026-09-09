@@ -1,9 +1,5 @@
 #pragma once
 
-#include "GPSType.h"
-#include "satellite_info.h"
-#include "sensor_gps.h"
-
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
 
@@ -11,8 +7,11 @@
 #include <functional>
 #include <memory>
 
+#include "GPSObservation.h"
+#include "GPSReceiverCapabilities.h"
+#include "GPSType.h"
+
 class GPSTransport;
-class GPSBaseStationSupport;
 
 /// Configuration used only by the RTK base-station role.
 struct GPSBaseStationConfig
@@ -66,8 +65,9 @@ Q_DECLARE_METATYPE(GPSSurveyInStatus)
 /// within configure()/receive().
 struct GPSDriverSinks
 {
-    std::function<void(const sensor_gps_s &)> onPosition;
-    std::function<void(const satellite_info_s &)> onSatelliteInfo;
+    std::function<void(const GPSObservation&)> onPosition;
+    std::function<void(const GPSSatelliteObservation&)> onSatelliteInfo;
+    std::function<void(const GPSRelativeObservation&)> onRelativePosition;
     std::function<void(const QByteArray &)> onRTCM;
     std::function<void(const GPSSurveyInStatus &)> onSurveyIn;
 };
@@ -78,34 +78,74 @@ struct GPSDriverSinks
 class GPSDriver
 {
 public:
-    GPSDriver(GPSType type, GPSTransport &transport, const GPSReceiverConfig &config, GPSDriverSinks sinks);
+    enum class ConfigurationStatus
+    {
+        NotConfigured,
+        Ready,
+        Unsupported,
+        Cancelled,
+        TransportError,
+        Failed,
+    };
+
+    struct ConfigurationResult
+    {
+        ConfigurationStatus status = ConfigurationStatus::NotConfigured;
+        QString error;
+    };
+
+    enum class ReceiveStatus
+    {
+        Data,
+        Idle,
+        Cancelled,
+        DeviceError,
+        NotConfigured,
+    };
+
+    struct ReceiveResult
+    {
+        ReceiveStatus status = ReceiveStatus::NotConfigured;
+        bool positionUpdated = false;
+        bool satellitesUpdated = false;
+    };
+
+    GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks);
     ~GPSDriver();
 
-    GPSDriver(const GPSDriver &) = delete;
-    GPSDriver &operator=(const GPSDriver &) = delete;
+    GPSDriver(const GPSDriver&) = delete;
+    GPSDriver& operator=(const GPSDriver&) = delete;
 
     /// Create and configure the underlying driver. Returns false on failure.
     bool configure();
+
+    const ConfigurationResult& configurationResult() const { return _configurationResult; }
+
+    const GPSReceiverCapabilities& capabilities() const { return _capabilities; }
 
     /// Pump one receive cycle, invoking the position/satellite sinks as data
     /// arrives. Returns the px4 bitset (<0 error, bit0 position, bit1 satellite),
     /// or <0 if not configured.
     int receive(unsigned timeoutMs);
+    ReceiveResult receiveResult(unsigned timeoutMs);
 
     unsigned baudrate() const { return _baudrate; }
 
     /// Trampoline target for the px4 callback; `type` is a GPSCallbackType value.
     /// Public only so the file-local C callback can reach it — not for callers.
-    int handleCallback(int type, void *data1, int data2);
+    int handleCallback(int type, void* data1, int data2);
 
 private:
+    void _updateCapabilities();
+
     GPSType _type;
-    GPSTransport &_transport;
+    GPSTransport& _transport;
     GPSReceiverConfig _config;
     GPSDriverSinks _sinks;
     unsigned _baudrate = 0;
+    GPSReceiverCapabilities _capabilities;
+    ConfigurationResult _configurationResult;
 
-    std::unique_ptr<GPSBaseStationSupport> _driver;
-    sensor_gps_s _sensorGps{};
-    satellite_info_s _satelliteInfo{};
+    struct Private;
+    std::unique_ptr<Private> _private;
 };

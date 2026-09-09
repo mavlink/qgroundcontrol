@@ -1172,6 +1172,14 @@ public:
 	};
 
 	const Board &board() const { return _board; }
+	const char *modelName() const { return _model_name; }
+	const char *firmwareVersion() const { return _firmware_version; }
+	enum class BaseStationCapability : uint8_t {
+		Unknown,
+		Unsupported,
+		Supported,
+	};
+	BaseStationCapability baseStationCapability() const;
 
 	/**
 	 * What UART1 carries in a given mode, for status output
@@ -1406,6 +1414,8 @@ private:
 	bool _configured{false};
 	bool _survey_in_stopped{false};
 	bool _is_m8p{false};
+	char _model_name[30] {};
+	char _firmware_version[30] {};
 	bool _got_posllh{false};
 	bool _got_velned{false};
 	bool _got_sec_sig{false}; ///< SEC-SIG jammingState supersedes deprecated MON-RF flags

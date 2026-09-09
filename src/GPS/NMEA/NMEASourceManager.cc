@@ -2,13 +2,8 @@
 
 #include <QtCore/QUrl>
 #include <QtNetwork/QTcpSocket>
-#include <QtPositioning/QNmeaSatelliteInfoSource>
 
 #include "AutoConnectSettings.h"
-#include "GPSNMEAPreparation.h"
-#include "NMEAPositionSource.h"
-#include "NMEASatelliteAdapter.h"
-#include "NMEAStreamSplitter.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "UdpIODevice.h"
@@ -28,28 +23,49 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
                                      QObject* parent)
     : QObject(parent)
     , _settings(settings)
+    , _receiver(this)
     , _positionManager(positionManager)
-    , _satellitePollTimer(this)
-    , _health(this)
+    , _decoder(this)
     , _connection(this)
 {
     qCDebug(NMEASourceManagerLog) << this;
     connect(&_connection, &GPSConnectionState::changed, this, &NMEASourceManager::stateChanged);
-    _satellitePollTimer.setInterval(1000);
-    connect(&_satellitePollTimer, &QTimer::timeout, this, [this]() {
-        if (_satelliteSource) {
-            // One-shot requests also report unchanged lists, unlike continuous Qt satellite updates.
-            _satelliteSource->requestUpdate(5000);
+    connect(&_decoder, &NMEADecoderSession::satellitesChanged, this, &NMEASourceManager::satellitesChanged);
+    connect(&_receiver, &GPSReceiverSession::stateChanged, this, &NMEASourceManager::_receiverStateChanged);
+    connect(&_receiver, &GPSReceiverSession::configurationStarted, this, [this]() {
+        const QPointer<NMEASourceManager> guard(this);
+        _connection.configuring();
+        if (guard && _shouldConnect()) {
+            _setStatus(tr("Configuring receiver for NMEA"));
         }
     });
-    connect(&_health, &GPSSourceHealth::satellitesChanged, this, [this]() {
-        if (_health.satellitesInViewCount() < 0) {
-            _satellitesInView.clear();
+    connect(&_receiver, &GPSReceiverSession::receiverReady, this, [this]() {
+        if (!_shouldConnect() || !_receiver.ready()) {
+            return;
         }
-        if (_health.satellitesInUseCount() < 0) {
-            _satellitesInUse.clear();
+        if (!_installSource(_receiver.nmeaDevice())) {
+            _closeDevice();
+            return;
         }
-        emit satellitesChanged();
+        const QPointer<NMEASourceManager> guard(this);
+        _connection.ready();
+        if (guard && _shouldConnect()) {
+            _setStatus(tr("Connected"));
+        }
+    });
+    connect(&_receiver, &GPSReceiverSession::connectionError, this, [this](GPSConnectionError error) {
+        const QPointer<NMEASourceManager> guard(this);
+        _closeDevice();
+        if (!guard) {
+            return;
+        }
+        _receiverFailed = true;
+        const QString summary = error == GPSConnectionError::DeviceError ? tr("Serial connection lost; reconnecting")
+                                                                         : tr("Cannot configure receiver for NMEA");
+        _setStatus(_receiver.errorDetail().isEmpty() ? summary : tr("%1: %2").arg(summary, _receiver.errorDetail()));
+        if (guard) {
+            _receiverStateChanged();
+        }
     });
     _status = tr("Disconnected");
     _udpActivityTimer.setSingleShot(true);
@@ -77,7 +93,7 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
 
 QGeoPositionInfoSource* NMEASourceManager::positionSource() const
 {
-    return _positionSource.get();
+    return _decoder.positionSource();
 }
 
 bool NMEASourceManager::_shouldConnect() const
@@ -127,48 +143,27 @@ void NMEASourceManager::disconnectSource()
     _updateSerialRouting();
 }
 
-void NMEASourceManager::_prepareReceiver(GPSNMEAPreparation::TransportFactory factory)
+void NMEASourceManager::_startReceiver(GPSProvider::TransportFactory factory)
 {
-    const quint64 generation = _preparationGeneration;
-    _preparation = std::make_unique<GPSNMEAPreparation>(std::move(factory), GPSType::u_blox);
-    connect(_preparation.get(), &QThread::finished, this, [this, generation]() {
-        const QPointer<NMEASourceManager> guard(this);
-        const unsigned baud = _preparation->baudrate();
-        _preparation.reset();
-        if (generation != _preparationGeneration || !_shouldConnect()) {
-            return;
-        }
-        if (baud == 0) {
-            _connection.failed();
-            if (guard) {
-                _setStatus(tr("Cannot configure receiver for NMEA"));
-            }
-            return;
-        }
-        _preparedBaud = baud;
-        _connection.stopped();
-        if (guard) {
-            update();
-        }
-    });
+    _receiverFailed = false;
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
+    _receiver.start(GPSType::u_blox, std::move(factory), config);
+}
+
+void NMEASourceManager::_receiverStateChanged()
+{
+    if (_receiver.hasReceiver() || _receiver.stopping()) {
+        return;
+    }
     const QPointer<NMEASourceManager> guard(this);
-    _connection.configuring();
-    if (!guard) {
-        return;
+    if (_connection.state() == GPSConnectionState::Stopping) {
+        _connection.stopped();
     }
-    if (generation != _preparationGeneration || !_shouldConnect()) {
-        _preparation.reset();
-        return;
+    if (guard && _receiverFailed && _shouldConnect()) {
+        _connection.failed();
     }
-    _setStatus(tr("Configuring receiver for NMEA"));
-    if (!guard) {
-        return;
-    }
-    if (generation != _preparationGeneration || !_shouldConnect()) {
-        _preparation.reset();
-        return;
-    }
-    _preparation->start();
 }
 
 void NMEASourceManager::_setStatus(const QString& status)
@@ -183,11 +178,18 @@ void NMEASourceManager::_setStatus(const QString& status)
 NMEASourceManager::~NMEASourceManager()
 {
     qCDebug(NMEASourceManagerLog) << this;
+    shutdown();
+}
+
+void NMEASourceManager::shutdown()
+{
     stop();
+    _receiver.shutdown();
 }
 
 void NMEASourceManager::stop()
 {
+    _receiverFailed = false;
     _connection.stop();
     _closeDevice();
     _connection.resetRetry();
@@ -198,26 +200,17 @@ void NMEASourceManager::stop()
 
 void NMEASourceManager::_closeDevice()
 {
-    ++_preparationGeneration;
-    _preparedBaud = 0;
-    if (_preparation) {
-        _preparation->stop();
-    }
-    if (_sourceInstalled || _tcp) {
+    if (_sourceInstalled || _tcp || _receiver.hasReceiver() || _receiver.stopping()) {
         _connection.stopping();
     }
     _udpActivityTimer.stop();
-    _satellitePollTimer.stop();
     // Detach the decoder before destroying the device it reads from.
     if (_sourceInstalled && _positionManager) {
-        _positionManager->clearNmeaPositionSource(_positionSource.get());
+        _positionManager->clearNmeaPositionSource(_decoder.positionSource());
     }
     _sourceInstalled = false;
-    _positionSource.reset();
-    _satelliteSource.reset();
-    _satelliteAdapter.reset();
-    _stream.reset();
-    _health.reset();
+    _decoder.stop();
+    _receiver.stop();
     _udp.reset();
     if (_tcp) {
         _tcp->disconnect(this);
@@ -231,7 +224,9 @@ void NMEASourceManager::_closeDevice()
     _serialBaud = 0;
 #endif
     _source = -1;
-    _connection.stopped();
+    if (!_receiver.stopping()) {
+        _connection.stopped();
+    }
 }
 
 bool NMEASourceManager::_installSource(QIODevice* device)
@@ -242,70 +237,12 @@ bool NMEASourceManager::_installSource(QIODevice* device)
         return false;
     }
     device->readAll();
-    _stream = std::make_unique<NMEAStreamSplitter>(device);
-    _satelliteSource = std::make_unique<QNmeaSatelliteInfoSource>(QNmeaSatelliteInfoSource::UpdateMode::RealTimeMode);
-    _satelliteAdapter = std::make_unique<NMEASatelliteAdapter>(_stream->satelliteDevice());
-    _satelliteSource->setDevice(_satelliteAdapter.get());
-    const QPointer<QNmeaSatelliteInfoSource> current = _satelliteSource.get();
-    connect(_satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInViewUpdated, this,
-            [this, current](const QList<QGeoSatelliteInfo>& satellites) {
-                QElapsedTimer received;
-                received.start();
-                QMetaObject::invokeMethod(
-                    this,
-                    [this, current, satellites, received]() {
-                        if (!current || _satelliteSource.get() != current) {
-                            return;
-                        }
-                        _satellitesInView = satellites;
-                        _health.updateSatellitesInView(satellites.size(), received.elapsed());
-                    },
-                    Qt::QueuedConnection);
-            });
-    connect(_satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInUseUpdated, this,
-            [this, current](const QList<QGeoSatelliteInfo>& satellites) {
-                QElapsedTimer received;
-                received.start();
-                QMetaObject::invokeMethod(
-                    this,
-                    [this, current, satellites, received]() {
-                        if (!current || _satelliteSource.get() != current) {
-                            return;
-                        }
-                        _satellitesInUse = satellites;
-                        _health.updateSatellitesInUse(satellites.size(), received.elapsed());
-                    },
-                    Qt::QueuedConnection);
-            });
-    connect(
-        _satelliteSource.get(), &QGeoSatelliteInfoSource::errorOccurred, this,
-        [this, current](QGeoSatelliteInfoSource::Error error) {
-            if (current && _satelliteSource.get() == current && error != QGeoSatelliteInfoSource::NoError) {
-                _clearSatelliteInfo();
-            }
-        },
-        Qt::QueuedConnection);
-    _satelliteSource->requestUpdate(5000);
-    _satellitePollTimer.start();
-    _positionSource = std::make_unique<NMEAPositionSource>(_stream->positionDevice());
-    connect(_positionSource.get(), &QGeoPositionInfoSource::positionUpdated, &_health,
-            [this](const QGeoPositionInfo& position) {
-                _health.updatePosition(position, _positionSource->lastUpdateAgeMs());
-            });
-    connect(_positionSource.get(), &QGeoPositionInfoSource::errorOccurred, &_health,
-            [this](QGeoPositionInfoSource::Error error) {
-                if (error != QGeoPositionInfoSource::NoError) {
-                    _health.invalidatePosition();
-                }
-            });
-    _positionManager->setNmeaPositionSource(_positionSource.get(), &_health);
+    if (!_decoder.start(device)) {
+        return false;
+    }
+    _positionManager->setNmeaPositionSource(_decoder.positionSource(), _decoder.health());
     _sourceInstalled = true;
     return true;
-}
-
-void NMEASourceManager::_clearSatelliteInfo()
-{
-    _health.clearSatellites();
 }
 
 void NMEASourceManager::update()
@@ -362,8 +299,7 @@ void NMEASourceManager::update()
 #ifndef QGC_NO_SERIAL_LINK
     if (source == NMEAConnectionConfig::Serial) {
         const QString device = _config.device;
-        const qint32 baud =
-            _config.receiverMode == NMEAConnectionConfig::Ublox ? static_cast<qint32>(_preparedBaud) : _config.baud;
+        const qint32 baud = _config.baud;
         auto* ports = SerialPortManager::instance();
         bool present = false;
         for (const auto& port : ports->availablePorts()) {
@@ -381,7 +317,7 @@ void NMEASourceManager::update()
             _setStatus(tr("Waiting for serial device"));
             return;
         }
-        if (_serial || _preparation) {
+        if (_serial || _receiver.hasReceiver() || _receiver.stopping()) {
             return;
         }
         if (!_connection.canAttempt()) {
@@ -395,8 +331,8 @@ void NMEASourceManager::update()
         if (!_connection.beginAttempt()) {
             return;
         }
-        if (_config.receiverMode == NMEAConnectionConfig::Ublox && _preparedBaud == 0) {
-            _prepareReceiver([device, reservation = std::move(reservation)](const std::atomic_bool& stop) {
+        if (_config.receiverMode == NMEAConnectionConfig::Ublox) {
+            _startReceiver([device, reservation = std::move(reservation)](const std::atomic_bool& stop) {
                 return std::make_unique<SerialGPSTransport>(device, stop);
             });
             return;
@@ -404,7 +340,6 @@ void NMEASourceManager::update()
         auto serial = std::make_unique<QSerialPort>();
         serial->setPortName(device);
         if (!serial->setBaudRate(baud) || !serial->open(QIODevice::ReadOnly)) {
-            _preparedBaud = 0;
             _connection.failed();
             _setStatus(tr("Cannot open serial device: %1").arg(serial->errorString()));
             return;

@@ -25,6 +25,7 @@ RTKAutoConnect::RTKAutoConnect(GPSRtk* receiver, AutoConnectSettings* settings, 
     if (_receiver) {
         connect(this, &RTKAutoConnect::disconnectRequested, _receiver, &GPSRtk::disconnectGPS);
         connect(_receiver, &GPSRtk::receiverStateChanged, this, &RTKAutoConnect::_updateReceiverState);
+        connect(_receiver, &GPSRtk::diagnosticsChanged, this, &RTKAutoConnect::stateChanged);
         connect(_receiver, &GPSRtk::connectedChanged, this, &RTKAutoConnect::_updateReceiverState);
         connect(_receiver, &GPSRtk::configurationStarted, &_connection, &GPSConnectionState::configuring);
         connect(_receiver, &GPSRtk::connectionFailed, &_connection, &GPSConnectionState::failed);
@@ -271,6 +272,11 @@ void RTKAutoConnect::update()
         _updateSerial();
     }
 #endif
+}
+
+QString RTKAutoConnect::errorDetail() const
+{
+    return _receiver ? _receiver->errorDetail() : QString();
 }
 
 GPSSourceHealth* RTKAutoConnect::health() const

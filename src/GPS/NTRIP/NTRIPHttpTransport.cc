@@ -1,9 +1,11 @@
 #include "NTRIPHttpTransport.h"
 
 #include <QtCore/QDateTime>
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
+
 #include <chrono>
 
 #include "NMEAUtils.h"
@@ -39,8 +41,8 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObje
     _dataWatchdogTimer.setInterval(kDataWatchdog);
     _dataWatchdogTimer.callOnTimeout(this, [this]() {
         const auto secs = std::chrono::duration_cast<std::chrono::seconds>(kDataWatchdog).count();
-        qCWarning(NTRIPHttpTransportLog) << "No data received for" << secs << "seconds";
-        _fail(NTRIPError::DataWatchdog, tr("No data received for %1 seconds").arg(secs));
+        qCWarning(NTRIPHttpTransportLog) << "No valid corrections received for" << secs << "seconds";
+        _fail(NTRIPError::DataWatchdog, tr("No valid corrections received for %1 seconds").arg(secs));
     });
 }
 
@@ -251,6 +253,12 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
         return;
     }
 
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const QPointer<QTcpSocket> socket = _socket;
+    emit bytesReceived(buffer.size());
+    if (!guard || _stopped || socket != _socket) {
+        return;
+    }
     for (char ch : buffer) {
         const uint8_t byte = static_cast<uint8_t>(static_cast<unsigned char>(ch));
 
@@ -267,14 +275,23 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
         const QByteArray message = _rtcmParser.currentFrame();
         const uint16_t id = _rtcmParser.messageId();
 
-        if (_rtcmParser.isWhitelisted(id)) {
+        const bool filtered = !_rtcmParser.isWhitelisted(id);
+        _rtcmParser.reset();
+        // Correction health follows valid framing, independently of the user's filter.
+        _dataWatchdogTimer.start();
+        emit rtcmFrameValidated(message, id, filtered);
+        if (!guard || _stopped || socket != _socket) {
+            return;
+        }
+        if (!filtered) {
             qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << id << "len" << message.length();
             emit RTCMDataUpdate(message, id);
+            if (!guard || _stopped || socket != _socket) {
+                return;
+            }
         } else {
             qCDebug(NTRIPHttpTransportLog) << "Ignoring RTCM" << id;
         }
-
-        _rtcmParser.reset();
     }
 }
 
@@ -414,7 +431,6 @@ void NTRIPHttpTransport::_handleRtcmData()
 {
     const QByteArray bytes = _socket->readAll();
     if (!bytes.isEmpty()) {
-        _dataWatchdogTimer.start();
         qCDebug(NTRIPHttpTransportLog) << "rx bytes:" << bytes.size();
         _parseRtcm(bytes);
     }

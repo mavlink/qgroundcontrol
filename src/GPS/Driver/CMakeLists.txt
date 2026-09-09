@@ -8,8 +8,10 @@ qt_add_library(
     STATIC
     GPSDriver.cc
     GPSDriver.h
-    GPSNMEAPreparation.cc
-    GPSNMEAPreparation.h
+    GPSDriverData.cc
+    GPSDriverData.h
+    GPSReceiverCapabilities.cc
+    GPSReceiverCapabilities.h
     GPSTransport.cc
     GPSTransport.h
     TcpGPSTransport.cc
@@ -41,7 +43,7 @@ qgc_disable_dependency_warnings(px4-gpsdrivers)
 
 target_link_libraries(
     QGCGPSDriver
-    PUBLIC Qt6::Core
+    PUBLIC Qt6::Core QGCGPSCore
     PRIVATE Qt6::Network QGCLogging px4-gpsdrivers
 )
 target_compile_definitions(QGCGPSDriver PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)

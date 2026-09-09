@@ -15,7 +15,66 @@
 #include "SerialPortManager.h"
 #endif
 
+void RTKAutoConnectTest::_receiverErrorDetailReachesStatus()
+{
+    GPSRtk receiver;
+    RTKAutoConnect controller(&receiver, nullptr, nullptr);
+    QSignalSpy changes(&controller, &RTKAutoConnect::stateChanged);
+    QSignalSpy failed(&receiver, &GPSRtk::connectionFailed);
+    const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
+    receiver.connectReceiver(GPSType::u_blox, {}, {});
+    QTRY_VERIFY_WITH_TIMEOUT(!failed.isEmpty(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QVERIFY(!controller.errorDetail().isEmpty());
+    QCOMPARE(controller.property("errorDetail").toString(), receiver.errorDetail());
+    QVERIFY(!changes.isEmpty());
+}
+
 #ifndef QGC_NO_SERIAL_LINK
+void RTKAutoConnectTest::_nmeaDiscoveryExclusionDoesNotRevokeReceiver()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    const QString device = QStringLiteral("/test/active-rtk");
+    SerialPortManager ports(nullptr, [&]() {
+        return QList<SerialPortManager::Port>{
+            {device, QStringLiteral("rtk"), QGCSerialPortInfo::BoardTypeRTKGPS, QStringLiteral("u-blox")}};
+    });
+    QSemaphore entered;
+    QSemaphore release;
+    GPSRtk receiver;
+    RTKAutoConnect controller(settings, &receiver, &ports);
+    controller._connectDelayMs = 0;
+    const auto cleanup = qScopeGuard([&]() {
+        receiver.disconnectGPS();
+        release.release();
+        receiver.shutdown();
+    });
+    connect(&controller, &RTKAutoConnect::connectRequested, &receiver, [&]() {
+        receiver.connectReceiver(GPSType::u_blox,
+                                 [&](const std::atomic_bool&) {
+                                     entered.release();
+                                     release.acquire();
+                                     return std::unique_ptr<GPSTransport>();
+                                 },
+                                 {});
+    });
+    QSignalSpy disconnects(&controller, &RTKAutoConnect::disconnectRequested);
+    controller.update();
+    controller.update();
+    QTRY_VERIFY_WITH_TIMEOUT(entered.available() > 0, TestTimeout::mediumMs());
+    const auto exclusion = ports.excludeFromAutoConnect(device);
+    controller.update();
+    QVERIFY(receiver.hasReceiver());
+    QVERIFY(disconnects.isEmpty());
+    controller.disconnectSelected();
+    QCOMPARE(disconnects.size(), 1);
+    QVERIFY(receiver.stopping());
+}
+
 void RTKAutoConnectTest::_serialRetriesKeepConfiguration()
 {
     expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,

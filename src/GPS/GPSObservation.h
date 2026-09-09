@@ -1,0 +1,115 @@
+#pragma once
+
+#include <QtCore/QDateTime>
+#include <QtCore/QList>
+#include <QtCore/QMetaType>
+#include <QtCore/QString>
+#include <QtPositioning/QGeoPositionInfo>
+
+#include <array>
+#include <optional>
+
+/// Receiver-independent data. Unknown metadata remains absent, never a manufactured zero.
+struct GPSObservation
+{
+    enum class FixQuality
+    {
+        Unknown,
+        NoFix,
+        Fix2D,
+        Fix3D,
+        Differential,
+        RTKFloat,
+        RTKFixed,
+        Extrapolated
+    };
+
+    enum class AltitudeDatum
+    {
+        Unknown,
+        MeanSeaLevel,
+        Ellipsoid
+    };
+
+    QGeoPositionInfo position;
+    QDateTime receivedAt;
+    quint64 monotonicTimestampUs = 0;
+    quint64 sessionId = 0;
+    QString sourceId;
+    FixQuality fixQuality = FixQuality::Unknown;
+    AltitudeDatum altitudeDatum = AltitudeDatum::Unknown;
+    std::optional<int> satellitesUsed;
+    std::optional<double> horizontalDop;
+    std::optional<double> verticalDop;
+    std::optional<double> altitudeEllipsoidMeters;
+    // Antenna orientation is distinct from QGeoPositionInfo::Direction (course over ground).
+    std::optional<double> trueHeadingDegrees;
+    std::optional<double> trueHeadingAccuracyDegrees;
+    std::optional<int> jammingState;
+    std::optional<int> spoofingState;
+    std::optional<int> authenticationState;
+    std::optional<int> correctionsProtocol;
+    std::optional<int> correctionsUsed;
+
+    bool usable() const;
+    QGeoCoordinate coordinate() const;
+    double heading() const;
+    qint64 ageMilliseconds() const;
+    static quint64 monotonicNowUs();
+    static qint64 ageMilliseconds(quint64 timestampUs);
+};
+Q_DECLARE_METATYPE(GPSObservation)
+
+struct GPSSatellite
+{
+    enum class AzimuthEncoding
+    {
+        Unknown,
+        ScaledFullCircleByte,
+        DegreesModulo256
+    };
+
+    int id = 0;
+    int prn = 0;
+    bool used = false;
+    int elevationDegrees = 0;
+    int signalStrength = 0;
+    std::optional<int> rawAzimuth;
+    AzimuthEncoding azimuthEncoding = AzimuthEncoding::Unknown;
+
+    std::optional<double> azimuthDegrees() const;
+};
+
+struct GPSSatelliteObservation
+{
+    quint64 monotonicTimestampUs = 0;
+    quint64 sessionId = 0;
+    QList<GPSSatellite> satellites;
+    int usedCount() const;
+};
+Q_DECLARE_METATYPE(GPSSatelliteObservation)
+
+struct GPSRelativeObservation
+{
+    quint64 monotonicTimestampUs = 0;
+    quint64 sampleTimestampUs = 0;
+    quint64 sessionId = 0;
+    quint64 receiverTimeUs = 0;
+    int referenceStationId = 0;
+    std::array<double, 3> positionNedMeters{};
+    std::array<double, 3> accuracyNedMeters{};
+    double lengthMeters = 0;
+    double lengthAccuracyMeters = 0;
+    std::optional<double> headingDegrees;
+    std::optional<double> headingAccuracyDegrees;
+    bool fixValid = false;
+    bool differential = false;
+    bool positionValid = false;
+    bool carrierFloat = false;
+    bool carrierFixed = false;
+    bool movingBase = false;
+    bool referencePositionMissing = false;
+    bool referenceObservationsMissing = false;
+    bool normalized = false;
+};
+Q_DECLARE_METATYPE(GPSRelativeObservation)

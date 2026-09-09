@@ -172,6 +172,25 @@ GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config)
 	return configure(baudrate, config, OutputProtocol::Native);
 }
 
+GPSDriverUBX::BaseStationCapability GPSDriverUBX::baseStationCapability() const
+{
+	switch (_board) {
+	case Board::u_blox8:
+		return _is_m8p ? BaseStationCapability::Supported :
+		       (_model_name[0] ? BaseStationCapability::Unsupported : BaseStationCapability::Unknown);
+	case Board::u_blox9_F9P_L1L2:
+	case Board::u_blox9_F9P_L1L5:
+	case Board::u_blox_X20:
+		return BaseStationCapability::Supported;
+	case Board::u_blox9:
+	case Board::u_blox10:
+	case Board::u_blox10_L1L5:
+		return BaseStationCapability::Unsupported;
+	default:
+		return BaseStationCapability::Unknown;
+	}
+}
+
 int
 GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config, OutputProtocol output_protocol)
 {
@@ -416,6 +435,9 @@ GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config, OutputProto
 	 * Note: we won't actually get an ACK-ACK, but UBX_MSG_MON_VER will also set the ack state.
 	 */
 	if (waitForAck(UBX_MSG_MON_VER, UBX_CONFIG_TIMEOUT, true) < 0) {
+		return -1;
+	}
+	if (_output_mode == OutputMode::RTCM && baseStationCapability() == BaseStationCapability::Unsupported) {
 		return -1;
 	}
 
@@ -2604,6 +2626,10 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
 {
 	int ret = 0;
 	uint8_t *p_buf = (uint8_t *)&_buf;
+	if (_rx_payload_index == 0) {
+		_model_name[0] = '\0';
+		_firmware_version[0] = '\0';
+	}
 
 	if (_rx_payload_index < sizeof(ubx_payload_rx_mon_ver_part1_t)) {
 		// Fill Part 1 buffer
@@ -2616,6 +2642,7 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
 			// from the device, so enforce it before anything walks the field.
 			_buf.payload_rx_mon_ver_part1.swVersion[sizeof(_buf.payload_rx_mon_ver_part1.swVersion) - 1] = 0;
 			_buf.payload_rx_mon_ver_part1.hwVersion[sizeof(_buf.payload_rx_mon_ver_part1.hwVersion) - 1] = 0;
+			memcpy(_firmware_version, _buf.payload_rx_mon_ver_part1.swVersion, sizeof(_firmware_version));
 
 			_ubx_version = fnv1_32_str(_buf.payload_rx_mon_ver_part1.swVersion, FNV1_32_INIT);
 			_ubx_version = fnv1_32_str(_buf.payload_rx_mon_ver_part1.hwVersion, _ubx_version);
@@ -2671,6 +2698,8 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
 			const char *fwver_str = strstr((const char *)_buf.payload_rx_mon_ver_part2.extension, "FWVER=");
 
 			if (fwver_str != nullptr) {
+				strncpy(_firmware_version, fwver_str + strlen("FWVER="), sizeof(_firmware_version) - 1);
+				_firmware_version[sizeof(_firmware_version) - 1] = '\0';
 				GPS_INFO("u-blox firmware version: %s", fwver_str + strlen("FWVER="));
 
 				// Check if its a ZED-F9P-15B
@@ -2691,6 +2720,8 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
 			const char *mod_str = strstr((const char *)_buf.payload_rx_mon_ver_part2.extension, "MOD=");
 
 			if (mod_str != nullptr) {
+				strncpy(_model_name, mod_str + strlen("MOD="), sizeof(_model_name) - 1);
+				_model_name[sizeof(_model_name) - 1] = '\0';
 				_is_m8p = strstr(mod_str, "M8P") != nullptr;
 				// in case of u-blox9 family, check if it's an F9P
 				if (_board == Board::u_blox9) {

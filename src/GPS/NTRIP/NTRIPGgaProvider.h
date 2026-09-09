@@ -6,9 +6,13 @@
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtPositioning/QGeoCoordinate>
+
 #include <chrono>
 #include <functional>
 
+#include "GPSObservation.h"
+
+class Vehicle;
 class Fact;
 class FactGroup;
 class NTRIPSettings;
@@ -16,15 +20,17 @@ class NTRIPTransport;
 
 struct PositionResult
 {
-    QGeoCoordinate coordinate;
+    GPSObservation observation;
     QString source;
+    bool fixedReference = false;
 
-    bool isValid() const { return coordinate.isValid(); }
+    bool isValid() const;
 };
 
 class NTRIPGgaProvider : public QObject
 {
     Q_OBJECT
+    friend class NTRIPGgaProviderTest;
 
 public:
     enum class PositionSource
@@ -77,11 +83,16 @@ private:
     void _sendGGA();
     void _setRetryPhase(RetryPhase phase);
     void _ensureDefaultProviders();
+    void _trackVehicle();
     void _clearSource();
 
     PositionResult _getBestPosition() const;
 
     QPointer<NTRIPTransport> _transport;
+    QPointer<Vehicle> _vehicle;
+    QMetaObject::Connection _vehicleMessageConnection;
+    PositionResult _vehicleGpsPosition;
+    PositionResult _vehicleEkfPosition;
     QChronoTimer _timer;
     QString _source;
     QHash<PositionSource, PositionProvider> _providers;

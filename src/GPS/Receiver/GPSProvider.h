@@ -15,13 +15,14 @@
 #include "GPSType.h"
 
 class GPSTransport;
+class GPSByteBuffer;
 
 enum class GPSConnectionError
 {
     None,
-    OpenFailed,   ///< receiver transport could not be opened
-    ConfigFailed, ///< receiver did not accept configuration
-    DeviceError,  ///< fatal transport error after a working connection
+    OpenFailed,    ///< receiver transport could not be opened
+    ConfigFailed,  ///< receiver did not accept configuration
+    DeviceError,   ///< fatal transport error after a working connection
 };
 Q_DECLARE_METATYPE(GPSConnectionError)
 
@@ -34,20 +35,25 @@ public:
     using TransportFactory = std::function<std::unique_ptr<GPSTransport>(const std::atomic_bool&)>;
 
     GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
-                QObject* parent = nullptr);
+                std::shared_ptr<GPSByteBuffer> nmeaBuffer = {}, QObject* parent = nullptr);
 
     ~GPSProvider() override;
 
     void stop() { _requestStop = true; }
 
 signals:
-    void satelliteInfoUpdate(const satellite_info_s &message);
-    void sensorGpsUpdate(const sensor_gps_s &message);
-    void RTCMDataUpdate(const QByteArray &message);
-    void surveyInStatus(const GPSSurveyInStatus &status);
+    void satelliteInfoUpdate(const GPSSatelliteObservation& message);
+    void sensorGpsUpdate(const GPSObservation& message);
+    void relativePositionUpdate(const GPSRelativeObservation& message);
+    void RTCMDataUpdate(const QByteArray& message);
+    void RTCMFrameUpdate(const QByteArray& message, qint64 receivedAtMs);
+    void surveyInStatus(const GPSSurveyInStatus& status);
     void connectionError(GPSConnectionError error);
+    void connectionErrorDetail(GPSConnectionError error, const QString& detail);
+    void capabilitiesUpdated(const GPSReceiverCapabilities& capabilities);
     void receiverReady();
     void transportOpened();
+    void nmeaDataReady();
 
 private:
     void run() final;
@@ -56,7 +62,8 @@ private:
     GPSType _type;
     std::atomic_bool _requestStop = false;
     GPSReceiverConfig _config{};
+    std::shared_ptr<GPSByteBuffer> _nmeaBuffer;
 
     static constexpr uint32_t kGPSReceiveTimeout = 1200;
-    static constexpr uint8_t kMaxIdleReceiveCycles = 3;
+    static constexpr qint64 kProgressTimeoutMs = 3600;
 };

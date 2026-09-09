@@ -2,13 +2,16 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
+#include <QtCore/QtMath>
 
 #include <cstring>
 #include <gps_helper.h>  // px4: GPSCallbackType, SurveyInStatus — this is a driver-bridge test
 
 #include "GPSDriver.h"
+#include "GPSDriverData.h"
 #include "GPSTransport.h"
 #include "GPSType.h"
+#include "sensor_gnss_relative.h"
 
 namespace {
 
@@ -96,6 +99,7 @@ void GPSDriverTest::_testReceiveUnconfiguredReturnsError()
     FakeGPSTransport transport(stop);
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
     QCOMPARE(driver.receive(10), -1);
+    QCOMPARE(driver.receiveResult(10).status, GPSDriver::ReceiveStatus::NotConfigured);
 }
 
 void GPSDriverTest::_testReadDeviceDataRoutesToTransport()
@@ -150,6 +154,8 @@ void GPSDriverTest::_testCancelledConfigurationDoesNotWarn()
     transport.writeOk = false;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
     QVERIFY(!driver.configure());
+    QCOMPARE(driver.configurationResult().status, GPSDriver::ConfigurationStatus::Cancelled);
+    QVERIFY(driver.configurationResult().error.isEmpty());
 }
 
 void GPSDriverTest::_testWriteDeviceDataRoutesToTransport()
@@ -438,7 +444,145 @@ void GPSDriverTest::_unsupportedOutputProtocol()
                          QRegularExpression(QStringLiteral("Unsupported receiver output protocol")));
         QVERIFY(!driver.configure());
         verifyExpectedLogMessage();
+        QCOMPARE(driver.configurationResult().status, GPSDriver::ConfigurationStatus::Unsupported);
+        QVERIFY(!driver.configurationResult().error.isEmpty());
         QVERIFY(transport.lastWrite.isEmpty());
         QCOMPARE(driver.baudrate(), 0u);
+    }
+}
+
+void GPSDriverTest::_observationMetadata()
+{
+    sensor_gps_s fix;
+    GPSDriverData::initialize(fix);
+    auto observation = GPSDriverData::position(fix);
+    QVERIFY(!observation.position.isValid());
+    QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Unknown);
+    QVERIFY(!observation.satellitesUsed);
+    QVERIFY(!observation.horizontalDop);
+    QVERIFY(!observation.altitudeEllipsoidMeters);
+    QVERIFY(!observation.trueHeadingDegrees);
+    QVERIFY(!observation.jammingState);
+    fix.heading = 0;
+    observation = GPSDriverData::position(fix);
+    QCOMPARE(observation.trueHeadingDegrees.value(), 0.0);
+    QVERIFY(!observation.trueHeadingAccuracyDegrees);
+
+    fix.fix_type = sensor_gps_s::FIX_TYPE_RTK_FIXED;
+    fix.latitude_deg = 47;
+    fix.longitude_deg = 8;
+    fix.altitude_msl_m = 500;
+    fix.altitude_ellipsoid_m = 540;
+    fix.eph = 0.1f;
+    fix.epv = 0.2f;
+    fix.timestamp = GPSObservation::monotonicNowUs() - 2000000;
+    fix.time_utc_usec = 1000000;
+    fix.satellites_used = 0;
+    fix.hdop = 0.7f;
+    fix.heading = qDegreesToRadians(-90.0f);
+    fix.heading_accuracy = qDegreesToRadians(0.5f);
+    fix.vel_ned_valid = true;
+    fix.vel_m_s = 0;
+    fix.cog_rad = 0;
+    fix.jamming_state = sensor_gps_s::JAMMING_STATE_DETECTED;
+    fix.corrections_msg_used = sensor_gps_s::CORRECTIONS_MSG_USED_USED;
+    observation = GPSDriverData::position(fix);
+    QVERIFY(observation.usable());
+    QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::RTKFixed);
+    QCOMPARE(observation.altitudeDatum, GPSObservation::AltitudeDatum::MeanSeaLevel);
+    QCOMPARE(observation.position.coordinate().altitude(), 500.0);
+    QCOMPARE(observation.altitudeEllipsoidMeters.value(), 540.0);
+    QCOMPARE(observation.satellitesUsed.value(), 0);
+    QCOMPARE(observation.horizontalDop.value(), static_cast<double>(fix.hdop));
+    QVERIFY(observation.ageMilliseconds() >= 2000);
+    QCOMPARE(observation.position.timestamp().toMSecsSinceEpoch(), 1000);
+    QVERIFY(observation.receivedAt > observation.position.timestamp());
+    QVERIFY(qAbs(observation.trueHeadingDegrees.value() - 270) < 0.001);
+    QVERIFY(qAbs(observation.trueHeadingAccuracyDegrees.value() - 0.5) < 0.001);
+    QVERIFY(qIsNaN(observation.heading()));  // stationary course must not become antenna orientation
+    QCOMPARE(observation.jammingState.value(), static_cast<int>(sensor_gps_s::JAMMING_STATE_DETECTED));
+    QCOMPARE(observation.correctionsUsed.value(), static_cast<int>(sensor_gps_s::CORRECTIONS_MSG_USED_USED));
+}
+
+void GPSDriverTest::_relativePositionCallback()
+{
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
+    GPSRelativeObservation captured;
+    int received = 0;
+    GPSDriverSinks sinks;
+    sinks.onRelativePosition = [&](const GPSRelativeObservation& observation) {
+        captured = observation;
+        ++received;
+    };
+    GPSDriver driver(GPSType::u_blox, transport, {}, sinks);
+    sensor_gnss_relative_s relative{};
+    relative.timestamp = GPSObservation::monotonicNowUs();
+    relative.reference_station_id = 42;
+    relative.position[0] = 1.5f;
+    relative.position_accuracy[2] = 0.2f;
+    relative.heading = qDegreesToRadians(-90.0f);
+    relative.heading_accuracy = qDegreesToRadians(1.0f);
+    relative.relative_position_valid = true;
+    relative.carrier_solution_fixed = true;
+    relative.heading_valid = true;
+    callback(driver, GPSCallbackType::gotRelativePositionMessage, nullptr, sizeof(relative));
+    callback(driver, GPSCallbackType::gotRelativePositionMessage, &relative, sizeof(relative) - 1);
+    QCOMPARE(received, 0);
+    callback(driver, GPSCallbackType::gotRelativePositionMessage, &relative, sizeof(relative));
+    QCOMPARE(received, 1);
+    QCOMPARE(captured.referenceStationId, 42);
+    QCOMPARE(captured.positionNedMeters[0], 1.5);
+    QCOMPARE(captured.accuracyNedMeters[2], static_cast<double>(relative.position_accuracy[2]));
+    QVERIFY(captured.positionValid);
+    QVERIFY(captured.carrierFixed);
+    QVERIFY(qAbs(captured.headingDegrees.value() - 270) < 0.001);
+    relative.heading_valid = false;
+    callback(driver, GPSCallbackType::gotRelativePositionMessage, &relative, sizeof(relative));
+    QVERIFY(!captured.headingDegrees);
+}
+
+void GPSDriverTest::_satelliteAzimuthEncoding_data()
+{
+    QTest::addColumn<GPSType>("type");
+    QTest::addColumn<int>("raw");
+    QTest::addColumn<GPSSatellite::AzimuthEncoding>("encoding");
+    QTest::addColumn<bool>("hasRaw");
+    QTest::addColumn<double>("degrees");
+    QTest::newRow("ubx-east") << GPSType::u_blox << 64 << GPSSatellite::AzimuthEncoding::ScaledFullCircleByte << true
+                              << 64.0 * 360.0 / 255.0;
+    QTest::newRow("ubx-north") << GPSType::u_blox << 255 << GPSSatellite::AzimuthEncoding::ScaledFullCircleByte << true
+                               << 0.0;
+    QTest::newRow("ashtech-truncated") << GPSType::trimble << 14 << GPSSatellite::AzimuthEncoding::DegreesModulo256
+                                       << true << qQNaN();
+    QTest::newRow("femto-truncated") << GPSType::femto << 14 << GPSSatellite::AzimuthEncoding::DegreesModulo256 << true
+                                     << qQNaN();
+    QTest::newRow("sbf-count-only") << GPSType::septentrio << 0 << GPSSatellite::AzimuthEncoding::Unknown << false
+                                    << qQNaN();
+}
+
+void GPSDriverTest::_satelliteAzimuthEncoding()
+{
+    QFETCH(GPSType, type);
+    QFETCH(int, raw);
+    QFETCH(GPSSatellite::AzimuthEncoding, encoding);
+    QFETCH(bool, hasRaw);
+    QFETCH(double, degrees);
+    satellite_info_s report{};
+    report.timestamp = GPSObservation::monotonicNowUs() - 2000000;
+    report.count = 1;
+    report.azimuth[0] = static_cast<uint8_t>(raw);
+    const auto observation = GPSDriverData::satellites(report, type);
+    QCOMPARE(observation.monotonicTimestampUs, report.timestamp);
+    QCOMPARE(observation.satellites.size(), 1);
+    const auto& satellite = observation.satellites.front();
+    QCOMPARE(satellite.azimuthEncoding, encoding);
+    QCOMPARE(satellite.rawAzimuth.has_value(), hasRaw);
+    if (hasRaw) {
+        QCOMPARE(satellite.rawAzimuth.value(), raw);
+    }
+    QCOMPARE(satellite.azimuthDegrees().has_value(), qIsFinite(degrees));
+    if (qIsFinite(degrees)) {
+        QCOMPARE(satellite.azimuthDegrees().value(), degrees);
     }
 }

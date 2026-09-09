@@ -6,6 +6,7 @@
 #include <cmath>
 #include <limits>
 
+#include "GPSReceiverCapabilities.h"
 #include "RTKSettings.h"
 
 RTKConnectionConfig RTKConnectionConfig::fromSettings(RTKSettings& settings)
@@ -35,8 +36,12 @@ RTKConnectionConfig RTKConnectionConfig::fromSettings(RTKSettings& settings)
 QString RTKConnectionConfig::validationError() const
 {
     const auto tr = [](const char* text) { return QCoreApplication::translate("RTKConnectionConfig", text); };
-    if (transport < Serial || transport > Udp || receiverType < GPSType::u_blox || receiverType > GPSType::femto) {
+    if (transport < Serial || transport > Udp) {
         return tr("Select a valid receiver and connection type");
+    }
+    const QString receiverError = GPSReceiverCapabilities::forType(receiverType).validationError(receiver);
+    if (!receiverError.isEmpty()) {
+        return receiverError;
     }
     if (transport != Serial) {
         QUrl endpoint;
@@ -46,9 +51,6 @@ QString RTKConnectionConfig::validationError() const
             (transport == Udp && (localPort < 0 || localPort > 65535))) {
             return tr("Enter a valid receiver host and port");
         }
-    }
-    if (receiver.role != GPSReceiverConfig::Role::RTKBase && receiver.role != GPSReceiverConfig::Role::Position) {
-        return tr("Select a valid receiver role");
     }
     if (receiver.role == GPSReceiverConfig::Role::Position) {
         return {};

@@ -21,15 +21,19 @@ public:
     /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
     virtual unsigned fixedBaudrate() const { return 0; }
 
-    /// Read up to length bytes into buffer, waiting up to timeoutMs.
+    /// Read up to length bytes into buffer under one total timeout, polling cancellation while waiting.
+    /// A nonpositive timeout only polls immediately available input.
     /// Returns bytes read, 0 on timeout, <0 on error.
     virtual int read(uint8_t *buffer, int length, int timeoutMs) = 0;
 
-    /// Write length bytes. Returns bytes written, or -1 on error.
+    /// Write and drain length bytes under one bounded deadline. Returns bytes written, or -1 on error/cancellation.
     virtual int write(const uint8_t *buffer, int length) = 0;
 
     /// Set the link baud rate. Returns true on success.
     virtual bool setBaudrate(unsigned baudrate) = 0;
+
+protected:
+    static constexpr int kCancellationPollMs = 50;
 
 private:
     const std::atomic_bool& _requestStop;

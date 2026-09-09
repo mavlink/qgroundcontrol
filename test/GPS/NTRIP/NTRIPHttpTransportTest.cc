@@ -1,6 +1,7 @@
 #include "NTRIPHttpTransportTest.h"
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTimer>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
@@ -670,4 +671,63 @@ void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
     QCOMPARE(errors.size(), 1);
     QVERIFY(!transport._connectTimeoutTimer.isActive());
     verifyExpectedLogMessage();
+}
+
+void NTRIPHttpTransportTest::testCorrectionWatchdog_data()
+{
+    QTest::addColumn<bool>("validFilteredFrames");
+    QTest::newRow("garbage-does-not-renew-watchdog") << false;
+    QTest::newRow("filtered-valid-renews-watchdog") << true;
+}
+
+void NTRIPHttpTransportTest::testCorrectionWatchdog()
+{
+    QFETCH(bool, validFilteredFrames);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    config.port = server.serverPort();
+    config.mountpoint = QStringLiteral("TEST");
+    config.whitelist = QStringLiteral("1077");
+    NTRIPHttpTransport transport(config);
+    QSignalSpy connected(&transport, &NTRIPTransport::connected);
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    QSignalSpy validated(&transport, &NTRIPTransport::rtcmFrameValidated);
+    QSignalSpy forwarded(&transport, &NTRIPTransport::RTCMDataUpdate);
+    transport.start();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QVERIFY(peer);
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+    peer->readAll();
+    peer->write("HTTP/1.1 200 OK\r\n\r\n");
+    QTRY_COMPARE_WITH_TIMEOUT(connected.size(), 1, TestTimeout::mediumMs());
+    transport._dataWatchdogTimer.setInterval(std::chrono::milliseconds(150));
+    transport._dataWatchdogTimer.start();
+    const QByteArray data =
+        validFilteredFrames ? GpsTestHelpers::buildRtcmFrame(1005, 20) : QByteArrayLiteral("garbage");
+    QTimer writer;
+    writer.setInterval(20);
+    connect(&writer, &QTimer::timeout, peer.get(), [&peer, data]() {
+        if (peer->state() == QAbstractSocket::ConnectedState) {
+            peer->write(data);
+        }
+    });
+    writer.start();
+    if (validFilteredFrames) {
+        QTRY_VERIFY_WITH_TIMEOUT(validated.size() >= 12, TestTimeout::mediumMs());
+        QVERIFY(errors.isEmpty());
+        QVERIFY(forwarded.isEmpty());
+        QVERIFY(validated.first().at(2).toBool());
+    } else {
+        expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("No valid corrections received")));
+        QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
+        QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::DataWatchdog);
+        QVERIFY(validated.isEmpty());
+        verifyExpectedLogMessage();
+    }
+    writer.stop();
+    transport.stop();
 }

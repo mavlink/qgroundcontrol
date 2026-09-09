@@ -10,9 +10,9 @@
 #include <memory>
 
 #include "GPSConnectionState.h"
+#include "GPSReceiverSession.h"
 #include "NMEAConnectionConfig.h"
-#include "GPSSourceHealth.h"
-#include "GPSNMEAPreparation.h"
+#include "NMEADecoderSession.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
@@ -49,12 +49,13 @@ public:
     ~NMEASourceManager() override;
     void update();
     void stop();
+    void shutdown();
     bool connectSource();
     void disconnectSource();
 
     QGeoPositionInfoSource* positionSource() const;
 
-    GPSSourceHealth* health() { return &_health; }
+    GPSSourceHealth* health() { return _decoder.health(); }
 
     bool active() const { return _connection.active(); }
 
@@ -63,13 +64,13 @@ public:
     QString status() const { return _status; }
 
     /// Counts are -1 until fresh satellite information is available.
-    int satellitesInViewCount() const { return _health.satellitesInViewCount(); }
+    int satellitesInViewCount() const { return _decoder.health()->satellitesInViewCount(); }
 
-    int satellitesInUseCount() const { return _health.satellitesInUseCount(); }
+    int satellitesInUseCount() const { return _decoder.health()->satellitesInUseCount(); }
 
-    QList<QGeoSatelliteInfo> satellitesInView() const { return _satellitesInView; }
+    QList<QGeoSatelliteInfo> satellitesInView() const { return _decoder.satellitesInView(); }
 
-    QList<QGeoSatelliteInfo> satellitesInUse() const { return _satellitesInUse; }
+    QList<QGeoSatelliteInfo> satellitesInUse() const { return _decoder.satellitesInUse(); }
 
 signals:
     void stateChanged();
@@ -84,25 +85,17 @@ private:
     void _settingsChanged();
     void _updateSerialRouting();
     bool _installSource(QIODevice* device);
-    void _clearSatelliteInfo();
-    void _prepareReceiver(GPSNMEAPreparation::TransportFactory factory);
+    void _startReceiver(GPSProvider::TransportFactory factory);
+    void _receiverStateChanged();
 
     AutoConnectSettings* _settings;
-    unsigned _preparedBaud = 0;
-    std::unique_ptr<GPSNMEAPreparation> _preparation;
-    quint64 _preparationGeneration = 0;
+    GPSReceiverSession _receiver;
+    bool _receiverFailed = false;
     NMEAConnectionConfig _config;
     QPointer<QGCPositionManager> _positionManager;
     std::unique_ptr<UdpIODevice> _udp;
     std::unique_ptr<QTcpSocket> _tcp;
-    std::unique_ptr<NMEAStreamSplitter> _stream;
-    std::unique_ptr<NMEAPositionSource> _positionSource;
-    std::unique_ptr<NMEASatelliteAdapter> _satelliteAdapter;
-    std::unique_ptr<QNmeaSatelliteInfoSource> _satelliteSource;
-    QTimer _satellitePollTimer;
-    GPSSourceHealth _health;
-    QList<QGeoSatelliteInfo> _satellitesInView;
-    QList<QGeoSatelliteInfo> _satellitesInUse;
+    NMEADecoderSession _decoder;
     QTimer _udpActivityTimer;
     QDeadlineTimer _connectDeadline = QDeadlineTimer::Forever;
     GPSConnectionState _connection;

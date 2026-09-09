@@ -1,13 +1,14 @@
 #include "GPSManager.h"
 
 #include "AppMessages.h"
+#include "GPSReceiverCapabilities.h"
+#include "GPSReceiverPositionSource.h"
 #include "GPSRtk.h"
 #include "LinkManager.h"
 #include "NMEASourceManager.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "RTKAutoConnect.h"
-#include "RTKPositionSource.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 #ifndef QGC_NO_SERIAL_LINK
@@ -29,10 +30,25 @@ GPSManager::GPSManager(QObject* parent)
     qCDebug(GPSManagerLog) << this;
 
     auto* settings = SettingsManager::instance();
-    connect(_gpsRtk, &GPSRtk::rtcmDataReceived, &_corrections, &GPSCorrectionManager::forwardCorrections);
+    connect(_gpsRtk, &GPSRtk::configurationStarted, &_corrections,
+            [this]() { _corrections.beginSourceSession(GPSCorrectionSource::LocalReceiver); });
+    connect(_gpsRtk, &GPSRtk::receiverStateChanged, &_corrections, [this]() {
+        if (!_gpsRtk->hasReceiver()) {
+            _corrections.endSourceSession(GPSCorrectionSource::LocalReceiver);
+        }
+    });
+    connect(_gpsRtk, &GPSRtk::connectionFailed, &_corrections,
+            [this]() { _corrections.endSourceSession(GPSCorrectionSource::LocalReceiver); });
+    connect(_gpsRtk, &GPSRtk::rtcmFrameReceived, &_corrections, [this](const QByteArray& data, qint64 receivedAtMs) {
+        _corrections.acceptFrame({GPSCorrectionSource::LocalReceiver,
+                                  _corrections.sourceSession(GPSCorrectionSource::LocalReceiver), receivedAtMs, data, 0,
+                                  true, false});
+    });
     connect(_gpsRtk, &GPSRtk::receiverTypeChanged, this, [settings](GPSType type) {
-        const int manufacturer = type == GPSType::u_blox ? 4 : static_cast<int>(type);
-        settings->rtkSettings()->baseReceiverManufacturers()->setRawValue(manufacturer);
+        const auto capabilities = GPSReceiverCapabilities::forType(type);
+        if (capabilities.recognized()) {
+            settings->rtkSettings()->baseReceiverManufacturers()->setRawValue(capabilities.manufacturerId);
+        }
     });
     _nmeaSources = new NMEASourceManager(settings->autoConnectSettings(), _positionManager, this);
     _rtkAutoConnect = new RTKAutoConnect(_gpsRtk, settings->autoConnectSettings(), settings->rtkSettings(), this);
@@ -154,7 +170,7 @@ void GPSManager::shutdown()
         _connectionTimer->stop();
     }
     if (_nmeaSources) {
-        _nmeaSources->stop();
+        _nmeaSources->shutdown();
     }
     _rtkAutoConnect->stop();
     _gpsRtk->shutdown();

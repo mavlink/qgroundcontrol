@@ -43,6 +43,8 @@ private slots:
     void testConnectionWaitsForHttpResponse();
     void testHandshakeTimeoutClosesSocket();
     void testRemoteCloseEmitsSingleError();
+    void testCorrectionWatchdog_data();
+    void testCorrectionWatchdog();
 
     // HTTP request building
     void _testBuildRequestPlaintextCredentialsWarns();

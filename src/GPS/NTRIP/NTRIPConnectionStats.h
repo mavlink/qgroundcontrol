@@ -21,6 +21,9 @@ class NTRIPConnectionStats : public QObject
     Q_PROPERTY(double dataRateBytesPerSec READ dataRateBytesPerSec NOTIFY dataRateChanged)
     Q_PROPERTY(double correctionAgeSec READ correctionAgeSec NOTIFY correctionAgeChanged)
     Q_PROPERTY(bool dataStale READ dataStale NOTIFY dataStaleChanged)
+    Q_PROPERTY(quint64 networkBytesReceived READ networkBytesReceived NOTIFY validationChanged)
+    Q_PROPERTY(quint64 validatedFrames READ validatedFrames NOTIFY validationChanged)
+    Q_PROPERTY(quint64 filteredFrames READ filteredFrames NOTIFY validationChanged)
     /// Per-RTCM-message-ID counts since the current connection started.
     /// Returned as a list of [id, count] pairs sorted ascending by id so the
     /// QML Repeater can render deterministic chips without re-sorting.
@@ -36,6 +39,14 @@ public:
     /// and tracked under a distinct bucket so it still shows up in diagnostics.
     void recordMessage(int bytes, int messageId = 0);
     void reset();
+    void recordNetworkBytes(qint64 bytes);
+    void recordValidatedFrame(bool filtered);
+
+    quint64 networkBytesReceived() const { return _networkBytesReceived; }
+
+    quint64 validatedFrames() const { return _validatedFrames; }
+
+    quint64 filteredFrames() const { return _filteredFrames; }
 
     quint64 bytesReceived() const { return _rateTracker.totalBytes(); }
 
@@ -56,6 +67,7 @@ signals:
     void correctionAgeChanged();
     void dataStaleChanged();
     void messageCountsByIdChanged();
+    void validationChanged();
 
 private:
     static constexpr std::chrono::milliseconds kStaleThreshold{5000};
@@ -66,6 +78,10 @@ private:
     quint32 _prevMessagesReceived = 0;
     bool _dataStale = false;
     bool _messageCountsDirty = false;
+    quint64 _networkBytesReceived = 0;
+    quint64 _validatedFrames = 0;
+    quint64 _filteredFrames = 0;
+    QElapsedTimer _streamStarted;
     QElapsedTimer _lastMessageTime;
     QChronoTimer _rateTimer;
     // Per-ID counts. Using int for compatibility with QVariant in QML.

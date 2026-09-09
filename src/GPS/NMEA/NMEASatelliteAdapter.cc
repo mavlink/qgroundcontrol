@@ -102,26 +102,56 @@ NMEASatelliteAdapter::~NMEASatelliteAdapter()
 
 qint64 NMEASatelliteAdapter::bytesAvailable() const
 {
-    return QIODevice::bytesAvailable() + _buffer.size();
+    return QIODevice::bytesAvailable() + _bufferSize;
 }
 
 bool NMEASatelliteAdapter::canReadLine() const
 {
-    return QIODevice::canReadLine() || _buffer.contains('\n');
+    return QIODevice::canReadLine() || (!_output.isEmpty() && _output.front().bytes.contains('\n'));
 }
 
 qint64 NMEASatelliteAdapter::readData(char* data, qint64 maxSize)
 {
-    const qint64 size = std::min<qint64>(maxSize, _buffer.size());
-    std::copy_n(_buffer.constData(), size, data);
-    _buffer.remove(0, size);
-    return size;
+    qint64 copied = 0;
+    quint64 oldest = 0;
+    while (!_output.isEmpty() && copied < maxSize) {
+        auto& sentence = _output.front();
+        const qint64 count = std::min<qint64>(maxSize - copied, sentence.bytes.size());
+        std::copy_n(sentence.bytes.constData(), count, data + copied);
+        sentence.bytes.remove(0, count);
+        copied += count;
+        _bufferSize -= count;
+        oldest = oldest == 0 ? sentence.receivedAtUs : std::min(oldest, sentence.receivedAtUs);
+        if (sentence.bytes.isEmpty()) {
+            auto& timestamps = sentence.inUse ? _consumedUseTimestamps : _consumedViewTimestamps;
+            timestamps[sentence.talker] = sentence.receivedAtUs;
+            _output.removeFirst();
+        }
+    }
+    if (copied > 0) {
+        _lastReadTimestampUs = oldest;
+    }
+    return copied;
 }
 
 qint64 NMEASatelliteAdapter::readLineData(char* data, qint64 maxSize)
 {
-    const qsizetype newline = _buffer.indexOf('\n');
-    return readData(data, newline < 0 ? maxSize : std::min<qint64>(maxSize, newline + 1));
+    return readData(data, _output.isEmpty() ? 0 : std::min<qint64>(maxSize, _output.front().bytes.size()));
+}
+
+quint64 NMEASatelliteAdapter::satelliteTimestampUs(bool inUse) const
+{
+    quint64 oldest = 0;
+    const auto include = [&oldest](const QMap<QByteArray, quint64>& timestamps) {
+        for (quint64 timestamp : timestamps) {
+            oldest = oldest == 0 ? timestamp : std::min(oldest, timestamp);
+        }
+    };
+    include(_consumedViewTimestamps);
+    if (inUse) {
+        include(_consumedUseTimestamps);
+    }
+    return oldest;
 }
 
 void NMEASatelliteAdapter::close()
@@ -131,18 +161,24 @@ void NMEASatelliteAdapter::close()
     _reports.clear();
     _inUse.clear();
     _epochTime.clear();
-    _buffer.clear();
+    _output.clear();
+    _bufferSize = 0;
+    _lastReadTimestampUs = 0;
+    _inUseReceivedAtUs.clear();
+    _consumedViewTimestamps.clear();
+    _consumedUseTimestamps.clear();
     QIODevice::close();
 }
 
 void NMEASatelliteAdapter::_readAvailable()
 {
     while (isOpen() && _source && _source->canReadLine()) {
-        _parseSentence(_source->readLine());
+        const QByteArray sentence = _source->readLine();
+        _parseSentence(sentence, GPSReadTimestamp::from(_source));
     }
 }
 
-void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence)
+void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 receivedAtUs)
 {
     if (!NMEAUtils::verifyChecksum(sentence)) {
         return;
@@ -169,6 +205,7 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence)
         }
         fields[0] = "$" + talker + "GSA";
         _inUse[talker] = fields;
+        _inUseReceivedAtUs[talker] = receivedAtUs;
     } else if (type == "GSV" && fields.size() >= 4) {
         const QByteArray talker = canonicalTalker(fields[0].mid(1, 2));
         bool totalOk = false;
@@ -196,7 +233,8 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence)
         }
         auto& report = _reports[talker][signal];
         if (message == 1) {
-            report = SignalReport{.messageCount = total, .satelliteCount = count, .satellites = {}};
+            report = SignalReport{
+                .messageCount = total, .satelliteCount = count, .receivedAtUs = receivedAtUs, .satellites = {}};
         }
         if (report.messageCount != total || report.satelliteCount != count || report.nextMessage != message) {
             _reports[talker].remove(signal);
@@ -211,6 +249,7 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence)
             }
             report.satellites.append(fields.mid(i, 4));
         }
+        report.receivedAtUs = std::min(report.receivedAtUs, receivedAtUs);
         ++report.nextMessage;
     } else {
         return;
@@ -225,15 +264,18 @@ void NMEASatelliteAdapter::_flush()
 {
     _idleTimer.stop();
     _batchTimer.stop();
-    QByteArray output;
+    QList<TimedSentence> output;
+    qsizetype outputSize = 0;
     for (auto system = _reports.cbegin(); system != _reports.cend(); ++system) {
         QMap<int, QList<QByteArray>> satellites;
         bool complete = false;
+        quint64 receivedAtUs = 0;
         for (const auto& report : system.value()) {
             if (!report.complete()) {
                 continue;
             }
             complete = true;
+            receivedAtUs = receivedAtUs == 0 ? report.receivedAtUs : std::min(receivedAtUs, report.receivedAtUs);
             for (const auto& satellite : report.satellites) {
                 const int id = satellite[0].toInt();
                 const auto existing = satellites.constFind(id);
@@ -255,20 +297,27 @@ void NMEASatelliteAdapter::_flush()
             for (int i = message * 4; i < std::min(count, (message + 1) * 4); ++i) {
                 fields.append(entries[i]);
             }
-            output += encode(fields);
+            const QByteArray bytes = encode(fields);
+            output.append({bytes, system.key(), receivedAtUs, false});
+            outputSize += bytes.size();
         }
     }
-    for (const auto& fields : std::as_const(_inUse)) {
-        output += encode(fields);
+    for (auto report = _inUse.cbegin(); report != _inUse.cend(); ++report) {
+        const QByteArray bytes = encode(report.value());
+        output.append({bytes, report.key(), _inUseReceivedAtUs.value(report.key()), true});
+        outputSize += bytes.size();
     }
     _reports.clear();
     _inUse.clear();
+    _inUseReceivedAtUs.clear();
     if (!output.isEmpty()) {
         // Drop whole stale batches if Qt is not consuming requests.
-        if (_buffer.size() + output.size() > 64 * 1024) {
-            _buffer.clear();
+        if (_bufferSize + outputSize > 64 * 1024) {
+            _output.clear();
+            _bufferSize = 0;
         }
-        _buffer += output;
+        _output.append(output);
+        _bufferSize += outputSize;
         // Leave the parsing stack before consumers can destroy the connection.
         QMetaObject::invokeMethod(
             this,

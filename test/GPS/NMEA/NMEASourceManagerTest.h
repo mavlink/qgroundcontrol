@@ -7,9 +7,9 @@ class NMEASourceManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _receiverPreparationStateIsPerConnection();
+    void _managedReceiverSettingsPreservePassiveBaud();
     void init();
-    void _receiverPreparationFailureAndCancellation();
+    void _managedReceiverFailureAndCancellation();
     void _udpSwitchAndDisable();
     void _inactiveSettingsKeepConnection();
     void _udpActivityStatus();

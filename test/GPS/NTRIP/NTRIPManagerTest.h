@@ -35,4 +35,6 @@ private slots:
     void testCorrectionsAreIndependentOfSink_data();
     void testCorrectionsAreIndependentOfSink();
     void testCorrectionObserverCanStopSession();
+    void testSessionStartObserverCanStop_data();
+    void testSessionStartObserverCanStop();
 };

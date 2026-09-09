@@ -6,43 +6,6 @@
 
 QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.GPSSourceHealth")
 
-bool GPSObservation::usable() const
-{
-    const double accuracy = position.attribute(QGeoPositionInfo::HorizontalAccuracy);
-    return position.isValid() && position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) && qIsFinite(accuracy) &&
-           accuracy > 0 && accuracy <= 100;
-}
-
-QGeoCoordinate GPSObservation::coordinate() const
-{
-    if (!usable()) {
-        return {};
-    }
-    QGeoCoordinate coordinate(position.coordinate().latitude(), position.coordinate().longitude());
-    const double accuracy = position.attribute(QGeoPositionInfo::VerticalAccuracy);
-    if (position.hasAttribute(QGeoPositionInfo::VerticalAccuracy) && qIsFinite(accuracy) && accuracy > 0 &&
-        accuracy <= 10 && qIsFinite(position.coordinate().altitude())) {
-        coordinate.setAltitude(position.coordinate().altitude());
-    }
-    return coordinate;
-}
-
-double GPSObservation::heading() const
-{
-    const double direction = position.attribute(QGeoPositionInfo::Direction);
-    const double speed = position.attribute(QGeoPositionInfo::GroundSpeed);
-    const double accuracy = position.attribute(QGeoPositionInfo::DirectionAccuracy);
-    const bool accuracyAcceptable = !position.hasAttribute(QGeoPositionInfo::DirectionAccuracy) ||
-                                    (qIsFinite(accuracy) && accuracy >= 0 && accuracy <= 30);
-    // Both decoders report course over ground, which is unreliable when nearly stationary.
-    if (!usable() || !position.hasAttribute(QGeoPositionInfo::Direction) || !qIsFinite(direction) || direction < 0 ||
-        direction > 360 || !position.hasAttribute(QGeoPositionInfo::GroundSpeed) || !qIsFinite(speed) || speed < 0.5 ||
-        !accuracyAcceptable) {
-        return qQNaN();
-    }
-    return direction == 360 ? 0 : direction;
-}
-
 GPSSourceHealth::GPSSourceHealth(QObject* parent)
     : QObject(parent)
     , _positionTimer(this)
@@ -73,13 +36,7 @@ GPSSourceHealth::~GPSSourceHealth()
 
 qint64 GPSSourceHealth::ageMilliseconds(quint64 timestampUs)
 {
-    if (timestampUs == 0) {
-        return 0;
-    }
-    const auto now = static_cast<quint64>(
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch())
-            .count());
-    return timestampUs > now ? -1 : static_cast<qint64>((now - timestampUs) / 1000);
+    return GPSObservation::ageMilliseconds(timestampUs);
 }
 
 double GPSSourceHealth::horizontalAccuracy() const
@@ -89,8 +46,20 @@ double GPSSourceHealth::horizontalAccuracy() const
 
 void GPSSourceHealth::updatePosition(const QGeoPositionInfo& position, qint64 ageMs)
 {
+    GPSObservation observation;
+    observation.position = position;
+    observation.receivedAt = ageMs >= 0 ? QDateTime::currentDateTimeUtc().addMSecs(-ageMs) : QDateTime();
+    const quint64 now = GPSObservation::monotonicNowUs();
+    observation.monotonicTimestampUs = ageMs < 0 ? now + 1000000 : now - static_cast<quint64>(ageMs) * 1000;
+    updateObservation(observation);
+}
+
+void GPSSourceHealth::updateObservation(const GPSObservation& observation)
+{
     _positionTimer.stop();
-    _observation = {position, ageMs >= 0 ? QDateTime::currentDateTimeUtc().addMSecs(-ageMs) : QDateTime()};
+    _observation = observation;
+    const auto& position = observation.position;
+    const qint64 ageMs = observation.ageMilliseconds();
     if (ageMs < 0) {
         _state = Invalid;
     } else if (ageMs >= _freshnessTimeoutMs) {

@@ -3,6 +3,8 @@
 #include <QtCore/QByteArray>
 #include <QtPositioning/QGeoCoordinate>
 
+struct GPSObservation;
+
 namespace NMEAUtils {
 
 /// Compute XOR checksum over NMEA body (between '$' and '*').
@@ -17,6 +19,9 @@ bool verifyChecksum(const QByteArray& sentence);
 QByteArray repairChecksum(const QByteArray& sentence);
 
 /// Build a GGA sentence from a coordinate and altitude.
-QByteArray makeGGA(const QGeoCoordinate& coord, double altitudeMsl, int fixQuality = 1, int numSatellites = 12);
+QByteArray makeGGA(const QGeoCoordinate& coord, double altitudeMsl, int fixQuality = 1, int numSatellites = -1);
+
+/// Encode available observation metadata; unknown quality, satellite, DOP and altitude fields stay empty.
+QByteArray makeGGA(const GPSObservation& observation);
 
 }  // namespace NMEAUtils

@@ -1,8 +1,10 @@
 #include "RTCMMavlink.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QPointer>
 #include <QtCore/QSet>
 #include <QtCore/QThread>
+
 #include <algorithm>
 #include <cstring>
 
@@ -104,14 +106,24 @@ RTCMMavlink::PackResult RTCMMavlink::pack(QByteArrayView data, uint8_t sequenceI
 
 void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
 {
-    if (data.isEmpty()) {
-        return;
-    }
+    submit(data);
+}
 
+quint64 RTCMMavlink::submit(QByteArrayView data)
+{
+    if (data.isEmpty()) {
+        return 0;
+    }
+    quint64 submitted = 0;
+
+    const QPointer<RTCMMavlink> guard(this);
     _rateTracker.recordBytes(data.size());
     if (_rateTracker.rateUpdated()) {
         qCDebug(RTCMMavlinkLog) << QStringLiteral("RTCM bandwidth: %1 kB/s").arg(_rateTracker.kBps(), 0, 'f', 3);
         emit bandwidthChanged();
+        if (!guard) {
+            return 0;
+        }
     }
 
     const PackResult packed = pack(data, _sequenceId);
@@ -124,8 +136,13 @@ void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
         if (!packet.data.isEmpty()) {
             (void) memcpy(gpsRtcmData.data, packet.data.constData(), static_cast<size_t>(packet.data.size()));
         }
-        _sendMessageOnAllLinks(gpsRtcmData);
+        submitted += packet.data.size() * _sendMessageOnAllLinks(gpsRtcmData);
     }
+    if (submitted > 0) {
+        _submittedBytes += submitted;
+        emit deliveryStatsChanged();
+    }
+    return submitted;
 }
 
 void RTCMMavlink::sendSimulatedData(const std::atomic_bool& requestStop)
@@ -141,7 +158,7 @@ void RTCMMavlink::sendSimulatedData(const std::atomic_bool& requestStop)
     }
 }
 
-void RTCMMavlink::_sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data)
+int RTCMMavlink::_sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data)
 {
     QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
     QSet<const LinkInterface*> sentLinks;
@@ -170,4 +187,5 @@ void RTCMMavlink::_sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data)
                                                      &message, &data);
         sharedLink->sendMessageThreadSafe(message);
     }
+    return sentLinks.size();
 }

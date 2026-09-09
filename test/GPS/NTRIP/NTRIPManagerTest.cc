@@ -296,3 +296,49 @@ void NTRIPManagerTest::testCorrectionObserverCanStopSession()
     QVERIFY(!mgr._reconnectTimer.isActive());
     QVERIFY(!mgr._udpForwarder.isEnabled());
 }
+
+void NTRIPManagerTest::testSessionStartObserverCanStop_data()
+{
+    QTest::addColumn<bool>("restart");
+    QTest::newRow("stop-before-socket-start") << false;
+    QTest::newRow("replace-before-socket-start") << true;
+}
+
+void NTRIPManagerTest::testSessionStartObserverCanStop()
+{
+    QFETCH(bool, restart);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    NTRIPManager mgr;
+    mgr._settings = settings;
+    auto* first = new MockNTRIPTransport(&mgr);
+    first->autoConnect = false;
+    auto* second = new MockNTRIPTransport(&mgr);
+    second->autoConnect = false;
+    mgr.setTransportForTest(first);
+    QSignalSpy started(&mgr, &NTRIPManager::correctionSessionStarted);
+    QSignalSpy ended(&mgr, &NTRIPManager::correctionSessionEnded);
+    bool initialNotification = true;
+    connect(&mgr, &NTRIPManager::correctionSessionStarted, &mgr, [&]() {
+        if (!initialNotification) {
+            return;
+        }
+        initialNotification = false;
+        mgr.stopNTRIP();
+        if (restart) {
+            mgr.setTransportForTest(second);
+            mgr.startNTRIP();
+        }
+    });
+    mgr.startNTRIP();
+    QCOMPARE(first->startCount, 0);
+    QCOMPARE(first->stopCount, 1);
+    QCOMPARE(ended.size(), 1);
+    QCOMPARE(started.size(), restart ? 2 : 1);
+    QCOMPARE(second->startCount, restart ? 1 : 0);
+    QCOMPARE(mgr.connectionStatus(),
+             restart ? NTRIPManager::ConnectionStatus::Connecting : NTRIPManager::ConnectionStatus::Disconnected);
+    QCOMPARE(mgr._transport.data(), restart ? second : nullptr);
+}

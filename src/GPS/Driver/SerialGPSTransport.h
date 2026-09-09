@@ -30,6 +30,8 @@ public:
     bool setBaudrate(unsigned baudrate) override;
 
 private:
+    static constexpr int kOpenTimeoutMs = 30000;
+    static constexpr int kOpenRetryMs = 500;
     static constexpr int kWriteTimeoutMs = 500;
 
     QString _device;

@@ -27,7 +27,7 @@ public:
     int minimumUpdateInterval() const override;
     Error error() const override;
 
-    qint64 lastUpdateAgeMs() const { return _lastUpdateReceived.isValid() ? _lastUpdateReceived.elapsed() : 0; }
+    qint64 lastUpdateAgeMs() const;
 
 public slots:
     void startUpdates() override;
@@ -37,7 +37,7 @@ public slots:
 private:
     void _resetDecoder();
 
-    QElapsedTimer _lastUpdateReceived;
+    quint64 _lastUpdateReceivedUs = 0;
     QPointer<QIODevice> _device;
     std::unique_ptr<QNmeaPositionInfoSource> _decoder;
     QDeadlineTimer _requestDeadline = QDeadlineTimer::Forever;

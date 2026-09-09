@@ -13,6 +13,7 @@
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIP.NTRIPGgaProvider")
 
@@ -26,13 +27,30 @@ bool isSaneCoord(double lat, double lon)
     return qIsFinite(lat) && qIsFinite(lon) && !(lat == 0.0 && lon == 0.0) && qAbs(lat) <= 90.0 && qAbs(lon) <= 180.0;
 }
 
-PositionResult getVehicleGPSPosition()
+GPSObservation::FixQuality vehicleFixQuality(int fix)
 {
-    MultiVehicleManager* mvm = MultiVehicleManager::instance();
-    if (!mvm)
-        return {};
-    Vehicle* veh = mvm->activeVehicle();
-    if (!veh)
+    switch (fix) {
+        case 0:
+        case 1:
+            return GPSObservation::FixQuality::NoFix;
+        case 2:
+            return GPSObservation::FixQuality::Fix2D;
+        case 3:
+            return GPSObservation::FixQuality::Fix3D;
+        case 4:
+            return GPSObservation::FixQuality::Differential;
+        case 5:
+            return GPSObservation::FixQuality::RTKFloat;
+        case 6:
+            return GPSObservation::FixQuality::RTKFixed;
+        default:
+            return GPSObservation::FixQuality::Unknown;
+    }
+}
+
+PositionResult getVehicleGPSPosition(Vehicle* veh, const mavlink_message_t& message)
+{
+    if (!veh || veh->vehicleLinkManager()->communicationLost())
         return {};
 
     FactGroup* gps = veh->gpsFactGroup();
@@ -48,23 +66,48 @@ PositionResult getVehicleGPSPosition()
     const double lon = lonF->rawValue().toDouble();
 
     if (isSaneCoord(lat, lon)) {
-        return {QGeoCoordinate(lat, lon, veh->coordinate().altitude()), QStringLiteral("Vehicle GPS")};
+        GPSObservation observation;
+        observation.position = QGeoPositionInfo(QGeoCoordinate(lat, lon), QDateTime::currentDateTimeUtc());
+        observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        if (message.msgid == MAVLINK_MSG_ID_GPS_RAW_INT) {
+            mavlink_gps_raw_int_t fix{};
+            mavlink_msg_gps_raw_int_decode(&message, &fix);
+            observation.fixQuality = vehicleFixQuality(fix.fix_type);
+            if (fix.fix_type >= GPS_FIX_TYPE_3D_FIX) {
+                observation.position.setCoordinate(QGeoCoordinate(lat, lon, fix.alt / 1000.0));
+                observation.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+            }
+            if (fix.eph != UINT16_MAX && fix.eph > 0) {
+                observation.horizontalDop = fix.eph / 100.0;
+            }
+        } else if (message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY) {
+            mavlink_high_latency_t fix{};
+            mavlink_msg_high_latency_decode(&message, &fix);
+            observation.fixQuality = vehicleFixQuality(fix.gps_fix_type);
+        }
+        // HIGH_LATENCY2 has position uncertainty in metres, not HDOP or a fix type.
+        if (message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY2 &&
+            (mavlink_msg_high_latency2_get_failure_flags(&message) & HL_FAILURE_FLAG_GPS)) {
+            observation.fixQuality = GPSObservation::FixQuality::NoFix;
+        }
+        return {observation, QStringLiteral("Vehicle GPS")};
     }
     return {};
 }
 
-PositionResult getVehicleEKFPosition()
+PositionResult getVehicleEKFPosition(Vehicle* veh, quint64 receivedUs)
 {
-    MultiVehicleManager* mvm = MultiVehicleManager::instance();
-    if (!mvm)
-        return {};
-    Vehicle* veh = mvm->activeVehicle();
-    if (!veh)
+    if (!veh || receivedUs == 0 || veh->vehicleLinkManager()->communicationLost())
         return {};
 
     const QGeoCoordinate coord = veh->coordinate();
     if (coord.isValid() && isSaneCoord(coord.latitude(), coord.longitude())) {
-        return {coord, QStringLiteral("Vehicle EKF")};
+        GPSObservation observation;
+        observation.position = QGeoPositionInfo(coord, QDateTime::currentDateTimeUtc());
+        observation.monotonicTimestampUs = receivedUs;
+        observation.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+        observation.fixQuality = GPSObservation::FixQuality::Extrapolated;
+        return {observation, QStringLiteral("Vehicle EKF")};
     }
     return {};
 }
@@ -94,10 +137,13 @@ PositionResult getRTKBasePosition()
     Fact* altF = rtkGroup->getFact(QStringLiteral("currentAltitude"));
     const double lat = latF->rawValue().toDouble();
     const double lon = lonF->rawValue().toDouble();
-    const double alt = altF ? altF->rawValue().toDouble() : 0.0;
+    const double alt = altF ? altF->rawValue().toDouble() : qQNaN();
 
     if (isSaneCoord(lat, lon)) {
-        return {QGeoCoordinate(lat, lon, alt), QStringLiteral("RTK Base")};
+        GPSObservation observation;
+        observation.position = QGeoPositionInfo(QGeoCoordinate(lat, lon, alt), QDateTime::currentDateTimeUtc());
+        // Survey/fixed-base Facts do not identify their altitude datum.
+        return {observation, QStringLiteral("RTK Base"), true};
     }
     return {};
 }
@@ -110,12 +156,47 @@ PositionResult getGCSPosition()
 
     const QGeoCoordinate coord = posMgr->gcsPosition();
     if (coord.isValid() && isSaneCoord(coord.latitude(), coord.longitude())) {
-        return {coord, QStringLiteral("GCS Position")};
+        GPSObservation observation;
+        if (const auto* health = posMgr->sourceHealth()) {
+            if (!health->usable()) {
+                return {};
+            }
+            observation = health->observation();
+            const int used = health->satellitesInUseCount();
+            if (used >= 0) {
+                observation.satellitesUsed = used;
+            }
+        } else {
+            const QDateTime received = posMgr->gcsPositionTimestamp();
+            const qint64 age = received.msecsTo(QDateTime::currentDateTimeUtc());
+            if (!received.isValid() || age < 0 || age >= GPSSourceHealth::FRESHNESS_TIMEOUT_MS) {
+                return {};
+            }
+            observation.position = posMgr->geoPositionInfo();
+            if (!observation.usable() || observation.coordinate().latitude() != coord.latitude() ||
+                observation.coordinate().longitude() != coord.longitude()) {
+                return {};
+            }
+            observation.receivedAt = received;
+            observation.monotonicTimestampUs = GPSObservation::monotonicNowUs() - age * 1000;
+        }
+        observation.position.setCoordinate(observation.coordinate());
+        return {observation, QStringLiteral("GCS Position")};
     }
     return {};
 }
 
 }  // anonymous namespace
+
+bool PositionResult::isValid() const
+{
+    if (!observation.position.isValid() || observation.fixQuality == GPSObservation::FixQuality::NoFix) {
+        return false;
+    }
+    const qint64 age = observation.ageMilliseconds();
+    return fixedReference ||
+           (observation.monotonicTimestampUs != 0 && age >= 0 && age < GPSSourceHealth::FRESHNESS_TIMEOUT_MS);
+}
 
 NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
 {
@@ -202,11 +283,13 @@ void NTRIPGgaProvider::_sendGGA()
         return;
     }
 
+    _trackVehicle();
     _ensureDefaultProviders();
 
     const auto position = _getBestPosition();
 
     if (!position.isValid()) {
+        _clearSource();
         if (++_fastRetryCount >= 5 && _retryPhase == RetryPhase::Fast) {
             _setRetryPhase(RetryPhase::Normal);
         }
@@ -218,17 +301,47 @@ void NTRIPGgaProvider::_sendGGA()
         _setRetryPhase(RetryPhase::Normal);
     }
 
-    double alt_msl = position.coordinate.altitude();
-    if (!qIsFinite(alt_msl)) {
-        alt_msl = 0.0;
-    }
-
-    const QByteArray gga = NMEAUtils::makeGGA(position.coordinate, alt_msl);
+    const QByteArray gga = NMEAUtils::makeGGA(position.observation);
     _transport->sendNMEA(gga);
 
     if (!position.source.isEmpty() && position.source != _source) {
         _source = position.source;
         emit sourceChanged(_source);
+    }
+}
+
+void NTRIPGgaProvider::_trackVehicle()
+{
+    auto* manager = MultiVehicleManager::instance();
+    Vehicle* vehicle = manager ? manager->activeVehicle() : nullptr;
+    if (_vehicle == vehicle) {
+        return;
+    }
+    QObject::disconnect(_vehicleMessageConnection);
+    _vehicle = vehicle;
+    _vehicleGpsPosition = {};
+    _vehicleEkfPosition = {};
+    if (vehicle) {
+        _vehicleMessageConnection =
+            connect(vehicle, &Vehicle::mavlinkMessageReceived, this, [this](const mavlink_message_t& message) {
+                const quint64 received = GPSObservation::monotonicNowUs();
+                if (!_vehicle || message.sysid != _vehicle->id()) {
+                    return;
+                }
+                if (message.msgid == MAVLINK_MSG_ID_GPS_RAW_INT) {
+                    _vehicleGpsPosition = getVehicleGPSPosition(_vehicle, message);
+                } else if (message.msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT) {
+                    if (message.compid == _vehicle->defaultComponentId() &&
+                        (mavlink_msg_global_position_int_get_lat(&message) != 0 ||
+                         mavlink_msg_global_position_int_get_lon(&message) != 0)) {
+                        _vehicleEkfPosition = getVehicleEKFPosition(_vehicle, received);
+                    }
+                } else if (message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY ||
+                           message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY2) {
+                    _vehicleGpsPosition = getVehicleGPSPosition(_vehicle, message);
+                    _vehicleEkfPosition = getVehicleEKFPosition(_vehicle, received);
+                }
+            });
     }
 }
 
@@ -238,9 +351,17 @@ void NTRIPGgaProvider::_ensureDefaultProviders()
     // touches no singletons and tests can override any source via
     // setPositionProvider() before the first GGA tick. Only absent slots are
     // filled, so partial overrides are preserved.
-    static const std::pair<PositionSource, PositionProvider> kDefaults[] = {
-        {PositionSource::VehicleGPS, &getVehicleGPSPosition},
-        {PositionSource::VehicleEKF, &getVehicleEKFPosition},
+    const std::pair<PositionSource, PositionProvider> kDefaults[] = {
+        {PositionSource::VehicleGPS,
+         [this]() {
+             return _vehicle && !_vehicle->vehicleLinkManager()->communicationLost() ? _vehicleGpsPosition
+                                                                                     : PositionResult{};
+         }},
+        {PositionSource::VehicleEKF,
+         [this]() {
+             return _vehicle && !_vehicle->vehicleLinkManager()->communicationLost() ? _vehicleEkfPosition
+                                                                                     : PositionResult{};
+         }},
         {PositionSource::RTKBase, &getRTKBasePosition},
         {PositionSource::GCSPosition, &getGCSPosition},
     };

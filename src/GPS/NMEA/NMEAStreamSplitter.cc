@@ -3,7 +3,9 @@
 #include <QtCore/QIODevice>
 
 #include <algorithm>
+#include <deque>
 
+#include "GPSReadTimestamp.h"
 #include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
@@ -14,79 +16,78 @@ namespace {
 constexpr qsizetype kMaxBufferedBytes = 64 * 1024;
 }
 
-class NMEAStreamDevice : public QIODevice
+class NMEAStreamDevice : public QIODevice, public GPSReadTimestamp
 {
 public:
     NMEAStreamDevice()
     {
         qCDebug(NMEAStreamDeviceLog) << this;
-        open(QIODevice::ReadOnly);
+        open(QIODevice::ReadOnly | QIODevice::Unbuffered);
     }
 
     ~NMEAStreamDevice() override;
 
     bool isSequential() const override { return true; }
 
-    qint64 bytesAvailable() const override { return QIODevice::bytesAvailable() + _buffer.size(); }
+    qint64 bytesAvailable() const override { return QIODevice::bytesAvailable() + _size; }
 
-    bool canReadLine() const override { return QIODevice::canReadLine() || _buffer.contains('\n'); }
+    bool canReadLine() const override { return !_sentences.empty() && _sentences.front().bytes.contains('\n'); }
+
+    quint64 lastReadTimestampUs() const override { return _lastReadTimestampUs; }
 
     void close() override
     {
-        _buffer.clear();
-        _discardUntilNewline = false;
+        _sentences.clear();
+        _size = 0;
         QIODevice::close();
     }
 
-    void append(const QByteArray& data)
+    void append(const QByteArray& bytes, quint64 receivedAtUs)
     {
-        if (!isOpen() || data.isEmpty()) {
+        if (!isOpen() || bytes.isEmpty()) {
             return;
         }
-        qsizetype start = 0;
-        if (_discardUntilNewline) {
-            const qsizetype newline = data.indexOf('\n');
-            if (newline < 0) {
-                return;
-            }
-            start = newline + 1;
-            _discardUntilNewline = false;
+        while (!_sentences.empty() && _size + bytes.size() > kMaxBufferedBytes) {
+            _size -= _sentences.front().bytes.size();
+            _sentences.pop_front();
         }
-        _buffer.append(data.constData() + start, data.size() - start);
-        if (_buffer.size() > kMaxBufferedBytes) {
-            const qsizetype newline = _buffer.indexOf('\n', _buffer.size() - kMaxBufferedBytes - 1);
-            if (newline < 0) {
-                _buffer.clear();
-                _discardUntilNewline = true;
-            } else {
-                _buffer.remove(0, newline + 1);
-            }
-        }
-        if (!_buffer.isEmpty()) {
-            emit readyRead();
-        }
+        _sentences.push_back({bytes, receivedAtUs});
+        _size += bytes.size();
+        emit readyRead();
     }
 
 protected:
     qint64 readData(char* data, qint64 maxSize) override
     {
-        const qint64 size = std::min<qint64>(maxSize, _buffer.size());
-        std::copy_n(_buffer.constData(), size, data);
-        _buffer.remove(0, size);
+        if (_sentences.empty() || maxSize <= 0) {
+            return 0;
+        }
+        auto& sentence = _sentences.front();
+        const qint64 size = std::min<qint64>(maxSize, sentence.bytes.size());
+        std::copy_n(sentence.bytes.constData(), size, data);
+        _lastReadTimestampUs = sentence.receivedAtUs;
+        sentence.bytes.remove(0, size);
+        _size -= size;
+        if (sentence.bytes.isEmpty()) {
+            _sentences.pop_front();
+        }
         return size;
     }
 
-    qint64 readLineData(char* data, qint64 maxSize) override
-    {
-        const qint64 newline = _buffer.indexOf('\n');
-        return readData(data, newline < 0 ? maxSize : std::min(maxSize, newline + 1));
-    }
+    qint64 readLineData(char* data, qint64 maxSize) override { return readData(data, maxSize); }
 
     qint64 writeData(const char*, qint64) override { return -1; }
 
 private:
-    QByteArray _buffer;
-    bool _discardUntilNewline = false;
+    struct Sentence
+    {
+        QByteArray bytes;
+        quint64 receivedAtUs = 0;
+    };
+
+    std::deque<Sentence> _sentences;
+    qint64 _size = 0;
+    quint64 _lastReadTimestampUs = 0;
 };
 
 NMEAStreamDevice::~NMEAStreamDevice()
@@ -131,16 +132,18 @@ void NMEAStreamSplitter::_readAvailableData()
         if (data.isEmpty()) {
             return;
         }
-        QByteArray sentences;
+        const quint64 receivedAtUs = GPSReadTimestamp::from(_source);
+        QList<std::pair<QByteArray, quint64>> sentences;
         for (const char byte : data) {
             if (byte == '$') {
                 _sentence = "$";
+                _sentenceTimestampUs = receivedAtUs;
             } else if (!_sentence.isEmpty()) {
                 _sentence.append(byte);
                 if (byte == '\n') {
                     const QByteArray line = _sentence.trimmed();
                     if (line.indexOf('*') == line.size() - 3 && NMEAUtils::verifyChecksum(line)) {
-                        sentences.append(line).append("\r\n");
+                        sentences.append({line + "\r\n", _sentenceTimestampUs});
                     }
                     _sentence.clear();
                 } else if (_sentence.size() > 1024 || (byte != '\r' && (byte < ' ' || byte > '~'))) {
@@ -148,13 +151,15 @@ void NMEAStreamSplitter::_readAvailableData()
                 }
             }
         }
-        _positionDevice->append(sentences);
-        if (!guard) {
-            return;
-        }
-        _satelliteDevice->append(sentences);
-        if (!guard) {
-            return;
+        for (const auto& [sentence, timestampUs] : sentences) {
+            _positionDevice->append(sentence, timestampUs);
+            if (!guard) {
+                return;
+            }
+            _satelliteDevice->append(sentence, timestampUs);
+            if (!guard) {
+                return;
+            }
         }
     }
 }

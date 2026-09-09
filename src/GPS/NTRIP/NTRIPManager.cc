@@ -313,6 +313,7 @@ void NTRIPManager::_teardownTransport()
     _transport->stop();
     _transport->deleteLater();
     _transport = nullptr;
+    emit correctionSessionEnded();
 }
 
 int NTRIPManager::_reconnectBackoffMs() const
@@ -400,13 +401,37 @@ void NTRIPManager::_startTransport()
                 }
             });
 
+    connect(_transport, &NTRIPTransport::bytesReceived, this, [this, transport](qint64 bytes) {
+        if (transport && _transport == transport) {
+            _stats.recordNetworkBytes(bytes);
+        }
+    });
+    connect(_transport, &NTRIPTransport::rtcmFrameValidated, this,
+            [this, transport](const QByteArray& data, int messageId, bool filtered) {
+                if (!transport || _transport != transport) {
+                    return;
+                }
+                const QPointer<NTRIPManager> guard(this);
+                _stats.recordValidatedFrame(filtered);
+                if (guard && filtered && transport && _transport == transport) {
+                    emit correctionReceived(data, messageId, true);
+                }
+            });
+
     connect(_transport, &NTRIPTransport::plaintextCredentialsWarning, this, [this, transport]() {
         if (transport && _transport == transport) {
             _onPlaintextCredentialsWarning();
         }
     });
 
-    _transport->start();
+    // Publish only after teardown can retire this session. A listener may stop,
+    // replace, or destroy the manager synchronously before the socket is opened.
+    const QPointer<NTRIPManager> guard(this);
+    emit correctionSessionStarted();
+    if (!guard || !transport || _transport != transport || _connectionStatus != ConnectionStatus::Connecting) {
+        return;
+    }
+    transport->start();
     qCDebug(NTRIPManagerLog) << "NTRIP transport started";
 }
 
@@ -455,23 +480,28 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
 
 void NTRIPManager::_rtcmDataReceived(const QByteArray& data, int messageId)
 {
+    const QPointer<NTRIPManager> guard(this);
     const QPointer<NTRIPTransport> transport = _transport;
     const QByteArray correction = data;
     _stats.recordMessage(correction.size(), messageId);
-    if (!transport || _transport != transport) {
+    if (!guard || !transport || _transport != transport) {
         return;
     }
 
     qCDebug(NTRIPManagerLog) << "NTRIP received RTCM:" << correction.size() << "bytes";
+    emit correctionReceived(correction, messageId, false);
+    if (!guard || !transport || _transport != transport) {
+        return;
+    }
     emit rtcmDataReceived(correction);
-    if (!transport || _transport != transport) {
+    if (!guard || !transport || _transport != transport) {
         return;
     }
     if (_connectionStatus != ConnectionStatus::Connected) {
         // A decoded correction proves reception even if connected() has not arrived yet.
         _dispatch(Event::RTCMBeforeConnected);
     }
-    if (transport && _transport == transport) {
+    if (guard && transport && _transport == transport) {
         _udpForwarder.forward(correction);
     }
 }

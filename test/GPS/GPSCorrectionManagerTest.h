@@ -8,6 +8,8 @@ class GPSCorrectionManagerTest : public UnitTest
 
 private slots:
     void _sourcesShareForwarder();
+    void _sourceSelectionAndSessions();
+    void _filteredAndExpiredFrames();
     void _udpSettingsAndShutdown();
     void _shutdownDuringDelivery_data();
     void _shutdownDuringDelivery();

@@ -94,11 +94,32 @@ void RTCMUdpInputTest::_testFrameSplitAcrossDatagrams()
     // still comes out whole.
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 6);
     const int split = frame.size() / 2;
-    QVERIFY(sendDatagram(input.port(), frame.left(split)));
-    QVERIFY(sendDatagram(input.port(), frame.mid(split)));
+    QUdpSocket sender;
+    QCOMPARE(sender.writeDatagram(frame.left(split), QHostAddress::LocalHost, input.port()), split);
+    QCOMPARE(sender.writeDatagram(frame.mid(split), QHostAddress::LocalHost, input.port()), frame.size() - split);
 
     QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 2000);
     QCOMPARE(spy.at(0).at(0).toByteArray(), frame);
+}
+
+void RTCMUdpInputTest::_testInterleavedSenders()
+{
+    RTCMUdpInput input(0);
+    input.setValidation(true);
+    QVERIFY(input.start());
+    QSignalSpy frames(&input, &RTCMUdpInput::rtcmDataReceived);
+    QUdpSocket senderA;
+    QUdpSocket senderB;
+    const QByteArray frameA = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const QByteArray frameB = GpsTestHelpers::buildRtcmFrame(1077, 40);
+    const int split = 5;
+    QCOMPARE(senderA.writeDatagram(frameA.first(split), QHostAddress::LocalHost, input.port()), split);
+    QCOMPARE(senderB.writeDatagram(frameB, QHostAddress::LocalHost, input.port()), frameB.size());
+    QTRY_COMPARE_WITH_TIMEOUT(frames.count(), 1, TestTimeout::mediumMs());
+    QCOMPARE(frames.first().first().toByteArray(), frameB);
+    QCOMPARE(senderA.writeDatagram(frameA.sliced(split), QHostAddress::LocalHost, input.port()), frameA.size() - split);
+    QTRY_COMPARE_WITH_TIMEOUT(frames.count(), 2, TestTimeout::mediumMs());
+    QCOMPARE(frames.last().first().toByteArray(), frameA);
 }
 
 UT_REGISTER_TEST(RTCMUdpInputTest, TestLabel::Unit)

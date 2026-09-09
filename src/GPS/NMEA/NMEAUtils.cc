@@ -2,6 +2,8 @@
 
 #include <QtCore/QDateTime>
 
+#include "GPSObservation.h"
+
 namespace NMEAUtils {
 
 quint8 computeChecksum(const QByteArray& body)
@@ -67,6 +69,9 @@ QByteArray repairChecksum(const QByteArray& sentence)
 
 QByteArray makeGGA(const QGeoCoordinate& coord, double altitudeMsl, int fixQuality, int numSatellites)
 {
+    if (!coord.isValid()) {
+        return {};
+    }
     const QTime utc = QDateTime::currentDateTimeUtc().time();
     QByteArray hhmmss;
     hhmmss += QByteArray::number(utc.hour()).rightJustified(2, '0');
@@ -108,9 +113,15 @@ QByteArray makeGGA(const QGeoCoordinate& coord, double altitudeMsl, int fixQuali
     core += ',';
     core += lonField + ',';
     core += (lonEast ? "E" : "W");
-    core += ',' + QByteArray::number(fixQuality) + ',' + QByteArray::number(numSatellites) + ",1.0,";
-    core += QByteArray::number(altitudeMsl, 'f', 1);
-    core += ",M,0.0,M,,";
+    core += ',' + QByteArray::number(fixQuality) + ',';
+    if (numSatellites >= 0) {
+        core += QByteArray::number(numSatellites);
+    }
+    core += ",,";
+    if (qIsFinite(altitudeMsl)) {
+        core += QByteArray::number(altitudeMsl, 'f', 1);
+    }
+    core += ",M,,M,,";
 
     QByteArray sentence;
     sentence += '$';
@@ -119,6 +130,57 @@ QByteArray makeGGA(const QGeoCoordinate& coord, double altitudeMsl, int fixQuali
     sentence += QByteArray::number(computeChecksum(core), 16).rightJustified(2, '0').toUpper();
     sentence += "\r\n";
     return sentence;
+}
+
+QByteArray makeGGA(const GPSObservation& observation)
+{
+    int quality = 1;
+    switch (observation.fixQuality) {
+        case GPSObservation::FixQuality::Unknown:
+            break;
+        case GPSObservation::FixQuality::NoFix:
+            quality = 0;
+            break;
+        case GPSObservation::FixQuality::Fix2D:
+        case GPSObservation::FixQuality::Fix3D:
+            break;
+        case GPSObservation::FixQuality::Differential:
+            quality = 2;
+            break;
+        case GPSObservation::FixQuality::RTKFixed:
+            quality = 4;
+            break;
+        case GPSObservation::FixQuality::RTKFloat:
+            quality = 5;
+            break;
+        case GPSObservation::FixQuality::Extrapolated:
+            quality = 6;
+            break;
+    }
+    const double altitude = observation.altitudeDatum == GPSObservation::AltitudeDatum::MeanSeaLevel
+                                ? observation.position.coordinate().altitude()
+                                : qQNaN();
+    const QByteArray sentence =
+        makeGGA(observation.position.coordinate(), altitude, quality, observation.satellitesUsed.value_or(-1));
+    if (sentence.isEmpty()) {
+        return {};
+    }
+    auto fields = sentence.mid(1, sentence.indexOf('*') - 1).split(',');
+    if (observation.position.timestamp().isValid()) {
+        fields[1] = observation.position.timestamp().toUTC().toString(QStringLiteral("hhmmss.zzz")).toLatin1();
+    } else {
+        fields[1].clear();
+    }
+    if (observation.fixQuality == GPSObservation::FixQuality::Unknown) {
+        fields[6].clear();
+    }
+    if (observation.horizontalDop && qIsFinite(*observation.horizontalDop) && *observation.horizontalDop > 0) {
+        fields[8] = QByteArray::number(*observation.horizontalDop, 'f', 1);
+    }
+    if (qIsFinite(altitude) && observation.altitudeEllipsoidMeters && qIsFinite(*observation.altitudeEllipsoidMeters)) {
+        fields[11] = QByteArray::number(*observation.altitudeEllipsoidMeters - altitude, 'f', 1);
+    }
+    return repairChecksum('$' + fields.join(','));
 }
 
 }  // namespace NMEAUtils

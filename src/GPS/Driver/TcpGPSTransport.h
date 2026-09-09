@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QString>
 
 #include <atomic>
@@ -28,7 +29,7 @@ public:
     bool setBaudrate(unsigned baudrate) override;
 
 private:
-    bool _waitFor(const std::function<bool()>& ready, int timeoutMs);
+    bool _waitFor(const std::function<bool()>& ready, QDeadlineTimer deadline);
 
     QString _host;
     quint16 _port;
@@ -36,5 +37,4 @@ private:
 
     static constexpr int kConnectTimeoutMs = 5000;
     static constexpr int kWriteTimeoutMs = 5000;
-    static constexpr int kCancellationPollMs = 50;
 };

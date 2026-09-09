@@ -56,14 +56,17 @@ class TestFileCollector:
     def test_vendored_gps_sources_are_excluded(self, tmp_path: Path) -> None:
         owned = tmp_path / "src/GPS/Driver/GPSDriver.cc"
         vendor = tmp_path / "src/GPS/Driver/PX4/ubx.cpp"
+        vendor_test = tmp_path / "test/GPS/Driver/PX4/gps-ubx-test.cpp"
         plugin = tmp_path / "src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc"
-        for path in (owned, vendor, plugin):
+        for path in (owned, vendor, vendor_test, plugin):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
         collector = FileCollector(tmp_path)
         expected = sorted([owned, plugin])
         assert collector.get_cpp_files(analyze_all=True) == expected
-        changed = "\n".join(str(path.relative_to(tmp_path)) for path in (owned, vendor, plugin))
+        changed = "\n".join(
+            str(path.relative_to(tmp_path)) for path in (owned, vendor, vendor_test, plugin)
+        )
         with patch("analyze.run_git", return_value=MagicMock(returncode=0, stdout=changed)):
             assert collector._get_changed_files(collector.CPP_EXTENSIONS, "master") == expected
 

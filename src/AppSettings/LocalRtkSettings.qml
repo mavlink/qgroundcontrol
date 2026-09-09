@@ -143,6 +143,9 @@ SettingsGroupLayout {
             if (root._connection.connectionState === GPSConnectionState.Ready) return qsTr("Connected")
             if (root._connection.connectionState === GPSConnectionState.Configuring) return qsTr("Configuring receiver")
             if (root._connection.connectionState === GPSConnectionState.Retrying) {
+                if (root._connection.errorDetail.length > 0) {
+                    return qsTr("%1 — reconnecting").arg(root._connection.errorDetail)
+                }
                 return root._facts.lastError.value ? qsTr("%1 — reconnecting").arg(root._facts.lastError.enumStringValue) : qsTr("Reconnecting")
             }
             return root._serial ? qsTr("Waiting for receiver") : qsTr("Connecting")

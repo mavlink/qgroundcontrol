@@ -23,6 +23,7 @@ class RTCMMavlink : public QObject
     Q_OBJECT
     Q_PROPERTY(quint64 totalBytesSent READ totalBytesSent NOTIFY bandwidthChanged)
     Q_PROPERTY(double bandwidthKBps READ bandwidthKBps NOTIFY bandwidthChanged)
+    Q_PROPERTY(quint64 totalBytesSubmitted READ totalBytesSubmitted NOTIFY deliveryStatsChanged)
 
 public:
     /// MAVLink GPS_RTCM_DATA data[] field length.
@@ -38,6 +39,11 @@ public:
     quint64 totalBytesSent() const { return _rateTracker.totalBytes(); }
 
     double bandwidthKBps() const { return _rateTracker.kBps(); }
+
+    quint64 totalBytesSubmitted() const { return _submittedBytes; }
+
+    /// Returns payload bytes queued across connected links; this is not an acknowledgement.
+    quint64 submit(QByteArrayView data);
 
     /// Pack one RTCM blob into GPS_RTCM_DATA packets per MAVLink rules.
     ///
@@ -68,11 +74,13 @@ public:
 
 signals:
     void bandwidthChanged();
+    void deliveryStatsChanged();
 
 private:
-    static void _sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data);
+    static int _sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data);
     static uint8_t _makeFlags(bool fragmented, uint8_t fragmentId, uint8_t sequenceId);
 
+    quint64 _submittedBytes = 0;
     uint8_t _sequenceId = 0;
     DataRateTracker _rateTracker;
 };

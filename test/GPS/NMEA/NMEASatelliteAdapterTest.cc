@@ -3,10 +3,19 @@
 #include <QtCore/QBuffer>
 #include <QtPositioning/QNmeaSatelliteInfoSource>
 
+#include "NMEADecoderSession.h"
 #include "NMEASatelliteAdapter.h"
 #include "NMEAUtils.h"
 
 namespace {
+class TimedBuffer : public QBuffer, public GPSReadTimestamp
+{
+public:
+    quint64 receivedAtUs = 0;
+
+    quint64 lastReadTimestampUs() const override { return receivedAtUs; }
+};
+
 void feed(QBuffer& input, const QList<QByteArray>& sentences)
 {
     for (const auto& sentence : sentences) {
@@ -98,3 +107,46 @@ void NMEASatelliteAdapterTest::_idleBatchAndSourceClose()
 }
 
 UT_REGISTER_TEST(NMEASatelliteAdapterTest, TestLabel::Unit)
+
+void NMEASatelliteAdapterTest::_preservesReceiptAgeAcrossReports()
+{
+    TimedBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEASatelliteAdapter adapter(&input);
+    const quint64 oldTimestamp = GPSObservation::monotonicNowUs() - 2000000;
+    input.receivedAtUs = oldTimestamp;
+    feed(input, {"$GPGSV,1,1,01,02,40,100,30"});
+    input.receivedAtUs = GPSObservation::monotonicNowUs();
+    feed(input, {"$GAGSV,1,1,01,03,40,100,30", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
+    // A newer constellation or position delimiter cannot freshen the older GPS report.
+    const QByteArray output = adapter.readAll();
+    QVERIFY(output.contains("$GPGSV"));
+    QVERIFY(output.contains("$GAGSV"));
+    QCOMPARE(adapter.lastReadTimestampUs(), oldTimestamp);
+    QCOMPARE(adapter.satelliteTimestampUs(false), oldTimestamp);
+    const quint64 newTimestamp = GPSObservation::monotonicNowUs();
+    input.receivedAtUs = newTimestamp;
+    feed(input, {"$GAGSV,1,1,01,03,40,100,31", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
+    QVERIFY(!adapter.readAll().isEmpty());
+    QCOMPARE(adapter.lastReadTimestampUs(), newTimestamp);
+    QCOMPARE(adapter.satelliteTimestampUs(false), oldTimestamp);
+    feed(input, {"$GPGSV,1,1,01,02,40,100,32", "$GNRMC,120003.00,V,,,,,,,090926,,,N"});
+    QVERIFY(!adapter.readAll().isEmpty());
+    QCOMPARE(adapter.satelliteTimestampUs(false), newTimestamp);
+}
+
+void NMEASatelliteAdapterTest::_decoderRejectsDelayedSatelliteBatch()
+{
+    TimedBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEADecoderSession session;
+    QVERIFY(session.start(&input));
+    QSignalSpy changes(&session, &NMEADecoderSession::satellitesChanged);
+    input.receivedAtUs = GPSObservation::monotonicNowUs() - 6000000;
+    feed(input, {"$GPGSV,1,1,01,02,40,100,30", "$GPGSA,A,3,02,,,,,,,,,,,,1.0,0.8,0.6"});
+    input.receivedAtUs = GPSObservation::monotonicNowUs();
+    feed(input, {"$GNRMC,120001.00,V,,,,,,,090926,,,N"});
+    QTRY_VERIFY_WITH_TIMEOUT(!changes.isEmpty(), TestTimeout::shortMs());
+    QCOMPARE(session.health()->satellitesInViewCount(), -1);
+    QCOMPARE(session.health()->satellitesInUseCount(), -1);
+}

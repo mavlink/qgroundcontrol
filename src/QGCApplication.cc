@@ -307,8 +307,15 @@ void QGCApplication::_initForNormalAppBoot()
     QGCPositionManager::instance()->init();
     LinkManager::instance()->init();
     GPSManager::instance()->init();
-    connect(NTRIPManager::instance(), &NTRIPManager::rtcmDataReceived, GPSManager::instance()->corrections(),
-            &GPSCorrectionManager::forwardCorrections);
+    auto* corrections = GPSManager::instance()->corrections();
+    connect(NTRIPManager::instance(), &NTRIPManager::correctionSessionStarted, corrections,
+            [corrections]() { corrections->beginSourceSession(GPSCorrectionSource::Ntrip); });
+    connect(NTRIPManager::instance(), &NTRIPManager::correctionSessionEnded, corrections,
+            [corrections]() { corrections->endSourceSession(GPSCorrectionSource::Ntrip); });
+    connect(NTRIPManager::instance(), &NTRIPManager::correctionReceived, corrections,
+            [corrections](const QByteArray& data, int messageId, bool filtered) {
+                corrections->forwardCorrectionsFrom(GPSCorrectionSource::Ntrip, data, true, messageId, filtered);
+            });
     NTRIPManager::instance()->init();
     VideoManager::instance()->init(mainRootWindow());
 

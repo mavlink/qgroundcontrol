@@ -4,6 +4,7 @@
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QUdpSocket>
 
+#include "GPSCorrectionFrame.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.RTCM.RTCMUdpInput")
@@ -24,7 +25,7 @@ RTCMUdpInput::~RTCMUdpInput()
 bool RTCMUdpInput::start()
 {
     stop();
-    _rtcmParser.reset();
+    _peerParsers.clear();
 
     _socket = new QUdpSocket(this);
     if (!_socket->bind(QHostAddress::AnyIPv4, _port)) {
@@ -58,6 +59,7 @@ void RTCMUdpInput::stop()
         _socket = nullptr;
     }
     _running = false;
+    _peerParsers.clear();
     emit runningChanged();
     qCDebug(RTCMUdpInputLog) << "Stopped listening on UDP port" << _port;
 }
@@ -81,8 +83,9 @@ void RTCMUdpInput::_readDatagrams()
     if (!_socket) {
         return;
     }
+    const QPointer<RTCMUdpInput> guard(this);
     const QPointer<QUdpSocket> socket = _socket;
-    while (socket && socket == _socket && socket->hasPendingDatagrams()) {
+    while (guard && socket && socket == _socket && socket->hasPendingDatagrams()) {
         const QNetworkDatagram datagram = socket->receiveDatagram();
         const QByteArray data = datagram.data();
         if (data.isEmpty()) {
@@ -91,32 +94,44 @@ void RTCMUdpInput::_readDatagrams()
 
         if (!_validateRtcm) {
             qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << data.size() << "bytes";
+            emit correctionReceived(data, 0, false);
+            if (!guard || !socket || socket != _socket) {
+                return;
+            }
             emit rtcmDataReceived(data);
             continue;
         }
 
         // Emit one complete RTCM3 frame per signal so RTCMMavlink assigns a distinct
         // GPS_RTCM_DATA sequence per frame (required for correct MAVLink reassembly).
+        // A partial frame belongs to its sender, even when another sender interleaves datagrams.
+        const auto peer = _parserForPeer(datagram.senderAddress(), datagram.senderPort());
+        auto& parser = peer->parser;
         int framesFound = 0;
         int framesDropped = 0;
         for (const char ch : data) {
-            if (!_rtcmParser.addByte(static_cast<uint8_t>(static_cast<unsigned char>(ch)))) {
+            if (!parser.addByte(static_cast<uint8_t>(static_cast<unsigned char>(ch)))) {
                 continue;
             }
-            if (_rtcmParser.validateCrc()) {
+            if (parser.validateCrc()) {
                 ++framesFound;
                 ++_validFrames;
-                const QByteArray frame = _rtcmParser.currentFrame();
-                _rtcmParser.reset();
+                const QByteArray frame = parser.currentFrame();
+                const int messageId = parser.messageId();
+                parser.reset();
+                emit correctionReceived(frame, messageId, true);
+                if (!guard || !socket || socket != _socket) {
+                    return;
+                }
                 emit rtcmDataReceived(frame);
-                if (!socket || socket != _socket) {
+                if (!guard || !socket || socket != _socket) {
                     return;
                 }
             } else {
                 ++framesDropped;
                 ++_invalidFrames;
             }
-            _rtcmParser.reset();
+            parser.reset();
         }
 
         if (framesDropped > 0) {
@@ -135,4 +150,33 @@ void RTCMUdpInput::_readDatagrams()
                                             .arg(dropPct, 0, 'f', 1);
         }
     }
+}
+
+std::shared_ptr<RTCMUdpInput::PeerParser> RTCMUdpInput::_parserForPeer(const QHostAddress& address, quint16 port)
+{
+    const qint64 now = GPSCorrectionFrame::monotonicNowMs();
+    for (auto it = _peerParsers.begin(); it != _peerParsers.end();) {
+        if (now - it.value()->lastReceivedMs >= PEER_IDLE_TIMEOUT_MS) {
+            it = _peerParsers.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    const QString key = address.toString() + QLatin1Char(':') + QString::number(port);
+    auto peer = _peerParsers.value(key);
+    if (!peer) {
+        if (_peerParsers.size() >= MAX_PEERS) {
+            auto oldest = _peerParsers.begin();
+            for (auto it = _peerParsers.begin(); it != _peerParsers.end(); ++it) {
+                if (it.value()->lastReceivedMs < oldest.value()->lastReceivedMs) {
+                    oldest = it;
+                }
+            }
+            _peerParsers.erase(oldest);
+        }
+        peer = std::make_shared<PeerParser>();
+        _peerParsers.insert(key, peer);
+    }
+    peer->lastReceivedMs = now;
+    return peer;
 }

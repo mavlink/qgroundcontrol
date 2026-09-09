@@ -2,14 +2,17 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QThread>
 #include <QtCore/QtEndian>
 #include <QtTest/QSignalSpy>
 
 #include <cstring>
 #include <ubx.h>
 
+#include "GPSByteStream.h"
 #include "GPSDriver.h"
-#include "GPSNMEAPreparation.h"
+#include "GPSProvider.h"
 #include "GPSTransport.h"
 
 namespace {
@@ -72,6 +75,7 @@ public:
     int commsPolls = 0;
     bool rejectDisable = false;
     bool nmeaEnabled = false;
+    bool unsupportedKeyWritten = false;
     int readError = 0;
     bool neverStops = false;
     bool enabledBeforeStop = false;
@@ -115,6 +119,11 @@ private:
                     const quint32 key = qFromLittleEndian<quint32>(request.constData() + offset);
                     const int sizeCode = (key >> 28) & 7;
                     const int valueSize = sizeCode <= 2 ? 1 : 1 << (sizeCode - 2);
+                    if (module == "NEO-M9N" &&
+                        (key == UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X || key == UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X)) {
+                        unsupportedKeyWritten = true;
+                        reject = true;
+                    }
                     if (key == UBX_CFG_KEY_CFG_USBOUTPROT_NMEA) {
                         nmeaEnabled = request[offset + 4] != 0;
                     }
@@ -127,7 +136,7 @@ private:
                         if (mode == 1 && (neverStops || surveyPolls < 2)) {
                             enabledBeforeStop = true;
                         }
-                        reject = rejectDisable && mode == 0;
+                        reject |= rejectDisable && mode == 0;
                     }
                     offset += 4 + valueSize;
                 }
@@ -420,19 +429,27 @@ void GPSDriverUBXTest::_positionMode()
     // Invalid base configuration must never reach the receiver in position mode.
     config.base.useFixedBase = true;
     config.base.fixedBaseLatitude = qQNaN();
-    sensor_gps_s position{};
+    GPSObservation position{};
     int positions = 0;
     GPSDriverSinks sinks;
-    sinks.onPosition = [&](const sensor_gps_s& update) {
+    sinks.onPosition = [&](const GPSObservation& update) {
         position = update;
         ++positions;
     };
     GPSDriver driver(GPSType::u_blox, transport, config, sinks);
+    QCOMPARE(driver.configurationResult().status, GPSDriver::ConfigurationStatus::NotConfigured);
+    QCOMPARE(driver.receiveResult(0).status, GPSDriver::ReceiveStatus::NotConfigured);
     if (rejectDisable) {
         expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Driver configuration failed")));
     }
     QCOMPARE(driver.configure(), !rejectDisable);
+    QCOMPARE(driver.configurationResult().status,
+             rejectDisable ? GPSDriver::ConfigurationStatus::Failed : GPSDriver::ConfigurationStatus::Ready);
+    QCOMPARE(driver.capabilities().model, QString::fromLatin1(receiver.module));
+    QCOMPARE(driver.capabilities().firmware, QStringLiteral("HPG 1.13"));
+    QCOMPARE(driver.capabilities().rtkBase,
+             rtkCapable ? GPSReceiverCapabilities::Support::Supported : GPSReceiverCapabilities::Support::Unsupported);
     if (rejectDisable) {
         verifyExpectedLogMessage();
     }
@@ -451,31 +468,100 @@ void GPSDriverUBXTest::_positionMode()
         qToLittleEndian<qint32>(200000000, pvt.data() + 28);
         qToLittleEndian<quint32>(800, pvt.data() + 40);
         receiver.queue(ubxMessage(0x01, 0x07, pvt));
-        QVERIFY(driver.receive(500) & 1);
+        const auto result = driver.receiveResult(500);
+        QCOMPARE(result.status, GPSDriver::ReceiveStatus::Data);
+        QVERIFY(result.positionUpdated);
         QCOMPARE(positions, 1);
-        QCOMPARE(position.fix_type, 3);
-        QCOMPARE(position.latitude_deg, 20.0);
-        QCOMPARE(position.longitude_deg, 10.0);
-        QCOMPARE(position.satellites_used, 12);
+        QCOMPARE(position.fixQuality, GPSObservation::FixQuality::Fix3D);
+        QCOMPARE(position.position.coordinate().latitude(), 20.0);
+        QCOMPARE(position.position.coordinate().longitude(), 10.0);
+        QCOMPARE(position.satellitesUsed.value_or(-1), 12);
+        stop = true;
+        QCOMPARE(driver.receiveResult(0).status, GPSDriver::ReceiveStatus::Cancelled);
     }
 }
 
-void GPSDriverUBXTest::_nmeaPreparationReleasesTransport()
+void GPSDriverUBXTest::_unsupportedBaseDoesNotWriteConfiguration()
 {
     UBXReceiver receiver;
+    receiver.module = "NEO-M9N";
+    std::atomic_bool stop = false;
+    ReceiverTransport transport(stop, receiver);
+    GPSReceiverConfig config;
+    config.base.surveyInAccMeters = 2.0;
+    config.base.surveyInDurationSecs = 180;
+    GPSDriver driver(GPSType::u_blox, transport, config, {});
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Driver configuration failed")));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    QCOMPARE(driver.configurationResult().status, GPSDriver::ConfigurationStatus::Unsupported);
+    QVERIFY(!driver.configurationResult().error.isEmpty());
+    QCOMPARE(driver.capabilities().model, QStringLiteral("NEO-M9N"));
+    QVERIFY(!receiver.unsupportedKeyWritten);
+    QVERIFY(receiver.timeModes.isEmpty());
+    QVERIFY(receiver.dynamicModels.isEmpty());
+}
+
+void GPSDriverUBXTest::_managedNmeaKeepsTransportUntilStopped()
+{
+    class StreamingTransport : public ReceiverTransport
+    {
+    public:
+        StreamingTransport(const std::atomic_bool& stop, UBXReceiver& receiver, const std::atomic_bool& streaming)
+            : ReceiverTransport(stop, receiver)
+            , _streaming(streaming)
+        {}
+
+        int read(uint8_t* data, int size, int timeoutMs) override
+        {
+            if (!_streaming) {
+                return ReceiverTransport::read(data, size, timeoutMs);
+            }
+            if (!_sent) {
+                _sent = true;
+                const QByteArray sentence("$GPRMC,test*00\r\n");
+                const int count = std::min(size, static_cast<int>(sentence.size()));
+                std::memcpy(data, sentence.constData(), static_cast<size_t>(count));
+                return count;
+            }
+            return 0;
+        }
+
+    private:
+        const std::atomic_bool& _streaming;
+        bool _sent = false;
+    };
+
+    UBXReceiver receiver;
+    std::atomic_bool streaming = false;
     auto lease = std::make_shared<int>(1);
     const std::weak_ptr<int> weakLease = lease;
-    GPSNMEAPreparation preparation(
-        [&receiver, lease](const std::atomic_bool& stop) {
-            return std::make_unique<ReceiverTransport>(stop, receiver);
-        }, GPSType::u_blox);
-    lease.reset();
-    QSignalSpy finished(&preparation, &QThread::finished);
-    preparation.start();
-    QTRY_VERIFY_WITH_TIMEOUT(!finished.isEmpty(), TestTimeout::mediumMs());
-    QVERIFY(preparation.wait(TestTimeout::mediumMs()));
-    QCOMPARE(preparation.baudrate(), 115200u);
+    GPSByteStream stream;
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
+    GPSProvider provider(
+        [&receiver, &streaming, lease = std::move(lease)](const std::atomic_bool& stop) {
+            return std::make_unique<StreamingTransport>(stop, receiver, streaming);
+        },
+        GPSType::u_blox, config, stream.buffer());
+    const auto cleanup = qScopeGuard([&]() {
+        provider.stop();
+        provider.wait();
+    });
+    connect(&provider, &GPSProvider::receiverReady, &provider, [&]() { streaming = true; }, Qt::DirectConnection);
+    connect(&provider, &GPSProvider::nmeaDataReady, &stream, &GPSByteStream::notifyReadyRead, Qt::QueuedConnection);
+    QSignalSpy data(&stream, &QIODevice::readyRead);
+    QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    provider.start();
+    QTRY_VERIFY_WITH_TIMEOUT(!data.isEmpty(), TestTimeout::mediumMs());
+    QCOMPARE(stream.readAll(), QByteArray("$GPRMC,test*00\r\n"));
     QVERIFY(receiver.nmeaEnabled);
     QCOMPARE(receiver.timeModes, QList<int>{0});
+    QVERIFY(!weakLease.expired());
+    QVERIFY_NO_SIGNAL_WAIT(errors, TestTimeout::shortMs());
+    provider.stop();
+    QVERIFY(provider.wait(TestTimeout::mediumMs()));
     QVERIFY(weakLease.expired());
 }

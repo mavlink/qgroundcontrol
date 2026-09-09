@@ -2,7 +2,7 @@
 
 #include "UnitTest.h"
 
-class RTKPositionSourceTest : public UnitTest
+class GPSReceiverPositionSourceTest : public UnitTest
 {
     Q_OBJECT
 

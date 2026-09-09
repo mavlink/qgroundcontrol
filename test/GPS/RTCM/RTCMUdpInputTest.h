@@ -12,4 +12,5 @@ private slots:
     void _testEmitsOneSignalPerFrame();
     void _testDropsBadCrcFrame();
     void _testFrameSplitAcrossDatagrams();
+    void _testInterleavedSenders();
 };

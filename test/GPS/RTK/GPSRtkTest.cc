@@ -7,23 +7,26 @@
 #include <QtTest/QSignalSpy>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSDriverData.h"
 #include "GPSManager.h"
 #include "GPSRTKFactGroup.h"
+#include "GPSReceiverPositionSource.h"
 #include "GPSRtk.h"
 #include "GPSTransport.h"
 #include "PositionManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTCMMavlink.h"
-#include "RTKPositionSource.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
+#include "satellite_info.h"
+#include "sensor_gps.h"
 
 void GPSRtkTest::_testCountSatellitesClampsToMax()
 {
     satellite_info_s msg{};
     msg.count = 250;
 
-    const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
+    const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(GPSDriverData::satellites(msg));
 
     QCOMPARE(static_cast<int>(counts.inView), static_cast<int>(satellite_info_s::SAT_INFO_MAX_SATELLITES));
     QCOMPARE(counts.used, 0);
@@ -37,7 +40,7 @@ void GPSRtkTest::_testCountSatellitesCountsUsed()
     msg.used[3] = 1;
     msg.used[5] = 1;
 
-    const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
+    const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(GPSDriverData::satellites(msg));
 
     QCOMPARE(static_cast<int>(counts.inView), 6);
     QCOMPARE(counts.used, 3);
@@ -50,7 +53,7 @@ void GPSRtkTest::_testCountSatellitesIgnoresUsedBeyondCount()
     msg.used[0] = 1;
     msg.used[5] = 1;
 
-    const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
+    const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(GPSDriverData::satellites(msg));
 
     QCOMPARE(static_cast<int>(counts.inView), 2);
     QCOMPARE(counts.used, 1);
@@ -121,7 +124,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     });
     receiver.connectReceiver(GPSType::u_blox, blockedFactory(firstGate), {});
     QTRY_VERIFY_WITH_TIMEOUT(firstGate->entered.available() > 0, TestTimeout::mediumMs());
-    QPointer<GPSProvider> first = receiver._gpsProvider;
+    QPointer<GPSProvider> first = receiver._session._provider;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
     QVERIFY(!receiver.connected());
     receiver.positionSource()->startUpdates();
@@ -132,7 +135,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     fix.longitude_deg = 8;
     fix.eph = 1;
     emit first->receiverReady();
-    emit first->sensorGpsUpdate(fix);
+    emit first->sensorGpsUpdate(GPSDriverData::position(fix));
     GPSSurveyInStatus survey{};
     survey.valid = true;
     survey.active = true;
@@ -145,7 +148,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     satellite_info_s satellites{};
     satellites.count = 2;
     satellites.used[0] = 1;
-    emit first->satelliteInfoUpdate(satellites);
+    emit first->satelliteInfoUpdate(GPSDriverData::satellites(satellites));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
     QCOMPARE(positionUpdates.size(), 1);
@@ -158,10 +161,10 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     auto* rtcm = &forwarder;
     const auto bytesBefore = rtcm->totalBytesSent();
     // These callbacks are queued before retirement, then delivered during the replacement session.
-    emit first->sensorGpsUpdate(fix);
+    emit first->sensorGpsUpdate(GPSDriverData::position(fix));
     emit first->RTCMDataUpdate(QByteArrayLiteral("stale corrections"));
     emit first->surveyInStatus(survey);
-    emit first->satelliteInfoUpdate(satellites);
+    emit first->satelliteInfoUpdate(GPSDriverData::satellites(satellites));
     emit first->receiverReady();
     emit first->connectionError(GPSConnectionError::DeviceError);
     receiver.connectReceiver(GPSType::u_blox, blockedFactory(secondGate), {});
@@ -180,8 +183,8 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore);
     QVERIFY(positionUpdates.isEmpty());
     QVERIFY(!receiver.positionSource()->lastKnownPosition().isValid());
-    emit receiver._gpsProvider->receiverReady();
-    emit receiver._gpsProvider->RTCMDataUpdate(QByteArrayLiteral("new"));
+    emit receiver._session._provider->receiverReady();
+    emit receiver._session._provider->RTCMDataUpdate(QByteArrayLiteral("new"));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore + 3);
@@ -190,7 +193,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QVERIFY(firstGate->sawCancellation);
     QVERIFY(receiver.connected());
 
-    receiver._gpsProvider->stop();
+    receiver._session._provider->stop();
     secondGate->release.release();
     QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
     QVERIFY(secondGate->sawCancellation);
@@ -207,7 +210,7 @@ void GPSRtkTest::_workerCanOutliveManager()
     const auto releaseWorker = qScopeGuard([&]() { gate->release.release(); });
     receiver->connectReceiver(GPSType::u_blox, blockedFactory(gate), {});
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
-    QPointer<GPSProvider> provider = receiver->_gpsProvider;
+    QPointer<GPSProvider> provider = receiver->_session._provider;
     receiver.reset();
     QVERIFY(provider);
     QVERIFY(!provider->parent());
@@ -233,7 +236,7 @@ void GPSRtkTest::_shutdownWithoutEventLoop()
     QPointer<GPSProvider> provider;
     if (phase == QStringLiteral("before-start")) {
         connect(&receiver, &GPSRtk::receiverTypeChanged, &receiver, [&]() {
-            provider = receiver._gpsProvider;
+            provider = receiver._session._provider;
             receiver.shutdown();
         });
     }
@@ -248,7 +251,7 @@ void GPSRtkTest::_shutdownWithoutEventLoop()
                              {});
 
     if (phase != QStringLiteral("before-start")) {
-        provider = receiver._gpsProvider;
+        provider = receiver._session._provider;
         QVERIFY(provider);
         QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
         if (phase == QStringLiteral("retired")) {
@@ -297,27 +300,27 @@ void GPSRtkTest::_positionSourceSelection()
     fix.altitude_msl_m = 500;
     fix.eph = 0.1f;
     fix.epv = 0.2f;
-    receiver->_sensorGpsUpdate(fix);
+    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
     QVERIFY(updates.isEmpty());
     enabled->setRawValue(true);
     QVERIFY(!position->gcsPosition().isValid());
-    receiver->_sensorGpsUpdate(fix);
+    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
     QCOMPARE(updates.size(), 1);
     QCOMPARE(position->gcsPosition(), QGeoCoordinate(47, 8, 500));
     QVERIFY(receiver->connected());
     enabled->setRawValue(false);
     QVERIFY(receiver->connected());
     QVERIFY(!position->gcsPosition().isValid());
-    receiver->_sensorGpsUpdate(fix);
+    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
     QCOMPARE(updates.size(), 1);
     enabled->setRawValue(true);
     QVERIFY(!position->gcsPosition().isValid());
-    receiver->_sensorGpsUpdate(fix);
+    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
     QVERIFY(position->gcsPosition().isValid());
     receiver->disconnectGPS();
     QVERIFY(!position->gcsPosition().isValid());
     QVERIFY(!receiver->positionSource()->lastKnownPosition().isValid());
-    receiver->_sensorGpsUpdate(fix);
+    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
     QVERIFY(!position->gcsPosition().isValid());
 }
 
@@ -338,21 +341,21 @@ void GPSRtkTest::_sourceHealthIndependentOfSurvey()
     fix.latitude_deg = 47;
     fix.longitude_deg = 8;
     fix.eph = 1;
-    receiver._sensorGpsUpdate(fix);
+    receiver._sensorGpsUpdate(GPSDriverData::position(fix));
     QVERIFY(receiver.health()->usable());
     fix.fix_type = sensor_gps_s::FIX_TYPE_NONE;
-    receiver._sensorGpsUpdate(fix);
+    receiver._sensorGpsUpdate(GPSDriverData::position(fix));
     QCOMPARE(receiver.health()->state(), GPSSourceHealth::Invalid);
     QVERIFY(receiver.connected());
     QVERIFY(facts->valid()->rawValue().toBool());
     satellite_info_s satellites{};
     satellites.count = 2;
     satellites.used[0] = 1;
-    receiver._satelliteInfoUpdate(satellites);
+    receiver._satelliteInfoUpdate(GPSDriverData::satellites(satellites));
     QCOMPARE(receiver.health()->satellitesInViewCount(), 2);
     QCOMPARE(receiver.health()->satellitesInUseCount(), 1);
     satellites.timestamp = 1;
-    receiver._satelliteInfoUpdate(satellites);
+    receiver._satelliteInfoUpdate(GPSDriverData::satellites(satellites));
     QCOMPARE(receiver.health()->satellitesInViewCount(), -1);
     QCOMPARE(receiver.health()->satellitesInUseCount(), -1);
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), 0);

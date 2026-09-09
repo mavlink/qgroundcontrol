@@ -7,9 +7,10 @@ class GPSDriverUBXTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _nmeaPreparationReleasesTransport();
+    void _managedNmeaKeepsTransportUntilStopped();
     void _positionMode_data();
     void _positionMode();
+    void _unsupportedBaseDoesNotWriteConfiguration();
     void _surveyRestart_data();
     void _surveyRestart();
     void _readFailure_data();
