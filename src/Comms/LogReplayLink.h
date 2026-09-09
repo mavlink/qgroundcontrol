@@ -92,7 +92,7 @@ private:
     const LogReplayConfiguration *_logReplayConfig = nullptr;
     QTimer *_readTickTimer = nullptr;
 
-    bool _isConnected = false;
+    std::atomic<bool> _isConnected{false};
     uint8_t _mavlinkChannel = 0;
 
     quint64 _logCurrentTimeUSecs = 0;
