@@ -149,10 +149,23 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type, GPSReceiver
 
 void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, GPSReceiverConfig config)
 {
+    if (_shutdown) {
+        return;
+    }
     disconnectGPS();
     _gpsRtkFactGroup->lastError()->setRawValue(static_cast<int>(GPSConnectionError::None));
+    if (_shutdown) {
+        return;
+    }
     _gpsProvider = new GPSProvider(std::move(transportFactory), type, config, this);
     const QPointer<GPSProvider> provider = _gpsProvider;
+    _providers.insert(provider);
+    connect(provider, &QObject::destroyed, this, [this, key = _gpsProvider]() {
+        _providers.remove(key);
+        if (_retiringProviders.remove(key)) {
+            emit receiverStateChanged();
+        }
+    });
     // Always queue worker callbacks and reject retired sessions, including already queued events.
     (void) connect(
         provider, &GPSProvider::RTCMDataUpdate, this,
@@ -224,6 +237,9 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
         Qt::QueuedConnection);
     (void) connect(provider, &QThread::finished, provider, &QObject::deleteLater);
     emit receiverTypeChanged(type);
+    if (!provider || _gpsProvider != provider || _shutdown) {
+        return;
+    }
     provider->start();
     emit receiverStateChanged();
 }
@@ -240,6 +256,29 @@ void GPSRtk::disconnectGPS()
     _onGPSDisconnect();
     if (provider) {
         emit receiverStateChanged();
+    }
+}
+
+void GPSRtk::shutdown()
+{
+    if (_shutdown) {
+        return;
+    }
+    _shutdown = true;
+    disconnectGPS();
+
+    const auto providers = _providers;
+    for (GPSProvider* provider : providers) {
+        provider->stop();
+    }
+    for (GPSProvider* provider : providers) {
+        // Transports observe cancellation without main-thread callbacks. Joining also
+        // waits for native thread cleanup, which can continue after finished().
+        if (provider->wait()) {
+            delete provider;
+        } else {
+            qCWarning(GPSRtkLog) << "Cannot join GPS worker during shutdown";
+        }
     }
 }
 

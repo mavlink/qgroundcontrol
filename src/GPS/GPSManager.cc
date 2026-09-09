@@ -157,6 +157,6 @@ void GPSManager::shutdown()
         _nmeaSources->stop();
     }
     _rtkAutoConnect->stop();
-    _gpsRtk->disconnectGPS();
+    _gpsRtk->shutdown();
     _corrections.shutdown();
 }

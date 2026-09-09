@@ -216,6 +216,69 @@ void GPSRtkTest::_workerCanOutliveManager()
     QVERIFY(gate->sawCancellation);
 }
 
+void GPSRtkTest::_shutdownWithoutEventLoop_data()
+{
+    QTest::addColumn<QString>("phase");
+    for (const char* phase : {"running", "retired", "finished", "awaiting-deletion", "before-start"}) {
+        QTest::newRow(phase) << QString::fromLatin1(phase);
+    }
+}
+
+void GPSRtkTest::_shutdownWithoutEventLoop()
+{
+    QFETCH(QString, phase);
+    auto gate = std::make_shared<BlockedOpen>();
+    const auto releaseWorker = qScopeGuard([&]() { gate->release.release(); });
+    GPSRtk receiver;
+    QPointer<GPSProvider> provider;
+    if (phase == QStringLiteral("before-start")) {
+        connect(&receiver, &GPSRtk::receiverTypeChanged, &receiver, [&]() {
+            provider = receiver._gpsProvider;
+            receiver.shutdown();
+        });
+    }
+    receiver.connectReceiver(GPSType::u_blox,
+                             [gate](const std::atomic_bool& stop) {
+                                 gate->entered.release();
+                                 while (!stop && !gate->release.tryAcquire(1, 10)) {
+                                 }
+                                 gate->sawCancellation = stop.load();
+                                 return std::unique_ptr<GPSTransport>();
+                             },
+                             {});
+
+    if (phase != QStringLiteral("before-start")) {
+        provider = receiver._gpsProvider;
+        QVERIFY(provider);
+        QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
+        if (phase == QStringLiteral("retired")) {
+            receiver.disconnectGPS();
+            QVERIFY(receiver.stopping());
+        } else if (phase == QStringLiteral("finished") || phase == QStringLiteral("awaiting-deletion")) {
+            provider->stop();
+            QVERIFY(provider->wait(TestTimeout::mediumMs()));
+            if (phase == QStringLiteral("awaiting-deletion")) {
+                QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+                QVERIFY(!receiver.hasReceiver());
+                QVERIFY(provider);
+            }
+        }
+        // No event processing is allowed between shutdown and the destruction check.
+        receiver.shutdown();
+        QVERIFY(gate->sawCancellation);
+    }
+    QVERIFY(provider.isNull());
+    QVERIFY(!receiver.hasReceiver());
+    QVERIFY(!receiver.stopping());
+    receiver.shutdown();
+    receiver.connectReceiver(GPSType::u_blox, blockedFactory(gate), {});
+    QVERIFY(!receiver.hasReceiver());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(!receiver.hasReceiver());
+    QVERIFY(!receiver.stopping());
+}
+
 void GPSRtkTest::_positionSourceSelection()
 {
     TestFixtures::SettingsFixture saved;

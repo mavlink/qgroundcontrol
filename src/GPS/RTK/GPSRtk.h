@@ -28,6 +28,8 @@ public:
 #endif
     void connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, GPSReceiverConfig config);
     void disconnectGPS();
+    /// Final application teardown: join cancelled workers without relying on the event loop.
+    void shutdown();
     bool connected() const;
 
     GPSSourceHealth* health() { return &_health; }
@@ -70,6 +72,9 @@ private:
     GPSProvider* _gpsProvider = nullptr;
     GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
 
+    bool _shutdown = false;
+    // Includes finished workers whose deferred deletion has not run yet.
+    QSet<GPSProvider*> _providers;
     // Retired workers delete themselves on finished(); this set only gates reconnection.
     QSet<GPSProvider*> _retiringProviders;
 };
