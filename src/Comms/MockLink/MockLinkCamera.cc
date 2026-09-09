@@ -350,11 +350,19 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
 
     case MAV_CMD_SET_CAMERA_ZOOM:
         if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM) {
-             // param2 is an absolute level only for ZOOM_TYPE_RANGE. For step/continuous
-             // zoom it is a direction, which this simple simulation does not model.
-             if (static_cast<int>(request.param1) == ZOOM_TYPE_RANGE) {
+             // param2 is an absolute level for ZOOM_TYPE_RANGE and a direction for
+             // ZOOM_TYPE_STEP. Continuous zoom is not modeled.
+             switch (static_cast<int>(request.param1)) {
+             case ZOOM_TYPE_RANGE:
                  cam->zoomLevel = request.param2;
                  qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom set to" << cam->zoomLevel;
+                 break;
+             case ZOOM_TYPE_STEP:
+                 cam->zoomLevel = std::clamp(cam->zoomLevel + (request.param2 * kZoomStepPercent), kZoomMinPercent, kZoomMaxPercent);
+                 qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom stepped to" << cam->zoomLevel;
+                 break;
+             default:
+                 break;
              }
              // Spec-minimal: CAMERA_SETTINGS is not broadcast after a zoom change.
              // The GCS must re-request it (MAVLink camera protocol v2).

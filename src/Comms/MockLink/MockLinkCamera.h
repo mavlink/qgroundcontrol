@@ -120,6 +120,9 @@ private:
     static constexpr uint8_t  kNumStreams        = 2;    ///< Streams per camera
     static constexpr uint32_t kStorageTotalMiB   = 16384; ///< 16 GiB simulated SD card
     static constexpr uint32_t kStorageFreeMiB    = 8192;  ///< 8 GiB free
+    static constexpr float    kZoomMinPercent    = 0.0f;  ///< CAMERA_SETTINGS.zoomLevel range
+    static constexpr float    kZoomMaxPercent    = 100.0f;
+    static constexpr float    kZoomStepPercent   = 10.0f; ///< Zoom range change per ZOOM_TYPE_STEP
 
     MockLink   *_mockLink = nullptr;
     CameraState _cameras[kNumCameras];           ///< Simulated cameras
