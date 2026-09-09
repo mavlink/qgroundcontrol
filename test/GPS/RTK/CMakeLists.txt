@@ -1,5 +1,4 @@
 # RTK tests.
-add_subdirectory(Driver)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSProviderTest.cc GPSProviderTest.h GPSRtkTest.cc GPSRtkTest.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE TcpGPSTransportTest.cc TcpGPSTransportTest.h)

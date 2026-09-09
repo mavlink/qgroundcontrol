@@ -12,10 +12,11 @@
 #include <ubx.h>
 
 #include <cstring>
+#include <numbers>
 #include <utility>
 
-QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.RTK.Driver.GPSDriver")
-QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.RTK.Driver.Drivers")
+QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.Driver.GPSDriver")
+QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Driver.Drivers")
 
 namespace {
 int callbackTrampoline(GPSCallbackType type, void *data1, int data2, void *user)
@@ -40,6 +41,11 @@ GPSDriver::~GPSDriver()
 
 bool GPSDriver::configure()
 {
+    if (_config.role != GPSReceiverConfig::Role::RTKBase && _config.role != GPSReceiverConfig::Role::Position) {
+        qCWarning(GPSDriverLog) << "Unsupported receiver role:" << static_cast<int>(_config.role);
+        return false;
+    }
+    const bool baseStation = _config.role == GPSReceiverConfig::Role::RTKBase;
     unsigned baudrate = _transport.fixedBaudrate();
     switch (_type) {
     case GPSType::trimble:
@@ -47,11 +53,12 @@ bool GPSDriver::configure()
         baudrate = 115200;
         break;
     case GPSType::septentrio:
-        _driver.reset(new GPSDriverSBF(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo, _config.headingOffsetDeg));
+        _driver.reset(new GPSDriverSBF(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo,
+                                       _config.headingOffsetDeg * std::numbers::pi_v<float> / 180.0f));
         break;
     case GPSType::u_blox: {
         const GPSDriverUBX::Settings settings{
-            .dynamic_model = 7,
+            .dynamic_model = 0,
             .dgnss_timeout = 0,
             .min_cno = 0,
             .min_elev = 0,
@@ -76,16 +83,19 @@ bool GPSDriver::configure()
         return false;
     }
 
-    if (_config.useFixedBase) {
-        _driver->setBasePosition(_config.fixedBaseLatitude, _config.fixedBaseLongitude,
-                                 _config.fixedBaseAltitudeMeters, _config.fixedBaseAccuracyMeters * 1000.0f);
-    } else {
-        _driver->setSurveyInSpecs(static_cast<uint32_t>(_config.surveyInAccMeters * 10000.0),
-                                  static_cast<uint32_t>(_config.surveyInDurationSecs));
+    if (baseStation) {
+        if (_config.base.useFixedBase) {
+            _driver->setBasePosition(_config.base.fixedBaseLatitude, _config.base.fixedBaseLongitude,
+                                     _config.base.fixedBaseAltitudeMeters,
+                                     _config.base.fixedBaseAccuracyMeters * 1000.0f);
+        } else {
+            _driver->setSurveyInSpecs(static_cast<uint32_t>(_config.base.surveyInAccMeters * 10000.0),
+                                      static_cast<uint32_t>(_config.base.surveyInDurationSecs));
+        }
     }
 
     GPSHelper::GPSConfig gpsConfig{};
-    gpsConfig.output_mode = GPSHelper::OutputMode::RTCM;
+    gpsConfig.output_mode = baseStation ? GPSHelper::OutputMode::RTCM : GPSHelper::OutputMode::GPS;
 
     if (_driver->configure(baudrate, gpsConfig) != 0) {
         if (!_transport.isCancelled()) {
@@ -136,12 +146,12 @@ int GPSDriver::handleCallback(int type, void *data1, int data2)
     case GPSCallbackType::setBaudrate:
         return _transport.setBaudrate(static_cast<unsigned>(data2)) ? 0 : -1;
     case GPSCallbackType::gotRTCMMessage:
-        if (_sinks.onRTCM) {
+        if (_config.role == GPSReceiverConfig::Role::RTKBase && _sinks.onRTCM) {
             _sinks.onRTCM(QByteArray(static_cast<const char *>(data1), data2));
         }
         break;
     case GPSCallbackType::surveyInStatus:
-        if (data1 && _sinks.onSurveyIn) {
+        if (_config.role == GPSReceiverConfig::Role::RTKBase && data1 && _sinks.onSurveyIn) {
             const SurveyInStatus *const status = static_cast<const SurveyInStatus *>(data1);
             GPSSurveyInStatus out;
             out.latitude = status->latitude;

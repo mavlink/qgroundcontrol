@@ -1,4 +1,4 @@
-# RTK/Driver tests.
+# GPS driver tests.
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverTimeTest.cc GPSDriverTimeTest.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverUBXTest.cc GPSDriverUBXTest.h)
 

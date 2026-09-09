@@ -23,4 +23,7 @@ private slots:
     void _testCallbacksWithoutSinksAreSafe();
     void _testDefaultConfigHeadingOffsetMatchesSeptentrioPreset();
     void _testUnknownCallbackIgnored();
+    void _positionRoleDoesNotForwardBaseData();
+    void _receiverRoleCommands_data();
+    void _receiverRoleCommands();
 };

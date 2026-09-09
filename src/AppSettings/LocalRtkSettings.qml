@@ -7,7 +7,7 @@ import QGroundControl.FactControls
 
 SettingsGroupLayout {
     id: root
-    heading: qsTr("Local RTK Receiver")
+    heading: qsTr("Local GNSS Receiver")
     visible: root._settings.userVisible
 
     readonly property var _settings: QGroundControl.settingsManager.rtkSettings
@@ -22,6 +22,23 @@ SettingsGroupLayout {
     readonly property bool _active: root._connection.active
     property bool _invalidConnection: false
 
+    LabelledFactComboBox {
+        objectName: "gpsReceiverRole"
+        Layout.fillWidth: true
+        label: qsTr("Role")
+        fact: root._settings.receiverRole
+        enabled: !root._active
+    }
+
+    QGCLabel {
+        Layout.fillWidth: true
+        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
+        wrapMode: Text.WordWrap
+        text: root._settings.receiverRole.rawValue === RTKSettings.RTKBase
+              ? qsTr("Keep the receiver stationary. Survey-in or a specified base position is used to generate RTK corrections for vehicles.")
+              : qsTr("Use the receiver for live GNSS positioning, including while moving. Survey-in and fixed-base settings do not apply.")
+    }
+
     GpsConnectionType {
         objectName: "rtkConnectionType"
         Layout.fillWidth: true
@@ -34,10 +51,10 @@ SettingsGroupLayout {
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
         wrapMode: Text.WordWrap
         text: root._serial
-              ? qsTr("Choose a serial device or discover a supported USB RTK receiver automatically. The receiver baud rate is detected automatically.")
+              ? qsTr("Choose a serial device or discover a supported USB receiver automatically. The receiver baud rate is detected automatically.")
               : root._udp
-                ? qsTr("Connect to an RTK receiver or bidirectional serial bridge over UDP. The receiver must accept configuration commands and return data from the configured host and port. Serial bridges must use 115200 baud.")
-                : qsTr("Connect to an RTK receiver over TCP using the host, port, and receiver type below.")
+                ? qsTr("Connect to a GNSS receiver or bidirectional serial bridge over UDP. The receiver must accept configuration commands and return data from the configured host and port. Serial bridges must use 115200 baud.")
+                : qsTr("Connect to a GNSS receiver over TCP using the host, port, and receiver type below.")
     }
 
     LabelledComboBox {

@@ -18,8 +18,9 @@ RTKConnectionConfig RTKConnectionConfig::fromSettings(RTKSettings& settings)
     config.host = settings.networkBaseHost()->rawValue().toString().trimmed();
     config.port = settings.networkBasePort()->rawValue().toInt();
     config.localPort = settings.udpLocalPort()->rawValue().toInt();
+    config.receiver.role = static_cast<GPSReceiverConfig::Role>(settings.receiverRole()->rawValue().toInt());
     config.baseMode = settings.useFixedBasePosition()->rawValue().toInt();
-    config.receiver = {
+    config.receiver.base = {
         .useFixedBase = config.baseMode == static_cast<int>(BaseModeDefinition::Mode::BaseFixed),
         .surveyInAccMeters = settings.surveyInAccuracyLimit()->rawValue().toDouble(),
         .surveyInDurationSecs = settings.surveyInMinObservationDuration()->rawValue().toInt(),
@@ -46,19 +47,25 @@ QString RTKConnectionConfig::validationError() const
             return tr("Enter a valid receiver host and port");
         }
     }
+    if (receiver.role != GPSReceiverConfig::Role::RTKBase && receiver.role != GPSReceiverConfig::Role::Position) {
+        return tr("Select a valid receiver role");
+    }
+    if (receiver.role == GPSReceiverConfig::Role::Position) {
+        return {};
+    }
     if (baseMode < 0 || baseMode > 1) {
         return tr("Select a valid base mode");
     }
-    if (receiver.useFixedBase) {
-        if (!std::isfinite(receiver.fixedBaseLatitude) || std::abs(receiver.fixedBaseLatitude) > 90.0 ||
-            !std::isfinite(receiver.fixedBaseLongitude) || std::abs(receiver.fixedBaseLongitude) > 180.0 ||
-            !std::isfinite(receiver.fixedBaseAltitudeMeters) || !std::isfinite(receiver.fixedBaseAccuracyMeters) ||
-            receiver.fixedBaseAccuracyMeters < 0.0f) {
+    if (receiver.base.useFixedBase) {
+        if (!std::isfinite(receiver.base.fixedBaseLatitude) || std::abs(receiver.base.fixedBaseLatitude) > 90.0 ||
+            !std::isfinite(receiver.base.fixedBaseLongitude) || std::abs(receiver.base.fixedBaseLongitude) > 180.0 ||
+            !std::isfinite(receiver.base.fixedBaseAltitudeMeters) ||
+            !std::isfinite(receiver.base.fixedBaseAccuracyMeters) || receiver.base.fixedBaseAccuracyMeters < 0.0f) {
             return tr("Enter a valid fixed base position and accuracy");
         }
-    } else if (!std::isfinite(receiver.surveyInAccMeters) || receiver.surveyInAccMeters <= 0.0 ||
-               receiver.surveyInAccMeters * 10000.0 > std::numeric_limits<uint32_t>::max() ||
-               receiver.surveyInDurationSecs <= 0) {
+    } else if (!std::isfinite(receiver.base.surveyInAccMeters) || receiver.base.surveyInAccMeters <= 0.0 ||
+               receiver.base.surveyInAccMeters * 10000.0 > std::numeric_limits<uint32_t>::max() ||
+               receiver.base.surveyInDurationSecs <= 0) {
         return tr("Enter a valid survey-in accuracy and duration");
     }
     return {};

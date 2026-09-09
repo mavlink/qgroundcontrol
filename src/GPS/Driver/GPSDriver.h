@@ -14,8 +14,8 @@
 class GPSTransport;
 class GPSBaseStationSupport;
 
-/// RTK base-station configuration, decoupled from QGC settings types.
-struct GPSReceiverConfig
+/// Configuration used only by the RTK base-station role.
+struct GPSBaseStationConfig
 {
     bool useFixedBase = false;
     double surveyInAccMeters = 0.0;
@@ -24,6 +24,19 @@ struct GPSReceiverConfig
     double fixedBaseLongitude = 0.0;
     float fixedBaseAltitudeMeters = 0.0f;
     float fixedBaseAccuracyMeters = 0.0f;
+};
+
+/// Receiver configuration, decoupled from QGC settings types.
+struct GPSReceiverConfig
+{
+    enum class Role
+    {
+        RTKBase = 0,
+        Position = 1
+    };
+
+    Role role = Role::RTKBase;
+    GPSBaseStationConfig base;
     float headingOffsetDeg = 5.0f;  // dual-antenna heading offset; consumed only by the Septentrio (SBF) driver
 };
 

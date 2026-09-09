@@ -22,10 +22,25 @@ target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # ----------------------------------------------------------------------------
 # PX4 GPS Drivers Integration
 # ----------------------------------------------------------------------------
+include(CPMPatchCache)
+set(_gps_driver_patch "${CMAKE_CURRENT_LIST_DIR}/px4-gpsdrivers-position-mode.patch")
+set(_gps_driver_revision 2a5e78abfb34c91e1340d8136822397462f088d9)
+qgc_cpm_patch_cache_key(
+    _gps_driver_cache_key
+    GIT_REPOSITORY
+    "https://github.com/PX4/PX4-GPSDrivers.git"
+    GIT_TAG
+    "${_gps_driver_revision}"
+    PATCHES
+    "${_gps_driver_patch}"
+)
+
 CPMAddPackage(
     NAME px4-gpsdrivers
     GITHUB_REPOSITORY PX4/PX4-GPSDrivers
-    GIT_TAG 2a5e78abfb34c91e1340d8136822397462f088d9
+    GIT_TAG ${_gps_driver_revision}
+    CUSTOM_CACHE_KEY "${_gps_driver_cache_key}"
+    PATCHES "${_gps_driver_patch}"
     SOURCE_SUBDIR src
 )
 

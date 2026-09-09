@@ -33,8 +33,8 @@ RTKAutoConnect::RTKAutoConnect(GPSRtk* receiver, AutoConnectSettings* settings, 
     connect(&_connection, &GPSConnectionState::changed, this, &RTKAutoConnect::networkAutoConnectPausedChanged);
     connect(this, &RTKAutoConnect::networkActiveChanged, this, &RTKAutoConnect::stateChanged);
     if (_rtkSettings) {
-        for (Fact* fact :
-             {_rtkSettings->connectionType(), _rtkSettings->serialDevice(), _rtkSettings->networkReceiverType()}) {
+        for (Fact* fact : {_rtkSettings->connectionType(), _rtkSettings->serialDevice(),
+                           _rtkSettings->networkReceiverType(), _rtkSettings->receiverRole()}) {
             connect(fact, &Fact::rawValueChanged, this, [this]() {
                 stop();
                 _connection.resetIntent();

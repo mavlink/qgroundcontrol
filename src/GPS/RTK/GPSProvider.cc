@@ -17,7 +17,11 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
     , _config(config)
 {
     qCDebug(GPSProviderLog) << this;
-    qCDebug(GPSProviderLog) << QStringLiteral("Survey in accuracy: %1 | duration: %2").arg(_config.surveyInAccMeters).arg(_config.surveyInDurationSecs);
+    qCDebug(GPSProviderLog) << "Receiver role:" << static_cast<int>(_config.role);
+    if (_config.role == GPSReceiverConfig::Role::RTKBase) {
+        qCDebug(GPSProviderLog) << "Survey-in accuracy:" << _config.base.surveyInAccMeters
+                                << "duration:" << _config.base.surveyInDurationSecs;
+    }
 }
 
 GPSProvider::~GPSProvider()

@@ -3,16 +3,26 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "receiverRole",
+            "shortDesc": "Local GNSS receiver role",
+            "longDesc": "Use the receiver for ordinary positioning or configure it as an RTK base station that sends corrections to vehicles.",
+            "type": "uint8",
+            "enumStrings": "RTK base station,GNSS position receiver",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Role"
+        },
+        {
             "name": "useReceiverPosition",
             "shortDesc": "Use receiver for ground-station position",
             "label": "Use receiver for ground-station position",
-            "longDesc": "Use live fixes from the connected RTK receiver. On disconnect, return to the configured NMEA or device position source.",
+            "longDesc": "Use live fixes from the connected GNSS receiver. On disconnect, return to the configured NMEA or device position source.",
             "type": "bool",
             "default": false
         },
         {
             "name": "connectionType",
-            "shortDesc": "RTK receiver connection",
+            "shortDesc": "GNSS receiver connection",
             "type": "uint8",
             "enumStrings": "Serial,TCP,UDP",
             "enumValues": "0,1,2",

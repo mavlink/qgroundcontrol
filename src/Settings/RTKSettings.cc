@@ -25,3 +25,5 @@ DECLARE_SETTINGSFACT(RTKSettings, networkReceiverType)
 DECLARE_SETTINGSFACT(RTKSettings, useReceiverPosition)
 DECLARE_SETTINGSFACT(RTKSettings, connectionType)
 DECLARE_SETTINGSFACT(RTKSettings, serialDevice)
+
+DECLARE_SETTINGSFACT(RTKSettings, receiverRole)

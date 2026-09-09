@@ -31,20 +31,20 @@
         },
         {
             "name": "autoConnectRTKGPS",
-            "shortDesc": "Automatically connect to RTK GPS receivers detected on USB.",
-            "longDesc": "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
+            "shortDesc": "Automatically connect to supported GNSS receivers detected on USB.",
+            "longDesc": "Automatically connect to a supported USB GNSS receiver using the selected receiver role.",
             "type": "bool",
             "default": true,
-            "label": "Automatically connect to an RTK GPS",
+            "label": "Automatically connect to a GNSS receiver",
             "keywords": "auto connect,rtk gps"
         },
         {
             "name": "autoConnectNetworkRTKGPS",
-            "shortDesc": "Automatically connect to the configured TCP or UDP RTK receiver.",
+            "shortDesc": "Automatically connect to the configured TCP or UDP GNSS receiver.",
             "longDesc": "Connect at startup and retry when the receiver is unavailable. Disconnect pauses automatic connection until Connect is clicked, this option is re-enabled, or the application restarts. Turning this option off disconnects the network receiver.",
             "type": "bool",
             "default": false,
-            "label": "Automatically connect to the network RTK receiver",
+            "label": "Automatically connect to the network GNSS receiver",
             "keywords": "auto connect,rtk gps,tcp,udp,network"
         },
         {

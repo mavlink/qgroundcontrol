@@ -31,7 +31,7 @@ Item {
             QGCLabel {
                 id:                     gpsLabel
                 rotation:               90
-                text:                   qsTr("RTK")
+                text:                   QGroundControl.settingsManager.rtkSettings.receiverRole.rawValue === RTKSettings.RTKBase ? qsTr("RTK") : qsTr("GNSS")
                 color:                  qgcPal.text
                 anchors.verticalCenter: parent.verticalCenter
                 visible:                _rtkConnected

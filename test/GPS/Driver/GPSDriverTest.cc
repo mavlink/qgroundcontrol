@@ -186,7 +186,7 @@ void GPSDriverTest::_testFixedTransportBaudrate()
     transport.fixedRate = 115200;
     transport.writeOk = false;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
-    expectLogMessage("GPS.RTK.Driver.GPSDriver", QtWarningMsg,
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Driver configuration failed for type")));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
@@ -323,3 +323,104 @@ void GPSDriverTest::_testUnknownCallbackIgnored()
 }
 
 UT_REGISTER_TEST(GPSDriverTest, TestLabel::Unit)
+
+void GPSDriverTest::_positionRoleDoesNotForwardBaseData()
+{
+    std::atomic_bool stop{false};
+    FakeGPSTransport transport(stop);
+    int corrections = 0;
+    int surveys = 0;
+    GPSDriverSinks sinks;
+    sinks.onRTCM = [&](const QByteArray&) { ++corrections; };
+    sinks.onSurveyIn = [&](const GPSSurveyInStatus&) { ++surveys; };
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    GPSDriver driver(GPSType::u_blox, transport, config, sinks);
+    QByteArray correction("RTCM");
+    driver.handleCallback(int(GPSCallbackType::gotRTCMMessage), correction.data(), correction.size());
+    SurveyInStatus status{};
+    driver.handleCallback(int(GPSCallbackType::surveyInStatus), &status, 0);
+    QCOMPARE(corrections, 0);
+    QCOMPARE(surveys, 0);
+}
+
+void GPSDriverTest::_receiverRoleCommands_data()
+{
+    QTest::addColumn<bool>("septentrio");
+    QTest::addColumn<bool>("position");
+    QTest::newRow("femto-base") << false << false;
+    QTest::newRow("femto-position") << false << true;
+    QTest::newRow("septentrio-base") << true << false;
+    QTest::newRow("septentrio-position") << true << true;
+}
+
+void GPSDriverTest::_receiverRoleCommands()
+{
+    QFETCH(bool, septentrio);
+    QFETCH(bool, position);
+    std::atomic_bool stop{false};
+
+    class CommandTransport : public GPSTransport
+    {
+    public:
+        CommandTransport(const std::atomic_bool& stop, bool septentrio)
+            : GPSTransport(stop)
+            , _septentrio(septentrio)
+        {}
+
+        bool open() override { return true; }
+
+        bool fatalError() const override { return false; }
+
+        bool setBaudrate(unsigned) override { return true; }
+
+        unsigned fixedBaudrate() const override { return 115200; }
+
+        int read(uint8_t* data, int size, int) override
+        {
+            const int count = qMin(size, int(_reply.size()));
+            memcpy(data, _reply.constData(), count);
+            _reply.remove(0, count);
+            return count;
+        }
+
+        int write(const uint8_t* data, int size) override
+        {
+            const QByteArray command(reinterpret_cast<const char*>(data), size);
+            commands.append(command);
+            if (_septentrio) {
+                _reply = command.trimmed().isEmpty() ? "USB1>" : "$R: " + command;
+            } else {
+                _reply = '<' + command.split(' ').first().trimmed() + " OK";
+                _reply.append(char(0));
+            }
+            return size;
+        }
+
+        QList<QByteArray> commands;
+
+    private:
+        bool _septentrio;
+        QByteArray _reply;
+    } transport(stop, septentrio);
+
+    GPSReceiverConfig config;
+    config.role = position ? GPSReceiverConfig::Role::Position : GPSReceiverConfig::Role::RTKBase;
+    config.base.useFixedBase = true;
+    config.base.fixedBaseLatitude = 10.0;
+    config.base.fixedBaseLongitude = 20.0;
+    GPSDriver driver(septentrio ? GPSType::septentrio : GPSType::femto, transport, config, {});
+    QVERIFY(driver.configure());
+    const QByteArray commands = transport.commands.join("");
+    if (septentrio) {
+        QCOMPARE(commands.contains("setPVTMode, Rover, All, auto"), position);
+        QCOMPARE(commands.contains("setPVTMode, Static"), !position);
+        QCOMPARE(commands.contains("setAttitudeOffset, 5.000, 0.000"), position);
+        QCOMPARE(commands.contains("setDataInOut, USB1, Auto, RTCMv3+SBF"), !position);
+    } else {
+        QCOMPARE(commands.contains("POSAVE OFF"), position);
+        QCOMPARE(commands.contains("FIX NONE"), position);
+        QCOMPARE(commands.contains("LOG UAVGPSB"), position);
+        QCOMPARE(commands.contains("FIX POSITION 10.00000000 20.00000000"), !position);
+    }
+}

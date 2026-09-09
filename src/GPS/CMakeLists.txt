@@ -12,6 +12,7 @@ add_subdirectory(NMEA)
 add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)
 
+add_subdirectory(Driver)
 add_subdirectory(RTK)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h)
@@ -19,3 +20,5 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSConnectionState.cc GPSConnectionState.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSSourceHealth.cc GPSSourceHealth.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionManager.cc GPSCorrectionManager.h)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver)

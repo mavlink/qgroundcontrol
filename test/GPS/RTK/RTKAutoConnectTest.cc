@@ -24,6 +24,7 @@ void RTKAutoConnectTest::_serialRetriesKeepConfiguration()
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     auto* rtk = SettingsManager::instance()->rtkSettings();
     saved.setFactValue(settings->autoConnectRTKGPS(), false);
+    saved.setFactValue(rtk->receiverRole(), RTKSettings::RTKBase);
     saved.setFactValue(rtk->connectionType(), RTKSettings::Serial);
     saved.setFactValue(rtk->serialDevice(), QStringLiteral("/test/rtk"));
     saved.setFactValue(rtk->useFixedBasePosition(), 0);
@@ -42,8 +43,8 @@ void RTKAutoConnectTest::_serialRetriesKeepConfiguration()
     controller.update();
     QCOMPARE(attempts.size(), 1);
     const auto first = qvariant_cast<GPSReceiverConfig>(attempts.at(0).at(2));
-    QCOMPARE(first.surveyInAccMeters, 1.0);
-    QCOMPARE(first.surveyInDurationSecs, 120);
+    QCOMPARE(first.base.surveyInAccMeters, 1.0);
+    QCOMPARE(first.base.surveyInDurationSecs, 120);
 
     rtk->surveyInAccuracyLimit()->setRawValue(3.0);
     rtk->surveyInMinObservationDuration()->setRawValue(240);
@@ -52,16 +53,25 @@ void RTKAutoConnectTest::_serialRetriesKeepConfiguration()
     controller.update();
     QCOMPARE(attempts.size(), 2);
     const auto retry = qvariant_cast<GPSReceiverConfig>(attempts.at(1).at(2));
-    QCOMPARE(retry.surveyInAccMeters, 1.0);
-    QCOMPARE(retry.surveyInDurationSecs, 120);
+    QCOMPARE(retry.base.surveyInAccMeters, 1.0);
+    QCOMPARE(retry.base.surveyInDurationSecs, 120);
 
     controller.disconnectSelected();
     QVERIFY(controller.connectSelected());
     controller.update();
     QCOMPARE(attempts.size(), 3);
     const auto replacement = qvariant_cast<GPSReceiverConfig>(attempts.at(2).at(2));
-    QCOMPARE(replacement.surveyInAccMeters, 3.0);
-    QCOMPARE(replacement.surveyInDurationSecs, 240);
+    QCOMPARE(replacement.base.surveyInAccMeters, 3.0);
+    QCOMPARE(replacement.base.surveyInDurationSecs, 240);
+    QSignalSpy disconnects(&controller, &RTKAutoConnect::disconnectRequested);
+    rtk->receiverRole()->setRawValue(RTKSettings::Position);
+    QVERIFY(!disconnects.isEmpty());
+    QVERIFY(controller.connectSelected());
+    controller.update();
+    QCOMPARE(attempts.size(), 4);
+    const auto positioning = qvariant_cast<GPSReceiverConfig>(attempts.at(3).at(2));
+    QCOMPARE(positioning.role, GPSReceiverConfig::Role::Position);
+    QCOMPARE(first.role, GPSReceiverConfig::Role::RTKBase);
     verifyExpectedLogMessage();
 }
 

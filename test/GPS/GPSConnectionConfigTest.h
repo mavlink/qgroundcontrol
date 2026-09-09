@@ -12,4 +12,5 @@ private slots:
     void _rtkValidation_data();
     void _rtkValidation();
     void _settingsSnapshots();
+    void _positionRoleValidation();
 };

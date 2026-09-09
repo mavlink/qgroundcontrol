@@ -31,6 +31,7 @@ void saveNetworkSettings(TestFixtures::SettingsFixture& saved, const QString& ho
 {
     saved.setFactValue(SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS(), false);
     auto* settings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->receiverRole(), RTKSettings::RTKBase);
     saved.setFactValue(settings->connectionType(), RTKSettings::Tcp);
     saved.setFactValue(settings->networkBaseHost(), host);
     saved.setFactValue(settings->networkBasePort(), port);
@@ -442,16 +443,21 @@ void GPSManagerTest::_serialDiscoveryPausesForNetwork()
 void GPSManagerTest::_networkSettingsPanel_data()
 {
     QTest::addColumn<int>("connection");
-    QTest::newRow("tcp") << int(RTKSettings::Tcp);
-    QTest::newRow("udp") << int(RTKSettings::Udp);
+    QTest::addColumn<int>("role");
+    QTest::newRow("tcp-base") << int(RTKSettings::Tcp) << int(RTKSettings::RTKBase);
+    QTest::newRow("udp-base") << int(RTKSettings::Udp) << int(RTKSettings::RTKBase);
+    QTest::newRow("tcp-position") << int(RTKSettings::Tcp) << int(RTKSettings::Position);
+    QTest::newRow("udp-position") << int(RTKSettings::Udp) << int(RTKSettings::Position);
 }
 
 void GPSManagerTest::_networkSettingsPanel()
 {
     QFETCH(int, connection);
+    QFETCH(int, role);
     TestFixtures::SettingsFixture saved;
     saveNetworkSettings(saved, QString(), 2101, 0);
     SettingsManager::instance()->rtkSettings()->connectionType()->setRawValue(connection);
+    SettingsManager::instance()->rtkSettings()->receiverRole()->setRawValue(role);
     QQmlEngine engine;
     engine.addImageProvider(QStringLiteral("coloredsvg"), new ColoredSvgImageProvider);
     engine.addImportPath(QStringLiteral("qrc:/qml"));
@@ -460,8 +466,20 @@ void GPSManagerTest::_networkSettingsPanel()
     QVERIFY2(component.isReady(), qPrintable(component.errorString()));
     std::unique_ptr<QObject> root(component.create());
     QVERIFY2(root, qPrintable(component.errorString()));
+    QQmlComponent indicatorComponent(&engine,
+                                     QUrl(QStringLiteral("qrc:/qml/QGroundControl/Toolbar/GPSIndicatorPage.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!indicatorComponent.isLoading(), TestTimeout::mediumMs());
+    QVERIFY2(indicatorComponent.isReady(), qPrintable(indicatorComponent.errorString()));
+    std::unique_ptr<QObject> indicator(indicatorComponent.create());
+    QVERIFY2(indicator, qPrintable(indicatorComponent.errorString()));
+    QCOMPARE(indicator->property("showExpand").toBool(), role == RTKSettings::RTKBase);
+
     auto* button = root->findChild<QObject*>(QStringLiteral("networkRtkConnectButton"));
     auto* host = root->findChild<QObject*>(QStringLiteral("networkRtkHost"));
+    auto* roleControl = root->findChild<QObject*>(QStringLiteral("gpsReceiverRole"));
+    QVERIFY(roleControl);
+    QCOMPARE(roleControl->property("fact").value<Fact*>(), SettingsManager::instance()->rtkSettings()->receiverRole());
+    QVERIFY(roleControl->property("enabled").toBool());
     auto* usePosition = root->findChild<QObject*>(QStringLiteral("rtkUseReceiverPosition"));
     QVERIFY(usePosition);
     QCOMPARE(usePosition->property("fact").value<Fact*>(),
@@ -494,6 +512,7 @@ void GPSManagerTest::_networkSettingsPanel()
     QVERIFY(QMetaObject::invokeMethod(button, "clicked"));
     QVERIFY(GPSManager::instance()->networkRtkActive());
     QVERIFY(!host->property("enabled").toBool());
+    QVERIFY(!roleControl->property("enabled").toBool());
     QCOMPARE(button->property("text").toString(), QStringLiteral("Disconnect"));
     QTRY_VERIFY_WITH_TIMEOUT(GPSManager::instance()->gpsRtk()->connected(), TestTimeout::mediumMs());
     auto* status = root->findChild<QObject*>(QStringLiteral("networkRtkStatus"));
@@ -503,6 +522,7 @@ void GPSManagerTest::_networkSettingsPanel()
     QVERIFY(QMetaObject::invokeMethod(button, "clicked"));
     QVERIFY(!GPSManager::instance()->networkRtkActive());
     QVERIFY(host->property("enabled").toBool());
+    QVERIFY(roleControl->property("enabled").toBool());
     QCOMPARE(button->property("text").toString(), QStringLiteral("Connect"));
     QVERIFY(!button->property("enabled").toBool());
     QCOMPARE(status->property("text").toString(), QStringLiteral("Stopping"));

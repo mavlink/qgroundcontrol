@@ -24,7 +24,7 @@ struct RTKConnectionConfig
     int port = 0;
     int localPort = 0;
     int baseMode = 0;
-    GPSReceiverConfig receiver{.surveyInAccMeters = 2.0, .surveyInDurationSecs = 180};
+    GPSReceiverConfig receiver{.base = {.surveyInAccMeters = 2.0, .surveyInDurationSecs = 180}};
 
     QString validationError() const;
     static RTKConnectionConfig fromSettings(RTKSettings& settings);

@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 
@@ -8,7 +10,11 @@ import QGroundControl.FactControls
 // This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected
 
 ToolIndicatorPage {
-    showExpand: true
+    id: root
+    showExpand: root._baseStation
+
+    readonly property bool _baseStation: rtkSettings.receiverRole.rawValue === RTKSettings.RTKBase
+    readonly property var _receiverHealth: QGroundControl.gpsManager.rtkConnection.health
 
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property string na:                 qsTr("N/A", "No data to display")
@@ -55,11 +61,11 @@ ToolIndicatorPage {
     }
 
     function errorText() {
-        if (!_activeVehicle) {
+        if (!root.activeVehicle) {
             return qsTr("Disconnected");
         }
 
-        switch (_activeVehicle.gps.systemErrors.value) {
+        switch (root.activeVehicle.gps.systemErrors.value) {
             case 1:
                 return qsTr("Incoming correction");
             case 2:
@@ -120,19 +126,22 @@ ToolIndicatorPage {
             }
 
             SettingsGroupLayout {
-                heading:    qsTr("RTK GPS Status")
+                heading:    root._baseStation ? qsTr("RTK Base Status") : qsTr("GNSS Receiver Status")
                 visible:    QGroundControl.gpsRtk.connected.value
 
                 QGCLabel {
-                    text: (QGroundControl.gpsRtk.active.value) ? qsTr("Survey-in Active") : qsTr("RTK Streaming")
+                    text: root._baseStation
+                          ? (QGroundControl.gpsRtk.active.value ? qsTr("Survey-in Active") : qsTr("RTK Streaming"))
+                          : (root._receiverHealth.usable ? qsTr("Position available") : qsTr("Waiting for position"))
                 }
 
                 LabelledLabel {
                     label:      qsTr("Satellites")
-                    labelText:  QGroundControl.gpsRtk.numSatellites.value
+                    labelText:  root._baseStation ? QGroundControl.gpsRtk.numSatellites.value : root._receiverHealth.satellitesInUseCount
                 }
 
                 LabelledLabel {
+                    visible:    root._baseStation
                     label:      qsTr("Duration")
                     labelText:  QGroundControl.gpsRtk.currentDuration.value + ' s'
                 }
@@ -140,7 +149,7 @@ ToolIndicatorPage {
                 LabelledLabel {
                     label:      QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
                     labelText:  QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
-                    visible:    QGroundControl.gpsRtk.currentAccuracy.value > 0
+                    visible:    root._baseStation && QGroundControl.gpsRtk.currentAccuracy.value > 0
                 }
             }
         }
@@ -148,7 +157,8 @@ ToolIndicatorPage {
 
     expandedComponent: Component {
         SettingsGroupLayout {
-            heading:        qsTr("RTK GPS Settings")
+            heading:        qsTr("RTK Base Settings")
+            visible:        root._baseStation
 
             property real sliderWidth: ScreenTools.defaultFontPixelWidth * 40
 
