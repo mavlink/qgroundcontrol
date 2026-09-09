@@ -484,7 +484,7 @@ void RemoteControlCalibrationController::nextButtonClicked()
         auto state = _getStateMachineEntry(_currentStep);
         if (state.nextButtonFn) {
             (this->*state.nextButtonFn)();
-        } else if (state.channelInputFn == &RemoteControlCalibrationController::_inputStickDetect) {
+        } else if (_joystickMode && state.channelInputFn == &RemoteControlCalibrationController::_inputStickDetect) {
             // Manual override for detecting which stick was moved (useful for 0-to-MAX axes like triggers)
             int maxDelta = -1;
             int detectedChannel = -1;
@@ -502,7 +502,8 @@ void RemoteControlCalibrationController::nextButtonClicked()
                 }
             }
 
-            if (detectedChannel != -1) {
+            // ONLY force detection if actual movement was observed (e.g. maxDelta > 2000)
+            if (detectedChannel != -1 && maxDelta > 2000) {
                 ChannelInfo *const info = &_rgChannelInfo[detectedChannel];
                 int value = _channelRawValue[detectedChannel];
 
@@ -524,8 +525,8 @@ void RemoteControlCalibrationController::nextButtonClicked()
                     (info->channelReversed ? info->channelMin : info->channelMax);
 
                 _signalAllAttitudeValueChanges();
+                _advanceState();
             }
-            _advanceState();
             
         } else if (state.channelInputFn == &RemoteControlCalibrationController::_inputStickMin) {
             // Manual override for capturing the minimum/opposite extent of the stick
@@ -1009,9 +1010,14 @@ int RemoteControlCalibrationController::_adjustChannelRawValue(const ChannelInfo
         value = std::clamp(invertedValue, info.channelMin, info.channelMax);
     }
     
-    // For Joystick mode, the UI preview expects values scaled to the standard -32768 to 32767 range.
+    const bool attitudeControl = info.stickFunction == stickFunctionThrottle ||
+                                 info.stickFunction == stickFunctionYaw ||
+                                 info.stickFunction == stickFunctionRoll ||
+                                 info.stickFunction == stickFunctionPitch;
+
+    // For Joystick mode, the UI preview expects primary attitude controls scaled to the standard -32768 to 32767 range.
     // If the physical axis is 0 to 32767 (like a trigger), this stretches it to fill the UI box.
-    if (_joystickMode && info.stickFunction != stickFunctionMax && info.channelMax > info.channelMin) {
+    if (_joystickMode && attitudeControl && info.channelMax > info.channelMin) {
         float normalized = static_cast<float>(value - info.channelMin) / (info.channelMax - info.channelMin);
         value = -32768 + static_cast<int>(normalized * 65535.0f);
     }
