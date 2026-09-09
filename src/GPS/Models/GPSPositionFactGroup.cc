@@ -27,16 +27,17 @@ GPSPositionFactGroup::~GPSPositionFactGroup()
     qCDebug(GPSPositionFactGroupLog) << this;
 }
 
-void GPSPositionFactGroup::updatePosition(const GPSObservation& observation)
+void GPSPositionFactGroup::updatePosition(const GPSObservation& observation, std::optional<int> satelliteCount,
+                                          std::optional<int> lockCode)
 {
     const QPointer<GPSPositionFactGroup> guard(this);
     const quint64 revision = ++_positionRevision;
     const auto coordinate = observation.position.coordinate();
     const bool hasPosition = observation.position.isValid();
     // Dead reckoning has no equivalent in the vehicle GPS-lock enumeration.
-    const int fixType = observation.fixQuality == GPSObservation::FixQuality::Extrapolated
-                            ? 0
-                            : static_cast<int>(observation.fixQuality);
+    const int fixType = lockCode.value_or(observation.fixQuality == GPSObservation::FixQuality::Extrapolated
+                                              ? 0
+                                              : static_cast<int>(observation.fixQuality));
     const std::array<std::pair<Fact*, QVariant>, 8> values = {{
         {lat(), hasPosition ? coordinate.latitude() : qQNaN()},
         {lon(), hasPosition ? coordinate.longitude() : qQNaN()},
@@ -52,6 +53,9 @@ void GPSPositionFactGroup::updatePosition(const GPSObservation& observation)
             return;
         }
         fact->setRawValue(value);
+    }
+    if (guard && _positionRevision == revision && satelliteCount) {
+        count()->setRawValue(*satelliteCount);
     }
     if (guard && _positionRevision == revision) {
         _setTelemetryAvailable(true);

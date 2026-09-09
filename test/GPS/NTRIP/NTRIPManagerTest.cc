@@ -7,6 +7,7 @@
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSCorrectionManager.h"
+#include "GpsTestHelpers.h"
 #include "MockNTRIPStream.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
@@ -58,21 +59,6 @@ void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
     QVERIFY(mgr.securityWarning().contains(QStringLiteral("without TLS")));
 }
 
-void NTRIPManagerTest::testErrorStateStopsUdpForwarder()
-{
-    NTRIPManager mgr;
-
-    NTRIPTransportConfig config;
-    config.udpForwardEnabled = true;
-    config.udpTargetAddress = QStringLiteral("127.0.0.1");
-    config.udpTargetPort = 2101;
-
-    mgr._applyUdpForwarderConfig(config);
-    QVERIFY(mgr._udpForwarder.isEnabled());
-
-    mgr._onSessionState(NTRIPSession::State::Error, QStringLiteral("bad config"));
-    QVERIFY(!mgr._udpForwarder.isEnabled());
-}
 
 // ---------------------------------------------------------------------------
 // Reconnect backoff (migrated from NTRIPReconnectPolicyTest)
@@ -169,16 +155,36 @@ void NTRIPManagerTest::testCorrectionsAreIndependentOfSink()
     NTRIPManager mgr;
     mgr._settings = settings;
     GPSCorrectionManager corrections;
+    quint64 attempt = 0;
     if (withSink) {
-        connect(&mgr, &NTRIPManager::rtcmDataReceived, &corrections, &GPSCorrectionManager::forwardCorrections);
+        connect(&mgr, &NTRIPManager::correctionSessionStarted, &corrections, [&](quint64 id, const QString& sourceId) {
+            if (id == mgr.correctionAttemptId()) {
+                attempt = id;
+                corrections.beginSourceSession(GPSCorrectionSource::Ntrip, sourceId);
+            }
+        });
+        connect(&mgr, &NTRIPManager::correctionSessionEnded, &corrections, [&](quint64 id) {
+            if (id == attempt) {
+                attempt = 0;
+                corrections.endSourceSession(GPSCorrectionSource::Ntrip);
+            }
+        });
+        connect(&mgr, &NTRIPManager::correctionReceivedAt, &corrections,
+                [&](const QByteArray& data, int id, bool filtered, qint64 timestamp, quint64 sourceAttempt) {
+                    if (attempt && sourceAttempt == attempt) {
+                        corrections.acceptFrame({GPSCorrectionSource::Ntrip,
+                                                 corrections.sourceSession(GPSCorrectionSource::Ntrip), timestamp, data,
+                                                 id, true, filtered});
+                    }
+                });
     }
-    QSignalSpy received(&mgr, &NTRIPManager::rtcmDataReceived);
+    QSignalSpy received(&mgr, &NTRIPManager::correctionReceivedAt);
     auto* transport = new MockNTRIPStream(&mgr);
     transport->autoConnect = false;
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
-    const QByteArray payload = QByteArrayLiteral("correction");
+    const QByteArray payload = GpsTestHelpers::buildRtcmFrame(1005, 20);
     transport->simulateRtcmData(payload, 1005);
     QCOMPARE(received.size(), 1);
     QCOMPARE(received.first().first().toByteArray(), payload);
@@ -203,12 +209,11 @@ void NTRIPManagerTest::testCorrectionObserverCanStopSession()
     transport->autoConnect = false;
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
-    connect(&mgr, &NTRIPManager::rtcmDataReceived, &mgr, &NTRIPManager::stopNTRIP);
+    connect(&mgr, &NTRIPManager::correctionReceivedAt, &mgr, &NTRIPManager::stopNTRIP);
     transport->simulateRtcmData(QByteArrayLiteral("correction"), 1005);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
     QVERIFY(!mgr._session._stream);
     QVERIFY(!mgr._session._retryTimer.isActive());
-    QVERIFY(!mgr._udpForwarder.isEnabled());
 }
 
 void NTRIPManagerTest::testSessionStartObserverCanStop_data()

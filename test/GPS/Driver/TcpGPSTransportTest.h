@@ -11,4 +11,6 @@ private slots:
     void _cancelWait_data();
     void _cancelWait();
     void _refusedConnection();
+    void _boundedWriteEvidence_data();
+    void _boundedWriteEvidence();
 };

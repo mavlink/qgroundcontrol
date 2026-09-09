@@ -303,3 +303,30 @@ void NTRIPSourceTableControllerTest::testStatusObserverCanReplaceBeforeRequest()
     QVERIFY(!controller._reply);
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
 }
+
+void NTRIPSourceTableControllerTest::testFetchUsesSharedRequest()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    auto config = casterConfig(QStringLiteral("127.0.0.1"), server.serverPort());
+    config.username = QStringLiteral("user");
+    config.password = QStringLiteral("password");
+    config.mountpoint = QStringLiteral("stream-only name");
+    NTRIPSourceTableController controller;
+    QSignalSpy warning(&controller, &NTRIPSourceTableController::plaintextCredentialsWarning);
+    controller.fetch(config);
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QByteArray request;
+    QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).contains("\r\n\r\n"), TestTimeout::mediumMs());
+    QVERIFY(request.startsWith("GET / HTTP/1.1\r\n"));
+    QVERIFY(request.contains("Host: 127.0.0.1:" + QByteArray::number(server.serverPort()) + "\r\n"));
+    QVERIFY(request.contains("Ntrip-Version: Ntrip/2.0\r\n"));
+    QVERIFY(request.contains("Authorization: Basic dXNlcjpwYXNzd29yZA==\r\n"));
+    QCOMPARE(warning.size(), 1);
+    const QByteArray body = kValidTable.toUtf8();
+    peer->write("HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body);
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
+    QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+}

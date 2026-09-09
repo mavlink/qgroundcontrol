@@ -3,6 +3,8 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QVector>
 
+#include <chrono>
+
 #include "NTRIPError.h"
 #include "NTRIPStream.h"
 
@@ -42,7 +44,15 @@ public:
 
     void simulateError(NTRIPError code, const QString& detail) { emit error(code, detail); }
 
-    void simulateRtcmData(const QByteArray& data, int messageId = 0) { emit RTCMDataUpdate(data, messageId); }
+    void simulateRtcmData(const QByteArray& data, int messageId = 0, qint64 receivedAtMs = -1)
+    {
+        if (receivedAtMs < 0) {
+            receivedAtMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                               std::chrono::steady_clock::now().time_since_epoch())
+                               .count();
+        }
+        emit correctionReceivedAt(data, messageId, false, receivedAtMs);
+    }
 
     void simulateDisconnect() { emit finished(); }
 

@@ -30,7 +30,7 @@ NTRIPManager::NTRIPManager(QObject* parent)
     connect(&_settingsDebounceTimer, &QChronoTimer::timeout, this, &NTRIPManager::_onSettingChanged);
     connect(&_session, &NTRIPSession::stateChanged, this, &NTRIPManager::_onSessionState);
     connect(&_session, &NTRIPSession::streamStarted, this, &NTRIPManager::correctionSessionStarted);
-    connect(&_session, &NTRIPSession::streamEnded, this, [this]() {
+    connect(&_session, &NTRIPSession::streamEnded, this, [this](quint64 attemptId) {
         const QPointer<NTRIPManager> guard(this);
         const auto revision = _revision;
         _ggaProvider.stop();
@@ -39,7 +39,7 @@ NTRIPManager::NTRIPManager(QObject* parent)
         }
         _stats.stop();
         if (guard && revision == _revision) {
-            emit correctionSessionEnded();
+            emit correctionSessionEnded(attemptId);
         }
     });
     connect(&_session, &NTRIPSession::streamConnected, this, [this]() {
@@ -65,6 +65,8 @@ NTRIPManager::NTRIPManager(QObject* parent)
         }
     });
     connect(&_ggaProvider, &NTRIPGgaProvider::sourceChanged, this, &NTRIPManager::ggaSourceChanged);
+    connect(&_sourceTableController, &NTRIPSourceTableController::plaintextCredentialsWarning, this,
+            &NTRIPManager::_onPlaintextCredentialsWarning);
     connect(&_sourceTableController, &NTRIPSourceTableController::mountpointSelected, this,
             [this](const QString& mountpoint) {
                 if (_settings) {
@@ -102,9 +104,6 @@ void NTRIPManager::init()
         _settings->ntripWhitelist(),
         _settings->ntripUseTls(),
         _settings->ntripAllowSelfSignedCerts(),
-        _settings->ntripUdpForwardEnabled(),
-        _settings->ntripUdpTargetAddress(),
-        _settings->ntripUdpTargetPort(),
     };
     for (const auto* fact : facts) {
         connect(fact, &Fact::rawValueChanged, this, [this]() { _settingsDebounceTimer.start(); });
@@ -130,7 +129,6 @@ void NTRIPManager::startNTRIP()
     if (!guard || revision != _revision) {
         return;
     }
-    _applyUdpForwarderConfig(config);
     _session.start(config, _isEnabled());
 }
 
@@ -163,7 +161,6 @@ void NTRIPManager::_onSessionState(NTRIPSession::State state, const QString& mes
     _statusMessage = message;
     const QPointer<NTRIPManager> guard(this);
     if (state == NTRIPSession::State::Disconnected || state == NTRIPSession::State::Error) {
-        _udpForwarder.stop();
         _ggaProvider.stop();
         if (!guard || revision != _revision) {
             return;
@@ -201,8 +198,12 @@ void NTRIPManager::_onSessionState(NTRIPSession::State state, const QString& mes
     }
 }
 
-void NTRIPManager::_onCorrection(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs)
+void NTRIPManager::_onCorrection(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs,
+                                 quint64 attemptId)
 {
+    if (attemptId != _session.activeAttemptId()) {
+        return;
+    }
     const QPointer<NTRIPManager> guard(this);
     const auto revision = _revision;
     _stats.recordValidatedFrame(filtered);
@@ -215,18 +216,7 @@ void NTRIPManager::_onCorrection(const QByteArray& data, int messageId, bool fil
             return;
         }
     }
-    emit correctionReceivedAt(data, messageId, filtered, receivedAtMs);
-    if (!guard || revision != _revision) {
-        return;
-    }
-    emit correctionReceived(data, messageId, filtered);
-    if (!guard || revision != _revision || filtered) {
-        return;
-    }
-    emit rtcmDataReceived(data);
-    if (guard && revision == _revision) {
-        _udpForwarder.forward(data);
-    }
+    emit correctionReceivedAt(data, messageId, filtered, receivedAtMs, attemptId);
 }
 
 void NTRIPManager::_onPlaintextCredentialsWarning()
@@ -264,20 +254,8 @@ void NTRIPManager::_onSettingChanged()
         startNTRIP();
         return;
     }
-    if (config.udpForwardDiffers(_runningConfig)) {
-        _applyUdpForwarderConfig(config);
-    }
     if (config.whitelistDiffers(_runningConfig)) {
         _session.setWhitelist(config.whitelist);
     }
     _runningConfig = config;
-}
-
-void NTRIPManager::_applyUdpForwarderConfig(const NTRIPTransportConfig& config)
-{
-    if (!config.udpForwardEnabled) {
-        _udpForwarder.stop();
-    } else if (!_udpForwarder.configure(config.udpTargetAddress, config.udpTargetPort)) {
-        qCWarning(NTRIPManagerLog) << "UDP forward config invalid:" << config.udpTargetAddress << config.udpTargetPort;
-    }
 }

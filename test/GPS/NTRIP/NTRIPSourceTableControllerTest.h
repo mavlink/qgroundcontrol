@@ -7,6 +7,7 @@ class NTRIPSourceTableControllerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void testFetchUsesSharedRequest();
     void testInvalidReplacementRetiresPendingFetch();
     void testStatusObserverCanReplaceBeforeRequest();
     void testInitialState();

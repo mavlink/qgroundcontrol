@@ -1,5 +1,7 @@
 #include "GPSCorrectionEventModel.h"
 
+#include <QtCore/QPointer>
+
 #include <algorithm>
 
 #include "GPSCorrectionRouter.h"
@@ -77,14 +79,55 @@ QHash<int, QByteArray> GPSCorrectionEventModel::roleNames() const
 
 void GPSCorrectionEventModel::setEvents(const QList<GPSCorrectionEvent>& events)
 {
-    const auto snapshot = events.last((std::min) (events.size(), GPSCorrectionRouter::MAX_EVENTS));
-    if ((_events.isEmpty() && snapshot.isEmpty()) ||
-        (!_events.isEmpty() && _events.size() == snapshot.size() &&
-         _events.first().sequence == snapshot.first().sequence && _events.last().sequence == snapshot.last().sequence)) {
+    _pendingEvents = events.last((std::min) (events.size(), GPSCorrectionRouter::MAX_EVENTS));
+    _pending = true;
+    if (_updating) {
         return;
     }
-    // One bounded snapshot per refresh avoids one GUI event and model mutation per packet stage.
-    beginResetModel();
-    _events = snapshot;
-    endResetModel();
+    _updating = true;
+    const QPointer<GPSCorrectionEventModel> guard(this);
+    while (_pending) {
+        _pending = false;
+        const auto snapshot = _pendingEvents;
+        qsizetype remove = 0;
+        while (remove < _events.size() &&
+               (snapshot.isEmpty() || _events[remove].sequence != snapshot.first().sequence)) {
+            ++remove;
+        }
+        qsizetype retained = _events.size() - remove;
+        if (retained > snapshot.size()) {
+            remove = _events.size();
+            retained = 0;
+        }
+        for (qsizetype index = 0; index < retained; ++index) {
+            if (_events[remove + index].sequence != snapshot[index].sequence) {
+                remove = _events.size();
+                retained = 0;
+                break;
+            }
+        }
+        if (remove > 0) {
+            beginRemoveRows({}, 0, static_cast<int>(remove - 1));
+            if (!guard) {
+                return;
+            }
+            _events.remove(0, remove);
+            endRemoveRows();
+            if (!guard) {
+                return;
+            }
+        }
+        if (retained < snapshot.size()) {
+            beginInsertRows({}, static_cast<int>(retained), static_cast<int>(snapshot.size() - 1));
+            if (!guard) {
+                return;
+            }
+            _events.append(snapshot.sliced(retained));
+            endInsertRows();
+            if (!guard) {
+                return;
+            }
+        }
+    }
+    _updating = false;
 }

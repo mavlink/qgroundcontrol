@@ -17,6 +17,7 @@ qt_add_library(
     GPSReceiverMailbox.h
     GPSReceiverSession.cc
     GPSReceiverSession.h
+    GPSReceiverAttempt.h
 )
 
 target_include_directories(QGCGPSReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

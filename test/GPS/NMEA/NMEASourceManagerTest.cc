@@ -5,6 +5,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSemaphore>
+#include <QtCore/QTime>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
@@ -24,6 +25,21 @@
 #include "UdpIODevice.h"
 
 namespace {
+
+void attachPosition(NMEASourceManager& source, QGCPositionManager& position)
+{
+    auto registration = std::make_shared<std::unique_ptr<GPSPositionSourceRegistration>>();
+    QObject::connect(&source, &NMEASourceManager::positionSourceChanged, &position,
+                     [&source, &position, registration]() {
+                         if (source.positionSource()) {
+                             *registration = position.registerPositionSource(QGCPositionManager::SelectedSource::Nmea,
+                                                                             source.positionSource(), source.health());
+                         } else {
+                             registration->reset();
+                         }
+                     });
+}
+
 const QByteArray kFix =
     "$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A*43\r\n"
     "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,*76\r\n";
@@ -42,10 +58,12 @@ void NMEASourceManagerTest::_satelliteSnapshotsPreserveProvenance()
     NMEADecoderSession decoder;
     QVERIFY(decoder.start(&device));
     const quint64 session = decoder.sessionId();
-    QVERIFY(session != 0);
     QGeoSatelliteInfo gps;
     gps.setSatelliteSystem(QGeoSatelliteInfo::GPS);
     gps.setSatelliteIdentifier(3);
+    gps.setAttribute(QGeoSatelliteInfo::Azimuth, 275);
+    gps.setAttribute(QGeoSatelliteInfo::Elevation, 0);
+    gps.setSignalStrength(0);
     QGeoSatelliteInfo galileo = gps;
     galileo.setSatelliteSystem(QGeoSatelliteInfo::GALILEO);
     const quint64 receipt = GPSObservation::monotonicNowUs() - 100000;
@@ -53,68 +71,49 @@ void NMEASourceManagerTest::_satelliteSnapshotsPreserveProvenance()
     decoder._viewSnapshot.constellationReceipts = {{"GP", receipt}, {"GA", receipt}};
     decoder._useSnapshot.satellites = {gps};
     decoder._useSnapshot.constellationReceipts = {{"GP", receipt}};
-    QSignalSpy snapshots(&decoder, &NMEADecoderSession::satellitesChanged);
-    decoder._expireSatellites();
-    QCOMPARE(decoder.satellitesReceivedAtUs(), receipt);
-    QVERIFY(decoder.satellitesUsedKnown());
-    QCOMPARE(decoder.satelliteUseSystems(), QSet<int>{QGeoSatelliteInfo::GPS});
-    QCOMPARE(decoder.satellitesInView().size(), 2);
+    decoder._useSnapshot.usedIds = {{"GP", QSet<int>{3}}};
+    QSignalSpy snapshots(&decoder, &NMEADecoderSession::satellitesReceived);
+    decoder._updateSatellites();
+    auto observation = decoder.satelliteObservation();
+    QCOMPARE(observation.sourceId, QStringLiteral("nmeaReceiver"));
+    QCOMPARE(observation.satellitesInViewCount(), 2);
+    QCOMPARE(observation.satellitesInUseCount(), 1);
+    QCOMPARE(observation.satellites[0].used, std::optional<bool>(true));
+    QVERIFY(!observation.satellites[1].used.has_value());
+    QCOMPARE(observation.satellites[0].azimuthDegrees(), std::optional<double>(275));
+    QCOMPARE(observation.satellites[0].elevationDegrees, std::optional<double>(0));
+    QCOMPARE(observation.satellites[0].signalStrength, std::optional<int>(0));
+    QCOMPARE(observation.provenance[0].inViewTimestampUs, receipt);
+    QCOMPARE(observation.provenance[0].inUseTimestampUs, receipt);
     QCOMPARE(snapshots.size(), 1);
     decoder._viewSnapshot.satellites[0].setSignalStrength(42);
-    decoder._expireSatellites();
+    decoder._updateSatellites();
     QCOMPARE(snapshots.size(), 2);
-    QCOMPARE(decoder.satellitesReceivedAtUs(), receipt);
-    QCOMPARE(decoder.satellitesInView()[0].signalStrength(), 42);
-    decoder._useSnapshot.constellationReceipts["GP"] = receipt - 6000000;
-    decoder._expireSatellites();
-    QVERIFY(!decoder.satellitesUsedKnown());
-    QVERIFY(decoder.satelliteUseSystems().isEmpty());
-    QCOMPARE(decoder.satellitesInView().size(), 2);
-    decoder._health._freshnessTimeoutMs = 200;
-    const quint64 freshReceipt = GPSObservation::monotonicNowUs() - 10000;
-    decoder._viewSnapshot.constellationReceipts = {{"GP", freshReceipt - 400000}, {"GA", freshReceipt}};
-    decoder._useSnapshot.satellites = {gps, galileo};
-    decoder._useSnapshot.constellationReceipts = decoder._viewSnapshot.constellationReceipts;
-    decoder._expireSatellites();
-    QCOMPARE(decoder.satellitesInView().size(), 1);
-    QCOMPARE(decoder.satellitesInView().first().satelliteSystem(), QGeoSatelliteInfo::GALILEO);
-    QCOMPARE(decoder.satelliteUseSystems(), QSet<int>{QGeoSatelliteInfo::GALILEO});
-    QCOMPARE(decoder.satellitesReceivedAtUs(), freshReceipt);
-    decoder._health._freshnessTimeoutMs = 5000;
-    decoder._viewSnapshot.satellites.append(gps);
-    decoder._useSnapshot.satellites.append(gps);
-    decoder._viewSnapshot.constellationReceipts["GP"] = freshReceipt - 400000;
-    decoder._useSnapshot.constellationReceipts["GP"] = freshReceipt - 400000;
-    decoder._expireSatellites();
-    QCOMPARE(decoder.satellitesInView().size(), 1);
-    QCOMPARE(decoder.satelliteUseSystems(), QSet<int>{QGeoSatelliteInfo::GALILEO});
+    QCOMPARE(decoder.satelliteObservation().satellites[0].signalStrength, std::optional<int>(42));
+    // Qt can clear its decoded used list on repeated GSV; consumed GSA IDs remain authoritative.
+    decoder._useSnapshot.satellites.clear();
+    decoder._updateSatellites();
+    QCOMPARE(decoder.satelliteObservation().satellitesInUseCount(), 1);
+    QCOMPARE(decoder.satelliteObservation().satellites[0].used, std::optional<bool>(true));
 
-    decoder._viewSnapshot = {};
     GPSObservation fix;
-    fix.position = QGeoPositionInfo(QGeoCoordinate(47.0, 8.0, 100.0), QDateTime::currentDateTimeUtc());
+    fix.position = QGeoPositionInfo(QGeoCoordinate(47.0, 8.0, 500.0), QDateTime::currentDateTimeUtc());
+    fix.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
     fix.monotonicTimestampUs = GPSObservation::monotonicNowUs();
     fix.satellitesUsed = 8;
-    decoder._health.updateObservation(fix);
-    decoder._expireSatellites();
-    QVERIFY(decoder.satellitesInView().isEmpty());
-    QVERIFY(decoder.satellitesUsedKnown());
+    decoder.health()->updateObservation(fix);
     QCOMPARE(decoder.health()->satellitesInUseCount(), 8);
     emit decoder._satelliteSource->errorOccurred(QGeoSatelliteInfoSource::UpdateTimeoutError);
-    QTRY_VERIFY_WITH_TIMEOUT(!decoder.satellitesUsedKnown(), TestTimeout::shortMs());
-    QVERIFY(decoder.satelliteUseSystems().isEmpty());
-    QVERIFY(decoder.satellitesInUse().isEmpty());
-    QCOMPARE(decoder.satellitesReceivedAtUs(), 0ULL);
+    QTRY_COMPARE_WITH_TIMEOUT(decoder.satelliteObservation().satellitesInViewCount(), -1, TestTimeout::shortMs());
+    QCOMPARE(decoder.satelliteObservation().satellitesInUseCount(), -1);
     QCOMPARE(decoder.health()->satellitesInUseCount(), 8);
-    decoder._useSnapshot.satellites = {galileo};
-    decoder._useSnapshot.constellationReceipts = {{"GA", freshReceipt}};
-    decoder._expireSatellites();
-    QVERIFY(!decoder.satellitesUsedKnown());
-    QVERIFY(decoder.satelliteUseSystems().isEmpty());
+    decoder._viewSnapshot.satellites = {gps};
+    decoder._viewSnapshot.constellationReceipts = {{"GP", receipt}};
+    decoder._updateSatellites();
+    QCOMPARE(decoder.satelliteObservation().satellitesInViewCount(), -1);
     decoder.stop();
     QVERIFY(decoder.sessionId() > session);
-    QCOMPARE(decoder.satellitesReceivedAtUs(), 0ULL);
-    QVERIFY(decoder.satellitesInView().isEmpty());
-    QVERIFY(decoder.satelliteUseSystems().isEmpty());
+    QCOMPARE(decoder.satelliteObservation().satellitesInViewCount(), -1);
 }
 
 void NMEASourceManagerTest::init()
@@ -135,9 +134,10 @@ void NMEASourceManagerTest::_udpSwitchAndDisable()
     spare.close();
     saved.setFactValue(settings->nmeaUdpPort(), firstPort);
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     source.update();
-    QVERIFY(source._sourceInstalled);
+    QVERIFY(source._sourceAvailable);
     QUdpSocket sender;
     QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, firstPort), kFix.size());
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
@@ -148,7 +148,7 @@ void NMEASourceManagerTest::_udpSwitchAndDisable()
     settings->nmeaUdpPort()->setRawValue(secondPort);
     source.update();
     QVERIFY(!position.gcsPosition().isValid());
-    QVERIFY(source._sourceInstalled);
+    QVERIFY(source._sourceAvailable);
     QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, firstPort), kFix.size());
     QVERIFY(spare.bind(QHostAddress::LocalHost, firstPort, QUdpSocket::DontShareAddress));
     QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, secondPort), kFix.size());
@@ -157,7 +157,7 @@ void NMEASourceManagerTest::_udpSwitchAndDisable()
     settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
     source.update();
     QVERIFY(!position.gcsPosition().isValid());
-    QVERIFY(!source._sourceInstalled);
+    QVERIFY(!source._sourceAvailable);
     QVERIFY(!source._attempt);
     settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceUdp);
     source.update();
@@ -166,7 +166,7 @@ void NMEASourceManagerTest::_udpSwitchAndDisable()
     settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
     source.update();
     QVERIFY(!position.gcsPosition().isValid());
-    QVERIFY(!source._sourceInstalled);
+    QVERIFY(!source._sourceAvailable);
     QVERIFY(!source._attempt);
 }
 
@@ -181,7 +181,8 @@ void NMEASourceManagerTest::_inactiveSettingsKeepConnection()
     saved.setFactValue(settings->nmeaTcpPort(), server.serverPort());
     saved.setFactValue(settings->nmeaAutoConnect(), false);
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     QVERIFY(source.connectSource());
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     const auto peer = std::unique_ptr<QTcpSocket>(server.nextPendingConnection());
@@ -216,7 +217,8 @@ void NMEASourceManagerTest::_udpActivityStatus()
     spare.close();
     saved.setFactValue(settings->nmeaUdpPort(), port);
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     QVERIFY(source.connectSource());
     const QString listening = QStringLiteral("Listening on UDP port %1").arg(port);
     const QString receiving = QStringLiteral("Receiving UDP data on port %1").arg(port);
@@ -263,15 +265,16 @@ void NMEASourceManagerTest::_bindFailureAndTeardown()
     saved.setFactValue(settings->nmeaUdpPort(), port);
     QGCPositionManager position;
     {
-        NMEASourceManager source(settings, &position);
+        NMEASourceManager source(settings);
+        attachPosition(source, position);
         source.update();
-        QVERIFY(!source._sourceInstalled);
+        QVERIFY(!source._sourceAvailable);
         QVERIFY(!source._attempt);
         QCOMPARE(source.connectionState(), GPSConnectionState::Retrying);
         occupied.close();
         QTRY_VERIFY_WITH_TIMEOUT(([&]() {
                                      source.update();
-                                     return source._sourceInstalled;
+                                     return source._sourceAvailable;
                                  })(),
                                  TestTimeout::mediumMs());
         QCOMPARE(source.connectionState(), GPSConnectionState::Ready);
@@ -297,7 +300,8 @@ void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
     saved.setFactValue(settings->nmeaUdpPort(), port);
     GPSReceiverPositionSource receiver;
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     QVERIFY(source.connectSource());
     QCOMPARE(source.satellitesInViewCount(), -1);
     QCOMPARE(source.satellitesInUseCount(), -1);
@@ -307,19 +311,32 @@ void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
     const auto send = [&](const QByteArray& data) {
         QCOMPARE(sender.writeDatagram(data, QHostAddress::LocalHost, port), data.size());
     };
-    const QByteArray payload = kFix + satelliteSentences();
+    int fixSequence = 0;
+    const auto freshFix = [&]() {
+        const QByteArray epoch =
+            QTime(9, 27, 50).addSecs(++fixSequence).toString(QStringLiteral("hhmmss.zzz")).toLatin1();
+        QByteArray result;
+        for (QByteArray sentence : kFix.split('\n')) {
+            if (!sentence.trimmed().isEmpty()) {
+                sentence.replace("092750.000", epoch);
+                result += NMEAUtils::repairChecksum(sentence);
+            }
+        }
+        return result;
+    };
+    const QByteArray payload = freshFix() + satelliteSentences();
     const qsizetype split = kFix.size() + 15;
     send(payload.first(split));
     send(payload.sliced(split));
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), 2, TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInUseCount(), 8, TestTimeout::mediumMs());
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
-    const auto satellite = source.satellitesInView().first();
-    QCOMPARE(satellite.satelliteIdentifier(), 1);
-    QCOMPARE(satellite.satelliteSystem(), QGeoSatelliteInfo::GPS);
-    QCOMPARE(satellite.signalStrength(), 40);
-    QCOMPARE(satellite.attribute(QGeoSatelliteInfo::Elevation), 45);
-    QCOMPARE(satellite.attribute(QGeoSatelliteInfo::Azimuth), 100);
+    const auto satellite = source.satelliteObservation().satellites.first();
+    QCOMPARE(satellite.id, 1);
+    QCOMPARE(satellite.constellation, GPSSatellite::Constellation::GPS);
+    QCOMPARE(satellite.signalStrength, std::optional<int>(40));
+    QCOMPARE(satellite.elevationDegrees, std::optional<double>(45));
+    QCOMPARE(satellite.azimuthDegrees(), std::optional<double>(100));
 
     QSignalSpy responses(source._decoder._satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInViewUpdated);
     QTimer timer;
@@ -334,25 +351,26 @@ void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
     timer.stop();
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), -1, TestTimeout::mediumMs());
     QCOMPARE(source.satellitesInUseCount(), -1);
-    QVERIFY(source.satellitesInView().isEmpty());
-    QVERIFY(source.satellitesInUse().isEmpty());
-    QCOMPARE(source.satellitesReceivedAtUs(), 0ULL);
-    QVERIFY(!source.satellitesUsedKnown());
-    QVERIFY(source.satelliteUseSystems().isEmpty());
+    QVERIFY(source.satelliteObservation().satellites.isEmpty());
+    QCOMPARE(source.satelliteObservation().satellitesInUseCount(), -1);
+    QCOMPARE(source.satelliteObservation().satellitesInViewCount(), -1);
     source._decoder._health._freshnessTimeoutMs = 5000;
-    send(kFix);
-    QVERIFY(source.satellitesInView().isEmpty());
+    send(freshFix());
+    QVERIFY(source.satelliteObservation().satellites.isEmpty());
     send(satelliteSentences());
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), 2, TestTimeout::mediumMs());
 
     position.setReceiverPositionSource(&receiver);
     source._decoder._satelliteSource->requestUpdate(5000);
     send(satelliteSentences(45));
-    QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInView().first().signalStrength(), 45, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(source.satelliteObservation().satellites.first().signalStrength, std::optional<int>(45),
+                              TestTimeout::mediumMs());
+    const quint64 previousReceipt = source.health()->observation().monotonicTimestampUs;
     position.clearReceiverPositionSource(&receiver);
     QVERIFY(!position.gcsPosition().isValid());
-    send(kFix);
+    send(freshFix());
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QVERIFY(source.health()->observation().monotonicTimestampUs > previousReceipt);
     QCOMPARE(source.satellitesInViewCount(), 2);
 
     source.disconnectSource();
@@ -381,12 +399,13 @@ void NMEASourceManagerTest::_satellitesShareTcpConnection()
     saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("127.0.0.1"));
     saved.setFactValue(settings->nmeaTcpPort(), server.serverPort());
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     QVERIFY(source.connectSource());
     QCOMPARE(source.connectionState(), GPSConnectionState::Connecting);
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
-    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceAvailable, TestTimeout::mediumMs());
     peer->write(kFix + satelliteSentences());
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), 2, TestTimeout::mediumMs());
@@ -396,11 +415,11 @@ void NMEASourceManagerTest::_satellitesShareTcpConnection()
     peer->write(NMEAUtils::repairChecksum("$GPGSV,1,1,00") +
                 NMEAUtils::repairChecksum("$GPGSA,A,1,,,,,,,,,,,,,99.9,99.9,99.9"));
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), 0, TestTimeout::mediumMs());
-    QTRY_VERIFY_WITH_TIMEOUT(source.satellitesInUse().isEmpty(), TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(source.satelliteObservation().satellitesInUseCount(), 0, TestTimeout::mediumMs());
     // The fresh GGA total remains authoritative while the GSA satellite list changes.
     QCOMPARE(source.satellitesInUseCount(), 8);
     peer->disconnectFromHost();
-    QTRY_VERIFY_WITH_TIMEOUT(!source._sourceInstalled, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!source._sourceAvailable, TestTimeout::mediumMs());
     QCOMPARE(source.satellitesInViewCount(), -1);
     QVERIFY(!position.gcsPosition().isValid());
 }
@@ -416,7 +435,8 @@ void NMEASourceManagerTest::_disconnectDuringSatelliteUpdate()
     spare.close();
     saved.setFactValue(settings->nmeaUdpPort(), port);
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     QVERIFY(source.connectSource());
     connect(&source, &NMEASourceManager::satellitesChanged, this, [&]() {
         if (source.satellitesInViewCount() >= 0 || source.satellitesInUseCount() >= 0) {
@@ -444,11 +464,12 @@ void NMEASourceManagerTest::_configuredSerialRoutingSurvivesReconnect()
     saved.setFactValue(settings->autoConnectNmeaPort(), first);
     QGCPositionManager position;
     {
-        NMEASourceManager source(settings, &position);
+        NMEASourceManager source(settings);
+        attachPosition(source, position);
         QVERIFY(!ports->canAutoConnectPort(first));
         QVERIFY(!ports->isPortReserved(first));
         source.update();
-        QVERIFY(!source._sourceInstalled);
+        QVERIFY(!source._sourceAvailable);
         source.stop();
         QVERIFY(!ports->canAutoConnectPort(first));
         settings->autoConnectNmeaPort()->setRawValue(second);
@@ -526,11 +547,12 @@ void NMEASourceManagerTest::_tcpRecoveryAndSourceSwitch()
     saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("127.0.0.1"));
     saved.setFactValue(settings->nmeaTcpPort(), server.serverPort());
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
-    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceAvailable, TestTimeout::mediumMs());
     peer->write(kFix.first(20));
     QVERIFY(peer->waitForBytesWritten());
     QVERIFY(!position.gcsPosition().isValid());
@@ -547,7 +569,7 @@ void NMEASourceManagerTest::_tcpRecoveryAndSourceSwitch()
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     peer.reset(server.nextPendingConnection());
-    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceAvailable, TestTimeout::mediumMs());
     peer->write(kFix);
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
     QUdpSocket spare;
@@ -583,7 +605,8 @@ void NMEASourceManagerTest::_tcpManualAndAutoConnect()
     saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("tcp://invalid"));
     saved.setFactValue(settings->nmeaTcpPort(), server.serverPort());
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     source.update();
     QVERIFY(!source.active());
     QVERIFY(!source.connectSource());
@@ -596,20 +619,20 @@ void NMEASourceManagerTest::_tcpManualAndAutoConnect()
     QVERIFY(!source.active());
     settings->nmeaAutoConnect()->setRawValue(true);
     source.update();
-    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceAvailable, TestTimeout::mediumMs());
     QVERIFY(source.active());
     source.disconnectSource();
     source.update();
     QVERIFY(!source.active());
     QVERIFY(source.connectSource());
-    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceAvailable, TestTimeout::mediumMs());
     settings->nmeaAutoConnect()->setRawValue(false);
     QVERIFY(!source.active());
     QVERIFY(!source._attempt);
     source.update();
     QVERIFY(!source.active());
     QVERIFY(source.connectSource());
-    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceAvailable, TestTimeout::mediumMs());
     QVERIFY(!settings->nmeaAutoConnect()->rawValue().toBool());
     source.update();
     QVERIFY(source.active());
@@ -628,7 +651,8 @@ void NMEASourceManagerTest::_tcpRefusalBackoff()
     saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("127.0.0.1"));
     saved.setFactValue(settings->nmeaTcpPort(), port);
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(!source._attempt, TestTimeout::mediumMs());
     QVERIFY(!source._connection._retryDeadline.isForever());
@@ -642,7 +666,7 @@ void NMEASourceManagerTest::_tcpRefusalBackoff()
     QVERIFY(server.listen(QHostAddress::LocalHost, port));
     source._connection._retryDeadline.setRemainingTime(0);
     source.update();
-    QTRY_VERIFY_WITH_TIMEOUT(source._sourceInstalled, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(source._sourceAvailable, TestTimeout::mediumMs());
     QCOMPARE(source._connection._retryDelayMs, 1000);
 }
 
@@ -653,7 +677,8 @@ void NMEASourceManagerTest::_disconnectDuringPositionUpdate()
     saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
     saved.setFactValue(settings->nmeaUdpPort(), 0);
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     QVERIFY(source.connectSource());
     QPointer<QGeoPositionInfoSource> decoder = source.positionSource();
     QVERIFY(decoder);
@@ -682,7 +707,8 @@ void NMEASourceManagerTest::_managedReceiverFailureAndCancellation()
     saved.setFactValue(settings->nmeaReceiverMode(), AutoConnectSettings::NmeaReceiverUblox);
     saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/injected-nmea"));
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     auto lease = std::make_shared<int>(1);
     const std::weak_ptr<int> weakLease = lease;
     auto attempts = std::make_shared<std::atomic_int>(0);
@@ -732,15 +758,16 @@ void NMEASourceManagerTest::_managedReceiverSettingsPreservePassiveBaud()
     saved.setFactValue(settings->autoConnectNmeaBaud(), 4800);
     QGCPositionManager position;
     {
-        NMEASourceManager source(settings, &position);
-        QCOMPARE(source._config.receiverMode, NMEAConnectionConfig::Ublox);
+        NMEASourceManager source(settings);
+        attachPosition(source, position);
+        QCOMPARE(source._profile.configurationPolicy, GPSReceiverProfile::ConfigurationPolicy::Configure);
         source.disconnectSource();
         settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverPassive);
-        QCOMPARE(source._config.baud, 4800);
+        QCOMPARE(source._profile.endpoint.baud, 4800);
     }
     settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverUblox);
     NMEASourceManager restarted(settings, &position);
-    QCOMPARE(restarted._config.receiverMode, NMEAConnectionConfig::Ublox);
+    QCOMPARE(restarted._profile.configurationPolicy, GPSReceiverProfile::ConfigurationPolicy::Configure);
     QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 4800);
 }
 
@@ -754,7 +781,8 @@ void NMEASourceManagerTest::_managedModeChangeCancelsRetry()
     saved.setFactValue(settings->autoConnectNmeaBaud(), 4800);
     saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/injected-nmea"));
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     auto lease = std::make_shared<int>(1);
     const std::weak_ptr<int> weakLease = lease;
     source._receiverFactory = [lease](const std::atomic_bool&) -> std::unique_ptr<GPSTransport> { return {}; };
@@ -765,7 +793,7 @@ void NMEASourceManagerTest::_managedModeChangeCancelsRetry()
     QTRY_VERIFY_WITH_TIMEOUT(weakLease.expired(), TestTimeout::mediumMs());
     QVERIFY(!source._receiverFactory);
     QVERIFY(source._shouldConnect());
-    QCOMPARE(source._config.baud, 4800);
+    QCOMPARE(source._profile.endpoint.baud, 4800);
     source.disconnectSource();
     settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverUblox);
     QVERIFY(!source._shouldConnect());
@@ -799,7 +827,8 @@ void NMEASourceManagerTest::_reentrantConnectionCommands()
     saved.setFactValue(settings->nmeaTcpPort(), server.serverPort());
     saved.setFactValue(settings->nmeaUdpPort(), 0);
     QGCPositionManager position;
-    auto source = std::make_unique<NMEASourceManager>(settings, &position);
+    auto source = std::make_unique<NMEASourceManager>(settings);
+    attachPosition(*source, position);
     bool applied = false;
     connect(source.get(), &NMEASourceManager::stateChanged, &position, [&]() {
         if (applied || !source || !source->active()) {
@@ -835,7 +864,8 @@ void NMEASourceManagerTest::_managedAttemptRetainsReservationWhileStopping()
     saved.setFactValue(settings->nmeaReceiverMode(), AutoConnectSettings::NmeaReceiverUblox);
     saved.setFactValue(settings->nmeaAutoConnect(), false);
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     auto lease = std::make_shared<int>(1);
     const std::weak_ptr<int> reservation = lease;
     auto entered = std::make_shared<QSemaphore>();
@@ -879,7 +909,8 @@ void NMEASourceManagerTest::_injectedSerialDiscovery()
         return QList<SerialPortManager::Port>();
     });
     QGCPositionManager position;
-    NMEASourceManager source(settings, &position);
+    NMEASourceManager source(settings);
+    attachPosition(source, position);
     source.setSerialDiscovery(&inventory);
     QVERIFY(inventory.isAutoConnectExcluded(device));
     source.update();
@@ -897,4 +928,22 @@ void NMEASourceManagerTest::_injectedSerialDiscovery()
     source.disconnectSource();
     QVERIFY(!inventory.isAutoConnectExcluded(device));
 #endif
+}
+
+void NMEASourceManagerTest::_decodesWithoutPositionManager()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    saved.setFactValue(settings->nmeaUdpPort(), 0);
+    NMEASourceManager source(settings);
+    QVERIFY(source.connectSource());
+    QVERIFY(source.positionSource());
+    QUdpSocket sender;
+    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, source._attempt->localPort()), kFix.size());
+    QTRY_VERIFY_WITH_TIMEOUT(
+        source.health()->acceptedObservation(GPSObservation::PositionUse::GroundStation).has_value(),
+        TestTimeout::mediumMs());
+    source.disconnectSource();
+    QVERIFY(!source.positionSource());
 }

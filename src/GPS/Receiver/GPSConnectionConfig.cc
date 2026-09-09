@@ -28,6 +28,9 @@ GPSReceiverProfile GPSConnectionConfig::profile() const
     profile.driverType = receiverType;
     profile.receiverName = receiverName;
     profile.receiver = receiver;
+    if (receiver.role == GPSReceiverConfig::Role::RTKBase && (baseMode < 0 || baseMode > 1)) {
+        profile.receiver.role = static_cast<GPSReceiverConfig::Role>(-1);
+    }
     return profile.normalized();
 }
 

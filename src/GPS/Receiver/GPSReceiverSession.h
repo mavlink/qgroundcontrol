@@ -6,6 +6,7 @@
 
 #include "GPSByteStream.h"
 #include "GPSProvider.h"
+#include "GPSReceiverAttempt.h"
 
 class GPSRecordingBuffer;
 
@@ -22,7 +23,7 @@ public:
     explicit GPSReceiverSession(QObject* parent = nullptr);
     ~GPSReceiverSession() override;
 
-    void start(GPSType type, GPSProvider::TransportFactory factory, const GPSReceiverConfig& config);
+    void start(const GPSReceiverProfile& profile, GPSProvider::TransportFactory factory);
     void stop();
 
     /// Set at composition time; newly created attempts share this bounded recorder.
@@ -30,7 +31,7 @@ public:
     /// Join all workers during final application shutdown, without an event loop.
     void shutdown();
 
-    bool ready() const { return _ready; }
+    bool ready() const { return _attempt.ready(); }
 
     bool readyForCorrections() const;
     /// Returns queue acceptance, not device acknowledgement. Call on the session thread.
@@ -45,17 +46,22 @@ public:
 
     quint64 sessionId() const { return _generation; }
 
-    const GPSReceiverConfig& config() const { return _config; }
+    const GPSReceiverConfig& config() const { return profile().receiver; }
+
+    const GPSReceiverProfile& profile() const;
+
+    const GPSReceiverAttempt& attempt() const { return _attempt; }
 
     QIODevice* nmeaDevice() const { return _nmeaStream.get(); }
 
     const GPSReceiverCapabilities& capabilities() const { return _capabilities; }
 
-    QString errorDetail() const { return _errorDetail; }
+    QString errorDetail() const { return _attempt.errorDetail; }
 
     const GPSConfigurationReport& configurationReport() const { return _configurationReport; }
 
 signals:
+    void attemptChanged(const GPSReceiverAttempt& attempt);
     void receiverTypeChanged(GPSType type);
     void configurationStarted();
     void configurationReported(const GPSConfigurationReport& report);
@@ -69,11 +75,13 @@ signals:
     void satellitesReceived(const GPSSatelliteObservation& observation);
     void relativePositionReceived(const GPSRelativeObservation& observation);
     void rtcmReceived(const QByteArray& data);
-    void rtcmFrameReceived(const QByteArray& data, qint64 receivedAtMs);
+    void rtcmFrameReceived(const QByteArray& data, qint64 receivedAtMs, quint64 sessionId);
     void surveyInReceived(const GPSSurveyInStatus& status);
     void correctionDeliveriesReady(const QList<GPSCorrectionDelivery>& deliveries);
 
 private:
+    bool _transition(GPSReceiverAttempt::Phase phase);
+    void _finishAttempt(GPSConnectionError error = GPSConnectionError::None);
     void _invalidateConfigurationReport();
     void _drain(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
     void _flushDeliveries(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
@@ -85,11 +93,9 @@ private:
     QSet<GPSProvider*> _started;
     QSet<GPSProvider*> _retiring;
     quint64 _generation = 0;
-    bool _ready = false;
     bool _shutdown = false;
     bool _configurationTerminal = true;
-    GPSReceiverConfig _config;
+    GPSReceiverAttempt _attempt;
     GPSReceiverCapabilities _capabilities;
-    QString _errorDetail;
     GPSConfigurationReport _configurationReport;
 };

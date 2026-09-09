@@ -19,7 +19,6 @@ private slots:
     void testInitialStateIsDisconnected();
     void testStopFromIdleIsNoop();
     void testPlaintextCredentialWarningIsVisibleState();
-    void testErrorStateStopsUdpForwarder();
 
     void testDuplicateTransportErrorsScheduleOneRetry();
     void testRetiredTransportErrorCannotAffectNewSession();

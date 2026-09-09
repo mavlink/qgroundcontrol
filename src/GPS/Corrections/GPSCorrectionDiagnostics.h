@@ -38,6 +38,8 @@ struct GPSCorrectionDelivery
     quint64 requestedBytes = 0;
     quint64 writtenBytes = 0;
     GPSCorrectionOutcome outcome = GPSCorrectionOutcome::NotReady;
+    quint64 acceptedBytes = 0;
+    quint64 uncertainBytes = 0;
 };
 Q_DECLARE_METATYPE(GPSCorrectionDelivery)
 Q_DECLARE_METATYPE(QList<GPSCorrectionDelivery>)

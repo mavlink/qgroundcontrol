@@ -1,13 +1,13 @@
 #pragma once
 
 #include <QtCore/QByteArray>
-#include <QtCore/QJsonObject>
 #include <QtCore/QString>
 #include <QtCore/QVector>
 
 #include <atomic>
 #include <cstdint>
 
+#include "GPSRecordingFormat.h"
 #include "GPSTransport.h"
 
 class GPSReplayClock
@@ -28,32 +28,14 @@ private:
     uint64_t* _now;
 };
 
-struct GPSReplayEvent
-{
-    enum class Kind
-    {
-        Open,
-        OpenError,
-        Rx,
-        Tx,
-        Baud,
-        BaudError,
-        Timeout,
-        ReadError,
-        WriteError,
-        Disconnect,
-        Cancel
-    };
-    quint64 atUs = 0;
-    Kind kind = Kind::Rx;
-    QByteArray bytes = {};
-    int value = 0;
-};
+using GPSReplayEvent = GPSRecordingEvent;
 
 struct GPSReplayTrace
 {
     QVector<GPSReplayEvent> events;
-    QJsonObject profile = {};
+    std::optional<GPSRecordingMetadata> profile = {};
+    QVector<GPSRecordingEvent> recordedEvents = {};
+    bool limitReached = false;
     quint64 streamId = 0;
     static bool fromJson(const QByteArray& json, GPSReplayTrace& result, QString& error, quint64 streamId = 0);
     static bool load(const QString& filename, GPSReplayTrace& result, QString& error, quint64 streamId = 0);
@@ -73,6 +55,13 @@ public:
 
     int read(uint8_t* buffer, int length, int timeoutMs) override;
     int write(const uint8_t* buffer, int length) override;
+    WriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
+    std::chrono::milliseconds correctionWriteTimeout(int length) const override;
+
+    unsigned fixedBaudrate() const override { return _trace.profile ? _trace.profile->fixedBaud : 0; }
+
+    const GPSReplayTrace& trace() const { return _trace; }
+
     bool setBaudrate(unsigned baudrate) override;
 
     bool complete() const { return _index == _trace.events.size() && _failure.isEmpty(); }
@@ -93,6 +82,7 @@ private:
     qsizetype _index = 0;
     qsizetype _offset = 0;
     int _maximumRead = 4096;
+    unsigned _baudrate = 0;
     QString _failure;
     quint64 _lastReadTimestampUs = 0;
     quint64 _readCount = 0;

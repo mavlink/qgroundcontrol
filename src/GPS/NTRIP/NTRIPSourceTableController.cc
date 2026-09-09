@@ -7,6 +7,7 @@
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QSslError>
 
+#include "NTRIPRequest.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPTlsPolicy.h"
 #include "QGCLoggingCategory.h"
@@ -76,22 +77,22 @@ void NTRIPSourceTableController::fetch(const NTRIPTransportConfig& config, const
         return;
     }
 
-    QUrl url;
-    url.setScheme(config.useTls ? QStringLiteral("https") : QStringLiteral("http"));
-    url.setHost(config.host);
-    url.setPort(config.port);
-    url.setPath(QStringLiteral("/"));
-
+    const auto casterRequest = NTRIPRequest::build(config, true);
     QGCNetworkHelper::RequestConfig reqCfg;
     reqCfg.timeoutMs = kFetchTimeoutMs;
-    reqCfg.userAgent = QStringLiteral("QGC-NTRIP");
     reqCfg.http2Allowed = false;
     reqCfg.cacheEnabled = false;
-
-    QNetworkRequest request = QGCNetworkHelper::createRequest(url, reqCfg);
-    request.setRawHeader("Ntrip-Version", "Ntrip/2.0");
-    if (!config.username.isEmpty() || !config.password.isEmpty()) {
-        QGCNetworkHelper::setBasicAuth(request, config.username, config.password);
+    // Stream sockets do not follow redirects. Keep discovery on the same caster/TLS boundary.
+    reqCfg.allowRedirects = false;
+    QNetworkRequest request = QGCNetworkHelper::createRequest(casterRequest.url, reqCfg);
+    for (const auto& [name, value] : casterRequest.headers) {
+        request.setRawHeader(name, value);
+    }
+    if (casterRequest.credentialsInClear) {
+        emit plaintextCredentialsWarning();
+        if (!guard || generation != _generation) {
+            return;
+        }
     }
 
     _replyTooLarge = false;

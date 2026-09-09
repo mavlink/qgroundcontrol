@@ -144,3 +144,29 @@ void GPSReceiverProfileTest::_passiveAttemptNeverConfigures()
 }
 
 UT_REGISTER_TEST(GPSReceiverProfileTest, TestLabel::Unit)
+
+void GPSReceiverProfileTest::_passiveTerminalTransitionIsIdempotent()
+{
+    GPSReceiverProfile profile;
+    profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
+    profile.endpoint.port = -1;
+    NMEAConnectionAttempt attempt(profile, nullptr, 42);
+    int terminalTransitions = 0;
+    connect(&attempt, &NMEAConnectionAttempt::attemptChanged, &attempt, [&](const GPSReceiverAttempt& snapshot) {
+        QCOMPARE(snapshot.generation, quint64(42));
+        terminalTransitions += snapshot.terminal() ? 1 : 0;
+    });
+    QSignalSpy errors(&attempt, &NMEAConnectionAttempt::failed);
+    QSignalSpy stopped(&attempt, &NMEAConnectionAttempt::stopped);
+    attempt.start();
+    const auto failure = attempt.attempt();
+    QCOMPARE(failure.phase, GPSReceiverAttempt::Phase::Failed);
+    QVERIFY(!failure.errorDetail.isEmpty());
+    attempt.stop();
+    attempt.stop();
+    attempt.shutdown();
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(stopped.size(), 1);
+    QCOMPARE(terminalTransitions, 1);
+    QCOMPARE(attempt.attempt().errorDetail, failure.errorDetail);
+}

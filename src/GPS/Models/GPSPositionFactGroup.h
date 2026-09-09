@@ -40,7 +40,8 @@ public:
     Fact* lock() { return &_lockFact; }
 
     /// Satellite visibility is updated independently from the live fix.
-    void updatePosition(const GPSObservation& observation);
+    void updatePosition(const GPSObservation& observation, std::optional<int> satelliteCount = std::nullopt,
+                        std::optional<int> lockCode = std::nullopt);
     void resetPosition();
 
 protected:

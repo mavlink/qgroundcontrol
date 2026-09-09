@@ -10,6 +10,7 @@ void UdpForwarderTest::testInitialState()
 {
     UdpForwarder fwd;
     QVERIFY(!fwd.isEnabled());
+    QCOMPARE(fwd.forward(QByteArrayLiteral("disabled")), qint64(0));
     QCOMPARE(fwd.port(), quint16(0));
     QCOMPARE(fwd.address(), QString());
 }
@@ -50,7 +51,7 @@ void UdpForwarderTest::testForward()
     QVERIFY(fwd.configure(QStringLiteral("127.0.0.1"), port));
 
     const QByteArray payload = QByteArrayLiteral("test-rtcm-data");
-    fwd.forward(payload);
+    QCOMPARE(fwd.forward(payload), qint64(payload.size()));
 
     QVERIFY(receiver.waitForReadyRead(1000));
     QByteArray received;
@@ -67,6 +68,7 @@ void UdpForwarderTest::testStop()
 
     fwd.stop();
     QVERIFY(!fwd.isEnabled());
+    QCOMPARE(fwd.forward(QByteArrayLiteral("disabled")), qint64(0));
     QCOMPARE(fwd.port(), quint16(0));
 }
 

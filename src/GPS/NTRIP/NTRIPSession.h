@@ -47,17 +47,20 @@ public:
 
     QString sourceId() const;
 
+    quint64 activeAttemptId() const { return _stream ? _activeAttemptId : 0; }
+
     int failedAttempts() const { return _failedAttempts; }
 
     std::chrono::milliseconds nextRetryDelay() const;
 
 signals:
     void stateChanged(NTRIPSession::State state, const QString& message);
-    void streamStarted();
-    void streamEnded();
+    void streamStarted(quint64 attemptId, const QString& sourceId);
+    void streamEnded(quint64 attemptId);
     void streamConnected(NTRIPStream* stream);
-    void correctionReceived(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs);
-    void correctionRejected(const QByteArray& data, int messageId, qint64 receivedAtMs);
+    void correctionReceived(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs,
+                            quint64 attemptId);
+    void correctionRejected(const QByteArray& data, int messageId, qint64 receivedAtMs, quint64 attemptId);
     void bytesReceived(qint64 count);
     void failureOccurred(const NTRIPFailure& failure);
     void plaintextCredentialsWarning();
@@ -67,7 +70,8 @@ private:
     bool _retireStream(quint64 generation);
     bool _setState(State state, const QString& message, quint64 generation);
     void _onFailure(const NTRIPFailure& failure, NTRIPStream* stream);
-    void _onCorrection(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs, NTRIPStream* stream);
+    void _onCorrection(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs, NTRIPStream* stream,
+                       quint64 attemptId);
     void _onConnected(NTRIPStream* stream);
 
     StreamFactory _factory;
@@ -79,6 +83,8 @@ private:
     State _state = State::Disconnected;
     QString _message;
     quint64 _generation = 0;
+    quint64 _nextAttemptId = 0;
+    quint64 _activeAttemptId = 0;
     int _failedAttempts = 0;
     qint64 _healthySince = -1;
     qint64 _lastValid = -1;

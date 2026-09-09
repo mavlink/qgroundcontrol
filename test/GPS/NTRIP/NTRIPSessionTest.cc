@@ -133,10 +133,12 @@ private slots:
             QCOMPARE(session.failedAttempts(), failed);
             QCOMPARE(session.nextRetryDelay(), std::chrono::milliseconds{1000 * (1 << (failed - 1))});
             session._retryTimer.stop();
+            const auto retiredAttempt = session._nextAttemptId;
             session._beginAttempt(session._generation);
+            QVERIFY(session.activeAttemptId() > retiredAttempt);
         }
         for (int i = 0; i < 4; ++i) {
-            stream->simulateRtcmData(QByteArray("frame"), 1005);
+            stream->simulateRtcmData(QByteArray("frame"), 1005, now);
             now += 4000;
         }
         QCOMPARE(session.failedAttempts(), 0);
@@ -144,6 +146,49 @@ private slots:
         QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
         QCOMPARE(session.state(), NTRIPSession::State::Error);
         QVERIFY(!session._retryTimer.isActive());
+    }
+
+    void attemptIdentitySurvivesReentrantRestart_data()
+    {
+        QTest::addColumn<bool>("rejected");
+        QTest::newRow("successful-frame") << false;
+        QTest::newRow("rejected-frame") << true;
+    }
+
+    void attemptIdentitySurvivesReentrantRestart()
+    {
+        QFETCH(bool, rejected);
+        QList<MockNTRIPStream*> streams;
+        NTRIPSession session([&](const NTRIPTransportConfig&, QObject* owner) {
+            auto* stream = new MockNTRIPStream(owner);
+            streams.append(stream);
+            return stream;
+        });
+        session.start(config());
+        const auto retiredAttempt = session.activeAttemptId();
+        const auto restart = [&]() {
+            session.stop();
+            session.start(config());
+        };
+        // A preceding observer replaces the session before downstream observers see the old emission.
+        if (rejected) {
+            connect(&session, &NTRIPSession::correctionRejected, &session, restart);
+        } else {
+            connect(&session, &NTRIPSession::correctionReceived, &session, restart);
+        }
+        QSignalSpy received(&session, &NTRIPSession::correctionReceived);
+        QSignalSpy invalid(&session, &NTRIPSession::correctionRejected);
+        if (rejected) {
+            emit streams.first()->correctionRejectedAt(QByteArrayLiteral("bad"), 1005, 1000);
+            QCOMPARE(invalid.size(), 1);
+            QCOMPARE(invalid.first().last().toULongLong(), retiredAttempt);
+        } else {
+            streams.first()->simulateRtcmData(QByteArrayLiteral("frame"), 1005);
+            QCOMPARE(received.size(), 1);
+            QCOMPARE(received.first().last().toULongLong(), retiredAttempt);
+        }
+        QVERIFY(session.activeAttemptId() > retiredAttempt);
+        QCOMPARE(session.sourceId(), QStringLiteral("ntrip://caster.example.com:2101/BASE"));
     }
 
     void observerCanCancelOrReplace_data()

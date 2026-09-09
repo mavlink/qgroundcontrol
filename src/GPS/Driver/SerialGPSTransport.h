@@ -27,6 +27,8 @@ public:
 
     int read(uint8_t *buffer, int length, int timeoutMs) override;
     int write(const uint8_t *buffer, int length) override;
+    WriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
+    std::chrono::milliseconds correctionWriteTimeout(int length) const override;
     bool setBaudrate(unsigned baudrate) override;
 
 private:
@@ -36,4 +38,6 @@ private:
 
     QString _device;
     std::unique_ptr<QSerialPort> _serial;
+    qint64 _acceptedTotal = 0;
+    qint64 _writtenTotal = 0;
 };

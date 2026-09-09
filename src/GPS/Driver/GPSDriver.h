@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QMetaType>
 
 #include <cstdint>
@@ -10,64 +11,11 @@
 #include "GPSConfigurationReport.h"
 #include "GPSObservation.h"
 #include "GPSReceiverCapabilities.h"
+#include "GPSReceiverConfig.h"
+#include "GPSSurveyInStatus.h"
 #include "GPSType.h"
 
 class GPSTransport;
-
-/// Configuration used only by the RTK base-station role.
-struct GPSBaseStationConfig
-{
-    bool operator==(const GPSBaseStationConfig&) const = default;
-    bool useFixedBase = false;
-    double surveyInAccMeters = 0.0;
-    int surveyInDurationSecs = 0;
-    double fixedBaseLatitude = 0.0;
-    double fixedBaseLongitude = 0.0;
-    float fixedBaseAltitudeMeters = 0.0f;
-    float fixedBaseAccuracyMeters = 0.0f;
-};
-
-/// Receiver configuration, decoupled from QGC settings types.
-struct GPSReceiverConfig
-{
-    enum class Role
-    {
-        RTKBase = 0,
-        Position = 1
-    };
-
-    enum class OutputProtocol
-    {
-        Native,
-        NMEA
-    };
-
-    Role role = Role::RTKBase;
-    OutputProtocol outputProtocol = OutputProtocol::Native;
-    GPSBaseStationConfig base;
-    int constellationMask = 0;
-    int dynamicModel = 0;
-    int outputRateHz = 0;
-    QString validationError() const;
-    bool operator==(const GPSReceiverConfig&) const = default;
-
-    float headingOffsetDeg = 5.0f;  // dual-antenna heading offset; consumed only by the Septentrio (SBF) driver
-};
-
-Q_DECLARE_METATYPE(GPSReceiverConfig)
-
-/// Survey-in progress, translated from the px4 SurveyInStatus.
-struct GPSSurveyInStatus
-{
-    double latitude = 0.0;
-    double longitude = 0.0;
-    float altitude = 0.0f;
-    uint32_t meanAccuracyMM = 0;
-    uint32_t durationSecs = 0;
-    bool valid = false;
-    bool active = false;
-};
-Q_DECLARE_METATYPE(GPSSurveyInStatus)
 
 /// Sinks the driver pushes decoded data into, invoked on the caller thread from
 /// within configure()/receive().
@@ -153,11 +101,14 @@ public:
     {
         CorrectionStatus status = CorrectionStatus::NotReady;
         qsizetype bytesWritten = 0;
+        qsizetype bytesAccepted = 0;
+        qsizetype bytesUncertain = 0;
     };
 
     /// Worker-thread-only: configuration and receive calls must not run concurrently.
     bool readyForCorrections() const;
-    CorrectionResult injectCorrections(const QByteArray& data);
+    CorrectionResult injectCorrections(const QByteArray& data,
+                                       QDeadlineTimer deadline = QDeadlineTimer(QDeadlineTimer::Forever));
 
     unsigned baudrate() const { return _baudrate; }
 

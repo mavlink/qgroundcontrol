@@ -10,21 +10,18 @@ private slots:
     void testChunkedCorrectionsYieldBetweenReadBatches();
     void testPublicObserverCanStop_data();
     void testPublicObserverCanStop();
-    // HTTP status line parsing
-    void _testParseHttpStatus200();
-    void _testParseHttpStatusICY();
-    void _testParseHttpStatus401();
-    void _testParseHttpStatus404();
-    void _testParseHttpStatusInvalid();
-    void _testParseHttpStatus201();
-    void _testParseHttpStatus500();
-    void _testParseHttpStatusNoReason();
+    void testResponseDecoder_data();
+    void testResponseDecoder();
+    void testNormalizedRequest_data();
+    void testNormalizedRequest();
+    void testEncodedRequestReachesCaster();
+    void testAddressValidation_data();
+    void testAddressValidation();
 
     // Whitelist parsing
-    void _testWhitelistEmpty();
-    void _testWhitelistSingle();
-    void _testWhitelistMultiple();
-    void _testWhitelistInvalidEntries();
+    void _testWhitelistParsing_data();
+    void _testWhitelistParsing();
+    void _testFragmentedReceiptTime();
 
     // RTCM filtering
     void _testFilterNoWhitelist();
@@ -38,7 +35,7 @@ private slots:
     void testConfigRejectsColonUsername();
     void testConfigRejectsControlChars();
     void testConfigDiffClassifiersCoverIndependentFields();
-    void testConfigCasterIdentityExcludesMountpointAndSinks();
+    void testConfigCasterIdentityExcludesMountpointAndFilter();
 
     // Live TLS error path
     void testTlsFatalErrorEmitsSingleError();

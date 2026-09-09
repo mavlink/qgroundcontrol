@@ -7,6 +7,7 @@ class NMEASatelliteAdapterTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _gsvDoesNotClearFreshUsedReport();
     void _constellationsExpireIndependently();
     void _decoderKeepsFreshConstellation();
     void _preservesReceiptAgeAcrossReports();

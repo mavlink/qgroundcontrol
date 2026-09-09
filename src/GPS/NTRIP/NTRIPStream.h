@@ -13,8 +13,6 @@ public:
     explicit NTRIPStream(QObject* parent = nullptr);
     ~NTRIPStream() override;
 
-    virtual bool providesTimestampedFrames() const { return false; }
-
     virtual void start() = 0;
     virtual void stop() = 0;
     virtual void sendNMEA(const QByteArray& nmea) = 0;
@@ -29,8 +27,6 @@ signals:
     void correctionRejectedAt(const QByteArray& data, int messageId, qint64 receivedAtMs);
     void error(NTRIPError code, const QString& detail);
     void failed(const NTRIPFailure& failure);
-    void RTCMDataUpdate(const QByteArray& message, int messageId);
-    void rtcmFrameValidated(const QByteArray& message, int messageId, bool filtered);
     void bytesReceived(qint64 bytes);
     void finished();
 

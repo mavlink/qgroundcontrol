@@ -1,10 +1,12 @@
 #include "VehicleGPSFactGroup.h"
-#include "Vehicle.h"
-#include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
-#include "development/mavlink_msg_gnss_integrity.h"
 
 #include <QtPositioning/QGeoCoordinate>
+
+#include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
+#include "Vehicle.h"
+#include "VehicleGPSObservation.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : GPSPositionFactGroup(parent)
@@ -54,17 +56,8 @@ void VehicleGPSFactGroup::_handleGpsRawInt(const mavlink_message_t &message)
     mavlink_gps_raw_int_t gpsRawInt{};
     mavlink_msg_gps_raw_int_decode(&message, &gpsRawInt);
 
-    lat()->setRawValue(gpsRawInt.lat * 1e-7);
-    lon()->setRawValue(gpsRawInt.lon * 1e-7);
-    mgrs()->setRawValue(QGCGeo::convertGeoToMGRS(QGeoCoordinate(gpsRawInt.lat * 1e-7, gpsRawInt.lon * 1e-7)));
-    count()->setRawValue((gpsRawInt.satellites_visible == 255) ? 0 : gpsRawInt.satellites_visible);
-    hdop()->setRawValue((gpsRawInt.eph == UINT16_MAX) ? qQNaN() : (gpsRawInt.eph / 100.0));
-    vdop()->setRawValue((gpsRawInt.epv == UINT16_MAX) ? qQNaN() : (gpsRawInt.epv / 100.0));
-    courseOverGround()->setRawValue((gpsRawInt.cog == UINT16_MAX) ? qQNaN() : (gpsRawInt.cog / 100.0));
-    yaw()->setRawValue((gpsRawInt.yaw == UINT16_MAX) ? qQNaN() : (gpsRawInt.yaw / 100.0));
-    lock()->setRawValue(gpsRawInt.fix_type);
-
-    _setTelemetryAvailable(true);
+    const auto observation = VehicleGPSObservation::fromMessage(gpsRawInt);
+    updatePosition(observation.position, observation.satellitesVisible, observation.fixType);
 }
 
 void VehicleGPSFactGroup::_handleHighLatency(const mavlink_message_t &message)

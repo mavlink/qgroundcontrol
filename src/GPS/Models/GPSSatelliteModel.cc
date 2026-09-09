@@ -1,7 +1,6 @@
 #include "GPSSatelliteModel.h"
 
 #include <QtCore/QPointer>
-#include <QtCore/QSet>
 
 #include <algorithm>
 #include <cmath>
@@ -12,39 +11,16 @@
 QGC_LOGGING_CATEGORY(GPSSatelliteModelLog, "GPS.Models.GPSSatelliteModel")
 
 namespace {
-GPSSatellite::Constellation constellationFor(QGeoSatelliteInfo::SatelliteSystem system)
-{
-    switch (system) {
-        case QGeoSatelliteInfo::GPS:
-            return GPSSatellite::Constellation::GPS;
-        case QGeoSatelliteInfo::GLONASS:
-            return GPSSatellite::Constellation::GLONASS;
-        case QGeoSatelliteInfo::GALILEO:
-            return GPSSatellite::Constellation::Galileo;
-        case QGeoSatelliteInfo::BEIDOU:
-            return GPSSatellite::Constellation::BeiDou;
-        case QGeoSatelliteInfo::QZSS:
-            return GPSSatellite::Constellation::QZSS;
-        default:
-            return GPSSatellite::Constellation::Unknown;
-    }
-}
-
 auto satelliteKey(const GPSSatellite& satellite)
 {
     return std::make_tuple(satellite.constellation, satellite.id, satellite.prn);
 }
 }  // namespace
 
-GPSSatelliteModel::GPSSatelliteModel(QObject* parent, int freshnessTimeoutMs)
+GPSSatelliteModel::GPSSatelliteModel(QObject* parent)
     : QAbstractListModel(parent)
-    , _expiryTimer(this)
-    , _freshnessTimeoutMs(std::max(1, freshnessTimeoutMs))
 {
     qCDebug(GPSSatelliteModelLog) << this;
-    _expiryTimer.setSingleShot(true);
-    _expiryTimer.setTimerType(Qt::PreciseTimer);
-    connect(&_expiryTimer, &QTimer::timeout, this, &GPSSatelliteModel::_expire);
 }
 
 GPSSatelliteModel::~GPSSatelliteModel()
@@ -144,81 +120,16 @@ void GPSSatelliteModel::reset()
 
 void GPSSatelliteModel::updateObservation(const GPSSatelliteObservation& observation)
 {
-    const quint64 nowUs = GPSObservation::monotonicNowUs();
     if (_pending.sourceId.isEmpty() || observation.sessionId != _pending.sessionId ||
-        !observation.monotonicTimestampUs || observation.monotonicTimestampUs > nowUs ||
-        observation.monotonicTimestampUs < _pending.timestampUs ||
-        (nowUs - observation.monotonicTimestampUs) >= static_cast<quint64>(_freshnessTimeoutMs) * 1000) {
+        observation.sourceId != _pending.sourceId || observation.revision < _pending.revision) {
         return;
     }
-    _pending.timestampUs = observation.monotonicTimestampUs;
-    _pending.fresh = true;
+    _pending.revision = observation.revision;
+    _pending.fresh = observation.satellitesInViewCount() >= 0;
     _pending.satellites = observation.satellites;
     std::stable_sort(_pending.satellites.begin(), _pending.satellites.end(),
                      [](const auto& left, const auto& right) { return satelliteKey(left) < satelliteKey(right); });
     _publish();
-}
-
-void GPSSatelliteModel::updateNmeaSatellites(const QList<QGeoSatelliteInfo>& view, const QList<QGeoSatelliteInfo>& used,
-                                             bool usedKnown, quint64 receivedAtUs, quint64 sessionId,
-                                             const std::optional<QSet<int>>& usedSystems)
-{
-    if (!receivedAtUs) {
-        if (sessionId == _pending.sessionId) {
-            _pending.fresh = false;
-            _pending.satellites.clear();
-            _publish();
-        }
-        return;
-    }
-    GPSSatelliteObservation observation;
-    observation.monotonicTimestampUs = receivedAtUs;
-    observation.sessionId = sessionId;
-    QSet<QPair<int, int>> usedIds;
-    for (const auto& satellite : used) {
-        usedIds.insert({satellite.satelliteSystem(), satellite.satelliteIdentifier()});
-    }
-    observation.satellites.reserve(view.size());
-    for (const auto& satellite : view) {
-        GPSSatellite converted;
-        converted.id = satellite.satelliteIdentifier();
-        converted.constellation = constellationFor(satellite.satelliteSystem());
-        if (usedKnown && (!usedSystems || usedSystems->contains(satellite.satelliteSystem()))) {
-            converted.used = usedIds.contains({satellite.satelliteSystem(), satellite.satelliteIdentifier()});
-        }
-        if (satellite.signalStrength() >= 0) {
-            converted.signalStrength = satellite.signalStrength();
-        }
-        if (satellite.hasAttribute(QGeoSatelliteInfo::Elevation)) {
-            converted.elevationDegrees = satellite.attribute(QGeoSatelliteInfo::Elevation);
-        }
-        if (satellite.hasAttribute(QGeoSatelliteInfo::Azimuth)) {
-            converted.normalizedAzimuthDegrees = satellite.attribute(QGeoSatelliteInfo::Azimuth);
-        }
-        observation.satellites.append(converted);
-    }
-    updateObservation(observation);
-}
-
-void GPSSatelliteModel::_armTimer()
-{
-    if (!_current.fresh) {
-        _expiryTimer.stop();
-        return;
-    }
-    const qint64 remaining = _freshnessTimeoutMs - GPSObservation::ageMilliseconds(_current.timestampUs);
-    _expiryTimer.start(static_cast<int>(std::max<qint64>(1, remaining)));
-}
-
-void GPSSatelliteModel::_expire()
-{
-    if (_pending.fresh && GPSObservation::ageMilliseconds(_pending.timestampUs) >= _freshnessTimeoutMs) {
-        _pending.fresh = false;
-        _pending.satellites.clear();
-        _publish();
-    } else {
-        _armTimer();
-    }
 }
 
 void GPSSatelliteModel::_publish()
@@ -251,7 +162,6 @@ void GPSSatelliteModel::_publish()
         }
     }
     _current = next;
-    _armTimer();
     if (!sameRows) {
         endResetModel();
     } else if (count() > 0) {

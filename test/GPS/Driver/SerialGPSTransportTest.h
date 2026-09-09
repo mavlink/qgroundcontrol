@@ -12,4 +12,6 @@ private slots:
     void _testCancelPendingOperation_data();
     void _testCancelPendingOperation();
     void _testPendingWriteDeadline();
+    void _testLowBaudCorrectionAllowance_data();
+    void _testLowBaudCorrectionAllowance();
 };

@@ -50,7 +50,7 @@ void GPSPositionFactGroupTest::_vehicleMessages()
     QCOMPARE(common->lat()->rawValue().toDouble(), 47.3);
     QCOMPARE(common->lon()->rawValue().toDouble(), 8.54);
     QVERIFY(!common->mgrs()->rawValue().toString().isEmpty());
-    QCOMPARE(common->count()->rawValue().toInt(), unknown ? 0 : 17);
+    QCOMPARE(common->count()->rawValue().toInt(), unknown ? -1 : 17);
     QCOMPARE(common->lock()->rawValue().toInt(), 6);
     QVERIFY(common->telemetryAvailable());
     if (unknown) {
@@ -66,6 +66,73 @@ void GPSPositionFactGroupTest::_vehicleMessages()
     }
     QCOMPARE(common->lock()->enumValues().size(), 8);
     QCOMPARE(vehicleGps->authenticationState()->enumValues().size(), 5);
+}
+
+void GPSPositionFactGroupTest::_vehicleSentinels_data()
+{
+    QTest::addColumn<bool>("secondary");
+    QTest::addColumn<int>("yaw");
+    QTest::addColumn<bool>("missingExtension");
+    for (bool secondary : {false, true}) {
+        const QByteArray source = secondary ? "gps2" : "gps1";
+        for (int yaw : {0, 65535, 36000, 12345}) {
+            QTest::newRow((source + '-' + QByteArray::number(yaw)).constData()) << secondary << yaw << false;
+        }
+        QTest::newRow((source + "-missing-extension").constData()) << secondary << 12345 << true;
+    }
+}
+
+void GPSPositionFactGroupTest::_vehicleSentinels()
+{
+    QFETCH(bool, secondary);
+    QFETCH(int, yaw);
+    QFETCH(bool, missingExtension);
+    std::unique_ptr<VehicleGPSFactGroup> facts;
+    if (secondary) {
+        facts = std::make_unique<VehicleGPS2FactGroup>();
+    } else {
+        facts = std::make_unique<VehicleGPSFactGroup>();
+    }
+    const auto populate = [yaw](auto& raw) {
+        raw.lat = 0;
+        raw.lon = 0;
+        raw.eph = 0;
+        raw.epv = 0;
+        raw.cog = 0;
+        raw.yaw = yaw;
+        raw.fix_type = 7;
+        raw.satellites_visible = 0;
+    };
+    mavlink_message_t message{};
+    if (secondary) {
+        mavlink_gps2_raw_t raw{};
+        populate(raw);
+        mavlink_msg_gps2_raw_encode(1, 1, &message, &raw);
+        if (missingExtension) {
+            message.len = MAVLINK_MSG_ID_GPS2_RAW_MIN_LEN;
+        }
+    } else {
+        mavlink_gps_raw_int_t raw{};
+        populate(raw);
+        mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
+        if (missingExtension) {
+            message.len = MAVLINK_MSG_ID_GPS_RAW_INT_MIN_LEN;
+        }
+    }
+    facts->handleMessage(nullptr, message);
+    QCOMPARE(facts->lat()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->lon()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->hdop()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->vdop()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->courseOverGround()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->count()->rawValue().toInt(), 0);
+    QCOMPARE(facts->lock()->rawValue().toInt(), 7);
+    if (missingExtension || yaw == 0 || yaw == 65535) {
+        QVERIFY(qIsNaN(facts->yaw()->rawValue().toDouble()));
+    } else {
+        QCOMPARE(facts->yaw()->rawValue().toDouble(), yaw == 36000 ? 0.0 : yaw / 100.0);
+    }
+    QVERIFY(facts->telemetryAvailable());
 }
 
 void GPSPositionFactGroupTest::_localObservation()

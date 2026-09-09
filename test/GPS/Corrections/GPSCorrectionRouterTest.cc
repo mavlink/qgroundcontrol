@@ -3,6 +3,8 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include <utility>
+
 #include "../GpsTestHelpers.h"
 #include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionRouter.h"
@@ -34,6 +36,10 @@ private slots:
     void lateDeliveryDoesNotCreditReplacementSource();
     void boundedDiagnosticsAndUnconfirmedRetirement();
     void rejectedCandidateHasNoValidatedCredit();
+    void uncertainDeliveryIsNotDropped();
+    void sourceSpecificSinkPreservesNtripForwarding();
+    void eventHistoryUsesIncrementalRows();
+    void eventHistoryAllowsReentrantUpdates();
 };
 
 void GPSCorrectionRouterTest::automaticSelectionAndFailover()
@@ -307,6 +313,7 @@ void GPSCorrectionRouterTest::terminalDeliveryAccounting()
                                  size,
                                  actual,
                                  outcome};
+    result.acceptedBytes = actual;
     auto wrongSession = result;
     ++wrongSession.destinationSession;
     QVERIFY(!router.recordDelivery(wrongSession));
@@ -338,9 +345,10 @@ void GPSCorrectionRouterTest::lateDeliveryDoesNotCreditReplacementSource()
     const auto oldSession = router.beginSourceSession(GPSCorrectionSource::Ntrip, QStringLiteral("old-caster"));
     QVERIFY(router.acceptFrame(frame(GPSCorrectionSource::Ntrip, oldSession, now)));
     router.beginSourceSession(GPSCorrectionSource::Ntrip, QStringLiteral("new-caster"));
-    QVERIFY(router.recordDelivery({queued.deliveryId, queued.source, queued.sourceInstance, queued.session,
-                                   QStringLiteral("receiver"), 7, quint64(queued.data.size()),
-                                   quint64(queued.data.size()), GPSCorrectionOutcome::Written}));
+    QVERIFY(
+        router.recordDelivery({queued.deliveryId, queued.source, queued.sourceInstance, queued.session,
+                               QStringLiteral("receiver"), 7, quint64(queued.data.size()), quint64(queued.data.size()),
+                               GPSCorrectionOutcome::Written, quint64(queued.data.size())}));
     QCOMPARE(router.statistics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).writtenBytes, quint64(0));
     QCOMPARE(router.destinations().first().writtenBytes, quint64(queued.data.size()));
     QCOMPARE(router.events().last().sourceInstance, QStringLiteral("old-caster"));
@@ -374,9 +382,10 @@ void GPSCorrectionRouterTest::boundedDiagnosticsAndUnconfirmedRetirement()
     QCOMPARE(destination.unconfirmedFrames, submissions);
     QCOMPARE(destination.unconfirmedBytes, submissions * queued.data.size());
     QCOMPARE(router.events().last().stage, GPSCorrectionStage::Unconfirmed);
-    QVERIFY(!router.recordDelivery({queued.deliveryId, queued.source, queued.sourceInstance, queued.session,
-                                    QStringLiteral("receiver"), 7, quint64(queued.data.size()),
-                                    quint64(queued.data.size()), GPSCorrectionOutcome::Written}));
+    QVERIFY(
+        !router.recordDelivery({queued.deliveryId, queued.source, queued.sourceInstance, queued.session,
+                                QStringLiteral("receiver"), 7, quint64(queued.data.size()), quint64(queued.data.size()),
+                                GPSCorrectionOutcome::Written, quint64(queued.data.size())}));
     GPSCorrectionEventModel model;
     QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     model.setEvents(router.events());
@@ -391,7 +400,7 @@ void GPSCorrectionRouterTest::boundedDiagnosticsAndUnconfirmedRetirement()
     QVERIFY(resets.isEmpty());
     model.setEvents({});
     QCOMPARE(model.rowCount(), 0);
-    QCOMPARE(resets.size(), 1);
+    QVERIFY(resets.isEmpty());
 }
 
 void GPSCorrectionRouterTest::rejectedCandidateHasNoValidatedCredit()
@@ -407,6 +416,124 @@ void GPSCorrectionRouterTest::rejectedCandidateHasNoValidatedCredit()
     QCOMPARE(stats.selectedFrames, quint64(0));
     QCOMPARE(stats.droppedBytes, quint64(rejected.data.size()));
     QCOMPARE(router.events().last().reason, GPSCorrectionReason::InvalidFrame);
+}
+
+void GPSCorrectionRouterTest::uncertainDeliveryIsNotDropped()
+{
+    qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [&]() { return now; });
+    const auto session = router.beginSourceSession(GPSCorrectionSource::Ntrip);
+    GPSCorrectionFrame queued;
+    router.setDetailedSink(QStringLiteral("receiver"), [&](const GPSCorrectionFrame& value) {
+        queued = value;
+        return GPSCorrectionRouter::Submission{quint64(value.data.size()), 7, GPSCorrectionReason::None};
+    });
+    QVERIFY(router.acceptFrame(frame(GPSCorrectionSource::Ntrip, session, now)));
+    const quint64 size = queued.data.size();
+    GPSCorrectionDelivery delivery{queued.deliveryId,
+                                   queued.source,
+                                   queued.sourceInstance,
+                                   queued.session,
+                                   QStringLiteral("receiver"),
+                                   7,
+                                   size,
+                                   4,
+                                   GPSCorrectionOutcome::WriteFailed};
+    delivery.acceptedBytes = size - 3;
+    delivery.uncertainBytes = size - 7;
+    auto inconsistent = delivery;
+    inconsistent.acceptedBytes = delivery.writtenBytes;
+    QVERIFY(!router.recordDelivery(inconsistent));
+    QCOMPARE(router.destinations().first().pendingFrames, quint64(1));
+    QVERIFY(router.recordDelivery(delivery));
+    const auto destination = router.destinations().first();
+    QCOMPARE(destination.transportAcceptedBytes, size - 3);
+    QCOMPARE(destination.writtenBytes, quint64(4));
+    QCOMPARE(destination.writtenFrames, quint64(0));
+    QCOMPARE(destination.unconfirmedBytes, size - 7);
+    QCOMPARE(destination.unconfirmedFrames, quint64(1));
+    QCOMPARE(destination.droppedBytes, quint64(3));
+    QCOMPARE(destination.pendingBytes, quint64(0));
+    QVERIFY(!router.recordDelivery(delivery));
+}
+
+void GPSCorrectionRouterTest::sourceSpecificSinkPreservesNtripForwarding()
+{
+    qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [&]() { return now; });
+    const auto ntrip = router.beginSourceSession(GPSCorrectionSource::Ntrip);
+    const auto local = router.beginSourceSession(GPSCorrectionSource::LocalReceiver);
+    QList<GPSCorrectionFrame> selected;
+    QList<GPSCorrectionFrame> forwarded;
+    router.setSink(QStringLiteral("selected"), [&](const GPSCorrectionFrame& value) {
+        selected.append(value);
+        return value.data.size();
+    });
+    router.setSourceSink(QStringLiteral("ntripUdp"), GPSCorrectionSource::Ntrip, [&](const GPSCorrectionFrame& value) {
+        forwarded.append(value);
+        return value.data.size();
+    });
+    QVERIFY(router.acceptFrame(frame(GPSCorrectionSource::LocalReceiver, local, now)));
+    QVERIFY(!router.acceptFrame(frame(GPSCorrectionSource::Ntrip, ntrip, now)));
+    QCOMPARE(selected.size(), 1);
+    QCOMPARE(forwarded.size(), 1);
+    QCOMPARE(forwarded.first().source, GPSCorrectionSource::Ntrip);
+    auto filtered = frame(GPSCorrectionSource::Ntrip, ntrip, now);
+    filtered.filtered = true;
+    QVERIFY(!router.acceptFrame(filtered));
+    now += GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS;
+    filtered.filtered = false;
+    QVERIFY(!router.acceptFrame(filtered));
+    QCOMPARE(forwarded.size(), 1);
+    router.removeSink(QStringLiteral("ntripUdp"));
+    router.acceptFrame(frame(GPSCorrectionSource::Ntrip, ntrip, now));
+    QCOMPARE(forwarded.size(), 1);
+}
+
+void GPSCorrectionRouterTest::eventHistoryUsesIncrementalRows()
+{
+    GPSCorrectionEventModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
+    QSignalSpy inserts(&model, &QAbstractItemModel::rowsInserted);
+    QSignalSpy removals(&model, &QAbstractItemModel::rowsRemoved);
+    QList<GPSCorrectionEvent> events;
+    for (quint64 index = 1; index <= 256; ++index) {
+        events.append({.sequence = index});
+    }
+    model.setEvents(events);
+    QCOMPARE(model.rowCount(), 256);
+    QCOMPARE(inserts.size(), 1);
+    QPersistentModelIndex retained = model.index(10);
+    events.removeFirst();
+    events.append({.sequence = 257});
+    model.setEvents(events);
+    QCOMPARE(removals.size(), 1);
+    QCOMPARE(inserts.size(), 2);
+    QVERIFY(retained.isValid());
+    QCOMPARE(retained.row(), 9);
+    QCOMPARE(retained.data(GPSCorrectionEventModel::EventSequenceRole).toULongLong(), quint64(11));
+    model.setEvents(events);
+    QCOMPARE(inserts.size(), 2);
+    model.setEvents({});
+    QCOMPARE(model.rowCount(), 0);
+    QCOMPARE(removals.size(), 2);
+    QVERIFY(resets.isEmpty());
+}
+
+void GPSCorrectionRouterTest::eventHistoryAllowsReentrantUpdates()
+{
+    GPSCorrectionEventModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    bool first = true;
+    connect(&model, &QAbstractItemModel::rowsAboutToBeInserted, &model, [&]() {
+        if (std::exchange(first, false)) {
+            model.setEvents({GPSCorrectionEvent{.sequence = 2}, GPSCorrectionEvent{.sequence = 3}});
+        }
+    });
+    model.setEvents({GPSCorrectionEvent{.sequence = 1}});
+    QCOMPARE(model.rowCount(), 2);
+    QCOMPARE(model.index(0).data(GPSCorrectionEventModel::EventSequenceRole).toULongLong(), quint64(2));
 }
 
 QTEST_GUILESS_MAIN(GPSCorrectionRouterTest)

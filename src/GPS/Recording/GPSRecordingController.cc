@@ -9,7 +9,9 @@
 QGC_LOGGING_CATEGORY(GPSRecordingControllerLog, "GPS.Recording.GPSRecordingController")
 
 GPSRecordingController::GPSRecordingController(QObject* parent, std::shared_ptr<GPSRecordingBuffer> buffer)
-    : QObject(parent), _buffer(buffer ? std::move(buffer) : std::make_shared<GPSRecordingBuffer>()), _statusTimer(this)
+    : QObject(parent)
+    , _buffer(buffer ? std::move(buffer) : std::make_shared<GPSRecordingBuffer>())
+    , _statusTimer(this)
 {
     qCDebug(GPSRecordingControllerLog) << this;
     _statusTimer.setInterval(250);
@@ -64,6 +66,9 @@ bool GPSRecordingController::exportRecording(const QUrl& destination)
         return _fail(tr("Choose a local file for the recording."));
     }
     const QByteArray json = _buffer->exportJson();
+    if (json.isEmpty()) {
+        return _fail(tr("Receiver recording contains invalid or unsupported data."));
+    }
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly) || file.write(json) != json.size() || !file.commit()) {
         return _fail(tr("Cannot export receiver recording: %1").arg(file.errorString()));

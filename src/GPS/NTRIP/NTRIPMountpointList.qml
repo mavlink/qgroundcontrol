@@ -1,8 +1,7 @@
-import QtQuick
-import QtQuick.Layouts
-
 import QGroundControl
 import QGroundControl.Controls
+import QtQuick
+import QtQuick.Layouts
 
 /// Scrollable list of NTRIP caster mountpoints. Highlights the active selection
 /// and emits mountpointSelected() when the user picks one. The model rows must
@@ -15,82 +14,105 @@ QGCListView {
 
     signal mountpointSelected(string mountpoint)
 
-    Layout.fillWidth:       true
+    Layout.fillWidth: true
     Layout.preferredHeight: Math.min(root.contentHeight, ScreenTools.defaultFontPixelHeight * 20)
-    spacing:                ScreenTools.defaultFontPixelHeight * 0.25
-
-    QGCPalette { id: qgcPal }
+    spacing: ScreenTools.defaultFontPixelHeight * 0.25
 
     delegate: Rectangle {
         id: entry
 
-        required property int     index
-        required property string  mountpoint
-        required property string  format
-        required property string  navSystem
-        required property string  country
-        required property int     bitrate
-        required property real    distanceKm
+        required property int bitrate
+        required property string country
+        required property real distanceKm
+        required property string format
+        required property int index
+        required property string mountpoint
+        required property string navSystem
 
-        width:      ListView.view.width
-        height:     mountRow.height + ScreenTools.defaultFontPixelHeight * 0.5
-        radius:     ScreenTools.defaultFontPixelHeight * 0.25
         color: {
             if (entry.mountpoint === root.selectedMountpoint)
-                return qgcPal.buttonHighlight
-            return entry.index % 2 === 0 ? qgcPal.windowShade : qgcPal.window
+                return qgcPal.buttonHighlight;
+            return entry.index % 2 === 0 ? qgcPal.windowShade : qgcPal.window;
         }
+        height: mountRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.5
+        radius: ScreenTools.defaultFontPixelHeight * 0.25
+        width: ListView.view.width
 
         RowLayout {
-            id:             mountRow
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            anchors.verticalCenter: parent.verticalCenter
+            id: mountRow
+
+            anchors.left: parent.left
             anchors.margins: ScreenTools.defaultFontPixelWidth
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
 
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredWidth: 0
                 spacing: 0
 
                 RowLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: ScreenTools.defaultFontPixelWidth
 
                     QGCLabel {
-                        text:       entry.mountpoint
-                        font.bold:  true
-                        color:      entry.mountpoint === root.selectedMountpoint
-                                        ? qgcPal.buttonHighlightText : qgcPal.text
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        color: entry.mountpoint === root.selectedMountpoint ? qgcPal.buttonHighlightText : qgcPal.text
+                        elide: Text.ElideRight
+                        font.bold: true
+                        objectName: "mountpointName_" + entry.index
+                        text: entry.mountpoint
                     }
+
                     QGCLabel {
-                        visible:    entry.mountpoint === root.selectedMountpoint
-                        text:       qsTr("(selected)")
+                        color: qgcPal.buttonHighlightText
                         font.pointSize: ScreenTools.smallFontPointSize
-                        color:      qgcPal.buttonHighlightText
+                        text: qsTr("(selected)")
+                        visible: entry.mountpoint === root.selectedMountpoint
                     }
                 }
 
                 QGCLabel {
-                    text: {
-                        var parts = []
-                        if (entry.format) parts.push(entry.format)
-                        if (entry.navSystem) parts.push(entry.navSystem)
-                        if (entry.country) parts.push(entry.country)
-                        if (entry.bitrate > 0) parts.push(entry.bitrate + " bps")
-                        if (entry.distanceKm >= 0) parts.push(entry.distanceKm.toFixed(1) + " km")
-                        return parts.join(" · ")
-                    }
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    color: entry.mountpoint === root.selectedMountpoint ? qgcPal.buttonHighlightText : qgcPal.colorGrey
+                    elide: Text.ElideRight
                     font.pointSize: ScreenTools.smallFontPointSize
-                    color:  entry.mountpoint === root.selectedMountpoint
-                                ? qgcPal.buttonHighlightText : qgcPal.colorGrey
+                    maximumLineCount: 2
+                    objectName: "mountpointDescription_" + entry.index
+                    text: {
+                        var parts = [];
+                        if (entry.format)
+                            parts.push(entry.format);
+                        if (entry.navSystem)
+                            parts.push(entry.navSystem);
+                        if (entry.country)
+                            parts.push(entry.country);
+                        if (entry.bitrate > 0)
+                            parts.push(entry.bitrate + " bps");
+                        if (entry.distanceKm >= 0)
+                            parts.push(entry.distanceKm.toFixed(1) + " km");
+                        return parts.join(" · ");
+                    }
+                    wrapMode: Text.Wrap
                 }
             }
 
             QGCButton {
-                text:       entry.mountpoint === root.selectedMountpoint
-                                ? qsTr("Selected") : qsTr("Select")
-                enabled:    entry.mountpoint !== root.selectedMountpoint
-                onClicked:  root.mountpointSelected(entry.mountpoint)
+                Layout.minimumWidth: implicitWidth
+                enabled: entry.mountpoint !== root.selectedMountpoint
+                objectName: "mountpointSelect_" + entry.index
+                text: entry.mountpoint === root.selectedMountpoint ? qsTr("Selected") : qsTr("Select")
+
+                onClicked: root.mountpointSelected(entry.mountpoint)
             }
         }
+    }
+
+    QGCPalette {
+        id: qgcPal
     }
 }

@@ -1,6 +1,6 @@
 # GPS deterministic replay
 
-`GPSReplayTest` compiles the production native UBX driver, NMEA stream splitter,
+`GPSReplayTest` compiles the production GPSDriver facade and native drivers, NMEA stream splitter,
 NTRIP session, and correction router into a small Qt test executable. Its transport
 advances a virtual monotonic clock when consuming events; no receiver, socket, or
 wall-clock delay is needed.
@@ -33,7 +33,9 @@ session's retry QTimer with a virtual scheduler.
 
 ## Trace format
 
-A version 1 trace is a JSON object with an ordered `events` array:
+The shared `GPSRecordingDocument` codec writes version 2 and reads versions 1 and 2.
+New files require `fileType: "GPSRecording"`. This minimal version 1 synthetic trace
+remains supported (real capture profile mappings are documented in the recorder guide):
 
 ```json
 {
@@ -76,8 +78,9 @@ acceptance remains separate from synthetic replay.
 The opt-in [receiver recorder](../../../src/GPS/Recording/README.md) exports this
 format directly. Pass a `streamId` to `GPSReplayTrace::load`/`fromJson` to select a
 specific connection; the default selects the first stream. The parsed trace exposes
-its selected `profile` metadata. Informative session/configuration/close markers
-are skipped, while `open_error` and `baud_error` reproduce failed calls. A failed
+its selected typed `profile` metadata. `recordedEvents` retains all selected raw
+markers, operation start/completion timing and resumed flags. The executable
+`events` view omits informative session/configuration/close markers, while `open_error` and `baud_error` reproduce failed calls. A failed
 write can include its expected attempted bytes as well as the reported result.
 
 An `open` marked `resumed` represents capture starting on an existing connection,
@@ -86,3 +89,36 @@ native-driver transaction is required. The tests record and export actual native
 UBX transactions, reload them, and verify identical decoded positions at three
 fragment sizes. They also roundtrip passive NMEA, receipt timestamp preservation,
 configuration metadata, failed operations, and bounded concurrent capture.
+
+## Driver construction and write evidence
+
+```cpp
+GPSReplayTrace trace;
+QString error;
+GPSReplayTrace::load(path, trace, error, streamId);
+GPSReplayClock clock(&gps_test_time);
+std::atomic_bool stop = false;
+GPSReplayTransport transport(clock, stop, std::move(trace));
+if (transport.open()) {
+    auto driver = createGPSReplayDriver(transport, sinks, error);
+    if (driver && driver->configure()) {
+        driver->receive(1000);
+    }
+}
+```
+
+Check each return value and `transport.failure()` in a test. The factory uses the
+captured role, protocol, driver family, settings, and fixed transport baud. It
+rejects passive or incomplete captures and legacy unknown transport metadata.
+Native replay uses `GPSReplayDefinitions.h` for deterministic sleeps/clock and the
+production message structs, avoiding a second ABI definition. Capture tests cover
+Septentrio and Femto in position and fixed-base modes, then reconstruct the actual
+facade solely from their exported profiles.
+
+Version 2 `bounded_write` events retain accepted, written and uncertain byte counts,
+a stable status name, fatal state and start/completion time. Replay requires the
+exact attempted buffer and returns that evidence unchanged. It refuses an earlier
+deadline instead of guessing intermediate transmission progress. Other checks cover
+wrong JSON types, fractional or unsupported versions, invalid stream identifiers,
+unknown or credential-bearing metadata fields, invalid operation timing, exact
+hex payloads, v1 profile conversion and impossible partial-delivery counts.

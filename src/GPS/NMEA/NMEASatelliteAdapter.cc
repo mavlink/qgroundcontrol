@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-#include "GPSSourceHealth.h"
 #include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
@@ -126,6 +125,9 @@ qint64 NMEASatelliteAdapter::readData(char* data, qint64 maxSize)
         if (sentence.bytes.isEmpty()) {
             auto& timestamps = sentence.inUse ? _consumedUseTimestamps : _consumedViewTimestamps;
             timestamps[sentence.talker] = sentence.receivedAtUs;
+            if (sentence.inUse) {
+                _consumedUseIds[sentence.talker] = sentence.usedIds;
+            }
             _output.removeFirst();
         }
     }
@@ -155,62 +157,21 @@ quint64 NMEASatelliteAdapter::satelliteTimestampUs(bool inUse) const
     return oldest;
 }
 
-NMEASatelliteAdapter::Snapshot NMEASatelliteAdapter::freshSatellites(const QList<QGeoSatelliteInfo>& satellites,
-                                                                     bool inUse, quint64 nowUs) const
+NMEASatelliteAdapter::Snapshot NMEASatelliteAdapter::satelliteSnapshot(const QList<QGeoSatelliteInfo>& satellites,
+                                                                       bool inUse) const
 {
     Snapshot snapshot;
     snapshot.satellites = satellites;
-    const auto& timestamps = inUse ? _consumedUseTimestamps : _consumedViewTimestamps;
-    for (auto entry = timestamps.cbegin(); entry != timestamps.cend(); ++entry) {
-        quint64 timestamp = entry.value();
-        if (inUse) {
-            const quint64 viewTimestamp = _consumedViewTimestamps.value(entry.key());
-            timestamp = viewTimestamp ? std::min(timestamp, viewTimestamp) : 0;
-        }
-        snapshot.constellationReceipts.insert(entry.key(), timestamp);
+    snapshot.constellationReceipts = inUse ? _consumedUseTimestamps : _consumedViewTimestamps;
+    if (inUse) {
+        snapshot.usedIds = _consumedUseIds;
     }
-    return expireSnapshot(snapshot, nowUs);
-}
-
-NMEASatelliteAdapter::Snapshot NMEASatelliteAdapter::expireSnapshot(const Snapshot& snapshot, quint64 nowUs)
-{
-    Snapshot result;
-    for (auto entry = snapshot.constellationReceipts.cbegin(); entry != snapshot.constellationReceipts.cend();
-         ++entry) {
-        const quint64 timestamp = entry.value();
-        if (timestamp && timestamp <= nowUs && nowUs - timestamp < GPSSourceHealth::FRESHNESS_TIMEOUT_MS * 1000ULL) {
-            result.constellationReceipts.insert(entry.key(), timestamp);
+    for (const quint64 receipt : snapshot.constellationReceipts) {
+        if (receipt) {
+            snapshot.receivedAtUs = snapshot.receivedAtUs ? std::min(snapshot.receivedAtUs, receipt) : receipt;
         }
     }
-    for (quint64 timestamp : result.constellationReceipts) {
-        result.receivedAtUs = result.receivedAtUs ? std::min(result.receivedAtUs, timestamp) : timestamp;
-    }
-    for (const auto& satellite : snapshot.satellites) {
-        QByteArray talker;
-        switch (satellite.satelliteSystem()) {
-            case QGeoSatelliteInfo::GPS:
-                talker = "GP";
-                break;
-            case QGeoSatelliteInfo::GLONASS:
-                talker = "GL";
-                break;
-            case QGeoSatelliteInfo::GALILEO:
-                talker = "GA";
-                break;
-            case QGeoSatelliteInfo::BEIDOU:
-                talker = "GB";
-                break;
-            case QGeoSatelliteInfo::QZSS:
-                talker = "GQ";
-                break;
-            default:
-                break;
-        }
-        if (result.constellationReceipts.contains(talker)) {
-            result.satellites.append(satellite);
-        }
-    }
-    return result;
+    return snapshot;
 }
 
 void NMEASatelliteAdapter::close()
@@ -226,6 +187,7 @@ void NMEASatelliteAdapter::close()
     _inUseReceivedAtUs.clear();
     _consumedViewTimestamps.clear();
     _consumedUseTimestamps.clear();
+    _consumedUseIds.clear();
     QIODevice::close();
 }
 
@@ -255,6 +217,20 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
         return;
     }
     if (type == "GSA" && fields.size() >= 18) {
+        bool validFix = false;
+        const int fix = fields[2].toInt(&validFix);
+        if (!validFix || fix < 1 || fix > 3) {
+            return;
+        }
+        for (int index = 3; index < 15; ++index) {
+            if (!fields[index].isEmpty()) {
+                bool validId = false;
+                const int id = fields[index].toInt(&validId);
+                if (!validId || id <= 0) {
+                    return;
+                }
+            }
+        }
         const QByteArray talker = gsaTalker(fields);
         if (!supportedTalker(talker)) {
             return;
@@ -363,7 +339,15 @@ void NMEASatelliteAdapter::_flush()
     }
     for (auto report = _inUse.cbegin(); report != _inUse.cend(); ++report) {
         const QByteArray bytes = encode(report.value());
-        output.append({bytes, report.key(), _inUseReceivedAtUs.value(report.key()), true});
+        QSet<int> usedIds;
+        for (int index = 3; report.value()[2] != "1" && index < 15; ++index) {
+            bool valid = false;
+            const int id = report.value()[index].toInt(&valid);
+            if (valid && id > 0) {
+                usedIds.insert(id);
+            }
+        }
+        output.append({bytes, report.key(), _inUseReceivedAtUs.value(report.key()), true, usedIds});
         outputSize += bytes.size();
     }
     _reports.clear();

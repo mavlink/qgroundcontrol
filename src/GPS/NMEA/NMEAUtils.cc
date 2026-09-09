@@ -184,3 +184,25 @@ QByteArray makeGGA(const GPSObservation& observation)
 }
 
 }  // namespace NMEAUtils
+
+GPSSatellite::Constellation NMEAUtils::satelliteConstellation(QGeoSatelliteInfo::SatelliteSystem system)
+{
+    switch (system) {
+    case QGeoSatelliteInfo::GPS: return GPSSatellite::Constellation::GPS;
+    case QGeoSatelliteInfo::GLONASS: return GPSSatellite::Constellation::GLONASS;
+    case QGeoSatelliteInfo::GALILEO: return GPSSatellite::Constellation::Galileo;
+    case QGeoSatelliteInfo::BEIDOU: return GPSSatellite::Constellation::BeiDou;
+    case QGeoSatelliteInfo::QZSS: return GPSSatellite::Constellation::QZSS;
+    default: return GPSSatellite::Constellation::Unknown;
+    }
+}
+
+GPSSatellite::Constellation NMEAUtils::satelliteConstellation(const QByteArray& talker)
+{
+    if (talker == "GP") return GPSSatellite::Constellation::GPS;
+    if (talker == "GL") return GPSSatellite::Constellation::GLONASS;
+    if (talker == "GA") return GPSSatellite::Constellation::Galileo;
+    if (talker == "GB" || talker == "BD") return GPSSatellite::Constellation::BeiDou;
+    if (talker == "GQ" || talker == "QZ") return GPSSatellite::Constellation::QZSS;
+    return GPSSatellite::Constellation::Unknown;
+}

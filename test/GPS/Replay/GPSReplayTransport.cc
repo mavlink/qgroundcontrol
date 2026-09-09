@@ -1,16 +1,10 @@
 #include "GPSReplayTransport.h"
 
 #include <QtCore/QFile>
-#include <QtCore/QJsonArray>
-#include <QtCore/QJsonDocument>
-#include <QtCore/QJsonObject>
-#include <QtCore/QMap>
 
 #include <algorithm>
 #include <cerrno>
-#include <cmath>
 #include <cstring>
-#include <limits>
 #include <utility>
 
 #include "QGCLoggingCategory.h"
@@ -24,106 +18,30 @@ bool GPSReplayTrace::load(const QString& filename, GPSReplayTrace& result, QStri
         error = file.errorString();
         return false;
     }
-    constexpr qint64 maxTraceBytes = 4 * 1024 * 1024;
+    constexpr qint64 maxTraceBytes = GPSRecordingDocument::MAX_BYTES;
     if (file.size() > maxTraceBytes) {
         error = QStringLiteral("Replay trace exceeds 4 MiB");
         return false;
     }
-    return fromJson(file.readAll(), result, error, streamId);
+    return fromJson(file.read(maxTraceBytes + 1), result, error, streamId);
 }
 
 bool GPSReplayTrace::fromJson(const QByteArray& json, GPSReplayTrace& result, QString& error, quint64 streamId)
 {
-    if (json.size() > 4 * 1024 * 1024) {
-        error = QStringLiteral("Replay trace exceeds 4 MiB");
-        return false;
-    }
-    QJsonParseError parseError;
-    const auto document = QJsonDocument::fromJson(json, &parseError);
-    if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
-        error = QStringLiteral("Invalid replay JSON: %1").arg(parseError.errorString());
-        return false;
-    }
-    const auto object = document.object();
-    if (object.value("version").toInt() != 1 || !object.value("events").isArray()) {
-        error = QStringLiteral("Replay requires version 1 and an events array");
-        return false;
-    }
-    const auto events = object.value("events").toArray();
-    if (events.size() > 100000) {
-        error = QStringLiteral("Replay has too many events");
-        return false;
-    }
+    GPSRecordingDocument document;
     GPSReplayTrace parsed;
-    quint64 previous = 0;
-    quint64 selectedStream = streamId;
-    bool foundStream = false;
-    const QMap<QString, GPSReplayEvent::Kind> kinds = {
-        {"open", GPSReplayEvent::Kind::Open},
-        {"open_error", GPSReplayEvent::Kind::OpenError},
-        {"baud_error", GPSReplayEvent::Kind::BaudError},
-        {"rx", GPSReplayEvent::Kind::Rx},
-        {"tx", GPSReplayEvent::Kind::Tx},
-        {"baud", GPSReplayEvent::Kind::Baud},
-        {"timeout", GPSReplayEvent::Kind::Timeout},
-        {"read_error", GPSReplayEvent::Kind::ReadError},
-        {"write_error", GPSReplayEvent::Kind::WriteError},
-        {"disconnect", GPSReplayEvent::Kind::Disconnect},
-        {"cancel", GPSReplayEvent::Kind::Cancel},
-    };
-    for (const auto& value : events) {
-        const auto event = value.toObject();
-        const double timestamp = event.value("at_us").toDouble(-1);
-        const QString kindName = event.value("kind").toString();
-        const bool metadata = kindName == QStringLiteral("session") || kindName == QStringLiteral("close") ||
-                              kindName == QStringLiteral("configuration_started") ||
-                              kindName == QStringLiteral("configuration_finished");
-        const auto kind = kinds.constFind(kindName);
-        if (!std::isfinite(timestamp) || timestamp < 0 || timestamp > 9e15 || std::floor(timestamp) != timestamp ||
-            static_cast<quint64>(timestamp) < previous || (kind == kinds.cend() && !metadata)) {
-            error = QStringLiteral("Invalid or out-of-order replay event %1").arg(parsed.events.size());
-            return false;
-        }
-        previous = static_cast<quint64>(timestamp);
-        const auto streamValue = event.value("stream").toInteger();
-        if (streamValue < 0) {
-            error = QStringLiteral("Invalid recording stream identifier");
-            return false;
-        }
-        const auto currentStream = static_cast<quint64>(streamValue);
-        if (selectedStream == 0) {
-            selectedStream = currentStream;
-        }
-        if (currentStream != selectedStream) {
-            continue;
-        }
-        foundStream = true;
-        if (metadata) {
-            if (kindName == QStringLiteral("session")) {
-                parsed.profile = event.value("profile").toObject();
-            }
-            continue;
-        }
-        GPSReplayEvent item;
-        item.atUs = static_cast<quint64>(timestamp);
-        item.kind = kind.value();
-        item.value = event.value("value").toInt();
-        const auto hex = event.value("hex").toString().toLatin1();
-        item.bytes = QByteArray::fromHex(hex);
-        if (item.bytes.toHex() != hex.toLower() ||
-            ((item.kind == GPSReplayEvent::Kind::Rx || item.kind == GPSReplayEvent::Kind::Tx) &&
-             item.bytes.isEmpty())) {
-            error = QStringLiteral("Invalid replay hex at event %1").arg(parsed.events.size());
-            return false;
-        }
-        previous = item.atUs;
-        parsed.events.append(std::move(item));
-    }
-    if (streamId && !foundStream) {
-        error = QStringLiteral("Requested recording stream was not found");
+    if (!GPSRecordingDocument::decode(json, document, error) ||
+        !document.selectStream(streamId, parsed.recordedEvents, parsed.profile, parsed.streamId, error)) {
         return false;
     }
-    parsed.streamId = selectedStream;
+    parsed.limitReached = document.limitReached;
+    for (const auto& event : parsed.recordedEvents) {
+        using K = GPSRecordingEvent::Kind;
+        if (event.kind != K::Session && event.kind != K::Close && event.kind != K::ConfigurationStarted &&
+            event.kind != K::ConfigurationFinished) {
+            parsed.events.append(event);
+        }
+    }
     result = std::move(parsed);
     error.clear();
     return true;
@@ -131,13 +49,14 @@ bool GPSReplayTrace::fromJson(const QByteArray& json, GPSReplayTrace& result, QS
 
 GPSReplayTransport::GPSReplayTransport(GPSReplayClock& clock, std::atomic_bool& requestStop, GPSReplayTrace trace,
                                        int maximumRead)
-    : GPSTransport(requestStop),
-      _clock(clock),
-      _stop(requestStop),
-      _trace(std::move(trace)),
-      _maximumRead(qMax(maximumRead, 1))
+    : GPSTransport(requestStop)
+    , _clock(clock)
+    , _stop(requestStop)
+    , _trace(std::move(trace))
+    , _maximumRead(qMax(maximumRead, 1))
 {
     qCDebug(GPSReplayTransportLog) << this;
+    _baudrate = _trace.profile ? _trace.profile->initialBaud : 0;
 }
 
 GPSReplayTransport::~GPSReplayTransport()
@@ -277,5 +196,45 @@ bool GPSReplayTransport::setBaudrate(unsigned baudrate)
         return false;
     }
     _clock.advanceTo(_trace.events[_index++].atUs);
+    _baudrate = baudrate;
     return true;
+}
+
+GPSTransport::WriteResult GPSReplayTransport::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+{
+    if (isCancelled()) {
+        return {.status = WriteStatus::Cancelled};
+    }
+    if (!_opened || _fatal || (!buffer && length > 0) || length < 0 || _index >= _trace.events.size()) {
+        _fail(QStringLiteral("Unexpected bounded write"));
+        return {.status = WriteStatus::Error};
+    }
+    const auto& event = _trace.events[_index];
+    if (event.kind != GPSReplayEvent::Kind::BoundedWrite || !event.writeResult ||
+        event.bytes != QByteArrayView(reinterpret_cast<const char*>(buffer), length)) {
+        _fail(QStringLiteral("Bounded write or bytes differ from trace"));
+        return {.status = WriteStatus::Error};
+    }
+    const quint64 elapsed = event.atUs > _clock.nowUs() ? event.atUs - _clock.nowUs() : 0;
+    if (!deadline.isForever() && elapsed > quint64(qMax<qint64>(deadline.remainingTime(), 0)) * 1000) {
+        // A capture only proves progress at completion. Do not invent partial delivery at an earlier deadline.
+        _fail(QStringLiteral("Replay deadline is shorter than recorded write duration"));
+        return {.status = WriteStatus::Error};
+    }
+    _clock.advanceTo(event.atUs);
+    const auto result = *event.writeResult;
+    ++_index;
+    if (result.status == WriteStatus::Cancelled) {
+        _stop = true;
+    }
+    _fatal = event.fatal;
+    return result;
+}
+
+std::chrono::milliseconds GPSReplayTransport::correctionWriteTimeout(int length) const
+{
+    if (_trace.profile && _trace.profile->transport == GPSRecordingMetadata::Transport::Serial) {
+        return serialCorrectionWriteTimeout(length, _baudrate);
+    }
+    return GPSTransport::correctionWriteTimeout(length);
 }

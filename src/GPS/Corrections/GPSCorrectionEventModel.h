@@ -69,4 +69,7 @@ public:
 
 private:
     QList<GPSCorrectionEvent> _events;
+    QList<GPSCorrectionEvent> _pendingEvents;
+    bool _updating = false;
+    bool _pending = false;
 };

@@ -2,7 +2,6 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QPointer>
-#include <QtCore/QRegularExpression>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
 
@@ -13,7 +12,6 @@
 #include "NTRIPTlsPolicy.h"
 #include "NTRIPTransportConfig.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIP.NTRIPHttpTransport")
 
@@ -25,7 +23,7 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObje
 {
     qCDebug(NTRIPHttpTransportLog) << this;
     const QVector<int> whitelist = NTRIPTransportConfig::parseWhitelist(_config.whitelist);
-    _rtcmParser.setWhitelist(whitelist);
+    _rtcmDecoder.setWhitelist(whitelist);
     qCDebug(NTRIPHttpTransportLog) << "RTCM message filter:" << whitelist;
     if (whitelist.empty()) {
         qCDebug(NTRIPHttpTransportLog) << "Message filter empty; all RTCM message IDs will be forwarded.";
@@ -92,25 +90,6 @@ void NTRIPHttpTransport::stop()
     emit finished();
 }
 
-NTRIPHttpTransport::HttpRequest NTRIPHttpTransport::buildHttpRequest(const NTRIPTransportConfig& config)
-{
-    HttpRequest result;
-    QByteArray& req = result.bytes;
-    req += "GET /" + config.mountpoint.toUtf8() + " HTTP/1.1\r\n";
-    req += "Host: " + config.host.toUtf8() + "\r\n";
-    req += "Ntrip-Version: Ntrip/2.0\r\n";
-    req += "User-Agent: NTRIP QGroundControl/1.0\r\n";
-
-    if (!config.username.isEmpty() || !config.password.isEmpty()) {
-        result.credentialsInClear = !config.useTls;
-        const QByteArray authB64 =
-            QGCNetworkHelper::createBasicAuthCredentials(config.username, config.password).toUtf8();
-        req += "Authorization: Basic " + authB64 + "\r\n";
-    }
-
-    req += "\r\n";
-    return result;
-}
 
 void NTRIPHttpTransport::_sendHttpRequest()
 {
@@ -121,7 +100,7 @@ void NTRIPHttpTransport::_sendHttpRequest()
     const QPointer<NTRIPHttpTransport> guard(this);
     const QPointer<QTcpSocket> socket = _socket;
     const auto generation = _generation;
-    const HttpRequest request = buildHttpRequest(_config);
+    const auto request = NTRIPRequest::build(_config);
     if (request.credentialsInClear) {
         qCWarning(NTRIPHttpTransportLog) << "Sending credentials without TLS — data is not encrypted";
         emit plaintextCredentialsWarning();
@@ -181,7 +160,7 @@ void NTRIPHttpTransport::_connect()
 
     _httpHandshakeDone = false;
     _httpDecoder.reset();
-    _rtcmParser.reset();
+    _rtcmDecoder.reset();
 
     if (_config.useTls) {
         QSslSocket* sslSocket = new QSslSocket(this);
@@ -254,12 +233,12 @@ void NTRIPHttpTransport::_connect()
         connect(sslSocket, &QSslSocket::encrypted, this, [this]() {
             _sendHttpRequest();
         });
-        sslSocket->connectToHostEncrypted(_config.host, static_cast<quint16>(_config.port));
+        sslSocket->connectToHostEncrypted(NTRIPRequest::casterUrl(_config).host(), static_cast<quint16>(_config.port));
     } else {
         connect(_socket, &QTcpSocket::connected, this, [this]() {
             _sendHttpRequest();
         });
-        _socket->connectToHost(_config.host, static_cast<quint16>(_config.port));
+        _socket->connectToHost(NTRIPRequest::casterUrl(_config).host(), static_cast<quint16>(_config.port));
     }
     _connectTimeoutTimer.start();
 }
@@ -277,47 +256,20 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
         return;
     }
     for (char ch : buffer) {
-        const uint8_t byte = static_cast<uint8_t>(static_cast<unsigned char>(ch));
-
-        if (!_rtcmParser.addByte(byte)) {
+        const auto decoded = _rtcmDecoder.addByte(static_cast<uint8_t>(ch), _receivedAtMs);
+        if (!decoded) {
             continue;
         }
-
-        if (!_rtcmParser.validateCrc()) {
-            qCWarning(NTRIPHttpTransportLog) << "RTCM CRC mismatch, dropping message id" << _rtcmParser.messageId();
-            const QByteArray rejected = _rtcmParser.currentFrame();
-            const int messageId = _rtcmParser.messageId();
-            _rtcmParser.reset();
-            emit correctionRejectedAt(rejected, messageId, _receivedAtMs);
-            if (!guard || _stopped || socket != _socket) {
-                return;
-            }
-            continue;
-        }
-
-        const QByteArray message = _rtcmParser.currentFrame();
-        const uint16_t id = _rtcmParser.messageId();
-
-        const bool filtered = !_rtcmParser.isWhitelisted(id);
-        _rtcmParser.reset();
-        // Correction health follows valid framing, independently of the user's filter.
-        _dataWatchdogTimer.start();
-        emit correctionReceivedAt(message, id, filtered, _receivedAtMs);
-        if (!guard || _stopped || socket != _socket) {
-            return;
-        }
-        emit rtcmFrameValidated(message, id, filtered);
-        if (!guard || _stopped || socket != _socket) {
-            return;
-        }
-        if (!filtered) {
-            qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << id << "len" << message.length();
-            emit RTCMDataUpdate(message, id);
-            if (!guard || _stopped || socket != _socket) {
-                return;
-            }
+        if (!decoded->valid) {
+            qCWarning(NTRIPHttpTransportLog) << "Invalid RTCM framing or CRC, dropping message id" << decoded->messageId;
+            emit correctionRejectedAt(decoded->data, decoded->messageId, decoded->receivedAtMs);
         } else {
-            qCDebug(NTRIPHttpTransportLog) << "Ignoring RTCM" << id;
+            // Valid framing keeps the source alive independently of the user's message filter.
+            _dataWatchdogTimer.start();
+            emit correctionReceivedAt(decoded->data, decoded->messageId, decoded->filtered, decoded->receivedAtMs);
+        }
+        if (!guard || _stopped || socket != _socket) {
+            return;
         }
     }
 }
@@ -391,16 +343,4 @@ void NTRIPHttpTransport::sendNMEA(const QByteArray& nmea)
     const QByteArray line = NMEAUtils::repairChecksum(nmea);
     qCDebug(NTRIPHttpTransportLog) << "Sent NMEA:" << QString::fromUtf8(line.trimmed());
     _socket->write(line);
-}
-
-NTRIPHttpTransport::HttpStatus NTRIPHttpTransport::parseHttpStatusLine(const QString& line)
-{
-    static const QRegularExpression re(QStringLiteral("^\\S+\\s+(\\d{3})(?:\\s+(.*))?$"));
-    const QRegularExpressionMatch match = re.match(line.trimmed());
-
-    if (!match.hasMatch()) {
-        return HttpStatus{0, {}, false};
-    }
-
-    return HttpStatus{match.captured(1).toInt(), match.captured(2).trimmed(), true};
 }

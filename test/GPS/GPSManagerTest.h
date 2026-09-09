@@ -7,8 +7,13 @@ class GPSManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _receiverSettingsReentrantTransportChange();
+    void _receiverSettingsNotificationCanDestroyManager();
     void _positionSourceSettings();
     void _positionSourceReentrantDisable();
+    void _nmeaSourceRegistration_data();
+    void _nmeaSourceRegistration();
+    void _ntripUdpOutputSettings();
     void _correctionRoutingSettings_data();
     void _correctionRoutingSettings();
     void _correctionRuntimeLifecycle();

@@ -42,6 +42,7 @@ public:
         quint64 expiredCommands = 0;
         quint64 queuedCommandBytes = 0;
         quint64 writtenCommandBytes = 0;
+        quint64 uncertainCommandBytes = 0;
         quint64 failedCommandBytes = 0;
         quint64 droppedCommandBytes = 0;
         qsizetype pendingCorrections = 0;
@@ -62,7 +63,8 @@ public:
     GPSCorrectionSubmitResult submitCorrection(const GPSCorrectionFrame& frame, quint64 destinationSession,
                                                qint64 nowMs);
     std::optional<Correction> takeCommand(qint64 nowMs);
-    bool completeCommand(const Correction& command, GPSCorrectionOutcome outcome, quint64 writtenBytes);
+    bool completeCommand(const Correction& command, GPSCorrectionOutcome outcome, quint64 writtenBytes,
+                         quint64 acceptedBytes = 0, quint64 uncertainBytes = 0);
     bool scheduleDeliveryNotification();
     QList<GPSCorrectionDelivery> takeDeliveries();
     bool clearCommands();
@@ -78,7 +80,8 @@ public:
 
 private:
     bool _schedule();
-    void _finish(const Correction& command, GPSCorrectionOutcome outcome, quint64 writtenBytes = 0);
+    void _finish(const Correction& command, GPSCorrectionOutcome outcome, quint64 writtenBytes = 0,
+                 quint64 acceptedBytes = 0, quint64 uncertainBytes = 0);
     void _clearCommands(GPSCorrectionOutcome outcome);
     static bool _fresh(qint64 receivedAtMs, qint64 nowMs);
 

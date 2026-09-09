@@ -34,7 +34,16 @@ void UdpGPSTransportTest::_transferAndPartialReads()
     QVERIFY(!transport.setBaudrate(9600));
 
     const QByteArray payload = QByteArray::fromHex("b56201020300d300ff");
-    QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size()), payload.size());
+    const auto expired = transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
+                                                QDeadlineTimer(0));
+    QCOMPARE(expired.status, GPSTransport::WriteStatus::TimedOut);
+    QCOMPARE(expired.acceptedBytes, 0);
+    const auto sent = transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
+                                             QDeadlineTimer(100));
+    QCOMPARE(sent.status, GPSTransport::WriteStatus::Completed);
+    QCOMPARE(sent.acceptedBytes, payload.size());
+    QCOMPARE(sent.writtenBytes, payload.size());
+    QCOMPARE(sent.uncertainBytes, 0);
     QTRY_VERIFY_WITH_TIMEOUT(receiver.hasPendingDatagrams(), TestTimeout::shortMs());
     const QNetworkDatagram request = receiver.receiveDatagram();
     QCOMPARE(request.data(), payload);

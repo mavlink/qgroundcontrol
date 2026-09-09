@@ -104,12 +104,26 @@ struct GPSSatellite
     std::optional<double> azimuthDegrees() const;
 };
 
+/// Independent original receipts; zero means the field has no accepted report.
+struct GPSSatelliteProvenance
+{
+    GPSSatellite::Constellation constellation = GPSSatellite::Constellation::Unknown;
+    quint64 inViewTimestampUs = 0;
+    quint64 inUseTimestampUs = 0;
+    std::optional<int> satellitesUsed;
+};
+
 struct GPSSatelliteObservation
 {
     quint64 monotonicTimestampUs = 0;
     quint64 sessionId = 0;
     QList<GPSSatellite> satellites;
+    QList<GPSSatelliteProvenance> provenance = {};
+    quint64 revision = 0;  // Monotonic publication order assigned by the accepted-observation store.
+    QString sourceId = {};
     int usedCount() const;
+    int satellitesInViewCount() const;
+    int satellitesInUseCount() const;
 };
 Q_DECLARE_METATYPE(GPSSatelliteObservation)
 

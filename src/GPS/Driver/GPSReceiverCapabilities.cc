@@ -4,8 +4,8 @@
 
 #include <cmath>
 
-#include "GPSDriver.h"
 #include "GPSDriverBackend.h"
+#include "GPSReceiverConfig.h"
 
 GPSReceiverCapabilities GPSReceiverCapabilities::forType(GPSType type)
 {
@@ -73,12 +73,9 @@ QString GPSReceiverCapabilities::validationError(const GPSReceiverConfig& config
             return tr("Select a valid receiver output protocol");
     }
     const auto descriptors = settings(config.role == GPSReceiverConfig::Role::RTKBase);
-    const std::array<double, 4> values = {static_cast<double>(config.constellationMask),
-                                          static_cast<double>(config.dynamicModel),
-                                          static_cast<double>(config.outputRateHz), config.headingOffsetDeg};
-    for (qsizetype index = 0; index < descriptors.size(); ++index) {
-        if (!descriptors[index].accepts(values[index])) {
-            return tr("The selected %1 is not supported by this receiver in this mode").arg(descriptors[index].label);
+    for (const auto& descriptor : descriptors) {
+        if (!descriptor.accepts(GPSReceiverSettings::value(descriptor.id, config))) {
+            return tr("The selected %1 is not supported by this receiver in this mode").arg(descriptor.label);
         }
     }
     return {};
@@ -95,13 +92,13 @@ bool GPSReceiverCapabilities::SettingDescriptor::accepts(double value) const
     if (support == Support::Unsupported) {
         return false;
     }
-    if (kind == QStringLiteral("number")) {
+    if (kind == Kind::Number) {
         return true;
     }
     if (std::trunc(value) != value) {
         return false;
     }
-    if (kind == QStringLiteral("flags")) {
+    if (kind == Kind::Flags) {
         int mask = 0;
         for (int flag : values) {
             mask |= flag;
@@ -115,20 +112,20 @@ QList<GPSReceiverCapabilities::SettingDescriptor> GPSReceiverCapabilities::setti
 {
     const auto tr = [](const char* text) { return QCoreApplication::translate("GPSReceiverCapabilities", text); };
     QList<SettingDescriptor> result = {
-        {QStringLiteral("constellationMask"),
+        {GPSReceiverSetting::ConstellationMask,
          tr("Constellations"),
          {},
-         QStringLiteral("flags"),
+         SettingDescriptor::Kind::Flags,
          0,
          0,
          static_cast<double>(supportedConstellations),
          {0, 1, 2, 4, 8, 16},
          {tr("Receiver default"), tr("GPS and QZSS"), tr("SBAS"), tr("Galileo"), tr("BeiDou"), tr("GLONASS")},
          constellationSelection},
-        {QStringLiteral("dynamicModel"),
+        {GPSReceiverSetting::DynamicModel,
          tr("Dynamic model"),
          {},
-         QStringLiteral("enum"),
+         SettingDescriptor::Kind::Enum,
          0,
          0,
          8,
@@ -136,20 +133,20 @@ QList<GPSReceiverCapabilities::SettingDescriptor> GPSReceiverCapabilities::setti
          {tr("Default (portable)"), tr("Stationary"), tr("Pedestrian"), tr("Automotive"), tr("Sea"), tr("Airborne 1g"),
           tr("Airborne 2g"), tr("Airborne 4g")},
          baseStation ? Support::Unsupported : dynamicModelSelection},
-        {QStringLiteral("outputRateHz"),
+        {GPSReceiverSetting::OutputRateHz,
          tr("Output rate"),
          QStringLiteral("Hz"),
-         QStringLiteral("enum"),
+         SettingDescriptor::Kind::Enum,
          0,
          0,
          10,
          {0, 1, 2, 5, 10},
          {tr("Receiver default"), QStringLiteral("1"), QStringLiteral("2"), QStringLiteral("5"), QStringLiteral("10")},
          baseStation ? Support::Unsupported : outputRateSelection},
-        {QStringLiteral("headingOffsetDeg"),
+        {GPSReceiverSetting::HeadingOffsetDeg,
          tr("Heading offset"),
          QStringLiteral("deg"),
-         QStringLiteral("number"),
+         SettingDescriptor::Kind::Number,
          5,
          -180,
          180,
@@ -157,36 +154,17 @@ QList<GPSReceiverCapabilities::SettingDescriptor> GPSReceiverCapabilities::setti
          {},
          baseStation ? Support::Unsupported : headingOffsetSelection},
     };
-    result[0].requiredMask = 1;
-    for (qsizetype index = result[0].values.size() - 1; index > 0; --index) {
-        if ((result[0].values[index] & supportedConstellations) == 0) {
-            result[0].values.removeAt(index);
-            result[0].labels.removeAt(index);
+    for (auto& descriptor : result) {
+        if (descriptor.id != GPSReceiverSetting::ConstellationMask) {
+            continue;
         }
-    }
-    return result;
-}
-
-QVariantList GPSReceiverCapabilities::settingDescriptors(bool baseStation) const
-{
-    QVariantList result;
-    for (const auto& descriptor : settings(baseStation)) {
-        QVariantList values;
-        for (int value : descriptor.values) {
-            values.append(value);
+        descriptor.requiredMask = 1;
+        for (qsizetype index = descriptor.values.size() - 1; index > 0; --index) {
+            if ((descriptor.values[index] & supportedConstellations) == 0) {
+                descriptor.values.removeAt(index);
+                descriptor.labels.removeAt(index);
+            }
         }
-        result.append(QVariantMap{{QStringLiteral("key"), descriptor.key},
-                                  {QStringLiteral("label"), descriptor.label},
-                                  {QStringLiteral("units"), descriptor.units},
-                                  {QStringLiteral("kind"), descriptor.kind},
-                                  {QStringLiteral("defaultValue"), descriptor.defaultValue},
-                                  {QStringLiteral("minimum"), descriptor.minimum},
-                                  {QStringLiteral("maximum"), descriptor.maximum},
-                                  {QStringLiteral("values"), values},
-                                  {QStringLiteral("labels"), descriptor.labels},
-                                  {QStringLiteral("support"), static_cast<int>(descriptor.support)},
-                                  {QStringLiteral("requiredMask"), descriptor.requiredMask},
-                                  {QStringLiteral("requiresReconnect"), descriptor.requiresReconnect}});
     }
     return result;
 }

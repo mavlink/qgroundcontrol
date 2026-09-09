@@ -36,13 +36,22 @@ failures do not stop or alter receiver I/O.
 
 ## Replay format
 
-Exports use the version 1 format in [the replay test guide](../../../test/GPS/Replay/README.md).
+Exports use the version 2 contract in `GPSRecordingFormat.h/.cc`, shared with
+[the replay test guide](../../../test/GPS/Replay/README.md). The decoder also reads
+version 1 synthetic traces and recorder exports, with explicit frozen mappings
+for their numeric enums. New files use stable string names for transport, driver,
+protocol, role, configuration status and write status. Unsupported versions,
+unknown metadata keys, wrong JSON types, invalid payloads and inconsistent delivery
+counts are rejected before replay, including events in unselected streams.
+
 Every event includes a `stream` identifier; simultaneous connections and reconnect
 attempts get distinct identifiers. `GPSReplayTrace::load`/`fromJson` accepts an
-optional stream identifier and defaults to the first stream. Its `profile` retains
-the selected session's configuration metadata. The byte player does not automatically
-create a configured GPSDriver from that metadata; the test/caller selects its driver
-and configuration explicitly.
+optional identifier and defaults to the first stream. `profile` is typed allowlisted
+metadata; `recordedEvents` preserves all selected markers and operation timing.
+`events` contains executable transport operations. `createGPSReplayDriver` creates
+the production driver from captured receiver intent without duplicating manual
+configuration. It rejects passive, resumed, truncated and configuration-less captures.
+Unknown legacy transport metadata must be supplied explicitly before driver replay.
 
 `at_us` records I/O completion relative to capture start, starting at 1. `started_us`
 records the operation's start when available. Timestamps are monotonic; concurrent
@@ -54,7 +63,7 @@ preconfigured decoder. Reconnect after starting capture to obtain a full native
 configuration transaction.
 
 Additional event kinds `session`, `configuration_started`, `configuration_finished`
-and `close` are informative markers; the replay loader skips them. A close can carry
+and `close` are informative markers, retained in `recordedEvents`. A close can carry
 a negative cancellation reason. `open_error` and `baud_error` reproduce failed
 operations. A `write_error` contains the attempted bytes and reported return value;
 negative results do not prove that no prefix reached the physical receiver.
@@ -63,10 +72,11 @@ Session `profile` fields map directly to these C++ values:
 
 | JSON field | C++ value |
 | --- | --- |
-| `transport` | `GPSRecordingMetadata::Transport` enum; Unknown if the worker factory hides the endpoint |
-| `protocol`, `role` | `GPSReceiverConfig::outputProtocol`, `role` enum values |
-| `driver` | `GPSType` enum value, or -1 for a passive stream |
-| `baud` | Passive serial initial baud, or 0 when only subsequent `baud` events establish it |
+| `transport` | Stable `unknown`, `serial`, `tcp`, `udp`, `udp_listener`, or `udp_peer` |
+| `protocol`, `role` | `native`/`nmea`, `position`/`rtk_base` |
+| `driver` | `ublox`, `trimble`, `septentrio`, `femto`, or `none` for a passive stream |
+| `baud` | Initial serial baud from the immutable session profile, or 0 for autodetection |
+| `fixed_baud` | Link baud which cannot change; 115200 for native network bridges, otherwise 0 |
 | `configured` | Whether QGC configured this receiver |
 | `constellation_mask`, `dynamic_model`, `output_rate_hz` | Corresponding GPSReceiverConfig fields |
 | `heading_offset_deg` | GPSReceiverConfig::headingOffsetDeg |
@@ -74,6 +84,17 @@ Session `profile` fields map directly to these C++ values:
 | `base.survey_accuracy_m`, `base.survey_duration_s` | Survey-in accuracy and duration |
 | `base.latitude`, `base.longitude`, `base.altitude_m`, `base.accuracy_m` | Fixed-base coordinates and accuracy |
 
-`configuration_finished.value` is `GPSDriver::ConfigurationStatus`. Record the
-QGC revision alongside a shared capture because enum meanings and native receiver
-configuration can evolve between revisions.
+`configuration_finished.status` is a stable name: `not_configured`, `ready`,
+`unsupported`, `cancelled`, `transport_error`, or `failed`. The version 1 reader
+translates the original status integers explicitly.
+
+`bounded_write` stores attempted bytes and `write` evidence: `status`, `accepted`,
+`written`, `uncertain`, and the transport's `fatal` state. These counts describe
+transport progress, not receiver acknowledgement. Replay returns the exact recorded
+outcome and advances virtual time to completion. A caller deadline shorter than the
+recorded operation fails with a diagnostic; a trace cannot prove which bytes reached
+the receiver before an earlier deadline. Legacy `write_error` remains intentionally
+less precise because its integer return code cannot identify a transmitted prefix.
+
+Record the QGC revision alongside captures: stable format names do not imply that
+receiver configuration byte sequences remain identical across driver revisions.

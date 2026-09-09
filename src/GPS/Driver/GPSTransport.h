@@ -1,6 +1,9 @@
 #pragma once
 
+#include <QtCore/QDeadlineTimer>
+
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 
 /// Byte link the GPS driver reads and writes through (serial, TCP, ...).
@@ -28,6 +31,31 @@ public:
 
     /// Write and drain length bytes under one bounded deadline. Returns bytes written, or -1 on error/cancellation.
     virtual int write(const uint8_t *buffer, int length) = 0;
+
+    enum class WriteStatus
+    {
+        Completed,
+        TimedOut,
+        Cancelled,
+        Error,
+        Unsupported,
+        InvalidData
+    };
+
+    struct WriteResult
+    {
+        WriteStatus status = WriteStatus::Unsupported;
+        int acceptedBytes = 0;
+        int writtenBytes = 0;
+        int uncertainBytes = 0;
+    };
+
+    /// Counts describe transport progress, never receiver acknowledgement. Implementations must honor the deadline.
+    /// An unsupported implementation must reject without falling back to a potentially blocking legacy write.
+    virtual WriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline);
+    /// Runtime correction allowance; serial links account for the current wire speed.
+    virtual std::chrono::milliseconds correctionWriteTimeout(int length) const;
+    static std::chrono::milliseconds serialCorrectionWriteTimeout(int length, qint64 baud);
 
     /// Set the link baud rate. Returns true on success.
     virtual bool setBaudrate(unsigned baudrate) = 0;

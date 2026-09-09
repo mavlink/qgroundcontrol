@@ -104,14 +104,6 @@ void RTCMUdpInput::_readDatagrams()
         if (!_validateRtcm) {
             qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << data.size() << "bytes";
             emit frameReceived({GPSCorrectionSource::Udp, 0, receivedAtMs, data, 0, false, false, instance});
-            if (!guard || !socket || socket != _socket) {
-                return;
-            }
-            emit correctionReceived(data, 0, false);
-            if (!guard || !socket || socket != _socket) {
-                return;
-            }
-            emit rtcmDataReceived(data);
             continue;
         }
 
@@ -119,64 +111,33 @@ void RTCMUdpInput::_readDatagrams()
         // GPS_RTCM_DATA sequence per frame (required for correct MAVLink reassembly).
         // A partial frame belongs to its sender, even when another sender interleaves datagrams.
         const auto peer = _parserForPeer(datagram.senderAddress(), datagram.senderPort());
-        auto& parser = peer->parser;
         int framesFound = 0;
         int framesDropped = 0;
         for (const char ch : data) {
-            if (peer->frameReceivedAtMs == 0 && static_cast<quint8>(ch) == 0xD3) {
-                peer->frameReceivedAtMs = receivedAtMs;
-            }
-            if (!parser.addByte(static_cast<uint8_t>(static_cast<unsigned char>(ch)))) {
-                if (!parser.hasPartialFrame()) {
-                    peer->frameReceivedAtMs = 0;
-                }
+            const auto decoded = peer->decoder.addByte(static_cast<uint8_t>(ch), receivedAtMs);
+            if (!decoded) {
                 continue;
             }
-            if (parser.validateCrc()) {
+            const GPSCorrectionFrame frame = {GPSCorrectionSource::Udp, 0,
+                                              decoded->receivedAtMs,    decoded->data,
+                                              decoded->messageId,       decoded->valid,
+                                              decoded->filtered,        instance};
+            if (decoded->valid) {
                 ++framesFound;
                 ++_validFrames;
-                const QByteArray frame = parser.currentFrame();
-                const int messageId = parser.messageId();
-                const qint64 frameTimestamp = peer->frameReceivedAtMs;
-                parser.reset();
-                peer->frameReceivedAtMs = 0;
-                emit frameReceived(
-                    {GPSCorrectionSource::Udp, 0, frameTimestamp, frame, messageId, true, false, instance});
-                if (!guard || !socket || socket != _socket) {
-                    return;
-                }
-                emit correctionReceived(frame, messageId, true);
-                if (!guard || !socket || socket != _socket) {
-                    return;
-                }
-                emit rtcmDataReceived(frame);
-                if (!guard || !socket || socket != _socket) {
-                    return;
-                }
+                emit frameReceived(frame);
             } else {
                 ++framesDropped;
                 ++_invalidFrames;
-                const GPSCorrectionFrame rejected = {GPSCorrectionSource::Udp,
-                                                     0,
-                                                     peer->frameReceivedAtMs,
-                                                     parser.currentFrame(),
-                                                     parser.messageId(),
-                                                     false,
-                                                     true,
-                                                     instance};
-                parser.reset();
-                peer->frameReceivedAtMs = 0;
-                emit frameRejected(rejected, GPSCorrectionReason::InvalidFrame);
-                if (!guard || !socket || socket != _socket) {
-                    return;
-                }
+                emit frameRejected(frame, GPSCorrectionReason::InvalidFrame);
             }
-            parser.reset();
-            peer->frameReceivedAtMs = 0;
+            if (!guard || !socket || socket != _socket) {
+                return;
+            }
         }
 
         if (framesDropped > 0) {
-            qCWarning(RTCMUdpInputLog) << "Dropped" << framesDropped << "RTCM frame(s) - CRC mismatch";
+            qCWarning(RTCMUdpInputLog) << "Dropped" << framesDropped << "RTCM frame(s) - invalid framing or CRC";
         }
 
         qCDebug(RTCMUdpInputLog) << "Datagram" << data.size() << "bytes -" << "framesFound:" << framesFound

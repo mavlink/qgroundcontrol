@@ -24,10 +24,16 @@ void GPSBaseStationStateTest::_attachReceiver(GPSReceiverSession& session, GPSRe
                                               GPSReceiverCapabilities::Support support)
 {
     session.stop();
-    session._config.role = role;
+    GPSReceiverProfile profile;
+    profile.receiver.role = role;
+    session._attempt = {++session._generation,
+                        std::make_shared<const GPSReceiverProfile>(profile),
+                        GPSReceiverAttempt::Phase::Ready,
+                        GPSConnectionError::None,
+                        {}};
     session._capabilities = GPSReceiverCapabilities::forType(GPSType::u_blox);
     session._capabilities.rtkBase = support;
-    session._provider = new GPSProvider({}, GPSType::u_blox, session._config, {}, &session);
+    session._provider = new GPSProvider({}, GPSType::u_blox, session.config(), {}, &session);
     emit session.receiverTypeChanged(GPSType::u_blox);
 }
 

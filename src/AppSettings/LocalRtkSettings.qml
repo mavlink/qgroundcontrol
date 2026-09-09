@@ -20,7 +20,6 @@ SettingsGroupLayout {
     readonly property bool _serial: root._settings.connectionType.rawValue === RTKSettings.Serial
     readonly property bool _udp: root._settings.connectionType.rawValue === RTKSettings.Udp
     readonly property bool _active: root._connection.active
-    property bool _invalidConnection: false
 
     LabelledFactComboBox {
         objectName: "gpsReceiverRole"
@@ -137,7 +136,7 @@ SettingsGroupLayout {
         available: root._serial ? root._serialPortManager !== null
                                : root._settings.networkBaseHost.valueString.trim().length > 0
         statusText: {
-            if (root._invalidConnection) return qsTr("Unable to connect. Check the connection settings.")
+            if (root._connection.validationError.length > 0) return root._connection.validationError
             if (root._connection.connectionState === GPSConnectionState.Stopping) return qsTr("Stopping")
             if (!root._active) return root._connection.autoConnectPaused ? qsTr("Automatic connection paused") : qsTr("Disconnected")
             if (root._connection.connectionState === GPSConnectionState.Ready) return qsTr("Connected")
@@ -150,9 +149,8 @@ SettingsGroupLayout {
             }
             return root._serial ? qsTr("Waiting for receiver") : qsTr("Connecting")
         }
-        onConnectRequested: root._invalidConnection = !root._manager.connectRtk()
+        onConnectRequested: root._manager.connectRtk()
         onDisconnectRequested: {
-            root._invalidConnection = false
             root._manager.disconnectRtk()
         }
     }

@@ -22,7 +22,6 @@ class QSerialPort;
 #endif
 
 class AutoConnectSettings;
-class QGCPositionManager;
 class QTcpSocket;
 class UdpIODevice;
 class NMEAStreamSplitter;
@@ -32,7 +31,7 @@ class QGeoPositionInfoSource;
 class QIODevice;
 class QNmeaSatelliteInfoSource;
 
-/// Owns one NMEA connection and both decoders; PositionManager borrows the position source.
+/// Owns one NMEA connection and both decoders; consumers independently borrow observations.
 class NMEASourceManager : public QObject
 {
     Q_OBJECT
@@ -47,7 +46,7 @@ class NMEASourceManager : public QObject
     friend class NMEASourceManagerTest;
 
 public:
-    NMEASourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager, QObject* parent = nullptr);
+    NMEASourceManager(AutoConnectSettings* settings, QObject* parent = nullptr);
     ~NMEASourceManager() override;
 
     void setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer) { _recordingBuffer = buffer; }
@@ -76,21 +75,14 @@ public:
 
     int satellitesInUseCount() const { return _decoder.health()->satellitesInUseCount(); }
 
-    QList<QGeoSatelliteInfo> satellitesInView() const { return _decoder.satellitesInView(); }
-
-    QList<QGeoSatelliteInfo> satellitesInUse() const { return _decoder.satellitesInUse(); }
-
+    GPSSatelliteObservation satelliteObservation() const { return _decoder.satelliteObservation(); }
     quint64 sessionId() const { return _decoder.sessionId(); }
 
-    quint64 satellitesReceivedAtUs() const { return _decoder.satellitesReceivedAtUs(); }
-
-    bool satellitesUsedKnown() const { return _decoder.satellitesUsedKnown(); }
-
-    QSet<int> satelliteUseSystems() const { return _decoder.satelliteUseSystems(); }
-
 signals:
+    void positionSourceChanged();
     void stateChanged();
     void satellitesChanged();
+    void satellitesReceived(const GPSSatelliteObservation& observation);
 
 private:
     bool _shouldConnect() const;
@@ -109,14 +101,14 @@ private:
 
     std::shared_ptr<GPSRecordingBuffer> _recordingBuffer;
     AutoConnectSettings* _settings;
-    NMEAConnectionConfig _config;
-    QPointer<QGCPositionManager> _positionManager;
+    GPSReceiverProfile _profile;
+    quint64 _attemptGeneration = 0;
     std::unique_ptr<NMEAConnectionAttempt> _attempt;
     NMEADecoderSession _decoder;
     QTimer _udpActivityTimer;
     GPSConnectionState _connection;
     GPSProvider::TransportFactory _receiverFactory;
-    bool _sourceInstalled = false;
+    bool _sourceAvailable = false;
     bool _dispatching = false;
     bool _stateNotificationPending = false;
     bool _shutdown = false;

@@ -4,3 +4,5 @@ add_qgc_test(GPSConnectionStateTest LABELS Unit)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSSourceHealthTest.cc GPSSourceHealthTest.h)
 add_qgc_test(GPSSourceHealthTest LABELS Unit)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSSatelliteStoreTest.cc GPSSatelliteStoreTest.h)
+add_qgc_test(GPSSatelliteStoreTest LABELS Unit)

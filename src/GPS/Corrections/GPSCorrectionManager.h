@@ -11,6 +11,7 @@
 #include "GPSCorrectionRouter.h"
 #include "RTCMMavlink.h"
 #include "RTCMUdpInput.h"
+#include "UdpForwarder.h"
 
 class GPSCorrectionSettings;
 
@@ -22,7 +23,7 @@ class GPSCorrectionManager : public QObject
     QML_UNCREATABLE("")
     Q_PROPERTY(RTCMMavlink* rtcmMavlink READ rtcmMavlink CONSTANT)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY sourcesChanged)
-    Q_PROPERTY(QVariantList sourceInstances READ sourceInstances NOTIFY sourcesChanged)
+    Q_PROPERTY(QVariantList sourceInstances READ sourceInstances NOTIFY sourceInstancesChanged)
     Q_PROPERTY(QString activeInstance READ activeInstance NOTIFY sourcesChanged)
     Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT)
     Q_PROPERTY(QVariantList destinations READ destinations NOTIFY sourcesChanged)
@@ -43,6 +44,7 @@ public:
 
     void init(GPSCorrectionSettings* settings);
     void shutdown();
+    void configureNtripUdpOutput(bool enabled, const QString& address, quint16 port);
 
     RTCMMavlink* rtcmMavlink() { return &_rtcmMavlink; }
 
@@ -72,23 +74,20 @@ public:
 
     QVariantList sources() const;
     QVariantList sourceInstances() const;
-    void forwardCorrectionsFrom(GPSCorrectionSource source, const QByteArray& data, bool validated = false,
-                                int messageId = 0, bool filtered = false);
     void acceptFrame(const GPSCorrectionFrame& frame);
 
 signals:
     void sourcesChanged();
+    void sourceInstancesChanged();
     void correctionRouted(const GPSCorrectionFrame& frame);
     void selectedSourceChanged();
-
-public slots:
-    void forwardCorrections(const QByteArray& data);
 
 private:
     void _applyUdpInputSettings();
 
     void _scheduleSourcesChanged();
     void _refreshDiagnostics();
+    void _refreshSourceInstances();
 
     GPSCorrectionRouter _router;
     GPSCorrectionEventModel _eventModel;
@@ -96,6 +95,8 @@ private:
     QTimer _healthTimer;
     RTCMMavlink _rtcmMavlink;
     RTCMUdpInput _udpInput;
+    UdpForwarder _ntripUdpOutput{this};
     QPointer<GPSCorrectionSettings> _settings;
+    QVariantList _lastSourceInstances;
     bool _shutdown = false;
 };

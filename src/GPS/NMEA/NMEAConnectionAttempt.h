@@ -25,7 +25,8 @@ class NMEAConnectionAttempt : public QObject
     Q_OBJECT
 
 public:
-    explicit NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent = nullptr);
+    explicit NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent = nullptr,
+                                   quint64 generation = 1);
     ~NMEAConnectionAttempt() override;
 
     void start(GPSProvider::TransportFactory receiverFactory = {});
@@ -39,9 +40,12 @@ public:
 
     bool stopping() const { return _stopping; }
 
+    const GPSReceiverAttempt& attempt() const { return _attempt; }
+
     quint16 localPort() const;
 
 signals:
+    void attemptChanged(const GPSReceiverAttempt& attempt);
     void deviceReady();
     void configuring();
     void dataReceived();
@@ -49,6 +53,8 @@ signals:
     void stopped();
 
 private:
+    bool _transition(GPSReceiverAttempt::Phase phase, GPSConnectionError error = GPSConnectionError::None,
+                     const QString& detail = {});
     void _publishDeviceReady();
     void _startConfigured(GPSProvider::TransportFactory receiverFactory);
     bool _reserveSerial();
@@ -57,7 +63,7 @@ private:
 
     std::shared_ptr<GPSRecordingStream> _recording;
     std::unique_ptr<GPSRecordingDevice> _recordingDevice;
-    const GPSReceiverProfile _profile;
+    GPSReceiverAttempt _attempt;
     GPSReceiverSession _receiver;
     QTimer _connectTimer;
     std::unique_ptr<UdpIODevice> _udp;
@@ -68,8 +74,6 @@ private:
     SerialPortManager::ReservationPtr _reservation;
 #endif
     quint64 _openStartedAtUs = 0;
-    bool _started = false;
     bool _stopping = false;
-    bool _failed = false;
     bool _stopped = false;
 };

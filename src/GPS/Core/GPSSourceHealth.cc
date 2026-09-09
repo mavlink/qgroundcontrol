@@ -204,3 +204,13 @@ void GPSSourceHealth::clearSatelliteReports()
         emit satellitesChanged();
     }
 }
+
+void GPSSourceHealth::applySatelliteObservation(const GPSSatelliteObservation& observation)
+{
+    // The observation store owns report expiry; the fix's independent GGA count retains its own deadline.
+    _satellitesInViewTimer.stop();
+    _satellitesInUseTimer.stop();
+    _satellitesInViewCount = observation.satellitesInViewCount();
+    _satellitesInUseCount = observation.satellitesInUseCount();
+    emit satellitesChanged();
+}

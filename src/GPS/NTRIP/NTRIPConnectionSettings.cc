@@ -15,8 +15,5 @@ NTRIPTransportConfig NTRIPTransportConfig::fromSettings(NTRIPSettings& settings)
     config.whitelist = read(settings.ntripWhitelist(), config.whitelist).toString();
     config.useTls = read(settings.ntripUseTls(), config.useTls).toBool();
     config.allowSelfSignedCerts = read(settings.ntripAllowSelfSignedCerts(), config.allowSelfSignedCerts).toBool();
-    config.udpForwardEnabled = read(settings.ntripUdpForwardEnabled(), config.udpForwardEnabled).toBool();
-    config.udpTargetAddress = read(settings.ntripUdpTargetAddress(), config.udpTargetAddress).toString();
-    config.udpTargetPort = static_cast<quint16>(read(settings.ntripUdpTargetPort(), config.udpTargetPort).toUInt());
     return config;
 }

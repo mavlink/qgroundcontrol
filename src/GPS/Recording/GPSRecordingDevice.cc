@@ -8,7 +8,9 @@ QGC_LOGGING_CATEGORY(GPSRecordingDeviceLog, "GPS.Recording.GPSRecordingDevice")
 
 GPSRecordingDevice::GPSRecordingDevice(QIODevice* source, std::shared_ptr<GPSRecordingStream> recording,
                                        QObject* parent)
-    : QIODevice(parent), _source(source), _recording(std::move(recording))
+    : QIODevice(parent)
+    , _source(source)
+    , _recording(std::move(recording))
 {
     qCDebug(GPSRecordingDeviceLog) << this;
     if (!source || !source->isOpen()) {

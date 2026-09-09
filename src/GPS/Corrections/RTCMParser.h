@@ -35,6 +35,7 @@ public:
     static constexpr int kHeaderSize = 3;
 
     bool validateCrc() const;
+    static bool isValidFrame(const QByteArray& frame);
     static uint32_t crc24q(const uint8_t* data, size_t len);
 
     /// Bytes of the just-completed frame (header + payload + CRC). Valid only

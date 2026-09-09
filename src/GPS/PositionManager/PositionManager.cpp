@@ -18,9 +18,29 @@ Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 QGCPositionManager::QGCPositionManager(QObject* parent)
     : QObject(parent)
     , _recoveryTimer(this)
-    , _externalHealth(this)
 {
     qCDebug(QGCPositionManagerLog) << this;
+    for (auto& adapter : _sourceAdapters) {
+        adapter = std::make_unique<GPSPositionSourceAdapter>(this);
+        connect(adapter.get(), &GPSPositionSourceAdapter::bindingChanged, this,
+                &QGCPositionManager::_selectPositionSource);
+        connect(adapter.get(), &GPSPositionSourceAdapter::observationChanged, this, [this]() {
+            if (_sourceMode == SourceMode::Automatic) {
+                _selectPositionSource();
+            }
+        });
+    }
+    connect(_sourceAdapters[InternalGPS].get(), &GPSPositionSourceAdapter::backendError, this,
+            [this](QGeoPositionInfoSource::Error error) {
+                if (error == QGeoPositionInfoSource::AccessError) {
+                    _platformStatus = SourceStatus::PermissionDenied;
+                } else if (error == QGeoPositionInfoSource::ClosedError ||
+                           error == QGeoPositionInfoSource::UnknownSourceError) {
+                    _platformStatus = SourceStatus::BackendUnavailable;
+                } else if (error == QGeoPositionInfoSource::NoError) {
+                    _platformStatus = SourceStatus::WaitingForFix;
+                }
+            });
     _recoveryTimer.setSingleShot(true);
     _recoveryTimer.setTimerType(Qt::PreciseTimer);
     _recoveryTimer.setInterval(5000);
@@ -32,14 +52,9 @@ QGCPositionManager::~QGCPositionManager()
     qCDebug(QGCPositionManagerLog) << this;
     QObject::disconnect(_healthConnection);
     QObject::disconnect(_healthDestroyedConnection);
-    for (auto& watched : _automaticSources) {
-        for (const auto& connection : watched.connections) {
-            QObject::disconnect(connection);
-        }
-        if (watched.source) {
-            watched.source->disconnect(this);
-            watched.source->stopUpdates();
-        }
+    for (auto& adapter : _sourceAdapters) {
+        adapter->disconnect(this);
+        adapter->fallbackHealth().disconnect(this);
     }
 }
 
@@ -52,7 +67,7 @@ void QGCPositionManager::init()
 {
     if (QGC::runningUnitTests()) {
         _simulatedSource = new SimulatedPosition(this);
-        _setPositionSource(QGCPositionSource::Simulated);
+        _selectPositionSource();
     } else {
         _checkPermission();
     }
@@ -111,6 +126,40 @@ void QGCPositionManager::_checkPermission()
     }
 }
 
+std::unique_ptr<GPSPositionSourceRegistration> QGCPositionManager::registerPositionSource(
+    SelectedSource kind, QGeoPositionInfoSource* source, GPSSourceHealth* health)
+{
+    if ((kind != SelectedSource::Receiver && kind != SelectedSource::Nmea) || !source ||
+        QThread::currentThread() != thread() || source->thread() != thread() ||
+        (health && health->thread() != thread())) {
+        return {};
+    }
+    const auto index = static_cast<size_t>(kind);
+    const quint64 token = _registrationTokens[index] + 1;
+    auto registration = std::unique_ptr<GPSPositionSourceRegistration>(
+        new GPSPositionSourceRegistration(this, static_cast<int>(kind), token));
+    if (kind == SelectedSource::Receiver) {
+        setReceiverPositionSource(source, health);
+    } else {
+        setNmeaPositionSource(source, health);
+    }
+    return registration;
+}
+
+void QGCPositionManager::_retireRegistration(int kind, quint64 token)
+{
+    if (kind < 0 || kind >= static_cast<int>(_registrationTokens.size()) ||
+        _registrationTokens[static_cast<size_t>(kind)] != token) {
+        return;
+    }
+    ++_registrationTokens[static_cast<size_t>(kind)];
+    if (kind == static_cast<int>(SelectedSource::Receiver)) {
+        setReceiverPositionSource(nullptr);
+    } else if (kind == static_cast<int>(SelectedSource::Nmea)) {
+        setNmeaPositionSource(nullptr);
+    }
+}
+
 void QGCPositionManager::setReceiverPositionSource(QGeoPositionInfoSource* source, GPSSourceHealth* health)
 {
     if (QThread::currentThread() != thread() || (source && source->thread() != thread()) ||
@@ -118,6 +167,7 @@ void QGCPositionManager::setReceiverPositionSource(QGeoPositionInfoSource* sourc
         qCWarning(QGCPositionManagerLog) << "Position source changes require matching thread affinity";
         return;
     }
+    ++_registrationTokens[static_cast<size_t>(SelectedSource::Receiver)];
     if (_receiverSource == source && _receiverHealth == health) {
         return;
     }
@@ -167,7 +217,7 @@ void QGCPositionManager::setSourceMode(SourceMode mode)
     _sourceMode = mode;
     _forceSourceRefresh = true;
     ++_sourceGeneration;
-    _recoveryCandidate.reset();
+    _selector.reset();
     _recoveryTimer.stop();
     const QPointer<QGCPositionManager> guard(this);
     _selectPositionSource();
@@ -193,11 +243,6 @@ QGeoPositionInfoSource* QGCPositionManager::_sourceFor(QGCPositionSource source)
     return nullptr;
 }
 
-GPSSourceHealth* QGCPositionManager::_automaticHealthFor(QGCPositionSource source) const
-{
-    return _automaticSources[static_cast<size_t>(source)].health;
-}
-
 void QGCPositionManager::_selectPositionSource()
 {
     _selectionPending = true;
@@ -208,11 +253,7 @@ void QGCPositionManager::_selectPositionSource()
     const QPointer<QGCPositionManager> guard(this);
     do {
         _selectionPending = false;
-        if (_sourceMode == SourceMode::Automatic) {
-            _refreshAutomaticSources();
-        } else if (_monitoringAutomatic) {
-            _stopAutomaticSources();
-        }
+        _refreshSourceAdapters();
         if (!guard) {
             return;
         }
@@ -247,154 +288,53 @@ QGCPositionManager::QGCPositionSource QGCPositionManager::_choosePositionSource(
         case SourceMode::Automatic:
             break;
     }
-    const std::array priority = {ExternalGPS, NmeaGPS, internal};
-    std::optional<QGCPositionSource> best;
-    std::optional<QGCPositionSource> current;
-    for (const auto source : priority) {
-        if (_sourceFor(source) && _sourceFor(source) == _currentSource) {
-            current = source;
-        }
-        const auto* health = _automaticHealthFor(source);
-        if (!best && _sourceFor(source) && health &&
-            health->acceptedObservation(GPSObservation::PositionUse::GroundStation)) {
-            best = source;
-        }
+    const std::array priorityKinds = {ExternalGPS, NmeaGPS, internal};
+    std::array<GPSPositionSourceSelector::Candidate, 3> priority{};
+    for (size_t index = 0; index < priority.size(); ++index) {
+        const auto kind = priorityKinds[index];
+        auto* health = _sourceAdapters[kind]->health();
+        priority[index] = {
+            kind, _sourceFor(kind) != nullptr,
+            health && health->acceptedObservation(GPSObservation::PositionUse::GroundStation).has_value()};
     }
-    const auto* currentHealth = current ? _automaticHealthFor(*current) : nullptr;
-    if (best && current && *best != *current && currentHealth &&
-        currentHealth->acceptedObservation(GPSObservation::PositionUse::GroundStation)) {
-        if (_recoveryCandidate != best) {
-            _recoveryCandidate = best;
-            _recoveryElapsed.start();
+    const qint64 nowMs = static_cast<qint64>(GPSObservation::monotonicNowUs() / 1000);
+    const auto selected = static_cast<QGCPositionSource>(
+        _selector.select(priority, _currentSource ? _selectedKind : -1, nowMs, _recoveryTimer.interval()));
+    if (_selector.recovering()) {
+        if (!_recoveryTimer.isActive()) {
             _recoveryTimer.start();
         }
-        if (_recoveryElapsed.elapsed() < _recoveryTimer.interval()) {
-            return *current;
-        }
+    } else {
+        _recoveryTimer.stop();
     }
-    _recoveryCandidate.reset();
-    _recoveryTimer.stop();
-    if (best) {
-        return *best;
-    }
-    return current.value_or(_receiverSource ? ExternalGPS : (_nmeaSource ? NmeaGPS : internal));
+    return selected;
 }
 
-void QGCPositionManager::_refreshAutomaticSources()
+void QGCPositionManager::_refreshSourceAdapters()
 {
-    _monitoringAutomatic = true;
     const QPointer<QGCPositionManager> guard(this);
     for (const auto kind : {ExternalGPS, NmeaGPS, InternalGPS, Simulated}) {
-        auto& watched = _automaticSources[static_cast<size_t>(kind)];
-        QPointer<QGeoPositionInfoSource> source = _sourceFor(kind);
-        QPointer<GPSSourceHealth> health = kind == ExternalGPS ? _receiverHealth.data()
-                                           : kind == NmeaGPS   ? _nmeaHealth.data()
-                                                               : nullptr;
-        if (source && !health) {
-            if (!watched.fallback) {
-                watched.fallback = std::make_unique<GPSSourceHealth>(this);
-            }
-            health = watched.fallback.get();
-        }
-        if (watched.source == source && watched.health == health) {
-            continue;
-        }
-        for (const auto& connection : watched.connections) {
-            QObject::disconnect(connection);
-        }
-        watched.connections.clear();
-        if (watched.source && watched.source != source) {
-            watched.source->stopUpdates();
-        }
-        if (!guard) {
-            return;
-        }
-        if (watched.fallback) {
-            watched.fallback->reset();
-        }
-        if (!guard) {
-            return;
-        }
-        watched.source = source;
-        watched.health = health;
-        if (!source || !health) {
-            continue;
-        }
-        watched.connections.append(
-            connect(health, &GPSSourceHealth::positionChanged, this, &QGCPositionManager::_selectPositionSource));
-        watched.connections.append(
-            connect(source, &QObject::destroyed, this, &QGCPositionManager::_selectPositionSource));
-        watched.connections.append(
-            connect(health, &QObject::destroyed, this, &QGCPositionManager::_selectPositionSource));
-        if (health == watched.fallback.get()) {
-            watched.connections.append(connect(
-                source, &QGeoPositionInfoSource::positionUpdated, this,
-                [this, source, health, kind](const QGeoPositionInfo& update) {
-                    if (_sourceMode != SourceMode::Automatic || !source || !health || _sourceFor(kind) != source) {
-                        return;
-                    }
-                    if (kind == InternalGPS) {
-                        _platformStatus = SourceStatus::WaitingForFix;
-                    }
-                    GPSObservation observation;
-                    observation.position = update;
-                    observation.receivedAt = QDateTime::currentDateTimeUtc();
-                    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-                    observation.sourceId =
-                        kind == InternalGPS ? QStringLiteral("Platform") : QStringLiteral("External GPS");
-                    health->updateObservation(observation);
-                }));
-            watched.connections.append(connect(source, &QGeoPositionInfoSource::errorOccurred, this,
-                                               [this, source, health, kind](QGeoPositionInfoSource::Error error) {
-                                                   if (_sourceMode != SourceMode::Automatic || !source || !health ||
-                                                       _sourceFor(kind) != source) {
-                                                       return;
-                                                   }
-                                                   if (kind == InternalGPS) {
-                                                       if (error == QGeoPositionInfoSource::AccessError) {
-                                                           _platformStatus = SourceStatus::PermissionDenied;
-                                                       } else if (error == QGeoPositionInfoSource::ClosedError ||
-                                                                  error == QGeoPositionInfoSource::UnknownSourceError) {
-                                                           _platformStatus = SourceStatus::BackendUnavailable;
-                                                       }
-                                                   }
-                                                   if (error != QGeoPositionInfoSource::NoError) {
-                                                       health->invalidatePosition();
-                                                   }
-                                               }));
-        }
-        source->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
-        if (!guard || !source || _sourceMode != SourceMode::Automatic) {
-            return;
-        }
-        source->setUpdateInterval(kind == InternalGPS ? source->minimumUpdateInterval() : 0);
-        if (!guard || !source || _sourceMode != SourceMode::Automatic) {
-            return;
-        }
-        source->startUpdates();
+        auto* supplied = kind == ExternalGPS ? _receiverHealth.data() : kind == NmeaGPS ? _nmeaHealth.data() : nullptr;
+        const QString identity = kind == InternalGPS
+                                     ? (_usingPluginSource ? QStringLiteral("Plugin") : QStringLiteral("Platform"))
+                                 : kind == Simulated ? QStringLiteral("Simulated")
+                                                     : QStringLiteral("External GPS");
+        _sourceAdapters[kind]->configure(_sourceFor(kind), supplied, identity,
+                                         kind == InternalGPS || kind == Simulated);
         if (!guard) {
             return;
         }
     }
 }
 
-void QGCPositionManager::_stopAutomaticSources()
+void QGCPositionManager::_updateSourceActivity()
 {
-    _monitoringAutomatic = false;
     const QPointer<QGCPositionManager> guard(this);
-    for (auto& watched : _automaticSources) {
-        for (const auto& connection : watched.connections) {
-            QObject::disconnect(connection);
-        }
-        watched.connections.clear();
-        if (watched.source) {
-            watched.source->stopUpdates();
-        }
-        if (!guard) {
+    for (const auto kind : {ExternalGPS, NmeaGPS, InternalGPS, Simulated}) {
+        _sourceAdapters[kind]->setActive(_sourceMode == SourceMode::Automatic || _currentSource == _sourceFor(kind));
+        if (!guard || _selectionPending) {
             return;
         }
-        watched.source = nullptr;
-        watched.health = nullptr;
     }
 }
 
@@ -485,7 +425,7 @@ void QGCPositionManager::_updateSelectionStatus()
             reason = tr("Pinned to internal positioning");
             break;
         case SourceMode::Automatic:
-            reason = _recoveryCandidate ? tr("Keeping the current source while the preferred source recovers")
+            reason = _selector.recovering() ? tr("Keeping the current source while the preferred source recovers")
                      : status == SourceStatus::Active ? tr("Using the highest-priority healthy source")
                                                       : tr("Waiting for a healthy position source");
             break;
@@ -505,6 +445,7 @@ void QGCPositionManager::setNmeaPositionSource(QGeoPositionInfoSource* source, G
         qCWarning(QGCPositionManagerLog) << "Position source changes require matching thread affinity";
         return;
     }
+    ++_registrationTokens[static_cast<size_t>(SelectedSource::Nmea)];
     if (_nmeaSource == source && _nmeaHealth == health) {
         return;
     }
@@ -545,17 +486,7 @@ std::optional<GPSObservation> QGCPositionManager::acceptedObservation(GPSObserva
 
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo& update)
 {
-    if (!_isExternalSource()) {
-        _platformStatus = SourceStatus::WaitingForFix;
-    }
-    GPSObservation observation;
-    observation.position = update;
-    observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    observation.sourceId = _isExternalSource()
-                               ? QStringLiteral("External GPS")
-                               : (_usingPluginSource ? QStringLiteral("Plugin") : QStringLiteral("Platform"));
-    _externalHealth.updateObservation(observation);
+    _sourceAdapters[_selectedKind]->updatePosition(update);
 }
 
 void QGCPositionManager::_externalPositionChanged()
@@ -668,15 +599,9 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
             nextSource = _defaultSource;
             break;
     }
-    QPointer<GPSSourceHealth> nextHealth = nextSource && (source == ExternalGPS || source == NmeaGPS)
-                                               ? (source == ExternalGPS ? _receiverHealth.data() : _nmeaHealth.data())
-                                               : nullptr;
-    if (_sourceMode == SourceMode::Automatic) {
-        nextHealth = nextSource ? _automaticHealthFor(source) : nullptr;
-    } else if (nextSource && !nextHealth) {
-        nextHealth = &_externalHealth;
-    }
+    QPointer<GPSSourceHealth> nextHealth = nextSource ? _sourceAdapters[source]->health() : nullptr;
     if (!_forceSourceRefresh && _currentSource == nextSource && _currentHealth == nextHealth) {
+        _updateSourceActivity();
         return;
     }
     qCDebug(QGCPositionManagerLog) << "Ground-station position source changed"
@@ -687,20 +612,10 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
     const quint64 generation = ++_sourceGeneration;
     QObject::disconnect(_healthConnection);
     QObject::disconnect(_healthDestroyedConnection);
-    _externalHealth.reset();
-    if (!guard || generation != _sourceGeneration || _selectionPending) {
-        return;
-    }
-    QObject::disconnect(_positionUpdateConnection);
-    QObject::disconnect(_positionErrorConnection);
-    if (_currentSource && _sourceMode != SourceMode::Automatic) {
-        _currentSource->stopUpdates();
-    }
-    if (!guard || generation != _sourceGeneration || _selectionPending) {
-        return;
-    }
     _currentSource = nextSource;
     _currentHealth = nextHealth;
+    _selectedKind = source;
+    _updateInterval = _sourceAdapters[source]->updateInterval();
     _clearPosition();
     if (!guard || generation != _sourceGeneration || _selectionPending) {
         return;
@@ -723,53 +638,11 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
             }
         });
     }
-    if (_currentSource && _sourceMode == SourceMode::Automatic) {
-        _externalPositionChanged();
+    _updateSourceActivity();
+    if (!guard || generation != _sourceGeneration || _selectionPending) {
         return;
     }
-    if (_currentSource != nullptr) {
-        _currentSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
-        _updateInterval = _isExternalSource() ? 0 : _currentSource->minimumUpdateInterval();
-        if (_isExternalSource()) {
-            // Qt's NMEA minimum is 2 ms, which reports timeouts between normal receiver fixes.
-            _currentSource->setUpdateInterval(0);
-        }
-#if !defined(Q_OS_DARWIN) && !defined(Q_OS_IOS)
-        _currentSource->setUpdateInterval(_updateInterval);
-#endif
-
-        const QPointer<QGeoPositionInfoSource> selectedSource = _currentSource;
-        _positionUpdateConnection =
-            connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this,
-                    [this, selectedSource, generation](const QGeoPositionInfo& update) {
-                        if (selectedSource && _currentSource == selectedSource && generation == _sourceGeneration) {
-                            if (!_currentHealth || _currentHealth == &_externalHealth) {
-                                _positionUpdated(update);
-                            }
-                        }
-                    });
-        _positionErrorConnection =
-            connect(_currentSource, &QGeoPositionInfoSource::errorOccurred, this,
-                    [this, selectedSource, generation](QGeoPositionInfoSource::Error error) {
-                        if (selectedSource && _currentSource == selectedSource && generation == _sourceGeneration) {
-                            if (_currentSource == _defaultSource) {
-                                if (error == QGeoPositionInfoSource::AccessError) {
-                                    _platformStatus = SourceStatus::PermissionDenied;
-                                } else if (error == QGeoPositionInfoSource::ClosedError ||
-                                           error == QGeoPositionInfoSource::UnknownSourceError) {
-                                    _platformStatus = SourceStatus::BackendUnavailable;
-                                }
-                            }
-                            if (_currentHealth == &_externalHealth && error != QGeoPositionInfoSource::NoError) {
-                                _externalHealth.invalidatePosition();
-                            } else if (!_currentHealth) {
-                                _positionError(error);
-                            }
-                        }
-                    });
-
-        // (void) connect(QGCCompass::instance(), &QGCCompass::positionUpdated, this, &QGCPositionManager::_positionUpdated);
-
-        _currentSource->startUpdates();
+    if (_currentSource && _sourceMode == SourceMode::Automatic) {
+        _externalPositionChanged();
     }
 }

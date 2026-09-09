@@ -33,14 +33,14 @@ void RTCMUdpInputTest::_testPassthroughWithoutValidation()
 {
     RTCMUdpInput input(0);
     QVERIFY(input.start());
-    QSignalSpy spy(&input, &RTCMUdpInput::rtcmDataReceived);
+    QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
 
     // Validation off (default): datagram forwarded as-is, valid RTCM or not.
     const QByteArray payload = QByteArrayLiteral("not-rtcm-at-all");
     QVERIFY(sendDatagram(input.port(), payload));
 
     QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 2000);
-    QCOMPARE(spy.at(0).at(0).toByteArray(), payload);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, payload);
 }
 
 void RTCMUdpInputTest::_testEmitsOneSignalPerFrame()
@@ -48,7 +48,7 @@ void RTCMUdpInputTest::_testEmitsOneSignalPerFrame()
     RTCMUdpInput input(0);
     input.setValidation(true);
     QVERIFY(input.start());
-    QSignalSpy spy(&input, &RTCMUdpInput::rtcmDataReceived);
+    QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
 
     // One datagram carrying two frames plus leading garbage: each frame must be
     // emitted separately so RTCMMavlink assigns it its own sequence.
@@ -58,8 +58,8 @@ void RTCMUdpInputTest::_testEmitsOneSignalPerFrame()
     QVERIFY(sendDatagram(input.port(), garbage + frame1 + frame2));
 
     QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, 2000);
-    QCOMPARE(spy.at(0).at(0).toByteArray(), frame1);
-    QCOMPARE(spy.at(1).at(0).toByteArray(), frame2);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame1);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(1).at(0)).data, frame2);
 }
 
 void RTCMUdpInputTest::_testDropsBadCrcFrame()
@@ -67,7 +67,7 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
     RTCMUdpInput input(0);
     input.setValidation(true);
     QVERIFY(input.start());
-    QSignalSpy spy(&input, &RTCMUdpInput::rtcmDataReceived);
+    QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
     QSignalSpy rejected(&input, &RTCMUdpInput::frameRejected);
 
     const QByteArray frame1 = GpsTestHelpers::buildRtcmFrame(1005, 4);
@@ -80,8 +80,8 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
 
     QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, 2000);
     verifyExpectedLogMessage();
-    QCOMPARE(spy.at(0).at(0).toByteArray(), frame1);
-    QCOMPARE(spy.at(1).at(0).toByteArray(), frame2);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame1);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(1).at(0)).data, frame2);
     QCOMPARE(rejected.size(), 1);
     const auto candidate = qvariant_cast<GPSCorrectionFrame>(rejected.first().first());
     QCOMPARE(candidate.data, corrupted);
@@ -94,7 +94,7 @@ void RTCMUdpInputTest::_testFrameSplitAcrossDatagrams()
     RTCMUdpInput input(0);
     input.setValidation(true);
     QVERIFY(input.start());
-    QSignalSpy spy(&input, &RTCMUdpInput::rtcmDataReceived);
+    QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
 
     // Parser state must carry across datagrams so a frame split by the sender
     // still comes out whole.
@@ -105,7 +105,7 @@ void RTCMUdpInputTest::_testFrameSplitAcrossDatagrams()
     QCOMPARE(sender.writeDatagram(frame.mid(split), QHostAddress::LocalHost, input.port()), frame.size() - split);
 
     QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 2000);
-    QCOMPARE(spy.at(0).at(0).toByteArray(), frame);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame);
 }
 
 void RTCMUdpInputTest::_testInterleavedSenders()
@@ -113,7 +113,7 @@ void RTCMUdpInputTest::_testInterleavedSenders()
     RTCMUdpInput input(0);
     input.setValidation(true);
     QVERIFY(input.start());
-    QSignalSpy frames(&input, &RTCMUdpInput::rtcmDataReceived);
+    QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     QSignalSpy envelopes(&input, &RTCMUdpInput::frameReceived);
     QUdpSocket senderA;
     QUdpSocket senderB;
@@ -123,10 +123,10 @@ void RTCMUdpInputTest::_testInterleavedSenders()
     QCOMPARE(senderA.writeDatagram(frameA.first(split), QHostAddress::LocalHost, input.port()), split);
     QCOMPARE(senderB.writeDatagram(frameB, QHostAddress::LocalHost, input.port()), frameB.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.count(), 1, TestTimeout::mediumMs());
-    QCOMPARE(frames.first().first().toByteArray(), frameB);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(frames.first().first()).data, frameB);
     QCOMPARE(senderA.writeDatagram(frameA.sliced(split), QHostAddress::LocalHost, input.port()), frameA.size() - split);
     QTRY_COMPARE_WITH_TIMEOUT(frames.count(), 2, TestTimeout::mediumMs());
-    QCOMPARE(frames.last().first().toByteArray(), frameA);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(frames.last().first()).data, frameA);
     QCOMPARE(envelopes.size(), 2);
     const auto envelopeB = qvariant_cast<GPSCorrectionFrame>(envelopes.first().first());
     const auto envelopeA = qvariant_cast<GPSCorrectionFrame>(envelopes.last().first());

@@ -410,6 +410,15 @@ void GPSDriverTest::_receiverRoleCommands()
             return size;
         }
 
+        WriteResult writeBounded(const uint8_t* data, int size, QDeadlineTimer deadline) override
+        {
+            if (deadline.hasExpired()) {
+                return {WriteStatus::TimedOut};
+            }
+            const int count = write(data, size);
+            return {WriteStatus::Completed, count, count, 0};
+        }
+
         QList<QByteArray> commands;
 
     private:

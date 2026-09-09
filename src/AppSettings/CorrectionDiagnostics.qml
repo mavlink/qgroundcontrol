@@ -8,6 +8,12 @@ SettingsGroupLayout {
 
     property var corrections: QGroundControl.gpsManager.corrections
 
+    function destinationName(destinationId: string): string {
+        if (destinationId === "localReceiver") return qsTr("Local receiver")
+        if (destinationId === "ntripUdp") return qsTr("NTRIP UDP output")
+        return qsTr("Vehicles")
+    }
+
     function reasonName(reason) {
         switch (reason) {
         case GPSCorrectionEventModel.None:
@@ -114,7 +120,7 @@ SettingsGroupLayout {
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            text: qsTr("%1 — queued %2 B, written %3, dropped %4 B, pending %5 B, unconfirmed %6 B").arg(modelData.destinationId === "localReceiver" ? qsTr("Local receiver") : qsTr("Vehicles")).arg(modelData.queuedBytes).arg(modelData.reportsWrites ? qsTr("%1 B").arg(modelData.writtenBytes) : qsTr("unconfirmed")).arg(modelData.droppedBytes).arg(modelData.pendingBytes).arg(modelData.unconfirmedBytes)
+            text: qsTr("%1 — queued %2 B, written %3, dropped %4 B, pending %5 B, unconfirmed %6 B").arg(root.destinationName(modelData.destinationId)).arg(modelData.queuedBytes).arg(modelData.reportsWrites ? qsTr("%1 B").arg(modelData.writtenBytes) : qsTr("unconfirmed")).arg(modelData.droppedBytes).arg(modelData.pendingBytes).arg(modelData.unconfirmedBytes)
             wrapMode: Text.WordWrap
         }
     }

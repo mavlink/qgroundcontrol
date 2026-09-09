@@ -37,4 +37,8 @@ private slots:
     void _automaticMonitorsStandbyAndStopsOnExit();
     void _selectionStatus();
     void _selectionNotificationCanReconfigureOrDelete();
+    void _scopedRegistrationReplacementAndLifetime();
+    void _sourceProvenanceAcrossPolicies_data();
+    void _sourceProvenanceAcrossPolicies();
+    void _selectorRequiresContinuousRecovery();
 };

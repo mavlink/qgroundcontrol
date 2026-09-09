@@ -34,6 +34,11 @@ bool SerialGPSTransport::open()
         return false;
     }
     _serial = std::make_unique<QSerialPort>();
+    _acceptedTotal = 0;
+    _writtenTotal = 0;
+    QObject::connect(
+        _serial.get(), &QSerialPort::bytesWritten, _serial.get(), [this](qint64 count) { _writtenTotal += count; },
+        Qt::DirectConnection);
     _serial->setPortName(_device);
     const QDeadlineTimer openDeadline(kOpenTimeoutMs);
     while (!_serial->open(QIODevice::ReadWrite)) {
@@ -93,36 +98,66 @@ int SerialGPSTransport::read(uint8_t *buffer, int length, int timeoutMs)
     return _serial->read(reinterpret_cast<char *>(buffer), length);
 }
 
-int SerialGPSTransport::write(const uint8_t *buffer, int length)
+int SerialGPSTransport::write(const uint8_t* buffer, int length)
 {
-    if (isCancelled() || fatalError() || !buffer || length < 0) {
-        return -1;
+    const auto result = writeBounded(buffer, length, QDeadlineTimer(kWriteTimeoutMs));
+    return result.status == WriteStatus::Completed ? result.writtenBytes : -1;
+}
+
+GPSTransport::WriteResult SerialGPSTransport::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+{
+    if (isCancelled()) {
+        return {WriteStatus::Cancelled};
+    }
+    if (!buffer || length < 0) {
+        return {WriteStatus::InvalidData};
+    }
+    if (fatalError() || _serial->bytesToWrite() != 0) {
+        return {WriteStatus::Error};
     }
     if (length == 0) {
-        return 0;
+        return {WriteStatus::Completed};
     }
-    const QDeadlineTimer deadline(kWriteTimeoutMs);
-    int written = 0;
-    while (written < length || _serial->bytesToWrite() > 0) {
+    int accepted = 0;
+    const qint64 previousAccepted = _acceptedTotal;
+    WriteStatus status = WriteStatus::Completed;
+    while (accepted < length || _serial->bytesToWrite() > 0) {
         if (isCancelled() || fatalError() || deadline.hasExpired()) {
-            return -1;
+            status = isCancelled() ? WriteStatus::Cancelled : fatalError() ? WriteStatus::Error : WriteStatus::TimedOut;
+            break;
         }
-        if (written < length) {
-            const qint64 n = _serial->write(reinterpret_cast<const char*>(buffer) + written, length - written);
-            if (n < 0) {
-                return -1;
+        if (accepted < length) {
+            const qint64 count = _serial->write(reinterpret_cast<const char*>(buffer) + accepted, length - accepted);
+            if (count < 0) {
+                status = WriteStatus::Error;
+                break;
             }
-            written += static_cast<int>(n);
+            accepted += static_cast<int>(count);
+            _acceptedTotal += count;
         }
         if (_serial->bytesToWrite() > 0) {
             _serial->waitForBytesWritten(
                 static_cast<int>((std::min) (deadline.remainingTime(), qint64(kCancellationPollMs))));
         }
     }
-    return isCancelled() || fatalError() ? -1 : written;
+    if (isCancelled()) {
+        status = WriteStatus::Cancelled;
+    } else if (fatalError()) {
+        status = WriteStatus::Error;
+    }
+    // Qt can empty its write buffer before emitting bytesWritten; its later signal belongs to that earlier write.
+    const qint64 confirmed =
+        !fatalError() ? (std::max) (_writtenTotal, _acceptedTotal - _serial->bytesToWrite()) : _writtenTotal;
+    const int written = static_cast<int>(std::clamp(confirmed - previousAccepted, qint64(0), qint64(accepted)));
+    return {status, accepted, written, accepted - written};
 }
 
 bool SerialGPSTransport::setBaudrate(unsigned baudrate)
 {
     return !isCancelled() && !fatalError() && _serial->setBaudRate(baudrate);
+}
+
+std::chrono::milliseconds SerialGPSTransport::correctionWriteTimeout(int length) const
+{
+    return serialCorrectionWriteTimeout(length, _serial ? _serial->baudRate() : 0);
 }

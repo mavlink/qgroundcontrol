@@ -15,6 +15,9 @@ qt_add_library(
     GPSDriverData.h
     GPSReceiverCapabilities.cc
     GPSReceiverCapabilities.h
+    GPSReceiverConfig.cc
+    GPSReceiverConfig.h
+    GPSReceiverSetting.h
     GPSTransport.cc
     GPSTransport.h
     TcpGPSTransport.cc

@@ -2,10 +2,17 @@
 
 #include <QtCore/QByteArray>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtPositioning/QGeoSatelliteInfo>
+
+#include "GPSObservation.h"
 
 struct GPSObservation;
 
 namespace NMEAUtils {
+
+GPSSatellite::Constellation satelliteConstellation(QGeoSatelliteInfo::SatelliteSystem system);
+GPSSatellite::Constellation satelliteConstellation(const QByteArray& talker);
+
 
 /// Compute XOR checksum over NMEA body (between '$' and '*').
 quint8 computeChecksum(const QByteArray& body);

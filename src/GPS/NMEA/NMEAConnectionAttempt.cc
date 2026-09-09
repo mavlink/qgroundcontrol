@@ -17,9 +17,13 @@
 
 QGC_LOGGING_CATEGORY(NMEAConnectionAttemptLog, "GPS.NMEA.NMEAConnectionAttempt")
 
-NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent)
+NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent, quint64 generation)
     : QObject(parent)
-    , _profile(profile.normalized())
+    , _attempt{generation,
+               std::make_shared<const GPSReceiverProfile>(profile.normalized()),
+               GPSReceiverAttempt::Phase::Idle,
+               GPSConnectionError::None,
+               {}}
     , _receiver(this)
     , _connectTimer(this)
 {
@@ -27,9 +31,13 @@ NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, 
     _connectTimer.setSingleShot(true);
     _connectTimer.setInterval(10000);
     connect(&_connectTimer, &QTimer::timeout, this, [this]() { _fail(tr("Connection timed out")); });
-    connect(&_receiver, &GPSReceiverSession::configurationStarted, this, &NMEAConnectionAttempt::configuring);
+    connect(&_receiver, &GPSReceiverSession::configurationStarted, this, [this]() {
+        if (_transition(GPSReceiverAttempt::Phase::Configuring)) {
+            emit configuring();
+        }
+    });
     connect(&_receiver, &GPSReceiverSession::receiverReady, this, [this]() {
-        if (!_stopping && !_failed) {
+        if (!_stopping && !_attempt.terminal()) {
             _publishDeviceReady();
         }
     });
@@ -78,31 +86,30 @@ quint16 NMEAConnectionAttempt::localPort() const
 
 void NMEAConnectionAttempt::setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer)
 {
-    if (_started) {
+    if (_attempt.phase != GPSReceiverAttempt::Phase::Idle) {
         return;
     }
     _receiver.setRecordingBuffer(buffer);
-    if (!buffer || _profile.configurationPolicy == GPSReceiverProfile::ConfigurationPolicy::Configure) {
+    if (!buffer || _attempt.profile->configurationPolicy == GPSReceiverProfile::ConfigurationPolicy::Configure) {
         return;
     }
-    GPSRecordingMetadata metadata;
-    metadata.receiver = _profile.receiver;
-    metadata.initialBaud = _profile.endpoint.baud;
-    switch (_profile.endpoint.kind) {
-        case GPSReceiverProfile::Endpoint::Kind::Serial:
-            metadata.transport = GPSRecordingMetadata::Transport::Serial;
-            break;
-        case GPSReceiverProfile::Endpoint::Kind::Tcp:
-            metadata.transport = GPSRecordingMetadata::Transport::Tcp;
-            break;
-        case GPSReceiverProfile::Endpoint::Kind::UdpListener:
-        case GPSReceiverProfile::Endpoint::Kind::UdpPeer:
-            metadata.transport = GPSRecordingMetadata::Transport::Udp;
-            break;
-        case GPSReceiverProfile::Endpoint::Kind::Disabled:
-            break;
-    }
+    const auto metadata = GPSRecordingMetadata::fromProfile(*_attempt.profile);
     _recording = std::make_shared<GPSRecordingStream>(buffer, metadata);
+}
+
+bool NMEAConnectionAttempt::_transition(GPSReceiverAttempt::Phase phase, GPSConnectionError error,
+                                        const QString& detail)
+{
+    if (_attempt.terminal() || _attempt.phase == phase) {
+        return false;
+    }
+    const QPointer<NMEAConnectionAttempt> guard(this);
+    _attempt.phase = phase;
+    _attempt.error = error;
+    _attempt.errorDetail = detail;
+    const auto snapshot = _attempt;
+    emit attemptChanged(snapshot);
+    return guard && _attempt.phase == phase;
 }
 
 void NMEAConnectionAttempt::_publishDeviceReady()
@@ -111,25 +118,29 @@ void NMEAConnectionAttempt::_publishDeviceReady()
         _recording->opened(true, _openStartedAtUs);
         _recordingDevice = std::make_unique<GPSRecordingDevice>(device(), _recording);
     }
-    emit deviceReady();
+    if (_transition(GPSReceiverAttempt::Phase::Ready)) {
+        emit deviceReady();
+    }
 }
 
 void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
 {
-    if (_started || _stopping) {
+    if (_attempt.phase != GPSReceiverAttempt::Phase::Idle || _stopping) {
         return;
     }
-    _started = true;
+    if (!_transition(GPSReceiverAttempt::Phase::Connecting)) {
+        return;
+    }
     _openStartedAtUs = _recording ? _recording->nowUs() : 0;
-    if (const QString error = _profile.validationError(); !error.isEmpty()) {
+    if (const QString error = _attempt.profile->validationError(); !error.isEmpty()) {
         _fail(error);
         return;
     }
-    if (_profile.receiver.outputProtocol != GPSReceiverConfig::OutputProtocol::NMEA) {
+    if (_attempt.profile->receiver.outputProtocol != GPSReceiverConfig::OutputProtocol::NMEA) {
         _fail(tr("NMEA input requires NMEA output"));
         return;
     }
-    if (_profile.configurationPolicy == GPSReceiverProfile::ConfigurationPolicy::Configure) {
+    if (_attempt.profile->configurationPolicy == GPSReceiverProfile::ConfigurationPolicy::Configure) {
         _startConfigured(std::move(receiverFactory));
         return;
     }
@@ -137,11 +148,13 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
         _fail(tr("Passive input cannot configure a receiver"));
         return;
     }
-    switch (_profile.endpoint.kind) {
+    switch (_attempt.profile->endpoint.kind) {
         case GPSReceiverProfile::Endpoint::Kind::UdpListener: {
             _udp = std::make_unique<UdpIODevice>();
-            if (!_udp->bind(QHostAddress::AnyIPv4, static_cast<quint16>(_profile.endpoint.port))) {
-                _fail(tr("Cannot listen on UDP port %1: %2").arg(_profile.endpoint.port).arg(_udp->errorString()));
+            if (!_udp->bind(QHostAddress::AnyIPv4, static_cast<quint16>(_attempt.profile->endpoint.port))) {
+                _fail(tr("Cannot listen on UDP port %1: %2")
+                          .arg(_attempt.profile->endpoint.port)
+                          .arg(_udp->errorString()));
                 return;
             }
             connect(_udp.get(), &QIODevice::readyRead, this, &NMEAConnectionAttempt::dataReceived);
@@ -153,7 +166,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
             _tcp->setReadBufferSize(64 * 1024);
             connect(_tcp.get(), &QTcpSocket::connected, this, [this]() {
                 _connectTimer.stop();
-                if (!_stopping && !_failed) {
+                if (!_stopping && !_attempt.terminal()) {
                     _publishDeviceReady();
                 }
             });
@@ -169,7 +182,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
                 _tcp.get(), &QTcpSocket::disconnected, this,
                 [this]() { _fail(tr("Connection closed — reconnecting"), true); }, Qt::QueuedConnection);
             _connectTimer.start();
-            _tcp->connectToHost(_profile.networkHost(), static_cast<quint16>(_profile.endpoint.port));
+            _tcp->connectToHost(_attempt.profile->networkHost(), static_cast<quint16>(_attempt.profile->endpoint.port));
             return;
         }
         case GPSReceiverProfile::Endpoint::Kind::Serial:
@@ -178,8 +191,8 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
                 return;
             }
             _serial = std::make_unique<QSerialPort>();
-            _serial->setPortName(_profile.endpoint.device);
-            if (!_serial->setBaudRate(_profile.endpoint.baud) || !_serial->open(QIODevice::ReadOnly)) {
+            _serial->setPortName(_attempt.profile->endpoint.device);
+            if (!_serial->setBaudRate(_attempt.profile->endpoint.baud) || !_serial->open(QIODevice::ReadOnly)) {
                 _fail(tr("Cannot open serial device: %1").arg(_serial->errorString()));
                 return;
             }
@@ -207,25 +220,25 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
 void NMEAConnectionAttempt::_startConfigured(GPSProvider::TransportFactory receiverFactory)
 {
     if (!receiverFactory) {
-        if (_profile.endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial) {
+        if (_attempt.profile->endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial) {
             if (!_reserveSerial()) {
                 return;
             }
 #ifndef QGC_NO_SERIAL_LINK
-            receiverFactory = [device = _profile.endpoint.device,
+            receiverFactory = [device = _attempt.profile->endpoint.device,
                                reservation = std::move(_reservation)](const std::atomic_bool& stop) {
                 return std::make_unique<SerialGPSTransport>(device, stop);
             };
 #endif
         } else {
-            receiverFactory = GPSReceiverTransportFactory::network(_profile);
+            receiverFactory = GPSReceiverTransportFactory::network(*_attempt.profile);
         }
     }
     if (!receiverFactory) {
         _fail(tr("Cannot create receiver connection"));
         return;
     }
-    _receiver.start(_profile.driverType, std::move(receiverFactory), _profile.receiver);
+    _receiver.start(*_attempt.profile, std::move(receiverFactory));
 }
 
 bool NMEAConnectionAttempt::_reserveSerial()
@@ -235,7 +248,7 @@ bool NMEAConnectionAttempt::_reserveSerial()
         _fail(tr("Serial discovery is unavailable"));
         return false;
     }
-    _reservation = _serialPorts->reservePort(_profile.endpoint.device);
+    _reservation = _serialPorts->reservePort(_attempt.profile->endpoint.device);
     if (!_reservation) {
         _fail(tr("Serial device is in use"));
         return false;
@@ -249,10 +262,10 @@ bool NMEAConnectionAttempt::_reserveSerial()
 
 void NMEAConnectionAttempt::_fail(const QString& detail, bool disconnected)
 {
-    if (_stopping || _failed) {
+    if (_stopping || _attempt.terminal()) {
         return;
     }
-    _failed = true;
+
     if (_recording) {
         if (_recording->isOpen()) {
             _recording->record(
@@ -262,7 +275,12 @@ void NMEAConnectionAttempt::_fail(const QString& detail, bool disconnected)
         }
     }
     _connectTimer.stop();
-    emit failed(detail);
+    const auto error = _receiver.attempt().error != GPSConnectionError::None
+                           ? _receiver.attempt().error
+                           : (_attempt.ready() ? GPSConnectionError::DeviceError : GPSConnectionError::OpenFailed);
+    if (_transition(GPSReceiverAttempt::Phase::Failed, error, detail)) {
+        emit failed(detail);
+    }
 }
 
 void NMEAConnectionAttempt::stop()
@@ -270,17 +288,34 @@ void NMEAConnectionAttempt::stop()
     if (_stopping) {
         return;
     }
+    const QPointer<NMEAConnectionAttempt> guard(this);
     _stopping = true;
+    _transition(GPSReceiverAttempt::Phase::Cancelled);
+    if (!guard) {
+        return;
+    }
     _connectTimer.stop();
     _recordingDevice.reset();
+    if (!guard) {
+        return;
+    }
     _udp.reset();
+    if (!guard) {
+        return;
+    }
     _tcp.reset();
+    if (!guard) {
+        return;
+    }
 #ifndef QGC_NO_SERIAL_LINK
     _serial.reset();
+    if (!guard) {
+        return;
+    }
     _reservation.reset();
 #endif
     _receiver.stop();
-    if (!_receiver.stopping()) {
+    if (guard && !_receiver.stopping()) {
         _finishStop();
     }
 }
@@ -295,14 +330,17 @@ void NMEAConnectionAttempt::_finishStop()
 
 void NMEAConnectionAttempt::shutdown()
 {
+    const QPointer<NMEAConnectionAttempt> guard(this);
     stop();
-    _receiver.shutdown();
+    if (guard) {
+        _receiver.shutdown();
+    }
 }
 
 #ifndef QGC_NO_SERIAL_LINK
 void NMEAConnectionAttempt::setSerialDiscovery(SerialPortManager* serialPorts)
 {
-    if (!_started) {
+    if (_attempt.phase == GPSReceiverAttempt::Phase::Idle) {
         _serialPorts = serialPorts;
     }
 }

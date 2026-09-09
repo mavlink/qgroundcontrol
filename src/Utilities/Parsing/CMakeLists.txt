@@ -3,7 +3,11 @@
 # EXIF, APMDataFlash (ArduPilot DataFlash binary log), PX4ULog (PX4 ULog), JSON
 # ============================================================================
 
-qt_add_library(QGCParsing STATIC
+add_subdirectory(Json)
+
+qt_add_library(
+    QGCParsing
+    STATIC
     APMDataFlash/APMDataFlashUtility.cc
     APMDataFlash/APMDataFlashUtility.h
     Exif/ExifUtility.cc
@@ -31,7 +35,8 @@ CPMAddPackage(
 
 qgc_require_cpm_added(libexif)
 
-add_library(exif STATIC
+add_library(
+    exif STATIC
     ${libexif_SOURCE_DIR}/libexif/exif-byte-order.c
     ${libexif_SOURCE_DIR}/libexif/exif-content.c
     ${libexif_SOURCE_DIR}/libexif/exif-data.c
@@ -59,25 +64,29 @@ add_library(exif STATIC
     ${libexif_SOURCE_DIR}/libexif/pentax/mnote-pentax-tag.c
 )
 
-target_include_directories(exif
-    PUBLIC
-        ${libexif_SOURCE_DIR}
-    PRIVATE
-        ${libexif_SOURCE_DIR}/libexif
+target_include_directories(
+    exif
+    PUBLIC ${libexif_SOURCE_DIR}
+    PRIVATE ${libexif_SOURCE_DIR}/libexif
 )
 
 set(LIBEXIF_CONFIG_H "${CMAKE_CURRENT_BINARY_DIR}/Exif/config.h")
-file(WRITE ${LIBEXIF_CONFIG_H} "
+file(
+    WRITE ${LIBEXIF_CONFIG_H}
+    "
 #pragma once
 #define PACKAGE \"libexif\"
 #define PACKAGE_VERSION \"${QGC_LIBEXIF_VERSION}\"
 #define VERSION \"${QGC_LIBEXIF_VERSION}\"
 #define GETTEXT_PACKAGE \"libexif-12\"
-")
+"
+)
 
 set(LIBEXIF_STDINT_DIR "${CMAKE_CURRENT_BINARY_DIR}/Exif/libexif")
 file(MAKE_DIRECTORY ${LIBEXIF_STDINT_DIR})
-file(WRITE "${LIBEXIF_STDINT_DIR}/_stdint.h" "
+file(
+    WRITE "${LIBEXIF_STDINT_DIR}/_stdint.h"
+    "
 #pragma once
 #include <stdint.h>
 
@@ -88,15 +97,12 @@ typedef SSIZE_T ssize_t;
 #else
 #include <sys/types.h>
 #endif
-")
+"
+)
 target_include_directories(exif PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/Exif)
 
 target_compile_definitions(exif PRIVATE HAVE_CONFIG_H)
-set_target_properties(exif
-    PROPERTIES
-        C_STANDARD 99
-        POSITION_INDEPENDENT_CODE ON
-)
+set_target_properties(exif PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
 
 qgc_disable_dependency_warnings(exif)
 
@@ -122,10 +128,7 @@ CPMAddPackage(
     # Pinned to 1.1.0: 1.1.1 calls std::from_chars(double) unguarded, which AppleClang's
     # libc++ (macos-15/ios CI, pre-LLVM 20) lacks — valijson#239, fixed in 1.1.2.
     GIT_TAG v1.1.0
-    OPTIONS
-        "valijson_BUILD_TESTS OFF"
-        "valijson_BUILD_EXAMPLES OFF"
-        "valijson_INSTALL OFF"
+    OPTIONS "valijson_BUILD_TESTS OFF" "valijson_BUILD_EXAMPLES OFF" "valijson_INSTALL OFF"
     # QtJsonAdapter isInteger()/getInteger() use 32-bit toInt(), so integral values
     # > INT_MAX (e.g. PX4 uint32 fileCrc) fail "type": "integer" checks or truncate.
     PATCHES valijson-qtjson-int64.patch
@@ -134,15 +137,10 @@ CPMAddPackage(
 # Keep header-only Valijson diagnostics outside QGC's warning policy.
 set_target_properties(valijson PROPERTIES SYSTEM TRUE)
 
-target_link_libraries(QGCParsing
-    PUBLIC
-        Qt6::Core
-        exif
-        ulog_cpp::ulog_cpp
-    PRIVATE
-        QGCCompression
-        QGCLogging
-        ValiJSON::valijson
+target_link_libraries(
+    QGCParsing
+    PUBLIC Qt6::Core QGCJsonValidation exif ulog_cpp::ulog_cpp
+    PRIVATE QGCCompression QGCLogging ValiJSON::valijson
 )
 
 # valijson defaults to abort() on malformed schema (it only enables exceptions when building
@@ -153,19 +151,22 @@ target_include_directories(QGCParsing SYSTEM PUBLIC ${ulog_cpp_SOURCE_DIR})
 
 # GCC 12 emits false-positive bounds warnings from Valijson's inlined string code.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set_property(SOURCE Json/JsonSchemaValidator.cc APPEND PROPERTY COMPILE_OPTIONS -Wno-error)
+    set_property(
+        SOURCE Json/JsonSchemaValidator.cc
+        APPEND
+        PROPERTY COMPILE_OPTIONS -Wno-error
+    )
 endif()
 
-target_include_directories(QGCParsing
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash
-        ${CMAKE_CURRENT_SOURCE_DIR}/Exif
-        ${CMAKE_CURRENT_SOURCE_DIR}/Json
-        ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
+target_include_directories(
+    QGCParsing
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash ${CMAKE_CURRENT_SOURCE_DIR}/Exif
+           ${CMAKE_CURRENT_SOURCE_DIR}/Json ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
 )
 
-target_precompile_headers(QGCParsing PRIVATE
+target_precompile_headers(
+    QGCParsing
+    PRIVATE
     <QtCore/QObject>
     <QtCore/QString>
     <QtCore/QByteArray>

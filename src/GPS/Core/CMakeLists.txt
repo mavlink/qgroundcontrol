@@ -3,9 +3,13 @@ qt_add_library(
     STATIC
     GPSConnectionState.cc
     GPSConnectionState.h
+    GPSConnectionError.h
     GPSObservation.cc
     GPSObservation.h
     GPSReadTimestamp.h
+    GPSSurveyInStatus.h
+    GPSSatelliteStore.cc
+    GPSSatelliteStore.h
     GPSSourceHealth.cc
     GPSSourceHealth.h
 )

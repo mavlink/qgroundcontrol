@@ -1,5 +1,7 @@
 #include "GPSReceiverCapabilitiesTest.h"
 
+#include <algorithm>
+
 #include "GPSDriver.h"
 #include "GPSReceiverCapabilities.h"
 
@@ -89,15 +91,45 @@ void GPSReceiverCapabilitiesTest::_settingDescriptors()
     GPSReceiverConfig config;
     config.role = GPSReceiverConfig::Role::Position;
     auto ubx = GPSReceiverCapabilities::forType(GPSType::u_blox);
-    const auto descriptors = ubx.settingDescriptors();
+    const auto descriptors = ubx.settings();
     QCOMPARE(descriptors.size(), 4);
-    for (const auto& value : descriptors) {
-        const auto descriptor = value.toMap();
-        QVERIFY(descriptor.value(QStringLiteral("requiresReconnect")).toBool());
-        QCOMPARE(descriptor.value(QStringLiteral("values")).toList().size(),
-                 descriptor.value(QStringLiteral("labels")).toStringList().size());
+    for (const auto& descriptor : descriptors) {
+        QVERIFY(descriptor.requiresReconnect);
+        QCOMPARE(descriptor.values.size(), descriptor.labels.size());
+        if (descriptor.id == GPSReceiverSetting::ConstellationMask) {
+            QCOMPARE(descriptor.requiredMask, 1);
+        }
     }
-    QCOMPARE(descriptors[0].toMap().value(QStringLiteral("requiredMask")).toInt(), 1);
+    GPSReceiverConfig distinct;
+    distinct.constellationMask = 9;
+    distinct.dynamicModel = 4;
+    distinct.outputRateHz = 2;
+    distinct.headingOffsetDeg = 12;
+    auto reordered = descriptors;
+    std::reverse(reordered.begin(), reordered.end());
+    for (const auto& descriptor : reordered) {
+        const double value = GPSReceiverSettings::value(descriptor.id, distinct);
+        switch (descriptor.id) {
+            case GPSReceiverSetting::ConstellationMask:
+                QCOMPARE(value, 9.0);
+                QCOMPARE(GPSReceiverSettings::key(descriptor.id), QStringLiteral("constellationMask"));
+                break;
+            case GPSReceiverSetting::DynamicModel:
+                QCOMPARE(value, 4.0);
+                QCOMPARE(GPSReceiverSettings::key(descriptor.id), QStringLiteral("dynamicModel"));
+                break;
+            case GPSReceiverSetting::OutputRateHz:
+                QCOMPARE(value, 2.0);
+                QCOMPARE(GPSReceiverSettings::key(descriptor.id), QStringLiteral("outputRateHz"));
+                break;
+            case GPSReceiverSetting::HeadingOffsetDeg:
+                QCOMPARE(value, 12.0);
+                QCOMPARE(GPSReceiverSettings::key(descriptor.id), QStringLiteral("headingOffsetDeg"));
+                break;
+            case GPSReceiverSetting::Unknown:
+                QFAIL("Descriptor must identify a known setting");
+        }
+    }
     config.constellationMask = 5;
     config.dynamicModel = 4;
     config.outputRateHz = 5;

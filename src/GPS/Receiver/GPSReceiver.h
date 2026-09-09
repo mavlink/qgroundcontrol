@@ -4,6 +4,7 @@
 #include <QtCore/QString>
 
 #include "GPSReceiverSession.h"
+#include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
 
 class GPSReceiverFactGroup;
@@ -48,6 +49,7 @@ public:
 signals:
     void diagnosticsChanged();
     void receiverTypeChanged(GPSType type);
+    void satellitesReceived(const GPSSatelliteObservation& observation);
     void relativePositionReceived(const GPSRelativeObservation& observation);
     void connectedChanged();
     void receiverStateChanged();
@@ -55,6 +57,7 @@ signals:
     void connectionFailed();
 
 private slots:
+    void _attemptChanged(const GPSReceiverAttempt& attempt);
     void _satelliteInfoUpdate(const GPSSatelliteObservation& msg);
     void _sensorGpsUpdate(const GPSObservation& msg);
     void _onGPSConnect();
@@ -64,6 +67,7 @@ private slots:
 private:
     GPSReceiverSession& _session;
     GPSSourceHealth _health;
+    GPSSatelliteStore _satellites;
     GPSReceiverPositionSource* _positionSource = nullptr;
     GPSReceiverFactGroup* _facts = nullptr;
 };

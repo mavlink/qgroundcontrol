@@ -19,23 +19,6 @@ GPSReceiverMailbox::~GPSReceiverMailbox()
     qCDebug(GPSReceiverMailboxLog) << this;
 }
 
-namespace {
-bool validCorrection(const QByteArray& data)
-{
-    if (data.size() < 8 || data.size() > GPSReceiverMailbox::MAX_FRAME_BYTES) {
-        return false;
-    }
-    const auto* bytes = reinterpret_cast<const uint8_t*>(data.constData());
-    const qsizetype payloadSize = ((bytes[1] & 3) << 8) | bytes[2];
-    if (bytes[0] != RTCMParser::kPreamble || (bytes[1] & 0xfc) != 0 || data.size() != payloadSize + 6) {
-        return false;
-    }
-    const auto offset = data.size() - 3;
-    const uint32_t crc = (uint32_t(bytes[offset]) << 16) | (uint32_t(bytes[offset + 1]) << 8) | bytes[offset + 2];
-    return RTCMParser::crc24q(bytes, offset) == crc;
-}
-}  // namespace
-
 bool GPSReceiverMailbox::_schedule()
 {
     return !std::exchange(_scheduled, true);
@@ -174,7 +157,7 @@ GPSCorrectionSubmitResult GPSReceiverMailbox::submitCorrection(const GPSCorrecti
         rejected = GPSCorrectionOutcome::Cancelled;
     } else if (!_correctionsEnabled) {
         rejected = GPSCorrectionOutcome::NotReady;
-    } else if (!validCorrection(frame.data) || frame.receivedAtMs <= 0 || frame.receivedAtMs > nowMs) {
+    } else if (!RTCMParser::isValidFrame(frame.data) || frame.receivedAtMs <= 0 || frame.receivedAtMs > nowMs) {
         rejected = GPSCorrectionOutcome::InvalidData;
     } else if (!_fresh(frame.receivedAtMs, nowMs)) {
         rejected = GPSCorrectionOutcome::Expired;
@@ -219,24 +202,29 @@ std::optional<GPSReceiverMailbox::Correction> GPSReceiverMailbox::takeCommand(qi
     return {};
 }
 
-void GPSReceiverMailbox::_finish(const Correction& command, GPSCorrectionOutcome outcome, quint64 writtenBytes)
+void GPSReceiverMailbox::_finish(const Correction& command, GPSCorrectionOutcome outcome, quint64 writtenBytes,
+                                 quint64 acceptedBytes, quint64 uncertainBytes)
 {
     GPSCorrectionDelivery delivery = command.delivery;
-    delivery.writtenBytes = qMin(writtenBytes, delivery.requestedBytes);
+    delivery.acceptedBytes = qMin(qMax(acceptedBytes, writtenBytes), delivery.requestedBytes);
+    delivery.writtenBytes = qMin(writtenBytes, delivery.acceptedBytes);
+    delivery.uncertainBytes = qMin(uncertainBytes, delivery.acceptedBytes - delivery.writtenBytes);
     delivery.outcome = outcome;
     if (outcome == GPSCorrectionOutcome::Written && delivery.writtenBytes != delivery.requestedBytes) {
         delivery.outcome = GPSCorrectionOutcome::WriteFailed;
     }
     _stats.writtenCommandBytes += delivery.writtenBytes;
+    _stats.uncertainCommandBytes += delivery.uncertainBytes;
     if (delivery.outcome == GPSCorrectionOutcome::WriteFailed) {
-        _stats.failedCommandBytes += delivery.requestedBytes - delivery.writtenBytes;
+        _stats.failedCommandBytes += delivery.requestedBytes - delivery.writtenBytes - delivery.uncertainBytes;
     } else if (delivery.outcome != GPSCorrectionOutcome::Written) {
-        _stats.droppedCommandBytes += delivery.requestedBytes - delivery.writtenBytes;
+        _stats.droppedCommandBytes += delivery.requestedBytes - delivery.writtenBytes - delivery.uncertainBytes;
     }
     _deliveries.push_back(std::move(delivery));
 }
 
-bool GPSReceiverMailbox::completeCommand(const Correction& command, GPSCorrectionOutcome outcome, quint64 writtenBytes)
+bool GPSReceiverMailbox::completeCommand(const Correction& command, GPSCorrectionOutcome outcome, quint64 writtenBytes,
+                                         quint64 acceptedBytes, quint64 uncertainBytes)
 {
     const QMutexLocker lock(&_mutex);
     if (!_inFlight || _inFlight->commandId != command.commandId) {
@@ -246,7 +234,7 @@ bool GPSReceiverMailbox::completeCommand(const Correction& command, GPSCorrectio
     if (_closed) {
         return false;
     }
-    _finish(command, outcome, writtenBytes);
+    _finish(command, outcome, writtenBytes, acceptedBytes, uncertainBytes);
     return _schedule();
 }
 

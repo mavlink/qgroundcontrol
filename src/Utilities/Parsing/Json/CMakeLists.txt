@@ -1,0 +1,3 @@
+add_library(QGCJsonValidation STATIC JsonValidation.cc JsonParsing.h)
+target_include_directories(QGCJsonValidation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(QGCJsonValidation PUBLIC Qt6::Core)

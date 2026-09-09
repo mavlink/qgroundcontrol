@@ -9,6 +9,8 @@ class GPSPositionFactGroupTest : public UnitTest
 private slots:
     void _vehicleMessages_data();
     void _vehicleMessages();
+    void _vehicleSentinels_data();
+    void _vehicleSentinels();
     void _localObservation();
     void _resetDuringUpdate();
 };

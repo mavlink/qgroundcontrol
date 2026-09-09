@@ -28,12 +28,13 @@ void GPSReceiverAutoConnect::_updateSerial()
     if (!_receiver || !_serialPorts) {
         return;
     }
+    const quint64 revision = _commandRevision;
     const QPointer<GPSReceiverAutoConnect> guard(this);
     if (!_sessionConfig && !_captureConfig()) {
         return;
     }
     _updateReceiverState();
-    if (!guard || !_receiver || _receiver->stopping() || !_sessionConfig) {
+    if (!guard || revision != _commandRevision || !_receiver || _receiver->stopping() || !_sessionConfig) {
         return;
     }
     const QString selectedDevice = _sessionConfig->endpoint.device;
@@ -43,19 +44,24 @@ void GPSReceiverAutoConnect::_updateSerial()
                (selectedDevice.isEmpty() ? port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS
                                          : port.systemLocation == selectedDevice);
     };
-    const auto request = [this, &selectedDevice](const SerialPortManager::Port& port) {
+    const auto request = [this, &selectedDevice, revision](const SerialPortManager::Port& port) {
         const QString name = selectedDevice.isEmpty() ? port.boardName : _sessionConfig->receiverName;
         const GPSType type = selectedDevice.isEmpty()
                                  ? GPSReceiverCapabilities::typeForName(name).value_or(GPSType::u_blox)
                                  : _sessionConfig->driverType;
-        const auto config = _sessionConfig->receiver;
+        auto profile = *_sessionConfig;
+        profile.endpoint.device = port.systemLocation;
+        profile.endpoint.discoverSerialDevice = false;
+        profile.driverType = type;
+        profile.receiverName = name;
+        const auto config = profile.receiver;
         auto factory = _serialFactory ? _serialFactory(port.systemLocation) : GPSProvider::TransportFactory{};
         const QPointer<GPSReceiverAutoConnect> lifetime(this);
-        if (factory && _connection.beginAttempt() && lifetime) {
+        if (factory && _connection.beginAttempt() && lifetime && revision == _commandRevision) {
             emit connectRequested(port.systemLocation, name, config);
-            if (lifetime && _receiver && _connection.state() == GPSConnectionState::Connecting &&
-                _connection.active()) {
-                _receiver->start(type, std::move(factory), config);
+            if (lifetime && revision == _commandRevision && _receiver &&
+                _connection.state() == GPSConnectionState::Connecting && _connection.active()) {
+                _receiver->start(profile, std::move(factory));
             }
         }
     };
@@ -68,8 +74,8 @@ void GPSReceiverAutoConnect::_updateSerial()
          (!_receiver->hasReceiver() && _serialPorts->isAutoConnectExcluded(_autoConnectedPort)))) {
         // Removal retires the attempt without creating a new manual connection request.
         const auto config = _sessionConfig;
-        stopAttempt();
-        if (!guard || !_connection.active() || _connection.paused()) {
+        _stopAttempt(revision);
+        if (!guard || revision != _commandRevision || !_connection.active() || _connection.paused()) {
             return;
         }
         _sessionConfig = config;

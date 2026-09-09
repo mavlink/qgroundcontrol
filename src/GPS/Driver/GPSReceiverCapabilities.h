@@ -1,12 +1,14 @@
 #pragma once
 
+#include <QtCore/QList>
 #include <QtCore/QMetaType>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QStringView>
-#include <QtCore/QVariantList>
 
 #include <optional>
 
+#include "GPSReceiverSetting.h"
 #include "GPSType.h"
 
 struct GPSReceiverConfig;
@@ -38,10 +40,17 @@ struct GPSReceiverCapabilities
 
     struct SettingDescriptor
     {
-        QString key;
+        enum class Kind
+        {
+            Flags,
+            Enum,
+            Number
+        };
+
+        GPSReceiverSetting id = GPSReceiverSetting::Unknown;
         QString label;
         QString units;
-        QString kind;
+        Kind kind = Kind::Number;
         double defaultValue = 0;
         double minimum = 0;
         double maximum = 0;
@@ -55,7 +64,6 @@ struct GPSReceiverCapabilities
     };
 
     QList<SettingDescriptor> settings(bool baseStation = false) const;
-    QVariantList settingDescriptors(bool baseStation = false) const;
 
     bool recognized() const { return manufacturerId >= 0; }
 

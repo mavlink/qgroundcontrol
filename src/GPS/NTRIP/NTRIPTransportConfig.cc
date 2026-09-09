@@ -1,32 +1,11 @@
 #include "NTRIPTransportConfig.h"
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QRegularExpression>
+#include "NTRIPRequest.h"
 
 QString NTRIPTransportConfig::validationError() const
 {
-    const auto tr = [](const char* s) { return QCoreApplication::translate("NTRIPTransportConfig", s); };
-
-    if (host.isEmpty()) {
-        return tr("No host address");
-    }
-    if (port <= 0 || port > 65535) {
-        return tr("Invalid port");
-    }
-
-    static const QRegularExpression controlChars(QStringLiteral("[\\r\\n\\x00-\\x1f]"));
-    if (host.contains(controlChars)) {
-        return tr("Invalid host (contains control characters)");
-    }
-    if (!mountpoint.isEmpty() && mountpoint.contains(controlChars)) {
-        return tr("Invalid mountpoint name (contains control characters)");
-    }
-    // RFC 7617 §2: the Basic-auth userid must not contain a colon.
-    if (username.contains(QLatin1Char(':'))) {
-        return tr("Invalid username (must not contain ':')");
-    }
-
-    return QString();
+    return NTRIPRequest::validationError(*this);
 }
 
 QString NTRIPTransportConfig::streamValidationError() const
@@ -34,7 +13,11 @@ QString NTRIPTransportConfig::streamValidationError() const
     if (const QString error = validationError(); !error.isEmpty()) {
         return error;
     }
-    if (mountpoint.trimmed().isEmpty()) {
+    QString name = mountpoint;
+    while (name.startsWith(QLatin1Char('/'))) {
+        name.remove(0, 1);
+    }
+    if (name.trimmed().isEmpty()) {
         return QCoreApplication::translate("NTRIPTransportConfig", "Select a mountpoint before connecting");
     }
     return {};
@@ -50,7 +33,7 @@ bool NTRIPTransportConfig::transportDiffers(const NTRIPTransportConfig& other) c
 QString NTRIPTransportConfig::casterIdentity() const
 {
     return QStringLiteral("%1\x1f%2\x1f%3\x1f%4\x1f%5\x1f%6")
-        .arg(host)
+        .arg(NTRIPRequest::casterUrl(*this).toString(QUrl::FullyEncoded))
         .arg(port)
         .arg(username)
         .arg(password)
@@ -58,11 +41,7 @@ QString NTRIPTransportConfig::casterIdentity() const
         .arg(allowSelfSignedCerts ? 1 : 0);
 }
 
-bool NTRIPTransportConfig::udpForwardDiffers(const NTRIPTransportConfig& other) const
-{
-    return udpForwardEnabled != other.udpForwardEnabled || udpTargetAddress != other.udpTargetAddress ||
-           udpTargetPort != other.udpTargetPort;
-}
+
 
 QVector<int> NTRIPTransportConfig::parseWhitelist(const QString& csv)
 {

@@ -1,9 +1,12 @@
 #include "GPSDiagnosticsUITest.h"
 
 #include <QtCore/QScopeGuard>
+#include <QtGui/QImage>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
+#include <QtQuick/QQuickWindow>
+#include <QtTest/QSignalSpy>
 
 #include <memory>
 
@@ -226,3 +229,59 @@ void GPSDiagnosticsUITest::_configurationReadback()
 }
 
 UT_REGISTER_TEST(GPSDiagnosticsUITest, TestLabel::Unit)
+
+void GPSDiagnosticsUITest::_mountpointNarrowLayout()
+{
+    QQmlEngine engine;
+    configureEngine(engine);
+    auto model = mock(engine, R"(
+        import QtQuick
+        ListModel {
+            Component.onCompleted: append({mountpoint: "VeryLongMountpoint".repeat(30),
+                                           format: "UnbrokenFormat".repeat(30),
+                                           navSystem: "GPS+GLONASS+GALILEO+BEIDOU".repeat(20),
+                                           country: "Country".repeat(30), bitrate: 115200, distanceKm: 1234.5})
+        }
+    )");
+    QVERIFY(model);
+    QQmlComponent component(&engine);
+    component.loadFromModule("QGroundControl.GPS.NTRIP", "NTRIPMountpointList");
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    std::unique_ptr<QObject> panel(
+        component.createWithInitialProperties({{QStringLiteral("model"), QVariant::fromValue(model.get())},
+                                               {QStringLiteral("width"), 320.0},
+                                               {QStringLiteral("height"), 260.0}}));
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    auto* root = qobject_cast<QQuickItem*>(panel.get());
+    QVERIFY(root);
+    QQuickWindow window;
+    window.resize(320, 260);
+    root->setParentItem(window.contentItem());
+    window.show();
+    QTRY_VERIFY_WITH_TIMEOUT(findItem(root, QStringLiteral("mountpointSelect_0")), TestTimeout::mediumMs());
+    auto* button = findItem(root, QStringLiteral("mountpointSelect_0"));
+    auto* name = findItem(root, QStringLiteral("mountpointName_0"));
+    auto* description = findItem(root, QStringLiteral("mountpointDescription_0"));
+    QVERIFY(name);
+    QVERIFY(description);
+    QTRY_VERIFY_WITH_TIMEOUT(name->width() > 0 && button->width() > 0, TestTimeout::mediumMs());
+    const QRectF buttonRect = button->mapRectToItem(root, button->boundingRect());
+    const QRectF nameRect = name->mapRectToItem(root, name->boundingRect());
+    const QRectF descriptionRect = description->mapRectToItem(root, description->boundingRect());
+    QVERIFY(buttonRect.left() >= 0 && buttonRect.right() <= root->width() + 1);
+    QVERIFY(nameRect.right() <= buttonRect.left());
+    QVERIFY(descriptionRect.right() <= buttonRect.left());
+    QTRY_COMPARE_WITH_TIMEOUT(description->property("lineCount").toInt(), 2, TestTimeout::mediumMs());
+    QSignalSpy selected(root, SIGNAL(mountpointSelected(QString)));
+    QVERIFY(QMetaObject::invokeMethod(button, "clicked"));
+    QCOMPARE(selected.size(), 1);
+    QCOMPARE(selected.first().first().toString(), QStringLiteral("VeryLongMountpoint").repeated(30));
+    const QString capture = qEnvironmentVariable("QGC_GPS_LAYOUT_CAPTURE");
+    if (!capture.isEmpty()) {
+        const QImage image = window.grabWindow();
+        QVERIFY(!image.isNull());
+        QVERIFY(image.save(capture));
+    }
+    root->setParentItem(nullptr);
+}

@@ -2,6 +2,7 @@
 
 #include "GPSCorrectionSettings.h"
 #include "QGCLoggingCategory.h"
+#include "RTCMParser.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
 
@@ -31,7 +32,7 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
     _diagnosticsTimer.setInterval(100);
     connect(&_diagnosticsTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
     _healthTimer.setInterval(1000);
-    connect(&_healthTimer, &QTimer::timeout, this, &GPSCorrectionManager::sourcesChanged);
+    connect(&_healthTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
     _healthTimer.start();
 }
 
@@ -39,6 +40,26 @@ GPSCorrectionManager::~GPSCorrectionManager()
 {
     qCDebug(GPSCorrectionManagerLog) << this;
     shutdown();
+}
+
+void GPSCorrectionManager::configureNtripUdpOutput(bool enabled, const QString& address, quint16 port)
+{
+    const QString id = QStringLiteral("ntripUdp");
+    if (_shutdown) {
+        return;
+    }
+    if (enabled && _ntripUdpOutput.isEnabled() && _ntripUdpOutput.address() == address &&
+        _ntripUdpOutput.port() == port) {
+        return;
+    }
+    _router.removeSink(id);
+    _ntripUdpOutput.stop();
+    if (enabled && _ntripUdpOutput.configure(address, port)) {
+        _router.setSourceSink(id, GPSCorrectionSource::Ntrip, [this](const GPSCorrectionFrame& frame) {
+            return static_cast<quint64>(_ntripUdpOutput.forward(frame.data));
+        });
+    }
+    _scheduleSourcesChanged();
 }
 
 void GPSCorrectionManager::init(GPSCorrectionSettings* settings)
@@ -71,10 +92,6 @@ void GPSCorrectionManager::_applyUdpInputSettings()
     }
 }
 
-void GPSCorrectionManager::forwardCorrections(const QByteArray& data)
-{
-    forwardCorrectionsFrom(GPSCorrectionSource::Unknown, data);
-}
 
 quint64 GPSCorrectionManager::beginSourceSession(GPSCorrectionSource source, const QString& instance)
 {
@@ -168,6 +185,9 @@ void GPSCorrectionManager::_refreshDiagnostics()
     const QPointer<GPSCorrectionManager> guard(this);
     _eventModel.setEvents(_router.events());
     if (guard) {
+        _refreshSourceInstances();
+    }
+    if (guard) {
         emit sourcesChanged();
     }
 }
@@ -177,13 +197,6 @@ void GPSCorrectionManager::_scheduleSourcesChanged()
     if (!_shutdown && !_diagnosticsTimer.isActive()) {
         _diagnosticsTimer.start();
     }
-}
-
-void GPSCorrectionManager::forwardCorrectionsFrom(GPSCorrectionSource source, const QByteArray& data, bool validated,
-                                                  int messageId, bool filtered)
-{
-    acceptFrame(
-        {source, sourceSession(source), GPSCorrectionFrame::monotonicNowMs(), data, messageId, validated, filtered});
 }
 
 void GPSCorrectionManager::acceptFrame(const GPSCorrectionFrame& frame)
@@ -197,7 +210,12 @@ void GPSCorrectionManager::acceptFrame(const GPSCorrectionFrame& frame)
         static_cast<quint8>(routed.data[0]) == 0xD3) {
         routed.messageId = (static_cast<quint8>(routed.data[3]) << 4) | (static_cast<quint8>(routed.data[4]) >> 4);
     }
-    _router.acceptFrame(routed);
+    if (routed.validated && !RTCMParser::isValidFrame(routed.data)) {
+        routed.validated = false;
+        _router.recordRejectedFrame(routed, GPSCorrectionReason::InvalidFrame);
+    } else {
+        _router.acceptFrame(routed);
+    }
     if (!guard || _shutdown) {
         return;
     }
@@ -224,6 +242,7 @@ QVariantList GPSCorrectionManager::sources() const
             {QStringLiteral("queuedBytes"), QVariant::fromValue(stats.queuedBytes)},
             {QStringLiteral("writtenFrames"), QVariant::fromValue(stats.writtenFrames)},
             {QStringLiteral("writtenBytes"), QVariant::fromValue(stats.writtenBytes)},
+            {QStringLiteral("transportAcceptedBytes"), QVariant::fromValue(stats.transportAcceptedBytes)},
             {QStringLiteral("droppedFrames"), QVariant::fromValue(stats.droppedFrames)},
             {QStringLiteral("droppedBytes"), QVariant::fromValue(stats.droppedBytes)},
             {QStringLiteral("unconfirmedFrames"), QVariant::fromValue(stats.unconfirmedFrames)},
@@ -237,6 +256,15 @@ QVariantList GPSCorrectionManager::sources() const
                                            now - stats.lastValidMs < GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS}});
     }
     return result;
+}
+
+void GPSCorrectionManager::_refreshSourceInstances()
+{
+    const auto instances = sourceInstances();
+    if (instances != _lastSourceInstances) {
+        _lastSourceInstances = instances;
+        emit sourceInstancesChanged();
+    }
 }
 
 QVariantList GPSCorrectionManager::sourceInstances() const
@@ -263,20 +291,21 @@ QVariantList GPSCorrectionManager::destinations() const
 {
     QVariantList result;
     for (const auto& destination : _router.destinations()) {
-        result.append(
-            QVariantMap{{QStringLiteral("destinationId"), destination.id},
-                        {QStringLiteral("destinationSession"), QVariant::fromValue(destination.session)},
-                        {QStringLiteral("reportsWrites"), destination.reportsWrites},
-                        {QStringLiteral("queuedFrames"), QVariant::fromValue(destination.queuedFrames)},
-                        {QStringLiteral("queuedBytes"), QVariant::fromValue(destination.queuedBytes)},
-                        {QStringLiteral("writtenFrames"), QVariant::fromValue(destination.writtenFrames)},
-                        {QStringLiteral("writtenBytes"), QVariant::fromValue(destination.writtenBytes)},
-                        {QStringLiteral("droppedFrames"), QVariant::fromValue(destination.droppedFrames)},
-                        {QStringLiteral("droppedBytes"), QVariant::fromValue(destination.droppedBytes)},
-                        {QStringLiteral("unconfirmedFrames"), QVariant::fromValue(destination.unconfirmedFrames)},
-                        {QStringLiteral("unconfirmedBytes"), QVariant::fromValue(destination.unconfirmedBytes)},
-                        {QStringLiteral("pendingFrames"), QVariant::fromValue(destination.pendingFrames)},
-                        {QStringLiteral("pendingBytes"), QVariant::fromValue(destination.pendingBytes)}});
+        result.append(QVariantMap{
+            {QStringLiteral("destinationId"), destination.id},
+            {QStringLiteral("destinationSession"), QVariant::fromValue(destination.session)},
+            {QStringLiteral("reportsWrites"), destination.reportsWrites},
+            {QStringLiteral("queuedFrames"), QVariant::fromValue(destination.queuedFrames)},
+            {QStringLiteral("queuedBytes"), QVariant::fromValue(destination.queuedBytes)},
+            {QStringLiteral("writtenFrames"), QVariant::fromValue(destination.writtenFrames)},
+            {QStringLiteral("writtenBytes"), QVariant::fromValue(destination.writtenBytes)},
+            {QStringLiteral("transportAcceptedBytes"), QVariant::fromValue(destination.transportAcceptedBytes)},
+            {QStringLiteral("droppedFrames"), QVariant::fromValue(destination.droppedFrames)},
+            {QStringLiteral("droppedBytes"), QVariant::fromValue(destination.droppedBytes)},
+            {QStringLiteral("unconfirmedFrames"), QVariant::fromValue(destination.unconfirmedFrames)},
+            {QStringLiteral("unconfirmedBytes"), QVariant::fromValue(destination.unconfirmedBytes)},
+            {QStringLiteral("pendingFrames"), QVariant::fromValue(destination.pendingFrames)},
+            {QStringLiteral("pendingBytes"), QVariant::fromValue(destination.pendingBytes)}});
     }
     return result;
 }
@@ -289,6 +318,7 @@ void GPSCorrectionManager::shutdown()
     _shutdown = true;
     _healthTimer.stop();
     _diagnosticsTimer.stop();
+    _ntripUdpOutput.stop();
     _router.shutdown();
     _udpInput.stop();
     _refreshDiagnostics();

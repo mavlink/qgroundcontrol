@@ -105,4 +105,39 @@ void TcpGPSTransportTest::_refusedConnection()
     QVERIFY(transport.fatalError());
 }
 
+void TcpGPSTransportTest::_boundedWriteEvidence_data()
+{
+    QTest::addColumn<bool>("cancel");
+    QTest::newRow("deadline") << false;
+    QTest::newRow("cancelled-after-acceptance") << true;
+}
+
+void TcpGPSTransportTest::_boundedWriteEvidence()
+{
+    QFETCH(bool, cancel);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    std::atomic_bool stop = false;
+    TcpGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop);
+    QVERIFY(transport.open());
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
+    auto* peer = server.nextPendingConnection();
+    QVERIFY(peer);
+    peer->setReadBufferSize(1);
+    const QByteArray payload(8 * 1024 * 1024, 'x');
+    if (cancel) {
+        QTimer::singleShot(0, &server, [&]() { stop = true; });
+    }
+    QElapsedTimer elapsed;
+    elapsed.start();
+    const auto result = transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
+                                               QDeadlineTimer(100));
+    QCOMPARE(result.status, cancel ? GPSTransport::WriteStatus::Cancelled : GPSTransport::WriteStatus::TimedOut);
+    QCOMPARE(result.acceptedBytes, payload.size());
+    QVERIFY(result.uncertainBytes > 0);
+    QCOMPARE(result.writtenBytes + result.uncertainBytes, result.acceptedBytes);
+    QVERIFY(elapsed.elapsed() < 1000);
+    QCOMPARE(stop.load(), cancel);
+}
+
 UT_REGISTER_TEST(TcpGPSTransportTest, TestLabel::Unit)

@@ -7,33 +7,37 @@ endif()
 
 include(ParserTargets.cmake)
 qgc_add_gps_parser_runtime(QGCGPSReplayRuntime)
+qgc_add_gps_replay_driver(QGCGPSReplayDriverRuntime QGCGPSReplayRuntime)
+if(NOT TARGET QGCJsonValidation)
+    add_subdirectory("${QGC_GPS_REPOSITORY}/src/Utilities/Parsing/Json" JsonValidation)
+endif()
 add_executable(
     QGCGPSReplayTest
     GPSReplayTest.cc
     GPSReplayTransport.cc
     GPSReplayTransport.h
+    GPSReplayDriver.cc
+    GPSReplayDriver.h
+    GPSReplayDefinitions.h
     "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingBuffer.cc"
     "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingBuffer.h"
+    "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingFormat.cc"
+    "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingFormat.h"
     "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingTransport.cc"
     "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingTransport.h"
     "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingDevice.cc"
     "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingDevice.h"
     "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingController.cc"
     "${QGC_GPS_PARSER_SOURCE}/Recording/GPSRecordingController.h"
-    "${QGC_GPS_PARSER_SOURCE}/Driver/GPSTransport.cc"
-    "${QGC_GPS_PARSER_SOURCE}/Driver/PX4/ubx.cpp"
-    "${QGC_GPS_PARSER_SOURCE}/Driver/PX4/gps_helper.cpp"
-    "${QGC_GPS_PARSER_SOURCE}/Driver/PX4/rtcm.cpp"
 )
 set_target_properties(QGCGPSReplayTest PROPERTIES AUTOMOC ON)
-target_compile_definitions(QGCGPSReplayTest
-                           PRIVATE GPS_DEFINITIONS_HEADER="${CMAKE_CURRENT_SOURCE_DIR}/../Driver/PX4/definitions.h"
-                                   QGC_GPS_REPLAY_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
-)
+target_compile_definitions(QGCGPSReplayTest PRIVATE QGC_GPS_REPLAY_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
 target_include_directories(QGCGPSReplayTest
                            PRIVATE "${QGC_GPS_PARSER_SOURCE}/Driver" "${QGC_GPS_PARSER_SOURCE}/Driver/PX4"
-                                   "${QGC_GPS_PARSER_SOURCE}/Recording"
+                                   "${QGC_GPS_PARSER_SOURCE}/Recording" "${QGC_GPS_PARSER_SOURCE}/Receiver"
 )
-target_link_libraries(QGCGPSReplayTest PRIVATE QGCGPSReplayRuntime Qt6::Test Qt6::QmlIntegration)
+target_link_libraries(QGCGPSReplayTest PRIVATE QGCGPSReplayDriverRuntime QGCJsonValidation Qt6::Test
+                                               Qt6::QmlIntegration
+)
 add_test(NAME GPSReplayTest COMMAND QGCGPSReplayTest)
 set_tests_properties(GPSReplayTest PROPERTIES LABELS "Unit;GPS;Replay" TIMEOUT 60)

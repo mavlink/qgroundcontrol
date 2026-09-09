@@ -8,6 +8,7 @@
 
 #include <memory>
 
+#include "GPSConnectionConfig.h"
 #include "GPSReceiverSession.h"
 #include "GPSTransport.h"
 #include "NMEADecoderSession.h"
@@ -50,7 +51,7 @@ void GPSReceiverSessionTest::_cancelBeforeStart()
             session->stop();
         }
     });
-    session->start(GPSType::u_blox, std::move(factory), {});
+    session->start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), std::move(factory));
     QVERIFY(!opened);
     QVERIFY(provider.isNull());
     QVERIFY(reservation.expired());
@@ -59,7 +60,7 @@ void GPSReceiverSessionTest::_cancelBeforeStart()
         QVERIFY(!session->stopping());
         disconnect(cancellation);
         if (action == QStringLiteral("disconnect")) {
-            session->start(GPSType::u_blox, {}, {});
+            session->start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), {});
             QVERIFY(session->hasReceiver());
             QTRY_VERIFY_WITH_TIMEOUT(!session->hasReceiver(), TestTimeout::mediumMs());
         }
@@ -145,14 +146,12 @@ void GPSReceiverSessionTest::_destroyDuringStreamClose()
     GPSReceiverConfig config;
     config.role = GPSReceiverConfig::Role::Position;
     config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
-    session->start(
-        GPSType::u_blox,
-        [gate](const std::atomic_bool&) {
-            gate->entered.release();
-            gate->release.acquire();
-            return std::unique_ptr<GPSTransport>();
-        },
-        config);
+    session->start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = config}.profile(),
+                   [gate](const std::atomic_bool&) {
+                       gate->entered.release();
+                       gate->release.acquire();
+                       return std::unique_ptr<GPSTransport>();
+                   });
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> worker = session->_provider;
     connect(session->nmeaDevice(), &QObject::destroyed, this, [&]() { session.reset(); });
@@ -165,3 +164,73 @@ void GPSReceiverSessionTest::_destroyDuringStreamClose()
 }
 
 UT_REGISTER_TEST(GPSReceiverSessionTest, TestLabel::Unit)
+
+void GPSReceiverSessionTest::_terminalStateExactlyOnce()
+{
+    GPSReceiverSession session;
+    auto release = std::make_shared<QSemaphore>();
+    const auto cleanup = qScopeGuard([&]() {
+        session.stop();
+        release->release();
+        session.shutdown();
+    });
+    const auto profile =
+        GPSConnectionConfig{.transport = GPSConnectionConfig::Tcp, .host = QStringLiteral("localhost"), .port = 2101}
+            .profile();
+    QSignalSpy disconnected(&session, &GPSReceiverSession::disconnected);
+    QSignalSpy failed(&session, &GPSReceiverSession::connectionError);
+    int terminalTransitions = 0;
+    connect(&session, &GPSReceiverSession::attemptChanged, &session,
+            [&](const GPSReceiverAttempt& attempt) { terminalTransitions += attempt.terminal() ? 1 : 0; });
+    session.start(profile, [release](const std::atomic_bool&) {
+        release->acquire();
+        return std::unique_ptr<GPSTransport>();
+    });
+    const auto snapshot = session.attempt();
+    QCOMPARE(*snapshot.profile, profile);
+    const auto worker = session._provider;
+    emit worker->connectionErrorDetail(GPSConnectionError::ConfigFailed, QStringLiteral("Configuration rejected"));
+    emit worker->connectionError(GPSConnectionError::ConfigFailed);
+    QTRY_COMPARE_WITH_TIMEOUT(failed.size(), 1, TestTimeout::mediumMs());
+    QCOMPARE(disconnected.size(), 1);
+    QCOMPARE(session.attempt().phase, GPSReceiverAttempt::Phase::Failed);
+    release->release();
+    QTRY_VERIFY_WITH_TIMEOUT(!session.hasReceiver(), TestTimeout::mediumMs());
+    session.stop();
+    session.stop();
+    QCOMPARE(disconnected.size(), 1);
+    QCOMPARE(failed.size(), 1);
+    QCOMPARE(terminalTransitions, 1);
+    QCOMPARE(session.attempt().generation, snapshot.generation);
+    QCOMPARE(session.errorDetail(), QStringLiteral("Configuration rejected"));
+}
+
+void GPSReceiverSessionTest::_attemptSnapshotSurvivesRestart()
+{
+    GPSReceiverSession session;
+    const auto cleanup = qScopeGuard([&]() { session.shutdown(); });
+    GPSConnectionConfig config;
+    config.receiver.role = GPSReceiverConfig::Role::Position;
+    const auto first = config.profile();
+    config.receiver.outputRateHz = 5;
+    const auto second = config.profile();
+    quint64 firstGeneration = 0;
+    bool restarted = false;
+    connect(&session, &GPSReceiverSession::attemptChanged, &session, [&](const GPSReceiverAttempt& attempt) {
+        if (!restarted && attempt.phase == GPSReceiverAttempt::Phase::Connecting) {
+            restarted = true;
+            firstGeneration = attempt.generation;
+            const auto original = attempt.profile;
+            session.start(second, {});
+            // Reentrant replacement must not mutate the snapshot already being delivered.
+            QCOMPARE(attempt.generation, firstGeneration);
+            QCOMPARE(*attempt.profile, first);
+            QCOMPARE(original, attempt.profile);
+        }
+    });
+    session.start(first, {});
+    QVERIFY(restarted);
+    QVERIFY(session.attempt().generation > firstGeneration);
+    QCOMPARE(session.profile(), second);
+    QTRY_VERIFY_WITH_TIMEOUT(!session.hasReceiver(), TestTimeout::mediumMs());
+}

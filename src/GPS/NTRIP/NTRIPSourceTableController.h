@@ -52,6 +52,7 @@ public:
     Q_INVOKABLE void selectMountpoint(const QString& mountpoint);
 
 signals:
+    void plaintextCredentialsWarning();
     void fetchStatusChanged();
     void fetchErrorChanged();
     void mountpointModelChanged();

@@ -7,6 +7,7 @@ class NMEASourceManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _decodesWithoutPositionManager();
     void _managedReceiverSettingsPreservePassiveBaud();
     void _reentrantConnectionCommands_data();
     void _reentrantConnectionCommands();

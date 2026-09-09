@@ -9,30 +9,14 @@
 
 #include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionFrame.h"
-#include "RTCMParser.h"
+#include "RTCMFrameDecoder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
 
 class QUdpSocket;
 
-/**
- * @brief Listens on a UDP port for raw RTCM3 correction data and emits it
- *        for forwarding to connected vehicles via RTCMMavlink::RTCMDataUpdate().
- *
- * Typical wiring:
- * @code
- *   auto *udpInput = new RTCMUdpInput(13320, this);
- *   connect(udpInput, &RTCMUdpInput::rtcmDataReceived,
- *           _rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
- *   udpInput->start();
- * @endcode
- *
- * The class accepts datagrams from any sender on the bound port. With validation
- * disabled each datagram is emitted as-is; with validation enabled (see
- * setValidation) datagrams are reframed through RTCMParser and only CRC-valid
- * RTCM3 frames are forwarded — one signal per frame so each gets its own
- * GPS_RTCM_DATA sequence. Downstream (RTCMMavlink) fragments as needed.
- */
+/// Receives RTCM datagrams with bounded work and independent framing for each sender.
+/// Validated input emits complete timestamped frames; raw mode preserves datagram boundaries.
 class RTCMUdpInput : public QObject
 {
     Q_OBJECT
@@ -63,11 +47,6 @@ public:
     void setValidation(const bool validate) { _validateRtcm = validate; }
 
 signals:
-    /// Emitted with RTCM payload to forward. With validation off: once per
-    /// datagram. With validation on: once per CRC-valid RTCM3 frame.
-    /// Connect directly to RTCMMavlink::RTCMDataUpdate (same thread).
-    void rtcmDataReceived(const QByteArray& data);
-    void correctionReceived(const QByteArray& data, int messageId, bool validated);
     void frameReceived(const GPSCorrectionFrame& frame);
     void frameRejected(const GPSCorrectionFrame& frame, GPSCorrectionReason reason);
 
@@ -85,9 +64,8 @@ private:
 
     struct PeerParser
     {
-        RTCMParser parser;
+        RTCMFrameDecoder decoder;
         qint64 lastReceivedMs = 0;
-        qint64 frameReceivedAtMs = 0;
     };
 
     std::shared_ptr<PeerParser> _parserForPeer(const QHostAddress& address, quint16 port);

@@ -53,6 +53,7 @@ public:
         quint64 queuedBytes = 0;
         quint64 writtenFrames = 0;
         quint64 writtenBytes = 0;
+        quint64 transportAcceptedBytes = 0;
         quint64 droppedFrames = 0;
         quint64 droppedBytes = 0;
         quint64 unconfirmedFrames = 0;
@@ -68,6 +69,7 @@ public:
         quint64 queuedBytes = 0;
         quint64 writtenFrames = 0;
         quint64 writtenBytes = 0;
+        quint64 transportAcceptedBytes = 0;
         quint64 droppedFrames = 0;
         quint64 droppedBytes = 0;
         quint64 pendingFrames = 0;
@@ -105,6 +107,8 @@ public:
     QString activeInstance() const;
     GPSCorrectionSource activeSource() const;
     void setSink(const QString& id, Sink sink);
+    /// Source-specific outputs deliberately bypass global selection, but retain filtering and freshness checks.
+    void setSourceSink(const QString& id, GPSCorrectionSource source, Sink sink);
     void setDetailedSink(const QString& id, DetailedSink sink, bool reportsWrites = true);
     void removeSink(const QString& id);
     bool acceptFrame(GPSCorrectionFrame frame);
@@ -142,6 +146,7 @@ private:
     static QString _key(GPSCorrectionSource source, const QString& instance);
     bool _eligible(const Source& source, qint64 now) const;
     void _select(qint64 now);
+    bool _submit(const GPSCorrectionFrame& frame, bool selected);
     void _recordEvent(const GPSCorrectionFrame& frame, GPSCorrectionStage stage, GPSCorrectionReason reason,
                       quint64 bytes, const QString& destination = {}, quint64 destinationSession = 0);
     void _recordDrop(const GPSCorrectionFrame& frame, GPSCorrectionReason reason, quint64 bytes,
@@ -152,6 +157,7 @@ private:
     {
         DetailedSink submit;
         bool reportsWrites = false;
+        GPSCorrectionSource source = GPSCorrectionSource::Unknown;
     };
 
     struct PendingDelivery

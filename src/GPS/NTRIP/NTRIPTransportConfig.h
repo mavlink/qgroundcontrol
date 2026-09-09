@@ -16,11 +16,6 @@ struct NTRIPTransportConfig
     bool useTls = false;
     bool allowSelfSignedCerts = false;
 
-    // UDP forwarding
-    bool udpForwardEnabled = false;
-    QString udpTargetAddress;
-    quint16 udpTargetPort = 0;
-
     bool operator==(const NTRIPTransportConfig&) const = default;
 
     /// Returns a user-facing error string if the config is unusable, or an empty
@@ -32,16 +27,8 @@ struct NTRIPTransportConfig
 
     bool isValid() const { return validationError().isEmpty(); }
 
-    // The three differ-checks below must jointly cover every field (union == operator!=);
-    // a new field assigned to none silently breaks reconnect.
-
-    /// Hot fields: a change forces a transport reconnect (TCP/TLS handshake,
-    /// HTTP GET line, auth). Excludes whitelist (parser-only) and UDP sink.
+    /// Connection fields exclude the live-applied message filter.
     bool transportDiffers(const NTRIPTransportConfig& other) const;
-
-    /// Warm fields: the UDP sidecar can be reconfigured without tearing down
-    /// the caster connection.
-    bool udpForwardDiffers(const NTRIPTransportConfig& other) const;
 
     /// Cold field: RTCM whitelist is applied in the parser and does not
     /// require a reconnect or any sink reconfiguration.

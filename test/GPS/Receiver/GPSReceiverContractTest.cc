@@ -8,6 +8,7 @@
 #include <cstring>
 #include <thread>
 
+#include "GPSConnectionConfig.h"
 #include "GPSReceiverSession.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
@@ -34,6 +35,7 @@ class GPSReceiverContractTest : public QObject
     Q_OBJECT
 
 private slots:
+    void _correctionGenerationSurvivesRestart();
     void _stalledConsumerBoundsUpdates();
     void _retirementDiscardsPendingData();
     void _correctionQueueLifecycle();
@@ -41,6 +43,7 @@ private slots:
     void _correctionsWrittenOnlyOnWorker_data();
     void _correctionsWrittenOnlyOnWorker();
     void _deliveryReportsBoundAdmission();
+    void _uncertainDeliveryPreservesCounts();
     void _deliveryOutcomesPreserveProvenance();
     void _configurationReportLifecycle();
     void _configurationReportResetCanRestart();
@@ -57,7 +60,7 @@ void GPSReceiverContractTest::_stalledConsumerBoundsUpdates()
         gate->release.release();
         session.shutdown();
     });
-    session.start(GPSType::u_blox, blockedFactory(gate), {});
+    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), blockedFactory(gate));
     // Standalone Qt test: no application harness timeout helpers are linked.
     QVERIFY(gate->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
@@ -91,6 +94,7 @@ void GPSReceiverContractTest::_stalledConsumerBoundsUpdates()
     for (const auto& correction : corrections) {
         QCOMPARE(correction[0].toByteArray(), frame);
         QCOMPARE(correction[1].toLongLong(), receivedAtMs);
+        QCOMPARE(correction[2].toULongLong(), session.sessionId());
     }
     worker->sensorGpsUpdate(GPSObservation{});
     QCOMPARE(wakeups.load(), 2);
@@ -107,7 +111,8 @@ void GPSReceiverContractTest::_retirementDiscardsPendingData()
         second->release.release();
         session.shutdown();
     });
-    session.start(GPSType::u_blox, blockedFactory(first), {});
+    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+                  blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
@@ -133,7 +138,8 @@ void GPSReceiverContractTest::_retirementDiscardsPendingData()
     QSignalSpy deliveryResults(&session, &GPSReceiverSession::correctionDeliveriesReady);
     QSignalSpy positions(&session, &GPSReceiverSession::positionReceived);
     QSignalSpy corrections(&session, &GPSReceiverSession::rtcmFrameReceived);
-    session.start(GPSType::u_blox, blockedFactory(second), {});
+    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+                  blockedFactory(second));
     QVERIFY(second->entered.tryAcquire(1, 5000));
     QVERIFY(!mailbox->completeCommand(*inFlight, GPSCorrectionOutcome::Written, incoming.data.size()));
     emit worker->dataReady();
@@ -231,6 +237,10 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
         std::atomic<QThread*> writtenOn = nullptr;
         QByteArray written;
         bool partialWrite = false;
+        std::atomic<qint64> writeBudgetMs = 0;
+        std::atomic_int correctionCount = 0;
+        std::atomic_bool readAfterFirstCorrection = false;
+        std::atomic_bool receivedBetweenCorrections = false;
     };
 
     class ReceiverTransport : public GPSTransport
@@ -251,6 +261,9 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
 
         int read(uint8_t* data, int size, int) override
         {
+            if (_trace.correctionCount == 1) {
+                _trace.readAfterFirstCorrection = true;
+            }
             if (_trace.holdRead.exchange(false)) {
                 _trace.heldRead.release();
                 _trace.releaseRead.acquire();
@@ -274,14 +287,31 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
             const QByteArray command(reinterpret_cast<const char*>(data), size);
             if (command.startsWith(char(0xd3))) {
                 const int written = _trace.partialWrite ? size / 2 : size;
-                _trace.written = command.first(written);
-                _trace.writtenOn = QThread::currentThread();
-                _trace.correctionWritten.release();
+                if (_trace.correctionCount == 1) {
+                    _trace.written = command.first(written);
+                    _trace.writtenOn = QThread::currentThread();
+                    _trace.correctionWritten.release();
+                }
                 return written;
             } else {
                 _reply = command.trimmed().isEmpty() ? "USB1>" : "$R: " + command;
             }
             return size;
+        }
+
+        WriteResult writeBounded(const uint8_t* data, int size, QDeadlineTimer deadline) override
+        {
+            _trace.writeBudgetMs = deadline.remainingTime();
+            if (++_trace.correctionCount == 2) {
+                _trace.receivedBetweenCorrections = _trace.readAfterFirstCorrection.load();
+            }
+            if (!_trace.partialWrite) {
+                // Model a successful slow drain consuming the caller's full shared budget.
+                QSemaphore drain;
+                drain.tryAcquire(1, static_cast<int>(deadline.remainingTime()));
+            }
+            const int count = write(data, size);
+            return {_trace.partialWrite ? WriteStatus::Error : WriteStatus::Completed, size, count, size - count};
         }
 
     private:
@@ -300,9 +330,8 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
     });
     GPSReceiverConfig config;
     config.role = GPSReceiverConfig::Role::Position;
-    session.start(
-        GPSType::septentrio,
-        [&](const std::atomic_bool& stop) { return std::make_unique<ReceiverTransport>(stop, trace); }, config);
+    session.start(GPSConnectionConfig{.receiverType = GPSType::septentrio, .receiver = config}.profile(),
+                  [&](const std::atomic_bool& stop) { return std::make_unique<ReceiverTransport>(stop, trace); });
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
     GPSCorrectionFrame frame;
@@ -323,6 +352,11 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
     frame.data = GpsTestHelpers::buildRtcmFrame(1087);
     frame.deliveryId = 102;
     QVERIFY(session.submitCorrections(frame, session.sessionId()).accepted);
+    if (!partialWrite) {
+        auto next = frame;
+        next.deliveryId = 103;
+        QVERIFY(session.submitCorrections(next, session.sessionId()).accepted);
+    }
     QCOMPARE(session.deliveryStats().writtenCommandBytes, quint64(0));
     const quint64 destinationSession = session.sessionId();
     trace.releaseRead.release();
@@ -338,7 +372,7 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
         deliveries.clear();
         return reports.size();
     };
-    QTRY_COMPARE_WITH_TIMEOUT(collect(), 2, 5000);
+    QTRY_COMPARE_WITH_TIMEOUT(collect(), partialWrite ? 2 : 3, 5000);
     QCOMPARE(reports[0].deliveryId, quint64(101));
     QCOMPARE(reports[0].outcome, GPSCorrectionOutcome::Cleared);
     QCOMPARE(reports[0].writtenBytes, quint64(0));
@@ -350,6 +384,15 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
     QCOMPARE(reports[1].destinationSession, destinationSession);
     QCOMPARE(reports[1].requestedBytes, quint64(frame.data.size()));
     QCOMPARE(reports[1].writtenBytes, quint64(writtenBytes));
+    QCOMPARE(reports[1].acceptedBytes, quint64(frame.data.size()));
+    QCOMPARE(reports[1].uncertainBytes, quint64(frame.data.size() - writtenBytes));
+    QVERIFY(trace.writeBudgetMs > 0);
+    QVERIFY(trace.writeBudgetMs <= 200);
+    if (!partialWrite) {
+        QVERIFY(trace.receivedBetweenCorrections.load());
+        QCOMPARE(reports[2].deliveryId, quint64(103));
+        QCOMPARE(reports[2].outcome, GPSCorrectionOutcome::Written);
+    }
     QCOMPARE(reports[1].outcome, partialWrite ? GPSCorrectionOutcome::WriteFailed : GPSCorrectionOutcome::Written);
     session.stop();
     QVERIFY(!session.submitCorrections(frame, destinationSession).accepted);
@@ -443,7 +486,7 @@ void GPSReceiverContractTest::_clearFlushesKnownResults()
         gate->release.release();
         session.shutdown();
     });
-    session.start(GPSType::u_blox, blockedFactory(gate), {});
+    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), blockedFactory(gate));
     QVERIFY(gate->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
@@ -502,7 +545,8 @@ void GPSReceiverContractTest::_configurationReportLifecycle()
         second->release.release();
         session.shutdown();
     });
-    session.start(GPSType::u_blox, blockedFactory(first), {});
+    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+                  blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* retired = session.findChild<GPSProvider*>();
     QVERIFY(retired);
@@ -510,7 +554,7 @@ void GPSReceiverContractTest::_configurationReportLifecycle()
     QSignalSpy reports(&session, &GPSReceiverSession::configurationReported);
     GPSConfigurationReport report;
     GPSSettingReport setting;
-    setting.key = QStringLiteral("outputRateHz");
+    setting.id = GPSReceiverSetting::OutputRateHz;
     setting.requestedValue = 5;
     report.settings.append(setting);
     report.monotonicTimestampUs = GPSObservation::monotonicNowUs();
@@ -535,7 +579,8 @@ void GPSReceiverContractTest::_configurationReportLifecycle()
     QCOMPARE(reports.size(), 3);
 
     emit retired->configurationReported(report);
-    session.start(GPSType::u_blox, blockedFactory(second), {});
+    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+                  blockedFactory(second));
     QVERIFY(second->entered.tryAcquire(1, 5000));
     QVERIFY(session.sessionId() != oldSession);
     QVERIFY(session.configurationReport().settings.isEmpty());
@@ -566,7 +611,8 @@ void GPSReceiverContractTest::_configurationReportResetCanRestart()
         second->release.release();
         session.shutdown();
     });
-    session.start(GPSType::u_blox, blockedFactory(first), {});
+    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+                  blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
@@ -580,7 +626,8 @@ void GPSReceiverContractTest::_configurationReportResetCanRestart()
             restarted = true;
             GPSReceiverConfig config;
             config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
-            session.start(GPSType::u_blox, blockedFactory(second), config);
+            session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = config}.profile(),
+                          blockedFactory(second));
         }
     });
     session.stop();
@@ -588,6 +635,55 @@ void GPSReceiverContractTest::_configurationReportResetCanRestart()
     QVERIFY(second->entered.tryAcquire(1, 5000));
     QVERIFY(session.hasReceiver());
     QVERIFY(session.nmeaDevice());
+}
+
+void GPSReceiverContractTest::_uncertainDeliveryPreservesCounts()
+{
+    GPSReceiverMailbox mailbox;
+    mailbox.setCorrectionsEnabled(true);
+    GPSCorrectionFrame frame;
+    frame.data = GpsTestHelpers::buildRtcmFrame(1077);
+    frame.receivedAtMs = 1000;
+    frame.deliveryId = 12;
+    QVERIFY(mailbox.submitCorrection(frame, 7, 1000).accepted);
+    const auto command = mailbox.takeCommand(1000);
+    QVERIFY(command);
+    QVERIFY(mailbox.completeCommand(*command, GPSCorrectionOutcome::WriteFailed, 2, 5, 3));
+    const auto reports = mailbox.takeDeliveries();
+    QCOMPARE(reports.size(), 1);
+    QCOMPARE(reports.first().writtenBytes, quint64(2));
+    QCOMPARE(reports.first().acceptedBytes, quint64(5));
+    QCOMPARE(reports.first().uncertainBytes, quint64(3));
+    QCOMPARE(mailbox.stats().writtenCommandBytes, quint64(2));
+    QCOMPARE(mailbox.stats().uncertainCommandBytes, quint64(3));
+    QCOMPARE(mailbox.stats().failedCommandBytes, quint64(frame.data.size() - 5));
+}
+
+void GPSReceiverContractTest::_correctionGenerationSurvivesRestart()
+{
+    GPSReceiverSession session;
+    const auto first = std::make_shared<WorkerGate>();
+    const auto second = std::make_shared<WorkerGate>();
+    const auto cleanup = qScopeGuard([&]() {
+        session.stop();
+        first->release.release();
+        second->release.release();
+        session.shutdown();
+    });
+    const auto profile = GPSConnectionConfig{}.profile();
+    session.start(profile, blockedFactory(first));
+    auto* worker = session.findChild<GPSProvider*>();
+    QVERIFY(worker);
+    const auto originalGeneration = session.sessionId();
+    connect(&session, &GPSReceiverSession::rtcmFrameReceived, &session,
+            [&]() { session.start(profile, blockedFactory(second)); });
+    quint64 deliveredGeneration = 0;
+    connect(&session, &GPSReceiverSession::rtcmFrameReceived, &session,
+            [&](const QByteArray&, qint64, quint64 generation) { deliveredGeneration = generation; });
+    worker->RTCMFrameUpdate(GpsTestHelpers::buildRtcmFrame(1077), GPSObservation::monotonicNowUs() / 1000);
+    QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+    QCOMPARE(deliveredGeneration, originalGeneration);
+    QVERIFY(session.sessionId() > originalGeneration);
 }
 
 QTEST_GUILESS_MAIN(GPSReceiverContractTest)

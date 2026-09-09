@@ -12,6 +12,7 @@ private slots:
     void _receiverSettings_data();
     void _receiverSettings();
     void _managedNmeaKeepsTransportUntilStopped();
+    void _correctionBacklogPublishesBufferedPositions();
     void _positionMode_data();
     void _positionMode();
     void _unsupportedBaseDoesNotWriteConfiguration();

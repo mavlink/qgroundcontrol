@@ -2,6 +2,7 @@
 #include <QtCore/QList>
 #include <QtTest/QTest>
 
+#include "RTCMFrameDecoder.h"
 #include "RTCMParser.h"
 #include "rtcm.h"
 
@@ -27,6 +28,9 @@ class RTCMConformanceTest : public QObject
 private slots:
     void _sharedCorpus_data();
     void _sharedCorpus();
+    void _strictValidation_data();
+    void _strictValidation();
+    void _fragmentReceiptAndFiltering();
 };
 
 void RTCMConformanceTest::_sharedCorpus_data()
@@ -114,6 +118,69 @@ void RTCMConformanceTest::_sharedCorpus()
     QCOMPARE(px4Frames, expectedFrames);
     QCOMPARE(qgcIds, px4Ids);
     QCOMPARE(invalidFrames, expectedInvalidFrames);
+}
+
+void RTCMConformanceTest::_strictValidation_data()
+{
+    QTest::addColumn<QByteArray>("candidate");
+    QTest::newRow("reserved-header-bits") << QByteArray::fromHex("d304023ed0");
+    QTest::newRow("one-byte-payload") << QByteArray::fromHex("d300013e");
+}
+
+void RTCMConformanceTest::_strictValidation()
+{
+    QFETCH(QByteArray, candidate);
+    const auto crc = RTCMParser::crc24q(reinterpret_cast<const uint8_t*>(candidate.constData()), candidate.size());
+    candidate.append(static_cast<char>(crc >> 16));
+    candidate.append(static_cast<char>(crc >> 8));
+    candidate.append(static_cast<char>(crc));
+    QVERIFY(!RTCMParser::isValidFrame(candidate));
+    RTCMFrameDecoder decoder;
+    std::optional<RTCMFrameDecoder::Result> decoded;
+    RTCMParsing native;
+    bool nativeCompleted = false;
+    for (const char byte : candidate) {
+        if (const auto result = decoder.addByte(static_cast<uint8_t>(byte), 1000)) {
+            decoded = result;
+        }
+        nativeCompleted |= native.addByte(static_cast<uint8_t>(byte));
+    }
+    QVERIFY(decoded);
+    QVERIFY(!decoded->valid);
+    QCOMPARE(decoded->data, candidate);
+    // The vendor parser remains isolated. The application boundary enforces the stricter contract.
+    QVERIFY(nativeCompleted);
+    const QByteArray nativeFrame(reinterpret_cast<const char*>(native.message()), native.messageLength());
+    QVERIFY(!RTCMParser::isValidFrame(nativeFrame));
+    for (const char byte : SHORT_FRAME) {
+        decoded = decoder.addByte(static_cast<uint8_t>(byte), 8000);
+    }
+    QVERIFY(decoded && decoded->valid);
+    QCOMPARE(decoded->receivedAtMs, qint64(8000));
+}
+
+void RTCMConformanceTest::_fragmentReceiptAndFiltering()
+{
+    RTCMFrameDecoder decoder;
+    decoder.setWhitelist({1077});
+    for (const char byte : SHORT_FRAME.first(4)) {
+        QVERIFY(!decoder.addByte(static_cast<uint8_t>(byte), 1000));
+    }
+    std::optional<RTCMFrameDecoder::Result> decoded;
+    for (const char byte : SHORT_FRAME.sliced(4)) {
+        decoded = decoder.addByte(static_cast<uint8_t>(byte), 8000);
+    }
+    QVERIFY(decoded && decoded->valid && decoded->filtered);
+    QCOMPARE(decoded->messageId, 1005);
+    QCOMPARE(decoded->receivedAtMs, qint64(1000));
+    QCOMPARE(decoded->data, SHORT_FRAME);
+    decoder.reset();
+    decoder.setWhitelist({});
+    for (const char byte : SHORT_FRAME) {
+        decoded = decoder.addByte(static_cast<uint8_t>(byte), 9000);
+    }
+    QVERIFY(decoded && decoded->valid && !decoded->filtered);
+    QCOMPARE(decoded->receivedAtMs, qint64(9000));
 }
 
 QTEST_GUILESS_MAIN(RTCMConformanceTest)

@@ -198,35 +198,34 @@ void GPSProvider::run()
     QString failureDetail = tr("Receiver connection failed");
     QByteArray bytes(4096, Qt::Uninitialized);
     while (!_requestStop && !transport->fatalError()) {
-        // Limit writes per receive cycle so correction traffic cannot starve receiver parsing.
-        for (int index = 0; index < 4 && !_requestStop && driver.readyForCorrections(); ++index) {
+        // Give each complete frame its full budget, then service receive before another write.
+        if (driver.readyForCorrections()) {
             const auto correction = _mailbox->takeCommand(GPSObservation::monotonicNowUs() / 1000);
             if (_mailbox->scheduleDeliveryNotification()) {
                 emit dataReady();
             }
-            if (!correction) {
-                break;
-            }
-            const auto result = driver.injectCorrections(correction->data);
-            if (_mailbox->completeCommand(*correction, correctionOutcome(result.status),
-                                          qMax<qsizetype>(result.bytesWritten, 0))) {
-                emit dataReady();
-            }
-            if (result.status == GPSDriver::CorrectionStatus::TransportError) {
-                failureDetail = tr("Cannot send corrections to the receiver");
-                disableCorrections();
-                emit connectionErrorDetail(GPSConnectionError::DeviceError, failureDetail);
-                emit connectionError(GPSConnectionError::DeviceError);
-                return;
+            if (correction) {
+                const auto result = driver.injectCorrections(correction->data);
+                if (_mailbox->completeCommand(
+                        *correction, correctionOutcome(result.status), qMax<qsizetype>(result.bytesWritten, 0),
+                        qMax<qsizetype>(result.bytesAccepted, 0), qMax<qsizetype>(result.bytesUncertain, 0))) {
+                    emit dataReady();
+                }
+                if (result.status == GPSDriver::CorrectionStatus::TransportError) {
+                    failureDetail = tr("Cannot send corrections to the receiver");
+                    disableCorrections();
+                    emit connectionErrorDetail(GPSConnectionError::DeviceError, failureDetail);
+                    emit connectionError(GPSConnectionError::DeviceError);
+                    return;
+                }
             }
         }
         const qint64 remainingMs = kProgressTimeoutMs - lastProgress.elapsed();
-        if (remainingMs <= 0) {
-            failureDetail = tr("Receiver stopped producing data");
-            break;
-        }
-        const qint64 receiveLimitMs = driver.readyForCorrections() ? 200 : kGPSReceiveTimeout;
-        const auto timeoutMs = static_cast<unsigned>(qMin(receiveLimitMs, remainingMs));
+        const bool correctionsPending = _mailbox->stats().pendingCommands > 0;
+        const qint64 receiveLimitMs = correctionsPending ? 0 : driver.readyForCorrections() ? 200 : kGPSReceiveTimeout;
+        // Native parsers need a positive interval to publish a fix after consuming its bytes.
+        const qint64 minimumReceiveMs = _nmeaBuffer ? 0 : 10;
+        const auto timeoutMs = static_cast<unsigned>(qMax(minimumReceiveMs, qMin(remainingMs, receiveLimitMs)));
         QElapsedTimer receiveDuration;
         receiveDuration.start();
         gotData = false;
@@ -251,6 +250,9 @@ void GPSProvider::run()
         }
         if (progress) {
             lastProgress.restart();
+        } else if (lastProgress.elapsed() >= kProgressTimeoutMs) {
+            failureDetail = tr("Receiver stopped producing data");
+            break;
         } else if (receiveDuration.elapsed() < 10 && !_requestStop) {
             // Some drivers return an idle result before their requested timeout.
             QThread::msleep(10);

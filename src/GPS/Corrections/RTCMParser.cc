@@ -26,6 +26,9 @@ void RTCMParser::reset()
 
 bool RTCMParser::addByte(uint8_t byte)
 {
+    if (_crcBytesRead == kCrcSize) {
+        reset();
+    }
     switch (_state) {
         case State::WaitingForPreamble:
             if (byte == kPreamble) {
@@ -100,7 +103,8 @@ uint32_t RTCMParser::crc24q(const uint8_t* data, size_t len)
 
 bool RTCMParser::validateCrc() const
 {
-    if (_messageLength == 0 || _bytesRead < kHeaderSize + _messageLength) {
+    if (_messageLength < 2 || (_buffer[1] & 0xFC) != 0 || _crcBytesRead != kCrcSize ||
+        _bytesRead < kHeaderSize + _messageLength) {
         return false;
     }
 
@@ -115,4 +119,15 @@ QByteArray RTCMParser::currentFrame() const
     QByteArray frame(reinterpret_cast<const char*>(_buffer), kHeaderSize + _messageLength);
     frame.append(reinterpret_cast<const char*>(_crcBytes), kCrcSize);
     return frame;
+}
+
+bool RTCMParser::isValidFrame(const QByteArray& frame)
+{
+    if (frame.size() < kHeaderSize + 2 + kCrcSize || static_cast<uint8_t>(frame[0]) != kPreamble ||
+        (static_cast<uint8_t>(frame[1]) & 0xFC) != 0) {
+        return false;
+    }
+    const int length = ((static_cast<uint8_t>(frame[1]) & 3) << 8) | static_cast<uint8_t>(frame[2]);
+    return length >= 2 && frame.size() == kHeaderSize + length + kCrcSize &&
+           crc24q(reinterpret_cast<const uint8_t*>(frame.constData()), frame.size()) == 0;
 }

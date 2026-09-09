@@ -6,6 +6,7 @@
 #include <chrono>
 #include <utility>
 
+#include "NTRIPRequest.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSessionLog, "GPS.NTRIP.NTRIPSession")
@@ -47,6 +48,7 @@ bool NTRIPSession::_retireStream(quint64 generation)
 {
     const QPointer<NTRIPSession> guard(this);
     const QPointer<NTRIPStream> stream = _stream;
+    const auto retiredAttempt = std::exchange(_activeAttemptId, 0);
     _stream = nullptr;
     if (stream) {
         stream->disconnect(this);
@@ -57,7 +59,7 @@ bool NTRIPSession::_retireStream(quint64 generation)
         if (!guard || generation != _generation) {
             return false;
         }
-        emit streamEnded();
+        emit streamEnded(retiredAttempt);
     }
     return guard && generation == _generation;
 }
@@ -95,9 +97,8 @@ void NTRIPSession::stop()
 
 QString NTRIPSession::sourceId() const
 {
-    QUrl url;
+    QUrl url = NTRIPRequest::casterUrl(_config);
     url.setScheme(_config.useTls ? QStringLiteral("ntrips") : QStringLiteral("ntrip"));
-    url.setHost(_config.host);
     url.setPort(_config.port);
     url.setPath(QStringLiteral("/") + _config.mountpoint);
     return url.toString(QUrl::FullyEncoded);
@@ -135,8 +136,10 @@ void NTRIPSession::_beginAttempt(quint64 generation)
         return;
     }
     const QPointer<NTRIPStream> stream = _stream;
-    const auto current = [this, stream, generation]() {
-        return stream && stream == _stream && generation == _generation;
+    const auto attemptId = _activeAttemptId = ++_nextAttemptId;
+    const QString instance = sourceId();
+    const auto current = [this, stream, generation, attemptId]() {
+        return stream && stream == _stream && generation == _generation && attemptId == _activeAttemptId;
     };
     connect(
         stream, &NTRIPStream::failed, this,
@@ -173,9 +176,9 @@ void NTRIPSession::_beginAttempt(quint64 generation)
         }
     });
     connect(stream, &NTRIPStream::correctionRejectedAt, this,
-            [this, current](const QByteArray& data, int messageId, qint64 receivedAtMs) {
+            [this, current, attemptId](const QByteArray& data, int messageId, qint64 receivedAtMs) {
                 if (current()) {
-                    emit correctionRejected(data, messageId, receivedAtMs);
+                    emit correctionRejected(data, messageId, receivedAtMs, attemptId);
                 }
             });
     connect(stream, &NTRIPStream::plaintextCredentialsWarning, this, [this, current]() {
@@ -183,27 +186,13 @@ void NTRIPSession::_beginAttempt(quint64 generation)
             emit plaintextCredentialsWarning();
         }
     });
-    if (stream->providesTimestampedFrames()) {
-        connect(stream, &NTRIPStream::correctionReceivedAt, this,
-                [this, stream, current](const QByteArray& data, int id, bool filtered, qint64 receivedAtMs) {
-                    if (current()) {
-                        _onCorrection(data, id, filtered, receivedAtMs, stream);
-                    }
-                });
-    } else {
-        connect(stream, &NTRIPStream::RTCMDataUpdate, this, [this, stream, current](const QByteArray& data, int id) {
-            if (current()) {
-                _onCorrection(data, id, false, _clock(), stream);
-            }
-        });
-        connect(stream, &NTRIPStream::rtcmFrameValidated, this,
-                [this, stream, current](const QByteArray& data, int id, bool filtered) {
-                    if (current() && filtered) {
-                        _onCorrection(data, id, true, _clock(), stream);
-                    }
-                });
-    }
-    emit streamStarted();
+    connect(stream, &NTRIPStream::correctionReceivedAt, this,
+            [this, stream, current, attemptId](const QByteArray& data, int id, bool filtered, qint64 receivedAtMs) {
+                if (current()) {
+                    _onCorrection(data, id, filtered, receivedAtMs, stream, attemptId);
+                }
+            });
+    emit streamStarted(attemptId, instance);
     if (guard && current()) {
         stream->start();
     }
@@ -221,7 +210,7 @@ void NTRIPSession::_onConnected(NTRIPStream* stream)
 }
 
 void NTRIPSession::_onCorrection(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs,
-                                 NTRIPStream* stream)
+                                 NTRIPStream* stream, quint64 attemptId)
 {
     const QPointer<NTRIPSession> guard(this);
     const auto generation = _generation;
@@ -241,7 +230,7 @@ void NTRIPSession::_onCorrection(const QByteArray& data, int messageId, bool fil
             _failedAttempts = 0;
         }
     }
-    emit correctionReceived(data, messageId, filtered, receivedAtMs);
+    emit correctionReceived(data, messageId, filtered, receivedAtMs, attemptId);
 }
 
 void NTRIPSession::_onFailure(const NTRIPFailure& failure, NTRIPStream* stream)

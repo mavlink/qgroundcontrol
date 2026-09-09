@@ -4,16 +4,20 @@
 #include <QtTest/QSignalSpy>
 
 #include "GPSSatelliteModel.h"
+#include "GPSSatelliteStore.h"
 
 void GPSSatelliteModelTest::_rolesAndUnknownValues()
 {
     GPSSatelliteModel model;
+    GPSSatelliteStore store;
+    connect(&store, &GPSSatelliteStore::observationChanged, &model, &GPSSatelliteModel::updateObservation);
     QAbstractItemModelTester contract(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     model.beginSession(QStringLiteral("nativeReceiver"), 7);
+    store.beginSession(QStringLiteral("nativeReceiver"), 7);
     GPSSatellite satellite;
     satellite.id = 4;
     GPSSatelliteObservation report{GPSObservation::monotonicNowUs(), 7, {satellite}};
-    model.updateObservation(report);
+    store.updateObservation(report);
     QCOMPARE(model.count(), 1);
     QVERIFY(model.fresh());
     const QModelIndex row = model.index(0);
@@ -31,7 +35,7 @@ void GPSSatelliteModelTest::_rolesAndUnknownValues()
     report.satellites[0].signalStrength = 0;
     report.satellites[0].rawAzimuth = 255;
     report.satellites[0].azimuthEncoding = GPSSatellite::AzimuthEncoding::ScaledFullCircleByte;
-    model.updateObservation(report);
+    store.updateObservation(report);
     QCOMPARE(resetSpy.size(), 0);
     QCOMPARE(changeSpy.size(), 1);
     QCOMPARE(model.data(row, GPSSatelliteModel::UsedRole), QVariant(false));
@@ -39,40 +43,38 @@ void GPSSatelliteModelTest::_rolesAndUnknownValues()
     QCOMPARE(model.data(row, GPSSatelliteModel::SignalStrengthRole), QVariant(0));
     QCOMPARE(model.data(row, GPSSatelliteModel::AzimuthRole), QVariant(0.0));
     report.satellites[0].azimuthEncoding = GPSSatellite::AzimuthEncoding::DegreesModulo256;
-    model.updateObservation(report);
+    store.updateObservation(report);
     QVERIFY(!model.data(row, GPSSatelliteModel::AzimuthRole).isValid());
 }
 
 void GPSSatelliteModelTest::_nmeaConstellationAndUsedIdentity()
 {
     GPSSatelliteModel model;
+    GPSSatelliteStore store;
+    connect(&store, &GPSSatelliteStore::observationChanged, &model, &GPSSatelliteModel::updateObservation);
     QAbstractItemModelTester contract(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     model.beginSession(QStringLiteral("nmeaReceiver"), 12);
-    QGeoSatelliteInfo gps;
-    gps.setSatelliteIdentifier(3);
-    gps.setSatelliteSystem(QGeoSatelliteInfo::GPS);
-    gps.setAttribute(QGeoSatelliteInfo::Azimuth, 275.0);
-    QGeoSatelliteInfo galileo = gps;
-    galileo.setSatelliteSystem(QGeoSatelliteInfo::GALILEO);
+    store.beginSession(QStringLiteral("nmeaReceiver"), 12);
     const quint64 receipt = GPSObservation::monotonicNowUs();
-    model.updateNmeaSatellites({galileo, gps}, {gps}, true, receipt, 12);
+    GPSSatellite gps;
+    gps.id = 3;
+    gps.constellation = GPSSatellite::Constellation::GPS;
+    gps.normalizedAzimuthDegrees = 275;
+    gps.used = true;
+    GPSSatellite galileo = gps;
+    galileo.constellation = GPSSatellite::Constellation::Galileo;
+    galileo.used.reset();
+    GPSSatelliteObservation report;
+    report.sessionId = 12;
+    report.satellites = {galileo, gps};
+    report.provenance = {{gps.constellation, receipt, receipt, 1}, {galileo.constellation, receipt, 0, std::nullopt}};
+    store.updateObservation(report);
     QCOMPARE(model.count(), 2);
     QCOMPARE(model.data(model.index(0), GPSSatelliteModel::ConstellationRole).toString(), QStringLiteral("GPS"));
     QCOMPARE(model.data(model.index(0), GPSSatelliteModel::UsedRole), QVariant(true));
-    QCOMPARE(model.data(model.index(1), GPSSatelliteModel::UsedRole), QVariant(false));
+    QVERIFY(!model.data(model.index(1), GPSSatelliteModel::UsedRole).isValid());
     QCOMPARE(model.data(model.index(1), GPSSatelliteModel::AzimuthRole), QVariant(275.0));
-    model.updateNmeaSatellites({galileo, gps}, {gps}, true, receipt, 12, QSet<int>{QGeoSatelliteInfo::GPS});
-    QCOMPARE(model.data(model.index(0), GPSSatelliteModel::UsedRole), QVariant(true));
-    QVERIFY(!model.data(model.index(1), GPSSatelliteModel::UsedRole).isValid());
-    model.updateNmeaSatellites({galileo, gps}, {}, true, receipt, 12, QSet<int>{QGeoSatelliteInfo::GALILEO});
-    QVERIFY(!model.data(model.index(0), GPSSatelliteModel::UsedRole).isValid());
-    QCOMPARE(model.data(model.index(1), GPSSatelliteModel::UsedRole), QVariant(false));
-    model.updateNmeaSatellites({galileo, gps}, {gps}, false, receipt, 12);
-    QVERIFY(!model.data(model.index(0), GPSSatelliteModel::UsedRole).isValid());
-    QVERIFY(!model.data(model.index(1), GPSSatelliteModel::UsedRole).isValid());
-    model.updateNmeaSatellites({}, {}, false, 0, 11);
-    QVERIFY(model.fresh());
-    model.updateNmeaSatellites({}, {}, false, 0, 12);
+    store.clear();
     QVERIFY(!model.fresh());
     QCOMPARE(model.count(), 0);
     QCOMPARE(model.sessionId(), 12ULL);
@@ -81,33 +83,37 @@ void GPSSatelliteModelTest::_nmeaConstellationAndUsedIdentity()
 
 void GPSSatelliteModelTest::_freshnessAndSessionIsolation()
 {
-    GPSSatelliteModel model(nullptr, 100);
+    GPSSatelliteModel model;
+    GPSSatelliteStore store(nullptr, 100);
+    connect(&store, &GPSSatelliteStore::observationChanged, &model, &GPSSatelliteModel::updateObservation);
     QAbstractItemModelTester contract(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     model.beginSession(QStringLiteral("receiver"), 1);
+    store.beginSession(QStringLiteral("receiver"), 1);
     GPSSatellite satellite;
     satellite.id = 4;
     const quint64 nowUs = GPSObservation::monotonicNowUs();
     GPSSatelliteObservation report{nowUs - 20000, 1, {satellite}};
-    model.updateObservation(report);
+    store.updateObservation(report);
     QVERIFY(model.fresh());
     report.satellites[0].id = 99;
     report.monotonicTimestampUs = nowUs - 30000;
-    model.updateObservation(report);
+    store.updateObservation(report);
     QCOMPARE(model.data(model.index(0), GPSSatelliteModel::SatelliteIdRole).toInt(), 4);
     report.monotonicTimestampUs = nowUs + 1000000;
-    model.updateObservation(report);
+    store.updateObservation(report);
     QCOMPARE(model.data(model.index(0), GPSSatelliteModel::SatelliteIdRole).toInt(), 4);
     QTRY_VERIFY_WITH_TIMEOUT(!model.fresh(), 1000);
     QCOMPARE(model.count(), 0);
     report.monotonicTimestampUs = nowUs - 200000;
-    model.updateObservation(report);
+    store.updateObservation(report);
     QVERIFY(!model.fresh());
     model.beginSession(QStringLiteral("receiver"), 2);
+    store.beginSession(QStringLiteral("receiver"), 2);
     report.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    model.updateObservation(report);
+    store.updateObservation(report);
     QCOMPARE(model.count(), 0);
     report.sessionId = 2;
-    model.updateObservation(report);
+    store.updateObservation(report);
     QCOMPARE(model.count(), 1);
     model.reset();
     QVERIFY(model.sourceId().isEmpty());
@@ -118,21 +124,25 @@ void GPSSatelliteModelTest::_freshnessAndSessionIsolation()
 void GPSSatelliteModelTest::_reentrantReset()
 {
     GPSSatelliteModel model;
+    GPSSatelliteStore store;
+    connect(&store, &GPSSatelliteStore::observationChanged, &model, &GPSSatelliteModel::updateObservation);
     QAbstractItemModelTester contract(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     model.beginSession(QStringLiteral("receiver"), 1);
+    store.beginSession(QStringLiteral("receiver"), 1);
     bool replaced = false;
     connect(&model, &QAbstractItemModel::modelAboutToBeReset, &model, [&]() {
         if (!replaced) {
             replaced = true;
             model.beginSession(QStringLiteral("replacement"), 2);
+            store.beginSession(QStringLiteral("replacement"), 2);
             GPSSatellite next;
             next.id = 8;
-            model.updateObservation({GPSObservation::monotonicNowUs(), 2, {next}});
+            store.updateObservation({GPSObservation::monotonicNowUs(), 2, {next}});
         }
     });
     GPSSatellite old;
     old.id = 3;
-    model.updateObservation({GPSObservation::monotonicNowUs(), 1, {old}});
+    store.updateObservation({GPSObservation::monotonicNowUs(), 1, {old}});
     QTRY_COMPARE_WITH_TIMEOUT(model.sessionId(), 2ULL, 1000);
     QCOMPARE(model.count(), 1);
     QCOMPARE(model.data(model.index(0), GPSSatelliteModel::SatelliteIdRole).toInt(), 8);

@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
 #include "NMEASatelliteAdapter.h"
 
@@ -35,23 +36,16 @@ public:
 
     const GPSSourceHealth* health() const { return &_health; }
 
-    QList<QGeoSatelliteInfo> satellitesInView() const { return _satellitesInView; }
-
-    QList<QGeoSatelliteInfo> satellitesInUse() const { return _satellitesInUse; }
+    GPSSatelliteObservation satelliteObservation() const { return _satellites.observation(); }
 
     quint64 sessionId() const { return _sessionId; }
 
-    quint64 satellitesReceivedAtUs() const { return _satellitesReceivedAtUs; }
-
-    bool satellitesUsedKnown() const { return _satellitesUsedKnown; }
-
-    QSet<int> satelliteUseSystems() const { return _satelliteUseSystems; }
-
 signals:
     void satellitesChanged();
+    void satellitesReceived(const GPSSatelliteObservation& observation);
 
 private:
-    void _expireSatellites();
+    void _updateSatellites();
 
     std::unique_ptr<NMEAStreamSplitter> _stream;
     std::unique_ptr<NMEAPositionSource> _positionSource;
@@ -61,13 +55,6 @@ private:
     GPSSourceHealth _health;
     NMEASatelliteAdapter::Snapshot _viewSnapshot;
     NMEASatelliteAdapter::Snapshot _useSnapshot;
+    GPSSatelliteStore _satellites;
     quint64 _sessionId = 0;
-    quint64 _satellitesReceivedAtUs = 0;
-    quint64 _viewRejectedThroughUs = 0;
-    quint64 _useRejectedThroughUs = 0;
-    bool _satellitesUsedKnown = false;
-    QSet<int> _satelliteUseSystems;
-    bool _refreshingSatellites = false;
-    QList<QGeoSatelliteInfo> _satellitesInView;
-    QList<QGeoSatelliteInfo> _satellitesInUse;
 };

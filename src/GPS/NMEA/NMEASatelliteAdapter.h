@@ -3,6 +3,7 @@
 #include <QtCore/QIODevice>
 #include <QtCore/QMap>
 #include <QtCore/QPointer>
+#include <QtCore/QSet>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoSatelliteInfo>
 
@@ -30,11 +31,11 @@ public:
         QList<QGeoSatelliteInfo> satellites;
         quint64 receivedAtUs = 0;
         QMap<QByteArray, quint64> constellationReceipts;
+        QMap<QByteArray, QSet<int>> usedIds;
     };
 
-    static Snapshot expireSnapshot(const Snapshot& snapshot, quint64 nowUs);
     quint64 satelliteTimestampUs(bool inUse) const;
-    Snapshot freshSatellites(const QList<QGeoSatelliteInfo>& satellites, bool inUse, quint64 nowUs) const;
+    Snapshot satelliteSnapshot(const QList<QGeoSatelliteInfo>& satellites, bool inUse) const;
 
 protected:
     qint64 readData(char* data, qint64 maxSize) override;
@@ -64,6 +65,7 @@ private:
         QByteArray talker;
         quint64 receivedAtUs = 0;
         bool inUse = false;
+        QSet<int> usedIds = {};
     };
 
     QPointer<QIODevice> _source;
@@ -74,6 +76,7 @@ private:
     QMap<QByteArray, quint64> _inUseReceivedAtUs;
     QMap<QByteArray, quint64> _consumedViewTimestamps;
     QMap<QByteArray, quint64> _consumedUseTimestamps;
+    QMap<QByteArray, QSet<int>> _consumedUseIds;
     QByteArray _epochTime;
     QList<TimedSentence> _output;
     qsizetype _bufferSize = 0;

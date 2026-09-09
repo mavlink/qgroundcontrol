@@ -6,6 +6,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <functional>
+#include <memory>
 
 #include "GPSCorrectionManager.h"
 #include "GPSReceiverAutoConnect.h"
@@ -16,6 +17,7 @@
 
 class GPSReceiver;
 class GPSBaseStationState;
+class GPSPositionSourceRegistration;
 class QGCPositionManager;
 class QTimer;
 class SettingsManager;
@@ -97,15 +99,24 @@ private:
     void _updateConnections();
     void _updateReceiverSettings(bool restart = false);
     void _updatePositionSource();
+    void _updateNmeaPositionSource();
     void _updatePositionSourceMode();
     void _updateNmeaSatellites();
     void _updateCorrectionSettings();
+    void _updateNtripUdpOutput();
     SettingsManager& _settings;
     std::function<bool()> _connectionsSuspended;
     QPointer<NTRIPManager> _ntrip;
     quint64 _correctionDestinationSession = 0;
+    quint64 _ntripAttemptId = 0;
     bool _shutdown = false;
-    bool _positionSourceInstalled = false;
+    quint64 _receiverSettingsRevision = 0;
+    quint64 _receiverRegistrationRevision = 0;
+    quint64 _nmeaRegistrationRevision = 0;
+    QPointer<QGeoPositionInfoSource> _registeredReceiverSource;
+    QPointer<QGeoPositionInfoSource> _registeredNmeaSource;
+    std::unique_ptr<GPSPositionSourceRegistration> _receiverRegistration;
+    std::unique_ptr<GPSPositionSourceRegistration> _nmeaRegistration;
     QPointer<QGCPositionManager> _positionManager;
     GPSCorrectionManager _corrections;
     GPSRecordingController _recording;

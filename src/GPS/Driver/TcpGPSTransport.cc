@@ -1,6 +1,7 @@
 #include "TcpGPSTransport.h"
 
 #include <QtCore/QEventLoop>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTimer>
 #include <QtNetwork/QTcpSocket>
 
@@ -52,6 +53,7 @@ bool TcpGPSTransport::_waitFor(const std::function<bool()>& ready, QDeadlineTime
     QObject::connect(&cancellation, &QTimer::timeout, &loop, check);
     QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
     timeout.setSingleShot(true);
+    timeout.setTimerType(Qt::PreciseTimer);
     cancellation.start(kCancellationPollMs);
     timeout.start(static_cast<int>(deadline.remainingTime()));
     loop.exec();
@@ -98,18 +100,41 @@ int TcpGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
 
 int TcpGPSTransport::write(const uint8_t* buffer, int length)
 {
-    if (isCancelled() || fatalError() || !buffer || length < 0) {
-        return -1;
+    const auto result = writeBounded(buffer, length, QDeadlineTimer(kWriteTimeoutMs));
+    return result.status == WriteStatus::Completed ? result.writtenBytes : -1;
+}
+
+GPSTransport::WriteResult TcpGPSTransport::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+{
+    if (isCancelled()) {
+        return {WriteStatus::Cancelled};
+    }
+    if (!buffer || length < 0) {
+        return {WriteStatus::InvalidData};
+    }
+    if (fatalError() || _socket->bytesToWrite() != 0) {
+        return {WriteStatus::Error};
     }
     if (length == 0) {
-        return 0;
+        return {WriteStatus::Completed};
     }
-    const QDeadlineTimer deadline(kWriteTimeoutMs);
-    const qint64 written = _socket->write(reinterpret_cast<const char*>(buffer), length);
-    if (written != length || !_waitFor([this]() { return _socket->bytesToWrite() == 0; }, deadline)) {
-        return -1;
+    if (deadline.hasExpired()) {
+        return {WriteStatus::TimedOut};
     }
-    return fatalError() ? -1 : length;
+    qint64 drained = 0;
+    const auto connection = QObject::connect(
+        _socket.get(), &QTcpSocket::bytesWritten, _socket.get(), [&drained](qint64 count) { drained += count; },
+        Qt::DirectConnection);
+    const auto disconnect = qScopeGuard([&]() { QObject::disconnect(connection); });
+    const qint64 accepted = _socket->write(reinterpret_cast<const char*>(buffer), length);
+    const bool completed = accepted == length && _waitFor([this]() { return _socket->bytesToWrite() == 0; }, deadline);
+    const int acceptedBytes = static_cast<int>(std::clamp(accepted, qint64(0), qint64(length)));
+    const int writtenBytes = static_cast<int>(std::clamp(drained, qint64(0), qint64(acceptedBytes)));
+    const WriteStatus status = isCancelled()                ? WriteStatus::Cancelled
+                               : completed && !fatalError() ? WriteStatus::Completed
+                               : deadline.hasExpired()      ? WriteStatus::TimedOut
+                                                            : WriteStatus::Error;
+    return {status, acceptedBytes, writtenBytes, acceptedBytes - writtenBytes};
 }
 
 bool TcpGPSTransport::setBaudrate(unsigned baudrate)

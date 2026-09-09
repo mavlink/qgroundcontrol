@@ -21,7 +21,11 @@ function(qgc_add_gps_parser_runtime target)
         "${gps_parser_source}/NTRIP/NTRIPStream.cc"
         "${gps_parser_source}/NTRIP/NTRIPStream.h"
         "${gps_parser_source}/NTRIP/NTRIPTransportConfig.cc"
+        "${gps_parser_source}/NTRIP/NTRIPRequest.cc"
+        "${gps_parser_source}/NTRIP/NTRIPRequest.h"
         "${gps_parser_source}/Corrections/RTCMParser.cc"
+        "${gps_parser_source}/Corrections/RTCMFrameDecoder.cc"
+        "${gps_parser_source}/Corrections/RTCMFrameDecoder.h"
         "${gps_parser_source}/Corrections/GPSCorrectionDiagnostics.cc"
         "${gps_parser_source}/Corrections/GPSCorrectionDiagnostics.h"
         "${gps_parser_source}/Corrections/GPSCorrectionRouter.cc"
@@ -34,4 +38,25 @@ function(qgc_add_gps_parser_runtime target)
                          "${gps_parser_source}/Corrections" "${gps_repository}/src/Utilities/Logging"
     )
     target_link_libraries(${target} PUBLIC Qt6::Core Qt6::Positioning)
+endfunction()
+
+# Exercise the production facade and native implementations with deterministic test time.
+function(qgc_add_gps_replay_driver target parser_target)
+    set(driver_source "${QGC_GPS_PARSER_SOURCE}/Driver")
+    file(GLOB native_sources CONFIGURE_DEPENDS "${driver_source}/PX4/*.cpp")
+    add_library(
+        ${target} STATIC
+        "${driver_source}/GPSDriver.cc"
+        "${driver_source}/GPSDriverBackend.cc"
+        "${driver_source}/GPSDriverData.cc"
+        "${driver_source}/GPSReceiverConfig.cc"
+        "${driver_source}/GPSReceiverCapabilities.cc"
+        "${driver_source}/GPSTransport.cc"
+        ${native_sources}
+    )
+    target_include_directories(${target} PUBLIC "${driver_source}" "${driver_source}/PX4")
+    target_compile_definitions(${target}
+                               PUBLIC GPS_DEFINITIONS_HEADER="${CMAKE_CURRENT_FUNCTION_LIST_DIR}/GPSReplayDefinitions.h"
+    )
+    target_link_libraries(${target} PUBLIC ${parser_target})
 endfunction()

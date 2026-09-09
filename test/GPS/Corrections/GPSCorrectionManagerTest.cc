@@ -1,5 +1,7 @@
 #include "GPSCorrectionManagerTest.h"
 
+#include <QtCore/QScopeGuard>
+#include <QtCore/QSemaphore>
 #include <QtNetwork/QUdpSocket>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
@@ -8,15 +10,19 @@
 #include <memory>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSConnectionConfig.h"
 #include "GPSCorrectionManager.h"
 #include "GPSCorrectionSettings.h"
 #include "GPSManager.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverSession.h"
+#include "GPSTransport.h"
 #include "GpsTestHelpers.h"
+#include "MockNTRIPStream.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
+#include "RTKSettings.h"
 #include "SettingsManager.h"
 
 namespace {
@@ -42,41 +48,77 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     const quint16 port = unusedPort();
     QVERIFY(port);
     configureUdp(saved, settings, port);
-    GPSManager gps;
+    auto* ntripSettings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(ntripSettings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(ntripSettings->ntripMountpoint(), QStringLiteral("TEST"));
+    NTRIPManager ntrip;
+    auto* stream = new MockNTRIPStream(&ntrip);
+    stream->autoConnect = false;
+    ntrip.setTransportForTest(stream);
+    GPSManager gps(*SettingsManager::instance(), nullptr, []() { return true; });
+    gps.init(&ntrip);
     auto* corrections = gps.corrections();
     corrections->setRoutingPolicy(GPSCorrectionManager::RoutingPolicy::All);
-    corrections->beginSourceSession(GPSCorrectionSource::LocalReceiver);
+    auto* manufacturer = SettingsManager::instance()->rtkSettings()->baseReceiverManufacturers();
+    saved.setFactValue(manufacturer, manufacturer->rawValue());
+    auto* receiverSession = gps.receiverSession();
+    auto releaseOpen = std::make_shared<QSemaphore>();
+    const auto cleanup = qScopeGuard([&]() {
+        receiverSession->stop();
+        releaseOpen->release();
+        gps.shutdown();
+    });
+    receiverSession->start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+                           [releaseOpen](const std::atomic_bool&) {
+                               releaseOpen->acquire();
+                               return std::unique_ptr<GPSTransport>{};
+                           });
+    QVERIFY(receiverSession->hasReceiver());
+    const quint64 receiverSessionId = receiverSession->sessionId();
+    QVERIFY(receiverSessionId > 0);
+    auto* worker = receiverSession->findChild<GPSProvider*>();
+    QVERIFY(worker);
+    QSignalSpy configurationStarted(receiverSession, &GPSReceiverSession::configurationStarted);
+    emit worker->transportOpened();
+    QTRY_COMPARE_WITH_TIMEOUT(configurationStarted.size(), 1, TestTimeout::mediumMs());
     corrections->init(settings);
     auto* forwarder = corrections->rtcmMavlink();
     QCOMPARE(forwarder->parent(), corrections);
     QVERIFY(corrections->_udpInput.isRunning());
-    NTRIPManager ntrip;
-    connect(&ntrip, &NTRIPManager::rtcmDataReceived, corrections, &GPSCorrectionManager::forwardCorrections);
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1077, 500);
     quint64 expected = 0;
-    // Local RTK and UDP work before any NTRIP initialization or caster connection.
-    emit gps.receiverSession()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
+    // Events from retired or missing receiver attempts cannot enter the current source session.
+    emit receiverSession->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs(), 0);
+    emit receiverSession->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs(), receiverSessionId + 1);
+    QCOMPARE(forwarder->totalBytesSent(), expected);
+    // Local RTK and UDP work before opening a caster connection.
+    emit receiverSession->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs(), receiverSessionId);
     expected += frame.size();
     QCOMPARE(forwarder->totalBytesSent(), expected);
     QUdpSocket sender;
     QCOMPARE(sender.writeDatagram(frame, QHostAddress::LocalHost, port), frame.size());
     expected += frame.size();
     QTRY_COMPARE_WITH_TIMEOUT(forwarder->totalBytesSent(), expected, TestTimeout::mediumMs());
-    emit ntrip.rtcmDataReceived(frame);
+    ntrip.startNTRIP();
+    const auto attemptId = ntrip.correctionAttemptId();
+    QVERIFY(attemptId > 0);
+    stream->simulateRtcmData(frame, 1077);
     expected += frame.size();
     QCOMPARE(forwarder->totalBytesSent(), expected);
     ntrip.stopNTRIP();
     QVERIFY(corrections->_udpInput.isRunning());
-    emit gps.receiverSession()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
+    emit receiverSession->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs(), receiverSessionId);
     expected += frame.size();
     QCOMPARE(sender.writeDatagram(frame, QHostAddress::LocalHost, port), frame.size());
     expected += frame.size();
     QTRY_COMPARE_WITH_TIMEOUT(forwarder->totalBytesSent(), expected, TestTimeout::mediumMs());
-    QCOMPARE(ntrip.connectionStats()->bytesReceived(), quint64(0));
+    QCOMPARE(ntrip.connectionStats()->bytesReceived(), quint64(frame.size()));
+    receiverSession->stop();
+    releaseOpen->release();
     gps.shutdown();
     QVERIFY(!corrections->_udpInput.isRunning());
-    emit ntrip.rtcmDataReceived(frame);
-    emit gps.receiverSession()->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs());
+    emit ntrip.correctionReceivedAt(frame, 1077, false, GPSCorrectionFrame::monotonicNowMs(), attemptId);
+    emit receiverSession->rtcmFrameReceived(frame, GPSCorrectionFrame::monotonicNowMs(), receiverSessionId);
     QCOMPARE(forwarder->totalBytesSent(), expected);
 }
 
@@ -121,7 +163,9 @@ void GPSCorrectionManagerTest::_udpSettingsAndShutdown()
     settings->rtcmUdpInputEnabled()->setRawValue(false);
     QVERIFY(!corrections._udpInput.isRunning());
     // Disabling UDP input must not disable the other correction sources.
-    corrections.forwardCorrections(frame);
+    corrections.beginSourceSession(GPSCorrectionSource::Ntrip);
+    corrections.acceptFrame({GPSCorrectionSource::Ntrip, corrections.sourceSession(GPSCorrectionSource::Ntrip),
+                             GPSCorrectionFrame::monotonicNowMs(), frame, 1005, true});
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), expected + frame.size());
     settings->rtcmUdpInputEnabled()->setRawValue(true);
     QVERIFY(corrections._udpInput.isRunning());
@@ -153,7 +197,7 @@ void GPSCorrectionManagerTest::_shutdownDuringDelivery()
     settings->rtcmUdpValidate()->setRawValue(validate);
     GPSCorrectionManager corrections;
     corrections.init(settings);
-    connect(&corrections._udpInput, &RTCMUdpInput::rtcmDataReceived, &corrections, &GPSCorrectionManager::shutdown);
+    connect(&corrections._udpInput, &RTCMUdpInput::frameReceived, &corrections, &GPSCorrectionManager::shutdown);
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1077, 30);
     const QByteArray datagram = validate ? frame + frame : frame;
     QUdpSocket sender;
@@ -205,7 +249,9 @@ void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
     const QByteArray data = GpsTestHelpers::buildRtcmFrame(1005, 20);
     const auto initial = corrections.sources().at(static_cast<int>(GPSCorrectionSource::LocalReceiver)).toMap();
     QVERIFY(!initial.value(QStringLiteral("active")).toBool());
-    corrections.forwardCorrectionsFrom(GPSCorrectionSource::LocalReceiver, data, true, 1005);
+    corrections.acceptFrame({GPSCorrectionSource::LocalReceiver,
+                             corrections.sourceSession(GPSCorrectionSource::LocalReceiver),
+                             GPSCorrectionFrame::monotonicNowMs(), data, 1005, true});
     QVERIFY(routed.isEmpty());
     corrections.beginSourceSession(GPSCorrectionSource::LocalReceiver);
     const quint64 oldSession = corrections.beginSourceSession(GPSCorrectionSource::Ntrip);
@@ -218,7 +264,9 @@ void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
     corrections.setSelectedSource(GPSCorrectionSource::LocalReceiver);
     corrections.acceptFrame(frame);
     QCOMPARE(routed.size(), 1);
-    corrections.forwardCorrectionsFrom(GPSCorrectionSource::LocalReceiver, data, true, 1005);
+    corrections.acceptFrame({GPSCorrectionSource::LocalReceiver,
+                             corrections.sourceSession(GPSCorrectionSource::LocalReceiver),
+                             GPSCorrectionFrame::monotonicNowMs(), data, 1005, true});
     QCOMPARE(routed.size(), 2);
     corrections.setSelectedSource(GPSCorrectionSource::Unknown);
     corrections.endSourceSession(GPSCorrectionSource::Ntrip);
@@ -268,6 +316,71 @@ void GPSCorrectionManagerTest::_filteredAndExpiredFrames()
     QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), quint64(3));
     QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), quint64(2));
     QVERIFY(routed.isEmpty());
+}
+
+void GPSCorrectionManagerTest::_ntripUdpOutputIsSourceSpecific()
+{
+    GPSCorrectionManager corrections;
+    QUdpSocket destination;
+    QVERIFY(destination.bind(QHostAddress::LocalHost, 0));
+    corrections.configureNtripUdpOutput(true, QStringLiteral("127.0.0.1"), destination.localPort());
+    const auto local = corrections.beginSourceSession(GPSCorrectionSource::LocalReceiver);
+    const auto ntrip = corrections.beginSourceSession(GPSCorrectionSource::Ntrip);
+    const auto data = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const auto now = GPSCorrectionFrame::monotonicNowMs();
+    corrections.acceptFrame({GPSCorrectionSource::LocalReceiver, local, now, data, 1005, true});
+    corrections.acceptFrame({GPSCorrectionSource::Ntrip, ntrip, now, data, 1005, true});
+    QTRY_VERIFY_WITH_TIMEOUT(destination.hasPendingDatagrams(), TestTimeout::mediumMs());
+    QByteArray received(data.size(), Qt::Uninitialized);
+    QCOMPARE(destination.readDatagram(received.data(), received.size()), qint64(data.size()));
+    QCOMPARE(received, data);
+    QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(data.size()));
+    const auto outputStats = [&]() {
+        for (const auto& value : corrections.destinations()) {
+            const auto map = value.toMap();
+            if (map.value(QStringLiteral("destinationId")).toString() == QStringLiteral("ntripUdp")) {
+                return map;
+            }
+        }
+        return QVariantMap();
+    };
+    QCOMPARE(outputStats().value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
+    QVERIFY(!outputStats().value(QStringLiteral("reportsWrites")).toBool());
+    corrections.acceptFrame({GPSCorrectionSource::Ntrip, ntrip, now, data, 1005, true, true});
+    corrections.endSourceSession(GPSCorrectionSource::Ntrip);
+    corrections.acceptFrame({GPSCorrectionSource::Ntrip, ntrip, now, data, 1005, true});
+    QCOMPARE(outputStats().value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
+    corrections.configureNtripUdpOutput(false, {}, 0);
+    const auto next = corrections.beginSourceSession(GPSCorrectionSource::Ntrip);
+    corrections.acceptFrame({GPSCorrectionSource::Ntrip, next, now, data, 1005, true});
+    QCOMPARE(outputStats().value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
+    corrections.shutdown();
+    QVERIFY(!corrections._ntripUdpOutput.isEnabled());
+}
+
+void GPSCorrectionManagerTest::_sourceTopologyDoesNotNotifyOnCounters()
+{
+    GPSCorrectionManager corrections;
+    QSignalSpy topology(&corrections, &GPSCorrectionManager::sourceInstancesChanged);
+    QSignalSpy counters(&corrections, &GPSCorrectionManager::sourcesChanged);
+    const auto session = corrections.beginSourceSession(GPSCorrectionSource::Ntrip, QStringLiteral("caster/mount"));
+    GPSCorrectionFrame frame{GPSCorrectionSource::Ntrip,
+                             session,
+                             GPSCorrectionFrame::monotonicNowMs(),
+                             GpsTestHelpers::buildRtcmFrame(1005, 20),
+                             1005,
+                             true};
+    corrections.acceptFrame(frame);
+    corrections._refreshDiagnostics();
+    QCOMPARE(topology.size(), 1);
+    corrections.acceptFrame(frame);
+    corrections._refreshDiagnostics();
+    QCOMPARE(topology.size(), 1);
+    QCOMPARE(counters.size(), 2);
+    corrections.endSourceSession(GPSCorrectionSource::Ntrip);
+    corrections._refreshDiagnostics();
+    QCOMPARE(topology.size(), 2);
+    QVERIFY(corrections.sourceInstances().isEmpty());
 }
 
 UT_REGISTER_TEST(GPSCorrectionManagerTest, TestLabel::Unit)

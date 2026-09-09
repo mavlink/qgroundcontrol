@@ -20,19 +20,22 @@ GPSReceiverSession::~GPSReceiverSession()
     stop();
 }
 
-void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory factory, const GPSReceiverConfig& config)
+void GPSReceiverSession::start(const GPSReceiverProfile& profile, GPSProvider::TransportFactory factory)
 {
     if (_shutdown) {
         return;
     }
+    const auto requestedProfile = std::make_shared<const GPSReceiverProfile>(profile.normalized());
     const QPointer<GPSReceiverSession> lifetime(this);
+    const quint64 replacementGeneration = _generation + 1;
     stop();
-    if (!lifetime || _shutdown || _provider) {
+    if (!lifetime || _shutdown || _provider || _generation != replacementGeneration) {
         return;
     }
-    _config = config;
     const quint64 generation = ++_generation;
-    _errorDetail.clear();
+    _attempt = {generation, requestedProfile, GPSReceiverAttempt::Phase::Connecting, GPSConnectionError::None, {}};
+    const auto type = _attempt.profile->driverType;
+    const auto config = _attempt.profile->receiver;
     _configurationTerminal = false;
     _capabilities = GPSReceiverCapabilities::forType(type);
     if (config.outputProtocol == GPSReceiverConfig::OutputProtocol::NMEA) {
@@ -40,8 +43,8 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
     }
     std::shared_ptr<GPSRecordingStream> recording;
     if (_recordingBuffer && factory) {
-        recording =
-            std::make_shared<GPSRecordingStream>(_recordingBuffer, GPSRecordingMetadata::forReceiver(config, type));
+        recording = std::make_shared<GPSRecordingStream>(_recordingBuffer,
+                                                         GPSRecordingMetadata::fromProfile(*_attempt.profile));
         factory = [factory = std::move(factory), recording](const std::atomic_bool& stop) {
             return std::make_unique<GPSRecordingTransport>(factory(stop), stop, recording);
         };
@@ -92,8 +95,9 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
     connect(
         worker, &GPSProvider::connectionErrorDetail, this,
         [this, isCurrent](GPSConnectionError error, const QString& detail) {
-            if (isCurrent()) {
-                _errorDetail = detail;
+            if (isCurrent() && !_attempt.terminal()) {
+                _attempt.error = error;
+                _attempt.errorDetail = detail;
                 emit connectionErrorDetail(error, detail);
             }
         },
@@ -101,7 +105,7 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
     connect(
         worker, &GPSProvider::transportOpened, this,
         [this, isCurrent]() {
-            if (isCurrent()) {
+            if (isCurrent() && _transition(GPSReceiverAttempt::Phase::Configuring) && isCurrent()) {
                 emit configurationStarted();
             }
         },
@@ -109,8 +113,7 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
     connect(
         worker, &GPSProvider::receiverReady, this,
         [this, isCurrent]() {
-            if (isCurrent()) {
-                _ready = true;
+            if (isCurrent() && _transition(GPSReceiverAttempt::Phase::Ready) && isCurrent()) {
                 emit receiverReady();
             }
         },
@@ -124,15 +127,7 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
                 if (!guard || !isCurrent()) {
                     return;
                 }
-                _ready = false;
-                _invalidateConfigurationReport();
-                if (!guard || !isCurrent()) {
-                    return;
-                }
-                emit disconnected();
-                if (guard && isCurrent()) {
-                    emit connectionError(error);
-                }
+                _finishAttempt(error);
             }
         },
         Qt::QueuedConnection);
@@ -147,12 +142,7 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
                     return;
                 }
                 _provider = nullptr;
-                _ready = false;
-                _invalidateConfigurationReport();
-                if (!guard || _generation != generation) {
-                    return;
-                }
-                emit disconnected();
+                _finishAttempt();
             }
             if (guard) {
                 emit stateChanged();
@@ -160,6 +150,11 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
         },
         Qt::QueuedConnection);
     connect(worker, &QThread::finished, worker, &QObject::deleteLater);
+    const auto snapshot = _attempt;
+    emit attemptChanged(snapshot);
+    if (!lifetime || !isCurrent() || _shutdown) {
+        return;
+    }
     emit receiverTypeChanged(type);
     if (!lifetime || !current || !isCurrent() || _shutdown) {
         return;
@@ -177,7 +172,6 @@ void GPSReceiverSession::stop()
     GPSProvider* worker = _provider;
     const auto mailbox = worker ? worker->mailbox() : nullptr;
     _provider = nullptr;
-    _ready = false;
     _configurationTerminal = true;
     if (worker) {
         worker->stop();
@@ -209,8 +203,66 @@ void GPSReceiverSession::stop()
     if (!guard || _generation != stoppingGeneration) {
         return;
     }
-    emit disconnected();
+    _finishAttempt();
     if (guard && worker) {
+        emit stateChanged();
+    }
+}
+
+const GPSReceiverProfile& GPSReceiverSession::profile() const
+{
+    static const GPSReceiverProfile empty;
+    return _attempt.profile ? *_attempt.profile : empty;
+}
+
+bool GPSReceiverSession::_transition(GPSReceiverAttempt::Phase phase)
+{
+    if (_attempt.terminal() || _attempt.phase == phase ||
+        (phase == GPSReceiverAttempt::Phase::Configuring && _attempt.phase != GPSReceiverAttempt::Phase::Connecting)) {
+        return false;
+    }
+    const QPointer<GPSReceiverSession> guard(this);
+    const quint64 generation = _attempt.generation;
+    _attempt.phase = phase;
+    if (phase == GPSReceiverAttempt::Phase::Ready) {
+        _attempt.error = GPSConnectionError::None;
+        _attempt.errorDetail.clear();
+    }
+    const auto snapshot = _attempt;
+    emit attemptChanged(snapshot);
+    if (guard && _attempt.generation == generation) {
+        emit stateChanged();
+    }
+    return guard && _attempt.generation == generation && _attempt.phase == phase;
+}
+
+void GPSReceiverSession::_finishAttempt(GPSConnectionError error)
+{
+    if (_attempt.generation == 0 || _attempt.terminal()) {
+        return;
+    }
+    const QPointer<GPSReceiverSession> guard(this);
+    const quint64 generation = _attempt.generation;
+    _attempt.error = error;
+    _attempt.phase =
+        error == GPSConnectionError::None ? GPSReceiverAttempt::Phase::Cancelled : GPSReceiverAttempt::Phase::Failed;
+    _invalidateConfigurationReport();
+    if (!guard || _attempt.generation != generation) {
+        return;
+    }
+    const auto snapshot = _attempt;
+    emit attemptChanged(snapshot);
+    if (!guard || _attempt.generation != generation) {
+        return;
+    }
+    emit disconnected();
+    if (!guard || _attempt.generation != generation) {
+        return;
+    }
+    if (error != GPSConnectionError::None) {
+        emit connectionError(error);
+    }
+    if (guard && _attempt.generation == generation) {
         emit stateChanged();
     }
 }
@@ -250,7 +302,7 @@ void GPSReceiverSession::shutdown()
 
 bool GPSReceiverSession::readyForCorrections() const
 {
-    return _ready && _provider && !_shutdown && _config.role == GPSReceiverConfig::Role::Position &&
+    return ready() && _provider && !_shutdown && config().role == GPSReceiverConfig::Role::Position &&
            _capabilities.correctionInput == GPSReceiverCapabilities::Support::Supported;
 }
 
@@ -352,7 +404,7 @@ void GPSReceiverSession::_drain(const std::shared_ptr<GPSReceiverMailbox>& mailb
         return;
     }
     for (const auto& frame : batch.corrections) {
-        emit rtcmFrameReceived(frame.data, frame.receivedAtMs);
+        emit rtcmFrameReceived(frame.data, frame.receivedAtMs, generation);
         if (!current()) {
             return;
         }

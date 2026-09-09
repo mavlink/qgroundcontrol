@@ -10,7 +10,6 @@
 #include "NTRIPGgaProvider.h"
 #include "NTRIPSession.h"
 #include "NTRIPSourceTableController.h"
-#include "UdpForwarder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 class NTRIPSettings;
@@ -62,6 +61,8 @@ public:
     QString ggaSource() const { return _ggaProvider.currentSource(); }
 
     QString correctionSourceId() const { return _session.sourceId(); }
+
+    quint64 correctionAttemptId() const { return _session.activeAttemptId(); }
     NTRIPSourceTableController* sourceTableController() { return &_sourceTableController; }
     NTRIPConnectionStats* connectionStats() { return &_stats; }
 
@@ -77,12 +78,11 @@ public:
     void stopNTRIP();
 
 signals:
-    void rtcmDataReceived(const QByteArray& data);
-    void correctionReceived(const QByteArray& data, int messageId, bool filtered);
-    void correctionReceivedAt(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs);
-    void correctionRejectedAt(const QByteArray& data, int messageId, qint64 receivedAtMs);
-    void correctionSessionStarted();
-    void correctionSessionEnded();
+    void correctionReceivedAt(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs,
+                              quint64 attemptId);
+    void correctionRejectedAt(const QByteArray& data, int messageId, qint64 receivedAtMs, quint64 attemptId);
+    void correctionSessionStarted(quint64 attemptId, const QString& sourceId);
+    void correctionSessionEnded(quint64 attemptId);
     void connectionStatusChanged();
     void statusMessageChanged();
     void securityWarningChanged();
@@ -91,8 +91,7 @@ signals:
 
 private:
     void _onSessionState(NTRIPSession::State state, const QString& message);
-    void _onCorrection(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs);
-    void _applyUdpForwarderConfig(const NTRIPTransportConfig& config);
+    void _onCorrection(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs, quint64 attemptId);
     void _onPlaintextCredentialsWarning();
     void _setSecurityWarning(const QString& warning);
     void _onSettingChanged();
@@ -101,7 +100,6 @@ private:
     NTRIPSession _session;
     NTRIPGgaProvider _ggaProvider{this};
     NTRIPConnectionStats _stats{this};
-    UdpForwarder _udpForwarder{this};
     NTRIPSourceTableController _sourceTableController{this};
     QChronoTimer _settingsDebounceTimer{this};
     NTRIPTransportConfig _runningConfig;

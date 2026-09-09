@@ -10,7 +10,9 @@ QGC_LOGGING_CATEGORY(GPSRecordingTransportLog, "GPS.Recording.GPSRecordingTransp
 
 GPSRecordingTransport::GPSRecordingTransport(std::unique_ptr<GPSTransport> transport, const std::atomic_bool& stop,
                                              std::shared_ptr<GPSRecordingStream> recording)
-    : GPSTransport(stop), _transport(std::move(transport)), _recording(std::move(recording))
+    : GPSTransport(stop)
+    , _transport(std::move(transport))
+    , _recording(std::move(recording))
 {
     qCDebug(GPSRecordingTransportLog) << this;
 }
@@ -85,4 +87,23 @@ bool GPSRecordingTransport::setBaudrate(unsigned baudrate)
                            static_cast<int>(baudrate), started);
     }
     return result;
+}
+
+GPSTransport::WriteResult GPSRecordingTransport::writeBounded(const uint8_t* buffer, int length,
+                                                              QDeadlineTimer deadline)
+{
+    const auto started = _recording ? _recording->nowUs() : 0;
+    const auto result =
+        _transport ? _transport->writeBounded(buffer, length, deadline) : WriteResult{.status = WriteStatus::Error};
+    if (_recording) {
+        const auto bytes =
+            buffer && length > 0 ? QByteArrayView(reinterpret_cast<const char*>(buffer), length) : QByteArrayView();
+        _recording->recordWrite(bytes, result, started, fatalError());
+    }
+    return result;
+}
+
+std::chrono::milliseconds GPSRecordingTransport::correctionWriteTimeout(int length) const
+{
+    return _transport ? _transport->correctionWriteTimeout(length) : GPSTransport::correctionWriteTimeout(length);
 }

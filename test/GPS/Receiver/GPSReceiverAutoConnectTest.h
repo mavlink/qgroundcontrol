@@ -7,6 +7,9 @@ class GPSReceiverAutoConnectTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _restartDuringStopKeepsNewIntent();
+    void _receiverCanDisappearDuringStopping();
+    void _invalidManualAttemptRecoversAutomatically();
     void _receiverErrorDetailReachesStatus();
     void _networkRetriesAndStops();
     void _disconnectDoesNotBlockAndReconnectWaits();

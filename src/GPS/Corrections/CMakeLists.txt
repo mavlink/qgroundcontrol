@@ -16,6 +16,8 @@ qt_add_library(
     GPSCorrectionEventModel.h
     RTCMParser.cc
     RTCMParser.h
+    RTCMFrameDecoder.cc
+    RTCMFrameDecoder.h
 )
 target_include_directories(QGCGPSCorrections PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(

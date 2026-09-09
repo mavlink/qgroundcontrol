@@ -129,17 +129,33 @@ int UdpGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
 
 int UdpGPSTransport::write(const uint8_t* buffer, int length)
 {
-    if (isCancelled() || fatalError() || !buffer || length < 0) {
-        return -1;
+    const auto result = writeBounded(buffer, length, QDeadlineTimer(QDeadlineTimer::Forever));
+    return result.status == WriteStatus::Completed ? result.writtenBytes : -1;
+}
+
+GPSTransport::WriteResult UdpGPSTransport::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+{
+    if (isCancelled()) {
+        return {WriteStatus::Cancelled};
+    }
+    if (!buffer || length < 0) {
+        return {WriteStatus::InvalidData};
+    }
+    if (fatalError()) {
+        return {WriteStatus::Error};
+    }
+    if (deadline.hasExpired()) {
+        return {WriteStatus::TimedOut};
     }
     if (length == 0) {
-        return 0;
+        return {WriteStatus::Completed};
     }
-    if (_socket->write(reinterpret_cast<const char*>(buffer), length) != length) {
+    const qint64 written = _socket->write(reinterpret_cast<const char*>(buffer), length);
+    if (written != length) {
         _failed = true;
-        return -1;
     }
-    return length;
+    const int count = static_cast<int>(std::clamp(written, qint64(0), qint64(length)));
+    return {written == length ? WriteStatus::Completed : WriteStatus::Error, count, count, 0};
 }
 
 bool UdpGPSTransport::setBaudrate(unsigned baudrate)

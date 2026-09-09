@@ -5,6 +5,8 @@
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 
+#include "GPSReceiverSetting.h"
+
 /// Command acceptance and independently queried receiver state are separate evidence.
 struct GPSSettingReport
 {
@@ -20,7 +22,7 @@ struct GPSSettingReport
         Reported
     };
 
-    QString key;
+    GPSReceiverSetting id = GPSReceiverSetting::Unknown;
     QString label;
     QString units;
     QVariant requestedValue;

@@ -89,15 +89,15 @@ public:
         auto& receiver = static_cast<GPSDriverUBX&>(driver());
         const auto tr = [](const char* text) { return QCoreApplication::translate("GPSDriver", text); };
         for (auto& setting : report.settings) {
-            if (setting.key == QStringLiteral("constellationMask") && receiver.constellationConfigurationRejected()) {
+            if (setting.id == GPSReceiverSetting::ConstellationMask && receiver.constellationConfigurationRejected()) {
                 if (receiver.constellationRequestRejected()) {
                     setting.requestState = GPSSettingReport::RequestState::Rejected;
                 }
                 setting.detail = configurationError();
             } else if (configured &&
-                       (setting.key == QStringLiteral("dynamicModel") ||
-                        setting.key == QStringLiteral("outputRateHz") ||
-                        (setting.key == QStringLiteral("constellationMask") && config.constellationMask))) {
+                       (setting.id == GPSReceiverSetting::DynamicModel ||
+                        setting.id == GPSReceiverSetting::OutputRateHz ||
+                        (setting.id == GPSReceiverSetting::ConstellationMask && config.constellationMask))) {
                 setting.requestState = GPSSettingReport::RequestState::Acknowledged;
                 setting.detail = tr("Configuration acknowledged; receiver readback is unavailable");
             }
@@ -108,14 +108,14 @@ public:
             return;
         }
         for (auto& setting : report.settings) {
-            if (setting.key == QStringLiteral("dynamicModel")) {
+            if (setting.id == GPSReceiverSetting::DynamicModel) {
                 setting.reportedValue = values.dynamic_model;
                 setting.comparisonApplicable = true;
-            } else if (setting.key == QStringLiteral("outputRateHz") && values.measurement_interval_ms &&
+            } else if (setting.id == GPSReceiverSetting::OutputRateHz && values.measurement_interval_ms &&
                        values.navigation_rate) {
                 setting.reportedValue = 1000.0 / (double(values.measurement_interval_ms) * values.navigation_rate);
                 setting.comparisonApplicable = config.outputRateHz != 0;
-            } else if (setting.key == QStringLiteral("constellationMask") && values.constellations_reported) {
+            } else if (setting.id == GPSReceiverSetting::ConstellationMask && values.constellations_reported) {
                 setting.reportedValue = values.constellation_mask;
                 setting.comparisonApplicable = config.constellationMask != 0;
             } else {
@@ -174,7 +174,7 @@ public:
     void completeConfigurationReport(const GPSReceiverConfig&, bool configured, GPSConfigurationReport& report) override
     {
         for (auto& setting : report.settings) {
-            if (configured && setting.key == QStringLiteral("headingOffsetDeg")) {
+            if (configured && setting.id == GPSReceiverSetting::HeadingOffsetDeg) {
                 setting.requestState = GPSSettingReport::RequestState::Acknowledged;
                 setting.detail = QCoreApplication::translate(
                     "GPSDriver", "Configuration acknowledged; receiver readback is unavailable");

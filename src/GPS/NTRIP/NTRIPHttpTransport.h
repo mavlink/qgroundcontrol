@@ -8,9 +8,10 @@
 #include <chrono>
 
 #include "NTRIPHttpDecoder.h"
+#include "NTRIPRequest.h"
 #include "NTRIPStream.h"
 #include "NTRIPTransportConfig.h"
-#include "RTCMParser.h"
+#include "RTCMFrameDecoder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPHttpTransportLog)
 
@@ -27,38 +28,17 @@ public:
     explicit NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent = nullptr);
     ~NTRIPHttpTransport() override;
 
-    bool providesTimestampedFrames() const override { return true; }
     void start() override;
     void stop() override;
     void sendNMEA(const QByteArray& nmea) override;
 
-    void setRtcmWhitelist(const QVector<int>& messageIds) override { _rtcmParser.setWhitelist(messageIds); }
+    void setRtcmWhitelist(const QVector<int>& messageIds) override { _rtcmDecoder.setWhitelist(messageIds); }
 
     const NTRIPTransportConfig& config() const { return _config; }
 
     // plaintextCredentialsWarning lives on the NTRIPStream base signal set so
     // NTRIPManager can connect without concrete-type knowledge.
 
-protected:
-    struct HttpStatus
-    {
-        int code = 0;
-        QString reason;
-        bool valid = false;
-    };
-
-    static HttpStatus parseHttpStatusLine(const QString& line);
-
-    static bool isHttpSuccess(int code) { return code >= 200 && code < 300; }
-
-    struct HttpRequest
-    {
-        QByteArray bytes;
-        /// Credentials are present and the channel is not TLS — caller must warn.
-        bool credentialsInClear = false;
-    };
-
-    static HttpRequest buildHttpRequest(const NTRIPTransportConfig& config);
 
 private:
     void _connect();
@@ -75,7 +55,7 @@ private:
     QChronoTimer _connectTimeoutTimer;
     QChronoTimer _dataWatchdogTimer;
 
-    RTCMParser _rtcmParser;
+    RTCMFrameDecoder _rtcmDecoder;
     bool _httpHandshakeDone = false;
     bool _stopped = false;
 

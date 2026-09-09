@@ -2,7 +2,8 @@
 
 #include <QtCore/QString>
 
-#include "GPSDriver.h"
+#include "GPSReceiverConfig.h"
+#include "GPSType.h"
 
 /// Runtime receiver intent, independent of the saved NMEA/RTK settings layout.
 struct GPSReceiverProfile
@@ -19,8 +20,8 @@ struct GPSReceiverProfile
         };
 
         Kind kind = Kind::Disabled;
-        QString device;
-        QString host;
+        QString device{};
+        QString host{};
         int port = 0;
         int localPort = 0;
         int baud = 0;
@@ -41,7 +42,7 @@ struct GPSReceiverProfile
     GPSReceiverConfig receiver{.role = GPSReceiverConfig::Role::Position,
                                .outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA,
                                .base = {}};
-    QString receiverName;
+    QString receiverName{};
 
     /// Drop inactive fields so edits to other transport/role settings do not replace a live session.
     GPSReceiverProfile normalized() const;

@@ -117,3 +117,21 @@ std::optional<double> GPSSatellite::azimuthDegrees() const
     }
     return *rawAzimuth == 255 ? 0.0 : *rawAzimuth * 360.0 / 255.0;
 }
+
+int GPSSatelliteObservation::satellitesInViewCount() const
+{
+    return std::any_of(provenance.cbegin(), provenance.cend(),
+                       [](const auto& report) { return report.inViewTimestampUs != 0; })
+               ? static_cast<int>(satellites.size()) : -1;
+}
+
+int GPSSatelliteObservation::satellitesInUseCount() const
+{
+    int count = -1;
+    for (const auto& report : provenance) {
+        if (report.inUseTimestampUs && report.satellitesUsed) {
+            count = std::max(0, count) + *report.satellitesUsed;
+        }
+    }
+    return count;
+}

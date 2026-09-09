@@ -171,15 +171,12 @@ void NMEASatelliteAdapterTest::_constellationsExpireIndependently()
     galileo.setSatelliteSystem(QGeoSatelliteInfo::GALILEO);
     galileo.setSatelliteIdentifier(3);
     const QList<QGeoSatelliteInfo> decoded{gps, galileo};
-    QCOMPARE(adapter.freshSatellites(decoded, false, nowUs).satellites.size(), 2);
-    const auto partial = adapter.freshSatellites(decoded, false, nowUs + 1000000);
-    QCOMPARE(partial.satellites, QList<QGeoSatelliteInfo>{galileo});
-    QCOMPARE(partial.receivedAtUs, nowUs);
-    const auto expired = adapter.freshSatellites(decoded, false, nowUs + 5000000);
-    QVERIFY(expired.satellites.isEmpty());
-    QCOMPARE(expired.receivedAtUs, 0);
-    // No GSA has arrived. A view report cannot manufacture a known zero used count.
-    QCOMPARE(adapter.freshSatellites({}, true, nowUs).receivedAtUs, 0);
+    const auto snapshot = adapter.satelliteSnapshot(decoded, false);
+    QCOMPARE(snapshot.satellites.size(), 2);
+    QCOMPARE(snapshot.constellationReceipts.value("GP"), nowUs - 4000000);
+    QCOMPARE(snapshot.constellationReceipts.value("GA"), nowUs);
+    // The adapter reports provenance; the accepted-observation store alone decides expiry.
+    QCOMPARE(adapter.satelliteSnapshot({}, true).receivedAtUs, 0);
 }
 
 void NMEASatelliteAdapterTest::_decoderKeepsFreshConstellation()
@@ -194,7 +191,29 @@ void NMEASatelliteAdapterTest::_decoderKeepsFreshConstellation()
     feed(input, {"$GAGSV,1,1,01,03,40,100,30", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(session.health()->satellitesInViewCount(), 2, TestTimeout::shortMs());
     QTRY_COMPARE_WITH_TIMEOUT(session.health()->satellitesInViewCount(), 1, TestTimeout::mediumMs());
-    QCOMPARE(session.satellitesInView().size(), 1);
-    QCOMPARE(session.satellitesInView().first().satelliteSystem(), QGeoSatelliteInfo::GALILEO);
+    QCOMPARE(session.satelliteObservation().satellites.size(), 1);
+    QCOMPARE(session.satelliteObservation().satellites.first().constellation, GPSSatellite::Constellation::Galileo);
     QCOMPARE(session.health()->satellitesInUseCount(), -1);
+}
+
+void NMEASatelliteAdapterTest::_gsvDoesNotClearFreshUsedReport()
+{
+    TimedBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEADecoderSession session;
+    QVERIFY(session.start(&input));
+    const quint64 initialReceipt = GPSObservation::monotonicNowUs();
+    input.receivedAtUs = initialReceipt;
+    feed(input,
+         {"$GPGSV,1,1,01,02,40,100,30", "$GPGSA,A,3,02,,,,,,,,,,,,1.0,0.8,0.6", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
+    QTRY_COMPARE_WITH_TIMEOUT(session.satelliteObservation().satellitesInUseCount(), 1, TestTimeout::shortMs());
+    input.receivedAtUs = GPSObservation::monotonicNowUs();
+    feed(input, {"$GPGSV,1,1,01,02,40,100,45", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
+    QTRY_VERIFY_WITH_TIMEOUT(!session.satelliteObservation().satellites.isEmpty() &&
+                                 session.satelliteObservation().satellites.first().signalStrength == 45,
+                             TestTimeout::mediumMs());
+    QCOMPARE(session.satelliteObservation().satellitesInUseCount(), 1);
+    QCOMPARE(session.satelliteObservation().satellites.first().used, std::optional<bool>(true));
+    QCOMPARE(session.satelliteObservation().provenance.first().inUseTimestampUs, initialReceipt);
+    QVERIFY(session.satelliteObservation().provenance.first().inViewTimestampUs > initialReceipt);
 }

@@ -10,51 +10,13 @@
 #include <functional>
 #include <memory>
 
-#include "GPSDriver.h"
-
-/// Allowlisted receiver intent only; addresses, device names and credentials are never metadata.
-struct GPSRecordingMetadata
-{
-    enum class Transport
-    {
-        Unknown,
-        Serial,
-        Tcp,
-        Udp
-    };
-    Transport transport = Transport::Unknown;
-    GPSReceiverConfig receiver{.role = GPSReceiverConfig::Role::Position,
-                               .outputProtocol = GPSReceiverConfig::OutputProtocol::Native,
-                               .base = {}};
-    int driverType = -1;
-    int initialBaud = 0;
-    bool configured = false;
-
-    static GPSRecordingMetadata forReceiver(const GPSReceiverConfig& config, GPSType type);
-};
+#include "GPSRecordingFormat.h"
 
 /// Receiver threads append bounded value events; no queued payloads or disk I/O cross the thread boundary.
 class GPSRecordingBuffer
 {
 public:
-    enum class Kind
-    {
-        Session,
-        Open,
-        OpenError,
-        Rx,
-        Tx,
-        Baud,
-        BaudError,
-        Timeout,
-        ReadError,
-        WriteError,
-        Disconnect,
-        Cancel,
-        Close,
-        ConfigurationStarted,
-        ConfigurationFinished
-    };
+    using Kind = GPSRecordingEvent::Kind;
 
     struct Status
     {
@@ -76,23 +38,14 @@ public:
     quint64 nowUs() const;
     quint64 allocateStream();
     void append(quint64 stream, const GPSRecordingMetadata& metadata, bool alreadyOpen, Kind kind,
-                QByteArrayView bytes = {}, int value = 0, quint64 startedAtUs = 0);
+                QByteArrayView bytes = {}, int value = 0, quint64 startedAtUs = 0,
+                std::optional<GPSTransport::WriteResult> writeResult = {}, bool fatal = false);
 
     static constexpr qsizetype MAX_EVENTS = 10000;
     static constexpr qsizetype MAX_STORAGE_BYTES = 2 * 1024 * 1024;
 
 private:
-    struct Event
-    {
-        quint64 atUs = 0;
-        quint64 startedAtUs = 0;
-        quint64 stream = 0;
-        Kind kind = Kind::Rx;
-        QByteArray bytes;
-        int value = 0;
-        bool resumed = false;
-        GPSRecordingMetadata metadata;
-    };
+    using Event = GPSRecordingEvent;
 
     Clock _clock;
     mutable QMutex _mutex;
@@ -118,6 +71,7 @@ public:
     bool isOpen() const { return _opened; }
 
     void record(GPSRecordingBuffer::Kind kind, QByteArrayView bytes = {}, int value = 0, quint64 startedAtUs = 0);
+    void recordWrite(QByteArrayView bytes, GPSTransport::WriteResult result, quint64 startedAtUs, bool fatal);
     void configurationStarted();
     void configurationFinished(int status);
 

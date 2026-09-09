@@ -15,10 +15,10 @@ struct GPSConnectionConfig
     };
 
     Transport transport = Serial;
-    QString device;
-    QString receiverName;
+    QString device{};
+    QString receiverName{};
     GPSType receiverType = GPSType::u_blox;
-    QString host;
+    QString host{};
     int port = 0;
     int localPort = 0;
     int baseMode = 0;

@@ -66,6 +66,7 @@ public:
     void updatePosition(const QGeoPositionInfo& position, qint64 ageMs = 0);
     void invalidatePosition();
     void reset();
+    void applySatelliteObservation(const GPSSatelliteObservation& observation);
     void updateSatellitesInView(int count, qint64 ageMs = 0);
     void updateSatellitesInUse(int count, qint64 ageMs = 0);
     void updateSatelliteCounts(int inView, int inUse, qint64 ageMs = 0);

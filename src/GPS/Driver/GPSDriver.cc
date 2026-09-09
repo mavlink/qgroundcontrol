@@ -3,10 +3,8 @@
 #include <QtCore/QCoreApplication>
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstring>
-#include <limits>
 #include <utility>
 
 #include "GPSDriverBackend.h"
@@ -33,20 +31,16 @@ int callbackTrampoline(GPSCallbackType type, void *data1, int data2, void *user)
 GPSConfigurationReport requestedSettings(const GPSReceiverConfig& config, const GPSReceiverCapabilities& capabilities)
 {
     GPSConfigurationReport report;
-    const std::array<QVariant, 4> values = {config.constellationMask, config.dynamicModel, config.outputRateHz,
-                                            config.headingOffsetDeg};
-    const auto descriptors = capabilities.settings(config.role == GPSReceiverConfig::Role::RTKBase);
-    for (qsizetype index = 0; index < descriptors.size(); ++index) {
-        const auto& descriptor = descriptors[index];
-        if (descriptor.support == GPSReceiverCapabilities::Support::Unsupported &&
-            values[index].toDouble() == descriptor.defaultValue) {
+    for (const auto& descriptor : capabilities.settings(config.role == GPSReceiverConfig::Role::RTKBase)) {
+        const double value = GPSReceiverSettings::value(descriptor.id, config);
+        if (descriptor.support == GPSReceiverCapabilities::Support::Unsupported && value == descriptor.defaultValue) {
             continue;
         }
         GPSSettingReport setting;
-        setting.key = descriptor.key;
+        setting.id = descriptor.id;
         setting.label = descriptor.label;
         setting.units = descriptor.units;
-        setting.requestedValue = values[index];
+        setting.requestedValue = value;
         report.settings.append(setting);
     }
     return report;
@@ -58,7 +52,7 @@ void rejectUnsupportedSettings(GPSConfigurationReport& report, const GPSReceiver
     const auto descriptors = capabilities.settings(config.role == GPSReceiverConfig::Role::RTKBase);
     for (auto& setting : report.settings) {
         for (const auto& descriptor : descriptors) {
-            if (setting.key == descriptor.key && !descriptor.accepts(setting.requestedValue.toDouble())) {
+            if (setting.id == descriptor.id && !descriptor.accepts(setting.requestedValue.toDouble())) {
                 setting.requestState = GPSSettingReport::RequestState::Rejected;
                 setting.detail = QCoreApplication::translate(
                     "GPSDriver", "This setting is unsupported in the selected receiver mode");
@@ -67,41 +61,6 @@ void rejectUnsupportedSettings(GPSConfigurationReport& report, const GPSReceiver
     }
 }
 } // namespace
-
-QString GPSReceiverConfig::validationError() const
-{
-    const auto tr = [](const char* text) { return QCoreApplication::translate("GPSReceiverConfig", text); };
-    if (role != Role::RTKBase && role != Role::Position) {
-        return tr("Select a valid receiver role");
-    }
-    if ((outputProtocol != OutputProtocol::Native && outputProtocol != OutputProtocol::NMEA) ||
-        (outputProtocol == OutputProtocol::NMEA && role != Role::Position)) {
-        return tr("Select a valid receiver output protocol");
-    }
-    if (!std::isfinite(headingOffsetDeg)) {
-        return tr("Enter a finite receiver heading offset");
-    }
-    if (role != Role::RTKBase) {
-        return {};
-    }
-    if (base.useFixedBase) {
-        if (!std::isfinite(base.fixedBaseLatitude) || std::abs(base.fixedBaseLatitude) > 90.0 ||
-            !std::isfinite(base.fixedBaseLongitude) || std::abs(base.fixedBaseLongitude) > 180.0 ||
-            !std::isfinite(base.fixedBaseAltitudeMeters) ||
-            std::abs(static_cast<double>(base.fixedBaseAltitudeMeters) * 100.0) >
-                (std::numeric_limits<int32_t>::max)() ||
-            !std::isfinite(base.fixedBaseAccuracyMeters) || base.fixedBaseAccuracyMeters < 0.0f ||
-            static_cast<double>(base.fixedBaseAccuracyMeters * 1000.0f * 10.0f) >
-                (std::numeric_limits<uint32_t>::max)()) {
-            return tr("Enter a valid fixed base position and accuracy");
-        }
-    } else if (!std::isfinite(base.surveyInAccMeters) || base.surveyInAccMeters <= 0.0 ||
-               base.surveyInAccMeters * 10000.0 > (std::numeric_limits<uint32_t>::max)() ||
-               base.surveyInDurationSecs <= 0) {
-        return tr("Enter a valid survey-in accuracy and duration");
-    }
-    return {};
-}
 
 GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
     : _type(type)
@@ -204,7 +163,7 @@ bool GPSDriver::readyForCorrections() const
            _private->driver->receiverReady();
 }
 
-GPSDriver::CorrectionResult GPSDriver::injectCorrections(const QByteArray& data)
+GPSDriver::CorrectionResult GPSDriver::injectCorrections(const QByteArray& data, QDeadlineTimer deadline)
 {
     if (_transport.isCancelled()) {
         return {CorrectionStatus::Cancelled};
@@ -222,13 +181,32 @@ GPSDriver::CorrectionResult GPSDriver::injectCorrections(const QByteArray& data)
     if (!readyForCorrections()) {
         return {CorrectionStatus::NotReady};
     }
-    const int written =
-        _transport.write(reinterpret_cast<const uint8_t*>(data.constData()), static_cast<int>(data.size()));
-    if (_transport.isCancelled()) {
-        return {CorrectionStatus::Cancelled};
+    const QDeadlineTimer transportDeadline(_transport.correctionWriteTimeout(static_cast<int>(data.size())));
+    if (deadline.remainingTime() < 0 || transportDeadline.remainingTime() < deadline.remainingTime()) {
+        deadline = transportDeadline;
     }
-    return {written == data.size() ? CorrectionStatus::Submitted : CorrectionStatus::TransportError,
-            (std::max) (written, 0)};
+    const auto result = _transport.writeBounded(reinterpret_cast<const uint8_t*>(data.constData()),
+                                                static_cast<int>(data.size()), deadline);
+    CorrectionStatus status = CorrectionStatus::TransportError;
+    switch (result.status) {
+        case GPSTransport::WriteStatus::Completed:
+            status =
+                result.writtenBytes == data.size() ? CorrectionStatus::Submitted : CorrectionStatus::TransportError;
+            break;
+        case GPSTransport::WriteStatus::Cancelled:
+            status = CorrectionStatus::Cancelled;
+            break;
+        case GPSTransport::WriteStatus::Unsupported:
+            status = CorrectionStatus::Unsupported;
+            break;
+        case GPSTransport::WriteStatus::InvalidData:
+            status = CorrectionStatus::InvalidData;
+            break;
+        case GPSTransport::WriteStatus::TimedOut:
+        case GPSTransport::WriteStatus::Error:
+            break;
+    }
+    return {status, result.writtenBytes, result.acceptedBytes, result.uncertainBytes};
 }
 
 GPSDriver::ReceiveResult GPSDriver::receiveResult(unsigned timeoutMs)

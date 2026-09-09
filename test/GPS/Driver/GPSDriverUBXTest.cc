@@ -8,6 +8,7 @@
 #include <QtCore/QtEndian>
 #include <QtTest/QSignalSpy>
 
+#include <cmath>
 #include <cstring>
 #include <ubx.h>
 
@@ -15,6 +16,7 @@
 #include "GPSDriver.h"
 #include "GPSProvider.h"
 #include "GPSTransport.h"
+#include "GpsTestHelpers.h"
 
 namespace {
 
@@ -481,7 +483,7 @@ void GPSDriverUBXTest::_configurationReport()
     const auto& settings = driver.configurationReport().settings;
     const GPSSettingReport* dynamic = nullptr;
     for (const auto& setting : settings) {
-        if (setting.key == QStringLiteral("dynamicModel")) {
+        if (setting.id == GPSReceiverSetting::DynamicModel) {
             dynamic = &setting;
         }
     }
@@ -731,4 +733,112 @@ void GPSDriverUBXTest::_managedNmeaKeepsTransportUntilStopped()
     provider.stop();
     QVERIFY(provider.wait(TestTimeout::mediumMs()));
     QVERIFY(weakLease.expired());
+}
+
+void GPSDriverUBXTest::_correctionBacklogPublishesBufferedPositions()
+{
+    struct Progress
+    {
+        std::atomic_int admitted = 0;
+        std::atomic_int writes = 0;
+        std::atomic_int positions = 0;
+        std::atomic_int positionsBeforeThirdWrite = -1;
+        std::atomic_bool validPositions = true;
+    } progress;
+
+    class CorrectionTransport : public ReceiverTransport
+    {
+    public:
+        CorrectionTransport(const std::atomic_bool& stop, UBXReceiver& receiver, Progress& progress)
+            : ReceiverTransport(stop, receiver)
+            , _receiver(receiver)
+            , _progress(progress)
+        {}
+
+        int read(uint8_t* data, int size, int timeoutMs) override
+        {
+            if (isCancelled()) {
+                return GPSHelper::ReadCancelled;
+            }
+            const int count = ReceiverTransport::read(data, size, timeoutMs);
+            if (_progress.writes > 0 && count > 0) {
+                // Make packet reads consume wall time, as a real transport does.
+                QThread::usleep(100);
+            }
+            return count;
+        }
+
+        WriteResult writeBounded(const uint8_t*, int length, QDeadlineTimer) override
+        {
+            const int sequence = ++_progress.writes;
+            if (sequence == 3) {
+                _progress.positionsBeforeThirdWrite = _progress.positions.load();
+            }
+            QByteArray pvt(sizeof(ubx_payload_rx_nav_pvt_t), '\0');
+            qToLittleEndian<quint32>(sequence * 200, pvt.data());
+            qToLittleEndian<quint16>(2026, pvt.data() + 4);
+            pvt[6] = 9;
+            pvt[7] = 9;
+            pvt[11] = 7;
+            pvt[20] = 3;
+            pvt[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
+            pvt[23] = 12;
+            qToLittleEndian<qint32>(85400000, pvt.data() + 24);
+            qToLittleEndian<qint32>(473000000, pvt.data() + 28);
+            qToLittleEndian<quint32>(500, pvt.data() + 40);
+            qToLittleEndian<quint32>(800, pvt.data() + 44);
+            _receiver.queue(ubxMessage(0x01, 0x07, pvt));
+            return {WriteStatus::Completed, length, length, 0};
+        }
+
+    private:
+        UBXReceiver& _receiver;
+        Progress& _progress;
+    };
+
+    UBXReceiver receiver;
+    receiver.readChunk = 4096;
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    GPSProvider provider(
+        [&](const std::atomic_bool& stop) { return std::make_unique<CorrectionTransport>(stop, receiver, progress); },
+        GPSType::u_blox, config);
+    const auto cleanup = qScopeGuard([&]() {
+        provider.stop();
+        provider.wait();
+    });
+    const auto mailbox = provider.mailbox();
+    connect(
+        &provider, &GPSProvider::receiverReady, &provider,
+        [mailbox, &progress]() {
+            const qint64 now = GPSObservation::monotonicNowUs() / 1000;
+            for (int index = 0; index < 3; ++index) {
+                if (mailbox->submitCorrection(GpsTestHelpers::buildRtcmFrame(1077), now, now)) {
+                    ++progress.admitted;
+                }
+            }
+        },
+        Qt::DirectConnection);
+    connect(
+        &provider, &GPSProvider::dataReady, &provider,
+        [mailbox, &progress]() {
+            const auto batch = mailbox->take(GPSObservation::monotonicNowUs() / 1000);
+            if (batch.position) {
+                ++progress.positions;
+                if (!batch.position->position.isValid() ||
+                    std::abs(batch.position->position.coordinate().latitude() - 47.3) > 1e-6) {
+                    progress.validPositions = false;
+                }
+            }
+        },
+        Qt::DirectConnection);
+    QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    provider.start();
+    QTRY_VERIFY_WITH_TIMEOUT(progress.positionsBeforeThirdWrite.load() >= 0, TestTimeout::mediumMs());
+    provider.stop();
+    QVERIFY(provider.wait(TestTimeout::mediumMs()));
+    QCOMPARE(progress.admitted.load(), 3);
+    QCOMPARE(progress.positionsBeforeThirdWrite.load(), 2);
+    QVERIFY(progress.validPositions.load());
+    QVERIFY(errors.isEmpty());
 }
