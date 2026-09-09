@@ -23,9 +23,16 @@ function getSettingsModel() {
             iconSource: '/qmlimages/settings_controls.svg',
             description: "Control Settings"
         },
+        {
+            id: 'Calibration',
+            text: 'Calibration',
+            checkable: true,
+            iconSource: '/qmlimages/settings_controls.svg',
+            description: "Calibration Settings"
+        },
         { 
             id: 'Shortcuts', 
-            text: 'Shortcut', 
+            text: 'Shortcuts',
             checkable: true, 
             iconSource: '/qmlimages/settings_shortcut.svg',
             description: "Shortcut Settings"

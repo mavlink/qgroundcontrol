@@ -1235,9 +1235,14 @@ Item {
         radius: SVUnits.radius * 2
     }
 
-    
+    Loader {
+        anchors.fill: parent
+        active: root.activeSettingsId === 'Calibration'
+        sourceComponent: SVCalibrationSettings { }
+    }
 
     ColumnLayout {
+        visible: root.activeSettingsId !== 'Calibration'
         anchors.fill: parent
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 1.7
         anchors.topMargin: ScreenTools.defaultFontPixelWidth * 1.7

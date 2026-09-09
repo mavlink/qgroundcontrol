@@ -54,6 +54,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Resources/SVUnits.qml
         
         Settings/SVSettingsMenu.qml
+        Settings/SVCalibrationSettings.qml
         Settings/SVSettingsDefinitions.js
 
         Resources/SVArrow.qml

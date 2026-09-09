@@ -351,7 +351,9 @@ signals:
         float yaw_global, float pitch_global,
         uint8_t rel_frame_of_reference, float yaw_rel, float pitch_rel,
         quint64 publish_timestamp_us, uint8_t status, uint8_t lock_target);
-    void calibrationParametersReceived(uint8_t cam_id, uint8_t calib_command, uint8_t calib_status);
+    void calibrationParametersReceived(
+        uint8_t cam_id, uint8_t calib_command, uint8_t calib_status,
+        uint8_t completed_face_mask, uint8_t mag_progress_percent);
     void navigationParametersReceived(
         float altitude, float visual_lat, float visual_lon,
         float next_waypoint_target_yaw, float next_waypoint_target_pitch, float next_waypoint_target_roll,

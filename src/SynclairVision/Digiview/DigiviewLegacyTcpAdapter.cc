@@ -23,7 +23,7 @@ constexpr uint8_t kSyntheticComponentId = 66;
 constexpr float kOneShotIntervalUs = -1000.0F;
 constexpr char kSupportedParameterGroups[] =
     "SYSTEM_STATUS, AI, MODEL (GET only), VIDEO_OUTPUT, CAPTURE, DETECTION, TRACKED_DETECTION (GET only), "
-    "CAM_TARGETING, CAM_OPTICS_AND_CONTROL, SENSOR, SINGLE_TARGET_TRACKING, and CALIBRATION (GET only)";
+    "CAM_TARGETING, CAM_OPTICS_AND_CONTROL, SENSOR, SINGLE_TARGET_TRACKING, and CALIBRATION";
 
 const char* deliberatelyUnsupportedParameterGroup(uint32_t messageId)
 {
@@ -36,8 +36,6 @@ const char* deliberatelyUnsupportedParameterGroup(uint32_t messageId)
         return "CAM_OFFSET";
     case MAVLINK_MSG_ID_CAM_DEPTH_ESTIMATION_PARAMETERS:
         return "CAM_DEPTH_ESTIMATION";
-    case MAVLINK_MSG_ID_CALIBRATION_PARAMETERS:
-        return "CALIBRATION";
     case MAVLINK_MSG_ID_NAVIGATION_PARAMETERS:
         return "NAVIGATION";
     default:
@@ -328,6 +326,17 @@ QByteArray DigiviewLegacyTcpAdapter::encode(const mavlink_message_t& mavlinkMess
             parameters.zoom_level, parameters.confidence, parameters.yaw_global, parameters.pitch_global,
             parameters.rel_frame_of_reference, parameters.yaw_rel, parameters.pitch_rel,
             parameters.lock_target != 0U);
+        break;
+    }
+    case MAVLINK_MSG_ID_CALIBRATION_PARAMETERS: {
+        mavlink_calibration_parameters_t parameters {};
+        mavlink_msg_calibration_parameters_decode(&mavlinkMessage, &parameters);
+        if (parameters.calib_command >= NUM_CALIBRATION_CMDS) {
+            error = QStringLiteral("Invalid DigiView TCP calibration command %1").arg(parameters.calib_command);
+            return {};
+        }
+        pack_set_calibration_parameters(
+            nativeMessage, parameters.cam_id, u8_to_enum<calibration_command>(parameters.calib_command));
         break;
     }
     default:
@@ -626,6 +635,8 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         parameters.cam_id = nativeParameters.cam_id;
         parameters.calib_command = enum_to_u8(nativeParameters.calib_command);
         parameters.calib_status = enum_to_u8(nativeParameters.calib_status);
+        parameters.completed_face_mask = nativeParameters.completed_face_mask;
+        parameters.mag_progress_percent = nativeParameters.mag_progress_percent;
         mavlink_msg_calibration_parameters_encode(kSyntheticSystemId, kSyntheticComponentId, &mavlinkMessage,
                                                   &parameters);
         break;

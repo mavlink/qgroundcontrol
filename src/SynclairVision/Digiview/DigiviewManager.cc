@@ -718,7 +718,7 @@ bool DigiviewManager::requestTrackedDetectionParameters()
 
 bool DigiviewManager::requestCalibrationParameters(int cameraId)
 {
-    if ((cameraId < 0) || (cameraId > std::numeric_limits<uint8_t>::max())) {
+    if ((cameraId < 0) || (static_cast<size_t>(cameraId) >= kMaxCameras)) {
         emit commandRejected(tr("The requested calibration camera is invalid and was not sent."));
         return false;
     }
@@ -1323,7 +1323,7 @@ bool DigiviewManager::clearCurrentTarget(int cameraSlot)
 
 bool DigiviewManager::sendCalibrationParameters(int cameraId, int calibrationCommand)
 {
-    if ((cameraId < 0) || (cameraId > std::numeric_limits<uint8_t>::max())
+    if ((cameraId < 0) || (static_cast<size_t>(cameraId) >= kMaxCameras)
         || (calibrationCommand < CALIBRATION_CMD_NONE) || (calibrationCommand >= NUM_CALIBRATION_CMDS)) {
         emit commandRejected(tr("The requested DigiView calibration command is invalid and was not sent."));
         return false;
@@ -2187,7 +2187,9 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
     case MAVLINK_MSG_ID_CALIBRATION_PARAMETERS: {
         mavlink_calibration_parameters_t payload;
         mavlink_msg_calibration_parameters_decode(&message, &payload);
-        emit calibrationParametersReceived(payload.cam_id, payload.calib_command, payload.calib_status);
+        emit calibrationParametersReceived(
+            payload.cam_id, payload.calib_command, payload.calib_status,
+            payload.completed_face_mask, payload.mag_progress_percent);
         break;
     }
     case MAVLINK_MSG_ID_NAVIGATION_PARAMETERS: {

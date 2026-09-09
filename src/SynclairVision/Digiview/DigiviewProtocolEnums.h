@@ -73,6 +73,8 @@ enum CalibrationStatus : uint8_t {
     CalibrationStatus6DofYPositive = ::CALIBRATION_STATUS_6DOF_Y_POS,
     CalibrationStatus6DofYNegative = ::CALIBRATION_STATUS_6DOF_Y_NEG,
     CalibrationStatus6DofZPositive = ::CALIBRATION_STATUS_6DOF_Z_POS,
+    CalibrationStatus6DofZNegative = ::CALIBRATION_STATUS_6DOF_Z_NEG,
+    CalibrationStatusMagInProgress = ::CALIBRATION_STATUS_MAG_IN_PROGRESS,
     CalibrationStatus6DofReady = ::CALIBRATION_STATUS_6DOF_READY,
     CalibrationStatus6DofComplete = ::CALIBRATION_STATUS_6DOF_COMPLETE,
     CalibrationStatusMagComplete = ::CALIBRATION_STATUS_MAG_COMPLETE,
@@ -88,5 +90,9 @@ static_assert(static_cast<uint8_t>(DigiviewProtocol::TargetingDetection)
 static_assert(static_cast<uint8_t>(DigiviewProtocol::SttCommandNone) == static_cast<uint8_t>(::CMD_NONE));
 static_assert(DigiviewProtocol::SttStatusDropped
               == static_cast<uint8_t>(::single_target_tracking_status::DROPPED));
+static_assert(static_cast<uint8_t>(DigiviewProtocol::CalibrationStatus6DofZNegative)
+              == static_cast<uint8_t>(::CALIBRATION_STATUS_6DOF_Z_NEG));
+static_assert(static_cast<uint8_t>(DigiviewProtocol::CalibrationStatusMagInProgress)
+              == static_cast<uint8_t>(::CALIBRATION_STATUS_MAG_IN_PROGRESS));
 static_assert(static_cast<uint8_t>(DigiviewProtocol::CalibrationStatusMagFailed)
               == static_cast<uint8_t>(::CALIBRATION_STATUS_MAG_FAILED));
