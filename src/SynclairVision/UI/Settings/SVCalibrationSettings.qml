@@ -264,20 +264,20 @@ Item {
                             rowSpacing: root.spacing
                             visible: !root.showingMagnetometer
 
-                            // Standard axes and completed-face mask bit ordering: +X, -X, +Y, -Y, +Z, -Z.
+                             // Mount image mapping: +Z=nose up (VehicleTailDown.png), -Z=nose down (VehicleNoseDown.png), +Y=upside down (VehicleUpsideDown.png), -Y=down (VehicleDown.png), +X=right side (VehicleRight.png), -X=left side (VehicleLeft.png); mask bit ordering remains +X, -X, +Y, -Y, +Z, -Z.
                             Repeater {
                                 model: [
-                                    { label: "+X", image: "qrc:///qmlimages/VehicleNoseDown.png", bit: 0,
+                                     { label: "+X", image: "qrc:///qmlimages/VehicleRight.png", bit: 0,
                                       status: DigiviewProtocol.CalibrationStatus6DofXPositive },
-                                    { label: "-X", image: "qrc:///qmlimages/VehicleTailDown.png", bit: 1,
+                                     { label: "-X", image: "qrc:///qmlimages/VehicleLeft.png", bit: 1,
                                       status: DigiviewProtocol.CalibrationStatus6DofXNegative },
-                                    { label: "+Y", image: "qrc:///qmlimages/VehicleRight.png", bit: 2,
+                                     { label: "+Y", image: "qrc:///qmlimages/VehicleUpsideDown.png", bit: 2,
                                       status: DigiviewProtocol.CalibrationStatus6DofYPositive },
-                                    { label: "-Y", image: "qrc:///qmlimages/VehicleLeft.png", bit: 3,
+                                     { label: "-Y", image: "qrc:///qmlimages/VehicleDown.png", bit: 3,
                                       status: DigiviewProtocol.CalibrationStatus6DofYNegative },
-                                    { label: "+Z", image: "qrc:///qmlimages/VehicleDown.png", bit: 4,
+                                     { label: "+Z", image: "qrc:///qmlimages/VehicleTailDown.png", bit: 4,
                                       status: DigiviewProtocol.CalibrationStatus6DofZPositive },
-                                    { label: "-Z", image: "qrc:///qmlimages/VehicleUpsideDown.png", bit: 5,
+                                     { label: "-Z", image: "qrc:///qmlimages/VehicleNoseDown.png", bit: 5,
                                       status: DigiviewProtocol.CalibrationStatus6DofZNegative }
                                 ]
 
