@@ -102,11 +102,15 @@ qint64 GPSObservation::ageMilliseconds() const
 int GPSSatelliteObservation::usedCount() const
 {
     return static_cast<int>(std::count_if(satellites.cbegin(), satellites.cend(),
-                                          [](const GPSSatellite& satellite) { return satellite.used; }));
+                                          [](const GPSSatellite& satellite) { return satellite.used.value_or(false); }));
 }
 
 std::optional<double> GPSSatellite::azimuthDegrees() const
 {
+    if (normalizedAzimuthDegrees && qIsFinite(*normalizedAzimuthDegrees) && *normalizedAzimuthDegrees >= 0 &&
+        *normalizedAzimuthDegrees <= 360) {
+        return *normalizedAzimuthDegrees == 360 ? 0 : *normalizedAzimuthDegrees;
+    }
     if (!rawAzimuth || *rawAzimuth < 0 || *rawAzimuth > 255 ||
         azimuthEncoding != AzimuthEncoding::ScaledFullCircleByte) {
         return std::nullopt;

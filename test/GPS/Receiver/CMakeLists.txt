@@ -21,3 +21,9 @@ set_tests_properties(GPSReceiverContractTest PROPERTIES LABELS "Unit;GPS" TIMEOU
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverProfileTest.cc GPSReceiverProfileTest.h)
 add_qgc_test(GPSReceiverProfileTest LABELS Unit)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSSatelliteModelTest.cc GPSSatelliteModelTest.h
+                                             GPSRelativePositionModelTest.cc GPSRelativePositionModelTest.h
+)
+add_qgc_test(GPSSatelliteModelTest LABELS Unit)
+add_qgc_test(GPSRelativePositionModelTest LABELS Unit)

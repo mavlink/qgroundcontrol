@@ -2,6 +2,7 @@
 
 #include <QtCore/QCoreApplication>
 
+#include <cmath>
 #include <numbers>
 
 #include "PX4/ashtech.h"
@@ -82,6 +83,55 @@ public:
         return {};
     }
 
+    void completeConfigurationReport(const GPSReceiverConfig& config, bool configured,
+                                     GPSConfigurationReport& report) override
+    {
+        auto& receiver = static_cast<GPSDriverUBX&>(driver());
+        const auto tr = [](const char* text) { return QCoreApplication::translate("GPSDriver", text); };
+        for (auto& setting : report.settings) {
+            if (setting.key == QStringLiteral("constellationMask") && receiver.constellationConfigurationRejected()) {
+                if (receiver.constellationRequestRejected()) {
+                    setting.requestState = GPSSettingReport::RequestState::Rejected;
+                }
+                setting.detail = configurationError();
+            } else if (configured &&
+                       (setting.key == QStringLiteral("dynamicModel") ||
+                        setting.key == QStringLiteral("outputRateHz") ||
+                        (setting.key == QStringLiteral("constellationMask") && config.constellationMask))) {
+                setting.requestState = GPSSettingReport::RequestState::Acknowledged;
+                setting.detail = tr("Configuration acknowledged; receiver readback is unavailable");
+            }
+        }
+        GPSDriverUBX::ConfigurationReadback values;
+        if (!configured || config.outputProtocol != GPSReceiverConfig::OutputProtocol::Native ||
+            !receiver.readConfiguration(values, 500)) {
+            return;
+        }
+        for (auto& setting : report.settings) {
+            if (setting.key == QStringLiteral("dynamicModel")) {
+                setting.reportedValue = values.dynamic_model;
+                setting.comparisonApplicable = true;
+            } else if (setting.key == QStringLiteral("outputRateHz") && values.measurement_interval_ms &&
+                       values.navigation_rate) {
+                setting.reportedValue = 1000.0 / (double(values.measurement_interval_ms) * values.navigation_rate);
+                setting.comparisonApplicable = config.outputRateHz != 0;
+            } else if (setting.key == QStringLiteral("constellationMask") && values.constellations_reported) {
+                setting.reportedValue = values.constellation_mask;
+                setting.comparisonApplicable = config.constellationMask != 0;
+            } else {
+                continue;
+            }
+            setting.readbackState = GPSSettingReport::ReadbackState::Reported;
+            setting.matchesRequested =
+                setting.comparisonApplicable &&
+                std::abs(setting.requestedValue.toDouble() - setting.reportedValue.toDouble()) < 1e-9;
+            setting.detail = !setting.comparisonApplicable
+                                 ? tr("Receiver defaults requested; current receiver value reported")
+                             : setting.matchesRequested ? tr("Receiver readback matches the request")
+                                                        : tr("Receiver reports a value different from the request");
+        }
+    }
+
 private:
     int configureReceiver(unsigned& baudrate, const GPSHelper::GPSConfig& config,
                           GPSReceiverConfig::OutputProtocol protocol) override
@@ -119,6 +169,17 @@ public:
     {
         setDriver(std::make_unique<GPSDriverSBF>(callback, user, position, satellites,
                                                  config.headingOffsetDeg * std::numbers::pi_v<float> / 180.0f));
+    }
+
+    void completeConfigurationReport(const GPSReceiverConfig&, bool configured, GPSConfigurationReport& report) override
+    {
+        for (auto& setting : report.settings) {
+            if (configured && setting.key == QStringLiteral("headingOffsetDeg")) {
+                setting.requestState = GPSSettingReport::RequestState::Acknowledged;
+                setting.detail = QCoreApplication::translate(
+                    "GPSDriver", "Configuration acknowledged; receiver readback is unavailable");
+            }
+        }
     }
 };
 

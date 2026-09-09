@@ -29,6 +29,8 @@ public:
 
     virtual QString configurationError() const { return {}; }
 
+    virtual void completeConfigurationReport(const GPSReceiverConfig&, bool, GPSConfigurationReport&) {}
+
 protected:
     template <class Driver>
     void setDriver(std::unique_ptr<Driver> driver)

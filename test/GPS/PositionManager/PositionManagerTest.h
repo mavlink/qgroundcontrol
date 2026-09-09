@@ -31,4 +31,10 @@ private slots:
     void _positionNotificationsPublishCoherentState();
     void _sourceTeardownCanDeleteManager_data();
     void _sourceTeardownCanDeleteManager();
+    void _pinnedSourceIgnoresStandbyChanges();
+    void _legacyPriorityDoesNotFailOverOnHealth();
+    void _automaticFailoverAndRecovery();
+    void _automaticMonitorsStandbyAndStopsOnExit();
+    void _selectionStatus();
+    void _selectionNotificationCanReconfigureOrDelete();
 };

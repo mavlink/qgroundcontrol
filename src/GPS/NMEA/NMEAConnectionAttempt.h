@@ -15,6 +15,9 @@ class QIODevice;
 class QTcpSocket;
 class UdpIODevice;
 class QSerialPort;
+class GPSRecordingBuffer;
+class GPSRecordingStream;
+class GPSRecordingDevice;
 
 /// Resources for one attempt. Connection intent and retry policy belong to the caller.
 class NMEAConnectionAttempt : public QObject
@@ -26,6 +29,7 @@ public:
     ~NMEAConnectionAttempt() override;
 
     void start(GPSProvider::TransportFactory receiverFactory = {});
+    void setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer);
 #ifndef QGC_NO_SERIAL_LINK
     void setSerialDiscovery(SerialPortManager* serialPorts);
 #endif
@@ -45,11 +49,14 @@ signals:
     void stopped();
 
 private:
+    void _publishDeviceReady();
     void _startConfigured(GPSProvider::TransportFactory receiverFactory);
     bool _reserveSerial();
-    void _fail(const QString& detail);
+    void _fail(const QString& detail, bool disconnected = false);
     void _finishStop();
 
+    std::shared_ptr<GPSRecordingStream> _recording;
+    std::unique_ptr<GPSRecordingDevice> _recordingDevice;
     const GPSReceiverProfile _profile;
     GPSReceiverSession _receiver;
     QTimer _connectTimer;
@@ -60,6 +67,7 @@ private:
     std::unique_ptr<QSerialPort> _serial;
     SerialPortManager::ReservationPtr _reservation;
 #endif
+    quint64 _openStartedAtUs = 0;
     bool _started = false;
     bool _stopping = false;
     bool _failed = false;

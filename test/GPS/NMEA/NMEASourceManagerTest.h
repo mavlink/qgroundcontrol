@@ -25,6 +25,7 @@ private slots:
     void _tcpRefusalBackoff();
     void _settingsUseSharedSerialInventory();
     void _satellitesShareUdpAndStayFresh();
+    void _satelliteSnapshotsPreserveProvenance();
     void _satellitesShareTcpConnection();
     void _disconnectDuringSatelliteUpdate();
     void _disconnectDuringPositionUpdate();

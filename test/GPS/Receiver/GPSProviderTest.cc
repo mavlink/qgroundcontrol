@@ -2,6 +2,7 @@
 
 #include <QtTest/QSignalSpy>
 
+#include <algorithm>
 #include <cstring>
 
 #include "GPSProvider.h"
@@ -176,21 +177,51 @@ private:
 };
 }  // namespace
 
+void GPSProviderTest::_configuredReceiverReportsReadyThenLoss_data()
+{
+    QTest::addColumn<bool>("validConfig");
+    QTest::newRow("configured-then-lost") << true;
+    QTest::newRow("rejected-configuration") << false;
+}
+
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 {
+    QFETCH(bool, validConfig);
     GPSReceiverConfig config;
     config.base.surveyInAccMeters = 1.0;
     config.base.surveyInDurationSecs = 30;
+    if (!validConfig) {
+        config.headingOffsetDeg = 181.0f;
+    }
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
         GPSType::femto, config);
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
+    QSignalSpy reports(&provider, &GPSProvider::configurationReported);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::mediumMs()));
-    QCOMPARE(ready.size(), 1);
+    QCOMPARE(ready.size(), validConfig ? 1 : 0);
     QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()),
+             validConfig ? GPSConnectionError::DeviceError : GPSConnectionError::ConfigFailed);
+    QCOMPARE(reports.size(), 2);
+    const auto requested = reports.first().first().value<GPSConfigurationReport>();
+    const auto finalized = reports.last().first().value<GPSConfigurationReport>();
+    QCOMPARE(requested.settings.isEmpty(), validConfig);
+    QVERIFY(requested.monotonicTimestampUs > 0);
+    QVERIFY(finalized.monotonicTimestampUs >= requested.monotonicTimestampUs);
+    QCOMPARE(finalized.settings.size(), requested.settings.size());
+    for (const auto& setting : requested.settings) {
+        QCOMPARE(setting.requestState, GPSSettingReport::RequestState::Requested);
+        QCOMPARE(setting.readbackState, GPSSettingReport::ReadbackState::Unverifiable);
+    }
+    if (!validConfig) {
+        QVERIFY(
+            std::any_of(finalized.settings.cbegin(), finalized.settings.cend(), [](const GPSSettingReport& setting) {
+                return setting.requestState == GPSSettingReport::RequestState::Rejected;
+            }));
+    }
 }
 
 void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()

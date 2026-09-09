@@ -72,6 +72,8 @@ public:
     QList<int> dynamicModels;
     QMap<quint32, quint64> settingValues;
     bool rejectConstellations = false;
+    int readbackMode = 0;
+    int readbackRequests = 0;
     int readChunk = 7;
     int surveyReadError = 0;
     int failedReads = 0;
@@ -96,6 +98,34 @@ private:
             }
             const QByteArray request = _requests.first(messageLength);
             _requests.remove(0, messageLength);
+            if (request[2] == 0x06 && static_cast<quint8>(request[3]) == 0x8b) {
+                ++readbackRequests;
+                if (readbackMode == 1) {
+                    continue;
+                }
+                if (readbackMode == 2) {
+                    _responses += ubxMessage(0x05, 0x01, request.mid(2, 2));
+                    continue;
+                }
+                QByteArray response(4, '\0');
+                response[0] = 1;
+                response[1] = readbackMode == 4 ? 1 : 0;
+                for (int offset = 10; offset + 4 <= messageLength - 2; offset += 4) {
+                    const quint32 key = qFromLittleEndian<quint32>(request.constData() + offset);
+                    quint64 value = settingValues.value(key);
+                    if (readbackMode == 3 && key == UBX_CFG_KEY_NAVSPG_DYNMODEL) {
+                        value = 7;
+                    }
+                    response += request.mid(offset, 4);
+                    const int code = key >> 28;
+                    const int width = code <= 2 ? 1 : 1 << (code - 2);
+                    for (int index = 0; index < width; ++index) {
+                        response.append(char(value >> (8 * index)));
+                    }
+                }
+                _responses += ubxMessage(0x06, 0x8b, response);
+                continue;
+            }
             if (request[2] == 0x0a && request[3] == 0x36) {
                 ++commsPolls;
                 continue;
@@ -406,6 +436,71 @@ void GPSDriverUBXTest::_invalidCommsDiagnostics()
 }
 
 UT_REGISTER_TEST(GPSDriverUBXTest, TestLabel::Unit)
+
+void GPSDriverUBXTest::_configurationReport_data()
+{
+    QTest::addColumn<int>("scenario");
+    QTest::newRow("queried-match") << 0;
+    QTest::newRow("query-timeout") << 1;
+    QTest::newRow("ack-is-not-readback") << 2;
+    QTest::newRow("queried-mismatch") << 3;
+    QTest::newRow("wrong-storage-layer") << 4;
+    QTest::newRow("legacy-ack-only") << 5;
+    QTest::newRow("nmea-ack-only") << 6;
+    QTest::newRow("invalid-request") << 7;
+}
+
+void GPSDriverUBXTest::_configurationReport()
+{
+    QFETCH(int, scenario);
+    UBXReceiver receiver;
+    receiver.readbackMode = scenario < 5 ? scenario : 0;
+    receiver.legacy = scenario == 5;
+    if (receiver.legacy) {
+        receiver.hardware = "00080000";
+        receiver.module = "NEO-M8P";
+    }
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    config.dynamicModel = scenario == 7 ? 1 : 4;
+    config.outputRateHz = receiver.legacy ? 0 : 5;
+    config.constellationMask = receiver.legacy ? 0 : 5;
+    if (scenario == 6) {
+        config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
+    }
+    std::atomic_bool stop = false;
+    ReceiverTransport transport(stop, receiver);
+    GPSDriver driver(GPSType::u_blox, transport, config, {});
+    for (const auto& setting : driver.configurationReport().settings) {
+        QCOMPARE(setting.requestState, GPSSettingReport::RequestState::Requested);
+        QCOMPARE(setting.readbackState, GPSSettingReport::ReadbackState::Unverifiable);
+        QVERIFY(!setting.reportedValue.isValid());
+    }
+    QCOMPARE(driver.configure(), scenario != 7);
+    QCOMPARE(receiver.readbackRequests, scenario < 5 ? 1 : 0);
+    const auto& settings = driver.configurationReport().settings;
+    const GPSSettingReport* dynamic = nullptr;
+    for (const auto& setting : settings) {
+        if (setting.key == QStringLiteral("dynamicModel")) {
+            dynamic = &setting;
+        }
+    }
+    QVERIFY(dynamic);
+    QCOMPARE(dynamic->requestedValue.toInt(), config.dynamicModel);
+    QCOMPARE(dynamic->requestState,
+             scenario == 7 ? GPSSettingReport::RequestState::Rejected : GPSSettingReport::RequestState::Acknowledged);
+    const bool reported = scenario == 0 || scenario == 3;
+    QCOMPARE(dynamic->readbackState,
+             reported ? GPSSettingReport::ReadbackState::Reported : GPSSettingReport::ReadbackState::Unverifiable);
+    QCOMPARE(dynamic->comparisonApplicable, reported);
+    QCOMPARE(dynamic->matchesRequested, scenario == 0);
+    if (reported) {
+        QCOMPARE(dynamic->reportedValue.toInt(), scenario == 3 ? 7 : 4);
+        QVERIFY(!dynamic->detail.isEmpty());
+    } else {
+        QVERIFY(!dynamic->reportedValue.isValid());
+    }
+}
 
 void GPSDriverUBXTest::_receiverSettings_data()
 {

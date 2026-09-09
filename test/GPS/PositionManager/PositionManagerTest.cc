@@ -723,3 +723,183 @@ void PositionManagerTest::_sourceTeardownCanDeleteManager()
     }
     QVERIFY(!manager);
 }
+
+void PositionManagerTest::_pinnedSourceIgnoresStandbyChanges()
+{
+    GPSReceiverPositionSource platform;
+    GPSReceiverPositionSource receiver;
+    GPSReceiverPositionSource nmea;
+    QGCPositionManager manager;
+    manager._defaultSource = &platform;
+    manager.setSourceMode(QGCPositionManager::SourceMode::InternalOnly);
+    auto observation = GPSDriverData::position(receiverFix());
+    platform.updatePosition(observation);
+    QVERIFY(manager.gcsPosition().isValid());
+    const auto publishMoved = [&]() {
+        auto position = observation.position.coordinate();
+        position.setLatitude(position.latitude() + 0.01);
+        observation.position.setCoordinate(position);
+        platform.updatePosition(observation);
+    };
+    manager.setReceiverPositionSource(&receiver);
+    manager.setNmeaPositionSource(&nmea);
+    publishMoved();
+    QTRY_COMPARE_WITH_TIMEOUT(manager.gcsPosition(), observation.position.coordinate(), TestTimeout::mediumMs());
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Internal);
+    manager.clearReceiverPositionSource(&receiver);
+    manager.clearNmeaPositionSource(&nmea);
+    publishMoved();
+    QTRY_COMPARE_WITH_TIMEOUT(manager.gcsPosition(), observation.position.coordinate(), TestTimeout::mediumMs());
+    manager.setSourceMode(QGCPositionManager::SourceMode::ReceiverOnly);
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::None);
+    QCOMPARE(manager.sourceStatus(), QGCPositionManager::SourceStatus::NoSource);
+    QVERIFY(!manager.gcsPosition().isValid());
+    manager.setReceiverPositionSource(&receiver);
+    receiver.updatePosition(observation);
+    QVERIFY(manager.gcsPosition().isValid());
+    manager.setNmeaPositionSource(&nmea);
+    observation.position.setCoordinate(QGeoCoordinate(48, 8, 500));
+    receiver.updatePosition(observation);
+    QCOMPARE(manager.gcsPosition(), observation.position.coordinate());
+    manager.setSourceMode(QGCPositionManager::SourceMode::NmeaOnly);
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Nmea);
+    QVERIFY(!manager.gcsPosition().isValid());
+    nmea.updatePosition(observation);
+    QCOMPARE(manager.gcsPosition(), observation.position.coordinate());
+}
+
+void PositionManagerTest::_legacyPriorityDoesNotFailOverOnHealth()
+{
+    GPSReceiverPositionSource receiver;
+    GPSReceiverPositionSource nmea;
+    GPSSourceHealth receiverHealth;
+    GPSSourceHealth nmeaHealth;
+    QGCPositionManager manager;
+    manager.setReceiverPositionSource(&receiver, &receiverHealth);
+    manager.setNmeaPositionSource(&nmea, &nmeaHealth);
+    receiverHealth.updateObservation(GPSDriverData::position(receiverFix()));
+    nmeaHealth.updateObservation(GPSDriverData::position(receiverFix()));
+    receiverHealth.invalidatePosition();
+    QCOMPARE(manager.sourceMode(), QGCPositionManager::SourceMode::LegacyPriority);
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Receiver);
+    QCOMPARE(manager.sourceStatus(), QGCPositionManager::SourceStatus::InvalidFix);
+    QVERIFY(!manager.gcsPosition().isValid());
+}
+
+void PositionManagerTest::_automaticFailoverAndRecovery()
+{
+    GPSReceiverPositionSource receiver;
+    GPSReceiverPositionSource nmea;
+    GPSSourceHealth receiverHealth;
+    GPSSourceHealth nmeaHealth;
+    QGCPositionManager manager;
+    manager._recoveryTimer.setInterval(100);
+    manager.setReceiverPositionSource(&receiver, &receiverHealth);
+    manager.setNmeaPositionSource(&nmea, &nmeaHealth);
+    manager.setSourceMode(QGCPositionManager::SourceMode::Automatic);
+    auto primary = GPSDriverData::position(receiverFix());
+    auto secondary = primary;
+    secondary.position.setCoordinate(QGeoCoordinate(48, 9, 500));
+    receiverHealth.updateObservation(primary);
+    nmeaHealth.updateObservation(secondary);
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Receiver);
+    receiverHealth.invalidatePosition();
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Nmea);
+    QCOMPARE(manager.gcsPosition(), secondary.position.coordinate());
+    receiverHealth.updateObservation(primary);
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Nmea);
+    QVERIFY(manager._recoveryTimer.isActive());
+    receiverHealth.invalidatePosition();
+    QVERIFY(!manager._recoveryTimer.isActive());
+    QVERIFY(!manager._recoveryCandidate);
+    receiverHealth.updateObservation(primary);
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Nmea);
+    QTRY_COMPARE_WITH_TIMEOUT(manager.selectedSource(), QGCPositionManager::SelectedSource::Receiver,
+                              TestTimeout::mediumMs());
+    QCOMPARE(manager.gcsPosition(), primary.position.coordinate());
+    receiverHealth._freshnessTimeoutMs = 10;
+    receiverHealth.updateObservation(primary);
+    QTRY_COMPARE_WITH_TIMEOUT(manager.selectedSource(), QGCPositionManager::SelectedSource::Nmea,
+                              TestTimeout::mediumMs());
+    QCOMPARE(manager.gcsPosition(), secondary.position.coordinate());
+}
+
+void PositionManagerTest::_automaticMonitorsStandbyAndStopsOnExit()
+{
+    GPSReceiverPositionSource receiver;
+    GPSReceiverPositionSource nmea;
+    QGCPositionManager manager;
+    manager.setReceiverPositionSource(&receiver);
+    manager.setNmeaPositionSource(&nmea);
+    manager.setSourceMode(QGCPositionManager::SourceMode::Automatic);
+    QSignalSpy standbyUpdates(&nmea, &QGeoPositionInfoSource::positionUpdated);
+    receiver.updatePosition(GPSDriverData::position(receiverFix()));
+    auto fallback = GPSDriverData::position(receiverFix());
+    fallback.position.setCoordinate(QGeoCoordinate(48, 9, 500));
+    nmea.updatePosition(fallback);
+    QCOMPARE(standbyUpdates.count(), 1);
+    auto* primaryHealth = manager.sourceHealth();
+    primaryHealth->invalidatePosition();
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Nmea);
+    QCOMPARE(manager.gcsPosition(), fallback.position.coordinate());
+    manager.setSourceMode(QGCPositionManager::SourceMode::LegacyPriority);
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Receiver);
+    QVERIFY(!manager.gcsPosition().isValid());
+    nmea.updatePosition(fallback);
+    QCOMPARE(standbyUpdates.count(), 1);
+    receiver.updatePosition(GPSDriverData::position(receiverFix()));
+    QVERIFY(manager.gcsPosition().isValid());
+}
+
+void PositionManagerTest::_selectionStatus()
+{
+    GPSReceiverPositionSource platform;
+    QGCPositionManager manager;
+    manager.setSourceMode(QGCPositionManager::SourceMode::InternalOnly);
+    manager._platformStatus = QGCPositionManager::SourceStatus::PermissionRequired;
+    manager._selectPositionSource();
+    QCOMPARE(manager.sourceStatus(), QGCPositionManager::SourceStatus::PermissionRequired);
+    manager._platformStatus = QGCPositionManager::SourceStatus::PermissionDenied;
+    manager._selectPositionSource();
+    QCOMPARE(manager.sourceStatus(), QGCPositionManager::SourceStatus::PermissionDenied);
+    manager._platformStatus = QGCPositionManager::SourceStatus::BackendUnavailable;
+    manager._selectPositionSource();
+    QCOMPARE(manager.sourceStatus(), QGCPositionManager::SourceStatus::BackendUnavailable);
+    manager._platformStatus = QGCPositionManager::SourceStatus::WaitingForFix;
+    manager._defaultSource = &platform;
+    manager._selectPositionSource();
+    QCOMPARE(manager.sourceStatus(), QGCPositionManager::SourceStatus::WaitingForFix);
+    QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Internal);
+    QVERIFY(!manager.selectedSourceName().isEmpty());
+    QVERIFY(!manager.selectionReason().isEmpty());
+    QVERIFY(!manager.sourceStatusText().isEmpty());
+    platform.updatePosition(GPSDriverData::position(receiverFix()));
+    QCOMPARE(manager.sourceStatus(), QGCPositionManager::SourceStatus::Active);
+    manager._externalHealth._freshnessTimeoutMs = 10;
+    manager._externalHealth.updateObservation(GPSDriverData::position(receiverFix()));
+    QTRY_COMPARE_WITH_TIMEOUT(manager.sourceStatus(), QGCPositionManager::SourceStatus::Stale, TestTimeout::mediumMs());
+    QVERIFY(!manager.gcsPosition().isValid());
+}
+
+void PositionManagerTest::_selectionNotificationCanReconfigureOrDelete()
+{
+    GPSReceiverPositionSource receiver;
+    GPSReceiverPositionSource nmea;
+    auto manager = std::make_unique<QGCPositionManager>();
+    manager->setReceiverPositionSource(&receiver);
+    manager->setNmeaPositionSource(&nmea);
+    QObject observer;
+    connect(manager.get(), &QGCPositionManager::selectionChanged, &observer, [&]() {
+        if (manager->sourceMode() == QGCPositionManager::SourceMode::Automatic) {
+            manager->setSourceMode(QGCPositionManager::SourceMode::NmeaOnly);
+        }
+    });
+    manager->setSourceMode(QGCPositionManager::SourceMode::Automatic);
+    QCOMPARE(manager->sourceMode(), QGCPositionManager::SourceMode::NmeaOnly);
+    QCOMPARE(manager->selectedSource(), QGCPositionManager::SelectedSource::Nmea);
+    nmea.updatePosition(GPSDriverData::position(receiverFix()));
+    QVERIFY(manager->gcsPosition().isValid());
+    connect(manager.get(), &QGCPositionManager::selectionChanged, &observer, [&]() { manager.reset(); });
+    manager->setSourceMode(QGCPositionManager::SourceMode::ReceiverOnly);
+    QVERIFY(!manager);
+}

@@ -3,6 +3,7 @@
 #include <QtNetwork/QTcpSocket>
 
 #include "GPSReceiverTransportFactory.h"
+#include "GPSRecordingDevice.h"
 #include "QGCLoggingCategory.h"
 #include "UdpIODevice.h"
 #ifndef QGC_NO_SERIAL_LINK
@@ -29,7 +30,7 @@ NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, 
     connect(&_receiver, &GPSReceiverSession::configurationStarted, this, &NMEAConnectionAttempt::configuring);
     connect(&_receiver, &GPSReceiverSession::receiverReady, this, [this]() {
         if (!_stopping && !_failed) {
-            emit deviceReady();
+            _publishDeviceReady();
         }
     });
     connect(&_receiver, &GPSReceiverSession::connectionError, this, [this](GPSConnectionError error) {
@@ -53,6 +54,9 @@ NMEAConnectionAttempt::~NMEAConnectionAttempt()
 
 QIODevice* NMEAConnectionAttempt::device() const
 {
+    if (_recordingDevice) {
+        return _recordingDevice.get();
+    }
     if (_udp) {
         return _udp.get();
     }
@@ -72,12 +76,51 @@ quint16 NMEAConnectionAttempt::localPort() const
     return _udp ? _udp->localPort() : 0;
 }
 
+void NMEAConnectionAttempt::setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer)
+{
+    if (_started) {
+        return;
+    }
+    _receiver.setRecordingBuffer(buffer);
+    if (!buffer || _profile.configurationPolicy == GPSReceiverProfile::ConfigurationPolicy::Configure) {
+        return;
+    }
+    GPSRecordingMetadata metadata;
+    metadata.receiver = _profile.receiver;
+    metadata.initialBaud = _profile.endpoint.baud;
+    switch (_profile.endpoint.kind) {
+        case GPSReceiverProfile::Endpoint::Kind::Serial:
+            metadata.transport = GPSRecordingMetadata::Transport::Serial;
+            break;
+        case GPSReceiverProfile::Endpoint::Kind::Tcp:
+            metadata.transport = GPSRecordingMetadata::Transport::Tcp;
+            break;
+        case GPSReceiverProfile::Endpoint::Kind::UdpListener:
+        case GPSReceiverProfile::Endpoint::Kind::UdpPeer:
+            metadata.transport = GPSRecordingMetadata::Transport::Udp;
+            break;
+        case GPSReceiverProfile::Endpoint::Kind::Disabled:
+            break;
+    }
+    _recording = std::make_shared<GPSRecordingStream>(buffer, metadata);
+}
+
+void NMEAConnectionAttempt::_publishDeviceReady()
+{
+    if (_recording && !_recordingDevice) {
+        _recording->opened(true, _openStartedAtUs);
+        _recordingDevice = std::make_unique<GPSRecordingDevice>(device(), _recording);
+    }
+    emit deviceReady();
+}
+
 void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
 {
     if (_started || _stopping) {
         return;
     }
     _started = true;
+    _openStartedAtUs = _recording ? _recording->nowUs() : 0;
     if (const QString error = _profile.validationError(); !error.isEmpty()) {
         _fail(error);
         return;
@@ -102,7 +145,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
                 return;
             }
             connect(_udp.get(), &QIODevice::readyRead, this, &NMEAConnectionAttempt::dataReceived);
-            emit deviceReady();
+            _publishDeviceReady();
             return;
         }
         case GPSReceiverProfile::Endpoint::Kind::Tcp: {
@@ -111,7 +154,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
             connect(_tcp.get(), &QTcpSocket::connected, this, [this]() {
                 _connectTimer.stop();
                 if (!_stopping && !_failed) {
-                    emit deviceReady();
+                    _publishDeviceReady();
                 }
             });
             connect(
@@ -124,7 +167,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
                 Qt::QueuedConnection);
             connect(
                 _tcp.get(), &QTcpSocket::disconnected, this,
-                [this]() { _fail(tr("Connection closed — reconnecting")); }, Qt::QueuedConnection);
+                [this]() { _fail(tr("Connection closed — reconnecting"), true); }, Qt::QueuedConnection);
             _connectTimer.start();
             _tcp->connectToHost(_profile.networkHost(), static_cast<quint16>(_profile.endpoint.port));
             return;
@@ -148,7 +191,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
                     }
                 },
                 Qt::QueuedConnection);
-            emit deviceReady();
+            _publishDeviceReady();
 #else
             _fail(tr("Serial connections are unavailable in this build"));
 #endif
@@ -204,12 +247,20 @@ bool NMEAConnectionAttempt::_reserveSerial()
 #endif
 }
 
-void NMEAConnectionAttempt::_fail(const QString& detail)
+void NMEAConnectionAttempt::_fail(const QString& detail, bool disconnected)
 {
     if (_stopping || _failed) {
         return;
     }
     _failed = true;
+    if (_recording) {
+        if (_recording->isOpen()) {
+            _recording->record(
+                disconnected ? GPSRecordingBuffer::Kind::Disconnect : GPSRecordingBuffer::Kind::ReadError, {}, -1);
+        } else {
+            _recording->opened(false, _openStartedAtUs);
+        }
+    }
     _connectTimer.stop();
     emit failed(detail);
 }
@@ -221,6 +272,7 @@ void NMEAConnectionAttempt::stop()
     }
     _stopping = true;
     _connectTimer.stop();
+    _recordingDevice.reset();
     _udp.reset();
     _tcp.reset();
 #ifndef QGC_NO_SERIAL_LINK

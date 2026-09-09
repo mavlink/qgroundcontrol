@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <QtCore/QDateTime>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
@@ -8,6 +9,9 @@
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtPositioning/QGeoPositionInfoSource>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include <array>
+#include <memory>
 
 #include "GPSSourceHealth.h"
 
@@ -19,6 +23,12 @@ class QGCPositionManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
 
+    Q_PROPERTY(SourceMode sourceMode READ sourceMode WRITE setSourceMode NOTIFY sourceModeChanged)
+    Q_PROPERTY(SelectedSource selectedSource READ selectedSource NOTIFY selectionChanged)
+    Q_PROPERTY(QString selectedSourceName READ selectedSourceName NOTIFY selectionChanged)
+    Q_PROPERTY(QString selectionReason READ selectionReason NOTIFY selectionChanged)
+    Q_PROPERTY(SourceStatus sourceStatus READ sourceStatus NOTIFY selectionChanged)
+    Q_PROPERTY(QString sourceStatusText READ sourceStatusText NOTIFY selectionChanged)
     Q_PROPERTY(GPSSourceHealth* sourceHealth READ sourceHealth NOTIFY sourceHealthChanged)
     Q_PROPERTY(QGeoCoordinate gcsPosition                   READ gcsPosition                    NOTIFY gcsPositionChanged)
     Q_PROPERTY(qreal          gcsHeading                    READ gcsHeading                     NOTIFY gcsHeadingChanged)
@@ -27,10 +37,57 @@ class QGCPositionManager : public QObject
     friend class PositionManagerTest;
 
 public:
+    enum class SourceMode
+    {
+        LegacyPriority = 0,
+        Automatic = 1,
+        ReceiverOnly = 2,
+        NmeaOnly = 3,
+        InternalOnly = 4,
+    };
+    Q_ENUM(SourceMode)
+
+    enum class SelectedSource
+    {
+        None,
+        Receiver,
+        Nmea,
+        Internal,
+        Simulated,
+    };
+    Q_ENUM(SelectedSource)
+
+    enum class SourceStatus
+    {
+        NoSource,
+        PermissionRequired,
+        PermissionDenied,
+        BackendUnavailable,
+        WaitingForFix,
+        Active,
+        Stale,
+        InvalidFix,
+    };
+    Q_ENUM(SourceStatus)
+
+    SourceMode sourceMode() const { return _sourceMode; }
+
+    void setSourceMode(SourceMode mode);
+
+    SelectedSource selectedSource() const { return _selectedSource; }
+
+    QString selectedSourceName() const;
+
+    QString selectionReason() const { return _selectionReason; }
+
+    SourceStatus sourceStatus() const { return _sourceStatus; }
+
+    QString sourceStatusText() const;
+
     explicit QGCPositionManager(QObject *parent = nullptr);
     ~QGCPositionManager();
 
-    /// Gets the singleton instance of AudioOutput.
+    /// Gets the ground-station position manager.
     ///     @return The singleton instance.
     static QGCPositionManager *instance();
 
@@ -62,6 +119,8 @@ public:
     void clearNmeaPositionSource(QGeoPositionInfoSource* source);
 
 signals:
+    void sourceModeChanged();
+    void selectionChanged();
     void sourceHealthChanged();
     void gcsPositionChanged(QGeoCoordinate gcsPosition);
     void gcsHeadingChanged(qreal gcsHeading);
@@ -83,6 +142,12 @@ private:
 
     void _setPositionSource(QGCPositionSource source);
     void _selectPositionSource();
+    QGCPositionSource _choosePositionSource();
+    QGeoPositionInfoSource* _sourceFor(QGCPositionSource source) const;
+    GPSSourceHealth* _automaticHealthFor(QGCPositionSource source) const;
+    void _refreshAutomaticSources();
+    void _stopAutomaticSources();
+    void _updateSelectionStatus();
     bool _isExternalSource() const;
     void _setupPositionSources();
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
@@ -91,6 +156,27 @@ private:
     void _externalPositionChanged();
     void _publishPosition(const std::optional<GPSObservation>& observation);
 
+    struct AutomaticSource
+    {
+        QPointer<QGeoPositionInfoSource> source;
+        QPointer<GPSSourceHealth> health;
+        std::unique_ptr<GPSSourceHealth> fallback;
+        QList<QMetaObject::Connection> connections;
+    };
+
+    std::array<AutomaticSource, 5> _automaticSources;
+    SourceMode _sourceMode = SourceMode::LegacyPriority;
+    SelectedSource _selectedSource = SelectedSource::None;
+    SourceStatus _sourceStatus = SourceStatus::NoSource;
+    SourceStatus _platformStatus = SourceStatus::NoSource;
+    QString _selectionReason;
+    QTimer _recoveryTimer;
+    QElapsedTimer _recoveryElapsed;
+    std::optional<QGCPositionSource> _recoveryCandidate;
+    bool _monitoringAutomatic = false;
+    bool _selectingSource = false;
+    bool _selectionPending = false;
+    bool _forceSourceRefresh = false;
     bool _usingPluginSource = false;
     int _updateInterval = 0;
     GPSSourceHealth _externalHealth;
@@ -118,10 +204,10 @@ private:
     QMetaObject::Connection _nmeaDestroyedConnection;
     QMetaObject::Connection _positionUpdateConnection;
     QMetaObject::Connection _positionErrorConnection;
-    QGeoPositionInfoSource *_currentSource = nullptr;
-    QGeoPositionInfoSource *_defaultSource = nullptr;
+    QPointer<QGeoPositionInfoSource> _currentSource;
+    QPointer<QGeoPositionInfoSource> _defaultSource;
     QPointer<QGeoPositionInfoSource> _nmeaSource;
-    QGeoPositionInfoSource *_simulatedSource = nullptr;
+    QPointer<QGeoPositionInfoSource> _simulatedSource;
 
     QGCCompass *_compass = nullptr;
 

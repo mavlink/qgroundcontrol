@@ -17,6 +17,7 @@
 
 class GPSTransport;
 class GPSByteBuffer;
+class GPSRecordingStream;
 
 enum class GPSConnectionError
 {
@@ -42,6 +43,9 @@ public:
 
     void stop();
 
+    /// Install before starting the worker.
+    void setRecordingStream(const std::shared_ptr<GPSRecordingStream>& recording) { _recording = recording; }
+
     std::shared_ptr<GPSReceiverMailbox> mailbox() const { return _mailbox; }
 
     /// Thread-safe publication; only the first pending update queues a session wakeup.
@@ -57,6 +61,7 @@ signals:
     void connectionError(GPSConnectionError error);
     void connectionErrorDetail(GPSConnectionError error, const QString& detail);
     void capabilitiesUpdated(const GPSReceiverCapabilities& capabilities);
+    void configurationReported(const GPSConfigurationReport& report);
     void receiverReady();
     void transportOpened();
     void nmeaDataReady();
@@ -70,6 +75,7 @@ private:
     std::atomic_bool _requestStop = false;
     GPSReceiverConfig _config{};
     std::shared_ptr<GPSByteBuffer> _nmeaBuffer;
+    std::shared_ptr<GPSRecordingStream> _recording;
 
     static constexpr uint32_t kGPSReceiveTimeout = 1200;
     static constexpr qint64 kProgressTimeoutMs = 3600;

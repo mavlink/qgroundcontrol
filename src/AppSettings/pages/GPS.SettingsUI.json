@@ -3,6 +3,16 @@
     "fileType": "SettingsUI",
     "groups": [
         {
+            "component": "PositionSourceSettings",
+            "sectionName": "Ground-Station Position",
+            "keywords": [
+                "position source",
+                "fallback",
+                "device location",
+                "permission"
+            ]
+        },
+        {
             "component": "NmeaGpsSettings",
             "sectionName": "NMEA GPS",
             "keywords": [
@@ -84,6 +94,36 @@
                 "diagnostics",
                 "delivery",
                 "events"
+            ]
+        },
+        {
+            "component": "ReceiverConfigurationStatus",
+            "sectionName": "Receiver Configuration Status",
+            "keywords": [
+                "readback",
+                "acknowledgment",
+                "configuration"
+            ]
+        },
+        {
+            "component": "ReceiverObservationDiagnostics",
+            "sectionName": "Receiver Observations",
+            "keywords": [
+                "satellites",
+                "signal",
+                "baseline",
+                "heading",
+                "accuracy"
+            ]
+        },
+        {
+            "component": "GPSRecordingSettings",
+            "sectionName": "Receiver Recording",
+            "keywords": [
+                "recording",
+                "capture",
+                "replay",
+                "diagnostics"
             ]
         }
     ]

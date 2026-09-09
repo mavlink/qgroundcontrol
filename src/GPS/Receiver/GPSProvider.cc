@@ -8,6 +8,7 @@
 
 #include "GPSByteStream.h"
 #include "GPSDriver.h"
+#include "GPSRecordingBuffer.h"
 #include "GPSTransport.h"
 #include "QGCLoggingCategory.h"
 
@@ -158,7 +159,20 @@ void GPSProvider::run()
 
     GPSDriver driver(_type, *transport, _config, std::move(sinks));
 
+    const auto publishConfiguration = [this, &driver]() {
+        auto report = driver.configurationReport();
+        report.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        emit configurationReported(report);
+    };
+    publishConfiguration();
+    if (_recording) {
+        _recording->configurationStarted();
+    }
     const bool configured = driver.configure();
+    if (_recording) {
+        _recording->configurationFinished(static_cast<int>(driver.configurationResult().status));
+    }
+    publishConfiguration();
     emit capabilitiesUpdated(driver.capabilities());
     if (!configured) {
         if (!_requestStop) {

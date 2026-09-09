@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 
+#include "GPSConfigurationReport.h"
 #include "GPSObservation.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSType.h"
@@ -130,6 +131,8 @@ public:
 
     const GPSReceiverCapabilities& capabilities() const { return _capabilities; }
 
+    const GPSConfigurationReport& configurationReport() const { return _configurationReport; }
+
     /// Pump one receive cycle, invoking the position/satellite sinks as data
     /// arrives. Returns the px4 bitset (<0 error, bit0 position, bit1 satellite),
     /// or <0 if not configured.
@@ -172,6 +175,7 @@ private:
     unsigned _baudrate = 0;
     GPSReceiverCapabilities _capabilities;
     ConfigurationResult _configurationResult;
+    GPSConfigurationReport _configurationReport;
 
     struct Private;
     std::unique_ptr<Private> _private;

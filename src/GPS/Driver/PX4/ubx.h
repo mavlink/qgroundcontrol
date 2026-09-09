@@ -1183,6 +1183,16 @@ public:
 	bool supportsConstellationSelection() const;
 	bool supportsOutputRateSelection() const;
 	bool constellationConfigurationRejected() const { return _constellation_configuration_rejected; }
+	bool constellationRequestRejected() const { return _constellation_request_rejected; }
+
+	struct ConfigurationReadback {
+		uint8_t dynamic_model = 0;
+		uint16_t measurement_interval_ms = 0;
+		uint16_t navigation_rate = 0;
+		uint32_t constellation_mask = 0;
+		bool constellations_reported = false;
+	};
+	bool readConfiguration(ConfigurationReadback &report, unsigned timeout_ms);
 
 	/**
 	 * What UART1 carries in a given mode, for status output
@@ -1190,6 +1200,12 @@ public:
 	static const char *uart1Protocols(UBXMode mode, bool ppk_output);
 
 private:
+	void handleConfigurationReadback();
+	bool _configuration_readback_pending = false;
+	bool _configuration_readback_ready = false;
+	uint8_t _configuration_readback_count = 0;
+	uint32_t _configuration_readback_keys[9] {};
+	uint32_t _configuration_readback_values[9] {};
 	int enableNmeaOutput(unsigned baudrate);
 
 	/** Like receive(), but reports a negative device read separately from a timeout. */
@@ -1434,6 +1450,8 @@ private:
 	int8_t _min_elev{0};  ///< ublox minimum elevation for a GNSS satellite to be used in navigation
 	uint8_t _output_rate{0};  ///< ublox output rate in Hz, 0 = auto-select based on module
 	bool _constellation_configuration_rejected{false};
+	bool _constellation_request_rejected{false};
+	bool _last_ack_rejected{false};
 
 	uint16_t _ack_waiting_msg{0};
 	uint16_t _rx_msg{};

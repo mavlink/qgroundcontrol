@@ -125,6 +125,10 @@ qt_add_qml_module(AppSettingsModule
         CorrectionRoutingSettings.qml
         CorrectionDiagnostics.qml
         ReceiverConfigurationSettings.qml
+        PositionSourceSettings.qml
+        ReceiverConfigurationStatus.qml
+        ReceiverObservationDiagnostics.qml
+        GPSRecordingSettings.qml
         MapProviderSettings.qml
         MavlinkActionSettings.qml
         MavlinkLinkStatus.qml

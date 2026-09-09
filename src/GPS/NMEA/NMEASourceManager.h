@@ -49,6 +49,8 @@ class NMEASourceManager : public QObject
 public:
     NMEASourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager, QObject* parent = nullptr);
     ~NMEASourceManager() override;
+
+    void setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer) { _recordingBuffer = buffer; }
     void update();
     void stop();
     void shutdown();
@@ -78,6 +80,14 @@ public:
 
     QList<QGeoSatelliteInfo> satellitesInUse() const { return _decoder.satellitesInUse(); }
 
+    quint64 sessionId() const { return _decoder.sessionId(); }
+
+    quint64 satellitesReceivedAtUs() const { return _decoder.satellitesReceivedAtUs(); }
+
+    bool satellitesUsedKnown() const { return _decoder.satellitesUsedKnown(); }
+
+    QSet<int> satelliteUseSystems() const { return _decoder.satelliteUseSystems(); }
+
 signals:
     void stateChanged();
     void satellitesChanged();
@@ -97,6 +107,7 @@ private:
     void _attemptFailed(const QString& detail);
     void _notifyState();
 
+    std::shared_ptr<GPSRecordingBuffer> _recordingBuffer;
     AutoConnectSettings* _settings;
     NMEAConnectionConfig _config;
     QPointer<QGCPositionManager> _positionManager;

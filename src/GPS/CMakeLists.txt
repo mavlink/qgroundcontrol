@@ -14,6 +14,7 @@ add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)
 
 add_subdirectory(Driver)
+add_subdirectory(Recording)
 add_subdirectory(Receiver)
 add_subdirectory(BaseStation)
 

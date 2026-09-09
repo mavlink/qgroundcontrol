@@ -7,6 +7,8 @@ class GPSManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _positionSourceSettings();
+    void _positionSourceReentrantDisable();
     void _correctionRoutingSettings_data();
     void _correctionRoutingSettings();
     void _correctionRuntimeLifecycle();

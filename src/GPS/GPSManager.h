@@ -9,6 +9,9 @@
 
 #include "GPSCorrectionManager.h"
 #include "GPSReceiverAutoConnect.h"
+#include "GPSRecordingController.h"
+#include "GPSRelativePositionModel.h"
+#include "GPSSatelliteModel.h"
 #include "NMEASourceManager.h"
 
 class GPSReceiver;
@@ -24,6 +27,12 @@ class GPSManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_PROPERTY(QVariantList receiverSettings READ receiverSettings NOTIFY receiverSettingsChanged)
+    Q_PROPERTY(QVariantList configurationReport READ configurationReport NOTIFY configurationReportChanged)
+    Q_PROPERTY(bool configurationReportActive READ configurationReportActive NOTIFY configurationReportChanged)
+    Q_PROPERTY(GPSRecordingController* recordingController READ recordingController CONSTANT)
+    Q_PROPERTY(GPSSatelliteModel* satelliteModel READ satelliteModel CONSTANT)
+    Q_PROPERTY(GPSSatelliteModel* nmeaSatelliteModel READ nmeaSatelliteModel CONSTANT)
+    Q_PROPERTY(GPSRelativePositionModel* relativePositionModel READ relativePositionModel CONSTANT)
     Q_PROPERTY(NMEASourceManager* nmeaConnection READ nmeaConnection CONSTANT)
     Q_PROPERTY(GPSReceiverAutoConnect* rtkConnection READ rtkConnection CONSTANT)
     Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT)
@@ -55,6 +64,17 @@ public:
     GPSCorrectionManager* corrections() { return &_corrections; }
 
     QVariantList receiverSettings() const;
+    QVariantList configurationReport() const;
+
+    bool configurationReportActive() const { return _receiverSession.configurationReport().active; }
+
+    GPSRecordingController* recordingController() { return &_recording; }
+
+    GPSSatelliteModel* satelliteModel() { return &_satellites; }
+
+    GPSSatelliteModel* nmeaSatelliteModel() { return &_nmeaSatellites; }
+
+    GPSRelativePositionModel* relativePositionModel() { return &_relativePosition; }
 
     Q_INVOKABLE bool connectNmea();
     Q_INVOKABLE void disconnectNmea();
@@ -68,6 +88,7 @@ public:
     Q_INVOKABLE void disconnectNetworkRtk();
 
 signals:
+    void configurationReportChanged();
     void receiverSettingsChanged();
     void networkRtkActiveChanged();
     void networkRtkAutoConnectPausedChanged();
@@ -76,6 +97,8 @@ private:
     void _updateConnections();
     void _updateReceiverSettings(bool restart = false);
     void _updatePositionSource();
+    void _updatePositionSourceMode();
+    void _updateNmeaSatellites();
     void _updateCorrectionSettings();
     SettingsManager& _settings;
     std::function<bool()> _connectionsSuspended;
@@ -85,6 +108,10 @@ private:
     bool _positionSourceInstalled = false;
     QPointer<QGCPositionManager> _positionManager;
     GPSCorrectionManager _corrections;
+    GPSRecordingController _recording;
+    GPSSatelliteModel _satellites;
+    GPSSatelliteModel _nmeaSatellites;
+    GPSRelativePositionModel _relativePosition;
     GPSReceiverSession _receiverSession;
     QTimer* _connectionTimer = nullptr;
     NMEASourceManager* _nmeaSources = nullptr;

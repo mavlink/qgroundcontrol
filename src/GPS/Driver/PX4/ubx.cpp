@@ -203,11 +203,122 @@ bool GPSDriverUBX::supportsOutputRateSelection() const
 	return _proto_ver_27_or_higher && _model_name[0] && _board != Board::unknown;
 }
 
+bool GPSDriverUBX::readConfiguration(ConfigurationReadback &report, unsigned timeout_ms)
+{
+	report = {};
+	if (!_configured || !supportsOutputRateSelection() || !timeout_ms || ioError()) {
+		return false;
+	}
+	_configuration_readback_keys[0] = UBX_CFG_KEY_NAVSPG_DYNMODEL;
+	_configuration_readback_keys[1] = UBX_CFG_KEY_RATE_MEAS;
+	_configuration_readback_keys[2] = UBX_CFG_KEY_RATE_NAV;
+	_configuration_readback_count = 3;
+	if (supportsConstellationSelection()) {
+		const uint32_t keys[] = {UBX_CFG_KEY_SIGNAL_GPS_ENA, UBX_CFG_KEY_SIGNAL_QZSS_ENA,
+			UBX_CFG_KEY_SIGNAL_SBAS_ENA, UBX_CFG_KEY_SIGNAL_GAL_ENA,
+			UBX_CFG_KEY_SIGNAL_BDS_ENA, UBX_CFG_KEY_SIGNAL_GLO_ENA};
+		for (uint32_t key : keys) {
+			_configuration_readback_keys[_configuration_readback_count++] = key;
+		}
+	}
+	uint8_t request[4 + sizeof(_configuration_readback_keys)] {};
+	for (unsigned i = 0; i < _configuration_readback_count; ++i) {
+		for (unsigned byte = 0; byte < 4; ++byte) {
+			request[4 + i * 4 + byte] = uint8_t(_configuration_readback_keys[i] >> (8 * byte));
+		}
+	}
+	_configuration_readback_ready = false;
+	_configuration_readback_pending = true;
+	const gps_abstime deadline = gps_absolute_time() + uint64_t(timeout_ms) * 1000;
+	if (sendMessage(UBX_MSG_CFG_VALGET, request, 4 + _configuration_readback_count * 4)) {
+		while (!_configuration_readback_ready && !ioError()) {
+			const gps_abstime now = gps_absolute_time();
+			if (now >= deadline) {
+				break;
+			}
+			const unsigned remaining_ms = unsigned((deadline - now + 999) / 1000);
+			bool read_error = false;
+			receiveInternal(remaining_ms < 50 ? remaining_ms : 50, read_error);
+			if (read_error) {
+				break;
+			}
+		}
+	}
+	_configuration_readback_pending = false;
+	if (!_configuration_readback_ready) {
+		return false;
+	}
+	report.dynamic_model = uint8_t(_configuration_readback_values[0]);
+	report.measurement_interval_ms = uint16_t(_configuration_readback_values[1]);
+	report.navigation_rate = uint16_t(_configuration_readback_values[2]);
+	report.constellations_reported = _configuration_readback_count == 9;
+	if (report.constellations_reported) {
+		// QGC's GPS selection includes QZSS; differing receiver enables are not a match.
+		report.constellation_mask = (_configuration_readback_values[3] && _configuration_readback_values[4]) ? 1 : 0;
+		for (unsigned i = 5; i < 9; ++i) {
+			if (_configuration_readback_values[i]) {
+				report.constellation_mask |= 1u << (i - 4);
+			}
+		}
+	}
+	return true;
+}
+
+void GPSDriverUBX::handleConfigurationReadback()
+{
+	if (!_configuration_readback_pending || _rx_payload_length < 4) {
+		return;
+	}
+	const auto *payload = reinterpret_cast<const uint8_t *>(&_buf);
+	if (payload[0] != 1 || payload[1] != 0 || payload[2] != 0 || payload[3] != 0) {
+		return;
+	}
+	uint16_t seen = 0;
+	uint32_t values[9] {};
+	for (unsigned offset = 4; offset < _rx_payload_length;) {
+		if (_rx_payload_length - offset < 4) {
+			return;
+		}
+		uint32_t key = 0;
+		for (unsigned byte = 0; byte < 4; ++byte) {
+			key |= uint32_t(payload[offset++]) << (8 * byte);
+		}
+		const unsigned code = key >> 28;
+		if (code < 1 || code > 4) {
+			return;
+		}
+		const unsigned width = code <= 2 ? 1 : 1u << (code - 2);
+		if (_rx_payload_length - offset < width) {
+			return;
+		}
+		unsigned index = 0;
+		while (index < _configuration_readback_count && _configuration_readback_keys[index] != key) {
+			++index;
+		}
+		if (index == _configuration_readback_count || (seen & (1u << index))) {
+			return;
+		}
+		for (unsigned byte = 0; byte < width; ++byte) {
+			values[index] |= uint32_t(payload[offset++]) << (8 * byte);
+		}
+		if (code == 1 && values[index] > 1) {
+			return;
+		}
+		seen |= 1u << index;
+	}
+	if (seen != (1u << _configuration_readback_count) - 1) {
+		return;
+	}
+	memcpy(_configuration_readback_values, values, sizeof(values));
+	_configuration_readback_ready = true;
+}
+
 int
 GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config, OutputProtocol output_protocol)
 {
 	resetIOError();
 	_constellation_configuration_rejected = false;
+	_constellation_request_rejected = false;
 	_configured = false;
 	if (output_protocol != OutputProtocol::Native
 	    && (output_protocol != OutputProtocol::NMEA || config.output_mode != OutputMode::GPS
@@ -1052,6 +1163,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig &config, const int32_t uart2_b
 			if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0) {
 				if (config.require_gnss_config) {
 					_constellation_configuration_rejected = true;
+					_constellation_request_rejected = _last_ack_rejected;
 					return -1;
 				}
 				// Keep going with whatever the receiver already has, a refused constellation
@@ -1080,6 +1192,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig &config, const int32_t uart2_b
 
 		if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0 && config.require_gnss_config) {
 			_constellation_configuration_rejected = true;
+			_constellation_request_rejected = _last_ack_rejected;
 			return -1;
 		}
 
@@ -1856,6 +1969,7 @@ int	// -1 = NAK, error or timeout, 0 = ACK
 GPSDriverUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool report)
 {
 	int ret = -1;
+	_last_ack_rejected = false;
 
 	_ack_state = UBX_ACK_WAITING;
 	_ack_waiting_msg = msg;	// memorize sent msg class&ID for ACK check
@@ -1882,6 +1996,7 @@ GPSDriverUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool 
 		}
 	}
 
+	_last_ack_rejected = _ack_state == UBX_ACK_GOT_NAK;
 	_ack_state = UBX_ACK_IDLE;
 	return ret;
 }
@@ -1924,7 +2039,8 @@ int GPSDriverUBX::receiveInternal(unsigned timeout, bool &read_error)
 	int handled = 0;
 
 	while (true) {
-		bool ready_to_return = _configured ? (_got_posllh && _got_velned) : handled;
+		bool ready_to_return = (_configuration_readback_pending && _configuration_readback_ready)
+				      || (_configured ? (_got_posllh && _got_velned) : handled);
 
 		/* return success if ready */
 		if (ready_to_return) {
@@ -2133,6 +2249,13 @@ GPSDriverUBX::payloadRxInit()
 	_rx_state = UBX_RXMSG_HANDLE;	// handle by default
 
 	switch (_rx_msg) {
+	case UBX_MSG_CFG_VALGET:
+		if (!_configuration_readback_pending) {
+			_rx_state = UBX_RXMSG_IGNORE;
+		} else if (_rx_payload_length < 4 || _rx_payload_length > sizeof(_buf)) {
+			_rx_state = UBX_RXMSG_ERROR_LENGTH;
+		}
+		break;
 	case UBX_MSG_MON_COMMS:
 		if (_rx_payload_length < 8 || _rx_payload_length > sizeof(ubx_payload_rx_mon_comms_t)
 		    || (_rx_payload_length - 8) % sizeof(ubx_payload_rx_mon_comms_port_t) != 0) {
@@ -2902,6 +3025,9 @@ GPSDriverUBX::payloadRxDone()
 
 	case UBX_MSG_MON_COMMS:
 		logCommsDiagnostics();
+		break;
+	case UBX_MSG_CFG_VALGET:
+		handleConfigurationReadback();
 		break;
 
 	case UBX_MSG_NAV_POSLLH:

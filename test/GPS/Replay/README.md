@@ -70,3 +70,19 @@ Keep the original RX arrival times when varying read fragmentation. For native
 replay, wire `GPSReplayClock` to the driver's injected clock as in
 `nativePosition`; this also makes configuration sleeps deterministic. Real hardware
 acceptance remains separate from synthetic replay.
+
+## Live captures
+
+The opt-in [receiver recorder](../../../src/GPS/Recording/README.md) exports this
+format directly. Pass a `streamId` to `GPSReplayTrace::load`/`fromJson` to select a
+specific connection; the default selects the first stream. The parsed trace exposes
+its selected `profile` metadata. Informative session/configuration/close markers
+are skipped, while `open_error` and `baud_error` reproduce failed calls. A failed
+write can include its expected attempted bytes as well as the reported result.
+
+An `open` marked `resumed` represents capture starting on an existing connection,
+so earlier configuration is missing. Start capture before reconnecting when a full
+native-driver transaction is required. The tests record and export actual native
+UBX transactions, reload them, and verify identical decoded positions at three
+fragment sizes. They also roundtrip passive NMEA, receipt timestamp preservation,
+configuration metadata, failed operations, and bounded concurrent capture.

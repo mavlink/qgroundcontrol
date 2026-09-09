@@ -1,5 +1,6 @@
 #include "NMEASourceManagerTest.h"
 
+#include <QtCore/QBuffer>
 #include <QtCore/QEvent>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -33,6 +34,88 @@ QByteArray satelliteSentences(int signalStrength = 40)
     return NMEAUtils::repairChecksum(gsv) + NMEAUtils::repairChecksum("$GPGSA,A,3,01,02,,,,,,,,,,,1.0,0.8,0.6");
 }
 }  // namespace
+
+void NMEASourceManagerTest::_satelliteSnapshotsPreserveProvenance()
+{
+    QBuffer device;
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    NMEADecoderSession decoder;
+    QVERIFY(decoder.start(&device));
+    const quint64 session = decoder.sessionId();
+    QVERIFY(session != 0);
+    QGeoSatelliteInfo gps;
+    gps.setSatelliteSystem(QGeoSatelliteInfo::GPS);
+    gps.setSatelliteIdentifier(3);
+    QGeoSatelliteInfo galileo = gps;
+    galileo.setSatelliteSystem(QGeoSatelliteInfo::GALILEO);
+    const quint64 receipt = GPSObservation::monotonicNowUs() - 100000;
+    decoder._viewSnapshot.satellites = {gps, galileo};
+    decoder._viewSnapshot.constellationReceipts = {{"GP", receipt}, {"GA", receipt}};
+    decoder._useSnapshot.satellites = {gps};
+    decoder._useSnapshot.constellationReceipts = {{"GP", receipt}};
+    QSignalSpy snapshots(&decoder, &NMEADecoderSession::satellitesChanged);
+    decoder._expireSatellites();
+    QCOMPARE(decoder.satellitesReceivedAtUs(), receipt);
+    QVERIFY(decoder.satellitesUsedKnown());
+    QCOMPARE(decoder.satelliteUseSystems(), QSet<int>{QGeoSatelliteInfo::GPS});
+    QCOMPARE(decoder.satellitesInView().size(), 2);
+    QCOMPARE(snapshots.size(), 1);
+    decoder._viewSnapshot.satellites[0].setSignalStrength(42);
+    decoder._expireSatellites();
+    QCOMPARE(snapshots.size(), 2);
+    QCOMPARE(decoder.satellitesReceivedAtUs(), receipt);
+    QCOMPARE(decoder.satellitesInView()[0].signalStrength(), 42);
+    decoder._useSnapshot.constellationReceipts["GP"] = receipt - 6000000;
+    decoder._expireSatellites();
+    QVERIFY(!decoder.satellitesUsedKnown());
+    QVERIFY(decoder.satelliteUseSystems().isEmpty());
+    QCOMPARE(decoder.satellitesInView().size(), 2);
+    decoder._health._freshnessTimeoutMs = 200;
+    const quint64 freshReceipt = GPSObservation::monotonicNowUs() - 10000;
+    decoder._viewSnapshot.constellationReceipts = {{"GP", freshReceipt - 400000}, {"GA", freshReceipt}};
+    decoder._useSnapshot.satellites = {gps, galileo};
+    decoder._useSnapshot.constellationReceipts = decoder._viewSnapshot.constellationReceipts;
+    decoder._expireSatellites();
+    QCOMPARE(decoder.satellitesInView().size(), 1);
+    QCOMPARE(decoder.satellitesInView().first().satelliteSystem(), QGeoSatelliteInfo::GALILEO);
+    QCOMPARE(decoder.satelliteUseSystems(), QSet<int>{QGeoSatelliteInfo::GALILEO});
+    QCOMPARE(decoder.satellitesReceivedAtUs(), freshReceipt);
+    decoder._health._freshnessTimeoutMs = 5000;
+    decoder._viewSnapshot.satellites.append(gps);
+    decoder._useSnapshot.satellites.append(gps);
+    decoder._viewSnapshot.constellationReceipts["GP"] = freshReceipt - 400000;
+    decoder._useSnapshot.constellationReceipts["GP"] = freshReceipt - 400000;
+    decoder._expireSatellites();
+    QCOMPARE(decoder.satellitesInView().size(), 1);
+    QCOMPARE(decoder.satelliteUseSystems(), QSet<int>{QGeoSatelliteInfo::GALILEO});
+
+    decoder._viewSnapshot = {};
+    GPSObservation fix;
+    fix.position = QGeoPositionInfo(QGeoCoordinate(47.0, 8.0, 100.0), QDateTime::currentDateTimeUtc());
+    fix.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    fix.satellitesUsed = 8;
+    decoder._health.updateObservation(fix);
+    decoder._expireSatellites();
+    QVERIFY(decoder.satellitesInView().isEmpty());
+    QVERIFY(decoder.satellitesUsedKnown());
+    QCOMPARE(decoder.health()->satellitesInUseCount(), 8);
+    emit decoder._satelliteSource->errorOccurred(QGeoSatelliteInfoSource::UpdateTimeoutError);
+    QTRY_VERIFY_WITH_TIMEOUT(!decoder.satellitesUsedKnown(), TestTimeout::shortMs());
+    QVERIFY(decoder.satelliteUseSystems().isEmpty());
+    QVERIFY(decoder.satellitesInUse().isEmpty());
+    QCOMPARE(decoder.satellitesReceivedAtUs(), 0ULL);
+    QCOMPARE(decoder.health()->satellitesInUseCount(), 8);
+    decoder._useSnapshot.satellites = {galileo};
+    decoder._useSnapshot.constellationReceipts = {{"GA", freshReceipt}};
+    decoder._expireSatellites();
+    QVERIFY(!decoder.satellitesUsedKnown());
+    QVERIFY(decoder.satelliteUseSystems().isEmpty());
+    decoder.stop();
+    QVERIFY(decoder.sessionId() > session);
+    QCOMPARE(decoder.satellitesReceivedAtUs(), 0ULL);
+    QVERIFY(decoder.satellitesInView().isEmpty());
+    QVERIFY(decoder.satelliteUseSystems().isEmpty());
+}
 
 void NMEASourceManagerTest::init()
 {
@@ -252,6 +335,10 @@ void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), -1, TestTimeout::mediumMs());
     QCOMPARE(source.satellitesInUseCount(), -1);
     QVERIFY(source.satellitesInView().isEmpty());
+    QVERIFY(source.satellitesInUse().isEmpty());
+    QCOMPARE(source.satellitesReceivedAtUs(), 0ULL);
+    QVERIFY(!source.satellitesUsedKnown());
+    QVERIFY(source.satelliteUseSystems().isEmpty());
     source._decoder._health._freshnessTimeoutMs = 5000;
     send(kFix);
     QVERIFY(source.satellitesInView().isEmpty());

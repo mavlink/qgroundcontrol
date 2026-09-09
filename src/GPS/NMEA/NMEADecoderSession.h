@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QSet>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoSatelliteInfo>
 
@@ -38,6 +39,14 @@ public:
 
     QList<QGeoSatelliteInfo> satellitesInUse() const { return _satellitesInUse; }
 
+    quint64 sessionId() const { return _sessionId; }
+
+    quint64 satellitesReceivedAtUs() const { return _satellitesReceivedAtUs; }
+
+    bool satellitesUsedKnown() const { return _satellitesUsedKnown; }
+
+    QSet<int> satelliteUseSystems() const { return _satelliteUseSystems; }
+
 signals:
     void satellitesChanged();
 
@@ -52,6 +61,12 @@ private:
     GPSSourceHealth _health;
     NMEASatelliteAdapter::Snapshot _viewSnapshot;
     NMEASatelliteAdapter::Snapshot _useSnapshot;
+    quint64 _sessionId = 0;
+    quint64 _satellitesReceivedAtUs = 0;
+    quint64 _viewRejectedThroughUs = 0;
+    quint64 _useRejectedThroughUs = 0;
+    bool _satellitesUsedKnown = false;
+    QSet<int> _satelliteUseSystems;
     bool _refreshingSatellites = false;
     QList<QGeoSatelliteInfo> _satellitesInView;
     QList<QGeoSatelliteInfo> _satellitesInUse;

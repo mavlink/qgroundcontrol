@@ -72,6 +72,18 @@ Q_DECLARE_METATYPE(GPSObservation)
 
 struct GPSSatellite
 {
+    enum class Constellation
+    {
+        Unknown,
+        GPS,
+        GLONASS,
+        Galileo,
+        BeiDou,
+        QZSS,
+        SBAS,
+        NavIC
+    };
+
     enum class AzimuthEncoding
     {
         Unknown,
@@ -81,9 +93,11 @@ struct GPSSatellite
 
     int id = 0;
     int prn = 0;
-    bool used = false;
-    int elevationDegrees = 0;
-    int signalStrength = 0;
+    Constellation constellation = Constellation::Unknown;
+    std::optional<bool> used;
+    std::optional<double> elevationDegrees;
+    std::optional<int> signalStrength;
+    std::optional<double> normalizedAzimuthDegrees;
     std::optional<int> rawAzimuth;
     AzimuthEncoding azimuthEncoding = AzimuthEncoding::Unknown;
 

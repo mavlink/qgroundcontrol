@@ -17,6 +17,7 @@
 #include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionSettings.h"
 #include "GPSManager.h"
+#include "GPSPositionSettings.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverCapabilities.h"
@@ -25,6 +26,7 @@
 #include "GpsTestHelpers.h"
 #include "LinkManager.h"
 #include "MockNTRIPStream.h"
+#include "NMEAUtils.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "PositionManager.h"
@@ -130,6 +132,50 @@ private:
     quint16 _peerPort = 0;
 };
 }  // namespace
+
+void GPSManagerTest::_positionSourceSettings()
+{
+    auto* settings = SettingsManager::instance();
+    auto* mode = settings->gpsPositionSettings()->sourceMode();
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(mode, static_cast<int>(QGCPositionManager::SourceMode::ReceiverOnly));
+    QGCPositionManager positions;
+    GPSManager manager(*settings, &positions, []() { return true; });
+    QCOMPARE(positions.sourceMode(), QGCPositionManager::SourceMode::ReceiverOnly);
+    mode->setRawValue(static_cast<int>(QGCPositionManager::SourceMode::Automatic));
+    QCOMPARE(positions.sourceMode(), QGCPositionManager::SourceMode::Automatic);
+    QCOMPARE(QSettings().value(QStringLiteral("GPSPosition/sourceMode")).toInt(),
+             static_cast<int>(QGCPositionManager::SourceMode::Automatic));
+    manager.shutdown();
+    mode->setRawValue(static_cast<int>(QGCPositionManager::SourceMode::NmeaOnly));
+    QCOMPARE(positions.sourceMode(), QGCPositionManager::SourceMode::Automatic);
+}
+
+void GPSManagerTest::_positionSourceReentrantDisable()
+{
+    ReceiverServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    TestFixtures::SettingsFixture saved;
+    saveNetworkSettings(saved, QStringLiteral("localhost"), server.serverPort(), 3);
+    auto* settings = SettingsManager::instance();
+    auto* useReceiver = settings->rtkSettings()->useReceiverPosition();
+    saved.setFactValue(useReceiver, false);
+    saved.setFactValue(settings->gpsPositionSettings()->sourceMode(),
+                       static_cast<int>(QGCPositionManager::SourceMode::ReceiverOnly));
+    QGCPositionManager positions;
+    GPSManager manager(*settings, &positions, []() { return false; });
+    QVERIFY(manager.connectNetworkRtk());
+    QTRY_VERIFY_WITH_TIMEOUT(manager.receiver()->connected(), TestTimeout::mediumMs());
+    connect(&positions, &QGCPositionManager::sourceHealthChanged, &manager, [&]() {
+        if (positions.sourceHealth() == manager.receiver()->health()) {
+            useReceiver->setRawValue(false);
+        }
+    });
+    useReceiver->setRawValue(true);
+    QVERIFY(!useReceiver->rawValue().toBool());
+    QVERIFY(!manager._positionSourceInstalled);
+    QVERIFY(positions.sourceHealth() != manager.receiver()->health());
+}
 
 void GPSManagerTest::_invalidEndpoint_data()
 {
@@ -604,9 +650,38 @@ void GPSManagerTest::_nmeaAndRtkIndependent()
     QTRY_VERIFY_WITH_TIMEOUT(manager.receiver()->connected(), TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(manager.nmeaConnection()->status(), QStringLiteral("Connected"), TestTimeout::mediumMs());
     QVERIFY(manager.nmeaConnection()->active());
+    GPSSatelliteObservation satellites;
+    satellites.sessionId = manager.receiverSession()->sessionId();
+    satellites.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    GPSSatellite satellite;
+    satellite.id = 17;
+    satellite.used = true;
+    satellites.satellites.append(satellite);
+    emit manager.receiverSession()->satellitesReceived(satellites);
+    QVERIFY(manager.satelliteModel()->fresh());
+    QCOMPARE(manager.satelliteModel()->count(), 1);
+    GPSRelativeObservation relative;
+    relative.sessionId = satellites.sessionId;
+    relative.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    relative.fixValid = true;
+    relative.positionValid = true;
+    relative.lengthMeters = 1.5;
+    emit manager.receiverSession()->relativePositionReceived(relative);
+    QVERIFY(manager.relativePositionModel()->fresh());
+    QCOMPARE(manager.relativePositionModel()->length(), 1.5);
+    QTRY_VERIFY_WITH_TIMEOUT(nmeaServer.hasPendingConnections(), TestTimeout::mediumMs());
+    auto* nmeaPeer = nmeaServer.nextPendingConnection();
+    QVERIFY(nmeaPeer);
+    const auto nmea = NMEAUtils::repairChecksum("$GPGSV,1,1,02,01,45,100,40,02,30,200,35") +
+                      NMEAUtils::repairChecksum("$GPGSA,A,3,01,02,,,,,,,,,,,1.0,0.8,0.6");
+    QCOMPARE(nmeaPeer->write(nmea), nmea.size());
+    QTRY_COMPARE_WITH_TIMEOUT(manager.nmeaSatelliteModel()->count(), 2, TestTimeout::mediumMs());
+    QCOMPARE(manager.satelliteModel()->count(), 1);
     manager.disconnectNmea();
     manager._updateConnections();
     QVERIFY(!manager.nmeaConnection()->active());
+    QVERIFY(!manager.nmeaSatelliteModel()->fresh());
+    QCOMPARE(manager.nmeaSatelliteModel()->count(), 0);
     QVERIFY(manager.receiver()->connected());
     QVERIFY(manager.connectNmea());
     QTRY_COMPARE_WITH_TIMEOUT(manager.nmeaConnection()->status(), QStringLiteral("Connected"), TestTimeout::mediumMs());
@@ -614,6 +689,8 @@ void GPSManagerTest::_nmeaAndRtkIndependent()
     QTRY_VERIFY_WITH_TIMEOUT(!manager.receiver()->stopping(), TestTimeout::mediumMs());
     manager._updateConnections();
     QVERIFY(!manager.receiver()->hasReceiver());
+    QVERIFY(!manager.satelliteModel()->fresh());
+    QVERIFY(!manager.relativePositionModel()->fresh());
     QTRY_VERIFY_WITH_TIMEOUT(!manager.receiver()->stopping(), TestTimeout::mediumMs());
     QVERIFY(manager.nmeaConnection()->active());
     QCOMPARE(manager.nmeaConnection()->status(), QStringLiteral("Connected"));

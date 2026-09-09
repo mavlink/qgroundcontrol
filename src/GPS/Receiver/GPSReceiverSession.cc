@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "GPSRecordingTransport.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSReceiverSessionLog, "GPS.Receiver.GPSReceiverSession")
@@ -32,12 +33,22 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
     _config = config;
     const quint64 generation = ++_generation;
     _errorDetail.clear();
+    _configurationTerminal = false;
     _capabilities = GPSReceiverCapabilities::forType(type);
     if (config.outputProtocol == GPSReceiverConfig::OutputProtocol::NMEA) {
         _nmeaStream = std::make_unique<GPSByteStream>();
     }
+    std::shared_ptr<GPSRecordingStream> recording;
+    if (_recordingBuffer && factory) {
+        recording =
+            std::make_shared<GPSRecordingStream>(_recordingBuffer, GPSRecordingMetadata::forReceiver(config, type));
+        factory = [factory = std::move(factory), recording](const std::atomic_bool& stop) {
+            return std::make_unique<GPSRecordingTransport>(factory(stop), stop, recording);
+        };
+    }
     auto* worker =
         new GPSProvider(std::move(factory), type, config, _nmeaStream ? _nmeaStream->buffer() : nullptr, this);
+    worker->setRecordingStream(recording);
     _provider = worker;
     _workers.insert(worker);
     const QPointer<GPSProvider> current(worker);
@@ -64,6 +75,17 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
             if (isCurrent()) {
                 _capabilities = capabilities;
                 emit capabilitiesUpdated(capabilities);
+            }
+        },
+        Qt::QueuedConnection);
+    connect(
+        worker, &GPSProvider::configurationReported, this,
+        [this, isCurrent, generation](const GPSConfigurationReport& report) {
+            if (isCurrent() && !_configurationTerminal) {
+                _configurationReport = report;
+                _configurationReport.sessionId = generation;
+                _configurationReport.active = true;
+                emit configurationReported(_configurationReport);
             }
         },
         Qt::QueuedConnection);
@@ -103,6 +125,10 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
                     return;
                 }
                 _ready = false;
+                _invalidateConfigurationReport();
+                if (!guard || !isCurrent()) {
+                    return;
+                }
                 emit disconnected();
                 if (guard && isCurrent()) {
                     emit connectionError(error);
@@ -122,6 +148,10 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
                 }
                 _provider = nullptr;
                 _ready = false;
+                _invalidateConfigurationReport();
+                if (!guard || _generation != generation) {
+                    return;
+                }
                 emit disconnected();
             }
             if (guard) {
@@ -148,6 +178,7 @@ void GPSReceiverSession::stop()
     const auto mailbox = worker ? worker->mailbox() : nullptr;
     _provider = nullptr;
     _ready = false;
+    _configurationTerminal = true;
     if (worker) {
         worker->stop();
         if (_started.contains(worker)) {
@@ -167,6 +198,13 @@ void GPSReceiverSession::stop()
     if (!guard || _generation != stoppingGeneration) {
         return;
     }
+    if (_configurationReport.sessionId != 0 || !_configurationReport.settings.isEmpty()) {
+        _configurationReport = {};
+        emit configurationReported(_configurationReport);
+        if (!guard || _generation != stoppingGeneration) {
+            return;
+        }
+    }
     _nmeaStream.reset();
     if (!guard || _generation != stoppingGeneration) {
         return;
@@ -174,6 +212,15 @@ void GPSReceiverSession::stop()
     emit disconnected();
     if (guard && worker) {
         emit stateChanged();
+    }
+}
+
+void GPSReceiverSession::_invalidateConfigurationReport()
+{
+    _configurationTerminal = true;
+    if (_configurationReport.active) {
+        _configurationReport.active = false;
+        emit configurationReported(_configurationReport);
     }
 }
 

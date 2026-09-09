@@ -7,6 +7,8 @@
 #include "GPSByteStream.h"
 #include "GPSProvider.h"
 
+class GPSRecordingBuffer;
+
 /// Owns a receiver attempt and retires cancelled workers without blocking the UI.
 class GPSReceiverSession : public QObject
 {
@@ -22,6 +24,9 @@ public:
 
     void start(GPSType type, GPSProvider::TransportFactory factory, const GPSReceiverConfig& config);
     void stop();
+
+    /// Set at composition time; newly created attempts share this bounded recorder.
+    void setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer) { _recordingBuffer = buffer; }
     /// Join all workers during final application shutdown, without an event loop.
     void shutdown();
 
@@ -48,9 +53,12 @@ public:
 
     QString errorDetail() const { return _errorDetail; }
 
+    const GPSConfigurationReport& configurationReport() const { return _configurationReport; }
+
 signals:
     void receiverTypeChanged(GPSType type);
     void configurationStarted();
+    void configurationReported(const GPSConfigurationReport& report);
     void receiverReady();
     void disconnected();
     void connectionError(GPSConnectionError error);
@@ -66,9 +74,11 @@ signals:
     void correctionDeliveriesReady(const QList<GPSCorrectionDelivery>& deliveries);
 
 private:
+    void _invalidateConfigurationReport();
     void _drain(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
     void _flushDeliveries(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
 
+    std::shared_ptr<GPSRecordingBuffer> _recordingBuffer;
     QPointer<GPSProvider> _provider;
     std::unique_ptr<GPSByteStream> _nmeaStream;
     QSet<GPSProvider*> _workers;
@@ -77,7 +87,9 @@ private:
     quint64 _generation = 0;
     bool _ready = false;
     bool _shutdown = false;
+    bool _configurationTerminal = true;
     GPSReceiverConfig _config;
     GPSReceiverCapabilities _capabilities;
     QString _errorDetail;
+    GPSConfigurationReport _configurationReport;
 };

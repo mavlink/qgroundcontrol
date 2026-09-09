@@ -3,6 +3,7 @@
 #include <QtCore/QCoreApplication>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <limits>
@@ -27,6 +28,43 @@ namespace {
 int callbackTrampoline(GPSCallbackType type, void *data1, int data2, void *user)
 {
     return static_cast<GPSDriver *>(user)->handleCallback(static_cast<int>(type), data1, data2);
+}
+
+GPSConfigurationReport requestedSettings(const GPSReceiverConfig& config, const GPSReceiverCapabilities& capabilities)
+{
+    GPSConfigurationReport report;
+    const std::array<QVariant, 4> values = {config.constellationMask, config.dynamicModel, config.outputRateHz,
+                                            config.headingOffsetDeg};
+    const auto descriptors = capabilities.settings(config.role == GPSReceiverConfig::Role::RTKBase);
+    for (qsizetype index = 0; index < descriptors.size(); ++index) {
+        const auto& descriptor = descriptors[index];
+        if (descriptor.support == GPSReceiverCapabilities::Support::Unsupported &&
+            values[index].toDouble() == descriptor.defaultValue) {
+            continue;
+        }
+        GPSSettingReport setting;
+        setting.key = descriptor.key;
+        setting.label = descriptor.label;
+        setting.units = descriptor.units;
+        setting.requestedValue = values[index];
+        report.settings.append(setting);
+    }
+    return report;
+}
+
+void rejectUnsupportedSettings(GPSConfigurationReport& report, const GPSReceiverConfig& config,
+                               const GPSReceiverCapabilities& capabilities)
+{
+    const auto descriptors = capabilities.settings(config.role == GPSReceiverConfig::Role::RTKBase);
+    for (auto& setting : report.settings) {
+        for (const auto& descriptor : descriptors) {
+            if (setting.key == descriptor.key && !descriptor.accepts(setting.requestedValue.toDouble())) {
+                setting.requestState = GPSSettingReport::RequestState::Rejected;
+                setting.detail = QCoreApplication::translate(
+                    "GPSDriver", "This setting is unsupported in the selected receiver mode");
+            }
+        }
+    }
 }
 } // namespace
 
@@ -75,6 +113,7 @@ GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverCon
 {
     qCDebug(GPSDriverLog) << this;
     GPSDriverData::initialize(_private->sensorGps);
+    _configurationReport = requestedSettings(_config, _capabilities);
 }
 
 GPSDriver::~GPSDriver()
@@ -89,6 +128,7 @@ bool GPSDriver::configure()
     _private->driver.reset();
     _capabilities = GPSReceiverCapabilities::forType(_type);
     _configurationResult = {};
+    _configurationReport = requestedSettings(_config, _capabilities);
     if (_transport.isCancelled()) {
         _configurationResult.status = ConfigurationStatus::Cancelled;
         return false;
@@ -96,6 +136,7 @@ bool GPSDriver::configure()
     const QString validationError = _capabilities.validationError(_config);
     if (!validationError.isEmpty()) {
         _configurationResult = {ConfigurationStatus::Unsupported, validationError};
+        rejectUnsupportedSettings(_configurationReport, _config, _capabilities);
         if (!_capabilities.recognized()) {
             qCWarning(GPSDriverLog) << "Unsupported GPS type:" << static_cast<int>(_type);
         } else if (_config.role != GPSReceiverConfig::Role::RTKBase &&
@@ -119,6 +160,9 @@ bool GPSDriver::configure()
 
     _updateCapabilities();
     const QString capabilityError = _capabilities.validationError(_config);
+    rejectUnsupportedSettings(_configurationReport, _config, _capabilities);
+    _private->driver->completeConfigurationReport(_config, result == 0 && capabilityError.isEmpty(),
+                                                  _configurationReport);
     if (result != 0 || _private->driver->ioError() || !capabilityError.isEmpty() || _transport.isCancelled()) {
         if (_transport.isCancelled() || _private->driver->ioError() == GPSHelper::ReadCancelled) {
             _configurationResult = {ConfigurationStatus::Cancelled, {}};

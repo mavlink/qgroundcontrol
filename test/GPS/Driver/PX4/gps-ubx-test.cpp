@@ -50,10 +50,13 @@ enum class SurveyReply { stopped, active, valid, silent, bad_checksum, bad_lengt
 class Receiver
 {
 public:
+	int readback_mode = 0;
+	unsigned readback_requests = 0;
 	std::vector<SurveyReply> replies{SurveyReply::stopped};
 	bool reject_disable = false;
 	bool reject_nmea = false;
 	bool reject_constellations = false;
+	bool timeout_constellations = false;
 	bool cancel_nmea = false;
 	std::map<unsigned, unsigned> output_protocols;
 	bool legacy = false;
@@ -138,6 +141,42 @@ private:
 			++comms_polls;
 			return;
 		}
+		if (message == UBX_MSG_CFG_VALGET) {
+			++readback_requests;
+			CHECK(payload.size() >= 4 && payload.size() <= 40 && (payload.size() - 4) % 4 == 0);
+			CHECK(payload[0] == 0 && payload[1] == 0 && payload[2] == 0 && payload[3] == 0);
+			if (readback_mode == 1) {
+				return;
+			}
+			if (readback_mode == 2) {
+				queue(packet(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
+				return;
+			}
+			Bytes response{1, uint8_t(readback_mode == 3 ? 1 : 0), 0, 0};
+			for (size_t offset = 4; offset < payload.size(); offset += 4) {
+				const uint32_t key = littleEndian(payload, offset, 4);
+				const auto found = current_settings.find(key);
+				const uint32_t value = found == current_settings.end() ? 0 : found->second;
+				response.insert(response.end(), payload.begin() + offset, payload.begin() + offset + 4);
+				const unsigned code = key >> 28;
+				const unsigned width = code <= 2 ? 1 : 1u << (code - 2);
+				for (unsigned byte = 0; byte < width; ++byte) {
+					response.push_back(uint8_t(value >> (8 * byte)));
+				}
+			}
+			if (readback_mode == 4) {
+				const Bytes duplicate(response.begin() + 4, response.begin() + 9);
+				response.insert(response.end(), duplicate.begin(), duplicate.end());
+			} else if (readback_mode == 5) {
+				response.pop_back();
+			}
+			Bytes message_bytes = packet(message, response);
+			if (readback_mode == 6) {
+				message_bytes.back() ^= 1;
+			}
+			queue(message_bytes);
+			return;
+		}
 
 		if (message == UBX_MSG_MON_VER) {
 			CHECK(payload.empty());
@@ -207,6 +246,9 @@ private:
 		    && settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_NMEA) == 1) {
 			polls = 1;
 			poll_read_error = GPSHelper::ReadCancelled;
+		}
+		if (timeout_constellations && settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA)) {
+			return;
 		}
 		bool reject = reject_nmea && settings.count(UBX_CFG_KEY_CFG_USBOUTPROT_NMEA)
 			      && settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_NMEA) == 1;
@@ -661,13 +703,14 @@ static void nmeaOutputFailures()
 
 static void receiverSettings()
 {
-	for (int scenario = 0; scenario < 4; ++scenario) {
+	for (int scenario = 0; scenario < 5; ++scenario) {
 		gps_test_time = 0;
 		gps_test_warnings.clear();
 		Receiver receiver;
 		receiver.legacy = scenario == 2;
 		receiver.module = receiver.legacy ? "NEO-M8P" : scenario == 1 ? "NEO-M9N" : "ZED-F9P";
 		receiver.reject_constellations = scenario == 3;
+		receiver.timeout_constellations = scenario == 4;
 		sensor_gps_s position{};
 		GPSDriverUBX::Settings settings{};
 		settings.dynamic_model = 4;
@@ -681,6 +724,8 @@ static void receiverSettings()
 		unsigned baudrate = 115200;
 		CHECK((driver.configure(baudrate, config) == 0) == (scenario < 2));
 		CHECK(driver.supportsOutputRateSelection() == !receiver.legacy);
+		CHECK(driver.constellationRequestRejected() == (scenario == 3));
+		CHECK(driver.constellationConfigurationRejected() == (scenario >= 3));
 		if (scenario < 2) {
 			CHECK(receiver.current_settings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 4);
 			CHECK(receiver.current_settings.at(UBX_CFG_KEY_RATE_MEAS) == 200);
@@ -694,6 +739,37 @@ static void receiverSettings()
 	}
 }
 
+static void configurationReadback()
+{
+	for (int mode = 0; mode < 7; ++mode) {
+		Fixture f;
+		CHECK(f.configure(GPSHelper::OutputMode::GPS) == 0);
+		f.receiver.readback_mode = mode;
+		f.receiver.current_settings[UBX_CFG_KEY_NAVSPG_DYNMODEL] = 7;
+		f.receiver.current_settings[UBX_CFG_KEY_SIGNAL_GPS_ENA] = 1;
+		f.receiver.current_settings[UBX_CFG_KEY_SIGNAL_QZSS_ENA] = 1;
+		f.receiver.current_settings[UBX_CFG_KEY_SIGNAL_GAL_ENA] = 1;
+		const gps_abstime started = gps_test_time;
+		GPSDriverUBX::ConfigurationReadback report;
+		CHECK(f.driver.readConfiguration(report, 500) == (mode == 0));
+		CHECK(f.receiver.readback_requests == 1);
+		CHECK(gps_test_time - started <= 600000);
+		CHECK(f.driver.receiverReady());
+		CHECK(f.driver.ioError() == 0);
+		if (mode == 0) {
+			CHECK(report.dynamic_model == 7);
+			CHECK(report.measurement_interval_ms == 200 && report.navigation_rate == 1);
+			CHECK(report.constellations_reported && report.constellation_mask == 5);
+		}
+	}
+	Fixture cancelled;
+	CHECK(cancelled.configure(GPSHelper::OutputMode::GPS) == 0);
+	cancelled.receiver.poll_read_error = GPSHelper::ReadCancelled;
+	GPSDriverUBX::ConfigurationReadback report;
+	CHECK(!cancelled.driver.readConfiguration(report, 500));
+	CHECK(cancelled.driver.ioError() == GPSHelper::ReadCancelled);
+}
+
 int main()
 {
 	const struct {
@@ -702,6 +778,7 @@ int main()
 	} cases[] = {
 		{"position-f9p", [] { positionMode(false, true); }},
 		{"receiver-settings", receiverSettings},
+		{"configuration-readback", configurationReadback},
 		{"nmea-failures", nmeaOutputFailures},
 		{"nmea-f9p", [] { nmeaOutput(false, true); }},
 		{"nmea-m9n", [] { nmeaOutput(false, false); }},

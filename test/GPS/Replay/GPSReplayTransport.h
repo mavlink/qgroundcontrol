@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QJsonObject>
 #include <QtCore/QString>
 #include <QtCore/QVector>
 
@@ -32,9 +33,11 @@ struct GPSReplayEvent
     enum class Kind
     {
         Open,
+        OpenError,
         Rx,
         Tx,
         Baud,
+        BaudError,
         Timeout,
         ReadError,
         WriteError,
@@ -50,8 +53,10 @@ struct GPSReplayEvent
 struct GPSReplayTrace
 {
     QVector<GPSReplayEvent> events;
-    static bool fromJson(const QByteArray& json, GPSReplayTrace& result, QString& error);
-    static bool load(const QString& filename, GPSReplayTrace& result, QString& error);
+    QJsonObject profile = {};
+    quint64 streamId = 0;
+    static bool fromJson(const QByteArray& json, GPSReplayTrace& result, QString& error, quint64 streamId = 0);
+    static bool load(const QString& filename, GPSReplayTrace& result, QString& error, quint64 streamId = 0);
 };
 
 /// A trace owns byte order and arrival times; reads advance virtual time without sleeping.

@@ -13,6 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSPositionFactGroupTest.cc GPSPosi
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(GPSManagerTest LABELS Unit RESOURCE_LOCK Settings)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDiagnosticsUITest.cc GPSDiagnosticsUITest.h)
+add_qgc_test(GPSDiagnosticsUITest LABELS Unit RESOURCE_LOCK Settings)
 add_qgc_test(GPSConnectionStateTest LABELS Unit)
 add_qgc_test(GPSSourceHealthTest LABELS Unit)
 add_qgc_test(GPSCorrectionManagerTest LABELS Unit RESOURCE_LOCK Settings)

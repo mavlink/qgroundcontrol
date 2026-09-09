@@ -27,16 +27,21 @@ NMEADecoderSession::NMEADecoderSession(QObject* parent)
         }
     });
     connect(&_health, &GPSSourceHealth::satellitesChanged, this, [this]() {
-        if (!_refreshingSatellites && _satelliteAdapter &&
-            (_health.satellitesInViewCount() < 0 || _health.satellitesInUseCount() < 0)) {
+        if (_refreshingSatellites) {
+            return;
+        }
+        if (_satelliteAdapter && (_health.satellitesInViewCount() < 0 || _health.satellitesInUseCount() < 0)) {
             _expireSatellites();
             return;
         }
         if (_health.satellitesInViewCount() < 0) {
             _satellitesInView.clear();
+            _satellitesReceivedAtUs = 0;
         }
         if (_health.satellitesInUseCount() < 0) {
             _satellitesInUse.clear();
+            _satellitesUsedKnown = false;
+            _satelliteUseSystems.clear();
         }
         emit satellitesChanged();
     });
@@ -98,17 +103,22 @@ bool NMEADecoderSession::start(QIODevice* device)
         _satelliteSource.get(), &QGeoSatelliteInfoSource::errorOccurred, this,
         [this, current](QGeoSatelliteInfoSource::Error error) {
             if (current && _satelliteSource.get() == current && error != QGeoSatelliteInfoSource::NoError) {
+                _viewRejectedThroughUs = GPSObservation::monotonicNowUs();
+                _useRejectedThroughUs = _viewRejectedThroughUs;
                 _viewSnapshot = {};
                 _useSnapshot = {};
-                _health.clearSatelliteReports();
+                _expireSatellites();
             }
         },
         Qt::QueuedConnection);
     _satelliteSource->requestUpdate(5000);
     _satellitePollTimer.start();
     _positionSource = std::make_unique<NMEAPositionSource>(_stream->positionDevice());
-    connect(_positionSource.get(), &QGeoPositionInfoSource::positionUpdated, &_health,
-            [this](const QGeoPositionInfo&) { _health.updateObservation(_positionSource->lastObservation()); });
+    connect(_positionSource.get(), &QGeoPositionInfoSource::positionUpdated, &_health, [this](const QGeoPositionInfo&) {
+        auto observation = _positionSource->lastObservation();
+        observation.sessionId = _sessionId;
+        _health.updateObservation(observation);
+    });
     connect(_positionSource.get(), &QGeoPositionInfoSource::errorOccurred, &_health,
             [this](QGeoPositionInfoSource::Error error) {
                 if (error != QGeoPositionInfoSource::NoError) {
@@ -123,26 +133,61 @@ void NMEADecoderSession::_expireSatellites()
     if (!_satelliteAdapter || _refreshingSatellites) {
         return;
     }
-    const auto view = NMEASatelliteAdapter::expireSnapshot(_viewSnapshot, GPSObservation::monotonicNowUs());
-    const auto used = NMEASatelliteAdapter::expireSnapshot(_useSnapshot, GPSObservation::monotonicNowUs());
+    const quint64 nowUs = GPSObservation::monotonicNowUs();
+    const quint64 freshnessUs = static_cast<quint64>(_health.freshnessTimeoutMs()) * 1000;
+    const auto expire = [nowUs, freshnessUs](NMEASatelliteAdapter::Snapshot snapshot, quint64& rejectedThroughUs) {
+        for (auto it = snapshot.constellationReceipts.begin(); it != snapshot.constellationReceipts.end();) {
+            const quint64 receipt = it.value();
+            if (!receipt || receipt <= rejectedThroughUs || receipt > nowUs || nowUs - receipt >= freshnessUs) {
+                if (receipt <= nowUs && receipt > rejectedThroughUs) {
+                    rejectedThroughUs = receipt;
+                }
+                it = snapshot.constellationReceipts.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        return NMEASatelliteAdapter::expireSnapshot(snapshot, nowUs);
+    };
+    // Retire expired reports so a later health-policy change cannot revive cached metadata.
+    _viewSnapshot = expire(_viewSnapshot, _viewRejectedThroughUs);
+    _useSnapshot = expire(_useSnapshot, _useRejectedThroughUs);
+    const auto view = _viewSnapshot;
+    const auto used = _useSnapshot;
     const QPointer<NMEADecoderSession> guard(this);
     const QPointer<NMEASatelliteAdapter> adapter(_satelliteAdapter.get());
     _refreshingSatellites = true;
     _satellitesInView = view.satellites;
+    _satellitesInUse = used.satellites;
+    _satellitesReceivedAtUs = view.receivedAtUs;
+    _satellitesUsedKnown = used.receivedAtUs != 0;
+    _satelliteUseSystems.clear();
+    static const QMap<QByteArray, QGeoSatelliteInfo::SatelliteSystem> systems = {{"GP", QGeoSatelliteInfo::GPS},
+                                                                                 {"GL", QGeoSatelliteInfo::GLONASS},
+                                                                                 {"GA", QGeoSatelliteInfo::GALILEO},
+                                                                                 {"GB", QGeoSatelliteInfo::BEIDOU},
+                                                                                 {"GQ", QGeoSatelliteInfo::QZSS}};
+    for (auto it = used.constellationReceipts.cbegin(); it != used.constellationReceipts.cend(); ++it) {
+        const auto system = systems.constFind(it.key());
+        if (system != systems.cend()) {
+            _satelliteUseSystems.insert(system.value());
+        }
+    }
     _health.updateSatellitesInView(view.satellites.size(),
-                                   view.receivedAtUs ? GPSObservation::ageMilliseconds(view.receivedAtUs) : -1);
+                                   view.receivedAtUs ? static_cast<qint64>((nowUs - view.receivedAtUs) / 1000) : -1);
     if (guard && adapter && adapter == _satelliteAdapter.get()) {
-        _satellitesInUse = used.satellites;
         _health.updateSatellitesInUse(used.satellites.size(),
-                                      used.receivedAtUs ? GPSObservation::ageMilliseconds(used.receivedAtUs) : -1);
+                                      used.receivedAtUs ? static_cast<qint64>((nowUs - used.receivedAtUs) / 1000) : -1);
         if (guard) {
             _refreshingSatellites = false;
+            emit satellitesChanged();
         }
     }
 }
 
 void NMEADecoderSession::stop()
 {
+    ++_sessionId;
     _satellitePollTimer.stop();
     _positionSource.reset();
     _satelliteSource.reset();
@@ -151,5 +196,16 @@ void NMEADecoderSession::stop()
     _viewSnapshot = {};
     _useSnapshot = {};
     _refreshingSatellites = false;
+    _satellitesInView.clear();
+    _satellitesInUse.clear();
+    _satellitesReceivedAtUs = 0;
+    _viewRejectedThroughUs = 0;
+    _useRejectedThroughUs = 0;
+    _satellitesUsedKnown = false;
+    _satelliteUseSystems.clear();
+    const QPointer<NMEADecoderSession> guard(this);
     _health.reset();
+    if (guard) {
+        emit satellitesChanged();
+    }
 }

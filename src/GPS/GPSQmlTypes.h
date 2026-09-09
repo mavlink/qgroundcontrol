@@ -4,6 +4,8 @@
 
 #include "GPSConnectionState.h"
 #include "GPSCorrectionEventModel.h"
+#include "GPSRelativePositionModel.h"
+#include "GPSSatelliteModel.h"
 #include "GPSSourceHealth.h"
 
 // Keep application QML registration separate from the reusable GPS core.
@@ -28,5 +30,21 @@ struct GPSCorrectionEventModelQml
     Q_GADGET
     QML_FOREIGN(GPSCorrectionEventModel)
     QML_NAMED_ELEMENT(GPSCorrectionEventModel)
+    QML_UNCREATABLE("")
+};
+
+struct GPSSatelliteModelQml
+{
+    Q_GADGET
+    QML_FOREIGN(GPSSatelliteModel)
+    QML_NAMED_ELEMENT(GPSSatelliteModel)
+    QML_UNCREATABLE("")
+};
+
+struct GPSRelativePositionModelQml
+{
+    Q_GADGET
+    QML_FOREIGN(GPSRelativePositionModel)
+    QML_NAMED_ELEMENT(GPSRelativePositionModel)
     QML_UNCREATABLE("")
 };

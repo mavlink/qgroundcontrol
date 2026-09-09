@@ -1,0 +1,105 @@
+#include "GPSRelativePositionModelTest.h"
+
+#include <cmath>
+#include <limits>
+
+#include "GPSRelativePositionModel.h"
+
+void GPSRelativePositionModelTest::_validityAndZeroBaseline()
+{
+    GPSRelativePositionModel model;
+    QVERIFY(std::isnan(model.north()));
+    QVERIFY(std::isnan(model.heading()));
+    QCOMPARE(model.referenceStationId(), -1);
+    model.beginSession(QStringLiteral("nativeReceiver"), 4);
+    GPSRelativeObservation report;
+    report.sessionId = 4;
+    report.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    report.referenceStationId = 12;
+    report.fixValid = true;
+    report.positionValid = true;
+    report.carrierFixed = true;
+    report.normalized = true;
+    report.positionNedMeters = {0, -1, 2};
+    report.accuracyNedMeters = {0, 0.02, 0.03};
+    report.headingDegrees = 0;
+    report.headingAccuracyDegrees = 0;
+    model.updateObservation(report);
+    QVERIFY(model.fresh());
+    QCOMPARE(model.north(), 0.0);
+    QCOMPARE(model.east(), -1.0);
+    QCOMPARE(model.down(), 2.0);
+    QCOMPARE(model.northAccuracy(), 0.0);
+    QCOMPARE(model.heading(), 0.0);
+    QCOMPARE(model.headingAccuracy(), 0.0);
+    QVERIFY(model.carrierFixed());
+    QVERIFY(model.normalized());
+    QCOMPARE(model.referenceStationId(), 12);
+    report.positionValid = false;
+    report.headingDegrees.reset();
+    model.updateObservation(report);
+    QVERIFY(std::isnan(model.north()));
+    QVERIFY(std::isnan(model.northAccuracy()));
+    QVERIFY(std::isnan(model.heading()));
+    QVERIFY(std::isnan(model.headingAccuracy()));
+    report.positionValid = true;
+    report.positionNedMeters[0] = std::numeric_limits<double>::infinity();
+    report.accuracyNedMeters[1] = -1;
+    model.updateObservation(report);
+    QVERIFY(std::isnan(model.north()));
+    QVERIFY(std::isnan(model.eastAccuracy()));
+}
+
+void GPSRelativePositionModelTest::_freshnessAndSessionIsolation()
+{
+    GPSRelativePositionModel model(nullptr, 100);
+    model.beginSession(QStringLiteral("nativeReceiver"), 1);
+    GPSRelativeObservation report;
+    report.sessionId = 1;
+    report.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 10000;
+    report.fixValid = report.positionValid = report.movingBase = true;
+    report.positionNedMeters[0] = 5;
+    model.updateObservation(report);
+    QVERIFY(model.fresh());
+    report.monotonicTimestampUs -= 1000;
+    report.positionNedMeters[0] = 99;
+    model.updateObservation(report);
+    QCOMPARE(model.north(), 5.0);
+    report.monotonicTimestampUs = GPSObservation::monotonicNowUs() + 1000000;
+    model.updateObservation(report);
+    QCOMPARE(model.north(), 5.0);
+    QTRY_VERIFY_WITH_TIMEOUT(!model.fresh(), 1000);
+    QVERIFY(std::isnan(model.north()));
+    QVERIFY(!model.movingBase());
+    QCOMPARE(model.referenceStationId(), -1);
+    model.beginSession(QStringLiteral("nativeReceiver"), 2);
+    report.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    model.updateObservation(report);
+    QVERIFY(!model.fresh());
+    report.sessionId = 2;
+    model.updateObservation(report);
+    QCOMPARE(model.north(), 99.0);
+    model.reset();
+    QVERIFY(!model.fresh());
+    QVERIFY(model.sourceId().isEmpty());
+}
+
+void GPSRelativePositionModelTest::_reentrantReplacement()
+{
+    GPSRelativePositionModel model;
+    model.beginSession(QStringLiteral("nativeReceiver"), 1);
+    connect(&model, &GPSRelativePositionModel::stateChanged, &model, [&]() {
+        if (model.fresh() && model.sessionId() == 1) {
+            model.beginSession(QStringLiteral("replacement"), 2);
+        }
+    });
+    GPSRelativeObservation report;
+    report.sessionId = 1;
+    report.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    model.updateObservation(report);
+    QCOMPARE(model.sessionId(), 2ULL);
+    QVERIFY(!model.fresh());
+    QVERIFY(std::isnan(model.length()));
+}
+
+UT_REGISTER_TEST(GPSRelativePositionModelTest, TestLabel::Unit)

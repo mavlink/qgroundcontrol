@@ -42,6 +42,8 @@ private slots:
     void _correctionsWrittenOnlyOnWorker();
     void _deliveryReportsBoundAdmission();
     void _deliveryOutcomesPreserveProvenance();
+    void _configurationReportLifecycle();
+    void _configurationReportResetCanRestart();
     void _clearFlushesKnownResults_data();
     void _clearFlushesKnownResults();
 };
@@ -487,6 +489,105 @@ void GPSReceiverContractTest::_clearFlushesKnownResults()
         observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
         QVERIFY(mailbox->publish(observation));
     }
+}
+
+void GPSReceiverContractTest::_configurationReportLifecycle()
+{
+    GPSReceiverSession session;
+    const auto first = std::make_shared<WorkerGate>();
+    const auto second = std::make_shared<WorkerGate>();
+    const auto cleanup = qScopeGuard([&]() {
+        session.stop();
+        first->release.release();
+        second->release.release();
+        session.shutdown();
+    });
+    session.start(GPSType::u_blox, blockedFactory(first), {});
+    QVERIFY(first->entered.tryAcquire(1, 5000));
+    auto* retired = session.findChild<GPSProvider*>();
+    QVERIFY(retired);
+    const quint64 oldSession = session.sessionId();
+    QSignalSpy reports(&session, &GPSReceiverSession::configurationReported);
+    GPSConfigurationReport report;
+    GPSSettingReport setting;
+    setting.key = QStringLiteral("outputRateHz");
+    setting.requestedValue = 5;
+    report.settings.append(setting);
+    report.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    emit retired->configurationReported(report);
+    QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+    QCOMPARE(reports.size(), 1);
+    QCOMPARE(session.configurationReport().sessionId, oldSession);
+    QCOMPARE(session.configurationReport().monotonicTimestampUs, report.monotonicTimestampUs);
+    QVERIFY(session.configurationReport().active);
+
+    report.settings.first().requestState = GPSSettingReport::RequestState::Acknowledged;
+    report.settings.first().readbackState = GPSSettingReport::ReadbackState::Reported;
+    report.settings.first().reportedValue = 5;
+    emit retired->configurationReported(report);
+    emit retired->connectionError(GPSConnectionError::DeviceError);
+    QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+    QCOMPARE(reports.size(), 3);
+    QVERIFY(!session.configurationReport().active);
+    QCOMPARE(session.configurationReport().settings.first().reportedValue.toInt(), 5);
+    emit retired->configurationReported(report);
+    QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+    QCOMPARE(reports.size(), 3);
+
+    emit retired->configurationReported(report);
+    session.start(GPSType::u_blox, blockedFactory(second), {});
+    QVERIFY(second->entered.tryAcquire(1, 5000));
+    QVERIFY(session.sessionId() != oldSession);
+    QVERIFY(session.configurationReport().settings.isEmpty());
+    auto* current = session.findChild<GPSProvider*>();
+    QVERIFY(current);
+    QVERIFY(current != retired);
+    report.monotonicTimestampUs += 10;
+    emit current->configurationReported(report);
+    QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+    QCOMPARE(reports.size(), 5);
+    QCOMPARE(session.configurationReport().sessionId, session.sessionId());
+    QCOMPARE(session.configurationReport().monotonicTimestampUs, report.monotonicTimestampUs);
+    QVERIFY(session.configurationReport().active);
+    session.stop();
+    QCOMPARE(reports.size(), 6);
+    QVERIFY(session.configurationReport().settings.isEmpty());
+    QVERIFY(!session.configurationReport().active);
+}
+
+void GPSReceiverContractTest::_configurationReportResetCanRestart()
+{
+    GPSReceiverSession session;
+    const auto first = std::make_shared<WorkerGate>();
+    const auto second = std::make_shared<WorkerGate>();
+    const auto cleanup = qScopeGuard([&]() {
+        session.stop();
+        first->release.release();
+        second->release.release();
+        session.shutdown();
+    });
+    session.start(GPSType::u_blox, blockedFactory(first), {});
+    QVERIFY(first->entered.tryAcquire(1, 5000));
+    auto* worker = session.findChild<GPSProvider*>();
+    QVERIFY(worker);
+    GPSConfigurationReport report;
+    report.settings.append(GPSSettingReport{});
+    emit worker->configurationReported(report);
+    QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+    bool restarted = false;
+    connect(&session, &GPSReceiverSession::configurationReported, &session, [&](const GPSConfigurationReport& updated) {
+        if (updated.settings.isEmpty() && !restarted) {
+            restarted = true;
+            GPSReceiverConfig config;
+            config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
+            session.start(GPSType::u_blox, blockedFactory(second), config);
+        }
+    });
+    session.stop();
+    QVERIFY(restarted);
+    QVERIFY(second->entered.tryAcquire(1, 5000));
+    QVERIFY(session.hasReceiver());
+    QVERIFY(session.nmeaDevice());
 }
 
 QTEST_GUILESS_MAIN(GPSReceiverContractTest)

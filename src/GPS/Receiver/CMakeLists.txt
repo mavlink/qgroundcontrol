@@ -1,6 +1,10 @@
 qt_add_library(
     QGCGPSReceiver
     STATIC
+    GPSSatelliteModel.cc
+    GPSSatelliteModel.h
+    GPSRelativePositionModel.cc
+    GPSRelativePositionModel.h
     GPSConnectionConfig.cc
     GPSConnectionConfig.h
     GPSReceiverProfile.cc
@@ -22,7 +26,7 @@ qt_add_library(
 target_include_directories(QGCGPSReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
     QGCGPSReceiver
-    PUBLIC QGCGPSDriver QGCGPSCore QGCGPSCorrections
+    PUBLIC QGCGPSDriver QGCGPSCore QGCGPSCorrections QGCGPSRecording
     PRIVATE QGCLogging
 )
 

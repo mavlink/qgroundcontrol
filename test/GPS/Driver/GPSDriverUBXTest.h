@@ -7,6 +7,8 @@ class GPSDriverUBXTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _configurationReport_data();
+    void _configurationReport();
     void _receiverSettings_data();
     void _receiverSettings();
     void _managedNmeaKeepsTransportUntilStopped();

@@ -39,6 +39,8 @@ public:
     static constexpr int FRESHNESS_TIMEOUT_MS = 5000;
     static qint64 ageMilliseconds(quint64 monotonicTimestampUs);
 
+    int freshnessTimeoutMs() const { return _freshnessTimeoutMs; }
+
     State state() const { return _state; }
 
     bool usable() const { return _state == Usable; }
