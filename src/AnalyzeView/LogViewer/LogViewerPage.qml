@@ -45,6 +45,9 @@ AnalyzePage {
                 _parametersTab.applyFilter()
                 logViewerChart.clearMarker()
                 logViewerChart.refreshBinChart()
+                _mapTab._sharedCursorT = NaN
+                _mapTab._sharedZoomMinX = NaN
+                _mapTab._sharedZoomMaxX = NaN
                 if (clearControllerState) {
                     logViewerController.clear()
                 }
@@ -303,9 +306,12 @@ AnalyzePage {
                                 onCursorMoved: (t) => {
                                     _mapTab._markerVisible = true
                                     _mapTab._markerCoord   = logParser.gpsCoordAt(t)
+                                    _mapTab._sharedCursorT = t
                                     if (_altChart.visible) _altChart.setSharedCursor(t)
                                 }
                                 onZoomApplied: (minX, maxX) => {
+                                    _mapTab._sharedZoomMinX = minX
+                                    _mapTab._sharedZoomMaxX = maxX
                                     if (_altChart.visible) _altChart.setSharedZoom(minX, maxX)
                                 }
                             }
@@ -336,6 +342,14 @@ AnalyzePage {
                     // Shared cursor state (driven by altitude chart, displayed on map)
                     property bool _markerVisible: false
                     property var _markerCoord: ({})
+
+                    // Collapsed state for the altitude chart, so the map can use the full tab height
+                    property bool _altChartCollapsed: false
+
+                    // Last shared cursor/zoom from either chart; reapplied when the altitude chart becomes visible.
+                    property real _sharedCursorT: NaN
+                    property real _sharedZoomMinX: NaN
+                    property real _sharedZoomMaxX: NaN
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -427,12 +441,34 @@ AnalyzePage {
                             }
                         }
 
+                        // ---- Altitude chart header (collapse/expand toggle) ----
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: _mapTab._hasAltField && _mapTab._hasPath
+                            spacing: ScreenTools.defaultFontPixelWidth * 0.5
+
+                            QGCLabel {
+                                Layout.fillWidth: true
+                                text: qsTr("Altitude")
+                            }
+
+                            QGCButton {
+                                id: _altChartToggle
+                                iconSource: _mapTab._altChartCollapsed ? "/res/chevron-up.svg" : "/res/chevron-down.svg"
+                                Accessible.name: _mapTab._altChartCollapsed ? qsTr("Expand altitude chart") : qsTr("Collapse altitude chart")
+                                ToolTip.text: Accessible.name
+                                ToolTip.visible: hovered
+                                focusPolicy: Qt.StrongFocus
+                                onClicked: _mapTab._altChartCollapsed = !_mapTab._altChartCollapsed
+                            }
+                        }
+
                         // ---- Altitude chart ----
                         LogViewerAltChart {
                             id: _altChart
                             Layout.fillWidth: true
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 14
-                            visible: _mapTab._hasAltField && _mapTab._hasPath
+                            visible: _mapTab._hasAltField && _mapTab._hasPath && !_mapTab._altChartCollapsed
                             logParser: logParser
                             altFieldName: _mapTab._altFieldName
                             xAxisShowLocalTime: _xAxisShowLocalTime
@@ -440,13 +476,26 @@ AnalyzePage {
                             onMarkerChanged: (t) => {
                                 _mapTab._markerVisible = true
                                 _mapTab._markerCoord   = logParser.gpsCoordAt(t)
+                                _mapTab._sharedCursorT = t
                                 logViewerChart.setSharedCursor(t)
                             }
                             onMarkerCleared: {
                                 _mapTab._markerVisible = false
                             }
                             onZoomApplied: (minX, maxX) => {
+                                _mapTab._sharedZoomMinX = minX
+                                _mapTab._sharedZoomMaxX = maxX
                                 logViewerChart.setSharedZoom(minX, maxX)
+                            }
+                        }
+
+                        // Catch up on cursor/zoom changes that occurred while this chart was hidden.
+                        Connections {
+                            target: _altChart
+                            function onVisibleChanged() {
+                                if (!_altChart.visible) return
+                                if (!isNaN(_mapTab._sharedZoomMinX)) _altChart.setSharedZoom(_mapTab._sharedZoomMinX, _mapTab._sharedZoomMaxX)
+                                if (!isNaN(_mapTab._sharedCursorT)) _altChart.setSharedCursor(_mapTab._sharedCursorT)
                             }
                         }
                     }
