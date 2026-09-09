@@ -212,7 +212,8 @@ SerialWorker::~SerialWorker()
 
 bool SerialWorker::isConnected() const
 {
-    return (_port && _port->isOpen());
+    // Called cross-thread from SerialLink; must not touch the thread-affine _port
+    return _isConnected;
 }
 
 void SerialWorker::setupPort()
@@ -334,6 +335,7 @@ void SerialWorker::_onPortConnected()
         _timer->start(CONNECT_TIMEOUT_MS);
     }
 
+    _isConnected = true;
     _errorEmitted = false;
     emit connected();
 }
@@ -346,6 +348,7 @@ void SerialWorker::_onPortDisconnected()
         _timer->stop();
     }
 
+    _isConnected = false;
     _errorEmitted = false;
     emit disconnected();
 }
