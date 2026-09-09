@@ -6,18 +6,9 @@
 
 #include <QtPositioning/QGeoCoordinate>
 
-VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
-    : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
+VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
+    : GPSPositionFactGroup(parent)
 {
-    _addFact(&_latFact);
-    _addFact(&_lonFact);
-    _addFact(&_mgrsFact);
-    _addFact(&_hdopFact);
-    _addFact(&_vdopFact);
-    _addFact(&_courseOverGroundFact);
-    _addFact(&_yawFact);
-    _addFact(&_lockFact);
-    _addFact(&_countFact);
     _addFact(&_systemErrorsFact);
     _addFact(&_spoofingStateFact);
     _addFact(&_jammingStateFact);
@@ -27,13 +18,6 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     _addFact(&_gnssSignalQualityFact);
     _addFact(&_postProcessingQualityFact);
 
-    _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _mgrsFact.setRawValue("");
-    _hdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _yawFact.setRawValue(std::numeric_limits<int16_t>::quiet_NaN());
     _spoofingStateFact.setRawValue(255);
     _jammingStateFact.setRawValue(255);
     _authenticationStateFact.setRawValue(255);

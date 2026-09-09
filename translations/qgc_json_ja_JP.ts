@@ -7938,77 +7938,77 @@
     </message>
   </context>
   <context>
-    <name>GPSRTKFact.json</name>
+    <name>GPSBaseStationFact.json</name>
     <message>
       <extracomment>.QGC.MetaData.Facts[connected].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Connected</source>
       <translation>接続しました</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentAccuracy].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Accuracy</source>
       <translation>現在のサーベイイン精度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentLatitude].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Latitude</source>
       <translation>現在のサーベイイン緯度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentLongitude].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Longitude</source>
       <translation>現在のサーベイイン経度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentAltitude].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Altitude</source>
       <translation>現在のサーベイイン高度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentDuration].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Duration</source>
       <translation>現在のサーベイイン時間</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[valid].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Survey-In Valid</source>
       <translation>サーベイインの有効性</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[active].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Survey-In Active</source>
       <translation>サーベイイン 有効</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[numSatellites].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Satellites in View</source>
       <translation type="unfinished">Satellites in View</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[numSatellitesUsed].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Satellites Used in Solution</source>
       <translation type="unfinished">Satellites Used in Solution</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lastError].shortDesc</extracomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Last Connection Error</source>
       <translation type="unfinished">Last Connection Error</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lastError].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
-      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>None,Failed to open device,Configuration rejected,Device error</source>
       <translation type="unfinished">None,Failed to open device,Configuration rejected,Device error</translation>
     </message>

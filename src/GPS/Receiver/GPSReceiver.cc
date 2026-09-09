@@ -22,6 +22,16 @@ GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent)
         _facts->numSatellitesUsed()->setRawValue(qMax(0, _health.satellitesInUseCount()));
     });
 
+    connect(&_health, &GPSSourceHealth::positionChanged, this, [this]() {
+        const auto observation = _health.observation();
+        if (_health.state() == GPSSourceHealth::NoData || _health.state() == GPSSourceHealth::Stale ||
+            observation.ageMilliseconds() < 0) {
+            _facts->resetPosition();
+        } else {
+            _facts->updatePosition(observation);
+        }
+    });
+
     connect(&_session, &GPSReceiverSession::receiverTypeChanged, this, [this](GPSType type) {
         const QPointer<GPSReceiver> guard(this);
         _facts->lastError()->setRawValue(static_cast<int>(GPSConnectionError::None));

@@ -52,7 +52,6 @@ target_sources(${CMAKE_PROJECT_NAME}
 set(JSON_FILES
     RPMFact.json
     TemperatureFact.json
-    GPSFact.json
     EscStatusFactGroup.json
     LocalPositionFact.json
     EstimatorStatusFactGroup.json

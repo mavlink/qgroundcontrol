@@ -2,12 +2,13 @@
 
 #include "AppMessages.h"
 #include "AutoConnectSettings.h"
+#include "GPSBaseStationState.h"
 #include "GPSConnectionSettings.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverCapabilities.h"
+#include "GPSReceiverFactGroup.h"
 #include "GPSReceiverPositionSource.h"
-#include "GPSRtkState.h"
 #include "LinkManager.h"
 #include "NMEASourceManager.h"
 #include "PositionManager.h"
@@ -30,7 +31,7 @@ GPSManager::GPSManager(QObject* parent)
     , _corrections(this)
     , _receiverSession(this)
     , _receiver(new GPSReceiver(_receiverSession, this))
-    , _rtkState(new GPSRtkState(_receiverSession, this))
+    , _baseStationState(new GPSBaseStationState(_receiverSession, *_receiver->facts()->rtk(), this))
 {
     qCDebug(GPSManagerLog) << this;
 
@@ -88,7 +89,7 @@ GPSManager::~GPSManager()
 
     shutdown();
     delete _receiverAutoConnect;
-    delete _rtkState;
+    delete _baseStationState;
     delete _receiver;
 }
 

@@ -7938,77 +7938,77 @@
         </message>
     </context>
     <context>
-        <name>GPSRTKFact.json</name>
+        <name>GPSBaseStationFact.json</name>
         <message>
             <extracomment>.QGC.MetaData.Facts[connected].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Connected</source>
             <translation>[Ċǒńńėċṫėḋ___]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[currentAccuracy].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Current Survey-In Accuracy</source>
             <translation>[Ċũŕŕėńṫ Ŝũŕv̇ėẏ-İń Ȧċċũŕȧċẏ________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[currentLatitude].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Current Survey-In Latitude</source>
             <translation>[Ċũŕŕėńṫ Ŝũŕv̇ėẏ-İń Ĺȧṫıṫũḋė________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[currentLongitude].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Current Survey-In Longitude</source>
             <translation>[Ċũŕŕėńṫ Ŝũŕv̇ėẏ-İń Ĺǒńġıṫũḋė________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[currentAltitude].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Current Survey-In Altitude</source>
             <translation>[Ċũŕŕėńṫ Ŝũŕv̇ėẏ-İń Ȧĺṫıṫũḋė________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[currentDuration].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Current Survey-In Duration</source>
             <translation>[Ċũŕŕėńṫ Ŝũŕv̇ėẏ-İń Ḋũŕȧṫıǒń________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[valid].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Survey-In Valid</source>
             <translation>[Ŝũŕv̇ėẏ-İń V̇ȧĺıḋ_____]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[active].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Survey-In Active</source>
             <translation>[Ŝũŕv̇ėẏ-İń Ȧċṫıv̇ė_____]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[numSatellites].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Satellites in View</source>
             <translation>[Ŝȧṫėĺĺıṫėŝ ıń V̇ıėẇ______]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[numSatellitesUsed].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Satellites Used in Solution</source>
             <translation>[Ŝȧṫėĺĺıṫėŝ Ũŝėḋ ıń Ŝǒĺũṫıǒń________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[lastError].shortDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>Last Connection Error</source>
             <translation>[Ĺȧŝṫ Ċǒńńėċṫıǒń Ėŕŕǒŕ_______]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[lastError].enumStrings</extracomment>
             <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/GPSRTKFact.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json" />
             <source>None,Failed to open device,Configuration rejected,Device error</source>
             <translation>[Ńǒńė,Ƒȧıĺėḋ ṫǒ ǒṗėń ḋėv̇ıċė,Ċǒńƒıġũŕȧṫıǒń ŕėĵėċṫėḋ,Ḋėv̇ıċė ėŕŕǒŕ___________________]</translation>
         </message>

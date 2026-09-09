@@ -1,4 +1,4 @@
-#include "GPSRtkState.h"
+#include "GPSBaseStationState.h"
 
 #include <QtCore/QPointer>
 
@@ -7,17 +7,17 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSRtkStateLog, "GPS.RTK.GPSRtkState")
+QGC_LOGGING_CATEGORY(GPSBaseStationStateLog, "GPS.BaseStation.GPSBaseStationState")
 
-GPSRtkState::GPSRtkState(GPSReceiverSession& session, QObject* parent)
+GPSBaseStationState::GPSBaseStationState(GPSReceiverSession& session, GPSBaseStationFactGroup& facts, QObject* parent)
     : QObject(parent)
     , _session(session)
-    , _facts(this)
+    , _facts(facts)
 {
-    qCDebug(GPSRtkStateLog) << this;
-    connect(&_session, &GPSReceiverSession::surveyInReceived, this, &GPSRtkState::_updateSurvey);
-    connect(&_session, &GPSReceiverSession::disconnected, this, &GPSRtkState::_reset);
-    connect(&_session, &GPSReceiverSession::receiverTypeChanged, this, &GPSRtkState::_reset);
+    qCDebug(GPSBaseStationStateLog) << this;
+    connect(&_session, &GPSReceiverSession::surveyInReceived, this, &GPSBaseStationState::_updateSurvey);
+    connect(&_session, &GPSReceiverSession::disconnected, this, &GPSBaseStationState::_reset);
+    connect(&_session, &GPSReceiverSession::receiverTypeChanged, this, &GPSBaseStationState::_reset);
     connect(&_session, &GPSReceiverSession::capabilitiesUpdated, this, [this]() {
         if (!_acceptsSurvey()) {
             _reset();
@@ -25,24 +25,24 @@ GPSRtkState::GPSRtkState(GPSReceiverSession& session, QObject* parent)
     });
 }
 
-GPSRtkState::~GPSRtkState()
+GPSBaseStationState::~GPSBaseStationState()
 {
-    qCDebug(GPSRtkStateLog) << this;
+    qCDebug(GPSBaseStationStateLog) << this;
     _session.disconnect(this);
 }
 
-bool GPSRtkState::_acceptsSurvey() const
+bool GPSBaseStationState::_acceptsSurvey() const
 {
     return _session.hasReceiver() && _session.config().role == GPSReceiverConfig::Role::RTKBase &&
            _session.capabilities().rtkBase != GPSReceiverCapabilities::Support::Unsupported;
 }
 
-void GPSRtkState::_updateSurvey(const GPSSurveyInStatus& status)
+void GPSBaseStationState::_updateSurvey(const GPSSurveyInStatus& status)
 {
     if (!_acceptsSurvey()) {
         return;
     }
-    const QPointer<GPSRtkState> guard(this);
+    const QPointer<GPSBaseStationState> guard(this);
     const quint64 revision = ++_revision;
     const quint64 sessionId = _session.sessionId();
     const std::array<std::pair<Fact*, QVariant>, 7> values = {{
@@ -62,9 +62,9 @@ void GPSRtkState::_updateSurvey(const GPSSurveyInStatus& status)
     }
 }
 
-void GPSRtkState::_reset()
+void GPSBaseStationState::_reset()
 {
-    const QPointer<GPSRtkState> guard(this);
+    const QPointer<GPSBaseStationState> guard(this);
     const quint64 revision = ++_revision;
     const std::array<std::pair<Fact*, QVariant>, 7> values = {{
         {_facts.valid(), false},

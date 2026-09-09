@@ -6,7 +6,7 @@
 
 class GPSReceiverSession;
 
-class GPSRtkStateTest : public UnitTest
+class GPSBaseStationStateTest : public UnitTest
 {
     Q_OBJECT
 

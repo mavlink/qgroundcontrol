@@ -1,11 +1,11 @@
-#include "GPSRtkStateTest.h"
+#include "GPSBaseStationStateTest.h"
 
 #include <QtCore/QPointer>
 
 #include <memory>
 
+#include "GPSBaseStationState.h"
 #include "GPSReceiverSession.h"
-#include "GPSRtkState.h"
 
 namespace {
 GPSSurveyInStatus validSurvey()
@@ -20,8 +20,8 @@ GPSSurveyInStatus validSurvey()
 }
 }  // namespace
 
-void GPSRtkStateTest::_attachReceiver(GPSReceiverSession& session, GPSReceiverConfig::Role role,
-                                      GPSReceiverCapabilities::Support support)
+void GPSBaseStationStateTest::_attachReceiver(GPSReceiverSession& session, GPSReceiverConfig::Role role,
+                                              GPSReceiverCapabilities::Support support)
 {
     session.stop();
     session._config.role = role;
@@ -31,7 +31,7 @@ void GPSRtkStateTest::_attachReceiver(GPSReceiverSession& session, GPSReceiverCo
     emit session.receiverTypeChanged(GPSType::u_blox);
 }
 
-void GPSRtkStateTest::_surveyRoleGating_data()
+void GPSBaseStationStateTest::_surveyRoleGating_data()
 {
     QTest::addColumn<bool>("base");
     QTest::addColumn<GPSReceiverCapabilities::Support>("support");
@@ -52,71 +52,74 @@ void GPSRtkStateTest::_surveyRoleGating_data()
     }
 }
 
-void GPSRtkStateTest::_surveyRoleGating()
+void GPSBaseStationStateTest::_surveyRoleGating()
 {
     QFETCH(bool, base);
     QFETCH(GPSReceiverCapabilities::Support, support);
     QFETCH(bool, hasReceiver);
     QFETCH(bool, accepted);
     GPSReceiverSession session;
-    GPSRtkState state(session);
+    GPSBaseStationFactGroup facts;
+    GPSBaseStationState state(session, facts);
     _attachReceiver(session, base ? GPSReceiverConfig::Role::RTKBase : GPSReceiverConfig::Role::Position, support);
     if (!hasReceiver) {
         session.stop();
     }
     emit session.surveyInReceived(validSurvey());
-    QCOMPARE(state.facts()->valid()->rawValue().toBool(), accepted);
-    QCOMPARE(state.facts()->active()->rawValue().toBool(), accepted);
-    QCOMPARE(state.facts()->currentDuration()->rawValue().toInt(), accepted ? 180 : 0);
+    QCOMPARE(facts.valid()->rawValue().toBool(), accepted);
+    QCOMPARE(facts.active()->rawValue().toBool(), accepted);
+    QCOMPARE(facts.currentDuration()->rawValue().toInt(), accepted ? 180 : 0);
     if (accepted) {
-        QCOMPARE(state.facts()->currentAccuracy()->rawValue().toDouble(), 0.25);
-        QCOMPARE(state.facts()->currentLatitude()->rawValue().toDouble(), 47.5);
-        QCOMPARE(state.facts()->currentLongitude()->rawValue().toDouble(), 8.5);
-        QCOMPARE(state.facts()->currentAltitude()->rawValue().toDouble(), 500.0);
+        QCOMPARE(facts.currentAccuracy()->rawValue().toDouble(), 0.25);
+        QCOMPARE(facts.currentLatitude()->rawValue().toDouble(), 47.5);
+        QCOMPARE(facts.currentLongitude()->rawValue().toDouble(), 8.5);
+        QCOMPARE(facts.currentAltitude()->rawValue().toDouble(), 500.0);
     } else {
-        QVERIFY(qIsNaN(state.facts()->currentLatitude()->rawValue().toDouble()));
+        QVERIFY(qIsNaN(facts.currentLatitude()->rawValue().toDouble()));
     }
-    QCOMPARE(state.facts()->factNames().size(), 7);
-    QVERIFY(!state.facts()->factNames().contains(QStringLiteral("connected")));
-    QVERIFY(!state.facts()->factNames().contains(QStringLiteral("lastError")));
-    QVERIFY(!state.facts()->factNames().contains(QStringLiteral("numSatellites")));
+    QCOMPARE(facts.factNames().size(), 7);
+    QVERIFY(!facts.factNames().contains(QStringLiteral("connected")));
+    QVERIFY(!facts.factNames().contains(QStringLiteral("lastError")));
+    QVERIFY(!facts.factNames().contains(QStringLiteral("numSatellites")));
 }
 
-void GPSRtkStateTest::_roleChangeAndDisconnectReset()
+void GPSBaseStationStateTest::_roleChangeAndDisconnectReset()
 {
     GPSReceiverSession session;
-    GPSRtkState state(session);
+    GPSBaseStationFactGroup facts;
+    GPSBaseStationState state(session, facts);
     _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Unknown);
     emit session.surveyInReceived(validSurvey());
-    QVERIFY(state.facts()->valid()->rawValue().toBool());
+    QVERIFY(facts.valid()->rawValue().toBool());
     _attachReceiver(session, GPSReceiverConfig::Role::Position, GPSReceiverCapabilities::Support::Supported);
     emit session.surveyInReceived(validSurvey());
-    QVERIFY(!state.facts()->valid()->rawValue().toBool());
-    QVERIFY(!state.facts()->active()->rawValue().toBool());
-    QVERIFY(qIsNaN(state.facts()->currentAccuracy()->rawValue().toDouble()));
-    QVERIFY(qIsNaN(state.facts()->currentLatitude()->rawValue().toDouble()));
-    QVERIFY(qIsNaN(state.facts()->currentLongitude()->rawValue().toDouble()));
-    QVERIFY(qIsNaN(state.facts()->currentAltitude()->rawValue().toDouble()));
+    QVERIFY(!facts.valid()->rawValue().toBool());
+    QVERIFY(!facts.active()->rawValue().toBool());
+    QVERIFY(qIsNaN(facts.currentAccuracy()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.currentLatitude()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.currentLongitude()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.currentAltitude()->rawValue().toDouble()));
 
     _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Supported);
     emit session.surveyInReceived(validSurvey());
     session._capabilities.rtkBase = GPSReceiverCapabilities::Support::Unsupported;
     emit session.capabilitiesUpdated(session.capabilities());
-    QVERIFY(!state.facts()->valid()->rawValue().toBool());
+    QVERIFY(!facts.valid()->rawValue().toBool());
     emit session.surveyInReceived(validSurvey());
-    QCOMPARE(state.facts()->currentDuration()->rawValue().toInt(), 0);
+    QCOMPARE(facts.currentDuration()->rawValue().toInt(), 0);
     session.stop();
     emit session.surveyInReceived(validSurvey());
-    QVERIFY(!state.facts()->valid()->rawValue().toBool());
+    QVERIFY(!facts.valid()->rawValue().toBool());
 }
 
-void GPSRtkStateTest::_roleChangeDuringSurveyUpdate()
+void GPSBaseStationStateTest::_roleChangeDuringSurveyUpdate()
 {
     GPSReceiverSession session;
-    GPSRtkState state(session);
+    GPSBaseStationFactGroup facts;
+    GPSBaseStationState state(session, facts);
     _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Supported);
     bool switched = false;
-    connect(state.facts()->currentDuration(), &Fact::rawValueChanged, this, [&]() {
+    connect(facts.currentDuration(), &Fact::rawValueChanged, this, [&]() {
         if (!switched) {
             switched = true;
             _attachReceiver(session, GPSReceiverConfig::Role::Position, GPSReceiverCapabilities::Support::Supported);
@@ -125,20 +128,21 @@ void GPSRtkStateTest::_roleChangeDuringSurveyUpdate()
     emit session.surveyInReceived(validSurvey());
     QVERIFY(switched);
     QCOMPARE(session.config().role, GPSReceiverConfig::Role::Position);
-    QVERIFY(!state.facts()->valid()->rawValue().toBool());
-    QVERIFY(!state.facts()->active()->rawValue().toBool());
-    QCOMPARE(state.facts()->currentDuration()->rawValue().toInt(), 0);
-    QVERIFY(qIsNaN(state.facts()->currentLatitude()->rawValue().toDouble()));
-    QVERIFY(qIsNaN(state.facts()->currentAccuracy()->rawValue().toDouble()));
+    QVERIFY(!facts.valid()->rawValue().toBool());
+    QVERIFY(!facts.active()->rawValue().toBool());
+    QCOMPARE(facts.currentDuration()->rawValue().toInt(), 0);
+    QVERIFY(qIsNaN(facts.currentLatitude()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.currentAccuracy()->rawValue().toDouble()));
 }
 
-void GPSRtkStateTest::_presentationDestructionKeepsSession()
+void GPSBaseStationStateTest::_presentationDestructionKeepsSession()
 {
     GPSReceiverSession session;
     _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Supported);
     const QPointer<GPSProvider> worker = session._provider;
-    auto state = std::make_unique<GPSRtkState>(session);
-    connect(state->facts()->currentDuration(), &Fact::rawValueChanged, this, [&]() { state.reset(); });
+    GPSBaseStationFactGroup facts;
+    auto state = std::make_unique<GPSBaseStationState>(session, facts);
+    connect(facts.currentDuration(), &Fact::rawValueChanged, this, [&]() { state.reset(); });
     emit session.surveyInReceived(validSurvey());
     QVERIFY(!state);
     QVERIFY(worker);
@@ -147,4 +151,4 @@ void GPSRtkStateTest::_presentationDestructionKeepsSession()
     QVERIFY(!worker);
 }
 
-UT_REGISTER_TEST(GPSRtkStateTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSBaseStationStateTest, TestLabel::Unit)

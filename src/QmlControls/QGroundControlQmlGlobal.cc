@@ -5,11 +5,10 @@
 #include "AudioOutput.h"
 #include "FirmwarePluginManager.h"
 #include "FlightMapSettings.h"
+#include "GPSBaseStationFactGroup.h"
 #include "GPSManager.h"
-#include "GPSRTKFactGroup.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
-#include "GPSRtkState.h"
 #include "LinkManager.h"
 #include "LoggingCategoryModel.h"
 #include "MAVLinkProtocol.h"
@@ -62,7 +61,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
-    , _gpsRtkFactGroup(GPSManager::instance()->rtkState()->facts())
+    , _gpsRtkFactGroup(GPSManager::instance()->receiver()->facts()->rtk())
     , _gpsReceiverFactGroup(GPSManager::instance()->receiver()->facts())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.

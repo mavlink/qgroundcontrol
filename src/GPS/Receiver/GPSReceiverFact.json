@@ -9,12 +9,6 @@
             "default": false
         },
         {
-            "name": "numSatellites",
-            "shortDesc": "Satellites in View",
-            "type": "int32",
-            "default": 0
-        },
-        {
             "name": "numSatellitesUsed",
             "shortDesc": "Satellites Used in Solution",
             "type": "int32",

@@ -15,7 +15,7 @@ add_subdirectory(PositionManager)
 
 add_subdirectory(Driver)
 add_subdirectory(Receiver)
-add_subdirectory(RTK)
+add_subdirectory(BaseStation)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTypes.h GPSConnectionSettings.cc
                                              GPSConnectionSettings.h
@@ -24,3 +24,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTy
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionManager.cc GPSCorrectionManager.h)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver QGCGPSCore QGCGPSReceiver)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSPositionFactGroup.cc GPSPositionFactGroup.h)
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} json_gps_position
+    PREFIX "/json/Vehicle"
+    FILES GPSFact.json
+)

@@ -5,9 +5,10 @@
 #include <QtTest/QTest>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSBaseStationFactGroup.h"
 #include "GPSManager.h"
-#include "GPSRTKFactGroup.h"
-#include "GPSRtkState.h"
+#include "GPSReceiver.h"
+#include "GPSReceiverFactGroup.h"
 #include "MockNTRIPTransport.h"
 #include "NMEAUtils.h"
 #include "NTRIPGgaProvider.h"
@@ -215,7 +216,7 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
 {
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->ntripSettings();
-    auto* facts = GPSManager::instance()->rtkState()->facts();
+    auto* facts = GPSManager::instance()->receiver()->facts()->rtk();
     QVERIFY(facts);
     saved.setFactValue(settings->ntripGgaPositionSource(), static_cast<int>(NTRIPGgaProvider::PositionSource::RTKBase));
     saved.setFactValue(facts->valid(), true);

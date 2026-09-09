@@ -14,7 +14,7 @@ class GPSReceiverSession : public QObject
 
     friend class GPSReceiverSessionTest;
     friend class GPSReceiverTest;
-    friend class GPSRtkStateTest;
+    friend class GPSBaseStationStateTest;
 
 public:
     explicit GPSReceiverSession(QObject* parent = nullptr);

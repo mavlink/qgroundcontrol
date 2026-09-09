@@ -5,12 +5,15 @@
 QGC_LOGGING_CATEGORY(GPSReceiverFactGroupLog, "GPS.Receiver.GPSReceiverFactGroup")
 
 GPSReceiverFactGroup::GPSReceiverFactGroup(QObject* parent)
-    : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSReceiverFact.json"), parent)
+    : GPSPositionFactGroup(parent)
+    , _rtk(this)
 {
     qCDebug(GPSReceiverFactGroupLog) << this;
 
+    _nameToFactMetaDataMap.insert(
+        FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Vehicle/GPSReceiverFact.json"), this));
+    _addFactGroup(&_rtk, QStringLiteral("rtk"));
     _addFact(&_connectedFact);
-    _addFact(&_numSatellitesFact);
     _addFact(&_numSatellitesUsedFact);
     _addFact(&_lastErrorFact);
 }

@@ -10,7 +10,7 @@
 #include "NMEASourceManager.h"
 
 class GPSReceiver;
-class GPSRtkState;
+class GPSBaseStationState;
 class QGCPositionManager;
 class QTimer;
 
@@ -38,8 +38,6 @@ public:
     void shutdown();
 
     GPSReceiver* receiver() const { return _receiver; }
-
-    GPSRtkState* rtkState() const { return _rtkState; }
 
     GPSReceiverSession* receiverSession() { return &_receiverSession; }
 
@@ -76,5 +74,5 @@ private:
     NMEASourceManager* _nmeaSources = nullptr;
     GPSReceiverAutoConnect* _receiverAutoConnect = nullptr;
     GPSReceiver* _receiver = nullptr;
-    GPSRtkState* _rtkState = nullptr;
+    GPSBaseStationState* _baseStationState = nullptr;
 };

@@ -13,7 +13,6 @@
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverSession.h"
-#include "GPSRtkState.h"
 #include "GpsTestHelpers.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
@@ -173,7 +172,9 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
         QtObject {
             readonly property var forwarder: QGroundControl.gpsManager.corrections.rtcmMavlink
             readonly property var receiverFacts: QGroundControl.gpsReceiver
-            readonly property var baseFacts: QGroundControl.gpsRtk
+            readonly property var baseFacts: QGroundControl.gpsReceiver.rtk
+            readonly property var latitude: QGroundControl.gpsReceiver.lat
+            readonly property var legacyBaseFacts: QGroundControl.gpsRtk
         }
     )",
                       QUrl());
@@ -183,9 +184,11 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
     QVERIFY2(root, qPrintable(component.errorString()));
     QCOMPARE(root->property("forwarder").value<RTCMMavlink*>(), GPSManager::instance()->corrections()->rtcmMavlink());
     auto* receiverFacts = root->property("receiverFacts").value<GPSReceiverFactGroup*>();
-    auto* baseFacts = root->property("baseFacts").value<GPSRTKFactGroup*>();
+    auto* baseFacts = root->property("baseFacts").value<GPSBaseStationFactGroup*>();
     QCOMPARE(receiverFacts, GPSManager::instance()->receiver()->facts());
-    QCOMPARE(baseFacts, GPSManager::instance()->rtkState()->facts());
+    QCOMPARE(baseFacts, receiverFacts->rtk());
+    QCOMPARE(root->property("latitude").value<Fact*>(), receiverFacts->lat());
+    QCOMPARE(root->property("legacyBaseFacts").value<GPSBaseStationFactGroup*>(), baseFacts);
     QVERIFY(receiverFacts->metaObject()->indexOfProperty("connected") >= 0);
     QVERIFY(receiverFacts->metaObject()->indexOfProperty("lastError") >= 0);
     QCOMPARE(baseFacts->metaObject()->indexOfProperty("connected"), -1);

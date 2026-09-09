@@ -4,9 +4,10 @@
 
 #include "Fact.h"
 #include "FactGroup.h"
+#include "GPSBaseStationFactGroup.h"
 #include "GPSManager.h"
-#include "GPSRTKFactGroup.h"
-#include "GPSRtkState.h"
+#include "GPSReceiver.h"
+#include "GPSReceiverFactGroup.h"
 #include "MultiVehicleManager.h"
 #include "NMEAUtils.h"
 #include "NTRIPSettings.h"
@@ -118,11 +119,11 @@ PositionResult getRTKBasePosition()
     GPSManager* gpsManager = GPSManager::instance();
     if (!gpsManager)
         return {};
-    GPSRtkState* rtk = gpsManager->rtkState();
-    if (!rtk)
+    GPSReceiver* receiver = gpsManager->receiver();
+    if (!receiver)
         return {};
 
-    GPSRTKFactGroup* rtkGroup = rtk->facts();
+    GPSBaseStationFactGroup* rtkGroup = receiver->facts()->rtk();
     if (!rtkGroup->valid()->rawValue().toBool())
         return {};
 

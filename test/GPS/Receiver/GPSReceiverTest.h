@@ -15,6 +15,7 @@ private slots:
     void _shutdownWithoutEventLoop_data();
     void _shutdownWithoutEventLoop();
     void _sourceHealthIndependentOfSurvey();
+    void _liveFactsFollowHealth();
     void _testCountSatellitesClampsToMax();
     void _testCountSatellitesCountsUsed();
     void _testCountSatellitesIgnoresUsedBeyondCount();
