@@ -47,7 +47,19 @@ qgc_add_px4_test_target(
     "${QGC_PX4_SOURCE_DIR}/crc.cpp"
 )
 
-foreach(test IN ITEMS Parser Ubx ReceiverModes)
+qgc_add_px4_test_target(
+    QGCPX4IOContractTest
+    gps-io-contract-test.cpp
+    "${QGC_PX4_SOURCE_DIR}/ashtech.cpp"
+    "${QGC_PX4_SOURCE_DIR}/ubx.cpp"
+    "${QGC_PX4_SOURCE_DIR}/sbf.cpp"
+    "${QGC_PX4_SOURCE_DIR}/femtomes.cpp"
+    "${QGC_PX4_SOURCE_DIR}/gps_helper.cpp"
+    "${QGC_PX4_SOURCE_DIR}/rtcm.cpp"
+    "${QGC_PX4_SOURCE_DIR}/crc.cpp"
+)
+
+foreach(test IN ITEMS Parser Ubx ReceiverModes IOContract)
     add_test(NAME PX4GPS${test} COMMAND QGCPX4${test}Test)
     set_tests_properties(PX4GPS${test} PROPERTIES LABELS "Unit;GPS;PX4Driver" TIMEOUT 60)
 endforeach()

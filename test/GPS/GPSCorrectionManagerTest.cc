@@ -43,6 +43,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     configureUdp(saved, settings, port);
     GPSManager gps;
     auto* corrections = gps.corrections();
+    corrections->setRoutingPolicy(GPSCorrectionManager::RoutingPolicy::All);
     corrections->beginSourceSession(GPSCorrectionSource::LocalReceiver);
     corrections->init(settings);
     auto* forwarder = corrections->rtcmMavlink();

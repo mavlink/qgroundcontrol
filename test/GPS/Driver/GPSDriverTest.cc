@@ -6,8 +6,10 @@
 
 #include <cstring>
 #include <gps_helper.h>  // px4: GPSCallbackType, SurveyInStatus — this is a driver-bridge test
+#include <limits>
 
 #include "GPSDriver.h"
+#include "GPSDriverBackend.h"
 #include "GPSDriverData.h"
 #include "GPSTransport.h"
 #include "GPSType.h"
@@ -191,7 +193,9 @@ void GPSDriverTest::_testFixedTransportBaudrate()
     FakeGPSTransport transport(stop);
     transport.fixedRate = 115200;
     transport.writeOk = false;
-    GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    GPSDriver driver(GPSType::u_blox, transport, config, GPSDriverSinks{});
     expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Driver configuration failed for type")));
     QVERIFY(!driver.configure());
@@ -417,6 +421,20 @@ void GPSDriverTest::_receiverRoleCommands()
     config.base.fixedBaseLongitude = 20.0;
     GPSDriver driver(septentrio ? GPSType::septentrio : GPSType::femto, transport, config, {});
     QVERIFY(driver.configure());
+    const QByteArray correction = QByteArray::fromHex("d30000000000");
+    const auto beforeInjection = transport.commands.size();
+    const auto injected = driver.injectCorrections(correction);
+    const bool supportsInjection = position && septentrio;
+    QCOMPARE(driver.readyForCorrections(), supportsInjection);
+    QCOMPARE(injected.status,
+             supportsInjection ? GPSDriver::CorrectionStatus::Submitted : GPSDriver::CorrectionStatus::Unsupported);
+    QCOMPARE(injected.bytesWritten, supportsInjection ? correction.size() : 0);
+    QCOMPARE(transport.commands.size(), beforeInjection + (supportsInjection ? 1 : 0));
+    if (supportsInjection) {
+        QCOMPARE(transport.commands.last(), correction);
+    }
+    QCOMPARE(driver.injectCorrections({}).status, GPSDriver::CorrectionStatus::InvalidData);
+    QCOMPARE(driver.injectCorrections(QByteArray(1030, 'x')).status, GPSDriver::CorrectionStatus::InvalidData);
     const QByteArray commands = transport.commands.join("");
     if (septentrio) {
         QCOMPARE(commands.contains("setPVTMode, Rover, All, auto"), position);
@@ -585,4 +603,135 @@ void GPSDriverTest::_satelliteAzimuthEncoding()
     if (qIsFinite(degrees)) {
         QCOMPARE(satellite.azimuthDegrees().value(), degrees);
     }
+}
+
+void GPSDriverTest::_invalidConfiguration_data()
+{
+    QTest::addColumn<int>("invalidField");
+    for (int field = 0; field < 8; ++field) {
+        QTest::newRow(qPrintable(QString::number(field))) << field;
+    }
+}
+
+void GPSDriverTest::_invalidConfiguration()
+{
+    QFETCH(int, invalidField);
+    GPSReceiverConfig config;
+    config.base.useFixedBase = true;
+    switch (invalidField) {
+        case 0:
+            config.base.fixedBaseLatitude = 91.0;
+            break;
+        case 1:
+            config.base.fixedBaseLongitude = -181.0;
+            break;
+        case 2:
+            config.base.fixedBaseAltitudeMeters = std::numeric_limits<float>::infinity();
+            break;
+        case 3:
+            config.base.fixedBaseAccuracyMeters = -1.0f;
+            break;
+        case 4:
+            config.base.fixedBaseAccuracyMeters = (std::numeric_limits<float>::max)();
+            break;
+        case 5:
+            config.headingOffsetDeg = std::numeric_limits<float>::quiet_NaN();
+            break;
+        case 6:
+            config.base.useFixedBase = false;
+            config.base.surveyInAccMeters = -1.0;
+            config.base.surveyInDurationSecs = 60;
+            break;
+        case 7:
+            config.base.useFixedBase = false;
+            config.base.surveyInAccMeters = 1.0;
+            config.base.surveyInDurationSecs = -1;
+            break;
+    }
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
+    for (const auto type : {GPSType::u_blox, GPSType::trimble, GPSType::septentrio, GPSType::femto}) {
+        GPSDriver driver(type, transport, config, {});
+        QVERIFY(!driver.configure());
+        QCOMPARE(driver.configurationResult().status, GPSDriver::ConfigurationStatus::Unsupported);
+        QVERIFY(!driver.configurationResult().error.isEmpty());
+        QVERIFY(transport.requestedBaudrates.isEmpty());
+        QVERIFY(transport.lastWrite.isEmpty());
+        QCOMPARE(transport.lastReadLength, -1);
+    }
+}
+
+void GPSDriverTest::_familyCancellation_data()
+{
+    QTest::addColumn<int>("family");
+    QTest::addColumn<bool>("cancelled");
+    for (int family = 0; family != 4; ++family) {
+        QTest::newRow(qPrintable(QStringLiteral("cancel-%1").arg(family))) << family << true;
+        QTest::newRow(qPrintable(QStringLiteral("error-%1").arg(family))) << family << false;
+    }
+}
+
+void GPSDriverTest::_familyCancellation()
+{
+    QFETCH(int, family);
+    QFETCH(bool, cancelled);
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
+    transport.fixedRate = 115200;
+    transport.readError = -EIO;
+    transport.cancelDuringRead = cancelled;
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    GPSDriver driver(static_cast<GPSType>(family), transport, config, {});
+    if (!cancelled) {
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Driver configuration failed for type")));
+        if (family == 2) {
+            ignoreLogMessage("GPS.Driver.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("sbf read err")));
+        } else if (family == 0) {
+            ignoreLogMessage("GPS.Driver.Drivers", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("ubx poll_or_read err")));
+        }
+    }
+    QVERIFY(!driver.configure());
+    QCOMPARE(driver.configurationResult().status,
+             cancelled ? GPSDriver::ConfigurationStatus::Cancelled : GPSDriver::ConfigurationStatus::TransportError);
+    if (!cancelled) {
+        verifyExpectedLogMessage();
+    }
+}
+
+void GPSDriverTest::_positionBackendWithoutBaseSupport()
+{
+    class PositionDriver final : public GPSHelper
+    {
+    public:
+        PositionDriver()
+            : GPSHelper(nullptr, nullptr)
+        {}
+
+        int configure(unsigned& baudrate, const GPSConfig& config) override
+        {
+            baudrate = 9600;
+            return config.output_mode == OutputMode::GPS ? 0 : -1;
+        }
+
+        int receive(unsigned) override { return 1; }
+    };
+
+    class PositionBackend final : public GPSDriverBackend
+    {
+    public:
+        PositionBackend() { setDriver(std::make_unique<PositionDriver>()); }
+    } backend;
+
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    unsigned baudrate = 0;
+    QCOMPARE(backend.configure(baudrate, config), 0);
+    QCOMPARE(baudrate, 9600u);
+    QCOMPARE(backend.receive(0), 1);
+    config.role = GPSReceiverConfig::Role::RTKBase;
+    config.base.useFixedBase = true;
+    QVERIFY(backend.configure(baudrate, config) < 0);
 }

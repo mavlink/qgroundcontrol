@@ -3,9 +3,6 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QUrl>
 
-#include <cmath>
-#include <limits>
-
 #include "GPSReceiverCapabilities.h"
 
 QString GPSConnectionConfig::validationError() const
@@ -27,23 +24,8 @@ QString GPSConnectionConfig::validationError() const
             return tr("Enter a valid receiver host and port");
         }
     }
-    if (receiver.role == GPSReceiverConfig::Role::Position) {
-        return {};
-    }
-    if (baseMode < 0 || baseMode > 1) {
+    if (receiver.role == GPSReceiverConfig::Role::RTKBase && (baseMode < 0 || baseMode > 1)) {
         return tr("Select a valid base mode");
     }
-    if (receiver.base.useFixedBase) {
-        if (!std::isfinite(receiver.base.fixedBaseLatitude) || std::abs(receiver.base.fixedBaseLatitude) > 90.0 ||
-            !std::isfinite(receiver.base.fixedBaseLongitude) || std::abs(receiver.base.fixedBaseLongitude) > 180.0 ||
-            !std::isfinite(receiver.base.fixedBaseAltitudeMeters) ||
-            !std::isfinite(receiver.base.fixedBaseAccuracyMeters) || receiver.base.fixedBaseAccuracyMeters < 0.0f) {
-            return tr("Enter a valid fixed base position and accuracy");
-        }
-    } else if (!std::isfinite(receiver.base.surveyInAccMeters) || receiver.base.surveyInAccMeters <= 0.0 ||
-               receiver.base.surveyInAccMeters * 10000.0 > std::numeric_limits<uint32_t>::max() ||
-               receiver.base.surveyInDurationSecs <= 0) {
-        return tr("Enter a valid survey-in accuracy and duration");
-    }
-    return {};
+    return receiver.validationError();
 }

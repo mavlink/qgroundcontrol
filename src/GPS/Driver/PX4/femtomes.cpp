@@ -239,6 +239,9 @@ void GPSDriverFemto::receiveWait(unsigned timeout_min)
 
 	while (gps_absolute_time() < time_started + timeout_min * 1000) {
 		receive(timeout_min);
+		if (ioError()) {
+			return;
+		}
 	}
 
 }
@@ -280,7 +283,7 @@ int GPSDriverFemto::receive(unsigned timeout)
 
 		if (ret < 0) {
 			/* something went wrong when polling */
-			return -1;
+			return ret;
 
 		} else if (ret == 0) {
 			/* Timeout while polling or just nothing read if reading, let's
@@ -518,7 +521,7 @@ int GPSDriverFemto::writeAckedCommandFemto(const char *command, const char *repl
 		int ret = read(buf + buffered, sizeof(buf) - buffered, timeout);
 
 		if (ret < 0) {
-			return -1;
+			return ret;
 		}
 
 		buffered += static_cast<size_t>(ret);
@@ -543,6 +546,7 @@ int GPSDriverFemto::writeAckedCommandFemto(const char *command, const char *repl
 
 int GPSDriverFemto::configure(unsigned &baudrate, const GPSConfig &config)
 {
+	resetIOError();
 	FEMTO_DEBUG("Femto: configure gps driver")
 
 	if (config.output_mode != OutputMode::GPS && config.output_mode != OutputMode::RTCM) {
@@ -669,7 +673,7 @@ int GPSDriverFemto::configure(unsigned &baudrate, const GPSConfig &config)
 	_configure_done = true;
 	FEMTO_DEBUG("Femto: gps driver configure done")
 
-	return 0;
+	return ioError();
 }
 
 void GPSDriverFemto::activateCorrectionOutput()

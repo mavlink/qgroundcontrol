@@ -57,7 +57,7 @@
 {
     "name":             "count",
     "shortDesc": "Sat Count",
-    "type":             "uint32"
+    "type":             "int32"
 },
 {
     "name":             "systemErrors",

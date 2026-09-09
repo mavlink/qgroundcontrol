@@ -306,17 +306,7 @@ void QGCApplication::_initForNormalAppBoot()
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
     LinkManager::instance()->init();
-    GPSManager::instance()->init();
-    auto* corrections = GPSManager::instance()->corrections();
-    connect(NTRIPManager::instance(), &NTRIPManager::correctionSessionStarted, corrections,
-            [corrections]() { corrections->beginSourceSession(GPSCorrectionSource::Ntrip); });
-    connect(NTRIPManager::instance(), &NTRIPManager::correctionSessionEnded, corrections,
-            [corrections]() { corrections->endSourceSession(GPSCorrectionSource::Ntrip); });
-    connect(NTRIPManager::instance(), &NTRIPManager::correctionReceived, corrections,
-            [corrections](const QByteArray& data, int messageId, bool filtered) {
-                corrections->forwardCorrectionsFrom(GPSCorrectionSource::Ntrip, data, true, messageId, filtered);
-            });
-    NTRIPManager::instance()->init();
+    GPSManager::instance()->init(NTRIPManager::instance());
     VideoManager::instance()->init(mainRootWindow());
 
     // Set the window icon now that custom plugin has a chance to override it
@@ -772,7 +762,6 @@ QGCImageProvider* QGCApplication::qgcImageProvider()
 
 void QGCApplication::shutdown()
 {
-    NTRIPManager::instance()->stopNTRIP();
     GPSManager::instance()->shutdown();
     qCDebug(QGCApplicationLog) << "Exit";
 

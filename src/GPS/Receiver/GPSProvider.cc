@@ -1,6 +1,7 @@
 #include "GPSProvider.h"
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QScopeGuard>
 
 #include <chrono>
 #include <utility>
@@ -15,6 +16,7 @@ QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.Receiver.GPSProvider")
 GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                          std::shared_ptr<GPSByteBuffer> nmeaBuffer, QObject* parent)
     : QThread(parent)
+    , _mailbox(std::make_shared<GPSReceiverMailbox>())
     , _transportFactory(std::move(transportFactory))
     , _type(type)
     , _config(config)
@@ -31,6 +33,52 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
 GPSProvider::~GPSProvider()
 {
     qCDebug(GPSProviderLog) << this;
+}
+
+void GPSProvider::stop()
+{
+    _requestStop = true;
+    _mailbox->close();
+}
+
+void GPSProvider::sensorGpsUpdate(const GPSObservation& message)
+{
+    if (_mailbox->publish(message)) {
+        emit dataReady();
+    }
+}
+
+void GPSProvider::satelliteInfoUpdate(const GPSSatelliteObservation& message)
+{
+    if (_mailbox->publish(message)) {
+        emit dataReady();
+    }
+}
+
+void GPSProvider::relativePositionUpdate(const GPSRelativeObservation& message)
+{
+    if (_mailbox->publish(message)) {
+        emit dataReady();
+    }
+}
+
+void GPSProvider::surveyInStatus(const GPSSurveyInStatus& status)
+{
+    if (_mailbox->publish(status)) {
+        emit dataReady();
+    }
+}
+
+void GPSProvider::RTCMFrameUpdate(const QByteArray& message, qint64 receivedAtMs)
+{
+    if (_mailbox->publishCorrection(message, receivedAtMs)) {
+        emit dataReady();
+    }
+}
+
+void GPSProvider::RTCMDataUpdate(const QByteArray& message)
+{
+    RTCMFrameUpdate(message, static_cast<qint64>(GPSObservation::monotonicNowUs() / 1000));
 }
 
 void GPSProvider::run()
@@ -61,23 +109,22 @@ void GPSProvider::run()
     GPSDriverSinks sinks;
     sinks.onPosition = [this, &gotData](const GPSObservation& message) {
         gotData = true;
-        emit sensorGpsUpdate(message);
+        sensorGpsUpdate(message);
     };
     sinks.onSatelliteInfo = [this, &gotData](const GPSSatelliteObservation& message) {
         gotData = true;
-        emit satelliteInfoUpdate(message);
+        satelliteInfoUpdate(message);
     };
     sinks.onRelativePosition = [this, &gotData](const GPSRelativeObservation& message) {
         gotData = true;
-        emit relativePositionUpdate(message);
+        relativePositionUpdate(message);
     };
     sinks.onRTCM = [this, &gotData](const QByteArray& message) {
         gotData = true;
         const qint64 receivedAtMs =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
                 .count();
-        emit RTCMFrameUpdate(message, receivedAtMs);
-        emit RTCMDataUpdate(message);
+        RTCMFrameUpdate(message, receivedAtMs);
     };
     sinks.onSurveyIn = [this, &gotData](const GPSSurveyInStatus& status) {
         gotData = true;
@@ -86,7 +133,7 @@ void GPSProvider::run()
                                        .arg(status.meanAccuracyMM)
                                        .arg(status.valid)
                                        .arg(status.active);
-        emit surveyInStatus(status);
+        surveyInStatus(status);
     };
 
     GPSDriver driver(_type, *transport, _config, std::move(sinks));
@@ -103,6 +150,8 @@ void GPSProvider::run()
     if (_requestStop) {
         return;
     }
+    _mailbox->setCorrectionsEnabled(driver.readyForCorrections());
+    const auto disableCorrections = qScopeGuard([this]() { _mailbox->setCorrectionsEnabled(false); });
     emit receiverReady();
 
     QElapsedTimer lastProgress;
@@ -110,12 +159,28 @@ void GPSProvider::run()
     QString failureDetail = tr("Receiver connection failed");
     QByteArray bytes(4096, Qt::Uninitialized);
     while (!_requestStop && !transport->fatalError()) {
+        // Limit writes per receive cycle so correction traffic cannot starve receiver parsing.
+        for (int index = 0; index < 4 && !_requestStop && driver.readyForCorrections(); ++index) {
+            const auto correction = _mailbox->takeCommand(GPSObservation::monotonicNowUs() / 1000);
+            if (!correction) {
+                break;
+            }
+            const auto result = driver.injectCorrections(correction->data);
+            if (result.status == GPSDriver::CorrectionStatus::TransportError) {
+                failureDetail = tr("Cannot send corrections to the receiver");
+                _mailbox->setCorrectionsEnabled(false);
+                emit connectionErrorDetail(GPSConnectionError::DeviceError, failureDetail);
+                emit connectionError(GPSConnectionError::DeviceError);
+                return;
+            }
+        }
         const qint64 remainingMs = kProgressTimeoutMs - lastProgress.elapsed();
         if (remainingMs <= 0) {
             failureDetail = tr("Receiver stopped producing data");
             break;
         }
-        const auto timeoutMs = static_cast<unsigned>(qMin<qint64>(kGPSReceiveTimeout, remainingMs));
+        const qint64 receiveLimitMs = driver.readyForCorrections() ? 200 : kGPSReceiveTimeout;
+        const auto timeoutMs = static_cast<unsigned>(qMin(receiveLimitMs, remainingMs));
         QElapsedTimer receiveDuration;
         receiveDuration.start();
         gotData = false;

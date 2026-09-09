@@ -169,6 +169,8 @@ class GPSHelper
 public:
 	static constexpr int ReadCancelled = -ECANCELED;
 
+	int ioError() const { return _io_error; }
+
 	enum class OutputMode : uint8_t {
 		GPS = 0,    ///< normal GPS output
 		GPSAndRTCM, ///< normal GPS+RTCM output
@@ -282,8 +284,15 @@ protected:
 	 */
 	int read(uint8_t *buf, int buf_length, int timeout)
 	{
+		if (_io_error) {
+			return _io_error;
+		}
 		memcpy(buf, &timeout, sizeof(timeout));
-		return _callback(GPSCallbackType::readDeviceData, buf, buf_length, _callback_user);
+		const int result = _callback(GPSCallbackType::readDeviceData, buf, buf_length, _callback_user);
+		if (result < 0) {
+			_io_error = result;
+		}
+		return result;
 	}
 
 	/**
@@ -294,7 +303,16 @@ protected:
 	 */
 	int write(const void *buf, int buf_length)
 	{
-		return _callback(GPSCallbackType::writeDeviceData, (void *)buf, buf_length, _callback_user);
+		if (_io_error) {
+			return _io_error;
+		}
+		const int result = _callback(GPSCallbackType::writeDeviceData, (void *)buf, buf_length, _callback_user);
+		// Legacy -1 can be a rejected optional diagnostic write. Explicit errno
+		// values (including cancellation) and partial writes end the transaction.
+		if (result < -1 || (result >= 0 && result != buf_length)) {
+			_io_error = result < 0 ? result : -EIO;
+		}
+		return result;
 	}
 
 	/**
@@ -304,8 +322,19 @@ protected:
 	 */
 	int setBaudrate(int baudrate)
 	{
-		return _callback(GPSCallbackType::setBaudrate, nullptr, baudrate, _callback_user);
+		if (_io_error) {
+			return _io_error;
+		}
+		const int result = _callback(GPSCallbackType::setBaudrate, nullptr, baudrate, _callback_user);
+		if (result < -1) {
+			_io_error = result;
+		}
+		return result;
 	}
+
+	// A new configuration attempt starts a new I/O transaction. After a terminal
+	// error, no command may be written until the caller explicitly retries.
+	void resetIOError() { _io_error = 0; }
 
 	void surveyInStatus(SurveyInStatus &status)
 	{
@@ -367,6 +396,7 @@ protected:
 	static double nmeaToDegrees(double ddmm);
 
 	GPSCallbackPtr _callback{nullptr};
+	int _io_error{0};
 	void *_callback_user{};
 
 	uint8_t _rate_count_lat_lon{};

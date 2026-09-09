@@ -4,14 +4,14 @@
 #include <QtCore/QVector>
 
 #include "NTRIPError.h"
-#include "NTRIPTransport.h"
+#include "NTRIPStream.h"
 
-class MockNTRIPTransport : public NTRIPTransport
+class MockNTRIPStream : public NTRIPStream
 {
     Q_OBJECT
 
 public:
-    using NTRIPTransport::NTRIPTransport;
+    using NTRIPStream::NTRIPStream;
 
     void start() override
     {

@@ -7,6 +7,10 @@ class GPSManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _correctionRoutingSettings_data();
+    void _correctionRoutingSettings();
+    void _correctionRuntimeLifecycle();
+    void _correctionSettingsPanel();
     void _invalidEndpoint_data();
     void _invalidEndpoint();
     void _networkRecoveryAndDisconnect();

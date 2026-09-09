@@ -128,6 +128,7 @@ quint64 RTCMMavlink::submit(QByteArrayView data)
 
     const PackResult packed = pack(data, _sequenceId);
     _sequenceId = packed.nextSequenceId;
+    const auto links = _connectedLinks();
 
     for (const GpsRtcmPacket& packet : packed.packets) {
         mavlink_gps_rtcm_data_t gpsRtcmData{};
@@ -136,7 +137,10 @@ quint64 RTCMMavlink::submit(QByteArrayView data)
         if (!packet.data.isEmpty()) {
             (void) memcpy(gpsRtcmData.data, packet.data.constData(), static_cast<size_t>(packet.data.size()));
         }
-        submitted += packet.data.size() * _sendMessageOnAllLinks(gpsRtcmData);
+        submitted += packet.data.size() * _sendMessageOnLinks(gpsRtcmData, links);
+        if (!guard) {
+            return submitted;
+        }
     }
     if (submitted > 0) {
         _submittedBytes += submitted;
@@ -158,8 +162,9 @@ void RTCMMavlink::sendSimulatedData(const std::atomic_bool& requestStop)
     }
 }
 
-int RTCMMavlink::_sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data)
+QList<std::shared_ptr<LinkInterface>> RTCMMavlink::_connectedLinks()
 {
+    QList<std::shared_ptr<LinkInterface>> links;
     QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
     QSet<const LinkInterface*> sentLinks;
     for (qsizetype i = 0; i < vehicles->count(); i++) {
@@ -180,12 +185,25 @@ int RTCMMavlink::_sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data)
             continue;
         }
         (void) sentLinks.insert(sharedLink.get());
+        links.append(sharedLink);
+    }
+    return links;
+}
 
+int RTCMMavlink::_sendMessageOnLinks(const mavlink_gps_rtcm_data_t& data,
+                                     const QList<std::shared_ptr<LinkInterface>>& links)
+{
+    int submitted = 0;
+    for (const auto& sharedLink : links) {
+        if (!sharedLink->isConnected()) {
+            continue;
+        }
         mavlink_message_t message{};
         (void) mavlink_msg_gps_rtcm_data_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
                                                      MAVLinkProtocol::getComponentId(), sharedLink->mavlinkChannel(),
                                                      &message, &data);
         sharedLink->sendMessageThreadSafe(message);
+        ++submitted;
     }
-    return sentLinks.size();
+    return submitted;
 }

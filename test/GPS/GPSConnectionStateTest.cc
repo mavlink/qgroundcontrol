@@ -75,3 +75,24 @@ void GPSConnectionStateTest::_stoppingBlocksAttempts()
 }
 
 UT_REGISTER_TEST(GPSConnectionStateTest, TestLabel::Unit)
+
+void GPSConnectionStateTest::_pauseDuringRetryNotification()
+{
+    GPSConnectionState state;
+    state.requestConnect();
+    QVERIFY(state.beginAttempt());
+    state.failed();
+    bool paused = false;
+    connect(&state, &GPSConnectionState::changed, &state, [&]() {
+        if (!paused && state.state() == GPSConnectionState::Disconnected) {
+            paused = true;
+            state.pause();
+        }
+    });
+    state.requestConnect();
+    QVERIFY(paused);
+    QVERIFY(state.paused());
+    QVERIFY(!state.active());
+    QVERIFY(!state.canAttempt());
+    QVERIFY(!state.shouldConnect(true));
+}

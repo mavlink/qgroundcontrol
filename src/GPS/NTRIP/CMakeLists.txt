@@ -1,3 +1,13 @@
+qt_add_library(QGCGPSNTRIPSession STATIC
+    NTRIPError.h NTRIPHttpDecoder.cc NTRIPHttpDecoder.h NTRIPSession.cc NTRIPSession.h
+    NTRIPStream.cc NTRIPStream.h NTRIPTransportConfig.cc NTRIPTransportConfig.h
+)
+target_include_directories(QGCGPSNTRIPSession PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(QGCGPSNTRIPSession PUBLIC cxx_std_20)
+target_link_libraries(QGCGPSNTRIPSession PUBLIC Qt6::Core PRIVATE QGCLogging)
+qt_extract_metatypes(QGCGPSNTRIPSession)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNTRIPSession)
+
 # ============================================================================
 # NTRIP Module
 # NTRIP client, RTCM parsing, and correction streaming
@@ -5,17 +15,14 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        NTRIPError.h
-        NTRIPTransport.cc
-        NTRIPTransport.h
+        NTRIPTlsPolicy.h
+        NTRIPConnectionSettings.cc
         NTRIPConnectionStats.cc
         NTRIPConnectionStats.h
         NTRIPGgaProvider.cc
         NTRIPGgaProvider.h
         NTRIPHttpTransport.cc
         NTRIPHttpTransport.h
-        NTRIPTransportConfig.cc
-        NTRIPTransportConfig.h
         NTRIPManager.cc
         NTRIPManager.h
         NTRIPSourceTableController.cc

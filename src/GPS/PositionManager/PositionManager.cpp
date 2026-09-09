@@ -95,13 +95,16 @@ void QGCPositionManager::setReceiverPositionSource(QGeoPositionInfoSource* sourc
     _receiverHealth = source ? health : nullptr;
     if (source) {
         _receiverDestroyedConnection = connect(source, &QObject::destroyed, this, [this, source]() {
+            const QPointer<QGCPositionManager> guard(this);
+            _receiverSource = nullptr;
+            _receiverHealth = nullptr;
             if (_currentSource == source) {
                 _currentSource = nullptr;
                 _clearPosition();
             }
-            _receiverSource = nullptr;
-            _receiverHealth = nullptr;
-            _selectPositionSource();
+            if (guard) {
+                _selectPositionSource();
+            }
         });
     }
     _selectPositionSource();
@@ -134,13 +137,16 @@ void QGCPositionManager::setNmeaPositionSource(QGeoPositionInfoSource* source, G
     _nmeaHealth = source ? health : nullptr;
     if (source) {
         _nmeaDestroyedConnection = connect(source, &QObject::destroyed, this, [this, source]() {
+            const QPointer<QGCPositionManager> guard(this);
+            _nmeaSource = nullptr;
+            _nmeaHealth = nullptr;
             if (_currentSource == source) {
                 _currentSource = nullptr;
                 _clearPosition();
             }
-            _nmeaSource = nullptr;
-            _nmeaHealth = nullptr;
-            _selectPositionSource();
+            if (guard) {
+                _selectPositionSource();
+            }
         });
     }
     _selectPositionSource();
@@ -153,53 +159,22 @@ void QGCPositionManager::clearNmeaPositionSource(QGeoPositionInfoSource* source)
     }
 }
 
-void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
+std::optional<GPSObservation> QGCPositionManager::acceptedObservation(GPSObservation::PositionUse use) const
 {
-    if (_isExternalSource()) {
-        _externalHealth.updatePosition(update);
-        return;
-    }
-    _geoPositionInfo = update;
-    _gcsPositioningError = QGeoPositionInfoSource::NoError;
+    // Selecting a standby source waits for a new observation, even when its cache is fresh.
+    return _currentHealth && _gcsPosition.isValid() ? _currentHealth->acceptedObservation(use) : std::nullopt;
+}
 
-    QGeoCoordinate newGCSPosition(_gcsPosition);
-
-    if (update.isValid() && update.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
-        _gcsPositionHorizontalAccuracy = update.attribute(QGeoPositionInfo::HorizontalAccuracy);
-        if (qIsFinite(_gcsPositionHorizontalAccuracy) && _gcsPositionHorizontalAccuracy > 0 &&
-            _gcsPositionHorizontalAccuracy <= kMinHorizonalAccuracyMeters) {
-            newGCSPosition.setLatitude(update.coordinate().latitude());
-            newGCSPosition.setLongitude(update.coordinate().longitude());
-            // Stamp the local arrival time so consumers can tell how fresh gcsPosition is.
-            // Updates rejected by the accuracy gate leave the stamp alone, since they leave
-            // the previous coordinate in place as well.
-            _gcsPositionTimestamp = QDateTime::currentDateTimeUtc();
-            _gcsPositioningError = QGeoPositionInfoSource::NoError;
-        }
-        emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
-    }
-
-    if (update.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
-        _gcsPositionVerticalAccuracy = update.attribute(QGeoPositionInfo::VerticalAccuracy);
-        if (_gcsPositionVerticalAccuracy <= kMinVerticalAccuracyMeters) {
-            newGCSPosition.setAltitude(update.coordinate().altitude());
-        }
-    }
-
-    _gcsPositionAccuracy = sqrt(pow(_gcsPositionHorizontalAccuracy, 2) + pow(_gcsPositionVerticalAccuracy, 2));
-
-    _setGCSPosition(newGCSPosition);
-
-    if (update.hasAttribute(QGeoPositionInfo::DirectionAccuracy)) {
-        _gcsDirectionAccuracy = update.attribute(QGeoPositionInfo::DirectionAccuracy);
-        if (_gcsDirectionAccuracy <= kMinDirectionAccuracyDegrees) {
-            _setGCSHeading(update.attribute(QGeoPositionInfo::Direction));
-        }
-    } else if (_usingPluginSource && _currentSource == _defaultSource) {
-        _setGCSHeading(update.attribute(QGeoPositionInfo::Direction));
-    }
-
-    emit positionInfoUpdated(update);
+void QGCPositionManager::_positionUpdated(const QGeoPositionInfo& update)
+{
+    GPSObservation observation;
+    observation.position = update;
+    observation.receivedAt = QDateTime::currentDateTimeUtc();
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.sourceId = _isExternalSource()
+                               ? QStringLiteral("External GPS")
+                               : (_usingPluginSource ? QStringLiteral("Plugin") : QStringLiteral("Platform"));
+    _externalHealth.updateObservation(observation);
 }
 
 void QGCPositionManager::_externalPositionChanged()
@@ -207,37 +182,64 @@ void QGCPositionManager::_externalPositionChanged()
     if (!_currentHealth) {
         return;
     }
-    if (!_currentHealth->usable()) {
+    const auto accepted = _currentHealth->acceptedObservation(GPSObservation::PositionUse::GroundStation);
+    if (!accepted) {
         if (_currentHealth->state() != GPSSourceHealth::NoData) {
             _positionError(QGeoPositionInfoSource::UpdateTimeoutError);
         }
         _clearPosition();
         return;
     }
-    const GPSObservation observation = _currentHealth->observation();
-    const quint64 generation = _sourceGeneration;
-    _geoPositionInfo = observation.position;
-    _gcsPositionTimestamp = observation.receivedAt;
     _gcsPositioningError = QGeoPositionInfoSource::NoError;
-    _gcsPositionHorizontalAccuracy = observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy);
-    _gcsPositionVerticalAccuracy = observation.coordinate().type() == QGeoCoordinate::Coordinate3D
-                                       ? observation.position.attribute(QGeoPositionInfo::VerticalAccuracy)
-                                       : qInf();
-    _gcsDirectionAccuracy = observation.position.hasAttribute(QGeoPositionInfo::DirectionAccuracy)
-                                ? observation.position.attribute(QGeoPositionInfo::DirectionAccuracy)
-                                : qInf();
-    _gcsPositionAccuracy = std::hypot(_gcsPositionHorizontalAccuracy, _gcsPositionVerticalAccuracy);
+    _publishPosition(accepted);
+}
+
+void QGCPositionManager::_publishPosition(const std::optional<GPSObservation>& observation)
+{
+    const QPointer<QGCPositionManager> guard(this);
+    const quint64 generation = _sourceGeneration;
+    const quint64 revision = ++_positionRevision;
+    const QGeoCoordinate previousPosition = _gcsPosition;
+    const qreal previousHeading = _gcsHeading;
+    if (observation) {
+        // Preserve the raw fix for diagnostics; consumers request their own accepted projection.
+        _geoPositionInfo = _currentHealth->observation().position;
+        _gcsPosition = observation->position.coordinate();
+        _gcsPositionTimestamp = observation->receivedAt;
+        _gcsHeading = observation->heading();
+        _gcsPositionHorizontalAccuracy = observation->position.attribute(QGeoPositionInfo::HorizontalAccuracy);
+        _gcsPositionVerticalAccuracy = observation->position.hasAttribute(QGeoPositionInfo::VerticalAccuracy)
+                                           ? observation->position.attribute(QGeoPositionInfo::VerticalAccuracy)
+                                           : qInf();
+        _gcsDirectionAccuracy = observation->position.hasAttribute(QGeoPositionInfo::DirectionAccuracy)
+                                    ? observation->position.attribute(QGeoPositionInfo::DirectionAccuracy)
+                                    : qInf();
+        _gcsPositionAccuracy = std::hypot(_gcsPositionHorizontalAccuracy, _gcsPositionVerticalAccuracy);
+    } else {
+        _geoPositionInfo = {};
+        _gcsPosition = {};
+        _gcsPositionTimestamp = {};
+        _gcsHeading = qQNaN();
+        _gcsPositionHorizontalAccuracy = qInf();
+        _gcsPositionVerticalAccuracy = qInf();
+        _gcsPositionAccuracy = qInf();
+        _gcsDirectionAccuracy = qInf();
+    }
     emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
-    if (generation != _sourceGeneration) {
+    if (!guard || generation != _sourceGeneration || revision != _positionRevision) {
         return;
     }
-    _setGCSHeading(observation.heading());
-    if (generation != _sourceGeneration) {
+    if (_gcsHeading != previousHeading && !(qIsNaN(_gcsHeading) && qIsNaN(previousHeading))) {
+        emit gcsHeadingChanged(_gcsHeading);
+    }
+    if (!guard || generation != _sourceGeneration || revision != _positionRevision) {
         return;
     }
-    _setGCSPosition(observation.coordinate());
-    if (generation == _sourceGeneration) {
-        emit positionInfoUpdated(observation.position);
+    if (_gcsPosition != previousPosition) {
+        emit gcsPositionChanged(_gcsPosition);
+    }
+    if (guard && generation == _sourceGeneration && revision == _positionRevision) {
+        emit positionInfoUpdated(_geoPositionInfo);
     }
 }
 
@@ -252,39 +254,15 @@ void QGCPositionManager::_positionError(QGeoPositionInfoSource::Error gcsPositio
     }
 }
 
-void QGCPositionManager::_setGCSHeading(qreal newGCSHeading)
-{
-    if (newGCSHeading != _gcsHeading && !(qIsNaN(newGCSHeading) && qIsNaN(_gcsHeading))) {
-        _gcsHeading = newGCSHeading;
-        emit gcsHeadingChanged(_gcsHeading);
-    }
-}
-
-void QGCPositionManager::_setGCSPosition(const QGeoCoordinate& newGCSPosition)
-{
-    if (newGCSPosition != _gcsPosition) {
-        _gcsPosition = newGCSPosition;
-        emit gcsPositionChanged(_gcsPosition);
-    }
-}
-
 void QGCPositionManager::_clearPosition()
 {
-    _geoPositionInfo = QGeoPositionInfo();
-    _gcsPositionTimestamp = QDateTime();
-    _setGCSPosition(QGeoCoordinate());
-    _setGCSHeading(qQNaN());
-    _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
-    _gcsPositionVerticalAccuracy = std::numeric_limits<qreal>::infinity();
-    _gcsPositionAccuracy = std::numeric_limits<qreal>::infinity();
-    _gcsDirectionAccuracy = std::numeric_limits<qreal>::infinity();
-    emit positionInfoUpdated(_geoPositionInfo);
-    emit gcsPositionHorizontalAccuracyChanged(_gcsPositionHorizontalAccuracy);
+    _publishPosition(std::nullopt);
 }
 
 void QGCPositionManager::_setPositionSource(QGCPositionSource source)
 {
-    QGeoPositionInfoSource* nextSource = nullptr;
+    const QPointer<QGCPositionManager> guard(this);
+    QPointer<QGeoPositionInfoSource> nextSource;
     const char* sourceName = "platform";
     switch (source) {
         case Simulated:
@@ -303,10 +281,10 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
             nextSource = _defaultSource;
             break;
     }
-    GPSSourceHealth* nextHealth = nextSource && (source == ExternalGPS || source == NmeaGPS)
-                                      ? (source == ExternalGPS ? _receiverHealth.data() : _nmeaHealth.data())
-                                      : nullptr;
-    if (nextSource && (source == ExternalGPS || source == NmeaGPS) && !nextHealth) {
+    QPointer<GPSSourceHealth> nextHealth = nextSource && (source == ExternalGPS || source == NmeaGPS)
+                                               ? (source == ExternalGPS ? _receiverHealth.data() : _nmeaHealth.data())
+                                               : nullptr;
+    if (nextSource && !nextHealth) {
         nextHealth = &_externalHealth;
     }
     if (_currentSource && _currentSource == nextSource && _currentHealth == nextHealth) {
@@ -316,28 +294,43 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
                                    << "source:" << (nextSource ? sourceName : "none")
                                    << "previous:" << _currentSource
                                    << "selected:" << nextSource;
+    const quint64 generation = ++_sourceGeneration;
     QObject::disconnect(_healthConnection);
     QObject::disconnect(_healthDestroyedConnection);
     _externalHealth.reset();
+    if (!guard || generation != _sourceGeneration) {
+        return;
+    }
     QObject::disconnect(_positionUpdateConnection);
     QObject::disconnect(_positionErrorConnection);
     if (_currentSource) {
         _currentSource->stopUpdates();
     }
-    ++_sourceGeneration;
+    if (!guard || generation != _sourceGeneration) {
+        return;
+    }
     _currentSource = nextSource;
     _currentHealth = nextHealth;
     _clearPosition();
+    if (!guard || generation != _sourceGeneration) {
+        return;
+    }
     emit sourceHealthChanged();
+    if (!guard || generation != _sourceGeneration) {
+        return;
+    }
     _gcsPositioningError = QGeoPositionInfoSource::NoError;
 
     if (_currentHealth) {
         _healthConnection = connect(_currentHealth, &GPSSourceHealth::positionChanged, this,
                                     &QGCPositionManager::_externalPositionChanged);
         _healthDestroyedConnection = connect(_currentHealth, &QObject::destroyed, this, [this]() {
+            const QPointer<QGCPositionManager> managerGuard(this);
             _currentHealth = nullptr;
             _clearPosition();
-            _selectPositionSource();
+            if (managerGuard) {
+                _selectPositionSource();
+            }
         });
     }
     if (_currentSource != nullptr) {
@@ -352,7 +345,6 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
 #endif
 
         const QPointer<QGeoPositionInfoSource> selectedSource = _currentSource;
-        const quint64 generation = _sourceGeneration;
         _positionUpdateConnection =
             connect(_currentSource, &QGeoPositionInfoSource::positionUpdated, this,
                     [this, selectedSource, generation](const QGeoPositionInfo& update) {

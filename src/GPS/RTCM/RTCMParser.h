@@ -21,6 +21,8 @@ public:
 
     bool addByte(uint8_t byte);
 
+    bool hasPartialFrame() const { return _state != State::WaitingForPreamble; }
+
     uint8_t* message() { return _buffer; }
 
     uint16_t messageLength() const { return _messageLength; }

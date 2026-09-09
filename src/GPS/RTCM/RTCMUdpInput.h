@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "GPSCorrectionFrame.h"
 #include "RTCMParser.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
@@ -66,6 +67,7 @@ signals:
     /// Connect directly to RTCMMavlink::RTCMDataUpdate (same thread).
     void rtcmDataReceived(const QByteArray& data);
     void correctionReceived(const QByteArray& data, int messageId, bool validated);
+    void frameReceived(const GPSCorrectionFrame& frame);
 
     void runningChanged();
     void portChanged();
@@ -83,6 +85,7 @@ private:
     {
         RTCMParser parser;
         qint64 lastReceivedMs = 0;
+        qint64 frameReceivedAtMs = 0;
     };
 
     std::shared_ptr<PeerParser> _parserForPeer(const QHostAddress& address, quint16 port);
@@ -91,4 +94,7 @@ private:
     static constexpr qint64 PEER_IDLE_TIMEOUT_MS = 30000;
     quint64 _validFrames = 0;
     quint64 _invalidFrames = 0;
+    bool _drainScheduled = false;
+    static constexpr qsizetype MAX_DATAGRAMS_PER_DRAIN = 16;
+    static constexpr qsizetype MAX_BYTES_PER_DRAIN = 64 * 1024;
 };

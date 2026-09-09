@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QChronoTimer>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
@@ -16,7 +17,6 @@ class Vehicle;
 class Fact;
 class FactGroup;
 class NTRIPSettings;
-class NTRIPTransport;
 
 struct PositionResult
 {
@@ -50,6 +50,7 @@ public:
     static constexpr std::chrono::milliseconds kFastRetryInterval{1000};
 
     using PositionProvider = std::function<PositionResult()>;
+    using SentenceWriter = std::function<void(const QByteArray&)>;
 
     explicit NTRIPGgaProvider(QObject* parent = nullptr);
     ~NTRIPGgaProvider() override;
@@ -59,7 +60,7 @@ public:
     /// SettingsManager is ready — no singleton access happens at construction.
     void init(NTRIPSettings* settings);
 
-    void start(NTRIPTransport* transport);
+    void start(SentenceWriter writer);
     void stop();
 
     QString currentSource() const { return _source; }
@@ -88,7 +89,8 @@ private:
 
     PositionResult _getBestPosition() const;
 
-    QPointer<NTRIPTransport> _transport;
+    SentenceWriter _writer;
+    quint64 _generation = 0;
     QPointer<Vehicle> _vehicle;
     QMetaObject::Connection _vehicleMessageConnection;
     PositionResult _vehicleGpsPosition;

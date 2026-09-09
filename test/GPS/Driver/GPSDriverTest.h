@@ -7,6 +7,11 @@ class GPSDriverTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _positionBackendWithoutBaseSupport();
+    void _invalidConfiguration_data();
+    void _invalidConfiguration();
+    void _familyCancellation_data();
+    void _familyCancellation();
     void _observationMetadata();
     void _satelliteAzimuthEncoding_data();
     void _satelliteAzimuthEncoding();

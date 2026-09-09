@@ -11,7 +11,6 @@
 #include "MultiVehicleManager.h"
 #include "NMEAUtils.h"
 #include "NTRIPSettings.h"
-#include "NTRIPTransport.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
@@ -146,34 +145,10 @@ PositionResult getGCSPosition()
     if (!posMgr)
         return {};
 
-    const QGeoCoordinate coord = posMgr->gcsPosition();
-    if (coord.isValid() && isSaneCoord(coord.latitude(), coord.longitude())) {
-        GPSObservation observation;
-        if (const auto* health = posMgr->sourceHealth()) {
-            if (!health->usable()) {
-                return {};
-            }
-            observation = health->observation();
-            const int used = health->satellitesInUseCount();
-            if (used >= 0) {
-                observation.satellitesUsed = used;
-            }
-        } else {
-            const QDateTime received = posMgr->gcsPositionTimestamp();
-            const qint64 age = received.msecsTo(QDateTime::currentDateTimeUtc());
-            if (!received.isValid() || age < 0 || age >= GPSSourceHealth::FRESHNESS_TIMEOUT_MS) {
-                return {};
-            }
-            observation.position = posMgr->geoPositionInfo();
-            if (!observation.usable() || observation.coordinate().latitude() != coord.latitude() ||
-                observation.coordinate().longitude() != coord.longitude()) {
-                return {};
-            }
-            observation.receivedAt = received;
-            observation.monotonicTimestampUs = GPSObservation::monotonicNowUs() - age * 1000;
-        }
-        observation.position.setCoordinate(observation.coordinate());
-        return {observation, QStringLiteral("GCS Position")};
+    const auto observation = posMgr->acceptedObservation(GPSObservation::PositionUse::NTRIP);
+    if (observation &&
+        isSaneCoord(observation->position.coordinate().latitude(), observation->position.coordinate().longitude())) {
+        return {*observation, QStringLiteral("GCS Position")};
     }
     return {};
 }
@@ -237,20 +212,29 @@ void NTRIPGgaProvider::setPositionProvider(PositionSource source, PositionProvid
     _providers[source] = std::move(provider);
 }
 
-void NTRIPGgaProvider::start(NTRIPTransport* transport)
+void NTRIPGgaProvider::start(SentenceWriter writer)
 {
-    _transport = transport;
+    const QPointer<NTRIPGgaProvider> guard(this);
+    const auto generation = ++_generation;
+    _timer.stop();
+    _writer = std::move(writer);
     _fastRetryCount = 0;
     _clearSource();
+    if (!guard || generation != _generation || !_writer) {
+        return;
+    }
     _setRetryPhase(RetryPhase::Fast);
     _sendGGA();
-    _timer.start();
+    if (guard && generation == _generation) {
+        _timer.start();
+    }
 }
 
 void NTRIPGgaProvider::stop()
 {
+    ++_generation;
     _timer.stop();
-    _transport = nullptr;
+    _writer = {};
     _clearSource();
 }
 
@@ -271,17 +255,26 @@ void NTRIPGgaProvider::_clearSource()
 
 void NTRIPGgaProvider::_sendGGA()
 {
-    if (!_transport) {
+    if (!_writer) {
         return;
     }
 
+    const QPointer<NTRIPGgaProvider> guard(this);
+    const auto generation = _generation;
+    const auto writer = _writer;
     _trackVehicle();
     _ensureDefaultProviders();
 
     const auto position = _getBestPosition();
+    if (!guard || generation != _generation) {
+        return;
+    }
 
     if (!position.isValid()) {
         _clearSource();
+        if (!guard || generation != _generation) {
+            return;
+        }
         if (++_fastRetryCount >= 5 && _retryPhase == RetryPhase::Fast) {
             _setRetryPhase(RetryPhase::Normal);
         }
@@ -294,7 +287,10 @@ void NTRIPGgaProvider::_sendGGA()
     }
 
     const QByteArray gga = NMEAUtils::makeGGA(position.observation);
-    _transport->sendNMEA(gga);
+    writer(gga);
+    if (!guard || generation != _generation) {
+        return;
+    }
 
     if (!position.source.isEmpty() && position.source != _source) {
         _source = position.source;
@@ -366,13 +362,16 @@ void NTRIPGgaProvider::_ensureDefaultProviders()
 
 PositionResult NTRIPGgaProvider::_getBestPosition() const
 {
+    const QPointer<const NTRIPGgaProvider> guard(this);
+    const auto generation = _generation;
     const PositionSource source = _cachedSource;
 
     // If a specific source is requested, try only that one
     if (source != PositionSource::Auto) {
         auto it = _providers.find(source);
         if (it != _providers.end()) {
-            return it.value()();
+            const auto provider = it.value();
+            return provider();
         }
         return {};
     }
@@ -388,7 +387,11 @@ PositionResult NTRIPGgaProvider::_getBestPosition() const
     for (PositionSource s : kPriority) {
         auto it = _providers.find(s);
         if (it != _providers.end()) {
-            auto result = it.value()();
+            const auto provider = it.value();
+            auto result = provider();
+            if (!guard || generation != _generation) {
+                return {};
+            }
             if (result.isValid()) {
                 return result;
             }

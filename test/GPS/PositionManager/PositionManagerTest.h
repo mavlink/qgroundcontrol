@@ -26,4 +26,9 @@ private slots:
     void _sharedHealthControlsPosition_data();
     void _sharedHealthControlsPosition();
     void _healthLifetimeAndSelection();
+    void _allSourcesShareAcceptance_data();
+    void _allSourcesShareAcceptance();
+    void _positionNotificationsPublishCoherentState();
+    void _sourceTeardownCanDeleteManager_data();
+    void _sourceTeardownCanDeleteManager();
 };

@@ -7,12 +7,12 @@
 #include <memory>
 
 #include "GPSSourceHealth.h"
+#include "NMEASatelliteAdapter.h"
 
 class QIODevice;
 class QGeoPositionInfoSource;
 class QNmeaSatelliteInfoSource;
 class NMEAPositionSource;
-class NMEASatelliteAdapter;
 class NMEAStreamSplitter;
 
 /// Owns NMEA decoders and health independently of connection policy and device ownership.
@@ -42,12 +42,17 @@ signals:
     void satellitesChanged();
 
 private:
+    void _expireSatellites();
+
     std::unique_ptr<NMEAStreamSplitter> _stream;
     std::unique_ptr<NMEAPositionSource> _positionSource;
     std::unique_ptr<NMEASatelliteAdapter> _satelliteAdapter;
     std::unique_ptr<QNmeaSatelliteInfoSource> _satelliteSource;
     QTimer _satellitePollTimer;
     GPSSourceHealth _health;
+    NMEASatelliteAdapter::Snapshot _viewSnapshot;
+    NMEASatelliteAdapter::Snapshot _useSnapshot;
+    bool _refreshingSatellites = false;
     QList<QGeoSatelliteInfo> _satellitesInView;
     QList<QGeoSatelliteInfo> _satellitesInUse;
 };

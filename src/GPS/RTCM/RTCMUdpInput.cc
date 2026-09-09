@@ -49,6 +49,7 @@ bool RTCMUdpInput::start()
 
 void RTCMUdpInput::stop()
 {
+    _drainScheduled = false;
     if (!_running) {
         return;
     }
@@ -85,15 +86,27 @@ void RTCMUdpInput::_readDatagrams()
     }
     const QPointer<RTCMUdpInput> guard(this);
     const QPointer<QUdpSocket> socket = _socket;
-    while (guard && socket && socket == _socket && socket->hasPendingDatagrams()) {
+    qsizetype datagramsRead = 0;
+    qsizetype bytesRead = 0;
+    while (guard && socket && socket == _socket && socket->hasPendingDatagrams() &&
+           datagramsRead < MAX_DATAGRAMS_PER_DRAIN && bytesRead < MAX_BYTES_PER_DRAIN) {
         const QNetworkDatagram datagram = socket->receiveDatagram();
         const QByteArray data = datagram.data();
+        ++datagramsRead;
+        bytesRead += data.size();
         if (data.isEmpty()) {
             continue;
         }
+        const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs();
+        const QString instance =
+            datagram.senderAddress().toString() + QLatin1Char(':') + QString::number(datagram.senderPort());
 
         if (!_validateRtcm) {
             qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << data.size() << "bytes";
+            emit frameReceived({GPSCorrectionSource::Udp, 0, receivedAtMs, data, 0, false, false, instance});
+            if (!guard || !socket || socket != _socket) {
+                return;
+            }
             emit correctionReceived(data, 0, false);
             if (!guard || !socket || socket != _socket) {
                 return;
@@ -110,7 +123,13 @@ void RTCMUdpInput::_readDatagrams()
         int framesFound = 0;
         int framesDropped = 0;
         for (const char ch : data) {
+            if (peer->frameReceivedAtMs == 0 && static_cast<quint8>(ch) == 0xD3) {
+                peer->frameReceivedAtMs = receivedAtMs;
+            }
             if (!parser.addByte(static_cast<uint8_t>(static_cast<unsigned char>(ch)))) {
+                if (!parser.hasPartialFrame()) {
+                    peer->frameReceivedAtMs = 0;
+                }
                 continue;
             }
             if (parser.validateCrc()) {
@@ -118,7 +137,14 @@ void RTCMUdpInput::_readDatagrams()
                 ++_validFrames;
                 const QByteArray frame = parser.currentFrame();
                 const int messageId = parser.messageId();
+                const qint64 frameTimestamp = peer->frameReceivedAtMs;
                 parser.reset();
+                peer->frameReceivedAtMs = 0;
+                emit frameReceived(
+                    {GPSCorrectionSource::Udp, 0, frameTimestamp, frame, messageId, true, false, instance});
+                if (!guard || !socket || socket != _socket) {
+                    return;
+                }
                 emit correctionReceived(frame, messageId, true);
                 if (!guard || !socket || socket != _socket) {
                     return;
@@ -132,6 +158,7 @@ void RTCMUdpInput::_readDatagrams()
                 ++_invalidFrames;
             }
             parser.reset();
+            peer->frameReceivedAtMs = 0;
         }
 
         if (framesDropped > 0) {
@@ -149,6 +176,18 @@ void RTCMUdpInput::_readDatagrams()
                                             .arg(_invalidFrames)
                                             .arg(dropPct, 0, 'f', 1);
         }
+    }
+    if (guard && socket && socket == _socket && socket->hasPendingDatagrams() && !_drainScheduled) {
+        _drainScheduled = true;
+        QMetaObject::invokeMethod(
+            this,
+            [this, socket]() {
+                if (socket && socket == _socket) {
+                    _drainScheduled = false;
+                    _readDatagrams();
+                }
+            },
+            Qt::QueuedConnection);
     }
 }
 

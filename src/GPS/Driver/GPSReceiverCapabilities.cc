@@ -2,61 +2,21 @@
 
 #include <QtCore/QCoreApplication>
 
-#include <array>
-
 #include "GPSDriver.h"
-
-namespace {
-struct ReceiverFamily
-{
-    GPSType type;
-    QLatin1StringView name;
-    std::array<QLatin1StringView, 3> aliases;
-    int manufacturerId;
-    GPSReceiverCapabilities::Support baseSupport;
-    GPSReceiverCapabilities::Support nmeaSupport;
-};
-
-using Support = GPSReceiverCapabilities::Support;
-constexpr std::array families{
-    ReceiverFamily{GPSType::u_blox,
-                   QLatin1StringView("U-blox"),
-                   {QLatin1StringView("blox"), QLatin1StringView("ubx"), QLatin1StringView("u-blox")},
-                   4,
-                   Support::Unknown,
-                   Support::Supported},
-    ReceiverFamily{GPSType::trimble,
-                   QLatin1StringView("Trimble"),
-                   {QLatin1StringView("trimble"), QLatin1StringView("ashtech"), QLatin1StringView("spectra")},
-                   1,
-                   Support::Supported,
-                   Support::Unsupported},
-    ReceiverFamily{GPSType::septentrio,
-                   QLatin1StringView("Septentrio"),
-                   {QLatin1StringView("septentrio"), QLatin1StringView("sbf"), QLatin1StringView()},
-                   2,
-                   Support::Supported,
-                   Support::Unsupported},
-    ReceiverFamily{GPSType::femto,
-                   QLatin1StringView("Femtomes"),
-                   {QLatin1StringView("femtomes"), QLatin1StringView("femto"), QLatin1StringView()},
-                   3,
-                   Support::Supported,
-                   Support::Unsupported},
-};
-}  // namespace
+#include "GPSDriverBackend.h"
 
 GPSReceiverCapabilities GPSReceiverCapabilities::forType(GPSType type)
 {
     GPSReceiverCapabilities result;
     result.type = type;
-    for (const ReceiverFamily& family : families) {
+    for (const GPSDriverFamily& family : gpsDriverFamilies()) {
         if (family.type == type) {
             result.name = family.name;
             result.manufacturerId = family.manufacturerId;
             result.nativePosition = Support::Supported;
             result.rtkBase = family.baseSupport;
             result.nmeaOutput = family.nmeaSupport;
+            result.correctionInput = family.correctionInput;
             break;
         }
     }
@@ -65,7 +25,7 @@ GPSReceiverCapabilities GPSReceiverCapabilities::forType(GPSType type)
 
 std::optional<GPSType> GPSReceiverCapabilities::typeForName(QStringView name)
 {
-    for (const ReceiverFamily& family : families) {
+    for (const GPSDriverFamily& family : gpsDriverFamilies()) {
         for (const QLatin1StringView alias : family.aliases) {
             if (!alias.isEmpty() && name.contains(alias, Qt::CaseInsensitive)) {
                 return family.type;

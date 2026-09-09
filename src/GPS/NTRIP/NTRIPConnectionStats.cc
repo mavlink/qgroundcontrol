@@ -1,5 +1,7 @@
 #include "NTRIPConnectionStats.h"
 
+#include <QtCore/QPointer>
+
 #include <algorithm>
 
 #include "QGCLoggingCategory.h"
@@ -13,20 +15,37 @@ NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent)
     qCDebug(NTRIPConnectionStatsLog) << this;
     _rateTimer.setInterval(std::chrono::seconds{1});
     _rateTimer.callOnTimeout(this, [this]() {
+        const QPointer<NTRIPConnectionStats> guard(this);
+        const auto revision = ++_revision;
         const quint64 totalBytes = _rateTracker.totalBytes();
         if (totalBytes != _prevBytesReceived) {
             _prevBytesReceived = totalBytes;
             emit bytesReceivedChanged();
+            if (!guard || revision != _revision) {
+                return;
+            }
             emit dataRateChanged();
+            if (!guard || revision != _revision) {
+                return;
+            }
         } else if (_rateTracker.bytesPerSec() > 0) {
             emit dataRateChanged();
+            if (!guard || revision != _revision) {
+                return;
+            }
         }
         if (_prevMessagesReceived != _messagesReceived) {
             _prevMessagesReceived = _messagesReceived;
             emit messagesReceivedChanged();
+            if (!guard || revision != _revision) {
+                return;
+            }
         }
         if (_lastMessageTime.isValid()) {
             emit correctionAgeChanged();
+            if (!guard || revision != _revision) {
+                return;
+            }
         }
 
         const qint64 age = _lastMessageTime.isValid() ? _lastMessageTime.elapsed()
@@ -36,10 +55,16 @@ NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent)
         if (stale != _dataStale) {
             _dataStale = stale;
             emit dataStaleChanged();
+            if (!guard || revision != _revision) {
+                return;
+            }
         }
         if (_messageCountsDirty) {
             _messageCountsDirty = false;
             emit messageCountsByIdChanged();
+            if (!guard || revision != _revision) {
+                return;
+            }
         }
     });
 }
@@ -51,44 +76,66 @@ NTRIPConnectionStats::~NTRIPConnectionStats()
 
 void NTRIPConnectionStats::start()
 {
+    ++_revision;
     _streamStarted.start();
     _rateTimer.start();
 }
 
 void NTRIPConnectionStats::stop()
 {
+    const QPointer<NTRIPConnectionStats> guard(this);
+    const auto revision = ++_revision;
     _rateTimer.stop();
     if (_rateTracker.bytesPerSec() != 0.0) {
         _rateTracker.reset();
         _prevBytesReceived = 0;
         emit dataRateChanged();
+        if (!guard || revision != _revision) {
+            return;
+        }
         emit bytesReceivedChanged();
+        if (!guard || revision != _revision) {
+            return;
+        }
     }
 }
 
 void NTRIPConnectionStats::recordMessage(int bytes, int messageId)
 {
+    const QPointer<NTRIPConnectionStats> guard(this);
+    const auto revision = ++_revision;
     if (bytes <= 0) {
         return;
     }
     _rateTracker.recordBytes(bytes);
     _messagesReceived++;
+    ++_messageCountsById[messageId];
+    _messageCountsDirty = true;
     _lastMessageTime.restart();
     if (_dataStale) {
         _dataStale = false;
         emit dataStaleChanged();
+        if (!guard || revision != _revision) {
+            return;
+        }
     }
     if (_rateTracker.rateUpdated()) {
         _prevBytesReceived = _rateTracker.totalBytes();
         emit dataRateChanged();
+        if (!guard || revision != _revision) {
+            return;
+        }
         emit bytesReceivedChanged();
+        if (!guard || revision != _revision) {
+            return;
+        }
     }
-    ++_messageCountsById[messageId];
-    _messageCountsDirty = true;
 }
 
 void NTRIPConnectionStats::reset()
 {
+    const QPointer<NTRIPConnectionStats> guard(this);
+    const auto revision = ++_revision;
     _rateTracker.reset();
     _prevBytesReceived = 0;
     _messagesReceived = 0;
@@ -102,12 +149,30 @@ void NTRIPConnectionStats::reset()
     if (_dataStale) {
         _dataStale = false;
         emit dataStaleChanged();
+        if (!guard || revision != _revision) {
+            return;
+        }
     }
     emit bytesReceivedChanged();
+    if (!guard || revision != _revision) {
+        return;
+    }
     emit messagesReceivedChanged();
+    if (!guard || revision != _revision) {
+        return;
+    }
     emit dataRateChanged();
+    if (!guard || revision != _revision) {
+        return;
+    }
     emit correctionAgeChanged();
+    if (!guard || revision != _revision) {
+        return;
+    }
     emit messageCountsByIdChanged();
+    if (!guard || revision != _revision) {
+        return;
+    }
     emit validationChanged();
 }
 
@@ -126,6 +191,7 @@ QVariantList NTRIPConnectionStats::messageCountsById() const
 
 void NTRIPConnectionStats::recordNetworkBytes(qint64 bytes)
 {
+    ++_revision;
     if (bytes > 0) {
         _networkBytesReceived += bytes;
         emit validationChanged();
@@ -134,6 +200,8 @@ void NTRIPConnectionStats::recordNetworkBytes(qint64 bytes)
 
 void NTRIPConnectionStats::recordValidatedFrame(bool filtered)
 {
+    const QPointer<NTRIPConnectionStats> guard(this);
+    const auto revision = ++_revision;
     ++_validatedFrames;
     if (filtered) {
         ++_filteredFrames;
@@ -142,6 +210,9 @@ void NTRIPConnectionStats::recordValidatedFrame(bool filtered)
     if (_dataStale) {
         _dataStale = false;
         emit dataStaleChanged();
+        if (!guard || revision != _revision) {
+            return;
+        }
     }
     emit validationChanged();
 }

@@ -1,42 +1,18 @@
 #include "NTRIPSourceTableController.h"
 
 #include <QtCore/QDateTime>
+#include <QtCore/QPointer>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QSslError>
 
 #include "NTRIPSourceTable.h"
+#include "NTRIPTlsPolicy.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIP.NTRIPSourceTableController")
-
-namespace {
-bool isSelfSignedOnly(const QList<QSslError>& errors)
-{
-    if (errors.isEmpty()) {
-        return false;
-    }
-    for (const QSslError& error : errors) {
-        switch (error.error()) {
-            case QSslError::SelfSignedCertificate:
-            case QSslError::SelfSignedCertificateInChain:
-                break;
-            case QSslError::UnableToGetLocalIssuerCertificate:
-            case QSslError::UnableToVerifyFirstCertificate:
-            case QSslError::CertificateUntrusted:
-                if (error.certificate().isNull() || !error.certificate().isSelfSigned()) {
-                    return false;
-                }
-                break;
-            default:
-                return false;
-        }
-    }
-    return true;
-}
-}  // namespace
 
 NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent)
     : QObject(parent)
@@ -82,17 +58,23 @@ void NTRIPSourceTableController::fetch(const NTRIPTransportConfig& config, const
     // Same validation the streaming transport runs (host/port/control chars,
     // RFC 7617 username) so the fetch can't reach a caster the stream rejects.
     if (const QString invalid = config.validationError(); !invalid.isEmpty()) {
+        _abortReply();
         _onFetchError(invalid);
         return;
     }
 
     _abortReply();
 
+    const auto generation = _generation;
+    const QPointer<NTRIPSourceTableController> guard(this);
     _sortCoord = sortCoord;
     _lastFetchKey = cacheKey;
     _fetchStatus = FetchStatus::InProgress;
     _fetchError.clear();
     emit fetchStatusChanged();
+    if (!guard || generation != _generation) {
+        return;
+    }
 
     QUrl url;
     url.setScheme(config.useTls ? QStringLiteral("https") : QStringLiteral("http"));
@@ -115,24 +97,38 @@ void NTRIPSourceTableController::fetch(const NTRIPTransportConfig& config, const
     _replyTooLarge = false;
     _reply = _networkManager->get(request);
     QNetworkReply* const reply = _reply;
+    reply->setReadBufferSize(kMaxSourceTableBytes + 1);
+    connect(reply, &QNetworkReply::readyRead, this, [this, reply, generation]() {
+        if (generation == _generation && reply == _reply && reply->bytesAvailable() > kMaxSourceTableBytes) {
+            _replyTooLarge = true;
+            reply->abort();
+        }
+    });
     connect(reply, &QNetworkReply::sslErrors, this,
             [reply, allowSelfSigned = config.allowSelfSignedCerts](const QList<QSslError>& errors) {
-                if (allowSelfSigned && isSelfSignedOnly(errors)) {
+                if (NTRIPTlsPolicy::canIgnore(errors, allowSelfSigned)) {
                     reply->ignoreSslErrors(errors);
                 }
             });
     // Bound memory: abort mid-download if the caster streams an oversized body.
-    connect(_reply, &QNetworkReply::downloadProgress, this, [this](qint64 received, qint64) {
-        if (received >= kMaxSourceTableBytes && _reply) {
+    connect(_reply, &QNetworkReply::downloadProgress, this, [this, reply, generation](qint64 received, qint64) {
+        if (generation == _generation && _reply == reply && received >= kMaxSourceTableBytes) {
             _replyTooLarge = true;
             _reply->abort();
         }
     });
-    connect(_reply, &QNetworkReply::finished, this, &NTRIPSourceTableController::_onReplyFinished);
+    connect(_reply, &QNetworkReply::finished, this, [this, reply, generation]() {
+        if (generation == _generation && _reply == reply) {
+            _onReplyFinished();
+        }
+    });
 }
 
 void NTRIPSourceTableController::_onReplyFinished()
 {
+    if (!_reply) {
+        return;
+    }
     if (_replyTooLarge) {
         _abortReply();
         _onFetchError(tr("Source table too large (exceeds %1 MB)").arg(kMaxSourceTableBytes / (1024 * 1024)));
@@ -159,39 +155,58 @@ void NTRIPSourceTableController::_onReplyFinished()
 
 void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 {
+    const QPointer<NTRIPSourceTableController> guard(this);
+    const auto generation = _generation;
     _model->parseSourceTable(table);
+    if (!guard || generation != _generation) {
+        return;
+    }
     _fetchedAtMs = QDateTime::currentMSecsSinceEpoch();
 
     if (_sortCoord.isValid()) {
         _model->updateDistances(_sortCoord);
+        if (!guard || generation != _generation) {
+            return;
+        }
     }
 
     _fetchStatus = FetchStatus::Success;
     emit fetchStatusChanged();
-    emit mountpointModelChanged();
+    if (guard && generation == _generation) {
+        emit mountpointModelChanged();
+    }
 }
 
 void NTRIPSourceTableController::_onFetchError(const QString& error)
 {
-    // Invalidate the cache: a failed fetch must not let a later call serve the
-    // previous caster's table as this caster's "Success".
+    const QPointer<NTRIPSourceTableController> guard(this);
+    const auto generation = _generation;
     _fetchedAtMs = 0;
-    _model->clear();
     _fetchError = error;
     _fetchStatus = FetchStatus::Error;
+    _model->clear();
+    if (!guard || generation != _generation) {
+        return;
+    }
     emit fetchErrorChanged();
-    emit fetchStatusChanged();
+    if (guard && generation == _generation) {
+        emit fetchStatusChanged();
+    }
 }
 
 void NTRIPSourceTableController::_abortReply()
 {
-    if (_reply) {
-        disconnect(_reply, nullptr, this, nullptr);
-        if (_reply->isRunning()) {
-            _reply->abort();
+    ++_generation;
+    const QPointer<QNetworkReply> reply = _reply;
+    _reply = nullptr;
+    if (reply) {
+        disconnect(reply, nullptr, this, nullptr);
+        if (reply->isRunning()) {
+            reply->abort();
         }
-        _reply->deleteLater();
-        _reply = nullptr;
+        if (reply) {
+            reply->deleteLater();
+        }
     }
 }
 

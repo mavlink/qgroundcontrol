@@ -41,6 +41,8 @@ public:
     qreal gcsHeading() const { return _gcsHeading; }
     qreal gcsPositionHorizontalAccuracy() const { return _gcsPositionHorizontalAccuracy; }
     QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
+
+    std::optional<GPSObservation> acceptedObservation(GPSObservation::PositionUse use) const;
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
 
     /// Local arrival time of the last position update which passed the accuracy gates and was
@@ -85,10 +87,9 @@ private:
     void _setupPositionSources();
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
     void _checkPermission();
-    void _setGCSHeading(qreal newGCSHeading);
-    void _setGCSPosition(const QGeoCoordinate &newGCSPosition);
     void _clearPosition();
     void _externalPositionChanged();
+    void _publishPosition(const std::optional<GPSObservation>& observation);
 
     bool _usingPluginSource = false;
     int _updateInterval = 0;
@@ -113,6 +114,7 @@ private:
     QPointer<QGeoPositionInfoSource> _receiverSource;
     QMetaObject::Connection _receiverDestroyedConnection;
     quint64 _sourceGeneration = 0;
+    quint64 _positionRevision = 0;
     QMetaObject::Connection _nmeaDestroyedConnection;
     QMetaObject::Connection _positionUpdateConnection;
     QMetaObject::Connection _positionErrorConnection;
@@ -123,7 +125,4 @@ private:
 
     QGCCompass *_compass = nullptr;
 
-    static constexpr qreal kMinHorizonalAccuracyMeters = 100.;
-    static constexpr qreal kMinVerticalAccuracyMeters = 10.;
-    static constexpr qreal kMinDirectionAccuracyDegrees = 30.;
 };

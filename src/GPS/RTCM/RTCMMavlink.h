@@ -3,12 +3,15 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QObject>
+
 #include <atomic>
 #include <cstdint>
+#include <memory>
 
 #include "DataRateTracker.h"
 
 typedef struct __mavlink_gps_rtcm_data_t mavlink_gps_rtcm_data_t;
+class LinkInterface;
 
 /// One GPS_RTCM_DATA payload ready to encode. flags layout matches MAVLink:
 /// bit0 = fragmented, bits1-2 = fragment ID, bits3-7 = sequence ID.
@@ -77,7 +80,9 @@ signals:
     void deliveryStatsChanged();
 
 private:
-    static int _sendMessageOnAllLinks(const mavlink_gps_rtcm_data_t& data);
+    static QList<std::shared_ptr<LinkInterface>> _connectedLinks();
+    static int _sendMessageOnLinks(const mavlink_gps_rtcm_data_t& data,
+                                   const QList<std::shared_ptr<LinkInterface>>& links);
     static uint8_t _makeFlags(bool fragmented, uint8_t fragmentId, uint8_t sequenceId);
 
     quint64 _submittedBytes = 0;

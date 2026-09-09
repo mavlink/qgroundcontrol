@@ -1,5 +1,7 @@
 #include "GPSSourceHealth.h"
 
+#include <QtCore/QPointer>
+
 #include <chrono>
 
 #include "QGCLoggingCategory.h"
@@ -11,9 +13,10 @@ GPSSourceHealth::GPSSourceHealth(QObject* parent)
     , _positionTimer(this)
     , _satellitesInViewTimer(this)
     , _satellitesInUseTimer(this)
+    , _fixSatellitesInUseTimer(this)
 {
     qCDebug(GPSSourceHealthLog) << this;
-    for (auto* timer : {&_positionTimer, &_satellitesInViewTimer, &_satellitesInUseTimer}) {
+    for (auto* timer : {&_positionTimer, &_satellitesInViewTimer, &_satellitesInUseTimer, &_fixSatellitesInUseTimer}) {
         timer->setSingleShot(true);
         timer->setTimerType(Qt::PreciseTimer);
         timer->setInterval(FRESHNESS_TIMEOUT_MS);
@@ -24,8 +27,18 @@ GPSSourceHealth::GPSSourceHealth(QObject* parent)
         emit satellitesChanged();
     });
     connect(&_satellitesInUseTimer, &QTimer::timeout, this, [this]() {
+        const int previous = satellitesInUseCount();
         _satellitesInUseCount = -1;
-        emit satellitesChanged();
+        if (previous != satellitesInUseCount()) {
+            emit satellitesChanged();
+        }
+    });
+    connect(&_fixSatellitesInUseTimer, &QTimer::timeout, this, [this]() {
+        const int previous = satellitesInUseCount();
+        _fixSatellitesInUseCount = -1;
+        if (previous != satellitesInUseCount()) {
+            emit satellitesChanged();
+        }
     });
 }
 
@@ -44,6 +57,26 @@ double GPSSourceHealth::horizontalAccuracy() const
     return usable() ? _observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy) : qQNaN();
 }
 
+std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(GPSObservation::PositionUse use) const
+{
+    const qint64 age = _observation.ageMilliseconds();
+    if (!usable() || age < 0 || age >= _freshnessTimeoutMs) {
+        return std::nullopt;
+    }
+    GPSObservation accepted = _observation;
+    accepted.position = _observation.acceptedPosition(use);
+    if (use == GPSObservation::PositionUse::RemoteID && _observation.altitudeEllipsoidMeters &&
+        qIsFinite(*_observation.altitudeEllipsoidMeters)) {
+        accepted.altitudeDatum = GPSObservation::AltitudeDatum::Ellipsoid;
+    }
+    if (!accepted.position.isValid()) {
+        return std::nullopt;
+    }
+    const int used = satellitesInUseCount();
+    accepted.satellitesUsed = used >= 0 ? std::optional<int>(used) : std::nullopt;
+    return accepted;
+}
+
 void GPSSourceHealth::updatePosition(const QGeoPositionInfo& position, qint64 ageMs)
 {
     GPSObservation observation;
@@ -56,6 +89,8 @@ void GPSSourceHealth::updatePosition(const QGeoPositionInfo& position, qint64 ag
 
 void GPSSourceHealth::updateObservation(const GPSObservation& observation)
 {
+    const QPointer<GPSSourceHealth> guard(this);
+    const quint64 revision = ++_revision;
     _positionTimer.stop();
     _observation = observation;
     const auto& position = observation.position;
@@ -70,11 +105,20 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
     if (_state == Usable) {
         _positionTimer.start(_freshnessTimeoutMs - static_cast<int>(ageMs));
     }
+    const int previousUsed = satellitesInUseCount();
+    _updateSatelliteCount(observation.position.isValid() ? observation.satellitesUsed.value_or(-1) : -1, ageMs,
+                          _fixSatellitesInUseCount, _fixSatellitesInUseTimer);
     qCDebug(GPSSourceHealthLog) << this << "Position observation"
                                << "state:" << _state
                                << "coordinate:" << position.coordinate()
                                << "horizontalAccuracy:" << position.attribute(QGeoPositionInfo::HorizontalAccuracy)
                                << "ageMs:" << ageMs;
+    if (previousUsed != satellitesInUseCount()) {
+        emit satellitesChanged();
+    }
+    if (!guard || revision != _revision) {
+        return;
+    }
     emit positionChanged();
 }
 
@@ -90,16 +134,21 @@ void GPSSourceHealth::_setState(State state)
 
 void GPSSourceHealth::invalidatePosition()
 {
+    ++_revision;
     _setState(Invalid);
 }
 
 void GPSSourceHealth::reset()
 {
+    const QPointer<GPSSourceHealth> guard(this);
+    const quint64 revision = ++_revision;
     _positionTimer.stop();
     _observation = {};
     _state = NoData;
     clearSatellites();
-    emit positionChanged();
+    if (guard && revision == _revision) {
+        emit positionChanged();
+    }
 }
 
 void GPSSourceHealth::_updateSatelliteCount(int count, qint64 ageMs, int& stored, QTimer& timer)
@@ -134,9 +183,24 @@ void GPSSourceHealth::clearSatellites()
 {
     _satellitesInViewTimer.stop();
     _satellitesInUseTimer.stop();
-    if (_satellitesInViewCount != -1 || _satellitesInUseCount != -1) {
+    _fixSatellitesInUseTimer.stop();
+    if (_satellitesInViewCount != -1 || satellitesInUseCount() != -1) {
         _satellitesInViewCount = -1;
         _satellitesInUseCount = -1;
+        _fixSatellitesInUseCount = -1;
+        emit satellitesChanged();
+    }
+}
+
+void GPSSourceHealth::clearSatelliteReports()
+{
+    const int previousUsed = satellitesInUseCount();
+    const bool hadVisible = _satellitesInViewCount >= 0;
+    _satellitesInViewTimer.stop();
+    _satellitesInUseTimer.stop();
+    _satellitesInViewCount = -1;
+    _satellitesInUseCount = -1;
+    if (hadVisible || previousUsed != satellitesInUseCount()) {
         emit satellitesChanged();
     }
 }

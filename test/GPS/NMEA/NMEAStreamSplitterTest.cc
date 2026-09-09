@@ -2,6 +2,7 @@
 
 #include <QtCore/QIODevice>
 #include <QtCore/QPointer>
+#include <QtTest/QSignalSpy>
 
 #include <algorithm>
 
@@ -79,7 +80,8 @@ void NMEAStreamSplitterTest::_slowConsumerIsBounded()
     const QByteArray line = NMEAUtils::repairChecksum("$GNTXT,buffer");
     const QByteArray lines = line.repeated(8000);
     input.feed(lines);
-    QCOMPARE(received, lines);
+    QVERIFY(received.size() < lines.size());
+    QTRY_COMPARE_WITH_TIMEOUT(received, lines, TestTimeout::mediumMs());
     QVERIFY(stream.satelliteDevice()->bytesAvailable() <= 64 * 1024);
     const QByteArray buffered = stream.satelliteDevice()->readAll();
     QVERIFY(!buffered.isEmpty());
@@ -88,6 +90,7 @@ void NMEAStreamSplitterTest::_slowConsumerIsBounded()
     input.feed("$" + QByteArray(80 * 1024, 'x'));
     QVERIFY(stream.satelliteDevice()->readAll().isEmpty());
     input.feed("rest\n" + line);
+    QTRY_VERIFY_WITH_TIMEOUT(stream.satelliteDevice()->canReadLine(), TestTimeout::mediumMs());
     QCOMPARE(stream.satelliteDevice()->readAll(), line);
 }
 

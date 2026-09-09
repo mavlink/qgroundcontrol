@@ -19,6 +19,8 @@ SimulatedPosition::SimulatedPosition(QObject* parent)
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::Direction, kHeading);
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::GroundSpeed, kHorizontalVelocityMetersPerSec);
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::VerticalSpeed, kVerticalVelocityMetersPerSec);
+    _lastPosition.setAttribute(QGeoPositionInfo::Attribute::HorizontalAccuracy, 1.0);
+    _lastPosition.setAttribute(QGeoPositionInfo::Attribute::VerticalAccuracy, 1.0);
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &SimulatedPosition::_vehicleAdded);
 
@@ -55,6 +57,7 @@ void SimulatedPosition::_updatePosition()
     const qreal verticalDistance = kVerticalVelocityMetersPerSec * (1000. / static_cast<qreal>(intervalMsecs));
 
     _lastPosition.setCoordinate(coord.atDistanceAndAzimuth(horizontalDistance, kHeading, verticalDistance));
+    _lastPosition.setTimestamp(QDateTime::currentDateTimeUtc());
     emit positionUpdated(_lastPosition);
 }
 

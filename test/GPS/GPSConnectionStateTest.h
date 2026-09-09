@@ -8,6 +8,7 @@ class GPSConnectionStateTest : public UnitTest
 
 private slots:
     void _intentAndPause();
+    void _pauseDuringRetryNotification();
     void _lifecycleAndRetry();
     void _stoppingBlocksAttempts();
 };

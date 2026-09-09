@@ -18,8 +18,11 @@ GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent)
     qCDebug(GPSReceiverLog) << this;
 
     connect(&_health, &GPSSourceHealth::satellitesChanged, this, [this]() {
-        _facts->numSatellites()->setRawValue(qMax(0, _health.satellitesInViewCount()));
-        _facts->numSatellitesUsed()->setRawValue(qMax(0, _health.satellitesInUseCount()));
+        const QPointer<GPSReceiver> guard(this);
+        _facts->numSatellites()->setRawValue(_health.satellitesInViewCount());
+        if (guard) {
+            _facts->numSatellitesUsed()->setRawValue(_health.satellitesInUseCount());
+        }
     });
 
     connect(&_health, &GPSSourceHealth::positionChanged, this, [this]() {
@@ -81,8 +84,8 @@ void GPSReceiver::_onGPSDisconnect()
     }
     _positionSource->reset();
     _health.reset();
-    _facts->numSatellites()->setRawValue(0);
-    _facts->numSatellitesUsed()->setRawValue(0);
+    _facts->numSatellites()->setRawValue(-1);
+    _facts->numSatellitesUsed()->setRawValue(-1);
 }
 
 void GPSReceiver::_onGPSConnectionError(GPSConnectionError error)

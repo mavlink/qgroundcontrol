@@ -5,6 +5,8 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <functional>
+
 #include "GPSCorrectionManager.h"
 #include "GPSReceiverAutoConnect.h"
 #include "NMEASourceManager.h"
@@ -13,6 +15,8 @@ class GPSReceiver;
 class GPSBaseStationState;
 class QGCPositionManager;
 class QTimer;
+class SettingsManager;
+class NTRIPManager;
 
 class GPSManager : public QObject
 {
@@ -30,11 +34,13 @@ class GPSManager : public QObject
 
 public:
     GPSManager(QObject *parent = nullptr);
+    GPSManager(SettingsManager& settings, QGCPositionManager* positionManager,
+               std::function<bool()> connectionsSuspended, QObject* parent = nullptr);
     ~GPSManager();
 
     static GPSManager *instance();
 
-    void init();
+    void init(NTRIPManager* ntrip = nullptr);
     void shutdown();
 
     GPSReceiver* receiver() const { return _receiver; }
@@ -66,6 +72,11 @@ private:
     void _updateConnections();
     void _updateReceiverSettings(bool restart = false);
     void _updatePositionSource();
+    void _updateCorrectionSettings();
+    SettingsManager& _settings;
+    std::function<bool()> _connectionsSuspended;
+    QPointer<NTRIPManager> _ntrip;
+    bool _shutdown = false;
     bool _positionSourceInstalled = false;
     QPointer<QGCPositionManager> _positionManager;
     GPSCorrectionManager _corrections;

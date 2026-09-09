@@ -745,6 +745,9 @@ void GPSDriverAshtech::receiveWait(unsigned timeout_min)
 
 	while (gps_absolute_time() < time_started + timeout_min * 1000) {
 		receive(timeout_min);
+		if (ioError()) {
+			return;
+		}
 	}
 }
 
@@ -787,7 +790,7 @@ int GPSDriverAshtech::receive(unsigned timeout)
 
 			if (ret < 0) {
 				/* something went wrong when polling */
-				return -1;
+				return ret;
 
 			} else if (ret == 0) {
 				/* Timeout while polling or just nothing read if reading, let's
@@ -909,6 +912,9 @@ int GPSDriverAshtech::waitForReply(NMEACommand command, const unsigned timeout)
 
 	while (_command_state == NMEACommandState::waiting && gps_absolute_time() < time_started + timeout * 1000) {
 		receive(timeout);
+		if (ioError()) {
+			return ioError();
+		}
 	}
 
 	return _command_state == NMEACommandState::received ? 0 : -1;
@@ -916,6 +922,7 @@ int GPSDriverAshtech::waitForReply(NMEACommand command, const unsigned timeout)
 
 int GPSDriverAshtech::configure(unsigned &baudrate, const GPSConfig &config)
 {
+	resetIOError();
 	_output_mode = config.output_mode;
 	_correction_output_activated = false;
 	_configure_done = false;
@@ -1114,7 +1121,7 @@ int GPSDriverAshtech::configure(unsigned &baudrate, const GPSConfig &config)
 	}
 
 	_configure_done = true;
-	return 0;
+	return ioError();
 }
 
 void GPSDriverAshtech::activateCorrectionOutput()

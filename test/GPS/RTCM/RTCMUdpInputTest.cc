@@ -108,6 +108,7 @@ void RTCMUdpInputTest::_testInterleavedSenders()
     input.setValidation(true);
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::rtcmDataReceived);
+    QSignalSpy envelopes(&input, &RTCMUdpInput::frameReceived);
     QUdpSocket senderA;
     QUdpSocket senderB;
     const QByteArray frameA = GpsTestHelpers::buildRtcmFrame(1005, 20);
@@ -120,6 +121,35 @@ void RTCMUdpInputTest::_testInterleavedSenders()
     QCOMPARE(senderA.writeDatagram(frameA.sliced(split), QHostAddress::LocalHost, input.port()), frameA.size() - split);
     QTRY_COMPARE_WITH_TIMEOUT(frames.count(), 2, TestTimeout::mediumMs());
     QCOMPARE(frames.last().first().toByteArray(), frameA);
+    QCOMPARE(envelopes.size(), 2);
+    const auto envelopeB = qvariant_cast<GPSCorrectionFrame>(envelopes.first().first());
+    const auto envelopeA = qvariant_cast<GPSCorrectionFrame>(envelopes.last().first());
+    QVERIFY(envelopeB.sourceInstance.endsWith(QLatin1Char(':') + QString::number(senderB.localPort())));
+    QVERIFY(envelopeA.sourceInstance.endsWith(QLatin1Char(':') + QString::number(senderA.localPort())));
+    QVERIFY(envelopeA.sourceInstance != envelopeB.sourceInstance);
+    QVERIFY(envelopeA.receivedAtMs <= envelopeB.receivedAtMs);
+    QCOMPARE(envelopeA.data, frameA);
+}
+
+void RTCMUdpInputTest::_testBurstYieldsBetweenDrains()
+{
+    RTCMUdpInput input(0);
+    input.setValidation(true);
+    QVERIFY(input.start());
+    QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
+    QUdpSocket sender;
+    const QByteArray payload = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    for (int i = 0; i < 40; ++i) {
+        QCOMPARE(sender.writeDatagram(payload, QHostAddress::LocalHost, input.port()), payload.size());
+    }
+    // Invoke one drain without processing the event loop: it must leave work for a continuation.
+    QVERIFY(QMetaObject::invokeMethod(&input, "_readDatagrams", Qt::DirectConnection));
+    QVERIFY(frames.size() > 0);
+    QVERIFY(frames.size() <= 16);
+    QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 40, TestTimeout::mediumMs());
+    for (const auto& received : frames) {
+        QCOMPARE(qvariant_cast<GPSCorrectionFrame>(received.first()).data, payload);
+    }
 }
 
 UT_REGISTER_TEST(RTCMUdpInputTest, TestLabel::Unit)

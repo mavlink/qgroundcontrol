@@ -2,17 +2,13 @@
 
 #include <QtCore/QCoreApplication>
 
-#include <ashtech.h>
-#include <base_station.h>
+#include <algorithm>
+#include <cmath>
 #include <cstring>
-#include <definitions.h>
-#include <femtomes.h>
-#include <gps_helper.h>
-#include <numbers>
-#include <sbf.h>
-#include <ubx.h>
+#include <limits>
 #include <utility>
 
+#include "GPSDriverBackend.h"
 #include "GPSDriverData.h"
 #include "GPSTransport.h"
 #include "QGCLoggingCategory.h"
@@ -22,7 +18,7 @@ QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Driver.Drivers")
 
 struct GPSDriver::Private
 {
-    std::unique_ptr<GPSBaseStationSupport> driver;
+    std::unique_ptr<GPSDriverBackend> driver;
     sensor_gps_s sensorGps{};
     satellite_info_s satelliteInfo{};
 };
@@ -33,6 +29,41 @@ int callbackTrampoline(GPSCallbackType type, void *data1, int data2, void *user)
     return static_cast<GPSDriver *>(user)->handleCallback(static_cast<int>(type), data1, data2);
 }
 } // namespace
+
+QString GPSReceiverConfig::validationError() const
+{
+    const auto tr = [](const char* text) { return QCoreApplication::translate("GPSReceiverConfig", text); };
+    if (role != Role::RTKBase && role != Role::Position) {
+        return tr("Select a valid receiver role");
+    }
+    if ((outputProtocol != OutputProtocol::Native && outputProtocol != OutputProtocol::NMEA) ||
+        (outputProtocol == OutputProtocol::NMEA && role != Role::Position)) {
+        return tr("Select a valid receiver output protocol");
+    }
+    if (!std::isfinite(headingOffsetDeg)) {
+        return tr("Enter a finite receiver heading offset");
+    }
+    if (role != Role::RTKBase) {
+        return {};
+    }
+    if (base.useFixedBase) {
+        if (!std::isfinite(base.fixedBaseLatitude) || std::abs(base.fixedBaseLatitude) > 90.0 ||
+            !std::isfinite(base.fixedBaseLongitude) || std::abs(base.fixedBaseLongitude) > 180.0 ||
+            !std::isfinite(base.fixedBaseAltitudeMeters) ||
+            std::abs(static_cast<double>(base.fixedBaseAltitudeMeters) * 100.0) >
+                (std::numeric_limits<int32_t>::max)() ||
+            !std::isfinite(base.fixedBaseAccuracyMeters) || base.fixedBaseAccuracyMeters < 0.0f ||
+            static_cast<double>(base.fixedBaseAccuracyMeters * 1000.0f * 10.0f) >
+                (std::numeric_limits<uint32_t>::max)()) {
+            return tr("Enter a valid fixed base position and accuracy");
+        }
+    } else if (!std::isfinite(base.surveyInAccMeters) || base.surveyInAccMeters <= 0.0 ||
+               base.surveyInAccMeters * 10000.0 > (std::numeric_limits<uint32_t>::max)() ||
+               base.surveyInDurationSecs <= 0) {
+        return tr("Enter a valid survey-in accuracy and duration");
+    }
+    return {};
+}
 
 GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
     : _type(type)
@@ -58,6 +89,10 @@ bool GPSDriver::configure()
     _private->driver.reset();
     _capabilities = GPSReceiverCapabilities::forType(_type);
     _configurationResult = {};
+    if (_transport.isCancelled()) {
+        _configurationResult.status = ConfigurationStatus::Cancelled;
+        return false;
+    }
     const QString validationError = _capabilities.validationError(_config);
     if (!validationError.isEmpty()) {
         _configurationResult = {ConfigurationStatus::Unsupported, validationError};
@@ -71,85 +106,30 @@ bool GPSDriver::configure()
         }
         return false;
     }
-    const bool baseStation = _config.role == GPSReceiverConfig::Role::RTKBase;
-    unsigned baudrate = _transport.fixedBaudrate();
-    switch (_type) {
-        case GPSType::trimble:
-            _private->driver.reset(
-                new GPSDriverAshtech(&callbackTrampoline, this, &_private->sensorGps, &_private->satelliteInfo));
-            baudrate = 115200;
-            break;
-        case GPSType::septentrio:
-            _private->driver.reset(new GPSDriverSBF(&callbackTrampoline, this, &_private->sensorGps,
-                                                    &_private->satelliteInfo,
-                                                    _config.headingOffsetDeg * std::numbers::pi_v<float> / 180.0f));
-            break;
-        case GPSType::u_blox: {
-            const GPSDriverUBX::Settings settings{
-                .dynamic_model = 0,
-                .dgnss_timeout = 0,
-                .min_cno = 0,
-                .min_elev = 0,
-                .output_rate = 0,
-                .heading_offset = 0.0f,
-                .uart1_baudrate = 0,
-                .uart2_baudrate = 57600,
-                .ppk_output = false,
-                .jam_det_sensitivity_hi = false,
-                .mode = GPSDriverUBX::UBXMode::Normal,
-            };
-            _private->driver.reset(new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackTrampoline, this,
-                                                    &_private->sensorGps, &_private->satelliteInfo, settings));
-            break;
-        }
-        case GPSType::femto:
-            _private->driver.reset(
-                new GPSDriverFemto(&callbackTrampoline, this, &_private->sensorGps, &_private->satelliteInfo));
-            break;
-    }
-
-    if (!_private->driver) {
-        _configurationResult = {ConfigurationStatus::Unsupported, tr("Unsupported receiver type")};
-        qCWarning(GPSDriverLog) << "Unsupported GPS type:" << static_cast<int>(_type);
+    const QString configError = _config.validationError();
+    if (!configError.isEmpty()) {
+        _configurationResult = {ConfigurationStatus::Unsupported, configError};
         return false;
     }
-
-    if (baseStation) {
-        if (_config.base.useFixedBase) {
-            _private->driver->setBasePosition(_config.base.fixedBaseLatitude, _config.base.fixedBaseLongitude,
-                                              _config.base.fixedBaseAltitudeMeters,
-                                              _config.base.fixedBaseAccuracyMeters * 1000.0f);
-        } else {
-            _private->driver->setSurveyInSpecs(static_cast<uint32_t>(_config.base.surveyInAccMeters * 10000.0),
-                                               static_cast<uint32_t>(_config.base.surveyInDurationSecs));
-        }
-    }
-
-    GPSHelper::GPSConfig gpsConfig{};
-    gpsConfig.output_mode = baseStation ? GPSHelper::OutputMode::RTCM : GPSHelper::OutputMode::GPS;
-    int result;
-    if (_type == GPSType::u_blox) {
-        const auto protocol = _config.outputProtocol == GPSReceiverConfig::OutputProtocol::NMEA
-                                  ? GPSDriverUBX::OutputProtocol::NMEA
-                                  : GPSDriverUBX::OutputProtocol::Native;
-        result = static_cast<GPSDriverUBX*>(_private->driver.get())->configure(baudrate, gpsConfig, protocol);
-    } else {
-        result = _private->driver->configure(baudrate, gpsConfig);
-    }
+    const auto* family = gpsDriverFamily(_type);
+    _private->driver =
+        family->create(&callbackTrampoline, this, &_private->sensorGps, &_private->satelliteInfo, _config);
+    unsigned baudrate = _transport.fixedBaudrate();
+    const int result = _private->driver->configure(baudrate, _config);
 
     _updateCapabilities();
     const QString capabilityError = _capabilities.validationError(_config);
-    if (result != 0 || !capabilityError.isEmpty() || _transport.isCancelled()) {
-        if (_transport.isCancelled()) {
+    if (result != 0 || _private->driver->ioError() || !capabilityError.isEmpty() || _transport.isCancelled()) {
+        if (_transport.isCancelled() || _private->driver->ioError() == GPSHelper::ReadCancelled) {
             _configurationResult = {ConfigurationStatus::Cancelled, {}};
-        } else if (_transport.fatalError()) {
+        } else if (_transport.fatalError() || _private->driver->ioError()) {
             _configurationResult = {ConfigurationStatus::TransportError, tr("Receiver transport failed")};
         } else if (!capabilityError.isEmpty()) {
             _configurationResult = {ConfigurationStatus::Unsupported, capabilityError};
         } else {
             _configurationResult = {ConfigurationStatus::Failed, tr("Receiver configuration failed")};
         }
-        if (!_transport.isCancelled()) {
+        if (_configurationResult.status != ConfigurationStatus::Cancelled) {
             qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type);
         }
         _private->driver.reset();
@@ -164,42 +144,64 @@ bool GPSDriver::configure()
 
 void GPSDriver::_updateCapabilities()
 {
-    if (_type != GPSType::u_blox || !_private->driver) {
-        return;
+    if (_private->driver) {
+        _private->driver->updateCapabilities(_capabilities);
     }
-    const auto* driver = static_cast<const GPSDriverUBX*>(_private->driver.get());
-    _capabilities.model = QString::fromLatin1(driver->modelName());
-    _capabilities.firmware = QString::fromLatin1(driver->firmwareVersion());
-    using Support = GPSReceiverCapabilities::Support;
-    switch (driver->baseStationCapability()) {
-        case GPSDriverUBX::BaseStationCapability::Supported:
-            _capabilities.rtkBase = Support::Supported;
-            break;
-        case GPSDriverUBX::BaseStationCapability::Unsupported:
-            _capabilities.rtkBase = Support::Unsupported;
-            break;
-        case GPSDriverUBX::BaseStationCapability::Unknown:
-            break;
+}
+
+bool GPSDriver::readyForCorrections() const
+{
+    return !_transport.isCancelled() && !_transport.fatalError() && _private->driver && !_private->driver->ioError() &&
+           _configurationResult.status == ConfigurationStatus::Ready &&
+           _config.role == GPSReceiverConfig::Role::Position &&
+           _capabilities.correctionInput == GPSReceiverCapabilities::Support::Supported &&
+           _private->driver->receiverReady();
+}
+
+GPSDriver::CorrectionResult GPSDriver::injectCorrections(const QByteArray& data)
+{
+    if (_transport.isCancelled()) {
+        return {CorrectionStatus::Cancelled};
     }
+    if (data.isEmpty() || data.size() > 1029) {
+        return {CorrectionStatus::InvalidData};
+    }
+    if (_config.role != GPSReceiverConfig::Role::Position ||
+        _capabilities.correctionInput != GPSReceiverCapabilities::Support::Supported) {
+        return {CorrectionStatus::Unsupported};
+    }
+    if (_transport.fatalError() || (_private->driver && _private->driver->ioError())) {
+        return {CorrectionStatus::TransportError};
+    }
+    if (!readyForCorrections()) {
+        return {CorrectionStatus::NotReady};
+    }
+    const int written =
+        _transport.write(reinterpret_cast<const uint8_t*>(data.constData()), static_cast<int>(data.size()));
+    if (_transport.isCancelled()) {
+        return {CorrectionStatus::Cancelled};
+    }
+    return {written == data.size() ? CorrectionStatus::Submitted : CorrectionStatus::TransportError,
+            (std::max) (written, 0)};
 }
 
 GPSDriver::ReceiveResult GPSDriver::receiveResult(unsigned timeoutMs)
 {
-    if (_transport.isCancelled()) {
+    if (_transport.isCancelled() || (_private->driver && _private->driver->ioError() == GPSHelper::ReadCancelled)) {
         return {ReceiveStatus::Cancelled};
     }
     if (!_private->driver) {
         return {};
     }
     const int result = receive(timeoutMs);
-    if (_transport.isCancelled()) {
+    if (_transport.isCancelled() || _private->driver->ioError() == GPSHelper::ReadCancelled) {
         return {ReceiveStatus::Cancelled};
     }
-    if (_transport.fatalError()) {
+    if (_transport.fatalError() || _private->driver->ioError()) {
         return {ReceiveStatus::DeviceError};
     }
-    // Native drivers also return negative values for a receive timeout. Only the
-    // transport can distinguish a fatal device error from this normal idle case.
+    // A native receive timeout also returns -1; the callback's recorded I/O
+    // result distinguishes it from a device error.
     if (result <= 0) {
         return {ReceiveStatus::Idle};
     }
@@ -239,8 +241,14 @@ int GPSDriver::handleCallback(int type, void *data1, int data2)
         return _transport.isCancelled() ? GPSHelper::ReadCancelled : result;
     }
     case GPSCallbackType::writeDeviceData:
+        if (_transport.isCancelled()) {
+            return GPSHelper::ReadCancelled;
+        }
         return _transport.write(static_cast<const uint8_t *>(data1), data2);
     case GPSCallbackType::setBaudrate:
+        if (_transport.isCancelled()) {
+            return GPSHelper::ReadCancelled;
+        }
         return _transport.setBaudrate(static_cast<unsigned>(data2)) ? 0 : -1;
     case GPSCallbackType::gotRTCMMessage:
         if (_config.role == GPSReceiverConfig::Role::RTKBase && _sinks.onRTCM) {

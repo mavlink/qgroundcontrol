@@ -7,6 +7,8 @@ class NTRIPSourceTableControllerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void testInvalidReplacementRetiresPendingFetch();
+    void testStatusObserverCanReplaceBeforeRequest();
     void testInitialState();
     void testFetchEmptyHostTriggersError();
     void testFetchInvalidConfigTriggersError();

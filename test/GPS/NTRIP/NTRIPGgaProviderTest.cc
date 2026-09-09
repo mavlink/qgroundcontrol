@@ -9,7 +9,7 @@
 #include "GPSManager.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
-#include "MockNTRIPTransport.h"
+#include "MockNTRIPStream.h"
 #include "NMEAUtils.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPSettings.h"
@@ -190,7 +190,7 @@ void NTRIPGgaProviderTest::testMakeGGA_dmmPrecision()
 void NTRIPGgaProviderTest::testSourceClearedOnStopAndFreshStart()
 {
     NTRIPGgaProvider provider;
-    MockNTRIPTransport transport;
+    MockNTRIPStream transport;
 
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, []() {
         GPSObservation observation;
@@ -200,7 +200,7 @@ void NTRIPGgaProviderTest::testSourceClearedOnStopAndFreshStart()
         return PositionResult{observation, QStringLiteral("Vehicle GPS")};
     });
 
-    provider.start(&transport);
+    provider.start([&transport](const QByteArray& sentence) { transport.sendNMEA(sentence); });
     QCOMPARE(provider.currentSource(), QStringLiteral("Vehicle GPS"));
     QCOMPARE(transport.sentNmea.size(), 1);
 
@@ -208,7 +208,7 @@ void NTRIPGgaProviderTest::testSourceClearedOnStopAndFreshStart()
     QVERIFY(provider.currentSource().isEmpty());
 
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, []() { return PositionResult{}; });
-    provider.start(&transport);
+    provider.start([&transport](const QByteArray& sentence) { transport.sendNMEA(sentence); });
     QVERIFY(provider.currentSource().isEmpty());
 }
 
@@ -224,10 +224,10 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
     saved.setFactValue(facts->currentLongitude(), 8.5456);
     saved.setFactValue(facts->currentAltitude(), 450.0);
 
-    MockNTRIPTransport transport;
+    MockNTRIPStream transport;
     NTRIPGgaProvider provider;
     provider.init(settings);
-    provider.start(&transport);
+    provider.start([&transport](const QByteArray& sentence) { transport.sendNMEA(sentence); });
     QCOMPARE(provider.currentSource(), QStringLiteral("RTK Base"));
     QCOMPARE(transport.sentNmea.size(), 1);
     QVERIFY(transport.sentNmea.first().contains(",4723.8620,N,00832.7360,E,"));
@@ -239,7 +239,7 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
 
     facts->valid()->setRawValue(false);
     transport.sentNmea.clear();
-    provider.start(&transport);
+    provider.start([&transport](const QByteArray& sentence) { transport.sendNMEA(sentence); });
     QVERIFY(provider.currentSource().isEmpty());
     QVERIFY(transport.sentNmea.isEmpty());
 }
@@ -307,10 +307,10 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     auto* settings = SettingsManager::instance()->ntripSettings();
     saved.setFactValue(settings->ntripGgaPositionSource(),
                        static_cast<int>(NTRIPGgaProvider::PositionSource::VehicleGPS));
-    MockNTRIPTransport transport;
+    MockNTRIPStream transport;
     NTRIPGgaProvider provider;
     provider.init(settings);
-    provider.start(&transport);
+    provider.start([&transport](const QByteArray& sentence) { transport.sendNMEA(sentence); });
     QVERIFY(transport.sentNmea.isEmpty());
 
     const auto deliver = [&](const mavlink_message_t& message) {
@@ -375,3 +375,51 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
 }
 
 UT_REGISTER_TEST(NTRIPGgaProviderTest, TestLabel::Unit)
+
+void NTRIPGgaProviderTest::testWriterCanStopOrReplace_data()
+{
+    QTest::addColumn<bool>("replace");
+    QTest::newRow("stop") << false;
+    QTest::newRow("replace") << true;
+}
+
+void NTRIPGgaProviderTest::testWriterCanStopOrReplace()
+{
+    QFETCH(bool, replace);
+    NTRIPGgaProvider provider;
+    provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, []() {
+        GPSObservation observation;
+        observation.position =
+            QGeoPositionInfo(QGeoCoordinate(47.3977, 8.5456, 450.0), QDateTime::currentDateTimeUtc());
+        observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        return PositionResult{observation, QStringLiteral("Vehicle GPS")};
+    });
+    int replacedWrites = 0;
+    provider.start([&](const QByteArray& sentence) {
+        QVERIFY(validateChecksum(sentence));
+        provider.stop();
+        if (replace) {
+            provider.start([&](const QByteArray&) { ++replacedWrites; });
+        }
+    });
+    QCOMPARE(replacedWrites, replace ? 1 : 0);
+    QCOMPARE(provider._timer.isActive(), replace);
+    QCOMPARE(provider.currentSource().isEmpty(), !replace);
+    provider.stop();
+    provider._sendGGA();
+    QCOMPARE(replacedWrites, replace ? 1 : 0);
+}
+
+void NTRIPGgaProviderTest::testWriterCanDestroyProvider()
+{
+    QPointer<NTRIPGgaProvider> provider = new NTRIPGgaProvider;
+    provider->setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, []() {
+        GPSObservation observation;
+        observation.position =
+            QGeoPositionInfo(QGeoCoordinate(47.3977, 8.5456, 450.0), QDateTime::currentDateTimeUtc());
+        observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        return PositionResult{observation, QStringLiteral("Vehicle GPS")};
+    });
+    provider->start([&](const QByteArray&) { delete provider.data(); });
+    QVERIFY(!provider);
+}

@@ -83,4 +83,5 @@ private:
     // Cache key for the most recent fetch — NTRIPTransportConfig::casterIdentity()
     // so it stays in lockstep with the config's own notion of "same caster".
     QString _lastFetchKey;
+    quint64 _generation = 0;
 };

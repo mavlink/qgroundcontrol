@@ -43,6 +43,8 @@ struct GPSReceiverConfig
     Role role = Role::RTKBase;
     OutputProtocol outputProtocol = OutputProtocol::Native;
     GPSBaseStationConfig base;
+    QString validationError() const;
+
     float headingOffsetDeg = 5.0f;  // dual-antenna heading offset; consumed only by the Septentrio (SBF) driver
 };
 
@@ -128,6 +130,26 @@ public:
     /// or <0 if not configured.
     int receive(unsigned timeoutMs);
     ReceiveResult receiveResult(unsigned timeoutMs);
+
+    enum class CorrectionStatus
+    {
+        Submitted,
+        NotReady,
+        Unsupported,
+        Cancelled,
+        TransportError,
+        InvalidData,
+    };
+
+    struct CorrectionResult
+    {
+        CorrectionStatus status = CorrectionStatus::NotReady;
+        qsizetype bytesWritten = 0;
+    };
+
+    /// Worker-thread-only: configuration and receive calls must not run concurrently.
+    bool readyForCorrections() const;
+    CorrectionResult injectCorrections(const QByteArray& data);
 
     unsigned baudrate() const { return _baudrate; }
 

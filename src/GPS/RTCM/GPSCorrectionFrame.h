@@ -2,10 +2,11 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
+#include <QtCore/QString>
 
 #include <chrono>
 
-// Unknown retains the legacy unclassified input and selects all sources in the router.
+// Unknown identifies legacy unclassified input; routing policy is selected separately.
 enum class GPSCorrectionSource
 {
     Unknown,
@@ -24,6 +25,7 @@ struct GPSCorrectionFrame
     int messageId = 0;
     bool validated = false;
     bool filtered = false;
+    QString sourceInstance = {};
 
     static qint64 monotonicNowMs()
     {

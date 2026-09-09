@@ -31,6 +31,14 @@ struct GPSObservation
         Ellipsoid
     };
 
+    enum class PositionUse
+    {
+        GroundStation,
+        Motion,
+        RemoteID,
+        NTRIP
+    };
+
     QGeoPositionInfo position;
     QDateTime receivedAt;
     quint64 monotonicTimestampUs = 0;
@@ -54,6 +62,8 @@ struct GPSObservation
     bool usable() const;
     QGeoCoordinate coordinate() const;
     double heading() const;
+    /// Apply the consumer's accuracy policy without changing the raw observation.
+    QGeoPositionInfo acceptedPosition(PositionUse use) const;
     qint64 ageMilliseconds() const;
     static quint64 monotonicNowUs();
     static qint64 ageMilliseconds(quint64 timestampUs);

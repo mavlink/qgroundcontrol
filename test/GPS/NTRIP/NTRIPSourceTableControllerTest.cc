@@ -1,17 +1,23 @@
 #include "NTRIPSourceTableControllerTest.h"
 
 #include <QtCore/QAbstractItemModel>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QEvent>
 #include <QtCore/QUrl>
+#include <QtHttpServer/QHttpServer>
+#include <QtHttpServer/QHttpServerResponse>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
 #include <QtNetwork/QSslKey>
 #include <QtNetwork/QSslServer>
 #include <QtNetwork/QSslSocket>
-#include <QtHttpServer/QHttpServer>
-#include <QtHttpServer/QHttpServerResponse>
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
+
+#include <memory>
 
 #include "LocalHttpTestServer.h"
 #include "NTRIPSettings.h"
@@ -262,3 +268,38 @@ void NTRIPSourceTableControllerTest::testSelectMountpointEmitsSignal()
 }
 
 UT_REGISTER_TEST(NTRIPSourceTableControllerTest, TestLabel::Unit)
+
+void NTRIPSourceTableControllerTest::testInvalidReplacementRetiresPendingFetch()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPSourceTableController controller;
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    config.port = server.serverPort();
+    controller.fetch(config);
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QVERIFY(controller._reply);
+    config.host.clear();
+    controller.fetch(config);
+    QVERIFY(!controller._reply);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+    QVERIFY(controller.fetchError().contains(QStringLiteral("host")));
+}
+
+void NTRIPSourceTableControllerTest::testStatusObserverCanReplaceBeforeRequest()
+{
+    NTRIPSourceTableController controller;
+    connect(&controller, &NTRIPSourceTableController::fetchStatusChanged, &controller, [&]() {
+        if (controller.fetchStatus() == NTRIPSourceTableController::FetchStatus::InProgress) {
+            controller.fetch(NTRIPTransportConfig{});
+        }
+    });
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    controller.fetch(config);
+    QVERIFY(!controller._reply);
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+}

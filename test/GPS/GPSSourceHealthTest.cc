@@ -163,4 +163,124 @@ void GPSSourceHealthTest::_settingsStatus()
     QCOMPARE(satellites->property("text").toString(), QStringLiteral("Satellites: Unknown in use / Unknown in view"));
 }
 
+void GPSSourceHealthTest::_consumerAcceptancePolicies_data()
+{
+    QTest::addColumn<GPSObservation::PositionUse>("use");
+    QTest::addColumn<bool>("altitude");
+    QTest::addColumn<bool>("course");
+    QTest::newRow("ground-station") << GPSObservation::PositionUse::GroundStation << false << true;
+    QTest::newRow("motion") << GPSObservation::PositionUse::Motion << false << false;
+    QTest::newRow("remote-id") << GPSObservation::PositionUse::RemoteID << true << true;
+    QTest::newRow("ntrip") << GPSObservation::PositionUse::NTRIP << false << true;
+}
+
+void GPSSourceHealthTest::_consumerAcceptancePolicies()
+{
+    QFETCH(GPSObservation::PositionUse, use);
+    QFETCH(bool, altitude);
+    QFETCH(bool, course);
+    GPSSourceHealth health;
+    auto fix = position();
+    fix.setAttribute(QGeoPositionInfo::VerticalAccuracy, 20);
+    fix.setAttribute(QGeoPositionInfo::GroundSpeed, 0);
+    health.updatePosition(fix);
+    const auto accepted = health.acceptedObservation(use);
+    QVERIFY(accepted);
+    QCOMPARE(accepted->position.coordinate().type() == QGeoCoordinate::Coordinate3D, altitude);
+    QCOMPARE(accepted->position.hasAttribute(QGeoPositionInfo::Direction), course);
+    QCOMPARE(health.observation().position, fix);
+    fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
+    health.updatePosition(fix);
+    QVERIFY(!health.acceptedObservation(use));
+    QVERIFY(health.observation().position.isValid());
+    GPSObservation noFix;
+    noFix.position = position();
+    noFix.fixQuality = GPSObservation::FixQuality::NoFix;
+    health.updateObservation(noFix);
+    QVERIFY(!health.acceptedObservation(use));
+}
+
+void GPSSourceHealthTest::_fixSatelliteCountsTakePrecedence()
+{
+    GPSSourceHealth health;
+    health._freshnessTimeoutMs = 300;
+    health.updateSatelliteCounts(12, 3);
+    GPSObservation fix;
+    fix.position = position();
+    fix.satellitesUsed = 7;
+    fix.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 200000;
+    health.updateObservation(fix);
+    QCOMPARE(health.satellitesInUseCount(), 7);
+    QCOMPARE(health.acceptedObservation(GPSObservation::PositionUse::NTRIP)->satellitesUsed.value(), 7);
+    QTRY_COMPARE_WITH_TIMEOUT(health.satellitesInUseCount(), 3, TestTimeout::shortMs());
+    health.updateSatelliteCounts(12, 3);
+    fix.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    fix.satellitesUsed = 0;
+    health.updateObservation(fix);
+    QCOMPARE(health.satellitesInUseCount(), 0);
+    health.clearSatelliteReports();
+    QCOMPARE(health.satellitesInViewCount(), -1);
+    QCOMPARE(health.satellitesInUseCount(), 0);
+    QVERIFY(health.usable());
+    health.updateSatelliteCounts(12, 3);
+    fix.satellitesUsed.reset();
+    health.updateObservation(fix);
+    QCOMPARE(health.satellitesInUseCount(), 3);
+    fix.satellitesUsed = 7;
+    fix.monotonicTimestampUs = GPSObservation::monotonicNowUs() + 1000000;
+    health.updateObservation(fix);
+    QCOMPARE(health.satellitesInUseCount(), 3);
+    health.reset();
+    QCOMPARE(health.satellitesInUseCount(), -1);
+    QVERIFY(!health._fixSatellitesInUseTimer.isActive());
+}
+
+void GPSSourceHealthTest::_resetDuringMetadataNotification()
+{
+    GPSSourceHealth health;
+    QSignalSpy positions(&health, &GPSSourceHealth::positionChanged);
+    connect(&health, &GPSSourceHealth::satellitesChanged, &health, [&]() {
+        if (health.satellitesInUseCount() >= 0) {
+            health.reset();
+        }
+    });
+    GPSObservation fix;
+    fix.position = position();
+    fix.satellitesUsed = 7;
+    health.updateObservation(fix);
+    QCOMPARE(health.state(), GPSSourceHealth::NoData);
+    QCOMPARE(health.satellitesInUseCount(), -1);
+    QCOMPARE(positions.size(), 1);
+    QVERIFY(!health.acceptedObservation(GPSObservation::PositionUse::Motion));
+}
+
+void GPSSourceHealthTest::_remoteIdUsesKnownEllipsoidAltitude()
+{
+    GPSSourceHealth health;
+    GPSObservation fix;
+    fix.position = position();
+    fix.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+    fix.altitudeEllipsoidMeters = 545;
+    health.updateObservation(fix);
+    const auto remoteId = health.acceptedObservation(GPSObservation::PositionUse::RemoteID);
+    const auto groundStation = health.acceptedObservation(GPSObservation::PositionUse::GroundStation);
+    const auto ntrip = health.acceptedObservation(GPSObservation::PositionUse::NTRIP);
+    QVERIFY(remoteId);
+    QVERIFY(groundStation);
+    QVERIFY(ntrip);
+    QCOMPARE(remoteId->position.coordinate().altitude(), 545.0);
+    QCOMPARE(remoteId->altitudeDatum, GPSObservation::AltitudeDatum::Ellipsoid);
+    QCOMPARE(groundStation->position.coordinate().altitude(), 500.0);
+    QCOMPARE(ntrip->position.coordinate().altitude(), 500.0);
+    QCOMPARE(ntrip->altitudeDatum, GPSObservation::AltitudeDatum::MeanSeaLevel);
+    QCOMPARE(health.observation().position.coordinate().altitude(), 500.0);
+    fix.altitudeEllipsoidMeters.reset();
+    fix.altitudeDatum = GPSObservation::AltitudeDatum::Unknown;
+    health.updateObservation(fix);
+    const auto legacy = health.acceptedObservation(GPSObservation::PositionUse::RemoteID);
+    QVERIFY(legacy);
+    QCOMPARE(legacy->position.coordinate().altitude(), 500.0);
+    QCOMPARE(legacy->altitudeDatum, GPSObservation::AltitudeDatum::Unknown);
+}
+
 UT_REGISTER_TEST(GPSSourceHealthTest, TestLabel::Unit)

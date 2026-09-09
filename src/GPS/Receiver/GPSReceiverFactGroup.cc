@@ -16,6 +16,8 @@ GPSReceiverFactGroup::GPSReceiverFactGroup(QObject* parent)
     _addFact(&_connectedFact);
     _addFact(&_numSatellitesUsedFact);
     _addFact(&_lastErrorFact);
+    numSatellites()->setRawValue(-1);
+    numSatellitesUsed()->setRawValue(-1);
 }
 
 GPSReceiverFactGroup::~GPSReceiverFactGroup()

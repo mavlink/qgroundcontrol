@@ -19,12 +19,19 @@ NMEADecoderSession::NMEADecoderSession(QObject* parent)
     qCDebug(NMEADecoderSessionLog) << this;
     _satellitePollTimer.setInterval(1000);
     connect(&_satellitePollTimer, &QTimer::timeout, this, [this]() {
-        if (_satelliteSource) {
+        const QPointer<NMEADecoderSession> guard(this);
+        _expireSatellites();
+        if (guard && _satelliteSource) {
             // One-shot requests also report unchanged lists, unlike continuous Qt satellite updates.
             _satelliteSource->requestUpdate(5000);
         }
     });
     connect(&_health, &GPSSourceHealth::satellitesChanged, this, [this]() {
+        if (!_refreshingSatellites && _satelliteAdapter &&
+            (_health.satellitesInViewCount() < 0 || _health.satellitesInUseCount() < 0)) {
+            _expireSatellites();
+            return;
+        }
         if (_health.satellitesInViewCount() < 0) {
             _satellitesInView.clear();
         }
@@ -59,31 +66,31 @@ bool NMEADecoderSession::start(QIODevice* device)
     const QPointer<QNmeaSatelliteInfoSource> current = _satelliteSource.get();
     connect(_satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInViewUpdated, this,
             [this, current](const QList<QGeoSatelliteInfo>& satellites) {
-                const quint64 receivedAtUs = _satelliteAdapter->satelliteTimestampUs(false);
+                const auto snapshot =
+                    _satelliteAdapter->freshSatellites(satellites, false, GPSObservation::monotonicNowUs());
                 QMetaObject::invokeMethod(
                     this,
-                    [this, current, satellites, receivedAtUs]() {
+                    [this, current, snapshot]() {
                         if (!current || _satelliteSource.get() != current) {
                             return;
                         }
-                        _satellitesInView = satellites;
-                        _health.updateSatellitesInView(
-                            satellites.size(), receivedAtUs != 0 ? GPSObservation::ageMilliseconds(receivedAtUs) : -1);
+                        _viewSnapshot = snapshot;
+                        _expireSatellites();
                     },
                     Qt::QueuedConnection);
             });
     connect(_satelliteSource.get(), &QGeoSatelliteInfoSource::satellitesInUseUpdated, this,
             [this, current](const QList<QGeoSatelliteInfo>& satellites) {
-                const quint64 receivedAtUs = _satelliteAdapter->satelliteTimestampUs(true);
+                const auto snapshot =
+                    _satelliteAdapter->freshSatellites(satellites, true, GPSObservation::monotonicNowUs());
                 QMetaObject::invokeMethod(
                     this,
-                    [this, current, satellites, receivedAtUs]() {
+                    [this, current, snapshot]() {
                         if (!current || _satelliteSource.get() != current) {
                             return;
                         }
-                        _satellitesInUse = satellites;
-                        _health.updateSatellitesInUse(
-                            satellites.size(), receivedAtUs != 0 ? GPSObservation::ageMilliseconds(receivedAtUs) : -1);
+                        _useSnapshot = snapshot;
+                        _expireSatellites();
                     },
                     Qt::QueuedConnection);
             });
@@ -91,7 +98,9 @@ bool NMEADecoderSession::start(QIODevice* device)
         _satelliteSource.get(), &QGeoSatelliteInfoSource::errorOccurred, this,
         [this, current](QGeoSatelliteInfoSource::Error error) {
             if (current && _satelliteSource.get() == current && error != QGeoSatelliteInfoSource::NoError) {
-                _health.clearSatellites();
+                _viewSnapshot = {};
+                _useSnapshot = {};
+                _health.clearSatelliteReports();
             }
         },
         Qt::QueuedConnection);
@@ -99,17 +108,7 @@ bool NMEADecoderSession::start(QIODevice* device)
     _satellitePollTimer.start();
     _positionSource = std::make_unique<NMEAPositionSource>(_stream->positionDevice());
     connect(_positionSource.get(), &QGeoPositionInfoSource::positionUpdated, &_health,
-            [this](const QGeoPositionInfo& position) {
-                const qint64 age = _positionSource->lastUpdateAgeMs();
-                GPSObservation observation;
-                observation.position = position;
-                observation.receivedAt = QDateTime::currentDateTimeUtc().addMSecs(-age);
-                observation.monotonicTimestampUs = GPSObservation::monotonicNowUs() - age * 1000;
-                observation.sourceId = QStringLiteral("NMEA");
-                // Qt's GGA parser copies the mean-sea-level altitude field directly.
-                observation.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
-                _health.updateObservation(observation);
-            });
+            [this](const QGeoPositionInfo&) { _health.updateObservation(_positionSource->lastObservation()); });
     connect(_positionSource.get(), &QGeoPositionInfoSource::errorOccurred, &_health,
             [this](QGeoPositionInfoSource::Error error) {
                 if (error != QGeoPositionInfoSource::NoError) {
@@ -119,6 +118,29 @@ bool NMEADecoderSession::start(QIODevice* device)
     return true;
 }
 
+void NMEADecoderSession::_expireSatellites()
+{
+    if (!_satelliteAdapter || _refreshingSatellites) {
+        return;
+    }
+    const auto view = NMEASatelliteAdapter::expireSnapshot(_viewSnapshot, GPSObservation::monotonicNowUs());
+    const auto used = NMEASatelliteAdapter::expireSnapshot(_useSnapshot, GPSObservation::monotonicNowUs());
+    const QPointer<NMEADecoderSession> guard(this);
+    const QPointer<NMEASatelliteAdapter> adapter(_satelliteAdapter.get());
+    _refreshingSatellites = true;
+    _satellitesInView = view.satellites;
+    _health.updateSatellitesInView(view.satellites.size(),
+                                   view.receivedAtUs ? GPSObservation::ageMilliseconds(view.receivedAtUs) : -1);
+    if (guard && adapter && adapter == _satelliteAdapter.get()) {
+        _satellitesInUse = used.satellites;
+        _health.updateSatellitesInUse(used.satellites.size(),
+                                      used.receivedAtUs ? GPSObservation::ageMilliseconds(used.receivedAtUs) : -1);
+        if (guard) {
+            _refreshingSatellites = false;
+        }
+    }
+}
+
 void NMEADecoderSession::stop()
 {
     _satellitePollTimer.stop();
@@ -126,5 +148,8 @@ void NMEADecoderSession::stop()
     _satelliteSource.reset();
     _satelliteAdapter.reset();
     _stream.reset();
+    _viewSnapshot = {};
+    _useSnapshot = {};
+    _refreshingSatellites = false;
     _health.reset();
 }

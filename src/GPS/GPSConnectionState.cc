@@ -1,5 +1,7 @@
 #include "GPSConnectionState.h"
 
+#include <QtCore/QPointer>
+
 #include <algorithm>
 
 #include "QGCLoggingCategory.h"
@@ -23,31 +25,37 @@ bool GPSConnectionState::shouldConnect(bool automatic) const
 
 bool GPSConnectionState::updateIntent(bool automatic)
 {
+    const QPointer<GPSConnectionState> guard(this);
     const bool active = shouldConnect(automatic);
     if (_active != active) {
         _active = active;
         emit changed();
     }
-    return _active;
+    return guard && _active;
 }
 
 void GPSConnectionState::requestConnect()
 {
     _manualRequested = true;
     _paused = false;
+    _active = true;
     resetRetry();
     if (_state == Retrying) {
-        _setState(Disconnected);
+        _state = Disconnected;
     }
-    _active = true;
     emit changed();
 }
 
 void GPSConnectionState::pause()
 {
-    const bool changed = !_paused;
+    const bool changed = !_paused || _manualRequested || _active || _state == Retrying;
     _paused = true;
-    stop();
+    _manualRequested = false;
+    _active = false;
+    resetRetry();
+    if (_state == Retrying) {
+        _state = Disconnected;
+    }
     if (changed) {
         emit this->changed();
     }
@@ -55,12 +63,12 @@ void GPSConnectionState::pause()
 
 void GPSConnectionState::stop()
 {
-    const bool changed = _manualRequested || _active;
+    const bool changed = _manualRequested || _active || _state == Retrying;
     _manualRequested = false;
     _active = false;
     resetRetry();
     if (_state == Retrying) {
-        _setState(Disconnected);
+        _state = Disconnected;
     }
     if (changed) {
         emit this->changed();
@@ -69,9 +77,14 @@ void GPSConnectionState::stop()
 
 void GPSConnectionState::resetIntent()
 {
-    const bool changed = _paused;
+    const bool changed = _paused || _manualRequested || _active || _state == Retrying;
     _paused = false;
-    stop();
+    _manualRequested = false;
+    _active = false;
+    resetRetry();
+    if (_state == Retrying) {
+        _state = Disconnected;
+    }
     if (changed) {
         emit this->changed();
     }
@@ -91,8 +104,9 @@ bool GPSConnectionState::beginAttempt()
         _retryDelayMs = std::min(_retryDelayMs * 2, 30000);
     }
     _retryDeadline = QDeadlineTimer::Forever;
+    const QPointer<GPSConnectionState> guard(this);
     _setState(Connecting);
-    return _active && _state == Connecting;
+    return guard && _active && _state == Connecting;
 }
 
 void GPSConnectionState::configuring()

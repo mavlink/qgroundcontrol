@@ -28,6 +28,7 @@ struct GPSReceiverCapabilities
     Support nativePosition = Support::Unsupported;
     Support rtkBase = Support::Unsupported;
     Support nmeaOutput = Support::Unsupported;
+    Support correctionInput = Support::Unsupported;
 
     bool recognized() const { return manufacturerId >= 0; }
 

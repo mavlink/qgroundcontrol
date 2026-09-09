@@ -79,6 +79,7 @@ GPSDriverSBF::~GPSDriverSBF()
 
 int GPSDriverSBF::configure(unsigned &baudrate, const GPSConfig &config)
 {
+	resetIOError();
 	char buf[GPS_READ_BUFFER_SIZE];
 	char msg[MSG_SIZE];
 
@@ -266,7 +267,7 @@ int GPSDriverSBF::configure(unsigned &baudrate, const GPSConfig &config)
 	}
 
 	_configured = true;
-	return 0;
+	return ioError();
 }
 
 bool GPSDriverSBF::sendMessage(const char *msg)
@@ -336,6 +337,9 @@ bool GPSDriverSBF::sendMessageAndWaitForAck(const char *msg, const int timeout)
 // 0b0000_0100 = base station update (RTCM message or base station position)
 int GPSDriverSBF::receive(unsigned timeout)
 {
+	if (ioError()) {
+		return ioError();
+	}
 	int handled = 0;
 	gps_abstime time_started;
 	uint8_t buf[GPS_READ_BUFFER_SIZE];
@@ -358,7 +362,7 @@ int GPSDriverSBF::receive(unsigned timeout)
 			if (ret != ReadCancelled) {
 				SBF_WARN("sbf read err");
 			}
-			return -1;
+			return ret;
 
 		} else {
 			SBF_DEBUG("Read %d bytes (receive)", ret);

@@ -19,6 +19,11 @@
             "keywords": ["gps", "gnss", "position", "role", "rtk", "receiver", "base", "usb", "serial", "tcp", "udp", "network", "auto connect"]
         },
         {
+            "component": "CorrectionRoutingSettings",
+            "sectionName": "Correction Routing",
+            "keywords": ["rtcm", "corrections", "source", "rover", "ntrip", "udp"]
+        },
+        {
             "heading": "UDP RTCM Input",
             "keywords": ["udp rtcm"],
             "controls": [

@@ -30,6 +30,10 @@ private slots:
     void testPositionFreshness();
     void testVehicleMessageFreshness();
 
+    void testWriterCanStopOrReplace_data();
+    void testWriterCanStopOrReplace();
+    void testWriterCanDestroyProvider();
+
     // Lifecycle
     void testSourceClearedOnStopAndFreshStart();
     void testDefaultRTKBaseProvider();

@@ -7,11 +7,12 @@
 #include <QtPositioning/QGeoSatelliteInfo>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <deque>
+#include <functional>
 #include <memory>
 
 #include "GPSConnectionState.h"
-#include "GPSReceiverAutoConnect.h"
-#include "GPSReceiverSession.h"
+#include "NMEAConnectionAttempt.h"
 #include "NMEAConnectionConfig.h"
 #include "NMEADecoderSession.h"
 
@@ -53,6 +54,10 @@ public:
     void shutdown();
     bool connectSource();
     void disconnectSource();
+#ifndef QGC_NO_SERIAL_LINK
+    /// An explicit null inventory disables serial discovery for this source.
+    void setSerialDiscovery(SerialPortManager* serialPorts);
+#endif
 
     QGeoPositionInfoSource* positionSource() const;
 
@@ -79,36 +84,35 @@ signals:
 
 private:
     bool _shouldConnect() const;
+    void _dispatch(std::function<void()> command);
+    void _update();
+    void _stop();
     void _closeDevice();
     void _setStatus(const QString& status);
-    void _updateTcp();
-    void _tcpFailed(const QString& error);
     void _settingsChanged();
     void _updateSerialRouting();
     bool _installSource(QIODevice* device);
-    void _startReceiver(GPSProvider::TransportFactory factory);
+    void _startAttempt();
     void _uninstallSource();
+    void _attemptFailed(const QString& detail);
+    void _notifyState();
 
     AutoConnectSettings* _settings;
-    GPSReceiverSession _receiver;
-    bool _managedReceiver = false;
     NMEAConnectionConfig _config;
     QPointer<QGCPositionManager> _positionManager;
-    std::unique_ptr<UdpIODevice> _udp;
-    std::unique_ptr<QTcpSocket> _tcp;
+    std::unique_ptr<NMEAConnectionAttempt> _attempt;
     NMEADecoderSession _decoder;
     QTimer _udpActivityTimer;
-    QDeadlineTimer _connectDeadline = QDeadlineTimer::Forever;
     GPSConnectionState _connection;
-    GPSReceiverAutoConnect _receiverAutoConnect;
-    int _source = -1;
+    GPSProvider::TransportFactory _receiverFactory;
     bool _sourceInstalled = false;
+    bool _dispatching = false;
+    bool _stateNotificationPending = false;
+    bool _shutdown = false;
+    std::deque<std::function<void()>> _commands;
     QString _status;
 #ifndef QGC_NO_SERIAL_LINK
-    std::unique_ptr<QSerialPort> _serial;
-    SerialPortManager::ReservationPtr _reservation;
+    QPointer<SerialPortManager> _serialPorts;
     SerialPortManager::ReservationPtr _autoConnectExclusion;
-    QString _serialDevice;
-    qint32 _serialBaud = 0;
 #endif
 };

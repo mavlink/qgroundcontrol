@@ -178,9 +178,12 @@ private:
 
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 {
+    GPSReceiverConfig config;
+    config.base.surveyInAccMeters = 1.0;
+    config.base.surveyInDurationSecs = 30;
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
-        GPSType::femto, GPSReceiverConfig{});
+        GPSType::femto, config);
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();

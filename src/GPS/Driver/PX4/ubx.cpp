@@ -194,6 +194,7 @@ GPSDriverUBX::BaseStationCapability GPSDriverUBX::baseStationCapability() const
 int
 GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config, OutputProtocol output_protocol)
 {
+	resetIOError();
 	_configured = false;
 	if (output_protocol != OutputProtocol::Native
 	    && (output_protocol != OutputProtocol::NMEA || config.output_mode != OutputMode::GPS
@@ -1871,6 +1872,9 @@ GPSDriverUBX::waitForGnssReset()
 
 	while (gps_absolute_time() < time_started + UBX_GNSS_RESET_TIME) {
 		receive(UBX_CONFIG_TIMEOUT);
+		if (ioError()) {
+			return;
+		}
 	}
 }
 
@@ -1884,6 +1888,10 @@ GPSDriverUBX::receive(unsigned timeout)
 int GPSDriverUBX::receiveInternal(unsigned timeout, bool &read_error)
 {
 	read_error = false;
+	if (ioError()) {
+		read_error = true;
+		return ioError();
+	}
 	uint8_t buf[GPS_READ_BUFFER_SIZE];
 
 	/* timeout additional to poll */

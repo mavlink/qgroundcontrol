@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "GPSDriver.h"  // facade; also publishes GPSReceiverConfig + the GNSS data structs relayed below
+#include "GPSReceiverMailbox.h"
 #include "GPSType.h"
 
 class GPSTransport;
@@ -39,15 +40,20 @@ public:
 
     ~GPSProvider() override;
 
-    void stop() { _requestStop = true; }
+    void stop();
 
-signals:
+    std::shared_ptr<GPSReceiverMailbox> mailbox() const { return _mailbox; }
+
+    /// Thread-safe publication; only the first pending update queues a session wakeup.
     void satelliteInfoUpdate(const GPSSatelliteObservation& message);
     void sensorGpsUpdate(const GPSObservation& message);
     void relativePositionUpdate(const GPSRelativeObservation& message);
     void RTCMDataUpdate(const QByteArray& message);
     void RTCMFrameUpdate(const QByteArray& message, qint64 receivedAtMs);
     void surveyInStatus(const GPSSurveyInStatus& status);
+
+signals:
+    void dataReady();
     void connectionError(GPSConnectionError error);
     void connectionErrorDetail(GPSConnectionError error, const QString& detail);
     void capabilitiesUpdated(const GPSReceiverCapabilities& capabilities);
@@ -58,6 +64,7 @@ signals:
 private:
     void run() final;
 
+    std::shared_ptr<GPSReceiverMailbox> _mailbox;
     TransportFactory _transportFactory;
     GPSType _type;
     std::atomic_bool _requestStop = false;

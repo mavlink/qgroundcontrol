@@ -45,6 +45,8 @@ public:
 
     GPSObservation observation() const { return _observation; }
 
+    std::optional<GPSObservation> acceptedObservation(GPSObservation::PositionUse use) const;
+
     QGeoCoordinate coordinate() const { return usable() ? _observation.coordinate() : QGeoCoordinate(); }
 
     double horizontalAccuracy() const;
@@ -53,7 +55,10 @@ public:
 
     int satellitesInViewCount() const { return _satellitesInViewCount; }
 
-    int satellitesInUseCount() const { return _satellitesInUseCount; }
+    int satellitesInUseCount() const
+    {
+        return _fixSatellitesInUseCount >= 0 ? _fixSatellitesInUseCount : _satellitesInUseCount;
+    }
 
     void updateObservation(const GPSObservation& observation);
     void updatePosition(const QGeoPositionInfo& position, qint64 ageMs = 0);
@@ -62,6 +67,8 @@ public:
     void updateSatellitesInView(int count, qint64 ageMs = 0);
     void updateSatellitesInUse(int count, qint64 ageMs = 0);
     void updateSatelliteCounts(int inView, int inUse, qint64 ageMs = 0);
+    /// Satellite decoder failures do not invalidate a fresh count supplied with a position fix.
+    void clearSatelliteReports();
     void clearSatellites();
 
 signals:
@@ -78,6 +85,9 @@ private:
     QTimer _positionTimer;
     QTimer _satellitesInViewTimer;
     QTimer _satellitesInUseTimer;
+    QTimer _fixSatellitesInUseTimer;
     int _satellitesInViewCount = -1;
     int _satellitesInUseCount = -1;
+    int _fixSatellitesInUseCount = -1;
+    quint64 _revision = 0;
 };

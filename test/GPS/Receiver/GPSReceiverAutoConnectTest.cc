@@ -89,8 +89,8 @@ void GPSReceiverAutoConnectTest::_serialRetriesKeepConfiguration()
 {
     SerialPortManager ports(nullptr, receiverInventory);
     GPSReceiverSession receiver;
-    GPSConnectionState state;
-    GPSReceiverAutoConnect controller(&receiver, nullptr, nullptr, &state);
+    GPSReceiverAutoConnect controller(&receiver);
+    auto& state = controller._connection;
     auto config = serialConfig(QStringLiteral("/test/rtk"));
     config.receiver.role = GPSReceiverConfig::Role::RTKBase;
     config.receiver.base.surveyInAccMeters = 1.0;
@@ -241,8 +241,8 @@ void GPSReceiverAutoConnectTest::_unplugNotificationPreservesChangedIntent()
     auto inventory = receiverInventory();
     SerialPortManager ports(nullptr, [&]() { return inventory; });
     GPSReceiverSession receiver;
-    GPSConnectionState state;
-    GPSReceiverAutoConnect controller(&receiver, nullptr, nullptr, &state);
+    GPSReceiverAutoConnect controller(&receiver);
+    auto& state = controller._connection;
     const auto original = serialConfig(QStringLiteral("/test/rtk"));
     auto replacement = original;
     replacement.device = QStringLiteral("/test/replacement");
@@ -349,8 +349,8 @@ void GPSReceiverAutoConnectTest::_failedAttemptsBackOffAndRespectReservations()
 {
     SerialPortManager ports(nullptr, receiverInventory);
     GPSReceiverSession receiver;
-    GPSConnectionState state;
-    GPSReceiverAutoConnect controller(&receiver, nullptr, nullptr, &state);
+    GPSReceiverAutoConnect controller(&receiver);
+    auto& state = controller._connection;
     controller.setConfig(serialConfig());
     controller.setAutoConnect(true);
     controller.setSerialDiscovery(&ports);
@@ -391,8 +391,8 @@ void GPSReceiverAutoConnectTest::_failedOpenRetriesWithoutUnplug()
 {
     SerialPortManager ports(nullptr, receiverInventory);
     GPSReceiverSession receiver;
-    GPSConnectionState state;
-    GPSReceiverAutoConnect controller(&receiver, nullptr, nullptr, &state);
+    GPSReceiverAutoConnect controller(&receiver);
+    auto& state = controller._connection;
     controller.setConfig(serialConfig());
     controller.setAutoConnect(true);
     controller.setSerialDiscovery(&ports);
@@ -418,8 +418,8 @@ void GPSReceiverAutoConnectTest::_failedOpenRetriesWithoutUnplug()
 void GPSReceiverAutoConnectTest::_networkRetriesAndStops()
 {
     GPSReceiverSession receiver;
-    GPSConnectionState state;
-    GPSReceiverAutoConnect controller(&receiver, nullptr, nullptr, &state);
+    GPSReceiverAutoConnect controller(&receiver);
+    auto& state = controller._connection;
     QSignalSpy active(&controller, &GPSReceiverAutoConnect::networkActiveChanged);
     QSignalSpy disconnects(&controller, &GPSReceiverAutoConnect::disconnectRequested);
     QVERIFY(!controller.connectNetwork(GPSType::u_blox, {}));

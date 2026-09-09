@@ -7,6 +7,8 @@
 
 #include <memory>
 
+#include "GPSObservation.h"
+
 class QIODevice;
 class QNmeaPositionInfoSource;
 
@@ -29,6 +31,8 @@ public:
 
     qint64 lastUpdateAgeMs() const;
 
+    GPSObservation lastObservation() const { return _lastObservation; }
+
 public slots:
     void startUpdates() override;
     void stopUpdates() override;
@@ -38,6 +42,7 @@ private:
     void _resetDecoder();
 
     quint64 _lastUpdateReceivedUs = 0;
+    GPSObservation _lastObservation;
     QPointer<QIODevice> _device;
     std::unique_ptr<QNmeaPositionInfoSource> _decoder;
     QDeadlineTimer _requestDeadline = QDeadlineTimer::Forever;

@@ -13,4 +13,5 @@ private slots:
     void _testDropsBadCrcFrame();
     void _testFrameSplitAcrossDatagrams();
     void _testInterleavedSenders();
+    void _testBurstYieldsBetweenDrains();
 };

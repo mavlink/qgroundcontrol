@@ -136,8 +136,11 @@ ToolIndicatorPage {
                 }
 
                 LabelledLabel {
+                    readonly property int satelliteCount: root._baseStation
+                                                          ? QGroundControl.gpsReceiver.numSatellites.value
+                                                          : root._receiverHealth.satellitesInUseCount
                     label:      qsTr("Satellites")
-                    labelText:  root._baseStation ? QGroundControl.gpsReceiver.numSatellites.value : root._receiverHealth.satellitesInUseCount
+                    labelText: satelliteCount >= 0 ? satelliteCount : root.na
                 }
 
                 LabelledLabel {

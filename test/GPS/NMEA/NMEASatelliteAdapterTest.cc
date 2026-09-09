@@ -2,6 +2,7 @@
 
 #include <QtCore/QBuffer>
 #include <QtPositioning/QNmeaSatelliteInfoSource>
+#include <QtTest/QSignalSpy>
 
 #include "NMEADecoderSession.h"
 #include "NMEASatelliteAdapter.h"
@@ -148,5 +149,52 @@ void NMEASatelliteAdapterTest::_decoderRejectsDelayedSatelliteBatch()
     feed(input, {"$GNRMC,120001.00,V,,,,,,,090926,,,N"});
     QTRY_VERIFY_WITH_TIMEOUT(!changes.isEmpty(), TestTimeout::shortMs());
     QCOMPARE(session.health()->satellitesInViewCount(), -1);
+    QCOMPARE(session.health()->satellitesInUseCount(), -1);
+}
+
+void NMEASatelliteAdapterTest::_constellationsExpireIndependently()
+{
+    TimedBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEASatelliteAdapter adapter(&input);
+    constexpr quint64 nowUs = 10000000;
+    input.receivedAtUs = nowUs - 4000000;
+    feed(input, {"$GPGSV,1,1,01,02,40,100,30", "$GPRMC,120000.00,V,,,,,,,090926,,,N"});
+    QVERIFY(!adapter.readAll().isEmpty());
+    input.receivedAtUs = nowUs;
+    feed(input, {"$GAGSV,1,1,01,03,40,100,30", "$GPRMC,120001.00,V,,,,,,,090926,,,N"});
+    QVERIFY(!adapter.readAll().isEmpty());
+    QGeoSatelliteInfo gps;
+    gps.setSatelliteSystem(QGeoSatelliteInfo::GPS);
+    gps.setSatelliteIdentifier(2);
+    QGeoSatelliteInfo galileo;
+    galileo.setSatelliteSystem(QGeoSatelliteInfo::GALILEO);
+    galileo.setSatelliteIdentifier(3);
+    const QList<QGeoSatelliteInfo> decoded{gps, galileo};
+    QCOMPARE(adapter.freshSatellites(decoded, false, nowUs).satellites.size(), 2);
+    const auto partial = adapter.freshSatellites(decoded, false, nowUs + 1000000);
+    QCOMPARE(partial.satellites, QList<QGeoSatelliteInfo>{galileo});
+    QCOMPARE(partial.receivedAtUs, nowUs);
+    const auto expired = adapter.freshSatellites(decoded, false, nowUs + 5000000);
+    QVERIFY(expired.satellites.isEmpty());
+    QCOMPARE(expired.receivedAtUs, 0);
+    // No GSA has arrived. A view report cannot manufacture a known zero used count.
+    QCOMPARE(adapter.freshSatellites({}, true, nowUs).receivedAtUs, 0);
+}
+
+void NMEASatelliteAdapterTest::_decoderKeepsFreshConstellation()
+{
+    TimedBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEADecoderSession session;
+    QVERIFY(session.start(&input));
+    input.receivedAtUs = GPSObservation::monotonicNowUs() - 3000000;
+    feed(input, {"$GPGSV,1,1,01,02,40,100,30"});
+    input.receivedAtUs = GPSObservation::monotonicNowUs();
+    feed(input, {"$GAGSV,1,1,01,03,40,100,30", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
+    QTRY_COMPARE_WITH_TIMEOUT(session.health()->satellitesInViewCount(), 2, TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(session.health()->satellitesInViewCount(), 1, TestTimeout::mediumMs());
+    QCOMPARE(session.satellitesInView().size(), 1);
+    QCOMPARE(session.satellitesInView().first().satelliteSystem(), QGeoSatelliteInfo::GALILEO);
     QCOMPARE(session.health()->satellitesInUseCount(), -1);
 }

@@ -126,9 +126,14 @@ QIODevice* NMEAStreamSplitter::satelliteDevice() const
 
 void NMEAStreamSplitter::_readAvailableData()
 {
+    if (_drainPending) {
+        return;
+    }
     const QPointer<NMEAStreamSplitter> guard(this);
-    while (_source && _source->isReadable() && _source->bytesAvailable() > 0) {
-        const QByteArray data = _source->read(kMaxBufferedBytes / 2);
+    qsizetype remaining = kMaxBufferedBytes / 2;
+    while (remaining > 0 && _source && _source->isReadable() && _source->bytesAvailable() > 0) {
+        const QByteArray data = _source->read(remaining);
+        remaining -= data.size();
         if (data.isEmpty()) {
             return;
         }
@@ -161,6 +166,16 @@ void NMEAStreamSplitter::_readAvailableData()
                 return;
             }
         }
+    }
+    if (_source && _source->isReadable() && _source->bytesAvailable() > 0) {
+        _drainPending = true;
+        QMetaObject::invokeMethod(
+            this,
+            [this]() {
+                _drainPending = false;
+                _readAvailableData();
+            },
+            Qt::QueuedConnection);
     }
 }
 

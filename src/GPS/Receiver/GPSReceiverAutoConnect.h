@@ -31,7 +31,7 @@ class GPSReceiverAutoConnect : public QObject
 
 public:
     explicit GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPSSourceHealth* health = nullptr,
-                                    QObject* parent = nullptr, GPSConnectionState* sharedState = nullptr);
+                                    QObject* parent = nullptr);
     ~GPSReceiverAutoConnect() override;
 
     void setConfig(const GPSConnectionConfig& config, bool restart = false);
@@ -83,8 +83,7 @@ private:
 
     QPointer<GPSReceiverSession> _receiver;
     QPointer<GPSSourceHealth> _health;
-    GPSConnectionState _ownedConnection;
-    GPSConnectionState& _connection;
+    GPSConnectionState _connection;
     GPSConnectionConfig _config;
     bool _automatic = false;
     GPSProvider::TransportFactory _transportFactory;

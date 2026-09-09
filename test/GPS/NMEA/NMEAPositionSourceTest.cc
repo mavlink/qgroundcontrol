@@ -7,6 +7,7 @@
 
 #include <cstring>
 
+#include "GPSReadTimestamp.h"
 #include "NMEAPositionSource.h"
 #include "NMEAUtils.h"
 
@@ -15,10 +16,17 @@ const QByteArray kFix =
     "$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A*43\r\n"
     "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,*76\r\n";
 
-class NMEAInput : public QIODevice
+class NMEAInput : public QIODevice, public GPSReadTimestamp
 {
 public:
     NMEAInput() { open(QIODevice::ReadOnly); }
+
+    quint64 receivedAtUs = 0;
+
+    quint64 lastReadTimestampUs() const override
+    {
+        return receivedAtUs ? receivedAtUs : GPSObservation::monotonicNowUs();
+    }
 
     bool isSequential() const override { return true; }
 
@@ -125,3 +133,61 @@ void NMEAPositionSourceTest::_queuedUpdateCannotSurviveRestart()
 }
 
 UT_REGISTER_TEST(NMEAPositionSourceTest, TestLabel::Unit)
+
+void NMEAPositionSourceTest::_fixMetadata_data()
+{
+    QTest::addColumn<int>("quality");
+    QTest::addColumn<GPSObservation::FixQuality>("expected");
+    QTest::newRow("autonomous") << 1 << GPSObservation::FixQuality::Fix3D;
+    QTest::newRow("differential") << 2 << GPSObservation::FixQuality::Differential;
+    QTest::newRow("rtk-fixed") << 4 << GPSObservation::FixQuality::RTKFixed;
+    QTest::newRow("rtk-float") << 5 << GPSObservation::FixQuality::RTKFloat;
+}
+
+void NMEAPositionSourceTest::_fixMetadata()
+{
+    QFETCH(int, quality);
+    QFETCH(GPSObservation::FixQuality, expected);
+    NMEAInput device;
+    NMEAPositionSource source(&device);
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    source.startUpdates();
+    device.receivedAtUs = GPSObservation::monotonicNowUs() - 2000000;
+    const QByteArray rmc =
+        NMEAUtils::repairChecksum("$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A");
+    const QByteArray gga = NMEAUtils::repairChecksum("$GPGGA,092750.000,5321.6802,N,00630.3372,W," +
+                                                     QByteArray::number(quality) + ",8,1.03,61.7,M,55.2,M,,");
+    device.feed(rmc + gga + NMEAUtils::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
+    QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
+    const auto observation = source.lastObservation();
+    QCOMPARE(observation.fixQuality, expected);
+    QCOMPARE(observation.satellitesUsed, std::optional<int>(8));
+    QCOMPARE(observation.horizontalDop, std::optional<double>(1.03));
+    QCOMPARE(observation.verticalDop, std::optional<double>(0.6));
+    QCOMPARE(observation.altitudeDatum, GPSObservation::AltitudeDatum::MeanSeaLevel);
+    QVERIFY(observation.altitudeEllipsoidMeters.has_value());
+    QVERIFY(qAbs(*observation.altitudeEllipsoidMeters - 116.9) < 0.00001);
+    QCOMPARE(observation.monotonicTimestampUs, device.receivedAtUs);
+}
+
+void NMEAPositionSourceTest::_metadataDoesNotCrossEpochs()
+{
+    NMEAInput device;
+    NMEAPositionSource source(&device);
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    source.startUpdates();
+    device.feed(kFix);
+    QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(source.lastObservation().satellitesUsed.has_value());
+    updates.clear();
+    device.feed(NMEAUtils::repairChecksum("$GPRMC,092751.000,A,5321.6802,N,00630.3372,W,2.0,31.66,280511,,,A"));
+    QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
+    const auto observation = source.lastObservation();
+    QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Unknown);
+    QVERIFY(!observation.satellitesUsed);
+    QVERIFY(!observation.horizontalDop);
+    QVERIFY(!observation.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
+    QVERIFY(!observation.verticalDop);
+    QVERIFY(!observation.altitudeEllipsoidMeters);
+    QCOMPARE(observation.altitudeDatum, GPSObservation::AltitudeDatum::Unknown);
+}

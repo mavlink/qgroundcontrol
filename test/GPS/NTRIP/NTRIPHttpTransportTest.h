@@ -7,6 +7,9 @@ class NTRIPHttpTransportTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void testChunkedCorrectionsYieldBetweenReadBatches();
+    void testPublicObserverCanStop_data();
+    void testPublicObserverCanStop();
     // HTTP status line parsing
     void _testParseHttpStatus200();
     void _testParseHttpStatusICY();

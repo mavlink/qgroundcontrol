@@ -10,13 +10,11 @@
 
 QGC_LOGGING_CATEGORY(GPSReceiverAutoConnectLog, "GPS.Receiver.GPSReceiverAutoConnect")
 
-GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPSSourceHealth* health, QObject* parent,
-                                               GPSConnectionState* sharedState)
+GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPSSourceHealth* health, QObject* parent)
     : QObject(parent)
     , _receiver(receiver)
     , _health(health)
-    , _ownedConnection(this)
-    , _connection(sharedState ? *sharedState : _ownedConnection)
+    , _connection(this)
 {
     qCDebug(GPSReceiverAutoConnectLog) << this;
     if (_receiver) {

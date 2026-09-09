@@ -580,8 +580,8 @@ void NTRIPHttpTransportTest::testStreamingRequiresMountpoint()
         config.mountpoint = mountpoint;
         QVERIFY(!config.streamValidationError().isEmpty());
         NTRIPHttpTransport transport(config);
-        QSignalSpy errors(&transport, &NTRIPTransport::error);
-        QSignalSpy connected(&transport, &NTRIPTransport::connected);
+        QSignalSpy errors(&transport, &NTRIPStream::error);
+        QSignalSpy connected(&transport, &NTRIPStream::connected);
         transport.start();
         QCOMPARE(errors.size(), 1);
         QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::InvalidConfig);
@@ -599,8 +599,8 @@ void NTRIPHttpTransportTest::testConnectionWaitsForHttpResponse()
     config.port = server.serverPort();
     config.mountpoint = QStringLiteral("TEST");
     NTRIPHttpTransport transport(config);
-    QSignalSpy connected(&transport, &NTRIPTransport::connected);
-    QSignalSpy frames(&transport, &NTRIPTransport::RTCMDataUpdate);
+    QSignalSpy connected(&transport, &NTRIPStream::connected);
+    QSignalSpy frames(&transport, &NTRIPStream::RTCMDataUpdate);
     transport.start();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
@@ -628,8 +628,8 @@ void NTRIPHttpTransportTest::testHandshakeTimeoutClosesSocket()
     config.port = server.serverPort();
     config.mountpoint = QStringLiteral("TEST");
     NTRIPHttpTransport transport(config);
-    QSignalSpy connected(&transport, &NTRIPTransport::connected);
-    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    QSignalSpy connected(&transport, &NTRIPStream::connected);
+    QSignalSpy errors(&transport, &NTRIPStream::error);
     transport.start();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
@@ -657,7 +657,7 @@ void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
     config.port = server.serverPort();
     config.mountpoint = QStringLiteral("TEST");
     NTRIPHttpTransport transport(config);
-    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    QSignalSpy errors(&transport, &NTRIPStream::error);
     transport.start();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
@@ -691,10 +691,10 @@ void NTRIPHttpTransportTest::testCorrectionWatchdog()
     config.mountpoint = QStringLiteral("TEST");
     config.whitelist = QStringLiteral("1077");
     NTRIPHttpTransport transport(config);
-    QSignalSpy connected(&transport, &NTRIPTransport::connected);
-    QSignalSpy errors(&transport, &NTRIPTransport::error);
-    QSignalSpy validated(&transport, &NTRIPTransport::rtcmFrameValidated);
-    QSignalSpy forwarded(&transport, &NTRIPTransport::RTCMDataUpdate);
+    QSignalSpy connected(&transport, &NTRIPStream::connected);
+    QSignalSpy errors(&transport, &NTRIPStream::error);
+    QSignalSpy validated(&transport, &NTRIPStream::rtcmFrameValidated);
+    QSignalSpy forwarded(&transport, &NTRIPStream::RTCMDataUpdate);
     transport.start();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
@@ -730,4 +730,96 @@ void NTRIPHttpTransportTest::testCorrectionWatchdog()
     }
     writer.stop();
     transport.stop();
+}
+
+void NTRIPHttpTransportTest::testChunkedCorrectionsYieldBetweenReadBatches()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    config.port = server.serverPort();
+    config.mountpoint = QStringLiteral("TEST");
+    NTRIPHttpTransport transport(config);
+    QSignalSpy frames(&transport, &NTRIPStream::RTCMDataUpdate);
+    transport.start();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+    peer->readAll();
+    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 150);
+    QByteArray body;
+    constexpr int frameCount = 500;
+    for (int i = 0; i < frameCount; ++i) {
+        body += frame;
+    }
+    QByteArray wire("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n");
+    for (qsizetype offset = 0; offset < body.size(); offset += 71) {
+        const auto chunk = body.mid(offset, 71);
+        wire += QByteArray::number(chunk.size(), 16) + "\r\n" + chunk + "\r\n";
+    }
+    bool heartbeatQueued = false;
+    int framesAtHeartbeat = -1;
+    connect(&transport, &NTRIPStream::bytesReceived, &transport, [&]() {
+        if (!heartbeatQueued) {
+            heartbeatQueued = true;
+            QMetaObject::invokeMethod(&transport, [&]() { framesAtHeartbeat = frames.size(); }, Qt::QueuedConnection);
+        }
+    });
+    QCOMPARE(peer->write(wire), wire.size());
+    QTRY_COMPARE_WITH_TIMEOUT(frames.size(), frameCount, TestTimeout::mediumMs());
+    QVERIFY(framesAtHeartbeat > 0);
+    QVERIFY(framesAtHeartbeat < frameCount);
+    for (const auto& received : frames) {
+        QCOMPARE(received.first().toByteArray(), frame);
+    }
+    transport.stop();
+}
+
+void NTRIPHttpTransportTest::testPublicObserverCanStop_data()
+{
+    QTest::addColumn<bool>("warning");
+    QTest::newRow("credentials-warning") << true;
+    QTest::newRow("handshake-connected") << false;
+}
+
+void NTRIPHttpTransportTest::testPublicObserverCanStop()
+{
+    QFETCH(bool, warning);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    config.port = server.serverPort();
+    config.mountpoint = QStringLiteral("TEST");
+    if (warning) {
+        config.username = QStringLiteral("user");
+        expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Sending credentials without TLS")));
+    }
+    NTRIPHttpTransport transport(config);
+    bool stopped = false;
+    const auto stop = [&]() {
+        stopped = true;
+        transport.stop();
+    };
+    if (warning) {
+        connect(&transport, &NTRIPStream::plaintextCredentialsWarning, &transport, stop);
+    } else {
+        connect(&transport, &NTRIPStream::connected, &transport, stop);
+    }
+    transport.start();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    if (!warning) {
+        QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+        peer->write("HTTP/1.1 200 OK\r\n\r\n");
+    }
+    QTRY_VERIFY_WITH_TIMEOUT(stopped, TestTimeout::mediumMs());
+    QVERIFY(!transport._socket);
+    QVERIFY(!transport._connectTimeoutTimer.isActive());
+    QVERIFY(!transport._dataWatchdogTimer.isActive());
+    if (warning) {
+        verifyExpectedLogMessage();
+    }
 }

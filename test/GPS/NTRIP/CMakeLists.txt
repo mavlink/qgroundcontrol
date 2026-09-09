@@ -1,7 +1,7 @@
 # NTRIP tests.
 target_sources(
     ${CMAKE_PROJECT_NAME}
-    PRIVATE MockNTRIPTransport.h
+    PRIVATE MockNTRIPStream.h
             NTRIPManagerTest.cc
             NTRIPManagerTest.h
             NTRIPSourceTableTest.cc
@@ -24,3 +24,8 @@ add_qgc_test(NTRIPHttpTransportTest LABELS Unit)
 add_qgc_test(NTRIPConnectionStatsTest LABELS Unit)
 add_qgc_test(NTRIPGgaProviderTest LABELS Unit RESOURCE_LOCK MockLink)
 add_qgc_test(NTRIPSourceTableControllerTest LABELS Unit)
+
+qt_add_executable(QGCGPSNTRIPSessionTest NTRIPSessionTest.cc MockNTRIPStream.h)
+target_link_libraries(QGCGPSNTRIPSessionTest PRIVATE QGCGPSNTRIPSession Qt6::Test)
+add_test(NAME NTRIPSessionTest COMMAND QGCGPSNTRIPSessionTest)
+set_tests_properties(NTRIPSessionTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)

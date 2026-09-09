@@ -122,6 +122,7 @@ qt_add_qml_module(AppSettingsModule
         LinkConfigurationManager.qml
         LogReplaySettings.qml
         LocalRtkSettings.qml
+        CorrectionRoutingSettings.qml
         MapProviderSettings.qml
         MavlinkActionSettings.qml
         MavlinkLinkStatus.qml

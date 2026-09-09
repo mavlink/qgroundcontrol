@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "GPSSourceHealth.h"
 #include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
@@ -152,6 +153,64 @@ quint64 NMEASatelliteAdapter::satelliteTimestampUs(bool inUse) const
         include(_consumedUseTimestamps);
     }
     return oldest;
+}
+
+NMEASatelliteAdapter::Snapshot NMEASatelliteAdapter::freshSatellites(const QList<QGeoSatelliteInfo>& satellites,
+                                                                     bool inUse, quint64 nowUs) const
+{
+    Snapshot snapshot;
+    snapshot.satellites = satellites;
+    const auto& timestamps = inUse ? _consumedUseTimestamps : _consumedViewTimestamps;
+    for (auto entry = timestamps.cbegin(); entry != timestamps.cend(); ++entry) {
+        quint64 timestamp = entry.value();
+        if (inUse) {
+            const quint64 viewTimestamp = _consumedViewTimestamps.value(entry.key());
+            timestamp = viewTimestamp ? std::min(timestamp, viewTimestamp) : 0;
+        }
+        snapshot.constellationReceipts.insert(entry.key(), timestamp);
+    }
+    return expireSnapshot(snapshot, nowUs);
+}
+
+NMEASatelliteAdapter::Snapshot NMEASatelliteAdapter::expireSnapshot(const Snapshot& snapshot, quint64 nowUs)
+{
+    Snapshot result;
+    for (auto entry = snapshot.constellationReceipts.cbegin(); entry != snapshot.constellationReceipts.cend();
+         ++entry) {
+        const quint64 timestamp = entry.value();
+        if (timestamp && timestamp <= nowUs && nowUs - timestamp < GPSSourceHealth::FRESHNESS_TIMEOUT_MS * 1000ULL) {
+            result.constellationReceipts.insert(entry.key(), timestamp);
+        }
+    }
+    for (quint64 timestamp : result.constellationReceipts) {
+        result.receivedAtUs = result.receivedAtUs ? std::min(result.receivedAtUs, timestamp) : timestamp;
+    }
+    for (const auto& satellite : snapshot.satellites) {
+        QByteArray talker;
+        switch (satellite.satelliteSystem()) {
+            case QGeoSatelliteInfo::GPS:
+                talker = "GP";
+                break;
+            case QGeoSatelliteInfo::GLONASS:
+                talker = "GL";
+                break;
+            case QGeoSatelliteInfo::GALILEO:
+                talker = "GA";
+                break;
+            case QGeoSatelliteInfo::BEIDOU:
+                talker = "GB";
+                break;
+            case QGeoSatelliteInfo::QZSS:
+                talker = "GQ";
+                break;
+            default:
+                break;
+        }
+        if (result.constellationReceipts.contains(talker)) {
+            result.satellites.append(satellite);
+        }
+    }
+    return result;
 }
 
 void NMEASatelliteAdapter::close()

@@ -6,8 +6,9 @@
 bool GPSObservation::usable() const
 {
     const double accuracy = position.attribute(QGeoPositionInfo::HorizontalAccuracy);
-    return position.isValid() && position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) && qIsFinite(accuracy) &&
-           accuracy > 0 && accuracy <= 100;
+    return fixQuality != FixQuality::NoFix && position.isValid() &&
+           position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) && qIsFinite(accuracy) && accuracy > 0 &&
+           accuracy <= 100;
 }
 
 QGeoCoordinate GPSObservation::coordinate() const
@@ -38,6 +39,43 @@ double GPSObservation::heading() const
         return qQNaN();
     }
     return direction == 360 ? 0 : direction;
+}
+
+QGeoPositionInfo GPSObservation::acceptedPosition(PositionUse use) const
+{
+    if (!usable()) {
+        return {};
+    }
+    QGeoPositionInfo accepted = position;
+    switch (use) {
+        case PositionUse::GroundStation:
+        case PositionUse::Motion:
+        case PositionUse::NTRIP:
+            accepted.setCoordinate(coordinate());
+            if (accepted.coordinate().type() != QGeoCoordinate::Coordinate3D) {
+                accepted.removeAttribute(QGeoPositionInfo::VerticalAccuracy);
+            }
+            break;
+        case PositionUse::RemoteID:
+            // Operator reports may use a measured altitude even when its accuracy is unknown.
+            // Preserve legacy source altitude when no measured ellipsoid altitude is available.
+            if (altitudeEllipsoidMeters && qIsFinite(*altitudeEllipsoidMeters)) {
+                QGeoCoordinate coordinate = accepted.coordinate();
+                coordinate.setAltitude(*altitudeEllipsoidMeters);
+                accepted.setCoordinate(coordinate);
+            }
+            break;
+    }
+    if (use == PositionUse::Motion) {
+        const double course = heading();
+        if (qIsFinite(course)) {
+            accepted.setAttribute(QGeoPositionInfo::Direction, course);
+        } else {
+            accepted.removeAttribute(QGeoPositionInfo::Direction);
+            accepted.removeAttribute(QGeoPositionInfo::DirectionAccuracy);
+        }
+    }
+    return accepted;
 }
 
 quint64 GPSObservation::monotonicNowUs()

@@ -86,4 +86,5 @@ private:
     QChronoTimer _rateTimer;
     // Per-ID counts. Using int for compatibility with QVariant in QML.
     QHash<int, quint32> _messageCountsById;
+    quint64 _revision = 0;
 };

@@ -27,6 +27,12 @@ public:
 
     bool ready() const { return _ready; }
 
+    bool readyForCorrections() const;
+    /// Returns queue acceptance, not device acknowledgement. Call on the session thread.
+    bool submitCorrections(const QByteArray& data, qint64 receivedAtMs, quint64 sessionId);
+    void clearPendingCorrections();
+    GPSReceiverMailbox::Stats deliveryStats() const;
+
     bool hasReceiver() const { return !_provider.isNull(); }
 
     bool stopping() const { return !_retiring.isEmpty(); }
@@ -58,6 +64,8 @@ signals:
     void surveyInReceived(const GPSSurveyInStatus& status);
 
 private:
+    void _drain(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
+
     QPointer<GPSProvider> _provider;
     std::unique_ptr<GPSByteStream> _nmeaStream;
     QSet<GPSProvider*> _workers;

@@ -8,6 +8,10 @@ class NMEASourceManagerTest : public UnitTest
 
 private slots:
     void _managedReceiverSettingsPreservePassiveBaud();
+    void _reentrantConnectionCommands_data();
+    void _reentrantConnectionCommands();
+    void _managedAttemptRetainsReservationWhileStopping();
+    void _injectedSerialDiscovery();
     void init();
     void _managedReceiverFailureAndCancellation();
     void _managedModeChangeCancelsRetry();

@@ -7,6 +7,16 @@ class NTRIPSettings : public SettingsGroup
     Q_OBJECT
 
 public:
+    enum CorrectionSource
+    {
+        Automatic = 0,
+        LocalReceiver = 1,
+        Ntrip = 2,
+        Udp = 3,
+        All = 4,
+    };
+    Q_ENUM(CorrectionSource)
+
     NTRIPSettings(QObject* parent = nullptr);
 
     DEFINE_SETTING_NAME_GROUP()
@@ -28,4 +38,7 @@ public:
     DEFINE_SETTINGFACT(rtcmUdpInputEnabled)
     DEFINE_SETTINGFACT(rtcmUdpInputPort)
     DEFINE_SETTINGFACT(rtcmUdpValidate)
+    DEFINE_SETTINGFACT(correctionSource)
+    DEFINE_SETTINGFACT(correctionSourceInstance)
+    DEFINE_SETTINGFACT(injectLocalReceiver)
 };

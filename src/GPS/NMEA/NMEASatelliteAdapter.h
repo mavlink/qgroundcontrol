@@ -4,6 +4,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
+#include <QtPositioning/QGeoSatelliteInfo>
 
 #include "GPSReadTimestamp.h"
 
@@ -24,7 +25,16 @@ public:
 
     quint64 lastReadTimestampUs() const override { return _lastReadTimestampUs; }
 
+    struct Snapshot
+    {
+        QList<QGeoSatelliteInfo> satellites;
+        quint64 receivedAtUs = 0;
+        QMap<QByteArray, quint64> constellationReceipts;
+    };
+
+    static Snapshot expireSnapshot(const Snapshot& snapshot, quint64 nowUs);
     quint64 satelliteTimestampUs(bool inUse) const;
+    Snapshot freshSatellites(const QList<QGeoSatelliteInfo>& satellites, bool inUse, quint64 nowUs) const;
 
 protected:
     qint64 readData(char* data, qint64 maxSize) override;

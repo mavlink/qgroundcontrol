@@ -20,6 +20,10 @@
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
 #include "LinkManager.h"
+#include "MockNTRIPStream.h"
+#include "NTRIPManager.h"
+#include "NTRIPSettings.h"
+#include "PositionManager.h"
 #include "RTCMMavlink.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
@@ -626,4 +630,85 @@ void GPSManagerTest::_rtkConnectionSelectionMigration()
         const RTKSettings migrated;
     }
     QCOMPARE(storage.value(key).toInt(), static_cast<int>(RTKSettings::Serial));
+}
+
+void GPSManagerTest::_correctionRoutingSettings_data()
+{
+    QTest::addColumn<int>("selection");
+    QTest::addColumn<int>("policy");
+    QTest::addColumn<int>("category");
+    using Policy = GPSCorrectionManager::RoutingPolicy;
+    QTest::newRow("automatic") << int(NTRIPSettings::Automatic) << int(Policy::Automatic) << 0;
+    QTest::newRow("local") << int(NTRIPSettings::LocalReceiver) << int(Policy::Manual)
+                           << int(GPSCorrectionSource::LocalReceiver);
+    QTest::newRow("ntrip") << int(NTRIPSettings::Ntrip) << int(Policy::Manual) << int(GPSCorrectionSource::Ntrip);
+    QTest::newRow("udp") << int(NTRIPSettings::Udp) << int(Policy::Manual) << int(GPSCorrectionSource::Udp);
+    QTest::newRow("all") << int(NTRIPSettings::All) << int(Policy::All) << 0;
+}
+
+void GPSManagerTest::_correctionRoutingSettings()
+{
+    QFETCH(int, selection);
+    QFETCH(int, policy);
+    QFETCH(int, category);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->rtcmUdpInputEnabled(), false);
+    saved.setFactValue(settings->correctionSource(), NTRIPSettings::Automatic);
+    saved.setFactValue(settings->correctionSourceInstance(), QString());
+    saved.setFactValue(settings->injectLocalReceiver(), false);
+    GPSManager manager(*SettingsManager::instance(), nullptr, []() { return false; });
+    manager.init();
+    settings->correctionSource()->setRawValue(selection);
+    QCOMPARE(int(manager.corrections()->routingPolicy()), policy);
+    if (policy == int(GPSCorrectionManager::RoutingPolicy::Manual)) {
+        QCOMPARE(int(manager.corrections()->selectedSource()), category);
+    }
+    manager.shutdown();
+    settings->correctionSource()->setRawValue(NTRIPSettings::All);
+    QCOMPARE(int(manager.corrections()->routingPolicy()), policy);
+    QVERIFY(!manager.connectRtk());
+    QVERIFY(!manager.connectNmea());
+}
+
+void GPSManagerTest::_correctionRuntimeLifecycle()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->rtcmUdpInputEnabled(), false);
+    saved.setFactValue(settings->correctionSource(), NTRIPSettings::Ntrip);
+    saved.setFactValue(settings->correctionSourceInstance(), QString());
+    saved.setFactValue(settings->ntripServerConnectEnabled(), true);
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.test"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    NTRIPManager ntrip;
+    auto* stream = new MockNTRIPStream(&ntrip);
+    ntrip.setTransportForTest(stream);
+    GPSManager manager(*SettingsManager::instance(), nullptr, []() { return false; });
+    QSignalSpy routed(manager.corrections(), &GPSCorrectionManager::correctionRouted);
+    manager.init(&ntrip);
+    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005);
+    stream->simulateRtcmData(frame, 1005);
+    QCOMPARE(routed.size(), 1);
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(routed.at(0).at(0)).source, GPSCorrectionSource::Ntrip);
+    manager.shutdown();
+    QCOMPARE(ntrip.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+    ntrip.correctionReceivedAt(frame, 1005, false, GPSCorrectionFrame::monotonicNowMs());
+    QCOMPARE(routed.size(), 1);
+}
+
+void GPSManagerTest::_correctionSettingsPanel()
+{
+    QQmlEngine engine;
+    engine.addImageProvider(QStringLiteral("coloredsvg"), new ColoredSvgImageProvider);
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.loadFromModule("QGroundControl.AppSettings", "CorrectionRoutingSettings");
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    const std::unique_ptr<QObject> panel(component.create());
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    QVERIFY(panel->findChild<QObject*>(QStringLiteral("correctionSource")));
+    QVERIFY(panel->findChild<QObject*>(QStringLiteral("correctionStream")));
+    QVERIFY(panel->findChild<QObject*>(QStringLiteral("injectLocalReceiver")));
 }

@@ -3,7 +3,7 @@
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QObject>
 
-/// Shared connection intent, lifecycle, and retry policy; transports own their I/O.
+/// Connection intent, lifecycle, and retry policy, mutated by one controller.
 class GPSConnectionState : public QObject
 {
     Q_OBJECT

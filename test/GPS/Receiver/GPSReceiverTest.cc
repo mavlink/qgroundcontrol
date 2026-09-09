@@ -70,8 +70,8 @@ void GPSReceiverTest::_testCoreAvailableWithoutReceiver()
     auto* facts = receiver.facts();
     QVERIFY(facts);
     QVERIFY(!facts->connected()->rawValue().toBool());
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), 0);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 0);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
     QCOMPARE(facts->lastError()->rawValue().toUInt(), 0U);
     QCOMPARE(facts->getFact(QStringLiteral("lat")), facts->lat());
     QCOMPARE(facts->getFact(QStringLiteral("rtk.valid")), facts->rtk()->valid());
@@ -187,7 +187,7 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     QVERIFY(qIsNaN(surveyFacts->currentLatitude()->rawValue().toDouble()));
     QVERIFY(qIsNaN(surveyFacts->currentAccuracy()->rawValue().toDouble()));
     QCOMPARE(surveyFacts->currentDuration()->rawValue().toInt(), 0);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), 0);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
     QTRY_VERIFY_WITH_TIMEOUT(secondGate->entered.available() > 0, TestTimeout::mediumMs());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(!receiver.connected());
@@ -395,7 +395,7 @@ void GPSReceiverTest::_sourceHealthIndependentOfSurvey()
     receiver._satelliteInfoUpdate(GPSDriverData::satellites(satellites));
     QCOMPARE(receiver.health()->satellitesInViewCount(), -1);
     QCOMPARE(receiver.health()->satellitesInUseCount(), -1);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), 0);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
     session.stop();
     QCOMPARE(receiver.health()->state(), GPSSourceHealth::NoData);
 }
@@ -436,6 +436,6 @@ void GPSReceiverTest::_liveFactsFollowHealth()
     QVERIFY(facts->telemetryAvailable());
     session.stop();
     QVERIFY(qIsNaN(facts->lat()->rawValue().toDouble()));
-    QCOMPARE(facts->count()->rawValue().toInt(), 0);
+    QCOMPARE(facts->count()->rawValue().toInt(), -1);
     QVERIFY(!facts->telemetryAvailable());
 }

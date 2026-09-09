@@ -56,48 +56,8 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
         }
     });
     connect(
-        worker, &GPSProvider::sensorGpsUpdate, this,
-        [this, isCurrent, generation](GPSObservation observation) {
-            if (isCurrent()) {
-                observation.sessionId = generation;
-                emit positionReceived(observation);
-            }
-        },
-        Qt::QueuedConnection);
-    connect(
-        worker, &GPSProvider::satelliteInfoUpdate, this,
-        [this, isCurrent, generation](GPSSatelliteObservation observation) {
-            if (isCurrent()) {
-                observation.sessionId = generation;
-                emit satellitesReceived(observation);
-            }
-        },
-        Qt::QueuedConnection);
-    connect(
-        worker, &GPSProvider::relativePositionUpdate, this,
-        [this, isCurrent, generation](GPSRelativeObservation observation) {
-            if (isCurrent()) {
-                observation.sessionId = generation;
-                emit relativePositionReceived(observation);
-            }
-        },
-        Qt::QueuedConnection);
-    connect(
-        worker, &GPSProvider::RTCMDataUpdate, this,
-        [this, isCurrent](const QByteArray& data) {
-            if (isCurrent()) {
-                emit rtcmReceived(data);
-            }
-        },
-        Qt::QueuedConnection);
-    connect(
-        worker, &GPSProvider::RTCMFrameUpdate, this,
-        [this, isCurrent](const QByteArray& data, qint64 receivedAtMs) {
-            if (isCurrent()) {
-                emit rtcmFrameReceived(data, receivedAtMs);
-            }
-        },
-        Qt::QueuedConnection);
+        worker, &GPSProvider::dataReady, this,
+        [this, mailbox = worker->mailbox(), generation]() { _drain(mailbox, generation); }, Qt::QueuedConnection);
     connect(
         worker, &GPSProvider::capabilitiesUpdated, this,
         [this, isCurrent](const GPSReceiverCapabilities& capabilities) {
@@ -113,14 +73,6 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
             if (isCurrent()) {
                 _errorDetail = detail;
                 emit connectionErrorDetail(error, detail);
-            }
-        },
-        Qt::QueuedConnection);
-    connect(
-        worker, &GPSProvider::surveyInStatus, this,
-        [this, isCurrent](const GPSSurveyInStatus& status) {
-            if (isCurrent()) {
-                emit surveyInReceived(status);
             }
         },
         Qt::QueuedConnection);
@@ -230,5 +182,84 @@ void GPSReceiverSession::shutdown()
         } else {
             qCWarning(GPSReceiverSessionLog) << "Cannot join GPS worker during shutdown";
         }
+    }
+}
+
+bool GPSReceiverSession::readyForCorrections() const
+{
+    return _ready && _provider && !_shutdown && _config.role == GPSReceiverConfig::Role::Position &&
+           _capabilities.correctionInput == GPSReceiverCapabilities::Support::Supported;
+}
+
+bool GPSReceiverSession::submitCorrections(const QByteArray& data, qint64 receivedAtMs, quint64 sessionId)
+{
+    if (sessionId != _generation || !readyForCorrections()) {
+        return false;
+    }
+    return _provider->mailbox()->submitCorrection(data, receivedAtMs, GPSObservation::monotonicNowUs() / 1000);
+}
+
+void GPSReceiverSession::clearPendingCorrections()
+{
+    if (_provider) {
+        _provider->mailbox()->clearCommands();
+    }
+}
+
+GPSReceiverMailbox::Stats GPSReceiverSession::deliveryStats() const
+{
+    return _provider ? _provider->mailbox()->stats() : GPSReceiverMailbox::Stats{};
+}
+
+void GPSReceiverSession::_drain(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation)
+{
+    const QPointer<GPSReceiverSession> guard(this);
+    const auto current = [&]() {
+        return guard && _provider && _generation == generation && _provider->mailbox() == mailbox;
+    };
+    if (!current()) {
+        return;
+    }
+    auto batch = mailbox->take(GPSObservation::monotonicNowUs() / 1000);
+    if (batch.position) {
+        batch.position->sessionId = generation;
+        emit positionReceived(*batch.position);
+    }
+    if (!current()) {
+        return;
+    }
+    if (batch.satellites) {
+        batch.satellites->sessionId = generation;
+        emit satellitesReceived(*batch.satellites);
+    }
+    if (!current()) {
+        return;
+    }
+    if (batch.relativePosition) {
+        batch.relativePosition->sessionId = generation;
+        emit relativePositionReceived(*batch.relativePosition);
+    }
+    if (!current()) {
+        return;
+    }
+    if (batch.survey) {
+        emit surveyInReceived(*batch.survey);
+    }
+    if (!current()) {
+        return;
+    }
+    for (const auto& frame : batch.corrections) {
+        emit rtcmFrameReceived(frame.data, frame.receivedAtMs);
+        if (!current()) {
+            return;
+        }
+        emit rtcmReceived(frame.data);
+        if (!current()) {
+            return;
+        }
+    }
+    if (batch.more) {
+        QMetaObject::invokeMethod(
+            this, [this, mailbox, generation]() { _drain(mailbox, generation); }, Qt::QueuedConnection);
     }
 }

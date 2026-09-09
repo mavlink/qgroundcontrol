@@ -7,7 +7,7 @@
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSCorrectionManager.h"
-#include "MockNTRIPTransport.h"
+#include "MockNTRIPStream.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "SettingsManager.h"
@@ -70,99 +70,13 @@ void NTRIPManagerTest::testErrorStateStopsUdpForwarder()
     mgr._applyUdpForwarderConfig(config);
     QVERIFY(mgr._udpForwarder.isEnabled());
 
-    mgr._enterState(NTRIPManager::ConnectionStatus::Error, QStringLiteral("bad config"));
+    mgr._onSessionState(NTRIPSession::State::Error, QStringLiteral("bad config"));
     QVERIFY(!mgr._udpForwarder.isEnabled());
 }
 
 // ---------------------------------------------------------------------------
 // Reconnect backoff (migrated from NTRIPReconnectPolicyTest)
 // ---------------------------------------------------------------------------
-
-void NTRIPManagerTest::testReconnectInitialBackoff()
-{
-    NTRIPManager mgr;
-    QCOMPARE(mgr._reconnectAttempts, 0);
-    QVERIFY(!mgr._reconnectTimer.isActive());
-    QCOMPARE(mgr._reconnectBackoffMs(), NTRIPManager::kMinReconnectMs);
-}
-
-void NTRIPManagerTest::testReconnectExponentialBackoff()
-{
-    NTRIPManager mgr;
-
-    QCOMPARE(mgr._reconnectBackoffMs(), 1000);
-
-    mgr._scheduleReconnect();
-    QCOMPARE(mgr._reconnectAttempts, 1);
-    QCOMPARE(mgr._reconnectBackoffMs(), 2000);
-    mgr._cancelReconnect();
-
-    mgr._scheduleReconnect();
-    QCOMPARE(mgr._reconnectAttempts, 2);
-    QCOMPARE(mgr._reconnectBackoffMs(), 4000);
-    mgr._cancelReconnect();
-
-    mgr._scheduleReconnect();
-    QCOMPARE(mgr._reconnectAttempts, 3);
-    QCOMPARE(mgr._reconnectBackoffMs(), 8000);
-    mgr._cancelReconnect();
-
-    mgr._scheduleReconnect();
-    QCOMPARE(mgr._reconnectAttempts, 4);
-    QCOMPARE(mgr._reconnectBackoffMs(), 16000);
-    mgr._cancelReconnect();
-}
-
-void NTRIPManagerTest::testReconnectMaxBackoff()
-{
-    NTRIPManager mgr;
-    for (int i = 0; i < 20; ++i) {
-        mgr._scheduleReconnect();
-        mgr._cancelReconnect();
-    }
-    QVERIFY(mgr._reconnectBackoffMs() <= NTRIPManager::kMaxReconnectMs);
-}
-
-void NTRIPManagerTest::testReconnectCancelStopsTimer()
-{
-    NTRIPManager mgr;
-    mgr._scheduleReconnect();
-    QVERIFY(mgr._reconnectTimer.isActive());
-    mgr._cancelReconnect();
-    QVERIFY(!mgr._reconnectTimer.isActive());
-}
-
-void NTRIPManagerTest::testReconnectResetAttempts()
-{
-    NTRIPManager mgr;
-    mgr._scheduleReconnect();
-    mgr._cancelReconnect();
-    mgr._scheduleReconnect();
-    mgr._cancelReconnect();
-    QCOMPARE(mgr._reconnectAttempts, 2);
-
-    mgr._resetReconnectAttempts();
-    QCOMPARE(mgr._reconnectAttempts, 0);
-    QCOMPARE(mgr._reconnectBackoffMs(), NTRIPManager::kMinReconnectMs);
-}
-
-void NTRIPManagerTest::testReconnectSignalFires()
-{
-    NTRIPManager mgr;
-    // The timer callback dispatches ReconnectDue; a fresh manager is Disconnected
-    // where ReconnectDue has no transition (no-op), so observe the timer instead.
-    mgr._scheduleReconnect();
-    QVERIFY(mgr._reconnectTimer.isActive());
-    // Replace the production backoff (kMinReconnectMs) with a short interval so the
-    // single-shot fire is observed well within the wait timeout on loaded CI.
-    using namespace std::chrono_literals;
-    mgr._reconnectTimer.setInterval(50ms);
-    mgr._reconnectTimer.start();
-    QSignalSpy spy(&mgr._reconnectTimer, &QChronoTimer::timeout);
-    QVERIFY(spy.wait(2000));
-    QCOMPARE(spy.count(), 1);
-    QVERIFY(!mgr._reconnectTimer.isActive());
-}
 
 UT_REGISTER_TEST(NTRIPManagerTest, TestLabel::Unit)
 
@@ -175,7 +89,7 @@ void NTRIPManagerTest::testDuplicateTransportErrorsScheduleOneRetry()
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
     NTRIPManager mgr;
     mgr._settings = settings;
-    auto* transport = new MockNTRIPTransport(&mgr);
+    auto* transport = new MockNTRIPStream(&mgr);
     transport->autoConnect = false;
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
@@ -186,8 +100,8 @@ void NTRIPManagerTest::testDuplicateTransportErrorsScheduleOneRetry()
     transport->simulateError(NTRIPError::ServerDisconnected, QStringLiteral("duplicate failure"));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
-    QCOMPARE(mgr._reconnectAttempts, 1);
-    QCOMPARE(mgr._reconnectTimer.interval(), std::chrono::milliseconds(1000));
+    QCOMPARE(mgr._session._failedAttempts, 1);
+    QCOMPARE(mgr._session._retryTimer.interval(), std::chrono::milliseconds(1000));
     QVERIFY(mgr.statusMessage().contains(QStringLiteral("first failure")));
     QVERIFY(!mgr.statusMessage().contains(QStringLiteral("duplicate failure")));
     verifyExpectedLogMessage();
@@ -202,21 +116,21 @@ void NTRIPManagerTest::testRetiredTransportErrorCannotAffectNewSession()
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
     NTRIPManager mgr;
     mgr._settings = settings;
-    auto* first = new MockNTRIPTransport(&mgr);
+    auto* first = new MockNTRIPStream(&mgr);
     first->autoConnect = false;
     mgr.setTransportForTest(first);
     mgr.startNTRIP();
     first->simulateError(NTRIPError::SocketError, QStringLiteral("retired failure"));
     mgr.stopNTRIP();
-    auto* second = new MockNTRIPTransport(&mgr);
+    auto* second = new MockNTRIPStream(&mgr);
     second->autoConnect = false;
     mgr.setTransportForTest(second);
     mgr.startNTRIP();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
-    QCOMPARE(mgr._transport.data(), second);
-    QCOMPARE(mgr._reconnectAttempts, 0);
-    QVERIFY(!mgr._reconnectTimer.isActive());
+    QCOMPARE(mgr._session._stream.data(), second);
+    QCOMPARE(mgr._session._failedAttempts, 0);
+    QVERIFY(!mgr._session._retryTimer.isActive());
 }
 
 void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
@@ -227,13 +141,13 @@ void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
     saved.setFactValue(settings->ntripMountpoint(), QString());
     NTRIPManager mgr;
     mgr._settings = settings;
-    auto* transport = new MockNTRIPTransport(&mgr);
+    auto* transport = new MockNTRIPStream(&mgr);
     mgr.setTransportForTest(transport);
     expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
     mgr.startNTRIP();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QCOMPARE(transport->startCount, 0);
-    QVERIFY(!mgr._transport);
+    QVERIFY(!mgr._session._stream);
     QVERIFY(mgr.statusMessage().contains(QStringLiteral("mountpoint")));
     verifyExpectedLogMessage();
 }
@@ -259,7 +173,7 @@ void NTRIPManagerTest::testCorrectionsAreIndependentOfSink()
         connect(&mgr, &NTRIPManager::rtcmDataReceived, &corrections, &GPSCorrectionManager::forwardCorrections);
     }
     QSignalSpy received(&mgr, &NTRIPManager::rtcmDataReceived);
-    auto* transport = new MockNTRIPTransport(&mgr);
+    auto* transport = new MockNTRIPStream(&mgr);
     transport->autoConnect = false;
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
@@ -285,15 +199,15 @@ void NTRIPManagerTest::testCorrectionObserverCanStopSession()
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
     NTRIPManager mgr;
     mgr._settings = settings;
-    auto* transport = new MockNTRIPTransport(&mgr);
+    auto* transport = new MockNTRIPStream(&mgr);
     transport->autoConnect = false;
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
     connect(&mgr, &NTRIPManager::rtcmDataReceived, &mgr, &NTRIPManager::stopNTRIP);
     transport->simulateRtcmData(QByteArrayLiteral("correction"), 1005);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
-    QVERIFY(!mgr._transport);
-    QVERIFY(!mgr._reconnectTimer.isActive());
+    QVERIFY(!mgr._session._stream);
+    QVERIFY(!mgr._session._retryTimer.isActive());
     QVERIFY(!mgr._udpForwarder.isEnabled());
 }
 
@@ -313,9 +227,9 @@ void NTRIPManagerTest::testSessionStartObserverCanStop()
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
     NTRIPManager mgr;
     mgr._settings = settings;
-    auto* first = new MockNTRIPTransport(&mgr);
+    auto* first = new MockNTRIPStream(&mgr);
     first->autoConnect = false;
-    auto* second = new MockNTRIPTransport(&mgr);
+    auto* second = new MockNTRIPStream(&mgr);
     second->autoConnect = false;
     mgr.setTransportForTest(first);
     QSignalSpy started(&mgr, &NTRIPManager::correctionSessionStarted);
@@ -340,5 +254,5 @@ void NTRIPManagerTest::testSessionStartObserverCanStop()
     QCOMPARE(second->startCount, restart ? 1 : 0);
     QCOMPARE(mgr.connectionStatus(),
              restart ? NTRIPManager::ConnectionStatus::Connecting : NTRIPManager::ConnectionStatus::Disconnected);
-    QCOMPARE(mgr._transport.data(), restart ? second : nullptr);
+    QCOMPARE(mgr._session._stream.data(), restart ? second : nullptr);
 }

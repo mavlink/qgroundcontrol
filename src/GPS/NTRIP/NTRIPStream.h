@@ -5,13 +5,15 @@
 
 #include "NTRIPError.h"
 
-class NTRIPTransport : public QObject
+class NTRIPStream : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit NTRIPTransport(QObject* parent = nullptr);
-    ~NTRIPTransport() override;
+    explicit NTRIPStream(QObject* parent = nullptr);
+    ~NTRIPStream() override;
+
+    virtual bool providesTimestampedFrames() const { return false; }
 
     virtual void start() = 0;
     virtual void stop() = 0;
@@ -23,7 +25,9 @@ public:
 
 signals:
     void connected();
+    void correctionReceivedAt(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs);
     void error(NTRIPError code, const QString& detail);
+    void failed(const NTRIPFailure& failure);
     void RTCMDataUpdate(const QByteArray& message, int messageId);
     void rtcmFrameValidated(const QByteArray& message, int messageId, bool filtered);
     void bytesReceived(qint64 bytes);
