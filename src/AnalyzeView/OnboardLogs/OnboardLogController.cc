@@ -1013,7 +1013,11 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
                 if (withTime) {
                     dirName = dirName.section(QLatin1Char('\t'), 0, 0);
                 }
-                if (!dirName.isEmpty()) {
+                // Some servers list "." and ".."; descending into those would
+                // list this directory again, or its parent (ArduPilot sends
+                // them, PX4 does not).
+                if (!dirName.isEmpty() &&
+                    (dirName != QStringLiteral(".")) && (dirName != QStringLiteral(".."))) {
                     _ftpDirsToList.append(dirName);
                 }
             }
