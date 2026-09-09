@@ -8,7 +8,7 @@ include(CreateCPackCommon)
 # ----------------------------------------------------------------------------
 # Bundle Generator Configuration
 # ----------------------------------------------------------------------------
-list(APPEND CPACK_GENERATOR "BUNDLE")
+set(CPACK_GENERATOR "Bundle")
 set(CPACK_BINARY_BUNDLE ON)
 
 set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/macos")

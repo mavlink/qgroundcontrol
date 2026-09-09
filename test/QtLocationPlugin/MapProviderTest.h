@@ -7,6 +7,8 @@ class MapProviderTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _testProviderLayerUrls_data();
+    void _testProviderLayerUrls();
     void _testGetImageFormatPng();
     void _testGetImageFormatJpeg();
     void _testGetImageFormatGif();

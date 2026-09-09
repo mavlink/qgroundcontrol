@@ -1,0 +1,26 @@
+# Add this to the mavlink/.github-private repository's .github/runs-on.yml.
+# Pool definitions are organization-level RunsOn configuration and are not read
+# from this repository.
+runners:
+  windows-x64-builder:
+    family: ["c8i.2xlarge"]
+    spot: false
+    image: windows22-full-x64
+    extras: s3-cache
+    volume: 100gb
+
+pools:
+  qgc-windows-x64-builder:
+    env: production
+    runner: windows-x64-builder
+    timezone: UTC
+    schedule:
+      - name: weekday-peak
+        match:
+          day: [monday, tuesday, wednesday, thursday, friday]
+          time: ["12:00", "23:00"]
+        stopped: 2
+        hot: 0
+      - name: default
+        stopped: 1
+        hot: 0

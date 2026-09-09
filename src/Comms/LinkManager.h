@@ -21,7 +21,6 @@ class QmlObjectListModel;
 class QTimer;
 class SerialLink;
 class UDPConfiguration;
-class UdpIODevice;
 
 /// @brief Manage communication links
 ///        The Link Manager organizes the physical Links. It can manage arbitrary
@@ -80,6 +79,8 @@ public:
 
     /// Sets the flag to allow new connections to be made
     void setConnectionsAllowed() { _connectionsSuspended = false; }
+
+    bool connectionsSuspended() const { return _connectionsSuspended; }
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
     bool createConnectedLink(SharedLinkConfigurationPtr &config);
@@ -176,23 +177,13 @@ signals:
     void commPortsChanged();
 
 private:
-    bool _isSerialPortConnected();
     void _updateSerialPorts();
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
-    bool _portAlreadyConnected(const QString &portName);
-    void _filterCompositePorts(QList<QGCSerialPortInfo> &portList);
 
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
     QStringList _commPortList;
     QStringList _commPortDisplayList;
-    QString _autoConnectRTKPort;
-    QString _nmeaDeviceName;
-    uint32_t _nmeaBaud = 0;
-    QSerialPort *_nmeaPort = nullptr;
 #endif // QGC_NO_SERIAL_LINK
-
-    // NMEA UDP is network-only; available regardless of QGC_NO_SERIAL_LINK.
-    UdpIODevice *_nmeaSocket = nullptr;
 };

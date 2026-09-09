@@ -248,7 +248,7 @@ QString MavCommandQueue::_formatCommand(MAV_CMD command, float param1)
     QString friendlyName = MissionCommandTree::instance()->friendlyName(command);
     QString commandStr = friendlyName.isEmpty() ? rawName : QStringLiteral("%1 (%2)").arg(friendlyName, rawName);
 
-    if (command == MAV_CMD_REQUEST_MESSAGE) {
+    if (command == MAV_CMD_REQUEST_MESSAGE || command == MAV_CMD_SET_MESSAGE_INTERVAL) {
         const mavlink_message_info_t* info = mavlink_get_message_info_by_id(static_cast<int>(param1));
         if (info) {
             commandStr += QStringLiteral(" [%1]").arg(info->name);
@@ -348,11 +348,11 @@ void MavCommandQueue::_sendFromList(int index)
     if (++_list[index].tryCount > commandEntry.maxTries) {
         QString logMsg = QStringLiteral("Giving up sending command after max retries: %1").arg(rawCommandName);
 
-        // For REQUEST_MESSAGE commands, also log which message was being requested
-        if (commandEntry.command == MAV_CMD_REQUEST_MESSAGE) {
+        // These commands identify their target message in param1.
+        if (commandEntry.command == MAV_CMD_REQUEST_MESSAGE || commandEntry.command == MAV_CMD_SET_MESSAGE_INTERVAL) {
             int requestedMsgId = static_cast<int>(commandEntry.rgParam1);
             const mavlink_message_info_t *info = mavlink_get_message_info_by_id(requestedMsgId);
-            logMsg += QStringLiteral(" requesting: %1").arg(info ? info->name : QString::number(requestedMsgId));
+            logMsg += QStringLiteral(" message: %1").arg(info ? info->name : QString::number(requestedMsgId));
         }
 
         qCWarning(MavCommandQueueLog) << logMsg;

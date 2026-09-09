@@ -52,6 +52,14 @@ def test_qt_cache_stores_only_architecture_tree() -> None:
     assert "dir: ${{ runner.temp }}" not in _read(".github/actions/qt-android/action.yml")
 
 
+def test_qt_install_prefers_compatible_preinstalled_sdk() -> None:
+    action = _read(".github/actions/qt-install/action.yml")
+
+    assert "resolve-preinstalled" in action
+    assert "steps.qt-preinstalled.outputs.qt_root_dir ||" in action
+    assert action.count("steps.qt-preinstalled.outputs.available != 'true'") == 5
+
+
 def test_dependency_caches_use_shared_backend() -> None:
     prerequisites = _read(".github/actions/build-prerequisites/action.yml")
     setup_python = _read(".github/actions/setup-python/action.yml")

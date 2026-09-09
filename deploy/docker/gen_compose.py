@@ -13,6 +13,8 @@ import json
 import sys
 from pathlib import Path
 
+from _variants import DockerVariant, load_variants
+
 HERE = Path(__file__).resolve().parent
 VARIANTS_JSON = HERE / "variants.json"
 COMPOSE_YML = HERE / "docker-compose.yml"
@@ -33,7 +35,7 @@ def _yaml_scalar(value: str) -> str:
     return json.dumps(value)
 
 
-def _service(variant: dict) -> str:
+def _service(variant: DockerVariant) -> str:
     lines = [f"  {variant['id']}:"]
     lines.append("    build:")
     lines.append("      context: ../..")
@@ -61,7 +63,7 @@ def _service(variant: dict) -> str:
 
 
 def render() -> str:
-    variants = json.loads(VARIANTS_JSON.read_text())["variants"]
+    variants = load_variants(VARIANTS_JSON)
     services = "\n".join(_service(v) for v in variants)
     return f"{HEADER}\nservices:\n{services}\n"
 

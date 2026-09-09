@@ -2,6 +2,10 @@
 
 #include <QtCore/QtMath>
 
+#include <array>
+#include <memory>
+
+#include "GenericMapProvider.h"
 #include "MapProvider.h"
 #include "QGCTileSet.h"
 
@@ -26,6 +30,29 @@ private:
 };
 
 // --- Image format detection ---
+
+void MapProviderTest::_testProviderLayerUrls_data()
+{
+    QTest::addColumn<int>("provider");
+    QTest::addColumn<QString>("expectedPath");
+    QTest::newRow("japan-standard") << 0 << QStringLiteral("/xyz/std/6/53/23.png");
+    QTest::newRow("japan-photo") << 1 << QStringLiteral("/xyz/seamlessphoto/6/53/23.jpg");
+    QTest::newRow("statkart-topo") << 2 << QStringLiteral("/v1/wmts/1.0.0/topo/default/webmercator/6/23/53.png");
+    QTest::newRow("statkart-basemap") << 3 << QStringLiteral("/v1/wmts/1.0.0/topo/default/webmercator/6/23/53.png");
+    QTest::newRow("mapquest") << 4 << QStringLiteral("/tiles/1.0.0/map/6/53/23.jpg");
+    QTest::newRow("vworld") << 5 << QStringLiteral("/Base/6/23/53.png");
+}
+
+void MapProviderTest::_testProviderLayerUrls()
+{
+    QFETCH(int, provider);
+    QFETCH(QString, expectedPath);
+    const std::array<std::shared_ptr<MapProvider>, 6> providers = {
+        std::make_shared<JapanStdMapProvider>(),     std::make_shared<JapanSeamlessMapProvider>(),
+        std::make_shared<StatkartTopoMapProvider>(), std::make_shared<StatkartBaseMapProvider>(),
+        std::make_shared<MapQuestMapMapProvider>(),  std::make_shared<VWorldStreetMapProvider>()};
+    QVERIFY(providers[provider]->getTileURL(53, 23, 6).path().endsWith(expectedPath));
+}
 
 void MapProviderTest::_testGetImageFormatPng()
 {

@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
+import pytest
 from common.cmake import read_cache_dict
 from generate_cpm_sbom import (
     generate_sbom,
+    generate_spdx,
     make_purl,
     normalize_git_url,
 )
@@ -29,6 +32,28 @@ CPM_PACKAGE_earcut_hpp_VERSION:INTERNAL=0
 CPM_PACKAGE_earcut_hpp_SOURCE_DIR:PATH=/src/earcut
 CPM_PACKAGE_earcut_hpp_BINARY_DIR:PATH=/build/earcut
 """
+
+
+def test_spdx_snapshot_preserves_dependency_identity_and_relationships(tmp_path: Path) -> None:
+    (tmp_path / "CMakeCache.txt").write_text(SAMPLE_CACHE)
+    with patch("generate_cpm_sbom.git_info", side_effect=_mock_git_info):
+        sbom = generate_spdx(tmp_path)
+    assert sbom["spdxVersion"] == "SPDX-2.2"
+    assert sbom["creationInfo"]["created"].endswith("Z")
+    root, *dependencies = sbom["packages"]
+    assert len(dependencies) == 3
+    assert len({p["SPDXID"] for p in sbom["packages"]}) == 4
+    assert dependencies[0]["externalRefs"][0]["referenceLocator"] == "pkg:github/madler/zlib@1.3.2"
+    assert "checksums" not in dependencies[0]  # A Git commit is not a package archive checksum.
+    assert sbom["relationships"][0]["relationshipType"] == "DESCRIBES"
+    assert sbom["relationships"][1:] == [
+        {
+            "spdxElementId": root["SPDXID"],
+            "relationshipType": "DEPENDS_ON",
+            "relatedSpdxElement": p["SPDXID"],
+        }
+        for p in dependencies
+    ]
 
 
 def test_read_cache_dict(tmp_path: Path) -> None:
@@ -186,7 +211,10 @@ def test_main_requires_components(tmp_path: Path, monkeypatch) -> None:
     assert len(json.loads(out_file.read_text())["components"]) == 3
 
 
-def test_main_rejects_empty_required_components(tmp_path: Path, monkeypatch, capsys) -> None:
+@pytest.mark.parametrize("format_name", ["cyclonedx", "spdx"])
+def test_main_rejects_empty_required_components(
+    tmp_path: Path, monkeypatch, capsys, format_name: str
+) -> None:
     cache = tmp_path / "CMakeCache.txt"
     cache.write_text("CMAKE_BUILD_TYPE:STRING=Release\n")
     out_file = tmp_path / "sbom.json"
@@ -204,6 +232,7 @@ def test_main_rejects_empty_required_components(tmp_path: Path, monkeypatch, cap
 
     from generate_cpm_sbom import main
 
+    monkeypatch.setattr("sys.argv", [*sys.argv, "--format", format_name])
     assert main() == 1
     assert "contains no components" in capsys.readouterr().err
     assert not out_file.exists()
