@@ -2,7 +2,7 @@
 
 #include <QtCore/QString>
 
-#include "GPSDriver.h"
+#include "GPSReceiverProfile.h"
 
 /// Endpoint and receiver settings retained together across a session's retries.
 struct GPSConnectionConfig
@@ -24,5 +24,6 @@ struct GPSConnectionConfig
     int baseMode = 0;
     GPSReceiverConfig receiver{.base = {.surveyInAccMeters = 2.0, .surveyInDurationSecs = 180}};
 
+    GPSReceiverProfile profile() const;
     QString validationError() const;
 };

@@ -1,5 +1,7 @@
 #include "GPSDriverBackend.h"
 
+#include <QtCore/QCoreApplication>
+
 #include <numbers>
 
 #include "PX4/ashtech.h"
@@ -25,14 +27,14 @@ class UbxBackend final : public GPSDriverBackend
 {
 public:
     UbxBackend(GPSCallbackPtr callback, void* user, sensor_gps_s* position, satellite_info_s* satellites,
-               const GPSReceiverConfig&)
+               const GPSReceiverConfig& config)
     {
         const GPSDriverUBX::Settings settings = {
-            .dynamic_model = 0,
+            .dynamic_model = static_cast<uint8_t>(config.dynamicModel),
             .dgnss_timeout = 0,
             .min_cno = 0,
             .min_elev = 0,
-            .output_rate = 0,
+            .output_rate = static_cast<uint8_t>(config.outputRateHz),
             .heading_offset = 0.0f,
             .uart1_baudrate = 0,
             .uart2_baudrate = 57600,
@@ -50,6 +52,12 @@ public:
         capabilities.model = QString::fromLatin1(receiver.modelName());
         capabilities.firmware = QString::fromLatin1(receiver.firmwareVersion());
         using Support = GPSReceiverCapabilities::Support;
+        if (!capabilities.model.isEmpty()) {
+            capabilities.constellationSelection =
+                receiver.supportsConstellationSelection() ? Support::Supported : Support::Unsupported;
+            capabilities.outputRateSelection =
+                receiver.supportsOutputRateSelection() ? Support::Supported : Support::Unsupported;
+        }
         switch (receiver.baseStationCapability()) {
             case GPSDriverUBX::BaseStationCapability::Supported:
                 capabilities.rtkBase = Support::Supported;
@@ -63,6 +71,15 @@ public:
             case GPSDriverUBX::BaseStationCapability::Unknown:
                 break;
         }
+    }
+
+    QString configurationError() const override
+    {
+        if (static_cast<const GPSDriverUBX&>(driver()).constellationConfigurationRejected()) {
+            return QCoreApplication::translate("GPSDriver",
+                                               "Receiver did not accept the requested constellation configuration");
+        }
+        return {};
     }
 
 private:
@@ -131,7 +148,11 @@ constexpr std::array families = {
                     Support::Unknown,
                     Support::Supported,
                     Support::Unknown,
-                    &createBackend<UbxBackend>},
+                    &createBackend<UbxBackend>,
+                    Support::Unknown,
+                    Support::Supported,
+                    Support::Unknown,
+                    Support::Unsupported},
     GPSDriverFamily{GPSType::trimble,
                     QLatin1StringView("Trimble"),
                     {QLatin1StringView("trimble"), QLatin1StringView("ashtech"), QLatin1StringView("spectra")},
@@ -147,7 +168,11 @@ constexpr std::array families = {
                     Support::Supported,
                     Support::Unsupported,
                     Support::Supported,
-                    &createBackend<SbfBackend>},
+                    &createBackend<SbfBackend>,
+                    Support::Unsupported,
+                    Support::Unsupported,
+                    Support::Unsupported,
+                    Support::Supported},
     GPSDriverFamily{GPSType::femto,
                     QLatin1StringView("Femtomes"),
                     {QLatin1StringView("femtomes"), QLatin1StringView("femto"), QLatin1StringView()},
@@ -180,6 +205,8 @@ int GPSDriverBackend::configure(unsigned& baudrate, const GPSReceiverConfig& con
     GPSHelper::GPSConfig nativeConfig = {};
     nativeConfig.output_mode =
         config.role == GPSReceiverConfig::Role::RTKBase ? GPSHelper::OutputMode::RTCM : GPSHelper::OutputMode::GPS;
+    nativeConfig.gnss_systems = static_cast<GPSHelper::GNSSSystemsMask>(config.constellationMask);
+    nativeConfig.require_gnss_config = config.constellationMask != 0;
     const int result = configureReceiver(baudrate, nativeConfig, config.outputProtocol);
     return _driver->ioError() ? _driver->ioError() : result;
 }

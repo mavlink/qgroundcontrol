@@ -16,28 +16,74 @@
         {
             "component": "LocalRtkSettings",
             "sectionName": "Local GNSS Receiver",
-            "keywords": ["gps", "gnss", "position", "role", "rtk", "receiver", "base", "usb", "serial", "tcp", "udp", "network", "auto connect"]
+            "keywords": [
+                "gps",
+                "gnss",
+                "position",
+                "role",
+                "rtk",
+                "receiver",
+                "base",
+                "usb",
+                "serial",
+                "tcp",
+                "udp",
+                "network",
+                "auto connect"
+            ]
+        },
+        {
+            "component": "ReceiverConfigurationSettings",
+            "sectionName": "Receiver Configuration",
+            "keywords": [
+                "gps",
+                "constellations",
+                "dynamic model",
+                "output rate",
+                "heading offset"
+            ]
         },
         {
             "component": "CorrectionRoutingSettings",
             "sectionName": "Correction Routing",
-            "keywords": ["rtcm", "corrections", "source", "rover", "ntrip", "udp"]
+            "keywords": [
+                "rtcm",
+                "corrections",
+                "source",
+                "rover",
+                "ntrip",
+                "udp"
+            ]
         },
         {
             "heading": "UDP RTCM Input",
-            "keywords": ["udp rtcm"],
+            "keywords": [
+                "udp rtcm"
+            ],
             "controls": [
                 {
-                    "setting": "ntripSettings.rtcmUdpInputEnabled"
+                    "setting": "gpsCorrectionSettings.rtcmUdpInputEnabled"
                 },
                 {
-                    "setting": "ntripSettings.rtcmUdpInputPort",
-                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.rtcmUdpInputEnabled.rawValue"
+                    "setting": "gpsCorrectionSettings.rtcmUdpInputPort",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
                 },
                 {
-                    "setting": "ntripSettings.rtcmUdpValidate",
-                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.rtcmUdpInputEnabled.rawValue"
+                    "setting": "gpsCorrectionSettings.rtcmUdpValidate",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
                 }
+            ]
+        },
+        {
+            "component": "CorrectionDiagnostics",
+            "sectionName": "Correction Diagnostics",
+            "keywords": [
+                "gps",
+                "rtcm",
+                "corrections",
+                "diagnostics",
+                "delivery",
+                "events"
             ]
         }
     ]

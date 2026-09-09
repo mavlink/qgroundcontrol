@@ -36,7 +36,7 @@ void GPSReceiverAutoConnect::_updateSerial()
     if (!guard || !_receiver || _receiver->stopping() || !_sessionConfig) {
         return;
     }
-    const QString selectedDevice = _sessionConfig->device;
+    const QString selectedDevice = _sessionConfig->endpoint.device;
     const auto ports = _serialPorts->availablePorts();
     const auto eligible = [this, &selectedDevice](const SerialPortManager::Port& port) {
         return port.autoConnectAllowed && !port.bootloader && _serialPorts->canAutoConnectPort(port.systemLocation) &&
@@ -47,7 +47,7 @@ void GPSReceiverAutoConnect::_updateSerial()
         const QString name = selectedDevice.isEmpty() ? port.boardName : _sessionConfig->receiverName;
         const GPSType type = selectedDevice.isEmpty()
                                  ? GPSReceiverCapabilities::typeForName(name).value_or(GPSType::u_blox)
-                                 : _sessionConfig->receiverType;
+                                 : _sessionConfig->driverType;
         const auto config = _sessionConfig->receiver;
         auto factory = _serialFactory ? _serialFactory(port.systemLocation) : GPSProvider::TransportFactory{};
         const QPointer<GPSReceiverAutoConnect> lifetime(this);

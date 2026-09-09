@@ -1,6 +1,7 @@
 #include "GPSDriverUBXTest.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QMap>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QThread>
@@ -69,6 +70,8 @@ public:
     QByteArray hardware = "00190000";
     QByteArray module = "ZED-F9P";
     QList<int> dynamicModels;
+    QMap<quint32, quint64> settingValues;
+    bool rejectConstellations = false;
     int readChunk = 7;
     int surveyReadError = 0;
     int failedReads = 0;
@@ -119,6 +122,12 @@ private:
                     const quint32 key = qFromLittleEndian<quint32>(request.constData() + offset);
                     const int sizeCode = (key >> 28) & 7;
                     const int valueSize = sizeCode <= 2 ? 1 : 1 << (sizeCode - 2);
+                    quint64 value = 0;
+                    for (int index = 0; index < valueSize; ++index) {
+                        value |= quint64(static_cast<quint8>(request[offset + 4 + index])) << (8 * index);
+                    }
+                    settingValues.insert(key, value);
+                    reject |= rejectConstellations && key == UBX_CFG_KEY_SIGNAL_GPS_ENA;
                     if (module == "NEO-M9N" &&
                         (key == UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X || key == UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X)) {
                         unsupportedKeyWritten = true;
@@ -397,6 +406,69 @@ void GPSDriverUBXTest::_invalidCommsDiagnostics()
 }
 
 UT_REGISTER_TEST(GPSDriverUBXTest, TestLabel::Unit)
+
+void GPSDriverUBXTest::_receiverSettings_data()
+{
+    QTest::addColumn<bool>("legacy");
+    QTest::addColumn<bool>("rejectConstellations");
+    QTest::addColumn<bool>("m9n");
+    QTest::newRow("f9p-requested-settings") << false << false << false;
+    QTest::newRow("m9n-requested-settings") << false << false << true;
+    QTest::newRow("legacy-rate-unsupported") << true << false << false;
+    QTest::newRow("rejected-constellation-selection") << false << true << false;
+}
+
+void GPSDriverUBXTest::_receiverSettings()
+{
+    QFETCH(bool, legacy);
+    QFETCH(bool, rejectConstellations);
+    QFETCH(bool, m9n);
+    UBXReceiver receiver;
+    receiver.legacy = legacy;
+    receiver.hardware = legacy ? "00080000" : "00190000";
+    receiver.module = legacy ? "NEO-M8P" : (m9n ? "NEO-M9N" : "ZED-F9P");
+    receiver.rejectConstellations = rejectConstellations;
+    std::atomic_bool stop = false;
+    ReceiverTransport transport(stop, receiver);
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    config.dynamicModel = 4;
+    config.outputRateHz = 5;
+    config.constellationMask = legacy ? 0 : 5;
+    GPSDriver driver(GPSType::u_blox, transport, config, {});
+    if (legacy || rejectConstellations) {
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Driver configuration failed")));
+    }
+    if (rejectConstellations) {
+        expectLogMessage("GPS.Driver.Drivers", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("GNSS signal config rejected")));
+    }
+    QCOMPARE(driver.configure(), !legacy && !rejectConstellations);
+    if (legacy || rejectConstellations) {
+        verifyExpectedLogMessage();
+        if (rejectConstellations) {
+            verifyExpectedLogMessage();
+        }
+        QCOMPARE(driver.configurationResult().status,
+                 legacy ? GPSDriver::ConfigurationStatus::Unsupported : GPSDriver::ConfigurationStatus::Failed);
+        if (rejectConstellations) {
+            QVERIFY(driver.configurationResult().error.contains(QStringLiteral("constellation")));
+        }
+    } else {
+        QCOMPARE(receiver.settingValues.value(UBX_CFG_KEY_NAVSPG_DYNMODEL), quint64(4));
+        QCOMPARE(receiver.settingValues.value(UBX_CFG_KEY_RATE_MEAS), quint64(200));
+        QCOMPARE(receiver.settingValues.value(UBX_CFG_KEY_SIGNAL_GPS_ENA), quint64(1));
+        QCOMPARE(receiver.settingValues.value(UBX_CFG_KEY_SIGNAL_GAL_ENA), quint64(1));
+        QCOMPARE(receiver.settingValues.value(UBX_CFG_KEY_SIGNAL_BDS_ENA), quint64(0));
+        QCOMPARE(receiver.settingValues.value(UBX_CFG_KEY_SIGNAL_GLO_ENA), quint64(0));
+        QVERIFY(!receiver.unsupportedKeyWritten);
+    }
+    if (legacy) {
+        QVERIFY(!receiver.settingValues.contains(UBX_CFG_KEY_RATE_MEAS));
+        QVERIFY(!receiver.settingValues.contains(UBX_CFG_KEY_SIGNAL_GPS_ENA));
+    }
+}
 
 void GPSDriverUBXTest::_positionMode_data()
 {

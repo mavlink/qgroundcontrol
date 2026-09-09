@@ -10,6 +10,10 @@ qt_add_library(
     GPSCorrectionRouter.cc
     GPSCorrectionRouter.h
     GPSCorrectionFrame.h
+    GPSCorrectionDiagnostics.cc
+    GPSCorrectionDiagnostics.h
+    GPSCorrectionEventModel.cc
+    GPSCorrectionEventModel.h
     RTCMParser.cc
     RTCMParser.h
 )

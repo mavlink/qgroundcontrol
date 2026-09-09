@@ -211,6 +211,7 @@ public:
 		GNSSSystemsMask gnss_systems;
 		InterfaceProtocolsMask interface_protocols;
 		bool cfg_wipe;
+		bool require_gnss_config = false;
 	};
 
 

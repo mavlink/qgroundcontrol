@@ -2,6 +2,8 @@
 
 #include <QtCore/QString>
 
+#include "GPSReceiverProfile.h"
+
 class AutoConnectSettings;
 
 /// Values for one NMEA session. Only the selected transport contributes fields.
@@ -28,7 +30,8 @@ struct NMEAConnectionConfig
     int baud = 0;
     ReceiverMode receiverMode = Passive;
 
-    bool operator==(const NMEAConnectionConfig&) const = default;
+    bool operator==(const NMEAConnectionConfig& other) const;
+    GPSReceiverProfile profile() const;
     QString validationError() const;
     static NMEAConnectionConfig fromSettings(AutoConnectSettings& settings);
 };

@@ -259,7 +259,7 @@ void GPSReceiverAutoConnectTest::_unplugNotificationPreservesChangedIntent()
     QCOMPARE(connects.size(), 1);
     QVERIFY(receiver.hasReceiver());
     QVERIFY(controller._sessionConfig.has_value());
-    QCOMPARE(controller._sessionConfig->device, original.device);
+    QCOMPARE(controller._sessionConfig->endpoint.device, original.device);
 
     connect(&controller, &GPSReceiverAutoConnect::disconnectRequested, &controller, [&]() {
         if (action == QStringLiteral("disconnect")) {
@@ -296,7 +296,7 @@ void GPSReceiverAutoConnectTest::_unplugNotificationPreservesChangedIntent()
     QVERIFY(!state.shouldConnect(false));
     if (action == QStringLiteral("replace-config")) {
         QVERIFY(controller._sessionConfig.has_value());
-        QCOMPARE(controller._sessionConfig->device, replacement.device);
+        QCOMPARE(controller._sessionConfig->endpoint.device, replacement.device);
     } else {
         QVERIFY(!controller.active());
         QVERIFY(!controller._sessionConfig.has_value());

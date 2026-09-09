@@ -60,4 +60,8 @@ public:
     DEFINE_SETTINGFACT(networkBasePort)
     DEFINE_SETTINGFACT(udpLocalPort)
     DEFINE_SETTINGFACT(networkReceiverType)
+    DEFINE_SETTINGFACT(constellationMask)
+    DEFINE_SETTINGFACT(dynamicModel)
+    DEFINE_SETTINGFACT(outputRateHz)
+    DEFINE_SETTINGFACT(headingOffsetDeg)
 };

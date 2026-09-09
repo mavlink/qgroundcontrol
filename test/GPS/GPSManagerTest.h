@@ -11,6 +11,9 @@ private slots:
     void _correctionRoutingSettings();
     void _correctionRuntimeLifecycle();
     void _correctionSettingsPanel();
+    void _correctionDiagnosticsPanel();
+    void _receiverConfigurationPanel_data();
+    void _receiverConfigurationPanel();
     void _invalidEndpoint_data();
     void _invalidEndpoint();
     void _networkRecoveryAndDisconnect();

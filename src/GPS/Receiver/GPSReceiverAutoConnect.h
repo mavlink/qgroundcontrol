@@ -87,7 +87,7 @@ private:
     GPSConnectionConfig _config;
     bool _automatic = false;
     GPSProvider::TransportFactory _transportFactory;
-    std::optional<GPSConnectionConfig> _sessionConfig;
+    std::optional<GPSReceiverProfile> _sessionConfig;
 #ifndef QGC_NO_SERIAL_LINK
     void _updateSerial();
     SerialPortManager* _serialPorts = nullptr;

@@ -19,6 +19,7 @@
 #include "RTKSettings.h"
 #include "UnitsSettings.h"
 #include "NTRIPSettings.h"
+#include "GPSCorrectionSettings.h"
 #include "VideoSettings.h"
 #include "MavlinkSettings.h"
 #include "JoystickManagerSettings.h"
@@ -45,6 +46,8 @@ SettingsManager::SettingsManager(QObject *parent)
 SettingsManager::~SettingsManager()
 {
     qCDebug(SettingsManagerLog) << this;
+    // Destroy the forwarding facade before its shared correction Facts.
+    delete _ntripSettings;
 }
 
 SettingsManager *SettingsManager::instance()
@@ -72,7 +75,8 @@ void SettingsManager::init()
     _planViewSettings = new PlanViewSettings(this);
     _remoteIDSettings = new RemoteIDSettings(this);
     _rtkSettings = new RTKSettings(this);
-    _ntripSettings = new NTRIPSettings(this);
+    _gpsCorrectionSettings = new GPSCorrectionSettings(this);
+    _ntripSettings = new NTRIPSettings(*_gpsCorrectionSettings, this);
     _videoSettings = new VideoSettings(this);
     _mavlinkSettings = new MavlinkSettings(this);
     _joystickManagerSettings = new JoystickManagerSettings(this);
@@ -131,6 +135,7 @@ RemoteIDSettings *SettingsManager::remoteIDSettings() const { return _remoteIDSe
 RTKSettings *SettingsManager::rtkSettings() const { return _rtkSettings; }
 UnitsSettings *SettingsManager::unitsSettings() const { return _unitsSettings; }
 NTRIPSettings *SettingsManager::ntripSettings() const { return _ntripSettings; }
+GPSCorrectionSettings *SettingsManager::gpsCorrectionSettings() const { return _gpsCorrectionSettings; }
 VideoSettings *SettingsManager::videoSettings() const { return _videoSettings; }
 MavlinkSettings *SettingsManager::mavlinkSettings() const { return _mavlinkSettings; }
 JoystickManagerSettings *SettingsManager::joystickManagerSettings() const { return _joystickManagerSettings; }

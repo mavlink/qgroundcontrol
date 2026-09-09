@@ -101,7 +101,7 @@ bool GPSDriver::configure()
         } else if (_config.role != GPSReceiverConfig::Role::RTKBase &&
                    _config.role != GPSReceiverConfig::Role::Position) {
             qCWarning(GPSDriverLog) << "Unsupported receiver role:" << static_cast<int>(_config.role);
-        } else {
+        } else if (_config.outputProtocol != GPSReceiverConfig::OutputProtocol::Native) {
             qCWarning(GPSDriverLog) << "Unsupported receiver output protocol";
         }
         return false;
@@ -127,7 +127,9 @@ bool GPSDriver::configure()
         } else if (!capabilityError.isEmpty()) {
             _configurationResult = {ConfigurationStatus::Unsupported, capabilityError};
         } else {
-            _configurationResult = {ConfigurationStatus::Failed, tr("Receiver configuration failed")};
+            const QString detail = _private->driver->configurationError();
+            _configurationResult = {ConfigurationStatus::Failed,
+                                    detail.isEmpty() ? tr("Receiver configuration failed") : detail};
         }
         if (_configurationResult.status != ConfigurationStatus::Cancelled) {
             qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type);

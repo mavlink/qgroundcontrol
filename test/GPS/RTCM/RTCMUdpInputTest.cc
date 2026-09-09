@@ -68,6 +68,7 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
     input.setValidation(true);
     QVERIFY(input.start());
     QSignalSpy spy(&input, &RTCMUdpInput::rtcmDataReceived);
+    QSignalSpy rejected(&input, &RTCMUdpInput::frameRejected);
 
     const QByteArray frame1 = GpsTestHelpers::buildRtcmFrame(1005, 4);
     QByteArray corrupted = GpsTestHelpers::buildRtcmFrame(1077, 8);
@@ -81,6 +82,11 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
     verifyExpectedLogMessage();
     QCOMPARE(spy.at(0).at(0).toByteArray(), frame1);
     QCOMPARE(spy.at(1).at(0).toByteArray(), frame2);
+    QCOMPARE(rejected.size(), 1);
+    const auto candidate = qvariant_cast<GPSCorrectionFrame>(rejected.first().first());
+    QCOMPARE(candidate.data, corrupted);
+    QVERIFY(!candidate.validated);
+    QCOMPARE(qvariant_cast<GPSCorrectionReason>(rejected.first().at(1)), GPSCorrectionReason::InvalidFrame);
 }
 
 void RTCMUdpInputTest::_testFrameSplitAcrossDatagrams()

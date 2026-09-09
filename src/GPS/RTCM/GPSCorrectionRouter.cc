@@ -132,18 +132,159 @@ GPSCorrectionSource GPSCorrectionRouter::activeSource() const
 
 void GPSCorrectionRouter::setSink(const QString& id, Sink sink)
 {
-    ++_revision;
-    if (sink) {
-        _sinks.insert(id, std::move(sink));
-    } else {
-        _sinks.remove(id);
+    if (!sink) {
+        removeSink(id);
+        return;
     }
+    setDetailedSink(
+        id,
+        [sink = std::move(sink)](const GPSCorrectionFrame& frame) {
+            const quint64 queued = sink(frame);
+            return Submission{queued, 0,
+                              queued ? GPSCorrectionReason::None : GPSCorrectionReason::DestinationUnavailable};
+        },
+        false);
+}
+
+void GPSCorrectionRouter::setDetailedSink(const QString& id, DetailedSink sink, bool reportsWrites)
+{
+    if (!sink) {
+        removeSink(id);
+        return;
+    }
+    if (id.isEmpty() || (!_destinations.contains(id) && _destinations.size() >= MAX_DESTINATIONS)) {
+        return;
+    }
+    ++_revision;
+    _sinks.insert(id, {std::move(sink), reportsWrites});
+    auto& destination = _destinations[id];
+    destination.id = id;
+    destination.reportsWrites = reportsWrites;
 }
 
 void GPSCorrectionRouter::removeSink(const QString& id)
 {
     ++_revision;
     _sinks.remove(id);
+    const auto pending = _pendingDeliveries;
+    for (const auto& delivery : pending) {
+        if (delivery.destination == id) {
+            invalidateDestination(id, delivery.destinationSession);
+        }
+    }
+}
+
+GPSCorrectionRouter::Statistics* GPSCorrectionRouter::_currentStatistics(const GPSCorrectionFrame& frame)
+{
+    const int index = _sourceIndex(frame.source);
+    return index >= 0 && _statistics[index].session == frame.session ? &_statistics[index] : nullptr;
+}
+
+void GPSCorrectionRouter::_recordEvent(const GPSCorrectionFrame& frame, GPSCorrectionStage stage,
+                                       GPSCorrectionReason reason, quint64 bytes, const QString& destination,
+                                       quint64 destinationSession)
+{
+    if (_events.size() >= MAX_EVENTS) {
+        _events.removeFirst();
+    }
+    _events.append({++_nextEvent, _clock(), frame.deliveryId, frame.source, frame.sourceInstance, frame.session,
+                    destination, destinationSession, stage, reason, bytes});
+}
+
+void GPSCorrectionRouter::_recordDrop(const GPSCorrectionFrame& frame, GPSCorrectionReason reason, quint64 bytes,
+                                      const QString& destination, quint64 destinationSession)
+{
+    if (auto* stats = _currentStatistics(frame)) {
+        ++stats->droppedFrames;
+        stats->droppedBytes += bytes;
+    }
+    if (!destination.isEmpty() && _destinations.contains(destination)) {
+        auto& stats = _destinations[destination];
+        ++stats.droppedFrames;
+        stats.droppedBytes += bytes;
+    }
+    _recordEvent(frame, GPSCorrectionStage::Dropped, reason, bytes, destination, destinationSession);
+}
+
+void GPSCorrectionRouter::recordRejectedFrame(GPSCorrectionFrame frame, GPSCorrectionReason reason)
+{
+    if (_shutdown || frame.data.isEmpty()) {
+        return;
+    }
+    frame.deliveryId = ++_nextDelivery;
+    if (frame.sourceInstance.isEmpty()) {
+        frame.sourceInstance = sourceInstance(frame.source);
+    }
+    if (auto* stats = _currentStatistics(frame)) {
+        ++stats->receivedFrames;
+        stats->receivedBytes += frame.data.size();
+        ++stats->filteredFrames;
+    }
+    _recordEvent(frame, GPSCorrectionStage::Received, GPSCorrectionReason::None, frame.data.size());
+    _recordDrop(frame, reason, frame.data.size());
+}
+
+bool GPSCorrectionRouter::recordDelivery(const GPSCorrectionDelivery& delivery)
+{
+    const QString key = QString::number(delivery.deliveryId) + QLatin1Char('/') + delivery.destinationId;
+    const auto it = _pendingDeliveries.find(key);
+    if (it == _pendingDeliveries.end()) {
+        return false;
+    }
+    const PendingDelivery pending = it.value();
+    if (pending.destinationSession != delivery.destinationSession || pending.frame.source != delivery.source ||
+        pending.frame.sourceInstance != delivery.sourceInstance || pending.frame.session != delivery.sourceSession ||
+        pending.queuedBytes != delivery.requestedBytes || delivery.writtenBytes > pending.queuedBytes) {
+        _recordEvent(pending.frame, GPSCorrectionStage::Dropped, GPSCorrectionReason::InvalidDelivery, 0,
+                     pending.destination, pending.destinationSession);
+        return false;
+    }
+    _pendingDeliveries.erase(it);
+    auto& destination = _destinations[pending.destination];
+    --destination.pendingFrames;
+    destination.pendingBytes -= pending.queuedBytes;
+    const bool complete =
+        delivery.outcome == GPSCorrectionOutcome::Written && delivery.writtenBytes == pending.queuedBytes;
+    if (delivery.writtenBytes > 0) {
+        destination.writtenBytes += delivery.writtenBytes;
+        destination.writtenFrames += complete ? 1 : 0;
+        if (auto* stats = _currentStatistics(pending.frame)) {
+            stats->writtenBytes += delivery.writtenBytes;
+            stats->writtenFrames += complete ? 1 : 0;
+        }
+        _recordEvent(pending.frame, GPSCorrectionStage::Written, GPSCorrectionReason::None, delivery.writtenBytes,
+                     pending.destination, pending.destinationSession);
+    }
+    if (!complete) {
+        const auto reason = delivery.outcome == GPSCorrectionOutcome::Written ? GPSCorrectionReason::PartialWrite
+                                                                              : gpsCorrectionReason(delivery.outcome);
+        _recordDrop(pending.frame, reason, pending.queuedBytes - delivery.writtenBytes, pending.destination,
+                    pending.destinationSession);
+    }
+    return true;
+}
+
+void GPSCorrectionRouter::invalidateDestination(const QString& id, quint64 session)
+{
+    for (auto it = _pendingDeliveries.begin(); it != _pendingDeliveries.end();) {
+        const auto& delivery = it.value();
+        if (delivery.destination != id || delivery.destinationSession != session) {
+            ++it;
+            continue;
+        }
+        auto& destination = _destinations[id];
+        --destination.pendingFrames;
+        destination.pendingBytes -= delivery.queuedBytes;
+        ++destination.unconfirmedFrames;
+        destination.unconfirmedBytes += delivery.queuedBytes;
+        if (auto* stats = _currentStatistics(delivery.frame)) {
+            ++stats->unconfirmedFrames;
+            stats->unconfirmedBytes += delivery.queuedBytes;
+        }
+        _recordEvent(delivery.frame, GPSCorrectionStage::Unconfirmed, GPSCorrectionReason::DeliveryUnconfirmed,
+                     delivery.queuedBytes, id, session);
+        it = _pendingDeliveries.erase(it);
+    }
 }
 
 bool GPSCorrectionRouter::_eligible(const Source& source, qint64 now) const
@@ -191,23 +332,34 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
     if (_shutdown || _submitting || index < 0 || frame.data.isEmpty()) {
         return false;
     }
+    frame.deliveryId = ++_nextDelivery;
     auto& stats = _statistics[index];
     if (!stats.active || stats.session != frame.session) {
+        _recordEvent(
+            frame, GPSCorrectionStage::Dropped,
+            stats.session != frame.session ? GPSCorrectionReason::SessionMismatch : GPSCorrectionReason::InactiveSource,
+            frame.data.size());
         return false;
     }
     if (frame.sourceInstance.isEmpty()) {
         frame.sourceInstance = _configuredInstances[index];
     } else if (!_configuredInstances[index].isEmpty() && frame.sourceInstance != _configuredInstances[index]) {
+        _recordEvent(frame, GPSCorrectionStage::Dropped, GPSCorrectionReason::SessionMismatch, frame.data.size());
         return false;
     }
+    ++stats.receivedFrames;
     stats.receivedBytes += frame.data.size();
+    _recordEvent(frame, GPSCorrectionStage::Received, GPSCorrectionReason::None, frame.data.size());
     const qint64 now = _clock();
     if (frame.receivedAtMs <= 0 || frame.receivedAtMs > now) {
         ++stats.filteredFrames;
+        _recordDrop(frame, GPSCorrectionReason::InvalidTimestamp, frame.data.size());
         return false;
     }
     if (frame.validated) {
         ++stats.validatedFrames;
+        stats.validatedBytes += frame.data.size();
+        _recordEvent(frame, GPSCorrectionStage::Validated, GPSCorrectionReason::None, frame.data.size());
         stats.lastValidMs = (std::max) (stats.lastValidMs, frame.receivedAtMs);
     }
     const QString key = _key(frame.source, frame.sourceInstance);
@@ -229,12 +381,15 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
     source.lastReceivedMs = (std::max) (source.lastReceivedMs, frame.receivedAtMs);
     if (frame.filtered || now - frame.receivedAtMs >= FRESHNESS_TIMEOUT_MS) {
         ++stats.filteredFrames;
+        _recordDrop(frame, frame.filtered ? GPSCorrectionReason::MessageFiltered : GPSCorrectionReason::Expired,
+                    frame.data.size());
         return false;
     }
     source.lastRoutableMs = (std::max) (source.lastRoutableMs, frame.receivedAtMs);
     _select(now);
     if (_policy != Policy::All && key != _active) {
         ++stats.filteredFrames;
+        _recordDrop(frame, GPSCorrectionReason::NotSelected, frame.data.size());
         return false;
     }
     if (frame.validated && frame.messageId == 0 && frame.data.size() >= 8 &&
@@ -242,6 +397,9 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
         frame.messageId = (static_cast<quint8>(frame.data[3]) << 4) | (static_cast<quint8>(frame.data[4]) >> 4);
     }
     ++stats.routedFrames;
+    ++stats.selectedFrames;
+    stats.selectedBytes += frame.data.size();
+    _recordEvent(frame, GPSCorrectionStage::Selected, GPSCorrectionReason::None, frame.data.size());
     const QPointer<GPSCorrectionRouter> guard(this);
     const quint64 revision = _revision;
     const auto sinks = _sinks;
@@ -258,8 +416,12 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
             return false;
         }
     }
-    for (const auto& sink : sinks) {
-        const quint64 submitted = sink(frame);
+    for (auto it = sinks.cbegin(); it != sinks.cend(); ++it) {
+        if (it->reportsWrites && _pendingDeliveries.size() >= MAX_PENDING_DELIVERIES) {
+            _recordDrop(frame, GPSCorrectionReason::DiagnosticsBackpressure, frame.data.size(), it.key());
+            continue;
+        }
+        const Submission submitted = it->submit(frame);
         if (!guard) {
             return false;
         }
@@ -267,9 +429,32 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
             _submitting = false;
             return false;
         }
-        _statistics[index].submittedBytes += submitted;
+        if (submitted.queuedBytes == 0) {
+            _recordDrop(frame,
+                        submitted.reason == GPSCorrectionReason::None ? GPSCorrectionReason::DestinationUnavailable
+                                                                      : submitted.reason,
+                        frame.data.size(), it.key(), submitted.destinationSession);
+            continue;
+        }
+        auto& sourceStats = _statistics[index];
+        sourceStats.submittedBytes += submitted.queuedBytes;
+        ++sourceStats.queuedFrames;
+        sourceStats.queuedBytes += submitted.queuedBytes;
+        auto& destination = _destinations[it.key()];
+        destination.session = submitted.destinationSession;
+        ++destination.queuedFrames;
+        destination.queuedBytes += submitted.queuedBytes;
+        _recordEvent(frame, GPSCorrectionStage::Queued, GPSCorrectionReason::None, submitted.queuedBytes, it.key(),
+                     submitted.destinationSession);
+        if (it->reportsWrites) {
+            ++destination.pendingFrames;
+            destination.pendingBytes += submitted.queuedBytes;
+            _pendingDeliveries.insert(QString::number(frame.deliveryId) + QLatin1Char('/') + it.key(),
+                                      {frame, it.key(), submitted.destinationSession, submitted.queuedBytes});
+        }
     }
     _submitting = false;
+    emit frameRouted(frame);
     return true;
 }
 
@@ -284,4 +469,8 @@ void GPSCorrectionRouter::shutdown()
     _active.clear();
     _candidate.clear();
     _sinks.clear();
+    const auto pending = _pendingDeliveries;
+    for (const auto& delivery : pending) {
+        invalidateDestination(delivery.destination, delivery.destinationSession);
+    }
 }

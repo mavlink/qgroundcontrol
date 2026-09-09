@@ -53,6 +53,7 @@ public:
 	std::vector<SurveyReply> replies{SurveyReply::stopped};
 	bool reject_disable = false;
 	bool reject_nmea = false;
+	bool reject_constellations = false;
 	bool cancel_nmea = false;
 	std::map<unsigned, unsigned> output_protocols;
 	bool legacy = false;
@@ -209,6 +210,7 @@ private:
 		}
 		bool reject = reject_nmea && settings.count(UBX_CFG_KEY_CFG_USBOUTPROT_NMEA)
 			      && settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_NMEA) == 1;
+		reject |= reject_constellations && settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA);
 		const auto mode = settings.find(UBX_CFG_KEY_TMODE_MODE);
 
 		if (mode != settings.end()) {
@@ -657,6 +659,41 @@ static void nmeaOutputFailures()
 	}
 }
 
+static void receiverSettings()
+{
+	for (int scenario = 0; scenario < 4; ++scenario) {
+		gps_test_time = 0;
+		gps_test_warnings.clear();
+		Receiver receiver;
+		receiver.legacy = scenario == 2;
+		receiver.module = receiver.legacy ? "NEO-M8P" : scenario == 1 ? "NEO-M9N" : "ZED-F9P";
+		receiver.reject_constellations = scenario == 3;
+		sensor_gps_s position{};
+		GPSDriverUBX::Settings settings{};
+		settings.dynamic_model = 4;
+		settings.output_rate = 5;
+		GPSDriverUBX driver(GPSHelper::Interface::UART, Receiver::callback, &receiver, &position, nullptr, settings);
+		GPSHelper::GPSConfig config{};
+		config.output_mode = GPSHelper::OutputMode::GPS;
+		config.gnss_systems = receiver.legacy ? GPSHelper::GNSSSystemsMask::RECEIVER_DEFAULTS
+			: static_cast<GPSHelper::GNSSSystemsMask>(5);
+		config.require_gnss_config = !receiver.legacy;
+		unsigned baudrate = 115200;
+		CHECK((driver.configure(baudrate, config) == 0) == (scenario < 2));
+		CHECK(driver.supportsOutputRateSelection() == !receiver.legacy);
+		if (scenario < 2) {
+			CHECK(receiver.current_settings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 4);
+			CHECK(receiver.current_settings.at(UBX_CFG_KEY_RATE_MEAS) == 200);
+			CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_GPS_ENA) == 1);
+			CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_GAL_ENA) == 1);
+			CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_BDS_ENA) == 0);
+			CHECK(gps_test_warnings.empty());
+		} else {
+			CHECK(!driver.receiverReady());
+		}
+	}
+}
+
 int main()
 {
 	const struct {
@@ -664,6 +701,7 @@ int main()
 		void (*run)();
 	} cases[] = {
 		{"position-f9p", [] { positionMode(false, true); }},
+		{"receiver-settings", receiverSettings},
 		{"nmea-failures", nmeaOutputFailures},
 		{"nmea-f9p", [] { nmeaOutput(false, true); }},
 		{"nmea-m9n", [] { nmeaOutput(false, false); }},

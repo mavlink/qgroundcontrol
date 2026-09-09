@@ -80,6 +80,7 @@ signals:
     void rtcmDataReceived(const QByteArray& data);
     void correctionReceived(const QByteArray& data, int messageId, bool filtered);
     void correctionReceivedAt(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs);
+    void correctionRejectedAt(const QByteArray& data, int messageId, qint64 receivedAtMs);
     void correctionSessionStarted();
     void correctionSessionEnded();
     void connectionStatusChanged();

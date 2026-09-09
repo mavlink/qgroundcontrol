@@ -1,31 +1,40 @@
 #include "GPSConnectionConfig.h"
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QUrl>
 
-#include "GPSReceiverCapabilities.h"
+GPSReceiverProfile GPSConnectionConfig::profile() const
+{
+    GPSReceiverProfile profile;
+    switch (transport) {
+        case Serial:
+            profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Serial;
+            profile.endpoint.discoverSerialDevice = device.trimmed().isEmpty();
+            break;
+        case Tcp:
+            profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
+            break;
+        case Udp:
+            profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::UdpPeer;
+            break;
+        default:
+            profile.endpoint.kind = static_cast<GPSReceiverProfile::Endpoint::Kind>(-1);
+            break;
+    }
+    profile.endpoint.device = device;
+    profile.endpoint.host = host;
+    profile.endpoint.port = port;
+    profile.endpoint.localPort = localPort;
+    profile.configurationPolicy = GPSReceiverProfile::ConfigurationPolicy::Configure;
+    profile.driverType = receiverType;
+    profile.receiverName = receiverName;
+    profile.receiver = receiver;
+    return profile.normalized();
+}
 
 QString GPSConnectionConfig::validationError() const
 {
-    const auto tr = [](const char* text) { return QCoreApplication::translate("GPSConnectionConfig", text); };
-    if (transport < Serial || transport > Udp) {
-        return tr("Select a valid receiver and connection type");
-    }
-    const QString receiverError = GPSReceiverCapabilities::forType(receiverType).validationError(receiver);
-    if (!receiverError.isEmpty()) {
-        return receiverError;
-    }
-    if (transport != Serial) {
-        QUrl endpoint;
-        endpoint.setScheme(transport == Udp ? QStringLiteral("udp") : QStringLiteral("tcp"));
-        endpoint.setHost(host);
-        if (host.isEmpty() || !endpoint.isValid() || endpoint.host().isEmpty() || port < 1 || port > 65535 ||
-            (transport == Udp && (localPort < 0 || localPort > 65535))) {
-            return tr("Enter a valid receiver host and port");
-        }
-    }
     if (receiver.role == GPSReceiverConfig::Role::RTKBase && (baseMode < 0 || baseMode > 1)) {
-        return tr("Select a valid base mode");
+        return QCoreApplication::translate("GPSConnectionConfig", "Select a valid base mode");
     }
-    return receiver.validationError();
+    return profile().validationError();
 }

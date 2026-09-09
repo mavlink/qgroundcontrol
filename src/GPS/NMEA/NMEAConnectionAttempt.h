@@ -5,8 +5,8 @@
 
 #include <memory>
 
+#include "GPSReceiverProfile.h"
 #include "GPSReceiverSession.h"
-#include "NMEAConnectionConfig.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
@@ -22,7 +22,7 @@ class NMEAConnectionAttempt : public QObject
     Q_OBJECT
 
 public:
-    explicit NMEAConnectionAttempt(const NMEAConnectionConfig& config, QObject* parent = nullptr);
+    explicit NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent = nullptr);
     ~NMEAConnectionAttempt() override;
 
     void start(GPSProvider::TransportFactory receiverFactory = {});
@@ -45,10 +45,12 @@ signals:
     void stopped();
 
 private:
+    void _startConfigured(GPSProvider::TransportFactory receiverFactory);
+    bool _reserveSerial();
     void _fail(const QString& detail);
     void _finishStop();
 
-    const NMEAConnectionConfig _config;
+    const GPSReceiverProfile _profile;
     GPSReceiverSession _receiver;
     QTimer _connectTimer;
     std::unique_ptr<UdpIODevice> _udp;

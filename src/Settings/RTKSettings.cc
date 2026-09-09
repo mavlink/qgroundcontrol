@@ -27,3 +27,8 @@ DECLARE_SETTINGSFACT(RTKSettings, connectionType)
 DECLARE_SETTINGSFACT(RTKSettings, serialDevice)
 
 DECLARE_SETTINGSFACT(RTKSettings, receiverRole)
+
+DECLARE_SETTINGSFACT(RTKSettings, constellationMask)
+DECLARE_SETTINGSFACT(RTKSettings, dynamicModel)
+DECLARE_SETTINGSFACT(RTKSettings, outputRateHz)
+DECLARE_SETTINGSFACT(RTKSettings, headingOffsetDeg)

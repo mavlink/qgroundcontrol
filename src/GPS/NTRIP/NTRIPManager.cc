@@ -53,6 +53,7 @@ NTRIPManager::NTRIPManager(QObject* parent)
     });
     connect(&_session, &NTRIPSession::bytesReceived, &_stats, &NTRIPConnectionStats::recordNetworkBytes);
     connect(&_session, &NTRIPSession::correctionReceived, this, &NTRIPManager::_onCorrection);
+    connect(&_session, &NTRIPSession::correctionRejected, this, &NTRIPManager::correctionRejectedAt);
     connect(&_session, &NTRIPSession::plaintextCredentialsWarning, this, &NTRIPManager::_onPlaintextCredentialsWarning);
     connect(&_session, &NTRIPSession::failureOccurred, this, [this](const NTRIPFailure& failure) {
         qCWarning(NTRIPManagerLog) << "NTRIP error:" << static_cast<int>(failure.code) << failure.detail;

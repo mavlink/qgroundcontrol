@@ -38,7 +38,12 @@ private slots:
     void _retirementDiscardsPendingData();
     void _correctionQueueLifecycle();
     void _staleDataIsNotRejuvenated();
+    void _correctionsWrittenOnlyOnWorker_data();
     void _correctionsWrittenOnlyOnWorker();
+    void _deliveryReportsBoundAdmission();
+    void _deliveryOutcomesPreserveProvenance();
+    void _clearFlushesKnownResults_data();
+    void _clearFlushesKnownResults();
 };
 
 void GPSReceiverContractTest::_stalledConsumerBoundsUpdates()
@@ -110,11 +115,33 @@ void GPSReceiverContractTest::_retirementDiscardsPendingData()
     worker->sensorGpsUpdate(observation);
     worker->RTCMFrameUpdate(GpsTestHelpers::buildRtcmFrame(1077), observation.monotonicTimestampUs / 1000);
     const quint64 oldSession = session.sessionId();
+    GPSCorrectionFrame incoming;
+    incoming.source = GPSCorrectionSource::Ntrip;
+    incoming.sourceInstance = QStringLiteral("old-caster");
+    incoming.session = 5;
+    incoming.deliveryId = 40;
+    incoming.data = GpsTestHelpers::buildRtcmFrame(1087);
+    incoming.receivedAtMs = GPSObservation::monotonicNowUs() / 1000;
+    mailbox->setCorrectionsEnabled(true);
+    QVERIFY(mailbox->submitCorrection(incoming, oldSession, incoming.receivedAtMs).accepted);
+    const auto inFlight = mailbox->takeCommand(incoming.receivedAtMs);
+    QVERIFY(inFlight);
+    incoming.deliveryId = 41;
+    QVERIFY(mailbox->submitCorrection(incoming, oldSession, incoming.receivedAtMs).accepted);
+    QSignalSpy deliveryResults(&session, &GPSReceiverSession::correctionDeliveriesReady);
     QSignalSpy positions(&session, &GPSReceiverSession::positionReceived);
     QSignalSpy corrections(&session, &GPSReceiverSession::rtcmFrameReceived);
     session.start(GPSType::u_blox, blockedFactory(second), {});
     QVERIFY(second->entered.tryAcquire(1, 5000));
+    QVERIFY(!mailbox->completeCommand(*inFlight, GPSCorrectionOutcome::Written, incoming.data.size()));
+    emit worker->dataReady();
     QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+    QCOMPARE(deliveryResults.size(), 1);
+    const auto cancelled = deliveryResults.first().first().value<QList<GPSCorrectionDelivery>>();
+    QCOMPARE(cancelled.size(), 1);
+    QCOMPARE(cancelled.first().deliveryId, quint64(41));
+    QCOMPARE(cancelled.first().destinationSession, oldSession);
+    QCOMPARE(cancelled.first().outcome, GPSCorrectionOutcome::Cancelled);
     QVERIFY(positions.isEmpty());
     QVERIFY(corrections.isEmpty());
     QVERIFY(!mailbox->publish(observation));
@@ -183,8 +210,16 @@ void GPSReceiverContractTest::_staleDataIsNotRejuvenated()
     QCOMPARE(batch.position->monotonicTimestampUs, position.monotonicTimestampUs);
 }
 
+void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker_data()
+{
+    QTest::addColumn<bool>("partialWrite");
+    QTest::newRow("written") << false;
+    QTest::newRow("partial-write-failed") << true;
+}
+
 void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
 {
+    QFETCH(bool, partialWrite);
     struct Trace
     {
         QSemaphore correctionWritten;
@@ -193,6 +228,7 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
         std::atomic_bool holdRead = false;
         std::atomic<QThread*> writtenOn = nullptr;
         QByteArray written;
+        bool partialWrite = false;
     };
 
     class ReceiverTransport : public GPSTransport
@@ -235,9 +271,11 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
         {
             const QByteArray command(reinterpret_cast<const char*>(data), size);
             if (command.startsWith(char(0xd3))) {
-                _trace.written = command;
+                const int written = _trace.partialWrite ? size / 2 : size;
+                _trace.written = command.first(written);
                 _trace.writtenOn = QThread::currentThread();
                 _trace.correctionWritten.release();
+                return written;
             } else {
                 _reply = command.trimmed().isEmpty() ? "USB1>" : "$R: " + command;
             }
@@ -250,7 +288,9 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
     };
 
     Trace trace;
+    trace.partialWrite = partialWrite;
     GPSReceiverSession session;
+    QSignalSpy deliveries(&session, &GPSReceiverSession::correctionDeliveriesReady);
     const auto cleanup = qScopeGuard([&]() {
         session.stop();
         trace.releaseRead.release();
@@ -263,22 +303,190 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
         [&](const std::atomic_bool& stop) { return std::make_unique<ReceiverTransport>(stop, trace); }, config);
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
-    const auto frame = GpsTestHelpers::buildRtcmFrame(1077);
-    QVERIFY(!session.submitCorrections(frame, GPSObservation::monotonicNowUs() / 1000, session.sessionId()));
+    GPSCorrectionFrame frame;
+    frame.data = GpsTestHelpers::buildRtcmFrame(1077);
+    frame.receivedAtMs = GPSObservation::monotonicNowUs() / 1000;
+    frame.source = GPSCorrectionSource::Ntrip;
+    frame.sourceInstance = QStringLiteral("caster/mount");
+    frame.session = 23;
+    frame.deliveryId = 101;
+    QCOMPARE(session.submitCorrections(frame, session.sessionId()).outcome, GPSCorrectionOutcome::NotReady);
     // The SBF backend currently waits its full ACK deadlines, even with immediate replies.
     QTRY_VERIFY_WITH_TIMEOUT(session.readyForCorrections(), 30000);
+    frame.receivedAtMs = GPSObservation::monotonicNowUs() / 1000;
     trace.holdRead = true;
     QVERIFY(trace.heldRead.tryAcquire(1, 5000));
-    QVERIFY(session.submitCorrections(frame, GPSObservation::monotonicNowUs() / 1000, session.sessionId()));
+    QVERIFY(session.submitCorrections(frame, session.sessionId()).accepted);
     session.clearPendingCorrections();
-    const auto replacement = GpsTestHelpers::buildRtcmFrame(1087);
-    QVERIFY(session.submitCorrections(replacement, GPSObservation::monotonicNowUs() / 1000, session.sessionId()));
+    frame.data = GpsTestHelpers::buildRtcmFrame(1087);
+    frame.deliveryId = 102;
+    QVERIFY(session.submitCorrections(frame, session.sessionId()).accepted);
+    QCOMPARE(session.deliveryStats().writtenCommandBytes, quint64(0));
+    const quint64 destinationSession = session.sessionId();
     trace.releaseRead.release();
     QVERIFY(trace.correctionWritten.tryAcquire(1, 5000));
-    QCOMPARE(trace.written, replacement);
+    const auto writtenBytes = partialWrite ? frame.data.size() / 2 : frame.data.size();
+    QCOMPARE(trace.written, frame.data.first(writtenBytes));
     QCOMPARE(trace.writtenOn.load(), worker);
+    QList<GPSCorrectionDelivery> reports;
+    const auto collect = [&]() {
+        for (const auto& emission : deliveries) {
+            reports.append(emission.first().value<QList<GPSCorrectionDelivery>>());
+        }
+        deliveries.clear();
+        return reports.size();
+    };
+    QTRY_COMPARE_WITH_TIMEOUT(collect(), 2, 5000);
+    QCOMPARE(reports[0].deliveryId, quint64(101));
+    QCOMPARE(reports[0].outcome, GPSCorrectionOutcome::Cleared);
+    QCOMPARE(reports[0].writtenBytes, quint64(0));
+    QCOMPARE(reports[1].deliveryId, quint64(102));
+    QCOMPARE(reports[1].source, GPSCorrectionSource::Ntrip);
+    QCOMPARE(reports[1].sourceInstance, frame.sourceInstance);
+    QCOMPARE(reports[1].sourceSession, quint64(23));
+    QCOMPARE(reports[1].destinationId, QStringLiteral("localReceiver"));
+    QCOMPARE(reports[1].destinationSession, destinationSession);
+    QCOMPARE(reports[1].requestedBytes, quint64(frame.data.size()));
+    QCOMPARE(reports[1].writtenBytes, quint64(writtenBytes));
+    QCOMPARE(reports[1].outcome, partialWrite ? GPSCorrectionOutcome::WriteFailed : GPSCorrectionOutcome::Written);
     session.stop();
-    QVERIFY(!session.submitCorrections(frame, GPSObservation::monotonicNowUs() / 1000, session.sessionId()));
+    QVERIFY(!session.submitCorrections(frame, destinationSession).accepted);
+}
+
+void GPSReceiverContractTest::_deliveryReportsBoundAdmission()
+{
+    GPSReceiverMailbox mailbox;
+    mailbox.setCorrectionsEnabled(true);
+    GPSCorrectionFrame frame;
+    frame.source = GPSCorrectionSource::Ntrip;
+    frame.sourceInstance = QStringLiteral("caster/mount");
+    frame.session = 3;
+    frame.data = GpsTestHelpers::buildRtcmFrame(1077);
+    frame.receivedAtMs = 100000;
+    int notifications = 0;
+    for (int index = 0; index < GPSReceiverMailbox::MAX_DELIVERIES; ++index) {
+        frame.deliveryId = index + 1;
+        QVERIFY(mailbox.submitCorrection(frame, 7, frame.receivedAtMs).accepted);
+        const auto command = mailbox.takeCommand(frame.receivedAtMs);
+        QVERIFY(command);
+        notifications += mailbox.completeCommand(*command, GPSCorrectionOutcome::Written, frame.data.size());
+    }
+    QCOMPARE(notifications, 1);
+    QCOMPARE(mailbox.stats().pendingCommands, 0);
+    QCOMPARE(mailbox.stats().pendingDeliveries, GPSReceiverMailbox::MAX_DELIVERIES);
+    QCOMPARE(mailbox.submitCorrection(frame, 7, frame.receivedAtMs).outcome, GPSCorrectionOutcome::Overflow);
+    QList<GPSCorrectionDelivery> reports;
+    bool more = false;
+    do {
+        auto batch = mailbox.take(frame.receivedAtMs);
+        QVERIFY(batch.deliveries.size() <= GPSReceiverMailbox::FRAMES_PER_DRAIN);
+        reports.append(batch.deliveries);
+        more = batch.more;
+    } while (more);
+    QCOMPARE(reports.size(), GPSReceiverMailbox::MAX_DELIVERIES);
+    for (int index = 0; index < reports.size(); ++index) {
+        QCOMPARE(reports[index].deliveryId, quint64(index + 1));
+        QCOMPARE(reports[index].writtenBytes, quint64(frame.data.size()));
+    }
+    QVERIFY(mailbox.submitCorrection(frame, 7, frame.receivedAtMs).accepted);
+}
+
+void GPSReceiverContractTest::_deliveryOutcomesPreserveProvenance()
+{
+    GPSReceiverMailbox mailbox;
+    mailbox.setCorrectionsEnabled(true);
+    GPSCorrectionFrame frame;
+    frame.source = GPSCorrectionSource::Udp;
+    frame.sourceInstance = QStringLiteral("127.0.0.1:2101");
+    frame.session = 13;
+    frame.deliveryId = 1;
+    frame.data = GpsTestHelpers::buildRtcmFrame(1077);
+    frame.receivedAtMs = 100000;
+    QVERIFY(mailbox.submitCorrection(frame, 29, frame.receivedAtMs).accepted);
+    QVERIFY(!mailbox.takeCommand(frame.receivedAtMs + GPSReceiverMailbox::MAX_AGE_MS));
+    frame.deliveryId = 2;
+    QVERIFY(mailbox.submitCorrection(frame, 29, frame.receivedAtMs).accepted);
+    mailbox.close();
+    const auto reports = mailbox.takeDeliveries();
+    QCOMPARE(reports.size(), 2);
+    QCOMPARE(reports[0].outcome, GPSCorrectionOutcome::Expired);
+    QCOMPARE(reports[1].outcome, GPSCorrectionOutcome::Cancelled);
+    for (const auto& report : reports) {
+        QCOMPARE(report.source, frame.source);
+        QCOMPARE(report.sourceInstance, frame.sourceInstance);
+        QCOMPARE(report.sourceSession, frame.session);
+        QCOMPARE(report.destinationSession, quint64(29));
+        QCOMPARE(report.requestedBytes, quint64(frame.data.size()));
+        QCOMPARE(report.writtenBytes, quint64(0));
+    }
+    QCOMPARE(mailbox.stats().queuedCommandBytes, quint64(2 * frame.data.size()));
+    QCOMPARE(mailbox.stats().writtenCommandBytes, quint64(0));
+    QCOMPARE(mailbox.stats().droppedCommandBytes, quint64(2 * frame.data.size()));
+}
+
+void GPSReceiverContractTest::_clearFlushesKnownResults_data()
+{
+    QTest::addColumn<bool>("stopFromResult");
+    QTest::newRow("keep-session") << false;
+    QTest::newRow("stop-from-result") << true;
+}
+
+void GPSReceiverContractTest::_clearFlushesKnownResults()
+{
+    QFETCH(bool, stopFromResult);
+    GPSReceiverSession session;
+    const auto gate = std::make_shared<WorkerGate>();
+    const auto cleanup = qScopeGuard([&]() {
+        session.stop();
+        gate->release.release();
+        session.shutdown();
+    });
+    session.start(GPSType::u_blox, blockedFactory(gate), {});
+    QVERIFY(gate->entered.tryAcquire(1, 5000));
+    auto* worker = session.findChild<GPSProvider*>();
+    QVERIFY(worker);
+    const auto mailbox = worker->mailbox();
+    mailbox->setCorrectionsEnabled(true);
+    GPSCorrectionFrame frame;
+    frame.source = GPSCorrectionSource::Ntrip;
+    frame.sourceInstance = QStringLiteral("caster/mount");
+    frame.session = 7;
+    frame.data = GpsTestHelpers::buildRtcmFrame(1077);
+    frame.receivedAtMs = GPSObservation::monotonicNowUs() / 1000;
+    frame.deliveryId = 1;
+    QVERIFY(mailbox->submitCorrection(frame, session.sessionId(), frame.receivedAtMs).accepted);
+    const auto command = mailbox->takeCommand(frame.receivedAtMs);
+    QVERIFY(command);
+    if (mailbox->completeCommand(*command, GPSCorrectionOutcome::Written, frame.data.size())) {
+        emit worker->dataReady();
+    }
+    frame.deliveryId = 2;
+    QVERIFY(mailbox->submitCorrection(frame, session.sessionId(), frame.receivedAtMs).accepted);
+    QSignalSpy results(&session, &GPSReceiverSession::correctionDeliveriesReady);
+    if (stopFromResult) {
+        connect(&session, &GPSReceiverSession::correctionDeliveriesReady, &session, &GPSReceiverSession::stop);
+    }
+    session.clearPendingCorrections();
+    QCOMPARE(results.size(), 1);
+    const auto known = results.first().first().value<QList<GPSCorrectionDelivery>>();
+    QCOMPARE(known.size(), 2);
+    QCOMPARE(known[0].outcome, GPSCorrectionOutcome::Written);
+    QCOMPARE(known[0].writtenBytes, quint64(frame.data.size()));
+    QCOMPARE(known[1].outcome, GPSCorrectionOutcome::Cleared);
+    QCOMPARE(known[1].writtenBytes, quint64(0));
+    QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+    QCOMPARE(results.size(), 1);
+    if (!stopFromResult) {
+        frame.deliveryId = 3;
+        QVERIFY(mailbox->submitCorrection(frame, session.sessionId(), frame.receivedAtMs).accepted);
+        session.clearPendingCorrections();
+        QCOMPARE(results.size(), 2);
+        QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
+        // A synchronous result flush must not leave the mailbox notification permanently reserved.
+        GPSObservation observation;
+        observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        QVERIFY(mailbox->publish(observation));
+    }
 }
 
 QTEST_GUILESS_MAIN(GPSReceiverContractTest)

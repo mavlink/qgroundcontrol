@@ -1180,6 +1180,9 @@ public:
 		Supported,
 	};
 	BaseStationCapability baseStationCapability() const;
+	bool supportsConstellationSelection() const;
+	bool supportsOutputRateSelection() const;
+	bool constellationConfigurationRejected() const { return _constellation_configuration_rejected; }
 
 	/**
 	 * What UART1 carries in a given mode, for status output
@@ -1430,6 +1433,7 @@ private:
 
 	int8_t _min_elev{0};  ///< ublox minimum elevation for a GNSS satellite to be used in navigation
 	uint8_t _output_rate{0};  ///< ublox output rate in Hz, 0 = auto-select based on module
+	bool _constellation_configuration_rejected{false};
 
 	uint16_t _ack_waiting_msg{0};
 	uint16_t _rx_msg{};
@@ -1453,4 +1457,3 @@ private:
 	const bool _ppk_output {};
 	const bool _jam_det_sensitivity_hi {};
 };
-

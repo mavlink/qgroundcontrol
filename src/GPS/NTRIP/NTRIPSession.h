@@ -57,6 +57,7 @@ signals:
     void streamEnded();
     void streamConnected(NTRIPStream* stream);
     void correctionReceived(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs);
+    void correctionRejected(const QByteArray& data, int messageId, qint64 receivedAtMs);
     void bytesReceived(qint64 count);
     void failureOccurred(const NTRIPFailure& failure);
     void plaintextCredentialsWarning();

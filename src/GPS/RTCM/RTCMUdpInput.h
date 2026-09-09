@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionFrame.h"
 #include "RTCMParser.h"
 
@@ -68,6 +69,7 @@ signals:
     void rtcmDataReceived(const QByteArray& data);
     void correctionReceived(const QByteArray& data, int messageId, bool validated);
     void frameReceived(const GPSCorrectionFrame& frame);
+    void frameRejected(const GPSCorrectionFrame& frame, GPSCorrectionReason reason);
 
     void runningChanged();
     void portChanged();

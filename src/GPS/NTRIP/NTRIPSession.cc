@@ -172,6 +172,12 @@ void NTRIPSession::_beginAttempt(quint64 generation)
             emit bytesReceived(count);
         }
     });
+    connect(stream, &NTRIPStream::correctionRejectedAt, this,
+            [this, current](const QByteArray& data, int messageId, qint64 receivedAtMs) {
+                if (current()) {
+                    emit correctionRejected(data, messageId, receivedAtMs);
+                }
+            });
     connect(stream, &NTRIPStream::plaintextCredentialsWarning, this, [this, current]() {
         if (current()) {
             emit plaintextCredentialsWarning();

@@ -13,6 +13,10 @@ GPSConnectionConfig GPSConnectionSettings::fromSettings(RTKSettings& settings)
     config.port = settings.networkBasePort()->rawValue().toInt();
     config.localPort = settings.udpLocalPort()->rawValue().toInt();
     config.receiver.role = static_cast<GPSReceiverConfig::Role>(settings.receiverRole()->rawValue().toInt());
+    config.receiver.constellationMask = settings.constellationMask()->rawValue().toInt();
+    config.receiver.dynamicModel = settings.dynamicModel()->rawValue().toInt();
+    config.receiver.outputRateHz = settings.outputRateHz()->rawValue().toInt();
+    config.receiver.headingOffsetDeg = settings.headingOffsetDeg()->rawValue().toFloat();
     config.baseMode = settings.useFixedBasePosition()->rawValue().toInt();
     config.receiver.base = {
         .useFixedBase = config.baseMode == static_cast<int>(BaseModeDefinition::Mode::BaseFixed),

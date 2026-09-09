@@ -289,7 +289,7 @@ void NMEASourceManager::_startAttempt()
     if (!_connection.beginAttempt()) {
         return;
     }
-    _attempt = std::make_unique<NMEAConnectionAttempt>(_config, this);
+    _attempt = std::make_unique<NMEAConnectionAttempt>(_config.profile(), this);
 #ifndef QGC_NO_SERIAL_LINK
     _attempt->setSerialDiscovery(_serialPorts);
 #endif

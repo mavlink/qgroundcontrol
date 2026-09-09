@@ -26,6 +26,7 @@ public:
 signals:
     void connected();
     void correctionReceivedAt(const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs);
+    void correctionRejectedAt(const QByteArray& data, int messageId, qint64 receivedAtMs);
     void error(NTRIPError code, const QString& detail);
     void failed(const NTRIPFailure& failure);
     void RTCMDataUpdate(const QByteArray& message, int messageId);

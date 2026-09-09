@@ -191,10 +191,23 @@ GPSDriverUBX::BaseStationCapability GPSDriverUBX::baseStationCapability() const
 	}
 }
 
+bool GPSDriverUBX::supportsConstellationSelection() const
+{
+	// M10 combinations have additional restrictions; the legacy path does not
+	// provide strict acknowledgement of every requested constellation change.
+	return _proto_ver_27_or_higher && (_board == Board::u_blox9 || _board == Board::u_blox9_F9P_L1L2);
+}
+
+bool GPSDriverUBX::supportsOutputRateSelection() const
+{
+	return _proto_ver_27_or_higher && _model_name[0] && _board != Board::unknown;
+}
+
 int
 GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config, OutputProtocol output_protocol)
 {
 	resetIOError();
+	_constellation_configuration_rejected = false;
 	_configured = false;
 	if (output_protocol != OutputProtocol::Native
 	    && (output_protocol != OutputProtocol::NMEA || config.output_mode != OutputMode::GPS
@@ -439,6 +452,10 @@ GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config, OutputProto
 		return -1;
 	}
 	if (_output_mode == OutputMode::RTCM && baseStationCapability() == BaseStationCapability::Unsupported) {
+		return -1;
+	}
+	if ((_output_rate && !supportsOutputRateSelection()) ||
+	    (config.require_gnss_config && !supportsConstellationSelection())) {
 		return -1;
 	}
 
@@ -1033,6 +1050,10 @@ int GPSDriverUBX::configureDevice(const GPSConfig &config, const int32_t uart2_b
 			}
 
 			if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0) {
+				if (config.require_gnss_config) {
+					_constellation_configuration_rejected = true;
+					return -1;
+				}
 				// Keep going with whatever the receiver already has, a refused constellation
 				// selection must not cost us the fix
 				UBX_WARN("GNSS constellation config rejected, keeping receiver config");
@@ -1057,7 +1078,10 @@ int GPSDriverUBX::configureDevice(const GPSConfig &config, const int32_t uart2_b
 			return -1;
 		}
 
-		waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true);
+		if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0 && config.require_gnss_config) {
+			_constellation_configuration_rejected = true;
+			return -1;
+		}
 
 		waitForGnssReset();
 	}

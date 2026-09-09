@@ -156,6 +156,20 @@ void RTCMUdpInput::_readDatagrams()
             } else {
                 ++framesDropped;
                 ++_invalidFrames;
+                const GPSCorrectionFrame rejected = {GPSCorrectionSource::Udp,
+                                                     0,
+                                                     peer->frameReceivedAtMs,
+                                                     parser.currentFrame(),
+                                                     parser.messageId(),
+                                                     false,
+                                                     true,
+                                                     instance};
+                parser.reset();
+                peer->frameReceivedAtMs = 0;
+                emit frameRejected(rejected, GPSCorrectionReason::InvalidFrame);
+                if (!guard || !socket || socket != _socket) {
+                    return;
+                }
             }
             parser.reset();
             peer->frameReceivedAtMs = 0;

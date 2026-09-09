@@ -8,14 +8,18 @@
 #include <QtNetwork/QUdpSocket>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
+#include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
 
 #include "AutoConnectSettings.h"
 #include "ColoredSvgImageProvider.h"
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSCorrectionEventModel.h"
+#include "GPSCorrectionSettings.h"
 #include "GPSManager.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverAutoConnect.h"
+#include "GPSReceiverCapabilities.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
@@ -32,6 +36,22 @@
 #endif
 
 namespace {
+QQuickItem* findVisualItem(QQuickItem* root, const QString& name)
+{
+    if (!root) {
+        return nullptr;
+    }
+    if (root->objectName() == name) {
+        return root;
+    }
+    for (auto* child : root->childItems()) {
+        if (auto* found = findVisualItem(child, name)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
 void saveNetworkSettings(TestFixtures::SettingsFixture& saved, const QString& host, int port, int type)
 {
     saved.setFactValue(SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS(), false);
@@ -638,12 +658,13 @@ void GPSManagerTest::_correctionRoutingSettings_data()
     QTest::addColumn<int>("policy");
     QTest::addColumn<int>("category");
     using Policy = GPSCorrectionManager::RoutingPolicy;
-    QTest::newRow("automatic") << int(NTRIPSettings::Automatic) << int(Policy::Automatic) << 0;
-    QTest::newRow("local") << int(NTRIPSettings::LocalReceiver) << int(Policy::Manual)
+    QTest::newRow("automatic") << int(GPSCorrectionSettings::Automatic) << int(Policy::Automatic) << 0;
+    QTest::newRow("local") << int(GPSCorrectionSettings::LocalReceiver) << int(Policy::Manual)
                            << int(GPSCorrectionSource::LocalReceiver);
-    QTest::newRow("ntrip") << int(NTRIPSettings::Ntrip) << int(Policy::Manual) << int(GPSCorrectionSource::Ntrip);
-    QTest::newRow("udp") << int(NTRIPSettings::Udp) << int(Policy::Manual) << int(GPSCorrectionSource::Udp);
-    QTest::newRow("all") << int(NTRIPSettings::All) << int(Policy::All) << 0;
+    QTest::newRow("ntrip") << int(GPSCorrectionSettings::Ntrip) << int(Policy::Manual)
+                           << int(GPSCorrectionSource::Ntrip);
+    QTest::newRow("udp") << int(GPSCorrectionSettings::Udp) << int(Policy::Manual) << int(GPSCorrectionSource::Udp);
+    QTest::newRow("all") << int(GPSCorrectionSettings::All) << int(Policy::All) << 0;
 }
 
 void GPSManagerTest::_correctionRoutingSettings()
@@ -652,9 +673,9 @@ void GPSManagerTest::_correctionRoutingSettings()
     QFETCH(int, policy);
     QFETCH(int, category);
     TestFixtures::SettingsFixture saved;
-    auto* settings = SettingsManager::instance()->ntripSettings();
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
     saved.setFactValue(settings->rtcmUdpInputEnabled(), false);
-    saved.setFactValue(settings->correctionSource(), NTRIPSettings::Automatic);
+    saved.setFactValue(settings->correctionSource(), GPSCorrectionSettings::Automatic);
     saved.setFactValue(settings->correctionSourceInstance(), QString());
     saved.setFactValue(settings->injectLocalReceiver(), false);
     GPSManager manager(*SettingsManager::instance(), nullptr, []() { return false; });
@@ -665,7 +686,7 @@ void GPSManagerTest::_correctionRoutingSettings()
         QCOMPARE(int(manager.corrections()->selectedSource()), category);
     }
     manager.shutdown();
-    settings->correctionSource()->setRawValue(NTRIPSettings::All);
+    settings->correctionSource()->setRawValue(GPSCorrectionSettings::All);
     QCOMPARE(int(manager.corrections()->routingPolicy()), policy);
     QVERIFY(!manager.connectRtk());
     QVERIFY(!manager.connectNmea());
@@ -674,13 +695,14 @@ void GPSManagerTest::_correctionRoutingSettings()
 void GPSManagerTest::_correctionRuntimeLifecycle()
 {
     TestFixtures::SettingsFixture saved;
-    auto* settings = SettingsManager::instance()->ntripSettings();
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
     saved.setFactValue(settings->rtcmUdpInputEnabled(), false);
-    saved.setFactValue(settings->correctionSource(), NTRIPSettings::Ntrip);
+    saved.setFactValue(settings->correctionSource(), GPSCorrectionSettings::Ntrip);
     saved.setFactValue(settings->correctionSourceInstance(), QString());
-    saved.setFactValue(settings->ntripServerConnectEnabled(), true);
-    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.test"));
-    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    auto* ntripSettings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(ntripSettings->ntripServerConnectEnabled(), true);
+    saved.setFactValue(ntripSettings->ntripServerHostAddress(), QStringLiteral("caster.example.test"));
+    saved.setFactValue(ntripSettings->ntripMountpoint(), QStringLiteral("TEST"));
     NTRIPManager ntrip;
     auto* stream = new MockNTRIPStream(&ntrip);
     ntrip.setTransportForTest(stream);
@@ -711,4 +733,96 @@ void GPSManagerTest::_correctionSettingsPanel()
     QVERIFY(panel->findChild<QObject*>(QStringLiteral("correctionSource")));
     QVERIFY(panel->findChild<QObject*>(QStringLiteral("correctionStream")));
     QVERIFY(panel->findChild<QObject*>(QStringLiteral("injectLocalReceiver")));
+}
+
+void GPSManagerTest::_receiverConfigurationPanel_data()
+{
+    QTest::addColumn<int>("family");
+    QTest::addColumn<bool>("heading");
+    QTest::newRow("ublox") << int(GPSType::u_blox) << false;
+    QTest::newRow("septentrio") << int(GPSType::septentrio) << true;
+}
+
+void GPSManagerTest::_receiverConfigurationPanel()
+{
+    QFETCH(int, family);
+    QFETCH(bool, heading);
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(settings->constellationMask(), 0);
+    saved.setFactValue(settings->dynamicModel(), heading ? 4 : 0);
+    saved.setFactValue(settings->outputRateHz(), 0);
+    saved.setFactValue(settings->headingOffsetDeg(), 5.0);
+    QQmlEngine engine;
+    engine.addImageProvider(QStringLiteral("coloredsvg"), new ColoredSvgImageProvider);
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.loadFromModule("QGroundControl.AppSettings", "ReceiverConfigurationSettings");
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    const auto descriptors = GPSReceiverCapabilities::forType(static_cast<GPSType>(family)).settingDescriptors(false);
+    std::unique_ptr<QObject> panel(component.createWithInitialProperties(
+        {{QStringLiteral("descriptors"), descriptors}, {QStringLiteral("receiverActive"), false}}));
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    auto* visualRoot = qobject_cast<QQuickItem*>(panel.get());
+    QVERIFY(visualRoot);
+    const auto findControl = [visualRoot](const QString& name) { return findVisualItem(visualRoot, name); };
+    if (heading) {
+        QTRY_VERIFY_WITH_TIMEOUT(findControl(QStringLiteral("receiverSetting_headingOffsetDeg")),
+                                 TestTimeout::mediumMs());
+    } else {
+        QVERIFY(!findControl(QStringLiteral("receiverSetting_headingOffsetDeg")));
+    }
+    if (heading) {
+        auto* reset = findControl(QStringLiteral("receiverSetting_dynamicModel_reset"));
+        QVERIFY(reset);
+        QVERIFY(QMetaObject::invokeMethod(reset, "clicked"));
+        QCOMPARE(settings->dynamicModel()->rawValue().toInt(), 0);
+        QTRY_VERIFY_WITH_TIMEOUT(findControl(QStringLiteral("receiverSetting_headingOffsetDeg")),
+                                 TestTimeout::mediumMs());
+        auto* headingControl = findControl(QStringLiteral("receiverSetting_headingOffsetDeg"));
+        QVERIFY(headingControl->property("enabled").toBool());
+        panel->setProperty("receiverActive", true);
+        QVERIFY(!headingControl->property("enabled").toBool());
+    } else {
+        QTRY_VERIFY_WITH_TIMEOUT(findControl(QStringLiteral("receiverSetting_dynamicModel")), TestTimeout::mediumMs());
+        auto* dynamic = findControl(QStringLiteral("receiverSetting_dynamicModel"));
+        QVERIFY(QMetaObject::invokeMethod(dynamic, "activated", Q_ARG(int, 1)));
+        QCOMPARE(settings->dynamicModel()->rawValue().toInt(), 2);
+        auto* sbas = findControl(QStringLiteral("receiverSetting_constellationMask_2"));
+        QVERIFY(sbas);
+        sbas->setProperty("checked", true);
+        QVERIFY(QMetaObject::invokeMethod(sbas, "clicked"));
+        QCOMPARE(settings->constellationMask()->rawValue().toInt(), 3);
+        panel->setProperty("receiverActive", true);
+        QVERIFY(!dynamic->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dynamic, "activated", Q_ARG(int, 2)));
+        QCOMPARE(settings->dynamicModel()->rawValue().toInt(), 2);
+    }
+}
+
+void GPSManagerTest::_correctionDiagnosticsPanel()
+{
+    GPSCorrectionManager corrections;
+    const quint64 session = corrections.beginSourceSession(GPSCorrectionSource::Udp, QStringLiteral("test-source"));
+    QQmlEngine engine;
+    engine.addImageProvider(QStringLiteral("coloredsvg"), new ColoredSvgImageProvider);
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.loadFromModule("QGroundControl.AppSettings", "CorrectionDiagnostics");
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    std::unique_ptr<QObject> panel(
+        component.createWithInitialProperties({{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}}));
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005);
+    corrections.acceptFrame({GPSCorrectionSource::Udp, session, GPSCorrectionFrame::monotonicNowMs(), frame, 1005, true,
+                             false, QStringLiteral("test-source")});
+    QTRY_VERIFY_WITH_TIMEOUT(corrections.events()->rowCount() > 0, TestTimeout::mediumMs());
+    auto* toggle = panel->findChild<QObject*>(QStringLiteral("correctionHistoryToggle"));
+    QVERIFY(toggle);
+    QVERIFY(toggle->setProperty("checked", true));
+    QTRY_VERIFY_WITH_TIMEOUT(panel->findChild<QObject*>(QStringLiteral("correctionEventHistory")),
+                             TestTimeout::mediumMs());
+    corrections.shutdown();
 }

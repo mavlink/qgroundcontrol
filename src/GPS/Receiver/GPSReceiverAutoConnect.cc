@@ -1,12 +1,9 @@
 #include "GPSReceiverAutoConnect.h"
 
-#include <QtCore/QUrl>
-
 #include <utility>
 
+#include "GPSReceiverTransportFactory.h"
 #include "QGCLoggingCategory.h"
-#include "TcpGPSTransport.h"
-#include "UdpGPSTransport.h"
 
 QGC_LOGGING_CATEGORY(GPSReceiverAutoConnectLog, "GPS.Receiver.GPSReceiverAutoConnect")
 
@@ -43,8 +40,9 @@ GPSReceiverAutoConnect::~GPSReceiverAutoConnect()
 
 void GPSReceiverAutoConnect::setConfig(const GPSConnectionConfig& config, bool restart)
 {
+    const bool changed = _config.profile() != config.profile() || _config.validationError() != config.validationError();
     _config = config;
-    if (restart) {
+    if (restart && changed) {
         const QPointer<GPSReceiverAutoConnect> guard(this);
         stop();
         if (guard) {
@@ -111,17 +109,7 @@ bool GPSReceiverAutoConnect::connectNetwork()
     if (config.transport == GPSConnectionConfig::Serial || !config.validationError().isEmpty()) {
         return false;
     }
-    QUrl endpoint;
-    endpoint.setScheme(config.transport == GPSConnectionConfig::Udp ? QStringLiteral("udp") : QStringLiteral("tcp"));
-    endpoint.setHost(config.host);
-    return connectReceiver(
-        config, [config, host = endpoint.host()](const std::atomic_bool& stop) -> std::unique_ptr<GPSTransport> {
-            if (config.transport == GPSConnectionConfig::Udp) {
-                return std::make_unique<UdpGPSTransport>(host, static_cast<quint16>(config.port), stop,
-                                                         static_cast<quint16>(config.localPort));
-            }
-            return std::make_unique<TcpGPSTransport>(host, static_cast<quint16>(config.port), stop);
-        });
+    return connectReceiver(config, GPSReceiverTransportFactory::network(config.profile()));
 }
 
 bool GPSReceiverAutoConnect::connectNetwork(GPSType type, GPSProvider::TransportFactory factory)
@@ -149,7 +137,7 @@ bool GPSReceiverAutoConnect::connectReceiver(const GPSConnectionConfig& config, 
     if (!guard) {
         return false;
     }
-    _sessionConfig = config;
+    _sessionConfig = config.profile();
     _transportFactory = std::move(factory);
     _connection.requestConnect();
     if (!guard) {
@@ -168,13 +156,14 @@ bool GPSReceiverAutoConnect::_captureConfig()
         qCDebug(GPSReceiverAutoConnectLog) << error;
         return false;
     }
-    _sessionConfig = _config;
+    _sessionConfig = _config.profile();
     return true;
 }
 
 bool GPSReceiverAutoConnect::networkActive() const
 {
-    return _transportFactory && _sessionConfig && _sessionConfig->transport != GPSConnectionConfig::Serial;
+    return _transportFactory && _sessionConfig &&
+           _sessionConfig->endpoint.kind != GPSReceiverProfile::Endpoint::Kind::Serial;
 }
 
 void GPSReceiverAutoConnect::disconnectNetwork()
@@ -258,7 +247,7 @@ void GPSReceiverAutoConnect::_startReceiver()
     const QPointer<GPSReceiverAutoConnect> guard(this);
     if (_sessionConfig && _receiver && !_receiver->hasReceiver() && !_receiver->stopping() &&
         _connection.beginAttempt() && guard && _sessionConfig && _transportFactory && _receiver) {
-        _receiver->start(_sessionConfig->receiverType, _transportFactory, _sessionConfig->receiver);
+        _receiver->start(_sessionConfig->driverType, _transportFactory, _sessionConfig->receiver);
     }
 }
 

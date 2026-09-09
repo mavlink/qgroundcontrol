@@ -123,6 +123,8 @@ qt_add_qml_module(AppSettingsModule
         LogReplaySettings.qml
         LocalRtkSettings.qml
         CorrectionRoutingSettings.qml
+        CorrectionDiagnostics.qml
+        ReceiverConfigurationSettings.qml
         MapProviderSettings.qml
         MavlinkActionSettings.qml
         MavlinkLinkStatus.qml

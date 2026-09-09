@@ -23,6 +23,7 @@ class GPSManager : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_PROPERTY(QVariantList receiverSettings READ receiverSettings NOTIFY receiverSettingsChanged)
     Q_PROPERTY(NMEASourceManager* nmeaConnection READ nmeaConnection CONSTANT)
     Q_PROPERTY(GPSReceiverAutoConnect* rtkConnection READ rtkConnection CONSTANT)
     Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT)
@@ -53,6 +54,8 @@ public:
 
     GPSCorrectionManager* corrections() { return &_corrections; }
 
+    QVariantList receiverSettings() const;
+
     Q_INVOKABLE bool connectNmea();
     Q_INVOKABLE void disconnectNmea();
     Q_INVOKABLE bool connectRtk();
@@ -65,6 +68,7 @@ public:
     Q_INVOKABLE void disconnectNetworkRtk();
 
 signals:
+    void receiverSettingsChanged();
     void networkRtkActiveChanged();
     void networkRtkAutoConnectPausedChanged();
 
@@ -76,6 +80,7 @@ private:
     SettingsManager& _settings;
     std::function<bool()> _connectionsSuspended;
     QPointer<NTRIPManager> _ntrip;
+    quint64 _correctionDestinationSession = 0;
     bool _shutdown = false;
     bool _positionSourceInstalled = false;
     QPointer<QGCPositionManager> _positionManager;

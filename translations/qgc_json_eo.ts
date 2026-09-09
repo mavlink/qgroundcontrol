@@ -6470,39 +6470,42 @@
             <source>UDP target port</source>
             <translation>[ŨḊṖ ṫȧŕġėṫ ṗǒŕṫ_____]</translation>
         </message>
+    </context>
+    <context>
+        <name>GPSCorrection.SettingsGroup.json</name>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputEnabled].shortDesc, .QGC.MetaData.Facts[rtcmUdpInputEnabled].label</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>Enable UDP RTCM input</source>
             <translation>[Ėńȧƀĺė ŨḊṖ ŔṪĊM̃ ıńṗũṫ______]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputEnabled].longDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>Listen on a UDP port for incoming RTCM3 correction data and forward it to connected vehicles via MAVLink GPS_RTCM_DATA.</source>
             <translation>[Ĺıŝṫėń ǒń ȧ ŨḊṖ ṗǒŕṫ ƒǒŕ ıńċǒm̃ıńġ ŔṪĊM̃3 ċǒŕŕėċṫıǒń ḋȧṫȧ ȧńḋ ƒǒŕẇȧŕḋ ıṫ ṫǒ ċǒńńėċṫėḋ v̇ėħıċĺėŝ v̇ıȧ M̃ȦV̇Ĺıńķ ĠṖŜ_ŔṪĊM̃_ḊȦṪȦ.__________________________________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputPort].shortDesc, .QGC.MetaData.Facts[rtcmUdpInputPort].label</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>UDP RTCM input port</source>
             <translation>[ŨḊṖ ŔṪĊM̃ ıńṗũṫ ṗǒŕṫ______]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputPort].longDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>UDP port to listen on for incoming RTCM3 correction data.</source>
             <translation>[ŨḊṖ ṗǒŕṫ ṫǒ ĺıŝṫėń ǒń ƒǒŕ ıńċǒm̃ıńġ ŔṪĊM̃3 ċǒŕŕėċṫıǒń ḋȧṫȧ.________________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpValidate].shortDesc, .QGC.MetaData.Facts[rtcmUdpValidate].label</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>UDP RTCM enable validation</source>
             <translation>[ŨḊṖ ŔṪĊM̃ ėńȧƀĺė v̇ȧĺıḋȧṫıǒń________]</translation>
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpValidate].longDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>Enable validation of incoming data as RTCM and drop garbage (improves security).</source>
             <translation>[Ėńȧƀĺė v̇ȧĺıḋȧṫıǒń ǒƒ ıńċǒm̃ıńġ ḋȧṫȧ ȧŝ ŔṪĊM̃ ȧńḋ ḋŕǒṗ ġȧŕƀȧġė (ım̃ṗŕǒv̇ėŝ ŝėċũŕıṫẏ)._______________________]</translation>
         </message>

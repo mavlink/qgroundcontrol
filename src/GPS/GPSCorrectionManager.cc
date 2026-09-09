@@ -1,6 +1,6 @@
 #include "GPSCorrectionManager.h"
 
-#include "NTRIPSettings.h"
+#include "GPSCorrectionSettings.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.GPSCorrectionManager")
@@ -8,21 +8,28 @@ QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.GPSCorrectionManager")
 GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
     : QObject(parent)
     , _router(this)
+    , _eventModel(this)
     , _rtcmMavlink(this)
     , _udpInput(0, this)
 {
     qCDebug(GPSCorrectionManagerLog) << this;
     connect(&_router, &GPSCorrectionRouter::sourceSelected, this, &GPSCorrectionManager::selectedSourceChanged);
     connect(&_router, &GPSCorrectionRouter::sourceInvalidated, this, &GPSCorrectionManager::selectedSourceChanged);
+    connect(&_router, &GPSCorrectionRouter::frameRouted, this, &GPSCorrectionManager::correctionRouted);
     _router.setSink(QStringLiteral("mavlink"),
                     [this](const GPSCorrectionFrame& frame) { return _rtcmMavlink.submit(frame.data); });
     connect(&_udpInput, &RTCMUdpInput::frameReceived, this, [this](GPSCorrectionFrame frame) {
         frame.session = sourceSession(GPSCorrectionSource::Udp);
         acceptFrame(frame);
     });
+    connect(&_udpInput, &RTCMUdpInput::frameRejected, this,
+            [this](GPSCorrectionFrame frame, GPSCorrectionReason reason) {
+                frame.session = sourceSession(GPSCorrectionSource::Udp);
+                recordRejectedFrame(frame, reason);
+            });
     _diagnosticsTimer.setSingleShot(true);
     _diagnosticsTimer.setInterval(100);
-    connect(&_diagnosticsTimer, &QTimer::timeout, this, &GPSCorrectionManager::sourcesChanged);
+    connect(&_diagnosticsTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
     _healthTimer.setInterval(1000);
     connect(&_healthTimer, &QTimer::timeout, this, &GPSCorrectionManager::sourcesChanged);
     _healthTimer.start();
@@ -34,7 +41,7 @@ GPSCorrectionManager::~GPSCorrectionManager()
     shutdown();
 }
 
-void GPSCorrectionManager::init(NTRIPSettings* settings)
+void GPSCorrectionManager::init(GPSCorrectionSettings* settings)
 {
     if (_settings || !settings || _shutdown) {
         return;
@@ -129,6 +136,42 @@ void GPSCorrectionManager::removeSink(const QString& id)
     _router.removeSink(id);
 }
 
+void GPSCorrectionManager::addDetailedSink(const QString& id, GPSCorrectionRouter::DetailedSink sink,
+                                           bool reportsWrites)
+{
+    _router.setDetailedSink(id, std::move(sink), reportsWrites);
+    _scheduleSourcesChanged();
+}
+
+void GPSCorrectionManager::recordDeliveries(const QList<GPSCorrectionDelivery>& deliveries)
+{
+    for (const auto& delivery : deliveries) {
+        _router.recordDelivery(delivery);
+    }
+    _scheduleSourcesChanged();
+}
+
+void GPSCorrectionManager::invalidateDestination(const QString& id, quint64 destinationSession)
+{
+    _router.invalidateDestination(id, destinationSession);
+    _scheduleSourcesChanged();
+}
+
+void GPSCorrectionManager::recordRejectedFrame(const GPSCorrectionFrame& frame, GPSCorrectionReason reason)
+{
+    _router.recordRejectedFrame(frame, reason);
+    _scheduleSourcesChanged();
+}
+
+void GPSCorrectionManager::_refreshDiagnostics()
+{
+    const QPointer<GPSCorrectionManager> guard(this);
+    _eventModel.setEvents(_router.events());
+    if (guard) {
+        emit sourcesChanged();
+    }
+}
+
 void GPSCorrectionManager::_scheduleSourcesChanged()
 {
     if (!_shutdown && !_diagnosticsTimer.isActive()) {
@@ -154,14 +197,11 @@ void GPSCorrectionManager::acceptFrame(const GPSCorrectionFrame& frame)
         static_cast<quint8>(routed.data[0]) == 0xD3) {
         routed.messageId = (static_cast<quint8>(routed.data[3]) << 4) | (static_cast<quint8>(routed.data[4]) >> 4);
     }
-    const bool accepted = _router.acceptFrame(routed);
+    _router.acceptFrame(routed);
     if (!guard || _shutdown) {
         return;
     }
     _scheduleSourcesChanged();
-    if (accepted) {
-        emit correctionRouted(routed);
-    }
 }
 
 QVariantList GPSCorrectionManager::sources() const
@@ -176,6 +216,18 @@ QVariantList GPSCorrectionManager::sources() const
             {QStringLiteral("session"), QVariant::fromValue(stats.session)},
             {QStringLiteral("active"), stats.active},
             {QStringLiteral("receivedBytes"), QVariant::fromValue(stats.receivedBytes)},
+            {QStringLiteral("receivedFrames"), QVariant::fromValue(stats.receivedFrames)},
+            {QStringLiteral("validatedBytes"), QVariant::fromValue(stats.validatedBytes)},
+            {QStringLiteral("selectedFrames"), QVariant::fromValue(stats.selectedFrames)},
+            {QStringLiteral("selectedBytes"), QVariant::fromValue(stats.selectedBytes)},
+            {QStringLiteral("queuedFrames"), QVariant::fromValue(stats.queuedFrames)},
+            {QStringLiteral("queuedBytes"), QVariant::fromValue(stats.queuedBytes)},
+            {QStringLiteral("writtenFrames"), QVariant::fromValue(stats.writtenFrames)},
+            {QStringLiteral("writtenBytes"), QVariant::fromValue(stats.writtenBytes)},
+            {QStringLiteral("droppedFrames"), QVariant::fromValue(stats.droppedFrames)},
+            {QStringLiteral("droppedBytes"), QVariant::fromValue(stats.droppedBytes)},
+            {QStringLiteral("unconfirmedFrames"), QVariant::fromValue(stats.unconfirmedFrames)},
+            {QStringLiteral("unconfirmedBytes"), QVariant::fromValue(stats.unconfirmedBytes)},
             {QStringLiteral("validatedFrames"), QVariant::fromValue(stats.validatedFrames)},
             {QStringLiteral("filteredFrames"), QVariant::fromValue(stats.filteredFrames)},
             {QStringLiteral("routedFrames"), QVariant::fromValue(stats.routedFrames)},
@@ -207,6 +259,28 @@ QVariantList GPSCorrectionManager::sourceInstances() const
     return result;
 }
 
+QVariantList GPSCorrectionManager::destinations() const
+{
+    QVariantList result;
+    for (const auto& destination : _router.destinations()) {
+        result.append(
+            QVariantMap{{QStringLiteral("destinationId"), destination.id},
+                        {QStringLiteral("destinationSession"), QVariant::fromValue(destination.session)},
+                        {QStringLiteral("reportsWrites"), destination.reportsWrites},
+                        {QStringLiteral("queuedFrames"), QVariant::fromValue(destination.queuedFrames)},
+                        {QStringLiteral("queuedBytes"), QVariant::fromValue(destination.queuedBytes)},
+                        {QStringLiteral("writtenFrames"), QVariant::fromValue(destination.writtenFrames)},
+                        {QStringLiteral("writtenBytes"), QVariant::fromValue(destination.writtenBytes)},
+                        {QStringLiteral("droppedFrames"), QVariant::fromValue(destination.droppedFrames)},
+                        {QStringLiteral("droppedBytes"), QVariant::fromValue(destination.droppedBytes)},
+                        {QStringLiteral("unconfirmedFrames"), QVariant::fromValue(destination.unconfirmedFrames)},
+                        {QStringLiteral("unconfirmedBytes"), QVariant::fromValue(destination.unconfirmedBytes)},
+                        {QStringLiteral("pendingFrames"), QVariant::fromValue(destination.pendingFrames)},
+                        {QStringLiteral("pendingBytes"), QVariant::fromValue(destination.pendingBytes)}});
+    }
+    return result;
+}
+
 void GPSCorrectionManager::shutdown()
 {
     if (_shutdown) {
@@ -217,5 +291,5 @@ void GPSCorrectionManager::shutdown()
     _diagnosticsTimer.stop();
     _router.shutdown();
     _udpInput.stop();
-    emit sourcesChanged();
+    _refreshDiagnostics();
 }

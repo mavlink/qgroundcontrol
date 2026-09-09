@@ -285,7 +285,13 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
 
         if (!_rtcmParser.validateCrc()) {
             qCWarning(NTRIPHttpTransportLog) << "RTCM CRC mismatch, dropping message id" << _rtcmParser.messageId();
+            const QByteArray rejected = _rtcmParser.currentFrame();
+            const int messageId = _rtcmParser.messageId();
             _rtcmParser.reset();
+            emit correctionRejectedAt(rejected, messageId, _receivedAtMs);
+            if (!guard || _stopped || socket != _socket) {
+                return;
+            }
             continue;
         }
 

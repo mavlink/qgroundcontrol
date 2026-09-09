@@ -27,6 +27,8 @@ public:
 
     virtual void updateCapabilities(GPSReceiverCapabilities&) const {}
 
+    virtual QString configurationError() const { return {}; }
+
 protected:
     template <class Driver>
     void setDriver(std::unique_ptr<Driver> driver)
@@ -62,6 +64,10 @@ struct GPSDriverFamily
     GPSReceiverCapabilities::Support nmeaSupport;
     GPSReceiverCapabilities::Support correctionInput;
     Factory create;
+    GPSReceiverCapabilities::Support constellationSelection = GPSReceiverCapabilities::Support::Unsupported;
+    GPSReceiverCapabilities::Support dynamicModelSelection = GPSReceiverCapabilities::Support::Unsupported;
+    GPSReceiverCapabilities::Support outputRateSelection = GPSReceiverCapabilities::Support::Unsupported;
+    GPSReceiverCapabilities::Support headingOffsetSelection = GPSReceiverCapabilities::Support::Unsupported;
 };
 
 std::span<const GPSDriverFamily> gpsDriverFamilies();

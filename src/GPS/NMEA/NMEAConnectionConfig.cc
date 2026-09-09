@@ -1,8 +1,5 @@
 #include "NMEAConnectionConfig.h"
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QUrl>
-
 #include "AutoConnectSettings.h"
 
 NMEAConnectionConfig NMEAConnectionConfig::fromSettings(AutoConnectSettings& settings)
@@ -30,30 +27,43 @@ NMEAConnectionConfig NMEAConnectionConfig::fromSettings(AutoConnectSettings& set
     return config;
 }
 
-QString NMEAConnectionConfig::validationError() const
+GPSReceiverProfile NMEAConnectionConfig::profile() const
 {
-    const auto tr = [](const char* text) { return QCoreApplication::translate("NMEAConnectionConfig", text); };
+    GPSReceiverProfile profile;
     switch (source) {
         case Disabled:
-            return {};
+            break;
         case Udp:
-            return port >= 0 && port <= 65535 ? QString() : tr("Enter a valid UDP port");
-        case Tcp: {
-            QUrl endpoint;
-            endpoint.setScheme(QStringLiteral("tcp"));
-            endpoint.setHost(host);
-            return !host.isEmpty() && endpoint.isValid() && !endpoint.host().isEmpty() && port >= 1 && port <= 65535
-                       ? QString()
-                       : tr("Enter a valid TCP host and port");
-        }
+            profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::UdpListener;
+            break;
+        case Tcp:
+            profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
+            break;
         case Serial:
+            profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Serial;
+            profile.configurationPolicy = receiverMode == Passive ? GPSReceiverProfile::ConfigurationPolicy::Passive
+                                                                  : GPSReceiverProfile::ConfigurationPolicy::Configure;
             if (receiverMode != Passive && receiverMode != Ublox) {
-                return tr("Select a valid receiver configuration");
+                profile.configurationPolicy = static_cast<GPSReceiverProfile::ConfigurationPolicy>(-1);
             }
-            if (device.isEmpty()) {
-                return tr("Select a serial device");
-            }
-            return receiverMode == Ublox || baud > 0 ? QString() : tr("Select a valid baud rate");
+            break;
+        default:
+            profile.endpoint.kind = static_cast<GPSReceiverProfile::Endpoint::Kind>(-1);
+            break;
     }
-    return tr("Select a valid NMEA source");
+    profile.endpoint.device = device;
+    profile.endpoint.host = host;
+    profile.endpoint.port = port;
+    profile.endpoint.baud = baud;
+    return profile.normalized();
+}
+
+bool NMEAConnectionConfig::operator==(const NMEAConnectionConfig& other) const
+{
+    return profile() == other.profile();
+}
+
+QString NMEAConnectionConfig::validationError() const
+{
+    return profile().validationError();
 }

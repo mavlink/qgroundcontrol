@@ -6,6 +6,7 @@
 #include <array>
 #include <functional>
 
+#include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionFrame.h"
 
 /// Selects one correction stream and submits complete frames to injected outputs.
@@ -25,6 +26,15 @@ public:
     using Clock = std::function<qint64()>;
     using Sink = std::function<quint64(const GPSCorrectionFrame&)>;
 
+    struct Submission
+    {
+        quint64 queuedBytes = 0;
+        quint64 destinationSession = 0;
+        GPSCorrectionReason reason = GPSCorrectionReason::DestinationUnavailable;
+    };
+
+    using DetailedSink = std::function<Submission(const GPSCorrectionFrame&)>;
+
     struct Statistics
     {
         quint64 session = 1;
@@ -35,6 +45,35 @@ public:
         quint64 routedFrames = 0;
         quint64 submittedBytes = 0;
         qint64 lastValidMs = 0;
+        quint64 receivedFrames = 0;
+        quint64 validatedBytes = 0;
+        quint64 selectedFrames = 0;
+        quint64 selectedBytes = 0;
+        quint64 queuedFrames = 0;
+        quint64 queuedBytes = 0;
+        quint64 writtenFrames = 0;
+        quint64 writtenBytes = 0;
+        quint64 droppedFrames = 0;
+        quint64 droppedBytes = 0;
+        quint64 unconfirmedFrames = 0;
+        quint64 unconfirmedBytes = 0;
+    };
+
+    struct Destination
+    {
+        QString id;
+        bool reportsWrites = false;
+        quint64 session = 0;
+        quint64 queuedFrames = 0;
+        quint64 queuedBytes = 0;
+        quint64 writtenFrames = 0;
+        quint64 writtenBytes = 0;
+        quint64 droppedFrames = 0;
+        quint64 droppedBytes = 0;
+        quint64 pendingFrames = 0;
+        quint64 pendingBytes = 0;
+        quint64 unconfirmedFrames = 0;
+        quint64 unconfirmedBytes = 0;
     };
 
     struct Source
@@ -66,24 +105,36 @@ public:
     QString activeInstance() const;
     GPSCorrectionSource activeSource() const;
     void setSink(const QString& id, Sink sink);
+    void setDetailedSink(const QString& id, DetailedSink sink, bool reportsWrites = true);
     void removeSink(const QString& id);
     bool acceptFrame(GPSCorrectionFrame frame);
+    bool recordDelivery(const GPSCorrectionDelivery& delivery);
+    void invalidateDestination(const QString& id, quint64 session);
+    void recordRejectedFrame(GPSCorrectionFrame frame, GPSCorrectionReason reason);
     void shutdown();
 
     const std::array<Statistics, 4>& statistics() const { return _statistics; }
 
     QList<Source> sources() const { return _sources.values(); }
 
+    QList<Destination> destinations() const { return _destinations.values(); }
+
+    const QList<GPSCorrectionEvent>& events() const { return _events; }
+
     qint64 nowMs() const { return _clock(); }
 
     static constexpr qint64 FRESHNESS_TIMEOUT_MS = 5000;
     static constexpr qint64 SWITCH_HOLD_DOWN_MS = 2000;
     static constexpr qsizetype MAX_SOURCE_INSTANCES = 64;
+    static constexpr qsizetype MAX_EVENTS = 256;
+    static constexpr qsizetype MAX_PENDING_DELIVERIES = 128;
+    static constexpr qsizetype MAX_DESTINATIONS = 16;
 
 signals:
     /// Emitted before invoking outputs for a different stream or source session.
     void sourceSelected(GPSCorrectionSource source, const QString& instance);
     void sourceInvalidated();
+    void frameRouted(const GPSCorrectionFrame& frame);
 
 private:
     static int _sourceIndex(GPSCorrectionSource source);
@@ -91,12 +142,36 @@ private:
     static QString _key(GPSCorrectionSource source, const QString& instance);
     bool _eligible(const Source& source, qint64 now) const;
     void _select(qint64 now);
+    void _recordEvent(const GPSCorrectionFrame& frame, GPSCorrectionStage stage, GPSCorrectionReason reason,
+                      quint64 bytes, const QString& destination = {}, quint64 destinationSession = 0);
+    void _recordDrop(const GPSCorrectionFrame& frame, GPSCorrectionReason reason, quint64 bytes,
+                     const QString& destination = {}, quint64 destinationSession = 0);
+    Statistics* _currentStatistics(const GPSCorrectionFrame& frame);
+
+    struct SinkEntry
+    {
+        DetailedSink submit;
+        bool reportsWrites = false;
+    };
+
+    struct PendingDelivery
+    {
+        GPSCorrectionFrame frame;
+        QString destination;
+        quint64 destinationSession = 0;
+        quint64 queuedBytes = 0;
+    };
 
     Clock _clock;
     std::array<Statistics, 4> _statistics;
     std::array<QString, 4> _configuredInstances;
     QMap<QString, Source> _sources;
-    QMap<QString, Sink> _sinks;
+    QMap<QString, SinkEntry> _sinks;
+    QMap<QString, Destination> _destinations;
+    QMap<QString, PendingDelivery> _pendingDeliveries;
+    QList<GPSCorrectionEvent> _events;
+    quint64 _nextEvent = 0;
+    quint64 _nextDelivery = 0;
     Policy _policy = Policy::Automatic;
     GPSCorrectionSource _manualSource = GPSCorrectionSource::Unknown;
     QString _manualInstance;

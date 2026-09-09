@@ -6,12 +6,13 @@
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionFrame.h"
 #include "GPSCorrectionRouter.h"
 #include "RTCMMavlink.h"
 #include "RTCMUdpInput.h"
 
-class NTRIPSettings;
+class GPSCorrectionSettings;
 
 /// Owns the shared MAVLink sequence domain and UDP correction input for all GPS sources.
 class GPSCorrectionManager : public QObject
@@ -23,6 +24,8 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(QVariantList sources READ sources NOTIFY sourcesChanged)
     Q_PROPERTY(QVariantList sourceInstances READ sourceInstances NOTIFY sourcesChanged)
     Q_PROPERTY(QString activeInstance READ activeInstance NOTIFY sourcesChanged)
+    Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT)
+    Q_PROPERTY(QVariantList destinations READ destinations NOTIFY sourcesChanged)
 
     friend class GPSCorrectionManagerTest;
 
@@ -38,7 +41,7 @@ public:
     explicit GPSCorrectionManager(QObject* parent = nullptr);
     ~GPSCorrectionManager() override;
 
-    void init(NTRIPSettings* settings);
+    void init(GPSCorrectionSettings* settings);
     void shutdown();
 
     RTCMMavlink* rtcmMavlink() { return &_rtcmMavlink; }
@@ -58,6 +61,14 @@ public:
 
     void addSink(const QString& id, GPSCorrectionRouter::Sink sink);
     void removeSink(const QString& id);
+    void addDetailedSink(const QString& id, GPSCorrectionRouter::DetailedSink sink, bool reportsWrites = true);
+    void recordDeliveries(const QList<GPSCorrectionDelivery>& deliveries);
+    void invalidateDestination(const QString& id, quint64 destinationSession);
+    void recordRejectedFrame(const GPSCorrectionFrame& frame, GPSCorrectionReason reason);
+
+    GPSCorrectionEventModel* events() { return &_eventModel; }
+
+    QVariantList destinations() const;
 
     QVariantList sources() const;
     QVariantList sourceInstances() const;
@@ -77,12 +88,14 @@ private:
     void _applyUdpInputSettings();
 
     void _scheduleSourcesChanged();
+    void _refreshDiagnostics();
 
     GPSCorrectionRouter _router;
+    GPSCorrectionEventModel _eventModel;
     QTimer _diagnosticsTimer;
     QTimer _healthTimer;
     RTCMMavlink _rtcmMavlink;
     RTCMUdpInput _udpInput;
-    QPointer<NTRIPSettings> _settings;
+    QPointer<GPSCorrectionSettings> _settings;
     bool _shutdown = false;
 };

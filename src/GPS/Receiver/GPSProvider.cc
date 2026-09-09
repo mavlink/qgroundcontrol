@@ -13,6 +13,26 @@
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.Receiver.GPSProvider")
 
+namespace {
+GPSCorrectionOutcome correctionOutcome(GPSDriver::CorrectionStatus status)
+{
+    switch (status) {
+        case GPSDriver::CorrectionStatus::Submitted:
+            return GPSCorrectionOutcome::Written;
+        case GPSDriver::CorrectionStatus::TransportError:
+            return GPSCorrectionOutcome::WriteFailed;
+        case GPSDriver::CorrectionStatus::Cancelled:
+            return GPSCorrectionOutcome::Cancelled;
+        case GPSDriver::CorrectionStatus::InvalidData:
+            return GPSCorrectionOutcome::InvalidData;
+        case GPSDriver::CorrectionStatus::NotReady:
+        case GPSDriver::CorrectionStatus::Unsupported:
+            return GPSCorrectionOutcome::NotReady;
+    }
+    return GPSCorrectionOutcome::NotReady;
+}
+}  // namespace
+
 GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                          std::shared_ptr<GPSByteBuffer> nmeaBuffer, QObject* parent)
     : QThread(parent)
@@ -151,7 +171,12 @@ void GPSProvider::run()
         return;
     }
     _mailbox->setCorrectionsEnabled(driver.readyForCorrections());
-    const auto disableCorrections = qScopeGuard([this]() { _mailbox->setCorrectionsEnabled(false); });
+    const auto disableCorrections = [this]() {
+        if (_mailbox->setCorrectionsEnabled(false)) {
+            emit dataReady();
+        }
+    };
+    const auto finishCorrections = qScopeGuard(disableCorrections);
     emit receiverReady();
 
     QElapsedTimer lastProgress;
@@ -162,13 +187,20 @@ void GPSProvider::run()
         // Limit writes per receive cycle so correction traffic cannot starve receiver parsing.
         for (int index = 0; index < 4 && !_requestStop && driver.readyForCorrections(); ++index) {
             const auto correction = _mailbox->takeCommand(GPSObservation::monotonicNowUs() / 1000);
+            if (_mailbox->scheduleDeliveryNotification()) {
+                emit dataReady();
+            }
             if (!correction) {
                 break;
             }
             const auto result = driver.injectCorrections(correction->data);
+            if (_mailbox->completeCommand(*correction, correctionOutcome(result.status),
+                                          qMax<qsizetype>(result.bytesWritten, 0))) {
+                emit dataReady();
+            }
             if (result.status == GPSDriver::CorrectionStatus::TransportError) {
                 failureDetail = tr("Cannot send corrections to the receiver");
-                _mailbox->setCorrectionsEnabled(false);
+                disableCorrections();
                 emit connectionErrorDetail(GPSConnectionError::DeviceError, failureDetail);
                 emit connectionError(GPSConnectionError::DeviceError);
                 return;
@@ -210,6 +242,7 @@ void GPSProvider::run()
             QThread::msleep(10);
         }
     }
+    disableCorrections();
     if (!_requestStop) {
         emit connectionErrorDetail(GPSConnectionError::DeviceError, failureDetail);
         emit connectionError(GPSConnectionError::DeviceError);

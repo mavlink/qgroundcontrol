@@ -95,10 +95,14 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
         Qt::QueuedConnection);
     connect(
         worker, &GPSProvider::connectionError, this,
-        [this, isCurrent](GPSConnectionError error) {
+        [this, isCurrent, mailbox = worker->mailbox(), generation](GPSConnectionError error) {
             if (isCurrent()) {
-                _ready = false;
                 const QPointer<GPSReceiverSession> guard(this);
+                _flushDeliveries(mailbox, generation);
+                if (!guard || !isCurrent()) {
+                    return;
+                }
+                _ready = false;
                 emit disconnected();
                 if (guard && isCurrent()) {
                     emit connectionError(error);
@@ -108,10 +112,14 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
         Qt::QueuedConnection);
     connect(
         worker, &QThread::finished, this,
-        [this, current, worker]() {
+        [this, current, worker, mailbox = worker->mailbox(), generation]() {
             _retiring.remove(worker);
             const QPointer<GPSReceiverSession> guard(this);
             if (current && _provider == current) {
+                _flushDeliveries(mailbox, generation);
+                if (!guard || !current || _provider != current) {
+                    return;
+                }
                 _provider = nullptr;
                 _ready = false;
                 emit disconnected();
@@ -134,8 +142,10 @@ void GPSReceiverSession::start(GPSType type, GPSProvider::TransportFactory facto
 void GPSReceiverSession::stop()
 {
     const QPointer<GPSReceiverSession> guard(this);
-    ++_generation;
+    const quint64 retiredGeneration = _generation;
+    const quint64 stoppingGeneration = ++_generation;
     GPSProvider* worker = _provider;
+    const auto mailbox = worker ? worker->mailbox() : nullptr;
     _provider = nullptr;
     _ready = false;
     if (worker) {
@@ -151,8 +161,14 @@ void GPSReceiverSession::stop()
     if (!guard) {
         return;
     }
+    if (mailbox) {
+        _flushDeliveries(mailbox, retiredGeneration);
+    }
+    if (!guard || _generation != stoppingGeneration) {
+        return;
+    }
     _nmeaStream.reset();
-    if (!guard) {
+    if (!guard || _generation != stoppingGeneration) {
         return;
     }
     emit disconnected();
@@ -193,16 +209,48 @@ bool GPSReceiverSession::readyForCorrections() const
 
 bool GPSReceiverSession::submitCorrections(const QByteArray& data, qint64 receivedAtMs, quint64 sessionId)
 {
-    if (sessionId != _generation || !readyForCorrections()) {
-        return false;
+    GPSCorrectionFrame frame;
+    frame.data = data;
+    frame.receivedAtMs = receivedAtMs;
+    return submitCorrections(frame, sessionId).accepted;
+}
+
+GPSCorrectionSubmitResult GPSReceiverSession::submitCorrections(const GPSCorrectionFrame& frame, quint64 sessionId)
+{
+    if (sessionId != _generation) {
+        return {false, GPSCorrectionOutcome::Cancelled};
     }
-    return _provider->mailbox()->submitCorrection(data, receivedAtMs, GPSObservation::monotonicNowUs() / 1000);
+    if (!readyForCorrections()) {
+        return {false, GPSCorrectionOutcome::NotReady};
+    }
+    return _provider->mailbox()->submitCorrection(frame, sessionId, GPSObservation::monotonicNowUs() / 1000);
 }
 
 void GPSReceiverSession::clearPendingCorrections()
 {
-    if (_provider) {
-        _provider->mailbox()->clearCommands();
+    if (!_provider) {
+        return;
+    }
+    const QPointer<GPSReceiverSession> guard(this);
+    const auto mailbox = _provider->mailbox();
+    const quint64 generation = _generation;
+    const bool notify = mailbox->clearCommands();
+    // Removing a sink may invalidate its pending IDs as soon as this call returns.
+    _flushDeliveries(mailbox, generation);
+    if (guard && _provider && _generation == generation && notify) {
+        // Consume the reserved wakeup even when the synchronous flush emptied its reports.
+        QMetaObject::invokeMethod(
+            this, [this, mailbox, generation]() { _drain(mailbox, generation); }, Qt::QueuedConnection);
+    }
+}
+
+void GPSReceiverSession::_flushDeliveries(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation)
+{
+    auto deliveries = mailbox->takeDeliveries();
+    deliveries.removeIf(
+        [generation](const GPSCorrectionDelivery& delivery) { return delivery.destinationSession != generation; });
+    if (!deliveries.empty()) {
+        emit correctionDeliveriesReady(deliveries);
     }
 }
 
@@ -221,6 +269,14 @@ void GPSReceiverSession::_drain(const std::shared_ptr<GPSReceiverMailbox>& mailb
         return;
     }
     auto batch = mailbox->take(GPSObservation::monotonicNowUs() / 1000);
+    batch.deliveries.removeIf(
+        [generation](const GPSCorrectionDelivery& delivery) { return delivery.destinationSession != generation; });
+    if (!batch.deliveries.empty()) {
+        emit correctionDeliveriesReady(batch.deliveries);
+    }
+    if (!current()) {
+        return;
+    }
     if (batch.position) {
         batch.position->sessionId = generation;
         emit positionReceived(*batch.position);

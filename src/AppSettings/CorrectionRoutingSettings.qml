@@ -24,7 +24,7 @@ SettingsGroupLayout {
     }
     readonly property bool _manual: root._source >= 1 && root._source <= 3
     readonly property string _selectedInstance: root._settings.correctionSourceInstance.rawValue
-    readonly property var _settings: QGroundControl.settingsManager.ntripSettings
+    readonly property var _settings: QGroundControl.settingsManager.gpsCorrectionSettings
     readonly property int _source: root._settings.correctionSource.rawValue
 
     heading: qsTr("Correction Routing")

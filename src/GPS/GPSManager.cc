@@ -4,6 +4,7 @@
 #include "AutoConnectSettings.h"
 #include "GPSBaseStationState.h"
 #include "GPSConnectionSettings.h"
+#include "GPSCorrectionSettings.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverCapabilities.h"
@@ -12,7 +13,6 @@
 #include "LinkManager.h"
 #include "NMEASourceManager.h"
 #include "NTRIPManager.h"
-#include "NTRIPSettings.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
@@ -22,6 +22,8 @@
 #endif
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
+
+#include <utility>
 
 QGC_LOGGING_CATEGORY(GPSManagerLog, "GPS.GPSManager")
 
@@ -82,11 +84,15 @@ GPSManager::GPSManager(SettingsManager& settingsManager, QGCPositionManager* pos
           receiverSettings->useFixedBasePosition(), receiverSettings->surveyInAccuracyLimit(),
           receiverSettings->surveyInMinObservationDuration(), receiverSettings->fixedBasePositionLatitude(),
           receiverSettings->fixedBasePositionLongitude(), receiverSettings->fixedBasePositionAltitude(),
-          receiverSettings->fixedBasePositionAccuracy(), settings->autoConnectSettings()->autoConnectRTKGPS(),
+          receiverSettings->fixedBasePositionAccuracy(), receiverSettings->constellationMask(),
+          receiverSettings->dynamicModel(), receiverSettings->outputRateHz(), receiverSettings->headingOffsetDeg(),
+          settings->autoConnectSettings()->autoConnectRTKGPS(),
           settings->autoConnectSettings()->autoConnectNetworkRTKGPS()}) {
         connect(fact, &Fact::rawValueChanged, this, [this]() { _updateReceiverSettings(); });
     }
     _updateReceiverSettings();
+    connect(&_receiverSession, &GPSReceiverSession::capabilitiesUpdated, this, &GPSManager::receiverSettingsChanged);
+    connect(&_receiverSession, &GPSReceiverSession::stateChanged, this, &GPSManager::receiverSettingsChanged);
     connect(settings->rtkSettings()->useReceiverPosition(), &Fact::rawValueChanged, this,
             &GPSManager::_updatePositionSource);
     connect(_receiver, &GPSReceiver::connectedChanged, this, &GPSManager::_updatePositionSource);
@@ -116,7 +122,7 @@ void GPSManager::init(NTRIPManager* ntrip)
     if (_connectionTimer || _shutdown) {
         return;
     }
-    auto* correctionSettings = _settings.ntripSettings();
+    auto* correctionSettings = _settings.gpsCorrectionSettings();
     _corrections.init(correctionSettings);
     for (Fact* fact : {correctionSettings->correctionSource(), correctionSettings->correctionSourceInstance(),
                        correctionSettings->injectLocalReceiver()}) {
@@ -125,15 +131,19 @@ void GPSManager::init(NTRIPManager* ntrip)
     connect(&_corrections, &GPSCorrectionManager::selectedSourceChanged, &_receiverSession,
             &GPSReceiverSession::clearPendingCorrections);
     _updateCorrectionSettings();
-    _corrections.addSink(QStringLiteral("localReceiver"), [this](const GPSCorrectionFrame& frame) -> quint64 {
-        if (_shutdown || frame.source == GPSCorrectionSource::LocalReceiver || !frame.validated ||
-            !_settings.ntripSettings()->injectLocalReceiver()->rawValue().toBool() ||
-            !_receiverSession.readyForCorrections()) {
-            return 0;
+    connect(&_receiverSession, &GPSReceiverSession::correctionDeliveriesReady, &_corrections,
+            &GPSCorrectionManager::recordDeliveries);
+    const auto invalidateDestination = [this]() {
+        if (_correctionDestinationSession != 0) {
+            const quint64 retiredSession = std::exchange(_correctionDestinationSession, 0);
+            _corrections.invalidateDestination(QStringLiteral("localReceiver"), retiredSession);
         }
-        return _receiverSession.submitCorrections(frame.data, frame.receivedAtMs, _receiverSession.sessionId())
-                   ? static_cast<quint64>(frame.data.size())
-                   : 0;
+    };
+    connect(&_receiverSession, &GPSReceiverSession::disconnected, this, invalidateDestination);
+    connect(&_receiverSession, &GPSReceiverSession::stateChanged, this, [this, invalidateDestination]() {
+        if (!_receiverSession.hasReceiver() || _correctionDestinationSession != _receiverSession.sessionId()) {
+            invalidateDestination();
+        }
     });
     _ntrip = ntrip;
     if (_ntrip) {
@@ -144,6 +154,15 @@ void GPSManager::init(NTRIPManager* ntrip)
         });
         connect(_ntrip, &NTRIPManager::correctionSessionEnded, this,
                 [this]() { _corrections.endSourceSession(GPSCorrectionSource::Ntrip); });
+        connect(_ntrip, &NTRIPManager::correctionRejectedAt, this,
+                [this](const QByteArray& data, int messageId, qint64 receivedAtMs) {
+                    if (!_shutdown && _ntrip) {
+                        _corrections.recordRejectedFrame(
+                            {GPSCorrectionSource::Ntrip, _corrections.sourceSession(GPSCorrectionSource::Ntrip),
+                             receivedAtMs, data, messageId, false, true, _ntrip->correctionSourceId()},
+                            GPSCorrectionReason::InvalidFrame);
+                    }
+                });
         connect(_ntrip, &NTRIPManager::correctionReceivedAt, this,
                 [this](const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs) {
                     if (!_shutdown) {
@@ -251,7 +270,6 @@ void GPSManager::shutdown()
         _ntrip->disconnect(this);
         _ntrip = nullptr;
     }
-    _corrections.removeSink(QStringLiteral("localReceiver"));
     if (_connectionTimer) {
         _connectionTimer->stop();
     }
@@ -260,6 +278,7 @@ void GPSManager::shutdown()
     }
     _receiverAutoConnect->stop();
     _receiverSession.shutdown();
+    _corrections.removeSink(QStringLiteral("localReceiver"));
     _corrections.shutdown();
 }
 
@@ -275,6 +294,20 @@ void GPSManager::_updateReceiverSettings(bool restart)
                                ? settings->autoConnectSettings()->autoConnectRTKGPS()->rawValue().toBool()
                                : settings->autoConnectSettings()->autoConnectNetworkRTKGPS()->rawValue().toBool();
     _receiverAutoConnect->setAutoConnect(automatic);
+    if (restart) {
+        emit receiverSettingsChanged();
+    }
+}
+
+QVariantList GPSManager::receiverSettings() const
+{
+    auto* settings = _settings.rtkSettings();
+    const auto capabilities = _receiverSession.hasReceiver()
+                                  ? _receiverSession.capabilities()
+                                  : GPSReceiverCapabilities::forType(
+                                        static_cast<GPSType>(settings->networkReceiverType()->rawValue().toInt()));
+    const bool baseStation = settings->receiverRole()->rawValue().toInt() == RTKSettings::RTKBase;
+    return capabilities.settingDescriptors(baseStation);
 }
 
 void GPSManager::_updateCorrectionSettings()
@@ -283,17 +316,35 @@ void GPSManager::_updateCorrectionSettings()
         return;
     }
     _receiverSession.clearPendingCorrections();
-    auto* settings = _settings.ntripSettings();
+    auto* settings = _settings.gpsCorrectionSettings();
     const int source = settings->correctionSource()->rawValue().toInt();
-    if (source >= NTRIPSettings::LocalReceiver && source <= NTRIPSettings::Udp) {
-        const auto category = source == NTRIPSettings::LocalReceiver ? GPSCorrectionSource::LocalReceiver
-                              : source == NTRIPSettings::Ntrip       ? GPSCorrectionSource::Ntrip
-                                                                     : GPSCorrectionSource::Udp;
+    if (source >= GPSCorrectionSettings::LocalReceiver && source <= GPSCorrectionSettings::Udp) {
+        const auto category = source == GPSCorrectionSettings::LocalReceiver ? GPSCorrectionSource::LocalReceiver
+                              : source == GPSCorrectionSettings::Ntrip       ? GPSCorrectionSource::Ntrip
+                                                                             : GPSCorrectionSource::Udp;
         _corrections.setSelectedSource(category);
         _corrections.setSelectedInstance(settings->correctionSourceInstance()->rawValue().toString());
         _corrections.setRoutingPolicy(GPSCorrectionManager::RoutingPolicy::Manual);
     } else {
-        _corrections.setRoutingPolicy(source == NTRIPSettings::All ? GPSCorrectionManager::RoutingPolicy::All
-                                                                   : GPSCorrectionManager::RoutingPolicy::Automatic);
+        _corrections.setRoutingPolicy(source == GPSCorrectionSettings::All
+                                          ? GPSCorrectionManager::RoutingPolicy::All
+                                          : GPSCorrectionManager::RoutingPolicy::Automatic);
+    }
+    if (settings->injectLocalReceiver()->rawValue().toBool()) {
+        _corrections.addDetailedSink(QStringLiteral("localReceiver"), [this](const GPSCorrectionFrame& frame) {
+            const quint64 session = _receiverSession.sessionId();
+            if (_shutdown || frame.source == GPSCorrectionSource::LocalReceiver || !frame.validated ||
+                !_settings.gpsCorrectionSettings()->injectLocalReceiver()->rawValue().toBool() ||
+                !_receiverSession.readyForCorrections()) {
+                return GPSCorrectionRouter::Submission{0, session, GPSCorrectionReason::DestinationUnavailable};
+            }
+            _correctionDestinationSession = session;
+            const auto result = _receiverSession.submitCorrections(frame, session);
+            return GPSCorrectionRouter::Submission{
+                result.accepted ? static_cast<quint64>(frame.data.size()) : 0, session,
+                result.accepted ? GPSCorrectionReason::None : gpsCorrectionReason(result.outcome)};
+        });
+    } else {
+        _corrections.removeSink(QStringLiteral("localReceiver"));
     }
 }

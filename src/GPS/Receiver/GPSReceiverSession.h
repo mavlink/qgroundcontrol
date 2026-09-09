@@ -30,6 +30,7 @@ public:
     bool readyForCorrections() const;
     /// Returns queue acceptance, not device acknowledgement. Call on the session thread.
     bool submitCorrections(const QByteArray& data, qint64 receivedAtMs, quint64 sessionId);
+    GPSCorrectionSubmitResult submitCorrections(const GPSCorrectionFrame& frame, quint64 sessionId);
     void clearPendingCorrections();
     GPSReceiverMailbox::Stats deliveryStats() const;
 
@@ -62,9 +63,11 @@ signals:
     void rtcmReceived(const QByteArray& data);
     void rtcmFrameReceived(const QByteArray& data, qint64 receivedAtMs);
     void surveyInReceived(const GPSSurveyInStatus& status);
+    void correctionDeliveriesReady(const QList<GPSCorrectionDelivery>& deliveries);
 
 private:
     void _drain(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
+    void _flushDeliveries(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
 
     QPointer<GPSProvider> _provider;
     std::unique_ptr<GPSByteStream> _nmeaStream;

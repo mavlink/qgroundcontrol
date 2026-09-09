@@ -358,16 +358,19 @@ void GPSDriverTest::_receiverRoleCommands_data()
 {
     QTest::addColumn<bool>("septentrio");
     QTest::addColumn<bool>("position");
-    QTest::newRow("femto-base") << false << false;
-    QTest::newRow("femto-position") << false << true;
-    QTest::newRow("septentrio-base") << true << false;
-    QTest::newRow("septentrio-position") << true << true;
+    QTest::addColumn<float>("headingOffset");
+    QTest::newRow("femto-base") << false << false << 5.0f;
+    QTest::newRow("femto-position") << false << true << 5.0f;
+    QTest::newRow("septentrio-base") << true << false << 5.0f;
+    QTest::newRow("septentrio-position") << true << true << 5.0f;
+    QTest::newRow("septentrio-position-heading-offset") << true << true << 12.0f;
 }
 
 void GPSDriverTest::_receiverRoleCommands()
 {
     QFETCH(bool, septentrio);
     QFETCH(bool, position);
+    QFETCH(float, headingOffset);
     std::atomic_bool stop{false};
 
     class CommandTransport : public GPSTransport
@@ -416,6 +419,7 @@ void GPSDriverTest::_receiverRoleCommands()
 
     GPSReceiverConfig config;
     config.role = position ? GPSReceiverConfig::Role::Position : GPSReceiverConfig::Role::RTKBase;
+    config.headingOffsetDeg = headingOffset;
     config.base.useFixedBase = true;
     config.base.fixedBaseLatitude = 10.0;
     config.base.fixedBaseLongitude = 20.0;
@@ -439,7 +443,9 @@ void GPSDriverTest::_receiverRoleCommands()
     if (septentrio) {
         QCOMPARE(commands.contains("setPVTMode, Rover, All, auto"), position);
         QCOMPARE(commands.contains("setPVTMode, Static"), !position);
-        QCOMPARE(commands.contains("setAttitudeOffset, 5.000, 0.000"), position);
+        const QByteArray headingCommand =
+            QStringLiteral("setAttitudeOffset, %1, 0.000").arg(headingOffset, 0, 'f', 3).toLatin1();
+        QCOMPARE(commands.contains(headingCommand), position);
         QCOMPARE(commands.contains("setDataInOut, USB1, Auto, RTCMv3+SBF"), !position);
     } else {
         QCOMPARE(commands.contains("POSAVE OFF"), position);

@@ -3,6 +3,7 @@
 #include <QtCore/QMetaType>
 #include <QtCore/QString>
 #include <QtCore/QStringView>
+#include <QtCore/QVariantList>
 
 #include <optional>
 
@@ -29,6 +30,32 @@ struct GPSReceiverCapabilities
     Support rtkBase = Support::Unsupported;
     Support nmeaOutput = Support::Unsupported;
     Support correctionInput = Support::Unsupported;
+    Support constellationSelection = Support::Unsupported;
+    Support dynamicModelSelection = Support::Unsupported;
+    Support outputRateSelection = Support::Unsupported;
+    Support headingOffsetSelection = Support::Unsupported;
+    int supportedConstellations = 31;
+
+    struct SettingDescriptor
+    {
+        QString key;
+        QString label;
+        QString units;
+        QString kind;
+        double defaultValue = 0;
+        double minimum = 0;
+        double maximum = 0;
+        QList<int> values;
+        QStringList labels;
+        Support support = Support::Unsupported;
+        bool requiresReconnect = true;
+        int requiredMask = 0;
+
+        bool accepts(double value) const;
+    };
+
+    QList<SettingDescriptor> settings(bool baseStation = false) const;
+    QVariantList settingDescriptors(bool baseStation = false) const;
 
     bool recognized() const { return manufacturerId >= 0; }
 

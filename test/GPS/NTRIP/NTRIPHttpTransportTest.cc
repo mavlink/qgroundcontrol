@@ -502,6 +502,7 @@ void NTRIPHttpTransportTest::_testFilterRejectsBadCrc()
     NTRIPTransportConfig cfg;
     cfg.mountpoint = QStringLiteral("TEST");
     NTRIPHttpTransport t(cfg);
+    QSignalSpy rejected(&t, &NTRIPStream::correctionRejectedAt);
 
     int count = 0;
     connect(&t, &NTRIPHttpTransport::RTCMDataUpdate, this, [&](const QByteArray&) { count++; });
@@ -517,6 +518,9 @@ void NTRIPHttpTransportTest::_testFilterRejectsBadCrc()
     verifyExpectedLogMessage();
 
     QCOMPARE(count, 1);
+    QCOMPARE(rejected.size(), 1);
+    QCOMPARE(rejected.first().at(0).toByteArray(), bad);
+    QCOMPARE(rejected.first().at(1).toInt(), 1005);
 }
 
 // ---------------------------------------------------------------------------

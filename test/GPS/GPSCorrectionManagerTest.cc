@@ -9,6 +9,7 @@
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSCorrectionManager.h"
+#include "GPSCorrectionSettings.h"
 #include "GPSManager.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
@@ -25,9 +26,9 @@ quint16 unusedPort()
     return socket.bind(QHostAddress::LocalHost, 0) ? socket.localPort() : 0;
 }
 
-void configureUdp(TestFixtures::SettingsFixture& saved, NTRIPSettings* settings, quint16 port)
+void configureUdp(TestFixtures::SettingsFixture& saved, GPSCorrectionSettings* settings, quint16 port)
 {
-    saved.setFactValue(settings->ntripServerConnectEnabled(), false);
+    saved.setFactValue(SettingsManager::instance()->ntripSettings()->ntripServerConnectEnabled(), false);
     saved.setFactValue(settings->rtcmUdpInputEnabled(), true);
     saved.setFactValue(settings->rtcmUdpInputPort(), port);
     saved.setFactValue(settings->rtcmUdpValidate(), true);
@@ -37,7 +38,7 @@ void configureUdp(TestFixtures::SettingsFixture& saved, NTRIPSettings* settings,
 void GPSCorrectionManagerTest::_sourcesShareForwarder()
 {
     TestFixtures::SettingsFixture saved;
-    auto* settings = SettingsManager::instance()->ntripSettings();
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
     const quint16 port = unusedPort();
     QVERIFY(port);
     configureUdp(saved, settings, port);
@@ -82,7 +83,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
 void GPSCorrectionManagerTest::_udpSettingsAndShutdown()
 {
     TestFixtures::SettingsFixture saved;
-    auto* settings = SettingsManager::instance()->ntripSettings();
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
     const quint16 port = unusedPort();
     QVERIFY(port);
     configureUdp(saved, settings, port);
@@ -145,7 +146,7 @@ void GPSCorrectionManagerTest::_shutdownDuringDelivery()
 {
     QFETCH(bool, validate);
     TestFixtures::SettingsFixture saved;
-    auto* settings = SettingsManager::instance()->ntripSettings();
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
     const quint16 port = unusedPort();
     QVERIFY(port);
     configureUdp(saved, settings, port);

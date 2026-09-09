@@ -83,3 +83,39 @@ void GPSReceiverCapabilitiesTest::_detectedCapabilities()
 }
 
 UT_REGISTER_TEST(GPSReceiverCapabilitiesTest, TestLabel::Unit)
+
+void GPSReceiverCapabilitiesTest::_settingDescriptors()
+{
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    auto ubx = GPSReceiverCapabilities::forType(GPSType::u_blox);
+    const auto descriptors = ubx.settingDescriptors();
+    QCOMPARE(descriptors.size(), 4);
+    for (const auto& value : descriptors) {
+        const auto descriptor = value.toMap();
+        QVERIFY(descriptor.value(QStringLiteral("requiresReconnect")).toBool());
+        QCOMPARE(descriptor.value(QStringLiteral("values")).toList().size(),
+                 descriptor.value(QStringLiteral("labels")).toStringList().size());
+    }
+    QCOMPARE(descriptors[0].toMap().value(QStringLiteral("requiredMask")).toInt(), 1);
+    config.constellationMask = 5;
+    config.dynamicModel = 4;
+    config.outputRateHz = 5;
+    QVERIFY(ubx.validationError(config).isEmpty());
+    QVERIFY(!GPSReceiverCapabilities::forType(GPSType::femto).validationError(config).isEmpty());
+    QVERIFY(!GPSReceiverCapabilities::forType(GPSType::septentrio).validationError(config).isEmpty());
+    ubx.outputRateSelection = GPSReceiverCapabilities::Support::Unsupported;
+    QVERIFY(!ubx.validationError(config).isEmpty());
+    config.outputRateHz = 0;
+    config.constellationMask = 2;
+    QVERIFY(!ubx.validationError(config).isEmpty());
+    config.constellationMask = 0;
+    config.dynamicModel = 1;
+    QVERIFY(!ubx.validationError(config).isEmpty());
+    config.dynamicModel = 0;
+    config.headingOffsetDeg = 12;
+    QVERIFY(!ubx.validationError(config).isEmpty());
+    QVERIFY(GPSReceiverCapabilities::forType(GPSType::septentrio).validationError(config).isEmpty());
+    config.role = GPSReceiverConfig::Role::RTKBase;
+    QVERIFY(!GPSReceiverCapabilities::forType(GPSType::septentrio).validationError(config).isEmpty());
+}

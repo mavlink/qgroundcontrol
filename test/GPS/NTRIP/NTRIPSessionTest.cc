@@ -187,10 +187,13 @@ private slots:
             streams.append(stream);
             return stream;
         });
+        QSignalSpy rejected(&session, &NTRIPSession::correctionRejected);
         auto cfg = config();
         cfg.username = QStringLiteral("secret-user");
         cfg.password = QStringLiteral("secret-password");
         session.start(cfg);
+        emit streams.first()->correctionRejectedAt(QByteArrayLiteral("bad-frame"), 1005, 1000);
+        QCOMPARE(rejected.size(), 1);
         session.sendNMEA("gga");
         QCOMPARE(streams.first()->sentNmea.size(), 1);
         streams.first()->simulateError(NTRIPError::SocketError, QStringLiteral("old failure"));
@@ -198,6 +201,8 @@ private slots:
         session.sendNMEA("stale");
         QCOMPARE(streams.first()->sentNmea.size(), 1);
         session.start(cfg);
+        emit streams.first()->correctionRejectedAt(QByteArrayLiteral("retired-frame"), 1005, 2000);
+        QCOMPARE(rejected.size(), 1);
         QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
         QCOMPARE(session.state(), NTRIPSession::State::Connected);
         QCOMPARE(session.failedAttempts(), 0);

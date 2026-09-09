@@ -3,6 +3,10 @@ qt_add_library(
     STATIC
     GPSConnectionConfig.cc
     GPSConnectionConfig.h
+    GPSReceiverProfile.cc
+    GPSReceiverProfile.h
+    GPSReceiverTransportFactory.cc
+    GPSReceiverTransportFactory.h
     GPSByteStream.cc
     GPSByteStream.h
     GPSProvider.cc
@@ -18,8 +22,8 @@ qt_add_library(
 target_include_directories(QGCGPSReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
     QGCGPSReceiver
-    PUBLIC QGCGPSDriver QGCGPSCore
-    PRIVATE QGCLogging QGCGPSCorrections
+    PUBLIC QGCGPSDriver QGCGPSCore QGCGPSCorrections
+    PRIVATE QGCLogging
 )
 
 # Discovery integrates the application serial-port registry; worker sessions remain in the standalone library.
