@@ -69,6 +69,22 @@ Item {
         planMasterController: _planMasterController
     }
 
+    Connections {
+        target: _appSettings ? _appSettings.defaultMissionItemAltitude : null
+
+        function onRawValueChanged() {
+            if (_visualItems.count > 1) {
+                mainWindow._showMessageDialogWorker(
+                    mainWindow,                                  // owner
+                    qsTr("Apply new altitude"),                  // dialogTitle
+                    qsTr("You have changed the default altitude for mission items. Would you like to apply that altitude to all the items in the current mission?"), // dialogText
+                    Dialog.Yes | Dialog.No,                      // buttons
+                    function() { _missionController.applyDefaultMissionAltitude() } // acceptFunction
+                )
+            }
+        }
+    }
+
     PlanMasterController {
         id: planMasterController
         flyView: false
