@@ -14,6 +14,8 @@ GPSPositionFactGroup::GPSPositionFactGroup(QObject* parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSFact.json"), parent)
 {
     qCDebug(GPSPositionFactGroupLog) << this;
+    _integrity = new GPSIntegrityFactGroup(this);
+    _addFactGroup(_integrity, QStringLiteral("integrity"));
     for (Fact* fact : {&_latFact, &_lonFact, &_mgrsFact, &_hdopFact, &_vdopFact, &_courseOverGroundFact, &_yawFact,
                        &_countFact, &_lockFact}) {
         _addFact(fact);

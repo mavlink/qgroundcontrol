@@ -32,10 +32,10 @@ void GPSPositionSourceAdapter::_disconnectSource()
     }
 }
 
-void GPSPositionSourceAdapter::configure(QGeoPositionInfoSource* source, GPSSourceHealth* health,
-                                         const QString& identity, bool platform)
+void GPSPositionSourceAdapter::configure(QObject* producer, GPSSourceHealth* health, const QString& identity,
+                                         bool platform)
 {
-    if (_source == source && _providedHealth == health && _identity == identity && _platform == platform) {
+    if (_producer == producer && _providedHealth == health && _identity == identity && _platform == platform) {
         return;
     }
     const QPointer<GPSPositionSourceAdapter> guard(this);
@@ -44,15 +44,16 @@ void GPSPositionSourceAdapter::configure(QGeoPositionInfoSource* source, GPSSour
     if (!guard || generation != _generation) {
         return;
     }
-    _source = source;
+    _producer = producer;
+    _source = qobject_cast<QGeoPositionInfoSource*>(producer);
     _providedHealth = health;
     _identity = identity;
     _platform = platform;
     _fallbackHealth.reset();
-    if (!guard || generation != _generation || !_source) {
+    if (!guard || generation != _generation || !_producer) {
         return;
     }
-    _connections.append(connect(source, &QObject::destroyed, this, [this]() { emit bindingChanged(); }));
+    _connections.append(connect(producer, &QObject::destroyed, this, [this]() { emit bindingChanged(); }));
     if (health) {
         _connections.append(
             connect(health, &GPSSourceHealth::positionChanged, this, &GPSPositionSourceAdapter::observationChanged));
@@ -61,14 +62,17 @@ void GPSPositionSourceAdapter::configure(QGeoPositionInfoSource* source, GPSSour
             emit bindingChanged();
         }));
     }
-    _connections.append(connect(source, &QGeoPositionInfoSource::positionUpdated, this,
+    if (!_source) {
+        return;
+    }
+    _connections.append(connect(_source, &QGeoPositionInfoSource::positionUpdated, this,
                                 [this, generation](const QGeoPositionInfo& position) {
                                     if (_generation == generation && _active && !_providedHealth) {
                                         updatePosition(position);
                                     }
                                 }));
     _connections.append(connect(
-        source, &QGeoPositionInfoSource::errorOccurred, this, [this, generation](QGeoPositionInfoSource::Error error) {
+        _source, &QGeoPositionInfoSource::errorOccurred, this, [this, generation](QGeoPositionInfoSource::Error error) {
             if (_generation != generation || !_active || _providedHealth) {
                 return;
             }
@@ -82,11 +86,11 @@ void GPSPositionSourceAdapter::configure(QGeoPositionInfoSource* source, GPSSour
 
 void GPSPositionSourceAdapter::setActive(bool active)
 {
-    if (_active == active || !_source) {
+    if (_active == active || !_producer) {
         return;
     }
     _active = active;
-    if (_providedHealth) {
+    if (_providedHealth || !_source) {
         return;
     }
     const QPointer<GPSPositionSourceAdapter> guard(this);

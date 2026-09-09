@@ -8,9 +8,7 @@ QGC_LOGGING_CATEGORY(GPSRecordingDeviceLog, "GPS.Recording.GPSRecordingDevice")
 
 GPSRecordingDevice::GPSRecordingDevice(QIODevice* source, std::shared_ptr<GPSRecordingStream> recording,
                                        QObject* parent)
-    : QIODevice(parent)
-    , _source(source)
-    , _recording(std::move(recording))
+    : QIODevice(parent), _source(source), _recording(std::move(recording))
 {
     qCDebug(GPSRecordingDeviceLog) << this;
     if (!source || !source->isOpen()) {
@@ -61,7 +59,7 @@ qint64 GPSRecordingDevice::readData(char* data, qint64 maximum)
     if (count > 0) {
         _lastReadUs = GPSReadTimestamp::from(_source);
         if (_recording) {
-            _recording->record(GPSRecordingBuffer::Kind::Rx, QByteArrayView(data, count), 0, started);
+            _recording->record(GPSRecordingBuffer::Kind::Rx, QByteArrayView(data, count), 0, started, _lastReadUs);
         }
     } else if (count < 0 && _recording) {
         _recording->record(GPSRecordingBuffer::Kind::ReadError, {}, static_cast<int>(count), started);

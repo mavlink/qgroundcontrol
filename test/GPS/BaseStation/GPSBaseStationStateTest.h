@@ -11,6 +11,7 @@ class GPSBaseStationStateTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _referenceMetadata();
     void _surveyRoleGating_data();
     void _surveyRoleGating();
     void _roleChangeAndDisconnectReset();

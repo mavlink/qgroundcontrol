@@ -82,6 +82,36 @@ void GPSReceiverSession::start(const GPSReceiverProfile& profile, GPSProvider::T
         },
         Qt::QueuedConnection);
     connect(
+        worker, &GPSProvider::transportOpenFinished, this,
+        [this, isCurrent](const GPSOpenResult& result) {
+            if (isCurrent() && !_attempt.terminal() && !_attempt.transportOpen) {
+                _attempt.transportOpen = result;
+                const auto snapshot = _attempt;
+                emit attemptChanged(snapshot);
+            }
+        },
+        Qt::QueuedConnection);
+    connect(
+        worker, &GPSProvider::configurationFinished, this,
+        [this, isCurrent](const GPSConfigurationResult& result) {
+            if (isCurrent() && !_attempt.terminal() && !_attempt.configurationResult) {
+                _attempt.configurationResult = result;
+                const auto snapshot = _attempt;
+                emit attemptChanged(snapshot);
+            }
+        },
+        Qt::QueuedConnection);
+    connect(
+        worker, &GPSProvider::transportReadFailed, this,
+        [this, isCurrent](const GPSReadResult& result) {
+            if (isCurrent() && !_attempt.terminal() && !_attempt.transportRead) {
+                _attempt.transportRead = result;
+                const auto snapshot = _attempt;
+                emit attemptChanged(snapshot);
+            }
+        },
+        Qt::QueuedConnection);
+    connect(
         worker, &GPSProvider::configurationReported, this,
         [this, isCurrent, generation](const GPSConfigurationReport& report) {
             if (isCurrent() && !_configurationTerminal) {
@@ -398,6 +428,7 @@ void GPSReceiverSession::_drain(const std::shared_ptr<GPSReceiverMailbox>& mailb
         return;
     }
     if (batch.survey) {
+        batch.survey->sessionId = generation;
         emit surveyInReceived(*batch.survey);
     }
     if (!current()) {

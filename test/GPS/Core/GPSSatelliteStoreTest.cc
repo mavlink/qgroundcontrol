@@ -22,6 +22,7 @@ void GPSSatelliteStoreTest::_constellationRetirement()
     store.beginSession(QStringLiteral("receiver"), 1);
     const quint64 nowUs = GPSObservation::monotonicNowUs();
     GPSSatelliteObservation raw;
+    raw.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     raw.sessionId = 1;
     raw.satellites = {makeSatellite(GPSSatellite::Constellation::GPS, 3),
                       makeSatellite(GPSSatellite::Constellation::Galileo, 3, false)};
@@ -55,6 +56,7 @@ void GPSSatelliteStoreTest::_viewAndUseExpireIndependently()
     store.beginSession(QStringLiteral("nmeaReceiver"), 1);
     const quint64 nowUs = GPSObservation::monotonicNowUs();
     GPSSatelliteObservation raw;
+    raw.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     raw.sessionId = 1;
     raw.satellites = {makeSatellite(GPSSatellite::Constellation::GPS, 2)};
     raw.provenance = {{GPSSatellite::Constellation::GPS, nowUs - 10000, nowUs - 400000, 1}};
@@ -91,6 +93,7 @@ void GPSSatelliteStoreTest::_timerKeepsFreshConstellation()
     store.beginSession(QStringLiteral("receiver"), 1);
     const quint64 nowUs = GPSObservation::monotonicNowUs();
     GPSSatelliteObservation raw;
+    raw.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     raw.sessionId = 1;
     raw.satellites = {makeSatellite(GPSSatellite::Constellation::GPS, 1),
                       makeSatellite(GPSSatellite::Constellation::Galileo, 2)};
@@ -135,3 +138,44 @@ void GPSSatelliteStoreTest::_sessionsAndReentrantDelivery()
 }
 
 UT_REGISTER_TEST(GPSSatelliteStoreTest, TestLabel::Unit)
+
+void GPSSatelliteStoreTest::_fullSnapshotsReplaceAndDeltasPreserve()
+{
+    GPSSatelliteStore store;
+    store.beginSession(QStringLiteral("receiver"), 1);
+    const auto now = GPSObservation::monotonicNowUs();
+    GPSSatelliteObservation full{
+        now - 10000,
+        1,
+        {makeSatellite(GPSSatellite::Constellation::GPS, 1), makeSatellite(GPSSatellite::Constellation::Galileo, 2)}};
+    store.updateObservation(full);
+    QCOMPARE(store.observation().satellitesInViewCount(), 2);
+    GPSSatelliteObservation delta{now - 9000, 1, {makeSatellite(GPSSatellite::Constellation::GPS, 3)}};
+    delta.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
+    store.updateObservation(delta);
+    QCOMPARE(store.observation().satellitesInViewCount(), 2);
+    QCOMPARE(store.observation().satellites[0].id, 3);
+    full.monotonicTimestampUs = now - 8000;
+    full.satellites = {makeSatellite(GPSSatellite::Constellation::GPS, 4, std::nullopt)};
+    store.updateObservation(full);
+    QCOMPARE(store.observation().satellitesInViewCount(), 1);
+    QCOMPARE(store.observation().satellites[0].id, 4);
+    QVERIFY(!store.observation().satellites[0].used);
+    QCOMPARE(store.observation().satellitesInUseCount(), -1);
+    // A retired constellation cannot be restored by an older queued delta.
+    delta.satellites = {makeSatellite(GPSSatellite::Constellation::Galileo, 2)};
+    store.updateObservation(delta);
+    QCOMPARE(store.observation().satellitesInViewCount(), 1);
+    full.monotonicTimestampUs = now - 7000;
+    full.satellites.clear();
+    store.updateObservation(full);
+    QCOMPARE(store.observation().satellitesInViewCount(), 0);
+    QCOMPARE(store.observation().satellitesInUseCount(), 0);
+    // Full snapshots also cannot overwrite a newer delta already accepted for that constellation.
+    delta.monotonicTimestampUs = now - 5000;
+    store.updateObservation(delta);
+    full.monotonicTimestampUs = now - 6000;
+    store.updateObservation(full);
+    QCOMPARE(store.observation().satellitesInViewCount(), 1);
+    QCOMPARE(store.observation().satellites.first().constellation, GPSSatellite::Constellation::Galileo);
+}

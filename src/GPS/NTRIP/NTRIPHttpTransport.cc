@@ -1,6 +1,5 @@
 #include "NTRIPHttpTransport.h"
 
-#include <QtCore/QDateTime>
 #include <QtCore/QPointer>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
@@ -159,6 +158,7 @@ void NTRIPHttpTransport::_connect()
                                    << " mount=" << _config.mountpoint;
 
     _httpHandshakeDone = false;
+    _eof = false;
     _httpDecoder.reset();
     _rtcmDecoder.reset();
 
@@ -191,40 +191,28 @@ void NTRIPHttpTransport::_connect()
         if (_stopped || !_socket) {
             return;
         }
+        // Qt reports orderly EOF as an error before disconnected(). The latter
+        // drains all buffered bytes and finalizes the HTTP decoder.
+        if (code == QAbstractSocket::RemoteHostClosedError) {
+            return;
+        }
         _connectTimeoutTimer.stop();
 
         QString msg = _socket->errorString();
-        if (code == QAbstractSocket::RemoteHostClosedError && !_httpHandshakeDone) {
-            if (!_config.mountpoint.isEmpty()) {
-                msg += " (peer closed before HTTP response; check mountpoint and credentials)";
-            }
-        }
 
         qCWarning(NTRIPHttpTransportLog) << "Socket error code:" << int(code) << " msg:" << msg;
         _fail(NTRIPError::SocketError, msg);
     });
 
-    connect(_socket, &QTcpSocket::disconnected, this,
-            [this]() {
-                if (_stopped || !_socket) {
-                    return;
-                }
-                _connectTimeoutTimer.stop();
-
-                const QByteArray trailing = _socket->readAll();
-                QString reason;
-                if (!trailing.isEmpty()) {
-                    reason = QString::fromUtf8(trailing).trimmed();
-                } else {
-                    reason = QStringLiteral("Server disconnected");
-                }
-
-                qCWarning(NTRIPHttpTransportLog)
-                    << "Disconnected:"
-                    << "reason=" << reason << "ms_since_200="
-                    << (_postOkTimestampMs > 0 ? QDateTime::currentMSecsSinceEpoch() - _postOkTimestampMs : -1);
-                _fail(NTRIPError::ServerDisconnected, reason);
-            });
+    connect(_socket, &QTcpSocket::disconnected, this, [this]() {
+        if (_stopped || !_socket) {
+            return;
+        }
+        _eof = true;
+        _connectTimeoutTimer.stop();
+        _dataWatchdogTimer.stop();
+        _scheduleRead();
+    });
 
     connect(_socket, &QTcpSocket::readyRead, this, &NTRIPHttpTransport::_readBytes);
 
@@ -251,8 +239,9 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
 
     const QPointer<NTRIPHttpTransport> guard(this);
     const QPointer<QTcpSocket> socket = _socket;
+    const auto generation = _generation;
     emit bytesReceived(buffer.size());
-    if (!guard || _stopped || socket != _socket) {
+    if (!guard || _stopped || socket != _socket || generation != _generation) {
         return;
     }
     for (char ch : buffer) {
@@ -268,7 +257,7 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
             _dataWatchdogTimer.start();
             emit correctionReceivedAt(decoded->data, decoded->messageId, decoded->filtered, decoded->receivedAtMs);
         }
-        if (!guard || _stopped || socket != _socket) {
+        if (!guard || _stopped || socket != _socket || generation != _generation) {
             return;
         }
     }
@@ -276,7 +265,7 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
 
 void NTRIPHttpTransport::_scheduleRead()
 {
-    if (_readScheduled || _stopped || !_socket || _socket->bytesAvailable() <= 0) {
+    if (_readScheduled || _stopped || !_socket || (!_eof && _socket->bytesAvailable() <= 0)) {
         return;
     }
     _readScheduled = true;
@@ -303,14 +292,25 @@ void NTRIPHttpTransport::_readBytes()
     _receivedAtMs =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
             .count();
-    const auto result = _httpDecoder.feed(_socket->read(MAX_READ_PER_TURN));
-    if (result.failure) {
-        _fail(*result.failure);
+    const auto result = _socket->bytesAvailable() > 0 ? _httpDecoder.feed(_socket->read(MAX_READ_PER_TURN))
+                                                      : NTRIPHttpDecoder::Result{};
+    _consumeResult(result);
+    if (!guard || _stopped || generation != _generation) {
         return;
     }
+    if (_eof && _socket->bytesAvailable() == 0) {
+        _consumeResult(_httpDecoder.finish());
+        return;
+    }
+    _scheduleRead();
+}
+
+void NTRIPHttpTransport::_consumeResult(const NTRIPHttpDecoder::Result& result)
+{
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const auto generation = _generation;
     if (result.connected) {
         _httpHandshakeDone = true;
-        _postOkTimestampMs = QDateTime::currentMSecsSinceEpoch();
         _connectTimeoutTimer.stop();
         _dataWatchdogTimer.start();
         emit connected();
@@ -324,11 +324,14 @@ void NTRIPHttpTransport::_readBytes()
             return;
         }
     }
+    if (result.failure) {
+        _fail(*result.failure);
+        return;
+    }
     if (result.complete) {
         _fail(NTRIPError::ServerDisconnected, tr("Caster ended the correction stream"));
         return;
     }
-    _scheduleRead();
 }
 
 void NTRIPHttpTransport::sendNMEA(const QByteArray& nmea)

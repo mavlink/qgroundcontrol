@@ -7,7 +7,7 @@
 #include <chrono>
 
 #include "GPSDriverData.h"
-#include "GPSReceiverPositionSource.h"
+#include "TestGPSPositionSource.h"
 #include "satellite_info.h"
 #include "sensor_gps.h"
 
@@ -29,7 +29,7 @@ sensor_gps_s positionFix()
 
 void GPSReceiverPositionSourceTest::_convertsFixAndMotion()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     auto fix = positionFix();
     fix.vel_ned_valid = true;
@@ -115,7 +115,7 @@ void GPSReceiverPositionSourceTest::_validatesFix()
 {
     QFETCH(sensor_gps_s, fix);
     QFETCH(bool, valid);
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     source.startUpdates();
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
@@ -127,7 +127,7 @@ void GPSReceiverPositionSourceTest::_validatesFix()
 
 void GPSReceiverPositionSourceTest::_requestsAndReset()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     source.requestUpdate(20);
@@ -151,7 +151,7 @@ void GPSReceiverPositionSourceTest::_requestsAndReset()
 
 void GPSReceiverPositionSourceTest::_pendingRequestKeepsDeadline()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     source.requestUpdate(50);
     source.requestUpdate(5000);
@@ -171,7 +171,7 @@ void GPSReceiverPositionSourceTest::_pendingRequestKeepsDeadline()
 
 void GPSReceiverPositionSourceTest::_reportsLossOnceUntilRecovery()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     source.startUpdates();
@@ -195,7 +195,7 @@ void GPSReceiverPositionSourceTest::_reportsLossOnceUntilRecovery()
 
 void GPSReceiverPositionSourceTest::_intervalCoalescesLatestFix()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     source.setUpdateInterval(50);
     source.startUpdates();
@@ -217,7 +217,7 @@ void GPSReceiverPositionSourceTest::_intervalCoalescesLatestFix()
 
 void GPSReceiverPositionSourceTest::_intervalChangesWhileStarted()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     source.setUpdateInterval(10000);
     source.startUpdates();
@@ -237,7 +237,7 @@ void GPSReceiverPositionSourceTest::_intervalChangesWhileStarted()
 
 void GPSReceiverPositionSourceTest::_requestBypassesInterval()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     source.setUpdateInterval(10000);
@@ -257,7 +257,7 @@ void GPSReceiverPositionSourceTest::_requestBypassesInterval()
 
 void GPSReceiverPositionSourceTest::_stopPreservesRequest()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     source.setUpdateInterval(20);
     source.startUpdates();
@@ -273,7 +273,7 @@ void GPSReceiverPositionSourceTest::_stopPreservesRequest()
 
 void GPSReceiverPositionSourceTest::_resetDiscardsPendingUpdate()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     source.setUpdateInterval(20);
@@ -293,7 +293,7 @@ void GPSReceiverPositionSourceTest::_resetDiscardsPendingUpdate()
 
 void GPSReceiverPositionSourceTest::_intervalRejectsStaleFix()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     source.setUpdateInterval(750);
@@ -311,7 +311,7 @@ void GPSReceiverPositionSourceTest::_intervalRejectsStaleFix()
 
 void GPSReceiverPositionSourceTest::_silentIntervalsReportLossOnce()
 {
-    GPSReceiverPositionSource source;
+    TestGPSPositionSource source;
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     source.setUpdateInterval(20);

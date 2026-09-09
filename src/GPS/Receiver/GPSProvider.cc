@@ -114,9 +114,15 @@ void GPSProvider::run()
     if (_requestStop) {
         return;
     }
-    if (!transport || !transport->open()) {
-        if (!_requestStop) {
-            emit connectionErrorDetail(GPSConnectionError::OpenFailed, tr("Cannot open the receiver connection"));
+    const auto opened = transport ? transport->open() : GPSOpenResult{GPSOpenStatus::Unsupported};
+    emit transportOpenFinished(opened);
+    if (opened.status != GPSOpenStatus::Opened) {
+        if (!_requestStop && opened.status != GPSOpenStatus::Cancelled) {
+            const QString detail = !opened.detail.isEmpty() ? opened.detail
+                                   : opened.status == GPSOpenStatus::TimedOut
+                                       ? tr("Receiver connection timed out")
+                                       : tr("Cannot open the receiver connection");
+            emit connectionErrorDetail(GPSConnectionError::OpenFailed, detail);
             emit connectionError(GPSConnectionError::OpenFailed);
         }
         return;
@@ -151,7 +157,7 @@ void GPSProvider::run()
         gotData = true;
         qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2mm valid: %3 active: %4")
                                        .arg(status.durationSecs)
-                                       .arg(status.meanAccuracyMM)
+                                       .arg(status.meanAccuracyMM.value_or(0))
                                        .arg(status.valid)
                                        .arg(status.active);
         surveyInStatus(status);
@@ -169,13 +175,14 @@ void GPSProvider::run()
         _recording->configurationStarted();
     }
     const bool configured = driver.configure();
+    emit configurationFinished(driver.configurationResult());
     if (_recording) {
         _recording->configurationFinished(static_cast<int>(driver.configurationResult().status));
     }
     publishConfiguration();
     emit capabilitiesUpdated(driver.capabilities());
     if (!configured) {
-        if (!_requestStop) {
+        if (!_requestStop && driver.configurationResult().status != GPSConfigurationStatus::Cancelled) {
             emit connectionErrorDetail(GPSConnectionError::ConfigFailed, driver.configurationResult().error);
             emit connectionError(GPSConnectionError::ConfigFailed);
         }
@@ -197,7 +204,8 @@ void GPSProvider::run()
     lastProgress.start();
     QString failureDetail = tr("Receiver connection failed");
     QByteArray bytes(4096, Qt::Uninitialized);
-    while (!_requestStop && !transport->fatalError()) {
+    bool cancelled = false;
+    while (!_requestStop) {
         // Give each complete frame its full budget, then service receive before another write.
         if (driver.readyForCorrections()) {
             const auto correction = _mailbox->takeCommand(GPSObservation::monotonicNowUs() / 1000);
@@ -231,12 +239,17 @@ void GPSProvider::run()
         gotData = false;
         bool progress = false;
         if (_nmeaBuffer) {
-            const int count = transport->read(reinterpret_cast<uint8_t*>(bytes.data()), bytes.size(), timeoutMs);
-            if (count < 0) {
+            const auto result = transport->read(reinterpret_cast<uint8_t*>(bytes.data()), bytes.size(), timeoutMs);
+            if (result.status != GPSReadStatus::Data && result.status != GPSReadStatus::TimedOut) {
+                cancelled = result.status == GPSReadStatus::Cancelled;
+                emit transportReadFailed(result);
+                if (!result.detail.isEmpty()) {
+                    failureDetail = result.detail;
+                }
                 break;
             }
-            progress = count > 0;
-            if (progress && _nmeaBuffer->append(bytes.first(count))) {
+            progress = result.bytesRead > 0;
+            if (progress && _nmeaBuffer->append(bytes.first(result.bytesRead))) {
                 emit nmeaDataReady();
             }
         } else {
@@ -244,6 +257,13 @@ void GPSProvider::run()
             if (result.status == GPSDriver::ReceiveStatus::Cancelled ||
                 result.status == GPSDriver::ReceiveStatus::DeviceError ||
                 result.status == GPSDriver::ReceiveStatus::NotConfigured) {
+                cancelled = result.status == GPSDriver::ReceiveStatus::Cancelled;
+                if (result.transportRead) {
+                    emit transportReadFailed(*result.transportRead);
+                    if (!result.transportRead->detail.isEmpty()) {
+                        failureDetail = result.transportRead->detail;
+                    }
+                }
                 break;
             }
             progress = result.status == GPSDriver::ReceiveStatus::Data || gotData;
@@ -259,7 +279,7 @@ void GPSProvider::run()
         }
     }
     disableCorrections();
-    if (!_requestStop) {
+    if (!_requestStop && !cancelled) {
         emit connectionErrorDetail(GPSConnectionError::DeviceError, failureDetail);
         emit connectionError(GPSConnectionError::DeviceError);
     }

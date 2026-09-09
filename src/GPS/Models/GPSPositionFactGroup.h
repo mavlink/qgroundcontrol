@@ -1,12 +1,14 @@
 #pragma once
 
 #include "FactGroup.h"
+#include "GPSIntegrityFactGroup.h"
 #include "GPSObservation.h"
 
 /// Live GPS fix Facts shared by vehicle telemetry and local receivers.
 class GPSPositionFactGroup : public FactGroup
 {
     Q_OBJECT
+    Q_PROPERTY(GPSIntegrityFactGroup* integrity READ integrity CONSTANT)
     Q_PROPERTY(Fact* lat READ lat CONSTANT)
     Q_PROPERTY(Fact* lon READ lon CONSTANT)
     Q_PROPERTY(Fact* mgrs READ mgrs CONSTANT)
@@ -44,6 +46,8 @@ public:
                         std::optional<int> lockCode = std::nullopt);
     void resetPosition();
 
+    GPSIntegrityFactGroup* integrity() { return _integrity; }
+
 protected:
     Fact _latFact = Fact(0, QStringLiteral("lat"), FactMetaData::valueTypeDouble);
     Fact _lonFact = Fact(0, QStringLiteral("lon"), FactMetaData::valueTypeDouble);
@@ -57,4 +61,5 @@ protected:
 
 private:
     quint64 _positionRevision = 0;
+    GPSIntegrityFactGroup* _integrity = nullptr;
 };

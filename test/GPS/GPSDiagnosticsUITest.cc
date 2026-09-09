@@ -12,6 +12,7 @@
 
 #include "ColoredSvgImageProvider.h"
 #include "Fact.h"
+#include "GPSIntegrityFactGroup.h"
 #include "GPSPositionSettings.h"
 #include "QGCFileDialogController.h"
 #include "SettingsManager.h"
@@ -165,6 +166,7 @@ void GPSDiagnosticsUITest::_observationDetails()
          {QStringLiteral("nmeaSatelliteModel"), QVariant::fromValue(nmea.get())},
          {QStringLiteral("relativePosition"), QVariant::fromValue(relative.get())}}));
     QVERIFY2(panel, qPrintable(component.errorString()));
+    QVERIFY(qobject_cast<GPSIntegrityFactGroup*>(panel->property("integrity").value<QObject*>()));
     auto* root = qobject_cast<QQuickItem*>(panel.get());
     QVERIFY(!findItem(root, QStringLiteral("gpsSatelliteDetails")));
     auto* details = findItem(root, QStringLiteral("gpsObservationDetailsToggle"));
@@ -284,4 +286,82 @@ void GPSDiagnosticsUITest::_mountpointNarrowLayout()
         QVERIFY(image.save(capture));
     }
     root->setParentItem(nullptr);
+}
+
+void GPSDiagnosticsUITest::_integrityDetails()
+{
+    GPSIntegrityFactGroup integrity;
+    integrity.setLiveUpdates(true);
+    QQmlEngine engine;
+    configureEngine(engine);
+    QQmlComponent component(&engine);
+    component.loadFromModule("QGroundControl.AppSettings", "ReceiverObservationDiagnostics");
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    std::unique_ptr<QObject> panel(
+        component.createWithInitialProperties({{QStringLiteral("integrity"), QVariant::fromValue(&integrity)}}));
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    auto* root = qobject_cast<QQuickItem*>(panel.get());
+    auto* toggle = findItem(root, QStringLiteral("gpsObservationDetailsToggle"));
+    QVERIFY(toggle);
+    toggle->setProperty("checked", true);
+    QTRY_VERIFY_WITH_TIMEOUT(findItem(root, QStringLiteral("gpsIntegritySummary")), TestTimeout::mediumMs());
+    auto* summary = findItem(root, QStringLiteral("gpsIntegritySummary"));
+    QVERIFY(summary->property("text").toString().contains(QStringLiteral("no fresh report")));
+    GPSIntegrityObservation observation;
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.jammingState = 3;
+    observation.spoofingState = 2;
+    observation.correctionsProtocol = 1;
+    observation.correctionsUsed = 2;
+    integrity.update(observation);
+    auto* jamming = findItem(root, QStringLiteral("gpsIntegrity_jammingState"));
+    auto* authentication = findItem(root, QStringLiteral("gpsIntegrity_authenticationState"));
+    auto* corrections = findItem(root, QStringLiteral("gpsIntegrity_correctionsUsed"));
+    QVERIFY(jamming);
+    QVERIFY(authentication);
+    QVERIFY(corrections);
+    QVERIFY(jamming->property("text").toString().contains(QStringLiteral("Ongoing")));
+    QVERIFY(authentication->property("text").toString().contains(QStringLiteral("Unknown")));
+    QVERIFY(corrections->property("text").toString().contains(QStringLiteral("Used")));
+    // Satellite source selection must not relabel local receiver integrity as NMEA data.
+    findItem(root, QStringLiteral("gpsSatelliteSource"))->setProperty("currentIndex", 1);
+    QCOMPARE(summary->property("text").toString(), QStringLiteral("Local receiver integrity"));
+    integrity.reset();
+    QVERIFY(summary->property("text").toString().contains(QStringLiteral("no fresh report")));
+    QVERIFY(jamming->property("text").toString().contains(QStringLiteral("Unknown")));
+    QVERIFY(!jamming->isVisible());
+}
+
+void GPSDiagnosticsUITest::_correctionLinkLabels()
+{
+    QQmlEngine engine;
+    configureEngine(engine);
+    auto corrections = mock(engine, R"(
+        import QtQml
+        QtObject {
+            property var sources: []
+            property var destinations: [
+                {destinationId: "mavlink/17", queuedBytes: 10, writtenBytes: 0, reportsWrites: false, droppedBytes: 0, pendingBytes: 0, unconfirmedBytes: 10},
+                {destinationId: "mavlink/23", queuedBytes: 0, writtenBytes: 0, reportsWrites: false, droppedBytes: 10, pendingBytes: 0, unconfirmedBytes: 0}
+            ]
+            property var events: []
+        }
+    )");
+    QVERIFY(corrections);
+    QQmlComponent component(&engine);
+    component.loadFromModule("QGroundControl.AppSettings", "CorrectionDiagnostics");
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    std::unique_ptr<QObject> panel(component.createWithInitialProperties(
+        {{QStringLiteral("corrections"), QVariant::fromValue(corrections.get())}}));
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    auto* root = qobject_cast<QQuickItem*>(panel.get());
+    auto* first = findItem(root, QStringLiteral("correctionDestination_mavlink/17"));
+    auto* second = findItem(root, QStringLiteral("correctionDestination_mavlink/23"));
+    QVERIFY(first);
+    QVERIFY(second);
+    QVERIFY(first->property("text").toString().startsWith(QStringLiteral("Vehicle link 17")));
+    QVERIFY(second->property("text").toString().startsWith(QStringLiteral("Vehicle link 23")));
+    QVERIFY(first->property("text").toString().contains(QStringLiteral("unconfirmed")));
 }

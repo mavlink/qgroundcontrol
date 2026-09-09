@@ -74,6 +74,11 @@ public:
     }
 
     void setTransportForTest(NTRIPStream* stream) { _session.setStreamForTest(stream); }
+
+    void setPositionProvider(NTRIPGgaProvider::PositionSource source, NTRIPGgaProvider::PositionProvider provider)
+    {
+        _ggaProvider.setPositionProvider(source, std::move(provider));
+    }
     void startNTRIP();
     void stopNTRIP();
 

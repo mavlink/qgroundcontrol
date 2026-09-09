@@ -1,5 +1,7 @@
 #include "RTCMMavlinkTest.h"
 
+#include <QtCore/QPointer>
+
 #include "RTCMMavlink.h"
 
 namespace {
@@ -25,6 +27,106 @@ QByteArray makePayload(qsizetype size, char fill = 'R')
 }
 
 }  // namespace
+
+void RTCMMavlinkTest::_testOutputFanout()
+{
+    RTCMMavlink sender;
+    const auto bytes = makePayload(360);
+    QVERIFY(sender.submitToOutputs(bytes).isEmpty());
+    QCOMPARE(sender.totalBytesSubmitted(), 0ULL);
+    int firstCalls = 0;
+    int secondCalls = 0;
+    sender.setOutputProvider([&]() {
+        const RTCMMavlink::Output first{QStringLiteral("link1"), 1, [&](const GpsRtcmPacket&) {
+                                            ++firstCalls;
+                                            return true;
+                                        }};
+        const RTCMMavlink::Output second{QStringLiteral("link2"), 2, [&](const GpsRtcmPacket&) {
+                                             ++secondCalls;
+                                             return true;
+                                         }};
+        return QList<RTCMMavlink::Output>{first, second, first};
+    });
+    const auto admitted = sender.submitToOutputs(bytes);
+    QCOMPARE(admitted.size(), 2);
+    QCOMPARE(firstCalls, 3);
+    QCOMPARE(secondCalls, 3);
+    QVERIFY(admitted[0].complete);
+    QVERIFY(admitted[1].complete);
+    QCOMPARE(admitted[0].queuedBytes, 360ULL);
+    QCOMPARE(admitted[1].queuedBytes, 360ULL);
+    QCOMPARE(sender.totalBytesSubmitted(), 720ULL);
+}
+
+void RTCMMavlinkTest::_testPartialOutput_data()
+{
+    QTest::addColumn<int>("rejectAt");
+    QTest::addColumn<quint64>("queuedBytes");
+    QTest::newRow("unavailable-before-first-packet") << 1 << quint64(0);
+    QTest::newRow("disappears-after-first-packet") << 2 << quint64(180);
+    QTest::newRow("terminator-not-admitted") << 3 << quint64(360);
+}
+
+void RTCMMavlinkTest::_testPartialOutput()
+{
+    QFETCH(int, rejectAt);
+    QFETCH(quint64, queuedBytes);
+    RTCMMavlink sender;
+    int calls = 0;
+    sender.setOutputProvider([&]() {
+        return QList<RTCMMavlink::Output>{
+            {QStringLiteral("link"), 7, [&](const GpsRtcmPacket&) { return ++calls < rejectAt; }}};
+    });
+    const auto admitted = sender.submitToOutputs(makePayload(360));
+    QCOMPARE(admitted.size(), 1);
+    QCOMPARE(admitted[0].queuedBytes, queuedBytes);
+    QCOMPARE(admitted[0].session, 7ULL);
+    QVERIFY(!admitted[0].complete);
+    QCOMPARE(calls, rejectAt);
+    QCOMPARE(sender.totalBytesSubmitted(), queuedBytes);
+}
+
+void RTCMMavlinkTest::_testOutputReplacementAndDeletion()
+{
+    RTCMMavlink sender;
+    int oldCalls = 0;
+    int replacementCalls = 0;
+    sender.setOutputProvider([&]() {
+        return QList<RTCMMavlink::Output>{{QStringLiteral("old"), 1, [&](const GpsRtcmPacket&) {
+                                               ++oldCalls;
+                                               sender.setOutputProvider([&]() {
+                                                   return QList<RTCMMavlink::Output>{
+                                                       {QStringLiteral("new"), 2, [&](const GpsRtcmPacket& packet) {
+                                                            ++replacementCalls;
+                                                            return sequenceId(packet.flags) == uint8_t(1);
+                                                        }}};
+                                               });
+                                               return true;
+                                           }}};
+    });
+    const auto first = sender.submitToOutputs(makePayload(360));
+    QCOMPARE(first.size(), 1);
+    QCOMPARE(first[0].queuedBytes, 180ULL);
+    QVERIFY(!first[0].complete);
+    QCOMPARE(oldCalls, 1);
+    QCOMPARE(replacementCalls, 0);
+    QCOMPARE(sender.totalBytesSubmitted(), 180ULL);
+    const auto second = sender.submitToOutputs(makePayload(360));
+    QVERIFY(second[0].complete);
+    QCOMPARE(replacementCalls, 3);
+    QPointer<RTCMMavlink> destroyed = new RTCMMavlink;
+    destroyed->setOutputProvider([&]() {
+        return QList<RTCMMavlink::Output>{{QStringLiteral("deleted"), 1, [&](const GpsRtcmPacket&) {
+                                               delete destroyed.data();
+                                               return true;
+                                           }}};
+    });
+    const auto retired = destroyed->submitToOutputs(makePayload(360));
+    QVERIFY(destroyed.isNull());
+    QCOMPARE(retired.size(), 1);
+    QCOMPARE(retired[0].queuedBytes, 180ULL);
+    QVERIFY(!retired[0].complete);
+}
 
 void RTCMMavlinkTest::_testEmpty()
 {

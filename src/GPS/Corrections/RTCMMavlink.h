@@ -1,25 +1,11 @@
 #pragma once
 
-#include <QtCore/QByteArray>
-#include <QtCore/QList>
 #include <QtCore/QObject>
 
-#include <atomic>
-#include <cstdint>
-#include <memory>
+#include <functional>
 
 #include "DataRateTracker.h"
-
-typedef struct __mavlink_gps_rtcm_data_t mavlink_gps_rtcm_data_t;
-class LinkInterface;
-
-/// One GPS_RTCM_DATA payload ready to encode. flags layout matches MAVLink:
-/// bit0 = fragmented, bits1-2 = fragment ID, bits3-7 = sequence ID.
-struct GpsRtcmPacket
-{
-    uint8_t flags = 0;
-    QByteArray data;  // 0..kFragmentLen bytes
-};
+#include "RTCMMavlinkPacket.h"
 
 class RTCMMavlink : public QObject
 {
@@ -29,63 +15,55 @@ class RTCMMavlink : public QObject
     Q_PROPERTY(quint64 totalBytesSubmitted READ totalBytesSubmitted NOTIFY deliveryStatsChanged)
 
 public:
-    /// MAVLink GPS_RTCM_DATA data[] field length.
-    static constexpr qsizetype kFragmentLen = 180;
-    /// Fragment ID is 2 bits — at most 4 fragments per reassembled message.
-    static constexpr qsizetype kMaxFragments = 4;
-    /// Max payload that fits one fragmented sequence (4 * 180).
-    static constexpr qsizetype kMaxAssembledLen = kFragmentLen * kMaxFragments;
-
-    RTCMMavlink(QObject* parent = nullptr);
-    ~RTCMMavlink();
-
-    quint64 totalBytesSent() const { return _rateTracker.totalBytes(); }
-
-    double bandwidthKBps() const { return _rateTracker.kBps(); }
-
-    quint64 totalBytesSubmitted() const { return _submittedBytes; }
-
-    /// Returns payload bytes queued across connected links; this is not an acknowledgement.
-    quint64 submit(QByteArrayView data);
-
-    /// Pack one RTCM blob into GPS_RTCM_DATA packets per MAVLink rules.
-    ///
-    /// - size 0: no packets
-    /// - size <= 180: one unfragmented packet
-    /// - 181..720: fragmented; exact multiples of 180 with fewer than 4 fragments
-    ///   get a final zero-length fragment (required by MAVLink / ArduPilot / PX4)
-    /// - size > 720: stream as successive unfragmented chunks (protocol cannot
-    ///   reassemble more than 720 bytes in one sequence)
-    ///
-    /// @param sequenceId starting sequence id (0..31); advanced for each logical message
-    /// @return packets plus the next sequence id to use
-    struct PackResult
+    struct Output
     {
-        QList<GpsRtcmPacket> packets;
-        uint8_t nextSequenceId = 0;
+        QString id;
+        quint64 session = 0;
+        /// True means admitted to the output send API, never physical delivery or receiver acknowledgement.
+        std::function<bool(const GpsRtcmPacket&)> submit;
     };
 
-    static PackResult pack(QByteArrayView data, uint8_t sequenceId);
+    struct Admission
+    {
+        QString id;
+        quint64 session = 0;
+        quint64 queuedBytes = 0;
+        /// Includes the zero-length terminator when fragmentation requires one.
+        bool complete = false;
+    };
 
-public slots:
-    void RTCMDataUpdate(QByteArrayView data);
+    using OutputProvider = std::function<QList<Output>()>;
+    using PackResult = RTCMMavlinkPacket::PackResult;
+    static constexpr qsizetype kFragmentLen = RTCMMavlinkPacket::kFragmentLen;
+    static constexpr qsizetype kMaxFragments = RTCMMavlinkPacket::kMaxFragments;
+    static constexpr qsizetype kMaxAssembledLen = RTCMMavlinkPacket::kMaxAssembledLen;
 
-public:
-    /// Stream synthetic RTCM frames to vehicles until requestStop, for the
-    /// SIMULATE_RTCM_OUTPUT dev build. Blocks the calling thread.
-    void sendSimulatedData(const std::atomic_bool& requestStop);
+    explicit RTCMMavlink(QObject* parent = nullptr);
+    ~RTCMMavlink() override;
+
+    quint64 totalBytesSent() const { return _rateTracker.totalBytes(); }
+    double bandwidthKBps() const { return _rateTracker.kBps(); }
+    quint64 totalBytesSubmitted() const { return _submittedBytes; }
+
+    void setOutputProvider(OutputProvider provider);
+    QList<Admission> submitToOutputs(QByteArrayView data);
+    /// Compatibility aggregate; diagnostics should consume individual output admissions.
+    quint64 submit(QByteArrayView data);
+
+    static PackResult pack(QByteArrayView data, uint8_t sequenceId)
+    {
+        return RTCMMavlinkPacket::pack(data, sequenceId);
+    }
 
 signals:
     void bandwidthChanged();
     void deliveryStatsChanged();
 
 private:
-    static QList<std::shared_ptr<LinkInterface>> _connectedLinks();
-    static int _sendMessageOnLinks(const mavlink_gps_rtcm_data_t& data,
-                                   const QList<std::shared_ptr<LinkInterface>>& links);
-    static uint8_t _makeFlags(bool fragmented, uint8_t fragmentId, uint8_t sequenceId);
-
+    OutputProvider _outputProvider;
+    quint64 _outputRevision = 0;
     quint64 _submittedBytes = 0;
     uint8_t _sequenceId = 0;
     DataRateTracker _rateTracker;
+    bool _submitting = false;
 };

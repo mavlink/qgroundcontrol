@@ -7,6 +7,12 @@ class NTRIPHttpTransportTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void testBodyBeforeMalformedChunk_data();
+    void testBodyBeforeMalformedChunk();
+    void testEofFinalization_data();
+    void testEofFinalization();
+    void testBodyObserverRetiresAttempt_data();
+    void testBodyObserverRetiresAttempt();
     void testChunkedCorrectionsYieldBetweenReadBatches();
     void testPublicObserverCanStop_data();
     void testPublicObserverCanStop();

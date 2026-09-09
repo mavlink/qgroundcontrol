@@ -1,31 +1,4 @@
-qt_add_library(
-    QGCGPSReceiver
-    STATIC
-    GPSConnectionConfig.cc
-    GPSConnectionConfig.h
-    GPSReceiverProfile.cc
-    GPSReceiverProfile.h
-    GPSReceiverTransportFactory.cc
-    GPSReceiverTransportFactory.h
-    GPSByteStream.cc
-    GPSByteStream.h
-    GPSProvider.cc
-    GPSProvider.h
-    GPSReceiverPositionSource.cc
-    GPSReceiverPositionSource.h
-    GPSReceiverMailbox.cc
-    GPSReceiverMailbox.h
-    GPSReceiverSession.cc
-    GPSReceiverSession.h
-    GPSReceiverAttempt.h
-)
-
-target_include_directories(QGCGPSReceiver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(
-    QGCGPSReceiver
-    PUBLIC QGCGPSDriver QGCGPSCore QGCGPSCorrections QGCGPSRecording
-    PRIVATE QGCLogging
-)
+qgc_add_gps_component(QGCGPSReceiver COMPONENT Receiver LOGGING_TARGET QGCLogging)
 
 # Discovery integrates the application serial-port registry; worker sessions remain in the standalone library.
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverAutoConnect.cc GPSReceiverAutoConnect.h)
@@ -33,7 +6,10 @@ if(NOT QGC_NO_SERIAL_LINK)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverAutoConnectSerial.cc)
 endif()
 
-# Application presentation uses Facts; the receiver worker library stays independent of the UI.
+# Saved settings and presentation use Facts; worker sessions remain independent of the application.
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSConnectionSettings.cc GPSConnectionSettings.h
+                                             GPSReceiverSettingsPresentation.cc GPSReceiverSettingsPresentation.h
+)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiver.cc GPSReceiver.h GPSReceiverFactGroup.cc
                                              GPSReceiverFactGroup.h
 )

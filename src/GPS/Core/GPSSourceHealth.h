@@ -2,10 +2,11 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QObject>
-#include <QtCore/QTimer>
+#include <QtCore/QPointer>
 #include <QtPositioning/QGeoPositionInfo>
 
 #include "GPSObservation.h"
+#include "GPSRuntimeScheduler.h"
 
 /// Session health is independent of transport readiness and RTK survey-in validity.
 class GPSSourceHealth : public QObject
@@ -33,13 +34,15 @@ public:
     };
     Q_ENUM(State)
 
-    explicit GPSSourceHealth(QObject* parent = nullptr);
+    explicit GPSSourceHealth(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
     ~GPSSourceHealth() override;
 
     static constexpr int FRESHNESS_TIMEOUT_MS = 5000;
     static qint64 ageMilliseconds(quint64 monotonicTimestampUs);
 
     int freshnessTimeoutMs() const { return _freshnessTimeoutMs; }
+
+    void setFreshnessTimeoutMs(int timeoutMs);
 
     State state() const { return _state; }
 
@@ -67,9 +70,6 @@ public:
     void invalidatePosition();
     void reset();
     void applySatelliteObservation(const GPSSatelliteObservation& observation);
-    void updateSatellitesInView(int count, qint64 ageMs = 0);
-    void updateSatellitesInUse(int count, qint64 ageMs = 0);
-    void updateSatelliteCounts(int inView, int inUse, qint64 ageMs = 0);
     /// Satellite decoder failures do not invalidate a fresh count supplied with a position fix.
     void clearSatelliteReports();
     void clearSatellites();
@@ -80,15 +80,17 @@ signals:
 
 private:
     void _setState(State state);
-    void _updateSatelliteCount(int count, qint64 ageMs, int& stored, QTimer& timer);
+    void _cancel(GPSRuntimeScheduler::TaskId& task);
+    qint64 _age(quint64 timestampUs) const;
+    void _updateFixSatelliteCount(int count, qint64 ageMs);
 
     int _freshnessTimeoutMs = FRESHNESS_TIMEOUT_MS;
     GPSObservation _observation;
     State _state = NoData;
-    QTimer _positionTimer;
-    QTimer _satellitesInViewTimer;
-    QTimer _satellitesInUseTimer;
-    QTimer _fixSatellitesInUseTimer;
+    bool _positionInvalidated = true;
+    QPointer<GPSRuntimeScheduler> _scheduler;
+    GPSRuntimeScheduler::TaskId _positionTask = 0;
+    GPSRuntimeScheduler::TaskId _fixSatellitesTask = 0;
     int _satellitesInViewCount = -1;
     int _satellitesInUseCount = -1;
     int _fixSatellitesInUseCount = -1;

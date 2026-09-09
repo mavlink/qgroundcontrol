@@ -6,7 +6,7 @@
 bool GPSObservation::usable() const
 {
     const double accuracy = position.attribute(QGeoPositionInfo::HorizontalAccuracy);
-    return fixQuality != FixQuality::NoFix && position.isValid() &&
+    return receiverFixValid.value_or(true) && fixQuality != FixQuality::NoFix && position.isValid() &&
            position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) && qIsFinite(accuracy) && accuracy > 0 &&
            accuracy <= 100;
 }
@@ -43,11 +43,22 @@ double GPSObservation::heading() const
 
 QGeoPositionInfo GPSObservation::acceptedPosition(PositionUse use) const
 {
+    if (use == PositionUse::Diagnostics) {
+        return position.isValid() ? position : QGeoPositionInfo();
+    }
+    if (use == PositionUse::Gga) {
+        return receiverFixValid.value_or(true) && fixQuality != FixQuality::NoFix && position.isValid()
+                   ? position
+                   : QGeoPositionInfo();
+    }
     if (!usable()) {
         return {};
     }
     QGeoPositionInfo accepted = position;
     switch (use) {
+        case PositionUse::Diagnostics:
+        case PositionUse::Gga:
+            break;
         case PositionUse::GroundStation:
         case PositionUse::Motion:
         case PositionUse::NTRIP:

@@ -59,7 +59,6 @@ void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
     QVERIFY(mgr.securityWarning().contains(QStringLiteral("without TLS")));
 }
 
-
 // ---------------------------------------------------------------------------
 // Reconnect backoff (migrated from NTRIPReconnectPolicyTest)
 // ---------------------------------------------------------------------------
@@ -87,7 +86,7 @@ void NTRIPManagerTest::testDuplicateTransportErrorsScheduleOneRetry()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
     QCOMPARE(mgr._session._failedAttempts, 1);
-    QCOMPARE(mgr._session._retryTimer.interval(), std::chrono::milliseconds(1000));
+    QCOMPARE(mgr._session.nextRetryDelay(), std::chrono::milliseconds(1000));
     QVERIFY(mgr.statusMessage().contains(QStringLiteral("first failure")));
     QVERIFY(!mgr.statusMessage().contains(QStringLiteral("duplicate failure")));
     verifyExpectedLogMessage();
@@ -116,7 +115,7 @@ void NTRIPManagerTest::testRetiredTransportErrorCannotAffectNewSession()
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
     QCOMPARE(mgr._session._stream.data(), second);
     QCOMPARE(mgr._session._failedAttempts, 0);
-    QVERIFY(!mgr._session._retryTimer.isActive());
+    QVERIFY(!mgr._session.retryPending());
 }
 
 void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
@@ -213,7 +212,7 @@ void NTRIPManagerTest::testCorrectionObserverCanStopSession()
     transport->simulateRtcmData(QByteArrayLiteral("correction"), 1005);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
     QVERIFY(!mgr._session._stream);
-    QVERIFY(!mgr._session._retryTimer.isActive());
+    QVERIFY(!mgr._session.retryPending());
 }
 
 void NTRIPManagerTest::testSessionStartObserverCanStop_data()

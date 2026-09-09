@@ -10,6 +10,10 @@ The UBX trace fixes the expected configuration writes and NAV-PVT result. Change
 receiver configuration should be reviewed against that contract before updating the
 trace; regenerating expected writes automatically would hide regressions.
 
+The runtime uses the production component definitions in
+`src/GPS/cmake/GPSBuild.cmake`; the harness supplies logging and native clock
+injection. Codec-only checks live in `test/GPS/Recording`.
+
 ## Run
 
 The normal test build registers `GPSReplayTest` with the `Unit`, `GPS`, and `Replay`
@@ -22,18 +26,37 @@ cmake --build build/gps-replay
 ctest --test-dir build/gps-replay --output-on-failure
 ```
 
-The tests cover native configuration and position decoding at three read fragment
-sizes, NMEA position and receipt timestamps across disconnect/reopen, exact outgoing
-bytes across split writes, timeouts, read errors, short writes, cancellation, and
-NTRIP session retirement with stale correction rejection. The NMEA test calls Qt's
-actual sentence parser synchronously after splitting; it does not exercise the live
-position source's timer-driven publication. The NTRIP test injects a shared clock
-for receipt/freshness and explicitly restarts after failure; it does not replace the
-session's retry QTimer with a virtual scheduler.
+The tests cover native configuration and decoding at three fragmentation sizes,
+exact outgoing writes, partial delivery, typed errors, cancellation, and capture
+roundtrips. `GPSReplayScheduler` drives the same scheduled retry callbacks as
+production NTRIP sessions. Retry deadlines advance automatically; stopping the
+session cancels pending recovery. `GPSReplayDevice` schedules captured connection
+and RX events into the real `NMEADecoderSession`, including its position source,
+satellite assembler and health store. Tests verify publication cadence, original
+receipt age and suppression of publications after a close/reopen transition.
+
+The public NMEA cadence and request deadlines use the injected scheduler. Qt's
+private NMEA epoch-merging timer remains internal to Qt; deterministic tests trigger
+its normal flush by supplying the next timestamped epoch. A final epoch at EOF
+still requires Qt's event loop. These tests do not claim to virtualize that private
+timer or the native receiver worker thread.
+
+For sanitizer coverage, configure a separate Clang build:
+
+```sh
+cmake -S test/GPS/Replay -B build/gps-replay-asan -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/6.11.1/gcc_64 -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_BUILD_TYPE=Debug \
+  '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all' \
+  '-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined'
+cmake --build build/gps-replay-asan
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+  ctest --test-dir build/gps-replay-asan --output-on-failure
+```
 
 ## Trace format
 
-The shared `GPSRecordingDocument` codec writes version 2 and reads versions 1 and 2.
+The shared `GPSRecordingDocument` codec writes version 3 and reads versions 1, 2 and 3.
 New files require `fileType: "GPSRecording"`. This minimal version 1 synthetic trace
 remains supported (real capture profile mappings are documented in the recorder guide):
 
@@ -99,7 +122,7 @@ GPSReplayTrace::load(path, trace, error, streamId);
 GPSReplayClock clock(&gps_test_time);
 std::atomic_bool stop = false;
 GPSReplayTransport transport(clock, stop, std::move(trace));
-if (transport.open()) {
+if (transport.open().status == GPSOpenStatus::Opened) {
     auto driver = createGPSReplayDriver(transport, sinks, error);
     if (driver && driver->configure()) {
         driver->receive(1000);
@@ -122,3 +145,14 @@ deadline instead of guessing intermediate transmission progress. Other checks co
 wrong JSON types, fractional or unsupported versions, invalid stream identifiers,
 unknown or credential-bearing metadata fields, invalid operation timing, exact
 hex payloads, v1 profile conversion and impossible partial-delivery counts.
+
+Version 3 adds optional `open_status` and `read_status` with stable enum names.
+Transport diagnostic text is excluded because it can contain device paths or
+endpoints. Native transports currently provide read completion timestamps; passive
+QIODevice sources that implement `GPSReadTimestamp` additionally preserve original
+receipt in `received_us`. This signed offset uses the same origin as `at_us` and
+can be negative when data arrived before recording began. A missing receipt falls
+back to `at_us` for older traces and native reads. Replay shifts the virtual origin
+when necessary, preserving the exact receipt age without unsigned underflow.
+Passive TCP/UDP profiles have unknown fixed baud (`0`); the native driver fixed-baud
+convention is retained only for configured receivers.

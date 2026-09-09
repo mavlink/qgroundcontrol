@@ -43,13 +43,21 @@ void NTRIPSourceTableController::fetch(const NTRIPTransportConfig& config, const
     // Debounce repeat clicks for the same caster, but let a request for a
     // different caster supersede an in-flight one (_abortReply below cancels it).
     if (_fetchStatus == FetchStatus::InProgress && cacheKey == _lastFetchKey) {
+        _sortCoord = sortCoord;
         return;
     }
 
-    if (_model->count() > 0 && _fetchedAtMs > 0 && cacheKey == _lastFetchKey) {
+    if (_fetchedAtMs > 0 && cacheKey == _lastFetchKey) {
         const qint64 age = QDateTime::currentMSecsSinceEpoch() - _fetchedAtMs;
-        if (age < kCacheTtlMs) {
+        if (age >= 0 && age < kCacheTtlMs) {
             qCDebug(NTRIPSourceTableControllerLog) << "Source table cache hit, age:" << age << "ms";
+            const QPointer<NTRIPSourceTableController> guard(this);
+            const auto generation = _generation;
+            _sortCoord = sortCoord;
+            _model->updateDistances(sortCoord);
+            if (!guard || generation != _generation) {
+                return;
+            }
             _fetchStatus = FetchStatus::Success;
             emit fetchStatusChanged();
             return;
@@ -70,6 +78,7 @@ void NTRIPSourceTableController::fetch(const NTRIPTransportConfig& config, const
     const QPointer<NTRIPSourceTableController> guard(this);
     _sortCoord = sortCoord;
     _lastFetchKey = cacheKey;
+    _fetchedAtMs = 0;
     _fetchStatus = FetchStatus::InProgress;
     _fetchError.clear();
     emit fetchStatusChanged();
@@ -164,11 +173,9 @@ void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
     }
     _fetchedAtMs = QDateTime::currentMSecsSinceEpoch();
 
-    if (_sortCoord.isValid()) {
-        _model->updateDistances(_sortCoord);
-        if (!guard || generation != _generation) {
-            return;
-        }
+    _model->updateDistances(_sortCoord);
+    if (!guard || generation != _generation) {
+        return;
     }
 
     _fetchStatus = FetchStatus::Success;

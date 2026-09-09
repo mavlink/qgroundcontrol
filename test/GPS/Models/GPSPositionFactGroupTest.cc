@@ -4,6 +4,8 @@
 
 #include "GPSPositionFactGroup.h"
 #include "VehicleGPS2FactGroup.h"
+#include "VehicleGPSAggregateFactGroup.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 void GPSPositionFactGroupTest::_vehicleMessages_data()
 {
@@ -65,7 +67,13 @@ void GPSPositionFactGroupTest::_vehicleMessages()
         QCOMPARE(common->yaw()->rawValue().toDouble(), 180.0);
     }
     QCOMPARE(common->lock()->enumValues().size(), 8);
-    QCOMPARE(vehicleGps->authenticationState()->enumValues().size(), 5);
+    const auto authenticationValues = vehicleGps->authenticationState()->enumValues();
+    QCOMPARE(authenticationValues.size(), 6);
+    for (const int value : {0, 1, 2, 3, 4, 255}) {
+        QVERIFY(authenticationValues.contains(value));
+    }
+    QCOMPARE(vehicleGps->authenticationState()->rawValue().toInt(), 255);
+    QCOMPARE(vehicleGps->authenticationState()->enumStringValue(), QStringLiteral("Unknown"));
 }
 
 void GPSPositionFactGroupTest::_vehicleSentinels_data()
@@ -186,6 +194,78 @@ void GPSPositionFactGroupTest::_resetDuringUpdate()
     QVERIFY(qIsNaN(facts.lon()->rawValue().toDouble()));
     QCOMPARE(facts.lock()->rawValue().toInt(), 0);
     QVERIFY(!facts.telemetryAvailable());
+}
+
+void GPSPositionFactGroupTest::_integrityProjection()
+{
+    GPSPositionFactGroup native;
+    VehicleGPSFactGroup vehicle;
+    VehicleGPSAggregateFactGroup aggregate;
+    aggregate.bindToGps(&vehicle, nullptr);
+    GPSObservation observation;
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.jammingState = 3;
+    observation.spoofingState = 1;
+    observation.authenticationState = 4;
+    observation.correctionsProtocol = 1;
+    observation.correctionsUsed = 2;
+    native.integrity()->update(GPSIntegrityObservation::fromPosition(observation));
+    mavlink_gnss_integrity_t raw{};
+    raw.jamming_state = 3;
+    raw.spoofing_state = 1;
+    raw.authentication_state = 4;
+    raw.corrections_quality = 255;
+    raw.system_status_summary = 255;
+    raw.gnss_signal_quality = 255;
+    raw.post_processing_quality = 255;
+    mavlink_message_t message{};
+    mavlink_msg_gnss_integrity_encode(1, 1, &message, &raw);
+    vehicle.handleMessage(nullptr, message);
+    QCOMPARE(native.integrity()->jammingState()->rawValue(), vehicle.jammingState()->rawValue());
+    QCOMPARE(native.integrity()->spoofingState()->rawValue(), vehicle.spoofingState()->rawValue());
+    QCOMPARE(native.integrity()->authenticationState()->rawValue(), vehicle.authenticationState()->rawValue());
+    QCOMPARE(vehicle.getFact(QStringLiteral("jammingState")), vehicle.integrity()->jammingState());
+    QVERIFY(native.integrity()->available());
+    QVERIFY(!native.integrity()->systemErrorsKnown());
+    QVERIFY(vehicle.integrity()->systemErrorsKnown());
+    QCOMPARE(native.integrity()->correctionsUsed()->rawValue().toInt(), 2);
+    QCOMPARE(vehicle.integrity()->correctionsUsed()->rawValue().toInt(), 255);
+    vehicle.updatePosition({});
+    QCOMPARE(vehicle.jammingState()->rawValue().toInt(), 3);
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 3);
+    vehicle.integrity()->reset();
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 255);
+    native.integrity()->reset();
+    QVERIFY(!native.integrity()->available());
+    QCOMPARE(native.integrity()->correctionsProtocol()->rawValue().toInt(), 255);
+}
+
+void GPSPositionFactGroupTest::_integrityExpiryAndReentrancy()
+{
+    GPSIntegrityFactGroup facts;
+    GPSIntegrityObservation observation;
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 4900000;
+    observation.jammingState = 3;
+    facts.update(observation);
+    QVERIFY(facts.available());
+    QTRY_VERIFY_WITH_TIMEOUT(!facts.available(), 2000);
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 6000000;
+    facts.update(observation);
+    QVERIFY(!facts.available());
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.spoofingState = 3;
+    bool reset = false;
+    connect(facts.spoofingState(), &Fact::rawValueChanged, this, [&]() {
+        if (!reset) {
+            reset = true;
+            facts.reset();
+        }
+    });
+    facts.update(observation);
+    QVERIFY(reset);
+    QVERIFY(!facts.available());
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
 }
 
 UT_REGISTER_TEST(GPSPositionFactGroupTest, TestLabel::Unit)

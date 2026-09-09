@@ -10,6 +10,8 @@ private slots:
     void _positionBackendWithoutBaseSupport();
     void _invalidConfiguration_data();
     void _invalidConfiguration();
+    void _configurationWriteEvidence_data();
+    void _configurationWriteEvidence();
     void _familyCancellation_data();
     void _familyCancellation();
     void _observationMetadata();

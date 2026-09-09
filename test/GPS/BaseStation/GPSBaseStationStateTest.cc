@@ -157,4 +157,31 @@ void GPSBaseStationStateTest::_presentationDestructionKeepsSession()
     QVERIFY(!worker);
 }
 
+void GPSBaseStationStateTest::_referenceMetadata()
+{
+    GPSReceiverSession session;
+    GPSBaseStationFactGroup facts;
+    GPSBaseStationState state(session, facts);
+    _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Supported);
+    auto survey = validSurvey();
+    survey.meanAccuracyMM.reset();
+    survey.altitudeDatum = GPSObservation::AltitudeDatum::Ellipsoid;
+    survey.sessionId = session.sessionId();
+    emit session.surveyInReceived(survey);
+    QVERIFY(state.reference().isValid());
+    QVERIFY(!state.reference().accuracyMeters);
+    QVERIFY(qIsNaN(facts.currentAccuracy()->rawValue().toDouble()));
+    QCOMPARE(state.reference().observation.altitudeDatum, GPSObservation::AltitudeDatum::Ellipsoid);
+    survey.meanAccuracyMM = 0;
+    emit session.surveyInReceived(survey);
+    QCOMPARE(state.reference().accuracyMeters.value(), 0.0);
+    QCOMPARE(facts.currentAccuracy()->rawValue().toDouble(), 0.0);
+    survey.sessionId += 10;
+    survey.latitude = 20;
+    emit session.surveyInReceived(survey);
+    QCOMPARE(state.reference().observation.position.coordinate().latitude(), 47.5);
+    session.stop();
+    QVERIFY(!state.reference().isValid());
+}
+
 UT_REGISTER_TEST(GPSBaseStationStateTest, TestLabel::Unit)

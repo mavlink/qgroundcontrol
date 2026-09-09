@@ -14,12 +14,12 @@
 #include "GPSManager.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
-#include "GPSReceiverPositionSource.h"
 #include "GPSTransport.h"
 #include "PositionManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
+#include "TestGPSPositionSource.h"
 #include "satellite_info.h"
 #include "sensor_gps.h"
 
@@ -144,8 +144,7 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     QPointer<GPSProvider> first = receiver._session._provider;
     auto* facts = receiver.facts();
     QVERIFY(!receiver.connected());
-    receiver.positionSource()->startUpdates();
-    QSignalSpy positionUpdates(receiver.positionSource(), &QGeoPositionInfoSource::positionUpdated);
+    QSignalSpy positionUpdates(&session, &GPSReceiverSession::positionReceived);
     sensor_gps_s fix{};
     fix.fix_type = sensor_gps_s::FIX_TYPE_3D;
     fix.latitude_deg = 47;
@@ -197,7 +196,7 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(facts->lastError()->rawValue().toInt(), static_cast<int>(GPSConnectionError::None));
     QVERIFY(corrections.isEmpty());
     QVERIFY(positionUpdates.isEmpty());
-    QVERIFY(!receiver.positionSource()->lastKnownPosition().isValid());
+    QVERIFY(!receiver.health()->observation().position.isValid());
     emit receiver._session._provider->receiverReady();
     emit receiver._session._provider->RTCMDataUpdate(QByteArrayLiteral("new"));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
@@ -342,25 +341,30 @@ void GPSReceiverTest::_positionSourceSelection()
     fix.altitude_msl_m = 500;
     fix.eph = 0.1f;
     fix.epv = 0.2f;
-    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
+    const auto publish = [&]() {
+        auto observation = GPSDriverData::position(fix);
+        observation.sessionId = session.sessionId();
+        receiver->_sensorGpsUpdate(observation);
+    };
+    publish();
     QVERIFY(!position->gcsPosition().isValid());
     enabled->setRawValue(true);
     QVERIFY(!position->gcsPosition().isValid());
-    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
+    publish();
     QCOMPARE(position->gcsPosition(), QGeoCoordinate(47, 8, 500));
     QVERIFY(receiver->connected());
     enabled->setRawValue(false);
     QVERIFY(receiver->connected());
     QVERIFY(!position->gcsPosition().isValid());
-    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
+    publish();
     enabled->setRawValue(true);
     QVERIFY(!position->gcsPosition().isValid());
-    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
+    publish();
     QVERIFY(position->gcsPosition().isValid());
     session.stop();
     QVERIFY(!position->gcsPosition().isValid());
-    QVERIFY(!receiver->positionSource()->lastKnownPosition().isValid());
-    receiver->_sensorGpsUpdate(GPSDriverData::position(fix));
+    QVERIFY(!receiver->health()->observation().position.isValid());
+    publish();
     QVERIFY(!position->gcsPosition().isValid());
 }
 
@@ -448,7 +452,19 @@ void GPSReceiverTest::_liveFactsFollowHealth()
     QCOMPARE(facts->lock()->rawValue().toInt(), 6);
     QCOMPARE(facts->courseOverGround()->rawValue().toDouble(), 90.0);
     QCOMPARE(facts->yaw()->rawValue().toDouble(), 180.0);
-    receiver.health()->updateSatelliteCounts(20, 17);
+    GPSSatelliteObservation satelliteReport;
+    satelliteReport.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    satelliteReport.sessionId = session.sessionId();
+    satelliteReport.provenance = {{GPSSatellite::Constellation::GPS, satelliteReport.monotonicTimestampUs,
+                                   satelliteReport.monotonicTimestampUs, 17}};
+    for (int i = 0; i < 20; ++i) {
+        GPSSatellite satellite;
+        satellite.id = i + 1;
+        satellite.constellation = GPSSatellite::Constellation::GPS;
+        satellite.used = i < 17;
+        satelliteReport.satellites.append(satellite);
+    }
+    receiver._satelliteInfoUpdate(satelliteReport);
     QCOMPARE(facts->count()->rawValue().toInt(), 20);
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 17);
     fix.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 6000000;

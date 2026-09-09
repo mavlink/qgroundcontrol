@@ -53,6 +53,9 @@ signals:
     void connectionError(GPSConnectionError error);
     void connectionErrorDetail(GPSConnectionError error, const QString& detail);
     void capabilitiesUpdated(const GPSReceiverCapabilities& capabilities);
+    void transportOpenFinished(const GPSOpenResult& result);
+    void configurationFinished(const GPSConfigurationResult& result);
+    void transportReadFailed(const GPSReadResult& result);
     void configurationReported(const GPSConfigurationReport& report);
     void receiverReady();
     void transportOpened();

@@ -59,17 +59,7 @@ struct GPSDriverFamily
     using Factory = std::unique_ptr<GPSDriverBackend> (*)(GPSCallbackPtr, void*, sensor_gps_s*, satellite_info_s*,
                                                           const GPSReceiverConfig&);
     GPSType type;
-    QLatin1StringView name;
-    std::array<QLatin1StringView, 3> aliases;
-    int manufacturerId;
-    GPSReceiverCapabilities::Support baseSupport;
-    GPSReceiverCapabilities::Support nmeaSupport;
-    GPSReceiverCapabilities::Support correctionInput;
     Factory create;
-    GPSReceiverCapabilities::Support constellationSelection = GPSReceiverCapabilities::Support::Unsupported;
-    GPSReceiverCapabilities::Support dynamicModelSelection = GPSReceiverCapabilities::Support::Unsupported;
-    GPSReceiverCapabilities::Support outputRateSelection = GPSReceiverCapabilities::Support::Unsupported;
-    GPSReceiverCapabilities::Support headingOffsetSelection = GPSReceiverCapabilities::Support::Unsupported;
 };
 
 std::span<const GPSDriverFamily> gpsDriverFamilies();

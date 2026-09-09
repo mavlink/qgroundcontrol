@@ -3,18 +3,19 @@
 #include <QtCore/QIODevice>
 #include <QtPositioning/QGeoPositionInfoSource>
 
+#include <algorithm>
 #include <utility>
 
-#include "AutoConnectSettings.h"
+#include "GPSQtRuntimeScheduler.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NMEASourceManagerLog, "GPS.NMEA.NMEASourceManager")
 
-NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QObject* parent)
+NMEASourceManager::NMEASourceManager(QObject* parent, GPSRuntimeScheduler* scheduler)
     : QObject(parent)
-    , _settings(settings)
-    , _decoder(this)
-    , _connection(this)
+    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _decoder(this, _scheduler)
+    , _connection(this, _scheduler)
 {
     qCDebug(NMEASourceManagerLog) << this;
 #ifndef QGC_NO_SERIAL_LINK
@@ -34,36 +35,16 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QObject* par
             }
         });
     });
-    if (_settings) {
-        _profile = NMEAConnectionConfig::fromSettings(*_settings).profile();
-        for (Fact* fact : {_settings->nmeaSource(), _settings->autoConnectNmeaPort(), _settings->autoConnectNmeaBaud(),
-                           _settings->nmeaUdpPort(), _settings->nmeaTcpHost(), _settings->nmeaTcpPort(),
-                           _settings->nmeaReceiverMode()}) {
-            connect(fact, &Fact::rawValueChanged, this, &NMEASourceManager::_settingsChanged);
-        }
-        connect(_settings->nmeaAutoConnect(), &Fact::rawValueChanged, this, [this]() {
-            _dispatch([this]() {
-                const QPointer<NMEASourceManager> guard(this);
-                _closeDevice();
-                if (!guard) {
-                    return;
-                }
-                _connection.resetIntent();
-                _updateSerialRouting();
-                if (!_shouldConnect()) {
-                    _stop();
-                }
-            });
-        });
-        _updateSerialRouting();
-    }
 }
 
 NMEASourceManager::~NMEASourceManager()
 {
     qCDebug(NMEASourceManagerLog) << this;
-    disconnect(this, nullptr, nullptr, nullptr);
+    blockSignals(true);
     _shutdown = true;
+    if (_scheduler) {
+        _scheduler->cancel(_updateTask);
+    }
     _connection.disconnect(this);
     _decoder.disconnect(this);
     _udpActivityTimer.stop();
@@ -99,6 +80,7 @@ void NMEASourceManager::_dispatch(std::function<void()> command)
         }
     }
     _dispatching = false;
+    _scheduleUpdate();
 }
 
 void NMEASourceManager::_notifyState()
@@ -116,7 +98,7 @@ QGeoPositionInfoSource* NMEASourceManager::positionSource() const
 
 bool NMEASourceManager::_shouldConnect() const
 {
-    return !_shutdown && _settings && _connection.shouldConnect(_settings->nmeaAutoConnect()->rawValue().toBool()) &&
+    return !_shutdown && _connection.shouldConnect(_automatic) &&
            _profile.endpoint.kind != GPSReceiverProfile::Endpoint::Kind::Disabled;
 }
 
@@ -130,20 +112,21 @@ void NMEASourceManager::_updateSerialRouting()
 #endif
 }
 
-void NMEASourceManager::_settingsChanged()
+void NMEASourceManager::setProfile(const GPSReceiverProfile& profile)
 {
-    _dispatch([this]() {
-        const QPointer<NMEASourceManager> guard(this);
-        const auto profile = NMEAConnectionConfig::fromSettings(*_settings).profile();
-        if (profile != _profile) {
-            _profile = profile;
-            _receiverFactory = {};
-            _closeDevice();
-            if (!guard) {
-                return;
-            }
-            _connection.resetRetry();
+    _dispatch([this, profile = profile.normalized()]() {
+        if (_profile == profile) {
+            return;
         }
+        const QPointer<NMEASourceManager> guard(this);
+        _stopped = false;
+        _profile = profile;
+        _receiverFactory = {};
+        _closeDevice();
+        if (!guard) {
+            return;
+        }
+        _connection.resetRetry();
         _updateSerialRouting();
         if (!_shouldConnect()) {
             _stop();
@@ -151,13 +134,66 @@ void NMEASourceManager::_settingsChanged()
     });
 }
 
+void NMEASourceManager::setAutoConnect(bool enabled)
+{
+    _dispatch([this, enabled]() {
+        if (_automatic == enabled) {
+            return;
+        }
+        const QPointer<NMEASourceManager> guard(this);
+        _stopped = false;
+        _automatic = enabled;
+        _closeDevice();
+        if (!guard) {
+            return;
+        }
+        _connection.resetIntent();
+        _updateSerialRouting();
+        if (!_shouldConnect()) {
+            _stop();
+        }
+    });
+}
+
+void NMEASourceManager::setSuspended(bool suspended)
+{
+    _dispatch([this, suspended]() { _suspended = suspended; });
+}
+
+void NMEASourceManager::_scheduleUpdate()
+{
+    if (!_scheduler) {
+        return;
+    }
+    _scheduler->cancel(std::exchange(_updateTask, 0));
+    if (_stopped || !_shouldConnect() || _suspended) {
+        return;
+    }
+    qint64 delay = !_attempt ? _connection.retryRemainingMs() : -1;
+#ifndef QGC_NO_SERIAL_LINK
+    if (_profile.endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial && !_receiverFactory) {
+        delay = delay < 0 ? 1000 : std::min<qint64>(1000, delay);
+    }
+#endif
+    if (!_attempt && _connection.state() == GPSConnectionState::Disconnected) {
+        delay = delay < 0 ? 0 : delay;
+    }
+    if (delay >= 0) {
+        _updateTask = _scheduler->schedule(this, std::chrono::milliseconds(delay), [this]() {
+            _updateTask = 0;
+            update();
+        });
+    }
+}
+
 bool NMEASourceManager::connectSource()
 {
-    if (_shutdown || !_settings || _profile.endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Disabled) {
+    if (_shutdown || _suspended || _profile.endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Disabled) {
         return false;
     }
     const QPointer<NMEASourceManager> guard(this);
     _dispatch([this]() {
+        _stopped = false;
         _connection.requestConnect();
         _updateSerialRouting();
         _update();
@@ -204,7 +240,10 @@ void NMEASourceManager::shutdown()
 
 void NMEASourceManager::stop()
 {
-    _dispatch([this]() { _stop(); });
+    _dispatch([this]() {
+        _stopped = true;
+        _stop();
+    });
 }
 
 void NMEASourceManager::_stop()
@@ -217,9 +256,7 @@ void NMEASourceManager::_stop()
         return;
     }
     _connection.resetRetry();
-    _setStatus(_connection.paused() && _settings && _settings->nmeaAutoConnect()->rawValue().toBool()
-                   ? tr("Automatic connection paused")
-                   : tr("Disconnected"));
+    _setStatus(_connection.paused() && _automatic ? tr("Automatic connection paused") : tr("Disconnected"));
 }
 
 void NMEASourceManager::_closeDevice()
@@ -360,13 +397,16 @@ void NMEASourceManager::_startAttempt()
 
 void NMEASourceManager::update()
 {
-    _dispatch([this]() { _update(); });
+    _dispatch([this]() {
+        _stopped = false;
+        _update();
+    });
 }
 
 void NMEASourceManager::_update()
 {
     const QPointer<NMEASourceManager> guard(this);
-    if (!_settings || !_shouldConnect()) {
+    if (!_shouldConnect()) {
         _stop();
         return;
     }
@@ -378,7 +418,10 @@ void NMEASourceManager::_update()
         }
         return;
     }
-    _connection.updateIntent(_settings->nmeaAutoConnect()->rawValue().toBool());
+    _connection.updateIntent(_automatic);
+    if (_suspended) {
+        return;
+    }
 #ifndef QGC_NO_SERIAL_LINK
     if (_profile.endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial && !_receiverFactory) {
         bool present = false;
@@ -417,7 +460,13 @@ void NMEASourceManager::setSerialDiscovery(SerialPortManager* serialPorts)
             return;
         }
         const QPointer<NMEASourceManager> guard(this);
+        if (_serialPorts) {
+            _serialPorts->disconnect(this);
+        }
         _serialPorts = inventory;
+        if (_serialPorts) {
+            connect(_serialPorts, &SerialPortManager::serialPortsChanged, this, &NMEASourceManager::update);
+        }
         _autoConnectExclusion.reset();
         if (_profile.endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial) {
             _closeDevice();

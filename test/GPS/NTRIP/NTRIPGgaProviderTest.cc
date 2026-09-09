@@ -5,16 +5,14 @@
 #include <QtTest/QTest>
 
 #include "Fixtures/RAIIFixtures.h"
-#include "GPSBaseStationFactGroup.h"
-#include "GPSManager.h"
-#include "GPSReceiver.h"
-#include "GPSReceiverFactGroup.h"
+#include "GPSBaseReference.h"
 #include "MockNTRIPStream.h"
 #include "NMEAUtils.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPSettings.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleGPSPositionProvider.h"
 
 // Tests delegate checksum validation to the canonical NMEAUtils implementation
 // — no local XOR loop, so there is one source of truth.
@@ -216,17 +214,20 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
 {
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->ntripSettings();
-    auto* facts = GPSManager::instance()->receiver()->facts()->rtk();
-    QVERIFY(facts);
     saved.setFactValue(settings->ntripGgaPositionSource(), static_cast<int>(NTRIPGgaProvider::PositionSource::RTKBase));
-    saved.setFactValue(facts->valid(), true);
-    saved.setFactValue(facts->currentLatitude(), 47.3977);
-    saved.setFactValue(facts->currentLongitude(), 8.5456);
-    saved.setFactValue(facts->currentAltitude(), 450.0);
+    GPSBaseReference reference;
+    reference.valid = true;
+    reference.observation.sessionId = 1;
+    reference.observation.position =
+        QGeoPositionInfo(QGeoCoordinate(47.3977, 8.5456, 450.0), QDateTime::currentDateTimeUtc());
 
     MockNTRIPStream transport;
     NTRIPGgaProvider provider;
     provider.init(settings);
+    provider.setPositionProvider(NTRIPGgaProvider::PositionSource::RTKBase, [&]() {
+        return reference.isValid() ? PositionResult{reference.observation, QStringLiteral("RTK Base"), true}
+                                   : PositionResult{};
+    });
     provider.start([&transport](const QByteArray& sentence) { transport.sendNMEA(sentence); });
     QCOMPARE(provider.currentSource(), QStringLiteral("RTK Base"));
     QCOMPARE(transport.sentNmea.size(), 1);
@@ -237,7 +238,7 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
     QVERIFY(validateChecksum(transport.sentNmea.first()));
     provider.stop();
 
-    facts->valid()->setRawValue(false);
+    reference.valid = false;
     transport.sentNmea.clear();
     provider.start([&transport](const QByteArray& sentence) { transport.sendNMEA(sentence); });
     QVERIFY(provider.currentSource().isEmpty());
@@ -310,6 +311,14 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     MockNTRIPStream transport;
     NTRIPGgaProvider provider;
     provider.init(settings);
+    VehicleGPSPositionProvider positions;
+    positions.setVehicle(vehicle());
+    provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, [&]() {
+        return PositionResult{positions.gpsPosition(), QStringLiteral("Vehicle GPS")};
+    });
+    provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleEKF, [&]() {
+        return PositionResult{positions.ekfPosition(), QStringLiteral("Vehicle EKF")};
+    });
     provider.start([&transport](const QByteArray& sentence) { transport.sendNMEA(sentence); });
     QVERIFY(transport.sentNmea.isEmpty());
 
@@ -335,7 +344,7 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     QVERIFY(fields[8].isEmpty());
     QCOMPARE(fields[9], QByteArray("450.0"));
 
-    provider._vehicleGpsPosition.observation.monotonicTimestampUs -= 6000000;
+    positions._gpsPosition.monotonicTimestampUs -= 6000000;
     provider._sendGGA();
     QCOMPARE(transport.sentNmea.size(), 1);
     QVERIFY(provider.currentSource().isEmpty());
@@ -359,7 +368,7 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     QVERIFY(deliver(message));
     provider._sendGGA();
     QCOMPARE(transport.sentNmea.size(), 3);
-    provider._vehicleEkfPosition.observation.monotonicTimestampUs -= 6000000;
+    positions._ekfPosition.monotonicTimestampUs -= 6000000;
     mavlink_msg_global_position_int_encode(vehicle()->id(), MAV_COMP_ID_CAMERA, &message, &global);
     QVERIFY(deliver(message));
     provider._sendGGA();
@@ -371,6 +380,38 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     provider._sendGGA();
     QCOMPARE(transport.sentNmea.size(), 3);
     QVERIFY(provider.currentSource().isEmpty());
+    settings->ntripGgaPositionSource()->setRawValue(static_cast<int>(NTRIPGgaProvider::PositionSource::VehicleGPS));
+    fix.fix_type = 0;
+    mavlink_msg_gps_raw_int_encode(vehicle()->id(), vehicle()->defaultComponentId(), &message, &fix);
+    QVERIFY(deliver(message));
+    provider._sendGGA();
+    QCOMPARE(transport.sentNmea.size(), 3);
+    mavlink_high_latency_t highLatency = {};
+    highLatency.latitude = fix.lat;
+    highLatency.longitude = fix.lon;
+    highLatency.altitude_amsl = 450;
+    highLatency.gps_fix_type = 3;
+    mavlink_msg_high_latency_encode(vehicle()->id(), vehicle()->defaultComponentId(), &message, &highLatency);
+    QVERIFY(deliver(message));
+    provider._sendGGA();
+    QCOMPARE(transport.sentNmea.size(), 4);
+    mavlink_high_latency2_t highLatency2 = {};
+    highLatency2.latitude = fix.lat;
+    highLatency2.longitude = fix.lon;
+    highLatency2.altitude = 450;
+    highLatency2.failure_flags = HL_FAILURE_FLAG_GPS;
+    mavlink_msg_high_latency2_encode(vehicle()->id(), vehicle()->defaultComponentId(), &message, &highLatency2);
+    QVERIFY(deliver(message));
+    provider._sendGGA();
+    QCOMPARE(transport.sentNmea.size(), 4);
+    settings->ntripGgaPositionSource()->setRawValue(static_cast<int>(NTRIPGgaProvider::PositionSource::VehicleEKF));
+    provider._sendGGA();
+    QCOMPARE(transport.sentNmea.size(), 5);
+    positions.setVehicle(nullptr);
+    QVERIFY(!positions.gpsPosition().position.isValid());
+    QVERIFY(!positions.ekfPosition().position.isValid());
+    positions.setVehicle(vehicle());
+    QVERIFY(!positions.gpsPosition().position.isValid());
     provider.stop();
 }
 

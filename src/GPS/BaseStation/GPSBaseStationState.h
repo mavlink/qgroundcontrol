@@ -2,6 +2,7 @@
 
 #include <QtCore/QObject>
 
+#include "GPSBaseReference.h"
 #include "GPSBaseStationFactGroup.h"
 #include "GPSReceiverSession.h"
 
@@ -15,6 +16,11 @@ public:
                                  QObject* parent = nullptr);
     ~GPSBaseStationState() override;
 
+    GPSBaseReference reference() const { return _reference; }
+
+signals:
+    void referenceChanged();
+
 private:
     bool _acceptsSurvey() const;
     void _updateSurvey(const GPSSurveyInStatus& status);
@@ -23,4 +29,5 @@ private:
     GPSReceiverSession& _session;
     GPSBaseStationFactGroup& _facts;
     quint64 _revision = 0;
+    GPSBaseReference _reference;
 };

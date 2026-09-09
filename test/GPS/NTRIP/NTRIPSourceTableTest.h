@@ -7,6 +7,9 @@ class NTRIPSourceTableTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _testCoordinates_data();
+    void _testCoordinates();
+    void _testProjectionNotifications();
     void _testParseSTRLine();
     void _testParseShortLine();
     void _testParseNonSTRLine();

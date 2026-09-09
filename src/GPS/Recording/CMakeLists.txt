@@ -1,22 +1,5 @@
-qt_add_library(
-    QGCGPSRecording
-    STATIC
-    GPSRecordingBuffer.cc
-    GPSRecordingBuffer.h
-    GPSRecordingFormat.cc
-    GPSRecordingFormat.h
-    GPSRecordingTransport.cc
-    GPSRecordingTransport.h
-    GPSRecordingDevice.cc
-    GPSRecordingDevice.h
-)
-target_include_directories(QGCGPSRecording PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(QGCGPSRecording PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Receiver)
-target_link_libraries(
-    QGCGPSRecording
-    PUBLIC QGCGPSDriver Qt6::Core
-    PRIVATE QGCLogging QGCJsonValidation
-)
+qgc_add_gps_component(QGCGPSRecording COMPONENT Recording LOGGING_TARGET QGCLogging)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSRecordingController.cc GPSRecordingController.h)
+qgc_gps_component_sources(recording_controller_sources RecordingController)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${recording_controller_sources})
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSRecording)

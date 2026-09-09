@@ -17,4 +17,5 @@ private slots:
     void _fixSatelliteCountsTakePrecedence();
     void _resetDuringMetadataNotification();
     void _remoteIdUsesKnownEllipsoidAltitude();
+    void _rawPoliciesPreserveMeasurementsAndRespectInvalidation();
 };

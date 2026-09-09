@@ -39,6 +39,13 @@ public:
     };
     Q_ENUM(RoutingPolicy)
 
+    struct RoutingConfiguration
+    {
+        RoutingPolicy policy = RoutingPolicy::Automatic;
+        GPSCorrectionSource source = GPSCorrectionSource::Unknown;
+        QString instance;
+    };
+
     explicit GPSCorrectionManager(QObject* parent = nullptr);
     ~GPSCorrectionManager() override;
 
@@ -48,6 +55,9 @@ public:
 
     RTCMMavlink* rtcmMavlink() { return &_rtcmMavlink; }
 
+    void applyRoutingConfiguration(const RoutingConfiguration& configuration);
+    GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
+    void acceptIngress(const GPSCorrectionIngress& ingress);
     quint64 beginSourceSession(GPSCorrectionSource source, const QString& instance = {});
     void endSourceSession(GPSCorrectionSource source);
     quint64 sourceSession(GPSCorrectionSource source) const;
@@ -95,8 +105,10 @@ private:
     QTimer _healthTimer;
     RTCMMavlink _rtcmMavlink;
     RTCMUdpInput _udpInput;
+    GPSCorrectionSourceRegistration _udpRegistration;
     UdpForwarder _ntripUdpOutput{this};
     QPointer<GPSCorrectionSettings> _settings;
     QVariantList _lastSourceInstances;
+    quint64 _udpConfigurationRevision = 0;
     bool _shutdown = false;
 };

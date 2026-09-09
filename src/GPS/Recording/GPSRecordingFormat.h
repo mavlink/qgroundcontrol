@@ -7,7 +7,7 @@
 #include <optional>
 
 #include "GPSReceiverConfig.h"
-#include "GPSTransport.h"
+#include "GPSTransportResult.h"
 #include "GPSType.h"
 
 struct GPSReceiverProfile;
@@ -67,14 +67,17 @@ struct GPSRecordingEvent
     quint64 stream = 0;
     bool resumed = false;
     GPSRecordingMetadata metadata = {};
-    std::optional<GPSTransport::WriteResult> writeResult = {};
+    std::optional<GPSWriteResult> writeResult = {};
     bool fatal = false;
+    std::optional<qint64> receivedAtUs = {};
+    std::optional<GPSOpenStatus> openStatus = {};
+    std::optional<GPSReadStatus> readStatus = {};
 };
 
 /// Versioned wire contract shared by capture and replay. Decode validates every stream before selection.
 struct GPSRecordingDocument
 {
-    static constexpr int CURRENT_VERSION = 2;
+    static constexpr int CURRENT_VERSION = 3;
     static constexpr qsizetype MAX_BYTES = 4 * 1024 * 1024;
     static constexpr qsizetype MAX_EVENTS = 100000;
 

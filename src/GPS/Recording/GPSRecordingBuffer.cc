@@ -4,8 +4,8 @@
 
 #include <utility>
 
+#include "GPSConfigurationReport.h"
 #include "GPSObservation.h"
-#include "GPSDriver.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSRecordingBufferLog, "GPS.Recording.GPSRecordingBuffer")
@@ -61,7 +61,8 @@ quint64 GPSRecordingBuffer::allocateStream()
 
 void GPSRecordingBuffer::append(quint64 stream, const GPSRecordingMetadata& metadata, bool alreadyOpen, Kind kind,
                                 QByteArrayView bytes, int value, quint64 startedAtUs,
-                                std::optional<GPSTransport::WriteResult> writeResult, bool fatal)
+                                std::optional<GPSWriteResult> writeResult, bool fatal, quint64 receivedAtUs,
+                                std::optional<GPSOpenStatus> openStatus, std::optional<GPSReadStatus> readStatus)
 {
     if (!_recording.load(std::memory_order_relaxed)) {
         return;
@@ -111,6 +112,11 @@ void GPSRecordingBuffer::append(quint64 stream, const GPSRecordingMetadata& meta
     event.value = value;
     event.writeResult = writeResult;
     event.fatal = fatal;
+    event.openStatus = openStatus;
+    event.readStatus = readStatus;
+    if (receivedAtUs) {
+        event.receivedAtUs = static_cast<qint64>(receivedAtUs) - static_cast<qint64>(_originUs) + 1;
+    }
     _events.append(std::move(event));
     _storageBytes += overhead + bytes.size() * 2;
     _status.eventCount = _events.size();
@@ -133,9 +139,7 @@ QByteArray GPSRecordingBuffer::exportJson() const
 }
 
 GPSRecordingStream::GPSRecordingStream(std::shared_ptr<GPSRecordingBuffer> buffer, GPSRecordingMetadata metadata)
-    : _buffer(std::move(buffer))
-    , _metadata(metadata)
-    , _id(_buffer ? _buffer->allocateStream() : 0)
+    : _buffer(std::move(buffer)), _metadata(metadata), _id(_buffer ? _buffer->allocateStream() : 0)
 {
     qCDebug(GPSRecordingStreamLog) << this;
 }
@@ -165,10 +169,11 @@ void GPSRecordingStream::closed(int reason)
     }
 }
 
-void GPSRecordingStream::record(GPSRecordingBuffer::Kind kind, QByteArrayView bytes, int value, quint64 startedAtUs)
+void GPSRecordingStream::record(GPSRecordingBuffer::Kind kind, QByteArrayView bytes, int value, quint64 startedAtUs,
+                                quint64 receivedAtUs)
 {
     if (_buffer) {
-        _buffer->append(_id, _metadata, _opened, kind, bytes, value, startedAtUs);
+        _buffer->append(_id, _metadata, _opened, kind, bytes, value, startedAtUs, {}, false, receivedAtUs);
     }
 }
 
@@ -180,24 +185,76 @@ void GPSRecordingStream::configurationStarted()
 void GPSRecordingStream::configurationFinished(int status)
 {
     // The format's frozen status values do not depend on the driver's enum declaration order.
-    using S = GPSDriver::ConfigurationStatus;
+    using S = GPSConfigurationStatus;
     int recordedStatus = -1;
     switch (static_cast<S>(status)) {
-        case S::NotConfigured: recordedStatus = 0; break;
-        case S::Ready: recordedStatus = 1; break;
-        case S::Unsupported: recordedStatus = 2; break;
-        case S::Cancelled: recordedStatus = 3; break;
-        case S::TransportError: recordedStatus = 4; break;
-        case S::Failed: recordedStatus = 5; break;
+        case S::NotConfigured:
+            recordedStatus = 0;
+            break;
+        case S::Ready:
+            recordedStatus = 1;
+            break;
+        case S::Unsupported:
+            recordedStatus = 2;
+            break;
+        case S::Cancelled:
+            recordedStatus = 3;
+            break;
+        case S::TransportError:
+            recordedStatus = 4;
+            break;
+        case S::Failed:
+            recordedStatus = 5;
+            break;
     }
     record(GPSRecordingBuffer::Kind::ConfigurationFinished, {}, recordedStatus);
 }
 
-void GPSRecordingStream::recordWrite(QByteArrayView bytes, GPSTransport::WriteResult result, quint64 startedAtUs,
-                                     bool fatal)
+void GPSRecordingStream::recordWrite(QByteArrayView bytes, GPSWriteResult result, quint64 startedAtUs, bool fatal)
 {
+    result.detail.clear();
     if (_buffer) {
         _buffer->append(_id, _metadata, _opened, GPSRecordingBuffer::Kind::BoundedWrite, bytes, 0, startedAtUs, result,
                         fatal);
+    }
+}
+
+void GPSRecordingStream::opened(GPSOpenResult result, quint64 startedAtUs)
+{
+    if (_buffer) {
+        _buffer->append(_id, _metadata, _opened,
+                        result.status == GPSOpenStatus::Opened ? GPSRecordingBuffer::Kind::Open
+                                                               : GPSRecordingBuffer::Kind::OpenError,
+                        {}, 0, startedAtUs, {}, false, 0, result.status);
+    }
+    _opened = result.status == GPSOpenStatus::Opened;
+}
+
+void GPSRecordingStream::recordRead(QByteArrayView bytes, GPSReadResult result, quint64 startedAtUs,
+                                    quint64 receivedAtUs)
+{
+    using K = GPSRecordingBuffer::Kind;
+    K kind = K::ReadError;
+    switch (result.status) {
+        case GPSReadStatus::Data:
+            kind = K::Rx;
+            break;
+        case GPSReadStatus::TimedOut:
+            kind = K::Timeout;
+            break;
+        case GPSReadStatus::Cancelled:
+            kind = K::Cancel;
+            break;
+        case GPSReadStatus::Closed:
+            kind = K::Disconnect;
+            break;
+        case GPSReadStatus::Error:
+        case GPSReadStatus::Overflow:
+        case GPSReadStatus::InvalidData:
+            break;
+    }
+    if (_buffer) {
+        _buffer->append(_id, _metadata, _opened, kind, bytes, 0, startedAtUs, {}, false, receivedAtUs, {},
+                        result.status);
     }
 }

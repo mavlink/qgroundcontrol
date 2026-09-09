@@ -1,7 +1,9 @@
 #pragma once
 
-#include <QtCore/QDeadlineTimer>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
+
+#include "GPSRuntimeScheduler.h"
 
 /// Connection intent, lifecycle, and retry policy, mutated by one controller.
 class GPSConnectionState : public QObject
@@ -24,7 +26,7 @@ public:
     };
     Q_ENUM(State)
 
-    explicit GPSConnectionState(QObject* parent = nullptr);
+    explicit GPSConnectionState(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
     ~GPSConnectionState() override;
 
     State state() const { return _state; }
@@ -41,6 +43,7 @@ public:
     void resetIntent();
 
     bool canAttempt() const;
+    qint64 retryRemainingMs() const;
     bool beginAttempt();
     void configuring();
     void ready();
@@ -59,6 +62,7 @@ private:
     bool _active = false;
     bool _manualRequested = false;
     bool _paused = false;
-    QDeadlineTimer _retryDeadline = QDeadlineTimer::Forever;
+    QPointer<GPSRuntimeScheduler> _scheduler;
+    qint64 _retryDeadlineMs = -1;
     int _retryDelayMs = 1000;
 };

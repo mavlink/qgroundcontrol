@@ -39,7 +39,8 @@ public:
     quint64 allocateStream();
     void append(quint64 stream, const GPSRecordingMetadata& metadata, bool alreadyOpen, Kind kind,
                 QByteArrayView bytes = {}, int value = 0, quint64 startedAtUs = 0,
-                std::optional<GPSTransport::WriteResult> writeResult = {}, bool fatal = false);
+                std::optional<GPSWriteResult> writeResult = {}, bool fatal = false, quint64 receivedAtUs = 0,
+                std::optional<GPSOpenStatus> openStatus = {}, std::optional<GPSReadStatus> readStatus = {});
 
     static constexpr qsizetype MAX_EVENTS = 10000;
     static constexpr qsizetype MAX_STORAGE_BYTES = 2 * 1024 * 1024;
@@ -66,12 +67,15 @@ public:
     ~GPSRecordingStream();
     quint64 nowUs() const;
     void opened(bool success, quint64 startedAtUs = 0);
+    void opened(GPSOpenResult result, quint64 startedAtUs);
+    void recordRead(QByteArrayView bytes, GPSReadResult result, quint64 startedAtUs, quint64 receivedAtUs = 0);
     void closed(int reason = 0);
 
     bool isOpen() const { return _opened; }
 
-    void record(GPSRecordingBuffer::Kind kind, QByteArrayView bytes = {}, int value = 0, quint64 startedAtUs = 0);
-    void recordWrite(QByteArrayView bytes, GPSTransport::WriteResult result, quint64 startedAtUs, bool fatal);
+    void record(GPSRecordingBuffer::Kind kind, QByteArrayView bytes = {}, int value = 0, quint64 startedAtUs = 0,
+                quint64 receivedAtUs = 0);
+    void recordWrite(QByteArrayView bytes, GPSWriteResult result, quint64 startedAtUs, bool fatal);
     void configurationStarted();
     void configurationFinished(int status);
 

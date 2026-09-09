@@ -1,17 +1,23 @@
 #include "GPSReceiverAutoConnect.h"
 
+#include <QtCore/QScopeGuard>
+
+#include <algorithm>
 #include <utility>
 
+#include "GPSQtRuntimeScheduler.h"
 #include "GPSReceiverTransportFactory.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSReceiverAutoConnectLog, "GPS.Receiver.GPSReceiverAutoConnect")
 
-GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPSSourceHealth* health, QObject* parent)
+GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPSSourceHealth* health, QObject* parent,
+                                               GPSRuntimeScheduler* scheduler)
     : QObject(parent)
     , _receiver(receiver)
     , _health(health)
-    , _connection(this)
+    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _connection(this, _scheduler)
 {
     qCDebug(GPSReceiverAutoConnectLog) << this;
     if (_receiver) {
@@ -23,12 +29,16 @@ GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPS
     connect(&_connection, &GPSConnectionState::changed, this, &GPSReceiverAutoConnect::stateChanged);
     connect(&_connection, &GPSConnectionState::changed, this, &GPSReceiverAutoConnect::networkAutoConnectPausedChanged);
     connect(this, &GPSReceiverAutoConnect::networkActiveChanged, this, &GPSReceiverAutoConnect::stateChanged);
+    connect(this, &GPSReceiverAutoConnect::stateChanged, this, &GPSReceiverAutoConnect::_scheduleUpdate);
 }
 
 GPSReceiverAutoConnect::~GPSReceiverAutoConnect()
 {
     qCDebug(GPSReceiverAutoConnectLog) << this;
-    disconnect(this, nullptr, nullptr, nullptr);
+    if (_scheduler) {
+        _scheduler->cancel(_updateTask);
+    }
+    blockSignals(true);
     if (_receiver) {
         _receiver->disconnect(this);
         _receiver->disconnect(&_connection);
@@ -43,6 +53,7 @@ void GPSReceiverAutoConnect::setProfile(const GPSReceiverProfile& profile, bool 
     if (!changed) {
         return;
     }
+    _stopped = false;
     _profile = normalized;
     const quint64 revision = ++_commandRevision;
     const QPointer<GPSReceiverAutoConnect> guard(this);
@@ -62,6 +73,7 @@ void GPSReceiverAutoConnect::setAutoConnect(bool enabled)
     if (_automatic == enabled) {
         return;
     }
+    _stopped = false;
     _automatic = enabled;
     const quint64 revision = ++_commandRevision;
     const QPointer<GPSReceiverAutoConnect> guard(this);
@@ -78,6 +90,7 @@ void GPSReceiverAutoConnect::setAutoConnect(bool enabled)
 
 bool GPSReceiverAutoConnect::connectSelected()
 {
+    _stopped = false;
     if (!_serialSelected()) {
         return connectNetwork();
     }
@@ -138,9 +151,10 @@ bool GPSReceiverAutoConnect::connectNetwork(GPSType type, GPSProvider::Transport
 
 bool GPSReceiverAutoConnect::connectReceiver(const GPSReceiverProfile& profile, GPSProvider::TransportFactory factory)
 {
-    if (!_receiver || !factory || _transportFactory || !profile.validationError().isEmpty()) {
+    if (_suspended || !_receiver || !factory || _transportFactory || !profile.validationError().isEmpty()) {
         return false;
     }
+    _stopped = false;
     const auto requestedProfile = profile.normalized();
     const quint64 revision = ++_commandRevision;
     const QPointer<GPSReceiverAutoConnect> guard(this);
@@ -269,7 +283,12 @@ void GPSReceiverAutoConnect::_stopAttempt(quint64 revision)
 
 void GPSReceiverAutoConnect::stop()
 {
+    const QPointer<GPSReceiverAutoConnect> guard(this);
+    _stopped = true;
     _stop(++_commandRevision);
+    if (guard) {
+        _scheduleUpdate();
+    }
 }
 
 void GPSReceiverAutoConnect::_stop(quint64 revision)
@@ -285,7 +304,7 @@ void GPSReceiverAutoConnect::_startReceiver()
 {
     const quint64 revision = _commandRevision;
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    if (_sessionConfig && _receiver && !_receiver->hasReceiver() && !_receiver->stopping() &&
+    if (!_suspended && _sessionConfig && _receiver && !_receiver->hasReceiver() && !_receiver->stopping() &&
         _connection.beginAttempt() && guard && revision == _commandRevision && _sessionConfig && _transportFactory &&
         _receiver) {
         _receiver->start(*_sessionConfig, _transportFactory);
@@ -305,9 +324,16 @@ bool GPSReceiverAutoConnect::_retryReady()
 
 void GPSReceiverAutoConnect::update()
 {
-    if (!_receiver) {
+    _stopped = false;
+    if (!_receiver || _suspended) {
+        _scheduleUpdate();
         return;
     }
+    const auto reschedule = qScopeGuard([guard = QPointer<GPSReceiverAutoConnect>(this)]() {
+        if (guard) {
+            guard->_scheduleUpdate();
+        }
+    });
     const quint64 revision = _commandRevision;
     const QPointer<GPSReceiverAutoConnect> guard(this);
     if (!_connection.updateIntent(_automatic)) {
@@ -337,4 +363,63 @@ void GPSReceiverAutoConnect::update()
 QString GPSReceiverAutoConnect::errorDetail() const
 {
     return _receiver ? _receiver->errorDetail() : QString();
+}
+
+void GPSReceiverAutoConnect::setSuspended(bool suspended)
+{
+    if (_suspended == suspended) {
+        return;
+    }
+    const QPointer<GPSReceiverAutoConnect> guard(this);
+    _suspended = suspended;
+    ++_commandRevision;
+    if (suspended && _receiver && !_receiver->hasReceiver() && !_receiver->stopping() &&
+        _connection.state() == GPSConnectionState::Connecting) {
+        _connection.stopped();
+    }
+    if (guard) {
+        _scheduleUpdate();
+    }
+}
+
+void GPSReceiverAutoConnect::_scheduleUpdate()
+{
+    if (!_scheduler) {
+        return;
+    }
+    _scheduler->cancel(std::exchange(_updateTask, 0));
+    if (_stopped || _suspended || !_receiver || !_connection.shouldConnect(_automatic) ||
+        !(_sessionConfig ? *_sessionConfig : _profile).validationError().isEmpty()) {
+        return;
+    }
+    if (_serialSelected() && !_transportFactory) {
+#ifdef QGC_NO_SERIAL_LINK
+        return;
+#else
+        if (!_serialPorts) {
+            return;
+        }
+#endif
+    }
+    qint64 delay = -1;
+    if (!_receiver->hasReceiver() && !_receiver->stopping()) {
+        delay = _connection.retryRemainingMs();
+        if (delay < 0 && _connection.state() == GPSConnectionState::Disconnected) {
+            delay = 0;
+        }
+    }
+#ifndef QGC_NO_SERIAL_LINK
+    if (_serialSelected() && !_transportFactory && _serialPorts) {
+        delay = delay < 0 ? 1000 : std::min<qint64>(1000, delay);
+        if (delay == 0 && _connection.state() == GPSConnectionState::Disconnected) {
+            delay = 1000;
+        }
+    }
+#endif
+    if (delay >= 0) {
+        _updateTask = _scheduler->schedule(this, std::chrono::milliseconds(delay), [this]() {
+            _updateTask = 0;
+            update();
+        });
+    }
 }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QElapsedTimer>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -32,11 +31,12 @@ class GPSReceiverAutoConnect : public QObject
 
 public:
     explicit GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPSSourceHealth* health = nullptr,
-                                    QObject* parent = nullptr);
+                                    QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
     ~GPSReceiverAutoConnect() override;
 
     void setProfile(const GPSReceiverProfile& profile, bool restart = false);
     void setAutoConnect(bool enabled);
+    void setSuspended(bool suspended);
 #ifndef QGC_NO_SERIAL_LINK
     using SerialTransportFactory = std::function<GPSProvider::TransportFactory(const QString&)>;
     void setSerialDiscovery(SerialPortManager* serialPorts);
@@ -85,9 +85,14 @@ private:
     bool _retryReady();
     void _startReceiver();
     void _updateReceiverState();
+    void _scheduleUpdate();
 
     QPointer<GPSReceiverSession> _receiver;
     QPointer<GPSSourceHealth> _health;
+    QPointer<GPSRuntimeScheduler> _scheduler;
+    GPSRuntimeScheduler::TaskId _updateTask = 0;
+    bool _suspended = false;
+    bool _stopped = false;
     GPSConnectionState _connection;
     GPSReceiverProfile _profile{
         .endpoint = {.kind = GPSReceiverProfile::Endpoint::Kind::Serial, .discoverSerialDevice = true},
@@ -100,10 +105,10 @@ private:
     std::optional<GPSReceiverProfile> _sessionConfig;
 #ifndef QGC_NO_SERIAL_LINK
     void _updateSerial();
-    SerialPortManager* _serialPorts = nullptr;
+    QPointer<SerialPortManager> _serialPorts;
     SerialTransportFactory _serialFactory;
     QString _autoConnectedPort;
-    QMap<QString, QElapsedTimer> _waitingPorts;
+    QMap<QString, qint64> _waitingPorts;
 #ifdef Q_OS_WIN
     int _connectDelayMs = 6000;
 #else

@@ -1,10 +1,8 @@
 #pragma once
 
-#include <QtCore/QDeadlineTimer>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
-#include <QtPositioning/QGeoSatelliteInfo>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <deque>
@@ -12,24 +10,17 @@
 #include <memory>
 
 #include "GPSConnectionState.h"
+#include "GPSReceiverProfile.h"
+#include "GPSRuntimeScheduler.h"
 #include "NMEAConnectionAttempt.h"
-#include "NMEAConnectionConfig.h"
 #include "NMEADecoderSession.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
-class QSerialPort;
 #endif
 
-class AutoConnectSettings;
-class QTcpSocket;
-class UdpIODevice;
-class NMEAStreamSplitter;
-class NMEAPositionSource;
-class NMEASatelliteAdapter;
 class QGeoPositionInfoSource;
 class QIODevice;
-class QNmeaSatelliteInfoSource;
 
 /// Owns one NMEA connection and both decoders; consumers independently borrow observations.
 class NMEASourceManager : public QObject
@@ -46,7 +37,10 @@ class NMEASourceManager : public QObject
     friend class NMEASourceManagerTest;
 
 public:
-    NMEASourceManager(AutoConnectSettings* settings, QObject* parent = nullptr);
+    explicit NMEASourceManager(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
+    void setProfile(const GPSReceiverProfile& profile);
+    void setAutoConnect(bool enabled);
+    void setSuspended(bool suspended);
     ~NMEASourceManager() override;
 
     void setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer) { _recordingBuffer = buffer; }
@@ -91,7 +85,7 @@ private:
     void _stop();
     void _closeDevice();
     void _setStatus(const QString& status);
-    void _settingsChanged();
+    void _scheduleUpdate();
     void _updateSerialRouting();
     bool _installSource(QIODevice* device);
     void _startAttempt();
@@ -100,7 +94,11 @@ private:
     void _notifyState();
 
     std::shared_ptr<GPSRecordingBuffer> _recordingBuffer;
-    AutoConnectSettings* _settings;
+    QPointer<GPSRuntimeScheduler> _scheduler;
+    GPSRuntimeScheduler::TaskId _updateTask = 0;
+    bool _automatic = false;
+    bool _suspended = false;
+    bool _stopped = false;
     GPSReceiverProfile _profile;
     quint64 _attemptGeneration = 0;
     std::unique_ptr<NMEAConnectionAttempt> _attempt;

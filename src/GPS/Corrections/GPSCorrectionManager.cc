@@ -17,17 +17,20 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
     connect(&_router, &GPSCorrectionRouter::sourceSelected, this, &GPSCorrectionManager::selectedSourceChanged);
     connect(&_router, &GPSCorrectionRouter::sourceInvalidated, this, &GPSCorrectionManager::selectedSourceChanged);
     connect(&_router, &GPSCorrectionRouter::frameRouted, this, &GPSCorrectionManager::correctionRouted);
-    _router.setSink(QStringLiteral("mavlink"),
-                    [this](const GPSCorrectionFrame& frame) { return _rtcmMavlink.submit(frame.data); });
-    connect(&_udpInput, &RTCMUdpInput::frameReceived, this, [this](GPSCorrectionFrame frame) {
-        frame.session = sourceSession(GPSCorrectionSource::Udp);
-        acceptFrame(frame);
+    _router.setFanoutSink(QStringLiteral("mavlink"), [this](const GPSCorrectionFrame& frame) {
+        QList<GPSCorrectionRouter::Admission> results;
+        for (const auto& admission : _rtcmMavlink.submitToOutputs(frame.data)) {
+            results.append(
+                {admission.id,
+                 {admission.queuedBytes, admission.session,
+                  admission.complete ? GPSCorrectionReason::None : GPSCorrectionReason::DestinationUnavailable},
+                 admission.complete});
+        }
+        if (results.isEmpty()) {
+            results.append({QStringLiteral("mavlink"), {}, false});
+        }
+        return results;
     });
-    connect(&_udpInput, &RTCMUdpInput::frameRejected, this,
-            [this](GPSCorrectionFrame frame, GPSCorrectionReason reason) {
-                frame.session = sourceSession(GPSCorrectionSource::Udp);
-                recordRejectedFrame(frame, reason);
-            });
     _diagnosticsTimer.setSingleShot(true);
     _diagnosticsTimer.setInterval(100);
     connect(&_diagnosticsTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
@@ -80,18 +83,78 @@ void GPSCorrectionManager::_applyUdpInputSettings()
     if (!_settings || _shutdown) {
         return;
     }
-    endSourceSession(GPSCorrectionSource::Udp);
+    const QPointer<GPSCorrectionManager> guard(this);
+    const quint64 revision = ++_udpConfigurationRevision;
+    const bool enabled = _settings->rtcmUdpInputEnabled()->rawValue().toBool();
+    const bool validate = _settings->rtcmUdpValidate()->rawValue().toBool();
+    const quint16 port = static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt());
+    const auto current = [this, guard, revision]() {
+        return guard && !_shutdown && _udpConfigurationRevision == revision;
+    };
+    _udpRegistration.reset();
+    if (!current()) {
+        return;
+    }
     _udpInput.stop();
-    _udpInput.setValidation(_settings->rtcmUdpValidate()->rawValue().toBool());
-    _udpInput.setPort(static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt()));
-    if (_settings->rtcmUdpInputEnabled()->rawValue().toBool()) {
-        beginSourceSession(GPSCorrectionSource::Udp);
-        if (!_udpInput.start()) {
-            endSourceSession(GPSCorrectionSource::Udp);
-        }
+    if (!current()) {
+        return;
+    }
+    disconnect(&_udpInput, nullptr, this, nullptr);
+    _udpInput.setValidation(validate);
+    _udpInput.setPort(port);
+    if (!current() || !enabled) {
+        return;
+    }
+    auto registration = registerSource(GPSCorrectionSource::Udp);
+    if (!current()) {
+        return;
+    }
+    _udpRegistration = std::move(registration);
+    const auto token = _udpRegistration.token();
+    connect(&_udpInput, &RTCMUdpInput::frameReceived, this, [this, token](const GPSCorrectionFrame& frame) {
+        acceptIngress(token.event(frame.data, frame.receivedAtMs, frame.messageId, frame.validated, frame.filtered,
+                                  GPSCorrectionReason::None, frame.sourceInstance));
+    });
+    connect(&_udpInput, &RTCMUdpInput::frameRejected, this,
+            [this, token](const GPSCorrectionFrame& frame, GPSCorrectionReason reason) {
+                acceptIngress(token.event(frame.data, frame.receivedAtMs, frame.messageId, false, frame.filtered,
+                                          reason, frame.sourceInstance));
+            });
+    const bool started = _udpInput.start();
+    if (current() && !started) {
+        _udpRegistration.reset();
     }
 }
 
+void GPSCorrectionManager::applyRoutingConfiguration(const RoutingConfiguration& configuration)
+{
+    const QPointer<GPSCorrectionManager> guard(this);
+    _router.applyConfiguration(
+        {static_cast<GPSCorrectionRouter::Policy>(configuration.policy), configuration.source, configuration.instance});
+    if (guard) {
+        _scheduleSourcesChanged();
+    }
+}
+
+GPSCorrectionSourceRegistration GPSCorrectionManager::registerSource(GPSCorrectionSource source,
+                                                                     const QString& instance)
+{
+    const QPointer<GPSCorrectionManager> guard(this);
+    auto registration = _router.registerSource(source, instance);
+    if (guard) {
+        _scheduleSourcesChanged();
+    }
+    return registration;
+}
+
+void GPSCorrectionManager::acceptIngress(const GPSCorrectionIngress& ingress)
+{
+    const QPointer<GPSCorrectionManager> guard(this);
+    _router.acceptIngress(ingress);
+    if (guard) {
+        _scheduleSourcesChanged();
+    }
+}
 
 quint64 GPSCorrectionManager::beginSourceSession(GPSCorrectionSource source, const QString& instance)
 {
@@ -119,23 +182,18 @@ quint64 GPSCorrectionManager::sourceSession(GPSCorrectionSource source) const
 
 void GPSCorrectionManager::setSelectedSource(GPSCorrectionSource source)
 {
-    _router.setSelectedSource(source, _router.selectedInstance());
-    // Preserve the legacy setter's explicit select-all behavior.
-    _router.setPolicy(source == GPSCorrectionSource::Unknown ? GPSCorrectionRouter::Policy::All
-                                                             : GPSCorrectionRouter::Policy::Manual);
-    _scheduleSourcesChanged();
+    applyRoutingConfiguration({source == GPSCorrectionSource::Unknown ? RoutingPolicy::All : RoutingPolicy::Manual,
+                               source, _router.selectedInstance()});
 }
 
 void GPSCorrectionManager::setSelectedInstance(const QString& instance)
 {
-    _router.setSelectedSource(_router.selectedSource(), instance);
-    _scheduleSourcesChanged();
+    applyRoutingConfiguration({routingPolicy(), _router.selectedSource(), instance});
 }
 
 void GPSCorrectionManager::setRoutingPolicy(RoutingPolicy policy)
 {
-    _router.setPolicy(static_cast<GPSCorrectionRouter::Policy>(policy));
-    _scheduleSourcesChanged();
+    applyRoutingConfiguration({policy, _router.selectedSource(), _router.selectedInstance()});
 }
 
 GPSCorrectionManager::RoutingPolicy GPSCorrectionManager::routingPolicy() const

@@ -52,6 +52,23 @@ LinkManager::LinkManager(QObject *parent)
 #endif
 }
 
+void LinkManager::setConnectionsSuspended(const QString& reason)
+{
+    _connectionsSuspendedReason = reason;
+    if (!_connectionsSuspended) {
+        _connectionsSuspended = true;
+        emit connectionsSuspendedChanged(true);
+    }
+}
+
+void LinkManager::setConnectionsAllowed()
+{
+    if (_connectionsSuspended) {
+        _connectionsSuspended = false;
+        emit connectionsSuspendedChanged(false);
+    }
+}
+
 LinkManager::~LinkManager()
 {
     qCDebug(LinkManagerLog) << this;

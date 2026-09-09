@@ -122,6 +122,41 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     QCOMPARE(forwarder->totalBytesSent(), expected);
 }
 
+void GPSCorrectionManagerTest::_mavlinkDestinationAdmissions()
+{
+    GPSCorrectionManager corrections;
+    int calls = 0;
+    corrections.rtcmMavlink()->setOutputProvider([&]() {
+        return QList<RTCMMavlink::Output>{
+            {QStringLiteral("mavlink/full"), 1, [](const GpsRtcmPacket&) { return true; }},
+            {QStringLiteral("mavlink/partial"), 2, [&](const GpsRtcmPacket&) { return ++calls == 1; }}};
+    });
+    auto source = corrections.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
+    const auto bytes = GpsTestHelpers::buildRtcmFrame(1077, 500);
+    corrections.acceptIngress(source.token().event(bytes, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    const auto sourceStats = corrections.sources()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
+    QCOMPARE(sourceStats.value(QStringLiteral("queuedFrames")).toULongLong(), 1ULL);
+    QCOMPARE(sourceStats.value(QStringLiteral("queuedBytes")).toULongLong(), quint64(bytes.size()));
+    QCOMPARE(sourceStats.value(QStringLiteral("droppedFrames")).toULongLong(), 0ULL);
+    int outputs = 0;
+    for (const auto& value : corrections.destinations()) {
+        const auto destination = value.toMap();
+        const auto id = destination.value(QStringLiteral("destinationId")).toString();
+        if (id == QStringLiteral("mavlink/full")) {
+            ++outputs;
+            QCOMPARE(destination.value(QStringLiteral("queuedFrames")).toULongLong(), 1ULL);
+        } else if (id == QStringLiteral("mavlink/partial")) {
+            ++outputs;
+            QCOMPARE(destination.value(QStringLiteral("queuedFrames")).toULongLong(), 0ULL);
+            QCOMPARE(destination.value(QStringLiteral("queuedBytes")).toULongLong(), 180ULL);
+            QCOMPARE(destination.value(QStringLiteral("droppedBytes")).toULongLong(), quint64(bytes.size() - 180));
+        }
+        QCOMPARE(destination.value(QStringLiteral("writtenBytes")).toULongLong(), 0ULL);
+        QVERIFY(!destination.value(QStringLiteral("reportsWrites")).toBool());
+    }
+    QCOMPARE(outputs, 2);
+}
+
 void GPSCorrectionManagerTest::_udpSettingsAndShutdown()
 {
     TestFixtures::SettingsFixture saved;

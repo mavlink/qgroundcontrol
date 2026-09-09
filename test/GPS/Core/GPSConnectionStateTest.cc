@@ -39,10 +39,10 @@ void GPSConnectionStateTest::_lifecycleAndRetry()
         QCOMPARE(state.state(), GPSConnectionState::Retrying);
         QCOMPARE(state._retryDelayMs, delay);
         QVERIFY(!state.canAttempt());
-        const auto deadline = state._retryDeadline.deadline();
+        const auto deadline = state._retryDeadlineMs;
         state.failed();
-        QCOMPARE(state._retryDeadline.deadline(), deadline);
-        state._retryDeadline.setRemainingTime(0);
+        QCOMPARE(state._retryDeadlineMs, deadline);
+        state._retryDeadlineMs = 0;
         QVERIFY(state.beginAttempt());
     }
     state.ready();

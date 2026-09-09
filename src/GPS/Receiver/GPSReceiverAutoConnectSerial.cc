@@ -9,10 +9,17 @@
 
 void GPSReceiverAutoConnect::setSerialDiscovery(SerialPortManager* serialPorts)
 {
+    if (_serialPorts) {
+        _serialPorts->disconnect(this);
+    }
     _serialPorts = serialPorts;
+    if (_serialPorts) {
+        connect(_serialPorts, &SerialPortManager::serialPortsChanged, this, &GPSReceiverAutoConnect::_scheduleUpdate);
+    }
+    _scheduleUpdate();
     if (!_serialFactory) {
         _serialFactory = [this](const QString& device) -> GPSProvider::TransportFactory {
-            auto reservation = _serialPorts->reservePort(device);
+            auto reservation = _serialPorts ? _serialPorts->reservePort(device) : nullptr;
             if (!reservation) {
                 return {};
             }
@@ -39,6 +46,9 @@ void GPSReceiverAutoConnect::_updateSerial()
     }
     const QString selectedDevice = _sessionConfig->endpoint.device;
     const auto ports = _serialPorts->availablePorts();
+    if (!guard || revision != _commandRevision || !_serialPorts) {
+        return;
+    }
     const auto eligible = [this, &selectedDevice](const SerialPortManager::Port& port) {
         return port.autoConnectAllowed && !port.bootloader && _serialPorts->canAutoConnectPort(port.systemLocation) &&
                (selectedDevice.isEmpty() ? port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS
@@ -104,8 +114,8 @@ void GPSReceiverAutoConnect::_updateSerial()
         }
         auto it = _waitingPorts.find(port.systemLocation);
         if (it == _waitingPorts.end()) {
-            _waitingPorts[port.systemLocation].start();
-        } else if (it->elapsed() >= _connectDelayMs) {
+            _waitingPorts[port.systemLocation] = _scheduler->nowMs();
+        } else if (_scheduler->nowMs() - it.value() >= _connectDelayMs) {
             _autoConnectedPort = port.systemLocation;
             _waitingPorts.clear();
             request(port);

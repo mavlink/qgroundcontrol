@@ -11,7 +11,14 @@ VehicleGPSObservation convert(const Message& message)
     observation.position =
         QGeoPositionInfo(QGeoCoordinate(message.lat * 1e-7, message.lon * 1e-7), observation.receivedAt);
     observation.sourceId = QStringLiteral("VehicleGPS");
-    if (message.fix_type <= 6) {
+    if (message.fix_type >= 3) {
+        observation.position.setCoordinate(
+            QGeoCoordinate(message.lat * 1e-7, message.lon * 1e-7, message.alt / 1000.0));
+        observation.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+    }
+    if (message.fix_type <= 1) {
+        observation.fixQuality = GPSObservation::FixQuality::NoFix;
+    } else if (message.fix_type <= 6) {
         observation.fixQuality = static_cast<GPSObservation::FixQuality>(message.fix_type);
     }
     if (message.eph != UINT16_MAX) {

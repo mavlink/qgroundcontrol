@@ -17,6 +17,10 @@ private slots:
     void _correctionRoutingSettings_data();
     void _correctionRoutingSettings();
     void _correctionRuntimeLifecycle();
+    void _correctionDeliveryFlushReentrancy_data();
+    void _correctionDeliveryFlushReentrancy();
+    void _correctionSettingsReentrantChange_data();
+    void _correctionSettingsReentrantChange();
     void _correctionSettingsPanel();
     void _correctionDiagnosticsPanel();
     void _receiverConfigurationPanel_data();

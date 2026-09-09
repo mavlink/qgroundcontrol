@@ -1,26 +1,6 @@
-qt_add_library(
-    QGCGPSNTRIPSession
-    STATIC
-    NTRIPError.h
-    NTRIPHttpDecoder.cc
-    NTRIPHttpDecoder.h
-    NTRIPSession.cc
-    NTRIPSession.h
-    NTRIPStream.cc
-    NTRIPStream.h
-    NTRIPTransportConfig.cc
-    NTRIPTransportConfig.h
-    NTRIPRequest.cc
-    NTRIPRequest.h
-)
-target_include_directories(QGCGPSNTRIPSession PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_features(QGCGPSNTRIPSession PUBLIC cxx_std_20)
-target_link_libraries(
-    QGCGPSNTRIPSession
-    PUBLIC Qt6::Core
-    PRIVATE QGCLogging
-)
+qgc_add_gps_component(QGCGPSNTRIPSession COMPONENT NTRIPSession LOGGING_TARGET QGCLogging)
 qt_extract_metatypes(QGCGPSNTRIPSession)
+
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNTRIPSession)
 
 # ============================================================================

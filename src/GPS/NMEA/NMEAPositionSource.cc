@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "GPSQtRuntimeScheduler.h"
 #include "GPSReadTimestamp.h"
-#include "GPSSourceHealth.h"
 #include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
@@ -18,9 +18,8 @@ QGC_LOGGING_CATEGORY(NMEATimestampedPositionDecoderLog, "GPS.NMEA.NMEATimestampe
 class NMEATimestampedPositionDecoder : public QNmeaPositionInfoSource
 {
 public:
-    explicit NMEATimestampedPositionDecoder(QIODevice* device)
-        : QNmeaPositionInfoSource(RealTimeMode)
-        , _input(device)
+    explicit NMEATimestampedPositionDecoder(QIODevice* device, GPSRuntimeScheduler* scheduler)
+        : QNmeaPositionInfoSource(RealTimeMode), _input(device), _scheduler(scheduler)
     {
         qCDebug(NMEATimestampedPositionDecoderLog) << this;
         if (device) {
@@ -41,8 +40,10 @@ public:
         result.position.setCoordinate(position.coordinate());
         result.position.setTimestamp(position.timestamp());
         result.sourceId = QStringLiteral("NMEA");
-        if (result.monotonicTimestampUs) {
-            result.receivedAt = QDateTime::currentDateTimeUtc().addMSecs(-result.ageMilliseconds());
+        const auto nowUs = _scheduler ? _scheduler->nowUs() : GPSObservation::monotonicNowUs();
+        if (result.monotonicTimestampUs && result.monotonicTimestampUs <= nowUs) {
+            const auto ageMs = static_cast<qint64>((nowUs - result.monotonicTimestampUs) / 1000);
+            result.receivedAt = QDateTime::currentDateTimeUtc().addMSecs(-ageMs);
         }
         return result;
     }
@@ -169,13 +170,15 @@ private:
     }
 
     QPointer<QIODevice> _input;
+    QPointer<GPSRuntimeScheduler> _scheduler;
     QHash<QTime, GPSObservation> _epochs;
     QTime _currentEpoch;
 };
 
-NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent)
-    : QGeoPositionInfoSource(parent)
-    , _device(device)
+NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent, GPSRuntimeScheduler* scheduler)
+    : QGeoPositionInfoSource(parent),
+      _device(device),
+      _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
 {
     qCDebug(NMEAPositionSourceLog) << this;
     _resetDecoder();
@@ -184,61 +187,96 @@ NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent)
 NMEAPositionSource::~NMEAPositionSource()
 {
     qCDebug(NMEAPositionSourceLog) << this;
+    _cancelTask(_requestTask);
+    _cancelTask(_publicationTask);
 }
 
 void NMEAPositionSource::_resetDecoder()
 {
     ++_generation;
+    _cancelTask(_requestTask);
+    _cancelTask(_publicationTask);
+    _pendingObservation.reset();
+    _pendingRequested = false;
     _lastObservation = {};
-    _lastUpdateReceivedUs = 0;
-    _requestDeadline = QDeadlineTimer::Forever;
-    _decoder = std::make_unique<NMEATimestampedPositionDecoder>(_device);
+    _error = NoError;
+    _decoder = std::make_unique<NMEATimestampedPositionDecoder>(_device, _scheduler);
     _decoder->setUserEquivalentRangeError(5.1);
-    _decoder->setUpdateInterval(updateInterval());
+    // Qt owns epoch merging; the outer source owns requested publication cadence.
+    _decoder->setUpdateInterval(0);
     const quint64 generation = _generation;
     connect(_decoder.get(), &QGeoPositionInfoSource::positionUpdated, this,
             [this, generation](const QGeoPositionInfo& update) {
-                const bool requested = !_requestDeadline.isForever();
-                _requestDeadline = QDeadlineTimer::Forever;
-                const GPSObservation observation =
-                    static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(update);
-                // Leave Qt's parser stack before a consumer can tear down the session.
-                QMetaObject::invokeMethod(
-                    this,
-                    [this, generation, requested, observation]() {
-                        if (generation == _generation && (_started || requested)) {
-                            _lastObservation = observation;
-                            _lastUpdateReceivedUs = observation.monotonicTimestampUs;
-                            emit positionUpdated(observation.position);
-                        }
-                    },
-                    Qt::QueuedConnection);
+                if (generation != _generation || (!_started && !_requestTask)) {
+                    return;
+                }
+                _pendingRequested |= _requestTask != 0;
+                _cancelTask(_requestTask);
+                _pendingObservation = static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(update);
+                if (_pendingRequested) {
+                    _cancelTask(_publicationTask);
+                }
+                _schedulePublication();
             });
     connect(_decoder.get(), &QGeoPositionInfoSource::errorOccurred, this, [this, generation](Error error) {
-        if (_requestDeadline.hasExpired()) {
-            _requestDeadline = QDeadlineTimer::Forever;
-        }
-        QMetaObject::invokeMethod(
-            this,
-            [this, generation, error]() {
+        if (_scheduler) {
+            _scheduler->schedule(this, std::chrono::microseconds::zero(), [this, generation, error]() {
                 if (generation == _generation) {
+                    _error = error;
                     emit errorOccurred(error);
                 }
-            },
-            Qt::QueuedConnection);
+            });
+        }
     });
 }
 
-qint64 NMEAPositionSource::lastUpdateAgeMs() const
+void NMEAPositionSource::_cancelTask(GPSRuntimeScheduler::TaskId& task)
 {
-    return _lastUpdateReceivedUs ? GPSSourceHealth::ageMilliseconds(_lastUpdateReceivedUs)
-                                 : GPSSourceHealth::FRESHNESS_TIMEOUT_MS;
+    if (_scheduler) {
+        _scheduler->cancel(task);
+    }
+    task = 0;
+}
+
+void NMEAPositionSource::_schedulePublication()
+{
+    if (!_scheduler || _publicationTask || !_pendingObservation) {
+        return;
+    }
+    const auto generation = _generation;
+    const auto delay = std::chrono::milliseconds(_pendingRequested ? 0 : updateInterval());
+    _publicationTask = _scheduler->schedule(this, delay, [this, generation]() {
+        _publicationTask = 0;
+        if (generation == _generation) {
+            _publishPending();
+        }
+    });
+}
+
+void NMEAPositionSource::_publishPending()
+{
+    if (!_pendingObservation) {
+        return;
+    }
+    const auto observation = *_pendingObservation;
+    const bool requested = _pendingRequested;
+    _pendingObservation.reset();
+    _pendingRequested = false;
+    if (_started || requested) {
+        _error = NoError;
+        _lastObservation = observation;
+        if (!_started) {
+            _decoder->stopUpdates();
+        }
+        emit positionUpdated(observation.position);
+    }
 }
 
 void NMEAPositionSource::setUpdateInterval(int msec)
 {
-    _decoder->setUpdateInterval(msec);
-    QGeoPositionInfoSource::setUpdateInterval(_decoder->updateInterval());
+    QGeoPositionInfoSource::setUpdateInterval(msec == 0 ? 0 : (std::max) (msec, minimumUpdateInterval()));
+    _cancelTask(_publicationTask);
+    _schedulePublication();
 }
 
 QGeoPositionInfo NMEAPositionSource::lastKnownPosition(bool satelliteOnly) const
@@ -258,7 +296,7 @@ int NMEAPositionSource::minimumUpdateInterval() const
 
 QGeoPositionInfoSource::Error NMEAPositionSource::error() const
 {
-    return _decoder->error();
+    return _error;
 }
 
 void NMEAPositionSource::startUpdates()
@@ -266,8 +304,7 @@ void NMEAPositionSource::startUpdates()
     if (_started) {
         return;
     }
-    // Preserve a pending one-shot request when entering continuous mode.
-    if (_requestDeadline.isForever() || _requestDeadline.hasExpired()) {
+    if (!_requestTask) {
         _resetDecoder();
     }
     _started = true;
@@ -277,19 +314,42 @@ void NMEAPositionSource::startUpdates()
 void NMEAPositionSource::stopUpdates()
 {
     _started = false;
-    _decoder->stopUpdates();
+    if (!_requestTask) {
+        _decoder->stopUpdates();
+        if (!_pendingRequested) {
+            _cancelTask(_publicationTask);
+            _pendingObservation.reset();
+        }
+    }
 }
 
 void NMEAPositionSource::requestUpdate(int timeout)
 {
-    if (!_requestDeadline.isForever() && !_requestDeadline.hasExpired()) {
+    if (_requestTask || !_scheduler) {
         return;
     }
-    if (timeout == 0 || timeout >= minimumUpdateInterval()) {
-        _requestDeadline.setRemainingTime(timeout == 0 ? 300000 : timeout);
+    const auto generation = _generation;
+    if (timeout < 0 || (timeout > 0 && timeout < minimumUpdateInterval())) {
+        _scheduler->schedule(this, std::chrono::microseconds::zero(), [this, generation]() {
+            if (generation == _generation) {
+                _error = UpdateTimeoutError;
+                emit errorOccurred(_error);
+            }
+        });
+        return;
     }
-    _decoder->requestUpdate(timeout);
-    if (_decoder->error() != NoError) {
-        _requestDeadline = QDeadlineTimer::Forever;
-    }
+    _error = NoError;
+    _requestTask =
+        _scheduler->schedule(this, std::chrono::milliseconds(timeout == 0 ? 300000 : timeout), [this, generation]() {
+            _requestTask = 0;
+            if (generation != _generation) {
+                return;
+            }
+            if (!_started) {
+                _decoder->stopUpdates();
+            }
+            _error = UpdateTimeoutError;
+            emit errorOccurred(_error);
+        });
+    _decoder->startUpdates();
 }

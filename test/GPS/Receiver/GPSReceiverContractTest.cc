@@ -251,7 +251,7 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
             , _trace(trace)
         {}
 
-        bool open() override { return true; }
+        OpenResult open() override { return {OpenStatus::Opened}; }
 
         bool fatalError() const override { return false; }
 
@@ -259,7 +259,7 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
 
         unsigned fixedBaudrate() const override { return 115200; }
 
-        int read(uint8_t* data, int size, int) override
+        ReadResult read(uint8_t* data, int size, int) override
         {
             if (_trace.correctionCount == 1) {
                 _trace.readAfterFirstCorrection = true;
@@ -269,7 +269,7 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
                 _trace.releaseRead.acquire();
             }
             if (isCancelled()) {
-                return -1;
+                return {ReadStatus::Cancelled};
             }
             const int count = qMin(size, int(_reply.size()));
             std::memcpy(data, _reply.constData(), count);
@@ -279,10 +279,10 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
                 QSemaphore idle;
                 idle.tryAcquire(1, 1);
             }
-            return count;
+            return {count > 0 ? ReadStatus::Data : ReadStatus::TimedOut, count};
         }
 
-        int write(const uint8_t* data, int size) override
+        WriteResult write(const uint8_t* data, int size) override
         {
             const QByteArray command(reinterpret_cast<const char*>(data), size);
             if (command.startsWith(char(0xd3))) {
@@ -292,11 +292,11 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
                     _trace.writtenOn = QThread::currentThread();
                     _trace.correctionWritten.release();
                 }
-                return written;
+                return {WriteStatus::Completed, size, written, size - written};
             } else {
                 _reply = command.trimmed().isEmpty() ? "USB1>" : "$R: " + command;
             }
-            return size;
+            return {WriteStatus::Completed, size, size};
         }
 
         WriteResult writeBounded(const uint8_t* data, int size, QDeadlineTimer deadline) override
@@ -310,7 +310,7 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
                 QSemaphore drain;
                 drain.tryAcquire(1, static_cast<int>(deadline.remainingTime()));
             }
-            const int count = write(data, size);
+            const int count = write(data, size).writtenBytes;
             return {_trace.partialWrite ? WriteStatus::Error : WriteStatus::Completed, size, count, size - count};
         }
 

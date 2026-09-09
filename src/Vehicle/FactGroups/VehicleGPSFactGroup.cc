@@ -1,5 +1,6 @@
 #include "VehicleGPSFactGroup.h"
 
+#include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "QGCGeo.h"
@@ -11,22 +12,14 @@
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : GPSPositionFactGroup(parent)
 {
-    _addFact(&_systemErrorsFact);
-    _addFact(&_spoofingStateFact);
-    _addFact(&_jammingStateFact);
-    _addFact(&_authenticationStateFact);
-    _addFact(&_correctionsQualityFact);
-    _addFact(&_systemQualityFact);
-    _addFact(&_gnssSignalQualityFact);
-    _addFact(&_postProcessingQualityFact);
-
-    _spoofingStateFact.setRawValue(255);
-    _jammingStateFact.setRawValue(255);
-    _authenticationStateFact.setRawValue(255);
-    _correctionsQualityFact.setRawValue(255);
-    _systemQualityFact.setRawValue(255);
-    _gnssSignalQualityFact.setRawValue(255);
-    _postProcessingQualityFact.setRawValue(255);
+    _addFact(systemErrors());
+    _addFact(spoofingState());
+    _addFact(jammingState());
+    _addFact(authenticationState());
+    _addFact(correctionsQuality());
+    _addFact(systemQuality());
+    _addFact(gnssSignalQuality());
+    _addFact(postProcessingQuality());
 }
 
 void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -97,14 +90,35 @@ void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
         return;
     }
 
-    systemErrors()->setRawValue         (gnssIntegrity.system_errors);
-    spoofingState()->setRawValue        (gnssIntegrity.spoofing_state);
-    jammingState()->setRawValue         (gnssIntegrity.jamming_state);
-    authenticationState()->setRawValue  (gnssIntegrity.authentication_state);
-    correctionsQuality()->setRawValue   (gnssIntegrity.corrections_quality);
-    systemQuality()->setRawValue        (gnssIntegrity.system_status_summary);
-    gnssSignalQuality()->setRawValue    (gnssIntegrity.gnss_signal_quality);
-    postProcessingQuality()->setRawValue(gnssIntegrity.post_processing_quality);
+    GPSIntegrityObservation observation;
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.systemErrors = gnssIntegrity.system_errors;
+    if (gnssIntegrity.spoofing_state != UINT8_MAX) {
+        observation.spoofingState = gnssIntegrity.spoofing_state;
+    }
+    if (gnssIntegrity.jamming_state != UINT8_MAX) {
+        observation.jammingState = gnssIntegrity.jamming_state;
+    }
+    if (gnssIntegrity.authentication_state != UINT8_MAX) {
+        observation.authenticationState = gnssIntegrity.authentication_state;
+    }
+    if (gnssIntegrity.corrections_quality != UINT8_MAX) {
+        observation.correctionsQuality = gnssIntegrity.corrections_quality;
+    }
+    if (gnssIntegrity.system_status_summary != UINT8_MAX) {
+        observation.systemQuality = gnssIntegrity.system_status_summary;
+    }
+    if (gnssIntegrity.gnss_signal_quality != UINT8_MAX) {
+        observation.gnssSignalQuality = gnssIntegrity.gnss_signal_quality;
+    }
+    if (gnssIntegrity.post_processing_quality != UINT8_MAX) {
+        observation.postProcessingQuality = gnssIntegrity.post_processing_quality;
+    }
+    const QPointer<VehicleGPSFactGroup> guard(this);
+    integrity()->update(observation);
+    if (!guard) {
+        return;
+    }
 
     emit gnssIntegrityReceived();
 }

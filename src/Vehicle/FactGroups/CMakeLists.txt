@@ -31,6 +31,8 @@ target_sources(
             VehicleGPSFactGroup.h
             VehicleGPSObservation.cc
             VehicleGPSObservation.h
+            VehicleGPSPositionProvider.cc
+            VehicleGPSPositionProvider.h
             VehicleGPSAggregateFactGroup.cc
             VehicleGPSAggregateFactGroup.h
             VehicleLocalPositionFactGroup.cc

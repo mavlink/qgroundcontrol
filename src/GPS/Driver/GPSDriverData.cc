@@ -27,16 +27,6 @@ std::optional<int> knownState(int value)
 
 QGeoPositionInfo positionInfo(const sensor_gps_s& fix)
 {
-    if (fix.fix_type < sensor_gps_s::FIX_TYPE_2D || fix.fix_type > sensor_gps_s::FIX_TYPE_RTK_FIXED) {
-        qCDebug(GPSDriverDataLog) << "Rejected receiver fix: unsupported fix type"
-                                  << "fixType:" << fix.fix_type;
-        return {};
-    }
-    if (!qIsFinite(fix.eph) || fix.eph <= 0) {
-        qCDebug(GPSDriverDataLog) << "Rejected receiver fix: invalid horizontal accuracy"
-                                  << "horizontalAccuracy:" << fix.eph;
-        return {};
-    }
     QGeoCoordinate coordinate(fix.latitude_deg, fix.longitude_deg);
     if (!coordinate.isValid()) {
         qCDebug(GPSDriverDataLog) << "Rejected receiver fix: invalid coordinate"
@@ -57,7 +47,9 @@ QGeoPositionInfo positionInfo(const sensor_gps_s& fix)
                                   << "timeUtcUs:" << fix.time_utc_usec;
     }
     QGeoPositionInfo position(coordinate, timestamp);
-    position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, fix.eph);
+    if (qIsFinite(fix.eph) && fix.eph > 0) {
+        position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, fix.eph);
+    }
     if (altitudeValid && qIsFinite(fix.epv) && fix.epv > 0) {
         position.setAttribute(QGeoPositionInfo::VerticalAccuracy, fix.epv);
     }
@@ -99,6 +91,8 @@ GPSObservation GPSDriverData::position(const sensor_gps_s& fix)
 {
     GPSObservation result;
     result.position = positionInfo(fix);
+    result.receiverFixValid =
+        fix.fix_type >= sensor_gps_s::FIX_TYPE_2D && fix.fix_type <= sensor_gps_s::FIX_TYPE_RTK_FIXED;
     result.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
     result.monotonicTimestampUs = fix.timestamp != 0 ? fix.timestamp : GPSObservation::monotonicNowUs();
     const qint64 age = result.ageMilliseconds();

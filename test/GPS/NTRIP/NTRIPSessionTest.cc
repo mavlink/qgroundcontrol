@@ -132,7 +132,7 @@ private slots:
             QCOMPARE(session.state(), NTRIPSession::State::Reconnecting);
             QCOMPARE(session.failedAttempts(), failed);
             QCOMPARE(session.nextRetryDelay(), std::chrono::milliseconds{1000 * (1 << (failed - 1))});
-            session._retryTimer.stop();
+            session._cancelRetry();
             const auto retiredAttempt = session._nextAttemptId;
             session._beginAttempt(session._generation);
             QVERIFY(session.activeAttemptId() > retiredAttempt);
@@ -145,7 +145,7 @@ private slots:
         stream->simulateError(NTRIPError::SslError, QStringLiteral("certificate expired"));
         QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
         QCOMPARE(session.state(), NTRIPSession::State::Error);
-        QVERIFY(!session._retryTimer.isActive());
+        QVERIFY(!session.retryPending());
     }
 
     void attemptIdentitySurvivesReentrantRestart_data()

@@ -15,15 +15,15 @@ public:
     explicit GPSPositionSourceAdapter(QObject* parent = nullptr);
     ~GPSPositionSourceAdapter() override;
 
-    void configure(QGeoPositionInfoSource* source, GPSSourceHealth* health, const QString& identity, bool platform);
+    void configure(QObject* producer, GPSSourceHealth* health, const QString& identity, bool platform);
     void setActive(bool active);
     void updatePosition(const QGeoPositionInfo& position);
 
-    QGeoPositionInfoSource* source() const { return _source; }
+    QObject* source() const { return _producer; }
 
     GPSSourceHealth* health()
     {
-        return _source ? (_providedHealth ? _providedHealth.data() : &_fallbackHealth) : nullptr;
+        return _producer ? (_providedHealth ? _providedHealth.data() : &_fallbackHealth) : nullptr;
     }
 
     GPSSourceHealth& fallbackHealth() { return _fallbackHealth; }
@@ -37,6 +37,7 @@ signals:
 
 private:
     void _disconnectSource();
+    QPointer<QObject> _producer;
     QPointer<QGeoPositionInfoSource> _source;
     QPointer<GPSSourceHealth> _providedHealth;
     GPSSourceHealth _fallbackHealth;

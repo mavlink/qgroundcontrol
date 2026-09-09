@@ -4,44 +4,25 @@
 #include <QtCore/QMap>
 #include <QtCore/QPointer>
 #include <QtCore/QSet>
-#include <QtCore/QTimer>
-#include <QtPositioning/QGeoSatelliteInfo>
 
-#include "GPSReadTimestamp.h"
+#include "GPSObservation.h"
+#include "GPSRuntimeScheduler.h"
 
-/// Normalizes constellation and signal-specific NMEA satellite reports for Qt's decoder.
-class NMEASatelliteAdapter : public QIODevice, public GPSReadTimestamp
+/// Assembles multipart/multisignal NMEA satellite epochs into independent constellation reports.
+class NMEASatelliteAdapter : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit NMEASatelliteAdapter(QIODevice* source, QObject* parent = nullptr);
+    explicit NMEASatelliteAdapter(QIODevice* source, QObject* parent = nullptr,
+                                  GPSRuntimeScheduler* scheduler = nullptr);
     ~NMEASatelliteAdapter() override;
+    void close();
 
-    bool isSequential() const override { return true; }
+    bool isOpen() const { return _open; }
 
-    qint64 bytesAvailable() const override;
-    bool canReadLine() const override;
-    void close() override;
-
-    quint64 lastReadTimestampUs() const override { return _lastReadTimestampUs; }
-
-    struct Snapshot
-    {
-        QList<QGeoSatelliteInfo> satellites;
-        quint64 receivedAtUs = 0;
-        QMap<QByteArray, quint64> constellationReceipts;
-        QMap<QByteArray, QSet<int>> usedIds;
-    };
-
-    quint64 satelliteTimestampUs(bool inUse) const;
-    Snapshot satelliteSnapshot(const QList<QGeoSatelliteInfo>& satellites, bool inUse) const;
-
-protected:
-    qint64 readData(char* data, qint64 maxSize) override;
-    qint64 readLineData(char* data, qint64 maxSize) override;
-
-    qint64 writeData(const char*, qint64) override { return -1; }
+signals:
+    void observationReceived(const GPSSatelliteObservation& observation);
 
 private:
     struct SignalReport
@@ -50,35 +31,30 @@ private:
         int satelliteCount = 0;
         int nextMessage = 1;
         quint64 receivedAtUs = 0;
-        QList<QList<QByteArray>> satellites;
-
+        QList<GPSSatellite> satellites;
         bool complete() const { return messageCount > 0 && nextMessage == messageCount + 1; }
+    };
+
+    struct UsedReport
+    {
+        quint64 receivedAtUs = 0;
+        QSet<int> ids;
     };
 
     void _readAvailable();
     void _parseSentence(const QByteArray& sentence, quint64 receivedAtUs);
     void _flush();
-
-    struct TimedSentence
-    {
-        QByteArray bytes;
-        QByteArray talker;
-        quint64 receivedAtUs = 0;
-        bool inUse = false;
-        QSet<int> usedIds = {};
-    };
+    void _deliver();
 
     QPointer<QIODevice> _source;
-    QTimer _idleTimer;
-    QTimer _batchTimer;
+    GPSRuntimeScheduler* _scheduler;
+    GPSRuntimeScheduler::TaskId _idleTask = 0;
+    GPSRuntimeScheduler::TaskId _batchTask = 0;
+    GPSRuntimeScheduler::TaskId _deliveryTask = 0;
+    GPSRuntimeScheduler::TaskId _readTask = 0;
     QMap<QByteArray, QMap<int, SignalReport>> _reports;
-    QMap<QByteArray, QList<QByteArray>> _inUse;
-    QMap<QByteArray, quint64> _inUseReceivedAtUs;
-    QMap<QByteArray, quint64> _consumedViewTimestamps;
-    QMap<QByteArray, quint64> _consumedUseTimestamps;
-    QMap<QByteArray, QSet<int>> _consumedUseIds;
+    QMap<QByteArray, UsedReport> _inUse;
     QByteArray _epochTime;
-    QList<TimedSentence> _output;
-    qsizetype _bufferSize = 0;
-    quint64 _lastReadTimestampUs = 0;
+    QList<GPSSatelliteObservation> _pending;
+    bool _open = true;
 };

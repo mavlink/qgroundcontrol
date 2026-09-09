@@ -75,6 +75,7 @@ private:
     quint64 _validFrames = 0;
     quint64 _invalidFrames = 0;
     bool _drainScheduled = false;
+    quint64 _lifecycleRevision = 0;
     static constexpr qsizetype MAX_DATAGRAMS_PER_DRAIN = 16;
     static constexpr qsizetype MAX_BYTES_PER_DRAIN = 64 * 1024;
 };

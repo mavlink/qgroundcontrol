@@ -330,3 +330,52 @@ void NTRIPSourceTableControllerTest::testFetchUsesSharedRequest()
                               TestTimeout::mediumMs());
     QCOMPARE(controller.mountpointModel()->rowCount(), 1);
 }
+
+void NTRIPSourceTableControllerTest::testCachedProjectionFollowsPosition()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    const auto config = casterConfig(QStringLiteral("127.0.0.1"), server.serverPort());
+    NTRIPSourceTableController controller;
+    controller.fetch(config, QGeoCoordinate(0, 0));
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+    peer->readAll();
+    // A repeat while downloading updates the projection reference without restarting the request.
+    controller.fetch(config, QGeoCoordinate(0, 10));
+    const QByteArray table =
+        "STR;A;Id;RTCM;details;2;GPS;NET;USA;0;0;0;1;gen;none;B;N;4800\r\n"
+        "STR;B;Id;RTCM;details;2;GPS;NET;USA;0;10;0;1;gen;none;B;N;4800\r\nENDSOURCETABLE\r\n";
+    peer->write("HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(table.size()) + "\r\n\r\n" + table);
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
+    auto* model = controller.mountpointModel();
+    const auto firstMount = [&]() {
+        return model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString();
+    };
+    QCOMPARE(firstMount(), QStringLiteral("B"));
+    QSignalSpy reset(model, &QAbstractItemModel::modelReset);
+    const auto fetchedAt = controller._fetchedAtMs;
+    controller.fetch(config, QGeoCoordinate(0, 0));
+    QCOMPARE(firstMount(), QStringLiteral("A"));
+    QCOMPARE(reset.size(), 1);
+    QVERIFY(!controller._reply);
+    QCOMPARE(controller._fetchedAtMs, fetchedAt);
+    controller.fetch(config, {});
+    QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
+    QVERIFY(!controller._reply);
+    QVERIFY(!server.hasPendingConnections());
+}
+
+void NTRIPSourceTableControllerTest::testEmptyCatalogIsCached()
+{
+    NTRIPSourceTableController controller;
+    const auto config = casterConfig(QStringLiteral("caster.example.com"));
+    controller.fetch(config);
+    controller.injectSourceTableForTest(QStringLiteral("ENDSOURCETABLE\r\n"));
+    QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+    controller.fetch(config, QGeoCoordinate(0, 0));
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QVERIFY(!controller._reply);
+}

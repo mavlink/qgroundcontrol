@@ -8,6 +8,8 @@ class RTCMUdpInputTest : public UnitTest
 
 private slots:
     void _testStartStop();
+    void _testStartNotificationReentrancy_data();
+    void _testStartNotificationReentrancy();
     void _testPassthroughWithoutValidation();
     void _testEmitsOneSignalPerFrame();
     void _testDropsBadCrcFrame();

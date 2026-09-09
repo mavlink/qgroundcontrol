@@ -3,7 +3,6 @@
 #include <QtCore/QPointer>
 
 #include "GPSReceiverFactGroup.h"
-#include "GPSReceiverPositionSource.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSReceiverLog, "GPS.Receiver.GPSReceiver")
@@ -13,7 +12,6 @@ GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent)
     , _session(session)
     , _health(this)
     , _satellites(this)
-    , _positionSource(new GPSReceiverPositionSource(this))
     , _facts(new GPSReceiverFactGroup(this))
 {
     qCDebug(GPSReceiverLog) << this;
@@ -39,9 +37,17 @@ GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent)
         const auto observation = _health.observation();
         if (_health.state() == GPSSourceHealth::NoData || _health.state() == GPSSourceHealth::Stale ||
             observation.ageMilliseconds() < 0) {
-            _facts->resetPosition();
+            const QPointer<GPSReceiver> guard(this);
+            _facts->integrity()->reset();
+            if (guard) {
+                _facts->resetPosition();
+            }
         } else {
-            _facts->updatePosition(observation);
+            const QPointer<GPSReceiver> guard(this);
+            _facts->integrity()->update(GPSIntegrityObservation::fromPosition(observation));
+            if (guard) {
+                _facts->updatePosition(observation);
+            }
         }
     });
 
@@ -113,10 +119,6 @@ void GPSReceiver::_onGPSDisconnect()
     if (!current()) {
         return;
     }
-    _positionSource->reset();
-    if (!current()) {
-        return;
-    }
     _health.reset();
     if (current()) {
         _satellites.clear();
@@ -165,11 +167,6 @@ void GPSReceiver::_satelliteInfoUpdate(const GPSSatelliteObservation& msg)
 void GPSReceiver::_sensorGpsUpdate(const GPSObservation& msg)
 {
     if (connected()) {
-        const QPointer<GPSReceiver> guard(this);
-        const quint64 sessionId = _session.sessionId();
-        _positionSource->updatePosition(msg);
-        if (guard && connected() && sessionId == _session.sessionId()) {
-            _health.updateObservation(msg);
-        }
+        _health.updateObservation(msg);
     }
 }

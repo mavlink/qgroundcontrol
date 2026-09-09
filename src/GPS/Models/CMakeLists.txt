@@ -10,8 +10,9 @@ target_link_libraries(
 qt_extract_metatypes(QGCGPSModels)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSModels)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSPositionFactGroup.cc GPSPositionFactGroup.h)
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverSettingsPresentation.cc GPSReceiverSettingsPresentation.h)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSPositionFactGroup.cc GPSPositionFactGroup.h GPSIntegrityFactGroup.cc
+                                             GPSIntegrityFactGroup.h
+)
 qt_add_resources(
     ${CMAKE_PROJECT_NAME} json_gps_position
     PREFIX "/json/Vehicle"

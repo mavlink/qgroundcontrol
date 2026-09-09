@@ -1,0 +1,1 @@
+qgc_add_gps_component(QGCGPSContracts COMPONENT Contracts)

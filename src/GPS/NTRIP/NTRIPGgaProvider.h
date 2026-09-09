@@ -13,9 +13,6 @@
 
 #include "GPSObservation.h"
 
-class Vehicle;
-class Fact;
-class FactGroup;
 class NTRIPSettings;
 
 struct PositionResult
@@ -83,18 +80,12 @@ private:
 
     void _sendGGA();
     void _setRetryPhase(RetryPhase phase);
-    void _ensureDefaultProviders();
-    void _trackVehicle();
     void _clearSource();
 
     PositionResult _getBestPosition() const;
 
     SentenceWriter _writer;
     quint64 _generation = 0;
-    QPointer<Vehicle> _vehicle;
-    QMetaObject::Connection _vehicleMessageConnection;
-    PositionResult _vehicleGpsPosition;
-    PositionResult _vehicleEkfPosition;
     QChronoTimer _timer;
     QString _source;
     QHash<PositionSource, PositionProvider> _providers;

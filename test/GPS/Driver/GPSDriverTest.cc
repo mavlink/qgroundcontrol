@@ -26,28 +26,31 @@ public:
     {
     }
 
-    bool open() override { return true; }
+    OpenResult open() override { return {OpenStatus::Opened}; }
 
     bool fatalError() const override { return false; }
 
     unsigned fixedBaudrate() const override { return fixedRate; }
-    int read(uint8_t *buffer, int length, int timeoutMs) override
+    ReadResult read(uint8_t *buffer, int length, int timeoutMs) override
     {
         lastReadLength = length;
         lastReadTimeoutMs = timeoutMs;
         cancelled = cancelDuringRead;
         if (readError) {
-            return readError;
+            return {ReadStatus::Error};
         }
         const int n = qMin(static_cast<int>(scriptedRead.size()), length);
         (void) memcpy(buffer, scriptedRead.constData(), static_cast<size_t>(n));
-        return n;
+        return {n > 0 ? ReadStatus::Data : ReadStatus::TimedOut, n};
     }
 
-    int write(const uint8_t *buffer, int length) override
+    WriteResult write(const uint8_t *buffer, int length) override
     {
         lastWrite = QByteArray(reinterpret_cast<const char *>(buffer), length);
-        return writeOk ? length : -1;
+        if (scriptedWriteResult) {
+            return *scriptedWriteResult;
+        }
+        return writeOk ? WriteResult{WriteStatus::Completed, length, length} : WriteResult{WriteStatus::Error};
     }
 
     bool setBaudrate(unsigned baudrate) override
@@ -66,6 +69,7 @@ public:
     QList<unsigned> requestedBaudrates;
     bool baudrateOk = true;
     bool writeOk = true;
+    std::optional<WriteResult> scriptedWriteResult;
     std::atomic_bool& cancelled;
     bool cancelDuringRead = false;
     int readError = 0;
@@ -381,7 +385,7 @@ void GPSDriverTest::_receiverRoleCommands()
             , _septentrio(septentrio)
         {}
 
-        bool open() override { return true; }
+        OpenResult open() override { return {OpenStatus::Opened}; }
 
         bool fatalError() const override { return false; }
 
@@ -389,15 +393,15 @@ void GPSDriverTest::_receiverRoleCommands()
 
         unsigned fixedBaudrate() const override { return 115200; }
 
-        int read(uint8_t* data, int size, int) override
+        ReadResult read(uint8_t* data, int size, int) override
         {
             const int count = qMin(size, int(_reply.size()));
             memcpy(data, _reply.constData(), count);
             _reply.remove(0, count);
-            return count;
+            return {count > 0 ? ReadStatus::Data : ReadStatus::TimedOut, count};
         }
 
-        int write(const uint8_t* data, int size) override
+        WriteResult write(const uint8_t* data, int size) override
         {
             const QByteArray command(reinterpret_cast<const char*>(data), size);
             commands.append(command);
@@ -407,7 +411,7 @@ void GPSDriverTest::_receiverRoleCommands()
                 _reply = '<' + command.split(' ').first().trimmed() + " OK";
                 _reply.append(char(0));
             }
-            return size;
+            return {WriteStatus::Completed, size, size};
         }
 
         WriteResult writeBounded(const uint8_t* data, int size, QDeadlineTimer deadline) override
@@ -415,8 +419,7 @@ void GPSDriverTest::_receiverRoleCommands()
             if (deadline.hasExpired()) {
                 return {WriteStatus::TimedOut};
             }
-            const int count = write(data, size);
-            return {WriteStatus::Completed, count, count, 0};
+            return write(data, size);
         }
 
         QList<QByteArray> commands;
@@ -535,6 +538,29 @@ void GPSDriverTest::_observationMetadata()
     QVERIFY(qIsNaN(observation.heading()));  // stationary course must not become antenna orientation
     QCOMPARE(observation.jammingState.value(), static_cast<int>(sensor_gps_s::JAMMING_STATE_DETECTED));
     QCOMPARE(observation.correctionsUsed.value(), static_cast<int>(sensor_gps_s::CORRECTIONS_MSG_USED_USED));
+    fix.eph = qQNaN();
+    observation = GPSDriverData::position(fix);
+    QVERIFY(observation.position.isValid());
+    QVERIFY(!observation.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
+    QVERIFY(!observation.usable());
+    QVERIFY(!observation.acceptedPosition(GPSObservation::PositionUse::GroundStation).isValid());
+    QVERIFY(observation.acceptedPosition(GPSObservation::PositionUse::Diagnostics).isValid());
+    QVERIFY(observation.acceptedPosition(GPSObservation::PositionUse::Gga).isValid());
+    fix.eph = 0;
+    observation = GPSDriverData::position(fix);
+    QVERIFY(!observation.usable());
+    QVERIFY(observation.position.isValid());
+    fix.eph = 0.5f;
+    fix.fix_type = sensor_gps_s::FIX_TYPE_NONE;
+    observation = GPSDriverData::position(fix);
+    QVERIFY(observation.acceptedPosition(GPSObservation::PositionUse::Diagnostics).isValid());
+    QVERIFY(!observation.acceptedPosition(GPSObservation::PositionUse::Gga).isValid());
+    QVERIFY(!observation.usable());
+    fix.fix_type = sensor_gps_s::FIX_TYPE_EXTRAPOLATED;
+    observation = GPSDriverData::position(fix);
+    QVERIFY(observation.position.isValid());
+    QVERIFY(!observation.usable());
+
 }
 
 void GPSDriverTest::_relativePositionCallback()
@@ -749,4 +775,41 @@ void GPSDriverTest::_positionBackendWithoutBaseSupport()
     config.role = GPSReceiverConfig::Role::RTKBase;
     config.base.useFixedBase = true;
     QVERIFY(backend.configure(baudrate, config) < 0);
+}
+
+void GPSDriverTest::_configurationWriteEvidence_data()
+{
+    QTest::addColumn<bool>("cancelled");
+    QTest::newRow("partial-timeout") << false;
+    QTest::newRow("partial-cancel") << true;
+}
+
+void GPSDriverTest::_configurationWriteEvidence()
+{
+    QFETCH(bool, cancelled);
+    std::atomic_bool stop = false;
+    FakeGPSTransport transport(stop);
+    transport.fixedRate = 115200;
+    transport.scriptedWriteResult = GPSTransport::WriteResult{
+        cancelled ? GPSTransport::WriteStatus::Cancelled : GPSTransport::WriteStatus::TimedOut, 4, 1, 3};
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    GPSDriver driver(GPSType::u_blox, transport, config, {});
+    if (!cancelled) {
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Driver configuration failed for type")));
+    }
+    QVERIFY(!driver.configure());
+    const auto& result = driver.configurationResult();
+    QCOMPARE(result.status, cancelled ? GPSDriver::ConfigurationStatus::Cancelled
+                                      : GPSDriver::ConfigurationStatus::TransportError);
+    QVERIFY(result.transportWrite.has_value());
+    QCOMPARE(result.transportWrite->status, transport.scriptedWriteResult->status);
+    QCOMPARE(result.transportWrite->acceptedBytes, 4);
+    QCOMPARE(result.transportWrite->writtenBytes, 1);
+    QCOMPARE(result.transportWrite->uncertainBytes, 3);
+    if (!cancelled) {
+        QVERIFY(result.error.contains(QStringLiteral("timed out")));
+        verifyExpectedLogMessage();
+    }
 }

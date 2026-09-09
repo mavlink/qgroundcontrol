@@ -1,6 +1,8 @@
 #include "GPSManagerTest.h"
 
+#include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QSemaphore>
 #include <QtCore/QSettings>
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QTcpServer>
@@ -18,10 +20,12 @@
 #include "GPSCorrectionSettings.h"
 #include "GPSManager.h"
 #include "GPSPositionSettings.h"
+#include "GPSProvider.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverFactGroup.h"
+#include "GPSReceiverSession.h"
 #include "GPSReceiverSettingsPresentation.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
@@ -307,6 +311,7 @@ void GPSManagerTest::_invalidEndpoint()
     TestFixtures::SettingsFixture saved;
     saveNetworkSettings(saved, host, port, type);
     GPSManager manager;
+    manager.init();
     QSignalSpy active(&manager, &GPSManager::networkRtkActiveChanged);
     QVERIFY(!manager.connectNetworkRtk());
     QVERIFY(!manager.networkRtkActive());
@@ -339,11 +344,12 @@ void GPSManagerTest::_networkRecoveryAndDisconnect()
     saved.setFactValue(settings->fixedBasePositionAccuracy(), 0.0);
     GPSManager manager;
     QSignalSpy active(&manager, &GPSManager::networkRtkActiveChanged);
+    manager.init();
     auto* receiver = manager.receiver();
     auto* facts = receiver->facts();
     QVERIFY(facts);
 
-    expectLogMessage("GPS.Driver.TcpGPSTransport", QtWarningMsg,
+    expectLogMessage("GPS.Driver.Transport.TcpGPSTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to connect to GPS receiver")));
     expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
@@ -417,7 +423,11 @@ void GPSManagerTest::_udpRecoveryAndSelection()
     settings->connectionType()->setRawValue(RTKSettings::Udp);
     automatic->setRawValue(true);
     GPSManager manager;
+    manager.init();
     auto* forwarder = manager.corrections()->rtcmMavlink();
+    forwarder->setOutputProvider([]() {
+        return QList<RTCMMavlink::Output>{{QStringLiteral("test"), 1, [](const GpsRtcmPacket&) { return true; }}};
+    });
     auto* receiver = manager.receiver();
 
     manager._receiverAutoConnect->update();
@@ -488,9 +498,10 @@ void GPSManagerTest::_networkStartupAndPause()
     QVERIFY(QSettings().value(QStringLiteral("AutoConnect/autoConnectNetworkRTKGPS")).toBool());
 
     GPSManager manager;
-    manager.init();
+    QCoreApplication::processEvents();
     QVERIFY(!manager.networkRtkActive());
-    manager._updateConnections();
+    QCOMPARE(server.connections, 0);
+    manager.init();
     QVERIFY(manager.networkRtkActive());
     QTRY_VERIFY_WITH_TIMEOUT(manager.receiver()->connected(), TestTimeout::mediumMs());
     QCOMPARE(server.connections, 1);
@@ -558,13 +569,15 @@ void GPSManagerTest::_suspendedConnections()
     GPSManager manager;
     manager.init();
     QVERIFY(!manager.connectNetworkRtk());
-    manager._updateConnections();
     QVERIFY(!manager.networkRtkActive());
     QVERIFY(!manager.receiver()->hasReceiver());
     QTRY_VERIFY_WITH_TIMEOUT(!manager.receiver()->stopping(), TestTimeout::mediumMs());
     links->setConnectionsAllowed();
-    manager._updateConnections();
     QTRY_VERIFY_WITH_TIMEOUT(manager.receiver()->connected(), TestTimeout::mediumMs());
+    const quint64 session = manager.receiverSession()->sessionId();
+    links->setConnectionsSuspended(QStringLiteral("keep established receiver"));
+    QVERIFY(manager.receiver()->connected());
+    QCOMPARE(manager.receiverSession()->sessionId(), session);
 }
 
 void GPSManagerTest::_serialDiscoveryPausesForNetwork()
@@ -702,8 +715,10 @@ void GPSManagerTest::_networkSettingsPanel()
                                                                             : server.serverPort());
     settings->networkReceiverType()->setRawValue(3);
     QVERIFY(GPSManager::instance()->rtkConnection()->validationError().isEmpty());
+    GPSManager::instance()->init();
     if (connection == RTKSettings::Tcp && role == RTKSettings::Position) {
         auto* automatic = SettingsManager::instance()->autoConnectSettings()->autoConnectNetworkRTKGPS();
+        GPSManager::instance()->init();
         automatic->setRawValue(true);
         QTRY_VERIFY_WITH_TIMEOUT(([&]() {
                                      GPSManager::instance()->_updateConnections();
@@ -895,6 +910,136 @@ void GPSManagerTest::_correctionRoutingSettings()
     QVERIFY(!manager.connectNmea());
 }
 
+void GPSManagerTest::_correctionDeliveryFlushReentrancy_data()
+{
+    QTest::addColumn<bool>("destroyManager");
+    QTest::newRow("replace-during-delivery-flush") << false;
+    QTest::newRow("delete-during-delivery-flush") << true;
+}
+
+void GPSManagerTest::_correctionDeliveryFlushReentrancy()
+{
+    QFETCH(bool, destroyManager);
+    TestFixtures::SettingsFixture saved;
+    auto* allSettings = SettingsManager::instance();
+    auto* settings = allSettings->gpsCorrectionSettings();
+    saved.setFactValue(settings->rtcmUdpInputEnabled(), false);
+    saved.setFactValue(settings->correctionSource(), GPSCorrectionSettings::Automatic);
+    saved.setFactValue(settings->correctionSourceInstance(), QString());
+    saved.setFactValue(settings->injectLocalReceiver(), false);
+    auto* manufacturer = allSettings->rtkSettings()->baseReceiverManufacturers();
+    saved.setFactValue(manufacturer, manufacturer->rawValue());
+    auto manager = std::make_unique<GPSManager>(*allSettings, nullptr, []() { return true; });
+    manager->init();
+    auto releaseOpen = std::make_shared<QSemaphore>();
+    QPointer<GPSProvider> worker;
+    const auto cleanup = qScopeGuard([&]() {
+        if (worker) {
+            worker->stop();
+        }
+        releaseOpen->release();
+        if (manager) {
+            manager->shutdown();
+        }
+    });
+    GPSReceiverProfile profile;
+    profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
+    profile.endpoint.host = QStringLiteral("unused.example.test");
+    profile.endpoint.port = 2101;
+    profile.configurationPolicy = GPSReceiverProfile::ConfigurationPolicy::Configure;
+    profile.receiver.role = GPSReceiverConfig::Role::Position;
+    profile.receiver.outputProtocol = GPSReceiverConfig::OutputProtocol::Native;
+    auto* session = manager->receiverSession();
+    session->start(profile, [releaseOpen](const std::atomic_bool&) {
+        releaseOpen->acquire();
+        return std::unique_ptr<GPSTransport>{};
+    });
+    worker = session->findChild<GPSProvider*>();
+    QVERIFY(worker);
+    const auto mailbox = worker->mailbox();
+    mailbox->setCorrectionsEnabled(true);
+    const auto now = GPSCorrectionFrame::monotonicNowMs();
+    const GPSCorrectionFrame frame{GPSCorrectionSource::Ntrip,           1,    now,
+                                   GpsTestHelpers::buildRtcmFrame(1005), 1005, true};
+    QVERIFY(mailbox->submitCorrection(frame, session->sessionId(), now).accepted);
+    QCOMPARE(mailbox->stats().pendingCommands, 1);
+    bool flushed = false;
+    connect(session, &GPSReceiverSession::correctionDeliveriesReady, this,
+            [&](const QList<GPSCorrectionDelivery>& deliveries) {
+                if (flushed) {
+                    return;
+                }
+                flushed = true;
+                QCOMPARE(deliveries.size(), 1);
+                QCOMPARE(deliveries.first().outcome, GPSCorrectionOutcome::Cleared);
+                QCOMPARE(deliveries.first().requestedBytes, quint64(frame.data.size()));
+                // The outer operation has captured NTRIP, but must not apply it after this callback supersedes it.
+                QCOMPARE(manager->corrections()->routingPolicy(), GPSCorrectionManager::RoutingPolicy::Automatic);
+                if (destroyManager) {
+                    worker->stop();
+                    releaseOpen->release();
+                    manager.reset();
+                } else {
+                    settings->correctionSource()->setRawValue(GPSCorrectionSettings::Udp);
+                }
+            });
+    settings->correctionSource()->setRawValue(GPSCorrectionSettings::Ntrip);
+    QVERIFY(flushed);
+    if (destroyManager) {
+        QVERIFY(!manager);
+    } else {
+        QCOMPARE(manager->corrections()->selectedSource(), GPSCorrectionSource::Udp);
+        QCOMPARE(manager->corrections()->routingPolicy(), GPSCorrectionManager::RoutingPolicy::Manual);
+        QCOMPARE(mailbox->stats().pendingCommands, 0);
+    }
+}
+
+void GPSManagerTest::_correctionSettingsReentrantChange_data()
+{
+    QTest::addColumn<bool>("destroyManager");
+    QTest::newRow("replace-selection") << false;
+    QTest::newRow("destroy-manager") << true;
+}
+
+void GPSManagerTest::_correctionSettingsReentrantChange()
+{
+    QFETCH(bool, destroyManager);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
+    saved.setFactValue(settings->rtcmUdpInputEnabled(), false);
+    saved.setFactValue(settings->correctionSource(), GPSCorrectionSettings::Automatic);
+    saved.setFactValue(settings->correctionSourceInstance(), QString());
+    saved.setFactValue(settings->injectLocalReceiver(), false);
+    auto manager = std::make_unique<GPSManager>(*SettingsManager::instance(), nullptr, []() { return true; });
+    manager->init();
+    manager->corrections()->addSink(QStringLiteral("test"), [](const GPSCorrectionFrame&) { return true; });
+    auto source = manager->corrections()->registerSource(GPSCorrectionSource::LocalReceiver);
+    manager->corrections()->acceptIngress(
+        source.token().event(GpsTestHelpers::buildRtcmFrame(1005), GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    bool notified = false;
+    connect(manager->corrections(), &GPSCorrectionManager::selectedSourceChanged, this, [&]() {
+        if (notified) {
+            return;
+        }
+        notified = true;
+        QCOMPARE(manager->corrections()->routingPolicy(), GPSCorrectionManager::RoutingPolicy::Manual);
+        QCOMPARE(manager->corrections()->selectedSource(), GPSCorrectionSource::Ntrip);
+        if (destroyManager) {
+            manager.reset();
+        } else {
+            settings->correctionSource()->setRawValue(GPSCorrectionSettings::Udp);
+        }
+    });
+    settings->correctionSource()->setRawValue(GPSCorrectionSettings::Ntrip);
+    QVERIFY(notified);
+    if (destroyManager) {
+        QVERIFY(!manager);
+    } else {
+        QCOMPARE(manager->corrections()->selectedSource(), GPSCorrectionSource::Udp);
+        QCOMPARE(manager->corrections()->routingPolicy(), GPSCorrectionManager::RoutingPolicy::Manual);
+    }
+}
+
 void GPSManagerTest::_correctionRuntimeLifecycle()
 {
     TestFixtures::SettingsFixture saved;
@@ -1041,6 +1186,7 @@ void GPSManagerTest::_receiverSettingsReentrantTransportChange()
     saved.setFactValue(automatic->autoConnectNetworkRTKGPS(), true);
     settings->connectionType()->setRawValue(RTKSettings::Serial);
     GPSManager manager;
+    manager.init();
     bool switched = false;
     connect(manager.rtkConnection(), &GPSReceiverAutoConnect::stateChanged, &manager, [&]() {
         if (!switched) {

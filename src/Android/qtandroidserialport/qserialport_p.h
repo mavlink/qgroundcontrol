@@ -182,6 +182,7 @@ private:
     int _deviceId = INVALID_DEVICE_ID;
 
     std::atomic<bool> _readyReadPending{false};
+    std::atomic<bool> _inputOverflow{false};
     std::atomic<qint64> _bufferBytesEstimate{0};
     QMutex _readMutex;
     QWaitCondition _readWaitCondition;

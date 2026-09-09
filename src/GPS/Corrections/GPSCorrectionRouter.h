@@ -8,6 +8,7 @@
 
 #include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionFrame.h"
+#include "GPSCorrectionSourceRegistration.h"
 
 /// Selects one correction stream and submits complete frames to injected outputs.
 /// All calls and sink callbacks run on the owning thread. Submission is not receiver acknowledgement.
@@ -23,6 +24,15 @@ public:
         All
     };
     Q_ENUM(Policy)
+
+    struct Configuration
+    {
+        Policy policy = Policy::Automatic;
+        GPSCorrectionSource source = GPSCorrectionSource::Unknown;
+        QString instance;
+        bool operator==(const Configuration&) const = default;
+    };
+
     using Clock = std::function<qint64()>;
     using Sink = std::function<quint64(const GPSCorrectionFrame&)>;
 
@@ -32,6 +42,15 @@ public:
         quint64 destinationSession = 0;
         GPSCorrectionReason reason = GPSCorrectionReason::DestinationUnavailable;
     };
+
+    struct Admission
+    {
+        QString destination;
+        Submission submission;
+        bool complete = true;
+    };
+
+    using FanoutSink = std::function<QList<Admission>(const GPSCorrectionFrame&)>;
 
     using DetailedSink = std::function<Submission(const GPSCorrectionFrame&)>;
 
@@ -76,6 +95,7 @@ public:
         quint64 pendingBytes = 0;
         quint64 unconfirmedFrames = 0;
         quint64 unconfirmedBytes = 0;
+        qint64 lastActivityMs = 0;
     };
 
     struct Source
@@ -90,6 +110,13 @@ public:
     explicit GPSCorrectionRouter(QObject* parent = nullptr, Clock clock = {});
     ~GPSCorrectionRouter() override;
 
+    void applyConfiguration(const Configuration& configuration);
+
+    Configuration configuration() const { return {_policy, _manualSource, _manualInstance}; }
+
+    GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
+    bool isCurrentSource(GPSCorrectionSource source, quint64 session, const QString& instance) const;
+    bool acceptIngress(const GPSCorrectionIngress& ingress);
     quint64 beginSourceSession(GPSCorrectionSource source, const QString& instance = {});
     void endSourceSession(GPSCorrectionSource source);
     quint64 sourceSession(GPSCorrectionSource source) const;
@@ -109,6 +136,7 @@ public:
     void setSink(const QString& id, Sink sink);
     /// Source-specific outputs deliberately bypass global selection, but retain filtering and freshness checks.
     void setSourceSink(const QString& id, GPSCorrectionSource source, Sink sink);
+    void setFanoutSink(const QString& id, FanoutSink sink);
     void setDetailedSink(const QString& id, DetailedSink sink, bool reportsWrites = true);
     void removeSink(const QString& id);
     bool acceptFrame(GPSCorrectionFrame frame);
@@ -150,7 +178,8 @@ private:
     void _recordEvent(const GPSCorrectionFrame& frame, GPSCorrectionStage stage, GPSCorrectionReason reason,
                       quint64 bytes, const QString& destination = {}, quint64 destinationSession = 0);
     void _recordDrop(const GPSCorrectionFrame& frame, GPSCorrectionReason reason, quint64 bytes,
-                     const QString& destination = {}, quint64 destinationSession = 0);
+                     const QString& destination = {}, quint64 destinationSession = 0, bool creditSource = true);
+    bool _ensureDestination(const QString& id);
     Statistics* _currentStatistics(const GPSCorrectionFrame& frame);
 
     struct SinkEntry
@@ -158,6 +187,7 @@ private:
         DetailedSink submit;
         bool reportsWrites = false;
         GPSCorrectionSource source = GPSCorrectionSource::Unknown;
+        FanoutSink fanout = {};
     };
 
     struct PendingDelivery

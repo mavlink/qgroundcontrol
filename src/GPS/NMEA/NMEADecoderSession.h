@@ -1,9 +1,6 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QSet>
-#include <QtCore/QTimer>
-#include <QtPositioning/QGeoSatelliteInfo>
 
 #include <memory>
 
@@ -13,7 +10,6 @@
 
 class QIODevice;
 class QGeoPositionInfoSource;
-class QNmeaSatelliteInfoSource;
 class NMEAPositionSource;
 class NMEAStreamSplitter;
 
@@ -25,11 +21,12 @@ class NMEADecoderSession : public QObject
     friend class NMEASourceManagerTest;
 
 public:
-    explicit NMEADecoderSession(QObject* parent = nullptr);
+    explicit NMEADecoderSession(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
     ~NMEADecoderSession() override;
 
     bool start(QIODevice* device);
     void stop();
+    void setFreshnessTimeoutMs(int timeoutMs);
     QGeoPositionInfoSource* positionSource() const;
 
     GPSSourceHealth* health() { return &_health; }
@@ -45,16 +42,15 @@ signals:
     void satellitesReceived(const GPSSatelliteObservation& observation);
 
 private:
-    void _updateSatellites();
+    void _updateSatellites(const GPSSatelliteObservation& observation);
+
+    GPSRuntimeScheduler* _scheduler;
 
     std::unique_ptr<NMEAStreamSplitter> _stream;
     std::unique_ptr<NMEAPositionSource> _positionSource;
     std::unique_ptr<NMEASatelliteAdapter> _satelliteAdapter;
-    std::unique_ptr<QNmeaSatelliteInfoSource> _satelliteSource;
-    QTimer _satellitePollTimer;
     GPSSourceHealth _health;
-    NMEASatelliteAdapter::Snapshot _viewSnapshot;
-    NMEASatelliteAdapter::Snapshot _useSnapshot;
     GPSSatelliteStore _satellites;
     quint64 _sessionId = 0;
+    bool _active = false;
 };

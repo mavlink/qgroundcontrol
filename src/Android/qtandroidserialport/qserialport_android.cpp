@@ -220,6 +220,7 @@ void QSerialPortPrivate::newDataArrived(const char* bytes, int length)
         if (bytesToRead > headroom) {
             bytesToRead = static_cast<int>(qMax(qint64(0), headroom));
             droppedBytes = static_cast<qint64>(length - bytesToRead);
+            _inputOverflow.store(true, std::memory_order_release);
         }
     }
 

@@ -75,10 +75,10 @@ public:
 
     /// Sets the flag to suspend the all new connections
     ///     @param reason User visible reason to suspend connections
-    void setConnectionsSuspended(const QString &reason) { _connectionsSuspended = true; _connectionsSuspendedReason = reason; }
+    void setConnectionsSuspended(const QString& reason);
 
     /// Sets the flag to allow new connections to be made
-    void setConnectionsAllowed() { _connectionsSuspended = false; }
+    void setConnectionsAllowed();
 
     bool connectionsSuspended() const { return _connectionsSuspended; }
 
@@ -115,6 +115,7 @@ public:
     static constexpr uint8_t invalidMavlinkChannel() { return std::numeric_limits<uint8_t>::max(); }
 
 signals:
+    void connectionsSuspendedChanged(bool suspended);
     void mavlinkSupportForwardingEnabledChanged();
     void isBluetoothAvailableChanged();
 

@@ -17,6 +17,7 @@ public:
 
     struct Result
     {
+        // A valid prefix remains deliverable even when later framing in this feed fails.
         QByteArray body;
         bool connected = false;
         bool complete = false;

@@ -8,7 +8,6 @@
 #include "GPSSourceHealth.h"
 
 class GPSReceiverFactGroup;
-class GPSReceiverPositionSource;
 
 class GPSReceiver : public QObject
 {
@@ -25,7 +24,6 @@ public:
 
     GPSSourceHealth* health() { return &_health; }
 
-    GPSReceiverPositionSource* positionSource() const { return _positionSource; }
 
     bool hasReceiver() const { return _session.hasReceiver(); }
 
@@ -68,6 +66,5 @@ private:
     GPSReceiverSession& _session;
     GPSSourceHealth _health;
     GPSSatelliteStore _satellites;
-    GPSReceiverPositionSource* _positionSource = nullptr;
     GPSReceiverFactGroup* _facts = nullptr;
 };

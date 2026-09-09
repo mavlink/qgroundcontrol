@@ -49,12 +49,12 @@ public:
                        int maximumRead = 4096);
     ~GPSReplayTransport() override;
 
-    bool open() override;
+    OpenResult open() override;
 
     bool fatalError() const override { return _fatal; }
 
-    int read(uint8_t* buffer, int length, int timeoutMs) override;
-    int write(const uint8_t* buffer, int length) override;
+    ReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
+    WriteResult write(const uint8_t* buffer, int length) override;
     WriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
     std::chrono::milliseconds correctionWriteTimeout(int length) const override;
 
@@ -75,6 +75,11 @@ public:
     quint64 readCount() const { return _readCount; }
 
 private:
+    int _writeLegacy(const uint8_t* buffer, int length);
+
+    quint64 _eventTime(quint64 atUs) const { return _originUs + atUs; }
+
+    quint64 _originUs = 0;
     int _fail(const QString& message);
     GPSReplayClock& _clock;
     std::atomic_bool& _stop;

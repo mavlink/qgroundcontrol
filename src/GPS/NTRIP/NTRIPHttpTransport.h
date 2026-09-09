@@ -47,6 +47,7 @@ private:
     void _sendHttpRequest();
     void _readBytes();
     void _scheduleRead();
+    void _consumeResult(const NTRIPHttpDecoder::Result& result);
     void _parseRtcm(const QByteArray& buffer);
 
     NTRIPTransportConfig _config;
@@ -59,12 +60,11 @@ private:
     bool _httpHandshakeDone = false;
     bool _stopped = false;
 
-    qint64 _postOkTimestampMs = 0;
-
     NTRIPHttpDecoder _httpDecoder;
     quint64 _generation = 0;
     qint64 _receivedAtMs = 0;
     bool _readScheduled = false;
+    bool _eof = false;
     static constexpr qint64 MAX_READ_PER_TURN = 16384;
     static constexpr qint64 MAX_SOCKET_BUFFER = 65536;
 };

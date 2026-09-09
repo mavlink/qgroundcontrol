@@ -5,15 +5,17 @@
 #include "GPSBaseStationState.h"
 #include "GPSConnectionSettings.h"
 #include "GPSCorrectionSettings.h"
+#include "GPSMavlinkOutput.h"
 #include "GPSPositionSettings.h"
 #include "GPSPositionSourceRegistration.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverFactGroup.h"
-#include "GPSReceiverPositionSource.h"
 #include "GPSReceiverSettingsPresentation.h"
 #include "LinkManager.h"
+#include "MultiVehicleManager.h"
+#include "NMEAConnectionConfig.h"
 #include "NMEASourceManager.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
@@ -21,11 +23,11 @@
 #include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
+#include "VehicleGPSPositionProvider.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
 #include <QtCore/QApplicationStatic>
-#include <QtCore/QTimer>
 
 #include <utility>
 
@@ -39,6 +41,14 @@ GPSManager::GPSManager(QObject* parent)
           []() { return LinkManager::instance()->connectionsSuspended(); }, parent)
 {
     qCDebug(GPSManagerLog) << this;
+    connect(LinkManager::instance(), &LinkManager::connectionsSuspendedChanged, this, &GPSManager::_updateConnections);
+    auto* output = new GPSMavlinkOutput(this);
+    _corrections.rtcmMavlink()->setOutputProvider([output]() { return output->outputs(); });
+    _vehiclePositionProvider = new VehicleGPSPositionProvider(this);
+    auto* vehicles = MultiVehicleManager::instance();
+    _vehiclePositionProvider->setVehicle(vehicles->activeVehicle());
+    connect(vehicles, &MultiVehicleManager::activeVehicleChanged, _vehiclePositionProvider,
+            &VehicleGPSPositionProvider::setVehicle);
 }
 
 GPSManager::GPSManager(SettingsManager& settingsManager, QGCPositionManager* positionManager,
@@ -59,24 +69,21 @@ GPSManager::GPSManager(SettingsManager& settingsManager, QGCPositionManager* pos
     qCDebug(GPSManagerLog) << this;
 
     auto* settings = &_settings;
-    connect(&_receiverSession, &GPSReceiverSession::configurationStarted, &_corrections,
-            [this]() { _corrections.beginSourceSession(GPSCorrectionSource::LocalReceiver); });
-    connect(&_receiverSession, &GPSReceiverSession::stateChanged, &_corrections, [this]() {
+    connect(&_receiverSession, &GPSReceiverSession::configurationStarted, this, &GPSManager::_startReceiverCorrections);
+    connect(&_receiverSession, &GPSReceiverSession::stateChanged, this, [this]() {
         if (!_receiverSession.hasReceiver()) {
-            _corrections.endSourceSession(GPSCorrectionSource::LocalReceiver);
+            _stopReceiverCorrections();
         }
     });
-    connect(&_receiverSession, &GPSReceiverSession::connectionError, &_corrections,
-            [this]() { _corrections.endSourceSession(GPSCorrectionSource::LocalReceiver); });
-    connect(&_receiverSession, &GPSReceiverSession::rtcmFrameReceived, &_corrections,
+    connect(&_receiverSession, &GPSReceiverSession::connectionError, this, &GPSManager::_stopReceiverCorrections);
+    connect(&_receiverSession, &GPSReceiverSession::rtcmFrameReceived, this,
             [this](const QByteArray& data, qint64 receivedAtMs, quint64 sessionId) {
-                if (_shutdown || !sessionId || !_receiverSession.hasReceiver() ||
-                    sessionId != _receiverSession.sessionId()) {
+                if (_shutdown || !sessionId || sessionId != _receiverCorrectionAttemptId ||
+                    sessionId != _receiverSession.sessionId() || !_receiverSession.hasReceiver()) {
                     return;
                 }
-                _corrections.acceptFrame({GPSCorrectionSource::LocalReceiver,
-                                          _corrections.sourceSession(GPSCorrectionSource::LocalReceiver), receivedAtMs,
-                                          data, 0, true, false});
+                const auto token = _receiverCorrectionSource.token();
+                _corrections.acceptIngress(token.event(data, receivedAtMs, 0, true));
             });
     connect(&_receiverSession, &GPSReceiverSession::receiverTypeChanged, this, [settings](GPSType type) {
         const auto capabilities = GPSReceiverCapabilities::forType(type);
@@ -84,7 +91,16 @@ GPSManager::GPSManager(SettingsManager& settingsManager, QGCPositionManager* pos
             settings->rtkSettings()->baseReceiverManufacturers()->setRawValue(capabilities.manufacturerId);
         }
     });
-    _nmeaSources = new NMEASourceManager(settings->autoConnectSettings(), this);
+    _nmeaSources = new NMEASourceManager(this);
+    _nmeaSources->setSuspended(_connectionsSuspended && _connectionsSuspended());
+    auto* nmeaSettings = settings->autoConnectSettings();
+    for (Fact* fact :
+         {nmeaSettings->nmeaSource(), nmeaSettings->autoConnectNmeaPort(), nmeaSettings->autoConnectNmeaBaud(),
+          nmeaSettings->nmeaUdpPort(), nmeaSettings->nmeaTcpHost(), nmeaSettings->nmeaTcpPort(),
+          nmeaSettings->nmeaReceiverMode(), nmeaSettings->nmeaAutoConnect()}) {
+        connect(fact, &Fact::rawValueChanged, this, &GPSManager::_updateNmeaSettings);
+    }
+    _updateNmeaSettings();
     connect(_nmeaSources, &NMEASourceManager::positionSourceChanged, this, &GPSManager::_updateNmeaPositionSource);
     _nmeaSources->setRecordingBuffer(_recording.buffer());
     _receiverSession.setRecordingBuffer(_recording.buffer());
@@ -116,6 +132,7 @@ GPSManager::GPSManager(SettingsManager& settingsManager, QGCPositionManager* pos
             &GPSManager::_updatePositionSourceMode);
     _updatePositionSourceMode();
     _receiverAutoConnect = new GPSReceiverAutoConnect(&_receiverSession, _receiver->health(), this);
+    _receiverAutoConnect->setSuspended(_connectionsSuspended && _connectionsSuspended());
     auto* receiverSettings = settings->rtkSettings();
     for (Fact* fact : {receiverSettings->connectionType(), receiverSettings->serialDevice(),
                        receiverSettings->networkReceiverType(), receiverSettings->receiverRole()}) {
@@ -163,11 +180,16 @@ GPSManager *GPSManager::instance()
 
 void GPSManager::init(NTRIPManager* ntrip)
 {
-    if (_connectionTimer || _shutdown) {
+    if (_initialized || _shutdown) {
         return;
     }
+    const QPointer<GPSManager> guard(this);
+    _initialized = true;
     auto* correctionSettings = _settings.gpsCorrectionSettings();
     _corrections.init(correctionSettings);
+    if (!guard || _shutdown) {
+        return;
+    }
     for (Fact* fact : {correctionSettings->correctionSource(), correctionSettings->correctionSourceInstance(),
                        correctionSettings->injectLocalReceiver()}) {
         connect(fact, &Fact::rawValueChanged, this, &GPSManager::_updateCorrectionSettings);
@@ -175,6 +197,9 @@ void GPSManager::init(NTRIPManager* ntrip)
     connect(&_corrections, &GPSCorrectionManager::selectedSourceChanged, &_receiverSession,
             &GPSReceiverSession::clearPendingCorrections);
     _updateCorrectionSettings();
+    if (!guard || _shutdown) {
+        return;
+    }
     connect(&_receiverSession, &GPSReceiverSession::correctionDeliveriesReady, &_corrections,
             &GPSCorrectionManager::recordDeliveries);
     const auto invalidateDestination = [this]() {
@@ -191,42 +216,67 @@ void GPSManager::init(NTRIPManager* ntrip)
     });
     _ntrip = ntrip;
     if (_ntrip) {
+        const QPointer<GPSManager> owner(this);
+        using Source = NTRIPGgaProvider::PositionSource;
+        _ntrip->setPositionProvider(Source::VehicleGPS, [owner]() {
+            return owner && owner->_vehiclePositionProvider
+                       ? PositionResult{owner->_vehiclePositionProvider->gpsPosition(), QStringLiteral("Vehicle GPS")}
+                       : PositionResult{};
+        });
+        _ntrip->setPositionProvider(Source::VehicleEKF, [owner]() {
+            return owner && owner->_vehiclePositionProvider
+                       ? PositionResult{owner->_vehiclePositionProvider->ekfPosition(), QStringLiteral("Vehicle EKF")}
+                       : PositionResult{};
+        });
+        _ntrip->setPositionProvider(Source::RTKBase, [owner]() {
+            if (!owner || owner->_shutdown) {
+                return PositionResult{};
+            }
+            const auto reference = owner->_baseStationState->reference();
+            const auto coordinate = reference.observation.position.coordinate();
+            const bool accepted = reference.isValid() && (coordinate.latitude() != 0 || coordinate.longitude() != 0);
+            return accepted ? PositionResult{reference.observation, QStringLiteral("RTK Base"), true}
+                            : PositionResult{};
+        });
+        _ntrip->setPositionProvider(Source::GCSPosition, [owner]() {
+            if (!owner || owner->_shutdown || !owner->_positionManager) {
+                return PositionResult{};
+            }
+            const auto observation = owner->_positionManager->acceptedObservation(GPSObservation::PositionUse::NTRIP);
+            if (!observation) {
+                return PositionResult{};
+            }
+            const auto coordinate = observation->position.coordinate();
+            return coordinate.latitude() != 0 || coordinate.longitude() != 0
+                       ? PositionResult{*observation, QStringLiteral("GCS Position")}
+                       : PositionResult{};
+        });
         auto* ntripSettings = _settings.ntripSettings();
         for (Fact* fact : {ntripSettings->ntripServerConnectEnabled(), ntripSettings->ntripUdpForwardEnabled(),
                            ntripSettings->ntripUdpTargetAddress(), ntripSettings->ntripUdpTargetPort()}) {
             connect(fact, &Fact::rawValueChanged, this, &GPSManager::_updateNtripUdpOutput);
         }
         _updateNtripUdpOutput();
-        connect(_ntrip, &NTRIPManager::correctionSessionStarted, this,
-                [this](quint64 attemptId, const QString& sourceId) {
-                    if (!_shutdown && _ntrip && attemptId != 0 && attemptId == _ntrip->correctionAttemptId()) {
-                        _ntripAttemptId = attemptId;
-                        _corrections.beginSourceSession(GPSCorrectionSource::Ntrip, sourceId);
-                    }
-                });
-        connect(_ntrip, &NTRIPManager::correctionSessionEnded, this, [this](quint64 attemptId) {
-            if (!_shutdown && attemptId == _ntripAttemptId) {
-                _ntripAttemptId = 0;
-                _corrections.endSourceSession(GPSCorrectionSource::Ntrip);
-            }
-        });
+        if (!guard || _shutdown) {
+            return;
+        }
+        connect(_ntrip, &NTRIPManager::correctionSessionStarted, this, &GPSManager::_startNtripCorrections);
+        connect(_ntrip, &NTRIPManager::correctionSessionEnded, this, &GPSManager::_stopNtripCorrections);
         connect(_ntrip, &NTRIPManager::correctionRejectedAt, this,
                 [this](const QByteArray& data, int messageId, qint64 receivedAtMs, quint64 attemptId) {
                     if (!_shutdown && _ntrip && attemptId != 0 && attemptId == _ntripAttemptId &&
                         attemptId == _ntrip->correctionAttemptId()) {
-                        _corrections.recordRejectedFrame(
-                            {GPSCorrectionSource::Ntrip, _corrections.sourceSession(GPSCorrectionSource::Ntrip),
-                             receivedAtMs, data, messageId, false, true, _ntrip->correctionSourceId()},
-                            GPSCorrectionReason::InvalidFrame);
+                        const auto token = _ntripCorrectionSource.token();
+                        _corrections.acceptIngress(
+                            token.event(data, receivedAtMs, messageId, false, true, GPSCorrectionReason::InvalidFrame));
                     }
                 });
         connect(_ntrip, &NTRIPManager::correctionReceivedAt, this,
                 [this](const QByteArray& data, int messageId, bool filtered, qint64 receivedAtMs, quint64 attemptId) {
                     if (!_shutdown && _ntrip && attemptId != 0 && attemptId == _ntripAttemptId &&
                         attemptId == _ntrip->correctionAttemptId()) {
-                        _corrections.acceptFrame({GPSCorrectionSource::Ntrip,
-                                                  _corrections.sourceSession(GPSCorrectionSource::Ntrip), receivedAtMs,
-                                                  data, messageId, true, filtered});
+                        const auto token = _ntripCorrectionSource.token();
+                        _corrections.acceptIngress(token.event(data, receivedAtMs, messageId, true, filtered));
                     }
                 });
     }
@@ -235,23 +285,93 @@ void GPSManager::init(NTRIPManager* ntrip)
     _receiverAutoConnect->setSerialDiscovery(serialDiscovery);
     _nmeaSources->setSerialDiscovery(serialDiscovery);
 #endif
-    _connectionTimer = new QTimer(this);
-    _connectionTimer->setInterval(1000);
-    connect(_connectionTimer, &QTimer::timeout, this, &GPSManager::_updateConnections);
-    if (!QGC::runningUnitTests()) {
-        _connectionTimer->start();
-    }
     if (_ntrip) {
         _ntrip->init();
+    }
+    if (!guard || _shutdown) {
+        return;
+    }
+    _updateNmeaSettings();
+    if (!guard || _shutdown) {
+        return;
+    }
+    _updateReceiverSettings();
+    if (guard && !_shutdown) {
+        _updateConnections();
+    }
+}
+
+void GPSManager::_startReceiverCorrections()
+{
+    if (_shutdown || !_receiverSession.hasReceiver()) {
+        return;
+    }
+    const quint64 attempt = _receiverSession.sessionId();
+    const quint64 revision = ++_receiverCorrectionRevision;
+    const QPointer<GPSManager> guard(this);
+    _receiverCorrectionAttemptId = attempt;
+    _receiverCorrectionSource.reset();
+    if (!guard || _shutdown || revision != _receiverCorrectionRevision || attempt != _receiverSession.sessionId() ||
+        !_receiverSession.hasReceiver()) {
+        return;
+    }
+    auto registration = _corrections.registerSource(GPSCorrectionSource::LocalReceiver);
+    if (guard && !_shutdown && revision == _receiverCorrectionRevision && attempt == _receiverSession.sessionId()) {
+        _receiverCorrectionSource = std::move(registration);
+    }
+}
+
+void GPSManager::_stopReceiverCorrections()
+{
+    ++_receiverCorrectionRevision;
+    _receiverCorrectionAttemptId = 0;
+    _receiverCorrectionSource.reset();
+}
+
+void GPSManager::_startNtripCorrections(quint64 attemptId, const QString& sourceId)
+{
+    if (_shutdown || !_ntrip || !attemptId || attemptId != _ntrip->correctionAttemptId()) {
+        return;
+    }
+    const quint64 revision = ++_ntripCorrectionRevision;
+    const QPointer<GPSManager> guard(this);
+    _ntripAttemptId = attemptId;
+    _ntripCorrectionSource.reset();
+    if (!guard || _shutdown || revision != _ntripCorrectionRevision || !_ntrip ||
+        attemptId != _ntrip->correctionAttemptId()) {
+        return;
+    }
+    auto registration = _corrections.registerSource(GPSCorrectionSource::Ntrip, sourceId);
+    if (guard && !_shutdown && revision == _ntripCorrectionRevision && _ntrip &&
+        attemptId == _ntrip->correctionAttemptId()) {
+        _ntripCorrectionSource = std::move(registration);
+    }
+}
+
+void GPSManager::_stopNtripCorrections(quint64 attemptId)
+{
+    if (attemptId == _ntripAttemptId) {
+        ++_ntripCorrectionRevision;
+        _ntripAttemptId = 0;
+        _ntripCorrectionSource.reset();
     }
 }
 
 void GPSManager::_updateConnections()
 {
-    if (_shutdown || (_connectionsSuspended && _connectionsSuspended())) {
+    if (_shutdown) {
         return;
     }
     const QPointer<GPSManager> guard(this);
+    const bool suspended = _connectionsSuspended && _connectionsSuspended();
+    _nmeaSources->setSuspended(suspended);
+    if (!guard || _shutdown) {
+        return;
+    }
+    _receiverAutoConnect->setSuspended(suspended);
+    if (!guard || _shutdown || suspended) {
+        return;
+    }
     _nmeaSources->update();
     if (guard && !_shutdown) {
         _receiverAutoConnect->update();
@@ -260,26 +380,28 @@ void GPSManager::_updateConnections()
 
 void GPSManager::_updatePositionSource()
 {
-    const QPointer<QGeoPositionInfoSource> source =
-        !_shutdown && _positionManager && _receiver->connected() &&
-                _settings.rtkSettings()->useReceiverPosition()->rawValue().toBool()
-            ? _receiver->positionSource()
-            : nullptr;
-    if (_registeredReceiverSource == source) {
+    const QPointer<QObject> source = !_shutdown && _positionManager && _receiver->connected() &&
+                                             _settings.rtkSettings()->useReceiverPosition()->rawValue().toBool()
+                                         ? _receiver
+                                         : nullptr;
+    const quint64 session = source ? _receiverSession.sessionId() : 0;
+    if (_registeredReceiverSource == source && _registeredReceiverSession == session) {
         return;
     }
     const quint64 revision = ++_receiverRegistrationRevision;
     const QPointer<GPSManager> guard(this);
     _registeredReceiverSource = source;
+    _registeredReceiverSession = session;
     _receiverRegistration.reset();
     if (!guard || revision != _receiverRegistrationRevision || !source || !_positionManager || _shutdown) {
         return;
     }
     auto registration = _positionManager->registerPositionSource(QGCPositionManager::SelectedSource::Receiver, source,
-                                                                 _receiver->health());
+                                                                 _receiver->health(), session);
     if (guard && revision == _receiverRegistrationRevision && !_shutdown) {
         if (!registration) {
             _registeredReceiverSource = nullptr;
+            _registeredReceiverSession = 0;
         }
         _receiverRegistration = std::move(registration);
     }
@@ -287,23 +409,26 @@ void GPSManager::_updatePositionSource()
 
 void GPSManager::_updateNmeaPositionSource()
 {
-    const QPointer<QGeoPositionInfoSource> source =
-        !_shutdown && _positionManager ? _nmeaSources->positionSource() : nullptr;
-    if (_registeredNmeaSource == source) {
+    const QPointer<QObject> source =
+        !_shutdown && _positionManager && _nmeaSources->positionSource() ? _nmeaSources : nullptr;
+    const quint64 session = source ? _nmeaSources->sessionId() : 0;
+    if (_registeredNmeaSource == source && _registeredNmeaSession == session) {
         return;
     }
     const quint64 revision = ++_nmeaRegistrationRevision;
     const QPointer<GPSManager> guard(this);
     _registeredNmeaSource = source;
+    _registeredNmeaSession = session;
     _nmeaRegistration.reset();
     if (!guard || revision != _nmeaRegistrationRevision || !source || !_positionManager || _shutdown) {
         return;
     }
     auto registration = _positionManager->registerPositionSource(QGCPositionManager::SelectedSource::Nmea, source,
-                                                                 _nmeaSources->health());
+                                                                 _nmeaSources->health(), session);
     if (guard && revision == _nmeaRegistrationRevision && !_shutdown) {
         if (!registration) {
             _registeredNmeaSource = nullptr;
+            _registeredNmeaSession = 0;
         }
         _nmeaRegistration = std::move(registration);
     }
@@ -384,8 +509,15 @@ void GPSManager::shutdown()
         return;
     }
     _shutdown = true;
-    _ntripAttemptId = 0;
     const QPointer<GPSManager> guard(this);
+    _stopReceiverCorrections();
+    if (!guard) {
+        return;
+    }
+    _stopNtripCorrections(_ntripAttemptId);
+    if (!guard) {
+        return;
+    }
     ++_receiverRegistrationRevision;
     ++_nmeaRegistrationRevision;
     _registeredReceiverSource = nullptr;
@@ -405,9 +537,6 @@ void GPSManager::shutdown()
         if (!guard) {
             return;
         }
-    }
-    if (_connectionTimer) {
-        _connectionTimer->stop();
     }
     if (_nmeaSources) {
         _nmeaSources->shutdown();
@@ -446,6 +575,22 @@ void GPSManager::shutdown()
     _corrections.shutdown();
 }
 
+void GPSManager::_updateNmeaSettings()
+{
+    if (_shutdown) {
+        return;
+    }
+    const QPointer<GPSManager> guard(this);
+    const quint64 revision = ++_nmeaSettingsRevision;
+    auto* settings = _settings.autoConnectSettings();
+    const auto profile = NMEAConnectionConfig::fromSettings(*settings).profile();
+    const bool automatic = settings->nmeaAutoConnect()->rawValue().toBool();
+    _nmeaSources->setProfile(profile);
+    if (guard && !_shutdown && revision == _nmeaSettingsRevision) {
+        _nmeaSources->setAutoConnect(automatic && _initialized);
+    }
+}
+
 void GPSManager::_updateReceiverSettings(bool restart)
 {
     if (_shutdown) {
@@ -462,7 +607,7 @@ void GPSManager::_updateReceiverSettings(bool restart)
     if (!guard || _shutdown || revision != _receiverSettingsRevision) {
         return;
     }
-    _receiverAutoConnect->setAutoConnect(automatic);
+    _receiverAutoConnect->setAutoConnect(automatic && _initialized);
     if (guard && !_shutdown && revision == _receiverSettingsRevision && restart) {
         emit receiverSettingsChanged();
     }
@@ -489,22 +634,31 @@ void GPSManager::_updateCorrectionSettings()
     if (_shutdown) {
         return;
     }
-    _receiverSession.clearPendingCorrections();
+    const QPointer<GPSManager> guard(this);
+    const quint64 revision = ++_correctionSettingsRevision;
     auto* settings = _settings.gpsCorrectionSettings();
+    const bool injectReceiver = settings->injectLocalReceiver()->rawValue().toBool();
     const int source = settings->correctionSource()->rawValue().toInt();
+    GPSCorrectionManager::RoutingConfiguration configuration;
+    configuration.instance = settings->correctionSourceInstance()->rawValue().toString();
     if (source >= GPSCorrectionSettings::LocalReceiver && source <= GPSCorrectionSettings::Udp) {
-        const auto category = source == GPSCorrectionSettings::LocalReceiver ? GPSCorrectionSource::LocalReceiver
-                              : source == GPSCorrectionSettings::Ntrip       ? GPSCorrectionSource::Ntrip
-                                                                             : GPSCorrectionSource::Udp;
-        _corrections.setSelectedSource(category);
-        _corrections.setSelectedInstance(settings->correctionSourceInstance()->rawValue().toString());
-        _corrections.setRoutingPolicy(GPSCorrectionManager::RoutingPolicy::Manual);
+        configuration.source = source == GPSCorrectionSettings::LocalReceiver ? GPSCorrectionSource::LocalReceiver
+                               : source == GPSCorrectionSettings::Ntrip       ? GPSCorrectionSource::Ntrip
+                                                                              : GPSCorrectionSource::Udp;
+        configuration.policy = GPSCorrectionManager::RoutingPolicy::Manual;
     } else {
-        _corrections.setRoutingPolicy(source == GPSCorrectionSettings::All
-                                          ? GPSCorrectionManager::RoutingPolicy::All
-                                          : GPSCorrectionManager::RoutingPolicy::Automatic);
+        configuration.policy = source == GPSCorrectionSettings::All ? GPSCorrectionManager::RoutingPolicy::All
+                                                                    : GPSCorrectionManager::RoutingPolicy::Automatic;
     }
-    if (settings->injectLocalReceiver()->rawValue().toBool()) {
+    _receiverSession.clearPendingCorrections();
+    if (!guard || _shutdown || revision != _correctionSettingsRevision) {
+        return;
+    }
+    _corrections.applyRoutingConfiguration(configuration);
+    if (!guard || _shutdown || revision != _correctionSettingsRevision) {
+        return;
+    }
+    if (injectReceiver) {
         _corrections.addDetailedSink(QStringLiteral("localReceiver"), [this](const GPSCorrectionFrame& frame) {
             const quint64 session = _receiverSession.sessionId();
             if (_shutdown || frame.source == GPSCorrectionSource::LocalReceiver || !frame.validated ||

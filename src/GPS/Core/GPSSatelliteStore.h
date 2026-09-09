@@ -1,18 +1,19 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QTimer>
 
 #include <map>
 
 #include "GPSObservation.h"
+#include "GPSRuntimeScheduler.h"
 
 /// Authoritative accepted satellite state, with independent constellation and view/use deadlines.
 class GPSSatelliteStore : public QObject
 {
     Q_OBJECT
 public:
-    explicit GPSSatelliteStore(QObject* parent = nullptr, int freshnessTimeoutMs = 5000);
+    explicit GPSSatelliteStore(QObject* parent = nullptr, int freshnessTimeoutMs = 5000,
+                               GPSRuntimeScheduler* scheduler = nullptr);
     ~GPSSatelliteStore() override;
 
     void beginSession(const QString& sourceId, quint64 sessionId);
@@ -36,6 +37,7 @@ private:
         QList<GPSSatellite> satellites;
         std::map<std::pair<int, int>, bool> used;
         std::optional<int> usedCount;
+        std::optional<QList<int>> usedIds;
     };
 
     void _publish();
@@ -44,8 +46,10 @@ private:
 
     std::map<GPSSatellite::Constellation, ConstellationState> _constellations;
     GPSSatelliteObservation _observation;
-    QTimer _expiryTimer;
+    GPSRuntimeScheduler* _scheduler;
+    GPSRuntimeScheduler::TaskId _expiryTask = 0;
     int _freshnessTimeoutMs;
     quint64 _clearedThroughUs = 0;
     quint64 _revision = 0;
+    quint64 _fullSnapshotReceiptUs = 0;
 };

@@ -36,7 +36,9 @@ struct GPSObservation
         GroundStation,
         Motion,
         RemoteID,
-        NTRIP
+        NTRIP,
+        Gga,
+        Diagnostics
     };
 
     QGeoPositionInfo position;
@@ -45,6 +47,8 @@ struct GPSObservation
     quint64 sessionId = 0;
     QString sourceId;
     FixQuality fixQuality = FixQuality::Unknown;
+    // A receiver can retain coordinates while explicitly declaring its navigation solution invalid.
+    std::optional<bool> receiverFixValid = std::nullopt;
     AltitudeDatum altitudeDatum = AltitudeDatum::Unknown;
     std::optional<int> satellitesUsed;
     std::optional<double> horizontalDop;
@@ -111,16 +115,24 @@ struct GPSSatelliteProvenance
     quint64 inViewTimestampUs = 0;
     quint64 inUseTimestampUs = 0;
     std::optional<int> satellitesUsed;
+    // Present even for an empty GSA list; independent of visibility reports.
+    std::optional<QList<int>> usedSatelliteIds = std::nullopt;
 };
 
 struct GPSSatelliteObservation
 {
+    enum class UpdateMode
+    {
+        FullSnapshot,       // Omitted constellation/field retires its prior report through this snapshot receipt.
+        ConstellationDelta  // Only explicitly supplied view/use receipts replace state; omission preserves it.
+    };
     quint64 monotonicTimestampUs = 0;
     quint64 sessionId = 0;
     QList<GPSSatellite> satellites;
     QList<GPSSatelliteProvenance> provenance = {};
     quint64 revision = 0;  // Monotonic publication order assigned by the accepted-observation store.
     QString sourceId = {};
+    UpdateMode updateMode = UpdateMode::FullSnapshot;
     int usedCount() const;
     int satellitesInViewCount() const;
     int satellitesInUseCount() const;

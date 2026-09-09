@@ -1,6 +1,8 @@
 #include "RTCMUdpInputTest.h"
 
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtNetwork/QUdpSocket>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -27,6 +29,46 @@ void RTCMUdpInputTest::_testStartStop()
 
     input.stop();
     QVERIFY(!input.isRunning());
+}
+
+void RTCMUdpInputTest::_testStartNotificationReentrancy_data()
+{
+    QTest::addColumn<bool>("portNotification");
+    QTest::addColumn<bool>("destroy");
+    QTest::newRow("stop-before-running") << true << false;
+    QTest::newRow("delete-before-running") << true << true;
+    QTest::newRow("stop-after-running") << false << false;
+    QTest::newRow("delete-after-running") << false << true;
+}
+
+void RTCMUdpInputTest::_testStartNotificationReentrancy()
+{
+    QFETCH(bool, portNotification);
+    QFETCH(bool, destroy);
+    QPointer<RTCMUdpInput> input = new RTCMUdpInput(0);
+    const auto cleanup = qScopeGuard([&]() { delete input.data(); });
+    bool interrupted = false;
+    const auto notification = portNotification ? &RTCMUdpInput::portChanged : &RTCMUdpInput::runningChanged;
+    const auto connection = connect(input, notification, this, [&]() {
+        if (interrupted) {
+            return;
+        }
+        interrupted = true;
+        if (destroy) {
+            delete input.data();
+        } else {
+            input->stop();
+        }
+    });
+    QVERIFY(!input->start());
+    QVERIFY(interrupted);
+    if (destroy) {
+        QVERIFY(input.isNull());
+    } else {
+        QVERIFY(!input->isRunning());
+        disconnect(connection);
+        QVERIFY(input->start());
+    }
 }
 
 void RTCMUdpInputTest::_testPassthroughWithoutValidation()

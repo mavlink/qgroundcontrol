@@ -4,6 +4,8 @@
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QUdpSocket>
 
+#include <utility>
+
 #include "GPSCorrectionFrame.h"
 #include "QGCLoggingCategory.h"
 
@@ -24,7 +26,12 @@ RTCMUdpInput::~RTCMUdpInput()
 
 bool RTCMUdpInput::start()
 {
+    const QPointer<RTCMUdpInput> guard(this);
+    const quint64 revision = _lifecycleRevision + 1;
     stop();
+    if (!guard || _lifecycleRevision != revision) {
+        return false;
+    }
     _peerParsers.clear();
 
     _socket = new QUdpSocket(this);
@@ -39,30 +46,38 @@ bool RTCMUdpInput::start()
     if (_port == 0) {
         _port = _socket->localPort();
         emit portChanged();
+        if (!guard || _lifecycleRevision != revision) {
+            return false;
+        }
     }
 
     _running = true;
     emit runningChanged();
+    if (!guard || _lifecycleRevision != revision) {
+        return false;
+    }
     qCDebug(RTCMUdpInputLog) << "Listening for RTCM data on UDP port" << _port;
     return true;
 }
 
 void RTCMUdpInput::stop()
 {
+    const QPointer<RTCMUdpInput> guard(this);
+    const quint64 revision = ++_lifecycleRevision;
+    const bool wasRunning = std::exchange(_running, false);
     _drainScheduled = false;
-    if (!_running) {
-        return;
-    }
-
-    if (_socket) {
-        _socket->close();
-        _socket->deleteLater();
-        _socket = nullptr;
-    }
-    _running = false;
     _peerParsers.clear();
-    emit runningChanged();
-    qCDebug(RTCMUdpInputLog) << "Stopped listening on UDP port" << _port;
+    const QPointer<QUdpSocket> socket = std::exchange(_socket, nullptr);
+    if (socket) {
+        socket->close();
+        if (socket) {
+            socket->deleteLater();
+        }
+    }
+    if (guard && revision == _lifecycleRevision && wasRunning) {
+        qCDebug(RTCMUdpInputLog) << "Stopped listening on UDP port" << _port;
+        emit runningChanged();
+    }
 }
 
 void RTCMUdpInput::setPort(quint16 port)
@@ -71,10 +86,12 @@ void RTCMUdpInput::setPort(quint16 port)
         return;
     }
 
+    const QPointer<RTCMUdpInput> guard(this);
+    const quint64 revision = ++_lifecycleRevision;
     _port = port;
     emit portChanged();
 
-    if (_running) {
+    if (guard && revision == _lifecycleRevision && _running) {
         start();
     }
 }

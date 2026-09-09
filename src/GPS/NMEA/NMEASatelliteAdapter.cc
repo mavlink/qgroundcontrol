@@ -1,7 +1,10 @@
 #include "NMEASatelliteAdapter.h"
 
 #include <algorithm>
+#include <cmath>
 
+#include "GPSQtRuntimeScheduler.h"
+#include "GPSReadTimestamp.h"
 #include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
@@ -68,26 +71,14 @@ bool supportedTalker(const QByteArray& talker)
     return talker == "GP" || talker == "GL" || talker == "GA" || talker == "GB" || talker == "GQ";
 }
 
-QByteArray encode(const QList<QByteArray>& fields)
-{
-    return NMEAUtils::repairChecksum(fields.join(','));
-}
 }  // namespace
 
-NMEASatelliteAdapter::NMEASatelliteAdapter(QIODevice* source, QObject* parent)
-    : QIODevice(parent)
+NMEASatelliteAdapter::NMEASatelliteAdapter(QIODevice* source, QObject* parent, GPSRuntimeScheduler* scheduler)
+    : QObject(parent)
     , _source(source)
-    , _idleTimer(this)
-    , _batchTimer(this)
+    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
 {
     qCDebug(NMEASatelliteAdapterLog) << this;
-    open(ReadOnly | Unbuffered);
-    _idleTimer.setSingleShot(true);
-    _idleTimer.setInterval(150);
-    _batchTimer.setSingleShot(true);
-    _batchTimer.setInterval(1000);
-    connect(&_idleTimer, &QTimer::timeout, this, &NMEASatelliteAdapter::_flush);
-    connect(&_batchTimer, &QTimer::timeout, this, &NMEASatelliteAdapter::_flush);
     if (source) {
         connect(source, &QIODevice::readyRead, this, &NMEASatelliteAdapter::_readAvailable);
         connect(source, &QIODevice::aboutToClose, this, &NMEASatelliteAdapter::close);
@@ -98,104 +89,38 @@ NMEASatelliteAdapter::NMEASatelliteAdapter(QIODevice* source, QObject* parent)
 NMEASatelliteAdapter::~NMEASatelliteAdapter()
 {
     qCDebug(NMEASatelliteAdapterLog) << this;
-}
-
-qint64 NMEASatelliteAdapter::bytesAvailable() const
-{
-    return QIODevice::bytesAvailable() + _bufferSize;
-}
-
-bool NMEASatelliteAdapter::canReadLine() const
-{
-    return QIODevice::canReadLine() || (!_output.isEmpty() && _output.front().bytes.contains('\n'));
-}
-
-qint64 NMEASatelliteAdapter::readData(char* data, qint64 maxSize)
-{
-    qint64 copied = 0;
-    quint64 oldest = 0;
-    while (!_output.isEmpty() && copied < maxSize) {
-        auto& sentence = _output.front();
-        const qint64 count = std::min<qint64>(maxSize - copied, sentence.bytes.size());
-        std::copy_n(sentence.bytes.constData(), count, data + copied);
-        sentence.bytes.remove(0, count);
-        copied += count;
-        _bufferSize -= count;
-        oldest = oldest == 0 ? sentence.receivedAtUs : std::min(oldest, sentence.receivedAtUs);
-        if (sentence.bytes.isEmpty()) {
-            auto& timestamps = sentence.inUse ? _consumedUseTimestamps : _consumedViewTimestamps;
-            timestamps[sentence.talker] = sentence.receivedAtUs;
-            if (sentence.inUse) {
-                _consumedUseIds[sentence.talker] = sentence.usedIds;
-            }
-            _output.removeFirst();
-        }
-    }
-    if (copied > 0) {
-        _lastReadTimestampUs = oldest;
-    }
-    return copied;
-}
-
-qint64 NMEASatelliteAdapter::readLineData(char* data, qint64 maxSize)
-{
-    return readData(data, _output.isEmpty() ? 0 : std::min<qint64>(maxSize, _output.front().bytes.size()));
-}
-
-quint64 NMEASatelliteAdapter::satelliteTimestampUs(bool inUse) const
-{
-    quint64 oldest = 0;
-    const auto include = [&oldest](const QMap<QByteArray, quint64>& timestamps) {
-        for (quint64 timestamp : timestamps) {
-            oldest = oldest == 0 ? timestamp : std::min(oldest, timestamp);
-        }
-    };
-    include(_consumedViewTimestamps);
-    if (inUse) {
-        include(_consumedUseTimestamps);
-    }
-    return oldest;
-}
-
-NMEASatelliteAdapter::Snapshot NMEASatelliteAdapter::satelliteSnapshot(const QList<QGeoSatelliteInfo>& satellites,
-                                                                       bool inUse) const
-{
-    Snapshot snapshot;
-    snapshot.satellites = satellites;
-    snapshot.constellationReceipts = inUse ? _consumedUseTimestamps : _consumedViewTimestamps;
-    if (inUse) {
-        snapshot.usedIds = _consumedUseIds;
-    }
-    for (const quint64 receipt : snapshot.constellationReceipts) {
-        if (receipt) {
-            snapshot.receivedAtUs = snapshot.receivedAtUs ? std::min(snapshot.receivedAtUs, receipt) : receipt;
-        }
-    }
-    return snapshot;
+    close();
 }
 
 void NMEASatelliteAdapter::close()
 {
-    _idleTimer.stop();
-    _batchTimer.stop();
+    _open = false;
+    for (auto* task : {&_idleTask, &_batchTask, &_deliveryTask, &_readTask}) {
+        _scheduler->cancel(*task);
+        *task = 0;
+    }
     _reports.clear();
     _inUse.clear();
     _epochTime.clear();
-    _output.clear();
-    _bufferSize = 0;
-    _lastReadTimestampUs = 0;
-    _inUseReceivedAtUs.clear();
-    _consumedViewTimestamps.clear();
-    _consumedUseTimestamps.clear();
-    _consumedUseIds.clear();
-    QIODevice::close();
+    _pending.clear();
 }
 
 void NMEASatelliteAdapter::_readAvailable()
 {
-    while (isOpen() && _source && _source->canReadLine()) {
-        const QByteArray sentence = _source->readLine();
+    qsizetype remaining = 64 * 1024;
+    while (_open && _source && _source->canReadLine() && remaining > 0) {
+        const QByteArray sentence = _source->readLine(4096);
+        if (sentence.isEmpty()) {
+            break;
+        }
+        remaining -= sentence.size();
         _parseSentence(sentence, GPSReadTimestamp::from(_source));
+    }
+    if (_open && _source && _source->canReadLine() && !_readTask) {
+        _readTask = _scheduler->schedule(this, std::chrono::microseconds::zero(), [this]() {
+            _readTask = 0;
+            _readAvailable();
+        });
     }
 }
 
@@ -238,9 +163,14 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
         if (_inUse.contains(talker) && !_reports.isEmpty()) {
             _flush();
         }
-        fields[0] = "$" + talker + "GSA";
-        _inUse[talker] = fields;
-        _inUseReceivedAtUs[talker] = receivedAtUs;
+        UsedReport report;
+        report.receivedAtUs = receivedAtUs;
+        for (int index = 3; fix != 1 && index < 15; ++index) {
+            if (!fields[index].isEmpty()) {
+                report.ids.insert(fields[index].toInt());
+            }
+        }
+        _inUse[talker] = report;
     } else if (type == "GSV" && fields.size() >= 4) {
         const QByteArray talker = canonicalTalker(fields[0].mid(1, 2));
         bool totalOk = false;
@@ -282,27 +212,52 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
                 _reports[talker].remove(signal);
                 return;
             }
-            report.satellites.append(fields.mid(i, 4));
+            GPSSatellite satellite;
+            satellite.id = id;
+            satellite.constellation = NMEAUtils::satelliteConstellation(talker);
+            bool valid = false;
+            const double elevation = fields[i + 1].toDouble(&valid);
+            if (valid && std::isfinite(elevation) && elevation >= 0 && elevation <= 90) {
+                satellite.elevationDegrees = elevation;
+            }
+            const double azimuth = fields[i + 2].toDouble(&valid);
+            if (valid && std::isfinite(azimuth) && azimuth >= 0 && azimuth <= 360) {
+                satellite.normalizedAzimuthDegrees = azimuth;
+            }
+            const int strength = fields[i + 3].toInt(&valid);
+            if (valid && strength >= 0 && strength <= 99) {
+                satellite.signalStrength = strength;
+            }
+            report.satellites.append(satellite);
         }
         report.receivedAtUs = std::min(report.receivedAtUs, receivedAtUs);
         ++report.nextMessage;
     } else {
         return;
     }
-    _idleTimer.start();
-    if (!_batchTimer.isActive()) {
-        _batchTimer.start();
+    _scheduler->cancel(_idleTask);
+    _idleTask = _scheduler->schedule(this, std::chrono::milliseconds(150), [this]() {
+        _idleTask = 0;
+        _flush();
+    });
+    if (!_batchTask) {
+        _batchTask = _scheduler->schedule(this, std::chrono::seconds(1), [this]() {
+            _batchTask = 0;
+            _flush();
+        });
     }
 }
 
 void NMEASatelliteAdapter::_flush()
 {
-    _idleTimer.stop();
-    _batchTimer.stop();
-    QList<TimedSentence> output;
-    qsizetype outputSize = 0;
+    _scheduler->cancel(_idleTask);
+    _scheduler->cancel(_batchTask);
+    _idleTask = _batchTask = 0;
+    GPSSatelliteObservation observation;
+    observation.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
+    QMap<QByteArray, GPSSatelliteProvenance> provenance;
     for (auto system = _reports.cbegin(); system != _reports.cend(); ++system) {
-        QMap<int, QList<QByteArray>> satellites;
+        QMap<int, GPSSatellite> satellites;
         bool complete = false;
         quint64 receivedAtUs = 0;
         for (const auto& report : system.value()) {
@@ -312,63 +267,63 @@ void NMEASatelliteAdapter::_flush()
             complete = true;
             receivedAtUs = receivedAtUs == 0 ? report.receivedAtUs : std::min(receivedAtUs, report.receivedAtUs);
             for (const auto& satellite : report.satellites) {
-                const int id = satellite[0].toInt();
-                const auto existing = satellites.constFind(id);
-                // Qt exposes one signal strength per satellite; retain the strongest reported signal.
-                if (existing == satellites.cend() || satellite[3].toInt() > existing.value()[3].toInt()) {
-                    satellites[id] = satellite;
+                const auto existing = satellites.constFind(satellite.id);
+                // The public model exposes one signal per satellite, retaining its strongest measurement.
+                if (existing == satellites.cend() ||
+                    satellite.signalStrength.value_or(-1) > existing->signalStrength.value_or(-1)) {
+                    satellites[satellite.id] = satellite;
                 }
             }
         }
-        if (!complete) {
-            continue;
-        }
-        const auto entries = satellites.values();
-        const int count = static_cast<int>(entries.size());
-        const int messages = std::max(1, (count + 3) / 4);
-        for (int message = 0; message < messages; ++message) {
-            QList<QByteArray> fields{"$" + system.key() + "GSV", QByteArray::number(messages),
-                                     QByteArray::number(message + 1), QByteArray::number(count)};
-            for (int i = message * 4; i < std::min(count, (message + 1) * 4); ++i) {
-                fields.append(entries[i]);
-            }
-            const QByteArray bytes = encode(fields);
-            output.append({bytes, system.key(), receivedAtUs, false});
-            outputSize += bytes.size();
+        if (complete) {
+            auto& report = provenance[system.key()];
+            report.constellation = NMEAUtils::satelliteConstellation(system.key());
+            report.inViewTimestampUs = receivedAtUs;
+            observation.satellites.append(satellites.values());
         }
     }
-    for (auto report = _inUse.cbegin(); report != _inUse.cend(); ++report) {
-        const QByteArray bytes = encode(report.value());
-        QSet<int> usedIds;
-        for (int index = 3; report.value()[2] != "1" && index < 15; ++index) {
-            bool valid = false;
-            const int id = report.value()[index].toInt(&valid);
-            if (valid && id > 0) {
-                usedIds.insert(id);
-            }
-        }
-        output.append({bytes, report.key(), _inUseReceivedAtUs.value(report.key()), true, usedIds});
-        outputSize += bytes.size();
+    for (auto it = _inUse.cbegin(); it != _inUse.cend(); ++it) {
+        auto& report = provenance[it.key()];
+        report.constellation = NMEAUtils::satelliteConstellation(it.key());
+        report.inUseTimestampUs = it->receivedAtUs;
+        report.usedSatelliteIds = it->ids.values();
+        std::sort(report.usedSatelliteIds->begin(), report.usedSatelliteIds->end());
+        report.satellitesUsed = static_cast<int>(it->ids.size());
+    }
+    observation.provenance = provenance.values();
+    for (const auto& report : observation.provenance) {
+        observation.monotonicTimestampUs =
+            std::max({observation.monotonicTimestampUs, report.inViewTimestampUs, report.inUseTimestampUs});
     }
     _reports.clear();
     _inUse.clear();
-    _inUseReceivedAtUs.clear();
-    if (!output.isEmpty()) {
-        // Drop whole stale batches if Qt is not consuming requests.
-        if (_bufferSize + outputSize > 64 * 1024) {
-            _output.clear();
-            _bufferSize = 0;
+    if (!observation.provenance.isEmpty()) {
+        // Bound queued epochs if a receiver outpaces the application event loop.
+        if (_pending.size() >= 64) {
+            _pending.removeFirst();
         }
-        _output.append(output);
-        _bufferSize += outputSize;
-        // Leave the parsing stack before consumers can destroy the connection.
-        QMetaObject::invokeMethod(
-            this,
-            [this]() {
-                if (isOpen()) {
-                    emit readyRead();
-                }
-            },
-            Qt::QueuedConnection);
+        _pending.append(observation);
+        if (!_deliveryTask) {
+            _deliveryTask = _scheduler->schedule(this, std::chrono::microseconds::zero(), [this]() {
+                _deliveryTask = 0;
+                _deliver();
+            });
+        }
     }
+}
+
+void NMEASatelliteAdapter::_deliver()
+{
+    if (!_open || _pending.isEmpty()) {
+        return;
+    }
+    const auto observation = _pending.takeFirst();
+    // Schedule before notification; callbacks may close or destroy this assembler.
+    if (!_pending.isEmpty()) {
+        _deliveryTask = _scheduler->schedule(this, std::chrono::microseconds::zero(), [this]() {
+            _deliveryTask = 0;
+            _deliver();
+        });
+    }
+    emit observationReceived(observation);
 }

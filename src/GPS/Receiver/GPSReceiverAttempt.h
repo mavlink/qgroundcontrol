@@ -1,7 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
+#include "GPSConfigurationReport.h"
 #include "GPSConnectionError.h"
 #include "GPSReceiverProfile.h"
 
@@ -23,6 +25,9 @@ struct GPSReceiverAttempt
     Phase phase = Phase::Idle;
     GPSConnectionError error = GPSConnectionError::None;
     QString errorDetail;
+    std::optional<GPSOpenResult> transportOpen = {};
+    std::optional<GPSConfigurationResult> configurationResult = {};
+    std::optional<GPSReadResult> transportRead = {};
 
     bool terminal() const { return phase == Phase::Failed || phase == Phase::Cancelled; }
 

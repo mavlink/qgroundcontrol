@@ -42,6 +42,12 @@ void VehicleGPSAggregateFactGroup::bindToGps(VehicleGPSFactGroup* gps1, VehicleG
     if (_gps2) {
         _connections << connect(_gps2, &VehicleGPSFactGroup::gnssIntegrityReceived, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
     }
+    for (auto* gps : {gps1, gps2}) {
+        if (gps) {
+            _connections << connect(gps->integrity(), &GPSIntegrityFactGroup::availabilityChanged, this,
+                                    &VehicleGPSAggregateFactGroup::_updateAggregates);
+        }
+    }
     _updateAggregates();
 }
 

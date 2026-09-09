@@ -8,6 +8,7 @@ class PositionManagerTest : public UnitTest
 
 private slots:
     void init() override;
+    void _producerRegistrationTracksSessions();
 
     void _nmeaSourceProducesGcsPosition();
     void _nmeaCourseFromRmc();

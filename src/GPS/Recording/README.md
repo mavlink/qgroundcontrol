@@ -36,7 +36,7 @@ failures do not stop or alter receiver I/O.
 
 ## Replay format
 
-Exports use the version 2 contract in `GPSRecordingFormat.h/.cc`, shared with
+Exports use the version 3 contract in `GPSRecordingFormat.h/.cc`, shared with
 [the replay test guide](../../../test/GPS/Replay/README.md). The decoder also reads
 version 1 synthetic traces and recorder exports, with explicit frozen mappings
 for their numeric enums. New files use stable string names for transport, driver,
@@ -98,3 +98,11 @@ less precise because its integer return code cannot identify a transmitted prefi
 
 Record the QGC revision alongside captures: stable format names do not imply that
 receiver configuration byte sequences remain identical across driver revisions.
+
+Version 3 preserves typed open/read outcomes and, where the input device supplies
+it, the original producer receipt time separately from read completion. The
+`received_us` offset can precede recording start and be negative; it is never
+substituted with the consumption timestamp. Native transports without a producer
+receipt expose only completion timing. Free-form transport error strings are not
+exported. Passive network sources keep fixed baud unknown, since no serial baud
+has been configured by QGC.

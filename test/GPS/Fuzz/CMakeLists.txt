@@ -15,7 +15,10 @@ endif()
 
 include(../Replay/ParserTargets.cmake)
 qgc_add_gps_parser_runtime(QGCGPSFuzzRuntime)
-target_compile_options(QGCGPSFuzzRuntime PRIVATE -fsanitize=fuzzer-no-link,address,undefined -fno-omit-frame-pointer)
+get_target_property(gps_fuzz_components QGCGPSFuzzRuntime QGC_GPS_COMPONENT_TARGETS)
+foreach(component IN LISTS gps_fuzz_components)
+    target_compile_options(${component} PRIVATE -fsanitize=fuzzer-no-link,address,undefined -fno-omit-frame-pointer)
+endforeach()
 
 # Build an instrumented parser harness and register a bounded corpus smoke test.
 function(qgc_add_gps_fuzzer name source corpus)

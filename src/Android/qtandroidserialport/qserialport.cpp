@@ -450,6 +450,7 @@ bool QSerialPort::open(OpenMode mode)
     }
 
     clearError();
+    d->_inputOverflow.store(false, std::memory_order_release);
     if (!d->open(mode))
         return false;
 
@@ -930,6 +931,7 @@ bool QSerialPort::clear(Directions directions)
         d->buffer.clear();
         d->_pendingData.clear();
         d->_bufferBytesEstimate.store(0, std::memory_order_relaxed);
+        d->_inputOverflow.store(false, std::memory_order_release);
     }
     if (directions & Output)
         d->writeBuffer.clear();
@@ -973,6 +975,11 @@ QBindable<QSerialPort::SerialPortError> QSerialPort::bindableError() const
 
     \sa QSerialPort::error
 */
+
+bool QSerialPort::inputOverflowed() const
+{
+    return d_func()->_inputOverflow.load(std::memory_order_acquire);
+}
 
 /*!
     Returns the size of the internal read buffer. This limits the

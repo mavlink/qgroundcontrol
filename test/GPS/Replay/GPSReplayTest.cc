@@ -21,8 +21,12 @@
 #include "GPSRecordingController.h"
 #include "GPSRecordingDevice.h"
 #include "GPSRecordingTransport.h"
+#include "GPSReplayDevice.h"
 #include "GPSReplayDriver.h"
+#include "GPSReplayScheduler.h"
 #include "GPSReplayTransport.h"
+#include "NMEADecoderSession.h"
+#include "NMEAPositionSource.h"
 #include "NMEAStreamSplitter.h"
 #include "NTRIPHttpDecoder.h"
 #include "NTRIPSession.h"
@@ -81,10 +85,14 @@ int nativeCallback(GPSCallbackType type, void* data, int size, void* user)
     if (type == GPSCallbackType::readDeviceData) {
         int timeout = 0;
         std::memcpy(&timeout, data, sizeof(timeout));
-        return transport.read(static_cast<uint8_t*>(data), size, timeout);
+        const auto result = transport.read(static_cast<uint8_t*>(data), size, timeout);
+        return result.status == GPSTransport::ReadStatus::Data       ? result.bytesRead
+               : result.status == GPSTransport::ReadStatus::TimedOut ? 0
+                                                                     : -EIO;
     }
     if (type == GPSCallbackType::writeDeviceData) {
-        return transport.write(static_cast<const uint8_t*>(data), size);
+        const auto result = transport.write(static_cast<const uint8_t*>(data), size);
+        return result.status == GPSTransport::WriteStatus::Completed ? result.writtenBytes : -EIO;
     }
     if (type == GPSCallbackType::setBaudrate) {
         return transport.setBaudrate(size) ? 0 : -EIO;
@@ -145,7 +153,7 @@ private slots:
             std::make_shared<GPSRecordingStream>(recording, GPSRecordingMetadata::forReceiver(intent, GPSType::u_blox));
         QVERIFY(recording->start());
         GPSRecordingTransport transport(std::move(original), stop, recordedStream);
-        QVERIFY(transport.open());
+        QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
         sensor_gps_s position{};
         GPSDriverUBX driver(GPSHelper::Interface::UART, nativeCallback, &transport, &position, nullptr, {});
         GPSHelper::GPSConfig config{};
@@ -153,8 +161,8 @@ private slots:
         unsigned baudrate = 115200;
         recordedStream->configurationStarted();
         const auto configured = driver.configure(baudrate, config);
-        recordedStream->configurationFinished(int(configured == 0 ? GPSDriver::ConfigurationStatus::Ready
-                                                                 : GPSDriver::ConfigurationStatus::Failed));
+        recordedStream->configurationFinished(
+            int(configured == 0 ? GPSDriver::ConfigurationStatus::Ready : GPSDriver::ConfigurationStatus::Failed));
         QVERIFY2(configured == 0, qPrintable(originalTrace->failure()));
         QVERIFY(driver.receiverReady());
         QVERIFY2(driver.receive(500) > 0, qPrintable(originalTrace->failure()));
@@ -172,7 +180,7 @@ private slots:
         QCOMPARE(exported.profile->configured, true);
         gps_test_time = 1;
         GPSReplayTransport roundTrip(clock, stop, std::move(exported), fragment);
-        QVERIFY(roundTrip.open());
+        QCOMPARE(roundTrip.open().status, GPSTransport::OpenStatus::Opened);
         sensor_gps_s decoded{};
         GPSDriverUBX replayed(GPSHelper::Interface::UART, nativeCallback, &roundTrip, &decoded, nullptr, {});
         baudrate = 115200;
@@ -199,7 +207,7 @@ private slots:
         std::atomic_bool stop = false;
         GPSReplayTransport transport(clock, stop, std::move(trace), 3);
         for (int attempt = 0; attempt < 2; ++attempt) {
-            QVERIFY(transport.open());
+            QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
             ReplayInput input;
             NMEAStreamSplitter splitter(&input);
             QtNmeaDecoder decoder;
@@ -208,7 +216,10 @@ private slots:
             quint64 firstReceipt = 0;
             while (transport.remainingEvents() > 0) {
                 uint8_t bytes[32];
-                const int count = transport.read(bytes, sizeof(bytes), 1000);
+                const auto read = transport.read(bytes, sizeof(bytes), 1000);
+                const int count = read.status == GPSTransport::ReadStatus::Data       ? read.bytesRead
+                                  : read.status == GPSTransport::ReadStatus::TimedOut ? 0
+                                                                                      : -EIO;
                 if (count < 0) {
                     input.close();
                     break;
@@ -249,19 +260,19 @@ private slots:
         GPSReplayClock clock;
         std::atomic_bool stop = false;
         GPSReplayTransport transport(clock, stop, std::move(trace));
-        QVERIFY(transport.open());
-        QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("com"), 3), 3);
-        QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("mand"), 4), 4);
+        QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
+        QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("com"), 3).writtenBytes, 3);
+        QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("mand"), 4).writtenBytes, 4);
         uint8_t bytes[8];
-        QCOMPARE(transport.read(bytes, sizeof(bytes), 500), 0);
+        QCOMPARE(transport.read(bytes, sizeof(bytes), 500).status, GPSTransport::ReadStatus::TimedOut);
         QCOMPARE(clock.nowUs(), quint64(500001));
-        QCOMPARE(transport.read(bytes, sizeof(bytes), 100), -EIO);
+        QCOMPARE(transport.read(bytes, sizeof(bytes), 100).status, GPSTransport::ReadStatus::Error);
         QVERIFY(transport.fatalError());
-        QVERIFY(transport.open());
-        QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("command"), 7), 2);
+        QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
+        QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("command"), 7).writtenBytes, 2);
         QVERIFY(transport.fatalError());
-        QVERIFY(transport.open());
-        QCOMPARE(transport.read(bytes, sizeof(bytes), 100), -ECANCELED);
+        QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
+        QCOMPARE(transport.read(bytes, sizeof(bytes), 100).status, GPSTransport::ReadStatus::Cancelled);
         QVERIFY(stop);
         QVERIFY(transport.complete());
     }
@@ -311,11 +322,12 @@ private slots:
         std::atomic_bool stop = false;
         GPSReplayClock replayClock;
         GPSReplayTransport replay(replayClock, stop, std::move(trace), 5);
-        QVERIFY(replay.open());
+        QCOMPARE(replay.open().status, GPSTransport::OpenStatus::Opened);
         QByteArray received;
         uint8_t bytes[32];
         while (!replay.complete()) {
-            const auto count = replay.read(bytes, sizeof(bytes), 100);
+            const auto result = replay.read(bytes, sizeof(bytes), 100);
+            const int count = result.bytesRead;
             if (count > 0) {
                 received.append(reinterpret_cast<char*>(bytes), count);
             }
@@ -327,7 +339,7 @@ private slots:
         QVERIFY(decoder.decode(received, position, fix));
         QVERIFY(fix);
         QCOMPARE(position.coordinate().altitude(), 61.7);
-        QCOMPARE(replayClock.nowUs(), quint64(2001));
+        QCOMPARE(replayClock.nowUs() - replay.lastReadTimestampUs(), clock.nowUs() - quint64(43));
     }
 
     void recordingFaultsAndMetadata()
@@ -355,11 +367,11 @@ private slots:
         QVERIFY(buffer->start());
         {
             GPSRecordingTransport transport(std::make_unique<GPSReplayTransport>(clock, stop, fixture), stop, stream);
-            QVERIFY(!transport.open());
-            QVERIFY(transport.open());
+            QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Error);
+            QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
             QVERIFY(!transport.setBaudrate(9600));
             QVERIFY(transport.setBaudrate(115200));
-            QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("command"), 7), 2);
+            QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("command"), 7).writtenBytes, 2);
         }
         buffer->stop();
         GPSReplayTrace exported;
@@ -371,11 +383,11 @@ private slots:
         QCOMPARE(double(exported.profile->receiver.headingOffsetDeg), double(config.headingOffsetDeg));
         QCOMPARE(exported.profile->receiver.base.fixedBaseLatitude, config.base.fixedBaseLatitude);
         GPSReplayTransport replay(clock, stop, std::move(exported));
-        QVERIFY(!replay.open());
-        QVERIFY(replay.open());
+        QCOMPARE(replay.open().status, GPSTransport::OpenStatus::Error);
+        QCOMPARE(replay.open().status, GPSTransport::OpenStatus::Opened);
         QVERIFY(!replay.setBaudrate(9600));
         QVERIFY(replay.setBaudrate(115200));
-        QCOMPARE(replay.write(reinterpret_cast<const uint8_t*>("command"), 7), 2);
+        QCOMPARE(replay.write(reinterpret_cast<const uint8_t*>("command"), 7).writtenBytes, 2);
         QVERIFY(replay.complete());
     }
 
@@ -423,135 +435,6 @@ private slots:
         QCOMPARE(selected.events.last().bytes, QByteArray("new capture"));
     }
 
-    void recordingCodecRejectsMalformed_data()
-    {
-        QTest::addColumn<QByteArray>("json");
-        QTest::newRow("fractional-version") << QByteArray(R"({"version":1.5,"events":[]})");
-        QTest::newRow("future-version") << QByteArray(R"({"version":3,"events":[]})");
-        QTest::newRow("string-version") << QByteArray(R"({"version":"1","events":[]})");
-        QTest::newRow("missing-filetype") << QByteArray(R"({"version":2,"events":[]})");
-        QTest::newRow("wrong-limit-type") << QByteArray(R"({"version":1,"limit_reached":0,"events":[]})");
-        QTest::newRow("event-array") << QByteArray(R"({"version":1,"events":[[]]})");
-        QTest::newRow("string-time") << QByteArray(R"({"version":1,"events":[{"at_us":"2","kind":"open"}]})");
-        QTest::newRow("fractional-stream")
-            << QByteArray(R"({"version":1,"events":[{"at_us":1,"kind":"open","stream":1.5}]})");
-        QTest::newRow("string-error") << QByteArray(
-            R"({"version":1,"events":[{"at_us":1,"kind":"read_error","value":"-1"}]})");
-        QTest::newRow("invalid-hex") << QByteArray(R"({"version":1,"events":[{"at_us":1,"kind":"rx","hex":"gg"}]})");
-        QTest::newRow("nonascii-hex")
-            << QStringLiteral("{\"version\":1,\"events\":[{\"at_us\":1,\"kind\":\"rx\",\"hex\":\"\u0131\"}]}").toUtf8();
-        QTest::newRow("wrong-hex-type") << QByteArray(R"({"version":1,"events":[{"at_us":1,"kind":"rx","hex":1234}]})");
-        QTest::newRow("future-start") << QByteArray(
-            R"({"version":1,"events":[{"at_us":1,"started_us":2,"kind":"open"}]})");
-        QTest::newRow("wrong-resumed") << QByteArray(
-            R"({"version":1,"events":[{"at_us":1,"kind":"open","resumed":"yes"}]})");
-        QTest::newRow("metadata-type") << QByteArray(
-            R"({"version":1,"events":[{"at_us":1,"kind":"session","profile":[]}]})");
-        QTest::newRow("metadata-incomplete")
-            << QByteArray(R"({"version":1,"events":[{"at_us":1,"kind":"session","profile":{}}]})");
-    }
-
-    void recordingCodecRejectsMalformed()
-    {
-        QFETCH(QByteArray, json);
-        GPSRecordingDocument unchanged;
-        unchanged.limitReached = true;
-        QString error;
-        QVERIFY(!GPSRecordingDocument::decode(json, unchanged, error));
-        QVERIFY(!error.isEmpty());
-        QVERIFY(unchanged.limitReached);
-    }
-
-    void recordingCodecBoundsAndStreamValidation()
-    {
-        GPSRecordingDocument document;
-        QString error;
-        QVERIFY(!GPSRecordingDocument::decode(QByteArray(GPSRecordingDocument::MAX_BYTES + 1, ' '), document, error));
-        document.events.append({.atUs = 1, .kind = GPSRecordingEvent::Kind::Rx,
-                                .bytes = QByteArray(GPSRecordingDocument::MAX_BYTES, 'x')});
-        QVERIFY(document.encode(&error).isEmpty());
-        const QByteArray badOtherStream = R"({"version":1,"events":[
-            {"at_us":1,"stream":7,"kind":"open"},
-            {"at_us":2,"stream":8,"kind":"rx","hex":false}]})";
-        GPSReplayTrace trace;
-        QVERIFY(!GPSReplayTrace::fromJson(badOtherStream, trace, error, 7));
-        QVERIFY(!error.isEmpty());
-    }
-
-    void recordingCodecMetadataAndTiming()
-    {
-        GPSReceiverProfile profile;
-        profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::UdpPeer;
-        profile.endpoint.host = QStringLiteral("private.example");
-        profile.endpoint.device = QStringLiteral("private-device");
-        profile.receiverName = QStringLiteral("private-name");
-        profile.configurationPolicy = GPSReceiverProfile::ConfigurationPolicy::Configure;
-        profile.receiver.outputProtocol = GPSReceiverConfig::OutputProtocol::Native;
-        profile.receiver.base.useFixedBase = true;
-        profile.receiver.base.fixedBaseLatitude = 47.4;
-        const auto metadata = GPSRecordingMetadata::fromProfile(profile);
-        GPSRecordingDocument document;
-        document.limitReached = true;
-        GPSRecordingEvent session{.atUs = 1, .kind = GPSRecordingEvent::Kind::Session};
-        session.stream = 7;
-        session.metadata = metadata;
-        document.events.append(session);
-        GPSRecordingEvent open{.atUs = 25, .kind = GPSRecordingEvent::Kind::Open};
-        open.startedAtUs = 2;
-        open.stream = 7;
-        open.resumed = true;
-        document.events.append(open);
-        QString error;
-        const auto bytes = document.encode(&error);
-        QVERIFY2(!bytes.isEmpty(), qPrintable(error));
-        QVERIFY(!bytes.contains("private"));
-        QVERIFY(bytes.contains("udp_peer"));
-        GPSRecordingDocument decoded;
-        QVERIFY2(GPSRecordingDocument::decode(bytes, decoded, error), qPrintable(error));
-        QCOMPARE(decoded.events[0].metadata, metadata);
-        QCOMPARE(decoded.events[0].metadata.fixedBaud, 115200u);
-        QCOMPARE(decoded.events[1].startedAtUs, quint64(2));
-        QVERIFY(decoded.events[1].resumed);
-        QCOMPARE(decoded.encode(), bytes);
-        GPSReplayTrace trace;
-        QVERIFY(GPSReplayTrace::fromJson(bytes, trace, error, 7));
-        QVERIFY(trace.limitReached);
-        QCOMPARE(trace.recordedEvents.size(), 2);
-        QCOMPARE(trace.events.first().startedAtUs, quint64(2));
-        QVERIFY(!GPSReplayTrace::fromJson(bytes, trace, error, 8));
-        auto malformed = QJsonDocument::fromJson(bytes).object();
-        auto events = malformed["events"].toArray();
-        auto event = events[0].toObject();
-        auto config = event["profile"].toObject();
-        config.insert("host", "credential-bearing-endpoint");
-        event.insert("profile", config);
-        events[0] = event;
-        malformed.insert("events", events);
-        QVERIFY(!GPSRecordingDocument::decode(QJsonDocument(malformed).toJson(), decoded, error));
-        config.remove("host");
-        config.insert("driver", 0);
-        event.insert("profile", config);
-        events[0] = event;
-        malformed.insert("events", events);
-        QVERIFY(!GPSRecordingDocument::decode(QJsonDocument(malformed).toJson(), decoded, error));
-        // Version 1 transport/driver/role/protocol ordinals have a frozen compatibility mapping.
-        malformed.insert("version", 1);
-        malformed.remove("fileType");
-        config.insert("transport", 2);
-        config.insert("driver", 0);
-        config.insert("role", 1);
-        config.insert("protocol", 0);
-        config.remove("fixed_baud");
-        event.insert("profile", config);
-        events[0] = event;
-        malformed.insert("events", events);
-        QVERIFY2(GPSRecordingDocument::decode(QJsonDocument(malformed).toJson(), decoded, error), qPrintable(error));
-        QCOMPARE(decoded.events[0].metadata.transport, GPSRecordingMetadata::Transport::Tcp);
-        QCOMPARE(decoded.events[0].metadata.fixedBaud, 115200u);
-        QCOMPARE(decoded.events[0].metadata.driverType, int(GPSType::u_blox));
-        QCOMPARE(decoded.events[0].metadata.receiver.role, GPSReceiverConfig::Role::Position);
-    }
-
     void replaySerialDeadlineFollowsCapturedBaud()
     {
         GPSReplayClock clock;
@@ -563,7 +446,7 @@ private slots:
         trace.profile = metadata;
         GPSReplayTransport transport(clock, stop, trace);
         QCOMPARE(transport.correctionWriteTimeout(1029), GPSTransport::serialCorrectionWriteTimeout(1029, 115200));
-        QVERIFY(transport.open());
+        QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
         QVERIFY(transport.setBaudrate(9600));
         QCOMPARE(transport.correctionWriteTimeout(1029), GPSTransport::serialCorrectionWriteTimeout(1029, 9600));
         QVERIFY(transport.correctionWriteTimeout(1029) > std::chrono::milliseconds(1000));
@@ -583,7 +466,7 @@ private slots:
         QVERIFY(buffer->start());
         {
             GPSRecordingTransport tap(std::make_unique<GPSReplayTransport>(clock, stop, fixture), stop, stream);
-            QVERIFY(tap.open());
+            QCOMPARE(tap.open().status, GPSTransport::OpenStatus::Opened);
             const auto result = tap.writeBounded(reinterpret_cast<const uint8_t*>("abcdef"), 6, QDeadlineTimer(100));
             QCOMPARE(result.status, GPSTransport::WriteStatus::TimedOut);
             QCOMPARE(result.acceptedBytes, 5);
@@ -603,7 +486,7 @@ private slots:
         QVERIFY(GPSReplayTrace::fromJson(json, roundTrip, error));
         GPSReplayClock secondClock;
         GPSReplayTransport replay(secondClock, stop, roundTrip);
-        QVERIFY(replay.open());
+        QCOMPARE(replay.open().status, GPSTransport::OpenStatus::Opened);
         const auto result = replay.writeBounded(reinterpret_cast<const uint8_t*>("abcdef"), 6, QDeadlineTimer(100));
         QCOMPARE(result.acceptedBytes, 5);
         QCOMPARE(result.writtenBytes, 2);
@@ -617,7 +500,7 @@ private slots:
         QVERIFY(!error.isEmpty());
         GPSReplayClock shortClock;
         GPSReplayTransport shortDeadline(shortClock, stop, roundTrip);
-        QVERIFY(shortDeadline.open());
+        QCOMPARE(shortDeadline.open().status, GPSTransport::OpenStatus::Opened);
         QCOMPARE(shortDeadline.writeBounded(reinterpret_cast<const uint8_t*>("abcdef"), 6, QDeadlineTimer(0)).status,
                  GPSTransport::WriteStatus::Error);
         QVERIFY(!shortDeadline.failure().isEmpty());
@@ -646,12 +529,10 @@ private slots:
         {
         public:
             Receiver(std::atomic_bool& stop, bool septentrio, GPSReplayClock& clock)
-                : GPSTransport(stop)
-                , _septentrio(septentrio)
-                , _clock(clock)
+                : GPSTransport(stop), _septentrio(septentrio), _clock(clock)
             {}
 
-            bool open() override { return true; }
+            OpenResult open() override { return {.status = OpenStatus::Opened}; }
 
             bool fatalError() const override { return false; }
 
@@ -659,16 +540,16 @@ private slots:
 
             unsigned fixedBaudrate() const override { return 115200; }
 
-            int read(uint8_t* data, int size, int timeout) override
+            ReadResult read(uint8_t* data, int size, int timeout) override
             {
                 const int count = qMin(size, int(_reply.size()));
                 memcpy(data, _reply.constData(), count);
                 _reply.remove(0, count);
                 _clock.advanceBy(count ? 1 : quint64(qMax(timeout, 0)) * 1000 + 1);
-                return count;
+                return {.status = count ? ReadStatus::Data : ReadStatus::TimedOut, .bytesRead = count};
             }
 
-            int write(const uint8_t* data, int size) override
+            WriteResult write(const uint8_t* data, int size) override
             {
                 const QByteArray command(reinterpret_cast<const char*>(data), size);
                 if (_septentrio) {
@@ -677,7 +558,7 @@ private slots:
                     _reply = '<' + command.split(' ').first().trimmed() + " OK";
                     _reply.append(char(0));
                 }
-                return size;
+                return {.status = WriteStatus::Completed, .acceptedBytes = size, .writtenBytes = size};
             }
 
         private:
@@ -700,7 +581,7 @@ private slots:
         QVERIFY(buffer->start());
         {
             GPSRecordingTransport transport(std::make_unique<Receiver>(stop, septentrio, clock), stop, stream);
-            QVERIFY(transport.open());
+            QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
             stream->configurationStarted();
             GPSDriver original(profile.driverType, transport, profile.receiver, {});
             QVERIFY(original.configure());
@@ -713,7 +594,7 @@ private slots:
         QCOMPARE(trace.profile->receiver, profile.receiver);
         gps_test_time = 1;
         GPSReplayTransport transport(clock, stop, trace);
-        QVERIFY(transport.open());
+        QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
         auto driver = createGPSReplayDriver(transport, {}, error);
         QVERIFY2(driver != nullptr, qPrintable(error));
         QCOMPARE(transport.fixedBaudrate(), 115200u);
@@ -729,58 +610,156 @@ private slots:
         QVERIFY(!createGPSReplayDriver(passive, {}, error));
     }
 
-    void correctionAndRecoveryUseVirtualTime()
+    void schedulerRetiresCancelledAndDestroyedCallbacks()
+    {
+        GPSReplayScheduler scheduler;
+        auto owner = std::make_unique<QObject>();
+        int calls = 0;
+        const auto cancelled = scheduler.schedule(owner.get(), std::chrono::milliseconds(1), [&]() { ++calls; });
+        scheduler.cancel(cancelled);
+        scheduler.schedule(owner.get(), std::chrono::milliseconds(2), [&]() { ++calls; });
+        owner.reset();
+        QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+        QCOMPARE(calls, 0);
+        QObject alive;
+        scheduler.schedule(&alive, std::chrono::microseconds::zero(), [&]() { ++calls; });
+        QCOMPARE(calls, 0);
+        QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+        QCOMPARE(calls, 1);
+        QCOMPARE(scheduler.pendingCount(), 0);
+    }
+
+    void nmeaProductionSessionReplay()
+    {
+        GPSReplayScheduler scheduler;
+        GPSReplayDevice input(&scheduler);
+        NMEADecoderSession session(nullptr, &scheduler);
+        int positions = 0;
+        QVector<GPSObservation> observations;
+        connect(&input, &GPSReplayDevice::streamOpened, &session, [&]() {
+            QVERIFY(session.start(&input));
+            auto* position = qobject_cast<NMEAPositionSource*>(session.positionSource());
+            QVERIFY(position);
+            position->setUpdateInterval(100);
+            connect(position, &QGeoPositionInfoSource::positionUpdated, &session, [&, position]() {
+                ++positions;
+                observations.append(position->lastObservation());
+            });
+            position->startUpdates();
+        });
+        connect(&input, &GPSReplayDevice::streamClosed, &session, &NMEADecoderSession::stop);
+        auto sentence = [](const QByteArray& body) {
+            uint8_t checksum = 0;
+            for (const auto byte : body) {
+                checksum ^= static_cast<uint8_t>(byte);
+            }
+            return '$' + body + '*' + QByteArray::number(checksum, 16).rightJustified(2, '0').toUpper() + "\r\n";
+        };
+        const auto first = sentence("GPRMC,120000.00,A,4807.038,N,01131.000,E,0.0,0.0,010126,,,A") +
+                           sentence("GPGGA,120000.00,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,");
+        const auto second = sentence("GPRMC,120001.00,A,4807.039,N,01131.001,E,0.0,0.0,010126,,,A");
+        using K = GPSRecordingEvent::Kind;
+        GPSRecordingEvent delayed{.atUs = 1000, .kind = K::Rx, .bytes = first.left(12)};
+        delayed.receivedAtUs = -500000;
+        GPSRecordingEvent remainder{.atUs = 2000, .kind = K::Rx, .bytes = first.mid(12)};
+        remainder.receivedAtUs = -490000;
+        input.play({{.atUs = 1, .kind = K::Open},
+                    delayed,
+                    remainder,
+                    {.atUs = 3000, .kind = K::Rx, .bytes = second},
+                    {.atUs = 200000, .kind = K::Close},
+                    {.atUs = 210000, .kind = K::Open},
+                    {.atUs = 211000, .kind = K::Rx, .bytes = first},
+                    {.atUs = 212000, .kind = K::Rx, .bytes = second},
+                    {.atUs = 215000, .kind = K::Close}});
+        const auto origin = input.timeOriginUs();
+        QVERIFY(scheduler.advanceToUs(origin + 150000));
+        QCOMPARE(positions, 1);
+        QCOMPARE(observations.first().monotonicTimestampUs, origin - 500000);
+        QVERIFY(session.health()->usable());
+        QVERIFY(scheduler.advanceToUs(origin + 500000));
+        // The second session retired before its scheduled publication; no previous fix leaks through.
+        QCOMPARE(positions, 1);
+        QVERIFY(!session.health()->usable());
+    }
+
+    void oneShotTimeoutUsesVirtualTime()
+    {
+        GPSReplayScheduler scheduler;
+        ReplayInput input;
+        NMEAPositionSource source(&input, nullptr, &scheduler);
+        QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
+        source.requestUpdate(100);
+        source.requestUpdate(500);
+        QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(99)));
+        QCOMPARE(errors.size(), 0);
+        QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+        QCOMPARE(errors.size(), 1);
+        QCOMPARE(source.error(), QGeoPositionInfoSource::UpdateTimeoutError);
+        source.requestUpdate(100);
+        source.startUpdates();
+        source.stopUpdates();
+        QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(100)));
+        QCOMPARE(errors.size(), 2);
+    }
+
+    void typedReadAndOpenReplay()
     {
         GPSReplayClock clock;
-        clock.advanceTo(1000000);
+        std::atomic_bool stop = false;
+        using K = GPSRecordingEvent::Kind;
+        GPSRecordingEvent failed{.atUs = 1000, .kind = K::OpenError};
+        failed.openStatus = GPSOpenStatus::TimedOut;
+        GPSRecordingEvent overflow{.atUs = 3000, .kind = K::ReadError};
+        overflow.readStatus = GPSReadStatus::Overflow;
+        GPSReplayTransport transport(clock, stop, GPSReplayTrace{{failed, {.atUs = 2000, .kind = K::Open}, overflow}});
+        QCOMPARE(transport.open().status, GPSOpenStatus::TimedOut);
+        QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
+        uint8_t buffer[8];
+        QCOMPARE(transport.read(buffer, sizeof(buffer), 10).status, GPSReadStatus::Overflow);
+        QVERIFY(transport.complete());
+    }
+
+    void correctionAndRecoveryUseVirtualTime()
+    {
+        GPSReplayScheduler scheduler;
         ReplayCaster* stream = nullptr;
+        int attempts = 0;
         NTRIPSession session(
             [&](const NTRIPTransportConfig&, QObject* owner) {
+                ++attempts;
                 stream = new ReplayCaster(owner);
                 return stream;
             },
-            nullptr, [&]() { return clock.nowMs(); });
-        GPSCorrectionRouter router(nullptr, [&]() { return clock.nowMs(); });
-        int delivered = 0;
-        router.setSink(QStringLiteral("recording"), [&](const GPSCorrectionFrame& frame) {
-            ++delivered;
-            return quint64(frame.data.size());
-        });
-        connect(&session, &NTRIPSession::streamStarted, &router,
-                [&]() { router.beginSourceSession(GPSCorrectionSource::Ntrip, session.sourceId()); });
-        connect(&session, &NTRIPSession::streamEnded, &router,
-                [&]() { router.endSourceSession(GPSCorrectionSource::Ntrip); });
-        GPSCorrectionFrame retired;
-        connect(&session, &NTRIPSession::correctionReceived, &router,
-                [&](const QByteArray& data, int id, bool filtered, qint64 receivedAtMs) {
-                    retired = {GPSCorrectionSource::Ntrip,
-                               router.sourceSession(GPSCorrectionSource::Ntrip),
-                               receivedAtMs,
-                               data,
-                               id,
-                               true,
-                               filtered,
-                               session.sourceId()};
-                    router.acceptFrame(retired);
-                });
+            nullptr, {}, &scheduler);
+        QSignalSpy corrections(&session, &NTRIPSession::correctionReceived);
+        QSignalSpy retired(&session, &NTRIPSession::streamEnded);
         NTRIPTransportConfig config;
         config.host = QStringLiteral("synthetic.invalid");
         config.mountpoint = QStringLiteral("BASE");
         session.start(config);
-        stream->frame(clock.nowMs());
-        QCOMPARE(delivered, 1);
-        clock.advanceBy(6000000);
-        QVERIFY(!router.acceptFrame(retired));
+        const auto firstAttempt = session.activeAttemptId();
+        stream->frame(scheduler.nowMs());
+        QCOMPARE(corrections.size(), 1);
         stream->fail();
         QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
         QCOMPARE(session.state(), NTRIPSession::State::Reconnecting);
-        QCOMPARE(session.failedAttempts(), 1);
+        QCOMPARE(retired.size(), 1);
+        const auto retry = session.nextRetryDelay();
+        QVERIFY(scheduler.advanceBy(retry - std::chrono::milliseconds(1)));
+        QCOMPARE(attempts, 1);
+        QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+        QCOMPARE(attempts, 2);
+        QVERIFY(session.activeAttemptId() != firstAttempt);
+        stream->frame(scheduler.nowMs());
+        QCOMPARE(corrections.size(), 2);
+        QCOMPARE(corrections.last().at(3).toLongLong(), scheduler.nowMs());
+        stream->fail();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
         session.stop();
-        session.start(config);
-        QVERIFY(!router.acceptFrame(retired));
-        stream->frame(clock.nowMs());
-        QCOMPARE(delivered, 2);
-        session.stop();
+        QVERIFY(scheduler.advanceBy(std::chrono::minutes(1)));
+        QCOMPARE(attempts, 2);
+        QCOMPARE(session.state(), NTRIPSession::State::Disconnected);
     }
 };
 

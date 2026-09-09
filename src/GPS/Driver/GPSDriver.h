@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 
 #include "GPSConfigurationReport.h"
 #include "GPSObservation.h"
@@ -14,6 +15,7 @@
 #include "GPSReceiverConfig.h"
 #include "GPSSurveyInStatus.h"
 #include "GPSType.h"
+#include "GPSTransportResult.h"
 
 class GPSTransport;
 
@@ -34,21 +36,8 @@ struct GPSDriverSinks
 class GPSDriver
 {
 public:
-    enum class ConfigurationStatus
-    {
-        NotConfigured,
-        Ready,
-        Unsupported,
-        Cancelled,
-        TransportError,
-        Failed,
-    };
-
-    struct ConfigurationResult
-    {
-        ConfigurationStatus status = ConfigurationStatus::NotConfigured;
-        QString error;
-    };
+    using ConfigurationStatus = GPSConfigurationStatus;
+    using ConfigurationResult = GPSConfigurationResult;
 
     enum class ReceiveStatus
     {
@@ -64,6 +53,7 @@ public:
         ReceiveStatus status = ReceiveStatus::NotConfigured;
         bool positionUpdated = false;
         bool satellitesUpdated = false;
+        std::optional<GPSReadResult> transportRead = {};
     };
 
     GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks);

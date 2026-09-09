@@ -4,11 +4,14 @@
 
 #include <algorithm>
 
+#include "GPSQtRuntimeScheduler.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSConnectionStateLog, "GPS.Core.GPSConnectionState")
 
-GPSConnectionState::GPSConnectionState(QObject* parent) : QObject(parent)
+GPSConnectionState::GPSConnectionState(QObject* parent, GPSRuntimeScheduler* scheduler)
+    : QObject(parent)
+    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
 {
     qCDebug(GPSConnectionStateLog) << this;
 }
@@ -90,9 +93,14 @@ void GPSConnectionState::resetIntent()
     }
 }
 
+qint64 GPSConnectionState::retryRemainingMs() const
+{
+    return _retryDeadlineMs < 0 ? -1 : std::max<qint64>(0, _retryDeadlineMs - (_scheduler ? _scheduler->nowMs() : 0));
+}
+
 bool GPSConnectionState::canAttempt() const
 {
-    return _active && (_state == Disconnected || (_state == Retrying && _retryDeadline.hasExpired()));
+    return _active && (_state == Disconnected || (_state == Retrying && retryRemainingMs() == 0));
 }
 
 bool GPSConnectionState::beginAttempt()
@@ -103,7 +111,7 @@ bool GPSConnectionState::beginAttempt()
     if (_state == Retrying) {
         _retryDelayMs = std::min(_retryDelayMs * 2, 30000);
     }
-    _retryDeadline = QDeadlineTimer::Forever;
+    _retryDeadlineMs = -1;
     const QPointer<GPSConnectionState> guard(this);
     _setState(Connecting);
     return guard && _active && _state == Connecting;
@@ -127,7 +135,7 @@ void GPSConnectionState::ready()
 void GPSConnectionState::failed()
 {
     if (_active && _state != Retrying && _state != Stopping) {
-        _retryDeadline.setRemainingTime(_retryDelayMs);
+        _retryDeadlineMs = (_scheduler ? _scheduler->nowMs() : 0) + _retryDelayMs;
         _setState(Retrying);
     }
 }
@@ -144,7 +152,7 @@ void GPSConnectionState::stopped()
 
 void GPSConnectionState::resetRetry()
 {
-    _retryDeadline = QDeadlineTimer::Forever;
+    _retryDeadlineMs = -1;
     _retryDelayMs = 1000;
 }
 

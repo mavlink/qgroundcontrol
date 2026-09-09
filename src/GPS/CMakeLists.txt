@@ -7,6 +7,8 @@
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+include(cmake/GPSBuild.cmake)
+add_subdirectory(Contracts)
 add_subdirectory(Core)
 add_subdirectory(Corrections)
 add_subdirectory(Models)
@@ -19,8 +21,6 @@ add_subdirectory(Recording)
 add_subdirectory(Receiver)
 add_subdirectory(BaseStation)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTypes.h GPSConnectionSettings.cc
-                                             GPSConnectionSettings.h
-)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTypes.h)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver QGCGPSCore QGCGPSReceiver)

@@ -15,7 +15,7 @@
 namespace {
 using K = GPSRecordingEvent::Kind;
 using T = GPSRecordingMetadata::Transport;
-using W = GPSTransport::WriteStatus;
+using W = GPSWriteStatus;
 
 template <typename TEnum>
 struct Name
@@ -46,6 +46,18 @@ constexpr Name<T> transports[] = {
 constexpr Name<W> writes[] = {{W::Completed, "completed"},     {W::TimedOut, "timed_out"},
                               {W::Cancelled, "cancelled"},     {W::Error, "error"},
                               {W::Unsupported, "unsupported"}, {W::InvalidData, "invalid_data"}};
+constexpr Name<GPSOpenStatus> opens[] = {{GPSOpenStatus::Opened, "opened"},
+                                         {GPSOpenStatus::TimedOut, "timed_out"},
+                                         {GPSOpenStatus::Cancelled, "cancelled"},
+                                         {GPSOpenStatus::Error, "error"},
+                                         {GPSOpenStatus::Unsupported, "unsupported"}};
+constexpr Name<GPSReadStatus> reads[] = {{GPSReadStatus::Data, "data"},
+                                         {GPSReadStatus::TimedOut, "timed_out"},
+                                         {GPSReadStatus::Cancelled, "cancelled"},
+                                         {GPSReadStatus::Closed, "closed"},
+                                         {GPSReadStatus::Error, "error"},
+                                         {GPSReadStatus::Overflow, "overflow"},
+                                         {GPSReadStatus::InvalidData, "invalid_data"}};
 constexpr Name<GPSReceiverConfig::Role> roles[] = {{GPSReceiverConfig::Role::RTKBase, "rtk_base"},
                                                    {GPSReceiverConfig::Role::Position, "position"}};
 constexpr Name<GPSReceiverConfig::OutputProtocol> protocols[] = {{GPSReceiverConfig::OutputProtocol::Native, "native"},
@@ -100,7 +112,7 @@ bool readMetadata(const QJsonObject& object, int version, GPSRecordingMetadata& 
                                           {"role", enumeration, true},
                                           {"driver", enumeration, true},
                                           {"baud", QJsonValue::Double, true},
-                                          {"fixed_baud", QJsonValue::Double, version == 2},
+                                          {"fixed_baud", QJsonValue::Double, version >= 2},
                                           {"configured", QJsonValue::Bool, true},
                                           {"constellation_mask", QJsonValue::Double, true},
                                           {"dynamic_model", QJsonValue::Double, true},
@@ -143,7 +155,7 @@ bool readMetadata(const QJsonObject& object, int version, GPSRecordingMetadata& 
         }
     }
     m.initialBaud = object["baud"].toInt();
-    if (version == 2) {
+    if (version >= 2) {
         m.fixedBaud = object["fixed_baud"].toInt();
     }
     m.configured = object["configured"].toBool();
@@ -238,15 +250,15 @@ GPSRecordingMetadata GPSRecordingMetadata::fromProfile(const GPSReceiverProfile&
             break;
         case E::Tcp:
             result.transport = T::Tcp;
-            result.fixedBaud = 115200;
+            result.fixedBaud = result.configured ? 115200 : 0;
             break;
         case E::UdpListener:
             result.transport = T::UdpListener;
-            result.fixedBaud = 115200;
+            result.fixedBaud = result.configured ? 115200 : 0;
             break;
         case E::UdpPeer:
             result.transport = T::UdpPeer;
-            result.fixedBaud = 115200;
+            result.fixedBaud = result.configured ? 115200 : 0;
             break;
     }
     return result;
@@ -281,6 +293,15 @@ QByteArray GPSRecordingDocument::encode(QString* error) const
         }
         if (event.startedAtUs) {
             item.insert("started_us", static_cast<qint64>(event.startedAtUs));
+        }
+        if (event.receivedAtUs) {
+            item.insert("received_us", *event.receivedAtUs);
+        }
+        if (event.openStatus) {
+            item.insert("open_status", name(*event.openStatus, opens));
+        }
+        if (event.readStatus) {
+            item.insert("read_status", name(*event.readStatus, reads));
         }
         if (event.resumed) {
             item.insert("resumed", true);
@@ -349,7 +370,7 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
         return false;
     }
     const int version = object["version"].toInt();
-    if ((version == 2 || object.contains("fileType")) &&
+    if ((version >= 2 || object.contains("fileType")) &&
         object["fileType"].toString() != QStringLiteral("GPSRecording")) {
         error = QStringLiteral("Invalid recording file type");
         return false;
@@ -380,7 +401,10 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
                                               {"resumed", QJsonValue::Bool, false},
                                               {"profile", QJsonValue::Object, false},
                                               {"status", QJsonValue::String, false},
-                                              {"write", QJsonValue::Object, false}},
+                                              {"write", QJsonValue::Object, false},
+                                              {"received_us", QJsonValue::Double, false},
+                                              {"open_status", QJsonValue::String, false},
+                                              {"read_status", QJsonValue::String, false}},
                                              error)) {
             return false;
         }
@@ -402,6 +426,36 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
         }
         event.startedAtUs = item["started_us"].toInteger();
         previous = event.atUs;
+        if (item.contains("received_us")) {
+            if (version < 3 || event.kind != K::Rx || !integer(item["received_us"], -9000000000000000LL, event.atUs)) {
+                error = QStringLiteral("Invalid producer receipt time");
+                return false;
+            }
+            event.receivedAtUs = item["received_us"].toInteger();
+        }
+        if (item.contains("open_status")) {
+            GPSOpenStatus status;
+            if (version < 3 || (event.kind != K::Open && event.kind != K::OpenError) ||
+                !parseName(item["open_status"], status, opens) ||
+                ((status == GPSOpenStatus::Opened) != (event.kind == K::Open))) {
+                error = QStringLiteral("Invalid open outcome");
+                return false;
+            }
+            event.openStatus = status;
+        }
+        if (item.contains("read_status")) {
+            GPSReadStatus status;
+            if (version < 3 || !parseName(item["read_status"], status, reads) ||
+                (status == GPSReadStatus::Data        ? event.kind != K::Rx
+                 : status == GPSReadStatus::TimedOut  ? event.kind != K::Timeout
+                 : status == GPSReadStatus::Cancelled ? event.kind != K::Cancel
+                 : status == GPSReadStatus::Closed    ? event.kind != K::Disconnect
+                                                      : event.kind != K::ReadError)) {
+                error = QStringLiteral("Invalid read outcome");
+                return false;
+            }
+            event.readStatus = status;
+        }
         const auto hex = item["hex"].toString().toLatin1();
         event.bytes = QByteArray::fromHex(hex);
         if (event.bytes.toHex() != hex.toLower() ||
@@ -427,7 +481,7 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
             return false;
         }
         if (event.kind == K::ConfigurationFinished) {
-            if (version == 2 ? !parseName(item["status"], event.value, configurationStatuses)
+            if (version >= 2 ? !parseName(item["status"], event.value, configurationStatuses)
                              : !integer(item["value"], 0, 5)) {
                 error = QStringLiteral("Unknown configuration status");
                 return false;
@@ -438,7 +492,7 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
         }
         if (event.kind == K::BoundedWrite) {
             const auto write = item["write"].toObject();
-            GPSTransport::WriteResult w;
+            GPSWriteResult w;
             if (version < 2 || !item.contains("write") ||
                 !JsonParsing::validateKeysStrict(write,
                                                  {{"status", QJsonValue::String, true},

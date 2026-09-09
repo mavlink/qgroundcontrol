@@ -209,7 +209,7 @@ public:
         , _receiver(receiver)
     {}
 
-    bool open() override { return true; }
+    OpenResult open() override { return {OpenStatus::Opened, {}}; }
 
     bool fatalError() const override { return false; }
 
@@ -217,15 +217,29 @@ public:
 
     bool setBaudrate(unsigned) override { return true; }
 
-    int read(uint8_t* data, int size, int) override
+    ReadResult read(uint8_t* data, int size, int) override
     {
-        return UBXReceiver::callback(GPSCallbackType::readDeviceData, data, size, &_receiver);
+        if (isCancelled()) {
+            return {ReadStatus::Cancelled, 0, {}};
+        }
+        const int count = UBXReceiver::callback(GPSCallbackType::readDeviceData, data, size, &_receiver);
+        if (count == GPSHelper::ReadCancelled) {
+            return {ReadStatus::Cancelled, 0, {}};
+        }
+        if (count < 0) {
+            return {ReadStatus::Error, 0, {}};
+        }
+        return {count > 0 ? ReadStatus::Data : ReadStatus::TimedOut, count, {}};
     }
 
-    int write(const uint8_t* data, int size) override
+    WriteResult write(const uint8_t* data, int size) override
     {
-        return UBXReceiver::callback(GPSCallbackType::writeDeviceData, const_cast<uint8_t*>(data), size,
-                                     &_receiver);
+        if (isCancelled()) {
+            return {WriteStatus::Cancelled, 0, 0, 0, {}};
+        }
+        const int count =
+            UBXReceiver::callback(GPSCallbackType::writeDeviceData, const_cast<uint8_t*>(data), size, &_receiver);
+        return {WriteStatus::Completed, count, count, 0, {}};
     }
 
 private:
@@ -682,7 +696,7 @@ void GPSDriverUBXTest::_managedNmeaKeepsTransportUntilStopped()
             , _streaming(streaming)
         {}
 
-        int read(uint8_t* data, int size, int timeoutMs) override
+        ReadResult read(uint8_t* data, int size, int timeoutMs) override
         {
             if (!_streaming) {
                 return ReceiverTransport::read(data, size, timeoutMs);
@@ -692,9 +706,9 @@ void GPSDriverUBXTest::_managedNmeaKeepsTransportUntilStopped()
                 const QByteArray sentence("$GPRMC,test*00\r\n");
                 const int count = std::min(size, static_cast<int>(sentence.size()));
                 std::memcpy(data, sentence.constData(), static_cast<size_t>(count));
-                return count;
+                return {ReadStatus::Data, count, {}};
             }
-            return 0;
+            return {ReadStatus::TimedOut, 0, {}};
         }
 
     private:
@@ -755,17 +769,17 @@ void GPSDriverUBXTest::_correctionBacklogPublishesBufferedPositions()
             , _progress(progress)
         {}
 
-        int read(uint8_t* data, int size, int timeoutMs) override
+        ReadResult read(uint8_t* data, int size, int timeoutMs) override
         {
             if (isCancelled()) {
-                return GPSHelper::ReadCancelled;
+                return {ReadStatus::Cancelled, 0, {}};
             }
-            const int count = ReceiverTransport::read(data, size, timeoutMs);
-            if (_progress.writes > 0 && count > 0) {
+            const auto result = ReceiverTransport::read(data, size, timeoutMs);
+            if (_progress.writes > 0 && result.status == ReadStatus::Data) {
                 // Make packet reads consume wall time, as a real transport does.
                 QThread::usleep(100);
             }
-            return count;
+            return result;
         }
 
         WriteResult writeBounded(const uint8_t*, int length, QDeadlineTimer) override
@@ -788,7 +802,7 @@ void GPSDriverUBXTest::_correctionBacklogPublishesBufferedPositions()
             qToLittleEndian<quint32>(500, pvt.data() + 40);
             qToLittleEndian<quint32>(800, pvt.data() + 44);
             _receiver.queue(ubxMessage(0x01, 0x07, pvt));
-            return {WriteStatus::Completed, length, length, 0};
+            return {WriteStatus::Completed, length, length, 0, {}};
         }
 
     private:

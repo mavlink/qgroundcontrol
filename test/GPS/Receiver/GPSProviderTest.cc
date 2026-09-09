@@ -38,21 +38,21 @@ public:
         _trace.factoryAliveDuringDestruction = !_trace.factoryLifetime.expired();
     }
 
-    bool open() override
+    OpenResult open() override
     {
         _trace.openedOn = QThread::currentThread();
         // Stop before receiver configuration; this test exercises transport ownership only.
         if (_cancelInOpen) {
             _stop();
         }
-        return _openResult;
+        return {_openResult ? OpenStatus::Opened : OpenStatus::Error};
     }
 
     bool fatalError() const override { return false; }
 
-    int read(uint8_t*, int, int) override { return -1; }
+    ReadResult read(uint8_t*, int, int) override { return {ReadStatus::Error}; }
 
-    int write(const uint8_t*, int) override { return -1; }
+    WriteResult write(const uint8_t*, int) override { return {WriteStatus::Error}; }
 
     bool setBaudrate(unsigned) override { return true; }
 
@@ -147,29 +147,29 @@ class FemtoAckTransport : public GPSTransport
 public:
     using GPSTransport::GPSTransport;
 
-    bool open() override { return true; }
+    OpenResult open() override { return {OpenStatus::Opened}; }
 
     bool fatalError() const override { return false; }
 
     bool setBaudrate(unsigned) override { return true; }
 
-    int write(const uint8_t* bytes, int size) override
+    WriteResult write(const uint8_t* bytes, int size) override
     {
         const QByteArray command(reinterpret_cast<const char*>(bytes), size);
         _reply = '<' + command.split(' ').first().trimmed() + " OK";
         _reply.append(char(0));
-        return size;
+        return {WriteStatus::Completed, size, size};
     }
 
-    int read(uint8_t* bytes, int size, int) override
+    ReadResult read(uint8_t* bytes, int size, int) override
     {
         if (_reply.isEmpty()) {
-            return -1;
+            return {ReadStatus::TimedOut};
         }
         const auto count = qMin(size, static_cast<int>(_reply.size()));
         std::memcpy(bytes, _reply.constData(), count);
         _reply.remove(0, count);
-        return count;
+        return {ReadStatus::Data, count};
     }
 
 private:
@@ -240,4 +240,66 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
     QVERIFY(!trace.openedOn);
     QCOMPARE(trace.destroyedOn, &provider);
     QVERIFY(errors.isEmpty());
+}
+
+void GPSProviderTest::_typedFailureDetails_data()
+{
+    QTest::addColumn<bool>("opening");
+    QTest::newRow("open-refused") << true;
+    QTest::newRow("serial-input-overflow") << false;
+}
+
+void GPSProviderTest::_typedFailureDetails()
+{
+    QFETCH(bool, opening);
+
+    class EvidenceTransport : public FemtoAckTransport
+    {
+    public:
+        EvidenceTransport(const std::atomic_bool& stop, bool opening, const std::atomic_bool& ready)
+            : FemtoAckTransport(stop)
+            , _opening(opening)
+            , _ready(ready)
+        {}
+
+        OpenResult open() override
+        {
+            return _opening ? OpenResult{OpenStatus::Error, QStringLiteral("Connection refused")}
+                            : OpenResult{OpenStatus::Opened};
+        }
+
+        ReadResult read(uint8_t* bytes, int size, int timeout) override
+        {
+            return _ready ? ReadResult{ReadStatus::Overflow, 0, QStringLiteral("Serial input exhausted")}
+                          : FemtoAckTransport::read(bytes, size, timeout);
+        }
+
+    private:
+        bool _opening;
+        const std::atomic_bool& _ready;
+    };
+
+    std::atomic_bool ready = false;
+    GPSReceiverConfig config;
+    config.base.surveyInAccMeters = 1;
+    config.base.surveyInDurationSecs = 30;
+    GPSProvider provider(
+        [&](const std::atomic_bool& stop) { return std::make_unique<EvidenceTransport>(stop, opening, ready); },
+        GPSType::femto, config);
+    connect(&provider, &GPSProvider::receiverReady, &provider, [&]() { ready = true; }, Qt::DirectConnection);
+    QSignalSpy details(&provider, &GPSProvider::connectionErrorDetail);
+    QSignalSpy reads(&provider, &GPSProvider::transportReadFailed);
+    QSignalSpy opens(&provider, &GPSProvider::transportOpenFinished);
+    provider.start();
+    QVERIFY(provider.wait(TestTimeout::mediumMs()));
+    QCOMPARE(details.size(), 1);
+    QCOMPARE(details.first().at(1).toString(),
+             opening ? QStringLiteral("Connection refused") : QStringLiteral("Serial input exhausted"));
+    QCOMPARE(opens.size(), 1);
+    QCOMPARE(opens.first().first().value<GPSOpenResult>().status,
+             opening ? GPSOpenStatus::Error : GPSOpenStatus::Opened);
+    QCOMPARE(reads.size(), opening ? 0 : 1);
+    if (!opening) {
+        QCOMPARE(reads.first().first().value<GPSReadResult>().status, GPSReadStatus::Overflow);
+    }
 }

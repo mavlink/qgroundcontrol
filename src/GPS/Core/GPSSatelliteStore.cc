@@ -3,24 +3,23 @@
 #include <algorithm>
 #include <limits>
 
+#include "GPSQtRuntimeScheduler.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSSatelliteStoreLog, "GPS.Core.GPSSatelliteStore")
 
-GPSSatelliteStore::GPSSatelliteStore(QObject* parent, int freshnessTimeoutMs)
+GPSSatelliteStore::GPSSatelliteStore(QObject* parent, int freshnessTimeoutMs, GPSRuntimeScheduler* scheduler)
     : QObject(parent)
-    , _expiryTimer(this)
+    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
     , _freshnessTimeoutMs(std::max(1, freshnessTimeoutMs))
 {
     qCDebug(GPSSatelliteStoreLog) << this;
-    _expiryTimer.setSingleShot(true);
-    _expiryTimer.setTimerType(Qt::PreciseTimer);
-    connect(&_expiryTimer, &QTimer::timeout, this, &GPSSatelliteStore::_publish);
 }
 
 GPSSatelliteStore::~GPSSatelliteStore()
 {
     qCDebug(GPSSatelliteStoreLog) << this;
+    _scheduler->cancel(_expiryTask);
 }
 
 void GPSSatelliteStore::beginSession(const QString& sourceId, quint64 sessionId)
@@ -30,6 +29,7 @@ void GPSSatelliteStore::beginSession(const QString& sourceId, quint64 sessionId)
     }
     _constellations.clear();
     _clearedThroughUs = 0;
+    _fullSnapshotReceiptUs = 0;
     _observation = {};
     _observation.sourceId = sourceId;
     _observation.sessionId = sessionId;
@@ -40,13 +40,14 @@ void GPSSatelliteStore::reset()
 {
     _constellations.clear();
     _clearedThroughUs = 0;
+    _fullSnapshotReceiptUs = 0;
     _observation = {};
     _publish();
 }
 
 void GPSSatelliteStore::clear()
 {
-    _clearedThroughUs = GPSObservation::monotonicNowUs();
+    _clearedThroughUs = _scheduler->nowUs();
     _constellations.clear();
     _publish();
 }
@@ -77,9 +78,14 @@ void GPSSatelliteStore::updateObservation(const GPSSatelliteObservation& observa
         (!observation.sourceId.isEmpty() && observation.sourceId != _observation.sourceId)) {
         return;
     }
-    const quint64 nowUs = GPSObservation::monotonicNowUs();
+    const quint64 nowUs = _scheduler->nowUs();
     _expire(nowUs);
     auto reports = observation.provenance;
+    if (reports.isEmpty() && observation.satellites.isEmpty() &&
+        observation.updateMode == GPSSatelliteObservation::UpdateMode::ConstellationDelta) {
+        _publish();
+        return;
+    }
     if (reports.isEmpty()) {
         // Native reports have one receipt for the full view/use snapshot.
         std::map<GPSSatellite::Constellation, int> counts;
@@ -100,13 +106,45 @@ void GPSSatelliteStore::updateObservation(const GPSSatelliteObservation& observa
                             known ? std::optional<int>(count) : std::nullopt});
         }
     }
+    const bool fullSnapshot = observation.updateMode == GPSSatelliteObservation::UpdateMode::FullSnapshot;
+    quint64 fullReceipt = observation.monotonicTimestampUs;
+    for (const auto& report : reports) {
+        fullReceipt = std::max({fullReceipt, report.inViewTimestampUs, report.inUseTimestampUs});
+    }
+    if (fullSnapshot) {
+        if (!fullReceipt || fullReceipt > nowUs || fullReceipt <= _clearedThroughUs ||
+            fullReceipt < _fullSnapshotReceiptUs ||
+            nowUs - fullReceipt >= static_cast<quint64>(_freshnessTimeoutMs) * 1000) {
+            _publish();
+            return;
+        }
+        _fullSnapshotReceiptUs = fullReceipt;
+        for (auto& [constellation, state] : _constellations) {
+            const auto report = std::find_if(reports.cbegin(), reports.cend(), [constellation](const auto& value) {
+                return value.constellation == constellation;
+            });
+            if ((report == reports.cend() || !report->inViewTimestampUs) && state.viewReceiptUs <= fullReceipt) {
+                state.viewRetiredThroughUs = std::max(state.viewRetiredThroughUs, fullReceipt);
+                state.viewReceiptUs = 0;
+                state.satellites.clear();
+            }
+            if ((report == reports.cend() || !report->inUseTimestampUs) && state.useReceiptUs <= fullReceipt) {
+                state.useRetiredThroughUs = std::max(state.useRetiredThroughUs, fullReceipt);
+                state.useReceiptUs = 0;
+                state.usedCount.reset();
+                state.used.clear();
+                state.usedIds.reset();
+            }
+        }
+    }
     for (const auto& report : reports) {
         if (report.constellation < GPSSatellite::Constellation::Unknown ||
             report.constellation > GPSSatellite::Constellation::NavIC) {
             continue;
         }
         auto& state = _constellations[report.constellation];
-        if (_accept(report.inViewTimestampUs, state.viewReceiptUs, state.viewRetiredThroughUs, nowUs)) {
+        if ((fullSnapshot || report.inViewTimestampUs >= _fullSnapshotReceiptUs) &&
+            _accept(report.inViewTimestampUs, state.viewReceiptUs, state.viewRetiredThroughUs, nowUs)) {
             state.viewReceiptUs = report.inViewTimestampUs;
             state.satellites.clear();
             for (const auto& satellite : observation.satellites) {
@@ -115,10 +153,12 @@ void GPSSatelliteStore::updateObservation(const GPSSatelliteObservation& observa
                 }
             }
         }
-        if (report.satellitesUsed && *report.satellitesUsed >= 0 &&
+        if ((fullSnapshot || report.inUseTimestampUs >= _fullSnapshotReceiptUs) && report.satellitesUsed &&
+            *report.satellitesUsed >= 0 &&
             _accept(report.inUseTimestampUs, state.useReceiptUs, state.useRetiredThroughUs, nowUs)) {
             state.useReceiptUs = report.inUseTimestampUs;
             state.usedCount = report.satellitesUsed;
+            state.usedIds = report.usedSatelliteIds;
             state.used.clear();
             for (const auto& satellite : observation.satellites) {
                 if (satellite.constellation == report.constellation && satellite.used) {
@@ -144,13 +184,14 @@ void GPSSatelliteStore::_expire(quint64 nowUs)
             state.useReceiptUs = 0;
             state.usedCount.reset();
             state.used.clear();
+            state.usedIds.reset();
         }
     }
 }
 
 void GPSSatelliteStore::_publish()
 {
-    const quint64 nowUs = GPSObservation::monotonicNowUs();
+    const quint64 nowUs = _scheduler->nowUs();
     _expire(nowUs);
     _observation.satellites.clear();
     _observation.provenance.clear();
@@ -160,11 +201,18 @@ void GPSSatelliteStore::_publish()
         if (!state.viewReceiptUs && !state.useReceiptUs) {
             continue;
         }
-        _observation.provenance.append({constellation, state.viewReceiptUs, state.useReceiptUs, state.usedCount});
+        _observation.provenance.append(
+            {constellation, state.viewReceiptUs, state.useReceiptUs, state.usedCount, state.usedIds});
         for (auto satellite : state.satellites) {
             const auto used = state.used.find({satellite.id, satellite.prn});
-            satellite.used =
-                state.useReceiptUs && used != state.used.cend() ? std::optional<bool>(used->second) : std::nullopt;
+            satellite.used = std::nullopt;
+            if (state.useReceiptUs) {
+                if (state.usedIds) {
+                    satellite.used = state.usedIds->contains(satellite.id);
+                } else if (used != state.used.cend()) {
+                    satellite.used = used->second;
+                }
+            }
             _observation.satellites.append(satellite);
         }
         for (const quint64 receipt : {state.viewReceiptUs, state.useReceiptUs}) {
@@ -174,10 +222,13 @@ void GPSSatelliteStore::_publish()
             }
         }
     }
-    _expiryTimer.stop();
+    _scheduler->cancel(_expiryTask);
+    _expiryTask = 0;
     if (nextExpiryUs != std::numeric_limits<quint64>::max()) {
-        const quint64 remainingMs = (nextExpiryUs - nowUs + 999) / 1000;
-        _expiryTimer.start(static_cast<int>(std::min<quint64>(remainingMs, std::numeric_limits<int>::max())));
+        _expiryTask = _scheduler->schedule(this, std::chrono::microseconds(nextExpiryUs - nowUs), [this]() {
+            _expiryTask = 0;
+            _publish();
+        });
     }
     _observation.revision = ++_revision;
     const GPSSatelliteObservation snapshot = _observation;

@@ -7,6 +7,8 @@ class GPSProviderTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _typedFailureDetails_data();
+    void _typedFailureDetails();
     void _transportLifetimeStaysOnWorker_data();
     void _transportLifetimeStaysOnWorker();
     void _missingTransportReportsOpenFailure_data();

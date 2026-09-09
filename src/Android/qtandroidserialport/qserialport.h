@@ -169,6 +169,9 @@ public:
     void clearError();
     QBindable<SerialPortError> bindableError() const;
 
+    /// Sticky evidence of dropped input; reset only by opening or explicitly clearing input.
+    bool inputOverflowed() const;
+
     qint64 readBufferSize() const;
     void setReadBufferSize(qint64 size);
 

@@ -7,6 +7,7 @@
 #include "GPSConnectionConfig.h"
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverSession.h"
+#include "GPSReplayScheduler.h"
 #include "GPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
@@ -113,7 +114,7 @@ void GPSReceiverAutoConnectTest::_serialRetriesKeepConfiguration()
     config.receiver.base.surveyInAccMeters = 3.0;
     config.receiver.base.surveyInDurationSecs = 240;
     controller.setProfile(config.profile());
-    state._retryDeadline.setRemainingTime(0);
+    state._retryDeadlineMs = 0;
     controller.update();
     QCOMPARE(attempts.size(), 2);
     const auto retry = qvariant_cast<GPSReceiverConfig>(attempts.at(1).at(2));
@@ -127,7 +128,7 @@ void GPSReceiverAutoConnectTest::_serialRetriesKeepConfiguration()
     QVERIFY(controller.connectSelected());
     QCOMPARE(receiver.attempt().generation, failedGeneration);
     QCOMPARE(state.state(), GPSConnectionState::Disconnected);
-    QVERIFY(state._retryDeadline.isForever());
+    QVERIFY(state._retryDeadlineMs < 0);
     controller.update();
     QCOMPARE(attempts.size(), 3);
     const auto replacement = qvariant_cast<GPSReceiverConfig>(attempts.at(2).at(2));
@@ -373,12 +374,12 @@ void GPSReceiverAutoConnectTest::_failedAttemptsBackOffAndRespectReservations()
     QCOMPARE(state._retryDelayMs, 1000);
     auto claim = ports.reservePort(QStringLiteral("/test/rtk"));
     QVERIFY(claim);
-    state._retryDeadline.setRemainingTime(0);
+    state._retryDeadlineMs = 0;
     controller.update();
     QCOMPARE(attempts.size(), 1);
     claim.reset();
     for (const int delay : {2000, 4000, 8000, 16000, 30000, 30000}) {
-        state._retryDeadline.setRemainingTime(0);
+        state._retryDeadlineMs = 0;
         const auto previousAttempts = attempts.size();
         controller.update();
         QCOMPARE(attempts.size(), previousAttempts + 1);
@@ -389,7 +390,7 @@ void GPSReceiverAutoConnectTest::_failedAttemptsBackOffAndRespectReservations()
     controller.setAutoConnect(false);
     controller.update();
     QCOMPARE(state._retryDelayMs, 1000);
-    QVERIFY(state._retryDeadline.isForever());
+    QVERIFY(state._retryDeadlineMs < 0);
     QCOMPARE(attempts.size(), previousAttempts);
 }
 
@@ -410,12 +411,12 @@ void GPSReceiverAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     controller.update();
     QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver() && !receiver.stopping(), TestTimeout::mediumMs());
     QCOMPARE(attempts.size(), 1);
-    state._retryDeadline.setRemainingTime(0);
+    state._retryDeadlineMs = 0;
     controller.update();
     QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver() && !receiver.stopping(), TestTimeout::mediumMs());
     QCOMPARE(attempts.size(), 2);
     const auto exclusion = ports.excludeFromAutoConnect(QStringLiteral("/test/rtk"));
-    state._retryDeadline.setRemainingTime(0);
+    state._retryDeadlineMs = 0;
     controller.update();
     QCOMPARE(attempts.size(), 2);
 }
@@ -444,7 +445,7 @@ void GPSReceiverAutoConnectTest::_networkRetriesAndStops()
     QCOMPARE(attempts.load(), 1);
     QCOMPARE(state._retryDelayMs, 1000);
     for (const int delay : {2000, 4000, 8000, 16000, 30000, 30000}) {
-        state._retryDeadline.setRemainingTime(0);
+        state._retryDeadlineMs = 0;
         const int previousAttempts = attempts.load();
         controller.update();
         QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver() && !receiver.stopping(), TestTimeout::mediumMs());
@@ -456,7 +457,7 @@ void GPSReceiverAutoConnectTest::_networkRetriesAndStops()
     QCOMPARE(active.size(), 2);
     QCOMPARE(disconnects.size(), 1);
     QCOMPARE(state._retryDelayMs, 1000);
-    QVERIFY(state._retryDeadline.isForever());
+    QVERIFY(state._retryDeadlineMs < 0);
     const int previousAttempts = attempts.load();
     controller.update();
     controller.stop();
@@ -614,4 +615,69 @@ void GPSReceiverAutoConnectTest::_receiverCanDisappearDuringStopping()
     QVERIFY(!session);
     QVERIFY(!controller.active());
     QVERIFY(!controller.networkActive());
+}
+
+void GPSReceiverAutoConnectTest::_retryRunsWithoutPolling()
+{
+    GPSReplayScheduler scheduler;
+    GPSReceiverSession session;
+    GPSReceiverAutoConnect controller(&session, nullptr, nullptr, &scheduler);
+    GPSConnectionConfig config;
+    config.transport = GPSConnectionConfig::Tcp;
+    config.host = QStringLiteral("localhost");
+    config.port = 2101;
+    config.receiver.role = GPSReceiverConfig::Role::Position;
+    controller.setProfile(config.profile());
+    std::atomic_int attempts = 0;
+    const auto cleanup = qScopeGuard([&]() {
+        controller.stop();
+        session.shutdown();
+    });
+    QVERIFY(controller.connectReceiver(config.profile(), [&attempts](const std::atomic_bool&) {
+        ++attempts;
+        return std::unique_ptr<GPSTransport>();
+    }));
+    QTRY_COMPARE_WITH_TIMEOUT(controller.connectionState(), GPSConnectionState::Retrying, TestTimeout::mediumMs());
+    QCOMPARE(attempts.load(), 1);
+    controller.setSuspended(true);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
+    QCOMPARE(attempts.load(), 1);
+    controller.setSuspended(false);
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds(0)));
+    QTRY_COMPARE_WITH_TIMEOUT(attempts.load(), 2, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(controller.connectionState(), GPSConnectionState::Retrying, TestTimeout::mediumMs());
+    controller.disconnectSelected();
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(60)));
+    QCOMPARE(attempts.load(), 2);
+    QCOMPARE(scheduler.pendingCount(), 0);
+}
+
+void GPSReceiverAutoConnectTest::_suspensionDuringAdmissionDefersStart()
+{
+    GPSReplayScheduler scheduler;
+    GPSReceiverSession session;
+    GPSReceiverAutoConnect controller(&session, nullptr, nullptr, &scheduler);
+    std::atomic_int attempts = 0;
+    const auto cleanup = qScopeGuard([&]() {
+        controller.stop();
+        session.shutdown();
+    });
+    bool suspended = false;
+    const auto notification = connect(&controller, &GPSReceiverAutoConnect::stateChanged, &controller, [&]() {
+        if (!suspended && controller.connectionState() == GPSConnectionState::Connecting) {
+            suspended = true;
+            controller.setSuspended(true);
+        }
+    });
+    controller.connectNetwork(GPSType::u_blox, [&attempts](const std::atomic_bool&) {
+        ++attempts;
+        return std::unique_ptr<GPSTransport>();
+    });
+    QVERIFY(suspended);
+    QVERIFY(!session.hasReceiver());
+    QCOMPARE(attempts.load(), 0);
+    disconnect(notification);
+    controller.setSuspended(false);
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds(0)));
+    QTRY_COMPARE_WITH_TIMEOUT(attempts.load(), 1, TestTimeout::mediumMs());
 }

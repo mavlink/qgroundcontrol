@@ -7,6 +7,7 @@ SettingsGroupLayout {
     id: root
 
     readonly property var _satellites: sourceSelector.currentIndex === 1 ? root.nmeaSatelliteModel : root.satelliteModel
+    property var integrity: QGroundControl.gpsReceiver.integrity
     property var nmeaSatelliteModel: QGroundControl.gpsManager.nmeaSatelliteModel
     property var relativePosition: QGroundControl.gpsManager.relativePositionModel
     property var satelliteModel: QGroundControl.gpsManager.satelliteModel
@@ -39,7 +40,7 @@ SettingsGroupLayout {
         id: showDetails
 
         objectName: "gpsObservationDetailsToggle"
-        text: qsTr("Show satellite and relative-position details")
+        text: qsTr("Show satellite, relative-position, and integrity details")
     }
 
     Loader {
@@ -85,6 +86,29 @@ SettingsGroupLayout {
                         text: qsTr("Elevation: %1°   Azimuth: %2°").arg(root.formatValue(satellite.elevation, 0)).arg(root.formatValue(satellite.azimuth, 0))
                         wrapMode: Text.WordWrap
                     }
+                }
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                objectName: "gpsIntegritySummary"
+                text: root.integrity && root.integrity.available ? qsTr("Local receiver integrity") : qsTr("Local receiver integrity: no fresh report")
+                wrapMode: Text.WordWrap
+            }
+
+            Repeater {
+                model: ["jammingState", "spoofingState", "authenticationState", "correctionsProtocol", "correctionsUsed"]
+
+                QGCLabel {
+                    readonly property var fact: root.integrity ? root.integrity[modelData] : null
+                    required property string modelData
+
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
+                    objectName: "gpsIntegrity_" + modelData
+                    text: fact ? qsTr("%1: %2").arg(fact.shortDescription).arg(root.integrity.available ? fact.enumStringValue : qsTr("Unknown")) : ""
+                    visible: root.integrity ? root.integrity.available : false
+                    wrapMode: Text.WordWrap
                 }
             }
 

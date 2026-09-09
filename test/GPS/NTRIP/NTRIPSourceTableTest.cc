@@ -1,6 +1,8 @@
 #include "NTRIPSourceTableTest.h"
 
 #include <QtPositioning/QGeoCoordinate>
+#include <QtTest/QAbstractItemModelTester>
+#include <QtTest/QSignalSpy>
 
 #include "NTRIPSourceTable.h"
 
@@ -19,8 +21,8 @@ void NTRIPSourceTableTest::_testParseSTRLine()
     QCOMPARE(mp.navSystem, QStringLiteral("GPS+GLO+GAL"));
     QCOMPARE(mp.network, QStringLiteral("NET01"));
     QCOMPARE(mp.country, QStringLiteral("USA"));
-    QVERIFY(qFuzzyCompare(mp.latitude, 40.0));
-    QVERIFY(qFuzzyCompare(mp.longitude, -74.0));
+    QVERIFY(qFuzzyCompare(mp.coordinate.latitude(), 40.0));
+    QVERIFY(qFuzzyCompare(mp.coordinate.longitude(), -74.0));
     QVERIFY(!mp.nmea);
     QVERIFY(mp.solution);
     QCOMPARE(mp.generator, QStringLiteral("QGC Test"));
@@ -65,16 +67,14 @@ void NTRIPSourceTableTest::_testDistanceCalculation()
     NTRIPMountpoint mp;
     QVERIFY(NTRIPMountpoint::fromSourceTableLine(line, mp));
 
-    QVERIFY(mp.distanceKm < 0.0);
+    QCOMPARE(mp.distanceFrom({}), -1.0);
 
     QGeoCoordinate userPos(40.7128, -74.0060);
-    mp.updateDistance(userPos);
-    QVERIFY(mp.distanceKm >= 0.0);
-    QVERIFY(mp.distanceKm < 1.0);
+    QVERIFY(mp.distanceFrom(userPos) >= 0.0);
+    QVERIFY(mp.distanceFrom(userPos) < 1.0);
 
     QGeoCoordinate farPos(51.5074, -0.1278);
-    mp.updateDistance(farPos);
-    QVERIFY(mp.distanceKm > 5000.0);
+    QVERIFY(mp.distanceFrom(farPos) > 5000.0);
 }
 
 void NTRIPSourceTableTest::_testUpdateDistancesAll()
@@ -115,3 +115,70 @@ void NTRIPSourceTableTest::_testEmptyTable()
 }
 
 UT_REGISTER_TEST(NTRIPSourceTableTest, TestLabel::Unit)
+
+void NTRIPSourceTableTest::_testCoordinates_data()
+{
+    QTest::addColumn<QString>("latitude");
+    QTest::addColumn<QString>("longitude");
+    QTest::addColumn<bool>("valid");
+    QTest::newRow("zero") << QStringLiteral("0") << QStringLiteral("0") << true;
+    QTest::newRow("equator") << QStringLiteral("0") << QStringLiteral("13") << true;
+    QTest::newRow("prime-meridian") << QStringLiteral("51") << QStringLiteral("0") << true;
+    QTest::newRow("missing-lat") << QString() << QStringLiteral("13") << false;
+    QTest::newRow("missing-lon") << QStringLiteral("51") << QString() << false;
+    QTest::newRow("nan") << QStringLiteral("nan") << QStringLiteral("13") << false;
+    QTest::newRow("infinity") << QStringLiteral("51") << QStringLiteral("inf") << false;
+    QTest::newRow("latitude-range") << QStringLiteral("91") << QStringLiteral("13") << false;
+    QTest::newRow("longitude-range") << QStringLiteral("51") << QStringLiteral("181") << false;
+    QTest::newRow("garbage") << QStringLiteral("wrong") << QStringLiteral("13") << false;
+}
+
+void NTRIPSourceTableTest::_testCoordinates()
+{
+    QFETCH(QString, latitude);
+    QFETCH(QString, longitude);
+    QFETCH(bool, valid);
+    const QString row =
+        QStringLiteral("STR;MP;Id;RTCM;details;2;GPS;NET;USA;%1;%2;0;1;gen;none;B;N;4800").arg(latitude, longitude);
+    NTRIPSourceTableModel model;
+    model.parseSourceTable(row);
+    const auto index = model.index(0);
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::LatitudeRole).isValid(), valid);
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::LongitudeRole).isValid(), valid);
+    model.updateDistances(QGeoCoordinate(0, 0));
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::DistanceKmRole).toDouble() >= 0, valid);
+    model.updateDistances({});
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
+}
+
+void NTRIPSourceTableTest::_testProjectionNotifications()
+{
+    NTRIPSourceTableModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    const QString first = QStringLiteral("STR;A;Id;RTCM;details;2;GPS;NET;USA;0;0;0;1;gen;none;B;N;4800\n");
+    const QString second = QStringLiteral("STR;B;Id;RTCM;details;2;GPS;NET;USA;0;10;0;1;gen;none;B;N;4800\n");
+    model.parseSourceTable(first);
+    QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+    QSignalSpy reset(&model, &QAbstractItemModel::modelReset);
+    QSignalSpy count(&model, &NTRIPSourceTableModel::countChanged);
+    model.updateDistances(QGeoCoordinate(0, 0));
+    QCOMPARE(changed.size(), 1);
+    QCOMPARE(qvariant_cast<QList<int>>(changed.first().at(2)), QList<int>{NTRIPSourceTableModel::DistanceKmRole});
+    QCOMPARE(reset.size(), 0);
+    QCOMPARE(count.size(), 0);
+    model.updateDistances(QGeoCoordinate(0, 0));
+    QCOMPARE(changed.size(), 1);
+    model.updateDistances({});
+    QCOMPARE(changed.size(), 2);
+    model.parseSourceTable(first + second);
+    reset.clear();
+    count.clear();
+    model.updateDistances(QGeoCoordinate(0, 10));
+    QCOMPARE(reset.size(), 1);
+    QCOMPARE(count.size(), 0);
+    QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("B"));
+    model.updateDistances({});
+    QCOMPARE(reset.size(), 2);
+    QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("A"));
+    QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
+}

@@ -7,6 +7,7 @@ class GPSReceiverSessionTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _typedOperationEvidenceSurvivesFailureAndRejectsRetiredWorker();
     void _terminalStateExactlyOnce();
     void _attemptSnapshotSurvivesRestart();
     void _cancelBeforeStart_data();

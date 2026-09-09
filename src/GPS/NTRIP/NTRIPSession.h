@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QtCore/QChronoTimer>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 
 #include <functional>
 
+#include "GPSRuntimeScheduler.h"
 #include "NTRIPStream.h"
 #include "NTRIPTransportConfig.h"
 
@@ -29,7 +29,8 @@ public:
     using StreamFactory = std::function<NTRIPStream*(const NTRIPTransportConfig&, QObject*)>;
     using Clock = std::function<qint64()>;
 
-    explicit NTRIPSession(StreamFactory factory, QObject* parent = nullptr, Clock clock = {});
+    explicit NTRIPSession(StreamFactory factory, QObject* parent = nullptr, Clock clock = {},
+                          GPSRuntimeScheduler* scheduler = nullptr);
     ~NTRIPSession() override;
 
     void start(const NTRIPTransportConfig& config, bool reconnect = true);
@@ -53,6 +54,8 @@ public:
 
     std::chrono::milliseconds nextRetryDelay() const;
 
+    bool retryPending() const { return _retryTask != 0; }
+
 signals:
     void stateChanged(NTRIPSession::State state, const QString& message);
     void streamStarted(quint64 attemptId, const QString& sourceId);
@@ -67,6 +70,7 @@ signals:
 
 private:
     void _beginAttempt(quint64 generation);
+    void _cancelRetry();
     bool _retireStream(quint64 generation);
     bool _setState(State state, const QString& message, quint64 generation);
     void _onFailure(const NTRIPFailure& failure, NTRIPStream* stream);
@@ -75,11 +79,12 @@ private:
     void _onConnected(NTRIPStream* stream);
 
     StreamFactory _factory;
+    QPointer<GPSRuntimeScheduler> _scheduler;
     Clock _clock;
     NTRIPTransportConfig _config;
     QPointer<NTRIPStream> _stream;
     QPointer<NTRIPStream> _injectedStream;
-    QChronoTimer _retryTimer;
+    GPSRuntimeScheduler::TaskId _retryTask = 0;
     State _state = State::Disconnected;
     QString _message;
     quint64 _generation = 0;
