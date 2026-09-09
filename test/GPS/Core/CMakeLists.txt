@@ -1,4 +1,6 @@
-qt_add_executable(QGCGPSCoreTest GPSCoreTest.cc)
-target_link_libraries(QGCGPSCoreTest PRIVATE QGCGPSCore Qt6::Test)
-add_test(NAME GPSCoreTest COMMAND QGCGPSCoreTest)
-set_tests_properties(GPSCoreTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSConnectionStateTest.cc GPSConnectionStateTest.h)
+add_qgc_test(GPSConnectionStateTest LABELS Unit)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSSourceHealthTest.cc GPSSourceHealthTest.h)
+add_qgc_test(GPSSourceHealthTest LABELS Unit)

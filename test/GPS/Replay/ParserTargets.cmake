@@ -10,7 +10,7 @@ function(qgc_add_gps_parser_runtime target)
     add_library(
         ${target} STATIC
         "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/GPSParserLogging.cc"
-        "${gps_parser_source}/GPSObservation.cc"
+        "${gps_parser_source}/Core/GPSObservation.cc"
         "${gps_parser_source}/NMEA/NMEAUtils.cc"
         "${gps_parser_source}/NMEA/NMEAStreamSplitter.cc"
         "${gps_parser_source}/NMEA/NMEAStreamSplitter.h"
@@ -21,17 +21,17 @@ function(qgc_add_gps_parser_runtime target)
         "${gps_parser_source}/NTRIP/NTRIPStream.cc"
         "${gps_parser_source}/NTRIP/NTRIPStream.h"
         "${gps_parser_source}/NTRIP/NTRIPTransportConfig.cc"
-        "${gps_parser_source}/RTCM/RTCMParser.cc"
-        "${gps_parser_source}/RTCM/GPSCorrectionDiagnostics.cc"
-        "${gps_parser_source}/RTCM/GPSCorrectionDiagnostics.h"
-        "${gps_parser_source}/RTCM/GPSCorrectionRouter.cc"
-        "${gps_parser_source}/RTCM/GPSCorrectionRouter.h"
+        "${gps_parser_source}/Corrections/RTCMParser.cc"
+        "${gps_parser_source}/Corrections/GPSCorrectionDiagnostics.cc"
+        "${gps_parser_source}/Corrections/GPSCorrectionDiagnostics.h"
+        "${gps_parser_source}/Corrections/GPSCorrectionRouter.cc"
+        "${gps_parser_source}/Corrections/GPSCorrectionRouter.h"
     )
     set_target_properties(${target} PROPERTIES AUTOMOC ON)
     target_compile_features(${target} PUBLIC cxx_std_20)
-    target_include_directories(${target}
-                               PUBLIC "${gps_parser_source}" "${gps_parser_source}/NMEA" "${gps_parser_source}/NTRIP"
-                                      "${gps_parser_source}/RTCM" "${gps_repository}/src/Utilities/Logging"
+    target_include_directories(
+        ${target} PUBLIC "${gps_parser_source}/Core" "${gps_parser_source}/NMEA" "${gps_parser_source}/NTRIP"
+                         "${gps_parser_source}/Corrections" "${gps_repository}/src/Utilities/Logging"
     )
     target_link_libraries(${target} PUBLIC Qt6::Core Qt6::Positioning)
 endfunction()

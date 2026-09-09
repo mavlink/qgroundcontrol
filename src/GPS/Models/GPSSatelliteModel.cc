@@ -9,7 +9,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSSatelliteModelLog, "GPS.Receiver.GPSSatelliteModel")
+QGC_LOGGING_CATEGORY(GPSSatelliteModelLog, "GPS.Models.GPSSatelliteModel")
 
 namespace {
 GPSSatellite::Constellation constellationFor(QGeoSatelliteInfo::SatelliteSystem system)

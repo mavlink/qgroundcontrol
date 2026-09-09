@@ -5,7 +5,7 @@
 #include "GPSCorrectionRouter.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSCorrectionEventModelLog, "GPS.RTCM.GPSCorrectionEventModel")
+QGC_LOGGING_CATEGORY(GPSCorrectionEventModelLog, "GPS.Corrections.GPSCorrectionEventModel")
 
 GPSCorrectionEventModel::GPSCorrectionEventModel(QObject* parent)
     : QAbstractListModel(parent)

@@ -6,7 +6,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSRelativePositionModelLog, "GPS.Receiver.GPSRelativePositionModel")
+QGC_LOGGING_CATEGORY(GPSRelativePositionModelLog, "GPS.Models.GPSRelativePositionModel")
 
 GPSRelativePositionModel::GPSRelativePositionModel(QObject* parent, int freshnessTimeoutMs)
     : QObject(parent)

@@ -45,7 +45,7 @@ const QByteArray FIX =
     "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,*76\r\n";
 }  // namespace
 
-class GPSCoreTest : public QObject
+class NMEADecoderSessionTest : public QObject
 {
     Q_OBJECT
 
@@ -54,7 +54,7 @@ private slots:
     void _pauseDuringConfiguration();
 };
 
-void GPSCoreTest::_decoderSessionRestart()
+void NMEADecoderSessionTest::_decoderSessionRestart()
 {
     ReceiverInput input;
     NMEADecoderSession session;
@@ -80,7 +80,7 @@ void GPSCoreTest::_decoderSessionRestart()
     QVERIFY(!position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
 }
 
-void GPSCoreTest::_pauseDuringConfiguration()
+void NMEADecoderSessionTest::_pauseDuringConfiguration()
 {
     GPSConnectionState connection;
     connect(&connection, &GPSConnectionState::changed, this, [&]() {
@@ -103,6 +103,6 @@ void GPSCoreTest::_pauseDuringConfiguration()
     QVERIFY(connection.beginAttempt());
 }
 
-QTEST_GUILESS_MAIN(GPSCoreTest)
+QTEST_GUILESS_MAIN(NMEADecoderSessionTest)
 
-#include "GPSCoreTest.moc"
+#include "NMEADecoderSessionTest.moc"

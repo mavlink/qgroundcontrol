@@ -1,5 +1,5 @@
 # ============================================================================
-# RTCM Module
+# GPS Corrections Module
 # RTCM3 framing/parsing, UDP correction input, and MAVLink injection.
 # UDP socket helpers live in Utilities/Network.
 # ============================================================================
@@ -29,3 +29,5 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionFrame.h RTCMMavlink.cc
 )
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core QGCGPSCorrections)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionManager.cc GPSCorrectionManager.h)

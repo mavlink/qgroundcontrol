@@ -1,10 +1,6 @@
 qt_add_library(
     QGCGPSReceiver
     STATIC
-    GPSSatelliteModel.cc
-    GPSSatelliteModel.h
-    GPSRelativePositionModel.cc
-    GPSRelativePositionModel.h
     GPSConnectionConfig.cc
     GPSConnectionConfig.h
     GPSReceiverProfile.cc

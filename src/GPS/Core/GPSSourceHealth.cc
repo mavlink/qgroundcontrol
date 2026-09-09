@@ -6,7 +6,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.GPSSourceHealth")
+QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.Core.GPSSourceHealth")
 
 GPSSourceHealth::GPSSourceHealth(QObject* parent)
     : QObject(parent)

@@ -7,7 +7,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSCorrectionRouterLog, "GPS.RTCM.GPSCorrectionRouter")
+QGC_LOGGING_CATEGORY(GPSCorrectionRouterLog, "GPS.Corrections.GPSCorrectionRouter")
 
 GPSCorrectionRouter::GPSCorrectionRouter(QObject* parent, Clock clock)
     : QObject(parent)

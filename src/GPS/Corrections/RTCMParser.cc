@@ -2,7 +2,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(RTCMParserLog, "GPS.RTCM.RTCMParser")
+QGC_LOGGING_CATEGORY(RTCMParserLog, "GPS.Corrections.RTCMParser")
 
 RTCMParser::RTCMParser()
 {

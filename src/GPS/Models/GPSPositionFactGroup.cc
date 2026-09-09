@@ -8,7 +8,7 @@
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSPositionFactGroupLog, "GPS.GPSPositionFactGroup")
+QGC_LOGGING_CATEGORY(GPSPositionFactGroupLog, "GPS.Models.GPSPositionFactGroup")
 
 GPSPositionFactGroup::GPSPositionFactGroup(QObject* parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSFact.json"), parent)

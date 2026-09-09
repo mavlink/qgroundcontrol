@@ -3,7 +3,7 @@
 #include "GPSCorrectionSettings.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.GPSCorrectionManager")
+QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
 
 GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
     : QObject(parent)

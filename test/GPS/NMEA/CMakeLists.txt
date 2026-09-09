@@ -10,3 +10,8 @@ add_qgc_test(NMEAPositionSourceTest LABELS Unit)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE NMEASatelliteAdapterTest.cc NMEASatelliteAdapterTest.h)
 add_qgc_test(NMEASatelliteAdapterTest LABELS Unit)
+
+qt_add_executable(QGCNMEADecoderSessionTest NMEADecoderSessionTest.cc)
+target_link_libraries(QGCNMEADecoderSessionTest PRIVATE QGCGPSNMEA Qt6::Test)
+add_test(NAME NMEADecoderSessionTest COMMAND QGCNMEADecoderSessionTest)
+set_tests_properties(NMEADecoderSessionTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)

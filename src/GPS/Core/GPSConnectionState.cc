@@ -6,7 +6,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSConnectionStateLog, "GPS.GPSConnectionState")
+QGC_LOGGING_CATEGORY(GPSConnectionStateLog, "GPS.Core.GPSConnectionState")
 
 GPSConnectionState::GPSConnectionState(QObject* parent) : QObject(parent)
 {

@@ -7,7 +7,7 @@
 #include "GPSCorrectionFrame.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.RTCM.RTCMUdpInput")
+QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.Corrections.RTCMUdpInput")
 
 RTCMUdpInput::RTCMUdpInput(quint16 port, QObject* parent)
     : QObject(parent)
