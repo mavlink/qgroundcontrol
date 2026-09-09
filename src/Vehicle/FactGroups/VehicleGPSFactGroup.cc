@@ -1,9 +1,7 @@
 #include "VehicleGPSFactGroup.h"
 
 #include <QtCore/QPointer>
-#include <QtPositioning/QGeoCoordinate>
 
-#include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleGPSObservation.h"
@@ -58,12 +56,8 @@ void VehicleGPSFactGroup::_handleHighLatency(const mavlink_message_t &message)
     mavlink_high_latency_t highLatency{};
     mavlink_msg_high_latency_decode(&message, &highLatency);
 
-    lat()->setRawValue(highLatency.latitude * 1e-7);
-    lon()->setRawValue(highLatency.longitude * 1e-7);
-    mgrs()->setRawValue(QGCGeo::convertGeoToMGRS(QGeoCoordinate(highLatency.latitude * 1e-7, highLatency.longitude * 1e-7, highLatency.altitude_amsl)));
-    count()->setRawValue(0);
-
-    _setTelemetryAvailable(true);
+    const auto observation = VehicleGPSObservation::fromMessage(highLatency);
+    updatePosition(observation.position, observation.satellitesVisible, observation.fixType);
 }
 
 void VehicleGPSFactGroup::_handleHighLatency2(const mavlink_message_t &message)
@@ -71,14 +65,8 @@ void VehicleGPSFactGroup::_handleHighLatency2(const mavlink_message_t &message)
     mavlink_high_latency2_t highLatency2{};
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
 
-    lat()->setRawValue(highLatency2.latitude * 1e-7);
-    lon()->setRawValue(highLatency2.longitude * 1e-7);
-    mgrs()->setRawValue(QGCGeo::convertGeoToMGRS(QGeoCoordinate(highLatency2.latitude * 1e-7, highLatency2.longitude * 1e-7, highLatency2.altitude)));
-    count()->setRawValue(0);
-    hdop()->setRawValue((highLatency2.eph == UINT8_MAX) ? qQNaN() : (highLatency2.eph / 10.0));
-    vdop()->setRawValue((highLatency2.epv == UINT8_MAX) ? qQNaN() : (highLatency2.epv / 10.0));
-
-    _setTelemetryAvailable(true);
+    const auto observation = VehicleGPSObservation::fromMessage(highLatency2);
+    updatePosition(observation.position, observation.satellitesVisible, observation.fixType);
 }
 
 void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)

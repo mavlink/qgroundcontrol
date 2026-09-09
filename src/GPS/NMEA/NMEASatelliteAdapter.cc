@@ -10,69 +10,6 @@
 
 QGC_LOGGING_CATEGORY(NMEASatelliteAdapterLog, "GPS.NMEA.NMEASatelliteAdapter")
 
-namespace {
-QByteArray canonicalTalker(QByteArray talker)
-{
-    if (talker == "BD") {
-        return "GB";
-    }
-    if (talker == "PQ" || talker == "QZ") {
-        return "GQ";
-    }
-    return talker;
-}
-
-QByteArray gsaTalker(const QList<QByteArray>& fields)
-{
-    const QByteArray talker = canonicalTalker(fields[0].mid(1, 2));
-    if (talker != "GN") {
-        return talker;
-    }
-    if (fields.size() > 18 && !fields[18].isEmpty()) {
-        switch (fields[18].toInt()) {
-            case 1:
-                return "GP";
-            case 2:
-                return "GL";
-            case 3:
-                return "GA";
-            case 4:
-                return "GB";
-            case 5:
-                return "GQ";
-            default:
-                return {};
-        }
-    }
-    // Older GNGSA reports encode the constellation in globally assigned satellite IDs.
-    for (int i = 3; i < 15; ++i) {
-        const int id = fields[i].toInt();
-        if ((id >= 1 && id <= 64) || (id >= 152 && id <= 158)) {
-            return "GP";
-        }
-        if (id >= 65 && id <= 96) {
-            return "GL";
-        }
-        if (id >= 193 && id <= 202) {
-            return "GQ";
-        }
-        if ((id >= 201 && id <= 235) || (id >= 401 && id <= 463)) {
-            return "GB";
-        }
-        if (id >= 301 && id <= 336) {
-            return "GA";
-        }
-    }
-    return {};
-}
-
-bool supportedTalker(const QByteArray& talker)
-{
-    return talker == "GP" || talker == "GL" || talker == "GA" || talker == "GB" || talker == "GQ";
-}
-
-}  // namespace
-
 NMEASatelliteAdapter::NMEASatelliteAdapter(QIODevice* source, QObject* parent, GPSRuntimeScheduler* scheduler)
     : QObject(parent)
     , _source(source)
@@ -156,31 +93,57 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
                 }
             }
         }
-        const QByteArray talker = gsaTalker(fields);
-        if (!supportedTalker(talker)) {
-            return;
-        }
-        if (_inUse.contains(talker) && !_reports.isEmpty()) {
-            _flush();
-        }
-        UsedReport report;
-        report.receivedAtUs = receivedAtUs;
-        for (int index = 3; fix != 1 && index < 15; ++index) {
-            if (!fields[index].isEmpty()) {
-                report.ids.insert(fields[index].toInt());
+        const QByteArray talker = fields[0].mid(1, 2);
+        std::optional<int> systemId = std::nullopt;
+        if (talker == "GN" && fields.size() > 18 && !fields[18].isEmpty()) {
+            bool validSystem = false;
+            systemId = fields[18].toInt(&validSystem, 16);
+            if (!validSystem) {
+                return;
             }
         }
-        _inUse[talker] = report;
+        QMap<GPSSatellite::Constellation, UsedReport> reports;
+        const auto explicitConstellation = NMEAUtils::satelliteConstellation(talker, systemId);
+        if (explicitConstellation != GPSSatellite::Constellation::Unknown) {
+            reports[explicitConstellation].receivedAtUs = receivedAtUs;
+        }
+        for (int index = 3; index < 15; ++index) {
+            if (fields[index].isEmpty()) {
+                continue;
+            }
+            const int id = fields[index].toInt();
+            const auto constellation = NMEAUtils::satelliteConstellation(talker, systemId, id);
+            if (constellation == GPSSatellite::Constellation::Unknown) {
+                // Partial coverage would turn ambiguity into a fabricated used count.
+                return;
+            }
+            auto& report = reports[constellation];
+            report.receivedAtUs = receivedAtUs;
+            if (fix != 1) {
+                report.ids.insert(id);
+            }
+        }
+        if (reports.isEmpty()) {
+            return;
+        }
+        if (!_reports.isEmpty() && std::any_of(reports.keyBegin(), reports.keyEnd(),
+                                               [this](auto constellation) { return _inUse.contains(constellation); })) {
+            _flush();
+        }
+        for (auto report = reports.cbegin(); report != reports.cend(); ++report) {
+            _inUse[report.key()] = report.value();
+        }
     } else if (type == "GSV" && fields.size() >= 4) {
-        const QByteArray talker = canonicalTalker(fields[0].mid(1, 2));
+        const auto constellation = NMEAUtils::satelliteConstellation(fields[0].mid(1, 2));
         bool totalOk = false;
         bool messageOk = false;
         bool countOk = false;
         const int total = fields[1].toInt(&totalOk);
         const int message = fields[2].toInt(&messageOk);
         const int count = fields[3].toInt(&countOk);
-        if (!totalOk || !messageOk || !countOk || !supportedTalker(talker) || total < 1 || total > 64 || message < 1 ||
-            message > total || count < 0 || count > 256 || total != std::max(1, (count + 3) / 4)) {
+        if (!totalOk || !messageOk || !countOk || constellation == GPSSatellite::Constellation::Unknown || total < 1 ||
+            total > 64 || message < 1 || message > total || count < 0 || count > 256 ||
+            total != std::max(1, (count + 3) / 4)) {
             return;
         }
         const int entries = std::min(4, count - (message - 1) * 4);
@@ -193,28 +156,28 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
         if (!signalOk || signal < -1 || signal > 15) {
             return;
         }
-        if (message == 1 && _reports.value(talker).value(signal).complete()) {
+        if (message == 1 && _reports.value(constellation).value(signal).complete()) {
             _flush();
         }
-        auto& report = _reports[talker][signal];
+        auto& report = _reports[constellation][signal];
         if (message == 1) {
             report = SignalReport{
                 .messageCount = total, .satelliteCount = count, .receivedAtUs = receivedAtUs, .satellites = {}};
         }
         if (report.messageCount != total || report.satelliteCount != count || report.nextMessage != message) {
-            _reports[talker].remove(signal);
+            _reports[constellation].remove(signal);
             return;
         }
         for (int i = 4; i < end; i += 4) {
             bool idOk = false;
             const int id = fields[i].toInt(&idOk);
             if (!idOk || id < 1 || id > 999) {
-                _reports[talker].remove(signal);
+                _reports[constellation].remove(signal);
                 return;
             }
             GPSSatellite satellite;
             satellite.id = id;
-            satellite.constellation = NMEAUtils::satelliteConstellation(talker);
+            satellite.constellation = constellation;
             bool valid = false;
             const double elevation = fields[i + 1].toDouble(&valid);
             if (valid && std::isfinite(elevation) && elevation >= 0 && elevation <= 90) {
@@ -255,7 +218,7 @@ void NMEASatelliteAdapter::_flush()
     _idleTask = _batchTask = 0;
     GPSSatelliteObservation observation;
     observation.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
-    QMap<QByteArray, GPSSatelliteProvenance> provenance;
+    QMap<GPSSatellite::Constellation, GPSSatelliteProvenance> provenance;
     for (auto system = _reports.cbegin(); system != _reports.cend(); ++system) {
         QMap<int, GPSSatellite> satellites;
         bool complete = false;
@@ -277,14 +240,14 @@ void NMEASatelliteAdapter::_flush()
         }
         if (complete) {
             auto& report = provenance[system.key()];
-            report.constellation = NMEAUtils::satelliteConstellation(system.key());
+            report.constellation = system.key();
             report.inViewTimestampUs = receivedAtUs;
             observation.satellites.append(satellites.values());
         }
     }
     for (auto it = _inUse.cbegin(); it != _inUse.cend(); ++it) {
         auto& report = provenance[it.key()];
-        report.constellation = NMEAUtils::satelliteConstellation(it.key());
+        report.constellation = it.key();
         report.inUseTimestampUs = it->receivedAtUs;
         report.usedSatelliteIds = it->ids.values();
         std::sort(report.usedSatelliteIds->begin(), report.usedSatelliteIds->end());

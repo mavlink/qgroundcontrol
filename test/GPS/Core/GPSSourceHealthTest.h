@@ -7,6 +7,8 @@ class GPSSourceHealthTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _retainedMeasurementExpires_data();
+    void _retainedMeasurementExpires();
     void _normalizesObservation_data();
     void _normalizesObservation();
     void _ageAndRecovery();

@@ -89,6 +89,7 @@ private:
     void _updateSerialRouting();
     bool _installSource(QIODevice* device);
     void _startAttempt();
+    void _openAttempt();
     void _uninstallSource();
     void _attemptFailed(const QString& detail);
     void _notifyState();

@@ -7,6 +7,7 @@
 
 #include "GPSReadTimestamp.h"
 #include "GPSRecordingFormat.h"
+#include "GPSReplayLifecycle.h"
 #include "GPSRuntimeScheduler.h"
 
 /// Event-loop replay preserves chunk receipts while the production session owns parsing and publication.
@@ -27,10 +28,13 @@ public:
 
     quint64 timeOriginUs() const { return _originUs; }
 
+    const std::optional<GPSReplayTermination>& termination() const { return _lifecycle.termination(); }
+
 signals:
     void streamOpened();
     void streamClosed();
     void sessionError(GPSReadStatus status);
+    void terminated(const GPSReplayTermination& result);
 
 protected:
     qint64 readData(char* data, qint64 maximum) override;
@@ -39,6 +43,7 @@ protected:
 
 private:
     void _apply(const GPSRecordingEvent& event, quint64 generation);
+    void _publishTermination(quint64 generation);
 
     struct Chunk
     {
@@ -46,6 +51,7 @@ private:
         quint64 receiptUs = 0;
     };
 
+    GPSReplayLifecycle _lifecycle;
     QPointer<GPSRuntimeScheduler> _scheduler;
     QVector<GPSRuntimeScheduler::TaskId> _tasks;
     std::deque<Chunk> _chunks;

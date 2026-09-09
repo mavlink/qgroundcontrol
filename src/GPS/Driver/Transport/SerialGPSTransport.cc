@@ -159,6 +159,33 @@ GPSTransport::WriteResult SerialGPSTransport::writeBounded(const uint8_t* buffer
     if (length == 0) {
         return {WriteStatus::Completed};
     }
+#ifdef Q_OS_ANDROID
+    const auto result = _serial->writeBounded(reinterpret_cast<const char*>(buffer), length, deadline,
+                                              [this]() { return isCancelled() || fatalError(); });
+    WriteStatus status = WriteStatus::Error;
+    switch (result.status) {
+        case AndroidSerialWrite::Status::Completed:
+            status = WriteStatus::Completed;
+            break;
+        case AndroidSerialWrite::Status::TimedOut:
+            status = WriteStatus::TimedOut;
+            break;
+        case AndroidSerialWrite::Status::Cancelled:
+            status = WriteStatus::Cancelled;
+            break;
+        case AndroidSerialWrite::Status::InvalidData:
+            status = WriteStatus::InvalidData;
+            break;
+        case AndroidSerialWrite::Status::Error:
+            break;
+    }
+    if (!isCancelled() && fatalError()) {
+        status = WriteStatus::Error;
+    }
+    return {status, static_cast<int>(result.writtenBytes + result.uncertainBytes),
+            static_cast<int>(result.writtenBytes), static_cast<int>(result.uncertainBytes),
+            status == WriteStatus::Error ? _errorDetail() : QString()};
+#else
     int accepted = 0;
     const qint64 previousAccepted = _acceptedTotal;
     WriteStatus status = WriteStatus::Completed;
@@ -191,6 +218,7 @@ GPSTransport::WriteResult SerialGPSTransport::writeBounded(const uint8_t* buffer
         !fatalError() ? (std::max) (_writtenTotal, _acceptedTotal - _serial->bytesToWrite()) : _writtenTotal;
     const int written = static_cast<int>(std::clamp(confirmed - previousAccepted, qint64(0), qint64(accepted)));
     return {status, accepted, written, accepted - written, status == WriteStatus::Error ? _errorDetail() : QString()};
+#endif
 }
 
 bool SerialGPSTransport::setBaudrate(unsigned baudrate)

@@ -20,6 +20,8 @@ add_executable(
     GPSReplayScheduler.h
     GPSReplayDevice.cc
     GPSReplayDevice.h
+    GPSReplayLifecycle.cc
+    GPSReplayLifecycle.h
 )
 set_target_properties(QGCGPSReplayTest PROPERTIES AUTOMOC ON)
 target_compile_definitions(QGCGPSReplayTest PRIVATE QGC_GPS_REPLAY_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")

@@ -48,7 +48,10 @@ NTRIPHttpDecoder::Result NTRIPHttpDecoder::feed(QByteArrayView bytes)
             // Bare ICY is followed immediately by binary RTCM. Some v1 casters
             // instead include ordinary ASCII headers or an empty separator.
             if (first != '\r' && !(first >= 'A' && first <= 'Z') && !(first >= 'a' && first <= 'z')) {
-                _state = State::Identity;
+                _beginBody(result);
+                if (result.complete) {
+                    break;
+                }
             }
         }
         if (_state == State::Identity || _state == State::ChunkData) {
@@ -139,7 +142,7 @@ void NTRIPHttpDecoder::_lineReceived(Result& result)
     }
     if (_line.isEmpty()) {
         if (_state == State::IcyHeaders) {
-            _state = State::Identity;
+            _beginBody(result);
             return;
         }
         if (_status >= 100 && _status < 200 && _status != 101 && ++_informationalResponses <= 4) {
@@ -159,12 +162,7 @@ void NTRIPHttpDecoder::_lineReceived(Result& result)
             return;
         }
         result.connected = true;
-        _remaining = _contentLength;
-        _state = _chunked ? State::ChunkSize : State::Identity;
-        if (!_chunked && _contentLengthSet && _remaining == 0) {
-            _state = State::Complete;
-            result.complete = true;
-        }
+        _beginBody(result);
         return;
     }
     const auto colon = _line.indexOf(':');
@@ -200,6 +198,16 @@ void NTRIPHttpDecoder::_lineReceived(Result& result)
     }
 }
 
+void NTRIPHttpDecoder::_beginBody(Result& result)
+{
+    _remaining = _contentLength;
+    _state = _chunked ? State::ChunkSize : State::Identity;
+    if (!_chunked && _contentLengthSet && _remaining == 0) {
+        _state = State::Complete;
+        result.complete = true;
+    }
+}
+
 NTRIPHttpDecoder::Result NTRIPHttpDecoder::finish()
 {
     Result result;
@@ -207,7 +215,8 @@ NTRIPHttpDecoder::Result NTRIPHttpDecoder::finish()
         _state = State::Complete;
         result.complete = true;
     } else if (_state != State::Complete && _state != State::Failed) {
-        _fail(result, QStringLiteral("Truncated HTTP response"));
+        _fail(result, QStringLiteral("Caster disconnected before completing the HTTP response"),
+              NTRIPError::InterruptedResponse);
     }
     return result;
 }

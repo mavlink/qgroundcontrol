@@ -34,6 +34,7 @@ private slots:
     void endingSelectedSessionInvalidatesOutput();
     void teardownAndReentrancy();
     void boundedPeerHistory();
+    void destinationHistoryDoesNotLimitOutputs();
     void diagnosticStagesStayDistinct_data();
     void diagnosticStagesStayDistinct();
     void terminalDeliveryAccounting_data();
@@ -46,6 +47,69 @@ private slots:
     void eventHistoryUsesIncrementalRows();
     void eventHistoryAllowsReentrantUpdates();
 };
+
+void GPSCorrectionRouterTest::destinationHistoryDoesNotLimitOutputs()
+{
+    qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [&]() { return now; });
+    auto source = router.registerSource(GPSCorrectionSource::Ntrip);
+    const auto data = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const int outputCount = GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 4;
+    int submissions = 0;
+    for (int index = 0; index < outputCount; ++index) {
+        router.setSink(QString::number(index), [&](const GPSCorrectionFrame& submitted) {
+            ++submissions;
+            return quint64(submitted.data.size());
+        });
+    }
+    QVERIFY(router.acceptIngress(source.token().event(data, now, 1005, true)));
+    QCOMPARE(submissions, outputCount);
+    QCOMPARE(router.destinations().size(), outputCount);
+    for (const auto& destination : router.destinations()) {
+        QCOMPARE(destination.queuedBytes, quint64(data.size()));
+    }
+    for (int index = 0; index < outputCount; ++index) {
+        router.removeSink(QString::number(index));
+    }
+    QCOMPARE(router.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY);
+
+    GPSCorrectionFrame queued;
+    router.setDetailedSink(QStringLiteral("receiver"), [&](const GPSCorrectionFrame& submitted) {
+        queued = submitted;
+        return GPSCorrectionRouter::Submission{quint64(submitted.data.size()), 7, GPSCorrectionReason::None};
+    });
+    QVERIFY(router.acceptIngress(source.token().event(data, ++now, 1005, true)));
+    router.setFanoutSink(QStringLiteral("vehicles"), [&](const GPSCorrectionFrame& submitted) {
+        return QList<GPSCorrectionRouter::Admission>{
+            {QString::number(now), {quint64(submitted.data.size()), quint64(now), GPSCorrectionReason::None}, true}};
+    });
+    // Keep the first queued receiver frame outstanding while destination history turns over.
+    router.setDetailedSink(QStringLiteral("receiver"),
+                           [](const GPSCorrectionFrame&) { return GPSCorrectionRouter::Submission{}; });
+    for (int index = 0; index < outputCount; ++index) {
+        QVERIFY(router.acceptIngress(source.token().event(data, ++now, 1005, true)));
+        QVERIFY(router.destinations().size() <= GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 2);
+    }
+    GPSCorrectionDelivery delivery;
+    delivery.deliveryId = queued.deliveryId;
+    delivery.source = queued.source;
+    delivery.sourceInstance = queued.sourceInstance;
+    delivery.sourceSession = queued.session;
+    delivery.destinationId = QStringLiteral("receiver");
+    delivery.destinationSession = 7;
+    delivery.requestedBytes = data.size();
+    delivery.acceptedBytes = data.size();
+    delivery.writtenBytes = data.size();
+    delivery.outcome = GPSCorrectionOutcome::Written;
+    QVERIFY(router.recordDelivery(delivery));
+    const auto destinations = router.destinations();
+    const auto receiver = std::find_if(destinations.cbegin(), destinations.cend(), [](const auto& destination) {
+        return destination.id == QStringLiteral("receiver");
+    });
+    QVERIFY(receiver != destinations.cend());
+    QCOMPARE(receiver->pendingFrames, quint64(0));
+    QCOMPARE(receiver->writtenBytes, quint64(data.size()));
+}
 
 void GPSCorrectionRouterTest::atomicConfigurationAndReplacement()
 {

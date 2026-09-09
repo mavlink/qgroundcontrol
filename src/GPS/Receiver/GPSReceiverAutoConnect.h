@@ -84,6 +84,8 @@ private:
     bool _captureConfig();
     bool _retryReady();
     void _startReceiver();
+    bool _startReceiver(const GPSReceiverProfile& profile, GPSProvider::TransportFactory factory,
+                        std::function<void()> admitted = {});
     void _updateReceiverState();
     void _scheduleUpdate();
 

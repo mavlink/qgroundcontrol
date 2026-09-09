@@ -44,6 +44,7 @@ struct sensor_gps_s
 	static constexpr uint8_t JAMMING_STATE_MITIGATED = 2;
 	static constexpr uint8_t JAMMING_STATE_DETECTED = 3;
 	uint8_t jamming_state;
+	uint64_t jamming_state_timestamp;
 	int32_t jamming_indicator;
 
 	static constexpr uint8_t SPOOFING_STATE_UNKNOWN = 0;
@@ -51,6 +52,7 @@ struct sensor_gps_s
 	static constexpr uint8_t SPOOFING_STATE_MITIGATED = 2;
 	static constexpr uint8_t SPOOFING_STATE_DETECTED = 3;
 	uint8_t spoofing_state;
+	uint64_t spoofing_state_timestamp;
 
 	static constexpr uint8_t AUTHENTICATION_STATE_UNKNOWN = 0;
 	static constexpr uint8_t AUTHENTICATION_STATE_INITIALIZING = 1;
@@ -58,6 +60,7 @@ struct sensor_gps_s
 	static constexpr uint8_t AUTHENTICATION_STATE_OK = 3;
 	static constexpr uint8_t AUTHENTICATION_STATE_DISABLED = 4;
 	uint8_t authentication_state;
+	uint64_t authentication_state_timestamp;
 
 	float vel_m_s;
 	float vel_n_m_s;
@@ -102,6 +105,7 @@ struct sensor_gps_s
 	static constexpr uint8_t CORRECTIONS_MSG_USED_NOT_USED = 1;
 	static constexpr uint8_t CORRECTIONS_MSG_USED_USED = 2;
 	uint8_t corrections_msg_used;
+	uint64_t corrections_timestamp;
 
 	float antenna_offset_x;
 	float antenna_offset_y;

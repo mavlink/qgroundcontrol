@@ -9,6 +9,7 @@ class GPSCorrectionManagerTest : public UnitTest
 private slots:
     void _sourcesShareForwarder();
     void _mavlinkDestinationAdmissions();
+    void _outputsEnabledAfterLinkHistoryChurn();
     void _ntripUdpOutputIsSourceSpecific();
     void _sourceTopologyDoesNotNotifyOnCounters();
     void _sourceSelectionAndSessions();

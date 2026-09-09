@@ -8,7 +8,7 @@
 #include <cstring>
 #include <thread>
 
-#include "GPSConnectionConfig.h"
+#include "GPSReceiverTestProfile.h"
 #include "GPSReceiverSession.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
@@ -60,7 +60,7 @@ void GPSReceiverContractTest::_stalledConsumerBoundsUpdates()
         gate->release.release();
         session.shutdown();
     });
-    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), blockedFactory(gate));
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox), blockedFactory(gate));
     // Standalone Qt test: no application harness timeout helpers are linked.
     QVERIFY(gate->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
@@ -111,7 +111,7 @@ void GPSReceiverContractTest::_retirementDiscardsPendingData()
         second->release.release();
         session.shutdown();
     });
-    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
                   blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
@@ -138,7 +138,7 @@ void GPSReceiverContractTest::_retirementDiscardsPendingData()
     QSignalSpy deliveryResults(&session, &GPSReceiverSession::correctionDeliveriesReady);
     QSignalSpy positions(&session, &GPSReceiverSession::positionReceived);
     QSignalSpy corrections(&session, &GPSReceiverSession::rtcmFrameReceived);
-    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
                   blockedFactory(second));
     QVERIFY(second->entered.tryAcquire(1, 5000));
     QVERIFY(!mailbox->completeCommand(*inFlight, GPSCorrectionOutcome::Written, incoming.data.size()));
@@ -330,7 +330,7 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
     });
     GPSReceiverConfig config;
     config.role = GPSReceiverConfig::Role::Position;
-    session.start(GPSConnectionConfig{.receiverType = GPSType::septentrio, .receiver = config}.profile(),
+    session.start(gpsReceiverTestProfile(config, GPSType::septentrio),
                   [&](const std::atomic_bool& stop) { return std::make_unique<ReceiverTransport>(stop, trace); });
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
@@ -486,7 +486,7 @@ void GPSReceiverContractTest::_clearFlushesKnownResults()
         gate->release.release();
         session.shutdown();
     });
-    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), blockedFactory(gate));
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox), blockedFactory(gate));
     QVERIFY(gate->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
@@ -545,7 +545,7 @@ void GPSReceiverContractTest::_configurationReportLifecycle()
         second->release.release();
         session.shutdown();
     });
-    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
                   blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* retired = session.findChild<GPSProvider*>();
@@ -579,7 +579,7 @@ void GPSReceiverContractTest::_configurationReportLifecycle()
     QCOMPARE(reports.size(), 3);
 
     emit retired->configurationReported(report);
-    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
                   blockedFactory(second));
     QVERIFY(second->entered.tryAcquire(1, 5000));
     QVERIFY(session.sessionId() != oldSession);
@@ -611,7 +611,7 @@ void GPSReceiverContractTest::_configurationReportResetCanRestart()
         second->release.release();
         session.shutdown();
     });
-    session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
                   blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
@@ -626,7 +626,7 @@ void GPSReceiverContractTest::_configurationReportResetCanRestart()
             restarted = true;
             GPSReceiverConfig config;
             config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
-            session.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = config}.profile(),
+            session.start(gpsReceiverTestProfile(config, GPSType::u_blox),
                           blockedFactory(second));
         }
     });
@@ -670,7 +670,7 @@ void GPSReceiverContractTest::_correctionGenerationSurvivesRestart()
         second->release.release();
         session.shutdown();
     });
-    const auto profile = GPSConnectionConfig{}.profile();
+    const auto profile = gpsReceiverTestProfile();
     session.start(profile, blockedFactory(first));
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);

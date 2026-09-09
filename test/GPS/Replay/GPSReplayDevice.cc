@@ -35,11 +35,13 @@ void GPSReplayDevice::stop()
 void GPSReplayDevice::play(const QVector<GPSRecordingEvent>& events)
 {
     const QPointer<GPSReplayDevice> guard(this);
+    const auto expectedGeneration = _generation + 1;
     stop();
-    if (!guard || !_scheduler) {
+    if (!guard || !_scheduler || _generation != expectedGeneration) {
         return;
     }
     const auto generation = _generation;
+    _lifecycle = {};
     _originUs = _scheduler->nowUs();
     for (const auto& event : events) {
         if (event.receivedAtUs && *event.receivedAtUs <= 0) {
@@ -51,6 +53,37 @@ void GPSReplayDevice::play(const QVector<GPSRecordingEvent>& events)
         _tasks.append(_scheduler->schedule(this, std::chrono::microseconds(delay + event.atUs),
                                            [this, event, generation]() { _apply(event, generation); }));
     }
+    const auto lastEventUs = events.isEmpty() ? 0 : events.last().atUs;
+    _tasks.append(
+        _scheduler->schedule(this, std::chrono::microseconds(delay + lastEventUs), [this, generation, lastEventUs]() {
+            if (_generation == generation && _lifecycle.exhausted(lastEventUs)) {
+                _publishTermination(generation);
+            }
+        }));
+}
+
+void GPSReplayDevice::_publishTermination(quint64 generation)
+{
+    const auto result = *_lifecycle.termination();
+    const QPointer<GPSReplayDevice> guard(this);
+    if (result.reason != GPSReplayTermination::Reason::CaptureExhausted) {
+        _chunks.clear();
+        QIODevice::close();
+        if (!guard || generation != _generation) {
+            return;
+        }
+        if (result.readStatus != GPSReadStatus::Closed) {
+            emit sessionError(result.readStatus);
+            if (!guard || generation != _generation) {
+                return;
+            }
+        }
+        emit streamClosed();
+        if (!guard || generation != _generation) {
+            return;
+        }
+    }
+    emit terminated(result);
 }
 
 void GPSReplayDevice::_apply(const GPSRecordingEvent& event, quint64 generation)
@@ -59,6 +92,13 @@ void GPSReplayDevice::_apply(const GPSRecordingEvent& event, quint64 generation)
         return;
     }
     using K = GPSRecordingEvent::Kind;
+    if (_lifecycle.consume(event)) {
+        _publishTermination(generation);
+        return;
+    }
+    if (_lifecycle.termination()) {
+        return;
+    }
     switch (event.kind) {
         case K::Open:
             _chunks.clear();
@@ -75,19 +115,6 @@ void GPSReplayDevice::_apply(const GPSRecordingEvent& event, quint64 generation)
                                                    event.receivedAtUs.value_or(static_cast<qint64>(event.atUs)))});
             emit readyRead();
             return;
-        case K::Close:
-        case K::Disconnect:
-        case K::Cancel:
-        case K::ReadError:
-        case K::OpenError: {
-            const QPointer<GPSReplayDevice> guard(this);
-            _chunks.clear();
-            QIODevice::close();
-            if (guard && generation == _generation) {
-                emit streamClosed();
-            }
-            return;
-        }
         default:
             return;
     }

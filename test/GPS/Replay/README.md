@@ -103,7 +103,8 @@ format directly. Pass a `streamId` to `GPSReplayTrace::load`/`fromJson` to selec
 specific connection; the default selects the first stream. The parsed trace exposes
 its selected typed `profile` metadata. `recordedEvents` retains all selected raw
 markers, operation start/completion timing and resumed flags. The executable
-`events` view omits informative session/configuration/close markers, while `open_error` and `baud_error` reproduce failed calls. A failed
+`events` view omits informative session/configuration markers and preserves Close.
+`open_error` and `baud_error` reproduce failed calls. A failed
 write can include its expected attempted bytes as well as the reported result.
 
 An `open` marked `resumed` represents capture starting on an existing connection,
@@ -156,3 +157,18 @@ back to `at_us` for older traces and native reads. Replay shifts the virtual ori
 when necessary, preserving the exact receipt age without unsigned underflow.
 Passive TCP/UDP profiles have unknown fixed baud (`0`); the native driver fixed-baud
 convention is retained only for configured receivers.
+
+## Recorded lifecycle
+
+`GPSReplayLifecycle` interprets terminal events for both blocking transport and
+event-loop device replay. Its typed result preserves the recording-relative time,
+read/open/write status, and legacy reason value. The first termination wins until
+the next recorded Open; a destructor Close after cancellation or overflow does not
+replace the original reason or emit a second termination. Recoverable short writes
+do not close a connection.
+
+Exhausting a capture is distinct from a recorded receiver termination. Device replay
+emits `terminated(CaptureExhausted)` without fabricating `streamClosed`; transport
+replay reports `InvalidData` and a fatal replay boundary when read beyond the capture.
+Repeated reads retain that result and do not advance time as synthetic timeouts.
+Native tests must consume an exported Close before asserting `complete()`.

@@ -395,6 +395,18 @@ qint64 QSerialPortPrivate::_writeToPort(const char* data, qint64 maxSize, int ti
     return result;
 }
 
+AndroidSerialWrite::Result QSerialPortPrivate::writeBounded(const char* data, int length, QDeadlineTimer deadline,
+                                                            const AndroidSerialWrite::Cancelled& cancelled)
+{
+    if (AndroidSerial::usePosixSerial()) {
+        return AndroidSerialWrite::writePosix(descriptor, data, length, outputBaudRate, deadline, cancelled);
+    }
+    return AndroidSerialWrite::run(data, length, outputBaudRate, deadline, cancelled,
+                                   [this](const char* bytes, int size, int timeout) {
+                                       return AndroidSerial::writeResult(_deviceId, bytes, size, timeout);
+                                   });
+}
+
 qint64 QSerialPortPrivate::writeData(const char* data, qint64 maxSize)
 {
     if (!data || (maxSize <= 0)) {

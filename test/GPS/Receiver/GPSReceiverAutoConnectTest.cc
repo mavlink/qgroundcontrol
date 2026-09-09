@@ -4,9 +4,9 @@
 #include <QtCore/QSemaphore>
 #include <QtTest/QSignalSpy>
 
-#include "GPSConnectionConfig.h"
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverSession.h"
+#include "GPSReceiverTestProfile.h"
 #include "GPSReplayScheduler.h"
 #include "GPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
@@ -15,10 +15,11 @@
 
 namespace {
 #ifndef QGC_NO_SERIAL_LINK
-GPSConnectionConfig serialConfig(const QString& device = {})
+GPSReceiverProfile serialConfig(const QString& device = {})
 {
-    GPSConnectionConfig config;
-    config.device = device;
+    auto config = gpsReceiverTestProfile();
+    config.endpoint.device = device;
+    config.endpoint.discoverSerialDevice = device.isEmpty();
     config.receiver.role = GPSReceiverConfig::Role::Position;
     return config;
 }
@@ -53,7 +54,7 @@ void GPSReceiverAutoConnectTest::_receiverErrorDetailReachesStatus()
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
     QSignalSpy changes(&controller, &GPSReceiverAutoConnect::stateChanged);
     QSignalSpy failed(&receiver, &GPSReceiverSession::connectionError);
-    receiver.start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), {});
+    receiver.start(gpsReceiverTestProfile({}, GPSType::u_blox), {});
     QTRY_VERIFY_WITH_TIMEOUT(!failed.isEmpty(), TestTimeout::mediumMs());
     QVERIFY(!controller.errorDetail().isEmpty());
     QCOMPARE(controller.property("errorDetail").toString(), receiver.errorDetail());
@@ -66,7 +67,7 @@ void GPSReceiverAutoConnectTest::_nmeaDiscoveryExclusionDoesNotRevokeReceiver()
     SerialPortManager ports(nullptr, receiverInventory);
     GPSReceiverSession receiver;
     GPSReceiverAutoConnect controller(&receiver);
-    controller.setProfile(serialConfig().profile());
+    controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
     controller.setSerialDiscovery(&ports);
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
@@ -97,7 +98,7 @@ void GPSReceiverAutoConnectTest::_serialRetriesKeepConfiguration()
     config.receiver.role = GPSReceiverConfig::Role::RTKBase;
     config.receiver.base.surveyInAccMeters = 1.0;
     config.receiver.base.surveyInDurationSecs = 120;
-    controller.setProfile(config.profile());
+    controller.setProfile(config);
     controller.setSerialDiscovery(&ports);
     controller.setSerialTransportFactory([](const QString&) { return failedOpenFactory(); });
     controller._connectDelayMs = 0;
@@ -113,7 +114,7 @@ void GPSReceiverAutoConnectTest::_serialRetriesKeepConfiguration()
 
     config.receiver.base.surveyInAccMeters = 3.0;
     config.receiver.base.surveyInDurationSecs = 240;
-    controller.setProfile(config.profile());
+    controller.setProfile(config);
     state._retryDeadlineMs = 0;
     controller.update();
     QCOMPARE(attempts.size(), 2);
@@ -135,7 +136,7 @@ void GPSReceiverAutoConnectTest::_serialRetriesKeepConfiguration()
     QCOMPARE(replacement.base.surveyInAccMeters, 3.0);
     QCOMPARE(replacement.base.surveyInDurationSecs, 240);
     config.receiver.role = GPSReceiverConfig::Role::Position;
-    controller.setProfile(config.profile(), true);
+    controller.setProfile(config, true);
     QTRY_VERIFY_WITH_TIMEOUT(!receiver.stopping(), TestTimeout::mediumMs());
     QVERIFY(controller.connectSelected());
     controller.update();
@@ -153,9 +154,9 @@ void GPSReceiverAutoConnectTest::_manualSerialSelectionAndPause()
     GPSReceiverSession receiver;
     GPSReceiverAutoConnect controller(&receiver);
     auto config = serialConfig(QStringLiteral("/test/chosen"));
-    config.receiverType = GPSType::femto;
+    config.driverType = GPSType::femto;
     config.receiverName = QStringLiteral("Femtomes");
-    controller.setProfile(config.profile());
+    controller.setProfile(config);
     controller.setSerialDiscovery(&ports);
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
     controller._connectDelayMs = 0;
@@ -187,8 +188,8 @@ void GPSReceiverAutoConnectTest::_manualSerialSelectionAndPause()
     QVERIFY(controller.connectSelected());
     controller.update();
     QCOMPARE(connects.size(), 3);
-    config.transport = GPSConnectionConfig::Tcp;
-    controller.setProfile(config.profile(), true);
+    config.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
+    controller.setProfile(config, true);
     controller.setAutoConnect(false);
     controller.update();
     QVERIFY(!controller.active());
@@ -201,7 +202,7 @@ void GPSReceiverAutoConnectTest::_discoveryUnplugAndDisable()
     SerialPortManager ports(nullptr, [&]() { return inventory; });
     GPSReceiverSession receiver;
     GPSReceiverAutoConnect controller(&receiver);
-    controller.setProfile(serialConfig().profile());
+    controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
     controller.setSerialDiscovery(&ports);
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
@@ -252,8 +253,8 @@ void GPSReceiverAutoConnectTest::_unplugNotificationPreservesChangedIntent()
     auto& state = controller._connection;
     const auto original = serialConfig(QStringLiteral("/test/rtk"));
     auto replacement = original;
-    replacement.device = QStringLiteral("/test/replacement");
-    controller.setProfile(original.profile());
+    replacement.endpoint.device = QStringLiteral("/test/replacement");
+    controller.setProfile(original);
     controller.setAutoConnect(true);
     controller.setSerialDiscovery(&ports);
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
@@ -266,7 +267,7 @@ void GPSReceiverAutoConnectTest::_unplugNotificationPreservesChangedIntent()
     QCOMPARE(connects.size(), 1);
     QVERIFY(receiver.hasReceiver());
     QVERIFY(controller._sessionConfig.has_value());
-    QCOMPARE(controller._sessionConfig->endpoint.device, original.device);
+    QCOMPARE(controller._sessionConfig->endpoint.device, original.endpoint.device);
 
     connect(&controller, &GPSReceiverAutoConnect::disconnectRequested, &controller, [&]() {
         if (action == QStringLiteral("disconnect")) {
@@ -274,7 +275,7 @@ void GPSReceiverAutoConnectTest::_unplugNotificationPreservesChangedIntent()
         } else if (action == QStringLiteral("disable")) {
             controller.setAutoConnect(false);
         } else {
-            controller.setProfile(replacement.profile(), true);
+            controller.setProfile(replacement, true);
         }
     });
     inventory.clear();
@@ -303,7 +304,7 @@ void GPSReceiverAutoConnectTest::_unplugNotificationPreservesChangedIntent()
     QVERIFY(!state.shouldConnect(false));
     if (action == QStringLiteral("replace-config")) {
         QVERIFY(controller._sessionConfig.has_value());
-        QCOMPARE(controller._sessionConfig->endpoint.device, replacement.device);
+        QCOMPARE(controller._sessionConfig->endpoint.device, replacement.endpoint.device);
     } else {
         QVERIFY(!controller.active());
         QVERIFY(!controller._sessionConfig.has_value());
@@ -340,7 +341,7 @@ void GPSReceiverAutoConnectTest::_excludedPorts()
     }
     GPSReceiverSession receiver;
     GPSReceiverAutoConnect controller(&receiver);
-    controller.setProfile(serialConfig().profile());
+    controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
     controller.setSerialDiscovery(&ports);
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
@@ -358,7 +359,7 @@ void GPSReceiverAutoConnectTest::_failedAttemptsBackOffAndRespectReservations()
     GPSReceiverSession receiver;
     GPSReceiverAutoConnect controller(&receiver);
     auto& state = controller._connection;
-    controller.setProfile(serialConfig().profile());
+    controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
     controller.setSerialDiscovery(&ports);
     controller.setSerialTransportFactory([](const QString&) { return failedOpenFactory(); });
@@ -400,7 +401,7 @@ void GPSReceiverAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     GPSReceiverSession receiver;
     GPSReceiverAutoConnect controller(&receiver);
     auto& state = controller._connection;
-    controller.setProfile(serialConfig().profile());
+    controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
     controller.setSerialDiscovery(&ports);
     controller.setSerialTransportFactory([](const QString&) { return failedOpenFactory(); });
@@ -525,16 +526,16 @@ void GPSReceiverAutoConnectTest::_invalidManualAttemptRecoversAutomatically()
         release->release();
         session.shutdown();
     });
-    GPSConnectionConfig config;
-    config.transport = GPSConnectionConfig::Tcp;
+    auto config = gpsReceiverTestProfile();
+    config.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
     config.receiver.role = GPSReceiverConfig::Role::Position;
-    controller.setProfile(config.profile());
+    controller.setProfile(config);
     QVERIFY(!controller.connectSelected());
     QVERIFY(!controller.property("validationError").toString().isEmpty());
 
-    config.host = QStringLiteral("localhost");
-    config.port = 2101;
-    const auto profile = config.profile();
+    config.endpoint.host = QStringLiteral("localhost");
+    config.endpoint.port = 2101;
+    const auto profile = config;
     controller.setProfile(profile, true);
     QVERIFY(controller.property("validationError").toString().isEmpty());
     controller.setAutoConnect(true);
@@ -622,18 +623,18 @@ void GPSReceiverAutoConnectTest::_retryRunsWithoutPolling()
     GPSReplayScheduler scheduler;
     GPSReceiverSession session;
     GPSReceiverAutoConnect controller(&session, nullptr, nullptr, &scheduler);
-    GPSConnectionConfig config;
-    config.transport = GPSConnectionConfig::Tcp;
-    config.host = QStringLiteral("localhost");
-    config.port = 2101;
+    auto config = gpsReceiverTestProfile();
+    config.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
+    config.endpoint.host = QStringLiteral("localhost");
+    config.endpoint.port = 2101;
     config.receiver.role = GPSReceiverConfig::Role::Position;
-    controller.setProfile(config.profile());
+    controller.setProfile(config);
     std::atomic_int attempts = 0;
     const auto cleanup = qScopeGuard([&]() {
         controller.stop();
         session.shutdown();
     });
-    QVERIFY(controller.connectReceiver(config.profile(), [&attempts](const std::atomic_bool&) {
+    QVERIFY(controller.connectReceiver(config, [&attempts](const std::atomic_bool&) {
         ++attempts;
         return std::unique_ptr<GPSTransport>();
     }));
@@ -680,4 +681,70 @@ void GPSReceiverAutoConnectTest::_suspensionDuringAdmissionDefersStart()
     controller.setSuspended(false);
     QVERIFY(scheduler.advanceBy(std::chrono::microseconds(0)));
     QTRY_COMPARE_WITH_TIMEOUT(attempts.load(), 1, TestTimeout::mediumMs());
+}
+
+void GPSReceiverAutoConnectTest::_profileChangeDuringAdmission_data()
+{
+    QTest::addColumn<bool>("serial");
+    QTest::newRow("network") << false;
+#ifndef QGC_NO_SERIAL_LINK
+    QTest::newRow("serial") << true;
+#endif
+}
+
+void GPSReceiverAutoConnectTest::_profileChangeDuringAdmission()
+{
+    QFETCH(bool, serial);
+    GPSReplayScheduler scheduler;
+    GPSReceiverSession session;
+    GPSReceiverAutoConnect controller(&session, nullptr, nullptr, &scheduler);
+    auto profile = gpsReceiverTestProfile();
+    profile.receiver.role = GPSReceiverConfig::Role::Position;
+    profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
+    profile.endpoint.host = QStringLiteral("localhost");
+    profile.endpoint.port = 2101;
+    std::atomic_int attempts = 0;
+    const auto release = std::make_shared<QSemaphore>();
+    const GPSProvider::TransportFactory factory = [&attempts, release](const std::atomic_bool&) {
+        ++attempts;
+        release->acquire();
+        return std::unique_ptr<GPSTransport>();
+    };
+#ifndef QGC_NO_SERIAL_LINK
+    SerialPortManager ports(nullptr, receiverInventory);
+    if (serial) {
+        profile = serialConfig(QStringLiteral("/test/rtk"));
+        controller.setSerialDiscovery(&ports);
+        controller.setSerialTransportFactory([factory](const QString&) { return factory; });
+        controller._connectDelayMs = 0;
+    }
+#endif
+    controller.setProfile(profile);
+    const auto cleanup = qScopeGuard([&]() {
+        controller.stop();
+        release->release();
+        session.shutdown();
+    });
+    bool changed = false;
+    connect(&controller, &GPSReceiverAutoConnect::stateChanged, &controller, [&]() {
+        if (!changed && controller.connectionState() == GPSConnectionState::Connecting) {
+            changed = true;
+            auto replacement = profile;
+            replacement.receiver.dynamicModel = 4;
+            controller.setProfile(replacement);
+        }
+    });
+    if (serial) {
+        QVERIFY(controller.connectSelected());
+        controller.update();
+    } else {
+        QVERIFY(controller.connectReceiver(profile, factory));
+    }
+    QVERIFY(changed);
+    QCOMPARE(controller.connectionState(), GPSConnectionState::Disconnected);
+    QVERIFY(!session.hasReceiver());
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(serial ? 1 : 0)));
+    QTRY_COMPARE_WITH_TIMEOUT(attempts.load(), 1, TestTimeout::mediumMs());
+    QVERIFY(session.hasReceiver());
+    QCOMPARE(session.config().dynamicModel, profile.receiver.dynamicModel);
 }

@@ -331,9 +331,14 @@ void NMEASourceManager::_attemptFailed(const QString& detail)
 
 void NMEASourceManager::_startAttempt()
 {
-    if (!_connection.beginAttempt()) {
-        return;
-    }
+    _connection.startAttempt([this]() {
+        _openAttempt();
+        return true;
+    });
+}
+
+void NMEASourceManager::_openAttempt()
+{
     _attempt = std::make_unique<NMEAConnectionAttempt>(_profile, this, ++_attemptGeneration);
     _attempt->setRecordingBuffer(_recordingBuffer);
 #ifndef QGC_NO_SERIAL_LINK

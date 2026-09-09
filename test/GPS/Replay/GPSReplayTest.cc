@@ -270,7 +270,7 @@ private slots:
         QVERIFY(transport.fatalError());
         QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
         QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("command"), 7).writtenBytes, 2);
-        QVERIFY(transport.fatalError());
+        QVERIFY(!transport.fatalError());
         QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
         QCOMPARE(transport.read(bytes, sizeof(bytes), 100).status, GPSTransport::ReadStatus::Cancelled);
         QVERIFY(stop);
@@ -388,6 +388,10 @@ private slots:
         QVERIFY(!replay.setBaudrate(9600));
         QVERIFY(replay.setBaudrate(115200));
         QCOMPARE(replay.write(reinterpret_cast<const uint8_t*>("command"), 7).writtenBytes, 2);
+        uint8_t terminalByte;
+        QCOMPARE(replay.read(&terminalByte, 1, 1000).status, GPSReadStatus::Closed);
+        QCOMPARE(replay.termination()->reason, GPSReplayTermination::Reason::Closed);
+        QCOMPARE(replay.terminationCount(), quint64(2));  // The first open failed before the successful attempt.
         QVERIFY(replay.complete());
     }
 
@@ -493,6 +497,8 @@ private slots:
         QCOMPARE(result.uncertainBytes, 3);
         QCOMPARE(result.status, GPSTransport::WriteStatus::TimedOut);
         QCOMPARE(secondClock.nowUs(), quint64(501));
+        uint8_t terminalByte;
+        QCOMPARE(replay.read(&terminalByte, 1, 1000).status, GPSReadStatus::Closed);
         QVERIFY(replay.complete());
         // Impossible delivery counts must never enter the replay transport.
         decoded.events[2].writeResult->writtenBytes = 6;
@@ -599,6 +605,8 @@ private slots:
         QVERIFY2(driver != nullptr, qPrintable(error));
         QCOMPARE(transport.fixedBaudrate(), 115200u);
         QVERIFY2(driver->configure(), qPrintable(transport.failure()));
+        uint8_t terminalByte;
+        QCOMPARE(transport.read(&terminalByte, 1, 1000).status, GPSReadStatus::Closed);
         QVERIFY2(transport.complete(), qPrintable(transport.failure()));
         auto incomplete = trace;
         incomplete.recordedEvents[1].resumed = true;
@@ -718,6 +726,183 @@ private slots:
         uint8_t buffer[8];
         QCOMPARE(transport.read(buffer, sizeof(buffer), 10).status, GPSReadStatus::Overflow);
         QVERIFY(transport.complete());
+        GPSReplayScheduler scheduler;
+        GPSReplayDevice device(&scheduler);
+        QSignalSpy terminals(&device, &GPSReplayDevice::terminated);
+        QSignalSpy opened(&device, &GPSReplayDevice::streamOpened);
+        device.play({failed, {.atUs = 2000, .kind = K::Open}, overflow, {.atUs = 4000, .kind = K::Close}});
+        QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(5)));
+        QCOMPARE(opened.size(), 1);
+        QCOMPARE(terminals.size(), 2);
+        const auto first = qvariant_cast<GPSReplayTermination>(terminals.first().first());
+        QCOMPARE(first.reason, GPSReplayTermination::Reason::OpenFailure);
+        QCOMPARE(first.openStatus, std::optional{GPSOpenStatus::TimedOut});
+        QCOMPARE(first.atUs, quint64(1000));
+        QCOMPARE(qvariant_cast<GPSReplayTermination>(terminals.last().first()), *transport.termination());
+    }
+
+    void recoverableWrite_data()
+    {
+        QTest::addColumn<bool>("bounded");
+        QTest::newRow("legacy-short-write") << false;
+        QTest::newRow("bounded-nonfatal-error") << true;
+    }
+
+    void recoverableWrite()
+    {
+        QFETCH(bool, bounded);
+        using K = GPSRecordingEvent::Kind;
+        GPSRecordingEvent write{
+            .atUs = 10, .kind = bounded ? K::BoundedWrite : K::WriteError, .bytes = "command", .value = 2};
+        if (bounded) {
+            write.writeResult = GPSWriteResult{.status = GPSWriteStatus::Error, .acceptedBytes = 2, .writtenBytes = 2};
+        }
+        const QVector<GPSRecordingEvent> events{{.atUs = 1, .kind = K::Open},
+                                                write,
+                                                {.atUs = 20, .kind = K::Rx, .bytes = "recovered"},
+                                                {.atUs = 30, .kind = K::Close}};
+        GPSReplayClock clock;
+        std::atomic_bool stop = false;
+        GPSReplayTransport transport(clock, stop, GPSReplayTrace{events});
+        QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
+        QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>("command"), 7).writtenBytes, 2);
+        QVERIFY(!transport.fatalError());
+        QVERIFY(!transport.termination());
+        uint8_t bytes[32];
+        const auto read = transport.read(bytes, sizeof(bytes), 100);
+        QCOMPARE(read.status, GPSReadStatus::Data);
+        const QByteArray received(reinterpret_cast<char*>(bytes), read.bytesRead);
+        QCOMPARE(received, QByteArray("recovered"));
+        QCOMPARE(transport.read(bytes, sizeof(bytes), 100).status, GPSReadStatus::Closed);
+        QVERIFY(transport.complete());
+        GPSReplayScheduler scheduler;
+        GPSReplayDevice device(&scheduler);
+        QByteArray passive;
+        connect(&device, &QIODevice::readyRead, &device, [&]() { passive += device.readAll(); });
+        QSignalSpy terminal(&device, &GPSReplayDevice::terminated);
+        device.play(events);
+        QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+        QCOMPARE(passive, received);
+        QCOMPARE(terminal.size(), 1);
+        QCOMPARE(qvariant_cast<GPSReplayTermination>(terminal.first().first()), *transport.termination());
+        QCOMPARE(transport.termination()->reason, GPSReplayTermination::Reason::Closed);
+        QCOMPARE(transport.termination()->atUs, quint64(30));
+    }
+
+    void recordedTermination_data()
+    {
+        QTest::addColumn<int>("mode");
+        QTest::addColumn<int>("wireVersion");
+        QTest::newRow("normal-v1") << 0 << 1;
+        QTest::newRow("normal-v2") << 0 << 2;
+        QTest::newRow("normal-v3") << 0 << 3;
+        QTest::newRow("cancel-on-close-v1") << 1 << 1;
+        QTest::newRow("cancel-on-close-v2") << 1 << 2;
+        QTest::newRow("cancel-on-close-v3") << 1 << 3;
+        QTest::newRow("overflow-then-close") << 2 << 3;
+        QTest::newRow("read-cancel-then-close") << 3 << 3;
+        QTest::newRow("capture-exhaustion") << 4 << 3;
+    }
+
+    void recordedTermination()
+    {
+        QFETCH(int, mode);
+        QFETCH(int, wireVersion);
+        using K = GPSRecordingEvent::Kind;
+        using R = GPSReplayTermination::Reason;
+        GPSReplayClock clock;
+        std::atomic_bool stop = false;
+        GPSReplayTrace fixture{{{.atUs = 1, .kind = K::Open}}};
+        if (mode == 2 || mode == 3) {
+            GPSRecordingEvent event{.atUs = 100, .kind = mode == 2 ? K::ReadError : K::Cancel};
+            event.readStatus = mode == 2 ? GPSReadStatus::Overflow : GPSReadStatus::Cancelled;
+            fixture.events.append(event);
+        }
+        auto buffer = std::make_shared<GPSRecordingBuffer>([&clock]() { return clock.nowUs(); });
+        auto stream = std::make_shared<GPSRecordingStream>(buffer, GPSRecordingMetadata{});
+        QVERIFY(buffer->start());
+        {
+            GPSRecordingTransport tap(std::make_unique<GPSReplayTransport>(clock, stop, fixture), stop, stream);
+            QCOMPARE(tap.open().status, GPSOpenStatus::Opened);
+            if (mode == 2 || mode == 3) {
+                uint8_t bytes[8];
+                QCOMPARE(tap.read(bytes, sizeof(bytes), 1).status,
+                         mode == 2 ? GPSReadStatus::Overflow : GPSReadStatus::Cancelled);
+            }
+            clock.advanceTo(200);
+            if (mode == 1) {
+                stop = true;
+            }
+            if (mode == 4) {
+                buffer->stop();  // Capture ending is not evidence that the receiver disconnected.
+            }
+        }
+        buffer->stop();
+        auto document = QJsonDocument::fromJson(buffer->exportJson()).object();
+        document.insert("version", wireVersion);
+        if (wireVersion < 3) {
+            QJsonArray legacyEvents;
+            const auto events = document.value("events").toArray();
+            for (const auto& value : events) {
+                auto event = value.toObject();
+                event.remove("open_status");
+                if (wireVersion == 1) {
+                    if (event.value("kind").toString() == QStringLiteral("session")) {
+                        continue;
+                    }
+                    event.remove("stream");
+                    event.remove("profile");
+                }
+                legacyEvents.append(event);
+            }
+            document.insert("events", legacyEvents);
+        }
+        GPSReplayTrace trace;
+        QString error;
+        QVERIFY2(GPSReplayTrace::fromJson(QJsonDocument(document).toJson(), trace, error), qPrintable(error));
+        stop = false;
+        GPSReplayClock replayClock;
+        GPSReplayTransport native(replayClock, stop, trace);
+        QCOMPARE(native.open().status, GPSOpenStatus::Opened);
+        uint8_t bytes[8];
+        do {
+            native.read(bytes, sizeof(bytes), 100);
+        } while (!native.complete());
+        QVERIFY(native.termination());
+        const auto first = *native.termination();
+        const auto expectedReason = mode == 4                  ? R::CaptureExhausted
+                                    : mode == 2                ? R::ReadFailure
+                                    : (mode == 1 || mode == 3) ? R::Cancelled
+                                                               : R::Closed;
+        QCOMPARE(first.reason, expectedReason);
+        QCOMPARE(first.atUs, mode == 4 ? quint64(1) : (mode == 2 || mode == 3) ? quint64(100) : quint64(200));
+        QCOMPARE(first.readStatus, mode == 4                  ? GPSReadStatus::InvalidData
+                                   : mode == 2                ? GPSReadStatus::Overflow
+                                   : (mode == 1 || mode == 3) ? GPSReadStatus::Cancelled
+                                                              : GPSReadStatus::Closed);
+        const auto stoppedAt = replayClock.nowUs();
+        for (int i = 0; i < 3; ++i) {
+            QCOMPARE(native.read(bytes, sizeof(bytes), 100).status, first.readStatus);
+        }
+        QCOMPARE(replayClock.nowUs(), stoppedAt);
+        QCOMPARE(native.terminationCount(), quint64(1));
+        QVERIFY(native.fatalError());
+
+        GPSReplayScheduler scheduler;
+        GPSReplayDevice device(&scheduler);
+        QSignalSpy terminal(&device, &GPSReplayDevice::terminated);
+        QSignalSpy closed(&device, &GPSReplayDevice::streamClosed);
+        QSignalSpy errors(&device, &GPSReplayDevice::sessionError);
+        device.play(trace.recordedEvents);
+        QVERIFY(scheduler.advanceToUs(device.timeOriginUs() + 1000));
+        QCOMPARE(terminal.size(), 1);
+        QCOMPARE(qvariant_cast<GPSReplayTermination>(terminal.first().first()), first);
+        QCOMPARE(closed.size(), mode == 4 ? 0 : 1);
+        QCOMPARE(errors.size(), mode == 1 || mode == 2 || mode == 3 ? 1 : 0);
+        QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+        device.stop();
+        QCOMPARE(terminal.size(), 1);
+        QCOMPARE(closed.size(), mode == 4 ? 0 : 1);
     }
 
     void correctionAndRecoveryUseVirtualTime()

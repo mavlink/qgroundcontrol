@@ -11,4 +11,7 @@ private slots:
     void _pauseDuringRetryNotification();
     void _lifecycleAndRetry();
     void _stoppingBlocksAttempts();
+    void _cancelDuringAdmission_data();
+    void _cancelDuringAdmission();
+    void _replacementAdmissionSurvivesRollback();
 };

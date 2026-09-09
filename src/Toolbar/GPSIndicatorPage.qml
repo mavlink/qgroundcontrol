@@ -264,17 +264,20 @@ ToolIndicatorPage {
             }
 
             LabelledButton {
+                objectName:         "saveBaseReference"
                 label:              qsTr("Current Base Position")
-                buttonText:         enabled ? qsTr("Save") : qsTr("Not Yet Valid")
+                buttonText:         enabled ? qsTr("Save") : qsTr("Unavailable")
                 visible:            useFixedPosition == BaseModeDefinition.BaseFixed
-                enabled:            QGroundControl.gpsReceiver.rtk.valid.value
+                enabled:            QGroundControl.gpsManager.canSaveBaseReference
 
-                onClicked: {
-                    rtkSettings.fixedBasePositionLatitude.rawValue  = QGroundControl.gpsReceiver.rtk.currentLatitude.rawValue
-                    rtkSettings.fixedBasePositionLongitude.rawValue = QGroundControl.gpsReceiver.rtk.currentLongitude.rawValue
-                    rtkSettings.fixedBasePositionAltitude.rawValue  = QGroundControl.gpsReceiver.rtk.currentAltitude.rawValue
-                    rtkSettings.fixedBasePositionAccuracy.rawValue  = QGroundControl.gpsReceiver.rtk.currentAccuracy.rawValue
-                }
+                onClicked: QGroundControl.gpsManager.saveBaseReference()
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                text: QGroundControl.gpsManager.baseReferenceSaveError
+                visible: useFixedPosition == BaseModeDefinition.BaseFixed && text.length > 0
+                wrapMode: Text.WordWrap
             }
         }
     }

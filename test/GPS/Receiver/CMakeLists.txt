@@ -19,8 +19,7 @@ target_link_libraries(QGCGPSReceiverContractTest PRIVATE QGCGPSReceiver QGCGPSCo
 add_test(NAME GPSReceiverContractTest COMMAND QGCGPSReceiverContractTest)
 set_tests_properties(GPSReceiverContractTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverProfileTest.cc GPSReceiverProfileTest.h)
-add_qgc_test(GPSReceiverProfileTest LABELS Unit)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverIntegrationTest.cc GPSReceiverIntegrationTest.h)
+add_qgc_test(GPSReceiverIntegrationTest LABELS Unit)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSConnectionConfigTest.cc GPSConnectionConfigTest.h)
-add_qgc_test(GPSConnectionConfigTest LABELS Unit RESOURCE_LOCK Settings)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverTestProfile.h)

@@ -3088,6 +3088,7 @@ GPSDriverUBX::payloadRxDone()
 
 		_gps_position->spoofing_state = (_buf.payload_rx_nav_status.flags2 & UBX_RX_NAV_STATUS_SPOOFDETSTATE_MASK) >>
 						UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
+		_gps_position->spoofing_state_timestamp = gps_absolute_time();
 
 		ret = 1;
 		break;
@@ -3367,6 +3368,7 @@ GPSDriverUBX::payloadRxDone()
 
 		if (!_got_sec_sig) {
 			_gps_position->jamming_state = _buf.payload_rx_mon_rf.block[0].flags & 0x03;
+			_gps_position->jamming_state_timestamp = gps_absolute_time();
 		}
 
 		ret = 1;
@@ -3413,6 +3415,7 @@ GPSDriverUBX::payloadRxDone()
 			}
 
 			_gps_position->jamming_state = jamming_state;
+			_gps_position->jamming_state_timestamp = gps_absolute_time();
 			_got_sec_sig = true;
 
 			// TODO: v2/v3 carry jamNumCentFreqs X4 groups after the header (bits 23..0 centFreq in
@@ -3427,6 +3430,7 @@ GPSDriverUBX::payloadRxDone()
 	case UBX_MSG_RXM_RTCM:
 		UBX_TRACE_RXMSG("Rx RXM-RTCM");
 
+		_gps_position->corrections_timestamp = gps_absolute_time();
 		_gps_position->corrections_protocol = sensor_gps_s::CORRECTIONS_PROTOCOL_RTCM3;
 		_gps_position->corrections_crc_failed = (_buf.payload_rx_rxm_rtcm.flags & UBX_RX_RXM_RTCM_CRCFAILED_MASK) != 0;
 		_gps_position->corrections_msg_used = (_buf.payload_rx_rxm_rtcm.flags & UBX_RX_RXM_RTCM_MSGUSED_MASK) >>
@@ -3454,6 +3458,7 @@ GPSDriverUBX::payloadRxDone()
 			case 30: protocol = sensor_gps_s::CORRECTIONS_PROTOCOL_QZSS_L6; break;
 			}
 
+			_gps_position->corrections_timestamp = gps_absolute_time();
 			_gps_position->corrections_protocol = protocol;
 			_gps_position->corrections_crc_failed = ((status & UBX_RX_RXM_COR_ERRSTATUS_MASK) >> UBX_RX_RXM_COR_ERRSTATUS_SHIFT) == 2;
 			_gps_position->corrections_msg_used = (status & UBX_RX_RXM_COR_MSGUSED_MASK) >> UBX_RX_RXM_COR_MSGUSED_SHIFT;

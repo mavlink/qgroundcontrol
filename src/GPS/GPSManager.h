@@ -28,6 +28,8 @@ class GPSManager : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_PROPERTY(bool canSaveBaseReference READ canSaveBaseReference NOTIFY baseReferenceSaveStateChanged)
+    Q_PROPERTY(QString baseReferenceSaveError READ baseReferenceSaveError NOTIFY baseReferenceSaveStateChanged)
     Q_PROPERTY(QVariantList receiverSettings READ receiverSettings NOTIFY receiverSettingsChanged)
     Q_PROPERTY(QVariantList configurationReport READ configurationReport NOTIFY configurationReportChanged)
     Q_PROPERTY(bool configurationReportActive READ configurationReportActive NOTIFY configurationReportChanged)
@@ -78,6 +80,10 @@ public:
 
     GPSRelativePositionModel* relativePositionModel() { return &_relativePosition; }
 
+    bool canSaveBaseReference() const;
+    QString baseReferenceSaveError() const;
+    Q_INVOKABLE bool saveBaseReference();
+
     Q_INVOKABLE bool connectNmea();
     Q_INVOKABLE void disconnectNmea();
     Q_INVOKABLE bool connectRtk();
@@ -90,6 +96,7 @@ public:
     Q_INVOKABLE void disconnectNetworkRtk();
 
 signals:
+    void baseReferenceSaveStateChanged();
     void configurationReportChanged();
     void receiverSettingsChanged();
     void networkRtkActiveChanged();
@@ -118,6 +125,8 @@ private:
     quint64 _receiverCorrectionAttemptId = 0;
     quint64 _receiverCorrectionRevision = 0;
     quint64 _ntripCorrectionRevision = 0;
+    bool _savingBaseReference = false;
+    bool _baseReferenceRestartPending = false;
     bool _shutdown = false;
     bool _initialized = false;
     quint64 _nmeaSettingsRevision = 0;

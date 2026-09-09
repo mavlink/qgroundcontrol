@@ -2,11 +2,12 @@
 
 #include "UnitTest.h"
 
-class GPSConnectionConfigTest : public UnitTest
+class GPSSettingsTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
+    void _automaticIntent();
     void _nmeaReceiverConfiguration();
     void _nmeaValidation_data();
     void _nmeaValidation();

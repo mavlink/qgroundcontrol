@@ -7,6 +7,8 @@ struct GPSIntegrityObservation
 {
     quint64 monotonicTimestampUs = 0;
     quint64 sessionId = 0;
+    // Absent for a single complete integrity message; present for independently updated native fields.
+    std::optional<GPSIntegrityProvenance> provenance = std::nullopt;
     std::optional<quint32> systemErrors = std::nullopt;
     std::optional<int> spoofingState = std::nullopt;
     std::optional<int> jammingState = std::nullopt;
@@ -23,6 +25,7 @@ struct GPSIntegrityObservation
         GPSIntegrityObservation result;
         result.monotonicTimestampUs = observation.monotonicTimestampUs;
         result.sessionId = observation.sessionId;
+        result.provenance = observation.integrityProvenance;
         result.spoofingState = observation.spoofingState;
         result.jammingState = observation.jammingState;
         result.authenticationState = observation.authenticationState;

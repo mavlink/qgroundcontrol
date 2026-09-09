@@ -80,6 +80,7 @@ signals:
 
 private:
     void _setState(State state);
+    void _schedulePositionExpiry();
     void _cancel(GPSRuntimeScheduler::TaskId& task);
     qint64 _age(quint64 timestampUs) const;
     void _updateFixSatelliteCount(int count, qint64 ageMs);

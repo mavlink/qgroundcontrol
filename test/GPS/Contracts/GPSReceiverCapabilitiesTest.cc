@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-#include "GPSDriver.h"
 #include "GPSReceiverCapabilities.h"
 
 void GPSReceiverCapabilitiesTest::_familyResolution_data()

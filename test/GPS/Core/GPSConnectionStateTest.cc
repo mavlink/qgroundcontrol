@@ -96,3 +96,56 @@ void GPSConnectionStateTest::_pauseDuringRetryNotification()
     QVERIFY(!state.canAttempt());
     QVERIFY(!state.shouldConnect(true));
 }
+
+void GPSConnectionStateTest::_cancelDuringAdmission_data()
+{
+    QTest::addColumn<bool>("pause");
+    QTest::newRow("pause") << true;
+    QTest::newRow("stop") << false;
+}
+
+void GPSConnectionStateTest::_cancelDuringAdmission()
+{
+    QFETCH(bool, pause);
+    GPSConnectionState state;
+    state.requestConnect();
+    connect(&state, &GPSConnectionState::changed, &state, [&]() {
+        if (state.active() && state.state() == GPSConnectionState::Connecting) {
+            if (pause) {
+                state.pause();
+            } else {
+                state.stop();
+            }
+        }
+    });
+    bool started = false;
+    QVERIFY(!state.startAttempt([&]() {
+        started = true;
+        return true;
+    }));
+    QVERIFY(!started);
+    QVERIFY(!state.active());
+    QCOMPARE(state.state(), GPSConnectionState::Disconnected);
+}
+
+void GPSConnectionStateTest::_replacementAdmissionSurvivesRollback()
+{
+    GPSConnectionState state;
+    state.requestConnect();
+    bool replaced = false;
+    connect(&state, &GPSConnectionState::changed, &state, [&]() {
+        if (!replaced && state.state() == GPSConnectionState::Connecting) {
+            replaced = true;
+            state.stopped();
+            QVERIFY(state.startAttempt([]() { return true; }));
+        }
+    });
+    bool oldStarted = false;
+    QVERIFY(!state.startAttempt([&]() {
+        oldStarted = true;
+        return false;
+    }));
+    QVERIFY(replaced);
+    QVERIFY(!oldStarted);
+    QCOMPARE(state.state(), GPSConnectionState::Connecting);
+}

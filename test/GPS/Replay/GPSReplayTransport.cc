@@ -37,7 +37,7 @@ bool GPSReplayTrace::fromJson(const QByteArray& json, GPSReplayTrace& result, QS
     parsed.limitReached = document.limitReached;
     for (const auto& event : parsed.recordedEvents) {
         using K = GPSRecordingEvent::Kind;
-        if (event.kind != K::Session && event.kind != K::Close && event.kind != K::ConfigurationStarted &&
+        if (event.kind != K::Session && event.kind != K::ConfigurationStarted &&
             event.kind != K::ConfigurationFinished) {
             parsed.events.append(event);
         }
@@ -81,6 +81,11 @@ int GPSReplayTransport::_fail(const QString& message)
 
 GPSTransport::OpenResult GPSReplayTransport::open()
 {
+    while (_index < _trace.events.size() && _trace.events[_index].kind == GPSReplayEvent::Kind::Close) {
+        const auto& event = _trace.events[_index++];
+        _clock.advanceTo(_eventTime(event.atUs));
+        _lifecycle.consume(event);
+    }
     if (isCancelled()) {
         return {.status = OpenStatus::Cancelled};
     }
@@ -93,6 +98,7 @@ GPSTransport::OpenResult GPSReplayTransport::open()
     _clock.advanceTo(_eventTime(event.atUs));
     const auto status =
         event.openStatus.value_or(event.kind == GPSReplayEvent::Kind::Open ? OpenStatus::Opened : OpenStatus::Error);
+    _lifecycle.consume(event);
     _opened = status == OpenStatus::Opened;
     _fatal = !_opened;
     return {.status = status};
@@ -101,19 +107,32 @@ GPSTransport::OpenResult GPSReplayTransport::open()
 GPSTransport::ReadResult GPSReplayTransport::read(uint8_t* buffer, int length, int timeoutMs)
 {
     ++_readCount;
-    if (isCancelled()) {
-        return {.status = ReadStatus::Cancelled};
-    }
     if (!buffer || length <= 0) {
         return {.status = ReadStatus::InvalidData};
     }
-    if (!_opened || _fatal) {
+    // A recorder may append Close after the read/write that already retired this connection.
+    if (_lifecycle.termination() &&
+        (_index >= _trace.events.size() || _trace.events[_index].kind != GPSReplayEvent::Kind::Close)) {
+        return {.status = _lifecycle.termination()->readStatus};
+    }
+    if (isCancelled() && !_lifecycle.termination()) {
+        return {.status = ReadStatus::Cancelled};
+    }
+    if (_index >= _trace.events.size()) {
+        const auto& recorded = _trace.recordedEvents.isEmpty() ? _trace.events : _trace.recordedEvents;
+        const auto atUs = recorded.isEmpty() ? 0 : recorded.last().atUs;
+        _clock.advanceTo(_eventTime(atUs));
+        _lifecycle.exhausted(atUs);
+        _fatal = true;
+        _opened = false;
+        return {.status = ReadStatus::InvalidData, .detail = QStringLiteral("Replay capture exhausted")};
+    }
+    if ((!_opened || _fatal) && _trace.events[_index].kind != GPSReplayEvent::Kind::Close) {
         return {.status = ReadStatus::Closed};
     }
     const auto deadline = _clock.nowUs() + quint64(qMax(timeoutMs, 0)) * 1000;
-    if (_index >= _trace.events.size() ||
-        _eventTime(_trace.events[_index].atUs) >
-            deadline + (_trace.events[_index].kind == GPSReplayEvent::Kind::Timeout ? 1 : 0)) {
+    if (_eventTime(_trace.events[_index].atUs) >
+        deadline + (_trace.events[_index].kind == GPSReplayEvent::Kind::Timeout ? 1 : 0)) {
         _clock.advanceTo(deadline + (timeoutMs > 0 ? 1 : 0));
         return {.status = ReadStatus::TimedOut};
     }
@@ -132,33 +151,24 @@ GPSTransport::ReadResult GPSReplayTransport::read(uint8_t* buffer, int length, i
         }
         return {.status = ReadStatus::Data, .bytesRead = static_cast<int>(count)};
     }
-    ReadStatus status;
-    switch (event.kind) {
-        case GPSReplayEvent::Kind::Timeout:
-            status = ReadStatus::TimedOut;
-            break;
-        case GPSReplayEvent::Kind::Cancel:
-            status = ReadStatus::Cancelled;
-            break;
-        case GPSReplayEvent::Kind::Disconnect:
-            status = ReadStatus::Closed;
-            break;
-        case GPSReplayEvent::Kind::ReadError:
-            status = ReadStatus::Error;
-            break;
-        default:
-            _fail(QStringLiteral("Read encountered an expected write, baud change, or open"));
-            return {.status = ReadStatus::Error, .detail = _failure};
+    if (event.kind == GPSReplayEvent::Kind::Timeout) {
+        ++_index;
+        return {.status = ReadStatus::TimedOut};
     }
-    status = event.readStatus.value_or(status);
+    using K = GPSReplayEvent::Kind;
+    if (event.kind != K::Close && event.kind != K::Disconnect && event.kind != K::Cancel &&
+        event.kind != K::ReadError) {
+        _fail(QStringLiteral("Read encountered an expected write, baud change, or open"));
+        return {.status = ReadStatus::Error, .detail = _failure};
+    }
+    _lifecycle.consume(event);
     ++_index;
+    const auto status = _lifecycle.termination()->readStatus;
     if (status == ReadStatus::Cancelled) {
         _stop = true;
     }
-    if (status == ReadStatus::Closed || status == ReadStatus::Error || status == ReadStatus::Overflow) {
-        _fatal = true;
-        _opened = false;
-    }
+    _fatal = true;
+    _opened = false;
     return {.status = status};
 }
 
@@ -190,7 +200,8 @@ int GPSReplayTransport::_writeLegacy(const uint8_t* buffer, int length)
             return _fail(QStringLiteral("Failed TX bytes differ from trace"));
         }
         _clock.advanceTo(_eventTime(event.atUs));
-        _fatal = true;
+        _lifecycle.consume(event);
+        _fatal = event.fatal;
         return event.value < length ? event.value : -EIO;
     }
     int consumed = 0;
@@ -257,6 +268,7 @@ GPSTransport::WriteResult GPSReplayTransport::writeBounded(const uint8_t* buffer
     }
     _clock.advanceTo(_eventTime(event.atUs));
     const auto result = *event.writeResult;
+    _lifecycle.consume(event);
     ++_index;
     if (result.status == WriteStatus::Cancelled) {
         _stop = true;

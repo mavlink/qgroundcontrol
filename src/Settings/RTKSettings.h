@@ -21,6 +21,8 @@ private:
     explicit BaseModeDefinition(QObject* parent = nullptr) : QObject(parent) {}
 };
 
+struct GPSReceiverConfig;
+
 class RTKSettings : public SettingsGroup
 {
     Q_OBJECT
@@ -28,6 +30,7 @@ class RTKSettings : public SettingsGroup
     QML_UNCREATABLE("")
 public:
     RTKSettings(QObject* parent = nullptr);
+    bool saveFixedBasePosition(const GPSReceiverConfig& configuration);
 
     enum ConnectionType
     {

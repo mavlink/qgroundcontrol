@@ -52,8 +52,8 @@ private:
     GPSRuntimeScheduler::TaskId _batchTask = 0;
     GPSRuntimeScheduler::TaskId _deliveryTask = 0;
     GPSRuntimeScheduler::TaskId _readTask = 0;
-    QMap<QByteArray, QMap<int, SignalReport>> _reports;
-    QMap<QByteArray, UsedReport> _inUse;
+    QMap<GPSSatellite::Constellation, QMap<int, SignalReport>> _reports;
+    QMap<GPSSatellite::Constellation, UsedReport> _inUse;
     QByteArray _epochTime;
     QList<GPSSatelliteObservation> _pending;
     bool _open = true;

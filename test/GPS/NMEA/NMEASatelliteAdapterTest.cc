@@ -29,6 +29,19 @@ void connectStore(NMEASatelliteAdapter& adapter, GPSSatelliteStore& store)
                      });
 }
 
+QByteArray gsa(const QByteArray& talker, const QList<QByteArray>& ids, const QByteArray& system = {})
+{
+    QList<QByteArray> fields{"$" + talker + "GSA", "A", "3"};
+    for (int index = 0; index < 12; ++index) {
+        fields.append(ids.value(index));
+    }
+    fields.append({"1.0", "0.8", "0.6"});
+    if (!system.isEmpty()) {
+        fields.append(system);
+    }
+    return fields.join(',');
+}
+
 void feed(QBuffer& input, const QList<QByteArray>& sentences)
 {
     for (const auto& sentence : sentences) {
@@ -136,7 +149,11 @@ void NMEASatelliteAdapterTest::_preservesReceiptAgeAcrossReports()
     QTRY_COMPARE_WITH_TIMEOUT(reports.size(), 1, TestTimeout::shortMs());
     const auto first = reports.first().first().value<GPSSatelliteObservation>();
     QCOMPARE(first.satellites.size(), 2);
-    QCOMPARE(first.provenance.last().inViewTimestampUs, oldTimestamp);
+    const auto gpsReport = std::find_if(first.provenance.cbegin(), first.provenance.cend(), [](const auto& report) {
+        return report.constellation == GPSSatellite::Constellation::GPS;
+    });
+    QVERIFY(gpsReport != first.provenance.cend());
+    QCOMPARE(gpsReport->inViewTimestampUs, oldTimestamp);
     const quint64 newTimestamp = GPSObservation::monotonicNowUs();
     input.receivedAtUs = newTimestamp;
     feed(input, {"$GAGSV,1,1,01,03,40,100,31", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
@@ -312,4 +329,134 @@ void NMEASatelliteAdapterTest::_reentrantStopKeepsReplacement()
     feed(replacementInput, {"$GPGSV,1,1,01,02,40,100,45", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(session.satelliteObservation().satellitesInViewCount(), 1, TestTimeout::shortMs());
     QCOMPARE(session.satelliteObservation().satellites.first().signalStrength, std::optional<int>(45));
+}
+
+void NMEASatelliteAdapterTest::_identityResolution_data()
+{
+    using Constellation = GPSSatellite::Constellation;
+    QTest::addColumn<QByteArray>("talker");
+    QTest::addColumn<int>("system");
+    QTest::addColumn<int>("id");
+    QTest::addColumn<Constellation>("expected");
+    QTest::newRow("gps") << QByteArray("GN") << -1 << 2 << Constellation::GPS;
+    QTest::newRow("glonass") << QByteArray("GN") << -1 << 65 << Constellation::GLONASS;
+    QTest::newRow("qzss") << QByteArray("GN") << -1 << 200 << Constellation::QZSS;
+    QTest::newRow("ambiguous201") << QByteArray("GN") << -1 << 201 << Constellation::Unknown;
+    QTest::newRow("ambiguous202") << QByteArray("GN") << -1 << 202 << Constellation::Unknown;
+    QTest::newRow("legacy-beidou") << QByteArray("GN") << -1 << 203 << Constellation::BeiDou;
+    QTest::newRow("extended-beidou") << QByteArray("GN") << -1 << 401 << Constellation::BeiDou;
+    QTest::newRow("extended-galileo") << QByteArray("GN") << -1 << 301 << Constellation::Galileo;
+    QTest::newRow("zero-id") << QByteArray("GN") << -1 << 0 << Constellation::Unknown;
+    QTest::newRow("unrecognized-id") << QByteArray("GN") << -1 << 999 << Constellation::Unknown;
+    QTest::newRow("invalid-system") << QByteArray("GN") << 0 << 2 << Constellation::Unknown;
+    QTest::newRow("unknown-system") << QByteArray("GN") << 99 << 2 << Constellation::Unknown;
+    QTest::newRow("explicit-qzss") << QByteArray("GN") << 5 << 201 << Constellation::QZSS;
+    QTest::newRow("explicit-beidou") << QByteArray("GN") << 4 << 201 << Constellation::BeiDou;
+    QTest::newRow("modern-galileo") << QByteArray("GN") << 3 << 2 << Constellation::Galileo;
+    QTest::newRow("gps-talker") << QByteArray("GP") << -1 << 2 << Constellation::GPS;
+    QTest::newRow("beidou-talker") << QByteArray("GB") << -1 << 201 << Constellation::BeiDou;
+    QTest::newRow("beidou-alias") << QByteArray("BD") << -1 << 201 << Constellation::BeiDou;
+    QTest::newRow("qzss-talker") << QByteArray("GQ") << -1 << 201 << Constellation::QZSS;
+    QTest::newRow("qzss-alias") << QByteArray("QZ") << -1 << 201 << Constellation::QZSS;
+    QTest::newRow("qzss-proprietary-alias") << QByteArray("PQ") << -1 << 201 << Constellation::QZSS;
+    QTest::newRow("unsupported-talker") << QByteArray("XX") << 1 << 2 << Constellation::Unknown;
+}
+
+void NMEASatelliteAdapterTest::_identityResolution()
+{
+    QFETCH(QByteArray, talker);
+    QFETCH(int, system);
+    QFETCH(int, id);
+    QFETCH(GPSSatellite::Constellation, expected);
+    const std::optional<int> systemId = system < 0 ? std::nullopt : std::optional<int>(system);
+    QCOMPARE(NMEAUtils::satelliteConstellation(talker, systemId, id), expected);
+}
+
+void NMEASatelliteAdapterTest::_mixedLegacyIdentities_data()
+{
+    QTest::addColumn<QList<QByteArray>>("ids");
+    QTest::newRow("gps-first") << QList<QByteArray>{"02", "65", "65"};
+    QTest::newRow("glonass-first") << QList<QByteArray>{"65", "02", "02"};
+}
+
+void NMEASatelliteAdapterTest::_mixedLegacyIdentities()
+{
+    QFETCH(QList<QByteArray>, ids);
+    QBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEASatelliteAdapter adapter(&input);
+    GPSSatelliteStore store;
+    connectStore(adapter, store);
+    // Synthetic accepted input: do not infer all IDs from the first ID or count 65 in two systems.
+    feed(input, {gsa("GN", ids), gsa("GL", {"65"}), "$GPGSV,1,1,01,02,0,0,0", "$GLGSV,1,1,01,65,,,",
+                 "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
+    QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellites.size(), 2, TestTimeout::shortMs());
+    QCOMPARE(store.observation().satellitesInUseCount(), 2);
+    for (const auto& satellite : store.observation().satellites) {
+        QCOMPARE(satellite.used, std::optional<bool>(true));
+        if (satellite.id == 2) {
+            QCOMPARE(satellite.constellation, GPSSatellite::Constellation::GPS);
+            QCOMPARE(satellite.signalStrength, std::optional<int>(0));
+        } else {
+            QCOMPARE(satellite.id, 65);
+            QCOMPARE(satellite.constellation, GPSSatellite::Constellation::GLONASS);
+            QVERIFY(!satellite.signalStrength);
+        }
+    }
+}
+
+void NMEASatelliteAdapterTest::_ambiguousLegacyIdentities_data()
+{
+    QTest::addColumn<QList<QByteArray>>("ids");
+    QTest::newRow("ambiguous-pair") << QList<QByteArray>{"201", "202"};
+    QTest::newRow("partial-gps") << QList<QByteArray>{"02", "201"};
+    QTest::newRow("partial-beidou") << QList<QByteArray>{"203", "202"};
+}
+
+void NMEASatelliteAdapterTest::_ambiguousLegacyIdentities()
+{
+    QFETCH(QList<QByteArray>, ids);
+    TimedBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEASatelliteAdapter adapter(&input);
+    GPSSatelliteStore store;
+    connectStore(adapter, store);
+    input.receivedAtUs = GPSObservation::monotonicNowUs() - 100000;
+    feed(input, {gsa("GN", ids), "$GQGSV,1,1,02,201,0,0,0,202,,,", "$BDGSV,1,1,01,201,0,0,0",
+                 "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
+    QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellites.size(), 3, TestTimeout::shortMs());
+    QCOMPARE(store.observation().satellitesInUseCount(), -1);
+    for (const auto& satellite : store.observation().satellites) {
+        QVERIFY(!satellite.used.has_value());
+    }
+    input.receivedAtUs = GPSObservation::monotonicNowUs() - 50000;
+    feed(input, {gsa("GN", {"201", "202"}, "5"), gsa("BD", {"201"}), "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
+    QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInUseCount(), 3, TestTimeout::shortMs());
+    const quint64 usedReceipt = input.receivedAtUs;
+    input.receivedAtUs = GPSObservation::monotonicNowUs();
+    QSignalSpy reports(&adapter, &NMEASatelliteAdapter::observationReceived);
+    feed(input, {gsa("GN", ids), "$PQGSV,1,1,02,201,0,0,0,202,,,", "$GNRMC,120003.00,V,,,,,,,090926,,,N"});
+    QTRY_COMPARE_WITH_TIMEOUT(reports.size(), 1, TestTimeout::shortMs());
+    QCOMPARE(store.observation().satellitesInUseCount(), 3);
+    for (const auto& provenance : store.observation().provenance) {
+        QCOMPARE(provenance.inUseTimestampUs, usedReceipt);
+    }
+}
+
+void NMEASatelliteAdapterTest::_explicitZeroAndUnknownCoverage()
+{
+    QBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEASatelliteAdapter adapter(&input);
+    QSignalSpy reports(&adapter, &NMEASatelliteAdapter::observationReceived);
+    feed(input, {gsa("GN", {}), gsa("GN", {}, "0"), "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
+    // The following explicit GPS empty report is the only report with known coverage.
+    feed(input, {gsa("GN", {}, "1"), "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
+    QTRY_COMPARE_WITH_TIMEOUT(reports.size(), 1, TestTimeout::shortMs());
+    const auto observation = reports.first().first().value<GPSSatelliteObservation>();
+    QCOMPARE(observation.provenance.size(), 1);
+    QCOMPARE(observation.provenance.first().constellation, GPSSatellite::Constellation::GPS);
+    QCOMPARE(observation.provenance.first().satellitesUsed, std::optional<int>(0));
+    QVERIFY(observation.provenance.first().usedSatelliteIds.has_value());
+    QVERIFY(observation.provenance.first().usedSatelliteIds->isEmpty());
 }

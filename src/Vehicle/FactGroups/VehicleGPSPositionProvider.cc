@@ -69,22 +69,15 @@ void VehicleGPSPositionProvider::setVehicle(Vehicle* vehicle)
             } else if (message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY) {
                 mavlink_high_latency_t fix = {};
                 mavlink_msg_high_latency_decode(&message, &fix);
-                _gpsPosition =
-                    position(fix.latitude * 1e-7, fix.longitude * 1e-7, qQNaN(),
-                             fix.gps_fix_type <= 1   ? GPSObservation::FixQuality::NoFix
-                             : fix.gps_fix_type <= 6 ? static_cast<GPSObservation::FixQuality>(fix.gps_fix_type)
-                                                     : GPSObservation::FixQuality::Unknown);
-                _ekfPosition = position(fix.latitude * 1e-7, fix.longitude * 1e-7, fix.altitude_amsl,
-                                        GPSObservation::FixQuality::Extrapolated);
+                const auto observation = VehicleGPSObservation::fromMessage(fix);
+                _gpsPosition = observation.position;
+                _ekfPosition = observation.fusedPosition;
             } else if (message.msgid == MAVLINK_MSG_ID_HIGH_LATENCY2) {
                 mavlink_high_latency2_t fix = {};
                 mavlink_msg_high_latency2_decode(&message, &fix);
-                _gpsPosition =
-                    position(fix.latitude * 1e-7, fix.longitude * 1e-7, qQNaN(),
-                             (fix.failure_flags & HL_FAILURE_FLAG_GPS) ? GPSObservation::FixQuality::NoFix
-                                                                       : GPSObservation::FixQuality::Unknown);
-                _ekfPosition = position(fix.latitude * 1e-7, fix.longitude * 1e-7, fix.altitude,
-                                        GPSObservation::FixQuality::Extrapolated);
+                const auto observation = VehicleGPSObservation::fromMessage(fix);
+                _gpsPosition = observation.position;
+                _ekfPosition = observation.fusedPosition;
             }
         });
 }

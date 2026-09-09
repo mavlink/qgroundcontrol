@@ -117,6 +117,21 @@ bool GPSConnectionState::beginAttempt()
     return guard && _active && _state == Connecting;
 }
 
+bool GPSConnectionState::startAttempt(const std::function<bool()>& start)
+{
+    if (!start || !canAttempt()) {
+        return false;
+    }
+    const QPointer<GPSConnectionState> guard(this);
+    const quint64 admission = _transitionRevision + 1;
+    const bool admitted = beginAttempt();
+    const bool started = admitted && guard && _transitionRevision == admission && start();
+    if (!started && guard && _transitionRevision == admission && _state == Connecting) {
+        _setState(Disconnected);
+    }
+    return started;
+}
+
 void GPSConnectionState::configuring()
 {
     if (_active && _state == Connecting) {
@@ -161,6 +176,7 @@ void GPSConnectionState::_setState(State state)
     if (_state != state) {
         qCDebug(GPSConnectionStateLog) << this << _state << "->" << state;
         _state = state;
+        ++_transitionRevision;
         emit changed();
     }
 }

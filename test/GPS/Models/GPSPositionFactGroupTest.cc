@@ -5,6 +5,7 @@
 #include "GPSPositionFactGroup.h"
 #include "VehicleGPS2FactGroup.h"
 #include "VehicleGPSAggregateFactGroup.h"
+#include "VehicleGPSObservation.h"
 #include "development/mavlink_msg_gnss_integrity.h"
 
 void GPSPositionFactGroupTest::_vehicleMessages_data()
@@ -268,4 +269,117 @@ void GPSPositionFactGroupTest::_integrityExpiryAndReentrancy()
     QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
 }
 
+void GPSPositionFactGroupTest::_independentIntegrityReports()
+{
+    GPSIntegrityFactGroup facts;
+    GPSObservation position;
+    position.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    position.jammingState = 3;
+    position.spoofingState = 1;
+    position.correctionsUsed = 2;
+    position.integrityProvenance = GPSIntegrityProvenance{
+        .jammingTimestampUs = position.monotonicTimestampUs - 6000000,
+        .spoofingTimestampUs = position.monotonicTimestampUs,
+        .correctionsTimestampUs = position.monotonicTimestampUs - 6000000,
+    };
+    facts.update(GPSIntegrityObservation::fromPosition(position));
+    QVERIFY(facts.available());
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
+    QCOMPARE(facts.spoofingState()->rawValue().toInt(), 1);
+    QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
+    for (int i = 0; i < 10; ++i) {
+        position.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        facts.update(GPSIntegrityObservation::fromPosition(position));
+        QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
+        QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
+    }
+    position.integrityProvenance->jammingTimestampUs = GPSObservation::monotonicNowUs() - 4900000;
+    facts.update(GPSIntegrityObservation::fromPosition(position));
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 3);
+    QTRY_COMPARE_WITH_TIMEOUT(facts.jammingState()->rawValue().toInt(), 255, 2000);
+    QCOMPARE(facts.spoofingState()->rawValue().toInt(), 1);
+    position.integrityProvenance->jammingTimestampUs = GPSObservation::monotonicNowUs();
+    // An unchanged report renews its own freshness even when the last position is stale.
+    position.monotonicTimestampUs -= 6000000;
+    facts.update(GPSIntegrityObservation::fromPosition(position));
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 3);
+    QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
+    facts.reset();
+    QVERIFY(!facts.available());
+}
+
 UT_REGISTER_TEST(GPSPositionFactGroupTest, TestLabel::Unit)
+
+void GPSPositionFactGroupTest::_highLatencyTransitions_data()
+{
+    QTest::addColumn<bool>("version2");
+    QTest::addColumn<bool>("noFix");
+    QTest::addColumn<bool>("unknownError");
+    QTest::newRow("hl-fix") << false << false << false;
+    QTest::newRow("hl-no-fix") << false << true << false;
+    QTest::newRow("hl2-fix") << true << false << false;
+    QTest::newRow("hl2-no-fix") << true << true << false;
+    QTest::newRow("hl2-unknown-errors") << true << false << true;
+}
+
+void GPSPositionFactGroupTest::_highLatencyTransitions()
+{
+    QFETCH(bool, version2);
+    QFETCH(bool, noFix);
+    QFETCH(bool, unknownError);
+    VehicleGPSFactGroup facts;
+    mavlink_gps_raw_int_t raw{};
+    raw.lat = 470000000;
+    raw.lon = 80000000;
+    raw.fix_type = 6;
+    raw.eph = 150;
+    raw.epv = 200;
+    raw.cog = 12000;
+    raw.yaw = 18000;
+    raw.satellites_visible = 17;
+    mavlink_message_t message{};
+    mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
+    facts.handleMessage(nullptr, message);
+    QCOMPARE(facts.lock()->rawValue().toInt(), 6);
+    VehicleGPSObservation observation;
+    if (version2) {
+        mavlink_high_latency2_t highLatency{};
+        highLatency.latitude = 481000000;
+        highLatency.longitude = 95000000;
+        highLatency.altitude = 450;
+        highLatency.eph = unknownError ? UINT8_MAX : 15;
+        highLatency.epv = unknownError ? UINT8_MAX : 25;
+        highLatency.failure_flags = noFix ? HL_FAILURE_FLAG_GPS : 0;
+        observation = VehicleGPSObservation::fromMessage(highLatency);
+        mavlink_msg_high_latency2_encode(1, 1, &message, &highLatency);
+    } else {
+        mavlink_high_latency_t highLatency{};
+        highLatency.latitude = 481000000;
+        highLatency.longitude = 95000000;
+        highLatency.altitude_amsl = 450;
+        highLatency.gps_fix_type = noFix ? GPS_FIX_TYPE_NO_FIX : GPS_FIX_TYPE_3D_FIX;
+        observation = VehicleGPSObservation::fromMessage(highLatency);
+        mavlink_msg_high_latency_encode(1, 1, &message, &highLatency);
+    }
+    facts.handleMessage(nullptr, message);
+    QCOMPARE(facts.lat()->rawValue().toDouble(), observation.position.position.coordinate().latitude());
+    QCOMPARE(facts.lon()->rawValue().toDouble(), observation.position.position.coordinate().longitude());
+    QCOMPARE(facts.lock()->rawValue().toInt(), observation.fixType);
+    QCOMPARE(facts.count()->rawValue().toInt(), -1);
+    QVERIFY(qIsNaN(facts.hdop()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.vdop()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.courseOverGround()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.yaw()->rawValue().toDouble()));
+    QVERIFY(!observation.position.horizontalDop);
+    QVERIFY(!observation.position.verticalDop);
+    QCOMPARE(observation.position.fixQuality == GPSObservation::FixQuality::NoFix, noFix);
+    QVERIFY(qIsNaN(observation.position.position.coordinate().altitude()));
+    QCOMPARE(observation.fusedPosition.position.coordinate().altitude(), 450.0);
+    QCOMPARE(observation.fusedPosition.altitudeDatum, GPSObservation::AltitudeDatum::MeanSeaLevel);
+    QCOMPARE(observation.fusedPosition.monotonicTimestampUs, observation.position.monotonicTimestampUs);
+    QCOMPARE(observation.position.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy), version2 && !unknownError);
+    if (version2 && !unknownError) {
+        QCOMPARE(observation.position.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 1.5);
+        QCOMPARE(observation.position.position.attribute(QGeoPositionInfo::VerticalAccuracy), 2.5);
+    }
+}

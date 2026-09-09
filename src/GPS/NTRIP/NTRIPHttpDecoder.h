@@ -47,6 +47,7 @@ private:
         Failed
     };
     void _lineReceived(Result& result);
+    void _beginBody(Result& result);
     void _fail(Result& result, const QString& detail, NTRIPError code = NTRIPError::InvalidHttpResponse);
 
     State _state = State::Status;

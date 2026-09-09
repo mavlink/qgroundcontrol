@@ -202,7 +202,7 @@ void GPSCorrectionRouter::setDetailedSink(const QString& id, DetailedSink sink, 
         removeSink(id);
         return;
     }
-    if (id.isEmpty() || (!_destinations.contains(id) && _destinations.size() >= MAX_DESTINATIONS)) {
+    if (id.isEmpty()) {
         return;
     }
     ++_revision;
@@ -218,19 +218,23 @@ void GPSCorrectionRouter::setFanoutSink(const QString& id, FanoutSink sink)
         removeSink(id);
         return;
     }
-    if (id.isEmpty() || !_ensureDestination(id)) {
+    if (id.isEmpty()) {
         return;
     }
     ++_revision;
     _sinks.insert(id, {{}, false, GPSCorrectionSource::Unknown, std::move(sink)});
+    _destinations[id].id = id;
 }
 
-bool GPSCorrectionRouter::_ensureDestination(const QString& id)
+void GPSCorrectionRouter::_pruneDestinationHistory()
 {
-    if (_destinations.contains(id)) {
-        return true;
+    qsizetype historyCount = 0;
+    for (auto it = _destinations.cbegin(); it != _destinations.cend(); ++it) {
+        if (!_sinks.contains(it.key()) && it->pendingFrames == 0) {
+            ++historyCount;
+        }
     }
-    if (_destinations.size() >= MAX_DESTINATIONS) {
+    while (historyCount > MAX_DESTINATION_HISTORY) {
         auto oldest = _destinations.end();
         for (auto it = _destinations.begin(); it != _destinations.end(); ++it) {
             if (!_sinks.contains(it.key()) && it->pendingFrames == 0 &&
@@ -239,12 +243,11 @@ bool GPSCorrectionRouter::_ensureDestination(const QString& id)
             }
         }
         if (oldest == _destinations.end()) {
-            return false;
+            return;
         }
         _destinations.erase(oldest);
+        --historyCount;
     }
-    _destinations[id].id = id;
-    return true;
 }
 
 void GPSCorrectionRouter::removeSink(const QString& id)
@@ -257,6 +260,7 @@ void GPSCorrectionRouter::removeSink(const QString& id)
             invalidateDestination(id, delivery.destinationSession);
         }
     }
+    _pruneDestinationHistory();
 }
 
 GPSCorrectionRouter::Statistics* GPSCorrectionRouter::_currentStatistics(const GPSCorrectionFrame& frame)
@@ -363,6 +367,7 @@ bool GPSCorrectionRouter::recordDelivery(const GPSCorrectionDelivery& delivery)
                                                                               : gpsCorrectionReason(delivery.outcome);
         _recordDrop(pending.frame, reason, undelivered, pending.destination, pending.destinationSession);
     }
+    _pruneDestinationHistory();
     return true;
 }
 
@@ -387,6 +392,7 @@ void GPSCorrectionRouter::invalidateDestination(const QString& id, quint64 sessi
                      delivery.queuedBytes, id, session);
         it = _pendingDeliveries.erase(it);
     }
+    _pruneDestinationHistory();
 }
 
 bool GPSCorrectionRouter::_eligible(const Source& source, qint64 now) const
@@ -551,12 +557,13 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
         }
         // Preserve evidence returned by an output even if its callback retired the source or changed routing.
         for (const auto& admission : admissions) {
-            if (admission.destination.isEmpty() || !_ensureDestination(admission.destination)) {
+            if (admission.destination.isEmpty()) {
                 continue;
             }
             const auto& submitted = admission.submission;
             const quint64 bytes = (std::min) (submitted.queuedBytes, static_cast<quint64>(frame.data.size()));
             auto& destination = _destinations[admission.destination];
+            destination.id = admission.destination;
             destination.session = submitted.destinationSession;
             destination.lastActivityMs = _clock();
             destination.reportsWrites = it->reportsWrites;
@@ -605,6 +612,7 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
     if (attempted && !completeSubmission) {
         _recordDrop(frame, submissionFailure, frame.data.size() - logicalQueuedBytes);
     }
+    _pruneDestinationHistory();
     _submitting = false;
     if (selected && !_shutdown && revision == _revision) {
         emit frameRouted(frame);

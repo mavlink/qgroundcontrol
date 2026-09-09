@@ -3,7 +3,8 @@
 #include "AppMessages.h"
 #include "AutoConnectSettings.h"
 #include "GPSBaseStationState.h"
-#include "GPSConnectionSettings.h"
+#include "GPSSettings.h"
+#include "GPSBaseReferenceSave.h"
 #include "GPSCorrectionSettings.h"
 #include "GPSMavlinkOutput.h"
 #include "GPSPositionSettings.h"
@@ -15,7 +16,6 @@
 #include "GPSReceiverSettingsPresentation.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
-#include "NMEAConnectionConfig.h"
 #include "NMEASourceManager.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
@@ -161,6 +161,13 @@ GPSManager::GPSManager(SettingsManager& settingsManager, QGCPositionManager* pos
             &GPSManager::networkRtkActiveChanged);
     connect(_receiverAutoConnect, &GPSReceiverAutoConnect::networkAutoConnectPausedChanged, this,
             &GPSManager::networkRtkAutoConnectPausedChanged);
+    connect(this, &GPSManager::receiverSettingsChanged, this, &GPSManager::baseReferenceSaveStateChanged);
+    connect(_baseStationState, &GPSBaseStationState::referenceChanged, this, &GPSManager::baseReferenceSaveStateChanged);
+    connect(&_receiverSession, &GPSReceiverSession::stateChanged, this, &GPSManager::baseReferenceSaveStateChanged);
+    for (Fact* fact : {receiverSettings->receiverRole(), receiverSettings->useFixedBasePosition(),
+                       receiverSettings->fixedBasePositionAccuracy()}) {
+        connect(fact, &Fact::rawValueChanged, this, &GPSManager::baseReferenceSaveStateChanged);
+    }
 }
 
 GPSManager::~GPSManager()
@@ -459,6 +466,48 @@ void GPSManager::_updateNmeaSatellites()
     _nmeaSatellites.updateObservation(_nmeaSources->satelliteObservation());
 }
 
+bool GPSManager::canSaveBaseReference() const
+{
+    return !_savingBaseReference && baseReferenceSaveError().isEmpty();
+}
+
+QString GPSManager::baseReferenceSaveError() const
+{
+    if (_shutdown || !_receiverSession.hasReceiver()) {
+        return tr("No base receiver is connected");
+    }
+    const auto configuration = GPSSettings::receiver(*_settings.rtkSettings(), *_settings.autoConnectSettings());
+    return GPSBaseReferenceSave::prepare(_baseStationState->reference(), _receiverSession.sessionId(),
+                                         configuration.profile.receiver).error;
+}
+
+bool GPSManager::saveBaseReference()
+{
+    if (_savingBaseReference || _shutdown || !_receiverSession.hasReceiver()) {
+        return false;
+    }
+    const auto configuration = GPSSettings::receiver(*_settings.rtkSettings(), *_settings.autoConnectSettings());
+    const auto prepared = GPSBaseReferenceSave::prepare(_baseStationState->reference(), _receiverSession.sessionId(),
+                                                       configuration.profile.receiver);
+    if (!prepared.configuration) {
+        QGC::showAppMessage(prepared.error);
+        return false;
+    }
+    const QPointer<GPSManager> guard(this);
+    _savingBaseReference = true;
+    const bool saved = _settings.rtkSettings()->saveFixedBasePosition(*prepared.configuration);
+    if (!guard) {
+        return false;
+    }
+    _savingBaseReference = false;
+    const bool restart = std::exchange(_baseReferenceRestartPending, false);
+    _updateReceiverSettings(restart);
+    if (guard) {
+        emit baseReferenceSaveStateChanged();
+    }
+    return saved;
+}
+
 bool GPSManager::connectNmea()
 {
     return !_shutdown && (!_connectionsSuspended || !_connectionsSuspended()) && _nmeaSources->connectSource();
@@ -583,11 +632,10 @@ void GPSManager::_updateNmeaSettings()
     const QPointer<GPSManager> guard(this);
     const quint64 revision = ++_nmeaSettingsRevision;
     auto* settings = _settings.autoConnectSettings();
-    const auto profile = NMEAConnectionConfig::fromSettings(*settings).profile();
-    const bool automatic = settings->nmeaAutoConnect()->rawValue().toBool();
-    _nmeaSources->setProfile(profile);
+    const auto connection = GPSSettings::nmea(*settings);
+    _nmeaSources->setProfile(connection.profile);
     if (guard && !_shutdown && revision == _nmeaSettingsRevision) {
-        _nmeaSources->setAutoConnect(automatic && _initialized);
+        _nmeaSources->setAutoConnect(connection.automatic && _initialized);
     }
 }
 
@@ -596,18 +644,19 @@ void GPSManager::_updateReceiverSettings(bool restart)
     if (_shutdown) {
         return;
     }
+    if (_savingBaseReference) {
+        _baseReferenceRestartPending |= restart;
+        return;
+    }
     const QPointer<GPSManager> guard(this);
     const quint64 revision = ++_receiverSettingsRevision;
     auto* settings = &_settings;
-    const auto config = GPSConnectionSettings::fromSettings(*settings->rtkSettings());
-    const bool automatic = config.transport == GPSConnectionConfig::Serial
-                               ? settings->autoConnectSettings()->autoConnectRTKGPS()->rawValue().toBool()
-                               : settings->autoConnectSettings()->autoConnectNetworkRTKGPS()->rawValue().toBool();
-    _receiverAutoConnect->setProfile(config.profile(), restart);
+    const auto connection = GPSSettings::receiver(*settings->rtkSettings(), *settings->autoConnectSettings());
+    _receiverAutoConnect->setProfile(connection.profile, restart);
     if (!guard || _shutdown || revision != _receiverSettingsRevision) {
         return;
     }
-    _receiverAutoConnect->setAutoConnect(automatic && _initialized);
+    _receiverAutoConnect->setAutoConnect(connection.automatic && _initialized);
     if (guard && !_shutdown && revision == _receiverSettingsRevision && restart) {
         emit receiverSettingsChanged();
     }

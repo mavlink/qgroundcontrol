@@ -196,6 +196,7 @@ struct JniMethodCache
     jmethodID read = nullptr;
     jmethodID write = nullptr;
     jmethodID writeAsync = nullptr;
+    jmethodID writeResult = nullptr;
     jmethodID setParameters = nullptr;
     jmethodID getCarrierDetect = nullptr;
     jmethodID getClearToSend = nullptr;
@@ -239,6 +240,7 @@ static bool cacheMethodIds(JNIEnv* env, jclass javaClass)
         {&s_methods.read, "read", "(III)[B"},
         {&s_methods.write, "write", "(I[BII)I"},
         {&s_methods.writeAsync, "writeAsync", "(I[BI)I"},
+        {&s_methods.writeResult, "writeResult", "(I[BII)[I"},
         {&s_methods.setParameters, "setParameters", "(IIIII)Z"},
         {&s_methods.getCarrierDetect, "getCarrierDetect", "(I)Z"},
         {&s_methods.getClearToSend, "getClearToSend", "(I)Z"},
@@ -740,6 +742,43 @@ QByteArray read(int deviceId, int length, int timeout)
     ctx.env->ReleaseByteArrayElements(jarray.get(), bytes, JNI_ABORT);
 
     return data;
+}
+
+AndroidSerialWrite::Result writeResult(int deviceId, const char* data, int length, int timeout)
+{
+    using Status = AndroidSerialWrite::Status;
+    if (!data || length <= 0 || timeout <= 0) {
+        return {Status::InvalidData};
+    }
+    JniContext ctx;
+    if (!getContext(ctx, "writeResult")) {
+        return {Status::Error};
+    }
+    AndroidInterface::JniLocalRef<jbyteArray> bytes(ctx.env.jniEnv(), ctx.env->NewByteArray(length));
+    const bool allocationFailed = ctx.env.checkAndClearExceptions();
+    if (!bytes.get() || allocationFailed) {
+        return {Status::Error};
+    }
+    ctx.env->SetByteArrayRegion(bytes.get(), 0, length, reinterpret_cast<const jbyte*>(data));
+    if (ctx.env.checkAndClearExceptions()) {
+        return {Status::Error};
+    }
+    AndroidInterface::JniLocalRef<jintArray> response(
+        ctx.env.jniEnv(), static_cast<jintArray>(ctx.env->CallStaticObjectMethod(
+                              ctx.cls, s_methods.writeResult, static_cast<jint>(deviceId), bytes.get(),
+                              static_cast<jint>(length), static_cast<jint>(timeout))));
+    if (ctx.env.checkAndClearExceptions() || !response.get() || ctx.env->GetArrayLength(response.get()) != 3) {
+        return {Status::Error, 0, length};
+    }
+    jint values[3]{};
+    ctx.env->GetIntArrayRegion(response.get(), 0, 3, values);
+    if (ctx.env.checkAndClearExceptions() || values[0] < 0 || values[0] > 2 || values[1] < 0 || values[2] < 0 ||
+        qint64(values[1]) + values[2] > length) {
+        return {Status::Error, 0, length};
+    }
+    // Java emits only success, timeout, or I/O failure; cancellation belongs to the native write loop.
+    const Status status = values[0] == 0 ? Status::Completed : values[0] == 1 ? Status::TimedOut : Status::Error;
+    return {status, values[1], values[2]};
 }
 
 int write(int deviceId, const char* data, int length, int timeout, bool async)

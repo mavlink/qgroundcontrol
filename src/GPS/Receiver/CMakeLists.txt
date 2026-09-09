@@ -7,9 +7,7 @@ if(NOT QGC_NO_SERIAL_LINK)
 endif()
 
 # Saved settings and presentation use Facts; worker sessions remain independent of the application.
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSConnectionSettings.cc GPSConnectionSettings.h
-                                             GPSReceiverSettingsPresentation.cc GPSReceiverSettingsPresentation.h
-)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverSettingsPresentation.cc GPSReceiverSettingsPresentation.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiver.cc GPSReceiver.h GPSReceiverFactGroup.cc
                                              GPSReceiverFactGroup.h
 )

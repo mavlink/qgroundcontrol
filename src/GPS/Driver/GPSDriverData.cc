@@ -138,6 +138,12 @@ GPSObservation GPSDriverData::position(const sensor_gps_s& fix)
             result.trueHeadingAccuracyDegrees = qRadiansToDegrees(static_cast<double>(fix.heading_accuracy));
         }
     }
+    result.integrityProvenance = GPSIntegrityProvenance{
+        .jammingTimestampUs = fix.jamming_state_timestamp,
+        .spoofingTimestampUs = fix.spoofing_state_timestamp,
+        .authenticationTimestampUs = fix.authentication_state_timestamp,
+        .correctionsTimestampUs = fix.corrections_timestamp,
+    };
     result.jammingState = knownState(fix.jamming_state);
     result.spoofingState = knownState(fix.spoofing_state);
     result.authenticationState = knownState(fix.authentication_state);

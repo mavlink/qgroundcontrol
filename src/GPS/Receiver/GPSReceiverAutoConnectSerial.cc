@@ -54,7 +54,7 @@ void GPSReceiverAutoConnect::_updateSerial()
                (selectedDevice.isEmpty() ? port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS
                                          : port.systemLocation == selectedDevice);
     };
-    const auto request = [this, &selectedDevice, revision](const SerialPortManager::Port& port) {
+    const auto request = [this, &selectedDevice, guard, revision](const SerialPortManager::Port& port) {
         const QString name = selectedDevice.isEmpty() ? port.boardName : _sessionConfig->receiverName;
         const GPSType type = selectedDevice.isEmpty()
                                  ? GPSReceiverCapabilities::typeForName(name).value_or(GPSType::u_blox)
@@ -66,13 +66,10 @@ void GPSReceiverAutoConnect::_updateSerial()
         profile.receiverName = name;
         const auto config = profile.receiver;
         auto factory = _serialFactory ? _serialFactory(port.systemLocation) : GPSProvider::TransportFactory{};
-        const QPointer<GPSReceiverAutoConnect> lifetime(this);
-        if (factory && _connection.beginAttempt() && lifetime && revision == _commandRevision) {
-            emit connectRequested(port.systemLocation, name, config);
-            if (lifetime && revision == _commandRevision && _receiver &&
-                _connection.state() == GPSConnectionState::Connecting && _connection.active()) {
-                _receiver->start(profile, std::move(factory));
-            }
+        if (guard && revision == _commandRevision && factory) {
+            _startReceiver(profile, std::move(factory), [this, device = port.systemLocation, name, config]() {
+                emit connectRequested(device, name, config);
+            });
         }
     };
     QSet<QString> present;

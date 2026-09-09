@@ -9,6 +9,15 @@
 #include <array>
 #include <optional>
 
+/// Original diagnostic receipts; zero means that diagnostic has never been reported.
+struct GPSIntegrityProvenance
+{
+    quint64 jammingTimestampUs = 0;
+    quint64 spoofingTimestampUs = 0;
+    quint64 authenticationTimestampUs = 0;
+    quint64 correctionsTimestampUs = 0;
+};
+
 /// Receiver-independent data. Unknown metadata remains absent, never a manufactured zero.
 struct GPSObservation
 {
@@ -57,6 +66,7 @@ struct GPSObservation
     // Antenna orientation is distinct from QGeoPositionInfo::Direction (course over ground).
     std::optional<double> trueHeadingDegrees;
     std::optional<double> trueHeadingAccuracyDegrees;
+    std::optional<GPSIntegrityProvenance> integrityProvenance = std::nullopt;
     std::optional<int> jammingState;
     std::optional<int> spoofingState;
     std::optional<int> authenticationState;

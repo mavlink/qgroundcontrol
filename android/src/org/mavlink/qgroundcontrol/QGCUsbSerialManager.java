@@ -1043,6 +1043,28 @@ public class QGCUsbSerialManager {
         }
     }
 
+    public static int[] writeResult(final int deviceId, final byte[] data, final int length, final int timeoutMSec) {
+        return writeResultForPort(getOpenPortOrWarn(deviceId, "writeResult"), data, length, timeoutMSec);
+    }
+
+    // JNI result: status (0 complete, 1 timeout, 2 error), confirmed bytes, uncertain bytes.
+    static int[] writeResultForPort(final UsbSerialPort port, final byte[] data, final int length,
+                                   final int timeoutMSec) {
+        if (port == null || data == null || length <= 0 || length > data.length || timeoutMSec <= 0) {
+            return new int[] {2, 0, 0};
+        }
+        try {
+            port.write(data, length, timeoutMSec);
+            return new int[] {0, length, 0};
+        } catch (final SerialTimeoutException e) {
+            final int written = Math.max(0, Math.min(length, e.bytesTransferred));
+            // Never retry a suffix whose delivery the USB implementation did not establish.
+            return new int[] {1, written, length - written};
+        } catch (final IOException e) {
+            return new int[] {2, 0, length};
+        }
+    }
+
     /**
      * Writes data to the USB serial device.
      *

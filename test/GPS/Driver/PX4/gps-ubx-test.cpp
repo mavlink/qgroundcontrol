@@ -560,6 +560,85 @@ static Bytes commsPayload()
 	return payload;
 }
 
+static void integrityReceipts()
+{
+	Fixture f;
+	CHECK(f.configure(GPSHelper::OutputMode::GPS) == 0);
+	Bytes mon_rf(sizeof(ubx_payload_rx_mon_rf_t), 0);
+	mon_rf[1] = 1;
+	mon_rf[5] = 3;
+	f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
+	f.driver.receive(100);
+	CHECK(f.position.jamming_state == 3);
+	const auto rf_stamp = f.position.jamming_state_timestamp;
+	CHECK(rf_stamp != 0);
+
+	Bytes nav_status(sizeof(ubx_payload_rx_nav_status_t), 0);
+	nav_status[7] = 1 << UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
+	f.receiver.queue(packet(UBX_MSG_NAV_STATUS, nav_status));
+	f.driver.receive(100);
+	const auto spoof_stamp = f.position.spoofing_state_timestamp;
+	CHECK(spoof_stamp != 0);
+	CHECK(f.position.jamming_state_timestamp == rf_stamp);
+
+	Bytes pvt(sizeof(ubx_payload_rx_nav_pvt_t), 0);
+	pvt[20] = 3;
+	pvt[21] = 1;
+	for (int i = 0; i < 10; ++i) {
+		gps_test_time += 1000000;
+		f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+		CHECK(f.driver.receive(100) & 1);
+		CHECK(f.position.timestamp > rf_stamp);
+		CHECK(f.position.jamming_state_timestamp == rf_stamp);
+		CHECK(f.position.spoofing_state_timestamp == spoof_stamp);
+	}
+	Bytes corrupt = packet(UBX_MSG_MON_RF, mon_rf);
+	corrupt.back() ^= 0xff;
+	f.receiver.queue(corrupt);
+	f.driver.receive(100);
+	CHECK(f.position.jamming_state_timestamp == rf_stamp);
+	f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
+	f.driver.receive(100);
+	CHECK(f.position.jamming_state == 3);
+	CHECK(f.position.jamming_state_timestamp > rf_stamp);
+
+	Bytes sec_sig(4, 0);
+	sec_sig[0] = 2;
+	sec_sig[1] = 1 | (3 << 1);
+	f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
+	f.driver.receive(100);
+	CHECK(f.position.jamming_state == 3);
+	const auto sec_stamp = f.position.jamming_state_timestamp;
+	gps_test_time += 6000000;
+	f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+	CHECK(f.driver.receive(100) & 1);
+	CHECK(f.position.jamming_state_timestamp == sec_stamp);
+	f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
+	f.driver.receive(100);
+	CHECK(f.position.jamming_state == 3);
+	CHECK(f.position.jamming_state_timestamp > sec_stamp);
+
+	Bytes rtcm(sizeof(ubx_payload_rx_rxm_rtcm_t), 0);
+	rtcm[1] = 2 << UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
+	f.receiver.queue(packet(UBX_MSG_RXM_RTCM, rtcm));
+	f.driver.receive(100);
+	CHECK(f.position.corrections_msg_used == 2);
+	const auto correction_stamp = f.position.corrections_timestamp;
+	CHECK(correction_stamp != 0);
+	gps_test_time += 6000000;
+	f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+	CHECK(f.driver.receive(100) & 1);
+	CHECK(f.position.corrections_timestamp == correction_stamp);
+	Bytes cor(sizeof(ubx_payload_rx_rxm_cor_t), 0);
+	cor[4] = 29;
+	cor[5] = 1; // msgUsed=2 in statusInfo bits 8..7.
+	f.receiver.queue(packet(UBX_MSG_RXM_COR, cor));
+	f.driver.receive(100);
+	CHECK(f.position.corrections_protocol == sensor_gps_s::CORRECTIONS_PROTOCOL_PMP);
+	CHECK(f.position.corrections_msg_used == 2);
+	CHECK(f.position.corrections_timestamp > correction_stamp);
+}
+
 static void commsDiagnostics()
 {
 	Fixture f;
@@ -779,6 +858,7 @@ int main()
 		{"position-f9p", [] { positionMode(false, true); }},
 		{"receiver-settings", receiverSettings},
 		{"configuration-readback", configurationReadback},
+		{"integrity-original-receipts", integrityReceipts},
 		{"nmea-failures", nmeaOutputFailures},
 		{"nmea-f9p", [] { nmeaOutput(false, true); }},
 		{"nmea-m9n", [] { nmeaOutput(false, false); }},

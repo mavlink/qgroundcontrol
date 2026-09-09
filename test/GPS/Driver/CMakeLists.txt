@@ -1,9 +1,6 @@
 # GPS driver tests.
 add_subdirectory(PX4)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverCapabilitiesTest.cc GPSReceiverCapabilitiesTest.h)
-add_qgc_test(GPSReceiverCapabilitiesTest LABELS Unit)
-
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverTimeTest.cc GPSDriverTimeTest.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverUBXTest.cc GPSDriverUBXTest.h)
 

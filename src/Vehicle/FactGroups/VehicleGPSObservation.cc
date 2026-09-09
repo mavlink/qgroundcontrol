@@ -40,6 +40,25 @@ VehicleGPSObservation convert(const Message& message)
     result.fixType = message.fix_type;
     return result;
 }
+VehicleGPSObservation highLatencyPosition(int32_t latitude, int32_t longitude, double altitude,
+                                         GPSObservation::FixQuality quality, int fixType)
+{
+    VehicleGPSObservation result;
+    result.fixType = fixType;
+    result.position.receivedAt = QDateTime::currentDateTimeUtc();
+    result.position.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    result.position.sourceId = QStringLiteral("VehicleGPS");
+    result.position.position = QGeoPositionInfo(QGeoCoordinate(latitude * 1e-7, longitude * 1e-7),
+                                               result.position.receivedAt);
+    result.position.fixQuality = quality;
+    // High-latency altitude describes the fused vehicle position, not a separate raw GPS altitude.
+    result.fusedPosition = result.position;
+    result.fusedPosition.sourceId = QStringLiteral("VehicleEKF");
+    result.fusedPosition.position.setCoordinate(QGeoCoordinate(latitude * 1e-7, longitude * 1e-7, altitude));
+    result.fusedPosition.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+    result.fusedPosition.fixQuality = GPSObservation::FixQuality::Extrapolated;
+    return result;
+}
 }  // namespace
 
 VehicleGPSObservation VehicleGPSObservation::fromMessage(const mavlink_gps_raw_int_t& message)
@@ -51,5 +70,32 @@ VehicleGPSObservation VehicleGPSObservation::fromMessage(const mavlink_gps2_raw_
 {
     auto result = convert(message);
     result.position.sourceId = QStringLiteral("VehicleGPS2");
+    return result;
+}
+
+VehicleGPSObservation VehicleGPSObservation::fromMessage(const mavlink_high_latency_t& message)
+{
+    const auto quality = message.gps_fix_type <= 1   ? GPSObservation::FixQuality::NoFix
+                         : message.gps_fix_type <= 6 ? static_cast<GPSObservation::FixQuality>(message.gps_fix_type)
+                                                    : GPSObservation::FixQuality::Unknown;
+    return highLatencyPosition(message.latitude, message.longitude, message.altitude_amsl, quality,
+                               message.gps_fix_type);
+}
+
+VehicleGPSObservation VehicleGPSObservation::fromMessage(const mavlink_high_latency2_t& message)
+{
+    const bool failed = (message.failure_flags & HL_FAILURE_FLAG_GPS) != 0;
+    auto result = highLatencyPosition(message.latitude, message.longitude, message.altitude,
+                                      failed ? GPSObservation::FixQuality::NoFix : GPSObservation::FixQuality::Unknown,
+                                      failed ? GPS_FIX_TYPE_NO_FIX : GPS_FIX_TYPE_NO_GPS);
+    // HL2 reports maximum position errors in decimetres; these are not dilution of precision.
+    for (auto* observation : {&result.position, &result.fusedPosition}) {
+        if (message.eph != UINT8_MAX) {
+            observation->position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, message.eph / 10.0);
+        }
+        if (message.epv != UINT8_MAX) {
+            observation->position.setAttribute(QGeoPositionInfo::VerticalAccuracy, message.epv / 10.0);
+        }
+    }
     return result;
 }

@@ -7,6 +7,9 @@ class GPSPositionFactGroupTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _highLatencyTransitions_data();
+    void _highLatencyTransitions();
+    void _independentIntegrityReports();
     void _integrityProjection();
     void _integrityExpiryAndReentrancy();
     void _vehicleMessages_data();

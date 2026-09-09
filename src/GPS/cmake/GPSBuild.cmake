@@ -120,8 +120,6 @@ function(qgc_gps_component_sources output component)
         )
     elseif(component STREQUAL "Receiver")
         set(sources
-            "${gps_root}/Receiver/GPSConnectionConfig.cc"
-            "${gps_root}/Receiver/GPSConnectionConfig.h"
             "${gps_root}/Receiver/GPSReceiverTransportFactory.cc"
             "${gps_root}/Receiver/GPSReceiverTransportFactory.h"
             "${gps_root}/Receiver/GPSByteStream.cc"

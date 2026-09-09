@@ -160,7 +160,8 @@ public:
     static constexpr qsizetype MAX_SOURCE_INSTANCES = 64;
     static constexpr qsizetype MAX_EVENTS = 256;
     static constexpr qsizetype MAX_PENDING_DELIVERIES = 128;
-    static constexpr qsizetype MAX_DESTINATIONS = 16;
+    // Registered outputs and outstanding deliveries retain their statistics independently of this history limit.
+    static constexpr qsizetype MAX_DESTINATION_HISTORY = 16;
 
 signals:
     /// Emitted before invoking outputs for a different stream or source session.
@@ -179,7 +180,7 @@ private:
                       quint64 bytes, const QString& destination = {}, quint64 destinationSession = 0);
     void _recordDrop(const GPSCorrectionFrame& frame, GPSCorrectionReason reason, quint64 bytes,
                      const QString& destination = {}, quint64 destinationSession = 0, bool creditSource = true);
-    bool _ensureDestination(const QString& id);
+    void _pruneDestinationHistory();
     Statistics* _currentStatistics(const GPSCorrectionFrame& frame);
 
     struct SinkEntry

@@ -521,6 +521,7 @@ void GPSDriverTest::_observationMetadata()
     fix.vel_m_s = 0;
     fix.cog_rad = 0;
     fix.jamming_state = sensor_gps_s::JAMMING_STATE_DETECTED;
+    fix.jamming_state_timestamp = fix.timestamp - 6000000;
     fix.corrections_msg_used = sensor_gps_s::CORRECTIONS_MSG_USED_USED;
     observation = GPSDriverData::position(fix);
     QVERIFY(observation.usable());
@@ -537,6 +538,9 @@ void GPSDriverTest::_observationMetadata()
     QVERIFY(qAbs(observation.trueHeadingAccuracyDegrees.value() - 0.5) < 0.001);
     QVERIFY(qIsNaN(observation.heading()));  // stationary course must not become antenna orientation
     QCOMPARE(observation.jammingState.value(), static_cast<int>(sensor_gps_s::JAMMING_STATE_DETECTED));
+    QVERIFY(observation.integrityProvenance);
+    QCOMPARE(observation.integrityProvenance->jammingTimestampUs, fix.jamming_state_timestamp);
+    QCOMPARE(observation.integrityProvenance->correctionsTimestampUs, 0ULL);
     QCOMPARE(observation.correctionsUsed.value(), static_cast<int>(sensor_gps_s::CORRECTIONS_MSG_USED_USED));
     fix.eph = qQNaN();
     observation = GPSDriverData::position(fix);

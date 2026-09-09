@@ -3,6 +3,8 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 
+#include <functional>
+
 #include "GPSRuntimeScheduler.h"
 
 /// Connection intent, lifecycle, and retry policy, mutated by one controller.
@@ -45,6 +47,8 @@ public:
     bool canAttempt() const;
     qint64 retryRemainingMs() const;
     bool beginAttempt();
+    /// Commit backend startup, or retire an unchanged admission when startup was superseded.
+    bool startAttempt(const std::function<bool()>& start);
     void configuring();
     void ready();
     void failed();
@@ -65,4 +69,5 @@ private:
     QPointer<GPSRuntimeScheduler> _scheduler;
     qint64 _retryDeadlineMs = -1;
     int _retryDelayMs = 1000;
+    quint64 _transitionRevision = 0;
 };

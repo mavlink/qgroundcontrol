@@ -8,6 +8,7 @@
 #include <cstdint>
 
 #include "GPSRecordingFormat.h"
+#include "GPSReplayLifecycle.h"
 #include "GPSTransport.h"
 
 class GPSReplayClock
@@ -74,6 +75,10 @@ public:
 
     quint64 readCount() const { return _readCount; }
 
+    const std::optional<GPSReplayTermination>& termination() const { return _lifecycle.termination(); }
+
+    quint64 terminationCount() const { return _lifecycle.terminationCount(); }
+
 private:
     int _writeLegacy(const uint8_t* buffer, int length);
 
@@ -84,6 +89,7 @@ private:
     GPSReplayClock& _clock;
     std::atomic_bool& _stop;
     GPSReplayTrace _trace;
+    GPSReplayLifecycle _lifecycle;
     qsizetype _index = 0;
     qsizetype _offset = 0;
     int _maximumRead = 4096;

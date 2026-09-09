@@ -7,6 +7,13 @@ class NMEASatelliteAdapterTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _identityResolution_data();
+    void _identityResolution();
+    void _mixedLegacyIdentities_data();
+    void _mixedLegacyIdentities();
+    void _ambiguousLegacyIdentities_data();
+    void _ambiguousLegacyIdentities();
+    void _explicitZeroAndUnknownCoverage();
     void _reentrantStopKeepsReplacement();
     void _identicalReportsAndGsaWithoutView();
     void _qtLegacyEquivalence();

@@ -4,8 +4,10 @@
 
 #include <memory>
 
+#include "GPSBaseReferenceSave.h"
 #include "GPSBaseStationState.h"
 #include "GPSReceiverSession.h"
+#include "RTKSettings.h"
 
 namespace {
 GPSSurveyInStatus validSurvey()
@@ -182,6 +184,166 @@ void GPSBaseStationStateTest::_referenceMetadata()
     QCOMPARE(state.reference().observation.position.coordinate().latitude(), 47.5);
     session.stop();
     QVERIFY(!state.reference().isValid());
+}
+
+void GPSBaseStationStateTest::_saveReference_data()
+{
+    QTest::addColumn<GPSBaseReference>("reference");
+    QTest::addColumn<double>("savedAccuracy");
+    QTest::addColumn<bool>("accepted");
+    QTest::addColumn<double>("expectedAccuracy");
+    QTest::addColumn<double>("expectedAltitude");
+    GPSBaseReference reference;
+    reference.valid = true;
+    reference.observation.position = QGeoPositionInfo(QGeoCoordinate(47.5, 8.5, 500), QDateTime::currentDateTimeUtc());
+    reference.observation.monotonicTimestampUs = 9000000;
+    reference.observation.sessionId = 11;
+    reference.observation.altitudeDatum = GPSObservation::AltitudeDatum::Ellipsoid;
+    reference.accuracyMeters = 1.25;
+    const auto row = [](const char* name, const GPSBaseReference& value, bool accepted,
+                        double expectedAccuracy = 1.25, double expectedAltitude = 500) {
+        QTest::newRow(name) << value << 4.5 << accepted << expectedAccuracy << expectedAltitude;
+    };
+    row("known", reference, true);
+    auto changed = reference;
+    changed.accuracyMeters.reset();
+    row("unknown-preserves-configured", changed, true, 4.5);
+    QTest::newRow("unknown-preserves-configured-zero") << changed << 0.0 << true << 0.0 << 500.0;
+    QTest::newRow("unknown-with-invalid-configured") << changed << qQNaN() << false << 0.0 << 500.0;
+    changed.accuracyMeters = 0;
+    row("known-zero", changed, true, 0);
+    changed.accuracyMeters = -1;
+    row("negative-accuracy", changed, false);
+    changed.accuracyMeters = qQNaN();
+    row("nan-accuracy", changed, false);
+    changed = reference;
+    changed.observation.altitudeDatum = GPSObservation::AltitudeDatum::Unknown;
+    row("unknown-datum", changed, false);
+    changed.observation.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+    row("msl-without-ellipsoid", changed, false);
+    changed.observation.altitudeEllipsoidMeters = 550;
+    row("msl-with-known-ellipsoid", changed, true, 1.25, 550);
+    changed = reference;
+    changed.valid = false;
+    row("invalid-reference", changed, false);
+    changed = reference;
+    changed.observation.sessionId = 10;
+    row("retired-session", changed, false);
+    changed = reference;
+    changed.observation.monotonicTimestampUs = 0;
+    row("missing-receipt", changed, false);
+    changed.observation.monotonicTimestampUs = 10000001;
+    row("future-receipt", changed, false);
+    changed = reference;
+    changed.observation.position.setCoordinate(QGeoCoordinate(91, 8.5, 500));
+    row("invalid-coordinate", changed, false);
+}
+
+void GPSBaseStationStateTest::_saveReference()
+{
+    QFETCH(GPSBaseReference, reference);
+    QFETCH(double, savedAccuracy);
+    QFETCH(bool, accepted);
+    QFETCH(double, expectedAccuracy);
+    QFETCH(double, expectedAltitude);
+    GPSReceiverConfig current;
+    current.base.useFixedBase = true;
+    current.base.fixedBaseAccuracyMeters = static_cast<float>(savedAccuracy);
+    const auto result = GPSBaseReferenceSave::prepare(reference, 11, current, 10000000);
+    QCOMPARE(result.configuration.has_value(), accepted);
+    QCOMPARE(result.error.isEmpty(), accepted);
+    QCOMPARE(current.base.fixedBaseLatitude, 0.0);
+    if (accepted) {
+        QCOMPARE(result.configuration->base.fixedBaseLatitude, 47.5);
+        QCOMPARE(result.configuration->base.fixedBaseLongitude, 8.5);
+        QCOMPARE(result.configuration->base.fixedBaseAltitudeMeters, static_cast<float>(expectedAltitude));
+        QCOMPARE(result.configuration->base.fixedBaseAccuracyMeters, static_cast<float>(expectedAccuracy));
+        QVERIFY(result.configuration->validationError().isEmpty());
+    }
+}
+
+void GPSBaseStationStateTest::_saveSettingsAtomically()
+{
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    RTKSettings settings;
+    GPSReceiverConfig configuration;
+    configuration.base.useFixedBase = true;
+    configuration.base.fixedBaseLatitude = 47.5;
+    configuration.base.fixedBaseLongitude = 8.5;
+    configuration.base.fixedBaseAltitudeMeters = 500;
+    configuration.base.fixedBaseAccuracyMeters = 0;
+    settings.fixedBasePositionLatitude()->setRawValue(1.0);
+    settings.fixedBasePositionLongitude()->setRawValue(2.0);
+    settings.fixedBasePositionAltitude()->setRawValue(3.0);
+    settings.fixedBasePositionAccuracy()->setRawValue(2.0);
+    int notifications = 0;
+    for (auto* fact : {settings.fixedBasePositionLatitude(), settings.fixedBasePositionLongitude(),
+                       settings.fixedBasePositionAltitude(), settings.fixedBasePositionAccuracy()}) {
+        connect(fact, &Fact::rawValueChanged, &settings, [&]() {
+            ++notifications;
+            QCOMPARE(settings.fixedBasePositionLatitude()->rawValue().toDouble(), 47.5);
+            QCOMPARE(settings.fixedBasePositionLongitude()->rawValue().toDouble(), 8.5);
+            QCOMPARE(settings.fixedBasePositionAltitude()->rawValue().toFloat(), 500.0f);
+            QCOMPARE(settings.fixedBasePositionAccuracy()->rawValue().toFloat(), 0.0f);
+            QSettings storage;
+            QCOMPARE(storage.value(QStringLiteral("RTK/fixedBasePositionLatitude")).toDouble(), 47.5);
+            QCOMPARE(storage.value(QStringLiteral("RTK/fixedBasePositionLongitude")).toDouble(), 8.5);
+            QCOMPARE(storage.value(QStringLiteral("RTK/fixedBasePositionAltitude")).toFloat(), 500.0f);
+            QCOMPARE(storage.value(QStringLiteral("RTK/fixedBasePositionAccuracy")).toFloat(), 0.0f);
+        });
+    }
+    QVERIFY(settings.saveFixedBasePosition(configuration));
+    QCOMPARE(notifications, 4);
+    QVERIFY(settings.saveFixedBasePosition(configuration));
+    QCOMPARE(notifications, 4);
+    configuration.base.fixedBaseAccuracyMeters = qQNaN();
+    QVERIFY(!settings.saveFixedBasePosition(configuration));
+    QCOMPARE(notifications, 4);
+    QCOMPARE(settings.fixedBasePositionAccuracy()->rawValue().toFloat(), 0.0f);
+}
+
+void GPSBaseStationStateTest::_saveSettingsReentrantEdit()
+{
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    RTKSettings settings;
+    settings.fixedBasePositionLatitude()->setRawValue(1.0);
+    GPSReceiverConfig configuration;
+    configuration.base.useFixedBase = true;
+    configuration.base.fixedBaseLatitude = 47.5;
+    configuration.base.fixedBaseLongitude = 8.5;
+    configuration.base.fixedBaseAltitudeMeters = 500;
+    configuration.base.fixedBaseAccuracyMeters = 0;
+    connect(settings.fixedBasePositionLatitude(), &Fact::valueChanged, &settings, [&]() {
+        QCOMPARE(settings.fixedBasePositionAccuracy()->rawValue().toDouble(), 0.0);
+        settings.fixedBasePositionAccuracy()->setRawValue(2.5);
+    });
+    QVERIFY(settings.saveFixedBasePosition(configuration));
+    QCOMPARE(settings.fixedBasePositionAccuracy()->rawValue().toDouble(), 2.5);
+    QCOMPARE(QSettings().value(QStringLiteral("RTK/fixedBasePositionAccuracy")).toDouble(), 2.5);
+}
+
+void GPSBaseStationStateTest::_saveSettingsNotificationCanDestroySettings()
+{
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    auto settings = std::make_unique<RTKSettings>();
+    settings->fixedBasePositionLatitude()->setRawValue(1.0);
+    GPSReceiverConfig configuration;
+    configuration.base.useFixedBase = true;
+    configuration.base.fixedBaseLatitude = 47.5;
+    configuration.base.fixedBaseLongitude = 8.5;
+    configuration.base.fixedBaseAltitudeMeters = 500;
+    configuration.base.fixedBaseAccuracyMeters = 0;
+    connect(settings->fixedBasePositionLatitude(), &Fact::valueChanged, this, [&]() { settings.reset(); });
+    QVERIFY(!settings->saveFixedBasePosition(configuration));
+    QVERIFY(!settings);
+    QSettings storage;
+    QCOMPARE(storage.value(QStringLiteral("RTK/fixedBasePositionLatitude")).toDouble(), 47.5);
+    QCOMPARE(storage.value(QStringLiteral("RTK/fixedBasePositionLongitude")).toDouble(), 8.5);
+    QCOMPARE(storage.value(QStringLiteral("RTK/fixedBasePositionAltitude")).toDouble(), 500.0);
+    QCOMPARE(storage.value(QStringLiteral("RTK/fixedBasePositionAccuracy")).toDouble(), 0.0);
 }
 
 UT_REGISTER_TEST(GPSBaseStationStateTest, TestLabel::Unit)

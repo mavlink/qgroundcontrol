@@ -1202,6 +1202,22 @@ qint64 QSerialPort::readLineData(char* data, qint64 maxSize)
     return QIODevice::readLineData(data, maxSize);
 }
 
+AndroidSerialWrite::Result QSerialPort::writeBounded(const char* data, int length, QDeadlineTimer deadline,
+                                                     const AndroidSerialWrite::Cancelled& cancelled)
+{
+    Q_D(QSerialPort);
+    if (!isOpen() || !isWritable() || bytesToWrite() != 0) {
+        return {AndroidSerialWrite::Status::Error};
+    }
+    const auto result = d->writeBounded(data, length, deadline, cancelled);
+    if (result.status == AndroidSerialWrite::Status::Error) {
+        d->setError(QSerialPortErrorInfo(QSerialPort::WriteError, tr("Bounded serial write failed")));
+    } else if (result.status == AndroidSerialWrite::Status::TimedOut) {
+        d->setError(QSerialPortErrorInfo(QSerialPort::TimeoutError, tr("Bounded serial write timed out")));
+    }
+    return result;
+}
+
 /*!
     \reimp
 */

@@ -1212,3 +1212,74 @@ void GPSManagerTest::_receiverSettingsNotificationCanDestroyManager()
     settings->networkBasePort()->setRawValue(2102);
     QVERIFY(!manager);
 }
+
+void GPSManagerTest::_saveBaseReference()
+{
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    ReceiverServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    TestFixtures::SettingsFixture saved;
+    saveNetworkSettings(saved, QStringLiteral("localhost"), server.serverPort(), 3);
+    auto* settings = SettingsManager::instance();
+    auto* base = settings->rtkSettings();
+    saved.setFactValue(base->useFixedBasePosition(), true);
+    saved.setFactValue(base->fixedBasePositionLatitude(), 1.0);
+    saved.setFactValue(base->fixedBasePositionLongitude(), 2.0);
+    saved.setFactValue(base->fixedBasePositionAltitude(), 3.0);
+    saved.setFactValue(base->fixedBasePositionAccuracy(), 0.0);
+    GPSManager manager(*settings, nullptr, []() { return false; });
+    QVERIFY(!manager.canSaveBaseReference());
+    QVERIFY(manager.connectNetworkRtk());
+    QTRY_VERIFY_WITH_TIMEOUT(manager.receiver()->connected(), TestTimeout::mediumMs());
+    auto* session = manager.receiverSession();
+    GPSSurveyInStatus reference;
+    reference.latitude = 47.5;
+    reference.longitude = 8.5;
+    reference.altitude = 500;
+    reference.valid = true;
+    reference.sessionId = session->sessionId();
+    reference.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    reference.altitudeDatum = GPSObservation::AltitudeDatum::Unknown;
+    emit session->surveyInReceived(reference);
+    QVERIFY(!manager.canSaveBaseReference());
+    QVERIFY(!manager.baseReferenceSaveError().isEmpty());
+    QCOMPARE(base->fixedBasePositionLatitude()->rawValue().toDouble(), 1.0);
+    QCOMPARE(base->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.0);
+
+    reference.altitudeDatum = GPSObservation::AltitudeDatum::Ellipsoid;
+    emit session->surveyInReceived(reference);
+    QVERIFY(manager.canSaveBaseReference());
+    QVERIFY(manager.baseReferenceSaveError().isEmpty());
+    const quint64 savedSession = session->sessionId();
+    QSignalSpy settingsChanged(manager.rtkConnection(), &GPSReceiverAutoConnect::stateChanged);
+    QVERIFY(manager.saveBaseReference());
+    QCOMPARE(settingsChanged.count(), 1);
+    QCOMPARE(session->sessionId(), savedSession);
+    QCOMPARE(session->config().base.fixedBaseLatitude, 1.0);
+    QCOMPARE(base->fixedBasePositionLatitude()->rawValue().toDouble(), 47.5);
+    QCOMPARE(base->fixedBasePositionLongitude()->rawValue().toDouble(), 8.5);
+    QCOMPARE(base->fixedBasePositionAltitude()->rawValue().toDouble(), 500.0);
+    QCOMPARE(base->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.0);
+    manager.disconnectNetworkRtk();
+    QTRY_VERIFY_WITH_TIMEOUT(!manager.receiver()->stopping(), TestTimeout::mediumMs());
+    QVERIFY(manager.connectNetworkRtk());
+    QTRY_VERIFY_WITH_TIMEOUT(manager.receiver()->connected(), TestTimeout::mediumMs());
+    QCOMPARE(session->config().base.fixedBaseLatitude, 47.5);
+    QCOMPARE(session->config().base.fixedBaseLongitude, 8.5);
+    QCOMPARE(session->config().base.fixedBaseAltitudeMeters, 500.0f);
+    QCOMPARE(session->config().base.fixedBaseAccuracyMeters, 0.0f);
+    QVERIFY(session->config().validationError().isEmpty());
+
+    reference.sessionId = session->sessionId();
+    reference.latitude = 48.5;
+    emit session->surveyInReceived(reference);
+    QVERIFY(manager.canSaveBaseReference());
+    connect(base->fixedBasePositionLatitude(), &Fact::rawValueChanged, &manager, [&]() {
+        base->receiverRole()->setRawValue(RTKSettings::Position);
+    });
+    QVERIFY(manager.saveBaseReference());
+    QVERIFY(!session->hasReceiver());
+    QCOMPARE(base->receiverRole()->rawValue().toInt(), static_cast<int>(RTKSettings::Position));
+    QVERIFY(!manager.canSaveBaseReference());
+}

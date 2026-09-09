@@ -17,7 +17,7 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSReplayScheduler.h"
 #include "GPSTransport.h"
-#include "NMEAConnectionConfig.h"
+#include "GPSSettings.h"
 #include "NMEASourceManager.h"
 #include "NMEAUtils.h"
 #include "PositionManager.h"
@@ -30,7 +30,7 @@ namespace {
 void configureSource(NMEASourceManager& source, AutoConnectSettings* settings)
 {
     const auto apply = [&source, settings]() {
-        source.setProfile(NMEAConnectionConfig::fromSettings(*settings).profile());
+        source.setProfile(GPSSettings::nmea(*settings).profile);
         source.setAutoConnect(settings->nmeaAutoConnect()->rawValue().toBool());
     };
     for (Fact* fact : {settings->nmeaSource(), settings->autoConnectNmeaPort(), settings->autoConnectNmeaBaud(),

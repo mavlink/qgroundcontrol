@@ -17,7 +17,8 @@ class GPSReceiver : public QObject
 
 public:
     /// The receiver session must outlive this presentation object.
-    explicit GPSReceiver(GPSReceiverSession& session, QObject* parent = nullptr);
+    explicit GPSReceiver(GPSReceiverSession& session, QObject* parent = nullptr,
+                         GPSRuntimeScheduler* scheduler = nullptr);
     ~GPSReceiver();
 
     bool connected() const;
@@ -67,4 +68,5 @@ private:
     GPSSourceHealth _health;
     GPSSatelliteStore _satellites;
     GPSReceiverFactGroup* _facts = nullptr;
+    quint64 _projectionRevision = 0;
 };

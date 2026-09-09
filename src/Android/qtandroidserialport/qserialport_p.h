@@ -132,6 +132,8 @@ public:
     bool startAsyncRead();
 
     qint64 writeData(const char* data, qint64 maxSize);
+    AndroidSerialWrite::Result writeBounded(const char* data, int length, QDeadlineTimer deadline,
+                                            const AndroidSerialWrite::Cancelled& cancelled);
 
     void newDataArrived(const char* bytes, int length);
     void exceptionArrived(const QString& ex);

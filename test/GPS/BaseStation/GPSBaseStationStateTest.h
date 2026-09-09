@@ -11,6 +11,11 @@ class GPSBaseStationStateTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _saveReference_data();
+    void _saveReference();
+    void _saveSettingsAtomically();
+    void _saveSettingsReentrantEdit();
+    void _saveSettingsNotificationCanDestroySettings();
     void _referenceMetadata();
     void _surveyRoleGating_data();
     void _surveyRoleGating();

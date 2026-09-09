@@ -628,7 +628,7 @@ void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(errors.size(), 1);
     QVERIFY(!transport._connectTimeoutTimer.isActive());
-    QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::InvalidHttpResponse);
+    QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::InterruptedResponse);
 }
 
 void NTRIPHttpTransportTest::testCorrectionWatchdog_data()
@@ -920,7 +920,9 @@ void NTRIPHttpTransportTest::testBodyBeforeMalformedChunk()
     QCOMPARE(frames.size(), 1);
     QCOMPARE(framesAtFailure, 1);
     QCOMPARE(frames.first().first().toByteArray(), frame);
-    QCOMPARE(qvariant_cast<NTRIPFailure>(failures.first().first()).code, NTRIPError::InvalidHttpResponse);
+    const auto failure = qvariant_cast<NTRIPFailure>(failures.first().first());
+    QCOMPARE(failure.code, NTRIPError::InvalidHttpResponse);
+    QVERIFY(!failure.retryable);
 }
 
 void NTRIPHttpTransportTest::testEofFinalization_data()
@@ -931,15 +933,15 @@ void NTRIPHttpTransportTest::testEofFinalization_data()
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 150);
     const QByteArray identity = "HTTP/1.1 200 OK\r\n\r\n";
     const QByteArray chunked = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n";
-    QTest::newRow("headers") << QByteArray("HTTP/1.1 200 OK\r\nContent-Type:") << 0 << NTRIPError::InvalidHttpResponse;
+    QTest::newRow("headers") << QByteArray("HTTP/1.1 200 OK\r\nContent-Type:") << 0 << NTRIPError::InterruptedResponse;
     QTest::newRow("chunk-payload") << (chunked + QByteArray::number(frame.size() + 1, 16) + "\r\n" + frame) << 1
-                                   << NTRIPError::InvalidHttpResponse;
+                                   << NTRIPError::InterruptedResponse;
     QTest::newRow("chunk-terminator") << (chunked + QByteArray::number(frame.size(), 16) + "\r\n" + frame + "\r") << 1
-                                      << NTRIPError::InvalidHttpResponse;
-    QTest::newRow("trailers") << (chunked + "0\r\nTrailer:") << 0 << NTRIPError::InvalidHttpResponse;
+                                      << NTRIPError::InterruptedResponse;
+    QTest::newRow("trailers") << (chunked + "0\r\nTrailer:") << 0 << NTRIPError::InterruptedResponse;
     QTest::newRow("content-length") << (QByteArray("HTTP/1.1 200 OK\r\nContent-Length: ") +
                                         QByteArray::number(frame.size() + 1) + "\r\n\r\n" + frame)
-                                    << 1 << NTRIPError::InvalidHttpResponse;
+                                    << 1 << NTRIPError::InterruptedResponse;
     QTest::newRow("multiple-read-budgets")
         << (identity + frame.repeated(1000)) << 1000 << NTRIPError::ServerDisconnected;
     QTest::newRow("complete-chunk") << (chunked + QByteArray::number(frame.size(), 16) + "\r\n" + frame +
@@ -961,6 +963,7 @@ void NTRIPHttpTransportTest::testEofFinalization()
     NTRIPHttpTransport transport(config);
     QSignalSpy frames(&transport, &NTRIPStream::correctionReceivedAt);
     QSignalSpy errors(&transport, &NTRIPStream::error);
+    QSignalSpy failures(&transport, &NTRIPStream::failed);
     int framesAtError = -1;
     connect(&transport, &NTRIPStream::error, this, [&]() { framesAtError = frames.size(); });
     transport.start();
@@ -971,6 +974,8 @@ void NTRIPHttpTransportTest::testEofFinalization()
     QCOMPARE(peer->write(wire), wire.size());
     peer->disconnectFromHost();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
+    QCOMPARE(failures.size(), 1);
+    QVERIFY(qvariant_cast<NTRIPFailure>(failures.first().first()).retryable);
     QCOMPARE(frames.size(), frameCount);
     QCOMPARE(framesAtError, frameCount);
     QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), expectedError);

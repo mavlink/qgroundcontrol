@@ -302,13 +302,40 @@ void GPSReceiverAutoConnect::_stop(quint64 revision)
 
 void GPSReceiverAutoConnect::_startReceiver()
 {
+    if (_sessionConfig && _transportFactory) {
+        _startReceiver(*_sessionConfig, _transportFactory);
+    }
+}
+
+bool GPSReceiverAutoConnect::_startReceiver(const GPSReceiverProfile& profile, GPSProvider::TransportFactory factory,
+                                            std::function<void()> admitted)
+{
+    if (_suspended || !_receiver || _receiver->hasReceiver() || _receiver->stopping()) {
+        return false;
+    }
     const quint64 revision = _commandRevision;
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    if (!_suspended && _sessionConfig && _receiver && !_receiver->hasReceiver() && !_receiver->stopping() &&
-        _connection.beginAttempt() && guard && revision == _commandRevision && _sessionConfig && _transportFactory &&
-        _receiver) {
-        _receiver->start(*_sessionConfig, _transportFactory);
-    }
+    return _connection.startAttempt(
+        [this, guard, revision, profile, factory = std::move(factory), admitted = std::move(admitted)]() mutable {
+            const auto current = [&]() {
+                return guard && revision == _commandRevision && !_suspended && _receiver && !_receiver->hasReceiver() &&
+                       !_receiver->stopping() && _connection.active() &&
+                       _connection.state() == GPSConnectionState::Connecting;
+            };
+            if (!current()) {
+                return false;
+            }
+            if (admitted) {
+                admitted();
+                if (!current()) {
+                    return false;
+                }
+            }
+            _receiver->start(profile, std::move(factory));
+            return guard && _receiver &&
+                   (_receiver->hasReceiver() || _receiver->stopping() ||
+                    _connection.state() != GPSConnectionState::Connecting);
+        });
 }
 
 bool GPSReceiverAutoConnect::_retryReady()

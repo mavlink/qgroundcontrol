@@ -7,6 +7,9 @@ class GPSReceiverTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _projectionHandlesReentrantIntegrity_data();
+    void _projectionHandlesReentrantIntegrity();
+    void _retainedPositionFactsExpire();
     void _testCoreAvailableWithoutReceiver();
     void _positionSourceSelection();
     void _failedOpenNeverConnects();

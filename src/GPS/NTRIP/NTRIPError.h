@@ -22,7 +22,8 @@ enum class NTRIPError
     InvalidMountpoint,
     NoLocation,
     InvalidConfig,
-    Unknown
+    Unknown,
+    InterruptedResponse
 };
 Q_ENUM_NS(NTRIPError)
 

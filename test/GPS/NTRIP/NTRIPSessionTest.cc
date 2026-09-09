@@ -25,18 +25,37 @@ private slots:
     {
         QTest::addColumn<QByteArray>("header");
         QTest::addColumn<bool>("chunked");
-        QTest::newRow("http") << QByteArray("HTTP/1.1 200 OK\r\n\r\n") << false;
-        QTest::newRow("icy-bare") << QByteArray("ICY 200 OK\r\n") << false;
-        QTest::newRow("icy-headers") << QByteArray("ICY 200 OK\r\nServer: caster\r\n\r\n") << false;
-        QTest::newRow("chunked") << QByteArray("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n") << true;
-        QTest::newRow("continue") << QByteArray("HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 200 OK\r\n\r\n") << false;
+        QTest::addColumn<QByteArray>("payload");
+        QTest::addColumn<bool>("expectedComplete");
+        const QByteArray payload = QByteArray::fromHex("d3001234567890abcdef0123456789abcdef123456");
+        const QByteArray length = "Content-Length: " + QByteArray::number(payload.size()) + "\r\n\r\n";
+        QTest::newRow("http") << QByteArray("HTTP/1.1 200 OK\r\n\r\n") << false << payload << false;
+        QTest::newRow("icy-bare") << QByteArray("ICY 200 OK\r\n") << false << payload << false;
+        QTest::newRow("icy-headers") << QByteArray("ICY 200 OK\r\nServer: caster\r\n\r\n") << false << payload << false;
+        QTest::newRow("http-chunked") << QByteArray("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n") << true
+                                      << payload << true;
+        QTest::newRow("icy-chunked") << QByteArray("ICY 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n") << true
+                                     << payload << true;
+        QTest::newRow("http-length") << ("HTTP/1.1 200 OK\r\n" + length) << false << payload << true;
+        QTest::newRow("icy-length") << ("ICY 200 OK\r\n" + length) << false << payload << true;
+        QTest::newRow("http-empty-length")
+            << QByteArray("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n") << false << QByteArray() << true;
+        QTest::newRow("icy-empty-length")
+            << QByteArray("ICY 200 OK\r\nContent-Length: 0\r\n\r\n") << false << QByteArray() << true;
+        QTest::newRow("http-empty-chunked")
+            << QByteArray("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n") << true << QByteArray() << true;
+        QTest::newRow("icy-empty-chunked")
+            << QByteArray("ICY 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n") << true << QByteArray() << true;
+        QTest::newRow("continue") << QByteArray("HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 200 OK\r\n\r\n") << false
+                                  << payload << false;
     }
 
     void decoderFragmentation()
     {
         QFETCH(QByteArray, header);
         QFETCH(bool, chunked);
-        const QByteArray payload = QByteArray::fromHex("d3001234567890abcdef0123456789abcdef123456");
+        QFETCH(QByteArray, payload);
+        QFETCH(bool, expectedComplete);
         QByteArray wire = header;
         if (chunked) {
             for (qsizetype offset = 0; offset < payload.size(); offset += 3) {
@@ -63,7 +82,11 @@ private slots:
             }
             QCOMPARE(decoded, payload);
             QCOMPARE(connections, 1);
-            QCOMPARE(complete, chunked);
+            QCOMPARE(complete, expectedComplete);
+            const auto terminal = decoder.finish();
+            QVERIFY(!terminal.failure);
+            QCOMPARE(terminal.complete, !expectedComplete);
+            QVERIFY(decoder.feed("trailing bytes").body.isEmpty());
         }
     }
 
@@ -112,6 +135,61 @@ private slots:
         QCOMPARE(result.failure->httpStatus, status);
         QCOMPARE(result.failure->retryable, retryable);
         QCOMPARE(result.failure->retryAfter, std::chrono::seconds{17});
+    }
+
+    void interruptedResponseRecovers_data()
+    {
+        QTest::addColumn<QByteArray>("wire");
+        QTest::addColumn<bool>("retryable");
+        const QByteArray chunked = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n";
+        QTest::newRow("status") << QByteArray("HTTP/1.1 20") << true;
+        QTest::newRow("headers") << QByteArray("HTTP/1.1 200 OK\r\nContent-Type:") << true;
+        QTest::newRow("chunk-data") << (chunked + "4\r\nab") << true;
+        QTest::newRow("chunk-terminator") << (chunked + "2\r\nab\r") << true;
+        QTest::newRow("trailers") << (chunked + "0\r\nTrailer:") << true;
+        QTest::newRow("content-length") << QByteArray("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nab") << true;
+        QTest::newRow("malformed-chunk") << (chunked + "2\r\nab!!") << false;
+    }
+
+    void interruptedResponseRecovers()
+    {
+        QFETCH(QByteArray, wire);
+        QFETCH(bool, retryable);
+        NTRIPHttpDecoder decoder;
+        auto decoded = decoder.feed(wire);
+        if (!decoded.failure) {
+            decoded = decoder.finish();
+        }
+        QVERIFY(decoded.failure);
+        QCOMPARE(decoded.failure->code, retryable ? NTRIPError::InterruptedResponse : NTRIPError::InvalidHttpResponse);
+        QCOMPARE(decoded.failure->retryable, retryable);
+        QVERIFY(!decoder.finish().failure);
+
+        int attempts = 0;
+        MockNTRIPStream* stream = nullptr;
+        NTRIPSession session([&](const NTRIPTransportConfig&, QObject* owner) {
+            ++attempts;
+            stream = new MockNTRIPStream(owner);
+            return stream;
+        });
+        QSignalSpy retired(&session, &NTRIPSession::streamEnded);
+        QSignalSpy failures(&session, &NTRIPSession::failureOccurred);
+        session.start(config());
+        const auto firstAttempt = session.activeAttemptId();
+        emit stream->failed(*decoded.failure);
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+        QCOMPARE(retired.size(), 1);
+        QCOMPARE(failures.size(), 1);
+        QCOMPARE(session.state(), retryable ? NTRIPSession::State::Reconnecting : NTRIPSession::State::Error);
+        QCOMPARE(session.retryPending(), retryable);
+        if (retryable) {
+            // Exercise the scheduled retry, rather than invoking the private attempt method.
+            QTRY_COMPARE_WITH_TIMEOUT(attempts, 2, 5000);
+            QCOMPARE(session.state(), NTRIPSession::State::Connected);
+            QVERIFY(session.activeAttemptId() > firstAttempt);
+        }
+        session.stop();
+        QVERIFY(!session.retryPending());
     }
 
     void retriesRequireSustainedCorrections()

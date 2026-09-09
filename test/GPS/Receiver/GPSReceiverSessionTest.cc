@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "GPSConnectionConfig.h"
+#include "GPSReceiverTestProfile.h"
 #include "GPSReceiverSession.h"
 #include "GPSTransport.h"
 #include "NMEADecoderSession.h"
@@ -51,7 +51,7 @@ void GPSReceiverSessionTest::_cancelBeforeStart()
             session->stop();
         }
     });
-    session->start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), std::move(factory));
+    session->start(gpsReceiverTestProfile({}, GPSType::u_blox), std::move(factory));
     QVERIFY(!opened);
     QVERIFY(provider.isNull());
     QVERIFY(reservation.expired());
@@ -60,7 +60,7 @@ void GPSReceiverSessionTest::_cancelBeforeStart()
         QVERIFY(!session->stopping());
         disconnect(cancellation);
         if (action == QStringLiteral("disconnect")) {
-            session->start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(), {});
+            session->start(gpsReceiverTestProfile({}, GPSType::u_blox), {});
             QVERIFY(session->hasReceiver());
             QTRY_VERIFY_WITH_TIMEOUT(!session->hasReceiver(), TestTimeout::mediumMs());
         }
@@ -146,7 +146,7 @@ void GPSReceiverSessionTest::_destroyDuringStreamClose()
     GPSReceiverConfig config;
     config.role = GPSReceiverConfig::Role::Position;
     config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
-    session->start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = config}.profile(),
+    session->start(gpsReceiverTestProfile(config, GPSType::u_blox),
                    [gate](const std::atomic_bool&) {
                        gate->entered.release();
                        gate->release.acquire();
@@ -175,8 +175,10 @@ void GPSReceiverSessionTest::_terminalStateExactlyOnce()
         session.shutdown();
     });
     const auto profile =
-        GPSConnectionConfig{.transport = GPSConnectionConfig::Tcp, .host = QStringLiteral("localhost"), .port = 2101}
-            .profile();
+        GPSReceiverProfile{.endpoint = {.kind = GPSReceiverProfile::Endpoint::Kind::Tcp,
+                                             .host = QStringLiteral("localhost"), .port = 2101},
+                           .configurationPolicy = GPSReceiverProfile::ConfigurationPolicy::Configure,
+                           .receiver = {.base = {.surveyInAccMeters = 2.0, .surveyInDurationSecs = 180}}};
     QSignalSpy disconnected(&session, &GPSReceiverSession::disconnected);
     QSignalSpy failed(&session, &GPSReceiverSession::connectionError);
     int terminalTransitions = 0;
@@ -209,11 +211,11 @@ void GPSReceiverSessionTest::_attemptSnapshotSurvivesRestart()
 {
     GPSReceiverSession session;
     const auto cleanup = qScopeGuard([&]() { session.shutdown(); });
-    GPSConnectionConfig config;
+    auto config = gpsReceiverTestProfile();
     config.receiver.role = GPSReceiverConfig::Role::Position;
-    const auto first = config.profile();
+    const auto first = config.normalized();
     config.receiver.outputRateHz = 5;
-    const auto second = config.profile();
+    const auto second = config.normalized();
     quint64 firstGeneration = 0;
     bool restarted = false;
     connect(&session, &GPSReceiverSession::attemptChanged, &session, [&](const GPSReceiverAttempt& attempt) {
@@ -244,7 +246,7 @@ void GPSReceiverSessionTest::_typedOperationEvidenceSurvivesFailureAndRejectsRet
         release->release(2);
         session.shutdown();
     });
-    const auto profile = GPSConnectionConfig{}.profile();
+    const auto profile = gpsReceiverTestProfile();
     const auto factory = [release](const std::atomic_bool&) {
         release->acquire();
         return std::unique_ptr<GPSTransport>();

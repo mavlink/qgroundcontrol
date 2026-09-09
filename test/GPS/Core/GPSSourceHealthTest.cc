@@ -155,7 +155,8 @@ void GPSSourceHealthTest::_independentSatelliteExpiry()
 
 void GPSSourceHealthTest::_settingsStatus()
 {
-    GPSSourceHealth health;
+    GPSReplayScheduler scheduler(nullptr, 10000000);
+    GPSSourceHealth health(nullptr, &scheduler);
     QQmlEngine engine;
     engine.addImportPath(QStringLiteral("qrc:/qml"));
     QQmlComponent component(&engine);
@@ -178,12 +179,17 @@ void GPSSourceHealthTest::_settingsStatus()
     QVERIFY(fix->property("text").toString().contains(QStringLiteral("waiting")));
     health.updatePosition(position());
     QVERIFY(fix->property("text").toString().contains(QStringLiteral("5.0 m")));
-    health.applySatelliteObservation(satelliteReport(GPSObservation::monotonicNowUs(), 8, 0));
+    health.applySatelliteObservation(satelliteReport(scheduler.nowUs(), 8, 0));
     QCOMPARE(satellites->property("text").toString(), QStringLiteral("Satellites: 0 in use / 8 in view"));
     health.updatePosition(position(), GPSSourceHealth::FRESHNESS_TIMEOUT_MS);
     QCOMPARE(fix->property("text").toString(), QStringLiteral("Position: stale"));
     health.invalidatePosition();
+    QCOMPARE(fix->property("text").toString(), QStringLiteral("Position: stale"));
+    health.updatePosition(position());
+    health.invalidatePosition();
     QCOMPARE(fix->property("text").toString(), QStringLiteral("Position: no usable fix"));
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(GPSSourceHealth::FRESHNESS_TIMEOUT_MS)));
+    QCOMPARE(fix->property("text").toString(), QStringLiteral("Position: stale"));
     health.reset();
     QCOMPARE(satellites->property("text").toString(), QStringLiteral("Satellites: Unknown in use / Unknown in view"));
 }
@@ -345,3 +351,46 @@ void GPSSourceHealthTest::_rawPoliciesPreserveMeasurementsAndRespectInvalidation
 }
 
 UT_REGISTER_TEST(GPSSourceHealthTest, TestLabel::Unit)
+
+void GPSSourceHealthTest::_retainedMeasurementExpires_data()
+{
+    QTest::addColumn<QString>("quality");
+    for (const auto& quality : {"missing", "poor", "no-fix", "invalidated"}) {
+        QTest::newRow(quality) << QString::fromLatin1(quality);
+    }
+}
+
+void GPSSourceHealthTest::_retainedMeasurementExpires()
+{
+    QFETCH(QString, quality);
+    GPSReplayScheduler scheduler;
+    GPSSourceHealth health(nullptr, &scheduler);
+    health.setFreshnessTimeoutMs(100);
+    GPSObservation observation;
+    observation.position = position();
+    observation.monotonicTimestampUs = scheduler.nowUs();
+    if (quality == QStringLiteral("missing")) {
+        observation.position.removeAttribute(QGeoPositionInfo::HorizontalAccuracy);
+    } else if (quality == QStringLiteral("poor")) {
+        observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
+    } else if (quality == QStringLiteral("no-fix")) {
+        observation.receiverFixValid = false;
+        observation.fixQuality = GPSObservation::FixQuality::NoFix;
+    }
+    health.updateObservation(observation);
+    if (quality == QStringLiteral("invalidated")) {
+        health.invalidatePosition();
+    }
+    QCOMPARE(health.state(), GPSSourceHealth::Invalid);
+    QVERIFY(health.acceptedObservation(GPSObservation::PositionUse::Diagnostics));
+    QVERIFY(!health.acceptedObservation(GPSObservation::PositionUse::GroundStation));
+    QSignalSpy updates(&health, &GPSSourceHealth::positionChanged);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(99)));
+    QVERIFY(updates.isEmpty());
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(health.state(), GPSSourceHealth::Stale);
+    QCOMPARE(updates.size(), 1);
+    QVERIFY(!health.acceptedObservation(GPSObservation::PositionUse::Diagnostics));
+    QCOMPARE(health.observation().position, observation.position);
+    QCOMPARE(scheduler.pendingCount(), 0);
+}

@@ -98,15 +98,7 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
     } else {
         _state = _observation.usable() ? Usable : Invalid;
     }
-    if (_state == Usable) {
-        _positionTask =
-            _scheduler->schedule(this, std::chrono::milliseconds(_freshnessTimeoutMs - ageMs), [this, revision]() {
-                _positionTask = 0;
-                if (_revision == revision) {
-                    _setState(Stale);
-                }
-            });
-    }
+    _schedulePositionExpiry();
     const int previousUsed = satellitesInUseCount();
     const bool validFix = observation.position.isValid() && observation.receiverFixValid.value_or(true) &&
                           observation.fixQuality != GPSObservation::FixQuality::NoFix;
@@ -125,9 +117,25 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
     emit positionChanged();
 }
 
-void GPSSourceHealth::_setState(State state)
+void GPSSourceHealth::_schedulePositionExpiry()
 {
     _cancel(_positionTask);
+    const qint64 age = _age(_observation.monotonicTimestampUs);
+    if (age < 0 || age >= _freshnessTimeoutMs || !_scheduler) {
+        return;
+    }
+    const quint64 revision = _revision;
+    _positionTask =
+        _scheduler->schedule(this, std::chrono::milliseconds(_freshnessTimeoutMs - age), [this, revision]() {
+            _positionTask = 0;
+            if (_revision == revision) {
+                _setState(Stale);
+            }
+        });
+}
+
+void GPSSourceHealth::_setState(State state)
+{
     if (_state != state) {
         _state = state;
         qCDebug(GPSSourceHealthLog) << this << "Position health:" << state;
@@ -139,7 +147,12 @@ void GPSSourceHealth::invalidatePosition()
 {
     _positionInvalidated = true;
     ++_revision;
-    _setState(Invalid);
+    _schedulePositionExpiry();
+    if (_state == Invalid) {
+        emit positionChanged();
+    } else {
+        _setState(_age(_observation.monotonicTimestampUs) >= _freshnessTimeoutMs ? Stale : Invalid);
+    }
 }
 
 void GPSSourceHealth::reset()
@@ -206,7 +219,15 @@ void GPSSourceHealth::applySatelliteObservation(const GPSSatelliteObservation& o
 void GPSSourceHealth::setFreshnessTimeoutMs(int timeoutMs)
 {
     _freshnessTimeoutMs = std::max(1, timeoutMs);
-    if (_state != NoData && !_positionInvalidated) {
+    if (_state == NoData) {
+        return;
+    }
+    if (!_positionInvalidated) {
         updateObservation(_observation);
+    } else {
+        _schedulePositionExpiry();
+        if (_age(_observation.monotonicTimestampUs) >= _freshnessTimeoutMs) {
+            _setState(Stale);
+        }
     }
 }

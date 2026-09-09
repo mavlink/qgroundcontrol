@@ -5,12 +5,12 @@
 
 #include "GPSObservation.h"
 
-struct GPSObservation;
-
 namespace NMEAUtils {
 
-GPSSatellite::Constellation satelliteConstellation(const QByteArray& talker);
-
+/// Explicit talker/system context takes precedence. Legacy GN IDs with overlapping
+/// receiver numbering schemes remain Unknown; no missing ID implies a zero count.
+GPSSatellite::Constellation satelliteConstellation(const QByteArray& talker, std::optional<int> systemId = std::nullopt,
+                                                   std::optional<int> satelliteId = std::nullopt);
 
 /// Compute XOR checksum over NMEA body (between '$' and '*').
 quint8 computeChecksum(const QByteArray& body);

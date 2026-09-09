@@ -21,6 +21,6 @@ add_subdirectory(Recording)
 add_subdirectory(Receiver)
 add_subdirectory(BaseStation)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTypes.h)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTypes.h GPSSettings.cc GPSSettings.h)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver QGCGPSCore QGCGPSReceiver)

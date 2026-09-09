@@ -7,6 +7,8 @@ if(NOT ANDROID)
 endif()
 
 qt_add_library(QGCAndroidSerialPort STATIC
+    AndroidSerialWrite.cc
+    AndroidSerialWrite.h
     qserialport.cpp
     qserialport.h
     qserialport_android.cpp

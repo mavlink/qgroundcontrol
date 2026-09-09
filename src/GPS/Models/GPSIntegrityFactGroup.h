@@ -56,6 +56,8 @@ signals:
     void availabilityChanged();
 
 private:
+    void _refresh();
+    GPSIntegrityObservation _observation;
     Fact _systemErrors = Fact(0, QStringLiteral("systemErrors"), FactMetaData::valueTypeUint32);
     Fact _spoofingState = Fact(0, QStringLiteral("spoofingState"), FactMetaData::valueTypeUint8);
     Fact _jammingState = Fact(0, QStringLiteral("jammingState"), FactMetaData::valueTypeUint8);

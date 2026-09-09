@@ -10,13 +10,13 @@
 #include <memory>
 
 #include "Fixtures/RAIIFixtures.h"
-#include "GPSConnectionConfig.h"
 #include "GPSCorrectionManager.h"
 #include "GPSCorrectionSettings.h"
 #include "GPSManager.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverSession.h"
+#include "GPSReceiverTestProfile.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
 #include "MockNTRIPStream.h"
@@ -68,11 +68,10 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
         releaseOpen->release();
         gps.shutdown();
     });
-    receiverSession->start(GPSConnectionConfig{.receiverType = GPSType::u_blox, .receiver = {}}.profile(),
-                           [releaseOpen](const std::atomic_bool&) {
-                               releaseOpen->acquire();
-                               return std::unique_ptr<GPSTransport>{};
-                           });
+    receiverSession->start(gpsReceiverTestProfile({}, GPSType::u_blox), [releaseOpen](const std::atomic_bool&) {
+        releaseOpen->acquire();
+        return std::unique_ptr<GPSTransport>{};
+    });
     QVERIFY(receiverSession->hasReceiver());
     const quint64 receiverSessionId = receiverSession->sessionId();
     QVERIFY(receiverSessionId > 0);
@@ -351,6 +350,46 @@ void GPSCorrectionManagerTest::_filteredAndExpiredFrames()
     QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), quint64(3));
     QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), quint64(2));
     QVERIFY(routed.isEmpty());
+}
+
+void GPSCorrectionManagerTest::_outputsEnabledAfterLinkHistoryChurn()
+{
+    GPSCorrectionManager corrections;
+    auto source = corrections.registerSource(GPSCorrectionSource::Ntrip);
+    const auto data = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    quint64 linkSession = 0;
+    corrections.rtcmMavlink()->setOutputProvider([&]() {
+        return QList<RTCMMavlink::Output>{
+            {QStringLiteral("mavlink/%1").arg(linkSession), linkSession, [](const GpsRtcmPacket&) { return true; }}};
+    });
+    for (int index = 0; index < GPSCorrectionRouter::MAX_DESTINATION_HISTORY * 2; ++index) {
+        ++linkSession;
+        corrections.acceptIngress(source.token().event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    }
+    QCOMPARE(corrections.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 1);
+
+    GPSCorrectionFrame receiverFrame;
+    corrections.addDetailedSink(QStringLiteral("localReceiver"), [&](const GPSCorrectionFrame& frame) {
+        receiverFrame = frame;
+        return GPSCorrectionRouter::Submission{quint64(frame.data.size()), 1, GPSCorrectionReason::None};
+    });
+    QUdpSocket udpDestination;
+    QVERIFY(udpDestination.bind(QHostAddress::LocalHost, 0));
+    corrections.configureNtripUdpOutput(true, QStringLiteral("127.0.0.1"), udpDestination.localPort());
+    corrections.acceptIngress(source.token().event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    QCOMPARE(receiverFrame.data, data);
+    QTRY_VERIFY_WITH_TIMEOUT(udpDestination.hasPendingDatagrams(), TestTimeout::mediumMs());
+    QByteArray received(data.size(), Qt::Uninitialized);
+    QCOMPARE(udpDestination.readDatagram(received.data(), received.size()), qint64(data.size()));
+    QCOMPARE(received, data);
+    for (const auto& value : corrections.destinations()) {
+        const auto destination = value.toMap();
+        const auto id = destination.value(QStringLiteral("destinationId")).toString();
+        if (id == QStringLiteral("localReceiver") || id == QStringLiteral("ntripUdp")) {
+            QCOMPARE(destination.value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
+        }
+    }
+    QCOMPARE(corrections.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 3);
 }
 
 void GPSCorrectionManagerTest::_ntripUdpOutputIsSourceSpecific()

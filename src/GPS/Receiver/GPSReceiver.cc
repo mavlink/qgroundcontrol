@@ -7,11 +7,11 @@
 
 QGC_LOGGING_CATEGORY(GPSReceiverLog, "GPS.Receiver.GPSReceiver")
 
-GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent)
+GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent, GPSRuntimeScheduler* scheduler)
     : QObject(parent)
     , _session(session)
-    , _health(this)
-    , _satellites(this)
+    , _health(this, scheduler)
+    , _satellites(this, GPSSourceHealth::FRESHNESS_TIMEOUT_MS, scheduler)
     , _facts(new GPSReceiverFactGroup(this))
 {
     qCDebug(GPSReceiverLog) << this;
@@ -34,20 +34,25 @@ GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent)
     });
 
     connect(&_health, &GPSSourceHealth::positionChanged, this, [this]() {
-        const auto observation = _health.observation();
-        if (_health.state() == GPSSourceHealth::NoData || _health.state() == GPSSourceHealth::Stale ||
-            observation.ageMilliseconds() < 0) {
-            const QPointer<GPSReceiver> guard(this);
+        const QPointer<GPSReceiver> guard(this);
+        const quint64 revision = ++_projectionRevision;
+        const quint64 sessionId = _session.sessionId();
+        const auto current = [&]() {
+            return guard && _projectionRevision == revision && _session.sessionId() == sessionId;
+        };
+        const auto observation = _health.acceptedObservation(GPSObservation::PositionUse::Diagnostics);
+        if (_health.state() == GPSSourceHealth::NoData) {
             _facts->integrity()->reset();
-            if (guard) {
-                _facts->resetPosition();
-            }
         } else {
-            const QPointer<GPSReceiver> guard(this);
-            _facts->integrity()->update(GPSIntegrityObservation::fromPosition(observation));
-            if (guard) {
-                _facts->updatePosition(observation);
-            }
+            _facts->integrity()->update(GPSIntegrityObservation::fromPosition(_health.observation()));
+        }
+        if (!current()) {
+            return;
+        }
+        if (observation) {
+            _facts->updatePosition(*observation);
+        } else {
+            _facts->resetPosition();
         }
     });
 
