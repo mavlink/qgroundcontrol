@@ -1000,9 +1000,19 @@ void OnboardLogController::_ftpListDirComplete(const QStringList &dirList, const
         // and/or date subdirectories to descend into (PX4 fallback /fs/microsd/log).
         const uint flatLogs = _ftpProcessFileEntries(dirList, QString());
 
+        // A kCmdListDirectoryWithTime listing may give a directory the same trailing
+        // fields as a file: "D<name>\t<size>\t<modification time>". Servers differ on
+        // whether they send them (MAVSDK does, PX4 does not), so tolerate either. A
+        // plain kCmdListDirectory entry is just "D<name>", where a tab would be part
+        // of the name, so only strip the fields when times were asked for.
+        const bool withTime = _vehicle && !_vehicle->ftpManager()->listDirectoryWithTimeUnsupported();
+
         for (const QString &entry : dirList) {
             if (entry.startsWith(QLatin1Char('D'))) {
-                const QString dirName = entry.mid(1);
+                QString dirName = entry.mid(1);
+                if (withTime) {
+                    dirName = dirName.section(QLatin1Char('\t'), 0, 0);
+                }
                 if (!dirName.isEmpty()) {
                     _ftpDirsToList.append(dirName);
                 }
