@@ -4992,196 +4992,196 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="163"/>
       <source>Bluetooth Error</source>
-      <translation type="unfinished">Bluetooth Error</translation>
+      <translation>Ошибка Bluetooth</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="182"/>
       <source>Bluetooth Adapter</source>
-      <translation type="unfinished">Bluetooth Adapter</translation>
+      <translation>Адаптер Bluetooth</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="192"/>
       <source>Adapter</source>
-      <translation type="unfinished">Adapter</translation>
+      <translation>Адаптер</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="209"/>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="471"/>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="573"/>
       <source>Unknown</source>
-      <translation type="unfinished">Unknown</translation>
+      <translation>Неизвестно</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="232"/>
       <source>Status</source>
-      <translation type="unfinished">Status</translation>
+      <translation>Статус</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="243"/>
       <source>Bluetooth adapter unavailable</source>
-      <translation type="unfinished">Bluetooth adapter unavailable</translation>
+      <translation>Адаптер Bluetooth недоступен</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="256"/>
       <source>Powered On</source>
-      <translation type="unfinished">Powered On</translation>
+      <translation>Включён</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="266"/>
       <source>Discoverable</source>
-      <translation type="unfinished">Discoverable</translation>
+      <translation>Обнаруживаемый</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="278"/>
       <source>Connection</source>
-      <translation type="unfinished">Connection</translation>
+      <translation>Подключение</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="287"/>
       <source>Mode</source>
-      <translation type="unfinished">Mode</translation>
+      <translation>Режим</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="293"/>
       <source>Classic</source>
-      <translation type="unfinished">Classic</translation>
+      <translation>Классический</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="299"/>
       <source>BLE</source>
-      <translation type="unfinished">BLE</translation>
+      <translation>BLE</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="305"/>
       <source>Selected Device</source>
-      <translation type="unfinished">Selected Device</translation>
+      <translation>Выбранное устройство</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="308"/>
       <source>None</source>
-      <translation type="unfinished">None</translation>
+      <translation>Отсутствует</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="311"/>
       <source>Device Address</source>
-      <translation type="unfinished">Device Address</translation>
+      <translation>Адрес устройства</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="314"/>
       <source>N/A</source>
-      <translation type="unfinished">N/A</translation>
+      <translation>Н/Д</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="319"/>
       <source>Pairing</source>
-      <translation type="unfinished">Pairing</translation>
+      <translation>Сопряжение</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="333"/>
       <source>Unpair</source>
-      <translation type="unfinished">Unpair</translation>
+      <translation>Отменить сопряжение</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="333"/>
       <source>Pair</source>
-      <translation type="unfinished">Pair</translation>
+      <translation>Сопрячь</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="344"/>
       <source>Signal Strength</source>
-      <translation type="unfinished">Signal Strength</translation>
+      <translation>Уровень сигнала</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="389"/>
       <source>(Connected)</source>
-      <translation type="unfinished">(Connected)</translation>
+      <translation>(Подключено)</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="389"/>
       <source>(Last Scan)</source>
-      <translation type="unfinished">(Last Scan)</translation>
+      <translation>(Последнее сканирование)</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="401"/>
       <source>Advanced BLE Configuration</source>
-      <translation type="unfinished">Advanced BLE Configuration</translation>
+      <translation>Расширенная настройка BLE</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="413"/>
       <source>Service UUID</source>
-      <translation type="unfinished">Service UUID</translation>
+      <translation>UUID сервиса</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="418"/>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="427"/>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="436"/>
       <source>Auto-detect</source>
-      <translation type="unfinished">Auto-detect</translation>
+      <translation>Автоопределение</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="422"/>
       <source>RX Characteristic</source>
-      <translation type="unfinished">RX Characteristic</translation>
+      <translation>Характеристика RX</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="431"/>
       <source>TX Characteristic</source>
-      <translation type="unfinished">TX Characteristic</translation>
+      <translation>Характеристика TX</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="442"/>
       <source>UUIDs are auto-detected for most devices. Only configure if connection fails.</source>
-      <translation type="unfinished">UUIDs are auto-detected for most devices. Only configure if connection fails.</translation>
+      <translation>UUID определяются автоматически для большинства устройств. Настраивайте вручную только при сбое подключения.</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="455"/>
       <source>Known Devices</source>
-      <translation type="unfinished">Known Devices</translation>
+      <translation>Известные устройства</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="484"/>
       <source>Available BLE Devices</source>
-      <translation type="unfinished">Available BLE Devices</translation>
+      <translation>Доступные устройства BLE</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="484"/>
       <source>Available Devices</source>
-      <translation type="unfinished">Available Devices</translation>
+      <translation>Доступные устройства</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="500"/>
       <source>Scanning for devices...</source>
-      <translation type="unfinished">Scanning for devices...</translation>
+      <translation>Поиск устройств...</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="581"/>
       <source>Paired</source>
-      <translation type="unfinished">Paired</translation>
+      <translation>Сопряжено</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="611"/>
       <source>No devices found</source>
-      <translation type="unfinished">No devices found</translation>
+      <translation>Устройства не найдены</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="618"/>
       <source>Make sure your BLE device is powered on and advertising</source>
-      <translation type="unfinished">Make sure your BLE device is powered on and advertising</translation>
+      <translation>Убедитесь, что ваше устройство BLE включено и обнаруживается</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="619"/>
       <source>Make sure your Bluetooth device is powered on and discoverable</source>
-      <translation type="unfinished">Make sure your Bluetooth device is powered on and discoverable</translation>
+      <translation>Убедитесь, что ваше устройство Bluetooth включено и обнаруживается</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="631"/>
       <source>Stop Scan</source>
-      <translation type="unfinished">Stop Scan</translation>
+      <translation>Остановить сканирование</translation>
     </message>
     <message>
       <location filename="../src/AppSettings/BluetoothSettings.qml" line="631"/>
       <source>Scan for Devices</source>
-      <translation type="unfinished">Scan for Devices</translation>
+      <translation>Сканировать устройства</translation>
     </message>
   </context>
   <context>
@@ -7737,7 +7737,7 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/GCSControlIndicator.qml" line="106"/>
       <source>GCS </source>
-      <translation>GCS</translation>
+      <translation>GCS </translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GCSControlIndicator.qml" line="106"/>
@@ -7752,7 +7752,7 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/GCSControlIndicator.qml" line="128"/>
       <source>Ignoring automatically in </source>
-      <translation>Автоматическое игнорирование через</translation>
+      <translation>Автоматическое игнорирование через </translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GCSControlIndicator.qml" line="128"/>
@@ -7768,7 +7768,7 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/GCSControlIndicator.qml" line="183"/>
       <source>Reverting back to takeover not allowed if GCS </source>
-      <translation>Запрет перехвата будет восстановлен, если GCS</translation>
+      <translation>Запрет перехвата будет восстановлен, если GCS </translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GCSControlIndicator.qml" line="184"/>
@@ -7798,7 +7798,7 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/GCSControlIndicator.qml" line="246"/>
       <source>Takeover NOT allowed</source>
-      <translation>Перехват запрещён</translation>
+      <translation>Перехват НЕ разрешён</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GCSControlIndicator.qml" line="262"/>
@@ -10119,7 +10119,7 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="135"/>
       <source>Vendor/Product:</source>
-      <translation>Производитель/устройство:</translation>
+      <translation>Производитель/Модель:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="144"/>
@@ -10144,7 +10144,7 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="186"/>
       <source>Virtual:</source>
-      <translation>Виртуальное:</translation>
+      <translation>Виртуальный:</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/JoystickIndicator.qml" line="195"/>
@@ -18540,92 +18540,92 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="72"/>
       <source>RemoteID Status</source>
-      <translation type="unfinished">RemoteID Status</translation>
+      <translation>Статус Remote ID</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="95"/>
       <source>ARM STATUS</source>
-      <translation type="unfinished">ARM STATUS</translation>
+      <translation>СТАТУС ARM</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="119"/>
       <source>RID COMMS</source>
-      <translation type="unfinished">RID COMMS</translation>
+      <translation>СВЯЗЬ RID</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="119"/>
       <source>NOT CONNECTED</source>
-      <translation type="unfinished">NOT CONNECTED</translation>
+      <translation>НЕ ПОДКЛЮЧЕНО</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="144"/>
       <source>GCS GPS</source>
-      <translation type="unfinished">GCS GPS</translation>
+      <translation>GPS наземной станции</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="169"/>
       <source>BASIC ID</source>
-      <translation type="unfinished">BASIC ID</translation>
+      <translation>BASIC ID</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="194"/>
       <source>OPERATOR ID</source>
-      <translation type="unfinished">OPERATOR ID</translation>
+      <translation>OPERATOR ID</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="220"/>
       <source>EMERGENCY HAS BEEN DECLARED, Press and Hold for 3 seconds to cancel</source>
-      <translation type="unfinished">EMERGENCY HAS BEEN DECLARED, Press and Hold for 3 seconds to cancel</translation>
+      <translation>ОБЪЯВЛЕНА ЧРЕЗВЫЧАЙНАЯ СИТУАЦИЯ. Нажмите и удерживайте 3 секунды, чтобы отменить</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="220"/>
       <source>Press and Hold below button to declare emergency</source>
-      <translation type="unfinished">Press and Hold below button to declare emergency</translation>
+      <translation>Нажмите и удерживайте кнопку ниже, чтобы объявить чрезвычайную ситуацию</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="245"/>
       <source>Clear Emergency</source>
-      <translation type="unfinished">Clear Emergency</translation>
+      <translation>Отменить чрезвычайную ситуацию</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="245"/>
       <source>EMERGENCY</source>
-      <translation type="unfinished">EMERGENCY</translation>
+      <translation>ТРЕВОГА</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="323"/>
       <source>Arm Status Error</source>
-      <translation type="unfinished">Arm Status Error</translation>
+      <translation>Ошибка статуса Arm</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="330"/>
       <source>Self ID</source>
-      <translation type="unfinished">Self ID</translation>
+      <translation>Self ID</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="348"/>
       <source>If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.</source>
-      <translation type="unfinished">If an emergency is declared, Emergency Text will be broadcast even if Broadcast setting is not enabled.</translation>
+      <translation>Если объявлена чрезвычайная ситуация, текст сообщения будет передан в эфир, даже если параметр «Трансляция» отключён.</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="339"/>
       <source>Broadcast</source>
-      <translation type="unfinished">Broadcast</translation>
+      <translation>Трансляция</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="358"/>
       <source>Broadcast Message</source>
-      <translation type="unfinished">Broadcast Message</translation>
+      <translation>Транслируемое сообщение</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="411"/>
       <source>Remote ID</source>
-      <translation type="unfinished">Remote ID</translation>
+      <translation>Remote ID</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/RemoteIDIndicatorPage.qml" line="413"/>
       <source>Configure</source>
-      <translation type="unfinished">Configure</translation>
+      <translation>Настроить</translation>
     </message>
   </context>
   <context>
