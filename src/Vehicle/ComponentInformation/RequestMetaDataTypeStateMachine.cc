@@ -480,6 +480,17 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
         return;
     }
 
+    // This uri comes from the vehicle over an unauthenticated link. QGCFileDownload treats
+    // an unrecognised scheme, and any bare string, as a local file path, so restrict it to
+    // the schemes this state machine actually fetches.
+    if (!_uriIsMAVLinkFTP(uri)
+        && !uri.startsWith(QStringLiteral("http:"), Qt::CaseInsensitive)
+        && !uri.startsWith(QStringLiteral("https:"), Qt::CaseInsensitive)) {
+        qCWarning(RequestMetaDataTypeStateMachineLog) << typeToString() << ": refusing uri with unsupported scheme:" << uri;
+        completeCurrentState();
+        return;
+    }
+
     const QString cachedFile = crcValid ? _compMgr->fileCache().access(cacheFileTag) : "";
 
     if (!cachedFile.isEmpty()) {

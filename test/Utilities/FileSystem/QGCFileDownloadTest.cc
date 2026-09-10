@@ -5,6 +5,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QStandardPaths>
 #include <QtTest/QSignalSpy>
 
 #include "QGCCompression.h"
@@ -170,6 +171,82 @@ void QGCFileDownloadTest::_testFileDownloadCancelSingleCompletion()
 
     const QList<QVariant> args = finishedSpy.first();
     QVERIFY(!args.at(0).toBool());
+}
+
+void QGCFileDownloadTest::_testFileDownloadRemoteNameCannotNameTheDirectory()
+{
+    // The remote url is vehicle-supplied on the component-metadata and camera-definition
+    // paths. QUrl::fileName() percent-decodes the last segment before splitting it on '/',
+    // so an encoded separator survives into the derived name. Whatever the url says, the
+    // output has to resolve inside the download directory.
+    const QString downloadDir = QDir::cleanPath(
+        QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absolutePath());
+
+    const QStringList hostileUrls = {
+        QStringLiteral("file:///nonexistent/a%5C..%5C..%5C..%5CQGCFileDownloadTest_escaped.bin"),
+        QStringLiteral("file:///nonexistent/a%2F..%2F..%2FQGCFileDownloadTest_escaped.bin"),
+        QStringLiteral("file:///nonexistent/C:%5CWindows%5CTemp%5CQGCFileDownloadTest_escaped.bin"),
+        QStringLiteral("file:///nonexistent/..%5C..%5CQGCFileDownloadTest_escaped.bin"),
+    };
+
+    ignoreLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error:"));
+
+    for (const QString &url : hostileUrls) {
+        QGCFileDownload downloader(this);
+        QVERIFY2(downloader.start(url), qPrintable(url));
+
+        const QString localPath = downloader.localPath();
+        downloader.cancel();
+
+        const QString resolved = QDir::cleanPath(QFileInfo(localPath).absoluteFilePath());
+        QVERIFY2(resolved.startsWith(downloadDir + QLatin1Char('/')), qPrintable(resolved));
+        QVERIFY2(!resolved.mid(downloadDir.length() + 1).contains(QLatin1Char('/')), qPrintable(resolved));
+
+        QFile::remove(localPath);
+    }
+}
+
+void QGCFileDownloadTest::_testFileDownloadFailedDownloadPreservesExistingFile()
+{
+    // The destination must not be created or truncated until the reply is known good.
+    // Opening it up front means a download that 404s, times out, or never reaches a server
+    // still empties whatever was already there.
+    const QString downloadDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    const QString victimName = QStringLiteral("QGCFileDownloadTest_victim.bin");
+    const QString victimPath = QDir(downloadDir).filePath(victimName);
+    const QByteArray victimContent = QByteArrayLiteral("existing contents that must survive");
+
+    {
+        QFile victim(victimPath);
+        QVERIFY(victim.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        QCOMPARE(victim.write(victimContent), static_cast<qint64>(victimContent.size()));
+    }
+
+    // A source that does not exist, whose last path component is the victim's name, so the
+    // derived output path lands on the victim.
+    QTemporaryDir sourceDir;
+    const QString missingSource = sourceDir.filePath(victimName);
+    QVERIFY(!QFile::exists(missingSource));
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+
+    expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error:"));
+    QVERIFY(downloader.start(missingSource));
+    QCOMPARE(QFileInfo(downloader.localPath()).absoluteFilePath(),
+             QFileInfo(victimPath).absoluteFilePath());
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+
+    QCOMPARE(finishedSpy.count(), 1);
+    QVERIFY(!finishedSpy.first().at(0).toBool());
+
+    QFile victim(victimPath);
+    QVERIFY(victim.open(QIODevice::ReadOnly));
+    QCOMPARE(victim.readAll(), victimContent);
+    victim.close();
+
+    QFile::remove(victimPath);
 }
 
 void QGCFileDownloadTest::_testAutoDecompressGzip()
