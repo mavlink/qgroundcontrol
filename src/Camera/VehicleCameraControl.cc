@@ -19,6 +19,8 @@
 #include "QGCVideoStreamInfo.h"
 #include "MissionCommandTree.h"
 
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtCore/QDir>
 
@@ -106,6 +108,60 @@ static bool read_value(QDomNode& element, const char* tagName, QString& target)
     return true;
 }
 
+QString VehicleCameraControl::boundedNameField(const uint8_t *raw, size_t maxLen)
+{
+    if ((raw == nullptr) || (maxLen == 0)) {
+        return QString();
+    }
+
+    const char *chars = reinterpret_cast<const char*>(raw);
+    const qsizetype length = static_cast<qsizetype>(qstrnlen(chars, maxLen));
+    return QString::fromLatin1(chars, length);
+}
+
+QString VehicleCameraControl::pathSafeNameToken(const QString &name)
+{
+    QString token = name;
+
+    for (QChar &ch : token) {
+        const char16_t c = ch.unicode();
+        const bool safe = ((c >= u'A') && (c <= u'Z'))
+                       || ((c >= u'a') && (c <= u'z'))
+                       || ((c >= u'0') && (c <= u'9'))
+                       || (c == u'.') || (c == u'-') || (c == u'_');
+        if (!safe) {
+            ch = QLatin1Char('_');
+        }
+    }
+
+    // A leading dot lets a token of only dots act as a relative path element, and Win32
+    // strips trailing dots silently, which would change the name after validation.
+    while (token.startsWith(QLatin1Char('.'))) {
+        token.remove(0, 1);
+    }
+    while (token.endsWith(QLatin1Char('.'))) {
+        token.chop(1);
+    }
+
+    if (token.isEmpty()) {
+        token = QStringLiteral("unknown");
+    }
+
+    return token;
+}
+
+bool VehicleCameraControl::pathIsInside(const QString &baseDir, const QString &candidate)
+{
+    if (baseDir.isEmpty() || candidate.isEmpty()) {
+        return false;
+    }
+
+    // cleanPath() also normalises '\' to '/' on Windows, so this holds on every platform.
+    const QString base = QDir::cleanPath(QDir(baseDir).absolutePath());
+    const QString resolved = QDir::cleanPath(QFileInfo(candidate).absoluteFilePath());
+    return resolved.startsWith(base + QLatin1Char('/'));
+}
+
 VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
     : MavlinkCameraControlInterface(vehicle, parent)
     , _compID(compID)
@@ -114,13 +170,25 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
 
     memcpy(&_mavlinkCameraInfo, info, sizeof(mavlink_camera_information_t));
 
-    _vendor = QString(reinterpret_cast<const char*>(info->vendor_name));
-    _modelName = QString(reinterpret_cast<const char*>(info->model_name));
-    _cacheFile = QString::asprintf("%s/%s_%s_%03d.xml",
-                                    SettingsManager::instance()->appSettings()->parameterSavePath().toStdString().c_str(),
-                                    _vendor.toStdString().c_str(),
-                                    _modelName.toStdString().c_str(),
+    // vendor_name and model_name are uint8_t[32] filled straight from the wire by an
+    // unauthenticated peer, with no NUL guarantee. Bound the read, and keep the display
+    // strings as sent; only the file-name tokens are reduced to a safe character set.
+    _vendor = boundedNameField(info->vendor_name, sizeof(info->vendor_name));
+    _modelName = boundedNameField(info->model_name, sizeof(info->model_name));
+
+    _cacheFileToken = QString::asprintf("%s_%s_%03d",
+                                    pathSafeNameToken(_vendor).toStdString().c_str(),
+                                    pathSafeNameToken(_modelName).toStdString().c_str(),
                                     static_cast<int>(_mavlinkCameraInfo.cam_definition_version));
+
+    const QString cacheDir = SettingsManager::instance()->appSettings()->parameterSavePath();
+    const QString cacheCandidate = QDir(cacheDir).filePath(_cacheFileToken + QStringLiteral(".xml"));
+    if (pathIsInside(cacheDir, cacheCandidate)) {
+        _cacheFile = QDir::cleanPath(cacheCandidate);
+    } else {
+        qCWarning(VehicleCameraControlLog) << "Refusing camera cache path outside" << cacheDir << ":" << cacheCandidate;
+        _cacheFile.clear();
+    }
 
     connect(this, &VehicleCameraControl::dataReady, this, &VehicleCameraControl::_dataReady);
 
@@ -2192,15 +2260,12 @@ void VehicleCameraControl::_handleDefinitionFile(const QString &url)
     QString ftpPrefix(QStringLiteral("%1://").arg(FTPManager::mavlinkFTPScheme));
     if (!xmlFile.exists() && url.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
         qCDebug(VehicleCameraControlLog) << "No camera definition file cached, attempt ftp download";
-        int ver = static_cast<int>(_mavlinkCameraInfo.cam_definition_version);
         QString ext = "";
         if (url.endsWith(".lzma", Qt::CaseInsensitive)) { ext = ".lzma"; }
         if (url.endsWith(".xz", Qt::CaseInsensitive)) { ext = ".xz"; }
-        QString fileName = QString::asprintf("%s_%s_%03d.xml%s",
-            _vendor.toStdString().c_str(),
-            _modelName.toStdString().c_str(),
-            ver,
-            ext.toStdString().c_str());
+        // Built from the sanitised token, not from the raw vendor/model strings, so the
+        // vehicle cannot steer FTPManager's toDir.filePath() join out of the cache folder.
+        QString fileName = _cacheFileToken + QStringLiteral(".xml") + ext;
         connect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &VehicleCameraControl::_ftpDownloadComplete);
         _vehicle->ftpManager()->download(_compID, url,
             SettingsManager::instance()->appSettings()->parameterSavePath().toStdString().c_str(),
