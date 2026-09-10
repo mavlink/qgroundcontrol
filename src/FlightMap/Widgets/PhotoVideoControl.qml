@@ -220,6 +220,7 @@ Rectangle {
                 // Take Photo button
                 Rectangle {
                     id: photoCaptureButton
+                    objectName: "photoVideoControl_photoCaptureButton"
                     Layout.alignment: Qt.AlignHCenter
                     color: photoCaptureButtonPalette.button
                     width: ScreenTools.defaultFontPixelWidth * 6
