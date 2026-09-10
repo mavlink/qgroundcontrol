@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "GPSPositionFactGroup.h"
+#include "GPSReplayScheduler.h"
 #include "VehicleGPS2FactGroup.h"
 #include "VehicleGPSAggregateFactGroup.h"
 #include "VehicleGPSObservation.h"
@@ -383,4 +384,33 @@ void GPSPositionFactGroupTest::_highLatencyTransitions()
         QCOMPARE(observation.position.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 1.5);
         QCOMPARE(observation.position.position.attribute(QGeoPositionInfo::VerticalAccuracy), 2.5);
     }
+}
+
+void GPSPositionFactGroupTest::_metadataOwnershipAndVirtualIntegrity()
+{
+    VehicleGPSFactGroup vehicle;
+    QCOMPARE(vehicle.getFact(QStringLiteral("jammingState")), vehicle.integrity()->jammingState());
+    QCOMPARE(vehicle.getFact(QStringLiteral("integrity.jammingState")), vehicle.integrity()->jammingState());
+    QCOMPARE(vehicle.jammingState()->metaData()->parent(), vehicle.integrity());
+    QCOMPARE(vehicle.lat()->metaData()->parent(), &vehicle);
+    QCOMPARE(vehicle.jammingState()->rawValue().toInt(), 255);
+    vehicle.setLiveUpdates(true);
+    QVERIFY(!vehicle.integrity()->jammingState()->sendValueChangedSignals());
+    vehicle.integrity()->setLiveUpdates(true);
+    vehicle.setLiveUpdates(false);
+    QVERIFY(vehicle.integrity()->jammingState()->sendValueChangedSignals());
+
+    GPSReplayScheduler scheduler;
+    GPSPositionFactGroup position(nullptr, &scheduler);
+    GPSIntegrityObservation report;
+    report.monotonicTimestampUs = scheduler.nowUs();
+    report.jammingState = 0;
+    report.correctionsCrcFailed = false;
+    position.integrity()->update(report);
+    QCOMPARE(position.integrity()->jammingState()->rawValue().toInt(), 0);
+    QCOMPARE(position.integrity()->correctionsCrcFailed()->rawValue().toInt(), 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
+    QVERIFY(!position.integrity()->available());
+    QCOMPARE(position.integrity()->jammingState()->rawValue().toInt(), 255);
+    QCOMPARE(position.integrity()->correctionsCrcFailed()->rawValue().toInt(), -1);
 }

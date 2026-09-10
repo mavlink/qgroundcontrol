@@ -42,7 +42,7 @@ public:
 
     void simulateConnect() { emit connected(); }
 
-    void simulateError(NTRIPError code, const QString& detail) { emit error(code, detail); }
+    void simulateError(NTRIPError code, const QString& detail) { emit failed(NTRIPFailure::fromError(code, detail)); }
 
     void simulateRtcmData(const QByteArray& data, int messageId = 0, qint64 receivedAtMs = -1)
     {

@@ -86,6 +86,9 @@ void navigationEpochs()
         ubx.consume({});
         CHECK(observations.size() == 2);
         CHECK(observations.back().dop_timestamp == 0);
+        CHECK(std::isnan(observations.back().hdop));
+        CHECK(std::isnan(observations.back().heading));
+        CHECK(std::isnan(observations.back().heading_accuracy));
         CHECK(std::abs(observations.back().latitude_deg - 53.4507228) < 1e-8);
         // Adjacent epochs can interleave without donating DOP to one another.
         ubx.consume(timed(pvt, 1000));
@@ -172,6 +175,8 @@ int main()
         const auto geodetic = fixture("pvt-geodetic.sbf");
         for (auto byte : geodetic)
             sbf.consume({&byte, 1});
+        gps_test_time += 200000;
+        sbf.consume({});
         CHECK(std::abs(position.latitude_deg - 0.9310293523340808 * 180 / M_PI) < 1e-8);
         CHECK(std::abs(position.longitude_deg + 0.03921206770879602 * 180 / M_PI) < 1e-8);
         CHECK(std::abs(position.altitude_ellipsoid_m - 131.18596542546626) < 1e-5);

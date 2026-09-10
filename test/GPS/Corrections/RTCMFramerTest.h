@@ -2,7 +2,7 @@
 
 #include "UnitTest.h"
 
-class RTCMParserTest : public UnitTest
+class RTCMFramerTest : public UnitTest
 {
     Q_OBJECT
 
@@ -14,7 +14,7 @@ private slots:
     void _testCrc24qReferenceVector();
     void _testCrc24qIncremental();
 
-    // RTCMParser state machine
+    // RTCMFramer state machine
     void _testParserReset();
     void _testParserValidMessage();
     void _testParserCrcValidation();
@@ -34,5 +34,4 @@ private slots:
     void _testParserMaxLengthPayload();
     void _testParserPreambleInPayload();
     void _testParserTruncatedMidFrame();
-    void _testParserWhitelistEdgeCases();
 };

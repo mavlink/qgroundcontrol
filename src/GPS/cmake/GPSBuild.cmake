@@ -1,5 +1,7 @@
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../Driver/Protocols/NMEA/NMEAProtocol.cmake")
+
 # Explicit component dispatch keeps the production source and dependency manifests together.
 # cmake-lint: disable=R0912,R0915
 
@@ -27,11 +29,15 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/Contracts/GPSTransportResult.h"
         )
     elseif(component STREQUAL "Scheduler")
-        set(sources "${gps_root}/Core/GPSRuntimeScheduler.cc" "${gps_root}/Core/GPSRuntimeScheduler.h"
-                    "${gps_root}/Core/GPSQtRuntimeScheduler.cc" "${gps_root}/Core/GPSQtRuntimeScheduler.h"
+        set(sources
+            "${gps_root}/Core/GPSRuntimeScheduler.cc" "${gps_root}/Core/GPSRuntimeScheduler.h"
+            "${gps_root}/Core/GPSQtRuntimeScheduler.cc" "${gps_root}/Core/GPSQtRuntimeScheduler.h"
+            "${gps_root}/Core/GPSScheduledTask.cc" "${gps_root}/Core/GPSScheduledTask.h"
         )
     elseif(component STREQUAL "Core")
         set(sources
+            "${gps_root}/Core/GPSConnectionControl.cc"
+            "${gps_root}/Core/GPSConnectionControl.h"
             "${gps_root}/Core/GPSConnectionState.cc"
             "${gps_root}/Core/GPSConnectionState.h"
             "${gps_root}/Core/GPSObservation.cc"
@@ -42,6 +48,10 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/Core/GPSIntegrityObservation.h"
             "${gps_root}/Core/GPSReadTimestamp.h"
             "${gps_root}/Core/GPSSurveyInStatus.h"
+            "${gps_root}/Core/GPSRelativePositionStore.cc"
+            "${gps_root}/Core/GPSRelativePositionStore.h"
+            "${gps_root}/Core/GPSIntegrityStore.cc"
+            "${gps_root}/Core/GPSIntegrityStore.h"
             "${gps_root}/Core/GPSSatelliteStore.cc"
             "${gps_root}/Core/GPSSatelliteStore.h"
             "${gps_root}/Core/GPSSourceHealth.cc"
@@ -59,10 +69,7 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/NMEA/NMEAStreamSplitter.h"
             "${gps_root}/NMEA/NMEAUtils.cc"
             "${gps_root}/NMEA/NMEAUtils.h"
-            "${gps_root}/NMEA/NMEAFields.h"
-            "${gps_root}/NMEA/NMEASentence.h"
-            "${gps_root}/NMEA/NMEAConstellation.h"
-            "${gps_root}/NMEA/NMEASatelliteEpoch.h"
+            "${gps_root}/NMEA/NMEASentenceEnvelope.h"
         )
     elseif(component STREQUAL "NTRIPSession")
         set(sources
@@ -89,8 +96,7 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/Corrections/GPSCorrectionDiagnostics.h"
             "${gps_root}/Corrections/GPSCorrectionEventModel.cc"
             "${gps_root}/Corrections/GPSCorrectionEventModel.h"
-            "${gps_root}/Corrections/RTCMParser.cc"
-            "${gps_root}/Corrections/RTCMParser.h"
+            "${gps_root}/Corrections/RTCMFrame.h"
             "${gps_root}/Corrections/RTCMFramer.h"
             "${gps_root}/Corrections/RTCMFrameDecoder.cc"
             "${gps_root}/Corrections/RTCMFrameDecoder.h"
@@ -205,7 +211,7 @@ function(qgc_add_gps_component target)
         target_link_libraries(${target} PUBLIC ${arg_PREFIX}Contracts ${arg_PREFIX}Scheduler Qt6::Core Qt6::Positioning)
     elseif(arg_COMPONENT STREQUAL "NMEA")
         target_include_directories(${target} PUBLIC "${gps_root}/NMEA")
-        target_link_libraries(${target} PUBLIC ${arg_PREFIX}Core)
+        target_link_libraries(${target} PUBLIC ${arg_PREFIX}Core QGCGPSNMEAProtocol)
     elseif(arg_COMPONENT STREQUAL "NTRIPSession")
         target_include_directories(${target} PUBLIC "${gps_root}/NTRIP")
         target_link_libraries(${target} PUBLIC ${arg_PREFIX}Scheduler Qt6::Core)
@@ -235,9 +241,8 @@ function(qgc_add_gps_component target)
             message(FATAL_ERROR "GPS ${arg_COMPONENT} requires NATIVE_DEFINITIONS_HEADER")
         endif()
         target_compile_definitions(${target} PRIVATE GPS_PLATFORM_HEADER="${arg_NATIVE_DEFINITIONS_HEADER}")
-        target_include_directories(${target} PRIVATE "${gps_root}/Driver/Protocols" "${gps_root}/Corrections"
-                                                     "${gps_root}/NMEA"
-        )
+        target_include_directories(${target} PRIVATE "${gps_root}/Driver/Protocols" "${gps_root}/Corrections")
+        target_link_libraries(${target} PRIVATE QGCGPSNMEAProtocol)
         if(arg_COMPONENT STREQUAL "Native")
             include("${gps_root}/../Utilities/Geo/GeographicLib.cmake")
             target_link_libraries(${target} PRIVATE GeographicLib::GeographicLib)
@@ -270,6 +275,10 @@ function(qgc_add_gps_component target)
         )
     elseif(arg_COMPONENT STREQUAL "RecordingController")
         target_include_directories(${target} PUBLIC "${gps_root}/Recording")
-        target_link_libraries(${target} PUBLIC ${arg_PREFIX}Recording Qt6::QmlIntegration)
+        target_link_libraries(
+            ${target}
+            PUBLIC ${arg_PREFIX}Recording Qt6::QmlIntegration
+            PRIVATE Qt6::Concurrent
+        )
     endif()
 endfunction()

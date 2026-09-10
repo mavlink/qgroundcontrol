@@ -55,8 +55,8 @@ int GPSDriverFemto::handleMessage(int len)
         _gps_position->longitude_deg = _femto_uav_gps.lon / 1e7;
         _gps_position->altitude_msl_m = _femto_uav_gps.alt / 1e3;
         _gps_position->altitude_ellipsoid_m = _femto_uav_gps.alt_ellipsoid / 1e3;
-        _gps_position->s_variance_m_s = _femto_uav_gps.s_variance_m_s;
-        _gps_position->c_variance_rad = _femto_uav_gps.c_variance_rad;
+        _gps_position->speedAccuracyMetersPerSecond = _femto_uav_gps.s_variance_m_s;
+        _gps_position->courseAccuracyRadians = _femto_uav_gps.c_variance_rad;
         _gps_position->eph = _femto_uav_gps.eph;
         _gps_position->accuracy_timestamp = nowUs();
         _gps_position->epv = _femto_uav_gps.epv;

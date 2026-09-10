@@ -1,9 +1,10 @@
 #include "NTRIPHttpDecoder.h"
 
-#include "QGCLoggingCategory.h"
 #include <QtCore/QRegularExpression>
 
 #include <algorithm>
+
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpDecoderLog, "GPS.NTRIP.NTRIPHttpDecoder")
 
@@ -17,8 +18,9 @@ NTRIPHttpDecoder::~NTRIPHttpDecoder()
     qCDebug(NTRIPHttpDecoderLog) << this;
 }
 
-void NTRIPHttpDecoder::reset()
+void NTRIPHttpDecoder::reset(Mode mode)
 {
+    _mode = mode;
     _state = State::Status;
     _line.clear();
     _headerBytes = 0;
@@ -102,13 +104,23 @@ NTRIPHttpDecoder::Result NTRIPHttpDecoder::feed(QByteArrayView bytes)
 void NTRIPHttpDecoder::_lineReceived(Result& result)
 {
     if (_state == State::Status) {
-        static const QRegularExpression statusPattern(QStringLiteral("^(HTTP/1\\.[01]|ICY) ([0-9]{3})(?: .*)?$"));
+        static const QRegularExpression statusPattern(
+            QStringLiteral("^(HTTP/1\\.[01]|ICY|SOURCETABLE) ([0-9]{3})(?: .*)?$"));
         const auto match = statusPattern.match(QString::fromLatin1(_line));
         if (!match.hasMatch()) {
             _fail(result, QStringLiteral("Invalid HTTP status line"));
             return;
         }
         _status = match.captured(2).toInt();
+        if (match.captured(1) == QStringLiteral("SOURCETABLE") && _mode == Mode::Corrections) {
+            _fail(result, QStringLiteral("Caster returned a source table; select a valid mountpoint"),
+                  NTRIPError::InvalidMountpoint);
+            return;
+        }
+        if (match.captured(1) == QStringLiteral("ICY") && _mode == Mode::SourceTable) {
+            _fail(result, QStringLiteral("Caster returned a correction stream instead of a source table"));
+            return;
+        }
         if (match.captured(1) == QStringLiteral("ICY") && _status == 200) {
             _state = State::IcyHeaders;
             result.connected = true;
@@ -172,7 +184,11 @@ void NTRIPHttpDecoder::_lineReceived(Result& result)
     }
     const auto name = _line.first(colon).trimmed().toLower();
     const auto value = _line.sliced(colon + 1).trimmed().toLower();
-    if (name == "transfer-encoding") {
+    if (name == "content-type" && value.split(';').first().trimmed() == "gnss/sourcetable" &&
+        _mode == Mode::Corrections && _status >= 200 && _status < 300) {
+        _fail(result, QStringLiteral("Caster returned a source table; select a valid mountpoint"),
+              NTRIPError::InvalidMountpoint);
+    } else if (name == "transfer-encoding") {
         if (value != "chunked" || _chunked) {
             _fail(result, QStringLiteral("Unsupported HTTP transfer encoding"));
             return;

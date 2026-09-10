@@ -16,6 +16,8 @@ target_sources(
             NTRIPConnectionStats.h
             NTRIPGgaProvider.cc
             NTRIPGgaProvider.h
+            NTRIPHttpResponse.cc
+            NTRIPHttpResponse.h
             NTRIPHttpTransport.cc
             NTRIPHttpTransport.h
             NTRIPManager.cc

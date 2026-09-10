@@ -2,6 +2,7 @@
 
 #include <QtCore/QPointer>
 
+#include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleGPSObservation.h"
@@ -10,39 +11,39 @@
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : GPSPositionFactGroup(parent)
 {
-    _addFact(systemErrors());
-    _addFact(spoofingState());
-    _addFact(jammingState());
-    _addFact(authenticationState());
-    _addFact(correctionsQuality());
-    _addFact(systemQuality());
-    _addFact(gnssSignalQuality());
-    _addFact(postProcessingQuality());
+    _addFactAlias(systemErrors());
+    _addFactAlias(spoofingState());
+    _addFactAlias(jammingState());
+    _addFactAlias(authenticationState());
+    _addFactAlias(correctionsQuality());
+    _addFactAlias(systemQuality());
+    _addFactAlias(gnssSignalQuality());
+    _addFactAlias(postProcessingQuality());
 }
 
-void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
+void VehicleGPSFactGroup::handleMessage(Vehicle* vehicle, const mavlink_message_t& message)
 {
     Q_UNUSED(vehicle);
 
     switch (message.msgid) {
-    case MAVLINK_MSG_ID_GPS_RAW_INT:
-        _handleGpsRawInt(message);
-        break;
-    case MAVLINK_MSG_ID_HIGH_LATENCY:
-        _handleHighLatency(message);
-        break;
-    case MAVLINK_MSG_ID_HIGH_LATENCY2:
-        _handleHighLatency2(message);
-        break;
-    case MAVLINK_MSG_ID_GNSS_INTEGRITY:
-        _handleGnssIntegrity(message);
-        break;
-    default:
-        break;
+        case MAVLINK_MSG_ID_GPS_RAW_INT:
+            _handleGpsRawInt(message);
+            break;
+        case MAVLINK_MSG_ID_HIGH_LATENCY:
+            _handleHighLatency(message);
+            break;
+        case MAVLINK_MSG_ID_HIGH_LATENCY2:
+            _handleHighLatency2(message);
+            break;
+        case MAVLINK_MSG_ID_GNSS_INTEGRITY:
+            _handleGnssIntegrity(message);
+            break;
+        default:
+            break;
     }
 }
 
-void VehicleGPSFactGroup::_handleGpsRawInt(const mavlink_message_t &message)
+void VehicleGPSFactGroup::_handleGpsRawInt(const mavlink_message_t& message)
 {
     mavlink_gps_raw_int_t gpsRawInt{};
     mavlink_msg_gps_raw_int_decode(&message, &gpsRawInt);
@@ -51,7 +52,7 @@ void VehicleGPSFactGroup::_handleGpsRawInt(const mavlink_message_t &message)
     updatePosition(observation.position, observation.satellitesVisible, observation.fixType);
 }
 
-void VehicleGPSFactGroup::_handleHighLatency(const mavlink_message_t &message)
+void VehicleGPSFactGroup::_handleHighLatency(const mavlink_message_t& message)
 {
     mavlink_high_latency_t highLatency{};
     mavlink_msg_high_latency_decode(&message, &highLatency);
@@ -60,7 +61,7 @@ void VehicleGPSFactGroup::_handleHighLatency(const mavlink_message_t &message)
     updatePosition(observation.position, observation.satellitesVisible, observation.fixType);
 }
 
-void VehicleGPSFactGroup::_handleHighLatency2(const mavlink_message_t &message)
+void VehicleGPSFactGroup::_handleHighLatency2(const mavlink_message_t& message)
 {
     mavlink_high_latency2_t highLatency2{};
     mavlink_msg_high_latency2_decode(&message, &highLatency2);

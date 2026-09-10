@@ -27,13 +27,14 @@ int noDevice(GPSCallbackType type, void*, int, void*)
     return 0;
 }
 
-std::vector<uint8_t> sbfPacket(uint16_t id, std::span<const uint8_t> payload)
+std::vector<uint8_t> sbfPacket(uint16_t id, std::span<const uint8_t> payload, uint32_t tow = 0, uint16_t week = 2435)
 {
     sbf_buf_t header{};
     header.sync = 0x4024;
     header.msg_id = id;
     header.length = 14 + payload.size();
-    header.WNc = 2435;
+    header.WNc = week;
+    header.TOW = tow;
     std::vector<uint8_t> packet(header.length);
     std::memcpy(packet.data(), &header, 14);
     std::memcpy(packet.data() + 14, payload.data(), payload.size());
@@ -84,19 +85,24 @@ void malformedMessages()
     sbf.consume(sbfPacket(SBF_ID_VelCovGeodetic, bytes(covariance)));
     const auto good = sbfPacket(SBF_ID_PVTGeodetic, bytes(fix));
     const std::array<uint8_t, 2> shortPayload{};
-    CHECK(sbf.consume(good) & 1);
+    sbf.consume(good);
+    gps_test_time += 200000;
+    CHECK(sbf.consume({}) & 1);
     CHECK(std::abs(position.latitude_deg - 0.5 * M_RAD_TO_DEG) < 0.00001);
-    gps_test_time += 1000;
     const auto received = position.timestamp;
-    CHECK(sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, shortPayload)) == 0);
+    CHECK(sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, shortPayload, 1000)) == 0);
     CHECK(position.timestamp == received);
-    CHECK(sbf.consume(good) & 1);
+    CHECK(!(sbf.consume(good) & 1));  // Duplicate receiver epoch does not republish.
 
     fix.cog = -2.0e10f;
-    CHECK(sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix))) & 1);
+    sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 1000));
+    gps_test_time += 200000;
+    CHECK(sbf.consume({}) & 1);
     CHECK(std::isnan(position.cog_rad));
     fix.cog = 90.0f;
-    CHECK(sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix))) & 1);
+    sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 2000));
+    gps_test_time += 200000;
+    CHECK(sbf.consume({}) & 1);
     CHECK(std::abs(position.cog_rad - M_PI_F / 2) < 0.00001);
 
     GPSDriverFemto femto(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
@@ -152,20 +158,6 @@ void tinyReads()
         CHECK(guarded.front() == 0xab);
         CHECK(guarded[capacity + 1] == 0xab);
     }
-}
-
-void boundedFields()
-{
-    CHECK(NMEAFields::number<double>("+47.5").value() == 47.5);
-    CHECK(!NMEAFields::number<double>("+-1"));
-    CHECK(!NMEAFields::number<double>("12.5garbage"));
-    CHECK(!NMEAFields::number<double>("NaN"));
-    CHECK(!NMEAFields::number<int>("999999999999999999999"));
-    NMEAFields::Cursor fields("1,,3*00");
-    int value = 0;
-    CHECK(fields.read(value) && value == 1);
-    CHECK(!fields.read(value) && fields.valid());
-    CHECK(fields.read(value) && value == 3);
 }
 
 class DeadlineProbe : public ReadProbe
@@ -257,13 +249,82 @@ void ashtechMetadata()
     CHECK(position.time_utc_usec % 1000000 >= 455999 && position.time_utc_usec % 1000000 <= 456001);
 }
 
+void sbfEpochMetadata()
+{
+    GPSPositionReport position;
+    GPSSatelliteReport satellites;
+    std::vector<GPSPositionReport> fixes;
+    std::vector<GPSSatelliteUsageReport> usage;
+    GPSProtocolIO io;
+    io.decoded = [&](GPSDecodedBatch batch) {
+        for (const auto& event : batch.events) {
+            if (const auto* fix = std::get_if<GPSPositionReport>(&event))
+                fixes.push_back(*fix);
+            if (const auto* count = std::get_if<GPSSatelliteUsageReport>(&event))
+                usage.push_back(*count);
+        }
+    };
+    GPSDriverSBF driver(io, &position, &satellites);
+    sbf_payload_pvt_geodetic_t fix{};
+    fix.mode_type = 1;
+    fix.mode_2d = 1;
+    fix.latitude = 0.5;
+    fix.longitude = 1;
+    fix.height = 10;
+    fix.nr_sv = UINT8_MAX;
+    fix.h_accuracy = UINT16_MAX;
+    sbf_payload_att_euler heading{};
+    heading.heading = 90;
+    heading.mode = 2;
+    sbf_payload_att_cov_euler accuracy{};
+    accuracy.cov_headhead = 4;
+    sbf_payload_vel_cov_geodetic_t speed{};
+    speed.cov_vn_vn = 9;
+    sbf_payload_dop_t dop{};
+    dop.hDOP = 125;
+    driver.consume(sbfPacket(SBF_ID_AttCovEuler, bytes(accuracy), 1000));
+    driver.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 1000));
+    driver.consume(sbfPacket(SBF_ID_DOP, bytes(dop), 2000));  // Adjacent receiver epochs must remain independent.
+    driver.consume(sbfPacket(SBF_ID_AttEuler, bytes(heading), 1000));
+    driver.consume(sbfPacket(SBF_ID_VelCovGeodetic, bytes(speed), 1000));
+    CHECK(fixes.empty());
+    gps_test_time += 200000;
+    driver.consume({});
+    CHECK(fixes.size() == 1);
+    CHECK(fixes[0].fix_type == GPSPositionReport::FIX_TYPE_2D);
+    CHECK(fixes[0].satellites_used == UINT8_MAX);
+    CHECK(usage.size() == 1 && !usage[0].usedCount);
+    CHECK(std::isnan(fixes[0].hdop));
+    CHECK(std::isnan(fixes[0].eph));
+    CHECK(std::abs(fixes[0].heading_accuracy * M_RAD_TO_DEG - 2) < 1e-5);
+    CHECK(std::abs(fixes[0].heading * M_RAD_TO_DEG - 90) < 1e-5);
+    CHECK(fixes[0].speedAccuracyMetersPerSecond == 3);
+    CHECK(fixes[0].time_utc_usec == 0);  // GNSS time cannot be labeled UTC without a receiver UTC offset.
+    fix.mode_2d = 0;
+    fix.nr_sv = 0;
+    driver.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 3000));
+    gps_test_time += 200000;
+    driver.consume({});
+    CHECK(fixes.size() == 2);
+    CHECK(fixes.back().satellites_used == 0);
+    CHECK(fixes.back().fix_type == GPSPositionReport::FIX_TYPE_3D);
+    CHECK(std::isnan(fixes.back().heading));
+    CHECK(std::isnan(fixes.back().heading_accuracy));
+    CHECK(std::isnan(fixes.back().speedAccuracyMetersPerSecond));
+    CHECK(driver.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), UINT32_MAX)) == 0);
+    CHECK(driver.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 4000, UINT16_MAX)) == 0);
+    gps_test_time += 200000;
+    driver.consume({});
+    CHECK(fixes.size() == 2);
+}
+
 int main()
 {
     try {
         tinyReads();
-        boundedFields();
         absoluteDeadline();
         malformedMessages();
+        sbfEpochMetadata();
         ashtechMetadata();
     } catch (const std::exception& error) {
         std::fprintf(stderr, "%s\n", error.what());

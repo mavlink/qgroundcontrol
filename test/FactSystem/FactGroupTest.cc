@@ -1,7 +1,7 @@
 #include "FactGroupTest.h"
+
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
-
 
 #include "Fact.h"
 #include "FactGroup.h"
@@ -11,14 +11,15 @@ class TestableFactGroup : public FactGroup
 {
     Q_OBJECT
 public:
-    explicit TestableFactGroup(QObject *parent = nullptr, bool ignoreCamelCase = false)
-        : FactGroup(0 /* immediate updates */, parent, ignoreCamelCase)
-    {
-    }
+    explicit TestableFactGroup(QObject* parent = nullptr, bool ignoreCamelCase = false, int updateRate = 0)
+        : FactGroup(updateRate, parent, ignoreCamelCase)
+    {}
 
     using FactGroup::_addFact;
+    using FactGroup::_addFactAlias;
     using FactGroup::_addFactGroup;
     using FactGroup::_setTelemetryAvailable;
+    using FactGroup::_updateAllValues;
 };
 
 void FactGroupTest::_addFactAndLookup_test()
@@ -42,7 +43,7 @@ void FactGroupTest::_getFactNonExistent_test()
 {
     TestableFactGroup group;
     expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Unknown Fact"));
-    Fact *result = group.getFact(QStringLiteral("noSuchFact"));
+    Fact* result = group.getFact(QStringLiteral("noSuchFact"));
     verifyExpectedLogMessage();
     QVERIFY(result == nullptr);
 }
@@ -64,7 +65,7 @@ void FactGroupTest::_duplicateFact_test()
 void FactGroupTest::_addFactGroupAndLookup_test()
 {
     TestableFactGroup parent;
-    TestableFactGroup *child = new TestableFactGroup(&parent);
+    TestableFactGroup* child = new TestableFactGroup(&parent);
 
     parent._addFactGroup(child, QStringLiteral("childGroup"));
 
@@ -75,7 +76,7 @@ void FactGroupTest::_getFactGroupNonExistent_test()
 {
     TestableFactGroup group;
     expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Unknown FactGroup"));
-    FactGroup *result = group.getFactGroup(QStringLiteral("noSuchGroup"));
+    FactGroup* result = group.getFactGroup(QStringLiteral("noSuchGroup"));
     verifyExpectedLogMessage();
     QVERIFY(result == nullptr);
 }
@@ -83,8 +84,8 @@ void FactGroupTest::_getFactGroupNonExistent_test()
 void FactGroupTest::_duplicateFactGroup_test()
 {
     TestableFactGroup parent;
-    TestableFactGroup *child1 = new TestableFactGroup(&parent);
-    TestableFactGroup *child2 = new TestableFactGroup(&parent);
+    TestableFactGroup* child1 = new TestableFactGroup(&parent);
+    TestableFactGroup* child2 = new TestableFactGroup(&parent);
 
     parent._addFactGroup(child1, QStringLiteral("dup"));
     expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Duplicate FactGroup"));
@@ -96,7 +97,7 @@ void FactGroupTest::_duplicateFactGroup_test()
 void FactGroupTest::_dotNotationFact_test()
 {
     TestableFactGroup parent;
-    TestableFactGroup *child = new TestableFactGroup(&parent, true /* ignoreCamelCase */);
+    TestableFactGroup* child = new TestableFactGroup(&parent, true /* ignoreCamelCase */);
     Fact fact(0, "speed", FactMetaData::valueTypeDouble, child);
 
     child->_addFact(&fact, QStringLiteral("speed"));
@@ -110,7 +111,7 @@ void FactGroupTest::_dotNotationFact_test()
 void FactGroupTest::_dotNotationFactNotFound_test()
 {
     TestableFactGroup parent;
-    TestableFactGroup *child = new TestableFactGroup(&parent, true /* ignoreCamelCase */);
+    TestableFactGroup* child = new TestableFactGroup(&parent, true /* ignoreCamelCase */);
     parent._addFactGroup(child, QStringLiteral("gps"));
 
     QVERIFY(!parent.factExists(QStringLiteral("gps.noSuch")));
@@ -123,10 +124,12 @@ void FactGroupTest::_dotNotationTooDeep_test()
 {
     TestableFactGroup group;
     // More than one dot level is unsupported
-    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Only single level of hierarchy supported"));
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg,
+                     QRegularExpression("Only single level of hierarchy supported"));
     QVERIFY(!group.factExists(QStringLiteral("a.b.c")));
     verifyExpectedLogMessage();
-    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Only single level of hierarchy supported"));
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg,
+                     QRegularExpression("Only single level of hierarchy supported"));
     QVERIFY(group.getFact(QStringLiteral("a.b.c")) == nullptr);
     verifyExpectedLogMessage();
 }
@@ -177,7 +180,7 @@ void FactGroupTest::_factGroupNamesSignal_test()
     QSignalSpy spy(&parent, &FactGroup::factGroupNamesChanged);
     QVERIFY(spy.isValid());
 
-    TestableFactGroup *child = new TestableFactGroup(&parent);
+    TestableFactGroup* child = new TestableFactGroup(&parent);
     parent._addFactGroup(child, QStringLiteral("sub"));
     QCOMPARE(spy.count(), 1);
 }
@@ -222,8 +225,8 @@ void FactGroupTest::_factNames_test()
 void FactGroupTest::_factGroupNames_test()
 {
     TestableFactGroup parent;
-    TestableFactGroup *c1 = new TestableFactGroup(&parent);
-    TestableFactGroup *c2 = new TestableFactGroup(&parent);
+    TestableFactGroup* c1 = new TestableFactGroup(&parent);
+    TestableFactGroup* c2 = new TestableFactGroup(&parent);
 
     parent._addFactGroup(c1, QStringLiteral("sub1"));
     parent._addFactGroup(c2, QStringLiteral("sub2"));
@@ -237,3 +240,35 @@ void FactGroupTest::_factGroupNames_test()
 #include "FactGroupTest.moc"
 
 UT_REGISTER_TEST(FactGroupTest, TestLabel::Unit)
+
+void FactGroupTest::_aliasOwnership_test()
+{
+    TestableFactGroup owner(nullptr, false, 1000);
+    TestableFactGroup aliases(nullptr, false, 1000);
+    auto* fact = new Fact(0, QStringLiteral("value"), FactMetaData::valueTypeDouble, &owner);
+    owner._addFact(fact);
+    auto* metadata = fact->metaData();
+    fact->setRawValue(42.0);
+    QSignalSpy values(fact, &Fact::valueChanged);
+    aliases._addFactAlias(fact, QStringLiteral("legacyValue"));
+    QCOMPARE(aliases.getFact(QStringLiteral("legacyValue")), fact);
+    QCOMPARE(fact->metaData(), metadata);
+    QCOMPARE(fact->rawValue().toDouble(), 42.0);
+    QVERIFY(!fact->sendValueChangedSignals());
+    aliases.setLiveUpdates(true);
+    QVERIFY(!fact->sendValueChangedSignals());
+    aliases._updateAllValues();
+    QCOMPARE(values.count(), 0);
+    owner._updateAllValues();
+    QCOMPARE(values.count(), 1);
+    owner.setLiveUpdates(true);
+    aliases.setLiveUpdates(false);
+    QVERIFY(fact->sendValueChangedSignals());
+    fact->setRawValue(43.0);
+    QCOMPARE(values.count(), 2);
+    QSignalSpy names(&aliases, &FactGroup::factNamesChanged);
+    delete fact;
+    QCOMPARE(names.count(), 1);
+    QVERIFY(!aliases.factExists(QStringLiteral("legacyValue")));
+    QVERIFY(aliases.factNames().isEmpty());
+}

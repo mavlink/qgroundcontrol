@@ -34,9 +34,6 @@ struct GPSProtocolIO
     std::function<GPSProtocolReadResult(std::span<uint8_t>, GPSDeadline)> read;
     std::function<GPSProtocolWriteResult(std::span<const uint8_t>, GPSDeadline)> write;
     std::function<GPSBaudStatus(unsigned)> setBaudrate;
-    std::function<void(std::span<const uint8_t>)> rtcm;
-    std::function<void(const GPSRelativeReport&)> relativePosition;
-    std::function<void(const GPSSurveyReport&)> survey;
     std::function<uint64_t()> nowUs;
     std::function<bool(std::chrono::microseconds)> wait;
 };

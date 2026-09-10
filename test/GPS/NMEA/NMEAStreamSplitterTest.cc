@@ -48,24 +48,26 @@ void NMEAStreamSplitterTest::_independentReads()
     {
         NMEAStreamSplitter stream(&input);
         auto* position = stream.positionDevice();
-        auto* satellite = stream.satelliteDevice();
+        QList<NMEASentenceEnvelope> sentences;
+        connect(&stream, &NMEAStreamSplitter::sentenceReceived, this,
+                [&](const NMEASentenceEnvelope& sentence) { sentences.append(sentence); });
         const QByteArray first = NMEAUtils::repairChecksum("$GNTXT,first");
         const QByteArray next = NMEAUtils::repairChecksum("$GNTXT,next");
         input.feed(first.first(5));
         QCOMPARE(position->bytesAvailable(), 0);
-        QVERIFY(!satellite->canReadLine());
+        QVERIFY(sentences.isEmpty());
         input.feed(first.mid(5) + next);
         QCOMPARE(position->read(2), first.first(2));
         QCOMPARE(position->readAll(), first.mid(2) + next);
-        QCOMPARE(satellite->peek(first.size()), first);
-        QVERIFY(satellite->canReadLine());
-        QCOMPARE(satellite->readLine(), first);
-        QCOMPARE(satellite->readAll(), next);
+        QCOMPARE(sentences.size(), 2);
+        QCOMPARE(sentences.first().bytes(), first);
+        QCOMPARE(sentences.last().bytes(), next);
+        QCOMPARE(sentences.first().sentence().fields[1], std::string_view("first"));
         input.feed(first);
         position->close();
         QVERIFY(position->open(QIODevice::ReadOnly));
         QVERIFY(position->readAll().isEmpty());
-        QCOMPARE(satellite->readAll(), first);
+        QCOMPARE(sentences.last().bytes(), first);
     }
     QVERIFY(input.isOpen());
 }
@@ -75,23 +77,42 @@ void NMEAStreamSplitterTest::_slowConsumerIsBounded()
     StreamInput input;
     NMEAStreamSplitter stream(&input);
     QByteArray received;
-    connect(stream.positionDevice(), &QIODevice::readyRead, this,
-            [&]() { received += stream.positionDevice()->readAll(); });
+    connect(&stream, &NMEAStreamSplitter::sentenceReceived, this,
+            [&](const NMEASentenceEnvelope& sentence) { received += sentence.bytes(); });
     const QByteArray line = NMEAUtils::repairChecksum("$GNTXT,buffer");
     const QByteArray lines = line.repeated(8000);
     input.feed(lines);
     QVERIFY(received.size() < lines.size());
     QTRY_COMPARE_WITH_TIMEOUT(received, lines, TestTimeout::mediumMs());
-    QVERIFY(stream.satelliteDevice()->bytesAvailable() <= 64 * 1024);
-    const QByteArray buffered = stream.satelliteDevice()->readAll();
+    QVERIFY(stream.positionDevice()->bytesAvailable() <= 64 * 1024);
+    const QByteArray buffered = stream.positionDevice()->readAll();
     QVERIFY(!buffered.isEmpty());
     QVERIFY(lines.endsWith(buffered));
     QVERIFY(buffered.startsWith(line));
     input.feed("$" + QByteArray(80 * 1024, 'x'));
-    QVERIFY(stream.satelliteDevice()->readAll().isEmpty());
+    QVERIFY(stream.positionDevice()->readAll().isEmpty());
     input.feed("rest\n" + line);
-    QTRY_VERIFY_WITH_TIMEOUT(stream.satelliteDevice()->canReadLine(), TestTimeout::mediumMs());
-    QCOMPARE(stream.satelliteDevice()->readAll(), line);
+    QTRY_VERIFY_WITH_TIMEOUT(stream.positionDevice()->canReadLine(), TestTimeout::mediumMs());
+    QCOMPARE(stream.positionDevice()->readAll(), line);
+}
+
+void NMEAStreamSplitterTest::_queuedSentenceOwnsItsBytes()
+{
+    QList<NMEASentenceEnvelope> received;
+    {
+        StreamInput input;
+        NMEAStreamSplitter stream(&input);
+        connect(
+            &stream, &NMEAStreamSplitter::sentenceReceived, this,
+            [&](const NMEASentenceEnvelope& sentence) { received.append(sentence); }, Qt::QueuedConnection);
+        input.feed(NMEAUtils::repairChecksum("$GNTXT,retained"));
+        QVERIFY(received.isEmpty());
+        stream.positionDevice()->readAll();
+    }
+    QTRY_COMPARE_WITH_TIMEOUT(received.size(), 1, TestTimeout::shortMs());
+    QCOMPARE(received.first().sentence().fields[1], std::string_view("retained"));
+    QCOMPARE(received.first().bytes(), NMEAUtils::repairChecksum("$GNTXT,retained"));
+    QVERIFY(received.first().receivedAtUs() > 0);
 }
 
 void NMEAStreamSplitterTest::_sourceDestructionClosesOutputs()
@@ -101,20 +122,18 @@ void NMEAStreamSplitterTest::_sourceDestructionClosesOutputs()
     input->feed(NMEAUtils::repairChecksum("$GNTXT,pending"));
     input.reset();
     QVERIFY(!stream.positionDevice()->isOpen());
-    QVERIFY(!stream.satelliteDevice()->isOpen());
     QCOMPARE(stream.positionDevice()->bytesAvailable(), 0);
-    QCOMPARE(stream.satelliteDevice()->bytesAvailable(), 0);
 }
 
 void NMEAStreamSplitterTest::_destructionDuringDelivery()
 {
     StreamInput input;
     auto stream = std::make_unique<NMEAStreamSplitter>(&input);
-    const QPointer<QIODevice> satellite(stream->satelliteDevice());
+    const QPointer<QIODevice> position(stream->positionDevice());
     connect(stream->positionDevice(), &QIODevice::readyRead, this, [&]() { stream.reset(); });
     input.feed(NMEAUtils::repairChecksum("$GNTXT,one") + NMEAUtils::repairChecksum("$GNTXT,two"));
     QVERIFY(!stream);
-    QVERIFY(!satellite);
+    QVERIFY(!position);
     QVERIFY(input.isOpen());
 }
 
@@ -123,6 +142,9 @@ void NMEAStreamSplitterTest::_mixedBinaryAndFragmentedSentences()
     StreamInput input;
     NMEAStreamSplitter stream(&input);
     NMEAPositionSource position(stream.positionDevice());
+    QByteArray sentences;
+    connect(&stream, &NMEAStreamSplitter::sentenceReceived, this,
+            [&](const NMEASentenceEnvelope& sentence) { sentences += sentence.bytes(); });
     QSignalSpy fixes(&position, &QGeoPositionInfoSource::positionUpdated);
     position.startUpdates();
     const QByteArray rmc = NMEAUtils::repairChecksum("$GNRMC,120000.00,A,3724.000,N,07918.000,W,0.0,0.0,090926,,,A");
@@ -131,7 +153,7 @@ void NMEAStreamSplitterTest::_mixedBinaryAndFragmentedSentences()
     for (const char byte : garbage + rmc + gga) {
         input.feed(QByteArray(1, byte));
     }
-    QCOMPARE(stream.satelliteDevice()->readAll(), rmc + gga);
+    QCOMPARE(sentences, rmc + gga);
     QTRY_VERIFY_WITH_TIMEOUT(!fixes.isEmpty(), TestTimeout::shortMs());
     QVERIFY(fixes.first().first().value<QGeoPositionInfo>().isValid());
 }

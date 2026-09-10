@@ -4,7 +4,10 @@
 #include <QtCore/QIODevice>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QSemaphore>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QThreadPool>
 #include <QtPositioning/QNmeaPositionInfoSource>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -32,7 +35,6 @@
 #include "NMEAStreamSplitter.h"
 #include "NTRIPHttpDecoder.h"
 #include "NTRIPSession.h"
-#include "RTCMParser.h"
 #include "UBX/GPSDriverUBX.h"
 
 namespace {
@@ -114,7 +116,10 @@ public:
 
     void sendNMEA(const QByteArray& bytes) override { written += bytes; }
 
-    void fail() { emit error(NTRIPError::SocketError, QStringLiteral("replayed disconnect")); }
+    void fail()
+    {
+        emit failed(NTRIPFailure::fromError(NTRIPError::SocketError, QStringLiteral("replayed disconnect")));
+    }
 
     void frame(qint64 receiptMs)
     {
@@ -311,7 +316,12 @@ private slots:
         tap.close();
         controller.stop();
         const QString path = directory.filePath("nmea.json");
+        QSignalSpy exported(&controller, &GPSRecordingController::exportFinished);
         QVERIFY(controller.exportRecording(QUrl::fromLocalFile(path)));
+        QVERIFY(controller.exporting());
+        QTRY_COMPARE_WITH_TIMEOUT(exported.count(), 1, 5000);
+        QCOMPARE(exported.first()[0].toBool(), true);
+        QVERIFY(!controller.exporting());
         QCOMPARE(controller.lastExportPath(), path);
         QVERIFY(controller.errorString().isEmpty());
         GPSReplayTrace trace;
@@ -396,6 +406,99 @@ private slots:
         QCOMPARE(replay.termination()->reason, GPSReplayTermination::Reason::Closed);
         QCOMPARE(replay.terminationCount(), quint64(2));  // The first open failed before the successful attempt.
         QVERIFY(replay.complete());
+    }
+
+    void recordingAsyncExport_data()
+    {
+        QTest::addColumn<bool>("cancel");
+        QTest::addColumn<bool>("destroy");
+        QTest::newRow("immutable-snapshot") << false << false;
+        QTest::newRow("cancel-before-write") << true << false;
+        QTest::newRow("destroy-controller") << false << true;
+    }
+
+    void recordingAsyncExport()
+    {
+        QFETCH(bool, cancel);
+        QFETCH(bool, destroy);
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const QString path = directory.filePath("capture.json");
+        QFile existing(path);
+        QVERIFY(existing.open(QIODevice::WriteOnly));
+        QCOMPARE(existing.write("original"), qint64(8));
+        existing.close();
+        QSemaphore started;
+        QSemaphore release;
+        QThreadPool pool;
+        pool.setMaxThreadCount(1);
+        pool.start([&]() {
+            started.release();
+            release.acquire();
+        });
+        const auto cleanup = qScopeGuard([&]() {
+            release.release();
+            pool.waitForDone();
+        });
+        QVERIFY(started.tryAcquire(1, 5000));
+        auto buffer = std::make_shared<GPSRecordingBuffer>();
+        auto controller = std::make_unique<GPSRecordingController>(nullptr, buffer, &pool);
+        QVERIFY(controller->start());
+        buffer->append(1, {}, false, GPSRecordingEvent::Kind::Open);
+        buffer->append(1, {}, true, GPSRecordingEvent::Kind::Rx, QByteArray("first capture"));
+        controller->stop();
+        const auto expected = buffer->exportJson();
+        QSignalSpy finished(controller.get(), &GPSRecordingController::exportFinished);
+        bool completionOnOwnerThread = false;
+        connect(controller.get(), &GPSRecordingController::exportFinished, this,
+                [&]() { completionOnOwnerThread = QThread::currentThread() == thread(); });
+        QVERIFY(controller->exportRecording(QUrl::fromLocalFile(path)));
+        QVERIFY(controller->exporting());
+        QVERIFY(!controller->exportRecording(QUrl::fromLocalFile(directory.filePath("duplicate.json"))));
+        QVERIFY(controller->errorString().isEmpty());
+        // Starting another capture must not replace the submitted immutable document.
+        QVERIFY(controller->start());
+        buffer->append(2, {}, false, GPSRecordingEvent::Kind::Open);
+        buffer->append(2, {}, true, GPSRecordingEvent::Kind::Rx, QByteArray("second capture"));
+        controller->stop();
+        if (cancel) {
+            controller->cancelExport();
+        }
+        if (destroy) {
+            controller.reset();
+        }
+        release.release();
+        if (destroy) {
+            QVERIFY(pool.waitForDone(5000));
+            QCOMPARE(finished.count(), 0);
+        } else {
+            QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 5000);
+            QVERIFY(completionOnOwnerThread);
+            QVERIFY(!controller->exporting());
+            QCOMPARE(finished.first()[0].toBool(), !cancel);
+            QCOMPARE(controller->lastExportPath().isEmpty(), cancel);
+            QCOMPARE(controller->errorString().isEmpty(), !cancel);
+        }
+        QVERIFY(existing.open(QIODevice::ReadOnly));
+        QCOMPARE(existing.readAll(), cancel || destroy ? QByteArray("original") : expected);
+        QVERIFY(!QFile::exists(directory.filePath("duplicate.json")));
+    }
+
+    void recordingAsyncWriteFailure()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        GPSRecordingController controller;
+        QVERIFY(controller.start());
+        controller.buffer()->append(1, {}, false, GPSRecordingEvent::Kind::Open);
+        controller.stop();
+        QSignalSpy finished(&controller, &GPSRecordingController::exportFinished);
+        QVERIFY(controller.exportRecording(QUrl::fromLocalFile(directory.path())));
+        QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 5000);
+        QVERIFY(!finished.first()[0].toBool());
+        QVERIFY(!controller.exporting());
+        QVERIFY(!controller.errorString().isEmpty());
+        QVERIFY(controller.lastExportPath().isEmpty());
     }
 
     void recordingBoundsAndThreadRetirement()

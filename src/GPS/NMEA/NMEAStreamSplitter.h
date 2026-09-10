@@ -6,10 +6,12 @@
 
 #include <memory>
 
+#include "NMEASentenceEnvelope.h"
+
 class QIODevice;
 class NMEAStreamDevice;
 
-/// Copies one borrowed input stream into independent, bounded parser inputs.
+/// Frames one borrowed input into shared sentences and a bounded Qt position input.
 /// The input and splitter must stay in the same thread.
 class NMEAStreamSplitter : public QObject
 {
@@ -20,7 +22,10 @@ public:
     ~NMEAStreamSplitter() override;
 
     QIODevice* positionDevice() const;
-    QIODevice* satelliteDevice() const;
+
+signals:
+    void sentenceReceived(const NMEASentenceEnvelope& sentence);
+    void closed();
 
 private:
     void _readAvailableData();
@@ -31,5 +36,4 @@ private:
     quint64 _sentenceTimestampUs = 0;
     bool _drainPending = false;
     std::unique_ptr<NMEAStreamDevice> _positionDevice;
-    std::unique_ptr<NMEAStreamDevice> _satelliteDevice;
 };

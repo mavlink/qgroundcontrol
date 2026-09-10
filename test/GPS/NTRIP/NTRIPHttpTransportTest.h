@@ -7,6 +7,8 @@ class NTRIPHttpTransportTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void testSourceTableRejectsMountpoint_data();
+    void testSourceTableRejectsMountpoint();
     void testBodyBeforeMalformedChunk_data();
     void testBodyBeforeMalformedChunk();
     void testEofFinalization_data();

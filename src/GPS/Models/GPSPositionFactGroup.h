@@ -20,7 +20,7 @@ class GPSPositionFactGroup : public FactGroup
     Q_PROPERTY(Fact* lock READ lock CONSTANT)
 
 public:
-    explicit GPSPositionFactGroup(QObject* parent = nullptr);
+    explicit GPSPositionFactGroup(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
     ~GPSPositionFactGroup() override;
 
     Fact* lat() { return &_latFact; }

@@ -6,7 +6,6 @@
 #include <deque>
 
 #include "GPSReadTimestamp.h"
-#include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NMEAStreamSplitterLog, "GPS.NMEA.NMEAStreamSplitter")
@@ -16,7 +15,7 @@ namespace {
 constexpr qsizetype kMaxBufferedBytes = 64 * 1024;
 }
 
-class NMEAStreamDevice : public QIODevice, public GPSReadTimestamp
+class NMEAStreamDevice : public QIODevice, public GPSReadTimestamp, public NMEASentenceProvider
 {
 public:
     NMEAStreamDevice()
@@ -35,15 +34,19 @@ public:
 
     quint64 lastReadTimestampUs() const override { return _lastReadTimestampUs; }
 
+    std::optional<NMEASentenceEnvelope> lastReadSentence() const override { return _lastSentence; }
+
     void close() override
     {
         _sentences.clear();
         _size = 0;
+        _lastSentence.reset();
         QIODevice::close();
     }
 
-    void append(const QByteArray& bytes, quint64 receivedAtUs)
+    void append(const NMEASentenceEnvelope& envelope)
     {
+        const auto& bytes = envelope.bytes();
         if (!isOpen() || bytes.isEmpty()) {
             return;
         }
@@ -51,7 +54,7 @@ public:
             _size -= _sentences.front().bytes.size();
             _sentences.pop_front();
         }
-        _sentences.push_back({bytes, receivedAtUs});
+        _sentences.push_back({bytes, envelope});
         _size += bytes.size();
         emit readyRead();
     }
@@ -65,7 +68,8 @@ protected:
         auto& sentence = _sentences.front();
         const qint64 size = std::min<qint64>(maxSize, sentence.bytes.size());
         std::copy_n(sentence.bytes.constData(), size, data);
-        _lastReadTimestampUs = sentence.receivedAtUs;
+        _lastReadTimestampUs = sentence.envelope.receivedAtUs();
+        _lastSentence = sentence.envelope;
         sentence.bytes.remove(0, size);
         _size -= size;
         if (sentence.bytes.isEmpty()) {
@@ -82,12 +86,13 @@ private:
     struct Sentence
     {
         QByteArray bytes;
-        quint64 receivedAtUs = 0;
+        NMEASentenceEnvelope envelope;
     };
 
     std::deque<Sentence> _sentences;
     qint64 _size = 0;
     quint64 _lastReadTimestampUs = 0;
+    std::optional<NMEASentenceEnvelope> _lastSentence;
 };
 
 NMEAStreamDevice::~NMEAStreamDevice()
@@ -99,7 +104,6 @@ NMEAStreamSplitter::NMEAStreamSplitter(QIODevice* source, QObject* parent)
     : QObject(parent)
     , _source(source)
     , _positionDevice(std::make_unique<NMEAStreamDevice>())
-    , _satelliteDevice(std::make_unique<NMEAStreamDevice>())
 {
     qCDebug(NMEAStreamSplitterLog) << this;
     if (source) {
@@ -119,11 +123,6 @@ QIODevice* NMEAStreamSplitter::positionDevice() const
     return _positionDevice.get();
 }
 
-QIODevice* NMEAStreamSplitter::satelliteDevice() const
-{
-    return _satelliteDevice.get();
-}
-
 void NMEAStreamSplitter::_readAvailableData()
 {
     if (_drainPending) {
@@ -138,7 +137,7 @@ void NMEAStreamSplitter::_readAvailableData()
             return;
         }
         const quint64 receivedAtUs = GPSReadTimestamp::from(_source);
-        QList<std::pair<QByteArray, quint64>> sentences;
+        QList<NMEASentenceEnvelope> sentences;
         for (const char byte : data) {
             if (byte == '$') {
                 _sentence = "$";
@@ -147,8 +146,10 @@ void NMEAStreamSplitter::_readAvailableData()
                 _sentence.append(byte);
                 if (byte == '\n') {
                     const QByteArray line = _sentence.trimmed();
-                    if (line.indexOf('*') == line.size() - 3 && NMEAUtils::verifyChecksum(line)) {
-                        sentences.append({line + "\r\n", _sentenceTimestampUs});
+                    if (line.indexOf('*') == line.size() - 3) {
+                        if (auto sentence = NMEASentenceEnvelope::parse(line + "\r\n", _sentenceTimestampUs)) {
+                            sentences.append(std::move(*sentence));
+                        }
                     }
                     _sentence.clear();
                 } else if (_sentence.size() > 1024 || (byte != '\r' && (byte < ' ' || byte > '~'))) {
@@ -156,12 +157,12 @@ void NMEAStreamSplitter::_readAvailableData()
                 }
             }
         }
-        for (const auto& [sentence, timestampUs] : sentences) {
-            _positionDevice->append(sentence, timestampUs);
+        for (const auto& sentence : sentences) {
+            _positionDevice->append(sentence);
             if (!guard) {
                 return;
             }
-            _satelliteDevice->append(sentence, timestampUs);
+            emit sentenceReceived(sentence);
             if (!guard) {
                 return;
             }
@@ -185,6 +186,6 @@ void NMEAStreamSplitter::_closeOutputs()
     _sentence.clear();
     _positionDevice->close();
     if (guard) {
-        _satelliteDevice->close();
+        emit closed();
     }
 }

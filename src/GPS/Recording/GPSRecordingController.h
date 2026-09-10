@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QThreadPool>
 #include <QtCore/QTimer>
 #include <QtCore/QUrl>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -15,6 +17,7 @@ class GPSRecordingController : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("Owned by GPSManager")
+    Q_PROPERTY(bool exporting READ exporting NOTIFY stateChanged)
     Q_PROPERTY(bool recording READ recording NOTIFY stateChanged)
     Q_PROPERTY(bool hasRecording READ hasRecording NOTIFY stateChanged)
     Q_PROPERTY(int eventCount READ eventCount NOTIFY stateChanged)
@@ -24,11 +27,17 @@ class GPSRecordingController : public QObject
     Q_PROPERTY(QString lastExportPath READ lastExportPath NOTIFY stateChanged)
 
 public:
-    explicit GPSRecordingController(QObject* parent = nullptr, std::shared_ptr<GPSRecordingBuffer> buffer = {});
+    explicit GPSRecordingController(QObject* parent = nullptr, std::shared_ptr<GPSRecordingBuffer> buffer = {},
+                                    QThreadPool* exportPool = nullptr);
     ~GPSRecordingController() override;
     Q_INVOKABLE bool start();
     Q_INVOKABLE void stop();
+    /// Returns submission acceptance; exportFinished reports completion on the controller thread.
     Q_INVOKABLE bool exportRecording(const QUrl& destination);
+
+    Q_INVOKABLE void cancelExport();
+
+    bool exporting() const { return _exporting; }
 
     std::shared_ptr<GPSRecordingBuffer> buffer() const { return _buffer; }
 
@@ -48,6 +57,7 @@ public:
 
 signals:
     void stateChanged();
+    void exportFinished(bool success);
 
 private:
     void _refresh();
@@ -57,4 +67,8 @@ private:
     GPSRecordingBuffer::Status _lastStatus;
     QString _errorString;
     QString _lastExportPath;
+    QPointer<QThreadPool> _exportPool;
+    std::shared_ptr<std::atomic_bool> _exportCancel;
+    quint64 _exportRevision = 0;
+    bool _exporting = false;
 };

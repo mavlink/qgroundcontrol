@@ -6,7 +6,7 @@
 #include <utility>
 
 #include "QGCLoggingCategory.h"
-#include "RTCMParser.h"
+#include "RTCMFrame.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionRouterLog, "GPS.Corrections.GPSCorrectionRouter")
 
@@ -148,7 +148,7 @@ bool GPSCorrectionRouter::acceptIngress(const GPSCorrectionIngress& ingress)
         recordRejectedFrame(frame, ingress.rejection());
         return false;
     }
-    if (frame.validated && !RTCMParser::isValidFrame(frame.data)) {
+    if (frame.validated && !RTCM::isValidFrame(frame.data)) {
         frame.validated = false;
         recordRejectedFrame(frame, GPSCorrectionReason::InvalidFrame);
         return false;

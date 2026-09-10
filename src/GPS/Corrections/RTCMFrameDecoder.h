@@ -1,8 +1,12 @@
 #pragma once
 
+#include <QtCore/QByteArray>
+#include <QtCore/QSet>
+#include <QtCore/QVector>
+
 #include <optional>
 
-#include "RTCMParser.h"
+#include "RTCMFramer.h"
 
 /// Frames RTCM bytes while retaining the first fragment's monotonic receipt time.
 class RTCMFrameDecoder
@@ -22,9 +26,10 @@ public:
     std::optional<Result> addByte(uint8_t byte, qint64 receivedAtMs);
     void reset();
 
-    void setWhitelist(const QVector<int>& ids) { _parser.setWhitelist(ids); }
+    void setWhitelist(const QVector<int>& ids) { _whitelist = QSet<int>(ids.begin(), ids.end()); }
 
 private:
-    RTCMParser _parser;
+    RTCMFramer _framer;
+    QSet<int> _whitelist;
     qint64 _receivedAtMs = 0;
 };

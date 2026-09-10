@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "GPSCorrectionManager.h"
+#include "GPSPositionSourceRegistration.h"
 #include "GPSReceiverAutoConnect.h"
 #include "GPSRecordingController.h"
 #include "GPSRelativePositionModel.h"
@@ -16,9 +17,9 @@
 #include "NMEASourceManager.h"
 
 class GPSReceiver;
+class GPSSourceHealth;
 class VehicleGPSPositionProvider;
 class GPSBaseStationState;
-class GPSPositionSourceRegistration;
 class QGCPositionManager;
 class SettingsManager;
 class NTRIPManager;
@@ -47,12 +48,12 @@ class GPSManager : public QObject
     friend class GPSManagerTest;
 
 public:
-    GPSManager(QObject *parent = nullptr);
+    GPSManager(QObject* parent = nullptr);
     GPSManager(SettingsManager& settings, QGCPositionManager* positionManager,
                std::function<bool()> connectionsSuspended, QObject* parent = nullptr);
     ~GPSManager();
 
-    static GPSManager *instance();
+    static GPSManager* instance();
 
     void init(NTRIPManager* ntrip = nullptr);
     void shutdown();
@@ -132,14 +133,19 @@ private:
     quint64 _nmeaSettingsRevision = 0;
     quint64 _correctionSettingsRevision = 0;
     quint64 _receiverSettingsRevision = 0;
-    quint64 _receiverRegistrationRevision = 0;
-    quint64 _nmeaRegistrationRevision = 0;
-    QPointer<QObject> _registeredReceiverSource;
-    QPointer<QObject> _registeredNmeaSource;
-    quint64 _registeredReceiverSession = 0;
-    quint64 _registeredNmeaSession = 0;
-    std::unique_ptr<GPSPositionSourceRegistration> _receiverRegistration;
-    std::unique_ptr<GPSPositionSourceRegistration> _nmeaRegistration;
+
+    struct PositionBinding
+    {
+        QPointer<QObject> source;
+        quint64 session = 0;
+        quint64 revision = 0;
+        GPSPositionSourceRegistration registration;
+    };
+
+    PositionBinding _receiverBinding;
+    PositionBinding _nmeaBinding;
+    void _updatePositionBinding(PositionBinding& binding, int kind, QObject* source, GPSSourceHealth* health,
+                                quint64 session);
     QPointer<QGCPositionManager> _positionManager;
     GPSCorrectionManager _corrections;
     GPSCorrectionSourceRegistration _receiverCorrectionSource;

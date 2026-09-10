@@ -11,15 +11,23 @@ QGC_LOGGING_CATEGORY(GPSSatelliteStoreLog, "GPS.Core.GPSSatelliteStore")
 GPSSatelliteStore::GPSSatelliteStore(QObject* parent, int freshnessTimeoutMs, GPSRuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _expiryTask(_scheduler, this)
     , _freshnessTimeoutMs(std::max(1, freshnessTimeoutMs))
 {
     qCDebug(GPSSatelliteStoreLog) << this;
+    connect(_scheduler, &QObject::destroyed, this, [this]() {
+        _scheduler = nullptr;
+        _constellations.clear();
+        _publish();
+    });
 }
 
 GPSSatelliteStore::~GPSSatelliteStore()
 {
     qCDebug(GPSSatelliteStoreLog) << this;
-    _scheduler->cancel(_expiryTask);
+    if (_scheduler) {
+        _scheduler->disconnect(this);
+    }
 }
 
 void GPSSatelliteStore::beginSession(const QString& sourceId, quint64 sessionId)
@@ -47,7 +55,7 @@ void GPSSatelliteStore::reset()
 
 void GPSSatelliteStore::clear()
 {
-    _clearedThroughUs = _scheduler->nowUs();
+    _clearedThroughUs = _scheduler ? _scheduler->nowUs() : _clearedThroughUs;
     _constellations.clear();
     _publish();
 }
@@ -74,7 +82,7 @@ bool GPSSatelliteStore::_accept(quint64 receipt, quint64 current, quint64& retir
 
 void GPSSatelliteStore::updateObservation(const GPSSatelliteObservation& observation)
 {
-    if (_observation.sourceId.isEmpty() || observation.sessionId != _observation.sessionId ||
+    if (!_scheduler || _observation.sourceId.isEmpty() || observation.sessionId != _observation.sessionId ||
         (!observation.sourceId.isEmpty() && observation.sourceId != _observation.sourceId)) {
         return;
     }
@@ -153,15 +161,15 @@ void GPSSatelliteStore::updateObservation(const GPSSatelliteObservation& observa
                 }
             }
         }
-        if ((fullSnapshot || report.inUseTimestampUs >= _fullSnapshotReceiptUs) && report.satellitesUsed &&
-            *report.satellitesUsed >= 0 &&
+        if ((fullSnapshot || report.inUseTimestampUs >= _fullSnapshotReceiptUs) &&
+            (!report.satellitesUsed || *report.satellitesUsed >= 0) &&
             _accept(report.inUseTimestampUs, state.useReceiptUs, state.useRetiredThroughUs, nowUs)) {
             state.useReceiptUs = report.inUseTimestampUs;
             state.usedCount = report.satellitesUsed;
-            state.usedIds = report.usedSatelliteIds;
+            state.usedIds = report.satellitesUsed ? report.usedSatelliteIds : std::nullopt;
             state.used.clear();
             for (const auto& satellite : observation.satellites) {
-                if (satellite.constellation == report.constellation && satellite.used) {
+                if (report.satellitesUsed && satellite.constellation == report.constellation && satellite.used) {
                     state.used[{satellite.id, satellite.prn}] = *satellite.used;
                 }
             }
@@ -191,7 +199,7 @@ void GPSSatelliteStore::_expire(quint64 nowUs)
 
 void GPSSatelliteStore::_publish()
 {
-    const quint64 nowUs = _scheduler->nowUs();
+    const quint64 nowUs = _scheduler ? _scheduler->nowUs() : 0;
     _expire(nowUs);
     _observation.satellites.clear();
     _observation.provenance.clear();
@@ -222,13 +230,9 @@ void GPSSatelliteStore::_publish()
             }
         }
     }
-    _scheduler->cancel(_expiryTask);
-    _expiryTask = 0;
+    _expiryTask.cancel();
     if (nextExpiryUs != std::numeric_limits<quint64>::max()) {
-        _expiryTask = _scheduler->schedule(this, std::chrono::microseconds(nextExpiryUs - nowUs), [this]() {
-            _expiryTask = 0;
-            _publish();
-        });
+        _expiryTask.schedule(std::chrono::microseconds(nextExpiryUs - nowUs), [this]() { _publish(); });
     }
     _observation.revision = ++_revision;
     const GPSSatelliteObservation snapshot = _observation;

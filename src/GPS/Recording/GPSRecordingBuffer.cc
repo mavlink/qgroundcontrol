@@ -11,7 +11,8 @@
 QGC_LOGGING_CATEGORY(GPSRecordingBufferLog, "GPS.Recording.GPSRecordingBuffer")
 QGC_LOGGING_CATEGORY(GPSRecordingStreamLog, "GPS.Recording.GPSRecordingStream")
 
-GPSRecordingBuffer::GPSRecordingBuffer(Clock clock) : _clock(clock ? std::move(clock) : GPSObservation::monotonicNowUs)
+GPSRecordingBuffer::GPSRecordingBuffer(Clock clock)
+    : _clock(clock ? std::move(clock) : GPSObservation::monotonicNowUs)
 {
     qCDebug(GPSRecordingBufferLog) << this;
 }
@@ -123,23 +124,25 @@ void GPSRecordingBuffer::append(quint64 stream, const GPSRecordingMetadata& meta
     _status.bytesRecorded += bytes.size();
 }
 
+std::optional<GPSRecordingDocument> GPSRecordingBuffer::snapshot() const
+{
+    const QMutexLocker lock(&_mutex);
+    if (_status.recording) {
+        return std::nullopt;
+    }
+    return GPSRecordingDocument{.events = _events, .limitReached = _status.limitReached};
+}
+
 QByteArray GPSRecordingBuffer::exportJson() const
 {
-    QVector<Event> events;
-    Status status;
-    {
-        const QMutexLocker lock(&_mutex);
-        if (_status.recording) {
-            return {};
-        }
-        events = _events;
-        status = _status;
-    }
-    return GPSRecordingDocument{.events = std::move(events), .limitReached = status.limitReached}.encode();
+    const auto document = snapshot();
+    return document ? document->encode() : QByteArray();
 }
 
 GPSRecordingStream::GPSRecordingStream(std::shared_ptr<GPSRecordingBuffer> buffer, GPSRecordingMetadata metadata)
-    : _buffer(std::move(buffer)), _metadata(metadata), _id(_buffer ? _buffer->allocateStream() : 0)
+    : _buffer(std::move(buffer))
+    , _metadata(metadata)
+    , _id(_buffer ? _buffer->allocateStream() : 0)
 {
     qCDebug(GPSRecordingStreamLog) << this;
 }

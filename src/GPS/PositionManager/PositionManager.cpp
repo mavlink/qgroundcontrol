@@ -1,4 +1,5 @@
 #include "PositionManager.h"
+
 #include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "SimulatedPosition.h"
@@ -58,7 +59,7 @@ QGCPositionManager::~QGCPositionManager()
     }
 }
 
-QGCPositionManager *QGCPositionManager::instance()
+QGCPositionManager* QGCPositionManager::instance()
 {
     return _positionManager();
 }
@@ -118,18 +119,16 @@ void QGCPositionManager::_checkPermission()
         if (!guard) {
             return;
         }
-        QCoreApplication::instance()->requestPermission(locationPermission, this, [this](const QPermission &permission) {
-            _handlePermissionStatus(permission.status());
-        });
+        QCoreApplication::instance()->requestPermission(
+            locationPermission, this,
+            [this](const QPermission& permission) { _handlePermissionStatus(permission.status()); });
     } else {
         _handlePermissionStatus(permissionStatus);
     }
 }
 
-std::unique_ptr<GPSPositionSourceRegistration> QGCPositionManager::registerPositionSource(SelectedSource kind,
-                                                                                          QObject* source,
-                                                                                          GPSSourceHealth* health,
-                                                                                          quint64 sessionId)
+GPSPositionSourceRegistration QGCPositionManager::registerPositionSource(SelectedSource kind, QObject* source,
+                                                                         GPSSourceHealth* health, quint64 sessionId)
 {
     if ((kind != SelectedSource::Receiver && kind != SelectedSource::Nmea) || !source ||
         (!health && !qobject_cast<QGeoPositionInfoSource*>(source)) || QThread::currentThread() != thread() ||
@@ -138,8 +137,7 @@ std::unique_ptr<GPSPositionSourceRegistration> QGCPositionManager::registerPosit
     }
     const auto index = static_cast<size_t>(kind);
     const quint64 token = _registrationTokens[index] + 1;
-    auto registration = std::unique_ptr<GPSPositionSourceRegistration>(
-        new GPSPositionSourceRegistration(this, static_cast<int>(kind), token));
+    GPSPositionSourceRegistration registration(this, static_cast<int>(kind), token);
     if (kind == SelectedSource::Receiver) {
         setReceiverPositionSource(source, health, sessionId);
     } else {
@@ -627,8 +625,7 @@ void QGCPositionManager::_setPositionSource(QGCPositionSource source)
         return;
     }
     qCDebug(QGCPositionManagerLog) << "Ground-station position source changed"
-                                   << "source:" << (nextSource ? sourceName : "none")
-                                   << "previous:" << _currentSource
+                                   << "source:" << (nextSource ? sourceName : "none") << "previous:" << _currentSource
                                    << "selected:" << nextSource;
     _forceSourceRefresh = false;
     const quint64 generation = ++_sourceGeneration;

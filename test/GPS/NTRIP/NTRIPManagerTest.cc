@@ -155,25 +155,24 @@ void NTRIPManagerTest::testCorrectionsAreIndependentOfSink()
     mgr._settings = settings;
     GPSCorrectionManager corrections;
     quint64 attempt = 0;
+    GPSCorrectionSourceRegistration source;
     if (withSink) {
         connect(&mgr, &NTRIPManager::correctionSessionStarted, &corrections, [&](quint64 id, const QString& sourceId) {
             if (id == mgr.correctionAttemptId()) {
                 attempt = id;
-                corrections.beginSourceSession(GPSCorrectionSource::Ntrip, sourceId);
+                source = corrections.registerSource(GPSCorrectionSource::Ntrip, sourceId);
             }
         });
         connect(&mgr, &NTRIPManager::correctionSessionEnded, &corrections, [&](quint64 id) {
             if (id == attempt) {
                 attempt = 0;
-                corrections.endSourceSession(GPSCorrectionSource::Ntrip);
+                source.reset();
             }
         });
         connect(&mgr, &NTRIPManager::correctionReceivedAt, &corrections,
                 [&](const QByteArray& data, int id, bool filtered, qint64 timestamp, quint64 sourceAttempt) {
                     if (attempt && sourceAttempt == attempt) {
-                        corrections.acceptFrame({GPSCorrectionSource::Ntrip,
-                                                 corrections.sourceSession(GPSCorrectionSource::Ntrip), timestamp, data,
-                                                 id, true, filtered});
+                        corrections.acceptIngress(source.token().event(data, timestamp, id, true, filtered));
                     }
                 });
     }

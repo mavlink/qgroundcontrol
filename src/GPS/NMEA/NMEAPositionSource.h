@@ -7,6 +7,7 @@
 
 #include "GPSObservation.h"
 #include "GPSRuntimeScheduler.h"
+#include "GPSScheduledTask.h"
 
 class QIODevice;
 class QNmeaPositionInfoSource;
@@ -30,6 +31,9 @@ public:
 
     GPSObservation lastObservation() const { return _lastObservation; }
 
+signals:
+    void observationReceived(const GPSObservation& observation);
+
 public slots:
     void startUpdates() override;
     void stopUpdates() override;
@@ -37,7 +41,8 @@ public slots:
 
 private:
     void _resetDecoder();
-    void _cancelTask(GPSRuntimeScheduler::TaskId& task);
+    void _fixLost(GPSObservation observation);
+    void _publishLoss();
     void _publishPending();
     void _schedulePublication();
 
@@ -45,8 +50,11 @@ private:
     QPointer<QIODevice> _device;
     std::unique_ptr<QNmeaPositionInfoSource> _decoder;
     QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSRuntimeScheduler::TaskId _requestTask = 0;
-    GPSRuntimeScheduler::TaskId _publicationTask = 0;
+    GPSScheduledTask _requestTask;
+    GPSScheduledTask _publicationTask;
+    GPSScheduledTask _lossTask;
+    GPSScheduledTask _errorTask;
+    std::optional<GPSObservation> _pendingLoss;
     std::optional<GPSObservation> _pendingObservation;
     bool _pendingRequested = false;
     Error _error = NoError;

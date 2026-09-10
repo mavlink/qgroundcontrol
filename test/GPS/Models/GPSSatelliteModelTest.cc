@@ -148,3 +148,37 @@ void GPSSatelliteModelTest::_reentrantReset()
 }
 
 UT_REGISTER_TEST(GPSSatelliteModelTest, TestLabel::Unit)
+
+void GPSSatelliteModelTest::_unchangedAndRoleNotifications()
+{
+    GPSSatelliteModel model;
+    GPSSatelliteStore store;
+    connect(&store, &GPSSatelliteStore::observationChanged, &model, &GPSSatelliteModel::updateObservation);
+    QAbstractItemModelTester contract(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    model.beginSession(QStringLiteral("receiver"), 1);
+    store.beginSession(QStringLiteral("receiver"), 1);
+    GPSSatellite satellite;
+    satellite.id = 4;
+    GPSSatelliteObservation report{GPSObservation::monotonicNowUs(), 1, {satellite}};
+    store.updateObservation(report);
+    QSignalSpy data(&model, &QAbstractItemModel::dataChanged);
+    QSignalSpy state(&model, &GPSSatelliteModel::stateChanged);
+    QSignalSpy reset(&model, &QAbstractItemModel::modelReset);
+    store.updateObservation(report);
+    QCOMPARE(data.count(), 0);
+    QCOMPARE(state.count(), 0);
+    report.satellites[0].signalStrength = 0;
+    store.updateObservation(report);
+    QCOMPARE(data.count(), 1);
+    QCOMPARE(data.last()[2].value<QList<int>>(), QList<int>{GPSSatelliteModel::SignalStrengthRole});
+    QCOMPARE(state.count(), 0);
+    QCOMPARE(reset.count(), 0);
+    store.updateObservation(report);
+    QCOMPARE(data.count(), 1);
+    report.satellites[0].elevationDegrees = qQNaN();
+    store.updateObservation(report);
+    QCOMPARE(data.count(), 1);
+    model.reset();
+    QCOMPARE(reset.count(), 1);
+    QCOMPARE(state.count(), 1);
+}

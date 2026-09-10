@@ -315,7 +315,7 @@ protected:
         _decoded.events.emplace_back(report);
     }
 
-    void publishSatelliteUsage(int count)
+    void publishSatelliteUsage(std::optional<int> count)
     {
         _decoded.updates |= 2;
         _decoded.events.emplace_back(GPSSatelliteUsageReport{nowUs(), count});

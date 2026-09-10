@@ -445,242 +445,134 @@ GPSDriverUBX::payloadRxInit()
     return ret;
 }
 
-int  // -1 = error, 0 = ok, 1 = payload completed
-GPSDriverUBX::payloadRxAdd(const uint8_t b)
+void GPSDriverUBX::decodeNavSat(std::span<const uint8_t> payload)
 {
-    int ret = 0;
-    uint8_t* p_buf = (uint8_t*) &_buf;
-
-    if (_rx_payload_index < sizeof(_buf)) {
-        p_buf[_rx_payload_index] = b;
+    const auto header = UBX::payload<ubx_payload_rx_nav_sat_part1_t>(payload);
+    _satellite_info->count = std::min<size_t>(header.numSvs, _satellite_info->entries.size());
+    constexpr GPSConstellation systems[] = {
+        GPSConstellation::GPS,     GPSConstellation::SBAS, GPSConstellation::Galileo, GPSConstellation::BeiDou,
+        GPSConstellation::Unknown, GPSConstellation::QZSS, GPSConstellation::GLONASS, GPSConstellation::NavIC};
+    for (size_t index = 0; index < _satellite_info->count; ++index) {
+        const auto wire = UBX::payload<ubx_payload_rx_nav_sat_part2_t>(
+            payload, sizeof(header) + index * sizeof(ubx_payload_rx_nav_sat_part2_t));
+        auto& satellite = _satellite_info->entries[index];
+        satellite.constellation = wire.gnssId < std::size(systems) ? systems[wire.gnssId] : GPSConstellation::Unknown;
+        satellite.id = satellite.prn = wire.svId;
+        satellite.used = (wire.flags & 8) != 0;
+        satellite.elevation = wire.elev;
+        satellite.azimuth = wire.azim;
+        satellite.signal = wire.cno;
     }
-
-    if (++_rx_payload_index >= _rx_payload_length) {
-        ret = 1;  // payload received completely
-    }
-
-    return ret;
 }
 
-int  // -1 = error, 0 = ok, 1 = payload completed
-GPSDriverUBX::payloadRxAddNavSat(const uint8_t b)
+void GPSDriverUBX::decodeNavSvinfo(std::span<const uint8_t> payload)
 {
-    int ret = 0;
-    uint8_t* p_buf = (uint8_t*) &_buf;
+    const auto header = UBX::payload<ubx_payload_rx_nav_svinfo_part1_t>(payload);
+    _satellite_info->count = std::min<size_t>(header.numCh, _satellite_info->entries.size());
+    for (size_t index = 0; index < _satellite_info->count; ++index) {
+        const auto wire = UBX::payload<ubx_payload_rx_nav_svinfo_part2_t>(
+            payload, sizeof(header) + index * sizeof(ubx_payload_rx_nav_svinfo_part2_t));
+        auto& satellite = _satellite_info->entries[index];
+        satellite.id = satellite.prn = wire.svid;
+        satellite.used = (wire.flags & 1) != 0;
+        satellite.elevation = wire.elev;
+        satellite.azimuth = wire.azim;
+        satellite.signal = wire.cno;
+    }
+}
 
-    if (_rx_payload_index < sizeof(ubx_payload_rx_nav_sat_part1_t)) {
-        // Fill Part 1 buffer
-        p_buf[_rx_payload_index] = b;
+void GPSDriverUBX::decodeMonVer(std::span<const uint8_t> payload)
+{
+    _model_name[0] = '\0';
+    _firmware_version[0] = '\0';
+    _buf.payload_rx_mon_ver_part1 = UBX::payload<ubx_payload_rx_mon_ver_part1_t>(payload);
+    // Part 1 complete: decode Part 1 buffer and calculate hash for SW&HW version strings
+    // The protocol specifies these as nul-terminated strings, but the terminator comes
+    // from the device, so enforce it before anything walks the field.
+    _buf.payload_rx_mon_ver_part1.swVersion[sizeof(_buf.payload_rx_mon_ver_part1.swVersion) - 1] = 0;
+    _buf.payload_rx_mon_ver_part1.hwVersion[sizeof(_buf.payload_rx_mon_ver_part1.hwVersion) - 1] = 0;
+    memcpy(_firmware_version, _buf.payload_rx_mon_ver_part1.swVersion, sizeof(_firmware_version));
 
-    } else {
-        if (_rx_payload_index == sizeof(ubx_payload_rx_nav_sat_part1_t)) {
-            // Part 1 complete: decode Part 1 buffer
-            _satellite_info->count =
-                MIN(_buf.payload_rx_nav_sat_part1.numSvs, GPSSatelliteReport::SAT_INFO_MAX_SATELLITES);
+    _ubx_version = fnv1_32_str(_buf.payload_rx_mon_ver_part1.swVersion, FNV1_32_INIT);
+    _ubx_version = fnv1_32_str(_buf.payload_rx_mon_ver_part1.hwVersion, _ubx_version);
+
+    // Device detection (See
+    // https://forum.u-blox.com/index.php/9432/need-help-decoding-ubx-mon-ver-hardware-string)
+    static constexpr struct
+    {
+        char hw_version[9];
+        Board board;
+    } known_boards[] = {
+        {"00040005", Board::u_blox5},    {"00040007", Board::u_blox6}, {"00070000", Board::u_blox7},
+        {"00080000", Board::u_blox8},    {"00190000", Board::u_blox9}, {"000A0000", Board::u_blox10},
+        {"000B0000", Board::u_blox_X20},
+    };
+
+    bool known = false;
+
+    for (const auto& known_board : known_boards) {
+        if (strncmp((const char*) _buf.payload_rx_mon_ver_part1.hwVersion, known_board.hw_version,
+                    sizeof(_buf.payload_rx_mon_ver_part1.hwVersion)) == 0) {
+            _board = known_board.board;
+            known = true;
+            break;
         }
+    }
 
-        if (_rx_payload_index <
-            sizeof(ubx_payload_rx_nav_sat_part1_t) + _satellite_info->count * sizeof(ubx_payload_rx_nav_sat_part2_t)) {
-            // Still room in _satellite_info: fill Part 2 buffer
-            unsigned buf_index =
-                (_rx_payload_index - sizeof(ubx_payload_rx_nav_sat_part1_t)) % sizeof(ubx_payload_rx_nav_sat_part2_t);
-            p_buf[buf_index] = b;
+    if (!known) {
+        UBX_WARN("unknown board hw: %s", _buf.payload_rx_mon_ver_part1.hwVersion);
+    }
+    for (size_t offset = sizeof(ubx_payload_rx_mon_ver_part1_t); offset < payload.size();
+         offset += sizeof(ubx_payload_rx_mon_ver_part2_t)) {
+        _buf.payload_rx_mon_ver_part2 = UBX::payload<ubx_payload_rx_mon_ver_part2_t>(payload, offset);
+        // Part 2 complete: decode Part 2 buffer
+        // Same as above: the protocol specifies a nul-terminated string, the device provides
+        // the terminator, so enforce it before strstr() walks the field.
+        _buf.payload_rx_mon_ver_part2.extension[sizeof(_buf.payload_rx_mon_ver_part2.extension) - 1] = 0;
 
-            if (buf_index == sizeof(ubx_payload_rx_nav_sat_part2_t) - 1) {
-                // Part 2 complete: decode Part 2 buffer
-                unsigned sat_index = (_rx_payload_index - sizeof(ubx_payload_rx_nav_sat_part1_t)) /
-                                     sizeof(ubx_payload_rx_nav_sat_part2_t);
+        // "FWVER=" Firmware of product category and version
+        const char* fwver_str = strstr((const char*) _buf.payload_rx_mon_ver_part2.extension, "FWVER=");
 
-                constexpr GPSConstellation systems[] = {GPSConstellation::GPS,     GPSConstellation::SBAS,
-                                                        GPSConstellation::Galileo, GPSConstellation::BeiDou,
-                                                        GPSConstellation::Unknown, GPSConstellation::QZSS,
-                                                        GPSConstellation::GLONASS, GPSConstellation::NavIC};
-                const auto system = _buf.payload_rx_nav_sat_part2.gnssId;
-                _satellite_info->entries[sat_index].constellation =
-                    system < std::size(systems) ? systems[system] : GPSConstellation::Unknown;
-                _satellite_info->entries[sat_index].id = _buf.payload_rx_nav_sat_part2.svId;
+        if (fwver_str != nullptr) {
+            strncpy(_firmware_version, fwver_str + strlen("FWVER="), sizeof(_firmware_version) - 1);
+            _firmware_version[sizeof(_firmware_version) - 1] = '\0';
+            GPS_INFO("u-blox firmware version: %s", fwver_str + strlen("FWVER="));
 
-                // NAV-SAT flags: bits 2..0 qualityInd, bit 3 svUsed
-                _satellite_info->entries[sat_index].used =
-                    static_cast<uint8_t>((_buf.payload_rx_nav_sat_part2.flags >> 3) & 0x01);
-                _satellite_info->entries[sat_index].elevation = _buf.payload_rx_nav_sat_part2.elev;
-                _satellite_info->entries[sat_index].azimuth = _buf.payload_rx_nav_sat_part2.azim;
-                _satellite_info->entries[sat_index].signal = static_cast<uint8_t>(_buf.payload_rx_nav_sat_part2.cno);
-                _satellite_info->entries[sat_index].prn = _buf.payload_rx_nav_sat_part2.svId;
+            // Check if its a ZED-F9P-15B
+            if ((_board == Board::u_blox9) && strstr(fwver_str, "HPGL1L5")) {
+                _board = Board::u_blox9_F9P_L1L5;
             }
         }
-    }
 
-    if (++_rx_payload_index >= _rx_payload_length) {
-        ret = 1;  // payload received completely
-    }
+        // "PROTVER=" Supported protocol version.
+        const char* protver_str = strstr((const char*) _buf.payload_rx_mon_ver_part2.extension, "PROTVER=");
 
-    return ret;
-}
-
-int  // -1 = error, 0 = ok, 1 = payload completed
-GPSDriverUBX::payloadRxAddNavSvinfo(const uint8_t b)
-{
-    int ret = 0;
-    uint8_t* p_buf = (uint8_t*) &_buf;
-
-    if (_rx_payload_index < sizeof(ubx_payload_rx_nav_svinfo_part1_t)) {
-        // Fill Part 1 buffer
-        p_buf[_rx_payload_index] = b;
-
-    } else {
-        if (_rx_payload_index == sizeof(ubx_payload_rx_nav_svinfo_part1_t)) {
-            // Part 1 complete: decode Part 1 buffer
-            _satellite_info->count =
-                MIN(_buf.payload_rx_nav_svinfo_part1.numCh, GPSSatelliteReport::SAT_INFO_MAX_SATELLITES);
+        if (protver_str != nullptr) {
+            GPS_INFO("u-blox protocol version: %s", protver_str + strlen("PROTVER="));
         }
 
-        if (_rx_payload_index < sizeof(ubx_payload_rx_nav_svinfo_part1_t) +
-                                    _satellite_info->count * sizeof(ubx_payload_rx_nav_svinfo_part2_t)) {
-            // Still room in _satellite_info: fill Part 2 buffer
-            unsigned buf_index = (_rx_payload_index - sizeof(ubx_payload_rx_nav_svinfo_part1_t)) %
-                                 sizeof(ubx_payload_rx_nav_svinfo_part2_t);
-            p_buf[buf_index] = b;
+        // "MOD=" Module identification. Set in production.
+        const char* mod_str = strstr((const char*) _buf.payload_rx_mon_ver_part2.extension, "MOD=");
 
-            if (buf_index == sizeof(ubx_payload_rx_nav_svinfo_part2_t) - 1) {
-                // Part 2 complete: decode Part 2 buffer
-                unsigned sat_index = (_rx_payload_index - sizeof(ubx_payload_rx_nav_svinfo_part1_t)) /
-                                     sizeof(ubx_payload_rx_nav_svinfo_part2_t);
-                _satellite_info->entries[sat_index].id = static_cast<uint8_t>(_buf.payload_rx_nav_svinfo_part2.svid);
-                // NAV-SVINFO flags: bit 0 svUsed
-                _satellite_info->entries[sat_index].used =
-                    static_cast<uint8_t>(_buf.payload_rx_nav_svinfo_part2.flags & 0x01);
-                // TODO: same elev/azim wrap as NAV-SAT above
-                _satellite_info->entries[sat_index].elevation = _buf.payload_rx_nav_svinfo_part2.elev;
-                _satellite_info->entries[sat_index].azimuth = _buf.payload_rx_nav_svinfo_part2.azim;
-                _satellite_info->entries[sat_index].signal = static_cast<uint8_t>(_buf.payload_rx_nav_svinfo_part2.cno);
-                _satellite_info->entries[sat_index].prn = static_cast<uint8_t>(_buf.payload_rx_nav_svinfo_part2.svid);
-            }
-        }
-    }
+        if (mod_str != nullptr) {
+            strncpy(_model_name, mod_str + strlen("MOD="), sizeof(_model_name) - 1);
+            _model_name[sizeof(_model_name) - 1] = '\0';
+            _is_m8p = strstr(mod_str, "M8P") != nullptr;
+            // in case of u-blox9 family, check if it's an F9P
+            if (_board == Board::u_blox9) {
+                if (strstr(mod_str, "F9P")) {
+                    _board = Board::u_blox9_F9P_L1L2;
+                }
 
-    if (++_rx_payload_index >= _rx_payload_length) {
-        ret = 1;  // payload received completely
-    }
-
-    return ret;
-}
-
-int  // -1 = error, 0 = ok, 1 = payload completed
-GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
-{
-    int ret = 0;
-    uint8_t* p_buf = (uint8_t*) &_buf;
-    if (_rx_payload_index == 0) {
-        _model_name[0] = '\0';
-        _firmware_version[0] = '\0';
-    }
-
-    if (_rx_payload_index < sizeof(ubx_payload_rx_mon_ver_part1_t)) {
-        // Fill Part 1 buffer
-        p_buf[_rx_payload_index] = b;
-
-        if (_rx_payload_index + 1 == sizeof(ubx_payload_rx_mon_ver_part1_t)) {
-            // Part 1 complete: decode Part 1 buffer and calculate hash for SW&HW version strings
-            // The protocol specifies these as nul-terminated strings, but the terminator comes
-            // from the device, so enforce it before anything walks the field.
-            _buf.payload_rx_mon_ver_part1.swVersion[sizeof(_buf.payload_rx_mon_ver_part1.swVersion) - 1] = 0;
-            _buf.payload_rx_mon_ver_part1.hwVersion[sizeof(_buf.payload_rx_mon_ver_part1.hwVersion) - 1] = 0;
-            memcpy(_firmware_version, _buf.payload_rx_mon_ver_part1.swVersion, sizeof(_firmware_version));
-
-            _ubx_version = fnv1_32_str(_buf.payload_rx_mon_ver_part1.swVersion, FNV1_32_INIT);
-            _ubx_version = fnv1_32_str(_buf.payload_rx_mon_ver_part1.hwVersion, _ubx_version);
-
-            // Device detection (See
-            // https://forum.u-blox.com/index.php/9432/need-help-decoding-ubx-mon-ver-hardware-string)
-            static constexpr struct
-            {
-                char hw_version[9];
-                Board board;
-            } known_boards[] = {
-                {"00040005", Board::u_blox5},    {"00040007", Board::u_blox6}, {"00070000", Board::u_blox7},
-                {"00080000", Board::u_blox8},    {"00190000", Board::u_blox9}, {"000A0000", Board::u_blox10},
-                {"000B0000", Board::u_blox_X20},
-            };
-
-            bool known = false;
-
-            for (const auto& known_board : known_boards) {
-                if (strncmp((const char*) _buf.payload_rx_mon_ver_part1.hwVersion, known_board.hw_version,
-                            sizeof(_buf.payload_rx_mon_ver_part1.hwVersion)) == 0) {
-                    _board = known_board.board;
-                    known = true;
-                    break;
+            } else if (_board == Board::u_blox10) {
+                if (strstr(mod_str, "DAN-F10N")) {
+                    _board = Board::u_blox10_L1L5;
                 }
             }
 
-            if (!known) {
-                UBX_WARN("unknown board hw: %s", _buf.payload_rx_mon_ver_part1.hwVersion);
-            }
-        }
-
-    } else {
-        // fill Part 2 buffer
-        unsigned buf_index =
-            (_rx_payload_index - sizeof(ubx_payload_rx_mon_ver_part1_t)) % sizeof(ubx_payload_rx_mon_ver_part2_t);
-        p_buf[buf_index] = b;
-
-        if (buf_index == sizeof(ubx_payload_rx_mon_ver_part2_t) - 1) {
-            // Part 2 complete: decode Part 2 buffer
-            // Same as above: the protocol specifies a nul-terminated string, the device provides
-            // the terminator, so enforce it before strstr() walks the field.
-            _buf.payload_rx_mon_ver_part2.extension[sizeof(_buf.payload_rx_mon_ver_part2.extension) - 1] = 0;
-
-            // "FWVER=" Firmware of product category and version
-            const char* fwver_str = strstr((const char*) _buf.payload_rx_mon_ver_part2.extension, "FWVER=");
-
-            if (fwver_str != nullptr) {
-                strncpy(_firmware_version, fwver_str + strlen("FWVER="), sizeof(_firmware_version) - 1);
-                _firmware_version[sizeof(_firmware_version) - 1] = '\0';
-                GPS_INFO("u-blox firmware version: %s", fwver_str + strlen("FWVER="));
-
-                // Check if its a ZED-F9P-15B
-                if ((_board == Board::u_blox9) && strstr(fwver_str, "HPGL1L5")) {
-                    _board = Board::u_blox9_F9P_L1L5;
-                }
-            }
-
-            // "PROTVER=" Supported protocol version.
-            const char* protver_str = strstr((const char*) _buf.payload_rx_mon_ver_part2.extension, "PROTVER=");
-
-            if (protver_str != nullptr) {
-                GPS_INFO("u-blox protocol version: %s", protver_str + strlen("PROTVER="));
-            }
-
-            // "MOD=" Module identification. Set in production.
-            const char* mod_str = strstr((const char*) _buf.payload_rx_mon_ver_part2.extension, "MOD=");
-
-            if (mod_str != nullptr) {
-                strncpy(_model_name, mod_str + strlen("MOD="), sizeof(_model_name) - 1);
-                _model_name[sizeof(_model_name) - 1] = '\0';
-                _is_m8p = strstr(mod_str, "M8P") != nullptr;
-                // in case of u-blox9 family, check if it's an F9P
-                if (_board == Board::u_blox9) {
-                    if (strstr(mod_str, "F9P")) {
-                        _board = Board::u_blox9_F9P_L1L2;
-                    }
-
-                } else if (_board == Board::u_blox10) {
-                    if (strstr(mod_str, "DAN-F10N")) {
-                        _board = Board::u_blox10_L1L5;
-                    }
-                }
-
-                GPS_INFO("u-blox module: %s", mod_str + strlen("MOD="));
-            }
+            GPS_INFO("u-blox module: %s", mod_str + strlen("MOD="));
         }
     }
-
-    if (++_rx_payload_index >= _rx_payload_length) {
-        ret = 1;  // payload received completely
-    }
-
-    return ret;
 }
 
 int  // 0 = no message handled, 1 = message handled, 2 = sat info message handled
@@ -737,7 +629,7 @@ GPSDriverUBX::payloadRxDone()
                 _got_posllh = true;
             }
 
-            _gps_position->s_variance_m_s = static_cast<float>(_buf.payload_rx_nav_pvt.sAcc) * 1e-3f;
+            _gps_position->speedAccuracyMetersPerSecond = static_cast<float>(_buf.payload_rx_nav_pvt.sAcc) * 1e-3f;
 
             _gps_position->vel_m_s = static_cast<float>(_buf.payload_rx_nav_pvt.gSpeed) * 1e-3f;
 
@@ -746,7 +638,7 @@ GPSDriverUBX::payloadRxDone()
             _gps_position->vel_d_m_s = static_cast<float>(_buf.payload_rx_nav_pvt.velD) * 1e-3f;
 
             _gps_position->cog_rad = static_cast<float>(_buf.payload_rx_nav_pvt.headMot) * M_DEG_TO_RAD_F * 1e-5f;
-            _gps_position->c_variance_rad =
+            _gps_position->courseAccuracyRadians =
                 static_cast<float>(_buf.payload_rx_nav_pvt.headAcc) * M_DEG_TO_RAD_F * 1e-5f;
 
             // Check if time and date fix flags are good
@@ -850,7 +742,8 @@ GPSDriverUBX::payloadRxDone()
         case UBX_MSG_NAV_SOL:
 
             _gps_position->fix_type = _buf.payload_rx_nav_sol.gpsFix;
-            _gps_position->s_variance_m_s = static_cast<float>(_buf.payload_rx_nav_sol.sAcc) * 1e-2f;  // from cm to m
+            _gps_position->speedAccuracyMetersPerSecond =
+                static_cast<float>(_buf.payload_rx_nav_sol.sAcc) * 1e-2f;  // from cm to m
             _gps_position->satellites_used = _buf.payload_rx_nav_sol.numSV;
 
             ret = 1;
@@ -902,7 +795,7 @@ GPSDriverUBX::payloadRxDone()
         case UBX_MSG_NAV_SAT:
         case UBX_MSG_NAV_SVINFO:
 
-            // _satellite_info already populated by payload_rx_add_svinfo(), just add a timestamp
+            // Satellite entries were decoded from the validated payload.
             _satellite_info->timestamp = nowUs();
 
             ret = 2;
@@ -949,7 +842,7 @@ GPSDriverUBX::payloadRxDone()
             _gps_position->vel_d_m_s =
                 static_cast<float>(_buf.payload_rx_nav_velned.velD) * 1e-2f;  // NED DOWN velocity
             _gps_position->cog_rad = static_cast<float>(_buf.payload_rx_nav_velned.heading) * M_DEG_TO_RAD_F * 1e-5f;
-            _gps_position->c_variance_rad =
+            _gps_position->courseAccuracyRadians =
                 static_cast<float>(_buf.payload_rx_nav_velned.cAcc) * M_DEG_TO_RAD_F * 1e-5f;
             _gps_position->vel_ned_valid = true;
 
@@ -1338,7 +1231,6 @@ void GPSDriverUBX::decodeInit()
     _rx_ck_a = 0;
     _rx_ck_b = 0;
     _rx_payload_length = 0;
-    _rx_payload_index = 0;
 }
 
 float GPSDriverUBX::relPosHeadingToYaw(int32_t heading) const
@@ -1427,26 +1319,24 @@ int GPSDriverUBX::decodeValidatedPayload()
         _gps_position = &epoch->position;
         _epochHasHighPrecision = epoch->highPrecision;
     }
-    _rx_payload_index = 0;
-    if ((_rx_msg == UBX_MSG_NAV_SAT || _rx_msg == UBX_MSG_NAV_SVINFO) && _satellite_info) {
-        *_satellite_info = {};
-    }
-    for (unsigned index = 0; index < _rx_payload_length; ++index) {
-        const auto byte = _framePayload[index];
-        switch (_rx_msg) {
-            case UBX_MSG_NAV_SAT:
-                payloadRxAddNavSat(byte);
-                break;
-            case UBX_MSG_NAV_SVINFO:
-                payloadRxAddNavSvinfo(byte);
-                break;
-            case UBX_MSG_MON_VER:
-                payloadRxAddMonVer(byte);
-                break;
-            default:
-                payloadRxAdd(byte);
-                break;
-        }
+    const std::span<const uint8_t> payload{_framePayload.data(), _rx_payload_length};
+    switch (_rx_msg) {
+        case UBX_MSG_NAV_SAT:
+            *_satellite_info = {};
+            decodeNavSat(payload);
+            break;
+        case UBX_MSG_NAV_SVINFO:
+            *_satellite_info = {};
+            decodeNavSvinfo(payload);
+            break;
+        case UBX_MSG_MON_VER:
+            decodeMonVer(payload);
+            break;
+        default:
+            // NAV-PVT has both 84-byte and 92-byte versions. Absent extension fields stay zero.
+            _buf = {};
+            std::memcpy(&_buf, payload.data(), std::min(payload.size(), sizeof(_buf)));
+            break;
     }
     const int updates = payloadRxDone();
     _gps_position = output;

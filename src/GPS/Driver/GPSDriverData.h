@@ -2,12 +2,14 @@
 
 #include "GPSExecutionContext.h"
 #include "GPSObservation.h"
+#include "GPSSurveyInStatus.h"
 #include "GPSType.h"
 
 struct GPSPositionReport;
 struct GPSSatelliteReport;
 struct GPSSatelliteUsageReport;
 struct GPSRelativeReport;
+struct GPSSurveyReport;
 
 /// Internal adapter boundary; vendor types must not escape through the receiver API.
 namespace GPSDriverData {
@@ -15,5 +17,5 @@ GPSObservation position(const GPSPositionReport& fix, const GPSExecutionContext&
 GPSSatelliteObservation satellites(const GPSSatelliteReport& report, const GPSExecutionContext& context = {});
 GPSSatelliteObservation satellites(const GPSSatelliteUsageReport& report, const GPSExecutionContext& context = {});
 GPSRelativeObservation relativePosition(const GPSRelativeReport& report, const GPSExecutionContext& context = {});
-void initialize(GPSPositionReport& fix);
+GPSSurveyInStatus survey(const GPSSurveyReport& report, const GPSExecutionContext& context = {});
 }  // namespace GPSDriverData

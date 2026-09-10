@@ -43,7 +43,7 @@ struct NTRIPTransportConfig
     static NTRIPTransportConfig fromSettings(NTRIPSettings& settings);
 
     /// Parse a comma-separated RTCM message-id list (e.g. "1005,1077,1087")
-    /// into the QVector<int> expected by RTCMParser::setWhitelist. Empty or
+    /// into the QVector<int> expected by RTCMFrameDecoder::setWhitelist. Empty or
     /// non-numeric tokens are ignored.
     static QVector<int> parseWhitelist(const QString& csv);
 };

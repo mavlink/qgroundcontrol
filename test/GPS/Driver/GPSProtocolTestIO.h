@@ -111,15 +111,21 @@ inline GPSProtocolIO makeGPSProtocolTestIO(GPSCallbackPtr callback, void* user)
                : result == GPSProtocol::ReadCancelled ? GPSBaudStatus::Cancelled
                                                       : GPSBaudStatus::Error;
     };
-    io.rtcm = [callback, user](std::span<const uint8_t> bytes) {
-        callback(GPSCallbackType::gotRTCMMessage, const_cast<uint8_t*>(bytes.data()), bytes.size(), user);
-    };
-    io.relativePosition = [callback, user](const GPSRelativeReport& report) {
-        callback(GPSCallbackType::gotRelativePositionMessage, const_cast<GPSRelativeReport*>(&report), sizeof(report),
-                 user);
-    };
-    io.survey = [callback, user](const GPSSurveyReport& report) {
-        callback(GPSCallbackType::surveyInStatus, const_cast<GPSSurveyReport*>(&report), 0, user);
+    io.decoded = [callback, user](GPSDecodedBatch batch) {
+        for (auto& event : batch.events) {
+            std::visit(
+                [&](auto& report) {
+                    using Report = std::decay_t<decltype(report)>;
+                    if constexpr (std::is_same_v<Report, GPSRTCMReport>) {
+                        callback(GPSCallbackType::gotRTCMMessage, report.bytes.data(), report.size, user);
+                    } else if constexpr (std::is_same_v<Report, GPSRelativeReport>) {
+                        callback(GPSCallbackType::gotRelativePositionMessage, &report, sizeof(report), user);
+                    } else if constexpr (std::is_same_v<Report, GPSSurveyReport>) {
+                        callback(GPSCallbackType::surveyInStatus, &report, 0, user);
+                    }
+                },
+                event);
+        }
     };
     return io;
 }
@@ -149,16 +155,23 @@ inline int callGPSProtocolTestIO(GPSProtocolIO io, GPSCallbackType type, void* d
                    : result == GPSBaudStatus::Cancelled ? GPSProtocol::ReadCancelled
                                                         : -1;
         }
-        case GPSCallbackType::gotRTCMMessage:
-            io.rtcm({static_cast<uint8_t*>(data), static_cast<size_t>(size)});
+        case GPSCallbackType::gotRTCMMessage: {
+            GPSRTCMReport report;
+            if (size >= 0 && size_t(size) <= report.bytes.size()) {
+                std::copy_n(static_cast<const uint8_t*>(data), size, report.bytes.begin());
+                report.size = size;
+                if (io.decoded)
+                    io.decoded({{report}, 0});
+            }
             break;
+        }
         case GPSCallbackType::gotRelativePositionMessage:
-            if (data && size == sizeof(GPSRelativeReport))
-                io.relativePosition(*static_cast<GPSRelativeReport*>(data));
+            if (data && size == sizeof(GPSRelativeReport) && io.decoded)
+                io.decoded({{*static_cast<GPSRelativeReport*>(data)}, 0});
             break;
         case GPSCallbackType::surveyInStatus:
-            if (data)
-                io.survey(*static_cast<GPSSurveyReport*>(data));
+            if (data && io.decoded)
+                io.decoded({{*static_cast<GPSSurveyReport*>(data)}, 0});
             break;
         default:
             break;

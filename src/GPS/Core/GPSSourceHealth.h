@@ -6,7 +6,7 @@
 #include <QtPositioning/QGeoPositionInfo>
 
 #include "GPSObservation.h"
-#include "GPSRuntimeScheduler.h"
+#include "GPSScheduledTask.h"
 
 /// Session health is independent of transport readiness and RTK survey-in validity.
 class GPSSourceHealth : public QObject
@@ -81,7 +81,6 @@ signals:
 private:
     void _setState(State state);
     void _schedulePositionExpiry();
-    void _cancel(GPSRuntimeScheduler::TaskId& task);
     qint64 _age(quint64 timestampUs) const;
     void _updateFixSatelliteCount(int count, qint64 ageMs);
 
@@ -90,8 +89,8 @@ private:
     State _state = NoData;
     bool _positionInvalidated = true;
     QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSRuntimeScheduler::TaskId _positionTask = 0;
-    GPSRuntimeScheduler::TaskId _fixSatellitesTask = 0;
+    GPSScheduledTask _positionTask;
+    GPSScheduledTask _fixSatellitesTask;
     int _satellitesInViewCount = -1;
     int _satellitesInUseCount = -1;
     int _fixSatellitesInUseCount = -1;

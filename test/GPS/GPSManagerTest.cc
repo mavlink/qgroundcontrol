@@ -178,8 +178,8 @@ void GPSManagerTest::_positionSourceReentrantDisable()
     });
     useReceiver->setRawValue(true);
     QVERIFY(!useReceiver->rawValue().toBool());
-    QVERIFY(!manager._receiverRegistration);
-    QVERIFY(!manager._registeredReceiverSource);
+    QVERIFY(!manager._receiverBinding.registration);
+    QVERIFY(!manager._receiverBinding.source);
     QVERIFY(positions.sourceHealth() != manager.receiver()->health());
 }
 
@@ -220,7 +220,7 @@ void GPSManagerTest::_nmeaSourceRegistration()
     QTRY_VERIFY_WITH_TIMEOUT(manager.nmeaConnection()->positionSource(), TestTimeout::mediumMs());
     if (publishPosition) {
         QCOMPARE(positions.sourceHealth(), manager.nmeaConnection()->health());
-        QVERIFY(manager._nmeaRegistration);
+        QVERIFY(manager._nmeaBinding.registration);
     }
     const QByteArray sentences =
         NMEAUtils::repairChecksum("$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A") +
@@ -243,8 +243,8 @@ void GPSManagerTest::_nmeaSourceRegistration()
         return;
     }
     manager.disconnectNmea();
-    QVERIFY(!manager._nmeaRegistration);
-    QVERIFY(!manager._registeredNmeaSource);
+    QVERIFY(!manager._nmeaBinding.registration);
+    QVERIFY(!manager._nmeaBinding.source);
     QVERIFY(!manager.nmeaConnection()->positionSource());
     QCOMPARE(manager.nmeaSatelliteModel()->count(), 0);
     if (publishPosition) {
@@ -1153,7 +1153,7 @@ void GPSManagerTest::_receiverConfigurationPanel()
 void GPSManagerTest::_correctionDiagnosticsPanel()
 {
     GPSCorrectionManager corrections;
-    const quint64 session = corrections.beginSourceSession(GPSCorrectionSource::Udp, QStringLiteral("test-source"));
+    auto source = corrections.registerSource(GPSCorrectionSource::Udp, QStringLiteral("test-source"));
     QQmlEngine engine;
     engine.addImageProvider(QStringLiteral("coloredsvg"), new ColoredSvgImageProvider);
     engine.addImportPath(QStringLiteral("qrc:/qml"));
@@ -1165,8 +1165,7 @@ void GPSManagerTest::_correctionDiagnosticsPanel()
         component.createWithInitialProperties({{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}}));
     QVERIFY2(panel, qPrintable(component.errorString()));
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005);
-    corrections.acceptFrame({GPSCorrectionSource::Udp, session, GPSCorrectionFrame::monotonicNowMs(), frame, 1005, true,
-                             false, QStringLiteral("test-source")});
+    corrections.acceptIngress(source.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QTRY_VERIFY_WITH_TIMEOUT(corrections.events()->rowCount() > 0, TestTimeout::mediumMs());
     auto* toggle = panel->findChild<QObject*>(QStringLiteral("correctionHistoryToggle"));
     QVERIFY(toggle);
@@ -1275,9 +1274,8 @@ void GPSManagerTest::_saveBaseReference()
     reference.latitude = 48.5;
     emit session->surveyInReceived(reference);
     QVERIFY(manager.canSaveBaseReference());
-    connect(base->fixedBasePositionLatitude(), &Fact::rawValueChanged, &manager, [&]() {
-        base->receiverRole()->setRawValue(RTKSettings::Position);
-    });
+    connect(base->fixedBasePositionLatitude(), &Fact::rawValueChanged, &manager,
+            [&]() { base->receiverRole()->setRawValue(RTKSettings::Position); });
     QVERIFY(manager.saveBaseReference());
     QVERIFY(!session->hasReceiver());
     QCOMPARE(base->receiverRole()->rawValue().toInt(), static_cast<int>(RTKSettings::Position));

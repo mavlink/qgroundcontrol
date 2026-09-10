@@ -5,6 +5,7 @@
 #include <QtPositioning/QNmeaSatelliteInfoSource>
 #include <QtTest/QSignalSpy>
 
+#include "GPSQtRuntimeScheduler.h"
 #include "GPSReadTimestamp.h"
 #include "NMEADecoderSession.h"
 #include "NMEASatelliteAdapter.h"
@@ -479,4 +480,18 @@ void NMEASatelliteAdapterTest::_canonicalIdentities()
         QCOMPARE(satellite.used, std::optional<bool>(true));
         QVERIFY(satellite.prn > 0);
     }
+}
+
+void NMEASatelliteAdapterTest::_schedulerCanBeDestroyed()
+{
+    QBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    auto scheduler = std::make_unique<GPSQtRuntimeScheduler>();
+    NMEASatelliteAdapter adapter(&input, nullptr, scheduler.get());
+    QSignalSpy updates(&adapter, &NMEASatelliteAdapter::observationReceived);
+    feed(input, {"$GPGSV,1,1,01,01,45,100,30"});
+    scheduler.reset();
+    feed(input, {"$GPGSA,A,1,,,,,,,,,,,,,99.9,99.9,99.9"});
+    adapter.close();
+    QVERIFY(updates.isEmpty());
 }

@@ -42,16 +42,23 @@ SettingsGroupLayout {
         }
 
         QGCButton {
-            enabled: root.controller && root.controller.hasRecording && !root.controller.recording
+            enabled: root.controller && root.controller.hasRecording && !root.controller.recording && !root.controller.exporting
             objectName: "gpsRecordingExport"
-            text: qsTr("Export…")
+            text: root.controller && root.controller.exporting ? qsTr("Exporting…") : qsTr("Export…")
 
             onClicked: {
-                if (root.controller && root.controller.hasRecording && !root.controller.recording) {
+                if (root.controller && root.controller.hasRecording && !root.controller.recording && !root.controller.exporting) {
                     exportDialog.openForSave();
                 }
             }
         }
+    }
+
+    QGCButton {
+        objectName: "gpsRecordingCancelExport"
+        text: qsTr("Cancel export")
+        visible: root.controller && root.controller.exporting
+        onClicked: root.controller.cancelExport()
     }
 
     QGCLabel {
@@ -82,7 +89,7 @@ SettingsGroupLayout {
         title: qsTr("Export GPS recording")
 
         onAcceptedForSave: file => {
-            if (root.controller && !root.controller.recording) {
+            if (root.controller && !root.controller.recording && !root.controller.exporting) {
                 root.controller.exportRecording(QGCFileDialogController.localFileToUrl(file));
             }
         }

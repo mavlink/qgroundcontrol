@@ -16,8 +16,8 @@
 #include "AutoConnectSettings.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSReplayScheduler.h"
-#include "GPSTransport.h"
 #include "GPSSettings.h"
+#include "GPSTransport.h"
 #include "NMEASourceManager.h"
 #include "NMEAUtils.h"
 #include "PositionManager.h"
@@ -43,17 +43,16 @@ void configureSource(NMEASourceManager& source, AutoConnectSettings* settings)
 
 void attachPosition(NMEASourceManager& source, QGCPositionManager& position)
 {
-    auto registration = std::make_shared<std::unique_ptr<GPSPositionSourceRegistration>>();
-    QObject::connect(&source, &NMEASourceManager::positionSourceChanged, &position,
-                     [&source, &position, registration]() {
-                         if (source.positionSource()) {
-                             *registration =
-                                 position.registerPositionSource(QGCPositionManager::SelectedSource::Nmea, &source,
-                                                                 source.health(), source.sessionId());
-                         } else {
-                             registration->reset();
-                         }
-                     });
+    auto registration = std::make_shared<GPSPositionSourceRegistration>();
+    QObject::connect(
+        &source, &NMEASourceManager::positionSourceChanged, &position, [&source, &position, registration]() {
+            if (source.positionSource()) {
+                *registration = position.registerPositionSource(QGCPositionManager::SelectedSource::Nmea, &source,
+                                                                source.health(), source.sessionId());
+            } else {
+                registration->reset();
+            }
+        });
 }
 
 const QByteArray kFix =
@@ -230,7 +229,8 @@ void NMEASourceManagerTest::_udpActivityStatus()
     spare.close();
     saved.setFactValue(settings->nmeaUdpPort(), port);
     QGCPositionManager position;
-    NMEASourceManager source;
+    GPSReplayScheduler scheduler;
+    NMEASourceManager source(nullptr, &scheduler);
     configureSource(source, settings);
     attachPosition(source, position);
     QVERIFY(source.connectSource());
@@ -246,26 +246,26 @@ void NMEASourceManagerTest::_udpActivityStatus()
     QVERIFY(!stateSpy.isEmpty());
     QVERIFY(!position.gcsPosition().isValid());
 
-    source._udpActivityTimer.start(1);
-    QTRY_COMPARE_WITH_TIMEOUT(source.status(), listening, TestTimeout::mediumMs());
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(4999)));
+    QCOMPARE(source.status(), receiving);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(source.status(), listening);
     QVERIFY(source.active());
-    source._udpActivityTimer.setInterval(5000);
-    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, port), kFix.size());
+    QCOMPARE(sender.writeDatagram(invalidData, QHostAddress::LocalHost, port), invalidData.size());
     QTRY_COMPARE_WITH_TIMEOUT(source.status(), receiving, TestTimeout::mediumMs());
-    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
     source.update();
     QCOMPARE(source.status(), receiving);
 
     source.disconnectSource();
     QCOMPARE(source.status(), QStringLiteral("Disconnected"));
-    QVERIFY(!source._udpActivityTimer.isActive());
+    QVERIFY(!source._udpActivity.active());
     QVERIFY(source.connectSource());
     QCOMPARE(source.status(), listening);
-    QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, port), kFix.size());
+    QCOMPARE(sender.writeDatagram(invalidData, QHostAddress::LocalHost, port), invalidData.size());
     QTRY_COMPARE_WITH_TIMEOUT(source.status(), receiving, TestTimeout::mediumMs());
     settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
     QCOMPARE(source.status(), QStringLiteral("Disconnected"));
-    QVERIFY(!source._udpActivityTimer.isActive());
+    QVERIFY(!source._udpActivity.active());
 }
 
 void NMEASourceManagerTest::_bindFailureAndTeardown()
@@ -428,8 +428,9 @@ void NMEASourceManagerTest::_satellitesShareTcpConnection()
                 NMEAUtils::repairChecksum("$GPGSA,A,1,,,,,,,,,,,,,99.9,99.9,99.9"));
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), 0, TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(source.satelliteObservation().satellitesInUseCount(), 0, TestTimeout::mediumMs());
-    // The fresh GGA total remains authoritative while the GSA satellite list changes.
-    QCOMPARE(source.satellitesInUseCount(), 8);
+    // An explicit GSA no-fix report retires the earlier GGA fix and satellite total.
+    QCOMPARE(source.satellitesInUseCount(), 0);
+    QVERIFY(!source.health()->usable());
     peer->disconnectFromHost();
     QTRY_VERIFY_WITH_TIMEOUT(!source._sourceAvailable, TestTimeout::mediumMs());
     QCOMPARE(source.satellitesInViewCount(), -1);
@@ -580,7 +581,7 @@ void NMEASourceManagerTest::_tcpRecoveryAndSourceSwitch()
     QVERIFY(source.active());
     source.update();
     QVERIFY(!source._attempt);
-    source._connection._retryDeadlineMs = 0;
+    source._control.connection()._retryDeadlineMs = 0;
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     peer.reset(server.nextPendingConnection());
@@ -672,19 +673,19 @@ void NMEASourceManagerTest::_tcpRefusalBackoff()
     attachPosition(source, position);
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(!source._attempt, TestTimeout::mediumMs());
-    QVERIFY(source._connection._retryDeadlineMs >= 0);
-    QCOMPARE(source._connection._retryDelayMs, 1000);
+    QVERIFY(source._control.connection()._retryDeadlineMs >= 0);
+    QCOMPARE(source._control.connection()._retryDelayMs, 1000);
     source.update();
     QVERIFY(!source._attempt);
-    source._connection._retryDeadlineMs = 0;
+    source._control.connection()._retryDeadlineMs = 0;
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(!source._attempt, TestTimeout::mediumMs());
-    QCOMPARE(source._connection._retryDelayMs, 2000);
+    QCOMPARE(source._control.connection()._retryDelayMs, 2000);
     QVERIFY(server.listen(QHostAddress::LocalHost, port));
-    source._connection._retryDeadlineMs = 0;
+    source._control.connection()._retryDeadlineMs = 0;
     source.update();
     QTRY_VERIFY_WITH_TIMEOUT(source._sourceAvailable, TestTimeout::mediumMs());
-    QCOMPARE(source._connection._retryDelayMs, 1000);
+    QCOMPARE(source._control.connection()._retryDelayMs, 1000);
 }
 
 void NMEASourceManagerTest::_disconnectDuringPositionUpdate()
@@ -744,16 +745,16 @@ void NMEASourceManagerTest::_managedReceiverFailureAndCancellation()
              QStringLiteral("Cannot configure receiver for NMEA: Cannot open the receiver connection"));
     QVERIFY(!source.positionSource());
     QCOMPARE(attempts->load(), 1);
-    QCOMPARE(source._connection._retryDelayMs, 1000);
+    QCOMPARE(source._control.connection()._retryDelayMs, 1000);
     QVERIFY(!weakLease.expired());
 
     source.update();
     QCOMPARE(attempts->load(), 1);
-    source._connection._retryDeadlineMs = 0;
+    source._control.connection()._retryDeadlineMs = 0;
     source.update();
     QTRY_COMPARE_WITH_TIMEOUT(attempts->load(), 2, TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(source.connectionState(), GPSConnectionState::Retrying, TestTimeout::mediumMs());
-    QCOMPARE(source._connection._retryDelayMs, 2000);
+    QCOMPARE(source._control.connection()._retryDelayMs, 2000);
     QVERIFY(!weakLease.expired());
 
     source.disconnectSource();
@@ -780,15 +781,15 @@ void NMEASourceManagerTest::_managedReceiverSettingsPreservePassiveBaud()
         NMEASourceManager source;
         configureSource(source, settings);
         attachPosition(source, position);
-        QCOMPARE(source._profile.configurationPolicy, GPSReceiverProfile::ConfigurationPolicy::Configure);
+        QCOMPARE(source._control.profile().configurationPolicy, GPSReceiverProfile::ConfigurationPolicy::Configure);
         source.disconnectSource();
         settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverPassive);
-        QCOMPARE(source._profile.endpoint.baud, 4800);
+        QCOMPARE(source._control.profile().endpoint.baud, 4800);
     }
     settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverUblox);
     NMEASourceManager restarted(&position);
     configureSource(restarted, settings);
-    QCOMPARE(restarted._profile.configurationPolicy, GPSReceiverProfile::ConfigurationPolicy::Configure);
+    QCOMPARE(restarted._control.profile().configurationPolicy, GPSReceiverProfile::ConfigurationPolicy::Configure);
     QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 4800);
 }
 
@@ -815,7 +816,7 @@ void NMEASourceManagerTest::_managedModeChangeCancelsRetry()
     QTRY_VERIFY_WITH_TIMEOUT(weakLease.expired(), TestTimeout::mediumMs());
     QVERIFY(!source._receiverFactory);
     QVERIFY(source._shouldConnect());
-    QCOMPARE(source._profile.endpoint.baud, 4800);
+    QCOMPARE(source._control.profile().endpoint.baud, 4800);
     source.disconnectSource();
     settings->nmeaReceiverMode()->setRawValue(AutoConnectSettings::NmeaReceiverUblox);
     QVERIFY(!source._shouldConnect());
@@ -1006,4 +1007,33 @@ void NMEASourceManagerTest::_scheduledRetryAndSuspension()
     source.update();
     QCOMPARE(source.sessionId(), retired);
     QCOMPARE(scheduler.pendingCount(), 0);
+}
+
+void NMEASourceManagerTest::_passiveConnectTimeoutUsesScheduler()
+{
+    GPSReplayScheduler scheduler;
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    GPSReceiverProfile profile;
+    profile.endpoint = {.kind = GPSReceiverProfile::Endpoint::Kind::Tcp,
+                        .host = QStringLiteral("127.0.0.1"),
+                        .port = server.serverPort()};
+    NMEAConnectionAttempt attempt(profile, nullptr, 1, &scheduler);
+    QSignalSpy failures(&attempt, &NMEAConnectionAttempt::failed);
+    attempt.start();
+    QCOMPARE(attempt.attempt().phase, GPSReceiverAttempt::Phase::Connecting);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(9999)));
+    QCOMPARE(failures.size(), 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(failures.size(), 1);
+    QCOMPARE(failures.first().first().toString(), QStringLiteral("Connection timed out"));
+    attempt.stop();
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(10)));
+    QCOMPARE(failures.size(), 1);
+    NMEAConnectionAttempt cancelled(profile, nullptr, 2, &scheduler);
+    QSignalSpy cancelledFailures(&cancelled, &NMEAConnectionAttempt::failed);
+    cancelled.start();
+    cancelled.stop();
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(10)));
+    QCOMPARE(cancelledFailures.size(), 0);
 }

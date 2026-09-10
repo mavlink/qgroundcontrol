@@ -1,9 +1,8 @@
 #pragma once
 
-#include <QtCore/QChronoTimer>
-
 #include "FactGroup.h"
 #include "GPSIntegrityObservation.h"
+#include "GPSIntegrityStore.h"
 
 class GPSIntegrityFactGroup : public FactGroup
 {
@@ -26,7 +25,7 @@ class GPSIntegrityFactGroup : public FactGroup
     Q_PROPERTY(bool systemErrorsKnown READ systemErrorsKnown NOTIFY availabilityChanged)
 
 public:
-    explicit GPSIntegrityFactGroup(QObject* parent = nullptr);
+    explicit GPSIntegrityFactGroup(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
     ~GPSIntegrityFactGroup() override;
 
     Fact* systemErrors() { return &_systemErrors; }
@@ -69,7 +68,7 @@ signals:
 
 private:
     void _refresh();
-    GPSIntegrityObservation _observation;
+    GPSIntegrityStore _store;
     Fact _systemErrors = Fact(0, QStringLiteral("systemErrors"), FactMetaData::valueTypeUint32);
     Fact _spoofingState = Fact(0, QStringLiteral("spoofingState"), FactMetaData::valueTypeUint8);
     Fact _jammingState = Fact(0, QStringLiteral("jammingState"), FactMetaData::valueTypeUint8);
@@ -84,7 +83,6 @@ private:
     Fact _automaticGainControl = Fact(0, QStringLiteral("automaticGainControl"), FactMetaData::valueTypeInt32);
     Fact _jammingIndicator = Fact(0, QStringLiteral("jammingIndicator"), FactMetaData::valueTypeInt32);
     Fact _correctionsCrcFailed = Fact(0, QStringLiteral("correctionsCrcFailed"), FactMetaData::valueTypeInt32);
-    QChronoTimer _expiryTimer;
     quint64 _revision = 0;
     bool _available = false;
     bool _systemErrorsKnown = false;

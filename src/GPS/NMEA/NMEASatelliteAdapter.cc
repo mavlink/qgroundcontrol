@@ -1,12 +1,9 @@
 #include "NMEASatelliteAdapter.h"
 
 #include <algorithm>
-#include <cmath>
 
 #include "GPSQtRuntimeScheduler.h"
 #include "GPSReadTimestamp.h"
-#include "NMEAFields.h"
-#include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NMEASatelliteAdapterLog, "GPS.NMEA.NMEASatelliteAdapter")
@@ -15,6 +12,10 @@ NMEASatelliteAdapter::NMEASatelliteAdapter(QIODevice* source, QObject* parent, G
     : QObject(parent)
     , _source(source)
     , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _idleTask(_scheduler, this)
+    , _batchTask(_scheduler, this)
+    , _deliveryTask(_scheduler, this)
+    , _readTask(_scheduler, this)
 {
     qCDebug(NMEASatelliteAdapterLog) << this;
     if (source) {
@@ -34,8 +35,7 @@ void NMEASatelliteAdapter::close()
 {
     _open = false;
     for (auto* task : {&_idleTask, &_batchTask, &_deliveryTask, &_readTask}) {
-        _scheduler->cancel(*task);
-        *task = 0;
+        task->cancel();
     }
     _assembler.clear();
     _pending.clear();
@@ -52,42 +52,39 @@ void NMEASatelliteAdapter::_readAvailable()
         remaining -= sentence.size();
         _parseSentence(sentence, GPSReadTimestamp::from(_source));
     }
-    if (_open && _source && _source->canReadLine() && !_readTask) {
-        _readTask = _scheduler->schedule(this, std::chrono::microseconds::zero(), [this]() {
-            _readTask = 0;
-            _readAvailable();
-        });
+    if (_open && _source && _source->canReadLine() && !_readTask.active()) {
+        _readTask.schedule(std::chrono::microseconds::zero(), [this]() { _readAvailable(); });
     }
 }
 
 void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 receivedAtUs)
 {
-    const auto parsed = NMEA::sentence({sentence.constData(), static_cast<size_t>(sentence.size())});
-    if (!parsed)
+    if (const auto envelope = NMEASentenceEnvelope::parse(sentence, receivedAtUs)) {
+        ingest(*envelope);
+    }
+}
+
+void NMEASatelliteAdapter::ingest(const NMEASentenceEnvelope& envelope)
+{
+    if (!_open || !_scheduler) {
         return;
-    auto update = _assembler.ingest(*parsed, receivedAtUs);
+    }
+    auto update = _assembler.ingest(envelope.sentence(), envelope.receivedAtUs());
     if (!update.completed.empty())
         _queue(std::move(update.completed));
     if (!update.accepted)
         return;
-    _scheduler->cancel(_idleTask);
-    _idleTask = _scheduler->schedule(this, std::chrono::milliseconds(150), [this]() {
-        _idleTask = 0;
-        _flush();
-    });
-    if (!_batchTask) {
-        _batchTask = _scheduler->schedule(this, std::chrono::seconds(1), [this]() {
-            _batchTask = 0;
-            _flush();
-        });
+    _idleTask.cancel();
+    _idleTask.schedule(std::chrono::milliseconds(150), [this]() { _flush(); });
+    if (!_batchTask.active()) {
+        _batchTask.schedule(std::chrono::seconds(1), [this]() { _flush(); });
     }
 }
 
 void NMEASatelliteAdapter::_flush()
 {
-    _scheduler->cancel(_idleTask);
-    _scheduler->cancel(_batchTask);
-    _idleTask = _batchTask = 0;
+    _idleTask.cancel();
+    _batchTask.cancel();
     _queue(_assembler.flush());
 }
 
@@ -124,11 +121,8 @@ void NMEASatelliteAdapter::_queue(NMEA::SatelliteEpoch epoch)
             _pending.removeFirst();
         }
         _pending.append(observation);
-        if (!_deliveryTask) {
-            _deliveryTask = _scheduler->schedule(this, std::chrono::microseconds::zero(), [this]() {
-                _deliveryTask = 0;
-                _deliver();
-            });
+        if (!_deliveryTask.active()) {
+            _deliveryTask.schedule(std::chrono::microseconds::zero(), [this]() { _deliver(); });
         }
     }
 }
@@ -141,10 +135,7 @@ void NMEASatelliteAdapter::_deliver()
     const auto observation = _pending.takeFirst();
     // Schedule before notification; callbacks may close or destroy this assembler.
     if (!_pending.isEmpty()) {
-        _deliveryTask = _scheduler->schedule(this, std::chrono::microseconds::zero(), [this]() {
-            _deliveryTask = 0;
-            _deliver();
-        });
+        _deliveryTask.schedule(std::chrono::microseconds::zero(), [this]() { _deliver(); });
     }
     emit observationReceived(observation);
 }

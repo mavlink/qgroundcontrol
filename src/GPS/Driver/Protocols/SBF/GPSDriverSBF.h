@@ -74,6 +74,22 @@ private:
      */
     int parseChar(const uint8_t b);
 
+    struct NavigationEpoch
+    {
+        uint64_t receiverTimeMs = 0;
+        uint64_t receiptUs = 0;
+        GPSPositionReport position;
+        bool hasPosition = false;
+    };
+
+    NavigationEpoch* navigationEpoch(uint64_t receiverTimeMs);
+    void finishEpoch(std::optional<NavigationEpoch>& epoch);
+    void flushDecoded() override;
+    std::array<std::optional<NavigationEpoch>, 2> _epochs;
+    std::optional<uint64_t> _lastPublishedEpoch;
+    static constexpr uint64_t EPOCH_MAX_AGE_US = 200000;
+    static constexpr uint64_t WEEK_MS = 604800000;
+
     /**
      * @brief Add payload rx byte
      */
@@ -110,9 +126,7 @@ private:
     GPSPositionReport* _gps_position{nullptr};
     GPSSatelliteReport* _satellite_info{nullptr};
     uint8_t _dynamic_model{7};
-    uint64_t _last_timestamp_time{0};
     bool _configured{false};
-    uint8_t _msg_status{0};
     sbf_decode_state_t _decode_state{SBF_DECODE_SYNC1};
     uint16_t _rx_payload_index{0};
     sbf_buf_t _buf;

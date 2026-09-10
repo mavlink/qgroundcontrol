@@ -16,6 +16,9 @@ class GPSCorrectionRouter : public QObject
 {
     Q_OBJECT
 
+    friend class GPSCorrectionSourceRegistration;
+    friend class GPSCorrectionRouterTest;
+
 public:
     enum class Policy
     {
@@ -117,8 +120,6 @@ public:
     GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
     bool isCurrentSource(GPSCorrectionSource source, quint64 session, const QString& instance) const;
     bool acceptIngress(const GPSCorrectionIngress& ingress);
-    quint64 beginSourceSession(GPSCorrectionSource source, const QString& instance = {});
-    void endSourceSession(GPSCorrectionSource source);
     quint64 sourceSession(GPSCorrectionSource source) const;
     QString sourceInstance(GPSCorrectionSource source) const;
     void setPolicy(Policy policy);
@@ -139,10 +140,8 @@ public:
     void setFanoutSink(const QString& id, FanoutSink sink);
     void setDetailedSink(const QString& id, DetailedSink sink, bool reportsWrites = true);
     void removeSink(const QString& id);
-    bool acceptFrame(GPSCorrectionFrame frame);
     bool recordDelivery(const GPSCorrectionDelivery& delivery);
     void invalidateDestination(const QString& id, quint64 session);
-    void recordRejectedFrame(GPSCorrectionFrame frame, GPSCorrectionReason reason);
     void shutdown();
 
     const std::array<Statistics, 4>& statistics() const { return _statistics; }
@@ -170,6 +169,11 @@ signals:
     void frameRouted(const GPSCorrectionFrame& frame);
 
 private:
+    quint64 beginSourceSession(GPSCorrectionSource source, const QString& instance = {});
+    void endSourceSession(GPSCorrectionSource source);
+    bool acceptFrame(GPSCorrectionFrame frame);
+    void recordRejectedFrame(GPSCorrectionFrame frame, GPSCorrectionReason reason);
+
     static int _sourceIndex(GPSCorrectionSource source);
     static int _priority(GPSCorrectionSource source);
     static QString _key(GPSCorrectionSource source, const QString& instance);

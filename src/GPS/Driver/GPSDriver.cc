@@ -77,7 +77,6 @@ GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverCon
         _clock.nowUs = GPSObservation::monotonicNowUs;
     if (!_clock.wait)
         _clock.wait = [](std::chrono::microseconds duration) { QThread::usleep(duration.count()); };
-    GPSDriverData::initialize(_private->sensorGps);
     _configurationReport = requestedSettings(_config, _capabilities);
 }
 
@@ -166,7 +165,7 @@ bool GPSDriver::configure()
 
     _baudrate = baudrate;
     _configurationResult.status = ConfigurationStatus::Ready;
-    GPSDriverData::initialize(_private->sensorGps);
+    _private->sensorGps = {};
     return true;
 }
 
@@ -312,35 +311,21 @@ GPSProtocolIO GPSDriver::_protocolIO()
                : _transport.fatalError()        ? GPSBaudStatus::Error
                                                 : GPSBaudStatus::Unsupported;
     };
-    io.rtcm = [this](std::span<const uint8_t> bytes) {
+    const auto rtcm = [this](std::span<const uint8_t> bytes) {
         if (_config.role == GPSReceiverConfig::Role::RTKBase && _sinks.onRTCM) {
             _sinks.onRTCM(QByteArray(reinterpret_cast<const char*>(bytes.data()), bytes.size()));
         }
     };
-    io.relativePosition = [this](const GPSRelativeReport& report) {
+    const auto relative = [this](const GPSRelativeReport& report) {
         if (_sinks.onRelativePosition)
             _sinks.onRelativePosition(GPSDriverData::relativePosition(report, _clock));
     };
-    io.survey = [this](const GPSSurveyReport& status) {
+    const auto survey = [this](const GPSSurveyReport& status) {
         if (_config.role != GPSReceiverConfig::Role::RTKBase || !_sinks.onSurveyIn)
             return;
-        GPSSurveyInStatus out;
-        out.latitude = status.latitude;
-        out.longitude = status.longitude;
-        out.altitude = status.altitude;
-        if (status.accuracyKnown || status.mean_accuracy != 0)
-            out.meanAccuracyMM = status.mean_accuracy;
-        if (status.altitudeDatum == GPSSurveyReport::AltitudeDatum::Ellipsoid)
-            out.altitudeDatum = GPSObservation::AltitudeDatum::Ellipsoid;
-        else if (status.altitudeDatum == GPSSurveyReport::AltitudeDatum::MeanSeaLevel)
-            out.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
-        out.monotonicTimestampUs = status.timestamp ? status.timestamp : _clock.nowUs();
-        out.durationSecs = status.duration;
-        out.valid = status.flags & 1;
-        out.active = status.flags & 2;
-        _sinks.onSurveyIn(out);
+        _sinks.onSurveyIn(GPSDriverData::survey(status, _clock));
     };
-    io.decoded = [this, rtcm = io.rtcm, relative = io.relativePosition, survey = io.survey](GPSDecodedBatch batch) {
+    io.decoded = [this, rtcm, relative, survey](GPSDecodedBatch batch) {
         for (const auto& event : batch.events) {
             std::visit(
                 [&](const auto& report) {

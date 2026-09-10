@@ -52,6 +52,7 @@ class NMEADecoderSessionTest : public QObject
 private slots:
     void _decoderSessionRestart();
     void _pauseDuringConfiguration();
+    void _fixLossInvalidatesHealth();
 };
 
 void NMEADecoderSessionTest::_decoderSessionRestart()
@@ -101,6 +102,19 @@ void NMEADecoderSessionTest::_pauseDuringConfiguration()
     QVERIFY(!connection.beginAttempt());
     connection.requestConnect();
     QVERIFY(connection.beginAttempt());
+}
+
+void NMEADecoderSessionTest::_fixLossInvalidatesHealth()
+{
+    ReceiverInput input;
+    NMEADecoderSession session;
+    QVERIFY(session.start(&input));
+    session.positionSource()->startUpdates();
+    input.feed(FIX);
+    QTRY_VERIFY_WITH_TIMEOUT(session.health()->usable(), 1000);
+    input.feed(NMEAUtils::repairChecksum("$GPGGA,092751.000,,,,,0,0,,,,,,,"));
+    QTRY_COMPARE_WITH_TIMEOUT(session.health()->state(), GPSSourceHealth::Invalid, 1000);
+    QVERIFY(!session.health()->acceptedObservation(GPSObservation::PositionUse::GroundStation));
 }
 
 QTEST_GUILESS_MAIN(NMEADecoderSessionTest)

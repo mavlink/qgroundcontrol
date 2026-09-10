@@ -37,13 +37,17 @@ int GPSDriverSBF::parseChar(const uint8_t b)
 {
     int ret = 0;
 
-    if (_rtcm_parsing) {
-        if (_rtcm_parsing->addByte(b) && _rtcm_parsing->valid()) {
-            gotRTCMMessage(_rtcm_parsing->message(), _rtcm_parsing->messageLength());
-            decodeInit();
+    // A native frame owns its payload, including any embedded RTCM preambles.
+    if (_rtcm_parsing && (_decode_state == SBF_DECODE_SYNC1 || _rtcm_parsing->hasPartialFrame())) {
+        const bool complete = _rtcm_parsing->addByte(b);
+        if (complete) {
+            if (_rtcm_parsing->valid())
+                gotRTCMMessage(_rtcm_parsing->message(), _rtcm_parsing->messageLength());
             _rtcm_parsing->reset();
-            return 0b0100;  // ret
+            return GPSDecodedBatch::PROTOCOL_ACTIVITY;
         }
+        if (_rtcm_parsing->hasPartialFrame())
+            return 0;
     }
 
     switch (_decode_state) {
@@ -135,10 +139,6 @@ uint16_t crc16(const uint8_t* data_p, uint32_t length)
 int GPSDriverSBF::payloadRxDone()
 {
     int ret = 0;
-#ifndef NO_MKTIME
-    struct tm timeinfo;
-    time_t epoch;
-#endif
 
     if (_buf.length <= 4 || _buf.length > _rx_payload_index ||
         _buf.crc16 != crc16(reinterpret_cast<uint8_t*>(&_buf) + 4, _buf.length - 4)) {
@@ -166,21 +166,26 @@ int GPSDriverSBF::payloadRxDone()
         default:
             return 0;
     }
-    if (_buf.length < requiredLength) {
+    if (_buf.length < requiredLength || _buf.TOW >= WEEK_MS || _buf.WNc == UINT16_MAX) {
         return 0;
     }
 
-    // handle message
+    auto* epoch = navigationEpoch(uint64_t(_buf.WNc) * WEEK_MS + _buf.TOW);
+    if (!epoch)
+        return GPSDecodedBatch::PROTOCOL_ACTIVITY;
+    auto* output = _gps_position;
+    _gps_position = &epoch->position;
     switch (_buf.msg_id) {
         case SBF_ID_PVTGeodetic: {
             SBF_TRACE_RXMSG("Rx PVTGeodetic");
-            _msg_status |= 1;
+            epoch->hasPosition = true;
 
             if (_buf.payload_pvt_geodetic.mode_type < 1) {
                 _gps_position->fix_type = 1;
 
             } else {
                 switch (_buf.payload_pvt_geodetic.mode_type) {
+                    case 2:
                     case 6:
                         _gps_position->fix_type = 4;
                         break;
@@ -200,6 +205,11 @@ int GPSDriverSBF::payloadRxDone()
                         break;
                 }
             }
+
+            if (_buf.payload_pvt_geodetic.error != 0)
+                _gps_position->fix_type = GPSPositionReport::FIX_TYPE_NONE;
+            else if (_buf.payload_pvt_geodetic.mode_2d && _gps_position->fix_type >= GPSPositionReport::FIX_TYPE_3D)
+                _gps_position->fix_type = GPSPositionReport::FIX_TYPE_2D;
 
             // Check fix and error code
             _gps_position->vel_ned_valid = _gps_position->fix_type > 1 && _buf.payload_pvt_geodetic.error == 0;
@@ -230,7 +240,9 @@ int GPSDriverSBF::payloadRxDone()
                 }
 
             } else {
-                _gps_position->satellites_used = 0;
+                _gps_position->satellites_used = UINT8_MAX;
+                if (_satellite_info)
+                    publishSatelliteUsage(std::nullopt);
             }
 
             _gps_position->latitude_deg = _buf.payload_pvt_geodetic.latitude * M_RAD_TO_DEG;
@@ -241,9 +253,13 @@ int GPSDriverSBF::payloadRxDone()
 
             /* H and V accuracy are reported in 2DRMS, but based off the uBlox reporting we expect RMS.
              * Devide by 100 from cm to m and in addition divide by 2 to get RMS. */
-            _gps_position->eph = static_cast<float>(_buf.payload_pvt_geodetic.h_accuracy) / 200.0f;
+            _gps_position->eph = _buf.payload_pvt_geodetic.h_accuracy != UINT16_MAX
+                                     ? static_cast<float>(_buf.payload_pvt_geodetic.h_accuracy) / 200.0f
+                                     : NAN;
             _gps_position->accuracy_timestamp = nowUs();
-            _gps_position->epv = static_cast<float>(_buf.payload_pvt_geodetic.v_accuracy) / 200.0f;
+            _gps_position->epv = _buf.payload_pvt_geodetic.v_accuracy != UINT16_MAX
+                                     ? static_cast<float>(_buf.payload_pvt_geodetic.v_accuracy) / 200.0f
+                                     : NAN;
 
             _gps_position->vel_n_m_s = static_cast<float>(_buf.payload_pvt_geodetic.vn);
             _gps_position->vel_e_m_s = static_cast<float>(_buf.payload_pvt_geodetic.ve);
@@ -254,31 +270,12 @@ int GPSDriverSBF::payloadRxDone()
             const float course = _buf.payload_pvt_geodetic.cog;
             _gps_position->cog_rad =
                 std::isfinite(course) && course >= 0.0f && course <= 360.0f ? course * M_DEG_TO_RAD_F : NAN;
-            _gps_position->c_variance_rad = 1.0f * M_DEG_TO_RAD_F;
+            _gps_position->courseAccuracyRadians = 1.0f * M_DEG_TO_RAD_F;
 
+            // WNc/TOW is GNSS system time, not UTC. Without receiver UTC/leap information,
+            // retain the epoch key internally and let the facade use reception UTC.
             _gps_position->time_utc_usec = 0;
-#ifndef NO_MKTIME
-            /* convert to unix timestamp */
-            memset(&timeinfo, 0, sizeof(timeinfo));
-
-            timeinfo.tm_year = 1980 - 1900;
-            timeinfo.tm_mon = 0;
-            timeinfo.tm_mday = 6 + _buf.WNc * 7;
-            timeinfo.tm_hour = 0;
-            timeinfo.tm_min = 0;
-            timeinfo.tm_sec = _buf.TOW / 1000;
-
-            epoch = gpsTimeToEpoch(timeinfo);
-
-            if (epoch > GPS_EPOCH_SECS) {
-                _gps_position->time_utc_usec = static_cast<uint64_t>(epoch) * 1000000ULL;
-                _gps_position->time_utc_usec += (_buf.TOW % 1000) * 1000;
-            }
-
-#endif
             _gps_position->timestamp = nowUs();
-            _last_timestamp_time = _gps_position->timestamp;
-            ret |= (_msg_status == 7) ? 1 : 0;
 
             // In RTCM mode, PVTGeodetic is used to get base station survey-in
             if (_output_mode == OutputMode::RTCM) {
@@ -300,104 +297,92 @@ int GPSDriverSBF::payloadRxDone()
             break;
         }
 
-        case SBF_ID_VelCovGeodetic:
-            SBF_TRACE_RXMSG("Rx VelCovGeodetic");
-            _msg_status |= 2;
-            _gps_position->s_variance_m_s = _buf.payload_vel_col_geodetic.cov_ve_ve;
-
-            if (_gps_position->s_variance_m_s < _buf.payload_vel_col_geodetic.cov_vn_vn) {
-                _gps_position->s_variance_m_s = _buf.payload_vel_col_geodetic.cov_vn_vn;
-            }
-
-            if (_gps_position->s_variance_m_s < _buf.payload_vel_col_geodetic.cov_vu_vu) {
-                _gps_position->s_variance_m_s = _buf.payload_vel_col_geodetic.cov_vu_vu;
-            }
-
-            _gps_position->s_variance_m_s =
-                _gps_position->s_variance_m_s >= 0 ? std::sqrt(_gps_position->s_variance_m_s) : NAN;
-            //
+        case SBF_ID_VelCovGeodetic: {
+            const auto& covariance = _buf.payload_vel_col_geodetic;
+            const std::array variances{covariance.cov_vn_vn, covariance.cov_ve_ve, covariance.cov_vu_vu};
+            const bool valid = !covariance.error && std::all_of(variances.begin(), variances.end(), [](float variance) {
+                return std::isfinite(variance) && variance >= 0;
+            });
+            _gps_position->speedAccuracyMetersPerSecond =
+                valid ? std::sqrt(*std::max_element(variances.begin(), variances.end())) : NAN;
             break;
-
+        }
         case SBF_ID_DOP:
-            SBF_TRACE_RXMSG("Rx DOP");
-            _msg_status |= 4;
-            _gps_position->hdop = _buf.payload_dop.hDOP * 0.01f;
+            _gps_position->hdop = _buf.payload_dop.hDOP != UINT16_MAX ? _buf.payload_dop.hDOP * 0.01f : NAN;
+            _gps_position->vdop = _buf.payload_dop.vDOP != UINT16_MAX ? _buf.payload_dop.vDOP * 0.01f : NAN;
             _gps_position->dop_timestamp = nowUs();
-            _gps_position->vdop = _buf.payload_dop.vDOP * 0.01f;
-            //
             break;
 
-        case SBF_ID_AttEuler:
-            SBF_TRACE_RXMSG("Rx AttEuler");
-
-            if (!_buf.payload_att_euler.error_not_requested) {
-                int error_aux1 = _buf.payload_att_euler.error_aux1;
-                int error_aux2 = _buf.payload_att_euler.error_aux2;
-
-                //
-                if (error_aux1 == 0 && error_aux2 == 0) {
-                    float heading = _buf.payload_att_euler.heading;
-                    heading *= M_PI_F / 180.0f;  // deg to rad, now in range [0, 2pi]
-
-                    if (heading > M_PI_F) {
-                        heading -= 2.f * M_PI_F;  // final range is [-pi, pi]
-                    }
-
-                    _gps_position->heading = heading;
-                    _gps_position->heading_timestamp = nowUs();
-                    //
-                    //
-
-                } else if (error_aux1 != 0) {
-                    //
-                } else if (error_aux2 != 0) {
-                    //
-                }
-            } else {
-                //
+        case SBF_ID_AttEuler: {
+            const auto& attitude = _buf.payload_att_euler;
+            _gps_position->heading = NAN;
+            _gps_position->heading_timestamp = nowUs();
+            if (!attitude.error_not_requested && !attitude.error_aux1 && !attitude.error_aux2 && attitude.mode >= 1 &&
+                attitude.mode <= 4 && std::isfinite(attitude.heading) && std::abs(attitude.heading) <= 360) {
+                _gps_position->heading = std::remainder(attitude.heading, 360.0f) * M_DEG_TO_RAD_F;
             }
-
             break;
-
-        case SBF_ID_AttCovEuler:
-            SBF_TRACE_RXMSG("Rx AttCovEuler");
-
-            if (!_buf.payload_att_cov_euler.error_not_requested) {
-                int error_aux1 = _buf.payload_att_cov_euler.error_aux1;
-                int error_aux2 = _buf.payload_att_cov_euler.error_aux2;
-
-                if (error_aux1 == 0 && error_aux2 == 0) {
-                    float heading_acc = _buf.payload_att_cov_euler.cov_headhead;
-                    heading_acc *= M_PI_F / 180.0f;  // deg to rad, now in range [0, 2pi]
-                    _gps_position->heading_accuracy = heading_acc;
-                    //
-                    //
-
-                } else if (error_aux1 != 0) {
-                    //
-                } else if (error_aux2 != 0) {
-                    //
-                }
-            } else {
-                //
-            }
-
+        }
+        case SBF_ID_AttCovEuler: {
+            const auto& covariance = _buf.payload_att_cov_euler;
+            const float variance = covariance.cov_headhead;
+            const bool valid = !covariance.error_not_requested && !covariance.error_aux1 && !covariance.error_aux2 &&
+                               std::isfinite(variance) && variance >= 0;
+            _gps_position->heading_accuracy = valid ? std::sqrt(variance) * M_DEG_TO_RAD_F : NAN;
             break;
+        }
 
         default:
             SBF_TRACE_RXMSG("Rx other.");
             break;
     }
 
-    if (ret > 0) {
-        _gps_position->timestamp_time_relative = static_cast<int32_t>(_last_timestamp_time - _gps_position->timestamp);
-    }
+    _gps_position = output;
+    return ret | GPSDecodedBatch::PROTOCOL_ACTIVITY;
+}
 
-    if (ret == 1) {
-        _msg_status &= ~1;
+GPSDriverSBF::NavigationEpoch* GPSDriverSBF::navigationEpoch(uint64_t receiverTimeMs)
+{
+    flushDecoded();
+    if (_lastPublishedEpoch && receiverTimeMs <= *_lastPublishedEpoch)
+        return nullptr;
+    for (auto& epoch : _epochs)
+        if (epoch && epoch->receiverTimeMs == receiverTimeMs)
+            return &*epoch;
+    auto slot = _epochs.begin();
+    while (slot != _epochs.end() && *slot)
+        ++slot;
+    if (slot == _epochs.end()) {
+        slot = _epochs[0]->receiverTimeMs < _epochs[1]->receiverTimeMs ? _epochs.begin() : _epochs.begin() + 1;
+        if (receiverTimeMs <= (*slot)->receiverTimeMs)
+            return nullptr;
+        finishEpoch(*slot);
     }
+    *slot = NavigationEpoch{.receiverTimeMs = receiverTimeMs, .receiptUs = nowUs(), .position = {}};
+    return &**slot;
+}
 
-    return ret;
+void GPSDriverSBF::finishEpoch(std::optional<NavigationEpoch>& epoch)
+{
+    if (epoch->hasPosition && (!_lastPublishedEpoch || epoch->receiverTimeMs > *_lastPublishedEpoch)) {
+        *_gps_position = epoch->position;
+        _gps_position->timestamp = epoch->receiptUs;
+        _decoded.updates |= 1;
+        _decoded.events.emplace_back(*_gps_position);
+    }
+    if (!_lastPublishedEpoch || epoch->receiverTimeMs > *_lastPublishedEpoch)
+        _lastPublishedEpoch = epoch->receiverTimeMs;
+    epoch.reset();
+}
+
+void GPSDriverSBF::flushDecoded()
+{
+    if (_epochs[0] && _epochs[1] && _epochs[0]->receiverTimeMs > _epochs[1]->receiverTimeMs)
+        std::swap(_epochs[0], _epochs[1]);
+    const auto now = nowUs();
+    for (auto& epoch : _epochs)
+        if (epoch && now >= epoch->receiptUs && now - epoch->receiptUs >= EPOCH_MAX_AGE_US)
+            finishEpoch(epoch);
 }
 
 void GPSDriverSBF::decodeInit()

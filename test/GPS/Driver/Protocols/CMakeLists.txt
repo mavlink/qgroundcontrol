@@ -13,17 +13,17 @@ get_filename_component(QGC_GPS_PROTOCOL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/
 
 include("${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
 
+include("${QGC_GPS_PROTOCOL_SOURCE_DIR}/NMEA/NMEAProtocol.cmake")
 include("${QGC_GPS_PROTOCOL_SOURCE_DIR}/GPSProtocolSources.cmake")
 add_library(QGCGPSProtocolTestRuntime STATIC ${GPS_PROTOCOL_SOURCES})
 target_compile_features(QGCGPSProtocolTestRuntime PUBLIC cxx_std_20)
-target_link_libraries(QGCGPSProtocolTestRuntime PUBLIC GeographicLib::GeographicLib)
+target_link_libraries(QGCGPSProtocolTestRuntime PUBLIC GeographicLib::GeographicLib QGCGPSNMEAProtocol)
 target_include_directories(
     QGCGPSProtocolTestRuntime
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.."
            "${QGC_GPS_PROTOCOL_SOURCE_DIR}"
            "${QGC_GPS_PROTOCOL_SOURCE_DIR}/.."
            "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Contracts"
-           "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../NMEA"
            "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Core"
            "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Corrections"
            "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../../Utilities/Math"
@@ -52,6 +52,8 @@ function(qgc_add_protocol_test_target target source)
                    AUTORCC OFF
     )
 endfunction()
+
+add_subdirectory(NMEA)
 
 qgc_add_protocol_test_target(QGCNativeGPSUtcTest gps-time-test.cpp)
 qgc_add_protocol_test_target(QGCNativeGPSUtcFallbackTest gps-time-test.cpp)

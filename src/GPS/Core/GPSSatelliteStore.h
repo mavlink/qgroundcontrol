@@ -5,7 +5,7 @@
 #include <map>
 
 #include "GPSObservation.h"
-#include "GPSRuntimeScheduler.h"
+#include "GPSScheduledTask.h"
 
 /// Authoritative accepted satellite state, with independent constellation and view/use deadlines.
 class GPSSatelliteStore : public QObject
@@ -46,8 +46,8 @@ private:
 
     std::map<GPSSatellite::Constellation, ConstellationState> _constellations;
     GPSSatelliteObservation _observation;
-    GPSRuntimeScheduler* _scheduler;
-    GPSRuntimeScheduler::TaskId _expiryTask = 0;
+    QPointer<GPSRuntimeScheduler> _scheduler;
+    GPSScheduledTask _expiryTask;
     int _freshnessTimeoutMs;
     quint64 _clearedThroughUs = 0;
     quint64 _revision = 0;

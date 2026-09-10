@@ -34,6 +34,7 @@ public:
     bool start();
     void stop();
     Status status() const;
+    std::optional<GPSRecordingDocument> snapshot() const;
     QByteArray exportJson() const;
     quint64 nowUs() const;
     quint64 allocateStream();

@@ -2,7 +2,6 @@
 
 #include "GPSCorrectionSettings.h"
 #include "QGCLoggingCategory.h"
-#include "RTCMParser.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
 
@@ -156,30 +155,6 @@ void GPSCorrectionManager::acceptIngress(const GPSCorrectionIngress& ingress)
     }
 }
 
-quint64 GPSCorrectionManager::beginSourceSession(GPSCorrectionSource source, const QString& instance)
-{
-    const QPointer<GPSCorrectionManager> guard(this);
-    const quint64 session = _router.beginSourceSession(source, instance);
-    if (guard) {
-        _scheduleSourcesChanged();
-    }
-    return session;
-}
-
-void GPSCorrectionManager::endSourceSession(GPSCorrectionSource source)
-{
-    const QPointer<GPSCorrectionManager> guard(this);
-    _router.endSourceSession(source);
-    if (guard) {
-        _scheduleSourcesChanged();
-    }
-}
-
-quint64 GPSCorrectionManager::sourceSession(GPSCorrectionSource source) const
-{
-    return _router.sourceSession(source);
-}
-
 void GPSCorrectionManager::setSelectedSource(GPSCorrectionSource source)
 {
     applyRoutingConfiguration({source == GPSCorrectionSource::Unknown ? RoutingPolicy::All : RoutingPolicy::Manual,
@@ -232,12 +207,6 @@ void GPSCorrectionManager::invalidateDestination(const QString& id, quint64 dest
     _scheduleSourcesChanged();
 }
 
-void GPSCorrectionManager::recordRejectedFrame(const GPSCorrectionFrame& frame, GPSCorrectionReason reason)
-{
-    _router.recordRejectedFrame(frame, reason);
-    _scheduleSourcesChanged();
-}
-
 void GPSCorrectionManager::_refreshDiagnostics()
 {
     const QPointer<GPSCorrectionManager> guard(this);
@@ -255,29 +224,6 @@ void GPSCorrectionManager::_scheduleSourcesChanged()
     if (!_shutdown && !_diagnosticsTimer.isActive()) {
         _diagnosticsTimer.start();
     }
-}
-
-void GPSCorrectionManager::acceptFrame(const GPSCorrectionFrame& frame)
-{
-    const QPointer<GPSCorrectionManager> guard(this);
-    GPSCorrectionFrame routed = frame;
-    if (routed.sourceInstance.isEmpty()) {
-        routed.sourceInstance = _router.sourceInstance(frame.source);
-    }
-    if (routed.validated && routed.messageId == 0 && routed.data.size() >= 8 &&
-        static_cast<quint8>(routed.data[0]) == 0xD3) {
-        routed.messageId = (static_cast<quint8>(routed.data[3]) << 4) | (static_cast<quint8>(routed.data[4]) >> 4);
-    }
-    if (routed.validated && !RTCMParser::isValidFrame(routed.data)) {
-        routed.validated = false;
-        _router.recordRejectedFrame(routed, GPSCorrectionReason::InvalidFrame);
-    } else {
-        _router.acceptFrame(routed);
-    }
-    if (!guard || _shutdown) {
-        return;
-    }
-    _scheduleSourcesChanged();
 }
 
 QVariantList GPSCorrectionManager::sources() const

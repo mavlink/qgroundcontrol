@@ -157,24 +157,6 @@ int GPSProtocol::consume(std::span<const uint8_t> bytes)
         updates |= result.batch.updates;
         if (_io.decoded) {
             _io.decoded(std::move(result.batch));
-        } else {
-            for (const auto& event : result.batch.events) {
-                std::visit(
-                    [this](const auto& report) {
-                        using Report = std::decay_t<decltype(report)>;
-                        if constexpr (std::is_same_v<Report, GPSRTCMReport>) {
-                            if (_io.rtcm)
-                                _io.rtcm({report.bytes.data(), report.size});
-                        } else if constexpr (std::is_same_v<Report, GPSRelativeReport>) {
-                            if (_io.relativePosition)
-                                _io.relativePosition(report);
-                        } else if constexpr (std::is_same_v<Report, GPSSurveyReport>) {
-                            if (_io.survey)
-                                _io.survey(report);
-                        }
-                    },
-                    event);
-            }
         }
     } while (!bytes.empty());
     return updates;

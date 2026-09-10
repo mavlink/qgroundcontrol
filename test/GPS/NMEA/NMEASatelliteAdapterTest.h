@@ -7,6 +7,7 @@ class NMEASatelliteAdapterTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _schedulerCanBeDestroyed();
     void _canonicalIdentities();
     void _identityResolution_data();
     void _identityResolution();

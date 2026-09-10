@@ -45,25 +45,31 @@ bool NMEADecoderSession::start(QIODevice* device)
     const QPointer<NMEADecoderSession> guard(this);
     const QPointer<QIODevice> deviceGuard(device);
     stop();
-    if (!guard || _active || !deviceGuard || !deviceGuard->isReadable()) {
+    if (!guard || _active || !_scheduler || !deviceGuard || !deviceGuard->isReadable()) {
         return false;
     }
     const quint64 session = ++_sessionId;
     _active = true;
     _stream = std::make_unique<NMEAStreamSplitter>(device);
-    _satelliteAdapter = std::make_unique<NMEASatelliteAdapter>(_stream->satelliteDevice(), nullptr, _scheduler);
+    _satelliteAdapter = std::make_unique<NMEASatelliteAdapter>(nullptr, nullptr, _scheduler);
     connect(_satelliteAdapter.get(), &NMEASatelliteAdapter::observationReceived, this,
             [this, session](const GPSSatelliteObservation& observation) {
                 if (_active && session == _sessionId) {
                     _updateSatellites(observation);
                 }
             });
+    connect(_stream.get(), &NMEAStreamSplitter::sentenceReceived, _satelliteAdapter.get(),
+            &NMEASatelliteAdapter::ingest);
+    connect(_stream.get(), &NMEAStreamSplitter::closed, _satelliteAdapter.get(), &NMEASatelliteAdapter::close);
     _positionSource = std::make_unique<NMEAPositionSource>(_stream->positionDevice(), nullptr, _scheduler);
-    connect(_positionSource.get(), &QGeoPositionInfoSource::positionUpdated, &_health, [this](const QGeoPositionInfo&) {
-        auto observation = _positionSource->lastObservation();
-        observation.sessionId = _sessionId;
-        _health.updateObservation(observation);
-    });
+    connect(_positionSource.get(), &NMEAPositionSource::observationReceived, &_health,
+            [this, session](GPSObservation observation) {
+                if (!_active || session != _sessionId) {
+                    return;
+                }
+                observation.sessionId = _sessionId;
+                _health.updateObservation(observation);
+            });
     connect(_positionSource.get(), &QGeoPositionInfoSource::errorOccurred, &_health,
             [this](QGeoPositionInfoSource::Error error) {
                 if (error != QGeoPositionInfoSource::NoError) {

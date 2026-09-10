@@ -16,8 +16,10 @@ GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPS
     : QObject(parent)
     , _receiver(receiver)
     , _health(health)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
-    , _connection(this, _scheduler)
+    , _control(GPSConnectionControl::NotificationPolicy::Immediate, this, scheduler,
+               {.endpoint = {.kind = GPSReceiverProfile::Endpoint::Kind::Serial, .discoverSerialDevice = true},
+                .configurationPolicy = GPSReceiverProfile::ConfigurationPolicy::Configure,
+                .receiver = {.base = {.surveyInAccMeters = 2.0, .surveyInDurationSecs = 180}}})
 {
     qCDebug(GPSReceiverAutoConnectLog) << this;
     if (_receiver) {
@@ -26,8 +28,8 @@ GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPS
         connect(_receiver, &GPSReceiverSession::connectionErrorDetail, this, &GPSReceiverAutoConnect::stateChanged);
         connect(_receiver, &GPSReceiverSession::capabilitiesUpdated, this, &GPSReceiverAutoConnect::stateChanged);
     }
-    connect(&_connection, &GPSConnectionState::changed, this, &GPSReceiverAutoConnect::stateChanged);
-    connect(&_connection, &GPSConnectionState::changed, this, &GPSReceiverAutoConnect::networkAutoConnectPausedChanged);
+    connect(&_control, &GPSConnectionControl::changed, this, &GPSReceiverAutoConnect::stateChanged);
+    connect(&_control, &GPSConnectionControl::changed, this, &GPSReceiverAutoConnect::networkAutoConnectPausedChanged);
     connect(this, &GPSReceiverAutoConnect::networkActiveChanged, this, &GPSReceiverAutoConnect::stateChanged);
     connect(this, &GPSReceiverAutoConnect::stateChanged, this, &GPSReceiverAutoConnect::_scheduleUpdate);
 }
@@ -35,62 +37,57 @@ GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPS
 GPSReceiverAutoConnect::~GPSReceiverAutoConnect()
 {
     qCDebug(GPSReceiverAutoConnectLog) << this;
-    if (_scheduler) {
-        _scheduler->cancel(_updateTask);
-    }
+    _control.cancelUpdate();
     blockSignals(true);
     if (_receiver) {
         _receiver->disconnect(this);
-        _receiver->disconnect(&_connection);
+        _receiver->disconnect(&_control.connection());
         _receiver->stop();
     }
 }
 
 void GPSReceiverAutoConnect::setProfile(const GPSReceiverProfile& profile, bool restart)
 {
-    const auto normalized = profile.normalized();
-    const bool changed = _profile != normalized;
+    const bool changed = _control.changeProfile(profile);
     if (!changed) {
         return;
     }
-    _stopped = false;
-    _profile = normalized;
-    const quint64 revision = ++_commandRevision;
+    _control.setStopped(false);
+    const quint64 revision = _control.revision();
     const QPointer<GPSReceiverAutoConnect> guard(this);
     if (restart && changed) {
         _stop(revision);
-        if (guard && revision == _commandRevision) {
-            _connection.resetIntent();
+        if (guard && revision == _control.revision()) {
+            _control.connection().resetIntent();
         }
     }
-    if (guard && revision == _commandRevision && changed) {
+    if (guard && revision == _control.revision() && changed) {
         emit stateChanged();
     }
 }
 
 void GPSReceiverAutoConnect::setAutoConnect(bool enabled)
 {
-    if (_automatic == enabled) {
+    if (!_control.changeAutomatic(enabled)) {
         return;
     }
-    _stopped = false;
-    _automatic = enabled;
-    const quint64 revision = ++_commandRevision;
+    _control.setStopped(false);
+    const quint64 revision = _control.revision();
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    _connection.resetIntent();
-    if (!guard || revision != _commandRevision) {
+    _control.connection().resetIntent();
+    if (!guard || revision != _control.revision()) {
         return;
     }
     if (!enabled) {
         _stop(revision);
     } else {
-        _connection.updateIntent(true);
+        _control.connection().updateIntent(true);
     }
 }
 
 bool GPSReceiverAutoConnect::connectSelected()
 {
-    _stopped = false;
+    _control.setStopped(false);
     if (!_serialSelected()) {
         return connectNetwork();
     }
@@ -98,14 +95,14 @@ bool GPSReceiverAutoConnect::connectSelected()
     if (!_serialPorts || !_receiver) {
         return false;
     }
-    const quint64 revision = ++_commandRevision;
+    const quint64 revision = _control.beginCommand();
     const QPointer<GPSReceiverAutoConnect> guard(this);
     _stop(revision);
-    if (!guard || revision != _commandRevision || !_captureConfig()) {
+    if (!guard || revision != _control.revision() || !_captureConfig()) {
         return false;
     }
-    _connection.requestConnect();
-    if (!guard || revision != _commandRevision) {
+    _control.connection().requestConnect();
+    if (!guard || revision != _control.revision()) {
         return false;
     }
     update();
@@ -117,17 +114,17 @@ bool GPSReceiverAutoConnect::connectSelected()
 
 void GPSReceiverAutoConnect::disconnectSelected()
 {
-    const quint64 revision = ++_commandRevision;
+    const quint64 revision = _control.beginCommand();
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    _connection.pause();
-    if (guard && revision == _commandRevision) {
+    _control.connection().pause();
+    if (guard && revision == _control.revision()) {
         _stop(revision);
     }
 }
 
 bool GPSReceiverAutoConnect::connectNetwork()
 {
-    const auto profile = _profile;
+    const auto profile = _control.profile();
     if (profile.endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial || !profile.validationError().isEmpty()) {
         return false;
     }
@@ -136,7 +133,7 @@ bool GPSReceiverAutoConnect::connectNetwork()
 
 bool GPSReceiverAutoConnect::connectNetwork(GPSType type, GPSProvider::TransportFactory factory)
 {
-    auto profile = _profile;
+    auto profile = _control.profile();
     profile.driverType = type;
     profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
     // Injected factories supply the endpoint; these defaults permit transport-independent tests.
@@ -151,25 +148,25 @@ bool GPSReceiverAutoConnect::connectNetwork(GPSType type, GPSProvider::Transport
 
 bool GPSReceiverAutoConnect::connectReceiver(const GPSReceiverProfile& profile, GPSProvider::TransportFactory factory)
 {
-    if (_suspended || !_receiver || !factory || _transportFactory || !profile.validationError().isEmpty()) {
+    if (_control.suspended() || !_receiver || !factory || _transportFactory || !profile.validationError().isEmpty()) {
         return false;
     }
-    _stopped = false;
+    _control.setStopped(false);
     const auto requestedProfile = profile.normalized();
-    const quint64 revision = ++_commandRevision;
+    const quint64 revision = _control.beginCommand();
     const QPointer<GPSReceiverAutoConnect> guard(this);
     _stop(revision);
-    if (!guard || revision != _commandRevision) {
+    if (!guard || revision != _control.revision()) {
         return false;
     }
     _sessionConfig = requestedProfile;
     _transportFactory = std::move(factory);
-    _connection.requestConnect();
-    if (!guard || revision != _commandRevision) {
+    _control.connection().requestConnect();
+    if (!guard || revision != _control.revision()) {
         return false;
     }
     _startReceiver();
-    if (guard && revision == _commandRevision) {
+    if (guard && revision == _control.revision()) {
         emit networkActiveChanged();
     }
     return true;
@@ -177,11 +174,11 @@ bool GPSReceiverAutoConnect::connectReceiver(const GPSReceiverProfile& profile, 
 
 bool GPSReceiverAutoConnect::_captureConfig()
 {
-    if (const QString error = _profile.validationError(); !error.isEmpty()) {
+    if (const QString error = _control.profile().validationError(); !error.isEmpty()) {
         qCDebug(GPSReceiverAutoConnectLog) << error;
         return false;
     }
-    _sessionConfig = _profile;
+    _sessionConfig = _control.profile();
     return true;
 }
 
@@ -203,33 +200,33 @@ void GPSReceiverAutoConnect::_updateReceiverState()
     if (!_receiver) {
         return;
     }
-    const quint64 revision = _commandRevision;
+    const quint64 revision = _control.revision();
     const QPointer<GPSReceiverAutoConnect> guard(this);
     if (_receiver->stopping() && !_receiver->hasReceiver()) {
-        _connection.stopping();
-    } else if (_connection.state() == GPSConnectionState::Stopping) {
-        _connection.stopped();
+        _control.connection().stopping();
+    } else if (_control.connection().state() == GPSConnectionState::Stopping) {
+        _control.connection().stopped();
     }
-    if (!guard || !_receiver || revision != _commandRevision) {
+    if (!guard || !_receiver || revision != _control.revision()) {
         return;
     }
     switch (_receiver->attempt().phase) {
         case GPSReceiverAttempt::Phase::Configuring:
-            _connection.configuring();
+            _control.connection().configuring();
             break;
         case GPSReceiverAttempt::Phase::Ready:
-            _connection.ready();
+            _control.connection().ready();
             break;
         case GPSReceiverAttempt::Phase::Failed:
             if (!_receiver->stopping() && _handledTerminalAttempt != _receiver->attempt().generation) {
                 _handledTerminalAttempt = _receiver->attempt().generation;
-                _connection.failed();
+                _control.connection().failed();
             }
             break;
         case GPSReceiverAttempt::Phase::Cancelled:
             if (!_receiver->stopping() && _handledTerminalAttempt != _receiver->attempt().generation) {
                 _handledTerminalAttempt = _receiver->attempt().generation;
-                _connection.stopped();
+                _control.connection().stopped();
             }
             break;
         case GPSReceiverAttempt::Phase::Idle:
@@ -240,7 +237,7 @@ void GPSReceiverAutoConnect::_updateReceiverState()
 
 void GPSReceiverAutoConnect::stopAttempt()
 {
-    _stopAttempt(++_commandRevision);
+    _stopAttempt(_control.beginCommand());
 }
 
 void GPSReceiverAutoConnect::_stopAttempt(quint64 revision)
@@ -256,27 +253,27 @@ void GPSReceiverAutoConnect::_stopAttempt(quint64 revision)
     _waitingPorts.clear();
 #endif
     if (_receiver && (_receiver->hasReceiver() || _receiver->stopping())) {
-        _connection.stopping();
-        if (!guard || revision != _commandRevision) {
+        _control.connection().stopping();
+        if (!guard || revision != _control.revision()) {
             return;
         }
         if (_receiver) {
             _receiver->stop();
         }
     }
-    if (!guard || revision != _commandRevision) {
+    if (!guard || revision != _control.revision()) {
         return;
     }
     if (hadSession) {
         emit disconnectRequested();
     }
-    if (!guard || revision != _commandRevision) {
+    if (!guard || revision != _control.revision()) {
         return;
     }
     if (!_receiver || (!_receiver->hasReceiver() && !_receiver->stopping())) {
-        _connection.stopped();
+        _control.connection().stopped();
     }
-    if (guard && revision == _commandRevision && wasNetworkActive) {
+    if (guard && revision == _control.revision() && wasNetworkActive) {
         emit networkActiveChanged();
     }
 }
@@ -284,8 +281,8 @@ void GPSReceiverAutoConnect::_stopAttempt(quint64 revision)
 void GPSReceiverAutoConnect::stop()
 {
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    _stopped = true;
-    _stop(++_commandRevision);
+    _control.setStopped(true);
+    _stop(_control.beginCommand());
     if (guard) {
         _scheduleUpdate();
     }
@@ -294,8 +291,8 @@ void GPSReceiverAutoConnect::stop()
 void GPSReceiverAutoConnect::_stop(quint64 revision)
 {
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    _connection.stop();
-    if (guard && revision == _commandRevision) {
+    _control.connection().stop();
+    if (guard && revision == _control.revision()) {
         _stopAttempt(revision);
     }
 }
@@ -310,17 +307,17 @@ void GPSReceiverAutoConnect::_startReceiver()
 bool GPSReceiverAutoConnect::_startReceiver(const GPSReceiverProfile& profile, GPSProvider::TransportFactory factory,
                                             std::function<void()> admitted)
 {
-    if (_suspended || !_receiver || _receiver->hasReceiver() || _receiver->stopping()) {
+    if (_control.suspended() || !_receiver || _receiver->hasReceiver() || _receiver->stopping()) {
         return false;
     }
-    const quint64 revision = _commandRevision;
+    const quint64 revision = _control.revision();
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    return _connection.startAttempt(
+    return _control.startAttempt(
         [this, guard, revision, profile, factory = std::move(factory), admitted = std::move(admitted)]() mutable {
             const auto current = [&]() {
-                return guard && revision == _commandRevision && !_suspended && _receiver && !_receiver->hasReceiver() &&
-                       !_receiver->stopping() && _connection.active() &&
-                       _connection.state() == GPSConnectionState::Connecting;
+                return guard && revision == _control.revision() && !_control.suspended() && _receiver &&
+                       !_receiver->hasReceiver() && !_receiver->stopping() && _control.connection().active() &&
+                       _control.connection().state() == GPSConnectionState::Connecting;
             };
             if (!current()) {
                 return false;
@@ -334,25 +331,25 @@ bool GPSReceiverAutoConnect::_startReceiver(const GPSReceiverProfile& profile, G
             _receiver->start(profile, std::move(factory));
             return guard && _receiver &&
                    (_receiver->hasReceiver() || _receiver->stopping() ||
-                    _connection.state() != GPSConnectionState::Connecting);
+                    _control.connection().state() != GPSConnectionState::Connecting);
         });
 }
 
 bool GPSReceiverAutoConnect::_retryReady()
 {
-    const quint64 revision = _commandRevision;
+    const quint64 revision = _control.revision();
     const QPointer<GPSReceiverAutoConnect> guard(this);
     _updateReceiverState();
-    if (!guard || revision != _commandRevision || !_receiver || _receiver->hasReceiver() || _receiver->stopping()) {
+    if (!guard || revision != _control.revision() || !_receiver || _receiver->hasReceiver() || _receiver->stopping()) {
         return false;
     }
-    return _connection.canAttempt();
+    return _control.connection().canAttempt();
 }
 
 void GPSReceiverAutoConnect::update()
 {
-    _stopped = false;
-    if (!_receiver || _suspended) {
+    _control.setStopped(false);
+    if (!_receiver || _control.suspended()) {
         _scheduleUpdate();
         return;
     }
@@ -361,19 +358,19 @@ void GPSReceiverAutoConnect::update()
             guard->_scheduleUpdate();
         }
     });
-    const quint64 revision = _commandRevision;
+    const quint64 revision = _control.revision();
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    if (!_connection.updateIntent(_automatic)) {
-        if (guard && revision == _commandRevision) {
+    if (!_control.connection().updateIntent(_control.automatic())) {
+        if (guard && revision == _control.revision()) {
             stop();
         }
         return;
     }
-    if (!guard || revision != _commandRevision) {
+    if (!guard || revision != _control.revision()) {
         return;
     }
     if (_transportFactory) {
-        if (_retryReady() && guard && revision == _commandRevision) {
+        if (_retryReady() && guard && revision == _control.revision()) {
             _startReceiver();
         }
         return;
@@ -394,15 +391,13 @@ QString GPSReceiverAutoConnect::errorDetail() const
 
 void GPSReceiverAutoConnect::setSuspended(bool suspended)
 {
-    if (_suspended == suspended) {
+    if (!_control.changeSuspended(suspended)) {
         return;
     }
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    _suspended = suspended;
-    ++_commandRevision;
     if (suspended && _receiver && !_receiver->hasReceiver() && !_receiver->stopping() &&
-        _connection.state() == GPSConnectionState::Connecting) {
-        _connection.stopped();
+        _control.connection().state() == GPSConnectionState::Connecting) {
+        _control.connection().stopped();
     }
     if (guard) {
         _scheduleUpdate();
@@ -411,14 +406,11 @@ void GPSReceiverAutoConnect::setSuspended(bool suspended)
 
 void GPSReceiverAutoConnect::_scheduleUpdate()
 {
-    if (!_scheduler) {
+    _control.cancelUpdate();
+    if (!_receiver || !(_sessionConfig ? *_sessionConfig : _control.profile()).validationError().isEmpty()) {
         return;
     }
-    _scheduler->cancel(std::exchange(_updateTask, 0));
-    if (_stopped || _suspended || !_receiver || !_connection.shouldConnect(_automatic) ||
-        !(_sessionConfig ? *_sessionConfig : _profile).validationError().isEmpty()) {
-        return;
-    }
+    qint64 discoveryPollMs = -1;
     if (_serialSelected() && !_transportFactory) {
 #ifdef QGC_NO_SERIAL_LINK
         return;
@@ -426,27 +418,9 @@ void GPSReceiverAutoConnect::_scheduleUpdate()
         if (!_serialPorts) {
             return;
         }
+        discoveryPollMs = 1000;
 #endif
     }
-    qint64 delay = -1;
-    if (!_receiver->hasReceiver() && !_receiver->stopping()) {
-        delay = _connection.retryRemainingMs();
-        if (delay < 0 && _connection.state() == GPSConnectionState::Disconnected) {
-            delay = 0;
-        }
-    }
-#ifndef QGC_NO_SERIAL_LINK
-    if (_serialSelected() && !_transportFactory && _serialPorts) {
-        delay = delay < 0 ? 1000 : std::min<qint64>(1000, delay);
-        if (delay == 0 && _connection.state() == GPSConnectionState::Disconnected) {
-            delay = 1000;
-        }
-    }
-#endif
-    if (delay >= 0) {
-        _updateTask = _scheduler->schedule(this, std::chrono::milliseconds(delay), [this]() {
-            _updateTask = 0;
-            update();
-        });
-    }
+    _control.scheduleUpdate(!_receiver->hasReceiver() && !_receiver->stopping(), discoveryPollMs, true,
+                            [this]() { update(); });
 }

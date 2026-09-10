@@ -94,6 +94,7 @@ void GPSDiagnosticsUITest::_recordingAndExport()
         import QtQml
         QtObject {
             property bool recording: false
+            property bool exporting: false
             property bool hasRecording: false
             property int eventCount: 2
             property int bytesRecorded: 100
@@ -103,7 +104,8 @@ void GPSDiagnosticsUITest::_recordingAndExport()
             property int exports: 0
             function start() { recording = true; return true }
             function stop() { recording = false }
-            function exportRecording(file) { lastExportPath = file.toString(); exports++; return true }
+            function exportRecording(file) { exporting = true; lastExportPath = file.toString(); exports++; return true }
+            function cancelExport() { exporting = false }
         }
     )");
     QVERIFY(controller);
@@ -130,6 +132,12 @@ void GPSDiagnosticsUITest::_recordingAndExport()
     QGCFileDialogController::setTestNextFileForAccept(QStringLiteral("/tmp/gps capture.json"));
     QVERIFY(QMetaObject::invokeMethod(exportButton, "clicked"));
     QCOMPARE(controller->property("exports").toInt(), 1);
+    QVERIFY(!exportButton->isEnabled());
+    auto* cancelButton = findItem(root, QStringLiteral("gpsRecordingCancelExport"));
+    QVERIFY(cancelButton);
+    QVERIFY(cancelButton->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(cancelButton, "clicked"));
+    QVERIFY(exportButton->isEnabled());
     QCOMPARE(QUrl(controller->property("lastExportPath").toString()).toLocalFile(),
              QStringLiteral("/tmp/gps capture.json"));
     QVERIFY(!QGCFileDialogController::testHookArmed());

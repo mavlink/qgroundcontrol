@@ -368,11 +368,11 @@ void GPSDriverTest::_positionRoleDoesNotForwardBaseData()
     GPSReceiverConfig config;
     config.role = GPSReceiverConfig::Role::Position;
     GPSDriver driver(GPSType::u_blox, transport, config, sinks);
-    QByteArray correction("RTCM");
-    driver._protocolIO().rtcm(
-        {reinterpret_cast<const uint8_t*>(correction.constData()), static_cast<size_t>(correction.size())});
-    SurveyInStatus status{};
-    driver._protocolIO().survey(status);
+    GPSRTCMReport correction;
+    const QByteArray bytes("RTCM");
+    std::copy_n(bytes.constData(), bytes.size(), correction.bytes.begin());
+    correction.size = bytes.size();
+    driver._protocolIO().decoded({{correction, SurveyInStatus{}}, 0});
     QCOMPARE(corrections, 0);
     QCOMPARE(surveys, 0);
 }
@@ -509,7 +509,6 @@ void GPSDriverTest::_unsupportedOutputProtocol()
 void GPSDriverTest::_observationMetadata()
 {
     GPSPositionReport fix;
-    GPSDriverData::initialize(fix);
     auto observation = GPSDriverData::position(fix);
     QVERIFY(!observation.position.isValid());
     QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Unknown);

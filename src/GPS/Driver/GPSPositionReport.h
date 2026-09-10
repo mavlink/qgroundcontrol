@@ -1,19 +1,20 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
 #include <optional>
 
 struct GPSPositionReport
 {
     uint64_t timestamp{};
 
-    double latitude_deg{};
-    double longitude_deg{};
-    double altitude_msl_m{};
-    double altitude_ellipsoid_m{};
+    double latitude_deg = std::numeric_limits<double>::quiet_NaN();
+    double longitude_deg = std::numeric_limits<double>::quiet_NaN();
+    double altitude_msl_m = std::numeric_limits<double>::quiet_NaN();
+    double altitude_ellipsoid_m = std::numeric_limits<double>::quiet_NaN();
 
-    float s_variance_m_s{};
-    float c_variance_rad{};
+    float speedAccuracyMetersPerSecond = std::numeric_limits<float>::quiet_NaN();
+    float courseAccuracyRadians = std::numeric_limits<float>::quiet_NaN();
 
     static constexpr uint8_t FIX_TYPE_NONE = 1;
     static constexpr uint8_t FIX_TYPE_2D = 2;
@@ -24,14 +25,14 @@ struct GPSPositionReport
     static constexpr uint8_t FIX_TYPE_EXTRAPOLATED = 8;
     uint8_t fix_type{};
 
-    float eph{};
-    float epv{};
+    float eph = std::numeric_limits<float>::quiet_NaN();
+    float epv = std::numeric_limits<float>::quiet_NaN();
 
     uint64_t dop_timestamp{};
     uint64_t heading_timestamp{};
     uint64_t accuracy_timestamp{};
-    float hdop{};
-    float vdop{};
+    float hdop = std::numeric_limits<float>::quiet_NaN();
+    float vdop = std::numeric_limits<float>::quiet_NaN();
 
     std::optional<int32_t> noise_per_ms;
     std::optional<uint16_t> automatic_gain_control;
@@ -60,17 +61,17 @@ struct GPSPositionReport
     uint8_t authentication_state{};
     uint64_t authentication_state_timestamp{};
 
-    float vel_m_s{};
-    float vel_n_m_s{};
-    float vel_e_m_s{};
-    float vel_d_m_s{};
-    float cog_rad{};
+    float vel_m_s = std::numeric_limits<float>::quiet_NaN();
+    float vel_n_m_s = std::numeric_limits<float>::quiet_NaN();
+    float vel_e_m_s = std::numeric_limits<float>::quiet_NaN();
+    float vel_d_m_s = std::numeric_limits<float>::quiet_NaN();
+    float cog_rad = std::numeric_limits<float>::quiet_NaN();
     bool vel_ned_valid{};
 
     int32_t timestamp_time_relative{};
     uint64_t time_utc_usec{};
 
-    uint8_t satellites_used{};
+    uint8_t satellites_used = std::numeric_limits<uint8_t>::max();
 
     static constexpr uint32_t SYSTEM_ERROR_OK = 0;
     static constexpr uint32_t SYSTEM_ERROR_INCOMING_CORRECTIONS = 1;
@@ -82,8 +83,8 @@ struct GPSPositionReport
     static constexpr uint32_t SYSTEM_ERROR_OUTPUT_CONGESTION = 64;
     uint32_t system_error{};
 
-    float heading{};
-    float heading_accuracy{};
+    float heading = std::numeric_limits<float>::quiet_NaN();
+    float heading_accuracy = std::numeric_limits<float>::quiet_NaN();
 
     static constexpr uint8_t CORRECTIONS_PROTOCOL_UNKNOWN = 0;
     static constexpr uint8_t CORRECTIONS_PROTOCOL_RTCM3 = 1;

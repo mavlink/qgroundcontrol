@@ -11,4 +11,5 @@ private slots:
     void _viewAndUseExpireIndependently();
     void _timerKeepsFreshConstellation();
     void _sessionsAndReentrantDelivery();
+    void _unknownUsageRetiresPreviousCount();
 };

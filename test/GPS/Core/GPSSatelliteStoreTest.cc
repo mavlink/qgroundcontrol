@@ -2,6 +2,7 @@
 
 #include <QtTest/QSignalSpy>
 
+#include "GPSReplayScheduler.h"
 #include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
 
@@ -135,6 +136,47 @@ void GPSSatelliteStoreTest::_sessionsAndReentrantDelivery()
     QVERIFY(received);
     QVERIFY(store.observation().sourceId.isEmpty());
     QVERIFY(store.observation().revision > accepted.revision);
+}
+
+void GPSSatelliteStoreTest::_unknownUsageRetiresPreviousCount()
+{
+    GPSReplayScheduler scheduler;
+    GPSSatelliteStore store(nullptr, 5000, &scheduler);
+    store.beginSession(QStringLiteral("receiver"), 1);
+    GPSSatelliteObservation report;
+    report.sessionId = 1;
+    report.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
+    report.satellites = {makeSatellite(GPSSatellite::Constellation::GPS, 3)};
+    const auto firstReceipt = scheduler.nowUs();
+    report.provenance = {{GPSSatellite::Constellation::GPS, firstReceipt, firstReceipt, 1, QList<int>{3}}};
+    store.updateObservation(report);
+    QCOMPARE(store.observation().satellitesInUseCount(), 1);
+    QCOMPARE(store.observation().satellites.first().used, std::optional<bool>(true));
+
+    report.provenance[0].inUseTimestampUs = 0;
+    report.provenance[0].satellitesUsed.reset();
+    store.updateObservation(report);
+    QCOMPARE(store.observation().satellitesInUseCount(), 1);
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    report.provenance[0].inUseTimestampUs = scheduler.nowUs();
+    store.updateObservation(report);
+    QCOMPARE(store.observation().satellitesInUseCount(), -1);
+    QVERIFY(!store.observation().provenance.first().usedSatelliteIds);
+    QVERIFY(!store.observation().satellites.first().used);
+
+    report.provenance[0].inUseTimestampUs = firstReceipt;
+    report.provenance[0].satellitesUsed = 1;
+    store.updateObservation(report);
+    QCOMPARE(store.observation().satellitesInUseCount(), -1);
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    report.provenance[0].inUseTimestampUs = scheduler.nowUs();
+    report.provenance[0].satellitesUsed = 0;
+    report.provenance[0].usedSatelliteIds = QList<int>{};
+    store.updateObservation(report);
+    QCOMPARE(store.observation().satellitesInUseCount(), 0);
+    QCOMPARE(store.observation().satellites.first().used, std::optional<bool>(false));
 }
 
 UT_REGISTER_TEST(GPSSatelliteStoreTest, TestLabel::Unit)

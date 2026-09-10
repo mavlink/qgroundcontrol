@@ -2,14 +2,12 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include <deque>
 #include <functional>
 #include <memory>
 
-#include "GPSConnectionState.h"
+#include "GPSConnectionControl.h"
 #include "GPSReceiverProfile.h"
 #include "GPSRuntimeScheduler.h"
 #include "NMEAConnectionAttempt.h"
@@ -44,6 +42,7 @@ public:
     ~NMEASourceManager() override;
 
     void setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer) { _recordingBuffer = buffer; }
+
     void update();
     void stop();
     void shutdown();
@@ -58,9 +57,9 @@ public:
 
     GPSSourceHealth* health() { return _decoder.health(); }
 
-    bool active() const { return _connection.active(); }
+    bool active() const { return _control.connection().active(); }
 
-    GPSConnectionState::State connectionState() const { return _connection.state(); }
+    GPSConnectionState::State connectionState() const { return _control.connection().state(); }
 
     QString status() const { return _status; }
 
@@ -70,6 +69,7 @@ public:
     int satellitesInUseCount() const { return _decoder.health()->satellitesInUseCount(); }
 
     GPSSatelliteObservation satelliteObservation() const { return _decoder.satelliteObservation(); }
+
     quint64 sessionId() const { return _decoder.sessionId(); }
 
 signals:
@@ -95,23 +95,13 @@ private:
     void _notifyState();
 
     std::shared_ptr<GPSRecordingBuffer> _recordingBuffer;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSRuntimeScheduler::TaskId _updateTask = 0;
-    bool _automatic = false;
-    bool _suspended = false;
-    bool _stopped = false;
-    GPSReceiverProfile _profile;
+    GPSConnectionControl _control;
     quint64 _attemptGeneration = 0;
     std::unique_ptr<NMEAConnectionAttempt> _attempt;
     NMEADecoderSession _decoder;
-    QTimer _udpActivityTimer;
-    GPSConnectionState _connection;
+    GPSScheduledTask _udpActivity;
     GPSProvider::TransportFactory _receiverFactory;
     bool _sourceAvailable = false;
-    bool _dispatching = false;
-    bool _stateNotificationPending = false;
-    bool _shutdown = false;
-    std::deque<std::function<void()>> _commands;
     QString _status;
 #ifndef QGC_NO_SERIAL_LINK
     QPointer<SerialPortManager> _serialPorts;

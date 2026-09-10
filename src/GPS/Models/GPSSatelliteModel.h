@@ -61,6 +61,7 @@ private:
     };
 
     void _publish();
+    static QVariant _satelliteData(const GPSSatellite& satellite, int role, const QString& sourceId);
     static QString _constellationName(GPSSatellite::Constellation constellation);
 
     Snapshot _current;

@@ -2,9 +2,9 @@
 #include <QtCore/QList>
 #include <QtTest/QTest>
 
+#include "RTCMFrame.h"
 #include "RTCMFrameDecoder.h"
 #include "RTCMFramer.h"
-#include "RTCMParser.h"
 
 namespace {
 // Fixed CRCs keep the corpus independent of both implementations under test.
@@ -81,7 +81,7 @@ void RTCMConformanceTest::_sharedCorpus()
     QFETCH(QList<QByteArray>, expectedFrames);
     QFETCH(int, expectedInvalidFrames);
 
-    RTCMParser qgc;
+    RTCMFrameDecoder qgc;
     RTCMFramer px4;
     QList<QByteArray> qgcFrames;
     QList<QByteArray> px4Frames;
@@ -95,12 +95,11 @@ void RTCMConformanceTest::_sharedCorpus()
         }
         for (const char rawByte : chunks[chunkIndex]) {
             const auto byte = static_cast<uint8_t>(rawByte);
-            if (qgc.addByte(byte)) {
+            if (const auto decoded = qgc.addByte(byte, 1000)) {
                 // QGC exposes every complete frame so callers can count CRC failures.
-                if (qgc.validateCrc()) {
-                    qgcFrames.append(qgc.currentFrame());
-                    qgcIds.append(qgc.messageId());
-                    QCOMPARE(qgc.currentFrame().size(), qgc.messageLength() + 6);
+                if (decoded->valid) {
+                    qgcFrames.append(decoded->data);
+                    qgcIds.append(decoded->messageId);
                 } else {
                     ++invalidFrames;
                 }
@@ -130,11 +129,12 @@ void RTCMConformanceTest::_strictValidation_data()
 void RTCMConformanceTest::_strictValidation()
 {
     QFETCH(QByteArray, candidate);
-    const auto crc = RTCMParser::crc24q(reinterpret_cast<const uint8_t*>(candidate.constData()), candidate.size());
+    const auto crc = RTCMFramer::crc24q(
+        {reinterpret_cast<const uint8_t*>(candidate.constData()), static_cast<size_t>(candidate.size())});
     candidate.append(static_cast<char>(crc >> 16));
     candidate.append(static_cast<char>(crc >> 8));
     candidate.append(static_cast<char>(crc));
-    QVERIFY(!RTCMParser::isValidFrame(candidate));
+    QVERIFY(!RTCM::isValidFrame(candidate));
     RTCMFrameDecoder decoder;
     std::optional<RTCMFrameDecoder::Result> decoded;
     RTCMFramer native;
@@ -152,7 +152,7 @@ void RTCMConformanceTest::_strictValidation()
     QVERIFY(nativeCompleted);
     QVERIFY(!native.valid());
     const QByteArray nativeFrame(reinterpret_cast<const char*>(native.message()), native.messageLength());
-    QVERIFY(!RTCMParser::isValidFrame(nativeFrame));
+    QVERIFY(!RTCM::isValidFrame(nativeFrame));
     for (const char byte : SHORT_FRAME) {
         decoded = decoder.addByte(static_cast<uint8_t>(byte), 8000);
     }

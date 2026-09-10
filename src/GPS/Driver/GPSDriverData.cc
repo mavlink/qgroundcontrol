@@ -10,6 +10,7 @@
 #include "GPSPositionReport.h"
 #include "GPSRelativeReport.h"
 #include "GPSSatelliteReport.h"
+#include "GPSSurveyReport.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSDriverDataLog, "GPS.Driver.GPSDriverData")
@@ -69,8 +70,9 @@ QGeoPositionInfo positionInfo(const GPSPositionReport& fix, const GPSExecutionCo
         if (qIsFinite(fix.cog_rad)) {
             const double degrees = std::fmod(qRadiansToDegrees(static_cast<double>(fix.cog_rad)), 360.0);
             position.setAttribute(QGeoPositionInfo::Direction, degrees < 0 ? degrees + 360.0 : degrees);
-            if (qIsFinite(fix.c_variance_rad) && fix.c_variance_rad > 0) {
-                position.setAttribute(QGeoPositionInfo::DirectionAccuracy, qRadiansToDegrees(fix.c_variance_rad));
+            if (qIsFinite(fix.courseAccuracyRadians) && fix.courseAccuracyRadians > 0) {
+                position.setAttribute(QGeoPositionInfo::DirectionAccuracy,
+                                      qRadiansToDegrees(fix.courseAccuracyRadians));
             }
         }
     }
@@ -78,21 +80,6 @@ QGeoPositionInfo positionInfo(const GPSPositionReport& fix, const GPSExecutionCo
 }
 
 }  // namespace
-
-void GPSDriverData::initialize(GPSPositionReport& fix)
-{
-    fix = {};
-    fix.latitude_deg = qQNaN();
-    fix.longitude_deg = qQNaN();
-    fix.altitude_msl_m = qQNaN();
-    fix.altitude_ellipsoid_m = qQNaN();
-    fix.heading = qQNaN();
-    fix.heading_accuracy = qQNaN();
-    fix.s_variance_m_s = qQNaN();
-    fix.hdop = qQNaN();
-    fix.vdop = qQNaN();
-    fix.satellites_used = std::numeric_limits<uint8_t>::max();
-}
 
 GPSObservation GPSDriverData::position(const GPSPositionReport& fix, const GPSExecutionContext& context)
 {
@@ -135,8 +122,8 @@ GPSObservation GPSDriverData::position(const GPSPositionReport& fix, const GPSEx
     if (fix.satellites_used != std::numeric_limits<uint8_t>::max()) {
         result.satellitesUsed = fix.satellites_used;
     }
-    if (fix.vel_ned_valid && qIsFinite(fix.s_variance_m_s) && fix.s_variance_m_s >= 0) {
-        result.speedAccuracyMetersPerSecond = fix.s_variance_m_s;
+    if (fix.vel_ned_valid && qIsFinite(fix.speedAccuracyMetersPerSecond) && fix.speedAccuracyMetersPerSecond >= 0) {
+        result.speedAccuracyMetersPerSecond = fix.speedAccuracyMetersPerSecond;
     }
     result.dopTimestampUs = fix.dop_timestamp;
     result.headingTimestampUs = fix.heading_timestamp;
@@ -241,5 +228,24 @@ GPSRelativeObservation GPSDriverData::relativePosition(const GPSRelativeReport& 
     result.referencePositionMissing = report.reference_position_miss;
     result.referenceObservationsMissing = report.reference_observations_miss;
     result.normalized = report.relative_position_normalized;
+    return result;
+}
+
+GPSSurveyInStatus GPSDriverData::survey(const GPSSurveyReport& report, const GPSExecutionContext& context)
+{
+    GPSSurveyInStatus result;
+    result.latitude = report.latitude;
+    result.longitude = report.longitude;
+    result.altitude = report.altitude;
+    if (report.accuracyKnown || report.mean_accuracy != 0)
+        result.meanAccuracyMM = report.mean_accuracy;
+    if (report.altitudeDatum == GPSSurveyReport::AltitudeDatum::Ellipsoid)
+        result.altitudeDatum = GPSObservation::AltitudeDatum::Ellipsoid;
+    else if (report.altitudeDatum == GPSSurveyReport::AltitudeDatum::MeanSeaLevel)
+        result.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+    result.monotonicTimestampUs = report.timestamp ? report.timestamp : context.nowUs();
+    result.durationSecs = report.duration;
+    result.valid = report.flags & 1;
+    result.active = report.flags & 2;
     return result;
 }

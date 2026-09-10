@@ -2,9 +2,8 @@
 
 #include "AppMessages.h"
 #include "AutoConnectSettings.h"
-#include "GPSBaseStationState.h"
-#include "GPSSettings.h"
 #include "GPSBaseReferenceSave.h"
+#include "GPSBaseStationState.h"
 #include "GPSCorrectionSettings.h"
 #include "GPSMavlinkOutput.h"
 #include "GPSPositionSettings.h"
@@ -14,6 +13,7 @@
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverSettingsPresentation.h"
+#include "GPSSettings.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
 #include "NMEASourceManager.h"
@@ -162,7 +162,8 @@ GPSManager::GPSManager(SettingsManager& settingsManager, QGCPositionManager* pos
     connect(_receiverAutoConnect, &GPSReceiverAutoConnect::networkAutoConnectPausedChanged, this,
             &GPSManager::networkRtkAutoConnectPausedChanged);
     connect(this, &GPSManager::receiverSettingsChanged, this, &GPSManager::baseReferenceSaveStateChanged);
-    connect(_baseStationState, &GPSBaseStationState::referenceChanged, this, &GPSManager::baseReferenceSaveStateChanged);
+    connect(_baseStationState, &GPSBaseStationState::referenceChanged, this,
+            &GPSManager::baseReferenceSaveStateChanged);
     connect(&_receiverSession, &GPSReceiverSession::stateChanged, this, &GPSManager::baseReferenceSaveStateChanged);
     for (Fact* fact : {receiverSettings->receiverRole(), receiverSettings->useFixedBasePosition(),
                        receiverSettings->fixedBasePositionAccuracy()}) {
@@ -180,7 +181,7 @@ GPSManager::~GPSManager()
     delete _receiver;
 }
 
-GPSManager *GPSManager::instance()
+GPSManager* GPSManager::instance()
 {
     return _gpsManager();
 }
@@ -392,26 +393,8 @@ void GPSManager::_updatePositionSource()
                                          ? _receiver
                                          : nullptr;
     const quint64 session = source ? _receiverSession.sessionId() : 0;
-    if (_registeredReceiverSource == source && _registeredReceiverSession == session) {
-        return;
-    }
-    const quint64 revision = ++_receiverRegistrationRevision;
-    const QPointer<GPSManager> guard(this);
-    _registeredReceiverSource = source;
-    _registeredReceiverSession = session;
-    _receiverRegistration.reset();
-    if (!guard || revision != _receiverRegistrationRevision || !source || !_positionManager || _shutdown) {
-        return;
-    }
-    auto registration = _positionManager->registerPositionSource(QGCPositionManager::SelectedSource::Receiver, source,
-                                                                 _receiver->health(), session);
-    if (guard && revision == _receiverRegistrationRevision && !_shutdown) {
-        if (!registration) {
-            _registeredReceiverSource = nullptr;
-            _registeredReceiverSession = 0;
-        }
-        _receiverRegistration = std::move(registration);
-    }
+    _updatePositionBinding(_receiverBinding, static_cast<int>(QGCPositionManager::SelectedSource::Receiver), source,
+                           source ? _receiver->health() : nullptr, session);
 }
 
 void GPSManager::_updateNmeaPositionSource()
@@ -419,25 +402,34 @@ void GPSManager::_updateNmeaPositionSource()
     const QPointer<QObject> source =
         !_shutdown && _positionManager && _nmeaSources->positionSource() ? _nmeaSources : nullptr;
     const quint64 session = source ? _nmeaSources->sessionId() : 0;
-    if (_registeredNmeaSource == source && _registeredNmeaSession == session) {
+    _updatePositionBinding(_nmeaBinding, static_cast<int>(QGCPositionManager::SelectedSource::Nmea), source,
+                           source ? _nmeaSources->health() : nullptr, session);
+}
+
+void GPSManager::_updatePositionBinding(PositionBinding& binding, int kind, QObject* producer, GPSSourceHealth* health,
+                                        quint64 session)
+{
+    const QPointer<QObject> source(producer);
+    const QPointer<GPSSourceHealth> guardedHealth(health);
+    if (binding.source == source && binding.session == session) {
         return;
     }
-    const quint64 revision = ++_nmeaRegistrationRevision;
+    const quint64 revision = ++binding.revision;
     const QPointer<GPSManager> guard(this);
-    _registeredNmeaSource = source;
-    _registeredNmeaSession = session;
-    _nmeaRegistration.reset();
-    if (!guard || revision != _nmeaRegistrationRevision || !source || !_positionManager || _shutdown) {
+    binding.source = source;
+    binding.session = session;
+    binding.registration.reset();
+    if (!guard || revision != binding.revision || !source || !_positionManager || _shutdown) {
         return;
     }
-    auto registration = _positionManager->registerPositionSource(QGCPositionManager::SelectedSource::Nmea, source,
-                                                                 _nmeaSources->health(), session);
-    if (guard && revision == _nmeaRegistrationRevision && !_shutdown) {
+    auto registration = _positionManager->registerPositionSource(static_cast<QGCPositionManager::SelectedSource>(kind),
+                                                                 source, guardedHealth, session);
+    if (guard && revision == binding.revision && !_shutdown) {
         if (!registration) {
-            _registeredNmeaSource = nullptr;
-            _registeredNmeaSession = 0;
+            binding.source = nullptr;
+            binding.session = 0;
         }
-        _nmeaRegistration = std::move(registration);
+        binding.registration = std::move(registration);
     }
 }
 
@@ -478,7 +470,8 @@ QString GPSManager::baseReferenceSaveError() const
     }
     const auto configuration = GPSSettings::receiver(*_settings.rtkSettings(), *_settings.autoConnectSettings());
     return GPSBaseReferenceSave::prepare(_baseStationState->reference(), _receiverSession.sessionId(),
-                                         configuration.profile.receiver).error;
+                                         configuration.profile.receiver)
+        .error;
 }
 
 bool GPSManager::saveBaseReference()
@@ -488,7 +481,7 @@ bool GPSManager::saveBaseReference()
     }
     const auto configuration = GPSSettings::receiver(*_settings.rtkSettings(), *_settings.autoConnectSettings());
     const auto prepared = GPSBaseReferenceSave::prepare(_baseStationState->reference(), _receiverSession.sessionId(),
-                                                       configuration.profile.receiver);
+                                                        configuration.profile.receiver);
     if (!prepared.configuration) {
         QGC::showAppMessage(prepared.error);
         return false;
@@ -567,15 +560,15 @@ void GPSManager::shutdown()
     if (!guard) {
         return;
     }
-    ++_receiverRegistrationRevision;
-    ++_nmeaRegistrationRevision;
-    _registeredReceiverSource = nullptr;
-    _registeredNmeaSource = nullptr;
-    _receiverRegistration.reset();
+    ++_receiverBinding.revision;
+    ++_nmeaBinding.revision;
+    _receiverBinding.source = nullptr;
+    _nmeaBinding.source = nullptr;
+    _receiverBinding.registration.reset();
     if (!guard) {
         return;
     }
-    _nmeaRegistration.reset();
+    _nmeaBinding.registration.reset();
     if (!guard) {
         return;
     }

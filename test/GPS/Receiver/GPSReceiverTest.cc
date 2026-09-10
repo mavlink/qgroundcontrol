@@ -33,10 +33,11 @@ void GPSReceiverTest::_testCountSatellitesClampsToMax()
     }
     msg.count = 250;
 
-    const GPSReceiver::SatelliteCounts counts = GPSReceiver::countSatellites(GPSDriverData::satellites(msg));
+    const auto observation = GPSDriverData::satellites(msg);
 
-    QCOMPARE(static_cast<int>(counts.inView), static_cast<int>(GPSSatelliteReport::SAT_INFO_MAX_SATELLITES));
-    QCOMPARE(counts.used, 0);
+    QCOMPARE(static_cast<int>(observation.satellites.size()),
+             static_cast<int>(GPSSatelliteReport::SAT_INFO_MAX_SATELLITES));
+    QCOMPARE(observation.usedCount(), 0);
 }
 
 void GPSReceiverTest::_testCountSatellitesCountsUsed()
@@ -51,10 +52,10 @@ void GPSReceiverTest::_testCountSatellitesCountsUsed()
     msg.entries[3].used = 1;
     msg.entries[5].used = 1;
 
-    const GPSReceiver::SatelliteCounts counts = GPSReceiver::countSatellites(GPSDriverData::satellites(msg));
+    const auto observation = GPSDriverData::satellites(msg);
 
-    QCOMPARE(static_cast<int>(counts.inView), 6);
-    QCOMPARE(counts.used, 3);
+    QCOMPARE(static_cast<int>(observation.satellites.size()), 6);
+    QCOMPARE(observation.usedCount(), 3);
 }
 
 void GPSReceiverTest::_testCountSatellitesIgnoresUsedBeyondCount()
@@ -68,10 +69,10 @@ void GPSReceiverTest::_testCountSatellitesIgnoresUsedBeyondCount()
     msg.entries[0].used = 1;
     msg.entries[5].used = 1;
 
-    const GPSReceiver::SatelliteCounts counts = GPSReceiver::countSatellites(GPSDriverData::satellites(msg));
+    const auto observation = GPSDriverData::satellites(msg);
 
-    QCOMPARE(static_cast<int>(counts.inView), 2);
-    QCOMPARE(counts.used, 1);
+    QCOMPARE(static_cast<int>(observation.satellites.size()), 2);
+    QCOMPARE(observation.usedCount(), 1);
 }
 
 UT_REGISTER_TEST(GPSReceiverTest, TestLabel::Unit)

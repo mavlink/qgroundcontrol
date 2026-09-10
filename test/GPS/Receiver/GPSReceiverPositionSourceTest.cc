@@ -36,7 +36,7 @@ void GPSReceiverPositionSourceTest::_convertsFixAndMotion()
     fix.vel_m_s = 2.5f;
     fix.vel_d_m_s = -1.5f;
     fix.cog_rad = qDegreesToRadians(-90.0f);
-    fix.c_variance_rad = qDegreesToRadians(2.0f);
+    fix.courseAccuracyRadians = qDegreesToRadians(2.0f);
     source.startUpdates();
     source.updatePosition(GPSDriverData::position(fix));
     QCOMPARE(updates.size(), 1);

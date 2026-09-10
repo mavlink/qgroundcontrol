@@ -25,7 +25,6 @@ public:
 
     GPSSourceHealth* health() { return &_health; }
 
-
     bool hasReceiver() const { return _session.hasReceiver(); }
 
     bool stopping() const { return _session.stopping(); }
@@ -36,20 +35,10 @@ public:
 
     GPSReceiverFactGroup* facts() const { return _facts; }
 
-    struct SatelliteCounts
-    {
-        uint8_t inView = 0;
-        int used = 0;
-    };
-
-    /// Count the satellites in view and used in the solution.
-    static SatelliteCounts countSatellites(const GPSSatelliteObservation& msg);
-
 signals:
     void diagnosticsChanged();
     void receiverTypeChanged(GPSType type);
     void satellitesReceived(const GPSSatelliteObservation& observation);
-    void relativePositionReceived(const GPSRelativeObservation& observation);
     void connectedChanged();
     void receiverStateChanged();
     void configurationStarted();

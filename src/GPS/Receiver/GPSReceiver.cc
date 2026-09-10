@@ -12,7 +12,7 @@ GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent, GPSRuntim
     , _session(session)
     , _health(this, scheduler)
     , _satellites(this, GPSSourceHealth::FRESHNESS_TIMEOUT_MS, scheduler)
-    , _facts(new GPSReceiverFactGroup(this))
+    , _facts(new GPSReceiverFactGroup(this, scheduler))
 {
     qCDebug(GPSReceiverLog) << this;
 
@@ -66,7 +66,6 @@ GPSReceiver::GPSReceiver(GPSReceiverSession& session, QObject* parent, GPSRuntim
     connect(&_session, &GPSReceiverSession::stateChanged, this, &GPSReceiver::receiverStateChanged);
     connect(&_session, &GPSReceiverSession::positionReceived, this, &GPSReceiver::_sensorGpsUpdate);
     connect(&_session, &GPSReceiverSession::satellitesReceived, this, &GPSReceiver::_satelliteInfoUpdate);
-    connect(&_session, &GPSReceiverSession::relativePositionReceived, this, &GPSReceiver::relativePositionReceived);
     _attemptChanged(_session.attempt());
 }
 
@@ -154,14 +153,6 @@ void GPSReceiver::_onGPSConnectionError(GPSConnectionError error)
 bool GPSReceiver::connected() const
 {
     return _facts->connected()->rawValue().toBool();
-}
-
-GPSReceiver::SatelliteCounts GPSReceiver::countSatellites(const GPSSatelliteObservation& msg)
-{
-    SatelliteCounts counts;
-    counts.inView = static_cast<uint8_t>(msg.satellites.size());
-    counts.used = msg.usedCount();
-    return counts;
 }
 
 void GPSReceiver::_satelliteInfoUpdate(const GPSSatelliteObservation& msg)

@@ -46,7 +46,9 @@ private:
 class Decoder : public QNmeaPositionInfoSource
 {
 public:
-    Decoder() : QNmeaPositionInfoSource(RealTimeMode) {}
+    Decoder()
+        : QNmeaPositionInfoSource(RealTimeMode)
+    {}
 
     void decode(const QByteArray& line)
     {
@@ -66,18 +68,23 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* bytes, size_t size)
     Input input;
     NMEAStreamSplitter splitter(&input);
     Decoder decoder;
+    QObject::connect(&splitter, &NMEAStreamSplitter::sentenceReceived, &splitter,
+                     [](const NMEASentenceEnvelope& sentence) {
+                         if (!NMEAUtils::verifyChecksum(sentence.bytes()) || sentence.bytes().size() > 1026) {
+                             std::abort();
+                         }
+                     });
     const auto drain = [&]() {
-        for (auto* output : {splitter.positionDevice(), splitter.satelliteDevice()}) {
-            if (output->bytesAvailable() > 65536) {
+        auto* output = splitter.positionDevice();
+        if (output->bytesAvailable() > 65536) {
+            std::abort();
+        }
+        while (output->canReadLine()) {
+            const auto line = output->readLine();
+            if (!NMEAUtils::verifyChecksum(line) || line.size() > 1026) {
                 std::abort();
             }
-            while (output->canReadLine()) {
-                const auto line = output->readLine();
-                if (!NMEAUtils::verifyChecksum(line) || line.size() > 1026) {
-                    std::abort();
-                }
-                decoder.decode(line);
-            }
+            decoder.decode(line);
         }
     };
     const size_t fragment = size ? 1 + bytes[size - 1] % 127 : 1;

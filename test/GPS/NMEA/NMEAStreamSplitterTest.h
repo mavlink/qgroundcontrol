@@ -8,6 +8,7 @@ class NMEAStreamSplitterTest : public UnitTest
 
 private slots:
     void _independentReads();
+    void _queuedSentenceOwnsItsBytes();
     void _mixedBinaryAndFragmentedSentences();
     void _slowConsumerIsBounded();
     void _sourceDestructionClosesOutputs();

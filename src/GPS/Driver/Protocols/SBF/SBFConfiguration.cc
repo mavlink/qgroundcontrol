@@ -42,6 +42,10 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
     char msg[MSG_SIZE];
 
     _configured = false;
+    _epochs = {};
+    _lastPublishedEpoch.reset();
+    _rtcm_parsing.reset();
+    decodeInit();
 
     setBaudrate(SBF_TX_CFG_PRT_BAUDRATE);
     baudrate = SBF_TX_CFG_PRT_BAUDRATE;

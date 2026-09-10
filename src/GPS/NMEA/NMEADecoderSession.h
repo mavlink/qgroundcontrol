@@ -44,7 +44,7 @@ signals:
 private:
     void _updateSatellites(const GPSSatelliteObservation& observation);
 
-    GPSRuntimeScheduler* _scheduler;
+    QPointer<GPSRuntimeScheduler> _scheduler;
 
     std::unique_ptr<NMEAStreamSplitter> _stream;
     std::unique_ptr<NMEAPositionSource> _positionSource;

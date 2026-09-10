@@ -8,15 +8,13 @@
 
 QGC_LOGGING_CATEGORY(GPSRelativePositionModelLog, "GPS.Models.GPSRelativePositionModel")
 
-GPSRelativePositionModel::GPSRelativePositionModel(QObject* parent, int freshnessTimeoutMs)
+GPSRelativePositionModel::GPSRelativePositionModel(QObject* parent, int freshnessTimeoutMs,
+                                                   GPSRuntimeScheduler* scheduler)
     : QObject(parent)
-    , _expiryTimer(this)
-    , _freshnessTimeoutMs(std::max(1, freshnessTimeoutMs))
+    , _store(this, freshnessTimeoutMs, scheduler)
 {
     qCDebug(GPSRelativePositionModelLog) << this;
-    _expiryTimer.setSingleShot(true);
-    _expiryTimer.setTimerType(Qt::PreciseTimer);
-    connect(&_expiryTimer, &QTimer::timeout, this, &GPSRelativePositionModel::_expire);
+    connect(&_store, &GPSRelativePositionStore::observationChanged, this, &GPSRelativePositionModel::_project);
 }
 
 GPSRelativePositionModel::~GPSRelativePositionModel()
@@ -90,57 +88,61 @@ double GPSRelativePositionModel::headingAccuracy() const
 
 void GPSRelativePositionModel::beginSession(const QString& sourceId, quint64 sessionId)
 {
-    if (_sourceId == sourceId && _sessionId == sessionId) {
-        return;
-    }
-    _sourceId = sourceId;
-    _sessionId = sessionId;
-    _observation = {};
-    _fresh = false;
-    _expiryTimer.stop();
-    emit stateChanged();
+    _store.beginSession(sourceId, sessionId);
 }
 
 void GPSRelativePositionModel::reset()
 {
-    _sourceId.clear();
-    _sessionId = 0;
-    _observation = {};
-    _fresh = false;
-    _expiryTimer.stop();
-    emit stateChanged();
+    _store.reset();
 }
 
 void GPSRelativePositionModel::updateObservation(const GPSRelativeObservation& observation)
 {
-    const quint64 nowUs = GPSObservation::monotonicNowUs();
-    if (_sourceId.isEmpty() || observation.sessionId != _sessionId || !observation.monotonicTimestampUs ||
-        observation.monotonicTimestampUs > nowUs ||
-        observation.monotonicTimestampUs < _observation.monotonicTimestampUs ||
-        (nowUs - observation.monotonicTimestampUs) >= static_cast<quint64>(_freshnessTimeoutMs) * 1000) {
-        return;
-    }
-    _observation = observation;
-    _fresh = true;
-    _armTimer();
-    emit stateChanged();
+    _store.updateObservation(observation);
 }
 
-void GPSRelativePositionModel::_armTimer()
+QVariantList GPSRelativePositionModel::_values() const
 {
-    const qint64 remaining = _freshnessTimeoutMs - GPSObservation::ageMilliseconds(_observation.monotonicTimestampUs);
-    _expiryTimer.start(static_cast<int>(std::max<qint64>(1, remaining)));
+    return {sourceId(),
+            QVariant::fromValue(sessionId()),
+            fresh(),
+            referenceStationId(),
+            north(),
+            east(),
+            down(),
+            northAccuracy(),
+            eastAccuracy(),
+            downAccuracy(),
+            length(),
+            lengthAccuracy(),
+            heading(),
+            headingAccuracy(),
+            fixValid(),
+            differential(),
+            positionValid(),
+            carrierFloat(),
+            carrierFixed(),
+            movingBase(),
+            referencePositionMissing(),
+            referenceObservationsMissing(),
+            normalized()};
 }
 
-void GPSRelativePositionModel::_expire()
+void GPSRelativePositionModel::_project()
 {
-    if (!_fresh) {
-        return;
+    const auto previous = _values();
+    _sourceId = _store.sourceId();
+    _sessionId = _store.sessionId();
+    _observation = _store.observation();
+    _fresh = _store.fresh();
+    const auto next = _values();
+    for (qsizetype index = 0; index < next.size(); ++index) {
+        const bool bothNaN = next[index].metaType() == QMetaType::fromType<double>() &&
+                             previous[index].metaType() == QMetaType::fromType<double>() &&
+                             std::isnan(next[index].toDouble()) && std::isnan(previous[index].toDouble());
+        if (!bothNaN && next[index] != previous[index]) {
+            emit stateChanged();
+            return;
+        }
     }
-    if (GPSObservation::ageMilliseconds(_observation.monotonicTimestampUs) < _freshnessTimeoutMs) {
-        _armTimer();
-        return;
-    }
-    _fresh = false;
-    emit stateChanged();
 }

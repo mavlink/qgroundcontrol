@@ -1,9 +1,10 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QTimer>
+#include <QtCore/QVariantList>
 
 #include "GPSObservation.h"
+#include "GPSRelativePositionStore.h"
 
 /// Fresh relative baseline and antenna heading, independently of position/course-over-ground.
 class GPSRelativePositionModel : public QObject
@@ -34,7 +35,8 @@ class GPSRelativePositionModel : public QObject
     Q_PROPERTY(QVariant normalized READ normalized NOTIFY stateChanged)
 
 public:
-    explicit GPSRelativePositionModel(QObject* parent = nullptr, int freshnessTimeoutMs = 5000);
+    explicit GPSRelativePositionModel(QObject* parent = nullptr, int freshnessTimeoutMs = 5000,
+                                      GPSRuntimeScheduler* scheduler = nullptr);
     ~GPSRelativePositionModel() override;
 
     QString sourceId() const { return _sourceId; }
@@ -99,13 +101,12 @@ signals:
 
 private:
     double _positionValue(double value, bool accuracy = false) const;
-    void _expire();
-    void _armTimer();
+    void _project();
+    QVariantList _values() const;
 
     QString _sourceId;
     quint64 _sessionId = 0;
     GPSRelativeObservation _observation;
-    QTimer _expiryTimer;
-    int _freshnessTimeoutMs;
+    GPSRelativePositionStore _store;
     bool _fresh = false;
 };

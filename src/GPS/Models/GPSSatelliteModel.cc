@@ -38,7 +38,11 @@ QVariant GPSSatelliteModel::data(const QModelIndex& index, int role) const
     if (!index.isValid() || index.model() != this || index.column() != 0 || index.row() < 0 || index.row() >= count()) {
         return {};
     }
-    const auto& satellite = _current.satellites[index.row()];
+    return _satelliteData(_current.satellites[index.row()], role, _current.sourceId);
+}
+
+QVariant GPSSatelliteModel::_satelliteData(const GPSSatellite& satellite, int role, const QString& sourceId)
+{
     switch (role) {
         case SatelliteIdRole:
             return satellite.id;
@@ -61,7 +65,7 @@ QVariant GPSSatelliteModel::data(const QModelIndex& index, int role) const
             return azimuth ? QVariant(*azimuth) : QVariant();
         }
         case SourceIdRole:
-            return _current.sourceId;
+            return sourceId;
         default:
             return {};
     }
@@ -69,14 +73,15 @@ QVariant GPSSatelliteModel::data(const QModelIndex& index, int role) const
 
 QHash<int, QByteArray> GPSSatelliteModel::roleNames() const
 {
-    return {{SatelliteIdRole, "satelliteId"},
-            {PrnRole, "prn"},
-            {ConstellationRole, "constellation"},
-            {UsedRole, "used"},
-            {ElevationRole, "elevation"},
-            {SignalStrengthRole, "signalStrength"},
-            {AzimuthRole, "azimuth"},
-            {SourceIdRole, "sourceId"}};
+    static const QHash<int, QByteArray> roles = {{SatelliteIdRole, "satelliteId"},
+                                                 {PrnRole, "prn"},
+                                                 {ConstellationRole, "constellation"},
+                                                 {UsedRole, "used"},
+                                                 {ElevationRole, "elevation"},
+                                                 {SignalStrengthRole, "signalStrength"},
+                                                 {AzimuthRole, "azimuth"},
+                                                 {SourceIdRole, "sourceId"}};
+    return roles;
 }
 
 QString GPSSatelliteModel::_constellationName(GPSSatellite::Constellation constellation)
@@ -153,6 +158,23 @@ void GPSSatelliteModel::_publish()
     for (qsizetype index = 0; sameRows && index < next.satellites.size(); ++index) {
         sameRows = satelliteKey(next.satellites[index]) == satelliteKey(_current.satellites[index]);
     }
+    const bool stateChangedValue = next.sourceId != _current.sourceId || next.sessionId != _current.sessionId ||
+                                   next.fresh != _current.fresh || next.satellites.size() != _current.satellites.size();
+    QList<std::pair<int, QList<int>>> changes;
+    if (sameRows) {
+        for (int row = 0; row < next.satellites.size(); ++row) {
+            QList<int> roles;
+            for (int role = SatelliteIdRole; role <= SourceIdRole; ++role) {
+                if (_satelliteData(next.satellites[row], role, next.sourceId) !=
+                    _satelliteData(_current.satellites[row], role, _current.sourceId)) {
+                    roles.append(role);
+                }
+            }
+            if (!roles.isEmpty()) {
+                changes.append({row, roles});
+            }
+        }
+    }
     const QPointer<GPSSatelliteModel> guard(this);
     _publishing = true;
     if (!sameRows) {
@@ -164,13 +186,20 @@ void GPSSatelliteModel::_publish()
     _current = next;
     if (!sameRows) {
         endResetModel();
-    } else if (count() > 0) {
-        emit dataChanged(index(0), index(count() - 1));
+    } else {
+        for (const auto& [row, roles] : changes) {
+            if (!guard) {
+                return;
+            }
+            emit dataChanged(index(row), index(row), roles);
+        }
     }
     if (!guard) {
         return;
     }
-    emit stateChanged();
+    if (stateChangedValue) {
+        emit stateChanged();
+    }
     if (guard) {
         _publishing = false;
     }

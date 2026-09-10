@@ -1,9 +1,12 @@
 #include "GPSRelativePositionModelTest.h"
 
+#include <QtTest/QSignalSpy>
+
 #include <cmath>
 #include <limits>
 
 #include "GPSRelativePositionModel.h"
+#include "GPSReplayScheduler.h"
 
 void GPSRelativePositionModelTest::_validityAndZeroBaseline()
 {
@@ -104,3 +107,31 @@ void GPSRelativePositionModelTest::_reentrantReplacement()
 }
 
 UT_REGISTER_TEST(GPSRelativePositionModelTest, TestLabel::Unit)
+
+void GPSRelativePositionModelTest::_virtualExpiryAndUnchangedPublication()
+{
+    GPSReplayScheduler scheduler;
+    GPSRelativePositionModel model(nullptr, 100, &scheduler);
+    model.beginSession(QStringLiteral("receiver"), 2);
+    GPSRelativeObservation report;
+    report.sessionId = 2;
+    report.monotonicTimestampUs = scheduler.nowUs();
+    report.fixValid = true;
+    report.positionValid = true;
+    report.positionNedMeters = {0, 1, 2};
+    model.updateObservation(report);
+    QSignalSpy changed(&model, &GPSRelativePositionModel::stateChanged);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(50)));
+    report.monotonicTimestampUs = scheduler.nowUs();
+    model.updateObservation(report);
+    QCOMPARE(changed.count(), 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(99)));
+    QVERIFY(model.fresh());
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QVERIFY(!model.fresh());
+    QCOMPARE(changed.count(), 1);
+    QVERIFY(std::isnan(model.north()));
+    QVERIFY(!model.movingBase().isValid());
+    model.updateObservation(report);
+    QCOMPARE(changed.count(), 1);
+}

@@ -5,7 +5,7 @@
 
 #include <functional>
 
-#include "GPSRuntimeScheduler.h"
+#include "GPSScheduledTask.h"
 #include "NTRIPStream.h"
 #include "NTRIPTransportConfig.h"
 
@@ -54,7 +54,7 @@ public:
 
     std::chrono::milliseconds nextRetryDelay() const;
 
-    bool retryPending() const { return _retryTask != 0; }
+    bool retryPending() const { return _retryTask.active(); }
 
 signals:
     void stateChanged(NTRIPSession::State state, const QString& message);
@@ -70,7 +70,6 @@ signals:
 
 private:
     void _beginAttempt(quint64 generation);
-    void _cancelRetry();
     bool _retireStream(quint64 generation);
     bool _setState(State state, const QString& message, quint64 generation);
     void _onFailure(const NTRIPFailure& failure, NTRIPStream* stream);
@@ -80,11 +79,11 @@ private:
 
     StreamFactory _factory;
     QPointer<GPSRuntimeScheduler> _scheduler;
+    GPSScheduledTask _retryTask;
     Clock _clock;
     NTRIPTransportConfig _config;
     QPointer<NTRIPStream> _stream;
     QPointer<NTRIPStream> _injectedStream;
-    GPSRuntimeScheduler::TaskId _retryTask = 0;
     State _state = State::Disconnected;
     QString _message;
     quint64 _generation = 0;

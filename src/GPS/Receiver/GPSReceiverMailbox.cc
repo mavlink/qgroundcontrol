@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "QGCLoggingCategory.h"
-#include "RTCMParser.h"
+#include "RTCMFrame.h"
 
 QGC_LOGGING_CATEGORY(GPSReceiverMailboxLog, "GPS.Receiver.GPSReceiverMailbox")
 
@@ -157,7 +157,7 @@ GPSCorrectionSubmitResult GPSReceiverMailbox::submitCorrection(const GPSCorrecti
         rejected = GPSCorrectionOutcome::Cancelled;
     } else if (!_correctionsEnabled) {
         rejected = GPSCorrectionOutcome::NotReady;
-    } else if (!RTCMParser::isValidFrame(frame.data) || frame.receivedAtMs <= 0 || frame.receivedAtMs > nowMs) {
+    } else if (!RTCM::isValidFrame(frame.data) || frame.receivedAtMs <= 0 || frame.receivedAtMs > nowMs) {
         rejected = GPSCorrectionOutcome::InvalidData;
     } else if (!_fresh(frame.receivedAtMs, nowMs)) {
         rejected = GPSCorrectionOutcome::Expired;

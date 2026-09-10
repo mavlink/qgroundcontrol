@@ -1,12 +1,12 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QTimer>
 
 #include <memory>
 
 #include "GPSReceiverProfile.h"
 #include "GPSReceiverSession.h"
+#include "GPSScheduledTask.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
@@ -25,8 +25,8 @@ class NMEAConnectionAttempt : public QObject
     Q_OBJECT
 
 public:
-    explicit NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent = nullptr,
-                                   quint64 generation = 1);
+    explicit NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent = nullptr, quint64 generation = 1,
+                                   GPSRuntimeScheduler* scheduler = nullptr);
     ~NMEAConnectionAttempt() override;
 
     void start(GPSProvider::TransportFactory receiverFactory = {});
@@ -65,7 +65,8 @@ private:
     std::unique_ptr<GPSRecordingDevice> _recordingDevice;
     GPSReceiverAttempt _attempt;
     GPSReceiverSession _receiver;
-    QTimer _connectTimer;
+    QPointer<GPSRuntimeScheduler> _scheduler;
+    GPSScheduledTask _connectTimeout;
     std::unique_ptr<UdpIODevice> _udp;
     std::unique_ptr<QTcpSocket> _tcp;
 #ifndef QGC_NO_SERIAL_LINK

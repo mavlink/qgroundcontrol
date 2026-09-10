@@ -35,18 +35,14 @@
 
 #include <cmath>
 #include <cstddef>
-#include <ctime>
 #include <string.h>
 
-#include "GPSProtocolTime.h"
 #include "RTCMFramer.h"
 #include "SBF/GPSDriverSBF.h"
 
-#define SBF_CONFIG_TIMEOUT 1000       // ms, timeout for waiting ACK
-#define SBF_PACKET_TIMEOUT 2          // ms, if now data during this delay assume that full update received
-#define DISABLE_MSG_INTERVAL 1000000  // us, try to disable message with this interval
-#define DNU 100000.0                  // Do-Not-Use value for PVTGeodetic
-#define MSG_SIZE 100                  // size of the message to be sent to the receiver.
+#define SBF_CONFIG_TIMEOUT 1000  // ms, timeout for waiting ACK
+#define DNU 100000.0             // Do-Not-Use value for PVTGeodetic
+#define MSG_SIZE 100             // size of the message to be sent to the receiver.
 
 /**** Trace macros, disable for production builds */
 #define SBF_TRACE_PARSER(...)    \

@@ -7,7 +7,7 @@
 #include <functional>
 #include <optional>
 
-#include "GPSConnectionState.h"
+#include "GPSConnectionControl.h"
 #include "GPSReceiverProfile.h"
 #include "GPSReceiverSession.h"
 #include "GPSSourceHealth.h"
@@ -57,17 +57,17 @@ public:
 
     QString errorDetail() const;
 
-    QString validationError() const { return _profile.validationError(); }
+    QString validationError() const { return _control.profile().validationError(); }
 
-    bool active() const { return _connection.active(); }
+    bool active() const { return _control.connection().active(); }
 
-    GPSConnectionState::State connectionState() const { return _connection.state(); }
+    GPSConnectionState::State connectionState() const { return _control.connection().state(); }
 
-    bool autoConnectPaused() const { return _automatic && _connection.paused(); }
+    bool autoConnectPaused() const { return _control.automatic() && _control.connection().paused(); }
 
     bool networkActive() const;
 
-    bool networkAutoConnectPaused() const { return _connection.paused(); }
+    bool networkAutoConnectPaused() const { return _control.connection().paused(); }
 
 signals:
     void stateChanged();
@@ -77,7 +77,10 @@ signals:
     void disconnectRequested();
 
 private:
-    bool _serialSelected() const { return _profile.endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial; }
+    bool _serialSelected() const
+    {
+        return _control.profile().endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial;
+    }
 
     void _stop(quint64 revision);
     void _stopAttempt(quint64 revision);
@@ -91,18 +94,8 @@ private:
 
     QPointer<GPSReceiverSession> _receiver;
     QPointer<GPSSourceHealth> _health;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSRuntimeScheduler::TaskId _updateTask = 0;
-    bool _suspended = false;
-    bool _stopped = false;
-    GPSConnectionState _connection;
-    GPSReceiverProfile _profile{
-        .endpoint = {.kind = GPSReceiverProfile::Endpoint::Kind::Serial, .discoverSerialDevice = true},
-        .configurationPolicy = GPSReceiverProfile::ConfigurationPolicy::Configure,
-        .receiver = {.base = {.surveyInAccMeters = 2.0, .surveyInDurationSecs = 180}}};
-    quint64 _commandRevision = 0;
+    GPSConnectionControl _control;
     quint64 _handledTerminalAttempt = 0;
-    bool _automatic = false;
     GPSProvider::TransportFactory _transportFactory;
     std::optional<GPSReceiverProfile> _sessionConfig;
 #ifndef QGC_NO_SERIAL_LINK

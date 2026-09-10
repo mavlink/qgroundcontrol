@@ -58,9 +58,6 @@ public:
     void applyRoutingConfiguration(const RoutingConfiguration& configuration);
     GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
     void acceptIngress(const GPSCorrectionIngress& ingress);
-    quint64 beginSourceSession(GPSCorrectionSource source, const QString& instance = {});
-    void endSourceSession(GPSCorrectionSource source);
-    quint64 sourceSession(GPSCorrectionSource source) const;
     void setSelectedSource(GPSCorrectionSource source);
 
     GPSCorrectionSource selectedSource() const { return _router.selectedSource(); }
@@ -76,7 +73,6 @@ public:
     void addDetailedSink(const QString& id, GPSCorrectionRouter::DetailedSink sink, bool reportsWrites = true);
     void recordDeliveries(const QList<GPSCorrectionDelivery>& deliveries);
     void invalidateDestination(const QString& id, quint64 destinationSession);
-    void recordRejectedFrame(const GPSCorrectionFrame& frame, GPSCorrectionReason reason);
 
     GPSCorrectionEventModel* events() { return &_eventModel; }
 
@@ -84,7 +80,6 @@ public:
 
     QVariantList sources() const;
     QVariantList sourceInstances() const;
-    void acceptFrame(const GPSCorrectionFrame& frame);
 
 signals:
     void sourcesChanged();

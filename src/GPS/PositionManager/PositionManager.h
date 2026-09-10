@@ -33,9 +33,10 @@ class QGCPositionManager : public QObject
     Q_PROPERTY(SourceStatus sourceStatus READ sourceStatus NOTIFY selectionChanged)
     Q_PROPERTY(QString sourceStatusText READ sourceStatusText NOTIFY selectionChanged)
     Q_PROPERTY(GPSSourceHealth* sourceHealth READ sourceHealth NOTIFY sourceHealthChanged)
-    Q_PROPERTY(QGeoCoordinate gcsPosition                   READ gcsPosition                    NOTIFY gcsPositionChanged)
-    Q_PROPERTY(qreal          gcsHeading                    READ gcsHeading                     NOTIFY gcsHeadingChanged)
-    Q_PROPERTY(qreal          gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy  NOTIFY gcsPositionHorizontalAccuracyChanged)
+    Q_PROPERTY(QGeoCoordinate gcsPosition READ gcsPosition NOTIFY gcsPositionChanged)
+    Q_PROPERTY(qreal gcsHeading READ gcsHeading NOTIFY gcsHeadingChanged)
+    Q_PROPERTY(qreal gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy NOTIFY
+                   gcsPositionHorizontalAccuracyChanged)
 
     friend class PositionManagerTest;
     friend class GPSPositionSourceRegistration;
@@ -88,22 +89,27 @@ public:
 
     QString sourceStatusText() const;
 
-    explicit QGCPositionManager(QObject *parent = nullptr);
+    explicit QGCPositionManager(QObject* parent = nullptr);
     ~QGCPositionManager();
 
     /// Gets the ground-station position manager.
     ///     @return The singleton instance.
-    static QGCPositionManager *instance();
+    static QGCPositionManager* instance();
 
     void init();
 
     GPSSourceHealth* sourceHealth() const { return _currentHealth; }
+
     QGeoCoordinate gcsPosition() const { return _gcsPosition; }
+
     qreal gcsHeading() const { return _gcsHeading; }
+
     qreal gcsPositionHorizontalAccuracy() const { return _gcsPositionHorizontalAccuracy; }
+
     QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
 
     std::optional<GPSObservation> acceptedObservation(GPSObservation::PositionUse use) const;
+
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
 
     /// Local arrival time of the last position update which passed the accuracy gates and was
@@ -115,9 +121,8 @@ public:
 
     int updateInterval() const { return _updateInterval; }
 
-    std::unique_ptr<GPSPositionSourceRegistration> registerPositionSource(SelectedSource kind, QObject* source,
-                                                                          GPSSourceHealth* health,
-                                                                          quint64 sessionId = 0);
+    GPSPositionSourceRegistration registerPositionSource(SelectedSource kind, QObject* source, GPSSourceHealth* health,
+                                                         quint64 sessionId = 0);
 
     /// Select a borrowed, connected receiver source ahead of NMEA and platform positioning.
     void setReceiverPositionSource(QObject* source, GPSSourceHealth* health = nullptr, quint64 sessionId = 0);
@@ -136,11 +141,12 @@ signals:
     void gcsPositionHorizontalAccuracyChanged(qreal gcsPositionHorizontalAccuracy);
 
 private slots:
-    void _positionUpdated(const QGeoPositionInfo &update);
+    void _positionUpdated(const QGeoPositionInfo& update);
     void _positionError(QGeoPositionInfoSource::Error gcsPositioningError);
 
 private:
-    enum QGCPositionSource {
+    enum QGCPositionSource
+    {
         Simulated,
         InternalGPS,
         Log,
@@ -190,7 +196,7 @@ private:
     QMetaObject::Connection _healthDestroyedConnection;
 
     QGeoPositionInfo _geoPositionInfo;
-    QGeoPositionInfoSource::Error  _gcsPositioningError = QGeoPositionInfoSource::NoError;
+    QGeoPositionInfoSource::Error _gcsPositioningError = QGeoPositionInfoSource::NoError;
 
     QGeoCoordinate _gcsPosition;
     QDateTime _gcsPositionTimestamp;
@@ -210,6 +216,5 @@ private:
     QPointer<QObject> _nmeaSource;
     QPointer<QGeoPositionInfoSource> _simulatedSource;
 
-    QGCCompass *_compass = nullptr;
-
+    QGCCompass* _compass = nullptr;
 };

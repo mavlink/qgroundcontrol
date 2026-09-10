@@ -2,6 +2,7 @@
 
 #include <QtNetwork/QTcpSocket>
 
+#include "GPSQtRuntimeScheduler.h"
 #include "GPSReceiverTransportFactory.h"
 #include "GPSRecordingDevice.h"
 #include "QGCLoggingCategory.h"
@@ -17,7 +18,8 @@
 
 QGC_LOGGING_CATEGORY(NMEAConnectionAttemptLog, "GPS.NMEA.NMEAConnectionAttempt")
 
-NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent, quint64 generation)
+NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent, quint64 generation,
+                                             GPSRuntimeScheduler* scheduler)
     : QObject(parent)
     , _attempt{generation,
                std::make_shared<const GPSReceiverProfile>(profile.normalized()),
@@ -25,12 +27,10 @@ NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, 
                GPSConnectionError::None,
                {}}
     , _receiver(this)
-    , _connectTimer(this)
+    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _connectTimeout(_scheduler, this)
 {
     qCDebug(NMEAConnectionAttemptLog) << this;
-    _connectTimer.setSingleShot(true);
-    _connectTimer.setInterval(10000);
-    connect(&_connectTimer, &QTimer::timeout, this, [this]() { _fail(tr("Connection timed out")); });
     connect(&_receiver, &GPSReceiverSession::configurationStarted, this, [this]() {
         if (_transition(GPSReceiverAttempt::Phase::Configuring)) {
             emit configuring();
@@ -56,7 +56,8 @@ NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, 
 NMEAConnectionAttempt::~NMEAConnectionAttempt()
 {
     qCDebug(NMEAConnectionAttemptLog) << this;
-    disconnect(this, nullptr, nullptr, nullptr);
+    blockSignals(true);
+    _connectTimeout.cancel();
     shutdown();
 }
 
@@ -131,7 +132,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
     if (!_transition(GPSReceiverAttempt::Phase::Connecting)) {
         return;
     }
-    _openStartedAtUs = _recording ? _recording->nowUs() : 0;
+    _openStartedAtUs = _scheduler ? _scheduler->nowUs() : 0;
     if (const QString error = _attempt.profile->validationError(); !error.isEmpty()) {
         _fail(error);
         return;
@@ -170,7 +171,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
             _tcp = std::make_unique<QTcpSocket>();
             _tcp->setReadBufferSize(64 * 1024);
             connect(_tcp.get(), &QTcpSocket::connected, this, [this]() {
-                _connectTimer.stop();
+                _connectTimeout.cancel();
                 if (!_stopping && !_attempt.terminal()) {
                     _publishDeviceReady();
                 }
@@ -186,7 +187,7 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
             connect(
                 _tcp.get(), &QTcpSocket::disconnected, this,
                 [this]() { _fail(tr("Connection closed — reconnecting"), true); }, Qt::QueuedConnection);
-            _connectTimer.start();
+            _connectTimeout.schedule(std::chrono::seconds(10), [this]() { _fail(tr("Connection timed out")); });
             _tcp->connectToHost(_attempt.profile->networkHost(), static_cast<quint16>(_attempt.profile->endpoint.port));
             return;
         }
@@ -279,7 +280,7 @@ void NMEAConnectionAttempt::_fail(const QString& detail, bool disconnected)
             _recording->opened(false, _openStartedAtUs);
         }
     }
-    _connectTimer.stop();
+    _connectTimeout.cancel();
     const auto error = _receiver.attempt().error != GPSConnectionError::None
                            ? _receiver.attempt().error
                            : (_attempt.ready() ? GPSConnectionError::DeviceError : GPSConnectionError::OpenFailed);
@@ -299,7 +300,7 @@ void NMEAConnectionAttempt::stop()
     if (!guard) {
         return;
     }
-    _connectTimer.stop();
+    _connectTimeout.cancel();
     _recordingDevice.reset();
     if (!guard) {
         return;

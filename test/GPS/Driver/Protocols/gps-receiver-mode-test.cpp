@@ -147,6 +147,59 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     }
 }
 
+void sbfFrameOwnership()
+{
+    Receiver receiver;
+    receiver.septentrio = true;
+    GPSPositionReport position;
+    GPSSatelliteReport satellites;
+    size_t correctionCount = 0;
+    size_t fixCount = 0;
+    auto io = makeGPSProtocolTestIO(Receiver::callback, &receiver);
+    io.decoded = [&](GPSDecodedBatch batch) {
+        for (const auto& event : batch.events) {
+            correctionCount += std::holds_alternative<GPSRTCMReport>(event);
+            fixCount += std::holds_alternative<GPSPositionReport>(event);
+        }
+    };
+    GPSDriverSBF driver(io, &position, &satellites);
+    GPSProtocol::GPSConfig config{};
+    config.base = {.useFixedBase = true,
+                   .fixedBaseLatitude = 47,
+                   .fixedBaseLongitude = 8,
+                   .fixedBaseAltitudeMeters = 500,
+                   .fixedBaseAccuracyMeters = 1};
+    config.output_mode = GPSProtocol::OutputMode::RTCM;
+    unsigned baudrate = 115200;
+    CHECK(driver.configure(baudrate, config) == 0);
+    std::vector<uint8_t> correction{0xd3, 0, 2, 0x3e, 0xd0};
+    const auto checksum = RTCMFramer::crc24q(correction);
+    correction.push_back(checksum >> 16);
+    correction.push_back(checksum >> 8);
+    correction.push_back(checksum);
+    CHECK(RTCMFramer::isValidFrame(correction));
+    sbf_buf_t native{};
+    native.sync = 0x4024;
+    native.msg_id = SBF_ID_PVTGeodetic;
+    native.length = offsetof(sbf_buf_t, payload_pvt_geodetic) + sizeof(native.payload_pvt_geodetic);
+    native.WNc = 2435;
+    native.payload_pvt_geodetic.mode_type = 1;
+    native.payload_pvt_geodetic.latitude = 0.5;
+    native.payload_pvt_geodetic.longitude = 1;
+    // Both checksums are valid; only the outer native frame may own these bytes.
+    std::memcpy(&native.payload_pvt_geodetic.rx_clk_bias, correction.data(), correction.size());
+    native.crc16 = crc16(reinterpret_cast<uint8_t*>(&native) + 4, native.length - 4);
+    driver.consume({reinterpret_cast<uint8_t*>(&native), native.length});
+    CHECK(correctionCount == 0);
+    gps_test_time += 200000;
+    driver.consume({});
+    CHECK(fixCount == 1);
+    CHECK(std::abs(position.latitude_deg - 0.5 * M_RAD_TO_DEG) < 1e-6);
+    driver.consume(correction);
+    CHECK(correctionCount == 1);
+    CHECK(fixCount == 1);
+}
+
 int main()
 {
     try {
@@ -164,6 +217,7 @@ int main()
                 }
             }
         }
+        sbfFrameOwnership();
         receiverMode(true, GPSProtocol::OutputMode::GPSAndRTCM, true);
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, 1);
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, GPS_READ_BUFFER_SIZE,

@@ -18,5 +18,5 @@ struct GPSSatelliteReport
 struct GPSSatelliteUsageReport
 {
     uint64_t timestamp = 0;
-    int usedCount = 0;
+    std::optional<int> usedCount;
 };

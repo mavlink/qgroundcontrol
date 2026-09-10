@@ -8,6 +8,7 @@ class NMEASourceManagerTest : public UnitTest
 
 private slots:
     void _scheduledRetryAndSuspension();
+    void _passiveConnectTimeoutUsesScheduler();
     void _decodesWithoutPositionManager();
     void _managedReceiverSettingsPreservePassiveBaud();
     void _reentrantConnectionCommands_data();

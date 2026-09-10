@@ -35,18 +35,18 @@ void GPSReceiverAutoConnect::_updateSerial()
     if (!_receiver || !_serialPorts) {
         return;
     }
-    const quint64 revision = _commandRevision;
+    const quint64 revision = _control.revision();
     const QPointer<GPSReceiverAutoConnect> guard(this);
     if (!_sessionConfig && !_captureConfig()) {
         return;
     }
     _updateReceiverState();
-    if (!guard || revision != _commandRevision || !_receiver || _receiver->stopping() || !_sessionConfig) {
+    if (!guard || revision != _control.revision() || !_receiver || _receiver->stopping() || !_sessionConfig) {
         return;
     }
     const QString selectedDevice = _sessionConfig->endpoint.device;
     const auto ports = _serialPorts->availablePorts();
-    if (!guard || revision != _commandRevision || !_serialPorts) {
+    if (!guard || revision != _control.revision() || !_serialPorts) {
         return;
     }
     const auto eligible = [this, &selectedDevice](const SerialPortManager::Port& port) {
@@ -66,7 +66,7 @@ void GPSReceiverAutoConnect::_updateSerial()
         profile.receiverName = name;
         const auto config = profile.receiver;
         auto factory = _serialFactory ? _serialFactory(port.systemLocation) : GPSProvider::TransportFactory{};
-        if (guard && revision == _commandRevision && factory) {
+        if (guard && revision == _control.revision() && factory) {
             _startReceiver(profile, std::move(factory), [this, device = port.systemLocation, name, config]() {
                 emit connectRequested(device, name, config);
             });
@@ -82,11 +82,12 @@ void GPSReceiverAutoConnect::_updateSerial()
         // Removal retires the attempt without creating a new manual connection request.
         const auto config = _sessionConfig;
         _stopAttempt(revision);
-        if (!guard || revision != _commandRevision || !_connection.active() || _connection.paused()) {
+        if (!guard || revision != _control.revision() || !_control.connection().active() ||
+            _control.connection().paused()) {
             return;
         }
         _sessionConfig = config;
-        _connection.resetRetry();
+        _control.connection().resetRetry();
     }
     for (auto it = _waitingPorts.begin(); it != _waitingPorts.end();) {
         it = !present.contains(it.key()) ? _waitingPorts.erase(it) : std::next(it);
@@ -111,8 +112,8 @@ void GPSReceiverAutoConnect::_updateSerial()
         }
         auto it = _waitingPorts.find(port.systemLocation);
         if (it == _waitingPorts.end()) {
-            _waitingPorts[port.systemLocation] = _scheduler->nowMs();
-        } else if (_scheduler->nowMs() - it.value() >= _connectDelayMs) {
+            _waitingPorts[port.systemLocation] = _control.scheduler()->nowMs();
+        } else if (_control.scheduler()->nowMs() - it.value() >= _connectDelayMs) {
             _autoConnectedPort = port.systemLocation;
             _waitingPorts.clear();
             request(port);

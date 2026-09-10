@@ -324,10 +324,9 @@ private:
     /**
      * Add payload rx byte
      */
-    int payloadRxAdd(const uint8_t b);
-    int payloadRxAddMonVer(const uint8_t b);
-    int payloadRxAddNavSat(const uint8_t b);
-    int payloadRxAddNavSvinfo(const uint8_t b);
+    void decodeMonVer(std::span<const uint8_t> payload);
+    void decodeNavSat(std::span<const uint8_t> payload);
+    void decodeNavSvinfo(std::span<const uint8_t> payload);
 
     /**
      * Finish payload rx
@@ -393,7 +392,6 @@ private:
 
     uint16_t _ack_waiting_msg{0};
     uint16_t _rx_msg{};
-    uint16_t _rx_payload_index{0};
     uint16_t _rx_payload_length{0};
 
     uint32_t _ubx_version{0};

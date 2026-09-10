@@ -13,10 +13,11 @@
 QGC_LOGGING_CATEGORY(NTRIPSessionLog, "GPS.NTRIP.NTRIPSession")
 
 NTRIPSession::NTRIPSession(StreamFactory factory, QObject* parent, Clock clock, GPSRuntimeScheduler* scheduler)
-    : QObject(parent),
-      _factory(std::move(factory)),
-      _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this)),
-      _clock(clock ? std::move(clock) : [this]() { return _scheduler ? _scheduler->nowMs() : 0; })
+    : QObject(parent)
+    , _factory(std::move(factory))
+    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _retryTask(_scheduler, this)
+    , _clock(clock ? std::move(clock) : [this]() { return _scheduler ? _scheduler->nowMs() : 0; })
 {
     qCDebug(NTRIPSessionLog) << this;
 }
@@ -24,7 +25,7 @@ NTRIPSession::NTRIPSession(StreamFactory factory, QObject* parent, Clock clock, 
 NTRIPSession::~NTRIPSession()
 {
     qCDebug(NTRIPSessionLog) << this;
-    _cancelRetry();
+    _retryTask.cancel();
     if (_stream) {
         _stream->disconnect(this);
         _stream->stop();
@@ -63,7 +64,7 @@ bool NTRIPSession::_retireStream(quint64 generation)
 void NTRIPSession::start(const NTRIPTransportConfig& config, bool reconnect)
 {
     const auto generation = ++_generation;
-    _cancelRetry();
+    _retryTask.cancel();
     _reconnect = reconnect;
     _config = config;
     _failedAttempts = 0;
@@ -82,7 +83,7 @@ void NTRIPSession::start(const NTRIPTransportConfig& config, bool reconnect)
 void NTRIPSession::stop()
 {
     const auto generation = ++_generation;
-    _cancelRetry();
+    _retryTask.cancel();
     _failedAttempts = 0;
     _healthySince = -1;
     _lastValid = -1;
@@ -142,14 +143,6 @@ void NTRIPSession::_beginAttempt(quint64 generation)
         [this, stream, current](const NTRIPFailure& failure) {
             if (current()) {
                 _onFailure(failure, stream);
-            }
-        },
-        Qt::QueuedConnection);
-    connect(
-        stream, &NTRIPStream::error, this,
-        [this, stream, current](NTRIPError code, const QString& detail) {
-            if (current()) {
-                _onFailure(NTRIPFailure::fromError(code, detail), stream);
             }
         },
         Qt::QueuedConnection);
@@ -253,11 +246,8 @@ void NTRIPSession::_onFailure(const NTRIPFailure& failure, NTRIPStream* stream)
     const auto delay = std::min(std::max(nextRetryDelay(), failure.retryAfter), std::chrono::milliseconds{300000});
     if (_setState(State::Reconnecting, tr("Reconnecting in %1s: %2").arg(delay.count() / 1000).arg(failure.detail),
                   generation)) {
-        if (_scheduler) {
-            _retryTask = _scheduler->schedule(this, delay, [this, generation]() {
-                _retryTask = 0;
-                _beginAttempt(generation);
-            });
+        if (!_retryTask.schedule(delay, [this, generation]() { _beginAttempt(generation); })) {
+            _setState(State::Error, tr("GPS scheduler unavailable"), generation);
         }
     }
 }
@@ -275,12 +265,4 @@ void NTRIPSession::sendNMEA(const QByteArray& sentence)
     if (_state == State::Connected && _stream) {
         _stream->sendNMEA(sentence);
     }
-}
-
-void NTRIPSession::_cancelRetry()
-{
-    if (_scheduler) {
-        _scheduler->cancel(_retryTask);
-    }
-    _retryTask = 0;
 }

@@ -210,7 +210,7 @@ private slots:
             QCOMPARE(session.state(), NTRIPSession::State::Reconnecting);
             QCOMPARE(session.failedAttempts(), failed);
             QCOMPARE(session.nextRetryDelay(), std::chrono::milliseconds{1000 * (1 << (failed - 1))});
-            session._cancelRetry();
+            session._retryTask.cancel();
             const auto retiredAttempt = session._nextAttemptId;
             session._beginAttempt(session._generation);
             QVERIFY(session.activeAttemptId() > retiredAttempt);

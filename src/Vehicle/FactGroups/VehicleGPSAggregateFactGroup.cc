@@ -8,12 +8,14 @@
  ****************************************************************************/
 
 #include "VehicleGPSAggregateFactGroup.h"
-#include "VehicleGPSFactGroup.h"
-#include "QGCLoggingCategory.h"
+
 #include <QtMath>
 
-VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject *parent)
-    : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
+#include "QGCLoggingCategory.h"
+#include "VehicleGPSFactGroup.h"
+
+VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject* parent)
+    : FactGroup(1000, ":/json/GPS/Integrity/GPSFact.json", parent)
 {
     _addFact(&_spoofingStateFact);
     _addFact(&_jammingStateFact);
@@ -37,10 +39,12 @@ void VehicleGPSAggregateFactGroup::bindToGps(VehicleGPSFactGroup* gps1, VehicleG
     _gps2 = gps2;
 
     if (_gps1) {
-        _connections << connect(_gps1, &VehicleGPSFactGroup::gnssIntegrityReceived, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
+        _connections << connect(_gps1, &VehicleGPSFactGroup::gnssIntegrityReceived, this,
+                                &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
     }
     if (_gps2) {
-        _connections << connect(_gps2, &VehicleGPSFactGroup::gnssIntegrityReceived, this, &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
+        _connections << connect(_gps2, &VehicleGPSFactGroup::gnssIntegrityReceived, this,
+                                &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
     }
     for (auto* gps : {gps1, gps2}) {
         if (gps) {
@@ -106,13 +110,20 @@ int VehicleGPSAggregateFactGroup::_mergeAuthentication(int a, int b)
     // Priority: Unknown < Disabled < Initializing < OK < Error
     auto getWeight = [](int val) {
         switch (val) {
-        case AUTH_INVALID:      return -1;
-        case AUTH_UNKNOWN:      return 0;   // lowest priority)
-        case AUTH_DISABLED:     return 1;
-        case AUTH_INITIALIZING: return 2;
-        case AUTH_OK:           return 3;
-        case AUTH_ERROR:        return 4;   // highest priority
-        default:                return -1;
+            case AUTH_INVALID:
+                return -1;
+            case AUTH_UNKNOWN:
+                return 0;  // lowest priority)
+            case AUTH_DISABLED:
+                return 1;
+            case AUTH_INITIALIZING:
+                return 2;
+            case AUTH_OK:
+                return 3;
+            case AUTH_ERROR:
+                return 4;  // highest priority
+            default:
+                return -1;
         }
     };
 
@@ -121,16 +132,16 @@ int VehicleGPSAggregateFactGroup::_mergeAuthentication(int a, int b)
 
 void VehicleGPSAggregateFactGroup::updateFromGps(VehicleGPSFactGroup* gps1, VehicleGPSFactGroup* gps2)
 {
-    const int spoof1 = _valueOrInvalid(gps1 ? gps1->spoofingState()       : nullptr);
-    const int spoof2 = _valueOrInvalid(gps2 ? gps2->spoofingState()       : nullptr);
-    const int jam1   = _valueOrInvalid(gps1 ? gps1->jammingState()        : nullptr);
-    const int jam2   = _valueOrInvalid(gps2 ? gps2->jammingState()        : nullptr);
-    const int auth1  = _valueOrInvalid(gps1 ? gps1->authenticationState() : nullptr);
-    const int auth2  = _valueOrInvalid(gps2 ? gps2->authenticationState() : nullptr);
+    const int spoof1 = _valueOrInvalid(gps1 ? gps1->spoofingState() : nullptr);
+    const int spoof2 = _valueOrInvalid(gps2 ? gps2->spoofingState() : nullptr);
+    const int jam1 = _valueOrInvalid(gps1 ? gps1->jammingState() : nullptr);
+    const int jam2 = _valueOrInvalid(gps2 ? gps2->jammingState() : nullptr);
+    const int auth1 = _valueOrInvalid(gps1 ? gps1->authenticationState() : nullptr);
+    const int auth2 = _valueOrInvalid(gps2 ? gps2->authenticationState() : nullptr);
 
     const int spoofMerged = _mergeWorst(spoof1, spoof2);
-    const int jamMerged   = _mergeWorst(jam1,   jam2);
-    const int authMerged  = _mergeAuthentication(auth1, auth2);
+    const int jamMerged = _mergeWorst(jam1, jam2);
+    const int authMerged = _mergeAuthentication(auth1, auth2);
 
     _spoofingStateFact.setRawValue(spoofMerged == -1 ? 255 : spoofMerged);
     _jammingStateFact.setRawValue(jamMerged == -1 ? 255 : jamMerged);

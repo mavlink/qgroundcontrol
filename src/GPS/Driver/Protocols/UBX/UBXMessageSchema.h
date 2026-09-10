@@ -1,11 +1,23 @@
 #pragma once
 
 #include <array>
+#include <cstring>
 #include <span>
+#include <type_traits>
 
 #include "UBXMessages.h"
 
 namespace UBX {
+template <typename T>
+T payload(std::span<const uint8_t> bytes, size_t offset = 0)
+{
+    static_assert(std::is_trivially_copyable_v<T>);
+    T value{};
+    if (offset <= bytes.size() && sizeof(T) <= bytes.size() - offset)
+        std::memcpy(&value, bytes.data() + offset, sizeof(T));
+    return value;
+}
+
 inline constexpr uint16_t NAV_EOE = 0x6101;
 inline constexpr uint32_t NAV_EOE_MSGOUT_I2C = 0x2091015f;
 inline constexpr double DEGREES_PER_COORDINATE = 1e-7;

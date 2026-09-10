@@ -296,11 +296,11 @@ void PositionManagerTest::_idleNmeaWaitsForFirstFix()
     QVERIFY(!updates.wait(100));
     QVERIFY(!pm.gcsPosition().isValid());
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
-    QVERIFY(pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask == 0);
+    QVERIFY(!pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask.active());
 
     device.feed(kNmeaSentences);
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
-    QVERIFY(pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask != 0);
+    QVERIFY(pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask.active());
     pm.clearNmeaPositionSource(&source);
 }
 
@@ -339,14 +339,14 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
     QVERIFY(!pm.geoPositionInfo().isValid());
     QVERIFY(!pm.gcsPositionTimestamp().isValid());
     QVERIFY(qIsInf(pm.gcsPositionHorizontalAccuracy()));
-    QVERIFY(pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask == 0);
+    QVERIFY(!pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask.active());
 
     feed();
     QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
-    QVERIFY(pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask != 0);
+    QVERIFY(pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask.active());
     pm.clearNmeaPositionSource(&source);
-    QVERIFY(pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask == 0);
+    QVERIFY(!pm._sourceAdapters[QGCPositionManager::NmeaGPS]->fallbackHealth()._positionTask.active());
 }
 
 UT_REGISTER_TEST(PositionManagerTest, TestLabel::Unit)
@@ -364,7 +364,7 @@ GPSPositionReport receiverFix()
     fix.vel_ned_valid = true;
     fix.vel_m_s = 1;
     fix.cog_rad = 1;
-    fix.c_variance_rad = 0.01f;
+    fix.courseAccuracyRadians = 0.01f;
     return fix;
 }
 }  // namespace
@@ -473,7 +473,7 @@ void PositionManagerTest::_receiverInvalidAndStaleFixes()
     QCOMPARE(pm.gcsPosition(), QGeoCoordinate(47, 8, 500));
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
     pm.clearReceiverPositionSource(&receiver);
-    QVERIFY(pm._sourceAdapters[QGCPositionManager::ExternalGPS]->fallbackHealth()._positionTask == 0);
+    QVERIFY(!pm._sourceAdapters[QGCPositionManager::ExternalGPS]->fallbackHealth()._positionTask.active());
 }
 
 void PositionManagerTest::_receiverDestructionRestoresDefault()
@@ -913,10 +913,18 @@ void PositionManagerTest::_scopedRegistrationReplacementAndLifetime()
     TestGPSPositionSource first;
     TestGPSPositionSource second;
     auto manager = std::make_unique<QGCPositionManager>();
+    GPSPositionSourceRegistration empty;
+    QVERIFY(!empty);
     auto old = manager->registerPositionSource(QGCPositionManager::SelectedSource::Receiver, &first, nullptr);
     QVERIFY(old);
+    auto moved = std::move(old);
+    QVERIFY(!old);
+    QVERIFY(moved);
     auto current = manager->registerPositionSource(QGCPositionManager::SelectedSource::Receiver, &second, nullptr);
     old.reset();
+    empty = std::move(moved);
+    QVERIFY(!moved);
+    empty.reset();
     second.updatePosition(GPSDriverData::position(receiverFix()));
     QVERIFY(manager->gcsPosition().isValid());
     manager->setReceiverPositionSource(&first);
