@@ -25,12 +25,18 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QEventLoop>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QRunnable>
 #include <QtCore/QTimer>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+
+#if defined(Q_OS_ANDROID) && defined(QGC_GST_STREAMING)
+#include "AndroidMediaStore.h"
+#endif
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
@@ -318,6 +324,14 @@ void VideoManager::_cleanupOldVideos()
         return;
     }
 
+#if defined(Q_OS_ANDROID) && defined(QGC_GST_STREAMING)
+    if (!isUvc() && AndroidMediaStore::isSupported()) {
+        const qint64 maxBytes = _videoSettings->maxVideoSize()->rawValue().toLongLong() * 1024 * 1024;
+        AndroidMediaStore::cleanupOldVideos(maxBytes);
+        return;
+    }
+#endif
+
     const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
     QDir videoDir = QDir(savePath);
     videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
@@ -365,7 +379,8 @@ void VideoManager::startRecording(const QString &videoFile)
         return;
     }
 
-    const QString videoFileUrl = videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") : videoFile;
+    const QString videoFileUrl =
+        videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") : videoFile;
     const QString ext = kFileExtension[fileFormat];
 
     const QString videoFileNameTemplate = savePath + "/" + videoFileUrl + ".%1" + ext;
@@ -403,6 +418,39 @@ void VideoManager::grabImage(const QString &imageFile)
         receiver->takeScreenshot(_imageFile);
         // QSharedPointer<QQuickItemGrabResult> result = receiver->widget()->grabToImage(const QSize &targetSize = QSize())
     }
+}
+
+bool VideoManager::saveImage(const QString& imageFile, const QImage& image)
+{
+    if (image.isNull() || imageFile.isEmpty()) {
+        return false;
+    }
+
+#if defined(Q_OS_ANDROID) && defined(QGC_GST_STREAMING)
+    if (!isUvc() && AndroidMediaStore::isSupported()) {
+        // The path supplies only the display name. Encode directly into the pending
+        // Gallery item, without also writing a copy under Android/data.
+        AndroidMediaStore mediaStore;
+        if (mediaStore.openImage(QFileInfo(imageFile).fileName())) {
+            QFile output;
+            if (output.open(mediaStore.fileDescriptor(), QIODevice::WriteOnly, QFileDevice::DontCloseHandle)) {
+                const bool saved = image.save(&output, "JPEG") && output.flush();
+                output.close();  // Java owns the descriptor and closes it before publication.
+                if (saved) {
+                    return mediaStore.finish(true);
+                }
+            }
+        }
+        // A failed JPEG write is not a recoverable recording. Remove only this
+        // request's pending item, and never fall back to an invisible private copy.
+        mediaStore.discard();
+        return false;
+    }
+#endif
+
+    // The QtMultimedia-only backend also has its own snapshot writer; keep its
+    // existing destination until the capture/completion paths are unified.
+    return image.save(imageFile);
 }
 
 double VideoManager::aspectRatio() const
@@ -942,6 +990,19 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "recording started";
         if (!receiver->isThermal()) {
             _subtitleWriter->startCapturingTelemetry(filename, videoSize());
+        }
+    });
+
+    (void) connect(receiver, &VideoReceiver::onStartRecordingComplete, this, [](VideoReceiver::STATUS status) {
+        if (status == VideoReceiver::STATUS_FAIL || status == VideoReceiver::STATUS_INVALID_URL) {
+            QGC::showAppMessage(tr("Unable to start video recording. Check available storage and application logs."));
+        }
+    });
+
+    (void) connect(receiver, &VideoReceiver::onStopRecordingComplete, this, [](VideoReceiver::STATUS status) {
+        if (status == VideoReceiver::STATUS_FAIL) {
+            QGC::showAppMessage(
+                tr("Video recording could not be saved. Check available storage and application logs."));
         }
     });
 

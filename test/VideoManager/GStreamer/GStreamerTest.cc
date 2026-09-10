@@ -4,6 +4,15 @@
 
 QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 
+void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4_data()
+{
+    QTest::addColumn<bool>("useFileDescriptor");
+    QTest::newRow("filesystem") << false;
+#ifdef Q_OS_UNIX
+    QTest::newRow("borrowed-file-descriptor") << true;
+#endif
+}
+
 #ifdef QGC_GST_STREAMING
 
 #include <QtCore/QDir>
@@ -630,8 +639,9 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 
 void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
 {
+    QFETCH(bool, useFileDescriptor);
     for (const char* factoryName : {"appsrc", "h265parse", "tee", "queue", "fakesink", "valve", "splitmuxsink",
-                                    "mp4mux", "filesrc", "qtdemux", "avdec_h265"}) {
+                                    "mp4mux", "filesrc", "fdsink", "qtdemux", "avdec_h265"}) {
         GstElementFactory* factory = gst_element_factory_find(factoryName);
         if (!factory) {
             QSKIP(qPrintable(
@@ -655,6 +665,11 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
     const QString outputPath = QDir(tempDir.path()).filePath(QStringLiteral("mid-stream.mp4"));
+    QFile outputFile(outputPath);
+    if (useFileDescriptor) {
+        QVERIFY(outputFile.open(QIODevice::ReadWrite));
+        QVERIFY(outputFile.handle() >= 0);
+    }
 
     GstElement* pipeline = gst_pipeline_new("mid-stream-recording-test");
     QVERIFY(pipeline);
@@ -714,7 +729,9 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     GstCaps* recordingCaps = gst_pad_get_current_caps(valveSrcPad);
     QVERIFY2(recordingCaps, "Closed recording valve did not preserve negotiated caps");
 
-    GstElement* fileSink = GstVideoReceiver::_makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps);
+    const int fileDescriptor = useFileDescriptor ? outputFile.handle() : -1;
+    GstElement* fileSink =
+        GstVideoReceiver::_makeFileSink(outputPath, VideoReceiver::FILE_FORMAT_MP4, recordingCaps, fileDescriptor);
     gst_clear_caps(&recordingCaps);
     QVERIFY(fileSink);
     QVERIFY(gst_bin_add(GST_BIN(pipeline), fileSink));
@@ -730,6 +747,12 @@ void GStreamerTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
     QString failure;
     QVERIFY2(waitForPipelineEos(pipeline, failure), qPrintable(failure));
     (void) gst_element_set_state(pipeline, GST_STATE_NULL);
+    if (useFileDescriptor) {
+        // The sink must not close the descriptor owned by the Android/Qt caller.
+        QVERIFY(outputFile.seek(0));
+        QVERIFY(!outputFile.read(16).isEmpty());
+        outputFile.close();
+    }
     QVERIFY2(QFileInfo(outputPath).size() > 0, "Recording did not produce an MP4 file");
 
     GstElement* verifyPipeline = gst_pipeline_new("verify-mid-stream-recording");

@@ -21,6 +21,7 @@
 -keep class org.mavlink.qgroundcontrol.QGCUsbId { *; }
 -keep class org.mavlink.qgroundcontrol.QGCUsbSerialProber { *; }
 -keep class org.mavlink.qgroundcontrol.QGCLogger { *; }
+-keep class org.mavlink.qgroundcontrol.QGCMediaStore { *; }
 -keep class org.mavlink.qgroundcontrol.QGCFtdiSerialDriver { *; }
 -keep class org.mavlink.qgroundcontrol.QGCFtdiSerialDriver$QGCFtdiSerialPort { *; }
 -keep class org.mavlink.qgroundcontrol.QGCFtdiDriver { *; }

@@ -14,6 +14,10 @@
 
 #include "VideoReceiver.h"
 
+#ifdef Q_OS_ANDROID
+#include "AndroidMediaStore.h"
+#endif
+
 typedef std::function<void()> Task;
 
 /*===========================================================================*/
@@ -90,7 +94,8 @@ private:
     friend class GStreamerTest;
 
     GstElement *_makeDecoder();
-    static GstElement* _makeFileSink(const QString& videoFile, FILE_FORMAT format, const GstCaps* inputCaps);
+    static GstElement* _makeFileSink(const QString& videoFile, FILE_FORMAT format, const GstCaps* inputCaps,
+                                     int fileDescriptor = -1);
 
     void _onNewSourcePad(GstPad *pad);
     void _onNewDecoderPad(GstPad *pad);
@@ -104,7 +109,7 @@ private:
     /// -Send an EOS event at the beginning of that branch
     bool _unlinkBranch(GstElement *from);
     void _shutdownDecodingBranch();
-    void _shutdownRecordingBranch();
+    void _shutdownRecordingBranch(bool finalized);
     void _logDecodebin3SelectedCodec(GstElement *decodebin3);
 
     bool _needDispatch();
@@ -146,6 +151,11 @@ private:
     GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
     gulong _keyframeWatchId = 0;
     bool _recordingStopRequested = false;
+    std::atomic<bool> _recordingHasKeyframe = false;
+    std::atomic<bool> _recordingFragmentClosed = false;
+#ifdef Q_OS_ANDROID
+    AndroidMediaStore _mediaStore;
+#endif
 
     mutable QMutex _decoderNameMutex;  // QString refcount isn't thread-safe across reader/writer threads
     QString _decoderName;
