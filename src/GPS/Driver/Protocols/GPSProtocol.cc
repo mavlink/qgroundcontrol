@@ -130,6 +130,7 @@ void GPSProtocol::serviceControls()
 
 GPSDecodeResult GPSProtocol::decode(std::span<const uint8_t> bytes)
 {
+    flushDecoded();
     size_t consumed = 0;
     // One completed frame can publish relative/survey data plus position and satellites.
     while (consumed < bytes.size() && _decoded.events.size() + 4 <= GPSDecodedBatch::MAX_EVENTS) {

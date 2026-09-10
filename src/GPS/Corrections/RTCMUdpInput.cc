@@ -8,6 +8,7 @@
 
 #include "GPSCorrectionFrame.h"
 #include "QGCLoggingCategory.h"
+#include "UdpPeer.h"
 
 QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.Corrections.RTCMUdpInput")
 
@@ -103,20 +104,16 @@ void RTCMUdpInput::_readDatagrams()
     }
     const QPointer<RTCMUdpInput> guard(this);
     const QPointer<QUdpSocket> socket = _socket;
-    qsizetype datagramsRead = 0;
-    qsizetype bytesRead = 0;
-    while (guard && socket && socket == _socket && socket->hasPendingDatagrams() &&
-           datagramsRead < MAX_DATAGRAMS_PER_DRAIN && bytesRead < MAX_BYTES_PER_DRAIN) {
+    UdpDrainBudget budget;
+    while (guard && socket && socket == _socket && socket->hasPendingDatagrams() && budget.available()) {
         const QNetworkDatagram datagram = socket->receiveDatagram();
         const QByteArray data = datagram.data();
-        ++datagramsRead;
-        bytesRead += data.size();
+        budget.consume(data.size());
         if (data.isEmpty()) {
             continue;
         }
         const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs();
-        const QString instance =
-            datagram.senderAddress().toString() + QLatin1Char(':') + QString::number(datagram.senderPort());
+        const QString instance = udpPeerKey(datagram.senderAddress(), datagram.senderPort());
 
         if (!_validateRtcm) {
             qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << data.size() << "bytes";
@@ -193,7 +190,7 @@ std::shared_ptr<RTCMUdpInput::PeerParser> RTCMUdpInput::_parserForPeer(const QHo
             ++it;
         }
     }
-    const QString key = address.toString() + QLatin1Char(':') + QString::number(port);
+    const QString key = udpPeerKey(address, port);
     auto peer = _peerParsers.value(key);
     if (!peer) {
         if (_peerParsers.size() >= MAX_PEERS) {

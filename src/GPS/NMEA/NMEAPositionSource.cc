@@ -2,6 +2,7 @@
 
 #include <QtCore/QHash>
 #include <QtCore/QIODevice>
+#include <QtCore/QTimeZone>
 #include <QtPositioning/QNmeaPositionInfoSource>
 
 #include <algorithm>
@@ -54,7 +55,7 @@ public:
 protected:
     bool parsePosInfoFromNmeaData(const char* data, int size, QGeoPositionInfo* position, bool* hasFix) override
     {
-        const bool parsed = QNmeaPositionInfoSource::parsePosInfoFromNmeaData(data, size, position, hasFix);
+        bool parsed = QNmeaPositionInfoSource::parsePosInfoFromNmeaData(data, size, position, hasFix);
         const QByteArray sentence(data, size);
         if (!NMEAUtils::verifyChecksum(sentence)) {
             return parsed;
@@ -62,11 +63,32 @@ protected:
         const auto fields = sentence.first(sentence.indexOf('*')).split(',');
         const QByteArray type = fields[0].right(3);
         const quint64 receivedAtUs = GPSReadTimestamp::from(_input);
+        const auto decoded = NMEA::sentence({data, static_cast<size_t>(size)});
+        const auto accuracy = decoded ? NMEA::gst(*decoded) : std::nullopt;
+        if (accuracy) {
+            const auto time = NMEA::utcMilliseconds(decoded->fields[1]);
+            if (!time) {
+                return false;
+            }
+            position->setTimestamp(QDateTime(QDate(), QTime::fromMSecsSinceStartOfDay(*time), QTimeZone::UTC));
+            if (std::isfinite(accuracy->horizontalAccuracy)) {
+                position->setAttribute(QGeoPositionInfo::HorizontalAccuracy, accuracy->horizontalAccuracy);
+            }
+            if (std::isfinite(accuracy->verticalAccuracy)) {
+                position->setAttribute(QGeoPositionInfo::VerticalAccuracy, accuracy->verticalAccuracy);
+            }
+            *hasFix = false;
+            parsed = true;
+        }
         if (parsed && position->timestamp().time().isValid() &&
             (type == "GGA" || type == "RMC" || type == "GLL" || type == "GST")) {
             const QTime epoch = position->timestamp().time();
             _currentEpoch = epoch;
             auto& metadata = _epochs[epoch];
+            if (metadata.monotonicTimestampUs && receivedAtUs > metadata.monotonicTimestampUs &&
+                receivedAtUs - metadata.monotonicTimestampUs > 2000000) {
+                metadata = {};
+            }
             if (position->timestamp().date().isValid()) {
                 if (metadata.position.timestamp().date().isValid() &&
                     metadata.position.timestamp().date() != position->timestamp().date()) {
@@ -74,7 +96,10 @@ protected:
                 }
                 metadata.position.setTimestamp(position->timestamp());
             }
-            _mergeAttributes(metadata.position, *position);
+            _mergeAttributes(metadata.position, *position, metadata.accuracyTimestampUs && !accuracy);
+            if (accuracy) {
+                metadata.accuracyTimestampUs = receivedAtUs;
+            }
             // The first contributing sentence owns receipt age, including fragmented arrivals.
             metadata.monotonicTimestampUs = metadata.monotonicTimestampUs == 0
                                                 ? receivedAtUs
@@ -132,7 +157,7 @@ protected:
             // never carry its DOP forward into the next timed fix.
             if (epoch != _epochs.end() && receivedAtUs >= epoch->monotonicTimestampUs &&
                 receivedAtUs - epoch->monotonicTimestampUs < 1000000) {
-                _mergeAttributes(epoch->position, *position);
+                _mergeAttributes(epoch->position, *position, epoch->accuracyTimestampUs != 0);
                 if (type != "GSA" || fields.size() < 18) {
                     return parsed;
                 }
@@ -149,12 +174,18 @@ protected:
     }
 
 private:
-    static void _mergeAttributes(QGeoPositionInfo& target, const QGeoPositionInfo& source)
+    static void _mergeAttributes(QGeoPositionInfo& target, const QGeoPositionInfo& source,
+                                 bool preserveAccuracy = false)
     {
         for (auto attribute :
              {QGeoPositionInfo::Direction, QGeoPositionInfo::GroundSpeed, QGeoPositionInfo::VerticalSpeed,
               QGeoPositionInfo::MagneticVariation, QGeoPositionInfo::HorizontalAccuracy,
               QGeoPositionInfo::VerticalAccuracy, QGeoPositionInfo::DirectionAccuracy}) {
+            if (preserveAccuracy && target.hasAttribute(attribute) &&
+                (attribute == QGeoPositionInfo::HorizontalAccuracy ||
+                 attribute == QGeoPositionInfo::VerticalAccuracy)) {
+                continue;
+            }
             if (source.hasAttribute(attribute)) {
                 target.setAttribute(attribute, source.attribute(attribute));
             }
@@ -257,7 +288,8 @@ void NMEAPositionSource::_publishPending()
     if (!_pendingObservation) {
         return;
     }
-    const auto observation = *_pendingObservation;
+    const auto observation =
+        static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(_pendingObservation->position);
     const bool requested = _pendingRequested;
     _pendingObservation.reset();
     _pendingRequested = false;

@@ -95,6 +95,18 @@ inline std::optional<GGA> gga(const Sentence& input)
     return result;
 }
 
+inline std::optional<int> utcMilliseconds(std::string_view field)
+{
+    if (field.size() < 6 || (field.size() > 6 && field[6] != '.'))
+        return {};
+    const auto hours = NMEAFields::number<unsigned>(field.substr(0, 2));
+    const auto minutes = NMEAFields::number<unsigned>(field.substr(2, 2));
+    const auto seconds = NMEAFields::number<double>(field.substr(4));
+    if (!hours || !minutes || !seconds || *hours > 23 || *minutes > 59 || *seconds < 0 || *seconds >= 60)
+        return {};
+    return static_cast<int>((*hours * 3600 + *minutes * 60) * 1000 + *seconds * 1000);
+}
+
 struct GST
 {
     double horizontalAccuracy = NAN;

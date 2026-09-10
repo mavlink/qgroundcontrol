@@ -190,7 +190,7 @@ GPSSatelliteObservation GPSDriverData::satellites(const GPSSatelliteReport& repo
             continue;
         }
         GPSSatellite satellite;
-        satellite.id = entry.id;
+        satellite.id = gpsSatelliteId(entry.constellation, entry.id);
         satellite.prn = entry.prn;
         satellite.constellation = entry.constellation;
         satellite.used = entry.used;

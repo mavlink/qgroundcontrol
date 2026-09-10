@@ -16,7 +16,7 @@
 
 QGC_LOGGING_CATEGORY(SerialGPSTransportLog, "GPS.Driver.Transport.SerialGPSTransport")
 
-SerialGPSTransport::SerialGPSTransport(QString device, const std::atomic_bool &requestStop)
+SerialGPSTransport::SerialGPSTransport(QString device, const std::atomic_bool& requestStop)
     : GPSTransport(requestStop)
     , _device(std::move(device))
 {
@@ -36,6 +36,9 @@ GPSTransport::OpenResult SerialGPSTransport::open()
     _serial = std::make_unique<QSerialPort>();
     _inputOverflow = false;
     _serial->setReadBufferSize(kReadBufferBytes);
+#ifndef Q_OS_ANDROID
+    _serial->setWriteBufferSize(kWriteBufferBytes);
+#endif
     QObject::connect(
         _serial.get(), &QSerialPort::readyRead, _serial.get(),
         [this]() {
@@ -57,7 +60,8 @@ GPSTransport::OpenResult SerialGPSTransport::open()
         }
         // Device can take 10-20s to become accessible after startup.
         if (_serial->error() != QSerialPort::PermissionError || openDeadline.hasExpired()) {
-            qCWarning(SerialGPSTransportLog) << "GPS: Failed to open Serial Device" << _device << _serial->errorString();
+            qCWarning(SerialGPSTransportLog)
+                << "GPS: Failed to open Serial Device" << _device << _serial->errorString();
             return {openDeadline.hasExpired() ? OpenStatus::TimedOut : OpenStatus::Error, _serial->errorString()};
         }
         qCDebug(SerialGPSTransportLog) << "Cannot open device... retrying";
@@ -160,6 +164,7 @@ GPSTransport::WriteResult SerialGPSTransport::writeBounded(const uint8_t* buffer
         return {WriteStatus::Completed};
     }
 #ifdef Q_OS_ANDROID
+    // AndroidSerialWrite already sends bounded synchronous chunks of at most 512 bytes.
     const auto result = _serial->writeBounded(reinterpret_cast<const char*>(buffer), length, deadline,
                                               [this]() { return isCancelled() || fatalError(); });
     WriteStatus status = WriteStatus::Error;

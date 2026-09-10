@@ -191,3 +191,46 @@ void NMEAPositionSourceTest::_metadataDoesNotCrossEpochs()
     QVERIFY(!observation.altitudeEllipsoidMeters);
     QCOMPARE(observation.altitudeDatum, GPSObservation::AltitudeDatum::Unknown);
 }
+
+void NMEAPositionSourceTest::_gstAccuracy_data()
+{
+    QTest::addColumn<bool>("beforeFix");
+    QTest::addColumn<bool>("validChecksum");
+    QTest::newRow("before-fix") << true << true;
+    QTest::newRow("after-fix") << false << true;
+    QTest::newRow("bad-checksum") << false << false;
+}
+
+void NMEAPositionSourceTest::_gstAccuracy()
+{
+    QFETCH(bool, beforeFix);
+    QFETCH(bool, validChecksum);
+    NMEAInput device;
+    NMEAPositionSource source(&device);
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    source.startUpdates();
+    auto gst = NMEAUtils::repairChecksum("$GPGST,235959.000,1,1,1,0,3,4,6");
+    if (!validChecksum) {
+        gst[gst.indexOf('*') + 1] = 'X';
+    }
+    const auto fix = NMEAUtils::repairChecksum("$GPRMC,235959.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A") +
+                     NMEAUtils::repairChecksum("$GPGGA,235959.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,");
+    device.feed((beforeFix ? gst + fix : fix + gst) +
+                NMEAUtils::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
+    QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
+    const auto observation = source.lastObservation();
+    if (validChecksum) {
+        QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 5.0);
+        QCOMPARE(observation.position.attribute(QGeoPositionInfo::VerticalAccuracy), 6.0);
+        QVERIFY(observation.accuracyTimestampUs != 0);
+    } else {
+        QVERIFY(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy) != 5.0);
+        QCOMPARE(observation.accuracyTimestampUs, 0U);
+    }
+    updates.clear();
+    device.feed(NMEAUtils::repairChecksum("$GPRMC,000000.000,A,5321.6802,N,00630.3372,W,0.02,31.66,290511,,,A"));
+    QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(!source.lastObservation().position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
+    QCOMPARE(source.lastObservation().accuracyTimestampUs, 0U);
+    QCOMPARE(source.lastObservation().position.timestamp().date(), QDate(2011, 5, 29));
+}

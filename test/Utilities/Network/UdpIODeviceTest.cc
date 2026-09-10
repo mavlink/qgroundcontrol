@@ -128,3 +128,32 @@ void UdpIODeviceTest::_closeClearsBufferedData()
 }
 
 UT_REGISTER_TEST(UdpIODeviceTest, TestLabel::Unit, TestLabel::Utilities)
+
+void UdpIODeviceTest::_selectedPeerIsolation()
+{
+    UdpIODevice device;
+    device.setSelectFirstPeer(true);
+    QVERIFY(device.bind(QHostAddress::LocalHost, 0));
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    QUdpSocket first;
+    QUdpSocket second;
+    const auto send = [&](QUdpSocket& sender, const QByteArray& data) {
+        QSignalSpy ready(&device, &QIODevice::readyRead);
+        return sender.writeDatagram(data, QHostAddress::LocalHost, device.localPort()) == data.size() &&
+               ready.wait(TestTimeout::mediumMs());
+    };
+    QVERIFY(send(first, "$GPGGA,120000"));
+    const auto selected = device.selectedPeer();
+    QVERIFY(send(second, ",wrong-receiver\n$GPGGA,120000,other\n"));
+    QVERIFY(!device.canReadLine());
+    QVERIFY(send(first, ",selected-receiver\n"));
+    QCOMPARE(device.readAll(), QByteArray("$GPGGA,120000,selected-receiver\n"));
+    QCOMPARE(device.selectedPeer(), selected);
+    device.close();
+    QVERIFY(device.selectedPeer().isEmpty());
+    QVERIFY(device.bind(QHostAddress::LocalHost, 0));
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    QVERIFY(send(second, "replacement\n"));
+    QCOMPARE(device.readAll(), QByteArray("replacement\n"));
+    QVERIFY(device.selectedPeer() != selected);
+}

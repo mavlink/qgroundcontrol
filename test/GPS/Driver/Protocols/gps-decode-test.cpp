@@ -226,7 +226,15 @@ void ashtechMetadata()
 {
     GPSPositionReport position{};
     GPSSatelliteReport satellites{};
-    GPSDriverAshtech driver(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+    auto io = makeGPSProtocolTestIO(noDevice, nullptr);
+    GPSSatelliteReport gpsSatellites;
+    io.decoded = [&](GPSDecodedBatch batch) {
+        for (const auto& event : batch.events)
+            if (const auto* report = std::get_if<GPSSatelliteReport>(&event);
+                report && report->constellation == GPSConstellation::GPS)
+                gpsSatellites = *report;
+    };
+    GPSDriverAshtech driver(std::move(io), &position, &satellites);
     const auto gga = nmeaPacket("GPGGA,123519,4700.0,N,00800.0,E,1,08,0.9,500.0,M,0,M,,");
     CHECK(driver.consume(gga) & 1);
     CHECK(position.latitude_deg == 47.0);
@@ -236,15 +244,15 @@ void ashtechMetadata()
     CHECK(driver.consume(nmeaPacket("PASHR,POS,bad,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1")) == 0);
     CHECK(driver.consume(gga) & 1);
     CHECK(driver.consume(nmeaPacket("GPGSV,1,1,01,01,,,")) & 2);
-    CHECK(satellites.count == 1);
-    CHECK(!satellites.entries[0].signal);
-    CHECK(!satellites.entries[0].azimuth);
-    CHECK(!satellites.entries[0].elevation);
-    CHECK(!satellites.entries[0].used);
+    CHECK(gpsSatellites.count == 1);
+    CHECK(!gpsSatellites.entries[0].signal);
+    CHECK(!gpsSatellites.entries[0].azimuth);
+    CHECK(!gpsSatellites.entries[0].elevation);
+    CHECK(!gpsSatellites.entries[0].used);
     CHECK(driver.consume(nmeaPacket("GPGSV,1,1,01,01,0,0,0")) & 2);
-    CHECK(satellites.entries[0].signal == 0);
-    CHECK(satellites.entries[0].azimuth == 0);
-    CHECK(satellites.entries[0].elevation == 0);
+    CHECK(gpsSatellites.entries[0].signal == 0);
+    CHECK(gpsSatellites.entries[0].azimuth == 0);
+    CHECK(gpsSatellites.entries[0].elevation == 0);
     driver.consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
     CHECK(position.time_utc_usec % 1000000 >= 455999 && position.time_utc_usec % 1000000 <= 456001);
 }

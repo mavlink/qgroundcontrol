@@ -151,13 +151,18 @@ void NMEAConnectionAttempt::start(GPSProvider::TransportFactory receiverFactory)
     switch (_attempt.profile->endpoint.kind) {
         case GPSReceiverProfile::Endpoint::Kind::UdpListener: {
             _udp = std::make_unique<UdpIODevice>();
+            _udp->setSelectFirstPeer(true);
             if (!_udp->bind(QHostAddress::AnyIPv4, static_cast<quint16>(_attempt.profile->endpoint.port))) {
                 _fail(tr("Cannot listen on UDP port %1: %2")
                           .arg(_attempt.profile->endpoint.port)
                           .arg(_udp->errorString()));
                 return;
             }
-            connect(_udp.get(), &QIODevice::readyRead, this, &NMEAConnectionAttempt::dataReceived);
+            connect(_udp.get(), &QIODevice::readyRead, this, [this]() {
+                if (_udp && _udp->bytesAvailable() > 0) {
+                    emit dataReceived();
+                }
+            });
             _publishDeviceReady();
             return;
         }

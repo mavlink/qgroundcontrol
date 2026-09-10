@@ -5,10 +5,12 @@
 #include <algorithm>
 
 #include "QGCLoggingCategory.h"
+#include "UdpPeer.h"
 
 QGC_LOGGING_CATEGORY(UdpIODeviceLog, "Utilities.UdpIODevice")
 
-UdpIODevice::UdpIODevice(QObject* parent) : QUdpSocket(parent)
+UdpIODevice::UdpIODevice(QObject* parent)
+    : QUdpSocket(parent)
 {
     qCDebug(UdpIODeviceLog) << this;
 
@@ -48,6 +50,9 @@ qint64 UdpIODevice::readData(char* data, qint64 maxSize)
 
 void UdpIODevice::close()
 {
+    ++_generation;
+    _drainScheduled = false;
+    _selectedPeer.clear();
     _buffer.clear();
     _discardUntilNewline = false;
     QUdpSocket::close();
@@ -55,12 +60,26 @@ void UdpIODevice::close()
 
 void UdpIODevice::_readAvailableData()
 {
-    while (hasPendingDatagrams()) {
+    UdpDrainBudget budget;
+    while (hasPendingDatagrams() && budget.available()) {
         const QNetworkDatagram datagram = receiveDatagram();
         if (!datagram.isValid()) {
             break;
         }
         const QByteArray data = datagram.data();
+        budget.consume(data.size());
+        if (data.isEmpty()) {
+            continue;
+        }
+        if (_selectFirstPeer) {
+            const QString peer = udpPeerKey(datagram.senderAddress(), datagram.senderPort());
+            if (_selectedPeer.isEmpty()) {
+                _selectedPeer = peer;
+                qCDebug(UdpIODeviceLog) << "Selected UDP sender" << peer;
+            } else if (_selectedPeer != peer) {
+                continue;
+            }
+        }
         qsizetype start = 0;
         if (_discardUntilNewline) {
             const qsizetype newline = data.indexOf('\n');
@@ -80,5 +99,18 @@ void UdpIODevice::_readAvailableData()
                 _buffer.remove(0, newline + 1);
             }
         }
+    }
+    if (hasPendingDatagrams() && !_drainScheduled) {
+        _drainScheduled = true;
+        const auto generation = _generation;
+        QMetaObject::invokeMethod(
+            this,
+            [this, generation]() {
+                if (generation == _generation) {
+                    _drainScheduled = false;
+                    emit readyRead();
+                }
+            },
+            Qt::QueuedConnection);
     }
 }

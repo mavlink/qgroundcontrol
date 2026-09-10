@@ -7,6 +7,7 @@ class UdpIODeviceTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _selectedPeerIsolation();
     void _byteAccountingAndPeek();
     void _fragmentedAndPartialLines();
     void _nmeaStartDiscardsBufferedData();

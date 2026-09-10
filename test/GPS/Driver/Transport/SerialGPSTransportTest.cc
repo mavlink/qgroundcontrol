@@ -55,7 +55,7 @@ void SerialGPSTransportTest::_testWriteAbortsWhenStopRequested()
     QVERIFY(!transport.isCancelled());
     stop = true;
 
-    const uint8_t payload[4] = { 1, 2, 3, 4 };
+    const uint8_t payload[4] = {1, 2, 3, 4};
     QVERIFY(transport.write(payload, static_cast<int>(sizeof(payload))).status != GPSTransport::WriteStatus::Completed);
 }
 
@@ -90,7 +90,8 @@ void SerialGPSTransportTest::_testCancelPendingOperation()
         const auto result = transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()),
                                                    payload.size(), QDeadlineTimer(TestTimeout::longMs()));
         QCOMPARE(result.status, GPSTransport::WriteStatus::Cancelled);
-        QCOMPARE(result.acceptedBytes, payload.size());
+        QVERIFY(result.acceptedBytes < payload.size());
+        QVERIFY(result.acceptedBytes > 0);
         QVERIFY(result.uncertainBytes > 0);
         QCOMPARE(result.writtenBytes + result.uncertainBytes, result.acceptedBytes);
     } else {
@@ -118,7 +119,8 @@ void SerialGPSTransportTest::_testPendingWriteDeadline()
     const auto result = transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
                                                QDeadlineTimer(100));
     QCOMPARE(result.status, GPSTransport::WriteStatus::TimedOut);
-    QCOMPARE(result.acceptedBytes, payload.size());
+    QVERIFY(result.acceptedBytes < payload.size());
+    QVERIFY(result.acceptedBytes > 0);
     QVERIFY(result.writtenBytes > 0);
     QVERIFY(result.uncertainBytes > 0);
     QCOMPARE(result.writtenBytes + result.uncertainBytes, result.acceptedBytes);

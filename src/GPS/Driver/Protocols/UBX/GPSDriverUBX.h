@@ -51,6 +51,8 @@
 
 #include "GPSBaseProtocol.h"
 #include "UBXMessages.h"
+#include "UBXNavigationEpoch.h"
+#include "UBXReceiverProfile.h"
 
 class GPSDriverUBX : public GPSBaseProtocol
 {
@@ -78,20 +80,7 @@ public:
 
     bool receiverReady() const override { return _configured; }
 
-    enum class Board : uint8_t
-    {
-        unknown = 0,
-        u_blox5 = 5,
-        u_blox6 = 6,
-        u_blox7 = 7,
-        u_blox8 = 8,            ///< M8N or M8P
-        u_blox9 = 9,            ///< M9N, or any F9*, except F9P
-        u_blox9_F9P_L1L2 = 10,  ///< F9P
-        u_blox10 = 11,
-        u_blox9_F9P_L1L5 = 12,  ///< ZED-F9P-15B
-        u_blox10_L1L5 = 13,     ///< DAN-F10N
-        u_blox_X20 = 14,
-    };
+    using Board = UBX::Board;
 
     const Board& board() const { return _board; }
 
@@ -113,6 +102,7 @@ public:
         bool navigation = false;
         bool useNavPvt = true;
         bool corrections = false;
+        bool assembleEpochs = false;
     };
 
     void setDecodeContext(DecodeContext context);
@@ -370,6 +360,11 @@ private:
     std::array<uint8_t, 4096> _framePayload{};
     uint16_t _framePayloadIndex = 0;
     int decodeValidatedPayload();
+    void flushDecoded() override;
+    void publishEpoch(const GPSPositionReport& report);
+    UBXNavigationEpoch _navigationEpochs;
+    bool _assembleEpochs = false;
+    bool _epochHasHighPrecision = false;
     uint8_t _tx_cfg_valset_buf[UBX_CFG_VALSET_BUF_SIZE]{};
     int _tx_cfg_valset_size{0};
     ubx_decode_state_t _decode_state{};

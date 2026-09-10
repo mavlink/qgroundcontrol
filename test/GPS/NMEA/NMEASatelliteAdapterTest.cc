@@ -320,9 +320,8 @@ void NMEASatelliteAdapterTest::_reentrantStopKeepsReplacement()
     NMEADecoderSession session;
     QVERIFY(session.start(&firstInput));
     bool replaced = false;
-    connect(session.positionSource(), &QObject::destroyed, &session, [&]() {
-        replaced = session.start(&replacementInput);
-    });
+    connect(session.positionSource(), &QObject::destroyed, &session,
+            [&]() { replaced = session.start(&replacementInput); });
     session.stop();
     QVERIFY(replaced);
     QVERIFY(session.positionSource());
@@ -398,7 +397,7 @@ void NMEASatelliteAdapterTest::_mixedLegacyIdentities()
             QCOMPARE(satellite.constellation, GPSSatellite::Constellation::GPS);
             QCOMPARE(satellite.signalStrength, std::optional<int>(0));
         } else {
-            QCOMPARE(satellite.id, 65);
+            QCOMPARE(satellite.id, 1);
             QCOMPARE(satellite.constellation, GPSSatellite::Constellation::GLONASS);
             QVERIFY(!satellite.signalStrength);
         }
@@ -454,9 +453,30 @@ void NMEASatelliteAdapterTest::_explicitZeroAndUnknownCoverage()
     feed(input, {gsa("GN", {}, "1"), "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(reports.size(), 1, TestTimeout::shortMs());
     const auto observation = reports.first().first().value<GPSSatelliteObservation>();
-    QCOMPARE(observation.provenance.size(), 1);
+    QCOMPARE(observation.provenance.size(), 2);
+    QCOMPARE(observation.provenance.last().constellation, GPSSatellite::Constellation::SBAS);
+    QCOMPARE(observation.provenance.last().satellitesUsed, std::optional<int>(0));
     QCOMPARE(observation.provenance.first().constellation, GPSSatellite::Constellation::GPS);
     QCOMPARE(observation.provenance.first().satellitesUsed, std::optional<int>(0));
     QVERIFY(observation.provenance.first().usedSatelliteIds.has_value());
     QVERIFY(observation.provenance.first().usedSatelliteIds->isEmpty());
+}
+
+void NMEASatelliteAdapterTest::_canonicalIdentities()
+{
+    QBuffer input;
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    NMEASatelliteAdapter adapter(&input);
+    GPSSatelliteStore store;
+    connectStore(adapter, store);
+    feed(input, {"$GLGSV,1,1,01,01,30,100,40", "$GNGSA,A,3,65,,,,,,,,,,,,1.0,0.8,0.6,2", "$GAGSV,1,1,01,301,30,100,40",
+                 "$GAGSA,A,3,01,,,,,,,,,,,,1.0,0.8,0.6", "$GBGSV,1,1,01,401,30,100,40",
+                 "$GBGSA,A,3,201,,,,,,,,,,,,1.0,0.8,0.6", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
+    QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellites.size(), 3, TestTimeout::shortMs());
+    QCOMPARE(store.observation().satellitesInUseCount(), 3);
+    for (const auto& satellite : store.observation().satellites) {
+        QCOMPARE(satellite.id, 1);
+        QCOMPARE(satellite.used, std::optional<bool>(true));
+        QVERIFY(satellite.prn > 0);
+    }
 }

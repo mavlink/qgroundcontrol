@@ -107,6 +107,7 @@ void NMEASatelliteAdapter::_queue(NMEA::SatelliteEpoch epoch)
         for (const auto& value : system.satellites) {
             GPSSatellite satellite;
             satellite.id = value.id;
+            satellite.prn = value.prn;
             satellite.constellation = value.constellation;
             satellite.elevationDegrees = value.elevation;
             satellite.normalizedAzimuthDegrees = value.azimuth;

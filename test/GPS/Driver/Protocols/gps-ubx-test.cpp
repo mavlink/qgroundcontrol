@@ -566,6 +566,8 @@ static void integrityReceipts()
 {
     Fixture f;
     CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
+    // This test inspects individual decoder mutations; epoch assembly has separate coverage.
+    f.driver.setDecodeContext({.navigation = true});
     Bytes mon_rf(sizeof(ubx_payload_rx_mon_rf_t), 0);
     mon_rf[1] = 1;
     mon_rf[5] = 3;
@@ -896,6 +898,7 @@ static void transactionalFrames()
     Bytes pvt(sizeof(ubx_payload_rx_nav_pvt_t), 0);
     pvt[20] = 3;
     pvt[21] = 1;
+    driver.setDecodeContext({.navigation = true});
     Bytes epochs;
     for (uint8_t index = 1; index <= 20; ++index) {
         pvt[23] = index;

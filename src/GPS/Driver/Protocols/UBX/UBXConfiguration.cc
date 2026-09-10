@@ -31,6 +31,7 @@
  *
  ****************************************************************************/
 
+#include "UBXMessageSchema.h"
 #include "UBXPrivate.h"
 
 int GPSDriverUBX::enableNmeaOutput(unsigned baudrate)
@@ -50,7 +51,8 @@ int GPSDriverUBX::enableNmeaOutput(unsigned baudrate)
             initCfgValset();
             cfgValsetPort(nmea_messages, 1);
             cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1OUTPROT_NMEA, 1);
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_NMEA, 1);
+            if (UBX::receiverProfile(_board).usb)
+                cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_NMEA, 1);
             return sendCfgValsetAcked();
         }
 
@@ -89,28 +91,20 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config)
 
 GPSDriverUBX::BaseStationCapability GPSDriverUBX::baseStationCapability() const
 {
-    switch (_board) {
-        case Board::u_blox8:
-            return _is_m8p ? BaseStationCapability::Supported
-                           : (_model_name[0] ? BaseStationCapability::Unsupported : BaseStationCapability::Unknown);
-        case Board::u_blox9_F9P_L1L2:
-        case Board::u_blox9_F9P_L1L5:
-        case Board::u_blox_X20:
-            return BaseStationCapability::Supported;
-        case Board::u_blox9:
-        case Board::u_blox10:
-        case Board::u_blox10_L1L5:
-            return BaseStationCapability::Unsupported;
-        default:
-            return BaseStationCapability::Unknown;
-    }
+    if (_board == Board::u_blox8)
+        return _is_m8p ? BaseStationCapability::Supported
+                       : (_model_name[0] ? BaseStationCapability::Unsupported : BaseStationCapability::Unknown);
+    const auto profile = UBX::receiverProfile(_board);
+    return profile.rtcmOutput            ? BaseStationCapability::Supported
+           : profile.baseCapabilityKnown ? BaseStationCapability::Unsupported
+                                         : BaseStationCapability::Unknown;
 }
 
 bool GPSDriverUBX::supportsConstellationSelection() const
 {
     // M10 combinations have additional restrictions; the legacy path does not
     // provide strict acknowledgement of every requested constellation change.
-    return _proto_ver_27_or_higher && (_board == Board::u_blox9 || _board == Board::u_blox9_F9P_L1L2);
+    return _proto_ver_27_or_higher && UBX::receiverProfile(_board).constellationSelection;
 }
 
 bool GPSDriverUBX::supportsOutputRateSelection() const
@@ -191,6 +185,8 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
     _constellation_request_rejected = false;
     _configured = false;
     _decodeNavigation = false;
+    _assembleEpochs = false;
+    _navigationEpochs = {};
     if (output_protocol != OutputProtocol::Native &&
         (output_protocol != OutputProtocol::NMEA || config.output_mode != OutputMode::GPS)) {
         return -1;
@@ -430,6 +426,7 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
 
     _configured = true;
     _decodeNavigation = true;
+    _assembleEpochs = true;
     return output_protocol == OutputProtocol::NMEA ? enableNmeaOutput(baudrate) : 0;
 }
 
@@ -598,7 +595,7 @@ int GPSDriverUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
 int GPSDriverUBX::configureDevice(const GPSConfig& config)
 {
     // There is no RTCM or USB interface on M10
-    if (_board != Board::u_blox10 && _board != Board::u_blox10_L1L5) {
+    if (UBX::receiverProfile(_board).usb) {
         initCfgValset();
 
         const uint8_t enable_corrections_in = (_output_mode == OutputMode::RTCM) ? 0 : 1;
@@ -615,7 +612,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
 
         // Only RTCM-output-capable receivers expose these keys. M9 SPG rejects
         // the entire VALSET if they are included, even with a value of zero.
-        if (_board == Board::u_blox9_F9P_L1L2 || _board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox_X20) {
+        if (UBX::receiverProfile(_board).rtcmOutput) {
             cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X, _output_mode != OutputMode::GPS);
             cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X, _output_mode != OutputMode::GPS);
         }
@@ -974,6 +971,13 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
         return -1;
     }
 
+    // Optional on older firmware. A rejected EOE key leaves the bounded epoch deadline in use.
+    initCfgValset();
+    cfgValsetPort(UBX::NAV_EOE_MSGOUT_I2C, 1);
+    (void) sendCfgValsetAcked(false);
+    if (ioError())
+        return -1;
+
     // Correction input status. RXM-COR reports every protocol (RTCM3, SPARTN, HAS) and is
     // the only form on the X20, which has no RXM-RTCM; receivers without it get RXM-RTCM.
     initCfgValset();
@@ -1007,7 +1011,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
     cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_RXM_SFRBX_I2C, 0);
 
     // M10 and F10 have no raw measurement output
-    if (_board != Board::u_blox10 && _board != Board::u_blox10_L1L5) {
+    if (UBX::receiverProfile(_board).usb) {
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_RXM_RAWX_I2C, 0);
     }
 
@@ -1047,7 +1051,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
                            config.interface_protocols & InterfaceProtocolsMask::I2C_IN_PROT_NMEA);
 
         // There is no RTCM on M10
-        if (_board != Board::u_blox10 && _board != Board::u_blox10_L1L5) {
+        if (UBX::receiverProfile(_board).usb) {
             cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2CINPROT_RTCM3X,
                                config.interface_protocols & InterfaceProtocolsMask::I2C_IN_PROT_RTCM3X);
         }
@@ -1067,7 +1071,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
         }
 
         // Optional SPARTN on I2C (best-effort; NACK is fine on non-SPARTN firmware)
-        if (_board != Board::u_blox10 && _board != Board::u_blox10_L1L5) {
+        if (UBX::receiverProfile(_board).usb) {
             initCfgValset();
             cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2CINPROT_SPARTN,
                                config.interface_protocols & InterfaceProtocolsMask::I2C_IN_PROT_RTCM3X);
@@ -1113,9 +1117,12 @@ bool GPSDriverUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
     if ((key_id & 0xffff0000u) == 0x10310000u)
         _valsetSettings |= 4;
 
-    // Size field: 1 = L, 2 = U1/I1/E1/X1, 3 = 2 bytes, 4 = 4 bytes (5 = 8 bytes, unsupported here)
-    const unsigned size_field = (key_id >> 28) & 0x7;
-    const unsigned value_size = (size_field <= 2) ? 1 : (size_field == 3) ? 2 : 4;
+    const unsigned value_size = UBX::configurationValueBytes(key_id);
+    if (!value_size || (value_size < 4 && value >= (1u << (value_size * 8))) || ((key_id >> 28) == 1 && value > 1))
+        return false;
+    if ((key_id == UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X || key_id == UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) &&
+        !UBX::receiverProfile(_board).rtcmOutput)
+        return false;
 
     if (_tx_cfg_valset_size + sizeof(key_id) + value_size > sizeof(_tx_cfg_valset_buf)) {
         // If this ever fires, either bump UBX_CFG_VALSET_BUF_SIZE or split the
@@ -1134,16 +1141,10 @@ bool GPSDriverUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
 
 bool GPSDriverUBX::cfgValsetPort(uint32_t key_id, uint8_t value)
 {
-    // enable on UART1 & USB (TODO: should we enable UART2 too? -> better would be to detect the port)
-    if (!cfgValset<uint8_t>(key_id + 1, value)) {
-        return false;
-    }
-
-    // M10 has no USB
-    if (_board != Board::u_blox10 && _board != Board::u_blox10_L1L5) {
-        if (!cfgValset<uint8_t>(key_id + 3, value)) {
+    for (const auto port : UBX::OUTPUT_PORTS) {
+        if ((!port.requiresUsb || UBX::receiverProfile(_board).usb) &&
+            !cfgValset<uint8_t>(key_id + port.messageKeyOffset, value))
             return false;
-        }
     }
 
     return true;

@@ -69,8 +69,9 @@ int GPSDriverUBX::receiveInternal(unsigned timeout, bool& read_error)
     int handled = 0;
 
     while (true) {
-        bool ready_to_return = (_configuration_readback_pending && _configuration_readback_ready) ||
-                               (_configured ? (_got_posllh && _got_velned) : handled);
+        bool ready_to_return =
+            (_configuration_readback_pending && _configuration_readback_ready) ||
+            (_configured ? (_assembleEpochs ? (handled & 1) : (_got_posllh && _got_velned)) : handled);
 
         /* return success if ready */
         if (ready_to_return) {
@@ -80,9 +81,11 @@ int GPSDriverUBX::receiveInternal(unsigned timeout, bool& read_error)
         }
 
         /* Wait for only UBX_PACKET_TIMEOUT if something already received. */
-        int ret = read(buf, sizeof(buf),
-                       std::min<int>((_got_posllh || _got_velned) ? UBX_PACKET_TIMEOUT : timeout,
-                                     remainingMilliseconds(time_started + uint64_t(timeout) * 1000)));
+        int ret =
+            read(buf, sizeof(buf),
+                 std::min<int>((_got_posllh || _got_velned) ? UBX_PACKET_TIMEOUT
+                                                            : (_assembleEpochs ? std::min(timeout, 200U) : timeout),
+                               remainingMilliseconds(time_started + uint64_t(timeout) * 1000)));
 
         if (ret < 0) {
             /* something went wrong when polling or reading */
@@ -97,6 +100,8 @@ int GPSDriverUBX::receiveInternal(unsigned timeout, bool& read_error)
 
             /* pass received bytes to the packet decoder */
             handled |= consume({buf, static_cast<size_t>(ret)});
+        } else {
+            handled |= consume({});
         }
 
         /* abort after timeout if no useful packets received */
@@ -167,10 +172,41 @@ void GPSDriverUBX::servicePendingCommands()
 void GPSDriverUBX::setDecodeContext(DecodeContext context)
 {
     _decodeNavigation = context.navigation;
+    _assembleEpochs = context.assembleEpochs;
+    _navigationEpochs = {};
     _use_nav_pvt = context.useNavPvt;
     if (context.corrections)
         _rtcm_parsing.emplace();
     else
         _rtcm_parsing.reset();
     decodeInit();
+}
+
+void GPSDriverUBX::publishEpoch(const GPSPositionReport& report)
+{
+    auto published = report;
+    published.noise_per_ms = _gps_position->noise_per_ms;
+    published.automatic_gain_control = _gps_position->automatic_gain_control;
+    published.jamming_state = _gps_position->jamming_state;
+    published.jamming_state_timestamp = _gps_position->jamming_state_timestamp;
+    published.jamming_indicator = _gps_position->jamming_indicator;
+    published.rf_timestamp = _gps_position->rf_timestamp;
+    published.spoofing_state = _gps_position->spoofing_state;
+    published.spoofing_state_timestamp = _gps_position->spoofing_state_timestamp;
+    published.authentication_state = _gps_position->authentication_state;
+    published.authentication_state_timestamp = _gps_position->authentication_state_timestamp;
+    published.corrections_protocol = _gps_position->corrections_protocol;
+    published.corrections_crc_failed = _gps_position->corrections_crc_failed;
+    published.corrections_msg_used = _gps_position->corrections_msg_used;
+    published.corrections_timestamp = _gps_position->corrections_timestamp;
+    published.system_error = _gps_position->system_error;
+    *_gps_position = published;
+    _decoded.updates |= 1;
+    _decoded.events.emplace_back(published);
+}
+
+void GPSDriverUBX::flushDecoded()
+{
+    if (_assembleEpochs)
+        _navigationEpochs.expire(nowUs(), [this](const auto& report) { publishEpoch(report); });
 }

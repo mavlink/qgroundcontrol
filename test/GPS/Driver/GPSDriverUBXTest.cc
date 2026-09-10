@@ -810,6 +810,8 @@ void GPSDriverUBXTest::_correctionBacklogPublishesBufferedPositions()
             qToLittleEndian<quint32>(500, pvt.data() + 40);
             qToLittleEndian<quint32>(800, pvt.data() + 44);
             _receiver.queue(ubxMessage(0x01, 0x07, pvt));
+            // Configuration enables EOE; complete this receiver epoch before the next correction write.
+            _receiver.queue(ubxMessage(0x01, 0x61, pvt.first(4)));
             return {WriteStatus::Completed, length, length, 0, {}};
         }
 

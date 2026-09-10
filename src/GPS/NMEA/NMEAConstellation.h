@@ -10,6 +10,9 @@ inline GPSConstellation satelliteConstellation(std::string_view talker, std::opt
                                                std::optional<int> satelliteId)
 {
     using Constellation = GPSConstellation;
+    if ((talker == "GP" || (talker == "GN" && (!systemId || *systemId == 1))) && satelliteId &&
+        ((*satelliteId >= 33 && *satelliteId <= 64) || (*satelliteId >= 120 && *satelliteId <= 158)))
+        return Constellation::SBAS;
     if (talker == "GP")
         return Constellation::GPS;
     if (talker == "GL")

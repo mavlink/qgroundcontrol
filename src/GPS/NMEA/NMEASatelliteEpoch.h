@@ -60,8 +60,9 @@ inline std::optional<GSV> gsv(const Sentence& input)
         if (!id || *id < 1 || *id > 999)
             return {};
         GPSSatelliteData satellite;
-        satellite.id = satellite.prn = *id;
-        satellite.constellation = system;
+        satellite.constellation = satelliteConstellation(input.talker(), {}, *id);
+        satellite.id = gpsSatelliteId(satellite.constellation, *id);
+        satellite.prn = *id;
         if (const auto value = NMEAFields::number<double>(f[index + 1]); value && *value >= 0 && *value <= 90)
             satellite.elevation = value;
         if (const auto value = NMEAFields::number<double>(f[index + 2]); value && *value >= 0 && *value <= 360)
@@ -135,6 +136,8 @@ public:
             const auto explicitSystem = satelliteConstellation(input.talker(), system, {});
             if (explicitSystem != GPSConstellation::Unknown)
                 reports[explicitSystem].timestamp = receivedAtUs;
+            if (explicitSystem == GPSConstellation::GPS)
+                reports[GPSConstellation::SBAS].timestamp = receivedAtUs;
             for (size_t index = 3; index < 15; ++index) {
                 if (f[index].empty())
                     continue;
@@ -147,7 +150,7 @@ public:
                 auto& report = reports[constellation];
                 report.timestamp = receivedAtUs;
                 if (*fix != 1)
-                    report.ids.insert(*id);
+                    report.ids.insert(gpsSatelliteId(constellation, *id));
             }
             if (reports.empty())
                 return update;
@@ -165,7 +168,7 @@ public:
     {
         std::map<GPSConstellation, SatelliteSystem> systems;
         for (const auto& [system, signalReports] : _views) {
-            std::map<int, GPSSatelliteData> satellites;
+            std::map<std::pair<GPSConstellation, int>, GPSSatelliteData> satellites;
             for (const auto& [signal, report] : signalReports) {
                 if (!report.complete())
                     continue;
@@ -173,16 +176,26 @@ public:
                 out.constellation = system;
                 out.inViewTimestampUs =
                     out.inViewTimestampUs ? std::min(out.inViewTimestampUs, report.timestamp) : report.timestamp;
+                if (system == GPSConstellation::GPS) {
+                    auto& sbas = systems[GPSConstellation::SBAS];
+                    sbas.constellation = GPSConstellation::SBAS;
+                    sbas.inViewTimestampUs = out.inViewTimestampUs;
+                }
                 for (const auto& satellite : report.satellites) {
-                    const auto existing = satellites.find(satellite.id);
+                    const auto key = std::make_pair(satellite.constellation, satellite.id);
+                    const auto existing = satellites.find(key);
                     if (existing == satellites.end() ||
                         satellite.signal.value_or(-1) > existing->second.signal.value_or(-1))
-                        satellites[satellite.id] = satellite;
+                        satellites[key] = satellite;
                 }
             }
-            if (systems.contains(system))
-                for (auto& [id, satellite] : satellites)
-                    systems[system].satellites.push_back(satellite);
+            for (auto& [id, satellite] : satellites) {
+                auto& out = systems[satellite.constellation];
+                out.constellation = satellite.constellation;
+                const auto timestamp = systems[system].inViewTimestampUs;
+                out.inViewTimestampUs = out.inViewTimestampUs ? std::min(out.inViewTimestampUs, timestamp) : timestamp;
+                out.satellites.push_back(satellite);
+            }
         }
         for (const auto& [system, used] : _used) {
             auto& out = systems[system];

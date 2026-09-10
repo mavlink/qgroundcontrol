@@ -1,12 +1,12 @@
 #pragma once
 
-#include "GPSTransport.h"
-
 #include <QtCore/QString>
 
 #include <atomic>
 #include <cstdint>
 #include <memory>
+
+#include "GPSTransport.h"
 
 class QSerialPort;
 
@@ -15,9 +15,10 @@ class QSerialPort;
 class SerialGPSTransport : public GPSTransport
 {
 public:
+    static constexpr qint64 kWriteBufferBytes = 4 * 1024;
     static constexpr qint64 kReadBufferBytes = 64 * 1024;
 
-    SerialGPSTransport(QString device, const std::atomic_bool &requestStop);
+    SerialGPSTransport(QString device, const std::atomic_bool& requestStop);
     ~SerialGPSTransport() override;
 
     /// Open the device, retrying briefly while it settles after startup. Aborts the

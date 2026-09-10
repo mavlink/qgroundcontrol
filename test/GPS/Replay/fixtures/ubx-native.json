@@ -1,6 +1,6 @@
 {
   "version":1,
-  "description":"Synthetic UBX F9P native-position configuration and one NAV-PVT fix",
+  "description":"Synthetic UBX F9P native-position configuration and one NAV-PVT fix with NAV-EOE",
   "events":[
     {"at_us":1,"kind":"open"},
     {"at_us":1,"kind":"baud","value":115200},
@@ -65,6 +65,10 @@
     {"at_us":49002,"kind":"rx","hex":"b5620501020006"},
     {"at_us":50002,"kind":"rx","hex":"8a98c1"},
     {"at_us":50002,"kind":"tx","hex":"b562068a0e00"},
+    {"at_us":50002,"kind":"tx","hex":"0001000060019120016201912001"},
+    {"at_us":50002,"kind":"tx","hex":"c79c"},
+    {"at_us":50002,"kind":"rx","hex":"b56205010200068a98c1"},
+    {"at_us":50002,"kind":"tx","hex":"b562068a0e00"},
     {"at_us":50002,"kind":"tx","hex":"00010000b706912001b906912001"},
     {"at_us":50002,"kind":"tx","hex":"7ff6"},
     {"at_us":51002,"kind":"rx","hex":"b5620501020006"},
@@ -117,6 +121,7 @@
     {"at_us":81002,"kind":"rx","hex":"00000000000000"},
     {"at_us":82002,"kind":"rx","hex":"00000000000000"},
     {"at_us":83002,"kind":"rx","hex":"00000000000000"},
-    {"at_us":84002,"kind":"rx","hex":"c695"}
+    {"at_us":84002,"kind":"rx","hex":"c695"},
+    {"at_us":84002,"kind":"rx","hex":"b562016104000000000066c7"}
   ]
 }

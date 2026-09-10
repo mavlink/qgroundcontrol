@@ -150,6 +150,8 @@ public:
 protected:
     virtual int decodeByte(uint8_t) { return 0; }
 
+    virtual void flushDecoded() {}
+
     virtual const GPSPositionReport* positionReport() const { return nullptr; }
 
     virtual const GPSSatelliteReport* satelliteReport() const { return nullptr; }
