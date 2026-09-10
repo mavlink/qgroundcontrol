@@ -23,6 +23,7 @@ private slots:
     void _testListDirectoryBadSequence();
     void _testListDirectoryCancel();
     void _testUpload();
+    void _testDownloadExplicitFileNameIsBasename();
 
     // Overrides from UnitTest
     void cleanup() override;

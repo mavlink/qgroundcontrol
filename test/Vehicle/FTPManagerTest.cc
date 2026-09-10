@@ -1,7 +1,9 @@
 #include "FTPManagerTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -13,6 +15,35 @@
 const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
     {"/general.json"},
 };
+
+void FTPManagerTest::_testDownloadExplicitFileNameIsBasename()
+{
+    // An explicit fileName can come from the vehicle: a ListDirectory entry is surfaced to
+    // QML and passed straight back as the local name. It must not be usable as a path.
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+
+    ftpManager->download(MAV_COMP_ID_AUTOPILOT1, _rgTestCases[0].file, tempDir.path(),
+                         QStringLiteral("../../QGC03_escaped.bin"));
+    QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
+    QCOMPARE(spyDownloadComplete.count(), 1);
+
+    const QList<QVariant> arguments = spyDownloadComplete.takeFirst();
+    QVERIFY2(arguments[1].toString().isEmpty(), qPrintable(arguments[1].toString()));
+
+    const QString downloaded = QDir::cleanPath(QFileInfo(arguments[0].toString()).absoluteFilePath());
+    const QString root = QDir::cleanPath(QDir(tempDir.path()).absolutePath());
+    QVERIFY2(downloaded.startsWith(root + QLatin1Char('/')), qPrintable(downloaded));
+    QCOMPARE(QFileInfo(downloaded).fileName(), QStringLiteral("QGC03_escaped.bin"));
+    QVERIFY(!QFile::exists(QDir(root).filePath(QStringLiteral("../../QGC03_escaped.bin"))));
+
+    QFile::remove(downloaded);
+    _disconnectMockLink();
+}
 
 void FTPManagerTest::cleanup()
 {
