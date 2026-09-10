@@ -29,7 +29,8 @@ public:
     using TransportFactory = std::function<std::unique_ptr<GPSTransport>(const std::atomic_bool&)>;
 
     GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
-                std::shared_ptr<GPSByteBuffer> nmeaBuffer = {}, QObject* parent = nullptr);
+                std::shared_ptr<GPSByteBuffer> nmeaBuffer = {}, QObject* parent = nullptr,
+                GPSExecutionContext context = {});
 
     ~GPSProvider() override;
 
@@ -64,6 +65,7 @@ signals:
 private:
     void run() final;
 
+    GPSExecutionContext _clock;
     std::shared_ptr<GPSReceiverMailbox> _mailbox;
     TransportFactory _transportFactory;
     GPSType _type;

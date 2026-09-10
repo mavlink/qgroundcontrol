@@ -70,7 +70,7 @@ bool GPSReceiverMailbox::publish(const GPSSurveyInStatus& status)
     }
     _stats.coalescedSnapshots += _pending.survey.has_value();
     _pending.survey = status;
-    _surveyReceivedAtMs = static_cast<qint64>(GPSObservation::monotonicNowUs() / 1000);
+    _surveyReceivedAtMs = static_cast<qint64>(status.monotonicTimestampUs / 1000);
     return _schedule();
 }
 

@@ -1,6 +1,5 @@
 #include "GPSProvider.h"
 
-#include <QtCore/QElapsedTimer>
 #include <QtCore/QScopeGuard>
 
 #include <chrono>
@@ -35,8 +34,9 @@ GPSCorrectionOutcome correctionOutcome(GPSDriver::CorrectionStatus status)
 }  // namespace
 
 GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
-                         std::shared_ptr<GPSByteBuffer> nmeaBuffer, QObject* parent)
+                         std::shared_ptr<GPSByteBuffer> nmeaBuffer, QObject* parent, GPSExecutionContext context)
     : QThread(parent)
+    , _clock(std::move(context))
     , _mailbox(std::make_shared<GPSReceiverMailbox>())
     , _transportFactory(std::move(transportFactory))
     , _type(type)
@@ -85,7 +85,10 @@ void GPSProvider::relativePositionUpdate(const GPSRelativeObservation& message)
 
 void GPSProvider::surveyInStatus(const GPSSurveyInStatus& status)
 {
-    if (_mailbox->publish(status)) {
+    auto received = status;
+    if (!received.monotonicTimestampUs)
+        received.monotonicTimestampUs = _clock.nowUs();
+    if (_mailbox->publish(received)) {
         emit dataReady();
     }
 }
@@ -99,14 +102,14 @@ void GPSProvider::RTCMFrameUpdate(const QByteArray& message, qint64 receivedAtMs
 
 void GPSProvider::RTCMDataUpdate(const QByteArray& message)
 {
-    RTCMFrameUpdate(message, static_cast<qint64>(GPSObservation::monotonicNowUs() / 1000));
+    RTCMFrameUpdate(message, static_cast<qint64>(_clock.nowUs() / 1000));
 }
 
 void GPSProvider::run()
 {
     // Keep factory captures alive until the transport is destroyed, including on early returns.
     auto transportFactory = std::exchange(_transportFactory, {});
-    if (_requestStop) {
+    if (_requestStop || _clock.cancelled()) {
         return;
     }
 
@@ -148,9 +151,7 @@ void GPSProvider::run()
     };
     sinks.onRTCM = [this, &gotData](const QByteArray& message) {
         gotData = true;
-        const qint64 receivedAtMs =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-                .count();
+        const qint64 receivedAtMs = _clock.nowUs() / 1000;
         RTCMFrameUpdate(message, receivedAtMs);
     };
     sinks.onSurveyIn = [this, &gotData](const GPSSurveyInStatus& status) {
@@ -163,11 +164,11 @@ void GPSProvider::run()
         surveyInStatus(status);
     };
 
-    GPSDriver driver(_type, *transport, _config, std::move(sinks));
+    GPSDriver driver(_type, *transport, _config, std::move(sinks), _clock);
 
     const auto publishConfiguration = [this, &driver]() {
         auto report = driver.configurationReport();
-        report.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        report.monotonicTimestampUs = _clock.nowUs();
         emit configurationReported(report);
     };
     publishConfiguration();
@@ -200,15 +201,14 @@ void GPSProvider::run()
     const auto finishCorrections = qScopeGuard(disableCorrections);
     emit receiverReady();
 
-    QElapsedTimer lastProgress;
-    lastProgress.start();
+    auto lastProgress = _clock.nowUs();
     QString failureDetail = tr("Receiver connection failed");
     QByteArray bytes(4096, Qt::Uninitialized);
     bool cancelled = false;
-    while (!_requestStop) {
+    while (!_requestStop && !_clock.cancelled()) {
         // Give each complete frame its full budget, then service receive before another write.
         if (driver.readyForCorrections()) {
-            const auto correction = _mailbox->takeCommand(GPSObservation::monotonicNowUs() / 1000);
+            const auto correction = _mailbox->takeCommand(_clock.nowUs() / 1000);
             if (_mailbox->scheduleDeliveryNotification()) {
                 emit dataReady();
             }
@@ -228,18 +228,18 @@ void GPSProvider::run()
                 }
             }
         }
-        const qint64 remainingMs = kProgressTimeoutMs - lastProgress.elapsed();
+        const qint64 remainingMs = kProgressTimeoutMs - static_cast<qint64>((_clock.nowUs() - lastProgress) / 1000);
         const bool correctionsPending = _mailbox->stats().pendingCommands > 0;
         const qint64 receiveLimitMs = correctionsPending ? 0 : driver.readyForCorrections() ? 200 : kGPSReceiveTimeout;
         // Native parsers need a positive interval to publish a fix after consuming its bytes.
         const qint64 minimumReceiveMs = _nmeaBuffer ? 0 : 10;
         const auto timeoutMs = static_cast<unsigned>(qMax(minimumReceiveMs, qMin(remainingMs, receiveLimitMs)));
-        QElapsedTimer receiveDuration;
-        receiveDuration.start();
+        const auto receiveStarted = _clock.nowUs();
         gotData = false;
         bool progress = false;
         if (_nmeaBuffer) {
-            const auto result = transport->read(reinterpret_cast<uint8_t*>(bytes.data()), bytes.size(), timeoutMs);
+            const auto result = transport->readUntil(reinterpret_cast<uint8_t*>(bytes.data()), bytes.size(),
+                                                     GPSDeadline{_clock.nowUs() + uint64_t(timeoutMs) * 1000}, _clock);
             if (result.status != GPSReadStatus::Data && result.status != GPSReadStatus::TimedOut) {
                 cancelled = result.status == GPSReadStatus::Cancelled;
                 emit transportReadFailed(result);
@@ -249,7 +249,7 @@ void GPSProvider::run()
                 break;
             }
             progress = result.bytesRead > 0;
-            if (progress && _nmeaBuffer->append(bytes.first(result.bytesRead))) {
+            if (progress && _nmeaBuffer->append(bytes.first(result.bytesRead), _clock.nowUs())) {
                 emit nmeaDataReady();
             }
         } else {
@@ -269,17 +269,17 @@ void GPSProvider::run()
             progress = result.status == GPSDriver::ReceiveStatus::Data || gotData;
         }
         if (progress) {
-            lastProgress.restart();
-        } else if (lastProgress.elapsed() >= kProgressTimeoutMs) {
+            lastProgress = _clock.nowUs();
+        } else if ((_clock.nowUs() - lastProgress) / 1000 >= kProgressTimeoutMs) {
             failureDetail = tr("Receiver stopped producing data");
             break;
-        } else if (receiveDuration.elapsed() < 10 && !_requestStop) {
+        } else if ((_clock.nowUs() - receiveStarted) < 10000 && !_requestStop) {
             // Some drivers return an idle result before their requested timeout.
-            QThread::msleep(10);
+            _clock.waitFor(std::chrono::milliseconds(10));
         }
     }
     disableCorrections();
-    if (!_requestStop && !cancelled) {
+    if (!_requestStop && !_clock.cancelled() && !cancelled) {
         emit connectionErrorDetail(GPSConnectionError::DeviceError, failureDetail);
         emit connectionError(GPSConnectionError::DeviceError);
     }

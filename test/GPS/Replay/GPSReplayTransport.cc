@@ -49,11 +49,11 @@ bool GPSReplayTrace::fromJson(const QByteArray& json, GPSReplayTrace& result, QS
 
 GPSReplayTransport::GPSReplayTransport(GPSReplayClock& clock, std::atomic_bool& requestStop, GPSReplayTrace trace,
                                        int maximumRead)
-    : GPSTransport(requestStop),
-      _clock(clock),
-      _stop(requestStop),
-      _trace(std::move(trace)),
-      _maximumRead(qMax(maximumRead, 1))
+    : GPSTransport(requestStop)
+    , _clock(clock)
+    , _stop(requestStop)
+    , _trace(std::move(trace))
+    , _maximumRead(qMax(maximumRead, 1))
 {
     qCDebug(GPSReplayTransportLog) << this;
     _baudrate = _trace.profile ? _trace.profile->initialBaud : 0;
@@ -247,6 +247,26 @@ bool GPSReplayTransport::setBaudrate(unsigned baudrate)
 
 GPSTransport::WriteResult GPSReplayTransport::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
+    return writeUntil(
+        buffer, length,
+        GPSDeadline{deadline.isForever() ? UINT64_MAX
+                                         : _clock.nowUs() + uint64_t(qMax<qint64>(deadline.remainingTime(), 0)) * 1000},
+        executionContext());
+}
+
+GPSExecutionContext GPSReplayTransport::executionContext()
+{
+    GPSExecutionContext context;
+    context.nowUs = [this] { return _clock.nowUs(); };
+    context.utcNowUs = [this] { return uint64_t{1704067200000000} + _clock.nowUs(); };
+    context.wait = [this](auto duration) { _clock.advanceBy(duration.count()); };
+    context.cancelled = [this] { return isCancelled(); };
+    return context;
+}
+
+GPSTransport::WriteResult GPSReplayTransport::writeUntil(const uint8_t* buffer, int length, GPSDeadline deadline,
+                                                         const GPSExecutionContext&)
+{
     if (isCancelled()) {
         return {.status = WriteStatus::Cancelled};
     }
@@ -260,8 +280,7 @@ GPSTransport::WriteResult GPSReplayTransport::writeBounded(const uint8_t* buffer
         _fail(QStringLiteral("Bounded write or bytes differ from trace"));
         return {.status = WriteStatus::Error};
     }
-    const quint64 elapsed = _eventTime(event.atUs) > _clock.nowUs() ? _eventTime(event.atUs) - _clock.nowUs() : 0;
-    if (!deadline.isForever() && elapsed > quint64(qMax<qint64>(deadline.remainingTime(), 0)) * 1000) {
+    if (_eventTime(event.atUs) > deadline.untilUs) {
         // A capture only proves progress at completion. Do not invent partial delivery at an earlier deadline.
         _fail(QStringLiteral("Replay deadline is shorter than recorded write duration"));
         return {.status = WriteStatus::Error};

@@ -59,6 +59,9 @@ public:
     ReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
     WriteResult write(const uint8_t* buffer, int length) override;
     WriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
+    WriteResult writeUntil(const uint8_t* buffer, int length, GPSDeadline deadline,
+                           const GPSExecutionContext& context) override;
+    GPSExecutionContext executionContext();
     std::chrono::milliseconds correctionWriteTimeout(int length) const override;
 
     unsigned fixedBaudrate() const override { return _trace.profile ? _trace.profile->fixedBaud : 0; }

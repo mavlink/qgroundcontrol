@@ -36,6 +36,7 @@
 int GPSDriverFemto::writeAckedCommandFemto(const char* command, const char* reply, const unsigned int timeout)
 {
     const Operation operation(*this, timeout);
+    beginCommandWrite();
     const size_t command_length = strlen(command);
     const size_t reply_length = strlen(reply);
     uint8_t buf[GPS_READ_BUFFER_SIZE];
@@ -48,30 +49,26 @@ int GPSDriverFemto::writeAckedCommandFemto(const char* command, const char* repl
 
     size_t buffered = 0;
 
-    while (nowUs() < _operationDeadline.untilUs) {
-        int ret = read(buf + buffered, sizeof(buf) - buffered, timeout);
-
-        if (ret < 0) {
-            return ret;
-        }
-
-        buffered += static_cast<size_t>(ret);
-
-        for (size_t i = 0; i + reply_length <= buffered; ++i) {
-            if (memcmp(buf + i, reply, reply_length) == 0) {
-                return 0;
+    bool acknowledged = false;
+    const auto result = awaitCommand(
+        command, timeout,
+        [&] {
+            const int count = read(buf + buffered, sizeof(buf) - buffered, timeout);
+            if (count <= 0)
+                return;
+            buffered += static_cast<size_t>(count);
+            for (size_t index = 0; index + reply_length <= buffered; ++index) {
+                if (memcmp(buf + index, reply, reply_length) == 0)
+                    acknowledged = true;
             }
-        }
-
-        // Retain enough bytes to recognize an ACK split across reads, even after a full buffer of noise.
-        if (buffered >= reply_length) {
-            const size_t retained = reply_length - 1;
-            memmove(buf, buf + buffered - retained, retained);
-            buffered = retained;
-        }
-    }
-
-    return -1;
+            if (buffered >= reply_length) {
+                const size_t retained = reply_length - 1;
+                memmove(buf, buf + buffered - retained, retained);
+                buffered = retained;
+            }
+        },
+        [&] { return acknowledged ? GPSCommandOutcome::Acknowledged : GPSCommandOutcome::Pending; });
+    return result.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 
 int GPSDriverFemto::configure(unsigned& baudrate, const GPSConfig& config)
@@ -177,6 +174,7 @@ int GPSDriverFemto::configure(unsigned& baudrate, const GPSConfig& config)
 
         } else {
             FEMTO_ERR("Femto: command LOG UAVGPSB 0.1 failed");
+            return -1;
         }
 
         if (_satellite_info) {
@@ -197,63 +195,40 @@ int GPSDriverFemto::configure(unsigned& baudrate, const GPSConfig& config)
 
 void GPSDriverFemto::activateCorrectionOutput()
 {
-    if (_output_mode != OutputMode::RTCM) {
-        return; /**< only for base station */
-    }
-
-    char buffer[100];
-
+    if (_output_mode != OutputMode::RTCM || _correction_output_activated)
+        return;
     if (!_baseConfig.useFixedBase) {
-        if (writeAckedCommandFemto("POSAVE ON \r\n", "<POSAVE OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
-            if (writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) ==
-                0) { /**< for updating GPS satellite count of RTK */
-
-            } else {
-                FEMTO_ERR("Femto: LOG GPGGA command failed")
-            }
-
-        } else {
-            FEMTO_ERR("Femto: command POSAVE ON failed")
+        if (writeAckedCommandFemto("POSAVE ON \r\n", "<POSAVE OK", FEMTO_RESPONSE_TIMEOUT) != 0 ||
+            writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
+            controlFailed();
+            return;
         }
-
-        _survey_duration = 0;  // use it as counter how long survey-in has been active
+        _survey_duration = 0;
         _survey_in_start = nowUs();
         sendSurveyInStatusUpdate(true, false);
-
-    } else {
-        const GPSBaseStationConfig& settings = _baseConfig;
-        int len = snprintf(buffer, sizeof(buffer), "FIX POSITION %.8lf %.8lf %.5f\r\n", settings.fixedBaseLatitude,
-                           settings.fixedBaseLongitude, (double) settings.fixedBaseAltitudeMeters);
-
-        if (len >= 0 && len < (int) (sizeof(buffer))) {
-            if (writeAckedCommandFemto(buffer, "FIX OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
-                activateRTCMOutput();
-                sendSurveyInStatusUpdate(false, true, settings.fixedBaseLatitude, settings.fixedBaseLongitude,
-                                         settings.fixedBaseAltitudeMeters);
-
-                if (writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) ==
-                    0) { /**< for updating GPS satellite count of RTK */
-
-                } else {
-                    FEMTO_ERR("Femto: LOG GPGGA command failed")
-                }
-
-            } else {
-                FEMTO_ERR("Femto: fix base station position failed.")
-            }
-
-        } else {
-        }
+        return;
     }
+    const auto& settings = _baseConfig;
+    char buffer[100];
+    const int length = snprintf(buffer, sizeof(buffer), "FIX POSITION %.8lf %.8lf %.5f\r\n", settings.fixedBaseLatitude,
+                                settings.fixedBaseLongitude, double(settings.fixedBaseAltitudeMeters));
+    if (length < 0 || length >= int(sizeof(buffer)) ||
+        writeAckedCommandFemto(buffer, "FIX OK", FEMTO_RESPONSE_TIMEOUT) != 0 ||
+        writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
+        controlFailed();
+        return;
+    }
+    activateRTCMOutput();
+    if (_correction_output_activated)
+        sendSurveyInStatusUpdate(false, true, settings.fixedBaseLatitude, settings.fixedBaseLongitude,
+                                 settings.fixedBaseAltitudeMeters);
 }
 
 void GPSDriverFemto::activateRTCMOutput()
 {
     if (writeAckedCommandFemto("LOG RTCM 1\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
-        FEMTO_ERR("Femto: command LOG RTCM failed")
-
-    } else {
+        controlFailed();
+        return;
     }
-
     _correction_output_activated = true;
 }

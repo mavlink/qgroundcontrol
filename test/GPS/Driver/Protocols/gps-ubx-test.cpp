@@ -367,7 +367,7 @@ struct Fixture
     GPSBaseStationConfig base;
 
     Fixture()
-        : driver(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position, nullptr, GPSDriverUBX::Settings{})
+        : driver(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position, nullptr)
     {
         gps_test_time = 0;
         gps_test_warnings.clear();
@@ -782,11 +782,10 @@ static void receiverSettings()
         receiver.reject_constellations = scenario == 3;
         receiver.timeout_constellations = scenario == 4;
         GPSPositionReport position{};
-        GPSDriverUBX::Settings settings{};
-        settings.dynamic_model = 4;
-        settings.output_rate = 5;
-        GPSDriverUBX driver(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position, nullptr, settings);
+        GPSDriverUBX driver(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position, nullptr);
         GPSProtocol::GPSConfig config{};
+        config.dynamicModel = 4;
+        config.outputRateHz = 5;
         config.output_mode = GPSProtocol::OutputMode::GPS;
         config.gnss_systems = receiver.legacy ? GPSProtocol::GNSSSystemsMask::RECEIVER_DEFAULTS
                                               : static_cast<GPSProtocol::GNSSSystemsMask>(5);
@@ -794,6 +793,12 @@ static void receiverSettings()
         unsigned baudrate = 115200;
         CHECK((driver.configure(baudrate, config) == 0) == (scenario < 2));
         CHECK(driver.supportsOutputRateSelection() == !receiver.legacy);
+        if (scenario >= 3) {
+            CHECK(driver.settingOutcome(0) == GPSCommandOutcome::Acknowledged);
+            CHECK(driver.settingOutcome(1) == GPSCommandOutcome::Acknowledged);
+            CHECK(driver.settingOutcome(2) ==
+                  (scenario == 3 ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut));
+        }
         CHECK(driver.constellationRequestRejected() == (scenario == 3));
         CHECK(driver.constellationConfigurationRejected() == (scenario >= 3));
         if (scenario < 2) {
@@ -840,6 +845,88 @@ static void configurationReadback()
     CHECK(cancelled.driver.ioError() == GPSProtocol::ReadCancelled);
 }
 
+static void transactionalFrames()
+{
+    Receiver receiver;
+    GPSPositionReport position{};
+    GPSSatelliteReport satellites{};
+    GPSDriverUBX driver(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position, &satellites);
+    unsigned baud = 115200;
+    GPSProtocol::GPSConfig config{};
+    config.output_mode = GPSProtocol::OutputMode::GPS;
+    CHECK(driver.configure(baud, config) == 0);
+    Bytes payload(20, 0);
+    payload[4] = 1;
+    payload[5] = 1;
+    payload[8] = 0;
+    payload[9] = 17;
+    payload[10] = 35;
+    const auto valid = packet(UBX_MSG_NAV_SAT, payload);
+    payload[9] = 23;
+    auto corrupt = packet(UBX_MSG_NAV_SAT, payload);
+    corrupt.back() ^= 1;
+    Bytes joined = valid;
+    joined.insert(joined.end(), corrupt.begin(), corrupt.end());
+    auto decoded = driver.decode(joined);
+    CHECK(decoded.bytesConsumed == joined.size());
+    CHECK(decoded.batch.events.size() == 1);
+    CHECK(std::get<GPSSatelliteReport>(decoded.batch.events[0]).entries[0].id == 17);
+    CHECK(satellites.entries[0].id == 17);
+    CHECK(driver.decode(std::span(valid).first(valid.size() - 1)).batch.events.empty());
+    CHECK(satellites.entries[0].id == 17);
+    CHECK(driver.decode(std::span(valid).last(1)).batch.events.size() == 1);
+    payload[5] = 2;  // A valid checksum cannot make an incomplete counted payload valid.
+    CHECK(driver.decode(packet(UBX_MSG_NAV_SAT, payload)).batch.events.empty());
+    CHECK(satellites.entries[0].id == 17);
+    const std::string originalModel = driver.modelName();
+    Bytes version(70, 0);
+    const std::string module = "MOD=NEO-M9N";
+    std::copy(module.begin(), module.end(), version.begin() + 40);
+    auto badVersion = packet(UBX_MSG_MON_VER, version);
+    badVersion.back() ^= 1;
+    CHECK(driver.decode(badVersion).batch.events.empty());
+    CHECK(driver.modelName() == originalModel);
+
+    Bytes baseVersion(40, 0);
+    const std::string firmware = "SPG 4.04";
+    std::copy(firmware.begin(), firmware.end(), baseVersion.begin());
+    CHECK(driver.decode(packet(UBX_MSG_MON_VER, baseVersion)).batch.events.empty());
+    CHECK(driver.firmwareVersion() == firmware);
+
+    Bytes pvt(sizeof(ubx_payload_rx_nav_pvt_t), 0);
+    pvt[20] = 3;
+    pvt[21] = 1;
+    Bytes epochs;
+    for (uint8_t index = 1; index <= 20; ++index) {
+        pvt[23] = index;
+        const auto frame = packet(UBX_MSG_NAV_PVT, pvt);
+        epochs.insert(epochs.end(), frame.begin(), frame.end());
+    }
+    size_t offset = 0;
+    unsigned count = 0;
+    while (offset < epochs.size()) {
+        auto batch = driver.decode(std::span(epochs).subspan(offset));
+        CHECK(batch.bytesConsumed > 0);
+        CHECK(batch.batch.events.size() <= GPSDecodedBatch::MAX_EVENTS);
+        offset += batch.bytesConsumed;
+        for (const auto& event : batch.batch.events) {
+            CHECK(std::get<GPSPositionReport>(event).satellites_used == ++count);
+        }
+    }
+    CHECK(count == 20);
+    driver.setDecodeContext({true, true, true});
+    Bytes correction{0xd3, 0, 2, 0x3e, 0xd0};
+    const auto crc = RTCMFramer::crc24q(correction);
+    correction.insert(correction.end(), {uint8_t(crc >> 16), uint8_t(crc >> 8), uint8_t(crc)});
+    std::copy(correction.begin(), correction.end(), pvt.begin() + 40);
+    const auto embedded = driver.decode(packet(UBX_MSG_NAV_PVT, pvt));
+    CHECK(embedded.batch.events.size() == 1);
+    CHECK(std::holds_alternative<GPSPositionReport>(embedded.batch.events.front()));
+    const auto standalone = driver.decode(correction);
+    CHECK(standalone.batch.events.size() == 1);
+    CHECK(std::holds_alternative<GPSRTCMReport>(standalone.batch.events.front()));
+}
+
 static void controlDeadline()
 {
     Receiver receiver;
@@ -850,7 +937,7 @@ static void controlDeadline()
     const auto write = io.write;
     bool expireRead = false;
     bool verifyWrite = false;
-    io.read = [&](auto bytes, GPSProtocolDeadline deadline) {
+    io.read = [&](auto bytes, GPSDeadline deadline) {
         const auto result = read(bytes, deadline);
         if (expireRead && result.status == GPSReadStatus::Data) {
             gps_test_time = deadline.untilUs;
@@ -859,12 +946,12 @@ static void controlDeadline()
         }
         return result;
     };
-    io.write = [&](auto bytes, GPSProtocolDeadline deadline) {
+    io.write = [&](auto bytes, GPSDeadline deadline) {
         if (verifyWrite)
             CHECK(deadline.remainingMilliseconds(gps_test_time) > 0);
         return write(bytes, deadline);
     };
-    GPSDriverUBX driver(io, &position, nullptr, {});
+    GPSDriverUBX driver(io, &position, nullptr);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config{};
     config.output_mode = GPSProtocol::OutputMode::GPS;
@@ -902,6 +989,7 @@ int main()
         {"position-stop-failures", [] { positionModeFailure(); }},
         {"position-rtcm-stop-failures", [] { positionModeFailure(GPSProtocol::OutputMode::GPSAndRTCM); }},
         {"control-deadline", controlDeadline},
+        {"transactional-frames", transactionalFrames},
         {"comms-diagnostic-values", commsDiagnostics},
         {"comms-malformed-replies", invalidCommsDiagnostics},
         {"comms-expired-reply", expiredCommsDiagnostics},

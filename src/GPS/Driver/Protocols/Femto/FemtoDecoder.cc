@@ -32,6 +32,7 @@
  ****************************************************************************/
 
 #include "FemtoPrivate.h"
+#include "NMEASentence.h"
 
 int GPSDriverFemto::handleMessage(int len)
 {
@@ -57,8 +58,10 @@ int GPSDriverFemto::handleMessage(int len)
         _gps_position->s_variance_m_s = _femto_uav_gps.s_variance_m_s;
         _gps_position->c_variance_rad = _femto_uav_gps.c_variance_rad;
         _gps_position->eph = _femto_uav_gps.eph;
+        _gps_position->accuracy_timestamp = nowUs();
         _gps_position->epv = _femto_uav_gps.epv;
         _gps_position->hdop = _femto_uav_gps.hdop;
+        _gps_position->dop_timestamp = nowUs();
         _gps_position->vdop = _femto_uav_gps.vdop;
         _gps_position->noise_per_ms = _femto_uav_gps.noise_per_ms;
         _gps_position->jamming_indicator = _femto_uav_gps.jamming_indicator;
@@ -83,9 +86,11 @@ int GPSDriverFemto::handleMessage(int len)
             }
 
             _gps_position->heading = heading;
+            _gps_position->heading_timestamp = nowUs();
 
         } else {
             _gps_position->heading = NAN;
+            _gps_position->heading_timestamp = nowUs();
         }
 
         _gps_position->timestamp = nowUs();
@@ -119,99 +124,17 @@ int GPSDriverFemto::handleMessage(int len)
 
     } else if (OutputMode::RTCM == _output_mode && messageid == FEMTO_MSG_ID_GPGGA &&
                (memcmp(_femto_msg.data + 3, "GGA,", 3) == 0)) { /**< GPGGA only used in base station, for survey-in */
-        int uiCalcComma = 0;
-
-        for (int i = 0; i < len; i++) {
-            if (_femto_msg.data[i] == ',') {
-                uiCalcComma++;
-            }
+        const auto parsed = NMEA::sentence({reinterpret_cast<const char*>(_femto_msg.data), static_cast<size_t>(len)});
+        const auto fix = parsed ? NMEA::gga(*parsed) : std::nullopt;
+        if (!fix)
+            return 0;
+        if (!_correction_output_activated && fix->quality == 7) {
+            _survey_in_start = 0;
+            sendSurveyInStatusUpdate(false, true, fix->latitude, fix->longitude, fix->altitude);
+            _rtcmActivationPending = true;
         }
-
-        if (uiCalcComma == 14) {
-            NMEAFields::Cursor bufptr(
-                {reinterpret_cast<const char*>(_femto_msg.data + 7), static_cast<size_t>(len - 7)});
-            double ashtech_time = 0.0, lat = 0.0, lon = 0.0, alt = 0.0;
-            int num_of_sv = 0, fix_quality = 0;
-            double hdop = 99.9;
-            char ns = '?', ew = '?';
-
-            bufptr.read(ashtech_time);
-
-            if (!bufptr.valid())
-                return 0;
-
-            if (!bufptr.read(lat))
-                return 0;
-
-            if (!bufptr.valid())
-                return 0;
-
-            bufptr.read(ns);
-
-            if (!bufptr.valid())
-                return 0;
-
-            if (!bufptr.read(lon))
-                return 0;
-
-            if (!bufptr.valid())
-                return 0;
-
-            bufptr.read(ew);
-
-            if (!bufptr.valid())
-                return 0;
-
-            bufptr.read(fix_quality);
-
-            if (!bufptr.valid())
-                return 0;
-
-            bufptr.read(num_of_sv);
-
-            if (!bufptr.valid())
-                return 0;
-
-            bufptr.read(hdop);
-
-            if (!bufptr.valid())
-                return 0;
-
-            if (!bufptr.read(alt))
-                alt = NAN;
-
-            if (!bufptr.valid())
-                return 0;
-
-            if (ns == 'S') {
-                lat = -lat;
-            }
-
-            if (ew == 'W') {
-                lon = -lon;
-            }
-
-            FEMTO_UNUSED(ashtech_time)
-            FEMTO_UNUSED(hdop)
-
-            if (!_correction_output_activated && 7 == fix_quality) {
-                _survey_in_start = 0; /**< finished survey-in */
-
-                lat = nmeaToDegrees(lat) * 10000000;
-                lon = nmeaToDegrees(lon) * 10000000;
-                alt = alt * 1000;
-
-                sendSurveyInStatusUpdate(false, true, lat, lon, (float) alt);
-                _rtcmActivationPending = true;
-            }
-
-            if (_satellite_info) {
-                _satellite_info->count = 0;
-                _satellite_info->usedCount = num_of_sv;
-                _satellite_info->timestamp = nowUs(); /**< base station satellite count */
-            }
-
-            ret = 2;
+        if (_satellite_info && fix->satellitesUsed) {
+            publishSatelliteUsage(*fix->satellitesUsed);
         }
     }
 
@@ -442,14 +365,8 @@ void GPSDriverFemto::sendSurveyInStatusUpdate(bool active, bool valid, double la
     surveyInStatus(status);
 }
 
-int GPSDriverFemto::consume(std::span<const uint8_t> bytes)
+int GPSDriverFemto::decodeByte(uint8_t byte)
 {
-    int handled = 0;
-    for (const uint8_t byte : bytes) {
-        const int length = parseChar(byte);
-        if (length > 0) {
-            handled |= handleMessage(length);
-        }
-    }
-    return handled;
+    const int length = parseChar(byte);
+    return length > 0 ? handleMessage(length) : 0;
 }

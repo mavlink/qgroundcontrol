@@ -10,7 +10,8 @@
 #include <optional>
 
 #include "GPSConfigurationReport.h"
-#include "GPSDriverClock.h"
+#include "GPSDeadline.h"
+#include "GPSExecutionContext.h"
 #include "GPSObservation.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfig.h"
@@ -61,7 +62,7 @@ public:
     };
 
     GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks,
-              GPSDriverClock clock = {});
+              GPSExecutionContext clock = {});
     ~GPSDriver();
 
     GPSDriver(const GPSDriver&) = delete;
@@ -99,8 +100,8 @@ public:
 
     /// Worker-thread-only: configuration and receive calls must not run concurrently.
     bool readyForCorrections() const;
-    CorrectionResult injectCorrections(const QByteArray& data,
-                                       QDeadlineTimer deadline = QDeadlineTimer(QDeadlineTimer::Forever));
+    CorrectionResult injectCorrections(const QByteArray& data, GPSDeadline deadline = {});
+    CorrectionResult injectCorrections(const QByteArray& data, QDeadlineTimer deadline);
 
     unsigned baudrate() const { return _baudrate; }
 
@@ -108,7 +109,7 @@ private:
     void _updateCapabilities();
     GPSProtocolIO _protocolIO();
 
-    GPSDriverClock _clock;
+    GPSExecutionContext _clock;
     GPSType _type;
     GPSTransport& _transport;
     GPSReceiverConfig _config;

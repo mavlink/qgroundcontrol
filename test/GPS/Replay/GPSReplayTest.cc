@@ -17,6 +17,7 @@
 
 #include "GPSCorrectionRouter.h"
 #include "GPSProtocolTestIO.h"
+#include "GPSProvider.h"
 #include "GPSReadTimestamp.h"
 #include "GPSReceiverProfile.h"
 #include "GPSRecordingController.h"
@@ -157,7 +158,7 @@ private slots:
         GPSRecordingTransport transport(std::move(original), stop, recordedStream);
         QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
         GPSPositionReport position{};
-        GPSDriverUBX driver(makeGPSProtocolTestIO(nativeCallback, &transport), &position, nullptr, {});
+        GPSDriverUBX driver(makeGPSProtocolTestIO(nativeCallback, &transport), &position, nullptr);
         GPSProtocol::GPSConfig config{};
         config.output_mode = GPSProtocol::OutputMode::GPS;
         unsigned baudrate = 115200;
@@ -184,7 +185,7 @@ private slots:
         GPSReplayTransport roundTrip(clock, stop, std::move(exported), fragment);
         QCOMPARE(roundTrip.open().status, GPSTransport::OpenStatus::Opened);
         GPSPositionReport decoded{};
-        GPSDriverUBX replayed(makeGPSProtocolTestIO(nativeCallback, &roundTrip), &decoded, nullptr, {});
+        GPSDriverUBX replayed(makeGPSProtocolTestIO(nativeCallback, &roundTrip), &decoded, nullptr);
         baudrate = 115200;
         QVERIFY2(replayed.configure(baudrate, config) == 0, qPrintable(roundTrip.failure()));
         QVERIFY2(replayed.receive(500) > 0, qPrintable(roundTrip.failure()));
@@ -593,7 +594,7 @@ private slots:
             GPSRecordingTransport transport(std::make_unique<Receiver>(stop, septentrio, clock), stop, stream);
             QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
             stream->configurationStarted();
-            GPSDriverClock driverClock;
+            GPSExecutionContext driverClock;
             driverClock.nowUs = [&clock] { return clock.nowUs(); };
             driverClock.wait = [&clock](auto duration) { clock.advanceBy(duration.count()); };
             GPSDriver original(profile.driverType, transport, profile.receiver, {}, driverClock);
@@ -615,6 +616,49 @@ private slots:
         uint8_t terminalByte;
         QCOMPARE(transport.read(&terminalByte, 1, 1000).status, GPSReadStatus::Closed);
         QVERIFY2(transport.complete(), qPrintable(transport.failure()));
+        // Replay the same configuration through the production worker, including its lifecycle and clock.
+        GPSReplayClock workerClock;
+        bool workerComplete = false;
+        QString workerFailure;
+
+        class WorkerReplay : public GPSReplayTransport
+        {
+        public:
+            WorkerReplay(GPSReplayClock& clock, std::atomic_bool& stop, const GPSReplayTrace& trace, bool& complete,
+                         QString& failure)
+                : GPSReplayTransport(clock, stop, trace)
+                , _complete(complete)
+                , _failure(failure)
+            {}
+
+            ~WorkerReplay() override
+            {
+                _complete = complete();
+                _failure = failure();
+            }
+
+        private:
+            bool& _complete;
+            QString& _failure;
+        };
+
+        GPSExecutionContext workerContext;
+        workerContext.nowUs = [&] { return workerClock.nowUs(); };
+        workerContext.utcNowUs = [&] { return uint64_t{1704067200000000} + workerClock.nowUs(); };
+        workerContext.wait = [&](auto duration) { workerClock.advanceBy(duration.count()); };
+        workerContext.cancelled = [&] { return stop.load(); };
+        GPSProvider worker(
+            [&](const std::atomic_bool&) {
+                return std::make_unique<WorkerReplay>(workerClock, stop, trace, workerComplete, workerFailure);
+            },
+            profile.driverType, profile.receiver, {}, nullptr, workerContext);
+        QSignalSpy ready(&worker, &GPSProvider::receiverReady);
+        worker.start();
+        QVERIFY(worker.wait(5000));
+        QCOMPARE(ready.count(), 1);
+        QVERIFY2(workerComplete, qPrintable(workerFailure));
+        QVERIFY(workerFailure.isEmpty());
+        QCOMPARE(workerClock.nowUs(), clock.nowUs());
         auto incomplete = trace;
         incomplete.recordedEvents[1].resumed = true;
         GPSReplayTransport resumed(clock, stop, incomplete);

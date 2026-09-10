@@ -55,6 +55,9 @@ struct GPSObservation
     AltitudeDatum altitudeDatum = AltitudeDatum::Unknown;
     std::optional<int> satellitesUsed;
     std::optional<double> speedAccuracyMetersPerSecond;
+    quint64 dopTimestampUs = 0;
+    quint64 headingTimestampUs = 0;
+    quint64 accuracyTimestampUs = 0;
     std::optional<double> horizontalDop;
     std::optional<double> verticalDop;
     std::optional<double> altitudeEllipsoidMeters;

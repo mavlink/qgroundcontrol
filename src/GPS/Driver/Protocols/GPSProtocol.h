@@ -108,6 +108,8 @@ public:
     struct GPSConfig
     {
         GPSBaseStationConfig base;
+        uint8_t dynamicModel = 0;
+        uint8_t outputRateHz = 0;
         OutputMode output_mode;
         GNSSSystemsMask gnss_systems;
         InterfaceProtocolsMask interface_protocols;
@@ -135,7 +137,8 @@ public:
      *         bit 1 set: got satellite info update
      */
     virtual int receive(unsigned timeout) = 0;
-    virtual int consume(std::span<const uint8_t> bytes) = 0;
+    virtual int consume(std::span<const uint8_t> bytes);
+    GPSDecodeResult decode(std::span<const uint8_t> bytes);
 
     /**
      * Whether the receiver is configured and ready to accept injected data. Gates all
@@ -145,6 +148,12 @@ public:
     virtual bool receiverReady() const { return true; }
 
 protected:
+    virtual int decodeByte(uint8_t) { return 0; }
+
+    virtual const GPSPositionReport* positionReport() const { return nullptr; }
+
+    virtual const GPSSatelliteReport* satelliteReport() const { return nullptr; }
+
     class Operation
     {
     public:
@@ -160,7 +169,7 @@ protected:
 
     private:
         GPSProtocol& _driver;
-        GPSProtocolDeadline _previous;
+        GPSDeadline _previous;
     };
 
     uint64_t nowUs() const { return _io.nowUs(); }
@@ -181,6 +190,36 @@ protected:
     void serviceControls();
 
     int receiveDecoded(unsigned timeout);
+
+    GPSCommandResult awaitCommand(std::string command, unsigned timeout, const std::function<void()>& pump,
+                                  const std::function<GPSCommandOutcome()>& reply, bool required = true,
+                                  uint32_t affectedSettings = 0)
+    {
+        const Operation operation(*this, timeout);
+        _operationDeadline.untilUs =
+            std::min(_operationDeadline.untilUs, _commandWrite.startedAtUs + uint64_t(timeout) * 1000);
+        auto result = _commandWrite;
+        result.command = std::move(command);
+        result.required = required;
+        result.affectedSettings = affectedSettings;
+        result.outcome = GPSCommandTransaction::await(
+            _operationDeadline.untilUs, [this] { return nowUs(); }, reply, pump,
+            [this] {
+                return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled
+                       : ioError()                ? GPSCommandOutcome::TransportError
+                                                  : GPSCommandOutcome::Pending;
+            });
+        result.finishedAtUs = nowUs();
+        if (_io.commandFinished)
+            _io.commandFinished(result);
+        return result;
+    }
+
+    void beginCommandWrite()
+    {
+        _commandWrite = {};
+        _commandWrite.startedAtUs = nowUs();
+    }
 
     int remainingMilliseconds(uint64_t deadline) const
     {
@@ -203,8 +242,7 @@ protected:
             return _io_error;
         if (!buf || buf_length <= 0)
             return 0;
-        GPSProtocolDeadline deadline{
-            std::min(_operationDeadline.untilUs, nowUs() + uint64_t(std::max(timeout, 0)) * 1000)};
+        GPSDeadline deadline{std::min(_operationDeadline.untilUs, nowUs() + uint64_t(std::max(timeout, 0)) * 1000)};
         const auto result = _io.read ? _io.read({buf, static_cast<size_t>(buf_length)}, deadline)
                                      : GPSProtocolReadResult{GPSReadStatus::Error};
         if (result.status == GPSReadStatus::Data && result.bytesRead >= 0 && result.bytesRead <= buf_length)
@@ -230,6 +268,9 @@ protected:
         const auto result = _io.write ? _io.write({static_cast<const uint8_t*>(buf), static_cast<size_t>(buf_length)},
                                                   _operationDeadline)
                                       : GPSProtocolWriteResult{};
+        _commandWrite.acceptedBytes += result.acceptedBytes;
+        _commandWrite.writtenBytes += result.writtenBytes;
+        _commandWrite.uncertainBytes += result.uncertainBytes;
         if (result.status == GPSWriteStatus::Completed && result.writtenBytes == buf_length)
             return result.writtenBytes;
         if (result.status == GPSWriteStatus::Unsupported)
@@ -260,25 +301,43 @@ protected:
     // error, no command may be written until the caller explicitly retries.
     void resetIOError() { _io_error = 0; }
 
+    void controlFailed()
+    {
+        if (!_io_error)
+            _io_error = -EPROTO;
+    }
+
+    void publishSatellites(const GPSSatelliteReport& report)
+    {
+        _decoded.updates |= 2;
+        _decoded.events.emplace_back(report);
+    }
+
+    void publishSatelliteUsage(int count)
+    {
+        _decoded.updates |= 2;
+        _decoded.events.emplace_back(GPSSatelliteUsageReport{nowUs(), count});
+    }
+
     void surveyInStatus(GPSSurveyReport& status)
     {
-        if (_io.survey)
-            _io.survey(status);
+        status.timestamp = nowUs();
+        _decoded.events.emplace_back(status);
     }
 
     /** got an RTCM message from the device */
     void gotRTCMMessage(uint8_t* buf, int buf_length)
     {
-        if (_io.rtcm)
-            _io.rtcm({buf, static_cast<size_t>(buf_length)});
+        if (buf_length < 0 || static_cast<size_t>(buf_length) > GPSRTCMReport{}.bytes.size())
+            return;
+        GPSRTCMReport report;
+        report.size = static_cast<size_t>(buf_length);
+        std::copy_n(buf, report.size, report.bytes.begin());
+        _decoded.events.emplace_back(std::move(report));
     }
 
     /** got a relative position message from the device */
-    void gotRelativePositionMessage(GPSRelativeReport& gnss_relative)
-    {
-        if (_io.relativePosition)
-            _io.relativePosition(gnss_relative);
-    }
+    void gotRelativePositionMessage(GPSRelativeReport& gnss_relative) { _decoded.events.emplace_back(gnss_relative); }
 
     /**
      * Convert a broken-down UTC time to microseconds since the Unix epoch, if the date is after the GPS epoch.
@@ -306,9 +365,11 @@ protected:
      */
     static double nmeaToDegrees(double ddmm);
 
+    GPSCommandResult _commandWrite;
+    GPSDecodedBatch _decoded;
     GPSProtocolIO _io;
     int _io_error = 0;
-    GPSProtocolDeadline _operationDeadline;
+    GPSDeadline _operationDeadline;
     bool _servicingControls = false;
 };
 

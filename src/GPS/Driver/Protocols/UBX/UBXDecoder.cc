@@ -87,13 +87,17 @@ GPSDriverUBX::parseChar(const uint8_t b)
 {
     int ret = 0;
 
-    if (_rtcm_parsing) {
-        if (_rtcm_parsing->addByte(b) && _rtcm_parsing->valid()) {
-            gotRTCMMessage(_rtcm_parsing->message(), _rtcm_parsing->messageLength());
-            decodeInit();
+    // A framed payload owns its bytes; embedded preambles belong to that payload.
+    if (_rtcm_parsing && (_decode_state == UBX_DECODE_SYNC1 || _rtcm_parsing->hasPartialFrame())) {
+        const bool complete = _rtcm_parsing->addByte(b);
+        if (complete) {
+            if (_rtcm_parsing->valid())
+                gotRTCMMessage(_rtcm_parsing->message(), _rtcm_parsing->messageLength());
             _rtcm_parsing->reset();
             return ret;
         }
+        if (_rtcm_parsing->hasPartialFrame())
+            return ret;
     }
 
     switch (_decode_state) {
@@ -148,52 +152,18 @@ GPSDriverUBX::parseChar(const uint8_t b)
             addByteToChecksum(b);
             _rx_payload_length |= b << 8;  // calculate payload size
 
-            if (payloadRxInit() != 0) {    // start payload reception
-                // payload will not be handled, discard message
-                decodeInit();
-
-            } else {
-                _decode_state = (_rx_payload_length > 0) ? UBX_DECODE_PAYLOAD : UBX_DECODE_CHKSUM1;
-            }
-
+            _framePayloadIndex = 0;
+            _decode_state = _rx_payload_length ? UBX_DECODE_PAYLOAD : UBX_DECODE_CHKSUM1;
             break;
 
-        /* Expecting payload */
         case UBX_DECODE_PAYLOAD:
-
             addByteToChecksum(b);
-
-            switch (_rx_msg) {
-                case UBX_MSG_NAV_SAT:
-                    ret = payloadRxAddNavSat(b);  // add a NAV-SAT payload byte
-                    break;
-
-                case UBX_MSG_NAV_SVINFO:
-                    ret = payloadRxAddNavSvinfo(b);  // add a NAV-SVINFO payload byte
-                    break;
-
-                case UBX_MSG_MON_VER:
-                    ret = payloadRxAddMonVer(b);  // add a MON-VER payload byte
-                    break;
-
-                default:
-                    ret = payloadRxAdd(b);  // add a payload byte
-                    break;
+            if (_framePayloadIndex < _framePayload.size()) {
+                _framePayload[_framePayloadIndex] = b;
             }
-
-            if (ret < 0) {
-                // payload not handled, discard message
-                decodeInit();
-
-            } else if (ret > 0) {
-                // payload complete, expecting checksum
+            if (++_framePayloadIndex == _rx_payload_length) {
                 _decode_state = UBX_DECODE_CHKSUM1;
-
-            } else {
-                // expecting more payload, stay in state UBX_DECODE_PAYLOAD
             }
-
-            ret = 0;
             break;
 
         /* Expecting first checksum byte */
@@ -211,7 +181,7 @@ GPSDriverUBX::parseChar(const uint8_t b)
         case UBX_DECODE_CHKSUM2:
             if (_rx_ck_b != b) {
             } else {
-                ret = payloadRxDone();  // finish payload processing
+                ret = decodeValidatedPayload();
 
                 if (_rtcm_parsing) {
                     _rtcm_parsing->reset();
@@ -256,8 +226,8 @@ GPSDriverUBX::payloadRxInit()
                 && (_rx_payload_length != UBX_PAYLOAD_RX_NAV_PVT_SIZE_UBX8)) { /* u-blox 8+ msg format */
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (!_use_nav_pvt) {
                 _rx_state = UBX_RXMSG_DISABLE;  // disable if not using NAV-PVT
@@ -270,7 +240,7 @@ GPSDriverUBX::payloadRxInit()
         case UBX_MSG_INF_NOTICE:
         case UBX_MSG_INF_WARNING:
             if (_rx_payload_length >= sizeof(ubx_buf_t)) {
-                _rx_payload_length = sizeof(ubx_buf_t) - 1;  // avoid buffer overflow
+                _rx_state = UBX_RXMSG_ERROR_LENGTH;
             }
 
             break;
@@ -279,8 +249,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_posllh_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (_use_nav_pvt) {
                 _rx_state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
@@ -292,8 +262,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_sol_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (_use_nav_pvt) {
                 _rx_state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
@@ -305,8 +275,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_status_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
@@ -315,8 +285,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_dop_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
@@ -325,8 +295,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_relposned_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
@@ -335,8 +305,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_daheading_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
@@ -345,8 +315,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_hpposllh_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
@@ -355,8 +325,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_timeutc_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (_use_nav_pvt) {
                 _rx_state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
@@ -369,8 +339,8 @@ GPSDriverUBX::payloadRxInit()
             if (_satellite_info == nullptr) {
                 _rx_state = UBX_RXMSG_DISABLE;  // disable if sat info not requested
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else {
                 *_satellite_info = {};  // initialize sat info
@@ -389,8 +359,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_nav_velned_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (_use_nav_pvt) {
                 _rx_state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
@@ -407,8 +377,8 @@ GPSDriverUBX::payloadRxInit()
                 && (_rx_payload_length != sizeof(ubx_payload_rx_mon_hw_deprecated_t))) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
@@ -418,8 +388,8 @@ GPSDriverUBX::payloadRxInit()
                 (_rx_payload_length - 4) % sizeof(ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t) != 0) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
@@ -428,7 +398,7 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length < 4) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
+            } else if (!_decodeNavigation) {
                 _rx_state = UBX_RXMSG_IGNORE;
             }
 
@@ -438,8 +408,8 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_rxm_rtcm_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _configured
+            } else if (!_decodeNavigation) {
+                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
@@ -448,7 +418,7 @@ GPSDriverUBX::payloadRxInit()
             if (_rx_payload_length != sizeof(ubx_payload_rx_rxm_cor_t)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
-            } else if (!_configured) {
+            } else if (!_decodeNavigation) {
                 _rx_state = UBX_RXMSG_IGNORE;
             }
 
@@ -644,8 +614,7 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
         // Fill Part 1 buffer
         p_buf[_rx_payload_index] = b;
 
-    } else {
-        if (_rx_payload_index == sizeof(ubx_payload_rx_mon_ver_part1_t)) {
+        if (_rx_payload_index + 1 == sizeof(ubx_payload_rx_mon_ver_part1_t)) {
             // Part 1 complete: decode Part 1 buffer and calculate hash for SW&HW version strings
             // The protocol specifies these as nul-terminated strings, but the terminator comes
             // from the device, so enforce it before anything walks the field.
@@ -684,6 +653,7 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
             }
         }
 
+    } else {
         // fill Part 2 buffer
         unsigned buf_index =
             (_rx_payload_index - sizeof(ubx_payload_rx_mon_ver_part1_t)) % sizeof(ubx_payload_rx_mon_ver_part2_t);
@@ -795,6 +765,7 @@ GPSDriverUBX::payloadRxDone()
                 _gps_position->altitude_ellipsoid_m = _buf.payload_rx_nav_pvt.height * 1e-3;
 
                 _gps_position->eph = static_cast<float>(_buf.payload_rx_nav_pvt.hAcc) * 1e-3f;
+                _gps_position->accuracy_timestamp = nowUs();
                 _gps_position->epv = static_cast<float>(_buf.payload_rx_nav_pvt.vAcc) * 1e-3f;
 
                 _got_posllh = true;
@@ -872,6 +843,7 @@ GPSDriverUBX::payloadRxDone()
             _gps_position->altitude_msl_m = _buf.payload_rx_nav_posllh.hMSL * 1e-3;
             _gps_position->altitude_ellipsoid_m = _buf.payload_rx_nav_posllh.height * 1e-3;
             _gps_position->eph = static_cast<float>(_buf.payload_rx_nav_posllh.hAcc) * 1e-3f;  // from mm to m
+            _gps_position->accuracy_timestamp = nowUs();
             _gps_position->epv = static_cast<float>(_buf.payload_rx_nav_posllh.vAcc) * 1e-3f;  // from mm to m
 
             _gps_position->timestamp = nowUs();
@@ -898,6 +870,7 @@ GPSDriverUBX::payloadRxDone()
                 _gps_position->eph = static_cast<float>(_buf.payload_rx_nav_hpposllh.hAcc) *
                                      1e-4f;  // Accuracy estimates, convert from 0.1 mm to m
                 _gps_position->epv = static_cast<float>(_buf.payload_rx_nav_hpposllh.vAcc) * 1e-4f;
+                _gps_position->accuracy_timestamp = nowUs();
 
                 _gps_position->timestamp = nowUs();
 
@@ -930,6 +903,7 @@ GPSDriverUBX::payloadRxDone()
         case UBX_MSG_NAV_DOP:
 
             _gps_position->hdop = _buf.payload_rx_nav_dop.hDOP * 0.01f;  // from cm to m
+            _gps_position->dop_timestamp = nowUs();
             _gps_position->vdop = _buf.payload_rx_nav_dop.vDOP * 0.01f;  // from cm to m
 
             ret = 1;
@@ -974,12 +948,14 @@ GPSDriverUBX::payloadRxDone()
             ubx_payload_rx_nav_svin_t& svin = _buf.payload_rx_nav_svin;
             _survey_in_stopped = svin.active == 0 && svin.valid == 0;
 
-            if (!_configured) {
+            if (!_decodeNavigation) {
                 ret = 1;
                 break;
             }
 
             GPSSurveyReport status{};
+            status.accuracyKnown = true;
+            status.altitudeDatum = GPSSurveyReport::AltitudeDatum::Ellipsoid;
             double ecef_x = (static_cast<double>(svin.meanX) + static_cast<double>(svin.meanXHP) * 0.01) * 0.01;
             double ecef_y = (static_cast<double>(svin.meanY) + static_cast<double>(svin.meanYHP) * 0.01) * 0.01;
             double ecef_z = (static_cast<double>(svin.meanZ) + static_cast<double>(svin.meanZHP) * 0.01) * 0.01;
@@ -1039,6 +1015,7 @@ GPSDriverUBX::payloadRxDone()
             }
 
             _gps_position->heading = heading_rad;
+            _gps_position->heading_timestamp = nowUs();
             _gps_position->heading_accuracy = heading_acc_rad;
 
             GPSRelativeReport gps_rel{};
@@ -1106,6 +1083,7 @@ GPSDriverUBX::payloadRxDone()
             }
 
             _gps_position->heading = heading_rad;
+            _gps_position->heading_timestamp = nowUs();
             _gps_position->heading_accuracy = heading_acc_rad;
 
             GPSRelativeReport gps_rel{};
@@ -1449,11 +1427,57 @@ uint32_t GPSDriverUBX::fnv1_32_str(uint8_t* str, uint32_t hval)
     return hval;
 }
 
-int GPSDriverUBX::consume(std::span<const uint8_t> bytes)
+int GPSDriverUBX::decodeValidatedPayload()
 {
-    int handled = 0;
-    for (const uint8_t byte : bytes) {
-        handled |= parseChar(byte);
+    if (_rx_payload_length > _framePayload.size()) {
+        return 0;
     }
-    return handled;
+    // Counted payloads must be structurally complete before any decoder state is updated.
+    if (_rx_msg == UBX_MSG_NAV_SAT || _rx_msg == UBX_MSG_NAV_SVINFO) {
+        if (_rx_payload_length < 8 ||
+            _rx_payload_length != 8 + 12 * _framePayload[_rx_msg == UBX_MSG_NAV_SAT ? 5 : 4]) {
+            return 0;
+        }
+        if (_rx_msg == UBX_MSG_NAV_SAT && _framePayload[4] != 1) {
+            return 0;
+        }
+    }
+    if (_rx_msg == UBX_MSG_MON_VER && (_rx_payload_length < 40 || (_rx_payload_length - 40) % 30 != 0)) {
+        return 0;
+    }
+    if (payloadRxInit() != 0 || _rx_state != UBX_RXMSG_HANDLE) {
+        return 0;
+    }
+    _rx_payload_index = 0;
+    if ((_rx_msg == UBX_MSG_NAV_SAT || _rx_msg == UBX_MSG_NAV_SVINFO) && _satellite_info) {
+        *_satellite_info = {};
+    }
+    for (unsigned index = 0; index < _rx_payload_length; ++index) {
+        const auto byte = _framePayload[index];
+        switch (_rx_msg) {
+            case UBX_MSG_NAV_SAT:
+                payloadRxAddNavSat(byte);
+                break;
+            case UBX_MSG_NAV_SVINFO:
+                payloadRxAddNavSvinfo(byte);
+                break;
+            case UBX_MSG_MON_VER:
+                payloadRxAddMonVer(byte);
+                break;
+            default:
+                payloadRxAdd(byte);
+                break;
+        }
+    }
+    const int updates = payloadRxDone();
+    // ACKs and ancillary metadata are useful protocol activity, not new position epochs.
+    if ((updates & 1) && _rx_msg != UBX_MSG_NAV_PVT && _rx_msg != UBX_MSG_NAV_POSLLH &&
+        _rx_msg != UBX_MSG_NAV_HPPOSLLH && _rx_msg != UBX_MSG_NAV_VELNED)
+        return (updates & ~1) | GPSDecodedBatch::PROTOCOL_ACTIVITY;
+    return updates;
+}
+
+int GPSDriverUBX::decodeByte(uint8_t byte)
+{
+    return parseChar(byte);
 }

@@ -54,9 +54,8 @@ static std::unique_ptr<GPSBaseProtocol> createReceiver(unsigned family, Scripted
 {
     switch (family) {
         case 0: {
-            GPSDriverUBX::Settings settings{};
             return std::make_unique<GPSDriverUBX>(makeGPSProtocolTestIO(ScriptedIO::callback, &io), &position,
-                                                  &satellites, settings);
+                                                  &satellites);
         }
         case 1:
             return std::make_unique<GPSDriverAshtech>(makeGPSProtocolTestIO(ScriptedIO::callback, &io), &position,

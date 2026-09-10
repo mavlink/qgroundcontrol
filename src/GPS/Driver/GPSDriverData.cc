@@ -25,7 +25,13 @@ std::optional<int> knownState(int value)
     return value > 0 ? std::optional<int>(value) : std::nullopt;
 }
 
-QGeoPositionInfo positionInfo(const GPSPositionReport& fix)
+bool freshMetadata(uint64_t timestamp, uint64_t receipt)
+{
+    // Zero preserves callers that supply a complete, uncached report without per-field receipts.
+    return timestamp == 0 || (timestamp <= receipt && receipt - timestamp <= 5000000);
+}
+
+QGeoPositionInfo positionInfo(const GPSPositionReport& fix, const GPSExecutionContext& context)
 {
     QGeoCoordinate coordinate(fix.latitude_deg, fix.longitude_deg);
     if (!coordinate.isValid()) {
@@ -41,16 +47,16 @@ QGeoPositionInfo positionInfo(const GPSPositionReport& fix)
     const QDateTime timestamp =
         fix.time_utc_usec > 0
             ? QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(fix.time_utc_usec / 1000), QTimeZone::UTC)
-            : QDateTime::currentDateTimeUtc();
+            : QDateTime::fromMSecsSinceEpoch((context.utcNowUs() + 500) / 1000, QTimeZone::UTC);
     if (!timestamp.isValid()) {
         qCDebug(GPSDriverDataLog) << "Rejected receiver fix: invalid UTC timestamp"
                                   << "timeUtcUs:" << fix.time_utc_usec;
     }
     QGeoPositionInfo position(coordinate, timestamp);
-    if (qIsFinite(fix.eph) && fix.eph > 0) {
+    if (freshMetadata(fix.accuracy_timestamp, context.nowUs()) && qIsFinite(fix.eph) && fix.eph > 0) {
         position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, fix.eph);
     }
-    if (altitudeValid && qIsFinite(fix.epv) && fix.epv > 0) {
+    if (freshMetadata(fix.accuracy_timestamp, context.nowUs()) && altitudeValid && qIsFinite(fix.epv) && fix.epv > 0) {
         position.setAttribute(QGeoPositionInfo::VerticalAccuracy, fix.epv);
     }
     if (fix.vel_ned_valid) {
@@ -88,16 +94,19 @@ void GPSDriverData::initialize(GPSPositionReport& fix)
     fix.satellites_used = std::numeric_limits<uint8_t>::max();
 }
 
-GPSObservation GPSDriverData::position(const GPSPositionReport& fix)
+GPSObservation GPSDriverData::position(const GPSPositionReport& fix, const GPSExecutionContext& context)
 {
     GPSObservation result;
-    result.position = positionInfo(fix);
+    result.position = positionInfo(fix, context);
     result.receiverFixValid =
         fix.fix_type >= GPSPositionReport::FIX_TYPE_2D && fix.fix_type <= GPSPositionReport::FIX_TYPE_RTK_FIXED;
     result.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
-    result.monotonicTimestampUs = fix.timestamp != 0 ? fix.timestamp : GPSObservation::monotonicNowUs();
-    const qint64 age = result.ageMilliseconds();
-    result.receivedAt = age >= 0 ? QDateTime::currentDateTimeUtc().addMSecs(-age) : QDateTime();
+    result.monotonicTimestampUs = fix.timestamp != 0 ? fix.timestamp : context.nowUs();
+    const auto now = context.nowUs();
+    const qint64 age = now >= result.monotonicTimestampUs ? (now - result.monotonicTimestampUs) / 1000 : -1;
+    result.receivedAt =
+        age >= 0 ? QDateTime::fromMSecsSinceEpoch((context.utcNowUs() + 500) / 1000, QTimeZone::UTC).addMSecs(-age)
+                 : QDateTime();
     switch (fix.fix_type) {
         case GPSPositionReport::FIX_TYPE_NONE:
             result.fixQuality = GPSObservation::FixQuality::NoFix;
@@ -129,13 +138,18 @@ GPSObservation GPSDriverData::position(const GPSPositionReport& fix)
     if (fix.vel_ned_valid && qIsFinite(fix.s_variance_m_s) && fix.s_variance_m_s >= 0) {
         result.speedAccuracyMetersPerSecond = fix.s_variance_m_s;
     }
-    result.horizontalDop = positive(fix.hdop);
-    result.verticalDop = positive(fix.vdop);
+    result.dopTimestampUs = fix.dop_timestamp;
+    result.headingTimestampUs = fix.heading_timestamp;
+    result.accuracyTimestampUs = fix.accuracy_timestamp;
+    if (freshMetadata(fix.dop_timestamp, now)) {
+        result.horizontalDop = positive(fix.hdop);
+        result.verticalDop = positive(fix.vdop);
+    }
     if (fix.fix_type >= GPSPositionReport::FIX_TYPE_3D && fix.fix_type <= GPSPositionReport::FIX_TYPE_RTK_FIXED &&
         qIsFinite(fix.altitude_ellipsoid_m)) {
         result.altitudeEllipsoidMeters = fix.altitude_ellipsoid_m;
     }
-    if (qIsFinite(fix.heading)) {
+    if (freshMetadata(fix.heading_timestamp, now) && qIsFinite(fix.heading)) {
         double degrees = std::fmod(qRadiansToDegrees(static_cast<double>(fix.heading)), 360.0);
         result.trueHeadingDegrees = degrees < 0 ? degrees + 360.0 : degrees;
         if (qIsFinite(fix.heading_accuracy) && fix.heading_accuracy >= 0) {
@@ -161,14 +175,13 @@ GPSObservation GPSDriverData::position(const GPSPositionReport& fix)
     return result;
 }
 
-GPSSatelliteObservation GPSDriverData::satellites(const GPSSatelliteReport& report)
+GPSSatelliteObservation GPSDriverData::satellites(const GPSSatelliteReport& report, const GPSExecutionContext& context)
 {
     GPSSatelliteObservation result;
-    result.monotonicTimestampUs = report.timestamp != 0 ? report.timestamp : GPSObservation::monotonicNowUs();
-    if (report.usedCount) {
+    result.monotonicTimestampUs = report.timestamp != 0 ? report.timestamp : context.nowUs();
+    if (report.constellation) {
         result.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
-        result.provenance.append(
-            {GPSSatellite::Constellation::Unknown, 0, result.monotonicTimestampUs, report.usedCount});
+        result.provenance.append({*report.constellation, result.monotonicTimestampUs, 0, std::nullopt});
     }
     const auto count = std::min<size_t>(report.count, report.entries.size());
     for (size_t index = 0; index < count; ++index) {
@@ -189,10 +202,21 @@ GPSSatelliteObservation GPSDriverData::satellites(const GPSSatelliteReport& repo
     return result;
 }
 
-GPSRelativeObservation GPSDriverData::relativePosition(const GPSRelativeReport& report)
+GPSSatelliteObservation GPSDriverData::satellites(const GPSSatelliteUsageReport& report,
+                                                  const GPSExecutionContext& context)
+{
+    GPSSatelliteObservation result;
+    result.monotonicTimestampUs = report.timestamp ? report.timestamp : context.nowUs();
+    result.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
+    result.provenance.append({GPSConstellation::Unknown, 0, result.monotonicTimestampUs, report.usedCount});
+    return result;
+}
+
+GPSRelativeObservation GPSDriverData::relativePosition(const GPSRelativeReport& report,
+                                                       const GPSExecutionContext& context)
 {
     GPSRelativeObservation result;
-    result.monotonicTimestampUs = report.timestamp != 0 ? report.timestamp : GPSObservation::monotonicNowUs();
+    result.monotonicTimestampUs = report.timestamp != 0 ? report.timestamp : context.nowUs();
     result.sampleTimestampUs = report.timestamp_sample;
     result.receiverTimeUs = report.time_utc_usec;
     result.referenceStationId = report.reference_station_id;

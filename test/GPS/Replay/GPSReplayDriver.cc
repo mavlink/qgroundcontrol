@@ -49,8 +49,6 @@ std::unique_ptr<GPSDriver> createGPSReplayDriver(GPSReplayTransport& transport, 
             error = QStringLiteral("Unknown receiver driver");
             return {};
     }
-    GPSDriverClock clock;
-    clock.nowUs = [&transport] { return transport.clock().nowUs(); };
-    clock.wait = [&transport](std::chrono::microseconds duration) { transport.clock().advanceBy(duration.count()); };
-    return std::make_unique<GPSDriver>(type, transport, metadata.receiver, std::move(sinks), std::move(clock));
+    return std::make_unique<GPSDriver>(type, transport, metadata.receiver, std::move(sinks),
+                                       transport.executionContext());
 }

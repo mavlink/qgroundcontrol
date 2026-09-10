@@ -19,6 +19,8 @@ QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Driver.Drivers")
 struct GPSDriver::Private
 {
     std::unique_ptr<GPSDriverBackend> driver;
+    bool positionUpdated = false;
+    bool satellitesUpdated = false;
     GPSPositionReport sensorGps{};
     GPSSatelliteReport satelliteInfo{};
     std::optional<GPSReadResult> readFailure;
@@ -61,7 +63,7 @@ void rejectUnsupportedSettings(GPSConfigurationReport& report, const GPSReceiver
 }  // namespace
 
 GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks,
-                     GPSDriverClock clock)
+                     GPSExecutionContext clock)
     : _clock(std::move(clock))
     , _type(type)
     , _transport(transport)
@@ -94,7 +96,7 @@ bool GPSDriver::configure()
     _capabilities = GPSReceiverCapabilities::forType(_type);
     _configurationResult = {};
     _configurationReport = requestedSettings(_config, _capabilities);
-    if (_transport.isCancelled()) {
+    if ((_transport.isCancelled() || _clock.cancelled())) {
         _configurationResult.status = ConfigurationStatus::Cancelled;
         return false;
     }
@@ -128,8 +130,9 @@ bool GPSDriver::configure()
     _private->driver->completeConfigurationReport(_config, result == 0 && capabilityError.isEmpty(),
                                                   _configurationReport);
     if (result != 0 || _transport.fatalError() || _private->driver->ioError() || _private->readFailure ||
-        _private->writeFailure || !capabilityError.isEmpty() || _transport.isCancelled()) {
-        if (_transport.isCancelled() || _private->driver->ioError() == GPSProtocol::ReadCancelled) {
+        _private->writeFailure || !capabilityError.isEmpty() || (_transport.isCancelled() || _clock.cancelled())) {
+        if ((_transport.isCancelled() || _clock.cancelled()) ||
+            _private->driver->ioError() == GPSProtocol::ReadCancelled) {
             _configurationResult = {ConfigurationStatus::Cancelled, {}};
         } else if (_transport.fatalError() || _private->driver->ioError() || _private->readFailure ||
                    _private->writeFailure) {
@@ -176,8 +179,8 @@ void GPSDriver::_updateCapabilities()
 
 bool GPSDriver::readyForCorrections() const
 {
-    return !_transport.isCancelled() && !_transport.fatalError() && _private->driver && !_private->driver->ioError() &&
-           _configurationResult.status == ConfigurationStatus::Ready &&
+    return !(_transport.isCancelled() || _clock.cancelled()) && !_transport.fatalError() && _private->driver &&
+           !_private->driver->ioError() && _configurationResult.status == ConfigurationStatus::Ready &&
            _config.role == GPSReceiverConfig::Role::Position &&
            _capabilities.correctionInput == GPSReceiverCapabilities::Support::Supported &&
            _private->driver->receiverReady();
@@ -185,7 +188,15 @@ bool GPSDriver::readyForCorrections() const
 
 GPSDriver::CorrectionResult GPSDriver::injectCorrections(const QByteArray& data, QDeadlineTimer deadline)
 {
-    if (_transport.isCancelled()) {
+    return injectCorrections(
+        data, GPSDeadline{deadline.isForever()
+                              ? UINT64_MAX
+                              : _clock.nowUs() + uint64_t(std::max<qint64>(0, deadline.remainingTime())) * 1000});
+}
+
+GPSDriver::CorrectionResult GPSDriver::injectCorrections(const QByteArray& data, GPSDeadline deadline)
+{
+    if ((_transport.isCancelled() || _clock.cancelled())) {
         return {CorrectionStatus::Cancelled};
     }
     if (data.isEmpty() || data.size() > 1029) {
@@ -201,12 +212,10 @@ GPSDriver::CorrectionResult GPSDriver::injectCorrections(const QByteArray& data,
     if (!readyForCorrections()) {
         return {CorrectionStatus::NotReady};
     }
-    const QDeadlineTimer transportDeadline(_transport.correctionWriteTimeout(static_cast<int>(data.size())));
-    if (deadline.remainingTime() < 0 || transportDeadline.remainingTime() < deadline.remainingTime()) {
-        deadline = transportDeadline;
-    }
-    const auto result = _transport.writeBounded(reinterpret_cast<const uint8_t*>(data.constData()),
-                                                static_cast<int>(data.size()), deadline);
+    const auto budget = _transport.correctionWriteTimeout(static_cast<int>(data.size()));
+    deadline.untilUs = std::min(deadline.untilUs, _clock.nowUs() + uint64_t(budget.count()) * 1000);
+    const auto result = _transport.writeUntil(reinterpret_cast<const uint8_t*>(data.constData()),
+                                              static_cast<int>(data.size()), deadline, _clock);
     CorrectionStatus status = CorrectionStatus::TransportError;
     switch (result.status) {
         case GPSTransport::WriteStatus::Completed:
@@ -231,14 +240,17 @@ GPSDriver::CorrectionResult GPSDriver::injectCorrections(const QByteArray& data,
 
 GPSDriver::ReceiveResult GPSDriver::receiveResult(unsigned timeoutMs)
 {
-    if (_transport.isCancelled() || (_private->driver && _private->driver->ioError() == GPSProtocol::ReadCancelled)) {
+    if ((_transport.isCancelled() || _clock.cancelled()) ||
+        (_private->driver && _private->driver->ioError() == GPSProtocol::ReadCancelled)) {
         return {ReceiveStatus::Cancelled, false, false, _private->readFailure};
     }
     if (!_private->driver) {
         return {};
     }
+    _private->positionUpdated = false;
+    _private->satellitesUpdated = false;
     const int result = _private->driver->receive(timeoutMs);
-    if (_transport.isCancelled() || _private->driver->ioError() == GPSProtocol::ReadCancelled) {
+    if ((_transport.isCancelled() || _clock.cancelled()) || _private->driver->ioError() == GPSProtocol::ReadCancelled) {
         return {ReceiveStatus::Cancelled, false, false, _private->readFailure};
     }
     if (_transport.fatalError() || _private->driver->ioError() || _private->readFailure) {
@@ -249,11 +261,7 @@ GPSDriver::ReceiveResult GPSDriver::receiveResult(unsigned timeoutMs)
     if (result <= 0) {
         return {ReceiveStatus::Idle};
     }
-    if ((result & 1) && _sinks.onPosition)
-        _sinks.onPosition(GPSDriverData::position(_private->sensorGps));
-    if ((result & 2) && _sinks.onSatelliteInfo)
-        _sinks.onSatelliteInfo(GPSDriverData::satellites(_private->satelliteInfo));
-    return {ReceiveStatus::Data, (result & 1) != 0, (result & 2) != 0};
+    return {ReceiveStatus::Data, _private->positionUpdated, _private->satellitesUpdated};
 }
 
 GPSProtocolIO GPSDriver::_protocolIO()
@@ -261,21 +269,20 @@ GPSProtocolIO GPSDriver::_protocolIO()
     GPSProtocolIO io;
     io.nowUs = _clock.nowUs;
     io.wait = [this](std::chrono::microseconds duration) {
-        while (duration.count() > 0 && !_transport.isCancelled()) {
+        while (duration.count() > 0 && !(_transport.isCancelled() || _clock.cancelled())) {
             const auto slice = std::min(duration, std::chrono::microseconds(50000));
             _clock.wait(slice);
             duration -= slice;
         }
-        return !_transport.isCancelled();
+        return !(_transport.isCancelled() || _clock.cancelled());
     };
-    io.read = [this](std::span<uint8_t> bytes, GPSProtocolDeadline deadline) -> GPSProtocolReadResult {
-        if (_transport.isCancelled())
+    io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+        if ((_transport.isCancelled() || _clock.cancelled()))
             return {GPSReadStatus::Cancelled};
         if (_private->readFailure || _private->writeFailure)
             return {GPSReadStatus::Error};
-        const auto result = _transport.read(bytes.data(), static_cast<int>(bytes.size()),
-                                            deadline.remainingMilliseconds(_clock.nowUs()));
-        if (_transport.isCancelled() || result.status == GPSReadStatus::Cancelled) {
+        const auto result = _transport.readUntil(bytes.data(), static_cast<int>(bytes.size()), deadline, _clock);
+        if ((_transport.isCancelled() || _clock.cancelled()) || result.status == GPSReadStatus::Cancelled) {
             _private->readFailure = GPSReadResult{GPSReadStatus::Cancelled, 0, result.detail};
             return {GPSReadStatus::Cancelled};
         }
@@ -283,21 +290,21 @@ GPSProtocolIO GPSDriver::_protocolIO()
             _private->readFailure = result;
         return {result.status, result.bytesRead};
     };
-    io.write = [this](std::span<const uint8_t> bytes, GPSProtocolDeadline deadline) -> GPSProtocolWriteResult {
-        if (_transport.isCancelled())
+    io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolWriteResult {
+        if ((_transport.isCancelled() || _clock.cancelled()))
             return {GPSWriteStatus::Cancelled};
         if (_private->readFailure || _private->writeFailure)
             return {GPSWriteStatus::Error};
         const auto budget = std::min(std::chrono::milliseconds(deadline.remainingMilliseconds(_clock.nowUs())),
                                      _transport.configurationWriteTimeout());
-        const auto result =
-            _transport.writeBounded(bytes.data(), static_cast<int>(bytes.size()), QDeadlineTimer(budget));
+        deadline.untilUs = std::min(deadline.untilUs, _clock.nowUs() + uint64_t(budget.count()) * 1000);
+        const auto result = _transport.writeUntil(bytes.data(), static_cast<int>(bytes.size()), deadline, _clock);
         if (result.status != GPSWriteStatus::Completed || result.writtenBytes != static_cast<int>(bytes.size()))
             _private->writeFailure = result;
         return {result.status, result.acceptedBytes, result.writtenBytes, result.uncertainBytes};
     };
     io.setBaudrate = [this](unsigned baudrate) {
-        if (_transport.isCancelled())
+        if ((_transport.isCancelled() || _clock.cancelled()))
             return GPSBaudStatus::Cancelled;
         if (_private->readFailure || _private->writeFailure || _transport.fatalError())
             return GPSBaudStatus::Error;
@@ -312,7 +319,7 @@ GPSProtocolIO GPSDriver::_protocolIO()
     };
     io.relativePosition = [this](const GPSRelativeReport& report) {
         if (_sinks.onRelativePosition)
-            _sinks.onRelativePosition(GPSDriverData::relativePosition(report));
+            _sinks.onRelativePosition(GPSDriverData::relativePosition(report, _clock));
     };
     io.survey = [this](const GPSSurveyReport& status) {
         if (_config.role != GPSReceiverConfig::Role::RTKBase || !_sinks.onSurveyIn)
@@ -321,15 +328,42 @@ GPSProtocolIO GPSDriver::_protocolIO()
         out.latitude = status.latitude;
         out.longitude = status.longitude;
         out.altitude = status.altitude;
-        if (_type == GPSType::u_blox || _type == GPSType::septentrio || status.mean_accuracy != 0)
+        if (status.accuracyKnown || status.mean_accuracy != 0)
             out.meanAccuracyMM = status.mean_accuracy;
-        if (_type == GPSType::u_blox || _type == GPSType::septentrio)
+        if (status.altitudeDatum == GPSSurveyReport::AltitudeDatum::Ellipsoid)
             out.altitudeDatum = GPSObservation::AltitudeDatum::Ellipsoid;
-        out.monotonicTimestampUs = _clock.nowUs();
+        else if (status.altitudeDatum == GPSSurveyReport::AltitudeDatum::MeanSeaLevel)
+            out.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+        out.monotonicTimestampUs = status.timestamp ? status.timestamp : _clock.nowUs();
         out.durationSecs = status.duration;
         out.valid = status.flags & 1;
         out.active = status.flags & 2;
         _sinks.onSurveyIn(out);
+    };
+    io.decoded = [this, rtcm = io.rtcm, relative = io.relativePosition, survey = io.survey](GPSDecodedBatch batch) {
+        for (const auto& event : batch.events) {
+            std::visit(
+                [&](const auto& report) {
+                    using Report = std::decay_t<decltype(report)>;
+                    if constexpr (std::is_same_v<Report, GPSPositionReport>) {
+                        _private->positionUpdated = true;
+                        if (_sinks.onPosition)
+                            _sinks.onPosition(GPSDriverData::position(report, _clock));
+                    } else if constexpr (std::is_same_v<Report, GPSSatelliteReport> ||
+                                         std::is_same_v<Report, GPSSatelliteUsageReport>) {
+                        _private->satellitesUpdated = true;
+                        if (_sinks.onSatelliteInfo)
+                            _sinks.onSatelliteInfo(GPSDriverData::satellites(report, _clock));
+                    } else if constexpr (std::is_same_v<Report, GPSRTCMReport>) {
+                        rtcm({report.bytes.data(), report.size});
+                    } else if constexpr (std::is_same_v<Report, GPSRelativeReport>) {
+                        relative(report);
+                    } else if constexpr (std::is_same_v<Report, GPSSurveyReport>) {
+                        survey(report);
+                    }
+                },
+                event);
+        }
     };
     return io;
 }

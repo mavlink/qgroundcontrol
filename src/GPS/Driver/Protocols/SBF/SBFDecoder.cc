@@ -226,12 +226,7 @@ int GPSDriverSBF::payloadRxDone()
                 _gps_position->satellites_used = _buf.payload_pvt_geodetic.nr_sv;
 
                 if (_satellite_info) {
-                    // Only fill in the satellite count for now (we could use the ChannelStatus message for the
-                    // other data, but it's really large: >800B)
-                    _satellite_info->timestamp = nowUs();
-                    _satellite_info->count = 0;
-                    _satellite_info->usedCount = _gps_position->satellites_used;
-                    ret |= 2;
+                    publishSatelliteUsage(_gps_position->satellites_used);
                 }
 
             } else {
@@ -247,6 +242,7 @@ int GPSDriverSBF::payloadRxDone()
             /* H and V accuracy are reported in 2DRMS, but based off the uBlox reporting we expect RMS.
              * Devide by 100 from cm to m and in addition divide by 2 to get RMS. */
             _gps_position->eph = static_cast<float>(_buf.payload_pvt_geodetic.h_accuracy) / 200.0f;
+            _gps_position->accuracy_timestamp = nowUs();
             _gps_position->epv = static_cast<float>(_buf.payload_pvt_geodetic.v_accuracy) / 200.0f;
 
             _gps_position->vel_n_m_s = static_cast<float>(_buf.payload_pvt_geodetic.vn);
@@ -287,6 +283,8 @@ int GPSDriverSBF::payloadRxDone()
             // In RTCM mode, PVTGeodetic is used to get base station survey-in
             if (_output_mode == OutputMode::RTCM) {
                 GPSSurveyReport status{};
+                status.accuracyKnown = true;
+                status.altitudeDatum = GPSSurveyReport::AltitudeDatum::Ellipsoid;
                 status.latitude = _gps_position->latitude_deg;
                 status.longitude = _gps_position->longitude_deg;
                 status.altitude = _gps_position->altitude_ellipsoid_m;
@@ -324,6 +322,7 @@ int GPSDriverSBF::payloadRxDone()
             SBF_TRACE_RXMSG("Rx DOP");
             _msg_status |= 4;
             _gps_position->hdop = _buf.payload_dop.hDOP * 0.01f;
+            _gps_position->dop_timestamp = nowUs();
             _gps_position->vdop = _buf.payload_dop.vDOP * 0.01f;
             //
             break;
@@ -345,6 +344,7 @@ int GPSDriverSBF::payloadRxDone()
                     }
 
                     _gps_position->heading = heading;
+                    _gps_position->heading_timestamp = nowUs();
                     //
                     //
 
@@ -406,11 +406,7 @@ void GPSDriverSBF::decodeInit()
     _rx_payload_index = 0;
 }
 
-int GPSDriverSBF::consume(std::span<const uint8_t> bytes)
+int GPSDriverSBF::decodeByte(uint8_t byte)
 {
-    int handled = 0;
-    for (const uint8_t byte : bytes) {
-        handled |= parseChar(byte);
-    }
-    return handled;
+    return parseChar(byte);
 }

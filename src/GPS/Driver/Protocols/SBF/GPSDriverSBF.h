@@ -60,7 +60,11 @@ public:
     virtual ~GPSDriverSBF();
 
     int receive(unsigned timeout) override;
-    int consume(std::span<const uint8_t> bytes) override;
+    int decodeByte(uint8_t byte) override;
+
+    const GPSPositionReport* positionReport() const override { return _gps_position; }
+
+    const GPSSatelliteReport* satelliteReport() const override { return _satellite_info; }
 
     int configure(unsigned& baudrate, const GPSConfig& config) override;
 

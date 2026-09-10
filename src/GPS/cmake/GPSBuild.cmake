@@ -14,6 +14,8 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/Contracts/GPSReceiverConfig.h"
             "${gps_root}/Contracts/GPSBaseStationConfig.h"
             "${gps_root}/Contracts/GPSIOStatus.h"
+            "${gps_root}/Contracts/GPSExecutionContext.h"
+            "${gps_root}/Contracts/GPSDeadline.h"
             "${gps_root}/Contracts/GPSReceiverConfig.cc"
             "${gps_root}/Contracts/GPSReceiverSetting.h"
             "${gps_root}/Contracts/GPSReceiverCapabilities.h"
@@ -35,6 +37,7 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/Core/GPSObservation.cc"
             "${gps_root}/Core/GPSObservation.h"
             "${gps_root}/Core/GPSConstellation.h"
+            "${gps_root}/Core/GPSSatelliteData.h"
             "${gps_root}/Core/GPSBaseReference.h"
             "${gps_root}/Core/GPSIntegrityObservation.h"
             "${gps_root}/Core/GPSReadTimestamp.h"
@@ -57,6 +60,9 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/NMEA/NMEAUtils.cc"
             "${gps_root}/NMEA/NMEAUtils.h"
             "${gps_root}/NMEA/NMEAFields.h"
+            "${gps_root}/NMEA/NMEASentence.h"
+            "${gps_root}/NMEA/NMEAConstellation.h"
+            "${gps_root}/NMEA/NMEASatelliteEpoch.h"
         )
     elseif(component STREQUAL "NTRIPSession")
         set(sources
@@ -103,8 +109,11 @@ function(qgc_gps_component_sources output component)
         set(sources
             "${gps_root}/Driver/GPSDriver.cc"
             "${gps_root}/Driver/GPSDriver.h"
-            "${gps_root}/Driver/GPSDriverClock.h"
             "${gps_root}/Driver/GPSProtocolIO.h"
+            "${gps_root}/Driver/GPSNMEAReport.h"
+            "${gps_root}/Driver/GPSCommandTransaction.h"
+            "${gps_root}/Driver/GPSDecodedBatch.h"
+            "${gps_root}/Driver/GPSSurveyReport.h"
             "${gps_root}/Driver/GPSDriverBackend.cc"
             "${gps_root}/Driver/GPSDriverBackend.h"
             "${gps_root}/Driver/GPSDriverData.cc"

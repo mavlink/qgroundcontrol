@@ -32,6 +32,7 @@
  ****************************************************************************/
 
 #include "AshtechPrivate.h"
+#include "GPSNMEAReport.h"
 
 int GPSDriverAshtech::handleMessage(int len)
 {
@@ -130,145 +131,11 @@ int GPSDriverAshtech::handleMessage(int len)
     }
 
     else if ((memcmp(_rx_buffer + 3, "GGA,", 3) == 0) && (uiCalcComma == 14) && !_got_pashr_pos_message) {
-        /*
-          Time, position, and fix related data
-          An example of the GBS message string is:
-
-          $GPGGA,172814.0,3723.46587704,N,12202.26957864,W,2,6,1.2,18.893,M,-25.669,M,2.0,0031*4F
-
-          Note - The data string exceeds the ASHTECH standard length.
-          GGA message fields
-          Field   Meaning
-          0   Message ID $GPGGA
-          1   UTC of position fix
-          2   Latitude
-          3   Direction of latitude:
-          N: North
-          S: South
-          4   Longitude
-          5   Direction of longitude:
-          E: East
-          W: West
-          6   GPS Quality indicator:
-          0: Fix not valid
-          1: GPS fix
-          2: Differential GPS fix, OmniSTAR VBS
-          4: Real-Time Kinematic, fixed integers
-          5: Real-Time Kinematic, float integers, OmniSTAR XP/HP or Location RTK
-          7   Number of SVs in use, range from 00 through to 24+
-          8   HDOP
-          9   Orthometric height (MSL reference)
-          10  M: unit of measure for orthometric height is meters
-          11  Geoid separation
-          12  M: geoid separation measured in meters
-          13  Age of differential GPS data record, Type 1 or Type 9. Null field when DGPS is not used.
-          14  Reference station ID, range 0000-4095. A null field when any reference station ID is selected and no
-          corrections are received1. 15 The checksum data, always begins with * Note - If a user-defined geoid model, or
-          an inclined
-        */
-        double ashtech_time = 0.0, lat = 0.0, lon = 0.0, alt = 0.0;
-        int num_of_sv = 0, fix_quality = 0;
-        double hdop = 99.9;
-        char ns = '?', ew = '?';
-
-        ASH_UNUSED(ashtech_time);
-        ASH_UNUSED(num_of_sv);
-        ASH_UNUSED(hdop);
-
-        bufptr.read(ashtech_time);
-
-        if (!bufptr.valid())
+        const auto parsed = NMEA::sentence({reinterpret_cast<const char*>(_rx_buffer), static_cast<size_t>(len)});
+        const auto fix = parsed ? NMEA::gga(*parsed) : std::nullopt;
+        if (!fix)
             return 0;
-
-        if (!bufptr.read(lat))
-            return 0;
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(ns);
-
-        if (!bufptr.valid())
-            return 0;
-
-        if (!bufptr.read(lon))
-            return 0;
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(ew);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(fix_quality);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(num_of_sv);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(hdop);
-
-        if (!bufptr.valid())
-            return 0;
-
-        if (!bufptr.read(alt))
-            alt = NAN;
-
-        if (!bufptr.valid())
-            return 0;
-
-        if (fix_quality < 0 || fix_quality > 23 || num_of_sv < 0 || num_of_sv > 255 || lat < 0 || lat > 9000 ||
-            lon < 0 || lon > 18000 || (ns != 'N' && ns != 'S') || (ew != 'E' && ew != 'W')) {
-            return 0;
-        }
-        if (ns == 'S') {
-            lat = -lat;
-        }
-
-        if (ew == 'W') {
-            lon = -lon;
-        }
-
-        /* convert from degrees, minutes and seconds to degrees * 1e7 */
-        _gps_position->latitude_deg = nmeaToDegrees(lat);
-        _gps_position->longitude_deg = nmeaToDegrees(lon);
-        _gps_position->altitude_msl_m = alt;
-
-        if (fix_quality <= 0) {
-            _gps_position->fix_type = 0;
-
-        } else {
-            /*
-             * in this NMEA message float integers (value 5) mode has higher value than fixed integers (value 4),
-             * whereas it provides lower quality, and since value 3 is not being used, I "moved" value 5 to 3 to add it
-             * to _gps_position->fix_type
-             */
-            if (fix_quality == 5) {
-                fix_quality = 3;
-            }
-
-            /*
-             * fix quality 1 means just a normal 3D fix, so I'm subtracting 1 here. This way we'll have 3 for auto, 4
-             * for DGPS, 5 for floats, 6 for fixed.
-             */
-            _gps_position->fix_type = 3 + fix_quality - 1;
-        }
-
-        _gps_position->timestamp = nowUs();
-
-        _gps_position->vel_m_s = 0;   /**< GPS ground speed (m/s) */
-        _gps_position->vel_n_m_s = 0; /**< GPS ground speed in m/s */
-        _gps_position->vel_e_m_s = 0; /**< GPS ground speed in m/s */
-        _gps_position->vel_d_m_s = 0; /**< GPS ground speed in m/s */
-        _gps_position->cog_rad = 0; /**< Course over ground (NOT heading, but direction of movement) in rad, -PI..PI */
-        _gps_position->vel_ned_valid = true; /**< Flag to indicate if NED speed is valid */
-        _gps_position->c_variance_rad = 0.1f;
+        applyNMEAGGA(*_gps_position, *fix, nowUs());
         ret = 1;
 
     } else if (memcmp(_rx_buffer, "$GPHDT,", 7) == 0 && uiCalcComma == 2) {
@@ -291,6 +158,7 @@ int GPSDriverAshtech::handleMessage(int len)
             }
 
             _gps_position->heading = heading;
+            _gps_position->heading_timestamp = nowUs();
         }
 
     } else if ((memcmp(_rx_buffer, "$PASHR,POS,", 11) == 0) && (uiCalcComma == 18)) {
@@ -438,6 +306,7 @@ int GPSDriverAshtech::handleMessage(int len)
         _gps_position->longitude_deg = nmeaToDegrees(lon);
         _gps_position->altitude_msl_m = alt;
         _gps_position->hdop = static_cast<float>(hdop);
+        _gps_position->dop_timestamp = nowUs();
         _gps_position->vdop = static_cast<float>(vdop);
 
         if (coordinatesFound < 3) {
@@ -484,183 +353,34 @@ int GPSDriverAshtech::handleMessage(int len)
         ret = 1;
 
     } else if ((memcmp(_rx_buffer + 3, "GST,", 3) == 0) && (uiCalcComma == 8)) {
-        /*
-          Position error statistics
-          An example of the GST message string is:
-
-          $GPGST,172814.0,0.006,0.023,0.020,273.6,0.023,0.020,0.031*6A
-
-          The Talker ID ($--) will vary depending on the satellite system used for the position solution:
-
-          $GP - GPS only
-          $GL - GLONASS only
-          $GN - Combined
-          GST message fields
-          Field   Meaning
-          0   Message ID $GPGST
-          1   UTC of position fix
-          2   RMS value of the pseudorange residuals; includes carrier phase residuals during periods of RTK (float) and
-          RTK (fixed) processing 3   Error ellipse semi-major axis 1 sigma error, in meters 4   Error ellipse semi-minor
-          axis 1 sigma error, in meters 5   Error ellipse orientation, degrees from true north 6   Latitude 1 sigma
-          error, in meters 7   Longitude 1 sigma error, in meters 8   Height 1 sigma error, in meters 9   The checksum
-          data, always begins with *
-        */
-        double ashtech_time = 0.0, lat_err = 0.0, lon_err = 0.0, alt_err = 0.0;
-        double min_err = 0.0, maj_err = 0.0, deg_from_north = 0.0, rms_err = 0.0;
-
-        ASH_UNUSED(ashtech_time);
-        ASH_UNUSED(min_err);
-        ASH_UNUSED(maj_err);
-        ASH_UNUSED(deg_from_north);
-        ASH_UNUSED(rms_err);
-
-        bufptr.read(ashtech_time);
-
-        if (!bufptr.valid())
+        const auto parsed = NMEA::sentence({reinterpret_cast<const char*>(_rx_buffer), static_cast<size_t>(len)});
+        const auto error = parsed ? NMEA::gst(*parsed) : std::nullopt;
+        if (!error)
             return 0;
-
-        bufptr.read(rms_err);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(maj_err);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(min_err);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(deg_from_north);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(lat_err);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(lon_err);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(alt_err);
-
-        if (!bufptr.valid())
-            return 0;
-
-        _gps_position->eph = sqrtf(static_cast<float>(lat_err) * static_cast<float>(lat_err) +
-                                   static_cast<float>(lon_err) * static_cast<float>(lon_err));
-        _gps_position->epv = static_cast<float>(alt_err);
-
+        _gps_position->eph = error->horizontalAccuracy;
+        _gps_position->accuracy_timestamp = nowUs();
+        _gps_position->epv = error->verticalAccuracy;
         _gps_position->s_variance_m_s = NAN;
 
     } else if ((memcmp(_rx_buffer + 3, "GSV,", 4) == 0) && (uiCalcComma >= 3)) {
-        /*
-          The GSV message string identifies the number of SVs in view, the PRN numbers, elevations, azimuths, and SNR
-          values. An example of the GSV message string is:
-
-          $GPGSV,4,1,13,02,02,213,,03,-3,000,,11,00,121,,14,13,172,05*67
-
-          GSV message fields
-          Field   Meaning
-          0   Message ID $GPGSV
-          1   Total number of messages of this type in this cycle
-          2   Message number
-          3   Total number of SVs visible
-          4   SV PRN number
-          5   Elevation, in degrees, 90 maximum
-          6   Azimuth, degrees from True North, 000 through 359
-          7   SNR, 00 through 99 dB (null when not tracking)
-          8-11    Information about second SV, same format as fields 4 through 7
-          12-15   Information about third SV, same format as fields 4 through 7
-          16-19   Information about fourth SV, same format as fields 4 through 7
-          20  The checksum data, always begins with *
-        */
-        /*
-         * currently process only gps, because do not know what
-         * Global satellite ID I should use for non GPS sats
-         */
-
-        if (memcmp(_rx_buffer, "$GP", 3) != 0) {
+        const auto parsed = NMEA::sentence({reinterpret_cast<const char*>(_rx_buffer), static_cast<size_t>(len)});
+        if (!parsed || !_satellite_info)
             return 0;
+        const auto page = NMEA::gsv(*parsed);
+        if (!page)
+            return 0;
+        auto update = _satelliteAssembler.ingest(*parsed, nowUs());
+        if (page->message == page->messages) {
+            auto completed = _satelliteAssembler.flush();
+            update.completed.insert(update.completed.end(), completed.begin(), completed.end());
         }
-
-        int all_msg_num = 0, this_msg_num = 0, tot_sv_visible = 0;
-
-        bufptr.read(all_msg_num);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(this_msg_num);
-
-        if (!bufptr.valid())
-            return 0;
-
-        bufptr.read(tot_sv_visible);
-
-        if (!bufptr.valid())
-            return 0;
-
-        if ((this_msg_num < 1) || (this_msg_num > all_msg_num) || (tot_sv_visible < 0)) {
-            return 0;
-        }
-
-        const uint64_t page_start = static_cast<uint64_t>(this_msg_num - 1) * 4;
-
-        if (page_start > static_cast<uint64_t>(tot_sv_visible)) {
-            return 0;
-        }
-
-        if (this_msg_num == 1 && _satellite_info) {
+        for (const auto& system : update.completed) {
             *_satellite_info = {};
-        }
-
-        const int remaining_satellites = tot_sv_visible - static_cast<int>(page_start);
-        const int satellites_in_message = (uiCalcComma - 3) / 4;
-        const int satellites_in_page =
-            remaining_satellites < satellites_in_message ? remaining_satellites : satellites_in_message;
-        const int satellites_to_parse = satellites_in_page < 4 ? satellites_in_page : 4;
-
-        if (this_msg_num == all_msg_num) {
-            if (_satellite_info) {
-                _satellite_info->count = MIN(tot_sv_visible, GPSSatelliteReport::SAT_INFO_MAX_SATELLITES);
-                _satellite_info->timestamp = nowUs();
-                ret = 2;
-            }
-        }
-
-        if (_satellite_info) {
-            for (int y = 0; y < satellites_to_parse; ++y) {
-                GPSProtocolSatellite satellite;
-                int value = 0;
-                if (!bufptr.read(value) || value <= 0 || value > 255)
-                    return 0;
-                satellite.id = value;
-                satellite.prn = value;
-                satellite.constellation = GPSConstellation::GPS;
-                if (bufptr.read(value))
-                    satellite.elevation = value;
-                if (!bufptr.valid())
-                    return 0;
-                if (bufptr.read(value))
-                    satellite.azimuth = value;
-                if (!bufptr.valid())
-                    return 0;
-                if (bufptr.read(value))
-                    satellite.signal = value;
-                if (!bufptr.valid())
-                    return 0;
-                const uint64_t index = page_start + y;
-                if (index < _satellite_info->entries.size())
-                    _satellite_info->entries[index] = satellite;
-            }
+            _satellite_info->timestamp = system.inViewTimestampUs;
+            _satellite_info->constellation = system.constellation;
+            _satellite_info->count = std::min(system.satellites.size(), _satellite_info->entries.size());
+            std::copy_n(system.satellites.begin(), _satellite_info->count, _satellite_info->entries.begin());
+            publishSatellites(*_satellite_info);
         }
 
     } else if (memcmp(_rx_buffer, "$PASHR,NAK", 10) == 0) {
@@ -879,14 +599,8 @@ void GPSDriverAshtech::sendSurveyInStatusUpdate(bool active, bool valid, double 
     surveyInStatus(status);
 }
 
-int GPSDriverAshtech::consume(std::span<const uint8_t> bytes)
+int GPSDriverAshtech::decodeByte(uint8_t byte)
 {
-    int handled = 0;
-    for (const uint8_t byte : bytes) {
-        const int length = parseChar(byte);
-        if (length > 0) {
-            handled |= handleMessage(length);
-        }
-    }
-    return handled;
+    const int length = parseChar(byte);
+    return length > 0 ? handleMessage(length) : 0;
 }

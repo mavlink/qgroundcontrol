@@ -562,6 +562,21 @@ void GPSDriverTest::_observationMetadata()
     QCOMPARE(observation.integrity.provenance->correctionsTimestampUs, 0ULL);
     QCOMPARE(observation.integrity.correctionsUsed.value(),
              static_cast<int>(GPSPositionReport::CORRECTIONS_MSG_USED_USED));
+    GPSExecutionContext context;
+    context.nowUs = [] { return uint64_t{9000000}; };
+    context.utcNowUs = [] { return uint64_t{1704067209000000}; };
+    fix.dop_timestamp = fix.heading_timestamp = fix.accuracy_timestamp = 3000000;
+    const auto stale = GPSDriverData::position(fix, context);
+    QVERIFY(!stale.horizontalDop);
+    QVERIFY(!stale.trueHeadingDegrees);
+    QVERIFY(!stale.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
+    QCOMPARE(stale.dopTimestampUs, quint64(3000000));
+    fix.dop_timestamp = fix.heading_timestamp = fix.accuracy_timestamp = 8000000;
+    const auto fresh = GPSDriverData::position(fix, context);
+    QVERIFY(fresh.horizontalDop);
+    QVERIFY(fresh.trueHeadingDegrees);
+    QVERIFY(fresh.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
+    fix.dop_timestamp = fix.heading_timestamp = fix.accuracy_timestamp = 0;
     fix.eph = qQNaN();
     observation = GPSDriverData::position(fix);
     QVERIFY(observation.position.isValid());
@@ -652,9 +667,7 @@ void GPSDriverTest::_satelliteAzimuthEncoding()
     if (degrees >= 0) {
         QCOMPARE(satellite.azimuthDegrees().value(), degrees);
     }
-    report.count = 0;
-    report.usedCount = 12;
-    const auto countOnly = GPSDriverData::satellites(report);
+    const auto countOnly = GPSDriverData::satellites(GPSSatelliteUsageReport{report.timestamp, 12});
     QVERIFY(countOnly.satellites.isEmpty());
     QCOMPARE(countOnly.provenance.front().satellitesUsed.value(), 12);
 }

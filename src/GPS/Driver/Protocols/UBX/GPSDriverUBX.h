@@ -55,14 +55,7 @@
 class GPSDriverUBX : public GPSBaseProtocol
 {
 public:
-    struct Settings
-    {
-        uint8_t dynamic_model = 0;
-        uint8_t output_rate = 0;
-    };
-
-    GPSDriverUBX(GPSProtocolIO io, GPSPositionReport* gps_position, GPSSatelliteReport* satellite_info,
-                 Settings settings);
+    GPSDriverUBX(GPSProtocolIO io, GPSPositionReport* gps_position, GPSSatelliteReport* satellite_info);
 
     virtual ~GPSDriverUBX();
 
@@ -77,7 +70,11 @@ public:
     int configure(unsigned& baudrate, const GPSConfig& config, OutputProtocol output_protocol);
 
     int receive(unsigned timeout) override;
-    int consume(std::span<const uint8_t> bytes) override;
+    int decodeByte(uint8_t byte) override;
+
+    const GPSPositionReport* positionReport() const override { return _gps_position; }
+
+    const GPSSatelliteReport* satelliteReport() const override { return _satellite_info; }
 
     bool receiverReady() const override { return _configured; }
 
@@ -111,6 +108,15 @@ public:
     bool supportsConstellationSelection() const;
     bool supportsOutputRateSelection() const;
 
+    struct DecodeContext
+    {
+        bool navigation = false;
+        bool useNavPvt = true;
+        bool corrections = false;
+    };
+
+    void setDecodeContext(DecodeContext context);
+
     bool constellationConfigurationRejected() const { return _constellation_configuration_rejected; }
 
     bool constellationRequestRejected() const { return _constellation_request_rejected; }
@@ -126,6 +132,8 @@ public:
 
     bool readConfiguration(ConfigurationReadback& report, unsigned timeout_ms);
 
+    GPSCommandOutcome settingOutcome(unsigned index) const { return _settingOutcomes.at(index); }
+
     /**
      * What UART1 carries in a given mode, for status output
      */
@@ -135,6 +143,9 @@ private:
     bool _rtcmActivationPending = false;
     bool _comms_request_pending = false;
     uint16_t _pendingDisableMessage = 0;
+    uint32_t _valsetSettings = 0;
+    uint32_t _pendingCommandSettings = 0;
+    std::array<GPSCommandOutcome, 3> _settingOutcomes{};
     void handleConfigurationReadback();
     bool _configuration_readback_pending = false;
     bool _configuration_readback_ready = false;
@@ -356,12 +367,16 @@ private:
     GPSSatelliteReport* _satellite_info{nullptr};
     ubx_ack_state_t _ack_state{UBX_ACK_IDLE};
     ubx_buf_t _buf{};
+    std::array<uint8_t, 4096> _framePayload{};
+    uint16_t _framePayloadIndex = 0;
+    int decodeValidatedPayload();
     uint8_t _tx_cfg_valset_buf[UBX_CFG_VALSET_BUF_SIZE]{};
     int _tx_cfg_valset_size{0};
     ubx_decode_state_t _decode_state{};
     ubx_rxmsg_state_t _rx_state{UBX_RXMSG_IGNORE};
 
     bool _configured{false};
+    bool _decodeNavigation = false;
     bool _survey_in_stopped{false};
     bool _is_m8p{false};
     char _model_name[30]{};

@@ -27,14 +27,9 @@ namespace {
 class UbxBackend final : public GPSDriverBackend
 {
 public:
-    UbxBackend(GPSProtocolIO io, GPSPositionReport* position, GPSSatelliteReport* satellites,
-               const GPSReceiverConfig& config)
+    UbxBackend(GPSProtocolIO io, GPSPositionReport* position, GPSSatelliteReport* satellites, const GPSReceiverConfig&)
     {
-        const GPSDriverUBX::Settings settings = {
-            .dynamic_model = static_cast<uint8_t>(config.dynamicModel),
-            .output_rate = static_cast<uint8_t>(config.outputRateHz),
-        };
-        setDriver(std::make_unique<GPSDriverUBX>(std::move(io), position, satellites, settings));
+        setDriver(std::make_unique<GPSDriverUBX>(std::move(io), position, satellites));
     }
 
     void updateCapabilities(GPSReceiverCapabilities& capabilities) const override
@@ -84,12 +79,21 @@ public:
                     setting.requestState = GPSSettingReport::RequestState::Rejected;
                 }
                 setting.detail = configurationError();
-            } else if (configured &&
-                       (setting.id == GPSReceiverSetting::DynamicModel ||
-                        setting.id == GPSReceiverSetting::OutputRateHz ||
-                        (setting.id == GPSReceiverSetting::ConstellationMask && config.constellationMask))) {
-                setting.requestState = GPSSettingReport::RequestState::Acknowledged;
-                setting.detail = tr("Configuration acknowledged; receiver readback is unavailable");
+            } else {
+                const auto index = setting.id == GPSReceiverSetting::DynamicModel        ? 0
+                                   : setting.id == GPSReceiverSetting::OutputRateHz      ? 1
+                                   : setting.id == GPSReceiverSetting::ConstellationMask ? 2
+                                                                                         : -1;
+                if (index < 0)
+                    continue;
+                const auto outcome = receiver.settingOutcome(index);
+                if (outcome == GPSCommandOutcome::Acknowledged) {
+                    setting.requestState = GPSSettingReport::RequestState::Acknowledged;
+                    setting.detail = tr("Configuration acknowledged; receiver readback is unavailable");
+                } else if (outcome == GPSCommandOutcome::Rejected) {
+                    setting.requestState = GPSSettingReport::RequestState::Rejected;
+                    setting.detail = tr("Receiver rejected this configuration step");
+                }
             }
         }
         GPSDriverUBX::ConfigurationReadback values;
@@ -205,6 +209,8 @@ int GPSDriverBackend::configure(unsigned& baudrate, const GPSReceiverConfig& con
     }
     GPSProtocol::GPSConfig nativeConfig = {};
     nativeConfig.base = config.base;
+    nativeConfig.dynamicModel = static_cast<uint8_t>(config.dynamicModel);
+    nativeConfig.outputRateHz = static_cast<uint8_t>(config.outputRateHz);
     nativeConfig.output_mode =
         config.role == GPSReceiverConfig::Role::RTKBase ? GPSProtocol::OutputMode::RTCM : GPSProtocol::OutputMode::GPS;
     nativeConfig.gnss_systems = static_cast<GPSProtocol::GNSSSystemsMask>(config.constellationMask);

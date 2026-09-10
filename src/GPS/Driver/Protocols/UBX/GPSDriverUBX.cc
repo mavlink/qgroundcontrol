@@ -33,13 +33,11 @@
 
 #include "UBXPrivate.h"
 
-GPSDriverUBX::GPSDriverUBX(GPSProtocolIO io, GPSPositionReport* gps_position, GPSSatelliteReport* satellite_info,
-                           Settings settings)
+GPSDriverUBX::GPSDriverUBX(GPSProtocolIO io, GPSPositionReport* gps_position, GPSSatelliteReport* satellite_info)
     : GPSBaseProtocol(std::move(io))
     , _gps_position(gps_position)
     , _satellite_info(satellite_info)
-    , _dyn_model(settings.dynamic_model)
-    , _output_rate(settings.output_rate)
+
 {
     decodeInit();
 }
@@ -164,4 +162,15 @@ void GPSDriverUBX::servicePendingCommands()
             }
         }
     }
+}
+
+void GPSDriverUBX::setDecodeContext(DecodeContext context)
+{
+    _decodeNavigation = context.navigation;
+    _use_nav_pvt = context.useNavPvt;
+    if (context.corrections)
+        _rtcm_parsing.emplace();
+    else
+        _rtcm_parsing.reset();
+    decodeInit();
 }

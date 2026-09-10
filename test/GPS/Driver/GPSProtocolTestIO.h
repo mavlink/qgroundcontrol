@@ -85,7 +85,7 @@ inline GPSProtocolIO makeGPSProtocolTestIO(GPSCallbackPtr callback, void* user)
     };
     if (!callback)
         return io;
-    io.read = [callback, user](std::span<uint8_t> bytes, GPSProtocolDeadline deadline) {
+    io.read = [callback, user](std::span<uint8_t> bytes, GPSDeadline deadline) {
         GPSReadRequest request{bytes.data(), static_cast<int>(bytes.size()),
                                deadline.remainingMilliseconds(gps_absolute_time())};
         const int result = callback(GPSCallbackType::readDeviceData, &request, request.capacity, user);
@@ -95,7 +95,7 @@ inline GPSProtocolIO makeGPSProtocolTestIO(GPSCallbackPtr callback, void* user)
                                                                             : GPSReadStatus::Error,
                                      result > 0 ? result : 0};
     };
-    io.write = [callback, user](std::span<const uint8_t> bytes, GPSProtocolDeadline) {
+    io.write = [callback, user](std::span<const uint8_t> bytes, GPSDeadline) {
         const int result =
             callback(GPSCallbackType::writeDeviceData, const_cast<uint8_t*>(bytes.data()), bytes.size(), user);
         return GPSProtocolWriteResult{result >= 0                            ? GPSWriteStatus::Completed

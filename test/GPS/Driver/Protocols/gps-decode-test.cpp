@@ -189,7 +189,7 @@ void absoluteDeadline()
     uint64_t now = 1000000;
     GPSProtocolIO io;
     io.nowUs = [&] { return now; };
-    io.read = [&](auto buffer, GPSProtocolDeadline deadline) {
+    io.read = [&](auto buffer, GPSDeadline deadline) {
         CHECK(deadline.untilUs == 1010000);
         if (now == 1000000) {
             CHECK(deadline.remainingMilliseconds(now) == 10);

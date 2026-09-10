@@ -15,14 +15,23 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     io.write = [](auto, auto) -> GPSProtocolWriteResult { std::abort(); };
     io.setBaudrate = [](auto) -> GPSBaudStatus { std::abort(); };
     io.nowUs = [] { return uint64_t{1000000}; };
-    GPSDriverUBX ubx(io, &position, &satellites, {});
+    GPSDriverUBX ubx(io, &position, &satellites);
+    GPSDriverUBX operationalUbx(io, &position, &satellites);
+    operationalUbx.setDecodeContext({true, true, true});
     GPSDriverAshtech ashtech(io, &position, &satellites);
     GPSDriverSBF sbf(io, &position, &satellites);
     GPSDriverFemto femto(io, &position, &satellites);
-    for (GPSProtocol* protocol : std::array<GPSProtocol*, 4>{&ubx, &ashtech, &sbf, &femto}) {
+    for (GPSProtocol* protocol : std::array<GPSProtocol*, 5>{&ubx, &operationalUbx, &ashtech, &sbf, &femto}) {
         const size_t split = size ? data[0] % (size + 1) : 0;
-        protocol->consume({data, split});
-        protocol->consume({data + split, size - split});
+        for (auto bytes :
+             {std::span<const uint8_t>(data, split), std::span<const uint8_t>(data + split, size - split)}) {
+            do {
+                auto result = protocol->decode(bytes);
+                if (result.batch.events.size() > GPSDecodedBatch::MAX_EVENTS)
+                    std::abort();
+                bytes = bytes.subspan(result.bytesConsumed);
+            } while (!bytes.empty());
+        }
     }
     return 0;
 }

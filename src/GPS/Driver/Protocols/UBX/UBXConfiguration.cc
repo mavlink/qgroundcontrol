@@ -39,7 +39,6 @@ int GPSDriverUBX::enableNmeaOutput(unsigned baudrate)
         return -1;
     }
 
-    // The decoder accepts configuration acknowledgements only while configuring.
     _configured = false;
     const int result = [&]() -> int {
         if (_proto_ver_27_or_higher) {
@@ -82,6 +81,8 @@ int GPSDriverUBX::enableNmeaOutput(unsigned baudrate)
 int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _baseConfig = config.base;
+    _dyn_model = config.dynamicModel;
+    _output_rate = config.outputRateHz;
     _survey_duration = 0;
     return configure(baudrate, config, OutputProtocol::Native);
 }
@@ -181,11 +182,15 @@ bool GPSDriverUBX::readConfiguration(ConfigurationReadback& report, unsigned tim
 int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputProtocol output_protocol)
 {
     _baseConfig = config.base;
+    _dyn_model = config.dynamicModel;
+    _output_rate = config.outputRateHz;
     _survey_duration = 0;
     resetIOError();
+    _settingOutcomes.fill(GPSCommandOutcome::Pending);
     _constellation_configuration_rejected = false;
     _constellation_request_rejected = false;
     _configured = false;
+    _decodeNavigation = false;
     if (output_protocol != OutputProtocol::Native &&
         (output_protocol != OutputProtocol::NMEA || config.output_mode != OutputMode::GPS)) {
         return -1;
@@ -424,6 +429,7 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
     }
 
     _configured = true;
+    _decodeNavigation = true;
     return output_protocol == OutputProtocol::NMEA ? enableNmeaOutput(baudrate) : 0;
 }
 
@@ -1075,6 +1081,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
 
 void GPSDriverUBX::initCfgValset()
 {
+    _valsetSettings = 0;
     static_assert(sizeof(_tx_cfg_valset_buf) >= sizeof(ubx_payload_tx_cfg_valset_t),
                   "_tx_cfg_valset_buf must hold at least the CFG-VALSET header");
     auto* header = reinterpret_cast<ubx_payload_tx_cfg_valset_t*>(_tx_cfg_valset_buf);
@@ -1099,6 +1106,13 @@ int GPSDriverUBX::sendCfgValsetAcked(bool report_ack_error)
 
 bool GPSDriverUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
 {
+    if (key_id == UBX_CFG_KEY_NAVSPG_DYNMODEL)
+        _valsetSettings |= 1;
+    if (key_id == UBX_CFG_KEY_RATE_MEAS || key_id == UBX_CFG_KEY_RATE_NAV)
+        _valsetSettings |= 2;
+    if ((key_id & 0xffff0000u) == 0x10310000u)
+        _valsetSettings |= 4;
+
     // Size field: 1 = L, 2 = U1/I1/E1/X1, 3 = 2 bytes, 4 = 4 bytes (5 = 8 bytes, unsupported here)
     const unsigned size_field = (key_id >> 28) & 0x7;
     const unsigned value_size = (size_field <= 2) ? 1 : (size_field == 3) ? 2 : 4;
@@ -1388,32 +1402,29 @@ int  // -1 = NAK, error or timeout, 0 = ACK
 GPSDriverUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool report)
 {
     const Operation operation(*this, timeout);
-    int ret = -1;
     _last_ack_rejected = false;
-
     _ack_state = UBX_ACK_WAITING;
-    _ack_waiting_msg = msg;  // memorize sent msg class&ID for ACK check
-
-    while ((_ack_state == UBX_ACK_WAITING) && (nowUs() < _operationDeadline.untilUs)) {
-        bool read_error;
-        receiveInternal(timeout, read_error);
-        if (read_error) {
-            break;
-        }
+    _ack_waiting_msg = msg;
+    const auto result = awaitCommand(
+        std::to_string(msg), timeout,
+        [this, timeout] {
+            bool error;
+            receiveInternal(timeout, error);
+        },
+        [this] {
+            return _ack_state == UBX_ACK_GOT_ACK   ? GPSCommandOutcome::Acknowledged
+                   : _ack_state == UBX_ACK_GOT_NAK ? GPSCommandOutcome::Rejected
+                                                   : GPSCommandOutcome::Pending;
+        },
+        report, _pendingCommandSettings);
+    for (unsigned bit = 0; bit < _settingOutcomes.size(); ++bit) {
+        if (_pendingCommandSettings & (1u << bit))
+            _settingOutcomes[bit] = result.outcome;
     }
-
-    if (_ack_state == UBX_ACK_GOT_ACK) {
-        ret = 0;  // ACK received ok
-
-    } else if (report) {
-        if (_ack_state == UBX_ACK_GOT_NAK) {
-        } else {
-        }
-    }
-
-    _last_ack_rejected = _ack_state == UBX_ACK_GOT_NAK;
+    _pendingCommandSettings = 0;
+    _last_ack_rejected = result.outcome == GPSCommandOutcome::Rejected;
     _ack_state = UBX_ACK_IDLE;
-    return ret;
+    return result.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 
 void GPSDriverUBX::waitForGnssReset()
@@ -1545,6 +1556,13 @@ bool GPSDriverUBX::configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool r
 
 bool GPSDriverUBX::sendMessage(const uint16_t msg, const uint8_t* payload, const uint16_t length)
 {
+    const Operation operation(*this, UBX_CONFIG_TIMEOUT);
+    beginCommandWrite();
+    _pendingCommandSettings = msg == UBX_MSG_CFG_NAV5     ? 1u
+                              : msg == UBX_MSG_CFG_RATE   ? 2u
+                              : msg == UBX_MSG_CFG_GNSS   ? 4u
+                              : msg == UBX_MSG_CFG_VALSET ? _valsetSettings
+                                                          : 0u;
     ubx_header_t header = {UBX_SYNC1, UBX_SYNC2, 0, 0};
     ubx_checksum_t checksum = {0, 0};
 

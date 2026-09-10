@@ -6,6 +6,8 @@
 #include <chrono>
 #include <cstdint>
 
+#include "GPSDeadline.h"
+#include "GPSExecutionContext.h"
 #include "GPSTransportResult.h"
 
 /// Byte link the GPS driver reads and writes through (serial, TCP, ...).
@@ -35,6 +37,18 @@ public:
 
     /// A nonpositive timeout polls immediately available input. Failures never carry usable stream bytes.
     virtual ReadResult read(uint8_t* buffer, int length, int timeoutMs) = 0;
+
+    virtual ReadResult readUntil(uint8_t* buffer, int length, GPSDeadline deadline, const GPSExecutionContext& context)
+    {
+        return read(buffer, length, deadline.remainingMilliseconds(context.nowUs()));
+    }
+
+    virtual WriteResult writeUntil(const uint8_t* buffer, int length, GPSDeadline deadline,
+                                   const GPSExecutionContext& context)
+    {
+        return writeBounded(buffer, length, QDeadlineTimer(deadline.remainingMilliseconds(context.nowUs())));
+    }
+
     /// Configuration writes preserve the same progress evidence as correction writes.
     virtual WriteResult write(const uint8_t* buffer, int length);
     virtual std::chrono::milliseconds configurationWriteTimeout() const;

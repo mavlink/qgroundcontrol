@@ -63,6 +63,8 @@ void GPSDriverAshtech::activateRTCMOutput(bool reduce_update_rate)
         int str_len = snprintf(buffer, sizeof(buffer), rtcm_options[conf_i], _port);
 
         if (writeAckedCommand(buffer, str_len, ASH_RESPONSE_TIMEOUT) != 0) {
+            controlFailed();
+            return;
         }
     }
 }
@@ -70,6 +72,7 @@ void GPSDriverAshtech::activateRTCMOutput(bool reduce_update_rate)
 int GPSDriverAshtech::writeAckedCommand(const void* buf, int buf_length, unsigned timeout)
 {
     const Operation operation(*this, timeout);
+    beginCommandWrite();
     if (write(buf, buf_length) != buf_length) {
         return -1;
     }
@@ -84,14 +87,14 @@ int GPSDriverAshtech::waitForReply(NMEACommand command, const unsigned timeout)
     _command_state = NMEACommandState::waiting;
     _waiting_for_command = command;
 
-    while (_command_state == NMEACommandState::waiting && nowUs() < _operationDeadline.untilUs) {
-        receive(timeout);
-        if (ioError()) {
-            return ioError();
-        }
-    }
-
-    return _command_state == NMEACommandState::received ? 0 : -1;
+    const auto result = awaitCommand(
+        std::to_string(static_cast<int>(command)), timeout, [this, timeout] { receiveDecoded(timeout); },
+        [this] {
+            return _command_state == NMEACommandState::received ? GPSCommandOutcome::Acknowledged
+                   : _command_state == NMEACommandState::nack   ? GPSCommandOutcome::Rejected
+                                                                : GPSCommandOutcome::Pending;
+        });
+    return result.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 
 int GPSDriverAshtech::configure(unsigned& baudrate, const GPSConfig& config)
@@ -128,6 +131,7 @@ int GPSDriverAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         const char port_config[] = "$PASHQ,PRT\r\n";  // ask for the current port configuration
 
         for (int run = 0; run < 2; ++run) {           // try several times
+            beginCommandWrite();
             write(port_config, sizeof(port_config) - 1);
 
             if (waitForReply(NMEACommand::PRT, ASH_RESPONSE_TIMEOUT) == 0) {
@@ -152,6 +156,7 @@ int GPSDriverAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         const char baud_config[] = "$PASHS,SPD,%c,9\r\n";  // configure baudrate to 115200
         char baud_config_str[sizeof(baud_config)];
         int len = snprintf(baud_config_str, sizeof(baud_config_str), baud_config, _port);
+        beginCommandWrite();
         write(baud_config_str, len);
         decodeInit();
         receiveWait(200);
@@ -163,6 +168,7 @@ int GPSDriverAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         for (int run = 0; run < 10; ++run) {
             // We ask for the port config again. If we get a reply, we know that the changed settings work.
             const char port_config[] = "$PASHQ,PRT\r\n";
+            beginCommandWrite();
             write(port_config, sizeof(port_config) - 1);
 
             if (waitForReply(NMEACommand::PRT, ASH_RESPONSE_TIMEOUT) == 0) {
@@ -200,6 +206,7 @@ int GPSDriverAshtech::configure(unsigned& baudrate, const GPSConfig& config)
     // get the board identification
     const char board_identification[] = "$PASHQ,RID\r\n";
 
+    beginCommandWrite();
     if (write(board_identification, sizeof(board_identification) - 1) == sizeof(board_identification) - 1) {
         if (waitForReply(NMEACommand::RID, ASH_RESPONSE_TIMEOUT) != 0) {
             return -1;
@@ -295,7 +302,6 @@ void GPSDriverAshtech::activateCorrectionOutput()
         return;
     }
 
-    _correction_output_activated = true;
     char buffer[100];
 
     if (!_baseConfig.useFixedBase) {
@@ -304,9 +310,12 @@ void GPSDriverAshtech::activateCorrectionOutput()
         // alternatively use the current position as reference: "$PASHS,POS,CUR\r\n"
         int len = snprintf(buffer, sizeof(buffer), avg_pos, (int) _baseConfig.surveyInDurationSecs);
 
+        beginCommandWrite();
         write(buffer, len);
 
         if (waitForReply(NMEACommand::RECEIPT, ASH_RESPONSE_TIMEOUT) != 0) {
+            controlFailed();
+            return;
         }
 
         const char* config_options[] = {
@@ -316,6 +325,8 @@ void GPSDriverAshtech::activateCorrectionOutput()
 
         for (unsigned int conf_i = 0; conf_i < sizeof(config_options) / sizeof(config_options[0]); conf_i++) {
             if (writeAckedCommand(config_options[conf_i], strlen(config_options[conf_i]), ASH_RESPONSE_TIMEOUT) != 0) {
+                controlFailed();
+                return;
             }
         }
 
@@ -357,13 +368,20 @@ void GPSDriverAshtech::activateCorrectionOutput()
 
         if (len >= 0 && len < (int) sizeof(buffer)) {
             if (writeAckedCommand(buffer, len, ASH_RESPONSE_TIMEOUT) != 0) {
+                controlFailed();
+                return;
             }
 
         } else {
+            controlFailed();
+            return;
         }
 
         activateRTCMOutput(true);
+        if (ioError())
+            return;
         sendSurveyInStatusUpdate(false, true, settings.fixedBaseLatitude, settings.fixedBaseLongitude,
                                  settings.fixedBaseAltitudeMeters);
     }
+    _correction_output_activated = true;
 }

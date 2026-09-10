@@ -127,3 +127,54 @@ void GPSProtocol::serviceControls()
     }
     _servicingControls = false;
 }
+
+GPSDecodeResult GPSProtocol::decode(std::span<const uint8_t> bytes)
+{
+    size_t consumed = 0;
+    // One completed frame can publish relative/survey data plus position and satellites.
+    while (consumed < bytes.size() && _decoded.events.size() + 4 <= GPSDecodedBatch::MAX_EVENTS) {
+        const int updates = decodeByte(bytes[consumed++]);
+        if (updates > 0) {
+            _decoded.updates |= updates;
+            if ((updates & 1) && positionReport())
+                _decoded.events.emplace_back(*positionReport());
+            if ((updates & 2) && satelliteReport())
+                _decoded.events.emplace_back(*satelliteReport());
+        }
+    }
+    GPSDecodeResult result{consumed, std::move(_decoded)};
+    _decoded = {};
+    return result;
+}
+
+int GPSProtocol::consume(std::span<const uint8_t> bytes)
+{
+    int updates = 0;
+    do {
+        auto result = decode(bytes);
+        bytes = bytes.subspan(result.bytesConsumed);
+        updates |= result.batch.updates;
+        if (_io.decoded) {
+            _io.decoded(std::move(result.batch));
+        } else {
+            for (const auto& event : result.batch.events) {
+                std::visit(
+                    [this](const auto& report) {
+                        using Report = std::decay_t<decltype(report)>;
+                        if constexpr (std::is_same_v<Report, GPSRTCMReport>) {
+                            if (_io.rtcm)
+                                _io.rtcm({report.bytes.data(), report.size});
+                        } else if constexpr (std::is_same_v<Report, GPSRelativeReport>) {
+                            if (_io.relativePosition)
+                                _io.relativePosition(report);
+                        } else if constexpr (std::is_same_v<Report, GPSSurveyReport>) {
+                            if (_io.survey)
+                                _io.survey(report);
+                        }
+                    },
+                    event);
+            }
+        }
+    } while (!bytes.empty());
+    return updates;
+}

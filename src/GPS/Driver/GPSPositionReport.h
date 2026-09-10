@@ -27,6 +27,9 @@ struct GPSPositionReport
     float eph{};
     float epv{};
 
+    uint64_t dop_timestamp{};
+    uint64_t heading_timestamp{};
+    uint64_t accuracy_timestamp{};
     float hdop{};
     float vdop{};
 

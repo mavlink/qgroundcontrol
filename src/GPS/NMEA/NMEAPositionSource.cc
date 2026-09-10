@@ -9,6 +9,7 @@
 
 #include "GPSQtRuntimeScheduler.h"
 #include "GPSReadTimestamp.h"
+#include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
@@ -19,7 +20,9 @@ class NMEATimestampedPositionDecoder : public QNmeaPositionInfoSource
 {
 public:
     explicit NMEATimestampedPositionDecoder(QIODevice* device, GPSRuntimeScheduler* scheduler)
-        : QNmeaPositionInfoSource(RealTimeMode), _input(device), _scheduler(scheduler)
+        : QNmeaPositionInfoSource(RealTimeMode)
+        , _input(device)
+        , _scheduler(scheduler)
     {
         qCDebug(NMEATimestampedPositionDecoderLog) << this;
         if (device) {
@@ -77,10 +80,10 @@ protected:
                                                 ? receivedAtUs
                                                 : std::min(metadata.monotonicTimestampUs, receivedAtUs);
             if (type == "GGA" && fields.size() >= 15) {
-                bool qualityOk = false;
-                const int quality = fields[6].toInt(&qualityOk);
-                if (qualityOk) {
-                    switch (quality) {
+                const auto parsedSentence = NMEA::sentence({data, static_cast<size_t>(size)});
+                const auto fix = parsedSentence ? NMEA::gga(*parsedSentence) : std::nullopt;
+                if (fix) {
+                    switch (fix->quality) {
                         case 0:
                             metadata.fixQuality = GPSObservation::FixQuality::NoFix;
                             break;
@@ -104,20 +107,16 @@ protected:
                             break;
                     }
                 }
-                bool countOk = false;
-                const int count = fields[7].toInt(&countOk);
-                metadata.satellitesUsed =
-                    countOk && count >= 0 && count <= 256 ? std::optional<int>(count) : std::nullopt;
-                metadata.horizontalDop = _number(fields[8], true);
+                metadata.satellitesUsed = fix ? fix->satellitesUsed : std::nullopt;
+                metadata.horizontalDop =
+                    fix && std::isfinite(fix->hdop) && fix->hdop > 0 ? std::optional<double>(fix->hdop) : std::nullopt;
+                metadata.dopTimestampUs = receivedAtUs;
                 metadata.altitudeEllipsoidMeters.reset();
                 metadata.altitudeDatum = GPSObservation::AltitudeDatum::Unknown;
-                const auto altitude = _number(fields[9]);
-                const auto geoid = _number(fields[11]);
-                if (altitude && fields[10] == "M") {
+                if (fix && std::isfinite(fix->altitude)) {
                     metadata.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
-                    if (geoid && fields[12] == "M") {
-                        metadata.altitudeEllipsoidMeters = *altitude + *geoid;
-                    }
+                    if (std::isfinite(fix->geoidSeparation))
+                        metadata.altitudeEllipsoidMeters = fix->altitude + fix->geoidSeparation;
                 }
             }
             if (_epochs.size() > 32) {
@@ -176,9 +175,9 @@ private:
 };
 
 NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent, GPSRuntimeScheduler* scheduler)
-    : QGeoPositionInfoSource(parent),
-      _device(device),
-      _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    : QGeoPositionInfoSource(parent)
+    , _device(device)
+    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
 {
     qCDebug(NMEAPositionSourceLog) << this;
     _resetDecoder();

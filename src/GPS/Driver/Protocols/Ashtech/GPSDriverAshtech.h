@@ -41,6 +41,7 @@
 #include <optional>
 
 #include "GPSBaseProtocol.h"
+#include "NMEASatelliteEpoch.h"
 #include "RTCMFramer.h"
 
 #define ASHTECH_RECV_BUFFER_SIZE 512
@@ -60,7 +61,11 @@ public:
     int configure(unsigned& baudrate, const GPSConfig& config) override;
 
     int receive(unsigned timeout) override;
-    int consume(std::span<const uint8_t> bytes) override;
+    int decodeByte(uint8_t byte) override;
+
+    const GPSPositionReport* positionReport() const override { return _gps_position; }
+
+    const GPSSatelliteReport* satelliteReport() const override { return _satellite_info; }
 
 private:
     void servicePendingCommands() override;
@@ -142,6 +147,7 @@ private:
     GPSPositionReport* _gps_position{nullptr};
 
     GPSSatelliteReport* _satellite_info{nullptr};
+    NMEA::SatelliteAssembler _satelliteAssembler;
 
     AshtechBoard _board{AshtechBoard::other}; /**< board we are connected to */
 

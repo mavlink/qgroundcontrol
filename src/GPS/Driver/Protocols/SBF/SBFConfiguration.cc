@@ -232,47 +232,25 @@ bool GPSDriverSBF::sendMessageAndWaitForAck(const char* msg, const int timeout)
 {
     const Operation operation(*this, timeout);
 
-    // Send message
-    int length = static_cast<int>(strlen(msg));
-
-    if (write(msg, length) != length) {
+    beginCommandWrite();
+    const int length = static_cast<int>(strlen(msg));
+    if (write(msg, length) != length)
         return false;
-    }
-
-    // Wait for acknowledge
-    // For all valid set -, get - and exe -commands, the first line of the reply is an exact copy
-    // of the command as entered by the user, preceded with "$R:"
-    char buf[GPS_READ_BUFFER_SIZE];
-    size_t offset = 1;
-    gps_abstime time_started = nowUs();
-
-    bool found_response = false;
-
-    do {
-        --offset;  // overwrite the null-char
-        int ret = read(reinterpret_cast<uint8_t*>(buf) + offset, sizeof(buf) - offset - 1, timeout);
-
-        if (ret < 0) {
-            // something went wrong when reading
-            if (ret != ReadCancelled) {
-                SBF_WARN("sbf read err");
-            }
-            return false;
-        }
-
-        offset += ret;
-        buf[offset++] = '\0';
-
-        if (!found_response && strstr(buf, "$R: ") != nullptr) {
-            //
-            found_response = true;
-        }
-
-        if (offset >= sizeof(buf)) {
-            offset = 1;
-        }
-
-    } while (time_started + 1000 * timeout > nowUs());
-
-    return found_response;
+    const std::string expected = "$R: " + std::string(msg);
+    std::string received;
+    bool acknowledged = false;
+    const auto result = awaitCommand(
+        msg, timeout,
+        [&] {
+            uint8_t bytes[GPS_READ_BUFFER_SIZE];
+            const int count = read(bytes, sizeof(bytes), timeout);
+            if (count <= 0)
+                return;
+            received.append(reinterpret_cast<const char*>(bytes), count);
+            acknowledged = received.find(expected) != std::string::npos;
+            if (received.size() > expected.size())
+                received.erase(0, received.size() - expected.size());
+        },
+        [&] { return acknowledged ? GPSCommandOutcome::Acknowledged : GPSCommandOutcome::Pending; });
+    return result.outcome == GPSCommandOutcome::Acknowledged;
 }
