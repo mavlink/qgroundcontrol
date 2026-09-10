@@ -49,6 +49,7 @@ public:
         OptionStayMavlinkV1       = 1 << 5,
         OptionAPMStartFreshParams = 1 << 6,
         OptionFtpCapability       = 1 << 7,
+        OptionDropFirstExtParam   = 1 << 8,
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
@@ -171,6 +172,12 @@ public:
     bool ftpCapability() const { return _ftpCapability; }
     void setFtpCapability(bool ftpCapability) { _ftpCapability = ftpCapability; }
 
+    // Test-only: when true, the camera omits the first parameter from the PARAM_EXT_REQUEST_LIST
+    // stream, so it can only be picked up by the indexed re-request. Must be set before the link
+    // starts, since the list is streamed during initial connect. Not persisted.
+    bool dropFirstExtParam() const { return _dropFirstExtParam; }
+    void setDropFirstExtParam(bool dropFirstExtParam) { _dropFirstExtParam = dropFirstExtParam; }
+
 signals:
     void firmwareChanged();
     void vehicleChanged();
@@ -214,6 +221,7 @@ private:
     bool _preloadMission = false;
     bool _stayMavlinkV1 = false;
     bool _ftpCapability = false;
+    bool _dropFirstExtParam = false;
 
     // Camera capability flags (defaults match current Camera 1 configuration)
     bool _cameraCaptureVideo = true;

@@ -27,4 +27,6 @@ typedef struct __mavlink_camera_information_t mavlink_camera_information_t;
 typedef struct __mavlink_high_latency2_t mavlink_high_latency2_t;
 typedef struct __mavlink_event_t mavlink_event_t;
 typedef struct __mavlink_request_event_t mavlink_request_event_t;
+typedef struct __mavlink_param_ext_value_t mavlink_param_ext_value_t;
+typedef struct __mavlink_param_ext_ack_t mavlink_param_ext_ack_t;
 typedef struct param_union mavlink_param_union_t;
