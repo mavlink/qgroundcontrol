@@ -153,8 +153,37 @@ function(qgc_config_moccache)
     file(WRITE "${_moccache_wrapper}" "${_wrapper}")
     file(CHMOD "${_moccache_wrapper}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
+    # Post-build stats script; no-op unless MOCCACHE_STATS is set in the build environment.
+    set(_moccache_stats "${CMAKE_BINARY_DIR}/moccache-stats")
+    set(_stats "#!/bin/sh\n")
+    string(APPEND _stats "[ -n \"\${MOCCACHE_STATS}\" ] || exit 0\n")
+    string(APPEND _stats "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${CMAKE_SOURCE_DIR}/.cache/moccache}\"\n")
+    string(APPEND _stats "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
+    string(APPEND _stats "\"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n")
+    file(WRITE "${_moccache_stats}" "${_stats}")
+    file(CHMOD "${_moccache_stats}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
     set(CMAKE_AUTOMOC_EXECUTABLE "${_moccache_wrapper}" PARENT_SCOPE)
+    set_property(GLOBAL PROPERTY QGC_MOCCACHE_STATS_EXECUTABLE "${_moccache_stats}")
     message(STATUS "QGC: Using moccache for AUTOMOC (${_real_moc})")
+endfunction()
+
+# ----------------------------------------------------------------------------
+# qgc_add_moccache_stats
+# Print this build's moccache hit/miss stats after the given target links
+# (when MOCCACHE_STATS is set). Ninja only: per-build scoping needs .ninja_log.
+# ----------------------------------------------------------------------------
+function(qgc_add_moccache_stats target)
+    get_property(_moccache_stats GLOBAL PROPERTY QGC_MOCCACHE_STATS_EXECUTABLE)
+    if(_moccache_stats AND TARGET ${target} AND CMAKE_GENERATOR MATCHES "Ninja")
+        add_custom_command(
+            TARGET ${target}
+            POST_BUILD
+            COMMAND "${_moccache_stats}"
+            COMMENT "moccache stats"
+            VERBATIM
+        )
+    endif()
 endfunction()
 
 # ----------------------------------------------------------------------------

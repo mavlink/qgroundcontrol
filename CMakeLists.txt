@@ -308,6 +308,8 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
     ADDITIONAL_CLEAN_FILES "${CMAKE_BINARY_DIR}/ccache-launcher"
 )
 
+qgc_add_moccache_stats(${CMAKE_PROJECT_NAME})
+
 include(Sanitizers)
 
 include(Coverage)

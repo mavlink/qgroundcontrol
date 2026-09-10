@@ -95,4 +95,5 @@ runs:
       shell: bash
       env:
         MOCCACHE_DIR: ${{ github.workspace }}/.cache/moccache
-      run: python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --show-stats
+        BUILD_DIR: ${{ inputs.build-dir }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/moccache.py" --show-stats --build-dir "$BUILD_DIR"

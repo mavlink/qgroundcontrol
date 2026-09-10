@@ -201,18 +201,28 @@ re-validated by content hash on every use.
 
 Environment variables (set by the launcher, overridable at build time):
 
-| Variable            | Default                  | Purpose                                            |
-| ------------------- | ------------------------ | -------------------------------------------------- |
-| `MOCCACHE_DIR`      | `<repo>/.cache/moccache` | Cache location (persisted by CI, like ccache)      |
-| `MOCCACHE_MAX_SIZE` | `256M`                   | LRU auto-trim threshold (trims after misses)       |
-| `MOCCACHE_DISABLE`  | unset                    | Pass through to real moc (no caching)              |
-| `MOCCACHE_STATS`    | unset                    | Append hit/miss lines to `$MOCCACHE_DIR/stats.log` |
+| Variable            | Default                  | Purpose                                                   |
+| ------------------- | ------------------------ | --------------------------------------------------------- |
+| `MOCCACHE_DIR`      | `<repo>/.cache/moccache` | Cache location (persisted by CI, like ccache)             |
+| `MOCCACHE_MAX_SIZE` | `256M`                   | LRU auto-trim threshold (trims after misses)              |
+| `MOCCACHE_DISABLE`  | unset                    | Pass through to real moc (no caching)                     |
+| `MOCCACHE_STATS`    | unset                    | Log hits/misses; print this build's stats after linking   |
 
 ```sh
-MOCCACHE_STATS=1 just build                             # Log hits/misses during a build
+MOCCACHE_STATS=1 just build                             # This build's hit/miss stats print after linking
+MOCCACHE_BASEDIR=$PWD/build/Debug python3 ./tools/moccache.py --show-stats --build-dir build/Debug --verbose  # Per-miss reasons for the last build
+python3 ./tools/moccache.py --zero-stats                # Reset the stats log
 python3 ./tools/moccache.py --trim --max-size 256M      # Explicitly trim the cache (LRU)
 MOCCACHE_DISABLE=1 just build                           # Bypass the cache for one build
 ```
+
+Each miss is logged with a reason, and the report explains each kind inline, so you can tell
+expected misses from cache problems: `miss-first-seen`, `miss-header-changed`,
+`miss-include-changed` and `miss-predefs-changed` are expected; `miss-cache-evicted` means the
+cache is too small (raise `MOCCACHE_MAX_SIZE`); `miss-args-changed` and
+`miss-output-depth-differs` mean build trees differ in a way that defeats sharing and are worth
+investigating (`--verbose` shows the first differing argument per miss). See the docstring at the
+top of `tools/moccache.py` for the full list.
 
 ## Building QGC Installation Files
 
