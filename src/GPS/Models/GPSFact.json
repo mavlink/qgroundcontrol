@@ -121,7 +121,30 @@
     "type": "uint8",
     "enumStrings": "Unknown,Not Used,Used",
     "enumValues": "255,1,2"
+},
+{
+    "name": "noisePerMillisecond",
+    "shortDesc": "Noise per millisecond",
+    "type": "int32",
+    "decimalPlaces": 0
+},
+{
+    "name": "automaticGainControl",
+    "shortDesc": "Automatic gain control",
+    "type": "int32",
+    "decimalPlaces": 0
+},
+{
+    "name": "jammingIndicator",
+    "shortDesc": "Jamming indicator",
+    "type": "int32",
+    "decimalPlaces": 0
+},
+{
+    "name": "correctionsCrcFailed",
+    "shortDesc": "Correction CRC failed",
+    "type": "int32",
+    "decimalPlaces": 0
 }
-
 ]
 }

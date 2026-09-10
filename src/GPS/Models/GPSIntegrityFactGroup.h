@@ -18,6 +18,10 @@ class GPSIntegrityFactGroup : public FactGroup
     Q_PROPERTY(Fact* postProcessingQuality READ postProcessingQuality CONSTANT)
     Q_PROPERTY(Fact* correctionsProtocol READ correctionsProtocol CONSTANT)
     Q_PROPERTY(Fact* correctionsUsed READ correctionsUsed CONSTANT)
+    Q_PROPERTY(Fact* noisePerMillisecond READ noisePerMillisecond CONSTANT)
+    Q_PROPERTY(Fact* automaticGainControl READ automaticGainControl CONSTANT)
+    Q_PROPERTY(Fact* jammingIndicator READ jammingIndicator CONSTANT)
+    Q_PROPERTY(Fact* correctionsCrcFailed READ correctionsCrcFailed CONSTANT)
     Q_PROPERTY(bool available READ available NOTIFY availabilityChanged)
     Q_PROPERTY(bool systemErrorsKnown READ systemErrorsKnown NOTIFY availabilityChanged)
 
@@ -45,6 +49,14 @@ public:
 
     Fact* correctionsUsed() { return &_correctionsUsed; }
 
+    Fact* noisePerMillisecond() { return &_noisePerMillisecond; }
+
+    Fact* automaticGainControl() { return &_automaticGainControl; }
+
+    Fact* jammingIndicator() { return &_jammingIndicator; }
+
+    Fact* correctionsCrcFailed() { return &_correctionsCrcFailed; }
+
     bool available() const { return _available; }
 
     bool systemErrorsKnown() const { return _systemErrorsKnown; }
@@ -68,6 +80,10 @@ private:
     Fact _postProcessingQuality = Fact(0, QStringLiteral("postProcessingQuality"), FactMetaData::valueTypeUint8);
     Fact _correctionsProtocol = Fact(0, QStringLiteral("correctionsProtocol"), FactMetaData::valueTypeUint8);
     Fact _correctionsUsed = Fact(0, QStringLiteral("correctionsUsed"), FactMetaData::valueTypeUint8);
+    Fact _noisePerMillisecond = Fact(0, QStringLiteral("noisePerMillisecond"), FactMetaData::valueTypeInt32);
+    Fact _automaticGainControl = Fact(0, QStringLiteral("automaticGainControl"), FactMetaData::valueTypeInt32);
+    Fact _jammingIndicator = Fact(0, QStringLiteral("jammingIndicator"), FactMetaData::valueTypeInt32);
+    Fact _correctionsCrcFailed = Fact(0, QStringLiteral("correctionsCrcFailed"), FactMetaData::valueTypeInt32);
     QChronoTimer _expiryTimer;
     quint64 _revision = 0;
     bool _available = false;

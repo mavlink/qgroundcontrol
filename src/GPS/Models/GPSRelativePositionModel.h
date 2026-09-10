@@ -28,10 +28,10 @@ class GPSRelativePositionModel : public QObject
     Q_PROPERTY(bool positionValid READ positionValid NOTIFY stateChanged)
     Q_PROPERTY(bool carrierFloat READ carrierFloat NOTIFY stateChanged)
     Q_PROPERTY(bool carrierFixed READ carrierFixed NOTIFY stateChanged)
-    Q_PROPERTY(bool movingBase READ movingBase NOTIFY stateChanged)
-    Q_PROPERTY(bool referencePositionMissing READ referencePositionMissing NOTIFY stateChanged)
-    Q_PROPERTY(bool referenceObservationsMissing READ referenceObservationsMissing NOTIFY stateChanged)
-    Q_PROPERTY(bool normalized READ normalized NOTIFY stateChanged)
+    Q_PROPERTY(QVariant movingBase READ movingBase NOTIFY stateChanged)
+    Q_PROPERTY(QVariant referencePositionMissing READ referencePositionMissing NOTIFY stateChanged)
+    Q_PROPERTY(QVariant referenceObservationsMissing READ referenceObservationsMissing NOTIFY stateChanged)
+    Q_PROPERTY(QVariant normalized READ normalized NOTIFY stateChanged)
 
 public:
     explicit GPSRelativePositionModel(QObject* parent = nullptr, int freshnessTimeoutMs = 5000);
@@ -43,7 +43,7 @@ public:
 
     bool fresh() const { return _fresh; }
 
-    int referenceStationId() const { return _fresh ? _observation.referenceStationId : -1; }
+    int referenceStationId() const { return _fresh ? _observation.referenceStationId.value_or(-1) : -1; }
 
     double north() const;
     double east() const;
@@ -66,13 +66,29 @@ public:
 
     bool carrierFixed() const { return _fresh && _observation.carrierFixed; }
 
-    bool movingBase() const { return _fresh && _observation.movingBase; }
+    QVariant movingBase() const
+    {
+        return _fresh && _observation.movingBase.has_value() ? QVariant(*_observation.movingBase) : QVariant();
+    }
 
-    bool referencePositionMissing() const { return _fresh && _observation.referencePositionMissing; }
+    QVariant referencePositionMissing() const
+    {
+        return _fresh && _observation.referencePositionMissing.has_value()
+                   ? QVariant(*_observation.referencePositionMissing)
+                   : QVariant();
+    }
 
-    bool referenceObservationsMissing() const { return _fresh && _observation.referenceObservationsMissing; }
+    QVariant referenceObservationsMissing() const
+    {
+        return _fresh && _observation.referenceObservationsMissing.has_value()
+                   ? QVariant(*_observation.referenceObservationsMissing)
+                   : QVariant();
+    }
 
-    bool normalized() const { return _fresh && _observation.normalized; }
+    QVariant normalized() const
+    {
+        return _fresh && _observation.normalized.has_value() ? QVariant(*_observation.normalized) : QVariant();
+    }
 
     void beginSession(const QString& sourceId, quint64 sessionId);
     void updateObservation(const GPSRelativeObservation& observation);

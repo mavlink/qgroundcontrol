@@ -2,37 +2,26 @@
 
 #include <QtCore/QDateTime>
 
-#include <gps_helper.h>
-#include <gps_time.h>
+#include "GPSProtocol.h"
+#include "GPSProtocolTestIO.h"
+#include "GPSProtocolTime.h"
 
 namespace {
 
-class TimeConversionDriver : public GPSHelper
+class TimeConversionDriver : public GPSProtocol
 {
 public:
     TimeConversionDriver()
-        : GPSHelper(&_callback, this)
+        : GPSProtocol(GPSProtocolIO{})
     {}
 
     int configure(unsigned&, const GPSConfig&) override { return 0; }
 
     int receive(unsigned) override { return 0; }
 
-    using GPSHelper::timeFromUtc;
+    int consume(std::span<const uint8_t>) override { return 0; }
 
-    int clockUpdates = 0;
-    timespec clockTime{};
-
-private:
-    static int _callback(GPSCallbackType type, void* data, int, void* user)
-    {
-        auto* driver = static_cast<TimeConversionDriver*>(user);
-        if (type == GPSCallbackType::setClock) {
-            ++driver->clockUpdates;
-            driver->clockTime = *static_cast<timespec*>(data);
-        }
-        return 0;
-    }
+    using GPSProtocol::timeFromUtc;
 };
 
 tm calendarFields(const QDateTime& dateTime, int daylightSaving)
@@ -78,13 +67,6 @@ void GPSDriverTimeTest::_convertsUtc()
     const auto expectedUsecs = static_cast<uint64_t>(expected.toSecsSinceEpoch() * 1000000 + nanoseconds / 1000);
 
     QCOMPARE(driver.timeFromUtc(utc, nanoseconds), expectedUsecs);
-    QCOMPARE(driver.clockUpdates, 1);
-    QCOMPARE(driver.clockTime.tv_sec, expected.toSecsSinceEpoch());
-    QCOMPARE(driver.clockTime.tv_nsec, nanoseconds);
-
-    utc = calendarFields(expected, daylightSaving);
-    QCOMPARE(driver.timeFromUtc(utc, nanoseconds, false), expectedUsecs);
-    QCOMPARE(driver.clockUpdates, 1);
 }
 
 void GPSDriverTimeTest::_normalizesGpsWeek()
@@ -112,7 +94,6 @@ void GPSDriverTimeTest::_rejectsInvalidEpoch()
     const QDateTime oldTime = QDateTime::fromString(QStringLiteral("1980-01-01T00:00:00Z"), Qt::ISODate);
     auto utc = calendarFields(oldTime, 0);
     QCOMPARE(driver.timeFromUtc(utc, 0), uint64_t{0});
-    QCOMPARE(driver.clockUpdates, 0);
 }
 
 UT_REGISTER_TEST(GPSDriverTimeTest, TestLabel::Unit)

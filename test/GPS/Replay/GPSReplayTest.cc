@@ -16,6 +16,7 @@
 #include <thread>
 
 #include "GPSCorrectionRouter.h"
+#include "GPSProtocolTestIO.h"
 #include "GPSReadTimestamp.h"
 #include "GPSReceiverProfile.h"
 #include "GPSRecordingController.h"
@@ -31,7 +32,7 @@
 #include "NTRIPHttpDecoder.h"
 #include "NTRIPSession.h"
 #include "RTCMParser.h"
-#include "ubx.h"
+#include "UBX/GPSDriverUBX.h"
 
 namespace {
 class ReplayInput : public QIODevice, public GPSReadTimestamp
@@ -71,7 +72,9 @@ private:
 class QtNmeaDecoder : public QNmeaPositionInfoSource
 {
 public:
-    QtNmeaDecoder() : QNmeaPositionInfoSource(RealTimeMode) {}
+    QtNmeaDecoder()
+        : QNmeaPositionInfoSource(RealTimeMode)
+    {}
 
     bool decode(const QByteArray& bytes, QGeoPositionInfo& position, bool& fix)
     {
@@ -83,9 +86,8 @@ int nativeCallback(GPSCallbackType type, void* data, int size, void* user)
 {
     auto& transport = *static_cast<GPSTransport*>(user);
     if (type == GPSCallbackType::readDeviceData) {
-        int timeout = 0;
-        std::memcpy(&timeout, data, sizeof(timeout));
-        const auto result = transport.read(static_cast<uint8_t*>(data), size, timeout);
+        const auto& request = *static_cast<const GPSReadRequest*>(data);
+        const auto result = transport.read(request.buffer, request.capacity, request.timeoutMs);
         return result.status == GPSTransport::ReadStatus::Data       ? result.bytesRead
                : result.status == GPSTransport::ReadStatus::TimedOut ? 0
                                                                      : -EIO;
@@ -154,10 +156,10 @@ private slots:
         QVERIFY(recording->start());
         GPSRecordingTransport transport(std::move(original), stop, recordedStream);
         QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
-        sensor_gps_s position{};
-        GPSDriverUBX driver(GPSHelper::Interface::UART, nativeCallback, &transport, &position, nullptr, {});
-        GPSHelper::GPSConfig config{};
-        config.output_mode = GPSHelper::OutputMode::GPS;
+        GPSPositionReport position{};
+        GPSDriverUBX driver(makeGPSProtocolTestIO(nativeCallback, &transport), &position, nullptr, {});
+        GPSProtocol::GPSConfig config{};
+        config.output_mode = GPSProtocol::OutputMode::GPS;
         unsigned baudrate = 115200;
         recordedStream->configurationStarted();
         const auto configured = driver.configure(baudrate, config);
@@ -181,8 +183,8 @@ private slots:
         gps_test_time = 1;
         GPSReplayTransport roundTrip(clock, stop, std::move(exported), fragment);
         QCOMPARE(roundTrip.open().status, GPSTransport::OpenStatus::Opened);
-        sensor_gps_s decoded{};
-        GPSDriverUBX replayed(GPSHelper::Interface::UART, nativeCallback, &roundTrip, &decoded, nullptr, {});
+        GPSPositionReport decoded{};
+        GPSDriverUBX replayed(makeGPSProtocolTestIO(nativeCallback, &roundTrip), &decoded, nullptr, {});
         baudrate = 115200;
         QVERIFY2(replayed.configure(baudrate, config) == 0, qPrintable(roundTrip.failure()));
         QVERIFY2(replayed.receive(500) > 0, qPrintable(roundTrip.failure()));
@@ -535,7 +537,9 @@ private slots:
         {
         public:
             Receiver(std::atomic_bool& stop, bool septentrio, GPSReplayClock& clock)
-                : GPSTransport(stop), _septentrio(septentrio), _clock(clock)
+                : GPSTransport(stop)
+                , _septentrio(septentrio)
+                , _clock(clock)
             {}
 
             OpenResult open() override { return {.status = OpenStatus::Opened}; }
@@ -555,7 +559,7 @@ private slots:
                 return {.status = count ? ReadStatus::Data : ReadStatus::TimedOut, .bytesRead = count};
             }
 
-            WriteResult write(const uint8_t* data, int size) override
+            WriteResult writeBounded(const uint8_t* data, int size, QDeadlineTimer) override
             {
                 const QByteArray command(reinterpret_cast<const char*>(data), size);
                 if (_septentrio) {
@@ -589,7 +593,10 @@ private slots:
             GPSRecordingTransport transport(std::make_unique<Receiver>(stop, septentrio, clock), stop, stream);
             QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
             stream->configurationStarted();
-            GPSDriver original(profile.driverType, transport, profile.receiver, {});
+            GPSDriverClock driverClock;
+            driverClock.nowUs = [&clock] { return clock.nowUs(); };
+            driverClock.wait = [&clock](auto duration) { clock.advanceBy(duration.count()); };
+            GPSDriver original(profile.driverType, transport, profile.receiver, {}, driverClock);
             QVERIFY(original.configure());
             stream->configurationFinished(int(original.configurationResult().status));
         }

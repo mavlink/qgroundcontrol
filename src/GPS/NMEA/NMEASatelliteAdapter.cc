@@ -5,10 +5,22 @@
 
 #include "GPSQtRuntimeScheduler.h"
 #include "GPSReadTimestamp.h"
+#include "NMEAFields.h"
 #include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NMEASatelliteAdapterLog, "GPS.NMEA.NMEASatelliteAdapter")
+
+namespace {
+template <class T>
+T fieldNumber(const QByteArray& field, bool* valid = nullptr, int base = 10)
+{
+    const auto value = NMEAFields::number<T>({field.constData(), static_cast<size_t>(field.size())}, base);
+    if (valid)
+        *valid = value.has_value();
+    return value.value_or(T{});
+}
+}  // namespace
 
 NMEASatelliteAdapter::NMEASatelliteAdapter(QIODevice* source, QObject* parent, GPSRuntimeScheduler* scheduler)
     : QObject(parent)
@@ -80,14 +92,14 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
     }
     if (type == "GSA" && fields.size() >= 18) {
         bool validFix = false;
-        const int fix = fields[2].toInt(&validFix);
+        const int fix = fieldNumber<int>(fields[2], &validFix);
         if (!validFix || fix < 1 || fix > 3) {
             return;
         }
         for (int index = 3; index < 15; ++index) {
             if (!fields[index].isEmpty()) {
                 bool validId = false;
-                const int id = fields[index].toInt(&validId);
+                const int id = fieldNumber<int>(fields[index], &validId);
                 if (!validId || id <= 0) {
                     return;
                 }
@@ -97,7 +109,7 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
         std::optional<int> systemId = std::nullopt;
         if (talker == "GN" && fields.size() > 18 && !fields[18].isEmpty()) {
             bool validSystem = false;
-            systemId = fields[18].toInt(&validSystem, 16);
+            systemId = fieldNumber<int>(fields[18], &validSystem, 16);
             if (!validSystem) {
                 return;
             }
@@ -111,7 +123,7 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
             if (fields[index].isEmpty()) {
                 continue;
             }
-            const int id = fields[index].toInt();
+            const int id = fieldNumber<int>(fields[index]);
             const auto constellation = NMEAUtils::satelliteConstellation(talker, systemId, id);
             if (constellation == GPSSatellite::Constellation::Unknown) {
                 // Partial coverage would turn ambiguity into a fabricated used count.
@@ -138,9 +150,9 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
         bool totalOk = false;
         bool messageOk = false;
         bool countOk = false;
-        const int total = fields[1].toInt(&totalOk);
-        const int message = fields[2].toInt(&messageOk);
-        const int count = fields[3].toInt(&countOk);
+        const int total = fieldNumber<int>(fields[1], &totalOk);
+        const int message = fieldNumber<int>(fields[2], &messageOk);
+        const int count = fieldNumber<int>(fields[3], &countOk);
         if (!totalOk || !messageOk || !countOk || constellation == GPSSatellite::Constellation::Unknown || total < 1 ||
             total > 64 || message < 1 || message > total || count < 0 || count > 256 ||
             total != std::max(1, (count + 3) / 4)) {
@@ -152,7 +164,8 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
             return;
         }
         bool signalOk = true;
-        const int signal = fields.size() == end || fields[end].isEmpty() ? -1 : fields[end].toInt(&signalOk, 16);
+        const int signal =
+            fields.size() == end || fields[end].isEmpty() ? -1 : fieldNumber<int>(fields[end], &signalOk, 16);
         if (!signalOk || signal < -1 || signal > 15) {
             return;
         }
@@ -170,7 +183,7 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
         }
         for (int i = 4; i < end; i += 4) {
             bool idOk = false;
-            const int id = fields[i].toInt(&idOk);
+            const int id = fieldNumber<int>(fields[i], &idOk);
             if (!idOk || id < 1 || id > 999) {
                 _reports[constellation].remove(signal);
                 return;
@@ -179,15 +192,15 @@ void NMEASatelliteAdapter::_parseSentence(const QByteArray& sentence, quint64 re
             satellite.id = id;
             satellite.constellation = constellation;
             bool valid = false;
-            const double elevation = fields[i + 1].toDouble(&valid);
+            const double elevation = fieldNumber<double>(fields[i + 1], &valid);
             if (valid && std::isfinite(elevation) && elevation >= 0 && elevation <= 90) {
                 satellite.elevationDegrees = elevation;
             }
-            const double azimuth = fields[i + 2].toDouble(&valid);
+            const double azimuth = fieldNumber<double>(fields[i + 2], &valid);
             if (valid && std::isfinite(azimuth) && azimuth >= 0 && azimuth <= 360) {
                 satellite.normalizedAzimuthDegrees = azimuth;
             }
-            const int strength = fields[i + 3].toInt(&valid);
+            const int strength = fieldNumber<int>(fields[i + 3], &valid);
             if (valid && strength >= 0 && strength <= 99) {
                 satellite.signalStrength = strength;
             }

@@ -13,6 +13,7 @@
 #include "ColoredSvgImageProvider.h"
 #include "Fact.h"
 #include "GPSIntegrityFactGroup.h"
+#include "GPSObservation.h"
 #include "GPSPositionSettings.h"
 #include "QGCFileDialogController.h"
 #include "SettingsManager.h"

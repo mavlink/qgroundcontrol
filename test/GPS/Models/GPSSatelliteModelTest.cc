@@ -33,8 +33,7 @@ void GPSSatelliteModelTest::_rolesAndUnknownValues()
     report.satellites[0].used = false;
     report.satellites[0].elevationDegrees = 0;
     report.satellites[0].signalStrength = 0;
-    report.satellites[0].rawAzimuth = 255;
-    report.satellites[0].azimuthEncoding = GPSSatellite::AzimuthEncoding::ScaledFullCircleByte;
+    report.satellites[0].normalizedAzimuthDegrees = 360;
     store.updateObservation(report);
     QCOMPARE(resetSpy.size(), 0);
     QCOMPARE(changeSpy.size(), 1);
@@ -42,7 +41,7 @@ void GPSSatelliteModelTest::_rolesAndUnknownValues()
     QCOMPARE(model.data(row, GPSSatelliteModel::ElevationRole), QVariant(0.0));
     QCOMPARE(model.data(row, GPSSatelliteModel::SignalStrengthRole), QVariant(0));
     QCOMPARE(model.data(row, GPSSatelliteModel::AzimuthRole), QVariant(0.0));
-    report.satellites[0].azimuthEncoding = GPSSatellite::AzimuthEncoding::DegreesModulo256;
+    report.satellites[0].normalizedAzimuthDegrees.reset();
     store.updateObservation(report);
     QVERIFY(!model.data(row, GPSSatelliteModel::AzimuthRole).isValid());
 }

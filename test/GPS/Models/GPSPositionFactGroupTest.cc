@@ -205,11 +205,11 @@ void GPSPositionFactGroupTest::_integrityProjection()
     aggregate.bindToGps(&vehicle, nullptr);
     GPSObservation observation;
     observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    observation.jammingState = 3;
-    observation.spoofingState = 1;
-    observation.authenticationState = 4;
-    observation.correctionsProtocol = 1;
-    observation.correctionsUsed = 2;
+    observation.integrity.jammingState = 3;
+    observation.integrity.spoofingState = 1;
+    observation.integrity.authenticationState = 4;
+    observation.integrity.correctionsProtocol = 1;
+    observation.integrity.correctionsUsed = 2;
     native.integrity()->update(GPSIntegrityObservation::fromPosition(observation));
     mavlink_gnss_integrity_t raw{};
     raw.jamming_state = 3;
@@ -274,10 +274,10 @@ void GPSPositionFactGroupTest::_independentIntegrityReports()
     GPSIntegrityFactGroup facts;
     GPSObservation position;
     position.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    position.jammingState = 3;
-    position.spoofingState = 1;
-    position.correctionsUsed = 2;
-    position.integrityProvenance = GPSIntegrityProvenance{
+    position.integrity.jammingState = 3;
+    position.integrity.spoofingState = 1;
+    position.integrity.correctionsUsed = 2;
+    position.integrity.provenance = GPSIntegrityProvenance{
         .jammingTimestampUs = position.monotonicTimestampUs - 6000000,
         .spoofingTimestampUs = position.monotonicTimestampUs,
         .correctionsTimestampUs = position.monotonicTimestampUs - 6000000,
@@ -293,12 +293,12 @@ void GPSPositionFactGroupTest::_independentIntegrityReports()
         QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
         QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
     }
-    position.integrityProvenance->jammingTimestampUs = GPSObservation::monotonicNowUs() - 4900000;
+    position.integrity.provenance->jammingTimestampUs = GPSObservation::monotonicNowUs() - 4900000;
     facts.update(GPSIntegrityObservation::fromPosition(position));
     QCOMPARE(facts.jammingState()->rawValue().toInt(), 3);
     QTRY_COMPARE_WITH_TIMEOUT(facts.jammingState()->rawValue().toInt(), 255, 2000);
     QCOMPARE(facts.spoofingState()->rawValue().toInt(), 1);
-    position.integrityProvenance->jammingTimestampUs = GPSObservation::monotonicNowUs();
+    position.integrity.provenance->jammingTimestampUs = GPSObservation::monotonicNowUs();
     // An unchanged report renews its own freshness even when the last position is stale.
     position.monotonicTimestampUs -= 6000000;
     facts.update(GPSIntegrityObservation::fromPosition(position));
@@ -377,7 +377,8 @@ void GPSPositionFactGroupTest::_highLatencyTransitions()
     QCOMPARE(observation.fusedPosition.position.coordinate().altitude(), 450.0);
     QCOMPARE(observation.fusedPosition.altitudeDatum, GPSObservation::AltitudeDatum::MeanSeaLevel);
     QCOMPARE(observation.fusedPosition.monotonicTimestampUs, observation.position.monotonicTimestampUs);
-    QCOMPARE(observation.position.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy), version2 && !unknownError);
+    QCOMPARE(observation.position.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy),
+             version2 && !unknownError);
     if (version2 && !unknownError) {
         QCOMPARE(observation.position.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 1.5);
         QCOMPARE(observation.position.position.attribute(QGeoPositionInfo::VerticalAccuracy), 2.5);

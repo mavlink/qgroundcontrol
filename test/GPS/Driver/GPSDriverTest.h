@@ -1,10 +1,16 @@
 #pragma once
 
+enum class GPSCallbackType;
+class GPSDriver;
+
 #include "UnitTest.h"
 
 class GPSDriverTest : public UnitTest
 {
     Q_OBJECT
+
+public:
+    static int callback(GPSDriver& driver, GPSCallbackType type, void* data1, int data2);
 
 private slots:
     void _positionBackendWithoutBaseSupport();

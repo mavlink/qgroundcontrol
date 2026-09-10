@@ -3,8 +3,8 @@
 #include <QtTest/QTest>
 
 #include "RTCMFrameDecoder.h"
+#include "RTCMFramer.h"
 #include "RTCMParser.h"
-#include "rtcm.h"
 
 namespace {
 // Fixed CRCs keep the corpus independent of both implementations under test.
@@ -82,7 +82,7 @@ void RTCMConformanceTest::_sharedCorpus()
     QFETCH(int, expectedInvalidFrames);
 
     RTCMParser qgc;
-    RTCMParsing px4;
+    RTCMFramer px4;
     QList<QByteArray> qgcFrames;
     QList<QByteArray> px4Frames;
     QList<int> qgcIds;
@@ -106,8 +106,8 @@ void RTCMConformanceTest::_sharedCorpus()
                 }
                 qgc.reset();
             }
-            if (px4.addByte(byte)) {
-                // PX4 filters CRC failures internally and includes framing in its length.
+            if (px4.addByte(byte) && px4.valid()) {
+                // Native receivers publish only validated frames.
                 px4Frames.append(QByteArray(reinterpret_cast<const char*>(px4.message()), px4.messageLength()));
                 px4Ids.append(px4.messageId());
                 px4.reset();
@@ -137,7 +137,7 @@ void RTCMConformanceTest::_strictValidation()
     QVERIFY(!RTCMParser::isValidFrame(candidate));
     RTCMFrameDecoder decoder;
     std::optional<RTCMFrameDecoder::Result> decoded;
-    RTCMParsing native;
+    RTCMFramer native;
     bool nativeCompleted = false;
     for (const char byte : candidate) {
         if (const auto result = decoder.addByte(static_cast<uint8_t>(byte), 1000)) {
@@ -148,8 +148,9 @@ void RTCMConformanceTest::_strictValidation()
     QVERIFY(decoded);
     QVERIFY(!decoded->valid);
     QCOMPARE(decoded->data, candidate);
-    // The vendor parser remains isolated. The application boundary enforces the stricter contract.
+    // Both adapters use the same validation contract.
     QVERIFY(nativeCompleted);
+    QVERIFY(!native.valid());
     const QByteArray nativeFrame(reinterpret_cast<const char*>(native.message()), native.messageLength());
     QVERIFY(!RTCMParser::isValidFrame(nativeFrame));
     for (const char byte : SHORT_FRAME) {

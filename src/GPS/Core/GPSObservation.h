@@ -9,14 +9,8 @@
 #include <array>
 #include <optional>
 
-/// Original diagnostic receipts; zero means that diagnostic has never been reported.
-struct GPSIntegrityProvenance
-{
-    quint64 jammingTimestampUs = 0;
-    quint64 spoofingTimestampUs = 0;
-    quint64 authenticationTimestampUs = 0;
-    quint64 correctionsTimestampUs = 0;
-};
+#include "GPSConstellation.h"
+#include "GPSIntegrityObservation.h"
 
 /// Receiver-independent data. Unknown metadata remains absent, never a manufactured zero.
 struct GPSObservation
@@ -60,18 +54,14 @@ struct GPSObservation
     std::optional<bool> receiverFixValid = std::nullopt;
     AltitudeDatum altitudeDatum = AltitudeDatum::Unknown;
     std::optional<int> satellitesUsed;
+    std::optional<double> speedAccuracyMetersPerSecond;
     std::optional<double> horizontalDop;
     std::optional<double> verticalDop;
     std::optional<double> altitudeEllipsoidMeters;
     // Antenna orientation is distinct from QGeoPositionInfo::Direction (course over ground).
     std::optional<double> trueHeadingDegrees;
     std::optional<double> trueHeadingAccuracyDegrees;
-    std::optional<GPSIntegrityProvenance> integrityProvenance = std::nullopt;
-    std::optional<int> jammingState;
-    std::optional<int> spoofingState;
-    std::optional<int> authenticationState;
-    std::optional<int> correctionsProtocol;
-    std::optional<int> correctionsUsed;
+    GPSIntegrityObservation integrity;
 
     bool usable() const;
     QGeoCoordinate coordinate() const;
@@ -86,24 +76,7 @@ Q_DECLARE_METATYPE(GPSObservation)
 
 struct GPSSatellite
 {
-    enum class Constellation
-    {
-        Unknown,
-        GPS,
-        GLONASS,
-        Galileo,
-        BeiDou,
-        QZSS,
-        SBAS,
-        NavIC
-    };
-
-    enum class AzimuthEncoding
-    {
-        Unknown,
-        ScaledFullCircleByte,
-        DegreesModulo256
-    };
+    using Constellation = GPSConstellation;
 
     int id = 0;
     int prn = 0;
@@ -112,8 +85,6 @@ struct GPSSatellite
     std::optional<double> elevationDegrees;
     std::optional<int> signalStrength;
     std::optional<double> normalizedAzimuthDegrees;
-    std::optional<int> rawAzimuth;
-    AzimuthEncoding azimuthEncoding = AzimuthEncoding::Unknown;
 
     std::optional<double> azimuthDegrees() const;
 };
@@ -155,7 +126,7 @@ struct GPSRelativeObservation
     quint64 sampleTimestampUs = 0;
     quint64 sessionId = 0;
     quint64 receiverTimeUs = 0;
-    int referenceStationId = 0;
+    std::optional<int> referenceStationId;
     std::array<double, 3> positionNedMeters{};
     std::array<double, 3> accuracyNedMeters{};
     double lengthMeters = 0;
@@ -167,9 +138,9 @@ struct GPSRelativeObservation
     bool positionValid = false;
     bool carrierFloat = false;
     bool carrierFixed = false;
-    bool movingBase = false;
-    bool referencePositionMissing = false;
-    bool referenceObservationsMissing = false;
-    bool normalized = false;
+    std::optional<bool> movingBase;
+    std::optional<bool> referencePositionMissing;
+    std::optional<bool> referenceObservationsMissing;
+    std::optional<bool> normalized;
 };
 Q_DECLARE_METATYPE(GPSRelativeObservation)

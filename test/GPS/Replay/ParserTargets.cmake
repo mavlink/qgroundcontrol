@@ -59,8 +59,10 @@ function(qgc_add_gps_replay_driver target parser_target)
     target_link_libraries(${target} INTERFACE ${parser_target} ${parser_target}Driver ${parser_target}Recording
                                               ${parser_target}Receiver ${parser_target}RecordingController
     )
-    target_include_directories(${target} INTERFACE "${gps_repository}/src/GPS/Driver/PX4")
-    target_compile_definitions(
-        ${target} INTERFACE GPS_DEFINITIONS_HEADER="${CMAKE_CURRENT_FUNCTION_LIST_DIR}/GPSReplayDefinitions.h"
+    target_include_directories(${target} INTERFACE "${gps_repository}/src/GPS/Driver/Protocols"
+                                                   "${gps_repository}/test/GPS/Driver"
+    )
+    target_compile_definitions(${target}
+                               INTERFACE GPS_PLATFORM_HEADER="${CMAKE_CURRENT_FUNCTION_LIST_DIR}/GPSReplayDefinitions.h"
     )
 endfunction()

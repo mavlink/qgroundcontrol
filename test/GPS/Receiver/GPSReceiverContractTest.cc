@@ -8,8 +8,8 @@
 #include <cstring>
 #include <thread>
 
-#include "GPSReceiverTestProfile.h"
 #include "GPSReceiverSession.h"
+#include "GPSReceiverTestProfile.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
 
@@ -111,8 +111,7 @@ void GPSReceiverContractTest::_retirementDiscardsPendingData()
         second->release.release();
         session.shutdown();
     });
-    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
-                  blockedFactory(first));
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox), blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
@@ -138,8 +137,7 @@ void GPSReceiverContractTest::_retirementDiscardsPendingData()
     QSignalSpy deliveryResults(&session, &GPSReceiverSession::correctionDeliveriesReady);
     QSignalSpy positions(&session, &GPSReceiverSession::positionReceived);
     QSignalSpy corrections(&session, &GPSReceiverSession::rtcmFrameReceived);
-    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
-                  blockedFactory(second));
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox), blockedFactory(second));
     QVERIFY(second->entered.tryAcquire(1, 5000));
     QVERIFY(!mailbox->completeCommand(*inFlight, GPSCorrectionOutcome::Written, incoming.data.size()));
     emit worker->dataReady();
@@ -228,6 +226,7 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker_data()
 void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
 {
     QFETCH(bool, partialWrite);
+
     struct Trace
     {
         QSemaphore correctionWritten;
@@ -301,6 +300,9 @@ void GPSReceiverContractTest::_correctionsWrittenOnlyOnWorker()
 
         WriteResult writeBounded(const uint8_t* data, int size, QDeadlineTimer deadline) override
         {
+            if (size <= 0 || data[0] != 0xd3) {
+                return write(data, size);
+            }
             _trace.writeBudgetMs = deadline.remainingTime();
             if (++_trace.correctionCount == 2) {
                 _trace.receivedBetweenCorrections = _trace.readAfterFirstCorrection.load();
@@ -545,8 +547,7 @@ void GPSReceiverContractTest::_configurationReportLifecycle()
         second->release.release();
         session.shutdown();
     });
-    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
-                  blockedFactory(first));
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox), blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* retired = session.findChild<GPSProvider*>();
     QVERIFY(retired);
@@ -579,8 +580,7 @@ void GPSReceiverContractTest::_configurationReportLifecycle()
     QCOMPARE(reports.size(), 3);
 
     emit retired->configurationReported(report);
-    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
-                  blockedFactory(second));
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox), blockedFactory(second));
     QVERIFY(second->entered.tryAcquire(1, 5000));
     QVERIFY(session.sessionId() != oldSession);
     QVERIFY(session.configurationReport().settings.isEmpty());
@@ -611,8 +611,7 @@ void GPSReceiverContractTest::_configurationReportResetCanRestart()
         second->release.release();
         session.shutdown();
     });
-    session.start(gpsReceiverTestProfile({}, GPSType::u_blox),
-                  blockedFactory(first));
+    session.start(gpsReceiverTestProfile({}, GPSType::u_blox), blockedFactory(first));
     QVERIFY(first->entered.tryAcquire(1, 5000));
     auto* worker = session.findChild<GPSProvider*>();
     QVERIFY(worker);
@@ -626,8 +625,7 @@ void GPSReceiverContractTest::_configurationReportResetCanRestart()
             restarted = true;
             GPSReceiverConfig config;
             config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
-            session.start(gpsReceiverTestProfile(config, GPSType::u_blox),
-                          blockedFactory(second));
+            session.start(gpsReceiverTestProfile(config, GPSType::u_blox), blockedFactory(second));
         }
     });
     session.stop();

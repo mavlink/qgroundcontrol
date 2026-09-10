@@ -7,10 +7,10 @@
 #include <cmath>
 #include <limits>
 
+#include "GPSPositionReport.h"
+#include "GPSRelativeReport.h"
+#include "GPSSatelliteReport.h"
 #include "QGCLoggingCategory.h"
-#include "satellite_info.h"
-#include "sensor_gnss_relative.h"
-#include "sensor_gps.h"
 
 QGC_LOGGING_CATEGORY(GPSDriverDataLog, "GPS.Driver.GPSDriverData")
 
@@ -25,7 +25,7 @@ std::optional<int> knownState(int value)
     return value > 0 ? std::optional<int>(value) : std::nullopt;
 }
 
-QGeoPositionInfo positionInfo(const sensor_gps_s& fix)
+QGeoPositionInfo positionInfo(const GPSPositionReport& fix)
 {
     QGeoCoordinate coordinate(fix.latitude_deg, fix.longitude_deg);
     if (!coordinate.isValid()) {
@@ -33,7 +33,7 @@ QGeoPositionInfo positionInfo(const sensor_gps_s& fix)
                                   << "latitude:" << fix.latitude_deg << "longitude:" << fix.longitude_deg;
         return {};
     }
-    const bool altitudeValid = fix.fix_type >= sensor_gps_s::FIX_TYPE_3D && qIsFinite(fix.altitude_msl_m);
+    const bool altitudeValid = fix.fix_type >= GPSPositionReport::FIX_TYPE_3D && qIsFinite(fix.altitude_msl_m);
     if (altitudeValid) {
         coordinate.setAltitude(fix.altitude_msl_m);
     }
@@ -73,7 +73,7 @@ QGeoPositionInfo positionInfo(const sensor_gps_s& fix)
 
 }  // namespace
 
-void GPSDriverData::initialize(sensor_gps_s& fix)
+void GPSDriverData::initialize(GPSPositionReport& fix)
 {
     fix = {};
     fix.latitude_deg = qQNaN();
@@ -82,41 +82,42 @@ void GPSDriverData::initialize(sensor_gps_s& fix)
     fix.altitude_ellipsoid_m = qQNaN();
     fix.heading = qQNaN();
     fix.heading_accuracy = qQNaN();
+    fix.s_variance_m_s = qQNaN();
     fix.hdop = qQNaN();
     fix.vdop = qQNaN();
     fix.satellites_used = std::numeric_limits<uint8_t>::max();
 }
 
-GPSObservation GPSDriverData::position(const sensor_gps_s& fix)
+GPSObservation GPSDriverData::position(const GPSPositionReport& fix)
 {
     GPSObservation result;
     result.position = positionInfo(fix);
     result.receiverFixValid =
-        fix.fix_type >= sensor_gps_s::FIX_TYPE_2D && fix.fix_type <= sensor_gps_s::FIX_TYPE_RTK_FIXED;
+        fix.fix_type >= GPSPositionReport::FIX_TYPE_2D && fix.fix_type <= GPSPositionReport::FIX_TYPE_RTK_FIXED;
     result.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
     result.monotonicTimestampUs = fix.timestamp != 0 ? fix.timestamp : GPSObservation::monotonicNowUs();
     const qint64 age = result.ageMilliseconds();
     result.receivedAt = age >= 0 ? QDateTime::currentDateTimeUtc().addMSecs(-age) : QDateTime();
     switch (fix.fix_type) {
-        case sensor_gps_s::FIX_TYPE_NONE:
+        case GPSPositionReport::FIX_TYPE_NONE:
             result.fixQuality = GPSObservation::FixQuality::NoFix;
             break;
-        case sensor_gps_s::FIX_TYPE_2D:
+        case GPSPositionReport::FIX_TYPE_2D:
             result.fixQuality = GPSObservation::FixQuality::Fix2D;
             break;
-        case sensor_gps_s::FIX_TYPE_3D:
+        case GPSPositionReport::FIX_TYPE_3D:
             result.fixQuality = GPSObservation::FixQuality::Fix3D;
             break;
-        case sensor_gps_s::FIX_TYPE_RTCM_CODE_DIFFERENTIAL:
+        case GPSPositionReport::FIX_TYPE_RTCM_CODE_DIFFERENTIAL:
             result.fixQuality = GPSObservation::FixQuality::Differential;
             break;
-        case sensor_gps_s::FIX_TYPE_RTK_FLOAT:
+        case GPSPositionReport::FIX_TYPE_RTK_FLOAT:
             result.fixQuality = GPSObservation::FixQuality::RTKFloat;
             break;
-        case sensor_gps_s::FIX_TYPE_RTK_FIXED:
+        case GPSPositionReport::FIX_TYPE_RTK_FIXED:
             result.fixQuality = GPSObservation::FixQuality::RTKFixed;
             break;
-        case sensor_gps_s::FIX_TYPE_EXTRAPOLATED:
+        case GPSPositionReport::FIX_TYPE_EXTRAPOLATED:
             result.fixQuality = GPSObservation::FixQuality::Extrapolated;
             break;
         default:
@@ -125,9 +126,12 @@ GPSObservation GPSDriverData::position(const sensor_gps_s& fix)
     if (fix.satellites_used != std::numeric_limits<uint8_t>::max()) {
         result.satellitesUsed = fix.satellites_used;
     }
+    if (fix.vel_ned_valid && qIsFinite(fix.s_variance_m_s) && fix.s_variance_m_s >= 0) {
+        result.speedAccuracyMetersPerSecond = fix.s_variance_m_s;
+    }
     result.horizontalDop = positive(fix.hdop);
     result.verticalDop = positive(fix.vdop);
-    if (fix.fix_type >= sensor_gps_s::FIX_TYPE_3D && fix.fix_type <= sensor_gps_s::FIX_TYPE_RTK_FIXED &&
+    if (fix.fix_type >= GPSPositionReport::FIX_TYPE_3D && fix.fix_type <= GPSPositionReport::FIX_TYPE_RTK_FIXED &&
         qIsFinite(fix.altitude_ellipsoid_m)) {
         result.altitudeEllipsoidMeters = fix.altitude_ellipsoid_m;
     }
@@ -138,48 +142,54 @@ GPSObservation GPSDriverData::position(const sensor_gps_s& fix)
             result.trueHeadingAccuracyDegrees = qRadiansToDegrees(static_cast<double>(fix.heading_accuracy));
         }
     }
-    result.integrityProvenance = GPSIntegrityProvenance{
+    result.integrity.provenance = GPSIntegrityProvenance{
         .jammingTimestampUs = fix.jamming_state_timestamp,
         .spoofingTimestampUs = fix.spoofing_state_timestamp,
         .authenticationTimestampUs = fix.authentication_state_timestamp,
         .correctionsTimestampUs = fix.corrections_timestamp,
+        .rfTimestampUs = fix.rf_timestamp,
     };
-    result.jammingState = knownState(fix.jamming_state);
-    result.spoofingState = knownState(fix.spoofing_state);
-    result.authenticationState = knownState(fix.authentication_state);
-    result.correctionsProtocol = knownState(fix.corrections_protocol);
-    result.correctionsUsed = knownState(fix.corrections_msg_used);
+    result.integrity.noisePerMillisecond = fix.noise_per_ms;
+    result.integrity.automaticGainControl = fix.automatic_gain_control;
+    result.integrity.jammingIndicator = fix.jamming_indicator;
+    result.integrity.correctionsCrcFailed = fix.corrections_crc_failed;
+    result.integrity.jammingState = knownState(fix.jamming_state);
+    result.integrity.spoofingState = knownState(fix.spoofing_state);
+    result.integrity.authenticationState = knownState(fix.authentication_state);
+    result.integrity.correctionsProtocol = knownState(fix.corrections_protocol);
+    result.integrity.correctionsUsed = knownState(fix.corrections_msg_used);
     return result;
 }
 
-GPSSatelliteObservation GPSDriverData::satellites(const satellite_info_s& report, std::optional<GPSType> type)
+GPSSatelliteObservation GPSDriverData::satellites(const GPSSatelliteReport& report)
 {
     GPSSatelliteObservation result;
     result.monotonicTimestampUs = report.timestamp != 0 ? report.timestamp : GPSObservation::monotonicNowUs();
-    const int count = std::min(report.count, satellite_info_s::SAT_INFO_MAX_SATELLITES);
-    result.satellites.reserve(count);
-    for (int index = 0; index < count; ++index) {
+    if (report.usedCount) {
+        result.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
+        result.provenance.append(
+            {GPSSatellite::Constellation::Unknown, 0, result.monotonicTimestampUs, report.usedCount});
+    }
+    const auto count = std::min<size_t>(report.count, report.entries.size());
+    for (size_t index = 0; index < count; ++index) {
+        const auto& entry = report.entries[index];
+        if (!entry.id) {
+            continue;
+        }
         GPSSatellite satellite;
-        satellite.id = report.svid[index];
-        satellite.prn = report.prn[index];
-        satellite.used = report.used[index] != 0;
-        satellite.elevationDegrees = report.elevation[index];
-        satellite.signalStrength = report.snr[index];
-        if (type != GPSType::septentrio) {
-            satellite.rawAzimuth = report.azimuth[index];
-        }
-        if (type == GPSType::u_blox) {
-            satellite.azimuthEncoding = GPSSatellite::AzimuthEncoding::ScaledFullCircleByte;
-        } else if (type == GPSType::trimble || type == GPSType::femto) {
-            // These native drivers narrow a degree value to uint8_t before this boundary.
-            satellite.azimuthEncoding = GPSSatellite::AzimuthEncoding::DegreesModulo256;
-        }
+        satellite.id = entry.id;
+        satellite.prn = entry.prn;
+        satellite.constellation = entry.constellation;
+        satellite.used = entry.used;
+        satellite.elevationDegrees = entry.elevation;
+        satellite.signalStrength = entry.signal;
+        satellite.normalizedAzimuthDegrees = entry.azimuth;
         result.satellites.append(satellite);
     }
     return result;
 }
 
-GPSRelativeObservation GPSDriverData::relativePosition(const sensor_gnss_relative_s& report)
+GPSRelativeObservation GPSDriverData::relativePosition(const GPSRelativeReport& report)
 {
     GPSRelativeObservation result;
     result.monotonicTimestampUs = report.timestamp != 0 ? report.timestamp : GPSObservation::monotonicNowUs();

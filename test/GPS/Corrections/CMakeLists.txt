@@ -9,8 +9,10 @@ add_qgc_test(RTCMParserTest LABELS Unit)
 add_qgc_test(RTCMMavlinkTest LABELS Unit)
 add_qgc_test(RTCMUdpInputTest LABELS Unit)
 
-qt_add_executable(QGCRTCMConformanceTest RTCMConformanceTest.cc ../../../src/GPS/Driver/PX4/rtcm.cpp)
-target_include_directories(QGCRTCMConformanceTest PRIVATE ../../../src/GPS/Corrections ../../../src/GPS/Driver/PX4)
+qt_add_executable(QGCRTCMConformanceTest RTCMConformanceTest.cc)
+target_include_directories(QGCRTCMConformanceTest PRIVATE ../../../src/GPS/Corrections
+                                                          ../../../src/GPS/Driver/Protocols
+)
 target_link_libraries(QGCRTCMConformanceTest PRIVATE Qt6::Test QGCLogging QGCGPSCorrections)
 add_test(NAME RTCMConformanceTest COMMAND QGCRTCMConformanceTest)
 set_tests_properties(RTCMConformanceTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)

@@ -112,8 +112,9 @@ qint64 GPSObservation::ageMilliseconds() const
 
 int GPSSatelliteObservation::usedCount() const
 {
-    return static_cast<int>(std::count_if(satellites.cbegin(), satellites.cend(),
-                                          [](const GPSSatellite& satellite) { return satellite.used.value_or(false); }));
+    return static_cast<int>(std::count_if(satellites.cbegin(), satellites.cend(), [](const GPSSatellite& satellite) {
+        return satellite.used.value_or(false);
+    }));
 }
 
 std::optional<double> GPSSatellite::azimuthDegrees() const
@@ -122,18 +123,15 @@ std::optional<double> GPSSatellite::azimuthDegrees() const
         *normalizedAzimuthDegrees <= 360) {
         return *normalizedAzimuthDegrees == 360 ? 0 : *normalizedAzimuthDegrees;
     }
-    if (!rawAzimuth || *rawAzimuth < 0 || *rawAzimuth > 255 ||
-        azimuthEncoding != AzimuthEncoding::ScaledFullCircleByte) {
-        return std::nullopt;
-    }
-    return *rawAzimuth == 255 ? 0.0 : *rawAzimuth * 360.0 / 255.0;
+    return std::nullopt;
 }
 
 int GPSSatelliteObservation::satellitesInViewCount() const
 {
     return std::any_of(provenance.cbegin(), provenance.cend(),
                        [](const auto& report) { return report.inViewTimestampUs != 0; })
-               ? static_cast<int>(satellites.size()) : -1;
+               ? static_cast<int>(satellites.size())
+               : -1;
 }
 
 int GPSSatelliteObservation::satellitesInUseCount() const
@@ -145,4 +143,12 @@ int GPSSatelliteObservation::satellitesInUseCount() const
         }
     }
     return count;
+}
+
+GPSIntegrityObservation GPSIntegrityObservation::fromPosition(const GPSObservation& observation)
+{
+    auto result = observation.integrity;
+    result.monotonicTimestampUs = observation.monotonicTimestampUs;
+    result.sessionId = observation.sessionId;
+    return result;
 }

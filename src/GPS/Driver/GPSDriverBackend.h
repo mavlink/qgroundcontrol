@@ -8,7 +8,7 @@
 #include <type_traits>
 
 #include "GPSDriver.h"
-#include "PX4/base_station.h"
+#include "Protocols/GPSBaseProtocol.h"
 
 /// Private integration boundary: a receiver need not implement base-station operations.
 class GPSDriverBackend
@@ -35,28 +35,23 @@ protected:
     template <class Driver>
     void setDriver(std::unique_ptr<Driver> driver)
     {
-        _baseStation = nullptr;
-        if constexpr (std::is_base_of_v<GPSBaseStationSupport, Driver>) {
-            _baseStation = driver.get();
-        }
         _driver = std::move(driver);
     }
 
-    virtual int configureReceiver(unsigned& baudrate, const GPSHelper::GPSConfig& config,
+    virtual int configureReceiver(unsigned& baudrate, const GPSProtocol::GPSConfig& config,
                                   GPSReceiverConfig::OutputProtocol protocol);
 
-    GPSHelper& driver() { return *_driver; }
+    GPSProtocol& driver() { return *_driver; }
 
-    const GPSHelper& driver() const { return *_driver; }
+    const GPSProtocol& driver() const { return *_driver; }
 
 private:
-    std::unique_ptr<GPSHelper> _driver;
-    GPSBaseStationSupport* _baseStation = nullptr;
+    std::unique_ptr<GPSProtocol> _driver;
 };
 
 struct GPSDriverFamily
 {
-    using Factory = std::unique_ptr<GPSDriverBackend> (*)(GPSCallbackPtr, void*, sensor_gps_s*, satellite_info_s*,
+    using Factory = std::unique_ptr<GPSDriverBackend> (*)(GPSProtocolIO, GPSPositionReport*, GPSSatelliteReport*,
                                                           const GPSReceiverConfig&);
     GPSType type;
     Factory create;

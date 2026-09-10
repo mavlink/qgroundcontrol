@@ -153,6 +153,8 @@ public:
 
     bool setBaudrate(unsigned) override { return true; }
 
+    WriteResult writeBounded(const uint8_t* bytes, int size, QDeadlineTimer) override { return write(bytes, size); }
+
     WriteResult write(const uint8_t* bytes, int size) override
     {
         const QByteArray command(reinterpret_cast<const char*>(bytes), size);

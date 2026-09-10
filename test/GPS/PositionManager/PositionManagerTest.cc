@@ -8,13 +8,13 @@
 #include <cstring>
 
 #include "GPSDriverData.h"
+#include "GPSPositionReport.h"
+#include "GPSSatelliteReport.h"
 #include "NMEAPositionSource.h"
 #include "NMEAUtils.h"
 #include "PositionManager.h"
 #include "TestGPSPositionSource.h"
 #include "UdpIODevice.h"
-#include "satellite_info.h"
-#include "sensor_gps.h"
 
 namespace {
 
@@ -34,17 +34,19 @@ public:
     NmeaTestDevice() { (void) open(QIODevice::ReadOnly); }
 
     bool isSequential() const override { return true; }
+
     qint64 bytesAvailable() const override { return _data.size() + QIODevice::bytesAvailable(); }
+
     bool canReadLine() const override { return _data.contains('\n') || QIODevice::canReadLine(); }
 
-    void feed(const QByteArray &data)
+    void feed(const QByteArray& data)
     {
         _data.append(data);
         emit readyRead();
     }
 
 protected:
-    qint64 readData(char *data, qint64 maxSize) override
+    qint64 readData(char* data, qint64 maxSize) override
     {
         const qint64 count = qMin<qint64>(maxSize, _data.size());
         (void) memcpy(data, _data.constData(), count);
@@ -52,13 +54,13 @@ protected:
         return count;
     }
 
-    qint64 writeData(const char *, qint64) override { return -1; }
+    qint64 writeData(const char*, qint64) override { return -1; }
 
 private:
     QByteArray _data;
 };
 
-} // namespace
+}  // namespace
 
 void PositionManagerTest::init()
 {
@@ -350,10 +352,10 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
 UT_REGISTER_TEST(PositionManagerTest, TestLabel::Unit)
 
 namespace {
-sensor_gps_s receiverFix()
+GPSPositionReport receiverFix()
 {
-    sensor_gps_s fix{};
-    fix.fix_type = sensor_gps_s::FIX_TYPE_RTK_FIXED;
+    GPSPositionReport fix{};
+    fix.fix_type = GPSPositionReport::FIX_TYPE_RTK_FIXED;
     fix.latitude_deg = 47;
     fix.longitude_deg = 8;
     fix.altitude_msl_m = 500;
@@ -441,7 +443,7 @@ void PositionManagerTest::_receiverInvalidAndStaleFixes()
     receiver.updatePosition(GPSDriverData::position(fix));
     QVERIFY(pm.geoPositionInfo().isValid());
     QVERIFY(qIsFinite(pm.gcsHeading()));
-    fix.fix_type = sensor_gps_s::FIX_TYPE_NONE;
+    fix.fix_type = GPSPositionReport::FIX_TYPE_NONE;
     receiver.updatePosition(GPSDriverData::position(fix));
     QVERIFY(!pm.geoPositionInfo().isValid());
     QVERIFY(!pm.gcsPosition().isValid());
@@ -455,7 +457,7 @@ void PositionManagerTest::_receiverInvalidAndStaleFixes()
     QVERIFY(!pm.gcsPosition().isValid());
     QVERIFY(!pm.geoPositionInfo().isValid());
     fix = receiverFix();
-    fix.fix_type = sensor_gps_s::FIX_TYPE_2D;
+    fix.fix_type = GPSPositionReport::FIX_TYPE_2D;
     fix.vel_ned_valid = false;
     fix.latitude_deg = 0;
     fix.longitude_deg = 0;
@@ -958,6 +960,7 @@ void PositionManagerTest::_sourceProvenanceAcrossPolicies()
     public:
         int minimumUpdateInterval() const override { return 125; }
     };
+
     PlatformSource platform;
     QGCPositionManager manager;
     manager._defaultSource = &platform;

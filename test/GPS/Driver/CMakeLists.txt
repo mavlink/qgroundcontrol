@@ -1,12 +1,12 @@
 # GPS driver tests.
-add_subdirectory(PX4)
+add_subdirectory(Protocols)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverTimeTest.cc GPSDriverTimeTest.h)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverUBXTest.cc GPSDriverUBXTest.h)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Driver bridge and UTC conversion tests exercise the actual PX4 implementation.
+# Driver bridge and UTC conversion tests exercise the production protocol implementation.
 set_source_files_properties(
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverTest.cc ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverTimeTest.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverUBXTest.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}

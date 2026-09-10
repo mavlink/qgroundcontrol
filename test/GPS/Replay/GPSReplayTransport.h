@@ -14,7 +14,9 @@
 class GPSReplayClock
 {
 public:
-    explicit GPSReplayClock(uint64_t* externalClock = nullptr) : _now(externalClock ? externalClock : &_owned) {}
+    explicit GPSReplayClock(uint64_t* externalClock = nullptr)
+        : _now(externalClock ? externalClock : &_owned)
+    {}
 
     quint64 nowUs() const { return *_now; }
 
@@ -60,6 +62,8 @@ public:
     std::chrono::milliseconds correctionWriteTimeout(int length) const override;
 
     unsigned fixedBaudrate() const override { return _trace.profile ? _trace.profile->fixedBaud : 0; }
+
+    GPSReplayClock& clock() { return _clock; }
 
     const GPSReplayTrace& trace() const { return _trace; }
 

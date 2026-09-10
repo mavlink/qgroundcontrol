@@ -5,10 +5,10 @@
 #include <cmath>
 #include <numbers>
 
-#include "PX4/ashtech.h"
-#include "PX4/femtomes.h"
-#include "PX4/sbf.h"
-#include "PX4/ubx.h"
+#include "Protocols/Ashtech/GPSDriverAshtech.h"
+#include "Protocols/Femto/GPSDriverFemto.h"
+#include "Protocols/SBF/GPSDriverSBF.h"
+#include "Protocols/UBX/GPSDriverUBX.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSDriverBackendLog, "GPS.Driver.GPSDriverBackend")
@@ -27,24 +27,14 @@ namespace {
 class UbxBackend final : public GPSDriverBackend
 {
 public:
-    UbxBackend(GPSCallbackPtr callback, void* user, sensor_gps_s* position, satellite_info_s* satellites,
+    UbxBackend(GPSProtocolIO io, GPSPositionReport* position, GPSSatelliteReport* satellites,
                const GPSReceiverConfig& config)
     {
         const GPSDriverUBX::Settings settings = {
             .dynamic_model = static_cast<uint8_t>(config.dynamicModel),
-            .dgnss_timeout = 0,
-            .min_cno = 0,
-            .min_elev = 0,
             .output_rate = static_cast<uint8_t>(config.outputRateHz),
-            .heading_offset = 0.0f,
-            .uart1_baudrate = 0,
-            .uart2_baudrate = 57600,
-            .ppk_output = false,
-            .jam_det_sensitivity_hi = false,
-            .mode = GPSDriverUBX::UBXMode::Normal,
         };
-        setDriver(std::make_unique<GPSDriverUBX>(GPSDriverUBX::Interface::UART, callback, user, position, satellites,
-                                                 settings));
+        setDriver(std::make_unique<GPSDriverUBX>(std::move(io), position, satellites, settings));
     }
 
     void updateCapabilities(GPSReceiverCapabilities& capabilities) const override
@@ -133,7 +123,7 @@ public:
     }
 
 private:
-    int configureReceiver(unsigned& baudrate, const GPSHelper::GPSConfig& config,
+    int configureReceiver(unsigned& baudrate, const GPSProtocol::GPSConfig& config,
                           GPSReceiverConfig::OutputProtocol protocol) override
     {
         return static_cast<GPSDriverUBX&>(driver()).configure(baudrate, config,
@@ -146,14 +136,14 @@ private:
 class AshtechBackend final : public GPSDriverBackend
 {
 public:
-    AshtechBackend(GPSCallbackPtr callback, void* user, sensor_gps_s* position, satellite_info_s* satellites,
+    AshtechBackend(GPSProtocolIO io, GPSPositionReport* position, GPSSatelliteReport* satellites,
                    const GPSReceiverConfig&)
     {
-        setDriver(std::make_unique<GPSDriverAshtech>(callback, user, position, satellites));
+        setDriver(std::make_unique<GPSDriverAshtech>(std::move(io), position, satellites));
     }
 
 private:
-    int configureReceiver(unsigned& baudrate, const GPSHelper::GPSConfig& config,
+    int configureReceiver(unsigned& baudrate, const GPSProtocol::GPSConfig& config,
                           GPSReceiverConfig::OutputProtocol protocol) override
     {
         baudrate = 115200;
@@ -164,10 +154,10 @@ private:
 class SbfBackend final : public GPSDriverBackend
 {
 public:
-    SbfBackend(GPSCallbackPtr callback, void* user, sensor_gps_s* position, satellite_info_s* satellites,
+    SbfBackend(GPSProtocolIO io, GPSPositionReport* position, GPSSatelliteReport* satellites,
                const GPSReceiverConfig& config)
     {
-        setDriver(std::make_unique<GPSDriverSBF>(callback, user, position, satellites,
+        setDriver(std::make_unique<GPSDriverSBF>(std::move(io), position, satellites,
                                                  config.headingOffsetDeg * std::numbers::pi_v<float> / 180.0f));
     }
 
@@ -186,18 +176,18 @@ public:
 class FemtoBackend final : public GPSDriverBackend
 {
 public:
-    FemtoBackend(GPSCallbackPtr callback, void* user, sensor_gps_s* position, satellite_info_s* satellites,
+    FemtoBackend(GPSProtocolIO io, GPSPositionReport* position, GPSSatelliteReport* satellites,
                  const GPSReceiverConfig&)
     {
-        setDriver(std::make_unique<GPSDriverFemto>(callback, user, position, satellites));
+        setDriver(std::make_unique<GPSDriverFemto>(std::move(io), position, satellites));
     }
 };
 
 template <class Backend>
-std::unique_ptr<GPSDriverBackend> createBackend(GPSCallbackPtr callback, void* user, sensor_gps_s* position,
-                                                satellite_info_s* satellites, const GPSReceiverConfig& config)
+std::unique_ptr<GPSDriverBackend> createBackend(GPSProtocolIO io, GPSPositionReport* position,
+                                                GPSSatelliteReport* satellites, const GPSReceiverConfig& config)
 {
-    return std::make_unique<Backend>(callback, user, position, satellites, config);
+    return std::make_unique<Backend>(std::move(io), position, satellites, config);
 }
 
 constexpr std::array families = {
@@ -213,29 +203,17 @@ int GPSDriverBackend::configure(unsigned& baudrate, const GPSReceiverConfig& con
     if (!_driver || !config.validationError().isEmpty()) {
         return -1;
     }
-    if (config.role == GPSReceiverConfig::Role::RTKBase) {
-        if (!_baseStation) {
-            return -1;
-        }
-        if (config.base.useFixedBase) {
-            _baseStation->setBasePosition(config.base.fixedBaseLatitude, config.base.fixedBaseLongitude,
-                                          config.base.fixedBaseAltitudeMeters,
-                                          config.base.fixedBaseAccuracyMeters * 1000.0f);
-        } else {
-            _baseStation->setSurveyInSpecs(static_cast<uint32_t>(config.base.surveyInAccMeters * 10000.0),
-                                           static_cast<uint32_t>(config.base.surveyInDurationSecs));
-        }
-    }
-    GPSHelper::GPSConfig nativeConfig = {};
+    GPSProtocol::GPSConfig nativeConfig = {};
+    nativeConfig.base = config.base;
     nativeConfig.output_mode =
-        config.role == GPSReceiverConfig::Role::RTKBase ? GPSHelper::OutputMode::RTCM : GPSHelper::OutputMode::GPS;
-    nativeConfig.gnss_systems = static_cast<GPSHelper::GNSSSystemsMask>(config.constellationMask);
+        config.role == GPSReceiverConfig::Role::RTKBase ? GPSProtocol::OutputMode::RTCM : GPSProtocol::OutputMode::GPS;
+    nativeConfig.gnss_systems = static_cast<GPSProtocol::GNSSSystemsMask>(config.constellationMask);
     nativeConfig.require_gnss_config = config.constellationMask != 0;
     const int result = configureReceiver(baudrate, nativeConfig, config.outputProtocol);
     return _driver->ioError() ? _driver->ioError() : result;
 }
 
-int GPSDriverBackend::configureReceiver(unsigned& baudrate, const GPSHelper::GPSConfig& config,
+int GPSDriverBackend::configureReceiver(unsigned& baudrate, const GPSProtocol::GPSConfig& config,
                                         GPSReceiverConfig::OutputProtocol protocol)
 {
     return protocol == GPSReceiverConfig::OutputProtocol::Native ? _driver->configure(baudrate, config) : -1;

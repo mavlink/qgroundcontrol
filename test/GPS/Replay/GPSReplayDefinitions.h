@@ -43,6 +43,6 @@ inline void gps_test_warn(const char* format, ...)
 #define M_DEG_TO_RAD_F 0.01745329251994329577f
 #define M_RAD_TO_DEG 57.2957795130823208768
 
-#include "satellite_info.h"
-#include "sensor_gnss_relative.h"
-#include "sensor_gps.h"
+#include "GPSPositionReport.h"
+#include "GPSRelativeReport.h"
+#include "GPSSatelliteReport.h"

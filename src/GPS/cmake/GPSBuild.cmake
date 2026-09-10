@@ -12,6 +12,8 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/Contracts/GPSReceiverFamily.h"
             "${gps_root}/Contracts/GPSReceiverFamily.cc"
             "${gps_root}/Contracts/GPSReceiverConfig.h"
+            "${gps_root}/Contracts/GPSBaseStationConfig.h"
+            "${gps_root}/Contracts/GPSIOStatus.h"
             "${gps_root}/Contracts/GPSReceiverConfig.cc"
             "${gps_root}/Contracts/GPSReceiverSetting.h"
             "${gps_root}/Contracts/GPSReceiverCapabilities.h"
@@ -32,6 +34,7 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/Core/GPSConnectionState.h"
             "${gps_root}/Core/GPSObservation.cc"
             "${gps_root}/Core/GPSObservation.h"
+            "${gps_root}/Core/GPSConstellation.h"
             "${gps_root}/Core/GPSBaseReference.h"
             "${gps_root}/Core/GPSIntegrityObservation.h"
             "${gps_root}/Core/GPSReadTimestamp.h"
@@ -53,6 +56,7 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/NMEA/NMEAStreamSplitter.h"
             "${gps_root}/NMEA/NMEAUtils.cc"
             "${gps_root}/NMEA/NMEAUtils.h"
+            "${gps_root}/NMEA/NMEAFields.h"
         )
     elseif(component STREQUAL "NTRIPSession")
         set(sources
@@ -81,6 +85,7 @@ function(qgc_gps_component_sources output component)
             "${gps_root}/Corrections/GPSCorrectionEventModel.h"
             "${gps_root}/Corrections/RTCMParser.cc"
             "${gps_root}/Corrections/RTCMParser.h"
+            "${gps_root}/Corrections/RTCMFramer.h"
             "${gps_root}/Corrections/RTCMFrameDecoder.cc"
             "${gps_root}/Corrections/RTCMFrameDecoder.h"
             "${gps_root}/Corrections/GPSCorrectionSourceRegistration.cc"
@@ -98,14 +103,16 @@ function(qgc_gps_component_sources output component)
         set(sources
             "${gps_root}/Driver/GPSDriver.cc"
             "${gps_root}/Driver/GPSDriver.h"
+            "${gps_root}/Driver/GPSDriverClock.h"
+            "${gps_root}/Driver/GPSProtocolIO.h"
             "${gps_root}/Driver/GPSDriverBackend.cc"
             "${gps_root}/Driver/GPSDriverBackend.h"
             "${gps_root}/Driver/GPSDriverData.cc"
             "${gps_root}/Driver/GPSDriverData.h"
-            "${gps_root}/Driver/definitions.h"
-            "${gps_root}/Driver/satellite_info.h"
-            "${gps_root}/Driver/sensor_gnss_relative.h"
-            "${gps_root}/Driver/sensor_gps.h"
+            "${gps_root}/Driver/GPSDriverPlatform.h"
+            "${gps_root}/Driver/GPSSatelliteReport.h"
+            "${gps_root}/Driver/GPSRelativeReport.h"
+            "${gps_root}/Driver/GPSPositionReport.h"
         )
     elseif(component STREQUAL "Recording")
         set(sources
@@ -135,9 +142,9 @@ function(qgc_gps_component_sources output component)
     elseif(component STREQUAL "RecordingController")
         set(sources "${gps_root}/Recording/GPSRecordingController.cc" "${gps_root}/Recording/GPSRecordingController.h")
     elseif(component STREQUAL "Native")
-        file(GLOB sources CONFIGURE_DEPENDS "${gps_root}/Driver/PX4/*.c" "${gps_root}/Driver/PX4/*.cpp"
-             "${gps_root}/Driver/PX4/*.h"
-        )
+        include("${gps_root}/Driver/Protocols/GPSProtocolSources.cmake")
+        set(sources ${GPS_PROTOCOL_SOURCES})
+
     else()
         message(FATAL_ERROR "Unknown GPS component: ${component}")
     endif()
@@ -194,7 +201,7 @@ function(qgc_add_gps_component target)
         target_include_directories(${target} PUBLIC "${gps_root}/NTRIP")
         target_link_libraries(${target} PUBLIC ${arg_PREFIX}Scheduler Qt6::Core)
     elseif(arg_COMPONENT STREQUAL "Corrections")
-        target_include_directories(${target} PUBLIC "${gps_root}/Corrections")
+        target_include_directories(${target} PUBLIC "${gps_root}/Corrections" "${gps_root}/../Utilities/Math")
         target_link_libraries(${target} PUBLIC Qt6::Core)
     elseif(arg_COMPONENT STREQUAL "Transport")
         target_include_directories(${target} PUBLIC "${gps_root}/Driver/Transport")
@@ -218,15 +225,20 @@ function(qgc_add_gps_component target)
         if(NOT arg_NATIVE_DEFINITIONS_HEADER)
             message(FATAL_ERROR "GPS ${arg_COMPONENT} requires NATIVE_DEFINITIONS_HEADER")
         endif()
-        target_compile_definitions(${target} PRIVATE GPS_DEFINITIONS_HEADER="${arg_NATIVE_DEFINITIONS_HEADER}")
-        target_include_directories(${target} SYSTEM PRIVATE "${gps_root}/Driver/PX4")
+        target_compile_definitions(${target} PRIVATE GPS_PLATFORM_HEADER="${arg_NATIVE_DEFINITIONS_HEADER}")
+        target_include_directories(${target} PRIVATE "${gps_root}/Driver/Protocols" "${gps_root}/Corrections"
+                                                     "${gps_root}/NMEA"
+        )
         if(arg_COMPONENT STREQUAL "Native")
-            target_include_directories(${target} PRIVATE "${gps_root}/Driver")
+            include("${gps_root}/../Utilities/Geo/GeographicLib.cmake")
+            target_link_libraries(${target} PRIVATE GeographicLib::GeographicLib)
+            target_include_directories(${target}
+                                       PRIVATE "${gps_root}/Driver" "${gps_root}/Contracts" "${gps_root}/Core"
+                                               "${gps_root}/Corrections" "${gps_root}/../Utilities/Math"
+            )
             target_link_libraries(${target} PRIVATE Qt6::Core)
             set_target_properties(${target} PROPERTIES AUTOMOC OFF)
-            if(COMMAND qgc_disable_dependency_warnings)
-                qgc_disable_dependency_warnings(${target})
-            endif()
+
         else()
             target_include_directories(${target} PUBLIC "${gps_root}/Driver")
             target_link_libraries(

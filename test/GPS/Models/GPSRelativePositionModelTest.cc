@@ -33,7 +33,7 @@ void GPSRelativePositionModelTest::_validityAndZeroBaseline()
     QCOMPARE(model.heading(), 0.0);
     QCOMPARE(model.headingAccuracy(), 0.0);
     QVERIFY(model.carrierFixed());
-    QVERIFY(model.normalized());
+    QVERIFY(model.normalized().toBool());
     QCOMPARE(model.referenceStationId(), 12);
     report.positionValid = false;
     report.headingDegrees.reset();
@@ -57,7 +57,8 @@ void GPSRelativePositionModelTest::_freshnessAndSessionIsolation()
     GPSRelativeObservation report;
     report.sessionId = 1;
     report.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 10000;
-    report.fixValid = report.positionValid = report.movingBase = true;
+    report.fixValid = report.positionValid = true;
+    report.movingBase = true;
     report.positionNedMeters[0] = 5;
     model.updateObservation(report);
     QVERIFY(model.fresh());
@@ -70,7 +71,7 @@ void GPSRelativePositionModelTest::_freshnessAndSessionIsolation()
     QCOMPARE(model.north(), 5.0);
     QTRY_VERIFY_WITH_TIMEOUT(!model.fresh(), 1000);
     QVERIFY(std::isnan(model.north()));
-    QVERIFY(!model.movingBase());
+    QVERIFY(!model.movingBase().isValid());
     QCOMPARE(model.referenceStationId(), -1);
     model.beginSession(QStringLiteral("nativeReceiver"), 2);
     report.monotonicTimestampUs = GPSObservation::monotonicNowUs();

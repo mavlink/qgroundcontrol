@@ -10,13 +10,14 @@
 
 #include <cmath>
 #include <cstring>
-#include <ubx.h>
 
 #include "GPSByteStream.h"
 #include "GPSDriver.h"
+#include "GPSProtocolTestIO.h"
 #include "GPSProvider.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
+#include "UBX/GPSDriverUBX.h"
 
 namespace {
 
@@ -46,6 +47,7 @@ public:
     {
         auto& receiver = *static_cast<UBXReceiver*>(user);
         if (type == GPSCallbackType::readDeviceData) {
+            data = static_cast<GPSReadRequest*>(data)->buffer;
             if (receiver.surveyPolls > 0 && receiver.surveyReadError) {
                 ++receiver.failedReads;
                 return receiver.surveyReadError;
@@ -222,8 +224,9 @@ public:
         if (isCancelled()) {
             return {ReadStatus::Cancelled, 0, {}};
         }
-        const int count = UBXReceiver::callback(GPSCallbackType::readDeviceData, data, size, &_receiver);
-        if (count == GPSHelper::ReadCancelled) {
+        GPSReadRequest request{data, size, 0};
+        const int count = UBXReceiver::callback(GPSCallbackType::readDeviceData, &request, size, &_receiver);
+        if (count == GPSProtocol::ReadCancelled) {
             return {ReadStatus::Cancelled, 0, {}};
         }
         if (count < 0) {
@@ -231,6 +234,8 @@ public:
         }
         return {count > 0 ? ReadStatus::Data : ReadStatus::TimedOut, count, {}};
     }
+
+    WriteResult writeBounded(const uint8_t* data, int size, QDeadlineTimer) override { return write(data, size); }
 
     WriteResult write(const uint8_t* data, int size) override
     {
@@ -245,7 +250,6 @@ public:
 private:
     UBXReceiver& _receiver;
 };
-
 
 QByteArray commsPayload()
 {
@@ -287,12 +291,13 @@ void GPSDriverUBXTest::_surveyRestart()
         expectLogMessage("GPS.Driver.Drivers", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Survey-in did not stop")));
     }
-    sensor_gps_s position{};
+    GPSPositionReport position{};
     GPSDriverUBX::Settings settings{};
-    GPSDriverUBX driver(GPSHelper::Interface::UART, &UBXReceiver::callback, &receiver, &position, nullptr, settings);
-    driver.setSurveyInSpecs(20000, 180);
-    GPSHelper::GPSConfig config{};
-    config.output_mode = GPSHelper::OutputMode::RTCM;
+    GPSDriverUBX driver(makeGPSProtocolTestIO(UBXReceiver::callback, &receiver), &position, nullptr, settings);
+    GPSProtocol::GPSConfig config{};
+    config.base.surveyInAccMeters = 2;
+    config.base.surveyInDurationSecs = 180;
+    config.output_mode = GPSProtocol::OutputMode::RTCM;
     unsigned baudrate = 115200;
     const int result = driver.configure(baudrate, config);
     if (neverStops) {
@@ -322,9 +327,9 @@ void GPSDriverUBXTest::_readFailure()
 {
     QFETCH(bool, cancelled);
     UBXReceiver receiver;
-    receiver.readError = cancelled ? GPSHelper::ReadCancelled : -1;
-    sensor_gps_s position{};
-    GPSDriverUBX driver(GPSHelper::Interface::UART, &UBXReceiver::callback, &receiver, &position, nullptr, {});
+    receiver.readError = cancelled ? GPSProtocol::ReadCancelled : -1;
+    GPSPositionReport position{};
+    GPSDriverUBX driver(makeGPSProtocolTestIO(UBXReceiver::callback, &receiver), &position, nullptr, {});
     if (!cancelled) {
         expectLogMessage("GPS.Driver.Drivers", QtWarningMsg,
                          QRegularExpression(QStringLiteral("ubx poll_or_read err")));
@@ -340,7 +345,7 @@ void GPSDriverUBXTest::_surveyReadFailure_data()
     QTest::addColumn<int>("error");
     QTest::newRow("device-error") << -1;
     QTest::newRow("errno") << -EIO;
-    QTest::newRow("cancelled") << GPSHelper::ReadCancelled;
+    QTest::newRow("cancelled") << GPSProtocol::ReadCancelled;
 }
 
 void GPSDriverUBXTest::_surveyReadFailure()
@@ -348,18 +353,19 @@ void GPSDriverUBXTest::_surveyReadFailure()
     QFETCH(int, error);
     UBXReceiver receiver;
     receiver.surveyReadError = error;
-    sensor_gps_s position{};
-    GPSDriverUBX driver(GPSHelper::Interface::UART, &UBXReceiver::callback, &receiver, &position, nullptr, {});
-    driver.setSurveyInSpecs(20000, 180);
-    GPSHelper::GPSConfig config{};
-    config.output_mode = GPSHelper::OutputMode::RTCM;
+    GPSPositionReport position{};
+    GPSDriverUBX driver(makeGPSProtocolTestIO(UBXReceiver::callback, &receiver), &position, nullptr, {});
+    GPSProtocol::GPSConfig config{};
+    config.base.surveyInAccMeters = 2;
+    config.base.surveyInDurationSecs = 180;
+    config.output_mode = GPSProtocol::OutputMode::RTCM;
     unsigned baudrate = 115200;
-    if (error != GPSHelper::ReadCancelled) {
+    if (error != GPSProtocol::ReadCancelled) {
         expectLogMessage("GPS.Driver.Drivers", QtWarningMsg,
                          QRegularExpression(QStringLiteral("ubx poll_or_read err")));
     }
     QVERIFY(driver.configure(baudrate, config) < 0);
-    if (error != GPSHelper::ReadCancelled) {
+    if (error != GPSProtocol::ReadCancelled) {
         verifyExpectedLogMessage();
     }
     QCOMPARE(receiver.failedReads, 1);
@@ -371,8 +377,8 @@ void GPSDriverUBXTest::_surveyReadFailure()
 void GPSDriverUBXTest::_commsDiagnostics()
 {
     UBXReceiver receiver;
-    sensor_gps_s position{};
-    GPSDriverUBX driver(GPSHelper::Interface::UART, &UBXReceiver::callback, &receiver, &position, nullptr, {});
+    GPSPositionReport position{};
+    GPSDriverUBX driver(makeGPSProtocolTestIO(UBXReceiver::callback, &receiver), &position, nullptr, {});
     const QByteArray response = ubxMessage(0x0a, 0x36, commsPayload());
     // Unsolicited snapshots must stay quiet, even when they report congestion.
     receiver.queue(response);
@@ -433,8 +439,8 @@ void GPSDriverUBXTest::_invalidCommsDiagnostics()
 {
     QFETCH(QByteArray, response);
     UBXReceiver receiver;
-    sensor_gps_s position{};
-    GPSDriverUBX driver(GPSHelper::Interface::UART, &UBXReceiver::callback, &receiver, &position, nullptr, {});
+    GPSPositionReport position{};
+    GPSDriverUBX driver(makeGPSProtocolTestIO(UBXReceiver::callback, &receiver), &position, nullptr, {});
     expectLogMessage("GPS.Driver.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("^ubx msg: txbuf alloc$")));
     receiver.queue(ubxMessage(0x04, 0x00, "txbuf alloc"));
     driver.receive(10);
@@ -782,8 +788,11 @@ void GPSDriverUBXTest::_correctionBacklogPublishesBufferedPositions()
             return result;
         }
 
-        WriteResult writeBounded(const uint8_t*, int length, QDeadlineTimer) override
+        WriteResult writeBounded(const uint8_t* data, int length, QDeadlineTimer deadline) override
         {
+            if (length <= 0 || data[0] != 0xd3) {
+                return ReceiverTransport::writeBounded(data, length, deadline);
+            }
             const int sequence = ++_progress.writes;
             if (sequence == 3) {
                 _progress.positionsBeforeThirdWrite = _progress.positions.load();

@@ -11,37 +11,45 @@
 #include "GPSBaseStationState.h"
 #include "GPSDriverData.h"
 #include "GPSManager.h"
+#include "GPSPositionReport.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverTestProfile.h"
 #include "GPSReplayScheduler.h"
+#include "GPSSatelliteReport.h"
 #include "GPSTransport.h"
 #include "PositionManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 #include "TestGPSPositionSource.h"
-#include "satellite_info.h"
-#include "sensor_gps.h"
 
 void GPSReceiverTest::_testCountSatellitesClampsToMax()
 {
-    satellite_info_s msg{};
+    GPSSatelliteReport msg{};
+    for (size_t index = 0; index < msg.entries.size(); ++index) {
+        msg.entries[index].id = index + 1;
+        msg.entries[index].used = false;
+    }
     msg.count = 250;
 
     const GPSReceiver::SatelliteCounts counts = GPSReceiver::countSatellites(GPSDriverData::satellites(msg));
 
-    QCOMPARE(static_cast<int>(counts.inView), static_cast<int>(satellite_info_s::SAT_INFO_MAX_SATELLITES));
+    QCOMPARE(static_cast<int>(counts.inView), static_cast<int>(GPSSatelliteReport::SAT_INFO_MAX_SATELLITES));
     QCOMPARE(counts.used, 0);
 }
 
 void GPSReceiverTest::_testCountSatellitesCountsUsed()
 {
-    satellite_info_s msg{};
+    GPSSatelliteReport msg{};
+    for (size_t index = 0; index < msg.entries.size(); ++index) {
+        msg.entries[index].id = index + 1;
+        msg.entries[index].used = false;
+    }
     msg.count = 6;
-    msg.used[1] = 1;
-    msg.used[3] = 1;
-    msg.used[5] = 1;
+    msg.entries[1].used = 1;
+    msg.entries[3].used = 1;
+    msg.entries[5].used = 1;
 
     const GPSReceiver::SatelliteCounts counts = GPSReceiver::countSatellites(GPSDriverData::satellites(msg));
 
@@ -51,10 +59,14 @@ void GPSReceiverTest::_testCountSatellitesCountsUsed()
 
 void GPSReceiverTest::_testCountSatellitesIgnoresUsedBeyondCount()
 {
-    satellite_info_s msg{};
+    GPSSatelliteReport msg{};
+    for (size_t index = 0; index < msg.entries.size(); ++index) {
+        msg.entries[index].id = index + 1;
+        msg.entries[index].used = false;
+    }
     msg.count = 2;
-    msg.used[0] = 1;
-    msg.used[5] = 1;
+    msg.entries[0].used = 1;
+    msg.entries[5].used = 1;
 
     const GPSReceiver::SatelliteCounts counts = GPSReceiver::countSatellites(GPSDriverData::satellites(msg));
 
@@ -145,8 +157,8 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     auto* facts = receiver.facts();
     QVERIFY(!receiver.connected());
     QSignalSpy positionUpdates(&session, &GPSReceiverSession::positionReceived);
-    sensor_gps_s fix{};
-    fix.fix_type = sensor_gps_s::FIX_TYPE_3D;
+    GPSPositionReport fix{};
+    fix.fix_type = GPSPositionReport::FIX_TYPE_3D;
     fix.latitude_deg = 47;
     fix.longitude_deg = 8;
     fix.eph = 1;
@@ -161,9 +173,12 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     survey.durationSecs = 20;
     survey.meanAccuracyMM = 1500;
     emit first->surveyInStatus(survey);
-    satellite_info_s satellites{};
+    GPSSatelliteReport satellites{};
     satellites.count = 2;
-    satellites.used[0] = 1;
+    satellites.entries[0].id = 1;
+    satellites.entries[1].id = 2;
+    satellites.entries[0].used = true;
+    satellites.entries[1].used = false;
     emit first->satelliteInfoUpdate(GPSDriverData::satellites(satellites));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
@@ -332,8 +347,8 @@ void GPSReceiverTest::_positionSourceSelection()
     session.start(gpsReceiverTestProfile(), blockedFactory(gate));
     emit session._provider->receiverReady();
     QCoreApplication::sendPostedEvents(&session, QEvent::MetaCall);
-    sensor_gps_s fix{};
-    fix.fix_type = sensor_gps_s::FIX_TYPE_RTK_FIXED;
+    GPSPositionReport fix{};
+    fix.fix_type = GPSPositionReport::FIX_TYPE_RTK_FIXED;
     fix.latitude_deg = 47;
     fix.longitude_deg = 8;
     fix.altitude_msl_m = 500;
@@ -389,21 +404,24 @@ void GPSReceiverTest::_sourceHealthIndependentOfSurvey()
     emit session.surveyInReceived(survey);
     QVERIFY(receiver.facts()->rtk()->valid()->rawValue().toBool());
     QVERIFY(!receiver.health()->usable());
-    sensor_gps_s fix{};
-    fix.fix_type = sensor_gps_s::FIX_TYPE_3D;
+    GPSPositionReport fix{};
+    fix.fix_type = GPSPositionReport::FIX_TYPE_3D;
     fix.latitude_deg = 47;
     fix.longitude_deg = 8;
     fix.eph = 1;
     receiver._sensorGpsUpdate(GPSDriverData::position(fix));
     QVERIFY(receiver.health()->usable());
-    fix.fix_type = sensor_gps_s::FIX_TYPE_NONE;
+    fix.fix_type = GPSPositionReport::FIX_TYPE_NONE;
     receiver._sensorGpsUpdate(GPSDriverData::position(fix));
     QCOMPARE(receiver.health()->state(), GPSSourceHealth::Invalid);
     QVERIFY(receiver.connected());
     QVERIFY(receiver.facts()->rtk()->valid()->rawValue().toBool());
-    satellite_info_s satellites{};
+    GPSSatelliteReport satellites{};
     satellites.count = 2;
-    satellites.used[0] = 1;
+    satellites.entries[0].id = 1;
+    satellites.entries[1].id = 2;
+    satellites.entries[0].used = true;
+    satellites.entries[1].used = false;
     auto satelliteObservation = GPSDriverData::satellites(satellites);
     satelliteObservation.sessionId = session.sessionId();
     receiver._satelliteInfoUpdate(satelliteObservation);
@@ -500,7 +518,7 @@ void GPSReceiverTest::_projectionHandlesReentrantIntegrity()
     observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    observation.jammingState = 1;
+    observation.integrity.jammingState = 1;
     if (action == QStringLiteral("replace-during-reset")) {
         receiver->health()->updateObservation(observation);
     }
@@ -517,7 +535,7 @@ void GPSReceiverTest::_projectionHandlesReentrantIntegrity()
         } else if (action.startsWith(QStringLiteral("replace"))) {
             auto replacement = observation;
             replacement.position.setCoordinate(QGeoCoordinate(48, 9));
-            replacement.jammingState = 2;
+            replacement.integrity.jammingState = 2;
             receiver->health()->updateObservation(replacement);
         } else {
             receiver->health()->reset();

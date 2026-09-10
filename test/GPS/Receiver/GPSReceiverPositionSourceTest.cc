@@ -7,15 +7,15 @@
 #include <chrono>
 
 #include "GPSDriverData.h"
+#include "GPSPositionReport.h"
+#include "GPSSatelliteReport.h"
 #include "TestGPSPositionSource.h"
-#include "satellite_info.h"
-#include "sensor_gps.h"
 
 namespace {
-sensor_gps_s positionFix()
+GPSPositionReport positionFix()
 {
-    sensor_gps_s fix{};
-    fix.fix_type = sensor_gps_s::FIX_TYPE_RTK_FIXED;
+    GPSPositionReport fix{};
+    fix.fix_type = GPSPositionReport::FIX_TYPE_RTK_FIXED;
     fix.latitude_deg = 47.5;
     fix.longitude_deg = 8.5;
     fix.altitude_msl_m = 450;
@@ -50,7 +50,7 @@ void GPSReceiverPositionSourceTest::_convertsFixAndMotion()
     QVERIFY(qAbs(position.attribute(QGeoPositionInfo::Direction) - 270) < 0.001);
     QVERIFY(qAbs(position.attribute(QGeoPositionInfo::DirectionAccuracy) - 2) < 0.001);
 
-    fix.fix_type = sensor_gps_s::FIX_TYPE_2D;
+    fix.fix_type = GPSPositionReport::FIX_TYPE_2D;
     fix.vel_ned_valid = false;
     fix.time_utc_usec = 0;
     const auto before = QDateTime::currentDateTimeUtc();
@@ -73,7 +73,7 @@ void GPSReceiverPositionSourceTest::_convertsFixAndMotion()
 
 void GPSReceiverPositionSourceTest::_validatesFix_data()
 {
-    QTest::addColumn<sensor_gps_s>("fix");
+    QTest::addColumn<GPSPositionReport>("fix");
     QTest::addColumn<bool>("valid");
     auto fix = positionFix();
     QTest::newRow("valid") << fix << true;
@@ -91,9 +91,9 @@ void GPSReceiverPositionSourceTest::_validatesFix_data()
     fix.longitude_deg = 0;
     QTest::newRow("equator-prime-meridian") << fix << true;
     fix = positionFix();
-    fix.fix_type = sensor_gps_s::FIX_TYPE_NONE;
+    fix.fix_type = GPSPositionReport::FIX_TYPE_NONE;
     QTest::newRow("no-fix") << fix << false;
-    fix.fix_type = sensor_gps_s::FIX_TYPE_EXTRAPOLATED;
+    fix.fix_type = GPSPositionReport::FIX_TYPE_EXTRAPOLATED;
     QTest::newRow("extrapolated") << fix << false;
     fix = positionFix();
     fix.latitude_deg = 91;
@@ -113,7 +113,7 @@ void GPSReceiverPositionSourceTest::_validatesFix_data()
 
 void GPSReceiverPositionSourceTest::_validatesFix()
 {
-    QFETCH(sensor_gps_s, fix);
+    QFETCH(GPSPositionReport, fix);
     QFETCH(bool, valid);
     TestGPSPositionSource source;
     source.startUpdates();
@@ -176,7 +176,7 @@ void GPSReceiverPositionSourceTest::_reportsLossOnceUntilRecovery()
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     source.startUpdates();
     auto invalid = positionFix();
-    invalid.fix_type = sensor_gps_s::FIX_TYPE_NONE;
+    invalid.fix_type = GPSPositionReport::FIX_TYPE_NONE;
     source.updatePosition(GPSDriverData::position(invalid));
     source.updatePosition(GPSDriverData::position(invalid));
     source.updatePosition(GPSDriverData::position(invalid));

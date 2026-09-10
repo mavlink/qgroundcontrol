@@ -1,6 +1,20 @@
 #pragma once
 
-#include "GPSObservation.h"
+#include <QtCore/QMetaType>
+
+#include <optional>
+
+struct GPSObservation;
+
+/// Original diagnostic receipts; zero means that diagnostic has never been reported.
+struct GPSIntegrityProvenance
+{
+    quint64 jammingTimestampUs = 0;
+    quint64 spoofingTimestampUs = 0;
+    quint64 authenticationTimestampUs = 0;
+    quint64 correctionsTimestampUs = 0;
+    quint64 rfTimestampUs = 0;
+};
 
 /// Receiver-reported diagnostics, distinct from correction transport delivery counters.
 struct GPSIntegrityObservation
@@ -20,18 +34,11 @@ struct GPSIntegrityObservation
     std::optional<int> correctionsProtocol = std::nullopt;
     std::optional<int> correctionsUsed = std::nullopt;
 
-    static GPSIntegrityObservation fromPosition(const GPSObservation& observation)
-    {
-        GPSIntegrityObservation result;
-        result.monotonicTimestampUs = observation.monotonicTimestampUs;
-        result.sessionId = observation.sessionId;
-        result.provenance = observation.integrityProvenance;
-        result.spoofingState = observation.spoofingState;
-        result.jammingState = observation.jammingState;
-        result.authenticationState = observation.authenticationState;
-        result.correctionsProtocol = observation.correctionsProtocol;
-        result.correctionsUsed = observation.correctionsUsed;
-        return result;
-    }
+    std::optional<int> noisePerMillisecond;
+    std::optional<int> automaticGainControl;
+    std::optional<int> jammingIndicator;
+    std::optional<bool> correctionsCrcFailed;
+
+    static GPSIntegrityObservation fromPosition(const GPSObservation& observation);
 };
 Q_DECLARE_METATYPE(GPSIntegrityObservation)

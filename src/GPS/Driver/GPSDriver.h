@@ -10,14 +10,16 @@
 #include <optional>
 
 #include "GPSConfigurationReport.h"
+#include "GPSDriverClock.h"
 #include "GPSObservation.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfig.h"
 #include "GPSSurveyInStatus.h"
-#include "GPSType.h"
 #include "GPSTransportResult.h"
+#include "GPSType.h"
 
 class GPSTransport;
+struct GPSProtocolIO;
 
 /// Sinks the driver pushes decoded data into, invoked on the caller thread from
 /// within configure()/receive().
@@ -26,15 +28,17 @@ struct GPSDriverSinks
     std::function<void(const GPSObservation&)> onPosition;
     std::function<void(const GPSSatelliteObservation&)> onSatelliteInfo;
     std::function<void(const GPSRelativeObservation&)> onRelativePosition;
-    std::function<void(const QByteArray &)> onRTCM;
-    std::function<void(const GPSSurveyInStatus &)> onSurveyIn;
+    std::function<void(const QByteArray&)> onRTCM;
+    std::function<void(const GPSSurveyInStatus&)> onSurveyIn;
 };
 
-/// Facade over the px4-gpsdrivers library: selects and configures the receiver
-/// driver, bridges its callbacks to a GPSTransport plus the supplied sinks, and
-/// pumps its receive loop. Keeps all px4 headers and types out of callers.
+/// Receiver protocol facade: selects and configures the receiver
+/// driver, connects typed protocol services to a GPSTransport plus the supplied sinks, and
+/// pumps its receive loop. Keeps protocol implementation types out of callers.
 class GPSDriver
 {
+    friend class GPSDriverTest;
+
 public:
     using ConfigurationStatus = GPSConfigurationStatus;
     using ConfigurationResult = GPSConfigurationResult;
@@ -56,7 +60,8 @@ public:
         std::optional<GPSReadResult> transportRead = {};
     };
 
-    GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks);
+    GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks,
+              GPSDriverClock clock = {});
     ~GPSDriver();
 
     GPSDriver(const GPSDriver&) = delete;
@@ -71,10 +76,7 @@ public:
 
     const GPSConfigurationReport& configurationReport() const { return _configurationReport; }
 
-    /// Pump one receive cycle, invoking the position/satellite sinks as data
-    /// arrives. Returns the px4 bitset (<0 error, bit0 position, bit1 satellite),
-    /// or <0 if not configured.
-    int receive(unsigned timeoutMs);
+    /// Pump one receive cycle and publish validated observations.
     ReceiveResult receiveResult(unsigned timeoutMs);
 
     enum class CorrectionStatus
@@ -102,13 +104,11 @@ public:
 
     unsigned baudrate() const { return _baudrate; }
 
-    /// Trampoline target for the px4 callback; `type` is a GPSCallbackType value.
-    /// Public only so the file-local C callback can reach it — not for callers.
-    int handleCallback(int type, void* data1, int data2);
-
 private:
     void _updateCapabilities();
+    GPSProtocolIO _protocolIO();
 
+    GPSDriverClock _clock;
     GPSType _type;
     GPSTransport& _transport;
     GPSReceiverConfig _config;

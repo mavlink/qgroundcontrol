@@ -78,7 +78,8 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: true
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
-BreakConstructorInitializers: BeforeColon
+BreakConstructorInitializers: BeforeComma
+PackConstructorInitializers: Never
 BreakInheritanceList: BeforeColon
 ConstructorInitializerIndentWidth: 4
 

@@ -3,14 +3,7 @@
 #include <QtCore/QMetaType>
 #include <QtCore/QString>
 
-enum class GPSOpenStatus
-{
-    Opened,
-    TimedOut,
-    Cancelled,
-    Error,
-    Unsupported
-};
+#include "GPSIOStatus.h"
 
 struct GPSOpenResult
 {
@@ -18,32 +11,11 @@ struct GPSOpenResult
     QString detail = {};
 };
 
-enum class GPSReadStatus
-{
-    Data,
-    TimedOut,
-    Cancelled,
-    Closed,
-    Error,
-    Overflow,
-    InvalidData
-};
-
 struct GPSReadResult
 {
     GPSReadStatus status = GPSReadStatus::TimedOut;
     int bytesRead = 0;
     QString detail = {};
-};
-
-enum class GPSWriteStatus
-{
-    Completed,
-    TimedOut,
-    Cancelled,
-    Error,
-    Unsupported,
-    InvalidData
 };
 
 struct GPSWriteResult
