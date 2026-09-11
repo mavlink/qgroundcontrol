@@ -32,7 +32,7 @@
  ****************************************************************************/
 
 /**
- * @file gps_helper.h
+ * @file GPSProtocol.h
  * @author Thomas Gubler <thomasgubler@student.ethz.ch>
  * @author Julian Oes <julian@oes.ch>
  */
@@ -74,13 +74,12 @@ public:
 
     enum class OutputMode : uint8_t
     {
-        GPS = 0,     ///< normal GPS output
-        GPSAndRTCM,  ///< normal GPS+RTCM output
-        RTCM         ///< request RTCM output. This is used for (fixed position) base stations
+        GPS = 0,  ///< normal GPS output
+        RTCM = 2  ///< request RTCM output. This is used for (fixed position) base stations
     };
 
     /**
-     * Bitmask for GPS_1_GNSS and GPS_2_GNSS
+     * Receiver constellation selection
      * No bits set should keep the receiver's default config
      */
     enum class GNSSSystemsMask : int32_t
@@ -94,17 +93,6 @@ public:
         ENABLE_NAVIC = 1 << 5
     };
 
-    enum class InterfaceProtocolsMask : int32_t
-    {
-        ALL_DISABLED = 0,
-        I2C_IN_PROT_UBX = 1 << 0,
-        I2C_IN_PROT_NMEA = 1 << 1,
-        I2C_IN_PROT_RTCM3X = 1 << 2,
-        I2C_OUT_PROT_UBX = 1 << 3,
-        I2C_OUT_PROT_NMEA = 1 << 4,
-        I2C_OUT_PROT_RTCM3X = 1 << 5
-    };
-
     struct GPSConfig
     {
         GPSBaseStationConfig base;
@@ -112,8 +100,6 @@ public:
         uint8_t outputRateHz = 0;
         OutputMode output_mode;
         GNSSSystemsMask gnss_systems;
-        InterfaceProtocolsMask interface_protocols;
-        bool cfg_wipe;
         bool require_gnss_config = false;
     };
 
@@ -345,13 +331,12 @@ protected:
      * Convert a broken-down UTC time to microseconds since the Unix epoch, if the date is after the GPS epoch.
      * @param utc broken-down UTC time (normalized in place)
      * @param nsec sub-second part [ns], may be negative
-     * @return microseconds since the Unix epoch, 0 if the date is implausible or NO_MKTIME is defined
+     * @return microseconds since the Unix epoch, 0 if the date is implausible
      */
     uint64_t timeFromUtc(tm& utc, int32_t nsec);
 
     /**
      * Convert an ECEF (Earth Centered Earth Fixed) coordinate to LLA WGS84 (Lat, Lon, Alt).
-     * Ported from: https://stackoverflow.com/a/25428344
      * @param ecef_x ECEF X-coordinate [m]
      * @param ecef_y ECEF Y-coordinate [m]
      * @param ecef_z ECEF Z-coordinate [m]
@@ -376,11 +361,6 @@ protected:
 };
 
 inline bool operator&(GPSProtocol::GNSSSystemsMask a, GPSProtocol::GNSSSystemsMask b)
-{
-    return static_cast<int32_t>(a) & static_cast<int32_t>(b);
-}
-
-inline bool operator&(GPSProtocol::InterfaceProtocolsMask a, GPSProtocol::InterfaceProtocolsMask b)
 {
     return static_cast<int32_t>(a) & static_cast<int32_t>(b);
 }

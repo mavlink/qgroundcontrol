@@ -43,21 +43,3 @@
 #define SBF_CONFIG_TIMEOUT 1000  // ms, timeout for waiting ACK
 #define DNU 100000.0             // Do-Not-Use value for PVTGeodetic
 #define MSG_SIZE 100             // size of the message to be sent to the receiver.
-
-/**** Trace macros, disable for production builds */
-#define SBF_TRACE_PARSER(...)    \
-    { /*GPS_INFO(__VA_ARGS__);*/ \
-    } /* decoding progress in parse_char() */
-#define SBF_TRACE_RXMSG(...)     \
-    { /*GPS_INFO(__VA_ARGS__);*/ \
-    } /* Rx msgs in payload_rx_done() */
-#define SBF_INFO(...)          \
-    {                          \
-        GPS_INFO(__VA_ARGS__); \
-    }
-
-/**** Warning macros, disable to save memory */
-#define SBF_WARN(...)          \
-    {                          \
-        GPS_WARN(__VA_ARGS__); \
-    }

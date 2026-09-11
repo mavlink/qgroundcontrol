@@ -84,7 +84,6 @@ public:
     unsigned starts = 0;
     unsigned status_callbacks = 0;
     unsigned rtcm_enables = 0;
-    unsigned polls_when_rtcm_enabled = 0;
     std::vector<uint32_t> modes;
     std::map<uint32_t, uint32_t> start_settings;
     std::map<uint32_t, uint32_t> current_settings;
@@ -221,7 +220,6 @@ private:
 
             if (message == UBX_MSG_CFG_MSG && littleEndian(payload, 0, 2) == UBX_MSG_RTCM3_1005 && payload.at(2) > 0) {
                 ++rtcm_enables;
-                polls_when_rtcm_enabled = polls;
             }
 
             if (message == UBX_MSG_CFG_TMODE3) {
@@ -241,6 +239,9 @@ private:
 
         for (size_t i = 4; i < payload.size();) {
             const uint32_t key = littleEndian(payload, i, 4);
+            // Host connections must leave the receiver's I2C protocol configuration alone.
+            CHECK((key & 0xffff0000u) != 0x10710000u);
+            CHECK((key & 0xffff0000u) != 0x10720000u);
             i += 4;
             const unsigned size_code = (key >> 28) & 7;
             CHECK(size_code >= 1 && size_code <= 4);
@@ -278,7 +279,6 @@ private:
 
         if (settings[UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1005_I2C + 1] == 1) {
             ++rtcm_enables;
-            polls_when_rtcm_enabled = polls;
         }
 
         // M9 SPG has RTCM input, but no RTCM output protocol keys. Unknown keys
@@ -436,7 +436,7 @@ struct Fixture
     }
 };
 
-static void positionMode(bool legacy, bool base_capable, GPSProtocol::OutputMode output = GPSProtocol::OutputMode::GPS)
+static void positionMode(bool legacy, bool base_capable)
 {
     Fixture f;
     f.receiver.legacy = legacy;
@@ -457,16 +457,12 @@ static void positionMode(bool legacy, bool base_capable, GPSProtocol::OutputMode
               .fixedBaseLongitude = 8.0,
               .fixedBaseAltitudeMeters = 500.0f,
               .fixedBaseAccuracyMeters = 1.0f};
-    CHECK(f.configure(output) == 0);
+    CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
     CHECK(f.driver.receiverReady());
     CHECK(f.receiver.modes == (base_capable ? std::vector<uint32_t>{0} : std::vector<uint32_t>{}));
     CHECK(f.receiver.polls == (base_capable ? 3u : 0u));
     CHECK(f.receiver.starts == 0);
-    CHECK(f.receiver.rtcm_enables == (output == GPSProtocol::OutputMode::GPSAndRTCM ? 1u : 0u));
-    if (output == GPSProtocol::OutputMode::GPSAndRTCM) {
-        // active, valid, then stopped must all be observed before correction output is enabled.
-        CHECK(f.receiver.polls_when_rtcm_enabled == (base_capable ? 3u : 0u));
-    }
+    CHECK(f.receiver.rtcm_enables == 0);
     CHECK(f.receiver.status_callbacks == 0);
     CHECK(gps_test_warnings.empty());
     if (base_capable) {
@@ -478,10 +474,8 @@ static void positionMode(bool legacy, bool base_capable, GPSProtocol::OutputMode
         }
     }
     if (!legacy && base_capable) {
-        CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) ==
-              (output != GPSProtocol::OutputMode::GPS));
-        CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) ==
-              (output != GPSProtocol::OutputMode::GPS));
+        CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) == 0);
+        CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) == 0);
 
     } else if (!legacy) {
         CHECK(f.receiver.current_settings.count(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) == 0);
@@ -508,7 +502,7 @@ static void positionMode(bool legacy, bool base_capable, GPSProtocol::OutputMode
     CHECK(f.position.satellites_used == 12);
 }
 
-static void positionModeFailure(GPSProtocol::OutputMode output = GPSProtocol::OutputMode::GPS)
+static void positionModeFailure()
 {
     for (bool legacy : {false, true}) {
         for (int failure = 0; failure < 5; ++failure) {
@@ -523,7 +517,7 @@ static void positionModeFailure(GPSProtocol::OutputMode output = GPSProtocol::Ou
             if (failure >= 3) {
                 f.receiver.poll_read_error = failure == 3 ? -EIO : GPSProtocol::ReadCancelled;
             }
-            CHECK(f.configure(output) < 0);
+            CHECK(f.configure(GPSProtocol::OutputMode::GPS) < 0);
             CHECK(!f.driver.receiverReady());
             CHECK(f.receiver.modes == std::vector<uint32_t>{0});
             CHECK(f.receiver.starts == 0 && f.receiver.rtcm_enables == 0);
@@ -760,9 +754,9 @@ static void nmeaOutputFailures()
         CHECK(gps_test_warnings.empty());
     }
 
-    for (auto output : {GPSProtocol::OutputMode::RTCM, GPSProtocol::OutputMode::GPSAndRTCM}) {
+    {
         Fixture f;
-        CHECK(f.configure(output, GPSDriverUBX::OutputProtocol::NMEA) < 0);
+        CHECK(f.configure(GPSProtocol::OutputMode::RTCM, GPSDriverUBX::OutputProtocol::NMEA) < 0);
         CHECK(f.receiver.current_settings.empty());
         CHECK(!f.driver.receiverReady());
     }
@@ -987,10 +981,7 @@ int main()
         {"position-m9n", [] { positionMode(false, false); }},
         {"position-m8p", [] { positionMode(true, true); }},
         {"position-m8n", [] { positionMode(true, false); }},
-        {"position-rtcm-f9p", [] { positionMode(false, true, GPSProtocol::OutputMode::GPSAndRTCM); }},
-        {"position-rtcm-m8p", [] { positionMode(true, true, GPSProtocol::OutputMode::GPSAndRTCM); }},
         {"position-stop-failures", [] { positionModeFailure(); }},
-        {"position-rtcm-stop-failures", [] { positionModeFailure(GPSProtocol::OutputMode::GPSAndRTCM); }},
         {"control-deadline", controlDeadline},
         {"transactional-frames", transactionalFrames},
         {"comms-diagnostic-values", commsDiagnostics},

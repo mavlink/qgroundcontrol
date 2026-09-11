@@ -37,7 +37,6 @@
 #include <cstdint>
 
 #define FEMTO_MSG_ID_UAVGPS 8001
-#define FEMTO_MSG_ID_RTCM3 784
 #define FEMTO_MSG_ID_GPGGA 218
 #define FEMTO_MSG_ID_UAVSTATUS 8017
 

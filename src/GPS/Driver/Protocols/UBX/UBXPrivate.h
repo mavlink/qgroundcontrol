@@ -39,17 +39,6 @@
 #include "RTCMFramer.h"
 #include "UBX/GPSDriverUBX.h"
 
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#define SWAP16(X) ((((X) >> 8) & 0x00ff) | (((X) << 8) & 0xff00))
-
-/**** Trace macros, disable for production builds */
-
-/**** Warning macros, disable to save memory */
-#define UBX_WARN(...)          \
-    {                          \
-        GPS_WARN(__VA_ARGS__); \
-    }
-
 // RTCM3 message sets for a base: the station/bias messages plus GPS, GLONASS, Galileo and BeiDou
 // observations as MSM4 or MSM7 (1074/1084/1094/1124 vs 1077/1087/1097/1127)
 static constexpr uint32_t RTCM_BASE_MSGOUT_I2C[] = {

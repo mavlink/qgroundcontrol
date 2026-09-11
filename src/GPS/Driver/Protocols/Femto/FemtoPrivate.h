@@ -55,26 +55,3 @@
 #define FEMTO_PREAMBLE1 0xaa
 #define FEMTO_PREAMBLE2 0x44
 #define FEMTO_PREAMBLE3 0x12
-
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#define FEMTO_UNUSED(x) (void) x;
-
-#if defined _FMTOMES_DEBUG
-#define FEMTO_INFO(...)        \
-    {                          \
-        GPS_INFO(__VA_ARGS__); \
-    }
-#define FEMTO_ERR(...)        \
-    {                         \
-        GPS_ERR(__VA_ARGS__); \
-    }
-#else
-#define FEMTO_INFO(...) \
-    {                   \
-        (void) 0;       \
-    }
-#define FEMTO_ERR(...)         \
-    {                          \
-        GPS_WARN(__VA_ARGS__); \
-    }
-#endif

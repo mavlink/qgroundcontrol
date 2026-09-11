@@ -52,16 +52,10 @@
 
 #define SBF_CONFIG "setSBFOutput, Stream1, %s, PVTGeodetic+VelCovGeodetic+DOP+AttEuler+AttCovEuler, msec100\n"
 
-#define SBF_CONFIG_STATUS "setSBFOutput, Stream1, %s, +ReceiverStatus, msec500\n"
-
 #define SBF_CONFIG_DISABLE_OUTPUT "setDataInOut,%s%d,,-RTCMv3-RTCMv2-CMRv2\n"
 
 /* RTK Protocol */
 #define SBF_CONFIG_OUTPUT_RTCM3 "setDataInOut, USB1, Auto, RTCMv3+SBF\n"
-
-#define SBF_CONFIG_OUTPUT_RTCM2 "setDataInOut, USB1, Auto, RTCMv2+SBF\n"
-
-#define SBF_CONFIG_OUTPUT_CMR "setDataInOut, USB1, Auto, CMRv2+SBF\n"
 
 /* RTK Fixed */
 #define SBF_CONFIG_RTCM_STATIC_COORDINATES "setStaticPosGeodetic, Geodetic1, %f, %f, %f\n"
@@ -78,20 +72,12 @@
 /* Status */
 #define SBF_CONFIG_RTCM_STATUS "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500\n"
 
-/* Reset */
-#define SBF_CONFIG_RESET_HOT "" SBF_CONFIG_FORCE_INPUT "ExeResetReceiver, soft, none\n"
-
-#define SBF_CONFIG_RESET_WARM "" SBF_CONFIG_FORCE_INPUT "ExeResetReceiver, soft, PVTData\n"
-
-#define SBF_CONFIG_RESET_COLD "" SBF_CONFIG_FORCE_INPUT "ExeResetReceiver, hard, SatData\n"
-
 #define SBF_SYNC1 0x24
 #define SBF_SYNC2 0x40
 
 /* Block IDs */
 #define SBF_ID_DOP 4001
 #define SBF_ID_PVTGeodetic 4007
-#define SBF_ID_ChannelStatus 4013
 #define SBF_ID_VelCovGeodetic 5908
 #define SBF_ID_AttEuler 5938
 #define SBF_ID_AttCovEuler 5939

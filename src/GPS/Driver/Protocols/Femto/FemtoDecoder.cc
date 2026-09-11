@@ -141,7 +141,7 @@ int GPSDriverFemto::handleMessage(int len)
         }
 
         _satellite_info->timestamp = nowUs();
-        _satellite_info->count = MIN(count, GPSSatelliteReport::SAT_INFO_MAX_SATELLITES);
+        _satellite_info->count = std::min<uint32_t>(count, GPSSatelliteReport::SAT_INFO_MAX_SATELLITES);
 
         for (size_t i = 0; i < _satellite_info->count; i++) {
             _satellite_info->entries[i].id = GPSWire::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);

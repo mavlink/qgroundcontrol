@@ -150,12 +150,12 @@ private:
     void requestCommsDiagnostics();
     void logCommsDiagnostics();
 
-    int activateRTCMOutput(bool reduce_update_rate);
+    int activateRTCMOutput();
 
     /**
      * Convert a relative position heading into a vehicle heading.
      * @param heading baseline heading as reported by the receiver [1e-5 deg]
-     * @return heading corrected by GPS_YAW_OFFSET, normalized to [-pi, pi]
+     * @return heading normalized to [-pi, pi]
      */
     float relPosHeadingToYaw(int32_t heading) const;
 
@@ -276,11 +276,6 @@ private:
     void decodeInit(void);
 
     /**
-     * Calculate FNV1 hash
-     */
-    uint32_t fnv1_32_str(uint8_t* str, uint32_t hval);
-
-    /**
      * Start a new CFG-VALSET in _tx_cfg_valset_buf (header only, no config values yet)
      */
     void initCfgValset();
@@ -398,8 +393,6 @@ private:
     uint16_t _ack_waiting_msg{0};
     uint16_t _rx_msg{};
     uint16_t _rx_payload_length{0};
-
-    uint32_t _ubx_version{0};
 
     uint64_t _last_timestamp_time{0};
 

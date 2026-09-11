@@ -79,7 +79,7 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
         if (ret < 0) {
             // something went wrong when reading
             if (ret != ReadCancelled) {
-                SBF_WARN("sbf read err");
+                GPS_WARN("sbf read err");
             }
             return ret;
         }
@@ -104,11 +104,11 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
     } while (time_started + 1000 * SBF_CONFIG_TIMEOUT > nowUs() && !response_detected);
 
     if (response_detected) {
-        SBF_INFO("Septentrio GNSS receiver COM port: %s", com_port);
+        GPS_INFO("Septentrio GNSS receiver COM port: %s", com_port);
         response_detected = false;  // for future use
 
     } else {
-        SBF_WARN("No COM port detected")
+        GPS_WARN("No COM port detected");
         return -1;
     }
 
@@ -187,7 +187,7 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
         }
     } while (i < 5 && !response_detected);
 
-    if (_output_mode == OutputMode::GPSAndRTCM || _output_mode == OutputMode::RTCM) {
+    if (_output_mode == OutputMode::RTCM) {
         if (!_rtcm_parsing) {
             _rtcm_parsing.emplace();
         }

@@ -33,7 +33,7 @@
 
 #include "AshtechPrivate.h"
 
-void GPSDriverAshtech::activateRTCMOutput(bool reduce_update_rate)
+void GPSDriverAshtech::activateRTCMOutput()
 {
     char buffer[40];
     const char* rtcm_options[] = {
@@ -57,9 +57,7 @@ void GPSDriverAshtech::activateRTCMOutput(bool reduce_update_rate)
         "$PASHS,RT3,1087,%c,ON,1\r\n",
     };
 
-    unsigned first_index = reduce_update_rate ? 0 : 1;
-
-    for (unsigned int conf_i = first_index; conf_i < sizeof(rtcm_options) / sizeof(rtcm_options[0]); conf_i++) {
+    for (unsigned int conf_i = 0; conf_i < sizeof(rtcm_options) / sizeof(rtcm_options[0]); conf_i++) {
         int str_len = snprintf(buffer, sizeof(buffer), rtcm_options[conf_i], _port);
 
         if (writeAckedCommand(buffer, str_len, ASH_RESPONSE_TIMEOUT) != 0) {
@@ -268,7 +266,7 @@ int GPSDriverAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         }
     }
 
-    if (_output_mode == OutputMode::GPSAndRTCM || _output_mode == OutputMode::RTCM) {
+    if (_output_mode == OutputMode::RTCM) {
         if (!_rtcm_parsing) {
             _rtcm_parsing.emplace();
         }
@@ -286,10 +284,6 @@ int GPSDriverAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         const bool active = true;
         status.flags = (int) valid | ((int) active << 1);
         surveyInStatus(status);
-    }
-
-    if (_output_mode == OutputMode::GPSAndRTCM && _board == AshtechBoard::trimble_mb_two) {
-        activateRTCMOutput(false);
     }
 
     _configure_done = true;
@@ -377,7 +371,7 @@ void GPSDriverAshtech::activateCorrectionOutput()
             return;
         }
 
-        activateRTCMOutput(true);
+        activateRTCMOutput();
         if (ioError())
             return;
         sendSurveyInStatusUpdate(false, true, settings.fixedBaseLatitude, settings.fixedBaseLongitude,

@@ -330,17 +330,6 @@ inline ubx_payload_rx_mon_hw_ubx7_t payload<ubx_payload_rx_mon_hw_ubx7_t>(std::s
 }
 
 template <>
-inline ubx_payload_rx_mon_hw_deprecated_t payload<ubx_payload_rx_mon_hw_deprecated_t>(std::span<const uint8_t> input,
-                                                                                      size_t offset)
-{
-    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
-    ubx_payload_rx_mon_hw_deprecated_t value{};
-    for (size_t i = 0; i < 56; ++i)
-        value.reserved0[i] = GPSWire::read<uint8_t>(bytes, 0 + i * 1).value_or(0);
-    return value;
-}
-
-template <>
 inline ubx_payload_rx_sec_sig_t payload<ubx_payload_rx_sec_sig_t>(std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
@@ -434,18 +423,6 @@ inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_rate_t)> encode(const ubx_p
 }
 
 template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_cfg_t)> encode(const ubx_payload_tx_cfg_cfg_t& value)
-{
-    static_assert(sizeof(ubx_payload_tx_cfg_cfg_t) == 13);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_cfg_t)> bytes{};
-    GPSWire::write(bytes, 0, value.clearMask);
-    GPSWire::write(bytes, 4, value.saveMask);
-    GPSWire::write(bytes, 8, value.loadMask);
-    GPSWire::write(bytes, 12, value.deviceMask);
-    return bytes;
-}
-
-template <>
 inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_nav5_t)> encode(const ubx_payload_tx_cfg_nav5_t& value)
 {
     static_assert(sizeof(ubx_payload_tx_cfg_nav5_t) == 36);
@@ -470,30 +447,6 @@ inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_nav5_t)> encode(const ubx_p
     GPSWire::write(bytes, 30, value.utcStandard);
     GPSWire::write(bytes, 31, value.reserved3);
     GPSWire::write(bytes, 32, value.reserved4);
-    return bytes;
-}
-
-template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_rst_t)> encode(const ubx_payload_tx_cfg_rst_t& value)
-{
-    static_assert(sizeof(ubx_payload_tx_cfg_rst_t) == 4);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_rst_t)> bytes{};
-    GPSWire::write(bytes, 0, value.navBbrMask);
-    GPSWire::write(bytes, 2, value.resetMode);
-    GPSWire::write(bytes, 3, value.reserved1);
-    return bytes;
-}
-
-template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_sbas_t)> encode(const ubx_payload_tx_cfg_sbas_t& value)
-{
-    static_assert(sizeof(ubx_payload_tx_cfg_sbas_t) == 8);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_sbas_t)> bytes{};
-    GPSWire::write(bytes, 0, value.mode);
-    GPSWire::write(bytes, 1, value.usage);
-    GPSWire::write(bytes, 2, value.maxSBAS);
-    GPSWire::write(bytes, 3, value.scanmode2);
-    GPSWire::write(bytes, 4, value.scanmode1);
     return bytes;
 }
 

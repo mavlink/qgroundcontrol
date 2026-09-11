@@ -91,7 +91,7 @@ int GPSDriverUBX::receiveInternal(unsigned timeout, bool& read_error)
             /* something went wrong when polling or reading */
             read_error = true;
             if (ret != ReadCancelled) {
-                UBX_WARN("ubx poll_or_read err");
+                GPS_WARN("ubx poll_or_read err");
             }
             return -1;
 
@@ -119,7 +119,7 @@ void GPSDriverUBX::servicePendingCommands()
     }
     if (_rtcmActivationPending) {
         _rtcmActivationPending = false;
-        if (activateRTCMOutput(true) < 0 && !ioError()) {
+        if (activateRTCMOutput() < 0 && !ioError()) {
             _io_error = -EPROTO;
         }
     }

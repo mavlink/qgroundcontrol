@@ -40,12 +40,8 @@
 #include "GPSProtocolTime.h"
 #include <GeographicLib/Geocentric.hpp>
 
-#ifndef M_PI
-#define M_PI 3.141592653589793238462643383280
-#endif
-
 /**
- * @file gps_helper.cpp
+ * @file GPSProtocol.cc
  *
  * @author Thomas Gubler <thomasgubler@student.ethz.ch>
  * @author Julian Oes <julian@oes.ch>
@@ -83,14 +79,12 @@ double GPSProtocol::nmeaToDegrees(double ddmm)
 
 uint64_t GPSProtocol::timeFromUtc(tm& utc, int32_t nsec)
 {
-#ifndef NO_MKTIME
     const time_t epoch = gpsTimeToEpoch(utc);
 
     if (epoch > GPS_EPOCH_SECS) {
         return static_cast<uint64_t>(epoch) * 1000000ULL + nsec / 1000;
     }
 
-#endif
     return 0;
 }
 

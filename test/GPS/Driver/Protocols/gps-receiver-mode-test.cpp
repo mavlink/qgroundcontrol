@@ -218,7 +218,6 @@ int main()
             }
         }
         sbfFrameOwnership();
-        receiverMode(true, GPSProtocol::OutputMode::GPSAndRTCM, true);
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, 1);
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, GPS_READ_BUFFER_SIZE,
                      2 * GPS_READ_BUFFER_SIZE - 3);

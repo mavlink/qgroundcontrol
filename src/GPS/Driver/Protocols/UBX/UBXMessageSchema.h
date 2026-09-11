@@ -7,6 +7,7 @@
 #include "UBXWire.h"
 
 namespace UBX {
+inline constexpr size_t MON_HW_DEPRECATED_SIZE = 56;
 inline constexpr uint16_t NAV_EOE = 0x6101;
 inline constexpr uint32_t NAV_EOE_MSGOUT_I2C = 0x2091015f;
 inline constexpr double DEGREES_PER_COORDINATE = 1e-7;

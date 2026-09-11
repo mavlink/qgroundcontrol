@@ -160,7 +160,6 @@ int GPSDriverSBF::parseChar(const uint8_t b)
         // Expecting Sync1
         case SBF_DECODE_SYNC1:
             if (b == SBF_SYNC1) {  // Sync1 found --> expecting Sync2
-                SBF_TRACE_PARSER("A");
                 payloadRxAdd(b);   // add a payload byte
                 _decode_state = SBF_DECODE_SYNC2;
             }
@@ -170,7 +169,6 @@ int GPSDriverSBF::parseChar(const uint8_t b)
         // Expecting Sync2
         case SBF_DECODE_SYNC2:
             if (b == SBF_SYNC2) {  // Sync2 found --> expecting CRC
-                SBF_TRACE_PARSER("B");
                 payloadRxAdd(b);   // add a payload byte
                 _decode_state = SBF_DECODE_PAYLOAD;
 
@@ -182,8 +180,6 @@ int GPSDriverSBF::parseChar(const uint8_t b)
 
         // Expecting payload
         case SBF_DECODE_PAYLOAD:
-            SBF_TRACE_PARSER(".");
-
             ret = payloadRxAdd(b);  // add a payload byte
 
             if (ret < 0) {
@@ -247,7 +243,6 @@ int GPSDriverSBF::payloadRxDone()
 
     _buf = decodeBlock(std::span<const uint8_t>(_wire).first(_rx_payload_index));
     if (_buf.length < 14 || _buf.length > _rx_payload_index || _buf.crc16 != crc16(_wire.data() + 4, _buf.length - 4)) {
-        SBF_TRACE_RXMSG("Rx Unknow");
         return 0;
     }
 
@@ -282,7 +277,6 @@ int GPSDriverSBF::payloadRxDone()
     _gps_position = &epoch->position;
     switch (_buf.msg_id) {
         case SBF_ID_PVTGeodetic: {
-            SBF_TRACE_RXMSG("Rx PVTGeodetic");
             epoch->hasPosition = true;
 
             if (_buf.payload_pvt_geodetic.mode_type < 1) {
@@ -438,7 +432,7 @@ int GPSDriverSBF::payloadRxDone()
         }
 
         default:
-            SBF_TRACE_RXMSG("Rx other.");
+
             break;
     }
 

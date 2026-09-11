@@ -339,7 +339,7 @@ GPSDriverUBX::payloadRxInit()
         case UBX_MSG_MON_HW:
             if ((_rx_payload_length != sizeof(ubx_payload_rx_mon_hw_ubx6_t))    /* u-blox 6 msg format */
                 && (_rx_payload_length != sizeof(ubx_payload_rx_mon_hw_ubx7_t)) /* u-blox 7+ msg format */
-                && (_rx_payload_length != sizeof(ubx_payload_rx_mon_hw_deprecated_t))) {
+                && (_rx_payload_length != UBX::MON_HW_DEPRECATED_SIZE)) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
 
             } else if (!_decodeNavigation) {
@@ -436,7 +436,7 @@ GPSDriverUBX::payloadRxInit()
             break;
 
         default:       // invalid message state
-            UBX_WARN("ubx internal err1");
+            GPS_WARN("ubx internal err1");
             ret = -1;  // return error, abort handling this message
             break;
     }
@@ -485,15 +485,11 @@ void GPSDriverUBX::decodeMonVer(std::span<const uint8_t> payload)
     _model_name[0] = '\0';
     _firmware_version[0] = '\0';
     _buf.payload_rx_mon_ver_part1 = UBX::payload<ubx_payload_rx_mon_ver_part1_t>(payload);
-    // Part 1 complete: decode Part 1 buffer and calculate hash for SW&HW version strings
     // The protocol specifies these as nul-terminated strings, but the terminator comes
     // from the device, so enforce it before anything walks the field.
     _buf.payload_rx_mon_ver_part1.swVersion[sizeof(_buf.payload_rx_mon_ver_part1.swVersion) - 1] = 0;
     _buf.payload_rx_mon_ver_part1.hwVersion[sizeof(_buf.payload_rx_mon_ver_part1.hwVersion) - 1] = 0;
     memcpy(_firmware_version, _buf.payload_rx_mon_ver_part1.swVersion, sizeof(_firmware_version));
-
-    _ubx_version = fnv1_32_str(_buf.payload_rx_mon_ver_part1.swVersion, FNV1_32_INIT);
-    _ubx_version = fnv1_32_str(_buf.payload_rx_mon_ver_part1.hwVersion, _ubx_version);
 
     // Device detection (See
     // https://forum.u-blox.com/index.php/9432/need-help-decoding-ubx-mon-ver-hardware-string)
@@ -519,7 +515,7 @@ void GPSDriverUBX::decodeMonVer(std::span<const uint8_t> payload)
     }
 
     if (!known) {
-        UBX_WARN("unknown board hw: %s", _buf.payload_rx_mon_ver_part1.hwVersion);
+        GPS_WARN("unknown board hw: %s", _buf.payload_rx_mon_ver_part1.hwVersion);
     }
     for (size_t offset = sizeof(ubx_payload_rx_mon_ver_part1_t); offset < payload.size();
          offset += sizeof(ubx_payload_rx_mon_ver_part2_t)) {
@@ -679,7 +675,7 @@ GPSDriverUBX::payloadRxDone()
         case UBX_MSG_INF_WARNING: {
             uint8_t* p_buf = _framePayload.data();
             p_buf[_rx_payload_length] = 0;
-            UBX_WARN("ubx msg: %s", p_buf);
+            GPS_WARN("ubx msg: %s", p_buf);
 
             if (strncmp(reinterpret_cast<const char*>(p_buf), "txbuf", 5) == 0) {
                 _comms_request_pending = true;
@@ -1012,7 +1008,7 @@ GPSDriverUBX::payloadRxDone()
                     ret = 1;
                     break;
 
-                case sizeof(ubx_payload_rx_mon_hw_deprecated_t): /* u-blox 27+ deprecated, ignore */
+                case UBX::MON_HW_DEPRECATED_SIZE: /* u-blox 27+ deprecated, ignore */
                     ret = 0;
                     break;
 
@@ -1188,7 +1184,7 @@ void GPSDriverUBX::logCommsDiagnostics()
     }
 
     _comms_poll_deadline = 0;
-    UBX_WARN("MON-COMMS after txbuf: txErrors=0x%02x ports=%u (snapshot after warning)", (unsigned) status.txErrors,
+    GPS_WARN("MON-COMMS after txbuf: txErrors=0x%02x ports=%u (snapshot after warning)", (unsigned) status.txErrors,
              (unsigned) status.nPorts);
 
     for (unsigned i = 0; i < status.nPorts; ++i) {
@@ -1215,7 +1211,7 @@ void GPSDriverUBX::logCommsDiagnostics()
                 break;
         }
 
-        UBX_WARN(
+        GPS_WARN(
             "MON-COMMS %s port=0x%04x txPending=%u txUsage=%u%% txPeakUsage=%u%% "
             "rxPending=%u rxUsage=%u%% overrunErrs=%u skipped=%lu",
             name, (unsigned) port.portId, (unsigned) port.txPending, (unsigned) port.txUsage,
@@ -1259,29 +1255,6 @@ void GPSDriverUBX::calcChecksum(const uint8_t* buffer, const uint16_t length, ub
         checksum->ck_a = checksum->ck_a + buffer[i];
         checksum->ck_b = checksum->ck_b + checksum->ck_a;
     }
-}
-
-uint32_t GPSDriverUBX::fnv1_32_str(uint8_t* str, uint32_t hval)
-{
-    uint8_t* s = str;
-
-    /*
-     * FNV-1 hash each octet in the buffer
-     */
-    while (*s) {
-        /* multiply by the 32 bit FNV magic prime mod 2^32 */
-#if defined(NO_FNV_GCC_OPTIMIZATION)
-        hval *= FNV1_32_PRIME;
-#else
-        hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
-#endif
-
-        /* xor the bottom with the current octet */
-        hval ^= (uint32_t) *s++;
-    }
-
-    /* return our new hash value */
-    return hval;
 }
 
 int GPSDriverUBX::decodeValidatedPayload()

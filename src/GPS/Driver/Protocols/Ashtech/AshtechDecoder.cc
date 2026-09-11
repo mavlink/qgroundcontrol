@@ -73,8 +73,8 @@ int GPSDriverAshtech::handleMessage(int len)
         */
         double ashtech_time = 0.0;
         int day = 0, month = 0, year = 0, local_time_off_hour = 0, local_time_off_min = 0;
-        ASH_UNUSED(local_time_off_min);
-        ASH_UNUSED(local_time_off_hour);
+        (void) local_time_off_min;
+        (void) local_time_off_hour;
 
         bufptr.read(ashtech_time);
 
@@ -204,11 +204,11 @@ int GPSDriverAshtech::handleMessage(int len)
         double hdop = 99.9, vdop = 99.9, pdop = 99.9, tdop = 99.9, vertic_vel = 0.0;
         char ns = '?', ew = '?';
 
-        ASH_UNUSED(ashtech_time);
-        ASH_UNUSED(num_of_sv);
-        ASH_UNUSED(age_of_corr);
-        ASH_UNUSED(pdop);
-        ASH_UNUSED(tdop);
+        (void) ashtech_time;
+        (void) num_of_sv;
+        (void) age_of_corr;
+        (void) pdop;
+        (void) tdop;
 
         bufptr.read(fix_quality);
 

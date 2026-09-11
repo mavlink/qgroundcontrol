@@ -197,9 +197,8 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
     uint16_t out_proto_mask = _output_mode == OutputMode::GPS ? UBX_TX_CFG_PRT_PROTO_UBX
                                                               : (UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM);
 
-    uint16_t in_proto_mask = (_output_mode == OutputMode::GPS || _output_mode == OutputMode::GPSAndRTCM)
-                                 ? (UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM)
-                                 : UBX_TX_CFG_PRT_PROTO_UBX;
+    uint16_t in_proto_mask = (_output_mode == OutputMode::GPS) ? (UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM)
+                                                               : UBX_TX_CFG_PRT_PROTO_UBX;
 
     const bool auto_baudrate = baudrate == 0;
 
@@ -209,11 +208,6 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
 
         unsigned baud_i;
         unsigned desired_baudrate = auto_baudrate ? UBX_BAUDRATE_M8_AND_NEWER : baudrate;
-
-        // uart1_baudrate (GPS_UBX_BAUD1) is the sole UART1 target after auto-detect.
-        // 0 keeps the driver default (115200). The probe scan is unaffected, so this
-        // cannot lock the driver out of a receiver at its power-on default the way a
-        // fixed baudrate does.
 
         for (baud_i = 0; baud_i < sizeof(baudrates) / sizeof(baudrates[0]); baud_i++) {
             unsigned test_baudrate = baudrates[baud_i];
@@ -228,21 +222,6 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
             decodeInit();
             receive(20);
             decodeInit();
-
-            if (config.cfg_wipe) {
-                /* Send a CFG-CFG message to wipe the FLASH and reload a clean config */
-                memset(&_buf.payload_tx_cfg_cfg, 0, sizeof(_buf.payload_tx_cfg_cfg));
-                _buf.payload_tx_cfg_cfg.clearMask = 0xFFFFFFFF;
-                _buf.payload_tx_cfg_cfg.loadMask = 0xFFFFFFFF;
-
-                if (!sendMessage(UBX_MSG_CFG_CFG, UBX::encode(_buf.payload_tx_cfg_cfg))) {
-                    continue;
-                }
-
-                if (waitForAck(UBX_MSG_CFG_CFG, 2000, true) < 0) {
-                    continue;
-                }
-            }
 
             // try CFG-VALSET: if we get an ACK we know we can use protocol version 27+
             static constexpr CfgValsetItem uart1_ubx[] = {
@@ -377,7 +356,7 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
         }
     }
 
-    if (_output_mode == OutputMode::GPSAndRTCM || _output_mode == OutputMode::RTCM) {
+    if (_output_mode == OutputMode::RTCM) {
         if (!_rtcm_parsing) {
             _rtcm_parsing.emplace();
         }
@@ -404,7 +383,7 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
         return ret;
     }
 
-    // All GPS navigation modes, including heading rovers and moving bases, need time mode disabled.
+    // A position source must leave any previous base-station time mode.
     if (_output_mode != OutputMode::RTCM && (_is_m8p || _board == Board::u_blox9_F9P_L1L2 ||
                                              _board == Board::u_blox9_F9P_L1L5 || _board == Board::u_blox_X20)) {
         if (disableTimeMode() < 0) {
@@ -414,11 +393,6 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
 
     if (_output_mode == OutputMode::RTCM) {
         if (restartSurveyIn() < 0) {
-            return -1;
-        }
-
-    } else if (_output_mode == OutputMode::GPSAndRTCM) {
-        if (activateRTCMOutput(false) < 0) {
             return -1;
         }
     }
@@ -525,14 +499,14 @@ int GPSDriverUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
             // The receiver rejects the configuration as a whole if it names a constellation it
             // cannot receive, e.g. BeiDou on a SAM-M8Q, or more of them than it can track at
             // once. Keep the receiver's own selection rather than losing the fix over it.
-            UBX_WARN("GNSS constellation config rejected, keeping receiver config");
+            GPS_WARN("GNSS constellation config rejected, keeping receiver config");
         }
 
         // On u-blox 8 the Galileo change only takes effect once the configuration has been
         // saved and the receiver hardware reset, which we cannot do without dropping the
         // rest of this session's configuration
         if (gnssSystems & GNSSSystemsMask::ENABLE_GALILEO) {
-            UBX_WARN("Galileo needs a receiver power cycle to take effect");
+            GPS_WARN("Galileo needs a receiver power cycle to take effect");
         }
 
         waitForGnssReset();
@@ -648,7 +622,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
 
     if (_output_rate > 0) {
         if (_output_rate > 25) {
-            UBX_WARN("Rate %u Hz exceeds max, limiting to 25Hz", _output_rate);
+            GPS_WARN("Rate %u Hz exceeds max, limiting to 25Hz", _output_rate);
             _output_rate = 25;
         }
 
@@ -717,7 +691,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
         cfgValset<uint8_t>(UBX_CFG_KEY_ITFM_ENABLE, 1);
 
         if (sendCfgValsetAcked(false) < 0) {
-            UBX_WARN("Jamming monitor not supported by this receiver");
+            GPS_WARN("Jamming monitor not supported by this receiver");
         }
     }
 
@@ -873,7 +847,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
             // The receiver NAKs the whole message and applies nothing if it does not know a
             // single key, so a signal key missing on this generation would leave the receiver
             // unconfigured. Retry with the constellation enables, those exist everywhere.
-            UBX_WARN("GNSS signal config rejected, retrying without signal bands");
+            GPS_WARN("GNSS signal config rejected, retrying without signal bands");
 
             initCfgValset();
 
@@ -902,7 +876,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
                 }
                 // Keep going with whatever the receiver already has, a refused constellation
                 // selection must not cost us the fix
-                UBX_WARN("GNSS constellation config rejected, keeping receiver config");
+                GPS_WARN("GNSS constellation config rejected, keeping receiver config");
             }
         }
 
@@ -944,7 +918,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
         cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_L5_HEALTH_OVERRIDE, use_gps ? 1 : 0);
 
         if (sendCfgValsetAcked(false) < 0) {
-            UBX_WARN("GPS L5 health override not supported by this receiver");
+            GPS_WARN("GPS L5 health override not supported by this receiver");
         }
     }
 
@@ -1015,7 +989,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
     }
 
     if (sendCfgValsetAcked(false) < 0) {
-        UBX_WARN("Could not disable unused messages");
+        GPS_WARN("Could not disable unused messages");
     }
 
     // Dual antenna heading, not used in a moving base setup where NAV-RELPOSNED provides it. The rate is
@@ -1038,45 +1012,6 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
         cfgValset<uint8_t>(UBX_CFG_KEY_NAVCOR_ENABLE_HOST, 1);
         cfgValset<uint8_t>(UBX_CFG_KEY_NAVCOR_ENABLE_GAL_HAS, 0);
         sendCfgValsetAcked(false);
-    }
-
-    {
-        // Enable/Disable GPS protocols at I2C interface
-        initCfgValset();
-
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2CINPROT_UBX,
-                           config.interface_protocols & InterfaceProtocolsMask::I2C_IN_PROT_UBX);
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2CINPROT_NMEA,
-                           config.interface_protocols & InterfaceProtocolsMask::I2C_IN_PROT_NMEA);
-
-        // There is no RTCM on M10
-        if (UBX::receiverProfile(_board).usb) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2CINPROT_RTCM3X,
-                               config.interface_protocols & InterfaceProtocolsMask::I2C_IN_PROT_RTCM3X);
-        }
-
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2COUTPROT_UBX,
-                           config.interface_protocols & InterfaceProtocolsMask::I2C_OUT_PROT_UBX);
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2COUTPROT_NMEA,
-                           config.interface_protocols & InterfaceProtocolsMask::I2C_OUT_PROT_NMEA);
-
-        if ((_board == Board::u_blox9_F9P_L1L2) || (_board == Board::u_blox9_F9P_L1L5)) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2COUTPROT_RTCM3X,
-                               config.interface_protocols & InterfaceProtocolsMask::I2C_OUT_PROT_RTCM3X);
-        }
-
-        if (sendCfgValsetAcked() < 0) {
-            return -1;
-        }
-
-        // Optional SPARTN on I2C (best-effort; NACK is fine on non-SPARTN firmware)
-        if (UBX::receiverProfile(_board).usb) {
-            initCfgValset();
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_I2CINPROT_SPARTN,
-                               config.interface_protocols & InterfaceProtocolsMask::I2C_IN_PROT_RTCM3X);
-
-            sendCfgValsetAcked(false);
-        }
     }
 
     return 0;
@@ -1126,7 +1061,7 @@ bool GPSDriverUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
     if (_tx_cfg_valset_size + sizeof(key_id) + value_size > sizeof(_tx_cfg_valset_buf)) {
         // If this ever fires, either bump UBX_CFG_VALSET_BUF_SIZE or split the
         // batch into multiple CFG-VALSET messages at the call site.
-        UBX_WARN("buf for CFG_VALSET too small");
+        GPS_WARN("buf for CFG_VALSET too small");
         return false;
     }
 
@@ -1233,7 +1168,7 @@ int GPSDriverUBX::disableTimeMode()
     }
 
     if (!_survey_in_stopped) {
-        UBX_WARN("Time mode did not stop");
+        GPS_WARN("Time mode did not stop");
         return -1;
     }
 
@@ -1256,7 +1191,7 @@ int GPSDriverUBX::restartSurveyInPreV27()
     _buf.payload_tx_cfg_tmode3.flags = 0; /* disable time mode */
 
     if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(_buf.payload_tx_cfg_tmode3))) {
-        UBX_WARN("TMODE3 failed. Device w/o base station support?");
+        GPS_WARN("TMODE3 failed. Device w/o base station support?");
         return -1;
     }
 
@@ -1309,7 +1244,7 @@ int GPSDriverUBX::restartSurveyInPreV27()
         }
 
         // directly enable RTCM3 output
-        return activateRTCMOutput(true);
+        return activateRTCMOutput();
     }
 
     return 0;
@@ -1361,7 +1296,7 @@ int GPSDriverUBX::restartSurveyIn()
         }
 
         if (!_survey_in_stopped) {
-            UBX_WARN("Survey-in did not stop");
+            GPS_WARN("Survey-in did not stop");
             return -1;
         }
 
@@ -1397,7 +1332,7 @@ int GPSDriverUBX::restartSurveyIn()
         }
 
         // directly enable RTCM3 output
-        return activateRTCMOutput(true);
+        return activateRTCMOutput();
     }
 
     return 0;
@@ -1460,7 +1395,7 @@ void GPSDriverUBX::requestCommsDiagnostics()
     _comms_poll_deadline = sendMessage(UBX_MSG_MON_COMMS, nullptr, 0) ? now + 2000000 : 0;
 }
 
-int GPSDriverUBX::activateRTCMOutput(bool reduce_update_rate)
+int GPSDriverUBX::activateRTCMOutput()
 {
     /* For base stations we switch to 1 Hz update rate, which is enough for RTCM output.
      * For the survey-in, we still want 5/10 Hz, because this speeds up the process */
@@ -1468,9 +1403,7 @@ int GPSDriverUBX::activateRTCMOutput(bool reduce_update_rate)
     if (_proto_ver_27_or_higher) {
         initCfgValset();
 
-        if (reduce_update_rate) {
-            cfgValset<uint16_t>(UBX_CFG_KEY_RATE_MEAS, 1000);
-        }
+        cfgValset<uint16_t>(UBX_CFG_KEY_RATE_MEAS, 1000);
 
         cfgValsetPort(RTCM_BASE_MSGOUT_I2C, 1);
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C, 0);
@@ -1484,17 +1417,13 @@ int GPSDriverUBX::activateRTCMOutput(bool reduce_update_rate)
         }
 
     } else {
-        if (reduce_update_rate) {
-            memset(&_buf.payload_tx_cfg_rate, 0, sizeof(_buf.payload_tx_cfg_rate));
-            _buf.payload_tx_cfg_rate.measRate = 1000;
-            _buf.payload_tx_cfg_rate.navRate = UBX_TX_CFG_RATE_NAVRATE;
-            _buf.payload_tx_cfg_rate.timeRef = UBX_TX_CFG_RATE_TIMEREF;
+        memset(&_buf.payload_tx_cfg_rate, 0, sizeof(_buf.payload_tx_cfg_rate));
+        _buf.payload_tx_cfg_rate.measRate = 1000;
+        _buf.payload_tx_cfg_rate.navRate = UBX_TX_CFG_RATE_NAVRATE;
+        _buf.payload_tx_cfg_rate.timeRef = UBX_TX_CFG_RATE_TIMEREF;
 
-            if (!sendMessage(UBX_MSG_CFG_RATE, UBX::encode(_buf.payload_tx_cfg_rate))) {
-                return -1;
-            }
-
-            // according to the spec we should receive an (N)ACK here, but we don't
+        if (!sendMessage(UBX_MSG_CFG_RATE, UBX::encode(_buf.payload_tx_cfg_rate))) {
+            return -1;
         }
 
         configureMessageRate(UBX_MSG_NAV_SVIN, 0);
@@ -1538,7 +1467,7 @@ bool GPSDriverUBX::configureMessageRate(const uint16_t msg, const uint8_t rate)
     if (_proto_ver_27_or_higher) {
         // configureMessageRate() should not be called if _proto_ver_27_or_higher is true.
         // If you see this message the calling code needs to be fixed.
-        UBX_WARN("FIXME: use of deprecated msg CFG_MSG (%i %i)", msg, rate);
+        GPS_WARN("FIXME: use of deprecated msg CFG_MSG (%i %i)", msg, rate);
     }
 
     ubx_payload_tx_cfg_msg_t cfg_msg;  // don't use _buf (allow interleaved operation)

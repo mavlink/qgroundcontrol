@@ -38,7 +38,6 @@ public:
 
     static constexpr int kCacheTtlMs = 60000;
     static constexpr int kFetchTimeoutMs = 10000;
-    static constexpr qint64 kMaxSourceTableBytes = 8 * 1024 * 1024;
 
     explicit NTRIPSourceTableController(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
     ~NTRIPSourceTableController() override;

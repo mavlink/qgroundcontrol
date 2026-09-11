@@ -18,7 +18,6 @@ class NTRIPHttpTransport : public NTRIPStream
 public:
     static constexpr auto kConnectTimeout = NTRIPHttpResponse::kConnectTimeout;
     static constexpr std::chrono::milliseconds kDataWatchdog{30000};
-    static constexpr int kMaxHttpHeaderSize = 32768;
 
     explicit NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent = nullptr,
                                 GPSRuntimeScheduler* scheduler = nullptr);

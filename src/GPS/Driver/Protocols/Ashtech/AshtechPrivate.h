@@ -42,8 +42,3 @@
 #include "Ashtech/GPSDriverAshtech.h"
 #include "NMEAFields.h"
 #include "RTCMFramer.h"
-
-#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-#define ASH_UNUSED(x) (void) x;
-
-// #define 		{GPS_WARN(__VA_ARGS__);}

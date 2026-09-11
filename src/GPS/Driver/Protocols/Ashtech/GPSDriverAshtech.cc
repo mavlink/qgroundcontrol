@@ -72,6 +72,6 @@ void GPSDriverAshtech::servicePendingCommands()
     }
     if (_rtcmActivationPending) {
         _rtcmActivationPending = false;
-        activateRTCMOutput(true);
+        activateRTCMOutput();
     }
 }

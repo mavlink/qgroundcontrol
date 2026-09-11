@@ -38,7 +38,6 @@
 #include <limits>
 #include <time.h>
 
-#ifndef NO_MKTIME
 // Receiver calendar fields are UTC, irrespective of the host timezone. Normalize
 // overflowing fields too: SBF encodes GPS weeks as offsets from January 1980.
 static inline time_t gpsTimeToEpoch(tm& utc)
@@ -76,4 +75,3 @@ static inline time_t gpsTimeToEpoch(tm& utc)
     utc.tm_isdst = 0;
     return static_cast<time_t>(count);
 }
-#endif
