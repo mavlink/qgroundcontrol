@@ -4,8 +4,8 @@
     "QGC.MetaData.Facts": [
         {
             "name": "videoSource",
-            "shortDesc": "Source for video stream (UDP, TCP, RTSP, or connected USB camera).",
-            "longDesc": "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
+            "shortDesc": "Source for video stream (UDP, TCP, RTSP, HTTP MJPEG, or connected USB camera).",
+            "longDesc": "Source for video. UDP, TCP, RTSP, HTTP multipart MJPEG and UVC cameras may be supported depending on the ground station build.",
             "type": "string",
             "default": "",
             "label": "Source",
@@ -28,6 +28,15 @@
             "default": "",
             "label": "RTSP URL",
             "keywords": "rtsp,video url,stream url"
+        },
+        {
+            "name": "httpMjpegUrl",
+            "shortDesc": "Full URL for an HTTP multipart MJPEG stream.",
+            "longDesc": "Full http:// or https:// URL for a multipart MJPEG stream (multipart/x-mixed-replace with JPEG frames). User information in the URL is not supported.",
+            "type": "string",
+            "default": "",
+            "label": "HTTP MJPEG URL",
+            "keywords": "http,https,mjpeg,jpeg,video url,stream url"
         },
         {
             "name": "tcpUrl",
@@ -117,13 +126,14 @@
         },
         {
             "name": "rtspTimeout",
-            "shortDesc": "RTSP Video Timeout",
-            "longDesc": "How long to wait before assuming RTSP link is gone.",
+            "shortDesc": "Network video timeout.",
+            "longDesc": "How long to wait before assuming a timeout-based network video source is unavailable.",
             "type": "uint32",
             "min": 1,
             "units": "s",
             "default": 8,
-            "label": "RTSP Video Timeout"
+            "label": "Network Video Timeout",
+            "keywords": "rtsp,http,mjpeg,network,video timeout"
         },
         {
             "name": "streamEnabled",
@@ -170,7 +180,7 @@
             "type": "bool",
             "default": true,
             "label": "Auto-reconnect on stream loss",
-            "keywords": "rtsp,reconnect,watchdog,recovery,advanced"
+            "keywords": "rtsp,http,mjpeg,stream,reconnect,watchdog,recovery,advanced"
         },
         {
             "name": "forceVideoDecoder",
