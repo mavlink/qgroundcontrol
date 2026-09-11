@@ -9,6 +9,7 @@
 #include "MAVLinkEnumsQml.h"  // MAVLinkEnums::FAILURE_UNIT / FAILURE_TYPE, Q_ENUM_NS-reflected from the MAVLink dialect
 #include "MAVLinkLib.h"       // MAV_RESULT_* for resolveResult()
 #include "QGCMAVLink.h"       // QGCMAVLink::mavResultToString() fallback for resolveResult()
+#include "VehicleTypes.h"     // MavCmdResultFailureCode_t for resolveResult()
 
 namespace {
 
@@ -51,6 +52,20 @@ QVariantList _buildCatalog(const char* enumName, const QStringList& prefixesLong
     return list;
 }
 
+/// Human-readable reason for a Vehicle::MavCmdResultFailureCode_t, or an empty string when the code
+/// says the ack itself carries the outcome.
+QString _failureCodeReason(int failureCode)
+{
+    switch (failureCode) {
+        case VehicleTypes::MavCmdResultFailureNoResponseToCommand:
+            return FailureInjection::tr("No response");
+        case VehicleTypes::MavCmdResultFailureDuplicateCommand:
+            return FailureInjection::tr("Duplicate command");
+        default:
+            return QString();
+    }
+}
+
 }  // namespace
 
 FailureInjection::FailureInjection(QObject* parent) : QObject(parent)
@@ -83,7 +98,7 @@ void FailureInjection::logInjection(const QString& unitName, const QString& type
     }
 }
 
-void FailureInjection::resolveResult(int ackResult)
+void FailureInjection::resolveResult(int ackResult, int failureCode)
 {
     // ACKs for MAV_CMD_INJECT_FAILURE arrive in send order; resolve the oldest pending row (highest index, since newest
     // is prepended).
@@ -98,34 +113,39 @@ void FailureInjection::resolveResult(int ackResult)
         return;
     }
 
-    if (ackResult == MAV_RESULT_IN_PROGRESS) {
+    if ((ackResult == MAV_RESULT_IN_PROGRESS) &&
+        (failureCode == VehicleTypes::MavCmdResultCommandResultOnly)) {
         return;  // not a terminal result; leave pending
     }
 
-    QString reason;
-    switch (ackResult) {
-        // Not tr()'d: FailureInjectionComponent.qml matches this exact literal to style the row green.
-        case MAV_RESULT_ACCEPTED:
-            reason = QStringLiteral("accepted");
-            break;
-        case MAV_RESULT_TEMPORARILY_REJECTED:
-            reason = tr("Temporarily rejected");
-            break;
-        case MAV_RESULT_DENIED:
-            reason = tr("Denied");
-            break;
-        case MAV_RESULT_UNSUPPORTED:
-            reason = tr("Unsupported");
-            break;
-        case MAV_RESULT_FAILED:
-            reason = tr("Failed");
-            break;
-        case MAV_RESULT_CANCELLED:
-            reason = tr("Cancelled");
-            break;
-        default:
-            reason = QGCMAVLink::mavResultToString(static_cast<uint8_t>(ackResult));
-            break;
+    // A failure code other than CommandResultOnly means the vehicle never answered, so ackResult
+    // carries no information — report why the send itself failed instead of a generic "Failed".
+    QString reason = _failureCodeReason(failureCode);
+    if (reason.isEmpty()) {
+        switch (ackResult) {
+            // Not tr()'d: FailureInjectionComponent.qml matches this exact literal to style the row green.
+            case MAV_RESULT_ACCEPTED:
+                reason = QStringLiteral("accepted");
+                break;
+            case MAV_RESULT_TEMPORARILY_REJECTED:
+                reason = tr("Temporarily rejected");
+                break;
+            case MAV_RESULT_DENIED:
+                reason = tr("Denied");
+                break;
+            case MAV_RESULT_UNSUPPORTED:
+                reason = tr("Unsupported");
+                break;
+            case MAV_RESULT_FAILED:
+                reason = tr("Failed");
+                break;
+            case MAV_RESULT_CANCELLED:
+                reason = tr("Cancelled");
+                break;
+            default:
+                reason = QGCMAVLink::mavResultToString(static_cast<uint8_t>(ackResult));
+                break;
+        }
     }
 
     QVariantMap row = _activity.at(pendingIndex).toMap();

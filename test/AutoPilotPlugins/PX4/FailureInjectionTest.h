@@ -15,6 +15,7 @@ private slots:
     void _resolveResultResolvesOldestPendingRow();
     void _resolveResultIgnoresInProgress();
     void _resolveResultUnknownCodeFallsBackToMavResultString();
+    void _resolveResultReportsSendFailureCode();
     void _markUnitResetRemovesTrackedUnit();
     void _resolvePendingInterruptedResolvesStragglers();
     void _activeVehicleSwitchClearsSession();

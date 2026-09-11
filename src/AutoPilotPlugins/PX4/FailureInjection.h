@@ -45,7 +45,9 @@ public:
     Q_INVOKABLE void logInjection(const QString& unitName, const QString& typeName, int unitEnum,
                                   const QString& instanceLabel, const QString& time);
     /// Resolve the oldest still-pending injection with a MAV_RESULT ack code; sets the row result.
-    Q_INVOKABLE void resolveResult(int ackResult);
+    /// failureCode is Vehicle::MavCmdResultFailureCode_t: when the command never reached the vehicle
+    /// (no response, duplicate) it carries the actionable reason that ackResult alone cannot express.
+    Q_INVOKABLE void resolveResult(int ackResult, int failureCode = 0 /* MavCmdResultCommandResultOnly */);
     /// Distinct FAILURE_UNIT values injected this session, so Reset restores only those.
     Q_INVOKABLE QVariantList injectedUnits(void) const;
     /// Untrack one FAILURE_UNIT once its reset is accepted, so an interrupted Reset all keeps the rest retryable.

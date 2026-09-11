@@ -22,11 +22,18 @@ SetupPage {
 
     // ---- state / model ------------------------------------------------------
 
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    // FactPanelController captures the active vehicle once, at construction, and never re-targets it
+    // (its vehicle property is CONSTANT). Bind the page to that same vehicle so the parameters below and
+    // the commands sent further down always refer to one vehicle; binding to multiVehicleManager instead
+    // would let them diverge on an active-vehicle switch.
+    property var  _vehicle:             controller.vehicle
+    // A switch away from this page's vehicle disarms it rather than retargeting: the page's parameters
+    // still belong to the old vehicle, so injecting would use its component id against the new one.
+    readonly property bool _vehicleIsActive: _vehicle && (_vehicle === QGroundControl.multiVehicleManager.activeVehicle)
     property Fact _sysFailureEn:        controller.getParameterFact(-1, "SYS_FAILURE_EN", true /* reportMissing */)
     property bool _paramSet:            _sysFailureEn && _sysFailureEn.value === 1
     property bool _pendingReboot:       false   // SYS_FAILURE_EN just toggled, reboot not yet triggered
-    property bool _armed:               _paramSet && !_pendingReboot
+    property bool _armed:               _paramSet && !_pendingReboot && _vehicleIsActive
 
     readonly property int _cmdInjectFailure: 420   // MAV_CMD_INJECT_FAILURE
     readonly property int _mavResultAccepted: 0     // MAV_RESULT_ACCEPTED
@@ -62,13 +69,13 @@ SetupPage {
     // Holds MAV_CMD_INJECT_FAILURE sends not yet dispatched. Each entry is sent only once the
     // previous one's ack has come back through onMavCommandResult/_onAck, so at most one is ever
     // in flight at a time.
-    property var _sendQueue: []   // outstanding sends: [{ unit, type, instance, logArgs|null }]
+    property var _sendQueue: []   // outstanding sends: [{ unit, type, param3, param4, logArgs|null }]
 
     Connections {
-        target: _activeVehicle
+        target: _vehicle
         function onMavCommandResult(vehicleId, targetComponent, command, ackResult, failureCode) {
             if (command === _cmdInjectFailure) {
-                _onAck(ackResult)
+                _onAck(ackResult, failureCode)
             }
         }
     }
@@ -86,7 +93,7 @@ SetupPage {
     // ---- behaviour ----------------------------------------------------------
 
     function _injectOne(unitEnum, typeEnum, param3, param4) {
-        if (!_activeVehicle) {
+        if (!_vehicle || !_vehicleIsActive) {
             return
         }
         // sendCommand is the QML-callable form of sendMavCommand. Target the component
@@ -94,7 +101,7 @@ SetupPage {
         var compId = _sysFailureEn ? _sysFailureEn.componentId : 1
         // param3 = instance (0 = all, NaN = use bitmask), param4 = instance bitmask (bit 0 = instance 1).
         // showError=false: the ack result is surfaced via the mavCommandResult handler (per-row status).
-        _activeVehicle.sendCommand(compId,
+        _vehicle.sendCommand(compId,
                                    _cmdInjectFailure,
                                    false,                              // showError
                                    unitEnum, typeEnum, param3, param4, // param1..4
@@ -115,9 +122,10 @@ SetupPage {
         }
     }
 
-    // Send the command at the head of the queue, logging it when it's an injection (not a reset).
+    // Send the command at the head of the queue. Both injections and resets add an activity row; only an
+    // injection also tracks its unit for Reset all.
     function _sendCurrent() {
-        if (_sendQueue.length === 0 || !_activeVehicle) {
+        if (_sendQueue.length === 0 || !_vehicle || !_vehicleIsActive) {
             return
         }
         var s = _sendQueue[0]
@@ -135,9 +143,11 @@ SetupPage {
     }
 
     // One ack arrived: resolve the matching log row (only one is pending at a time), then send the next.
-    function _onAck(ackResult) {
+    function _onAck(ackResult, failureCode) {
         var acked = _sendQueue.length > 0 ? _sendQueue[0] : null   // head is the send being acked
-        FailureInjection.resolveResult(ackResult)   // resolves the oldest pending row (both injections and resets log one)
+        // resolves the oldest pending row (both injections and resets log one); failureCode distinguishes
+        // "the vehicle rejected it" from "the command never got an answer"
+        FailureInjection.resolveResult(ackResult, failureCode)
         // An accepted reset (track:false) untracks its unit — on ack, not up front, so an interrupted Reset all keeps the rest retryable.
         if (acked && acked.logArgs && !acked.logArgs.track && ackResult === _mavResultAccepted) {
             FailureInjection.markUnitReset(acked.unit)
@@ -202,7 +212,7 @@ SetupPage {
             // On (re)load: clear the session if the vehicle changed while the page was unloaded, then
             // resolve any row left "pending" when a prior page instance was destroyed mid-send.
             Component.onCompleted: {
-                FailureInjection.notifyActiveVehicle(_activeVehicle ? _activeVehicle.id : -1)
+                FailureInjection.notifyActiveVehicle(_vehicle ? _vehicle.id : -1)
                 FailureInjection.resolvePendingInterrupted()
             }
 
@@ -254,12 +264,20 @@ SetupPage {
                             visible:    _armed && !_pendingReboot
                             text:       qsTr("Active — injection armed.")
                         }
+                        QGCLabel {
+                            objectName: "failureInjection_vehicleChangedLabel"
+                            Layout.fillWidth: true
+                            elide:      Text.ElideRight
+                            color:      qgcPal.colorOrange
+                            visible:    !_vehicleIsActive
+                            text:       qsTr("Active vehicle changed — reopen this page to target it.")
+                        }
                         QGCButton {
                             objectName: "failureInjection_rebootButton"
                             text:       qsTr("Reboot Vehicle")
                             visible:    _pendingReboot
                             onClicked: {
-                                if (_activeVehicle) { _activeVehicle.rebootVehicle() }
+                                if (_vehicle) { _vehicle.rebootVehicle() }
                                 _pendingReboot = false   // link drops & reconnects; param re-reads on return
                             }
                         }
@@ -381,16 +399,15 @@ SetupPage {
                         wrapMode:       Text.WordWrap
                         text: {
                             if (_selectedInstances.length === 0) {
-                                return "MAV_CMD_INJECT_FAILURE  param1=" + _units[_unitIndex].unit +
-                                       "  param2=" + _types[_typeIndex].type + "  (no instance selected)"
+                                return qsTr("MAV_CMD_INJECT_FAILURE  param1=%1  param2=%2  (no instance selected)")
+                                        .arg(_units[_unitIndex].unit).arg(_types[_typeIndex].type)
                             }
                             var u = _units[_unitIndex]
                             var t = _types[_typeIndex]
                             var s = _instanceSend()
                             var p3 = isNaN(s.param3) ? "NaN" : s.param3
-                            return "MAV_CMD_INJECT_FAILURE  param1=" + u.unit +
-                                   "  param2=" + t.type + "  param3=" + p3 +
-                                   "  param4=" + s.param4 + "  (i=" + s.label + ")"
+                            return qsTr("MAV_CMD_INJECT_FAILURE  param1=%1  param2=%2  param3=%3  param4=%4  (i=%5)")
+                                    .arg(u.unit).arg(t.type).arg(p3).arg(s.param4).arg(s.label)
                         }
                     }
                 }

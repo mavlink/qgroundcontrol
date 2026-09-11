@@ -5,6 +5,7 @@
 
 #include "FailureInjection.h"
 #include "MAVLinkLib.h"
+#include "VehicleTypes.h"
 
 UT_REGISTER_TEST_LIGHTWEIGHT(FailureInjectionTest, TestLabel::Unit)
 
@@ -130,6 +131,41 @@ void FailureInjectionTest::_resolveResultUnknownCodeFallsBackToMavResultString()
 
     QCOMPARE(failureInjection.activity().first().toMap().value(QStringLiteral("result")).toString(),
              QStringLiteral("MAV_RESULT unknown 99"));
+}
+
+void FailureInjectionTest::_resolveResultReportsSendFailureCode()
+{
+    // A send that never reached the vehicle always carries MAV_RESULT_FAILED, so the failure code is the
+    // only thing that says why. Without it every one of these rows would read a useless "Failed".
+    struct SendFailure
+    {
+        VehicleTypes::MavCmdResultFailureCode_t failureCode;
+        const char* expectedResult;
+    };
+
+    static const SendFailure sendFailures[] = {
+        {VehicleTypes::MavCmdResultFailureNoResponseToCommand, "No response"},
+        {VehicleTypes::MavCmdResultFailureDuplicateCommand, "Duplicate command"},
+    };
+
+    for (const SendFailure& sendFailure : sendFailures) {
+        FailureInjection failureInjection;
+        failureInjection.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                                QStringLiteral("12:00:00"));
+
+        failureInjection.resolveResult(MAV_RESULT_FAILED, sendFailure.failureCode);
+
+        QCOMPARE(failureInjection.activity().first().toMap().value(QStringLiteral("result")).toString(),
+                 QString::fromLatin1(sendFailure.expectedResult));
+    }
+
+    // CommandResultOnly means the ack itself carries the outcome, so the MAV_RESULT mapping still wins.
+    FailureInjection ackCarriesResult;
+    ackCarriesResult.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
+                            QStringLiteral("12:00:00"));
+    ackCarriesResult.resolveResult(MAV_RESULT_UNSUPPORTED, VehicleTypes::MavCmdResultCommandResultOnly);
+    QCOMPARE(ackCarriesResult.activity().first().toMap().value(QStringLiteral("result")).toString(),
+             QStringLiteral("Unsupported"));
 }
 
 void FailureInjectionTest::_markUnitResetRemovesTrackedUnit()
