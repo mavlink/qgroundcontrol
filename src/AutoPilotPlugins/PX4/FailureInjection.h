@@ -27,6 +27,9 @@ class FailureInjection : public QObject
     Q_PROPERTY(QVariantList types READ types CONSTANT)  ///< [{ name, type }]
     Q_PROPERTY(QVariantList activity READ activity NOTIFY
                    activityChanged)  ///< newest first: [{ time, unitName, typeName, instance, result }]
+    /// SYS_FAILURE_EN written but not yet rebooted into. Kept here, not in the page: navigating away
+    /// destroys the page, and a fresh instance would read the parameter as 1 and arm injection anyway.
+    Q_PROPERTY(bool pendingReboot READ pendingReboot WRITE setPendingReboot NOTIFY pendingRebootChanged)
 
 public:
     explicit FailureInjection(QObject* parent = nullptr);
@@ -37,6 +40,10 @@ public:
 
     QVariantList activity(void) const { return _activity; }
 
+    bool pendingReboot(void) const { return _pendingReboot; }
+
+    void setPendingReboot(bool pendingReboot);
+
     /// Add a log row (prepended, newest first, result "pending") without tracking the unit for Reset.
     /// instanceLabel is a display descriptor for the affected instance(s), e.g. "all", "2", "1, 3, 5".
     Q_INVOKABLE void logRow(const QString& unitName, const QString& typeName, const QString& instanceLabel,
@@ -45,8 +52,8 @@ public:
     Q_INVOKABLE void logInjection(const QString& unitName, const QString& typeName, int unitEnum,
                                   const QString& instanceLabel, const QString& time);
     /// Resolve the oldest still-pending injection with a MAV_RESULT ack code; sets the row result.
-    /// failureCode is Vehicle::MavCmdResultFailureCode_t: when the command never reached the vehicle
-    /// (no response, duplicate) it carries the actionable reason that ackResult alone cannot express.
+    /// failureCode (Vehicle::MavCmdResultFailureCode_t) carries the reason when the command never
+    /// reached the vehicle, which ackResult alone cannot express.
     Q_INVOKABLE void resolveResult(int ackResult, int failureCode = 0 /* MavCmdResultCommandResultOnly */);
     /// Distinct FAILURE_UNIT values injected this session, so Reset restores only those.
     Q_INVOKABLE QVariantList injectedUnits(void) const;
@@ -64,11 +71,13 @@ public:
 
 signals:
     void activityChanged(void);
+    void pendingRebootChanged(void);
 
 private:
     QVariantList _units;
     QVariantList _types;
     QVariantList _activity;
     QList<int> _injectedUnits;
+    bool _pendingReboot = false;
     int _currentVehicleId = -1;  ///< MAVLink system id the session belongs to; -1 until the first vehicle is known
 };

@@ -9,7 +9,7 @@
 #include "MAVLinkEnumsQml.h"  // MAVLinkEnums::FAILURE_UNIT / FAILURE_TYPE, Q_ENUM_NS-reflected from the MAVLink dialect
 #include "MAVLinkLib.h"       // MAV_RESULT_* for resolveResult()
 #include "QGCMAVLink.h"       // QGCMAVLink::mavResultToString() fallback for resolveResult()
-#include "VehicleTypes.h"     // MavCmdResultFailureCode_t for resolveResult()
+#include "VehicleTypes.h"     // MavCmdResultFailureCode_t
 
 namespace {
 
@@ -52,8 +52,7 @@ QVariantList _buildCatalog(const char* enumName, const QStringList& prefixesLong
     return list;
 }
 
-/// Human-readable reason for a Vehicle::MavCmdResultFailureCode_t, or an empty string when the code
-/// says the ack itself carries the outcome.
+/// Reason a send never reached the vehicle; empty when the ack itself carries the outcome.
 QString _failureCodeReason(int failureCode)
 {
     switch (failureCode) {
@@ -113,13 +112,10 @@ void FailureInjection::resolveResult(int ackResult, int failureCode)
         return;
     }
 
-    if ((ackResult == MAV_RESULT_IN_PROGRESS) &&
-        (failureCode == VehicleTypes::MavCmdResultCommandResultOnly)) {
+    if ((ackResult == MAV_RESULT_IN_PROGRESS) && (failureCode == VehicleTypes::MavCmdResultCommandResultOnly)) {
         return;  // not a terminal result; leave pending
     }
 
-    // A failure code other than CommandResultOnly means the vehicle never answered, so ackResult
-    // carries no information — report why the send itself failed instead of a generic "Failed".
     QString reason = _failureCodeReason(failureCode);
     if (reason.isEmpty()) {
         switch (ackResult) {
@@ -152,6 +148,15 @@ void FailureInjection::resolveResult(int ackResult, int failureCode)
     row[QStringLiteral("result")] = reason;
     _activity[pendingIndex] = row;
     emit activityChanged();
+}
+
+void FailureInjection::setPendingReboot(bool pendingReboot)
+{
+    if (_pendingReboot == pendingReboot) {
+        return;
+    }
+    _pendingReboot = pendingReboot;
+    emit pendingRebootChanged();
 }
 
 QVariantList FailureInjection::injectedUnits(void) const
@@ -194,6 +199,7 @@ void FailureInjection::notifyActiveVehicle(int vehicleId)
     _injectedUnits.clear();
     _activity.clear();
     emit activityChanged();
+    setPendingReboot(false);  // belonged to the vehicle we just left
 }
 
 QVariantList FailureInjection::detailParams(int unitEnum, int typeEnum) const

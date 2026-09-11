@@ -49,6 +49,9 @@ CPMAddPackage(
     OPTIONS
         "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
         "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
+        # Nothing in QGC includes the C++11 headers, and upstream generates them without the
+        # deterministic PYTHONHASHSEED the patch below sets.
+        "MAVLINK_ENABLE_CXX OFF"
     # Retry upstream's build-time pip install and make mavgen hashes deterministic.
     PATCHES "${_mavlink_patch}"
 )

@@ -135,8 +135,7 @@ void FailureInjectionTest::_resolveResultUnknownCodeFallsBackToMavResultString()
 
 void FailureInjectionTest::_resolveResultReportsSendFailureCode()
 {
-    // A send that never reached the vehicle always carries MAV_RESULT_FAILED, so the failure code is the
-    // only thing that says why. Without it every one of these rows would read a useless "Failed".
+    // A send that never reached the vehicle always carries MAV_RESULT_FAILED; only the code says why.
     struct SendFailure
     {
         VehicleTypes::MavCmdResultFailureCode_t failureCode;
@@ -159,7 +158,7 @@ void FailureInjectionTest::_resolveResultReportsSendFailureCode()
                  QString::fromLatin1(sendFailure.expectedResult));
     }
 
-    // CommandResultOnly means the ack itself carries the outcome, so the MAV_RESULT mapping still wins.
+    // CommandResultOnly: the ack carries the outcome, so the MAV_RESULT mapping still wins.
     FailureInjection ackCarriesResult;
     ackCarriesResult.logRow(QStringLiteral("GPS"), QStringLiteral("Off"), QStringLiteral("1"),
                             QStringLiteral("12:00:00"));
@@ -230,6 +229,32 @@ void FailureInjectionTest::_activeVehicleSwitchClearsSession()
     QCOMPARE(activityChangedSpy.count(), 1);
     QVERIFY(failureInjection.injectedUnits().isEmpty());
     QVERIFY(failureInjection.activity().isEmpty());
+}
+
+void FailureInjectionTest::_pendingRebootSurvivesPageReloadAndClearsOnVehicleSwitch()
+{
+    FailureInjection failureInjection;
+    failureInjection.notifyActiveVehicle(1);
+    QVERIFY(!failureInjection.pendingReboot());
+
+    QSignalSpy pendingRebootChangedSpy(&failureInjection, &FailureInjection::pendingRebootChanged);
+
+    // Lives here, not in the page, so navigating away and back still reports the vehicle as unrebooted.
+    failureInjection.setPendingReboot(true);
+    QCOMPARE(pendingRebootChangedSpy.count(), 1);
+    QVERIFY(failureInjection.pendingReboot());
+
+    failureInjection.setPendingReboot(true);  // no-op write must not re-signal
+    QCOMPARE(pendingRebootChangedSpy.count(), 1);
+
+    // Transient disconnect / same vehicle returning keeps it: the reboot still has not happened.
+    failureInjection.notifyActiveVehicle(-1);
+    failureInjection.notifyActiveVehicle(1);
+    QVERIFY(failureInjection.pendingReboot());
+
+    // Switching vehicles drops it with the rest of the session.
+    failureInjection.notifyActiveVehicle(2);
+    QVERIFY(!failureInjection.pendingReboot());
 }
 
 void FailureInjectionTest::_detailParamsMapCombos()

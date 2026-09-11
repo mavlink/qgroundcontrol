@@ -22,17 +22,15 @@ SetupPage {
 
     // ---- state / model ------------------------------------------------------
 
-    // FactPanelController captures the active vehicle once, at construction, and never re-targets it
-    // (its vehicle property is CONSTANT). Bind the page to that same vehicle so the parameters below and
-    // the commands sent further down always refer to one vehicle; binding to multiVehicleManager instead
-    // would let them diverge on an active-vehicle switch.
+    // FactPanelController captures the active vehicle at construction and never re-targets it (its
+    // vehicle property is CONSTANT), so bind to it: the Facts below and the commands sent must agree.
     property var  _vehicle:             controller.vehicle
-    // A switch away from this page's vehicle disarms it rather than retargeting: the page's parameters
-    // still belong to the old vehicle, so injecting would use its component id against the new one.
+    // Disarm rather than retarget on a switch — the Facts below still belong to the old vehicle.
     readonly property bool _vehicleIsActive: _vehicle && (_vehicle === QGroundControl.multiVehicleManager.activeVehicle)
     property Fact _sysFailureEn:        controller.getParameterFact(-1, "SYS_FAILURE_EN", true /* reportMissing */)
     property bool _paramSet:            _sysFailureEn && _sysFailureEn.value === 1
-    property bool _pendingReboot:       false   // SYS_FAILURE_EN just toggled, reboot not yet triggered
+    // In the singleton so it survives the page being destroyed on navigation; see its declaration.
+    readonly property bool _pendingReboot: FailureInjection.pendingReboot
     property bool _armed:               _paramSet && !_pendingReboot && _vehicleIsActive
 
     readonly property int _cmdInjectFailure: 420   // MAV_CMD_INJECT_FAILURE
@@ -122,8 +120,7 @@ SetupPage {
         }
     }
 
-    // Send the command at the head of the queue. Both injections and resets add an activity row; only an
-    // injection also tracks its unit for Reset all.
+    // Send the head of the queue. Injections and resets both log a row; only injections track the unit.
     function _sendCurrent() {
         if (_sendQueue.length === 0 || !_vehicle || !_vehicleIsActive) {
             return
@@ -145,8 +142,7 @@ SetupPage {
     // One ack arrived: resolve the matching log row (only one is pending at a time), then send the next.
     function _onAck(ackResult, failureCode) {
         var acked = _sendQueue.length > 0 ? _sendQueue[0] : null   // head is the send being acked
-        // resolves the oldest pending row (both injections and resets log one); failureCode distinguishes
-        // "the vehicle rejected it" from "the command never got an answer"
+        // resolves the oldest pending row; failureCode separates "rejected" from "never answered"
         FailureInjection.resolveResult(ackResult, failureCode)
         // An accepted reset (track:false) untracks its unit — on ack, not up front, so an interrupted Reset all keeps the rest retryable.
         if (acked && acked.logArgs && !acked.logArgs.track && ackResult === _mavResultAccepted) {
@@ -179,7 +175,7 @@ SetupPage {
         if (_sysFailureEn) {
             _sysFailureEn.value = on ? 1 : 0
         }
-        _pendingReboot = true   // PX4 evaluates SYS_FAILURE_EN at boot, so any change (on or off) needs a reboot
+        FailureInjection.pendingReboot = true   // PX4 evaluates SYS_FAILURE_EN at boot, so any change (on or off) needs a reboot
     }
 
     function _unitName(unitEnum) {
@@ -278,7 +274,7 @@ SetupPage {
                             visible:    _pendingReboot
                             onClicked: {
                                 if (_vehicle) { _vehicle.rebootVehicle() }
-                                _pendingReboot = false   // link drops & reconnects; param re-reads on return
+                                FailureInjection.pendingReboot = false   // link drops & reconnects; param re-reads on return
                             }
                         }
                     }
