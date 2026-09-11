@@ -789,8 +789,7 @@ bool DigiviewManager::sendCaptureParameters(
 
 void DigiviewManager::sendDetectionParameters(
     uint8_t mode, uint8_t sorting_mode,
-    float track_confidence_threshold, float scan_confidence_threshold,
-    float track_box_overlap, float scan_box_overlap,
+    float scan_confidence_threshold, float scan_box_overlap,
     uint8_t creation_score_scale, uint8_t bonus_detection_scale,
     uint8_t bonus_redetection_scale, uint8_t missed_detection_penalty,
     uint8_t missed_redetection_penalty)
@@ -800,9 +799,7 @@ void DigiviewManager::sendDetectionParameters(
 
     payload.mode = mode;
     payload.sorting_mode = sorting_mode;
-    payload.track_confidence_threshold = track_confidence_threshold;
     payload.scan_confidence_threshold = scan_confidence_threshold;
-    payload.track_box_overlap = track_box_overlap;
     payload.scan_box_overlap = scan_box_overlap;
     payload.creation_score_scale = creation_score_scale;
     payload.bonus_detection_scale = bonus_detection_scale;
@@ -1819,12 +1816,8 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         const bool hasDetectionParametersChangedValue = !_hasDetectionParameters;
         const bool detectionModeChangedValue = _detectionMode != payload.mode;
         const bool detectionSortingModeChangedValue = _detectionSortingMode != payload.sorting_mode;
-        const bool detectionTrackConfidenceThresholdChangedValue =
-            !qFuzzyCompare(_detectionTrackConfidenceThreshold, payload.track_confidence_threshold);
         const bool detectionScanConfidenceThresholdChangedValue =
             !qFuzzyCompare(_detectionScanConfidenceThreshold, payload.scan_confidence_threshold);
-        const bool detectionTrackBoxOverlapChangedValue =
-            !qFuzzyCompare(_detectionTrackBoxOverlap, payload.track_box_overlap);
         const bool detectionScanBoxOverlapChangedValue =
             !qFuzzyCompare(_detectionScanBoxOverlap, payload.scan_box_overlap);
         const bool detectionCreationScoreScaleChangedValue = _detectionCreationScoreScale != payload.creation_score_scale;
@@ -1839,9 +1832,7 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         _hasDetectionParameters = true;
         _detectionMode = payload.mode;
         _detectionSortingMode = payload.sorting_mode;
-        _detectionTrackConfidenceThreshold = payload.track_confidence_threshold;
         _detectionScanConfidenceThreshold = payload.scan_confidence_threshold;
-        _detectionTrackBoxOverlap = payload.track_box_overlap;
         _detectionScanBoxOverlap = payload.scan_box_overlap;
         _detectionCreationScoreScale = payload.creation_score_scale;
         _detectionBonusDetectionScale = payload.bonus_detection_scale;
@@ -1858,14 +1849,8 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         if (detectionSortingModeChangedValue) {
             emit detectionSortingModeChanged();
         }
-        if (detectionTrackConfidenceThresholdChangedValue) {
-            emit detectionTrackConfidenceThresholdChanged();
-        }
         if (detectionScanConfidenceThresholdChangedValue) {
             emit detectionScanConfidenceThresholdChanged();
-        }
-        if (detectionTrackBoxOverlapChangedValue) {
-            emit detectionTrackBoxOverlapChanged();
         }
         if (detectionScanBoxOverlapChangedValue) {
             emit detectionScanBoxOverlapChanged();
@@ -1886,8 +1871,7 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             emit detectionMissedRedetectionPenaltyChanged();
         }
         if (hasDetectionParametersChangedValue || detectionModeChangedValue || detectionSortingModeChangedValue
-            || detectionTrackConfidenceThresholdChangedValue || detectionScanConfidenceThresholdChangedValue
-            || detectionTrackBoxOverlapChangedValue || detectionScanBoxOverlapChangedValue
+            || detectionScanConfidenceThresholdChangedValue || detectionScanBoxOverlapChangedValue
             || detectionCreationScoreScaleChangedValue || detectionBonusDetectionScaleChangedValue
             || detectionBonusRedetectionScaleChangedValue || detectionMissedDetectionPenaltyChangedValue
             || detectionMissedRedetectionPenaltyChangedValue) {
@@ -1897,9 +1881,7 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
         emit detectionParametersReceived(
             payload.mode,
             payload.sorting_mode,
-            payload.track_confidence_threshold,
             payload.scan_confidence_threshold,
-            payload.track_box_overlap,
             payload.scan_box_overlap,
             payload.creation_score_scale,
             payload.bonus_detection_scale,
@@ -2695,9 +2677,7 @@ void DigiviewManager::_resetRemoteSession()
     const bool hasDetectionParametersChangedValue = _hasDetectionParameters;
     const bool detectionModeChangedValue = _detectionMode != 0;
     const bool detectionSortingModeChangedValue = _detectionSortingMode != 0;
-    const bool detectionTrackConfidenceThresholdChangedValue = !qFuzzyIsNull(_detectionTrackConfidenceThreshold);
     const bool detectionScanConfidenceThresholdChangedValue = !qFuzzyIsNull(_detectionScanConfidenceThreshold);
-    const bool detectionTrackBoxOverlapChangedValue = !qFuzzyIsNull(_detectionTrackBoxOverlap);
     const bool detectionScanBoxOverlapChangedValue = !qFuzzyIsNull(_detectionScanBoxOverlap);
     const bool detectionCreationScoreScaleChangedValue = _detectionCreationScoreScale != 0;
     const bool detectionBonusDetectionScaleChangedValue = _detectionBonusDetectionScale != 0;
@@ -2708,9 +2688,7 @@ void DigiviewManager::_resetRemoteSession()
     _hasDetectionParameters = false;
     _detectionMode = 0;
     _detectionSortingMode = 0;
-    _detectionTrackConfidenceThreshold = 0.0f;
     _detectionScanConfidenceThreshold = 0.0f;
-    _detectionTrackBoxOverlap = 0.0f;
     _detectionScanBoxOverlap = 0.0f;
     _detectionCreationScoreScale = 0;
     _detectionBonusDetectionScale = 0;
@@ -2727,14 +2705,8 @@ void DigiviewManager::_resetRemoteSession()
     if (detectionSortingModeChangedValue) {
         emit detectionSortingModeChanged();
     }
-    if (detectionTrackConfidenceThresholdChangedValue) {
-        emit detectionTrackConfidenceThresholdChanged();
-    }
     if (detectionScanConfidenceThresholdChangedValue) {
         emit detectionScanConfidenceThresholdChanged();
-    }
-    if (detectionTrackBoxOverlapChangedValue) {
-        emit detectionTrackBoxOverlapChanged();
     }
     if (detectionScanBoxOverlapChangedValue) {
         emit detectionScanBoxOverlapChanged();
@@ -2755,8 +2727,7 @@ void DigiviewManager::_resetRemoteSession()
         emit detectionMissedRedetectionPenaltyChanged();
     }
     if (hasDetectionParametersChangedValue || detectionModeChangedValue || detectionSortingModeChangedValue
-        || detectionTrackConfidenceThresholdChangedValue || detectionScanConfidenceThresholdChangedValue
-        || detectionTrackBoxOverlapChangedValue || detectionScanBoxOverlapChangedValue
+        || detectionScanConfidenceThresholdChangedValue || detectionScanBoxOverlapChangedValue
         || detectionCreationScoreScaleChangedValue || detectionBonusDetectionScaleChangedValue
         || detectionBonusRedetectionScaleChangedValue || detectionMissedDetectionPenaltyChangedValue
         || detectionMissedRedetectionPenaltyChangedValue) {

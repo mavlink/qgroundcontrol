@@ -71,11 +71,8 @@ class DigiviewManager : public QObject
     Q_PROPERTY(bool hasDetectionParameters READ hasDetectionParameters NOTIFY hasDetectionParametersChanged)
     Q_PROPERTY(int detectionMode READ detectionMode NOTIFY detectionModeChanged)
     Q_PROPERTY(int detectionSortingMode READ detectionSortingMode NOTIFY detectionSortingModeChanged)
-    Q_PROPERTY(float detectionTrackConfidenceThreshold READ detectionTrackConfidenceThreshold NOTIFY
-               detectionTrackConfidenceThresholdChanged)
     Q_PROPERTY(float detectionScanConfidenceThreshold READ detectionScanConfidenceThreshold NOTIFY
                detectionScanConfidenceThresholdChanged)
-    Q_PROPERTY(float detectionTrackBoxOverlap READ detectionTrackBoxOverlap NOTIFY detectionTrackBoxOverlapChanged)
     Q_PROPERTY(float detectionScanBoxOverlap READ detectionScanBoxOverlap NOTIFY detectionScanBoxOverlapChanged)
     Q_PROPERTY(int detectionCreationScoreScale READ detectionCreationScoreScale NOTIFY detectionCreationScoreScaleChanged)
     Q_PROPERTY(int detectionBonusDetectionScale READ detectionBonusDetectionScale NOTIFY detectionBonusDetectionScaleChanged)
@@ -151,9 +148,7 @@ public:
     bool hasDetectionParameters() const { return _hasDetectionParameters; }
     int detectionMode() const { return _detectionMode; }
     int detectionSortingMode() const { return _detectionSortingMode; }
-    float detectionTrackConfidenceThreshold() const { return _detectionTrackConfidenceThreshold; }
     float detectionScanConfidenceThreshold() const { return _detectionScanConfidenceThreshold; }
-    float detectionTrackBoxOverlap() const { return _detectionTrackBoxOverlap; }
     float detectionScanBoxOverlap() const { return _detectionScanBoxOverlap; }
     int detectionCreationScoreScale() const { return _detectionCreationScoreScale; }
     int detectionBonusDetectionScale() const { return _detectionBonusDetectionScale; }
@@ -192,8 +187,7 @@ public:
         uint16_t images_captured, uint16_t videos_captured);
     Q_INVOKABLE void sendDetectionParameters(
         uint8_t mode, uint8_t sorting_mode,
-        float track_confidence_threshold, float scan_confidence_threshold,
-        float track_box_overlap, float scan_box_overlap,
+        float scan_confidence_threshold, float scan_box_overlap,
         uint8_t creation_score_scale, uint8_t bonus_detection_scale,
         uint8_t bonus_redetection_scale, uint8_t missed_detection_penalty,
         uint8_t missed_redetection_penalty);
@@ -288,9 +282,7 @@ signals:
     void hasDetectionParametersChanged();
     void detectionModeChanged();
     void detectionSortingModeChanged();
-    void detectionTrackConfidenceThresholdChanged();
     void detectionScanConfidenceThresholdChanged();
-    void detectionTrackBoxOverlapChanged();
     void detectionScanBoxOverlapChanged();
     void detectionCreationScoreScaleChanged();
     void detectionBonusDetectionScaleChanged();
@@ -314,8 +306,7 @@ signals:
         uint16_t images_captured, uint16_t videos_captured);
     void detectionParametersReceived(
         uint8_t mode, uint8_t sorting_mode,
-        float track_confidence_threshold, float scan_confidence_threshold,
-        float track_box_overlap, float scan_box_overlap,
+        float scan_confidence_threshold, float scan_box_overlap,
         uint8_t creation_score_scale, uint8_t bonus_detection_scale,
         uint8_t bonus_redetection_scale, uint8_t missed_detection_penalty,
         uint8_t missed_redetection_penalty);
@@ -530,9 +521,7 @@ private:
     bool _hasDetectionParameters = false;
     uint8_t _detectionMode = 0;
     uint8_t _detectionSortingMode = 0;
-    float _detectionTrackConfidenceThreshold = 0.0f;
     float _detectionScanConfidenceThreshold = 0.0f;
-    float _detectionTrackBoxOverlap = 0.0f;
     float _detectionScanBoxOverlap = 0.0f;
     uint8_t _detectionCreationScoreScale = 0;
     uint8_t _detectionBonusDetectionScale = 0;

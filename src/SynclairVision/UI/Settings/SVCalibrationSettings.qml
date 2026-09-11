@@ -8,26 +8,44 @@ import QGroundControl.Controls
 Item {
     id: root
 
+    enum MonitorState {
+        Idle,
+        AwaitingCalibration,
+        Running,
+        AwaitingStop
+    }
+
     readonly property var digiview: QGroundControl.digiviewManager
     property bool localMonitorActive: false
     property int monitoredCamera: 0
     property int monitoredCommand: DigiviewProtocol.CalibrationCommandStartMag
+    property int monitorState: SVCalibrationSettings.MonitorState.Idle
     property int calibrationStatus: DigiviewProtocol.CalibrationStatusNotStarted
     property int completedFaceMask: 0
     property int magnetometerProgress: 0
     property string resultText: ""
     property bool resultSucceeded: false
     property int missedResponsePolls: 0
+    // CALIBRATION_PARAMETERS has no request/session ID, so correlation intentionally relies on ordered per-camera replies.
+    property bool sessionCommandObserved: false
+    property bool stopCommandObserved: false
 
     readonly property real margin: ScreenTools.defaultFontPixelHeight
     readonly property real spacing: ScreenTools.defaultFontPixelHeight * 0.75
     readonly property int maximumMissedResponsePolls: 10
+    readonly property int stopAcknowledgementTimeoutMs: 5000
+    readonly property bool stopPending:
+        monitorState === SVCalibrationSettings.MonitorState.AwaitingStop
     readonly property bool showingMagnetometer:
         commandSelector.currentValue === DigiviewProtocol.CalibrationCommandStartMag
 
     function stopMonitoring() {
         calibrationPollTimer.stop()
+        stopAcknowledgementTimer.stop()
         localMonitorActive = false
+        monitorState = SVCalibrationSettings.MonitorState.Idle
+        sessionCommandObserved = false
+        stopCommandObserved = false
     }
 
     function startCalibration() {
@@ -37,6 +55,8 @@ Item {
         resultText = ""
         resultSucceeded = false
         missedResponsePolls = 0
+        sessionCommandObserved = false
+        stopCommandObserved = false
 
         if (!digiview || !digiview.connected) {
             resultText = qsTr("DigiView is not connected.")
@@ -46,6 +66,7 @@ Item {
         monitoredCamera = cameraSelector.value
         monitoredCommand = commandSelector.currentValue
         localMonitorActive = true
+        monitorState = SVCalibrationSettings.MonitorState.AwaitingCalibration
 
         if (!digiview.sendCalibrationParameters(monitoredCamera, monitoredCommand)) {
             stopMonitoring()
@@ -57,9 +78,57 @@ Item {
         calibrationPollTimer.start()
     }
 
-    function handleCalibrationResponse(cameraId, _command, status, completedMask, magProgress) {
+    function stopCalibration() {
+        if (!localMonitorActive || stopPending || !digiview || !digiview.connected) {
+            return
+        }
+
+        if (!digiview.sendCalibrationParameters(monitoredCamera, DigiviewProtocol.CalibrationCommandStop)) {
+            resultSucceeded = false
+            resultText = qsTr("Calibration stop request could not be sent.")
+            return
+        }
+
+        monitorState = SVCalibrationSettings.MonitorState.AwaitingStop
+        stopCommandObserved = false
+        missedResponsePolls = 0
+        resultSucceeded = false
+        resultText = qsTr("Stopping calibration. Waiting for DigiView response...")
+        stopAcknowledgementTimer.start()
+    }
+
+    function handleCalibrationResponse(cameraId, command, status, completedMask, magProgress) {
         if (!localMonitorActive || cameraId !== monitoredCamera) {
             return
+        }
+
+        const sessionCommandMatches = command === monitoredCommand
+        const isIdleTerminalResponse = command === DigiviewProtocol.CalibrationCommandNone
+        if (sessionCommandMatches) {
+            sessionCommandObserved = true
+            if (!stopPending) {
+                monitorState = SVCalibrationSettings.MonitorState.Running
+            }
+        } else if (stopPending && command === DigiviewProtocol.CalibrationCommandStop) {
+            stopCommandObserved = true
+        } else if (!isIdleTerminalResponse) {
+            return
+        }
+
+        const isMagnetometerSession = monitoredCommand === DigiviewProtocol.CalibrationCommandStartMag
+        const isSuccessfulTerminal = isMagnetometerSession
+            ? status === DigiviewProtocol.CalibrationStatusMagComplete
+            : status === DigiviewProtocol.CalibrationStatus6DofComplete
+        const isMagnetometerFailure = isMagnetometerSession
+            && status === DigiviewProtocol.CalibrationStatusMagFailed
+        const isGenericFailure = status === DigiviewProtocol.CalibrationStatusFailed
+
+        if (isIdleTerminalResponse) {
+            if ((!sessionCommandObserved && !stopCommandObserved)
+                || (!isSuccessfulTerminal && !isMagnetometerFailure && !isGenericFailure)
+                || (stopPending && stopCommandObserved && !isGenericFailure)) {
+                return
+            }
         }
 
         missedResponsePolls = 0
@@ -67,17 +136,23 @@ Item {
         completedFaceMask = completedMask & 0x3f
         magnetometerProgress = Math.max(0, Math.min(100, magProgress))
 
-        if (monitoredCommand === DigiviewProtocol.CalibrationCommandStartMag) {
-            if (status === DigiviewProtocol.CalibrationStatusMagComplete) {
-                resultSucceeded = true
-                resultText = qsTr("Magnetometer calibration complete.")
-                stopMonitoring()
-            } else if (status === DigiviewProtocol.CalibrationStatusMagFailed) {
-                resultSucceeded = false
-                resultText = qsTr("Magnetometer calibration failed.")
-                stopMonitoring()
-            }
-        } else if (status === DigiviewProtocol.CalibrationStatus6DofComplete) {
+        if (!isIdleTerminalResponse) {
+            return
+        }
+
+        if (isGenericFailure) {
+            resultSucceeded = false
+            resultText = qsTr("Calibration Failed")
+            stopMonitoring()
+        } else if (isMagnetometerFailure) {
+            resultSucceeded = false
+            resultText = qsTr("Magnetometer calibration failed.")
+            stopMonitoring()
+        } else if (isMagnetometerSession) {
+            resultSucceeded = true
+            resultText = qsTr("Magnetometer calibration complete.")
+            stopMonitoring()
+        } else if (isSuccessfulTerminal) {
             resultSucceeded = true
             resultText = qsTr("Gyroscope and accelerometer calibration complete.")
             stopMonitoring()
@@ -114,7 +189,7 @@ Item {
             }
 
             root.missedResponsePolls++
-            if (root.missedResponsePolls >= root.maximumMissedResponsePolls) {
+            if (!root.stopPending && root.missedResponsePolls >= root.maximumMissedResponsePolls) {
                 root.stopMonitoring()
                 root.resultSucceeded = false
                 root.resultText = qsTr("Calibration monitoring stopped: no response for 5 seconds.")
@@ -122,6 +197,23 @@ Item {
             }
 
             root.digiview.requestCalibrationParameters(root.monitoredCamera)
+        }
+    }
+
+    Timer {
+        id: stopAcknowledgementTimer
+
+        interval: root.stopAcknowledgementTimeoutMs
+        repeat: false
+        onTriggered: {
+            if (!root.stopPending) {
+                return
+            }
+
+            root.stopMonitoring()
+            root.resultSucceeded = false
+            root.resultText = qsTr(
+                "DigiView did not acknowledge the stop request. Verify the calibration state before starting again.")
         }
     }
 
@@ -207,10 +299,10 @@ Item {
                         }
 
                         QGCButton {
-                            text: qsTr("Start")
+                            text: root.localMonitorActive ? qsTr("Stop") : qsTr("Start")
                             primary: true
-                            enabled: !root.localMonitorActive && !!root.digiview && root.digiview.connected
-                            onClicked: root.startCalibration()
+                            enabled: !!root.digiview && root.digiview.connected && !root.stopPending
+                            onClicked: root.localMonitorActive ? root.stopCalibration() : root.startCalibration()
                         }
 
                         ColumnLayout {
@@ -225,7 +317,8 @@ Item {
                                 radius: height / 2
                                 color: "transparent"
                                 border.width: 2
-                                border.color: root.resultText !== ""
+                                border.color: root.stopPending ? qgcPalette.buttonHighlight
+                                    : root.resultText !== ""
                                     ? (root.resultSucceeded ? qgcPalette.colorGreen : qgcPalette.colorRed)
                                     : qgcPalette.buttonHighlight
 
@@ -326,7 +419,8 @@ Item {
                             Layout.fillWidth: true
                             visible: root.resultText !== ""
                             text: root.resultText
-                            color: root.resultSucceeded ? qgcPalette.colorGreen : qgcPalette.colorRed
+                            color: root.stopPending ? qgcPalette.text
+                                : (root.resultSucceeded ? qgcPalette.colorGreen : qgcPalette.colorRed)
                             font.bold: true
                             wrapMode: Text.WordWrap
                         }

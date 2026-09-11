@@ -63,6 +63,7 @@ enum CalibrationCommand : uint8_t {
     CalibrationCommandStartAll = ::CALIBRATION_CMD_START_ALL,
     CalibrationCommandStart6Dof = ::CALIBRATION_CMD_START_6DOF,
     CalibrationCommandStartMag = ::CALIBRATION_CMD_START_MAG,
+    CalibrationCommandStop = ::CALIBRATION_CMD_STOP,
 };
 Q_ENUM_NS(CalibrationCommand)
 
@@ -79,6 +80,7 @@ enum CalibrationStatus : uint8_t {
     CalibrationStatus6DofComplete = ::CALIBRATION_STATUS_6DOF_COMPLETE,
     CalibrationStatusMagComplete = ::CALIBRATION_STATUS_MAG_COMPLETE,
     CalibrationStatusMagFailed = ::CALIBRATION_STATUS_MAG_FAILED,
+    CalibrationStatusFailed = ::CALIBRATION_STATUS_FAILED,
 };
 Q_ENUM_NS(CalibrationStatus)
 } // namespace DigiviewProtocol
@@ -96,3 +98,7 @@ static_assert(static_cast<uint8_t>(DigiviewProtocol::CalibrationStatusMagInProgr
               == static_cast<uint8_t>(::CALIBRATION_STATUS_MAG_IN_PROGRESS));
 static_assert(static_cast<uint8_t>(DigiviewProtocol::CalibrationStatusMagFailed)
               == static_cast<uint8_t>(::CALIBRATION_STATUS_MAG_FAILED));
+static_assert(static_cast<uint8_t>(DigiviewProtocol::CalibrationCommandStop)
+              == static_cast<uint8_t>(::CALIBRATION_CMD_STOP));
+static_assert(static_cast<uint8_t>(DigiviewProtocol::CalibrationStatusFailed)
+              == static_cast<uint8_t>(::CALIBRATION_STATUS_FAILED));

@@ -483,9 +483,7 @@ Item {
         root.digiview.sendDetectionParameters(
             root.digiview.detectionMode,
             displayedSettingValue('aiSortingMode', 'detection'),
-            root.digiview.detectionTrackConfidenceThreshold,
             displayedSettingValue('aiScanConfidenceTreshold', 'detection'),
-            root.digiview.detectionTrackBoxOverlap,
             displayedSettingValue('aiVarBoxOverlap', 'detection'),
             displayedSettingValue('aiCreationScoreScale', 'detection'),
             displayedSettingValue('aiBonusDetectionScale', 'detection'),

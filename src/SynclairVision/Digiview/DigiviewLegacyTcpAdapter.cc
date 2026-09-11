@@ -284,9 +284,8 @@ QByteArray DigiviewLegacyTcpAdapter::encode(const mavlink_message_t& mavlinkMess
         mavlink_detection_parameters_t parameters {};
         mavlink_msg_detection_parameters_decode(&mavlinkMessage, &parameters);
         pack_set_detection_parameters(nativeMessage, parameters.mode, parameters.sorting_mode,
-                                      parameters.track_confidence_threshold, parameters.scan_confidence_threshold,
-                                      parameters.track_box_overlap, parameters.scan_box_overlap,
-                                      parameters.creation_score_scale, parameters.bonus_detection_scale,
+                                       parameters.scan_confidence_threshold, parameters.scan_box_overlap,
+                                       parameters.creation_score_scale, parameters.bonus_detection_scale,
                                       parameters.bonus_redetection_scale, parameters.missed_detection_penalty,
                                       parameters.missed_redetection_penalty);
         break;
@@ -516,9 +515,7 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         mavlink_detection_parameters_t parameters {};
         parameters.mode = nativeParameters.mode;
         parameters.sorting_mode = nativeParameters.sorting_mode;
-        parameters.track_confidence_threshold = nativeParameters.track_confidence_threshold;
         parameters.scan_confidence_threshold = nativeParameters.scan_confidence_threshold;
-        parameters.track_box_overlap = nativeParameters.track_box_overlap;
         parameters.scan_box_overlap = nativeParameters.scan_box_overlap;
         parameters.creation_score_scale = nativeParameters.creation_score_scale;
         parameters.bonus_detection_scale = nativeParameters.bonus_detection_scale;
