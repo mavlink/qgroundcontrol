@@ -240,23 +240,47 @@ void GimbalController::_handleGimbalDeviceAttitudeStatus(const mavlink_message_t
     gimbal->setAbsoluteRoll(qRadiansToDegrees(roll));
     gimbal->setAbsolutePitch(qRadiansToDegrees(pitch));
 
-    const bool yaw_in_vehicle_frame = _yawInVehicleFrame(attitude_status.flags);
+    // The two yaw frame flags are mutually exclusive. Both set is malformed: ignore both and fall back to the
+    // legacy YAW_LOCK frame semantics with the vehicle's heading.
+    constexpr uint16_t kYawFrameFlags = GIMBAL_DEVICE_FLAGS_YAW_IN_VEHICLE_FRAME | GIMBAL_DEVICE_FLAGS_YAW_IN_EARTH_FRAME;
+    uint16_t flags = attitude_status.flags;
+    const bool yawFrameFlagsInvalid = (flags & kYawFrameFlags) == kYawFrameFlags;
+    if (yawFrameFlagsInvalid) {
+        flags &= ~kYawFrameFlags;
+    }
+    if (yawFrameFlagsInvalid != gimbal->_yawFrameFlagsInvalid) {
+        gimbal->_yawFrameFlagsInvalid = yawFrameFlagsInvalid;
+        if (yawFrameFlagsInvalid) {
+            qCWarning(GimbalControllerLog) << "GIMBAL_DEVICE_ATTITUDE_STATUS has both yaw frame flags set, ignoring them for device:"
+                                           << gimbal->deviceId()->rawValue().toUInt();
+        }
+    }
+
+    // Spec: delta_yaw (gimbal's own estimate of vehicle heading) is only meaningful when a yaw frame flag is
+    // set; NaN means unknown. Without it fall back to the vehicle's heading.
+    const bool frameFlagged = (flags & kYawFrameFlags) != 0;
+    const bool deltaYawValid = frameFlagged && !std::isnan(attitude_status.delta_yaw);
+    const float deltaYawDeg = deltaYawValid ? std::remainder(qRadiansToDegrees(attitude_status.delta_yaw), 360.0f) : qQNaN();
+    if (deltaYawValid != gimbal->_deltaYawValid) {
+        gimbal->_deltaYawValid = deltaYawValid;
+        qCDebug(GimbalControllerLog) << "delta_yaw heading source" << (deltaYawValid ? "available" : "unavailable")
+                                     << "for device:" << gimbal->deviceId()->rawValue().toUInt();
+    }
+    gimbal->setDeltaYaw(deltaYawDeg);
+
+    const float headingDeg = deltaYawValid ? deltaYawDeg : _vehicle->heading()->rawValue().toFloat();
+
+    const bool yaw_in_vehicle_frame = _yawInVehicleFrame(flags);
     if (yaw_in_vehicle_frame) {
         const float bodyYaw = qRadiansToDegrees(yaw);
-        float absoluteYaw = bodyYaw + _vehicle->heading()->rawValue().toFloat();
-        if (absoluteYaw > 180.0f) {
-            absoluteYaw -= 360.0f;
-        }
+        const float absoluteYaw = std::remainder(bodyYaw + headingDeg, 360.0f);
 
         gimbal->setBodyYaw(bodyYaw);
         gimbal->setAbsoluteYaw(absoluteYaw);
 
     } else {
         const float absoluteYaw = qRadiansToDegrees(yaw);
-        float bodyYaw = absoluteYaw - _vehicle->heading()->rawValue().toFloat();
-        if (bodyYaw < -180.0f) {
-            bodyYaw += 360.0f;
-        }
+        const float bodyYaw = std::remainder(absoluteYaw - headingDeg, 360.0f);
 
         gimbal->setBodyYaw(bodyYaw);
         gimbal->setAbsoluteYaw(absoluteYaw);
@@ -314,11 +338,10 @@ void GimbalController::_checkComplete(Gimbal &gimbal, GimbalPairId pairId)
         _requestGimbalInformation(pairId.managerCompid);
         --gimbal._requestInformationRetries;
     }
-    // Limit to 1 second between set message interface requests
-    static qint64 lastRequestStatusMessage = 0;
-    qint64 now = QDateTime::currentMSecsSinceEpoch();
-    if (!gimbal._receivedGimbalManagerStatus && (gimbal._requestStatusRetries > 0) && (now - lastRequestStatusMessage > 1000)) {
-        lastRequestStatusMessage = now;
+    // Limit to 1 second between set message interval requests, per gimbal
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (!gimbal._receivedGimbalManagerStatus && (gimbal._requestStatusRetries > 0) && (now - gimbal._lastStatusRequestMs > 1000)) {
+        gimbal._lastStatusRequestMs = now;
         _vehicle->sendMavCommand(pairId.managerCompid,
                                  MAV_CMD_SET_MESSAGE_INTERVAL,
                                  false /* no error */,
@@ -474,7 +497,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
         const float tiltDesired = tiltIncDesired + _activeGimbal->absolutePitch()->rawValue().toFloat();
 
         if (_activeGimbal->yawLock()) {
-            sendPitchAbsoluteYaw(tiltDesired, panDesired + _vehicle->heading()->rawValue().toFloat(), false);
+            sendPitchAbsoluteYaw(tiltDesired, panIncDesired + _activeGimbal->absoluteYaw()->rawValue().toFloat(), false);
         } else {
             sendPitchBodyYaw(tiltDesired, panDesired, false);
         }
@@ -491,7 +514,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
         const float tiltDesired = tiltIncDesired + _activeGimbal->absolutePitch()->rawValue().toFloat();
 
         if (_activeGimbal->yawLock()) {
-            sendPitchAbsoluteYaw(tiltDesired, panDesired + _vehicle->heading()->rawValue().toFloat(), false);
+            sendPitchAbsoluteYaw(tiltDesired, panIncDesired + _activeGimbal->absoluteYaw()->rawValue().toFloat(), false);
         } else {
             sendPitchBodyYaw(tiltDesired, panDesired, false);
         }
