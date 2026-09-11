@@ -1,7 +1,9 @@
 #include "APMDataFlashUtility.h"
-#include "QGCLoggingCategory.h"
 
 #include <cstring>
+
+#include "LittleEndian.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(APMDataFlashUtilityLog, "Utilities.APMDataFlashUtility")
 
@@ -80,73 +82,59 @@ QVariant parseValue(const char *data, char formatChar)
     case 'M':
         return static_cast<uint8_t>(*data);
     case 'h': {
-        int16_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int16_t>({reinterpret_cast<const uint8_t*>(data), sizeof(int16_t)});
         return val;
     }
     case 'H': {
-        uint16_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint16_t>({reinterpret_cast<const uint8_t*>(data), sizeof(uint16_t)});
         return val;
     }
     case 'c': {
-        int16_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int16_t>({reinterpret_cast<const uint8_t*>(data), sizeof(int16_t)});
         return val / 100.0;
     }
     case 'C': {
-        uint16_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint16_t>({reinterpret_cast<const uint8_t*>(data), sizeof(uint16_t)});
         return val / 100.0;
     }
     case 'i': {
-        int32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int32_t>({reinterpret_cast<const uint8_t*>(data), sizeof(int32_t)});
         return val;
     }
     case 'I': {
-        uint32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint32_t>({reinterpret_cast<const uint8_t*>(data), sizeof(uint32_t)});
         return val;
     }
     case 'e': {
-        int32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int32_t>({reinterpret_cast<const uint8_t*>(data), sizeof(int32_t)});
         return val / 100.0;
     }
     case 'E': {
-        uint32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint32_t>({reinterpret_cast<const uint8_t*>(data), sizeof(uint32_t)});
         return val / 100.0;
     }
     case 'L': {
-        int32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int32_t>({reinterpret_cast<const uint8_t*>(data), sizeof(int32_t)});
         return val / 1.0e7;  // Latitude/longitude in degrees
     }
     case 'f': {
-        float val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<float>({reinterpret_cast<const uint8_t*>(data), sizeof(float)});
         return static_cast<double>(val);
     }
     case 'd': {
-        double val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<double>({reinterpret_cast<const uint8_t*>(data), sizeof(double)});
         return val;
     }
     case 'q': {
-        int64_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int64_t>({reinterpret_cast<const uint8_t*>(data), sizeof(int64_t)});
         return static_cast<qlonglong>(val);
     }
     case 'Q': {
-        uint64_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint64_t>({reinterpret_cast<const uint8_t*>(data), sizeof(uint64_t)});
         return static_cast<qulonglong>(val);
     }
     case 'g': {
-        uint16_t bits;
-        memcpy(&bits, data, sizeof(bits));
+        const auto bits = *LittleEndian::read<uint16_t>({reinterpret_cast<const uint8_t*>(data), sizeof(uint16_t)});
         return static_cast<double>(halfToFloat(bits));
     }
     case 'n':

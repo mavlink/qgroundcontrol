@@ -32,7 +32,6 @@
  ****************************************************************************/
 
 #pragma once
-
 #include <cstddef>
 #include <cstdint>
 
@@ -40,9 +39,7 @@
 #define UBX_GNSS_RESET_TIME 500000  // us, GNSS subsystem reset after a constellation change
 #define UBX_PACKET_TIMEOUT 8        // ms, if now data during this delay assume that full update received
 
-// Dedicated TX buffer for CFG-VALSET. Sized independently of ubx_buf_t (the RX
-// union) so adding config keys can't push the batch past sizeof(ubx_buf_t),
-// which is bounded by the largest RX payload (NAV-PVT, 92 B).
+// Bound configuration batches independently of received message sizes.
 #define UBX_CFG_VALSET_BUF_SIZE 256
 
 #define DISABLE_MSG_INTERVAL 1000000  // us, try to disable message with this interval
@@ -352,7 +349,6 @@
 #include "RTCMFramer.h"
 
 /*** u-blox protocol binary message and payload definitions ***/
-#pragma pack(push, 1)
 
 /* General: Header */
 typedef struct
@@ -911,45 +907,6 @@ typedef struct
     ubx_payload_rx_mon_comms_port_t ports[UBX_MON_COMMS_MAX_PORTS];
 } ubx_payload_rx_mon_comms_t;
 
-/* General message and payload buffer union */
-typedef union
-{
-    ubx_payload_rx_nav_pvt_t payload_rx_nav_pvt;
-    ubx_payload_rx_nav_posllh_t payload_rx_nav_posllh;
-    ubx_payload_rx_nav_hpposllh_t payload_rx_nav_hpposllh;
-    ubx_payload_rx_nav_sol_t payload_rx_nav_sol;
-    ubx_payload_rx_nav_dop_t payload_rx_nav_dop;
-    ubx_payload_rx_nav_timeutc_t payload_rx_nav_timeutc;
-    ubx_payload_rx_nav_svinfo_part1_t payload_rx_nav_svinfo_part1;
-    ubx_payload_rx_nav_svinfo_part2_t payload_rx_nav_svinfo_part2;
-    ubx_payload_rx_nav_sat_part1_t payload_rx_nav_sat_part1;
-    ubx_payload_rx_nav_sat_part2_t payload_rx_nav_sat_part2;
-    ubx_payload_rx_nav_status_t payload_rx_nav_status;
-    ubx_payload_rx_nav_svin_t payload_rx_nav_svin;
-    ubx_payload_rx_nav_velned_t payload_rx_nav_velned;
-    ubx_payload_rx_mon_hw_ubx6_t payload_rx_mon_hw_ubx6;
-    ubx_payload_rx_mon_hw_ubx7_t payload_rx_mon_hw_ubx7;
-    ubx_payload_rx_mon_rf_t payload_rx_mon_rf;
-    ubx_payload_rx_mon_comms_t payload_rx_mon_comms;
-    ubx_payload_rx_sec_sig_t payload_rx_sec_sig;
-    ubx_payload_rx_mon_ver_part1_t payload_rx_mon_ver_part1;
-    ubx_payload_rx_mon_ver_part2_t payload_rx_mon_ver_part2;
-    ubx_payload_rx_rxm_rtcm_t payload_rx_rxm_rtcm;
-    ubx_payload_rx_rxm_cor_t payload_rx_rxm_cor;
-    ubx_payload_rx_ack_ack_t payload_rx_ack_ack;
-    ubx_payload_rx_ack_nak_t payload_rx_ack_nak;
-    ubx_payload_tx_cfg_prt_t payload_tx_cfg_prt;
-    ubx_payload_tx_cfg_rate_t payload_tx_cfg_rate;
-    ubx_payload_tx_cfg_nav5_t payload_tx_cfg_nav5;
-    ubx_payload_tx_cfg_msg_t payload_tx_cfg_msg;
-    ubx_payload_tx_cfg_tmode3_t payload_tx_cfg_tmode3;
-    ubx_payload_tx_cfg_gnss_t payload_tx_cfg_gnss;
-    ubx_payload_rx_nav_relposned_t payload_rx_nav_relposned;
-    ubx_payload_rx_nav_daheading_t payload_rx_nav_daheading;
-} ubx_buf_t;
-
-#pragma pack(pop)
-
 /*** END OF u-blox protocol binary message and payload definitions ***/
 
 /* Decoder state */
@@ -983,3 +940,84 @@ typedef enum
     UBX_ACK_GOT_ACK,
     UBX_ACK_GOT_NAK
 } ubx_ack_state_t;
+
+namespace UBX {
+template <typename T>
+inline constexpr size_t WIRE_SIZE = 0;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_header_t> = 6;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_checksum_t> = 2;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_posllh_t> = 28;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_dop_t> = 18;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_sol_t> = 52;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_pvt_t> = 92;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_timeutc_t> = 20;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_svinfo_part1_t> = 8;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_svinfo_part2_t> = 12;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_sat_part1_t> = 8;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_sat_part2_t> = 12;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_status_t> = 16;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_svin_t> = 40;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_velned_t> = 36;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_hw_ubx6_t> = 68;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_hw_ubx7_t> = 60;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_rf_t> = 28;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_sec_sig_t> = 5;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_ver_part1_t> = 40;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_ver_part2_t> = 30;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_rxm_rtcm_t> = 8;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_rxm_cor_t> = 12;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_ack_ack_t> = 2;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_ack_nak_t> = 2;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_prt_t> = 20;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_rate_t> = 6;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_valset_t> = 5;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_nav5_t> = 36;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_msg_t> = 3;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_tmode3_t> = 40;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_gnss_t> = 60;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_relposned_t> = 64;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_daheading_t> = 60;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_hpposllh_t> = 36;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_comms_port_t> = 40;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_comms_t> = 328;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t> = 8;
+template <>
+inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t> = 24;
+}  // namespace UBX

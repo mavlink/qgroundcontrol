@@ -7,6 +7,7 @@
 #include "UBXWire.h"
 
 namespace UBX {
+inline constexpr size_t MAX_CONTROL_PAYLOAD_SIZE = 328;
 inline constexpr size_t MON_HW_DEPRECATED_SIZE = 56;
 inline constexpr uint16_t NAV_EOE = 0x6101;
 inline constexpr uint32_t NAV_EOE_MSGOUT_I2C = 0x2091015f;
@@ -30,8 +31,8 @@ inline constexpr std::array MESSAGE_SCHEMAS = {
     MessageSchema{UBX_MSG_NAV_STATUS, 16, 16, 1, -1},
     MessageSchema{UBX_MSG_NAV_DOP, 18, 18, 1, 0},
     MessageSchema{UBX_MSG_NAV_RELPOSNED, 64, 64, 1, 4},
-    MessageSchema{UBX_MSG_NAV_DAHEADING, sizeof(ubx_payload_rx_nav_daheading_t), sizeof(ubx_payload_rx_nav_daheading_t),
-                  1, 4},
+    MessageSchema{UBX_MSG_NAV_DAHEADING, UBX::WIRE_SIZE<ubx_payload_rx_nav_daheading_t>,
+                  UBX::WIRE_SIZE<ubx_payload_rx_nav_daheading_t>, 1, 4},
     MessageSchema{UBX_MSG_NAV_TIMEUTC, 20, 20, 1, 0},
     MessageSchema{UBX_MSG_NAV_VELNED, 36, 36, 1, 0},
     MessageSchema{UBX_MSG_NAV_SVIN, 40, 40, 1, -1},
@@ -63,7 +64,7 @@ inline bool validPayload(uint16_t message, std::span<const uint8_t> payload)
     return true;
 }
 
-static_assert(sizeof(ubx_payload_rx_nav_pvt_t) == 92);
-static_assert(sizeof(ubx_payload_rx_nav_hpposllh_t) == 36);
-static_assert(sizeof(ubx_payload_rx_nav_relposned_t) == 64);
+static_assert(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t> == 92);
+static_assert(UBX::WIRE_SIZE<ubx_payload_rx_nav_hpposllh_t> == 36);
+static_assert(UBX::WIRE_SIZE<ubx_payload_rx_nav_relposned_t> == 64);
 }  // namespace UBX

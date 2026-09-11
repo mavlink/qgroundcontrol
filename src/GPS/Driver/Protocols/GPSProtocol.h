@@ -41,26 +41,21 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <ctime>
+#include <numbers>
 #include <span>
 
 #include "GPSBaseStationConfig.h"
 #include "GPSProtocolIO.h"
 
-#ifndef GPS_PLATFORM_HEADER
-#define GPS_PLATFORM_HEADER "GPSDriverPlatform.h"
-#endif
-
-#include GPS_PLATFORM_HEADER
-
-#ifndef GPS_READ_BUFFER_SIZE
-#define GPS_READ_BUFFER_SIZE 150  ///< buffer size for the read() call. Messages can be longer than that.
-#endif
-
-#ifndef M_PI_F
-#define M_PI_F 3.14159265358979323846f
-#endif
+inline constexpr int GPS_READ_BUFFER_SIZE = 150;
+inline constexpr float GPS_PI = std::numbers::pi_v<float>;
+inline constexpr float GPS_DEG_TO_RAD = GPS_PI / 180.0f;
+inline constexpr double GPS_RAD_TO_DEG = 180.0 / std::numbers::pi;
 
 // TODO: this number seems wrong
 #define GPS_EPOCH_SECS ((time_t) 1234567890ULL)
@@ -159,6 +154,19 @@ protected:
         GPSProtocol& _driver;
         GPSDeadline _previous;
     };
+
+    template <typename... Args>
+    void log(GPSProtocolLogLevel level, const char* format, Args... args) const
+    {
+        if (!_io.log)
+            return;
+        char message[1024]{};
+        if constexpr (sizeof...(Args) == 0)
+            std::snprintf(message, sizeof(message), "%s", format);
+        else
+            std::snprintf(message, sizeof(message), format, args...);
+        _io.log(level, message);
+    }
 
     uint64_t nowUs() const { return _io.nowUs(); }
 

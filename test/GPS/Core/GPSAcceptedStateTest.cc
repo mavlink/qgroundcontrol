@@ -4,13 +4,13 @@
 
 #include "GPSIntegrityStore.h"
 #include "GPSRelativePositionStore.h"
-#include "GPSReplayScheduler.h"
 #include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
+#include "ManualScheduler.h"
 
 void GPSAcceptedStateTest::_relativeExpiryAndSession()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSRelativePositionStore store(nullptr, 100, &scheduler);
     store.beginSession(QStringLiteral("receiver"), 5);
     GPSRelativeObservation sample;
@@ -54,7 +54,7 @@ void GPSAcceptedStateTest::_relativeExpiryAndSession()
 
 void GPSAcceptedStateTest::_integrityProvenanceExpiry()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSIntegrityStore store(nullptr, &scheduler);
     store.beginSession(8);
     GPSIntegrityObservation sample;
@@ -99,7 +99,7 @@ void GPSAcceptedStateTest::_integrityProvenanceExpiry()
 
 void GPSAcceptedStateTest::_integrityRejectsOlderGroups()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSIntegrityStore store(nullptr, &scheduler);
     store.beginSession(8);
     GPSIntegrityObservation sample;
@@ -150,7 +150,7 @@ void GPSAcceptedStateTest::_integrityRejectsOlderGroups()
 
 void GPSAcceptedStateTest::_schedulerDestructionClearsAcceptedState()
 {
-    auto scheduler = std::make_unique<GPSReplayScheduler>();
+    auto scheduler = std::make_unique<ManualScheduler>();
     GPSSatelliteStore satellites(nullptr, 5000, scheduler.get());
     GPSRelativePositionStore relative(nullptr, 5000, scheduler.get());
     GPSIntegrityStore integrity(nullptr, scheduler.get());

@@ -1,11 +1,28 @@
-qgc_add_gps_component(QGCGPSCorrections COMPONENT Corrections LOGGING_TARGET QGCLogging)
-
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionFrame.h RTCMMavlink.cc RTCMMavlink.h RTCMUdpInput.cc
-                                             RTCMUdpInput.h
+add_library(
+    QGCGPSCorrections STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/RTCMMavlinkPacket.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/RTCMMavlinkPacket.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionRouter.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionRouter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionFrame.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionDiagnostics.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionDiagnostics.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionEventModel.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionEventModel.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/RTCMFrame.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/RTCMFramer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/RTCMFrameDecoder.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/RTCMFrameDecoder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionSourceRegistration.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionSourceRegistration.h
 )
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core QGCGPSCorrections)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionManager.cc GPSCorrectionManager.h)
-
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSMavlinkOutput.cc GPSMavlinkOutput.h)
+add_library(QGC::GPSCorrections ALIAS QGCGPSCorrections)
+set_target_properties(QGCGPSCorrections PROPERTIES AUTOMOC ON)
+target_compile_features(QGCGPSCorrections PUBLIC cxx_std_20)
+target_include_directories(QGCGPSCorrections PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(
+    QGCGPSCorrections
+    PUBLIC Qt6::Core
+    PRIVATE QGCLoggingCategory
+)
+target_include_directories(QGCGPSCorrections PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Math")

@@ -169,18 +169,18 @@ int GPSDriverFemto::configure(unsigned& baudrate, const GPSConfig& config)
             /** 20Hz need authorization in femtomes device */
             if (writeAckedCommandFemto("LOG UAVGPSB 0.05\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
             } else {
-                GPS_WARN("Femto: command LOG UAVGPSB 0.05 failed,maybe no authorization");
+                log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVGPSB 0.05 failed,maybe no authorization");
             }
 
         } else {
-            GPS_WARN("Femto: command LOG UAVGPSB 0.1 failed");
+            log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVGPSB 0.1 failed");
             return -1;
         }
 
         if (_satellite_info) {
             if (writeAckedCommandFemto("LOG UAVSTATUSB 1\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
             } else {
-                GPS_WARN("Femto: command LOG UAVSTATUSB 1 failed");
+                log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVSTATUSB 1 failed");
             }
         }
 

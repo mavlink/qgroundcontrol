@@ -12,7 +12,7 @@
 
 /// Byte link the GPS driver reads and writes through (serial, TCP, ...).
 /// Implemented by the owner of the physical connection and consumed by GPSDriver,
-/// keeping the px4-gpsdrivers library decoupled from the concrete transport.
+/// keeping the native protocol drivers decoupled from the concrete transport.
 class GPSTransport
 {
 public:

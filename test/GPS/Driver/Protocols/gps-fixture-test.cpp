@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "GPSProtocolTestIO.h"
-#include "GPSWire.h"
+#include "LittleEndian.h"
 #include "NMEASentence.h"
 #include "RTCMFramer.h"
 #include "SBF/GPSDriverSBF.h"
@@ -27,10 +27,17 @@ std::vector<uint8_t> fixture(const char* name)
     return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 }
 
-int noDevice(GPSCallbackType type, void*, int, void*)
+GPSProtocolIO noDevice()
 {
-    CHECK(type != GPSCallbackType::readDeviceData && type != GPSCallbackType::writeDeviceData);
-    return 0;
+    auto io = makeGPSProtocolTestIO();
+    io.read = [](std::span<uint8_t>, GPSDeadline) -> GPSProtocolReadResult {
+        throw std::runtime_error("decoder read device");
+    };
+    io.write = [](std::span<const uint8_t>, GPSDeadline) -> GPSProtocolWriteResult {
+        throw std::runtime_error("decoder wrote device");
+    };
+    io.setBaudrate = [](unsigned) -> GPSBaudStatus { throw std::runtime_error("decoder changed baudrate"); };
+    return io;
 }
 
 void checksum(std::vector<uint8_t>& frame)
@@ -63,7 +70,7 @@ void navigationEpochs()
         GPSPositionReport position{};
         GPSSatelliteReport satellites{};
         std::vector<GPSPositionReport> observations;
-        auto io = makeGPSProtocolTestIO(noDevice, nullptr);
+        auto io = noDevice();
         io.decoded = [&](GPSDecodedBatch batch) {
             for (const auto& event : batch.events)
                 if (const auto* fix = std::get_if<GPSPositionReport>(&event))
@@ -125,7 +132,7 @@ void independentSequences()
 {
     GPSPositionReport position{};
     GPSSatelliteReport satellites{};
-    GPSDriverUBX ubx(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+    GPSDriverUBX ubx(noDevice(), &position, &satellites);
     ubx.setDecodeContext({.navigation = true});
     const auto navigation = fixture("navigation.ubx");
     size_t offset = 0;
@@ -178,7 +185,7 @@ void independentSequences()
     CHECK(std::abs(gga->altitude - GPSFixture::ggaAltitude) < 1e-6);
     CHECK(gga->satellitesUsed == GPSFixture::ggaSatellites);
 
-    GPSDriverSBF sbf(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+    GPSDriverSBF sbf(noDevice(), &position, &satellites);
     for (auto byte : fixture("geodetic.sbf"))
         sbf.consume({&byte, 1});
     gps_test_time += 200000;
@@ -196,20 +203,20 @@ void independentSequences()
 void scalarWireValues()
 {
     const std::array<uint8_t, 9> data{0, 0xfe, 0xff, 0xff, 0xff, 0, 0, 0x80, 0xbf};
-    CHECK(GPSWire::read<int32_t>(data, 1) == -2);
-    CHECK(GPSWire::read<float>(data, 5) == -1.0f);
-    CHECK(!GPSWire::read<double>(data, 2));
-    CHECK(!GPSWire::read<uint8_t>(data, SIZE_MAX));
+    CHECK(LittleEndian::read<int32_t>(data, 1) == -2);
+    CHECK(LittleEndian::read<float>(data, 5) == -1.0f);
+    CHECK(!LittleEndian::read<double>(data, 2));
+    CHECK(!LittleEndian::read<uint8_t>(data, SIZE_MAX));
     std::array<uint8_t, 9> output{};
-    CHECK(GPSWire::write(output, 1, int32_t(-2)));
-    CHECK(GPSWire::write(output, 5, -1.0f));
+    CHECK(LittleEndian::write(output, 1, int32_t(-2)));
+    CHECK(LittleEndian::write(output, 5, -1.0f));
     CHECK(output == data);
-    CHECK(!GPSWire::write(output, 2, double(1.0)));
+    CHECK(!LittleEndian::write(output, 2, double(1.0)));
     CHECK(output == data);
-    CHECK(GPSWire::write(output, 1, std::numeric_limits<uint64_t>::max()));
-    CHECK(GPSWire::read<uint64_t>(output, 1) == std::numeric_limits<uint64_t>::max());
-    CHECK(GPSWire::write(output, 1, std::bit_cast<double>(uint64_t(0x7ff8000000000001))));
-    CHECK(std::bit_cast<uint64_t>(*GPSWire::read<double>(output, 1)) == 0x7ff8000000000001);
+    CHECK(LittleEndian::write(output, 1, std::numeric_limits<uint64_t>::max()));
+    CHECK(LittleEndian::read<uint64_t>(output, 1) == std::numeric_limits<uint64_t>::max());
+    CHECK(LittleEndian::write(output, 1, std::bit_cast<double>(uint64_t(0x7ff8000000000001))));
+    CHECK(std::bit_cast<uint64_t>(*LittleEndian::read<double>(output, 1)) == 0x7ff8000000000001);
 }
 
 int main()
@@ -231,7 +238,7 @@ int main()
         }
         GPSPositionReport position{};
         GPSSatelliteReport satellites{};
-        GPSDriverUBX ubx(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+        GPSDriverUBX ubx(noDevice(), &position, &satellites);
         ubx.setDecodeContext({.navigation = true});
         std::vector<uint8_t> relative(72);
         relative[0] = 0xb5;
@@ -268,7 +275,7 @@ int main()
         CHECK(std::abs(position.longitude_deg + 2.056673696) < 1e-9);
         CHECK(std::abs(position.altitude_msl_m - 233.5227) < 1e-6);
         CHECK(std::abs(position.eph - 0.335) < 1e-6);
-        GPSDriverSBF sbf(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+        GPSDriverSBF sbf(noDevice(), &position, &satellites);
         const auto geodetic = fixture("pvt-geodetic.sbf");
         for (auto byte : geodetic)
             sbf.consume({&byte, 1});

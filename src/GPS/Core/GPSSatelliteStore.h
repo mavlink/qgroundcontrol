@@ -5,7 +5,7 @@
 #include <map>
 
 #include "GPSObservation.h"
-#include "GPSScheduledTask.h"
+#include "ScheduledTask.h"
 
 /// Authoritative accepted satellite state, with independent constellation and view/use deadlines.
 class GPSSatelliteStore : public QObject
@@ -13,7 +13,7 @@ class GPSSatelliteStore : public QObject
     Q_OBJECT
 public:
     explicit GPSSatelliteStore(QObject* parent = nullptr, int freshnessTimeoutMs = 5000,
-                               GPSRuntimeScheduler* scheduler = nullptr);
+                               RuntimeScheduler* scheduler = nullptr);
     ~GPSSatelliteStore() override;
 
     void beginSession(const QString& sourceId, quint64 sessionId);
@@ -46,8 +46,8 @@ private:
 
     std::map<GPSSatellite::Constellation, ConstellationState> _constellations;
     GPSSatelliteObservation _observation;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _expiryTask;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _expiryTask;
     int _freshnessTimeoutMs;
     quint64 _clearedThroughUs = 0;
     quint64 _revision = 0;

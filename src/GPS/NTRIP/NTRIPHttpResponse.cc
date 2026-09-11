@@ -6,21 +6,21 @@
 
 #include <chrono>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "NTRIPError.h"
 #include "NTRIPRequest.h"
 #include "NTRIPTlsPolicy.h"
 #include "NTRIPTransportConfig.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpResponseLog, "GPS.NTRIP.NTRIPHttpResponse")
 
 NTRIPHttpResponse::NTRIPHttpResponse(const NTRIPTransportConfig& config, Mode mode, QObject* parent,
-                                     GPSRuntimeScheduler* scheduler)
+                                     RuntimeScheduler* scheduler)
     : QObject(parent)
     , _config(config)
     , _mode(mode)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _deadline(_scheduler, this)
 {
     qCDebug(NTRIPHttpResponseLog) << this;

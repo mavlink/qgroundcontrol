@@ -8,10 +8,10 @@
 #include <algorithm>
 #include <cmath>
 
-#include "GPSQtRuntimeScheduler.h"
-#include "GPSReadTimestamp.h"
 #include "NMEASentenceEnvelope.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
+#include "ReadTimestamp.h"
 
 QGC_LOGGING_CATEGORY(NMEAPositionSourceLog, "GPS.NMEA.NMEAPositionSource")
 QGC_LOGGING_CATEGORY(NMEATimestampedPositionDecoderLog, "GPS.NMEA.NMEATimestampedPositionDecoder")
@@ -19,7 +19,7 @@ QGC_LOGGING_CATEGORY(NMEATimestampedPositionDecoderLog, "GPS.NMEA.NMEATimestampe
 class NMEATimestampedPositionDecoder : public QNmeaPositionInfoSource
 {
 public:
-    explicit NMEATimestampedPositionDecoder(QIODevice* device, GPSRuntimeScheduler* scheduler,
+    explicit NMEATimestampedPositionDecoder(QIODevice* device, RuntimeScheduler* scheduler,
                                             std::function<void(GPSObservation)> fixLost)
         : QNmeaPositionInfoSource(RealTimeMode)
         , _input(device)
@@ -69,7 +69,7 @@ protected:
             }
         }
         if (!envelope) {
-            envelope = NMEASentenceEnvelope::parse(QByteArray(data, size), GPSReadTimestamp::from(_input));
+            envelope = NMEASentenceEnvelope::parse(QByteArray(data, size), ReadTimestamp::from(_input));
         }
         if (!envelope) {
             return false;
@@ -285,7 +285,7 @@ private:
     }
 
     QPointer<QIODevice> _input;
-    QPointer<GPSRuntimeScheduler> _scheduler;
+    QPointer<RuntimeScheduler> _scheduler;
     QHash<QTime, GPSObservation> _epochs;
     QTime _currentEpoch;
     QHash<QTime, quint64> _epochSequences;
@@ -298,10 +298,10 @@ private:
     bool _navigationValid = true;
 };
 
-NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent, GPSRuntimeScheduler* scheduler)
+NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent, RuntimeScheduler* scheduler)
     : QGeoPositionInfoSource(parent)
     , _device(device)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _requestTask(_scheduler, this)
     , _publicationTask(_scheduler, this)
     , _lossTask(_scheduler, this)

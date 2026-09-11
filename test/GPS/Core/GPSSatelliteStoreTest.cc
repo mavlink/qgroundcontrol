@@ -2,9 +2,9 @@
 
 #include <QtTest/QSignalSpy>
 
-#include "GPSReplayScheduler.h"
 #include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
+#include "ManualScheduler.h"
 
 namespace {
 GPSSatellite makeSatellite(GPSSatellite::Constellation constellation, int id, std::optional<bool> used = true)
@@ -140,7 +140,7 @@ void GPSSatelliteStoreTest::_sessionsAndReentrantDelivery()
 
 void GPSSatelliteStoreTest::_unknownUsageRetiresPreviousCount()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSSatelliteStore store(nullptr, 5000, &scheduler);
     store.beginSession(QStringLiteral("receiver"), 1);
     GPSSatelliteObservation report;

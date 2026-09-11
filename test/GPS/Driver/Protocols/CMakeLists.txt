@@ -5,41 +5,20 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     enable_testing()
 endif()
 
-# Compile the checked-in driver bytes with the host test platform contract. These
-# tests need neither a Qt installation nor the separate PX4-GPSDrivers checkout.
 get_filename_component(QGC_GPS_PROTOCOL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/GPS/Driver/Protocols"
                        ABSOLUTE
 )
-
-include("${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
-
-include("${QGC_GPS_PROTOCOL_SOURCE_DIR}/NMEA/NMEAProtocol.cmake")
-include("${QGC_GPS_PROTOCOL_SOURCE_DIR}/GPSProtocolSources.cmake")
-add_library(QGCGPSProtocolTestRuntime STATIC ${GPS_PROTOCOL_SOURCES})
-target_compile_features(QGCGPSProtocolTestRuntime PUBLIC cxx_std_20)
-target_link_libraries(QGCGPSProtocolTestRuntime PUBLIC GeographicLib::GeographicLib QGCGPSNMEAProtocol)
+if(NOT TARGET QGCGPSNative)
+    add_subdirectory("${QGC_GPS_PROTOCOL_SOURCE_DIR}" Native)
+endif()
+add_library(QGCGPSProtocolTestRuntime INTERFACE)
+target_link_libraries(QGCGPSProtocolTestRuntime INTERFACE QGCGPSNative)
 target_include_directories(
     QGCGPSProtocolTestRuntime
-    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/.."
-           "${QGC_GPS_PROTOCOL_SOURCE_DIR}"
-           "${QGC_GPS_PROTOCOL_SOURCE_DIR}/.."
-           "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Contracts"
-           "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Core"
-           "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Corrections"
-           "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../../Utilities/Math"
+    INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/.." "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Corrections"
+              "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../../Utilities/Math"
 )
-target_compile_definitions(QGCGPSProtocolTestRuntime
-                           PUBLIC GPS_PLATFORM_HEADER="${CMAKE_CURRENT_SOURCE_DIR}/definitions.h"
-)
-set_target_properties(
-    QGCGPSProtocolTestRuntime
-    PROPERTIES AUTOMOC OFF
-               AUTOUIC OFF
-               AUTORCC OFF
-)
-if(NOT MSVC)
-    target_compile_options(QGCGPSProtocolTestRuntime PRIVATE -Wall -Wextra)
-endif()
+target_compile_definitions(QGCGPSProtocolTestRuntime INTERFACE QGC_GPS_TEST_CLOCK)
 
 # Build a host test against the shared native protocol runtime.
 function(qgc_add_protocol_test_target target source)
@@ -82,10 +61,13 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         message(FATAL_ERROR "QGC_BUILD_GPS_PROTOCOL_FUZZER requires Clang")
     endif()
-    target_compile_options(QGCGPSProtocolTestRuntime PRIVATE -fsanitize=fuzzer-no-link,address,undefined
-                                                             -fno-omit-frame-pointer
-    )
-    target_link_options(QGCGPSProtocolTestRuntime INTERFACE -fsanitize=address,undefined)
+    get_target_property(native_targets QGCGPSNative QGC_GPS_NATIVE_TARGETS)
+    foreach(native_target IN LISTS native_targets)
+        target_compile_options(${native_target} PRIVATE -fsanitize=fuzzer-no-link,address,undefined
+                                                        -fno-omit-frame-pointer
+        )
+    endforeach()
+    target_link_options(QGCGPSNative INTERFACE -fsanitize=address,undefined)
     qgc_add_protocol_test_target(QGCGPSProtocolFuzz ProtocolFuzz.cc)
     target_compile_options(QGCGPSProtocolFuzz PRIVATE -fsanitize=fuzzer-no-link,address,undefined
                                                       -fno-omit-frame-pointer

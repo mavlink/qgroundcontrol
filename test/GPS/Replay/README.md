@@ -11,7 +11,7 @@ receiver configuration should be reviewed against that contract before updating 
 trace; regenerating expected writes automatically would hide regressions.
 
 The runtime uses the production component definitions in
-`src/GPS/cmake/GPSBuild.cmake`; the harness supplies logging and native clock
+`src/GPS/Libraries.cmake`; the harness injects native clock
 injection. Codec-only checks live in `test/GPS/Recording`.
 
 ## Run
@@ -28,7 +28,7 @@ ctest --test-dir build/gps-replay --output-on-failure
 
 The tests cover native configuration and decoding at three fragmentation sizes,
 exact outgoing writes, partial delivery, typed errors, cancellation, and capture
-roundtrips. `GPSReplayScheduler` drives the same scheduled retry callbacks as
+roundtrips. `ManualScheduler` drives the same scheduled retry callbacks as
 production NTRIP sessions. Retry deadlines advance automatically; stopping the
 session cancels pending recovery. `GPSReplayDevice` schedules captured connection
 and RX events into the real `NMEADecoderSession`, including its position source,
@@ -56,7 +56,7 @@ ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
 
 ## Trace format
 
-The shared `GPSRecordingDocument` codec writes version 3 and reads versions 1, 2 and 3.
+The shared `GPSRecordingDocument` codec writes version 4 and reads versions 1–4.
 New files require `fileType: "GPSRecording"`. This minimal version 1 synthetic trace
 remains supported (real capture profile mappings are documented in the recorder guide):
 
@@ -134,8 +134,8 @@ if (transport.open().status == GPSOpenStatus::Opened) {
 Check each return value and `transport.failure()` in a test. The factory uses the
 captured role, protocol, driver family, settings, and fixed transport baud. It
 rejects passive or incomplete captures and legacy unknown transport metadata.
-Native replay uses `GPSReplayDefinitions.h` for deterministic sleeps/clock and the
-production message structs, avoiding a second ABI definition. Capture tests cover
+Native replay injects typed `GPSProtocolIO` clock/wait callbacks into the same
+production native library, without platform macros or a separate ABI definition. Capture tests cover
 Septentrio and Femto in position and fixed-base modes, then reconstruct the actual
 facade solely from their exported profiles.
 
@@ -150,7 +150,7 @@ hex payloads, v1 profile conversion and impossible partial-delivery counts.
 Version 3 adds optional `open_status` and `read_status` with stable enum names.
 Transport diagnostic text is excluded because it can contain device paths or
 endpoints. Native transports currently provide read completion timestamps; passive
-QIODevice sources that implement `GPSReadTimestamp` additionally preserve original
+QIODevice sources that implement `ReadTimestamp` additionally preserve original
 receipt in `received_us`. This signed offset uses the same origin as `at_us` and
 can be negative when data arrived before recording began. A missing receipt falls
 back to `at_us` for older traces and native reads. Replay shifts the virtual origin
@@ -172,3 +172,9 @@ emits `terminated(CaptureExhausted)` without fabricating `streamClosed`; transpo
 replay reports `InvalidData` and a fatal replay boundary when read beyond the capture.
 Repeated reads retain that result and do not advance time as synthetic timeouts.
 Native tests must consume an exported Close before asserting `complete()`.
+
+Version 4 adds optional allowlisted `producer`, `build`, and `configuration_revision`
+fields to session metadata. These identify capture provenance separately from the
+JSON schema. Missing provenance in older files means unknown. Strict driver replay
+still checks every expected write; a known configuration revision mismatch is
+reported alongside the byte mismatch rather than bypassing validation.

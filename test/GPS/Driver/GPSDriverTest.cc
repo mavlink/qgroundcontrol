@@ -106,11 +106,6 @@ public:
 
 }  // namespace
 
-int GPSDriverTest::callback(GPSDriver& driver, GPSCallbackType type, void* data1, int data2)
-{
-    return callGPSProtocolTestIO(driver._protocolIO(), type, data1, data2);
-}
-
 void GPSDriverTest::_testReceiveUnconfiguredReturnsError()
 {
     std::atomic_bool stop = false;
@@ -128,9 +123,10 @@ void GPSDriverTest::_testReadDeviceDataRoutesToTransport()
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     uint8_t buffer[64] = {};
-    const int timeoutMs = 250;  // px4 packs the timeout into the first sizeof(int) bytes
-    memcpy(buffer, &timeoutMs, sizeof(timeoutMs));
-    const int ret = callback(driver, GPSCallbackType::readDeviceData, buffer, sizeof(buffer));
+    const auto io = driver._protocolIO();
+    const auto result = io.read(buffer, {io.nowUs() + 250000});
+    QCOMPARE(result.status, GPSReadStatus::Data);
+    const int ret = result.bytesRead;
 
     QCOMPARE(ret, static_cast<int>(transport.scriptedRead.size()));
     QCOMPARE(transport.lastReadTimeoutMs, 250);
@@ -158,8 +154,8 @@ void GPSDriverTest::_testReadCancellation()
     transport.readError = -1;
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
     uint8_t buffer[16]{};
-    const int result = callback(driver, GPSCallbackType::readDeviceData, buffer, sizeof(buffer));
-    QCOMPARE(result, beforeRead || duringRead ? GPSProtocol::ReadCancelled : -1);
+    const auto result = driver._protocolIO().read(buffer, {});
+    QCOMPARE(result.status, beforeRead || duringRead ? GPSReadStatus::Cancelled : GPSReadStatus::Error);
     QCOMPARE(transport.lastReadLength, beforeRead ? -1 : static_cast<int>(sizeof(buffer)));
 }
 
@@ -183,10 +179,13 @@ void GPSDriverTest::_testWriteDeviceDataRoutesToTransport()
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     const QByteArray payload = QByteArray::fromHex("deadbeef");
-    const int ret = callback(driver, GPSCallbackType::writeDeviceData, const_cast<char*>(payload.constData()),
-                             static_cast<int>(payload.size()));
+    const auto result =
+        driver._protocolIO().write({reinterpret_cast<const uint8_t*>(payload.constData()), size_t(payload.size())}, {});
 
-    QCOMPARE(ret, static_cast<int>(payload.size()));
+    QCOMPARE(result.status, GPSWriteStatus::Completed);
+    QCOMPARE(result.acceptedBytes, payload.size());
+    QCOMPARE(result.writtenBytes, payload.size());
+    QCOMPARE(result.uncertainBytes, 0);
     QCOMPARE(transport.lastWrite, payload);
 }
 
@@ -196,11 +195,11 @@ void GPSDriverTest::_testSetBaudrateRoutesToTransport()
     FakeGPSTransport transport(stop);
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
-    QCOMPARE(callback(driver, GPSCallbackType::setBaudrate, nullptr, 115200), 0);
+    QCOMPARE(driver._protocolIO().setBaudrate(115200), GPSBaudStatus::Configured);
     QCOMPARE(transport.lastBaudrate, 115200u);
 
     transport.baudrateOk = false;
-    QCOMPARE(callback(driver, GPSCallbackType::setBaudrate, nullptr, 9600), -1);
+    QCOMPARE(driver._protocolIO().setBaudrate(9600), GPSBaudStatus::Unsupported);
 }
 
 void GPSDriverTest::_testFixedTransportBaudrate()
@@ -228,8 +227,10 @@ void GPSDriverTest::_testRtcmMessageForwardedToSink()
     GPSDriver driver(GPSType::septentrio, transport, GPSReceiverConfig{}, capture.sinks());
 
     const QByteArray rtcm = QByteArray::fromHex("d3aabbccddeeff00");
-    callback(driver, GPSCallbackType::gotRTCMMessage, const_cast<char*>(rtcm.constData()),
-             static_cast<int>(rtcm.size()));
+    GPSRTCMReport report;
+    std::copy_n(reinterpret_cast<const uint8_t*>(rtcm.constData()), rtcm.size(), report.bytes.begin());
+    report.size = rtcm.size();
+    driver._protocolIO().decoded({{report}, 0});
 
     QCOMPARE(capture.rtcmCount, 1);
     QCOMPARE(capture.rtcm, rtcm);
@@ -264,7 +265,7 @@ void GPSDriverTest::_testSurveyInStatusTranslatedAndFlagsDecoded()
     int expectedCount = 0;
     for (const auto& c : cases) {
         status.flags = c.flags;
-        callback(driver, GPSCallbackType::surveyInStatus, &status, 0);
+        driver._protocolIO().decoded({{status}, 0});
         ++expectedCount;
         QCOMPARE(capture.surveyInCount, expectedCount);
         QCOMPARE(capture.surveyIn.valid, c.valid);
@@ -286,10 +287,10 @@ void GPSDriverTest::_testWriteDeviceDataErrorPropagates()
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     const QByteArray payload = QByteArray::fromHex("deadbeef");
-    const int ret = callback(driver, GPSCallbackType::writeDeviceData, const_cast<char*>(payload.constData()),
-                             static_cast<int>(payload.size()));
+    const auto result =
+        driver._protocolIO().write({reinterpret_cast<const uint8_t*>(payload.constData()), size_t(payload.size())}, {});
 
-    QCOMPARE(ret, -1);
+    QCOMPARE(result.status, GPSWriteStatus::Error);
 }
 
 void GPSDriverTest::_testSurveyInStatusPreservesLargeValues()
@@ -303,22 +304,11 @@ void GPSDriverTest::_testSurveyInStatusPreservesLargeValues()
     status.flags = 0x01;
     status.mean_accuracy = 4000000001u;
     status.duration = 3000000001u;
-    callback(driver, GPSCallbackType::surveyInStatus, &status, 0);
+    driver._protocolIO().decoded({{status}, 0});
 
     QCOMPARE(capture.surveyInCount, 1);
     QCOMPARE(capture.surveyIn.meanAccuracyMM, 4000000001u);
     QCOMPARE(capture.surveyIn.durationSecs, 3000000001u);
-}
-
-void GPSDriverTest::_testSurveyInStatusNullDataIgnored()
-{
-    std::atomic_bool stop = false;
-    FakeGPSTransport transport(stop);
-    SinkCapture capture;
-    GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, capture.sinks());
-
-    QCOMPARE(callback(driver, GPSCallbackType::surveyInStatus, nullptr, 0), 0);
-    QCOMPARE(capture.surveyInCount, 0);
 }
 
 void GPSDriverTest::_testCallbacksWithoutSinksAreSafe()
@@ -328,30 +318,19 @@ void GPSDriverTest::_testCallbacksWithoutSinksAreSafe()
     GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     const QByteArray rtcm = QByteArray::fromHex("d3aabbcc");
-    QCOMPARE(callback(driver, GPSCallbackType::gotRTCMMessage, const_cast<char*>(rtcm.constData()),
-                      static_cast<int>(rtcm.size())),
-             0);
+    GPSRTCMReport report;
+    std::copy_n(reinterpret_cast<const uint8_t*>(rtcm.constData()), rtcm.size(), report.bytes.begin());
+    report.size = rtcm.size();
+    driver._protocolIO().decoded({{report}, 0});
 
     SurveyInStatus status{};
     status.flags = 0x03;
-    QCOMPARE(callback(driver, GPSCallbackType::surveyInStatus, &status, 0), 0);
+    driver._protocolIO().decoded({{status}, 0});
 }
 
 void GPSDriverTest::_testDefaultConfigHeadingOffsetMatchesSeptentrioPreset()
 {
     QCOMPARE(GPSReceiverConfig{}.headingOffsetDeg, 5.0f);
-}
-
-void GPSDriverTest::_testUnknownCallbackIgnored()
-{
-    std::atomic_bool stop = false;
-    FakeGPSTransport transport(stop);
-    SinkCapture capture;
-    GPSDriver driver(GPSType::u_blox, transport, GPSReceiverConfig{}, capture.sinks());
-
-    QCOMPARE(callback(driver, GPSCallbackType::setClock, nullptr, 0), 0);
-    QCOMPARE(capture.rtcmCount, 0);
-    QCOMPARE(capture.surveyInCount, 0);
 }
 
 UT_REGISTER_TEST(GPSDriverTest, TestLabel::Unit)
@@ -622,10 +601,7 @@ void GPSDriverTest::_relativePositionCallback()
     relative.relative_position_valid = true;
     relative.carrier_solution_fixed = true;
     relative.heading_valid = true;
-    callback(driver, GPSCallbackType::gotRelativePositionMessage, nullptr, sizeof(relative));
-    callback(driver, GPSCallbackType::gotRelativePositionMessage, &relative, sizeof(relative) - 1);
-    QCOMPARE(received, 0);
-    callback(driver, GPSCallbackType::gotRelativePositionMessage, &relative, sizeof(relative));
+    driver._protocolIO().decoded({{relative}, 0});
     QCOMPARE(received, 1);
     QCOMPARE(captured.referenceStationId, 42);
     QCOMPARE(captured.positionNedMeters[0], 1.5);
@@ -634,7 +610,7 @@ void GPSDriverTest::_relativePositionCallback()
     QVERIFY(captured.carrierFixed);
     QVERIFY(qAbs(captured.headingDegrees.value() - 270) < 0.001);
     relative.heading_valid = false;
-    callback(driver, GPSCallbackType::gotRelativePositionMessage, &relative, sizeof(relative));
+    driver._protocolIO().decoded({{relative}, 0});
     QVERIFY(!captured.headingDegrees);
 }
 

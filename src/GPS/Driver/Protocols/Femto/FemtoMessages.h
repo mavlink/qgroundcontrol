@@ -32,7 +32,6 @@
  ****************************************************************************/
 
 #pragma once
-
 #include <cstddef>
 #include <cstdint>
 
@@ -41,11 +40,7 @@
 #define FEMTO_MSG_ID_UAVSTATUS 8017
 
 /*** femtomes protocol binary message and payload definitions ***/
-#pragma pack(push, 1)
 
-/**
- * femto_uav_gps_t struct need to be packed
- */
 typedef struct
 {
     uint64_t time_utc_usec; /** Timestamp (microseconds, UTC), this is the timestamp which comes from the gps module. It
@@ -130,27 +125,22 @@ typedef struct
     } sat_status[64]; /**< uav status of all satellites */
 } femto_uav_status_t;
 
-/**
- * Analysis Femto uavgps frame header
- */
-typedef struct
-{
-    femto_msg_header_t femto_header;
-    uint8_t data[28];
-} msg_header_t;
+namespace Femto {
+inline constexpr size_t HEADER_SIZE = 28;
+inline constexpr size_t GPS_PAYLOAD_SIZE = 88;
+inline constexpr size_t STATUS_HEADER_SIZE = 40;
+}  // namespace Femto
 
-/**
- * receive Femto complete uavgps frame
- */
-typedef struct
+struct femto_msg_t
 {
-    uint8_t data[600];   /**< receive Frame message content */
-    uint32_t crc;        /**< receive Frame message crc 4 bytes */
-    msg_header_t header; /**< receive Frame message header */
-    uint16_t read;       /**< receive Frame message read bytes count */
-} femto_msg_t;
+    uint8_t data[600]{};
+    uint32_t crc = 0;
+    uint8_t header[Femto::HEADER_SIZE]{};
+    uint16_t messageId = 0;
+    uint16_t payloadLength = 0;
+    uint16_t read = 0;
+};
 
-#pragma pack(pop)
 /*** END OF femtomes protocol binary message and payload definitions ***/
 
 enum class FemtoDecodeState

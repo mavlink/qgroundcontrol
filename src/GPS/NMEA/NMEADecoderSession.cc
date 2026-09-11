@@ -3,17 +3,17 @@
 #include <QtCore/QIODevice>
 #include <QtCore/QPointer>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "NMEAPositionSource.h"
 #include "NMEASatelliteAdapter.h"
 #include "NMEAStreamSplitter.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NMEADecoderSessionLog, "GPS.NMEA.NMEADecoderSession")
 
-NMEADecoderSession::NMEADecoderSession(QObject* parent, GPSRuntimeScheduler* scheduler)
+NMEADecoderSession::NMEADecoderSession(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _health(this, _scheduler)
     , _satellites(this, 5000, _scheduler)
 {

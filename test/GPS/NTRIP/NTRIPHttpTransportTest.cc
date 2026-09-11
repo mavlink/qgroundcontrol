@@ -10,8 +10,8 @@
 #include <QtNetwork/QTcpServer>
 #include <QtTest/QSignalSpy>
 
-#include "GPSReplayScheduler.h"
 #include "GpsTestHelpers.h"
+#include "ManualScheduler.h"
 #include "NMEAUtils.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpTransport.h"
@@ -585,7 +585,7 @@ void NTRIPHttpTransportTest::testHandshakeTimeoutClosesSocket()
     config.host = QStringLiteral("127.0.0.1");
     config.port = server.serverPort();
     config.mountpoint = QStringLiteral("TEST");
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     NTRIPHttpTransport transport(config, nullptr, &scheduler);
     QSignalSpy connected(&transport, &NTRIPStream::connected);
     QSignalSpy errors(&transport, &NTRIPStream::failed);
@@ -643,7 +643,7 @@ void NTRIPHttpTransportTest::testCorrectionWatchdog()
     config.port = server.serverPort();
     config.mountpoint = QStringLiteral("TEST");
     config.whitelist = QStringLiteral("1077");
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     NTRIPHttpTransport transport(config, nullptr, &scheduler);
     QSignalSpy connected(&transport, &NTRIPStream::connected);
     QSignalSpy errors(&transport, &NTRIPStream::failed);

@@ -7,6 +7,7 @@
 #include <cstring>
 #include <utility>
 
+#include "GPSDriverRevision.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSReplayTransportLog, "GPS.Test.ReplayTransport")
@@ -74,6 +75,11 @@ int GPSReplayTransport::_fail(const QString& message)
 {
     if (_failure.isEmpty()) {
         _failure = QStringLiteral("Event %1 at %2 us: %3").arg(_index).arg(_clock.nowUs()).arg(message);
+        if (_trace.profile && _trace.profile->provenance.configurationRevision != 0 &&
+            _trace.profile->provenance.configurationRevision != GPS_DRIVER_CONFIGURATION_REVISION)
+            _failure += QStringLiteral(" (driver configuration revision %1; current %2)")
+                            .arg(_trace.profile->provenance.configurationRevision)
+                            .arg(GPS_DRIVER_CONFIGURATION_REVISION);
     }
     _fatal = true;
     return -EIO;

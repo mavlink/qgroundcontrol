@@ -5,14 +5,14 @@
 #include <QtPositioning/QNmeaSatelliteInfoSource>
 #include <QtTest/QSignalSpy>
 
-#include "GPSQtRuntimeScheduler.h"
-#include "GPSReadTimestamp.h"
 #include "NMEADecoderSession.h"
 #include "NMEASatelliteAdapter.h"
 #include "NMEAUtils.h"
+#include "QtRuntimeScheduler.h"
+#include "ReadTimestamp.h"
 
 namespace {
-class TimedBuffer : public QBuffer, public GPSReadTimestamp
+class TimedBuffer : public QBuffer, public ReadTimestamp
 {
 public:
     quint64 receivedAtUs = 0;
@@ -486,7 +486,7 @@ void NMEASatelliteAdapterTest::_schedulerCanBeDestroyed()
 {
     QBuffer input;
     QVERIFY(input.open(QIODevice::ReadOnly));
-    auto scheduler = std::make_unique<GPSQtRuntimeScheduler>();
+    auto scheduler = std::make_unique<QtRuntimeScheduler>();
     NMEASatelliteAdapter adapter(&input, nullptr, scheduler.get());
     QSignalSpy updates(&adapter, &NMEASatelliteAdapter::observationReceived);
     feed(input, {"$GPGSV,1,1,01,01,45,100,30"});

@@ -2,29 +2,31 @@
 
 #include <QtCore/QDateTime>
 
-#include "Fact.h"
 #include "GPSSourceHealth.h"
 #include "NMEAUtils.h"
-#include "NTRIPSettings.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIP.NTRIPGgaProvider")
 
-bool PositionResult::isValid() const
+bool PositionResult::isValid(quint64 nowUs) const
 {
     if (!observation.acceptedPosition(GPSObservation::PositionUse::Gga).isValid()) {
         return false;
     }
-    const qint64 age = observation.ageMilliseconds();
+    const qint64 age = nowUs >= observation.monotonicTimestampUs
+                           ? static_cast<qint64>((nowUs - observation.monotonicTimestampUs) / 1000)
+                           : -1;
     return fixedReference ||
            (observation.monotonicTimestampUs != 0 && age >= 0 && age < GPSSourceHealth::FRESHNESS_TIMEOUT_MS);
 }
 
-NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
+NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent, RuntimeScheduler* scheduler)
+    : QObject(parent)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _task(_scheduler, this)
 {
     qCDebug(NTRIPGgaProviderLog) << this;
-    _timer.setInterval(_normalInterval);
-    connect(&_timer, &QChronoTimer::timeout, this, &NTRIPGgaProvider::_sendGGA);
 }
 
 NTRIPGgaProvider::~NTRIPGgaProvider()
@@ -32,34 +34,23 @@ NTRIPGgaProvider::~NTRIPGgaProvider()
     qCDebug(NTRIPGgaProviderLog) << this;
 }
 
-void NTRIPGgaProvider::init(NTRIPSettings* settings)
+void NTRIPGgaProvider::configure(const Configuration& config)
 {
-    // Cache the user-selected source and interval so the hot path (_sendGGA)
-    // avoids a SettingsManager::instance()->ntripSettings()->...->rawValue()
-    // chain per tick.
-    if (!settings) {
-        return;
-    }
+    _cachedSource = config.source;
+    _normalInterval = config.interval.count() > 0 ? config.interval : kDefaultInterval;
+    if (_writer)
+        _scheduleNext();
+}
 
-    auto* sourceFact = settings->ntripGgaPositionSource();
-    auto refreshSource = [this, sourceFact]() {
-        _cachedSource = static_cast<PositionSource>(sourceFact->rawValue().toUInt());
-    };
-    refreshSource();
-    connect(sourceFact, &Fact::rawValueChanged, this, refreshSource);
-
-    auto* intervalFact = settings->ntripGgaIntervalSec();
-    auto refreshInterval = [this, intervalFact]() {
-        const uint seconds = intervalFact->rawValue().toUInt();
-        // Guard against 0 from a stale config — fall back to the default.
-        _normalInterval =
-            (seconds > 0) ? std::chrono::milliseconds{static_cast<qint64>(seconds) * 1000} : kDefaultInterval;
-        if (_retryPhase == RetryPhase::Normal) {
-            _timer.setInterval(_normalInterval);
-        }
-    };
-    refreshInterval();
-    connect(intervalFact, &Fact::rawValueChanged, this, refreshInterval);
+void NTRIPGgaProvider::_scheduleNext()
+{
+    const auto generation = _generation;
+    _task.schedule(_retryPhase == RetryPhase::Fast ? kFastRetryInterval : _normalInterval, [this, generation] {
+        const QPointer<NTRIPGgaProvider> guard(this);
+        _sendGGA();
+        if (guard && generation == _generation && _writer)
+            _scheduleNext();
+    });
 }
 
 void NTRIPGgaProvider::setPositionProvider(PositionSource source, PositionProvider provider)
@@ -71,7 +62,7 @@ void NTRIPGgaProvider::start(SentenceWriter writer)
 {
     const QPointer<NTRIPGgaProvider> guard(this);
     const auto generation = ++_generation;
-    _timer.stop();
+    _task.cancel();
     _writer = std::move(writer);
     _fastRetryCount = 0;
     _clearSource();
@@ -81,14 +72,14 @@ void NTRIPGgaProvider::start(SentenceWriter writer)
     _setRetryPhase(RetryPhase::Fast);
     _sendGGA();
     if (guard && generation == _generation) {
-        _timer.start();
+        _scheduleNext();
     }
 }
 
 void NTRIPGgaProvider::stop()
 {
     ++_generation;
-    _timer.stop();
+    _task.cancel();
     _writer = {};
     _clearSource();
 }
@@ -96,7 +87,6 @@ void NTRIPGgaProvider::stop()
 void NTRIPGgaProvider::_setRetryPhase(RetryPhase phase)
 {
     _retryPhase = phase;
-    _timer.setInterval(phase == RetryPhase::Fast ? kFastRetryInterval : _normalInterval);
 }
 
 void NTRIPGgaProvider::_clearSource()
@@ -110,7 +100,7 @@ void NTRIPGgaProvider::_clearSource()
 
 void NTRIPGgaProvider::_sendGGA()
 {
-    if (!_writer) {
+    if (!_writer || !_scheduler) {
         return;
     }
 
@@ -119,11 +109,11 @@ void NTRIPGgaProvider::_sendGGA()
     const auto writer = _writer;
 
     const auto position = _getBestPosition();
-    if (!guard || generation != _generation) {
+    if (!guard || generation != _generation || !_scheduler) {
         return;
     }
 
-    if (!position.isValid()) {
+    if (!position.isValid(_scheduler->nowUs())) {
         _clearSource();
         if (!guard || generation != _generation) {
             return;
@@ -180,10 +170,10 @@ PositionResult NTRIPGgaProvider::_getBestPosition() const
         if (it != _providers.end()) {
             const auto provider = it.value();
             auto result = provider();
-            if (!guard || generation != _generation) {
+            if (!guard || generation != _generation || !_scheduler) {
                 return {};
             }
-            if (result.isValid()) {
+            if (result.isValid(_scheduler->nowUs())) {
                 return result;
             }
         }

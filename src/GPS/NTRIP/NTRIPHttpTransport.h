@@ -2,10 +2,10 @@
 
 #include <QtCore/QLoggingCategory>
 
-#include "GPSScheduledTask.h"
 #include "NTRIPHttpResponse.h"
 #include "NTRIPStream.h"
 #include "RTCMFrameDecoder.h"
+#include "ScheduledTask.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPHttpTransportLog)
 
@@ -20,7 +20,7 @@ public:
     static constexpr std::chrono::milliseconds kDataWatchdog{30000};
 
     explicit NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent = nullptr,
-                                GPSRuntimeScheduler* scheduler = nullptr);
+                                RuntimeScheduler* scheduler = nullptr);
     ~NTRIPHttpTransport() override;
     void start() override;
     void stop() override;
@@ -36,8 +36,8 @@ private:
     void _armWatchdog();
 
     NTRIPTransportConfig _config;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _dataWatchdog;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _dataWatchdog;
     NTRIPHttpResponse _response;
     RTCMFrameDecoder _rtcmDecoder;
     quint64 _generation = 0;

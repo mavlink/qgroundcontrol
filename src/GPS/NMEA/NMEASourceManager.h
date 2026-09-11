@@ -9,12 +9,12 @@
 
 #include "GPSConnectionControl.h"
 #include "GPSReceiverProfile.h"
-#include "GPSRuntimeScheduler.h"
 #include "NMEAConnectionAttempt.h"
 #include "NMEADecoderSession.h"
+#include "RuntimeScheduler.h"
 
 #ifndef QGC_NO_SERIAL_LINK
-#include "SerialPortManager.h"
+#include "GPSSerialDiscovery.h"
 #endif
 
 class QGeoPositionInfoSource;
@@ -35,7 +35,7 @@ class NMEASourceManager : public QObject
     friend class NMEASourceManagerTest;
 
 public:
-    explicit NMEASourceManager(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
+    explicit NMEASourceManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     void setProfile(const GPSReceiverProfile& profile);
     void setAutoConnect(bool enabled);
     void setSuspended(bool suspended);
@@ -50,7 +50,7 @@ public:
     void disconnectSource();
 #ifndef QGC_NO_SERIAL_LINK
     /// An explicit null inventory disables serial discovery for this source.
-    void setSerialDiscovery(SerialPortManager* serialPorts);
+    void setSerialDiscovery(GPSSerialDiscovery* serialPorts);
 #endif
 
     QGeoPositionInfoSource* positionSource() const;
@@ -99,12 +99,12 @@ private:
     quint64 _attemptGeneration = 0;
     std::unique_ptr<NMEAConnectionAttempt> _attempt;
     NMEADecoderSession _decoder;
-    GPSScheduledTask _udpActivity;
+    ScheduledTask _udpActivity;
     GPSProvider::TransportFactory _receiverFactory;
     bool _sourceAvailable = false;
     QString _status;
 #ifndef QGC_NO_SERIAL_LINK
-    QPointer<SerialPortManager> _serialPorts;
-    SerialPortManager::ReservationPtr _autoConnectExclusion;
+    QPointer<GPSSerialDiscovery> _serialPorts;
+    GPSSerialDiscovery::ReservationPtr _autoConnectExclusion;
 #endif
 };

@@ -1,13 +1,17 @@
+add_subdirectory(Protocols)
 add_subdirectory(Transport)
-qgc_add_gps_component(QGCGPSNative COMPONENT Native NATIVE_DEFINITIONS_HEADER
-                      "${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverPlatform.h"
+add_library(
+    QGCGPSDriver STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriver.cc ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverBackend.cc ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverBackend.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverData.cc ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverData.h
 )
-qgc_add_gps_component(
+add_library(QGC::GPSDriver ALIAS QGCGPSDriver)
+set_target_properties(QGCGPSDriver PROPERTIES AUTOMOC ON)
+target_compile_features(QGCGPSDriver PUBLIC cxx_std_20)
+target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(
     QGCGPSDriver
-    COMPONENT
-    Driver
-    LOGGING_TARGET
-    QGCLogging
-    NATIVE_DEFINITIONS_HEADER
-    "${CMAKE_CURRENT_SOURCE_DIR}/GPSDriverPlatform.h"
+    PUBLIC QGCGPSContracts QGCGPSCore QGCGPSTransport QGCGPSNativeContracts
+    PRIVATE QGCGPSNative QGCLoggingCategory
 )

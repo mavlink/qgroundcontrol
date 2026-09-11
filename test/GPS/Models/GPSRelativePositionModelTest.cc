@@ -6,7 +6,7 @@
 #include <limits>
 
 #include "GPSRelativePositionModel.h"
-#include "GPSReplayScheduler.h"
+#include "ManualScheduler.h"
 
 void GPSRelativePositionModelTest::_validityAndZeroBaseline()
 {
@@ -110,7 +110,7 @@ UT_REGISTER_TEST(GPSRelativePositionModelTest, TestLabel::Unit)
 
 void GPSRelativePositionModelTest::_virtualExpiryAndUnchangedPublication()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSRelativePositionModel model(nullptr, 100, &scheduler);
     model.beginSession(QStringLiteral("receiver"), 2);
     GPSRelativeObservation report;

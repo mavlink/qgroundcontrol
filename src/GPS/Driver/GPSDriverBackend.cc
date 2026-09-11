@@ -5,6 +5,7 @@
 #include <cmath>
 #include <numbers>
 
+#include "GPSProtocolFeatures.h"
 #include "Protocols/Ashtech/GPSDriverAshtech.h"
 #include "Protocols/Femto/GPSDriverFemto.h"
 #include "Protocols/SBF/GPSDriverSBF.h"
@@ -24,6 +25,7 @@ GPSDriverBackend::~GPSDriverBackend()
 }
 
 namespace {
+#if QGC_GPS_ENABLE_UBX
 class UbxBackend final : public GPSDriverBackend
 {
 public:
@@ -137,6 +139,9 @@ private:
     }
 };
 
+#endif
+
+#if QGC_GPS_ENABLE_ASHTECH
 class AshtechBackend final : public GPSDriverBackend
 {
 public:
@@ -155,6 +160,9 @@ private:
     }
 };
 
+#endif
+
+#if QGC_GPS_ENABLE_SBF
 class SbfBackend final : public GPSDriverBackend
 {
 public:
@@ -177,6 +185,9 @@ public:
     }
 };
 
+#endif
+
+#if QGC_GPS_ENABLE_FEMTO
 class FemtoBackend final : public GPSDriverBackend
 {
 public:
@@ -187,6 +198,8 @@ public:
     }
 };
 
+#endif
+
 template <class Backend>
 std::unique_ptr<GPSDriverBackend> createBackend(GPSProtocolIO io, GPSPositionReport* position,
                                                 GPSSatelliteReport* satellites, const GPSReceiverConfig& config)
@@ -195,10 +208,18 @@ std::unique_ptr<GPSDriverBackend> createBackend(GPSProtocolIO io, GPSPositionRep
 }
 
 constexpr std::array families = {
+#if QGC_GPS_ENABLE_UBX
     GPSDriverFamily{GPSType::u_blox, &createBackend<UbxBackend>},
+#endif
+#if QGC_GPS_ENABLE_ASHTECH
     GPSDriverFamily{GPSType::trimble, &createBackend<AshtechBackend>},
+#endif
+#if QGC_GPS_ENABLE_SBF
     GPSDriverFamily{GPSType::septentrio, &createBackend<SbfBackend>},
+#endif
+#if QGC_GPS_ENABLE_FEMTO
     GPSDriverFamily{GPSType::femto, &createBackend<FemtoBackend>},
+#endif
 };
 }  // namespace
 

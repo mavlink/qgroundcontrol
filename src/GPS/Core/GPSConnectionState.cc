@@ -4,14 +4,14 @@
 
 #include <algorithm>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSConnectionStateLog, "GPS.Core.GPSConnectionState")
 
-GPSConnectionState::GPSConnectionState(QObject* parent, GPSRuntimeScheduler* scheduler)
+GPSConnectionState::GPSConnectionState(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
 {
     qCDebug(GPSConnectionStateLog) << this;
 }

@@ -14,22 +14,6 @@ QLoggingCategory::CategoryFilter QGCLoggingCategoryManager::s_previousFilter = n
 
 static QGCLoggingCategoryManager* s_managerInstance = nullptr;
 
-// Shared with QGCLoggingCategory.cc — registrations that land before the manager exists
-// are buffered here, then replayed from the manager ctor. Owned as a heap QStringList*
-// rather than a QStringList value so we can delete+null it exactly once, avoiding
-// static-destructor ordering hazards.
-QMutex& qgcLoggingEarlyMutex()
-{
-    static QMutex m;
-    return m;
-}
-
-QStringList*& qgcLoggingEarlyPending()
-{
-    static QStringList* p = new QStringList;
-    return p;
-}
-
 QGCLoggingCategoryManager* QGCLoggingCategoryManager::instance()
 {
     return s_managerInstance;
@@ -71,17 +55,10 @@ QGCLoggingCategoryManager::QGCLoggingCategoryManager() : QObject()
         }
     }
 
-    // Replay categories that registered before the manager was constructed
-    {
-        QMutexLocker locker(&qgcLoggingEarlyMutex());
-        if (qgcLoggingEarlyPending()) {
-            for (const QString& cat : std::as_const(*qgcLoggingEarlyPending())) {
-                registerCategory(cat);
-            }
-            delete qgcLoggingEarlyPending();
-            qgcLoggingEarlyPending() = nullptr;
-        }
-    }
+    const auto categories =
+        qgcObserveLoggingCategories(this, [this](const QString& category) { registerCategory(category); });
+    for (const auto& category : categories)
+        registerCategory(category);
 }
 
 void QGCLoggingCategoryManager::registerCategory(const QString& fullCategory)

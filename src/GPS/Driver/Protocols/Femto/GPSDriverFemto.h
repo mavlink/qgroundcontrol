@@ -108,7 +108,6 @@ private:
 
     struct GPSPositionReport* _gps_position{nullptr};
     FemtoDecodeState _decode_state{FemtoDecodeState::pream_ble1};
-    femto_uav_gps_t _femto_uav_gps;
     femto_msg_t _femto_msg;
     GPSSatelliteReport* _satellite_info{nullptr};
     float _heading_offset;
@@ -118,5 +117,5 @@ private:
     bool _configure_done{false};
     bool _correction_output_activated{false};
 
-    gps_abstime _survey_in_start{0};
+    uint64_t _survey_in_start{0};
 };

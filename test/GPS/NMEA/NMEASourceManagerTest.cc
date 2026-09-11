@@ -1,5 +1,6 @@
-#include "NMEASourceManagerTest.h"
-
+#ifndef QGC_NO_SERIAL_LINK
+#include "GPSSerialPortRegistry.h"
+#endif
 #include <QtCore/QBuffer>
 #include <QtCore/QEvent>
 #include <QtCore/QRegularExpression>
@@ -15,10 +16,11 @@
 
 #include "AutoConnectSettings.h"
 #include "Fixtures/RAIIFixtures.h"
-#include "GPSReplayScheduler.h"
 #include "GPSSettings.h"
 #include "GPSTransport.h"
+#include "ManualScheduler.h"
 #include "NMEASourceManager.h"
+#include "NMEASourceManagerTest.h"
 #include "NMEAUtils.h"
 #include "PositionManager.h"
 #include "SettingsManager.h"
@@ -129,7 +131,7 @@ void NMEASourceManagerTest::_satelliteSnapshotsPreserveProvenance()
 void NMEASourceManagerTest::init()
 {
     UnitTest::init();
-    ignoreLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
+    ignoreLogMessage("GPS.PositionManager.GPSPositionService", QtWarningMsg,
                      QRegularExpression(QStringLiteral("UpdateTimeoutError")));
 }
 
@@ -229,7 +231,7 @@ void NMEASourceManagerTest::_udpActivityStatus()
     spare.close();
     saved.setFactValue(settings->nmeaUdpPort(), port);
     QGCPositionManager position;
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     NMEASourceManager source(nullptr, &scheduler);
     configureSource(source, settings);
     attachPosition(source, position);
@@ -479,6 +481,7 @@ void NMEASourceManagerTest::_configuredSerialRoutingSurvivesReconnect()
     QGCPositionManager position;
     {
         NMEASourceManager source;
+        source.setSerialDiscovery(new GPSSerialPortRegistry(ports, &source));
         configureSource(source, settings);
         attachPosition(source, position);
         QVERIFY(!ports->canAutoConnectPort(first));
@@ -937,7 +940,7 @@ void NMEASourceManagerTest::_injectedSerialDiscovery()
     NMEASourceManager source;
     configureSource(source, settings);
     attachPosition(source, position);
-    source.setSerialDiscovery(&inventory);
+    source.setSerialDiscovery(new GPSSerialPortRegistry(&inventory, &source));
     QVERIFY(inventory.isAutoConnectExcluded(device));
     source.update();
     QVERIFY(enumerations > 0);
@@ -949,7 +952,7 @@ void NMEASourceManagerTest::_injectedSerialDiscovery()
     QCOMPARE(enumerations, previousEnumerations);
     QVERIFY(!source._attempt);
     QCOMPARE(source.status(), QStringLiteral("Serial discovery is unavailable"));
-    source.setSerialDiscovery(&inventory);
+    source.setSerialDiscovery(new GPSSerialPortRegistry(&inventory, &source));
     QVERIFY(inventory.isAutoConnectExcluded(device));
     source.disconnectSource();
     QVERIFY(!inventory.isAutoConnectExcluded(device));
@@ -977,7 +980,7 @@ void NMEASourceManagerTest::_decodesWithoutPositionManager()
 
 void NMEASourceManagerTest::_scheduledRetryAndSuspension()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     QUdpSocket occupied;
     QVERIFY(occupied.bind(QHostAddress::AnyIPv4, 0, QAbstractSocket::DontShareAddress));
     const quint16 port = occupied.localPort();
@@ -1011,7 +1014,7 @@ void NMEASourceManagerTest::_scheduledRetryAndSuspension()
 
 void NMEASourceManagerTest::_passiveConnectTimeoutUsesScheduler()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
     GPSReceiverProfile profile;

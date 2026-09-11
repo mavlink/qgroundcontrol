@@ -9,6 +9,7 @@
 
 #include "Femto/GPSDriverFemto.h"
 #include "GPSProtocolTestIO.h"
+#include "LittleEndian.h"
 #include "SBF/GPSDriverSBF.h"
 
 // Keep checks active in Release, too.
@@ -30,11 +31,6 @@ public:
     unsigned failed_reads = 0;
     std::vector<std::string> commands;
 
-    static int callback(GPSCallbackType type, void* data, int size, void* user)
-    {
-        return static_cast<Receiver*>(user)->handle(type, data, size);
-    }
-
     bool sent(const std::string& prefix) const
     {
         return std::any_of(commands.begin(), commands.end(),
@@ -45,10 +41,36 @@ private:
     std::string reply;
     bool rejected = false;
 
-    int handle(GPSCallbackType type, void* data, int size)
+public:
+    GPSProtocolIO io()
     {
-        if (type == GPSCallbackType::writeDeviceData) {
-            const std::string command(static_cast<const char*>(data), size);
+        auto result = makeGPSProtocolTestIO();
+        result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+            const int timeout = deadline.remainingMilliseconds(gps_test_time);
+            auto* data = bytes.data();
+            const int size = static_cast<int>(bytes.size());
+            CHECK(timeout >= 0);
+            gps_test_time += 1000;
+            if (rejected && cancel_read) {
+                ++failed_reads;
+                return {GPSReadStatus::Cancelled};
+            }
+            if (reply.empty()) {
+                gps_test_time += uint64_t(timeout) * 1000 + 1;
+                return {GPSReadStatus::TimedOut};
+            }
+            // Neither protocol guarantees that an ACK fits in one read or includes a NUL terminator.
+            const size_t count = std::min({reply.size(), size_t(size), read_chunk});
+            memcpy(data, reply.data(), count);
+            reply.erase(0, count);
+            gps_test_time += 1000;
+            return {GPSReadStatus::Data, static_cast<int>(count)};
+        };
+        result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSProtocolWriteResult {
+            const auto* data = input.data();
+            const int size = static_cast<int>(input.size());
+
+            const std::string command(reinterpret_cast<const char*>(data), size);
             commands.push_back(command);
             rejected = !rejected_command.empty() && command.compare(0, rejected_command.size(), rejected_command) == 0;
             if (rejected) {
@@ -59,31 +81,9 @@ private:
                 reply = '<' + command.substr(0, command.find_first_of(" \r\n")) + " OK";
                 reply.insert(0, noise_bytes, '\0');
             }
-            return size;
-        }
-
-        if (type == GPSCallbackType::readDeviceData) {
-            const auto request = *static_cast<const GPSReadRequest*>(data);
-            const int timeout = request.timeoutMs;
-            data = request.buffer;
-            CHECK(timeout >= 0);
-            gps_test_time += 1000;
-            if (rejected && cancel_read) {
-                ++failed_reads;
-                return GPSProtocol::ReadCancelled;
-            }
-            if (reply.empty()) {
-                gps_test_time += uint64_t(timeout) * 1000 + 1;
-                return 0;
-            }
-            // Neither protocol guarantees that an ACK fits in one read or includes a NUL terminator.
-            const size_t count = std::min({reply.size(), size_t(size), read_chunk});
-            memcpy(data, reply.data(), count);
-            reply.erase(0, count);
-            gps_test_time += 1000;
-            return static_cast<int>(count);
-        }
-        return 0;
+            return {GPSWriteStatus::Completed, size, size, 0};
+        };
+        return result;
     }
 };
 
@@ -103,11 +103,9 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     GPSSatelliteReport satellites{};
     std::unique_ptr<GPSBaseProtocol> driver;
     if (septentrio) {
-        driver = std::make_unique<GPSDriverSBF>(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position,
-                                                &satellites);
+        driver = std::make_unique<GPSDriverSBF>(receiver.io(), &position, &satellites);
     } else {
-        driver = std::make_unique<GPSDriverFemto>(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position,
-                                                  &satellites);
+        driver = std::make_unique<GPSDriverFemto>(receiver.io(), &position, &satellites);
     }
     GPSProtocol::GPSConfig config{};
     config.base = {.useFixedBase = fixed,
@@ -155,7 +153,7 @@ void sbfFrameOwnership()
     GPSSatelliteReport satellites;
     size_t correctionCount = 0;
     size_t fixCount = 0;
-    auto io = makeGPSProtocolTestIO(Receiver::callback, &receiver);
+    auto io = receiver.io();
     io.decoded = [&](GPSDecodedBatch batch) {
         for (const auto& event : batch.events) {
             correctionCount += std::holds_alternative<GPSRTCMReport>(event);
@@ -178,23 +176,23 @@ void sbfFrameOwnership()
     correction.push_back(checksum >> 8);
     correction.push_back(checksum);
     CHECK(RTCMFramer::isValidFrame(correction));
-    sbf_buf_t native{};
-    native.sync = 0x4024;
-    native.msg_id = SBF_ID_PVTGeodetic;
-    native.length = offsetof(sbf_buf_t, payload_pvt_geodetic) + sizeof(native.payload_pvt_geodetic);
-    native.WNc = 2435;
-    native.payload_pvt_geodetic.mode_type = 1;
-    native.payload_pvt_geodetic.latitude = 0.5;
-    native.payload_pvt_geodetic.longitude = 1;
+    std::vector<uint8_t> native(94);
+    LittleEndian::write<uint16_t>(native, 0, 0x4024);
+    LittleEndian::write<uint16_t>(native, 4, SBF_ID_PVTGeodetic);
+    LittleEndian::write<uint16_t>(native, 6, native.size());
+    LittleEndian::write<uint16_t>(native, 12, 2435);
+    native[14] = 1;
+    LittleEndian::write<double>(native, 16, 0.5);
+    LittleEndian::write<double>(native, 24, 1);
     // Both checksums are valid; only the outer native frame may own these bytes.
-    std::memcpy(&native.payload_pvt_geodetic.rx_clk_bias, correction.data(), correction.size());
-    native.crc16 = crc16(reinterpret_cast<uint8_t*>(&native) + 4, native.length - 4);
-    driver.consume({reinterpret_cast<uint8_t*>(&native), native.length});
+    std::copy(correction.begin(), correction.end(), native.begin() + 60);
+    LittleEndian::write<uint16_t>(native, 2, crc16(native.data() + 4, native.size() - 4));
+    driver.consume(native);
     CHECK(correctionCount == 0);
     gps_test_time += 200000;
     driver.consume({});
     CHECK(fixCount == 1);
-    CHECK(std::abs(position.latitude_deg - 0.5 * M_RAD_TO_DEG) < 1e-6);
+    CHECK(std::abs(position.latitude_deg - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
     driver.consume(correction);
     CHECK(correctionCount == 1);
     CHECK(fixCount == 1);

@@ -1,0 +1,65 @@
+#pragma once
+
+#include "FactGroup.h"
+#include "GPSIntegrityFactGroup.h"
+#include "GPSObservation.h"
+
+/// Live GPS fix Facts shared by vehicle telemetry and local receivers.
+class GPSPositionFactGroup : public FactGroup
+{
+    Q_OBJECT
+    Q_PROPERTY(GPSIntegrityFactGroup* integrity READ integrity CONSTANT)
+    Q_PROPERTY(Fact* lat READ lat CONSTANT)
+    Q_PROPERTY(Fact* lon READ lon CONSTANT)
+    Q_PROPERTY(Fact* mgrs READ mgrs CONSTANT)
+    Q_PROPERTY(Fact* hdop READ hdop CONSTANT)
+    Q_PROPERTY(Fact* vdop READ vdop CONSTANT)
+    Q_PROPERTY(Fact* courseOverGround READ courseOverGround CONSTANT)
+    Q_PROPERTY(Fact* yaw READ yaw CONSTANT)
+    Q_PROPERTY(Fact* count READ count CONSTANT)
+    Q_PROPERTY(Fact* lock READ lock CONSTANT)
+
+public:
+    explicit GPSPositionFactGroup(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    ~GPSPositionFactGroup() override;
+
+    Fact* lat() { return &_latFact; }
+
+    Fact* lon() { return &_lonFact; }
+
+    Fact* mgrs() { return &_mgrsFact; }
+
+    Fact* hdop() { return &_hdopFact; }
+
+    Fact* vdop() { return &_vdopFact; }
+
+    Fact* courseOverGround() { return &_courseOverGroundFact; }
+
+    Fact* yaw() { return &_yawFact; }
+
+    Fact* count() { return &_countFact; }
+
+    Fact* lock() { return &_lockFact; }
+
+    /// Satellite visibility is updated independently from the live fix.
+    void updatePosition(const GPSObservation& observation, std::optional<int> satelliteCount = std::nullopt,
+                        std::optional<int> lockCode = std::nullopt);
+    void resetPosition();
+
+    GPSIntegrityFactGroup* integrity() { return _integrity; }
+
+protected:
+    Fact _latFact = Fact(0, QStringLiteral("lat"), FactMetaData::valueTypeDouble);
+    Fact _lonFact = Fact(0, QStringLiteral("lon"), FactMetaData::valueTypeDouble);
+    Fact _mgrsFact = Fact(0, QStringLiteral("mgrs"), FactMetaData::valueTypeString);
+    Fact _hdopFact = Fact(0, QStringLiteral("hdop"), FactMetaData::valueTypeDouble);
+    Fact _vdopFact = Fact(0, QStringLiteral("vdop"), FactMetaData::valueTypeDouble);
+    Fact _courseOverGroundFact = Fact(0, QStringLiteral("courseOverGround"), FactMetaData::valueTypeDouble);
+    Fact _yawFact = Fact(0, QStringLiteral("yaw"), FactMetaData::valueTypeDouble);
+    Fact _countFact = Fact(0, QStringLiteral("count"), FactMetaData::valueTypeInt32);
+    Fact _lockFact = Fact(0, QStringLiteral("lock"), FactMetaData::valueTypeInt32);
+
+private:
+    quint64 _positionRevision = 0;
+    GPSIntegrityFactGroup* _integrity = nullptr;
+};

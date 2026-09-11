@@ -5,17 +5,17 @@
 
 #include <deque>
 
-#include "GPSReadTimestamp.h"
 #include "GPSRecordingFormat.h"
 #include "GPSReplayLifecycle.h"
-#include "GPSRuntimeScheduler.h"
+#include "ReadTimestamp.h"
+#include "RuntimeScheduler.h"
 
 /// Event-loop replay preserves chunk receipts while the production session owns parsing and publication.
-class GPSReplayDevice : public QIODevice, public GPSReadTimestamp
+class GPSReplayDevice : public QIODevice, public ReadTimestamp
 {
     Q_OBJECT
 public:
-    explicit GPSReplayDevice(GPSRuntimeScheduler* scheduler, QObject* parent = nullptr);
+    explicit GPSReplayDevice(RuntimeScheduler* scheduler, QObject* parent = nullptr);
     ~GPSReplayDevice() override;
     void play(const QVector<GPSRecordingEvent>& events);
     void stop();
@@ -52,8 +52,8 @@ private:
     };
 
     GPSReplayLifecycle _lifecycle;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    QVector<GPSRuntimeScheduler::TaskId> _tasks;
+    QPointer<RuntimeScheduler> _scheduler;
+    QVector<RuntimeScheduler::TaskId> _tasks;
     std::deque<Chunk> _chunks;
     quint64 _generation = 0;
     quint64 _originUs = 0;

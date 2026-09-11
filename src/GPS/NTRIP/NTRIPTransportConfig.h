@@ -3,8 +3,6 @@
 #include <QtCore/QString>
 #include <QtCore/QVector>
 
-class NTRIPSettings;
-
 struct NTRIPTransportConfig
 {
     QString host;
@@ -39,8 +37,6 @@ struct NTRIPTransportConfig
     /// across mountpoints on the same caster. Used as the source-table cache key
     /// so it cannot drift from this config's own notion of "same caster".
     QString casterIdentity() const;
-
-    static NTRIPTransportConfig fromSettings(NTRIPSettings& settings);
 
     /// Parse a comma-separated RTCM message-id list (e.g. "1005,1077,1087")
     /// into the QVector<int> expected by RTCMFrameDecoder::setWhitelist. Empty or

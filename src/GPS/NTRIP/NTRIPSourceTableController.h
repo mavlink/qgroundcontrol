@@ -7,8 +7,8 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "GPSRuntimeScheduler.h"
 #include "NTRIPTransportConfig.h"
+#include "RuntimeScheduler.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
@@ -39,7 +39,7 @@ public:
     static constexpr int kCacheTtlMs = 60000;
     static constexpr int kFetchTimeoutMs = 10000;
 
-    explicit NTRIPSourceTableController(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
+    explicit NTRIPSourceTableController(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~NTRIPSourceTableController() override;
 
     FetchStatus fetchStatus() const { return _fetchStatus; }
@@ -73,7 +73,7 @@ private:
     void _abortReply();
 
     NTRIPSourceTableModel* _model = nullptr;
-    QPointer<GPSRuntimeScheduler> _scheduler;
+    QPointer<RuntimeScheduler> _scheduler;
     NTRIPHttpResponse* _reply = nullptr;
     QByteArray _body;
     QGeoCoordinate _sortCoord;

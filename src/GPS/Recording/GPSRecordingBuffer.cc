@@ -22,6 +22,15 @@ GPSRecordingBuffer::~GPSRecordingBuffer()
     qCDebug(GPSRecordingBufferLog) << this;
 }
 
+bool GPSRecordingBuffer::setProvenance(const GPSRecordingProvenance& provenance)
+{
+    const QMutexLocker lock(&_mutex);
+    if (_status.recording || !provenance.valid())
+        return false;
+    _provenance = provenance;
+    return true;
+}
+
 bool GPSRecordingBuffer::start()
 {
     const QMutexLocker lock(&_mutex);
@@ -94,6 +103,8 @@ void GPSRecordingBuffer::append(quint64 stream, const GPSRecordingMetadata& meta
         session.stream = stream;
         session.kind = Kind::Session;
         session.metadata = metadata;
+        if (!_provenance.producer.isEmpty())
+            session.metadata.provenance = _provenance;
         _events.append(std::move(session));
     }
     if (resumed) {

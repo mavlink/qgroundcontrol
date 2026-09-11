@@ -68,7 +68,7 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
     char com_port[5]{};
     size_t offset = 1;
     bool response_detected = false;
-    gps_abstime time_started = nowUs();
+    uint64_t time_started = nowUs();
     sendMessage("\n\r");
 
     // Read buffer to get the COM port
@@ -79,7 +79,7 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
         if (ret < 0) {
             // something went wrong when reading
             if (ret != ReadCancelled) {
-                GPS_WARN("sbf read err");
+                log(GPSProtocolLogLevel::Warning, "sbf read err");
             }
             return ret;
         }
@@ -104,11 +104,11 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
     } while (time_started + 1000 * SBF_CONFIG_TIMEOUT > nowUs() && !response_detected);
 
     if (response_detected) {
-        GPS_INFO("Septentrio GNSS receiver COM port: %s", com_port);
+        log(GPSProtocolLogLevel::Debug, "Septentrio GNSS receiver COM port: %s", com_port);
         response_detected = false;  // for future use
 
     } else {
-        GPS_WARN("No COM port detected");
+        log(GPSProtocolLogLevel::Warning, "No COM port detected");
         return -1;
     }
 
@@ -145,7 +145,7 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
         }
 
         // Specify the offsets that the receiver applies to the computed attitude angles.
-        snprintf(msg, sizeof(msg), SBF_CONFIG_ATTITUDE_OFFSET, (double) (_heading_offset * 180 / M_PI_F),
+        snprintf(msg, sizeof(msg), SBF_CONFIG_ATTITUDE_OFFSET, (double) (_heading_offset * 180 / GPS_PI),
                  (double) _pitch_offset);
 
         if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {

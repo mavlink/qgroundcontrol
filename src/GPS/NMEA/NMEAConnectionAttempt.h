@@ -6,9 +6,9 @@
 
 #include "GPSReceiverProfile.h"
 #include "GPSReceiverSession.h"
-#include "GPSScheduledTask.h"
+#include "ScheduledTask.h"
 #ifndef QGC_NO_SERIAL_LINK
-#include "SerialPortManager.h"
+#include "GPSSerialDiscovery.h"
 #endif
 
 class QIODevice;
@@ -26,13 +26,13 @@ class NMEAConnectionAttempt : public QObject
 
 public:
     explicit NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent = nullptr, quint64 generation = 1,
-                                   GPSRuntimeScheduler* scheduler = nullptr);
+                                   RuntimeScheduler* scheduler = nullptr);
     ~NMEAConnectionAttempt() override;
 
     void start(GPSProvider::TransportFactory receiverFactory = {});
     void setRecordingBuffer(const std::shared_ptr<GPSRecordingBuffer>& buffer);
 #ifndef QGC_NO_SERIAL_LINK
-    void setSerialDiscovery(SerialPortManager* serialPorts);
+    void setSerialDiscovery(GPSSerialDiscovery* serialPorts);
 #endif
     void stop();
     void shutdown();
@@ -65,14 +65,14 @@ private:
     std::unique_ptr<GPSRecordingDevice> _recordingDevice;
     GPSReceiverAttempt _attempt;
     GPSReceiverSession _receiver;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _connectTimeout;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _connectTimeout;
     std::unique_ptr<UdpIODevice> _udp;
     std::unique_ptr<QTcpSocket> _tcp;
 #ifndef QGC_NO_SERIAL_LINK
-    QPointer<SerialPortManager> _serialPorts;
+    QPointer<GPSSerialDiscovery> _serialPorts;
     std::unique_ptr<QSerialPort> _serial;
-    SerialPortManager::ReservationPtr _reservation;
+    GPSSerialDiscovery::ReservationPtr _reservation;
 #endif
     quint64 _openStartedAtUs = 0;
     bool _stopping = false;

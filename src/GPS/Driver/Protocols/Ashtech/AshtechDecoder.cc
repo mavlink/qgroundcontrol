@@ -150,11 +150,11 @@ int GPSDriverAshtech::handleMessage(int len)
         float heading = 0.f;
 
         if (bufptr.read(heading)) {
-            heading *= M_PI_F / 180.0f;  // deg to rad, now in range [0, 2pi]
+            heading *= GPS_PI / 180.0f;  // deg to rad, now in range [0, 2pi]
             heading -= _heading_offset;  // range: [-pi, 3pi]
 
-            if (heading > M_PI_F) {
-                heading -= 2.f * M_PI_F;  // final range is [-pi, pi]
+            if (heading > GPS_PI) {
+                heading -= 2.f * GPS_PI;  // final range is [-pi, pi]
             }
 
             _gps_position->heading = heading;
@@ -336,7 +336,7 @@ int GPSDriverAshtech::handleMessage(int len)
 
         _gps_position->timestamp = nowUs();
 
-        float track_rad = static_cast<float>(track_true) * M_PI_F / 180.0f;
+        float track_rad = static_cast<float>(track_true) * GPS_PI / 180.0f;
 
         float velocity_ms = static_cast<float>(ground_speed) / 1.9438445f; /** knots to m/s */
         float velocity_north = static_cast<float>(velocity_ms) * cosf(track_rad);
@@ -494,7 +494,7 @@ int GPSDriverAshtech::handleMessage(int len)
 
     // handle survey-in status update
     if (_survey_in_start != 0) {
-        const gps_abstime now = nowUs();
+        const uint64_t now = nowUs();
         uint32_t survey_in_duration = (now - _survey_in_start) / 1000000;
 
         if (survey_in_duration != _survey_duration) {

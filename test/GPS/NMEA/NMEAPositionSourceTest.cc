@@ -7,18 +7,18 @@
 
 #include <cstring>
 
-#include "GPSQtRuntimeScheduler.h"
-#include "GPSReadTimestamp.h"
 #include "GPSSourceHealth.h"
 #include "NMEAPositionSource.h"
 #include "NMEAUtils.h"
+#include "QtRuntimeScheduler.h"
+#include "ReadTimestamp.h"
 
 namespace {
 const QByteArray kFix =
     "$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A*43\r\n"
     "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,*76\r\n";
 
-class NMEAInput : public QIODevice, public GPSReadTimestamp
+class NMEAInput : public QIODevice, public ReadTimestamp
 {
 public:
     NMEAInput() { open(QIODevice::ReadOnly); }
@@ -321,7 +321,7 @@ void NMEAPositionSourceTest::_lateFixLossDoesNotRejectRecovery()
 void NMEAPositionSourceTest::_schedulerCanBeDestroyed()
 {
     NMEAInput device;
-    auto scheduler = std::make_unique<GPSQtRuntimeScheduler>();
+    auto scheduler = std::make_unique<QtRuntimeScheduler>();
     NMEAPositionSource source(&device, nullptr, scheduler.get());
     QSignalSpy observations(&source, &NMEAPositionSource::observationReceived);
     source.requestUpdate(1000);

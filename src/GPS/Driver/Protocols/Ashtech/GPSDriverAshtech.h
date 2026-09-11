@@ -142,7 +142,7 @@ private:
 
     float _heading_offset;
 
-    gps_abstime _survey_in_start{0};
+    uint64_t _survey_in_start{0};
 
     GPSPositionReport* _gps_position{nullptr};
 

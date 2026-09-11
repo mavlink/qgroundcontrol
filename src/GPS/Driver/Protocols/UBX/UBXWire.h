@@ -36,7 +36,7 @@
 #include <array>
 #include <span>
 
-#include "GPSWire.h"
+#include "LittleEndian.h"
 #include "UBXMessages.h"
 
 namespace UBX {
@@ -44,20 +44,20 @@ namespace UBX {
 template <typename T>
 T payload(std::span<const uint8_t> bytes, size_t offset = 0);
 template <typename T>
-std::array<uint8_t, sizeof(T)> encode(const T& value);
+std::array<uint8_t, WIRE_SIZE<T>> encode(const T& value);
 
 template <>
 inline ubx_payload_rx_nav_posllh_t payload<ubx_payload_rx_nav_posllh_t>(std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_posllh_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.lon = GPSWire::read<int32_t>(bytes, 4).value_or(0);
-    value.lat = GPSWire::read<int32_t>(bytes, 8).value_or(0);
-    value.height = GPSWire::read<int32_t>(bytes, 12).value_or(0);
-    value.hMSL = GPSWire::read<int32_t>(bytes, 16).value_or(0);
-    value.hAcc = GPSWire::read<uint32_t>(bytes, 20).value_or(0);
-    value.vAcc = GPSWire::read<uint32_t>(bytes, 24).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.lon = LittleEndian::read<int32_t>(bytes, 4).value_or(0);
+    value.lat = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.height = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.hMSL = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.hAcc = LittleEndian::read<uint32_t>(bytes, 20).value_or(0);
+    value.vAcc = LittleEndian::read<uint32_t>(bytes, 24).value_or(0);
     return value;
 }
 
@@ -66,14 +66,14 @@ inline ubx_payload_rx_nav_dop_t payload<ubx_payload_rx_nav_dop_t>(std::span<cons
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_dop_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.gDOP = GPSWire::read<uint16_t>(bytes, 4).value_or(0);
-    value.pDOP = GPSWire::read<uint16_t>(bytes, 6).value_or(0);
-    value.tDOP = GPSWire::read<uint16_t>(bytes, 8).value_or(0);
-    value.vDOP = GPSWire::read<uint16_t>(bytes, 10).value_or(0);
-    value.hDOP = GPSWire::read<uint16_t>(bytes, 12).value_or(0);
-    value.nDOP = GPSWire::read<uint16_t>(bytes, 14).value_or(0);
-    value.eDOP = GPSWire::read<uint16_t>(bytes, 16).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.gDOP = LittleEndian::read<uint16_t>(bytes, 4).value_or(0);
+    value.pDOP = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
+    value.tDOP = LittleEndian::read<uint16_t>(bytes, 8).value_or(0);
+    value.vDOP = LittleEndian::read<uint16_t>(bytes, 10).value_or(0);
+    value.hDOP = LittleEndian::read<uint16_t>(bytes, 12).value_or(0);
+    value.nDOP = LittleEndian::read<uint16_t>(bytes, 14).value_or(0);
+    value.eDOP = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
     return value;
 }
 
@@ -82,23 +82,23 @@ inline ubx_payload_rx_nav_sol_t payload<ubx_payload_rx_nav_sol_t>(std::span<cons
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_sol_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.fTOW = GPSWire::read<int32_t>(bytes, 4).value_or(0);
-    value.week = GPSWire::read<int16_t>(bytes, 8).value_or(0);
-    value.gpsFix = GPSWire::read<uint8_t>(bytes, 10).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 11).value_or(0);
-    value.ecefX = GPSWire::read<int32_t>(bytes, 12).value_or(0);
-    value.ecefY = GPSWire::read<int32_t>(bytes, 16).value_or(0);
-    value.ecefZ = GPSWire::read<int32_t>(bytes, 20).value_or(0);
-    value.pAcc = GPSWire::read<uint32_t>(bytes, 24).value_or(0);
-    value.ecefVX = GPSWire::read<int32_t>(bytes, 28).value_or(0);
-    value.ecefVY = GPSWire::read<int32_t>(bytes, 32).value_or(0);
-    value.ecefVZ = GPSWire::read<int32_t>(bytes, 36).value_or(0);
-    value.sAcc = GPSWire::read<uint32_t>(bytes, 40).value_or(0);
-    value.pDOP = GPSWire::read<uint16_t>(bytes, 44).value_or(0);
-    value.reserved1 = GPSWire::read<uint8_t>(bytes, 46).value_or(0);
-    value.numSV = GPSWire::read<uint8_t>(bytes, 47).value_or(0);
-    value.reserved2 = GPSWire::read<uint32_t>(bytes, 48).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.fTOW = LittleEndian::read<int32_t>(bytes, 4).value_or(0);
+    value.week = LittleEndian::read<int16_t>(bytes, 8).value_or(0);
+    value.gpsFix = LittleEndian::read<uint8_t>(bytes, 10).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 11).value_or(0);
+    value.ecefX = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.ecefY = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.ecefZ = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.pAcc = LittleEndian::read<uint32_t>(bytes, 24).value_or(0);
+    value.ecefVX = LittleEndian::read<int32_t>(bytes, 28).value_or(0);
+    value.ecefVY = LittleEndian::read<int32_t>(bytes, 32).value_or(0);
+    value.ecefVZ = LittleEndian::read<int32_t>(bytes, 36).value_or(0);
+    value.sAcc = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
+    value.pDOP = LittleEndian::read<uint16_t>(bytes, 44).value_or(0);
+    value.reserved1 = LittleEndian::read<uint8_t>(bytes, 46).value_or(0);
+    value.numSV = LittleEndian::read<uint8_t>(bytes, 47).value_or(0);
+    value.reserved2 = LittleEndian::read<uint32_t>(bytes, 48).value_or(0);
     return value;
 }
 
@@ -107,38 +107,38 @@ inline ubx_payload_rx_nav_pvt_t payload<ubx_payload_rx_nav_pvt_t>(std::span<cons
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_pvt_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.year = GPSWire::read<uint16_t>(bytes, 4).value_or(0);
-    value.month = GPSWire::read<uint8_t>(bytes, 6).value_or(0);
-    value.day = GPSWire::read<uint8_t>(bytes, 7).value_or(0);
-    value.hour = GPSWire::read<uint8_t>(bytes, 8).value_or(0);
-    value.min = GPSWire::read<uint8_t>(bytes, 9).value_or(0);
-    value.sec = GPSWire::read<uint8_t>(bytes, 10).value_or(0);
-    value.valid = GPSWire::read<uint8_t>(bytes, 11).value_or(0);
-    value.tAcc = GPSWire::read<uint32_t>(bytes, 12).value_or(0);
-    value.nano = GPSWire::read<int32_t>(bytes, 16).value_or(0);
-    value.fixType = GPSWire::read<uint8_t>(bytes, 20).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 21).value_or(0);
-    value.reserved1 = GPSWire::read<uint8_t>(bytes, 22).value_or(0);
-    value.numSV = GPSWire::read<uint8_t>(bytes, 23).value_or(0);
-    value.lon = GPSWire::read<int32_t>(bytes, 24).value_or(0);
-    value.lat = GPSWire::read<int32_t>(bytes, 28).value_or(0);
-    value.height = GPSWire::read<int32_t>(bytes, 32).value_or(0);
-    value.hMSL = GPSWire::read<int32_t>(bytes, 36).value_or(0);
-    value.hAcc = GPSWire::read<uint32_t>(bytes, 40).value_or(0);
-    value.vAcc = GPSWire::read<uint32_t>(bytes, 44).value_or(0);
-    value.velN = GPSWire::read<int32_t>(bytes, 48).value_or(0);
-    value.velE = GPSWire::read<int32_t>(bytes, 52).value_or(0);
-    value.velD = GPSWire::read<int32_t>(bytes, 56).value_or(0);
-    value.gSpeed = GPSWire::read<int32_t>(bytes, 60).value_or(0);
-    value.headMot = GPSWire::read<int32_t>(bytes, 64).value_or(0);
-    value.sAcc = GPSWire::read<uint32_t>(bytes, 68).value_or(0);
-    value.headAcc = GPSWire::read<uint32_t>(bytes, 72).value_or(0);
-    value.pDOP = GPSWire::read<uint16_t>(bytes, 76).value_or(0);
-    value.reserved2 = GPSWire::read<uint16_t>(bytes, 78).value_or(0);
-    value.reserved3 = GPSWire::read<uint32_t>(bytes, 80).value_or(0);
-    value.headVeh = GPSWire::read<int32_t>(bytes, 84).value_or(0);
-    value.reserved4 = GPSWire::read<uint32_t>(bytes, 88).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.year = LittleEndian::read<uint16_t>(bytes, 4).value_or(0);
+    value.month = LittleEndian::read<uint8_t>(bytes, 6).value_or(0);
+    value.day = LittleEndian::read<uint8_t>(bytes, 7).value_or(0);
+    value.hour = LittleEndian::read<uint8_t>(bytes, 8).value_or(0);
+    value.min = LittleEndian::read<uint8_t>(bytes, 9).value_or(0);
+    value.sec = LittleEndian::read<uint8_t>(bytes, 10).value_or(0);
+    value.valid = LittleEndian::read<uint8_t>(bytes, 11).value_or(0);
+    value.tAcc = LittleEndian::read<uint32_t>(bytes, 12).value_or(0);
+    value.nano = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.fixType = LittleEndian::read<uint8_t>(bytes, 20).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 21).value_or(0);
+    value.reserved1 = LittleEndian::read<uint8_t>(bytes, 22).value_or(0);
+    value.numSV = LittleEndian::read<uint8_t>(bytes, 23).value_or(0);
+    value.lon = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
+    value.lat = LittleEndian::read<int32_t>(bytes, 28).value_or(0);
+    value.height = LittleEndian::read<int32_t>(bytes, 32).value_or(0);
+    value.hMSL = LittleEndian::read<int32_t>(bytes, 36).value_or(0);
+    value.hAcc = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
+    value.vAcc = LittleEndian::read<uint32_t>(bytes, 44).value_or(0);
+    value.velN = LittleEndian::read<int32_t>(bytes, 48).value_or(0);
+    value.velE = LittleEndian::read<int32_t>(bytes, 52).value_or(0);
+    value.velD = LittleEndian::read<int32_t>(bytes, 56).value_or(0);
+    value.gSpeed = LittleEndian::read<int32_t>(bytes, 60).value_or(0);
+    value.headMot = LittleEndian::read<int32_t>(bytes, 64).value_or(0);
+    value.sAcc = LittleEndian::read<uint32_t>(bytes, 68).value_or(0);
+    value.headAcc = LittleEndian::read<uint32_t>(bytes, 72).value_or(0);
+    value.pDOP = LittleEndian::read<uint16_t>(bytes, 76).value_or(0);
+    value.reserved2 = LittleEndian::read<uint16_t>(bytes, 78).value_or(0);
+    value.reserved3 = LittleEndian::read<uint32_t>(bytes, 80).value_or(0);
+    value.headVeh = LittleEndian::read<int32_t>(bytes, 84).value_or(0);
+    value.reserved4 = LittleEndian::read<uint32_t>(bytes, 88).value_or(0);
     return value;
 }
 
@@ -147,16 +147,16 @@ inline ubx_payload_rx_nav_timeutc_t payload<ubx_payload_rx_nav_timeutc_t>(std::s
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_timeutc_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.tAcc = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.nano = GPSWire::read<int32_t>(bytes, 8).value_or(0);
-    value.year = GPSWire::read<uint16_t>(bytes, 12).value_or(0);
-    value.month = GPSWire::read<uint8_t>(bytes, 14).value_or(0);
-    value.day = GPSWire::read<uint8_t>(bytes, 15).value_or(0);
-    value.hour = GPSWire::read<uint8_t>(bytes, 16).value_or(0);
-    value.min = GPSWire::read<uint8_t>(bytes, 17).value_or(0);
-    value.sec = GPSWire::read<uint8_t>(bytes, 18).value_or(0);
-    value.valid = GPSWire::read<uint8_t>(bytes, 19).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.tAcc = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.nano = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.year = LittleEndian::read<uint16_t>(bytes, 12).value_or(0);
+    value.month = LittleEndian::read<uint8_t>(bytes, 14).value_or(0);
+    value.day = LittleEndian::read<uint8_t>(bytes, 15).value_or(0);
+    value.hour = LittleEndian::read<uint8_t>(bytes, 16).value_or(0);
+    value.min = LittleEndian::read<uint8_t>(bytes, 17).value_or(0);
+    value.sec = LittleEndian::read<uint8_t>(bytes, 18).value_or(0);
+    value.valid = LittleEndian::read<uint8_t>(bytes, 19).value_or(0);
     return value;
 }
 
@@ -166,10 +166,10 @@ inline ubx_payload_rx_nav_svinfo_part1_t payload<ubx_payload_rx_nav_svinfo_part1
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_svinfo_part1_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.numCh = GPSWire::read<uint8_t>(bytes, 4).value_or(0);
-    value.globalFlags = GPSWire::read<uint8_t>(bytes, 5).value_or(0);
-    value.reserved2 = GPSWire::read<uint16_t>(bytes, 6).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.numCh = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
+    value.globalFlags = LittleEndian::read<uint8_t>(bytes, 5).value_or(0);
+    value.reserved2 = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
     return value;
 }
 
@@ -179,14 +179,14 @@ inline ubx_payload_rx_nav_svinfo_part2_t payload<ubx_payload_rx_nav_svinfo_part2
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_svinfo_part2_t value{};
-    value.chn = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.svid = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 2).value_or(0);
-    value.quality = GPSWire::read<uint8_t>(bytes, 3).value_or(0);
-    value.cno = GPSWire::read<uint8_t>(bytes, 4).value_or(0);
-    value.elev = GPSWire::read<int8_t>(bytes, 5).value_or(0);
-    value.azim = GPSWire::read<int16_t>(bytes, 6).value_or(0);
-    value.prRes = GPSWire::read<int32_t>(bytes, 8).value_or(0);
+    value.chn = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.svid = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    value.quality = LittleEndian::read<uint8_t>(bytes, 3).value_or(0);
+    value.cno = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
+    value.elev = LittleEndian::read<int8_t>(bytes, 5).value_or(0);
+    value.azim = LittleEndian::read<int16_t>(bytes, 6).value_or(0);
+    value.prRes = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
     return value;
 }
 
@@ -196,10 +196,10 @@ inline ubx_payload_rx_nav_sat_part1_t payload<ubx_payload_rx_nav_sat_part1_t>(st
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_sat_part1_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.version = GPSWire::read<uint8_t>(bytes, 4).value_or(0);
-    value.numSvs = GPSWire::read<uint8_t>(bytes, 5).value_or(0);
-    value.reserved = GPSWire::read<uint16_t>(bytes, 6).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
+    value.numSvs = LittleEndian::read<uint8_t>(bytes, 5).value_or(0);
+    value.reserved = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
     return value;
 }
 
@@ -209,13 +209,13 @@ inline ubx_payload_rx_nav_sat_part2_t payload<ubx_payload_rx_nav_sat_part2_t>(st
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_sat_part2_t value{};
-    value.gnssId = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.svId = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
-    value.cno = GPSWire::read<uint8_t>(bytes, 2).value_or(0);
-    value.elev = GPSWire::read<int8_t>(bytes, 3).value_or(0);
-    value.azim = GPSWire::read<int16_t>(bytes, 4).value_or(0);
-    value.prRes = GPSWire::read<int16_t>(bytes, 6).value_or(0);
-    value.flags = GPSWire::read<uint32_t>(bytes, 8).value_or(0);
+    value.gnssId = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.svId = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.cno = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    value.elev = LittleEndian::read<int8_t>(bytes, 3).value_or(0);
+    value.azim = LittleEndian::read<int16_t>(bytes, 4).value_or(0);
+    value.prRes = LittleEndian::read<int16_t>(bytes, 6).value_or(0);
+    value.flags = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
     return value;
 }
 
@@ -224,13 +224,13 @@ inline ubx_payload_rx_nav_status_t payload<ubx_payload_rx_nav_status_t>(std::spa
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_status_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.gpsFix = GPSWire::read<uint8_t>(bytes, 4).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 5).value_or(0);
-    value.fixStat = GPSWire::read<uint8_t>(bytes, 6).value_or(0);
-    value.flags2 = GPSWire::read<uint8_t>(bytes, 7).value_or(0);
-    value.ttff = GPSWire::read<uint32_t>(bytes, 8).value_or(0);
-    value.msss = GPSWire::read<uint32_t>(bytes, 12).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.gpsFix = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 5).value_or(0);
+    value.fixStat = LittleEndian::read<uint8_t>(bytes, 6).value_or(0);
+    value.flags2 = LittleEndian::read<uint8_t>(bytes, 7).value_or(0);
+    value.ttff = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
+    value.msss = LittleEndian::read<uint32_t>(bytes, 12).value_or(0);
     return value;
 }
 
@@ -239,24 +239,24 @@ inline ubx_payload_rx_nav_svin_t payload<ubx_payload_rx_nav_svin_t>(std::span<co
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_svin_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
     for (size_t i = 0; i < 3; ++i)
-        value.reserved1[i] = GPSWire::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.dur = GPSWire::read<uint32_t>(bytes, 8).value_or(0);
-    value.meanX = GPSWire::read<int32_t>(bytes, 12).value_or(0);
-    value.meanY = GPSWire::read<int32_t>(bytes, 16).value_or(0);
-    value.meanZ = GPSWire::read<int32_t>(bytes, 20).value_or(0);
-    value.meanXHP = GPSWire::read<int8_t>(bytes, 24).value_or(0);
-    value.meanYHP = GPSWire::read<int8_t>(bytes, 25).value_or(0);
-    value.meanZHP = GPSWire::read<int8_t>(bytes, 26).value_or(0);
-    value.reserved2 = GPSWire::read<int8_t>(bytes, 27).value_or(0);
-    value.meanAcc = GPSWire::read<uint32_t>(bytes, 28).value_or(0);
-    value.obs = GPSWire::read<uint32_t>(bytes, 32).value_or(0);
-    value.valid = GPSWire::read<uint8_t>(bytes, 36).value_or(0);
-    value.active = GPSWire::read<uint8_t>(bytes, 37).value_or(0);
+        value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.dur = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
+    value.meanX = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.meanY = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.meanZ = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.meanXHP = LittleEndian::read<int8_t>(bytes, 24).value_or(0);
+    value.meanYHP = LittleEndian::read<int8_t>(bytes, 25).value_or(0);
+    value.meanZHP = LittleEndian::read<int8_t>(bytes, 26).value_or(0);
+    value.reserved2 = LittleEndian::read<int8_t>(bytes, 27).value_or(0);
+    value.meanAcc = LittleEndian::read<uint32_t>(bytes, 28).value_or(0);
+    value.obs = LittleEndian::read<uint32_t>(bytes, 32).value_or(0);
+    value.valid = LittleEndian::read<uint8_t>(bytes, 36).value_or(0);
+    value.active = LittleEndian::read<uint8_t>(bytes, 37).value_or(0);
     for (size_t i = 0; i < 2; ++i)
-        value.reserved3[i] = GPSWire::read<uint8_t>(bytes, 38 + i * 1).value_or(0);
+        value.reserved3[i] = LittleEndian::read<uint8_t>(bytes, 38 + i * 1).value_or(0);
     return value;
 }
 
@@ -265,15 +265,15 @@ inline ubx_payload_rx_nav_velned_t payload<ubx_payload_rx_nav_velned_t>(std::spa
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_velned_t value{};
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.velN = GPSWire::read<int32_t>(bytes, 4).value_or(0);
-    value.velE = GPSWire::read<int32_t>(bytes, 8).value_or(0);
-    value.velD = GPSWire::read<int32_t>(bytes, 12).value_or(0);
-    value.speed = GPSWire::read<uint32_t>(bytes, 16).value_or(0);
-    value.gSpeed = GPSWire::read<uint32_t>(bytes, 20).value_or(0);
-    value.heading = GPSWire::read<int32_t>(bytes, 24).value_or(0);
-    value.sAcc = GPSWire::read<uint32_t>(bytes, 28).value_or(0);
-    value.cAcc = GPSWire::read<uint32_t>(bytes, 32).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.velN = LittleEndian::read<int32_t>(bytes, 4).value_or(0);
+    value.velE = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.velD = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.speed = LittleEndian::read<uint32_t>(bytes, 16).value_or(0);
+    value.gSpeed = LittleEndian::read<uint32_t>(bytes, 20).value_or(0);
+    value.heading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
+    value.sAcc = LittleEndian::read<uint32_t>(bytes, 28).value_or(0);
+    value.cAcc = LittleEndian::read<uint32_t>(bytes, 32).value_or(0);
     return value;
 }
 
@@ -282,24 +282,24 @@ inline ubx_payload_rx_mon_hw_ubx6_t payload<ubx_payload_rx_mon_hw_ubx6_t>(std::s
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_hw_ubx6_t value{};
-    value.pinSel = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.pinBank = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.pinDir = GPSWire::read<uint32_t>(bytes, 8).value_or(0);
-    value.pinVal = GPSWire::read<uint32_t>(bytes, 12).value_or(0);
-    value.noisePerMS = GPSWire::read<uint16_t>(bytes, 16).value_or(0);
-    value.agcCnt = GPSWire::read<uint16_t>(bytes, 18).value_or(0);
-    value.aStatus = GPSWire::read<uint8_t>(bytes, 20).value_or(0);
-    value.aPower = GPSWire::read<uint8_t>(bytes, 21).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 22).value_or(0);
-    value.reserved1 = GPSWire::read<uint8_t>(bytes, 23).value_or(0);
-    value.usedMask = GPSWire::read<uint32_t>(bytes, 24).value_or(0);
+    value.pinSel = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.pinBank = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.pinDir = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
+    value.pinVal = LittleEndian::read<uint32_t>(bytes, 12).value_or(0);
+    value.noisePerMS = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
+    value.agcCnt = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
+    value.aStatus = LittleEndian::read<uint8_t>(bytes, 20).value_or(0);
+    value.aPower = LittleEndian::read<uint8_t>(bytes, 21).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 22).value_or(0);
+    value.reserved1 = LittleEndian::read<uint8_t>(bytes, 23).value_or(0);
+    value.usedMask = LittleEndian::read<uint32_t>(bytes, 24).value_or(0);
     for (size_t i = 0; i < 25; ++i)
-        value.VP[i] = GPSWire::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
-    value.jamInd = GPSWire::read<uint8_t>(bytes, 53).value_or(0);
-    value.reserved3 = GPSWire::read<uint16_t>(bytes, 54).value_or(0);
-    value.pinIrq = GPSWire::read<uint32_t>(bytes, 56).value_or(0);
-    value.pullH = GPSWire::read<uint32_t>(bytes, 60).value_or(0);
-    value.pullL = GPSWire::read<uint32_t>(bytes, 64).value_or(0);
+        value.VP[i] = LittleEndian::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
+    value.jamInd = LittleEndian::read<uint8_t>(bytes, 53).value_or(0);
+    value.reserved3 = LittleEndian::read<uint16_t>(bytes, 54).value_or(0);
+    value.pinIrq = LittleEndian::read<uint32_t>(bytes, 56).value_or(0);
+    value.pullH = LittleEndian::read<uint32_t>(bytes, 60).value_or(0);
+    value.pullL = LittleEndian::read<uint32_t>(bytes, 64).value_or(0);
     return value;
 }
 
@@ -308,24 +308,24 @@ inline ubx_payload_rx_mon_hw_ubx7_t payload<ubx_payload_rx_mon_hw_ubx7_t>(std::s
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_hw_ubx7_t value{};
-    value.pinSel = GPSWire::read<uint32_t>(bytes, 0).value_or(0);
-    value.pinBank = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.pinDir = GPSWire::read<uint32_t>(bytes, 8).value_or(0);
-    value.pinVal = GPSWire::read<uint32_t>(bytes, 12).value_or(0);
-    value.noisePerMS = GPSWire::read<uint16_t>(bytes, 16).value_or(0);
-    value.agcCnt = GPSWire::read<uint16_t>(bytes, 18).value_or(0);
-    value.aStatus = GPSWire::read<uint8_t>(bytes, 20).value_or(0);
-    value.aPower = GPSWire::read<uint8_t>(bytes, 21).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 22).value_or(0);
-    value.reserved1 = GPSWire::read<uint8_t>(bytes, 23).value_or(0);
-    value.usedMask = GPSWire::read<uint32_t>(bytes, 24).value_or(0);
+    value.pinSel = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.pinBank = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.pinDir = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
+    value.pinVal = LittleEndian::read<uint32_t>(bytes, 12).value_or(0);
+    value.noisePerMS = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
+    value.agcCnt = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
+    value.aStatus = LittleEndian::read<uint8_t>(bytes, 20).value_or(0);
+    value.aPower = LittleEndian::read<uint8_t>(bytes, 21).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 22).value_or(0);
+    value.reserved1 = LittleEndian::read<uint8_t>(bytes, 23).value_or(0);
+    value.usedMask = LittleEndian::read<uint32_t>(bytes, 24).value_or(0);
     for (size_t i = 0; i < 17; ++i)
-        value.VP[i] = GPSWire::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
-    value.jamInd = GPSWire::read<uint8_t>(bytes, 45).value_or(0);
-    value.reserved3 = GPSWire::read<uint16_t>(bytes, 46).value_or(0);
-    value.pinIrq = GPSWire::read<uint32_t>(bytes, 48).value_or(0);
-    value.pullH = GPSWire::read<uint32_t>(bytes, 52).value_or(0);
-    value.pullL = GPSWire::read<uint32_t>(bytes, 56).value_or(0);
+        value.VP[i] = LittleEndian::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
+    value.jamInd = LittleEndian::read<uint8_t>(bytes, 45).value_or(0);
+    value.reserved3 = LittleEndian::read<uint16_t>(bytes, 46).value_or(0);
+    value.pinIrq = LittleEndian::read<uint32_t>(bytes, 48).value_or(0);
+    value.pullH = LittleEndian::read<uint32_t>(bytes, 52).value_or(0);
+    value.pullL = LittleEndian::read<uint32_t>(bytes, 56).value_or(0);
     return value;
 }
 
@@ -334,11 +334,11 @@ inline ubx_payload_rx_sec_sig_t payload<ubx_payload_rx_sec_sig_t>(std::span<cons
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_sec_sig_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
-    value.reserved0 = GPSWire::read<uint8_t>(bytes, 2).value_or(0);
-    value.jamNumCentFreqs = GPSWire::read<uint8_t>(bytes, 3).value_or(0);
-    value.jamFlags = GPSWire::read<uint8_t>(bytes, 4).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.reserved0 = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    value.jamNumCentFreqs = LittleEndian::read<uint8_t>(bytes, 3).value_or(0);
+    value.jamFlags = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
     return value;
 }
 
@@ -349,9 +349,9 @@ inline ubx_payload_rx_mon_ver_part1_t payload<ubx_payload_rx_mon_ver_part1_t>(st
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_ver_part1_t value{};
     for (size_t i = 0; i < 30; ++i)
-        value.swVersion[i] = GPSWire::read<uint8_t>(bytes, 0 + i * 1).value_or(0);
+        value.swVersion[i] = LittleEndian::read<uint8_t>(bytes, 0 + i * 1).value_or(0);
     for (size_t i = 0; i < 10; ++i)
-        value.hwVersion[i] = GPSWire::read<uint8_t>(bytes, 30 + i * 1).value_or(0);
+        value.hwVersion[i] = LittleEndian::read<uint8_t>(bytes, 30 + i * 1).value_or(0);
     return value;
 }
 
@@ -362,7 +362,7 @@ inline ubx_payload_rx_mon_ver_part2_t payload<ubx_payload_rx_mon_ver_part2_t>(st
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_ver_part2_t value{};
     for (size_t i = 0; i < 30; ++i)
-        value.extension[i] = GPSWire::read<uint8_t>(bytes, 0 + i * 1).value_or(0);
+        value.extension[i] = LittleEndian::read<uint8_t>(bytes, 0 + i * 1).value_or(0);
     return value;
 }
 
@@ -371,11 +371,11 @@ inline ubx_payload_rx_rxm_rtcm_t payload<ubx_payload_rx_rxm_rtcm_t>(std::span<co
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_rxm_rtcm_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
-    value.subType = GPSWire::read<uint16_t>(bytes, 2).value_or(0);
-    value.refStationID = GPSWire::read<uint16_t>(bytes, 4).value_or(0);
-    value.msgType = GPSWire::read<uint16_t>(bytes, 6).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.subType = LittleEndian::read<uint16_t>(bytes, 2).value_or(0);
+    value.refStationID = LittleEndian::read<uint16_t>(bytes, 4).value_or(0);
+    value.msgType = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
     return value;
 }
 
@@ -384,92 +384,88 @@ inline ubx_payload_rx_rxm_cor_t payload<ubx_payload_rx_rxm_cor_t>(std::span<cons
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_rxm_cor_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.ebno = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.ebno = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
     for (size_t i = 0; i < 2; ++i)
-        value.reserved0[i] = GPSWire::read<uint8_t>(bytes, 2 + i * 1).value_or(0);
-    value.statusInfo = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.msgType = GPSWire::read<uint16_t>(bytes, 8).value_or(0);
-    value.msgSubType = GPSWire::read<uint16_t>(bytes, 10).value_or(0);
+        value.reserved0[i] = LittleEndian::read<uint8_t>(bytes, 2 + i * 1).value_or(0);
+    value.statusInfo = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.msgType = LittleEndian::read<uint16_t>(bytes, 8).value_or(0);
+    value.msgSubType = LittleEndian::read<uint16_t>(bytes, 10).value_or(0);
     return value;
 }
 
 template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_prt_t)> encode(const ubx_payload_tx_cfg_prt_t& value)
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_prt_t>> encode(const ubx_payload_tx_cfg_prt_t& value)
 {
-    static_assert(sizeof(ubx_payload_tx_cfg_prt_t) == 20);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_prt_t)> bytes{};
-    GPSWire::write(bytes, 0, value.portID);
-    GPSWire::write(bytes, 1, value.reserved0);
-    GPSWire::write(bytes, 2, value.txReady);
-    GPSWire::write(bytes, 4, value.mode);
-    GPSWire::write(bytes, 8, value.baudRate);
-    GPSWire::write(bytes, 12, value.inProtoMask);
-    GPSWire::write(bytes, 14, value.outProtoMask);
-    GPSWire::write(bytes, 16, value.flags);
-    GPSWire::write(bytes, 18, value.reserved5);
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_prt_t>> bytes{};
+    LittleEndian::write(bytes, 0, value.portID);
+    LittleEndian::write(bytes, 1, value.reserved0);
+    LittleEndian::write(bytes, 2, value.txReady);
+    LittleEndian::write(bytes, 4, value.mode);
+    LittleEndian::write(bytes, 8, value.baudRate);
+    LittleEndian::write(bytes, 12, value.inProtoMask);
+    LittleEndian::write(bytes, 14, value.outProtoMask);
+    LittleEndian::write(bytes, 16, value.flags);
+    LittleEndian::write(bytes, 18, value.reserved5);
     return bytes;
 }
 
 template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_rate_t)> encode(const ubx_payload_tx_cfg_rate_t& value)
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_rate_t>> encode(const ubx_payload_tx_cfg_rate_t& value)
 {
-    static_assert(sizeof(ubx_payload_tx_cfg_rate_t) == 6);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_rate_t)> bytes{};
-    GPSWire::write(bytes, 0, value.measRate);
-    GPSWire::write(bytes, 2, value.navRate);
-    GPSWire::write(bytes, 4, value.timeRef);
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_rate_t>> bytes{};
+    LittleEndian::write(bytes, 0, value.measRate);
+    LittleEndian::write(bytes, 2, value.navRate);
+    LittleEndian::write(bytes, 4, value.timeRef);
     return bytes;
 }
 
 template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_nav5_t)> encode(const ubx_payload_tx_cfg_nav5_t& value)
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_nav5_t>> encode(const ubx_payload_tx_cfg_nav5_t& value)
 {
-    static_assert(sizeof(ubx_payload_tx_cfg_nav5_t) == 36);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_nav5_t)> bytes{};
-    GPSWire::write(bytes, 0, value.mask);
-    GPSWire::write(bytes, 2, value.dynModel);
-    GPSWire::write(bytes, 3, value.fixMode);
-    GPSWire::write(bytes, 4, value.fixedAlt);
-    GPSWire::write(bytes, 8, value.fixedAltVar);
-    GPSWire::write(bytes, 12, value.minElev);
-    GPSWire::write(bytes, 13, value.drLimit);
-    GPSWire::write(bytes, 14, value.pDop);
-    GPSWire::write(bytes, 16, value.tDop);
-    GPSWire::write(bytes, 18, value.pAcc);
-    GPSWire::write(bytes, 20, value.tAcc);
-    GPSWire::write(bytes, 22, value.staticHoldThresh);
-    GPSWire::write(bytes, 23, value.dgpsTimeOut);
-    GPSWire::write(bytes, 24, value.cnoThreshNumSVs);
-    GPSWire::write(bytes, 25, value.cnoThresh);
-    GPSWire::write(bytes, 26, value.reserved);
-    GPSWire::write(bytes, 28, value.staticHoldMaxDist);
-    GPSWire::write(bytes, 30, value.utcStandard);
-    GPSWire::write(bytes, 31, value.reserved3);
-    GPSWire::write(bytes, 32, value.reserved4);
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_nav5_t>> bytes{};
+    LittleEndian::write(bytes, 0, value.mask);
+    LittleEndian::write(bytes, 2, value.dynModel);
+    LittleEndian::write(bytes, 3, value.fixMode);
+    LittleEndian::write(bytes, 4, value.fixedAlt);
+    LittleEndian::write(bytes, 8, value.fixedAltVar);
+    LittleEndian::write(bytes, 12, value.minElev);
+    LittleEndian::write(bytes, 13, value.drLimit);
+    LittleEndian::write(bytes, 14, value.pDop);
+    LittleEndian::write(bytes, 16, value.tDop);
+    LittleEndian::write(bytes, 18, value.pAcc);
+    LittleEndian::write(bytes, 20, value.tAcc);
+    LittleEndian::write(bytes, 22, value.staticHoldThresh);
+    LittleEndian::write(bytes, 23, value.dgpsTimeOut);
+    LittleEndian::write(bytes, 24, value.cnoThreshNumSVs);
+    LittleEndian::write(bytes, 25, value.cnoThresh);
+    LittleEndian::write(bytes, 26, value.reserved);
+    LittleEndian::write(bytes, 28, value.staticHoldMaxDist);
+    LittleEndian::write(bytes, 30, value.utcStandard);
+    LittleEndian::write(bytes, 31, value.reserved3);
+    LittleEndian::write(bytes, 32, value.reserved4);
     return bytes;
 }
 
 template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_tmode3_t)> encode(const ubx_payload_tx_cfg_tmode3_t& value)
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_tmode3_t>> encode(const ubx_payload_tx_cfg_tmode3_t& value)
 {
-    static_assert(sizeof(ubx_payload_tx_cfg_tmode3_t) == 40);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_tmode3_t)> bytes{};
-    GPSWire::write(bytes, 0, value.version);
-    GPSWire::write(bytes, 1, value.reserved1);
-    GPSWire::write(bytes, 2, value.flags);
-    GPSWire::write(bytes, 4, value.ecefXOrLat);
-    GPSWire::write(bytes, 8, value.ecefYOrLon);
-    GPSWire::write(bytes, 12, value.ecefZOrAlt);
-    GPSWire::write(bytes, 16, value.ecefXOrLatHP);
-    GPSWire::write(bytes, 17, value.ecefYOrLonHP);
-    GPSWire::write(bytes, 18, value.ecefZOrAltHP);
-    GPSWire::write(bytes, 19, value.reserved2);
-    GPSWire::write(bytes, 20, value.fixedPosAcc);
-    GPSWire::write(bytes, 24, value.svinMinDur);
-    GPSWire::write(bytes, 28, value.svinAccLimit);
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_tmode3_t>> bytes{};
+    LittleEndian::write(bytes, 0, value.version);
+    LittleEndian::write(bytes, 1, value.reserved1);
+    LittleEndian::write(bytes, 2, value.flags);
+    LittleEndian::write(bytes, 4, value.ecefXOrLat);
+    LittleEndian::write(bytes, 8, value.ecefYOrLon);
+    LittleEndian::write(bytes, 12, value.ecefZOrAlt);
+    LittleEndian::write(bytes, 16, value.ecefXOrLatHP);
+    LittleEndian::write(bytes, 17, value.ecefYOrLonHP);
+    LittleEndian::write(bytes, 18, value.ecefZOrAltHP);
+    LittleEndian::write(bytes, 19, value.reserved2);
+    LittleEndian::write(bytes, 20, value.fixedPosAcc);
+    LittleEndian::write(bytes, 24, value.svinMinDur);
+    LittleEndian::write(bytes, 28, value.svinAccLimit);
     for (size_t i = 0; i < 8; ++i) {
-        GPSWire::write(bytes, 32 + i * 1, value.reserved3[i]);
+        LittleEndian::write(bytes, 32 + i * 1, value.reserved3[i]);
     }
     return bytes;
 }
@@ -480,27 +476,27 @@ inline ubx_payload_rx_nav_relposned_t payload<ubx_payload_rx_nav_relposned_t>(st
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_relposned_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.reserved0 = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
-    value.refStationId = GPSWire::read<uint16_t>(bytes, 2).value_or(0);
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.relPosN = GPSWire::read<int32_t>(bytes, 8).value_or(0);
-    value.relPosE = GPSWire::read<int32_t>(bytes, 12).value_or(0);
-    value.relPosD = GPSWire::read<int32_t>(bytes, 16).value_or(0);
-    value.relPosLength = GPSWire::read<int32_t>(bytes, 20).value_or(0);
-    value.relPosHeading = GPSWire::read<int32_t>(bytes, 24).value_or(0);
-    value.reserved1 = GPSWire::read<uint32_t>(bytes, 28).value_or(0);
-    value.relPosHPN = GPSWire::read<int8_t>(bytes, 32).value_or(0);
-    value.relPosHPE = GPSWire::read<int8_t>(bytes, 33).value_or(0);
-    value.relPosHPD = GPSWire::read<int8_t>(bytes, 34).value_or(0);
-    value.relPosHPLength = GPSWire::read<int8_t>(bytes, 35).value_or(0);
-    value.accN = GPSWire::read<uint32_t>(bytes, 36).value_or(0);
-    value.accE = GPSWire::read<uint32_t>(bytes, 40).value_or(0);
-    value.accD = GPSWire::read<uint32_t>(bytes, 44).value_or(0);
-    value.accLength = GPSWire::read<uint32_t>(bytes, 48).value_or(0);
-    value.accHeading = GPSWire::read<uint32_t>(bytes, 52).value_or(0);
-    value.reserved2 = GPSWire::read<uint32_t>(bytes, 56).value_or(0);
-    value.flags = GPSWire::read<uint32_t>(bytes, 60).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.reserved0 = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.refStationId = LittleEndian::read<uint16_t>(bytes, 2).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.relPosN = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.relPosE = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.relPosD = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.relPosLength = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.relPosHeading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
+    value.reserved1 = LittleEndian::read<uint32_t>(bytes, 28).value_or(0);
+    value.relPosHPN = LittleEndian::read<int8_t>(bytes, 32).value_or(0);
+    value.relPosHPE = LittleEndian::read<int8_t>(bytes, 33).value_or(0);
+    value.relPosHPD = LittleEndian::read<int8_t>(bytes, 34).value_or(0);
+    value.relPosHPLength = LittleEndian::read<int8_t>(bytes, 35).value_or(0);
+    value.accN = LittleEndian::read<uint32_t>(bytes, 36).value_or(0);
+    value.accE = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
+    value.accD = LittleEndian::read<uint32_t>(bytes, 44).value_or(0);
+    value.accLength = LittleEndian::read<uint32_t>(bytes, 48).value_or(0);
+    value.accHeading = LittleEndian::read<uint32_t>(bytes, 52).value_or(0);
+    value.reserved2 = LittleEndian::read<uint32_t>(bytes, 56).value_or(0);
+    value.flags = LittleEndian::read<uint32_t>(bytes, 60).value_or(0);
     return value;
 }
 
@@ -510,25 +506,25 @@ inline ubx_payload_rx_nav_daheading_t payload<ubx_payload_rx_nav_daheading_t>(st
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_daheading_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
     for (size_t i = 0; i < 3; ++i)
-        value.reserved0[i] = GPSWire::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.relPosN = GPSWire::read<int32_t>(bytes, 8).value_or(0);
-    value.relPosE = GPSWire::read<int32_t>(bytes, 12).value_or(0);
-    value.relPosD = GPSWire::read<int32_t>(bytes, 16).value_or(0);
-    value.relPosLength = GPSWire::read<int32_t>(bytes, 20).value_or(0);
-    value.relPosHeading = GPSWire::read<int32_t>(bytes, 24).value_or(0);
+        value.reserved0[i] = LittleEndian::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.relPosN = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.relPosE = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.relPosD = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.relPosLength = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.relPosHeading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
     for (size_t i = 0; i < 4; ++i)
-        value.reserved1[i] = GPSWire::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
-    value.accN = GPSWire::read<uint32_t>(bytes, 32).value_or(0);
-    value.accE = GPSWire::read<uint32_t>(bytes, 36).value_or(0);
-    value.accD = GPSWire::read<uint32_t>(bytes, 40).value_or(0);
-    value.accLength = GPSWire::read<uint32_t>(bytes, 44).value_or(0);
-    value.accHeading = GPSWire::read<uint32_t>(bytes, 48).value_or(0);
+        value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
+    value.accN = LittleEndian::read<uint32_t>(bytes, 32).value_or(0);
+    value.accE = LittleEndian::read<uint32_t>(bytes, 36).value_or(0);
+    value.accD = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
+    value.accLength = LittleEndian::read<uint32_t>(bytes, 44).value_or(0);
+    value.accHeading = LittleEndian::read<uint32_t>(bytes, 48).value_or(0);
     for (size_t i = 0; i < 4; ++i)
-        value.reserved2[i] = GPSWire::read<uint8_t>(bytes, 52 + i * 1).value_or(0);
-    value.flags = GPSWire::read<uint32_t>(bytes, 56).value_or(0);
+        value.reserved2[i] = LittleEndian::read<uint8_t>(bytes, 52 + i * 1).value_or(0);
+    value.flags = LittleEndian::read<uint32_t>(bytes, 56).value_or(0);
     return value;
 }
 
@@ -538,21 +534,21 @@ inline ubx_payload_rx_nav_hpposllh_t payload<ubx_payload_rx_nav_hpposllh_t>(std:
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_hpposllh_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
     for (size_t i = 0; i < 2; ++i)
-        value.reserved1[i] = GPSWire::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
-    value.flags = GPSWire::read<int8_t>(bytes, 3).value_or(0);
-    value.iTOW = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.lon = GPSWire::read<int32_t>(bytes, 8).value_or(0);
-    value.lat = GPSWire::read<int32_t>(bytes, 12).value_or(0);
-    value.height = GPSWire::read<int32_t>(bytes, 16).value_or(0);
-    value.hMSL = GPSWire::read<int32_t>(bytes, 20).value_or(0);
-    value.lonHp = GPSWire::read<int8_t>(bytes, 24).value_or(0);
-    value.latHp = GPSWire::read<int8_t>(bytes, 25).value_or(0);
-    value.heightHp = GPSWire::read<int8_t>(bytes, 26).value_or(0);
-    value.hMSLHp = GPSWire::read<int8_t>(bytes, 27).value_or(0);
-    value.hAcc = GPSWire::read<uint32_t>(bytes, 28).value_or(0);
-    value.vAcc = GPSWire::read<uint32_t>(bytes, 32).value_or(0);
+        value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
+    value.flags = LittleEndian::read<int8_t>(bytes, 3).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.lon = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.lat = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.height = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.hMSL = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.lonHp = LittleEndian::read<int8_t>(bytes, 24).value_or(0);
+    value.latHp = LittleEndian::read<int8_t>(bytes, 25).value_or(0);
+    value.heightHp = LittleEndian::read<int8_t>(bytes, 26).value_or(0);
+    value.hMSLHp = LittleEndian::read<int8_t>(bytes, 27).value_or(0);
+    value.hAcc = LittleEndian::read<uint32_t>(bytes, 28).value_or(0);
+    value.vAcc = LittleEndian::read<uint32_t>(bytes, 32).value_or(0);
     return value;
 }
 
@@ -562,21 +558,21 @@ inline ubx_payload_rx_mon_comms_port_t payload<ubx_payload_rx_mon_comms_port_t>(
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_comms_port_t value{};
-    value.portId = GPSWire::read<uint16_t>(bytes, 0).value_or(0);
-    value.txPending = GPSWire::read<uint16_t>(bytes, 2).value_or(0);
-    value.txBytes = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
-    value.txUsage = GPSWire::read<uint8_t>(bytes, 8).value_or(0);
-    value.txPeakUsage = GPSWire::read<uint8_t>(bytes, 9).value_or(0);
-    value.rxPending = GPSWire::read<uint16_t>(bytes, 10).value_or(0);
-    value.rxBytes = GPSWire::read<uint32_t>(bytes, 12).value_or(0);
-    value.rxUsage = GPSWire::read<uint8_t>(bytes, 16).value_or(0);
-    value.rxPeakUsage = GPSWire::read<uint8_t>(bytes, 17).value_or(0);
-    value.overrunErrs = GPSWire::read<uint16_t>(bytes, 18).value_or(0);
+    value.portId = LittleEndian::read<uint16_t>(bytes, 0).value_or(0);
+    value.txPending = LittleEndian::read<uint16_t>(bytes, 2).value_or(0);
+    value.txBytes = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.txUsage = LittleEndian::read<uint8_t>(bytes, 8).value_or(0);
+    value.txPeakUsage = LittleEndian::read<uint8_t>(bytes, 9).value_or(0);
+    value.rxPending = LittleEndian::read<uint16_t>(bytes, 10).value_or(0);
+    value.rxBytes = LittleEndian::read<uint32_t>(bytes, 12).value_or(0);
+    value.rxUsage = LittleEndian::read<uint8_t>(bytes, 16).value_or(0);
+    value.rxPeakUsage = LittleEndian::read<uint8_t>(bytes, 17).value_or(0);
+    value.overrunErrs = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
     for (size_t i = 0; i < 4; ++i)
-        value.msgs[i] = GPSWire::read<uint16_t>(bytes, 20 + i * 2).value_or(0);
+        value.msgs[i] = LittleEndian::read<uint16_t>(bytes, 20 + i * 2).value_or(0);
     for (size_t i = 0; i < 8; ++i)
-        value.reserved[i] = GPSWire::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
-    value.skipped = GPSWire::read<uint32_t>(bytes, 36).value_or(0);
+        value.reserved[i] = LittleEndian::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
+    value.skipped = LittleEndian::read<uint32_t>(bytes, 36).value_or(0);
     return value;
 }
 
@@ -585,12 +581,12 @@ inline ubx_payload_rx_mon_comms_t payload<ubx_payload_rx_mon_comms_t>(std::span<
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_comms_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.nPorts = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
-    value.txErrors = GPSWire::read<uint8_t>(bytes, 2).value_or(0);
-    value.reserved = GPSWire::read<uint8_t>(bytes, 3).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.nPorts = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.txErrors = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    value.reserved = LittleEndian::read<uint8_t>(bytes, 3).value_or(0);
     for (size_t i = 0; i < 4; ++i)
-        value.protIds[i] = GPSWire::read<uint8_t>(bytes, 4 + i * 1).value_or(0);
+        value.protIds[i] = LittleEndian::read<uint8_t>(bytes, 4 + i * 1).value_or(0);
     for (size_t i = 0; i < 8; ++i)
         value.ports[i] = payload<ubx_payload_rx_mon_comms_port_t>(bytes, 8 + i * 40);
     return value;
@@ -602,22 +598,22 @@ payload<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(std::span<const 
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t value{};
-    value.blockId = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.flags = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
-    value.antStatus = GPSWire::read<uint8_t>(bytes, 2).value_or(0);
-    value.antPower = GPSWire::read<uint8_t>(bytes, 3).value_or(0);
-    value.postStatus = GPSWire::read<uint32_t>(bytes, 4).value_or(0);
+    value.blockId = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.antStatus = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    value.antPower = LittleEndian::read<uint8_t>(bytes, 3).value_or(0);
+    value.postStatus = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
     for (size_t i = 0; i < 4; ++i)
-        value.reserved2[i] = GPSWire::read<uint8_t>(bytes, 8 + i * 1).value_or(0);
-    value.noisePerMS = GPSWire::read<uint16_t>(bytes, 12).value_or(0);
-    value.agcCnt = GPSWire::read<uint16_t>(bytes, 14).value_or(0);
-    value.jamInd = GPSWire::read<uint8_t>(bytes, 16).value_or(0);
-    value.ofsI = GPSWire::read<int8_t>(bytes, 17).value_or(0);
-    value.magI = GPSWire::read<uint8_t>(bytes, 18).value_or(0);
-    value.ofsQ = GPSWire::read<int8_t>(bytes, 19).value_or(0);
-    value.magQ = GPSWire::read<uint8_t>(bytes, 20).value_or(0);
+        value.reserved2[i] = LittleEndian::read<uint8_t>(bytes, 8 + i * 1).value_or(0);
+    value.noisePerMS = LittleEndian::read<uint16_t>(bytes, 12).value_or(0);
+    value.agcCnt = LittleEndian::read<uint16_t>(bytes, 14).value_or(0);
+    value.jamInd = LittleEndian::read<uint8_t>(bytes, 16).value_or(0);
+    value.ofsI = LittleEndian::read<int8_t>(bytes, 17).value_or(0);
+    value.magI = LittleEndian::read<uint8_t>(bytes, 18).value_or(0);
+    value.ofsQ = LittleEndian::read<int8_t>(bytes, 19).value_or(0);
+    value.magQ = LittleEndian::read<uint8_t>(bytes, 20).value_or(0);
     for (size_t i = 0; i < 3; ++i)
-        value.reserved3[i] = GPSWire::read<uint8_t>(bytes, 21 + i * 1).value_or(0);
+        value.reserved3[i] = LittleEndian::read<uint8_t>(bytes, 21 + i * 1).value_or(0);
     return value;
 }
 
@@ -626,38 +622,36 @@ inline ubx_payload_rx_mon_rf_t payload<ubx_payload_rx_mon_rf_t>(std::span<const 
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_rf_t value{};
-    value.version = GPSWire::read<uint8_t>(bytes, 0).value_or(0);
-    value.nBlocks = GPSWire::read<uint8_t>(bytes, 1).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.nBlocks = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
     for (size_t i = 0; i < 2; ++i)
-        value.reserved1[i] = GPSWire::read<uint8_t>(bytes, 2 + i * 1).value_or(0);
+        value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 2 + i * 1).value_or(0);
     for (size_t i = 0; i < 1; ++i)
         value.block[i] = payload<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(bytes, 4 + i * 24);
     return value;
 }
 
 template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t)> encode(
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t>> encode(
     const ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t& value)
 {
-    static_assert(sizeof(ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t) == 8);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t)> bytes{};
-    GPSWire::write(bytes, 0, value.gnssId);
-    GPSWire::write(bytes, 1, value.resTrkCh);
-    GPSWire::write(bytes, 2, value.maxTrkCh);
-    GPSWire::write(bytes, 3, value.reserved1);
-    GPSWire::write(bytes, 4, value.flags);
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t>> bytes{};
+    LittleEndian::write(bytes, 0, value.gnssId);
+    LittleEndian::write(bytes, 1, value.resTrkCh);
+    LittleEndian::write(bytes, 2, value.maxTrkCh);
+    LittleEndian::write(bytes, 3, value.reserved1);
+    LittleEndian::write(bytes, 4, value.flags);
     return bytes;
 }
 
 template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_gnss_t)> encode(const ubx_payload_tx_cfg_gnss_t& value)
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t>> encode(const ubx_payload_tx_cfg_gnss_t& value)
 {
-    static_assert(sizeof(ubx_payload_tx_cfg_gnss_t) == 60);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_gnss_t)> bytes{};
-    GPSWire::write(bytes, 0, value.msgVer);
-    GPSWire::write(bytes, 1, value.numTrkChHw);
-    GPSWire::write(bytes, 2, value.numTrkChUse);
-    GPSWire::write(bytes, 3, value.numConfigBlocks);
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t>> bytes{};
+    LittleEndian::write(bytes, 0, value.msgVer);
+    LittleEndian::write(bytes, 1, value.numTrkChHw);
+    LittleEndian::write(bytes, 2, value.numTrkChUse);
+    LittleEndian::write(bytes, 3, value.numConfigBlocks);
     for (size_t i = 0; i < 7; ++i) {
         const auto block = encode(value.block[i]);
         std::copy(block.begin(), block.end(), bytes.begin() + 4 + i * 8);
@@ -670,7 +664,7 @@ inline ubx_payload_rx_ack_ack_t payload<ubx_payload_rx_ack_ack_t>(std::span<cons
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_ack_ack_t value{};
-    value.msg = GPSWire::read<uint16_t>(bytes, 0).value_or(0);
+    value.msg = LittleEndian::read<uint16_t>(bytes, 0).value_or(0);
     return value;
 }
 
@@ -679,27 +673,26 @@ inline ubx_payload_rx_ack_nak_t payload<ubx_payload_rx_ack_nak_t>(std::span<cons
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_ack_nak_t value{};
-    value.msg = GPSWire::read<uint16_t>(bytes, 0).value_or(0);
+    value.msg = LittleEndian::read<uint16_t>(bytes, 0).value_or(0);
     return value;
 }
 
 template <>
-inline std::array<uint8_t, sizeof(ubx_payload_tx_cfg_msg_t)> encode(const ubx_payload_tx_cfg_msg_t& value)
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_msg_t>> encode(const ubx_payload_tx_cfg_msg_t& value)
 {
-    static_assert(sizeof(ubx_payload_tx_cfg_msg_t) == 3);
-    std::array<uint8_t, sizeof(ubx_payload_tx_cfg_msg_t)> bytes{};
-    GPSWire::write(bytes, 0, value.msg);
-    GPSWire::write(bytes, 2, value.rate);
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_msg_t>> bytes{};
+    LittleEndian::write(bytes, 0, value.msg);
+    LittleEndian::write(bytes, 2, value.rate);
     return bytes;
 }
 
 template <typename T, size_t N>
-std::array<uint8_t, sizeof(T) * N> encode(const T (&values)[N])
+std::array<uint8_t, WIRE_SIZE<T> * N> encode(const T (&values)[N])
 {
-    std::array<uint8_t, sizeof(T) * N> bytes{};
+    std::array<uint8_t, WIRE_SIZE<T> * N> bytes{};
     for (size_t i = 0; i < N; ++i) {
         const auto block = encode(values[i]);
-        std::copy(block.begin(), block.end(), bytes.begin() + i * sizeof(T));
+        std::copy(block.begin(), block.end(), bytes.begin() + i * WIRE_SIZE<T>);
     }
     return bytes;
 }

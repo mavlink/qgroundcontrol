@@ -1,6 +1,5 @@
 #pragma once
 
-enum class GPSCallbackType;
 class GPSDriver;
 
 #include "UnitTest.h"
@@ -8,9 +7,6 @@ class GPSDriver;
 class GPSDriverTest : public UnitTest
 {
     Q_OBJECT
-
-public:
-    static int callback(GPSDriver& driver, GPSCallbackType type, void* data1, int data2);
 
 private slots:
     void _positionBackendWithoutBaseSupport();
@@ -37,10 +33,8 @@ private slots:
     void _testRtcmMessageForwardedToSink();
     void _testSurveyInStatusTranslatedAndFlagsDecoded();
     void _testSurveyInStatusPreservesLargeValues();
-    void _testSurveyInStatusNullDataIgnored();
     void _testCallbacksWithoutSinksAreSafe();
     void _testDefaultConfigHeadingOffsetMatchesSeptentrioPreset();
-    void _testUnknownCallbackIgnored();
     void _positionRoleDoesNotForwardBaseData();
     void _receiverRoleCommands_data();
     void _receiverRoleCommands();

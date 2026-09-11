@@ -3,16 +3,16 @@
 #include <algorithm>
 #include <utility>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSConnectionControlLog, "GPS.Core.GPSConnectionControl")
 
-GPSConnectionControl::GPSConnectionControl(NotificationPolicy policy, QObject* parent, GPSRuntimeScheduler* scheduler,
+GPSConnectionControl::GPSConnectionControl(NotificationPolicy policy, QObject* parent, RuntimeScheduler* scheduler,
                                            GPSReceiverProfile profile)
     : QObject(parent)
     , _policy(policy)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _connection(this, _scheduler)
     , _update(_scheduler, this)
     , _profile(profile.normalized())

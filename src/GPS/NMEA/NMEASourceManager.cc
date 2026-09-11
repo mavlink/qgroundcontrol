@@ -9,16 +9,13 @@
 
 QGC_LOGGING_CATEGORY(NMEASourceManagerLog, "GPS.NMEA.NMEASourceManager")
 
-NMEASourceManager::NMEASourceManager(QObject* parent, GPSRuntimeScheduler* scheduler)
+NMEASourceManager::NMEASourceManager(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _control(GPSConnectionControl::NotificationPolicy::AfterCommands, this, scheduler)
     , _decoder(this, _control.scheduler())
     , _udpActivity(_control.scheduler(), this)
 {
     qCDebug(NMEASourceManagerLog) << this;
-#ifndef QGC_NO_SERIAL_LINK
-    _serialPorts = SerialPortManager::instance();
-#endif
     connect(&_control, &GPSConnectionControl::changed, this, &NMEASourceManager::stateChanged);
     connect(&_decoder, &NMEADecoderSession::satellitesChanged, this, &NMEASourceManager::satellitesChanged);
     connect(&_decoder, &NMEADecoderSession::satellitesReceived, this, &NMEASourceManager::satellitesReceived);
@@ -413,9 +410,9 @@ void NMEASourceManager::_update()
 }
 
 #ifndef QGC_NO_SERIAL_LINK
-void NMEASourceManager::setSerialDiscovery(SerialPortManager* serialPorts)
+void NMEASourceManager::setSerialDiscovery(GPSSerialDiscovery* serialPorts)
 {
-    const QPointer<SerialPortManager> inventory(serialPorts);
+    const QPointer<GPSSerialDiscovery> inventory(serialPorts);
     _dispatch([this, inventory]() {
         if (_serialPorts == inventory) {
             return;
@@ -426,7 +423,7 @@ void NMEASourceManager::setSerialDiscovery(SerialPortManager* serialPorts)
         }
         _serialPorts = inventory;
         if (_serialPorts) {
-            connect(_serialPorts, &SerialPortManager::serialPortsChanged, this, &NMEASourceManager::update);
+            connect(_serialPorts, &GPSSerialDiscovery::serialPortsChanged, this, &NMEASourceManager::update);
         }
         _autoConnectExclusion.reset();
         if (_control.profile().endpoint.kind == GPSReceiverProfile::Endpoint::Kind::Serial) {

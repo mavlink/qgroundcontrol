@@ -32,6 +32,7 @@ public:
     explicit GPSRecordingBuffer(Clock clock = {});
     ~GPSRecordingBuffer();
     bool start();
+    bool setProvenance(const GPSRecordingProvenance& provenance);
     void stop();
     Status status() const;
     std::optional<GPSRecordingDocument> snapshot() const;
@@ -50,6 +51,7 @@ private:
     using Event = GPSRecordingEvent;
 
     Clock _clock;
+    GPSRecordingProvenance _provenance;
     mutable QMutex _mutex;
     std::atomic_bool _recording = false;
     std::atomic<quint64> _nextStream = 1;

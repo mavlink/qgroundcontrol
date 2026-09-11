@@ -6,16 +6,16 @@
 #include <chrono>
 #include <utility>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "NTRIPRequest.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSessionLog, "GPS.NTRIP.NTRIPSession")
 
-NTRIPSession::NTRIPSession(StreamFactory factory, QObject* parent, Clock clock, GPSRuntimeScheduler* scheduler)
+NTRIPSession::NTRIPSession(StreamFactory factory, QObject* parent, Clock clock, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _factory(std::move(factory))
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _retryTask(_scheduler, this)
     , _clock(clock ? std::move(clock) : [this]() { return _scheduler ? _scheduler->nowMs() : 0; })
 {

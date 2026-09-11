@@ -31,106 +31,109 @@
  *
  ****************************************************************************/
 
-#include "GPSWire.h"
+#include "LittleEndian.h"
 #include "SBFPrivate.h"
 
 namespace {
 sbf_buf_t decodeBlock(std::span<const uint8_t> bytes)
 {
     sbf_buf_t value{};
-    value.sync = GPSWire::read<uint16_t>(bytes, 0).value_or(0);
-    value.crc16 = GPSWire::read<uint16_t>(bytes, 2).value_or(0);
-    const auto id = GPSWire::read<uint16_t>(bytes, 4).value_or(0);
+    value.sync = LittleEndian::read<uint16_t>(bytes, 0).value_or(0);
+    value.crc16 = LittleEndian::read<uint16_t>(bytes, 2).value_or(0);
+    const auto id = LittleEndian::read<uint16_t>(bytes, 4).value_or(0);
     value.msg_id = id & 0x1fff;
     value.msg_revision = id >> 13;
-    value.length = GPSWire::read<uint16_t>(bytes, 6).value_or(0);
-    value.TOW = GPSWire::read<uint32_t>(bytes, 8).value_or(0);
-    value.WNc = GPSWire::read<uint16_t>(bytes, 12).value_or(0);
+    value.length = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
+    value.TOW = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
+    value.WNc = LittleEndian::read<uint16_t>(bytes, 12).value_or(0);
     switch (value.msg_id) {
         case SBF_ID_PVTGeodetic:
-            value.payload_pvt_geodetic.mode_type = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 0) & 15;
-            value.payload_pvt_geodetic.mode_reserved = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 4) & 3;
-            value.payload_pvt_geodetic.mode_base_fixed = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 6) & 1;
-            value.payload_pvt_geodetic.mode_2d = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 7) & 1;
-            value.payload_pvt_geodetic.error = GPSWire::read<uint8_t>(bytes, 15).value_or(0);
-            value.payload_pvt_geodetic.latitude = GPSWire::read<double>(bytes, 16).value_or(0);
-            value.payload_pvt_geodetic.longitude = GPSWire::read<double>(bytes, 24).value_or(0);
-            value.payload_pvt_geodetic.height = GPSWire::read<double>(bytes, 32).value_or(0);
-            value.payload_pvt_geodetic.undulation = GPSWire::read<float>(bytes, 40).value_or(0);
-            value.payload_pvt_geodetic.vn = GPSWire::read<float>(bytes, 44).value_or(0);
-            value.payload_pvt_geodetic.ve = GPSWire::read<float>(bytes, 48).value_or(0);
-            value.payload_pvt_geodetic.vu = GPSWire::read<float>(bytes, 52).value_or(0);
-            value.payload_pvt_geodetic.cog = GPSWire::read<float>(bytes, 56).value_or(0);
-            value.payload_pvt_geodetic.rx_clk_bias = GPSWire::read<double>(bytes, 60).value_or(0);
-            value.payload_pvt_geodetic.RxClkDrift = GPSWire::read<float>(bytes, 68).value_or(0);
-            value.payload_pvt_geodetic.time_system = GPSWire::read<uint8_t>(bytes, 72).value_or(0);
-            value.payload_pvt_geodetic.datum = GPSWire::read<uint8_t>(bytes, 73).value_or(0);
-            value.payload_pvt_geodetic.nr_sv = GPSWire::read<uint8_t>(bytes, 74).value_or(0);
-            value.payload_pvt_geodetic.wa_corr_info = GPSWire::read<uint8_t>(bytes, 75).value_or(0);
-            value.payload_pvt_geodetic.reference_id = GPSWire::read<uint16_t>(bytes, 76).value_or(0);
-            value.payload_pvt_geodetic.mean_corr_age = GPSWire::read<uint16_t>(bytes, 78).value_or(0);
-            value.payload_pvt_geodetic.signal_info = GPSWire::read<uint32_t>(bytes, 80).value_or(0);
-            value.payload_pvt_geodetic.alert_flag = GPSWire::read<uint8_t>(bytes, 84).value_or(0);
-            value.payload_pvt_geodetic.nr_bases = GPSWire::read<uint8_t>(bytes, 85).value_or(0);
-            value.payload_pvt_geodetic.ppp_info = GPSWire::read<uint16_t>(bytes, 86).value_or(0);
-            value.payload_pvt_geodetic.latency = GPSWire::read<uint16_t>(bytes, 88).value_or(0);
-            value.payload_pvt_geodetic.h_accuracy = GPSWire::read<uint16_t>(bytes, 90).value_or(0);
-            value.payload_pvt_geodetic.v_accuracy = GPSWire::read<uint16_t>(bytes, 92).value_or(0);
+            value.payload_pvt_geodetic.mode_type = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 0) & 15;
+            value.payload_pvt_geodetic.mode_reserved = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 4) & 3;
+            value.payload_pvt_geodetic.mode_base_fixed = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 6) & 1;
+            value.payload_pvt_geodetic.mode_2d = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 7) & 1;
+            value.payload_pvt_geodetic.error = LittleEndian::read<uint8_t>(bytes, 15).value_or(0);
+            value.payload_pvt_geodetic.latitude = LittleEndian::read<double>(bytes, 16).value_or(0);
+            value.payload_pvt_geodetic.longitude = LittleEndian::read<double>(bytes, 24).value_or(0);
+            value.payload_pvt_geodetic.height = LittleEndian::read<double>(bytes, 32).value_or(0);
+            value.payload_pvt_geodetic.undulation = LittleEndian::read<float>(bytes, 40).value_or(0);
+            value.payload_pvt_geodetic.vn = LittleEndian::read<float>(bytes, 44).value_or(0);
+            value.payload_pvt_geodetic.ve = LittleEndian::read<float>(bytes, 48).value_or(0);
+            value.payload_pvt_geodetic.vu = LittleEndian::read<float>(bytes, 52).value_or(0);
+            value.payload_pvt_geodetic.cog = LittleEndian::read<float>(bytes, 56).value_or(0);
+            value.payload_pvt_geodetic.rx_clk_bias = LittleEndian::read<double>(bytes, 60).value_or(0);
+            value.payload_pvt_geodetic.RxClkDrift = LittleEndian::read<float>(bytes, 68).value_or(0);
+            value.payload_pvt_geodetic.time_system = LittleEndian::read<uint8_t>(bytes, 72).value_or(0);
+            value.payload_pvt_geodetic.datum = LittleEndian::read<uint8_t>(bytes, 73).value_or(0);
+            value.payload_pvt_geodetic.nr_sv = LittleEndian::read<uint8_t>(bytes, 74).value_or(0);
+            value.payload_pvt_geodetic.wa_corr_info = LittleEndian::read<uint8_t>(bytes, 75).value_or(0);
+            value.payload_pvt_geodetic.reference_id = LittleEndian::read<uint16_t>(bytes, 76).value_or(0);
+            value.payload_pvt_geodetic.mean_corr_age = LittleEndian::read<uint16_t>(bytes, 78).value_or(0);
+            value.payload_pvt_geodetic.signal_info = LittleEndian::read<uint32_t>(bytes, 80).value_or(0);
+            value.payload_pvt_geodetic.alert_flag = LittleEndian::read<uint8_t>(bytes, 84).value_or(0);
+            value.payload_pvt_geodetic.nr_bases = LittleEndian::read<uint8_t>(bytes, 85).value_or(0);
+            value.payload_pvt_geodetic.ppp_info = LittleEndian::read<uint16_t>(bytes, 86).value_or(0);
+            value.payload_pvt_geodetic.latency = LittleEndian::read<uint16_t>(bytes, 88).value_or(0);
+            value.payload_pvt_geodetic.h_accuracy = LittleEndian::read<uint16_t>(bytes, 90).value_or(0);
+            value.payload_pvt_geodetic.v_accuracy = LittleEndian::read<uint16_t>(bytes, 92).value_or(0);
             break;
         case SBF_ID_VelCovGeodetic:
-            value.payload_vel_col_geodetic.mode_type = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 0) & 15;
-            value.payload_vel_col_geodetic.mode_reserved = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 4) & 3;
-            value.payload_vel_col_geodetic.mode_base_fixed = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 6) & 1;
-            value.payload_vel_col_geodetic.mode_2d = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 7) & 1;
-            value.payload_vel_col_geodetic.error = GPSWire::read<uint8_t>(bytes, 15).value_or(0);
-            value.payload_vel_col_geodetic.cov_vn_vn = GPSWire::read<float>(bytes, 16).value_or(0);
-            value.payload_vel_col_geodetic.cov_ve_ve = GPSWire::read<float>(bytes, 20).value_or(0);
-            value.payload_vel_col_geodetic.cov_vu_vu = GPSWire::read<float>(bytes, 24).value_or(0);
-            value.payload_vel_col_geodetic.cov_dt_dt = GPSWire::read<float>(bytes, 28).value_or(0);
-            value.payload_vel_col_geodetic.cov_vn_ve = GPSWire::read<float>(bytes, 32).value_or(0);
-            value.payload_vel_col_geodetic.cov_vn_vu = GPSWire::read<float>(bytes, 36).value_or(0);
-            value.payload_vel_col_geodetic.cov_vn_dt = GPSWire::read<float>(bytes, 40).value_or(0);
-            value.payload_vel_col_geodetic.cov_ve_vu = GPSWire::read<float>(bytes, 44).value_or(0);
-            value.payload_vel_col_geodetic.cov_ve_dt = GPSWire::read<float>(bytes, 48).value_or(0);
-            value.payload_vel_col_geodetic.cov_vu_dt = GPSWire::read<float>(bytes, 52).value_or(0);
+            value.payload_vel_col_geodetic.mode_type = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 0) & 15;
+            value.payload_vel_col_geodetic.mode_reserved =
+                (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 4) & 3;
+            value.payload_vel_col_geodetic.mode_base_fixed =
+                (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 6) & 1;
+            value.payload_vel_col_geodetic.mode_2d = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 7) & 1;
+            value.payload_vel_col_geodetic.error = LittleEndian::read<uint8_t>(bytes, 15).value_or(0);
+            value.payload_vel_col_geodetic.cov_vn_vn = LittleEndian::read<float>(bytes, 16).value_or(0);
+            value.payload_vel_col_geodetic.cov_ve_ve = LittleEndian::read<float>(bytes, 20).value_or(0);
+            value.payload_vel_col_geodetic.cov_vu_vu = LittleEndian::read<float>(bytes, 24).value_or(0);
+            value.payload_vel_col_geodetic.cov_dt_dt = LittleEndian::read<float>(bytes, 28).value_or(0);
+            value.payload_vel_col_geodetic.cov_vn_ve = LittleEndian::read<float>(bytes, 32).value_or(0);
+            value.payload_vel_col_geodetic.cov_vn_vu = LittleEndian::read<float>(bytes, 36).value_or(0);
+            value.payload_vel_col_geodetic.cov_vn_dt = LittleEndian::read<float>(bytes, 40).value_or(0);
+            value.payload_vel_col_geodetic.cov_ve_vu = LittleEndian::read<float>(bytes, 44).value_or(0);
+            value.payload_vel_col_geodetic.cov_ve_dt = LittleEndian::read<float>(bytes, 48).value_or(0);
+            value.payload_vel_col_geodetic.cov_vu_dt = LittleEndian::read<float>(bytes, 52).value_or(0);
             break;
         case SBF_ID_DOP:
-            value.payload_dop.nr_sv = GPSWire::read<uint8_t>(bytes, 14).value_or(0);
-            value.payload_dop.reserved = GPSWire::read<uint8_t>(bytes, 15).value_or(0);
-            value.payload_dop.pDOP = GPSWire::read<uint16_t>(bytes, 16).value_or(0);
-            value.payload_dop.tDOP = GPSWire::read<uint16_t>(bytes, 18).value_or(0);
-            value.payload_dop.hDOP = GPSWire::read<uint16_t>(bytes, 20).value_or(0);
-            value.payload_dop.vDOP = GPSWire::read<uint16_t>(bytes, 22).value_or(0);
-            value.payload_dop.hpl = GPSWire::read<float>(bytes, 24).value_or(0);
-            value.payload_dop.vpl = GPSWire::read<float>(bytes, 28).value_or(0);
+            value.payload_dop.nr_sv = LittleEndian::read<uint8_t>(bytes, 14).value_or(0);
+            value.payload_dop.reserved = LittleEndian::read<uint8_t>(bytes, 15).value_or(0);
+            value.payload_dop.pDOP = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
+            value.payload_dop.tDOP = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
+            value.payload_dop.hDOP = LittleEndian::read<uint16_t>(bytes, 20).value_or(0);
+            value.payload_dop.vDOP = LittleEndian::read<uint16_t>(bytes, 22).value_or(0);
+            value.payload_dop.hpl = LittleEndian::read<float>(bytes, 24).value_or(0);
+            value.payload_dop.vpl = LittleEndian::read<float>(bytes, 28).value_or(0);
             break;
         case SBF_ID_AttEuler:
-            value.payload_att_euler.nr_sv = GPSWire::read<uint8_t>(bytes, 14).value_or(0);
-            value.payload_att_euler.error_aux1 = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 0) & 3;
-            value.payload_att_euler.error_aux2 = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 2) & 3;
-            value.payload_att_euler.error_reserved = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 4) & 7;
-            value.payload_att_euler.error_not_requested = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 7) & 1;
-            value.payload_att_euler.mode = GPSWire::read<uint16_t>(bytes, 16).value_or(0);
-            value.payload_att_euler.reserved = GPSWire::read<uint16_t>(bytes, 18).value_or(0);
-            value.payload_att_euler.heading = GPSWire::read<float>(bytes, 20).value_or(0);
-            value.payload_att_euler.pitch = GPSWire::read<float>(bytes, 24).value_or(0);
-            value.payload_att_euler.roll = GPSWire::read<float>(bytes, 28).value_or(0);
-            value.payload_att_euler.pitch_dot = GPSWire::read<float>(bytes, 32).value_or(0);
-            value.payload_att_euler.roll_dot = GPSWire::read<float>(bytes, 36).value_or(0);
-            value.payload_att_euler.heading_dot = GPSWire::read<float>(bytes, 40).value_or(0);
+            value.payload_att_euler.nr_sv = LittleEndian::read<uint8_t>(bytes, 14).value_or(0);
+            value.payload_att_euler.error_aux1 = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 0) & 3;
+            value.payload_att_euler.error_aux2 = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 2) & 3;
+            value.payload_att_euler.error_reserved = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 4) & 7;
+            value.payload_att_euler.error_not_requested = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 7) & 1;
+            value.payload_att_euler.mode = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
+            value.payload_att_euler.reserved = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
+            value.payload_att_euler.heading = LittleEndian::read<float>(bytes, 20).value_or(0);
+            value.payload_att_euler.pitch = LittleEndian::read<float>(bytes, 24).value_or(0);
+            value.payload_att_euler.roll = LittleEndian::read<float>(bytes, 28).value_or(0);
+            value.payload_att_euler.pitch_dot = LittleEndian::read<float>(bytes, 32).value_or(0);
+            value.payload_att_euler.roll_dot = LittleEndian::read<float>(bytes, 36).value_or(0);
+            value.payload_att_euler.heading_dot = LittleEndian::read<float>(bytes, 40).value_or(0);
             break;
         case SBF_ID_AttCovEuler:
-            value.payload_att_cov_euler.reserved = GPSWire::read<uint8_t>(bytes, 14).value_or(0);
-            value.payload_att_cov_euler.error_aux1 = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 0) & 3;
-            value.payload_att_cov_euler.error_aux2 = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 2) & 3;
-            value.payload_att_cov_euler.error_reserved = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 4) & 7;
-            value.payload_att_cov_euler.error_not_requested = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 7) & 1;
-            value.payload_att_cov_euler.cov_headhead = GPSWire::read<float>(bytes, 16).value_or(0);
-            value.payload_att_cov_euler.cov_pitchpitch = GPSWire::read<float>(bytes, 20).value_or(0);
-            value.payload_att_cov_euler.cov_rollroll = GPSWire::read<float>(bytes, 24).value_or(0);
-            value.payload_att_cov_euler.cov_headpitch = GPSWire::read<float>(bytes, 28).value_or(0);
-            value.payload_att_cov_euler.cov_headroll = GPSWire::read<float>(bytes, 32).value_or(0);
-            value.payload_att_cov_euler.cov_pitchroll = GPSWire::read<float>(bytes, 36).value_or(0);
+            value.payload_att_cov_euler.reserved = LittleEndian::read<uint8_t>(bytes, 14).value_or(0);
+            value.payload_att_cov_euler.error_aux1 = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 0) & 3;
+            value.payload_att_cov_euler.error_aux2 = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 2) & 3;
+            value.payload_att_cov_euler.error_reserved = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 4) & 7;
+            value.payload_att_cov_euler.error_not_requested =
+                (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 7) & 1;
+            value.payload_att_cov_euler.cov_headhead = LittleEndian::read<float>(bytes, 16).value_or(0);
+            value.payload_att_cov_euler.cov_pitchpitch = LittleEndian::read<float>(bytes, 20).value_or(0);
+            value.payload_att_cov_euler.cov_rollroll = LittleEndian::read<float>(bytes, 24).value_or(0);
+            value.payload_att_cov_euler.cov_headpitch = LittleEndian::read<float>(bytes, 28).value_or(0);
+            value.payload_att_cov_euler.cov_headroll = LittleEndian::read<float>(bytes, 32).value_or(0);
+            value.payload_att_cov_euler.cov_pitchroll = LittleEndian::read<float>(bytes, 36).value_or(0);
             break;
         default:
             break;
@@ -214,7 +217,7 @@ int GPSDriverSBF::payloadRxAdd(const uint8_t b)
 {
     int ret = 0;
     _wire[_rx_payload_index++] = b;
-    const auto length = GPSWire::read<uint16_t>(_wire, 6).value_or(0);
+    const auto length = LittleEndian::read<uint16_t>(_wire, 6).value_or(0);
 
     if ((_rx_payload_index > 7 && _rx_payload_index >= length) || _rx_payload_index >= _wire.size()) {
         ret = 1;  // payload received completely
@@ -324,8 +327,8 @@ int GPSDriverSBF::payloadRxDone()
             // Check boundaries and invalidate position
             // We're not just checking for the do-not-use value (-2*10^10) but for any value beyond the specified max
             // values
-            if (fabs(_buf.payload_pvt_geodetic.latitude) > (double) (M_PI_F / 2.0f) ||
-                fabs(_buf.payload_pvt_geodetic.longitude) > (double) M_PI_F ||
+            if (fabs(_buf.payload_pvt_geodetic.latitude) > (double) (GPS_PI / 2.0f) ||
+                fabs(_buf.payload_pvt_geodetic.longitude) > (double) GPS_PI ||
                 fabs(_buf.payload_pvt_geodetic.height) > DNU ||
                 fabsf(_buf.payload_pvt_geodetic.undulation) > (float) DNU) {
                 _gps_position->fix_type = 0;
@@ -344,8 +347,8 @@ int GPSDriverSBF::payloadRxDone()
                     publishSatelliteUsage(std::nullopt);
             }
 
-            _gps_position->latitude_deg = _buf.payload_pvt_geodetic.latitude * M_RAD_TO_DEG;
-            _gps_position->longitude_deg = _buf.payload_pvt_geodetic.longitude * M_RAD_TO_DEG;
+            _gps_position->latitude_deg = _buf.payload_pvt_geodetic.latitude * GPS_RAD_TO_DEG;
+            _gps_position->longitude_deg = _buf.payload_pvt_geodetic.longitude * GPS_RAD_TO_DEG;
             _gps_position->altitude_ellipsoid_m = _buf.payload_pvt_geodetic.height;
             _gps_position->altitude_msl_m =
                 _buf.payload_pvt_geodetic.height - static_cast<double>(_buf.payload_pvt_geodetic.undulation);
@@ -368,8 +371,8 @@ int GPSDriverSBF::payloadRxDone()
 
             const float course = _buf.payload_pvt_geodetic.cog;
             _gps_position->cog_rad =
-                std::isfinite(course) && course >= 0.0f && course <= 360.0f ? course * M_DEG_TO_RAD_F : NAN;
-            _gps_position->courseAccuracyRadians = 1.0f * M_DEG_TO_RAD_F;
+                std::isfinite(course) && course >= 0.0f && course <= 360.0f ? course * GPS_DEG_TO_RAD : NAN;
+            _gps_position->courseAccuracyRadians = 1.0f * GPS_DEG_TO_RAD;
 
             // WNc/TOW is GNSS system time, not UTC. Without receiver UTC/leap information,
             // retain the epoch key internally and let the facade use reception UTC.
@@ -418,7 +421,7 @@ int GPSDriverSBF::payloadRxDone()
             _gps_position->heading_timestamp = nowUs();
             if (!attitude.error_not_requested && !attitude.error_aux1 && !attitude.error_aux2 && attitude.mode >= 1 &&
                 attitude.mode <= 4 && std::isfinite(attitude.heading) && std::abs(attitude.heading) <= 360) {
-                _gps_position->heading = std::remainder(attitude.heading, 360.0f) * M_DEG_TO_RAD_F;
+                _gps_position->heading = std::remainder(attitude.heading, 360.0f) * GPS_DEG_TO_RAD;
             }
             break;
         }
@@ -427,7 +430,7 @@ int GPSDriverSBF::payloadRxDone()
             const float variance = covariance.cov_headhead;
             const bool valid = !covariance.error_not_requested && !covariance.error_aux1 && !covariance.error_aux2 &&
                                std::isfinite(variance) && variance >= 0;
-            _gps_position->heading_accuracy = valid ? std::sqrt(variance) * M_DEG_TO_RAD_F : NAN;
+            _gps_position->heading_accuracy = valid ? std::sqrt(variance) * GPS_DEG_TO_RAD : NAN;
             break;
         }
 

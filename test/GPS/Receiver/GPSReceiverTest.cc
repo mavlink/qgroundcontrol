@@ -15,9 +15,9 @@
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverTestProfile.h"
-#include "GPSReplayScheduler.h"
 #include "GPSSatelliteReport.h"
 #include "GPSTransport.h"
+#include "ManualScheduler.h"
 #include "PositionManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTKSettings.h"
@@ -562,7 +562,7 @@ void GPSReceiverTest::_projectionHandlesReentrantIntegrity()
 
 void GPSReceiverTest::_retainedPositionFactsExpire()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSReceiverSession session;
     GPSReceiver receiver(session, nullptr, &scheduler);
     receiver.health()->setFreshnessTimeoutMs(100);

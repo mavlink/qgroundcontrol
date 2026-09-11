@@ -16,8 +16,19 @@ class QIODevice;
 struct GPSReceiverProfile;
 
 /// Allowlisted receiver intent only; addresses, device names and credentials are never metadata.
+struct GPSRecordingProvenance
+{
+    QString producer;
+    QString build;
+    quint32 configurationRevision = 0;
+    bool valid() const;
+    bool operator==(const GPSRecordingProvenance&) const = default;
+};
+
 struct GPSRecordingMetadata
 {
+    GPSRecordingProvenance provenance;
+
     enum class Transport
     {
         Unknown,
@@ -80,7 +91,7 @@ struct GPSRecordingEvent
 /// Versioned wire contract shared by capture and replay. Decode validates every stream before selection.
 struct GPSRecordingDocument
 {
-    static constexpr int CURRENT_VERSION = 3;
+    static constexpr int CURRENT_VERSION = 4;
     static constexpr qsizetype MAX_BYTES = 4 * 1024 * 1024;
     static constexpr qsizetype MAX_EVENTS = 100000;
 

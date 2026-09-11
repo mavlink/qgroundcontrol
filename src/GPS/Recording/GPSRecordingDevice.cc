@@ -57,7 +57,7 @@ qint64 GPSRecordingDevice::readData(char* data, qint64 maximum)
     const auto started = _recording ? _recording->nowUs() : 0;
     const qint64 count = _source->read(data, maximum);
     if (count > 0) {
-        _lastReadUs = GPSReadTimestamp::from(_source);
+        _lastReadUs = ReadTimestamp::from(_source);
         if (_recording) {
             _recording->record(GPSRecordingBuffer::Kind::Rx, QByteArrayView(data, count), 0, started, _lastReadUs);
         }

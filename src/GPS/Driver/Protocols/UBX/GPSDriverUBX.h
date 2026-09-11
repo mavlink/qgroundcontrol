@@ -349,13 +349,12 @@ private:
      */
     void waitForGnssReset();
 
-    gps_abstime _disable_cmd_last{0};
-    gps_abstime _next_comms_poll{0};
-    gps_abstime _comms_poll_deadline{0};
+    uint64_t _disable_cmd_last{0};
+    uint64_t _next_comms_poll{0};
+    uint64_t _comms_poll_deadline{0};
     GPSPositionReport* _gps_position{nullptr};
     GPSSatelliteReport* _satellite_info{nullptr};
     ubx_ack_state_t _ack_state{UBX_ACK_IDLE};
-    ubx_buf_t _buf{};
     std::array<uint8_t, 4096> _framePayload{};
     uint16_t _framePayloadIndex = 0;
     int decodeValidatedPayload();

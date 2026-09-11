@@ -20,32 +20,45 @@
 
 struct ScriptedIO
 {
-    GPSCallbackType fault;
+    enum class Operation
+    {
+        Read,
+        Write,
+        Baud
+    };
+    Operation fault;
     int error;
     bool failed = false;
     unsigned operations = 0;
 
-    static int callback(GPSCallbackType type, void* data, int length, void* user)
+    bool fail(Operation operation)
     {
-        auto& io = *static_cast<ScriptedIO*>(user);
-        if (type != GPSCallbackType::readDeviceData && type != GPSCallbackType::writeDeviceData &&
-            type != GPSCallbackType::setBaudrate) {
-            return 0;
-        }
-        CHECK(!io.failed);
-        CHECK(++io.operations < 100);
-        if (type == io.fault) {
-            io.failed = true;
-            return io.error;
-        }
-        if (type == GPSCallbackType::readDeviceData) {
-            const auto request = *static_cast<const GPSReadRequest*>(data);
-            const int timeout = request.timeoutMs;
-            data = request.buffer;
-            gps_test_time += uint64_t(timeout + 1) * 1000;
-            return 0;
-        }
-        return type == GPSCallbackType::writeDeviceData ? length : 0;
+        CHECK(!failed);
+        CHECK(++operations < 100);
+        failed = operation == fault;
+        return failed;
+    }
+
+    GPSProtocolIO io()
+    {
+        auto result = makeGPSProtocolTestIO();
+        result.read = [this](std::span<uint8_t>, GPSDeadline deadline) -> GPSProtocolReadResult {
+            if (fail(Operation::Read))
+                return {error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error};
+            gps_test_time = deadline.untilUs + 1000;
+            return {GPSReadStatus::TimedOut};
+        };
+        result.write = [this](std::span<const uint8_t> bytes, GPSDeadline) -> GPSProtocolWriteResult {
+            if (fail(Operation::Write))
+                return {error == GPSProtocol::ReadCancelled ? GPSWriteStatus::Cancelled : GPSWriteStatus::Error};
+            return {GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size()), 0};
+        };
+        result.setBaudrate = [this](unsigned) {
+            return !fail(Operation::Baud)                ? GPSBaudStatus::Configured
+                   : error == GPSProtocol::ReadCancelled ? GPSBaudStatus::Cancelled
+                                                         : GPSBaudStatus::Error;
+        };
+        return result;
     }
 };
 
@@ -54,18 +67,14 @@ static std::unique_ptr<GPSBaseProtocol> createReceiver(unsigned family, Scripted
 {
     switch (family) {
         case 0: {
-            return std::make_unique<GPSDriverUBX>(makeGPSProtocolTestIO(ScriptedIO::callback, &io), &position,
-                                                  &satellites);
+            return std::make_unique<GPSDriverUBX>(io.io(), &position, &satellites);
         }
         case 1:
-            return std::make_unique<GPSDriverAshtech>(makeGPSProtocolTestIO(ScriptedIO::callback, &io), &position,
-                                                      &satellites);
+            return std::make_unique<GPSDriverAshtech>(io.io(), &position, &satellites);
         case 2:
-            return std::make_unique<GPSDriverSBF>(makeGPSProtocolTestIO(ScriptedIO::callback, &io), &position,
-                                                  &satellites);
+            return std::make_unique<GPSDriverSBF>(io.io(), &position, &satellites);
         default:
-            return std::make_unique<GPSDriverFemto>(makeGPSProtocolTestIO(ScriptedIO::callback, &io), &position,
-                                                    &satellites);
+            return std::make_unique<GPSDriverFemto>(io.io(), &position, &satellites);
     }
 }
 
@@ -74,7 +83,7 @@ int main()
     try {
         for (unsigned family = 0; family != 4; ++family) {
             for (const auto fault :
-                 {GPSCallbackType::readDeviceData, GPSCallbackType::writeDeviceData, GPSCallbackType::setBaudrate}) {
+                 {ScriptedIO::Operation::Read, ScriptedIO::Operation::Write, ScriptedIO::Operation::Baud}) {
                 for (const int error : {GPSProtocol::ReadCancelled, -EIO}) {
                     for (const auto mode : {GPSProtocol::OutputMode::GPS, GPSProtocol::OutputMode::RTCM}) {
                         gps_test_time = 0;

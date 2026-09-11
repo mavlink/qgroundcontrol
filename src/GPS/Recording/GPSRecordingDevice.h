@@ -5,11 +5,11 @@
 
 #include <memory>
 
-#include "GPSReadTimestamp.h"
 #include "GPSRecordingBuffer.h"
+#include "ReadTimestamp.h"
 
 /// Non-owning, unbuffered tap: only the decoder consumes the original passive NMEA stream.
-class GPSRecordingDevice : public QIODevice, public GPSReadTimestamp
+class GPSRecordingDevice : public QIODevice, public ReadTimestamp
 {
     Q_OBJECT
 

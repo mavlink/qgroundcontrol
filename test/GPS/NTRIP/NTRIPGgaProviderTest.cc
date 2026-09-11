@@ -223,7 +223,14 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
 
     MockNTRIPStream transport;
     NTRIPGgaProvider provider;
-    provider.init(settings);
+    const auto refresh = [&provider, settings] {
+        provider.configure(
+            {static_cast<NTRIPGgaProvider::PositionSource>(settings->ntripGgaPositionSource()->rawValue().toUInt()),
+             std::chrono::milliseconds(settings->ntripGgaIntervalSec()->rawValue().toLongLong() * 1000)});
+    };
+    connect(settings->ntripGgaPositionSource(), &Fact::rawValueChanged, &provider, refresh);
+    connect(settings->ntripGgaIntervalSec(), &Fact::rawValueChanged, &provider, refresh);
+    refresh();
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::RTKBase, [&]() {
         return reference.isValid() ? PositionResult{reference.observation, QStringLiteral("RTK Base"), true}
                                    : PositionResult{};
@@ -310,7 +317,14 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
                        static_cast<int>(NTRIPGgaProvider::PositionSource::VehicleGPS));
     MockNTRIPStream transport;
     NTRIPGgaProvider provider;
-    provider.init(settings);
+    const auto refresh = [&provider, settings] {
+        provider.configure(
+            {static_cast<NTRIPGgaProvider::PositionSource>(settings->ntripGgaPositionSource()->rawValue().toUInt()),
+             std::chrono::milliseconds(settings->ntripGgaIntervalSec()->rawValue().toLongLong() * 1000)});
+    };
+    connect(settings->ntripGgaPositionSource(), &Fact::rawValueChanged, &provider, refresh);
+    connect(settings->ntripGgaIntervalSec(), &Fact::rawValueChanged, &provider, refresh);
+    refresh();
     VehicleGPSPositionProvider positions;
     positions.setVehicle(vehicle());
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, [&]() {
@@ -444,7 +458,7 @@ void NTRIPGgaProviderTest::testWriterCanStopOrReplace()
         }
     });
     QCOMPARE(replacedWrites, replace ? 1 : 0);
-    QCOMPARE(provider._timer.isActive(), replace);
+    QCOMPARE(provider._task.active(), replace);
     QCOMPARE(provider.currentSource().isEmpty(), !replace);
     provider.stop();
     provider._sendGGA();

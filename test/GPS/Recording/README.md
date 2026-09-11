@@ -2,7 +2,7 @@
 
 `GPSRecordingFormatTest` validates the shared recording document without the native
 driver, receiver worker, network transports, QML, or application. The library source
-and dependency definitions come from `src/GPS/cmake/GPSBuild.cmake`.
+and dependency definitions come from `src/GPS/Libraries.cmake`.
 
 ```sh
 cmake -S test/GPS/Recording -B build/gps-recording -G Ninja \

@@ -6,9 +6,9 @@
 
 #include <memory>
 
-#include "GPSReplayScheduler.h"
 #include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
+#include "ManualScheduler.h"
 
 namespace {
 QGeoPositionInfo position()
@@ -88,7 +88,7 @@ void GPSSourceHealthTest::_normalizesObservation()
 
 void GPSSourceHealthTest::_ageAndRecovery()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
     health._freshnessTimeoutMs = 100;
     QCOMPARE(health.state(), GPSSourceHealth::NoData);
@@ -123,7 +123,7 @@ void GPSSourceHealthTest::_ageAndRecovery()
 
 void GPSSourceHealthTest::_independentSatelliteExpiry()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
     GPSSatelliteStore store(nullptr, 100, &scheduler);
     connect(&store, &GPSSatelliteStore::observationChanged, &health, &GPSSourceHealth::applySatelliteObservation);
@@ -155,7 +155,7 @@ void GPSSourceHealthTest::_independentSatelliteExpiry()
 
 void GPSSourceHealthTest::_settingsStatus()
 {
-    GPSReplayScheduler scheduler(nullptr, 10000000);
+    ManualScheduler scheduler(nullptr, 10000000);
     GPSSourceHealth health(nullptr, &scheduler);
     QQmlEngine engine;
     engine.addImportPath(QStringLiteral("qrc:/qml"));
@@ -234,7 +234,7 @@ void GPSSourceHealthTest::_consumerAcceptancePolicies()
 
 void GPSSourceHealthTest::_fixSatelliteCountsTakePrecedence()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
     GPSSatelliteStore store(nullptr, 300, &scheduler);
     connect(&store, &GPSSatelliteStore::observationChanged, &health, &GPSSourceHealth::applySatelliteObservation);
@@ -326,7 +326,7 @@ void GPSSourceHealthTest::_remoteIdUsesKnownEllipsoidAltitude()
 
 void GPSSourceHealthTest::_rawPoliciesPreserveMeasurementsAndRespectInvalidation()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
     auto fix = position();
     fix.removeAttribute(QGeoPositionInfo::HorizontalAccuracy);
@@ -363,7 +363,7 @@ void GPSSourceHealthTest::_retainedMeasurementExpires_data()
 void GPSSourceHealthTest::_retainedMeasurementExpires()
 {
     QFETCH(QString, quality);
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
     health.setFreshnessTimeoutMs(100);
     GPSObservation observation;

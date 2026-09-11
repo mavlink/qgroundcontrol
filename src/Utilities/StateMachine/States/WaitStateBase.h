@@ -1,8 +1,7 @@
 #pragma once
 
 #include "QGCState.h"
-
-#include <QtCore/QTimer>
+#include "ScheduledTask.h"
 
 /// \brief Base class for states that wait for something with optional timeout
 ///
@@ -17,7 +16,8 @@ public:
     /// @param stateName Name for this state (for logging)
     /// @param parent Parent state
     /// @param timeoutMsecs Timeout in milliseconds, 0 for no timeout
-    WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs = 0);
+    WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs = 0,
+                  RuntimeScheduler* scheduler = nullptr);
 
     /// Rearm wait signal connections and timeout after a handled timeout event.
     /// Intended for retry loops that stay in the same state.
@@ -69,6 +69,7 @@ private slots:
 
 private:
     int _timeoutMsecs = 0;
-    QTimer _timeoutTimer;
+    ScheduledTask _timeoutTask;
+    int _effectiveTimeout = 0;
     bool _completed = false;
 };

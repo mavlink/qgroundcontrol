@@ -5,12 +5,29 @@
 #include <QtTest/QTest>
 
 #include "GPSReceiverProfile.h"
+#include "GPSRecordingBuffer.h"
 #include "GPSRecordingFormat.h"
 
 class GPSRecordingFormatTest : public QObject
 {
     Q_OBJECT
 private slots:
+
+    void provenanceRoundTrip()
+    {
+        auto buffer = std::make_shared<GPSRecordingBuffer>();
+        const GPSRecordingProvenance provenance{QStringLiteral("QGroundControl"), QStringLiteral("abc123-dirty"), 7};
+        QVERIFY(buffer->setProvenance(provenance));
+        QVERIFY(!buffer->setProvenance({QStringLiteral("host:password@example.org"), {}, 0}));
+        QVERIFY(buffer->start());
+        QVERIFY(!buffer->setProvenance({}));
+        buffer->append(buffer->allocateStream(), {}, false, GPSRecordingEvent::Kind::Open);
+        buffer->stop();
+        GPSRecordingDocument decoded;
+        QString error;
+        QVERIFY2(GPSRecordingDocument::decode(buffer->exportJson(), decoded, error), qPrintable(error));
+        QCOMPARE(decoded.events.first().metadata.provenance, provenance);
+    }
 
     void streamingCancellationAndErrors()
     {

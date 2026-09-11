@@ -34,7 +34,8 @@ GPSCorrectionOutcome correctionOutcome(GPSDriver::CorrectionStatus status)
 }  // namespace
 
 GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
-                         std::shared_ptr<GPSByteBuffer> nmeaBuffer, QObject* parent, GPSExecutionContext context)
+                         std::shared_ptr<TimestampedByteBuffer> nmeaBuffer, QObject* parent,
+                         GPSExecutionContext context)
     : QThread(parent)
     , _clock(std::move(context))
     , _mailbox(std::make_shared<GPSReceiverMailbox>())

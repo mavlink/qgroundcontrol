@@ -5,9 +5,9 @@
 
 #include <functional>
 
-#include "GPSScheduledTask.h"
 #include "NTRIPStream.h"
 #include "NTRIPTransportConfig.h"
+#include "ScheduledTask.h"
 
 /// Settings-independent owner of one caster session and its replacement attempts.
 class NTRIPSession : public QObject
@@ -30,7 +30,7 @@ public:
     using Clock = std::function<qint64()>;
 
     explicit NTRIPSession(StreamFactory factory, QObject* parent = nullptr, Clock clock = {},
-                          GPSRuntimeScheduler* scheduler = nullptr);
+                          RuntimeScheduler* scheduler = nullptr);
     ~NTRIPSession() override;
 
     void start(const NTRIPTransportConfig& config, bool reconnect = true);
@@ -78,8 +78,8 @@ private:
     void _onConnected(NTRIPStream* stream);
 
     StreamFactory _factory;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _retryTask;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _retryTask;
     Clock _clock;
     NTRIPTransportConfig _config;
     QPointer<NTRIPStream> _stream;

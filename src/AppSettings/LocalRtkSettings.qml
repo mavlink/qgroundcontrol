@@ -13,7 +13,7 @@ SettingsGroupLayout {
     readonly property var _settings: QGroundControl.settingsManager.rtkSettings
     readonly property var _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
     readonly property var _manager: QGroundControl.gpsManager
-    readonly property var _connection: root._manager.rtkConnection
+    readonly property var _connection: root._manager.receiverConnection
     readonly property var _facts: QGroundControl.gpsReceiver
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property var _serialPorts: root._serialPortManager ? root._serialPortManager.serialPorts : []
@@ -39,7 +39,7 @@ SettingsGroupLayout {
     }
 
     GpsConnectionType {
-        objectName: "rtkConnectionType"
+        objectName: "receiverConnectionType"
         Layout.fillWidth: true
         fact: root._settings.connectionType
         excludedValues: root._serialPortManager ? [] : [RTKSettings.Serial]
@@ -149,9 +149,9 @@ SettingsGroupLayout {
             }
             return root._serial ? qsTr("Waiting for receiver") : qsTr("Connecting")
         }
-        onConnectRequested: root._manager.connectRtk()
+        onConnectRequested: root._manager.connectReceiver()
         onDisconnectRequested: {
-            root._manager.disconnectRtk()
+            root._manager.disconnectReceiver()
         }
     }
 

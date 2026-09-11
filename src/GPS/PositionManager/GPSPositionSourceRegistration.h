@@ -2,12 +2,12 @@
 
 #include <QtCore/QPointer>
 
-class QGCPositionManager;
+class GPSPositionService;
 
 /// A source registration is retired only by its own token, never by a superseded owner.
 class GPSPositionSourceRegistration
 {
-    friend class QGCPositionManager;
+    friend class GPSPositionService;
 
 public:
     GPSPositionSourceRegistration();
@@ -22,9 +22,9 @@ public:
     GPSPositionSourceRegistration& operator=(const GPSPositionSourceRegistration&) = delete;
 
 private:
-    GPSPositionSourceRegistration(QGCPositionManager* manager, int kind, quint64 token);
+    GPSPositionSourceRegistration(GPSPositionService* manager, int kind, quint64 token);
     void _swap(GPSPositionSourceRegistration& other) noexcept;
-    QPointer<QGCPositionManager> _manager;
+    QPointer<GPSPositionService> _manager;
     int _kind = 0;
     quint64 _token = 0;
 };

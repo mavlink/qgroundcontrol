@@ -266,6 +266,20 @@ GPSDriver::ReceiveResult GPSDriver::receiveResult(unsigned timeoutMs)
 GPSProtocolIO GPSDriver::_protocolIO()
 {
     GPSProtocolIO io;
+    io.log = [](GPSProtocolLogLevel level, std::string_view message) {
+        const auto text = QString::fromUtf8(message.data(), message.size());
+        switch (level) {
+            case GPSProtocolLogLevel::Debug:
+                qCDebug(GPSDriversLog).noquote() << text;
+                break;
+            case GPSProtocolLogLevel::Warning:
+                qCWarning(GPSDriversLog).noquote() << text;
+                break;
+            case GPSProtocolLogLevel::Error:
+                qCCritical(GPSDriversLog).noquote() << text;
+                break;
+        }
+    };
     io.nowUs = _clock.nowUs;
     io.wait = [this](std::chrono::microseconds duration) {
         while (duration.count() > 0 && !(_transport.isCancelled() || _clock.cancelled())) {

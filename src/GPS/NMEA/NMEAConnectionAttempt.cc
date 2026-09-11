@@ -2,10 +2,10 @@
 
 #include <QtNetwork/QTcpSocket>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "GPSReceiverTransportFactory.h"
 #include "GPSRecordingDevice.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 #include "UdpIODevice.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -19,7 +19,7 @@
 QGC_LOGGING_CATEGORY(NMEAConnectionAttemptLog, "GPS.NMEA.NMEAConnectionAttempt")
 
 NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, QObject* parent, quint64 generation,
-                                             GPSRuntimeScheduler* scheduler)
+                                             RuntimeScheduler* scheduler)
     : QObject(parent)
     , _attempt{generation,
                std::make_shared<const GPSReceiverProfile>(profile.normalized()),
@@ -27,7 +27,7 @@ NMEAConnectionAttempt::NMEAConnectionAttempt(const GPSReceiverProfile& profile, 
                GPSConnectionError::None,
                {}}
     , _receiver(this)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _connectTimeout(_scheduler, this)
 {
     qCDebug(NMEAConnectionAttemptLog) << this;
@@ -344,7 +344,7 @@ void NMEAConnectionAttempt::shutdown()
 }
 
 #ifndef QGC_NO_SERIAL_LINK
-void NMEAConnectionAttempt::setSerialDiscovery(SerialPortManager* serialPorts)
+void NMEAConnectionAttempt::setSerialDiscovery(GPSSerialDiscovery* serialPorts)
 {
     if (_attempt.phase == GPSReceiverAttempt::Phase::Idle) {
         _serialPorts = serialPorts;

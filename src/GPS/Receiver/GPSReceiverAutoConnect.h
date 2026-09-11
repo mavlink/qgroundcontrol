@@ -10,9 +10,8 @@
 #include "GPSConnectionControl.h"
 #include "GPSReceiverProfile.h"
 #include "GPSReceiverSession.h"
+#include "GPSSerialDiscovery.h"
 #include "GPSSourceHealth.h"
-
-class SerialPortManager;
 
 /// Connection intent, discovery and retry policy for one independently owned receiver session.
 class GPSReceiverAutoConnect : public QObject
@@ -31,7 +30,7 @@ class GPSReceiverAutoConnect : public QObject
 
 public:
     explicit GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPSSourceHealth* health = nullptr,
-                                    QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
+                                    QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSReceiverAutoConnect() override;
 
     void setProfile(const GPSReceiverProfile& profile, bool restart = false);
@@ -39,7 +38,7 @@ public:
     void setSuspended(bool suspended);
 #ifndef QGC_NO_SERIAL_LINK
     using SerialTransportFactory = std::function<GPSProvider::TransportFactory(const QString&)>;
-    void setSerialDiscovery(SerialPortManager* serialPorts);
+    void setSerialDiscovery(GPSSerialDiscovery* serialPorts);
     void setSerialTransportFactory(SerialTransportFactory factory);
 #endif
     bool connectSelected();
@@ -100,7 +99,7 @@ private:
     std::optional<GPSReceiverProfile> _sessionConfig;
 #ifndef QGC_NO_SERIAL_LINK
     void _updateSerial();
-    QPointer<SerialPortManager> _serialPorts;
+    QPointer<GPSSerialDiscovery> _serialPorts;
     SerialTransportFactory _serialFactory;
     QString _autoConnectedPort;
     QMap<QString, qint64> _waitingPorts;

@@ -14,7 +14,7 @@ ToolIndicatorPage {
     showExpand: root._baseStation
 
     readonly property bool _baseStation: rtkSettings.receiverRole.rawValue === RTKSettings.RTKBase
-    readonly property var _receiverHealth: QGroundControl.gpsManager.rtkConnection.health
+    readonly property var _receiverHealth: QGroundControl.gpsManager.receiverConnection.health
 
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property string na:                 qsTr("N/A", "No data to display")

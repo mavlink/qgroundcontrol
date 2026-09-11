@@ -3,14 +3,14 @@
 #include <algorithm>
 #include <utility>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSIntegrityStoreLog, "GPS.Core.GPSIntegrityStore")
 
-GPSIntegrityStore::GPSIntegrityStore(QObject* parent, GPSRuntimeScheduler* scheduler)
+GPSIntegrityStore::GPSIntegrityStore(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _expiryTask(_scheduler, this)
 {
     qCDebug(GPSIntegrityStoreLog) << this;

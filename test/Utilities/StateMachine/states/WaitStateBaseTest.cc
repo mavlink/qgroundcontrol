@@ -1,16 +1,18 @@
 #include "WaitStateBaseTest.h"
-#include "StateTestCommon.h"
 
 #include <QtCore/QCoreApplication>
 
+#include "ManualScheduler.h"
+#include "StateTestCommon.h"
 
 /// Concrete implementation for testing WaitStateBase
 class TestWaitState : public WaitStateBase
 {
     Q_OBJECT
 public:
-    TestWaitState(const QString& name, QState* parent, int timeoutMsecs = 0)
-        : WaitStateBase(name, parent, timeoutMsecs) {}
+    TestWaitState(const QString& name, QState* parent, int timeoutMsecs = 0, RuntimeScheduler* scheduler = nullptr)
+        : WaitStateBase(name, parent, timeoutMsecs, scheduler)
+    {}
 
     void triggerComplete() { waitComplete(); }
     void triggerFailed() { waitFailed(); }
@@ -184,32 +186,25 @@ void WaitStateBaseTest::_testDoubleFailProtection()
 
 void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
 {
+    ManualScheduler clock;
     QStateMachine machine;
-    const int timeoutMs = 200;
-
-    auto* waitState = new TestWaitState(QStringLiteral("TestCancelTimeout"), &machine, timeoutMs);
+    auto* state = new TestWaitState(QStringLiteral("TestCancelTimeout"), &machine, 200, &clock);
     auto* finalState = new QFinalState(&machine);
-
-    waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
-    machine.setInitialState(waitState);
-
-    QSignalSpy timeoutSpy(waitState, &WaitStateBase::timeout);
-    QSignalSpy completedSpy(waitState, &WaitStateBase::completed);
-    QSignalSpy enteredSpy(waitState, &QState::entered);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
+    state->addTransition(state, &WaitStateBase::completed, finalState);
+    machine.setInitialState(state);
+    QSignalSpy entered(state, &QState::entered);
+    QSignalSpy timedOut(state, &WaitStateBase::timeout);
+    QSignalSpy finished(&machine, &QStateMachine::finished);
     machine.start();
-
-    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
-
-    // Complete before timeout
-    QTimer::singleShot(50, waitState, [waitState]() {
-        waitState->triggerComplete();
-    });
-
-    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
-    QCOMPARE(completedSpy.count(), 1);
-    QCOMPARE(timeoutSpy.count(), 0);  // Timeout should have been cancelled
+    QVERIFY(entered.wait(TestTimeout::shortMs()));
+    QCOMPARE(clock.pendingCount(), 1);
+    QVERIFY(clock.advanceBy(std::chrono::milliseconds(199)));
+    QCOMPARE(timedOut.count(), 0);
+    state->triggerComplete();
+    QVERIFY(spyTriggered(finished, TestTimeout::shortMs()));
+    QCOMPARE(clock.pendingCount(), 0);
+    QVERIFY(clock.advanceBy(std::chrono::hours(1)));
+    QCOMPARE(timedOut.count(), 0);
 }
 
 void WaitStateBaseTest::_testSignalDisconnectOnExit()

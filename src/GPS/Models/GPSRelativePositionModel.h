@@ -36,7 +36,7 @@ class GPSRelativePositionModel : public QObject
 
 public:
     explicit GPSRelativePositionModel(QObject* parent = nullptr, int freshnessTimeoutMs = 5000,
-                                      GPSRuntimeScheduler* scheduler = nullptr);
+                                      RuntimeScheduler* scheduler = nullptr);
     ~GPSRelativePositionModel() override;
 
     QString sourceId() const { return _sourceId; }

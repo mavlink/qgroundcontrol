@@ -7,6 +7,7 @@
 #include <QtCore/QJsonParseError>
 #include <QtCore/QSet>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <utility>
@@ -116,6 +117,9 @@ bool readMetadata(const QJsonObject& object, int version, GPSRecordingMetadata& 
                                           {"baud", QJsonValue::Double, true},
                                           {"fixed_baud", QJsonValue::Double, version >= 2},
                                           {"configured", QJsonValue::Bool, true},
+                                          {"producer", QJsonValue::String, false},
+                                          {"build", QJsonValue::String, false},
+                                          {"configuration_revision", QJsonValue::Double, false},
                                           {"constellation_mask", QJsonValue::Double, true},
                                           {"dynamic_model", QJsonValue::Double, true},
                                           {"output_rate_hz", QJsonValue::Double, true},
@@ -125,6 +129,17 @@ bool readMetadata(const QJsonObject& object, int version, GPSRecordingMetadata& 
         return false;
     }
     auto& m = result;
+    m.provenance.producer = object["producer"].toString();
+    m.provenance.build = object["build"].toString();
+    if (object.contains("configuration_revision") && !integer(object["configuration_revision"], 0, UINT32_MAX)) {
+        error = QStringLiteral("Invalid driver configuration revision");
+        return false;
+    }
+    m.provenance.configurationRevision = static_cast<quint32>(object["configuration_revision"].toInteger());
+    if (!m.provenance.valid()) {
+        error = QStringLiteral("Invalid recording provenance");
+        return false;
+    }
     if (version == 1) {
         if (!integer(object["transport"], 0, 3) || !integer(object["protocol"], 0, 1) ||
             !integer(object["role"], 0, 1) || !integer(object["driver"], -1, 3)) {
@@ -212,6 +227,9 @@ QJsonObject metadataJson(const GPSRecordingMetadata& m)
             {"baud", m.initialBaud},
             {"fixed_baud", static_cast<qint64>(m.fixedBaud)},
             {"configured", m.configured},
+            {"producer", m.provenance.producer},
+            {"build", m.provenance.build},
+            {"configuration_revision", static_cast<qint64>(m.provenance.configurationRevision)},
             {"constellation_mask", m.receiver.constellationMask},
             {"dynamic_model", m.receiver.dynamicModel},
             {"output_rate_hz", m.receiver.outputRateHz},
@@ -225,6 +243,17 @@ QJsonObject metadataJson(const GPSRecordingMetadata& m)
                                  {"accuracy_m", m.receiver.base.fixedBaseAccuracyMeters}}}};
 }
 }  // namespace
+
+bool GPSRecordingProvenance::valid() const
+{
+    const auto identifier = [](const QString& text) {
+        return text.size() <= 128 && std::all_of(text.cbegin(), text.cend(), [](QChar c) {
+                   return (c >= u'a' && c <= u'z') || (c >= u'A' && c <= u'Z') || (c >= u'0' && c <= u'9') ||
+                          c == u'.' || c == u'_' || c == u'-' || c == u'+';
+               });
+    };
+    return identifier(producer) && identifier(build);
+}
 
 GPSRecordingMetadata GPSRecordingMetadata::forReceiver(const GPSReceiverConfig& config, GPSType type)
 {
@@ -347,6 +376,8 @@ public:
             if (_sessions.contains(event.stream))
                 return fail("Duplicate stream profile");
             const auto& m = event.metadata;
+            if (!m.provenance.valid())
+                return fail("Invalid recording provenance");
             const auto& r = m.receiver;
             const auto& b = r.base;
             if (name(m.transport, transports).isEmpty() || name(m.driverType, drivers).isEmpty() ||

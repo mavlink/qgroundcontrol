@@ -1,6 +1,6 @@
 #pragma once
 
-/// Receiver families QGC can drive via the px4-gpsdrivers library.
+/// Receiver families QGC can drive using the native protocol drivers.
 enum class GPSType
 {
     u_blox = 0,

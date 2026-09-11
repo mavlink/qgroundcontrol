@@ -83,7 +83,6 @@
 #define SBF_ID_AttCovEuler 5939
 
 /*** SBF protocol binary message and payload definitions ***/
-#pragma pack(push, 1)
 
 typedef struct
 {
@@ -331,8 +330,6 @@ typedef struct
 
     uint8_t padding[16];
 } sbf_buf_t;
-
-#pragma pack(pop)
 
 /*** END OF SBF protocol binary message and payload definitions ***/
 

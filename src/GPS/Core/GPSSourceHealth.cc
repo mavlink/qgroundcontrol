@@ -5,14 +5,14 @@
 #include <algorithm>
 #include <chrono>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.Core.GPSSourceHealth")
 
-GPSSourceHealth::GPSSourceHealth(QObject* parent, GPSRuntimeScheduler* scheduler)
+GPSSourceHealth::GPSSourceHealth(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _positionTask(_scheduler, this)
     , _fixSatellitesTask(_scheduler, this)
 {

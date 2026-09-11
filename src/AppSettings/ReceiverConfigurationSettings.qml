@@ -12,7 +12,7 @@ SettingsGroupLayout {
         return fact && fact.userVisible && (descriptor.support !== 1 || Number(fact.rawValue) !== Number(descriptor.defaultValue));
     }) : []
     property var descriptors: QGroundControl.gpsManager.receiverSettings
-    property bool receiverActive: QGroundControl.gpsManager.rtkConnection.active
+    property bool receiverActive: QGroundControl.gpsManager.receiverConnection.active
     property var settings: QGroundControl.settingsManager.rtkSettings
 
     heading: qsTr("Receiver Configuration")

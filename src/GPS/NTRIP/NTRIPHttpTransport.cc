@@ -1,16 +1,15 @@
 #include "NTRIPHttpTransport.h"
 
-#include "GPSQtRuntimeScheduler.h"
 #include "NMEAUtils.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIP.NTRIPHttpTransport")
 
-NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent,
-                                       GPSRuntimeScheduler* scheduler)
+NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent, RuntimeScheduler* scheduler)
     : NTRIPStream(parent)
     , _config(config)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _dataWatchdog(_scheduler, this)
     , _response(config, NTRIPHttpResponse::Mode::Corrections, this, _scheduler)
 {

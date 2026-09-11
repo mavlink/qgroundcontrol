@@ -68,7 +68,7 @@ void PositionManagerTest::init()
     UnitTest::init();
     // Headless CI has no real position source, so the internal GPS fallback
     // times out waiting for updates. Expected and benign in this fixture.
-    ignoreLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
+    ignoreLogMessage("GPS.PositionManager.GPSPositionService", QtWarningMsg,
                      QRegularExpression(QStringLiteral("UpdateTimeoutError")));
 }
 
@@ -102,7 +102,7 @@ void PositionManagerTest::_platformSourceSelection()
 #endif
     const bool hasSource = customProvider || (platformAvailable && !expectedProvider.isEmpty());
     if (!hasSource) {
-        expectLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
+        expectLogMessage("GPS.Integration.QGCPositionManager", QtWarningMsg,
                          QRegularExpression(QStringLiteral("^Platform positioning backend unavailable$")));
     }
     QStringList attemptedProviders;

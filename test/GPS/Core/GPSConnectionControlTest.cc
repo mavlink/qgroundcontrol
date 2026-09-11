@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "GPSConnectionControl.h"
-#include "GPSReplayScheduler.h"
+#include "ManualScheduler.h"
 
 void GPSConnectionControlTest::_reentrantProfileReplacement_data()
 {
@@ -16,7 +16,7 @@ void GPSConnectionControlTest::_reentrantProfileReplacement()
 {
     QFETCH(bool, deferred);
     using Policy = GPSConnectionControl::NotificationPolicy;
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSReceiverProfile first;
     first.endpoint = {.kind = GPSReceiverProfile::Endpoint::Kind::Tcp, .host = "localhost", .port = 1234};
     auto second = first;
@@ -65,7 +65,7 @@ void GPSConnectionControlTest::_retryScheduling()
 {
     QFETCH(bool, deferred);
     using Policy = GPSConnectionControl::NotificationPolicy;
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSReceiverProfile profile;
     profile.endpoint = {.kind = GPSReceiverProfile::Endpoint::Kind::Tcp, .host = "localhost", .port = 1234};
     GPSConnectionControl control(deferred ? Policy::AfterCommands : Policy::Immediate, nullptr, &scheduler, profile);
@@ -91,7 +91,7 @@ void GPSConnectionControlTest::_retryScheduling()
 
 void GPSConnectionControlTest::_queuedCommandsRetireWithOwner()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     auto control = std::make_unique<GPSConnectionControl>(GPSConnectionControl::NotificationPolicy::AfterCommands,
                                                           nullptr, &scheduler);
     bool staleCommandRan = false;

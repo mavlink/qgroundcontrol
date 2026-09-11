@@ -35,6 +35,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <thread>
 #include <time.h>
 
 #include "GPSProtocolTime.h"
@@ -51,10 +52,14 @@ GPSProtocol::GPSProtocol(GPSProtocolIO io)
     : _io(std::move(io))
 {
     if (!_io.nowUs)
-        _io.nowUs = [] { return gps_absolute_time(); };
+        _io.nowUs = [] {
+            return std::chrono::duration_cast<std::chrono::microseconds>(
+                       std::chrono::steady_clock::now().time_since_epoch())
+                .count();
+        };
     if (!_io.wait)
         _io.wait = [](std::chrono::microseconds duration) {
-            gps_usleep(duration.count());
+            std::this_thread::sleep_for(duration);
             return true;
         };
 }

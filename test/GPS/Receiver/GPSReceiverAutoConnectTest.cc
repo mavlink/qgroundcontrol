@@ -7,9 +7,10 @@
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverSession.h"
 #include "GPSReceiverTestProfile.h"
-#include "GPSReplayScheduler.h"
 #include "GPSTransport.h"
+#include "ManualScheduler.h"
 #ifndef QGC_NO_SERIAL_LINK
+#include "GPSSerialPortRegistry.h"
 #include "SerialPortManager.h"
 #endif
 
@@ -69,7 +70,7 @@ void GPSReceiverAutoConnectTest::_nmeaDiscoveryExclusionDoesNotRevokeReceiver()
     GPSReceiverAutoConnect controller(&receiver);
     controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
-    controller.setSerialDiscovery(&ports);
+    controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
     controller._connectDelayMs = 0;
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
@@ -99,7 +100,7 @@ void GPSReceiverAutoConnectTest::_serialRetriesKeepConfiguration()
     config.receiver.base.surveyInAccMeters = 1.0;
     config.receiver.base.surveyInDurationSecs = 120;
     controller.setProfile(config);
-    controller.setSerialDiscovery(&ports);
+    controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
     controller.setSerialTransportFactory([](const QString&) { return failedOpenFactory(); });
     controller._connectDelayMs = 0;
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
@@ -157,7 +158,7 @@ void GPSReceiverAutoConnectTest::_manualSerialSelectionAndPause()
     config.driverType = GPSType::femto;
     config.receiverName = QStringLiteral("Femtomes");
     controller.setProfile(config);
-    controller.setSerialDiscovery(&ports);
+    controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
     controller._connectDelayMs = 0;
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
@@ -204,7 +205,7 @@ void GPSReceiverAutoConnectTest::_discoveryUnplugAndDisable()
     GPSReceiverAutoConnect controller(&receiver);
     controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
-    controller.setSerialDiscovery(&ports);
+    controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
     controller._connectDelayMs = 0;
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
@@ -256,7 +257,7 @@ void GPSReceiverAutoConnectTest::_unplugNotificationPreservesChangedIntent()
     replacement.endpoint.device = QStringLiteral("/test/replacement");
     controller.setProfile(original);
     controller.setAutoConnect(true);
-    controller.setSerialDiscovery(&ports);
+    controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
     controller._connectDelayMs = 0;
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
@@ -343,7 +344,7 @@ void GPSReceiverAutoConnectTest::_excludedPorts()
     GPSReceiverAutoConnect controller(&receiver);
     controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
-    controller.setSerialDiscovery(&ports);
+    controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
     controller.setSerialTransportFactory([](const QString&) { return waitingFactory(); });
     controller._connectDelayMs = 0;
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
@@ -361,7 +362,7 @@ void GPSReceiverAutoConnectTest::_failedAttemptsBackOffAndRespectReservations()
     auto& state = controller._control.connection();
     controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
-    controller.setSerialDiscovery(&ports);
+    controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
     controller.setSerialTransportFactory([](const QString&) { return failedOpenFactory(); });
     controller._connectDelayMs = 0;
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
@@ -403,7 +404,7 @@ void GPSReceiverAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     auto& state = controller._control.connection();
     controller.setProfile(serialConfig());
     controller.setAutoConnect(true);
-    controller.setSerialDiscovery(&ports);
+    controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
     controller.setSerialTransportFactory([](const QString&) { return failedOpenFactory(); });
     controller._connectDelayMs = 0;
     const auto cleanup = qScopeGuard([&]() { receiver.shutdown(); });
@@ -620,7 +621,7 @@ void GPSReceiverAutoConnectTest::_receiverCanDisappearDuringStopping()
 
 void GPSReceiverAutoConnectTest::_retryRunsWithoutPolling()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSReceiverSession session;
     GPSReceiverAutoConnect controller(&session, nullptr, nullptr, &scheduler);
     auto config = gpsReceiverTestProfile();
@@ -655,7 +656,7 @@ void GPSReceiverAutoConnectTest::_retryRunsWithoutPolling()
 
 void GPSReceiverAutoConnectTest::_suspensionDuringAdmissionDefersStart()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSReceiverSession session;
     GPSReceiverAutoConnect controller(&session, nullptr, nullptr, &scheduler);
     std::atomic_int attempts = 0;
@@ -695,7 +696,7 @@ void GPSReceiverAutoConnectTest::_profileChangeDuringAdmission_data()
 void GPSReceiverAutoConnectTest::_profileChangeDuringAdmission()
 {
     QFETCH(bool, serial);
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSReceiverSession session;
     GPSReceiverAutoConnect controller(&session, nullptr, nullptr, &scheduler);
     auto profile = gpsReceiverTestProfile();
@@ -714,7 +715,7 @@ void GPSReceiverAutoConnectTest::_profileChangeDuringAdmission()
     SerialPortManager ports(nullptr, receiverInventory);
     if (serial) {
         profile = serialConfig(QStringLiteral("/test/rtk"));
-        controller.setSerialDiscovery(&ports);
+        controller.setSerialDiscovery(new GPSSerialPortRegistry(&ports, &controller));
         controller.setSerialTransportFactory([factory](const QString&) { return factory; });
         controller._connectDelayMs = 0;
     }

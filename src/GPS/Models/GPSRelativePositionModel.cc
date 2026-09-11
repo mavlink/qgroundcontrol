@@ -8,8 +8,7 @@
 
 QGC_LOGGING_CATEGORY(GPSRelativePositionModelLog, "GPS.Models.GPSRelativePositionModel")
 
-GPSRelativePositionModel::GPSRelativePositionModel(QObject* parent, int freshnessTimeoutMs,
-                                                   GPSRuntimeScheduler* scheduler)
+GPSRelativePositionModel::GPSRelativePositionModel(QObject* parent, int freshnessTimeoutMs, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _store(this, freshnessTimeoutMs, scheduler)
 {

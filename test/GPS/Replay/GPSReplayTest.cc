@@ -21,24 +21,24 @@
 #include "GPSCorrectionRouter.h"
 #include "GPSProtocolTestIO.h"
 #include "GPSProvider.h"
-#include "GPSReadTimestamp.h"
 #include "GPSReceiverProfile.h"
 #include "GPSRecordingController.h"
 #include "GPSRecordingDevice.h"
 #include "GPSRecordingTransport.h"
 #include "GPSReplayDevice.h"
 #include "GPSReplayDriver.h"
-#include "GPSReplayScheduler.h"
 #include "GPSReplayTransport.h"
+#include "ManualScheduler.h"
 #include "NMEADecoderSession.h"
 #include "NMEAPositionSource.h"
 #include "NMEAStreamSplitter.h"
 #include "NTRIPHttpDecoder.h"
 #include "NTRIPSession.h"
+#include "ReadTimestamp.h"
 #include "UBX/GPSDriverUBX.h"
 
 namespace {
-class ReplayInput : public QIODevice, public GPSReadTimestamp
+class ReplayInput : public QIODevice, public ReadTimestamp
 {
 public:
     ReplayInput() { open(QIODevice::ReadOnly | QIODevice::Unbuffered); }
@@ -85,24 +85,22 @@ public:
     }
 };
 
-int nativeCallback(GPSCallbackType type, void* data, int size, void* user)
+GPSProtocolIO nativeIO(GPSTransport& transport)
 {
-    auto& transport = *static_cast<GPSTransport*>(user);
-    if (type == GPSCallbackType::readDeviceData) {
-        const auto& request = *static_cast<const GPSReadRequest*>(data);
-        const auto result = transport.read(request.buffer, request.capacity, request.timeoutMs);
-        return result.status == GPSTransport::ReadStatus::Data       ? result.bytesRead
-               : result.status == GPSTransport::ReadStatus::TimedOut ? 0
-                                                                     : -EIO;
-    }
-    if (type == GPSCallbackType::writeDeviceData) {
-        const auto result = transport.write(static_cast<const uint8_t*>(data), size);
-        return result.status == GPSTransport::WriteStatus::Completed ? result.writtenBytes : -EIO;
-    }
-    if (type == GPSCallbackType::setBaudrate) {
-        return transport.setBaudrate(size) ? 0 : -EIO;
-    }
-    return 0;
+    auto io = makeGPSProtocolTestIO();
+    io.read = [&transport](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+        const auto result =
+            transport.read(bytes.data(), int(bytes.size()), deadline.remainingMilliseconds(gps_test_time));
+        return {result.status, result.bytesRead};
+    };
+    io.write = [&transport](std::span<const uint8_t> bytes, GPSDeadline) -> GPSProtocolWriteResult {
+        const auto result = transport.write(bytes.data(), int(bytes.size()));
+        return {result.status, result.acceptedBytes, result.writtenBytes, result.uncertainBytes};
+    };
+    io.setBaudrate = [&transport](unsigned baudrate) {
+        return transport.setBaudrate(baudrate) ? GPSBaudStatus::Configured : GPSBaudStatus::Error;
+    };
+    return io;
 }
 
 class ReplayCaster : public NTRIPStream
@@ -135,6 +133,31 @@ class GPSReplayTest : public QObject
     Q_OBJECT
 private slots:
 
+    void incompatibleConfigurationStillChecksBytes()
+    {
+        GPSReplayTrace trace;
+        QString error;
+        QVERIFY(GPSReplayTrace::load(QStringLiteral(QGC_GPS_REPLAY_FIXTURES "/ubx-native.json"), trace, error));
+        trace.profile.emplace();
+        trace.profile->provenance.configurationRevision = 999;
+        auto event = std::find_if(trace.events.begin(), trace.events.end(),
+                                  [](const auto& item) { return item.kind == GPSRecordingEvent::Kind::Tx; });
+        QVERIFY(event != trace.events.end());
+        event->bytes[0] = char(event->bytes[0] ^ 1);
+        gps_test_time = 1;
+        GPSReplayClock clock(&gps_test_time);
+        std::atomic_bool stop = false;
+        GPSReplayTransport transport(clock, stop, trace);
+        transport.open();
+        GPSPositionReport position;
+        GPSDriverUBX driver(nativeIO(transport), &position, nullptr);
+        GPSProtocol::GPSConfig config{};
+        config.output_mode = GPSProtocol::OutputMode::GPS;
+        unsigned baudrate = 115200;
+        QVERIFY(driver.configure(baudrate, config) < 0);
+        QVERIFY(transport.failure().contains(QStringLiteral("configuration revision 999")));
+    }
+
     void nativePosition_data()
     {
         QTest::addColumn<int>("fragment");
@@ -163,7 +186,7 @@ private slots:
         GPSRecordingTransport transport(std::move(original), stop, recordedStream);
         QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
         GPSPositionReport position{};
-        GPSDriverUBX driver(makeGPSProtocolTestIO(nativeCallback, &transport), &position, nullptr);
+        GPSDriverUBX driver(nativeIO(transport), &position, nullptr);
         GPSProtocol::GPSConfig config{};
         config.output_mode = GPSProtocol::OutputMode::GPS;
         unsigned baudrate = 115200;
@@ -190,7 +213,7 @@ private slots:
         GPSReplayTransport roundTrip(clock, stop, std::move(exported), fragment);
         QCOMPARE(roundTrip.open().status, GPSTransport::OpenStatus::Opened);
         GPSPositionReport decoded{};
-        GPSDriverUBX replayed(makeGPSProtocolTestIO(nativeCallback, &roundTrip), &decoded, nullptr);
+        GPSDriverUBX replayed(nativeIO(roundTrip), &decoded, nullptr);
         baudrate = 115200;
         QVERIFY2(replayed.configure(baudrate, config) == 0, qPrintable(roundTrip.failure()));
         QVERIFY2(replayed.receive(500) > 0, qPrintable(roundTrip.failure()));
@@ -240,7 +263,7 @@ private slots:
                     if (decoder.decode(line, position, fix) && fix) {
                         ++decoded;
                         if (firstReceipt == 0) {
-                            firstReceipt = GPSReadTimestamp::from(output);
+                            firstReceipt = ReadTimestamp::from(output);
                         }
                     }
                 }
@@ -311,7 +334,7 @@ private slots:
         input.feed(sentence.sliced(10), 43);
         const auto live = splitter.positionDevice()->readLine();
         QCOMPARE(live, sentence);
-        QCOMPARE(GPSReadTimestamp::from(splitter.positionDevice()), quint64(42));
+        QCOMPARE(ReadTimestamp::from(splitter.positionDevice()), quint64(42));
         stream->record(GPSRecordingBuffer::Kind::Disconnect, {}, -1);
         tap.close();
         controller.stop();
@@ -776,7 +799,7 @@ private slots:
 
     void schedulerRetiresCancelledAndDestroyedCallbacks()
     {
-        GPSReplayScheduler scheduler;
+        ManualScheduler scheduler;
         auto owner = std::make_unique<QObject>();
         int calls = 0;
         const auto cancelled = scheduler.schedule(owner.get(), std::chrono::milliseconds(1), [&]() { ++calls; });
@@ -795,7 +818,7 @@ private slots:
 
     void nmeaProductionSessionReplay()
     {
-        GPSReplayScheduler scheduler;
+        ManualScheduler scheduler;
         GPSReplayDevice input(&scheduler);
         NMEADecoderSession session(nullptr, &scheduler);
         int positions = 0;
@@ -849,7 +872,7 @@ private slots:
 
     void oneShotTimeoutUsesVirtualTime()
     {
-        GPSReplayScheduler scheduler;
+        ManualScheduler scheduler;
         ReplayInput input;
         NMEAPositionSource source(&input, nullptr, &scheduler);
         QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
@@ -882,7 +905,7 @@ private slots:
         uint8_t buffer[8];
         QCOMPARE(transport.read(buffer, sizeof(buffer), 10).status, GPSReadStatus::Overflow);
         QVERIFY(transport.complete());
-        GPSReplayScheduler scheduler;
+        ManualScheduler scheduler;
         GPSReplayDevice device(&scheduler);
         QSignalSpy terminals(&device, &GPSReplayDevice::terminated);
         QSignalSpy opened(&device, &GPSReplayDevice::streamOpened);
@@ -931,7 +954,7 @@ private slots:
         QCOMPARE(received, QByteArray("recovered"));
         QCOMPARE(transport.read(bytes, sizeof(bytes), 100).status, GPSReadStatus::Closed);
         QVERIFY(transport.complete());
-        GPSReplayScheduler scheduler;
+        ManualScheduler scheduler;
         GPSReplayDevice device(&scheduler);
         QByteArray passive;
         connect(&device, &QIODevice::readyRead, &device, [&]() { passive += device.readAll(); });
@@ -1044,7 +1067,7 @@ private slots:
         QCOMPARE(native.terminationCount(), quint64(1));
         QVERIFY(native.fatalError());
 
-        GPSReplayScheduler scheduler;
+        ManualScheduler scheduler;
         GPSReplayDevice device(&scheduler);
         QSignalSpy terminal(&device, &GPSReplayDevice::terminated);
         QSignalSpy closed(&device, &GPSReplayDevice::streamClosed);
@@ -1063,7 +1086,7 @@ private slots:
 
     void correctionAndRecoveryUseVirtualTime()
     {
-        GPSReplayScheduler scheduler;
+        ManualScheduler scheduler;
         ReplayCaster* stream = nullptr;
         int attempts = 0;
         NTRIPSession session(

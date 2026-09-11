@@ -47,7 +47,7 @@ GPSDriverFemto::~GPSDriverFemto() {}
 
 void GPSDriverFemto::receiveWait(unsigned timeout_min)
 {
-    gps_abstime time_started = nowUs();
+    uint64_t time_started = nowUs();
 
     while (nowUs() < time_started + timeout_min * 1000) {
         receive(timeout_min);

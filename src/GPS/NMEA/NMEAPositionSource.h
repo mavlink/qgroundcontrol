@@ -6,8 +6,8 @@
 #include <memory>
 
 #include "GPSObservation.h"
-#include "GPSRuntimeScheduler.h"
-#include "GPSScheduledTask.h"
+#include "RuntimeScheduler.h"
+#include "ScheduledTask.h"
 
 class QIODevice;
 class QNmeaPositionInfoSource;
@@ -20,7 +20,7 @@ class NMEAPositionSource : public QGeoPositionInfoSource
     friend class NMEAPositionSourceTest;
 
 public:
-    explicit NMEAPositionSource(QIODevice* device, QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
+    explicit NMEAPositionSource(QIODevice* device, QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~NMEAPositionSource() override;
 
     void setUpdateInterval(int msec) override;
@@ -49,11 +49,11 @@ private:
     GPSObservation _lastObservation;
     QPointer<QIODevice> _device;
     std::unique_ptr<QNmeaPositionInfoSource> _decoder;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _requestTask;
-    GPSScheduledTask _publicationTask;
-    GPSScheduledTask _lossTask;
-    GPSScheduledTask _errorTask;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _requestTask;
+    ScheduledTask _publicationTask;
+    ScheduledTask _lossTask;
+    ScheduledTask _errorTask;
     std::optional<GPSObservation> _pendingLoss;
     std::optional<GPSObservation> _pendingObservation;
     bool _pendingRequested = false;

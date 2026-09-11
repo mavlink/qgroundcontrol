@@ -5,7 +5,7 @@
 
 #include "GPSConnectionState.h"
 #include "GPSReceiverProfile.h"
-#include "GPSScheduledTask.h"
+#include "ScheduledTask.h"
 
 /// Shared intent, admission, command notifications, and retry scheduling; backends own acquisition and teardown.
 class GPSConnectionControl : public QObject
@@ -17,7 +17,7 @@ public:
         Immediate,
         AfterCommands
     };
-    GPSConnectionControl(NotificationPolicy policy, QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr,
+    GPSConnectionControl(NotificationPolicy policy, QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
                          GPSReceiverProfile profile = {});
     ~GPSConnectionControl() override;
 
@@ -25,7 +25,7 @@ public:
 
     const GPSConnectionState& connection() const { return _connection; }
 
-    GPSRuntimeScheduler* scheduler() const { return _scheduler; }
+    RuntimeScheduler* scheduler() const { return _scheduler; }
 
     const GPSReceiverProfile& profile() const { return _profile; }
 
@@ -71,9 +71,9 @@ signals:
 
 private:
     NotificationPolicy _policy;
-    QPointer<GPSRuntimeScheduler> _scheduler;
+    QPointer<RuntimeScheduler> _scheduler;
     GPSConnectionState _connection;
-    GPSScheduledTask _update;
+    ScheduledTask _update;
     GPSReceiverProfile _profile;
     bool _automatic = false;
     bool _suspended = false;

@@ -4,17 +4,17 @@
 
 #include "GPSReceiverAutoConnect.h"
 #include "GPSReceiverCapabilities.h"
+#include "GPSSerialDiscovery.h"
 #include "SerialGPSTransport.h"
-#include "SerialPortManager.h"
 
-void GPSReceiverAutoConnect::setSerialDiscovery(SerialPortManager* serialPorts)
+void GPSReceiverAutoConnect::setSerialDiscovery(GPSSerialDiscovery* serialPorts)
 {
     if (_serialPorts) {
         _serialPorts->disconnect(this);
     }
     _serialPorts = serialPorts;
     if (_serialPorts) {
-        connect(_serialPorts, &SerialPortManager::serialPortsChanged, this, &GPSReceiverAutoConnect::_scheduleUpdate);
+        connect(_serialPorts, &GPSSerialDiscovery::serialPortsChanged, this, &GPSReceiverAutoConnect::_scheduleUpdate);
     }
     _scheduleUpdate();
     if (!_serialFactory) {
@@ -49,12 +49,13 @@ void GPSReceiverAutoConnect::_updateSerial()
     if (!guard || revision != _control.revision() || !_serialPorts) {
         return;
     }
-    const auto eligible = [this, &selectedDevice](const SerialPortManager::Port& port) {
+    const auto eligible = [this, &selectedDevice](const GPSSerialDiscovery::Port& port) {
         return port.autoConnectAllowed && !port.bootloader && _serialPorts->canAutoConnectPort(port.systemLocation) &&
-               (selectedDevice.isEmpty() ? port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS
-                                         : port.systemLocation == selectedDevice);
+               (selectedDevice.isEmpty()
+                    ? (port.receiver && GPSReceiverCapabilities::typeForName(port.boardName).has_value())
+                    : port.systemLocation == selectedDevice);
     };
-    const auto request = [this, &selectedDevice, guard, revision](const SerialPortManager::Port& port) {
+    const auto request = [this, &selectedDevice, guard, revision](const GPSSerialDiscovery::Port& port) {
         const QString name = selectedDevice.isEmpty() ? port.boardName : _sessionConfig->receiverName;
         const GPSType type = selectedDevice.isEmpty()
                                  ? GPSReceiverCapabilities::typeForName(name).value_or(GPSType::u_blox)

@@ -2,16 +2,16 @@
 
 #include <algorithm>
 
-#include "GPSQtRuntimeScheduler.h"
-#include "GPSReadTimestamp.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
+#include "ReadTimestamp.h"
 
 QGC_LOGGING_CATEGORY(NMEASatelliteAdapterLog, "GPS.NMEA.NMEASatelliteAdapter")
 
-NMEASatelliteAdapter::NMEASatelliteAdapter(QIODevice* source, QObject* parent, GPSRuntimeScheduler* scheduler)
+NMEASatelliteAdapter::NMEASatelliteAdapter(QIODevice* source, QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _source(source)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _idleTask(_scheduler, this)
     , _batchTask(_scheduler, this)
     , _deliveryTask(_scheduler, this)
@@ -50,7 +50,7 @@ void NMEASatelliteAdapter::_readAvailable()
             break;
         }
         remaining -= sentence.size();
-        _parseSentence(sentence, GPSReadTimestamp::from(_source));
+        _parseSentence(sentence, ReadTimestamp::from(_source));
     }
     if (_open && _source && _source->canReadLine() && !_readTask.active()) {
         _readTask.schedule(std::chrono::microseconds::zero(), [this]() { _readAvailable(); });

@@ -46,25 +46,29 @@ private:
 
 void NMEAStreamSplitterTest::_rawPartialReadOverflow()
 {
-    GPSByteBuffer buffer;
+    TimestampedByteBuffer buffer;
     const auto received = GPSObservation::monotonicNowUs();
     const QByteArray shared(50000, 'a');
     QVERIFY(buffer.append(shared, received));
     QByteArray output(10000, '\0');
-    quint64 timestamp = 0;
-    QCOMPARE(buffer.read(output.data(), output.size(), timestamp), 10000);
+    const auto read = [&] { return buffer.read(output.data(), output.size(), received, 5000000); };
+    auto result = read();
+    QCOMPARE(result.bytes, 10000);
     QCOMPARE(output, QByteArray(10000, 'a'));
-    QCOMPARE(timestamp, received);
+    QCOMPARE(result.receivedAtUs, received);
     QCOMPARE(buffer.size(), 40000);
     buffer.append(QByteArray(30000, 'b'), received);
-    QCOMPARE(buffer.size(), 30001);
-    QCOMPARE(buffer.read(output.data(), output.size(), timestamp), 1);
-    QCOMPARE(output[0], '\0');
+    QCOMPARE(buffer.size(), 30000);
+    QVERIFY(buffer.gapPending());
+    result = read();
+    QVERIFY(result.gap);
+    QCOMPARE(result.bytes, 0);
     QCOMPARE(buffer.size(), 30000);
     for (int i = 0; i < 3; ++i) {
-        QCOMPARE(buffer.read(output.data(), output.size(), timestamp), 10000);
+        result = read();
+        QCOMPARE(result.bytes, 10000);
         QCOMPARE(output, QByteArray(10000, 'b'));
-        QCOMPARE(timestamp, received);
+        QCOMPARE(result.receivedAtUs, received);
     }
     QCOMPARE(buffer.size(), 0);
     QCOMPARE(shared, QByteArray(50000, 'a'));

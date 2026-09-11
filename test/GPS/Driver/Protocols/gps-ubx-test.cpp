@@ -88,13 +88,8 @@ public:
     std::map<uint32_t, uint32_t> start_settings;
     std::map<uint32_t, uint32_t> current_settings;
     std::map<uint16_t, uint8_t> message_rates;
-    gps_abstime disabled_at = 0;
-    gps_abstime started_at = 0;
-
-    static int callback(GPSCallbackType type, void* data, int size, void* user)
-    {
-        return static_cast<Receiver*>(user)->handle(type, data, size);
-    }
+    uint64_t disabled_at = 0;
+    uint64_t started_at = 0;
 
     void survey(SurveyReply reply)
     {
@@ -297,24 +292,27 @@ private:
         queue(packet(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
     }
 
-    int handle(GPSCallbackType type, void* data, int size)
+public:
+    GPSProtocolIO io()
     {
-        if (type == GPSCallbackType::readDeviceData) {
-            const auto request = *static_cast<const GPSReadRequest*>(data);
-            const int timeout = request.timeoutMs;
-            data = request.buffer;
+        auto result = makeGPSProtocolTestIO();
+        result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+            const int timeout = deadline.remainingMilliseconds(gps_test_time);
+            auto* data = bytes.data();
+            const int size = static_cast<int>(bytes.size());
             CHECK(timeout >= 0);
 
             if (polls > 0 && poll_read_error < 0) {
                 ++failed_reads;
                 gps_test_time += 1000;
-                return poll_read_error;
+                return {poll_read_error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled
+                                                                      : GPSReadStatus::Error};
             }
 
             if (incoming.empty()) {
                 // The driver's deadlines use strict comparisons; move past the timeout.
                 gps_test_time += uint64_t(timeout) * 1000 + 1;
-                return 0;
+                return {GPSReadStatus::TimedOut};
             }
 
             gps_test_time += 1000;
@@ -325,19 +323,21 @@ private:
                 incoming.pop_front();
             }
 
-            return static_cast<int>(count);
-        }
+            return {GPSReadStatus::Data, static_cast<int>(count)};
+        };
+        result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSProtocolWriteResult {
+            const auto* data = input.data();
+            const int size = static_cast<int>(input.size());
 
-        if (type == GPSCallbackType::writeDeviceData) {
             const auto* bytes = static_cast<const uint8_t*>(data);
 
             if (fail_comms_write && outgoing.empty() && size >= 4 && bytes[2] == 0x0a && bytes[3] == 0x36) {
                 ++comms_polls;
-                return -1;
+                return {GPSWriteStatus::Unsupported};
             }
 
             if (fail_poll_write && outgoing.empty() && size >= 4 && bytes[2] == 0x01 && bytes[3] == 0x3b) {
-                return -1;
+                return {GPSWriteStatus::Unsupported};
             }
 
             outgoing.insert(outgoing.end(), bytes, bytes + size);
@@ -348,14 +348,14 @@ private:
                 process(complete);
             }
 
-            return size;
-        }
-
-        if (type == GPSCallbackType::surveyInStatus) {
-            ++status_callbacks;
-        }
-
-        return 0;
+            return {GPSWriteStatus::Completed, size, size, 0};
+        };
+        result.decoded = [this](GPSDecodedBatch batch) {
+            for (const auto& event : batch.events)
+                if (std::holds_alternative<GPSSurveyReport>(event))
+                    ++status_callbacks;
+        };
+        return result;
     }
 };
 
@@ -367,7 +367,7 @@ struct Fixture
     GPSBaseStationConfig base;
 
     Fixture()
-        : driver(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position, nullptr)
+        : driver(receiver.io(), &position, nullptr)
     {
         gps_test_time = 0;
         gps_test_warnings.clear();
@@ -482,7 +482,7 @@ static void positionMode(bool legacy, bool base_capable)
         CHECK(f.receiver.current_settings.count(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) == 0);
     }
 
-    Bytes pvt(sizeof(ubx_payload_rx_nav_pvt_t), 0);
+    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     pvt[20] = 3;
     pvt[21] = 1;
     pvt[23] = 12;
@@ -562,7 +562,7 @@ static void integrityReceipts()
     CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
     // This test inspects individual decoder mutations; epoch assembly has separate coverage.
     f.driver.setDecodeContext({.navigation = true});
-    Bytes mon_rf(sizeof(ubx_payload_rx_mon_rf_t), 0);
+    Bytes mon_rf(UBX::WIRE_SIZE<ubx_payload_rx_mon_rf_t>, 0);
     mon_rf[1] = 1;
     mon_rf[5] = 3;
     f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
@@ -571,7 +571,7 @@ static void integrityReceipts()
     const auto rf_stamp = f.position.jamming_state_timestamp;
     CHECK(rf_stamp != 0);
 
-    Bytes nav_status(sizeof(ubx_payload_rx_nav_status_t), 0);
+    Bytes nav_status(UBX::WIRE_SIZE<ubx_payload_rx_nav_status_t>, 0);
     nav_status[7] = 1 << UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
     f.receiver.queue(packet(UBX_MSG_NAV_STATUS, nav_status));
     f.driver.receive(100);
@@ -579,7 +579,7 @@ static void integrityReceipts()
     CHECK(spoof_stamp != 0);
     CHECK(f.position.jamming_state_timestamp == rf_stamp);
 
-    Bytes pvt(sizeof(ubx_payload_rx_nav_pvt_t), 0);
+    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     pvt[20] = 3;
     pvt[21] = 1;
     for (int i = 0; i < 10; ++i) {
@@ -616,7 +616,7 @@ static void integrityReceipts()
     CHECK(f.position.jamming_state == 3);
     CHECK(f.position.jamming_state_timestamp > sec_stamp);
 
-    Bytes rtcm(sizeof(ubx_payload_rx_rxm_rtcm_t), 0);
+    Bytes rtcm(UBX::WIRE_SIZE<ubx_payload_rx_rxm_rtcm_t>, 0);
     rtcm[1] = 2 << UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
     f.receiver.queue(packet(UBX_MSG_RXM_RTCM, rtcm));
     f.driver.receive(100);
@@ -627,7 +627,7 @@ static void integrityReceipts()
     f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
     CHECK(f.position.corrections_timestamp == correction_stamp);
-    Bytes cor(sizeof(ubx_payload_rx_rxm_cor_t), 0);
+    Bytes cor(UBX::WIRE_SIZE<ubx_payload_rx_rxm_cor_t>, 0);
     cor[4] = 29;
     cor[5] = 1;  // msgUsed=2 in statusInfo bits 8..7.
     f.receiver.queue(packet(UBX_MSG_RXM_COR, cor));
@@ -778,7 +778,7 @@ static void receiverSettings()
         receiver.reject_constellations = scenario == 3;
         receiver.timeout_constellations = scenario == 4;
         GPSPositionReport position{};
-        GPSDriverUBX driver(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position, nullptr);
+        GPSDriverUBX driver(receiver.io(), &position, nullptr);
         GPSProtocol::GPSConfig config{};
         config.dynamicModel = 4;
         config.outputRateHz = 5;
@@ -820,7 +820,7 @@ static void configurationReadback()
         f.receiver.current_settings[UBX_CFG_KEY_SIGNAL_GPS_ENA] = 1;
         f.receiver.current_settings[UBX_CFG_KEY_SIGNAL_QZSS_ENA] = 1;
         f.receiver.current_settings[UBX_CFG_KEY_SIGNAL_GAL_ENA] = 1;
-        const gps_abstime started = gps_test_time;
+        const uint64_t started = gps_test_time;
         GPSDriverUBX::ConfigurationReadback report;
         CHECK(f.driver.readConfiguration(report, 500) == (mode == 0));
         CHECK(f.receiver.readback_requests == 1);
@@ -846,7 +846,7 @@ static void transactionalFrames()
     Receiver receiver;
     GPSPositionReport position{};
     GPSSatelliteReport satellites{};
-    GPSDriverUBX driver(makeGPSProtocolTestIO(Receiver::callback, &receiver), &position, &satellites);
+    GPSDriverUBX driver(receiver.io(), &position, &satellites);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config{};
     config.output_mode = GPSProtocol::OutputMode::GPS;
@@ -889,7 +889,7 @@ static void transactionalFrames()
     CHECK(driver.decode(packet(UBX_MSG_MON_VER, baseVersion)).batch.events.empty());
     CHECK(driver.firmwareVersion() == firmware);
 
-    Bytes pvt(sizeof(ubx_payload_rx_nav_pvt_t), 0);
+    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     pvt[20] = 3;
     pvt[21] = 1;
     driver.setDecodeContext({.navigation = true});
@@ -929,7 +929,7 @@ static void controlDeadline()
     Receiver receiver;
     GPSPositionReport position{};
     gps_test_time = 1000000;
-    auto io = makeGPSProtocolTestIO(Receiver::callback, &receiver);
+    auto io = receiver.io();
     const auto read = io.read;
     const auto write = io.write;
     bool expireRead = false;

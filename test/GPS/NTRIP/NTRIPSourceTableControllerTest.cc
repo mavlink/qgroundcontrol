@@ -19,8 +19,8 @@
 
 #include <memory>
 
-#include "GPSReplayScheduler.h"
 #include "LocalHttpTestServer.h"
+#include "ManualScheduler.h"
 #include "NTRIPHttpResponse.h"
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
@@ -389,7 +389,7 @@ void NTRIPSourceTableControllerTest::testEmptyCatalogIsCached()
 
 void NTRIPSourceTableControllerTest::testFetchDeadlineAndErrorNotification()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
     NTRIPSourceTableController controller(nullptr, &scheduler);
@@ -417,7 +417,7 @@ void NTRIPSourceTableControllerTest::testFetchDeadlineAndErrorNotification()
 
 void NTRIPSourceTableControllerTest::testCacheUsesInjectedClock()
 {
-    GPSReplayScheduler scheduler(nullptr, 0);
+    ManualScheduler scheduler(nullptr, 0);
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
     const auto config = casterConfig(QStringLiteral("127.0.0.1"), server.serverPort());
@@ -434,7 +434,7 @@ void NTRIPSourceTableControllerTest::testCacheUsesInjectedClock()
 
 void NTRIPSourceTableControllerTest::testBodyProgressRenewsFetchDeadline()
 {
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
     NTRIPSourceTableController controller(nullptr, &scheduler);

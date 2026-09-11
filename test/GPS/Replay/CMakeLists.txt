@@ -15,9 +15,6 @@ add_executable(
     GPSReplayTransport.h
     GPSReplayDriver.cc
     GPSReplayDriver.h
-    GPSReplayDefinitions.h
-    GPSReplayScheduler.cc
-    GPSReplayScheduler.h
     GPSReplayDevice.cc
     GPSReplayDevice.h
     GPSReplayLifecycle.cc

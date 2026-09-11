@@ -2,6 +2,7 @@
 
 #include "Ashtech/GPSDriverAshtech.h"
 #include "Femto/GPSDriverFemto.h"
+#include "GPSProtocolTestIO.h"
 #include "SBF/GPSDriverSBF.h"
 #include "UBX/GPSDriverUBX.h"
 

@@ -5,14 +5,14 @@
 #include <algorithm>
 #include <utility>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "GPSReceiverTransportFactory.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSReceiverAutoConnectLog, "GPS.Receiver.GPSReceiverAutoConnect")
 
 GPSReceiverAutoConnect::GPSReceiverAutoConnect(GPSReceiverSession* receiver, GPSSourceHealth* health, QObject* parent,
-                                               GPSRuntimeScheduler* scheduler)
+                                               RuntimeScheduler* scheduler)
     : QObject(parent)
     , _receiver(receiver)
     , _health(health)

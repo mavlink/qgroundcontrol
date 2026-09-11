@@ -6,7 +6,7 @@ The NMEA harness also calls Qt's real sentence parser. Qt itself is instrumented
 when an instrumented Qt SDK is supplied; an ordinary Qt installation remains usable.
 The targets are disabled by default and require Clang with libFuzzer.
 Source lists and dependencies come from the production component definitions in
-`src/GPS/cmake/GPSBuild.cmake`; each runtime component receives the sanitizer flags.
+`src/GPS/Libraries.cmake`; each runtime component receives the sanitizer flags.
 
 ## Build and smoke test
 

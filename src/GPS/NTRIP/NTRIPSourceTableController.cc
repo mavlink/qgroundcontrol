@@ -2,17 +2,17 @@
 
 #include <QtCore/QPointer>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "NTRIPHttpResponse.h"
 #include "NTRIPSourceTable.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIP.NTRIPSourceTableController")
 
-NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent, GPSRuntimeScheduler* scheduler)
+NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _model(new NTRIPSourceTableModel(this))
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
 {
     qCDebug(NTRIPSourceTableControllerLog) << this;
 }

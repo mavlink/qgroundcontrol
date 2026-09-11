@@ -4,7 +4,7 @@
 #include <QtCore/QPointer>
 
 #include "GPSObservation.h"
-#include "GPSScheduledTask.h"
+#include "ScheduledTask.h"
 
 /// Accepted relative receiver data and its session-scoped freshness, independent of presentation.
 class GPSRelativePositionStore : public QObject
@@ -13,7 +13,7 @@ class GPSRelativePositionStore : public QObject
 
 public:
     explicit GPSRelativePositionStore(QObject* parent = nullptr, int freshnessTimeoutMs = 5000,
-                                      GPSRuntimeScheduler* scheduler = nullptr);
+                                      RuntimeScheduler* scheduler = nullptr);
     ~GPSRelativePositionStore() override;
 
     void beginSession(const QString& sourceId, quint64 sessionId);
@@ -35,8 +35,8 @@ private:
     void _expire();
     void _publish();
 
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _expiryTask;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _expiryTask;
     QString _sourceId;
     quint64 _sessionId = 0;
     GPSRelativeObservation _observation;

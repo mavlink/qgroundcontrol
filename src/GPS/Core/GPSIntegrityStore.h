@@ -4,7 +4,7 @@
 #include <QtCore/QPointer>
 
 #include "GPSIntegrityObservation.h"
-#include "GPSScheduledTask.h"
+#include "ScheduledTask.h"
 
 /// Accepted receiver diagnostics with separate freshness for each reported provenance group.
 class GPSIntegrityStore : public QObject
@@ -12,7 +12,7 @@ class GPSIntegrityStore : public QObject
     Q_OBJECT
 
 public:
-    explicit GPSIntegrityStore(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
+    explicit GPSIntegrityStore(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSIntegrityStore() override;
 
     void beginSession(quint64 sessionId);
@@ -31,8 +31,8 @@ signals:
 private:
     void _refresh();
 
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _expiryTask;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _expiryTask;
     GPSIntegrityObservation _observation;
     std::optional<quint64> _sessionId = std::nullopt;
     bool _available = false;

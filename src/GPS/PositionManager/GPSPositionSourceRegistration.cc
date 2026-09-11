@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "PositionManager.h"
+#include "GPSPositionService.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSPositionSourceRegistrationLog, "GPS.PositionManager.GPSPositionSourceRegistration")
@@ -35,7 +35,7 @@ void GPSPositionSourceRegistration::_swap(GPSPositionSourceRegistration& other) 
     std::swap(_token, other._token);
 }
 
-GPSPositionSourceRegistration::GPSPositionSourceRegistration(QGCPositionManager* manager, int kind, quint64 token)
+GPSPositionSourceRegistration::GPSPositionSourceRegistration(GPSPositionService* manager, int kind, quint64 token)
     : _manager(manager)
     , _kind(kind)
     , _token(token)

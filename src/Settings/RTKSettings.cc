@@ -6,6 +6,7 @@
 #include <array>
 
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverFamily.h"
 
 DECLARE_SETTINGGROUP(RTK, "RTK")
 {
@@ -16,7 +17,20 @@ DECLARE_SETTINGGROUP(RTK, "RTK")
     }
 }
 
-DECLARE_SETTINGSFACT(RTKSettings, baseReceiverManufacturers)
+DECLARE_SETTINGSFACT_NO_FUNC(RTKSettings, baseReceiverManufacturers)
+{
+    if (!_baseReceiverManufacturersFact) {
+        _baseReceiverManufacturersFact = _createSettingsFact(baseReceiverManufacturersName);
+        QStringList names{tr("All")};
+        QVariantList values{0};
+        for (const auto& family : gpsReceiverFamilies()) {
+            names.append(QString(family.name));
+            values.append(family.manufacturerId);
+        }
+        _baseReceiverManufacturersFact->setEnumInfo(names, values);
+    }
+    return _baseReceiverManufacturersFact;
+}
 DECLARE_SETTINGSFACT(RTKSettings, surveyInAccuracyLimit)
 DECLARE_SETTINGSFACT(RTKSettings, surveyInMinObservationDuration)
 DECLARE_SETTINGSFACT(RTKSettings, useFixedBasePosition)
@@ -27,7 +41,21 @@ DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionAccuracy)
 DECLARE_SETTINGSFACT(RTKSettings, networkBaseHost)
 DECLARE_SETTINGSFACT(RTKSettings, networkBasePort)
 DECLARE_SETTINGSFACT(RTKSettings, udpLocalPort)
-DECLARE_SETTINGSFACT(RTKSettings, networkReceiverType)
+
+DECLARE_SETTINGSFACT_NO_FUNC(RTKSettings, networkReceiverType)
+{
+    if (!_networkReceiverTypeFact) {
+        _networkReceiverTypeFact = _createSettingsFact(networkReceiverTypeName);
+        QStringList names;
+        QVariantList values;
+        for (const auto& family : gpsReceiverFamilies()) {
+            names.append(QString(family.name));
+            values.append(static_cast<int>(family.type));
+        }
+        _networkReceiverTypeFact->setEnumInfo(names, values);
+    }
+    return _networkReceiverTypeFact;
+}
 
 DECLARE_SETTINGSFACT(RTKSettings, useReceiverPosition)
 DECLARE_SETTINGSFACT(RTKSettings, connectionType)

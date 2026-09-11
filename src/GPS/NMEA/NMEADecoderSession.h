@@ -21,7 +21,7 @@ class NMEADecoderSession : public QObject
     friend class NMEASourceManagerTest;
 
 public:
-    explicit NMEADecoderSession(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
+    explicit NMEADecoderSession(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~NMEADecoderSession() override;
 
     bool start(QIODevice* device);
@@ -44,7 +44,7 @@ signals:
 private:
     void _updateSatellites(const GPSSatelliteObservation& observation);
 
-    QPointer<GPSRuntimeScheduler> _scheduler;
+    QPointer<RuntimeScheduler> _scheduler;
 
     std::unique_ptr<NMEAStreamSplitter> _stream;
     std::unique_ptr<NMEAPositionSource> _positionSource;

@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "GPSPositionFactGroup.h"
-#include "GPSReplayScheduler.h"
+#include "ManualScheduler.h"
 #include "VehicleGPS2FactGroup.h"
 #include "VehicleGPSAggregateFactGroup.h"
 #include "VehicleGPSObservation.h"
@@ -400,7 +400,7 @@ void GPSPositionFactGroupTest::_metadataOwnershipAndVirtualIntegrity()
     vehicle.setLiveUpdates(false);
     QVERIFY(vehicle.integrity()->jammingState()->sendValueChangedSignals());
 
-    GPSReplayScheduler scheduler;
+    ManualScheduler scheduler;
     GPSPositionFactGroup position(nullptr, &scheduler);
     GPSIntegrityObservation report;
     report.monotonicTimestampUs = scheduler.nowUs();

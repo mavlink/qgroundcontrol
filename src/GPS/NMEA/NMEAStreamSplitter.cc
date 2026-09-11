@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <deque>
 
-#include "GPSReadTimestamp.h"
 #include "QGCLoggingCategory.h"
+#include "ReadTimestamp.h"
 
 QGC_LOGGING_CATEGORY(NMEAStreamSplitterLog, "GPS.NMEA.NMEAStreamSplitter")
 QGC_LOGGING_CATEGORY(NMEAStreamDeviceLog, "GPS.NMEA.NMEAStreamDevice")
@@ -15,7 +15,7 @@ namespace {
 constexpr qsizetype kMaxBufferedBytes = 64 * 1024;
 }
 
-class NMEAStreamDevice : public QIODevice, public GPSReadTimestamp, public NMEASentenceProvider
+class NMEAStreamDevice : public QIODevice, public ReadTimestamp, public NMEASentenceProvider
 {
 public:
     NMEAStreamDevice()
@@ -138,7 +138,7 @@ void NMEAStreamSplitter::_readAvailableData()
         if (data.isEmpty()) {
             return;
         }
-        const quint64 receivedAtUs = GPSReadTimestamp::from(_source);
+        const quint64 receivedAtUs = ReadTimestamp::from(_source);
         QList<NMEASentenceEnvelope> sentences;
         for (const char byte : data) {
             if (byte == '$') {

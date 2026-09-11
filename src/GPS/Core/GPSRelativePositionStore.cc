@@ -2,15 +2,14 @@
 
 #include <algorithm>
 
-#include "GPSQtRuntimeScheduler.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSRelativePositionStoreLog, "GPS.Core.GPSRelativePositionStore")
 
-GPSRelativePositionStore::GPSRelativePositionStore(QObject* parent, int freshnessTimeoutMs,
-                                                   GPSRuntimeScheduler* scheduler)
+GPSRelativePositionStore::GPSRelativePositionStore(QObject* parent, int freshnessTimeoutMs, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _scheduler(scheduler ? scheduler : new GPSQtRuntimeScheduler(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _expiryTask(_scheduler, this)
     , _freshnessTimeoutMs((std::max) (1, freshnessTimeoutMs))
 {

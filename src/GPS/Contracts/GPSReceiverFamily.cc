@@ -1,8 +1,11 @@
 #include "GPSReceiverFamily.h"
 
+#include "GPSProtocolFeatures.h"
+
 namespace {
 using Support = GPSReceiverCapabilities::Support;
 constexpr std::array families = {
+#if QGC_GPS_ENABLE_UBX
     GPSReceiverFamily{GPSType::u_blox,
                       QLatin1StringView("U-blox"),
                       {QLatin1StringView("blox"), QLatin1StringView("ubx"), QLatin1StringView("u-blox")},
@@ -14,6 +17,8 @@ constexpr std::array families = {
                       Support::Supported,
                       Support::Unknown,
                       Support::Unsupported},
+#endif
+#if QGC_GPS_ENABLE_ASHTECH
     GPSReceiverFamily{
         GPSType::trimble,
         QLatin1StringView("Trimble"),
@@ -23,6 +28,8 @@ constexpr std::array families = {
         Support::Unsupported,
         Support::Unknown,
     },
+#endif
+#if QGC_GPS_ENABLE_SBF
     GPSReceiverFamily{GPSType::septentrio,
                       QLatin1StringView("Septentrio"),
                       {QLatin1StringView("septentrio"), QLatin1StringView("sbf"), QLatin1StringView()},
@@ -34,6 +41,8 @@ constexpr std::array families = {
                       Support::Unsupported,
                       Support::Unsupported,
                       Support::Supported},
+#endif
+#if QGC_GPS_ENABLE_FEMTO
     GPSReceiverFamily{
         GPSType::femto,
         QLatin1StringView("Femtomes"),
@@ -43,6 +52,7 @@ constexpr std::array families = {
         Support::Unsupported,
         Support::Unknown,
     },
+#endif
 };
 }  // namespace
 

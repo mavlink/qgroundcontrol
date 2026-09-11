@@ -4,10 +4,10 @@
 #include <QtCore/QPointer>
 
 #include "GPSObservation.h"
-#include "GPSRuntimeScheduler.h"
-#include "GPSScheduledTask.h"
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentenceEnvelope.h"
+#include "RuntimeScheduler.h"
+#include "ScheduledTask.h"
 
 /// Assembles multipart/multisignal NMEA satellite epochs into independent constellation reports.
 class NMEASatelliteAdapter : public QObject
@@ -15,8 +15,7 @@ class NMEASatelliteAdapter : public QObject
     Q_OBJECT
 
 public:
-    explicit NMEASatelliteAdapter(QIODevice* source, QObject* parent = nullptr,
-                                  GPSRuntimeScheduler* scheduler = nullptr);
+    explicit NMEASatelliteAdapter(QIODevice* source, QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~NMEASatelliteAdapter() override;
     void close();
     void ingest(const NMEASentenceEnvelope& sentence);
@@ -34,11 +33,11 @@ private:
     void _queue(NMEA::SatelliteEpoch epoch);
 
     QPointer<QIODevice> _source;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _idleTask;
-    GPSScheduledTask _batchTask;
-    GPSScheduledTask _deliveryTask;
-    GPSScheduledTask _readTask;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _idleTask;
+    ScheduledTask _batchTask;
+    ScheduledTask _deliveryTask;
+    ScheduledTask _readTask;
     NMEA::SatelliteAssembler _assembler;
     QList<GPSSatelliteObservation> _pending;
     bool _open = true;

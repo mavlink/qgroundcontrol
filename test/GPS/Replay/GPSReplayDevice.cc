@@ -7,8 +7,9 @@
 
 QGC_LOGGING_CATEGORY(GPSReplayDeviceLog, "GPS.Test.GPSReplayDevice")
 
-GPSReplayDevice::GPSReplayDevice(GPSRuntimeScheduler* scheduler, QObject* parent)
-    : QIODevice(parent), _scheduler(scheduler)
+GPSReplayDevice::GPSReplayDevice(RuntimeScheduler* scheduler, QObject* parent)
+    : QIODevice(parent)
+    , _scheduler(scheduler)
 {
     qCDebug(GPSReplayDeviceLog) << this;
 }

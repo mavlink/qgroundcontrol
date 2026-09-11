@@ -11,6 +11,7 @@
 #include "Femto/GPSDriverFemto.h"
 #include "GPSProtocolTestIO.h"
 #include "NMEAFields.h"
+#include "ProtocolTestPackets.h"
 #include "SBF/GPSDriverSBF.h"
 
 #define CHECK(condition)                          \
@@ -20,60 +21,51 @@
         }                                         \
     } while (0)
 
-int noDevice(GPSCallbackType type, void*, int, void*)
+GPSProtocolIO noDevice()
 {
-    CHECK(type != GPSCallbackType::readDeviceData && type != GPSCallbackType::writeDeviceData &&
-          type != GPSCallbackType::setBaudrate);
-    return 0;
+    auto io = makeGPSProtocolTestIO();
+    io.read = [](std::span<uint8_t>, GPSDeadline) -> GPSProtocolReadResult {
+        throw std::runtime_error("decoder read device");
+    };
+    io.write = [](std::span<const uint8_t>, GPSDeadline) -> GPSProtocolWriteResult {
+        throw std::runtime_error("decoder wrote device");
+    };
+    io.setBaudrate = [](unsigned) -> GPSBaudStatus { throw std::runtime_error("decoder changed baudrate"); };
+    return io;
 }
 
 std::vector<uint8_t> sbfPacket(uint16_t id, std::span<const uint8_t> payload, uint32_t tow = 0, uint16_t week = 2435)
 {
-    sbf_buf_t header{};
-    header.sync = 0x4024;
-    header.msg_id = id;
-    header.length = 14 + payload.size();
-    header.WNc = week;
-    header.TOW = tow;
-    std::vector<uint8_t> packet(header.length);
-    std::memcpy(packet.data(), &header, 14);
-    std::memcpy(packet.data() + 14, payload.data(), payload.size());
-    const auto crc = crc16(packet.data() + 4, packet.size() - 4);
-    packet[2] = crc & 0xff;
-    packet[3] = crc >> 8;
+    std::vector<uint8_t> packet(14 + payload.size());
+    LittleEndian::write<uint16_t>(packet, 0, 0x4024);
+    LittleEndian::write<uint16_t>(packet, 4, id);
+    LittleEndian::write<uint16_t>(packet, 6, uint16_t(packet.size()));
+    LittleEndian::write<uint32_t>(packet, 8, tow);
+    LittleEndian::write<uint16_t>(packet, 12, week);
+    std::copy(payload.begin(), payload.end(), packet.begin() + 14);
+    LittleEndian::write<uint16_t>(packet, 2, crc16(packet.data() + 4, packet.size() - 4));
     return packet;
 }
 
 std::vector<uint8_t> femtoPacket(uint16_t id, std::span<const uint8_t> payload)
 {
-    femto_msg_header_t header{};
-    header.preamble[0] = 0xaa;
-    header.preamble[1] = 0x44;
-    header.preamble[2] = 0x12;
-    header.headerlength = sizeof(header);
-    header.messageid = id;
-    header.messagelength = payload.size();
-    std::vector<uint8_t> packet(sizeof(header) + payload.size() + 4);
-    std::memcpy(packet.data(), &header, sizeof(header));
-    std::memcpy(packet.data() + sizeof(header), payload.data(), payload.size());
-    const auto crc = QGC::crc32Update({packet.data(), packet.size() - 4});
-    for (size_t i = 0; i < 4; ++i) {
-        packet[packet.size() - 4 + i] = crc >> (8 * i);
-    }
+    std::vector<uint8_t> packet(28 + payload.size() + 4);
+    packet[0] = 0xaa;
+    packet[1] = 0x44;
+    packet[2] = 0x12;
+    packet[3] = 28;
+    LittleEndian::write<uint16_t>(packet, 4, id);
+    LittleEndian::write<uint16_t>(packet, 8, uint16_t(payload.size()));
+    std::copy(payload.begin(), payload.end(), packet.begin() + 28);
+    LittleEndian::write<uint32_t>(packet, packet.size() - 4, QGC::crc32Update({packet.data(), packet.size() - 4}));
     return packet;
-}
-
-template <class T>
-std::span<const uint8_t> bytes(const T& value)
-{
-    return {reinterpret_cast<const uint8_t*>(&value), sizeof(value)};
 }
 
 void malformedMessages()
 {
     GPSPositionReport position{};
     GPSSatelliteReport satellites{};
-    GPSDriverSBF sbf(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+    GPSDriverSBF sbf(noDevice(), &position, &satellites);
     sbf_payload_pvt_geodetic_t fix{};
     fix.mode_type = 1;
     fix.latitude = 0.5;
@@ -88,7 +80,7 @@ void malformedMessages()
     sbf.consume(good);
     gps_test_time += 200000;
     CHECK(sbf.consume({}) & 1);
-    CHECK(std::abs(position.latitude_deg - 0.5 * M_RAD_TO_DEG) < 0.00001);
+    CHECK(std::abs(position.latitude_deg - 0.5 * GPS_RAD_TO_DEG) < 0.00001);
     const auto received = position.timestamp;
     CHECK(sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, shortPayload, 1000)) == 0);
     CHECK(position.timestamp == received);
@@ -103,9 +95,9 @@ void malformedMessages()
     sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 2000));
     gps_test_time += 200000;
     CHECK(sbf.consume({}) & 1);
-    CHECK(std::abs(position.cog_rad - M_PI_F / 2) < 0.00001);
+    CHECK(std::abs(position.cog_rad - GPS_PI / 2) < 0.00001);
 
-    GPSDriverFemto femto(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+    GPSDriverFemto femto(noDevice(), &position, &satellites);
     femto_uav_gps_t gps{};
     gps.lat = 470000000;
     gps.lon = 80000000;
@@ -143,15 +135,14 @@ public:
 
 void tinyReads()
 {
-    const auto callback = [](GPSCallbackType type, void* data, int, void*) {
-        CHECK(type == GPSCallbackType::readDeviceData);
-        const auto& request = *static_cast<GPSReadRequest*>(data);
-        CHECK(request.timeoutMs == 1000);
-        CHECK(request.capacity > 0 && request.capacity <= 3);
-        std::memset(request.buffer, 0x12, request.capacity);
-        return request.capacity;
+    auto io = makeGPSProtocolTestIO();
+    io.read = [](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+        CHECK(deadline.remainingMilliseconds(gps_test_time) == 1000);
+        CHECK(!bytes.empty() && bytes.size() <= 3);
+        std::fill(bytes.begin(), bytes.end(), 0x12);
+        return {GPSReadStatus::Data, int(bytes.size())};
     };
-    ReadProbe probe(makeGPSProtocolTestIO(callback, nullptr));
+    ReadProbe probe(io);
     for (int capacity = 0; capacity <= 3; ++capacity) {
         std::array<uint8_t, 5> guarded{0xab, 0xab, 0xab, 0xab, 0xab};
         CHECK(probe.read(guarded.data() + 1, capacity, 1000) == capacity);
@@ -218,7 +209,7 @@ void ashtechMetadata()
 {
     GPSPositionReport position{};
     GPSSatelliteReport satellites{};
-    auto io = makeGPSProtocolTestIO(noDevice, nullptr);
+    auto io = noDevice();
     GPSSatelliteReport gpsSatellites;
     io.decoded = [&](GPSDecodedBatch batch) {
         for (const auto& event : batch.events)
@@ -255,7 +246,7 @@ void sbfEpochMetadata()
     GPSSatelliteReport satellites;
     std::vector<GPSPositionReport> fixes;
     std::vector<GPSSatelliteUsageReport> usage;
-    GPSProtocolIO io;
+    auto io = makeGPSProtocolTestIO();
     io.decoded = [&](GPSDecodedBatch batch) {
         for (const auto& event : batch.events) {
             if (const auto* fix = std::get_if<GPSPositionReport>(&event))
@@ -296,8 +287,8 @@ void sbfEpochMetadata()
     CHECK(usage.size() == 1 && !usage[0].usedCount);
     CHECK(std::isnan(fixes[0].hdop));
     CHECK(std::isnan(fixes[0].eph));
-    CHECK(std::abs(fixes[0].heading_accuracy * M_RAD_TO_DEG - 2) < 1e-5);
-    CHECK(std::abs(fixes[0].heading * M_RAD_TO_DEG - 90) < 1e-5);
+    CHECK(std::abs(fixes[0].heading_accuracy * GPS_RAD_TO_DEG - 2) < 1e-5);
+    CHECK(std::abs(fixes[0].heading * GPS_RAD_TO_DEG - 90) < 1e-5);
     CHECK(fixes[0].speedAccuracyMetersPerSecond == 3);
     CHECK(fixes[0].time_utc_usec == 0);  // GNSS time cannot be labeled UTC without a receiver UTC offset.
     fix.mode_2d = 0;

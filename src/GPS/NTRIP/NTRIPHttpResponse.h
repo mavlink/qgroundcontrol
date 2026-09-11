@@ -4,9 +4,9 @@
 #include <QtCore/QPointer>
 #include <QtNetwork/QTcpSocket>
 
-#include "GPSScheduledTask.h"
 #include "NTRIPHttpDecoder.h"
 #include "NTRIPTransportConfig.h"
+#include "ScheduledTask.h"
 
 /// One bounded HTTP/NTRIP transaction shared by correction streams and source-table discovery.
 class NTRIPHttpResponse : public QObject
@@ -20,7 +20,7 @@ public:
     static constexpr qint64 MAX_SOURCE_TABLE_BYTES = 8 * 1024 * 1024;
 
     NTRIPHttpResponse(const NTRIPTransportConfig& config, Mode mode, QObject* parent = nullptr,
-                      GPSRuntimeScheduler* scheduler = nullptr);
+                      RuntimeScheduler* scheduler = nullptr);
     ~NTRIPHttpResponse() override;
     void start();
     void stop();
@@ -48,8 +48,8 @@ private:
 
     NTRIPTransportConfig _config;
     Mode _mode;
-    QPointer<GPSRuntimeScheduler> _scheduler;
-    GPSScheduledTask _deadline;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _deadline;
     QTcpSocket* _socket = nullptr;
     NTRIPHttpDecoder _httpDecoder;
     quint64 _generation = 0;

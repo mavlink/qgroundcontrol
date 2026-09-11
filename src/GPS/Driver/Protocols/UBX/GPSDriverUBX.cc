@@ -64,7 +64,7 @@ int GPSDriverUBX::receiveInternal(unsigned timeout, bool& read_error)
     uint8_t buf[GPS_READ_BUFFER_SIZE];
 
     /* timeout additional to poll */
-    gps_abstime time_started = nowUs();
+    uint64_t time_started = nowUs();
 
     int handled = 0;
 
@@ -91,7 +91,7 @@ int GPSDriverUBX::receiveInternal(unsigned timeout, bool& read_error)
             /* something went wrong when polling or reading */
             read_error = true;
             if (ret != ReadCancelled) {
-                GPS_WARN("ubx poll_or_read err");
+                log(GPSProtocolLogLevel::Warning, "ubx poll_or_read err");
             }
             return -1;
 
@@ -144,7 +144,7 @@ void GPSDriverUBX::servicePendingCommands()
             }
 
             if (key_id != 0) {
-                gps_abstime t = nowUs();
+                uint64_t t = nowUs();
 
                 if (t > _disable_cmd_last + DISABLE_MSG_INTERVAL && _configured) {
                     /* don't attempt for every message to disable, some might not be disabled */
@@ -157,7 +157,7 @@ void GPSDriverUBX::servicePendingCommands()
             }
 
         } else {
-            gps_abstime t = nowUs();
+            uint64_t t = nowUs();
 
             if (t > _disable_cmd_last + DISABLE_MSG_INTERVAL) {
                 /* don't attempt for every message to disable, some might not be disabled */

@@ -5,7 +5,7 @@
 
 #include <functional>
 
-#include "GPSRuntimeScheduler.h"
+#include "RuntimeScheduler.h"
 
 /// Connection intent, lifecycle, and retry policy, mutated by one controller.
 class GPSConnectionState : public QObject
@@ -28,7 +28,7 @@ public:
     };
     Q_ENUM(State)
 
-    explicit GPSConnectionState(QObject* parent = nullptr, GPSRuntimeScheduler* scheduler = nullptr);
+    explicit GPSConnectionState(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSConnectionState() override;
 
     State state() const { return _state; }
@@ -66,7 +66,7 @@ private:
     bool _active = false;
     bool _manualRequested = false;
     bool _paused = false;
-    QPointer<GPSRuntimeScheduler> _scheduler;
+    QPointer<RuntimeScheduler> _scheduler;
     qint64 _retryDeadlineMs = -1;
     int _retryDelayMs = 1000;
     quint64 _transitionRevision = 0;

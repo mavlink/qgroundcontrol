@@ -17,7 +17,7 @@
 #include "GPSType.h"
 
 class GPSTransport;
-class GPSByteBuffer;
+class TimestampedByteBuffer;
 class GPSRecordingStream;
 
 class GPSProvider : public QThread
@@ -29,7 +29,7 @@ public:
     using TransportFactory = std::function<std::unique_ptr<GPSTransport>(const std::atomic_bool&)>;
 
     GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
-                std::shared_ptr<GPSByteBuffer> nmeaBuffer = {}, QObject* parent = nullptr,
+                std::shared_ptr<TimestampedByteBuffer> nmeaBuffer = {}, QObject* parent = nullptr,
                 GPSExecutionContext context = {});
 
     ~GPSProvider() override;
@@ -71,7 +71,7 @@ private:
     GPSType _type;
     std::atomic_bool _requestStop = false;
     GPSReceiverConfig _config{};
-    std::shared_ptr<GPSByteBuffer> _nmeaBuffer;
+    std::shared_ptr<TimestampedByteBuffer> _nmeaBuffer;
     std::shared_ptr<GPSRecordingStream> _recording;
 
     static constexpr uint32_t kGPSReceiveTimeout = 1200;
