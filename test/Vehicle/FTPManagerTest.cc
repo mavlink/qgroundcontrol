@@ -164,11 +164,22 @@ void FTPManagerTest::_testListDirectoryWithTime()
     _disconnectMockLink();
 }
 
+void FTPManagerTest::_testListDirectoryWithTimeFallback_data()
+{
+    QTest::addColumn<int>("nakError");
+
+    QTest::newRow("UnknownCommand (PX4)") << static_cast<int>(MavlinkFTP::kErrUnknownCommand);
+    QTest::newRow("Fail (ArduPilot)") << static_cast<int>(MavlinkFTP::kErrFail);
+}
+
 void FTPManagerTest::_testListDirectoryWithTimeFallback()
 {
+    QFETCH(int, nakError);
+
     _connectMockLinkNoInitialConnectSequence();
     FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
+    _mockLink->mockLinkFTP()->setListDirectoryWithTimeNakError(static_cast<MavlinkFTP::ErrorCode_t>(nakError));
     QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
     ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
     QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
@@ -177,11 +188,35 @@ void FTPManagerTest::_testListDirectoryWithTimeFallback()
     const QStringList entries = arguments[0].toStringList();
     QCOMPARE(entries.count(), 6);
     QVERIFY(arguments[1].toString().isEmpty());
+    QVERIFY(ftpManager->listDirectoryWithTimeUnsupported());
 
     // After falling back to kCmdListDirectory the entries carry no modification-time field.
     for (const QString &entry : entries) {
         QCOMPARE(entry.mid(1).count(QLatin1Char('\t')), 1);
     }
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testListDirectoryWithTimeFailAfterSupported()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
+
+    // First listing establishes kCmdListDirectoryWithTime support
+    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
+    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
+    QVERIFY(spyListDirectoryComplete.takeFirst()[1].toString().isEmpty());
+
+    // Once support is known a kErrFail Nak is a real failure, not a reason to fall back
+    _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
+    _mockLink->mockLinkFTP()->setListDirectoryWithTimeNakError(MavlinkFTP::kErrFail);
+    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
+    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
+    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
+    QCOMPARE(arguments[0].toStringList().count(), 0);
+    QVERIFY(!arguments[1].toString().isEmpty());
+    QVERIFY(!ftpManager->listDirectoryWithTimeUnsupported());
     _disconnectMockLink();
 }
 
