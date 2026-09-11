@@ -98,8 +98,8 @@ function getTrackingModel(uiInteractionEnabled) {
         },
         {
             id: 'cursorTrack',
-            text: 'Cursor',
-            description: "Track from cursor",
+            text: 'Cursor-GNSS',
+            description: "Track GNSS target from cursor",
             checkable: true,
             iconSource: '/qmlimages/tracking_cursor.svg',
             enabled: uiInteractionEnabled
