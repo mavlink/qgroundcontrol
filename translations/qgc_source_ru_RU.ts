@@ -8853,187 +8853,187 @@ VTOL</translation>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="24"/>
       <source>EMERGENCY STOP</source>
-      <translation type="unfinished">EMERGENCY STOP</translation>
+      <translation>АВАРИЙНАЯ ОСТАНОВКА</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="25"/>
       <source>Arm</source>
-      <translation type="unfinished">Arm</translation>
+      <translation>Arm</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="26"/>
       <source>Arm (MV)</source>
-      <translation type="unfinished">Arm (MV)</translation>
+      <translation>Arm (MV)</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="28"/>
       <source>Disarm</source>
-      <translation type="unfinished">Disarm</translation>
+      <translation>Disarm</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="29"/>
       <source>Disarm (MV)</source>
-      <translation type="unfinished">Disarm (MV)</translation>
+      <translation>Disarm (MV)</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="30"/>
       <source>Return</source>
-      <translation type="unfinished">Return</translation>
+      <translation>Возврат</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="31"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>Takeoff</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="32"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>Land</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="33"/>
       <source>Start Mission</source>
-      <translation type="unfinished">Start Mission</translation>
+      <translation>Начать полётное задание</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="34"/>
       <source>Start Mission (MV)</source>
-      <translation type="unfinished">Start Mission (MV)</translation>
+      <translation>Начать полётное задание (MV)</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="35"/>
       <source>Continue Mission</source>
-      <translation type="unfinished">Continue Mission</translation>
+      <translation>Продолжить полётное задание</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="36"/>
       <source>Resume FAILED</source>
-      <translation type="unfinished">Resume FAILED</translation>
+      <translation>Не удалось возобновить</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="37"/>
       <source>Pause</source>
-      <translation type="unfinished">Pause</translation>
+      <translation>Пауза</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="38"/>
       <source>Pause (MV)</source>
-      <translation type="unfinished">Pause (MV)</translation>
+      <translation>Пауза (MV)</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="39"/>
       <source>Change Altitude</source>
-      <translation type="unfinished">Change Altitude</translation>
+      <translation>Изменить высоту</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="43"/>
       <source>Orbit</source>
-      <translation type="unfinished">Orbit</translation>
+      <translation>Orbit</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="44"/>
       <source>Land Abort</source>
-      <translation type="unfinished">Land Abort</translation>
+      <translation>Отменить посадку</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="45"/>
       <source>Set Waypoint</source>
-      <translation type="unfinished">Set Waypoint</translation>
+      <translation>Установить путевую точку</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="46"/>
       <source>Go To Location</source>
-      <translation type="unfinished">Go To Location</translation>
+      <translation>Перейти к точке</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="49"/>
       <source>Set Estimator Origin</source>
-      <translation type="unfinished">Set Estimator Origin</translation>
+      <translation>Установить точку отсчёта EKF</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="59"/>
       <source>Takeoff and hold position</source>
-      <translation type="unfinished">Takeoff and hold position</translation>
+      <translation>Takeoff, затем удержание позиции</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="60"/>
       <source>Takeoff and start the current mission</source>
-      <translation type="unfinished">Takeoff and start the current mission</translation>
+      <translation>Takeoff, затем запуск текущего полётного задания</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="61"/>
       <source>Takeoff and start the current mission for selected vehicles</source>
-      <translation type="unfinished">Takeoff and start the current mission for selected vehicles</translation>
+      <translation>Takeoff, затем запуск текущего полётного задания для выбранных бортов</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="62"/>
       <source>Continue the mission from the current waypoint</source>
-      <translation type="unfinished">Continue the mission from the current waypoint</translation>
+      <translation>Продолжить полётное задание с текущей путевой точки</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="64"/>
       <source>Land the vehicle at the current position</source>
-      <translation type="unfinished">Land the vehicle at the current position</translation>
+      <translation>Посадить борт в текущей точке</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="65"/>
       <source>Return to the launch position of the vehicle</source>
-      <translation type="unfinished">Return to the launch position of the vehicle</translation>
+      <translation>Вернуться в точку старта</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="66"/>
       <source>Change the altitude of the vehicle up or down</source>
-      <translation type="unfinished">Change the altitude of the vehicle up or down</translation>
+      <translation>Изменить высоту борта вверх или вниз</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="67"/>
       <source>Change the forward flight loiter radius</source>
-      <translation type="unfinished">Change the forward flight loiter radius</translation>
+      <translation>Изменить радиус облёта при полёте вперёд</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="68"/>
       <source>Change the maximum horizontal cruise speed</source>
-      <translation type="unfinished">Change the maximum horizontal cruise speed</translation>
+      <translation>Изменить максимальную горизонтальную крейсерскую скорость</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="69"/>
       <source>Change the equivalent airspeed setpoint</source>
-      <translation type="unfinished">Change the equivalent airspeed setpoint</translation>
+      <translation>Изменить заданную воздушную скорость</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="70"/>
       <source>Move the vehicle to the specified location</source>
-      <translation type="unfinished">Move the vehicle to the specified location</translation>
+      <translation>Переместить борт в указанную точку</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="71"/>
       <source>Adjust current waypoint to %1</source>
-      <translation type="unfinished">Adjust current waypoint to %1</translation>
+      <translation>Скорректировать текущую путевую точку на %1</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="72"/>
       <source>Orbit the vehicle around the specified location</source>
-      <translation type="unfinished">Orbit the vehicle around the specified location</translation>
+      <translation>Облёт борта вокруг указанной точки</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="73"/>
       <source>Abort the landing sequence</source>
-      <translation type="unfinished">Abort the landing sequence</translation>
+      <translation>Прервать последовательность посадки</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="74"/>
       <source>Pause at current position</source>
-      <translation type="unfinished">Pause at current position</translation>
+      <translation>Приостановить в текущей точке</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="75"/>
       <source>Pause selected vehicles at their current position</source>
-      <translation type="unfinished">Pause selected vehicles at their current position</translation>
+      <translation>Приостановить выбранные борта в их текущих точках</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="76"/>
       <source>Make the specified location a Region Of Interest</source>
-      <translation type="unfinished">Make the specified location a Region Of Interest</translation>
+      <translation>Сделать указанную точку точкой интереса</translation>
     </message>
     <message>
       <location filename="../src/FlyView/GuidedActionsController.qml" line="78"/>
