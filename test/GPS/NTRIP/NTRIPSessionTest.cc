@@ -1,5 +1,6 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QEvent>
+#include <QtCore/QTimeZone>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -111,6 +112,53 @@ private slots:
         QVERIFY(!result.failure->retryable);
         QVERIFY(decoder.bufferedBytes() <= NTRIPHttpDecoder::MAX_LINE_BYTES);
         QVERIFY(decoder.feed("ignored").body.isEmpty());
+    }
+
+    void retryAfterDate_data()
+    {
+        QTest::addColumn<QByteArray>("value");
+        QTest::addColumn<int>("seconds");
+        QTest::newRow("seconds") << QByteArray("17") << 17;
+        QTest::newRow("seconds-capped") << QByteArray("999999") << 300;
+        QTest::newRow("date") << QByteArray("Thu, 10 Sep 2026 12:00:17 GMT") << 17;
+        QTest::newRow("past") << QByteArray("Thu, 10 Sep 2026 11:59:00 GMT") << 0;
+        QTest::newRow("date-capped") << QByteArray("Thu, 10 Sep 2026 13:00:00 GMT") << 300;
+        QTest::newRow("invalid") << QByteArray("tomorrow") << 0;
+        QTest::newRow("negative") << QByteArray("-1") << 0;
+    }
+
+    void retryAfterDate()
+    {
+        QFETCH(QByteArray, value);
+        QFETCH(int, seconds);
+        NTRIPHttpDecoder decoder([]() { return QDateTime(QDate(2026, 9, 10), QTime(12, 0), QTimeZone::UTC); });
+        const auto result = decoder.feed("HTTP/1.1 503 Busy\r\nRetry-After: " + value + "\r\n\r\n");
+        QVERIFY(result.failure);
+        QCOMPARE(result.failure->retryAfter, std::chrono::seconds(seconds));
+    }
+
+    void strictContentLength_data()
+    {
+        QTest::addColumn<QByteArray>("headers");
+        QTest::addColumn<bool>("valid");
+        QTest::newRow("equal") << QByteArray("Content-Length: 0\r\ncontent-length: 0\r\n") << true;
+        QTest::newRow("conflict") << QByteArray("Content-Length: 0\r\ncontent-length: 1\r\n") << false;
+        QTest::newRow("positive-sign") << QByteArray("Content-Length: +0\r\n") << false;
+        QTest::newRow("list") << QByteArray("Content-Length: 0, 0\r\n") << false;
+        QTest::newRow("empty") << QByteArray("Content-Length: \r\n") << false;
+        QTest::newRow("overflow") << QByteArray("Content-Length: 18446744073709551616\r\n") << false;
+        QTest::newRow("mixed-encoding-case")
+            << QByteArray("Content-Encoding: Identity\r\nContent-Length: 0\r\n") << true;
+    }
+
+    void strictContentLength()
+    {
+        QFETCH(QByteArray, headers);
+        QFETCH(bool, valid);
+        NTRIPHttpDecoder decoder;
+        const auto result = decoder.feed("HTTP/1.1 200 OK\r\n" + headers + "\r\n");
+        QCOMPARE(!result.failure, valid);
+        QCOMPARE(result.complete, valid);
     }
 
     void httpRecoveryClassification_data()

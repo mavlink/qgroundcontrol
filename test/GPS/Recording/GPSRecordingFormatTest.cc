@@ -1,3 +1,4 @@
+#include <QtCore/QBuffer>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
@@ -10,6 +11,55 @@ class GPSRecordingFormatTest : public QObject
 {
     Q_OBJECT
 private slots:
+
+    void streamingCancellationAndErrors()
+    {
+        GPSRecordingDocument document;
+        for (quint64 i = 0; i < 200; ++i)
+            document.events.append({.atUs = i, .kind = GPSRecordingEvent::Kind::Rx, .bytes = "data"});
+        QBuffer output;
+        QVERIFY(output.open(QIODevice::WriteOnly));
+        QString error;
+        qsizetype completed = 0;
+        QVERIFY(!document.writeTo(output, error, [&](qsizetype count) {
+            completed = count;
+            return count < 70;
+        }));
+        QCOMPARE(completed, 70);
+        QVERIFY(!error.isEmpty());
+        GPSRecordingDocument decoded;
+        QVERIFY(!GPSRecordingDocument::decode(output.data(), decoded, error));
+        output.buffer().clear();
+        output.seek(0);
+        QVERIFY(document.writeTo(output, error, [&](qsizetype count) {
+            completed = count;
+            return true;
+        }));
+        QCOMPARE(completed, document.events.size());
+        QVERIFY(GPSRecordingDocument::decode(output.data(), decoded, error));
+        QCOMPARE(decoded.events.size(), 200);
+        QCOMPARE(document.encode(), output.data());
+
+        class FailingDevice : public QIODevice
+        {
+        public:
+            FailingDevice() { open(QIODevice::WriteOnly); }
+
+            qint64 readData(char*, qint64) override { return -1; }
+
+            qint64 writeData(const char*, qint64) override
+            {
+                setErrorString(QStringLiteral("disk full"));
+                return -1;
+            }
+        } failure;
+
+        QVERIFY(!document.writeTo(failure, error));
+        QVERIFY(error.contains(QStringLiteral("disk full")));
+        document.events.last().atUs = 0;
+        QVERIFY(document.encode(&error).isEmpty());
+        QVERIFY(error.contains(QStringLiteral("Out-of-order")));
+    }
 
     void recordingCodecRejectsMalformed_data()
     {

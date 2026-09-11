@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <limits>
 #include <time.h>
@@ -42,49 +43,37 @@
 // overflowing fields too: SBF encodes GPS weeks as offsets from January 1980.
 static inline time_t gpsTimeToEpoch(tm& utc)
 {
-#ifdef _WIN32
-    return _mkgmtime(&utc);
-#elif defined(__NEWLIB__) || defined(GPS_NO_TIMEGM)
-    // Newlib has gmtime_r(), but does not provide timegm(). GPS_NO_TIMEGM
-    // also selects this path for other platforms with the same libc contract.
-    const auto floorDivide = [](int64_t value, int64_t divisor) {
-        return value / divisor - (value % divisor < 0 ? 1 : 0);
-    };
-    const auto daysBeforeYear = [&floorDivide](int64_t year) {
-        const int64_t previous = year - 1;
-        return previous * 365 + floorDivide(previous, 4) - floorDivide(previous, 100) + floorDivide(previous, 400);
-    };
-    const int64_t extra_years = floorDivide(utc.tm_mon, 12);
-    const int64_t year = static_cast<int64_t>(utc.tm_year) + 1900 + extra_years;
-    const int month = static_cast<int>(utc.tm_mon - extra_years * 12);
-    static constexpr int days_before_month[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
-    const bool leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-    const int64_t days = daysBeforeYear(year) - daysBeforeYear(1970) + days_before_month[month] +
-                         (month > 1 && leap ? 1 : 0) + static_cast<int64_t>(utc.tm_mday) - 1;
-    const int64_t seconds =
-        days * 86400 + static_cast<int64_t>(utc.tm_hour) * 3600 + static_cast<int64_t>(utc.tm_min) * 60 + utc.tm_sec;
-
-    if (seconds < 0) {
-        if (!std::numeric_limits<time_t>::is_signed ||
-            seconds < static_cast<int64_t>(std::numeric_limits<time_t>::min())) {
-            return static_cast<time_t>(-1);
-        }
-
-    } else if (static_cast<uint64_t>(seconds) > static_cast<uint64_t>(std::numeric_limits<time_t>::max())) {
+    using namespace std::chrono;
+    const int64_t monthIndex = static_cast<int64_t>(utc.tm_year) * 12 + utc.tm_mon;
+    const int64_t normalizedYear = 1900 + monthIndex / 12 - (monthIndex % 12 < 0 ? 1 : 0);
+    if (normalizedYear < int(year::min()) || normalizedYear > int(year::max())) {
         return static_cast<time_t>(-1);
     }
-
-    const time_t epoch = static_cast<time_t>(seconds);
-    tm normalized{};
-
-    if (gmtime_r(&epoch, &normalized) == nullptr) {
+    const unsigned normalizedMonth = static_cast<unsigned>((monthIndex % 12 + 12) % 12 + 1);
+    const sys_seconds instant = sys_days(year(static_cast<int>(normalizedYear)) / month(normalizedMonth) / 1) +
+                                days(static_cast<int64_t>(utc.tm_mday) - 1) + hours(utc.tm_hour) + minutes(utc.tm_min) +
+                                seconds(utc.tm_sec);
+    const auto count = instant.time_since_epoch().count();
+    if ((count < 0 && (!std::numeric_limits<time_t>::is_signed ||
+                       count < static_cast<int64_t>(std::numeric_limits<time_t>::min()))) ||
+        (count >= 0 && static_cast<uint64_t>(count) > static_cast<uint64_t>(std::numeric_limits<time_t>::max()))) {
         return static_cast<time_t>(-1);
     }
-
-    utc = normalized;
-    return epoch;
-#else
-    return timegm(&utc);
-#endif
+    const auto date = floor<days>(instant);
+    if (date < sys_days(year::min() / January / 1) || date > sys_days(year::max() / December / 31)) {
+        return static_cast<time_t>(-1);
+    }
+    const year_month_day calendar(date);
+    const hh_mm_ss time(instant - date);
+    utc.tm_year = int(calendar.year()) - 1900;
+    utc.tm_mon = static_cast<int>(unsigned(calendar.month())) - 1;
+    utc.tm_mday = static_cast<int>(unsigned(calendar.day()));
+    utc.tm_hour = static_cast<int>(time.hours().count());
+    utc.tm_min = static_cast<int>(time.minutes().count());
+    utc.tm_sec = static_cast<int>(time.seconds().count());
+    utc.tm_wday = static_cast<int>(weekday(date).c_encoding());
+    utc.tm_yday = static_cast<int>((date - sys_days(calendar.year() / January / 1)).count());
+    utc.tm_isdst = 0;
+    return static_cast<time_t>(count);
 }
 #endif

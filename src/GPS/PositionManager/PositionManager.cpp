@@ -76,21 +76,47 @@ void QGCPositionManager::init()
 
 void QGCPositionManager::_setupPositionSources()
 {
-    _defaultSource = QGCCorePlugin::instance()->createPositionSource(this);
-    if (_defaultSource) {
-        _usingPluginSource = true;
-    } else {
-        qCDebug(QGCPositionManagerLog) << Q_FUNC_INFO << QGeoPositionInfoSource::availableSources();
+    _setupPositionSources(
+        QGCCorePlugin::instance()->createPositionSource(this),
+        [](const QString& name, QObject* parent) { return QGeoPositionInfoSource::createSource(name, parent); });
+}
 
-        _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
-        if (!_defaultSource) {
-            qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << "No default source available";
-            _platformStatus = SourceStatus::BackendUnavailable;
-            _selectPositionSource();
-            return;
+QString QGCPositionManager::_platformSourceName()
+{
+#if defined(Q_OS_ANDROID)
+    return QStringLiteral("android");
+#elif defined(Q_OS_IOS) || defined(Q_OS_MACOS)
+    return QStringLiteral("corelocation");
+#elif defined(Q_OS_WIN)
+    return QStringLiteral("winrt");
+#elif defined(Q_OS_WASM)
+    return QStringLiteral("wasm");
+#elif defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_OPENBSD) || defined(Q_OS_NETBSD) || \
+    defined(Q_OS_HURD)
+    return QStringLiteral("geoclue2");
+#else
+    return {};
+#endif
+}
+
+void QGCPositionManager::_setupPositionSources(
+    QGeoPositionInfoSource* customSource,
+    const std::function<QGeoPositionInfoSource*(const QString&, QObject*)>& createPlatformSource)
+{
+    _defaultSource = customSource;
+    _usingPluginSource = customSource != nullptr;
+    if (!_defaultSource) {
+        const QString name = _platformSourceName();
+        qCDebug(QGCPositionManagerLog) << "Platform positioning provider:" << name;
+        // Qt's default-source fallback can open a serial NMEA device outside QGC's reservations.
+        if (!name.isEmpty()) {
+            _defaultSource = createPlatformSource(name, this);
         }
     }
-
+    _platformStatus = _defaultSource ? SourceStatus::WaitingForFix : SourceStatus::BackendUnavailable;
+    if (!_defaultSource) {
+        qCWarning(QGCPositionManagerLog) << "Platform positioning backend unavailable";
+    }
     _selectPositionSource();
 }
 

@@ -8,6 +8,8 @@ class PositionManagerTest : public UnitTest
 
 private slots:
     void init() override;
+    void _platformSourceSelection_data();
+    void _platformSourceSelection();
     void _producerRegistrationTracksSessions();
 
     void _nmeaSourceProducesGcsPosition();

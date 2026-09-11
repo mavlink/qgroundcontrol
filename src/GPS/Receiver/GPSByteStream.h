@@ -24,6 +24,9 @@ private:
     {
         QByteArray bytes;
         quint64 receivedAtUs = 0;
+        qsizetype offset = 0;
+
+        qsizetype remaining() const { return bytes.size() - offset; }
     };
 
     std::deque<Chunk> _chunks;

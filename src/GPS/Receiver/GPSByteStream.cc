@@ -18,7 +18,7 @@ bool GPSByteBuffer::append(const QByteArray& bytes, quint64 receivedAtUs)
     const QMutexLocker lock(&_mutex);
     const bool notify = _chunks.empty() && !_gap;
     while (!_chunks.empty() && (_size + bytes.size() > kCapacity || _chunks.size() >= kMaxChunks)) {
-        _size -= _chunks.front().bytes.size();
+        _size -= _chunks.front().remaining();
         _chunks.pop_front();
         _gap = true;
     }
@@ -39,7 +39,7 @@ qint64 GPSByteBuffer::read(char* data, qint64 length, quint64& receivedAtUs)
     const quint64 now = GPSObservation::monotonicNowUs();
     while (!_chunks.empty() && (_chunks.front().receivedAtUs > now ||
                                 now - _chunks.front().receivedAtUs >= GPSSourceHealth::FRESHNESS_TIMEOUT_MS * 1000u)) {
-        _size -= _chunks.front().bytes.size();
+        _size -= _chunks.front().remaining();
         _chunks.pop_front();
         _gap = true;
     }
@@ -54,12 +54,12 @@ qint64 GPSByteBuffer::read(char* data, qint64 length, quint64& receivedAtUs)
         return 0;
     }
     auto& chunk = _chunks.front();
-    const qint64 count = std::min(length, static_cast<qint64>(chunk.bytes.size()));
-    std::memcpy(data, chunk.bytes.constData(), static_cast<size_t>(count));
+    const qint64 count = std::min(length, static_cast<qint64>(chunk.remaining()));
+    std::memcpy(data, chunk.bytes.constData() + chunk.offset, static_cast<size_t>(count));
     receivedAtUs = chunk.receivedAtUs;
-    chunk.bytes.remove(0, count);
+    chunk.offset += count;
     _size -= count;
-    if (chunk.bytes.isEmpty()) {
+    if (chunk.remaining() == 0) {
         _chunks.pop_front();
     }
     return count;

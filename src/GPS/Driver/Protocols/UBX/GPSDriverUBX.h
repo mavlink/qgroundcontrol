@@ -339,6 +339,11 @@ private:
      */
     bool sendMessage(const uint16_t msg, const uint8_t* payload, const uint16_t length);
 
+    bool sendMessage(uint16_t msg, std::span<const uint8_t> payload)
+    {
+        return payload.size() <= UINT16_MAX && sendMessage(msg, payload.data(), static_cast<uint16_t>(payload.size()));
+    }
+
     /**
      * Wait for message acknowledge
      */

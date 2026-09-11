@@ -1,5 +1,6 @@
 #include "GPSRecordingFormat.h"
 
+#include <QtCore/QBuffer>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
@@ -8,6 +9,7 @@
 
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #include "GPSReceiverProfile.h"
 #include "JsonParsing.h"
@@ -264,83 +266,185 @@ GPSRecordingMetadata GPSRecordingMetadata::fromProfile(const GPSReceiverProfile&
     return result;
 }
 
+namespace {
+QJsonObject eventJson(const GPSRecordingEvent& event)
+{
+    QJsonObject item{{"at_us", static_cast<qint64>(event.atUs)},
+                     {"stream", static_cast<qint64>(event.stream)},
+                     {"kind", name(event.kind, kinds)}};
+    if (!event.bytes.isEmpty()) {
+        item.insert("hex", QString::fromLatin1(event.bytes.toHex()));
+    }
+    if (event.startedAtUs) {
+        item.insert("started_us", static_cast<qint64>(event.startedAtUs));
+    }
+    if (event.receivedAtUs) {
+        item.insert("received_us", *event.receivedAtUs);
+    }
+    if (event.openStatus) {
+        item.insert("open_status", name(*event.openStatus, opens));
+    }
+    if (event.readStatus) {
+        item.insert("read_status", name(*event.readStatus, reads));
+    }
+    if (event.resumed) {
+        item.insert("resumed", true);
+    }
+    if (event.kind == K::Session) {
+        item.insert("profile", metadataJson(event.metadata));
+    } else if (event.kind == K::ConfigurationFinished) {
+        item.insert("status", name(event.value, configurationStatuses));
+    } else if (event.value || event.kind == K::WriteError) {
+        item.insert("value", event.value);
+    }
+    if (event.writeResult) {
+        const auto& w = *event.writeResult;
+        item.insert("write", QJsonObject{{"status", name(w.status, writes)},
+                                         {"accepted", w.acceptedBytes},
+                                         {"written", w.writtenBytes},
+                                         {"uncertain", w.uncertainBytes},
+                                         {"fatal", event.fatal}});
+    }
+    return item;
+}
+
+class EventValidator
+{
+public:
+    bool check(const GPSRecordingEvent& event, QString& error)
+    {
+        constexpr quint64 maximum = 9000000000000000ULL;
+        const auto fail = [&](const char* message) {
+            error = QString::fromLatin1(message);
+            return false;
+        };
+        if (name(event.kind, kinds).isEmpty() || event.atUs > maximum || event.stream > maximum)
+            return fail("Invalid recording event integer or kind");
+        if (event.atUs < _previous || event.startedAtUs > event.atUs)
+            return fail("Out-of-order event or invalid operation timing");
+        _previous = event.atUs;
+        if (event.receivedAtUs &&
+            (event.kind != K::Rx || *event.receivedAtUs < -qint64(maximum) || *event.receivedAtUs > qint64(event.atUs)))
+            return fail("Invalid producer receipt time");
+        if (event.openStatus &&
+            (name(*event.openStatus, opens).isEmpty() || (event.kind != K::Open && event.kind != K::OpenError) ||
+             ((*event.openStatus == GPSOpenStatus::Opened) != (event.kind == K::Open))))
+            return fail("Invalid open outcome");
+        if (event.readStatus) {
+            const auto status = *event.readStatus;
+            if (name(status, reads).isEmpty() || (status == GPSReadStatus::Data        ? event.kind != K::Rx
+                                                  : status == GPSReadStatus::TimedOut  ? event.kind != K::Timeout
+                                                  : status == GPSReadStatus::Cancelled ? event.kind != K::Cancel
+                                                  : status == GPSReadStatus::Closed    ? event.kind != K::Disconnect
+                                                                                       : event.kind != K::ReadError))
+                return fail("Invalid read outcome");
+        }
+        if ((event.kind == K::Rx || event.kind == K::Tx) && event.bytes.isEmpty())
+            return fail("Empty recording payload");
+        if (event.resumed && event.kind != K::Open)
+            return fail("Only open can be resumed");
+        if (event.kind == K::Session) {
+            if (_sessions.contains(event.stream))
+                return fail("Duplicate stream profile");
+            const auto& m = event.metadata;
+            const auto& r = m.receiver;
+            const auto& b = r.base;
+            if (name(m.transport, transports).isEmpty() || name(m.driverType, drivers).isEmpty() ||
+                name(r.role, roles).isEmpty() || name(r.outputProtocol, protocols).isEmpty())
+                return fail("Unknown profile enumeration");
+            const auto validInteger = [](auto value) { return std::in_range<int>(value) && value >= 0; };
+            if (!validInteger(m.initialBaud) || !validInteger(m.fixedBaud) || !validInteger(r.constellationMask) ||
+                !validInteger(r.dynamicModel) || !validInteger(r.outputRateHz) || !validInteger(b.surveyInDurationSecs))
+                return fail("Invalid profile integer");
+            for (double number :
+                 {double(r.headingOffsetDeg), double(b.surveyInAccMeters), b.fixedBaseLatitude, b.fixedBaseLongitude,
+                  double(b.fixedBaseAltitudeMeters), double(b.fixedBaseAccuracyMeters)}) {
+                if (!std::isfinite(number) || std::abs(number) > std::numeric_limits<float>::max())
+                    return fail("Invalid base coordinate or accuracy");
+            }
+            _sessions.insert(event.stream);
+        }
+        if (event.kind == K::ConfigurationFinished && name(event.value, configurationStatuses).isEmpty())
+            return fail("Unknown configuration status");
+        if (event.kind == K::BoundedWrite) {
+            if (!event.writeResult)
+                return fail("Missing bounded write evidence");
+            const auto& w = *event.writeResult;
+            if (name(w.status, writes).isEmpty() || w.acceptedBytes < 0 || w.acceptedBytes > event.bytes.size() ||
+                w.writtenBytes < 0 || w.writtenBytes > w.acceptedBytes || w.uncertainBytes < 0 ||
+                w.uncertainBytes > w.acceptedBytes - w.writtenBytes ||
+                ((w.status == W::Unsupported || w.status == W::InvalidData) && w.acceptedBytes != 0) ||
+                (w.status == W::Completed && (w.writtenBytes != event.bytes.size() || w.uncertainBytes)))
+                return fail("Inconsistent bounded write counts");
+        } else if (event.writeResult) {
+            return fail("Unexpected write evidence");
+        }
+        return true;
+    }
+
+private:
+    quint64 _previous = 0;
+    QSet<quint64> _sessions;
+};
+}  // namespace
+
+bool GPSRecordingDocument::writeTo(QIODevice& device, QString& error,
+                                   const std::function<bool(qsizetype)>& progress) const
+{
+    error.clear();
+    if (events.size() > MAX_EVENTS) {
+        error = QStringLiteral("Recording has too many events");
+        return false;
+    }
+    qsizetype written = 0;
+    const auto write = [&](QByteArrayView bytes) {
+        if (bytes.size() > MAX_BYTES - written) {
+            error = QStringLiteral("Recording exceeds 4 MiB");
+            return false;
+        }
+        if (device.write(bytes.data(), bytes.size()) != bytes.size()) {
+            error = QStringLiteral("Cannot write recording: %1").arg(device.errorString());
+            return false;
+        }
+        written += bytes.size();
+        return true;
+    };
+    const auto proceed = [&](qsizetype count) {
+        if (progress && !progress(count)) {
+            error = QStringLiteral("Recording export cancelled");
+            return false;
+        }
+        return true;
+    };
+    if (!proceed(0) || !write("{\"fileType\":\"GPSRecording\",\"version\":" + QByteArray::number(CURRENT_VERSION) +
+                              ",\"description\":\"QGC receiver recording\",\"limit_reached\":"))
+        return false;
+    if (!write(limitReached ? "true,\"events\":[" : "false,\"events\":["))
+        return false;
+    EventValidator validator;
+    for (qsizetype i = 0; i < events.size(); ++i) {
+        const auto& event = events[i];
+        // Bound hex expansion before allocating even a single event's JSON.
+        if (event.bytes.size() > (MAX_BYTES - written) / 2) {
+            error = QStringLiteral("Recording exceeds 4 MiB");
+            return false;
+        }
+        if (!validator.check(event, error) || (i && !write(",")) ||
+            !write(QJsonDocument(eventJson(event)).toJson(QJsonDocument::Compact)) || !proceed(i + 1))
+            return false;
+    }
+    return write("]}");
+}
+
 QByteArray GPSRecordingDocument::encode(QString* error) const
 {
-    if (events.size() > MAX_EVENTS) {
-        if (error) {
-            *error = QStringLiteral("Recording has too many events");
-        }
-        return {};
-    }
-    qsizetype estimatedBytes = 256;
-    for (const auto& event : events) {
-        const qsizetype overhead = event.kind == K::Session ? 1536 : 384;
-        if (estimatedBytes > MAX_BYTES - overhead || event.bytes.size() > (MAX_BYTES - estimatedBytes - overhead) / 2) {
-            if (error) {
-                *error = QStringLiteral("Recording exceeds 4 MiB");
-            }
-            return {};
-        }
-        estimatedBytes += overhead + event.bytes.size() * 2;
-    }
-    QJsonArray output;
-    for (const auto& event : events) {
-        QJsonObject item{{"at_us", static_cast<qint64>(event.atUs)},
-                         {"stream", static_cast<qint64>(event.stream)},
-                         {"kind", name(event.kind, kinds)}};
-        if (!event.bytes.isEmpty()) {
-            item.insert("hex", QString::fromLatin1(event.bytes.toHex()));
-        }
-        if (event.startedAtUs) {
-            item.insert("started_us", static_cast<qint64>(event.startedAtUs));
-        }
-        if (event.receivedAtUs) {
-            item.insert("received_us", *event.receivedAtUs);
-        }
-        if (event.openStatus) {
-            item.insert("open_status", name(*event.openStatus, opens));
-        }
-        if (event.readStatus) {
-            item.insert("read_status", name(*event.readStatus, reads));
-        }
-        if (event.resumed) {
-            item.insert("resumed", true);
-        }
-        if (event.kind == K::Session) {
-            item.insert("profile", metadataJson(event.metadata));
-        } else if (event.kind == K::ConfigurationFinished) {
-            item.insert("status", name(event.value, configurationStatuses));
-        } else if (event.value || event.kind == K::WriteError) {
-            item.insert("value", event.value);
-        }
-        if (event.writeResult) {
-            const auto& w = *event.writeResult;
-            item.insert("write", QJsonObject{{"status", name(w.status, writes)},
-                                             {"accepted", w.acceptedBytes},
-                                             {"written", w.writtenBytes},
-                                             {"uncertain", w.uncertainBytes},
-                                             {"fatal", event.fatal}});
-        }
-        output.append(item);
-    }
-    const auto bytes = QJsonDocument(QJsonObject{{"fileType", "GPSRecording"},
-                                                 {"version", CURRENT_VERSION},
-                                                 {"description", "QGC receiver recording"},
-                                                 {"limit_reached", limitReached},
-                                                 {"events", output}})
-                           .toJson(QJsonDocument::Compact);
-    GPSRecordingDocument validated;
-    QString validationError;
-    if (!decode(bytes, validated, validationError)) {
-        if (error) {
-            *error = validationError;
-        }
-        return {};
-    }
-    if (error) {
-        error->clear();
-    }
-    return bytes;
+    QBuffer buffer;
+    buffer.open(QIODevice::WriteOnly);
+    QString failure;
+    const bool success = writeTo(buffer, failure);
+    if (error)
+        *error = failure;
+    return success ? buffer.data() : QByteArray{};
 }
 
 bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument& result, QString& error)
@@ -383,8 +487,7 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
     GPSRecordingDocument parsed;
     parsed.sourceVersion = version;
     parsed.limitReached = object["limit_reached"].toBool();
-    quint64 previous = 0;
-    QSet<quint64> sessions;
+    EventValidator validator;
     for (const auto& value : array) {
         if (!value.isObject()) {
             error = QStringLiteral("Recording event must be an object");
@@ -420,12 +523,11 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
         event.stream = item["stream"].toInteger();
         event.value = item["value"].toInt();
         event.resumed = item["resumed"].toBool();
-        if (event.atUs < previous || (item.contains("started_us") && !integer(item["started_us"], 0, event.atUs))) {
+        if (item.contains("started_us") && !integer(item["started_us"], 0, event.atUs)) {
             error = QStringLiteral("Out-of-order event or invalid operation timing");
             return false;
         }
         event.startedAtUs = item["started_us"].toInteger();
-        previous = event.atUs;
         if (item.contains("received_us")) {
             if (version < 3 || event.kind != K::Rx || !integer(item["received_us"], -9000000000000000LL, event.atUs)) {
                 error = QStringLiteral("Invalid producer receipt time");
@@ -464,20 +566,15 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
             return false;
         }
         if (event.kind == K::Session) {
-            if (!item.contains("profile") || sessions.contains(event.stream) ||
+            if (!item.contains("profile") ||
                 !readMetadata(item["profile"].toObject(), version, event.metadata, error)) {
                 if (error.isEmpty()) {
                     error = QStringLiteral("Missing or duplicate stream profile");
                 }
                 return false;
             }
-            sessions.insert(event.stream);
         } else if (item.contains("profile")) {
             error = QStringLiteral("Profile outside session event");
-            return false;
-        }
-        if (event.resumed && event.kind != K::Open) {
-            error = QStringLiteral("Only open can be resumed");
             return false;
         }
         if (event.kind == K::ConfigurationFinished) {
@@ -512,18 +609,14 @@ bool GPSRecordingDocument::decode(const QByteArray& bytes, GPSRecordingDocument&
             w.acceptedBytes = write["accepted"].toInt();
             w.writtenBytes = write["written"].toInt();
             w.uncertainBytes = write["uncertain"].toInt();
-            if (w.writtenBytes + w.uncertainBytes > w.acceptedBytes ||
-                ((w.status == W::Unsupported || w.status == W::InvalidData) && w.acceptedBytes != 0) ||
-                (w.status == W::Completed && (w.writtenBytes != event.bytes.size() || w.uncertainBytes))) {
-                error = QStringLiteral("Inconsistent bounded write counts");
-                return false;
-            }
             event.writeResult = w;
             event.fatal = write["fatal"].toBool();
         } else if (item.contains("write")) {
             error = QStringLiteral("Unexpected write evidence");
             return false;
         }
+        if (!validator.check(event, error))
+            return false;
         parsed.events.append(std::move(event));
     }
     result = std::move(parsed);

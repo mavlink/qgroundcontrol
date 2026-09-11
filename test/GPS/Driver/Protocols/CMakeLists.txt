@@ -56,8 +56,6 @@ endfunction()
 add_subdirectory(NMEA)
 
 qgc_add_protocol_test_target(QGCNativeGPSUtcTest gps-time-test.cpp)
-qgc_add_protocol_test_target(QGCNativeGPSUtcFallbackTest gps-time-test.cpp)
-target_compile_definitions(QGCNativeGPSUtcFallbackTest PRIVATE GPS_NO_TIMEGM)
 qgc_add_protocol_test_target(QGCNativeGPSUbxTest gps-ubx-test.cpp)
 qgc_add_protocol_test_target(QGCNativeGPSReceiverModesTest gps-receiver-mode-test.cpp)
 qgc_add_protocol_test_target(QGCNativeGPSIOContractTest gps-io-contract-test.cpp)
@@ -71,7 +69,7 @@ foreach(test IN ITEMS Decode Ubx ReceiverModes IOContract Fixture)
 endforeach()
 
 foreach(timezone IN ITEMS UTC0 EST5EDT JST-9)
-    foreach(variant IN ITEMS Utc UtcFallback)
+    foreach(variant IN ITEMS Utc)
         add_test(NAME GPSProtocol${variant}-${timezone} COMMAND QGCNativeGPS${variant}Test)
         set_tests_properties(GPSProtocol${variant}-${timezone} PROPERTIES LABELS "Unit;GPS;NativeDriver" TIMEOUT 60
                                                                           ENVIRONMENT "TZ=${timezone}"

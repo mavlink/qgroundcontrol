@@ -3,12 +3,14 @@
 #include <QtCore/QRegularExpression>
 
 #include <algorithm>
+#include <utility>
 
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpDecoderLog, "GPS.NTRIP.NTRIPHttpDecoder")
 
-NTRIPHttpDecoder::NTRIPHttpDecoder()
+NTRIPHttpDecoder::NTRIPHttpDecoder(UtcClock utcClock)
+    : _utcClock(utcClock ? std::move(utcClock) : QDateTime::currentDateTimeUtc)
 {
     qCDebug(NTRIPHttpDecoderLog) << this;
 }
@@ -20,6 +22,7 @@ NTRIPHttpDecoder::~NTRIPHttpDecoder()
 
 void NTRIPHttpDecoder::reset(Mode mode)
 {
+    _headers.clear();
     _mode = mode;
     _state = State::Status;
     _line.clear();
@@ -159,6 +162,8 @@ void NTRIPHttpDecoder::_lineReceived(Result& result)
         }
         if (_status >= 100 && _status < 200 && _status != 101 && ++_informationalResponses <= 4) {
             _state = State::Status;
+            _headers.clear();
+            _retryAfter = std::chrono::milliseconds{0};
             _chunked = false;
             _contentLengthSet = false;
             return;
@@ -182,34 +187,52 @@ void NTRIPHttpDecoder::_lineReceived(Result& result)
         _fail(result, QStringLiteral("Invalid HTTP response header"));
         return;
     }
-    const auto name = _line.first(colon).trimmed().toLower();
-    const auto value = _line.sliced(colon + 1).trimmed().toLower();
-    if (name == "content-type" && value.split(';').first().trimmed() == "gnss/sourcetable" &&
+    const auto name = QByteArrayView(_line).first(colon);
+    const auto rawValue = QByteArrayView(_line).sliced(colon + 1);
+    if (!_headers.append(QLatin1StringView(name.data(), name.size()),
+                         QLatin1StringView(rawValue.data(), rawValue.size()))) {
+        _fail(result, QStringLiteral("Invalid HTTP response header"));
+        return;
+    }
+    const auto value = _headers.valueAt(_headers.size() - 1);
+    const auto field = _headers.nameAt(_headers.size() - 1);
+    if (field == "content-type" &&
+        value.first(value.indexOf(';') < 0 ? value.size() : value.indexOf(';'))
+                .trimmed()
+                .compare("gnss/sourcetable", Qt::CaseInsensitive) == 0 &&
         _mode == Mode::Corrections && _status >= 200 && _status < 300) {
         _fail(result, QStringLiteral("Caster returned a source table; select a valid mountpoint"),
               NTRIPError::InvalidMountpoint);
-    } else if (name == "transfer-encoding") {
-        if (value != "chunked" || _chunked) {
+    } else if (field == "transfer-encoding") {
+        if (value.compare("chunked", Qt::CaseInsensitive) != 0 || _chunked) {
             _fail(result, QStringLiteral("Unsupported HTTP transfer encoding"));
             return;
         }
         _chunked = true;
-    } else if (name == "content-encoding" && value != "identity") {
+    } else if (field == "content-encoding" && value.compare("identity", Qt::CaseInsensitive) != 0) {
         _fail(result, QStringLiteral("Unsupported HTTP content encoding"));
-    } else if (name == "content-length") {
+    } else if (field == "content-length") {
         bool ok = false;
         const quint64 length = value.toULongLong(&ok);
-        if (!ok || (_contentLengthSet && length != _contentLength)) {
+        const bool digits =
+            !value.isEmpty() && std::all_of(value.begin(), value.end(), [](char c) { return c >= '0' && c <= '9'; });
+        if (!ok || !digits || (_contentLengthSet && length != _contentLength)) {
             _fail(result, QStringLiteral("Invalid HTTP content length"));
             return;
         }
         _contentLengthSet = true;
         _contentLength = length;
-    } else if (name == "retry-after") {
+    } else if (field == "retry-after") {
         bool ok = false;
         const auto seconds = value.toULongLong(&ok);
-        if (ok) {
+        if (ok && !value.isEmpty() &&
+            std::all_of(value.begin(), value.end(), [](char c) { return c >= '0' && c <= '9'; })) {
             _retryAfter = std::chrono::seconds{std::min<quint64>(seconds, 300)};
+        } else if (const auto date = _headers.dateTimeValueAt(_headers.size() - 1)) {
+            const auto now = _utcClock();
+            if (now.isValid()) {
+                _retryAfter = std::chrono::milliseconds{std::clamp(now.msecsTo(*date), qint64(0), qint64(300000))};
+            }
         }
     }
 }

@@ -32,7 +32,40 @@
  ****************************************************************************/
 
 #include "FemtoPrivate.h"
+#include "GPSWire.h"
 #include "NMEASentence.h"
+
+namespace {
+inline femto_uav_gps_t decodePosition(std::span<const uint8_t> bytes)
+{
+    femto_uav_gps_t value{};
+    value.time_utc_usec = GPSWire::read<uint64_t>(bytes, 0).value_or(0);
+    value.lat = GPSWire::read<int32_t>(bytes, 8).value_or(0);
+    value.lon = GPSWire::read<int32_t>(bytes, 12).value_or(0);
+    value.alt = GPSWire::read<int32_t>(bytes, 16).value_or(0);
+    value.alt_ellipsoid = GPSWire::read<int32_t>(bytes, 20).value_or(0);
+    value.s_variance_m_s = GPSWire::read<float>(bytes, 24).value_or(0);
+    value.c_variance_rad = GPSWire::read<float>(bytes, 28).value_or(0);
+    value.eph = GPSWire::read<float>(bytes, 32).value_or(0);
+    value.epv = GPSWire::read<float>(bytes, 36).value_or(0);
+    value.hdop = GPSWire::read<float>(bytes, 40).value_or(0);
+    value.vdop = GPSWire::read<float>(bytes, 44).value_or(0);
+    value.noise_per_ms = GPSWire::read<int32_t>(bytes, 48).value_or(0);
+    value.jamming_indicator = GPSWire::read<int32_t>(bytes, 52).value_or(0);
+    value.vel_m_s = GPSWire::read<float>(bytes, 56).value_or(0);
+    value.vel_n_m_s = GPSWire::read<float>(bytes, 60).value_or(0);
+    value.vel_e_m_s = GPSWire::read<float>(bytes, 64).value_or(0);
+    value.vel_d_m_s = GPSWire::read<float>(bytes, 68).value_or(0);
+    value.cog_rad = GPSWire::read<float>(bytes, 72).value_or(0);
+    value.timestamp_time_relative = GPSWire::read<int32_t>(bytes, 76).value_or(0);
+    value.heading = GPSWire::read<float>(bytes, 80).value_or(0);
+    value.fix_type = GPSWire::read<uint8_t>(bytes, 84).value_or(0);
+    value.vel_ned_valid = GPSWire::read<uint8_t>(bytes, 85).value_or(0);
+    value.satellites_used = GPSWire::read<uint8_t>(bytes, 86).value_or(0);
+    value.heading_type = GPSWire::read<uint8_t>(bytes, 87).value_or(0);
+    return value;
+}
+}  // namespace
 
 int GPSDriverFemto::handleMessage(int len)
 {
@@ -48,7 +81,7 @@ int GPSDriverFemto::handleMessage(int len)
         if (_femto_msg.header.femto_header.messagelength < sizeof(femto_uav_gps_t)) {
             return 0;
         }
-        memcpy(&_femto_uav_gps, _femto_msg.data, sizeof(femto_uav_gps_t));
+        _femto_uav_gps = decodePosition({_femto_msg.data, _femto_msg.header.femto_header.messagelength});
 
         _gps_position->time_utc_usec = _femto_uav_gps.time_utc_usec;
         _gps_position->latitude_deg = _femto_uav_gps.lat / 1e7;
@@ -101,23 +134,22 @@ int GPSDriverFemto::handleMessage(int len)
         if (_femto_msg.header.femto_header.messagelength < offsetof(femto_uav_status_t, sat_status)) {
             return 0;
         }
-        const femto_uav_status_t* uav_status = (const femto_uav_status_t*) _femto_msg.data;
-        if (uav_status->sat_number > sizeof(uav_status->sat_status) / sizeof(uav_status->sat_status[0]) ||
-            _femto_msg.header.femto_header.messagelength <
-                offsetof(femto_uav_status_t, sat_status) + uav_status->sat_number * sizeof(uav_status->sat_status[0])) {
+        const std::span<const uint8_t> status(_femto_msg.data, _femto_msg.header.femto_header.messagelength);
+        const auto count = GPSWire::read<uint32_t>(status, 36).value_or(0);
+        if (count > 64 || status.size() < 40 + count * 8) {
             return 0;
         }
 
         _satellite_info->timestamp = nowUs();
-        _satellite_info->count = MIN(uav_status->sat_number, GPSSatelliteReport::SAT_INFO_MAX_SATELLITES);
+        _satellite_info->count = MIN(count, GPSSatelliteReport::SAT_INFO_MAX_SATELLITES);
 
         for (size_t i = 0; i < _satellite_info->count; i++) {
-            _satellite_info->entries[i].id = uav_status->sat_status[i].svid;
+            _satellite_info->entries[i].id = GPSWire::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);
             _satellite_info->entries[i].used.reset();
-            _satellite_info->entries[i].elevation = uav_status->sat_status[i].ele;
-            _satellite_info->entries[i].azimuth = uav_status->sat_status[i].azi;
-            _satellite_info->entries[i].signal = uav_status->sat_status[i].cn0;
-            _satellite_info->entries[i].prn = uav_status->sat_status[i].svid;
+            _satellite_info->entries[i].elevation = GPSWire::read<uint8_t>(status, 40 + i * 8 + 3).value_or(0);
+            _satellite_info->entries[i].azimuth = GPSWire::read<uint16_t>(status, 40 + i * 8 + 4).value_or(0);
+            _satellite_info->entries[i].signal = GPSWire::read<uint8_t>(status, 40 + i * 8 + 2).value_or(0);
+            _satellite_info->entries[i].prn = GPSWire::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);
         }
 
         ret = 2;
@@ -219,6 +251,10 @@ int GPSDriverFemto::parseChar(uint8_t temp)
                 _femto_msg.read++;
 
                 if (_femto_msg.read >= _femto_msg.header.femto_header.headerlength) {
+                    _femto_msg.header.femto_header.messageid =
+                        GPSWire::read<uint16_t>(_femto_msg.header.data, 4).value_or(0);
+                    _femto_msg.header.femto_header.messagelength =
+                        GPSWire::read<uint16_t>(_femto_msg.header.data, 8).value_or(0);
                     if (_femto_msg.header.femto_header.messagelength > sizeof(_femto_msg.data)) {
                         _decode_state = FemtoDecodeState::pream_ble1;
                     } else {

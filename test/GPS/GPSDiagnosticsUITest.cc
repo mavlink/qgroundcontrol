@@ -95,6 +95,7 @@ void GPSDiagnosticsUITest::_recordingAndExport()
         QtObject {
             property bool recording: false
             property bool exporting: false
+            property int exportProgress: 0
             property bool hasRecording: false
             property int eventCount: 2
             property int bytesRecorded: 100
@@ -133,6 +134,8 @@ void GPSDiagnosticsUITest::_recordingAndExport()
     QVERIFY(QMetaObject::invokeMethod(exportButton, "clicked"));
     QCOMPARE(controller->property("exports").toInt(), 1);
     QVERIFY(!exportButton->isEnabled());
+    controller->setProperty("exportProgress", 42);
+    QVERIFY(exportButton->property("text").toString().contains(QStringLiteral("42%")));
     auto* cancelButton = findItem(root, QStringLiteral("gpsRecordingCancelExport"));
     QVERIFY(cancelButton);
     QVERIFY(cancelButton->property("visible").toBool());

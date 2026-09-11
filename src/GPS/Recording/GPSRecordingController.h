@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QFuture>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QThreadPool>
@@ -18,6 +19,7 @@ class GPSRecordingController : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("Owned by GPSManager")
     Q_PROPERTY(bool exporting READ exporting NOTIFY stateChanged)
+    Q_PROPERTY(int exportProgress READ exportProgress NOTIFY exportProgressChanged)
     Q_PROPERTY(bool recording READ recording NOTIFY stateChanged)
     Q_PROPERTY(bool hasRecording READ hasRecording NOTIFY stateChanged)
     Q_PROPERTY(int eventCount READ eventCount NOTIFY stateChanged)
@@ -39,6 +41,8 @@ public:
 
     bool exporting() const { return _exporting; }
 
+    int exportProgress() const { return _exportProgress; }
+
     std::shared_ptr<GPSRecordingBuffer> buffer() const { return _buffer; }
 
     bool recording() const { return _buffer->status().recording; }
@@ -58,6 +62,7 @@ public:
 signals:
     void stateChanged();
     void exportFinished(bool success);
+    void exportProgressChanged();
 
 private:
     void _refresh();
@@ -68,7 +73,8 @@ private:
     QString _errorString;
     QString _lastExportPath;
     QPointer<QThreadPool> _exportPool;
-    std::shared_ptr<std::atomic_bool> _exportCancel;
+    QFuture<void> _exportFuture;
+    int _exportProgress = 0;
     quint64 _exportRevision = 0;
     bool _exporting = false;
 };

@@ -6,9 +6,13 @@
 #include <vector>
 
 #include "GPSProtocolTestIO.h"
+#include "GPSWire.h"
+#include "NMEASentence.h"
+#include "RTCMFramer.h"
 #include "SBF/GPSDriverSBF.h"
 #include "UBX/GPSDriverUBX.h"
 #include "UBX/UBXMessageSchema.h"
+#include "fixtures/GPSFixtureExpectations.h"
 
 #define CHECK(value)                          \
     do {                                      \
@@ -117,9 +121,102 @@ void navigationEpochs()
     }
 }
 
+void independentSequences()
+{
+    GPSPositionReport position{};
+    GPSSatelliteReport satellites{};
+    GPSDriverUBX ubx(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+    ubx.setDecodeContext({.navigation = true});
+    const auto navigation = fixture("navigation.ubx");
+    size_t offset = 0;
+    for (const auto& expected : GPSFixture::positions) {
+        const auto end = expected.offset + expected.size;
+        while (offset < end) {
+            ubx.consume({navigation.data() + offset, 1});
+            ++offset;
+        }
+        CHECK(std::abs(position.latitude_deg - expected.latitude) < 1e-8);
+        CHECK(std::abs(position.longitude_deg - expected.longitude) < 1e-8);
+        CHECK(std::abs(position.altitude_msl_m - expected.altitude) < 1e-6);
+    }
+    ubx.consume(std::span(navigation).subspan(offset));
+    CHECK(satellites.count == std::size(GPSFixture::satellites));
+    constexpr GPSConstellation systems[] = {
+        GPSConstellation::GPS,     GPSConstellation::SBAS, GPSConstellation::Galileo, GPSConstellation::BeiDou,
+        GPSConstellation::Unknown, GPSConstellation::QZSS, GPSConstellation::GLONASS};
+    for (size_t i = 0; i < satellites.count; ++i) {
+        const auto& expected = GPSFixture::satellites[i];
+        const auto& actual = satellites.entries[i];
+        CHECK(actual.id == expected.id && actual.signal == expected.signal);
+        CHECK(actual.elevation == expected.elevation && actual.azimuth == expected.azimuth);
+        CHECK(actual.used == expected.used);
+        CHECK(expected.gnss < std::size(systems) && actual.constellation == systems[expected.gnss]);
+    }
+    const auto relative = ubx.decode(fixture("relative.ubx")).batch;
+    CHECK(relative.events.size() == 1);
+    CHECK(std::get<GPSRelativeReport>(relative.events.front()).relative_position_valid == GPSFixture::relativeValid);
+
+    const auto mixed = fixture("mixed.gps");
+    for (const auto& expected : GPSFixture::corrections) {
+        RTCMFramer frame;
+        for (unsigned i = 0; i < expected.size; ++i)
+            CHECK(frame.addByte(mixed[expected.offset + i]) == (i + 1 == expected.size));
+        CHECK(frame.valid() && frame.messageId() == expected.id);
+        CHECK(frame.messageLength() == expected.size);
+        frame.message()[frame.messageLength() - 1] ^= 1;
+        CHECK(!frame.valid());
+    }
+    ubx.consume(mixed);
+    CHECK(std::abs(position.latitude_deg - 32.0658325) < 1e-8);
+    const auto nmea = fixture("gga.nmea");
+    const auto sentence = NMEA::sentence({reinterpret_cast<const char*>(nmea.data()), nmea.size()});
+    CHECK(sentence);
+    const auto gga = NMEA::gga(*sentence);
+    CHECK(gga);
+    CHECK(std::abs(gga->latitude - GPSFixture::ggaLatitude) < 1e-8);
+    CHECK(std::abs(gga->longitude - GPSFixture::ggaLongitude) < 1e-8);
+    CHECK(std::abs(gga->altitude - GPSFixture::ggaAltitude) < 1e-6);
+    CHECK(gga->satellitesUsed == GPSFixture::ggaSatellites);
+
+    GPSDriverSBF sbf(makeGPSProtocolTestIO(noDevice, nullptr), &position, &satellites);
+    for (auto byte : fixture("geodetic.sbf"))
+        sbf.consume({&byte, 1});
+    gps_test_time += 200000;
+    sbf.consume({});
+    CHECK(std::abs(position.speedAccuracyMetersPerSecond - std::sqrt(GPSFixture::speedVariance)) < 1e-7);
+    // Attitude blocks for a different epoch must not create another position.
+    const auto previousTimestamp = position.timestamp;
+    sbf.consume(fixture("attitude.sbf"));
+    gps_test_time += 200000;
+    sbf.consume({});
+    CHECK(position.timestamp == previousTimestamp);
+    CHECK(std::isnan(position.heading));
+}
+
+void scalarWireValues()
+{
+    const std::array<uint8_t, 9> data{0, 0xfe, 0xff, 0xff, 0xff, 0, 0, 0x80, 0xbf};
+    CHECK(GPSWire::read<int32_t>(data, 1) == -2);
+    CHECK(GPSWire::read<float>(data, 5) == -1.0f);
+    CHECK(!GPSWire::read<double>(data, 2));
+    CHECK(!GPSWire::read<uint8_t>(data, SIZE_MAX));
+    std::array<uint8_t, 9> output{};
+    CHECK(GPSWire::write(output, 1, int32_t(-2)));
+    CHECK(GPSWire::write(output, 5, -1.0f));
+    CHECK(output == data);
+    CHECK(!GPSWire::write(output, 2, double(1.0)));
+    CHECK(output == data);
+    CHECK(GPSWire::write(output, 1, std::numeric_limits<uint64_t>::max()));
+    CHECK(GPSWire::read<uint64_t>(output, 1) == std::numeric_limits<uint64_t>::max());
+    CHECK(GPSWire::write(output, 1, std::bit_cast<double>(uint64_t(0x7ff8000000000001))));
+    CHECK(std::bit_cast<uint64_t>(*GPSWire::read<double>(output, 1)) == 0x7ff8000000000001);
+}
+
 int main()
 {
     try {
+        scalarWireValues();
+        independentSequences();
         navigationEpochs();
         CHECK(!UBX::receiverProfile(UBX::Board::u_blox9).rtcmOutput);
         CHECK(UBX::receiverProfile(UBX::Board::u_blox9_F9P_L1L2).rtcmOutput);

@@ -4,7 +4,10 @@
 #include <QtCore/QString>
 #include <QtCore/QVector>
 
+#include <functional>
 #include <optional>
+
+class QIODevice;
 
 #include "GPSReceiverConfig.h"
 #include "GPSTransportResult.h"
@@ -85,6 +88,9 @@ struct GPSRecordingDocument
     bool limitReached = false;
     int sourceVersion = CURRENT_VERSION;
 
+    /// The callback receives completed event count; false cancels between events.
+    /// Failure can leave a partial document: callers publishing files must use QSaveFile.
+    bool writeTo(QIODevice& device, QString& error, const std::function<bool(qsizetype)>& progress = {}) const;
     QByteArray encode(QString* error = nullptr) const;
     static bool decode(const QByteArray& bytes, GPSRecordingDocument& result, QString& error);
     bool selectStream(quint64 requestedStream, QVector<GPSRecordingEvent>& selected,

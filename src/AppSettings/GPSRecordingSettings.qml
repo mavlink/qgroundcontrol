@@ -44,7 +44,7 @@ SettingsGroupLayout {
         QGCButton {
             enabled: root.controller && root.controller.hasRecording && !root.controller.recording && !root.controller.exporting
             objectName: "gpsRecordingExport"
-            text: root.controller && root.controller.exporting ? qsTr("Exporting…") : qsTr("Export…")
+            text: root.controller && root.controller.exporting ? qsTr("Exporting %1%…").arg(root.controller.exportProgress) : qsTr("Export…")
 
             onClicked: {
                 if (root.controller && root.controller.hasRecording && !root.controller.recording && !root.controller.exporting) {

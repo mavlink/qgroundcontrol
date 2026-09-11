@@ -130,6 +130,7 @@ private:
     sbf_decode_state_t _decode_state{SBF_DECODE_SYNC1};
     uint16_t _rx_payload_index{0};
     sbf_buf_t _buf;
+    std::array<uint8_t, sizeof(sbf_buf_t)> _wire{};
     OutputMode _output_mode{OutputMode::GPS};
     std::optional<RTCMFramer> _rtcm_parsing;
 

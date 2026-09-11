@@ -494,8 +494,8 @@ void NTRIPHttpTransportTest::_testBuildRequestPlaintextCredentialsWarns()
 
     QVERIFY(request.credentialsInClear);
     QVERIFY(request.bytes.startsWith("GET /MOUNT01 HTTP/1.1\r\n"));
-    QVERIFY(request.bytes.contains("Host: caster.example.com:2101\r\n"));
-    QVERIFY(request.bytes.contains("Authorization: Basic "));
+    QVERIFY(request.bytes.contains("host: caster.example.com:2101\r\n"));
+    QVERIFY(request.bytes.contains("authorization: Basic "));
     QVERIFY(request.bytes.endsWith("\r\n\r\n"));
 }
 
@@ -511,7 +511,7 @@ void NTRIPHttpTransportTest::_testBuildRequestTlsCredentialsNoWarn()
     const auto request = NTRIPRequest::build(cfg);
 
     QVERIFY(!request.credentialsInClear);
-    QVERIFY(request.bytes.contains("Authorization: Basic "));
+    QVERIFY(request.bytes.contains("authorization: Basic "));
 }
 
 void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
@@ -808,9 +808,9 @@ void NTRIPHttpTransportTest::testNormalizedRequest()
     const auto discovery = NTRIPRequest::build(config, true);
     QVERIFY(stream.bytes.startsWith("GET /M%C3%BCnchen%20base%3Fx%23y%25z HTTP/1.1\r\n"));
     QVERIFY(discovery.bytes.startsWith("GET / HTTP/1.1\r\n"));
-    QCOMPARE(stream.headers, discovery.headers);
-    QVERIFY(stream.bytes.contains("Host: " + authority + "\r\n"));
-    QVERIFY(stream.bytes.contains("Authorization: Basic dXNlcjpwYXNzd29yZA==\r\n"));
+    QCOMPARE(stream.headers.toListOfPairs(), discovery.headers.toListOfPairs());
+    QVERIFY(stream.bytes.contains("host: " + authority + "\r\n"));
+    QVERIFY(stream.bytes.contains("authorization: Basic dXNlcjpwYXNzd29yZA==\r\n"));
     QCOMPARE(stream.credentialsInClear, !tls);
     QVERIFY(stream.url.userName().isEmpty());
     QVERIFY(stream.url.password().isEmpty());
@@ -834,7 +834,7 @@ void NTRIPHttpTransportTest::testEncodedRequestReachesCaster()
     QByteArray request;
     QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).contains("\r\n\r\n"), TestTimeout::mediumMs());
     QVERIFY(request.startsWith("GET /base%20name%3Fvariant%231 HTTP/1.1\r\n"));
-    QVERIFY(request.contains("Host: 127.0.0.1:" + QByteArray::number(server.serverPort()) + "\r\n"));
+    QVERIFY(request.contains("host: 127.0.0.1:" + QByteArray::number(server.serverPort()) + "\r\n"));
     peer->write("HTTP/1.1 200 OK\r\n\r\n");
     QTRY_COMPARE_WITH_TIMEOUT(connected.size(), 1, TestTimeout::mediumMs());
     transport.stop();

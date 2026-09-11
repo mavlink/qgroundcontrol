@@ -31,6 +31,7 @@
  *
  ****************************************************************************/
 
+#include "GPSWire.h"
 #include "UBXMessageSchema.h"
 #include "UBXPrivate.h"
 
@@ -71,7 +72,7 @@ int GPSDriverUBX::enableNmeaOutput(unsigned baudrate)
             ports[i].inProtoMask = UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM;
             ports[i].outProtoMask = UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_NMEA;
         }
-        if (!sendMessage(UBX_MSG_CFG_PRT, reinterpret_cast<uint8_t*>(ports), sizeof(ports))) {
+        if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports))) {
             return -1;
         }
         return waitForAck(UBX_MSG_CFG_PRT, UBX_CONFIG_TIMEOUT, true);
@@ -132,9 +133,7 @@ bool GPSDriverUBX::readConfiguration(ConfigurationReadback& report, unsigned tim
     }
     uint8_t request[4 + sizeof(_configuration_readback_keys)]{};
     for (unsigned i = 0; i < _configuration_readback_count; ++i) {
-        for (unsigned byte = 0; byte < 4; ++byte) {
-            request[4 + i * 4 + byte] = uint8_t(_configuration_readback_keys[i] >> (8 * byte));
-        }
+        GPSWire::write(request, 4 + i * 4, _configuration_readback_keys[i]);
     }
     _configuration_readback_ready = false;
     _configuration_readback_pending = true;
@@ -236,7 +235,7 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
                 _buf.payload_tx_cfg_cfg.clearMask = 0xFFFFFFFF;
                 _buf.payload_tx_cfg_cfg.loadMask = 0xFFFFFFFF;
 
-                if (!sendMessage(UBX_MSG_CFG_CFG, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_cfg))) {
+                if (!sendMessage(UBX_MSG_CFG_CFG, UBX::encode(_buf.payload_tx_cfg_cfg))) {
                     continue;
                 }
 
@@ -301,7 +300,7 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
                 cfg_prt[1].inProtoMask = in_proto_mask;
                 cfg_prt[1].outProtoMask = out_proto_mask;
 
-                if (!sendMessage(UBX_MSG_CFG_PRT, (uint8_t*) cfg_prt, 2 * sizeof(ubx_payload_tx_cfg_prt_t))) {
+                if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(cfg_prt))) {
                     continue;
                 }
 
@@ -318,7 +317,7 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
                 cfg_prt[0].baudRate = desired_baudrate;
                 cfg_prt[1].baudRate = desired_baudrate;
 
-                if (!sendMessage(UBX_MSG_CFG_PRT, (uint8_t*) cfg_prt, 2 * sizeof(ubx_payload_tx_cfg_prt_t))) {
+                if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(cfg_prt))) {
                     continue;
                 }
 
@@ -369,7 +368,7 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
         cfg_prt[0].baudRate = UBX_BAUDRATE_M8_AND_NEWER;
         cfg_prt[1].baudRate = UBX_BAUDRATE_M8_AND_NEWER;
 
-        if (sendMessage(UBX_MSG_CFG_PRT, (uint8_t*) cfg_prt, 2 * sizeof(ubx_payload_tx_cfg_prt_t))) {
+        if (sendMessage(UBX_MSG_CFG_PRT, UBX::encode(cfg_prt))) {
             /* no ACK is expected here, but read the buffer anyway in case we actually get an ACK */
             waitForAck(UBX_MSG_CFG_PRT, UBX_CONFIG_TIMEOUT, false);
 
@@ -438,7 +437,7 @@ int GPSDriverUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
     _buf.payload_tx_cfg_rate.navRate = UBX_TX_CFG_RATE_NAVRATE;
     _buf.payload_tx_cfg_rate.timeRef = UBX_TX_CFG_RATE_TIMEREF;
 
-    if (!sendMessage(UBX_MSG_CFG_RATE, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_rate))) {
+    if (!sendMessage(UBX_MSG_CFG_RATE, UBX::encode(_buf.payload_tx_cfg_rate))) {
         return -1;
     }
 
@@ -452,7 +451,7 @@ int GPSDriverUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
     _buf.payload_tx_cfg_nav5.dynModel = _dyn_model;
     _buf.payload_tx_cfg_nav5.fixMode = UBX_TX_CFG_NAV5_FIXMODE;
 
-    if (!sendMessage(UBX_MSG_CFG_NAV5, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_nav5))) {
+    if (!sendMessage(UBX_MSG_CFG_NAV5, UBX::encode(_buf.payload_tx_cfg_nav5))) {
         return -1;
     }
 
@@ -518,7 +517,7 @@ int GPSDriverUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
         _buf.payload_tx_cfg_gnss.block[6].flags = 0;
 
         // send message
-        if (!sendMessage(UBX_MSG_CFG_GNSS, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_gnss))) {
+        if (!sendMessage(UBX_MSG_CFG_GNSS, UBX::encode(_buf.payload_tx_cfg_gnss))) {
             return -1;
         }
 
@@ -1131,11 +1130,16 @@ bool GPSDriverUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
         return false;
     }
 
-    memcpy(_tx_cfg_valset_buf + _tx_cfg_valset_size, &key_id, sizeof(key_id));
-    _tx_cfg_valset_size += sizeof(key_id);
-    // little-endian: the low value_size bytes of value are the narrower type's bytes
-    memcpy(_tx_cfg_valset_buf + _tx_cfg_valset_size, &value, value_size);
-    _tx_cfg_valset_size += value_size;
+    const std::span<uint8_t> output(_tx_cfg_valset_buf);
+    if (!GPSWire::write(output, _tx_cfg_valset_size, key_id))
+        return false;
+    const auto valueOffset = _tx_cfg_valset_size + sizeof(key_id);
+    const bool written = value_size == 1   ? GPSWire::write(output, valueOffset, static_cast<uint8_t>(value))
+                         : value_size == 2 ? GPSWire::write(output, valueOffset, static_cast<uint16_t>(value))
+                                           : GPSWire::write(output, valueOffset, value);
+    if (!written)
+        return false;
+    _tx_cfg_valset_size = valueOffset + value_size;
     return true;
 }
 
@@ -1202,7 +1206,7 @@ int GPSDriverUBX::disableTimeMode()
 
         memset(&_buf.payload_tx_cfg_tmode3, 0, sizeof(_buf.payload_tx_cfg_tmode3));
 
-        if (!sendMessage(UBX_MSG_CFG_TMODE3, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_tmode3)) ||
+        if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(_buf.payload_tx_cfg_tmode3)) ||
             waitForAck(UBX_MSG_CFG_TMODE3, UBX_CONFIG_TIMEOUT, true) < 0) {
             return -1;
         }
@@ -1251,7 +1255,7 @@ int GPSDriverUBX::restartSurveyInPreV27()
     memset(&_buf.payload_tx_cfg_tmode3, 0, sizeof(_buf.payload_tx_cfg_tmode3));
     _buf.payload_tx_cfg_tmode3.flags = 0; /* disable time mode */
 
-    if (!sendMessage(UBX_MSG_CFG_TMODE3, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_tmode3))) {
+    if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(_buf.payload_tx_cfg_tmode3))) {
         UBX_WARN("TMODE3 failed. Device w/o base station support?");
         return -1;
     }
@@ -1266,7 +1270,7 @@ int GPSDriverUBX::restartSurveyInPreV27()
         _buf.payload_tx_cfg_tmode3.svinMinDur = _baseConfig.surveyInDurationSecs;
         _buf.payload_tx_cfg_tmode3.svinAccLimit = static_cast<uint32_t>(_baseConfig.surveyInAccMeters * 10000.0);
 
-        if (!sendMessage(UBX_MSG_CFG_TMODE3, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_tmode3))) {
+        if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(_buf.payload_tx_cfg_tmode3))) {
             return -1;
         }
 
@@ -1296,7 +1300,7 @@ int GPSDriverUBX::restartSurveyInPreV27()
 
         _buf.payload_tx_cfg_tmode3.fixedPosAcc = (uint32_t) (settings.fixedBaseAccuracyMeters * 10000.f);
 
-        if (!sendMessage(UBX_MSG_CFG_TMODE3, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_tmode3))) {
+        if (!sendMessage(UBX_MSG_CFG_TMODE3, UBX::encode(_buf.payload_tx_cfg_tmode3))) {
             return -1;
         }
 
@@ -1486,7 +1490,7 @@ int GPSDriverUBX::activateRTCMOutput(bool reduce_update_rate)
             _buf.payload_tx_cfg_rate.navRate = UBX_TX_CFG_RATE_NAVRATE;
             _buf.payload_tx_cfg_rate.timeRef = UBX_TX_CFG_RATE_TIMEREF;
 
-            if (!sendMessage(UBX_MSG_CFG_RATE, (uint8_t*) &_buf, sizeof(_buf.payload_tx_cfg_rate))) {
+            if (!sendMessage(UBX_MSG_CFG_RATE, UBX::encode(_buf.payload_tx_cfg_rate))) {
                 return -1;
             }
 
@@ -1543,7 +1547,7 @@ bool GPSDriverUBX::configureMessageRate(const uint16_t msg, const uint8_t rate)
     cfg_msg.msg = msg;
     cfg_msg.rate = rate;
 
-    return sendMessage(UBX_MSG_CFG_MSG, (uint8_t*) &cfg_msg, sizeof(cfg_msg));
+    return sendMessage(UBX_MSG_CFG_MSG, UBX::encode(cfg_msg));
 }
 
 bool GPSDriverUBX::configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool report_ack_error)
@@ -1564,22 +1568,18 @@ bool GPSDriverUBX::sendMessage(const uint16_t msg, const uint8_t* payload, const
                               : msg == UBX_MSG_CFG_GNSS   ? 4u
                               : msg == UBX_MSG_CFG_VALSET ? _valsetSettings
                                                           : 0u;
-    ubx_header_t header = {UBX_SYNC1, UBX_SYNC2, 0, 0};
+    std::array<uint8_t, 6> header{UBX_SYNC1, UBX_SYNC2};
+    GPSWire::write(header, 2, msg);
+    GPSWire::write(header, 4, length);
     ubx_checksum_t checksum = {0, 0};
-
-    // Populate header
-    header.msg = msg;
-    header.length = length;
-
-    // Calculate checksum
-    calcChecksum(((uint8_t*) &header) + 2, sizeof(header) - 2, &checksum);  // skip 2 sync bytes
+    calcChecksum(header.data() + 2, header.size() - 2, &checksum);
 
     if (payload != nullptr) {
         calcChecksum(payload, length, &checksum);
     }
 
     // Send message
-    if (write((void*) &header, sizeof(header)) != sizeof(header)) {
+    if (write(header.data(), header.size()) != static_cast<int>(header.size())) {
         return false;
     }
 

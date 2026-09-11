@@ -327,9 +327,9 @@ void NTRIPSourceTableControllerTest::testFetchUsesSharedRequest()
     QByteArray request;
     QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).contains("\r\n\r\n"), TestTimeout::mediumMs());
     QVERIFY(request.startsWith("GET / HTTP/1.1\r\n"));
-    QVERIFY(request.contains("Host: 127.0.0.1:" + QByteArray::number(server.serverPort()) + "\r\n"));
-    QVERIFY(request.contains("Ntrip-Version: Ntrip/2.0\r\n"));
-    QVERIFY(request.contains("Authorization: Basic dXNlcjpwYXNzd29yZA==\r\n"));
+    QVERIFY(request.contains("host: 127.0.0.1:" + QByteArray::number(server.serverPort()) + "\r\n"));
+    QVERIFY(request.contains("ntrip-version: Ntrip/2.0\r\n"));
+    QVERIFY(request.contains("authorization: Basic dXNlcjpwYXNzd29yZA==\r\n"));
     QCOMPARE(warning.size(), 1);
     const QByteArray body = kValidTable.toUtf8();
     peer->write(status + "\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body);

@@ -2,6 +2,7 @@
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QFutureWatcher>
+#include <QtCore/QPromise>
 #include <QtCore/QSaveFile>
 
 #include <utility>
@@ -84,26 +85,25 @@ bool GPSRecordingController::exportRecording(const QUrl& destination)
     struct Result
     {
         bool success = false;
-        bool cancelled = false;
         QString error;
     };
 
-    const auto cancel = std::make_shared<std::atomic_bool>(false);
-    _exportCancel = cancel;
     const quint64 revision = ++_exportRevision;
     _exporting = true;
+    _exportProgress = 0;
     _errorString.clear();
     _lastExportPath.clear();
     auto* watcher = new QFutureWatcher<Result>(this);
     connect(watcher, &QFutureWatcher<Result>::finished, this, [this, watcher, revision, path]() {
-        const auto result = watcher->result();
+        const bool cancelled = watcher->isCanceled();
+        const auto result = cancelled ? Result{} : watcher->result();
         watcher->deleteLater();
         if (revision != _exportRevision) {
             return;
         }
         _exporting = false;
-        _exportCancel.reset();
-        _errorString = result.cancelled ? tr("Recording export cancelled.") : result.error;
+        _exportFuture = {};
+        _errorString = cancelled ? tr("Recording export cancelled.") : result.error;
         if (result.success) {
             _lastExportPath = path;
         }
@@ -113,39 +113,59 @@ bool GPSRecordingController::exportRecording(const QUrl& destination)
             emit exportFinished(result.success);
         }
     });
-    watcher->setFuture(QtConcurrent::run(_exportPool.data(), [snapshot = *document, path, cancel]() -> Result {
-        if (cancel->load()) {
-            return {false, true, {}};
+    connect(watcher, &QFutureWatcher<Result>::progressValueChanged, this, [this, revision](int value) {
+        if (revision == _exportRevision && value != _exportProgress) {
+            _exportProgress = value;
+            emit exportProgressChanged();
         }
-        const QByteArray json = snapshot.encode();
-        if (cancel->load()) {
-            return {false, true, {}};
-        }
-        if (json.isEmpty()) {
-            return {false, false, tr("Receiver recording contains invalid or unsupported data.")};
-        }
+    });
+    const auto future = QtConcurrent::run(_exportPool.data(), [snapshot = *document, path](QPromise<Result>& promise) {
+        promise.setProgressRange(0, 100);
+        if (promise.isCanceled())
+            return;
         QSaveFile file(path);
-        if (!file.open(QIODevice::WriteOnly) || file.write(json) != json.size()) {
-            return {false, false, tr("Cannot export receiver recording: %1").arg(file.errorString())};
+        QString error;
+        const auto progress = [&](qsizetype completed) {
+            promise.setProgressValue(
+                snapshot.events.isEmpty() ? 0 : static_cast<int>(99 * completed / snapshot.events.size()));
+            return !promise.isCanceled();
+        };
+        if (!file.open(QIODevice::WriteOnly)) {
+            promise.addResult(Result{false, tr("Cannot export receiver recording: %1").arg(file.errorString())});
+            return;
         }
-        // Once atomic commit begins it may finish even if cancellation arrives concurrently.
-        if (cancel->load()) {
+        if (!snapshot.writeTo(file, error, progress)) {
             file.cancelWriting();
-            return {false, true, {}};
+            if (!promise.isCanceled())
+                promise.addResult(Result{false, error});
+            return;
+        }
+        // Cancellation is cooperative; an atomic commit already in progress may finish.
+        if (promise.isCanceled()) {
+            file.cancelWriting();
+            return;
         }
         if (!file.commit()) {
-            return {false, false, tr("Cannot export receiver recording: %1").arg(file.errorString())};
+            promise.addResult(Result{false, tr("Cannot export receiver recording: %1").arg(file.errorString())});
+            return;
         }
-        return {true, false, {}};
-    }));
+        promise.setProgressValue(100);
+        promise.addResult(Result{true, {}});
+    });
+    _exportFuture = future;
+    watcher->setFuture(future);
+    const QPointer<GPSRecordingController> guard(this);
+    emit exportProgressChanged();
+    if (!guard)
+        return true;
     emit stateChanged();
     return true;
 }
 
 void GPSRecordingController::cancelExport()
 {
-    if (_exportCancel) {
-        _exportCancel->store(true);
+    if (_exporting) {
+        _exportFuture.cancel();
     }
 }
 

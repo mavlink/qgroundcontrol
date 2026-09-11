@@ -64,17 +64,23 @@ NTRIPRequest::Request NTRIPRequest::build(const NTRIPTransportConfig& config, bo
         }
         request.url.setPath(QLatin1Char('/') + mountpoint, QUrl::DecodedMode);
     }
-    request.headers = {{"Host", request.url.authority(QUrl::FullyEncoded).toLatin1()},
-                       {"Ntrip-Version", "Ntrip/2.0"},
-                       {"User-Agent", "NTRIP QGroundControl/1.0"}};
+    using Header = QHttpHeaders::WellKnownHeader;
+    if (!request.headers.append(Header::Host, request.url.authority(QUrl::FullyEncoded)) ||
+        !request.headers.append("Ntrip-Version", "Ntrip/2.0") ||
+        !request.headers.append(Header::UserAgent, "NTRIP QGroundControl/1.0")) {
+        return {};
+    }
     if (!config.username.isEmpty() || !config.password.isEmpty()) {
         const QByteArray credentials = (config.username + QLatin1Char(':') + config.password).toUtf8().toBase64();
-        request.headers.append({"Authorization", "Basic " + credentials});
+        if (!request.headers.append(Header::Authorization, "Basic " + credentials)) {
+            return {};
+        }
         request.credentialsInClear = !config.useTls;
     }
     request.bytes = "GET " + request.url.path(QUrl::FullyEncoded).toUtf8() + " HTTP/1.1\r\n";
-    for (const auto& [name, value] : request.headers) {
-        request.bytes += name + ": " + value + "\r\n";
+    for (qsizetype i = 0; i < request.headers.size(); ++i) {
+        request.bytes +=
+            request.headers.nameAt(i).toString().toLatin1() + ": " + request.headers.valueAt(i).toByteArray() + "\r\n";
     }
     request.bytes += "\r\n";
     return request;

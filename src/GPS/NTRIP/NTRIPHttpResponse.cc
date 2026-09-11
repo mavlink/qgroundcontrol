@@ -79,6 +79,10 @@ void NTRIPHttpResponse::_sendHttpRequest()
     const QPointer<QTcpSocket> socket = _socket;
     const auto generation = _generation;
     const auto request = NTRIPRequest::build(_config, _mode == Mode::SourceTable);
+    if (request.bytes.isEmpty()) {
+        _fail(NTRIPError::InvalidConfig, tr("Cannot construct caster request"));
+        return;
+    }
     if (request.credentialsInClear) {
         if (_mode == Mode::Corrections) {
             qCWarning(NTRIPHttpResponseLog) << "Sending credentials without TLS — data is not encrypted";

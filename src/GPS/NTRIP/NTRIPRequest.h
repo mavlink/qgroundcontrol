@@ -1,10 +1,9 @@
 #pragma once
 
 #include <QtCore/QByteArray>
-#include <QtCore/QList>
-#include <QtCore/QPair>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
+#include <QtNetwork/QHttpHeaders>
 
 struct NTRIPTransportConfig;
 
@@ -13,7 +12,7 @@ namespace NTRIPRequest {
 struct Request
 {
     QUrl url;
-    QList<QPair<QByteArray, QByteArray>> headers;
+    QHttpHeaders headers;
     QByteArray bytes;
     bool credentialsInClear = false;
 };

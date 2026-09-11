@@ -11,6 +11,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <array>
+#include <functional>
 #include <memory>
 
 #include "GPSPositionSourceAdapter.h"
@@ -165,6 +166,10 @@ private:
     void _updateSelectionStatus();
     bool _isExternalSource() const;
     void _setupPositionSources();
+    void _setupPositionSources(
+        QGeoPositionInfoSource* customSource,
+        const std::function<QGeoPositionInfoSource*(const QString&, QObject*)>& createPlatformSource);
+    static QString _platformSourceName();
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
     void _checkPermission();
     void _clearPosition();

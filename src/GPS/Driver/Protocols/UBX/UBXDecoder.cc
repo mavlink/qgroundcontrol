@@ -39,7 +39,7 @@ void GPSDriverUBX::handleConfigurationReadback()
     if (!_configuration_readback_pending || _rx_payload_length < 4) {
         return;
     }
-    const auto* payload = reinterpret_cast<const uint8_t*>(&_buf);
+    const std::span<const uint8_t> payload(_framePayload.data(), _rx_payload_length);
     if (payload[0] != 1 || payload[1] != 0 || payload[2] != 0 || payload[3] != 0) {
         return;
     }
@@ -49,10 +49,8 @@ void GPSDriverUBX::handleConfigurationReadback()
         if (_rx_payload_length - offset < 4) {
             return;
         }
-        uint32_t key = 0;
-        for (unsigned byte = 0; byte < 4; ++byte) {
-            key |= uint32_t(payload[offset++]) << (8 * byte);
-        }
+        const auto key = GPSWire::read<uint32_t>(payload, offset).value_or(0);
+        offset += 4;
         const unsigned code = key >> 28;
         if (code < 1 || code > 4) {
             return;
@@ -68,9 +66,10 @@ void GPSDriverUBX::handleConfigurationReadback()
         if (index == _configuration_readback_count || (seen & (1u << index))) {
             return;
         }
-        for (unsigned byte = 0; byte < width; ++byte) {
-            values[index] |= uint32_t(payload[offset++]) << (8 * byte);
-        }
+        values[index] = width == 1   ? GPSWire::read<uint8_t>(payload, offset).value_or(0)
+                        : width == 2 ? GPSWire::read<uint16_t>(payload, offset).value_or(0)
+                                     : GPSWire::read<uint32_t>(payload, offset).value_or(0);
+        offset += width;
         if (code == 1 && values[index] > 1) {
             return;
         }
@@ -671,14 +670,14 @@ GPSDriverUBX::payloadRxDone()
 
         case UBX_MSG_INF_DEBUG:
         case UBX_MSG_INF_NOTICE: {
-            uint8_t* p_buf = (uint8_t*) &_buf;
+            uint8_t* p_buf = _framePayload.data();
             p_buf[_rx_payload_length] = 0;
 
         } break;
 
         case UBX_MSG_INF_ERROR:
         case UBX_MSG_INF_WARNING: {
-            uint8_t* p_buf = (uint8_t*) &_buf;
+            uint8_t* p_buf = _framePayload.data();
             p_buf[_rx_payload_length] = 0;
             UBX_WARN("ubx msg: %s", p_buf);
 
@@ -1310,9 +1309,7 @@ int GPSDriverUBX::decodeValidatedPayload()
     GPSPositionReport* output = _gps_position;
     if (_assembleEpochs && timed) {
         const size_t offset = schema->towOffset;
-        uint32_t tow = 0;
-        for (size_t index = 0; index < 4; ++index)
-            tow |= uint32_t(_framePayload[offset + index]) << (index * 8);
+        const auto tow = GPSWire::read<uint32_t>(_framePayload, offset).value_or(0);
         epoch = _navigationEpochs.find(tow, nowUs(), publish);
         if (!epoch)
             return GPSDecodedBatch::PROTOCOL_ACTIVITY;
@@ -1333,9 +1330,71 @@ int GPSDriverUBX::decodeValidatedPayload()
             decodeMonVer(payload);
             break;
         default:
-            // NAV-PVT has both 84-byte and 92-byte versions. Absent extension fields stay zero.
             _buf = {};
-            std::memcpy(&_buf, payload.data(), std::min(payload.size(), sizeof(_buf)));
+            switch (_rx_msg) {
+                case UBX_MSG_NAV_POSLLH:
+                    _buf.payload_rx_nav_posllh = UBX::payload<ubx_payload_rx_nav_posllh_t>(payload);
+                    break;
+                case UBX_MSG_NAV_DOP:
+                    _buf.payload_rx_nav_dop = UBX::payload<ubx_payload_rx_nav_dop_t>(payload);
+                    break;
+                case UBX_MSG_NAV_SOL:
+                    _buf.payload_rx_nav_sol = UBX::payload<ubx_payload_rx_nav_sol_t>(payload);
+                    break;
+                case UBX_MSG_NAV_PVT:
+                    _buf.payload_rx_nav_pvt = UBX::payload<ubx_payload_rx_nav_pvt_t>(payload);
+                    break;
+                case UBX_MSG_NAV_TIMEUTC:
+                    _buf.payload_rx_nav_timeutc = UBX::payload<ubx_payload_rx_nav_timeutc_t>(payload);
+                    break;
+                case UBX_MSG_NAV_STATUS:
+                    _buf.payload_rx_nav_status = UBX::payload<ubx_payload_rx_nav_status_t>(payload);
+                    break;
+                case UBX_MSG_NAV_SVIN:
+                    _buf.payload_rx_nav_svin = UBX::payload<ubx_payload_rx_nav_svin_t>(payload);
+                    break;
+                case UBX_MSG_NAV_VELNED:
+                    _buf.payload_rx_nav_velned = UBX::payload<ubx_payload_rx_nav_velned_t>(payload);
+                    break;
+                case UBX_MSG_SEC_SIG:
+                    _buf.payload_rx_sec_sig = UBX::payload<ubx_payload_rx_sec_sig_t>(payload);
+                    break;
+                case UBX_MSG_RXM_RTCM:
+                    _buf.payload_rx_rxm_rtcm = UBX::payload<ubx_payload_rx_rxm_rtcm_t>(payload);
+                    break;
+                case UBX_MSG_RXM_COR:
+                    _buf.payload_rx_rxm_cor = UBX::payload<ubx_payload_rx_rxm_cor_t>(payload);
+                    break;
+                case UBX_MSG_NAV_RELPOSNED:
+                    _buf.payload_rx_nav_relposned = UBX::payload<ubx_payload_rx_nav_relposned_t>(payload);
+                    break;
+                case UBX_MSG_NAV_DAHEADING:
+                    _buf.payload_rx_nav_daheading = UBX::payload<ubx_payload_rx_nav_daheading_t>(payload);
+                    break;
+                case UBX_MSG_NAV_HPPOSLLH:
+                    _buf.payload_rx_nav_hpposllh = UBX::payload<ubx_payload_rx_nav_hpposllh_t>(payload);
+                    break;
+                case UBX_MSG_MON_COMMS:
+                    _buf.payload_rx_mon_comms = UBX::payload<ubx_payload_rx_mon_comms_t>(payload);
+                    break;
+                case UBX_MSG_MON_RF:
+                    _buf.payload_rx_mon_rf = UBX::payload<ubx_payload_rx_mon_rf_t>(payload);
+                    break;
+                case UBX_MSG_ACK_ACK:
+                    _buf.payload_rx_ack_ack = UBX::payload<ubx_payload_rx_ack_ack_t>(payload);
+                    break;
+                case UBX_MSG_ACK_NAK:
+                    _buf.payload_rx_ack_nak = UBX::payload<ubx_payload_rx_ack_nak_t>(payload);
+                    break;
+                case UBX_MSG_MON_HW:
+                    if (payload.size() == sizeof(ubx_payload_rx_mon_hw_ubx6_t))
+                        _buf.payload_rx_mon_hw_ubx6 = UBX::payload<ubx_payload_rx_mon_hw_ubx6_t>(payload);
+                    else if (payload.size() == sizeof(ubx_payload_rx_mon_hw_ubx7_t))
+                        _buf.payload_rx_mon_hw_ubx7 = UBX::payload<ubx_payload_rx_mon_hw_ubx7_t>(payload);
+                    break;
+                default:
+                    break;
+            }
             break;
     }
     const int updates = payloadRxDone();

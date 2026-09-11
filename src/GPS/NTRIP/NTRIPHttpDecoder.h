@@ -2,7 +2,10 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QByteArrayView>
+#include <QtCore/QDateTime>
+#include <QtNetwork/QHttpHeaders>
 
+#include <functional>
 #include <optional>
 
 #include "NTRIPError.h"
@@ -30,7 +33,8 @@ public:
         std::optional<NTRIPFailure> failure;
     };
 
-    NTRIPHttpDecoder();
+    using UtcClock = std::function<QDateTime()>;
+    explicit NTRIPHttpDecoder(UtcClock utcClock = QDateTime::currentDateTimeUtc);
     ~NTRIPHttpDecoder();
     void reset(Mode mode = Mode::Corrections);
     Result feed(QByteArrayView bytes);
@@ -56,6 +60,8 @@ private:
     void _beginBody(Result& result);
     void _fail(Result& result, const QString& detail, NTRIPError code = NTRIPError::InvalidHttpResponse);
 
+    UtcClock _utcClock;
+    QHttpHeaders _headers;
     Mode _mode = Mode::Corrections;
     State _state = State::Status;
     QByteArray _line;

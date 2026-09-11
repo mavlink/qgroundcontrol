@@ -6,6 +6,8 @@
 
 #include <algorithm>
 
+#include "GPSByteStream.h"
+#include "GPSObservation.h"
 #include "NMEAPositionSource.h"
 #include "NMEAStreamSplitter.h"
 #include "NMEAUtils.h"
@@ -41,6 +43,32 @@ private:
     QByteArray _data;
 };
 }  // namespace
+
+void NMEAStreamSplitterTest::_rawPartialReadOverflow()
+{
+    GPSByteBuffer buffer;
+    const auto received = GPSObservation::monotonicNowUs();
+    const QByteArray shared(50000, 'a');
+    QVERIFY(buffer.append(shared, received));
+    QByteArray output(10000, '\0');
+    quint64 timestamp = 0;
+    QCOMPARE(buffer.read(output.data(), output.size(), timestamp), 10000);
+    QCOMPARE(output, QByteArray(10000, 'a'));
+    QCOMPARE(timestamp, received);
+    QCOMPARE(buffer.size(), 40000);
+    buffer.append(QByteArray(30000, 'b'), received);
+    QCOMPARE(buffer.size(), 30001);
+    QCOMPARE(buffer.read(output.data(), output.size(), timestamp), 1);
+    QCOMPARE(output[0], '\0');
+    QCOMPARE(buffer.size(), 30000);
+    for (int i = 0; i < 3; ++i) {
+        QCOMPARE(buffer.read(output.data(), output.size(), timestamp), 10000);
+        QCOMPARE(output, QByteArray(10000, 'b'));
+        QCOMPARE(timestamp, received);
+    }
+    QCOMPARE(buffer.size(), 0);
+    QCOMPARE(shared, QByteArray(50000, 'a'));
+}
 
 void NMEAStreamSplitterTest::_independentReads()
 {

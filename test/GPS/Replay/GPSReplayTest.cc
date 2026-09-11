@@ -476,6 +476,8 @@ private slots:
             QVERIFY(completionOnOwnerThread);
             QVERIFY(!controller->exporting());
             QCOMPARE(finished.first()[0].toBool(), !cancel);
+            if (!cancel)
+                QCOMPARE(controller->exportProgress(), 100);
             QCOMPARE(controller->lastExportPath().isEmpty(), cancel);
             QCOMPARE(controller->errorString().isEmpty(), !cancel);
         }

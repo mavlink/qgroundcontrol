@@ -31,7 +31,113 @@
  *
  ****************************************************************************/
 
+#include "GPSWire.h"
 #include "SBFPrivate.h"
+
+namespace {
+sbf_buf_t decodeBlock(std::span<const uint8_t> bytes)
+{
+    sbf_buf_t value{};
+    value.sync = GPSWire::read<uint16_t>(bytes, 0).value_or(0);
+    value.crc16 = GPSWire::read<uint16_t>(bytes, 2).value_or(0);
+    const auto id = GPSWire::read<uint16_t>(bytes, 4).value_or(0);
+    value.msg_id = id & 0x1fff;
+    value.msg_revision = id >> 13;
+    value.length = GPSWire::read<uint16_t>(bytes, 6).value_or(0);
+    value.TOW = GPSWire::read<uint32_t>(bytes, 8).value_or(0);
+    value.WNc = GPSWire::read<uint16_t>(bytes, 12).value_or(0);
+    switch (value.msg_id) {
+        case SBF_ID_PVTGeodetic:
+            value.payload_pvt_geodetic.mode_type = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 0) & 15;
+            value.payload_pvt_geodetic.mode_reserved = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 4) & 3;
+            value.payload_pvt_geodetic.mode_base_fixed = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 6) & 1;
+            value.payload_pvt_geodetic.mode_2d = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 7) & 1;
+            value.payload_pvt_geodetic.error = GPSWire::read<uint8_t>(bytes, 15).value_or(0);
+            value.payload_pvt_geodetic.latitude = GPSWire::read<double>(bytes, 16).value_or(0);
+            value.payload_pvt_geodetic.longitude = GPSWire::read<double>(bytes, 24).value_or(0);
+            value.payload_pvt_geodetic.height = GPSWire::read<double>(bytes, 32).value_or(0);
+            value.payload_pvt_geodetic.undulation = GPSWire::read<float>(bytes, 40).value_or(0);
+            value.payload_pvt_geodetic.vn = GPSWire::read<float>(bytes, 44).value_or(0);
+            value.payload_pvt_geodetic.ve = GPSWire::read<float>(bytes, 48).value_or(0);
+            value.payload_pvt_geodetic.vu = GPSWire::read<float>(bytes, 52).value_or(0);
+            value.payload_pvt_geodetic.cog = GPSWire::read<float>(bytes, 56).value_or(0);
+            value.payload_pvt_geodetic.rx_clk_bias = GPSWire::read<double>(bytes, 60).value_or(0);
+            value.payload_pvt_geodetic.RxClkDrift = GPSWire::read<float>(bytes, 68).value_or(0);
+            value.payload_pvt_geodetic.time_system = GPSWire::read<uint8_t>(bytes, 72).value_or(0);
+            value.payload_pvt_geodetic.datum = GPSWire::read<uint8_t>(bytes, 73).value_or(0);
+            value.payload_pvt_geodetic.nr_sv = GPSWire::read<uint8_t>(bytes, 74).value_or(0);
+            value.payload_pvt_geodetic.wa_corr_info = GPSWire::read<uint8_t>(bytes, 75).value_or(0);
+            value.payload_pvt_geodetic.reference_id = GPSWire::read<uint16_t>(bytes, 76).value_or(0);
+            value.payload_pvt_geodetic.mean_corr_age = GPSWire::read<uint16_t>(bytes, 78).value_or(0);
+            value.payload_pvt_geodetic.signal_info = GPSWire::read<uint32_t>(bytes, 80).value_or(0);
+            value.payload_pvt_geodetic.alert_flag = GPSWire::read<uint8_t>(bytes, 84).value_or(0);
+            value.payload_pvt_geodetic.nr_bases = GPSWire::read<uint8_t>(bytes, 85).value_or(0);
+            value.payload_pvt_geodetic.ppp_info = GPSWire::read<uint16_t>(bytes, 86).value_or(0);
+            value.payload_pvt_geodetic.latency = GPSWire::read<uint16_t>(bytes, 88).value_or(0);
+            value.payload_pvt_geodetic.h_accuracy = GPSWire::read<uint16_t>(bytes, 90).value_or(0);
+            value.payload_pvt_geodetic.v_accuracy = GPSWire::read<uint16_t>(bytes, 92).value_or(0);
+            break;
+        case SBF_ID_VelCovGeodetic:
+            value.payload_vel_col_geodetic.mode_type = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 0) & 15;
+            value.payload_vel_col_geodetic.mode_reserved = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 4) & 3;
+            value.payload_vel_col_geodetic.mode_base_fixed = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 6) & 1;
+            value.payload_vel_col_geodetic.mode_2d = (GPSWire::read<uint8_t>(bytes, 14).value_or(0) >> 7) & 1;
+            value.payload_vel_col_geodetic.error = GPSWire::read<uint8_t>(bytes, 15).value_or(0);
+            value.payload_vel_col_geodetic.cov_vn_vn = GPSWire::read<float>(bytes, 16).value_or(0);
+            value.payload_vel_col_geodetic.cov_ve_ve = GPSWire::read<float>(bytes, 20).value_or(0);
+            value.payload_vel_col_geodetic.cov_vu_vu = GPSWire::read<float>(bytes, 24).value_or(0);
+            value.payload_vel_col_geodetic.cov_dt_dt = GPSWire::read<float>(bytes, 28).value_or(0);
+            value.payload_vel_col_geodetic.cov_vn_ve = GPSWire::read<float>(bytes, 32).value_or(0);
+            value.payload_vel_col_geodetic.cov_vn_vu = GPSWire::read<float>(bytes, 36).value_or(0);
+            value.payload_vel_col_geodetic.cov_vn_dt = GPSWire::read<float>(bytes, 40).value_or(0);
+            value.payload_vel_col_geodetic.cov_ve_vu = GPSWire::read<float>(bytes, 44).value_or(0);
+            value.payload_vel_col_geodetic.cov_ve_dt = GPSWire::read<float>(bytes, 48).value_or(0);
+            value.payload_vel_col_geodetic.cov_vu_dt = GPSWire::read<float>(bytes, 52).value_or(0);
+            break;
+        case SBF_ID_DOP:
+            value.payload_dop.nr_sv = GPSWire::read<uint8_t>(bytes, 14).value_or(0);
+            value.payload_dop.reserved = GPSWire::read<uint8_t>(bytes, 15).value_or(0);
+            value.payload_dop.pDOP = GPSWire::read<uint16_t>(bytes, 16).value_or(0);
+            value.payload_dop.tDOP = GPSWire::read<uint16_t>(bytes, 18).value_or(0);
+            value.payload_dop.hDOP = GPSWire::read<uint16_t>(bytes, 20).value_or(0);
+            value.payload_dop.vDOP = GPSWire::read<uint16_t>(bytes, 22).value_or(0);
+            value.payload_dop.hpl = GPSWire::read<float>(bytes, 24).value_or(0);
+            value.payload_dop.vpl = GPSWire::read<float>(bytes, 28).value_or(0);
+            break;
+        case SBF_ID_AttEuler:
+            value.payload_att_euler.nr_sv = GPSWire::read<uint8_t>(bytes, 14).value_or(0);
+            value.payload_att_euler.error_aux1 = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 0) & 3;
+            value.payload_att_euler.error_aux2 = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 2) & 3;
+            value.payload_att_euler.error_reserved = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 4) & 7;
+            value.payload_att_euler.error_not_requested = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 7) & 1;
+            value.payload_att_euler.mode = GPSWire::read<uint16_t>(bytes, 16).value_or(0);
+            value.payload_att_euler.reserved = GPSWire::read<uint16_t>(bytes, 18).value_or(0);
+            value.payload_att_euler.heading = GPSWire::read<float>(bytes, 20).value_or(0);
+            value.payload_att_euler.pitch = GPSWire::read<float>(bytes, 24).value_or(0);
+            value.payload_att_euler.roll = GPSWire::read<float>(bytes, 28).value_or(0);
+            value.payload_att_euler.pitch_dot = GPSWire::read<float>(bytes, 32).value_or(0);
+            value.payload_att_euler.roll_dot = GPSWire::read<float>(bytes, 36).value_or(0);
+            value.payload_att_euler.heading_dot = GPSWire::read<float>(bytes, 40).value_or(0);
+            break;
+        case SBF_ID_AttCovEuler:
+            value.payload_att_cov_euler.reserved = GPSWire::read<uint8_t>(bytes, 14).value_or(0);
+            value.payload_att_cov_euler.error_aux1 = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 0) & 3;
+            value.payload_att_cov_euler.error_aux2 = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 2) & 3;
+            value.payload_att_cov_euler.error_reserved = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 4) & 7;
+            value.payload_att_cov_euler.error_not_requested = (GPSWire::read<uint8_t>(bytes, 15).value_or(0) >> 7) & 1;
+            value.payload_att_cov_euler.cov_headhead = GPSWire::read<float>(bytes, 16).value_or(0);
+            value.payload_att_cov_euler.cov_pitchpitch = GPSWire::read<float>(bytes, 20).value_or(0);
+            value.payload_att_cov_euler.cov_rollroll = GPSWire::read<float>(bytes, 24).value_or(0);
+            value.payload_att_cov_euler.cov_headpitch = GPSWire::read<float>(bytes, 28).value_or(0);
+            value.payload_att_cov_euler.cov_headroll = GPSWire::read<float>(bytes, 32).value_or(0);
+            value.payload_att_cov_euler.cov_pitchroll = GPSWire::read<float>(bytes, 36).value_or(0);
+            break;
+        default:
+            break;
+    }
+    return value;
+}
+}  // namespace
 
 int GPSDriverSBF::parseChar(const uint8_t b)
 {
@@ -111,11 +217,10 @@ int GPSDriverSBF::parseChar(const uint8_t b)
 int GPSDriverSBF::payloadRxAdd(const uint8_t b)
 {
     int ret = 0;
-    uint8_t* p_buf = reinterpret_cast<uint8_t*>(&_buf);
+    _wire[_rx_payload_index++] = b;
+    const auto length = GPSWire::read<uint16_t>(_wire, 6).value_or(0);
 
-    p_buf[_rx_payload_index++] = b;
-
-    if ((_rx_payload_index > 7 && _rx_payload_index >= _buf.length) || _rx_payload_index >= sizeof(_buf)) {
+    if ((_rx_payload_index > 7 && _rx_payload_index >= length) || _rx_payload_index >= _wire.size()) {
         ret = 1;  // payload received completely
     }
 
@@ -140,8 +245,8 @@ int GPSDriverSBF::payloadRxDone()
 {
     int ret = 0;
 
-    if (_buf.length <= 4 || _buf.length > _rx_payload_index ||
-        _buf.crc16 != crc16(reinterpret_cast<uint8_t*>(&_buf) + 4, _buf.length - 4)) {
+    _buf = decodeBlock(std::span<const uint8_t>(_wire).first(_rx_payload_index));
+    if (_buf.length < 14 || _buf.length > _rx_payload_index || _buf.crc16 != crc16(_wire.data() + 4, _buf.length - 4)) {
         SBF_TRACE_RXMSG("Rx Unknow");
         return 0;
     }
@@ -149,19 +254,19 @@ int GPSDriverSBF::payloadRxDone()
     size_t requiredLength = 0;
     switch (_buf.msg_id) {
         case SBF_ID_PVTGeodetic:
-            requiredLength = offsetof(sbf_buf_t, payload_pvt_geodetic) + sizeof(_buf.payload_pvt_geodetic);
+            requiredLength = 94;
             break;
         case SBF_ID_VelCovGeodetic:
-            requiredLength = offsetof(sbf_buf_t, payload_vel_col_geodetic) + sizeof(_buf.payload_vel_col_geodetic);
+            requiredLength = 56;
             break;
         case SBF_ID_DOP:
-            requiredLength = offsetof(sbf_buf_t, payload_dop) + sizeof(_buf.payload_dop);
+            requiredLength = 32;
             break;
         case SBF_ID_AttEuler:
-            requiredLength = offsetof(sbf_buf_t, payload_att_euler) + sizeof(_buf.payload_att_euler);
+            requiredLength = 44;
             break;
         case SBF_ID_AttCovEuler:
-            requiredLength = offsetof(sbf_buf_t, payload_att_cov_euler) + sizeof(_buf.payload_att_cov_euler);
+            requiredLength = 40;
             break;
         default:
             return 0;

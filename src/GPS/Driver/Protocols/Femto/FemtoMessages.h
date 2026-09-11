@@ -134,7 +134,7 @@ typedef struct
 /**
  * Analysis Femto uavgps frame header
  */
-typedef union
+typedef struct
 {
     femto_msg_header_t femto_header;
     uint8_t data[28];

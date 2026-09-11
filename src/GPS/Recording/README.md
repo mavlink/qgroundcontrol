@@ -30,9 +30,16 @@ replay loader's 4 MiB limit. It is an accounting bound, not a claim about exact 
 usage; JSON serialization uses additional bounded temporary memory.
 
 Stop freezes the buffer, and destroying the controller stops it before retired
-worker tokens are released. Export is a bounded synchronous QSaveFile transaction
-on the controller thread, allowed only after stop. Recording limits and export
-failures do not stop or alter receiver I/O.
+worker tokens are released. Export is allowed only after stop. Recording limits
+and export failures do not stop or alter receiver I/O.
+
+Exports retain version 3 JSON and its 4 MiB bound. Typed event validation is shared
+with import; the exporter writes one event at a time without assembling or parsing
+a second complete JSON document. Promise-mode QtConcurrent work reports event
+progress, checks cancellation between events, and commits through QSaveFile only
+after the document is complete. Cancellation before commit preserves any existing
+destination; an atomic commit already in progress may finish. Only one export job
+is admitted per controller, and starting a new capture does not alter its snapshot.
 
 ## Replay format
 

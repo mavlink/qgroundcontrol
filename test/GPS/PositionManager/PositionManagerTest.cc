@@ -2,6 +2,7 @@
 
 #include <QtCore/QIODevice>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QStringList>
 #include <QtCore/QTimeZone>
 #include <QtTest/QSignalSpy>
 
@@ -69,6 +70,68 @@ void PositionManagerTest::init()
     // times out waiting for updates. Expected and benign in this fixture.
     ignoreLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("UpdateTimeoutError")));
+}
+
+void PositionManagerTest::_platformSourceSelection_data()
+{
+    QTest::addColumn<bool>("customProvider");
+    QTest::addColumn<bool>("platformAvailable");
+    QTest::newRow("custom-provider-bypasses-platform") << true << false;
+    QTest::newRow("native-platform-provider") << false << true;
+    QTest::newRow("unavailable-platform-does-not-fall-back-to-nmea") << false << false;
+}
+
+void PositionManagerTest::_platformSourceSelection()
+{
+    QFETCH(bool, customProvider);
+    QFETCH(bool, platformAvailable);
+    QGCPositionManager manager;
+    manager.setSourceMode(QGCPositionManager::SourceMode::InternalOnly);
+    QString expectedProvider;
+#if defined(Q_OS_ANDROID)
+    expectedProvider = QStringLiteral("android");
+#elif defined(Q_OS_IOS) || defined(Q_OS_MACOS)
+    expectedProvider = QStringLiteral("corelocation");
+#elif defined(Q_OS_WIN)
+    expectedProvider = QStringLiteral("winrt");
+#elif defined(Q_OS_WASM)
+    expectedProvider = QStringLiteral("wasm");
+#elif defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_OPENBSD) || defined(Q_OS_NETBSD) || \
+    defined(Q_OS_HURD)
+    expectedProvider = QStringLiteral("geoclue2");
+#endif
+    const bool hasSource = customProvider || (platformAvailable && !expectedProvider.isEmpty());
+    if (!hasSource) {
+        expectLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Platform positioning backend unavailable$")));
+    }
+    QStringList attemptedProviders;
+    auto* customSource = customProvider ? new TestGPSPositionSource(&manager) : nullptr;
+    manager._setupPositionSources(customSource, [&](const QString& name, QObject* parent) -> QGeoPositionInfoSource* {
+        attemptedProviders.append(name);
+        // A fallback provider would succeed, so an accidental fallback changes the observable result.
+        return platformAvailable || name != expectedProvider ? new TestGPSPositionSource(parent) : nullptr;
+    });
+    if (!hasSource) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(attemptedProviders,
+             customProvider || expectedProvider.isEmpty() ? QStringList{} : QStringList{expectedProvider});
+    QCOMPARE(manager.sourceStatus(), hasSource ? QGCPositionManager::SourceStatus::WaitingForFix
+                                               : QGCPositionManager::SourceStatus::BackendUnavailable);
+    QCOMPARE(manager.selectedSource(),
+             hasSource ? QGCPositionManager::SelectedSource::Internal : QGCPositionManager::SelectedSource::None);
+    QCOMPARE(manager._usingPluginSource, customProvider);
+    if (customProvider) {
+        QCOMPARE(manager._defaultSource.data(), customSource);
+    }
+    if (!hasSource) {
+        auto* managedSource = new TestGPSPositionSource(&manager);
+        manager.setNmeaPositionSource(managedSource);
+        manager.setSourceMode(QGCPositionManager::SourceMode::LegacyPriority);
+        QCOMPARE(manager.selectedSource(), QGCPositionManager::SelectedSource::Nmea);
+        QCOMPARE(manager.sourceStatus(), QGCPositionManager::SourceStatus::WaitingForFix);
+    }
 }
 
 void PositionManagerTest::_nmeaSourceProducesGcsPosition()

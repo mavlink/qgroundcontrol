@@ -30,7 +30,7 @@ public:
 
     qint64 bytesAvailable() const override { return QIODevice::bytesAvailable() + _size; }
 
-    bool canReadLine() const override { return !_sentences.empty() && _sentences.front().bytes.contains('\n'); }
+    bool canReadLine() const override { return !_sentences.empty() && _sentences.front().remaining().contains('\n'); }
 
     quint64 lastReadTimestampUs() const override { return _lastReadTimestampUs; }
 
@@ -51,10 +51,10 @@ public:
             return;
         }
         while (!_sentences.empty() && _size + bytes.size() > kMaxBufferedBytes) {
-            _size -= _sentences.front().bytes.size();
+            _size -= _sentences.front().remaining().size();
             _sentences.pop_front();
         }
-        _sentences.push_back({bytes, envelope});
+        _sentences.push_back({envelope});
         _size += bytes.size();
         emit readyRead();
     }
@@ -66,13 +66,13 @@ protected:
             return 0;
         }
         auto& sentence = _sentences.front();
-        const qint64 size = std::min<qint64>(maxSize, sentence.bytes.size());
-        std::copy_n(sentence.bytes.constData(), size, data);
+        const qint64 size = std::min<qint64>(maxSize, sentence.remaining().size());
+        std::copy_n(sentence.remaining().data(), size, data);
         _lastReadTimestampUs = sentence.envelope.receivedAtUs();
         _lastSentence = sentence.envelope;
-        sentence.bytes.remove(0, size);
+        sentence.offset += size;
         _size -= size;
-        if (sentence.bytes.isEmpty()) {
+        if (sentence.remaining().isEmpty()) {
             _sentences.pop_front();
         }
         return size;
@@ -85,8 +85,10 @@ protected:
 private:
     struct Sentence
     {
-        QByteArray bytes;
         NMEASentenceEnvelope envelope;
+        qsizetype offset = 0;
+
+        QByteArrayView remaining() const { return QByteArrayView(envelope.bytes()).sliced(offset); }
     };
 
     std::deque<Sentence> _sentences;
