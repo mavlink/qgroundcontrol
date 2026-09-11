@@ -187,17 +187,17 @@ protected:
 
     int receiveDecoded(unsigned timeout);
 
-    GPSCommandResult awaitCommand(std::string command, unsigned timeout, const std::function<void()>& pump,
-                                  const std::function<GPSCommandOutcome()>& reply, bool required = true,
-                                  uint32_t affectedSettings = 0)
+    GPSCommandResult awaitCommand(GPSConfigurationStep step, const std::function<void()>& pump,
+                                  const std::function<GPSCommandOutcome()>& reply)
     {
+        const auto timeout = static_cast<unsigned>(step.timeout.count());
         const Operation operation(*this, timeout);
         _operationDeadline.untilUs =
             std::min(_operationDeadline.untilUs, _commandWrite.startedAtUs + uint64_t(timeout) * 1000);
         auto result = _commandWrite;
-        result.command = std::move(command);
-        result.required = required;
-        result.affectedSettings = affectedSettings;
+        result.command = std::move(step.command);
+        result.required = step.required;
+        result.affectedSettings = step.affectedSettings;
         result.outcome = GPSCommandTransaction::await(
             _operationDeadline.untilUs, [this] { return nowUs(); }, reply, pump,
             [this] {
@@ -206,15 +206,30 @@ protected:
                                                   : GPSCommandOutcome::Pending;
             });
         result.finishedAtUs = nowUs();
-        if (_io.commandFinished)
+        if (!_commandCompleted && _io.commandFinished)
             _io.commandFinished(result);
+        _commandCompleted = true;
         return result;
     }
 
-    void beginCommandWrite()
+    void beginCommandWrite(std::string command = {}, GPSReceiverSettingSet settings = {})
     {
         _commandWrite = {};
         _commandWrite.startedAtUs = nowUs();
+        _commandWrite.command = std::move(command);
+        _commandWrite.affectedSettings = settings;
+        _commandCompleted = false;
+    }
+
+    void failCommandWrite(GPSCommandOutcome outcome)
+    {
+        if (_commandCompleted)
+            return;
+        _commandWrite.outcome = outcome;
+        _commandWrite.finishedAtUs = nowUs();
+        if (_io.commandFinished)
+            _io.commandFinished(_commandWrite);
+        _commandCompleted = true;
     }
 
     int remainingMilliseconds(uint64_t deadline) const
@@ -272,6 +287,8 @@ protected:
         if (result.status == GPSWriteStatus::Unsupported)
             return -1;
         _io_error = result.status == GPSWriteStatus::Cancelled ? ReadCancelled : -EIO;
+        failCommandWrite(result.status == GPSWriteStatus::Cancelled ? GPSCommandOutcome::Cancelled
+                                                                    : GPSCommandOutcome::TransportError);
         return _io_error;
     }
 
@@ -301,6 +318,13 @@ protected:
     {
         if (!_io_error)
             _io_error = -EPROTO;
+    }
+
+    void publishIntegrity()
+    {
+        _integrity.timestamp = nowUs();
+        _decoded.events.emplace_back(_integrity);
+        _decoded.updates |= GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
 
     void publishSatellites(const GPSSatelliteReport& report)
@@ -360,8 +384,10 @@ protected:
      */
     static double nmeaToDegrees(double ddmm);
 
+    bool _commandCompleted = true;
     GPSCommandResult _commandWrite;
     GPSDecodedBatch _decoded;
+    GPSIntegrityReport _integrity;
     GPSProtocolIO _io;
     int _io_error = 0;
     GPSDeadline _operationDeadline;

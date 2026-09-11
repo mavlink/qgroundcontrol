@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Femto/GPSDriverFemto.h"
+#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "LittleEndian.h"
 #include "SBF/GPSDriverSBF.h"
@@ -26,6 +27,7 @@ public:
     bool septentrio = false;
     std::string rejected_command;
     bool cancel_read = false;
+    bool silence_rejected = false;
     size_t read_chunk = 7;
     size_t noise_bytes = 0;
     unsigned failed_reads = 0;
@@ -74,7 +76,7 @@ public:
             commands.push_back(command);
             rejected = !rejected_command.empty() && command.compare(0, rejected_command.size(), rejected_command) == 0;
             if (rejected) {
-                reply = septentrio ? "$R? rejected\n" : "<ERROR\r\n";
+                reply = silence_rejected ? std::string{} : septentrio ? "$R? rejected\n" : "<ERROR\r\n";
             } else if (septentrio) {
                 reply = command == "\n\r" ? "USB1>" : "$R: " + command;
             } else {
@@ -103,10 +105,15 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     GPSSatelliteReport satellites{};
     std::unique_ptr<GPSBaseProtocol> driver;
     if (septentrio) {
+#if QGC_GPS_ENABLE_SBF
         driver = std::make_unique<GPSDriverSBF>(receiver.io(), &position, &satellites);
+#endif
     } else {
+#if QGC_GPS_ENABLE_FEMTO
         driver = std::make_unique<GPSDriverFemto>(receiver.io(), &position, &satellites);
+#endif
     }
+    CHECK(driver);
     GPSProtocol::GPSConfig config{};
     config.base = {.useFixedBase = fixed,
                    .surveyInAccMeters = 1.25,
@@ -145,6 +152,52 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     }
 }
 
+#if QGC_GPS_ENABLE_SBF
+void sbfRequiredBaseCommands()
+{
+    const std::vector<std::string> fixedCommands = {
+        "setDataInOut, USB1, Auto, RTCMv3+SBF", "setStaticPosGeodetic", "setAntennaOffset",
+        "setReceiverDynamics, Low, Static",     "setPVTMode, Static",   "setSBFOutput, Stream1, USB1, +PVTGeodetic",
+    };
+    for (bool fixed : {false, true}) {
+        const auto commands =
+            fixed ? fixedCommands
+                  : std::vector<std::string>{"setDataInOut, USB1, Auto, RTCMv3+SBF", "setPVTMode, Static",
+                                             "setSBFOutput, Stream1, USB1, +PVTGeodetic"};
+        for (const auto& command : commands) {
+            for (bool silent : {false, true}) {
+                gps_test_time = 0;
+                Receiver receiver;
+                receiver.septentrio = true;
+                receiver.rejected_command = command;
+                receiver.silence_rejected = silent;
+                GPSPositionReport position;
+                GPSSatelliteReport satellites;
+                std::vector<GPSCommandResult> results;
+                auto io = receiver.io();
+                io.commandFinished = [&](const GPSCommandResult& result) { results.push_back(result); };
+                GPSDriverSBF driver(io, &position, &satellites);
+                GPSProtocol::GPSConfig config{};
+                config.output_mode = GPSProtocol::OutputMode::RTCM;
+                config.base.useFixedBase = fixed;
+                unsigned baudrate = 115200;
+                CHECK(driver.configure(baudrate, config) < 0);
+                CHECK(!driver.receiverReady());
+                CHECK(receiver.sent(command));
+                CHECK(receiver.commands.back().starts_with(command));
+                CHECK(!results.empty());
+                CHECK(results.back().command.starts_with(command));
+                CHECK(results.back().required);
+                CHECK(results.back().outcome == (silent ? GPSCommandOutcome::TimedOut : GPSCommandOutcome::Rejected));
+                CHECK(results.back().acceptedBytes == int(receiver.commands.back().size()));
+                CHECK(results.back().writtenBytes == int(receiver.commands.back().size()));
+            }
+        }
+    }
+}
+#endif
+
+#if QGC_GPS_ENABLE_SBF
 void sbfFrameOwnership()
 {
     Receiver receiver;
@@ -197,11 +250,14 @@ void sbfFrameOwnership()
     CHECK(correctionCount == 1);
     CHECK(fixCount == 1);
 }
+#endif
 
 int main()
 {
     try {
         for (bool septentrio : {false, true}) {
+            if ((septentrio && !QGC_GPS_ENABLE_SBF) || (!septentrio && !QGC_GPS_ENABLE_FEMTO))
+                continue;
             for (bool fixed : {false, true}) {
                 receiverMode(septentrio, GPSProtocol::OutputMode::GPS, fixed);
                 receiverMode(septentrio, GPSProtocol::OutputMode::RTCM, fixed);
@@ -215,10 +271,15 @@ int main()
                 }
             }
         }
+#if QGC_GPS_ENABLE_SBF
+        sbfRequiredBaseCommands();
         sbfFrameOwnership();
+#endif
+#if QGC_GPS_ENABLE_FEMTO
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, 1);
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, GPS_READ_BUFFER_SIZE,
                      2 * GPS_READ_BUFFER_SIZE - 3);
+#endif
         std::puts("PASS receiver position/base modes and failed mode switches");
     } catch (const std::exception& error) {
         std::fprintf(stderr, "FAIL %s\n", error.what());

@@ -70,7 +70,7 @@ int GPSDriverUBX::receiveInternal(unsigned timeout, bool& read_error)
 
     while (true) {
         bool ready_to_return =
-            (_configuration_readback_pending && _configuration_readback_ready) ||
+            (_controller.readbackPending() && _controller.readbackReady()) ||
             (_configured ? (_assembleEpochs ? (handled & 1) : (_got_posllh && _got_velned)) : handled);
 
         /* return success if ready */
@@ -184,25 +184,9 @@ void GPSDriverUBX::setDecodeContext(DecodeContext context)
 
 void GPSDriverUBX::publishEpoch(const GPSPositionReport& report)
 {
-    auto published = report;
-    published.noise_per_ms = _gps_position->noise_per_ms;
-    published.automatic_gain_control = _gps_position->automatic_gain_control;
-    published.jamming_state = _gps_position->jamming_state;
-    published.jamming_state_timestamp = _gps_position->jamming_state_timestamp;
-    published.jamming_indicator = _gps_position->jamming_indicator;
-    published.rf_timestamp = _gps_position->rf_timestamp;
-    published.spoofing_state = _gps_position->spoofing_state;
-    published.spoofing_state_timestamp = _gps_position->spoofing_state_timestamp;
-    published.authentication_state = _gps_position->authentication_state;
-    published.authentication_state_timestamp = _gps_position->authentication_state_timestamp;
-    published.corrections_protocol = _gps_position->corrections_protocol;
-    published.corrections_crc_failed = _gps_position->corrections_crc_failed;
-    published.corrections_msg_used = _gps_position->corrections_msg_used;
-    published.corrections_timestamp = _gps_position->corrections_timestamp;
-    published.system_error = _gps_position->system_error;
-    *_gps_position = published;
+    *_gps_position = report;
     _decoded.updates |= 1;
-    _decoded.events.emplace_back(published);
+    _decoded.events.emplace_back(report);
 }
 
 void GPSDriverUBX::flushDecoded()

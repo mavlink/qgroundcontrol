@@ -1,5 +1,6 @@
 #include "NTRIPSourceTableTest.h"
 
+#include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
@@ -181,4 +182,87 @@ void NTRIPSourceTableTest::_testProjectionNotifications()
     QCOMPARE(reset.size(), 2);
     QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("A"));
     QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
+}
+
+void NTRIPSourceTableTest::_testReentrantPublication_data()
+{
+    QTest::addColumn<bool>("replace");
+    QTest::addColumn<bool>("distanceReset");
+    QTest::newRow("clear-during-parse") << false << false;
+    QTest::newRow("replace-during-parse") << true << false;
+    QTest::newRow("clear-during-distance") << false << true;
+    QTest::newRow("replace-during-distance") << true << true;
+}
+
+void NTRIPSourceTableTest::_testReentrantPublication()
+{
+    QFETCH(bool, replace);
+    QFETCH(bool, distanceReset);
+    NTRIPSourceTableModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    const QString first = QStringLiteral("STR;A;Id;RTCM;details;2;GPS;NET;USA;0;0;0;1;gen;none;B;N;4800\n");
+    const QString second = QStringLiteral("STR;B;Id;RTCM;details;2;GPS;NET;USA;0;10;0;1;gen;none;B;N;4800\n");
+    if (distanceReset) {
+        model.parseSourceTable(first + second);
+    }
+    bool triggered = false;
+    bool resetting = false;
+    connect(&model, &QAbstractItemModel::modelAboutToBeReset, &model, [&]() {
+        QVERIFY(!resetting);
+        resetting = true;
+        if (triggered) {
+            return;
+        }
+        triggered = true;
+        model.clear();
+        if (replace) {
+            model.parseSourceTable(second);
+            model.updateDistances(QGeoCoordinate(0, 10));
+        }
+    });
+    connect(&model, &QAbstractItemModel::modelReset, &model, [&]() { resetting = false; });
+    if (distanceReset) {
+        model.updateDistances(QGeoCoordinate(0, 10));
+    } else {
+        model.parseSourceTable(first + second);
+    }
+    QVERIFY(triggered);
+    QTRY_COMPARE_WITH_TIMEOUT(model.count(), replace ? 1 : 0, TestTimeout::shortMs());
+    QVERIFY(!resetting);
+    if (replace) {
+        QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("B"));
+        QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), 0.0);
+    }
+}
+
+void NTRIPSourceTableTest::_testDestructionDuringReset_data()
+{
+    QTest::addColumn<bool>("distanceReset");
+    QTest::addColumn<bool>("beforeReset");
+    QTest::newRow("parse-about-to-reset") << false << true;
+    QTest::newRow("parse-reset") << false << false;
+    QTest::newRow("distance-about-to-reset") << true << true;
+    QTest::newRow("distance-reset") << true << false;
+}
+
+void NTRIPSourceTableTest::_testDestructionDuringReset()
+{
+    QFETCH(bool, distanceReset);
+    QFETCH(bool, beforeReset);
+    QPointer<NTRIPSourceTableModel> model = new NTRIPSourceTableModel;
+    new QAbstractItemModelTester(model, QAbstractItemModelTester::FailureReportingMode::QtTest, model);
+    const QString table = QStringLiteral(
+        "STR;A;Id;RTCM;details;2;GPS;NET;USA;0;0;0;1;gen;none;B;N;4800\n"
+        "STR;B;Id;RTCM;details;2;GPS;NET;USA;0;10;0;1;gen;none;B;N;4800\n");
+    if (distanceReset) {
+        model->parseSourceTable(table);
+    }
+    const auto signal = beforeReset ? &QAbstractItemModel::modelAboutToBeReset : &QAbstractItemModel::modelReset;
+    connect(model, signal, this, [&]() { delete model.data(); });
+    if (distanceReset) {
+        model->updateDistances(QGeoCoordinate(0, 10));
+    } else {
+        model->parseSourceTable(table);
+    }
+    QVERIFY(model.isNull());
 }

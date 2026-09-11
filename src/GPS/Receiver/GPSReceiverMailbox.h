@@ -7,6 +7,7 @@
 
 #include "GPSCorrectionDiagnostics.h"
 #include "GPSDriver.h"
+#include "GPSIntegrityObservation.h"
 
 /// Bounded, thread-safe handoff between one receiver worker and its session.
 class GPSReceiverMailbox
@@ -26,6 +27,7 @@ public:
     struct Batch
     {
         std::optional<GPSObservation> position;
+        std::optional<GPSIntegrityObservation> integrity;
         std::optional<GPSSatelliteObservation> satellites;
         std::optional<GPSRelativeObservation> relativePosition;
         std::optional<GPSSurveyInStatus> survey;
@@ -52,6 +54,7 @@ public:
 
     /// Returns true only when the caller must schedule a drain notification.
     bool publish(const GPSObservation& observation);
+    bool publish(const GPSIntegrityObservation& observation);
     bool publish(const GPSSatelliteObservation& observation);
     bool publish(const GPSRelativeObservation& observation);
     bool publish(const GPSSurveyInStatus& status);

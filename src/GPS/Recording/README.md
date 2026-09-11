@@ -33,7 +33,7 @@ Stop freezes the buffer, and destroying the controller stops it before retired
 worker tokens are released. Export is allowed only after stop. Recording limits
 and export failures do not stop or alter receiver I/O.
 
-Exports retain version 3 JSON and its 4 MiB bound. Typed event validation is shared
+Exports retain version 4 JSON and its 4 MiB bound. Typed event validation is shared
 with import; the exporter writes one event at a time without assembling or parsing
 a second complete JSON document. Promise-mode QtConcurrent work reports event
 progress, checks cancellation between events, and commits through QSaveFile only
@@ -43,10 +43,9 @@ is admitted per controller, and starting a new capture does not alter its snapsh
 
 ## Replay format
 
-Exports use the version 3 contract in `GPSRecordingFormat.h/.cc`, shared with
+Exports use the version 4 contract in `GPSRecordingFormat.h`, shared with
 [the replay test guide](../../../test/GPS/Replay/README.md). The decoder also reads
-version 1 synthetic traces and recorder exports, with explicit frozen mappings
-for their numeric enums. New files use stable string names for transport, driver,
+versions 1–3, with explicit frozen mappings for version 1 numeric enums. New files use stable string names for transport, driver,
 protocol, role, configuration status and write status. Unsupported versions,
 unknown metadata keys, wrong JSON types, invalid payloads and inconsistent delivery
 counts are rejected before replay, including events in unselected streams.
@@ -103,8 +102,17 @@ recorded operation fails with a diagnostic; a trace cannot prove which bytes rea
 the receiver before an earlier deadline. Legacy `write_error` remains intentionally
 less precise because its integer return code cannot identify a transmitted prefix.
 
-Record the QGC revision alongside captures: stable format names do not imply that
-receiver configuration byte sequences remain identical across driver revisions.
+Version 4 records the allowlisted `producer`, `build`, and `configuration_revision`
+profile fields. Older captures leave provenance unknown. A driver configuration
+revision mismatch adds a diagnostic to strict replay failures; it never skips the
+transmitted-byte comparison or declares incompatible bytes acceptable.
+
+In memory, `GPSRecordingEvent::Payload` distinguishes session, open, read, write,
+baud, configuration, bounded-write and close data. Capture and replay share these
+typed payloads. `GPSRecordingJsonCodec.cc` owns version migration and wire names;
+`GPSRecordingValidator` owns timing, profile and byte-evidence invariants. Import
+normalizes each wire event before semantic validation, and export uses the same
+validator before writing each event.
 
 Version 3 preserves typed open/read outcomes and, where the input device supplies
 it, the original producer receipt time separately from read completion. The

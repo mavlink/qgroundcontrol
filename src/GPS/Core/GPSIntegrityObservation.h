@@ -4,8 +4,6 @@
 
 #include <optional>
 
-struct GPSObservation;
-
 /// Original diagnostic receipts; zero means that diagnostic has never been reported.
 struct GPSIntegrityProvenance
 {
@@ -38,7 +36,5 @@ struct GPSIntegrityObservation
     std::optional<int> automaticGainControl;
     std::optional<int> jammingIndicator;
     std::optional<bool> correctionsCrcFailed;
-
-    static GPSIntegrityObservation fromPosition(const GPSObservation& observation);
 };
 Q_DECLARE_METATYPE(GPSIntegrityObservation)

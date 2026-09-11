@@ -135,3 +135,32 @@ void GPSRelativePositionModelTest::_virtualExpiryAndUnchangedPublication()
     model.updateObservation(report);
     QCOMPARE(changed.count(), 1);
 }
+
+void GPSRelativePositionModelTest::_borrowedStoreSurvivesPresentation()
+{
+    ManualScheduler scheduler;
+    auto store = std::make_unique<GPSRelativePositionStore>(nullptr, 100, &scheduler);
+    store->beginSession(QStringLiteral("receiver"), 1);
+    GPSRelativeObservation observation;
+    observation.sessionId = 1;
+    observation.monotonicTimestampUs = scheduler.nowUs();
+    observation.fixValid = true;
+    observation.positionValid = true;
+    observation.positionNedMeters = {1, 2, 3};
+    store->updateObservation(observation);
+    {
+        GPSRelativePositionModel first;
+        first.bindStore(store.get());
+        QCOMPARE(first.north(), 1.0);
+    }
+    QVERIFY(store->fresh());
+    GPSRelativePositionModel replacement;
+    replacement.bindStore(store.get());
+    QCOMPARE(replacement.east(), 2.0);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(100)));
+    QVERIFY(!replacement.fresh());
+    QVERIFY(std::isnan(replacement.north()));
+    store.reset();
+    QVERIFY(replacement.sourceId().isEmpty());
+    QCOMPARE(replacement.sessionId(), 0ULL);
+}

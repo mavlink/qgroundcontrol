@@ -31,171 +31,31 @@
  *
  ****************************************************************************/
 
-#include "UBXMessageSchema.h"
+#include "UBXMessageCodec.h"
 #include "UBXPrivate.h"
 
-void GPSDriverUBX::handleConfigurationReadback()
+int GPSDriverUBX::parseChar(uint8_t byte)
 {
-    if (!_configuration_readback_pending || _rx_payload_length < 4) {
-        return;
-    }
-    const std::span<const uint8_t> payload(_framePayload.data(), _rx_payload_length);
-    if (payload[0] != 1 || payload[1] != 0 || payload[2] != 0 || payload[3] != 0) {
-        return;
-    }
-    uint16_t seen = 0;
-    uint32_t values[9]{};
-    for (unsigned offset = 4; offset < _rx_payload_length;) {
-        if (_rx_payload_length - offset < 4) {
-            return;
-        }
-        const auto key = LittleEndian::read<uint32_t>(payload, offset).value_or(0);
-        offset += 4;
-        const unsigned code = key >> 28;
-        if (code < 1 || code > 4) {
-            return;
-        }
-        const unsigned width = code <= 2 ? 1 : 1u << (code - 2);
-        if (_rx_payload_length - offset < width) {
-            return;
-        }
-        unsigned index = 0;
-        while (index < _configuration_readback_count && _configuration_readback_keys[index] != key) {
-            ++index;
-        }
-        if (index == _configuration_readback_count || (seen & (1u << index))) {
-            return;
-        }
-        values[index] = width == 1   ? LittleEndian::read<uint8_t>(payload, offset).value_or(0)
-                        : width == 2 ? LittleEndian::read<uint16_t>(payload, offset).value_or(0)
-                                     : LittleEndian::read<uint32_t>(payload, offset).value_or(0);
-        offset += width;
-        if (code == 1 && values[index] > 1) {
-            return;
-        }
-        seen |= 1u << index;
-    }
-    if (seen != (1u << _configuration_readback_count) - 1) {
-        return;
-    }
-    memcpy(_configuration_readback_values, values, sizeof(values));
-    _configuration_readback_ready = true;
-}
-
-int  // 0 = decoding, 1 = message handled, 2 = sat info message handled
-GPSDriverUBX::parseChar(const uint8_t b)
-{
-    int ret = 0;
-
-    // A framed payload owns its bytes; embedded preambles belong to that payload.
-    if (_rtcm_parsing && (_decode_state == UBX_DECODE_SYNC1 || _rtcm_parsing->hasPartialFrame())) {
-        const bool complete = _rtcm_parsing->addByte(b);
-        if (complete) {
+    if (_rtcm_parsing && (_frameDecoder.idle() || _rtcm_parsing->hasPartialFrame())) {
+        if (_rtcm_parsing->addByte(byte)) {
             if (_rtcm_parsing->valid())
                 gotRTCMMessage(_rtcm_parsing->message(), _rtcm_parsing->messageLength());
             _rtcm_parsing->reset();
-            return ret;
+            return 0;
         }
         if (_rtcm_parsing->hasPartialFrame())
-            return ret;
+            return 0;
     }
-
-    switch (_decode_state) {
-        /* Expecting Sync1 */
-        case UBX_DECODE_SYNC1:
-            if (b == UBX_SYNC1) {  // Sync1 found --> expecting Sync2
-
-                _decode_state = UBX_DECODE_SYNC2;
-            }
-
-            break;
-
-        /* Expecting Sync2 */
-        case UBX_DECODE_SYNC2:
-            if (b == UBX_SYNC2) {  // Sync2 found --> expecting Class
-
-                _decode_state = UBX_DECODE_CLASS;
-
-            } else {  // Sync1 not followed by Sync2: reset parser
-                decodeInit();
-            }
-
-            break;
-
-        /* Expecting Class */
-        case UBX_DECODE_CLASS:
-
-            addByteToChecksum(b);  // checksum is calculated for everything except Sync and Checksum bytes
-            _rx_msg = b;
-            _decode_state = UBX_DECODE_ID;
-            break;
-
-        /* Expecting ID */
-        case UBX_DECODE_ID:
-
-            addByteToChecksum(b);
-            _rx_msg |= b << 8;
-            _decode_state = UBX_DECODE_LENGTH1;
-            break;
-
-        /* Expecting first length byte */
-        case UBX_DECODE_LENGTH1:
-
-            addByteToChecksum(b);
-            _rx_payload_length = b;
-            _decode_state = UBX_DECODE_LENGTH2;
-            break;
-
-        /* Expecting second length byte */
-        case UBX_DECODE_LENGTH2:
-
-            addByteToChecksum(b);
-            _rx_payload_length |= b << 8;  // calculate payload size
-
-            _framePayloadIndex = 0;
-            _decode_state = _rx_payload_length ? UBX_DECODE_PAYLOAD : UBX_DECODE_CHKSUM1;
-            break;
-
-        case UBX_DECODE_PAYLOAD:
-            addByteToChecksum(b);
-            if (_framePayloadIndex < _framePayload.size()) {
-                _framePayload[_framePayloadIndex] = b;
-            }
-            if (++_framePayloadIndex == _rx_payload_length) {
-                _decode_state = UBX_DECODE_CHKSUM1;
-            }
-            break;
-
-        /* Expecting first checksum byte */
-        case UBX_DECODE_CHKSUM1:
-            if (_rx_ck_a != b) {
-                decodeInit();
-
-            } else {
-                _decode_state = UBX_DECODE_CHKSUM2;
-            }
-
-            break;
-
-        /* Expecting second checksum byte */
-        case UBX_DECODE_CHKSUM2:
-            if (_rx_ck_b != b) {
-            } else {
-                ret = decodeValidatedPayload();
-
-                if (_rtcm_parsing) {
-                    _rtcm_parsing->reset();
-                }
-            }
-
-            decodeInit();
-            break;
-
-        default:
-            break;
-    }
-
-    return ret;
+    const auto frame = _frameDecoder.consume(byte);
+    if (!frame)
+        return 0;
+    _rx_msg = frame->message;
+    _rx_payload_length = frame->length;
+    _framePayload = frame->payload;
+    const int updates = decodeValidatedPayload();
+    if (_rtcm_parsing)
+        _rtcm_parsing->reset();
+    return updates;
 }
 
 int  // -1 = abort, 0 = continue
@@ -207,18 +67,13 @@ GPSDriverUBX::payloadRxInit()
 
     switch (_rx_msg) {
         case UBX_MSG_CFG_VALGET:
-            if (!_configuration_readback_pending) {
+            if (!_controller.readbackPending()) {
                 _rx_state = UBX_RXMSG_IGNORE;
             } else if (_rx_payload_length < 4 || _rx_payload_length > UBX::MAX_CONTROL_PAYLOAD_SIZE) {
                 _rx_state = UBX_RXMSG_ERROR_LENGTH;
             }
             break;
         case UBX_MSG_MON_COMMS:
-            if (_rx_payload_length < 8 || _rx_payload_length > UBX::WIRE_SIZE<ubx_payload_rx_mon_comms_t> ||
-                (_rx_payload_length - 8) % UBX::WIRE_SIZE<ubx_payload_rx_mon_comms_port_t> != 0) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
-            }
-
             break;
 
         case UBX_MSG_NAV_PVT:
@@ -337,74 +192,49 @@ GPSDriverUBX::payloadRxInit()
             break;  // unconditionally handle this message
 
         case UBX_MSG_MON_HW:
-            if ((_rx_payload_length != UBX::WIRE_SIZE<ubx_payload_rx_mon_hw_ubx6_t>)   /* u-blox 6 msg format */
-                &&(_rx_payload_length != UBX::WIRE_SIZE<ubx_payload_rx_mon_hw_ubx7_t>) /* u-blox 7+ msg format */
-                &&(_rx_payload_length != UBX::MON_HW_DEPRECATED_SIZE)) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
-
-            } else if (!_decodeNavigation) {
+            if (!_decodeNavigation) {
                 _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_MON_RF:
-            if (_rx_payload_length < UBX::WIRE_SIZE<ubx_payload_rx_mon_rf_t> ||
-                (_rx_payload_length - 4) % UBX::WIRE_SIZE<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t> !=
-                    0) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
-
-            } else if (!_decodeNavigation) {
+            if (!_decodeNavigation) {
                 _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_SEC_SIG:
-            if (_rx_payload_length < 4) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
-
-            } else if (!_decodeNavigation) {
+            if (!_decodeNavigation) {
                 _rx_state = UBX_RXMSG_IGNORE;
             }
 
             break;
 
         case UBX_MSG_RXM_RTCM:
-            if (_rx_payload_length != UBX::WIRE_SIZE<ubx_payload_rx_rxm_rtcm_t>) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
-
-            } else if (!_decodeNavigation) {
+            if (!_decodeNavigation) {
                 _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_RXM_COR:
-            if (_rx_payload_length != UBX::WIRE_SIZE<ubx_payload_rx_rxm_cor_t>) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
-
-            } else if (!_decodeNavigation) {
+            if (!_decodeNavigation) {
                 _rx_state = UBX_RXMSG_IGNORE;
             }
 
             break;
 
         case UBX_MSG_ACK_ACK:
-            if (_rx_payload_length != UBX::WIRE_SIZE<ubx_payload_rx_ack_ack_t>) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
-
-            } else if (_ack_state != UBX_ACK_WAITING) {
+            if (!_controller.awaitingAcknowledgement()) {
                 _rx_state = UBX_RXMSG_IGNORE;  // No command is awaiting acknowledgement.
             }
 
             break;
 
         case UBX_MSG_ACK_NAK:
-            if (_rx_payload_length != UBX::WIRE_SIZE<ubx_payload_rx_ack_nak_t>) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
-
-            } else if (_ack_state != UBX_ACK_WAITING) {
+            if (!_controller.awaitingAcknowledgement()) {
                 _rx_state = UBX_RXMSG_IGNORE;  // No command is awaiting acknowledgement.
             }
 
@@ -447,15 +277,21 @@ GPSDriverUBX::payloadRxInit()
 
 void GPSDriverUBX::decodeNavSat(std::span<const uint8_t> payload)
 {
-    const auto header = UBX::payload<ubx_payload_rx_nav_sat_part1_t>(payload);
+    auto decoded_header = UBX::MessageCodec<ubx_payload_rx_nav_sat_part1_t>::block(payload);
+    if (!decoded_header)
+        return;
+    const auto header = *decoded_header;
     _satellite_info->count = std::min<size_t>(header.numSvs, _satellite_info->entries.size());
     constexpr GPSConstellation systems[] = {
         GPSConstellation::GPS,     GPSConstellation::SBAS, GPSConstellation::Galileo, GPSConstellation::BeiDou,
         GPSConstellation::Unknown, GPSConstellation::QZSS, GPSConstellation::GLONASS, GPSConstellation::NavIC};
     for (size_t index = 0; index < _satellite_info->count; ++index) {
-        const auto wire = UBX::payload<ubx_payload_rx_nav_sat_part2_t>(
+        auto decoded_wire = UBX::MessageCodec<ubx_payload_rx_nav_sat_part2_t>::block(
             payload, UBX::WIRE_SIZE<std::remove_cv_t<decltype(header)>> +
                          index * UBX::WIRE_SIZE<ubx_payload_rx_nav_sat_part2_t>);
+        if (!decoded_wire)
+            return;
+        const auto wire = *decoded_wire;
         auto& satellite = _satellite_info->entries[index];
         satellite.constellation = wire.gnssId < std::size(systems) ? systems[wire.gnssId] : GPSConstellation::Unknown;
         satellite.id = satellite.prn = wire.svId;
@@ -468,12 +304,18 @@ void GPSDriverUBX::decodeNavSat(std::span<const uint8_t> payload)
 
 void GPSDriverUBX::decodeNavSvinfo(std::span<const uint8_t> payload)
 {
-    const auto header = UBX::payload<ubx_payload_rx_nav_svinfo_part1_t>(payload);
+    auto decoded_header = UBX::MessageCodec<ubx_payload_rx_nav_svinfo_part1_t>::block(payload);
+    if (!decoded_header)
+        return;
+    const auto header = *decoded_header;
     _satellite_info->count = std::min<size_t>(header.numCh, _satellite_info->entries.size());
     for (size_t index = 0; index < _satellite_info->count; ++index) {
-        const auto wire = UBX::payload<ubx_payload_rx_nav_svinfo_part2_t>(
+        auto decoded_wire = UBX::MessageCodec<ubx_payload_rx_nav_svinfo_part2_t>::block(
             payload, UBX::WIRE_SIZE<std::remove_cv_t<decltype(header)>> +
                          index * UBX::WIRE_SIZE<ubx_payload_rx_nav_svinfo_part2_t>);
+        if (!decoded_wire)
+            return;
+        const auto wire = *decoded_wire;
         auto& satellite = _satellite_info->entries[index];
         satellite.id = satellite.prn = wire.svid;
         satellite.used = (wire.flags & 1) != 0;
@@ -487,7 +329,10 @@ void GPSDriverUBX::decodeMonVer(std::span<const uint8_t> payload)
 {
     _model_name[0] = '\0';
     _firmware_version[0] = '\0';
-    auto payload_rx_mon_ver_part1 = UBX::payload<ubx_payload_rx_mon_ver_part1_t>(payload);
+    auto decoded_payload_rx_mon_ver_part1 = UBX::MessageCodec<ubx_payload_rx_mon_ver_part1_t>::block(payload);
+    if (!decoded_payload_rx_mon_ver_part1)
+        return;
+    auto payload_rx_mon_ver_part1 = *decoded_payload_rx_mon_ver_part1;
     // The protocol specifies these as nul-terminated strings, but the terminator comes
     // from the device, so enforce it before anything walks the field.
     payload_rx_mon_ver_part1.swVersion[sizeof(payload_rx_mon_ver_part1.swVersion) - 1] = 0;
@@ -522,7 +367,11 @@ void GPSDriverUBX::decodeMonVer(std::span<const uint8_t> payload)
     }
     for (size_t offset = UBX::WIRE_SIZE<ubx_payload_rx_mon_ver_part1_t>; offset < payload.size();
          offset += UBX::WIRE_SIZE<ubx_payload_rx_mon_ver_part2_t>) {
-        auto payload_rx_mon_ver_part2 = UBX::payload<ubx_payload_rx_mon_ver_part2_t>(payload, offset);
+        auto decoded_payload_rx_mon_ver_part2 =
+            UBX::MessageCodec<ubx_payload_rx_mon_ver_part2_t>::block(payload, offset);
+        if (!decoded_payload_rx_mon_ver_part2)
+            return;
+        auto payload_rx_mon_ver_part2 = *decoded_payload_rx_mon_ver_part2;
         // Part 2 complete: decode Part 2 buffer
         // Same as above: the protocol specifies a nul-terminated string, the device provides
         // the terminator, so enforce it before strstr() walks the field.
@@ -574,7 +423,7 @@ void GPSDriverUBX::decodeMonVer(std::span<const uint8_t> payload)
 }
 
 int  // 0 = no message handled, 1 = message handled, 2 = sat info message handled
-GPSDriverUBX::payloadRxDone()
+GPSDriverUBX::payloadRxDone(GPSPositionReport& position)
 {
     int ret = 0;
 
@@ -586,60 +435,62 @@ GPSDriverUBX::payloadRxDone()
     // handle message
     switch (_rx_msg) {
         case UBX_MSG_NAV_PVT: {
-            const auto payload_rx_nav_pvt = UBX::payload<ubx_payload_rx_nav_pvt_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_pvt =
+                UBX::MessageCodec<ubx_payload_rx_nav_pvt_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_pvt)
+                break;
+            const auto& payload_rx_nav_pvt = *decoded_payload_rx_nav_pvt;
 
             // Check if position fix flag is good
             if ((payload_rx_nav_pvt.flags & UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK) == 1) {
-                _gps_position->fix_type = payload_rx_nav_pvt.fixType;
+                position.fix_type = payload_rx_nav_pvt.fixType;
 
                 if (payload_rx_nav_pvt.flags & UBX_RX_NAV_PVT_FLAGS_DIFFSOLN) {
-                    _gps_position->fix_type = 4;  // DGPS
+                    position.fix_type = 4;  // DGPS
                 }
 
                 uint8_t carr_soln = payload_rx_nav_pvt.flags >> 6;
 
                 if (carr_soln == 1) {
-                    _gps_position->fix_type = 5;  // Float RTK
+                    position.fix_type = 5;  // Float RTK
 
                 } else if (carr_soln == 2) {
-                    _gps_position->fix_type = 6;  // Fixed RTK
+                    position.fix_type = 6;  // Fixed RTK
                 }
 
-                _gps_position->vel_ned_valid = true;
+                position.vel_ned_valid = true;
 
             } else {
-                _gps_position->fix_type = 0;
-                _gps_position->vel_ned_valid = false;
+                position.fix_type = 0;
+                position.vel_ned_valid = false;
             }
 
-            _gps_position->satellites_used = payload_rx_nav_pvt.numSV;
+            position.satellites_used = payload_rx_nav_pvt.numSV;
 
-            if (_assembleEpochs ? !_epochHasHighPrecision : _gps_position->fix_type < 6) {
+            if (_assembleEpochs ? !_epochHasHighPrecision : position.fix_type < 6) {
                 // When RTK is active and solid (fix=6), these values will be filled by HPPOSLLH:
-                _gps_position->latitude_deg = payload_rx_nav_pvt.lat * UBX::DEGREES_PER_COORDINATE;
-                _gps_position->longitude_deg = payload_rx_nav_pvt.lon * UBX::DEGREES_PER_COORDINATE;
-                _gps_position->altitude_msl_m = payload_rx_nav_pvt.hMSL * 1e-3;
-                _gps_position->altitude_ellipsoid_m = payload_rx_nav_pvt.height * 1e-3;
+                position.latitude_deg = payload_rx_nav_pvt.lat * UBX::DEGREES_PER_COORDINATE;
+                position.longitude_deg = payload_rx_nav_pvt.lon * UBX::DEGREES_PER_COORDINATE;
+                position.altitude_msl_m = payload_rx_nav_pvt.hMSL * 1e-3;
+                position.altitude_ellipsoid_m = payload_rx_nav_pvt.height * 1e-3;
 
-                _gps_position->eph = static_cast<float>(payload_rx_nav_pvt.hAcc) * 1e-3f;
-                _gps_position->accuracy_timestamp = nowUs();
-                _gps_position->epv = static_cast<float>(payload_rx_nav_pvt.vAcc) * 1e-3f;
+                position.eph = static_cast<float>(payload_rx_nav_pvt.hAcc) * 1e-3f;
+                position.accuracy_timestamp = nowUs();
+                position.epv = static_cast<float>(payload_rx_nav_pvt.vAcc) * 1e-3f;
 
                 _got_posllh = true;
             }
 
-            _gps_position->speedAccuracyMetersPerSecond = static_cast<float>(payload_rx_nav_pvt.sAcc) * 1e-3f;
+            position.speedAccuracyMetersPerSecond = static_cast<float>(payload_rx_nav_pvt.sAcc) * 1e-3f;
 
-            _gps_position->vel_m_s = static_cast<float>(payload_rx_nav_pvt.gSpeed) * 1e-3f;
+            position.vel_m_s = static_cast<float>(payload_rx_nav_pvt.gSpeed) * 1e-3f;
 
-            _gps_position->vel_n_m_s = static_cast<float>(payload_rx_nav_pvt.velN) * 1e-3f;
-            _gps_position->vel_e_m_s = static_cast<float>(payload_rx_nav_pvt.velE) * 1e-3f;
-            _gps_position->vel_d_m_s = static_cast<float>(payload_rx_nav_pvt.velD) * 1e-3f;
+            position.vel_n_m_s = static_cast<float>(payload_rx_nav_pvt.velN) * 1e-3f;
+            position.vel_e_m_s = static_cast<float>(payload_rx_nav_pvt.velE) * 1e-3f;
+            position.vel_d_m_s = static_cast<float>(payload_rx_nav_pvt.velD) * 1e-3f;
 
-            _gps_position->cog_rad = static_cast<float>(payload_rx_nav_pvt.headMot) * GPS_DEG_TO_RAD * 1e-5f;
-            _gps_position->courseAccuracyRadians =
-                static_cast<float>(payload_rx_nav_pvt.headAcc) * GPS_DEG_TO_RAD * 1e-5f;
+            position.cog_rad = static_cast<float>(payload_rx_nav_pvt.headMot) * GPS_DEG_TO_RAD * 1e-5f;
+            position.courseAccuracyRadians = static_cast<float>(payload_rx_nav_pvt.headAcc) * GPS_DEG_TO_RAD * 1e-5f;
 
             // Check if time and date fix flags are good
             if ((payload_rx_nav_pvt.valid & UBX_RX_NAV_PVT_VALID_VALIDDATE) &&
@@ -652,17 +503,17 @@ GPSDriverUBX::payloadRxDone()
                 timeinfo.tm_hour = payload_rx_nav_pvt.hour;
                 timeinfo.tm_min = payload_rx_nav_pvt.min;
                 timeinfo.tm_sec = payload_rx_nav_pvt.sec;
-                _gps_position->time_utc_usec = timeFromUtc(timeinfo, payload_rx_nav_pvt.nano);
+                position.time_utc_usec = timeFromUtc(timeinfo, payload_rx_nav_pvt.nano);
 
             } else {
                 // The struct is reused across messages, so without this a receiver
                 // that lost time in a reset keeps reporting the last time it knew.
                 // 0 is the defined "unavailable" value.
-                _gps_position->time_utc_usec = 0;
+                position.time_utc_usec = 0;
             }
 
-            _gps_position->timestamp = nowUs();
-            _last_timestamp_time = _gps_position->timestamp;
+            position.timestamp = nowUs();
+            _last_timestamp_time = position.timestamp;
 
             _got_velned = true;
 
@@ -691,22 +542,26 @@ GPSDriverUBX::payloadRxDone()
             logCommsDiagnostics();
             break;
         case UBX_MSG_CFG_VALGET:
-            handleConfigurationReadback();
+            if (const auto values = UBX::decodeConfigurationValues({_framePayload.data(), _rx_payload_length}))
+                _controller.accept(*values);
             break;
 
         case UBX_MSG_NAV_POSLLH: {
-            const auto payload_rx_nav_posllh = UBX::payload<ubx_payload_rx_nav_posllh_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_posllh =
+                UBX::MessageCodec<ubx_payload_rx_nav_posllh_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_posllh)
+                break;
+            const auto& payload_rx_nav_posllh = *decoded_payload_rx_nav_posllh;
 
-            _gps_position->latitude_deg = payload_rx_nav_posllh.lat * UBX::DEGREES_PER_COORDINATE;
-            _gps_position->longitude_deg = payload_rx_nav_posllh.lon * UBX::DEGREES_PER_COORDINATE;
-            _gps_position->altitude_msl_m = payload_rx_nav_posllh.hMSL * 1e-3;
-            _gps_position->altitude_ellipsoid_m = payload_rx_nav_posllh.height * 1e-3;
-            _gps_position->eph = static_cast<float>(payload_rx_nav_posllh.hAcc) * 1e-3f;  // from mm to m
-            _gps_position->accuracy_timestamp = nowUs();
-            _gps_position->epv = static_cast<float>(payload_rx_nav_posllh.vAcc) * 1e-3f;  // from mm to m
+            position.latitude_deg = payload_rx_nav_posllh.lat * UBX::DEGREES_PER_COORDINATE;
+            position.longitude_deg = payload_rx_nav_posllh.lon * UBX::DEGREES_PER_COORDINATE;
+            position.altitude_msl_m = payload_rx_nav_posllh.hMSL * 1e-3;
+            position.altitude_ellipsoid_m = payload_rx_nav_posllh.height * 1e-3;
+            position.eph = static_cast<float>(payload_rx_nav_posllh.hAcc) * 1e-3f;  // from mm to m
+            position.accuracy_timestamp = nowUs();
+            position.epv = static_cast<float>(payload_rx_nav_posllh.vAcc) * 1e-3f;  // from mm to m
 
-            _gps_position->timestamp = nowUs();
+            position.timestamp = nowUs();
 
             _got_posllh = true;
 
@@ -714,27 +569,30 @@ GPSDriverUBX::payloadRxDone()
             break;
         }
         case UBX_MSG_NAV_HPPOSLLH: {
-            const auto payload_rx_nav_hpposllh = UBX::payload<ubx_payload_rx_nav_hpposllh_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_hpposllh =
+                UBX::MessageCodec<ubx_payload_rx_nav_hpposllh_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_hpposllh)
+                break;
+            const auto& payload_rx_nav_hpposllh = *decoded_payload_rx_nav_hpposllh;
 
-            if (payload_rx_nav_hpposllh.flags == 0 && (_assembleEpochs || _gps_position->fix_type == 6)) {
-                _gps_position->latitude_deg =
+            if (payload_rx_nav_hpposllh.flags == 0 && (_assembleEpochs || position.fix_type == 6)) {
+                position.latitude_deg =
                     payload_rx_nav_hpposllh.lat * UBX::DEGREES_PER_COORDINATE +
                     payload_rx_nav_hpposllh.latHp * 1e-9;  // regular precision lat/lon (1e7), plus high precision (1e9)
-                _gps_position->longitude_deg =
+                position.longitude_deg =
                     payload_rx_nav_hpposllh.lon * UBX::DEGREES_PER_COORDINATE + payload_rx_nav_hpposllh.lonHp * 1e-9;
-                _gps_position->altitude_msl_m =
+                position.altitude_msl_m =
                     payload_rx_nav_hpposllh.hMSL * 1e-3 +
                     payload_rx_nav_hpposllh.hMSLHp *
                         1e-4;  // regular precision altitude, mm, plus high precision components of altitude, 0.1 mm
-                _gps_position->altitude_ellipsoid_m =
+                position.altitude_ellipsoid_m =
                     payload_rx_nav_hpposllh.height * 1e-3 + payload_rx_nav_hpposllh.heightHp * 1e-4;
-                _gps_position->eph = static_cast<float>(payload_rx_nav_hpposllh.hAcc) *
-                                     1e-4f;  // Accuracy estimates, convert from 0.1 mm to m
-                _gps_position->epv = static_cast<float>(payload_rx_nav_hpposllh.vAcc) * 1e-4f;
-                _gps_position->accuracy_timestamp = nowUs();
+                position.eph = static_cast<float>(payload_rx_nav_hpposllh.hAcc) *
+                               1e-4f;  // Accuracy estimates, convert from 0.1 mm to m
+                position.epv = static_cast<float>(payload_rx_nav_hpposllh.vAcc) * 1e-4f;
+                position.accuracy_timestamp = nowUs();
 
-                _gps_position->timestamp = nowUs();
+                position.timestamp = nowUs();
 
                 _got_posllh = true;
 
@@ -744,42 +602,54 @@ GPSDriverUBX::payloadRxDone()
             break;
         }
         case UBX_MSG_NAV_SOL: {
-            const auto payload_rx_nav_sol = UBX::payload<ubx_payload_rx_nav_sol_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_sol =
+                UBX::MessageCodec<ubx_payload_rx_nav_sol_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_sol)
+                break;
+            const auto& payload_rx_nav_sol = *decoded_payload_rx_nav_sol;
 
-            _gps_position->fix_type = payload_rx_nav_sol.gpsFix;
-            _gps_position->speedAccuracyMetersPerSecond =
+            position.fix_type = payload_rx_nav_sol.gpsFix;
+            position.speedAccuracyMetersPerSecond =
                 static_cast<float>(payload_rx_nav_sol.sAcc) * 1e-2f;  // from cm to m
-            _gps_position->satellites_used = payload_rx_nav_sol.numSV;
+            position.satellites_used = payload_rx_nav_sol.numSV;
 
             ret = 1;
             break;
         }
         case UBX_MSG_NAV_STATUS: {
-            const auto payload_rx_nav_status = UBX::payload<ubx_payload_rx_nav_status_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_status =
+                UBX::MessageCodec<ubx_payload_rx_nav_status_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_status)
+                break;
+            const auto& payload_rx_nav_status = *decoded_payload_rx_nav_status;
 
-            _gps_position->spoofing_state = (payload_rx_nav_status.flags2 & UBX_RX_NAV_STATUS_SPOOFDETSTATE_MASK) >>
-                                            UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
-            _gps_position->spoofing_state_timestamp = nowUs();
+            _integrity.spoofing_state = (payload_rx_nav_status.flags2 & UBX_RX_NAV_STATUS_SPOOFDETSTATE_MASK) >>
+                                        UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
+            _integrity.spoofing_state_timestamp = nowUs();
 
             ret = 1;
             break;
         }
         case UBX_MSG_NAV_DOP: {
-            const auto payload_rx_nav_dop = UBX::payload<ubx_payload_rx_nav_dop_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_dop =
+                UBX::MessageCodec<ubx_payload_rx_nav_dop_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_dop)
+                break;
+            const auto& payload_rx_nav_dop = *decoded_payload_rx_nav_dop;
 
-            _gps_position->hdop = payload_rx_nav_dop.hDOP * UBX::DOP_PER_UNIT;
-            _gps_position->dop_timestamp = nowUs();
-            _gps_position->vdop = payload_rx_nav_dop.vDOP * UBX::DOP_PER_UNIT;
+            position.hdop = payload_rx_nav_dop.hDOP * UBX::DOP_PER_UNIT;
+            position.dop_timestamp = nowUs();
+            position.vdop = payload_rx_nav_dop.vDOP * UBX::DOP_PER_UNIT;
 
             ret = 1;
             break;
         }
         case UBX_MSG_NAV_TIMEUTC: {
-            const auto payload_rx_nav_timeutc = UBX::payload<ubx_payload_rx_nav_timeutc_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_timeutc =
+                UBX::MessageCodec<ubx_payload_rx_nav_timeutc_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_timeutc)
+                break;
+            const auto& payload_rx_nav_timeutc = *decoded_payload_rx_nav_timeutc;
 
             if (payload_rx_nav_timeutc.valid & UBX_RX_NAV_TIMEUTC_VALID_VALIDUTC) {
                 tm timeinfo{};
@@ -789,13 +659,13 @@ GPSDriverUBX::payloadRxDone()
                 timeinfo.tm_hour = payload_rx_nav_timeutc.hour;
                 timeinfo.tm_min = payload_rx_nav_timeutc.min;
                 timeinfo.tm_sec = payload_rx_nav_timeutc.sec;
-                _gps_position->time_utc_usec = timeFromUtc(timeinfo, payload_rx_nav_timeutc.nano);
+                position.time_utc_usec = timeFromUtc(timeinfo, payload_rx_nav_timeutc.nano);
 
             } else {
                 // The struct is reused across messages, so without this a receiver
                 // that lost time in a reset keeps reporting the last time it knew.
                 // 0 is the defined "unavailable" value.
-                _gps_position->time_utc_usec = 0;
+                position.time_utc_usec = 0;
             }
 
             _last_timestamp_time = nowUs();
@@ -813,8 +683,11 @@ GPSDriverUBX::payloadRxDone()
             break;
 
         case UBX_MSG_NAV_SVIN: {
-            const auto payload_rx_nav_svin = UBX::payload<ubx_payload_rx_nav_svin_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_svin =
+                UBX::MessageCodec<ubx_payload_rx_nav_svin_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_svin)
+                break;
+            const auto& payload_rx_nav_svin = *decoded_payload_rx_nav_svin;
 
             {
                 const ubx_payload_rx_nav_svin_t& svin = payload_rx_nav_svin;
@@ -846,17 +719,19 @@ GPSDriverUBX::payloadRxDone()
             break;
         }
         case UBX_MSG_NAV_VELNED: {
-            const auto payload_rx_nav_velned = UBX::payload<ubx_payload_rx_nav_velned_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_velned =
+                UBX::MessageCodec<ubx_payload_rx_nav_velned_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_velned)
+                break;
+            const auto& payload_rx_nav_velned = *decoded_payload_rx_nav_velned;
 
-            _gps_position->vel_m_s = static_cast<float>(payload_rx_nav_velned.gSpeed) * 1e-2f;
-            _gps_position->vel_n_m_s = static_cast<float>(payload_rx_nav_velned.velN) * 1e-2f;  // NED NORTH velocity
-            _gps_position->vel_e_m_s = static_cast<float>(payload_rx_nav_velned.velE) * 1e-2f;  // NED EAST velocity
-            _gps_position->vel_d_m_s = static_cast<float>(payload_rx_nav_velned.velD) * 1e-2f;  // NED DOWN velocity
-            _gps_position->cog_rad = static_cast<float>(payload_rx_nav_velned.heading) * GPS_DEG_TO_RAD * 1e-5f;
-            _gps_position->courseAccuracyRadians =
-                static_cast<float>(payload_rx_nav_velned.cAcc) * GPS_DEG_TO_RAD * 1e-5f;
-            _gps_position->vel_ned_valid = true;
+            position.vel_m_s = static_cast<float>(payload_rx_nav_velned.gSpeed) * 1e-2f;
+            position.vel_n_m_s = static_cast<float>(payload_rx_nav_velned.velN) * 1e-2f;  // NED NORTH velocity
+            position.vel_e_m_s = static_cast<float>(payload_rx_nav_velned.velE) * 1e-2f;  // NED EAST velocity
+            position.vel_d_m_s = static_cast<float>(payload_rx_nav_velned.velD) * 1e-2f;  // NED DOWN velocity
+            position.cog_rad = static_cast<float>(payload_rx_nav_velned.heading) * GPS_DEG_TO_RAD * 1e-5f;
+            position.courseAccuracyRadians = static_cast<float>(payload_rx_nav_velned.cAcc) * GPS_DEG_TO_RAD * 1e-5f;
+            position.vel_ned_valid = true;
 
             _got_velned = true;
 
@@ -864,8 +739,11 @@ GPSDriverUBX::payloadRxDone()
             break;
         }
         case UBX_MSG_NAV_RELPOSNED: {
-            const auto payload_rx_nav_relposned = UBX::payload<ubx_payload_rx_nav_relposned_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_relposned =
+                UBX::MessageCodec<ubx_payload_rx_nav_relposned_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_relposned)
+                break;
+            const auto& payload_rx_nav_relposned = *decoded_payload_rx_nav_relposned;
 
             {
                 const float rel_length_cm =
@@ -887,9 +765,9 @@ GPSDriverUBX::payloadRxDone()
                     heading_acc_rad = payload_rx_nav_relposned.accHeading * GPS_DEG_TO_RAD * 1e-5f;
                 }
 
-                _gps_position->heading = heading_rad;
-                _gps_position->heading_timestamp = nowUs();
-                _gps_position->heading_accuracy = heading_acc_rad;
+                position.heading = heading_rad;
+                position.heading_timestamp = nowUs();
+                position.heading_accuracy = heading_acc_rad;
 
                 GPSRelativeReport gps_rel{};
 
@@ -936,8 +814,11 @@ GPSDriverUBX::payloadRxDone()
             break;
         }
         case UBX_MSG_NAV_DAHEADING: {
-            const auto payload_rx_nav_daheading = UBX::payload<ubx_payload_rx_nav_daheading_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_nav_daheading =
+                UBX::MessageCodec<ubx_payload_rx_nav_daheading_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_nav_daheading)
+                break;
+            const auto& payload_rx_nav_daheading = *decoded_payload_rx_nav_daheading;
 
             {
                 const float rel_length_m = payload_rx_nav_daheading.relPosLength * 1e-3f;  // mm -> m
@@ -957,9 +838,9 @@ GPSDriverUBX::payloadRxDone()
                     heading_acc_rad = payload_rx_nav_daheading.accHeading * GPS_DEG_TO_RAD * 1e-5f;
                 }
 
-                _gps_position->heading = heading_rad;
-                _gps_position->heading_timestamp = nowUs();
-                _gps_position->heading_accuracy = heading_acc_rad;
+                position.heading = heading_rad;
+                position.heading_timestamp = nowUs();
+                position.heading_accuracy = heading_acc_rad;
 
                 GPSRelativeReport gps_rel{};
 
@@ -1001,37 +882,42 @@ GPSDriverUBX::payloadRxDone()
         case UBX_MSG_MON_VER:
 
             // This is polled only on startup, and the startup code waits for an ack
-            if (_ack_state == UBX_ACK_WAITING && _ack_waiting_msg == UBX_MSG_MON_VER) {
-                _ack_state = UBX_ACK_GOT_ACK;
-            }
+            _controller.accept(UBX::Acknowledgement{UBX_MSG_MON_VER, true});
 
             ret = 1;
             break;
 
         case UBX_MSG_MON_HW: {
-            const auto payload_rx_mon_hw_ubx6 = UBX::payload<ubx_payload_rx_mon_hw_ubx6_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
-            const auto payload_rx_mon_hw_ubx7 = UBX::payload<ubx_payload_rx_mon_hw_ubx7_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
-
             switch (_rx_payload_length) {
-                case UBX::WIRE_SIZE<ubx_payload_rx_mon_hw_ubx6_t>: /* u-blox 6 msg format */
-                    _gps_position->noise_per_ms = payload_rx_mon_hw_ubx6.noisePerMS;
-                    _gps_position->automatic_gain_control = payload_rx_mon_hw_ubx6.agcCnt;
-                    _gps_position->jamming_indicator = payload_rx_mon_hw_ubx6.jamInd;
-                    _gps_position->rf_timestamp = nowUs();
+                case UBX::WIRE_SIZE<ubx_payload_rx_mon_hw_ubx6_t>: /* u-blox 6 msg format */ {
+                    const auto decoded = UBX::MessageCodec<ubx_payload_rx_mon_hw_ubx6_t>::decode(
+                        {_framePayload.data(), _rx_payload_length});
+                    if (!decoded)
+                        break;
+                    const auto& payload_rx_mon_hw_ubx6 = *decoded;
+                    _integrity.noise_per_ms = payload_rx_mon_hw_ubx6.noisePerMS;
+                    _integrity.automatic_gain_control = payload_rx_mon_hw_ubx6.agcCnt;
+                    _integrity.jamming_indicator = payload_rx_mon_hw_ubx6.jamInd;
+                    _integrity.rf_timestamp = nowUs();
 
                     ret = 1;
                     break;
+                }
 
-                case UBX::WIRE_SIZE<ubx_payload_rx_mon_hw_ubx7_t>: /* u-blox 7+ msg format */
-                    _gps_position->noise_per_ms = payload_rx_mon_hw_ubx7.noisePerMS;
-                    _gps_position->automatic_gain_control = payload_rx_mon_hw_ubx7.agcCnt;
-                    _gps_position->jamming_indicator = payload_rx_mon_hw_ubx7.jamInd;
-                    _gps_position->rf_timestamp = nowUs();
+                case UBX::WIRE_SIZE<ubx_payload_rx_mon_hw_ubx7_t>: /* u-blox 7+ msg format */ {
+                    const auto decoded = UBX::MessageCodec<ubx_payload_rx_mon_hw_ubx7_t>::decode(
+                        {_framePayload.data(), _rx_payload_length});
+                    if (!decoded)
+                        break;
+                    const auto& payload_rx_mon_hw_ubx7 = *decoded;
+                    _integrity.noise_per_ms = payload_rx_mon_hw_ubx7.noisePerMS;
+                    _integrity.automatic_gain_control = payload_rx_mon_hw_ubx7.agcCnt;
+                    _integrity.jamming_indicator = payload_rx_mon_hw_ubx7.jamInd;
+                    _integrity.rf_timestamp = nowUs();
 
                     ret = 1;
                     break;
+                }
 
                 case UBX::MON_HW_DEPRECATED_SIZE: /* u-blox 27+ deprecated, ignore */
                     ret = 0;
@@ -1045,29 +931,35 @@ GPSDriverUBX::payloadRxDone()
             break;
         }
         case UBX_MSG_MON_RF: {
-            const auto payload_rx_mon_rf = UBX::payload<ubx_payload_rx_mon_rf_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_mon_rf =
+                UBX::MessageCodec<ubx_payload_rx_mon_rf_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_mon_rf)
+                break;
+            const auto& payload_rx_mon_rf = *decoded_payload_rx_mon_rf;
 
             // TODO: only block 0 is read. F9P reports 2 blocks, X20 3, each with its own noisePerMS,
             // agcCnt and cwSuppression (jamInd). cwSuppression is the CW notch in effect per front end,
             // i.e. the per-frequency mitigation state GNSS_BANDS wants; the block covering a SEC-SIG
             // center frequency comes from rfBlockGnssBand (HPG 2.10) or blockId on older firmware.
-            _gps_position->noise_per_ms = payload_rx_mon_rf.block[0].noisePerMS;
-            _gps_position->automatic_gain_control = payload_rx_mon_rf.block[0].agcCnt;
-            _gps_position->jamming_indicator = payload_rx_mon_rf.block[0].jamInd;
-            _gps_position->rf_timestamp = nowUs();
+            _integrity.noise_per_ms = payload_rx_mon_rf.block[0].noisePerMS;
+            _integrity.automatic_gain_control = payload_rx_mon_rf.block[0].agcCnt;
+            _integrity.jamming_indicator = payload_rx_mon_rf.block[0].jamInd;
+            _integrity.rf_timestamp = nowUs();
 
             if (!_got_sec_sig) {
-                _gps_position->jamming_state = payload_rx_mon_rf.block[0].flags & 0x03;
-                _gps_position->jamming_state_timestamp = nowUs();
+                _integrity.jamming_state = payload_rx_mon_rf.block[0].flags & 0x03;
+                _integrity.jamming_state_timestamp = nowUs();
             }
 
             ret = 1;
             break;
         }
         case UBX_MSG_SEC_SIG: {
-            const auto payload_rx_sec_sig = UBX::payload<ubx_payload_rx_sec_sig_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_sec_sig =
+                UBX::MessageCodec<ubx_payload_rx_sec_sig_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_sec_sig)
+                break;
+            const auto& payload_rx_sec_sig = *decoded_payload_rx_sec_sig;
 
             {
                 const uint8_t version = payload_rx_sec_sig.version;
@@ -1106,8 +998,8 @@ GPSDriverUBX::payloadRxDone()
                     }
                 }
 
-                _gps_position->jamming_state = jamming_state;
-                _gps_position->jamming_state_timestamp = nowUs();
+                _integrity.jamming_state = jamming_state;
+                _integrity.jamming_state_timestamp = nowUs();
                 _got_sec_sig = true;
 
                 // TODO: v2/v3 carry jamNumCentFreqs X4 groups after the header (bits 23..0 centFreq in
@@ -1120,53 +1012,59 @@ GPSDriverUBX::payloadRxDone()
             break;
         }
         case UBX_MSG_RXM_RTCM: {
-            const auto payload_rx_rxm_rtcm = UBX::payload<ubx_payload_rx_rxm_rtcm_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_rxm_rtcm =
+                UBX::MessageCodec<ubx_payload_rx_rxm_rtcm_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_rxm_rtcm)
+                break;
+            const auto& payload_rx_rxm_rtcm = *decoded_payload_rx_rxm_rtcm;
 
-            _gps_position->corrections_timestamp = nowUs();
-            _gps_position->corrections_protocol = GPSPositionReport::CORRECTIONS_PROTOCOL_RTCM3;
-            _gps_position->corrections_crc_failed = (payload_rx_rxm_rtcm.flags & UBX_RX_RXM_RTCM_CRCFAILED_MASK) != 0;
-            _gps_position->corrections_msg_used =
+            _integrity.corrections_timestamp = nowUs();
+            _integrity.corrections_protocol = GPSIntegrityReport::CORRECTIONS_PROTOCOL_RTCM3;
+            _integrity.corrections_crc_failed = (payload_rx_rxm_rtcm.flags & UBX_RX_RXM_RTCM_CRCFAILED_MASK) != 0;
+            _integrity.corrections_msg_used =
                 (payload_rx_rxm_rtcm.flags & UBX_RX_RXM_RTCM_MSGUSED_MASK) >> UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
 
             ret = 1;
             break;
         }
         case UBX_MSG_RXM_COR: {
-            const auto payload_rx_rxm_cor = UBX::payload<ubx_payload_rx_rxm_cor_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_rxm_cor =
+                UBX::MessageCodec<ubx_payload_rx_rxm_cor_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_rxm_cor)
+                break;
+            const auto& payload_rx_rxm_cor = *decoded_payload_rx_rxm_cor;
 
             {
                 const uint32_t status = payload_rx_rxm_cor.statusInfo;
-                uint8_t protocol = GPSPositionReport::CORRECTIONS_PROTOCOL_UNKNOWN;
+                uint8_t protocol = GPSIntegrityReport::CORRECTIONS_PROTOCOL_UNKNOWN;
 
                 switch (status & UBX_RX_RXM_COR_PROTOCOL_MASK) {
                     case 1:
-                        protocol = GPSPositionReport::CORRECTIONS_PROTOCOL_RTCM3;
+                        protocol = GPSIntegrityReport::CORRECTIONS_PROTOCOL_RTCM3;
                         break;
 
                     case 2:
-                        protocol = GPSPositionReport::CORRECTIONS_PROTOCOL_SPARTN;
+                        protocol = GPSIntegrityReport::CORRECTIONS_PROTOCOL_SPARTN;
                         break;
 
                     case 5:
-                        protocol = GPSPositionReport::CORRECTIONS_PROTOCOL_HAS;
+                        protocol = GPSIntegrityReport::CORRECTIONS_PROTOCOL_HAS;
                         break;
 
                     case 29:
-                        protocol = GPSPositionReport::CORRECTIONS_PROTOCOL_PMP;
+                        protocol = GPSIntegrityReport::CORRECTIONS_PROTOCOL_PMP;
                         break;
 
                     case 30:
-                        protocol = GPSPositionReport::CORRECTIONS_PROTOCOL_QZSS_L6;
+                        protocol = GPSIntegrityReport::CORRECTIONS_PROTOCOL_QZSS_L6;
                         break;
                 }
 
-                _gps_position->corrections_timestamp = nowUs();
-                _gps_position->corrections_protocol = protocol;
-                _gps_position->corrections_crc_failed =
+                _integrity.corrections_timestamp = nowUs();
+                _integrity.corrections_protocol = protocol;
+                _integrity.corrections_crc_failed =
                     ((status & UBX_RX_RXM_COR_ERRSTATUS_MASK) >> UBX_RX_RXM_COR_ERRSTATUS_SHIFT) == 2;
-                _gps_position->corrections_msg_used =
+                _integrity.corrections_msg_used =
                     (status & UBX_RX_RXM_COR_MSGUSED_MASK) >> UBX_RX_RXM_COR_MSGUSED_SHIFT;
             }
 
@@ -1174,23 +1072,25 @@ GPSDriverUBX::payloadRxDone()
             break;
         }
         case UBX_MSG_ACK_ACK: {
-            const auto payload_rx_ack_ack = UBX::payload<ubx_payload_rx_ack_ack_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_ack_ack =
+                UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_ack_ack)
+                break;
+            const auto& payload_rx_ack_ack = *decoded_payload_rx_ack_ack;
 
-            if ((_ack_state == UBX_ACK_WAITING) && (payload_rx_ack_ack.msg == _ack_waiting_msg)) {
-                _ack_state = UBX_ACK_GOT_ACK;
-            }
+            _controller.accept(UBX::Acknowledgement{payload_rx_ack_ack.msg, true});
 
             ret = 1;
             break;
         }
         case UBX_MSG_ACK_NAK: {
-            const auto payload_rx_ack_ack = UBX::payload<ubx_payload_rx_ack_ack_t>(
-                std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+            const auto decoded_payload_rx_ack_ack =
+                UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode({_framePayload.data(), _rx_payload_length});
+            if (!decoded_payload_rx_ack_ack)
+                break;
+            const auto& payload_rx_ack_ack = *decoded_payload_rx_ack_ack;
 
-            if ((_ack_state == UBX_ACK_WAITING) && (payload_rx_ack_ack.msg == _ack_waiting_msg)) {
-                _ack_state = UBX_ACK_GOT_NAK;
-            }
+            _controller.accept(UBX::Acknowledgement{payload_rx_ack_ack.msg, false});
 
             ret = 1;
             break;
@@ -1200,7 +1100,22 @@ GPSDriverUBX::payloadRxDone()
     }
 
     if (ret > 0) {
-        _gps_position->timestamp_time_relative = (int32_t) (_last_timestamp_time - _gps_position->timestamp);
+        switch (_rx_msg) {
+            case UBX_MSG_NAV_STATUS:
+            case UBX_MSG_MON_HW:
+            case UBX_MSG_MON_RF:
+            case UBX_MSG_SEC_SIG:
+            case UBX_MSG_RXM_RTCM:
+            case UBX_MSG_RXM_COR:
+                publishIntegrity();
+                break;
+            default:
+                break;
+        }
+    }
+
+    if (ret > 0) {
+        position.timestamp_time_relative = (int32_t) (_last_timestamp_time - position.timestamp);
     }
 
     return ret;
@@ -1212,8 +1127,11 @@ void GPSDriverUBX::logCommsDiagnostics()
         return;
     }
 
-    const auto status =
-        UBX::payload<ubx_payload_rx_mon_comms_t>(std::span<const uint8_t>(_framePayload.data(), _rx_payload_length));
+    const auto decoded_status =
+        UBX::MessageCodec<ubx_payload_rx_mon_comms_t>::decode({_framePayload.data(), _rx_payload_length});
+    if (!decoded_status)
+        return;
+    const auto& status = *decoded_status;
 
     if (status.version != 0 || status.nPorts > UBX_MON_COMMS_MAX_PORTS ||
         _rx_payload_length != 8 + status.nPorts * UBX::WIRE_SIZE<ubx_payload_rx_mon_comms_port_t>) {
@@ -1259,10 +1177,7 @@ void GPSDriverUBX::logCommsDiagnostics()
 
 void GPSDriverUBX::decodeInit()
 {
-    _decode_state = UBX_DECODE_SYNC1;
-    _rx_ck_a = 0;
-    _rx_ck_b = 0;
-    _rx_payload_length = 0;
+    _frameDecoder.reset();
 }
 
 float GPSDriverUBX::relPosHeadingToYaw(int32_t heading) const
@@ -1278,12 +1193,6 @@ float GPSDriverUBX::relPosHeadingToYaw(int32_t heading) const
     }
 
     return heading_rad;
-}
-
-void GPSDriverUBX::addByteToChecksum(const uint8_t b)
-{
-    _rx_ck_a = _rx_ck_a + b;
-    _rx_ck_b = _rx_ck_b + _rx_ck_a;
 }
 
 void GPSDriverUBX::calcChecksum(const uint8_t* buffer, const uint16_t length, ubx_checksum_t* checksum)
@@ -1316,14 +1225,12 @@ int GPSDriverUBX::decodeValidatedPayload()
     const auto publish = [this](const auto& report) { publishEpoch(report); };
     const auto* schema = UBX::messageSchema(_rx_msg);
     const bool timed = schema && schema->towOffset >= 0;
-    GPSPositionReport* output = _gps_position;
     if (_assembleEpochs && timed) {
         const size_t offset = schema->towOffset;
         const auto tow = LittleEndian::read<uint32_t>(_framePayload, offset).value_or(0);
         epoch = _navigationEpochs.find(tow, nowUs(), publish);
         if (!epoch)
             return GPSDecodedBatch::PROTOCOL_ACTIVITY;
-        _gps_position = &epoch->position;
         _epochHasHighPrecision = epoch->highPrecision;
     }
     const std::span<const uint8_t> payload{_framePayload.data(), _rx_payload_length};
@@ -1342,8 +1249,7 @@ int GPSDriverUBX::decodeValidatedPayload()
         default:
             break;
     }
-    const int updates = payloadRxDone();
-    _gps_position = output;
+    const int updates = payloadRxDone(epoch ? epoch->position : *_gps_position);
     if (epoch) {
         if (_rx_msg == UBX_MSG_NAV_PVT) {
             epoch->positionValid = epoch->velocityValid = true;

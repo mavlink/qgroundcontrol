@@ -7,6 +7,7 @@
 
 #include "Ashtech/GPSDriverAshtech.h"
 #include "Femto/GPSDriverFemto.h"
+#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "SBF/GPSDriverSBF.h"
 #include "UBX/GPSDriverUBX.h"
@@ -66,15 +67,24 @@ static std::unique_ptr<GPSBaseProtocol> createReceiver(unsigned family, Scripted
                                                        GPSSatelliteReport& satellites)
 {
     switch (family) {
-        case 0: {
+#if QGC_GPS_ENABLE_UBX
+        case 0:
             return std::make_unique<GPSDriverUBX>(io.io(), &position, &satellites);
-        }
+#endif
+#if QGC_GPS_ENABLE_ASHTECH
         case 1:
             return std::make_unique<GPSDriverAshtech>(io.io(), &position, &satellites);
+#endif
+#if QGC_GPS_ENABLE_SBF
         case 2:
             return std::make_unique<GPSDriverSBF>(io.io(), &position, &satellites);
-        default:
+#endif
+#if QGC_GPS_ENABLE_FEMTO
+        case 3:
             return std::make_unique<GPSDriverFemto>(io.io(), &position, &satellites);
+#endif
+        default:
+            return {};
     }
 }
 
@@ -91,6 +101,8 @@ int main()
                         GPSPositionReport position{};
                         GPSSatelliteReport satellites{};
                         auto receiver = createReceiver(family, io, position, satellites);
+                        if (!receiver)
+                            continue;
                         GPSProtocol::GPSConfig config{};
                         config.base.surveyInAccMeters = 1;
                         config.base.surveyInDurationSecs = 60;

@@ -45,8 +45,8 @@ void GPSReplayDevice::play(const QVector<GPSRecordingEvent>& events)
     _lifecycle = {};
     _originUs = _scheduler->nowUs();
     for (const auto& event : events) {
-        if (event.receivedAtUs && *event.receivedAtUs <= 0) {
-            _originUs = qMax(_originUs, static_cast<quint64>(1 - *event.receivedAtUs));
+        if (event.receivedAtUs() && *event.receivedAtUs() <= 0) {
+            _originUs = qMax(_originUs, static_cast<quint64>(1 - *event.receivedAtUs()));
         }
     }
     const auto delay = _originUs - _scheduler->nowUs();
@@ -100,7 +100,7 @@ void GPSReplayDevice::_apply(const GPSRecordingEvent& event, quint64 generation)
     if (_lifecycle.termination()) {
         return;
     }
-    switch (event.kind) {
+    switch (event.kind()) {
         case K::Open:
             _chunks.clear();
             open(QIODevice::ReadOnly | QIODevice::Unbuffered);
@@ -112,8 +112,8 @@ void GPSReplayDevice::_apply(const GPSRecordingEvent& event, quint64 generation)
                 return;
             }
             _chunks.push_back(
-                {event.bytes, static_cast<quint64>(static_cast<qint64>(_originUs) +
-                                                   event.receivedAtUs.value_or(static_cast<qint64>(event.atUs)))});
+                {event.bytes(), static_cast<quint64>(static_cast<qint64>(_originUs) +
+                                                     event.receivedAtUs().value_or(static_cast<qint64>(event.atUs)))});
             emit readyRead();
             return;
         default:

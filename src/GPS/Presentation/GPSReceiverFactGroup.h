@@ -13,7 +13,8 @@ class GPSReceiverFactGroup : public GPSPositionFactGroup
     Q_PROPERTY(Fact* lastError READ lastError CONSTANT)
 
 public:
-    explicit GPSReceiverFactGroup(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    explicit GPSReceiverFactGroup(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
+                                  GPSIntegrityStore* integrityStore = nullptr);
     ~GPSReceiverFactGroup();
 
     Fact* connected() { return &_connectedFact; }

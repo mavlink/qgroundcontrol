@@ -5,6 +5,7 @@
 #include <QtCore/QMutex>
 
 #include <deque>
+#include <functional>
 #include <memory>
 
 #include "ReadTimestamp.h"
@@ -16,7 +17,7 @@ class GPSByteStream : public QIODevice, public ReadTimestamp
     Q_OBJECT
 
 public:
-    explicit GPSByteStream(QObject* parent = nullptr);
+    explicit GPSByteStream(QObject* parent = nullptr, std::function<quint64()> nowUs = ReadTimestamp::nowUs);
     ~GPSByteStream() override;
 
     std::shared_ptr<TimestampedByteBuffer> buffer() const { return _buffer; }
@@ -36,6 +37,7 @@ protected:
     qint64 writeData(const char*, qint64) override { return -1; }
 
 private:
+    std::function<quint64()> _nowUs;
     std::shared_ptr<TimestampedByteBuffer> _buffer;
     quint64 _lastReadTimestampUs = 0;
 };

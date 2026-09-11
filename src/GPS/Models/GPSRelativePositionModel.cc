@@ -10,15 +10,18 @@ QGC_LOGGING_CATEGORY(GPSRelativePositionModelLog, "GPS.Models.GPSRelativePositio
 
 GPSRelativePositionModel::GPSRelativePositionModel(QObject* parent, int freshnessTimeoutMs, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _store(this, freshnessTimeoutMs, scheduler)
+    , _ownedStore(std::make_unique<GPSRelativePositionStore>(nullptr, freshnessTimeoutMs, scheduler))
 {
     qCDebug(GPSRelativePositionModelLog) << this;
-    connect(&_store, &GPSRelativePositionStore::observationChanged, this, &GPSRelativePositionModel::_project);
+    bindStore(_ownedStore.get());
 }
 
 GPSRelativePositionModel::~GPSRelativePositionModel()
 {
     qCDebug(GPSRelativePositionModelLog) << this;
+    if (_store) {
+        _store->disconnect(this);
+    }
 }
 
 double GPSRelativePositionModel::_positionValue(double value, bool accuracy) const
@@ -85,19 +88,44 @@ double GPSRelativePositionModel::headingAccuracy() const
                : std::numeric_limits<double>::quiet_NaN();
 }
 
+void GPSRelativePositionModel::bindStore(GPSRelativePositionStore* store)
+{
+    if (_store == store) {
+        return;
+    }
+    if (_store) {
+        _store->disconnect(this);
+    }
+    _store = store;
+    if (store != _ownedStore.get()) {
+        _ownedStore.reset();
+    }
+    if (_store) {
+        connect(_store, &GPSRelativePositionStore::observationChanged, this, &GPSRelativePositionModel::_project);
+        connect(_store, &QObject::destroyed, this, &GPSRelativePositionModel::_project);
+    }
+    _project();
+}
+
 void GPSRelativePositionModel::beginSession(const QString& sourceId, quint64 sessionId)
 {
-    _store.beginSession(sourceId, sessionId);
+    if (_store) {
+        _store->beginSession(sourceId, sessionId);
+    }
 }
 
 void GPSRelativePositionModel::reset()
 {
-    _store.reset();
+    if (_store) {
+        _store->reset();
+    }
 }
 
 void GPSRelativePositionModel::updateObservation(const GPSRelativeObservation& observation)
 {
-    _store.updateObservation(observation);
+    if (_store) {
+        _store->updateObservation(observation);
+    }
 }
 
 QVariantList GPSRelativePositionModel::_values() const
@@ -130,10 +158,10 @@ QVariantList GPSRelativePositionModel::_values() const
 void GPSRelativePositionModel::_project()
 {
     const auto previous = _values();
-    _sourceId = _store.sourceId();
-    _sessionId = _store.sessionId();
-    _observation = _store.observation();
-    _fresh = _store.fresh();
+    _sourceId = _store ? _store->sourceId() : QString();
+    _sessionId = _store ? _store->sessionId() : 0;
+    _observation = _store ? _store->observation() : GPSRelativeObservation();
+    _fresh = _store && _store->fresh();
     const auto next = _values();
     for (qsizetype index = 0; index < next.size(); ++index) {
         const bool bothNaN = next[index].metaType() == QMetaType::fromType<double>() &&

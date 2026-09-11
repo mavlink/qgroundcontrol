@@ -9,6 +9,7 @@
 #include "Ashtech/GPSDriverAshtech.h"
 #include "CRC32.h"
 #include "Femto/GPSDriverFemto.h"
+#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "NMEAFields.h"
 #include "ProtocolTestPackets.h"
@@ -34,6 +35,7 @@ GPSProtocolIO noDevice()
     return io;
 }
 
+#if QGC_GPS_ENABLE_SBF
 std::vector<uint8_t> sbfPacket(uint16_t id, std::span<const uint8_t> payload, uint32_t tow = 0, uint16_t week = 2435)
 {
     std::vector<uint8_t> packet(14 + payload.size());
@@ -46,6 +48,7 @@ std::vector<uint8_t> sbfPacket(uint16_t id, std::span<const uint8_t> payload, ui
     LittleEndian::write<uint16_t>(packet, 2, crc16(packet.data() + 4, packet.size() - 4));
     return packet;
 }
+#endif
 
 std::vector<uint8_t> femtoPacket(uint16_t id, std::span<const uint8_t> payload)
 {
@@ -61,10 +64,13 @@ std::vector<uint8_t> femtoPacket(uint16_t id, std::span<const uint8_t> payload)
     return packet;
 }
 
+#if QGC_GPS_ENABLE_SBF || QGC_GPS_ENABLE_FEMTO
 void malformedMessages()
 {
     GPSPositionReport position{};
     GPSSatelliteReport satellites{};
+    const std::array<uint8_t, 2> shortPayload{};
+#if QGC_GPS_ENABLE_SBF
     GPSDriverSBF sbf(noDevice(), &position, &satellites);
     sbf_payload_pvt_geodetic_t fix{};
     fix.mode_type = 1;
@@ -76,7 +82,6 @@ void malformedMessages()
     sbf.consume(sbfPacket(SBF_ID_DOP, bytes(dop)));
     sbf.consume(sbfPacket(SBF_ID_VelCovGeodetic, bytes(covariance)));
     const auto good = sbfPacket(SBF_ID_PVTGeodetic, bytes(fix));
-    const std::array<uint8_t, 2> shortPayload{};
     sbf.consume(good);
     gps_test_time += 200000;
     CHECK(sbf.consume({}) & 1);
@@ -97,6 +102,8 @@ void malformedMessages()
     CHECK(sbf.consume({}) & 1);
     CHECK(std::abs(position.cog_rad - GPS_PI / 2) < 0.00001);
 
+#endif
+#if QGC_GPS_ENABLE_FEMTO
     GPSDriverFemto femto(noDevice(), &position, &satellites);
     femto_uav_gps_t gps{};
     gps.lat = 470000000;
@@ -118,7 +125,9 @@ void malformedMessages()
         CHECK(femto.consume(valid) & 1);
     }
     CHECK(femto.consume(femtoPacket(FEMTO_MSG_ID_UAVSTATUS, shortPayload)) == 0);
+#endif
 }
+#endif
 
 class ReadProbe : public GPSProtocol
 {
@@ -205,6 +214,7 @@ std::vector<uint8_t> nmeaPacket(std::string_view body)
     return result;
 }
 
+#if QGC_GPS_ENABLE_ASHTECH
 void ashtechMetadata()
 {
     GPSPositionReport position{};
@@ -239,7 +249,9 @@ void ashtechMetadata()
     driver.consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
     CHECK(position.time_utc_usec % 1000000 >= 455999 && position.time_utc_usec % 1000000 <= 456001);
 }
+#endif
 
+#if QGC_GPS_ENABLE_SBF
 void sbfEpochMetadata()
 {
     GPSPositionReport position;
@@ -308,15 +320,22 @@ void sbfEpochMetadata()
     driver.consume({});
     CHECK(fixes.size() == 2);
 }
+#endif
 
 int main()
 {
     try {
         tinyReads();
         absoluteDeadline();
+#if QGC_GPS_ENABLE_SBF || QGC_GPS_ENABLE_FEMTO
         malformedMessages();
+#endif
+#if QGC_GPS_ENABLE_SBF
         sbfEpochMetadata();
+#endif
+#if QGC_GPS_ENABLE_ASHTECH
         ashtechMetadata();
+#endif
     } catch (const std::exception& error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

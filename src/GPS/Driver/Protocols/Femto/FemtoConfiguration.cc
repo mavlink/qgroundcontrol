@@ -36,7 +36,7 @@
 int GPSDriverFemto::writeAckedCommandFemto(const char* command, const char* reply, const unsigned int timeout)
 {
     const Operation operation(*this, timeout);
-    beginCommandWrite();
+    beginCommandWrite(command);
     const size_t command_length = strlen(command);
     const size_t reply_length = strlen(reply);
     uint8_t buf[GPS_READ_BUFFER_SIZE];
@@ -51,7 +51,7 @@ int GPSDriverFemto::writeAckedCommandFemto(const char* command, const char* repl
 
     bool acknowledged = false;
     const auto result = awaitCommand(
-        command, timeout,
+        {command, std::chrono::milliseconds(timeout)},
         [&] {
             const int count = read(buf + buffered, sizeof(buf) - buffered, timeout);
             if (count <= 0)

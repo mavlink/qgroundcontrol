@@ -43,6 +43,7 @@ class VehicleEstimatorStatusFactGroup;
 class VehicleGeneratorFactGroup;
 class VehicleGPS2FactGroup;
 class VehicleGPSFactGroup;
+class VehicleGPSObservationStream;
 class VehicleGPSAggregateFactGroup;
 class VehicleHygrometerFactGroup;
 class VehicleLocalPositionFactGroup;
@@ -549,6 +550,8 @@ public:
     void stopCalibration    (bool showError);
 
     FactGroup* vehicleFactGroup             () { return _vehicleFactGroup; }
+
+    VehicleGPSObservationStream* gpsObservationStream() const { return _gpsObservationStream; }
     FactGroup* gpsFactGroup                 ();
     FactGroup* gps2FactGroup                ();
     FactGroup* gpsAggregateFactGroup        ();
@@ -1097,6 +1100,7 @@ public:
     const QString _radioStatusFactGroupName =        QStringLiteral("radioStatus");
 
     VehicleFactGroup*               _vehicleFactGroup;
+    VehicleGPSObservationStream* _gpsObservationStream = nullptr;
     VehicleGPSFactGroup*                _gpsFactGroup               = nullptr;
     VehicleGPS2FactGroup*               _gps2FactGroup              = nullptr;
     VehicleGPSAggregateFactGroup*       _gpsAggregateFactGroup      = nullptr;

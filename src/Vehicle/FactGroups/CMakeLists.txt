@@ -25,12 +25,13 @@ target_sources(
             VehicleGeneratorFactGroup.h
             VehicleFactGroup.cc
             VehicleFactGroup.h
-            VehicleGPS2FactGroup.cc
             VehicleGPS2FactGroup.h
             VehicleGPSFactGroup.cc
             VehicleGPSFactGroup.h
             VehicleGPSObservation.cc
             VehicleGPSObservation.h
+            VehicleGPSObservationStream.cc
+            VehicleGPSObservationStream.h
             VehicleGPSPositionProvider.cc
             VehicleGPSPositionProvider.h
             VehicleGPSAggregateFactGroup.cc

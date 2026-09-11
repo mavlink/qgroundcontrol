@@ -70,7 +70,7 @@ void GPSDriverAshtech::activateRTCMOutput()
 int GPSDriverAshtech::writeAckedCommand(const void* buf, int buf_length, unsigned timeout)
 {
     const Operation operation(*this, timeout);
-    beginCommandWrite();
+    beginCommandWrite(std::string(static_cast<const char*>(buf), buf_length));
     if (write(buf, buf_length) != buf_length) {
         return -1;
     }
@@ -86,7 +86,8 @@ int GPSDriverAshtech::waitForReply(NMEACommand command, const unsigned timeout)
     _waiting_for_command = command;
 
     const auto result = awaitCommand(
-        std::to_string(static_cast<int>(command)), timeout, [this, timeout] { receiveDecoded(timeout); },
+        {std::to_string(static_cast<int>(command)), std::chrono::milliseconds(timeout)},
+        [this, timeout] { receiveDecoded(timeout); },
         [this] {
             return _command_state == NMEACommandState::received ? GPSCommandOutcome::Acknowledged
                    : _command_state == NMEACommandState::nack   ? GPSCommandOutcome::Rejected

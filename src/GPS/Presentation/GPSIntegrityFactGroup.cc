@@ -10,9 +10,10 @@
 
 QGC_LOGGING_CATEGORY(GPSIntegrityFactGroupLog, "GPS.Models.GPSIntegrityFactGroup")
 
-GPSIntegrityFactGroup::GPSIntegrityFactGroup(QObject* parent, RuntimeScheduler* scheduler)
+GPSIntegrityFactGroup::GPSIntegrityFactGroup(QObject* parent, RuntimeScheduler* scheduler, GPSIntegrityStore* store)
     : FactGroup(1000, QStringLiteral(":/json/GPS/Integrity/GPSFact.json"), parent)
-    , _store(this, scheduler)
+    , _ownedStore(store ? nullptr : std::make_unique<GPSIntegrityStore>(nullptr, scheduler))
+
 {
     qCDebug(GPSIntegrityFactGroupLog) << this;
     for (auto* fact :
@@ -21,26 +22,49 @@ GPSIntegrityFactGroup::GPSIntegrityFactGroup(QObject* parent, RuntimeScheduler* 
           &_automaticGainControl, &_jammingIndicator, &_correctionsCrcFailed}) {
         _addFact(fact);
     }
-    connect(&_store, &GPSIntegrityStore::observationChanged, this, &GPSIntegrityFactGroup::_refresh);
-    _refresh();
+    bindStore(store ? store : _ownedStore.get());
 }
 
 GPSIntegrityFactGroup::~GPSIntegrityFactGroup()
 {
     qCDebug(GPSIntegrityFactGroupLog) << this;
+    if (_store) {
+        _store->disconnect(this);
+    }
+}
+
+void GPSIntegrityFactGroup::bindStore(GPSIntegrityStore* store)
+{
+    if (_store == store) {
+        return;
+    }
+    if (_store) {
+        _store->disconnect(this);
+    }
+    _store = store;
+    if (store != _ownedStore.get()) {
+        _ownedStore.reset();
+    }
+    if (_store) {
+        connect(_store, &GPSIntegrityStore::observationChanged, this, &GPSIntegrityFactGroup::_refresh);
+        connect(_store, &QObject::destroyed, this, &GPSIntegrityFactGroup::_refresh);
+    }
+    _refresh();
 }
 
 void GPSIntegrityFactGroup::update(const GPSIntegrityObservation& observation)
 {
-    _store.updateObservation(observation);
+    if (_store) {
+        _store->updateObservation(observation);
+    }
 }
 
 void GPSIntegrityFactGroup::_refresh()
 {
     const QPointer<GPSIntegrityFactGroup> guard(this);
     const quint64 revision = ++_revision;
-    const auto observation = _store.observation();
-    const bool available = _store.available();
+    const auto observation = _store ? _store->observation() : GPSIntegrityObservation();
+    const bool available = _store && _store->available();
     const bool changed = _available != available || _systemErrorsKnown != observation.systemErrors.has_value();
     _available = available;
     _systemErrorsKnown = observation.systemErrors.has_value();
@@ -77,5 +101,7 @@ void GPSIntegrityFactGroup::_refresh()
 
 void GPSIntegrityFactGroup::reset()
 {
-    _store.reset();
+    if (_store) {
+        _store->reset();
+    }
 }

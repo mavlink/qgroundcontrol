@@ -2,8 +2,15 @@ if(NOT TARGET QGCWire)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Parsing/Wire" "${CMAKE_CURRENT_BINARY_DIR}/Wire")
 endif()
 include(NMEA/NMEAProtocol.cmake)
+if(NOT QGC_GPS_ENABLE_UBX
+   AND NOT QGC_GPS_ENABLE_ASHTECH
+   AND NOT QGC_GPS_ENABLE_SBF
+   AND NOT QGC_GPS_ENABLE_FEMTO
+)
+    message(FATAL_ERROR "At least one GPS receiver family must be enabled")
+endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
-add_subdirectory(Contracts)
+
 add_library(QGCGPSNativeCommon STATIC GPSProtocol.cc GPSProtocol.h GPSProtocolTime.h GPSBaseProtocol.h)
 set_target_properties(
     QGCGPSNativeCommon

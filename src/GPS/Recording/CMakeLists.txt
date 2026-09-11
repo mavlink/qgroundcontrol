@@ -2,6 +2,11 @@ add_library(
     QGCGPSRecording STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingBuffer.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingBuffer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingEvent.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingEvent.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingJsonCodec.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingValidator.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingValidator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingFormat.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingFormat.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingTransport.cc
@@ -19,15 +24,18 @@ target_link_libraries(
     PRIVATE QGCJsonValidation QGCLoggingCategory
 )
 
-add_library(QGCGPSRecordingController STATIC ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingController.cc
-                                             ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingController.h
-)
-add_library(QGC::GPSRecordingController ALIAS QGCGPSRecordingController)
-set_target_properties(QGCGPSRecordingController PROPERTIES AUTOMOC ON)
-target_compile_features(QGCGPSRecordingController PUBLIC cxx_std_20)
-target_include_directories(QGCGPSRecordingController PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(
-    QGCGPSRecordingController
-    PUBLIC QGCGPSRecording Qt6::QmlIntegration
-    PRIVATE Qt6::Concurrent QGCLoggingCategory
-)
+if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "RecordingController" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    add_library(QGCGPSRecordingController STATIC ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingController.cc
+                                                 ${CMAKE_CURRENT_SOURCE_DIR}/GPSRecordingController.h
+    )
+    add_library(QGC::GPSRecordingController ALIAS QGCGPSRecordingController)
+    set_target_properties(QGCGPSRecordingController PROPERTIES AUTOMOC ON)
+    target_compile_features(QGCGPSRecordingController PUBLIC cxx_std_20)
+    target_include_directories(QGCGPSRecordingController PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(
+        QGCGPSRecordingController
+        PUBLIC QGCGPSRecording Qt6::QmlIntegration
+        PRIVATE Qt6::Concurrent QGCLoggingCategory
+    )
+
+endif()

@@ -12,13 +12,13 @@ std::unique_ptr<GPSDriver> createGPSReplayDriver(GPSReplayTransport& transport, 
     }
     const auto& metadata = *trace.profile;
     if (trace.limitReached || std::any_of(trace.recordedEvents.cbegin(), trace.recordedEvents.cend(),
-                                          [](const auto& event) { return event.resumed; })) {
+                                          [](const auto& event) { return event.resumed(); })) {
         error = QStringLiteral("Driver configuration cannot be reproduced from a truncated or resumed capture");
         return {};
     }
     using K = GPSRecordingEvent::Kind;
     const auto started = std::find_if(trace.recordedEvents.cbegin(), trace.recordedEvents.cend(),
-                                      [](const auto& event) { return event.kind == K::ConfigurationStarted; });
+                                      [](const auto& event) { return event.kind() == K::ConfigurationStarted; });
     if (started == trace.recordedEvents.cend()) {
         error = QStringLiteral("Capture must include the receiver configuration start");
         return {};

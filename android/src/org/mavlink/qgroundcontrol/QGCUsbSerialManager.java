@@ -1066,58 +1066,6 @@ public class QGCUsbSerialManager {
     }
 
     /**
-     * Writes data to the USB serial device.
-     *
-     * @param deviceId    The device ID.
-     * @param data        The byte array of data to write.
-     * @param length      The number of bytes to write.
-     * @param timeoutMSec The timeout in milliseconds.
-     * @return The number of bytes written, or -1 if failed.
-     */
-    public static int write(final int deviceId, final byte[] data, final int length, final int timeoutMSec) {
-        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "write");
-        if (port == null) {
-            return -1;
-        }
-
-        try {
-            port.write(data, length, timeoutMSec);
-            return length;
-        } catch (final SerialTimeoutException e) {
-            QGCLogger.e(TAG, "Write timeout occurred", e);
-            return -1;
-        } catch (final IOException e) {
-            QGCLogger.e(TAG, "Error writing data", e);
-            return -1;
-        }
-    }
-
-    /**
-     * Writes data asynchronously to the USB serial device.
-     *
-     * @param deviceId    The device ID.
-     * @param data        The byte array of data to write.
-     * @param timeoutMSec The timeout in milliseconds.
-     * @return The number of bytes written, or -1 if failed.
-     */
-    public static int writeAsync(final int deviceId, final byte[] data, final int timeoutMSec) {
-        UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
-        if (resources == null || resources.ioManager == null) {
-            QGCLogger.w(TAG, "IO Manager not found for device ID " + deviceId);
-            return -1;
-        }
-
-        if (resources.ioManager.getReadTimeout() == 0) {
-            QGCLogger.w(TAG, "Read Timeout is 0 for writeAsync");
-        }
-
-        resources.ioManager.setWriteTimeout(timeoutMSec);
-        resources.ioManager.writeAsync(data);
-
-        return data.length;
-    }
-
-    /**
      * Reads data from the USB serial device.
      *
      * @param deviceId The device ID.

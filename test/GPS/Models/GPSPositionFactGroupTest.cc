@@ -204,14 +204,14 @@ void GPSPositionFactGroupTest::_integrityProjection()
     VehicleGPSFactGroup vehicle;
     VehicleGPSAggregateFactGroup aggregate;
     aggregate.bindToGps(&vehicle, nullptr);
-    GPSObservation observation;
+    GPSIntegrityObservation observation;
     observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    observation.integrity.jammingState = 3;
-    observation.integrity.spoofingState = 1;
-    observation.integrity.authenticationState = 4;
-    observation.integrity.correctionsProtocol = 1;
-    observation.integrity.correctionsUsed = 2;
-    native.integrity()->update(GPSIntegrityObservation::fromPosition(observation));
+    observation.jammingState = 3;
+    observation.spoofingState = 1;
+    observation.authenticationState = 4;
+    observation.correctionsProtocol = 1;
+    observation.correctionsUsed = 2;
+    native.integrity()->update(observation);
     mavlink_gnss_integrity_t raw{};
     raw.jamming_state = 3;
     raw.spoofing_state = 1;
@@ -273,36 +273,36 @@ void GPSPositionFactGroupTest::_integrityExpiryAndReentrancy()
 void GPSPositionFactGroupTest::_independentIntegrityReports()
 {
     GPSIntegrityFactGroup facts;
-    GPSObservation position;
-    position.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    position.integrity.jammingState = 3;
-    position.integrity.spoofingState = 1;
-    position.integrity.correctionsUsed = 2;
-    position.integrity.provenance = GPSIntegrityProvenance{
-        .jammingTimestampUs = position.monotonicTimestampUs - 6000000,
-        .spoofingTimestampUs = position.monotonicTimestampUs,
-        .correctionsTimestampUs = position.monotonicTimestampUs - 6000000,
+    GPSIntegrityObservation observation;
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.jammingState = 3;
+    observation.spoofingState = 1;
+    observation.correctionsUsed = 2;
+    observation.provenance = GPSIntegrityProvenance{
+        .jammingTimestampUs = observation.monotonicTimestampUs - 6000000,
+        .spoofingTimestampUs = observation.monotonicTimestampUs,
+        .correctionsTimestampUs = observation.monotonicTimestampUs - 6000000,
     };
-    facts.update(GPSIntegrityObservation::fromPosition(position));
+    facts.update(observation);
     QVERIFY(facts.available());
     QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
     QCOMPARE(facts.spoofingState()->rawValue().toInt(), 1);
     QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
     for (int i = 0; i < 10; ++i) {
-        position.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-        facts.update(GPSIntegrityObservation::fromPosition(position));
+        observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        facts.update(observation);
         QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
         QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
     }
-    position.integrity.provenance->jammingTimestampUs = GPSObservation::monotonicNowUs() - 4900000;
-    facts.update(GPSIntegrityObservation::fromPosition(position));
+    observation.provenance->jammingTimestampUs = GPSObservation::monotonicNowUs() - 4900000;
+    facts.update(observation);
     QCOMPARE(facts.jammingState()->rawValue().toInt(), 3);
     QTRY_COMPARE_WITH_TIMEOUT(facts.jammingState()->rawValue().toInt(), 255, 2000);
     QCOMPARE(facts.spoofingState()->rawValue().toInt(), 1);
-    position.integrity.provenance->jammingTimestampUs = GPSObservation::monotonicNowUs();
-    // An unchanged report renews its own freshness even when the last position is stale.
-    position.monotonicTimestampUs -= 6000000;
-    facts.update(GPSIntegrityObservation::fromPosition(position));
+    observation.provenance->jammingTimestampUs = GPSObservation::monotonicNowUs();
+    // An unchanged report renews its own freshness even when another diagnostic group is stale.
+    observation.monotonicTimestampUs -= 6000000;
+    facts.update(observation);
     QCOMPARE(facts.jammingState()->rawValue().toInt(), 3);
     QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
     facts.reset();
@@ -413,4 +413,86 @@ void GPSPositionFactGroupTest::_metadataOwnershipAndVirtualIntegrity()
     QVERIFY(!position.integrity()->available());
     QCOMPARE(position.integrity()->jammingState()->rawValue().toInt(), 255);
     QCOMPARE(position.integrity()->correctionsCrcFailed()->rawValue().toInt(), -1);
+}
+
+void GPSPositionFactGroupTest::_sharedVehicleObservations()
+{
+    VehicleGPSObservationStream stream;
+    VehicleGPSFactGroup first(nullptr, &stream);
+    VehicleGPS2FactGroup second(nullptr, &stream);
+    QSignalSpy updates(&stream, &VehicleGPSObservationStream::gpsReceived);
+    mavlink_gps_raw_int_t raw = {};
+    raw.lat = 470000000;
+    raw.lon = 80000000;
+    raw.alt = 500000;
+    raw.fix_type = GPS_FIX_TYPE_3D_FIX;
+    mavlink_message_t message = {};
+    mavlink_msg_gps_raw_int_encode(2, 1, &message, &raw);
+    stream.handleMessage(message, 1, 1);
+    QVERIFY(updates.isEmpty());
+    mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
+    stream.handleMessage(message, 1, 1);
+    QCOMPARE(updates.size(), 1);
+    const auto observed = qvariant_cast<VehicleGPSObservation>(updates.first().at(1));
+    QCOMPARE(observed.position.monotonicTimestampUs, stream.gps().position.monotonicTimestampUs);
+    QCOMPARE(first.lat()->rawValue().toDouble(), 47.0);
+    QVERIFY(qIsNaN(second.lat()->rawValue().toDouble()));
+    first.handleMessage(nullptr, message);
+    QCOMPARE(updates.size(), 1);
+
+    mavlink_gps2_raw_t secondary = {};
+    secondary.lat = 480000000;
+    secondary.lon = 90000000;
+    secondary.fix_type = GPS_FIX_TYPE_3D_FIX;
+    mavlink_msg_gps2_raw_encode(1, 1, &message, &secondary);
+    stream.handleMessage(message, 1, 1);
+    QCOMPARE(second.lat()->rawValue().toDouble(), 48.0);
+    QCOMPARE(first.lat()->rawValue().toDouble(), 47.0);
+    mavlink_global_position_int_t fused = {};
+    fused.lat = 490000000;
+    fused.lon = 100000000;
+    fused.alt = 600000;
+    mavlink_msg_global_position_int_encode(1, 2, &message, &fused);
+    stream.handleMessage(message, 1, 1);
+    QVERIFY(!stream.fusedPosition().position.isValid());
+    mavlink_msg_global_position_int_encode(1, 1, &message, &fused);
+    stream.handleMessage(message, 1, 1);
+    QCOMPARE(stream.fusedPosition().position.coordinate(), QGeoCoordinate(49, 10, 600));
+    QCOMPARE(stream.gps().position.position.coordinate(), QGeoCoordinate(47, 8, 500));
+    stream.reset();
+    QVERIFY(!stream.fusedPosition().position.isValid());
+    QVERIFY(qIsNaN(first.lat()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(second.lat()->rawValue().toDouble()));
+}
+
+void GPSPositionFactGroupTest::_independentReceiverIntegrityExpiry()
+{
+    ManualScheduler scheduler;
+    VehicleGPSObservationStream stream(nullptr, &scheduler);
+    VehicleGPSFactGroup first(nullptr, &stream);
+    VehicleGPS2FactGroup second(nullptr, &stream);
+    VehicleGPSAggregateFactGroup aggregate;
+    aggregate.bindToGps(&first, &second);
+    mavlink_gnss_integrity_t observation = {};
+    observation.jamming_state = 3;
+    observation.authentication_state = VehicleGPSAggregateFactGroup::AUTH_ERROR;
+    mavlink_message_t message = {};
+    mavlink_msg_gnss_integrity_encode(1, 1, &message, &observation);
+    stream.handleMessage(message, 1, 1);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(3)));
+    observation.id = 1;
+    observation.jamming_state = 1;
+    observation.authentication_state = VehicleGPSAggregateFactGroup::AUTH_OK;
+    mavlink_msg_gnss_integrity_encode(1, 1, &message, &observation);
+    stream.handleMessage(message, 1, 1);
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 3);
+    QCOMPARE(aggregate.authenticationState()->rawValue().toInt(), VehicleGPSAggregateFactGroup::AUTH_ERROR);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
+    QCOMPARE(first.jammingState()->rawValue().toInt(), 255);
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 1);
+    QCOMPARE(aggregate.authenticationState()->rawValue().toInt(), VehicleGPSAggregateFactGroup::AUTH_OK);
+    QVERIFY(!aggregate.isStale()->rawValue().toBool());
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(3)));
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 255);
+    QVERIFY(aggregate.isStale()->rawValue().toBool());
 }

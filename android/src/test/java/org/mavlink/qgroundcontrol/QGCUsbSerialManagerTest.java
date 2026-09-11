@@ -95,4 +95,18 @@ public class QGCUsbSerialManagerTest {
                 QGCUsbSerialManager.writeResultForPort(port, new byte[8], 8, 0));
         assertEquals(25, timeout[0]);
     }
+    @Test
+    public void writeResult_missingDeviceHasNoUncertainBytes() {
+        assertArrayEquals(new int[] {2, 0, 0},
+                QGCUsbSerialManager.writeResultForPort(null, new byte[8], 8, 25));
+    }
+
+    @Test
+    public void writeResult_completedPrefixOnTimeoutHasNoUnknownSuffix() {
+        final UsbSerialPort port = (UsbSerialPort) Proxy.newProxyInstance(
+                UsbSerialPort.class.getClassLoader(), new Class<?>[] {UsbSerialPort.class},
+                (proxy, method, args) -> { throw new SerialTimeoutException("late", 8); });
+        assertArrayEquals(new int[] {1, 8, 0},
+                QGCUsbSerialManager.writeResultForPort(port, new byte[8], 8, 25));
+    }
 }

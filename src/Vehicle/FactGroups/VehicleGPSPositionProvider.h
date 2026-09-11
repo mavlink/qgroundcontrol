@@ -22,7 +22,4 @@ public:
 
 private:
     QPointer<Vehicle> _vehicle;
-    QMetaObject::Connection _messageConnection;
-    GPSObservation _gpsPosition;
-    GPSObservation _ekfPosition;
 };

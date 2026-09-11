@@ -5,6 +5,7 @@
 #include <variant>
 #include <vector>
 
+#include "GPSIntegrityReport.h"
 #include "GPSPositionReport.h"
 #include "GPSRelativeReport.h"
 #include "GPSSatelliteReport.h"
@@ -16,8 +17,8 @@ struct GPSRTCMReport
     size_t size = 0;
 };
 
-using GPSDecodedEvent = std::variant<GPSPositionReport, GPSSatelliteReport, GPSSatelliteUsageReport, GPSRelativeReport,
-                                     GPSSurveyReport, GPSRTCMReport>;
+using GPSDecodedEvent = std::variant<GPSPositionReport, GPSIntegrityReport, GPSSatelliteReport, GPSSatelliteUsageReport,
+                                     GPSRelativeReport, GPSSurveyReport, GPSRTCMReport>;
 
 /// A bounded, owned sequence. The caller decides whether position epochs may be coalesced.
 struct GPSDecodedBatch

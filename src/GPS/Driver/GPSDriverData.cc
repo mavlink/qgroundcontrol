@@ -7,6 +7,7 @@
 #include <cmath>
 #include <limits>
 
+#include "GPSIntegrityReport.h"
 #include "GPSPositionReport.h"
 #include "GPSRelativeReport.h"
 #include "GPSSatelliteReport.h"
@@ -143,22 +144,29 @@ GPSObservation GPSDriverData::position(const GPSPositionReport& fix, const GPSEx
             result.trueHeadingAccuracyDegrees = qRadiansToDegrees(static_cast<double>(fix.heading_accuracy));
         }
     }
-    result.integrity.provenance = GPSIntegrityProvenance{
-        .jammingTimestampUs = fix.jamming_state_timestamp,
-        .spoofingTimestampUs = fix.spoofing_state_timestamp,
-        .authenticationTimestampUs = fix.authentication_state_timestamp,
-        .correctionsTimestampUs = fix.corrections_timestamp,
-        .rfTimestampUs = fix.rf_timestamp,
+    return result;
+}
+
+GPSIntegrityObservation GPSDriverData::integrity(const GPSIntegrityReport& report, const GPSExecutionContext& context)
+{
+    GPSIntegrityObservation result;
+    result.monotonicTimestampUs = report.timestamp ? report.timestamp : context.nowUs();
+    result.provenance = GPSIntegrityProvenance{
+        .jammingTimestampUs = report.jamming_state_timestamp,
+        .spoofingTimestampUs = report.spoofing_state_timestamp,
+        .authenticationTimestampUs = report.authentication_state_timestamp,
+        .correctionsTimestampUs = report.corrections_timestamp,
+        .rfTimestampUs = report.rf_timestamp,
     };
-    result.integrity.noisePerMillisecond = fix.noise_per_ms;
-    result.integrity.automaticGainControl = fix.automatic_gain_control;
-    result.integrity.jammingIndicator = fix.jamming_indicator;
-    result.integrity.correctionsCrcFailed = fix.corrections_crc_failed;
-    result.integrity.jammingState = knownState(fix.jamming_state);
-    result.integrity.spoofingState = knownState(fix.spoofing_state);
-    result.integrity.authenticationState = knownState(fix.authentication_state);
-    result.integrity.correctionsProtocol = knownState(fix.corrections_protocol);
-    result.integrity.correctionsUsed = knownState(fix.corrections_msg_used);
+    result.noisePerMillisecond = report.noise_per_ms;
+    result.automaticGainControl = report.automatic_gain_control;
+    result.jammingIndicator = report.jamming_indicator;
+    result.correctionsCrcFailed = report.corrections_crc_failed;
+    result.jammingState = knownState(report.jamming_state);
+    result.spoofingState = knownState(report.spoofing_state);
+    result.authenticationState = knownState(report.authentication_state);
+    result.correctionsProtocol = knownState(report.corrections_protocol);
+    result.correctionsUsed = knownState(report.corrections_msg_used);
     return result;
 }
 

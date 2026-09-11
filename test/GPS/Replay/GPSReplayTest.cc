@@ -19,6 +19,7 @@
 #include <thread>
 
 #include "GPSCorrectionRouter.h"
+#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "GPSProvider.h"
 #include "GPSReceiverProfile.h"
@@ -133,6 +134,7 @@ class GPSReplayTest : public QObject
     Q_OBJECT
 private slots:
 
+#if QGC_GPS_ENABLE_UBX
     void incompatibleConfigurationStillChecksBytes()
     {
         GPSReplayTrace trace;
@@ -141,9 +143,10 @@ private slots:
         trace.profile.emplace();
         trace.profile->provenance.configurationRevision = 999;
         auto event = std::find_if(trace.events.begin(), trace.events.end(),
-                                  [](const auto& item) { return item.kind == GPSRecordingEvent::Kind::Tx; });
+                                  [](const auto& item) { return item.kind() == GPSRecordingEvent::Kind::Tx; });
         QVERIFY(event != trace.events.end());
-        event->bytes[0] = char(event->bytes[0] ^ 1);
+        std::get<GPSRecordingEvent::Write>(event->payload).bytes[0] =
+            char(std::get<GPSRecordingEvent::Write>(event->payload).bytes[0] ^ 1);
         gps_test_time = 1;
         GPSReplayClock clock(&gps_test_time);
         std::atomic_bool stop = false;
@@ -228,6 +231,8 @@ private slots:
         QCOMPARE(clock.nowUs(), before);
     }
 
+#endif
+
     void nmeaReconnect()
     {
         GPSReplayTrace trace;
@@ -279,15 +284,15 @@ private slots:
 
     void faultsAndExactWrites()
     {
-        using K = GPSReplayEvent::Kind;
-        GPSReplayTrace trace{{{1, K::Open},
-                              {2, K::Tx, QByteArrayLiteral("command")},
-                              {500001, K::Timeout},
-                              {600000, K::ReadError, {}, -EIO},
-                              {700000, K::Open},
-                              {800000, K::WriteError, {}, 2},
-                              {900000, K::Open},
-                              {1000000, K::Cancel}}};
+        GPSReplayTrace trace{
+            {{.atUs = 1, .payload = GPSRecordingEvent::Open{}},
+             {.atUs = 2, .payload = GPSRecordingEvent::Write{QByteArrayLiteral("command")}},
+             {.atUs = 500001, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::TimedOut}},
+             {.atUs = 600000, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Error, {}, -EIO}},
+             {.atUs = 700000, .payload = GPSRecordingEvent::Open{}},
+             {.atUs = 800000, .payload = GPSRecordingEvent::Write{{}, false, 2}},
+             {.atUs = 900000, .payload = GPSRecordingEvent::Open{}},
+             {.atUs = 1000000, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Cancelled}}}};
         GPSReplayClock clock;
         std::atomic_bool stop = false;
         GPSReplayTransport transport(clock, stop, std::move(trace));
@@ -380,12 +385,11 @@ private slots:
 
     void recordingFaultsAndMetadata()
     {
-        using K = GPSReplayEvent::Kind;
-        GPSReplayTrace fixture{{{1, K::OpenError},
-                                {2, K::Open},
-                                {3, K::BaudError, {}, 9600},
-                                {4, K::Baud, {}, 115200},
-                                {5, K::WriteError, "command", 2}}};
+        GPSReplayTrace fixture{{{.atUs = 1, .payload = GPSRecordingEvent::Open{false}},
+                                {.atUs = 2, .payload = GPSRecordingEvent::Open{}},
+                                {.atUs = 3, .payload = GPSRecordingEvent::Baud{9600, false}},
+                                {.atUs = 4, .payload = GPSRecordingEvent::Baud{115200, true}},
+                                {.atUs = 5, .payload = GPSRecordingEvent::Write{"command", false, 2}}}};
         GPSReplayClock clock;
         std::atomic_bool stop = false;
         auto buffer = std::make_shared<GPSRecordingBuffer>([&clock]() { return clock.nowUs(); });
@@ -566,15 +570,16 @@ private slots:
         retired.record(GPSRecordingBuffer::Kind::Rx, "new capture");
         buffer->stop();
         QVERIFY2(GPSReplayTrace::fromJson(buffer->exportJson(), selected, error), qPrintable(error));
-        QCOMPARE(selected.events.first().kind, GPSReplayEvent::Kind::Open);
-        QCOMPARE(selected.events.last().bytes, QByteArray("new capture"));
+        QCOMPARE(selected.events.first().kind(), GPSReplayEvent::Kind::Open);
+        QCOMPARE(selected.events.last().bytes(), QByteArray("new capture"));
     }
 
     void replaySerialDeadlineFollowsCapturedBaud()
     {
         GPSReplayClock clock;
         std::atomic_bool stop = false;
-        GPSReplayTrace trace{{{1, GPSReplayEvent::Kind::Open}, {2, GPSReplayEvent::Kind::Baud, {}, 9600}}};
+        GPSReplayTrace trace{{{.atUs = 1, .payload = GPSRecordingEvent::Open{}},
+                              {.atUs = 2, .payload = GPSRecordingEvent::Baud{9600, true}}}};
         GPSRecordingMetadata metadata;
         metadata.transport = GPSRecordingMetadata::Transport::Serial;
         metadata.initialBaud = 115200;
@@ -592,10 +597,11 @@ private slots:
     {
         GPSReplayClock clock;
         std::atomic_bool stop = false;
-        GPSRecordingEvent write{.atUs = 501, .kind = GPSRecordingEvent::Kind::BoundedWrite, .bytes = "abcdef"};
+        GPSRecordingEvent write{.atUs = 501, .payload = GPSRecordingEvent::BoundedWrite{"abcdef", {}}};
         write.startedAtUs = 1;
-        write.writeResult = GPSTransport::WriteResult{GPSTransport::WriteStatus::TimedOut, 5, 2, 3};
-        GPSReplayTrace fixture{{{1, GPSReplayEvent::Kind::Open}, write}};
+        std::get<GPSRecordingEvent::BoundedWrite>(write.payload).result =
+            GPSTransport::WriteResult{GPSTransport::WriteStatus::TimedOut, 5, 2, 3};
+        GPSReplayTrace fixture{{{.atUs = 1, .payload = GPSRecordingEvent::Open{}}, write}};
         auto buffer = std::make_shared<GPSRecordingBuffer>([&clock]() { return clock.nowUs(); });
         auto stream = std::make_shared<GPSRecordingStream>(buffer, GPSRecordingMetadata{});
         QVERIFY(buffer->start());
@@ -616,7 +622,7 @@ private slots:
         QVERIFY2(GPSRecordingDocument::decode(json, decoded, error), qPrintable(error));
         QCOMPARE(decoded.events[2].startedAtUs, quint64(1));
         QCOMPARE(decoded.events[2].atUs, quint64(501));
-        QVERIFY(decoded.events[2].writeResult.has_value());
+        QVERIFY(decoded.events[2].writeResult().has_value());
         GPSReplayTrace roundTrip;
         QVERIFY(GPSReplayTrace::fromJson(json, roundTrip, error));
         GPSReplayClock secondClock;
@@ -632,7 +638,7 @@ private slots:
         QCOMPARE(replay.read(&terminalByte, 1, 1000).status, GPSReadStatus::Closed);
         QVERIFY(replay.complete());
         // Impossible delivery counts must never enter the replay transport.
-        decoded.events[2].writeResult->writtenBytes = 6;
+        std::get<GPSRecordingEvent::BoundedWrite>(decoded.events[2].payload).result.writtenBytes = 6;
         QVERIFY(decoded.encode(&error).isEmpty());
         QVERIFY(!error.isEmpty());
         GPSReplayClock shortClock;
@@ -644,19 +650,28 @@ private slots:
         QCOMPARE(shortClock.nowUs(), quint64(1));
     }
 
+#if QGC_GPS_ENABLE_SBF || QGC_GPS_ENABLE_FEMTO || QGC_GPS_ENABLE_ASHTECH
     void driverFromCapturedProfile_data()
     {
-        QTest::addColumn<bool>("septentrio");
+        QTest::addColumn<GPSType>("family");
         QTest::addColumn<bool>("base");
-        QTest::newRow("septentrio-position") << true << false;
-        QTest::newRow("septentrio-base") << true << true;
-        QTest::newRow("femto-position") << false << false;
-        QTest::newRow("femto-base") << false << true;
+#if QGC_GPS_ENABLE_SBF
+        QTest::newRow("septentrio-position") << GPSType::septentrio << false;
+        QTest::newRow("septentrio-base") << GPSType::septentrio << true;
+#endif
+#if QGC_GPS_ENABLE_FEMTO
+        QTest::newRow("femto-position") << GPSType::femto << false;
+        QTest::newRow("femto-base") << GPSType::femto << true;
+#endif
+#if QGC_GPS_ENABLE_ASHTECH
+        QTest::newRow("ashtech-position") << GPSType::trimble << false;
+        QTest::newRow("ashtech-base") << GPSType::trimble << true;
+#endif
     }
 
     void driverFromCapturedProfile()
     {
-        QFETCH(bool, septentrio);
+        QFETCH(GPSType, family);
         QFETCH(bool, base);
         gps_test_time = 1;
         GPSReplayClock clock(&gps_test_time);
@@ -665,9 +680,9 @@ private slots:
         class Receiver : public GPSTransport
         {
         public:
-            Receiver(std::atomic_bool& stop, bool septentrio, GPSReplayClock& clock)
+            Receiver(std::atomic_bool& stop, GPSType family, GPSReplayClock& clock)
                 : GPSTransport(stop)
-                , _septentrio(septentrio)
+                , _family(family)
                 , _clock(clock)
             {}
 
@@ -691,8 +706,17 @@ private slots:
             WriteResult writeBounded(const uint8_t* data, int size, QDeadlineTimer) override
             {
                 const QByteArray command(reinterpret_cast<const char*>(data), size);
-                if (_septentrio) {
+                if (_family == GPSType::septentrio) {
                     _reply = command.trimmed().isEmpty() ? "USB1>" : "$R: " + command;
+                } else if (_family == GPSType::trimble) {
+                    const QByteArray body = command.startsWith("$PASHQ,PRT")   ? "PASHR,PRT,A,9"
+                                            : command.startsWith("$PASHQ,RID") ? "PASHR,RID,MB2"
+                                                                               : "PASHR,ACK";
+                    quint8 checksum = 0;
+                    for (char byte : body)
+                        checksum ^= quint8(byte);
+                    _reply =
+                        '$' + body + '*' + QByteArray::number(checksum, 16).rightJustified(2, '0').toUpper() + "\r\n";
                 } else {
                     _reply = '<' + command.split(' ').first().trimmed() + " OK";
                     _reply.append(char(0));
@@ -701,7 +725,7 @@ private slots:
             }
 
         private:
-            bool _septentrio;
+            GPSType _family;
             GPSReplayClock& _clock;
             QByteArray _reply;
         };
@@ -709,7 +733,7 @@ private slots:
         GPSReceiverProfile profile;
         profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
         profile.configurationPolicy = GPSReceiverProfile::ConfigurationPolicy::Configure;
-        profile.driverType = septentrio ? GPSType::septentrio : GPSType::femto;
+        profile.driverType = family;
         profile.receiver.outputProtocol = GPSReceiverConfig::OutputProtocol::Native;
         profile.receiver.role = base ? GPSReceiverConfig::Role::RTKBase : GPSReceiverConfig::Role::Position;
         profile.receiver.base.useFixedBase = true;
@@ -719,7 +743,7 @@ private slots:
         auto stream = std::make_shared<GPSRecordingStream>(buffer, GPSRecordingMetadata::fromProfile(profile));
         QVERIFY(buffer->start());
         {
-            GPSRecordingTransport transport(std::make_unique<Receiver>(stop, septentrio, clock), stop, stream);
+            GPSRecordingTransport transport(std::make_unique<Receiver>(stop, family, clock), stop, stream);
             QCOMPARE(transport.open().status, GPSTransport::OpenStatus::Opened);
             stream->configurationStarted();
             GPSExecutionContext driverClock;
@@ -788,7 +812,7 @@ private slots:
         QVERIFY(workerFailure.isEmpty());
         QCOMPARE(workerClock.nowUs(), clock.nowUs());
         auto incomplete = trace;
-        incomplete.recordedEvents[1].resumed = true;
+        std::get<GPSRecordingEvent::Open>(incomplete.recordedEvents[1].payload).resumed = true;
         GPSReplayTransport resumed(clock, stop, incomplete);
         QVERIFY(!createGPSReplayDriver(resumed, {}, error));
         incomplete = trace;
@@ -796,6 +820,8 @@ private slots:
         GPSReplayTransport passive(clock, stop, incomplete);
         QVERIFY(!createGPSReplayDriver(passive, {}, error));
     }
+
+#endif
 
     void schedulerRetiresCancelledAndDestroyedCallbacks()
     {
@@ -845,20 +871,22 @@ private slots:
         const auto first = sentence("GPRMC,120000.00,A,4807.038,N,01131.000,E,0.0,0.0,010126,,,A") +
                            sentence("GPGGA,120000.00,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,");
         const auto second = sentence("GPRMC,120001.00,A,4807.039,N,01131.001,E,0.0,0.0,010126,,,A");
-        using K = GPSRecordingEvent::Kind;
-        GPSRecordingEvent delayed{.atUs = 1000, .kind = K::Rx, .bytes = first.left(12)};
-        delayed.receivedAtUs = -500000;
-        GPSRecordingEvent remainder{.atUs = 2000, .kind = K::Rx, .bytes = first.mid(12)};
-        remainder.receivedAtUs = -490000;
-        input.play({{.atUs = 1, .kind = K::Open},
-                    delayed,
-                    remainder,
-                    {.atUs = 3000, .kind = K::Rx, .bytes = second},
-                    {.atUs = 200000, .kind = K::Close},
-                    {.atUs = 210000, .kind = K::Open},
-                    {.atUs = 211000, .kind = K::Rx, .bytes = first},
-                    {.atUs = 212000, .kind = K::Rx, .bytes = second},
-                    {.atUs = 215000, .kind = K::Close}});
+        GPSRecordingEvent delayed{
+            .atUs = 1000, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data, first.left(12)}};
+        std::get<GPSRecordingEvent::Read>(delayed.payload).receivedAtUs = -500000;
+        GPSRecordingEvent remainder{
+            .atUs = 2000, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data, first.mid(12)}};
+        std::get<GPSRecordingEvent::Read>(remainder.payload).receivedAtUs = -490000;
+        input.play(
+            {{.atUs = 1, .payload = GPSRecordingEvent::Open{.success = true}},
+             delayed,
+             remainder,
+             {.atUs = 3000, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data, second}},
+             {.atUs = 200000, .payload = GPSRecordingEvent::Close{}},
+             {.atUs = 210000, .payload = GPSRecordingEvent::Open{.success = true}},
+             {.atUs = 211000, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data, first}},
+             {.atUs = 212000, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data, second}},
+             {.atUs = 215000, .payload = GPSRecordingEvent::Close{}}});
         const auto origin = input.timeOriginUs();
         QVERIFY(scheduler.advanceToUs(origin + 150000));
         QCOMPARE(positions, 1);
@@ -894,12 +922,14 @@ private slots:
     {
         GPSReplayClock clock;
         std::atomic_bool stop = false;
-        using K = GPSRecordingEvent::Kind;
-        GPSRecordingEvent failed{.atUs = 1000, .kind = K::OpenError};
-        failed.openStatus = GPSOpenStatus::TimedOut;
-        GPSRecordingEvent overflow{.atUs = 3000, .kind = K::ReadError};
-        overflow.readStatus = GPSReadStatus::Overflow;
-        GPSReplayTransport transport(clock, stop, GPSReplayTrace{{failed, {.atUs = 2000, .kind = K::Open}, overflow}});
+        GPSRecordingEvent failed{.atUs = 1000, .payload = GPSRecordingEvent::Open{.success = false}};
+        std::get<GPSRecordingEvent::Open>(failed.payload).status = GPSOpenStatus::TimedOut;
+        GPSRecordingEvent overflow{.atUs = 3000,
+                                   .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Error, {}}};
+        std::get<GPSRecordingEvent::Read>(overflow.payload).status = GPSReadStatus::Overflow;
+        GPSReplayTransport transport(
+            clock, stop,
+            GPSReplayTrace{{failed, {.atUs = 2000, .payload = GPSRecordingEvent::Open{.success = true}}, overflow}});
         QCOMPARE(transport.open().status, GPSOpenStatus::TimedOut);
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         uint8_t buffer[8];
@@ -909,7 +939,10 @@ private slots:
         GPSReplayDevice device(&scheduler);
         QSignalSpy terminals(&device, &GPSReplayDevice::terminated);
         QSignalSpy opened(&device, &GPSReplayDevice::streamOpened);
-        device.play({failed, {.atUs = 2000, .kind = K::Open}, overflow, {.atUs = 4000, .kind = K::Close}});
+        device.play({failed,
+                     {.atUs = 2000, .payload = GPSRecordingEvent::Open{.success = true}},
+                     overflow,
+                     {.atUs = 4000, .payload = GPSRecordingEvent::Close{}}});
         QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(5)));
         QCOMPARE(opened.size(), 1);
         QCOMPARE(terminals.size(), 2);
@@ -930,16 +963,16 @@ private slots:
     void recoverableWrite()
     {
         QFETCH(bool, bounded);
-        using K = GPSRecordingEvent::Kind;
-        GPSRecordingEvent write{
-            .atUs = 10, .kind = bounded ? K::BoundedWrite : K::WriteError, .bytes = "command", .value = 2};
+        GPSRecordingEvent write{.atUs = 10, .payload = GPSRecordingEvent::Write{"command", false, 2}};
         if (bounded) {
-            write.writeResult = GPSWriteResult{.status = GPSWriteStatus::Error, .acceptedBytes = 2, .writtenBytes = 2};
+            write.payload = GPSRecordingEvent::BoundedWrite{
+                "command", GPSWriteResult{.status = GPSWriteStatus::Error, .acceptedBytes = 2, .writtenBytes = 2}};
         }
-        const QVector<GPSRecordingEvent> events{{.atUs = 1, .kind = K::Open},
-                                                write,
-                                                {.atUs = 20, .kind = K::Rx, .bytes = "recovered"},
-                                                {.atUs = 30, .kind = K::Close}};
+        const QVector<GPSRecordingEvent> events{
+            {.atUs = 1, .payload = GPSRecordingEvent::Open{.success = true}},
+            write,
+            {.atUs = 20, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data, "recovered"}},
+            {.atUs = 30, .payload = GPSRecordingEvent::Close{}}};
         GPSReplayClock clock;
         std::atomic_bool stop = false;
         GPSReplayTransport transport(clock, stop, GPSReplayTrace{events});
@@ -987,14 +1020,17 @@ private slots:
     {
         QFETCH(int, mode);
         QFETCH(int, wireVersion);
-        using K = GPSRecordingEvent::Kind;
         using R = GPSReplayTermination::Reason;
         GPSReplayClock clock;
         std::atomic_bool stop = false;
-        GPSReplayTrace fixture{{{.atUs = 1, .kind = K::Open}}};
+        GPSReplayTrace fixture{{{.atUs = 1, .payload = GPSRecordingEvent::Open{.success = true}}}};
         if (mode == 2 || mode == 3) {
-            GPSRecordingEvent event{.atUs = 100, .kind = mode == 2 ? K::ReadError : K::Cancel};
-            event.readStatus = mode == 2 ? GPSReadStatus::Overflow : GPSReadStatus::Cancelled;
+            GPSRecordingEvent event{
+                .atUs = 100,
+                .payload = GPSRecordingEvent::Read{mode == 2 ? GPSRecordingEvent::Read::Outcome::Error
+                                                             : GPSRecordingEvent::Read::Outcome::Cancelled}};
+            std::get<GPSRecordingEvent::Read>(event.payload).status =
+                mode == 2 ? GPSReadStatus::Overflow : GPSReadStatus::Cancelled;
             fixture.events.append(event);
         }
         auto buffer = std::make_shared<GPSRecordingBuffer>([&clock]() { return clock.nowUs(); });

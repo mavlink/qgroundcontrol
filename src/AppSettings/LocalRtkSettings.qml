@@ -141,6 +141,11 @@ SettingsGroupLayout {
             if (!root._active) return root._connection.autoConnectPaused ? qsTr("Automatic connection paused") : qsTr("Disconnected")
             if (root._connection.connectionState === GPSConnectionState.Ready) return qsTr("Connected")
             if (root._connection.connectionState === GPSConnectionState.Configuring) return qsTr("Configuring receiver")
+            if (root._connection.connectionState === GPSConnectionState.AwaitingChange) {
+                return root._connection.errorDetail.length > 0
+                    ? qsTr("%1 — change settings or receiver").arg(root._connection.errorDetail)
+                    : qsTr("Change settings or receiver to connect")
+            }
             if (root._connection.connectionState === GPSConnectionState.Retrying) {
                 if (root._connection.errorDetail.length > 0) {
                     return qsTr("%1 — reconnecting").arg(root._connection.errorDetail)

@@ -9,6 +9,7 @@
 
 #include "GPSProtocolTestIO.h"
 #include "UBX/GPSDriverUBX.h"
+#include "UBX/UBXMessageCodec.h"
 
 // Keep checks active in Release, too.
 #define CHECK(condition)                                                                                 \
@@ -62,6 +63,9 @@ enum class SurveyReply
 class Receiver
 {
 public:
+    GPSIntegrityReport integrity;
+    unsigned integrityCount = 0;
+
     int readback_mode = 0;
     unsigned readback_requests = 0;
     std::vector<SurveyReply> replies{SurveyReply::stopped};
@@ -351,6 +355,12 @@ public:
             return {GPSWriteStatus::Completed, size, size, 0};
         };
         result.decoded = [this](GPSDecodedBatch batch) {
+            for (const auto& event : batch.events) {
+                if (const auto* report = std::get_if<GPSIntegrityReport>(&event)) {
+                    integrity = *report;
+                    ++integrityCount;
+                }
+            }
             for (const auto& event : batch.events)
                 if (std::holds_alternative<GPSSurveyReport>(event))
                     ++status_callbacks;
@@ -567,17 +577,19 @@ static void integrityReceipts()
     mon_rf[5] = 3;
     f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
-    CHECK(f.position.jamming_state == 3);
-    const auto rf_stamp = f.position.jamming_state_timestamp;
+    CHECK(f.receiver.integrityCount == 1);
+    CHECK(f.position.timestamp == 0);
+    CHECK(f.receiver.integrity.jamming_state == 3);
+    const auto rf_stamp = f.receiver.integrity.jamming_state_timestamp;
     CHECK(rf_stamp != 0);
 
     Bytes nav_status(UBX::WIRE_SIZE<ubx_payload_rx_nav_status_t>, 0);
     nav_status[7] = 1 << UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
     f.receiver.queue(packet(UBX_MSG_NAV_STATUS, nav_status));
     f.driver.receive(100);
-    const auto spoof_stamp = f.position.spoofing_state_timestamp;
+    const auto spoof_stamp = f.receiver.integrity.spoofing_state_timestamp;
     CHECK(spoof_stamp != 0);
-    CHECK(f.position.jamming_state_timestamp == rf_stamp);
+    CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
 
     Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     pvt[20] = 3;
@@ -587,54 +599,55 @@ static void integrityReceipts()
         f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
         CHECK(f.driver.receive(100) & 1);
         CHECK(f.position.timestamp > rf_stamp);
-        CHECK(f.position.jamming_state_timestamp == rf_stamp);
-        CHECK(f.position.spoofing_state_timestamp == spoof_stamp);
+        CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
+        CHECK(f.receiver.integrity.spoofing_state_timestamp == spoof_stamp);
     }
     Bytes corrupt = packet(UBX_MSG_MON_RF, mon_rf);
     corrupt.back() ^= 0xff;
     f.receiver.queue(corrupt);
     f.driver.receive(100);
-    CHECK(f.position.jamming_state_timestamp == rf_stamp);
+    CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
     f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
-    CHECK(f.position.jamming_state == 3);
-    CHECK(f.position.jamming_state_timestamp > rf_stamp);
+    CHECK(f.receiver.integrity.jamming_state == 3);
+    CHECK(f.receiver.integrity.jamming_state_timestamp > rf_stamp);
 
     Bytes sec_sig(4, 0);
     sec_sig[0] = 2;
     sec_sig[1] = 1 | (3 << 1);
     f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
-    CHECK(f.position.jamming_state == 3);
-    const auto sec_stamp = f.position.jamming_state_timestamp;
+    CHECK(f.receiver.integrity.jamming_state == 3);
+    const auto sec_stamp = f.receiver.integrity.jamming_state_timestamp;
     gps_test_time += 6000000;
     f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
-    CHECK(f.position.jamming_state_timestamp == sec_stamp);
+    CHECK(f.receiver.integrity.jamming_state_timestamp == sec_stamp);
     f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
-    CHECK(f.position.jamming_state == 3);
-    CHECK(f.position.jamming_state_timestamp > sec_stamp);
+    CHECK(f.receiver.integrity.jamming_state == 3);
+    CHECK(f.receiver.integrity.jamming_state_timestamp > sec_stamp);
 
     Bytes rtcm(UBX::WIRE_SIZE<ubx_payload_rx_rxm_rtcm_t>, 0);
     rtcm[1] = 2 << UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
     f.receiver.queue(packet(UBX_MSG_RXM_RTCM, rtcm));
     f.driver.receive(100);
-    CHECK(f.position.corrections_msg_used == 2);
-    const auto correction_stamp = f.position.corrections_timestamp;
+    CHECK(f.receiver.integrity.corrections_msg_used == 2);
+    const auto correction_stamp = f.receiver.integrity.corrections_timestamp;
     CHECK(correction_stamp != 0);
     gps_test_time += 6000000;
     f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
-    CHECK(f.position.corrections_timestamp == correction_stamp);
+    CHECK(f.receiver.integrity.corrections_timestamp == correction_stamp);
     Bytes cor(UBX::WIRE_SIZE<ubx_payload_rx_rxm_cor_t>, 0);
+    cor[0] = 1;
     cor[4] = 29;
     cor[5] = 1;  // msgUsed=2 in statusInfo bits 8..7.
     f.receiver.queue(packet(UBX_MSG_RXM_COR, cor));
     f.driver.receive(100);
-    CHECK(f.position.corrections_protocol == GPSPositionReport::CORRECTIONS_PROTOCOL_PMP);
-    CHECK(f.position.corrections_msg_used == 2);
-    CHECK(f.position.corrections_timestamp > correction_stamp);
+    CHECK(f.receiver.integrity.corrections_protocol == GPSIntegrityReport::CORRECTIONS_PROTOCOL_PMP);
+    CHECK(f.receiver.integrity.corrections_msg_used == 2);
+    CHECK(f.receiver.integrity.corrections_timestamp > correction_stamp);
 }
 
 static void commsDiagnostics()
@@ -778,7 +791,15 @@ static void receiverSettings()
         receiver.reject_constellations = scenario == 3;
         receiver.timeout_constellations = scenario == 4;
         GPSPositionReport position{};
-        GPSDriverUBX driver(receiver.io(), &position, nullptr);
+        std::map<GPSReceiverSetting, GPSCommandOutcome> outcomes;
+        auto io = receiver.io();
+        io.commandFinished = [&](const GPSCommandResult& command) {
+            for (auto setting : {GPSReceiverSetting::DynamicModel, GPSReceiverSetting::OutputRateHz,
+                                 GPSReceiverSetting::ConstellationMask})
+                if (command.affectedSettings.contains(setting))
+                    outcomes[setting] = command.outcome;
+        };
+        GPSDriverUBX driver(io, &position, nullptr);
         GPSProtocol::GPSConfig config{};
         config.dynamicModel = 4;
         config.outputRateHz = 5;
@@ -790,9 +811,9 @@ static void receiverSettings()
         CHECK((driver.configure(baudrate, config) == 0) == (scenario < 2));
         CHECK(driver.supportsOutputRateSelection() == !receiver.legacy);
         if (scenario >= 3) {
-            CHECK(driver.settingOutcome(0) == GPSCommandOutcome::Acknowledged);
-            CHECK(driver.settingOutcome(1) == GPSCommandOutcome::Acknowledged);
-            CHECK(driver.settingOutcome(2) ==
+            CHECK(outcomes.at(GPSReceiverSetting::DynamicModel) == GPSCommandOutcome::Acknowledged);
+            CHECK(outcomes.at(GPSReceiverSetting::OutputRateHz) == GPSCommandOutcome::Acknowledged);
+            CHECK(outcomes.at(GPSReceiverSetting::ConstellationMask) ==
                   (scenario == 3 ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut));
         }
         CHECK(driver.constellationRequestRejected() == (scenario == 3));
@@ -963,6 +984,104 @@ static void controlDeadline()
     CHECK(driver.ioError() == 0);
 }
 
+static void isolatedFrameAndControl()
+{
+    UBX::FrameDecoder decoder;
+    const Bytes payload = {0x06, 0x24};
+    const auto bytes = packet(UBX_MSG_ACK_ACK, payload);
+    std::optional<UBX::Frame> frame;
+    for (size_t index = 0; index < bytes.size(); ++index) {
+        frame = decoder.consume(bytes[index]);
+        CHECK(frame.has_value() == (index + 1 == bytes.size()));
+    }
+    CHECK(frame->message == UBX_MSG_ACK_ACK && frame->length == 2);
+    CHECK(frame->payload[0] == 6 && frame->payload[1] == 0x24);
+    const auto retained = *frame;
+    auto corrupt = bytes;
+    corrupt.back() ^= 1;
+    for (auto byte : corrupt)
+        CHECK(!decoder.consume(byte));
+    CHECK(decoder.idle());
+    CHECK(retained.payload[0] == 6);
+
+    UBX::ReceiverController controller;
+    controller.beginAcknowledgement(UBX_MSG_CFG_NAV5);
+    controller.accept(UBX::Acknowledgement{UBX_MSG_CFG_RATE, true});
+    CHECK(controller.acknowledgement() == GPSCommandOutcome::Pending);
+    controller.accept(UBX::Acknowledgement{UBX_MSG_CFG_NAV5, false});
+    CHECK(controller.acknowledgement() == GPSCommandOutcome::Rejected);
+    controller.finishAcknowledgement();
+    controller.accept(UBX::Acknowledgement{UBX_MSG_CFG_NAV5, true});
+    CHECK(controller.acknowledgement() == GPSCommandOutcome::Rejected);
+
+    const std::array<uint32_t, 2> keys{UBX_CFG_KEY_NAVSPG_DYNMODEL, UBX_CFG_KEY_RATE_MEAS};
+    controller.beginReadback(keys);
+    UBX::ConfigurationValues values;
+    values.count = 2;
+    values.keys[0] = values.keys[1] = keys[0];
+    controller.accept(values);
+    CHECK(!controller.readbackReady());
+    values.keys[0] = keys[1];
+    values.keys[1] = keys[0];
+    values.values[0] = 200;
+    values.values[1] = 4;
+    controller.accept(values);
+    CHECK(controller.readbackReady());
+    CHECK(controller.readback().values[0] == 4 && controller.readback().values[1] == 200);
+    CHECK(!UBX::decodeConfigurationValues(Bytes{1, 0, 0, 0, 1}));
+}
+
+static void checkedWireCodecs()
+{
+    const auto fixed = []<typename T>() {
+        using Codec = UBX::MessageCodec<T>;
+        Bytes payload(UBX::WIRE_SIZE<T>, 0);
+        CHECK(Codec::decode(payload));
+        CHECK(!Codec::decode({}));
+        payload.pop_back();
+        CHECK(!Codec::decode(payload));
+        payload.resize(UBX::WIRE_SIZE<T> + 1);
+        CHECK(!Codec::decode(payload));
+    };
+    fixed.operator()<ubx_payload_rx_nav_posllh_t>();
+    fixed.operator()<ubx_payload_rx_nav_dop_t>();
+    fixed.operator()<ubx_payload_rx_nav_sol_t>();
+    fixed.operator()<ubx_payload_rx_nav_pvt_t>();
+    fixed.operator()<ubx_payload_rx_nav_timeutc_t>();
+    fixed.operator()<ubx_payload_rx_nav_status_t>();
+    fixed.operator()<ubx_payload_rx_nav_svin_t>();
+    fixed.operator()<ubx_payload_rx_nav_velned_t>();
+    fixed.operator()<ubx_payload_rx_nav_relposned_t>();
+    fixed.operator()<ubx_payload_rx_nav_daheading_t>();
+    fixed.operator()<ubx_payload_rx_nav_hpposllh_t>();
+    fixed.operator()<ubx_payload_rx_ack_ack_t>();
+    fixed.operator()<ubx_payload_rx_ack_nak_t>();
+    fixed.operator()<ubx_payload_rx_rxm_rtcm_t>();
+    fixed.operator()<ubx_payload_rx_mon_hw_ubx6_t>();
+    fixed.operator()<ubx_payload_rx_mon_hw_ubx7_t>();
+    CHECK(UBX::MessageCodec<ubx_payload_rx_nav_pvt_t>::decode(Bytes(84)));
+
+    Bytes rf(28, 0);
+    rf[1] = 1;
+    CHECK(UBX::MessageCodec<ubx_payload_rx_mon_rf_t>::decode(rf));
+    rf[1] = 2;
+    CHECK(!UBX::MessageCodec<ubx_payload_rx_mon_rf_t>::decode(rf));
+    rf[1] = 1;
+    rf[0] = 99;
+    CHECK(!UBX::MessageCodec<ubx_payload_rx_mon_rf_t>::decode(rf));
+    Bytes comms(48, 0);
+    comms[1] = 1;
+    CHECK(UBX::MessageCodec<ubx_payload_rx_mon_comms_t>::decode(comms));
+    comms[1] = 2;
+    CHECK(!UBX::MessageCodec<ubx_payload_rx_mon_comms_t>::decode(comms));
+    CHECK(UBX::MessageCodec<ubx_payload_rx_sec_sig_t>::decode(Bytes{2, 7, 0, 0}));
+    CHECK(!UBX::MessageCodec<ubx_payload_rx_sec_sig_t>::decode(Bytes{99, 7, 0, 0}));
+    CHECK(!UBX::MessageCodec<ubx_payload_rx_sec_sig_t>::decode(Bytes{2, 7, 0, 1}));
+    CHECK(!UBX::MessageCodec<ubx_payload_rx_nav_sat_part2_t>::block(Bytes(12), 1));
+    const auto ack = UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode(Bytes{6, 0x24});
+    CHECK(ack && ack->msg == UBX_MSG_CFG_NAV5);
+}
+
 int main()
 {
     const struct
@@ -970,6 +1089,8 @@ int main()
         const char* name;
         void (*run)();
     } cases[] = {
+        {"isolated-frame-control", isolatedFrameAndControl},
+        {"checked-wire-codecs", checkedWireCodecs},
         {"position-f9p", [] { positionMode(false, true); }},
         {"receiver-settings", receiverSettings},
         {"configuration-readback", configurationReadback},

@@ -1,5 +1,9 @@
-add_subdirectory(Protocols)
-add_subdirectory(Transport)
+if(NOT TARGET QGCGPSNative)
+    add_subdirectory(Protocols)
+endif()
+if(NOT TARGET QGCGPSTransport)
+    add_subdirectory(Transport)
+endif()
 add_library(
     QGCGPSDriver STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriver.cc ${CMAKE_CURRENT_SOURCE_DIR}/GPSDriver.h

@@ -13,6 +13,54 @@ class GPSRecordingFormatTest : public QObject
     Q_OBJECT
 private slots:
 
+    void wireVersionsNormalizeToTypedPayloads_data()
+    {
+        QTest::addColumn<int>("version");
+        for (int version = 1; version <= 4; ++version)
+            QTest::newRow(qPrintable(QString::number(version))) << version;
+    }
+
+    void wireVersionsNormalizeToTypedPayloads()
+    {
+        QFETCH(int, version);
+        QJsonObject configuration{{"at_us", 3}, {"kind", "configuration_finished"}};
+        if (version == 1)
+            configuration.insert("value", 1);
+        else
+            configuration.insert("status", "ready");
+        QJsonObject wire{
+            {"fileType", "GPSRecording"},
+            {"version", version},
+            {"events", QJsonArray{QJsonObject{{"at_us", 1}, {"kind", "open"}},
+                                  QJsonObject{{"at_us", 2}, {"kind", "rx"}, {"hex", "616263"}}, configuration}}};
+        GPSRecordingDocument decoded;
+        QString error;
+        QVERIFY2(GPSRecordingDocument::decode(QJsonDocument(wire).toJson(), decoded, error), qPrintable(error));
+        QVERIFY(std::holds_alternative<GPSRecordingEvent::Open>(decoded.events[0].payload));
+        const auto* read = std::get_if<GPSRecordingEvent::Read>(&decoded.events[1].payload);
+        QVERIFY(read);
+        QCOMPARE(read->bytes, QByteArray("abc"));
+        QCOMPARE(read->outcome, GPSRecordingEvent::Read::Outcome::Data);
+        const auto* configured = std::get_if<GPSRecordingEvent::Configuration>(&decoded.events[2].payload);
+        QVERIFY(configured);
+        QCOMPARE(configured->status, std::optional<int>(1));
+        GPSRecordingDocument roundTrip;
+        QVERIFY(GPSRecordingDocument::decode(decoded.encode(), roundTrip, error));
+        QCOMPARE(roundTrip.events[2].value(), 1);
+    }
+
+    void semanticValidationChecksUnselectedStreams()
+    {
+        const QByteArray wire = R"({"fileType":"GPSRecording","version":4,"events":[
+            {"at_us":1,"stream":7,"kind":"open"},
+            {"at_us":2,"stream":8,"kind":"bounded_write","hex":"61626364",
+             "write":{"status":"error","accepted":2,"written":3,"uncertain":0,"fatal":false}}]})";
+        GPSRecordingDocument decoded;
+        QString error;
+        QVERIFY(!GPSRecordingDocument::decode(wire, decoded, error));
+        QVERIFY(error.contains(QStringLiteral("Inconsistent bounded write counts")));
+    }
+
     void provenanceRoundTrip()
     {
         auto buffer = std::make_shared<GPSRecordingBuffer>();
@@ -26,14 +74,15 @@ private slots:
         GPSRecordingDocument decoded;
         QString error;
         QVERIFY2(GPSRecordingDocument::decode(buffer->exportJson(), decoded, error), qPrintable(error));
-        QCOMPARE(decoded.events.first().metadata.provenance, provenance);
+        QCOMPARE(decoded.events.first().metadata().provenance, provenance);
     }
 
     void streamingCancellationAndErrors()
     {
         GPSRecordingDocument document;
         for (quint64 i = 0; i < 200; ++i)
-            document.events.append({.atUs = i, .kind = GPSRecordingEvent::Kind::Rx, .bytes = "data"});
+            document.events.append(
+                {.atUs = i, .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data, "data"}});
         QBuffer output;
         QVERIFY(output.open(QIODevice::WriteOnly));
         QString error;
@@ -82,7 +131,7 @@ private slots:
     {
         QTest::addColumn<QByteArray>("json");
         QTest::newRow("fractional-version") << QByteArray(R"({"version":1.5,"events":[]})");
-        QTest::newRow("future-version") << QByteArray(R"({"version":4,"events":[]})");
+        QTest::newRow("future-version") << QByteArray(R"({"version":5,"events":[]})");
         QTest::newRow("string-version") << QByteArray(R"({"version":"1","events":[]})");
         QTest::newRow("missing-filetype") << QByteArray(R"({"version":2,"events":[]})");
         QTest::newRow("wrong-limit-type") << QByteArray(R"({"version":1,"limit_reached":0,"events":[]})");
@@ -123,8 +172,8 @@ private slots:
         QString error;
         QVERIFY(!GPSRecordingDocument::decode(QByteArray(GPSRecordingDocument::MAX_BYTES + 1, ' '), document, error));
         document.events.append({.atUs = 1,
-                                .kind = GPSRecordingEvent::Kind::Rx,
-                                .bytes = QByteArray(GPSRecordingDocument::MAX_BYTES, 'x')});
+                                .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data,
+                                                                   QByteArray(GPSRecordingDocument::MAX_BYTES, 'x')}});
         QVERIFY(document.encode(&error).isEmpty());
         const QByteArray badOtherStream = R"({"version":1,"events":[
             {"at_us":1,"stream":7,"kind":"open"},
@@ -147,14 +196,14 @@ private slots:
         const auto metadata = GPSRecordingMetadata::fromProfile(profile);
         GPSRecordingDocument document;
         document.limitReached = true;
-        GPSRecordingEvent session{.atUs = 1, .kind = GPSRecordingEvent::Kind::Session};
+        GPSRecordingEvent session{.atUs = 1, .payload = GPSRecordingEvent::Session{}};
         session.stream = 7;
-        session.metadata = metadata;
+        session.payload = GPSRecordingEvent::Session{metadata};
         document.events.append(session);
-        GPSRecordingEvent open{.atUs = 25, .kind = GPSRecordingEvent::Kind::Open};
+        GPSRecordingEvent open{.atUs = 25, .payload = GPSRecordingEvent::Open{.success = true}};
         open.startedAtUs = 2;
         open.stream = 7;
-        open.resumed = true;
+        std::get<GPSRecordingEvent::Open>(open.payload).resumed = true;
         document.events.append(open);
         QString error;
         const auto bytes = document.encode(&error);
@@ -163,10 +212,10 @@ private slots:
         QVERIFY(bytes.contains("udp_peer"));
         GPSRecordingDocument decoded;
         QVERIFY2(GPSRecordingDocument::decode(bytes, decoded, error), qPrintable(error));
-        QCOMPARE(decoded.events[0].metadata, metadata);
-        QCOMPARE(decoded.events[0].metadata.fixedBaud, 115200u);
+        QCOMPARE(decoded.events[0].metadata(), metadata);
+        QCOMPARE(decoded.events[0].metadata().fixedBaud, 115200u);
         QCOMPARE(decoded.events[1].startedAtUs, quint64(2));
-        QVERIFY(decoded.events[1].resumed);
+        QVERIFY(decoded.events[1].resumed());
         QCOMPARE(decoded.encode(), bytes);
         QVector<GPSRecordingEvent> selected;
         std::optional<GPSRecordingMetadata> selectedMetadata;
@@ -202,31 +251,33 @@ private slots:
         events[0] = event;
         malformed.insert("events", events);
         QVERIFY2(GPSRecordingDocument::decode(QJsonDocument(malformed).toJson(), decoded, error), qPrintable(error));
-        QCOMPARE(decoded.events[0].metadata.transport, GPSRecordingMetadata::Transport::Tcp);
-        QCOMPARE(decoded.events[0].metadata.fixedBaud, 115200u);
-        QCOMPARE(decoded.events[0].metadata.driverType, int(GPSType::u_blox));
-        QCOMPARE(decoded.events[0].metadata.receiver.role, GPSReceiverConfig::Role::Position);
+        QCOMPARE(decoded.events[0].metadata().transport, GPSRecordingMetadata::Transport::Tcp);
+        QCOMPARE(decoded.events[0].metadata().fixedBaud, 115200u);
+        QCOMPARE(decoded.events[0].metadata().driverType, int(GPSType::u_blox));
+        QCOMPARE(decoded.events[0].metadata().receiver.role, GPSReceiverConfig::Role::Position);
     }
 
     void receiptAndTransportOutcomeCompatibility()
     {
         GPSRecordingDocument document;
-        GPSRecordingEvent open{.atUs = 1, .kind = GPSRecordingEvent::Kind::OpenError};
-        open.openStatus = GPSOpenStatus::TimedOut;
-        GPSRecordingEvent receipt{.atUs = 1000, .kind = GPSRecordingEvent::Kind::Rx, .bytes = "abc"};
-        receipt.receivedAtUs = -500000;
-        receipt.readStatus = GPSReadStatus::Data;
-        GPSRecordingEvent overflow{.atUs = 2000, .kind = GPSRecordingEvent::Kind::ReadError};
-        overflow.readStatus = GPSReadStatus::Overflow;
+        GPSRecordingEvent open{.atUs = 1, .payload = GPSRecordingEvent::Open{.success = false}};
+        std::get<GPSRecordingEvent::Open>(open.payload).status = GPSOpenStatus::TimedOut;
+        GPSRecordingEvent receipt{.atUs = 1000,
+                                  .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Data, "abc"}};
+        std::get<GPSRecordingEvent::Read>(receipt.payload).receivedAtUs = -500000;
+        std::get<GPSRecordingEvent::Read>(receipt.payload).status = GPSReadStatus::Data;
+        GPSRecordingEvent overflow{.atUs = 2000,
+                                   .payload = GPSRecordingEvent::Read{GPSRecordingEvent::Read::Outcome::Error, {}}};
+        std::get<GPSRecordingEvent::Read>(overflow.payload).status = GPSReadStatus::Overflow;
         document.events = {open, receipt, overflow};
         QString error;
         const auto bytes = document.encode(&error);
         QVERIFY2(!bytes.isEmpty(), qPrintable(error));
         GPSRecordingDocument decoded;
         QVERIFY2(GPSRecordingDocument::decode(bytes, decoded, error), qPrintable(error));
-        QCOMPARE(decoded.events[0].openStatus, open.openStatus);
-        QCOMPARE(decoded.events[1].receivedAtUs, receipt.receivedAtUs);
-        QCOMPARE(decoded.events[2].readStatus, overflow.readStatus);
+        QCOMPARE(decoded.events[0].openStatus(), open.openStatus());
+        QCOMPARE(decoded.events[1].receivedAtUs(), receipt.receivedAtUs());
+        QCOMPARE(decoded.events[2].readStatus(), overflow.readStatus());
         QCOMPARE(decoded.encode(), bytes);
         auto malformed = QJsonDocument::fromJson(bytes).object();
         auto events = malformed["events"].toArray();
@@ -239,13 +290,13 @@ private slots:
         events[1] = rx;
         malformed.insert("events", events);
         QVERIFY(!GPSRecordingDocument::decode(QJsonDocument(malformed).toJson(), decoded, error));
-        document.events[2].readStatus = GPSReadStatus::TimedOut;
+        std::get<GPSRecordingEvent::Read>(document.events[2].payload).status = GPSReadStatus::TimedOut;
         QVERIFY(document.encode(&error).isEmpty());
         // Version 2 has no receipt field; the replay defaults to the recorded completion time.
         QVERIFY(GPSRecordingDocument::decode(
             R"({"fileType":"GPSRecording","version":2,"events":[{"at_us":1,"kind":"rx","hex":"6162"}]})", decoded,
             error));
-        QVERIFY(!decoded.events.first().receivedAtUs);
+        QVERIFY(!decoded.events.first().receivedAtUs());
     }
 
     void passiveNetworkBaudRemainsUnknown()

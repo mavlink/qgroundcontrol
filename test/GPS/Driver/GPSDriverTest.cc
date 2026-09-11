@@ -495,7 +495,6 @@ void GPSDriverTest::_observationMetadata()
     QVERIFY(!observation.horizontalDop);
     QVERIFY(!observation.altitudeEllipsoidMeters);
     QVERIFY(!observation.trueHeadingDegrees);
-    QVERIFY(!observation.integrity.jammingState);
     fix.heading = 0;
     observation = GPSDriverData::position(fix);
     QCOMPARE(observation.trueHeadingDegrees.value(), 0.0);
@@ -517,9 +516,10 @@ void GPSDriverTest::_observationMetadata()
     fix.vel_ned_valid = true;
     fix.vel_m_s = 0;
     fix.cog_rad = 0;
-    fix.jamming_state = GPSPositionReport::JAMMING_STATE_DETECTED;
-    fix.jamming_state_timestamp = fix.timestamp - 6000000;
-    fix.corrections_msg_used = GPSPositionReport::CORRECTIONS_MSG_USED_USED;
+    GPSIntegrityReport nativeIntegrity;
+    nativeIntegrity.jamming_state = GPSIntegrityReport::JAMMING_STATE_DETECTED;
+    nativeIntegrity.jamming_state_timestamp = fix.timestamp - 6000000;
+    nativeIntegrity.corrections_msg_used = GPSIntegrityReport::CORRECTIONS_MSG_USED_USED;
     observation = GPSDriverData::position(fix);
     QVERIFY(observation.usable());
     QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::RTKFixed);
@@ -534,12 +534,12 @@ void GPSDriverTest::_observationMetadata()
     QVERIFY(qAbs(observation.trueHeadingDegrees.value() - 270) < 0.001);
     QVERIFY(qAbs(observation.trueHeadingAccuracyDegrees.value() - 0.5) < 0.001);
     QVERIFY(qIsNaN(observation.heading()));  // stationary course must not become antenna orientation
-    QCOMPARE(observation.integrity.jammingState.value(), static_cast<int>(GPSPositionReport::JAMMING_STATE_DETECTED));
-    QVERIFY(observation.integrity.provenance);
-    QCOMPARE(observation.integrity.provenance->jammingTimestampUs, fix.jamming_state_timestamp);
-    QCOMPARE(observation.integrity.provenance->correctionsTimestampUs, 0ULL);
-    QCOMPARE(observation.integrity.correctionsUsed.value(),
-             static_cast<int>(GPSPositionReport::CORRECTIONS_MSG_USED_USED));
+    const auto integrity = GPSDriverData::integrity(nativeIntegrity);
+    QCOMPARE(integrity.jammingState.value(), static_cast<int>(GPSIntegrityReport::JAMMING_STATE_DETECTED));
+    QVERIFY(integrity.provenance);
+    QCOMPARE(integrity.provenance->jammingTimestampUs, nativeIntegrity.jamming_state_timestamp);
+    QCOMPARE(integrity.provenance->correctionsTimestampUs, 0ULL);
+    QCOMPARE(integrity.correctionsUsed.value(), static_cast<int>(GPSIntegrityReport::CORRECTIONS_MSG_USED_USED));
     GPSExecutionContext context;
     context.nowUs = [] { return uint64_t{9000000}; };
     context.utcNowUs = [] { return uint64_t{1704067209000000}; };

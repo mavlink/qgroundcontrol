@@ -7,6 +7,7 @@
 
 #include <optional>
 
+#include "GPSCommandTransaction.h"
 #include "GPSReceiverSetting.h"
 #include "GPSTransportResult.h"
 
@@ -37,7 +38,10 @@ struct GPSSettingReport
     {
         Requested,
         Acknowledged,
-        Rejected
+        Rejected,
+        TimedOut,
+        Cancelled,
+        TransportError
     };
     enum class ReadbackState
     {
@@ -61,6 +65,7 @@ Q_DECLARE_METATYPE(GPSSettingReport)
 struct GPSConfigurationReport
 {
     QList<GPSSettingReport> settings;
+    QList<GPSCommandResult> commands;
     quint64 sessionId = 0;
     qint64 monotonicTimestampUs = 0;
     bool active = false;

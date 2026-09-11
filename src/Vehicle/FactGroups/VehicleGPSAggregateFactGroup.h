@@ -9,10 +9,12 @@
 
 #pragma once
 
-#include "FactGroup.h"
-#include <QtCore/QTimer>
-#include <QtCore/QVector>
 #include <QtCore/QMetaObject>
+#include <QtCore/QPointer>
+#include <QtCore/QVector>
+
+#include "FactGroup.h"
+#include "GPSIntegrityStore.h"
 
 class VehicleGPSFactGroup;
 
@@ -45,20 +47,15 @@ public:
 
 private slots:
     void _updateAggregates();
-    void _onIntegrityUpdated();
-    void _onStaleTimeout();
 
 private:
-    static constexpr int GNSS_INTEGRITY_STALE_TIMEOUT_MS = 5000;
-
-    static int  _mergeWorst(int a, int b);
-    static int  _mergeAuthentication(int a, int b);
-    static int  _valueOrInvalid(Fact* fact);
+    static int _mergeWorst(int a, int b);
+    static int _mergeAuthentication(int a, int b);
     void _clearConnections();
 
-    VehicleGPSFactGroup* _gps1 = nullptr;
-    VehicleGPSFactGroup* _gps2 = nullptr;
-    QTimer _staleTimer;
+    QPointer<GPSIntegrityStore> _gps1;
+    QPointer<GPSIntegrityStore> _gps2;
+    quint64 _revision = 0;
     QVector<QMetaObject::Connection> _connections;
 
     Fact _spoofingStateFact = Fact(0, QStringLiteral("spoofingState"), FactMetaData::valueTypeUint8);

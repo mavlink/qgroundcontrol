@@ -3,6 +3,8 @@
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
 
+#include <memory>
+
 #include "GPSObservation.h"
 #include "GPSRelativePositionStore.h"
 
@@ -92,6 +94,7 @@ public:
         return _fresh && _observation.normalized.has_value() ? QVariant(*_observation.normalized) : QVariant();
     }
 
+    void bindStore(GPSRelativePositionStore* store);
     void beginSession(const QString& sourceId, quint64 sessionId);
     void updateObservation(const GPSRelativeObservation& observation);
     void reset();
@@ -107,6 +110,7 @@ private:
     QString _sourceId;
     quint64 _sessionId = 0;
     GPSRelativeObservation _observation;
-    GPSRelativePositionStore _store;
+    std::unique_ptr<GPSRelativePositionStore> _ownedStore;
+    QPointer<GPSRelativePositionStore> _store;
     bool _fresh = false;
 };

@@ -80,6 +80,11 @@ void GPSReceiverAutoConnectTest::_nmeaDiscoveryExclusionDoesNotRevokeReceiver()
     controller.update();
     QCOMPARE(connects.size(), 1);
     QVERIFY(receiver.hasReceiver());
+    QVERIFY(controller._control.profile().receiverName.isEmpty());
+    QCOMPARE(receiver.profile().receiverName, QStringLiteral("u-blox"));
+    controller.update();
+    QVERIFY(receiver.hasReceiver());
+    QVERIFY(disconnects.isEmpty());
     const auto exclusion = ports.excludeFromAutoConnect(QStringLiteral("/test/rtk"));
     controller.update();
     QVERIFY(receiver.hasReceiver());

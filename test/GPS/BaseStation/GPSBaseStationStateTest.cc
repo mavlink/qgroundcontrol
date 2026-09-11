@@ -67,8 +67,9 @@ void GPSBaseStationStateTest::_surveyRoleGating()
     QFETCH(bool, hasReceiver);
     QFETCH(bool, accepted);
     GPSReceiverSession session;
+    GPSReceiverState receiverState(session);
     GPSBaseStationFactGroup facts;
-    GPSBaseStationState state(session, facts);
+    GPSBaseStationState state(receiverState, facts);
     _attachReceiver(session, base ? GPSReceiverConfig::Role::RTKBase : GPSReceiverConfig::Role::Position, support);
     if (!hasReceiver) {
         session.stop();
@@ -94,8 +95,9 @@ void GPSBaseStationStateTest::_surveyRoleGating()
 void GPSBaseStationStateTest::_roleChangeAndDisconnectReset()
 {
     GPSReceiverSession session;
+    GPSReceiverState receiverState(session);
     GPSBaseStationFactGroup facts;
-    GPSBaseStationState state(session, facts);
+    GPSBaseStationState state(receiverState, facts);
     _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Unknown);
     emit session.surveyInReceived(validSurvey());
     QVERIFY(facts.valid()->rawValue().toBool());
@@ -123,8 +125,9 @@ void GPSBaseStationStateTest::_roleChangeAndDisconnectReset()
 void GPSBaseStationStateTest::_roleChangeDuringSurveyUpdate()
 {
     GPSReceiverSession session;
+    GPSReceiverState receiverState(session);
     GPSBaseStationFactGroup facts;
-    GPSBaseStationState state(session, facts);
+    GPSBaseStationState state(receiverState, facts);
     _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Supported);
     bool switched = false;
     connect(facts.currentDuration(), &Fact::rawValueChanged, this, [&]() {
@@ -146,10 +149,11 @@ void GPSBaseStationStateTest::_roleChangeDuringSurveyUpdate()
 void GPSBaseStationStateTest::_presentationDestructionKeepsSession()
 {
     GPSReceiverSession session;
+    GPSReceiverState receiverState(session);
     _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Supported);
     const QPointer<GPSProvider> worker = session._provider;
     GPSBaseStationFactGroup facts;
-    auto state = std::make_unique<GPSBaseStationState>(session, facts);
+    auto state = std::make_unique<GPSBaseStationState>(receiverState, facts);
     connect(facts.currentDuration(), &Fact::rawValueChanged, this, [&]() { state.reset(); });
     emit session.surveyInReceived(validSurvey());
     QVERIFY(!state);
@@ -162,8 +166,9 @@ void GPSBaseStationStateTest::_presentationDestructionKeepsSession()
 void GPSBaseStationStateTest::_referenceMetadata()
 {
     GPSReceiverSession session;
+    GPSReceiverState receiverState(session);
     GPSBaseStationFactGroup facts;
-    GPSBaseStationState state(session, facts);
+    GPSBaseStationState state(receiverState, facts);
     _attachReceiver(session, GPSReceiverConfig::Role::RTKBase, GPSReceiverCapabilities::Support::Supported);
     auto survey = validSurvey();
     survey.meanAccuracyMM.reset();

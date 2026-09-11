@@ -7,6 +7,7 @@ class GPSManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _bindingRetirementDisconnectsRouting();
     void _saveBaseReference();
     void _receiverSettingsReentrantTransportChange();
     void _receiverSettingsNotificationCanDestroyManager();

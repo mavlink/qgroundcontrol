@@ -34,6 +34,7 @@
 #include "LittleEndian.h"
 #include "UBXMessageSchema.h"
 #include "UBXPrivate.h"
+#include "UBXWire.h"
 
 int GPSDriverUBX::enableNmeaOutput(unsigned baudrate)
 {
@@ -120,26 +121,26 @@ bool GPSDriverUBX::readConfiguration(ConfigurationReadback& report, unsigned tim
     if (!_configured || !supportsOutputRateSelection() || !timeout_ms || ioError()) {
         return false;
     }
-    _configuration_readback_keys[0] = UBX_CFG_KEY_NAVSPG_DYNMODEL;
-    _configuration_readback_keys[1] = UBX_CFG_KEY_RATE_MEAS;
-    _configuration_readback_keys[2] = UBX_CFG_KEY_RATE_NAV;
-    _configuration_readback_count = 3;
+    std::array<uint32_t, 9> readbackKeys{};
+    readbackKeys[0] = UBX_CFG_KEY_NAVSPG_DYNMODEL;
+    readbackKeys[1] = UBX_CFG_KEY_RATE_MEAS;
+    readbackKeys[2] = UBX_CFG_KEY_RATE_NAV;
+    unsigned readbackCount = 3;
     if (supportsConstellationSelection()) {
         const uint32_t keys[] = {UBX_CFG_KEY_SIGNAL_GPS_ENA, UBX_CFG_KEY_SIGNAL_QZSS_ENA, UBX_CFG_KEY_SIGNAL_SBAS_ENA,
                                  UBX_CFG_KEY_SIGNAL_GAL_ENA, UBX_CFG_KEY_SIGNAL_BDS_ENA,  UBX_CFG_KEY_SIGNAL_GLO_ENA};
         for (uint32_t key : keys) {
-            _configuration_readback_keys[_configuration_readback_count++] = key;
+            readbackKeys[readbackCount++] = key;
         }
     }
-    uint8_t request[4 + sizeof(_configuration_readback_keys)]{};
-    for (unsigned i = 0; i < _configuration_readback_count; ++i) {
-        LittleEndian::write(request, 4 + i * 4, _configuration_readback_keys[i]);
+    uint8_t request[4 + sizeof(readbackKeys)]{};
+    for (unsigned i = 0; i < readbackCount; ++i) {
+        LittleEndian::write(request, 4 + i * 4, readbackKeys[i]);
     }
-    _configuration_readback_ready = false;
-    _configuration_readback_pending = true;
+    _controller.beginReadback(std::span(readbackKeys).first(readbackCount));
     const uint64_t deadline = nowUs() + uint64_t(timeout_ms) * 1000;
-    if (sendMessage(UBX_MSG_CFG_VALGET, request, 4 + _configuration_readback_count * 4)) {
-        while (!_configuration_readback_ready && !ioError()) {
+    if (sendMessage(UBX_MSG_CFG_VALGET, request, 4 + readbackCount * 4)) {
+        while (!_controller.readbackReady() && !ioError()) {
             const uint64_t now = nowUs();
             if (now >= deadline) {
                 break;
@@ -152,19 +153,19 @@ bool GPSDriverUBX::readConfiguration(ConfigurationReadback& report, unsigned tim
             }
         }
     }
-    _configuration_readback_pending = false;
-    if (!_configuration_readback_ready) {
+    _controller.finishReadback();
+    if (!_controller.readbackReady()) {
         return false;
     }
-    report.dynamic_model = uint8_t(_configuration_readback_values[0]);
-    report.measurement_interval_ms = uint16_t(_configuration_readback_values[1]);
-    report.navigation_rate = uint16_t(_configuration_readback_values[2]);
-    report.constellations_reported = _configuration_readback_count == 9;
+    report.dynamic_model = uint8_t(_controller.readback().values[0]);
+    report.measurement_interval_ms = uint16_t(_controller.readback().values[1]);
+    report.navigation_rate = uint16_t(_controller.readback().values[2]);
+    report.constellations_reported = readbackCount == 9;
     if (report.constellations_reported) {
         // QGC's GPS selection includes QZSS; differing receiver enables are not a match.
-        report.constellation_mask = (_configuration_readback_values[3] && _configuration_readback_values[4]) ? 1 : 0;
+        report.constellation_mask = (_controller.readback().values[3] && _controller.readback().values[4]) ? 1 : 0;
         for (unsigned i = 5; i < 9; ++i) {
-            if (_configuration_readback_values[i]) {
+            if (_controller.readback().values[i]) {
                 report.constellation_mask |= 1u << (i - 4);
             }
         }
@@ -179,7 +180,6 @@ int GPSDriverUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
     _output_rate = config.outputRateHz;
     _survey_duration = 0;
     resetIOError();
-    _settingOutcomes.fill(GPSCommandOutcome::Pending);
     _constellation_configuration_rejected = false;
     _constellation_request_rejected = false;
     _configured = false;
@@ -1023,7 +1023,7 @@ int GPSDriverUBX::configureDevice(const GPSConfig& config)
 
 void GPSDriverUBX::initCfgValset()
 {
-    _valsetSettings = 0;
+    _valsetSettings = {};
     memset(_tx_cfg_valset_buf, 0, sizeof(_tx_cfg_valset_buf));
     _tx_cfg_valset_buf[1] = UBX_CFG_LAYER_RAM;
     _tx_cfg_valset_size = 4;
@@ -1046,11 +1046,11 @@ int GPSDriverUBX::sendCfgValsetAcked(bool report_ack_error)
 bool GPSDriverUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
 {
     if (key_id == UBX_CFG_KEY_NAVSPG_DYNMODEL)
-        _valsetSettings |= 1;
+        _valsetSettings.add(GPSReceiverSetting::DynamicModel);
     if (key_id == UBX_CFG_KEY_RATE_MEAS || key_id == UBX_CFG_KEY_RATE_NAV)
-        _valsetSettings |= 2;
+        _valsetSettings.add(GPSReceiverSetting::OutputRateHz);
     if ((key_id & 0xffff0000u) == 0x10310000u)
-        _valsetSettings |= 4;
+        _valsetSettings.add(GPSReceiverSetting::ConstellationMask);
 
     const unsigned value_size = UBX::configurationValueBytes(key_id);
     if (!value_size || (value_size < 4 && value >= (1u << (value_size * 8))) || ((key_id >> 28) == 1 && value > 1))
@@ -1348,27 +1348,17 @@ GPSDriverUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool 
 {
     const Operation operation(*this, timeout);
     _last_ack_rejected = false;
-    _ack_state = UBX_ACK_WAITING;
-    _ack_waiting_msg = msg;
+    _controller.beginAcknowledgement(msg);
     const auto result = awaitCommand(
-        std::to_string(msg), timeout,
+        {std::to_string(msg), std::chrono::milliseconds(timeout), _pendingCommandSettings, report},
         [this, timeout] {
             bool error;
             receiveInternal(timeout, error);
         },
-        [this] {
-            return _ack_state == UBX_ACK_GOT_ACK   ? GPSCommandOutcome::Acknowledged
-                   : _ack_state == UBX_ACK_GOT_NAK ? GPSCommandOutcome::Rejected
-                                                   : GPSCommandOutcome::Pending;
-        },
-        report, _pendingCommandSettings);
-    for (unsigned bit = 0; bit < _settingOutcomes.size(); ++bit) {
-        if (_pendingCommandSettings & (1u << bit))
-            _settingOutcomes[bit] = result.outcome;
-    }
-    _pendingCommandSettings = 0;
+        [this] { return _controller.acknowledgement(); });
+    _pendingCommandSettings = {};
     _last_ack_rejected = result.outcome == GPSCommandOutcome::Rejected;
-    _ack_state = UBX_ACK_IDLE;
+    _controller.finishAcknowledgement();
     return result.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 
@@ -1497,12 +1487,16 @@ bool GPSDriverUBX::configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool r
 bool GPSDriverUBX::sendMessage(const uint16_t msg, const uint8_t* payload, const uint16_t length)
 {
     const Operation operation(*this, UBX_CONFIG_TIMEOUT);
-    beginCommandWrite();
-    _pendingCommandSettings = msg == UBX_MSG_CFG_NAV5     ? 1u
-                              : msg == UBX_MSG_CFG_RATE   ? 2u
-                              : msg == UBX_MSG_CFG_GNSS   ? 4u
-                              : msg == UBX_MSG_CFG_VALSET ? _valsetSettings
-                                                          : 0u;
+    _pendingCommandSettings = {};
+    if (msg == UBX_MSG_CFG_NAV5)
+        _pendingCommandSettings.add(GPSReceiverSetting::DynamicModel);
+    else if (msg == UBX_MSG_CFG_RATE)
+        _pendingCommandSettings.add(GPSReceiverSetting::OutputRateHz);
+    else if (msg == UBX_MSG_CFG_GNSS)
+        _pendingCommandSettings.add(GPSReceiverSetting::ConstellationMask);
+    else if (msg == UBX_MSG_CFG_VALSET)
+        _pendingCommandSettings = _valsetSettings;
+    beginCommandWrite(std::to_string(msg), _pendingCommandSettings);
     std::array<uint8_t, 6> header{UBX_SYNC1, UBX_SYNC2};
     LittleEndian::write(header, 2, msg);
     LittleEndian::write(header, 4, length);

@@ -59,6 +59,8 @@ public:
 
     virtual ~GPSDriverSBF();
 
+    bool receiverReady() const override { return _configured; }
+
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
 
@@ -115,7 +117,8 @@ private:
      * @brief Send a message and waits for acknowledge
      * @return true on success, false on write error (errno set) or ack wait timeout
      */
-    bool sendMessageAndWaitForAck(const char* msg, const int timeout);
+    bool sendMessageAndWaitForAck(const char* msg, int timeout, GPSReceiverSettingSet settings = {},
+                                  bool required = true);
 
     /**
      * @brief Configures the SBF Output blocks

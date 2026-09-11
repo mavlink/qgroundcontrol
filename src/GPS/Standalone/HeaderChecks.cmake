@@ -1,63 +1,42 @@
 include_guard(GLOBAL)
 
-# Separate translation units prevent one public header from supplying another's missing includes.
-function(qgc_gps_check_headers target directory)
-    if(NOT TARGET ${target} OR NOT IS_DIRECTORY "${directory}")
-        message(FATAL_ERROR "Header checks need a production target and header directory")
-    endif()
-    cmake_parse_arguments(ARG "" "INCLUDE;EXCLUDE" "" ${ARGN})
-    file(GLOB headers CONFIGURE_DEPENDS "${directory}/*.h")
-    set(sources)
+get_property(api_targets GLOBAL PROPERTY QGC_GPS_PUBLIC_API_TARGETS)
+list(REMOVE_DUPLICATES api_targets)
+foreach(api_target IN LISTS api_targets)
+    get_target_property(headers ${api_target} QGC_PUBLIC_HEADER_NAMES)
+    set(_sources)
     foreach(header IN LISTS headers)
-        get_filename_component(header_name "${header}" NAME_WE)
-        if(header_name MATCHES "Private$|GPSDriverBackend"
-           OR (ARG_INCLUDE AND NOT header_name MATCHES "${ARG_INCLUDE}")
-           OR (ARG_EXCLUDE AND header_name MATCHES "${ARG_EXCLUDE}")
-        )
-            continue()
-        endif()
-        set(source "${CMAKE_CURRENT_BINARY_DIR}/headers/${target}/${header_name}.cc")
+        string(MAKE_C_IDENTIFIER "${header}" source_name)
+        set(_source "${CMAKE_CURRENT_BINARY_DIR}/headers/${api_target}/${source_name}.cc")
         file(
             GENERATE
-            OUTPUT "${source}"
-            CONTENT "#include \"${header}\"\n"
+            OUTPUT "${_source}"
+            CONTENT "#include <${header}>\n"
         )
-        list(APPEND sources "${source}")
+        list(APPEND _sources "${_source}")
     endforeach()
-    if(TARGET ${target}Headers)
-        target_sources(${target}Headers PRIVATE ${sources})
-        return()
-    endif()
-    add_library(${target}Headers OBJECT ${sources})
+    add_library(${api_target}Headers OBJECT ${_sources})
     set_target_properties(
-        ${target}Headers
+        ${api_target}Headers
         PROPERTIES AUTOMOC OFF
                    AUTORCC OFF
                    AUTOUIC OFF
     )
-    target_link_libraries(${target}Headers PRIVATE ${target})
-endfunction()
-
-set(_gps_root "${CMAKE_CURRENT_LIST_DIR}/..")
-qgc_gps_check_headers(QGCGPSNativeContracts "${_gps_root}/Driver/Protocols/Contracts")
-qgc_gps_check_headers(QGCGPSNative "${_gps_root}/Driver/Protocols")
-qgc_gps_check_headers(QGCGPSContracts "${_gps_root}/Contracts")
-qgc_gps_check_headers(QGCGPSCore "${_gps_root}/Core")
-qgc_gps_check_headers(QGCGPSNMEA "${_gps_root}/NMEA" EXCLUDE "NMEASourceManager|NMEAConnectionAttempt")
-qgc_gps_check_headers(QGCGPSConnections "${_gps_root}/NMEA" INCLUDE "NMEASourceManager|NMEAConnectionAttempt")
-qgc_gps_check_headers(QGCGPSNTRIPNetwork "${_gps_root}/NTRIP")
-qgc_gps_check_headers(QGCGPSPositioning "${_gps_root}/PositionManager")
-qgc_gps_check_headers(QGCGPSConnections "${_gps_root}/Receiver" INCLUDE "GPSReceiverAutoConnect|GPSSerialDiscovery")
-qgc_gps_check_headers(QGCGPSReceiver "${_gps_root}/Receiver" EXCLUDE "GPSReceiverAutoConnect|GPSSerialDiscovery")
-qgc_gps_check_headers(QGCGPSDriver "${_gps_root}/Driver")
-qgc_gps_check_headers(QGCGPSModels "${_gps_root}/Models")
-qgc_gps_check_headers(QGCGPSCorrections "${_gps_root}/Corrections")
-foreach(family UBX Ashtech SBF Femto)
-    if(TARGET QGCGPS${family})
-        qgc_gps_check_headers(QGCGPS${family} "${_gps_root}/Driver/Protocols/${family}")
+    target_link_libraries(${api_target}Headers PRIVATE ${api_target})
+    set(_main "${CMAKE_CURRENT_BINARY_DIR}/headers/${api_target}/_main.cc")
+    file(
+        GENERATE
+        OUTPUT "${_main}"
+        CONTENT "int main() { return 0; }\n"
+    )
+    add_executable(${api_target}Consumer "${_main}" $<TARGET_OBJECTS:${api_target}Headers>)
+    get_target_property(library_type ${api_target} TYPE)
+    if(library_type STREQUAL "STATIC_LIBRARY")
+        # Resolve every object, including methods not referenced by an include-only translation unit.
+        target_link_libraries(${api_target}Consumer PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,${api_target}>")
+    else()
+        target_link_libraries(${api_target}Consumer PRIVATE ${api_target})
     endif()
+    add_test(NAME ${api_target}Consumer COMMAND ${api_target}Consumer)
+    set_tests_properties(${api_target}Consumer PROPERTIES LABELS "Unit;GPS;Library;PublicAPI" TIMEOUT 10)
 endforeach()
-qgc_gps_check_headers(QGCGPSRecordingController "${_gps_root}/Recording")
-qgc_gps_check_headers(QGCIO "${_gps_root}/../Utilities/IO")
-qgc_gps_check_headers(QGCTiming "${_gps_root}/../Utilities/Timing")
-qgc_gps_check_headers(QGCNetworkIO "${_gps_root}/../Utilities/Network/IO")

@@ -2,6 +2,10 @@ add_library(
     QGCGPSCorrections STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/RTCMMavlinkPacket.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/RTCMMavlinkPacket.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionSelector.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionSelector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionLedger.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionLedger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionRouter.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionRouter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSCorrectionFrame.h

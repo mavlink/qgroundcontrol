@@ -5,6 +5,7 @@
 
 #include "GPSConfigurationReport.h"
 #include "GPSConnectionError.h"
+#include "GPSReceiverFailure.h"
 #include "GPSReceiverProfile.h"
 
 /// Immutable configuration and observed state for one generation; reconnect intent lives in the controller.
@@ -28,6 +29,8 @@ struct GPSReceiverAttempt
     std::optional<GPSOpenResult> transportOpen = {};
     std::optional<GPSConfigurationResult> configurationResult = {};
     std::optional<GPSReadResult> transportRead = {};
+
+    std::optional<GPSReceiverFailure> failure = {};
 
     bool terminal() const { return phase == Phase::Failed || phase == Phase::Cancelled; }
 

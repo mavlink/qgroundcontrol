@@ -4,14 +4,16 @@
 
 #include <algorithm>
 #include <cstring>
+#include <utility>
 
 #include "GPSSourceHealth.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSByteStreamLog, "GPS.Receiver.GPSByteStream")
 
-GPSByteStream::GPSByteStream(QObject* parent)
+GPSByteStream::GPSByteStream(QObject* parent, std::function<quint64()> nowUs)
     : QIODevice(parent)
+    , _nowUs(nowUs ? std::move(nowUs) : ReadTimestamp::nowUs)
     , _buffer(std::make_shared<TimestampedByteBuffer>())
 {
     qCDebug(GPSByteStreamLog) << this;
@@ -30,8 +32,7 @@ qint64 GPSByteStream::bytesAvailable() const
 
 qint64 GPSByteStream::readData(char* data, qint64 length)
 {
-    const auto result =
-        _buffer->read(data, length, ReadTimestamp::nowUs(), GPSSourceHealth::FRESHNESS_TIMEOUT_MS * 1000u);
+    const auto result = _buffer->read(data, length, _nowUs(), GPSSourceHealth::FRESHNESS_TIMEOUT_MS * 1000u);
     _lastReadTimestampUs = result.receivedAtUs;
     if (result.gap) {
         // NMEA resynchronizes at a data gap; the generic buffer does not manufacture bytes.

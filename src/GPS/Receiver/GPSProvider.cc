@@ -70,6 +70,13 @@ void GPSProvider::sensorGpsUpdate(const GPSObservation& message)
     }
 }
 
+void GPSProvider::integrityUpdate(const GPSIntegrityObservation& message)
+{
+    if (_mailbox->publish(message)) {
+        emit dataReady();
+    }
+}
+
 void GPSProvider::satelliteInfoUpdate(const GPSSatelliteObservation& message)
 {
     if (_mailbox->publish(message)) {
@@ -118,7 +125,7 @@ void GPSProvider::run()
     if (_requestStop) {
         return;
     }
-    const auto opened = transport ? transport->open() : GPSOpenResult{GPSOpenStatus::Unsupported};
+    const auto opened = transport ? transport->open() : GPSOpenResult{GPSOpenStatus::Error};
     emit transportOpenFinished(opened);
     if (opened.status != GPSOpenStatus::Opened) {
         if (!_requestStop && opened.status != GPSOpenStatus::Cancelled) {
@@ -141,6 +148,10 @@ void GPSProvider::run()
     sinks.onPosition = [this, &gotData](const GPSObservation& message) {
         gotData = true;
         sensorGpsUpdate(message);
+    };
+    sinks.onIntegrity = [this, &gotData](const GPSIntegrityObservation& message) {
+        gotData = true;
+        integrityUpdate(message);
     };
     sinks.onSatelliteInfo = [this, &gotData](const GPSSatelliteObservation& message) {
         gotData = true;

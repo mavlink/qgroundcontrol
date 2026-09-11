@@ -27,6 +27,7 @@
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverSession.h"
 #include "GPSReceiverSettingsPresentation.h"
+#include "GPSSourceBindings.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
 #include "LinkManager.h"
@@ -179,8 +180,6 @@ void GPSManagerTest::_positionSourceReentrantDisable()
     });
     useReceiver->setRawValue(true);
     QVERIFY(!useReceiver->rawValue().toBool());
-    QVERIFY(!manager._receiverBinding.registration);
-    QVERIFY(!manager._receiverBinding.source);
     QVERIFY(positions.sourceHealth() != manager.receiver()->health());
 }
 
@@ -221,7 +220,6 @@ void GPSManagerTest::_nmeaSourceRegistration()
     QTRY_VERIFY_WITH_TIMEOUT(manager.nmeaConnection()->positionSource(), TestTimeout::mediumMs());
     if (publishPosition) {
         QCOMPARE(positions.sourceHealth(), manager.nmeaConnection()->health());
-        QVERIFY(manager._nmeaBinding.registration);
     }
     const QByteArray sentences =
         NMEAUtils::repairChecksum("$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A") +
@@ -244,8 +242,6 @@ void GPSManagerTest::_nmeaSourceRegistration()
         return;
     }
     manager.disconnectNmea();
-    QVERIFY(!manager._nmeaBinding.registration);
-    QVERIFY(!manager._nmeaBinding.source);
     QVERIFY(!manager.nmeaConnection()->positionSource());
     QCOMPARE(manager.nmeaSatelliteModel()->count(), 0);
     if (publishPosition) {
@@ -1281,4 +1277,66 @@ void GPSManagerTest::_saveBaseReference()
     QVERIFY(!session->hasReceiver());
     QCOMPARE(base->receiverRole()->rawValue().toInt(), static_cast<int>(RTKSettings::Position));
     QVERIFY(!manager.canSaveBaseReference());
+}
+
+void GPSManagerTest::_bindingRetirementDisconnectsRouting()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance();
+    saved.setFactValue(settings->gpsCorrectionSettings()->rtcmUdpInputEnabled(), false);
+    saved.setFactValue(settings->gpsCorrectionSettings()->injectLocalReceiver(), false);
+    saved.setFactValue(settings->gpsCorrectionSettings()->correctionSource(), GPSCorrectionSettings::Automatic);
+    saved.setFactValue(settings->rtkSettings()->useReceiverPosition(), true);
+    saved.setFactValue(settings->gpsPositionSettings()->sourceMode(),
+                       int(GPSPositionService::SourceMode::ReceiverOnly));
+    QGCPositionManager positions;
+    GPSReceiverSession session;
+    GPSReceiverState state(session);
+    NMEASourceManager nmea;
+    GPSCorrectionManager corrections;
+    std::unique_ptr<GPSSourceBindings> bindings;
+    const auto release = std::make_shared<QSemaphore>();
+    const auto cleanup = qScopeGuard([&]() {
+        session.stop();
+        release->release();
+        session.shutdown();
+        corrections.shutdown();
+    });
+    GPSReceiverProfile profile;
+    profile.endpoint.kind = GPSReceiverProfile::Endpoint::Kind::Tcp;
+    profile.endpoint.host = QStringLiteral("unused.example.test");
+    profile.endpoint.port = 2101;
+    session.start(profile, [release](const std::atomic_bool&) {
+        release->acquire();
+        return std::unique_ptr<GPSTransport>();
+    });
+    auto* worker = session.findChild<GPSProvider*>();
+    QVERIFY(worker);
+    emit worker->receiverReady();
+    QTRY_VERIFY_WITH_TIMEOUT(session.attempt().ready(), TestTimeout::shortMs());
+    bindings = std::make_unique<GPSSourceBindings>(*settings, &positions, state, nmea, corrections);
+    bindings->init(nullptr);
+    QCOMPARE(positions.sourceHealth(), state.health());
+    const auto mailbox = worker->mailbox();
+    mailbox->setCorrectionsEnabled(true);
+    const auto now = GPSCorrectionFrame::monotonicNowMs();
+    const GPSCorrectionFrame frame{GPSCorrectionSource::Ntrip,           1,    now,
+                                   GpsTestHelpers::buildRtcmFrame(1005), 1005, true};
+    QVERIFY(mailbox->submitCorrection(frame, session.sessionId(), now).accepted);
+    QSignalSpy deliveries(&session, &GPSReceiverSession::correctionDeliveriesReady);
+    emit corrections.selectedSourceChanged();
+    QCOMPARE(mailbox->stats().pendingCommands, 0);
+    QCOMPARE(deliveries.count(), 1);
+
+    bindings->stop();
+    QVERIFY(mailbox->submitCorrection(frame, session.sessionId(), now).accepted);
+    emit corrections.selectedSourceChanged();
+    QCOMPARE(mailbox->stats().pendingCommands, 0);
+    QCOMPARE(deliveries.count(), 2);
+    bindings->shutdown();
+    bindings.reset();
+    QVERIFY(mailbox->submitCorrection(frame, session.sessionId(), now).accepted);
+    emit corrections.selectedSourceChanged();
+    QCOMPARE(mailbox->stats().pendingCommands, 1);
+    QCOMPARE(deliveries.count(), 2);
 }

@@ -51,6 +51,8 @@ public:
                    GPSSatelliteReport* satellite_info = nullptr, float heading_offset = 0.f);
     virtual ~GPSDriverFemto();
 
+    bool receiverReady() const override { return _configure_done; }
+
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
 

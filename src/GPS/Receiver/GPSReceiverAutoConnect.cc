@@ -55,7 +55,7 @@ void GPSReceiverAutoConnect::setProfile(const GPSReceiverProfile& profile, bool 
     _control.setStopped(false);
     const quint64 revision = _control.revision();
     const QPointer<GPSReceiverAutoConnect> guard(this);
-    if (restart && changed) {
+    if (restart || _control.connection().state() == GPSConnectionState::AwaitingChange) {
         _stop(revision);
         if (guard && revision == _control.revision()) {
             _control.connection().resetIntent();
@@ -220,7 +220,9 @@ void GPSReceiverAutoConnect::_updateReceiverState()
         case GPSReceiverAttempt::Phase::Failed:
             if (!_receiver->stopping() && _handledTerminalAttempt != _receiver->attempt().generation) {
                 _handledTerminalAttempt = _receiver->attempt().generation;
-                _control.connection().failed();
+                const auto& failure = _receiver->attempt().failure;
+                const auto disposition = failure ? failure->retry : GPSRetryDisposition::Retry;
+                _control.connection().failed(disposition);
             }
             break;
         case GPSReceiverAttempt::Phase::Cancelled:

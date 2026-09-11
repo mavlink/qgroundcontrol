@@ -5,8 +5,10 @@
 #include <QtCore/QSet>
 
 #include "GPSByteStream.h"
+#include "GPSIntegrityObservation.h"
 #include "GPSProvider.h"
 #include "GPSReceiverAttempt.h"
+#include "GPSReceiverAttemptReducer.h"
 
 class GPSRecordingBuffer;
 
@@ -20,7 +22,8 @@ class GPSReceiverSession : public QObject
     friend class GPSBaseStationStateTest;
 
 public:
-    explicit GPSReceiverSession(QObject* parent = nullptr);
+    /// Clock functions are called on both session and worker threads; do not capture a thread-confined scheduler.
+    explicit GPSReceiverSession(QObject* parent = nullptr, GPSExecutionContext context = {});
     ~GPSReceiverSession() override;
 
     void start(const GPSReceiverProfile& profile, GPSProvider::TransportFactory factory);
@@ -72,6 +75,7 @@ signals:
     void capabilitiesUpdated(const GPSReceiverCapabilities& capabilities);
     void stateChanged();
     void positionReceived(const GPSObservation& observation);
+    void integrityReceived(const GPSIntegrityObservation& observation);
     void satellitesReceived(const GPSSatelliteObservation& observation);
     void relativePositionReceived(const GPSRelativeObservation& observation);
     void rtcmReceived(const QByteArray& data);
@@ -80,12 +84,14 @@ signals:
     void correctionDeliveriesReady(const QList<GPSCorrectionDelivery>& deliveries);
 
 private:
+    void _applyEvent(const GPSReceiverEvent& event);
     bool _transition(GPSReceiverAttempt::Phase phase);
     void _finishAttempt(GPSConnectionError error = GPSConnectionError::None);
     void _invalidateConfigurationReport();
     void _drain(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
     void _flushDeliveries(const std::shared_ptr<GPSReceiverMailbox>& mailbox, quint64 generation);
 
+    GPSExecutionContext _clock;
     std::shared_ptr<GPSRecordingBuffer> _recordingBuffer;
     QPointer<GPSProvider> _provider;
     std::unique_ptr<GPSByteStream> _nmeaStream;

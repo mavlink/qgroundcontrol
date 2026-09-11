@@ -57,12 +57,12 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
     // Disable previous output for now so we can detect the COM port
     for (int i = 1; i <= 2; i++) {
         snprintf(msg, sizeof(msg), SBF_CONFIG_DISABLE_OUTPUT, "COM", i);
-        sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT);
+        sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT, {}, false);
     }
 
     for (int i = 1; i <= 4; i++) {
         snprintf(msg, sizeof(msg), SBF_CONFIG_DISABLE_OUTPUT, "USB", i);
-        sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT);
+        sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT, {}, false);
     }
 
     char com_port[5]{};
@@ -148,7 +148,7 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
         snprintf(msg, sizeof(msg), SBF_CONFIG_ATTITUDE_OFFSET, (double) (_heading_offset * 180 / GPS_PI),
                  (double) _pitch_offset);
 
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT, {GPSReceiverSetting::HeadingOffsetDeg})) {
             return -1;
         }
 
@@ -165,11 +165,15 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
             snprintf(msg, sizeof(msg), SBF_CONFIG_RECEIVER_DYNAMICS, "max");
         }
 
-        sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT);
+        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+            return -1;
+        }
 
         snprintf(msg, sizeof(msg), SBF_CONFIG, com_port);
 
-        sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT);
+        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+            return -1;
+        }
     }
 
     int i = 0;
@@ -196,25 +200,39 @@ int GPSDriverSBF::configure(unsigned& baudrate, const GPSConfig& config)
     }
 
     if (_output_mode != OutputMode::GPS) {
-        sendMessageAndWaitForAck(SBF_CONFIG_OUTPUT_RTCM3, SBF_CONFIG_TIMEOUT);
+        if (!sendMessageAndWaitForAck(SBF_CONFIG_OUTPUT_RTCM3, SBF_CONFIG_TIMEOUT)) {
+            return -1;
+        }
     }
 
     if (_output_mode == OutputMode::RTCM) {
         if (_baseConfig.useFixedBase) {
             snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_COORDINATES, _baseConfig.fixedBaseLatitude,
                      _baseConfig.fixedBaseLongitude, static_cast<double>(_baseConfig.fixedBaseAltitudeMeters));
-            sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT);
+            if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+                return -1;
+            }
 
             snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_OFFSET, 0.0, 0.0, 0.0);
-            sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT);
+            if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+                return -1;
+            }
 
-            sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC1, SBF_CONFIG_TIMEOUT);
-            sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC2, SBF_CONFIG_TIMEOUT);
+            if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC1, SBF_CONFIG_TIMEOUT)) {
+                return -1;
+            }
+            if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC2, SBF_CONFIG_TIMEOUT)) {
+                return -1;
+            }
         } else {
-            sendMessageAndWaitForAck(SBF_CONFIG_RTCM_SURVEY_IN, SBF_CONFIG_TIMEOUT);
+            if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_SURVEY_IN, SBF_CONFIG_TIMEOUT)) {
+                return -1;
+            }
         }
 
-        sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATUS, SBF_CONFIG_TIMEOUT);
+        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATUS, SBF_CONFIG_TIMEOUT)) {
+            return -1;
+        }
         _survey_active = true;
         _survey_activation_date = nowUs();
     }
@@ -232,29 +250,32 @@ bool GPSDriverSBF::sendMessage(const char* msg)
     return (write(msg, length) == length);
 }
 
-bool GPSDriverSBF::sendMessageAndWaitForAck(const char* msg, const int timeout)
+bool GPSDriverSBF::sendMessageAndWaitForAck(const char* msg, int timeout, GPSReceiverSettingSet settings, bool required)
 {
     const Operation operation(*this, timeout);
 
-    beginCommandWrite();
+    beginCommandWrite(msg, settings);
     const int length = static_cast<int>(strlen(msg));
     if (write(msg, length) != length)
         return false;
     const std::string expected = "$R: " + std::string(msg);
     std::string received;
-    bool acknowledged = false;
+    GPSCommandOutcome response = GPSCommandOutcome::Pending;
     const auto result = awaitCommand(
-        msg, timeout,
+        {msg, std::chrono::milliseconds(timeout), settings, required},
         [&] {
             uint8_t bytes[GPS_READ_BUFFER_SIZE];
             const int count = read(bytes, sizeof(bytes), timeout);
             if (count <= 0)
                 return;
             received.append(reinterpret_cast<const char*>(bytes), count);
-            acknowledged = received.find(expected) != std::string::npos;
+            if (received.find(expected) != std::string::npos)
+                response = GPSCommandOutcome::Acknowledged;
+            else if (received.find("$R?") != std::string::npos)
+                response = GPSCommandOutcome::Rejected;
             if (received.size() > expected.size())
                 received.erase(0, received.size() - expected.size());
         },
-        [&] { return acknowledged ? GPSCommandOutcome::Acknowledged : GPSCommandOutcome::Pending; });
+        [&] { return response; });
     return result.outcome == GPSCommandOutcome::Acknowledged;
 }

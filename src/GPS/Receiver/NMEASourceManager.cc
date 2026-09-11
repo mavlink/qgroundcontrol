@@ -260,15 +260,17 @@ void NMEASourceManager::_attemptFailed(const QString& detail)
     const QPointer<NMEASourceManager> guard(this);
     const auto failedConfig = _control.profile();
     const quint64 failedGeneration = _attemptGeneration;
+    const auto disposition =
+        _attempt && _attempt->attempt().failure ? _attempt->attempt().failure->retry : GPSRetryDisposition::Retry;
     _closeDevice();
     if (!guard) {
         return;
     }
     // Retry starts after the stopped event, once the attempt has released its endpoint.
-    _control.enqueue([this, detail, failedConfig, failedGeneration]() {
+    _control.enqueue([this, detail, failedConfig, failedGeneration, disposition]() {
         if (_attemptGeneration == failedGeneration && _control.profile() == failedConfig && _shouldConnect()) {
             _control.connection().stopped();
-            _control.connection().failed();
+            _control.connection().failed(disposition);
             _setStatus(detail);
         }
     });

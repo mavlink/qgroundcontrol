@@ -43,7 +43,7 @@ void GPSConnectionState::requestConnect()
     _paused = false;
     _active = true;
     resetRetry();
-    if (_state == Retrying) {
+    if (_state == Retrying || _state == AwaitingChange) {
         _state = Disconnected;
     }
     emit changed();
@@ -51,12 +51,12 @@ void GPSConnectionState::requestConnect()
 
 void GPSConnectionState::pause()
 {
-    const bool changed = !_paused || _manualRequested || _active || _state == Retrying;
+    const bool changed = !_paused || _manualRequested || _active || (_state == Retrying || _state == AwaitingChange);
     _paused = true;
     _manualRequested = false;
     _active = false;
     resetRetry();
-    if (_state == Retrying) {
+    if (_state == Retrying || _state == AwaitingChange) {
         _state = Disconnected;
     }
     if (changed) {
@@ -66,11 +66,11 @@ void GPSConnectionState::pause()
 
 void GPSConnectionState::stop()
 {
-    const bool changed = _manualRequested || _active || _state == Retrying;
+    const bool changed = _manualRequested || _active || (_state == Retrying || _state == AwaitingChange);
     _manualRequested = false;
     _active = false;
     resetRetry();
-    if (_state == Retrying) {
+    if (_state == Retrying || _state == AwaitingChange) {
         _state = Disconnected;
     }
     if (changed) {
@@ -80,12 +80,12 @@ void GPSConnectionState::stop()
 
 void GPSConnectionState::resetIntent()
 {
-    const bool changed = _paused || _manualRequested || _active || _state == Retrying;
+    const bool changed = _paused || _manualRequested || _active || (_state == Retrying || _state == AwaitingChange);
     _paused = false;
     _manualRequested = false;
     _active = false;
     resetRetry();
-    if (_state == Retrying) {
+    if (_state == Retrying || _state == AwaitingChange) {
         _state = Disconnected;
     }
     if (changed) {
@@ -147,9 +147,20 @@ void GPSConnectionState::ready()
     }
 }
 
-void GPSConnectionState::failed()
+void GPSConnectionState::failed(GPSRetryDisposition disposition)
 {
-    if (_active && _state != Retrying && _state != Stopping) {
+    if (disposition == GPSRetryDisposition::Cancel) {
+        stopped();
+        return;
+    }
+    if (disposition == GPSRetryDisposition::AwaitChange) {
+        if (_active && _state != Stopping) {
+            resetRetry();
+            _setState(AwaitingChange);
+        }
+        return;
+    }
+    if (_active && _state != Retrying && _state != AwaitingChange && _state != Stopping) {
         _retryDeadlineMs = (_scheduler ? _scheduler->nowMs() : 0) + _retryDelayMs;
         _setState(Retrying);
     }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "FactGroup.h"
 #include "GPSIntegrityObservation.h"
 #include "GPSIntegrityStore.h"
@@ -25,7 +27,8 @@ class GPSIntegrityFactGroup : public FactGroup
     Q_PROPERTY(bool systemErrorsKnown READ systemErrorsKnown NOTIFY availabilityChanged)
 
 public:
-    explicit GPSIntegrityFactGroup(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    explicit GPSIntegrityFactGroup(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
+                                   GPSIntegrityStore* store = nullptr);
     ~GPSIntegrityFactGroup() override;
 
     Fact* systemErrors() { return &_systemErrors; }
@@ -60,6 +63,9 @@ public:
 
     bool systemErrorsKnown() const { return _systemErrorsKnown; }
 
+    void bindStore(GPSIntegrityStore* store);
+
+    GPSIntegrityStore* store() const { return _store; }
     void update(const GPSIntegrityObservation& observation);
     void reset();
 
@@ -68,7 +74,8 @@ signals:
 
 private:
     void _refresh();
-    GPSIntegrityStore _store;
+    std::unique_ptr<GPSIntegrityStore> _ownedStore;
+    QPointer<GPSIntegrityStore> _store;
     Fact _systemErrors = Fact(0, QStringLiteral("systemErrors"), FactMetaData::valueTypeUint32);
     Fact _spoofingState = Fact(0, QStringLiteral("spoofingState"), FactMetaData::valueTypeUint8);
     Fact _jammingState = Fact(0, QStringLiteral("jammingState"), FactMetaData::valueTypeUint8);

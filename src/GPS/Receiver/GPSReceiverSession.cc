@@ -7,8 +7,9 @@
 
 QGC_LOGGING_CATEGORY(GPSReceiverSessionLog, "GPS.Receiver.GPSReceiverSession")
 
-GPSReceiverSession::GPSReceiverSession(QObject* parent)
+GPSReceiverSession::GPSReceiverSession(QObject* parent, GPSExecutionContext context)
     : QObject(parent)
+    , _clock(std::move(context))
 {
     qCDebug(GPSReceiverSessionLog) << this;
 }
@@ -39,7 +40,7 @@ void GPSReceiverSession::start(const GPSReceiverProfile& profile, GPSProvider::T
     _configurationTerminal = false;
     _capabilities = GPSReceiverCapabilities::forType(type);
     if (config.outputProtocol == GPSReceiverConfig::OutputProtocol::NMEA) {
-        _nmeaStream = std::make_unique<GPSByteStream>();
+        _nmeaStream = std::make_unique<GPSByteStream>(nullptr, _clock.nowUs);
     }
     std::shared_ptr<GPSRecordingStream> recording;
     if (_recordingBuffer && factory) {
@@ -50,7 +51,7 @@ void GPSReceiverSession::start(const GPSReceiverProfile& profile, GPSProvider::T
         };
     }
     auto* worker =
-        new GPSProvider(std::move(factory), type, config, _nmeaStream ? _nmeaStream->buffer() : nullptr, this);
+        new GPSProvider(std::move(factory), type, config, _nmeaStream ? _nmeaStream->buffer() : nullptr, this, _clock);
     worker->setRecordingStream(recording);
     _provider = worker;
     _workers.insert(worker);
@@ -83,34 +84,14 @@ void GPSReceiverSession::start(const GPSReceiverProfile& profile, GPSProvider::T
         Qt::QueuedConnection);
     connect(
         worker, &GPSProvider::transportOpenFinished, this,
-        [this, isCurrent](const GPSOpenResult& result) {
-            if (isCurrent() && !_attempt.terminal() && !_attempt.transportOpen) {
-                _attempt.transportOpen = result;
-                const auto snapshot = _attempt;
-                emit attemptChanged(snapshot);
-            }
-        },
-        Qt::QueuedConnection);
+        [this, generation](const GPSOpenResult& result) { _applyEvent({generation, result}); }, Qt::QueuedConnection);
     connect(
         worker, &GPSProvider::configurationFinished, this,
-        [this, isCurrent](const GPSConfigurationResult& result) {
-            if (isCurrent() && !_attempt.terminal() && !_attempt.configurationResult) {
-                _attempt.configurationResult = result;
-                const auto snapshot = _attempt;
-                emit attemptChanged(snapshot);
-            }
-        },
+        [this, generation](const GPSConfigurationResult& result) { _applyEvent({generation, result}); },
         Qt::QueuedConnection);
     connect(
         worker, &GPSProvider::transportReadFailed, this,
-        [this, isCurrent](const GPSReadResult& result) {
-            if (isCurrent() && !_attempt.terminal() && !_attempt.transportRead) {
-                _attempt.transportRead = result;
-                const auto snapshot = _attempt;
-                emit attemptChanged(snapshot);
-            }
-        },
-        Qt::QueuedConnection);
+        [this, generation](const GPSReadResult& result) { _applyEvent({generation, result}); }, Qt::QueuedConnection);
     connect(
         worker, &GPSProvider::configurationReported, this,
         [this, isCurrent, generation](const GPSConfigurationReport& report) {
@@ -124,12 +105,8 @@ void GPSReceiverSession::start(const GPSReceiverProfile& profile, GPSProvider::T
         Qt::QueuedConnection);
     connect(
         worker, &GPSProvider::connectionErrorDetail, this,
-        [this, isCurrent](GPSConnectionError error, const QString& detail) {
-            if (isCurrent() && !_attempt.terminal()) {
-                _attempt.error = error;
-                _attempt.errorDetail = detail;
-                emit connectionErrorDetail(error, detail);
-            }
+        [this, generation](GPSConnectionError error, const QString& detail) {
+            _applyEvent({generation, GPSReceiverErrorDetail{error, detail}});
         },
         Qt::QueuedConnection);
     connect(
@@ -245,18 +222,25 @@ const GPSReceiverProfile& GPSReceiverSession::profile() const
     return _attempt.profile ? *_attempt.profile : empty;
 }
 
+void GPSReceiverSession::_applyEvent(const GPSReceiverEvent& event)
+{
+    if (event.generation != _generation || !_provider || !gpsReduceReceiverAttempt(_attempt, event)) {
+        return;
+    }
+    if (const auto* detail = std::get_if<GPSReceiverErrorDetail>(&event.value)) {
+        emit connectionErrorDetail(detail->error, detail->detail);
+    } else {
+        const auto snapshot = _attempt;
+        emit attemptChanged(snapshot);
+    }
+}
+
 bool GPSReceiverSession::_transition(GPSReceiverAttempt::Phase phase)
 {
-    if (_attempt.terminal() || _attempt.phase == phase ||
-        (phase == GPSReceiverAttempt::Phase::Configuring && _attempt.phase != GPSReceiverAttempt::Phase::Connecting)) {
-        return false;
-    }
     const QPointer<GPSReceiverSession> guard(this);
     const quint64 generation = _attempt.generation;
-    _attempt.phase = phase;
-    if (phase == GPSReceiverAttempt::Phase::Ready) {
-        _attempt.error = GPSConnectionError::None;
-        _attempt.errorDetail.clear();
+    if (!gpsReduceReceiverAttempt(_attempt, {generation, phase})) {
+        return false;
     }
     const auto snapshot = _attempt;
     emit attemptChanged(snapshot);
@@ -273,9 +257,15 @@ void GPSReceiverSession::_finishAttempt(GPSConnectionError error)
     }
     const QPointer<GPSReceiverSession> guard(this);
     const quint64 generation = _attempt.generation;
-    _attempt.error = error;
-    _attempt.phase =
-        error == GPSConnectionError::None ? GPSReceiverAttempt::Phase::Cancelled : GPSReceiverAttempt::Phase::Failed;
+    const GPSReceiverEvent event =
+        error == GPSConnectionError::None
+            ? GPSReceiverEvent{generation, GPSReceiverAttempt::Phase::Cancelled}
+            : GPSReceiverEvent{generation,
+                               GPSReceiverFailure::from(generation, error, _attempt.errorDetail, _attempt.transportOpen,
+                                                        _attempt.configurationResult, _attempt.transportRead)};
+    if (!gpsReduceReceiverAttempt(_attempt, event)) {
+        return;
+    }
     _invalidateConfigurationReport();
     if (!guard || _attempt.generation != generation) {
         return;
@@ -289,7 +279,7 @@ void GPSReceiverSession::_finishAttempt(GPSConnectionError error)
     if (!guard || _attempt.generation != generation) {
         return;
     }
-    if (error != GPSConnectionError::None) {
+    if (_attempt.phase == GPSReceiverAttempt::Phase::Failed) {
         emit connectionError(error);
     }
     if (guard && _attempt.generation == generation) {
@@ -352,7 +342,7 @@ GPSCorrectionSubmitResult GPSReceiverSession::submitCorrections(const GPSCorrect
     if (!readyForCorrections()) {
         return {false, GPSCorrectionOutcome::NotReady};
     }
-    return _provider->mailbox()->submitCorrection(frame, sessionId, GPSObservation::monotonicNowUs() / 1000);
+    return _provider->mailbox()->submitCorrection(frame, sessionId, _clock.nowUs() / 1000);
 }
 
 void GPSReceiverSession::clearPendingCorrections()
@@ -397,7 +387,7 @@ void GPSReceiverSession::_drain(const std::shared_ptr<GPSReceiverMailbox>& mailb
     if (!current()) {
         return;
     }
-    auto batch = mailbox->take(GPSObservation::monotonicNowUs() / 1000);
+    auto batch = mailbox->take(_clock.nowUs() / 1000);
     batch.deliveries.removeIf(
         [generation](const GPSCorrectionDelivery& delivery) { return delivery.destinationSession != generation; });
     if (!batch.deliveries.empty()) {
@@ -409,6 +399,13 @@ void GPSReceiverSession::_drain(const std::shared_ptr<GPSReceiverMailbox>& mailb
     if (batch.position) {
         batch.position->sessionId = generation;
         emit positionReceived(*batch.position);
+    }
+    if (!current()) {
+        return;
+    }
+    if (batch.integrity) {
+        batch.integrity->sessionId = generation;
+        emit integrityReceived(*batch.integrity);
     }
     if (!current()) {
         return;

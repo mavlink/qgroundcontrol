@@ -1,4 +1,6 @@
-add_subdirectory(../Driver/Protocols/Contracts "${CMAKE_CURRENT_BINARY_DIR}/NativeContracts")
+if(NOT TARGET QGCGPSNativeContracts)
+    add_subdirectory(../Driver/Protocols/Contracts "${CMAKE_CURRENT_BINARY_DIR}/NativeContracts")
+endif()
 add_library(
     QGCGPSContracts STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/GPSType.h

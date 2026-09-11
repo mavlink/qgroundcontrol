@@ -22,6 +22,9 @@ class GPSCorrectionRouterTest : public QObject
     Q_OBJECT
 
 private slots:
+    void fanoutRetirementSettlesPendingChildren();
+    void synchronousCompletion_data();
+    void synchronousCompletion();
     void atomicConfigurationAndReplacement();
     void scopedSourceIdentity();
     void fanoutAdmissionAccounting();
@@ -47,6 +50,67 @@ private slots:
     void eventHistoryUsesIncrementalRows();
     void eventHistoryAllowsReentrantUpdates();
 };
+
+void GPSCorrectionRouterTest::fanoutRetirementSettlesPendingChildren()
+{
+    const qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [now] { return now; });
+    auto source = router.registerSource(GPSCorrectionSource::Ntrip);
+    router.setOutput(QStringLiteral("receivers"),
+                     {{}, GPSCorrectionRouter::Completion::Reported, [](const GPSCorrectionFrame& frame) {
+                          const quint64 bytes = frame.data.size();
+                          return QList<GPSCorrectionRouter::Admission>{
+                              {QStringLiteral("receiver/1"), {bytes, 7, GPSCorrectionReason::None}, true},
+                              {QStringLiteral("receiver/2"), {bytes, 8, GPSCorrectionReason::None}, true}};
+                      }});
+    const auto bytes = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    QVERIFY(router.acceptIngress(source.token().event(bytes, now, 1005, true)));
+    router.removeSink(QStringLiteral("receivers"));
+    for (const auto& destination : router.destinations()) {
+        QCOMPARE(destination.pendingFrames, 0ULL);
+        if (destination.id != QStringLiteral("receivers"))
+            QCOMPARE(destination.unconfirmedBytes, quint64(bytes.size()));
+    }
+    QCOMPARE(router.statistics()[2].unconfirmedBytes, quint64(bytes.size() * 2));
+}
+
+void GPSCorrectionRouterTest::synchronousCompletion_data()
+{
+    QTest::addColumn<bool>("changeRouting");
+    QTest::newRow("ordinary") << false;
+    QTest::newRow("routing-replaced-during-admission") << true;
+}
+
+void GPSCorrectionRouterTest::synchronousCompletion()
+{
+    QFETCH(bool, changeRouting);
+    const qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [now] { return now; });
+    auto source = router.registerSource(GPSCorrectionSource::Ntrip);
+    bool completionQueued = false;
+    router.setOutput(QStringLiteral("receiver"),
+                     {{}, GPSCorrectionRouter::Completion::Reported, [&](const GPSCorrectionFrame& frame) {
+                          const quint64 bytes = frame.data.size();
+                          completionQueued =
+                              router.recordDelivery({frame.deliveryId, frame.source, frame.sourceInstance,
+                                                     frame.session, QStringLiteral("receiver"), 7, bytes, bytes - 3,
+                                                     GPSCorrectionOutcome::WriteFailed, bytes, 3});
+                          if (changeRouting)
+                              router.setPolicy(GPSCorrectionRouter::Policy::All);
+                          return QList<GPSCorrectionRouter::Admission>{
+                              {QStringLiteral("receiver"), {bytes, 7, GPSCorrectionReason::None}, true}};
+                      }});
+    const auto bytes = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    QVERIFY(router.acceptIngress(source.token().event(bytes, now, 1005, true)));
+    QVERIFY(completionQueued);
+    const auto destination = router.destinations().first();
+    QCOMPARE(destination.pendingBytes, 0ULL);
+    QCOMPARE(destination.writtenBytes, quint64(bytes.size() - 3));
+    QCOMPARE(destination.unconfirmedBytes, 3ULL);
+    QCOMPARE(destination.droppedBytes, 0ULL);
+    QCOMPARE(router.statistics()[2].writtenBytes, destination.writtenBytes);
+    QCOMPARE(router.statistics()[2].unconfirmedBytes, destination.unconfirmedBytes);
+}
 
 void GPSCorrectionRouterTest::destinationHistoryDoesNotLimitOutputs()
 {

@@ -22,27 +22,30 @@ target_link_libraries(
     PRIVATE QGCLoggingCategory
 )
 
-add_library(
-    QGCGPSNTRIPNetwork STATIC
-    NTRIPGgaProvider.cc
-    NTRIPGgaProvider.h
-    NTRIPTlsPolicy.h
-    NTRIPConnectionStats.cc
-    NTRIPConnectionStats.h
-    NTRIPHttpResponse.cc
-    NTRIPHttpResponse.h
-    NTRIPHttpTransport.cc
-    NTRIPHttpTransport.h
-    NTRIPSourceTableController.cc
-    NTRIPSourceTableController.h
-    NTRIPSourceTable.cc
-    NTRIPSourceTable.h
-)
-add_library(QGC::GPSNTRIPNetwork ALIAS QGCGPSNTRIPNetwork)
-set_target_properties(QGCGPSNTRIPNetwork PROPERTIES AUTOMOC ON)
-target_include_directories(QGCGPSNTRIPNetwork PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(
-    QGCGPSNTRIPNetwork
-    PUBLIC QGCGPSNMEA QGCGPSNTRIPSession QGCGPSCorrections QGCIO Qt6::QmlIntegration
-    PRIVATE QGCLoggingCategory
-)
+if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "NTRIPNetwork" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    add_library(
+        QGCGPSNTRIPNetwork STATIC
+        NTRIPGgaProvider.cc
+        NTRIPGgaProvider.h
+        NTRIPTlsPolicy.h
+        NTRIPConnectionStats.cc
+        NTRIPConnectionStats.h
+        NTRIPHttpResponse.cc
+        NTRIPHttpResponse.h
+        NTRIPHttpTransport.cc
+        NTRIPHttpTransport.h
+        NTRIPSourceTableController.cc
+        NTRIPSourceTableController.h
+        NTRIPSourceTable.cc
+        NTRIPSourceTable.h
+    )
+    add_library(QGC::GPSNTRIPNetwork ALIAS QGCGPSNTRIPNetwork)
+    set_target_properties(QGCGPSNTRIPNetwork PROPERTIES AUTOMOC ON)
+    target_include_directories(QGCGPSNTRIPNetwork PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(
+        QGCGPSNTRIPNetwork
+        PUBLIC QGCGPSNMEA QGCGPSNTRIPSession QGCGPSCorrections QGCIO Qt6::QmlIntegration
+        PRIVATE QGCLoggingCategory
+    )
+
+endif()

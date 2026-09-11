@@ -280,6 +280,41 @@ GPSProtocolIO GPSDriver::_protocolIO()
                 break;
         }
     };
+    io.commandFinished = [this](const GPSCommandResult& command) {
+        if (_configurationResult.status != ConfigurationStatus::NotConfigured)
+            return;
+        _configurationReport.commands.append(command);
+        for (auto& setting : _configurationReport.settings) {
+            if (!command.affectedSettings.contains(setting.id))
+                continue;
+            switch (command.outcome) {
+                case GPSCommandOutcome::Pending:
+                    setting.requestState = GPSSettingReport::RequestState::Requested;
+                    break;
+                case GPSCommandOutcome::Acknowledged:
+                    setting.requestState = GPSSettingReport::RequestState::Acknowledged;
+                    setting.detail = QCoreApplication::translate(
+                        "GPSDriver", "Configuration acknowledged; receiver readback is unavailable");
+                    break;
+                case GPSCommandOutcome::Rejected:
+                    setting.requestState = GPSSettingReport::RequestState::Rejected;
+                    setting.detail =
+                        QCoreApplication::translate("GPSDriver", "Receiver rejected this configuration step");
+                    break;
+                case GPSCommandOutcome::TimedOut:
+                    setting.requestState = GPSSettingReport::RequestState::TimedOut;
+                    setting.detail =
+                        QCoreApplication::translate("GPSDriver", "Receiver configuration acknowledgement timed out");
+                    break;
+                case GPSCommandOutcome::Cancelled:
+                    setting.requestState = GPSSettingReport::RequestState::Cancelled;
+                    break;
+                case GPSCommandOutcome::TransportError:
+                    setting.requestState = GPSSettingReport::RequestState::TransportError;
+                    break;
+            }
+        }
+    };
     io.nowUs = _clock.nowUs;
     io.wait = [this](std::chrono::microseconds duration) {
         while (duration.count() > 0 && !(_transport.isCancelled() || _clock.cancelled())) {
@@ -348,6 +383,9 @@ GPSProtocolIO GPSDriver::_protocolIO()
                         _private->positionUpdated = true;
                         if (_sinks.onPosition)
                             _sinks.onPosition(GPSDriverData::position(report, _clock));
+                    } else if constexpr (std::is_same_v<Report, GPSIntegrityReport>) {
+                        if (_sinks.onIntegrity)
+                            _sinks.onIntegrity(GPSDriverData::integrity(report, _clock));
                     } else if constexpr (std::is_same_v<Report, GPSSatelliteReport> ||
                                          std::is_same_v<Report, GPSSatelliteUsageReport>) {
                         _private->satellitesUpdated = true;

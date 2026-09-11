@@ -14,6 +14,7 @@
 #include "GPSPositionReport.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
+#include "GPSReceiverState.h"
 #include "GPSReceiverTestProfile.h"
 #include "GPSSatelliteReport.h"
 #include "GPSTransport.h"
@@ -80,7 +81,8 @@ UT_REGISTER_TEST(GPSReceiverTest, TestLabel::Unit)
 void GPSReceiverTest::_testCoreAvailableWithoutReceiver()
 {
     GPSReceiverSession session;
-    GPSReceiver receiver(session);
+    GPSReceiverState receiverState(session);
+    GPSReceiver receiver(receiverState);
     QVERIFY(!receiver.connected());
     auto* facts = receiver.facts();
     QVERIFY(facts);
@@ -120,7 +122,8 @@ void GPSReceiverTest::_failedOpenNeverConnects()
     auto* manufacturer = SettingsManager::instance()->rtkSettings()->baseReceiverManufacturers();
     saved.setFactValue(manufacturer, manufacturer->rawValue());
     GPSReceiverSession session;
-    GPSReceiver receiver(session);
+    GPSReceiverState receiverState(session);
+    GPSReceiver receiver(receiverState);
     const auto cleanup = qScopeGuard([&]() { session.shutdown(); });
     auto* facts = receiver.facts();
     QSignalSpy connected(facts->connected(), &Fact::rawValueChanged);
@@ -143,8 +146,9 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     auto firstGate = std::make_shared<BlockedOpen>();
     auto secondGate = std::make_shared<BlockedOpen>();
     GPSReceiverSession session;
-    GPSReceiver receiver(session);
-    GPSBaseStationState baseStationState(session, *receiver.facts()->rtk());
+    GPSReceiverState receiverState(session);
+    GPSReceiver receiver(receiverState);
+    GPSBaseStationState baseStationState(receiverState, *receiver.facts()->rtk());
     auto* surveyFacts = receiver.facts()->rtk();
     const auto releaseWorkers = qScopeGuard([&]() {
         session.stop();
@@ -237,7 +241,8 @@ void GPSReceiverTest::_facadeDestructionDoesNotStopSession()
     saved.setFactValue(manufacturer, manufacturer->rawValue());
     auto gate = std::make_shared<BlockedOpen>();
     GPSReceiverSession session;
-    auto receiver = std::make_unique<GPSReceiver>(session);
+    GPSReceiverState receiverState(session);
+    auto receiver = std::make_unique<GPSReceiver>(receiverState);
     const auto releaseWorker = qScopeGuard([&]() {
         session.stop();
         gate->release.release();
@@ -249,14 +254,29 @@ void GPSReceiverTest::_facadeDestructionDoesNotStopSession()
     emit provider->receiverReady();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver->connected());
+    GPSObservation observation;
+    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());
+    observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.sessionId = session.sessionId();
+    observation.fixQuality = GPSObservation::FixQuality::Fix3D;
+    emit session.positionReceived(observation);
+    GPSIntegrityObservation integrity;
+    integrity.monotonicTimestampUs = observation.monotonicTimestampUs;
+    integrity.sessionId = session.sessionId();
+    integrity.jammingState = 1;
+    emit session.integrityReceived(integrity);
     receiver.reset();
     QVERIFY(provider);
     QVERIFY(session.hasReceiver());
     QCOMPARE(provider->parent(), &session);
     QVERIFY(!session.stopping());
     QVERIFY(!gate->sawCancellation);
-    GPSReceiver replacement(session);
+    GPSReceiver replacement(receiverState);
     QVERIFY(replacement.connected());
+    QCOMPARE(replacement.facts()->lat()->rawValue().toDouble(), 47.0);
+    QCOMPARE(replacement.facts()->integrity()->jammingState()->rawValue().toInt(), 1);
+    QCOMPARE(replacement.health()->observation().monotonicTimestampUs, observation.monotonicTimestampUs);
     session.stop();
     QVERIFY(!replacement.connected());
     gate->release.release();
@@ -277,7 +297,8 @@ void GPSReceiverTest::_shutdownWithoutEventLoop()
     QFETCH(QString, phase);
     auto gate = std::make_shared<BlockedOpen>();
     GPSReceiverSession session;
-    GPSReceiver receiver(session);
+    GPSReceiverState receiverState(session);
+    GPSReceiver receiver(receiverState);
     const auto releaseWorker = qScopeGuard([&]() {
         session.stop();
         gate->release.release();
@@ -358,7 +379,7 @@ void GPSReceiverTest::_positionSourceSelection()
     const auto publish = [&]() {
         auto observation = GPSDriverData::position(fix);
         observation.sessionId = session.sessionId();
-        receiver->_sensorGpsUpdate(observation);
+        emit session.positionReceived(observation);
     };
     publish();
     QVERIFY(!position->gcsPosition().isValid());
@@ -385,8 +406,9 @@ void GPSReceiverTest::_positionSourceSelection()
 void GPSReceiverTest::_sourceHealthIndependentOfSurvey()
 {
     GPSReceiverSession session;
-    GPSReceiver receiver(session);
-    GPSBaseStationState baseStationState(session, *receiver.facts()->rtk());
+    GPSReceiverState receiverState(session);
+    GPSReceiver receiver(receiverState);
+    GPSBaseStationState baseStationState(receiverState, *receiver.facts()->rtk());
     const auto profile = gpsReceiverTestProfile();
     session._attempt = {++session._generation,
                         std::make_shared<const GPSReceiverProfile>(profile),
@@ -394,7 +416,7 @@ void GPSReceiverTest::_sourceHealthIndependentOfSurvey()
                         GPSConnectionError::None,
                         {}};
     session._provider = new GPSProvider({}, GPSType::u_blox, profile.receiver, {}, &session);
-    receiver._satellites.beginSession(QStringLiteral("nativeReceiver"), session.sessionId());
+    receiverState.satellites()->beginSession(QStringLiteral("nativeReceiver"), session.sessionId());
     session._capabilities = GPSReceiverCapabilities::forType(GPSType::u_blox);
     auto* facts = receiver.facts();
     receiver._onGPSConnect();
@@ -410,10 +432,10 @@ void GPSReceiverTest::_sourceHealthIndependentOfSurvey()
     fix.latitude_deg = 47;
     fix.longitude_deg = 8;
     fix.eph = 1;
-    receiver._sensorGpsUpdate(GPSDriverData::position(fix));
+    emit session.positionReceived(GPSDriverData::position(fix));
     QVERIFY(receiver.health()->usable());
     fix.fix_type = GPSPositionReport::FIX_TYPE_NONE;
-    receiver._sensorGpsUpdate(GPSDriverData::position(fix));
+    emit session.positionReceived(GPSDriverData::position(fix));
     QCOMPARE(receiver.health()->state(), GPSSourceHealth::Invalid);
     QVERIFY(receiver.connected());
     QVERIFY(receiver.facts()->rtk()->valid()->rawValue().toBool());
@@ -425,15 +447,15 @@ void GPSReceiverTest::_sourceHealthIndependentOfSurvey()
     satellites.entries[1].used = false;
     auto satelliteObservation = GPSDriverData::satellites(satellites);
     satelliteObservation.sessionId = session.sessionId();
-    receiver._satelliteInfoUpdate(satelliteObservation);
+    emit session.satellitesReceived(satelliteObservation);
     QCOMPARE(receiver.health()->satellitesInViewCount(), 2);
     QCOMPARE(receiver.health()->satellitesInUseCount(), 1);
     satellites.timestamp = 1;
     satelliteObservation = GPSDriverData::satellites(satellites);
     satelliteObservation.sessionId = session.sessionId();
-    receiver._satelliteInfoUpdate(satelliteObservation);
+    emit session.satellitesReceived(satelliteObservation);
     QCOMPARE(receiver.health()->satellitesInViewCount(), 2);
-    receiver._satellites.setFreshnessTimeoutMs(1);
+    receiverState.satellites()->setFreshnessTimeoutMs(1);
     QTRY_COMPARE_WITH_TIMEOUT(receiver.health()->satellitesInViewCount(), -1, TestTimeout::shortMs());
     QCOMPARE(receiver.health()->satellitesInUseCount(), -1);
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
@@ -444,7 +466,8 @@ void GPSReceiverTest::_sourceHealthIndependentOfSurvey()
 void GPSReceiverTest::_liveFactsFollowHealth()
 {
     GPSReceiverSession session;
-    GPSReceiver receiver(session);
+    GPSReceiverState receiverState(session);
+    GPSReceiver receiver(receiverState);
     const auto gate = std::make_shared<BlockedOpen>();
     const auto cleanup = qScopeGuard([&]() {
         session.stop();
@@ -465,7 +488,7 @@ void GPSReceiverTest::_liveFactsFollowHealth()
     fix.trueHeadingDegrees = 180;
     fix.horizontalDop = 1.6;
     fix.fixQuality = GPSObservation::FixQuality::RTKFixed;
-    receiver._sensorGpsUpdate(fix);
+    emit session.positionReceived(fix);
     QCOMPARE(facts->lat()->rawValue().toDouble(), 47.3);
     QCOMPARE(facts->lock()->rawValue().toInt(), 6);
     QCOMPARE(facts->courseOverGround()->rawValue().toDouble(), 90.0);
@@ -482,11 +505,11 @@ void GPSReceiverTest::_liveFactsFollowHealth()
         satellite.used = i < 17;
         satelliteReport.satellites.append(satellite);
     }
-    receiver._satelliteInfoUpdate(satelliteReport);
+    emit session.satellitesReceived(satelliteReport);
     QCOMPARE(facts->count()->rawValue().toInt(), 20);
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 17);
     fix.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 6000000;
-    receiver._sensorGpsUpdate(fix);
+    emit session.positionReceived(fix);
     QCOMPARE(receiver.health()->state(), GPSSourceHealth::Stale);
     QVERIFY(qIsNaN(facts->lat()->rawValue().toDouble()));
     QCOMPARE(facts->lock()->rawValue().toInt(), 0);
@@ -494,7 +517,7 @@ void GPSReceiverTest::_liveFactsFollowHealth()
     QCOMPARE(facts->rtk()->currentLatitude()->rawValue().toDouble(), 48.0);
     QVERIFY(facts->rtk()->valid()->rawValue().toBool());
     fix.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    receiver._sensorGpsUpdate(fix);
+    emit session.positionReceived(fix);
     QVERIFY(facts->telemetryAvailable());
     session.stop();
     QVERIFY(qIsNaN(facts->lat()->rawValue().toDouble()));
@@ -514,14 +537,18 @@ void GPSReceiverTest::_projectionHandlesReentrantIntegrity()
 {
     QFETCH(QString, action);
     GPSReceiverSession session;
-    auto receiver = std::make_unique<GPSReceiver>(session);
+    GPSReceiverState receiverState(session);
+    auto receiver = std::make_unique<GPSReceiver>(receiverState);
     GPSObservation observation;
     observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
-    observation.integrity.jammingState = 1;
+    receiver->health()->updateObservation(observation);
+    GPSIntegrityObservation integrity;
+    integrity.monotonicTimestampUs = observation.monotonicTimestampUs;
+    integrity.jammingState = 1;
     if (action == QStringLiteral("replace-during-reset")) {
-        receiver->health()->updateObservation(observation);
+        receiverState.integrity()->updateObservation(integrity);
     }
     bool applied = false;
     connect(receiver->facts()->integrity()->jammingState(), &Fact::rawValueChanged, &session, [&]() {
@@ -532,20 +559,22 @@ void GPSReceiverTest::_projectionHandlesReentrantIntegrity()
         if (action == QStringLiteral("destroy")) {
             receiver.reset();
         } else if (action == QStringLiteral("disconnect")) {
-            receiver->_onGPSDisconnect();
+            receiverState.reset();
         } else if (action.startsWith(QStringLiteral("replace"))) {
             auto replacement = observation;
             replacement.position.setCoordinate(QGeoCoordinate(48, 9));
-            replacement.integrity.jammingState = 2;
             receiver->health()->updateObservation(replacement);
+            auto newIntegrity = integrity;
+            newIntegrity.jammingState = 2;
+            receiverState.integrity()->updateObservation(newIntegrity);
         } else {
             receiver->health()->reset();
         }
     });
     if (action == QStringLiteral("replace-during-reset")) {
-        receiver->health()->reset();
+        receiverState.integrity()->reset();
     } else {
-        receiver->health()->updateObservation(observation);
+        receiverState.integrity()->updateObservation(integrity);
     }
     QVERIFY(applied);
     if (action == QStringLiteral("destroy")) {
@@ -564,7 +593,8 @@ void GPSReceiverTest::_retainedPositionFactsExpire()
 {
     ManualScheduler scheduler;
     GPSReceiverSession session;
-    GPSReceiver receiver(session, nullptr, &scheduler);
+    GPSReceiverState receiverState(session, nullptr, &scheduler);
+    GPSReceiver receiver(receiverState, nullptr, &scheduler);
     receiver.health()->setFreshnessTimeoutMs(100);
     GPSObservation observation;
     observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());

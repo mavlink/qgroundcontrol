@@ -3,12 +3,14 @@
 #include <utility>
 
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSPositionSourceAdapterLog, "GPS.PositionManager.GPSPositionSourceAdapter")
 
-GPSPositionSourceAdapter::GPSPositionSourceAdapter(QObject* parent)
+GPSPositionSourceAdapter::GPSPositionSourceAdapter(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _fallbackHealth(this)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _fallbackHealth(this, _scheduler)
 {
     qCDebug(GPSPositionSourceAdapterLog) << this;
     connect(&_fallbackHealth, &GPSSourceHealth::positionChanged, this, &GPSPositionSourceAdapter::observationChanged);
@@ -134,7 +136,7 @@ void GPSPositionSourceAdapter::updatePosition(const QGeoPositionInfo& position)
     GPSObservation observation;
     observation.position = position;
     observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.monotonicTimestampUs = _scheduler ? _scheduler->nowUs() : 0;
     observation.sourceId = _identity;
     _fallbackHealth.updateObservation(observation);
 }

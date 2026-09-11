@@ -50,8 +50,10 @@
 #pragma once
 
 #include "GPSBaseProtocol.h"
+#include "UBXFrameDecoder.h"
 #include "UBXMessages.h"
 #include "UBXNavigationEpoch.h"
+#include "UBXReceiverController.h"
 #include "UBXReceiverProfile.h"
 
 class GPSDriverUBX : public GPSBaseProtocol
@@ -122,8 +124,6 @@ public:
 
     bool readConfiguration(ConfigurationReadback& report, unsigned timeout_ms);
 
-    GPSCommandOutcome settingOutcome(unsigned index) const { return _settingOutcomes.at(index); }
-
     /**
      * What UART1 carries in a given mode, for status output
      */
@@ -133,15 +133,9 @@ private:
     bool _rtcmActivationPending = false;
     bool _comms_request_pending = false;
     uint16_t _pendingDisableMessage = 0;
-    uint32_t _valsetSettings = 0;
-    uint32_t _pendingCommandSettings = 0;
-    std::array<GPSCommandOutcome, 3> _settingOutcomes{};
-    void handleConfigurationReadback();
-    bool _configuration_readback_pending = false;
-    bool _configuration_readback_ready = false;
-    uint8_t _configuration_readback_count = 0;
-    uint32_t _configuration_readback_keys[9]{};
-    uint32_t _configuration_readback_values[9]{};
+    GPSReceiverSettingSet _valsetSettings;
+    GPSReceiverSettingSet _pendingCommandSettings;
+    UBX::ReceiverController _controller;
     int enableNmeaOutput(unsigned baudrate);
 
     /** Like receive(), but reports a negative device read separately from a timeout. */
@@ -162,7 +156,6 @@ private:
     /**
      * While parsing add every byte (except the sync bytes) to the checksum
      */
-    void addByteToChecksum(const uint8_t);
 
     /**
      * Calculate & add checksum for given buffer
@@ -326,7 +319,7 @@ private:
     /**
      * Finish payload rx
      */
-    int payloadRxDone(void);
+    int payloadRxDone(GPSPositionReport& position);
 
     /**
      * Send a message
@@ -354,9 +347,8 @@ private:
     uint64_t _comms_poll_deadline{0};
     GPSPositionReport* _gps_position{nullptr};
     GPSSatelliteReport* _satellite_info{nullptr};
-    ubx_ack_state_t _ack_state{UBX_ACK_IDLE};
     std::array<uint8_t, 4096> _framePayload{};
-    uint16_t _framePayloadIndex = 0;
+    UBX::FrameDecoder _frameDecoder;
     int decodeValidatedPayload();
     void flushDecoded() override;
     void publishEpoch(const GPSPositionReport& report);
@@ -365,7 +357,6 @@ private:
     bool _epochHasHighPrecision = false;
     uint8_t _tx_cfg_valset_buf[UBX_CFG_VALSET_BUF_SIZE]{};
     int _tx_cfg_valset_size{0};
-    ubx_decode_state_t _decode_state{};
     ubx_rxmsg_state_t _rx_state{UBX_RXMSG_IGNORE};
 
     bool _configured{false};
@@ -380,8 +371,6 @@ private:
     bool _proto_ver_27_or_higher{false};  ///< true if protocol version 27 or higher detected
     bool _use_nav_pvt{false};
 
-    uint8_t _rx_ck_a{0};
-    uint8_t _rx_ck_b{0};
     uint8_t _dyn_model{7};    ///< ublox Dynamic platform model default 7: airborne with <2g acceleration
 
     uint8_t _output_rate{0};  ///< ublox output rate in Hz, 0 = auto-select based on module
@@ -389,7 +378,6 @@ private:
     bool _constellation_request_rejected{false};
     bool _last_ack_rejected{false};
 
-    uint16_t _ack_waiting_msg{0};
     uint16_t _rx_msg{};
     uint16_t _rx_payload_length{0};
 

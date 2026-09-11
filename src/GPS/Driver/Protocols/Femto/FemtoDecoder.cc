@@ -95,9 +95,11 @@ int GPSDriverFemto::handleMessage(int len)
         _gps_position->hdop = position.hdop;
         _gps_position->dop_timestamp = nowUs();
         _gps_position->vdop = position.vdop;
-        _gps_position->noise_per_ms = position.noise_per_ms;
-        _gps_position->jamming_indicator = position.jamming_indicator;
-        _gps_position->rf_timestamp = nowUs();
+        _integrity.noise_per_ms = position.noise_per_ms;
+        _integrity.rf_timestamp = nowUs();
+        _integrity.jamming_indicator = position.jamming_indicator;
+        _integrity.rf_timestamp = nowUs();
+        publishIntegrity();
         _gps_position->vel_m_s = position.vel_m_s;
         _gps_position->vel_n_m_s = position.vel_n_m_s;
         _gps_position->vel_e_m_s = position.vel_e_m_s;

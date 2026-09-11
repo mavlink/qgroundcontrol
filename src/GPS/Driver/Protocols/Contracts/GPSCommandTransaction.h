@@ -1,9 +1,11 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <string>
 
 #include "GPSIOStatus.h"
+#include "GPSReceiverSettingId.h"
 
 enum class GPSCommandOutcome
 {
@@ -15,13 +17,21 @@ enum class GPSCommandOutcome
     TransportError,
 };
 
+struct GPSConfigurationStep
+{
+    std::string command;
+    std::chrono::milliseconds timeout;
+    GPSReceiverSettingSet affectedSettings = {};
+    bool required = true;
+};
+
 struct GPSCommandResult
 {
     std::string command;
     GPSCommandOutcome outcome = GPSCommandOutcome::Pending;
     uint64_t startedAtUs = 0;
     uint64_t finishedAtUs = 0;
-    uint32_t affectedSettings = 0;
+    GPSReceiverSettingSet affectedSettings = {};
     int acceptedBytes = 0;
     int writtenBytes = 0;
     int uncertainBytes = 0;

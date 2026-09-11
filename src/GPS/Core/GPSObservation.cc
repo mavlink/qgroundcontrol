@@ -144,11 +144,3 @@ int GPSSatelliteObservation::satellitesInUseCount() const
     }
     return count;
 }
-
-GPSIntegrityObservation GPSIntegrityObservation::fromPosition(const GPSObservation& observation)
-{
-    auto result = observation.integrity;
-    result.monotonicTimestampUs = observation.monotonicTimestampUs;
-    result.sessionId = observation.sessionId;
-    return result;
-}

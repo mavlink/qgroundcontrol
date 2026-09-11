@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GPSPositionFactGroup.h"
+#include "VehicleGPSObservationStream.h"
 
 class VehicleGPSFactGroup : public GPSPositionFactGroup
 {
@@ -15,7 +16,8 @@ class VehicleGPSFactGroup : public GPSPositionFactGroup
     Q_PROPERTY(Fact* postProcessingQuality  READ postProcessingQuality  CONSTANT)
 
 public:
-    explicit VehicleGPSFactGroup(QObject *parent = nullptr);
+    explicit VehicleGPSFactGroup(QObject* parent = nullptr, VehicleGPSObservationStream* stream = nullptr,
+                                 int receiverIndex = 0);
 
     Fact* systemErrors() { return integrity()->systemErrors(); }
 
@@ -39,12 +41,8 @@ public:
 signals:
     void gnssIntegrityReceived();
 
-protected:
-    void _handleGpsRawInt(const mavlink_message_t &message);
-    void _handleHighLatency(const mavlink_message_t &message);
-    void _handleHighLatency2(const mavlink_message_t &message);
-    void _handleGnssIntegrity(const mavlink_message_t& message);
-
-
-    uint8_t _gnssIntegrityId {};
+private:
+    QPointer<VehicleGPSObservationStream> _stream;
+    bool _ownsStream = false;
+    int _receiverIndex = 0;
 };

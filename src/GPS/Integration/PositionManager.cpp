@@ -10,8 +10,8 @@
 QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "GPS.Integration.QGCPositionManager")
 Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 
-QGCPositionManager::QGCPositionManager(QObject* parent)
-    : GPSPositionService(parent)
+QGCPositionManager::QGCPositionManager(QObject* parent, RuntimeScheduler* scheduler)
+    : GPSPositionService(parent, scheduler)
 {
     qCDebug(QGCPositionManagerLog) << this;
 }
@@ -29,8 +29,7 @@ QGCPositionManager* QGCPositionManager::instance()
 void QGCPositionManager::init()
 {
     if (QGC::runningUnitTests()) {
-        _simulatedSource = new SimulatedPosition(this);
-        _selectPositionSource();
+        setSimulatedPositionSource(new SimulatedPosition(this));
     } else {
         _checkPermission();
     }
@@ -38,7 +37,7 @@ void QGCPositionManager::init()
 
 void QGCPositionManager::_setupPositionSources()
 {
-    _setupPositionSources(
+    configurePositionSources(
         QGCCorePlugin::instance()->createPositionSource(this),
         [](const QString& name, QObject* parent) { return QGeoPositionInfoSource::createSource(name, parent); });
 }
@@ -50,9 +49,8 @@ void QGCPositionManager::_checkPermission()
 
     const Qt::PermissionStatus permissionStatus = QCoreApplication::instance()->checkPermission(locationPermission);
     if (permissionStatus == Qt::PermissionStatus::Undetermined) {
-        _platformStatus = SourceStatus::PermissionRequired;
         const QPointer<QGCPositionManager> guard(this);
-        _selectPositionSource();
+        setInternalPositionStatus(SourceStatus::PermissionRequired);
         if (!guard) {
             return;
         }
@@ -82,35 +80,36 @@ QString QGCPositionManager::_platformSourceName()
 #endif
 }
 
-void QGCPositionManager::_setupPositionSources(
+void QGCPositionManager::configurePositionSources(
     QGeoPositionInfoSource* customSource,
     const std::function<QGeoPositionInfoSource*(const QString&, QObject*)>& createPlatformSource)
 {
-    _defaultSource = customSource;
-    _usingPluginSource = customSource != nullptr;
-    if (!_defaultSource) {
+    const QPointer<QGCPositionManager> guard(this);
+    QGeoPositionInfoSource* source = customSource;
+    if (!source) {
         const QString name = _platformSourceName();
         qCDebug(QGCPositionManagerLog) << "Platform positioning provider:" << name;
         // Qt's default-source fallback can open a serial NMEA device outside QGC's reservations.
-        if (!name.isEmpty()) {
-            _defaultSource = createPlatformSource(name, this);
+        if (!name.isEmpty() && createPlatformSource) {
+            source = createPlatformSource(name, this);
+            if (!guard) {
+                return;
+            }
         }
     }
-    const auto status = _defaultSource ? SourceStatus::WaitingForFix : SourceStatus::BackendUnavailable;
-    if (!_defaultSource) {
+    const auto status = source ? SourceStatus::WaitingForFix : SourceStatus::BackendUnavailable;
+    if (!source) {
         qCWarning(QGCPositionManagerLog) << "Platform positioning backend unavailable";
     }
-    setInternalPositionSource(_defaultSource, status, _usingPluginSource);
+    setInternalPositionSource(source, status, customSource != nullptr);
 }
 
 void QGCPositionManager::_handlePermissionStatus(Qt::PermissionStatus permissionStatus)
 {
     if (permissionStatus == Qt::PermissionStatus::Granted) {
-        _platformStatus = SourceStatus::WaitingForFix;
         _setupPositionSources();
     } else {
-        _platformStatus = SourceStatus::PermissionDenied;
         qCWarning(QGCPositionManagerLog) << Q_FUNC_INFO << "Location Permission Denied";
-        _selectPositionSource();
+        setInternalPositionStatus(SourceStatus::PermissionDenied);
     }
 }

@@ -3,16 +3,7 @@
 #include <QtCore/QString>
 
 #include "GPSReceiverConfig.h"
-
-/// Stable identities shared by validation, command reporting, and presentation.
-enum class GPSReceiverSetting
-{
-    Unknown,
-    ConstellationMask,
-    DynamicModel,
-    OutputRateHz,
-    HeadingOffsetDeg,
-};
+#include "GPSReceiverSettingId.h"
 
 namespace GPSReceiverSettings {
 inline QString key(GPSReceiverSetting setting)

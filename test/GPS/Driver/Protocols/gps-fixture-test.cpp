@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "LittleEndian.h"
 #include "NMEASentence.h"
@@ -64,6 +65,7 @@ std::vector<uint8_t> endEpoch(uint32_t tow)
     return timed({0xb5, 0x62, 1, 0x61, 4, 0, 0, 0, 0, 0, 0, 0}, tow);
 }
 
+#if QGC_GPS_ENABLE_UBX
 void navigationEpochs()
 {
     for (bool before : {false, true}) {
@@ -127,11 +129,14 @@ void navigationEpochs()
         CHECK(std::abs(observations.back().latitude_deg - 53.4507228) < 1e-8);
     }
 }
+#endif
 
+#if QGC_GPS_ENABLE_UBX || QGC_GPS_ENABLE_SBF
 void independentSequences()
 {
     GPSPositionReport position{};
     GPSSatelliteReport satellites{};
+#if QGC_GPS_ENABLE_UBX
     GPSDriverUBX ubx(noDevice(), &position, &satellites);
     ubx.setDecodeContext({.navigation = true});
     const auto navigation = fixture("navigation.ubx");
@@ -185,6 +190,8 @@ void independentSequences()
     CHECK(std::abs(gga->altitude - GPSFixture::ggaAltitude) < 1e-6);
     CHECK(gga->satellitesUsed == GPSFixture::ggaSatellites);
 
+#endif
+#if QGC_GPS_ENABLE_SBF
     GPSDriverSBF sbf(noDevice(), &position, &satellites);
     for (auto byte : fixture("geodetic.sbf"))
         sbf.consume({&byte, 1});
@@ -198,7 +205,9 @@ void independentSequences()
     sbf.consume({});
     CHECK(position.timestamp == previousTimestamp);
     CHECK(std::isnan(position.heading));
+#endif
 }
+#endif
 
 void scalarWireValues()
 {
@@ -223,7 +232,12 @@ int main()
 {
     try {
         scalarWireValues();
+#if QGC_GPS_ENABLE_UBX || QGC_GPS_ENABLE_SBF
         independentSequences();
+        GPSPositionReport position{};
+        GPSSatelliteReport satellites{};
+#endif
+#if QGC_GPS_ENABLE_UBX
         navigationEpochs();
         CHECK(!UBX::receiverProfile(UBX::Board::u_blox9).rtcmOutput);
         CHECK(UBX::receiverProfile(UBX::Board::u_blox9_F9P_L1L2).rtcmOutput);
@@ -236,8 +250,6 @@ int main()
             std::vector<uint8_t> longPayload(schema.maximum + 1);
             CHECK(!UBX::validPayload(schema.message, longPayload));
         }
-        GPSPositionReport position{};
-        GPSSatelliteReport satellites{};
         GPSDriverUBX ubx(noDevice(), &position, &satellites);
         ubx.setDecodeContext({.navigation = true});
         std::vector<uint8_t> relative(72);
@@ -275,6 +287,8 @@ int main()
         CHECK(std::abs(position.longitude_deg + 2.056673696) < 1e-9);
         CHECK(std::abs(position.altitude_msl_m - 233.5227) < 1e-6);
         CHECK(std::abs(position.eph - 0.335) < 1e-6);
+#endif
+#if QGC_GPS_ENABLE_SBF
         GPSDriverSBF sbf(noDevice(), &position, &satellites);
         const auto geodetic = fixture("pvt-geodetic.sbf");
         for (auto byte : geodetic)
@@ -286,6 +300,7 @@ int main()
         CHECK(std::abs(position.altitude_ellipsoid_m - 131.18596542546626) < 1e-5);
         CHECK(position.satellites_used == 36);
         CHECK(std::isnan(position.cog_rad));
+#endif
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';
         return 1;

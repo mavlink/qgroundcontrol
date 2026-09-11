@@ -194,8 +194,6 @@ struct JniMethodCache
     jmethodID close = nullptr;
     jmethodID isDeviceNameOpen = nullptr;
     jmethodID read = nullptr;
-    jmethodID write = nullptr;
-    jmethodID writeAsync = nullptr;
     jmethodID writeResult = nullptr;
     jmethodID setParameters = nullptr;
     jmethodID getCarrierDetect = nullptr;
@@ -238,8 +236,6 @@ static bool cacheMethodIds(JNIEnv* env, jclass javaClass)
         {&s_methods.close, "close", "(I)Z"},
         {&s_methods.isDeviceNameOpen, "isDeviceNameOpen", "(Ljava/lang/String;)Z"},
         {&s_methods.read, "read", "(III)[B"},
-        {&s_methods.write, "write", "(I[BII)I"},
-        {&s_methods.writeAsync, "writeAsync", "(I[BI)I"},
         {&s_methods.writeResult, "writeResult", "(I[BII)[I"},
         {&s_methods.setParameters, "setParameters", "(IIIII)Z"},
         {&s_methods.getCarrierDetect, "getCarrierDetect", "(I)Z"},
@@ -779,47 +775,6 @@ AndroidSerialWrite::Result writeResult(int deviceId, const char* data, int lengt
     // Java emits only success, timeout, or I/O failure; cancellation belongs to the native write loop.
     const Status status = values[0] == 0 ? Status::Completed : values[0] == 1 ? Status::TimedOut : Status::Error;
     return {status, values[1], values[2]};
-}
-
-int write(int deviceId, const char* data, int length, int timeout, bool async)
-{
-    if (!data || length <= 0) {
-        qCWarning(AndroidSerialLog) << "Invalid data or length in write";
-        return -1;
-    }
-
-    JniContext ctx;
-    if (!getContext(ctx, "write"))
-        return -1;
-
-    AndroidInterface::JniLocalRef<jbyteArray> jarray(ctx.env.jniEnv(),
-                                                     ctx.env->NewByteArray(static_cast<jsize>(length)));
-    if (!jarray.get()) {
-        qCWarning(AndroidSerialLog) << "Failed to create jbyteArray in write";
-        return -1;
-    }
-
-    ctx.env->SetByteArrayRegion(jarray.get(), 0, static_cast<jsize>(length), reinterpret_cast<const jbyte*>(data));
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while setting byte array region in write";
-        return -1;
-    }
-
-    jint result;
-    if (async) {
-        result = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.writeAsync, static_cast<jint>(deviceId), jarray.get(),
-                                              static_cast<jint>(timeout));
-    } else {
-        result = ctx.env->CallStaticIntMethod(ctx.cls, s_methods.write, static_cast<jint>(deviceId), jarray.get(),
-                                              static_cast<jint>(length), static_cast<jint>(timeout));
-    }
-
-    if (ctx.env.checkAndClearExceptions()) {
-        qCWarning(AndroidSerialLog) << "Exception occurred while calling write/writeAsync";
-        return -1;
-    }
-
-    return static_cast<int>(result);
 }
 
 // ----------------------------------------------------------------------------

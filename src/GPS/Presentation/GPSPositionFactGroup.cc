@@ -10,11 +10,12 @@
 
 QGC_LOGGING_CATEGORY(GPSPositionFactGroupLog, "GPS.Models.GPSPositionFactGroup")
 
-GPSPositionFactGroup::GPSPositionFactGroup(QObject* parent, RuntimeScheduler* scheduler)
+GPSPositionFactGroup::GPSPositionFactGroup(QObject* parent, RuntimeScheduler* scheduler,
+                                           GPSIntegrityStore* integrityStore)
     : FactGroup(1000, QStringLiteral(":/json/GPS/Position/GPSFact.json"), parent)
 {
     qCDebug(GPSPositionFactGroupLog) << this;
-    _integrity = new GPSIntegrityFactGroup(this, scheduler);
+    _integrity = new GPSIntegrityFactGroup(this, scheduler, integrityStore);
     _addFactGroup(_integrity, QStringLiteral("integrity"));
     for (Fact* fact : {&_latFact, &_lonFact, &_mgrsFact, &_hdopFact, &_vdopFact, &_courseOverGroundFact, &_yawFact,
                        &_countFact, &_lockFact}) {

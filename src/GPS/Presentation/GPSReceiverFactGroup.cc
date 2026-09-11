@@ -4,8 +4,9 @@
 
 QGC_LOGGING_CATEGORY(GPSReceiverFactGroupLog, "GPS.Receiver.GPSReceiverFactGroup")
 
-GPSReceiverFactGroup::GPSReceiverFactGroup(QObject* parent, RuntimeScheduler* scheduler)
-    : GPSPositionFactGroup(parent, scheduler)
+GPSReceiverFactGroup::GPSReceiverFactGroup(QObject* parent, RuntimeScheduler* scheduler,
+                                           GPSIntegrityStore* integrityStore)
+    : GPSPositionFactGroup(parent, scheduler, integrityStore)
     , _rtk(this)
 {
     qCDebug(GPSReceiverFactGroupLog) << this;

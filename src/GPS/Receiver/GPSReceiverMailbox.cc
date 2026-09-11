@@ -40,6 +40,17 @@ bool GPSReceiverMailbox::publish(const GPSObservation& observation)
     return _schedule();
 }
 
+bool GPSReceiverMailbox::publish(const GPSIntegrityObservation& observation)
+{
+    const QMutexLocker lock(&_mutex);
+    if (_closed) {
+        return false;
+    }
+    _stats.coalescedSnapshots += _pending.integrity.has_value();
+    _pending.integrity = observation;
+    return _schedule();
+}
+
 bool GPSReceiverMailbox::publish(const GPSSatelliteObservation& observation)
 {
     const QMutexLocker lock(&_mutex);
@@ -97,9 +108,13 @@ GPSReceiverMailbox::Batch GPSReceiverMailbox::take(qint64 nowMs)
     const QMutexLocker lock(&_mutex);
     Batch batch;
     batch.position = std::exchange(_pending.position, {});
+    batch.integrity = std::exchange(_pending.integrity, {});
     batch.satellites = std::exchange(_pending.satellites, {});
     batch.relativePosition = std::exchange(_pending.relativePosition, {});
     batch.survey = std::exchange(_pending.survey, {});
+    if (batch.integrity && !_fresh(batch.integrity->monotonicTimestampUs / 1000, nowMs)) {
+        batch.integrity.reset();
+    }
     if (batch.position && !_fresh(batch.position->monotonicTimestampUs / 1000, nowMs)) {
         batch.position.reset();
     }

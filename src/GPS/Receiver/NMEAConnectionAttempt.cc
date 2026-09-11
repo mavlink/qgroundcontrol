@@ -101,13 +101,19 @@ void NMEAConnectionAttempt::setRecordingBuffer(const std::shared_ptr<GPSRecordin
 bool NMEAConnectionAttempt::_transition(GPSReceiverAttempt::Phase phase, GPSConnectionError error,
                                         const QString& detail)
 {
-    if (_attempt.terminal() || _attempt.phase == phase) {
+    const QPointer<NMEAConnectionAttempt> guard(this);
+    GPSReceiverEvent event{_attempt.generation, phase};
+    if (phase == GPSReceiverAttempt::Phase::Failed) {
+        auto failure = _receiver.attempt().failure.value_or(
+            GPSReceiverFailure::from(_attempt.generation, error, detail, _attempt.transportOpen,
+                                     _attempt.configurationResult, _attempt.transportRead));
+        failure.generation = _attempt.generation;
+        failure.detail = detail;
+        event.value = std::move(failure);
+    }
+    if (!gpsReduceReceiverAttempt(_attempt, event)) {
         return false;
     }
-    const QPointer<NMEAConnectionAttempt> guard(this);
-    _attempt.phase = phase;
-    _attempt.error = error;
-    _attempt.errorDetail = detail;
     const auto snapshot = _attempt;
     emit attemptChanged(snapshot);
     return guard && _attempt.phase == phase;

@@ -81,21 +81,6 @@ public:
                     setting.requestState = GPSSettingReport::RequestState::Rejected;
                 }
                 setting.detail = configurationError();
-            } else {
-                const auto index = setting.id == GPSReceiverSetting::DynamicModel        ? 0
-                                   : setting.id == GPSReceiverSetting::OutputRateHz      ? 1
-                                   : setting.id == GPSReceiverSetting::ConstellationMask ? 2
-                                                                                         : -1;
-                if (index < 0)
-                    continue;
-                const auto outcome = receiver.settingOutcome(index);
-                if (outcome == GPSCommandOutcome::Acknowledged) {
-                    setting.requestState = GPSSettingReport::RequestState::Acknowledged;
-                    setting.detail = tr("Configuration acknowledged; receiver readback is unavailable");
-                } else if (outcome == GPSCommandOutcome::Rejected) {
-                    setting.requestState = GPSSettingReport::RequestState::Rejected;
-                    setting.detail = tr("Receiver rejected this configuration step");
-                }
             }
         }
         GPSDriverUBX::ConfigurationReadback values;
@@ -171,17 +156,6 @@ public:
     {
         setDriver(std::make_unique<GPSDriverSBF>(std::move(io), position, satellites,
                                                  config.headingOffsetDeg * std::numbers::pi_v<float> / 180.0f));
-    }
-
-    void completeConfigurationReport(const GPSReceiverConfig&, bool configured, GPSConfigurationReport& report) override
-    {
-        for (auto& setting : report.settings) {
-            if (configured && setting.id == GPSReceiverSetting::HeadingOffsetDeg) {
-                setting.requestState = GPSSettingReport::RequestState::Acknowledged;
-                setting.detail = QCoreApplication::translate(
-                    "GPSDriver", "Configuration acknowledged; receiver readback is unavailable");
-            }
-        }
     }
 };
 

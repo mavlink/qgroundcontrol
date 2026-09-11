@@ -5,6 +5,7 @@
 
 #include <functional>
 
+#include "GPSConnectionError.h"
 #include "RuntimeScheduler.h"
 
 /// Connection intent, lifecycle, and retry policy, mutated by one controller.
@@ -25,6 +26,7 @@ public:
         Ready,
         Retrying,
         Stopping,
+        AwaitingChange,
     };
     Q_ENUM(State)
 
@@ -51,7 +53,7 @@ public:
     bool startAttempt(const std::function<bool()>& start);
     void configuring();
     void ready();
-    void failed();
+    void failed(GPSRetryDisposition disposition = GPSRetryDisposition::Retry);
     void stopping();
     void stopped();
     void resetRetry();

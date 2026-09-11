@@ -12,6 +12,7 @@
 #include "GPSConfigurationReport.h"
 #include "GPSDeadline.h"
 #include "GPSExecutionContext.h"
+#include "GPSIntegrityObservation.h"
 #include "GPSObservation.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfig.h"
@@ -27,6 +28,7 @@ struct GPSProtocolIO;
 struct GPSDriverSinks
 {
     std::function<void(const GPSObservation&)> onPosition;
+    std::function<void(const GPSIntegrityObservation&)> onIntegrity;
     std::function<void(const GPSSatelliteObservation&)> onSatelliteInfo;
     std::function<void(const GPSRelativeObservation&)> onRelativePosition;
     std::function<void(const QByteArray&)> onRTCM;

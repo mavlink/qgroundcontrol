@@ -1,5 +1,6 @@
 #include <QtCore/QSet>
 
+#include <algorithm>
 #include <iterator>
 
 #include "GPSReceiverAutoConnect.h"
@@ -77,8 +78,14 @@ void GPSReceiverAutoConnect::_updateSerial()
     for (const auto& port : ports) {
         present.insert(port.systemLocation);
     }
+    const bool identityChanged =
+        _control.profile().endpoint.discoverSerialDevice &&
+        _receiver->profile().endpoint.device == _autoConnectedPort &&
+        std::any_of(ports.cbegin(), ports.cend(), [this](const auto& port) {
+            return port.systemLocation == _autoConnectedPort && port.boardName != _receiver->profile().receiverName;
+        });
     if (!_autoConnectedPort.isEmpty() &&
-        (!present.contains(_autoConnectedPort) ||
+        (identityChanged || !present.contains(_autoConnectedPort) ||
          (!_receiver->hasReceiver() && _serialPorts->isAutoConnectExcluded(_autoConnectedPort)))) {
         // Removal retires the attempt without creating a new manual connection request.
         const auto config = _sessionConfig;

@@ -12,7 +12,7 @@ class GPSPositionSourceAdapter : public QObject
     Q_OBJECT
 
 public:
-    explicit GPSPositionSourceAdapter(QObject* parent = nullptr);
+    explicit GPSPositionSourceAdapter(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSPositionSourceAdapter() override;
 
     void configure(QObject* producer, GPSSourceHealth* health, const QString& identity, bool platform);
@@ -40,6 +40,7 @@ private:
     QPointer<QObject> _producer;
     QPointer<QGeoPositionInfoSource> _source;
     QPointer<GPSSourceHealth> _providedHealth;
+    QPointer<RuntimeScheduler> _scheduler;
     GPSSourceHealth _fallbackHealth;
     QList<QMetaObject::Connection> _connections;
     QString _identity;

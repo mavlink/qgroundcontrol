@@ -2,6 +2,10 @@ target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE GPSManager.cc
             GPSManager.h
+            GPSSourceBindings.cc
+            GPSSourceBindings.h
+            GPSConnectionSettingsController.cc
+            GPSConnectionSettingsController.h
             GPSSettings.cc
             GPSSettings.h
             GPSMavlinkOutput.cc

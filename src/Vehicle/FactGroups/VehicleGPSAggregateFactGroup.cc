@@ -9,7 +9,10 @@
 
 #include "VehicleGPSAggregateFactGroup.h"
 
-#include <QtMath>
+#include <QtCore/QPointer>
+
+#include <algorithm>
+#include <array>
 
 #include "QGCLoggingCategory.h"
 #include "VehicleGPSFactGroup.h"
@@ -26,30 +29,18 @@ VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject* parent)
     _jammingStateFact.setRawValue(255);
     _authenticationStateFact.setRawValue(255);
     _isStaleFact.setRawValue(true);
-
-    _staleTimer.setSingleShot(true);
-    _staleTimer.setInterval(GNSS_INTEGRITY_STALE_TIMEOUT_MS);
-    connect(&_staleTimer, &QTimer::timeout, this, &VehicleGPSAggregateFactGroup::_onStaleTimeout);
 }
 
 void VehicleGPSAggregateFactGroup::bindToGps(VehicleGPSFactGroup* gps1, VehicleGPSFactGroup* gps2)
 {
     _clearConnections();
-    _gps1 = gps1;
-    _gps2 = gps2;
-
-    if (_gps1) {
-        _connections << connect(_gps1, &VehicleGPSFactGroup::gnssIntegrityReceived, this,
-                                &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
-    }
-    if (_gps2) {
-        _connections << connect(_gps2, &VehicleGPSFactGroup::gnssIntegrityReceived, this,
-                                &VehicleGPSAggregateFactGroup::_onIntegrityUpdated);
-    }
-    for (auto* gps : {gps1, gps2}) {
-        if (gps) {
-            _connections << connect(gps->integrity(), &GPSIntegrityFactGroup::availabilityChanged, this,
+    _gps1 = gps1 ? gps1->integrity()->store() : nullptr;
+    _gps2 = gps2 ? gps2->integrity()->store() : nullptr;
+    for (auto* store : {_gps1.data(), _gps2.data()}) {
+        if (store) {
+            _connections << connect(store, &GPSIntegrityStore::observationChanged, this,
                                     &VehicleGPSAggregateFactGroup::_updateAggregates);
+            _connections << connect(store, &QObject::destroyed, this, &VehicleGPSAggregateFactGroup::_updateAggregates);
         }
     }
     _updateAggregates();
@@ -57,22 +48,27 @@ void VehicleGPSAggregateFactGroup::bindToGps(VehicleGPSFactGroup* gps1, VehicleG
 
 void VehicleGPSAggregateFactGroup::_updateAggregates()
 {
-    updateFromGps(_gps1, _gps2);
-}
-
-void VehicleGPSAggregateFactGroup::_onIntegrityUpdated()
-{
-    _isStaleFact.setRawValue(false);
-    _staleTimer.start();
-    _updateAggregates();
-}
-
-void VehicleGPSAggregateFactGroup::_onStaleTimeout()
-{
-    _spoofingStateFact.setRawValue(255);
-    _jammingStateFact.setRawValue(255);
-    _authenticationStateFact.setRawValue(255);
-    _isStaleFact.setRawValue(true);
+    const auto first = _gps1 ? _gps1->observation() : GPSIntegrityObservation();
+    const auto second = _gps2 ? _gps2->observation() : GPSIntegrityObservation();
+    const auto spoofing = _mergeWorst(first.spoofingState.value_or(-1), second.spoofingState.value_or(-1));
+    const auto jamming = _mergeWorst(first.jammingState.value_or(-1), second.jammingState.value_or(-1));
+    const auto authentication =
+        _mergeAuthentication(first.authenticationState.value_or(-1), second.authenticationState.value_or(-1));
+    const bool stale = !((_gps1 && _gps1->available()) || (_gps2 && _gps2->available()));
+    const QPointer<VehicleGPSAggregateFactGroup> guard(this);
+    const auto revision = ++_revision;
+    const std::array<std::pair<Fact*, QVariant>, 4> values = {{
+        {&_spoofingStateFact, spoofing == -1 ? 255 : spoofing},
+        {&_jammingStateFact, jamming == -1 ? 255 : jamming},
+        {&_authenticationStateFact, authentication == -1 ? 255 : authentication},
+        {&_isStaleFact, stale},
+    }};
+    for (const auto& [fact, value] : values) {
+        if (!guard || revision != _revision) {
+            return;
+        }
+        fact->setRawValue(value);
+    }
 }
 
 void VehicleGPSAggregateFactGroup::_clearConnections()
@@ -83,26 +79,9 @@ void VehicleGPSAggregateFactGroup::_clearConnections()
     _connections.clear();
 }
 
-int VehicleGPSAggregateFactGroup::_valueOrInvalid(Fact* fact)
-{
-    if (!fact) {
-        return -1;
-    }
-    const QVariant v = fact->rawValue();
-    if (!v.isValid()) {
-        return -1;
-    }
-    bool ok = false;
-    const int val = v.toInt(&ok);
-    if (!ok) {
-        return -1;
-    }
-    return (val == 255) ? -1 : val;
-}
-
 int VehicleGPSAggregateFactGroup::_mergeWorst(int a, int b)
 {
-    return qMax(a, b);
+    return (std::max) (a, b);
 }
 
 int VehicleGPSAggregateFactGroup::_mergeAuthentication(int a, int b)
@@ -132,18 +111,5 @@ int VehicleGPSAggregateFactGroup::_mergeAuthentication(int a, int b)
 
 void VehicleGPSAggregateFactGroup::updateFromGps(VehicleGPSFactGroup* gps1, VehicleGPSFactGroup* gps2)
 {
-    const int spoof1 = _valueOrInvalid(gps1 ? gps1->spoofingState() : nullptr);
-    const int spoof2 = _valueOrInvalid(gps2 ? gps2->spoofingState() : nullptr);
-    const int jam1 = _valueOrInvalid(gps1 ? gps1->jammingState() : nullptr);
-    const int jam2 = _valueOrInvalid(gps2 ? gps2->jammingState() : nullptr);
-    const int auth1 = _valueOrInvalid(gps1 ? gps1->authenticationState() : nullptr);
-    const int auth2 = _valueOrInvalid(gps2 ? gps2->authenticationState() : nullptr);
-
-    const int spoofMerged = _mergeWorst(spoof1, spoof2);
-    const int jamMerged = _mergeWorst(jam1, jam2);
-    const int authMerged = _mergeAuthentication(auth1, auth2);
-
-    _spoofingStateFact.setRawValue(spoofMerged == -1 ? 255 : spoofMerged);
-    _jammingStateFact.setRawValue(jamMerged == -1 ? 255 : jamMerged);
-    _authenticationStateFact.setRawValue(authMerged == -1 ? 255 : authMerged);
+    bindToGps(gps1, gps2);
 }

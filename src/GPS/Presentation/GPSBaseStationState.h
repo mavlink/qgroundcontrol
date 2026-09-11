@@ -4,30 +4,26 @@
 
 #include "GPSBaseReference.h"
 #include "GPSBaseStationFactGroup.h"
-#include "GPSReceiverSession.h"
+#include "GPSReceiverState.h"
 
-/// Survey and fixed-base presentation; the session and Facts must outlive this object.
+/// Survey and fixed-base projection; the accepted state and Facts must outlive this object.
 class GPSBaseStationState : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit GPSBaseStationState(GPSReceiverSession& session, GPSBaseStationFactGroup& facts,
-                                 QObject* parent = nullptr);
+    explicit GPSBaseStationState(GPSReceiverState& state, GPSBaseStationFactGroup& facts, QObject* parent = nullptr);
     ~GPSBaseStationState() override;
 
-    GPSBaseReference reference() const { return _reference; }
+    GPSBaseReference reference() const { return _state.reference(); }
 
 signals:
     void referenceChanged();
 
 private:
-    bool _acceptsSurvey() const;
-    void _updateSurvey(const GPSSurveyInStatus& status);
-    void _reset();
+    void _project();
 
-    GPSReceiverSession& _session;
+    GPSReceiverState& _state;
     GPSBaseStationFactGroup& _facts;
     quint64 _revision = 0;
-    GPSBaseReference _reference;
 };

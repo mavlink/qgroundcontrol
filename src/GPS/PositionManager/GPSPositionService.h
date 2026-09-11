@@ -1,25 +1,25 @@
 #pragma once
 
 #include <QtCore/QDateTime>
-#include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtPositioning/QGeoPositionInfoSource>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <array>
-#include <functional>
+#include <chrono>
+#include <cstddef>
+#include <limits>
 #include <memory>
+#include <optional>
 
 #include "GPSPositionSourceAdapter.h"
 #include "GPSPositionSourceRegistration.h"
 #include "GPSPositionSourceSelector.h"
 #include "GPSSourceHealth.h"
-
-class QGCPositionManager;
+#include "ScheduledTask.h"
 
 class GPSPositionService : public QObject
 {
@@ -39,8 +39,6 @@ class GPSPositionService : public QObject
     Q_PROPERTY(qreal gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy NOTIFY
                    gcsPositionHorizontalAccuracyChanged)
 
-    friend class PositionManagerTest;
-    friend class QGCPositionManager;
     friend class GPSPositionSourceRegistration;
 
 public:
@@ -91,11 +89,14 @@ public:
 
     QString sourceStatusText() const;
 
-    explicit GPSPositionService(QObject* parent = nullptr);
+    explicit GPSPositionService(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSPositionService() override;
 
     /// Borrow a platform source; the application owns permission requests and source creation.
     void setInternalPositionSource(QGeoPositionInfoSource* source, SourceStatus status, bool custom = false);
+
+    void setInternalPositionStatus(SourceStatus status);
+    void setSimulatedPositionSource(QGeoPositionInfoSource* source);
 
     GPSSourceHealth* sourceHealth() const { return _currentHealth; }
 
@@ -123,13 +124,6 @@ public:
     GPSPositionSourceRegistration registerPositionSource(SelectedSource kind, QObject* source, GPSSourceHealth* health,
                                                          quint64 sessionId = 0);
 
-    /// Select a borrowed, connected receiver source ahead of NMEA and platform positioning.
-    void setReceiverPositionSource(QObject* source, GPSSourceHealth* health = nullptr, quint64 sessionId = 0);
-    void clearReceiverPositionSource(QObject* source);
-    /// Borrow an NMEA position source; its owner manages the decoder and input device.
-    void setNmeaPositionSource(QObject* source, GPSSourceHealth* health = nullptr, quint64 sessionId = 0);
-    void clearNmeaPositionSource(QObject* source);
-
 signals:
     void sourceModeChanged();
     void selectionChanged();
@@ -140,53 +134,53 @@ signals:
     void gcsPositionHorizontalAccuracyChanged(qreal gcsPositionHorizontalAccuracy);
 
 private slots:
-    void _positionUpdated(const QGeoPositionInfo& update);
     void _positionError(QGeoPositionInfoSource::Error gcsPositioningError);
 
 private:
-    enum QGCPositionSource
+    struct SourceBinding
     {
-        Simulated,
-        InternalGPS,
-        Log,
-        NmeaGPS,
-        ExternalGPS
+        QPointer<QObject> source;
+        QPointer<GPSSourceHealth> health;
+        quint64 session = 0;
+        quint64 token = 0;
+        QMetaObject::Connection destroyedConnection;
+        std::unique_ptr<GPSPositionSourceAdapter> adapter;
     };
 
+    SourceBinding& _binding(SelectedSource kind) { return _bindings[static_cast<size_t>(kind)]; }
+
+    const SourceBinding& _binding(SelectedSource kind) const { return _bindings[static_cast<size_t>(kind)]; }
     void _retireRegistration(int kind, quint64 token);
-    std::array<quint64, 5> _registrationTokens{};
-    void _setPositionSource(QGCPositionSource source);
+    void _setBinding(SelectedSource kind, QObject* source, GPSSourceHealth* health = nullptr, quint64 sessionId = 0);
+    void _setPositionSource(SelectedSource source);
     void _selectPositionSource();
-    QGCPositionSource _choosePositionSource();
-    QObject* _sourceFor(QGCPositionSource source) const;
+    SelectedSource _choosePositionSource();
+    QObject* _sourceFor(SelectedSource source) const;
     void _refreshSourceAdapters();
     void _updateSourceActivity();
     void _updateSelectionStatus();
-    bool _isExternalSource() const;
     void _clearPosition();
     void _externalPositionChanged();
     void _publishPosition(const std::optional<GPSObservation>& observation);
 
-    std::array<std::unique_ptr<GPSPositionSourceAdapter>, 5> _sourceAdapters;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _recoveryTask;
+    std::array<SourceBinding, 5> _bindings;
     GPSPositionSourceSelector _selector;
-    QGCPositionSource _selectedKind = InternalGPS;
+    SelectedSource _selectedKind = SelectedSource::Internal;
     SourceMode _sourceMode = SourceMode::LegacyPriority;
     SelectedSource _selectedSource = SelectedSource::None;
     SourceStatus _sourceStatus = SourceStatus::NoSource;
     SourceStatus _platformStatus = SourceStatus::NoSource;
     QString _selectionReason;
-    QTimer _recoveryTimer;
+    static constexpr std::chrono::milliseconds RECOVERY_DELAY{5000};
     bool _selectingSource = false;
     bool _selectionPending = false;
     bool _forceSourceRefresh = false;
     bool _usingPluginSource = false;
     int _updateInterval = 0;
-    quint64 _receiverSession = 0;
-    quint64 _nmeaSession = 0;
-    std::optional<GPSObservation> _acceptedSourceObservation(QGCPositionSource source,
+    std::optional<GPSObservation> _acceptedSourceObservation(SelectedSource source,
                                                              GPSObservation::PositionUse use) const;
-    QPointer<GPSSourceHealth> _receiverHealth;
-    QPointer<GPSSourceHealth> _nmeaHealth;
     QPointer<GPSSourceHealth> _currentHealth;
     QMetaObject::Connection _healthConnection;
     QMetaObject::Connection _healthDestroyedConnection;
@@ -202,13 +196,7 @@ private:
     qreal _gcsPositionAccuracy = std::numeric_limits<qreal>::infinity();
     qreal _gcsDirectionAccuracy = std::numeric_limits<qreal>::infinity();
 
-    QPointer<QObject> _receiverSource;
-    QMetaObject::Connection _receiverDestroyedConnection;
     quint64 _sourceGeneration = 0;
     quint64 _positionRevision = 0;
-    QMetaObject::Connection _nmeaDestroyedConnection;
     QPointer<QObject> _currentSource;
-    QPointer<QGeoPositionInfoSource> _defaultSource;
-    QPointer<QObject> _nmeaSource;
-    QPointer<QGeoPositionInfoSource> _simulatedSource;
 };

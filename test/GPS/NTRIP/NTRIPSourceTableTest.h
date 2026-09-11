@@ -10,6 +10,10 @@ private slots:
     void _testCoordinates_data();
     void _testCoordinates();
     void _testProjectionNotifications();
+    void _testReentrantPublication_data();
+    void _testReentrantPublication();
+    void _testDestructionDuringReset_data();
+    void _testDestructionDuringReset();
     void _testParseSTRLine();
     void _testParseShortLine();
     void _testParseNonSTRLine();

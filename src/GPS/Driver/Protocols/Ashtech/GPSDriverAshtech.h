@@ -60,6 +60,8 @@ public:
 
     int configure(unsigned& baudrate, const GPSConfig& config) override;
 
+    bool receiverReady() const override { return _configure_done; }
+
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
 

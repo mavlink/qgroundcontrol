@@ -307,6 +307,8 @@ UT_REGISTER_TEST(NMEASourceManagerTest, TestLabel::Unit)
 
 void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
 {
+    GPSPositionSourceRegistration positionReceiverRegistration;
+
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
@@ -377,12 +379,13 @@ void NMEASourceManagerTest::_satellitesShareUdpAndStayFresh()
     send(satelliteSentences());
     QTRY_COMPARE_WITH_TIMEOUT(source.satellitesInViewCount(), 2, TestTimeout::mediumMs());
 
-    position.setReceiverPositionSource(&receiver);
+    positionReceiverRegistration =
+        position.registerPositionSource(GPSPositionService::SelectedSource::Receiver, &receiver, nullptr);
     send(satelliteSentences(45));
     QTRY_COMPARE_WITH_TIMEOUT(source.satelliteObservation().satellites.first().signalStrength, std::optional<int>(45),
                               TestTimeout::mediumMs());
     const quint64 previousReceipt = source.health()->observation().monotonicTimestampUs;
-    position.clearReceiverPositionSource(&receiver);
+    positionReceiverRegistration.reset();
     QVERIFY(!position.gcsPosition().isValid());
     send(freshFix());
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());

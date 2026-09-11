@@ -70,7 +70,7 @@ public:
     explicit NTRIPSourceTableModel(QObject* parent = nullptr);
     ~NTRIPSourceTableModel() override;
 
-    int count() const { return static_cast<int>(_projection.size()); }
+    int count() const { return static_cast<int>(_current.projection.size()); }
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -90,6 +90,16 @@ private:
         double distanceKm;
     };
 
-    QList<NTRIPMountpoint> _catalog;
-    QList<ProjectedRow> _projection;
+    struct Snapshot
+    {
+        QList<NTRIPMountpoint> catalog;
+        QList<ProjectedRow> projection;
+        quint64 catalogRevision = 0;
+    };
+
+    void _publish();
+    Snapshot _current;
+    Snapshot _pending;
+    bool _publishing = false;
+    bool _publicationQueued = false;
 };

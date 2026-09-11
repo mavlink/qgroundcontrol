@@ -3,7 +3,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
-#include "GPSReceiverSession.h"
+#include "GPSReceiverState.h"
 #include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
 
@@ -16,8 +16,8 @@ class GPSReceiver : public QObject
     friend class GPSReceiverTest;
 
 public:
-    /// The receiver session must outlive this presentation object.
-    explicit GPSReceiver(GPSReceiverSession& session, QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    /// The accepted receiver state and its session must outlive this presentation object.
+    explicit GPSReceiver(GPSReceiverState& state, QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSReceiver();
 
     bool connected() const;
@@ -45,16 +45,13 @@ signals:
 
 private slots:
     void _attemptChanged(const GPSReceiverAttempt& attempt);
-    void _satelliteInfoUpdate(const GPSSatelliteObservation& msg);
-    void _sensorGpsUpdate(const GPSObservation& msg);
     void _onGPSConnect();
     void _onGPSDisconnect();
     void _onGPSConnectionError(GPSConnectionError error);
 
 private:
     GPSReceiverSession& _session;
-    GPSSourceHealth _health;
-    GPSSatelliteStore _satellites;
+    GPSSourceHealth& _health;
     GPSReceiverFactGroup* _facts = nullptr;
     quint64 _projectionRevision = 0;
 };

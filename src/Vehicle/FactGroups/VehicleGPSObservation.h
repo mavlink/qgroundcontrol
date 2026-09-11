@@ -16,3 +16,5 @@ struct VehicleGPSObservation
     static VehicleGPSObservation fromMessage(const mavlink_high_latency_t& message);
     static VehicleGPSObservation fromMessage(const mavlink_high_latency2_t& message);
 };
+
+Q_DECLARE_METATYPE(VehicleGPSObservation)

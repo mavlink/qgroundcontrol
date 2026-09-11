@@ -11,6 +11,7 @@
 #include "VehicleGeneratorFactGroup.h"
 #include "VehicleGPS2FactGroup.h"
 #include "VehicleGPSFactGroup.h"
+#include "VehicleGPSObservationStream.h"
 #include "VehicleGPSAggregateFactGroup.h"
 #include "VehicleHygrometerFactGroup.h"
 #include "VehicleLocalPositionFactGroup.h"
@@ -308,8 +309,15 @@ void Vehicle::_commonInit(LinkInterface* link)
     // Flight modes can differ based on advanced mode
     connect(QGCCorePlugin::instance(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
-    _gpsFactGroup                   = new VehicleGPSFactGroup(this);
-    _gps2FactGroup                  = new VehicleGPS2FactGroup(this);
+    _gpsObservationStream = new VehicleGPSObservationStream(this);
+    connect(_vehicleLinkManager, &VehicleLinkManager::communicationLostChanged, _gpsObservationStream,
+            [stream = _gpsObservationStream](bool lost) {
+                if (lost) {
+                    stream->reset();
+                }
+            });
+    _gpsFactGroup = new VehicleGPSFactGroup(this, _gpsObservationStream);
+    _gps2FactGroup = new VehicleGPS2FactGroup(this, _gpsObservationStream);
     _gpsAggregateFactGroup          = new VehicleGPSAggregateFactGroup(this);
     _windFactGroup                  = new VehicleWindFactGroup(this);
     _vibrationFactGroup             = new VehicleVibrationFactGroup(this);
@@ -583,6 +591,8 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     // Handle creation of dynamic fact group lists
     _batteryFactGroupListModel->handleMessageForFactGroupCreation(this, message);
     _escStatusFactGroupListModel->handleMessageForFactGroupCreation(this, message);
+
+    _gpsObservationStream->handleMessage(message, id(), defaultComponentId());
 
     // Let the fact groups take a whack at the mavlink traffic
     for (FactGroup* factGroup : factGroups()) {

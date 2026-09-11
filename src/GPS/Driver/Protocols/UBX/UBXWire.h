@@ -40,14 +40,16 @@
 #include "UBXMessages.h"
 
 namespace UBX {
-// All callers validate frame length/version before decoding; absent optional tails stay zero.
+namespace detail {
 template <typename T>
-T payload(std::span<const uint8_t> bytes, size_t offset = 0);
+T decodeFields(std::span<const uint8_t> bytes, size_t offset = 0);
+}
 template <typename T>
 std::array<uint8_t, WIRE_SIZE<T>> encode(const T& value);
 
 template <>
-inline ubx_payload_rx_nav_posllh_t payload<ubx_payload_rx_nav_posllh_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_nav_posllh_t detail::decodeFields<ubx_payload_rx_nav_posllh_t>(std::span<const uint8_t> input,
+                                                                                     size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_posllh_t value{};
@@ -62,7 +64,8 @@ inline ubx_payload_rx_nav_posllh_t payload<ubx_payload_rx_nav_posllh_t>(std::spa
 }
 
 template <>
-inline ubx_payload_rx_nav_dop_t payload<ubx_payload_rx_nav_dop_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_nav_dop_t detail::decodeFields<ubx_payload_rx_nav_dop_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_dop_t value{};
@@ -78,7 +81,8 @@ inline ubx_payload_rx_nav_dop_t payload<ubx_payload_rx_nav_dop_t>(std::span<cons
 }
 
 template <>
-inline ubx_payload_rx_nav_sol_t payload<ubx_payload_rx_nav_sol_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_nav_sol_t detail::decodeFields<ubx_payload_rx_nav_sol_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_sol_t value{};
@@ -103,7 +107,8 @@ inline ubx_payload_rx_nav_sol_t payload<ubx_payload_rx_nav_sol_t>(std::span<cons
 }
 
 template <>
-inline ubx_payload_rx_nav_pvt_t payload<ubx_payload_rx_nav_pvt_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_nav_pvt_t detail::decodeFields<ubx_payload_rx_nav_pvt_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_pvt_t value{};
@@ -143,7 +148,8 @@ inline ubx_payload_rx_nav_pvt_t payload<ubx_payload_rx_nav_pvt_t>(std::span<cons
 }
 
 template <>
-inline ubx_payload_rx_nav_timeutc_t payload<ubx_payload_rx_nav_timeutc_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_nav_timeutc_t detail::decodeFields<ubx_payload_rx_nav_timeutc_t>(std::span<const uint8_t> input,
+                                                                                       size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_timeutc_t value{};
@@ -161,8 +167,8 @@ inline ubx_payload_rx_nav_timeutc_t payload<ubx_payload_rx_nav_timeutc_t>(std::s
 }
 
 template <>
-inline ubx_payload_rx_nav_svinfo_part1_t payload<ubx_payload_rx_nav_svinfo_part1_t>(std::span<const uint8_t> input,
-                                                                                    size_t offset)
+inline ubx_payload_rx_nav_svinfo_part1_t detail::decodeFields<ubx_payload_rx_nav_svinfo_part1_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_svinfo_part1_t value{};
@@ -174,8 +180,8 @@ inline ubx_payload_rx_nav_svinfo_part1_t payload<ubx_payload_rx_nav_svinfo_part1
 }
 
 template <>
-inline ubx_payload_rx_nav_svinfo_part2_t payload<ubx_payload_rx_nav_svinfo_part2_t>(std::span<const uint8_t> input,
-                                                                                    size_t offset)
+inline ubx_payload_rx_nav_svinfo_part2_t detail::decodeFields<ubx_payload_rx_nav_svinfo_part2_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_svinfo_part2_t value{};
@@ -191,8 +197,8 @@ inline ubx_payload_rx_nav_svinfo_part2_t payload<ubx_payload_rx_nav_svinfo_part2
 }
 
 template <>
-inline ubx_payload_rx_nav_sat_part1_t payload<ubx_payload_rx_nav_sat_part1_t>(std::span<const uint8_t> input,
-                                                                              size_t offset)
+inline ubx_payload_rx_nav_sat_part1_t detail::decodeFields<ubx_payload_rx_nav_sat_part1_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_sat_part1_t value{};
@@ -204,8 +210,8 @@ inline ubx_payload_rx_nav_sat_part1_t payload<ubx_payload_rx_nav_sat_part1_t>(st
 }
 
 template <>
-inline ubx_payload_rx_nav_sat_part2_t payload<ubx_payload_rx_nav_sat_part2_t>(std::span<const uint8_t> input,
-                                                                              size_t offset)
+inline ubx_payload_rx_nav_sat_part2_t detail::decodeFields<ubx_payload_rx_nav_sat_part2_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_sat_part2_t value{};
@@ -220,7 +226,8 @@ inline ubx_payload_rx_nav_sat_part2_t payload<ubx_payload_rx_nav_sat_part2_t>(st
 }
 
 template <>
-inline ubx_payload_rx_nav_status_t payload<ubx_payload_rx_nav_status_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_nav_status_t detail::decodeFields<ubx_payload_rx_nav_status_t>(std::span<const uint8_t> input,
+                                                                                     size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_status_t value{};
@@ -235,7 +242,8 @@ inline ubx_payload_rx_nav_status_t payload<ubx_payload_rx_nav_status_t>(std::spa
 }
 
 template <>
-inline ubx_payload_rx_nav_svin_t payload<ubx_payload_rx_nav_svin_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_nav_svin_t detail::decodeFields<ubx_payload_rx_nav_svin_t>(std::span<const uint8_t> input,
+                                                                                 size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_svin_t value{};
@@ -261,7 +269,8 @@ inline ubx_payload_rx_nav_svin_t payload<ubx_payload_rx_nav_svin_t>(std::span<co
 }
 
 template <>
-inline ubx_payload_rx_nav_velned_t payload<ubx_payload_rx_nav_velned_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_nav_velned_t detail::decodeFields<ubx_payload_rx_nav_velned_t>(std::span<const uint8_t> input,
+                                                                                     size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_velned_t value{};
@@ -278,7 +287,8 @@ inline ubx_payload_rx_nav_velned_t payload<ubx_payload_rx_nav_velned_t>(std::spa
 }
 
 template <>
-inline ubx_payload_rx_mon_hw_ubx6_t payload<ubx_payload_rx_mon_hw_ubx6_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_mon_hw_ubx6_t detail::decodeFields<ubx_payload_rx_mon_hw_ubx6_t>(std::span<const uint8_t> input,
+                                                                                       size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_hw_ubx6_t value{};
@@ -304,7 +314,8 @@ inline ubx_payload_rx_mon_hw_ubx6_t payload<ubx_payload_rx_mon_hw_ubx6_t>(std::s
 }
 
 template <>
-inline ubx_payload_rx_mon_hw_ubx7_t payload<ubx_payload_rx_mon_hw_ubx7_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_mon_hw_ubx7_t detail::decodeFields<ubx_payload_rx_mon_hw_ubx7_t>(std::span<const uint8_t> input,
+                                                                                       size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_hw_ubx7_t value{};
@@ -330,7 +341,8 @@ inline ubx_payload_rx_mon_hw_ubx7_t payload<ubx_payload_rx_mon_hw_ubx7_t>(std::s
 }
 
 template <>
-inline ubx_payload_rx_sec_sig_t payload<ubx_payload_rx_sec_sig_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_sec_sig_t detail::decodeFields<ubx_payload_rx_sec_sig_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_sec_sig_t value{};
@@ -343,8 +355,8 @@ inline ubx_payload_rx_sec_sig_t payload<ubx_payload_rx_sec_sig_t>(std::span<cons
 }
 
 template <>
-inline ubx_payload_rx_mon_ver_part1_t payload<ubx_payload_rx_mon_ver_part1_t>(std::span<const uint8_t> input,
-                                                                              size_t offset)
+inline ubx_payload_rx_mon_ver_part1_t detail::decodeFields<ubx_payload_rx_mon_ver_part1_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_ver_part1_t value{};
@@ -356,8 +368,8 @@ inline ubx_payload_rx_mon_ver_part1_t payload<ubx_payload_rx_mon_ver_part1_t>(st
 }
 
 template <>
-inline ubx_payload_rx_mon_ver_part2_t payload<ubx_payload_rx_mon_ver_part2_t>(std::span<const uint8_t> input,
-                                                                              size_t offset)
+inline ubx_payload_rx_mon_ver_part2_t detail::decodeFields<ubx_payload_rx_mon_ver_part2_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_ver_part2_t value{};
@@ -367,7 +379,8 @@ inline ubx_payload_rx_mon_ver_part2_t payload<ubx_payload_rx_mon_ver_part2_t>(st
 }
 
 template <>
-inline ubx_payload_rx_rxm_rtcm_t payload<ubx_payload_rx_rxm_rtcm_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_rxm_rtcm_t detail::decodeFields<ubx_payload_rx_rxm_rtcm_t>(std::span<const uint8_t> input,
+                                                                                 size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_rxm_rtcm_t value{};
@@ -380,7 +393,8 @@ inline ubx_payload_rx_rxm_rtcm_t payload<ubx_payload_rx_rxm_rtcm_t>(std::span<co
 }
 
 template <>
-inline ubx_payload_rx_rxm_cor_t payload<ubx_payload_rx_rxm_cor_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_rxm_cor_t detail::decodeFields<ubx_payload_rx_rxm_cor_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_rxm_cor_t value{};
@@ -471,8 +485,8 @@ inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_tmode3_t>> encode(c
 }
 
 template <>
-inline ubx_payload_rx_nav_relposned_t payload<ubx_payload_rx_nav_relposned_t>(std::span<const uint8_t> input,
-                                                                              size_t offset)
+inline ubx_payload_rx_nav_relposned_t detail::decodeFields<ubx_payload_rx_nav_relposned_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_relposned_t value{};
@@ -501,8 +515,8 @@ inline ubx_payload_rx_nav_relposned_t payload<ubx_payload_rx_nav_relposned_t>(st
 }
 
 template <>
-inline ubx_payload_rx_nav_daheading_t payload<ubx_payload_rx_nav_daheading_t>(std::span<const uint8_t> input,
-                                                                              size_t offset)
+inline ubx_payload_rx_nav_daheading_t detail::decodeFields<ubx_payload_rx_nav_daheading_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_daheading_t value{};
@@ -529,8 +543,8 @@ inline ubx_payload_rx_nav_daheading_t payload<ubx_payload_rx_nav_daheading_t>(st
 }
 
 template <>
-inline ubx_payload_rx_nav_hpposllh_t payload<ubx_payload_rx_nav_hpposllh_t>(std::span<const uint8_t> input,
-                                                                            size_t offset)
+inline ubx_payload_rx_nav_hpposllh_t detail::decodeFields<ubx_payload_rx_nav_hpposllh_t>(std::span<const uint8_t> input,
+                                                                                         size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_hpposllh_t value{};
@@ -553,8 +567,8 @@ inline ubx_payload_rx_nav_hpposllh_t payload<ubx_payload_rx_nav_hpposllh_t>(std:
 }
 
 template <>
-inline ubx_payload_rx_mon_comms_port_t payload<ubx_payload_rx_mon_comms_port_t>(std::span<const uint8_t> input,
-                                                                                size_t offset)
+inline ubx_payload_rx_mon_comms_port_t detail::decodeFields<ubx_payload_rx_mon_comms_port_t>(
+    std::span<const uint8_t> input, size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_comms_port_t value{};
@@ -577,7 +591,8 @@ inline ubx_payload_rx_mon_comms_port_t payload<ubx_payload_rx_mon_comms_port_t>(
 }
 
 template <>
-inline ubx_payload_rx_mon_comms_t payload<ubx_payload_rx_mon_comms_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_mon_comms_t detail::decodeFields<ubx_payload_rx_mon_comms_t>(std::span<const uint8_t> input,
+                                                                                   size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_comms_t value{};
@@ -588,13 +603,14 @@ inline ubx_payload_rx_mon_comms_t payload<ubx_payload_rx_mon_comms_t>(std::span<
     for (size_t i = 0; i < 4; ++i)
         value.protIds[i] = LittleEndian::read<uint8_t>(bytes, 4 + i * 1).value_or(0);
     for (size_t i = 0; i < 8; ++i)
-        value.ports[i] = payload<ubx_payload_rx_mon_comms_port_t>(bytes, 8 + i * 40);
+        value.ports[i] = detail::decodeFields<ubx_payload_rx_mon_comms_port_t>(bytes, 8 + i * 40);
     return value;
 }
 
 template <>
 inline ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t
-payload<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(std::span<const uint8_t> input, size_t offset)
+detail::decodeFields<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(std::span<const uint8_t> input,
+                                                                             size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t value{};
@@ -618,7 +634,8 @@ payload<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(std::span<const 
 }
 
 template <>
-inline ubx_payload_rx_mon_rf_t payload<ubx_payload_rx_mon_rf_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_mon_rf_t detail::decodeFields<ubx_payload_rx_mon_rf_t>(std::span<const uint8_t> input,
+                                                                             size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_mon_rf_t value{};
@@ -627,7 +644,8 @@ inline ubx_payload_rx_mon_rf_t payload<ubx_payload_rx_mon_rf_t>(std::span<const 
     for (size_t i = 0; i < 2; ++i)
         value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 2 + i * 1).value_or(0);
     for (size_t i = 0; i < 1; ++i)
-        value.block[i] = payload<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(bytes, 4 + i * 24);
+        value.block[i] =
+            detail::decodeFields<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(bytes, 4 + i * 24);
     return value;
 }
 
@@ -660,7 +678,8 @@ inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t>> encode(con
 }
 
 template <>
-inline ubx_payload_rx_ack_ack_t payload<ubx_payload_rx_ack_ack_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_ack_ack_t detail::decodeFields<ubx_payload_rx_ack_ack_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_ack_ack_t value{};
@@ -669,7 +688,8 @@ inline ubx_payload_rx_ack_ack_t payload<ubx_payload_rx_ack_ack_t>(std::span<cons
 }
 
 template <>
-inline ubx_payload_rx_ack_nak_t payload<ubx_payload_rx_ack_nak_t>(std::span<const uint8_t> input, size_t offset)
+inline ubx_payload_rx_ack_nak_t detail::decodeFields<ubx_payload_rx_ack_nak_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_ack_nak_t value{};

@@ -13,6 +13,7 @@
 
 #include "GPSConnectionError.h"
 #include "GPSDriver.h"  // facade; also publishes GPSReceiverConfig + the GNSS data structs relayed below
+#include "GPSIntegrityObservation.h"
 #include "GPSReceiverMailbox.h"
 #include "GPSType.h"
 
@@ -44,6 +45,7 @@ public:
     /// Thread-safe publication; only the first pending update queues a session wakeup.
     void satelliteInfoUpdate(const GPSSatelliteObservation& message);
     void sensorGpsUpdate(const GPSObservation& message);
+    void integrityUpdate(const GPSIntegrityObservation& message);
     void relativePositionUpdate(const GPSRelativeObservation& message);
     void RTCMDataUpdate(const QByteArray& message);
     void RTCMFrameUpdate(const QByteArray& message, qint64 receivedAtMs);

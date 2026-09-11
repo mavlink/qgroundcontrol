@@ -75,8 +75,8 @@ QVariant NTRIPSourceTableModel::data(const QModelIndex& index, int role) const
     if (!index.isValid() || index.model() != this || index.column() != 0 || index.row() >= count()) {
         return {};
     }
-    const ProjectedRow& row = _projection.at(index.row());
-    const NTRIPMountpoint& mp = _catalog.at(row.catalogIndex);
+    const ProjectedRow& row = _current.projection.at(index.row());
+    const NTRIPMountpoint& mp = _current.catalog.at(row.catalogIndex);
     switch (role) {
         case MountpointRole:
             return mp.mountpoint;
@@ -153,25 +153,20 @@ void NTRIPSourceTableModel::parseSourceTable(const QString& raw)
             catalog.append(mp);
         }
     }
-    const bool countDiffers = count() != catalog.size();
-    const QPointer<NTRIPSourceTableModel> guard(this);
-    beginResetModel();
-    _catalog = std::move(catalog);
-    _projection.clear();
-    for (int i = 0; i < _catalog.size(); ++i) {
-        _projection.append({i, -1.0});
+    _pending.catalog = std::move(catalog);
+    ++_pending.catalogRevision;
+    _pending.projection.clear();
+    for (int i = 0; i < _pending.catalog.size(); ++i) {
+        _pending.projection.append({i, -1.0});
     }
-    endResetModel();
-    if (guard && countDiffers) {
-        emit countChanged();
-    }
+    _publish();
 }
 
 void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
 {
     QList<ProjectedRow> projection;
-    for (int i = 0; i < _catalog.size(); ++i) {
-        projection.append({i, _catalog.at(i).distanceFrom(from)});
+    for (int i = 0; i < _pending.catalog.size(); ++i) {
+        projection.append({i, _pending.catalog.at(i).distanceFrom(from)});
     }
     std::stable_sort(projection.begin(), projection.end(), [](const ProjectedRow& a, const ProjectedRow& b) {
         if (a.distanceKm < 0) {
@@ -179,25 +174,66 @@ void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
         }
         return b.distanceKm < 0 || a.distanceKm < b.distanceKm;
     });
-    bool reordered = false;
-    bool distanceChanged = false;
-    for (int i = 0; i < projection.size(); ++i) {
-        reordered |= projection.at(i).catalogIndex != _projection.at(i).catalogIndex;
-        distanceChanged |= projection.at(i).distanceKm != _projection.at(i).distanceKm;
-    }
-    if (reordered) {
-        beginResetModel();
-        _projection = std::move(projection);
-        endResetModel();
-    } else if (distanceChanged) {
-        _projection = std::move(projection);
-        emit dataChanged(index(0), index(count() - 1), {DistanceKmRole});
-    }
+    _pending.projection = std::move(projection);
+    _publish();
 }
 
 void NTRIPSourceTableModel::clear()
 {
-    if (!_catalog.isEmpty()) {
+    if (!_pending.catalog.isEmpty()) {
         parseSourceTable({});
     }
+}
+
+void NTRIPSourceTableModel::_publish()
+{
+    if (_publishing) {
+        // Keep catalog and projection updates together across reentrant model notifications.
+        if (!_publicationQueued) {
+            _publicationQueued = true;
+            QMetaObject::invokeMethod(
+                this,
+                [this]() {
+                    _publicationQueued = false;
+                    _publish();
+                },
+                Qt::QueuedConnection);
+        }
+        return;
+    }
+    const Snapshot next = _pending;
+    const bool countDiffers = _current.projection.size() != next.projection.size();
+    bool reset = _current.catalogRevision != next.catalogRevision || countDiffers;
+    bool distanceChanged = false;
+    for (qsizetype i = 0; !reset && i < next.projection.size(); ++i) {
+        reset = next.projection.at(i).catalogIndex != _current.projection.at(i).catalogIndex;
+        distanceChanged |= next.projection.at(i).distanceKm != _current.projection.at(i).distanceKm;
+    }
+    if (!reset && !distanceChanged) {
+        return;
+    }
+    const QPointer<NTRIPSourceTableModel> guard(this);
+    _publishing = true;
+    if (reset) {
+        beginResetModel();
+        if (!guard) {
+            return;
+        }
+    }
+    _current = next;
+    if (reset) {
+        endResetModel();
+    } else if (distanceChanged) {
+        emit dataChanged(index(0), index(count() - 1), {DistanceKmRole});
+    }
+    if (!guard) {
+        return;
+    }
+    if (countDiffers) {
+        emit countChanged();
+        if (!guard) {
+            return;
+        }
+    }
+    _publishing = false;
 }

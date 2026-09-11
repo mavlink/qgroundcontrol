@@ -12,6 +12,7 @@
 #include "NTRIPSettings.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleGPSObservationStream.h"
 #include "VehicleGPSPositionProvider.h"
 
 // Tests delegate checksum validation to the canonical NMEAUtils implementation
@@ -325,6 +326,7 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     connect(settings->ntripGgaPositionSource(), &Fact::rawValueChanged, &provider, refresh);
     connect(settings->ntripGgaIntervalSec(), &Fact::rawValueChanged, &provider, refresh);
     refresh();
+    vehicle()->gpsObservationStream()->reset();
     VehicleGPSPositionProvider positions;
     positions.setVehicle(vehicle());
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, [&]() {
@@ -358,7 +360,7 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     QVERIFY(fields[8].isEmpty());
     QCOMPARE(fields[9], QByteArray("450.0"));
 
-    positions._gpsPosition.monotonicTimestampUs -= 6000000;
+    vehicle()->gpsObservationStream()->_gps[0].position.monotonicTimestampUs -= 6000000;
     provider._sendGGA();
     QCOMPARE(transport.sentNmea.size(), 1);
     QVERIFY(provider.currentSource().isEmpty());
@@ -382,7 +384,7 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     QVERIFY(deliver(message));
     provider._sendGGA();
     QCOMPARE(transport.sentNmea.size(), 3);
-    positions._ekfPosition.monotonicTimestampUs -= 6000000;
+    vehicle()->gpsObservationStream()->_fused.monotonicTimestampUs -= 6000000;
     mavlink_msg_global_position_int_encode(vehicle()->id(), MAV_COMP_ID_CAMERA, &message, &global);
     QVERIFY(deliver(message));
     provider._sendGGA();
@@ -421,11 +423,20 @@ void NTRIPGgaProviderTest::testVehicleMessageFreshness()
     settings->ntripGgaPositionSource()->setRawValue(static_cast<int>(NTRIPGgaProvider::PositionSource::VehicleEKF));
     provider._sendGGA();
     QCOMPARE(transport.sentNmea.size(), 5);
+    const auto lastGpsReceipt = positions.gpsPosition().monotonicTimestampUs;
+    vehicle()->gpsObservationStream()->_fused.monotonicTimestampUs -= 6000000;
+    const auto lastFusedReceipt = positions.ekfPosition().monotonicTimestampUs;
     positions.setVehicle(nullptr);
     QVERIFY(!positions.gpsPosition().position.isValid());
     QVERIFY(!positions.ekfPosition().position.isValid());
     positions.setVehicle(vehicle());
-    QVERIFY(!positions.gpsPosition().position.isValid());
+    // Reselecting a vehicle projects its retained reports without assigning a new receipt.
+    QCOMPARE(positions.gpsPosition().monotonicTimestampUs, lastGpsReceipt);
+    QCOMPARE(positions.gpsPosition().fixQuality, GPSObservation::FixQuality::NoFix);
+    QCOMPARE(positions.ekfPosition().monotonicTimestampUs, lastFusedReceipt);
+    provider._sendGGA();
+    QCOMPARE(transport.sentNmea.size(), 5);
+    QVERIFY(provider.currentSource().isEmpty());
     provider.stop();
 }
 

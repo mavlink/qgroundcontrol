@@ -101,33 +101,71 @@ void GPSRecordingBuffer::append(quint64 stream, const GPSRecordingMetadata& meta
         Event session;
         session.atUs = atUs;
         session.stream = stream;
-        session.kind = Kind::Session;
-        session.metadata = metadata;
+        auto sessionMetadata = metadata;
         if (!_provenance.producer.isEmpty())
-            session.metadata.provenance = _provenance;
+            sessionMetadata.provenance = _provenance;
+        session.payload = Event::Session{sessionMetadata};
         _events.append(std::move(session));
     }
     if (resumed) {
         Event open;
         open.atUs = atUs;
         open.stream = stream;
-        open.kind = Kind::Open;
-        open.resumed = true;
+        open.payload = Event::Open{.resumed = true};
         _events.append(std::move(open));
     }
     Event event;
     event.atUs = atUs;
     event.startedAtUs = startedAtUs >= _originUs ? qMin(startedAtUs - _originUs + 1, atUs) : 0;
     event.stream = stream;
-    event.kind = kind;
-    event.bytes = QByteArray(bytes.data(), bytes.size());
-    event.value = value;
-    event.writeResult = writeResult;
-    event.fatal = fatal;
-    event.openStatus = openStatus;
-    event.readStatus = readStatus;
-    if (receivedAtUs) {
-        event.receivedAtUs = static_cast<qint64>(receivedAtUs) - static_cast<qint64>(_originUs) + 1;
+    const QByteArray data(bytes.data(), bytes.size());
+    const auto receipt = receivedAtUs
+                             ? std::optional(static_cast<qint64>(receivedAtUs) - static_cast<qint64>(_originUs) + 1)
+                             : std::nullopt;
+    using R = Event::Read::Outcome;
+    switch (kind) {
+        case Kind::Session:
+            event.payload = Event::Session{metadata};
+            break;
+        case Kind::Open:
+        case Kind::OpenError:
+            event.payload = Event::Open{kind == Kind::Open, false, openStatus};
+            break;
+        case Kind::Rx:
+            event.payload = Event::Read{R::Data, data, value, receipt, readStatus};
+            break;
+        case Kind::Timeout:
+            event.payload = Event::Read{R::TimedOut, {}, value, {}, readStatus};
+            break;
+        case Kind::ReadError:
+            event.payload = Event::Read{R::Error, data, value, {}, readStatus};
+            break;
+        case Kind::Disconnect:
+            event.payload = Event::Read{R::Closed, {}, value, {}, readStatus};
+            break;
+        case Kind::Cancel:
+            event.payload = Event::Read{R::Cancelled, {}, value, {}, readStatus};
+            break;
+        case Kind::Tx:
+        case Kind::WriteError:
+            event.payload = Event::Write{data, kind == Kind::Tx, value, fatal};
+            break;
+        case Kind::Baud:
+        case Kind::BaudError:
+            event.payload = Event::Baud{value, kind == Kind::Baud};
+            break;
+        case Kind::Close:
+            event.payload = Event::Close{value};
+            break;
+        case Kind::ConfigurationStarted:
+            event.payload = Event::Configuration{};
+            break;
+        case Kind::ConfigurationFinished:
+            event.payload = Event::Configuration{value};
+            break;
+        case Kind::BoundedWrite:
+            event.payload = Event::BoundedWrite{data, writeResult.value_or(GPSWriteResult{}), fatal};
+            break;
     }
     _events.append(std::move(event));
     _storageBytes += overhead + bytes.size() * 2;
