@@ -252,7 +252,14 @@ bool parseFmtMessages(const char *data, qint64 size, QMap<uint8_t, MessageFormat
             }
 
             const MessageFormat fmt = parseFmtPayload(data + pos);
-            formats[fmt.type] = fmt;
+            // length and format come from the log and describe the same record, so they
+            // have to agree: length counts the 3-byte header, and the fields the format
+            // string declares must fit in what is left. Checking it here is what keeps
+            // "length - 3" non-negative below and in iterateMessages(), and what bounds
+            // the offset parseMessage() accumulates from the format string.
+            if ((fmt.length >= 3) && (calculatePayloadSize(fmt.format) <= (fmt.length - 3))) {
+                formats[fmt.type] = fmt;
+            }
             pos += kFmtPayloadSize;
         } else {
             // Skip message if we know its length
