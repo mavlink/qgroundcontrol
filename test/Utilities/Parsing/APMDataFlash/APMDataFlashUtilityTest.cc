@@ -310,6 +310,54 @@ void APMDataFlashUtilityTest::_testParseFmtMessages()
     QCOMPARE(formats[128].name, QStringLiteral("FMT"));
 }
 
+void APMDataFlashUtilityTest::_testParseFmtMessagesRejectsInconsistentLength()
+{
+    // length and format are both read from the log. A format may only be registered when
+    // they agree, because "length - 3" is used as a payload size elsewhere and the format
+    // string drives how many bytes parseMessage() reads.
+    auto fmtRecord = [](uint8_t type, uint8_t length, const char *format) {
+        QByteArray record;
+        record.append(static_cast<char>(0xA3));
+        record.append(static_cast<char>(0x95));
+        record.append(static_cast<char>(128));
+        char payload[86];
+        memset(payload, 0, sizeof(payload));
+        payload[0] = static_cast<char>(type);
+        payload[1] = static_cast<char>(length);
+        memcpy(payload + 2, "TST\0", 4);
+        memcpy(payload + 6, format, qMin(strlen(format), static_cast<size_t>(16)));
+        memcpy(payload + 22, "A,B,C", 5);
+        record.append(payload, sizeof(payload));
+        return record;
+    };
+
+    // length < 3 makes "length - 3" negative. With a record of that type following, the
+    // cursor stops advancing and the scan never terminates.
+    for (uint8_t badLength : {uint8_t(0), uint8_t(1), uint8_t(2)}) {
+        const QByteArray data = fmtRecord(100, badLength, "BB") + QByteArray("\xA3\x95\x64ABCD", 7);
+        QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+        APMDataFlashUtility::parseFmtMessages(data.constData(), data.size(), formats);
+        QVERIFY2(!formats.contains(100), qPrintable(QStringLiteral("length %1 was registered").arg(badLength)));
+    }
+
+    // A format declaring more bytes than the record holds would make parseMessage() read
+    // past the payload: length 4 leaves one byte, "a" asks for 64.
+    {
+        const QByteArray data = fmtRecord(101, 4, "a");
+        QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+        APMDataFlashUtility::parseFmtMessages(data.constData(), data.size(), formats);
+        QVERIFY(!formats.contains(101));
+    }
+
+    // A consistent record is still accepted: "QBb" is 8 + 1 + 1, so length 13.
+    {
+        const QByteArray data = fmtRecord(102, 13, "QBb");
+        QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+        QVERIFY(APMDataFlashUtility::parseFmtMessages(data.constData(), data.size(), formats));
+        QVERIFY(formats.contains(102));
+    }
+}
+
 // ============================================================================
 // Message Parsing Tests
 // ============================================================================
