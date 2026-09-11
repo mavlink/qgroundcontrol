@@ -112,8 +112,12 @@ public:
     void setErrorMode(ErrorMode_t errMode) { _errMode = errMode; };
 
     /// Controls whether the server implements the kCmdListDirectoryWithTime command. When false the
-    /// server Naks it with kErrUnknownCommand so the client fallback to kCmdListDirectory can be tested.
+    /// server Naks it (see setListDirectoryWithTimeNakError) so the client fallback to kCmdListDirectory can be tested.
     void setListDirectoryWithTimeSupported(bool supported) { _listDirectoryWithTimeSupported = supported; }
+
+    /// Error code used to Nak kCmdListDirectoryWithTime when unsupported. PX4 replies kErrUnknownCommand,
+    /// ArduPilot replies kErrFail.
+    void setListDirectoryWithTimeNakError(MavlinkFTP::ErrorCode_t error) { _listDirectoryWithTimeNakError = error; }
 
     /// When true, kCmdListDirectoryWithTime directory entries under @MAV_LOG carry "\t0\t<mtime>", as MAVSDK sends.
     void setLogDirEntriesWithTime(bool enabled) { _logDirEntriesWithTime = enabled; }
@@ -189,6 +193,7 @@ private:
     int _burstReadDelayMs = 0;                  ///< Per-burst delay to simulate a slow link
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
+    MavlinkFTP::ErrorCode_t _listDirectoryWithTimeNakError = MavlinkFTP::kErrUnknownCommand;
     bool _logDirEntriesWithTime = false;  ///< @MAV_LOG directory entries carry "\t0\t<mtime>" when listed with time
     bool _logDirDotEntries = false;       ///< @MAV_LOG listings include "D." and "D.." entries
     bool _paramPckEnabled = true;               ///< Serve @PARAM/param.pck; false NAKs errno ENOENT
