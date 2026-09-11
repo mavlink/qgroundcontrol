@@ -45,6 +45,19 @@ public:
     VehicleCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
     ~VehicleCameraControl() override;
 
+    /// Read a fixed-size CAMERA_INFORMATION name field without running off the end of it.
+    /// MAVLink does not guarantee these arrays are NUL terminated, so the length is bounded
+    /// by the array itself rather than by strlen().
+    static QString boundedNameField(const uint8_t *raw, size_t maxLen);
+
+    /// Reduce a vehicle-supplied name to something safe to embed in a file name. Everything
+    /// that could act as a path separator, a drive or NTFS stream qualifier, or a directory
+    /// traversal is replaced.
+    static QString pathSafeNameToken(const QString &name);
+
+    /// True when candidate resolves to a location inside baseDir.
+    static bool pathIsInside(const QString &baseDir, const QString &candidate);
+
     Q_INVOKABLE void setCameraModeVideo() override;
     Q_INVOKABLE void setCameraModePhoto() override;
     Q_INVOKABLE void toggleCameraMode       () override;
@@ -270,6 +283,7 @@ protected:
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;
+    QString                             _cacheFileToken;    ///< sanitised "<vendor>_<model>_<NNN>", no extension
     StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
     QStringList                         _activeSettings;
     QStringList                         _settings;
