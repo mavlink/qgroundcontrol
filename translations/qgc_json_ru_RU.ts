@@ -9781,7 +9781,7 @@
       <extracomment>.groups[Link Management].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/CommLinks.SettingsUI.json"/>
       <source>Link Management</source>
-      <translation>Каналы связи</translation>
+      <translation>Управление подключениями</translation>
     </message>
     <message>
       <extracomment>.groups[Link Management].keywords[0]</extracomment>
@@ -11065,253 +11065,253 @@
       <extracomment>.groups[General].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>Общие</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>language</source>
-      <translation type="unfinished">language</translation>
+      <translation>язык</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>locale</source>
-      <translation type="unfinished">locale</translation>
+      <translation>локаль</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>color scheme</source>
-      <translation type="unfinished">color scheme</translation>
+      <translation>цветовая схема</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>dark mode</source>
-      <translation type="unfinished">dark mode</translation>
+      <translation>тёмная тема</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>theme</source>
-      <translation type="unfinished">theme</translation>
+      <translation>тема</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>palette</source>
-      <translation type="unfinished">palette</translation>
+      <translation>палитра</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>follow me</source>
-      <translation type="unfinished">follow me</translation>
+      <translation>follow me</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>audio</source>
-      <translation type="unfinished">audio</translation>
+      <translation>звук</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>volume</source>
-      <translation type="unfinished">volume</translation>
+      <translation>громкость</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[9]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>sound</source>
-      <translation type="unfinished">sound</translation>
+      <translation>звук</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[10]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>gstreamer</source>
-      <translation type="unfinished">gstreamer</translation>
+      <translation>gstreamer</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[11]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>debug level</source>
-      <translation type="unfinished">debug level</translation>
+      <translation>уровень отладки</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[12]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>ui scale</source>
-      <translation type="unfinished">ui scale</translation>
+      <translation>масштаб интерфейса</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[13]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>font size</source>
-      <translation type="unfinished">font size</translation>
+      <translation>размер шрифта</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[14]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>zoom</source>
-      <translation type="unfinished">zoom</translation>
+      <translation>zoom</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[15]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>save path</source>
-      <translation type="unfinished">save path</translation>
+      <translation>путь сохранения</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[16]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>storage</source>
-      <translation type="unfinished">storage</translation>
+      <translation>хранилище</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[17]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>reset</source>
-      <translation type="unfinished">reset</translation>
+      <translation>сброс</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[18]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>clear settings</source>
-      <translation type="unfinished">clear settings</translation>
+      <translation>сброс настроек</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[19]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>factory reset</source>
-      <translation type="unfinished">factory reset</translation>
+      <translation>заводские настройки</translation>
     </message>
     <message>
       <extracomment>.groups[General].controls[3].button.text</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>Test</source>
-      <translation type="unfinished">Test</translation>
+      <translation>Проверить</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>Vehicle Preferences</source>
-      <translation type="unfinished">Vehicle Preferences</translation>
+      <translation>Настройки борта</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>firmware</source>
-      <translation type="unfinished">firmware</translation>
+      <translation>прошивка</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>ardupilot</source>
-      <translation type="unfinished">ardupilot</translation>
+      <translation>ardupilot</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>px4</source>
-      <translation type="unfinished">px4</translation>
+      <translation>px4</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>vehicle</source>
-      <translation type="unfinished">vehicle</translation>
+      <translation>борт</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>multirotor</source>
-      <translation type="unfinished">multirotor</translation>
+      <translation>мультикоптер</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>fixed wing</source>
-      <translation type="unfinished">fixed wing</translation>
+      <translation>самолёт</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>vtol</source>
-      <translation type="unfinished">vtol</translation>
+      <translation>vtol</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>rover</source>
-      <translation type="unfinished">rover</translation>
+      <translation>ровер</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>sub</source>
-      <translation type="unfinished">sub</translation>
+      <translation>подводный аппарат</translation>
     </message>
     <message>
       <extracomment>.groups[Units].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>Units</source>
-      <translation type="unfinished">Units</translation>
+      <translation>Единицы измерения</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>units</source>
-      <translation type="unfinished">units</translation>
+      <translation>единицы измерения</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>metric</source>
-      <translation type="unfinished">metric</translation>
+      <translation>метрическая</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>imperial</source>
-      <translation type="unfinished">imperial</translation>
+      <translation>имперская</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>distance</source>
-      <translation type="unfinished">distance</translation>
+      <translation>расстояние</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>speed</source>
-      <translation type="unfinished">speed</translation>
+      <translation>скорость</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>area</source>
-      <translation type="unfinished">area</translation>
+      <translation>площадь</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>temperature</source>
-      <translation type="unfinished">temperature</translation>
+      <translation>температура</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>feet</source>
-      <translation type="unfinished">feet</translation>
+      <translation>футы</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>meters</source>
-      <translation type="unfinished">meters</translation>
+      <translation>метры</translation>
     </message>
   </context>
   <context>
