@@ -4,7 +4,10 @@
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
+#include <algorithm>
+
 #include "Fact.h"
+#include "ScreenToolsController.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
 
@@ -39,6 +42,31 @@ static QQuickItem* findVisibleSectionButton(QQuickItem* root, const QString& sec
 static void setVideoSource(const char* source)
 {
     SettingsManager::instance()->videoSettings()->videoSource()->setRawValue(QString::fromLatin1(source));
+}
+
+static void collectSettingsDividers(QQuickItem* item, QList<QQuickItem*>& dividers)
+{
+    if (!item) {
+        return;
+    }
+    if (item->objectName().startsWith(QStringLiteral("settingsDivider_"))) {
+        dividers.append(item);
+    }
+    const auto children = item->childItems();
+    for (auto* child : children) {
+        collectSettingsDividers(child, dividers);
+    }
+}
+
+// Settings sidebar dividers are named settingsDivider_<modelIndex>; returns them in model order
+static QList<QQuickItem*> findSettingsDividers(QQuickItem* root)
+{
+    QList<QQuickItem*> dividers;
+    collectSettingsDividers(root, dividers);
+    std::sort(dividers.begin(), dividers.end(), [](const QQuickItem* a, const QQuickItem* b) {
+        return a->objectName().section('_', 1).toInt() < b->objectName().section('_', 1).toInt();
+    });
+    return dividers;
 }
 
 // Sets the video source and returns a guard restoring the original value on scope exit
@@ -288,4 +316,63 @@ void TopLevelViewsTest::_testSettingsSearchExcludesHiddenSections()
     // not because the page became unavailable: clearing the search brings it back
     searchField->setProperty("text", QString());
     QTRY_VERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsButton_Video"), 0));
+}
+
+// A divider only shows between two groups that both contain an available page. The
+// trailing divider precedes the debug-only pages, so it must hide in release builds.
+void TopLevelViewsTest::_testSettingsDividerVisibility()
+{
+    startUI();
+    if (QTest::currentTestFailed())
+        return;
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("settings_buttonList")));
+
+    // SettingsPages.json: dividers after Plan View, after 3D View, after Help
+    const QList<QQuickItem*> dividers = findSettingsDividers(_rootItem);
+    QCOMPARE(dividers.size(), 3);
+    QTRY_VERIFY(dividers[0]->isVisible());
+    QTRY_VERIFY(dividers[1]->isVisible());
+    QTRY_COMPARE(dividers[2]->isVisible(), ScreenToolsController::isDebug());
+
+    // Search flattens the list into matches only
+    QQuickItem* const searchField = findVisibleItem(_rootItem, QStringLiteral("settings_searchField"));
+    QVERIFY(searchField);
+    searchField->setProperty("text", QStringLiteral("video"));
+    for (QQuickItem* divider : dividers) {
+        QTRY_VERIFY(!divider->isVisible());
+    }
+
+    searchField->setProperty("text", QString());
+    QTRY_VERIFY(dividers[0]->isVisible());
+    QTRY_VERIFY(dividers[1]->isVisible());
+    QTRY_COMPARE(dividers[2]->isVisible(), ScreenToolsController::isDebug());
+}
+
+// With no vehicle the component group is empty and Parameters is hidden: the divider
+// after Summary shows only because Firmware follows it, and the one before
+// Parameters/Firmware must not leave a dangling gap.
+void TopLevelViewsTest::_testVehicleConfigDividersNoVehicle()
+{
+    startUI();
+    if (QTest::currentTestFailed())
+        return;
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewConfigure")));
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_root"), 3000));
+
+    QQuickItem* const parametersButton = findItem(_rootItem, QStringLiteral("vehicleConfig_parametersButton"));
+    QQuickItem* const firmwareButton = findItem(_rootItem, QStringLiteral("vehicleConfig_firmwareButton"));
+    QQuickItem* const summaryDivider = findItem(_rootItem, QStringLiteral("vehicleConfig_summaryDivider"));
+    QQuickItem* const componentsDivider = findItem(_rootItem, QStringLiteral("vehicleConfig_componentsDivider"));
+    QVERIFY(parametersButton);
+    QVERIFY(firmwareButton);
+    QVERIFY(summaryDivider);
+    QVERIFY(componentsDivider);
+
+    QTRY_VERIFY(!parametersButton->isVisible());
+    QTRY_VERIFY(firmwareButton->isVisible());
+    QTRY_VERIFY(summaryDivider->isVisible());
+    QTRY_VERIFY(!componentsDivider->isVisible());
 }
